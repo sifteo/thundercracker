@@ -14,6 +14,7 @@ ScoredCubeState_NotWord::ScoredCubeState_NotWord()
 
 unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& data)
 {
+#if (0)
     switch (eventID)
     {
     case EventID_EnterState:
@@ -87,6 +88,7 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
     }
+#endif
     return getStateMachine().getCurrentStateIndex();
 }
 
@@ -98,34 +100,4 @@ unsigned ScoredCubeState_NotWord::update(float dt, float stateTime)
 
 void ScoredCubeState_NotWord::paint()
 {
-    Cube& c = getStateMachine().getCube();
-    // FIXME vertical words
-    bool neighbored =
-            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    vid.init();
-    switch (GameStateMachine::getCurrentMaxLettersPerCube())
-    {
-    case 2:
-        paintLetters(vid, Font2Letter, true);
-        break;
-
-    case 3:
-        paintLetters(vid, Font3Letter, true);
-        break;
-
-    default:
-        paintLetters(vid, Font1Letter, true);
-        break;
-    }
-
-    if (neighbored)
-    {
-        paintBorder(vid, ImageIndex_Neighbored, true, false, true, false);
-    }
-    else
-    {
-        paintBorder(vid, ImageIndex_Teeth, false, true, false, true);
-    }
 }

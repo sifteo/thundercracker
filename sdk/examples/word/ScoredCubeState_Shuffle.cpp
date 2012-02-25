@@ -32,6 +32,7 @@ unsigned ScoredCubeState_Shuffle::update(float dt, float stateTime)
 
 void ScoredCubeState_Shuffle::paint()
 {
+#if (0)
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
@@ -65,4 +66,5 @@ void ScoredCubeState_Shuffle::paint()
         paintBorder(vid, ImageIndex_Teeth, true, false, false, false, TEETH_ANIM_LENGTH);
         //DEBUG_LOG(("shuffle: [c: %d] teeth opening %f\n", c.id(), GameStateMachine::getTime()));
     }
+#endif
 }

@@ -27,6 +27,7 @@ unsigned TitleExitCubeState::update(float dt, float stateTime)
 
 void TitleExitCubeState::paint()
 {
+#if (0)
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
 /*    const Sifteo::AssetImage& bg =
@@ -38,4 +39,5 @@ void TitleExitCubeState::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintBorder(vid, ImageIndex_Teeth, true, false);
+#endif
 }

@@ -2,63 +2,40 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 
-/*
-enum AnimObjIndex
+enum AnimIndex
 {
-    AnimObjIndex_Tile0,
-    AnimObjIndex_Tile1,
-    AnimObjIndex_Tile2,
+    AnimIndex_Tile1Idle,
+    AnimIndex_Tile1SlideL,
+    AnimIndex_Tile1SlideR,
+    AnimIndex_Tile1OldWord,
+    AnimIndex_Tile1NewWord,
+    AnimIndex_Tile1EndofRoundScored,
+    AnimIndex_Tile1ShuffleScored,
 
-    NumAnimObjIndexIndexes
+    AnimIndex_Tile2Idle,
+    AnimIndex_Tile2SlideL,
+    AnimIndex_Tile2SlideR,
+    AnimIndex_Tile2OldWord,
+    AnimIndex_Tile2NewWord,
+    AnimIndex_Tile2EndofRoundScored,
+    AnimIndex_Tile2ShuffleScored,
+
+    AnimIndex_Tile3Idle,
+    AnimIndex_Tile3SlideL,
+    AnimIndex_Tile3SlideR,
+    AnimIndex_Tile3OldWord,
+    AnimIndex_Tile3NewWord,
+    AnimIndex_Tile3EndofRoundScored,
+    AnimIndex_Tile3ShuffleScored,
+
+    NumAnimIndexes
 };
 
-enum AnimObjFlags
-{
-    AnimObjFlags_None,
-    AnimObjFlags_Hide = (1 << 0),
-};
-*/
-
-/*
-struct Point
-{
-    int x, y;
-};
-
-struct Bla
-{
-    int another_var;
-    Point *foo;
-};
-
-
-Bla test =
-{
-    0, (Point[]) {(Point){1, 2}, (Point){3, 4}}
-};
-
-
-const static Vec2 bar = Vec2(2, 8);
-//Vec2 *bar = (Vec2[]){Vec2(2, 8)};
-
-struct Bla2
-{
-    int another_var;
-    Vec2 *foo;
-};
-
-Bla2 test2 =
-{
-    0, (Vec2[]) {Vec2(1, 2), Vec2(3, 4)}
-};
-
-const static AnimObjData *foo =
-        (AnimObjData[]){{ 0, (Vec2[]){ Vec2(2, 8), Vec2(2, 8), Vec2(2, 8) }}};
-*/
 
 struct AnimObjData
 {
     const AssetImage *mAsset;
+    const AssetImage *mAltAsset;
     uint32_t mInvisibleFrames; // bitmask
     unsigned char mNumFrames;
     const Vec2 *mPositions;
@@ -108,24 +85,40 @@ const static Vec2 positions[] =
 const static AnimObjData animObjData[] =
 {
     // AnimIndex_Tile2Idle
-    { &Tile2, 0x0, 1, &positions[0]},
-    { &Tile2, 0x0, 1, &positions[1]},
+    { &Tile2, &Tile2, 0x0, 1, &positions[0]},
+    { &Tile2, &Tile2, 0x0, 1, &positions[1]},
 
     // AnimIndex_Tile2SlideL
-    { &Tile2, 0x0, 10, &positions[7]},
-    { &Tile2, 0x0, 7, &positions[2]},
+    { &Tile2, &Tile2, 0x0, 10, &positions[7]},
+    { &Tile2, &Tile2, 0x0, 7, &positions[2]},
 
     // AnimIndex_Tile2SlideR
-    { &Tile2, 0x0, 7, &positions[10]},
-    { &Tile2, 0x0, 10, &positions[16]},
+    { &Tile2, &Tile2, 0x0, 7, &positions[10]},
+    { &Tile2, &Tile2, 0x0, 10, &positions[16]},
 
-    // AnimIndex_Tile2Glow
-    { &Tile2Glow, 0x0, 1, &positions[0]},
-    { &Tile2Glow, 0x0, 1, &positions[1]},
+    // AnimIndex_Tile2OldWord
+    { &Tile2Glow, &Tile2, 0x0, 1, &positions[0]},
+    { &Tile2Glow, &Tile2, 0x0, 1, &positions[1]},
 };
 
 const static AnimData animData[] =
 {
+
+    //AnimIndex_Tile1Idle,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1SlideL,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1SlideR,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1OldWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1NewWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1EndofRoundScored,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1ShuffleScored,
+    { 1.f, true, 2, &animObjData[0]},
+
     // AnimIndex_Tile2Idle
     { 1.f, true, 2, &animObjData[0]},
 
@@ -135,12 +128,34 @@ const static AnimData animData[] =
     // AnimIndex_Tile2SlideR
     { 1.f, false, 2, &animObjData[4]},
 
-    // AnimIndex_Tile2Glow
+    // AnimIndex_Tile2OldWord
     { 1.f, true, 2, &animObjData[6]},
+
+    //AnimIndex_Tile2NewWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile2EndofRoundScored,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile2ShuffleScored,
+    { 1.f, true, 2, &animObjData[0]},
+
+    //AnimIndex_Tile3Idle,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3SlideL,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3SlideR,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3OldWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3NewWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3EndofRoundScored,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3ShuffleScored,
+    { 1.f, true, 2, &animObjData[0]},
 
 };
 
-bool animPaint(AnimIndex anim,
+bool animPaint(AnimType animT,
                VidMode_BG0_SPR_BG1 &vid,
                BG1Helper *bg1,
                float animTime,
@@ -151,8 +166,11 @@ bool animPaint(AnimIndex anim,
         &Font1Letter, &Font2Letter, &Font3Letter,
     };
     const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
-
+    AnimIndex anim = (AnimIndex)(animT + NumAnimTypes * (GameStateMachine::getCurrentMaxLettersPerCube() - 1));
+    STATIC_ASSERT(NumAnimTypes * MAX_LETTERS_PER_CUBE == NumAnimIndexes);
+    STATIC_ASSERT(arraysize(animData) == NumAnimIndexes);
     const AnimData &data = animData[anim];
+
     float animPct =
             data.mLoop ?
                 fmodf(animTime, data.mDuration)/data.mDuration :
@@ -188,25 +206,31 @@ bool animPaint(AnimIndex anim,
         ASSERT(size.y > 0);
         ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
-        /*if (animTime > 0.f)
+        /* TODO why does this segfault now?
+if (anim != AnimIndex_Tile2Idle )
         {
             DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
-        }*/
-
-        vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+        }
+*/
+        unsigned fontFrame = font.frames + 1;
         if (params && params->mLetters && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
             {
-                Vec2 letterPos(pos);
-                letterPos.y += 3; // TODO
-                unsigned frame = params->mLetters[i] - (int)'A';
-
-                if (frame < font.frames)
-                {
-                    bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, frame);
-                }
+                fontFrame = params->mLetters[i] - (int)'A';
             }
+        }
+
+        if (fontFrame < font.frames)
+        {
+            Vec2 letterPos(pos);
+            letterPos.y += 3; // TODO
+            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+            bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
+        }
+        else
+        {
+            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
         }
 
         switch (anim)

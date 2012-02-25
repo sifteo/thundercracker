@@ -3,15 +3,19 @@
 
 #include <sifteo.h>
 
-enum AnimIndex
+enum AnimType
 {
-    AnimIndex_Tile2Idle,
-    AnimIndex_Tile2SlideL,
-    AnimIndex_Tile2SlideR,
-    AnimIndex_Tile2Glow,
+    AnimType_NotWord,
+    AnimType_SlideL,
+    AnimType_SlideR,
+    AnimType_OldWord,
+    AnimType_NewWord,
+    AnimType_EndofRound,
+    AnimType_Shuffle,
 
-    NumAnimIndexes
+    NumAnimTypes
 };
+
 
 enum CheckMarkState
 {
@@ -27,7 +31,7 @@ struct AnimParams
     //float mTimeLeft;
 };
 
-bool animPaint(AnimIndex anim,
+bool animPaint(AnimType anim,
                VidMode_BG0_SPR_BG1 &vid,
                BG1Helper *bg1 = 0,
                float animTime = 0.f,

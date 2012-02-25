@@ -48,23 +48,6 @@ public:
     CubeStateMachine& getStateMachine();
 
 protected:
-    void paintBorder(VidMode_BG0_SPR_BG1& vid,
-                     ImageIndex imageIndex = ImageIndex_Connected,
-                     bool animate=false,
-                     bool reverseAnim=false,
-                     bool loopAnim=false,
-                     bool paintTime=false,
-                     float animStartTime=0.f);
-
-    void paintScore(VidMode_BG0_SPR_BG1& vid,
-                    ImageIndex teethImageIndex,
-                    bool animate=false,
-                    bool reverseAnim=false,
-                    bool loopAnim=false,
-                    bool paintTime=false,
-                    float animStartTime=0.f);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
-    void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
     virtual unsigned update(float dt, float stateTime);
 

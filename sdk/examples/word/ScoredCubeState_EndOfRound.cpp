@@ -44,6 +44,7 @@ unsigned ScoredCubeState_EndOfRound::update(float dt, float stateTime)
 
 void ScoredCubeState_EndOfRound::paint()
 {
+#if (0)
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
     bool neighbored =
@@ -141,4 +142,5 @@ void ScoredCubeState_EndOfRound::paint()
 
         break;
     }
+#endif
 }

@@ -23,9 +23,10 @@ class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine() :
-        StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f), mAnimIndex(AnimIndex_Tile2Idle),
-        mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0), mLettersStartTarget(0),
-        mCube(0) {}
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f),
+        mAnimType(AnimType_NotWord), mPainting(false), mBG0Panning(0.f),
+        mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
+        mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0) {}
 
     void setCube(Cube& cube);
     Cube& getCube();
@@ -39,8 +40,8 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    bool getLetters(char *buffer, bool forPaint=false);
-    void queueAnim(AnimIndex anim);/*
+    unsigned getLetters(char *buffer, bool forPaint=false);
+    void queueAnim(AnimType anim);/*
                    VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
                     const AnimParams *params = 0);*/
@@ -64,7 +65,26 @@ public:
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
-    AnimIndex getAnimForCurrentState() const;
+    AnimType getNextAnim() const;
+    void paint();
+
+    void paintBorder(VidMode_BG0_SPR_BG1& vid,
+                     ImageIndex imageIndex = ImageIndex_Connected,
+                     bool animate=false,
+                     bool reverseAnim=false,
+                     bool loopAnim=false,
+                     bool paintTime=false,
+                     float animStartTime=0.f);
+
+    void paintScore(VidMode_BG0_SPR_BG1& vid,
+                    ImageIndex teethImageIndex,
+                    bool animate=false,
+                    bool reverseAnim=false,
+                    bool loopAnim=false,
+                    bool paintTime=false,
+                    float animStartTime=0.f);
+    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
+    void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
@@ -72,13 +92,15 @@ private:
     unsigned mNumLetters;
     float mIdleTime;
     float mAnimTime;
-    AnimIndex mAnimIndex;
+    AnimType mAnimType;
+    bool mPainting;
 
     float mBG0Panning;
     float mBG0TargetPanning;
     bool mBG0PanningLocked;
     unsigned mLettersStart;
     unsigned mLettersStartTarget;
+    ImageIndex mImageIndex;
 
     Cube* mCube;
     TitleCubeState mTitleState;
