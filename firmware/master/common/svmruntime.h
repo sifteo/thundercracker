@@ -17,25 +17,11 @@ public:
     void run(uint16_t appId);
     void svc(uint8_t imm8);
 
-    // translate a game's virtual RAM address to physical RAM
-    reg_t virt2physRam(uint32_t vaddr) {
-        return ((vaddr - VIRTUAL_RAM_BASE) & 0xFFFFF) + cpu.userRam();
-    }
-
-    // translate a virtual flash address to its cache block
-    reg_t virt2cacheFlash(uint32_t a) {
-        return a - VIRTUAL_FLASH_BASE + cacheBlockBase() - flashRegion.baseAddress() + progInfo.textRodata.start;
-    }
-
-    // translate from an address in our local flash block cache to a game's virtual address
-    reg_t cache2virtFlash(reg_t a) const {
-        return a - cacheBlockBase() + VIRTUAL_FLASH_BASE + flashRegion.baseAddress() - progInfo.textRodata.start;
-    }
-
-    // address of the current cache block
-    reg_t cacheBlockBase() const {
-        return reinterpret_cast<reg_t>(flashRegion.data());
-    }
+    // address translation routines
+    reg_t virt2physRam(uint32_t vaddr);
+    reg_t virt2cacheFlash(uint32_t a);
+    reg_t cache2virtFlash(reg_t a) const;
+    reg_t cacheBlockBase() const;
 
     inline bool inRange(reg_t val, reg_t start, reg_t sz) const {
         return (val - start < sz) ? true : false;
