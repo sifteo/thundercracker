@@ -12,6 +12,8 @@ class SvmRuntime {
 public:
     SvmRuntime();
 
+    static SvmRuntime instance;
+
     void run(uint16_t appId);
     void svc(uint8_t imm8);
 

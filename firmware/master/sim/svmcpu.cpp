@@ -6,9 +6,13 @@
 #include <string.h>
 #include <inttypes.h>
 
-void SvmCpu::init(SvmRuntime *runtime)
+SvmCpu::SvmCpu() :
+    runtime(SvmRuntime::instance)
 {
-    this->runtime = runtime;
+}
+
+void SvmCpu::init()
+{
     memset(regs, 0, sizeof(regs));
     cpsr = 0;
 
@@ -56,7 +60,7 @@ uint16_t SvmCpu::fetch()
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #if 1
-    LOG(("[%"PRIxPTR": %x]", runtime->cache2virtFlash(reinterpret_cast<reg_t>(tst)), *tst));
+    LOG(("[%"PRIxPTR": %x]", runtime.cache2virtFlash(reinterpret_cast<reg_t>(tst)), *tst));
     for (unsigned r = 0; r < 8; r++) {
         assert((uint32_t)regs[r] == regs[r]);
         LOG((" r%d=%08x", r, (uint32_t) regs[r]));
@@ -617,7 +621,7 @@ void SvmCpu::emulateLDRLitPool(uint16_t instr)
         (((regs[REG_PC] + 3) & ~3) + (imm8 << 2));
 
     // this should only come from our current flash block
-    ASSERT((reinterpret_cast<reg_t>(addr) - runtime->cacheBlockBase()) < FlashLayer::BLOCK_SIZE && "PC relative load from invalid address");
+    ASSERT((reinterpret_cast<reg_t>(addr) - runtime.cacheBlockBase()) < FlashLayer::BLOCK_SIZE && "PC relative load from invalid address");
     regs[Rt] = *addr;
 }
 
@@ -735,5 +739,5 @@ void SvmCpu::emulateDIV(uint32_t instr)
 void SvmCpu::emulateSVC(uint16_t instr)
 {
     uint8_t imm8 = instr & 0xff;
-    this->runtime->svc(imm8);
+    runtime.svc(imm8);
 }

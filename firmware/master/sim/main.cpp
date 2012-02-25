@@ -63,8 +63,7 @@ int main(int argc, char **argv)
 
 #ifdef SVM_TEST
     installElfFile();
-    SvmRuntime runtime;
-    runtime.run(111);
+    SvmRuntime::instance.run(111);
     return 0;
 #endif
 

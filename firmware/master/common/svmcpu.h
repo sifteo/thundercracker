@@ -9,7 +9,8 @@ class SvmRuntime;
 
 class SvmCpu {
 public:
-    void init(SvmRuntime *runtime);
+    SvmCpu();
+    void init();
     void run();
 
     reg_t call(reg_t address);
@@ -65,7 +66,7 @@ private:
     };
 #endif
 
-    SvmRuntime *runtime;
+    SvmRuntime &runtime;
 
 #ifdef SIFTEO_SIMULATOR
     reg_t regs[NUM_REGS];

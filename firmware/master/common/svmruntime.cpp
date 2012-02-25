@@ -9,6 +9,9 @@
 
 using namespace Svm;
 
+// statics
+SvmRuntime SvmRuntime::instance;
+
 SvmRuntime::SvmRuntime()
 {
 }
@@ -27,7 +30,7 @@ void SvmRuntime::run(uint16_t appId)
         return;
     }
 
-    cpu.init(this);
+    cpu.init();
 
     // TODO: This actually needs to be like a call SVC, not just a branch
     cpu.setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(flashRegion.data())
