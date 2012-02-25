@@ -390,7 +390,8 @@ unsigned Game::OnPassiveTrigger() {
       //-----------------------------------------------------------------------
       // PLAYER TRIGGERED EQUIP PICKUP
       pRoom->ClearTrigger();
-      
+      mPlayer.CurrentView()->HideItem();
+
       // do a pickup animation
       for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
         mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
