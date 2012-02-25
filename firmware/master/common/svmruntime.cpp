@@ -4,6 +4,7 @@
 #include "svm.h"
 #include "svmvalidator.h"
 
+#include <inttypes.h>
 #include <string.h>
 
 using namespace Svm;
@@ -119,7 +120,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
     uint32_t literal = blockBase[imm8];
 
-    LOG(("indirect, literal 0x%x @ 0x%x\n", literal, cache2virtFlash(reinterpret_cast<reg_t>(blockBase + imm8))));
+    LOG(("indirect, literal 0x%x @ 0x%"PRIxPTR"\n", literal, cache2virtFlash(reinterpret_cast<reg_t>(blockBase + imm8))));
 
     if ((literal & CallMask) == CallTest) {
         LOG(("indirect call\n"));
@@ -163,7 +164,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
     switch (opnum) {
     case 0: {
         cpu.setReg(SvmCpu::REG_PC, address);
-        LOG(("addrOp: long branch to 0x%x, result: 0x%x\n", address, cpu.reg(SvmCpu::REG_PC)));
+        LOG(("addrOp: long branch to 0x%"PRIxPTR", result: 0x%"PRIxPTR"\n", address, cpu.reg(SvmCpu::REG_PC)));
         break;
     }
 //    case 1:
@@ -173,7 +174,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 //        LOG(("addrOp: Assign to r8-9\n"));
 //        break;
     default:
-        LOG(("unknown addrOp: %d (0x%x)\n", opnum, address));
+        LOG(("unknown addrOp: %d (0x%"PRIxPTR")\n", opnum, address));
         break;
     }
 }
@@ -208,7 +209,7 @@ reg_t SvmRuntime::validate(reg_t address)
             result = virt2physRam(address);
         ASSERT(inRange(result, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
     }
-    LOG(("validated: 0x%x for address 0x%x\n", result, address));
+    LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", result, address));
     setBasePtrs(result);
     return result;
 }
