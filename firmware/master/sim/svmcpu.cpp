@@ -39,7 +39,7 @@ reg_t SvmCpu::reg(uint8_t r) const
     return regs[r];
 }
 
-void SvmCpu::setReg(uint8_t r, uint32_t val)
+void SvmCpu::setReg(uint8_t r, reg_t val)
 {
     regs[r] = val;
 }

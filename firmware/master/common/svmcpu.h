@@ -20,7 +20,7 @@ public:
         stacked registers during interrupt handling.
     */
     reg_t reg(uint8_t r) const;
-    void setReg(uint8_t r, uint32_t val);
+    void setReg(uint8_t r, reg_t val);
 
     // address of user ram
     reg_t userRam() const;
