@@ -13,8 +13,6 @@ public:
     void init();
     void run();
 
-    reg_t call(reg_t address);
-
     /*
         For now, register accessors are assumed to only really be used to access
         stacked registers during interrupt handling.
@@ -34,6 +32,11 @@ public:
     static const unsigned MEM_IN_BYTES = 32 * 1024;
 
 #ifdef SIFTEO_SIMULATOR
+    // TODO: adjustSP needs to be common API
+    inline void adjustSP(int offset) {
+        regs[REG_SP] += offset;
+    }
+
     inline void BranchOffsetPC(int offset) {
         regs[REG_PC] = (regs[REG_PC] + offset + 2) & ~(reg_t)1;
     }

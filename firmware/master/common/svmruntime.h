@@ -18,6 +18,7 @@ public:
 
     void run(uint16_t appId);
     void exit();
+    void call(reg_t addr);
     void svc(uint8_t imm8);
 
     // address translation routines
@@ -30,6 +31,8 @@ public:
         return (val - start < sz) ? true : false;
     }
 
+    // TODO: evaluate whether we can standardize on a pointer type for validate
+    // input and get rid of templates
     /*
         Ensure that a read-only pointer is valid, and translate if necessary.
         Read-write pointers may reference any valid flash or ram memory.
@@ -42,21 +45,26 @@ public:
 
         reg_t addr = reinterpret_cast<reg_t>(ptr);
         if (isFlashAddr(addr)) {
+            addr = virt2cacheFlash(addr);
             if (!inRange(addr, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
                 FlashLayer::releaseRegion(flashRegion);
-                fetchFlashBlock(addr);
+                fetchFlashBlock(reinterpret_cast<reg_t>(ptr));
             }
-            addr = virt2cacheFlash(addr);
+            // set base pointers
+            cpu.setReg(8, addr);
+            cpu.setReg(9, 0);   // r9 is read/write, which is invalid for flash pointers
         }
         else {
             // if it's already in range, leave it be
             if (!inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
                 addr = virt2physRam(addr);
             ASSERT(inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validateReadOnly: bad address");
+            // set base pointers
+            cpu.setReg(8, addr);
+            cpu.setReg(9, addr);
         }
 
         LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", addr, reinterpret_cast<reg_t>(ptr)));
-        setBasePtrs(addr);
         ptr = reinterpret_cast<T>(addr);
         return true;
     }
@@ -80,7 +88,9 @@ public:
             addr = virt2physRam(addr);
         ASSERT(inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validateReadWrite: bad address");
 
-        setBasePtrs(addr);
+        // set base pointers
+        cpu.setReg(8, addr);
+        cpu.setReg(9, addr);
         ptr = reinterpret_cast<T>(addr);
         return true;
     }
@@ -103,17 +113,21 @@ private:
         Segment rwdata;
     };
 
+    struct StackFrame {
+        reg_t r7;
+        reg_t r6;
+        reg_t r5;
+        reg_t r4;
+        reg_t r3;
+        reg_t r2;
+        reg_t fp;
+        reg_t sp;
+    };
+
     bool loadElfFile(unsigned addr, unsigned len);
 
     inline bool isFlashAddr(reg_t a) const {
         return (a & (1 << 31));
-    }
-
-    inline void setBasePtrs(reg_t a) {
-        cpu.setReg(8, a);
-        // if addr is in flash space, set r9 to 0, since flash mem is read-only
-        // and r9 is used as a read-write base address, so we'll just fault.
-        cpu.setReg(9, isFlashAddr(a) ? 0 : a);
     }
 
     void fetchFlashBlock(reg_t addr);
@@ -122,6 +136,7 @@ private:
 
     FlashRegion flashRegion;
     unsigned currentAppPhysAddr;    // where does this app start in external flash?
+    unsigned currentBlockValidBytes;
     ProgramInfo progInfo;
 
     reg_t validate(reg_t address);

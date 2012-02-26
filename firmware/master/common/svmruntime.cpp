@@ -20,28 +20,53 @@ void SvmRuntime::run(uint16_t appId)
     currentAppPhysAddr = 0;  // TODO: look this up via appId
     if (!loadElfFile(currentAppPhysAddr, 12345))
         return;
-
     LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
-
-    unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
-    if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
-        LOG(("failed to get entry block\n"));
-        return;
-    }
 
     cpu.init();
 
-    // TODO: This actually needs to be like a call SVC, not just a branch
-    cpu.setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(flashRegion.data())
-        + (progInfo.textRodata.vaddr & 0xFFFFFF));
+    reg_t entryPoint = progInfo.entry;
+    reg_t a = ((entryPoint >> 2) & 0x3fffff) * 4;
+    fetchFlashBlock(a + VIRTUAL_FLASH_BASE);
+    a = validate(a + VIRTUAL_FLASH_BASE);
 
-    SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
+    // TODO: set initial FP & SP based on SPAdj
+    call(a);
+    unsigned spAdjust = ((entryPoint >> 24) & 0x7f) * 4;
+    LOG(("main - stack: %d bytes\n", spAdjust));
+    cpu.adjustSP(-spAdjust);
     cpu.run();
 }
 
 void SvmRuntime::exit()
 {
+    // TODO: implement
+}
 
+/*
+    0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
+*/
+void SvmRuntime::call(reg_t addr)
+{
+    StackFrame frame = {
+        cpu.reg(7),
+        cpu.reg(6),
+        cpu.reg(5),
+        cpu.reg(4),
+        cpu.reg(3),
+        cpu.reg(2),
+        cpu.reg(SvmCpu::REG_FP),
+        cpu.reg(SvmCpu::REG_SP)
+    };
+
+    reg_t sp = cpu.reg(SvmCpu::REG_SP);
+    const int framesize = sizeof frame;
+    uint32_t *stk = reinterpret_cast<uint32_t*>(sp) - framesize;
+    memcpy(stk, &frame, framesize);
+
+    cpu.adjustSP(-framesize);
+    cpu.setReg(SvmCpu::REG_LR, cpu.reg(SvmCpu::REG_PC));
+
+    cpu.setReg(SvmCpu::REG_PC, addr);
 }
 
 // translate a game's virtual RAM address to physical RAM
@@ -68,14 +93,17 @@ reg_t SvmRuntime::cacheBlockBase() const
     return reinterpret_cast<reg_t>(flashRegion.data());
 }
 
-
+/*
+    Given a virtual flash address, fetch the physical block that it maps to.
+*/
 void SvmRuntime::fetchFlashBlock(reg_t addr)
 {
     uint32_t flashBlock = (addr / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE;
-    reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
+    reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start + currentAppPhysAddr;
     if (!FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion)) {
         ASSERT(0 && "validate() - couldn't retrieve new flash block\n");
     }
+    currentBlockValidBytes = SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
 }
 
 /*
@@ -116,8 +144,7 @@ void SvmRuntime::svc(uint8_t imm8)
     switch (sub) {
     case 0x1c:  { // 0b11100
         LOG(("svc: r8-9 = validate(r%d)\n", r));
-        uint32_t addr = validate(cpu.reg(r));
-        setBasePtrs(addr);
+        validate(cpu.reg(r));
         return;
     }
     case 0x1d:  // 0b11101
@@ -233,15 +260,15 @@ reg_t SvmRuntime::validate(reg_t address)
 {
     reg_t result;
     if (isFlashAddr(address)) {
-        if (!inRange(address, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
-            FlashLayer::releaseRegion(flashRegion);
-
-            uint32_t flashBlock = (address / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE;
-            reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
-            bool f = FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion);
-            ASSERT(f && "validate() - couldn't retrieve new flash block\n");
-        }
         result = virt2cacheFlash(address);
+        if (!inRange(result, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
+            FlashLayer::releaseRegion(flashRegion);
+            fetchFlashBlock(address);
+        }
+        // set our base pointers - 9 is the read/write pointer, so set it to
+        // an invalid address since this is one read-only
+        cpu.setReg(8, result);
+        cpu.setReg(9, 0);
     }
     else {
         if (inRange(address, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
@@ -249,9 +276,11 @@ reg_t SvmRuntime::validate(reg_t address)
         else
             result = virt2physRam(address);
         ASSERT(inRange(result, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
+        // set base pointers
+        cpu.setReg(8, result);
+        cpu.setReg(9, result);
     }
     LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", result, address));
-    setBasePtrs(result);
     return result;
 }
 
