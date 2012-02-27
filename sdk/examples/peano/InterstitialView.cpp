@@ -62,7 +62,7 @@ void InterstitialView::Paint()
     {
         //TODO        if (message.Length > 0) Library.PskFont.PaintCentered(c, message, 64, 8+16);
 
-        if (image)
+        if (image && GetCube()->backgroundLayer.isSpriteHidden(0))
         {
             GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
             GetCube()->backgroundLayer.moveSprite(0, Vec2(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
@@ -97,7 +97,7 @@ void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
         off -= (7 + 6);
         if (!backwards && off > 0)
         {
-            c->FillScreen(&Dark_Purple);//, Vec2(0, 1), Vec2(0,0), Vec2(16, off));
+            c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, off));
         }
         c->ClipImage(&VaultDoor, Vec2(0, 1-16));
         c->ClipImage(&VaultDoor, Vec2(0, 1+off));

@@ -115,7 +115,7 @@ void TiltFlowView::PaintFooter(TotalsCube *c) {
 }
 
 void TiltFlowView::PaintInner(TotalsCube *c) {
-    c->FillScreen(&Dark_Purple);//, Vec2(0, 1), Vec2(0,0), Vec2(16, 16-4-1));
+    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
     if (menu->IsPicked()) {
         int x, w;
         ClipIt(24, &x, &w); // magic

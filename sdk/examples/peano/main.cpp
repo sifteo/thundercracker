@@ -4,6 +4,8 @@
 #include "Game.h"
 #include "AudioPlayer.h"
 
+#include "config.h"
+
 using namespace Sifteo;
 
 void *operator new(size_t) throw();
@@ -19,6 +21,7 @@ void siftmain() {
     rom.init();
     rom.BG0_text(Vec2(1,1), "Loading...");
   }
+#if LOAD_ASSETS
   for (;;) {
     bool done = true;
     for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
@@ -34,6 +37,7 @@ void siftmain() {
     mode.init();
     mode.BG0_drawAsset(Vec2(0,0), Background);
   }
+#endif
   //_SYS_vectors.neighborEvents.add = OnNeighborAdd;
   //_SYS_vectors.neighborEvents.remove = OnNeighborRem;
   

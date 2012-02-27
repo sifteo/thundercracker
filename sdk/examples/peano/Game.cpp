@@ -192,11 +192,13 @@ namespace TotalsGame
         {
             if(!cubes[i].IsTextOverlayEnabled())
             {
+                /*
                 cubes[i].backgroundLayer.set();
                 cubes[i].backgroundLayer.setWindow(0,128);
                 cubes[i].foregroundLayer.Clear();
                 for(int s = 0 ; s < _SYS_VRAM_SPRITES; s++)
                     cubes[i].backgroundLayer.hideSprite(s);
+                    */
             }
         }
 

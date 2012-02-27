@@ -80,7 +80,7 @@ void MenuController::TransitionView::Paint()
 
         if (!mBackwards && bottom-top > 0)
         {
-            c->FillScreen(&Dark_Purple);//, Vec2(0, top), Vec2(0,0), Vec2(16, bottom-top));
+            c->FillArea(&Dark_Purple, Vec2(0, top), Vec2(16, bottom-top));
         }
 
         c->ClipImage(&VaultDoor, Vec2(0, top-16));

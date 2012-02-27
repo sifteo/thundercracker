@@ -264,9 +264,15 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::FillScreen(const AssetImage *image)
+    void TotalsCube::FillArea(const AssetImage *image, const Vec2 &pos, const Vec2 &size)
     {
-        backgroundLayer.clear(image->tiles[0]);
+        for(int y = pos.y; y < pos.y + size.y; y++)
+        {
+            for(int x = pos.x; x < pos.x + size.x; x++)
+            {
+                backgroundLayer.BG0_putTile(Vec2(x,y), image->tiles[0]);
+            }
+        }
     }
 
     void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)

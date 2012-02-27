@@ -96,3 +96,4 @@ PauseHelper.h
 mungePuzzles.py
 VictoryView.h
 VictoryController.h
+config.h

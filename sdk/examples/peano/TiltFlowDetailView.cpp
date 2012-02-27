@@ -1,5 +1,6 @@
 #include "TiltFlowDetailView.h"
 #include "assets.gen.h"
+#include "Game.h"
 
 namespace TotalsGame {
 
@@ -25,21 +26,25 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
 void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
         AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
-        mDescription = "";
+        mDescription = "";        
         GetCube()->DisableTextOverlay();
     }
 }
 
 void TiltFlowDetailView::Update (float dt) {
     if (mDescription[0]) {
-        if (mAmount < 1) {
-            mAmount = MIN(mAmount + dt / TotalsCube::kTransitionTime, 1);
-            //TODO    Paint();
+        while (mAmount < 1) {
+            mAmount = MIN(mAmount + Game::GetInstance().dt / TotalsCube::kTransitionTime, 1);
+            Paint();
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
         }
     } else {
-        if (mAmount > 0) {
-            mAmount = MAX(mAmount - dt / TotalsCube::kTransitionTime, 0);
-            //TODO    Paint();
+        while (mAmount > 0) {
+            mAmount = MAX(mAmount - Game::GetInstance().dt / TotalsCube::kTransitionTime, 0);
+            Paint();
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
         }
     }
 
@@ -54,10 +59,14 @@ void TiltFlowDetailView::Paint() {
 #define INTERPOLATE(a,b,t)  ((a)*(1-(t))+(b)*(t))
         int bottom = /*Mathf.FloorToInt todo*/(INTERPOLATE(4, 16-4, clamp(1.1f * mAmount,0.0f,1.0f)));
 #undef INTERPOLATE
-        c->FillScreen(&Dark_Purple);//, Vec2(0,1), Vec2(0,0), Vec2(16,bottom));
+        c->FillArea(&Dark_Purple, Vec2(0,1), Vec2(16,bottom-1));
         c->ClipImage(&VaultDoor, Vec2(0,1-16));
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
 
+        if(!GetCube()->backgroundLayer.isSpriteHidden(0))
+        {
+            GetCube()->backgroundLayer.hideSprite(0);   //enabled by interstitialview
+        }
     }
 /*
     if (mAmount == 1) {

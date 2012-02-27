@@ -67,7 +67,7 @@ public:
         void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame=0);
         void ClipImage(const AssetImage *image, const Vec2 &pos);
         void ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame = 0);
-        void FillScreen(const AssetImage *image);
+        void FillArea(const AssetImage *image, const Vec2 &pos, const Vec2 &size);
 	
         void DrawFraction(Fraction f, const Vec2 &pos);
         //void DrawDecimal(float d, const Vec2 &pos);
