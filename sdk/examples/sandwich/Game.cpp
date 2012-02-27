@@ -21,21 +21,20 @@ void Game::MainLoop(Cube* pPrimary) {
   //---------------------------------------------------------------------------
   // RESET EVERYTHING
   //mSimFrames = 0;
+  pInventory = 0;
+  pMinimap = 0;
   mAnimFrames = 0;
-  mIsDone = false;
   mNeedsSync = 0;
   mState.Init();
   mMap.Init();
   mPlayer.Init(pPrimary);
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
-    if (v->GetCube() != pPrimary) {
-      v->Init(); 
-    }
+    if (v->GetCube() != pPrimary) { v->Init(); }
   }
   Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
   mPlayer.View()->ShowLocation(mPlayer.Location());
   PlayMusic(music_castle);
-  //mSimTime = System::clock();
+  mSimTime = System::clock();
   _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
   _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
   CheckMapNeighbors();

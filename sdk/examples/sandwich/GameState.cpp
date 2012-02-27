@@ -73,11 +73,8 @@ bool GameState::Flag(uint8_t questId, uint8_t flagId) {
 }
 
 bool GameState::PickupItem(int itemId) {
-  if (itemId == 0) { return false; }
   if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
     mKeyCount++;
-    //if (mKeyCount == 1) {
-    //}
   } else if (!HasItem(itemId)) {
     mItemSet |= (1<<itemId);
     ASSERT(HasItem(itemId));

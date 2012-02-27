@@ -27,7 +27,7 @@ WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=6}
 
 Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
 
-Flash = image{"flash.png"}
+White = image{"flash.png"}
 Black = image{"black.png"}
 DialogBox = image{"dialog_box.png"}
 
