@@ -19,13 +19,7 @@ void RoomView::Init(unsigned roomId) {
   Room* r = GetRoom();
   switch(r->TriggerType()) {
     case TRIGGER_ITEM: 
-      const InventoryData& inv = gInventoryData[r->TriggerAsItem()->itemId];
-      mode.setSpriteImage(TRIGGER_SPRITE_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
-      mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
-      {
-        Vec2 p = 16 * GetRoom()->LocalCenter(0);
-        mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
-      }
+      ShowItem();
       break;
   }
   if (this->Parent() == pGame->GetPlayer()->View()) { 
@@ -107,9 +101,9 @@ void RoomView::ShowPlayer() {
   ViewMode gfx = Parent()->Graphics();
   gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   if (pGame->GetPlayer()->Equipment()) {
-    //const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
-    //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
-    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
+    const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
+    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
+    //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
     gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
   }
   UpdatePlayer();
@@ -146,12 +140,23 @@ void RoomView::HidePlayer() {
   gfx.hideSprite(EQUIP_SPRITE_ID);
 }
 
+void RoomView::ShowItem() {
+  Room* pRoom = GetRoom();
+  ASSERT(pRoom->HasItem());
+  ViewMode mode = Parent()->Graphics();
+  const InventoryData& inv = gInventoryData[pRoom->TriggerAsItem()->itemId];
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
+  mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
+  Vec2 p = 16 * pRoom->LocalCenter(0);
+  mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+}
+
 void RoomView::SetEquipPosition(Vec2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
   ViewMode gfx = Parent()->Graphics();
-  //const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
-  //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
-  gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
+  const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
+  gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
+  //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
   gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
 }
   
@@ -162,6 +167,10 @@ void RoomView::SetItemPosition(Vec2 p) {
 
 void RoomView::HideItem() {
   Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID);
+}
+
+void RoomView::HideEquip() {
+  Parent()->Graphics().hideSprite(EQUIP_SPRITE_ID);
 }
 
 //----------------------------------------------------------------------

@@ -49,7 +49,13 @@ void Game::MainLoop(Cube* pPrimary) {
     do {
       Paint();
       if (mPlayer.CurrentView()->Parent()->Touched()) {
-        OnActiveTrigger();
+        if (mPlayer.Equipment()) {
+          OnUseEquipment();
+        } else if (mPlayer.GetRoom()->HasItem()) {
+          OnPickup(mPlayer.GetRoom());
+        } else {
+          OnActiveTrigger();
+        }
       }
     } while (!pGame->GetMap()->FindBroadPath(&mPath));
 
@@ -359,6 +365,41 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
     PlaySfx(sfx_deNeighbor);
 }
 
+void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) {
+  ViewMode gfx = pView->Graphics();
+  #if GFX_ARTIFACT_WORKAROUNDS    
+    Paint(true);
+    pView->GetCube()->vbuf.touch();
+    Paint(true);
+  #endif
+  gfx.setWindow(80+16,128-80-16);
+  Dialog view(pView->GetCube());
+  view.Init();
+  view.Erase();
+  if (hdr) { view.Show(hdr); }
+  view.ShowAll(msg);
+  pView->GetCube()->vbuf.touch();
+  Paint(true);
+  for(int t=0; t<16; t++) {
+    gfx.setWindow(80+15-(t),128-80-15+(t));
+    view.SetAlpha(t<<4);
+    Paint();
+  }
+  view.SetAlpha(255);
+  for(float t=System::clock(); System::clock()-t<4.f && !pView->Touched();) { Paint(); }
+  pView->GetCube()->vbuf.touch();
+  Paint(true);
+  mPlayer.CurrentView()->Parent()->Restore();
+  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+  #if GFX_ARTIFACT_WORKAROUNDS    
+    Paint(true);
+    pView->GetCube()->vbuf.touch();
+    Paint(true);
+  #endif
+  // wait a sec
+  for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
+}
+
 //------------------------------------------------------------------
 // EVENTS
 //------------------------------------------------------------------
@@ -376,101 +417,80 @@ void Game::OnInventoryChanged() {
     }
   }
   mIsDone = true;
-
 }
 
+
+void Game::OnPickup(Room *pRoom) {
+  const ItemData* pItem = pRoom->TriggerAsItem();
+  const InventoryData &inv = gInventoryData[pItem->itemId];
+  if (inv.storageType == STORAGE_EQUIPMENT) {
+
+    //---------------------------------------------------------------------------
+    // PLAYER TRIGGERED EQUIP PICKUP
+    pRoom->ClearTrigger();
+    mPlayer.CurrentView()->HideItem();
+    if (mPlayer.Equipment()) {
+      OnDropEquipment(pRoom);
+    }
+    mPlayer.SetEquipment(pItem);
+    // do a pickup animation
+    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+      float t=System::clock();
+      Paint();
+      do {
+        // this calc is kinda annoyingly complex
+        float u = (mSimTime - t) / 0.075f;
+        const float du = 1.f / (float) PlayerPickup.frames;
+        u = (frame + u) * du;
+        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+        Paint();
+        mPlayer.CurrentView()->SetEquipPosition(Vec2(0, -float(ITEM_OFFSET) * u) );
+      } while(mSimTime-t<0.075f);
+    }
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    DescriptionDialog(
+      "ITEM DISCOVERED", 
+      gInventoryData[pItem->itemId].description, 
+      mPlayer.CurrentView()->Parent()
+    );
+  } else {
+    //-----------------------------------------------------------------------
+    // PLAYER TRIGGERED ITEM OR KEY PICKUP
+    if (mState.FlagTrigger(pItem->trigger)) { pRoom->ClearTrigger(); }
+    if (mState.PickupItem(pItem->itemId)) {
+      PlaySfx(sfx_pickup);
+      OnInventoryChanged();
+    }
+    // do a pickup animation
+    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+      float t=System::clock();
+      Paint();
+      do {
+        // this calc is kinda annoyingly complex
+        float u = (mSimTime - t) / 0.075f;
+        const float du = 1.f / (float) PlayerPickup.frames;
+        u = (frame + u) * du;
+        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+        Paint();
+        mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
+      } while(System::clock()-t<0.075f);
+    }
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    DescriptionDialog(
+      "ITEM DISCOVERED", 
+      gInventoryData[pItem->itemId].description, 
+      mPlayer.CurrentView()->Parent()
+    );
+    mPlayer.CurrentView()->HideItem();        
+  }
+}
 
 unsigned Game::OnPassiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasItem()) {
-
-    const ItemData* pItem = pRoom->TriggerAsItem();
-    const InventoryData &inv = gInventoryData[pItem->itemId];
-    if (inv.storageType == STORAGE_EQUIPMENT) {
-      //-----------------------------------------------------------------------
-      // PLAYER TRIGGERED EQUIP PICKUP
-      pRoom->ClearTrigger();
-      mPlayer.CurrentView()->HideItem();
-
-      // do a pickup animation
-      for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-        float t=System::clock();
-        do {
-          // this calc is kinda annoyingly complex
-          float u = (mSimTime - t) / 0.075f;
-          const float du = 1.f / (float) PlayerPickup.frames;
-          u = (frame + u) * du;
-          u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-          Paint();
-          mPlayer.CurrentView()->SetEquipPosition(Vec2(0, -ITEM_OFFSET * u) );
-        } while(mSimTime-t<0.075f);
-      }
-      mPlayer.SetEquipment(pItem);
-
-    } else {
-      //-----------------------------------------------------------------------
-      // PLAYER TRIGGERED ITEM OR KEY PICKUP
-
-
-      if (mState.FlagTrigger(pItem->trigger)) { pRoom->ClearTrigger(); }
-      if (mState.PickupItem(pItem->itemId)) {
-        PlaySfx(sfx_pickup);
-        OnInventoryChanged();
-      }
-      // do a pickup animation
-      for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-        float t=System::clock();
-        do {
-          // this calc is kinda annoyingly complex
-          float u = (System::clock() - t) / 0.075f;
-          const float du = 1.f / (float) PlayerPickup.frames;
-          u = (frame + u) * du;
-          u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-          Paint();
-          mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-        } while(System::clock()-t<0.075f);
-      }
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-      
-      // show a dialog description
-      Cube *pCube = mPlayer.CurrentView()->Parent()->GetCube();
-      ViewMode gfx = mPlayer.CurrentView()->Parent()->Graphics();
-      #if GFX_ARTIFACT_WORKAROUNDS    
-        Paint(true);
-        pCube->vbuf.touch();
-        Paint(true);
-      #endif
-      gfx.setWindow(80+16,128-80-16);
-      Dialog view(pCube);
-      view.Init();
-      view.Erase();
-      view.Show("ITEM DISCOVERED!");
-      view.ShowAll(gInventoryData[pItem->itemId].description);
-      pCube->vbuf.touch();
-      Paint(true);
-      for(int t=0; t<16; t++) {
-        gfx.setWindow(80+15-(t),128-80-15+(t));
-        view.SetAlpha(t<<4);
-        Paint();
-      }
-      view.SetAlpha(255);
-      for(float t=System::clock(); System::clock()-t<4.f && !mPlayer.View()->Touched();) { Paint(); }
-      pCube->vbuf.touch();
-      Paint(true);
-      mPlayer.CurrentView()->Parent()->Restore();
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-      #if GFX_ARTIFACT_WORKAROUNDS    
-        Paint(true);
-        pCube->vbuf.touch();
-        Paint(true);
-      #endif
-      // wait a sec
-      for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
-      mPlayer.CurrentView()->HideItem();        
-    }
-
+    OnPickup(pRoom);
   } else if (pRoom->HasTrapdoor()) {
 
     //-------------------------------------------------------------------------
@@ -527,9 +547,7 @@ unsigned Game::OnPassiveTrigger() {
     CheckMapNeighbors();
     Paint(true);
     return RESULT_PATH_INTERRUPTED;
-
   }
-
   return RESULT_NONE;
 }
 
@@ -571,6 +589,26 @@ void Game::OnActiveTrigger() {
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();
   }
+}
+
+void Game::OnDropEquipment(Room *pRoom) {
+  const ItemData *pItem = mPlayer.Equipment();
+  // TODO: Putting-Down Animation (pickup backwards?)
+  mPlayer.SetEquipment(0);
+  pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
+  mPlayer.CurrentView()->HideEquip();
+  mPlayer.CurrentView()->ShowItem();
+}
+
+void Game::OnUseEquipment() {
+  // TODO: special cases for different types of equipment
+  Room *pRoom = mPlayer.GetRoom();
+  if (pRoom->HasItem()) {
+    OnPickup(pRoom);
+  } else {
+    OnDropEquipment(pRoom); // default
+  }
+  
 }
 
 //------------------------------------------------------------------

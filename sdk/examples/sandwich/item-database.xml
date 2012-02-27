@@ -49,8 +49,14 @@
 		<name>Bomb</name>
 		<description>
 			Oh dear! Someone set
-			us up a bomb!
+			us up a Bomb!
 		</description>
 	</item>
-
+	<item id="babomb" type="equipment">
+		<name>Ba-Bomb</name>
+		<description>
+			Oh.  Another bomb.
+			Ho-hum.
+		</description>
+	</item>
 </item-database>
