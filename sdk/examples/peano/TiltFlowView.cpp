@@ -29,6 +29,8 @@ TiltFlowView::TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu):
     mMarquee = 0;
     mLastUpdate = 0;
 
+    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
+
     /* warning: big hack TODO
           view constructor calls virtual DidAttachToCube
           since we're currently in a constructor the virtual call
@@ -110,32 +112,55 @@ void TiltFlowView::Paint() {
 void TiltFlowView::PaintFooter(TotalsCube *c) {
     c->ClipImage(&VaultDoor, Vec2(0, 16-4));
     const PinnedAssetImage *image = kMarquee[mMarquee % 2];
-    c->backgroundLayer.setSpriteImage(0, *image, 0);
-    c->backgroundLayer.moveSprite(0, Vec2((128-8*image->width)>>1, 128-26));
+
+    if(menu->IsPicked())
+    {
+        c->backgroundLayer.hideSprite(0)   ;
+    }
+    else
+    {
+        c->backgroundLayer.setSpriteImage(0, *image, 0);
+        c->backgroundLayer.moveSprite(0, Vec2((128-8*image->width)>>1, 128-26));
+    }
 }
 
-void TiltFlowView::PaintInner(TotalsCube *c) {
-    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
+void TiltFlowView::PaintInner(TotalsCube *c) {    
     if (menu->IsPicked()) {
         int x, w;
         ClipIt(24, &x, &w); // magic
         if (w > 0) {
             DoPaintItem(GetItem(), x, w);
+            c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(x/8, 16-4-1));
+            c->FillArea(&Dark_Purple, Vec2((x+w)/8, 1), Vec2(16-(x+w)/8, 16-4-1));
             if (mDrawLabel) {
                 //TODO Library.Verdana.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,20)); // magic
             }
         }
     } else {
+        c->FillArea(&Dark_Purple, Vec2((mOffsetX+24+80)/8, 1), Vec2(2, 16-4-1));
+        c->FillArea(&Dark_Purple, Vec2((mOffsetX-72+80)/8, 1), Vec2(2, 16-4-1));
+
         int x, w;
         ClipIt(24, &x, &w); // magic
-        if (w > 0) { DoPaintItem(GetItem(), x, w); }
-        if (mItem > 0) {
-            ClipIt(-70, &x, &w); // magic
-            if (w > 0) { DoPaintItem(menu->GetItem(mItem-1), x, w); }
+        if (w > 0)
+        {
+            DoPaintItem(GetItem(), x, w);
         }
-        if (mItem < menu->GetNumItems()-1) {
-            ClipIt(118, &x, &w); // magic
-            if (w > 0) { DoPaintItem(menu->GetItem(mItem+1),x, 80); }
+        if (mItem > 0)
+        {
+            ClipIt(-72, &x, &w); // magic
+            if (w > 0)
+            {
+                DoPaintItem(menu->GetItem(mItem-1), x, w);
+            }
+        }
+        if (mItem < menu->GetNumItems()-1)
+        {
+            ClipIt(120, &x, &w); // magic
+            if (w > 0)
+            {
+                DoPaintItem(menu->GetItem(mItem+1),x, 80);
+            }
         }
     }
 }
@@ -155,7 +180,9 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x, int w) {
         } else {
             PixelToTileImage(item->GetImage(), Vec2(x, y), item->GetSourcePosition(), Vec2(w, h));//TODO same as above!, 1, 0);
         }
-    } else {
+    }
+    else
+    {
         //TODO   Cube.FillRect(item.color, x, y, w, h);
     }
 }

@@ -14,7 +14,6 @@ InterstitialView::InterstitialView(TotalsCube *c) : View(c)
     mImageOffset = 0;
 }
 
-
 void InterstitialView::SetTransitionAmount(float u)
 {
     // 0 <= offset <= 136+2*kPad (56, kPad, 48, kPad, 32)
@@ -67,6 +66,10 @@ void InterstitialView::Paint()
             GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
             GetCube()->backgroundLayer.moveSprite(0, Vec2(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
         }
+    }
+    else
+    {
+        GetCube()->backgroundLayer.hideSprite(0);
     }
 }
 

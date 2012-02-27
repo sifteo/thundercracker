@@ -52,7 +52,11 @@ float StingController::Coroutine(float dt)
     {
         new(blankViewBuffer[i]) BlankView(&Game::GetInstance().cubes[i], NULL);
         Game::GetCube(i)->AddEventHandler(&eventHandlers[i]);
+
+        //force a paint to initialize the screen
+        Game::GetCube(i)->GetView()->Paint();
     }
+    System::paint();
 
     CORO_YIELD(0.1f);
     AudioPlayer::PlaySfx(sfx_Stinger_02);

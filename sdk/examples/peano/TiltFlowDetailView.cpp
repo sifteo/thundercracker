@@ -14,6 +14,8 @@ TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
     mAmount = 0;
     mDescription = "";
 }
+
+
 void TiltFlowDetailView::ShowDescription(const char * desc) {
     if (mDescription == desc) { return; }    //should be using same string pointer
     if (mDescription[0]) {

@@ -266,9 +266,40 @@ namespace TotalsGame
 
     void TotalsCube::FillArea(const AssetImage *image, const Vec2 &pos, const Vec2 &size)
     {
-        for(int y = pos.y; y < pos.y + size.y; y++)
+        Vec2 p = pos;
+        Vec2 s = size;
+
+        if(p.x < 0)
         {
-            for(int x = pos.x; x < pos.x + size.x; x++)
+            s.x += p.x;
+            p.x = 0;
+        }
+
+        if(p.y < 0)
+        {
+            s.y += p.y;
+            p.y = 0;
+        }
+
+        if(p.x + s.x > 16)
+        {
+            s.x = 16 - p.x;
+        }
+
+        if(p.y + s.y > 16)
+        {
+            s.y = 16 - p.y;
+        }
+
+        if(s.x == 0 || s.y == 0)
+        {
+            return;
+        }
+
+
+        for(int y = p.y; y < p.y + s.y; y++)
+        {
+            for(int x = p.x; x < p.x + s.x; x++)
             {
                 backgroundLayer.BG0_putTile(Vec2(x,y), image->tiles[0]);
             }
