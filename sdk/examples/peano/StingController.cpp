@@ -62,7 +62,9 @@ float StingController::Coroutine(float dt)
         float dt;
         while((dt=Game::GetCube(i)->OpenShutters(&Title)) >= 0)
         {
-            CORO_YIELD(dt);
+            //CORO_YIELD(dt);
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
         }
         ((BlankView*)Game::GetCube(i)->GetView())->SetImage(&Title);
         CORO_YIELD(0);
@@ -75,7 +77,9 @@ float StingController::Coroutine(float dt)
         float dt;
         while((dt=Game::GetCube(i)->CloseShutters(&Title)) >= 0)
         {
-            CORO_YIELD(dt);
+            //CORO_YIELD(dt);
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
         }
         ((BlankView*)Game::GetCube(i)->GetView())->SetImage(NULL);
         CORO_YIELD(0);

@@ -58,6 +58,7 @@ namespace TotalsGame {
 
 		void Setup(TotalsCube *cubes, int nCubes);
 
+        void UpdateDt();
 		void Tick();
 
         bool IsPlayingRandom();

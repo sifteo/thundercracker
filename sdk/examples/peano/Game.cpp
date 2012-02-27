@@ -172,6 +172,13 @@ namespace TotalsGame
                 .SetState("sting");
     }
 
+    void Game::UpdateDt()
+    {
+        float time = System::clock();
+        dt = time - mTime;
+        mTime = time;
+    }
+
 	void Game::Tick()
 	{
 /*		if (!IsIdle)
@@ -179,9 +186,7 @@ namespace TotalsGame
 			return;
 		} */
 
-		float time = System::clock();
-		dt = time - mTime;
-		mTime = time;
+        UpdateDt();
 
         for(int i = 0; i < NUMBER_OF_CUBES; i++)
         {
