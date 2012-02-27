@@ -59,8 +59,8 @@ void SvmRuntime::call(reg_t addr)
     };
 
     reg_t sp = cpu.reg(SvmCpu::REG_SP);
-    const int framesize = sizeof frame;
-    uint32_t *stk = reinterpret_cast<uint32_t*>(sp) - framesize;
+    const intptr_t framesize = sizeof(frame);
+    reg_t *stk = reinterpret_cast<reg_t*>(sp) - framesize;
     memcpy(stk, &frame, framesize);
 
     cpu.adjustSP(-framesize);
@@ -104,6 +104,7 @@ void SvmRuntime::fetchFlashBlock(reg_t addr)
         ASSERT(0 && "validate() - couldn't retrieve new flash block\n");
     }
     currentBlockValidBytes = SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
+    ASSERT(currentBlockValidBytes > 0 && "no valid bytes in newly fetched block\n");
 }
 
 /*

@@ -92,7 +92,6 @@ bool SvmValidator::isValid16(uint16_t instr)
     }
     if (instr == Nop) {
         // 10111111 00000000     nop
-        LOG(("nop\n"));
         return true;
     }
     LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
