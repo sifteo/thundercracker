@@ -29,7 +29,7 @@ struct RCC_t {
     uint32_t APB1ENR;
     uint32_t BDCR;
     uint32_t CSR;
-    uint32_t AHBSTR;
+    uint32_t AHBRSTR;
     uint32_t CFGR2;
 };
 
@@ -148,16 +148,19 @@ extern volatile TIM_t TIM8;
  * Digital to Analog Converter
  */
 
-struct DACChannel_t {
-    uint32_t DHR12R;
-    uint32_t DHR12L;
-    uint32_t DHR8R1;
+union DACChannel_t {
+    uint32_t DHR[3];
+    struct {
+        uint32_t DHR12R;
+        uint32_t DHR12L;
+        uint32_t DHR8R1;
+    };
 };
 
 struct DAC_t {
     uint32_t CR;
     uint32_t SWTRIG;
-    struct DACChannel_t channels[2];
+    DACChannel_t channels[2];
     uint32_t DHR8R2;
     uint32_t DHR12R;
     uint32_t DHR12L;
@@ -470,6 +473,25 @@ struct NVIC_t {
     void sysHandlerPrioritize(const ISR_t &vector, uint8_t prio) volatile {
         unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.MemManage) >> 2;
         sysHandlerPriority[id >> 2] |= prio << ((id & 3) << 3);
+    }
+
+    void systemReset() volatile {
+        appInterruptControl =   (0x5FA << 16) |                     // reset key
+                                (appInterruptControl & (7 << 8)) |  // priority group unchanged
+                                (1 << 2);                           // issue system reset
+        asm volatile ("dsb");                                       // paranoia - ensure memory access
+        while (1);                                                  // wait to reset
+    }
+
+    void deinit() volatile {
+        irqClearEnable[0]  = 0xFFFFFFFF;
+        irqClearEnable[1]  = 0x0FFFFFFF;
+        irqClearPending[0] = 0xFFFFFFFF;
+        irqClearPending[1] = 0x0FFFFFFF;
+
+        for (unsigned i = 0; i < 0x40; i++) {
+            irqPriority[i] = 0x0;
+        }
     }
 };
 
