@@ -31,9 +31,8 @@ void Dac::disableChannel(int ch)
 
 void Dac::write(int ch, uint16_t data, DataFormat format)
 {
-    volatile uint32_t *reg = (uint32_t*)&DAC.channels[ch - 1];
-    reg += format; // skip to the appropriate register based on the format
-    *reg = data;
+    volatile DACChannel_t &dc = DAC.channels[ch - 1];
+    dc.DHR[format] = data;
 }
 
 // TODO - this is only 8-bit dual, support other formats/alignments as needed
