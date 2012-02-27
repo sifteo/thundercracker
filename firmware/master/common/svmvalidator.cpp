@@ -58,45 +58,35 @@ region of the same page, and the target is 32-bit aligned:
 bool SvmValidator::isValid16(uint16_t instr)
 {
     if ((instr & AluMask) == AluTest) {
-        LOG(("arithmetic\n"));
         return true;
     }
     if ((instr & DataProcMask) == DataProcTest) {
-        LOG(("data processing\n"));
         return true;
     }
     if ((instr & MiscMask) == MiscTest) {
-        LOG(("miscellaneous\n"));
         return true;
     }
     if ((instr & SvcMask) == SvcTest) {
-        LOG(("svc\n"));
         return true;
     }
     if ((instr & PcRelLdrMask) == PcRelLdrTest) {
-        LOG(("pc relative ldr\n"));
         return true;
     }
     if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
-        LOG(("sp relative ldr/str\n"));
         return true;
     }
     if ((instr & SpRelAddMask) == SpRelAddTest) {
-        LOG(("sp relative add\n"));
         return true;
     }
     if ((instr & UncondBranchMask) == UncondBranchTest) {
-        LOG(("unconditional branch\n"));
         // TODO: must validate target
         return true;
     }
     if ((instr & CompareBranchMask) == CompareBranchTest) {
-        LOG(("compare and branch\n"));
         // TODO: must validate target
         return true;
     }
     if ((instr & CondBranchMask) == CondBranchTest) {
-        LOG(("branchcc\n"));
         // TODO: must validate target
         return true;
     }
@@ -125,27 +115,21 @@ Allowed 32-bit instruction encodings:
 bool SvmValidator::isValid32(uint32_t instr)
 {
     if ((instr & StrMask) == StrTest) {
-        LOG(("32bit str\n"));
         return true;
     }
     if ((instr & StrBhMask) == StrBhTest) {
-        LOG(("32bit str[bh]\n"));
         return true;
     }
     if ((instr & LdrBhMask) == LdrBhTest) {
-        LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
     if ((instr & LdrMask) == LdrTest) {
-        LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
     if ((instr & MovWtMask) == MovWtTest) {
-        LOG(("32bit mov[wt]\n"));
         return true;
     }
     if ((instr & DivMask) == DivTest) {
-        LOG(("32bit [su]div\n"));
         return true;
     }
     LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));
