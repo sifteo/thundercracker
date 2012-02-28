@@ -146,7 +146,6 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	//Vec2 tilt = (Vec2(mTiltX, mTiltY) + Parent()->GetCube()->virtualAccel()) >> 1;
 	Vec2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;

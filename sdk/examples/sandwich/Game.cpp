@@ -66,7 +66,8 @@ void Game::MainLoop(Cube* pPrimary) {
       mMap.GetBroadLocationNeighbor(*mPlayer.Current(), mPlayer.Direction(), mPlayer.Target());
       PlaySfx(sfx_running);
       mPlayer.TargetView()->ShowPlayer();
-      if (mPlayer.Direction() == SIDE_TOP && mPlayer.GetRoom()->HasClosedDoor()) {
+      // TODO: Walking South Through Door?
+      if (mPlayer.Direction() == SIDE_TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
 
         //---------------------------------------------------------------------
         // WALKING NORTH THROUGH DOOR
@@ -78,10 +79,11 @@ void Game::MainLoop(Cube* pPrimary) {
 
         if (mPlayer.HasBasicKey()) {
           mPlayer.UseBasicKey();
-          mPlayer.GetRoom()->OpenDoor();
+          mPlayer.CurrentRoom()->OpenDoor();
           mPlayer.CurrentView()->DrawBackground();
           mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
-          mPlayer.CurrentView()->UpdatePlayer();
+          //mPlayer.CurrentView()->UpdatePlayer();
+          mPlayer.CurrentView()->HideEquip();
           float timeout = System::clock();
           #if GFX_ARTIFACT_WORKAROUNDS
             Paint(true);

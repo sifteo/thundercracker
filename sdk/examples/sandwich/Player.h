@@ -30,6 +30,8 @@ public:
   inline BroadLocation* Target() { return &mTarget; }
   inline RoomView* CurrentView() { return mCurrent.view; }
   inline RoomView* TargetView() { return mTarget.view; }
+  inline Room* CurrentRoom() { return mCurrent.view->GetRoom(); }
+  inline Room* TargetRoom() { return mTarget.view->GetRoom(); }
   inline ViewSlot* View() const { return mTarget.view==0?mCurrent.view->Parent():mTarget.view->Parent(); }
   inline Cube::Side Direction() { return mDir; }
   inline Vec2 Position() const { return mPosition; }
