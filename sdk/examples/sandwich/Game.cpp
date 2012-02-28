@@ -239,6 +239,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   IrisOut(view);
   mMap.SetData(m);
+  if (pMinimap) { pMinimap->Restore(); }
   Zoom(view, room.x + room.y * mMap.Data()->width);
   
   // todo: expose music in level editor?

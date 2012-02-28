@@ -9,6 +9,8 @@ void MinimapView::Init() {
 	unsigned padLeft = (16 - pData->width) >> 1;
 	unsigned padTop = (16 - pData->height) >> 1;
 
+	// replace drawAsset w/ putTile?
+
 	// fill in the top
 	for(unsigned row=0; row<padTop; ++row) {
 		for(unsigned col=0; col<18; ++col) {
@@ -45,7 +47,7 @@ void MinimapView::Init() {
 }
 
 void MinimapView::Restore() {
-
+	Init();
 }
 
 void MinimapView::Update(float dt) {
