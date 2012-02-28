@@ -103,8 +103,11 @@ float PuzzleController::TheBigCoroutine(float dt)
         {
             CORO_YIELD(dt);
         }
+        {
+            TokenView *tv = new(tokenViewBuffer[static_i]) TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
+            tv->PaintNow();
+        }
 
-        new(tokenViewBuffer[static_i]) TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
         CORO_YIELD(0.1f);
 
     }
@@ -144,12 +147,19 @@ float PuzzleController::TheBigCoroutine(float dt)
                     // transition out
                     for(static_i=0; static_i<puzzle->GetNumTokens(); ++static_i)
                     {
+                        for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
+                        {
+                            Game::GetCube(static_i)->backgroundLayer.hideSprite(i);
+                        }
+                        Game::GetCube(static_i)->foregroundLayer.Clear();
+                        Game::GetCube(static_i)->foregroundLayer.Flush();
                         Game::GetCube(static_i)->SetView(NULL);
 
                         float dt;
                         while((dt=Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
                         {
-                            CORO_YIELD(dt);
+                            Game::GetInstance().UpdateDt();
+                            System::paintSync();
                         }
                         new(blankViewBuffer[static_i]) BlankView(Game::GetCube(static_i), NULL);
                     }
@@ -158,10 +168,22 @@ float PuzzleController::TheBigCoroutine(float dt)
                     {
                         static char confirmationBuffer[sizeof(ConfirmationMenu)];
                         menu = new(confirmationBuffer) ConfirmationMenu("Return to Menu?");
+
                         while(!menu->IsDone())
                         {
-                            CORO_YIELD(0);
+                            System::paint();
+                            Game::GetInstance().UpdateDt();
                             menu->Tick(game->dt);
+
+                            System::paint();
+                            Game::GetInstance().UpdateDt();
+                            menu->Tick(game->dt);
+                            Game::UpdateCubeViews(Game::GetInstance().dt);
+                            Game::PaintCubeViews();
+                            for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+                            {
+                                Game::GetCube(i)->foregroundLayer.Flush();
+                            }
                         }
                     }
 
@@ -180,10 +202,12 @@ float PuzzleController::TheBigCoroutine(float dt)
                         float dt;
                         while((dt=Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
                         {
-                            CORO_YIELD(dt);
+                            Game::GetInstance().UpdateDt();
+                            System::paintSync();
                         }
 
                         Game::GetCube(static_i)->SetView(puzzle->GetToken(static_i)->GetTokenView());
+                        ((TokenView*)Game::GetCube(static_i)->GetView())->PaintNow();
                         CORO_YIELD(0.1f);
                     }
 
@@ -213,6 +237,9 @@ float PuzzleController::TheBigCoroutine(float dt)
     { // transition out
         for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
         {
+            puzzle->GetToken(static_i)->GetTokenView()->GetCube()->foregroundLayer.Clear();
+            puzzle->GetToken(static_i)->GetTokenView()->GetCube()->foregroundLayer.Flush();
+
             float dt;
             while((dt = Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
             {

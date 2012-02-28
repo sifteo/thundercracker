@@ -108,8 +108,9 @@ public:
     virtual void WillDetachFromCube(TotalsCube *c) ;
 
     virtual void Update(float dt) ;
-    
-    virtual void Paint() ;
+
+    //virtual void Paint() ;
+    void PaintNow();
   
     //-------------------------------------------------------------------------
     // HELPER METHODS

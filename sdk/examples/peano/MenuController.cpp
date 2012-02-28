@@ -297,9 +297,9 @@ Setup:
     };
 
     {
-        static const PinnedAssetImage *difficultyIcons[] = {&Icon_Easy, &Icon_Medium, &Icon_Hard};
-        static const PinnedAssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
-        static const PinnedAssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
+        static const AssetImage *difficultyIcons[] = {&Icon_Easy, &Icon_Medium, &Icon_Hard};
+        static const AssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
+        static const AssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
         static TiltFlowItem difficultyItems(difficultyIcons, 3);
         static TiltFlowItem musicItems(musicIcons, 2);
         static TiltFlowItem sfxItems(sfxIcons, 2);

@@ -165,7 +165,7 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
     }
 }
 
-void TiltFlowView::PixelToTileImage(const PinnedAssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s)
+void TiltFlowView::PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s)
 {
     //todo tiles or sprites?
     GetCube()->ClipImage(image, p/8);//, o/8, s/8);

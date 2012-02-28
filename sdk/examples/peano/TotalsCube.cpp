@@ -18,6 +18,7 @@ namespace TotalsGame
 		eventHandler = NULL;       
         //backgroundLayer.init();
         backgroundLayer.set();
+        foregroundLayer.Flush();
 
         overlayText = NULL;
         overlayYTop = 0;

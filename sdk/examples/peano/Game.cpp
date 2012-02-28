@@ -173,7 +173,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-                .SetState("sting");
+                .SetState("interstitial");//sting");
     }
 
     void Game::UpdateDt()
@@ -213,7 +213,7 @@ namespace TotalsGame
         {
              if(!cubes[i].IsTextOverlayEnabled())
              {
-                cubes[i].foregroundLayer.Flush();
+                //cubes[i].foregroundLayer.Flush();
              }
             cubes[i].UpdateTextOverlay();
         }

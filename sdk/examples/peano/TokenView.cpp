@@ -46,7 +46,7 @@ namespace TotalsGame
 	void TokenView::HideOps() 
 	{
 		mDigitId = 0;
-		Paint();
+        PaintNow();
 	}
 
 	void TokenView::PaintRandomNumeral() 
@@ -55,9 +55,7 @@ namespace TotalsGame
 		while (d == mDigitId) { mDigitId = Game::rand.randrange(9) + 1; }
         useAccentDigit = false;
         renderedDigit = mDigitId;
-        //PaintDigit();
-
-		//Cube.Paint();
+        PaintNow();
 	}
 
 	void TokenView::ResetNumeral() 
@@ -65,12 +63,9 @@ namespace TotalsGame
         if (renderedDigit != token->val) {
             useAccentDigit = false;
             renderedDigit = token->val;
-            PaintDigit();
 		}
 		mDigitId = -1;
-		PaintBottom(false);
-		PaintRight(false);
-		// Cube.Paint();
+        PaintNow();
 	}
 
 	void TokenView::WillJoinGroup() 
@@ -90,30 +85,7 @@ namespace TotalsGame
 		mStatus = StatusQueued;
 		if (grp != NULL) 
 		{
-			if (grp->GetSrcToken() == token) 
-			{
-				if (grp->GetSrcSide() == SIDE_RIGHT)
-				{
-					PaintRight(true);
-				} 
-				else 
-				{
-					PaintBottom(true);
-				}
-				//     Cube.Paint();
-			} 
-			else if (grp->GetDstToken() == token)
-			{
-				if (grp->GetSrcSide() == SIDE_RIGHT) 
-				{
-					PaintLeft(true);
-				} 
-				else
-				{
-					PaintTop(true);
-				}
-				//Cube.Paint();
-			}
+            PaintNow();
 		}
 	}
 
@@ -138,7 +110,7 @@ namespace TotalsGame
 	{
 		if (!mLit) {
 			mLit = true;
-			Paint();
+            PaintNow();
 		}
 	}
 
@@ -147,6 +119,7 @@ namespace TotalsGame
 		if (mStatus == StatusOverlay) 
 		{
 			SetState(StatusIdle);
+            PaintNow();
 		}
 	}
 
@@ -155,7 +128,7 @@ namespace TotalsGame
 		if (mHideMask != mask) 
 		{
 			mHideMask = mask;
-			Paint();
+            PaintNow();
 		}
 	}
 
@@ -183,7 +156,6 @@ namespace TotalsGame
 			}
 			if (resetTimer) { mTimeout = -1.0f; }
 			if (resetExpr) { mCurrentExpression = token->current; }
-            //Paint();
 
             if(state != StatusOverlay)
             {
@@ -193,6 +165,7 @@ namespace TotalsGame
                     GetCube()->backgroundLayer.hideSprite(i);
                 }
             }
+            PaintNow();
 		}
 	}
 
@@ -268,8 +241,11 @@ namespace TotalsGame
 		}
 	}
 
-	void TokenView::Paint() 
-    {
+    void TokenView::PaintNow()
+    {        
+
+        GetCube()->foregroundLayer.Clear();
+
 		TotalsCube *c = GetCube();
         c->Image(mLit ? &BackgroundLit : &Background, Vec2(0,0));
 		SideStatus bottomStatus = SideStatusOpen;
@@ -362,6 +338,8 @@ namespace TotalsGame
         {
             PaintDigit();
         }
+
+        GetCube()->foregroundLayer.Flush();
 	}
 
 	// // // //

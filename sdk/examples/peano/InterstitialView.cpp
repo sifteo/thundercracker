@@ -69,7 +69,8 @@ void InterstitialView::Paint()
     }
     else
     {
-        GetCube()->backgroundLayer.hideSprite(0);
+        if(!GetCube()->backgroundLayer.isSpriteHidden(0))
+            GetCube()->backgroundLayer.hideSprite(0);
     }
 }
 

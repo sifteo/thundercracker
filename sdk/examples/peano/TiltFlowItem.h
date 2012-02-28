@@ -11,8 +11,8 @@ namespace TotalsGame
       const char *name;
       Vec2 sourcePosition;
       int imageIndex;
-      const PinnedAssetImage **images;
-      const PinnedAssetImage *singleImage;
+      const AssetImage **images;
+      const AssetImage *singleImage;
       int numImages;
       int opt;
 
@@ -29,15 +29,15 @@ namespace TotalsGame
 
     TiltFlowItem (/*Color color TODO */);
 
-    TiltFlowItem(const PinnedAssetImage *image);
+    TiltFlowItem(const AssetImage *image);
 
     void IncrementImageIndex();
 
-    TiltFlowItem(const PinnedAssetImage **_images, int _numImages);
+    TiltFlowItem(const AssetImage **_images, int _numImages);
     int GetOpt();
     void SetOpt(int val);
 
-    const PinnedAssetImage *GetImage();
+    const AssetImage *GetImage();
 
     bool IsToggle();
 

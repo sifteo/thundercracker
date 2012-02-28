@@ -44,25 +44,25 @@ Narrator_Yay = image { "narrator_yay.png" }
 Narrator_Mix01 = image { "narrator_mix01.png" }
 Narrator_Mix02 = image { "narrator_mix02.png" }
 
-Icon_Back = image { "icon_back.png", pinned=true }
-Icon_Clear_Data = image { "icon_clear_data.png" , pinned=true}
-Icon_Easy = image { "icon_easy.png" , pinned=true}
-Icon_Hard = image { "icon_hard.png" , pinned=true}
-Icon_Locked = image { "icon_locked.png" , pinned=true}
-Icon_Main_Menu = image { "icon_main_menu.png" , pinned=true}
-Icon_Medium = image { "icon_medium.png" , pinned=true}
-Icon_Music_Off = image { "icon_music_off.png" , pinned=true}
-Icon_Music_On = image { "icon_music_on.png" , pinned=true}
-Icon_No = image { "icon_no.png" , pinned=true}
-Icon_Resume = image { "icon_resume.png" , pinned=true}
-Icon_Sfx_Off = image { "icon_sfx_off.png" , pinned=true}
-Icon_Sfx_On = image { "icon_sfx_on.png" , pinned=true}
-Icon_Yes = image { "icon_yes.png" , pinned=true}
-Icon_Continue = image { "icon_continue.png" , pinned=true}
-Icon_Random = image { "icon_random.png" , pinned=true}
-Icon_Howtoplay = image { "icon_howtoplay.png" , pinned=true}
-Icon_Level_Select = image { "icon_level_select.png" , pinned=true}
-Icon_Setup = image { "icon_setup.png" , pinned=true}
+Icon_Back = image { "icon_back.png"}
+Icon_Clear_Data = image { "icon_clear_data.png"}
+Icon_Easy = image { "icon_easy.png"}
+Icon_Hard = image { "icon_hard.png"}
+Icon_Locked = image { "icon_locked.png"}
+Icon_Main_Menu = image { "icon_main_menu.png"}
+Icon_Medium = image { "icon_medium.png"}
+Icon_Music_Off = image { "icon_music_off.png"}
+Icon_Music_On = image { "icon_music_on.png"}
+Icon_No = image { "icon_no.png"}
+Icon_Resume = image { "icon_resume.png"}
+Icon_Sfx_Off = image { "icon_sfx_off.png"}
+Icon_Sfx_On = image { "icon_sfx_on.png"}
+Icon_Yes = image { "icon_yes.png"}
+Icon_Continue = image { "icon_continue.png"}
+Icon_Random = image { "icon_random.png"}
+Icon_Howtoplay = image { "icon_howtoplay.png"}
+Icon_Level_Select = image { "icon_level_select.png"}
+Icon_Setup = image { "icon_setup.png"}
 
 icon_starting_simple = image { "icon_starting_simple.png" , pinned=true}
 icon_two_tuples = image { "icon_two_tuples.png" , pinned=true}

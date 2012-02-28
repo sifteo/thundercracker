@@ -49,7 +49,7 @@ void siftmain() {
   for(;;) 
   {
 	theGame.Tick();
-    System::paintSync();
+    System::paint();
   }
 }
 
