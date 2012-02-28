@@ -81,8 +81,6 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.UseBasicKey();
           mPlayer.CurrentRoom()->OpenDoor();
           mPlayer.CurrentView()->DrawBackground();
-          mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
-          //mPlayer.CurrentView()->UpdatePlayer();
           mPlayer.CurrentView()->HideEquip();
           float timeout = System::clock();
           #if GFX_ARTIFACT_WORKAROUNDS
