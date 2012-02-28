@@ -113,6 +113,11 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setOperationAction(ISD::SELECT, MVT::i32, Expand);
     setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
+    // Load/store operations
+    setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
+    setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
+
     // Other unsupported operations
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
