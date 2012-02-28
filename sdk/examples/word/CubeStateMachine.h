@@ -73,12 +73,7 @@ private:
     void paint();
 
     void paintBorder(VidMode_BG0_SPR_BG1& vid,
-                     ImageIndex imageIndex = ImageIndex_Connected,
-                     bool animate=false,
-                     bool reverseAnim=false,
-                     bool loopAnim=false,
-                     bool paintTime=false,
-                     float animStartTime=0.f);
+                     BG1Helper &bg1);
 
     void paintScore(VidMode_BG0_SPR_BG1& vid,
                     ImageIndex teethImageIndex,
@@ -87,7 +82,7 @@ private:
                     bool loopAnim=false,
                     bool paintTime=false,
                     float animStartTime=0.f);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
+    void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
     // shared state data

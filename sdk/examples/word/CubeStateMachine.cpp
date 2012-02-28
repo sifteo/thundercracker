@@ -620,8 +620,10 @@ void CubeStateMachine::paint()
     Cube& c = getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter, true);
-    paintBorder(vid, mImageIndex, true, false, false, false);
+    vid.BG0_drawAsset(Vec2(0,0), TileBG);
+    BG1Helper bg1(c);
+    paintLetters(vid, bg1, Font1Letter, true);
+    paintBorder(vid, bg1);
     vid.BG0_setPanning(Vec2(0.f, 0.f));
     /* not word
     Cube& c = getCube();
@@ -689,31 +691,33 @@ void CubeStateMachine::paint()
     }
     paintBorder(vid, ii, true, false, true, false);
     */
+    bg1.Flush(); // TODO only flush if mask has changed recently
+    WordGame::instance()->setNeedsPaintSync();
+
     mPainting = false;
 }
 
 void CubeStateMachine::paintBorder(VidMode_BG0_SPR_BG1& vid,
-                           ImageIndex teethImageIndex,
-                           bool animate,
-                           bool reverseAnim,
-                           bool loopAnim,
-                           bool paintTime,
-                           float animStartTime)
+                                   BG1Helper &bg1)
 {
     Cube& c = getCube();
     // TODO animations etc.
     if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
     {
-        vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 2), Vec2(2, 14), BorderLeft);
+        vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
+        bg1.DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
+        bg1.DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
     }
 
     if (c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
     {
         vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
+        bg1.DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
+        bg1.DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
     }
 
     vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
-    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(2, 0), Vec2(14, 2), BorderBottom);
+    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
 }
 
 void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
@@ -1032,8 +1036,9 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 }
 
 void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
-                             const AssetImage &fontREMOVE,
-                             bool paintSprites)
+                                    BG1Helper &bg1,
+                                    const AssetImage &fontREMOVE,
+                                    bool paintSprites)
 {
     const static AssetImage* fonts[] =
     {
@@ -1041,8 +1046,6 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     };
     const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
 
-    vid.BG0_drawAsset(Vec2(0,0), TileBG);
-    BG1Helper bg1(getCube());
     char str[MAX_LETTERS_PER_CUBE + 1];
     if (!getLetters(str, true))
     {
@@ -1124,8 +1127,6 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
         }
         break;
     }
-    bg1.Flush(); // TODO only flush if mask has changed recently
-    WordGame::instance()->setNeedsPaintSync();
 }
 
 void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
