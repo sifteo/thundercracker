@@ -7,6 +7,7 @@
 
 #include "SVMFrameLowering.h"
 #include "SVMInstrInfo.h"
+#include "SVMTargetMachine.h"
 #include "SVMMachineFunctionInfo.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -41,6 +42,17 @@ void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
     unsigned alignMask = getStackAlignment() - 1;
     stackSize = (stackSize + alignMask) & ~alignMask;
     MFI->setStackSize(stackSize);
+    
+    /*
+     * If this frame is too big, raise an error immediately.
+     */
+
+    if (stackSize > SVMTargetMachine::getMaxStackFrameBytes()) {
+        Twine Name = MF.getFunction()->getName();
+        report_fatal_error("Function '" + Name + "' has oversized stack frame, "
+            + Twine(stackSize) + " bytes. (Max allowed size is "
+            + Twine(SVMTargetMachine::getMaxStackFrameBytes()) + " bytes)");
+    }
 
     /*
      * On SVM, the 'call' SVC includes an SP adjustment. We emit this

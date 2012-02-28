@@ -208,9 +208,8 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
         FNStackMap_t::const_iterator I = FNStackMap.find(Offset);
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
-        if (SPAdj < 0 || (SPAdj & 3) || SPAdj >= 512)
-            report_fatal_error("Code symbol '" + Twine(Name) +
-                "' has unsupported stack size of " + Twine(Offset) + " bytes");
+        assert(SPAdj >= 0 && !(SPAdj & 3) &&
+            SPAdj <= (int)SVMTargetMachine::getMaxStackFrameBytes());
         SPAdj <<= 22;
 
         if (Deco.isCall) {
