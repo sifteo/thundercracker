@@ -115,7 +115,7 @@ bool NeedPaintSync(App& app)
 {
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
-        if (app.GetCubeWrapper(i).IsEnabled() && !app.GetCubeWrapper(i).DrawNeedsSync())
+        if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).DrawNeedsSync())
         {
             return true;
         }
@@ -1052,7 +1052,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
-            cubeWrapper.DrawBuddy();
+            //cubeWrapper.DrawBuddy();
+            cubeWrapper.DrawBackground(UiBackground);
+            
             cubeWrapper.DrawUiAsset(
                 Vec2(0, 0),
                 cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
@@ -1065,7 +1067,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            cubeWrapper.DrawBuddy();
+            //cubeWrapper.DrawBuddy();
+            cubeWrapper.DrawBackground(UiBackground);
+            
             cubeWrapper.DrawUiAsset(
                 Vec2(0, 0),
                 cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
@@ -1074,31 +1078,42 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_PLAY:
         case GAME_STATE_SHUFFLE_HINT:
         {
-            cubeWrapper.DrawBuddy();
+            //cubeWrapper.DrawBuddy();
             
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
+                cubeWrapper.DrawBackground(UiBackground);
                 cubeWrapper.DrawUiAsset(
                     Vec2(0, 0),
                     cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+            }
+            else
+            {
+                cubeWrapper.DrawBuddy();
             }
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            cubeWrapper.DrawBuddy();
+            //cubeWrapper.DrawBuddy();
             
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
+                cubeWrapper.DrawBackground(UiBackground);
                 cubeWrapper.DrawUiAsset(
                     Vec2(0, 0),
                     cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+            }
+            else
+            {
+                cubeWrapper.DrawBuddy();
             }
             break;
         }
         case GAME_STATE_SHUFFLE_SCORE:
         {
-            cubeWrapper.DrawBuddy();
+            //cubeWrapper.DrawBuddy();
+            cubeWrapper.DrawBackground(UiBackground);
             
             if (cubeWrapper.GetId() == 0)
             {
@@ -1157,7 +1172,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBuddy();
+                //cubeWrapper.DrawBuddy();
+                cubeWrapper.DrawBackground(UiBackground);
                 cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlayNeighbor);
                 cubeWrapper.DrawUiText(Vec2(2, 4), FontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
             }
@@ -1171,13 +1187,18 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBuddy();
+                //cubeWrapper.DrawBuddy();
             
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
+                    cubeWrapper.DrawBackground(UiBackground);
                     cubeWrapper.DrawUiAsset(
                         Vec2(0, 0),
                         cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
+                else
+                {
+                    cubeWrapper.DrawBuddy();
                 }
             }
             else
@@ -1190,10 +1211,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBuddy();
+                //cubeWrapper.DrawBuddy();
                 
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
+                    cubeWrapper.DrawBackground(UiBackground);
                     cubeWrapper.DrawUiAsset(
                         Vec2(0, 0),
                         cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
@@ -1202,8 +1224,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 ASSERT(mHintCubeTouched != CUBE_ID_UNDEFINED);
                 if (cubeWrapper.GetId() == mHintCubeTouched)
                 {
+                    cubeWrapper.DrawBackground(UiBackground);
                     cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlay);
                     cubeWrapper.DrawUiText(Vec2(2, 4), FontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                }
+                
+                if (mFaceCompleteTimers[cubeWrapper.GetId()] == 0.0f &&
+                    cubeWrapper.GetId() != mHintCubeTouched)
+                {
+                    cubeWrapper.DrawBuddy();
                 }
             }
             else
@@ -1216,13 +1245,18 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBuddy();
+                //cubeWrapper.DrawBuddy();
                 
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
+                    cubeWrapper.DrawBackground(UiBackground);
                     cubeWrapper.DrawUiAsset(
                         Vec2(0, 0),
                         cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
+                else
+                {
+                    cubeWrapper.DrawBuddy();
                 }
             }
             else
@@ -1235,13 +1269,18 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBuddy();
+                //cubeWrapper.DrawBuddy();
                 
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
+                    cubeWrapper.DrawBackground(UiBackground);
                     cubeWrapper.DrawUiAsset(
                         Vec2(0, 0),
                         cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
+                else
+                {
+                    cubeWrapper.DrawBuddy();
                 }
             }
             else
@@ -1650,7 +1689,7 @@ void App::OnSwapFinish()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-App::TouchEvent App::OnTouch(Sifteo::Cube::ID *cubeId)
+App::TouchEvent App::OnTouch(Cube::ID *cubeId)
 {
     if (!mTouching)
     {

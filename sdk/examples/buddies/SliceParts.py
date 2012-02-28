@@ -3,7 +3,7 @@ import glob
 import os.path
 import sys
 
-sprite_size = (64, 64)
+sprite_size = (48, 48)
 num_parts = 4
 num_rotations = 4
 
@@ -15,10 +15,12 @@ def ProcessImage(image_path, image_dir_output):
     image.load()
     
     sprites = [Image.new('RGBA', sprite_size) for i in range(num_parts)]
-    sprites[0].paste(image.crop((40,  0,  88,  40)), ( 8,  8))
-    sprites[1].paste(image.crop(( 0, 40,  40,  88)), (12,  8))
-    sprites[2].paste(image.crop((40, 88,  88, 128)), ( 8, 16))
-    sprites[3].paste(image.crop((88, 40, 128,  88)), (12,  8))
+    
+    # Paste cropped parts in their spot on the sprite
+    sprites[0].paste(image.crop((40,  0,  88,  40)), ( 0,  0)) # Top 
+    sprites[1].paste(image.crop(( 0, 40,  40,  88)), ( 4,  0)) # Left
+    sprites[2].paste(image.crop((40, 88,  88, 128)), ( 0,  8)) # Bottom
+    sprites[3].paste(image.crop((88, 40, 128,  88)), ( 4,  0)) # Right
     
     final = Image.new('RGBA', (sprite_size[0], sprite_size[1] * num_parts * num_rotations))
     PasteRotations(final, sprites)

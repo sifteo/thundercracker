@@ -46,7 +46,7 @@ const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
+const AssetImage &GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
     {
@@ -65,10 +65,10 @@ const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
 
 const Vec2 kPartPositions[NUM_SIDES] =
 {
-    Vec2(32, -8),
-    Vec2(-8, 32),
-    Vec2(32, 72),
-    Vec2(72, 32),
+    Vec2(40,  0), // Sprites => Vec2(32, -8),
+    Vec2( 0, 40), // Sprites => Vec2(-8, 32),
+    Vec2(40, 80), // Sprites => Vec2(32, 72),
+    Vec2(80, 40), // Sprites => Vec2(72, 32),
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +190,7 @@ void CubeWrapper::DrawBuddy()
     {
         if (mPieceBlinking != int(i) || !mPieceBlinkingOn)
         {
-            DrawPiece(mPieces[i], i);
+            DrawPieceBg1(mPieces[i], i);
         }
     }
 }
@@ -198,7 +198,7 @@ void CubeWrapper::DrawBuddy()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
+void CubeWrapper::DrawBackground(const AssetImage &asset)
 {
     Video().BG0_drawAsset(Vec2(0, 0), asset);
 }
@@ -208,7 +208,7 @@ void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
 
 void CubeWrapper::DrawUiAsset(
     const Vec2 &position,
-    const Sifteo::AssetImage &asset, unsigned int assetFrame)
+    const AssetImage &asset, unsigned int assetFrame)
 {
     mBg1Helper.DrawAsset(position, asset, assetFrame);
 }
@@ -218,7 +218,7 @@ void CubeWrapper::DrawUiAsset(
 
 void CubeWrapper::DrawUiText(
     const Vec2 &position,
-    const Sifteo::AssetImage &assetFont,
+    const AssetImage &assetFont,
     const char *text)
 {
     ASSERT(text != NULL);
@@ -291,7 +291,7 @@ void CubeWrapper::DrawLoadingAssets()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Sifteo::Cube::ID CubeWrapper::GetId()
+Cube::ID CubeWrapper::GetId()
 {
     return mCube.id();
 }
@@ -394,7 +394,7 @@ void CubeWrapper::SetPieceOffset(Cube::Side side, int offset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::StartPieceBlinking(Sifteo::Cube::Side side)
+void CubeWrapper::StartPieceBlinking(Cube::Side side)
 {
     mPieceBlinking = side;
     mPieceBlinkTimer = kHintBlinkTimerDuration;
@@ -448,7 +448,7 @@ bool CubeWrapper::IsTouching() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
+VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 {
     return VidMode_BG0_SPR_BG1(mCube.vbuf);
 }
@@ -456,7 +456,7 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
+void CubeWrapper::DrawPieceSprite(const Piece &piece, Cube::Side side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(side >= 0 && side < NUM_SIDES);
@@ -467,7 +467,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     
     if (piece.mAttribute == Piece::ATTR_FIXED)
     {
-        Video().setSpriteImage(spriteLayer0, BuddyFacePartFixed);
+        //Video().setSpriteImage(spriteLayer0, BuddyFacePartFixed);
     }
     else
     {
@@ -476,7 +476,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     
     if (piece.mAttribute == Piece::ATTR_HIDDEN)
     {
-        Video().setSpriteImage(spriteLayer1, BuddyFacePartHidden);
+        //Video().setSpriteImage(spriteLayer1, BuddyFacePartHidden);
     }
     else
     {
@@ -486,11 +486,11 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
             rotation += NUM_SIDES;
         }
         
-        const Sifteo::PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
-        unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
+        //const PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
+        //unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
         
-        ASSERT(frame < asset.frames);
-        Video().setSpriteImage(spriteLayer1, asset, frame);
+        //ASSERT(frame < asset.frames);
+        //Video().setSpriteImage(spriteLayer1, asset, frame);
     }
     
     Vec2 point = kPartPositions[side];
@@ -529,7 +529,120 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     
     Video().moveSprite(spriteLayer0, point);
     Video().moveSprite(spriteLayer1, point);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawPieceBg1(const Piece &piece, Cube::Side side)
+{
+    int rotation = side - piece.mPart;
+    if (rotation < 0)
+    {
+        rotation += NUM_SIDES;
+    }
     
+    const AssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
+    unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
+    ASSERT(frame < asset.frames);
+    
+    Vec2 point = kPartPositions[side];
+    
+    switch(side)
+    {
+        case SIDE_TOP:
+        {
+            point.y += mPieceOffsets[side];
+            break;
+        }
+        case SIDE_LEFT:
+        {
+            point.x += mPieceOffsets[side];
+            break;
+        }
+        case SIDE_BOTTOM:
+        {
+            point.y -= mPieceOffsets[side];
+            break;
+        }
+        case SIDE_RIGHT:
+        {
+            point.x -= mPieceOffsets[side];
+            break;
+        }
+    }
+    
+    Float2 pointFloat(point.x, point.y);
+    pointFloat.x /= float(VidMode::TILE);
+    pointFloat.y /= float(VidMode::TILE);
+    
+    point.x = int(pointFloat.x);
+    point.y = int(pointFloat.y);
+    
+    if (point.x < int(-asset.width))
+    {
+        point.x = -asset.width;
+    }
+    
+    if (point.x > int(16 + asset.width))
+    {
+        point.x = 16 + asset.width;
+    }
+    
+    if (point.y < int(-asset.height))
+    {
+        point.y = -asset.height;
+    }
+    
+    if (point.y > int(16 + asset.height))
+    {
+        point.y = 16 + asset.height;
+    }
+    
+    if (point.x > int(-asset.width) && point.x < 0)
+    {
+        int tilesX = -point.x;
+        
+        mBg1Helper.DrawPartialAsset(
+            Vec2(0, point.y),
+            Vec2(tilesX, 0),
+            Vec2(asset.width - tilesX, asset.height),
+            asset, frame);
+    }
+    else if (point.x < 16 && (point.x + asset.width) > 16)
+    {
+        int tilesX = (point.x + asset.width) - 16;
+        
+        mBg1Helper.DrawPartialAsset(
+            Vec2(point.x, point.y),
+            Vec2(0, 0),
+            Vec2(asset.width - tilesX, asset.height),
+            asset, frame);
+    }
+    else if (point.y > int(-asset.height) && point.y < 0)
+    {
+        int tilesY = -point.y;
+        
+        mBg1Helper.DrawPartialAsset(
+            Vec2(point.x, 0),
+            Vec2(0, tilesY),
+            Vec2(asset.width, asset.height - tilesY),
+            asset, frame);
+    }
+    else if (point.y < 16 && (point.y + asset.height) > 16)
+    {
+        int tilesY = (point.y + asset.height) - 16;
+        
+        mBg1Helper.DrawPartialAsset(
+            Vec2(point.x, point.y),
+            Vec2(0, 0),
+            Vec2(asset.width, asset.height - tilesY),
+            asset, frame);
+    }    
+    else if (point.x >= 0 && point.x < 16 && point.y >= 0 && point.y < 16)
+    {
+        mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

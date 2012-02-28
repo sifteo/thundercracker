@@ -9,14 +9,14 @@ BuddyFaceBackground4 = image{"assets/bg5.png"}
 BuddyFaceBackground5 = image{"assets/bg6.png"}
 
 -- Face Parts (Sprites)
-BuddyFaceParts0 = image{"assets/parts1.png", height = 64, pinned = true}
-BuddyFaceParts1 = image{"assets/parts2.png", height = 64, pinned = true}
-BuddyFaceParts2 = image{"assets/parts3.png", height = 64, pinned = true}
-BuddyFaceParts3 = image{"assets/parts4.png", height = 64, pinned = true}
-BuddyFaceParts4 = image{"assets/parts5.png", height = 64, pinned = true}
-BuddyFaceParts5 = image{"assets/parts6.png", height = 64, pinned = true}
-BuddyFacePartFixed = image{"assets/fixed.png", pinned = true}
-BuddyFacePartHidden = image{"assets/hidden.png", pinned = true}
+BuddyFaceParts0 = image{"assets/parts1.png", height = 48}
+BuddyFaceParts1 = image{"assets/parts2.png", height = 48}
+BuddyFaceParts2 = image{"assets/parts3.png", height = 48}
+BuddyFaceParts3 = image{"assets/parts4.png", height = 48}
+BuddyFaceParts4 = image{"assets/parts5.png", height = 48}
+BuddyFaceParts5 = image{"assets/parts6.png", height = 48}
+BuddyFacePartFixed = image{"assets/fixed.png"}
+BuddyFacePartHidden = image{"assets/hidden.png"}
 
 -- UI (BG1)
 FaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
