@@ -702,22 +702,35 @@ void CubeStateMachine::paintBorder(VidMode_BG0_SPR_BG1& vid,
 {
     Cube& c = getCube();
     // TODO animations etc.
-    if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
+    bool leftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
+    bool rightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+    if (leftNeighbor || (rightNeighbor && mAnimType != AnimType_NewWord && mAnimType != AnimType_OldWord))
     {
+        // don't draw left border
+        vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
+    }
+    else
+    {
+        // draw left border
         vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
         bg1.DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
         bg1.DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
+        vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
     }
 
-    if (c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
+    if (rightNeighbor || (leftNeighbor && mAnimType != AnimType_NewWord && mAnimType != AnimType_OldWord))
     {
+        // don't draw right border
+        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
+    }
+    else
+    {
+        // draw right border
         vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
         bg1.DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
         bg1.DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
+        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
     }
-
-    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
-    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
 }
 
 void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
