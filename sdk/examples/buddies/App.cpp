@@ -1052,9 +1052,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
-            //cubeWrapper.DrawBuddy();
             cubeWrapper.DrawBackground(UiBackground);
-            
             cubeWrapper.DrawUiAsset(
                 Vec2(0, 0),
                 cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
@@ -1067,9 +1065,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            //cubeWrapper.DrawBuddy();
             cubeWrapper.DrawBackground(UiBackground);
-            
             cubeWrapper.DrawUiAsset(
                 Vec2(0, 0),
                 cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
@@ -1078,8 +1074,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_PLAY:
         case GAME_STATE_SHUFFLE_HINT:
         {
-            //cubeWrapper.DrawBuddy();
-            
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(UiBackground);
@@ -1095,8 +1089,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            //cubeWrapper.DrawBuddy();
-            
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(UiBackground);
@@ -1112,7 +1104,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SCORE:
         {
-            //cubeWrapper.DrawBuddy();
             cubeWrapper.DrawBackground(UiBackground);
             
             if (cubeWrapper.GetId() == 0)
@@ -1172,7 +1163,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                //cubeWrapper.DrawBuddy();
                 cubeWrapper.DrawBackground(UiBackground);
                 cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlayNeighbor);
                 cubeWrapper.DrawUiText(Vec2(2, 4), FontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
@@ -1187,8 +1177,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                //cubeWrapper.DrawBuddy();
-            
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     cubeWrapper.DrawBackground(UiBackground);
@@ -1211,8 +1199,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                //cubeWrapper.DrawBuddy();
-                
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     cubeWrapper.DrawBackground(UiBackground);
@@ -1245,8 +1231,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                //cubeWrapper.DrawBuddy();
-                
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     cubeWrapper.DrawBackground(UiBackground);
@@ -1269,8 +1253,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                //cubeWrapper.DrawBuddy();
-                
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     cubeWrapper.DrawBackground(UiBackground);

@@ -86,8 +86,7 @@ public:
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     
-    void DrawPieceSprite(const Piece &piece, Sifteo::Cube::Side side);
-    void DrawPieceBg1(const Piece &piece, Sifteo::Cube::Side side);
+    void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
 
     Sifteo::Cube mCube;

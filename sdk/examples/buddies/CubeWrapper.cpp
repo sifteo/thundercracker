@@ -190,7 +190,7 @@ void CubeWrapper::DrawBuddy()
     {
         if (mPieceBlinking != int(i) || !mPieceBlinkingOn)
         {
-            DrawPieceBg1(mPieces[i], i);
+            DrawPiece(mPieces[i], i);
         }
     }
 }
@@ -456,85 +456,7 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawPieceSprite(const Piece &piece, Cube::Side side)
-{
-    ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
-    ASSERT(side >= 0 && side < NUM_SIDES);
-    ASSERT((NUM_SIDES * 2) <= _SYS_VRAM_SPRITES);
-    
-    int spriteLayer0 = side;
-    int spriteLayer1 = side + NUM_SIDES;
-    
-    if (piece.mAttribute == Piece::ATTR_FIXED)
-    {
-        //Video().setSpriteImage(spriteLayer0, BuddyFacePartFixed);
-    }
-    else
-    {
-        Video().hideSprite(spriteLayer0);
-    }
-    
-    if (piece.mAttribute == Piece::ATTR_HIDDEN)
-    {
-        //Video().setSpriteImage(spriteLayer1, BuddyFacePartHidden);
-    }
-    else
-    {
-        int rotation = side - piece.mPart;
-        if (rotation < 0)
-        {
-            rotation += NUM_SIDES;
-        }
-        
-        //const PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
-        //unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
-        
-        //ASSERT(frame < asset.frames);
-        //Video().setSpriteImage(spriteLayer1, asset, frame);
-    }
-    
-    Vec2 point = kPartPositions[side];
-    
-    switch(side)
-    {
-        case SIDE_TOP:
-        {
-            point.y += mPieceOffsets[side];
-            break;
-        }
-        case SIDE_LEFT:
-        {
-            point.x += mPieceOffsets[side];
-            break;
-        }
-        case SIDE_BOTTOM:
-        {
-            point.y -= mPieceOffsets[side];
-            break;
-        }
-        case SIDE_RIGHT:
-        {
-            point.x -= mPieceOffsets[side];
-            break;
-        }
-    }
-    
-    ASSERT(kPieceAnimPeriod > 0.0f);
-    float w = 2.0f * M_PI / kPieceAnimPeriod;
-    float x = kPieceAnimX * cosf(w * mPieceAnimT);
-    float y = kPieceAnimY * sinf(w * mPieceAnimT);
-    
-    point.x += int(x);
-    point.y += int(y);
-    
-    Video().moveSprite(spriteLayer0, point);
-    Video().moveSprite(spriteLayer1, point);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawPieceBg1(const Piece &piece, Cube::Side side)
+void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
     int rotation = side - piece.mPart;
     if (rotation < 0)
