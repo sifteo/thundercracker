@@ -5,6 +5,10 @@
 #include "DrawingHelpers.h"
 
 class MinimapView : public View {
+private:
+	int8_t mCanvasOffsetX;
+	int8_t mCanvasOffsetY;
+
 public:
 	void Init();
 	void Restore();

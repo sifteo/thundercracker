@@ -19,30 +19,13 @@ EquipmentIcons = image{"equipment.png", width=16, height=16, pinned=true}
 
 InventoryReticle = image{"inventory_reticle.png", width=32, height=32}
 
---[[
-Winscreen = image{"winscreen.png", width=128, height=128}
-WinscreenBackground = image{"winscreen_background.png", width=128, height=128}
-WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=6}
-]]--
-
-Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
-
 White = image{"flash.png"}
 Black = image{"black.png"}
 DialogBox = image{"dialog_box.png"}
 
---[[
-ScrollLeft = image{"scroll_left.png", width=16, height=128}
-ScrollLeftAccent = image{"scroll_left_accent.png", width=8, height=128}
-ScrollMiddle = image{"scroll_middle.png", width=8, height=128}
-ScrollRightAccent = image{"scroll_right_accent.png", width=8, height=128}
-ScrollRight = image{"scroll_right.png", width=16, height=128}
-ScrollBubble = image{"scroll_bubble.png", width=80, height=32}
-ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
-]]--
-
 InventoryBackground = image{"inventory_background.png"}
 MinimapBasic = image{"minimap_basic.png", width=8, height=8}
+MinimapDot = image{"minimap_dot.png", width=8, height=8, pinned=true}
 
 dofile "content.gen.lua"
 
@@ -59,3 +42,18 @@ sfx_running = sound{ "sfx_running.raw", encode="PCM" }
 sfx_walkStart = sound{ "sfx_walkStart.raw", encode="PCM" }
 sfx_zoomIn = sound{ "sfx_zoomIn.raw", encode="PCM" }
 sfx_zoomOut = sound{ "sfx_zoomOut.raw", encode="PCM" }
+
+--[[
+ScrollLeft = image{"scroll_left.png", width=16, height=128}
+ScrollLeftAccent = image{"scroll_left_accent.png", width=8, height=128}
+ScrollMiddle = image{"scroll_middle.png", width=8, height=128}
+ScrollRightAccent = image{"scroll_right_accent.png", width=8, height=128}
+ScrollRight = image{"scroll_right.png", width=16, height=128}
+ScrollBubble = image{"scroll_bubble.png", width=80, height=32}
+ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
+Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
+Winscreen = image{"winscreen.png", width=128, height=128}
+WinscreenBackground = image{"winscreen_background.png", width=128, height=128}
+WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=6}
+]]--
+

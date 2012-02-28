@@ -1,5 +1,7 @@
 #include "Game.h"
 
+#define SPRITE_DOT_ID	0
+
 void MinimapView::Init() {
 	Parent()->HideSprites();
 	BG1Helper(*Parent()->GetCube()).Flush();
@@ -43,7 +45,19 @@ void MinimapView::Init() {
 			g.BG0_drawAsset(Vec2(col, row), Black);
 		}
 	}
-	g.BG0_setPanning(Vec2(-((pData->width%2)<<2), -((pData->height%2)<<2)));
+
+	Vec2 pan = Vec2(-((pData->width%2)<<2), -((pData->height%2)<<2));
+	g.BG0_setPanning(pan);
+
+	mCanvasOffsetX = 8 * padLeft - pan.x - 4;
+	mCanvasOffsetY = 8 * padTop - pan.y - 4;
+
+	g.resizeSprite(SPRITE_DOT_ID, 8, 8);
+	g.setSpriteImage(SPRITE_DOT_ID, MinimapDot);
+	g.moveSprite(
+		SPRITE_DOT_ID, 
+		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+	);
 }
 
 void MinimapView::Restore() {
@@ -51,7 +65,10 @@ void MinimapView::Restore() {
 }
 
 void MinimapView::Update(float dt) {
-
+	Parent()->Graphics().moveSprite(
+		SPRITE_DOT_ID, 
+		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+	);
 }
 
 unsigned MinimapView::ComputeTileId(int lx, int ly) {
