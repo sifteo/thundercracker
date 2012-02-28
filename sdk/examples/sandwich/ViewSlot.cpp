@@ -40,10 +40,12 @@ void ViewSlot::HideSprites() {
 
 void ViewSlot::SetView(unsigned viewId, unsigned rid) {
 	mFlags.view = viewId;
+	ViewMode gfx = Graphics();
 	if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
-		ViewMode gfx = Graphics();
 		gfx.setWindow(0,128);
 		gfx.init();
+	} else {
+		gfx.BG0_setPanning(Vec2(0,0));
 	}
 	if (pInventory == this && viewId != VIEW_INVENTORY) { pInventory = 0; }
 	if (pMinimap == this && viewId != VIEW_MINIMAP) { pMinimap = 0; }

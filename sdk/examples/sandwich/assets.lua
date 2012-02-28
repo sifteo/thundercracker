@@ -42,6 +42,7 @@ ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
 ]]--
 
 InventoryBackground = image{"inventory_background.png"}
+MinimapBasic = image{"minimap_basic.png", width=8, height=8}
 
 dofile "content.gen.lua"
 

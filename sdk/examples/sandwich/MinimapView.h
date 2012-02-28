@@ -9,4 +9,6 @@ public:
 	void Init();
 	void Restore();
 	void Update(float dt);
+private:
+	unsigned ComputeTileId(int lx, int ly);
 };
