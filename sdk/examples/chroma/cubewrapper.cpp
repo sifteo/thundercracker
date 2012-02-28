@@ -1935,3 +1935,32 @@ void CubeWrapper::StopGlimmer()
     m_glimmer.Stop();
     m_timeTillGlimmer += GLIMMER_BUFFER_TIME;
 }
+
+
+void CubeWrapper::SpawnRockExplosion( const Vec2 &pos, unsigned int health )
+{
+    //find an unused explosion.
+    for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
+    {
+        if( m_aExplosions[ i ].isUnused() )
+        {
+            m_aExplosions[ i ].Spawn( pos, health );
+            return;
+        }
+    }
+
+    //if we didn't find one, find oldest explosion
+    int oldest = -1;
+    unsigned int oldestFrame = 0;
+
+    for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
+    {
+        if( m_aExplosions[ i ].getAnimFrame() > oldestFrame )
+        {
+            oldestFrame = m_aExplosions[ i ].getAnimFrame();
+            oldest = i;
+        }
+    }
+
+    m_aExplosions[ oldest ].Spawn( pos, health );
+}

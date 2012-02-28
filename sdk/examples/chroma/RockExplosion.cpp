@@ -49,3 +49,17 @@ void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
 }
 
 
+static const Vec2 OFFSET[] =
+{
+    Vec2( 0, 0 ),
+    Vec2( 0, 0 ),
+    Vec2( 0, 0 ),
+    Vec2( 0, 0 ),
+};
+
+
+void RockExplosion::Spawn( const Vec2 &pos, int whichpiece )
+{
+    m_pos.set( pos.x * 8 + OFFSET[whichpiece].x, pos.y * 8 + OFFSET[whichpiece].y );
+    m_animFrame = 0;
+}

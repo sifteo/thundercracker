@@ -643,7 +643,11 @@ void GridSlot::DamageRock()
 {
     if( m_RockHealth > 0 )
     {
+        Vec2 vec( m_col * 4, m_row * 4 );
+
         m_RockHealth--;
+
+        m_pWrapper->SpawnRockExplosion( vec, m_RockHealth );
 
         if( m_RockHealth == 0 )
             explode();

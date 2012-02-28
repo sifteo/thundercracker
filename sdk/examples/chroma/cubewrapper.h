@@ -129,6 +129,7 @@ public:
     inline void setDirty() { m_dirty = true; }
 
     void StopGlimmer();
+    void SpawnRockExplosion( const Vec2 &pos, unsigned int health );
 
 private:
 	//try moving a gem from row1/col1 to row2/col2

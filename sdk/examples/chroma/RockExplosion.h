@@ -20,6 +20,10 @@ public:
     void Reset();
     void Update( float dt );
     void Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex );
+    void Spawn( const Vec2 &pos, int whichpiece );
+
+    inline bool isUnused() const { return m_pos.x < 0; }
+    inline unsigned int getAnimFrame() const { return m_animFrame; }
 	
 private:
     Vec2 m_pos;
