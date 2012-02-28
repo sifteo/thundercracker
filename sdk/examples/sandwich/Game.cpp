@@ -20,7 +20,6 @@ void Game::MainLoop(Cube* pPrimary) {
   
   //---------------------------------------------------------------------------
   // RESET EVERYTHING
-  //mSimFrames = 0;
   pInventory = 0;
   pMinimap = 0;
   mAnimFrames = 0;
@@ -76,16 +75,19 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.Move(0, -WALK_SPEED);
           Paint();
         }
-        if (mState.HasBasicKey()) {
-          mState.DecrementBasicKeyCount();
-          if (!mState.HasBasicKey()) { OnInventoryChanged(); }
-          // check the door
+
+        if (mPlayer.HasBasicKey()) {
+          mPlayer.UseBasicKey();
           mPlayer.GetRoom()->OpenDoor();
           mPlayer.CurrentView()->DrawBackground();
           mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
           mPlayer.CurrentView()->UpdatePlayer();
           float timeout = System::clock();
-          NeedsSync();
+          #if GFX_ARTIFACT_WORKAROUNDS
+            Paint(true);
+            mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
+          #endif
+          Paint(true);
           do {
             Paint();
           } while(System::clock() - timeout <  0.5f);
@@ -422,8 +424,8 @@ void Game::OnInventoryChanged() {
 
 void Game::OnPickup(Room *pRoom) {
   const ItemData* pItem = pRoom->TriggerAsItem();
-  const InventoryData &inv = gInventoryData[pItem->itemId];
-  if (inv.storageType == STORAGE_EQUIPMENT) {
+  const ItemTypeData &itemType = gItemTypeData[pItem->itemId];
+  if (itemType.storageType == STORAGE_EQUIPMENT) {
 
     //---------------------------------------------------------------------------
     // PLAYER TRIGGERED EQUIP PICKUP
@@ -451,7 +453,7 @@ void Game::OnPickup(Room *pRoom) {
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
-      gInventoryData[pItem->itemId].description, 
+      itemType.description, 
       mPlayer.CurrentView()->Parent()
     );
   } else {
@@ -480,7 +482,7 @@ void Game::OnPickup(Room *pRoom) {
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
-      gInventoryData[pItem->itemId].description, 
+      itemType.description, 
       mPlayer.CurrentView()->Parent()
     );
     mPlayer.CurrentView()->HideItem();        

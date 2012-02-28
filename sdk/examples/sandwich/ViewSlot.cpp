@@ -29,6 +29,7 @@ void ViewSlot::Init() {
 		mView.minimap.Init();
 	}
 	pGame->NeedsSync();
+
 }
 
 void ViewSlot::HideSprites() {

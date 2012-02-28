@@ -21,8 +21,6 @@ using namespace Sifteo;
 // Utils
 Cube::Side InferDirection(Vec2 u);
 
-extern const PinnedAssetImage* const kStorageTypeToIcon[3];
-
 // Audio Smutz
 void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
 void PlayMusic(_SYSAudioModule& music, bool loop=true);

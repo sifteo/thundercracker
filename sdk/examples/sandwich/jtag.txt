@@ -5,3 +5,4 @@ sandwich: ../../../tools/install.py /dev/tty.usbmodemXXX asegment.bin
 firmware/master: make clean
 firmware/master: make BUILD_STM32=1 MASTER_RF_CHAN=0xb -j2
 sandwich: make program
+

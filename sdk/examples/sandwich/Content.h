@@ -16,19 +16,21 @@ using namespace Sifteo;
 #define SUBDIV_BRDG_VER     4
 
 #define STORAGE_INVENTORY   0
-#define STORAGE_KEY         1
-#define STORAGE_EQUIPMENT   2
-#define STORAGE_TYPE_COUNT  3
+#define STORAGE_EQUIPMENT   1
+#define STORAGE_TYPE_COUNT  2
+
+#define ITEM_TRIGGER_NONE   0
+#define ITEM_TRIGGER_KEY    1
 
 struct QuestData {
     uint8_t mapId;
     uint8_t roomId;
 };
 
-struct InventoryData {
+struct ItemTypeData {
     const char* description;
-    uint16_t storageType : 4;
-    uint16_t storageId : 12;
+    uint8_t storageType : 1;
+    uint8_t triggerType : 7; 
 };
 
 struct DialogTextData {
@@ -155,4 +157,4 @@ extern const unsigned gDialogCount;
 extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
-extern const InventoryData gInventoryData[];
+extern const ItemTypeData gItemTypeData[];

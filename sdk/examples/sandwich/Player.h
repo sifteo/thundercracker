@@ -37,6 +37,9 @@ public:
   inline int Status() const { return mStatus; }
   inline const ItemData* Equipment() const { return mEquipment; }
 
+  bool HasBasicKey() const;
+  void UseBasicKey();
+
   void SetStatus(int status);
   inline void SetDirection(Cube::Side dir) { mDir = dir; }
   inline void SetPosition(Vec2 position) { mPosition = position; }
