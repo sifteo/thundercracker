@@ -31,7 +31,6 @@ FontScoreBlue = image{"assets/ui_numbers_blue.png", height = 16}
 FontScoreOrange = image{"assets/ui_numbers_orange.png", height = 16}
 Font = image{"assets/font-8x16.png", height = 16}
 FontOrange = image{"assets/font-8x16_orange.png", height = 16}
-BannerEmpty = image{"assets/BannerEmpty.png"}
 
 -- Main Menu
 UiBackground = image{"assets/ui_background.png"}
