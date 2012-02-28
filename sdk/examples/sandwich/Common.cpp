@@ -2,6 +2,9 @@
 
 Math::Random gRandom;
 
+const PinnedAssetImage* const kStorageTypeToIcon[3] = {
+  &InventoryIcons, &KeyIcons, &EquipmentIcons
+};
 
 Cube::Side InferDirection(Vec2 u) {
 	if (u.x > 0) {

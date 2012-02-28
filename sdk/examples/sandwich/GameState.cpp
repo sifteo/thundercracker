@@ -1,5 +1,9 @@
 #include "GameState.h"
 
+// hack
+#define ITEM_BASIC_KEY	4
+#define ITEM_SKELETON_KEY 5
+
 void GameState::Init() {
 	mQuest = 0;
 	mQuestMask = 0;
@@ -69,11 +73,8 @@ bool GameState::Flag(uint8_t questId, uint8_t flagId) {
 }
 
 bool GameState::PickupItem(int itemId) {
-  if (itemId == 0) { return false; }
   if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
     mKeyCount++;
-    //if (mKeyCount == 1) {
-    //}
   } else if (!HasItem(itemId)) {
     mItemSet |= (1<<itemId);
     ASSERT(HasItem(itemId));
@@ -91,9 +92,7 @@ bool GameState::DecrementBasicKeyCount() {
 
 unsigned GameState::GetItems(uint8_t* buf) {
 	unsigned result = 0;
-	const int firstSandwichId = 2;
-	const int sandwichTypeCount = 4;
-	for(int8_t itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
+	for(int8_t itemId=0; itemId<4; ++itemId) {
 		if (HasItem(itemId)) { buf[result++] = itemId; }
 	}
 	if (HasBasicKey()) {

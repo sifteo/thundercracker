@@ -10,7 +10,7 @@ private:
 public:
 	void Init();
 	void Restore();
-	void Update();
+	inline void Update(float dt) {}
 	//void OnInventoryChanged();
 
 private:
