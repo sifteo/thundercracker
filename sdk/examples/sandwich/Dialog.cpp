@@ -110,13 +110,13 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 static uint16_t color_lerp(uint8_t alpha) {
     // Linear interpolation between foreground and background
 
-    const unsigned bg_r = 0xe8;
-    const unsigned bg_g = 0xdc;
-    const unsigned bg_b = 0xcc;
+    const unsigned bg_r = 0x0;
+    const unsigned bg_g = 0x0;
+    const unsigned bg_b = 0x0;
 
-    const unsigned fg_r = 0x0;//0xf4;
-    const unsigned fg_g = 0x0;//0xd8;
-    const unsigned fg_b = 0x0;//0xb7;
+    const unsigned fg_r = 0xdd;
+    const unsigned fg_g = 0xed;
+    const unsigned fg_b = 0xc1;
     
     const uint8_t invalpha = 0xff - alpha;
 
@@ -139,7 +139,7 @@ const char* Dialog::Show(const char* str) {
     MeasureText(str, &count, &length);
 	mPosition.x = (128 - length) >> 1;
     DrawText(str);
-    mPosition.y += kFontHeight + 1;
+    mPosition.y += kFontHeight+1;
     return str + count;
 }
 
@@ -195,7 +195,7 @@ void Dialog::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
 }
 
 void Dialog::Erase() {
-    mPosition.y = 8;
+    mPosition.y = 5;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
     	mCube->vbuf.poke(i, 0);
     }

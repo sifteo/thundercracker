@@ -16,7 +16,7 @@ private:
 public:
 	void Init();
 	void Restore();
-	void Update();
+	void Update(float dt);
 
 	void OnInventoryChanged();
 

@@ -34,7 +34,7 @@ void InventoryView::Restore() {
 static const char* kLabels[4] = { "top", "left", "bottom", "right" };
 int t;
 
-void InventoryView::Update() {
+void InventoryView::Update(float dt) {
 	bool touch = UpdateTouch();
 	CORO_BEGIN;
 	while(1) {
@@ -59,19 +59,19 @@ void InventoryView::Update() {
 			CORO_YIELD;
 		} while(!touch);
 
-
 		pGame->NeedsSync();
 		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-
+		#if GFX_ARTIFACT_WORKAROUNDS		
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+		#endif
 		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
@@ -80,7 +80,7 @@ void InventoryView::Update() {
 			Parent()->Graphics().setWindow(80+16,128-80-16);
 			mDialog.Init();
 			mDialog.Erase();
-			mDialog.ShowAll(gInventoryData[items[mSelected]-1].description);
+			mDialog.ShowAll(gInventoryData[items[mSelected]].description);
 		}
 		pGame->NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
@@ -96,16 +96,6 @@ void InventoryView::Update() {
 		}
 		System::paintSync();
 		Parent()->Restore();
-		/*
-		{
-			ViewMode gfx = Parent()->Graphics();
-			gfx.init();
-			gfx.setWindow(0,128);
-			gfx.BG0_drawAsset(Vec2(0,0), InventoryBackground);
-		}
-		Parent()->HideSprites();
-		RenderInventory();
-		*/
 		mAccumX = 0;
 		mAccumY = 0;
 		pGame->NeedsSync();
@@ -135,13 +125,17 @@ void InventoryView::RenderInventory() {
 		if (i == mSelected) {
 			overlay.DrawAsset(Vec2(x<<2,y<<2), InventoryReticle);
 		} else {
-			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, items[i]-1);
+			const InventoryData& inv = gInventoryData[items[i]];
+			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), *kStorageTypeToIcon[inv.storageType], inv.storageId);
 		}
 	}
 	overlay.Flush();	
 	ViewMode gfx = Parent()->Graphics();
 	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
-	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]-1);
+	{
+		const InventoryData& inv = gInventoryData[items[mSelected]];
+		gfx.setSpriteImage(HOVERING_ICON_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
+	}
 	ComputeHoveringIconPosition();
 	pGame->NeedsSync();
 }

@@ -12,7 +12,7 @@
 static GPIOPin tim4TestPin(&GPIOC, 4);
 #endif
 
-void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB)
+void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
@@ -29,10 +29,10 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     }
 
     pwmTimer.init(500, 0); // TODO - tune the PWM freq we want
-    pwmTimer.configureChannel(this->pwmChan,
-                                HwTimer::ActiveHigh,
-                                HwTimer::Pwm1,
-                                HwTimer::ComplementaryOutput);
+    pwmTimer.configureChannelAsOutput(this->pwmChan,
+                                        HwTimer::ActiveHigh,
+                                        HwTimer::Pwm1,
+                                        HwTimer::ComplementaryOutput);
 }
 
 void PwmAudioOut::start()
@@ -49,12 +49,22 @@ void PwmAudioOut::stop()
 
 void PwmAudioOut::suspend()
 {
+    sampleTimer.disableUpdateIsr();
     pwmTimer.disableChannel(this->pwmChan);
+    // ensure outputs are tied in the same direction to avoid leaking current
+    // across the speaker
+    outA.setControl(GPIOPin::OUT_2MHZ);
+    outB.setControl(GPIOPin::OUT_2MHZ);
+    outA.setHigh();
+    outB.setHigh();
 }
 
 void PwmAudioOut::resume()
 {
+    outA.setControl(GPIOPin::OUT_ALT_50MHZ);
+    outB.setControl(GPIOPin::OUT_ALT_50MHZ);
     pwmTimer.enableChannel(this->pwmChan);
+    sampleTimer.enableUpdateIsr();
 }
 
 /*
@@ -75,5 +85,5 @@ void PwmAudioOut::tmrIsr()
 
     uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-    pwmTimer.setDuty(this->pwmChan, duty);
+    pwmTimer.setDuty(pwmChan, duty);
 }

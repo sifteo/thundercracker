@@ -21,6 +21,7 @@ void Player::Init(Cube* pPrimary) {
   mDir = 2;
   mAnimFrame = 0;
   mAnimTime = 0.f;
+  mEquipment = 0;
 }
 
 Room* Player::GetRoom() const {

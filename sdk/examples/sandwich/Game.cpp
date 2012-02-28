@@ -12,16 +12,6 @@ static void onNeighbor(void *context,
   sNeighborDirty = true;
 }
 
-void Game::ObserveNeighbors(bool flag) {
-  if (flag) {
-    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
-  } else {
-    _SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, NULL, NULL);
-  }
-}
-
 //----------------------------------------------------------------------------
 // MAIN PLAYER INTERACTION LOOP
 //----------------------------------------------------------------------------
@@ -30,23 +20,23 @@ void Game::MainLoop(Cube* pPrimary) {
   
   //---------------------------------------------------------------------------
   // RESET EVERYTHING
-  mSimFrames = 0;
+  //mSimFrames = 0;
+  pInventory = 0;
+  pMinimap = 0;
   mAnimFrames = 0;
-  mIsDone = false;
   mNeedsSync = 0;
   mState.Init();
   mMap.Init();
   mPlayer.Init(pPrimary);
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
-    if (v->GetCube() != pPrimary) {
-      v->Init(); 
-    }
+    if (v->GetCube() != pPrimary) { v->Init(); }
   }
   Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
   mPlayer.View()->ShowLocation(mPlayer.Location());
   PlayMusic(music_castle);
   mSimTime = System::clock();
-  ObserveNeighbors(true);
+  _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
+  _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
   CheckMapNeighbors();
   while(!mIsDone) {
 
@@ -56,9 +46,15 @@ void Game::MainLoop(Cube* pPrimary) {
     mPlayer.CurrentView()->UpdatePlayer();
     mPath.Cancel();
     do {
-      Update();
+      Paint();
       if (mPlayer.CurrentView()->Parent()->Touched()) {
-        OnActiveTrigger();
+        if (mPlayer.Equipment()) {
+          OnUseEquipment();
+        } else if (mPlayer.GetRoom()->HasItem()) {
+          OnPickup(mPlayer.GetRoom());
+        } else {
+          OnActiveTrigger();
+        }
       }
     } while (!pGame->GetMap()->FindBroadPath(&mPath));
 
@@ -78,7 +74,7 @@ void Game::MainLoop(Cube* pPrimary) {
         int progress;
         for(progress=0; progress<24; progress+=WALK_SPEED) {
           mPlayer.Move(0, -WALK_SPEED);
-          Update();
+          Paint();
         }
         if (mState.HasBasicKey()) {
           mState.DecrementBasicKeyCount();
@@ -91,13 +87,13 @@ void Game::MainLoop(Cube* pPrimary) {
           float timeout = System::clock();
           NeedsSync();
           do {
-            Update();
+            Paint();
           } while(System::clock() - timeout <  0.5f);
           PlaySfx(sfx_doorOpen);
           // finish up
           for(; progress+WALK_SPEED<=128; progress+=WALK_SPEED) {
             mPlayer.Move(0,-WALK_SPEED);
-            Update();
+            Paint();
           }
           // fill in the remainder
           mPlayer.SetPosition(
@@ -109,7 +105,7 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.ClearTarget();
           mPlayer.SetDirection( (mPlayer.Direction()+2)%4 );
           for(progress=0; progress<24; progress+=WALK_SPEED) {
-            Update();
+            Paint();
             mPlayer.Move(0, WALK_SPEED);
           }          
         }
@@ -128,12 +124,12 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.SetDirection(*pNextMove);
           if (progress != 0) {
             mPlayer.Move(progress * kSideToUnit[*pNextMove]);
-            Update();
+            Paint();
           }
           while(progress+WALK_SPEED < 16) {
             progress += WALK_SPEED;
             mPlayer.Move(WALK_SPEED * kSideToUnit[*pNextMove]);
-            Update();
+            Paint();
           }
           mPlayer.Move((16 - progress) * kSideToUnit[*pNextMove]);
           progress = WALK_SPEED - (16-progress);
@@ -142,7 +138,7 @@ void Game::MainLoop(Cube* pPrimary) {
           pNextMove--;
           mPlayer.Move(progress * kSideToUnit[*pNextMove]);
           progress = 0;
-          Update();
+          Paint();
         }
 
       }
@@ -161,33 +157,24 @@ void Game::MainLoop(Cube* pPrimary) {
     // ACTIVE TRIGGER TRIGGER (landing-on room)
     OnActiveTrigger();
   }
+  _SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);
+  _SYS_setVector(_SYS_NEIGHBOR_REMOVE, NULL, NULL);
 }
 
 //------------------------------------------------------------------
 // UPDATE CONTROLLERS AND PAINT (yielded from MainLoop)
 //------------------------------------------------------------------
 
-void Game::Update(bool sync) {
-  mDeltaTime = UpdateDeltaTime();
-  // update any sub-controllers here (e.g. inv menu)
-  Paint(sync);
-  mSimFrames++;
-}
-
-//------------------------------------------------------------------
-// JUST UPDATE VIEWS
-//------------------------------------------------------------------
-
 void Game::Paint(bool sync) {
-    if (sNeighborDirty) { 
-      CheckMapNeighbors(); 
-    }
-    mPlayer.Update(mDeltaTime);
-    for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
-    p->Update();
-    #if KLUDGES
-    p->GetCube()->vbuf.touch();
-    #endif
+  if (sNeighborDirty) { 
+    CheckMapNeighbors(); 
+  }
+  float now = System::clock();
+  float dt = now - mSimTime;
+  mSimTime = now;
+  mPlayer.Update(dt);
+  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    p->Update(dt);
   }
   if (sync || mNeedsSync) {
     System::paintSync();
@@ -204,18 +191,10 @@ void Game::Paint(bool sync) {
 // HELPERS
 //------------------------------------------------------------------
 
-float Game::UpdateDeltaTime() {
-  float now = System::clock();
-  float result = now - mSimTime;
-  mSimTime = now;
-  return result;
-}
-
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
   mPlayer.Move(dx, dy);
-  mPlayer.Update(UpdateDeltaTime());
-  System::paint();
+  Paint();
 }
 
 void Game::WalkTo(Vec2 position, bool dosfx) {
@@ -260,6 +239,8 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   IrisOut(view);
   mMap.SetData(m);
+  mPlayer.SetPosition(position);
+  if (pMinimap) { pMinimap->Restore(); }
   Zoom(view, room.x + room.y * mMap.Data()->width);
   
   // todo: expose music in level editor?
@@ -267,14 +248,13 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   // walk out of the in-gate
   Vec2 target = mMap.GetRoom(room)->Center(0);
-  mPlayer.SetPosition(position);
   mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room);
   WalkTo(target, false);
   CheckMapNeighbors();
 
   // clear out any accumulated time
-  UpdateDeltaTime();
+  mSimTime = System::clock();
 }
 
 void Game::IrisOut(ViewSlot* view) {
@@ -339,11 +319,13 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
             BG1Helper ovrly(*cube);
             ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
             ovrly.Flush();
-            System::paintSync();
-            for(unsigned i=0; i<4; ++i) {
-                cube->vbuf.touch();
-                System::paintSync();
-            }
+            Paint(true);
+            #if GFX_ARTIFACT_WORKAROUNDS
+              cube->vbuf.touch();
+              Paint(true);
+              cube->vbuf.touch();
+              Paint(true);
+            #endif
             //Now set up a letterboxed 128x48 mode
             mode.setWindow(80, 48);
             view.Init();
@@ -383,6 +365,41 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
     PlaySfx(sfx_deNeighbor);
 }
 
+void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) {
+  ViewMode gfx = pView->Graphics();
+  #if GFX_ARTIFACT_WORKAROUNDS    
+    Paint(true);
+    pView->GetCube()->vbuf.touch();
+    Paint(true);
+  #endif
+  gfx.setWindow(80+16,128-80-16);
+  Dialog view(pView->GetCube());
+  view.Init();
+  view.Erase();
+  if (hdr) { view.Show(hdr); }
+  view.ShowAll(msg);
+  pView->GetCube()->vbuf.touch();
+  Paint(true);
+  for(int t=0; t<16; t++) {
+    gfx.setWindow(80+15-(t),128-80-15+(t));
+    view.SetAlpha(t<<4);
+    Paint();
+  }
+  view.SetAlpha(255);
+  for(float t=System::clock(); System::clock()-t<4.f && !pView->Touched();) { Paint(); }
+  pView->GetCube()->vbuf.touch();
+  Paint(true);
+  mPlayer.CurrentView()->Parent()->Restore();
+  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+  #if GFX_ARTIFACT_WORKAROUNDS    
+    Paint(true);
+    pView->GetCube()->vbuf.touch();
+    Paint(true);
+  #endif
+  // wait a sec
+  for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
+}
+
 //------------------------------------------------------------------
 // EVENTS
 //------------------------------------------------------------------
@@ -393,25 +410,53 @@ void Game::OnInventoryChanged() {
   }
 
   // demo end-condition hack
-  const int firstSandwichId = 2;
   int count = 0;
-  for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
+  for(int i=0; i<4; ++i) {
     if(!mState.HasItem(i)) {
       return;
     }
   }
   mIsDone = true;
-
 }
 
 
-unsigned Game::OnPassiveTrigger() {
-  Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasItem()) {
+void Game::OnPickup(Room *pRoom) {
+  const ItemData* pItem = pRoom->TriggerAsItem();
+  const InventoryData &inv = gInventoryData[pItem->itemId];
+  if (inv.storageType == STORAGE_EQUIPMENT) {
 
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED ITEM PICKUP
-    const ItemData* pItem = pRoom->TriggerAsItem();
+    //---------------------------------------------------------------------------
+    // PLAYER TRIGGERED EQUIP PICKUP
+    pRoom->ClearTrigger();
+    mPlayer.CurrentView()->HideItem();
+    if (mPlayer.Equipment()) {
+      OnDropEquipment(pRoom);
+    }
+    mPlayer.SetEquipment(pItem);
+    // do a pickup animation
+    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+      float t=System::clock();
+      Paint();
+      do {
+        // this calc is kinda annoyingly complex
+        float u = (mSimTime - t) / 0.075f;
+        const float du = 1.f / (float) PlayerPickup.frames;
+        u = (frame + u) * du;
+        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+        Paint();
+        mPlayer.CurrentView()->SetEquipPosition(Vec2(0, -float(ITEM_OFFSET) * u) );
+      } while(mSimTime-t<0.075f);
+    }
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    DescriptionDialog(
+      "ITEM DISCOVERED", 
+      gInventoryData[pItem->itemId].description, 
+      mPlayer.CurrentView()->Parent()
+    );
+  } else {
+    //-----------------------------------------------------------------------
+    // PLAYER TRIGGERED ITEM OR KEY PICKUP
     if (mState.FlagTrigger(pItem->trigger)) { pRoom->ClearTrigger(); }
     if (mState.PickupItem(pItem->itemId)) {
       PlaySfx(sfx_pickup);
@@ -421,48 +466,31 @@ unsigned Game::OnPassiveTrigger() {
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
       float t=System::clock();
+      Paint();
       do {
         // this calc is kinda annoyingly complex
-        float u = (System::clock() - t) / 0.075f;
+        float u = (mSimTime - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
         mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-      } while(System::clock()-t<0.075);
+      } while(System::clock()-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-    
-    // show a dialog description
-    Cube *pCube = mPlayer.CurrentView()->Parent()->GetCube();
-    ViewMode gfx = mPlayer.CurrentView()->Parent()->Graphics();
-    Paint(true);
-    pCube->vbuf.touch();
-    Paint(true);
-    gfx.setWindow(80+16,128-80-16);
-    Dialog view(pCube);
-    view.Init();
-    view.Erase();
-    view.ShowAll(gInventoryData[pItem->itemId-1].description);
-    pCube->vbuf.touch();
-    Paint(true);
-    for(int t=0; t<16; t++) {
-      gfx.setWindow(80+15-(t),128-80-15+(t));
-      view.SetAlpha(t<<4);
-      Paint();
-    }
-    view.SetAlpha(255);
-    for(float t=System::clock(); System::clock()-t<4.f;) { System::paint(); }
-    mPlayer.CurrentView()->Parent()->Restore();
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-    Paint(true);
-    pCube->vbuf.touch();
-    Paint(true);
-
-    // wait a sec
-    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+    DescriptionDialog(
+      "ITEM DISCOVERED", 
+      gInventoryData[pItem->itemId].description, 
+      mPlayer.CurrentView()->Parent()
+    );
     mPlayer.CurrentView()->HideItem();        
+  }
+}
 
+unsigned Game::OnPassiveTrigger() {
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasItem()) {
+    OnPickup(pRoom);
   } else if (pRoom->HasTrapdoor()) {
 
     //-------------------------------------------------------------------------
@@ -498,14 +526,14 @@ unsigned Game::OnPassiveTrigger() {
     Vec2 start = 128 * pRoom->Location();
     Vec2 delta = 128 * (targetRoom->Location() - pRoom->Location());
     ViewMode mode = pView->Graphics();
-    float t=System::clock(); 
+    float t=mSimTime; 
     do {
-      float u = (System::clock()-t) / 2.333f;
+      float u = (mSimTime-t) / 2.333f;
       u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
       Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
       DrawOffsetMap(&mode, mMap.Data(), pos);
       Paint(true);
-    } while(System::clock()-t<2.333f);
+    } while(mSimTime-t<2.333f);
     // fall
     DrawRoom(&mode, mMap.Data(), targetRoom->Id());
     int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
@@ -515,13 +543,11 @@ unsigned Game::OnPassiveTrigger() {
     }
     mPlayer.SetPosition(targetRoom->Center(0));
     mPlayer.SetDirection(SIDE_BOTTOM);
-    pView->ShowLocation(mPlayer.Location());
+    pView->ShowLocation(mPlayer.Position()/128);
     CheckMapNeighbors();
     Paint(true);
     return RESULT_PATH_INTERRUPTED;
-
   }
-
   return RESULT_NONE;
 }
 
@@ -533,8 +559,9 @@ void Game::OnActiveTrigger() {
     const GatewayData* pGate = mPlayer.GetRoom()->TriggerAsGate();
     const MapData& targetMap = gMapData[pGate->targetMap];
     const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-    if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); } 
+    if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
     WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2(pGate->x, pGate->y));
+    mPlayer.SetEquipment(0);
     TeleportTo(gMapData[pGate->targetMap], Vec2(
       128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
       128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
@@ -562,6 +589,26 @@ void Game::OnActiveTrigger() {
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();
   }
+}
+
+void Game::OnDropEquipment(Room *pRoom) {
+  const ItemData *pItem = mPlayer.Equipment();
+  // TODO: Putting-Down Animation (pickup backwards?)
+  mPlayer.SetEquipment(0);
+  pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
+  mPlayer.CurrentView()->HideEquip();
+  mPlayer.CurrentView()->ShowItem();
+}
+
+void Game::OnUseEquipment() {
+  // TODO: special cases for different types of equipment
+  Room *pRoom = mPlayer.GetRoom();
+  if (pRoom->HasItem()) {
+    OnPickup(pRoom);
+  } else {
+    OnDropEquipment(pRoom); // default
+  }
+  
 }
 
 //------------------------------------------------------------------

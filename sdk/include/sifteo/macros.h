@@ -10,6 +10,10 @@
 #ifdef SIFTEO_SIMULATOR
 #include <stdio.h>
 #include <assert.h>
+#else
+#ifdef FW_BUILD // ie, not a game build
+#include "usart.h"
+#endif
 #endif
 
 /*
@@ -58,6 +62,13 @@ extern void assertWrapper(bool b);
 #   define LOG(_x)
 #   define ASSERT(_x)
 #   define DEBUG_ONLY(x)
+#endif
+
+// debug dump to uart - only defined for firmware internal code, not games
+#ifdef SIFTEO_SIMULATOR
+#   define UART(_x)
+#else
+#   define UART(_x)     Usart::Dbg.write(_x)
 #endif
 
 // Produces a 'size of array is negative' compile error when the assert fails

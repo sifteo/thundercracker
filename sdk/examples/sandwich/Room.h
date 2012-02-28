@@ -5,7 +5,7 @@
 #define USERDATA_NONE 0
 #define USERDATA_TRIGGER 1
 #define USERDATA_SUBDIV 2
-#define USERDATA_TRAPDOOR 3
+#define USERDATA_TRAPDOOR 3 // generalize to EVENT(?)/TRAPDOOR
 
 class Room {
 private:
@@ -73,7 +73,7 @@ public:
     return (const NpcData*) mUserdata; 
   }
 
-inline void SetTrigger(int type, const TriggerData* p) { 
+  inline void SetTrigger(int type, const TriggerData* p) { 
     mUserdataType = USERDATA_TRIGGER;
     mInnerType = type; 
     mUserdata = p; 
@@ -84,6 +84,7 @@ inline void SetTrigger(int type, const TriggerData* p) {
     mInnerType = TRIGGER_UNDEFINED; 
   }
   
+
   //---------------------------------------------------------------------------
   // subdivs
   //---------------------------------------------------------------------------

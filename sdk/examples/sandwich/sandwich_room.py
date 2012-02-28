@@ -5,6 +5,11 @@ from sandwich_trigger import *
 PORTAL_OPEN = 0
 PORTAL_WALL = 1
 PORTAL_DOOR = 2
+PORTAL_TO_CHAR = {
+	PORTAL_OPEN: "O",
+	PORTAL_WALL: "X",
+	PORTAL_DOOR: "_"
+}
 SIDE_TOP = 0
 SIDE_LEFT = 1
 SIDE_BOTTOM = 2
