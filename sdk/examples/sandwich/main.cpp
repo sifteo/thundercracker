@@ -38,9 +38,8 @@ void siftmain() {
     	gCubes[i].enable(i + CUBE_ID_BASE);
   	}
 	#if LOAD_ASSETS
-	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-      gCubes[i].loadAssets(GameAssets);
+      	gCubes[i].loadAssets(SandwichAssets);
 	    VidMode_BG0_ROM rom(gCubes[i].vbuf);
 	    rom.init();
 	    rom.BG0_text(Vec2(1,1), "Loading...");
@@ -50,18 +49,17 @@ void siftmain() {
 	  	done = true;
 	    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
 	      VidMode_BG0_ROM rom(gCubes[i].vbuf);
-	      rom.BG0_progressBar(Vec2(0,7), gCubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-	      done &= gCubes[i].assetDone(GameAssets);
+	      rom.BG0_progressBar(Vec2(0,7), gCubes[i].assetProgress(SandwichAssets, VidMode_BG0::LCD_width), 2);
+	      done &= gCubes[i].assetDone(SandwichAssets);
 	    }
 	    System::paint();
 	  }
-	}
 	#endif
 	#if SFX_ON
-	gChannelSfx.init();
+		gChannelSfx.init();
 	#endif
 	#if MUSIC_ON
-	gChannelMusic.init();
+		gChannelMusic.init();
 	#endif
 
 	//ScrollMap(gMapData+1);
@@ -182,7 +180,7 @@ Cube* IntroCutscene() {
 	const int innerPad = (128 - pad - pad) / 3;
 	for(unsigned i = 0; i < 4; ++i) {
 		int x = pad + innerPad * i - 8;
-		mode.setSpriteImage(i+1, Items.index + Items.width * Items.height * (i+1));
+		mode.setSpriteImage(i+1, InventoryIcons.index + (i<<2));
 		mode.resizeSprite(i+1, 16, 16);
 		// jump
 		//PlaySfx(sfx_pickup);

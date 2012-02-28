@@ -42,6 +42,7 @@ void HwTimer::init(int period, int prescaler)
     tim->DIER = 0;
     tim->CR2  = 0;
     tim->CCER = 0;
+    tim->EGR  = 1;
     tim->SR   = 0;              // clear status register
     tim->CR1  = (1 << 7) |      // ARPE - auto reload preload enable
                 (1 << 2) |      // URS - update request source
@@ -72,7 +73,7 @@ void HwTimer::deinit()
 }
 
 // channels are numbered 1-4
-void HwTimer::configureChannel(int ch, Polarity polarity, TimerMode timmode, OutputMode outmode, DmaMode dmamode)
+void HwTimer::configureChannelAsOutput(int ch, Polarity polarity, TimerMode timmode, OutputMode outmode, DmaMode dmamode)
 {
     uint8_t mode, pol;
 
@@ -90,9 +91,8 @@ void HwTimer::configureChannel(int ch, Polarity polarity, TimerMode timmode, Out
         pol |= 1 << 2;                      // enable OCxNE
     }
 
+    tim->CCR[ch - 1] = 0;
     tim->CCER |= (pol << ((ch - 1) * 4));
-    tim->CCR[ch - 1] = 10;
-    tim->DIER |= 1 << ch;
 }
 
 void HwTimer::configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq, uint8_t prescaler)

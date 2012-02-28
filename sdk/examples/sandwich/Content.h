@@ -3,15 +3,6 @@
 
 using namespace Sifteo;
 
-#define ITEM_NONE           0
-#define ITEM_BASIC_KEY      1
-#define ITEM_BREAD          2
-#define ITEM_TOMATO         3
-#define ITEM_LETTUCE        4
-#define ITEM_HAM            5
-#define ITEM_SKELETON_KEY   6
-#define ITEM_TYPE_COUNT     7
-
 #define TRIGGER_UNDEFINED   0
 #define TRIGGER_GATEWAY     1
 #define TRIGGER_ITEM        2
@@ -24,6 +15,10 @@ using namespace Sifteo;
 #define SUBDIV_BRDG_HOR     3
 #define SUBDIV_BRDG_VER     4
 
+#define STORAGE_INVENTORY   0
+#define STORAGE_KEY         1
+#define STORAGE_EQUIPMENT   2
+#define STORAGE_TYPE_COUNT  3
 
 struct QuestData {
     uint8_t mapId;
@@ -31,8 +26,9 @@ struct QuestData {
 };
 
 struct InventoryData {
-    const char* name;
     const char* description;
+    uint16_t storageType : 4;
+    uint16_t storageId : 12;
 };
 
 struct DialogTextData {
@@ -60,7 +56,7 @@ struct DoorData {
 
 struct ItemData {
     TriggerData trigger;
-    uint32_t itemId;
+    uint8_t itemId;
 };
 
 struct GatewayData {

@@ -432,9 +432,21 @@
     <property name="target" value="forest:CastleGate"/>
    </properties>
   </object>
-  <object name="Toast" type="Item" x="176" y="176" width="32" height="32">
+  <object name="Lembas Bread" type="Item" x="176" y="176" width="32" height="32">
    <properties>
     <property name="id" value="bread"/>
+    <property name="quest" value="tutorial"/>
+   </properties>
+  </object>
+  <object name="SomeoneElseSetUsUpABomb" type="Item" x="288" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="babomb"/>
+    <property name="quest" value="tutorial"/>
+   </properties>
+  </object>
+  <object name="SomeoneSetUsUpABomb" type="Item" x="64" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="bomb"/>
     <property name="quest" value="tutorial"/>
    </properties>
   </object>

@@ -1,6 +1,58 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 
+#include "Game.h"
+#include "AudioPlayer.h"
+
+using namespace Sifteo;
+
+void *operator new(size_t) throw();
+void operator delete(void*) throw();
+
+static TotalsGame::TotalsCube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
+
+void siftmain() {
+  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+    cubes[i].enable(i);
+    cubes[i].loadAssets(GameAssets);
+    VidMode_BG0_ROM rom(cubes[i].vbuf);
+    rom.init();
+    rom.BG0_text(Vec2(1,1), "Loading...");
+  }
+  for (;;) {
+    bool done = true;
+    for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+      VidMode_BG0_ROM rom(cubes[i].vbuf);
+      rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+      done &= cubes[i].assetDone(GameAssets);
+    }
+    System::paint();
+    if (done) break;
+  }
+  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+    VidMode_BG0 mode(cubes[i].vbuf);
+    mode.init();
+    mode.BG0_drawAsset(Vec2(0,0), Background);
+  }
+  //_SYS_vectors.neighborEvents.add = OnNeighborAdd;
+  //_SYS_vectors.neighborEvents.remove = OnNeighborRem;
+  
+  TotalsGame::AudioPlayer::Init();
+
+  TotalsGame::Game &theGame = TotalsGame::Game::GetInstance();
+  theGame.Setup(cubes, TotalsGame::Game::NUMBER_OF_CUBES);
+
+  for(;;) 
+  {
+	theGame.Tick();
+    System::paint();
+    //TODO ? System::paintSync();
+  }
+}
+
+/////////////////////////////////old code starts here
+#if 0
+
 using namespace Sifteo;
 
 enum Bits { // tmp
@@ -57,7 +109,7 @@ static void RenderView(Cube& c, ViewState view) {
   ASSERT(vunion < (1<<6));
 
   // flood fill the background to start (not optimal, but this is a demo, dogg)
-  VidMode_BG0 mode(c.vbuf);
+  VidMode_BG0_SPR_BG1 mode(c.vbuf);
   mode.BG0_drawAsset(Vec2(0,0), Background);
   if (vunion == 0x00) { return; }
   
@@ -217,3 +269,5 @@ void siftmain() {
     System::paint();
   }
 }
+
+#endif
