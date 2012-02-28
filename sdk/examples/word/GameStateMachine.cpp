@@ -67,6 +67,13 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         mAnagramCooldown = ANAGRAM_COOLDOWN;
         mNumAnagramsLeft = data.mNewAnagram.mNumAnagrams;
         mNumBonusAnagramsLeft = data.mNewAnagram.mNumBonusAnagrams;
+        for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
+        {
+            mLevelProgressData.mPuzzleProgress[i] =
+                    (i < mNumAnagramsLeft) ?
+                        CheckMarkState_Unchecked :
+                        CheckMarkState_Hidden;
+        }
         break;
 
     case EventID_NewWordFound:
@@ -83,6 +90,21 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             {
                 --mNumAnagramsLeft;
             }
+
+            // trade time for space, no "current index"
+            for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
+            {
+                if (mLevelProgressData.mPuzzleProgress[i] == CheckMarkState_Unchecked)
+                {
+                    mLevelProgressData.mPuzzleProgress[i] =
+                            (data.mWordFound.mBonus) ?
+                                CheckMarkState_CheckedBonus :
+                                CheckMarkState_Checked;
+                    break;
+                }
+                ASSERT(mLevelProgressData.mPuzzleProgress[i] != CheckMarkState_Hidden); // out of range, unexpected
+            }
+
             // TODO multiple letters per cube
             // TODO count active cubes
             /* TODO extra time sound

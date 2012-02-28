@@ -242,6 +242,84 @@ bool animPaint(AnimType animT,
         }
     }
 
+    // TODO fold border painting into the paint code
+    const bool leftNeighbor = params ? params->mLeftNeighbor : false;
+    const bool rightNeighbor = params ? params->mRightNeighbor : false;
+    if (leftNeighbor || (rightNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+    {
+        // don't draw left border
+        vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
+    }
+    else if (bg1)
+    {
+        // draw left border
+        vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
+        bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
+        bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
+        vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
+    }
+
+    if (rightNeighbor || (leftNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+    {
+        // don't draw right border
+        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
+    }
+    else if (bg1)
+    {
+        // draw right border
+        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
+        bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
+        bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
+        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
+    }
+
+
+    const LevelProgressData &progressData =
+            GameStateMachine::getInstance().getLevelProgressData();
+
+    const static AssetImage *CheckMarkImagesBottom[] =
+    {
+        0,
+        &BorderSlotBlank,
+        &BorderSlotNormal,
+        &BorderSlotBonus,
+
+    };
+
+    const static AssetImage *CheckMarkImagesTop[] =
+    {
+        0,
+        &BorderSlotBlank,
+        &BorderSlotNormal,
+        &BorderSlotBonus,
+
+    };
+
+    const unsigned TopRowStartIndex = arraysize(LevelProgressData::mPuzzleProgress)/2;
+    for (unsigned i = 0; i < arraysize(LevelProgressData::mPuzzleProgress); ++i)
+    {
+        if (i < TopRowStartIndex)
+        {
+            // row 1, bottom
+            const AssetImage *image =
+                    CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
+            if (image)
+            {
+                vid.BG0_drawAsset(Vec2(2 + i * 2, 14), *image);
+            }
+        }
+        else
+        {
+            // row 2, top
+            const AssetImage *image =
+                    CheckMarkImagesTop[(int)progressData.mPuzzleProgress[i]];
+            if (image)
+            {
+                vid.BG0_drawAsset(Vec2(2 + i * 2, 0), *image);
+            }
+        }
+    }
+
     // finished?
     return data.mLoop || animTime <= data.mDuration;
 }

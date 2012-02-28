@@ -1,18 +1,13 @@
 GameAssets = group{}
 
-EyeLeft = image{"wc_eyeball_left.png", width=16, height=16, quality=10, pinned=true}
-EyeRight = image{"wc_eyeball_right.png", width=16, height=16, quality=10, pinned=true}
-EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=10, pinned=true}
-EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
-LetterZzZ = image{"wc_zzz.png", width=8, height=16, quality=10, pinned=true}
+Star = image{"star-8.png", pinned=true, width=8, height=8, quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
-BorderCornerTR = image{"wp2_border_corner_tr.png", quality=10}
-BorderCornerBL = image{"wp2_border_corner_bl.png", quality=10}
-BorderCornerTL = image{"wp2_border_corner_tl.png", quality=10}
-BorderCornerBR = image{"wp2_border_corner_br.png", quality=10}
+BorderSlotBlank = image{"wp2_border_bottom_slot_blank.png", quality=10}
+BorderSlotNormal = image{"wp2_border_bottom_slot_normal.png", quality=10}
+BorderSlotBonus = image{"wp2_border_bottom_slot_bonus.png", quality=10}
 Tile2 = image{"wp2_tile01.png", quality=10}
 Tile2Glow = image{"wp2_tile02.png", quality=10}
 Font1Letter = image{"WC_letters.png", width=120, height=88, quality=0}
@@ -21,26 +16,8 @@ Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
 TileBG = image{"wp2_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
 Title = image{"wc_title.png", quality=10}
-TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}
 HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
-Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
-TeethLoopNeighboredTop = image{"wc_letters_neighbored_top.png", width=128, height=16, quality=10}
-TeethLoopNeighboredBottom = image{"wc_letters_neighbored_bottom.png", width=128, height=16, quality=10}
-TeethLoopWordTop = image{"wc_letters_connected_center_top.png", width=128, height=16, quality=10}
-TeethLoopWordBottom = image{"wc_letters_connected_center_bottom.png", width=128, height=16, quality=10}
-TeethLoopWordLeftTop = image{"wc_letters_connected_left_top.png", width=128, height=16, quality=10}
-TeethLoopWordLeftBottom = image{"wc_letters_connected_left_bottom.png", width=128, height=16, quality=10}
-TeethLoopWordLeftLeft = image{"wc_letters_connected_left_left.png", width=16, height=96, quality=10}
-TeethLoopWordRightTop = image{"wc_letters_connected_right_top.png", width=128, height=16, quality=10}
-TeethLoopWordRightBottom = image{"wc_letters_connected_right_bottom.png", width=128, height=16, quality=10}
-TeethLoopWordRightRight = image{"wc_letters_connected_right_right.png", width=16, height=96, quality=10}
-TeethNewWord2 = image{"wc_letters_connected_center_2.png", width=128, height=128, quality=10}
-TeethNewWord2Left = image{"wc_letters_connected_left_2.png", width=128, height=128, quality=10}
-TeethNewWord2Right = image{"WC_letters_connected_right_2.png", width=128, height=128, quality=10}
-TeethNewWord3 = image{"WC_letters_connected_3.png", width=56, height=32, quality=10}
-TeethNewWord4 = image{"WC_letters_connected_4.png", width=56, height=32, quality=10}
-TeethNewWord5 = image{"WC_letters_connected_5.png", width=56, height=32, quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}
 FontBonus = image{"score_font_bonus.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
@@ -48,8 +25,6 @@ TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
 TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
 TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
 TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
-
-ScreenOff = image{"PowerOff.png", width=128, height=128}
 
 blip = sound{"blip.raw", encode="PCM"}
 bonus = sound{"bonus.raw", encode="PCM"}

@@ -67,6 +67,7 @@ void TitleCubeState::paint()
     switch (getStateMachine().getCube().id() - CUBE_ID_BASE)
     {
     //default:
+#if (0)
     case 999:
         vid.BG0_drawAsset(Vec2(0,0), Title);
         if (mAnimDelay <= 0.f)
@@ -106,10 +107,10 @@ void TitleCubeState::paint()
             }
         }
         break;
-
+#endif
     default:
     case 1:
-        vid.BG0_drawAsset(Vec2(0, 0), Teeth);
+        vid.BG0_drawAsset(Vec2(0, 0), Title);
         if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
         {
             const float ANIM_LENGTH = 1.0f;

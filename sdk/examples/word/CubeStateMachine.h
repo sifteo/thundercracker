@@ -13,11 +13,10 @@
 #include "ScoredCubeState_Shuffle.h"
 #include "config.h"
 #include "Anim.h"
+#include "Constants.h"
 
 using namespace Sifteo;
 
-const unsigned MAX_LETTERS_PER_CUBE = 3;
-const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * GameStateMachine::getCurrentMaxLettersPerCube();
 
 class CubeStateMachine : public StateMachine
 {
@@ -72,9 +71,6 @@ private:
     AnimType getNextAnim() const;
     void paint();
 
-    void paintBorder(VidMode_BG0_SPR_BG1& vid,
-                     BG1Helper &bg1);
-
     void paintScore(VidMode_BG0_SPR_BG1& vid,
                     ImageIndex teethImageIndex,
                     bool animate=false,
@@ -84,6 +80,8 @@ private:
                     float animStartTime=0.f);
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
+
+    bool getAnimParams(AnimParams *params);
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];

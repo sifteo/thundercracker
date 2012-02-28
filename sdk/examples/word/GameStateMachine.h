@@ -10,6 +10,8 @@
 #include "ScoredGameState_Shuffle.h"
 #include "CubeStateMachine.h"
 #include "Utility.h"
+#include "LevelProgressData.h"
+#include "Anim.h"
 
 using namespace Sifteo;
 
@@ -32,22 +34,26 @@ public:
 
     virtual void update(float dt);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
-    static unsigned sOnEvent(unsigned eventID, const EventData& data);
-    static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
+
+    const LevelProgressData& getLevelProgressData() const { return mLevelProgressData; }
+
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
-    static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
-    static unsigned getSecondsLeft() { return (unsigned) _ceilf(sInstance->mTimeLeft); }
-    static float getSecondsLeftFloat() { return sInstance->mTimeLeft; }
-    static unsigned getNumAnagramsLeft() { return sInstance->mNumAnagramsLeft; }
-    static unsigned getNumBonusAnagramsLeft() { return sInstance->mNumBonusAnagramsLeft; }
-    static unsigned getScore() { return (unsigned) sInstance->mScore; }
-    static float getTime() { return sInstance->StateMachine::getTime(); }
-    static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
+    static GameStateMachine& getInstance() { ASSERT(sInstance); return *sInstance; }
+    static float getAnagramCooldown() { return getInstance().mAnagramCooldown; }
+    static unsigned getSecondsLeft() { return (unsigned) _ceilf(getInstance().mTimeLeft); }
+    static float getSecondsLeftFloat() { return getInstance().mTimeLeft; }
+    static unsigned getNumAnagramsLeft() { return getInstance().mNumAnagramsLeft; }
+    static unsigned getNumBonusAnagramsLeft() { return getInstance().mNumBonusAnagramsLeft; }
+    static unsigned getScore() { return (unsigned) getInstance().mScore; }
+    static float getTime() { return getInstance().StateMachine::getTime(); }
+    static unsigned char getNewWordLength() { return getInstance().mNewWordLength; }
     static unsigned getNumCubesInAnim(AnimType animT);
     static unsigned getCurrentMaxLettersPerCube();
     static void setCurrentMaxLettersPerCube(unsigned max);
     static unsigned getCurrentMaxLettersPerWord();
+    static unsigned sOnEvent(unsigned eventID, const EventData& data);
+    static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
 
 protected:
     virtual State& getState(unsigned index);
@@ -69,6 +75,7 @@ private:
     unsigned mNumAnagramsLeft;
     unsigned mNumBonusAnagramsLeft;
     unsigned mCurrentMaxLettersPerCube;
+    LevelProgressData mLevelProgressData;
 
     static GameStateMachine* sInstance;
 };

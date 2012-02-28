@@ -2,6 +2,8 @@
 #define ANIM_H
 
 #include <sifteo.h>
+#include "LevelProgressData.h"
+#include "Constants.h"
 
 enum AnimType
 {
@@ -16,19 +18,11 @@ enum AnimType
     NumAnimTypes
 };
 
-
-enum CheckMarkState
-{
-    CheckMarkState_Unchecked,
-    CheckMarkState_Checked,
-    CheckMarkState_CheckedBonus,
-};
-
 struct AnimParams
 {
-    const char *mLetters;
-    CheckMarkState mProgState[16];
-    //float mTimeLeft;
+    char mLetters[MAX_LETTERS_PER_CUBE + 1];
+    bool mLeftNeighbor, mRightNeighbor;
+
 };
 
 bool animPaint(AnimType anim,

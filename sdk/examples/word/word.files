@@ -73,3 +73,5 @@ Utility.h
 Utility.cpp
 Anim.h
 Anim.cpp
+LevelProgressData.h
+Constants.h

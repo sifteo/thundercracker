@@ -623,7 +623,6 @@ void CubeStateMachine::paint()
     vid.BG0_drawAsset(Vec2(0,0), TileBG);
     BG1Helper bg1(c);
     paintLetters(vid, bg1, Font1Letter, true);
-    paintBorder(vid, bg1);
     vid.BG0_setPanning(Vec2(0.f, 0.f));
     /* not word
     Cube& c = getCube();
@@ -697,42 +696,6 @@ void CubeStateMachine::paint()
     mPainting = false;
 }
 
-void CubeStateMachine::paintBorder(VidMode_BG0_SPR_BG1& vid,
-                                   BG1Helper &bg1)
-{
-    Cube& c = getCube();
-    // TODO animations etc.
-    bool leftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
-    bool rightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-    if (leftNeighbor || (rightNeighbor && mAnimType != AnimType_NewWord && mAnimType != AnimType_OldWord))
-    {
-        // don't draw left border
-        vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
-    }
-    else
-    {
-        // draw left border
-        vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
-        bg1.DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
-        bg1.DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-        vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
-    }
-
-    if (rightNeighbor || (leftNeighbor && mAnimType != AnimType_NewWord && mAnimType != AnimType_OldWord))
-    {
-        // don't draw right border
-        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
-    }
-    else
-    {
-        // draw right border
-        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
-        bg1.DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
-        bg1.DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
-    }
-}
-
 void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                            ImageIndex teethImageIndex,
                            bool animate,
@@ -741,6 +704,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
+#if (0)
     return;
     if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
@@ -1046,6 +1010,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 
     bg1.Flush(); // TODO only flush if mask has changed recently
     WordGame::instance()->setNeedsPaintSync();
+#endif // (0)
 }
 
 void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
@@ -1059,23 +1024,22 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     };
     const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
 
-    char str[MAX_LETTERS_PER_CUBE + 1];
-    if (!getLetters(str, true))
-    {
-        return;
-    }
+
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
         {
+            Cube &c = getCube();
             AnimParams params;
-            params.mLetters = str;
+            getAnimParams(&params);
             updateAnim(vid, &bg1, &params);
         }
       break;
 
     case 3:
-        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
+#if (0)
+        /* TODO remove
+vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
         vid.BG0_drawPartialAsset(Vec2(17, 0),
                                  Vec2(0, 0),
                                  Vec2(1, 16),
@@ -1084,6 +1048,7 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                                  Vec2(0, 0),
                                  Vec2(1, 16),
                                  ScreenOff);
+                                 */
         {
             unsigned frame = str[0] - (int)'A';
 
@@ -1104,9 +1069,11 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                 vid.BG0_drawAsset(Vec2(12,6), font, frame);
             }
         }
+#endif
       break;
 
     default:
+#if (0)
         vid.BG0_drawAsset(Vec2(0,0), TileBG);
         {
             unsigned frame = *str - (int)'A';
@@ -1138,6 +1105,7 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                 */
             }
         }
+#endif
         break;
     }
 }
@@ -1168,3 +1136,18 @@ void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RH
     }
 }
 
+bool CubeStateMachine::getAnimParams(AnimParams *params)
+{
+    ASSERT(params);
+    Cube &c = getCube();
+
+    if (!getLetters(params->mLetters, true))
+    {
+        return false;
+    }
+
+    params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
+    params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+
+    return true;
+}
