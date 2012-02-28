@@ -104,6 +104,13 @@ namespace TotalsGame
         ASSERT(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
+        //loading assets resets video mode to bg0 only.
+        //reset to bg_spr_bg1 as needed
+        for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+        {
+            cubes[i].backgroundLayer.set();
+        }
+
         _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
         _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
         _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
@@ -173,7 +180,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-                .SetState("interstitial");//sting");
+                .SetState("sting");
     }
 
     void Game::UpdateDt()
