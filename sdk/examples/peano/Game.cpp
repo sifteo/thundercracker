@@ -139,7 +139,9 @@ namespace TotalsGame
         static MenuController menuController(this);
         static InterstitialController interstitialController(this);
         static TutorialController tutorialController(this);
+#if !DISABLE_CHAPTERS
         static VictoryController victoryController(this);
+#endif // !DISABLE_CHAPTERS
 
 		sceneMgr
 			.State("sting", &stingController)                //
@@ -149,7 +151,9 @@ namespace TotalsGame
             .State("interstitial", &interstitialController)  //
             .State("puzzle", &puzzleController)
             .State("advance", &Game::Advance)
+#if !DISABLE_CHAPTERS
             .State("victory", &victoryController)            //
+#endif // !DISABLE_CHAPTERS
 			.State("isover", &IsGameOver)
 
 			.Transition("sting", "Next", "init")
@@ -235,10 +239,13 @@ namespace TotalsGame
         Game &g = Game::GetInstance();
         delete g.previousPuzzle;
         g.previousPuzzle = g.currentPuzzle;
+#if !DISABLE_CHAPTERS
         if (g.currentPuzzle == NULL)
+#endif //!DISABLE_CHAPTERS
 		{ 
 			return "RandComplete";
 		}
+#if !DISABLE_CHAPTERS
         g.currentPuzzle->SaveAsSolved();
         int chapter, puzzle;
         bool success;
@@ -263,6 +270,7 @@ namespace TotalsGame
             g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
 			return "NextChapter";
 		}
+#endif // !DISABLE_CHAPTERS
 	}
 
 	const char *Game::IsGameOver()

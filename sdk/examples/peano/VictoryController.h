@@ -1,3 +1,9 @@
+#pragma once
+
+#include "config.h"
+
+#if !DISABLE_CHAPTERS
+
 #include "VictoryView.h"
 #include "coroutine.h"
 #include "NarratorView.h"
@@ -167,3 +173,4 @@ namespace TotalsGame {
 
 }
 
+#endif //!DISABLE_CHAPTERS

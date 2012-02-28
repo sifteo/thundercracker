@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "InterstitialController.h"
 
 namespace TotalsGame {
@@ -30,9 +32,12 @@ namespace TotalsGame {
         CORO_BEGIN;
 
         iv = new(ivBuffer) InterstitialView(Game::GetCube(0));
+#if !DISABLE_CHAPTERS
         if (mGame->IsPlayingRandom()) {
+#endif //!DISABLE_CHAPTERS
             iv->message = "Random!";
             iv->image = &Hint_6;
+#if !DISABLE_CHAPTERS
         } else {
             iv->message = Database::NameOfChapter(mGame->currentPuzzle->chapterIndex);
             static const PinnedAssetImage *hints[] =
@@ -41,7 +46,7 @@ namespace TotalsGame {
             };
             iv->image = hints[mGame->currentPuzzle->chapterIndex];
         }
-
+#endif //!DISABLE_CHAPTERS
         for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)
         {
             new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);

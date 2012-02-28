@@ -105,12 +105,14 @@ namespace TotalsGame {
       if (p == null || Game.Inst == null) { return false; }
       return p.guid != Guid.Empty && Game.Inst.saveData.solved.Contains(p.guid);
     }*/
-
-	void Puzzle::SaveAsSolved() 
+	void Puzzle::SaveAsSolved()     
 	{
+#if !DISABLE_CHAPTERS
         Database::SavePuzzleAsSolved(chapterIndex, puzzleIndex);
         Game::GetInstance().saveData.Save();
-	}
+#endif //DISABLE_CHAPTERS
+    }
+
 	/*
     public static int CountAfterThisInChapterWithCurrentCubeSet(this Puzzle p) {
       if (p == null || p.chapter == null || Game.Inst == null) { return 0; }
@@ -126,6 +128,7 @@ namespace TotalsGame {
     bool Puzzle::GetNext(int *chapter, int *puzzle)
     {
         if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
+#if !DISABLE_CHAPTERS
         if (puzzleIndex < Database::NumPuzzlesInChapter(chapterIndex)-1) {
             *chapter = chapterIndex;
             *puzzle = puzzleIndex + 1;
@@ -136,17 +139,20 @@ namespace TotalsGame {
             *chapter = chapterIndex + 1;
             *puzzle = 0;
             return true;
-        }
+        }        
         *chapter = *puzzle = -1;
+#endif //DISABLE_CHAPTERS
         return false;
     }
     
     bool Puzzle::GetNext(int maxCubeCount, int *chapter, int *puzzle)
     {
-        bool success;
+        bool success = false;
+#if !DISABLE_CHAPTERS
         do {
             success = GetNext(chapter, puzzle);
         } while(success && Database::NumTokensInPuzzle(*chapter, *puzzle) > maxCubeCount);
+#endif //#if !DISABLE_CHAPTERS
         return success;
     }
 
@@ -154,6 +160,7 @@ namespace TotalsGame {
     {
       if (chapterIndex == -1) { return 0; }
       int result = 0;
+#if !DISABLE_CHAPTERS
       for(int i=puzzleIndex+1; i<Database::NumPuzzlesInChapter(chapterIndex); ++i)
       {
         if (Database::NumTokensInPuzzle(chapterIndex, i) <= Game::NUMBER_OF_CUBES)
@@ -161,6 +168,7 @@ namespace TotalsGame {
           result++;
         }
       }
+#endif //#if !DISABLE_CHAPTERS
       return result;
     }
 

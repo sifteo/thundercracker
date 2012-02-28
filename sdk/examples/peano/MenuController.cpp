@@ -186,7 +186,9 @@ WelcomeBack:
 
     ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!")
             ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!")
-//TODO            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
+#if !DISABLE_CHAPTERS
+            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
+#endif //!DISABLE_CHAPTERS
             ADD_ITEM(Icon_Setup, Setup, "Change your game settings.")
         #undef ADD_ITEM
 
@@ -404,6 +406,7 @@ Setup:
     //-----------------------------------------------------------------------
 
 ChapterSelect:
+#if !DISABLE_CHAPTERS
     CORO_YIELD(0.25f);
     labelView->message = "Select a Level";
     AudioPlayer::PlayShutterOpen();
@@ -499,6 +502,7 @@ ChapterSelect:
     }
 
     mGame->sceneMgr.QueueTransition("Play");
+#endif //!DISABLE_CHAPTERS
 
     CORO_END;
 

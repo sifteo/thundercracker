@@ -1,3 +1,5 @@
+#include "config.h"
+
 #pragma once
 
 #include "sifteo.h"
@@ -5,6 +7,7 @@
 #include "StateMachine.h"
 #include "SaveData.h"
 #include "TotalsCube.h"
+#include "Puzzle.h"
 
 namespace TotalsGame {
 
@@ -26,7 +29,7 @@ namespace TotalsGame {
         NeighborEventHandler *neighborEventHandler;
 
 
-        static const int NUMBER_OF_CUBES = 4;		
+        static const int NUMBER_OF_CUBES = NUM_CUBES;
         
 		static Game &GetInstance();
 		StateMachine sceneMgr;

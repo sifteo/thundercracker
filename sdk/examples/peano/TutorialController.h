@@ -520,11 +520,13 @@ public:
 
         mGame->saveData.CompleteTutorial();
         if (mGame->currentPuzzle == NULL) {
+#if !DISABLE_CHAPTERS
             if (!mGame->saveData.AllChaptersSolved()) {
                 mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
             } else {
                 mGame->currentPuzzle = Database::GetPuzzleInChapter(0, 0);
             }
+#endif // #if !DISABLE_CHAPTERS
         }
 
         mGame->sceneMgr.QueueTransition("Next");
