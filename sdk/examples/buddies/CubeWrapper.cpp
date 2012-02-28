@@ -494,74 +494,76 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         }
     }
     
-    Float2 pointFloat(point.x, point.y);
-    pointFloat.x /= float(VidMode::TILE);
-    pointFloat.y /= float(VidMode::TILE);
+    point.x /= float(VidMode::TILE);
+    point.y /= float(VidMode::TILE);
     
-    point.x = int(pointFloat.x);
-    point.y = int(pointFloat.y);
+    const int width = asset.width;
+    const int height = asset.height;
+    const int max_tiles_x = VidMode::LCD_width / VidMode::TILE;
+    const int max_tiles_y = VidMode::LCD_height / VidMode::TILE;
     
-    if (point.x < int(-asset.width))
+    // Clamp X
+    if (point.x < -width)
     {
-        point.x = -asset.width;
+        point.x = -width;
+    }
+    else if (point.x > (max_tiles_x + width))
+    {
+        point.x = max_tiles_x + asset.width;
     }
     
-    if (point.x > int(16 + asset.width))
+    // Clamp Y
+    if (point.y < -height)
     {
-        point.x = 16 + asset.width;
+        point.y = -height;
+    }
+    else if (point.y > (max_tiles_y + height))
+    {
+        point.y = max_tiles_y + height;
     }
     
-    if (point.y < int(-asset.height))
+    // TODO: Cleanup partial draws
+    if (point.x > -width && point.x < 0)
     {
-        point.y = -asset.height;
-    }
-    
-    if (point.y > int(16 + asset.height))
-    {
-        point.y = 16 + asset.height;
-    }
-    
-    if (point.x > int(-asset.width) && point.x < 0)
-    {
-        int tilesX = -point.x;
+        int tiles_off = -point.x;
         
         mBg1Helper.DrawPartialAsset(
             Vec2(0, point.y),
-            Vec2(tilesX, 0),
-            Vec2(asset.width - tilesX, asset.height),
+            Vec2(tiles_off, 0),
+            Vec2(width - tiles_off, height),
             asset, frame);
     }
-    else if (point.x < 16 && (point.x + asset.width) > 16)
+    else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
     {
-        int tilesX = (point.x + asset.width) - 16;
+        int tiles_off = (point.x + width) - max_tiles_x;
         
         mBg1Helper.DrawPartialAsset(
             Vec2(point.x, point.y),
             Vec2(0, 0),
-            Vec2(asset.width - tilesX, asset.height),
+            Vec2(width - tiles_off, height),
             asset, frame);
     }
-    else if (point.y > int(-asset.height) && point.y < 0)
+    else if (point.y > -height && point.y < 0)
     {
-        int tilesY = -point.y;
+        int tiles_off = -point.y;
         
         mBg1Helper.DrawPartialAsset(
             Vec2(point.x, 0),
-            Vec2(0, tilesY),
-            Vec2(asset.width, asset.height - tilesY),
+            Vec2(0, tiles_off),
+            Vec2(width, height - tiles_off),
             asset, frame);
     }
-    else if (point.y < 16 && (point.y + asset.height) > 16)
+    else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
     {
-        int tilesY = (point.y + asset.height) - 16;
+        int tiles_off = (point.y + height) - max_tiles_y;
         
         mBg1Helper.DrawPartialAsset(
             Vec2(point.x, point.y),
             Vec2(0, 0),
-            Vec2(asset.width, asset.height - tilesY),
+            Vec2(width, height - tiles_off),
             asset, frame);
     }    
-    else if (point.x >= 0 && point.x < 16 && point.y >= 0 && point.y < 16)
+    else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
     {
         mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
     }
