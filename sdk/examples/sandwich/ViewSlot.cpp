@@ -47,8 +47,21 @@ void ViewSlot::SetView(unsigned viewId, unsigned rid) {
 	} else {
 		gfx.BG0_setPanning(Vec2(0,0));
 	}
-	if (pInventory == this && viewId != VIEW_INVENTORY) { pInventory = 0; }
-	if (pMinimap == this && viewId != VIEW_MINIMAP) { pMinimap = 0; }
+	if (pInventory == this && viewId != VIEW_INVENTORY) { 
+		pInventory = FindIdleView();
+		if (pInventory) { pInventory->SetView(VIEW_INVENTORY); }
+	}
+	if (pMinimap == this && viewId != VIEW_MINIMAP) { 
+		pMinimap = FindIdleView();
+		if (pMinimap) { 
+			pMinimap->SetView(VIEW_MINIMAP); 
+		} else if (pInventory) {
+			pInventory->SetView(VIEW_MINIMAP);
+			pInventory = 0;
+		} else {
+			pMinimap = 0; 
+		}
+	}
 	switch(viewId) {
 		case VIEW_IDLE:
 			LOG(("SETTING IDLE VIEW\n"));
@@ -121,10 +134,6 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
-			if (mFlags.view == VIEW_INVENTORY) {
-				ViewSlot* p = FindIdleView();
-				if (p) { p->SetView(VIEW_INVENTORY); }
-			}
 			SetView(VIEW_ROOM, rid);
 			return true;
 		}
