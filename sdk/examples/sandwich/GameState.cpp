@@ -4,7 +4,6 @@ void GameState::Init() {
 	mQuest = 0;
 	mQuestMask = 0;
 	mUnlockMask = 0;
-	mKeyCount = 0;//1
 	mItemSet = 0;//0xff
 }
 
@@ -69,35 +68,16 @@ bool GameState::Flag(uint8_t questId, uint8_t flagId) {
 }
 
 bool GameState::PickupItem(int itemId) {
-  if (itemId == 0) { return false; }
-  if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
-    mKeyCount++;
-    //if (mKeyCount == 1) {
-    //}
-  } else if (!HasItem(itemId)) {
-    mItemSet |= (1<<itemId);
-    ASSERT(HasItem(itemId));
-  } else {
-  	return false;
-  }
-  return true;
-}
-
-bool GameState::DecrementBasicKeyCount() { 
-  ASSERT(mKeyCount>0); 
-  mKeyCount--; 
-  return true;
+	ASSERT(gItemTypeData[itemId].storageType != STORAGE_EQUIPMENT);
+	mItemSet |= (1<<itemId);
+	ASSERT(HasItem(itemId));
+	return true;
 }
 
 unsigned GameState::GetItems(uint8_t* buf) {
 	unsigned result = 0;
-	const int firstSandwichId = 2;
-	const int sandwichTypeCount = 4;
-	for(int8_t itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
+	for(int8_t itemId=0; itemId<31; ++itemId) {
 		if (HasItem(itemId)) { buf[result++] = itemId; }
-	}
-	if (HasBasicKey()) {
-		buf[result++] = ITEM_BASIC_KEY;
 	}
 	return result;
 }

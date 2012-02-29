@@ -17,6 +17,7 @@ OBJS = \
 	Map.o \
 	Map_NarrowPath.o \
 	Map_BroadPath.o \
+	MinimapView.o \
 	Player.o \
 	Room.o \
 	RoomView.o \

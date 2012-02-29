@@ -34,7 +34,7 @@ void InventoryView::Restore() {
 static const char* kLabels[4] = { "top", "left", "bottom", "right" };
 int t;
 
-void InventoryView::Update() {
+void InventoryView::Update(float dt) {
 	bool touch = UpdateTouch();
 	CORO_BEGIN;
 	while(1) {
@@ -59,7 +59,6 @@ void InventoryView::Update() {
 			CORO_YIELD;
 		} while(!touch);
 
-
 		pGame->NeedsSync();
 		CORO_YIELD;
 		#if GFX_ARTIFACT_WORKAROUNDS		
@@ -81,7 +80,7 @@ void InventoryView::Update() {
 			Parent()->Graphics().setWindow(80+16,128-80-16);
 			mDialog.Init();
 			mDialog.Erase();
-			mDialog.ShowAll(gInventoryData[items[mSelected]-1].description);
+			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
 		}
 		pGame->NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
@@ -97,16 +96,6 @@ void InventoryView::Update() {
 		}
 		System::paintSync();
 		Parent()->Restore();
-		/*
-		{
-			ViewMode gfx = Parent()->Graphics();
-			gfx.init();
-			gfx.setWindow(0,128);
-			gfx.BG0_drawAsset(Vec2(0,0), InventoryBackground);
-		}
-		Parent()->HideSprites();
-		RenderInventory();
-		*/
 		mAccumX = 0;
 		mAccumY = 0;
 		pGame->NeedsSync();
@@ -136,13 +125,13 @@ void InventoryView::RenderInventory() {
 		if (i == mSelected) {
 			overlay.DrawAsset(Vec2(x<<2,y<<2), InventoryReticle);
 		} else {
-			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, items[i]-1);
+			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, items[i]);
 		}
 	}
 	overlay.Flush();	
 	ViewMode gfx = Parent()->Graphics();
 	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
-	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]-1);
+	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]);
 	ComputeHoveringIconPosition();
 	pGame->NeedsSync();
 }
@@ -157,7 +146,6 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	//Vec2 tilt = (Vec2(mTiltX, mTiltY) + Parent()->GetCube()->virtualAccel()) >> 1;
 	Vec2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;

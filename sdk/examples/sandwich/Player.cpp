@@ -21,10 +21,24 @@ void Player::Init(Cube* pPrimary) {
   mDir = 2;
   mAnimFrame = 0;
   mAnimTime = 0.f;
+  mEquipment = 0;
 }
 
 Room* Player::GetRoom() const {
   return pGame->GetMap()->GetRoom(Location());
+}
+
+bool Player::HasBasicKey() const {
+  if (mEquipment) {
+    return gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_KEY;
+  }
+  return false;
+}
+
+void Player::UseBasicKey() {
+  ASSERT(HasBasicKey());
+  pGame->GetState()->FlagTrigger(mEquipment->trigger);
+  mEquipment = 0;
 }
 
 void Player::Move(int dx, int dy) { 

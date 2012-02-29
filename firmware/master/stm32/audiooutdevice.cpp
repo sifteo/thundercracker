@@ -16,14 +16,12 @@
 // since we don't want to bother with inheritance/virtual methods
 #if AUDIOOUT_BACKEND == PWM_BACKEND
 
-static const int pwmChan = AUDIO_PWM_CHAN;
-static PwmAudioOut pwmAudioOut(HwTimer(&TIM1), pwmChan, HwTimer(&TIM4));
+static PwmAudioOut pwmAudioOut(HwTimer(&TIM1), AUDIO_PWM_CHAN, HwTimer(&TIM4), AUDIO_PWMA_GPIO, AUDIO_PWMB_GPIO);
 #define audioOutBackend  pwmAudioOut
 
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
 
-static const int dacChan = AUDIO_DAC_CHAN;
-static DacAudioOut dacAudioOut(dacChan, HwTimer(&TIM4));
+static DacAudioOut dacAudioOut(AUDIO_DAC_CHAN, HwTimer(&TIM4));
 #define audioOutBackend dacAudioOut
 
 #else
@@ -51,9 +49,7 @@ void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 #if AUDIOOUT_BACKEND == PWM_BACKEND
 
     AFIO.MAPR |= (1 << 6);          // TIM1 partial remap for complementary channels
-    GPIOPin outA = AUDIO_PWMA_GPIO;
-    GPIOPin outB = AUDIO_PWMB_GPIO;
-    pwmAudioOut.init(samplerate, mixer, outA, outB);
+    pwmAudioOut.init(samplerate, mixer);
 
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
 

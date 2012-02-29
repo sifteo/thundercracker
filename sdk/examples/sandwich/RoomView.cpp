@@ -5,7 +5,8 @@
 #define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
 #define TRIGGER_SPRITE_ID   1
-#define PLAYER_SPRITE_ID    2
+#define EQUIP_SPRITE_ID     2
+#define PLAYER_SPRITE_ID    3
 
 void RoomView::Init(unsigned roomId) {
   Parent()->HideSprites();
@@ -18,12 +19,7 @@ void RoomView::Init(unsigned roomId) {
   Room* r = GetRoom();
   switch(r->TriggerType()) {
     case TRIGGER_ITEM: 
-      mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + ((r->TriggerAsItem()->itemId - 1) << 2));
-      mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
-      {
-        Vec2 p = 16 * GetRoom()->LocalCenter(0);
-        mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
-      }
+      ShowItem();
       break;
   }
   if (this->Parent() == pGame->GetPlayer()->View()) { 
@@ -47,7 +43,7 @@ void RoomView::Restore() {
   Init(mRoomId);
 }
 
-void RoomView::Update() {
+void RoomView::Update(float dt) {
   ViewMode mode = Parent()->Graphics();
   // update animated tiles (could suffer some optimization)
   const unsigned t = pGame->AnimFrame() - mStartFrame;
@@ -102,7 +98,12 @@ void RoomView::HideOverlay(bool flag) {
 }
 
 void RoomView::ShowPlayer() {
-  Parent()->Graphics().resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  ViewMode gfx = Parent()->Graphics();
+  gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  if (pGame->GetPlayer()->Equipment()) {
+    gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, pGame->GetPlayer()->Equipment()->itemId);
+    gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
+  }
   UpdatePlayer();
 }
 
@@ -112,9 +113,12 @@ void RoomView::SetPlayerFrame(unsigned frame) {
 
 void RoomView::UpdatePlayer() {
   Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * Location();
-  ViewMode mode = Parent()->Graphics();
-  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->AnimFrame());
-  mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  ViewMode gfx = Parent()->Graphics();
+  gfx.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->AnimFrame());
+  gfx.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  if (pGame->GetPlayer()->Equipment()) {
+    gfx.moveSprite(EQUIP_SPRITE_ID, localPosition.x-8, localPosition.y-ITEM_OFFSET);
+  }
 }
 
 void RoomView::DrawPlayerFalling(int height) {
@@ -123,10 +127,32 @@ void RoomView::DrawPlayerFalling(int height) {
   mode.setSpriteImage(PLAYER_SPRITE_ID, PlayerStand.index + (2<<4));
   mode.moveSprite(PLAYER_SPRITE_ID, localCenter.x-16, localCenter.y-32-height);
   mode.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  if (pGame->GetPlayer()->Equipment()) {
+    mode.moveSprite(EQUIP_SPRITE_ID, localCenter.x-8, localCenter.y-16-height-ITEM_OFFSET);
+  }
 }
 
 void RoomView::HidePlayer() {
-  Parent()->Graphics().hideSprite(PLAYER_SPRITE_ID);
+  ViewMode gfx = Parent()->Graphics();
+  gfx.hideSprite(PLAYER_SPRITE_ID);
+  gfx.hideSprite(EQUIP_SPRITE_ID);
+}
+
+void RoomView::ShowItem() {
+  Room* pRoom = GetRoom();
+  ASSERT(pRoom->HasItem());
+  ViewMode mode = Parent()->Graphics();
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
+  mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
+  Vec2 p = 16 * pRoom->LocalCenter(0);
+  mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+}
+
+void RoomView::SetEquipPosition(Vec2 p) {
+  p += 16 * GetRoom()->LocalCenter(0);
+  ViewMode gfx = Parent()->Graphics();
+  gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, pGame->GetPlayer()->Equipment()->itemId);
+  gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
 }
   
 void RoomView::SetItemPosition(Vec2 p) {
@@ -136,6 +162,10 @@ void RoomView::SetItemPosition(Vec2 p) {
 
 void RoomView::HideItem() {
   Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID);
+}
+
+void RoomView::HideEquip() {
+  Parent()->Graphics().hideSprite(EQUIP_SPRITE_ID);
 }
 
 //----------------------------------------------------------------------

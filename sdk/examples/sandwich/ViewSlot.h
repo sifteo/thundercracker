@@ -2,13 +2,14 @@
 #include "RoomView.h"
 #include "IdleView.h"
 #include "InventoryView.h"
+#include "MinimapView.h"
 
-//#define VIEW_NONE		0 // needs to be zero
+#define VIEW_NONE		0
 #define VIEW_IDLE		1
 #define VIEW_ROOM		2
 #define VIEW_INVENTORY	3
-#define VIEW_TYPE_COUNT	4
-#define BITS_FOR_VIEW_TYPE 2 // invariant: 2 ^ BITS_FOR_VIEW_TYPE >= VIEW_TYPE_COUNT
+#define VIEW_MINIMAP	4
+#define VIEW_TYPE_COUNT	5
 
 class ViewSlot {
 private:
@@ -16,10 +17,11 @@ private:
 		IdleView idle;
 		RoomView room;
 		InventoryView inventory;
+		MinimapView minimap;
 	} mView;
   	struct {
-    	unsigned view : BITS_FOR_VIEW_TYPE;
-    	unsigned prevTouch : 1;
+    	unsigned view 		: 3;
+    	unsigned prevTouch	: 1;
   	} mFlags;
 
 public:
@@ -35,22 +37,26 @@ public:
 	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
 	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
 	inline InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
+	inline MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
 
 	void Init();
-	void Restore();
-	void Update();
+	void Restore(bool doFlush=true);
+	void Update(float dt);
   
   	void HideSprites();
 
-	bool ShowLocation(Vec2 location);
-	bool HideLocation();
+	bool ShowLocation(Vec2 location, bool doFlush=true);
+	bool HideLocation(bool doFlush=true);
 
-	void ShowInventory();
-	void RefreshInventory();
+	void RefreshInventory(bool doFlush=true);
 
 	Cube::Side VirtualTiltDirection() const;
 	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
 private:
-	void SetView(unsigned viewId, unsigned rig=0);
+	void SetView(unsigned viewId, bool doFlush, unsigned rig=0);
+	ViewSlot* FindIdleView();
 };
+
+extern ViewSlot *pInventory;
+extern ViewSlot *pMinimap;
