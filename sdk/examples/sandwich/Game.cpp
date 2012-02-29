@@ -617,32 +617,57 @@ void Game::OnUseEquipment() {
 // NEIGHBOR WALKING
 //------------------------------------------------------------------
 
-static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
-  if (!view || visited[view->GetCubeID()]) { return; }
-  visited[view->GetCubeID()] = true;
-  if (view->ShowLocation(loc)) {
-    PlaySfx(sfx_neighbor);
-  }
+#define VIEW_UNVISITED 0
+#define VIEW_UNCHANGED 1
+#define VIEW_CHANGED 2
+
+static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
+  if (!view || visited[view->GetCubeID()]) { return false; }
+  bool result = view->ShowLocation(loc, false);
+  visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
   if (origin) {
     view->GetCube()->orientTo(*(origin->GetCube()));
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
+    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }
+  return result;
 }
 
 void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  VisitMapView(visited, mPlayer.View(), mPlayer.Location());
+  bool chchchchanges = VisitMapView(visited, mPlayer.View(), mPlayer.Location());
   
+  if (chchchchanges) {
+    PlaySfx(sfx_neighbor);
+  }
+
+  bool otherChanges = false;
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!visited[v->GetCubeID()]) { 
-      if (v->HideLocation()) {
-        PlaySfx(sfx_deNeighbor);
-      }
+    if (!visited[v->GetCubeID()] && v->HideLocation(false)) { 
+      otherChanges = true;
+      visited[v->GetCubeID()] = VIEW_CHANGED;
     }
+  }
+
+  if (otherChanges && !chchchchanges) {
+    PlaySfx(sfx_deNeighbor);    
   }
   
   sNeighborDirty = false;
+
+  if (chchchchanges || otherChanges) {
+    #if GFX_ARTIFACT_WORKAROUNDS
+      Paint(true);
+      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
+        if (visited[v->GetCubeID()] == VIEW_CHANGED) {
+          v->GetCube()->vbuf.touch();
+        }
+      }
+    #endif
+    Paint(true);
+  }
+
+
 }
