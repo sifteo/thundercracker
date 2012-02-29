@@ -98,11 +98,7 @@ float PuzzleController::TheBigCoroutine(float dt)
 
     for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
     {
-        float dt;
-        while((dt = Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
+        Game::GetCube(static_i)->OpenShuttersSync(&Background);
         {
             TokenView *tv = new(tokenViewBuffer[static_i]) TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
             tv->PaintNow();
@@ -155,12 +151,7 @@ float PuzzleController::TheBigCoroutine(float dt)
                         Game::GetCube(static_i)->foregroundLayer.Flush();
                         Game::GetCube(static_i)->SetView(NULL);
 
-                        float dt;
-                        while((dt=Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
-                        {
-                            Game::GetInstance().UpdateDt();
-                            System::paintSync();
-                        }
+                        Game::GetCube(static_i)->CloseShuttersSync(&Background);
                         new(blankViewBuffer[static_i]) BlankView(Game::GetCube(static_i), NULL);
                     }
 
@@ -199,12 +190,7 @@ float PuzzleController::TheBigCoroutine(float dt)
                     {
                         Game::GetCube(static_i)->SetView(NULL);
 
-                        float dt;
-                        while((dt=Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
-                        {
-                            Game::GetInstance().UpdateDt();
-                            System::paintSync();
-                        }
+                        Game::GetCube(static_i)->OpenShuttersSync(&Background);
 
                         Game::GetCube(static_i)->SetView(puzzle->GetToken(static_i)->GetTokenView());
                         ((TokenView*)Game::GetCube(static_i)->GetView())->PaintNow();
@@ -240,11 +226,7 @@ float PuzzleController::TheBigCoroutine(float dt)
             puzzle->GetToken(static_i)->GetTokenView()->GetCube()->foregroundLayer.Clear();
             puzzle->GetToken(static_i)->GetTokenView()->GetCube()->foregroundLayer.Flush();
 
-            float dt;
-            while((dt = Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
-            {
-                CORO_YIELD(dt);
-            }
+            Game::GetCube(static_i)->CloseShuttersSync(&Background);
             CORO_YIELD(0.1f);
         }
     }

@@ -243,19 +243,12 @@ public:
         // open shutters
         narrator->SetMessage("");
         CORO_YIELD(1);
-        float dt;
-        while((dt=Game::GetCube(1)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
+        Game::GetCube(1)->OpenShuttersSync(&Background);
         // initialize two token views
         firstToken = new(tokenViewBuffer[0]) TokenView(Game::GetCube(1), puzzle->GetToken(0), true);
         firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
         CORO_YIELD(0.25f);
-        while((dt=Game::GetCube(2)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
+        Game::GetCube(2)->OpenShuttersSync(&Background);
         secondToken = new(tokenViewBuffer[1]) TokenView(Game::GetCube(2), puzzle->GetToken(1), true);
         secondToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
         CORO_YIELD(0.5f);
@@ -394,18 +387,16 @@ public:
         CORO_YIELD(1);
         secondToken->SetCube(NULL);
         //Game::GetCube(2)->SetView(NULL);
-        while((remembered_t = Game::GetCube(2)->CloseShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(2)->foregroundLayer.Clear();
+        Game::GetCube(2)->foregroundLayer.Flush();
+        Game::GetCube(2)->CloseShuttersSync(&Background);
         new(blankViewBuffer[2]) BlankView(Game::GetCube(2), NULL);
 
         //Game::GetCube(1)->SetView(NULL);
         firstToken->SetCube(NULL);
-        while((remembered_t = Game::GetCube(1)->CloseShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(1)->foregroundLayer.Clear();
+        Game::GetCube(1)->foregroundLayer.Flush();
+        Game::GetCube(1)->CloseShuttersSync(&Background);
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
         CORO_YIELD(1);
@@ -413,20 +404,14 @@ public:
         CORO_YIELD(2);
 
         Game::GetCube(1)->SetView(NULL);
-        while((remembered_t = Game::GetCube(1)->OpenShutters(&Tutorial_Groups)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(1)->OpenShuttersSync(&Tutorial_Groups);
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), &Tutorial_Groups);
 
         CORO_YIELD(5);
         narrator->SetMessage("");
         CORO_YIELD(1);
         Game::GetCube(1)->SetView(NULL);
-        while((remembered_t = Game::GetCube(1)->CloseShutters(&Tutorial_Groups)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(1)->CloseShuttersSync(&Tutorial_Groups);
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
         CORO_YIELD(1);
@@ -439,21 +424,16 @@ public:
         CORO_YIELD(2);
 
         //Game::GetCube(1)->SetView(NULL);
-        firstToken->SetCube(NULL);
-        while((remembered_t = Game::GetCube(1)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(1)->OpenShuttersSync(&Background);
         firstToken->SetCube(Game::GetCube(1));
+        firstToken->Paint();
         CORO_YIELD(0.1f);
 
         //Game::GetCube(2)->SetView(NULL);
         secondToken->SetCube(NULL);
-        while(( remembered_t = Game::GetCube(2)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(2)->OpenShuttersSync(&Background);
         secondToken->SetCube(Game::GetCube(2));
+        secondToken->Paint();
         CORO_YIELD(1);
 
         narrator->SetMessage("Try it out!  Shake one!");
@@ -482,18 +462,16 @@ public:
         CORO_YIELD(3);
         firstToken->token->GetPuzzle()->target = NULL;
 
+        Game::GetCube(2)->foregroundLayer.Clear();
+        Game::GetCube(2)->foregroundLayer.Flush();
         Game::GetCube(2)->SetView(NULL);
-        while((remembered_t = Game::GetCube(2)->CloseShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(2)->CloseShuttersSync(&Background);
         new(blankViewBuffer[2]) BlankView(Game::GetCube(2), NULL);
 
+        Game::GetCube(1)->foregroundLayer.Clear();
+        Game::GetCube(1)->foregroundLayer.Flush();
         Game::GetCube(1)->SetView(NULL);
-        while((remembered_t = Game::GetCube(1)->CloseShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(remembered_t);
-        }
+        Game::GetCube(1)->CloseShuttersSync(&Background);
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
 

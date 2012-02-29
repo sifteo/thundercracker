@@ -37,7 +37,7 @@ Guid GuidForPuzzle(int chapter, int puzzle)
 }
 #endif
     
-const PinnedAssetImage &ImageForChapter(int chapter)
+const AssetImage &ImageForChapter(int chapter)
 {
     return TheData::everything.chapters[chapter]->icon;
 }

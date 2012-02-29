@@ -64,13 +64,13 @@ Icon_Howtoplay = image { "icon_howtoplay.png"}
 Icon_Level_Select = image { "icon_level_select.png"}
 Icon_Setup = image { "icon_setup.png"}
 
-icon_starting_simple = image { "icon_starting_simple.png" , pinned=true}
-icon_two_tuples = image { "icon_two_tuples.png" , pinned=true}
-icon_bend_it = image { "icon_bend_it.png" , pinned=true}
-icon_crosses = image { "icon_crosses.png" , pinned=true}
-icon_experts_only = image { "icon_experts_only.png" , pinned=true}
-icon_squares = image { "icon_squares.png" , pinned=true}
-icon_stacking_up = image { "icon_stacking_up.png" , pinned=true}
+icon_starting_simple = image { "icon_starting_simple.png"}
+icon_two_tuples = image { "icon_two_tuples.png"}
+icon_bend_it = image { "icon_bend_it.png"}
+icon_crosses = image { "icon_crosses.png"}
+icon_experts_only = image { "icon_experts_only.png"}
+icon_squares = image { "icon_squares.png"}
+icon_stacking_up = image { "icon_stacking_up.png"}
 
 Press_To_Select = image { "press_to_select.png", pinned=true }
 Tilt_For_More = image { "tilt_for_more.png", pinned=true}

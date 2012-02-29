@@ -18,8 +18,10 @@ public:
 
     static const int kPad = 1;
     static const int kMaxOffset = 17 + kPad + kPad;
-
+private:
     void SetTransitionAmount(float u);
+public:
+    void TransitionSync(float duration, bool opening);
 
 public:
     const char *message;

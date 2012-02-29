@@ -140,12 +140,7 @@ WelcomeBack:
     labelView->message = "Main Menu";
 
     AudioPlayer::PlayShutterOpen();
-    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt)
-    {
-        labelView->SetTransitionAmount(rememberedT/kDuration);
-        CORO_YIELD(0);
-    }
-    labelView->SetTransitionAmount(1);
+    labelView->TransitionSync(kDuration, true);
     CORO_YIELD(0.25f);
 
     AudioPlayer::PlayShutterOpen();
@@ -204,11 +199,7 @@ WelcomeBack:
 
         // close labelView
         AudioPlayer::PlayShutterClose();
-        for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
-            labelView->SetTransitionAmount(1-rememberedT/kDuration);
-            CORO_YIELD(0);
-        }
-        labelView->SetTransitionAmount(0);
+        labelView->TransitionSync(kDuration, false);
         CORO_YIELD(0);
         // transition out
         AudioPlayer::PlayShutterClose();
@@ -272,11 +263,7 @@ Setup:
     CORO_YIELD(0.25f);
     labelView->message = "Game Setup";
     AudioPlayer::PlayShutterOpen();
-    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
-        labelView->SetTransitionAmount(rememberedT/kDuration);
-        CORO_YIELD(0);
-    }
-    labelView->SetTransitionAmount(1);
+    labelView->TransitionSync(kDuration, true);
     CORO_YIELD(0.25f);
 
     AudioPlayer::PlayShutterOpen();
@@ -358,11 +345,7 @@ Setup:
 
     // close labelView
     AudioPlayer::PlayShutterClose();
-    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
-        labelView->SetTransitionAmount(1.0f-rememberedT/kDuration);
-        CORO_YIELD(0);
-    }
-    labelView->SetTransitionAmount(0);
+    labelView->TransitionSync(kDuration, false);
     CORO_YIELD(0);
     // transition out
     tv = new(tvBuffer) TransitionView(Game::GetCube(0));
@@ -410,11 +393,7 @@ ChapterSelect:
     CORO_YIELD(0.25f);
     labelView->message = "Select a Level";
     AudioPlayer::PlayShutterOpen();
-    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
-        labelView->SetTransitionAmount(rememberedT/kDuration);
-        CORO_YIELD(0);
-    }
-    labelView->SetTransitionAmount(1);
+    labelView->TransitionSync(kDuration, true);
     CORO_YIELD(0.25f);
 
     AudioPlayer::PlayShutterOpen();
@@ -467,11 +446,7 @@ ChapterSelect:
 
     // close labelView
     AudioPlayer::PlayShutterClose();
-    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
-        labelView->SetTransitionAmount(1-rememberedT/kDuration);
-        CORO_YIELD(0);
-    }
-    labelView->SetTransitionAmount(0);
+    labelView->TransitionSync(kDuration, false);
     CORO_YIELD(0);
 
     // transition out

@@ -259,7 +259,7 @@ namespace TotalsGame
         success = g.currentPuzzle->GetNext(NUMBER_OF_CUBES, &chapter, &puzzle);
         if (success)
 		{
-            Database::SavePuzzleAsSolved(g.currentPuzzle->chapterIndex, g.currentPuzzle->puzzleIndex);
+            Game::GetInstance().saveData.AddSolvedPuzzle(g.currentPuzzle->chapterIndex, g.currentPuzzle->puzzleIndex);
             delete g.currentPuzzle;
             g.currentPuzzle = NULL;
 			return "GameComplete";
@@ -272,7 +272,7 @@ namespace TotalsGame
 		}
 		else 
 		{
-            Database::SaveChapterAsSolved(g.currentPuzzle->chapterIndex);
+            Game::GetInstance().saveData.AddSolvedChapter(g.currentPuzzle->chapterIndex);
             delete g.currentPuzzle;
             g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
 			return "NextChapter";

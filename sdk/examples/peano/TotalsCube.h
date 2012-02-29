@@ -57,9 +57,12 @@ public:
         void RemoveEventHandler(EventHandler *e);
         void ResetEventHandlers();
 
-		float OpenShutters(const AssetImage *image);
-		float CloseShutters(const AssetImage *image);
+        float OpenShuttersAsync(const AssetImage *image);
+        float CloseShuttersAsync(const AssetImage *image);
 				
+        void OpenShuttersSync(const AssetImage *image);
+        void CloseShuttersSync(const AssetImage *image);
+
 		void DrawVaultDoorsClosed();
 
         void Image(const AssetImage *image, const Vec2 &pos, int frame=0);

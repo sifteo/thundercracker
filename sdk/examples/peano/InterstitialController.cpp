@@ -54,19 +54,11 @@ namespace TotalsGame {
 
         CORO_YIELD(0.333f);
         AudioPlayer::PlayShutterOpen();
-        for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=mGame->dt) {
-            iv->SetTransitionAmount(remembered_t/kTransitionTime);
-            CORO_YIELD(0);
-        }
-        iv->SetTransitionAmount(1);
+        iv->TransitionSync(kTransitionTime, true);
         AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
         CORO_YIELD(3);
         AudioPlayer::PlayShutterClose();
-        for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=mGame->dt) {
-            iv->SetTransitionAmount(1.0f-remembered_t/kTransitionTime);
-            CORO_YIELD(0);
-        }
-        new(blankViewBuffer[0]) BlankView(Game::GetCube(0), NULL);
+        iv->TransitionSync(kTransitionTime, false);
         CORO_YIELD(0.333f);
 
         CORO_END;

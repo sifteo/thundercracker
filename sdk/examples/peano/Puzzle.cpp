@@ -108,7 +108,7 @@ namespace TotalsGame {
 	void Puzzle::SaveAsSolved()     
 	{
 #if !DISABLE_CHAPTERS
-        Database::SavePuzzleAsSolved(chapterIndex, puzzleIndex);
+        Game::GetInstance().saveData.AddSolvedPuzzle(chapterIndex, puzzleIndex);
         Game::GetInstance().saveData.Save();
 #endif //DISABLE_CHAPTERS
     }

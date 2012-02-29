@@ -1,5 +1,6 @@
 #include "InterstitialView.h"
 #include "TotalsCube.h"
+#include "Game.h"
 
 namespace TotalsGame {
 
@@ -18,6 +19,18 @@ void InterstitialView::SetTransitionAmount(float u)
 {
     // 0 <= offset <= 136+2*kPad (56, kPad, 48, kPad, 32)
     SetTransition(kMaxOffset * u);
+}
+
+void InterstitialView::TransitionSync(float duration, bool opening)
+{
+    for(float t=0; t<duration; t+=Game::GetInstance().dt) {
+        SetTransitionAmount((opening? t : 1-t)/duration);
+        Paint();
+        System::paintSync();
+        Game::GetInstance().UpdateDt();
+    }
+    SetTransitionAmount(opening? 1 : 0);
+    Paint();
 }
 
 void InterstitialView::SetTransition(int offset)

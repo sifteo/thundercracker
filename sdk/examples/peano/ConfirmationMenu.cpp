@@ -95,14 +95,7 @@ float ConfirmationMenu::Coroutine(float dt)
     CORO_BEGIN;
 
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
-        mLabel->SetTransitionAmount(remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
-        mLabel->Paint();
-        System::paintSync();
-        Game::GetInstance().UpdateDt();
-    }
-    mLabel->SetTransitionAmount(1);
+    mLabel->TransitionSync(kTransitionTime, true);
     mLabel->Paint();
     //CORO_YIELD(0);
     AudioPlayer::PlayShutterOpen();
@@ -163,15 +156,8 @@ float ConfirmationMenu::Coroutine(float dt)
     //CORO_YIELD(0);
 
     AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
-        mLabel->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
-        mLabel->Paint();
-        System::paintSync();
-        Game::GetInstance().UpdateDt();
-    }
-    mLabel->SetTransitionAmount(0);
-    mLabel->Paint();
+    mLabel->TransitionSync(kTransitionTime, false);
+
 
     CORO_END;
 

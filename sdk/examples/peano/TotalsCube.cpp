@@ -152,7 +152,7 @@ namespace TotalsGame
         }
     }
 
-	float TotalsCube::OpenShutters(const AssetImage *image)
+    float TotalsCube::OpenShuttersAsync(const AssetImage *image)
 	{						
 		CORO_BEGIN
 
@@ -177,7 +177,7 @@ namespace TotalsGame
 		return -1;
 	}
 
-	float TotalsCube::CloseShutters(const AssetImage *image)
+    float TotalsCube::CloseShuttersAsync(const AssetImage *image)
 	{
 		CORO_BEGIN
 
@@ -358,6 +358,26 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(Vec2(0,y),Vec2(9,0),Vec2(x,16-y), VaultDoor, 0);
         backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), VaultDoor, 0);
 	}
+
+    void TotalsCube::OpenShuttersSync(const AssetImage *image)
+    {
+        while(OpenShuttersAsync(image) >= 0)
+        {
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
+        }
+    }
+
+    void TotalsCube::CloseShuttersSync(const AssetImage *image)
+    {
+        while(CloseShuttersAsync(image) >= 0)
+        {
+            System::paintSync();
+            Game::GetInstance().UpdateDt();
+        }
+    }
+
+
 
 	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
 	{
