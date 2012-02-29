@@ -450,7 +450,7 @@ void CubeWrapper::Update(float t, float dt)
         if( Game::Inst().getMode() != Game::MODE_BLITZ )
         {
             for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
-                m_aExplosions[i].Update( dt );
+                m_aExplosions[i].Update();
         }
 
         m_banner.Update(t);

@@ -15,10 +15,11 @@ class RockExplosion
 {
 public:
     static const int MAX_ROCK_EXPLOSIONS = 4;
+    static const float FRAMES_PER_SECOND;
 
     RockExplosion();
     void Reset();
-    void Update( float dt );
+    void Update();
     void Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex );
     void Spawn( const Vec2 &pos, int whichpiece );
 
@@ -28,6 +29,7 @@ public:
 private:
     Vec2 m_pos;
     unsigned int m_animFrame;
+    float m_startTime;
 };
 
 #endif

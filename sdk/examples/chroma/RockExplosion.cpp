@@ -8,6 +8,9 @@
 #include "RockExplosion.h"
 
 
+const float RockExplosion::FRAMES_PER_SECOND = 12.0f;
+
+
 RockExplosion::RockExplosion()
 {
     Reset();
@@ -21,12 +24,11 @@ void RockExplosion::Reset()
 }
 
 
-void RockExplosion::Update( float dt )
+void RockExplosion::Update()
 {
     if( m_pos.x >= 0 )
     {
-        //for now, try frame at a time
-        m_animFrame++;
+        m_animFrame = ( System::clock() - m_startTime ) * FRAMES_PER_SECOND;
 
         if( m_animFrame >= rock_explode.frames )
         {
@@ -51,10 +53,10 @@ void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
 
 static const Vec2 OFFSET[] =
 {
-    Vec2( 0, 0 ),
-    Vec2( 0, 0 ),
-    Vec2( 0, 0 ),
-    Vec2( 0, 0 ),
+    Vec2( -8, 8 ),
+    Vec2( 8, 8 ),
+    Vec2( 8, -8 ),
+    Vec2( -8, -8 ),
 };
 
 
@@ -62,4 +64,5 @@ void RockExplosion::Spawn( const Vec2 &pos, int whichpiece )
 {
     m_pos.set( pos.x * 8 + OFFSET[whichpiece].x, pos.y * 8 + OFFSET[whichpiece].y );
     m_animFrame = 0;
+    m_startTime = System::clock();
 }
