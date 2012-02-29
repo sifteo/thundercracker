@@ -112,7 +112,7 @@ void TitleCubeState::paint()
     default:
     case 1:
         vid.BG0_drawAsset(Vec2(0, 0), TileBG);
-        if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
+        //if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;

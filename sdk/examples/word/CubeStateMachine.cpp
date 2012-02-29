@@ -286,6 +286,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+        mLettersStart = mLettersStartTarget = 0;
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
         {
             mLetters[i] = '\0';

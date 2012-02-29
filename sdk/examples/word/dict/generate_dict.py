@@ -133,7 +133,7 @@ def generate_dict():
     fi.close()
     
     # uncomment to regenerate: 
-    #generate_word_list_file()
+    generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -183,7 +183,7 @@ def generate_dict():
             #min_anagrams = [999, 999, 4, 15, 25, 25]
             #print "checking word " + word
             if skip_tests or len(anagrams) >= min_anagrams[len(word) - 1]:
-                #print word + " " + str(anagrams)
+                print word + " " + str(anagrams)
                 num_seed_repeats = 0
                 # skip it if a pre-existing seed word has the same anagram set 
                 bad = False
