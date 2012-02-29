@@ -19,7 +19,7 @@ TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
 void TiltFlowDetailView::ShowDescription(const char * desc) {
     if (mDescription == desc) { return; }    //should be using same string pointer
     if (mDescription[0]) {
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
+        PLAY_SFX(sfx_Menu_Tilt_Stop);
     }
     mDescription = desc;
     //TODO Paint();
@@ -27,7 +27,7 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
 
 void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
+        PLAY_SFX(sfx_Menu_Tilt_Stop);
         mDescription = "";        
         GetCube()->DisableTextOverlay();
     }

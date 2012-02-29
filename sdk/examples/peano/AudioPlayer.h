@@ -1,6 +1,22 @@
 #pragma once
 
 #include <sifteo.h>
+#include "config.h"
+
+#if MUSIC_ON
+#define PLAY_MUSIC(a) do{AudioPlayer::PlayMusic(a);}while(0)
+#else
+#define PLAY_MUSIC(a) do{}while(0)
+#endif
+
+#if SFX_ON
+#define PLAY_SFX(a) do{AudioPlayer::PlaySfx(a);}while(0)
+#define PLAY_SFX2(a,b) do{AudioPlayer::PlaySfx(a,b);}while(0)
+#else
+#define PLAY_SFX(a) do{}while(0)
+#define PLAY_SFX2(a,b) do{}while(0)
+#endif
+
 
 namespace TotalsGame
 {

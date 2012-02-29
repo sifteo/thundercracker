@@ -59,7 +59,7 @@ float StingController::Coroutine(float dt)
     System::paint();
 
     CORO_YIELD(0.1f);
-    AudioPlayer::PlaySfx(sfx_Stinger_02);
+    PLAY_SFX(sfx_Stinger_02);
 
     for(i = 0; i < Game::NUMBER_OF_CUBES; i++)
     {

@@ -38,7 +38,7 @@ class TutorialController : public IStateController {
                     owner->secondToken->DidJoinGroup();
                 }
                 //TODO redundant? firstToken.Cube.ClearEvents();
-                AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+                PLAY_SFX(sfx_Tutorial_Correct);
             }
         }
     };
@@ -70,7 +70,7 @@ class TutorialController : public IStateController {
                     owner->secondToken->DidJoinGroup();
                 }
                 //TODO redundant? firstToken.Cube.ClearEvents();
-                AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+                PLAY_SFX(sfx_Tutorial_Correct);
             }
         }
     };
@@ -89,7 +89,7 @@ class TutorialController : public IStateController {
         {
             owner->OnNeighborAdd(Game::GetCube(c0), s0, Game::GetCube(c1), s1);
             if (!owner->firstToken->token->current->GetValue() == Fraction(6)) {
-                AudioPlayer::PlaySfx(sfx_Tutorial_Oops, false);
+                PLAY_SFX2(sfx_Tutorial_Oops, false);
                 owner->narrator->SetMessage("Oops, let's try again...", NarratorView::EmoteSad);
             }
         }
@@ -167,7 +167,7 @@ public:
     }
 
     void OnSetup() {
-        AudioPlayer::PlayMusic(sfx_PeanosVaultMenu);
+        PLAY_MUSIC(sfx_PeanosVaultMenu);
         CORO_RESET;
         narrator = NULL;
         puzzle = NULL;
@@ -331,7 +331,7 @@ public:
 
         // press your luck flourish
         {
-            AudioPlayer::PlaySfx(sfx_Tutorial_Mix_Nums);
+            PLAY_SFX(sfx_Tutorial_Mix_Nums);
             rememberedTimeout = period;
             rememberedCubeId = 0;
             remembered_t=0;
@@ -374,8 +374,8 @@ public:
         {
             CORO_YIELD(0);
         }
-        AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
-        AudioPlayer::PlaySfx(sfx_Tutorial_Oops, false);
+        PLAY_SFX(sfx_Tutorial_Correct);
+        PLAY_SFX2(sfx_Tutorial_Oops, false);
         Game::ClearCubeEventHandlers();
         mGame->neighborEventHandler = NULL;
         CORO_YIELD(0.5f);

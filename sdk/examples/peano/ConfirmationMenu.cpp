@@ -43,7 +43,7 @@ void ConfirmationChoiceView::OnButton(TotalsCube *c, bool pressed)
     if (!pressed)
     {
         mTriggered = true;
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
+        PLAY_SFX(sfx_Menu_Tilt_Stop);
     }
 }
 

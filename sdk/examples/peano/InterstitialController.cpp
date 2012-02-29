@@ -55,7 +55,7 @@ namespace TotalsGame {
         CORO_YIELD(0.333f);
         AudioPlayer::PlayShutterOpen();
         iv->TransitionSync(kTransitionTime, true);
-        AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+        PLAY_SFX(sfx_Tutorial_Correct);
         CORO_YIELD(3);
         AudioPlayer::PlayShutterClose();
         iv->TransitionSync(kTransitionTime, false);

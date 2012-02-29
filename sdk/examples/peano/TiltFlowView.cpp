@@ -193,7 +193,7 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x, int w) {
 
 void TiltFlowView::OnButton(TotalsCube *c, bool pressed) {
     if (!pressed && !menu->IsPicked()) {
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
+        PLAY_SFX(sfx_Menu_Tilt_Stop);
         if (GetItem()->IsToggle()) {
             GetItem()->IncrementImageIndex();
             menu->SetToggledItem(GetItem());
@@ -241,7 +241,7 @@ void TiltFlowView::UpdateMenu() {
 
         mRestTime = menu->GetSimTime();
 
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt, false);
+        PLAY_SFX2(sfx_Menu_Tilt, false);
 
         // accelerate in the direction of tilt
         mDrawLabel = false;

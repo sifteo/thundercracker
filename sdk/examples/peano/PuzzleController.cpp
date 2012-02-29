@@ -111,7 +111,7 @@ float PuzzleController::TheBigCoroutine(float dt)
     { // flourish in
         CORO_YIELD(1.1f);
         // show total
-        AudioPlayer::PlaySfx(sfx_Tutorial_Mix_Nums);
+        PLAY_SFX(sfx_Tutorial_Mix_Nums);
 
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
@@ -210,7 +210,7 @@ float PuzzleController::TheBigCoroutine(float dt)
 
     { // flourish out
         CORO_YIELD(1);
-        AudioPlayer::PlaySfx(sfx_Level_Clear);
+        PLAY_SFX(sfx_Level_Clear);
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             puzzle->GetToken(i)->GetTokenView()->ShowLit();

@@ -143,16 +143,16 @@ void TokenView::SetState(Status state, bool resetTimer, bool resetExpr)
     {
         if (mStatus == StatusHinting)
         {
-            AudioPlayer::PlaySfx(sfx_Hide_Overlay);
+            PLAY_SFX(sfx_Hide_Overlay);
         }
         mStatus = state;
         if (mStatus == StatusHinting)
         {
             sHintParity = 1 - sHintParity;
             if(sHintParity)
-                AudioPlayer::PlaySfx(sfx_Hint_Stinger_01);
+                PLAY_SFX(sfx_Hint_Stinger_01);
             else
-                AudioPlayer::PlaySfx(sfx_Hint_Stinger_02);
+                PLAY_SFX(sfx_Hint_Stinger_02);
         }
         if (resetTimer) { mTimeout = -1.0f; }
         if (resetExpr) { mCurrentExpression = token->current; }
@@ -186,9 +186,9 @@ void TokenView::OnShakeStarted(TotalsCube *c)
     if (!token->GetPuzzle()->unlimitedHints && token->GetPuzzle()->hintsUsed >= token->GetPuzzle()->GetNumTokens()-1)
     {
         if(sHintParity)
-            AudioPlayer::PlaySfx(sfx_Hint_Deny_01);
+            PLAY_SFX(sfx_Hint_Deny_01);
         else
-            AudioPlayer::PlaySfx(sfx_Hint_Deny_02);
+            PLAY_SFX(sfx_Hint_Deny_02);
     }
     else
     {
@@ -203,7 +203,7 @@ void TokenView::OnButtonEvent(TotalsCube *c, bool isPressed) {
     if (!isPressed && token->GetPuzzle()->target != NULL)
     {
         BlinkOverlay();
-        AudioPlayer::PlaySfx(sfx_Target_Overlay);
+        PLAY_SFX(sfx_Target_Overlay);
     }
 }
 
@@ -237,7 +237,7 @@ void TokenView::Update(float dt)
             else
             {
                 if (mStatus == StatusOverlay) {
-                    AudioPlayer::PlaySfx(sfx_Hide_Overlay);
+                    PLAY_SFX(sfx_Hide_Overlay);
                 }
                 SetState(StatusIdle);
             }

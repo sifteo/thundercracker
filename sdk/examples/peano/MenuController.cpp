@@ -103,7 +103,7 @@ MenuController::MenuController(Game *game)
 void MenuController::OnSetup()
 {
     CORO_RESET;
-    AudioPlayer::PlayMusic(sfx_PeanosVaultMenu);
+    PLAY_MUSIC(sfx_PeanosVaultMenu);
     // todo mGame.CubeSet.LostCubeEvent += OnCubeLost;
 }
 /* todo

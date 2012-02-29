@@ -58,7 +58,7 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
             //          Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
         }
         if (mString[0]) {
-            AudioPlayer::PlaySfx(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
+            PLAY_SFX(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
 //            PaintText();
         } else {
             //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);

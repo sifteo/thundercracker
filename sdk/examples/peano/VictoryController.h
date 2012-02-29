@@ -74,7 +74,7 @@ namespace TotalsGame {
 
       AudioPlayer::PlayNeighborRemove();
         CORO_YIELD(0.1f);
- //TODO     AudioPlayer::PlaySfx(sfx_Chapter_Victory);
+ //TODO     PLAY_SFX(sfx_Chapter_Victory);
       vv = new(vvBuffer) VictoryView(Game::GetCube(0), mGame->previousPuzzle->chapterIndex);
       CORO_YIELD(1);
       vv->Open();
