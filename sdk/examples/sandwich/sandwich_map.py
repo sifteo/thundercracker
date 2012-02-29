@@ -20,7 +20,6 @@ class Map:
 	def __init__(self, world, path):
 		self.world = world
 		self.id = os.path.basename(path)[:-4].lower()
-		#assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
 		self.raw = tmx.Map(path)
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
@@ -31,6 +30,11 @@ class Map:
 				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
+
+		self.background_id = os.path.basename(self.background.gettileset().imgpath)
+		if self.overlay is not None:
+			self.overlay_id = os.path.basename(self.overlay.gettileset().imgpath)
+
 		self.width = self.raw.pw / 128
 		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
@@ -227,7 +231,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(name)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
+			"    { &TileSet_%(bg)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
 			"%(name)s_xportals, %(name)s_yportals, " \
 			"%(item)s, %(gate)s, %(npc)s, %(trapdoor)s, %(door)s, " \
 			"%(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
@@ -236,7 +240,8 @@ class Map:
 			"0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
-				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
+				"bg": os.path.splitext(self.background_id)[0],
+				"overlay": "&Overlay_" + os.path.splitext(self.overlay_id)[0] if self.overlay is not None else "0",
 				"overlay_rle": self.id + "_overlay_rle" if self.overlay is not None else "0",
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",

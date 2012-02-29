@@ -7,6 +7,10 @@
 
 static bool sNeighborDirty = false;
 
+#if PLAYTESTING_HACKS
+static float sShakeTime = -1.f;
+#endif
+
 static void onNeighbor(void *context,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
   sNeighborDirty = true;
@@ -31,7 +35,7 @@ void Game::MainLoop(Cube* pPrimary) {
     if (v->GetCube() != pPrimary) { v->Init(); }
   }
   Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
-  mPlayer.View()->ShowLocation(mPlayer.Location());
+  mPlayer.View()->ShowLocation(mPlayer.Location(), true);
   PlayMusic(music_castle);
   mSimTime = System::clock();
   _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
@@ -55,6 +59,18 @@ void Game::MainLoop(Cube* pPrimary) {
           OnActiveTrigger();
         }
       }
+      #if PLAYTESTING_HACKS
+        else if (sShakeTime > 2.0f && mMap.Data() != gMapData) {
+          const MapData& map = gMapData[0];
+          const GatewayData& gate = map.gates[0];
+          TeleportTo(map, Vec2(
+            128 * (gate.trigger.room % map.width) + gate.x,
+            128 * (gate.trigger.room / map.width) + gate.y
+          ));
+          mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+          mPlayer.CurrentView()->UpdatePlayer();
+        }
+      #endif
     } while (!pGame->GetMap()->FindBroadPath(&mPath));
 
     //-------------------------------------------------------------------------
@@ -187,6 +203,21 @@ void Game::Paint(bool sync) {
     System::paint();
   }
   mAnimFrames++;
+
+  #if PLAYTESTING_HACKS
+    Cube* pCube = mPlayer.View()->GetCube();
+    _SYSShakeState shakeState;
+    _SYS_getShake(pCube->id(), &shakeState);
+    if (shakeState == SHAKING) {
+      if (sShakeTime < 0.0f) {
+        sShakeTime = 0.f;
+      } else {
+        sShakeTime += dt;
+      }
+    } else {
+      sShakeTime = -1.f;
+    }
+  #endif
 }
 
 //------------------------------------------------------------------
@@ -245,13 +276,17 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   if (pMinimap) { pMinimap->Restore(); }
   Zoom(view, room.x + room.y * mMap.Data()->width);
   
+  ViewMode g = view->Graphics();
+  g.init();
+  view->GetCube()->vbuf.touch();
+
   // todo: expose music in level editor?
   PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
 
   // walk out of the in-gate
   Vec2 target = mMap.GetRoom(room)->Center(0);
   mPlayer.SetDirection(InferDirection(target - position));
-  view->ShowLocation(room);
+  view->ShowLocation(room, true);
   WalkTo(target, false);
   CheckMapNeighbors();
 
@@ -545,7 +580,7 @@ unsigned Game::OnPassiveTrigger() {
     }
     mPlayer.SetPosition(targetRoom->Center(0));
     mPlayer.SetDirection(SIDE_BOTTOM);
-    pView->ShowLocation(mPlayer.Position()/128);
+    pView->ShowLocation(mPlayer.Position()/128, true);
     CheckMapNeighbors();
     Paint(true);
     return RESULT_PATH_INTERRUPTED;
@@ -623,7 +658,7 @@ void Game::OnUseEquipment() {
 
 static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
-  bool result = view->ShowLocation(loc, false);
+  bool result = view->ShowLocation(loc, false, false);
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
   if (origin) {
     view->GetCube()->orientTo(*(origin->GetCube()));

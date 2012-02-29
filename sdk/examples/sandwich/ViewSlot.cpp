@@ -134,14 +134,14 @@ void ViewSlot::Update(float dt) {
 	}
 }
   
-bool ViewSlot::ShowLocation(Vec2 loc, bool doFlush) {
+bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
 	if (!pGame->GetMap()->Contains(loc)) {
 		if (IsShowingRoom()) {
 			HideLocation(doFlush);
 		}
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
-		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
+		if (force || !IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
 			SetView(VIEW_ROOM, doFlush, rid);
 			return true;
 		}
