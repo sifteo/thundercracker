@@ -17,7 +17,7 @@ namespace TotalsGame
 		View(TotalsCube *_cube);
 
 		virtual void Paint() {}
-		virtual void Update(float dt) {}
+		virtual void Update() {}
 		virtual void DidAttachToCube(TotalsCube *c) {}
 		virtual void WillDetachFromCube(TotalsCube *c) {}
 		virtual ~View() {};

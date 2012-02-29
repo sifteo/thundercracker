@@ -81,7 +81,7 @@ void PuzzleController::OnSetup ()
 // MAIN CORO
 //-------------------------------------------------------------------------
 
-float PuzzleController::TheBigCoroutine(float dt)
+float PuzzleController::TheBigCoroutine()
 {
     static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
     static char tokenViewBuffer[Game::NUMBER_OF_CUBES][sizeof(TokenView)];
@@ -164,12 +164,12 @@ float PuzzleController::TheBigCoroutine(float dt)
                         {
                             System::paint();
                             Game::GetInstance().UpdateDt();
-                            menu->Tick(game->dt);
+                            menu->Tick();
 
                             System::paint();
                             Game::GetInstance().UpdateDt();
-                            menu->Tick(game->dt);
-                            Game::UpdateCubeViews(Game::GetInstance().dt);
+                            menu->Tick();
+                            Game::UpdateCubeViews();
                             Game::PaintCubeViews();
                             for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
                             {
@@ -361,13 +361,13 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
 // CLEANUP
 //-------------------------------------------------------------------------
 
-void PuzzleController::OnTick (float dt)
+void PuzzleController::OnTick ()
 {
     /* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
             ProcessRemoveEventBuffer();
             } */
-    UPDATE_CORO(TheBigCoroutine, dt);
-    Game::UpdateCubeViews(dt);
+    UPDATE_CORO(TheBigCoroutine);
+    Game::UpdateCubeViews();
 }
 
 void PuzzleController::OnPaint (bool canvasDirty)

@@ -27,7 +27,7 @@ namespace TotalsGame
 
         EventHandler eventHandlers[Game::NUMBER_OF_CUBES];
 
-        float Coroutine(float dt);
+        float Coroutine();
 
 	public:
 		StingController(Game *game);
@@ -36,7 +36,7 @@ namespace TotalsGame
 
 		//IStateController
 		virtual void OnSetup ();
-        virtual void OnTick (float dt);
+        virtual void OnTick ();
 		virtual void OnPaint (bool canvasDirty);
 		virtual void OnDispose ();
 

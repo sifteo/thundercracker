@@ -33,17 +33,17 @@ void TiltFlowDetailView::HideDescription() {
     }
 }
 
-void TiltFlowDetailView::Update (float dt) {
+void TiltFlowDetailView::Update () {
     if (mDescription[0]) {
         while (mAmount < 1) {
-            mAmount = MIN(mAmount + Game::GetInstance().dt / TotalsCube::kTransitionTime, 1);
+            mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
             Paint();
             System::paintSync();
             Game::GetInstance().UpdateDt();
         }
     } else {
         while (mAmount > 0) {
-            mAmount = MAX(mAmount - Game::GetInstance().dt / TotalsCube::kTransitionTime, 0);
+            mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
             System::paintSync();
             Game::GetInstance().UpdateDt();

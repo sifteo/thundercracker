@@ -56,13 +56,13 @@ public:
 
     virtual void OnSetup ();
 
-    float TheBigCoroutine(float dt);
+    float TheBigCoroutine();
 
     //-------------------------------------------------------------------------
     // CLEANUP
     //-------------------------------------------------------------------------
 
-    virtual void OnTick (float dt);
+    virtual void OnTick ();
 
     virtual void OnPaint (bool canvasDirty);
 

@@ -157,7 +157,7 @@ namespace TotalsGame
 		CORO_BEGIN
 
 		AudioPlayer::PlayShutterOpen();
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
 		{
 			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
 			CORO_YIELD(0);
@@ -166,7 +166,7 @@ namespace TotalsGame
 		DrawVaultDoorsOpenStep1(32, image);			
 		CORO_YIELD(0);
 
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt)
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
 			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
 			CORO_YIELD(0);
@@ -182,7 +182,7 @@ namespace TotalsGame
 		CORO_BEGIN
 
 		AudioPlayer::PlayShutterClose();
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
 		{
 			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
 			CORO_YIELD(0);
@@ -191,7 +191,7 @@ namespace TotalsGame
 		DrawVaultDoorsOpenStep2(0, image);
 		CORO_YIELD(0);
 
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
 		{
 			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
 			CORO_YIELD(0);

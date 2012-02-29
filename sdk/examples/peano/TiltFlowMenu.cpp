@@ -85,9 +85,9 @@ namespace TotalsGame
         return IsPicked() && mSimTime - mPickTime > kPickDelay;
     }
 
-    void TiltFlowMenu::Tick(float dt)
+    void TiltFlowMenu::Tick()
     {
-      mSimTime += dt;
+        mSimTime += Game::dt;
       view->Tick();
     }
 

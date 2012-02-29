@@ -7,7 +7,7 @@ namespace TotalsGame
 	public:
         virtual void OnSetup() {}
         virtual void OnDispose() {}
-        virtual void OnTick(float dt) {}
+        virtual void OnTick() {}
         virtual void OnPaint(bool dirty) {}
 	};
 
@@ -22,7 +22,7 @@ namespace TotalsGame
 		StateMachine &State(const char *name, StateTransitionCallback transition);
 		StateMachine &Transition(const char *from, const char *name, const char *to);
 
-		void Tick(float dt);
+		void Tick();
 		void Paint(bool dirty);
 
 		void QueueTransition(const char *name);

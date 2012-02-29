@@ -107,7 +107,7 @@ public:
     
     virtual void WillDetachFromCube(TotalsCube *c) ;
 
-    virtual void Update(float dt) ;
+    virtual void Update() ;
 
     //virtual void Paint() ;
     void PaintNow();

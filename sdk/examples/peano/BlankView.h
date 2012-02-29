@@ -21,7 +21,7 @@ namespace TotalsGame
 		bool HasImage();
 
 		virtual void Paint();
-		virtual void Update (float dt);
+		virtual void Update ();
 
         //for placement new
         void* operator new (size_t size, void* ptr) throw() {return ptr;}

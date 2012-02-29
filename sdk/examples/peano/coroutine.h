@@ -9,4 +9,4 @@
 #define CORO_WAIT(delay) do{time=System::clock();do{do{mState=__LINE__; return; case __LINE__:;}while(0);}while(System::clock()-time<delay);}while(0)
 #endif
 
-#define UPDATE_CORO(c, dt) do{mTimer-=dt;if(mTimer<=0){mTimer=c(dt);}}while(0)
+#define UPDATE_CORO(c) do{mTimer-=Game::dt;if(mTimer<=0){mTimer=c();}}while(0)

@@ -45,7 +45,7 @@ namespace TotalsGame {
       }
     }
 */
-    float Coroutine(float dt) {
+    float Coroutine() {
         
         bool isLast;
         
@@ -153,7 +153,7 @@ namespace TotalsGame {
       mGame->sceneMgr.QueueTransition("Next");
     }
 
-    void OnTick (float dt) {
+    void OnTick () {
         UPDATE_CORO(Coroutine, dt);
         Game::UpdateCubeViews(dt);
     }

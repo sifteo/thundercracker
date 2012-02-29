@@ -212,11 +212,11 @@ void TokenView::WillDetachFromCube(TotalsCube *c)
     c->RemoveEventHandler(&eventHandler);
 }
 
-void TokenView::Update(float dt)
+void TokenView::Update()
 {
     if (mTimeout >= 0)
     {
-        mTimeout -= dt;
+        mTimeout -= Game::dt;
         if (mTimeout < 0 && mStatus != StatusIdle)
         {
             if (mStatus == StatusQueued)

@@ -20,7 +20,7 @@ public:
 
     void HideDescription();
 
-    void Update (float dt);
+    void Update ();
 
     void Paint();
 

@@ -59,9 +59,9 @@ public:
 
     ConfirmationMenu (const char *msg);
 
-    void Tick(float dt);
+    void Tick();
 
-    float Coroutine(float dt);
+    float Coroutine();
     bool IsDone();
 
     bool GetResult();

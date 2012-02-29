@@ -113,7 +113,7 @@ void MenuController::OnSetup()
       }
     } */
 
-float MenuController::Coroutine(float dt)
+float MenuController::Coroutine()
 {
     static const float kDuration = 0.333f;
     int numInitialItems=0;
@@ -193,7 +193,7 @@ WelcomeBack:
         menu = new (menuBuffer) TiltFlowMenu(items, numInitialItems, labelView);
         while(!menu->IsDone())
         {
-            menu->Tick(mGame->dt);
+            menu->Tick();
             CORO_YIELD(0);
         }
 
@@ -310,7 +310,7 @@ Setup:
 
         while(!menu->IsDone())
         {
-            menu->Tick(dt);
+            menu->Tick();
             CORO_YIELD(0);
             if (menu->GetToggledItem() != NULL) {
                 switch(menu->GetToggledItemIndex())
@@ -370,7 +370,7 @@ Setup:
         confirm = new(buffer) ConfirmationMenu("Clear Data?");
 
         while(!confirm->IsDone()) {
-            confirm->Tick(mGame->dt);
+            confirm->Tick();
             CORO_YIELD(0);
         }
         if (confirm->GetResult()) {
@@ -484,10 +484,10 @@ ChapterSelect:
     return -1;
 }
 
-void MenuController::OnTick(float dt)
+void MenuController::OnTick()
 {
-    UPDATE_CORO(Coroutine, dt);
-    Game::UpdateCubeViews(dt);
+    UPDATE_CORO(Coroutine);
+    Game::UpdateCubeViews();
 }
 
 void MenuController::OnPaint(bool canvasDirty)

@@ -38,7 +38,7 @@ namespace TotalsGame
 		}
 	}
 
-	void BlankView::Update (float dt) 
+	void BlankView::Update () 
 	{
 	}
 

@@ -58,13 +58,13 @@ int strcmp(const char *a, const char *b)
 		return *this;
 	}
 
-	void StateMachine::Tick(float dt)
+	void StateMachine::Tick()
 	{
         ASSERT(currentState);
 
 		if(currentState->isController)
 		{		
-           currentState->controller->OnTick(dt);
+           currentState->controller->OnTick();
 		}
 		else
 		{

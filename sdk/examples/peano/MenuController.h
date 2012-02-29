@@ -78,10 +78,10 @@ private:
       }
     } */
 
-    float Coroutine(float dt);
+    float Coroutine();
 
 
-    void OnTick(float dt);
+    void OnTick();
 
     void OnPaint(bool canvasDirty);
 

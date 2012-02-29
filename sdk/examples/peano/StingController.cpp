@@ -41,7 +41,7 @@ void StingController::Skip()
     mGame->sceneMgr.QueueTransition("Next");
 }
 
-float StingController::Coroutine(float dt)
+float StingController::Coroutine()
 {
 
     static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
@@ -86,10 +86,10 @@ float StingController::Coroutine(float dt)
             return -1;
 }
 
-void StingController::OnTick (float dt)
+void StingController::OnTick ()
 {
-    UPDATE_CORO(Coroutine, dt);
-    Game::UpdateCubeViews(dt);
+    UPDATE_CORO(Coroutine);
+    Game::UpdateCubeViews();
 }
 
 void StingController::OnPaint (bool canvasDirty)

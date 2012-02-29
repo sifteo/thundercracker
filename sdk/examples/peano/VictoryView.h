@@ -22,7 +22,7 @@ struct VictoryParticle {
                     );
     }
 
-    void Update(float dt) {
+    void Update() {
         while(dt > 0.25f) {
             velocity.y += 0.25f * 65;
             position += 0.25f * velocity;
@@ -85,7 +85,7 @@ public:
         mOver = true;
     }
 
-    void Update (float dt) {
+    void Update () {
         if (mOpen && !mOver) {
             /* TODO need this? nah
             if (OkayToPaint()) {

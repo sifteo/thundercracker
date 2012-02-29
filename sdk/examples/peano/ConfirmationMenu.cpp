@@ -78,18 +78,18 @@ ConfirmationMenu::ConfirmationMenu (const char *msg)
     CORO_RESET;
 }
 
-void ConfirmationMenu::Tick(float dt)
+void ConfirmationMenu::Tick()
 {
-    Coroutine(dt);
+    Coroutine();
     if(!done)
     {
-        mYes->Update(dt);
-        mNo->Update(dt);
-        mLabel->Update(dt);
+        mYes->Update();
+        mNo->Update();
+        mLabel->Update();
     }
 }
 
-float ConfirmationMenu::Coroutine(float dt)
+float ConfirmationMenu::Coroutine()
 {
 
     CORO_BEGIN;
@@ -99,7 +99,7 @@ float ConfirmationMenu::Coroutine(float dt)
     mLabel->Paint();
     //CORO_YIELD(0);
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
+    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
         mYes->SetTransitionAmount(remembered_t/kTransitionTime);
         //CORO_YIELD(0);
         mYes->Paint();
@@ -110,7 +110,7 @@ float ConfirmationMenu::Coroutine(float dt)
     mYes->Paint();
     //CORO_YIELD(0);
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
+    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
         mNo->SetTransitionAmount(remembered_t/kTransitionTime);
         //CORO_YIELD(0);
         mNo->Paint();
@@ -132,7 +132,7 @@ float ConfirmationMenu::Coroutine(float dt)
     second = mResult ? mYes : mNo;
 
     AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
+    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
         first->SetTransitionAmount(1-remembered_t/kTransitionTime);
         //CORO_YIELD(0);
         first->Paint();
@@ -144,7 +144,7 @@ float ConfirmationMenu::Coroutine(float dt)
     //CORO_YIELD(0);
 
     AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::GetInstance().dt) {
+    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
         second->SetTransitionAmount(1-remembered_t/kTransitionTime);
         //CORO_YIELD(0);
         second->Paint();

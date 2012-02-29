@@ -191,7 +191,7 @@ public:
         new BlankView(c);
     }
     */
-    float Coroutine(float dt) {
+    float Coroutine() {
         const float kTransitionDuration = 0.2f;
         static char narratorViewBuffer[sizeof(NarratorView)];
         static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
@@ -588,9 +588,9 @@ public:
         //Jukebox.PlayNeighborRemove();
     }
 
-    void OnTick (float dt) {
-        UPDATE_CORO(Coroutine, dt);
-        Game::UpdateCubeViews(dt);
+    void OnTick () {
+        UPDATE_CORO(Coroutine);
+        Game::UpdateCubeViews();
     }
 
     void OnPaint (bool canvasDirty) {

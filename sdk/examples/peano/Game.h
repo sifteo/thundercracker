@@ -42,7 +42,7 @@ namespace TotalsGame {
 		static void ClearCubeEventHandlers();
 		static void DrawVaultDoorsClosed();
 		static void PaintCubeViews();
-        static void UpdateCubeViews(float dt);
+        static void UpdateCubeViews();
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;
@@ -56,7 +56,7 @@ namespace TotalsGame {
 		//Jukebox jukebox = new Jukebox();		
 		bool mDirty;
 		float mTime;
-		float dt;
+		static float dt;
 		bool IsPaused;
 
 		void Setup(TotalsCube *cubes, int nCubes);

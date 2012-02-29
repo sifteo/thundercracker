@@ -11,6 +11,7 @@
 namespace TotalsGame
 {
 
+    float Game::dt = 0;
 	Random Game::rand;
 
 	Game &Game::GetInstance()
@@ -85,7 +86,7 @@ namespace TotalsGame
 		}
 	}
 
-    void Game::UpdateCubeViews(float dt)
+    void Game::UpdateCubeViews()
     {
         for(int i = 0; i < NUMBER_OF_CUBES; i++)
         {
@@ -94,7 +95,7 @@ namespace TotalsGame
             {
                 View *v = c->GetView();
                 if(v)
-                    v->Update(dt);
+                    v->Update();
             }
         }       
     }
@@ -213,7 +214,7 @@ namespace TotalsGame
             }
         }
 
-        sceneMgr.Tick(dt);
+        sceneMgr.Tick();
         sceneMgr.Paint(true);
 
         for(int i = 0; i < NUMBER_OF_CUBES; i++)

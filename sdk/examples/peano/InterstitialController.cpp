@@ -23,7 +23,7 @@ namespace TotalsGame {
       */
     }
 
-    float InterstitialController::Coroutine(float dt) {
+    float InterstitialController::Coroutine() {
 
         const float kTransitionTime = 0.5f;
         static char ivBuffer[sizeof(InterstitialView)];
@@ -65,14 +65,14 @@ namespace TotalsGame {
         return -1;
     }
 
-    void InterstitialController::OnTick (float dt) {        
+    void InterstitialController::OnTick () {        
         if (mDone) { return; }
-        UPDATE_CORO(Coroutine, dt);
+        UPDATE_CORO(Coroutine);
         if(mTimer == -1) {  //result of update coro stored in 'secret' variable
             mDone = true;
             mGame->sceneMgr.QueueTransition("Next");
         } else {
-            Game::UpdateCubeViews(dt);
+            Game::UpdateCubeViews();
         }
     }
 

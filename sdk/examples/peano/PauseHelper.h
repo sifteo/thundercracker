@@ -20,7 +20,7 @@ public:
     void Update() {
         for(int i=0; i<Game::NUMBER_OF_CUBES; ++i) {
             if (Game::GetCube(i)->touching()) {
-                mSeconds += Game::GetInstance().dt;
+                mSeconds += Game::dt;
                 return;
             }
         }
