@@ -35,6 +35,7 @@ const float kFreePlayShakeThrottleDuration = 1.5f;
 
 // Shuffle Mode
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears in shuffle mode
+const float kHintTimerOffDuration = 1.5f; // Seconds before hint disappears in shuffle mode
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next
 const float kShuffleFaceCompleteTimerDuration = 2.0f;
