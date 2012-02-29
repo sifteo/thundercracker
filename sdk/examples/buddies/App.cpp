@@ -1785,26 +1785,7 @@ void App::UpdateSwap(float dt)
         {
             Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
             Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
-            
-            if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
-            {
-                if (--piece0.mRotation < 0)
-                {
-                    piece0.mRotation += NUM_SIDES;
-                }
-            }
-        
-            if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
-            {
-                if (--piece1.mRotation < 0)
-                {
-                    piece1.mRotation += NUM_SIDES;
-                }
-            }
-            
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
-            
+                
             if (IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
                 IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
             {
@@ -1812,6 +1793,25 @@ void App::UpdateSwap(float dt)
             }
             else
             {
+                if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
+                {
+                    if (--piece0.mRotation < 0)
+                    {
+                        piece0.mRotation += NUM_SIDES;
+                    }
+                }
+                
+                if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+                {
+                    if (--piece1.mRotation < 0)
+                    {
+                        piece1.mRotation += NUM_SIDES;
+                    }
+                }
+                
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+                
                 mDelayTimer += kSwapAnimationTurn;
             }
         }
