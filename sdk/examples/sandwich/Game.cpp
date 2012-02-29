@@ -60,7 +60,7 @@ void Game::MainLoop(Cube* pPrimary) {
         }
       }
       #if PLAYTESTING_HACKS
-        else if (sShakeTime > 2.0f && mMap.Data() != gMapData) {
+        /*else if (sShakeTime > 2.0f && mMap.Data() != gMapData) {
           const MapData& map = gMapData[0];
           const GatewayData& gate = map.gates[0];
           TeleportTo(map, Vec2(
@@ -69,7 +69,24 @@ void Game::MainLoop(Cube* pPrimary) {
           ));
           mPlayer.SetStatus(PLAYER_STATUS_IDLE);
           mPlayer.CurrentView()->UpdatePlayer();
-        }
+        }*/
+          else if (sShakeTime > 2.0f) {
+            sShakeTime = -1.f;
+            mState.AdvanceQuest();
+            const QuestData* quest = mState.Quest();
+            const MapData& map = gMapData[quest->mapId];
+            const RoomData& room = map.rooms[quest->roomId];
+            TeleportTo(
+              map, 
+              Vec2(
+                128 * (quest->roomId % map.width) + 16 * room.centerX,
+                128 * (quest->roomId / map.width) + 16 * room.centerY
+              )
+            );
+            mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+            mPlayer.CurrentView()->UpdatePlayer();
+
+          }
       #endif
     } while (!pGame->GetMap()->FindBroadPath(&mPath));
 
