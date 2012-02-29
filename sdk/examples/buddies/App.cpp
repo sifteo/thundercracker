@@ -619,7 +619,7 @@ void App::OnShake(Cube::ID cubeId)
             }
             mCubeWrappers[cubeId].SetBuddyId(buddyId);
             
-            ResetCubesToPuzzle(GetPuzzleDefault());
+            ResetCubesToPuzzle(GetPuzzleDefault(), false);
         }
     }
     else if (mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
@@ -654,7 +654,7 @@ void App::OnShake(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::ResetCubesToPuzzle(const Puzzle &puzzle)
+void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
 {
     ASSERT(kNumCubes >= GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
     
@@ -664,12 +664,26 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle)
         if (mCubeWrappers[i].IsEnabled())
         {
             mCubeWrappers[i].Reset();
-            mCubeWrappers[i].SetBuddyId(puzzle.GetBuddy(i));
             
-            for (unsigned int j = 0; j < NUM_SIDES; ++j)
+            if (resetBuddies)
             {
-                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
-                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
+                mCubeWrappers[i].SetBuddyId(puzzle.GetBuddy(i));
+            
+                for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                {
+                    mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
+                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
+                }
+            }
+            else
+            {
+                // TODO: This is definitely hacky... the special-case for Free Play shuffle
+                // should fit with the active puzzle better...
+                for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                {
+                    mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(mCubeWrappers[i].GetBuddyId(), j));
+                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(mCubeWrappers[i].GetBuddyId(), j));
+                }
             }
         }
     }
@@ -737,7 +751,7 @@ void App::StartGameState(GameState gameState)
                 mCubeWrappers[i].SetBuddyId(buddyIds[i]);
             }
             
-            ResetCubesToPuzzle(GetPuzzleDefault());
+            ResetCubesToPuzzle(GetPuzzleDefault(), false);
             break;
         }
         case GAME_STATE_SHUFFLE_START:
@@ -749,7 +763,7 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
                 }
             }
-            ResetCubesToPuzzle(GetPuzzleDefault());
+            ResetCubesToPuzzle(GetPuzzleDefault(), true);
             mDelayTimer = kStateTimeDelayShort;
             break;
         }
@@ -806,7 +820,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_CHAPTER_START:
         {
             ASSERT(mStoryPuzzleIndex < GetNumPuzzles());
-            ResetCubesToPuzzle(GetPuzzle(mStoryPuzzleIndex));
+            ResetCubesToPuzzle(GetPuzzle(mStoryPuzzleIndex), true);
             mDelayTimer = kStateTimeDelayLong;
             break;
         }

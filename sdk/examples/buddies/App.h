@@ -54,7 +54,7 @@ public:
     void OnShake(Sifteo::Cube::ID cubeId);
     
 private:
-    void ResetCubesToPuzzle(const Puzzle &puzzle);
+    void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
     void UpdateCubes(float dt);
     
     void PlaySound();
