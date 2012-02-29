@@ -76,6 +76,7 @@ void Game::MainLoop(Cube* pPrimary) {
             const QuestData* quest = mState.Quest();
             const MapData& map = gMapData[quest->mapId];
             const RoomData& room = map.rooms[quest->roomId];
+            mPlayer.SetEquipment(0);
             TeleportTo(
               map, 
               Vec2(
