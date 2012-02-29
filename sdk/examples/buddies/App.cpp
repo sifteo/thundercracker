@@ -851,6 +851,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_HINT_MOVE:
         {
             StartHint();
+            mHintTimer = kHintTimerOffDuration;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -1163,6 +1164,12 @@ void App::UpdateGameState(float dt)
                 {
                     UpdateTimer(mFaceCompleteTimers[i], dt);
                 }
+            }
+            
+            if (UpdateTimer(mHintTimer, dt))
+            {
+                StopHint();
+                StartGameState(GAME_STATE_STORY_PLAY);
             }
             
             if (AnyTouchBegin())
