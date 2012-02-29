@@ -75,15 +75,18 @@ private:
     void OnSwapExchange();
     void OnSwapFinish();
     
-    enum TouchEvent
+    enum TouchState
     {
-        TOUCH_EVENT_NONE = 0,
-        TOUCH_EVENT_BEGIN,
-        TOUCH_EVENT_END,
+        TOUCH_STATE_NONE = 0,
+        TOUCH_STATE_BEGIN,
+        TOUCH_STATE_HOLD,
+        TOUCH_STATE_END,
         
-        NUM_TOUCH_EVENTS
+        NUM_TOUCH_STATES
     };
-    TouchEvent OnTouch(Sifteo::Cube::ID *cubeId = NULL);
+    
+    bool AnyTouchBegin() const;
+    bool AnyTouchEnd() const;
     
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
@@ -96,7 +99,7 @@ private:
     float mDelayTimer;
     
     // Input
-    bool mTouching;
+    TouchState mTouching[kNumCubes];
     
     // Scoring
     float mScoreTimer;
