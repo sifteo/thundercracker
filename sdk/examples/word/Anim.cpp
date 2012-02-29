@@ -309,8 +309,8 @@ bool animPaint(AnimType animT,
 
     };
 
-    const unsigned TopRowStartIndex = arraysize(LevelProgressData::mPuzzleProgress)/2;
-    for (unsigned i = 0; i < arraysize(LevelProgressData::mPuzzleProgress); ++i)
+    const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
+    for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
     {
         if (i < TopRowStartIndex)
         {
