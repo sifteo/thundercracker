@@ -481,14 +481,8 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    int rotation = side - piece.mPart;
-    if (rotation < 0)
-    {
-        rotation += NUM_SIDES;
-    }
-    
     const AssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
-    unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
+    unsigned int frame = (piece.mRotation * NUM_SIDES) + piece.mPart;
     ASSERT(frame < asset.frames);
     
     Vec2 point = kPartPositions[side];

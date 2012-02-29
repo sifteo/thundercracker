@@ -1769,6 +1769,18 @@ void App::OnSwapExchange()
     Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
     Piece piece1 = temp;
     
+    piece0.mRotation = int(mSwapPiece0 % NUM_SIDES) - piece0.mPart;
+    if (piece0.mRotation < 0)
+    {
+        piece0.mRotation += NUM_SIDES;
+    }
+    
+    piece1.mRotation = int(mSwapPiece1 % NUM_SIDES) - piece1.mPart;
+    if (piece1.mRotation < 0)
+    {
+        piece1.mRotation += NUM_SIDES;
+    }
+    
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
     
@@ -1904,37 +1916,6 @@ void App::OnSwapFinish()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: This is mighty lame... and more than likely buggy.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-App::TouchEvent App::OnTouch(Cube::ID *cubeId)
-{
-    if (!mTouching)
-    {
-        int touching = AnyTouching(*this);
-        if (touching != -1)
-        {
-            if (cubeId != NULL)
-            {
-                *cubeId = touching;
-            }
-            mTouching = true;
-            return TOUCH_EVENT_BEGIN;
-        }
-    }
-    else
-    {
-        if (AnyTouching(*this) == -1)
-        {
-            mTouching = false;
-            return TOUCH_EVENT_END;
-        }
-    }
-    
-    return TOUCH_EVENT_NONE;
-}
-*/
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

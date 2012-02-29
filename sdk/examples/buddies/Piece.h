@@ -31,6 +31,7 @@ struct Piece
     Piece()
         : mBuddy(0)
         , mPart(0)
+        , mRotation(0)
         , mMustSolve(true)
         , mAttribute(ATTR_NONE)
     {
@@ -43,6 +44,7 @@ struct Piece
         Attribute attribute = ATTR_NONE)
         : mBuddy(buddy)
         , mPart(part)
+        , mRotation(0)
         , mMustSolve(must_solve)
         , mAttribute(attribute)
     {
@@ -50,6 +52,7 @@ struct Piece
     
     int mBuddy;
     int mPart;
+    int mRotation;
     bool mMustSolve;
     Attribute mAttribute;
 };

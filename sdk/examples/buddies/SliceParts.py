@@ -30,7 +30,7 @@ def ProcessImage(image_path, image_dir_output):
 def PasteRotations(image_final, sprites):
     sprite_index = 0
     for i in range(num_rotations):
-        for sprite in [sprite.rotate(i * -(360.0 / num_rotations)) for sprite in sprites]:
+        for sprite in [sprite.rotate(i * (360.0 / num_rotations)) for sprite in sprites]:
             image_final.paste(sprite, (0, sprite_size[1] * sprite_index))
             sprite_index += 1
 
