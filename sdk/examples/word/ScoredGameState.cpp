@@ -34,6 +34,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_Input:
+#if (0) // TODO put in the pause menu
 #ifndef SIFTEO_SIMULATOR
         // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
@@ -42,6 +43,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
             return GameStateIndex_ShuffleScored;
         }
+#endif
 #endif
         break;
 
@@ -136,8 +138,9 @@ void ScoredGameState::createNewAnagram()
                          data.mNewAnagram.mNumBonusAnagrams,
                          data.mNewAnagram.mLeadingSpaces);
 
-    GameStateMachine::setCurrentMaxLettersPerCube(
-            (unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
+    // TODO data-driven
+    GameStateMachine::setCurrentMaxLettersPerCube(2);
+            //(unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
 
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];

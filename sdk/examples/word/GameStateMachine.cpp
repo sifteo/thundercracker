@@ -65,7 +65,10 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
-        mNumAnagramsLeft = data.mNewAnagram.mNumAnagrams;
+        // TODO data driven
+        mNumAnagramsLeft =
+                (data.mNewAnagram.mNumAnagrams > 0) ?
+                    data.mNewAnagram.mNumAnagrams : MIN(2, data.mNewAnagram.mNumBonusAnagrams);
         mNumBonusAnagramsLeft = data.mNewAnagram.mNumBonusAnagrams;
         for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
         {
