@@ -39,7 +39,7 @@ Puzzle::Puzzle(
     , mStartState()
     , mEndState()
 {
-    for (unsigned int i = 0; i < numBuddies; ++i)
+    for (unsigned int i = 0; i < kMaxBuddies; ++i)
     {
         for (unsigned int j = 0; j < NUM_SIDES; ++j)
         {

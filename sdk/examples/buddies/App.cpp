@@ -587,8 +587,8 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle)
             
             for (unsigned int j = 0; j < NUM_SIDES; ++j)
             {
-                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
-                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
+                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(mCubeWrappers[i].GetBuddyId(), j));
+                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(mCubeWrappers[i].GetBuddyId(), j));
             }
         }
     }
@@ -632,15 +632,30 @@ void App::StartGameState(GameState gameState)
     {
         case GAME_STATE_FREE_PLAY:
         {
-            // TODO: Pick to random buddies
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            unsigned int buddyIds[kMaxBuddies];
+            for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
-                }
+                buddyIds[i] = i;
             }
+            
+            // Fisher-Yates Shuffle
+            Random random;
+            for (unsigned int i = arraysize(buddyIds) - 1; i > 0; --i)
+            {
+                int j = random.randrange(i + 1);
+                int temp = buddyIds[j];
+                buddyIds[j] = buddyIds[i];
+                buddyIds[i] = temp;
+            }
+            
+            // Assign IDs to the buddies
+            for (unsigned int i = 0; i < kNumCubes; ++i)
+            {
+                mCubeWrappers[i].SetBuddyId(buddyIds[i]);
+            }
+            
             ResetCubesToPuzzle(GetPuzzleDefault());
+            break;
         }
         case GAME_STATE_SHUFFLE_START:
         {
