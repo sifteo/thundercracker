@@ -1988,3 +1988,14 @@ shoes
 workers
 rope
 were
+tap
+pat
+arm
+ram
+dab
+pan
+nap
+bets
+pets
+ruts
+rust
