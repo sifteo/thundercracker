@@ -668,8 +668,8 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle)
             
             for (unsigned int j = 0; j < NUM_SIDES; ++j)
             {
-                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(mCubeWrappers[i].GetBuddyId(), j));
-                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(mCubeWrappers[i].GetBuddyId(), j));
+                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
+                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
             }
         }
     }

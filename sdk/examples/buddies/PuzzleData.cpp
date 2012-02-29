@@ -73,24 +73,21 @@ Piece kDefaultState[kMaxBuddies][NUM_SIDES] =
 // - BuddyId = [0...kNumCubes)
 // - PartId = [0...NUM_SIDES)
 // - MustSolve = true/false
-// - Attribute = [Piece::ATTR_NONE, Piece::ATTR_FIXED, Piece::ATTR_HIDDEN]
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Piece kStartStateAttributeTest[kNumCubes][NUM_SIDES] =
+Piece kAuthoredStartStateMouths[kMaxBuddies][NUM_SIDES] =
 {
-    // Buddy 0
     {
-        Piece(0, 0, true),                      // Top (Hair)
-        Piece(0, 1, true),                      // Left (Left Eye)
-        Piece(0, 2, true, Piece::ATTR_HIDDEN),  // Bottom (Mouth)
-        Piece(0, 3, true),                      // Right (Right Eye)
+        Piece(0, 0, false),
+        Piece(0, 1, false),
+        Piece(0, 2, false),
+        Piece(0, 3, false),
     },
-    // Buddy 1
-    {   
-        Piece(1, 0, true),
-        Piece(1, 1, true, Piece::ATTR_FIXED),
-        Piece(1, 2, true),
-        Piece(1, 3, true, Piece::ATTR_FIXED),
+    {
+        Piece(1, 0, false),
+        Piece(1, 1, false),
+        Piece(1, 2, false),
+        Piece(1, 3, false),
     },
 };
 
@@ -110,6 +107,54 @@ Piece kAuthoredEndStateMouths[kMaxBuddies][NUM_SIDES] =
     },
 };
 
+Piece kAuthoredStartStateMixedUp[kMaxBuddies][NUM_SIDES] =
+{
+    {
+        Piece(1, 0, false),
+        Piece(1, 1, false),
+        Piece(1, 2, false),
+        Piece(1, 3, false),
+    },
+    {
+        Piece(2, 0, false),
+        Piece(2, 1, false),
+        Piece(2, 2, false),
+        Piece(2, 3, false),
+    },
+};
+
+Piece kAuthoredEndStateMixedUp[kMaxBuddies][NUM_SIDES] =
+{
+    {
+        Piece(1, 0, true),
+        Piece(1, 1, true),
+        Piece(1, 2, true),
+        Piece(1, 3, true),
+    },
+    {
+        Piece(2, 0, true),
+        Piece(2, 1, true),
+        Piece(2, 2, true),
+        Piece(2, 3, true),
+    },
+};
+
+Piece kAuthoredStartStateHair[kMaxBuddies][NUM_SIDES] =
+{
+    {
+        Piece(3, 0, false),
+        Piece(3, 1, false),
+        Piece(3, 2, false),
+        Piece(3, 3, false),
+    },
+    {
+        Piece(4, 0, false),
+        Piece(4, 1, false),
+        Piece(4, 2, false),
+        Piece(4, 3, false),
+    },
+};
+
 Piece kAuthoredEndStateHair[kMaxBuddies][NUM_SIDES] =
 {
     {
@@ -119,10 +164,26 @@ Piece kAuthoredEndStateHair[kMaxBuddies][NUM_SIDES] =
         Piece(3, 3, false),
     },
     {
-        Piece(4, 0, true),
-        Piece(3, 1, false),
-        Piece(3, 2, false),
-        Piece(3, 3, false),
+        Piece(3, 0, true),
+        Piece(4, 1, false),
+        Piece(4, 2, false),
+        Piece(4, 3, false),
+    },
+};
+
+Piece kAuthoredStartStateEyes[kMaxBuddies][NUM_SIDES] =
+{
+    {
+        Piece(5, 0, false),
+        Piece(5, 1, false),
+        Piece(5, 2, false),
+        Piece(5, 3, true),
+    },
+    {
+        Piece(0, 0, false),
+        Piece(0, 1, false),
+        Piece(0, 2, false),
+        Piece(0, 3, false),
     },
 };
 
@@ -196,7 +257,7 @@ const Puzzle kPuzzles[] =
         kBuddiesPuzzle0,
         arraysize(kBuddiesPuzzle0),
         0,
-        kDefaultState,
+        kAuthoredStartStateMouths,
         kAuthoredEndStateMouths),
     Puzzle(
         "All Mixed Up",
@@ -206,8 +267,8 @@ const Puzzle kPuzzles[] =
         kBuddiesPuzzle1,
         arraysize(kBuddiesPuzzle1),
         3,
-        kDefaultState,
-        kDefaultState),
+        kAuthoredStartStateMixedUp,
+        kAuthoredEndStateMixedUp),
     Puzzle(
         "Bad Hair Day",
         "How do I get\ncool hair\nlike you?",
@@ -216,7 +277,7 @@ const Puzzle kPuzzles[] =
         kBuddiesPuzzle2,
         arraysize(kBuddiesPuzzle2),
         0,
-        kDefaultState,
+        kAuthoredStartStateHair,
         kAuthoredEndStateHair),
     Puzzle(
         "Private Eyes",
@@ -226,18 +287,8 @@ const Puzzle kPuzzles[] =
         kBuddiesPuzzle3,
         arraysize(kBuddiesPuzzle3),
         0,
-        kDefaultState,
+        kAuthoredStartStateEyes,
         kAuthoredEndStateEyes),
-    Puzzle(
-        "Attribute\nTest",
-        "This is\nweird...",
-        "SO WEIRD\nright?",
-        "Swap Mouths",
-        kBuddiesPuzzle4,
-        arraysize(kBuddiesPuzzle4),
-        0,
-        kStartStateAttributeTest,
-        kAuthoredEndStateMouths),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
