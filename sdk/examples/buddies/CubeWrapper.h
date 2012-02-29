@@ -63,8 +63,12 @@ public:
     
     // Enable/Disable
     bool IsEnabled() const;
-    void Enable(Sifteo::Cube::ID cubeId, unsigned int buddyId);
+    void Enable(Sifteo::Cube::ID cubeId);
     void Disable();
+    
+    // Buddy
+    unsigned int GetBuddyId() const;
+    void SetBuddyId(unsigned int buddyId);
     
     // Pieces
     const Piece &GetPiece(Sifteo::Cube::Side side) const;

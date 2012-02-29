@@ -337,7 +337,7 @@ void App::Init()
     {
         ASSERT(i < arraysize(mCubeWrappers));
         ASSERT(!mCubeWrappers[i].IsEnabled());
-        mCubeWrappers[i].Enable(i, i % kMaxBuddies);
+        mCubeWrappers[i].Enable(i);
     }
     
 #ifdef SIFTEO_SIMULATOR
@@ -632,10 +632,25 @@ void App::StartGameState(GameState gameState)
     {
         case GAME_STATE_FREE_PLAY:
         {
+            // TODO: Pick to random buddies
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
+                }
+            }
             ResetCubesToPuzzle(GetPuzzleDefault());
         }
         case GAME_STATE_SHUFFLE_START:
         {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
+                }
+            }
             ResetCubesToPuzzle(GetPuzzleDefault());
             mDelayTimer = kStateTimeDelayShort;
             break;
@@ -677,6 +692,13 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_START:
         {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
+                }
+            }
             mStoryPuzzleIndex = 0;
             StartGameState(GAME_STATE_STORY_CHAPTER_START);
             break;

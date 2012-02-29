@@ -88,7 +88,7 @@ void OnFound(void *, _SYSCubeID cid)
 {
     if (!sApp.GetCubeWrapper(cid).IsEnabled())
     {
-        sApp.GetCubeWrapper(cid).Enable(cid, cid % Buddies::kMaxBuddies);
+        sApp.GetCubeWrapper(cid).Enable(cid);
     }
 }
 
