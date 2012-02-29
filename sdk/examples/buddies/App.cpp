@@ -1211,16 +1211,16 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CHAPTER_END:
         {
-            if (mTouching[0] == TOUCH_STATE_BEGIN)
+            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
                 mStoryPuzzleIndex = (mStoryPuzzleIndex + 1) % GetNumPuzzles();
                 StartGameState(GAME_STATE_STORY_CHAPTER_START);
             }
-            else if (mTouching[1] == TOUCH_STATE_BEGIN)
+            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_STORY_CHAPTER_START);
             }
-            else if (mTouching[2] == TOUCH_STATE_BEGIN)
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_MAIN_MENU);
             }
