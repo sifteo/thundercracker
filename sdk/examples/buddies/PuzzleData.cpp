@@ -113,32 +113,32 @@ Piece kAuthoredEndStateMouths[kMaxBuddies][NUM_SIDES] =
 Piece kAuthoredEndStateHair[kMaxBuddies][NUM_SIDES] =
 {
     {
-        Piece(1, 0, true),
-        Piece(0, 1, false),
-        Piece(0, 2, false),
-        Piece(0, 3, false),
+        Piece(4, 0, true),
+        Piece(3, 1, false),
+        Piece(3, 2, false),
+        Piece(3, 3, false),
     },
     {
-        Piece(0, 0, true),
-        Piece(1, 1, false),
-        Piece(1, 2, false),
-        Piece(1, 3, false),
+        Piece(4, 0, true),
+        Piece(3, 1, false),
+        Piece(3, 2, false),
+        Piece(3, 3, false),
     },
 };
 
 Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 {
     {
-        Piece(0, 0, false),
-        Piece(1, 1, true),
-        Piece(0, 2, false),
-        Piece(1, 3, true),
+        Piece(5, 0, false),
+        Piece(0, 1, true),
+        Piece(5, 2, false),
+        Piece(0, 3, true),
     },
     {
-        Piece(1, 0, false),
-        Piece(0, 1, true),
-        Piece(1, 2, false),
-        Piece(0, 3, true),
+        Piece(0, 0, false),
+        Piece(5, 1, true),
+        Piece(0, 2, false),
+        Piece(5, 3, true),
     },
 };
 
@@ -153,23 +153,24 @@ const Puzzle kPuzzleDefault =
         "Default",
         "Default",
         "Default",
-        kNumCubes,
         kBuddyIdsDefault,
+        kNumCubes,
         0,
         kDefaultState,
         kDefaultState);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Here are all of our puzzles. Each puzzle has the number of cubes it uses, a string for
-// instrunctions, the start state, and the end state. Just use kNumCubes for the number of buddies
-// for now. Be aware that the instructions currently only support two lines of 16 characters each.
+// instrunctions, the start state, and the end state. Be aware that the instructions currently
+// only support two lines of 16 characters each.
 //
 // Puzzle(
 //     CHAPTER_TITLE,
 //     CUTSCENE_TEXT_START,
 //     CUTSCENE_TEXT_END,
 //     CLUE,
-//     NUMBER_OF_CUBES,
+//     BUDDY_ARRAY,
+//     NUMBER_OF_BUDDIES,
 //     NUMBER_OF_SHUFFLES,
 //     START_STATE,
 //     END_STATE);
@@ -179,11 +180,11 @@ const Puzzle kPuzzleDefault =
 // all are solved.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const unsigned int kBuddyIdsTest0[] = {0, 1};
-const unsigned int kBuddyIdsTest1[] = {1, 2};
-const unsigned int kBuddyIdsTest2[] = {3, 4};
-const unsigned int kBuddyIdsTest3[] = {5, 0};
-const unsigned int kBuddyIdsTest4[] = {1, 3};
+const unsigned int kBuddiesPuzzle0[] = {0, 1};
+const unsigned int kBuddiesPuzzle1[] = {1, 2};
+const unsigned int kBuddiesPuzzle2[] = {3, 4};
+const unsigned int kBuddiesPuzzle3[] = {5, 0};
+const unsigned int kBuddiesPuzzle4[] = {0, 1};
 
 const Puzzle kPuzzles[] =
 {
@@ -192,8 +193,8 @@ const Puzzle kPuzzles[] =
         "Gimme a kiss!",
         "Muuuahhh",
         "Swap Mouths",
-        2,
-        kBuddyIdsTest0,
+        kBuddiesPuzzle0,
+        arraysize(kBuddiesPuzzle0),
         0,
         kDefaultState,
         kAuthoredEndStateMouths),
@@ -202,8 +203,8 @@ const Puzzle kPuzzles[] =
         "Let's get\nCRAZY!",
         "My head\nhurts.",
         "Unscramble",
-        2,
-        kBuddyIdsTest1,
+        kBuddiesPuzzle1,
+        arraysize(kBuddiesPuzzle1),
         3,
         kDefaultState,
         kDefaultState),
@@ -212,8 +213,8 @@ const Puzzle kPuzzles[] =
         "How do I get\ncool hair\nlike you?",
         "That's much\nbetter.",
         "Swap Hair",
-        2,
-        kBuddyIdsTest2,
+        kBuddiesPuzzle2,
+        arraysize(kBuddiesPuzzle2),
         0,
         kDefaultState,
         kAuthoredEndStateHair),
@@ -222,8 +223,8 @@ const Puzzle kPuzzles[] =
         "See the world\nfrom my eyes!",
         "That's much\nbetter.",
         "Swap Eyes",
-        2,
-        kBuddyIdsTest3,
+        kBuddiesPuzzle3,
+        arraysize(kBuddiesPuzzle3),
         0,
         kDefaultState,
         kAuthoredEndStateEyes),
@@ -232,8 +233,8 @@ const Puzzle kPuzzles[] =
         "This is\nweird...",
         "SO WEIRD\nright?",
         "Swap Mouths",
-        2,
-        kBuddyIdsTest4,
+        kBuddiesPuzzle4,
+        arraysize(kBuddiesPuzzle4),
         0,
         kStartStateAttributeTest,
         kAuthoredEndStateMouths),

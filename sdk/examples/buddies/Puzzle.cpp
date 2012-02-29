@@ -26,8 +26,8 @@ Puzzle::Puzzle(
     const char *cutsceneTextStart,
     const char *cutsceneTextEnd,
     const char *clue,
+    const unsigned int buddies[],
     unsigned int numBuddies,
-    const unsigned int buddyIds[],
     unsigned int numShuffles,
     const Piece startState[kMaxBuddies][NUM_SIDES],
     const Piece endState[kMaxBuddies][NUM_SIDES])
@@ -35,15 +35,16 @@ Puzzle::Puzzle(
     , mCutsceneTextStart(cutsceneTextStart)
     , mCutsceneTextEnd(cutsceneTextEnd)
     , mClue(clue)
+    , mBuddies()
     , mNumBuddies(numBuddies)
-    , mBuddyIds()
     , mNumShuffles(numShuffles)
     , mStartState()
     , mEndState()
 {
-    for (unsigned int i = 0; i < numBuddies; ++i)
+    ASSERT(mNumBuddies < arraysize(mBuddies));
+    for (unsigned int i = 0; i < mNumBuddies; ++i)
     {
-        mBuddyIds[i] = buddyIds[i];
+        mBuddies[i] = buddies[i];
     }
     
     for (unsigned int i = 0; i < kMaxBuddies; ++i)
@@ -91,17 +92,18 @@ const char *Puzzle::GetClue() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int Puzzle::GetNumBuddies() const
+unsigned int Puzzle::GetBuddy(unsigned int buddyIndex) const
 {
-    return mNumBuddies;
+    ASSERT(buddyIndex < arraysize(mBuddies) && buddyIndex < mNumBuddies);
+    return mBuddies[buddyIndex];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int Puzzle::GetBuddyId(unsigned int buddyIdIndex) const
+unsigned int Puzzle::GetNumBuddies() const
 {
-    return mBuddyIds[buddyIdIndex];
+    return mNumBuddies;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -552,7 +552,7 @@ void App::OnTilt(Cube::ID cubeId)
     {
         if (mSwapState == SWAP_STATE_NONE)
         {
-            assert(cubeId < arraysize(mCubeWrappers));
+            ASSERT(cubeId < arraysize(mCubeWrappers));
             Cube::TiltState tiltState = mCubeWrappers[cubeId].GetTiltState();
             
             mCubeWrappers[cubeId].SetPieceOffset(
@@ -658,15 +658,13 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle)
 {
     ASSERT(kNumCubes >= GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
     
-    unsigned int buddyIdIndex = 0;
-    
     for (unsigned int i = 0; i < puzzle.GetNumBuddies(); ++i)
     {
         ASSERT(i < arraysize(mCubeWrappers));
         if (mCubeWrappers[i].IsEnabled())
         {
             mCubeWrappers[i].Reset();
-            mCubeWrappers[i].SetBuddyId(puzzle.GetBuddyId(buddyIdIndex++));
+            mCubeWrappers[i].SetBuddyId(puzzle.GetBuddy(i));
             
             for (unsigned int j = 0; j < NUM_SIDES; ++j)
             {
