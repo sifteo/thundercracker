@@ -83,6 +83,9 @@ public:
     void StartPieceBlinking(Sifteo::Cube::Side side);
     void StopPieceBlinking();
     
+    // Tilt
+    Sifteo::Cube::TiltState GetTiltState() const;
+    
     // State
     bool IsSolved() const;
     bool IsTouching() const;

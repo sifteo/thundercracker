@@ -512,7 +512,20 @@ void App::OnNeighborAdd(
 
 void App::OnTilt(Cube::ID cubeId)
 {
-    if(mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES)
+    if (mGameState == GAME_STATE_FREE_PLAY)
+    {
+        if (mSwapState == SWAP_STATE_NONE)
+        {
+            assert(cubeId < arraysize(mCubeWrappers));
+            Cube::TiltState tiltState = mCubeWrappers[cubeId].GetTiltState();
+            
+            mCubeWrappers[cubeId].SetPieceOffset(SIDE_TOP,     (tiltState.y - 1) * VidMode::TILE);
+            mCubeWrappers[cubeId].SetPieceOffset(SIDE_LEFT,    (tiltState.x - 1) * VidMode::TILE);
+            mCubeWrappers[cubeId].SetPieceOffset(SIDE_BOTTOM, -(tiltState.y - 1) * VidMode::TILE);
+            mCubeWrappers[cubeId].SetPieceOffset(SIDE_RIGHT,  -(tiltState.x - 1) * VidMode::TILE);
+        }
+    }
+    else if (mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES)
     {
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
@@ -1553,6 +1566,9 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
     mSwapPiece1 = swapPiece1;
     mSwapState = SWAP_STATE_OUT;
     mSwapAnimationCounter = kSwapAnimationCount;
+    
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, 0);
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, 0);
     
     mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = 0.0f;
     mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = 0.0f;
