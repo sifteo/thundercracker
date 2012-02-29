@@ -1670,15 +1670,22 @@ void App::UpdateSwap(float dt)
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
                 Vec2(0, -kSwapAnimationCount + mSwapAnimationCounter));
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(0, -kSwapAnimationCount + mSwapAnimationCounter));
         }
-        else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
+         else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
                 Vec2(-kSwapAnimationCount + mSwapAnimationCounter, 0));
+        }
+        
+        if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
+        {        
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+                mSwapPiece1 % NUM_SIDES,
+                Vec2(0, -kSwapAnimationCount + mSwapAnimationCounter));
+        }
+        else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
+        {
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
                 Vec2(-kSwapAnimationCount + mSwapAnimationCounter, 0));
@@ -1698,15 +1705,22 @@ void App::UpdateSwap(float dt)
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
                 Vec2(0, -mSwapAnimationCounter));
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(0, -mSwapAnimationCounter));
         }
         else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
                 Vec2(-mSwapAnimationCounter, 0));
+        }
+        
+        if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
+        {
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+                mSwapPiece1 % NUM_SIDES,
+                Vec2(0, -mSwapAnimationCounter));
+        }
+        else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
+        {
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
                 Vec2(-mSwapAnimationCounter, 0));
