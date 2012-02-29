@@ -77,8 +77,8 @@ public:
     const Piece &GetPieceSolution(Sifteo::Cube::Side side) const;
     void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
     
-    int GetPieceOffset(Sifteo::Cube::Side side) const;
-    void SetPieceOffset(Sifteo::Cube::Side side, int offset);
+    const Vec2 &GetPieceOffset(Sifteo::Cube::Side side) const;
+    void SetPieceOffset(Sifteo::Cube::Side side, const Vec2 &offset);
     
     void StartPieceBlinking(Sifteo::Cube::Side side);
     void StopPieceBlinking();
@@ -103,7 +103,7 @@ private:
     unsigned int mBuddyId;
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
-    int mPieceOffsets[NUM_SIDES];
+    Vec2 mPieceOffsets[NUM_SIDES];
     float mPieceAnimT;
     Sifteo::Cube::Side mPieceBlinking;
     float mPieceBlinkTimer;

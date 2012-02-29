@@ -97,7 +97,7 @@ CubeWrapper::CubeWrapper()
 {
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
-        mPieceOffsets[i] = 0;
+        mPieceOffsets[i] = Vec2(0, 0);
     }
 }
 
@@ -110,7 +110,7 @@ void CubeWrapper::Reset()
     {
         mPieces[i] = Piece();
         mPiecesSolution[i] = Piece();
-        mPieceOffsets[i] = 0;
+        mPieceOffsets[i] = Vec2(0, 0);
     }
     mPieceAnimT = 0.0f;
     mPieceBlinking = SIDE_UNDEFINED;
@@ -389,7 +389,7 @@ void CubeWrapper::SetPieceSolution(Cube::Side side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-int CubeWrapper::GetPieceOffset(Cube::Side side) const
+const Vec2 &CubeWrapper::GetPieceOffset(Cube::Side side) const
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -399,7 +399,7 @@ int CubeWrapper::GetPieceOffset(Cube::Side side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceOffset(Cube::Side side, int offset)
+void CubeWrapper::SetPieceOffset(Cube::Side side, const Vec2 &offset)
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -497,22 +497,26 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     {
         case SIDE_TOP:
         {
-            point.y += mPieceOffsets[side];
+            point.x += mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
             break;
         }
         case SIDE_LEFT:
         {
-            point.x += mPieceOffsets[side];
+            point.x += mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
             break;
         }
         case SIDE_BOTTOM:
         {
-            point.y -= mPieceOffsets[side];
+            point.x -= mPieceOffsets[side].x;
+            point.y -= mPieceOffsets[side].y;
             break;
         }
         case SIDE_RIGHT:
         {
-            point.x -= mPieceOffsets[side];
+            point.x -= mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
             break;
         }
     }
