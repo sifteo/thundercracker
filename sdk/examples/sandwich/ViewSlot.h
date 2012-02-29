@@ -40,22 +40,21 @@ public:
 	inline MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
 
 	void Init();
-	void Restore();
+	void Restore(bool doFlush=true);
 	void Update(float dt);
   
   	void HideSprites();
 
-	bool ShowLocation(Vec2 location);
-	bool HideLocation();
+	bool ShowLocation(Vec2 location, bool doFlush=true);
+	bool HideLocation(bool doFlush=true);
 
-	void ShowInventory();
-	void RefreshInventory();
+	void RefreshInventory(bool doFlush=true);
 
 	Cube::Side VirtualTiltDirection() const;
 	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
 private:
-	void SetView(unsigned viewId, unsigned rig=0);
+	void SetView(unsigned viewId, bool doFlush, unsigned rig=0);
 	ViewSlot* FindIdleView();
 };
 

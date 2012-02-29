@@ -101,9 +101,7 @@ void RoomView::ShowPlayer() {
   ViewMode gfx = Parent()->Graphics();
   gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   if (pGame->GetPlayer()->Equipment()) {
-    const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
-    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
-    //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
+    gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, pGame->GetPlayer()->Equipment()->itemId);
     gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
   }
   UpdatePlayer();
@@ -144,8 +142,7 @@ void RoomView::ShowItem() {
   Room* pRoom = GetRoom();
   ASSERT(pRoom->HasItem());
   ViewMode mode = Parent()->Graphics();
-  const InventoryData& inv = gInventoryData[pRoom->TriggerAsItem()->itemId];
-  mode.setSpriteImage(TRIGGER_SPRITE_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
   mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
   Vec2 p = 16 * pRoom->LocalCenter(0);
   mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
@@ -154,9 +151,7 @@ void RoomView::ShowItem() {
 void RoomView::SetEquipPosition(Vec2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
   ViewMode gfx = Parent()->Graphics();
-  const InventoryData &inv = gInventoryData[pGame->GetPlayer()->Equipment()->itemId];
-  gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, (EquipmentIcons.frames>>1) + inv.storageId);
-  //gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // hack
+  gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, pGame->GetPlayer()->Equipment()->itemId);
   gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
 }
   

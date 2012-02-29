@@ -13,9 +13,7 @@ PlayerIdle = image{"idle.png", width=32, height=32, pinned=true}
 
 Butterfly = image{"butterfly.png", width=8, height=8, pinned=true}
 
-InventoryIcons = image{"items.png", width=16, height=16, pinned=true}
-KeyIcons = image{"keys.png", width=16, height=16, pinned=true}
-EquipmentIcons = image{"equipment.png", width=16, height=16, pinned=true}
+Items = image{"items.png", width=16, height=16, pinned=true}
 
 InventoryReticle = image{"inventory_reticle.png", width=32, height=32}
 

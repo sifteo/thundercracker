@@ -180,7 +180,7 @@ Cube* IntroCutscene() {
 	const int innerPad = (128 - pad - pad) / 3;
 	for(unsigned i = 0; i < 4; ++i) {
 		int x = pad + innerPad * i - 8;
-		mode.setSpriteImage(i+1, InventoryIcons.index + (i<<2));
+		mode.setSpriteImage(i+1, Items, i);
 		mode.resizeSprite(i+1, 16, 16);
 		// jump
 		//PlaySfx(sfx_pickup);

@@ -20,7 +20,6 @@ void Game::MainLoop(Cube* pPrimary) {
   
   //---------------------------------------------------------------------------
   // RESET EVERYTHING
-  //mSimFrames = 0;
   pInventory = 0;
   pMinimap = 0;
   mAnimFrames = 0;
@@ -67,7 +66,8 @@ void Game::MainLoop(Cube* pPrimary) {
       mMap.GetBroadLocationNeighbor(*mPlayer.Current(), mPlayer.Direction(), mPlayer.Target());
       PlaySfx(sfx_running);
       mPlayer.TargetView()->ShowPlayer();
-      if (mPlayer.Direction() == SIDE_TOP && mPlayer.GetRoom()->HasClosedDoor()) {
+      // TODO: Walking South Through Door?
+      if (mPlayer.Direction() == SIDE_TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
 
         //---------------------------------------------------------------------
         // WALKING NORTH THROUGH DOOR
@@ -76,16 +76,18 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.Move(0, -WALK_SPEED);
           Paint();
         }
-        if (mState.HasBasicKey()) {
-          mState.DecrementBasicKeyCount();
-          if (!mState.HasBasicKey()) { OnInventoryChanged(); }
-          // check the door
-          mPlayer.GetRoom()->OpenDoor();
+
+        if (mPlayer.HasBasicKey()) {
+          mPlayer.UseBasicKey();
+          mPlayer.CurrentRoom()->OpenDoor();
           mPlayer.CurrentView()->DrawBackground();
-          mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
-          mPlayer.CurrentView()->UpdatePlayer();
+          mPlayer.CurrentView()->HideEquip();
           float timeout = System::clock();
-          NeedsSync();
+          #if GFX_ARTIFACT_WORKAROUNDS
+            Paint(true);
+            mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
+          #endif
+          Paint(true);
           do {
             Paint();
           } while(System::clock() - timeout <  0.5f);
@@ -422,8 +424,8 @@ void Game::OnInventoryChanged() {
 
 void Game::OnPickup(Room *pRoom) {
   const ItemData* pItem = pRoom->TriggerAsItem();
-  const InventoryData &inv = gInventoryData[pItem->itemId];
-  if (inv.storageType == STORAGE_EQUIPMENT) {
+  const ItemTypeData &itemType = gItemTypeData[pItem->itemId];
+  if (itemType.storageType == STORAGE_EQUIPMENT) {
 
     //---------------------------------------------------------------------------
     // PLAYER TRIGGERED EQUIP PICKUP
@@ -451,7 +453,7 @@ void Game::OnPickup(Room *pRoom) {
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
-      gInventoryData[pItem->itemId].description, 
+      itemType.description, 
       mPlayer.CurrentView()->Parent()
     );
   } else {
@@ -480,7 +482,7 @@ void Game::OnPickup(Room *pRoom) {
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
-      gInventoryData[pItem->itemId].description, 
+      itemType.description, 
       mPlayer.CurrentView()->Parent()
     );
     mPlayer.CurrentView()->HideItem();        
@@ -615,32 +617,57 @@ void Game::OnUseEquipment() {
 // NEIGHBOR WALKING
 //------------------------------------------------------------------
 
-static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
-  if (!view || visited[view->GetCubeID()]) { return; }
-  visited[view->GetCubeID()] = true;
-  if (view->ShowLocation(loc)) {
-    PlaySfx(sfx_neighbor);
-  }
+#define VIEW_UNVISITED 0
+#define VIEW_UNCHANGED 1
+#define VIEW_CHANGED 2
+
+static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
+  if (!view || visited[view->GetCubeID()]) { return false; }
+  bool result = view->ShowLocation(loc, false);
+  visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
   if (origin) {
     view->GetCube()->orientTo(*(origin->GetCube()));
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
+    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }
+  return result;
 }
 
 void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  VisitMapView(visited, mPlayer.View(), mPlayer.Location());
+  bool chchchchanges = VisitMapView(visited, mPlayer.View(), mPlayer.Location());
   
+  if (chchchchanges) {
+    PlaySfx(sfx_neighbor);
+  }
+
+  bool otherChanges = false;
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!visited[v->GetCubeID()]) { 
-      if (v->HideLocation()) {
-        PlaySfx(sfx_deNeighbor);
-      }
+    if (!visited[v->GetCubeID()] && v->HideLocation(false)) { 
+      otherChanges = true;
+      visited[v->GetCubeID()] = VIEW_CHANGED;
     }
+  }
+
+  if (otherChanges && !chchchchanges) {
+    PlaySfx(sfx_deNeighbor);    
   }
   
   sNeighborDirty = false;
+
+  if (chchchchanges || otherChanges) {
+    #if GFX_ARTIFACT_WORKAROUNDS
+      Paint(true);
+      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
+        if (visited[v->GetCubeID()] == VIEW_CHANGED) {
+          v->GetCube()->vbuf.touch();
+        }
+      }
+    #endif
+    Paint(true);
+  }
+
+
 }
