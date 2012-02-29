@@ -11,10 +11,12 @@ void GameState::Init() {
 bool GameState::AdvanceQuest() {
 	#if PLAYTESTING_HACKS
 	mQuest = (mQuest + 1) % gQuestCount;
+	mQuestMask = 0;
 	return true;
 	#else
 	if (mQuest < gQuestCount) {
 		mQuest++;
+		mQuestMask = 0;
 		Save();
 		return true;
 	}
