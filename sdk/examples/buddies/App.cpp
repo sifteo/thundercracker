@@ -285,6 +285,20 @@ bool IsBuddyUsed(App &app, unsigned buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
+{
+    int rotation = side - piece.mPart;
+    if (rotation < 0)
+    {
+        rotation += NUM_SIDES;
+    }
+    
+    return piece.mRotation == rotation;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
@@ -1735,7 +1749,56 @@ void App::UpdateSwap(float dt)
         
         if (done)
         {
-            OnSwapFinish();
+            const Piece &piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
+            const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
+            
+            if (IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
+                IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+            {
+                OnSwapFinish();
+            }
+            else
+            {
+                mSwapState = SWAP_STATE_ROTATE;
+                mDelayTimer = kSwapAnimationTurn;
+            }
+        }
+    }
+    else if (mSwapState == SWAP_STATE_ROTATE)
+    {
+        if (UpdateTimer(mDelayTimer, dt))
+        {
+            Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
+            Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
+            
+            if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
+            {
+                if (--piece0.mRotation < 0)
+                {
+                    piece0.mRotation += NUM_SIDES;
+                }
+            }
+        
+            if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+            {
+                if (--piece1.mRotation < 0)
+                {
+                    piece1.mRotation += NUM_SIDES;
+                }
+            }
+            
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+            
+            if (IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
+                IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+            {
+                OnSwapFinish();
+            }
+            else
+            {
+                mDelayTimer += kSwapAnimationTurn;
+            }
         }
     }
 }
@@ -1768,18 +1831,6 @@ void App::OnSwapExchange()
     Piece temp = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
     Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
     Piece piece1 = temp;
-    
-    piece0.mRotation = int(mSwapPiece0 % NUM_SIDES) - piece0.mPart;
-    if (piece0.mRotation < 0)
-    {
-        piece0.mRotation += NUM_SIDES;
-    }
-    
-    piece1.mRotation = int(mSwapPiece1 % NUM_SIDES) - piece1.mPart;
-    if (piece1.mRotation < 0)
-    {
-        piece1.mRotation += NUM_SIDES;
-    }
     
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);

@@ -25,6 +25,7 @@ const unsigned int kMaxBuddies = 6; // Number of characters
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;
 const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
+const float kSwapAnimationTurn = 0.5f;
 const float kPieceAnimX = 0.0f;
 const float kPieceAnimY = 0.0f;
 const float kPieceAnimPeriod = 1.0f;
