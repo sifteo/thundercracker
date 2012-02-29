@@ -27,6 +27,7 @@ Puzzle::Puzzle(
     const char *cutsceneTextEnd,
     const char *clue,
     unsigned int numBuddies,
+    const unsigned int buddyIds[],
     unsigned int numShuffles,
     const Piece startState[kMaxBuddies][NUM_SIDES],
     const Piece endState[kMaxBuddies][NUM_SIDES])
@@ -35,10 +36,16 @@ Puzzle::Puzzle(
     , mCutsceneTextEnd(cutsceneTextEnd)
     , mClue(clue)
     , mNumBuddies(numBuddies)
+    , mBuddyIds()
     , mNumShuffles(numShuffles)
     , mStartState()
     , mEndState()
 {
+    for (unsigned int i = 0; i < numBuddies; ++i)
+    {
+        mBuddyIds[i] = buddyIds[i];
+    }
+    
     for (unsigned int i = 0; i < kMaxBuddies; ++i)
     {
         for (unsigned int j = 0; j < NUM_SIDES; ++j)
@@ -87,6 +94,14 @@ const char *Puzzle::GetClue() const
 unsigned int Puzzle::GetNumBuddies() const
 {
     return mNumBuddies;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Puzzle::GetBuddyId(unsigned int buddyIdIndex) const
+{
+    return mBuddyIds[buddyIdIndex];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

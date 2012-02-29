@@ -146,6 +146,7 @@ Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 // This is the default state (all buddies with their original parts in the right position).
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const unsigned int kBuddyIdsDefault[] = {0, 1, 2, 3, 4, 5};
 const Puzzle kPuzzleDefault =
     Puzzle(
         "Default",
@@ -153,6 +154,7 @@ const Puzzle kPuzzleDefault =
         "Default",
         "Default",
         kNumCubes,
+        kBuddyIdsDefault,
         0,
         kDefaultState,
         kDefaultState);
@@ -177,6 +179,12 @@ const Puzzle kPuzzleDefault =
 // all are solved.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const unsigned int kBuddyIdsTest0[] = {0, 1};
+const unsigned int kBuddyIdsTest1[] = {1, 2};
+const unsigned int kBuddyIdsTest2[] = {3, 4};
+const unsigned int kBuddyIdsTest3[] = {5, 0};
+const unsigned int kBuddyIdsTest4[] = {1, 3};
+
 const Puzzle kPuzzles[] =
 {
     Puzzle(
@@ -185,6 +193,7 @@ const Puzzle kPuzzles[] =
         "Muuuahhh",
         "Swap Mouths",
         2,
+        kBuddyIdsTest0,
         0,
         kDefaultState,
         kAuthoredEndStateMouths),
@@ -194,6 +203,7 @@ const Puzzle kPuzzles[] =
         "My head\nhurts.",
         "Unscramble",
         2,
+        kBuddyIdsTest1,
         3,
         kDefaultState,
         kDefaultState),
@@ -203,6 +213,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Hair",
         2,
+        kBuddyIdsTest2,
         0,
         kDefaultState,
         kAuthoredEndStateHair),
@@ -212,6 +223,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Eyes",
         2,
+        kBuddyIdsTest3,
         0,
         kDefaultState,
         kAuthoredEndStateEyes),
@@ -221,6 +233,7 @@ const Puzzle kPuzzles[] =
         "SO WEIRD\nright?",
         "Swap Mouths",
         2,
+        kBuddyIdsTest4,
         0,
         kStartStateAttributeTest,
         kAuthoredEndStateMouths),
