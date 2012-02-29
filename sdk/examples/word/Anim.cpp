@@ -11,6 +11,7 @@ enum AnimIndex
     AnimIndex_Tile1NewWord,
     AnimIndex_Tile1EndofRoundScored,
     AnimIndex_Tile1ShuffleScored,
+    AnimIndex_Tile1CityProgression,
 
     AnimIndex_Tile2Idle,
     AnimIndex_Tile2SlideL,
@@ -19,6 +20,7 @@ enum AnimIndex
     AnimIndex_Tile2NewWord,
     AnimIndex_Tile2EndofRoundScored,
     AnimIndex_Tile2ShuffleScored,
+    AnimIndex_Tile2CityProgression,
 
     AnimIndex_Tile3Idle,
     AnimIndex_Tile3SlideL,
@@ -27,16 +29,24 @@ enum AnimIndex
     AnimIndex_Tile3NewWord,
     AnimIndex_Tile3EndofRoundScored,
     AnimIndex_Tile3ShuffleScored,
+    AnimIndex_Tile3CityProgression,
 
     NumAnimIndexes
 };
 
+enum Layer
+{
+    Layer_BG0,
+    Layer_Sprite,
+    Layer_BG1,
+};
 
 struct AnimObjData
 {
     const AssetImage *mAsset;
     const AssetImage *mAltAsset;
-    uint32_t mInvisibleFrames; // bitmask
+    Layer mLayer : 2;
+    uint16_t mInvisibleFrames; // bitmask
     unsigned char mNumFrames;
     const Vec2 *mPositions;
 };
@@ -53,7 +63,6 @@ struct AnimData
 // FIXME reuse stuff with indexing
 const static Vec2 positions[] =
 {
-
     Vec2(2, 2),
     Vec2(8, 2),
     Vec2(7, 2),
@@ -64,7 +73,7 @@ const static Vec2 positions[] =
     Vec2(2, 2),
     Vec2(2, 2),
     Vec2(2, 2),
-    Vec2(2, 2),
+    Vec2(2, 2), // [10]
     Vec2(3, 2),
     Vec2(4, 2),
     Vec2(5, 2),
@@ -74,31 +83,35 @@ const static Vec2 positions[] =
     Vec2(8, 2),
     Vec2(8, 2),
     Vec2(8, 2),
-    Vec2(7, 2),
+    Vec2(7, 2), // [20]
     Vec2(6, 2),
     Vec2(5, 2),
     Vec2(4, 2),
     Vec2(3, 2),
     Vec2(2, 2),
+    Vec2(3, 3), // [26]
 };
 
 const static AnimObjData animObjData[] =
 {
     // AnimIndex_Tile2Idle
-    { &Tile2, &Tile2, 0x0, 1, &positions[0]},
-    { &Tile2, &Tile2, 0x0, 1, &positions[1]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 1, &positions[0]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 1, &positions[1]},
 
     // AnimIndex_Tile2SlideL
-    { &Tile2, &Tile2, 0x0, 10, &positions[7]},
-    { &Tile2, &Tile2, 0x0, 7, &positions[2]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 10, &positions[7]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 7, &positions[2]},
 
     // AnimIndex_Tile2SlideR
-    { &Tile2, &Tile2, 0x0, 7, &positions[10]},
-    { &Tile2, &Tile2, 0x0, 10, &positions[16]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 7, &positions[10]},
+    { &Tile2, &Tile2, Layer_BG0, 0x0, 10, &positions[16]},
 
     // AnimIndex_Tile2OldWord
-    { &Tile2Glow, &Tile2, 0x0, 1, &positions[0]},
-    { &Tile2Glow, &Tile2, 0x0, 1, &positions[1]},
+    { &Tile2Glow, &Tile2, Layer_BG0, 0x0, 1, &positions[0]},
+    { &Tile2Glow, &Tile2, Layer_BG0, 0x0, 1, &positions[1]},
+
+    // CityProgression
+    { &LevelComplete, &LevelComplete, Layer_BG1, 0x0, 1, &positions[26]},
 };
 
 const static AnimData animData[] =
@@ -118,25 +131,25 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1ShuffleScored,
     { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile1CityProgression
+    { 1.f, true, 1, &animObjData[0]},
 
     // AnimIndex_Tile2Idle
     { 1.f, true, 2, &animObjData[0]},
-
     // AnimIndex_Tile2SlideL
     { 1.f, false, 2, &animObjData[2]},
-
     // AnimIndex_Tile2SlideR
     { 1.f, false, 2, &animObjData[4]},
-
     // AnimIndex_Tile2OldWord
     { 1.f, true, 2, &animObjData[6]},
-
     //AnimIndex_Tile2NewWord,
     { 1.f, true, 2, &animObjData[6]},
     //AnimIndex_Tile2EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile2ShuffleScored,
     { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile2CityProgression
+    { 1.f, true, 1, &animObjData[8]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
@@ -152,6 +165,8 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3ShuffleScored,
     { 1.f, true, 2, &animObjData[0]},
+    //AnimIndex_Tile3CityProgression
+    { 1.f, true, 1, &animObjData[8]},
 
 };
 
@@ -220,25 +235,24 @@ bool animPaint(AnimType animT,
             }
         }
 
-        if (fontFrame < font.frames)
+        if (fontFrame < font.frames && objData.mLayer == Layer_BG0)
         {
             Vec2 letterPos(pos);
             letterPos.y += 3; // TODO
             vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
             bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
         }
-        else
+        else if (objData.mLayer == Layer_BG0)
         {
             vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
         }
-
-        switch (anim)
+        else if (objData.mLayer == Layer_BG1)
         {
-        case AnimIndex_Tile2SlideL:
-            break;
-
-        default:
-            break;
+            bg1->DrawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+        }
+        else
+        {
+            ASSERT(0);// unhandled layer
         }
     }
 

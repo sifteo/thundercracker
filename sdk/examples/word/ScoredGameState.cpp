@@ -18,10 +18,17 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
             GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0)
         {
-            // wait for all the cube states to exit the new word state
-            // then shuffle
-            WordGame::playAudio(shake, AudioChannelIndex_Shake);
-            return GameStateIndex_ShuffleScored;
+            if (Dictionary::isMetapuzzle())
+            {
+                return GameStateIndex_StoryCityProgression;
+            }
+            else
+            {
+                // wait for all the cube states to exit the new word state
+                // then shuffle
+                WordGame::playAudio(shake, AudioChannelIndex_Shake);
+                return GameStateIndex_ShuffleScored;
+            }
         }
 
         return GameStateIndex_PlayScored;

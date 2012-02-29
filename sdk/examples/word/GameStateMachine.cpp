@@ -186,6 +186,9 @@ State& GameStateMachine::getState(unsigned index)
 
     case GameStateIndex_ShuffleScored:
         return mScoredShuffleState;
+
+    case GameStateIndex_StoryCityProgression:
+        return mStoryCityProgressionState;
     }
 }
 

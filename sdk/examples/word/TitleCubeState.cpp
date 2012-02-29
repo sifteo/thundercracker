@@ -108,9 +108,10 @@ void TitleCubeState::paint()
         }
         break;
 #endif
+
     default:
     case 1:
-        vid.BG0_drawAsset(Vec2(0, 0), Title);
+        vid.BG0_drawAsset(Vec2(0, 0), TileBG);
         if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
         {
             const float ANIM_LENGTH = 1.0f;
@@ -122,7 +123,7 @@ void TitleCubeState::paint()
             frame = MIN(frame, anim.frames - 1);
 
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(5, 2), anim, frame);
+            bg1.DrawAsset(Vec2(5, 4), anim, frame);
             bg1.Flush(); // TODO only flush if mask has changed recently
             WordGame::instance()->setNeedsPaintSync();
         }

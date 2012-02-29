@@ -75,3 +75,5 @@ Anim.h
 Anim.cpp
 LevelProgressData.h
 Constants.h
+StoryGameState_CityProgression.h
+StoryGameState_CityProgression.cpp

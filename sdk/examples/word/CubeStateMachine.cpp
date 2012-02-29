@@ -124,9 +124,15 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case GameStateIndex_EndOfRoundScored:
             queueAnim(AnimType_EndofRound);
+            break;
 
         case GameStateIndex_ShuffleScored:
             queueAnim(AnimType_Shuffle);
+            break;
+
+        case GameStateIndex_StoryCityProgression:
+            queueAnim(AnimType_CityProgression);
+            break;
         }
         break;
 
@@ -178,12 +184,12 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_LetterOrderChange:
         switch (mAnimType)
         {
-        case AnimType_SlideL:
-        case AnimType_SlideR:
+        default:
         case AnimType_NewWord: // see ::update (wait for min display time)
             break;
 
-        default:
+        case AnimType_NotWord:
+        case AnimType_OldWord:
             {
                 bool isOldWord = false;
                 if (canBeginWord())
@@ -624,6 +630,7 @@ void CubeStateMachine::paint()
     BG1Helper bg1(c);
     paintLetters(vid, bg1, Font1Letter, true);
     vid.BG0_setPanning(Vec2(0.f, 0.f));
+
     /* not word
     Cube& c = getCube();
     // FIXME vertical words

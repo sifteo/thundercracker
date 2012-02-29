@@ -1,6 +1,7 @@
 GameAssets = group{}
 
 Star = image{"star-8.png", pinned=true, width=8, height=8, quality=10}
+LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}

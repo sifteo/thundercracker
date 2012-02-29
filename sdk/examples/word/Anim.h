@@ -14,6 +14,7 @@ enum AnimType
     AnimType_NewWord,
     AnimType_EndofRound,
     AnimType_Shuffle,
+    AnimType_CityProgression,
 
     NumAnimTypes
 };

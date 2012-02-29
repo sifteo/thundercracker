@@ -8,6 +8,7 @@
 #include "ScoredGameState_StartOfRound.h"
 #include "ScoredGameState_EndOfRound.h"
 #include "ScoredGameState_Shuffle.h"
+#include "StoryGameState_CityProgression.h"
 #include "CubeStateMachine.h"
 #include "Utility.h"
 #include "LevelProgressData.h"
@@ -22,6 +23,7 @@ enum GameStateIndex
     GameStateIndex_StartOfRoundScored,
     GameStateIndex_EndOfRoundScored,
     GameStateIndex_ShuffleScored,
+    GameStateIndex_StoryCityProgression,
 
     GameStateIndex_NumStates
 };
@@ -67,6 +69,7 @@ private:
     ScoredGameState_StartOfRound mScoredStartOfRoundState;
     ScoredGameState_EndOfRound mScoredEndOfRoundState;
     ScoredGameState_Shuffle mScoredShuffleState;
+    StoryGameState_CityProgression mStoryCityProgressionState;
     CubeStateMachine mCubeStateMachines[NUM_CUBES];
     float mAnagramCooldown;
     float mTimeLeft;

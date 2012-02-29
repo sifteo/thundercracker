@@ -14,7 +14,7 @@ public:
     static bool isWord(const char* string, bool& isCommon);
     static bool isOldWord(const char* word);
     static bool trim(const char* word, char* buffer);
-
+    static bool isMetapuzzle();
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:

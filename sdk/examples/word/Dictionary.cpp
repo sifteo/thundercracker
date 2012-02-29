@@ -50,6 +50,18 @@ bool Dictionary::pickWord(char* buffer,
     return false;
 }
 
+bool Dictionary::isMetapuzzle()
+{
+    // TODO data-driven
+    switch (sPickIndex)
+    {
+    case 1:
+        return true;
+    }
+
+    return false;
+}
+
 bool Dictionary::isWord(const char* string, bool& isBonus)
 {
     return PrototypeWordList::isWord(string, isBonus);

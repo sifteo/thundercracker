@@ -13,7 +13,7 @@ TitleExitCubeState.sim.o TileTransparencyLookup.sim.o \
 TileTransparencyLookupData.sim.o PartialAnimationData.sim.o \
 ScoredCubeState_Shuffle.sim.o ScoredGameState_Shuffle.sim.o \
 ScoredCubeState_StartOfRound.sim.o ScoredGameState_StartOfRound.sim.o \
-Utility.sim.o Anim.sim.o
+Utility.sim.o Anim.sim.o StoryGameState_CityProgression.sim.o
 
 
 BIN_STM32 = word.stm32
@@ -28,7 +28,7 @@ TitleCubeState.stm32.o TitleExitCubeState.stm32.o TileTransparencyLookup.stm32.o
 TileTransparencyLookupData.stm32.o PartialAnimationData.stm32.o \
 ScoredCubeState_Shuffle.stm32.o ScoredGameState_Shuffle.stm32.o \
 ScoredCubeState_StartOfRound.stm32.o ScoredGameState_StartOfRound.stm32.o \
-Utility.stm32.o Anim.stm32.o
+Utility.stm32.o Anim.stm32.o StoryGameState_CityProgression.stm32.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 
