@@ -752,6 +752,7 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -959,6 +960,11 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
+            if (UpdateTimer(mDelayTimer, dt))
+            {
+                StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            }
+            
             if (AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
@@ -1657,6 +1663,7 @@ void App::StopHint()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: This swap logic is geting too complex...
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::UpdateSwap(float dt)
