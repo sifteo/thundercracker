@@ -807,6 +807,30 @@ void App::UpdateGameState(float dt)
 {
     switch (mGameState)
     {
+        case GAME_STATE_FREE_PLAY:
+        {
+            if (mSwapState == SWAP_STATE_NONE)
+            {
+                Cube::ID cubeId;
+                TouchEvent touch = OnTouch(&cubeId);
+                
+                if (touch == TOUCH_EVENT_BEGIN)
+                {            
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_TOP,    VidMode::TILE);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_LEFT,   VidMode::TILE);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_BOTTOM, VidMode::TILE);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_RIGHT,  VidMode::TILE);
+                }
+                else
+                {
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_TOP,    0);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_LEFT,   0);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_BOTTOM, 0);
+                    mCubeWrappers[cubeId].SetPieceOffset(SIDE_RIGHT,  0);
+                }
+            }
+            break;
+        }
         case GAME_STATE_SHUFFLE_START:
         {
             if (UpdateTimer(mDelayTimer, dt))
