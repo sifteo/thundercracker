@@ -124,6 +124,9 @@ private:
     int mHintPieceSkip;
     Sifteo::Cube::ID mHintCubeTouched;
     
+    // Free Play Mode
+    float mFreePlayShakeThrottleTimer;
+    
     // Shuffle Mode
     unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];

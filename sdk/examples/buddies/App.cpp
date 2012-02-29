@@ -269,6 +269,22 @@ bool IsHinting(Cube::ID cubeId, int hintPiece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool IsBuddyUsed(App &app, unsigned buddyId)
+{
+    for (unsigned int i = 0; i < kNumCubes; ++i)
+    {
+        if (app.GetCubeWrapper(i).IsEnabled() &&
+            app.GetCubeWrapper(i).GetBuddyId() == buddyId)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
@@ -313,6 +329,7 @@ App::App()
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
     , mHintCubeTouched(CUBE_ID_UNDEFINED)
+    , mFreePlayShakeThrottleTimer(0.0f)
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
 {
@@ -555,7 +572,30 @@ void App::OnTilt(Cube::ID cubeId)
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if(mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
+    if (mGameState == GAME_STATE_FREE_PLAY)
+    {
+        if (mSwapState == SWAP_STATE_NONE && mFreePlayShakeThrottleTimer == 0.0f)
+        {
+            mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
+        
+            Random random;
+            int selection = random.randrange(kMaxBuddies - kNumCubes);
+            
+            unsigned buddyId = mCubeWrappers[cubeId].GetBuddyId();
+            for (int i = 0; i < selection; ++i)
+            {
+                buddyId = (buddyId + 1) % kMaxBuddies;
+                while (IsBuddyUsed(*this, buddyId))
+                {
+                    buddyId = (buddyId + 1) % kMaxBuddies;
+                }
+            }
+            mCubeWrappers[cubeId].SetBuddyId(buddyId);
+            
+            ResetCubesToPuzzle(GetPuzzleDefault());
+        }
+    }
+    else if (mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
     {
         StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
     }
@@ -645,6 +685,8 @@ void App::StartGameState(GameState gameState)
     {
         case GAME_STATE_FREE_PLAY:
         {
+            mFreePlayShakeThrottleTimer = 0.0f;
+            
             unsigned int buddyIds[kMaxBuddies];
             for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
@@ -811,6 +853,11 @@ void App::UpdateGameState(float dt)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
+                if (mFreePlayShakeThrottleTimer > 0.0f)
+                {
+                    UpdateTimer(mFreePlayShakeThrottleTimer, dt);
+                }
+                
                 Cube::ID cubeId;
                 TouchEvent touch = OnTouch(&cubeId);
                 
@@ -1746,6 +1793,7 @@ void App::OnSwapFinish()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: This is mighty lame... and more than likely buggy.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 App::TouchEvent App::OnTouch(Cube::ID *cubeId)

@@ -29,6 +29,9 @@ const float kPieceAnimX = 0.0f;
 const float kPieceAnimY = 0.0f;
 const float kPieceAnimPeriod = 1.0f;
 
+// Free Play
+const float kFreePlayShakeThrottleDuration = 1.5f;
+
 // Shuffle Mode
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears in shuffle mode
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
