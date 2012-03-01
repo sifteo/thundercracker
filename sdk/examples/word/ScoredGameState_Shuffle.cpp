@@ -10,10 +10,11 @@
 unsigned ScoredGameState_Shuffle::update(float dt, float stateTime)
 {
     const float BLIP_TIME = 4.f/7.f * TEETH_ANIM_LENGTH + TEETH_ANIM_LENGTH;
-    if (stateTime > TEETH_ANIM_LENGTH && stateTime - dt <= TEETH_ANIM_LENGTH)
+    if (stateTime > TEETH_ANIM_LENGTH && mNeedsNewAnagram)
     {
         ScoredGameState::createNewAnagram();
         WordGame::playAudio(teeth_open, AudioChannelIndex_Teeth);
+        mNeedsNewAnagram = false;
     }
     else if (stateTime > BLIP_TIME && stateTime - dt <= BLIP_TIME)
     {
@@ -29,6 +30,7 @@ unsigned ScoredGameState_Shuffle::onEvent(unsigned eventID, const EventData& dat
     switch (eventID)
     {
     case EventID_EnterState:
+        mNeedsNewAnagram = true;
         WordGame::playAudio(teeth_close, AudioChannelIndex_Teeth);
         break;
 

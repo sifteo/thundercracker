@@ -13,7 +13,7 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsRemaining(0), mNumBonusAnagramsRemaining(0),
+    mNumAnagramsLeft(0), mNumBonusAnagramsLeft(0),
     mCurrentMaxLettersPerCube(1)
 {
     ASSERT(cubes != 0);
@@ -45,7 +45,7 @@ void GameStateMachine::update(float dt)
     }
 }
 
-void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
+unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -65,8 +65,16 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
-        mNumAnagramsRemaining = data.mNewAnagram.mNumAnagrams;
-        mNumBonusAnagramsRemaining = data.mNewAnagram.mNumBonusAnagrams;
+        // TODO data driven
+        mNumAnagramsLeft = MAX(1, data.mNewAnagram.mNumAnagrams);
+        mNumBonusAnagramsLeft = data.mNewAnagram.mNumBonusAnagrams;
+        for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
+        {
+            mLevelProgressData.mPuzzleProgress[i] =
+                    (i < mNumAnagramsLeft) ?
+                        CheckMarkState_Unchecked :
+                        CheckMarkState_Hidden;
+        }
         break;
 
     case EventID_NewWordFound:
@@ -76,13 +84,28 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             mNewWordLength = len;
             if (data.mWordFound.mBonus)
             {
-                --mNumAnagramsRemaining;
-                --mNumBonusAnagramsRemaining;
+                --mNumAnagramsLeft;
+                --mNumBonusAnagramsLeft;
             }
             else
             {
-                --mNumAnagramsRemaining;
+                --mNumAnagramsLeft;
             }
+
+            // trade time for space, no "current index"
+            for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
+            {
+                if (mLevelProgressData.mPuzzleProgress[i] == CheckMarkState_Unchecked)
+                {
+                    mLevelProgressData.mPuzzleProgress[i] =
+                            (data.mWordFound.mBonus) ?
+                                CheckMarkState_CheckedBonus :
+                                CheckMarkState_Checked;
+                    break;
+                }
+                ASSERT(mLevelProgressData.mPuzzleProgress[i] != CheckMarkState_Hidden); // out of range, unexpected
+            }
+
             // TODO multiple letters per cube
             // TODO count active cubes
             /* TODO extra time sound
@@ -101,19 +124,21 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     Dictionary::sOnEvent(eventID, data);
     SavedData::sOnEvent(eventID, data);
 
-    StateMachine::onEvent(eventID, data);
+    unsigned result = StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
         mCubeStateMachines[i].onEvent(eventID, data);
     }
+    return result;
 }
 
-void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
+unsigned GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
 {
     if (sInstance != 0)
     {
-        sInstance->onEvent(eventID, data);
+        return sInstance->onEvent(eventID, data);
     }
+    return 0;
 }
 
 CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
@@ -159,6 +184,9 @@ State& GameStateMachine::getState(unsigned index)
 
     case GameStateIndex_ShuffleScored:
         return mScoredShuffleState;
+
+    case GameStateIndex_StoryCityProgression:
+        return mStoryCityProgressionState;
     }
 }
 
@@ -172,13 +200,13 @@ void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
 }
 
 
-unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
+unsigned GameStateMachine::getNumCubesInAnim(AnimType animT)
 {
     ASSERT(sInstance);
     unsigned count = 0;
     for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
     {
-        if ((int)sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
+        if ((int)sInstance->mCubeStateMachines[i].getAnim() == animT)
         {
             ++count;
         }

@@ -55,11 +55,6 @@ public:
     return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; 
   }
   
-  inline const TriggerData* Trigger() const {
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    return (const TriggerData*) mUserdata;
-  }
-
   inline const GatewayData* TriggerAsGate() const { 
     ASSERT(mUserdataType == USERDATA_TRIGGER);
     ASSERT(mInnerType == TRIGGER_GATEWAY); 
@@ -78,7 +73,7 @@ public:
     return (const NpcData*) mUserdata; 
   }
 
-inline void SetTrigger(int type, const TriggerData* p) { 
+  inline void SetTrigger(int type, const TriggerData* p) { 
     mUserdataType = USERDATA_TRIGGER;
     mInnerType = type; 
     mUserdata = p; 

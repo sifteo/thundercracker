@@ -7,12 +7,13 @@
 #include "ScoredCubeState_NewWord.h"
 #include "WordGame.h"
 
-ScoredCubeState_NewWord::ScoredCubeState_NewWord() : mImageIndex(ImageIndex_ConnectedWord)
+ScoredCubeState_NewWord::ScoredCubeState_NewWord()
 {
 }
 
 unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& data)
 {
+#if (0)
     switch (eventID)
     {
     case EventID_NewWordFound:
@@ -79,73 +80,15 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
     }
+#endif
     return getStateMachine().getCurrentStateIndex();
 }
 
 unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 {
-    CubeState::update(dt, stateTime);
-    if (getStateMachine().getTime() <= TEETH_ANIM_LENGTH)
-    {
-        return CubeStateIndex_NewWordScored;
-    }
-    else if (GameStateMachine::getNumAnagramsRemaining() <= 0)
-    {
-        return CubeStateIndex_ShuffleScored;
-    }
-    else
-    {
-        bool isOldWord = false;
-        if (getStateMachine().canBeginWord())
-        {
-            char wordBuffer[MAX_LETTERS_PER_WORD + 1];
-            EventData wordFoundData;
-            if (getStateMachine().beginsWord(isOldWord, wordBuffer, wordFoundData.mWordFound.mBonus))
-            {
-                wordFoundData.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
-                wordFoundData.mWordFound.mWord = wordBuffer;
-
-                if (isOldWord)
-                {
-                    GameStateMachine::sOnEvent(EventID_OldWordFound, wordFoundData);
-                    return CubeStateIndex_OldWordScored;
-                }
-                else
-                {
-                    GameStateMachine::sOnEvent(EventID_NewWordFound, wordFoundData);
-                    return CubeStateIndex_NewWordScored;
-                }
-            }
-            else
-            {
-                EventData wordBrokenData;
-                wordBrokenData.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
-                GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
-                return CubeStateIndex_NotWordScored;
-            }
-        }
-        else if (getStateMachine().hasNoNeighbors())
-        {
-            return CubeStateIndex_NotWordScored;
-        }
-        return CubeStateIndex_OldWordScored;
-    }
+    return CubeState::update(dt, stateTime);
 }
 
 void ScoredCubeState_NewWord::paint()
 {
-    Cube& c = getStateMachine().getCube();
-    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    vid.init();
-    if (GameStateMachine::getCurrentMaxLettersPerCube() == 1)
-    {
-        paintLetters(vid, Font1Letter, true);
-    }
-    else
-    {
-        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
-    }
-
-    paintTeeth(vid, mImageIndex, true, false, false, false);
-    vid.BG0_setPanning(Vec2(0.f, 0.f));
 }

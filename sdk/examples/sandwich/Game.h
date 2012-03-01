@@ -28,6 +28,8 @@ public:
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
 
+  bool ShowingMinimap() const { return true; }
+
   // methods  
   void MainLoop(Cube* pPrimary);
   void Paint(bool sync=false);
@@ -47,11 +49,18 @@ private:
   void TeleportTo(const MapData& m, Vec2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
+  void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, Cube* cube);
   
+
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
+
+  void OnPickup(Room *pRoom);
+  void OnDropEquipment(Room *pRoom);
+
+  void OnUseEquipment();
 
 };
 

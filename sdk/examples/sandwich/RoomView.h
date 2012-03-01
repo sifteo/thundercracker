@@ -46,9 +46,11 @@ public:
   void DrawPlayerFalling(int height);
   void HidePlayer();
 
+  void ShowItem();
   void SetEquipPosition(Vec2 p);
   void SetItemPosition(Vec2 p);
   void HideItem();
+  void HideEquip();
 
   void DrawTrapdoorFrame(int delta);
 

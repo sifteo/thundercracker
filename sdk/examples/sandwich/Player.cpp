@@ -28,6 +28,19 @@ Room* Player::GetRoom() const {
   return pGame->GetMap()->GetRoom(Location());
 }
 
+bool Player::HasBasicKey() const {
+  if (mEquipment) {
+    return gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_KEY;
+  }
+  return false;
+}
+
+void Player::UseBasicKey() {
+  ASSERT(HasBasicKey());
+  pGame->GetState()->FlagTrigger(mEquipment->trigger);
+  mEquipment = 0;
+}
+
 void Player::Move(int dx, int dy) { 
   SetStatus(PLAYER_STATUS_WALKING);
   mPosition.x += dx;

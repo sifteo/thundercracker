@@ -17,7 +17,7 @@ private:
   Vec2 mPosition;
   uint8_t mDir;
   uint8_t mAnimFrame;
-  uint8_t mEquipment;
+  const ItemData* mEquipment;
   float mAnimTime;
 
 public:
@@ -30,17 +30,22 @@ public:
   inline BroadLocation* Target() { return &mTarget; }
   inline RoomView* CurrentView() { return mCurrent.view; }
   inline RoomView* TargetView() { return mTarget.view; }
+  inline Room* CurrentRoom() { return mCurrent.view->GetRoom(); }
+  inline Room* TargetRoom() { return mTarget.view->GetRoom(); }
   inline ViewSlot* View() const { return mTarget.view==0?mCurrent.view->Parent():mTarget.view->Parent(); }
   inline Cube::Side Direction() { return mDir; }
   inline Vec2 Position() const { return mPosition; }
   inline Vec2 Location() const { return View()->IsShowingRoom() ? View()->GetRoomView()->Location() : mPosition/128; }
   inline int Status() const { return mStatus; }
-  inline uint8_t Equipment() const { return mEquipment; }
+  inline const ItemData* Equipment() const { return mEquipment; }
+
+  bool HasBasicKey() const;
+  void UseBasicKey();
 
   void SetStatus(int status);
   inline void SetDirection(Cube::Side dir) { mDir = dir; }
   inline void SetPosition(Vec2 position) { mPosition = position; }
-  inline void SetEquipment(uint8_t equipId) { mEquipment = equipId; }
+  inline void SetEquipment(const ItemData *equipId) { mEquipment = equipId; }
 
   void ClearTarget();
   void AdvanceToTarget();

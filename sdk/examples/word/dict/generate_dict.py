@@ -8,7 +8,7 @@ from ctypes import *
 import operator
 
 seed_word_lens = [3, 4, 5, 6, 8, 9]
-min_nonbonus_anagrams = 2
+min_nonbonus_anagrams = 1
 word_list_leading_spaces = {}
 
 def find_anagrams(string, dictionary, letters_per_cube):
@@ -133,7 +133,7 @@ def generate_dict():
     fi.close()
     
     # uncomment to regenerate: 
-    #generate_word_list_file()
+    generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -151,8 +151,8 @@ def generate_dict():
     output_dictionary = {}
     max_anagrams = 0
     word_list_used = {}
-    letters_per_cube = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    min_anagrams = [999, 999, 1, 999, 2, 2, 2, 2, 2]    
+    letters_per_cube = [1, 2, 2, 2, 2, 2, 3, 3, 3]
+    min_anagrams = [999, 999, 1, 1, 1, 1, 1, 1, 1]    
 
     
     # test code
@@ -183,7 +183,7 @@ def generate_dict():
             #min_anagrams = [999, 999, 4, 15, 25, 25]
             #print "checking word " + word
             if skip_tests or len(anagrams) >= min_anagrams[len(word) - 1]:
-                #print word + " " + str(anagrams)
+                print word + " " + str(anagrams)
                 num_seed_repeats = 0
                 # skip it if a pre-existing seed word has the same anagram set 
                 bad = False

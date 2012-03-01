@@ -1,0 +1,759 @@
+<chapters>
+  <chapter id="starting_simple" name="Starting Simple" guid="44380013-73cd-4039-b975-73abe54f1766">
+    <puzzle guid="374f7f74-d5fe-4357-96f0-a93297df62cc">
+      <token val="2" opRight="Add" opBottom="Divide" />
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="3" srcToken="0" srcSide="RIGHT" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="c0bf5f3e-8b29-4d3c-901d-2539c7fadb28">
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <token val="7" opRight="Multiply" opBottom="Subtract" />
+      <token val="2" opRight="Subtract" opBottom="Add" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="3" srcToken="1" srcSide="RIGHT" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="72aa0f70-143a-42c5-85c1-970e1d50ac47">
+      <token val="1" opRight="Divide" opBottom="Multiply" />
+      <token val="5" opRight="Multiply" opBottom="Add" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="3" dstToken="1" />
+    </puzzle>
+    <puzzle guid="bb17dd84-b84e-490c-bf9c-ee20dc20f9ee">
+      <token val="8" opRight="Subtract" opBottom="Add" />
+      <token val="3" opRight="Divide" opBottom="Subtract" />
+      <token val="2" opRight="Multiply" opBottom="Subtract" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="3" dstToken="2" />
+    </puzzle>
+    <puzzle guid="f800e62f-e695-4ebc-8cbc-73004e48af40">
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <token val="8" opRight="Multiply" opBottom="Add" />
+      <token val="9" opRight="Divide" opBottom="Multiply" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="4" dstToken="3" />
+      <group src="5" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="eb5de5a2-379a-4325-ad15-3b40f6815ada">
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Add" opBottom="Divide" />
+      <token val="4" opRight="Divide" opBottom="Subtract" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="4" srcToken="3" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="5" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="9ee9ece9-7b64-4f48-8d84-df728cf6d3b3">
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="9" opRight="Add" opBottom="Subtract" />
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Subtract" opBottom="Add" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="4" srcToken="2" srcSide="RIGHT" dst="5" dstToken="3" />
+    </puzzle>
+    <puzzle guid="98c43dea-c68a-4fbd-9245-7bcda28372fc">
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <token val="5" opRight="Multiply" opBottom="Divide" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="5" dstToken="1" />
+      <group src="6" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="7" dstToken="2" />
+    </puzzle>
+    <puzzle guid="27325f4e-9c0e-4f18-aac9-1893aa642fec">
+      <token val="5" opRight="Multiply" opBottom="Subtract" />
+      <token val="3" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Subtract" opBottom="Add" />
+      <token val="6" opRight="Add" opBottom="Multiply" />
+      <token val="6" opRight="Divide" opBottom="Add" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="5" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="6" srcToken="3" srcSide="RIGHT" dst="7" dstToken="0" />
+    </puzzle>
+    <puzzle guid="ff0b8486-79b6-4fd6-a2e2-546d8bd95691">
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Add" opBottom="Multiply" />
+      <token val="5" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Multiply" opBottom="Add" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="6" srcToken="4" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="7" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="8" dstToken="0" />
+      <group src="9" srcToken="1" srcSide="RIGHT" dst="5" dstToken="5" />
+    </puzzle>
+  </chapter>
+  <chapter id="stacking_up" name="Stacking Up" guid="2e50c901-54c2-4a39-b214-1c2d0f258e2d">
+    <puzzle guid="0f92f622-cd30-4c0c-ae71-795294dd8706">
+      <token val="3" opRight="Divide" opBottom="Multiply" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="8" opRight="Subtract" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="efed23b7-025b-47b0-b227-00c6ccd4c87c">
+      <token val="5" opRight="Divide" opBottom="Subtract" />
+      <token val="7" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Add" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="1" />
+    </puzzle>
+    <puzzle guid="d6d6f8cd-de4b-4452-b009-fa52b1a28939">
+      <token val="1" opRight="Subtract" opBottom="Add" />
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <token val="6" opRight="Divide" opBottom="Add" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="1" />
+    </puzzle>
+    <puzzle guid="f5bf7e64-bcdb-428a-9788-192180e94cfe">
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <token val="5" opRight="Divide" opBottom="Subtract" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="2" />
+    </puzzle>
+    <puzzle guid="e80d77e3-8c38-431c-b306-7d545c4f4766">
+      <token val="2" opRight="Divide" opBottom="Subtract" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Divide" opBottom="Subtract" />
+      <token val="6" opRight="Divide" opBottom="Multiply" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="4" dstToken="0" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="5" dstToken="2" />
+    </puzzle>
+    <puzzle guid="4248d9bf-7bd9-4b90-accf-9f3f927bd362">
+      <token val="8" opRight="Multiply" opBottom="Subtract" />
+      <token val="4" opRight="Add" opBottom="Multiply" />
+      <token val="6" opRight="Subtract" opBottom="Add" />
+      <token val="2" opRight="Subtract" opBottom="Add" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="4" srcToken="2" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="5" dstToken="3" />
+    </puzzle>
+    <puzzle guid="7a705150-471c-40f8-a998-ea016e39164e">
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="2" opRight="Multiply" opBottom="Add" />
+      <token val="6" opRight="Subtract" opBottom="Divide" />
+      <token val="7" opRight="Multiply" opBottom="Add" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="4" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="5" dstToken="0" />
+    </puzzle>
+    <puzzle guid="f3942073-5718-4654-9f6c-2cc41a20055d">
+      <token val="6" opRight="Subtract" opBottom="Multiply" />
+      <token val="9" opRight="Multiply" opBottom="Add" />
+      <token val="7" opRight="Divide" opBottom="Add" />
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="5" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="6" srcToken="4" srcSide="BOTTOM" dst="7" dstToken="1" />
+    </puzzle>
+    <puzzle guid="6e3dfbc7-c90b-4ca3-9650-ad3d1f868951">
+      <token val="7" opRight="Divide" opBottom="Multiply" />
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <token val="6" opRight="Subtract" opBottom="Add" />
+      <token val="9" opRight="Multiply" opBottom="Subtract" />
+      <token val="1" opRight="Multiply" opBottom="Subtract" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="5" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="6" srcToken="3" srcSide="BOTTOM" dst="7" dstToken="4" />
+    </puzzle>
+    <puzzle guid="094f963d-1072-4354-8431-d3b01414e338">
+      <token val="4" opRight="Subtract" opBottom="Add" />
+      <token val="6" opRight="Multiply" opBottom="Divide" />
+      <token val="5" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Divide" opBottom="Add" />
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <group src="5" srcToken="5" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="6" srcToken="2" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="7" dstToken="5" />
+      <group src="8" srcToken="4" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="9" srcToken="3" srcSide="BOTTOM" dst="0" dstToken="0" />
+    </puzzle>
+  </chapter>
+  <chapter id="bend_it" name="Bend it!" guid="fe1f761d-f31a-4a6b-b946-80a5e96e82fb">
+    <puzzle guid="8a9e7d37-e6ec-4b3b-9818-95039590a964">
+      <token val="9" opRight="Multiply" opBottom="Subtract" />
+      <token val="2" opRight="Divide" opBottom="Subtract" />
+      <token val="1" opRight="Subtract" opBottom="Divide" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="3" dstToken="1" />
+    </puzzle>
+    <puzzle guid="7fa2e16a-b620-4368-b369-c1bb4daa4221">
+      <token val="2" opRight="Divide" opBottom="Add" />
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <token val="6" opRight="Divide" opBottom="Subtract" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="3" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="4515890d-7860-46df-b6e0-b219d5dd5a2e">
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="7" opRight="Multiply" opBottom="Subtract" />
+      <token val="8" opRight="Multiply" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="3" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="8a976ee3-7298-45ff-a849-a515b4934f44">
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <token val="3" opRight="Divide" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="0" />
+    </puzzle>
+    <puzzle guid="99c062a3-5ce9-4210-b16c-e92bc2ce6397">
+      <token val="2" opRight="Add" opBottom="Multiply" />
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Subtract" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="4" dstToken="3" />
+      <group src="5" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="1c5d8698-64e7-4f52-859e-20328d8e65f2">
+      <token val="2" opRight="Subtract" opBottom="Add" />
+      <token val="2" opRight="Multiply" opBottom="Divide" />
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="4" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="5" srcToken="0" srcSide="RIGHT" dst="3" dstToken="3" />
+    </puzzle>
+    <puzzle guid="673a362f-71fd-4213-8984-f77c639ee97c">
+      <token val="5" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Subtract" opBottom="Multiply" />
+      <token val="3" opRight="Multiply" opBottom="Subtract" />
+      <token val="9" opRight="Divide" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="4" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="5" dstToken="0" />
+    </puzzle>
+    <puzzle guid="0c37c1ad-82e7-4fb2-b755-602607307e3c">
+      <token val="7" opRight="Divide" opBottom="Multiply" />
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <token val="2" opRight="Subtract" opBottom="Add" />
+      <token val="9" opRight="Divide" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="5" srcToken="3" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="6" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="7" dstToken="4" />
+    </puzzle>
+    <puzzle guid="37a1b792-778b-4d6a-8b69-837b568edade">
+      <token val="2" opRight="Multiply" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <token val="2" opRight="Multiply" opBottom="Subtract" />
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="5" dstToken="0" />
+      <group src="6" srcToken="3" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="7" srcToken="1" srcSide="RIGHT" dst="4" dstToken="4" />
+    </puzzle>
+    <puzzle guid="9bcf22b3-058a-4a9f-9d8f-74bacb3b892a">
+      <token val="2" opRight="Divide" opBottom="Add" />
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Divide" opBottom="Add" />
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="6" dstToken="4" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="7" dstToken="1" />
+      <group src="8" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="9" dstToken="3" />
+    </puzzle>
+  </chapter>
+  <chapter id="squares" name="Squares" guid="45adeb73-7a48-4f48-a8a1-4a98415dffb9">
+    <puzzle guid="1751bf40-e191-4304-ac0f-25e828781c8f">
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <token val="5" opRight="Subtract" opBottom="Add" />
+      <token val="2" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Divide" opBottom="Subtract" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="4" srcToken="0" srcSide="RIGHT" dst="5" dstToken="3" />
+    </puzzle>
+    <puzzle guid="9251064d-b11d-4498-ad68-99383eaf3873">
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <token val="7" opRight="Add" opBottom="Subtract" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="4" srcToken="0" srcSide="BOTTOM" dst="5" dstToken="3" />
+    </puzzle>
+    <puzzle guid="d3c432ef-cf69-45c1-86d4-e901f46711c0">
+      <token val="4" opRight="Multiply" opBottom="Add" />
+      <token val="9" opRight="Multiply" opBottom="Subtract" />
+      <token val="6" opRight="Divide" opBottom="Subtract" />
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="4" srcToken="0" srcSide="BOTTOM" dst="5" dstToken="2" />
+    </puzzle>
+    <puzzle guid="3480a427-98f9-4c8d-ba64-e26e1284cf66">
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="7" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Subtract" opBottom="Divide" />
+      <token val="3" opRight="Subtract" opBottom="Divide" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="4" srcToken="1" srcSide="BOTTOM" dst="5" dstToken="0" />
+    </puzzle>
+    <puzzle guid="783a8437-68bd-4a37-b4a9-0993f7d41b5f">
+      <token val="4" opRight="Add" opBottom="Multiply" />
+      <token val="3" opRight="Divide" opBottom="Subtract" />
+      <token val="3" opRight="Divide" opBottom="Subtract" />
+      <token val="8" opRight="Multiply" opBottom="Divide" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="4" srcToken="0" srcSide="BOTTOM" dst="5" dstToken="1" />
+    </puzzle>
+  </chapter>
+  <chapter id="crosses" name="Crosses" guid="bf7a09fa-73a4-416c-87cc-73b3d84e3127">
+    <puzzle guid="856d8cf8-f8a5-48e6-8e12-11e003e0d4ec">
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <token val="5" opRight="Add" opBottom="Subtract" />
+      <token val="7" opRight="Add" opBottom="Multiply" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <token val="6" opRight="Add" opBottom="Divide" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="5" dstToken="4" />
+      <group src="6" srcToken="4" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="7" srcToken="4" srcSide="RIGHT" dst="0" dstToken="0" />
+    </puzzle>
+    <puzzle guid="af60e462-68a8-41dc-9425-6341723a7f49">
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <token val="1" opRight="Divide" opBottom="Multiply" />
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <token val="1" opRight="Multiply" opBottom="Divide" />
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="5" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="6" srcToken="0" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="7" dstToken="0" />
+    </puzzle>
+    <puzzle guid="8f8bfbfe-0f03-4a4e-886b-465e5e81f27f">
+      <token val="9" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Subtract" />
+      <token val="3" opRight="Multiply" opBottom="Add" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="5" srcToken="3" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="6" dstToken="3" />
+      <group src="7" srcToken="3" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="79f1b141-101d-475a-9729-51f9f90a6f94">
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <token val="9" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Multiply" opBottom="Divide" />
+      <token val="6" opRight="Subtract" opBottom="Add" />
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="5" dstToken="3" />
+      <group src="6" srcToken="3" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="7" dstToken="3" />
+    </puzzle>
+    <puzzle guid="9bfe4423-914b-4934-8fca-0d400a704c26">
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <token val="1" opRight="Multiply" opBottom="Divide" />
+      <token val="4" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Subtract" opBottom="Multiply" />
+      <token val="5" opRight="Add" opBottom="Subtract" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="5" dstToken="4" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="6" dstToken="4" />
+      <group src="7" srcToken="4" srcSide="RIGHT" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="f5d163b2-d0d2-4be6-95b8-d8e33732e823">
+      <token val="1" opRight="Add" opBottom="Multiply" />
+      <token val="4" opRight="Divide" opBottom="Multiply" />
+      <token val="3" opRight="Add" opBottom="Multiply" />
+      <token val="1" opRight="Subtract" opBottom="Add" />
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="6" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="7" srcToken="0" srcSide="BOTTOM" dst="8" dstToken="1" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="9" dstToken="0" />
+    </puzzle>
+    <puzzle guid="4064cb75-d8bd-407e-9d62-8da8a2112611">
+      <token val="4" opRight="Multiply" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Multiply" />
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <token val="7" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Add" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="5" dstToken="5" />
+      <group src="6" srcToken="5" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="7" srcToken="5" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="8" dstToken="5" />
+      <group src="9" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="3" />
+    </puzzle>
+    <puzzle guid="c65768ca-5723-4d8d-b97f-062d4c4bdd33">
+      <token val="2" opRight="Subtract" opBottom="Add" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Divide" opBottom="Multiply" />
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="7" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Divide" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="6" srcToken="3" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="7" srcToken="3" srcSide="RIGHT" dst="5" dstToken="5" />
+      <group src="8" srcToken="2" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="9" dstToken="3" />
+    </puzzle>
+    <puzzle guid="382791c7-9966-4126-bac1-46c3aabd9886">
+      <token val="9" opRight="Divide" opBottom="Multiply" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Divide" opBottom="Multiply" />
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Subtract" />
+      <token val="8" opRight="Add" opBottom="Multiply" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="6" srcToken="4" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="7" dstToken="3" />
+      <group src="8" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="9" dstToken="3" />
+    </puzzle>
+    <puzzle guid="9ae39f70-6b64-4def-8b67-0f9c711091d1">
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="3" opRight="Divide" opBottom="Multiply" />
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Multiply" opBottom="Add" />
+      <token val="6" opRight="Add" opBottom="Divide" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="6" srcToken="1" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="7" dstToken="1" />
+      <group src="5" srcToken="5" srcSide="BOTTOM" dst="8" dstToken="1" />
+      <group src="9" srcToken="0" srcSide="BOTTOM" dst="3" dstToken="3" />
+    </puzzle>
+  </chapter>
+  <chapter id="two_tuples" name="Two Tuples" guid="81de4981-73d9-41a6-af2b-57fe21f49426">
+    <puzzle guid="c9267394-11eb-4226-8be2-1a37871a117e">
+      <token val="4" opRight="Add" opBottom="Multiply" />
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="9" opRight="Add" opBottom="Subtract" />
+      <token val="7" opRight="Divide" opBottom="Multiply" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="4" srcToken="0" srcSide="BOTTOM" dst="5" dstToken="3" />
+    </puzzle>
+    <puzzle guid="21314230-b77e-471b-b513-189f1b79a9ba">
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <token val="2" opRight="Multiply" opBottom="Subtract" />
+      <token val="3" opRight="Multiply" opBottom="Subtract" />
+      <token val="1" opRight="Multiply" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="4" srcToken="3" srcSide="RIGHT" dst="5" dstToken="2" />
+    </puzzle>
+    <puzzle guid="d053f354-8f48-48eb-bb62-e42207e90425">
+      <token val="2" opRight="Multiply" opBottom="Divide" />
+      <token val="6" opRight="Multiply" opBottom="Add" />
+      <token val="6" opRight="Divide" opBottom="Subtract" />
+      <token val="3" opRight="Multiply" opBottom="Add" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="4" srcToken="2" srcSide="RIGHT" dst="5" dstToken="0" />
+    </puzzle>
+    <puzzle guid="24713096-7cd8-473a-86d6-d5464e62b0c5">
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <token val="9" opRight="Divide" opBottom="Add" />
+      <token val="1" opRight="Multiply" opBottom="Divide" />
+      <token val="9" opRight="Subtract" opBottom="Add" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="4" srcToken="0" srcSide="RIGHT" dst="5" dstToken="2" />
+    </puzzle>
+    <puzzle guid="dd343c56-2ef4-4e28-9a7c-0a36e7b0307d">
+      <token val="1" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Multiply" opBottom="Divide" />
+      <token val="9" opRight="Subtract" opBottom="Add" />
+      <token val="9" opRight="Subtract" opBottom="Multiply" />
+      <token val="6" opRight="Multiply" opBottom="Add" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="6" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="5" srcToken="4" srcSide="BOTTOM" dst="7" dstToken="2" />
+    </puzzle>
+    <puzzle guid="5d90efe4-81ef-44a2-bedb-51ce7a0479d9">
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="6" opRight="Divide" opBottom="Subtract" />
+      <token val="4" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="8" opRight="Multiply" opBottom="Add" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="6" srcToken="0" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="5" srcToken="4" srcSide="RIGHT" dst="7" dstToken="1" />
+    </puzzle>
+    <puzzle guid="105f9124-45a8-46a8-a529-207b92586d41">
+      <token val="2" opRight="Divide" opBottom="Multiply" />
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Multiply" opBottom="Subtract" />
+      <token val="6" opRight="Subtract" opBottom="Multiply" />
+      <token val="1" opRight="Subtract" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="5" srcToken="1" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="6" srcToken="4" srcSide="RIGHT" dst="7" dstToken="2" />
+    </puzzle>
+    <puzzle guid="756e3f71-86e9-429a-bebb-32ce2abe681a">
+      <token val="7" opRight="Divide" opBottom="Multiply" />
+      <token val="6" opRight="Multiply" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Multiply" />
+      <token val="5" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="6" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="8" srcToken="0" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="7" srcToken="1" srcSide="RIGHT" dst="9" dstToken="4" />
+    </puzzle>
+    <puzzle guid="21780e85-5e55-4150-843b-172cd7bfc07b">
+      <token val="3" opRight="Multiply" opBottom="Add" />
+      <token val="7" opRight="Divide" opBottom="Add" />
+      <token val="9" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Subtract" opBottom="Add" />
+      <token val="5" opRight="Multiply" opBottom="Subtract" />
+      <token val="2" opRight="Divide" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="6" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="5" dstToken="5" />
+      <group src="8" srcToken="5" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="7" srcToken="1" srcSide="BOTTOM" dst="9" dstToken="4" />
+    </puzzle>
+    <puzzle guid="a8060f4b-3df8-44ee-8df8-cf706b1672d2">
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="5" opRight="Multiply" opBottom="Add" />
+      <token val="8" opRight="Subtract" opBottom="Add" />
+      <token val="4" opRight="Multiply" opBottom="Add" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="6" srcToken="3" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="5" srcToken="5" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="8" srcToken="5" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="7" srcToken="0" srcSide="RIGHT" dst="9" dstToken="1" />
+    </puzzle>
+  </chapter>
+  <chapter id="experts_only" name="Experts Only" guid="0a1992f5-b2c2-4745-b70e-2180db5d598c">
+    <puzzle guid="4abbdf3f-49e3-4d7c-941f-1411fbe379a8">
+      <token val="5" opRight="Multiply" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="9" opRight="Multiply" opBottom="Subtract" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="3" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="5e34e2c7-0e12-47b1-a1de-9297800bc827">
+      <token val="9" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Multiply" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="3" srcToken="0" srcSide="RIGHT" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="daa92771-11ec-4fc7-9284-bdf1daf82484">
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Add" opBottom="Divide" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+    </puzzle>
+    <puzzle guid="24503e17-df03-4f90-9724-893cc6b781d3">
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <token val="2" opRight="Divide" opBottom="Add" />
+      <token val="7" opRight="Divide" opBottom="Subtract" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="0b234afa-cb54-4de8-841b-7c474f8bfeb7">
+      <token val="6" opRight="Divide" opBottom="Multiply" />
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="3" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="9a8dfcb9-7855-4c3b-b9e2-a6b339d15d8d">
+      <token val="7" opRight="Subtract" opBottom="Multiply" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <token val="2" opRight="Divide" opBottom="Multiply" />
+      <token val="1" opRight="Subtract" opBottom="Multiply" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="4" dstToken="3" />
+      <group src="5" srcToken="0" srcSide="BOTTOM" dst="2" dstToken="2" />
+    </puzzle>
+    <puzzle guid="a5a9647c-356a-46c0-8eab-b6b56f7fbfd1">
+      <token val="6" opRight="Divide" opBottom="Subtract" />
+      <token val="4" opRight="Divide" opBottom="Multiply" />
+      <token val="6" opRight="Multiply" opBottom="Add" />
+      <token val="6" opRight="Subtract" opBottom="Multiply" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="4" dstToken="3" />
+      <group src="5" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="e2554698-cc0c-46d8-8d3e-46178d85ac60">
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <token val="1" opRight="Multiply" opBottom="Subtract" />
+      <token val="9" opRight="Divide" opBottom="Subtract" />
+      <token val="9" opRight="Multiply" opBottom="Divide" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="4" dstToken="2" />
+      <group src="5" srcToken="0" srcSide="RIGHT" dst="3" dstToken="3" />
+    </puzzle>
+    <puzzle guid="600b689b-341d-4afe-a28d-2d90136c4e23">
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Divide" opBottom="Multiply" />
+      <token val="7" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Divide" opBottom="Add" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="4" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="5" dstToken="1" />
+    </puzzle>
+    <puzzle guid="b658b2c7-09db-4926-aedd-5769615d392e">
+      <token val="3" opRight="Divide" opBottom="Add" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <token val="1" opRight="Divide" opBottom="Add" />
+      <token val="1" opRight="Subtract" opBottom="Add" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="4" dstToken="3" />
+      <group src="5" srcToken="1" srcSide="BOTTOM" dst="0" dstToken="0" />
+    </puzzle>
+    <puzzle guid="bc98aeb7-f8ea-4e07-b33c-f012c9dbdf5f">
+      <token val="3" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Divide" opBottom="Multiply" />
+      <token val="4" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Divide" opBottom="Subtract" />
+      <token val="1" opRight="Multiply" opBottom="Add" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="5" dstToken="1" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="6" srcToken="3" srcSide="RIGHT" dst="7" dstToken="4" />
+    </puzzle>
+    <puzzle guid="15cb6598-3cfd-4549-a116-9d7688cab7b4">
+      <token val="5" opRight="Add" opBottom="Multiply" />
+      <token val="7" opRight="Subtract" opBottom="Add" />
+      <token val="4" opRight="Divide" opBottom="Add" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Multiply" opBottom="Divide" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="1" srcToken="1" srcSide="RIGHT" dst="6" dstToken="2" />
+      <group src="5" srcToken="4" srcSide="RIGHT" dst="7" dstToken="1" />
+    </puzzle>
+    <puzzle guid="a44f96ab-7493-4387-bfc1-107234629a69">
+      <token val="3" opRight="Subtract" opBottom="Multiply" />
+      <token val="6" opRight="Subtract" opBottom="Multiply" />
+      <token val="4" opRight="Add" opBottom="Multiply" />
+      <token val="2" opRight="Multiply" opBottom="Subtract" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="3" dstToken="3" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="6" srcToken="1" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="5" srcToken="3" srcSide="RIGHT" dst="7" dstToken="2" />
+    </puzzle>
+    <puzzle guid="136a1f0b-f4ab-4534-a2ed-d0f202e59d71">
+      <token val="5" opRight="Add" opBottom="Multiply" />
+      <token val="6" opRight="Multiply" opBottom="Divide" />
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="9" opRight="Divide" opBottom="Subtract" />
+      <group src="3" srcToken="3" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="0" dstToken="0" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="6" dstToken="2" />
+      <group src="5" srcToken="1" srcSide="RIGHT" dst="7" dstToken="4" />
+    </puzzle>
+    <puzzle guid="8575bc12-91bb-453e-bf35-d1d2cb88c126">
+      <token val="6" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Multiply" opBottom="Divide" />
+      <token val="3" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="5" dstToken="0" />
+      <group src="2" srcToken="2" srcSide="RIGHT" dst="6" dstToken="3" />
+      <group src="7" srcToken="2" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="6e281c27-e1a8-470e-a0e5-ebff775debb4">
+      <token val="8" opRight="Divide" opBottom="Subtract" />
+      <token val="9" opRight="Subtract" opBottom="Multiply" />
+      <token val="9" opRight="Divide" opBottom="Subtract" />
+      <token val="1" opRight="Multiply" opBottom="Add" />
+      <token val="5" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Multiply" opBottom="Divide" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="3" dstToken="3" />
+      <group src="6" srcToken="3" srcSide="BOTTOM" dst="1" dstToken="1" />
+      <group src="2" srcToken="2" srcSide="BOTTOM" dst="5" dstToken="5" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="8" dstToken="2" />
+      <group src="7" srcToken="1" srcSide="BOTTOM" dst="9" dstToken="2" />
+    </puzzle>
+    <puzzle guid="6ab9ac51-9853-4342-b883-e03bf4b74018">
+      <token val="3" opRight="Multiply" opBottom="Add" />
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="2" opRight="Subtract" opBottom="Multiply" />
+      <token val="8" opRight="Divide" opBottom="Multiply" />
+      <token val="4" opRight="Subtract" opBottom="Multiply" />
+      <token val="1" opRight="Divide" opBottom="Multiply" />
+      <group src="5" srcToken="5" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="6" dstToken="2" />
+      <group src="7" srcToken="5" srcSide="RIGHT" dst="4" dstToken="4" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="8" dstToken="3" />
+      <group src="9" srcToken="4" srcSide="BOTTOM" dst="1" dstToken="1" />
+    </puzzle>
+    <puzzle guid="d76c3116-e92c-488a-a670-b87163ba908f">
+      <token val="9" opRight="Multiply" opBottom="Subtract" />
+      <token val="2" opRight="Divide" opBottom="Add" />
+      <token val="7" opRight="Add" opBottom="Subtract" />
+      <token val="8" opRight="Subtract" opBottom="Multiply" />
+      <token val="1" opRight="Multiply" opBottom="Subtract" />
+      <token val="6" opRight="Divide" opBottom="Add" />
+      <group src="4" srcToken="4" srcSide="BOTTOM" dst="2" dstToken="2" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="6" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="7" srcToken="2" srcSide="RIGHT" dst="8" dstToken="0" />
+      <group src="9" srcToken="2" srcSide="BOTTOM" dst="3" dstToken="3" />
+    </puzzle>
+    <puzzle guid="119ffa10-802f-413f-ba35-c220847ef304">
+      <token val="1" opRight="Subtract" opBottom="Add" />
+      <token val="8" opRight="Add" opBottom="Subtract" />
+      <token val="3" opRight="Divide" opBottom="Add" />
+      <token val="4" opRight="Multiply" opBottom="Divide" />
+      <token val="5" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Multiply" opBottom="Divide" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="4" dstToken="4" />
+      <group src="1" srcToken="1" srcSide="BOTTOM" dst="6" dstToken="0" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="7" dstToken="1" />
+      <group src="5" srcToken="5" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="8" srcToken="4" srcSide="RIGHT" dst="9" dstToken="5" />
+    </puzzle>
+    <puzzle guid="3475f1db-a2b9-4f86-b407-f25c00fc26e2">
+      <token val="1" opRight="Divide" opBottom="Multiply" />
+      <token val="8" opRight="Multiply" opBottom="Divide" />
+      <token val="7" opRight="Multiply" opBottom="Subtract" />
+      <token val="2" opRight="Add" opBottom="Subtract" />
+      <token val="6" opRight="Divide" opBottom="Add" />
+      <token val="3" opRight="Multiply" opBottom="Subtract" />
+      <group src="4" srcToken="4" srcSide="RIGHT" dst="5" dstToken="5" />
+      <group src="6" srcToken="5" srcSide="RIGHT" dst="1" dstToken="1" />
+      <group src="3" srcToken="3" srcSide="RIGHT" dst="2" dstToken="2" />
+      <group src="7" srcToken="5" srcSide="BOTTOM" dst="8" dstToken="2" />
+      <group src="0" srcToken="0" srcSide="BOTTOM" dst="9" dstToken="5" />
+    </puzzle>
+  </chapter>
+</chapters>

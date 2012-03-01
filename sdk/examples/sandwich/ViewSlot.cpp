@@ -1,6 +1,7 @@
 #include "Game.h"
 
-// the whole way that I "search for inventory views" kinda sucks - should cache a pointer of something...
+ViewSlot* pInventory = 0;
+ViewSlot* pMinimap = 0;
 
 Cube* ViewSlot::GetCube() const {
 	return gCubes + (this - pGame->ViewBegin());
@@ -15,13 +16,20 @@ bool ViewSlot::Touched() const {
 }
 
 void ViewSlot::Init() {
-	mFlags.view = VIEW_IDLE;
-	ViewMode mode = Graphics();
+	ViewMode mode(GetCube()->vbuf);
 	mode.set();
 	mode.clear();
   	mode.setWindow(0, 128);
-	mView.idle.Init();
+	if (pMinimap) {
+		mFlags.view = VIEW_IDLE;
+		mView.idle.Init();
+	} else {
+		pMinimap = this;
+		mFlags.view = VIEW_MINIMAP;
+		mView.minimap.Init();
+	}
 	pGame->NeedsSync();
+
 }
 
 void ViewSlot::HideSprites() {
@@ -31,14 +39,30 @@ void ViewSlot::HideSprites() {
 	}
 }
 
-void ViewSlot::SetView(unsigned viewId, unsigned rid) {
+void ViewSlot::SetView(unsigned viewId, bool doFlush, unsigned rid) {
 	mFlags.view = viewId;
+	ViewMode gfx = Graphics();
 	if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
-		ViewMode gfx = Graphics();
 		gfx.setWindow(0,128);
 		gfx.init();
+	} else {
+		gfx.BG0_setPanning(Vec2(0,0));
 	}
-	pGame->NeedsSync();
+	if (pInventory == this && viewId != VIEW_INVENTORY) { 
+		pInventory = FindIdleView();
+		if (pInventory) { pInventory->SetView(VIEW_INVENTORY, doFlush); }
+	}
+	if (pMinimap == this && viewId != VIEW_MINIMAP) { 
+		pMinimap = FindIdleView();
+		if (pMinimap) { 
+			pMinimap->SetView(VIEW_MINIMAP, doFlush); 
+		} else if (pInventory) {
+			pInventory->SetView(VIEW_MINIMAP, doFlush);
+			pInventory = 0;
+		} else {
+			pMinimap = 0; 
+		}
+	}
 	switch(viewId) {
 		case VIEW_IDLE:
 			mView.idle.Init();
@@ -47,12 +71,24 @@ void ViewSlot::SetView(unsigned viewId, unsigned rid) {
 			mView.room.Init(rid);
 			break;
 		case VIEW_INVENTORY:
+			pInventory = this;
 			mView.inventory.Init();
 			break;
+		case VIEW_MINIMAP:
+			pMinimap = this;
+			mView.minimap.Init();
+			break;
+	}
+	if (doFlush) {
+		#if GFX_ARTIFACT_WORKAROUNDS
+			pGame->Paint(true);
+			GetCube()->vbuf.touch();
+		#endif
+			pGame->Paint(true);
 	}
 }
 
-void ViewSlot::Restore() {
+void ViewSlot::Restore(bool doFlush) {
 	ViewMode mode = Graphics();
 	mode.set();
 	mode.clear();
@@ -67,8 +103,17 @@ void ViewSlot::Restore() {
 	case VIEW_INVENTORY:
 		mView.inventory.Restore();
 		break;
+	case VIEW_MINIMAP:
+		mView.minimap.Restore();
+		break;
 	}
-	pGame->NeedsSync();
+	if (doFlush) {
+		#if GFX_ARTIFACT_WORKAROUNDS
+			pGame->Paint(true);
+			GetCube()->vbuf.touch();
+		#endif
+			pGame->Paint(true);
+	}
 }
 
 void ViewSlot::Update(float dt) {
@@ -83,74 +128,57 @@ void ViewSlot::Update(float dt) {
 	case VIEW_INVENTORY:
 		mView.inventory.Update(dt);
 		break;
+	case VIEW_MINIMAP:
+		mView.minimap.Update(dt);
+		break;
 	}
 }
   
-bool ViewSlot::ShowLocation(Vec2 loc) {
+bool ViewSlot::ShowLocation(Vec2 loc, bool doFlush) {
 	if (!pGame->GetMap()->Contains(loc)) {
 		if (IsShowingRoom()) {
-			HideLocation();
+			HideLocation(doFlush);
 		}
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
-			if (mFlags.view == VIEW_INVENTORY) {
-				for (ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
-					if (p->ViewType() == VIEW_IDLE) {
-						p->SetView(VIEW_INVENTORY);
-						break;
-					}
-				}
-			}
-			SetView(VIEW_ROOM, rid);
+			SetView(VIEW_ROOM, doFlush, rid);
 			return true;
 		}
 	}
 	return false;
 }
 
-bool ViewSlot::HideLocation() {
-	if (IsShowingRoom()) {
+ViewSlot* ViewSlot::FindIdleView() {
+	for (ViewSlot *p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+		if (p->ViewType() == VIEW_IDLE) { return p; }
+	}
+	return 0;
+}
 
-		if (pGame->GetState()->HasAnyItems()) {
-			bool invShowing = false;
-			for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
-				if ((invShowing = (p->ViewType() == VIEW_INVENTORY))) { break; }
-			}
-			if (invShowing) {
-				SetView(VIEW_IDLE);
-			} else {
-				SetView(VIEW_INVENTORY);
-			}
+bool ViewSlot::HideLocation(bool doFlush) {
+	if (IsShowingRoom()) {
+		if (pGame->ShowingMinimap() && !pMinimap) {
+			SetView(VIEW_MINIMAP, doFlush);
+		} else if (pGame->GetState()->HasAnyItems() && !pInventory) {
+			SetView(VIEW_INVENTORY, doFlush);
 		} else {
-			SetView(VIEW_IDLE);
+			SetView(VIEW_IDLE, doFlush);
 		}
 		return true;
 	}
 	return false;
 }
 
-void ViewSlot::ShowInventory() {
-	if (mFlags.view != VIEW_INVENTORY) {
-		SetView(VIEW_INVENTORY);
-	}
-}
-
-void ViewSlot::RefreshInventory() {
+void ViewSlot::RefreshInventory(bool doFlush) {
   if (mFlags.view == VIEW_INVENTORY) {
   	if (!pGame->GetState()->HasAnyItems()) {
-  		SetView(VIEW_IDLE);
+  		SetView(VIEW_IDLE, doFlush);
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
-  } else if (mFlags.view == VIEW_IDLE && pGame->GetState()->HasAnyItems()) { 
-	bool invShowing = false;
-	for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
-		if ((invShowing = p->ViewType() == VIEW_INVENTORY)) { break; }
-	}
-	if (!invShowing) {
-		SetView(VIEW_INVENTORY);
-  	}
+  } else if (mFlags.view == VIEW_IDLE && pGame->GetState()->HasAnyItems() && !pInventory) { 
+	SetView(VIEW_INVENTORY, doFlush);
   }
 }
 
