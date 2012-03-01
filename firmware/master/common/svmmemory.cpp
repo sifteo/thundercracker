@@ -79,3 +79,20 @@ bool SVMMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
     pa = ref->getData() + blockOffset;
     return true;
 }
+
+bool SVMMemory::copyROData(PhysAddr dest, VirtAddr src, uint32_t length)
+{
+    FlashBlockRef ref;
+    SvmMemory::PhysAddr srcPA;
+
+    while (count) {
+        uint32_t chunk = count;
+        if (!SvmMemory::mapROData(ref, src, chunk, srcPA))
+            return;
+
+        memcpy(dest, srcPA, chunk);
+        dest += chunk;
+        src += chunk;
+        count -= chunk;
+    }
+}

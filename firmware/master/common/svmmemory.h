@@ -93,6 +93,23 @@ public:
     static bool mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa);
 
     /**
+     * Copy out read-only data into arbitrary physical RAM. This is a more
+     * convenient alternative for small data structures that are not necessarily
+     * block aligned.
+     */
+    static bool copyROData(PhysAddr dest, VirtAddr src, uint32_t length);
+
+    /**
+     * Convenient type-safe wrapper around copyROData.
+     */
+    template <typename T>
+    static inline bool copyROData(T &dest, const T *src)
+    {
+        return copyROData(reinterpret_cast<PhysAddr>(&dest),
+                          reinterpret_cast<VirtAddr>(src), sizeof(T));
+    }
+
+    /**
      * Convenience functions to read a single value from RAM or Flash.
      * On error, returns a default value.
      */

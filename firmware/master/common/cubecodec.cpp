@@ -8,7 +8,7 @@
 #include <sifteo/machine.h>
 
 #include "cubecodec.h"
-#include "flashlayer.h"
+#include "svmmemory.h"
 
 using namespace Sifteo;
 using namespace Sifteo::Intrinsic;
@@ -383,32 +383,43 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     if (!ac)
         return false;
 
-    uint32_t dataSize = group->size;
-    uint32_t progress = ac->progress;
-    if (progress > dataSize)
+    // Read (cached) asset group header
+    const _SYSAssetGroupHeader *headerVA = group->hdr;
+    _SYSAssetGroupHeader header;
+    if (!SvmMemory::copyROData(header, headerVA))
         return false;
-    
-    uint32_t count;
+
+    uint32_t progress = ac->progress;
+    if (progress > header.dataSize)
+        return false;
+
+    FlashBlockRef ref;
+    SvmMemory::PhysAddr dataPA;
+    SvmMemory::VirtAddr dataVA = reinterpret_cast<SvmMemory::VirtAddr>(headerVA);
+    dataVA += header.hdrSize;
+    dataVA += progress;
 
     flashEscape(buf);
 
     // We're limited by the size of the packet, the asset, and the cube's FIFO
-    count = MIN(buf.bytesFree(), dataSize - progress);
+    uint32_t count = MIN(buf.bytesFree(), header.dataSize - progress);
     count = MIN(count, loadBufferAvail);
+    progress += count;
+    loadBufferAvail -= count;
 
-    FlashRegion fr;
-    if (!FlashLayer::getRegion(progress + group->offset, count, &fr)) {
-        return false;
+    while (count) {
+        uint32_t chunk = count;
+        if (!SvmMemory::mapROData(ref, dataVA, chunk, dataPA))
+            return false;
+
+        buf.append(dataPA, chunk);
+        count -= chunk;
+        dataVA += chunk;
     }
-    uint8_t *region = static_cast<uint8_t*>(fr.data());
-    buf.append(region, fr.size());
-    progress += fr.size();
-    loadBufferAvail -= fr.size();
-    FlashLayer::releaseRegion(fr);
 
     ac->progress = progress;
-    ASSERT(progress <= dataSize);
-    if (progress >= dataSize)
+    ASSERT(progress <= header.dataSize);
+    if (progress >= header.dataSize)
         done = true;
 
     return true;

@@ -223,23 +223,8 @@ void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) MEMSET_BODY()
 
 void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count)
 {
-    if (!SvmMemory::mapRAM(dest, count))
-        return;
-
-    FlashBlockRef ref;
-    SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
-    SvmMemory::PhysAddr srcPA;
-
-    while (count) {
-        uint32_t chunk = count;
-        if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
-            return;
-
-        memcpy(dest, srcPA, chunk);
-        dest += chunk;
-        srcVA += chunk;
-        count -= chunk;
-    }
+    if (SvmMemory::mapRAM(dest, count))
+        SvmMemory::copyROData(dest, reinterpret_cast<SvmMemory::VirtAddr>(src), count);
 }
 
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count)
@@ -814,11 +799,11 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
         AudioMixer::instance.enableChannel(buffer);
 }
 
-uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
-    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(mod);
-    if (SvmMemory::checkROData(va, sizeof *mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
-        return AudioMixer::instance.play(mod, h, loop);
+    _SYSAudioModule modCopy;
+    if (SvmMemory::copyROData(modCopy, mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
+        return AudioMixer::instance.play(&modCopy, h, loop);
     }
     return false;
 }

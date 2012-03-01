@@ -6,6 +6,7 @@
 #ifndef AUDIO_H_
 #define AUDIO_H_
 
+#include <sifteo/asset.h>
 #include <sifteo/abi.h>
 
 namespace Sifteo {

@@ -35,15 +35,17 @@ public:
 
     _SYSAudioType channelType() const {
         ASSERT(mod != NULL);
-        return mod->type;
+        return (_SYSAudioType) mod->type;
     }
 
     void pause() {
         state |= STATE_PAUSED;
     }
+
     bool isPaused() const {
         return state & STATE_PAUSED;
     }
+
     void resume() {
         state &= ~STATE_PAUSED;
     }

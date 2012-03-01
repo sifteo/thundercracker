@@ -9,6 +9,7 @@
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
+#include "event.h"
 #include "flashlayer.h"
 
 #include "neighbors.h"
@@ -69,42 +70,18 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     
     // XXX: Pick a base address too!
     ac->progress = 0;
-    
-    LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
-    
+
+    LOG(("FLASH[%d]: Sending asset group %p\n", id(), a));
+
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
         assetLoadTimestamp = SysTime::ticks();
     });
 
-    FlashRegion region;
-    unsigned entryOffset = a->id * sizeof(AssetIndexEntry);
-    // XXX: this is assuming an offset of 0 for the whole asset segment.
-    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
-    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &region)) {
-        LOG(("failed to get flash block for asset index entry\n"));
-        return;
-    }
-    AssetIndexEntry entry;
-    memcpy(&entry, region.data(), sizeof(AssetIndexEntry));
-    FlashLayer::releaseRegion(region);
-
-    unsigned offset = entry.offset;
-    if (!FlashLayer::getRegion(offset, sizeof(AssetGroupHeader), &region)) {
-        LOG(("failed to get flash block for asset group header\n"));
-        return;
-    }
-    AssetGroupHeader header;
-    memcpy(&header, region.data(), sizeof(AssetGroupHeader));
-    FlashLayer::releaseRegion(region);
-
-    a->offset = offset + sizeof(AssetGroupHeader);
-    a->size = header.dataSize;
-    
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(CubeSlots::flashResetSent, ~bit());
     Atomic::Or(CubeSlots::flashResetWait, bit());
-    
+
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
     loadGroup = a;
@@ -239,9 +216,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
         LOG(("%u cubes connected\n", count));
-        if (count >= CubeSlots::minCubes) {
-            Event::resume();
-        }
     }
     
     // If we're expecting a stale packet, completely ignore its contents.
@@ -397,9 +371,6 @@ void CubeSlot::radioTimeout()
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
         LOG(("%u cubes connected\n", count));
-        if (count < CubeSlots::minCubes) {
-            Event::pause();
-        }
     }
 }
 
