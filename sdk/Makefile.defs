@@ -8,7 +8,7 @@ CC := $(LLVM_BIN)/clang
 BIN := program.elf
 ASSETS = assets
 
-GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 

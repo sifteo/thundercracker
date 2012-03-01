@@ -27,14 +27,8 @@ public:
         _SYS_audio_enableChannel(&buf);
     }
 
-#if 0
-    bool play(const _SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod, &handle, loopMode);
-    }
-#endif
-    
-    bool play(_SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod, &handle, loopMode);
+    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopOnce) {
+        return _SYS_audio_play(&mod.sys, &handle, loopMode);
     }
 
     bool isPlaying() const {

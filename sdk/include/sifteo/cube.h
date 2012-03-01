@@ -129,7 +129,7 @@ class Cube {
     
     int assetProgress(AssetGroup &group, int max=100) {
         ASSERT(id() < arraysize(group.cubes));
-        return group.cubes[id()].progress * max / group.sys.size;
+        return group.cubes[id()].progress * max / group.sys.hdr->dataSize;
     }
     
     bool assetDone(AssetGroup &group) {

@@ -77,9 +77,7 @@ struct _SYSAssetGroupCube {
 };
 
 struct _SYSAssetGroup {
-    uint32_t id;                                /// OUT    ID of this group in the asset segment
-    uint32_t offset;
-    uint32_t size;
+    const struct _SYSAssetGroupHeader *hdr;     /// OUT    Read-only data for this asset group
     struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
     _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
     _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
@@ -305,11 +303,11 @@ typedef uint32_t _SYSAudioHandle;
 #define _SYS_AUDIO_MAX_CHANNELS         8
 
 /*
- * Types of audio supported by the system - TBD if these make sense...
+ * Types of audio supported by the system
  */
 enum _SYSAudioType {
-    Sample = 0, // more tbd...  // TODO: Rename this to speex
-    PCM = 1
+    _SYS_Speex = 0,
+    _SYS_PCM = 1
 };
 
 enum _SYSAudioLoopType {
@@ -318,10 +316,11 @@ enum _SYSAudioLoopType {
 };
 
 struct _SYSAudioModule {
-    uint32_t id;
-    uint32_t offset;
-    uint32_t size;
-    enum _SYSAudioType type;
+    uint8_t type;               /// _SYSAudioType code
+    uint8_t reserved0;          /// Reserved, must be zero
+    uint16_t reserved1;         /// Reserved, must be zero
+    uint32_t dataSize;          /// Size of compressed data, in bytes
+    const uint8_t *data;        /// Flash address for compressed data
 };
 
 struct _SYSAudioBuffer {
@@ -555,7 +554,7 @@ void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned wi
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
-uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
 void _SYS_audio_stop(_SYSAudioHandle h) _SC(73);
 void _SYS_audio_pause(_SYSAudioHandle h) _SC(72);

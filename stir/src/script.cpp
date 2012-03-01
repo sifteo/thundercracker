@@ -13,6 +13,7 @@
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
+#include "audioencoder.h"
 
 namespace Stir {
 
@@ -76,7 +77,7 @@ bool Script::run(const char *filename)
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
     CPPSourceWriter source(log, outputSource);
-    
+
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
         Group *group = *i;
         TilePool &pool = group->getPool();
@@ -90,11 +91,20 @@ bool Script::run(const char *filename)
         header.writeGroup(*group);
         source.writeGroup(*group);
     }
+
+    if (!sounds.empty()) {
+        log.heading("Audio");
+        log.taskBegin("Compressing files");
     
-    for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
-        Sound *sound = *i;
-        header.writeSound(*sound);
-        source.writeSound(*sound);
+        for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
+            Sound *sound = *i;
+
+            log.taskProgress("%s (%s)", sound->getName().c_str(), sound->getFile().c_str());
+            header.writeSound(*sound);
+            source.writeSound(*sound);
+        }
+        
+        log.taskEnd();
     }
 
     proof.close();
@@ -487,7 +497,7 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "encode")) {
         setEncode(lua_tostring(L, -1));
     } else {
-        setEncode("Sample");    // TODO: this will eventually change to "SpeexSample" in the master FW
+        setEncode("");  // Default
     }
     
     if (Script::argMatch(L, "quality")) {
@@ -498,6 +508,14 @@ Sound::Sound(lua_State *L)
 
     if (!Script::argEnd(L))
         return;
+
+    // Validate the encoder parameters immediately, so we can raise an error
+    // during script execution rather than during actual audio compression.
+    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality());
+    if (enc)
+        delete enc;
+    else
+        luaL_error(L, "Invalid audio encoding parameters");
 }
 
 

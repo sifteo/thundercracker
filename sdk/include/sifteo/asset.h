@@ -13,7 +13,6 @@
 
 namespace Sifteo {
 
-//typedef _SYSAssetGroupID AssetGroupID;
 
 /**
  * An asset group. At build time, STIR creates a statically
@@ -42,6 +41,7 @@ class AssetGroup {
     _SYSAssetGroup sys;
     _SYSAssetGroupCube cubes[CUBE_ALLOCATION];
 };
+
 
 /**
  * A plain, tile-mapped asset image.
@@ -74,8 +74,18 @@ class PinnedAssetImage {
 
     uint16_t index;
 };
-    
-    
+
+
+/**
+ * An audio asset, using any supported compression codec.
+ */
+
+class AssetAudio {
+ public:
+    _SYSAudioModule sys;
+};
+
+
 };  // namespace Sifteo
 
 #endif
