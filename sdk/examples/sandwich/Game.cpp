@@ -367,26 +367,32 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
     mode.BG0_drawAsset(Vec2(0,10), DialogBox);
 
-    // save BG0
+    // save BG0 (above dialog line)
+    VideoBuffer& vbuf = vslot->GetCube()->vbuf;
+    uint16_t bg0_tiles[180];
+    for(unsigned i=0; i<180; ++i) {
+      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(Vec2(i%18, i/18))) );
+    }
+
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
           if (line > 0) {
-              Paint(true);
-              mode.setWindow(0, 80);
-              vslot->GetRoomView()->DrawBackground();
-          }
-            BG1Helper ovrly = vslot->Overlay();
-            ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
-            ovrly.Flush();
             Paint(true);
-            #if GFX_ARTIFACT_WORKAROUNDS
-              vslot->GetCube()->vbuf.touch();
-              Paint(true);
-            #endif
-            //Now set up a letterboxed 128x48 mode
-            mode.setWindow(80, 48);
-            view.Init();
+            mode.setWindow(0, 80);
+            _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(Vec2(0,0)), bg0_tiles, 180);
+          }
+          BG1Helper ovrly = vslot->Overlay();
+          ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
+          ovrly.Flush();
+          Paint(true);
+          #if GFX_ARTIFACT_WORKAROUNDS
+            vslot->GetCube()->vbuf.touch();
+            Paint(true);
+          #endif
+          //Now set up a letterboxed 128x48 mode
+          mode.setWindow(80, 48);
+          view.Init();
         }
         view.Erase();
         Paint(true);
