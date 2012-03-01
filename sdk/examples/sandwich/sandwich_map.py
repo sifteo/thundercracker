@@ -18,6 +18,7 @@ class AnimatedTile:
 
 class Map:
 	def __init__(self, world, path):
+		print "Reading Map: ", path
 		self.world = world
 		self.id = os.path.basename(path)[:-4].lower()
 		self.raw = tmx.Map(path)

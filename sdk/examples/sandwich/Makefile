@@ -61,5 +61,5 @@ CONTENT_TOOLS = \
 	misc.py
 
 
-content_crc.txt: $(CONTENT_TOOLS) *.tmx *-database.xml
+content_crc.txt: $(CONTENT_TOOLS) Content/*
 	python sandwich.py

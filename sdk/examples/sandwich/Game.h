@@ -37,7 +37,7 @@ public:
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
 
-  bool ShowingMinimap() const { return false; }
+  bool ShowingMinimap() const { return true; }
 
   // methods  
   void MainLoop();
