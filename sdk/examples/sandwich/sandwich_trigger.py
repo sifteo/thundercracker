@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, math
+import lxml.etree, os, posixpath, re, tmx, misc, math
 
 EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
 EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")

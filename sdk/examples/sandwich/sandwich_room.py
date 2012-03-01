@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, math
+import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_trigger import *
 
 # constants

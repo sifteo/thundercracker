@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, Image
+import lxml.etree, os, posixpath, re, tmx, misc, Image
 
 STORAGE_TYPE_INVENTORY = 0
 STORAGE_TYPE_EQUIP =  1

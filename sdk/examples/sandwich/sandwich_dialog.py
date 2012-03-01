@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, Image
+import lxml.etree, os, posixpath, re, tmx, misc, Image
 
 class DialogDatabase:
 	def __init__(self, world, path):
@@ -12,7 +12,7 @@ class DialogDatabase:
 					assert d.id != otherd.id, "duplicate dialog id"
 		# todo: validate dialog images
 		self.dialog_dict = dict((d.id, d) for d in self.dialogs)
-		self.detail_images = dict((name, DialogDetailImage(os.path.join(world.dir, name+".png"))) for name in self.list_detail_image_names())
+		self.detail_images = dict((name, DialogDetailImage(posixpath.join(world.dir, name+".png"))) for name in self.list_detail_image_names())
 
 	def list_npc_image_names(self):
 		hash = {}
