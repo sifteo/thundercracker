@@ -11,8 +11,8 @@ BorderSlotNormal = image{"wp2_border_bottom_slot_normal.png", quality=10}
 BorderSlotBonus = image{"wp2_border_bottom_slot_bonus.png", quality=10}
 Tile2 = image{"wp2_tile01.png", quality=10}
 Tile2Glow = image{"wp2_tile02.png", quality=10}
-Font1Letter = image{"WC_letters.png", width=120, height=88, quality=0}
-Font2Letter = image{"font_2ltr.png", width=48, height=48, quality=10}
+Font1Letter = image{"font_2ltr.png"}--, width=120, height=88, quality=0}
+Font2Letter = image{"font_2ltr.png", width=48, height=40, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
 TileBG = image{"wp2_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
@@ -21,11 +21,6 @@ HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}
 FontBonus = image{"score_font_bonus.png", width=8, height=16, quality=10}
-FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
-TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
-TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
-TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
 
 blip = sound{"blip.raw", encode="PCM"}
 bonus = sound{"bonus.raw", encode="PCM"}

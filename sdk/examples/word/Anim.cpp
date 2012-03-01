@@ -238,7 +238,7 @@ bool animPaint(AnimType animT,
         if (fontFrame < font.frames && objData.mLayer == Layer_BG0)
         {
             Vec2 letterPos(pos);
-            letterPos.y += 3; // TODO
+            letterPos.y += 4; // TODO
             vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
             bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
         }
