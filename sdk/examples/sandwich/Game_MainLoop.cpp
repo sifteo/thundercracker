@@ -78,7 +78,7 @@ void Game::MainLoop() {
 
 	        }
 	      	#endif
-    	} while (!pGame->GetMap()->FindBroadPath(&mPath));
+    	} while (!gGame.GetMap()->FindBroadPath(&mPath));
 
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET
@@ -141,7 +141,7 @@ void Game::MainLoop() {
 	      		if (mPlayer.TargetView()->GetRoom()->IsBridge()) {
 	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == 1);
 	      		}
-	      		bool result = pGame->GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
+	      		bool result = gGame.GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
 	      		ASSERT(result);
 	      		int progress = 0;
 	      		uint8_t *pNextMove;

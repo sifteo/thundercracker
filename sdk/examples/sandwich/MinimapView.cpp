@@ -6,7 +6,7 @@ void MinimapView::Init() {
 	Parent()->HideSprites();
 	BG1Helper(*Parent()->GetCube()).Flush();
 	ViewMode g = Parent()->Graphics();
-	Map *pMap = pGame->GetMap();
+	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;
 	unsigned padTop = (16 - pData->height) >> 1;
@@ -56,7 +56,7 @@ void MinimapView::Init() {
 	g.setSpriteImage(SPRITE_DOT_ID, MinimapDot);
 	g.moveSprite(
 		SPRITE_DOT_ID, 
-		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+		(gGame.GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
 	);
 }
 
@@ -67,12 +67,12 @@ void MinimapView::Restore() {
 void MinimapView::Update(float dt) {
 	Parent()->Graphics().moveSprite(
 		SPRITE_DOT_ID, 
-		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+		(gGame.GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
 	);
 }
 
 unsigned MinimapView::ComputeTileId(int lx, int ly) {
-	Map *pMap = pGame->GetMap();
+	Map *pMap = gGame.GetMap();
 	unsigned t = ly > 0 && pMap->GetPortalY(lx, ly-1);
 	unsigned l = lx > 0 && pMap->GetPortalX(lx-1, ly);
 	unsigned b = ly < pMap->Data()->height-1 && pMap->GetPortalY(lx, ly);

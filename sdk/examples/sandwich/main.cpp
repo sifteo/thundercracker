@@ -4,8 +4,6 @@
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
 AudioChannel gChannelMusic;
-static Game sGame;
-Game* pGame = 0;
 
 void siftmain() {
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
@@ -36,8 +34,6 @@ void siftmain() {
 		gChannelMusic.init();
 	#endif
 	while(1) {
-		pGame = &sGame;
-		pGame->MainLoop();
-		pGame = 0;
+		gGame.MainLoop();
 	}
 }

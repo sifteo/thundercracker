@@ -39,7 +39,7 @@ void InventoryView::Update(float dt) {
 	CORO_BEGIN;
 	while(1) {
 		do {
-			if (pGame->AnimFrame()%2==0) {
+			if (gGame.AnimFrame()%2==0) {
 				ComputeHoveringIconPosition();
 			}
 			{
@@ -48,7 +48,7 @@ void InventoryView::Update(float dt) {
 					Vec2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side];
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
-					int count = pGame->GetState()->GetItems(items);
+					int count = gGame.GetState()->GetItems(items);
 					if (idx >= 0 && idx < count) {
 						mSelected = idx;
 						mAnim = 0;
@@ -59,30 +59,30 @@ void InventoryView::Update(float dt) {
 			CORO_YIELD;
 		} while(!touch);
 
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		CORO_YIELD;
 		#if GFX_ARTIFACT_WORKAROUNDS		
-			pGame->NeedsSync();
+			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
-			pGame->NeedsSync();
+			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
-			pGame->NeedsSync();
+			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
 		#endif
 		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
-			int count = pGame->GetState()->GetItems(items);
+			int count = gGame.GetState()->GetItems(items);
 			//Parent()->Graphics().setWindow(80, 48);
 			Parent()->Graphics().setWindow(80+16,128-80-16);
 			mDialog.Init();
 			mDialog.Erase();
 			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
 		}
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 		for(t=0; t<16; t++) {
@@ -98,9 +98,9 @@ void InventoryView::Update(float dt) {
 		Parent()->Restore();
 		mAccumX = 0;
 		mAccumY = 0;
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		CORO_YIELD;
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 	}
@@ -118,7 +118,7 @@ void InventoryView::RenderInventory() {
 	const int pad = 24;
 	const int innerPad = (128-pad-pad)/3;
 	uint8_t items[16];
-	unsigned count = pGame->GetState()->GetItems(items);
+	unsigned count = gGame.GetState()->GetItems(items);
 	for(unsigned i=0; i<count; ++i) {
 		const int x = i % 4;
 		const int y = i >> 2;
@@ -133,7 +133,7 @@ void InventoryView::RenderInventory() {
 	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
 	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]);
 	ComputeHoveringIconPosition();
-	pGame->NeedsSync();
+	gGame.NeedsSync();
 }
 
 void InventoryView::ComputeHoveringIconPosition() {

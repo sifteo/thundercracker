@@ -3,6 +3,7 @@
 #include "DrawingHelpers.h"
 
 bool Game::sNeighborDirty = false;
+Game gGame;
 
 #if PLAYTESTING_HACKS
 float Game::sShakeTime = -1.f;
@@ -211,7 +212,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           vslot->GetCube()->vbuf.touch();
           Paint(true);
         #endif
-        pGame->Paint(true);
+        gGame.Paint(true);
         view.ShowAll(txt.line);
         if (line > 0) {
             PlaySfx(sfx_neighbor);
@@ -220,13 +221,13 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
         const unsigned hold = 250;
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(i<<4);
-            pGame->Paint();
+            gGame.Paint();
         }
         view.SetAlpha(255);
-        pGame->Paint();
+        gGame.Paint();
         bool prev = vslot->GetCube()->touching();
         for (unsigned i = 0; i < hold; i++) {
-            pGame->Paint();
+            gGame.Paint();
             bool next = vslot->GetCube()->touching();
             if (next && !prev) { break; }
             prev = next;
@@ -234,13 +235,13 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
         }
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(0xff - (i<<4));
-            pGame->Paint();
+            gGame.Paint();
         }
         view.SetAlpha(0);
-        pGame->Paint();
+        gGame.Paint();
     }
     for(unsigned i=0; i<16; ++i) {
-        pGame->Paint();
+        gGame.Paint();
     }
     PlaySfx(sfx_deNeighbor);
 }

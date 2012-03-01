@@ -80,5 +80,5 @@ private:
 
 };
 
-extern Game* pGame;
+extern Game gGame;
 
