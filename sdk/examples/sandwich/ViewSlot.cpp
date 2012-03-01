@@ -20,7 +20,7 @@ void ViewSlot::Init() {
 	mode.set();
 	mode.clear();
   	mode.setWindow(0, 128);
-	if (pMinimap) {
+	if (!pGame->ShowingMinimap() || pMinimap) {
 		mFlags.view = VIEW_IDLE;
 		mView.idle.Init();
 	} else {

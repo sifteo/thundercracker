@@ -9,4 +9,12 @@
 			here in the woods!
 		</text>
 	</dialog>
+	<dialog id="king_intro" npc="sprout">
+		<text image="sprout_detail">
+			I'm the king.			
+		</text>
+		<text image="sprout_detail">
+			Introduce the game here.
+		</text>
+	</dialog>
 </dialog-database>
