@@ -73,6 +73,20 @@ GlimmerImg = image{"Glimmer.png", height=32}
 PointFont = image{"points.png", height=16}
 BannerPoints = image{"Bannerpoints.png", height=16}
 
+
+--UI
+--Main menu
+UI_Main_Menu_Blitz = image{"ui_main_menu_blitz.png"}
+UI_Main_Menu_Puzzle = image{"ui_main_menu_puzzle.png"}
+UI_Main_Menu_Survival = image{"ui_main_menu_survival.png"}
+UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
+UI_Main_Menu_TipsTouch = image{"ui_main_menu_tips_touch.png"}
+UI_Main_Menu_TipsTilt = image{"ui_main_menu_tips_tilt.png"}
+UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
+--for clearing
+White = image{"White.png"}
+
+
 --sounds
 astrokraut = sound{"astrokraut.raw", encode="PCM"}
 bubble_pop_02 = sound{"bubble_pop_02.raw", encode="PCM"}
@@ -94,3 +108,10 @@ slosh_multi_02 = sound{"slosh_multi_02.raw", encode="PCM"}
 StingerIV2 = sound{"StingerIV2.raw", encode="PCM"}
 timer_blink = sound{"timer_blink.raw", encode="PCM"}
 timer_explode = sound{"timer_explode.raw", encode="PCM"}
+
+
+--UI audio
+changeoption = sound{"changeoption.raw"}
+ui_select = sound{"ui_select.raw"}
+settle = sound{"settle.raw"}
+game_start = sound{"game_start.raw"}
