@@ -360,25 +360,28 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 }
 
 
-void Game::NpcDialog(const DialogData& data, Cube* cube) {
-    if (!cube) cube = gCubes;
-    Dialog view(cube);
+void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
+    Dialog view(vslot->GetCube());
+    ViewMode mode = vslot->Graphics();
     PlaySfx(sfx_neighbor);
-    ViewMode mode(cube->vbuf);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
     mode.BG0_drawAsset(Vec2(0,10), DialogBox);
+
+    // save BG0
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
-            System::paintSync();
-            BG1Helper ovrly(*cube);
-            ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
+          if (line > 0) {
+              Paint(true);
+              mode.setWindow(0, 80);
+              vslot->GetRoomView()->DrawBackground();
+          }
+            BG1Helper ovrly = vslot->Overlay();
+            ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2,0), *(txt.detail));
             ovrly.Flush();
             Paint(true);
             #if GFX_ARTIFACT_WORKAROUNDS
-              cube->vbuf.touch();
-              Paint(true);
-              cube->vbuf.touch();
+              vslot->GetCube()->vbuf.touch();
               Paint(true);
             #endif
             //Now set up a letterboxed 128x48 mode
@@ -386,6 +389,11 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
             view.Init();
         }
         view.Erase();
+        Paint(true);
+        #if GFX_ARTIFACT_WORKAROUNDS
+          vslot->GetCube()->vbuf.touch();
+          Paint(true);
+        #endif
         pGame->Paint(true);
         view.ShowAll(txt.line);
         if (line > 0) {
@@ -399,10 +407,10 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
         }
         view.SetAlpha(255);
         pGame->Paint();
-        bool prev = cube->touching();
+        bool prev = vslot->GetCube()->touching();
         for (unsigned i = 0; i < hold; i++) {
             pGame->Paint();
-            bool next = cube->touching();
+            bool next = vslot->GetCube()->touching();
             if (next && !prev) { break; }
             prev = next;
 
@@ -631,7 +639,7 @@ void Game::OnActiveTrigger() {
     for(int i=0; i<16; ++i) { Paint(true); }
     const NpcData* pNpc = mPlayer.GetRoom()->TriggerAsNPC();
     if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent()->GetCube());
+    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
     System::paintSync();
     mPlayer.CurrentView()->Parent()->Restore();
     System::paintSync();

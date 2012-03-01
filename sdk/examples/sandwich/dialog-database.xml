@@ -9,6 +9,16 @@
 			here in the woods!
 		</text>
 	</dialog>
+
+	<dialog id="burgher_hello" npc="burgher">
+		<text image="burgher_detail">
+			Boo!
+		</text>
+		<text image="pearl_detail">
+			Eek!!
+		</text>
+	</dialog>
+	
 	<dialog id="king_intro" npc="sprout">
 		<text image="sprout_detail">
 			I'm the king.			

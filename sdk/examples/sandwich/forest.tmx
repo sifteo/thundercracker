@@ -638,5 +638,10 @@
     <property name="id" value="sprout_hello"/>
    </properties>
   </object>
+  <object name="Burgher" type="NPC" x="336" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="burgher_hello"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

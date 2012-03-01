@@ -50,7 +50,7 @@ private:
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
-  void NpcDialog(const DialogData& data, Cube* cube);
+  void NpcDialog(const DialogData& data, ViewSlot *view);
   
 
   unsigned OnPassiveTrigger();
