@@ -31,11 +31,7 @@ bool Dictionary::pickWord(char* buffer,
         _SYS_strlcpy(buffer, puzzles[sPickIndex], MAX_LETTERS_PER_WORD + 1);
 
         // TODO make data-driven
-        numAnagrams =
-                (puzzlesNumGoalAnagrams[sPickIndex] > 0) ?
-                    puzzlesNumGoalAnagrams[sPickIndex] :
-                    MIN(2, puzzlesNumBonusAnagrams[sPickIndex]);
-
+        numAnagrams = MAX(1, puzzlesNumGoalAnagrams[sPickIndex]);
         numBonusAnagrams = puzzlesNumBonusAnagrams[sPickIndex];
         leadingSpaces = puzzlesUseLeadingSpaces[sPickIndex];
         sPickIndex = (sPickIndex + 1) % NUM_PUZZLES;
