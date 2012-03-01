@@ -1,3 +1,7 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "flashlayer.h"
 #include "flash.h"
@@ -6,97 +10,106 @@
 #include <string.h>
 
 
-FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
-uint8_t FlashLayer::blockMem[NUM_BLOCKS * BLOCK_SIZE] BLOCK_ALIGN;
-uint32_t FlashLayer::validBlocksMask = 0;
-uint32_t FlashLayer::freeBlocksMask = 0;
+uint8_t FlashBlock::mem[NUM_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
+FlashBlock FlashBlock::instances[NUM_BLOCKS];
+uint32_t FlashBlock::referencedBlocksMap;
+uint32_t FlashBlock::busyBlocksMap;
+FlashBlock::Stats FlashBlock::stats;
 
-#ifdef SIFTEO_SIMULATOR
-FlashLayer::Stats FlashLayer::stats;
-#endif
 
-void FlashLayer::init()
+void FlashBlock::init()
 {
-    memset(blocks, 0, sizeof(blocks));
-    // all blocks begin their lives free
+    // All blocks start out with no valid data
     for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
-        Atomic::SetLZ(freeBlocksMask, i);
+        instances[i].address = INVALID_ADDRESS;
     }
 }
 
-bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
+void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 {
-    CachedBlock *b = getCachedBlock(offset);
-    if (b == 0) {
-#ifdef SIFTEO_SIMULATOR
-        stats.misses++;
+    assert((blockAddr & BLOCK_MASK) == 0);
+
+    if (ref.isHeld() && ref->address == blockAddr) {
+        // Cache layer 1: Repeated access to the same block. Keep existing ref.
+        FLASHLAYER_STATS_ONLY(stats.hit_same++);
+
+    } else if (FlashBlock *cached = lookupBlock(blockAddr)) {
+        // Cache layer 2: Block exists elsewhere in the cache
+        FLASHLAYER_STATS_ONLY(stats.hit_other++);
+        ref.set(cached);
+
+    } else {
+        // Cache miss. Find a free block and reload it. Reset the lazy
+        // code validator.
+
+        FlashBlock *recycled = recycleBlock();
+        assert(recycled->refCount == 0);
+        FLASHLAYER_STATS_ONLY(stats.miss++);
+
+        recycled->validCodeBytes = 0;
+        recycled->address = blockAddr;
+        Flash::read(blockAddr, recycled->getData(), BLOCK_SIZE);
+        ref.set(recycled);
+    }
+    
+    // Mark this block as busy. This is a hint used by recycleBlock().
+    busyBlocksMap |= ref->bit();
+
+#ifdef FLASHLAYER_STATS
+    if (++stats.total >= 1000) {
+        DEBUG_LOG(("Flashlayer, stats for last %u accesses: "
+            "%u same-block hits, %u other-block hits, %u misses, %u refs\n",
+            stats.hit_same, stats.hit_other, stats.miss,
+            stats.global_refcount));
+
+        stats.total = 0;
+        stats.hit_same = 0;
+        stats.hit_other = 0;
+        stats.miss = 0;
+    }
 #endif
-        b = getFreeBlock();
-        if (b == 0) {
-            return false;
-        }
-
-        // find the start address of the block that contains this offset,
-        // and read in the entire block.
-        b->address = (offset / BLOCK_SIZE) * BLOCK_SIZE;
-        Flash::read(b->address, b->getData(), BLOCK_SIZE);
-
-        // mark it as both valid & no longer free
-        unsigned idx = b - blocks;
-        ASSERT(idx < NUM_BLOCKS);
-        Atomic::SetLZ(validBlocksMask, idx);
-        Atomic::ClearLZ(freeBlocksMask, idx);
-    }
-#ifdef SIFTEO_SIMULATOR
-    else {
-        stats.hits++;
-    }
-
-    if (stats.hits + stats.misses >= 1000) {
-        DEBUG_LOG(("Flashlayer, stats for last 1000 accesses: %u hits, %u misses\n", stats.hits, stats.misses));
-        stats.hits = stats.misses = 0;
-    }
-#endif
-
-    if (offset + len > b->address + BLOCK_SIZE) {
-        // requested region crosses block boundary :(
-        r->_size = b->address + BLOCK_SIZE - offset;
-    }
-    else {
-        r->_size = len;
-    }
-
-    r->_address = offset;
-    r->_data = b->getData() + (offset % BLOCK_SIZE);
-    return true;
 }
 
-void FlashLayer::releaseRegion(const FlashRegion &r) {
-    if (CachedBlock *b = getCachedBlock(r._address)) {
-        unsigned idx = b - blocks;
-        ASSERT(idx < NUM_BLOCKS);
-        Atomic::SetLZ(freeBlocksMask, idx);
-    }
-}
+uint8_t *FlashBlock::getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length)
+{
+    uint32_t offset = address & BLOCK_MASK;
+    uint32_t maxLength = BLOCK_SIZE - offset;
 
-FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address) {
-    uint32_t mask = validBlocksMask;
-    while (mask) {
-        unsigned idx = Intrinsic::CLZ(mask);
-        CachedBlock *b = &blocks[idx];
-        if (address >= b->address && address < b->address + BLOCK_SIZE) {
+    if (length > maxLength)
+        length = maxLength;
+
+    get(ref, address - offset);
+    return ref->getData() + offset;
+}   
+
+FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
+{
+    // Any slot in the cache may have a valid block, even if
+    // the refcount is zero. Right now there's no faster way to find
+    // a block than performing a linear search.
+    
+    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+        FlashBlock *b = &instances[i];
+        if (b->address == blockAddr)
             return b;
-        }
-        Atomic::ClearLZ(mask, idx);
     }
-    return 0;
+    return NULL;
 }
 
-FlashLayer::CachedBlock* FlashLayer::getFreeBlock() {
-    if (freeBlocksMask == 0) {
-        return 0;
-    }
+FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
+{
+    // Look for a block we can recycle, in order to service a cache miss.
+    // This block *must* have a refcount of zero, so we only search the
+    // blocks that are zero in referencedBlocksMap. Additionally, we prefer
+    // to look at blocks that haven't been used since the last cache miss.
 
-    unsigned idx = Intrinsic::CLZ(freeBlocksMask);
-    return &blocks[idx];
+    uint32_t availableBlocks = ~referencedBlocksMap;
+    uint32_t idleBlocks = availableBlocks & ~busyBlocksMap;
+    busyBlocksMap = 0;
+
+    if (idleBlocks)
+        return &instances[Intrinsic::CLZ(idleBlocks)];
+
+    assert(availableBlocks && "Oh no, all cache blocks are in use. Is there a reference leak?");
+    return &instances[Intrinsic::CLZ(availableBlocks)];
 }

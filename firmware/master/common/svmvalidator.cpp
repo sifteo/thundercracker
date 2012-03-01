@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+ 
 #include "svmvalidator.h"
 #include "svm.h"
 #include "sifteo.h"
@@ -26,11 +31,6 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
     }
     LOG(("validation complete, valid: %d\n", numValidBytes));
     return numValidBytes;
-}
-
-bool SvmValidator::addressIsValid(uintptr_t address)
-{
-    return true;
 }
 
 /*

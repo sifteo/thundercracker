@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_RADIO_H
@@ -11,7 +8,7 @@
 
 #include <string.h>
 #include <sifteo/abi.h>
-#include "runtime.h"
+#include <sifteo/macros.h>
 
 class RadioManager;
 
@@ -66,11 +63,6 @@ struct PacketBuffer {
 
         memcpy(bytes + len, src, count);
         len += count;
-    }
-
-    void appendUser(uint8_t *src, unsigned count) {
-        if (Runtime::checkUserPointer(src, count))
-            append(src, count);
     }
 
     void log() const {

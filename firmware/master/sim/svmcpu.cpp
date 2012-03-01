@@ -1,20 +1,23 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "sifteo/macros.h"
+
+#include <sifteo/macros.h>
+#include <sifteo/machine.h>
 
 #include <string.h>
 #include <inttypes.h>
 
-SvmCpu::SvmCpu() :
-    runtime(SvmRuntime::instance)
-{
-}
+reg_t SvmCpu::regs[NUM_REGS];
+
 
 void SvmCpu::init()
 {
     memset(regs, 0, sizeof(regs));
-    cpsr = 0;
 
     // init sp to top of user data
     regs[REG_SP] = reinterpret_cast<reg_t>(&mem[MEM_IN_BYTES - 4]);
@@ -34,7 +37,7 @@ void SvmCpu::run()
     }
 }
 
-reg_t SvmCpu::reg(uint8_t r) const
+reg_t SvmCpu::reg(uint8_t r)
 {
     return regs[r];
 }
@@ -44,7 +47,7 @@ void SvmCpu::setReg(uint8_t r, reg_t val)
     regs[r] = val;
 }
 
-reg_t SvmCpu::userRam() const
+reg_t SvmCpu::userRam()
 {
     return reinterpret_cast<reg_t>(&mem);
 }
@@ -62,8 +65,7 @@ uint16_t SvmCpu::fetch()
 #if 1
     LOG(("[%"PRIxPTR": %x]", runtime.cache2virtFlash(reinterpret_cast<reg_t>(tst)), *tst));
     for (unsigned r = 0; r < 8; r++) {
-        assert((uint32_t)regs[r] == regs[r]);
-        LOG((" r%d=%08x", r, (uint32_t) regs[r]));
+        LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
     }
     LOG((" | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n", regs[8], regs[9], regs[REG_SP]));
 #endif
@@ -301,7 +303,7 @@ void SvmCpu::emulateADDReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = (uint32_t) (regs[Rn] + regs[Rm]);
+    regs[Rd] = regs[Rn] + regs[Rm];
     // TODO: set N, Z, C and V flags
 }
 
@@ -311,7 +313,7 @@ void SvmCpu::emulateSUBReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = (uint32_t) (regs[Rn] - regs[Rm]);
+    regs[Rd] = regs[Rn] - regs[Rm];
     // TODO: set N, Z, C and V flags
 }
 
@@ -321,7 +323,7 @@ void SvmCpu::emulateADD3Imm(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = (uint32_t) (regs[Rn] + imm3);
+    regs[Rd] = regs[Rn] + imm3;
     // TODO: set N, Z, C and V flags
 }
 
@@ -331,7 +333,7 @@ void SvmCpu::emulateSUB3Imm(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = (uint32_t) (regs[Rn] - imm3);
+    regs[Rd] = regs[Rn] - imm3;
     // TODO: set N, Z, C and V flags
 }
 
@@ -357,7 +359,7 @@ void SvmCpu::emulateADD8Imm(uint16_t instr)
     unsigned Rdn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    regs[Rdn] = (uint32_t) (regs[Rdn] + imm8);
+    regs[Rdn] = regs[Rdn] + imm8;
     // TODO: set N, Z, C and V flags
 }
 
@@ -366,7 +368,7 @@ void SvmCpu::emulateSUB8Imm(uint16_t instr)
     unsigned Rdn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    regs[Rdn] = (uint32_t) (regs[Rdn] - imm8);
+    regs[Rdn] = regs[Rdn] - imm8;
     // TODO: set N, Z, C and V flags
 }
 
@@ -437,7 +439,7 @@ void SvmCpu::emulateRORReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = ROR(regs[Rdn], regs[Rm]);
+    regs[Rdn] = Sifteo::Intrinsic::ROR(regs[Rdn], regs[Rm]);
 }
 
 void SvmCpu::emulateTSTReg(uint16_t instr)
@@ -548,7 +550,7 @@ void SvmCpu::emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x7FF;
-    BranchOffsetPC(SignExtend<signed int, 12>(imm11 << 1));
+    branchOffsetPC(SignExtend<signed int, 12>(imm11 << 1));
 }
 
 void SvmCpu::emulateCondB(uint16_t instr)
@@ -557,7 +559,7 @@ void SvmCpu::emulateCondB(uint16_t instr)
     unsigned imm8 = instr & 0xff;
 
     if (conditionPassed(cond)) {
-        BranchOffsetPC(SignExtend<signed int, 9>(imm8 << 1));
+        branchOffsetPC(SignExtend<signed int, 9>(imm8 << 1));
     }
 }
 
@@ -570,7 +572,7 @@ void SvmCpu::emulateCBZ_CBNZ(uint16_t instr)
 
     if (nonzero ^ (regs[Rn] == 0)) {
         // ZeroExtend(i:imm5:'0')
-        BranchOffsetPC((i << 6) | (imm5 << 1));
+        branchOffsetPC((i << 6) | (imm5 << 1));
     }
 }
 

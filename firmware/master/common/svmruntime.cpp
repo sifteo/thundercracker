@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "svmruntime.h"
 #include "elfdefs.h"
 #include "flashlayer.h"
@@ -9,11 +14,12 @@
 using namespace Svm;
 
 // statics
-SvmRuntime SvmRuntime::instance;
+FlashRegion SvmRuntime::flashRegion;
+unsigned SvmRuntime::currentAppPhysAddr;
+unsigned SvmRuntime::currentBlockValidBytes;
+ProgramInfo SvmRuntime::progInfo;
+uint8_t SvmRuntime::userRAM[RAM_SIZE_IN_BYTES];
 
-SvmRuntime::SvmRuntime()
-{
-}
 
 void SvmRuntime::run(uint16_t appId)
 {
@@ -250,6 +256,9 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 
 /*
     Given an address:
+    - if address is already valid physical stack pointer
+        - pass it through.
+          (This happens when validating an addr computed based on SP)
     - if address is in virtual flash
         - make sure any referenced memory has been loaded.
         - translate from virtual to cached data address
@@ -259,30 +268,34 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 */
 reg_t SvmRuntime::validate(reg_t address)
 {
-    reg_t result;
-    if (isFlashAddr(address)) {
-        result = virt2cacheFlash(address);
-        if (!inRange(result, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
+    reg_t baseRO, baseRW;
+
+    if (inRange(address, cpu.userRam(), SvmCpu::MEM_IN_BYTES)) {
+        // Already a valid RAM address. (Includes user stack)
+        baseRO = baseRW = address;
+
+    } else if (isFlashAddr(address)) {
+
+        baseRO = virt2cacheFlash(address);
+        baseRW = 0;
+
+        if (!inRange(baseRO, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
             FlashLayer::releaseRegion(flashRegion);
             fetchFlashBlock(address);
         }
-        // set our base pointers - 9 is the read/write pointer, so set it to
-        // an invalid address since this is one read-only
-        cpu.setReg(8, result);
-        cpu.setReg(9, 0);
+
+    } else {
+        // RAM address in need of translation
+        
+        baseRO = baseRW = virt2physRam(address);
+        ASSERT(inRange(baseRO, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
     }
-    else {
-        if (inRange(address, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
-            result = address;
-        else
-            result = virt2physRam(address);
-        ASSERT(inRange(result, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
-        // set base pointers
-        cpu.setReg(8, result);
-        cpu.setReg(9, result);
-    }
-    LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", result, address));
-    return result;
+
+    cpu.setReg(8, baseRO);
+    cpu.setReg(9, baseRW);
+
+    LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", baseRO, address));
+    return baseRO;
 }
 
 bool SvmRuntime::loadElfFile(unsigned addr, unsigned len)

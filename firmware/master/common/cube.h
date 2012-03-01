@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _CUBE_H
@@ -12,7 +9,7 @@
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 #include "radio.h"
-#include "runtime.h"
+#include "svmmemory.h"
 #include "cubeslots.h"
 #include "systime.h"
 
@@ -104,8 +101,10 @@ class CubeSlot {
          * NULL.
          */
         _SYSCubeID i = id();
-        if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
-            return &group->cubes[i];
+        _SYSAssetGroupCube *cubes = group->cubes;
+
+        if (SvmMemory::mapRAM(cubes, (sizeof cubes[0]) * (i + 1)))
+            return &cubes[i];
         return 0;
     }
 

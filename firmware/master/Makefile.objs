@@ -2,7 +2,7 @@ MASTER_DIR = $(TC_DIR)/firmware/master
 
 OBJS_COMMON = \
 	$(MASTER_DIR)/common/syscall.o \
-	$(MASTER_DIR)/common/runtime.o \
+	$(MASTER_DIR)/common/event.o \
 	$(MASTER_DIR)/common/radio.o \
 	$(MASTER_DIR)/common/cubeslots.o \
 	$(MASTER_DIR)/common/cube.o \

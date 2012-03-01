@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_RUNTIME_H
@@ -162,21 +159,8 @@ class Event {
 #endif
     }
 	
-	static void pause() {
-		LOG(("pausing game runtime...\n"));
-		paused = true;
-		
-		// TODO: display a standard "game paused" screen
-	}
-	
-	static void resume() {
-		LOG(("resuming game runtime...\n"));
-		paused = false;
-	}
-
     static uint32_t pending;            /// CLZ map of all pending events
     static bool dispatchInProgress;     /// Reentrancy detector
-    static bool paused;
 
  private:
      

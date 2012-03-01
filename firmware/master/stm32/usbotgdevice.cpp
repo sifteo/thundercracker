@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "usbotgdevice.h"
 #include <cstring>  // for NULL...is this defined within the SDK anywhere?
 #include <sifteo/macros.h>

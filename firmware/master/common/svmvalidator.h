@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef SVMVALIDATOR_H
 #define SVMVALIDATOR_H
 
@@ -6,9 +11,11 @@
 class SvmValidator
 {
 public:
-    SvmValidator();
+    SvmValidator();  // Do not implement
+
     static unsigned validBytes(void *block, unsigned lenInBytes);
-    static bool addressIsValid(uintptr_t address);
+
+private:
     static bool isValid16(uint16_t instr);
     static bool isValid32(uint32_t instr);
 };

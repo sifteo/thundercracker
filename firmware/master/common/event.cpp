@@ -1,39 +1,20 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "runtime.h"
+#include "event.h"
 #include "cube.h"
 #include "neighbors.h"
-#include "tasks.h"
 
 #include <sifteo/abi.h>
 
 using namespace Sifteo;
 
-jmp_buf Runtime::jmpExit;
-
 bool Event::dispatchInProgress;
-bool Event::paused = false;
 uint32_t Event::pending;
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 
-void Runtime::run()
-{
-    if (setjmp(jmpExit))
-        return;
-
-    // siftmain;
-}
-
-void Runtime::exit()
-{
-    longjmp(jmpExit, 1);
-}
 
 void Event::dispatch()
 {
@@ -41,7 +22,7 @@ void Event::dispatch()
      * Skip event dispatch if we're already in an event handler
      */
 
-    if (dispatchInProgress || paused)
+    if (dispatchInProgress)
         return;
     dispatchInProgress = true;
 

@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef SVMCPU_H
 #define SVMCPU_H
 
@@ -9,40 +14,38 @@ class SvmRuntime;
 
 class SvmCpu {
 public:
-    SvmCpu();
-    void init();
-    void run();
+    SvmCpu();  // Do not implement
+
+    static void init();
+    static void run();
 
     /*
         For now, register accessors are assumed to only really be used to access
         stacked registers during interrupt handling.
     */
-    reg_t reg(uint8_t r) const;
-    void setReg(uint8_t r, reg_t val);
+    static reg_t reg(uint8_t r);
+    static void setReg(uint8_t r, reg_t val);
 
-    // address of user ram
-    reg_t userRam() const;
-
-    static const unsigned NUM_REGS = 16;
-    static const unsigned REG_PC = 15;
-    static const unsigned REG_LR = 14;
-    static const unsigned REG_SP = 13;
     static const unsigned REG_FP = 11;
-
-    static const unsigned MEM_IN_BYTES = 32 * 1024;
-
-#ifdef SIFTEO_SIMULATOR
-    // TODO: adjustSP needs to be common API
-    inline void adjustSP(int offset) {
-        regs[REG_SP] += offset;
-    }
-
-    inline void BranchOffsetPC(int offset) {
-        regs[REG_PC] = (regs[REG_PC] + offset + 2) & ~(reg_t)1;
-    }
-#endif
+    static const unsigned REG_SP = 13;
+    static const unsigned REG_LR = 14;
+    static const unsigned REG_PC = 15;
+    static const unsigned REG_CPSR = 16;
+    static const unsigned NUM_REGS = 17;
 
 private:
+    template <typename T>
+    static inline T Align(T x, T y) {
+        return y * (x / y);
+    }
+
+    // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
+    template <typename T, unsigned B>
+    static inline T SignExtend(const T x) {
+        struct { T x:B; } s;
+        return s.x = x;
+    }
+
 #if 0
     // this gets saved at interrupt by HW on cortex-m3
     struct HwStackFrame {
@@ -69,18 +72,14 @@ private:
     };
 #endif
 
-    SvmRuntime &runtime;
-
 #ifdef SIFTEO_SIMULATOR
-    reg_t regs[NUM_REGS];
-    reg_t cpsr;
-    uint8_t mem[MEM_IN_BYTES];
+    static reg_t regs[NUM_REGS];
 
     // ARM emulation support
-    uint16_t fetch();
-    void execute16(uint16_t instr);
-    void execute32(uint32_t instr);
-    bool conditionPassed(uint8_t cond);
+    static uint16_t fetch();
+    static void execute16(uint16_t instr);
+    static void execute32(uint32_t instr);
+    static bool conditionPassed(uint8_t cond);
 
     enum Conditions {
         EQ = 0,    // Equal
@@ -101,119 +100,106 @@ private:
     };
 
     // status flag helpers
-    inline bool getNeg() const {
-        return cpsr & (1 << 31);
+    static inline bool getNeg() {
+        return regs[REG_CPSR] & (1 << 31);
     }
-    inline void setNeg() {
-        cpsr |= (1 << 31);
+    static inline void setNeg() {
+        regs[REG_CPSR] |= (1 << 31);
     }
-    inline void clrNeg() {
-        cpsr &= ~(1 << 31);
-    }
-
-    inline bool getZero() const {
-        return cpsr & (1 << 30);
-    }
-    inline void setZero() {
-        cpsr |= 1 << 30;
-    }
-    inline void clrZero() {
-        cpsr &= ~(1 << 30);
+    static inline void clrNeg() {
+        regs[REG_CPSR] &= ~(1 << 31);
     }
 
-    inline bool getCarry() const {
-        return cpsr & (1 << 29);
+    static inline bool getZero() {
+        return regs[REG_CPSR] & (1 << 30);
     }
-    inline void setCarry() {
-        cpsr |= 1 << 29;
+    static inline void setZero() {
+        regs[REG_CPSR] |= 1 << 30;
     }
-    inline void clrCarry() {
-        cpsr &= ~(1 << 29);
+    static inline void clrZero() {
+        regs[REG_CPSR] &= ~(1 << 30);
     }
 
-    inline int getOverflow() const {
-        return cpsr & (1 << 28);
+    static inline bool getCarry() {
+        return regs[REG_CPSR] & (1 << 29);
     }
-    inline void setOverflow() {
-        cpsr |= (1 << 28);
+    static inline void setCarry() {
+        regs[REG_CPSR] |= 1 << 29;
     }
-    inline void clrOverflow() {
-        cpsr &= ~(1 << 28);
+    static inline void clrCarry() {
+        regs[REG_CPSR] &= ~(1 << 29);
+    }
+
+    static inline int getOverflow() {
+        return regs[REG_CPSR] & (1 << 28);
+    }
+    static inline void setOverflow() {
+        regs[REG_CPSR] |= (1 << 28);
+    }
+    static inline void clrOverflow() {
+        regs[REG_CPSR] &= ~(1 << 28);
+    }
+    
+    static inline void branchOffsetPC(int offset) {
+        setReg(REG_PC, (reg(REG_PC) + offset + 2) & ~(reg_t)1);
     }
 
     // shift/add/subtract/move/compare
-    void emulateLSLImm(uint16_t inst);      // LSL (immediate)
-    void emulateLSRImm(uint16_t inst);      // LSR (immediate)
-    void emulateASRImm(uint16_t instr);     // ASR (immediate)
-    void emulateADDReg(uint16_t instr);     // ADD (register)
-    void emulateSUBReg(uint16_t instr);     // SUB (register)
-    void emulateADD3Imm(uint16_t instr);    // ADD (immediate)
-    void emulateSUB3Imm(uint16_t instr);    // SUB (immediate)
-    void emulateMovImm(uint16_t instr);     // MOV (immediate)
-    void emulateCmpImm(uint16_t instr);     // CMP (immediate)
-    void emulateADD8Imm(uint16_t instr);    // ADD (immediate)
-    void emulateSUB8Imm(uint16_t instr);    // SUB (immediate)
+    static void emulateLSLImm(uint16_t inst);      // LSL (immediate)
+    static void emulateLSRImm(uint16_t inst);      // LSR (immediate)
+    static void emulateASRImm(uint16_t instr);     // ASR (immediate)
+    static void emulateADDReg(uint16_t instr);     // ADD (register)
+    static void emulateSUBReg(uint16_t instr);     // SUB (register)
+    static void emulateADD3Imm(uint16_t instr);    // ADD (immediate)
+    static void emulateSUB3Imm(uint16_t instr);    // SUB (immediate)
+    static void emulateMovImm(uint16_t instr);     // MOV (immediate)
+    static void emulateCmpImm(uint16_t instr);     // CMP (immediate)
+    static void emulateADD8Imm(uint16_t instr);    // ADD (immediate)
+    static void emulateSUB8Imm(uint16_t instr);    // SUB (immediate)
 
     // data processing
-    void emulateANDReg(uint16_t instr);     // AND (register)
-    void emulateEORReg(uint16_t instr);     // EOR (register)
-    void emulateLSLReg(uint16_t instr);     // LSL (register)
-    void emulateLSRReg(uint16_t instr);     // LSR (register)
-    void emulateASRReg(uint16_t instr);     // ASR (register)
-    void emulateADCReg(uint16_t instr);     // ADC (register)
-    void emulateSBCReg(uint16_t instr);     // SBC (register)
-    void emulateRORReg(uint16_t instr);     // ROR (register)
-    void emulateTSTReg(uint16_t instr);     // TST (register)
-    void emulateRSBImm(uint16_t instr);     // RSB (immediate)
-    void emulateCMPReg(uint16_t instr);     // CMP (register)
-    void emulateCMNReg(uint16_t instr);     // CMN (register)
-    void emulateORRReg(uint16_t instr);     // ORR (register)
-    void emulateMUL(uint16_t instr);        // MUL
-    void emulateBICReg(uint16_t instr);     // BIC (register)
-    void emulateMVNReg(uint16_t instr);     // MVN (register)
+    static void emulateANDReg(uint16_t instr);     // AND (register)
+    static void emulateEORReg(uint16_t instr);     // EOR (register)
+    static void emulateLSLReg(uint16_t instr);     // LSL (register)
+    static void emulateLSRReg(uint16_t instr);     // LSR (register)
+    static void emulateASRReg(uint16_t instr);     // ASR (register)
+    static void emulateADCReg(uint16_t instr);     // ADC (register)
+    static void emulateSBCReg(uint16_t instr);     // SBC (register)
+    static void emulateRORReg(uint16_t instr);     // ROR (register)
+    static void emulateTSTReg(uint16_t instr);     // TST (register)
+    static void emulateRSBImm(uint16_t instr);     // RSB (immediate)
+    static void emulateCMPReg(uint16_t instr);     // CMP (register)
+    static void emulateCMNReg(uint16_t instr);     // CMN (register)
+    static void emulateORRReg(uint16_t instr);     // ORR (register)
+    static void emulateMUL(uint16_t instr);        // MUL
+    static void emulateBICReg(uint16_t instr);     // BIC (register)
+    static void emulateMVNReg(uint16_t instr);     // MVN (register)
 
     // misc
-    void emulateSXTH(uint16_t instr);       // SXTH
-    void emulateSXTB(uint16_t instr);       // SXTB
-    void emulateUXTH(uint16_t instr);       // UXTH
-    void emulateUXTB(uint16_t instr);       // UXTB
+    static void emulateSXTH(uint16_t instr);       // SXTH
+    static void emulateSXTB(uint16_t instr);       // SXTB
+    static void emulateUXTH(uint16_t instr);       // UXTH
+    static void emulateUXTB(uint16_t instr);       // UXTB
 
-    void emulateB(uint16_t instr);          // B
-    void emulateCondB(uint16_t instr);      // B
-    void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
+    static void emulateB(uint16_t instr);          // B
+    static void emulateCondB(uint16_t instr);      // B
+    static void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
 
-    void emulateSTRSPImm(uint16_t instr);   // STR (SP plus immediate)
-    void emulateLDRSPImm(uint16_t instr);   // LDR (SP plus immediate)
-    void emulateADDSpImm(uint16_t instr);   // ADD (SP plus immediate)
+    static void emulateSTRSPImm(uint16_t instr);   // STR (SP plus immediate)
+    static void emulateLDRSPImm(uint16_t instr);   // LDR (SP plus immediate)
+    static void emulateADDSpImm(uint16_t instr);   // ADD (SP plus immediate)
 
-    void emulateLDRLitPool(uint16_t instr); // LDR (literal)
+    static void emulateLDRLitPool(uint16_t instr); // LDR (literal)
 
-    void emulateSVC(uint16_t instr);
+    static void emulateSVC(uint16_t instr);
 
     // 32-bit instructions
-    void emulateSTR(uint32_t instr);
-    void emulateSTRBH(uint32_t instr);
-    void emulateLDRBH(uint32_t instr);
-    void emulateLDR(uint32_t instr);
-    void emulateMOVWT(uint32_t instr);
-    void emulateDIV(uint32_t instr);
-
-    // utils
-    uint32_t ROR(uint32_t data, uint32_t ror) {
-        return (data << (32 - ror)) | (data >> ror);
-    }
-
-    template <typename T>
-    inline T Align(T x, T y) {
-        return y * (x / y);
-    }
-
-    // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
-    template <typename T, unsigned B>
-    inline T SignExtend(const T x) {
-        struct { T x:B; } s;
-        return s.x = x;
-    }
+    static void emulateSTR(uint32_t instr);
+    static void emulateSTRBH(uint32_t instr);
+    static void emulateLDRBH(uint32_t instr);
+    static void emulateLDR(uint32_t instr);
+    static void emulateMOVWT(uint32_t instr);
+    static void emulateDIV(uint32_t instr);
 #endif
 };
 

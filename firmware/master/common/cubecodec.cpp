@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include <stdio.h>
@@ -404,7 +401,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
         return false;
     }
     uint8_t *region = static_cast<uint8_t*>(fr.data());
-    buf.appendUser(region, fr.size());
+    buf.append(region, fr.size());
     progress += fr.size();
     loadBufferAvail -= fr.size();
     FlashLayer::releaseRegion(fr);
