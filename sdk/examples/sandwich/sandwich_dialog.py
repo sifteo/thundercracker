@@ -50,7 +50,7 @@ class DialogDetailImage:
 	def __init__(self, path):
 		self.image = Image.open(path)
 		w,h = self.image.size
-		assert w==112 and h==80, "NPC Details currently restricted to 112x80 crappy dimensions"
+		assert w<=112 and h<=80, "NPC Details currently restricted to 112x80 crappy dimensions"
 		# assert h<=80, "detail image is taller than 80px"
 		# assert w%8 == 0 and h%8 == 0, "detail image dimensions not multiples of 8"
 		# w = w>>3

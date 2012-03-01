@@ -377,7 +377,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
               vslot->GetRoomView()->DrawBackground();
           }
             BG1Helper ovrly = vslot->Overlay();
-            ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2,0), *(txt.detail));
+            ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
             ovrly.Flush();
             Paint(true);
             #if GFX_ARTIFACT_WORKAROUNDS
