@@ -11,6 +11,9 @@ OBJS = \
 	Dialog.o \
 	DrawingHelpers.o \
 	Game.o \
+	Game_IntroCutscene.o \
+	Game_WinScreen.o \
+	Game_MainLoop.o \
 	GameState.o \
 	IdleView.o \
 	InventoryView.o \

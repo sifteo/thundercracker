@@ -4,8 +4,17 @@
 #include "Map.h"
 #include "GameState.h"
 
+#define TRIGGER_RESULT_NONE             0
+#define TRIGGER_RESULT_PATH_INTERRUPTED 1
+
 class Game {
 private:
+  static bool sNeighborDirty;
+  #if PLAYTESTING_HACKS
+  static float sShakeTime;
+  #endif
+
+
   ViewSlot mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
@@ -31,7 +40,7 @@ public:
   bool ShowingMinimap() const { return false; }
 
   // methods  
-  void MainLoop(Cube* pPrimary);
+  void MainLoop();
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
 
@@ -40,6 +49,13 @@ public:
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
 
 private:
+
+  static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+
+  // cutscenes
+  Cube* IntroCutscene();
+  void WinScreen();
+
 
   // helpers
   void CheckMapNeighbors();
