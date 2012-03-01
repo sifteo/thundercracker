@@ -1,6 +1,6 @@
 <quest-database>
-	<quest id="tutorial" map="castle" x="1" y="0" />
-	<!--quest id="tutorial" map="tutorial" x="0" y="5" /-->
+	<quest id="tutorial" map="tutorial" x="0" y="5" />	
+	<quest id="tutorial2" map="tutorial2" x="0" y="6" />	
 	<quest id="linearcriticalpath" map="linearcriticalpath" x="0" y="6" />
 	<quest id="longerdeadends" map="longerdeadends" x="0" y="6" />	
 	<quest id="openSpaceLandmarks" map="openSpaceLandmarks" x="1" y="6" />	
