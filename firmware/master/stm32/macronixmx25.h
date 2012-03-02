@@ -10,8 +10,6 @@ public:
     static const unsigned SECTOR_SIZE = 1024 * 4;   // smallest erase granularity
     static const unsigned BLOCK_SIZE = 1024 * 64;   // largest erase granularity
 
-    static MacronixMX25 instance;
-
     enum Status {
         Ok                  = 0,
         // from status register

@@ -1,12 +1,6 @@
 #include "macronixmx25.h"
 #include "board.h"
 
-MacronixMX25 MacronixMX25::instance(SPIMaster(&FLASH_SPI,
-                                              FLASH_CS_GPIO,
-                                              FLASH_SCK_GPIO,
-                                              FLASH_MISO_GPIO,
-                                              FLASH_MOSI_GPIO));
-
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;

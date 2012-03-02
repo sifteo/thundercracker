@@ -19,7 +19,7 @@
 #include "vectors.h"
 #include "systime.h"
 #include "gpio.h"
-#include "macronixmx25.h"
+#include "flash.h"
 #include "tasks.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
@@ -154,7 +154,7 @@ extern "C" void _start()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
 #ifndef DEBUG
-    MacronixMX25::instance.init();
+    Flash::init();
 #else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
