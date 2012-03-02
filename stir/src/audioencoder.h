@@ -18,21 +18,27 @@
 class AudioEncoder {
 public:
     virtual ~AudioEncoder() {};
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out) = 0;
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps) = 0;
+
     virtual const char *getTypeSymbol() = 0;
+    virtual const char *getName() = 0;
     
-    static AudioEncoder *create(std::string name, int quality);
+    static AudioEncoder *create(std::string name, float quality);
 };
 
 
 class SpeexEncoder : public AudioEncoder {
 public:
-    SpeexEncoder(int quality);
+    SpeexEncoder(float quality);
     virtual ~SpeexEncoder();
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out);
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_Speex";
+    }
+
+    virtual const char *getName() {
+        return "Speex";
     }
 
 private:
@@ -48,10 +54,14 @@ private:
 
 class PCMEncoder : public AudioEncoder {
 public:
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out);
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_PCM";
+    }
+
+    virtual const char *getName() {
+        return "Uncompressed PCM";
     }
 };
 

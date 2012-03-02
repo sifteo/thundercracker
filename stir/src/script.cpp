@@ -94,17 +94,15 @@ bool Script::run(const char *filename)
 
     if (!sounds.empty()) {
         log.heading("Audio");
-        log.taskBegin("Compressing files");
-    
+        log.infoBegin("Sound compression");
+
         for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
             Sound *sound = *i;
-
-            log.taskProgress("%s (%s)", sound->getName().c_str(), sound->getFile().c_str());
             header.writeSound(*sound);
             source.writeSound(*sound);
         }
-        
-        log.taskEnd();
+
+        log.infoEnd();
     }
 
     proof.close();
@@ -503,7 +501,8 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "quality")) {
         setQuality(lua_tonumber(L, -1));
     } else {
-        setQuality(10);
+        lua_getglobal(L, GLOBAL_QUALITY);
+        setQuality(lua_tonumber(L, -1));
     }
 
     if (!Script::argEnd(L))

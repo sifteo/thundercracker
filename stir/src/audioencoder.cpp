@@ -22,7 +22,7 @@ using namespace std;
 #define SPEEX_MODE  SPEEX_MODEID_WB
 
 
-AudioEncoder *AudioEncoder::create(std::string name, int quality)
+AudioEncoder *AudioEncoder::create(std::string name, float quality)
 {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
@@ -36,14 +36,27 @@ AudioEncoder *AudioEncoder::create(std::string name, int quality)
 }
 
 
-SpeexEncoder::SpeexEncoder(int quality) :
+SpeexEncoder::SpeexEncoder(float quality) :
     frameSize(0)
 {
     encoderState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODE));
     speex_bits_init(&bits);
 
-    speex_encoder_ctl(encoderState, SPEEX_SET_QUALITY, &quality);
-    speex_encoder_ctl(encoderState,SPEEX_GET_FRAME_SIZE, &frameSize);
+    spx_int32_t vbrMax = 100000; // Arbitrary big number
+    spx_int32_t vbrEnabled = 1;
+    spx_int32_t complexity = 10;  // Unbounded CPU for encoding
+
+    speex_encoder_ctl(encoderState, SPEEX_SET_VBR, &vbrEnabled);
+
+    // Make sure VBR support is compiled in!
+    vbrEnabled = 0;
+    speex_encoder_ctl(encoderState, SPEEX_GET_VBR, &vbrEnabled);
+    assert(vbrEnabled == 1);
+
+    speex_encoder_ctl(encoderState, SPEEX_SET_VBR_MAX_BITRATE, &vbrMax);
+    speex_encoder_ctl(encoderState, SPEEX_SET_VBR_QUALITY, &quality);
+    speex_encoder_ctl(encoderState, SPEEX_SET_COMPLEXITY, &complexity);
+    speex_encoder_ctl(encoderState, SPEEX_GET_FRAME_SIZE, &frameSize);
 }
 
 SpeexEncoder::~SpeexEncoder()
@@ -54,7 +67,8 @@ SpeexEncoder::~SpeexEncoder()
     }
 }
 
-void SpeexEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out)
+void SpeexEncoder::encodeFile(const std::string &path,
+    std::vector<uint8_t> &out, float &kbps)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -62,26 +76,38 @@ void SpeexEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out
 
     short inbuf[MAX_FRAME_SIZE];
     char outbuf[MAX_FRAME_BYTES];
-    
+    unsigned totalSamples = 0;
+
     for (;;) {
         int rx = fread(inbuf, sizeof(short), frameSize, fin);
-        if (feof(fin) || rx != frameSize)
+        if (feof(fin) && rx == 0)
             break;
+
+        totalSamples += rx;
+        if (rx < frameSize) {
+            // Pad with silence
+            memset(inbuf + rx, 0, (frameSize - rx) * sizeof(short));
+        }
 
         // encode this frame and write it to our raw encoded file
         speex_bits_reset(&bits);
         speex_encode_int(encoderState, inbuf, &bits);
 
         int nbBytes = speex_bits_write(&bits, outbuf, sizeof(outbuf));
-        assert(nbBytes < 0xFF && "frame is too large for format :(\n");
+        assert(nbBytes > 0 && "frame shouldn't be empty?");
+        assert(nbBytes < 0xFF && "frame is too large for format :(");
 
         out.push_back((uint8_t) nbBytes);
         out.insert(out.end(), &outbuf[0], &outbuf[nbBytes]);
     }
+
+    // Calculate final bit rate
+    kbps = (8.0f * SAMPLE_RATE * out.size()) / (1000.0f * totalSamples);
 }
 
 
-void PCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out)
+void PCMEncoder::encodeFile(const std::string &path,
+    std::vector<uint8_t> &out, float &kbps)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -96,4 +122,7 @@ void PCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out)
 
         out.insert(out.end(), &inbuf[0], &inbuf[rx]);
     }
+
+    // Constant bit rate (uncompressed)
+    kbps = SAMPLE_RATE * (16.0f / 1000.0f);
 }

@@ -140,7 +140,11 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     std::vector<uint8_t> data;
     AudioEncoder *enc = AudioEncoder::create(sound.getEncode(), sound.getQuality());
     assert(enc != 0);
-    enc->encodeFile(sound.getFile(), data);
+
+    float kbps;
+    enc->encodeFile(sound.getFile(), data, kbps);
+    mLog.infoLine("%20s: %7.02f kiB, %6.02f kbps %s (%s)", sound.getName().c_str(),
+        data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
 
     if (data.empty())
         mLog.error("Error encoding audio file '%s'", sound.getFile().c_str());
