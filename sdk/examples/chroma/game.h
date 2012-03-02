@@ -10,6 +10,7 @@
 #include <sifteo.h>
 #include "Level.h"
 #include "cubewrapper.h"
+#include "MenuController.h"
 #include "TimeKeeper.h"
 #include "config.h"
 
@@ -27,11 +28,11 @@ public:
 #if SPLASH_ON
         STARTING_STATE = STATE_SPLASH,
 #endif
-		STATE_MENU,
-        STATE_INTRO,
+        STATE_MAINMENU,
 #if !SPLASH_ON
-        STARTING_STATE = STATE_INTRO,
+        STARTING_STATE = STATE_MAINMENU,
 #endif
+        STATE_INTRO,
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
@@ -172,6 +173,7 @@ private:
 	GameMode m_mode;
     float m_stateTime;
 	TimeKeeper m_timer;
+    MenuController m_menu;
     float m_fLastTime;
     float m_fLastSloshTime;
 

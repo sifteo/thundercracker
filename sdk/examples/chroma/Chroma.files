@@ -88,9 +88,6 @@ Puzzle.cpp
 RockExplosion.h
 RockExplosion.cpp
 TiltFlowMenu.h
-TFutils.h
-TFcubewrapper.h
 MenuController.h
 TiltFlowMenu.cpp
-TFcubewrapper.cpp
 MenuController.cpp

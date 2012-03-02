@@ -8,12 +8,11 @@
 #define _MENUCONTROLLER_H
 
 //#include <sifteo.h>
-#include "TFcubewrapper.h"
 #include "TiltFlowMenu.h"
+#include "cubewrapper.h"
 #include "config.h"
 
 using namespace Sifteo;
-using namespace SelectorMenu;
 
 void RunMenu();
 
@@ -28,13 +27,12 @@ public:
     //static const int NUM_CUBES = 3;
     static const int NUM_MAIN_MENU_ITEMS = 4;
 
-	CubeWrapper cubes[NUM_CUBES]; 
-
 	void Init();
 	bool Update();
 	void Reset();
 	
     void checkNeighbors();
+    CubeWrapper &GetWrapper( unsigned int id );
 
 private:
     float m_fLastTime;

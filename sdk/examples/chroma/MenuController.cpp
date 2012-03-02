@@ -5,7 +5,8 @@
  */
 
 #include "MenuController.h"
-#include "TFutils.h"
+#include "Game.h"
+#include "Utils.h"
 #include "assets.gen.h"
 
 
@@ -30,6 +31,12 @@ MenuController::MenuController() : m_Menu( MAINMENUITEMS, NUM_MAIN_MENU_ITEMS, N
 }
 
 
+void MenuController::Init()
+{
+    m_Menu.AssignViews();
+}
+
+
 bool MenuController::Update()
 {
     float t = System::clock();
@@ -45,10 +52,10 @@ bool MenuController::Update()
 
 void MenuController::Reset()
 {
-	for( int i = 0; i < NUM_CUBES; i++ )
-	{
-		cubes[i].Reset();
-	}
 }
 
 
+CubeWrapper &MenuController::GetWrapper( unsigned int id )
+{
+    return Game::Inst().m_cubes[ id ];
+}

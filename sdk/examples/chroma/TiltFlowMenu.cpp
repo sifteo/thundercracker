@@ -4,7 +4,6 @@
 
 #include "TiltFlowMenu.h"
 #include "MenuController.h"
-#include "TFcubewrapper.h"
 #include "assets.gen.h"
 #include "config.h"
 
@@ -40,7 +39,7 @@ void TiltFlowMenu::AssignViews()
     //TODO ASSIGN VIEWS
     for( int i = 0; i < mNumCubes; i++ )
 	{
-        mViews[i].SetCube( &MenuController::Inst().cubes[i].GetCube() );
+        mViews[i].SetCube( &MenuController::Inst().GetWrapper(i).GetCube() );
 	}
 
 	//for some reason this doesn't work if it's called in the constructor, so put it here for now.
@@ -369,7 +368,7 @@ void TiltFlowView::PaintMenu() {
 
   if( mStatus != STATUS_PICKED )
   {
-      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper();
+      BG1Helper &bg1helper = MenuController::Inst().GetWrapper( mpCube->id() - CUBE_ID_BASE ).getBG1Helper();
 
 	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
 		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
@@ -724,7 +723,7 @@ bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) 
 void TiltFlowView::Flush()
 {
     //printf( "flushing\n" );
-    MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper().Flush();
+    MenuController::Inst().GetWrapper( mpCube->id() - CUBE_ID_BASE ).getBG1Helper().Flush();
     //force touch
     //MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetCube().vbuf.touch();
     mFlushNeeded = false;
