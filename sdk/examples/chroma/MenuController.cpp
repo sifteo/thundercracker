@@ -18,15 +18,19 @@ TiltFlowItem MAINMENUITEMS[ MenuController::NUM_MAIN_MENU_ITEMS ] =
     TiltFlowItem( UI_Main_Menu_Settings, UI_Main_Menu_Topbar ),
 };
 
+
+static MenuController *s_pMenu = NULL;
+
+
 MenuController &MenuController::Inst()
 {
-    static MenuController menu = MenuController();
-
-    return menu;
+    ASSERT( s_pMenu );
+    return *s_pMenu;
 }
 
 MenuController::MenuController() : m_Menu( MAINMENUITEMS, NUM_MAIN_MENU_ITEMS, NUM_CUBES )
 {
+    s_pMenu = this;
 	//Reset();
 }
 
