@@ -13,6 +13,7 @@
 #include "Intro.h"
 #include "GameOver.h"
 #include "Glimmer.h"
+#include "RockExplosion.h"
 
 using namespace Sifteo;
 
@@ -124,6 +125,11 @@ public:
     //search for a multiplier dot and increase it
     void UpMultiplier();
     void ClearSprite( unsigned int id );
+    inline void resetIntro() { m_intro.Reset(); }
+    inline void setDirty() { m_dirty = true; }
+
+    void StopGlimmer();
+    void SpawnRockExplosion( const Vec2 &pos, unsigned int health );
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -137,6 +143,12 @@ private:
     static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
 
     bool HasFloatingDots() const;
+    void fillPuzzleCube();
+    //draw a message box with centered text
+    //bDrawBox - draw the box or not
+    //in_yOffset - optional y offset for text
+    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 );
+    void DrawGrid();
 
 	Cube m_cube;
     VidMode_BG0_SPR_BG1 m_vid;
@@ -177,6 +189,9 @@ private:
     bool m_queuedFlush;
     //TODO, need to start using this for other screens
     bool m_dirty;
+
+    //allow up to 4 rock explosions simultaneously
+    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
 };
 
 #endif

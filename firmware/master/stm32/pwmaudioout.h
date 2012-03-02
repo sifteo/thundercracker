@@ -20,12 +20,14 @@ class AudioMixer;
 class PwmAudioOut
 {
 public:
-    PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer) :
+    PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer, GPIOPin a, GPIOPin b) :
         pwmTimer(_pwmTimer),
         pwmChan(pwmChannel),
-        sampleTimer(_sampleTimer)
+        sampleTimer(_sampleTimer),
+        outA(a),
+        outB(b)
     {}
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB);
+    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer);
 
     void start();
     void stop();
@@ -44,6 +46,8 @@ private:
     HwTimer pwmTimer;
     int pwmChan;
     HwTimer sampleTimer;
+    GPIOPin outA;
+    GPIOPin outB;
 
     AudioBuffer buf;
     _SYSAudioBuffer sys;

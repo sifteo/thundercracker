@@ -13,8 +13,6 @@ C:/projects/sifteo/thundercracker/sdk/examples/chroma/ArrowUp.png
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/banner.cpp
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/banner.h
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/banner.png
-C:/projects/sifteo/thundercracker/sdk/examples/chroma/BG1Helper.cpp
-C:/projects/sifteo/thundercracker/sdk/examples/chroma/BG1Helper.h
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/cover.png
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/cubewrapper.cpp
 C:/projects/sifteo/thundercracker/sdk/examples/chroma/cubewrapper.h
@@ -85,3 +83,7 @@ audio.gen.cpp
 config.h
 Level.h
 Level.cpp
+Puzzle.h
+Puzzle.cpp
+RockExplosion.h
+RockExplosion.cpp

@@ -31,30 +31,37 @@ void StateMachine::update(float dt)
     }
 }
 
-void StateMachine::onEvent(unsigned eventID, const EventData& data)
+unsigned StateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     State& state = getState(mStateIndex);
     unsigned newStateIndex = state.onEvent(eventID, data);
-    if (newStateIndex != mStateIndex)
+    switch (eventID)
     {
-        setState(newStateIndex, state);
+    case EventID_EnterState:
+    case EventID_ExitState:
+        ASSERT(newStateIndex == mStateIndex);// can't change states when already changing states
+        break;
+
+    default:
+        if (newStateIndex != mStateIndex)
+        {
+            setState(newStateIndex, state);
+        }
+        break;
     }
+
+    return mStateIndex;
 }
 
 void StateMachine::setState(unsigned newStateIndex, State& oldState)
 {
     ASSERT(newStateIndex < getNumStates());
-    unsigned newAttemptedStateIndex =
-            oldState.onEvent(EventID_ExitState, EventData());
-    ASSERT(newAttemptedStateIndex == newStateIndex ||
-           newAttemptedStateIndex == mStateIndex); // can't change state on this event
+    onEvent(EventID_ExitState, EventData());
     EventData data;
     data.mEnterState.mFirst = false;
     data.mEnterState.mPreviousStateIndex = mStateIndex;
     mStateIndex = newStateIndex;
     mStateTime = .0f;
     State& newState = getState(mStateIndex);    
-    newAttemptedStateIndex =
-        newState.onEvent(EventID_EnterState, data);
-    ASSERT(newAttemptedStateIndex == newStateIndex); // can't change state on this event
+    onEvent(EventID_EnterState, data);
 }

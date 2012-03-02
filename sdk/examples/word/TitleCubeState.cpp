@@ -67,6 +67,7 @@ void TitleCubeState::paint()
     switch (getStateMachine().getCube().id() - CUBE_ID_BASE)
     {
     //default:
+#if (0)
     case 999:
         vid.BG0_drawAsset(Vec2(0,0), Title);
         if (mAnimDelay <= 0.f)
@@ -106,11 +107,12 @@ void TitleCubeState::paint()
             }
         }
         break;
+#endif
 
     default:
     case 1:
-        vid.BG0_drawAsset(Vec2(0, 0), Teeth);
-        if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
+        vid.BG0_drawAsset(Vec2(0, 0), TileBG);
+        //if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
@@ -121,7 +123,7 @@ void TitleCubeState::paint()
             frame = MIN(frame, anim.frames - 1);
 
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(5, 2), anim, frame);
+            bg1.DrawAsset(Vec2(5, 4), anim, frame);
             bg1.Flush(); // TODO only flush if mask has changed recently
             WordGame::instance()->setNeedsPaintSync();
         }
@@ -130,7 +132,7 @@ void TitleCubeState::paint()
         // TODO high scores
 #if BLAH
     default:
-        paintTeeth(vid, ImageIndex_Teeth);
+        paintBorder(vid, ImageIndex_Teeth);
         /* TODO load/save
         paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 

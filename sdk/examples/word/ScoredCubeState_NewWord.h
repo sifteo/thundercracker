@@ -15,7 +15,6 @@ public:
 private:
     void paint();
 
-    ImageIndex mImageIndex;
 
 };
 
