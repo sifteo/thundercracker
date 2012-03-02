@@ -559,7 +559,7 @@ namespace TotalsGame
             foregroundLayer.Clear();
             view->Paint();
             foregroundLayer.Flush();
-            System::paint();
+            System::paintSync();
 
             overlayShown = false;
         }

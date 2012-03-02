@@ -240,9 +240,16 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
     mCube->vbuf.touch();
     System::paintSync();
 
+
+/*
+    System::paintSync();
+    mCube->vbuf.touch();
+    System::paintSync();
+*/
+
     mCube->backgroundLayer.set();
-    mCube->backgroundLayer.clear();
     mCube->backgroundLayer.setWindow(0, 128);
+    mCube->backgroundLayer.clear(1);
     mCube->foregroundLayer.Clear();
     mCube->GetView()->Paint();
     mCube->foregroundLayer.Flush();
@@ -252,13 +259,10 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
     System::paintSync();
 
     //Now set up a letterboxed 128x48 mode
+    mCube->backgroundLayer.setWindow(yTop, ySize);
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, fg);
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, bg);
     mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
-    mCube->backgroundLayer.setWindow(yTop, ySize);
-
-    System::paintSync();
-    mCube->vbuf.touch();
     System::paintSync();
 
     Erase();
