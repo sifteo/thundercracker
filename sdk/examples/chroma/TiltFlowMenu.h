@@ -81,6 +81,7 @@ public:
   void CheckForRepaint();
   void Tick();
   _SYSCubeID getNeighbor();
+  void Cleanup();
   //void RelateToMenu();
 
 private:

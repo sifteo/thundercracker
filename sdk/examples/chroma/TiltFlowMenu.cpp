@@ -52,6 +52,10 @@ bool TiltFlowMenu::Tick(float dt)
     mSimTime += dt;
 
     if (mDone) {
+        for( int i = 0; i < mNumCubes; i++ )
+        {
+            mViews[i].Cleanup();
+        }
       return false;
     }
 
@@ -733,4 +737,12 @@ void TiltFlowView::Flush()
     //force touch
     //MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetCube().vbuf.touch();
     mFlushNeeded = false;
+}
+
+
+
+void TiltFlowView::Cleanup()
+{
+    VidMode_BG0 vid( mpCube->vbuf );
+    vid.BG0_setPanning(Vec2(0, 0));
 }
