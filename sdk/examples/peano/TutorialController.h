@@ -329,6 +329,14 @@ public:
         secondToken->Unlock();
 
 
+        //set window to bottom half of screen so we can animate peano
+        //while text window is open above
+        System::paintSync();
+        narrator->GetCube()->backgroundLayer.set();
+        narrator->GetCube()->backgroundLayer.clear();
+        narrator->GetCube()->backgroundLayer.setWindow(64,64);
+
+
         // press your luck flourish
         {
             PLAY_SFX(sfx_Tutorial_Mix_Nums);
@@ -340,12 +348,22 @@ public:
                 rememberedTimeout -= mGame->dt;
                 while (rememberedTimeout < 0) {
                     (rememberedCubeId==0?firstToken:secondToken)->PaintRandomNumeral();
-                    narrator->SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
+                    //narrator->SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
                     rememberedCubeId = (rememberedCubeId+1) % 2;
                     rememberedTimeout += period;
                 }
-                CORO_YIELD(0);
+
+                narrator->GetCube()->Image(rememberedCubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,2), Vec2(16,8));
+                firstToken->PaintNow();
+                secondToken->PaintNow();
+                System::paintSync();
+                Game::GetInstance().UpdateDt();
             }
+
+            narrator->GetCube()->backgroundLayer.setWindow(0,128);
+            narrator->Paint();
+            System::paint();
+
             firstToken->token->val = 2;
             firstToken->token->SetOpRight(OpMultiply);
             secondToken->token->val = 3;
@@ -365,7 +383,7 @@ public:
         }
 
         // can you make 42?
-        narrator->SetMessage("Can you build the number 6?");
+        narrator->SetMessage("Can you build\nthe number 6?");
 
         mGame->neighborEventHandler = &makeSixEventHandler;
 
@@ -400,7 +418,7 @@ public:
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
         CORO_YIELD(1);
-        narrator->SetMessage("Keep combining to build even more numbers!", NarratorView::EmoteYay);
+        narrator->SetMessage("Keep combining to build\neven more numbers!", NarratorView::EmoteYay);
         CORO_YIELD(2);
 
         Game::GetCube(1)->SetView(NULL);
@@ -415,7 +433,7 @@ public:
         new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
         CORO_YIELD(1);
-        narrator->SetMessage("If you get stuck, you can shake for a hint.");
+        narrator->SetMessage("If you get stuck,\nyou can shake\nfor a hint.");
         puzzle->target = (TokenGroup*)firstToken->token->current;
         firstToken->token->PopGroup();
         secondToken->token->PopGroup();
@@ -446,9 +464,9 @@ public:
         CORO_YIELD(0.5f);
         narrator->SetMessage("Nice!", NarratorView::EmoteYay);
         CORO_YIELD(3);
-        narrator->SetMessage("Careful! You only get a few hints!");
+        narrator->SetMessage("Careful!\nYou only get a few hints!");
         CORO_YIELD(3);
-        narrator->SetMessage("If you forget the target, press the screen.");
+        narrator->SetMessage("If you forget\nthe target,\npress the screen.");
         CORO_YIELD(2);
         narrator->SetMessage("Try it out!  Press one!");
 
@@ -457,6 +475,7 @@ public:
         while(!(waitForTouchEventHandler[0].DidTouch()||waitForTouchEventHandler[1].DidTouch())) {
             CORO_YIELD(0);
         }
+
         CORO_YIELD(0.5f);
         narrator->SetMessage("Great!", NarratorView::EmoteYay);
         CORO_YIELD(3);
@@ -476,16 +495,17 @@ public:
 
 
         // transition out narrator
-        narrator->SetMessage("Let's try it for real, now!", NarratorView::EmoteWave);
+        narrator->SetMessage("Let's try it\nfor real, now!", NarratorView::EmoteWave);
         CORO_YIELD(3);
-        narrator->SetMessage("Remember, you need to use every Key!");
+        narrator->SetMessage("Remember, you need\nto use every Key!");
         CORO_YIELD(3);
-        narrator->SetMessage("Press-and-hold a cube to access the main menu.");
+        narrator->SetMessage("Press-and-hold a cube\nto access the main menu.");
         CORO_YIELD(3);
         narrator->SetMessage("Good luck!", NarratorView::EmoteWave);
         CORO_YIELD(3);
 
         narrator->SetMessage("");
+        narrator->GetCube()->UpdateTextOverlay();
 
         AudioPlayer::PlayShutterClose();
         Game::GetCube(0)->SetView(NULL);
