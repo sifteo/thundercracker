@@ -28,18 +28,10 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
-    // NOTE: several games are failing their builds for hardware because the
-    // speex libs & their own asset metadata overflow MCU internal flash.
-    // Disabling this init allows the linker to strip all the speex code, and
-    // for many games to fit in flash - of course, if you try to run on HW with
-    // speex encoded samples, it will go up in flames. run on HW with uncompressed
-    // samples for now, until absolutely everything is being pulled from external
-    // flash, in which case we should be able to pull speex back in.
-#ifdef SIFTEO_SIMULATOR
+
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        decoders[i].init();
+        speexDecoders[i].init();
     }
-#endif
 }
 
 /*
@@ -141,51 +133,14 @@ void AudioMixer::handleAudioOutEmpty(void *p) {
     }
 }
 
-/*
-    Read the details of this module out of flash.
-*/
-bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
+bool AudioMixer::play(const struct _SYSAudioModule *mod,
+    _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    // TODO: can we tag these as already populated and avoid subsequent lookups?
-    FlashRegion ar;
-    unsigned entryOffset = mod->id * sizeof(AssetIndexEntry);
-    // XXX: this is assuming an offset of 0 for the whole asset segment.
-    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
-    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &ar)) {
-        LOG(("got null AssetIndexEntry from flash"));
-        return false;
-    }
-
-    AssetIndexEntry entry;
-    memcpy(&entry, ar.data(), sizeof(AssetIndexEntry));
-    FlashLayer::releaseRegion(ar);
-
-    unsigned offset = entry.offset;
-    FlashRegion hr;
-    if (!FlashLayer::getRegion(offset, sizeof(SoundHeader), &hr)) {
-        LOG(("Got null SoundHeader from flashlayer\n"));
-        return false;
-    }
-
-    SoundHeader header;
-    memcpy(&header, hr.data(), sizeof(SoundHeader));
-    FlashLayer::releaseRegion(hr);
-
-    mod->offset = offset + sizeof(SoundHeader);
-    mod->size = header.dataSize;
-    mod->type = (_SYSAudioType)header.encoding;
-    return true;
-}
-
-bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
-{
+    // NB: "mod" is a temporary contiguous copy of SYSAudioModule in RAM.
+    
     // find channels that are enabled, not active & not marked as stopped
     uint32_t selector = enabledChannelMask & ~activeChannelMask & ~stoppedChannelMask;
     if (selector == 0) {
-        return false;
-    }
-
-    if (!populateModuleMetaData(mod)) {
         return false;
     }
 
@@ -195,26 +150,31 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     ch.handle = nextHandle++;
     *handle = ch.handle;
 
-    // does this module require a decoder? if so, get one
-    if (mod->type == Sample) {
-        SpeexDecoder *dec = getDecoder();
-        if (dec == NULL) {
-            LOG(("ERROR: No SpeexDecoder available.\n"));
-            return false;
+    switch (mod->type) {
+        
+        case _SYS_Speex: {
+            SpeexDecoder *dec = getSpeexDecoder();
+            if (dec == NULL) {
+                LOG(("ERROR: No SpeexDecoder available.\n"));
+                return false;
+            }
+            ch.play(mod, loopMode, dec);
+            break;    
         }
-        ch.play(mod, loopMode, dec);
-    }
-    else if (mod->type == PCM) {
-        PCMDecoder *pcmdec = getPCMDecoder();
-        if (pcmdec == NULL) {
-            LOG(("ERROR: No PCMDecoder available.\n"));
-            return false;
+        
+        case _SYS_PCM: {
+            PCMDecoder *dec = getPCMDecoder();
+            if (dec == NULL) {
+                LOG(("ERROR: No PCMDecoder available.\n"));
+                return false;
+            }
+            ch.play(mod, loopMode, dec);
+            break;
         }
-        ch.play(mod, loopMode, pcmdec);
-    }
-    else {
-        LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
-        return false;
+        
+        default:
+            LOG(("ERROR: Unknown audio encoding (%d)\n", mod->type));
+            return false;
     }
 
     Atomic::SetLZ(activeChannelMask, idx);
@@ -243,14 +203,14 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
     ASSERT(activeChannelMask & Intrinsic::LZ(channelIndex));
 
     // mark this channel's decoder as available again
-    if (ch->channelType() == Sample) {
-        unsigned decoderIndex = ch->decoder - decoders;
+    if (ch->channelType() == _SYS_Speex) {
+        unsigned decoderIndex = ch->decoder.speex - speexDecoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
         ASSERT(!(availableDecodersMask & Intrinsic::LZ(decoderIndex)));
         Atomic::SetLZ(availableDecodersMask, decoderIndex);
     }
-    else if (ch->channelType() == PCM) {
-        unsigned decoderIndex = ch->pcmDecoder - pcmDecoders;
+    else if (ch->channelType() == _SYS_PCM) {
+        unsigned decoderIndex = ch->decoder.pcm - pcmDecoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
         ASSERT(!(availableDecodersMask & Intrinsic::LZ(decoderIndex)));
         Atomic::SetLZ(availableDecodersMask, decoderIndex);
@@ -312,7 +272,7 @@ AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t 
     return 0;
 }
 
-SpeexDecoder* AudioMixer::getDecoder()
+SpeexDecoder* AudioMixer::getSpeexDecoder()
 {
     if (availableDecodersMask == 0) {
         return NULL;
@@ -320,7 +280,7 @@ SpeexDecoder* AudioMixer::getDecoder()
 
     unsigned idx = Intrinsic::CLZ(availableDecodersMask);
     Atomic::ClearLZ(availableDecodersMask, idx);
-    return &decoders[idx];
+    return &speexDecoders[idx];
 }
 
 PCMDecoder* AudioMixer::getPCMDecoder()

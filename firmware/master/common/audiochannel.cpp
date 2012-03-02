@@ -13,8 +13,9 @@
 using namespace Sifteo;
 
 AudioChannelSlot::AudioChannelSlot() :
-    mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
+    state(0), volume(Audio::MAX_VOLUME)
 {
+    decoder.speex = NULL;
 }
 
 void AudioChannelSlot::init(_SYSAudioBuffer *b)
@@ -27,25 +28,21 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType
 {
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
-    ASSERT(!(mod->type == Sample && dec == NULL));
-    ASSERT(!(mod->type == Sample && this->decoder != NULL));
+    ASSERT(!(type == _SYS_Speex && dec == NULL));
+    ASSERT(!(type == _SYS_Speex && decoder.speex != NULL));
 
-    this->decoder = dec;
-    this->mod = mod;
-    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    if (this->decoder != 0) {
-        this->decoder->setOffset(mod->offset, mod->size);
-    }
+    decoder.speex = dec;
+    type = _SYS_Speex;
+    state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
+    decoder.speex->setSource(reinterpret_cast<SvmMemory::VirtAddr>(mod->data), mod->dataSize);
 }
 
 void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec)
 {
-    this->pcmDecoder = dec;
-    this->mod = mod;
-    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    if (this->pcmDecoder != 0) {
-        this->pcmDecoder->setOffset(mod->offset, mod->size);
-    }
+    decoder.pcm = dec;
+    type = _SYS_PCM;
+    state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
+    decoder.pcm->setSource(reinterpret_cast<SvmMemory::VirtAddr>(mod->data), mod->dataSize);
 }
 
 int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
@@ -54,6 +51,7 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
 
     int mixable = MIN(buf.readAvailable() / sizeof(*buffer), len);
     if (mixable > 0) {
+
         for (int i = 0; i < mixable; i++) {
             ASSERT(buf.readAvailable() >= 2);
             int16_t src = buf.dequeue() | (buf.dequeue() << 8);
@@ -65,11 +63,15 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
             *buffer = Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
             buffer++;
         }
-        // if we have nothing buffered, and there's nothing else to read, we're done
-        if (decoder && decoder->endOfStream() && buf.readAvailable() == 0) {
-            if (this->state & STATE_LOOP) {
-                this->decoder->setOffset(mod->offset, mod->size);
-            }
+
+        switch (type) {
+
+        case _SYS_Speex:
+            assert(decoder.speex != 0);
+            if (decoder.speex->endOfStream() && buf.readAvailable() == 0) {
+                if (this->state & STATE_LOOP) {
+                    this->decoder->setOffset(mod->offset, mod->size);
+                }
             else {
                 return -1;
             }

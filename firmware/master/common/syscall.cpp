@@ -223,8 +223,9 @@ void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) MEMSET_BODY()
 
 void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count)
 {
+    FlashBlockRef ref;
     if (SvmMemory::mapRAM(dest, count))
-        SvmMemory::copyROData(dest, reinterpret_cast<SvmMemory::VirtAddr>(src), count);
+        SvmMemory::copyROData(ref, dest, reinterpret_cast<SvmMemory::VirtAddr>(src), count);
 }
 
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count)

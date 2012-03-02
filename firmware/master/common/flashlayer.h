@@ -20,6 +20,11 @@
 class FlashBlockRef;
 
 
+/**
+ * A single flash block, fetched via a globally shared cache.
+ * This is the general-purpose mechansim used to randomly access arbitrary
+ * sized data items from flash.
+ */
 class FlashBlock
 {
 public:
@@ -118,6 +123,12 @@ private:
 };
 
 
+/**
+ * A reference to a single cached flash block. While the reference is held,
+ * the block will be maintained in the cache. These objects can be used
+ * transiently during a single memory operation, or they can be held for
+ * longer periods of time.
+ */
 class FlashBlockRef
 {
 public:
@@ -159,6 +170,99 @@ public:
 
 private:
     FlashBlock *block;
+};
+
+
+/**
+ * A contiguous region of flash, not necessarily block-aligned, used as a
+ * source for streaming data. This does not use the cache layer, since it's
+ * assumed that we'll be reading a large object in mostly linear order
+ * and we'd rather not pollute the cache with all of these blocks that will
+ * not be reused.
+ */
+class FlashStream {
+public:
+    FlashStream() {}
+
+    FlashStream(uint32_t address, uint32_t size)
+        : address(address), size(size), offset(0) {}
+
+    inline void init(uint32_t address, uint32_t size) {
+        this->address = address;
+        this->size = size;
+        this->offset = 0;
+    }
+
+    inline bool eof() const {
+        assert(offset <= size);
+        return offset >= size;
+    }
+
+    inline bool tell() const {
+        return offset;
+    }
+
+    inline void seek(uint32_t o) {
+        offset = o;
+    }
+
+    inline uint32_t remaining() const {
+        assert(offset <= size);
+        return size - offset;
+    }
+
+    uint32_t read(uint8_t *dest, uint32_t maxLength);
+
+private:
+    uint32_t address;
+    uint32_t size;
+    uint32_t offset;
+};
+
+
+/**
+ * A buffer that, combined with FlashStream, provides buffered I/O with
+ * zero copies in the common case.
+ *
+ * The buffer will pull data from flash as necessary, by calling read() on
+ * the provided stream. If sufficient data is already present in the buffer,
+ * no read() call will occur.
+ *
+ * Any time the underlying FlashStream object is init()'ed or seek()'ed, the
+ * buffer must be reset().
+ */
+template <unsigned bufSize>
+class FlashStreamBuffer {
+
+    inline void reset() {
+        writePtr = readPtr = 0;
+    }
+
+    /// Returns NULL on unexpected EOF.
+    uint8_t *read(FlashStream &stream, uint32_t length) {
+        assert(length < bufSize);
+        uint32_t bufferedBytes = writePtr - readPtr;
+
+        if (bufferedBytes < length) {
+            // Need more data!
+            memmove(data, data + readPtr, bufferedBytes);
+            bufferedBytes += stream.read(data + bufferedBytes, bufSize - bufferedBytes);
+            readPtr = 0;
+            writePtr = bufferedBytes;
+        }
+        if (bufferedBytes < length) {
+            // EOF
+            return NULL;
+        }
+
+        uint8_t *result = data + readPtr;
+        readPtr += length;
+        return result;
+    }
+
+private:
+    uint16_t writePtr, readPtr;
+    uint8_t data[bufSize];
 };
 
 

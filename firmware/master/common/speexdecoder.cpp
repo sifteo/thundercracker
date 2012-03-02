@@ -11,20 +11,8 @@
 #include "config.h"
 #endif
 
-SpeexDecoder::SpeexDecoder() :
-    decodeState(0),
-    srcBytesRemaining(0),
-    status(EndOfStream)
-{
-}
-
 void SpeexDecoder::init()
 {
-    // speex decoding intilalization
-    // speex_bits_init_buffer prevents speex from doing extra reallocs
-//    speex_bits_init_buffer(&speexBits, bitsBuffer, sizeof(bitsBuffer));
-    // TODO - speex_bits_init_buffer appears to result in different decoded data...
-    // would be nicer to use it though...look into it
     speex_bits_init(&this->bits);
     this->decodeState = speex_decoder_init(speex_lib_get_mode(SIFT_SPEEX_MODE));
     if (this->decodeState == 0) {
@@ -43,32 +31,6 @@ void SpeexDecoder::init()
 #endif
 }
 
-void SpeexDecoder::setData(const uint8_t *srcaddr, int size)
-{
-    // FIXME: audio hacking
-    //this->srcaddr = (uintptr_t)srcaddr;
-    //this->srcBytesRemaining = size;
-    
-    //this->srcaddr = 0;  // 20480
-    //this->srcaddr = 20480;  // 20480
-    //this->srcBytesRemaining = 769924;
-    
-    status = Ok;
-}
-
-void SpeexDecoder::setOffset(const uint32_t offset, int size)
-{
-    this->srcaddr = offset;
-    this->srcBytesRemaining = size;
-    
-    status = Ok;
-}
-
-//SpeexDecoder::~SpeexDecoder()
-//{
-//    deinit();
-//}
-
 void SpeexDecoder::deinit()
 {
     speex_bits_destroy(&this->bits); // remove this once we use speex_bits_init_buffer in init()
@@ -78,12 +40,9 @@ void SpeexDecoder::deinit()
     }
 }
 
-/*
- * Return the number of bytes decoded.
- */
-int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
+int SpeexDecoder::decodeFrame(FlashStream &in, uint8_t *dest, uint32_t destSize)
 {
-    if (size < (int)DECODED_FRAME_SIZE || status != Ok) {
+    if (destSize < (int)DECODED_FRAME_SIZE) {
         return 0;
     }
 
@@ -147,50 +106,4 @@ void _speex_putc(int ch, void *file)
     for (;;) {
         ;
     }
-}
-
-
-PCMDecoder::PCMDecoder() :
-    //decodeState(0),
-    srcBytesRemaining(0),
-    status(EndOfStream)
-{
-}
-
-void PCMDecoder::setOffset(const uint32_t offset, int size)
-{
-    this->srcaddr = offset;
-    this->srcBytesRemaining = size;
-    
-    status = Ok;
-}
-
-int PCMDecoder::decodeFrame(uint8_t *buf, int size)
-{
-    if (size < (int)FRAME_SIZE || status != Ok) {
-        return 0;
-    }
-    
-    if ((unsigned)this->srcBytesRemaining < FRAME_SIZE) {
-        status = EndOfStream;
-        return 0;   // not enough data left
-    }
-    
-    FlashRegion r;
-    if (!FlashLayer::getRegion(this->srcaddr, FRAME_SIZE, &r)) {
-        LOG(("ERROR: Failed to read from flash layer.\n"));
-        return 0; // ruh roh, TODO error handling
-    }
-    
-    unsigned rsize = r.size();
-    memcpy(buf, r.data(), rsize);
-    FlashLayer::releaseRegion(r);
-
-    this->srcBytesRemaining -= rsize;
-    this->srcaddr += rsize;
-    if (this->srcBytesRemaining < (int)FRAME_SIZE) {
-        status = EndOfStream;
-    }
-
-    return rsize;
 }

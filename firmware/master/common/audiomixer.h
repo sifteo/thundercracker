@@ -54,17 +54,16 @@ private:
 
     // decoders can be loaned to a channel for sample playback
     // TODO: Don't allocate both types of decoders
-    SpeexDecoder decoders[_SYS_AUDIO_MAX_CHANNELS];
+    SpeexDecoder speexDecoders[_SYS_AUDIO_MAX_CHANNELS];
     PCMDecoder pcmDecoders[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t availableDecodersMask;
     // 8 channels, but left aligned for use with CLZ() & friends
     static const int ALL_DECODERS_AVAILABLE = 0xFF000000;
 
     AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask);
-    SpeexDecoder* getDecoder();
+    SpeexDecoder* getSpeexDecoder();
     PCMDecoder* getPCMDecoder();
     void stopChannel(AudioChannelSlot *ch);
-    bool populateModuleMetaData(struct _SYSAudioModule *mod);
 };
 
 #endif /* AUDIOMIXER_H_ */

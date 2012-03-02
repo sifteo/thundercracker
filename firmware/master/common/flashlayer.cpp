@@ -113,3 +113,12 @@ FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
     assert(availableBlocks && "Oh no, all cache blocks are in use. Is there a reference leak?");
     return &instances[Intrinsic::CLZ(availableBlocks)];
 }
+
+uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
+{
+    uint32_t chunk = MIN(maxLength, remaining());
+    if (chunk)
+        Flash::read(address + offset, dest, chunk);
+    return chunk;
+}
+

@@ -80,9 +80,8 @@ bool SVMMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
     return true;
 }
 
-bool SVMMemory::copyROData(PhysAddr dest, VirtAddr src, uint32_t length)
+bool SVMMemory::copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length)
 {
-    FlashBlockRef ref;
     SvmMemory::PhysAddr srcPA;
 
     while (count) {
@@ -95,4 +94,19 @@ bool SVMMemory::copyROData(PhysAddr dest, VirtAddr src, uint32_t length)
         src += chunk;
         count -= chunk;
     }
+}
+
+bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out)
+{
+    if (!(va & VIRTUAL_FLASH_BASE)) {
+        return false;
+    }
+
+    uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
+    if (flashOffset < flashSize && (flashSize - flashOffset) >= length) {
+        out.init(flashOffset, length);
+        return true;
+    }
+    
+    return false;
 }

@@ -10,12 +10,12 @@
 #include <sifteo/machine.h>
 #include <stdint.h>
 #include "audiobuffer.h"
+#include "flashlayer.h"
 
 class SpeexDecoder;
 class PCMDecoder;
 
-// TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
-// Maybe "AudioChannelSlot", by analogy with "CubeSlot"?
+
 class AudioChannelSlot {
 public:
     static const int STATE_PAUSED   = (1 << 0);
@@ -34,8 +34,7 @@ public:
     int mixAudio(int16_t *buffer, unsigned len);
 
     _SYSAudioType channelType() const {
-        ASSERT(mod != NULL);
-        return (_SYSAudioType) mod->type;
+        return (_SYSAudioType) type;
     }
 
     void pause() {
@@ -54,14 +53,20 @@ protected:
     void fetchData();
     void onPlaybackComplete();
 
-    AudioBuffer buf;
-    const struct _SYSAudioModule *mod;
+    AudioBuffer buf;                // Decompressed data
+    FlashStream flStream;           // Location of compressed source data
+    FlashStreamBuffer<256> flBuf;   // Buffer for incoming compressed frames
+
     uint8_t state;
+    uint8_t type;
+    int16_t volume;
     _SYSAudioHandle handle;
+
     // TODO: Make an IAudioDecoder interface.
-    SpeexDecoder *decoder;
-    PCMDecoder *pcmDecoder;
-    int volume;
+    union {
+        SpeexDecoder *speex;
+        PCMDecoder *pcm;
+    } decoder;
 
     friend class AudioMixer;    // mixer can tell us to fetchData()
 };

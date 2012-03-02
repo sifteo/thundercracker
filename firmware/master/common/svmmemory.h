@@ -82,7 +82,7 @@ public:
      * Check whether a Read-only Data region is valid in our virtual address
      * space, without actually mapping it.
      */
-     static bool checkROData(VirtAddr va, uint32_t length);
+    static bool checkROData(VirtAddr va, uint32_t length);
 
     /**
      * Read-only code memory validator. Ensures that the supplied va is a
@@ -97,7 +97,13 @@ public:
      * convenient alternative for small data structures that are not necessarily
      * block aligned.
      */
-    static bool copyROData(PhysAddr dest, VirtAddr src, uint32_t length);
+    static bool copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length);
+
+    /**
+     * Initialize a FlashStream with read-only data from a flash pointer.
+     * Does NOT support RAM addresses, unlike all the *ROData functions.
+     */
+    static bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out);
 
     /**
      * Convenient type-safe wrapper around copyROData.
@@ -105,7 +111,8 @@ public:
     template <typename T>
     static inline bool copyROData(T &dest, const T *src)
     {
-        return copyROData(reinterpret_cast<PhysAddr>(&dest),
+        FlashBlockRef ref;
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           reinterpret_cast<VirtAddr>(src), sizeof(T));
     }
 
@@ -149,5 +156,9 @@ private:
     static uint32_t flashBase;
     static uint32_t flashSize;
 };
+
+
+class SvmMemStream
+
 
 #endif // SVM_MEMORY_H
