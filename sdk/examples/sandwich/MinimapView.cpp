@@ -16,7 +16,7 @@ void MinimapView::Init() {
 	// fill in the top
 	for(unsigned row=0; row<padTop; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), Black);
+			g.BG0_drawAsset(Vec2(col, row), BlackTile);
 		}
 	}
 
@@ -25,7 +25,7 @@ void MinimapView::Init() {
 		unsigned y = row + padTop;
 		// fill in the left
 		for(unsigned col=0; col<padLeft; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), Black);
+			g.BG0_drawAsset(Vec2(col, y), BlackTile);
 		}
 		// fill in the map data
 		for(unsigned col=0; col<pData->width; ++col) {
@@ -35,14 +35,14 @@ void MinimapView::Init() {
 
 		// fill in the right
 		for (unsigned col=padLeft+pData->width; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), Black);
+			g.BG0_drawAsset(Vec2(col, y), BlackTile);
 		}
 	}
 
 	// fill in the bottom
 	for(unsigned row=padTop+pData->height; row<18; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), Black);
+			g.BG0_drawAsset(Vec2(col, row), BlackTile);
 		}
 	}
 

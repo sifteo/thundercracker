@@ -2,7 +2,7 @@ SandwichAssets = group{quality=10}
 
 Blank = image{"Blank.png", width=128, height=128}
 Sting = image{"sting.png",width=128,height=128}
-Title = image{"title.png"}
+SandwichTitle = image{"title.png"}
 TitleBalloon = image{"title_bubble.png"}
 TitleThoughts = image{"title_thought_dots.png"}
 
@@ -17,8 +17,8 @@ Items = image{"items.png", width=16, height=16, pinned=true}
 
 InventoryReticle = image{"inventory_reticle.png", width=32, height=32}
 
-White = image{"flash.png"}
-Black = image{"black.png"}
+WhiteTile = image{"flash.png"}
+BlackTile = image{"black.png"}
 DialogBox = image{"dialog_box.png"}
 
 InventoryBackground = image{"inventory_background.png"}

@@ -132,12 +132,12 @@ void Game::IrisOut(ViewSlot* view) {
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
-      mode.BG0_putTile(Vec2(x, i), *Black.tiles);
-      mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
+      mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
+      mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
     }
     for(unsigned y=i+1; y<16-i-1; ++y) {
-      mode.BG0_putTile(Vec2(i, y), *Black.tiles);
-      mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
+      mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
+      mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
     }
     System::paintSync();
   }
