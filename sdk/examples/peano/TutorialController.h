@@ -426,14 +426,14 @@ public:
         //Game::GetCube(1)->SetView(NULL);
         Game::GetCube(1)->OpenShuttersSync(&Background);
         firstToken->SetCube(Game::GetCube(1));
-        firstToken->Paint();
+        firstToken->PaintNow();
         CORO_YIELD(0.1f);
 
         //Game::GetCube(2)->SetView(NULL);
         secondToken->SetCube(NULL);
         Game::GetCube(2)->OpenShuttersSync(&Background);
         secondToken->SetCube(Game::GetCube(2));
-        secondToken->Paint();
+        secondToken->PaintNow();
         CORO_YIELD(1);
 
         narrator->SetMessage("Try it out!  Shake one!");

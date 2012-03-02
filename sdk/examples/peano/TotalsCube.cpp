@@ -517,7 +517,7 @@ namespace TotalsGame
     }
 
     void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
-    {return;//todo
+    {
         overlayText = text;
         overlayYTop = yTop;
         overlayYSize = ySize;
@@ -549,16 +549,18 @@ namespace TotalsGame
         else if(!overlayText && overlayShown)
         {
             //turn it off
-            System::paint();
             System::paintSync();
+            vbuf.touch();
+            System::paintSync();
+
             backgroundLayer.set();
+            backgroundLayer.clear();
             backgroundLayer.setWindow(0, 128);
-            //is the paint necessary? it'll get painted next draw call
-/*            foregroundLayer.Clear();
+            foregroundLayer.Clear();
             view->Paint();
             foregroundLayer.Flush();
             System::paint();
-            System::paintSync();    */
+
             overlayShown = false;
         }
 

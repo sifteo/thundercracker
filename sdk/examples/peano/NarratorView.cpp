@@ -37,7 +37,7 @@ NarratorView::NarratorView(TotalsCube *c):View(c)
 int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
-    if (!strcmp(mString,msg) && mEmote == emote) { return; }
+   // if (!strcmp(mString,msg) && mEmote == emote) { return; }
     mString = msg;
     mEmote = emote;
 
