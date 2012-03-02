@@ -2,7 +2,7 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 
-enum AnimIndex
+/*enum AnimIndex
 {
     AnimIndex_Tile1Idle,
     AnimIndex_Tile1SlideL,
@@ -33,7 +33,7 @@ enum AnimIndex
 
     NumAnimIndexes
 };
-
+*/
 enum Layer
 {
     Layer_BG0,
@@ -45,6 +45,7 @@ struct AnimObjData
 {
     const AssetImage *mAsset;
     const AssetImage *mAltAsset;
+    const PinnedAssetImage *mSpriteAsset;
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
     unsigned char mNumFrames;
@@ -90,28 +91,33 @@ const static Vec2 positions[] =
     Vec2(3, 2),
     Vec2(2, 2),
     Vec2(3, 3), // [26]
+    Vec2(56, 24), // [27]
 };
 
 const static AnimObjData animObjData[] =
 {
     // AnimIndex_Tile2Idle
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 1, &positions[0]},
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[0]},
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
-    // AnimIndex_Tile2SlideL
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 10, &positions[7]},
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 7, &positions[2]},
+    // AnimIndex_Tile2MetaSlideL
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 10, &positions[7]},
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 7, &positions[2]},
 
-    // AnimIndex_Tile2SlideR
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 7, &positions[10]},
-    { &Tile2, &Tile2, Layer_BG0, 0x0, 10, &positions[16]},
+    // AnimIndex_Tile2MetaSlideR
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 7, &positions[10]},
+    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 10, &positions[16]},
 
-    // AnimIndex_Tile2OldWord
-    { &Tile2Glow, &Tile2, Layer_BG0, 0x0, 1, &positions[0]},
-    { &Tile2Glow, &Tile2, Layer_BG0, 0x0, 1, &positions[1]},
+    // AnimIndex_Tile2MetaOldWord
+    {&Tile2MetaGlow, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[0]},
+    {&Tile2MetaGlow, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
     // CityProgression
-    { &LevelComplete, &LevelComplete, Layer_BG1, 0x0, 1, &positions[26]},
+    {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]},
+
+    // HintIdle
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]},
+
 };
 
 const static AnimData animData[] =
@@ -133,23 +139,39 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1CityProgression
     { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintAppear,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintIdle,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintShake,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintDisppear,
+    { 1.f, true, 1, &animObjData[0]},
 
     // AnimIndex_Tile2Idle
     { 1.f, true, 2, &animObjData[0]},
     // AnimIndex_Tile2SlideL
-    { 1.f, false, 2, &animObjData[2]},
+    { 0.5f, false, 2, &animObjData[2]},
     // AnimIndex_Tile2SlideR
-    { 1.f, false, 2, &animObjData[4]},
+    { 0.5f, false, 2, &animObjData[4]},
     // AnimIndex_Tile2OldWord
     { 1.f, true, 2, &animObjData[6]},
     //AnimIndex_Tile2NewWord,
-    { 1.f, true, 2, &animObjData[6]},
+    { 1.5f, true, 2, &animObjData[6]},
     //AnimIndex_Tile2EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile2ShuffleScored,
-    { 1.f, true, 2, &animObjData[0]},
+    { 0.5f, true, 2, &animObjData[0]},
     //AnimIndex_Tile2CityProgression
     { 1.f, true, 1, &animObjData[8]},
+    //AnimType_HintAppear,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintIdle,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintShake,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintDisppear,
+    { 1.f, true, 1, &animObjData[0]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
@@ -167,6 +189,14 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3CityProgression
     { 1.f, true, 1, &animObjData[8]},
+    //AnimType_HintAppear,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintIdle,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintShake,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintDisppear,
+    { 1.f, true, 1, &animObjData[0]},
 
 };
 
@@ -181,9 +211,13 @@ bool animPaint(AnimType animT,
         &Font1Letter, &Font2Letter, &Font3Letter,
     };
     const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
-    AnimIndex anim = (AnimIndex)(animT + NumAnimTypes * (GameStateMachine::getCurrentMaxLettersPerCube() - 1));
-    STATIC_ASSERT(NumAnimTypes * MAX_LETTERS_PER_CUBE == NumAnimIndexes);
-    STATIC_ASSERT(arraysize(animData) == NumAnimIndexes);
+    if (animT == AnimType_None)
+    {
+        return false;
+    }
+    unsigned anim = (animT + NumAnimTypes * (GameStateMachine::getCurrentMaxLettersPerCube() - 1));
+    STATIC_ASSERT(NumAnimTypes * MAX_LETTERS_PER_CUBE == arraysize(animData));
+    //STATIC_ASSERT(arraysize(animData) == NumAnimIndexes);
     const AnimData &data = animData[anim];
 
     float animPct =
@@ -199,29 +233,33 @@ bool animPaint(AnimType animT,
         frame = MIN(frame, objData.mNumFrames - 1);
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
-        // FIXME write utility AABB class
-        if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
-        {
-            continue; // totally offscreen
-        }
-        pos.x = MAX(pos.x, 0);
-        pos.y = MAX(pos.y, 0);
-        Vec2 clipOffset = pos - objData.mPositions[frame];
-        if (clipOffset.x >= (int)objData.mAsset->width ||
-            clipOffset.y >= (int)objData.mAsset->height)
-        {
-            continue; // totally offscreen
-        }
+        Vec2 clipOffset(0,0);
         Vec2 size(objData.mAsset->width, objData.mAsset->height);
-        size.x -= abs<int>(clipOffset.x);
-        size.y -= abs<int>(clipOffset.y);
-        size.x = MIN(size.x, MAX_ROWS - pos.x);
-        size.y = MIN(size.y, MAX_COLS - pos.y);
+        if (objData.mLayer != Layer_Sprite)
+        {
+            // FIXME write utility AABB class
+            if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
+            {
+                continue; // totally offscreen
+            }
+            pos.x = MAX(pos.x, 0);
+            pos.y = MAX(pos.y, 0);
+            clipOffset = pos - objData.mPositions[frame];
+            if (clipOffset.x >= (int)objData.mAsset->width ||
+                clipOffset.y >= (int)objData.mAsset->height)
+            {
+                continue; // totally offscreen
+            }
+            size.x -= abs<int>(clipOffset.x);
+            size.y -= abs<int>(clipOffset.y);
+            size.x = MIN(size.x, MAX_ROWS - pos.x);
+            size.y = MIN(size.y, MAX_COLS - pos.y);
+        }
         ASSERT(size.x > 0);
         ASSERT(size.y > 0);
         ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
-        if (anim != AnimIndex_Tile2Idle )
+        if ((anim % NumAnimTypes) != AnimType_NotWord)
         {
             DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
         }
@@ -252,7 +290,9 @@ bool animPaint(AnimType animT,
         }
         else
         {
-            ASSERT(0);// unhandled layer
+            vid.moveSprite(0, objData.mPositions[frame]);
+            vid.resizeSprite(0, size);
+            vid.setSpriteImage(0, *objData.mSpriteAsset);
         }
     }
 

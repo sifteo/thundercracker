@@ -17,13 +17,21 @@
 
 using namespace Sifteo;
 
+enum CubeAnim
+{
+    CubeAnim_Main,
+    CubeAnim_Hint,
+    CubeAnim_Border,
+
+    NumCubeAnims
+};
 
 class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine() :
-        StateMachine(0), mNumLetters(0), mIdleTime(0.f), mAnimTime(0.f),
-        mAnimType(AnimType_NotWord), mPainting(false), mBG0Panning(0.f),
+        StateMachine(0), mNumLetters(0), mIdleTime(0.f),
+        mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
         mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
     {
@@ -43,7 +51,7 @@ public:
     void resetStateTime() { mStateTime = 0.0f; }
 
     unsigned getLetters(char *buffer, bool forPaint=false);
-    void queueAnim(AnimType anim);/*
+    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
                    VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
                     const AnimParams *params = 0);*/
@@ -55,7 +63,7 @@ public:
     void updateAnim(VidMode_BG0_SPR_BG1 &vid,
                      BG1Helper *bg1 = 0,
                      const AnimParams *params = 0);
-    AnimType getAnim() const { return mAnimType; }
+    AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
@@ -88,8 +96,10 @@ private:
     Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
     unsigned mNumLetters;
     float mIdleTime;
-    float mAnimTime;
-    AnimType mAnimType;
+
+    AnimType mAnimTypes[NumCubeAnims];
+    float mAnimTimes[NumCubeAnims];
+
     bool mPainting;
 
     float mBG0Panning;

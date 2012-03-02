@@ -39,7 +39,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_Tilt:
-        switch (mAnimType)
+        switch (mAnimTypes[CubeAnim_Main])
         {
         default:
         case AnimType_SlideL:
@@ -137,7 +137,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_EnterState:
-        switch (mAnimType)
+        switch (mAnimTypes[CubeAnim_Main])
         {
         default:
         case AnimType_SlideL:
@@ -182,7 +182,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
     case EventID_LetterOrderChange:
-        switch (mAnimType)
+        switch (mAnimTypes[CubeAnim_Main])
         {
         default:
         case AnimType_NewWord: // see ::update (wait for min display time)
@@ -248,7 +248,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             }
         }
 
-        switch (mAnimType)
+        switch (mAnimTypes[CubeAnim_Main])
         {
         case AnimType_NewWord:
             if (isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
@@ -314,7 +314,7 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
         return 0;
     }
 
-    switch (mAnimType)
+    switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_SlideL:
     case AnimType_SlideR:
@@ -344,13 +344,13 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
     return _SYS_strnlen(buffer, GameStateMachine::getCurrentMaxLettersPerCube());
 }
 
-void CubeStateMachine::queueAnim(AnimType anim)
+void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
     // FIXME check for uninterruptible anim flag vs. interrupt override arg
     if (mLettersStart == mLettersStartTarget)
     {
-        mAnimType = anim;
-        mAnimTime = 0.f;
+        mAnimTypes[cubeAnim] = anim;
+        mAnimTimes[cubeAnim] = 0.f;
         // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
     }
 }
@@ -365,19 +365,30 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
                                   BG1Helper *bg1,
                                   const AnimParams *params)
 {
-    if (!animPaint(mAnimType, vid, bg1, mAnimTime, params))
+    for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
-        bool ltrOrderChange = false;
-        if (mLettersStart != mLettersStartTarget)
+        if (!animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
         {
-            mLettersStart = mLettersStartTarget;
-            ltrOrderChange = true;
-        }
-        queueDefaultAnimForState();//, vid, bg1, params);
-        if (ltrOrderChange)
-        {
-            // new state is ready to react to level order change
-            WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+            switch (i)
+            {
+            case CubeAnim_Main:
+                {
+                    bool ltrOrderChange = false;
+                    if (mLettersStart != mLettersStartTarget)
+                    {
+                        mLettersStart = mLettersStartTarget;
+                        ltrOrderChange = true;
+                    }
+                    queueDefaultAnimForState();//, vid, bg1, params);
+                    if (ltrOrderChange)
+                    {
+                        // new state is ready to react to level order change
+                        WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+                    }
+                }
+                break;
+
+            }
         }
     }
 }
@@ -535,7 +546,14 @@ unsigned CubeStateMachine::getNumStates() const
 void CubeStateMachine::update(float dt)
 {
     mIdleTime += dt;
-    mAnimTime += dt;
+    for (unsigned i = 0; i < NumCubeAnims; ++i)
+    {
+        if (mAnimTypes[i] != AnimType_None)
+        {
+            mAnimTimes[i] += dt;
+        }
+    }
+
     StateMachine::update(dt);
     if ((int)mBG0Panning != (int)mBG0TargetPanning)
     {
@@ -543,13 +561,13 @@ void CubeStateMachine::update(float dt)
         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
         setPanning(vid, mBG0Panning);
     }
-    switch (mAnimType)
+    switch (mAnimTypes[CubeAnim_Main])
     {
     default:
         break;
 
     case AnimType_NewWord:
-        if (mAnimTime <= 3.f)
+        if (mAnimTimes[CubeAnim_Main] <= 1.5f)
         {
             // do nothing
         }

@@ -1,6 +1,7 @@
 GameAssets = group{}
 
 Star = image{"star-8.png", pinned=true, width=8, height=8, quality=10}
+HintSprite = image{"lightbulb_on.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
@@ -11,6 +12,8 @@ BorderSlotNormal = image{"wp2_border_bottom_slot_normal.png", quality=10}
 BorderSlotBonus = image{"wp2_border_bottom_slot_bonus.png", quality=10}
 Tile2 = image{"wp2_tile01.png", quality=10}
 Tile2Glow = image{"wp2_tile02.png", quality=10}
+Tile2Meta = image{"wp2_tile05.png", quality=10}
+Tile2MetaGlow = image{"wp2_tile06.png", quality=10}
 Font1Letter = image{"font_2ltr.png"}--, width=120, height=88, quality=0}
 Font2Letter = image{"font_2ltr.png", width=48, height=40, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
