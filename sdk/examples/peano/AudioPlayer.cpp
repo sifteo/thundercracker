@@ -80,21 +80,26 @@ namespace TotalsGame
 
     void AudioPlayer::PlayShutterOpen() 
     {
+#if SFX_ON
 		static int parity = 0;
 		parity = 1-parity;
 		if(parity)
 			PlaySfx(sfx_Slide_LessScrape_02);
 		else
 			PlaySfx(sfx_Slide_LessScrape_01);
+#endif
     }
 
     void AudioPlayer::PlayShutterClose() 
 	{ 
+#if SFX_ON
 		PlaySfx(sfx_Slide_LessScrape_Close_01); 
+#endif
 	}
 
 	void AudioPlayer::PlayInGameMusic() 
 	{
+#if MUSIC_ON
 		static const int musicCount = 3;
 		static _SYSAudioModule *sInGameMusic[3] = 
 		{
@@ -112,16 +117,21 @@ namespace TotalsGame
             int i = Game::GetInstance().currentPuzzle->chapterIndex;
 			PlayMusic(*sInGameMusic[i % musicCount]);
 		}
+#endif
 	}
 
     void AudioPlayer::PlayNeighborAdd()
     {
+#if SFX_ON
         PlaySfx(sfx_Connect);
+#endif
     }
 
     void AudioPlayer::PlayNeighborRemove()
     {
+#if SFX_ON
         PlaySfx(sfx_Fast_Tick);
+#endif
     }
 
 }
