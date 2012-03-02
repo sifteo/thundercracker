@@ -8,8 +8,6 @@
 #include "config.h"
 
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
-const float TiltFlowMenu::PICK_DELAY = 2.3f;
-const float TiltFlowMenu::POST_PICK_DELAY = 0.9f;
 const float TiltFlowMenu::REST_DELAY = 0.1f;
 
 TiltFlowMenu *TiltFlowMenu::s_pInst = NULL;
@@ -71,7 +69,7 @@ bool TiltFlowMenu::Tick(float dt)
       for( int i = 0; i < mNumCubes; i++ )
         mViews[i].Tick();
 
-      if (mStatus == PICKED && mSimTime - mPickTime > PICK_DELAY+POST_PICK_DELAY) {
+      if (mStatus == PICKED) {
         mDone = true;
       }
 
