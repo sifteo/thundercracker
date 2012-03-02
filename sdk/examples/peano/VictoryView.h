@@ -23,13 +23,13 @@ struct VictoryParticle {
     }
 
     void Update() {
-        while(dt > 0.25f) {
+        while(Game::dt > 0.25f) {
             velocity.y += 0.25f * 65;
             position += 0.25f * velocity;
-            dt -= 0.25f;
+            Game::dt -= 0.25f;
         }
-        velocity.y += dt * 65;
-        position += dt * velocity;
+        velocity.y += Game::dt * 65;
+        position += Game::dt * velocity;
     }
 
     bool IsOnScreen() {
@@ -97,7 +97,7 @@ public:
                 Cube.Paint();
             } */
             for(int i=0; i<8; ++i) {
-                mParticles[i].Update(dt);
+                mParticles[i].Update();
             }
         }
     }

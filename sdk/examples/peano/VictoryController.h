@@ -63,14 +63,17 @@ namespace TotalsGame {
       static const float kTransitionTime = 0.2f;
       CORO_YIELD(0.5f);
       AudioPlayer::PlayShutterOpen();
-      for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
+      for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
         nv->SetTransitionAmount(remembered_t/kTransitionTime);
-        CORO_YIELD(0);
+        nv->Paint();
+        System::paintSync();
+        Game::GetInstance().UpdateDt();
       }
-      nv->SetTransitionAmount(1);
+      nv->SetTransitionAmount(-1);
       CORO_YIELD(0.25f);
-        nv->SetMessage("Codes accepted!  Get ready!", NarratorView::EmoteYay);
+        nv->SetMessage("Codes accepted!\nGet ready!", NarratorView::EmoteYay);
       CORO_YIELD(3);
+      nv->SetMessage("");
 
       AudioPlayer::PlayNeighborRemove();
         CORO_YIELD(0.1f);
@@ -81,8 +84,11 @@ namespace TotalsGame {
       //Jukebox.Sfx("win");
       CORO_YIELD(3.5f);
       vv->EndUpdates();
+      for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
+      {
+          vv->GetCube()->backgroundLayer.hideSprite(i);
+      }
 
-      nv->SetMessage("");
       nv->SetCube(Game::GetCube(0));
       CORO_YIELD(0.5f);
 
@@ -92,11 +98,11 @@ namespace TotalsGame {
         CORO_YIELD(2.5f);
           nv->SetMessage("Congratulations!", NarratorView::EmoteYay);
         CORO_YIELD(2.25f);
-        nv->SetMessage("We'll go to the home screen now.");
+        nv->SetMessage("We'll go to\nthe home screen now.");
         CORO_YIELD(2.75f);
-        nv->SetMessage("You can replay any chapter.");
+        nv->SetMessage("You can replay\nany chapter.");
         CORO_YIELD(2.75f);
-          nv->SetMessage("Or I can create random puzzles for you!", NarratorView::EmoteMix01);
+          nv->SetMessage("Or I can create\nrandom puzzles for you!", NarratorView::EmoteMix01);
         remembered_i=0;
         CORO_YIELD(0);
         for(remembered_t=0; remembered_t<3; remembered_t+=mGame->dt) {
@@ -114,7 +120,7 @@ namespace TotalsGame {
           nv->SetMessage("Thanks for playing!", NarratorView::EmoteYay);
         CORO_YIELD(3);
       } else {
-          nv->SetMessage("Are you ready for the next chapter?", NarratorView::EmoteMix01);
+          nv->SetMessage("Are you ready for\nthe next chapter?", NarratorView::EmoteMix01);
         remembered_i=0;
         CORO_YIELD(0);
         for(remembered_t=0; remembered_t<3; remembered_t+=mGame->dt) {
@@ -132,6 +138,7 @@ namespace TotalsGame {
           nv->SetMessage("Let's go!", NarratorView::EmoteYay);
         CORO_YIELD(2.5f);
       }
+      nv->SetMessage("");
 
       AudioPlayer::PlayShutterClose();
       for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=mGame->dt) {
@@ -154,8 +161,8 @@ namespace TotalsGame {
     }
 
     void OnTick () {
-        UPDATE_CORO(Coroutine, dt);
-        Game::UpdateCubeViews(dt);
+        UPDATE_CORO(Coroutine);
+        Game::UpdateCubeViews();
     }
 
     void OnPaint (bool canvasDirty) {
