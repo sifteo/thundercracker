@@ -440,7 +440,7 @@ ChapterSelect:
     }
 
     while(!menu->IsDone()) {
-        menu->Tick(mGame->dt);
+        menu->Tick();
         CORO_YIELD(0);
     }
 
