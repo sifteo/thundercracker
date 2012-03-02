@@ -90,7 +90,9 @@ void Game::WalkTo(Vec2 position, bool dosfx) {
 }
 
 void Game::TeleportTo(const MapData& m, Vec2 position) {
-  gChannelMusic.stop();
+  #if MUSIC_ON
+    gChannelMusic.stop();
+  #endif
   Vec2 room = position/128;
   ViewSlot* view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();

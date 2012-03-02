@@ -2,8 +2,12 @@
 #include "Dialog.h"
 
 Cube gCubes[NUM_CUBES];
+#if SFX_ON
 AudioChannel gChannelSfx;
+#endif
+#if MUSIC_ON
 AudioChannel gChannelMusic;
+#endif
 
 void siftmain() {
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
