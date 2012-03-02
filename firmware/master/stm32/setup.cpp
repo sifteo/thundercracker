@@ -154,7 +154,6 @@ extern "C" void _start()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
 #ifndef DEBUG
-    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
     MacronixMX25::instance.init();
 #else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
