@@ -113,7 +113,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   view->GetCube()->vbuf.touch();
 
   // todo: expose music in level editor?
-  PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
+  PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
 
   // walk out of the in-gate
   Vec2 target = mMap.GetRoom(room)->Center(0);
