@@ -1916,6 +1916,9 @@ void CubeWrapper::DrawGrid()
         m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
     }
 
+    ClearSprite( GridSlot::MULT_SPRITE_ID );
+    ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
+
     //draw grid
     for( int i = 0; i < NUM_ROWS; i++ )
     {

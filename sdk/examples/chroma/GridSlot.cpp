@@ -20,7 +20,10 @@ const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROL
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 const float GridSlot::START_FADING_TIME = 1.75f;
 const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
-const float GridSlot::MULTIPLIER_MOTION_PERIOD_MODIFIER = 15.0f;
+const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 1.5f;
+const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
+//what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
+const float GridSlot::MULTIPLIER_NUMBER_PERCENTON = 0.7f;
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
@@ -245,7 +248,8 @@ unsigned int GridSlot::GetSpecialFrame()
 void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
 {
 	Vec2 vec( m_col * 4, m_row * 4 );
-	switch( m_state )
+
+    switch( m_state )
 	{
         case STATE_SPAWNING:
         {
@@ -268,9 +272,18 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 
                     if( m_multiplier > 1 )
                     {
-                        vid.setSpriteImage( MULT_SPRITE_ID, mults, m_multiplier - 2 );
-                        vid.resizeSprite( MULT_SPRITE_ID, 32, 16 );
-                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                        unsigned int frame = Math::fmodf( (float)System::clock(), MULTIPLIER_LIGHTNING_PERIOD ) / MULTIPLIER_LIGHTNING_PERIOD * mult_lightning.frames;
+                        vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
+                        vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
+                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
+
+                        //number on bg1
+                        if( Math::fmodf( (float)System::clock(), MULTIPLIER_NUMBER_PERIOD ) / MULTIPLIER_NUMBER_PERIOD < MULTIPLIER_NUMBER_PERCENTON )
+                        {
+                            vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
+                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 16, 32 );
+                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 8 );
+                        }
                     }
                 }
             }
@@ -415,7 +428,6 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 		default:
 			break;
 	}
-	
 }
 
 
@@ -598,7 +610,6 @@ void GridSlot::explode()
     {
         Game::Inst().UpMultiplier();
         m_multiplier = 1;
-        m_pWrapper->ClearSprite( MULT_SPRITE_ID );
         DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
