@@ -20,18 +20,13 @@ AudioMixer::AudioMixer() :
     enabledChannelMask(0),
     activeChannelMask(0),
     stoppedChannelMask(0),
-    nextHandle(0),
-    availableDecodersMask(ALL_DECODERS_AVAILABLE)
+    nextHandle(0)
 {
 }
 
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
-
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        speexDecoders[i].init();
-    }
 }
 
 /*
@@ -150,32 +145,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
     ch.handle = nextHandle++;
     *handle = ch.handle;
 
-    switch (mod->type) {
-        
-        case _SYS_Speex: {
-            SpeexDecoder *dec = getSpeexDecoder();
-            if (dec == NULL) {
-                LOG(("ERROR: No SpeexDecoder available.\n"));
-                return false;
-            }
-            ch.play(mod, loopMode, dec);
-            break;    
-        }
-        
-        case _SYS_PCM: {
-            PCMDecoder *dec = getPCMDecoder();
-            if (dec == NULL) {
-                LOG(("ERROR: No PCMDecoder available.\n"));
-                return false;
-            }
-            ch.play(mod, loopMode, dec);
-            break;
-        }
-        
-        default:
-            LOG(("ERROR: Unknown audio encoding (%d)\n", mod->type));
-            return false;
-    }
+    ch.play(mod, loopMode);
 
     Atomic::SetLZ(activeChannelMask, idx);
 
@@ -202,20 +172,7 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
     ASSERT(channelIndex < _SYS_AUDIO_MAX_CHANNELS);
     ASSERT(activeChannelMask & Intrinsic::LZ(channelIndex));
 
-    // mark this channel's decoder as available again
-    if (ch->channelType() == _SYS_Speex) {
-        unsigned decoderIndex = ch->decoder.speex - speexDecoders;
-        ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
-        ASSERT(!(availableDecodersMask & Intrinsic::LZ(decoderIndex)));
-        Atomic::SetLZ(availableDecodersMask, decoderIndex);
-    }
-    else if (ch->channelType() == _SYS_PCM) {
-        unsigned decoderIndex = ch->decoder.pcm - pcmDecoders;
-        ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
-        ASSERT(!(availableDecodersMask & Intrinsic::LZ(decoderIndex)));
-        Atomic::SetLZ(availableDecodersMask, decoderIndex);
-    }
-    ch->onPlaybackComplete();
+    ch->stop();
     Atomic::ClearLZ(activeChannelMask, channelIndex);
 }
 
@@ -270,26 +227,4 @@ AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t 
         Atomic::ClearLZ(mask, idx);
     }
     return 0;
-}
-
-SpeexDecoder* AudioMixer::getSpeexDecoder()
-{
-    if (availableDecodersMask == 0) {
-        return NULL;
-    }
-
-    unsigned idx = Intrinsic::CLZ(availableDecodersMask);
-    Atomic::ClearLZ(availableDecodersMask, idx);
-    return &speexDecoders[idx];
-}
-
-PCMDecoder* AudioMixer::getPCMDecoder()
-{
-    if (availableDecodersMask == 0) {
-        return NULL;
-    }
-
-    unsigned idx = Intrinsic::CLZ(availableDecodersMask);
-    Atomic::ClearLZ(availableDecodersMask, idx);
-    return &pcmDecoders[idx];
 }

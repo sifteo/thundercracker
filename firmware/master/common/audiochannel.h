@@ -10,10 +10,8 @@
 #include <sifteo/machine.h>
 #include <stdint.h>
 #include "audiobuffer.h"
+#include "speexdecoder.h"
 #include "flashlayer.h"
-
-class SpeexDecoder;
-class PCMDecoder;
 
 
 class AudioChannelSlot {
@@ -22,15 +20,13 @@ public:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    AudioChannelSlot();
     void init(_SYSAudioBuffer *b);
 
     bool isEnabled() const {
         return buf.isValid();
     }
 
-    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
-    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec);
+    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode);
     int mixAudio(int16_t *buffer, unsigned len);
 
     _SYSAudioType channelType() const {
@@ -49,26 +45,26 @@ public:
         state &= ~STATE_PAUSED;
     }
 
+    void stop() {
+        state |= STATE_STOPPED;
+    }
+
 protected:
     void fetchData();
-    void onPlaybackComplete();
+    friend class AudioMixer;    // mixer can tell us to fetchData()
 
-    AudioBuffer buf;                // Decompressed data
-    FlashStream flStream;           // Location of compressed source data
-    FlashStreamBuffer<256> flBuf;   // Buffer for incoming compressed frames
+private:
+    void onPlaybackComplete();
+    static void fetchRaw(FlashStream &in, AudioBuffer &out);
 
     uint8_t state;
     uint8_t type;
     int16_t volume;
     _SYSAudioHandle handle;
 
-    // TODO: Make an IAudioDecoder interface.
-    union {
-        SpeexDecoder *speex;
-        PCMDecoder *pcm;
-    } decoder;
-
-    friend class AudioMixer;    // mixer can tell us to fetchData()
+    AudioBuffer buf;            // User-owned buffer for decompressed data
+    FlashStream flStream;       // Location of compressed source data
+    SpeexDecoder speexDec;      // Speex decoder state
 };
 
 #endif /* AUDIOCHANNEL_H_ */

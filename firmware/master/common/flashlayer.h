@@ -119,7 +119,7 @@ private:
     }
     
     static FlashBlock *lookupBlock(uint32_t blockAddr);
-    static FlashBlock *recycleBlock(uint32_t blockAddr);
+    static FlashBlock *recycleBlock();
 };
 
 
@@ -211,6 +211,11 @@ public:
         return size - offset;
     }
 
+    inline void advance(uint32_t bytes) {
+        seek(bytes + tell());
+    }
+
+    // Reads at the current offset, does *not* auto-advance.
     uint32_t read(uint8_t *dest, uint32_t maxLength);
 
 private:
@@ -233,7 +238,7 @@ private:
  */
 template <unsigned bufSize>
 class FlashStreamBuffer {
-
+public:
     inline void reset() {
         writePtr = readPtr = 0;
     }
@@ -257,6 +262,7 @@ class FlashStreamBuffer {
 
         uint8_t *result = data + readPtr;
         readPtr += length;
+        stream.advance(length);
         return result;
     }
 

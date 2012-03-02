@@ -6,9 +6,10 @@
 #ifndef SPEEXDECODER_H_
 #define SPEEXDECODER_H_
 
-#include "svmmemory.h"
+#include "audiobuffer.h"
+#include "flashlayer.h"
 #include "speex/speex.h"
-#include "../speex/STM32/config."
+#include "../speex/STM32/config.h"
 
 #include <stdint.h>
 
@@ -31,9 +32,7 @@ public:
 #endif
 
     void init();
-    void deinit();
-
-    int decodeFrame(FlashStream &in, uint8_t *dest, uint32_t destSize);
+    bool decodeFrame(FlashStream &in, AudioBuffer &out);
 
 private:
     void* decodeState;

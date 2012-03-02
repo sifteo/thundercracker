@@ -7,7 +7,7 @@
 #include <sifteo/machine.h>
 #include "neighbors.h"
 #include "vram.h"
-#include "runtime.h"
+#include "event.h"
 
 #define CUBE_ID_MASK (0x1F)
 #define HAS_NEIGHBOR_MASK (0x80)

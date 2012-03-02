@@ -44,8 +44,12 @@ public:
 
 private:
     _SYSAudioBuffer *sys;                       // provided by userspace
+
     // to support reserve/commit API, when we need to wrap around the end of our
-    // actual sys buffer, provide a coalescer
+    // actual sys buffer, provide a coalescer.
+    // XXX: If we do still need this, it should be allocated on the stack or
+    //      shared globally. This is negating the whole RAM footprint benefit
+    //      of keeping buffers in userspace!
     uint8_t coalescer[_SYS_AUDIO_BUF_SIZE];
 };
 

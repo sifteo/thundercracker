@@ -96,7 +96,7 @@ FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
     return NULL;
 }
 
-FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
+FlashBlock *FlashBlock::recycleBlock()
 {
     // Look for a block we can recycle, in order to service a cache miss.
     // This block *must* have a refcount of zero, so we only search the

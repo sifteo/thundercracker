@@ -158,7 +158,4 @@ private:
 };
 
 
-class SvmMemStream
-
-
 #endif // SVM_MEMORY_H

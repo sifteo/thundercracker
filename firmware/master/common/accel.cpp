@@ -4,7 +4,7 @@
  */
 
 #include "accel.h"
-#include "runtime.h"
+#include "event.h"
 #include <stdlib.h>
 
 //using namespace Sifteo;

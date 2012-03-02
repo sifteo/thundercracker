@@ -52,17 +52,7 @@ private:
 
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
-    // decoders can be loaned to a channel for sample playback
-    // TODO: Don't allocate both types of decoders
-    SpeexDecoder speexDecoders[_SYS_AUDIO_MAX_CHANNELS];
-    PCMDecoder pcmDecoders[_SYS_AUDIO_MAX_CHANNELS];
-    uint32_t availableDecodersMask;
-    // 8 channels, but left aligned for use with CLZ() & friends
-    static const int ALL_DECODERS_AVAILABLE = 0xFF000000;
-
     AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask);
-    SpeexDecoder* getSpeexDecoder();
-    PCMDecoder* getPCMDecoder();
     void stopChannel(AudioChannelSlot *ch);
 };
 
