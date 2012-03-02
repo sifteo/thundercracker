@@ -19,6 +19,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/assetmanager.o \
+    $(MASTER_DIR)/common/elfutil.o
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \

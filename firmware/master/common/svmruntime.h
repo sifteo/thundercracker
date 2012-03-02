@@ -21,6 +21,7 @@ public:
     
     static void run(uint16_t appId);
     static void exit();
+
     static void call(reg_t addr);
     static void svc(uint8_t imm8);
 
@@ -50,11 +51,9 @@ private:
         reg_t sp;
     };
 
-    static bool loadElfFile(unsigned addr, unsigned len);
-
-    static unsigned currentAppPhysAddr;    // where does this app start in external flash?
-    static unsigned currentBlockValidBytes;
     static ProgramInfo progInfo;
+
+    static bool loadElfFile(unsigned addr, unsigned len);
 
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t address);

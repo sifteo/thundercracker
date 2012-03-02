@@ -104,7 +104,7 @@ bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out)
 
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
     if (flashOffset < flashSize && (flashSize - flashOffset) >= length) {
-        out.init(flashOffset, length);
+        out.init(flashOffset + flashBase, length);
         return true;
     }
     

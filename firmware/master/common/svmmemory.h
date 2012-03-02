@@ -136,7 +136,10 @@ public:
      * This is initialized to the current binary's RODATA segment by our ELF
      * loader.
      */
-    static void setFlashSegment(uint32_t base, uint32_t size) {
+    static void setFlashSegment(const FlashRange &segment) {
+        uint32_t base = segment.getAddress();
+        uint32_t size = segment.getSize();
+
         ASSERT((base & FlashBlock::BLOCK_MASK) == 0);
         ASSERT((size & FlashBlock::BLOCK_MASK) == 0);
         

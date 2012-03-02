@@ -174,28 +174,75 @@ private:
 
 
 /**
+ * A contiguous range of bytes in Flash. Has a beginning and an end.
+ */
+class FlashRange {
+public:
+    FlashRange() {}
+
+    FlashRange(uint32_t address, uint32_t size)
+        : address(address), size(size) {}
+
+    inline void init(uint32_t address, uint32_t size) {
+        this->address = address;
+        this->size = size;
+    }
+
+    inline void clear() {
+        this->size = 0;
+    }
+
+    inline uint32_t getAddress() const {
+        return address;
+    }
+
+    inline uint32_t getSize() const {
+        return size;
+    }
+    
+    inline bool isEmpty() const {
+        return size != 0;
+    }
+    
+    inline bool isAligned() const {
+        return (address & FlashBlock::BLOCK_MASK) == 0;
+    }
+
+    FlashRange split(uint32_t sliceOffset, uint32_t sliceSize);
+
+private:
+    uint32_t address;
+    uint32_t size;
+};
+
+
+/**
  * A contiguous region of flash, not necessarily block-aligned, used as a
  * source for streaming data. This does not use the cache layer, since it's
  * assumed that we'll be reading a large object in mostly linear order
  * and we'd rather not pollute the cache with all of these blocks that will
  * not be reused.
  */
-class FlashStream {
+class FlashStream : public FlashRange {
 public:
     FlashStream() {}
 
     FlashStream(uint32_t address, uint32_t size)
-        : address(address), size(size), offset(0) {}
+        : FlashRange(address, size), offset(0) {}
 
     inline void init(uint32_t address, uint32_t size) {
-        this->address = address;
-        this->size = size;
+        FlashRange::init(address, size);
+        this->offset = 0;
+    }
+
+    inline void clear() {
+        FlashRange::clear();
         this->offset = 0;
     }
 
     inline bool eof() const {
-        assert(offset <= size);
-        return offset >= size;
+        assert(offset <= getSize());
+        return offset >= getSize();
     }
 
     inline bool tell() const {
@@ -203,12 +250,13 @@ public:
     }
 
     inline void seek(uint32_t o) {
+        assert(o <= getSize());
         offset = o;
     }
 
     inline uint32_t remaining() const {
-        assert(offset <= size);
-        return size - offset;
+        assert(offset <= getSize());
+        return getSize() - offset;
     }
 
     inline void advance(uint32_t bytes) {
@@ -219,8 +267,6 @@ public:
     uint32_t read(uint8_t *dest, uint32_t maxLength);
 
 private:
-    uint32_t address;
-    uint32_t size;
     uint32_t offset;
 };
 

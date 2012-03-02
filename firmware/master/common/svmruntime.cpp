@@ -75,43 +75,6 @@ void SvmRuntime::call(reg_t addr)
     cpu.setReg(SvmCpu::REG_PC, addr);
 }
 
-// translate a game's virtual RAM address to physical RAM
-reg_t SvmRuntime::virt2physRam(uint32_t vaddr) const
-{
-    return ((vaddr - VIRTUAL_RAM_BASE) & 0xFFFFF) + cpu.userRam();
-}
-
-// translate a virtual flash address to its cache block
-reg_t SvmRuntime::virt2cacheFlash(uint32_t a) const
-{
-    return a - VIRTUAL_FLASH_BASE + cacheBlockBase() - flashRegion.baseAddress() + progInfo.textRodata.start;
-}
-
-// translate from an address in our local flash block cache to a game's virtual address
-reg_t SvmRuntime::cache2virtFlash(reg_t a) const
-{
-    return a - cacheBlockBase() + VIRTUAL_FLASH_BASE + flashRegion.baseAddress() - progInfo.textRodata.start;
-}
-
-// address of the current cache block
-reg_t SvmRuntime::cacheBlockBase() const
-{
-    return reinterpret_cast<reg_t>(flashRegion.data());
-}
-
-/*
-    Given a virtual flash address, fetch the physical block that it maps to.
-*/
-void SvmRuntime::fetchFlashBlock(reg_t addr)
-{
-    uint32_t flashBlock = (addr / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE;
-    reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start + currentAppPhysAddr;
-    if (!FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion)) {
-        ASSERT(0 && "validate() - couldn't retrieve new flash block\n");
-    }
-    currentBlockValidBytes = SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
-    ASSERT(currentBlockValidBytes > 0 && "no valid bytes in newly fetched block\n");
-}
 
 /*
 SVC encodings:

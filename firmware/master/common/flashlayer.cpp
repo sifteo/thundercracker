@@ -118,7 +118,20 @@ uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
 {
     uint32_t chunk = MIN(maxLength, remaining());
     if (chunk)
-        Flash::read(address + offset, dest, chunk);
+        Flash::read(getAddress() + offset, dest, chunk);
     return chunk;
 }
 
+FlashRange FlashRange::split(uint32_t sliceOffset, uint32_t sliceSize)
+{
+    // Catch underflow
+    if (sliceOffset >= size)
+        return FlashRange(getAddress(), 0);
+
+    // Truncate overflows
+    uint32_t maxSliceSize = getSize() - sliceOffset;
+    if (sliceSize > maxSliceSize)
+        sliceSize = maxSliceSize;
+    
+    return FlashRange(getAddress() + sliceOffset, sliceSize);
+}
