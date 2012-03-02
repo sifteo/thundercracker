@@ -290,6 +290,7 @@ void Game::OnInventoryChanged() {
     p->RefreshInventory();
   }
 
+  
   // demo end-condition hack
   int count = 0;
   for(int i=0; i<4; ++i) {
@@ -297,6 +298,7 @@ void Game::OnInventoryChanged() {
       return;
     }
   }
+  
   mIsDone = true;
 }
 
@@ -313,6 +315,7 @@ void Game::OnPickup(Room *pRoom) {
     if (mPlayer.Equipment()) {
       OnDropEquipment(pRoom);
     }
+    PlaySfx(sfx_pickup);
     mPlayer.SetEquipment(pItem);
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
@@ -540,9 +543,15 @@ void Game::CheckMapNeighbors() {
     #if GFX_ARTIFACT_WORKAROUNDS
       Paint(true);
       for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
-        if (visited[v->GetCubeID()] == VIEW_CHANGED) {
+        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
           v->GetCube()->vbuf.touch();
-        }
+        //}
+      }
+      Paint(true);
+      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
+        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
+          v->GetCube()->vbuf.touch();
+        //}
       }
     #endif
     Paint(true);

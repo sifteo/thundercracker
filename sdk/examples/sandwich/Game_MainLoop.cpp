@@ -11,6 +11,10 @@ void Game::MainLoop() {
   	//---------------------------------------------------------------------------
   	// INTRO
 
+	for(Cube* p=gCubes; p!=gCubes+NUM_CUBES; ++p) {
+		VidMode(p->vbuf).setWindow(0, 128);
+	}
+
 	#if FAST_FORWARD
 	Cube* pPrimary = gCubes;
 	#else
@@ -38,8 +42,7 @@ void Game::MainLoop() {
 	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
 	CheckMapNeighbors();
 
-	//WinScreen();
-
+	mIsDone = false;
 	while(!mIsDone) {
 
     	//-------------------------------------------------------------------------

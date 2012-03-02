@@ -62,7 +62,6 @@ void InventoryView::Update(float dt) {
 		gGame.NeedsSync();
 		CORO_YIELD;
 		#if GFX_ARTIFACT_WORKAROUNDS		
-			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
 			gGame.NeedsSync();
