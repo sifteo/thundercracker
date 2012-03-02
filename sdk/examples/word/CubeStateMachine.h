@@ -29,15 +29,7 @@ enum CubeAnim
 class CubeStateMachine : public StateMachine
 {
 public:
-    CubeStateMachine() :
-        StateMachine(0), mNumLetters(0), mIdleTime(0.f),
-        mPainting(false), mBG0Panning(0.f),
-        mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
-    {
-        mLetters[0] = '\0';
-    }
-
+    CubeStateMachine();
     void setCube(Cube& cube);
     Cube& getCube();
 

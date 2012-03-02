@@ -7,9 +7,9 @@ BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
-BorderSlotBlank = image{"wp2_border_bottom_slot_blank.png", quality=10}
-BorderSlotNormal = image{"wp2_border_bottom_slot_normal.png", quality=10}
-BorderSlotBonus = image{"wp2_border_bottom_slot_bonus.png", quality=10}
+BorderSlotBlank = image{"border_available01.png", quality=10}
+BorderSlotNormal = image{"border_created_basic01.png", quality=10}
+BorderSlotBonus = image{"border_created_bonus01.png", quality=10}
 Tile2 = image{"wp2_tile01.png", quality=10}
 Tile2Glow = image{"wp2_tile02.png", quality=10}
 Tile2Meta = image{"wp2_tile05.png", quality=10}

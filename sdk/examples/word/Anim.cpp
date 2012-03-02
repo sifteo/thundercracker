@@ -350,26 +350,29 @@ bool animPaint(AnimType animT,
     };
 
     const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-    for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
+    if (params && params->mCubeID == 0)
     {
-        if (i < TopRowStartIndex)
+        for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
         {
-            // row 1, bottom
-            const AssetImage *image =
-                    CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
-            if (image)
+            if (i < TopRowStartIndex)
             {
-                vid.BG0_drawAsset(Vec2(2 + i * 2, 14), *image);
+                // row 1, bottom
+                const AssetImage *image =
+                        CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
+                if (image)
+                {
+                    vid.BG0_drawAsset(Vec2(2 + i * 2, 14), *image);
+                }
             }
-        }
-        else
-        {
-            // row 2, top
-            const AssetImage *image =
-                    CheckMarkImagesTop[(int)progressData.mPuzzleProgress[i]];
-            if (image)
+            else
             {
-                vid.BG0_drawAsset(Vec2(2 + i * 2, 0), *image);
+                // row 2, top
+                const AssetImage *image =
+                        CheckMarkImagesTop[(int)progressData.mPuzzleProgress[i]];
+                if (image)
+                {
+                    vid.BG0_drawAsset(Vec2(2 + i * 2, 0), *image);
+                }
             }
         }
     }

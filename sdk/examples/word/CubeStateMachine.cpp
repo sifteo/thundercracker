@@ -7,6 +7,24 @@
 #include "WordGame.h"
 #include "assets.gen.h"
 
+CubeStateMachine::CubeStateMachine() :
+        StateMachine(0), mNumLetters(0), mIdleTime(0.f),
+        mPainting(false), mBG0Panning(0.f),
+        mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
+        mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
+{
+    mLetters[0] = '\0';
+    for (unsigned i = 0; i < arraysize(mAnimTypes); ++i)
+    {
+        mAnimTypes[i] = AnimType_None;
+    }
+
+    for (unsigned i = 0; i < arraysize(mAnimTimes); ++i)
+    {
+        mAnimTimes[i] = 0.f;
+    }
+}
+
 void CubeStateMachine::setCube(Cube& cube)
 {
     mCube = &cube;
@@ -167,12 +185,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
         }
         {
-            /*BG1Helper bg1(getCube());
-            char str[MAX_LETTERS_PER_CUBE + 1];
-            getLetters(str, true);
-            AnimParams params;
-            params.mLetters = str;
-            */
             queueDefaultAnimForState();//vid, bg1, params);
         }
         mIdleTime = 0.f;
@@ -1174,6 +1186,6 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
 
     params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-
+    params->mCubeID = getCube().id();
     return true;
 }
