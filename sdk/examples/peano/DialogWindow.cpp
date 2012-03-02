@@ -206,7 +206,7 @@ void DialogWindow::MeasureText(const char *str, unsigned *outCount, unsigned *ou
 }
 
 void DialogWindow::Erase() {
-    mPosition.y = 8;
+    mPosition.y = 3;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
         mCube->vbuf.poke(i, 0);
     }
@@ -272,7 +272,7 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
         pNextChar = Show(pNextChar);
     }
 
-    System::paint();
+    System::paintSync();
 }
 
 
