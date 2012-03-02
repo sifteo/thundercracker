@@ -115,7 +115,16 @@ void Game::Update()
     //painting is handled by menu manager
     if( m_state == STATE_MAINMENU )
     {
-        m_menu.Update();
+        int choice;
+
+        if( !m_menu.Update( choice ) )
+        {
+            setState( STATE_INTRO );
+            if( choice < MODE_CNT )
+                m_mode = (GameMode)choice;
+            else
+                ASSERT( 0 );  //TODO settings!
+        }
         return;
     }
 

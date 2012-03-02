@@ -45,6 +45,7 @@ public:
         MODE_SURVIVAL,
         MODE_BLITZ,
 		MODE_PUZZLE,
+        MODE_CNT
 	} GameMode;
 
 	static Game &Inst();

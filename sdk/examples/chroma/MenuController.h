@@ -28,7 +28,7 @@ public:
     static const int NUM_MAIN_MENU_ITEMS = 4;
 
 	void Init();
-	bool Update();
+    bool Update( int &choice );
 	void Reset();
 	
     void checkNeighbors();

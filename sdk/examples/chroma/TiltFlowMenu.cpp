@@ -625,6 +625,12 @@ void TiltFlowView::UpdateMenu() {
     }
     mDirty = true;
   }
+
+  //check for touch
+  if( mpCube->touching() )
+  {
+      TiltFlowMenu::Inst()->Pick( *this );
+  }
 }
 
 float TiltFlowView::Resistance() {
