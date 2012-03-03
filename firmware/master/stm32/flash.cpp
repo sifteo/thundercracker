@@ -21,15 +21,19 @@ void Flash::read(uint32_t address, uint8_t *buf, unsigned len) {
     flash.read(address, buf, len);
 }
 
+// TODO: remove bools from the signatures here, this is just historical & not useful
 bool Flash::write(uint32_t address, const uint8_t *buf, unsigned len) {
-    return flash.write(address, buf, len) == MacronixMX25::Ok;
+    flash.write(address, buf, len);
+    return true;
 }
 
 bool Flash::eraseSector(uint32_t address) {
-    return flash.eraseSector(address) == MacronixMX25::Ok;
+    flash.eraseSector(address);
+    return true;
 }
 
 bool Flash::chipErase() {
-    return flash.chipErase() == MacronixMX25::Ok;
+    flash.chipErase();
+    return true;
 }
 
