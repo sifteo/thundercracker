@@ -88,6 +88,7 @@ public:
 
     static void init();
     static void get(FlashBlockRef &ref, uint32_t blockAddr);
+    static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
     static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);
 
 private:
@@ -165,6 +166,7 @@ public:
     }
 
     inline FlashBlock* operator->() const {
+        ASSERT(isHeld());
         return block;
     }
 
@@ -208,7 +210,7 @@ public:
         return (address & FlashBlock::BLOCK_MASK) == 0;
     }
 
-    FlashRange split(uint32_t sliceOffset, uint32_t sliceSize);
+    FlashRange split(uint32_t sliceOffset, uint32_t sliceSize) const;
 
 private:
     uint32_t address;
@@ -226,6 +228,9 @@ private:
 class FlashStream : public FlashRange {
 public:
     FlashStream() {}
+
+    FlashStream(const FlashRange &r)
+        : FlashRange(r), offset(0) {}
 
     FlashStream(uint32_t address, uint32_t size)
         : FlashRange(address, size), offset(0) {}

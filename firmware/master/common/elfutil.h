@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "svmmemory.h"
+#include "flashlayer.h"
 
 namespace Elf {
 

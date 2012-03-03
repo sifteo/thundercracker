@@ -4,43 +4,59 @@
  */
 
 #include "svmruntime.h"
-#include "elfdefs.h"
+#include "elfutil.h"
 #include "flashlayer.h"
 #include "svm.h"
-#include "svmvalidator.h"
+#include "svmmemory.h"
 
+#include <sifteo/abi.h>
 #include <string.h>
 
 using namespace Svm;
 
-// statics
-FlashRegion SvmRuntime::flashRegion;
-unsigned SvmRuntime::currentAppPhysAddr;
-unsigned SvmRuntime::currentBlockValidBytes;
-ProgramInfo SvmRuntime::progInfo;
-uint8_t SvmRuntime::userRAM[RAM_SIZE_IN_BYTES];
+FlashBlockRef SvmRuntime::codeBlock;
+FlashBlockRef SvmRuntime::dataBlock;
+SvmMemory::PhysAddr SvmRuntime::stackLimit;
 
 
 void SvmRuntime::run(uint16_t appId)
 {
-    currentAppPhysAddr = 0;  // TODO: look this up via appId
-    if (!loadElfFile(currentAppPhysAddr, 12345))
+    // TODO: look this up via appId
+    FlashRange elf(0, 0xFFFF0000);
+
+    Elf::ProgramInfo pInfo;
+    if (!pInfo.init(elf))
         return;
-    LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
 
-    cpu.init();
+    // Initialize rodata segment
+    SvmMemory::setFlashSegment(pInfo.rodata.data);
 
-    reg_t entryPoint = progInfo.entry;
-    reg_t a = ((entryPoint >> 2) & 0x3fffff) * 4;
-    fetchFlashBlock(a + VIRTUAL_FLASH_BASE);
-    a = validate(a + VIRTUAL_FLASH_BASE);
+    // Clear RAM (including implied BSS)
+    SvmMemory::erase();
+    SvmCpu::init();
 
-    // TODO: set initial FP & SP based on SPAdj
-    call(a);
-    unsigned spAdjust = ((entryPoint >> 24) & 0x7f) * 4;
-    LOG(("main - stack: %d bytes\n", spAdjust));
-    cpu.adjustSP(-spAdjust);
-    cpu.run();
+    // Load RWDATA into RAM
+    SvmMemory::PhysAddr rwdataPA;
+    if (!pInfo.rwdata.data.isEmpty() &&
+        SvmMemory::mapRAM(SvmMemory::VirtAddr(pInfo.rwdata.vaddr),
+            pInfo.rwdata.size, rwdataPA)) {
+        FlashStream rwDataStream(pInfo.rwdata.data);
+        rwDataStream.read(rwdataPA, pInfo.rwdata.size);
+    }
+
+    // Stack setup
+    SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
+    setSP(SvmMemory::VIRTUAL_RAM_TOP);
+
+    // Tail call into user code
+    call(pInfo.entry);
+    SvmCpu::run();
+}
+
+void SvmRuntime::fault(FaultCode code)
+{
+    // TODO: implement
+    ASSERT(0);
 }
 
 void SvmRuntime::exit()
@@ -48,45 +64,34 @@ void SvmRuntime::exit()
     // TODO: implement
 }
 
-/*
-    0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
-*/
 void SvmRuntime::call(reg_t addr)
 {
+#if 0 // TODO: Implement call/return
     StackFrame frame = {
-        cpu.reg(7),
-        cpu.reg(6),
-        cpu.reg(5),
-        cpu.reg(4),
-        cpu.reg(3),
-        cpu.reg(2),
-        cpu.reg(SvmCpu::REG_FP),
-        cpu.reg(SvmCpu::REG_SP)
+        SvmCpu::reg(7),
+        SvmCpu::reg(6),
+        SvmCpu::reg(5),
+        SvmCpu::reg(4),
+        SvmCpu::reg(3),
+        SvmCpu::reg(2),
+        SvmCpu::reg(SvmCpu::REG_FP),
+        SvmCpu::reg(SvmCpu::REG_SP)
     };
 
-    reg_t sp = cpu.reg(SvmCpu::REG_SP);
+    reg_t sp = SvmCpu::reg(SvmCpu::REG_SP);
     const intptr_t framesize = sizeof(frame);
     reg_t *stk = reinterpret_cast<reg_t*>(sp) - framesize;
     memcpy(stk, &frame, framesize);
 
-    cpu.adjustSP(-framesize);
-    cpu.setReg(SvmCpu::REG_LR, cpu.reg(SvmCpu::REG_PC));
+    adjustSP(framesize);
 
-    cpu.setReg(SvmCpu::REG_PC, addr);
+    SvmCpu::setReg(SvmCpu::REG_LR, SvmCpu::reg(SvmCpu::REG_PC));
+#endif
+
+    adjustSP(addr >> 24);
+    branch(addr);
 }
 
-
-/*
-SVC encodings:
-
-  11011111 0xxxxxxx     (1) Indirect operation
-  11011111 10xxxxxx     (2) Direct syscall #0-63
-  11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
-  11011111 11100rrr     (4) r8-9 = validate(rN)
-  11011111 11101rrr     (5) Reserved
-  11011111 11110rrr     (6) Call validate(rN), with SP adjust
-  11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
-*/
 void SvmRuntime::svc(uint8_t imm8)
 {
     LOG(("svc, imm8 %d\n", imm8));
@@ -97,35 +102,37 @@ void SvmRuntime::svc(uint8_t imm8)
     if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
         LOG(("direct syscall #%d\n", syscallNum));
-        reg_t result = SyscallTable[syscallNum](cpu.reg(0), cpu.reg(1), cpu.reg(2), cpu.reg(3),
-                                                cpu.reg(4), cpu.reg(5), cpu.reg(6), cpu.reg(7));
-        cpu.setReg(0, result);
+        syscall(syscallNum);
         return;
     }
     if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         LOG(("SP = validate(SP - imm5*4)\n"));
         uint8_t imm5 = imm8 & 0x1f;
-        cpu.setReg(SvmCpu::REG_SP, validate(cpu.reg(SvmCpu::REG_SP) - (imm5 * 4)));
+        adjustSP(imm5);
         return;
     }
 
     uint8_t sub = (imm8 >> 3) & 0x1f;
     unsigned r = imm8 & 0x7;
+
     switch (sub) {
     case 0x1c:  { // 0b11100
         LOG(("svc: r8-9 = validate(r%d)\n", r));
-        validate(cpu.reg(r));
+        validate(SvmCpu::reg(r));
         return;
     }
     case 0x1d:  // 0b11101
         ASSERT(0 && "svc: reserved\n");
         return;
     case 0x1e: { // 0b11110
-        LOG(("svc: Call validate(rN), with SP adjust\n"));
+        LOG(("svc: Indirect call(r%d)\n", r));
+        call(SvmCpu::reg(r));
         return;
     }
     case 0x1f:  // 0b11110
-        LOG(("svc: Tail call validate(rN), with SP adjust\n"));
+        LOG(("svc: Indirect tail call(r%d)\n", r));
+        call(SvmCpu::reg(r));
+        _SYS_ret();
         return;
     default:
         ASSERT(0 && "unknown sub op for svc");
@@ -134,215 +141,143 @@ void SvmRuntime::svc(uint8_t imm8)
     ASSERT(0 && "unhandled SVC");
 }
 
-/*
-When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
-four and added to the base of the current page, to form the address of a
-32-bit literal. This 32-bit literal encodes an indirect operation to perform:
-
-  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
-  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
-  0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
-  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
-  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
-
-  (F = 0x80000000, flash segment virtual address)
-*/
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
 {
-    // we already know the MSB of imm8 is clear by the fact that we're being called here.
+    // Should be checked by the validator
+    ASSERT(imm8 < FlashBlock::BLOCK_SIZE / sizeof(uint32_t));
 
-    reg_t instructionBase = cpu.reg(SvmCpu::REG_PC) - 2;
-    uintptr_t blockMask = ~(uintptr_t)(FlashLayer::BLOCK_SIZE - 1);
-    uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
+    uint32_t *blockBase = reinterpret_cast<uint32_t*>(codeBlock->getData());
     uint32_t literal = blockBase[imm8];
 
-    LOG(("indirect, literal 0x%x @ 0x%"PRIxPTR"\n", literal, cache2virtFlash(reinterpret_cast<reg_t>(blockBase + imm8))));
+    LOG(("indirect, literal 0x%08x @ (0x%08x+%03x)\n", literal,
+        codeBlock->getAddress(), (int)(imm8 * sizeof(uint32_t))));
 
     if ((literal & CallMask) == CallTest) {
         LOG(("indirect call\n"));
-        unsigned a = (literal >> 2) & 0x3fffff;
-        unsigned n = (literal >> 24) & 0x7f;
-
-        reg_t addr = validate(VIRTUAL_FLASH_BASE + (a * 4));
-        // TODO: call it
+        call(literal);
     }
     else if ((literal & TailCallMask) == TailCallTest) {
         LOG(("indirect tail call\n"));
+        call(literal);
+        _SYS_ret();
     }
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
         LOG(("indirect syscall #%d\n", imm15));
-        reg_t result = SyscallTable[imm15](cpu.reg(0), cpu.reg(1), cpu.reg(2), cpu.reg(3),
-                                           cpu.reg(4), cpu.reg(5), cpu.reg(6), cpu.reg(7));
-        cpu.setReg(0, result);
+        syscall(imm15);
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
-        LOG(("indirect tail syscall\n"));
+        unsigned imm15 = (literal >> 16) & 0x3ff;
+        LOG(("indirect tail syscall #%d\n", imm15));
+        syscall(imm15);
+        _SYS_ret();
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
-        reg_t a = validate(literal & 0xffffff);
-        addrOp(opnum, a);
+        addrOp(opnum, literal & 0xffffff);
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
-        reg_t a = validate(VIRTUAL_FLASH_BASE + (literal & 0xffffff));
-        addrOp(opnum, a);
+        addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
     }
     else {
         ASSERT(0 && "unhandled svc Indirect Operation");
     }
 }
 
-// note: address has already been validate()d
 void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 {
     switch (opnum) {
     case 0: {
-        cpu.setReg(SvmCpu::REG_PC, address);
-        LOG(("addrOp: long branch to 0x%"PRIxPTR", result: 0x%"PRIxPTR"\n", address, cpu.reg(SvmCpu::REG_PC)));
+        LOG(("addrOp: long branch to 0x%"PRIxPTR", result: 0x%"PRIxPTR"\n", address, SvmCpu::reg(SvmCpu::REG_PC)));
+        branch(address);
         break;
     }
-//    case 1:
-//        LOG(("addrOp: Asynchronous preload\n"));
-//        break;
-//    case 2:
-//        LOG(("addrOp: Assign to r8-9\n"));
-//        break;
+    case 1:
+        LOG(("addrOp: Asynchronous preload\n"));
+        break;
+    case 2:
+        LOG(("addrOp: Assign to r8-9\n"));
+        validate(address);
+        break;
     default:
         LOG(("unknown addrOp: %d (0x%"PRIxPTR")\n", opnum, address));
         break;
     }
 }
 
-/*
-    Given an address:
-    - if address is already valid physical stack pointer
-        - pass it through.
-          (This happens when validating an addr computed based on SP)
-    - if address is in virtual flash
-        - make sure any referenced memory has been loaded.
-        - translate from virtual to cached data address
-    - otherwise, assume RAM address
-        - if already in range of physical RAM, pass through
-        - otherwise, assume virtual RAM address and translate to phys RAM
-*/
-reg_t SvmRuntime::validate(reg_t address)
+void SvmRuntime::validate(reg_t address)
 {
-    reg_t baseRO, baseRW;
+    /*
+     * Map 'address' as either a flash or RAM address, and set the
+     * base pointer registers r8-9 appropriately.
+     */
 
-    if (inRange(address, cpu.userRam(), SvmCpu::MEM_IN_BYTES)) {
-        // Already a valid RAM address. (Includes user stack)
-        baseRO = baseRW = address;
+    SvmMemory::PhysAddr bro, brw;
+    if (!SvmMemory::validateBase(dataBlock, address, bro, brw))
+        fault(F_BAD_DATA_ADDRESS);
 
-    } else if (isFlashAddr(address)) {
+    SvmCpu::setReg(8, reinterpret_cast<reg_t>(bro));
+    SvmCpu::setReg(9, reinterpret_cast<reg_t>(brw));
 
-        baseRO = virt2cacheFlash(address);
-        baseRW = 0;
-
-        if (!inRange(baseRO, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
-            FlashLayer::releaseRegion(flashRegion);
-            fetchFlashBlock(address);
-        }
-
-    } else {
-        // RAM address in need of translation
-        
-        baseRO = baseRW = virt2physRam(address);
-        ASSERT(inRange(baseRO, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
-    }
-
-    cpu.setReg(8, baseRO);
-    cpu.setReg(9, baseRW);
-
-    LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", baseRO, address));
-    return baseRO;
+    LOG(("validated: %p:%p for address 0x%"PRIxPTR"\n",
+        bro, brw, address));
 }
 
-bool SvmRuntime::loadElfFile(unsigned addr, unsigned len)
+void SvmRuntime::syscall(unsigned num)
 {
-    FlashRegion r;
-    if (!FlashLayer::getRegion(addr, FlashLayer::BLOCK_SIZE, &r)) {
-        LOG(("couldn't get flash region for elf file\n"));
-        return false;
+    // syscall calling convention: 8 params, as provided by r0-r7,
+    // and return up to 64 bits in r0-r1.
+    typedef uint64_t (*SvmSyscall)(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3,
+                                   uint32_t p4, uint32_t p5, uint32_t p6, uint32_t p7);
+
+    static const SvmSyscall SyscallTable[] = {
+        #include "syscall-table.def"
+    };
+
+    if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
+        fault(F_BAD_SYSCALL);
+        return;
     }
-    uint8_t *block = static_cast<uint8_t*>(r.data());
-
-    // verify magicality
-    if ((block[Elf::EI_MAG0] != Elf::Magic0) ||
-        (block[Elf::EI_MAG1] != Elf::Magic1) ||
-        (block[Elf::EI_MAG2] != Elf::Magic2) ||
-        (block[Elf::EI_MAG3] != Elf::Magic3))
-    {
-        LOG(("incorrect elf magic number"));
-        return false;
-    }
-
-
-    Elf::FileHeader header;
-    memcpy(&header, block, sizeof header);
-
-    // ensure the file is the correct Elf version
-    if (header.e_ident[Elf::EI_VERSION] != Elf::EV_CURRENT) {
-        LOG(("incorrect elf file version\n"));
-        return false;
+    SvmSyscall fn = SyscallTable[num];
+    if (!fn) {
+        fault(F_BAD_SYSCALL);
+        return;
     }
 
-    // ensure the file is the correct data format
-    union {
-        int32_t l;
-        char c[sizeof (int32_t)];
-    } u;
-    u.l = 1;
-    if ((u.c[sizeof(int32_t) - 1] + 1) != header.e_ident[Elf::EI_DATA]) {
-        LOG(("incorrect elf data format\n"));
-        return false;
-    }
+    uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
+                         SvmCpu::reg(2), SvmCpu::reg(3),
+                         SvmCpu::reg(4), SvmCpu::reg(5),
+                         SvmCpu::reg(6), SvmCpu::reg(7));
 
-    if (header.e_machine != Elf::EM_ARM) {
-        LOG(("elf: incorrect machine format\n"));
-        return false;
-    }
+    SvmCpu::setReg(0, (uint32_t) result);
+    SvmCpu::setReg(1, (uint32_t) (result >> 32));
+}
 
-    progInfo.entry = header.e_entry;
-    /*
-        We're looking for 3 segments, identified by the following profiles:
-        - text segment - executable & read-only
-        - data segment - read/write & non-zero size on disk
-        - bss segment - read/write, zero size on disk, and non-zero size in memory
-    */
-    unsigned offset = header.e_phoff;
-    for (unsigned i = 0; i < header.e_phnum; ++i, offset += header.e_phentsize) {
-        Elf::ProgramHeader pHeader;
-        memcpy(&pHeader, block + offset, header.e_phentsize);
-        if (pHeader.p_type != Elf::PT_LOAD)
-            continue;
+void SvmRuntime::adjustSP(int words)
+{
+    setSP(SvmCpu::reg(SvmCpu::REG_SP) + 4*words);
+}
 
-        switch (pHeader.p_flags) {
-        case (Elf::PF_Exec | Elf::PF_Read):
-            LOG(("rodata/text segment found\n"));
-            progInfo.textRodata.start = pHeader.p_offset;
-            progInfo.textRodata.size = pHeader.p_filesz;
-            progInfo.textRodata.vaddr = pHeader.p_vaddr;
-            progInfo.textRodata.paddr = pHeader.p_paddr;
-            break;
-        case (Elf::PF_Read | Elf::PF_Write):
-            if (pHeader.p_memsz > 0 && pHeader.p_filesz == 0) {
-                LOG(("bss segment found\n"));
-                progInfo.bss.start = pHeader.p_offset;
-                progInfo.bss.size = pHeader.p_memsz;
-            }
-            else if (pHeader.p_filesz > 0) {
-                LOG(("found rwdata segment\n"));
-                progInfo.rwdata.start = pHeader.p_offset;
-                progInfo.rwdata.size = pHeader.p_memsz;
-            }
-            break;
-        }
-    }
+void SvmRuntime::setSP(reg_t addr)
+{
+    SvmMemory::PhysAddr pa;
 
-    FlashLayer::releaseRegion(r);
-    return true;
+    if (!SvmMemory::mapRAM(addr, 0, pa))
+        fault(F_BAD_STACK);
+
+    if (pa < stackLimit)
+        fault(F_STACK_OVERFLOW);
+
+    SvmCpu::setReg(SvmCpu::REG_SP, reinterpret_cast<reg_t>(pa));
+}
+
+void SvmRuntime::branch(reg_t addr)
+{
+    SvmMemory::PhysAddr pa;
+
+    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
+        fault(F_BAD_CODE_ADDRESS);
+
+    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    
 }

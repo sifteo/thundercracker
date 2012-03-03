@@ -18,9 +18,6 @@ reg_t SvmCpu::regs[NUM_REGS];
 void SvmCpu::init()
 {
     memset(regs, 0, sizeof(regs));
-
-    // init sp to top of user data
-    regs[REG_SP] = reinterpret_cast<reg_t>(&mem[MEM_IN_BYTES - 4]);
 }
 
 void SvmCpu::run()
@@ -47,11 +44,6 @@ void SvmCpu::setReg(uint8_t r, reg_t val)
     regs[r] = val;
 }
 
-reg_t SvmCpu::userRam()
-{
-    return reinterpret_cast<reg_t>(&mem);
-}
-
 /*
     Fetch the next instruction.
     We can return 16bit values unconditionally, since all our instructions are Thumb,
@@ -63,7 +55,7 @@ uint16_t SvmCpu::fetch()
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #if 1
-    LOG(("[%"PRIxPTR": %x]", runtime.cache2virtFlash(reinterpret_cast<reg_t>(tst)), *tst));
+    LOG(("[%p: %x]", tst, *tst));
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
     }

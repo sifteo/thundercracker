@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "svm.h"
 #include "flashlayer.h"
@@ -15,6 +16,11 @@
 
 class SvmMemory {
 public:
+    static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
+    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
+    static const unsigned RAM_SIZE_IN_BYTES = 32 * 1024;
+    static const unsigned VIRTUAL_RAM_TOP = VIRTUAL_FLASH_BASE + RAM_SIZE_IN_BYTES;
+
     typedef uint8_t* PhysAddr;
     typedef Svm::reg_t VirtAddr;
 
@@ -83,6 +89,14 @@ public:
      * space, without actually mapping it.
      */
     static bool checkROData(VirtAddr va, uint32_t length);
+    
+    /**
+     * Specialized read-only memory validator for internal use by the SvmRuntime.
+     * This is similar to mapROData, but it has no length check, and it provides
+     * separate read-only and read-write base pointer outputs.
+     */
+    static bool validateBase(FlashBlockRef &ref, VirtAddr va,
+        PhysAddr &bro, PhysAddr &brw);
 
     /**
      * Read-only code memory validator. Ensures that the supplied va is a
@@ -137,27 +151,28 @@ public:
      * loader.
      */
     static void setFlashSegment(const FlashRange &segment) {
-        uint32_t base = segment.getAddress();
-        uint32_t size = segment.getSize();
-
-        ASSERT((base & FlashBlock::BLOCK_MASK) == 0);
-        ASSERT((size & FlashBlock::BLOCK_MASK) == 0);
-        
-        // Masks here are for security and reliability in case of a
-        // badly constructed ELF file.
-        flashBase = base & ~FlashBlock::BLOCK_MASK;
-        flashSize = size & ~FlashBlock::BLOCK_MASK;
+        ASSERT(segment.isAligned());
+        flashSeg = segment;
     }
 
-private:
-    static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
-    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
-    static const unsigned RAM_SIZE_IN_BYTES = 32 * 1024;
-
-    static uint8_t userRAM[RAM_SIZE_IN_BYTES];
+    /**
+     * Clear all user RAM. Should happen before launching a new game.
+     */
+    static void erase() {
+        memset(userRAM, 0, RAM_SIZE_IN_BYTES);
+    }
     
-    static uint32_t flashBase;
-    static uint32_t flashSize;
+    /**
+     * Quick predicate to check a physical address. Used only in simulation.
+     */
+#ifdef SIFTEO_SIMULATOR
+    static bool isPhysAddrFaulty(PhysAddr pa) {
+        return 
+#endif
+
+private:
+    static uint8_t userRAM[RAM_SIZE_IN_BYTES];    
+    static FlashRange flashSeg;
 };
 
 

@@ -12,7 +12,7 @@
 
 bool Elf::ProgramInfo::init(const FlashRange &elf)
 {
-    if (elf.getSize() < FlashLayer::BLOCK_SIZE) {
+    if (elf.getSize() < FlashBlock::BLOCK_SIZE) {
         LOG(("ELF Error: file is too small\n"));
         return false;
     }
@@ -23,7 +23,7 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
     }
 
     FlashBlockRef ref;
-    FlashLayer::get(ref, elf.getAddress());
+    FlashBlock::get(ref, elf.getAddress());
     Elf::FileHeader *header = reinterpret_cast<Elf::FileHeader*>(ref->getData());
 
     // verify magicality
@@ -75,7 +75,7 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
         - bss segment - read/write, zero size on disk, and non-zero size in memory
     */
 
-    for (unsigned i = 0; i < header.e_phnum; ++i, ++ph) {
+    for (unsigned i = 0; i < header->e_phnum; ++i, ++ph) {
         if (ph->p_type != Elf::PT_LOAD)
             continue;
 
@@ -83,7 +83,7 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
 
         case (Elf::PF_Exec | Elf::PF_Read):
             rodata.data = elf.split(ph->p_offset, ph->p_filesz);
-            if (!rodataSrc.isAligned()) {
+            if (!rodata.data.isAligned()) {
                 LOG(("ELF Error: Flash data segment not aligned\n"));
                 return false;
             }
@@ -103,6 +103,12 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
             }
             break;
         }
+    }
+
+    // RODATA segment is mandatory
+    if (rodata.data.isEmpty()) {
+        LOG(("ELF Error: No read-only data segment defined\n"));
+        return false;
     }
 
     return true;

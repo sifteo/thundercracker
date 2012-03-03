@@ -29,10 +29,6 @@
 
 extern "C" {
 
-const SvmSyscall SyscallTable[] = {
-    #include "syscall-table.def"
-};
-
 // TODO: implement!
 void _SYS_ret() {
 

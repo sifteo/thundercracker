@@ -70,16 +70,21 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 #endif
 }
 
+uint8_t *FlashBlock::getByte(FlashBlockRef &ref, uint32_t address)
+{
+    uint32_t offset = address & BLOCK_MASK;
+    get(ref, address & ~BLOCK_MASK);
+    return ref->getData() + offset;
+}
+
 uint8_t *FlashBlock::getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length)
 {
     uint32_t offset = address & BLOCK_MASK;
     uint32_t maxLength = BLOCK_SIZE - offset;
-
     if (length > maxLength)
         length = maxLength;
 
-    get(ref, address - offset);
-    return ref->getData() + offset;
+    return getByte(ref, address);
 }   
 
 FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
@@ -122,7 +127,7 @@ uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
     return chunk;
 }
 
-FlashRange FlashRange::split(uint32_t sliceOffset, uint32_t sliceSize)
+FlashRange FlashRange::split(uint32_t sliceOffset, uint32_t sliceSize) const
 {
     // Catch underflow
     if (sliceOffset >= size)

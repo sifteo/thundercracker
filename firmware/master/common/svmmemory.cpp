@@ -14,12 +14,12 @@ bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
 {
     reg_t offset;
     
-    if ((offset = reinterpret_cast<PhysAddr>(va) - userRAM) < RAM_SIZE_IN_BYTES) {
+    if ((offset = reinterpret_cast<PhysAddr>(va) - userRAM) <= RAM_SIZE_IN_BYTES) {
         // Already a valid PA. This check is required for handling addresses
         // that result from pointer arithmetic on SP.
         pa = reinterpret_cast<PhysAddr>(va);
 
-    } else if ((offset = va - VIRTUAL_RAM_BASE) < RAM_SIZE_IN_BYTES) {
+    } else if ((offset = va - VIRTUAL_RAM_BASE) <= RAM_SIZE_IN_BYTES) {
         // Standard RAM address virtual-to-physical translation
         pa = userRAM + offset;
 
@@ -28,7 +28,8 @@ bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
         return false;
     }
 
-    // Check the extent of this region
+    // Check the extent of this region.
+    // Note that with length==0, the address (VIRTUAL_RAM_BASE + RAM_SIZE_IN_BYTES) is valid.
     return length <= (RAM_SIZE_IN_BYTES - offset);
 }
 
@@ -61,6 +62,30 @@ bool SvmMemory::mapROData(FlashBlockRef &ref, VirtAddr va,
     flashOffset += flashBase;
 
     pa = FlashBlock::getBytes(ref, flashOffset, length);
+    return true;
+}
+
+bool SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
+    PhysAddr &bro, PhysAddr &brw)
+{
+    if (!(va & VIRTUAL_FLASH_BASE)) {
+        // RAM address
+
+        if (mapRAM(va, 1, bro)) {
+            brw = bro;
+            return true;
+        }
+        return false;
+    }
+
+    // Flash address
+    uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
+    if (flashOffset >= flashSize)
+        return false;
+    flashOffset += flashBase;
+    
+    bro = FlashBlock::getByte(ref, flashOffset);
+    brw = 0;
     return true;
 }
 
