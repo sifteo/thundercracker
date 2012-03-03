@@ -34,135 +34,136 @@ void _SYS_ret() {
     ASSERT(0 && "Not yet implemented");
 }
 
-// XXX: floating point support stubbed out for now
-uint32_t _SYS_add_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {
+    float r = reinterpret_cast<float&>(a) + reinterpret_cast<float&>(b);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_add_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_add_f64(uint64_t a, uint64_t b) {
+    double r = reinterpret_cast<double&>(a) + reinterpret_cast<double&>(b);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_sub_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) {
+    float r = reinterpret_cast<float&>(a) - reinterpret_cast<float&>(b);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_sub_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_sub_f64(uint64_t a, uint64_t b) {
+    double r = reinterpret_cast<double&>(a) - reinterpret_cast<double&>(b);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_mul_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) {
+    float r = reinterpret_cast<float&>(a) * reinterpret_cast<float&>(b);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_mul_f64() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_mul_f64(uint64_t a, uint64_t b) {
+    double r = reinterpret_cast<double&>(a) * reinterpret_cast<double&>(b);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_div_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_div_f32(uint32_t a, uint32_t b) {
+    // XXX: Trap divide-by-zero
+    float r = reinterpret_cast<float&>(a) / reinterpret_cast<float&>(b);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_div_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_div_f64(uint64_t a, uint64_t b) {
+    // XXX: Trap divide-by-zero
+    double r = reinterpret_cast<double&>(a) / reinterpret_cast<double&>(b);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_fpext_f32_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_fpext_f32_f64(uint32_t a) {
+    double r = reinterpret_cast<float&>(a);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_fpround_f64_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fpround_f64_f32(uint64_t a) {
+    float r = reinterpret_cast<double&>(a);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_fptosint_f32_i32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fptosint_f32_i32(uint32_t a) {
+    int32_t r = reinterpret_cast<float&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptosint_f32_i64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_fptosint_f32_i64(uint32_t a) {
+    int64_t r = reinterpret_cast<float&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptosint_f64_i32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fptosint_f64_i32(uint64_t a) {
+    int32_t r = reinterpret_cast<double&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptosint_f64_i64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_fptosint_f64_i64(uint64_t a) {
+    int64_t r = reinterpret_cast<double&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptouint_f32_i32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fptouint_f32_i32(uint32_t a) {
+    uint32_t r = reinterpret_cast<float&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptouint_f32_i64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_fptouint_f32_i64(uint32_t a) {
+    uint64_t r = reinterpret_cast<float&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptouint_f64_i32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fptouint_f64_i32(uint64_t a) {
+    uint32_t r = reinterpret_cast<double&>(a);
+    return r;
 }
 
-uint32_t _SYS_fptouint_f64_i64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_fptouint_f64_i64(uint64_t a) {
+    uint64_t r = reinterpret_cast<double&>(a);
+    return r;
 }
 
-uint32_t _SYS_sinttofp_i32_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_sinttofp_i32_f32(uint32_t a) {
+    float r = reinterpret_cast<int32_t&>(a);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_sinttofp_i32_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_sinttofp_i32_f64(uint32_t a) {
+    double r = reinterpret_cast<int32_t&>(a);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_sinttofp_i64_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_sinttofp_i64_f32(uint64_t a) {
+    float r = reinterpret_cast<int64_t&>(a);
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_sinttofp_i64_f64() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_sinttofp_i64_f64(uint64_t a) {
+    double r = reinterpret_cast<int64_t&>(a);
+    return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_uinttofp_i32_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_uinttofp_i32_f32(uint32_t a) {
+    float r = a;
+    return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_uinttofp_i32_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint64_t _SYS_uinttofp_i32_f64(uint32_t a) {
+    double r = a;
+    return reinterpret_cast<uint64_t&>(r);
 }
-
-uint32_t _SYS_uinttofp_i64_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+        
+uint32_t _SYS_uinttofp_i64_f32(uint64_t a) {
+    float r = a;
+    return reinterpret_cast<uint32_t&>(r);
 }
-
-uint32_t _SYS_uinttofp_i64_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+    
+uint64_t _SYS_uinttofp_i64_f64(uint64_t a) {
+    double r = a;
+    return reinterpret_cast<uint64_t&>(r);
 }
 
 uint32_t _SYS_oeq_f32() {
