@@ -216,8 +216,7 @@ void SvmRuntime::validate(reg_t address)
      */
 
     SvmMemory::PhysAddr bro, brw;
-    if (!SvmMemory::validateBase(dataBlock, address, bro, brw))
-        fault(F_BAD_DATA_ADDRESS);
+    SvmMemory::validateBase(dataBlock, address, bro, brw);
 
     SvmCpu::setReg(8, reinterpret_cast<reg_t>(bro));
     SvmCpu::setReg(9, reinterpret_cast<reg_t>(brw));

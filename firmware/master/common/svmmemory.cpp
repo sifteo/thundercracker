@@ -67,7 +67,7 @@ bool SvmMemory::mapROData(FlashBlockRef &ref, VirtAddr va,
     return true;
 }
 
-bool SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
+void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
     PhysAddr &bro, PhysAddr &brw)
 {
     if (!(va & VIRTUAL_FLASH_BASE)) {
@@ -75,20 +75,23 @@ bool SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
         if (mapRAM(va, 1, bro)) {
             brw = bro;
-            return true;
+            return;
         }
-        return false;
+        
+        brw = bro = 0;
+        return;
     }
 
     // Flash address
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-    if (flashOffset >= flashSeg.getSize())
-        return false;
+    if (flashOffset >= flashSeg.getSize()) {
+        brw = bro = 0;
+        return;
+    }
     flashOffset += flashSeg.getAddress();
     
     bro = FlashBlock::getByte(ref, flashOffset);
     brw = 0;
-    return true;
 }
 
 bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)

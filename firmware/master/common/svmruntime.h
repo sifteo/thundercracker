@@ -24,7 +24,6 @@ public:
         F_UNKNOWN = 0,
         F_STACK_OVERFLOW,       // Stack allocation failure
         F_BAD_STACK,            // Validation-time stack address error
-        F_BAD_DATA_ADDRESS,     // Validation-time data address error
         F_BAD_CODE_ADDRESS,     // Branch-time code address error
         F_BAD_SYSCALL,          // Unsupported syscall number
         F_LOAD_ADDRESS,         // Runtime load address error

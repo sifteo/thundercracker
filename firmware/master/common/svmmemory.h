@@ -94,8 +94,11 @@ public:
      * Specialized read-only memory validator for internal use by the SvmRuntime.
      * This is similar to mapROData, but it has no length check, and it provides
      * separate read-only and read-write base pointer outputs.
+     *
+     * If the address is valid for read but not for write, brw will be 0. If
+     * the address is totally invalid, both bro and brw will be 0.
      */
-    static bool validateBase(FlashBlockRef &ref, VirtAddr va,
+    static void validateBase(FlashBlockRef &ref, VirtAddr va,
         PhysAddr &bro, PhysAddr &brw);
 
     /**
