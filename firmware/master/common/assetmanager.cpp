@@ -41,9 +41,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
             status = 2;
             Usb::write(&status, 1);
 #endif
-            if (!Flash::eraseSector(i)) {
-                ; // TODO
-            }
+            Flash::eraseSector(i);
         }
 #ifndef SIFTEO_SIMULATOR
         status = 0x0;
@@ -56,9 +54,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 
     unsigned chunk = MIN(installation.size - installation.currentAddress, len);
 
-    if (!Flash::write(installation.currentAddress, buf, chunk)) {
-        ; // TODO
-    }
+    Flash::write(installation.currentAddress, buf, chunk);
     installation.currentAddress += chunk;
 
     addToCrc(buf, chunk);
