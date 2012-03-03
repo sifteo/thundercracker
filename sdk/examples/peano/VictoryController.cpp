@@ -26,7 +26,7 @@ c.MoveViewTo(blanky);
 */
 
 Game::GameState Coroutine() {
-
+#if !DISABLE_CHAPTERS
     NarratorView *nv;
     VictoryView *vv;
 
@@ -135,7 +135,7 @@ Game::GameState Coroutine() {
      mGame.CubeSet.ClearEvents();
      mGame.CubeSet.ClearUserData();
      */
-
+#endif //!DISABLE_CHAPTERS
     return Game::GameState_IsOver;
 }
 
