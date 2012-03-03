@@ -93,13 +93,13 @@ bool SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
 bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 {
-    uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
+    uint32_t flashOffset = (uint32_t)va & 0xfffffc;
     if (flashOffset >= flashSeg.getSize())
         return false;
     flashOffset += flashSeg.getAddress();
 
     uint32_t blockOffset = flashOffset & FlashBlock::BLOCK_MASK;
-    FlashBlock::get(ref, flashOffset - blockOffset);
+    FlashBlock::get(ref, flashOffset & ~FlashBlock::BLOCK_MASK);
     if (!ref->isCodeOffsetValid(blockOffset))
         return false;
 

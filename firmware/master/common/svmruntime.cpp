@@ -191,7 +191,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 {
     switch (opnum) {
     case 0: {
-        LOG(("addrOp: long branch to 0x%"PRIxPTR", result: 0x%"PRIxPTR"\n", address, SvmCpu::reg(SvmCpu::REG_PC)));
+        LOG(("addrOp: long branch to 0x%"PRIxPTR"\n", address));
         branch(address);
         break;
     }
@@ -283,7 +283,7 @@ void SvmRuntime::branch(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
-    if (!SvmMemory::mapROCode(codeBlock, addr & 0xfffffc, pa))
+    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
         fault(F_BAD_CODE_ADDRESS);
 
     SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    
