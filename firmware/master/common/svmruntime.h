@@ -42,6 +42,14 @@ public:
     static void svc(uint8_t imm8);
 
     static void fault(FaultCode code);
+    
+    /**
+     * For debugging use; using the current codeBlock and PC,
+     * reconstruct the current virtual program counter.
+     */
+    static unsigned reconstructCodeAddr() {
+        return SvmMemory::reconstructCodeAddr(codeBlock, SvmCpu::reg(SvmCpu::REG_PC));
+    }
 
 private:
     struct StackFrame {

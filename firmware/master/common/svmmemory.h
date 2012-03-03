@@ -161,7 +161,7 @@ public:
     static void erase() {
         memset(userRAM, 0, RAM_SIZE_IN_BYTES);
     }
-    
+
     /**
      * Reconstruct a code address, given a FlashBlock and low-level PC.
      * This is currently just used for creating readable fault addresses.
@@ -172,7 +172,7 @@ public:
                 - flashSeg.getAddress() + VIRTUAL_FLASH_BASE;
         return 0;
     }
-    
+
     /**
      * Quick predicates to check a physical address. Used only in simulation.
      */
