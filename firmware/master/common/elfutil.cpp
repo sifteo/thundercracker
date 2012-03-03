@@ -99,7 +99,7 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
             } else if (ph->p_filesz) {
                 rwdata.data = elf.split(ph->p_offset, ph->p_filesz);
                 rwdata.vaddr = ph->p_vaddr;
-                rwdata.vaddr = ph->p_memsz;
+                rwdata.size = ph->p_memsz;
             }
             break;
         }
