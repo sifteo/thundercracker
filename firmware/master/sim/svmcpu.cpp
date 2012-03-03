@@ -455,6 +455,18 @@ static void emulateUXTB(uint16_t instr)
     regs[Rdn] = regs[Rm] & 0xFF;
 }
 
+static void emulateMOV(uint16_t instr)
+{
+    // Thumb T5 encoding, does not affect flags.
+    // This subset does not support high register access.
+
+    unsigned Rs = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    regs[Rd] = regs[Rs];
+}
+
+
 ///////////////////////////////////////////////
 // B R A N C H I N G   I N S T R U C T I O N S
 ///////////////////////////////////////////////
@@ -804,6 +816,10 @@ static void execute16(uint16_t instr)
             }
         }
     }
+    if ((instr & MovMask) == MovTest) {
+        emulateMOV(instr);
+        return;
+    }    
     if ((instr & SvcMask) == SvcTest) {
         emulateSVC(instr);
         return;

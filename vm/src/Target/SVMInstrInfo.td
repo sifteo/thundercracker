@@ -358,6 +358,14 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
     let opB = 15;
 }
 
+// Format 5
+
+def MOVr : T5<0b10, (outs GPReg:$Rd), (ins GPReg:$Rs),
+    "mov\t$Rd, $Rs", []> {
+    // Does not affect CPSR.
+    let neverHasSideEffects = 1;
+}
+
 // 32-bit data processing instructions
 
 def UDIVr : T32_DIV<0b1, (outs GPReg:$Rd), (ins GPReg:$Rn, GPReg:$Rm),

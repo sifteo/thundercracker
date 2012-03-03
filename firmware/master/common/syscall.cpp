@@ -56,12 +56,12 @@ uint32_t _SYS_sub_f64() {
 }
 
 uint32_t _SYS_mul_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
 uint32_t _SYS_mul_f64() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
@@ -81,12 +81,12 @@ uint32_t _SYS_fpext_f32_f64() {
 }
 
 uint32_t _SYS_fpround_f64_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
 uint32_t _SYS_fptosint_f32_i32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
@@ -141,7 +141,7 @@ uint32_t _SYS_sinttofp_i64_f32() {
 }
 
 uint32_t _SYS_sinttofp_i64_f64() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 

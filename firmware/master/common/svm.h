@@ -70,6 +70,9 @@ static const uint16_t CondBranchTest    = 0xd << 12;    // 0b1101xxxx xxxxxxxx
 static const uint16_t CompareBranchMask = 0xf5 << 8;    // 0b11110101 xxxxxxxx
 static const uint16_t CompareBranchTest = 0xb1 << 8;    // 0b1011x0x1 xxxxxxxx
 
+static const uint16_t MovMask           = 0xffc0;       // 0b11111111 11xxxxxx  
+static const uint16_t MovTest           = 0x4600;       // 0b01000110 00xxxxxx  
+
 static const uint16_t Nop               = 0xbf00;       // 0b10111111 00000000
 
 ///////////////////////////////////////

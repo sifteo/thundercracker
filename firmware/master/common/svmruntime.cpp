@@ -63,7 +63,7 @@ void SvmRuntime::fault(FaultCode code)
 
 void SvmRuntime::exit()
 {
-    // TODO: implement
+    ASSERT(0 && "Not yet implemented");
 }
 
 void SvmRuntime::call(reg_t addr)

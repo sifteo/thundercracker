@@ -112,8 +112,8 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                bool KillSrc) const
 {
     if (SVM::GPRegRegClass.contains(DestReg, SrcReg))
-        // GPR <- GPR
-        BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
+        // GPR <- GPR. Must not affect CPSR.
+        BuildMI(MBB, MBBI, DL, get(SVM::MOVr), DestReg)
             .addReg(SrcReg, getKillRegState(KillSrc));
 
     else if (SVM::GPRegRegClass.contains(SrcReg) && SVM::BPRegRegClass.contains(DestReg))

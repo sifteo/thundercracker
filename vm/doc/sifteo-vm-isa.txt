@@ -154,6 +154,7 @@ Allowed 16-bit instruction encodings:
   10110010 xxxxxxxx     uxth, sxth, uxtb, sxtb
   10111111 00000000     nop
   11011111 xxxxxxxx     svc
+  01000110 00xxxxxx     mov r0-r7, r0-r7 (Without setting flags)
 
   01001xxx xxxxxxxx     ldr r0-r7, [PC, #imm8]
   1001xxxx xxxxxxxx     ldr/str r0-r7, [SP, #imm8]

@@ -151,6 +151,25 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Defs = [CPSR];
 }
 
+class T5<bits<2> opB, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
+{
+    // High register ops and CMP. Includes a MOV that does not set
+    // condition flags!
+
+    let opA = 2;
+    bits<4> Rs;
+    bits<4> Rd;
+    let Inst{12-10} = 1;
+    let Inst{9-8} = opB;
+    let Inst{7} = Rd{3};
+    let Inst{6} = Rs{3};
+    let Inst{5-3} = Rs{2-0};
+    let Inst{2-0} = Rd{2-0};
+
+    let isReMaterializable = 1;
+}
+
 class T6<dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst16<outs, ins, asmstr, pattern>
 {
