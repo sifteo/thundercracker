@@ -39,14 +39,14 @@ void TiltFlowDetailView::Update () {
             mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
             Paint();
             System::paintSync();
-            Game::GetInstance().UpdateDt();
+            Game::UpdateDt();
         }
     } else {
         while (mAmount > 0) {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
             System::paintSync();
-            Game::GetInstance().UpdateDt();
+            Game::UpdateDt();
         }
     }
 

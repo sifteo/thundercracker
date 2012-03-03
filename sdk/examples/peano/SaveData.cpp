@@ -31,10 +31,10 @@ namespace TotalsGame
 
     void SaveData::Reset()
     {
-        delete Game::GetInstance().currentPuzzle;
-        delete Game::GetInstance().previousPuzzle;
-        Game::GetInstance().currentPuzzle = NULL;
-        Game::GetInstance().previousPuzzle = NULL;
+        delete Game::currentPuzzle;
+        delete Game::previousPuzzle;
+        Game::currentPuzzle = NULL;
+        Game::previousPuzzle = NULL;
         Save();
     }
 

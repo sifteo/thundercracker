@@ -13,7 +13,12 @@ namespace TotalsGame {
 
   class TokenView : public View 
   {
+  public:
+      void OnShakeStarted(TotalsCube *c) ;
+      
+      void OnButtonEvent(TotalsCube *c, bool isPressed);
 
+      
   private:
 	  static int sHintParity;
 
@@ -100,10 +105,6 @@ private:
     //-------------------------------------------------------------------------
 public:
     virtual void DidAttachToCube(TotalsCube *c) ;
-
-    void OnShakeStarted(TotalsCube *c) ;
-    
-    void OnButtonEvent(TotalsCube *c, bool isPressed);
     
     virtual void WillDetachFromCube(TotalsCube *c) ;
 

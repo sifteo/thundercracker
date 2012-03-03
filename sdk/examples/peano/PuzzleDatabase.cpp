@@ -63,7 +63,7 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
 
     int numGroups = TheData::everything.chapters[chapter]->puzzles[puzzle]->nGroups;
     if (numGroups > 0) {
-        TokenGroup *groups[Game::NUMBER_OF_CUBES] = {0};
+        TokenGroup *groups[NUM_CUBES] = {0};
         for(int i=0; i<numGroups; ++i) {
             int group = TheData::everything.chapters[chapter]->puzzles[puzzle]->groups[i];
 
@@ -94,7 +94,7 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
 
 bool HasPuzzleBeenSolved(int chapter, int puzzle)
 {
-    return Game::GetInstance().saveData.IsPuzzleSolved(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
+    return Game::saveData.IsPuzzleSolved(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
 }
 
 bool CanBePlayedWithCurrentCubeSet(int chapter)
@@ -105,21 +105,21 @@ bool CanBePlayedWithCurrentCubeSet(int chapter)
 
 void SaveChapterAsSolved(int chapter)
 {
-    Game::GetInstance().saveData.AddSolvedChapter(chapter);//TheData::everything.chapters[chapter]->guid);
-      Game::GetInstance().saveData.Save();
+    Game::saveData.AddSolvedChapter(chapter);//TheData::everything.chapters[chapter]->guid);
+      Game::saveData.Save();
 }
 
 void SavePuzzleAsSolved(int chapter, int puzzle)
 {
-    Game::GetInstance().saveData.AddSolvedPuzzle(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
-      Game::GetInstance().saveData.Save();
+    Game::saveData.AddSolvedPuzzle(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
+      Game::saveData.Save();
 }
 
 int FirstPuzzleForCurrentCubeSetInChapter(int chapter)
 {
     for(int i = 0; i < TheData::everything.chapters[chapter]->nPuzzles; i++)
     {
-        if(TheData::everything.chapters[chapter]->puzzles[i]->nTokens <= Game::NUMBER_OF_CUBES)
+        if(TheData::everything.chapters[chapter]->puzzles[i]->nTokens <= NUM_CUBES)
             return i;
     }
     return -1;

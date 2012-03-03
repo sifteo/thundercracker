@@ -18,8 +18,8 @@ public:
     }
 
     void Update() {
-        for(int i=0; i<Game::NUMBER_OF_CUBES; ++i) {
-            if (Game::GetCube(i)->touching()) {
+        for(int i=0; i<NUM_CUBES; ++i) {
+            if (Game::cubes[0].touching()) {
                 mSeconds += Game::dt;
                 return;
             }

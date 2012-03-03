@@ -10,7 +10,7 @@ ConfirmationChoiceView::EventHandler::EventHandler(ConfirmationChoiceView *_owne
 
 void ConfirmationChoiceView::EventHandler::OnCubeTouch(TotalsCube *c, bool pressed)
 {
-    owner->OnButton(c, pressed);
+    OnButton(c, pressed);
 }
 
 
@@ -62,12 +62,12 @@ ConfirmationMenu::ConfirmationMenu (const char *msg)
 {
     static char buffers[2][sizeof(ConfirmationChoiceView)];
     mYes = new(buffers[0]) ConfirmationChoiceView(Game::GetCube(0), &Icon_Yes);
-    mNo = new(buffers[1]) ConfirmationChoiceView(Game::GetCube(1), &Icon_No);
+    mNo = new(buffers[1]) ConfirmationChoiceView(Game::cubes[1], &Icon_No);
     mResult = false;
     mManagingLabel = false;
 
     static char ivBuffer[sizeof(InterstitialView)];
-    mLabel = new(ivBuffer) InterstitialView(Game::GetCube(2));
+    mLabel = new(ivBuffer) InterstitialView(Game::cubes[2]);
     mManagingLabel= true;
 
     mLabel->image = NULL;
@@ -92,7 +92,7 @@ void ConfirmationMenu::Tick()
 float ConfirmationMenu::Coroutine()
 {
 
-    CORO_BEGIN;
+    //CORO_BEGIN;
 
     AudioPlayer::PlayShutterOpen();
     mLabel->TransitionSync(kTransitionTime, true);
@@ -104,7 +104,7 @@ float ConfirmationMenu::Coroutine()
         //CORO_YIELD(0);
         mYes->Paint();
         System::paintSync();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     mYes->SetTransitionAmount(1);
     mYes->Paint();
@@ -115,7 +115,7 @@ float ConfirmationMenu::Coroutine()
         //CORO_YIELD(0);
         mNo->Paint();
         System::paintSync();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     mNo->SetTransitionAmount(1);
     mNo->Paint();   //need to render one last frame before we go synchronous
@@ -124,7 +124,7 @@ float ConfirmationMenu::Coroutine()
     while(!(mYes->Triggered() || mNo->Triggered())) {
         //CORO_YIELD(0);
         System::paint();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     mResult = mYes->Triggered();
 
@@ -137,7 +137,7 @@ float ConfirmationMenu::Coroutine()
         //CORO_YIELD(0);
         first->Paint();
         System::paintSync();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     first->SetTransitionAmount(0);
     first->Paint();
@@ -149,7 +149,7 @@ float ConfirmationMenu::Coroutine()
         //CORO_YIELD(0);
         second->Paint();
         System::paintSync();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     second->SetTransitionAmount(0);
     second->Paint();
@@ -159,7 +159,7 @@ float ConfirmationMenu::Coroutine()
     mLabel->TransitionSync(kTransitionTime, false);
 
 
-    CORO_END;
+    //CORO_END;
 
     done = true;
     return -1;

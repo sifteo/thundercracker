@@ -4,41 +4,30 @@
 #include "coroutine.h"
 #include "assets.gen.h"
 #include "AudioPlayer.h"
+#include "Game.h"
 
 namespace TotalsGame 
 {
 
-	class StingController : public IStateController 
+	namespace StingController
 	{
-	private:
+
 		class EventHandler: public TotalsCube::EventHandler
 		{			
 		public:
-            StingController *owner;
 			virtual void OnCubeTouch(TotalsCube *cube, bool touching);
 			virtual void OnCubeShake(TotalsCube *cube);
 		};
 
-		Game *mGame;
-
-		CORO_PARAMS
 		float time;
 		int i;
 
-        EventHandler eventHandlers[Game::NUMBER_OF_CUBES];
+        EventHandler eventHandlers[NUM_CUBES];
 
-        float Coroutine();
-
-	public:
-		StingController(Game *game);
+        Game::GameState Coroutine();
 
 		void Skip();
 
-		//IStateController
-		virtual void OnSetup ();
-        virtual void OnTick ();
-		virtual void OnPaint (bool canvasDirty);
-		virtual void OnDispose ();
 
 	};
 

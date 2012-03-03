@@ -13,7 +13,7 @@ namespace TotalsGame {
 class TotalsCube;
 class ConfirmationMenu;
 
-  class MenuController : public IStateController
+  namespace MenuController
   {
 
      static const int MAX_CHAPTERS=7;
@@ -24,7 +24,6 @@ class ConfirmationMenu;
       void Paint(TotalsCube *c);
     };
 
-public:
     class TransitionView : public View
     {
         static const int kPad = 1;
@@ -53,21 +52,12 @@ public:
       void operator delete(void *ptr) {}
     };
 
-private:
-
-    CORO_PARAMS;
     float rememberedT;
 
      TransitionView *tv;
      TiltFlowDetailView *labelView;
      TiltFlowMenu *menu;
      ConfirmationMenu *confirm;
-
-    Game *mGame;
-  public:
-    Game *GetGame();
-
-    MenuController(Game *game);
 
     void OnSetup();
 
@@ -78,15 +68,12 @@ private:
       }
     } */
 
-    float Coroutine();
-
-
-    void OnTick();
+      Game::GameState Coroutine();
 
     void OnPaint(bool canvasDirty);
 
     void OnDispose();
-  };
+  }
 
 
   //---------------------------------------------------------------------------

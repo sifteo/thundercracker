@@ -10,7 +10,6 @@
 namespace TotalsGame {
 
 class InterstitialController : public IStateController {
-    Game *mGame;
     bool mDone;
     InterstitialView *iv;
 
@@ -18,11 +17,11 @@ class InterstitialController : public IStateController {
     float remembered_t;
 
 public:
-    InterstitialController (Game *game);
+    InterstitialController ();
 
     void OnSetup();
 
-    float Coroutine();
+    static Game::GameState Coroutine();
 
     void OnTick ();
     void OnPaint (bool canvasDirty);

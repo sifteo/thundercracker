@@ -27,7 +27,7 @@ void InterstitialView::TransitionSync(float duration, bool opening)
         SetTransitionAmount((opening? t : 1-t)/duration);
         Paint();
         System::paintSync();
-        Game::GetInstance().UpdateDt();
+        Game::UpdateDt();
     }
     SetTransitionAmount(opening? 1 : 0);
     Paint();

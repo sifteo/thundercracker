@@ -13,12 +13,9 @@ namespace TotalsGame {
 
     class Puzzle;
 
-	class Game
+    
+	namespace Game
 	{
-	private:
-		Game() {};	//singleton
-
-	public:
 
         class NeighborEventHandler
         {
@@ -26,51 +23,58 @@ namespace TotalsGame {
             virtual void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
             virtual void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
         };
-        NeighborEventHandler *neighborEventHandler;
-
-
-        static const int NUMBER_OF_CUBES = NUM_CUBES;
         
-		static Game &GetInstance();
-		StateMachine sceneMgr;
+        extern NeighborEventHandler *neighborEventHandler;
 
-		static const int FrameRate = 15;
 
-		TotalsCube *cubes;
-		static TotalsCube *GetCube(int i) {return &Game::GetInstance().cubes[i];}
-		static void ClearCubeViews();
-		static void ClearCubeEventHandlers();
-		static void DrawVaultDoorsClosed();
-		static void PaintCubeViews();
-        static void UpdateCubeViews();
+
+        enum GameState
+        {
+            GameState_Sting,
+            GameState_Init,
+            GameState_Menu,
+            GameState_Tutorial,
+            GameState_Puzzle,
+            GameState_Advance,
+            GameState_Interstitial,
+            GameState_Victory,
+            GameState_IsOver
+        };
+
+		extern TotalsCube *cubes;
+
+		void ClearCubeViews();
+		void ClearCubeEventHandlers();
+		void DrawVaultDoorsClosed();
+		void PaintCubeViews();
+        void UpdateCubeViews();
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;
 
-		static Random rand;
+		extern Random rand;
 
-		Difficulty difficulty;
-		NumericMode mode;
-		Random seed;
-		SaveData saveData;
+		extern Difficulty difficulty;
+		extern NumericMode mode;
+
+		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
-		bool mDirty;
-		float mTime;
-		static float dt;
-		bool IsPaused;
 
-		void Setup(TotalsCube *cubes, int nCubes);
+		extern float mTime;
+		extern float dt;
+
+		void Run(TotalsCube *cubes, int nCubes);
 
         void UpdateDt();
 		void Tick();
 
         bool IsPlayingRandom();
 
-		static const char *Initialize();
+		GameState Initialize();
 
-        static const char *Advance();
+        GameState Advance();
 
-		static const char *IsGameOver();
+		GameState IsGameOver();
 
 		void OnPause();
 
@@ -79,14 +83,14 @@ namespace TotalsGame {
 
 		void OnStopped();
 
-	private:
 
-        static void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-        static void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 
-        static void OnCubeTouch(void*, _SYSCubeID cid);
-        static void OnCubeShake(void*, _SYSCubeID cid);
-	};
+        void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+        void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+
+        void OnCubeTouch(void*, _SYSCubeID cid);
+        void OnCubeShake(void*, _SYSCubeID cid);
+	}
 
 }
 

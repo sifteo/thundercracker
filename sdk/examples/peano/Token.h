@@ -26,7 +26,7 @@ namespace TotalsGame {
 
 	class Token : public IExpression {
 
-        DECLARE_POOL(Token, Game::NUMBER_OF_CUBES);
+        DECLARE_POOL(Token, NUM_CUBES);
 
 	public:
 

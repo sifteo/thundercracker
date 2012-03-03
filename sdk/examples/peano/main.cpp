@@ -11,10 +11,10 @@ using namespace Sifteo;
 void *operator new(size_t) throw();
 void operator delete(void*) throw();
 
-static TotalsGame::TotalsCube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
+static TotalsGame::TotalsCube cubes[NUM_CUBES];
 
 void siftmain() {
-  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+  for (int i = 0; i < NUM_CUBES; i++) {
     cubes[i].enable(i);
     cubes[i].loadAssets(GameAssets);
     VidMode_BG0_ROM rom(cubes[i].vbuf);
@@ -24,7 +24,7 @@ void siftmain() {
 #if LOAD_ASSETS
   for (;;) {
     bool done = true;
-    for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+    for (int i = 0; i < NUM_CUBES; i++) {
       VidMode_BG0_ROM rom(cubes[i].vbuf);
       rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
       done &= cubes[i].assetDone(GameAssets);
@@ -32,7 +32,7 @@ void siftmain() {
     System::paint();
     if (done) break;
   }
-  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+  for (int i = 0; i < NUM_CUBES; i++) {
     VidMode_BG0 mode(cubes[i].vbuf);
     mode.init();
     mode.BG0_drawAsset(Vec2(0,0), Background);
@@ -43,14 +43,8 @@ void siftmain() {
   
   TotalsGame::AudioPlayer::Init();
 
-  TotalsGame::Game &theGame = TotalsGame::Game::GetInstance();
-  theGame.Setup(cubes, TotalsGame::Game::NUMBER_OF_CUBES);
-
-  for(;;) 
-  {
-	theGame.Tick();
-    System::paint();
-  }
+    
+    TotalsGame::Game::Run(cubes, NUM_CUBES);
 }
 
 /////////////////////////////////old code starts here

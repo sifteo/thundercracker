@@ -95,7 +95,7 @@ namespace TotalsGame {
 
 	Difficulty Puzzle::GetDifficulty()
 	{
-		return Game::GetInstance().difficulty;
+		return Game::difficulty;
 	}
 
 
@@ -108,8 +108,8 @@ namespace TotalsGame {
 	void Puzzle::SaveAsSolved()     
 	{
 #if !DISABLE_CHAPTERS
-        Game::GetInstance().saveData.AddSolvedPuzzle(chapterIndex, puzzleIndex);
-        Game::GetInstance().saveData.Save();
+        Game::saveData.AddSolvedPuzzle(chapterIndex, puzzleIndex);
+        Game::saveData.Save();
 #endif //DISABLE_CHAPTERS
     }
 
@@ -163,7 +163,7 @@ namespace TotalsGame {
 #if !DISABLE_CHAPTERS
       for(int i=puzzleIndex+1; i<Database::NumPuzzlesInChapter(chapterIndex); ++i)
       {
-        if (Database::NumTokensInPuzzle(chapterIndex, i) <= Game::NUMBER_OF_CUBES)
+        if (Database::NumTokensInPuzzle(chapterIndex, i) <= NUM_CUBES)
         {
           result++;
         }

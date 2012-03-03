@@ -151,57 +151,6 @@ namespace TotalsGame
             e = e->next;
         }
     }
-
-    float TotalsCube::OpenShuttersAsync(const AssetImage *image)
-	{						
-		CORO_BEGIN
-
-		AudioPlayer::PlayShutterOpen();
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
-		{
-			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-
-		DrawVaultDoorsOpenStep1(32, image);			
-		CORO_YIELD(0);
-
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt)
-		{
-			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-		CORO_END
-		CORO_RESET;
-
-		return -1;
-	}
-
-    float TotalsCube::CloseShuttersAsync(const AssetImage *image)
-	{
-		CORO_BEGIN
-
-		AudioPlayer::PlayShutterClose();
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
-		{
-			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-
-		DrawVaultDoorsOpenStep2(0, image);
-		CORO_YIELD(0);
-
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
-		{
-			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
-			CORO_YIELD(0);
-		}			
-
-		CORO_END
-		CORO_RESET;
-
-		return -1;
-	}
 	
     void TotalsCube::Image(const AssetImage *image, const Vec2 &pos, int frame)
 	{
@@ -360,21 +309,49 @@ namespace TotalsGame
 	}
 
     void TotalsCube::OpenShuttersSync(const AssetImage *image)
-    {
-        while(OpenShuttersAsync(image) >= 0)
-        {
+    {	
+		AudioPlayer::PlayShutterOpen();
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+		{
+			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
             System::paintSync();
-            Game::GetInstance().UpdateDt();
-        }
+            Game::UpdateDt();
+		}
+        
+		DrawVaultDoorsOpenStep1(32, image);			
+        System::paintSync();
+        Game::UpdateDt();
+
+        
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt)
+		{
+			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
+            System::paintSync();
+            Game::UpdateDt();
+		}
     }
 
     void TotalsCube::CloseShuttersSync(const AssetImage *image)
     {
-        while(CloseShuttersAsync(image) >= 0)
-        {
-            System::paintSync();
-            Game::GetInstance().UpdateDt();
-        }
+        AudioPlayer::PlayShutterClose();
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+		{
+			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
+			System::paintSync();
+            Game::UpdateDt();
+		}
+        
+		DrawVaultDoorsOpenStep2(0, image);
+		System::paintSync();
+        Game::UpdateDt();
+        
+		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+		{
+			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
+			System::paintSync();
+            Game::UpdateDt();
+		}			
+
     }
 
 

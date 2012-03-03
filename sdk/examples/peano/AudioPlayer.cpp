@@ -108,13 +108,13 @@ namespace TotalsGame
 			&sfx_PeanosVaultSneakers
 		};
 
-		if (Game::GetInstance().currentPuzzle == NULL) 
+		if (Game::currentPuzzle == NULL) 
 		{
 			PlayMusic(*sInGameMusic[Game::rand.randrange(musicCount)]);
 		} 
 		else
         {
-            int i = Game::GetInstance().currentPuzzle->chapterIndex;
+            int i = Game::currentPuzzle->chapterIndex;
 			PlayMusic(*sInGameMusic[i % musicCount]);
 		}
 #endif

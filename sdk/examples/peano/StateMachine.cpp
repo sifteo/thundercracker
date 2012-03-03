@@ -102,20 +102,14 @@ int strcmp(const char *a, const char *b)
 
 	void StateMachine::SetState(const char *name)
 	{
-		if(currentState && currentState->isController)
-		{
-			currentState->controller->OnDispose();
-		}
+	
 
 		for(int i = 0; i < numStateNodes; i++)
 		{
 			if(!strcmp(stateNodes[i].name, name))
 			{
 				currentState = stateNodes + i;
-				if(currentState->isController)
-				{
-					currentState->controller->OnSetup();
-				}
+				
 				return;
 			}
 		}

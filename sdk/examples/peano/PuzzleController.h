@@ -4,16 +4,15 @@
 #include "PuzzleHelper.h"
 #include "AudioPlayer.h"
 #include "TokenView.h"
+#include "Game.h"
 
 namespace TotalsGame {
 
 class PauseHelper;
 class ConfirmationMenu;
 
-class PuzzleController: public IStateController
+namespace PuzzleController
 {       
-private:
-    CORO_PARAMS;
     int static_i;
 
     PauseHelper *pauseHelper;
@@ -25,24 +24,19 @@ private:
         void OnCubeTouch(TotalsCube *cube, bool touching) {};
         //TODO connect, disconnect
     };
-    EventHandler eventHandlers[Game::NUMBER_OF_CUBES];
+    EventHandler eventHandlers[NUM_CUBES];
 
     class NeighborEventHandler: public Game::NeighborEventHandler
     {
-        PuzzleController *owner;
         void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
         void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-    public:
-        NeighborEventHandler(PuzzleController *p) {owner = p;}
     };
     NeighborEventHandler neighborEventHandler;
 
-public:
     //-------------------------------------------------------------------------
     // PARAMETERS
     //-------------------------------------------------------------------------
 
-    Game *game;
     Puzzle *puzzle;
     bool mTransitioningOut;
     bool mPaused;
@@ -52,23 +46,21 @@ public:
     // SETUP
     //-------------------------------------------------------------------------
 
-    PuzzleController(Game *_game);
+    void OnSetup ();
 
-    virtual void OnSetup ();
-
-    float TheBigCoroutine();
+    Game::GameState Coroutine();
 
     //-------------------------------------------------------------------------
     // CLEANUP
     //-------------------------------------------------------------------------
 
-    virtual void OnTick ();
+    void OnTick ();
 
-    virtual void OnPaint (bool canvasDirty);
+    void OnPaint (bool canvasDirty);
 
     void Transition(const char *id);
 
-    virtual void OnDispose ();
-};
+    void OnDispose ();
+}
 }
 

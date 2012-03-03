@@ -27,7 +27,7 @@ namespace TotalsGame {
 
         const float kTransitionTime = 0.5f;
         static char ivBuffer[sizeof(InterstitialView)];
-        static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
+        static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
 
         CORO_BEGIN;
 
@@ -47,9 +47,9 @@ namespace TotalsGame {
             iv->image = hints[mGame->currentPuzzle->chapterIndex];
         }
 #endif //!DISABLE_CHAPTERS
-        for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)
+        for(int i = 1; i < NUM_CUBES; i++)
         {
-            new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
+            new(blankViewBuffer[i]) BlankView(Game::cubes[0], NULL);
         }
 
         CORO_YIELD(0.333f);
@@ -66,14 +66,9 @@ namespace TotalsGame {
     }
 
     void InterstitialController::OnTick () {        
-        if (mDone) { return; }
+
         UPDATE_CORO(Coroutine);
-        if(mTimer == -1) {  //result of update coro stored in 'secret' variable
-            mDone = true;
             mGame->sceneMgr.QueueTransition("Next");
-        } else {
-            Game::UpdateCubeViews();
-        }
     }
 
     void InterstitialController::OnPaint (bool canvasDirty) {
