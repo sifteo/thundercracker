@@ -35,7 +35,7 @@ namespace TotalsGame
       items = _items;
       numItems = _numItems;
       static char tiltFlowViewBuffer[sizeof(TiltFlowView)];
-      view = new(tiltFlowViewBuffer) TiltFlowView(Game::GetCube(0), this);
+      view = new(tiltFlowViewBuffer) TiltFlowView(&Game::cubes[0], this);
     details = _details;
     toggledItem = NULL;
     }

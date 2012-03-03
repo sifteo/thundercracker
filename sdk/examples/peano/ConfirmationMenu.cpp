@@ -10,7 +10,7 @@ ConfirmationChoiceView::EventHandler::EventHandler(ConfirmationChoiceView *_owne
 
 void ConfirmationChoiceView::EventHandler::OnCubeTouch(TotalsCube *c, bool pressed)
 {
-    OnButton(c, pressed);
+    owner->OnButton(c, pressed);
 }
 
 
@@ -61,8 +61,8 @@ void ConfirmationChoiceView::Paint ()
 ConfirmationMenu::ConfirmationMenu (const char *msg)
 {
     static char buffers[2][sizeof(ConfirmationChoiceView)];
-    mYes = new(buffers[0]) ConfirmationChoiceView(Game::GetCube(0), &Icon_Yes);
-    mNo = new(buffers[1]) ConfirmationChoiceView(Game::cubes[1], &Icon_No);
+    mYes = new(buffers[0]) ConfirmationChoiceView(&Game::cubes[0], &Icon_Yes);
+    mNo = new(buffers[1]) ConfirmationChoiceView(&Game::cubes[1], &Icon_No);
     mResult = false;
     mManagingLabel = false;
 

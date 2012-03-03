@@ -90,7 +90,7 @@ namespace TotalsGame {
         }
         
         
-        void MenuController::OnSetup()
+        void OnSetup()
         {
             CORO_RESET;
             PLAY_MUSIC(sfx_PeanosVaultMenu);
@@ -115,15 +115,15 @@ namespace TotalsGame {
             
             // transition in
             static char tvBuffer[sizeof(TransitionView)];
-            tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+            tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
             
             static char labelBuffer[sizeof(TiltFlowDetailView)];
-            labelView = new(labelBuffer) TiltFlowDetailView(Game::cubes[1]);
+            labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
             
             for(int i=2; i<NUM_CUBES; ++i)
             {
                 static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
-                new(blankViewBuffer[i]) BlankView(Game::cubes[0], NULL);
+                new(blankViewBuffer[i]) BlankView(&Game::cubes[0], NULL);
             }
             
         WelcomeBack:
@@ -134,7 +134,7 @@ namespace TotalsGame {
             CORO_YIELD(0.25f);
             
             AudioPlayer::PlayShutterOpen();
-            for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+            for(rememberedT=0; rememberedT<kDuration; rememberedT+=Game::dt) {
                 tv->SetTransitionAmount(rememberedT/kDuration);
                 CORO_YIELD(0);
             }
@@ -164,7 +164,7 @@ numInitialItems++;
             static TiltFlowItem initialItems[5];
             numInitialItems = 0;
             
-            if (mGame->currentPuzzle != NULL /* TODO || !mGame->saveData.AllChaptersSolved() */)
+            if (Game::currentPuzzle != NULL /* TODO || !mGame->saveData.AllChaptersSolved() */)
             {
                 ADD_ITEM(Icon_Continue, Continue,0) //"continue", "Continue from your auto-save data.")
             }
@@ -195,9 +195,9 @@ numInitialItems++;
                 AudioPlayer::PlayShutterClose();
                 /* putting the tilt menu on cube 0 secretly deletes the transition view. remake.
                  */
-                tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+                tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
                 //tv->SetCube(menu->GetView()->GetCube());
-                for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+                for(rememberedT=0; rememberedT<kDuration; rememberedT+=Game::dt) {
                     tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
                     CORO_YIELD(0);
                 }
@@ -208,24 +208,22 @@ numInitialItems++;
                 {
                     case Continue:
                     {
-                        if (mGame->currentPuzzle == NULL) {
-                            mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
+                        if (Game::currentPuzzle == NULL) {
+                            Game::currentPuzzle = Game::saveData.FindNextPuzzle();
                         }
-                        mGame->sceneMgr.QueueTransition("Play");
-                        return 0;
+                        
+                        return Game::GameState_Interstitial;
                         break;
                     }
                     case RandomPuzzle:
                     {
-                        mGame->currentPuzzle = NULL;
-                        mGame->sceneMgr.QueueTransition("Play");
-                        return 0;
+                        Game::currentPuzzle = NULL;
+                        return Game::GameState_Interstitial;
                         break;
                     }
                     case Tutorial:
                     {
-                        mGame->sceneMgr.QueueTransition("Tutorial");
-                        return 0;
+                        return Game::GameState_Tutorial;
                         break;
                     }
                     case Level:
@@ -247,8 +245,8 @@ numInitialItems++;
             
         Setup:
             
-            tv = new(tvBuffer) TransitionView(Game::GetCube(0));
-            labelView = new(labelBuffer) TiltFlowDetailView(Game::cubes[1]);
+            tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
+            labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
             
             CORO_YIELD(0.25f);
             labelView->message = "Game Setup";
@@ -257,7 +255,7 @@ numInitialItems++;
             CORO_YIELD(0.25f);
             
             AudioPlayer::PlayShutterOpen();
-            for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+            for(rememberedT=0; rememberedT<kDuration; rememberedT+=Game::dt) {
                 tv->SetTransitionAmount(rememberedT/kDuration);
                 CORO_YIELD(0);
             }
@@ -288,7 +286,7 @@ numInitialItems++;
                 };
                 
 #define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
-                SET_PARAMS(difficultyItems, Toggle_Difficulty, (int)mGame->difficulty, "Toggle multiplication and division.");
+                SET_PARAMS(difficultyItems, Toggle_Difficulty, (int)Game::difficulty, "Toggle multiplication and division.");
                 SET_PARAMS(musicItems, Toggle_Music, AudioPlayer::MusicMuted(), "Toggle background music.");
                 SET_PARAMS(sfxItems, Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
                 SET_PARAMS(clearDataItem, Clear_Data, 0, "Clear your auto-save data.");
@@ -308,9 +306,9 @@ numInitialItems++;
                             case 0:
                                 switch(menu->GetToggledItem()->GetOpt())
                             {
-                                case 0: mGame->difficulty = DifficultyEasy; break;
-                                case 1: mGame->difficulty = DifficultyMedium; break;
-                                case 2: mGame->difficulty = DifficultyHard; break;
+                                case 0: Game::difficulty = DifficultyEasy; break;
+                                case 1: Game::difficulty = DifficultyMedium; break;
+                                case 2: Game::difficulty = DifficultyHard; break;
                             }
                                 break;
                             case 1:
@@ -338,9 +336,9 @@ numInitialItems++;
             labelView->TransitionSync(kDuration, false);
             CORO_YIELD(0);
             // transition out
-            tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+            tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
             AudioPlayer::PlayShutterClose();
-            for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+            for(rememberedT=0; rememberedT<kDuration; rememberedT+=Game::dt) {
                 tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
                 CORO_YIELD(0);
             }
@@ -364,11 +362,11 @@ numInitialItems++;
                     CORO_YIELD(0);
                 }
                 if (confirm->GetResult()) {
-                    mGame->saveData.Reset();
+                    Game::saveData.Reset();
                 }
                 CORO_YIELD(0);
-                tv->SetCube(Game::GetCube(0));
-                labelView->SetCube(Game::cubes[1]);
+                tv->SetCube(&Game::cubes[0]);
+                labelView->SetCube(&Game::cubes[1]);
                 goto Setup;
             }
             
@@ -466,21 +464,16 @@ numInitialItems++;
                 }
             }
             
-            mGame->sceneMgr.QueueTransition("Play");
+
 #endif //!DISABLE_CHAPTERS
             
             CORO_END;
             
-            return -1;
+            return Game::GameState_Interstitial;
         }
         
-        void MenuController::OnTick()
-        {
-            UPDATE_CORO(Coroutine);
-            Game::UpdateCubeViews();
-        }
         
-        void MenuController::OnPaint(bool canvasDirty)
+        void OnPaint(bool canvasDirty)
         {
             if (canvasDirty)
             {
@@ -488,7 +481,7 @@ numInitialItems++;
             }
         }
         
-        void MenuController::OnDispose()
+        void OnDispose()
         {
             Game::ClearCubeEventHandlers();
             Game::ClearCubeViews();

@@ -14,7 +14,7 @@ namespace TotalsGame {
           TiltFlowView *owner;
       public:
           EventHandler(TiltFlowView* v) {owner = v;}
-          void OnCubeTouch(TotalsCube *cube, bool touching) {OnButton(cube, touching);}
+          void OnCubeTouch(TotalsCube *cube, bool touching) {owner->OnButton(cube, touching);}
       };
       EventHandler eventHandler;
 
