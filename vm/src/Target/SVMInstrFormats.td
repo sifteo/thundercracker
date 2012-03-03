@@ -144,8 +144,8 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
     bits<3> Rn;
     let Inst{12-10} = 0;
     let Inst{9-6} = opB;
-    let Inst{5-3} = Rs;
-    let Inst{2-0} = Rn;
+    let Inst{5-3} = Rn;
+    let Inst{2-0} = Rs;
 
     let isReMaterializable = 1;
     let Defs = [CPSR];
