@@ -203,6 +203,10 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           #if GFX_ARTIFACT_WORKAROUNDS
             vslot->GetCube()->vbuf.touch();
             Paint(true);
+            vslot->GetCube()->vbuf.touch();
+            Paint(true);
+            vslot->GetCube()->vbuf.touch();
+            Paint(true);
           #endif
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
@@ -519,9 +523,11 @@ static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* o
 }
 
 void Game::CheckMapNeighbors() {
+  ViewSlot *root = mPlayer.View();
+  if (!root->IsShowingRoom()) { return; }
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  bool chchchchanges = VisitMapView(visited, mPlayer.View(), mPlayer.Location());
+  bool chchchchanges = VisitMapView(visited, root, root->GetRoomView()->Location());
   
   if (chchchchanges) {
     PlaySfx(sfx_neighbor);
