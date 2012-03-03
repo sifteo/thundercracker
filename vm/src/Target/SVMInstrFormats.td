@@ -270,7 +270,7 @@ class T32_DIV<bits<1> isUnsigned, dag outs, dag ins, string asmstr, list<dag> pa
     let op2{1} = isUnsigned;
     let op2{0} = 0b1;
 
-    let firstWord{3} = 0b1;
+    let firstWord{3} = 0b0;
     let firstWord{2-0} = Rn;
     let secondWord{15-11} = 0b11110;
     let secondWord{10-8} = Rd;
