@@ -249,20 +249,23 @@ void SvmRuntime::syscall(unsigned num)
         return;
     }
 
+    LOG(("SYSCALL: enter _SYS_%d(%x, %x, %x, %x, %x, %x, %x, %x)\n",
+        num,
+        (unsigned)SvmCpu::reg(0), (unsigned)SvmCpu::reg(1),
+        (unsigned)SvmCpu::reg(2), (unsigned)SvmCpu::reg(3),
+        (unsigned)SvmCpu::reg(4), (unsigned)SvmCpu::reg(5),
+        (unsigned)SvmCpu::reg(6), (unsigned)SvmCpu::reg(7)));
+
     uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
                          SvmCpu::reg(2), SvmCpu::reg(3),
                          SvmCpu::reg(4), SvmCpu::reg(5),
                          SvmCpu::reg(6), SvmCpu::reg(7));
 
     uint32_t result0 = result;
-    uint32_t result1 = result >> 32;                 
+    uint32_t result1 = result >> 32;
 
-    LOG(("SYSCALL: %x:%x = _SYS_%d(%x, %x, %x, %x, %x, %x, %x, %x)\n",
-        result1, result0, num,
-        (unsigned)SvmCpu::reg(0), (unsigned)SvmCpu::reg(1),
-        (unsigned)SvmCpu::reg(2), (unsigned)SvmCpu::reg(3),
-        (unsigned)SvmCpu::reg(4), (unsigned)SvmCpu::reg(5),
-        (unsigned)SvmCpu::reg(6), (unsigned)SvmCpu::reg(7)));
+    LOG(("SYSCALL: leave _SYS_%d() -> %x:%x\n",
+        num, result1, result0));
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
