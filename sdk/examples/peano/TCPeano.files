@@ -97,3 +97,5 @@ mungePuzzles.py
 VictoryView.h
 VictoryController.h
 config.h
+TutorialController.cpp
+VictoryController.cpp

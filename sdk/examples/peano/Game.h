@@ -41,7 +41,7 @@ namespace TotalsGame {
             GameState_IsOver
         };
 
-		extern TotalsCube *cubes;
+
 
 		void ClearCubeViews();
 		void ClearCubeEventHandlers();
@@ -49,8 +49,10 @@ namespace TotalsGame {
 		void PaintCubeViews();
         void UpdateCubeViews();
 
-		Puzzle *currentPuzzle;
-		Puzzle *previousPuzzle;
+        extern TotalsCube *cubes;
+
+        extern Puzzle *currentPuzzle;
+        extern Puzzle *previousPuzzle;
 
 		extern Random rand;
 

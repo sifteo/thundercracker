@@ -7,12 +7,18 @@
 #include "coroutine.h"
 #include "MenuController.h"
 
-namespace TotalsGame {
+namespace TotalsGame
+{
+
+namespace ConfirmationMenu
+{
+
+bool Coroutine(const char *msg);
 
 
 class ConfirmationChoiceView : public MenuController::TransitionView {
     const AssetImage *image;
-    bool mTriggered;  
+    bool mTriggered;
 
     class EventHandler: public TotalsCube::EventHandler
     {
@@ -41,37 +47,6 @@ public:
 
 };
 
-
-class ConfirmationMenu {
-    InterstitialView *mLabel;
-    ConfirmationChoiceView *mYes;
-    ConfirmationChoiceView *mNo;
-    static const float kTransitionTime = 0.333f;
-    bool mResult;
-    bool mManagingLabel;
-    bool done;
-
-    CORO_PARAMS;
-    float remembered_t;
-    ConfirmationChoiceView *first;
-    ConfirmationChoiceView *second;
-public:
-
-    ConfirmationMenu (const char *msg);
-
-    void Tick();
-
-    float Coroutine();
-    bool IsDone();
-
-    bool GetResult();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-};
-
-
-
+}
 }
 

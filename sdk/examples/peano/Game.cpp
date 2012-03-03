@@ -15,10 +15,20 @@ namespace TotalsGame
         NeighborEventHandler *neighborEventHandler;
         
         
-        
-        
-        float dt = 0;
+        TotalsCube *cubes;
+
+        Puzzle *currentPuzzle;
+        Puzzle *previousPuzzle;
+
         Random rand;
+
+        Difficulty difficulty;
+        NumericMode mode;
+
+        SaveData saveData;
+
+        float mTime;
+        float dt;
         
         
         void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
@@ -234,26 +244,26 @@ namespace TotalsGame
             currentPuzzle->SaveAsSolved();
             int chapter, puzzle;
             bool success;
-            success = currentPuzzle->GetNext(NUMBER_OF_CUBES, &chapter, &puzzle);
+            success = currentPuzzle->GetNext(NUM_CUBES, &chapter, &puzzle);
             if (success)
             {
                 saveData.AddSolvedPuzzle(currentPuzzle->chapterIndex, currentPuzzle->puzzleIndex);
                 delete Game::currentPuzzle;
                 Game::currentPuzzle = NULL;
-                return "GameComplete";
+                return GameState_Victory;
             } 
             else if (chapter == Game::currentPuzzle->chapterIndex)
             {
                 delete Game::currentPuzzle;
                 Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
-                return "NextPuzzle";
+                return GameState_Puzzle;
             }
             else 
             {
                 saveData.AddSolvedChapter(Game::currentPuzzle->chapterIndex);
                 delete Game::currentPuzzle;
                 Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
-                return "NextChapter";
+                return GameState_Victory;
             }
 #endif // !DISABLE_CHAPTERS
         }

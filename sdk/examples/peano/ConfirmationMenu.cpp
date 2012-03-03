@@ -2,6 +2,12 @@
 
 namespace TotalsGame {
 
+namespace ConfirmationMenu
+{
+
+ConfirmationChoiceView *first;
+ConfirmationChoiceView *second;
+
 
 ConfirmationChoiceView::EventHandler::EventHandler(ConfirmationChoiceView *_owner)
 {
@@ -58,125 +64,91 @@ void ConfirmationChoiceView::Paint ()
 
 
 
-ConfirmationMenu::ConfirmationMenu (const char *msg)
+bool Coroutine(const char *msg)
 {
+
+    InterstitialView *label;
+    ConfirmationChoiceView *yes;
+    ConfirmationChoiceView *no;
+    static const float kTransitionTime = 0.333f;
+    bool result;
+
+
     static char buffers[2][sizeof(ConfirmationChoiceView)];
-    mYes = new(buffers[0]) ConfirmationChoiceView(&Game::cubes[0], &Icon_Yes);
-    mNo = new(buffers[1]) ConfirmationChoiceView(&Game::cubes[1], &Icon_No);
-    mResult = false;
-    mManagingLabel = false;
+    yes = new(buffers[0]) ConfirmationChoiceView(&Game::cubes[0], &Icon_Yes);
+    no = new(buffers[1]) ConfirmationChoiceView(&Game::cubes[1], &Icon_No);
+    result = false;
 
     static char ivBuffer[sizeof(InterstitialView)];
-    mLabel = new(ivBuffer) InterstitialView(Game::cubes[2]);
-    mManagingLabel= true;
+    label = new(ivBuffer) InterstitialView(&Game::cubes[2]);
 
-    mLabel->image = NULL;
-    mLabel->message = msg;
+    label->image = NULL;
+    label->message = msg;
 
-    done = false;
-
-    CORO_RESET;
-}
-
-void ConfirmationMenu::Tick()
-{
-    Coroutine();
-    if(!done)
-    {
-        mYes->Update();
-        mNo->Update();
-        mLabel->Update();
-    }
-}
-
-float ConfirmationMenu::Coroutine()
-{
-
-    //CORO_BEGIN;
 
     AudioPlayer::PlayShutterOpen();
-    mLabel->TransitionSync(kTransitionTime, true);
-    mLabel->Paint();
-    //CORO_YIELD(0);
+    label->TransitionSync(kTransitionTime, true);
+    label->Paint();
+
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
-        mYes->SetTransitionAmount(remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
-        mYes->Paint();
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        yes->SetTransitionAmount(t/kTransitionTime);
+        yes->Paint();
         System::paintSync();
         Game::UpdateDt();
     }
-    mYes->SetTransitionAmount(1);
-    mYes->Paint();
-    //CORO_YIELD(0);
+    yes->SetTransitionAmount(1);
+    yes->Paint();
+
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
-        mNo->SetTransitionAmount(remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
-        mNo->Paint();
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        no->SetTransitionAmount(t/kTransitionTime);
+        no->Paint();
         System::paintSync();
         Game::UpdateDt();
     }
-    mNo->SetTransitionAmount(1);
-    mNo->Paint();   //need to render one last frame before we go synchronous
-    //System::paintSync();
-    //CORO_YIELD(0);
-    while(!(mYes->Triggered() || mNo->Triggered())) {
-        //CORO_YIELD(0);
+    no->SetTransitionAmount(1);
+    no->Paint();   //need to render one last frame before we go synchronous
+
+    while(!(yes->Triggered() || no->Triggered())) {
         System::paint();
         Game::UpdateDt();
     }
-    mResult = mYes->Triggered();
+    result = yes->Triggered();
 
-    first = mResult ? mNo : mYes;
-    second = mResult ? mYes : mNo;
+    first = result ? no : yes;
+    second = result ? yes : no;
 
     AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
-        first->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        first->SetTransitionAmount(1-t/kTransitionTime);
         first->Paint();
         System::paintSync();
         Game::UpdateDt();
     }
     first->SetTransitionAmount(0);
     first->Paint();
-    //CORO_YIELD(0);
 
     AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=Game::dt) {
-        second->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        //CORO_YIELD(0);
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        second->SetTransitionAmount(1-t/kTransitionTime);
         second->Paint();
         System::paintSync();
         Game::UpdateDt();
     }
     second->SetTransitionAmount(0);
     second->Paint();
-    //CORO_YIELD(0);
 
     AudioPlayer::PlayShutterClose();
-    mLabel->TransitionSync(kTransitionTime, false);
+    label->TransitionSync(kTransitionTime, false);
 
+    return result;
 
-    //CORO_END;
-
-    done = true;
-    return -1;
-}
-
-bool ConfirmationMenu::IsDone()
-{
-    return done;
-}
-
-bool ConfirmationMenu::GetResult()
-{
-    return mResult;
 }
 
 
 
+}
 
 }
 

@@ -12,9 +12,6 @@ namespace TotalsGame
 
 	class TotalsCube: public Sifteo::Cube
 	{
-		CORO_PARAMS;
-		float t;
-
 		View *view;
         const char *overlayText;
         int overlayYTop, overlayYSize;

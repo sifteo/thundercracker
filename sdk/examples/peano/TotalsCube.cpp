@@ -13,7 +13,6 @@ namespace TotalsGame
       backgroundLayer(this->vbuf),
         foregroundLayer(*this)
 	{
-		CORO_RESET;
 		view = NULL;
 		eventHandler = NULL;       
         //backgroundLayer.init();
@@ -311,7 +310,7 @@ namespace TotalsGame
     void TotalsCube::OpenShuttersSync(const AssetImage *image)
     {	
 		AudioPlayer::PlayShutterOpen();
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
 			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
             System::paintSync();
@@ -323,7 +322,7 @@ namespace TotalsGame
         Game::UpdateDt();
 
         
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt)
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
 			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
             System::paintSync();
@@ -334,7 +333,7 @@ namespace TotalsGame
     void TotalsCube::CloseShuttersSync(const AssetImage *image)
     {
         AudioPlayer::PlayShutterClose();
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
 			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
 			System::paintSync();
@@ -345,7 +344,7 @@ namespace TotalsGame
 		System::paintSync();
         Game::UpdateDt();
         
-		for(t=0.0f; t<kTransitionTime; t+=Game::dt) 
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
 			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
 			System::paintSync();
