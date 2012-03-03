@@ -32,6 +32,7 @@ public:
         F_STORE_ALIGNMENT,      // Runtime store alignment error
         F_CODE_FETCH,           // Runtime code fetch error
         F_CODE_ALIGNMENT,       // Runtime code alignment error
+        F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
     };
     
     static void run(uint16_t appId);

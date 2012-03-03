@@ -30,6 +30,15 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
         }
     }
 
+    /*
+     * XXX: MUST also ensure that the last valid instruction is a terminator.
+     *      (Branch, long branch, tail call, tail syscall) Otherwise, execution
+     *      can run past the end of valid instructions into invalid territory.
+     *      We can do this by allowing valid non-terminators to make forward
+     *      progress through the block, but only saving a copy of the
+     *      numValidBytes result when we hit a terminator instruction.
+     */
+
     LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
     return numValidBytes;
 }

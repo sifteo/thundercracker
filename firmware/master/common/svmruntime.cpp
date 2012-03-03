@@ -254,8 +254,18 @@ void SvmRuntime::syscall(unsigned num)
                          SvmCpu::reg(4), SvmCpu::reg(5),
                          SvmCpu::reg(6), SvmCpu::reg(7));
 
-    SvmCpu::setReg(0, (uint32_t) result);
-    SvmCpu::setReg(1, (uint32_t) (result >> 32));
+    uint32_t result0 = result;
+    uint32_t result1 = result >> 32;                 
+
+    LOG(("SYSCALL: %x:%x = _SYS_%d(%x, %x, %x, %x, %x, %x, %x, %x)\n",
+        result1, result0, num,
+        (unsigned)SvmCpu::reg(0), (unsigned)SvmCpu::reg(1),
+        (unsigned)SvmCpu::reg(2), (unsigned)SvmCpu::reg(3),
+        (unsigned)SvmCpu::reg(4), (unsigned)SvmCpu::reg(5),
+        (unsigned)SvmCpu::reg(6), (unsigned)SvmCpu::reg(7)));
+
+    SvmCpu::setReg(0, result0);
+    SvmCpu::setReg(1, result1);
 }
 
 void SvmRuntime::adjustSP(int words)
