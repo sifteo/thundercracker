@@ -837,8 +837,8 @@ static void execute16(uint16_t instr)
     }
 
     // should never get here since we should only be executing validated instructions
-    LOG(("*********************************** invalid 16bit instruction: 0x%x", instr));
-    ASSERT(0 && "unhandled instruction group!");
+    LOG(("SVMCPU: invalid 16bit instruction: 0x%x\n", instr));
+    SvmRuntime::fault(SvmRuntime::F_CPU_SIM);
 }
 
 static void execute32(uint32_t instr)
@@ -869,8 +869,8 @@ static void execute32(uint32_t instr)
     }
 
     // should never get here since we should only be executing validated instructions
-    LOG(("*********************************** invalid 32bit instruction: 0x%x", instr));
-    ASSERT(0 && "unhandled instruction group!");
+    LOG(("SVMCPU: invalid 32bit instruction: 0x%x\n", instr));
+    SvmRuntime::fault(SvmRuntime::F_CPU_SIM);
 }
 
 
