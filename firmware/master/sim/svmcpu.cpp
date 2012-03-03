@@ -590,6 +590,7 @@ void SvmCpu::emulateSTRSPImm(uint16_t instr)
     if (!SvmMemory::isAddrAligned(addr, 4))
         SvmRuntime::fault(SvmRuntime::F_STORE_ALIGNMENT);
 
+    SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
 }
 
@@ -650,6 +651,7 @@ void SvmCpu::emulateSTR(uint32_t instr)
     if (!SvmMemory::isAddrAligned(addr, 4))
         SvmRuntime::fault(SvmRuntime::F_STORE_ALIGNMENT);
 
+    SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
 }
 

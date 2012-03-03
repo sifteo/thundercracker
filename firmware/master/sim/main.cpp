@@ -16,20 +16,21 @@
 #include "flash.h"
 #include "flashlayer.h"
 #include "assetmanager.h"
-
-static void installAssetsToMaster();
-
-#define SVM_TEST
-
-#ifdef SVM_TEST
 #include "svmruntime.h"
 
-static void installElfFile()
+
+// XXX: Hack, for testing SVM only
+static bool installElfFile(const char *path)
 {
-    FILE *elfFile = fopen("../../vm/program.elf", "rb");
+    if (!path) {
+        LOG(("usage: master-sim program.elf\n"));
+        return false;
+    }
+
+    FILE *elfFile = fopen(path, "rb");
     if (elfFile == NULL) {
         LOG(("couldn't open elf file, bail.\n"));
-        return;
+        return false;
     }
 
     // write the file to external flash
@@ -46,8 +47,9 @@ static void installElfFile()
     }
     fclose(elfFile);
     Flash::flush();
+    
+    return true;
 }
-#endif // SVM_TEST
 
 int main(int argc, char **argv)
 {
@@ -57,9 +59,8 @@ int main(int argc, char **argv)
     FlashBlock::init();
     AssetManager::init();
 
-#ifdef SVM_TEST
-    installElfFile();
-#endif
+    if (!installElfFile(argv[1]))
+        return 1;
 
     AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);

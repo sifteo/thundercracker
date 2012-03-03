@@ -57,9 +57,8 @@ void SvmRuntime::fault(FaultCode code)
 {
     // TODO: implement
 
-    LOG(("*** VM FAULT code %d, at PC=%08x+%03x\n", code,
-        codeBlock.isHeld() ? codeBlock->getAddress() : -1,
-        (unsigned) SvmCpu::reg(SvmCpu::REG_PC)));
+    LOG(("*** VM FAULT code %d, at PC=%08x\n", code,
+        SvmMemory::reconstructCodeAddr(codeBlock, SvmCpu::reg(SvmCpu::REG_PC))));
     ASSERT(0);
 }
 

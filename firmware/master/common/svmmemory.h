@@ -163,6 +163,17 @@ public:
     }
     
     /**
+     * Reconstruct a code address, given a FlashBlock and low-level PC.
+     * This is currently just used for creating readable fault addresses.
+     */
+    static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc) {
+        if (ref.isHeld())
+            return ref->getAddress() + (pc & FlashBlock::BLOCK_MASK)
+                - flashSeg.getAddress() + VIRTUAL_FLASH_BASE;
+        return 0;
+    }
+    
+    /**
      * Quick predicates to check a physical address. Used only in simulation.
      */
 #ifdef SIFTEO_SIMULATOR
@@ -176,6 +187,31 @@ public:
     static bool isAddrAligned(uintptr_t pa, int alignment) {
         return 0 == (pa & (alignment - 1));
     }
+#endif
+
+    /**
+     * On the simulator, we may have a bit-ness mismatch between the
+     * possibly 64-bit host and the 32-bit VM. This becomes a problem
+     * with stack addresses in particular, due to how we mix and match
+     * physical and virtual addresses as inputs to the SVM validate()
+     * operation.
+     *
+     * This is largely solved by us using wider registers on 64-bit hosts,
+     * but we still need a solution for when these physical stack addresses
+     * are stored to memory. This function is used, on simulation only,
+     * to squash 64-bit physical addresses back to 32-bit virtual ones.
+     *
+     * This operation only needs to be performed on 32-bit stores. Not on
+     * loads, not on other kinds of stores.
+     */
+#ifdef SIFTEO_SIMULATOR
+    static void squashPhysicalAddr(Svm::reg_t &r) {
+        if (r != (uint32_t)r) {
+            uintptr_t offset = reinterpret_cast<uint8_t*>(r) - userRAM; 
+            if (offset < RAM_SIZE_IN_BYTES)
+                r = offset + VIRTUAL_RAM_BASE;
+        }
+    }   
 #endif
 
 private:
