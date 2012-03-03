@@ -299,6 +299,9 @@ int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
             break;
 
         uint32_t chunk = MIN(chunkA, chunkB);
+        vaA += chunk;
+        vaB += chunk;
+        count -= chunk;
 
         while (chunk) {
             int diff = *(paA++) - *(paB++);
@@ -306,10 +309,6 @@ int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
                 return diff;
             chunk--;
         }
-        
-        vaA += chunk;
-        vaB += chunk;
-        count -= chunk;
     }
 
     return 0;
@@ -470,6 +469,9 @@ int _SYS_strncmp(const char *a, const char *b, uint32_t count)
             break;
 
         uint32_t chunk = MIN(chunkA, chunkB);
+        vaA += chunk;
+        vaB += chunk;
+        count -= chunk;
 
         while (chunk) {
             uint8_t aV = *(paA++);
@@ -481,10 +483,6 @@ int _SYS_strncmp(const char *a, const char *b, uint32_t count)
                 return 0;
             chunk--;
         }
-        
-        vaA += chunk;
-        vaB += chunk;
-        count -= chunk;
     }
 
     return 0;
@@ -733,6 +731,9 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
         if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
             return;
 
+        srcVA += chunk;
+        bytes -= chunk;
+
         while (chunk) {
             VRAM::truncateWordAddr(addr);
             VRAM::poke(*vbuf, addr, *reinterpret_cast<uint16_t*>(srcPA));
@@ -740,9 +741,6 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
             addr++;
             src += sizeof(uint16_t);
         }
-
-        srcVA += chunk;
-        bytes -= chunk;
     }
 }
 
@@ -757,22 +755,26 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     SvmMemory::PhysAddr srcPA;
 
+    assert((bytes & 1) == 0);
     while (bytes) {
         uint32_t chunk = bytes;
         if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
             return;
 
-        while (chunk) {
-            uint16_t index = offset + *reinterpret_cast<uint16_t*>(srcPA);
-            VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, VRAM::index14(index));
-            chunk--;
-            addr++;
-            src += sizeof(uint16_t);
-        }
-
+        assert((chunk & 1) == 0);
         srcVA += chunk;
         bytes -= chunk;
+
+        while (chunk) {
+            uint16_t index = offset + *reinterpret_cast<uint16_t*>(srcPA);
+
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(*vbuf, addr, VRAM::index14(index));
+            addr++;
+
+            chunk -= sizeof(uint16_t);
+            srcPA += sizeof(uint16_t);
+        }
     }
 }
 
