@@ -77,10 +77,10 @@ struct _SYSAssetGroupCube {
 };
 
 struct _SYSAssetGroup {
-    const struct _SYSAssetGroupHeader *hdr;     /// OUT    Read-only data for this asset group
-    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
+    uint32_t pHdr;                  /// OUT    Read-only data for this asset group
+    uint32_t pCubes;                /// OUT    Array of per-cube state buffers
+    _SYSCubeIDVector reqCubes;      /// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;     /// IN     Which cubes have finished installing this group?
 };
 
 /*
@@ -312,11 +312,11 @@ enum _SYSAudioLoopType {
 };
 
 struct _SYSAudioModule {
-    uint8_t type;               /// _SYSAudioType code
-    uint8_t reserved0;          /// Reserved, must be zero
-    uint16_t reserved1;         /// Reserved, must be zero
-    uint32_t dataSize;          /// Size of compressed data, in bytes
-    const uint8_t *data;        /// Flash address for compressed data
+    uint8_t type;           /// _SYSAudioType code
+    uint8_t reserved0;      /// Reserved, must be zero
+    uint16_t reserved1;     /// Reserved, must be zero
+    uint32_t dataSize;      /// Size of compressed data, in bytes
+    uint32_t pData;         /// Flash address for compressed data
 };
 
 struct _SYSAudioBuffer {

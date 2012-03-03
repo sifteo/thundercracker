@@ -101,7 +101,7 @@ class CubeSlot {
          * NULL.
          */
         _SYSCubeID i = id();
-        _SYSAssetGroupCube *cubes = group->cubes;
+        _SYSAssetGroupCube *cubes = reinterpret_cast<_SYSAssetGroupCube*>(group->pCubes);
 
         if (SvmMemory::mapRAM(cubes, (sizeof cubes[0]) * (i + 1)))
             return &cubes[i];

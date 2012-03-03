@@ -128,8 +128,9 @@ class Cube {
      */
     
     int assetProgress(AssetGroup &group, int max=100) {
+        _SYSAssetGroupHeader *hdr = reinterpret_cast<_SYSAssetGroupHeader*>(group.sys.pHdr);
         ASSERT(id() < arraysize(group.cubes));
-        return group.cubes[id()].progress * max / group.sys.hdr->dataSize;
+        return group.cubes[id()].progress * max / hdr->dataSize;
     }
     
     bool assetDone(AssetGroup &group) {

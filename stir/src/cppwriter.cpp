@@ -127,8 +127,10 @@ void CPPSourceWriter::writeGroup(const Group &group)
 
     mStream <<
         "}};\n\n"
-        "Sifteo::AssetGroup " << group.getName() <<
-        " = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
+        "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
+        indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
+        indent << "/* pCubes    */ reinterpret_cast<uint32_t>(" << group.getName() << ".cubes),\n" <<
+        "}};\n\n";
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++)
@@ -159,7 +161,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* reserved0 */ " << 0 << ",\n" <<
         indent << "/* reserved1 */ " << 0 << ",\n" <<
         indent << "/* dataSize  */ " << data.size() << ",\n" <<
-        indent << "/* data      */ (const uint8_t *) " << sound.getName() << "_data\n" <<
+        indent << "/* pData     */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
         "}};\n\n";
 
     delete enc;

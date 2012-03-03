@@ -23,7 +23,7 @@ void AudioChannelSlot::init(_SYSAudioBuffer *b)
 
 void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode)
 {
-    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(mod->data);
+    SvmMemory::VirtAddr va = mod->pData;
     if (SvmMemory::initFlashStream(va, mod->dataSize, flStream)) {
 
         type = mod->type;

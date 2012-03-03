@@ -384,7 +384,8 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
         return false;
 
     // Read (cached) asset group header
-    const _SYSAssetGroupHeader *headerVA = group->hdr;
+    const _SYSAssetGroupHeader *headerVA =
+        reinterpret_cast<const _SYSAssetGroupHeader*>(group->pHdr);
     _SYSAssetGroupHeader header;
     if (!SvmMemory::copyROData(header, headerVA))
         return false;
