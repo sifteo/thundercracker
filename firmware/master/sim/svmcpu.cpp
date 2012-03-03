@@ -385,7 +385,7 @@ static void emulateORRReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    uint32_t result = regs[Rdn] | regs[Rm];
+    reg_t result = regs[Rdn] | regs[Rm];
     regs[Rdn] = result;
     setNZ(result);
 }
