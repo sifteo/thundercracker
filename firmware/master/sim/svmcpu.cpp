@@ -96,8 +96,8 @@ static inline void setOverflow(bool f) {
         regs[REG_CPSR] &= ~(1 << 28);
 }
 
-static inline void setNZ(reg_t result) {
-    setNeg((int32_t)result < 0);
+static inline void setNZ(int32_t result) {
+    setNeg(result < 0);
     setZero(result == 0);
 }
 
@@ -224,7 +224,7 @@ static void emulateSUBReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], -regs[Rm]);
+    regs[Rd] = opADD(regs[Rn], (uint32_t)-regs[Rm]);
 }
 
 static void emulateADD3Imm(uint16_t instr)
@@ -242,7 +242,7 @@ static void emulateSUB3Imm(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], -imm3);
+    regs[Rd] = opADD(regs[Rn], (uint32_t)-imm3);
 }
 
 static void emulateMovImm(uint16_t instr)
@@ -258,7 +258,7 @@ static void emulateCmpImm(uint16_t instr)
     unsigned Rn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    opADD(regs[Rn], -imm8);
+    reg_t result = opADD(regs[Rn], (uint32_t)-imm8);
 }
 
 static void emulateADD8Imm(uint16_t instr)
@@ -274,7 +274,7 @@ static void emulateSUB8Imm(uint16_t instr)
     unsigned Rdn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    regs[Rdn] = opADD(regs[Rdn], -imm8);
+    regs[Rdn] = opADD(regs[Rdn], (uint32_t)-imm8);
 }
 
 ///////////////////////////////////
@@ -337,7 +337,7 @@ static void emulateSBCReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = opADD(regs[Rdn], -regs[Rm] - (getCarry() ? 0 : 1));
+    regs[Rdn] = opADD(regs[Rdn], (uint32_t)(-regs[Rm] - (getCarry() ? 0 : 1)));
 }
 
 static void emulateRORReg(uint16_t instr)
@@ -708,11 +708,16 @@ static uint16_t fetch()
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #if 1
-    LOG(("[%08x: %x]", SvmRuntime::reconstructCodeAddr(), *pc));
+    LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(), *pc));
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
     }
-    LOG((" | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n", regs[8], regs[9], regs[REG_SP]));
+    LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n",
+        getNeg() ? 'N' : ' ',
+        getZero() ? 'Z' : ' ',
+        getCarry() ? 'C' : ' ',
+        getOverflow() ? 'V' : ' ',
+        regs[8], regs[9], regs[REG_SP]));
 #endif
 
     regs[REG_PC] += sizeof(uint16_t);
