@@ -41,12 +41,12 @@ const static char* puzzles[] =
 const static unsigned char puzzlesNumGoalAnagrams[] =
 {
     2,	// TEN, nonbonus anagrams: ['NET', 'TEN']
-    2,	// PAT, nonbonus anagrams: ['TAP', 'PAT']
-    2,	// ARM, nonbonus anagrams: ['RAM', 'ARM']
+    3,	// PAT, nonbonus anagrams: ['TAP', 'PAT', 'APT']
+    3,	// ARM, nonbonus anagrams: ['MAR', 'RAM', 'ARM']
     2,	// BAD, nonbonus anagrams: ['BAD', 'DAB']
     2,	// PAN, nonbonus anagrams: ['NAP', 'PAN']
     2,	// BEST, nonbonus anagrams: ['BETS', 'BEST']
-    2,	// PEST, nonbonus anagrams: ['PEST', 'PETS']
+    3,	// PEST, nonbonus anagrams: ['STEP', 'PEST', 'PETS']
     2,	// RUST, nonbonus anagrams: ['RUTS', 'RUST']
     2,	// QUIET, nonbonus anagrams: ['QUIET', 'QUITE']
     2,	// MIDDLE, nonbonus anagrams: ['MIDDLE', 'MILE']
@@ -71,18 +71,18 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     4,	// CENTS, nonbonus anagrams: ['CENTS', 'SCENT', 'SEC', 'CENT']
     6,	// DESIGN, nonbonus anagrams: ['DESIGN', 'SIGNED', 'SIGN', 'SINGED', 'SING', 'SIDE']
     5,	// WOMAN, nonbonus anagrams: ['WOMAN', 'OWN', 'WON', 'NOW', 'MAN']
-    0,	// MOSAIC, nonbonus anagrams: []
+    1,	// MOSAIC, nonbonus anagrams: ['MOSAIC']
 };
 
 const static unsigned char puzzlesNumBonusAnagrams[] =
 {
     0,	// TEN, bonus anagrams: []
-    1,	// PAT, bonus anagrams: ['APT']
-    1,	// ARM, bonus anagrams: ['MAR']
+    0,	// PAT, bonus anagrams: []
+    0,	// ARM, bonus anagrams: []
     0,	// BAD, bonus anagrams: []
     0,	// PAN, bonus anagrams: []
     0,	// BEST, bonus anagrams: []
-    1,	// PEST, bonus anagrams: ['STEP']
+    0,	// PEST, bonus anagrams: []
     0,	// RUST, bonus anagrams: []
     1,	// QUIET, bonus anagrams: ['ETUI']
     0,	// MIDDLE, bonus anagrams: []
@@ -107,7 +107,7 @@ const static unsigned char puzzlesNumBonusAnagrams[] =
     0,	// CENTS, bonus anagrams: []
     0,	// DESIGN, bonus anagrams: []
     1,	// WOMAN, bonus anagrams: ['NAM']
-    3,	// MOSAIC, bonus anagrams: ['ASCI', 'MOAS', 'MOSAIC']
+    2,	// MOSAIC, bonus anagrams: ['ASCI', 'MOAS']
 };
 
 const static bool puzzlesUseLeadingSpaces[] =
