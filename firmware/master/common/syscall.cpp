@@ -46,7 +46,7 @@ uint32_t _SYS_add_f64() {
 }
 
 uint32_t _SYS_sub_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
@@ -186,7 +186,7 @@ uint32_t _SYS_une_f64() {
 }
 
 uint32_t _SYS_oge_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
@@ -196,7 +196,7 @@ uint32_t _SYS_oge_f64() {
 }
 
 uint32_t _SYS_olt_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
@@ -226,7 +226,7 @@ uint32_t _SYS_ogt_f64() {
 }
 
 uint32_t _SYS_uo_f32() {
-    ASSERT(0 && "Not yet implemented");
+    //ASSERT(0 && "Not yet implemented");
     return 0;
 }
 
