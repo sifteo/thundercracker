@@ -40,10 +40,10 @@ Game::GameState Coroutine()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         new(blankViewBuffer[i]) BlankView(&Game::cubes[i], NULL);
-        Game::cubes[0].AddEventHandler(&eventHandlers[i]);
+        Game::cubes[i].AddEventHandler(&eventHandlers[i]);
 
         //force a paint to initialize the screen
-        Game::cubes[0].GetView()->Paint();
+        Game::cubes[i].GetView()->Paint();
     }
     System::paint();
 
@@ -52,8 +52,8 @@ Game::GameState Coroutine()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[0].OpenShuttersSync(&Title);
-        ((BlankView*)Game::cubes[0].GetView())->SetImage(&Title);
+        Game::cubes[i].OpenShuttersSync(&Title);
+        ((BlankView*)Game::cubes[i].GetView())->SetImage(&Title);
         CORO_YIELD(0);
     }
 
@@ -61,8 +61,8 @@ Game::GameState Coroutine()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[0].CloseShuttersSync(&Title);
-        ((BlankView*)Game::cubes[0].GetView())->SetImage(NULL);
+        Game::cubes[i].CloseShuttersSync(&Title);
+        ((BlankView*)Game::cubes[i].GetView())->SetImage(NULL);
         CORO_YIELD(0);
     }
 
