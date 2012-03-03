@@ -161,6 +161,8 @@ public:
         if (isHeld())
             block->decRef();
         block = b;
+        if (b)
+            b->incRef();
     }
     
     inline void release() {
@@ -213,7 +215,7 @@ public:
     }
     
     inline bool isEmpty() const {
-        return size != 0;
+        return size == 0;
     }
     
     inline bool isAligned() const {

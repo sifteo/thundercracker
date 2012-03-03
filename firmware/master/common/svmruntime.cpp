@@ -56,6 +56,10 @@ void SvmRuntime::run(uint16_t appId)
 void SvmRuntime::fault(FaultCode code)
 {
     // TODO: implement
+
+    LOG(("*** VM FAULT code %d, at PC=%08x+%03x\n", code,
+        codeBlock.isHeld() ? codeBlock->getAddress() : -1,
+        (unsigned) SvmCpu::reg(SvmCpu::REG_PC)));
     ASSERT(0);
 }
 
@@ -88,7 +92,7 @@ void SvmRuntime::call(reg_t addr)
     SvmCpu::setReg(SvmCpu::REG_LR, SvmCpu::reg(SvmCpu::REG_PC));
 #endif
 
-    adjustSP(addr >> 24);
+    adjustSP(-(addr >> 24));
     branch(addr);
 }
 
@@ -227,9 +231,12 @@ void SvmRuntime::validate(reg_t address)
 void SvmRuntime::syscall(unsigned num)
 {
     // syscall calling convention: 8 params, as provided by r0-r7,
-    // and return up to 64 bits in r0-r1.
-    typedef uint64_t (*SvmSyscall)(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3,
-                                   uint32_t p4, uint32_t p5, uint32_t p6, uint32_t p7);
+    // and return up to 64 bits in r0-r1. Note that the return value is never
+    // a system pointer, so for that purpose we treat return values as 32-bit
+    // registers.
+
+    typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
+                                   reg_t p4, reg_t p5, reg_t p6, reg_t p7);
 
     static const SvmSyscall SyscallTable[] = {
         #include "syscall-table.def"
@@ -262,6 +269,8 @@ void SvmRuntime::adjustSP(int words)
 void SvmRuntime::setSP(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
+    
+    LOG(("SP = 0x%"PRIxPTR"\n", addr));
 
     if (!SvmMemory::mapRAM(addr, 0, pa))
         fault(F_BAD_STACK);
@@ -276,7 +285,7 @@ void SvmRuntime::branch(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
-    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
+    if (!SvmMemory::mapROCode(codeBlock, addr & 0xfffffc, pa))
         fault(F_BAD_CODE_ADDRESS);
 
     SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    

@@ -19,7 +19,7 @@ public:
     static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
     static const unsigned VIRTUAL_RAM_BASE = 0x10000;
     static const unsigned RAM_SIZE_IN_BYTES = 32 * 1024;
-    static const unsigned VIRTUAL_RAM_TOP = VIRTUAL_FLASH_BASE + RAM_SIZE_IN_BYTES;
+    static const unsigned VIRTUAL_RAM_TOP = VIRTUAL_RAM_BASE + RAM_SIZE_IN_BYTES;
 
     typedef uint8_t* PhysAddr;
     typedef Svm::reg_t VirtAddr;
