@@ -1,4 +1,0 @@
-<quest-database>
-	<quest id="tutorial" map="castle" x="1" y="0" />
-	<quest id="test" map="sandbox" x="2" y="1" />
-</quest-database>

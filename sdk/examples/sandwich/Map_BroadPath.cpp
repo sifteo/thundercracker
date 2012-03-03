@@ -68,7 +68,7 @@ bool BroadPath::PopStep(BroadLocation newRoot, BroadLocation* outNext) {
     steps[i] = steps[i+1];
   }
   steps[NUM_CUBES-2] = -1;
-  if (*steps >= 0 && pGame->GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
+  if (*steps >= 0 && gGame.GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
     return true;
   }
   steps[0] = -1;
@@ -82,7 +82,7 @@ void BroadPath::Cancel() {
 
 static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int depth) {
   BroadLocation next;
-  if (!pGame->GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
+  if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
     return false;
   }
   sVisitMask[next.view->Parent()->GetCubeID()] |= (1<<next.subdivision);
@@ -105,7 +105,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
 
 bool Map::FindBroadPath(BroadPath* outPath) {
   for(unsigned i=0; i<NUM_CUBES; ++i) { sVisitMask[i] = 0; }
-  const BroadLocation* pRoot = pGame->GetPlayer()->Current();
+  const BroadLocation* pRoot = gGame.GetPlayer()->Current();
   sVisitMask[pRoot->view->Parent()->GetCubeID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;

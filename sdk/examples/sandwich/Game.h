@@ -4,8 +4,17 @@
 #include "Map.h"
 #include "GameState.h"
 
+#define TRIGGER_RESULT_NONE             0
+#define TRIGGER_RESULT_PATH_INTERRUPTED 1
+
 class Game {
 private:
+  static bool sNeighborDirty;
+  #if PLAYTESTING_HACKS
+  static float sShakeTime;
+  #endif
+
+
   ViewSlot mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
@@ -28,10 +37,16 @@ public:
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
 
-  bool ShowingMinimap() const { return true; }
+  bool ShowingMinimap() const { 
+    #if PLAYTESTING_HACKS
+      return false; 
+    #else
+      return true;
+    #endif
+  }
 
   // methods  
-  void MainLoop(Cube* pPrimary);
+  void MainLoop();
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
 
@@ -40,6 +55,13 @@ public:
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
 
 private:
+
+  static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+
+  // cutscenes
+  Cube* IntroCutscene();
+  void WinScreen();
+
 
   // helpers
   void CheckMapNeighbors();
@@ -50,7 +72,7 @@ private:
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
-  void NpcDialog(const DialogData& data, Cube* cube);
+  void NpcDialog(const DialogData& data, ViewSlot *view);
   
 
   unsigned OnPassiveTrigger();
@@ -64,5 +86,5 @@ private:
 
 };
 
-extern Game* pGame;
+extern Game gGame;
 

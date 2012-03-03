@@ -1,12 +1,13 @@
 # reads the tmx file format
 
 import lxml.etree
-import os.path
+import posixpath
 
 class Map:
 	def __init__(self, path):
 		doc = lxml.etree.parse(path)
 		self.path = path
+		self.dir = posixpath.dirname(path)
 		self.width = int(doc.getroot().get("width"))
 		self.height = int(doc.getroot().get("height"))
 		self.pw = 16 * self.width
@@ -32,8 +33,7 @@ class TileSet:
 		self.gid = int(xml.get("firstgid"))
 		img = xml.find("image")
 		self.imgpath = img.get("source")
-		if not os.path.exists(self.imgpath):
-			raise Exception("TileSet image missing:  %s" % self.imgpath)
+		assert posixpath.exists(posixpath.join(map.dir, self.imgpath)), "TileSet image missing:  %s" % self.imgpath
 		self.pw = int(img.get("width"))
 		self.ph = int(img.get("height"))
 		self.width = self.pw/16

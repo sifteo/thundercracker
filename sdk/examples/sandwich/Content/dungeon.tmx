@@ -606,7 +606,7 @@
 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,36,24,101,102,24,58,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 </data>
  </layer>
- <layer name="grid" width="48" height="72" visible="0" opacity="0.25">
+ <layer name="grid" width="48" height="72" opacity="0.25">
   <data encoding="csv">
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -764,7 +764,7 @@
     <property name="target" value="forest:DungeonGate"/>
    </properties>
   </object>
-  <object name="Key0" type="Item" x="432" y="960" width="32" height="32">
+  <object name="Key0" type="Item" x="432" y="832" width="32" height="32">
    <properties>
     <property name="id" value="basic_key"/>
    </properties>
@@ -787,6 +787,11 @@
   <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
    <properties>
     <property name="id" value="lettuce"/>
+   </properties>
+  </object>
+  <object name="Burgher" type="NPC" x="464" y="944" width="32" height="32">
+   <properties>
+    <property name="id" value="burgher_hello"/>
    </properties>
   </object>
  </objectgroup>

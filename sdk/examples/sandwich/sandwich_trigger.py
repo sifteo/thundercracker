@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, math
+import lxml.etree, os, posixpath, re, tmx, misc, math
 
 EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
 EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")
@@ -64,7 +64,7 @@ class Trigger:
 		
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
-			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
+			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID (" + did + ") in Map: " + room.map.id
 			self.dialog = room.map.world.dialogs.dialog_dict[did]
 		
 		elif self.type == TRIGGER_TRAPDOOR:

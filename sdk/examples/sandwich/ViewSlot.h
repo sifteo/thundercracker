@@ -45,7 +45,7 @@ public:
   
   	void HideSprites();
 
-	bool ShowLocation(Vec2 location, bool doFlush=true);
+	bool ShowLocation(Vec2 location, bool force, bool doFlush=true);
 	bool HideLocation(bool doFlush=true);
 
 	void RefreshInventory(bool doFlush=true);
