@@ -20,16 +20,17 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
         if (instructionSize(instr) == InstrBits16) {
             if (!isValid16(instr))
                 break;
-            numValidBytes++;
+            numValidBytes += 2;
         }
         else {
             uint16_t instrLow = *b++;
             if (!isValid32(instr << 16 | instrLow))
                 break;
-            numValidBytes += 2;
+            numValidBytes += 4;
         }
     }
-    LOG(("validation complete, valid: %d\n", numValidBytes));
+
+    LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
     return numValidBytes;
 }
 
@@ -94,7 +95,7 @@ bool SvmValidator::isValid16(uint16_t instr)
         // 10111111 00000000     nop
         return true;
     }
-    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
+    LOG(("VALIDATOR: invalid 16bit instruction: 0x%x\n", instr));
     return false;
 }
 
@@ -131,6 +132,6 @@ bool SvmValidator::isValid32(uint32_t instr)
     if ((instr & DivMask) == DivTest) {
         return true;
     }
-    LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));
+    LOG(("VALIDATOR: invalid 32-bit instruction: 0x%x\n", instr));
     return false;
 }
