@@ -3,11 +3,13 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "svmmemory.h"
+#include "svm.h"
+#include "SvmMemory.h"
 
-uint8_t SvmMemory::userRAM[RAM_SIZE_IN_BYTES] __attribute__ ((align(4)));
-uint32_t SvmMemory::flashBase;
-uint32_t SvmMemory::flashSize;
+using namespace Svm;
+
+uint8_t SvmMemory::userRAM[RAM_SIZE_IN_BYTES] __attribute__ ((aligned(4)));
+FlashRange SvmMemory::flashSeg;
 
 
 bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
@@ -43,7 +45,7 @@ bool SvmMemory::checkROData(VirtAddr va, uint32_t length)
     } else {
         // Flash address
         uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-        return flashOffset < flashSize && (flashSize - flashOffset) >= length;
+        return flashOffset < flashSeg.getSize() && (flashSeg.getSize() - flashOffset) >= length;
     }
 }
 
@@ -57,9 +59,9 @@ bool SvmMemory::mapROData(FlashBlockRef &ref, VirtAddr va,
 
     // Flash address
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-    if (flashOffset >= flashSize)
+    if (flashOffset >= flashSeg.getSize())
         return false;
-    flashOffset += flashBase;
+    flashOffset += flashSeg.getAddress();
 
     pa = FlashBlock::getBytes(ref, flashOffset, length);
     return true;
@@ -80,24 +82,24 @@ bool SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
     // Flash address
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-    if (flashOffset >= flashSize)
+    if (flashOffset >= flashSeg.getSize())
         return false;
-    flashOffset += flashBase;
+    flashOffset += flashSeg.getAddress();
     
     bro = FlashBlock::getByte(ref, flashOffset);
     brw = 0;
     return true;
 }
 
-bool SVMMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
+bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 {
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-    if (flashOffset >= flashSize)
+    if (flashOffset >= flashSeg.getSize())
         return false;
-    flashOffset += flashBase;
+    flashOffset += flashSeg.getAddress();
 
-    uint32_t blockOffset = flashOffset & BLOCK_MASK;
-    get(ref, flashOffset - blockOffset);
+    uint32_t blockOffset = flashOffset & FlashBlock::BLOCK_MASK;
+    FlashBlock::get(ref, flashOffset - blockOffset);
     if (!ref->isCodeOffsetValid(blockOffset))
         return false;
 
@@ -105,31 +107,34 @@ bool SVMMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
     return true;
 }
 
-bool SVMMemory::copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length)
+bool SvmMemory::copyROData(FlashBlockRef &ref,
+    PhysAddr dest, VirtAddr src, uint32_t length)
 {
     SvmMemory::PhysAddr srcPA;
 
-    while (count) {
-        uint32_t chunk = count;
+    while (length) {
+        uint32_t chunk = length;
         if (!SvmMemory::mapROData(ref, src, chunk, srcPA))
-            return;
+            return false;
 
         memcpy(dest, srcPA, chunk);
         dest += chunk;
         src += chunk;
-        count -= chunk;
+        length -= chunk;
     }
+    
+    return true;
 }
 
-bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out)
+bool SvmMemory::initFlashStream(VirtAddr va, uint32_t length, FlashStream &out)
 {
     if (!(va & VIRTUAL_FLASH_BASE)) {
         return false;
     }
 
     uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
-    if (flashOffset < flashSize && (flashSize - flashOffset) >= length) {
-        out.init(flashOffset + flashBase, length);
+    if (flashOffset < flashSeg.getSize() && (flashSeg.getSize() - flashOffset) >= length) {
+        out.init(flashOffset + flashSeg.getAddress(), length);
         return true;
     }
     

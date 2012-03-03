@@ -163,11 +163,19 @@ public:
     }
     
     /**
-     * Quick predicate to check a physical address. Used only in simulation.
+     * Quick predicates to check a physical address. Used only in simulation.
      */
 #ifdef SIFTEO_SIMULATOR
-    static bool isPhysAddrFaulty(PhysAddr pa) {
-        return 
+    static bool isAddrValid(uintptr_t pa) {
+        if (FlashBlock::isAddrValid(pa))
+            return true;
+
+        uintptr_t offset = reinterpret_cast<uint8_t*>(pa) - userRAM; 
+        return offset < RAM_SIZE_IN_BYTES;
+    }
+    static bool isAddrAligned(uintptr_t pa, int alignment) {
+        return 0 == (pa & (alignment - 1));
+    }
 #endif
 
 private:

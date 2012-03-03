@@ -52,10 +52,15 @@ void SvmCpu::setReg(uint8_t r, reg_t val)
 */
 uint16_t SvmCpu::fetch()
 {
-    uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
+    if (!SvmMemory::isAddrValid(regs[REG_PC]))
+        SvmRuntime::fault(SvmRuntime::F_CODE_FETCH);
+    if (!SvmMemory::isAddrAligned(regs[REG_PC], 2))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
+    
+    uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #if 1
-    LOG(("[%p: %x]", tst, *tst));
+    LOG(("[%p: %x]", pc, *pc));
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
     }
@@ -63,7 +68,7 @@ uint16_t SvmCpu::fetch()
 #endif
 
     regs[REG_PC] += sizeof(uint16_t);
-    return *tst;
+    return *pc;
 }
 
 void SvmCpu::execute16(uint16_t instr)
@@ -578,10 +583,14 @@ void SvmCpu::emulateSTRSPImm(uint16_t instr)
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
+    reg_t addr = regs[REG_SP] + (imm8 << 2);
 
-    uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
-    ASSERT((reinterpret_cast<uint8_t*>(addr) - &mem[0]) < MEM_IN_BYTES && "store to invalid memory address");
-    *addr = regs[Rt];
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_STORE_ADDRESS);
+    if (!SvmMemory::isAddrAligned(addr, 4))
+        SvmRuntime::fault(SvmRuntime::F_STORE_ALIGNMENT);
+
+    *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
 }
 
 void SvmCpu::emulateLDRSPImm(uint16_t instr)
@@ -589,10 +598,14 @@ void SvmCpu::emulateLDRSPImm(uint16_t instr)
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
+    reg_t addr = regs[REG_SP] + (imm8 << 2);
 
-    uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
-    ASSERT((reinterpret_cast<uint8_t*>(addr) - &mem[0]) < MEM_IN_BYTES && "load from invalid memory address");
-    regs[Rt] = *addr;
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ADDRESS);
+    if (!SvmMemory::isAddrAligned(addr, 4))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
+
+    regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
 
 void SvmCpu::emulateADDSpImm(uint16_t instr)
@@ -610,12 +623,14 @@ void SvmCpu::emulateLDRLitPool(uint16_t instr)
     unsigned imm8 = instr & 0xFF;
 
     // Round up to the next 32-bit boundary
-    uint32_t *addr = reinterpret_cast<uint32_t*>
-        (((regs[REG_PC] + 3) & ~3) + (imm8 << 2));
+    reg_t addr = ((regs[REG_PC] + 3) & ~3) + (imm8 << 2);
 
-    // this should only come from our current flash block
-    ASSERT((reinterpret_cast<reg_t>(addr) - runtime.cacheBlockBase()) < FlashLayer::BLOCK_SIZE && "PC relative load from invalid address");
-    regs[Rt] = *addr;
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ADDRESS);
+    if (!SvmMemory::isAddrAligned(addr, 4))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
+
+    regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
 
 
@@ -630,6 +645,11 @@ void SvmCpu::emulateSTR(uint32_t instr)
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
 
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_STORE_ADDRESS);
+    if (!SvmMemory::isAddrAligned(addr, 4))
+        SvmRuntime::fault(SvmRuntime::F_STORE_ALIGNMENT);
+
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
 }
 
@@ -639,6 +659,11 @@ void SvmCpu::emulateLDR(uint32_t instr)
     unsigned Rn = (instr >> 16) & 0xF;
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
+
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ADDRESS);
+    if (!SvmMemory::isAddrAligned(addr, 4))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -652,7 +677,12 @@ void SvmCpu::emulateSTRBH(uint32_t instr)
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
 
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_STORE_ADDRESS);
+
     if (instr & HalfwordBit) {
+        if (!SvmMemory::isAddrAligned(addr, 2))
+            SvmRuntime::fault(SvmRuntime::F_STORE_ALIGNMENT);
         *reinterpret_cast<uint16_t*>(addr) = regs[Rt];
     } else {
         *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
@@ -669,11 +699,16 @@ void SvmCpu::emulateLDRBH(uint32_t instr)
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
 
+    if (!SvmMemory::isAddrValid(addr))
+        SvmRuntime::fault(SvmRuntime::F_LOAD_ADDRESS);
+
     switch (instr & (HalfwordBit | SignExtBit)) {
     case 0:
         regs[Rt] = *reinterpret_cast<uint8_t*>(addr);
         break;
     case HalfwordBit:
+        if (!SvmMemory::isAddrAligned(addr, 2))
+            SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
         regs[Rt] = *reinterpret_cast<uint16_t*>(addr);
         break;
     case SignExtBit:
@@ -681,6 +716,8 @@ void SvmCpu::emulateLDRBH(uint32_t instr)
             (*reinterpret_cast<uint8_t*>(addr));
         break;
     case HalfwordBit | SignExtBit:
+        if (!SvmMemory::isAddrAligned(addr, 2))
+            SvmRuntime::fault(SvmRuntime::F_LOAD_ALIGNMENT);
         regs[Rt] = (uint32_t) SignExtend<signed int, 16>
             (*reinterpret_cast<uint16_t*>(addr));
         break;
@@ -732,5 +769,5 @@ void SvmCpu::emulateDIV(uint32_t instr)
 void SvmCpu::emulateSVC(uint16_t instr)
 {
     uint8_t imm8 = instr & 0xff;
-    runtime.svc(imm8);
+    SvmRuntime::svc(imm8);
 }

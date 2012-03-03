@@ -10,7 +10,6 @@
 
 #include <sifteo.h>
 #include "radio.h"
-#include "runtime.h"
 #include "systime.h"
 #include "audiooutdevice.h"
 #include "audiomixer.h"
@@ -55,13 +54,11 @@ int main(int argc, char **argv)
     SysTime::init();
 
     Flash::init();
-    FlashLayer::init();
+    FlashBlock::init();
     AssetManager::init();
 
 #ifdef SVM_TEST
     installElfFile();
-    SvmRuntime::instance.run(111);
-    return 0;
 #endif
 
     AudioMixer::instance.init();
@@ -70,7 +67,7 @@ int main(int argc, char **argv)
 
     Radio::open();
 
-    Runtime::run();
+    SvmRuntime::run(111);
 
     return 0;
 }

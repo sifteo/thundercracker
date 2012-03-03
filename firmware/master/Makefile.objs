@@ -18,6 +18,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flashlayer.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
+    $(MASTER_DIR)/common/svmmemory.o \
     $(MASTER_DIR)/common/assetmanager.o \
     $(MASTER_DIR)/common/elfutil.o
 

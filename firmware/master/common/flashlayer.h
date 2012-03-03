@@ -85,6 +85,16 @@ public:
 
         return offset < validCodeBytes;
     }
+    
+    /**
+     * Quick predicate to check a physical address. Used only in simulation.
+     */
+#ifdef SIFTEO_SIMULATOR
+    static bool isAddrValid(uintptr_t pa) {
+        uintptr_t offset = reinterpret_cast<uint8_t*>(pa) - &mem[0][0];
+        return offset < sizeof mem;
+    }
+#endif
 
     static void init();
     static void get(FlashBlockRef &ref, uint32_t blockAddr);
