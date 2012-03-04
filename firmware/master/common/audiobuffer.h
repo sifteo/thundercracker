@@ -29,11 +29,11 @@ public:
     int read(uint8_t *buf, int len);
 
     inline bool full() const {
-        return (((sys->tail + 1) & (sizeof(sys->buf) - 1)) == sys->head);
+        return mask(sys->tail + 1) == mask(sys->head);
     }
 
     inline bool empty() const {
-        return (sys->head == sys->tail);
+        return mask(sys->head) == mask(sys->tail);
     }
 
     unsigned readAvailable() const;
@@ -44,6 +44,12 @@ public:
 
 private:
     _SYSAudioBuffer *sys;                       // provided by userspace
+
+    // Mask off invalid bits from head/tail addresses.
+    // This must be done on *read* from the buffer.
+    inline unsigned mask(unsigned x) const {
+        return x & (sizeof(sys->buf) - 1);
+    }
 
     // to support reserve/commit API, when we need to wrap around the end of our
     // actual sys buffer, provide a coalescer.

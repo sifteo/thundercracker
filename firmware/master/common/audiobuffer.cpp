@@ -2,6 +2,12 @@
  * Thundercracker Firmware -- Confidential, not for redistribution.
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
+ 
+/*
+ * Remember that _SYSAudioBuffer is in userspace! We can verify that 'sys'
+ * points to real user RAM once, but we can never trust the values we pull
+ * from this buffer.
+ */
 
 #include "audiobuffer.h"
 #include <sifteo/macros.h>
@@ -17,18 +23,23 @@ void AudioBuffer::enqueue(uint8_t c)
 {
     ASSERT(isValid());
     ASSERT(!full());
-    sys->buf[sys->tail] = c;
-    sys->tail = (sys->tail + 1) & capacity();
-    ASSERT(sys->tail != sys->head);
+    
+    unsigned tail = mask(sys->tail);
+    sys->buf[tail] = c;
+    sys->tail = tail + 1;
+
+    ASSERT(mask(sys->tail) != mask(sys->head));
 }
 
 uint8_t AudioBuffer::dequeue()
 {
     ASSERT(isValid());
     ASSERT(!empty());
-    ASSERT(sys->head < sizeof(sys->buf));
-    uint8_t c = sys->buf[sys->head];
-    sys->head = (sys->head + 1) & capacity();
+
+    unsigned head = mask(sys->head);
+    uint8_t c = sys->buf[head];
+    sys->head = head + 1;
+
     return c;
 }
 
@@ -53,7 +64,9 @@ int AudioBuffer::read(uint8_t *buf, int len)
 unsigned AudioBuffer::readAvailable() const
 {
     ASSERT(isValid());
-    return ((sys->head > sys->tail) ? sizeof(sys->buf) : 0) + sys->tail - sys->head;
+    unsigned head = mask(sys->head);
+    unsigned tail = mask(sys->tail);
+    return ((head > tail) ? sizeof(sys->buf) : 0) + tail - head;
 }
 
 unsigned AudioBuffer::writeAvailable() const
