@@ -413,7 +413,8 @@ struct _SYSPseudoRandomState {
  * System calls #0-63 are faster and smaller than normal function calls,
  * whereas all other syscalls (#64-8191) are similar in cost to a normal
  * call. System calls use a simplified calling convention that supports
- * only 32-bit values, with at most one return value and 8 arguments.
+ * only at most 8 32-bit integer parameters, with at most one (32/64-bit)
+ * integer result.
  */
 
 #ifdef __clang__
@@ -426,56 +427,52 @@ void _SYS_ret() _SC(0);
 
 // Compiler floating point support
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
-uint64_t _SYS_add_f64(uint64_t a, uint64_t b) _SC(62);
+uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(62);
 uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) _SC(61);
-uint64_t _SYS_sub_f64(uint64_t a, uint64_t b) _SC(60);
+uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(60);
 uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) _SC(59);
-uint64_t _SYS_mul_f64(uint64_t a, uint64_t b) _SC(58);
+uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(58);
 uint32_t _SYS_div_f32(uint32_t a, uint32_t b) _SC(57);
-uint64_t _SYS_div_f64(uint64_t a, uint64_t b) _SC(56);
+uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(56);
 uint64_t _SYS_fpext_f32_f64(uint32_t a) _SC(55);
-uint32_t _SYS_fpround_f64_f32(uint64_t a) _SC(54);
+uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) _SC(54);
 uint32_t _SYS_fptosint_f32_i32(uint32_t a) _SC(53);
 uint64_t _SYS_fptosint_f32_i64(uint32_t a) _SC(52);
-uint32_t _SYS_fptosint_f64_i32(uint64_t a) _SC(51);
-uint64_t _SYS_fptosint_f64_i64(uint64_t a) _SC(50);
+uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) _SC(51);
+uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) _SC(50);
 uint32_t _SYS_fptouint_f32_i32(uint32_t a) _SC(49);
 uint64_t _SYS_fptouint_f32_i64(uint32_t a) _SC(48);
-uint32_t _SYS_fptouint_f64_i32(uint64_t a) _SC(47);
-uint64_t _SYS_fptouint_f64_i64(uint64_t a) _SC(46);
+uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) _SC(47);
+uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) _SC(46);
 uint32_t _SYS_sinttofp_i32_f32(uint32_t a) _SC(45);
 uint64_t _SYS_sinttofp_i32_f64(uint32_t a) _SC(44);
-uint32_t _SYS_sinttofp_i64_f32(uint64_t a) _SC(43);
-uint64_t _SYS_sinttofp_i64_f64(uint64_t a) _SC(42);
+uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(43);
+uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(42);
 uint32_t _SYS_uinttofp_i32_f32(uint32_t a) _SC(41);
 uint64_t _SYS_uinttofp_i32_f64(uint32_t a) _SC(40);
-uint32_t _SYS_uinttofp_i64_f32(uint64_t a) _SC(39);
-uint64_t _SYS_uinttofp_i64_f64(uint64_t a) _SC(38);
-uint32_t _SYS_oeq_f32() _SC(37);
-uint32_t _SYS_oeq_f64() _SC(36);
-uint32_t _SYS_une_f32() _SC(35);
-uint32_t _SYS_une_f64() _SC(34);
-uint32_t _SYS_oge_f32() _SC(33);
-uint32_t _SYS_oge_f64() _SC(32);
-uint32_t _SYS_olt_f32() _SC(31);
-uint32_t _SYS_olt_f64() _SC(30);
-uint32_t _SYS_ole_f32() _SC(29);
-uint32_t _SYS_ole_f64() _SC(28);
-uint32_t _SYS_ogt_f32() _SC(27);
-uint32_t _SYS_ogt_f64() _SC(26);
-uint32_t _SYS_uo_f32() _SC(25);
-uint32_t _SYS_uo_f64() _SC(24);
-uint32_t _SYS_o_f32() _SC(23);
-uint32_t _SYS_o_f64() _SC(22);
+uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(39);
+uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(38);
+uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) _SC(37);
+uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(36);
+uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) _SC(35);
+uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(34);
+uint32_t _SYS_le_f32(uint32_t a, uint32_t b) _SC(33);
+uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(32);
+uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) _SC(31);
+uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(30);
+uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) _SC(29);
+uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(28);
+uint32_t _SYS_un_f32(uint32_t a, uint32_t b) _SC(27);
+uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(26);
 
 // Compiler atomics support
-uint32_t _SYS_fetch_and_or_4() _SC(107);
-uint32_t _SYS_fetch_and_xor_4() _SC(108);
-uint32_t _SYS_fetch_and_nand_4() _SC(109);
-uint32_t _SYS_fetch_and_and_4() _SC(110);
+uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(21);
+uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(22);
+uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(23);
+uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(24);
 
-void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
-float _SYS_fmodf(float a, float b) _SC(9);
+void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(8);
+uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(9);
 
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(1);
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(2);

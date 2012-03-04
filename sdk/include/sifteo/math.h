@@ -33,6 +33,68 @@ namespace Math {
 #define MAXFLOAT    ((float)3.40282346638528860e+38)
 
 
+/*
+ * General helper routines
+ */
+
+template <typename T> inline T clamp(const T& value, const T& low, const T& high)
+{
+    if (value < low) {
+        return low;
+    }
+    if (value > high) {
+        return high;
+    }
+    return value;
+}
+
+template <typename T> inline T abs(const T& value)
+{
+    if (value < 0) {
+        return -value;
+    }
+    return value;
+}
+
+float inline fmodf(float a, float b)
+{
+    uint32_t result = _SYS_fmodf(reinterpret_cast<uint32_t&>(a),
+                                 reinterpret_cast<uint32_t&>(b));
+    return reinterpret_cast<float&>(result);
+}
+
+float inline fabs(float a)
+{
+    if (a < 0)
+        return -a;
+    return a;
+}
+
+
+/*
+ * Trigonometry
+ */
+ 
+void inline sincosf(float x, float *s, float *c)
+{
+    _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
+}
+
+float inline sinf(float x)
+{
+    float s;
+    sincosf(x, &s, NULL);
+    return s;
+}
+
+float inline cosf(float x)
+{
+    float c;
+    sincosf(x, NULL, &c);
+    return c;
+}
+
+
 /**
  * 2-element float vector
  */
@@ -57,14 +119,14 @@ struct Float2 {
 
     void setPolar(float angle, float magnitude) {
 		float s, c;
-		_SYS_sincosf(angle, &s, &c);
+		sincosf(angle, &s, &c);
         x = c * magnitude;
         y = s * magnitude;
     }
 	
 	Float2 rotate(float angle) const {
 		float s, c;
-		_SYS_sincosf(angle, &s, &c);
+		sincosf(angle, &s, &c);
         return Float2(x*c - y*s, x*s + y*c);
 	}
 		
@@ -316,7 +378,7 @@ struct AffineMatrix {
 
     static AffineMatrix rotation(float angle) {
         float s, c;
-        _SYS_sincosf(angle, &s, &c);
+        sincosf(angle, &s, &c);
         return AffineMatrix(c, -s, 0,
                             s, c, 0);
     }
@@ -346,66 +408,6 @@ struct AffineMatrix {
         *this *= scaling(s);
     }
 };
-
-
-/*
- * General helper routines
- */
-
-template <typename T> inline T clamp(const T& value, const T& low, const T& high)
-{
-    if (value < low) {
-        return low;
-    }
-    if (value > high) {
-        return high;
-    }
-    return value;
-}
-
-template <typename T> inline T abs(const T& value)
-{
-    if (value < 0) {
-        return -value;
-    }
-    return value;
-}
-
-float inline fmodf(float a, float b)
-{
-    return _SYS_fmodf(a, b);
-}
-
-float inline fabs(float a)
-{
-    if (a < 0)
-        return -a;
-    return a;
-}
-
-
-/*
- * Trigonometry
- */
- 
-float inline sinf(float x)
-{
-    float s;
-    _SYS_sincosf(x, &s, NULL);
-    return s;
-}
-
-float inline cosf(float x)
-{
-    float c;
-    _SYS_sincosf(x, NULL, &c);
-    return c;
-}
-
-void inline sincosf(float x, float *s, float *c)
-{
-    _SYS_sincosf(x, s, c);
-}
 
 
 }   // namespace Math

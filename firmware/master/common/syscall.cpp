@@ -39,7 +39,9 @@ uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_add_f64(uint64_t a, uint64_t b) {
+uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) + reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
@@ -49,7 +51,9 @@ uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) {
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_sub_f64(uint64_t a, uint64_t b) {
+uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) - reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
@@ -59,19 +63,21 @@ uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) {
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_mul_f64(uint64_t a, uint64_t b) {
+uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) * reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
 
 uint32_t _SYS_div_f32(uint32_t a, uint32_t b) {
-    // XXX: Trap divide-by-zero
     float r = reinterpret_cast<float&>(a) / reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_div_f64(uint64_t a, uint64_t b) {
-    // XXX: Trap divide-by-zero
+uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) / reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
@@ -81,7 +87,8 @@ uint64_t _SYS_fpext_f32_f64(uint32_t a) {
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_fpround_f64_f32(uint64_t a) {
+uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     float r = reinterpret_cast<double&>(a);
     return reinterpret_cast<uint32_t&>(r);
 }
@@ -96,12 +103,14 @@ uint64_t _SYS_fptosint_f32_i64(uint32_t a) {
     return r;
 }
 
-uint32_t _SYS_fptosint_f64_i32(uint64_t a) {
+uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     int32_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint64_t _SYS_fptosint_f64_i64(uint64_t a) {
+uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     int64_t r = reinterpret_cast<double&>(a);
     return r;
 }
@@ -116,12 +125,14 @@ uint64_t _SYS_fptouint_f32_i64(uint32_t a) {
     return r;
 }
 
-uint32_t _SYS_fptouint_f64_i32(uint64_t a) {
+uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     uint32_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint64_t _SYS_fptouint_f64_i64(uint64_t a) {
+uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t r = reinterpret_cast<double&>(a);
     return r;
 }
@@ -136,12 +147,14 @@ uint64_t _SYS_sinttofp_i32_f64(uint32_t a) {
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_sinttofp_i64_f32(uint64_t a) {
+uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     float r = reinterpret_cast<int64_t&>(a);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_sinttofp_i64_f64(uint64_t a) {
+uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     double r = reinterpret_cast<int64_t&>(a);
     return reinterpret_cast<uint64_t&>(r);
 }
@@ -156,94 +169,92 @@ uint64_t _SYS_uinttofp_i32_f64(uint32_t a) {
     return reinterpret_cast<uint64_t&>(r);
 }
         
-uint32_t _SYS_uinttofp_i64_f32(uint64_t a) {
+uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     float r = a;
     return reinterpret_cast<uint32_t&>(r);
 }
     
-uint64_t _SYS_uinttofp_i64_f64(uint64_t a) {
+uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
     double r = a;
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_oeq_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) {
+    return reinterpret_cast<float&>(a) == reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_oeq_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return reinterpret_cast<double&>(a) == reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_une_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) {
+    return reinterpret_cast<float&>(a) < reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_une_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return reinterpret_cast<double&>(a) < reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_oge_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_le_f32(uint32_t a, uint32_t b) {
+    return reinterpret_cast<float&>(a) <= reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_oge_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return reinterpret_cast<double&>(a) <= reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_olt_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) {
+    return reinterpret_cast<float&>(a) >= reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_olt_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return reinterpret_cast<double&>(a) >= reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_ole_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) {
+    return reinterpret_cast<float&>(a) > reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_ole_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return reinterpret_cast<double&>(a) > reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_ogt_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_un_f32(uint32_t a, uint32_t b) {
+    return isunordered(reinterpret_cast<float&>(a), reinterpret_cast<float&>(b));
 }
 
-uint32_t _SYS_ogt_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return isunordered(reinterpret_cast<double&>(a), reinterpret_cast<double&>(b));
 }
 
-uint32_t _SYS_uo_f32() {
-    //ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) {
+    return __sync_fetch_and_or(p, t);
 }
 
-uint32_t _SYS_uo_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) {
+    return __sync_fetch_and_xor(p, t);
 }
 
-uint32_t _SYS_o_f32() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) {
+    return __sync_fetch_and_nand(p, t);
 }
 
-uint32_t _SYS_o_f64() {
-    ASSERT(0 && "Not yet implemented");
-    return 0;
+uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) {
+    return __sync_fetch_and_and(p, t);
 }
 
 #define MEMSET_BODY() {                                                 \
@@ -489,7 +500,7 @@ int _SYS_strncmp(const char *a, const char *b, uint32_t count)
     return 0;
 }
 
-void _SYS_sincosf(float x, float *sinOut, float *cosOut)
+void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut)
 {
     /*
      * This syscall exists as such because it's very common, especially for
@@ -503,18 +514,20 @@ void _SYS_sincosf(float x, float *sinOut, float *cosOut)
      * breaking compatibility.
      */
 
+    float fX = reinterpret_cast<float&>(x);
+
     if (SvmMemory::mapRAM(sinOut, sizeof *sinOut))
-        *sinOut = ::sinf(x);
+        *sinOut = ::sinf(fX);
     if (SvmMemory::mapRAM(cosOut, sizeof *cosOut))
-        *cosOut = ::cosf(x);
+        *cosOut = ::cosf(fX);
 }
 
-float _SYS_fmodf(float a, float b)
+uint32_t _SYS_fmodf(uint32_t a, uint32_t b)
 {
-    if (isfinite(a) && b != 0)
-        return ::fmodf(a, b);
-    else
-        return NAN;
+    float fA = reinterpret_cast<float&>(a);
+    float fB = reinterpret_cast<float&>(b);
+    float fR = (isfinite(fA) && fB != 0) ? ::fmodf(fA, fB) : NAN;
+    return reinterpret_cast<uint32_t&>(fR);
 }
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)

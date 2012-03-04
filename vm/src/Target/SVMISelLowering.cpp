@@ -76,28 +76,45 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setLibcallName(RTLIB::UINTTOFP_I64_F32, "_SYS_39");
     setLibcallName(RTLIB::UINTTOFP_I64_F64, "_SYS_38");
 
-    setLibcallName(RTLIB::OEQ_F32, "_SYS_37");
-    setLibcallName(RTLIB::OEQ_F64, "_SYS_36");
-    setLibcallName(RTLIB::UNE_F32, "_SYS_35");
-    setLibcallName(RTLIB::UNE_F64, "_SYS_34");
-    setLibcallName(RTLIB::OGE_F32, "_SYS_33");
-    setLibcallName(RTLIB::OGE_F64, "_SYS_32");
-    setLibcallName(RTLIB::OLT_F32, "_SYS_31");
-    setLibcallName(RTLIB::OLT_F64, "_SYS_30");
-    setLibcallName(RTLIB::OLE_F32, "_SYS_29");
-    setLibcallName(RTLIB::OLE_F64, "_SYS_28");
-    setLibcallName(RTLIB::OGT_F32, "_SYS_27");
-    setLibcallName(RTLIB::OGT_F64, "_SYS_26");
-    setLibcallName(RTLIB::UO_F32, "_SYS_25");
-    setLibcallName(RTLIB::UO_F64, "_SYS_24");
-    setLibcallName(RTLIB::O_F32, "_SYS_23");
-    setLibcallName(RTLIB::O_F64, "_SYS_22");
-    
+    setLibcallName(RTLIB::OEQ_F32, "_SYS_37");  // _SYS_eq_f32
+    setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
+    setLibcallName(RTLIB::UNE_F32, "_SYS_37");  // _SYS_eq_f32
+    setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETEQ);
+    setLibcallName(RTLIB::OLT_F32, "_SYS_35");  // _SYS_lt_f32
+    setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OLE_F32, "_SYS_33");  // _SYS_le_f32
+    setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OGE_F32, "_SYS_31");  // _SYS_ge_f32
+    setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OGT_F32, "_SYS_29");  // _SYS_gt_f32
+    setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
+    setLibcallName(RTLIB::UO_F32,  "_SYS_27");  // _SYS_un_f32
+    setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
+    setLibcallName(RTLIB::O_F32,   "_SYS_27");  // _SYS_un_f32
+    setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
+
+    setLibcallName(RTLIB::OEQ_F64, "_SYS_36");  // _SYS_eq_f64
+    setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
+    setLibcallName(RTLIB::UNE_F64, "_SYS_36");  // _SYS_eq_f64
+    setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETEQ);
+    setLibcallName(RTLIB::OLT_F64, "_SYS_34");  // _SYS_lt_f64
+    setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OLE_F64, "_SYS_32");  // _SYS_le_f64
+    setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OGE_F64, "_SYS_30");  // _SYS_ge_f64
+    setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OGT_F64, "_SYS_28");  // _SYS_gt_f64
+    setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
+    setLibcallName(RTLIB::UO_F64,  "_SYS_26");  // _SYS_un_f64
+    setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
+    setLibcallName(RTLIB::O_F64,   "_SYS_26");  // _SYS_un_f64
+    setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
+
     // Atomic operations
-    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_107");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_108");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_109");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_110");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_21");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_22");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_23");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_24");
 
     // Register classes to allocate into
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
