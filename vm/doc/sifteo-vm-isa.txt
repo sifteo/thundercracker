@@ -257,18 +257,18 @@ Sample stack layout, assuming main() calls f1() which calls f2():
 
      +-----------------+  <-- Top
      | main() locals   |  }-- Size set by main() symbol's SPAdj value
- /-> +-----------------+
- |   | Saved r7        |
- |   | Saved r6        |
- |   | Saved r5        |
- |   | Saved r4        |
- |   | Saved r3        |
- |   | Saved r2        |
- |   | Saved FP (0)    |
- |   | Saved PC        |
+     +-----------------+
+     | Saved r7        |
+     | Saved r6        |
+     | Saved r5        |
+     | Saved r4        |
+     | Saved r3        |
+     | Saved r2        |
+     | Saved FP (0)    |
+ /-> | Saved PC        |
  |   +-----------------+
  |   | f1() locals     |
- |   +-----------------+  <-- Current FP value
+ |   +-----------------+ 
  |   | Saved r7        |
  |   | Saved r6        |
  |   | Saved r5        |
@@ -276,7 +276,7 @@ Sample stack layout, assuming main() calls f1() which calls f2():
  |   | Saved r3        |
  |   | Saved r2        |
  \---| Saved FP        |
-     | Saved PC        |
+     | Saved PC        |  <-- Current FP value
      +-----------------+
      | f2() locals     |
      +-----------------+  <-- Current SP value
