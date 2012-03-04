@@ -205,7 +205,7 @@ void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
         unsigned TBBN = TBB->getNumber();
 
         // In an earlier block? Possibly in a later block?
-        if (TBBN < FirstLocalBB || TBBN > (unsigned)MBB->getNumber()) {
+        if (TBBN < FirstLocalBB || TBBN >= (unsigned)MBB->getNumber()) {
 
             if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
                 // Trampoline MBB needed
