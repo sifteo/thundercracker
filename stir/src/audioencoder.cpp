@@ -22,7 +22,7 @@ using namespace std;
 #define SPEEX_MODE  SPEEX_MODEID_WB
 
 
-AudioEncoder *AudioEncoder::create(std::string name, float quality)
+AudioEncoder *AudioEncoder::create(std::string name, float quality, bool vbr)
 {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
@@ -30,30 +30,37 @@ AudioEncoder *AudioEncoder::create(std::string name, float quality)
         return new PCMEncoder();
 
     if (name == "speex" || name == "")
-        return new SpeexEncoder(quality);
+        return new SpeexEncoder(quality, vbr);
 
     return 0;
 }
 
 
-SpeexEncoder::SpeexEncoder(float quality) :
+SpeexEncoder::SpeexEncoder(float quality, bool vbr) :
     frameSize(0)
 {
     encoderState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODE));
     speex_bits_init(&bits);
 
-    spx_int32_t vbrEnabled = 1;
     spx_int32_t complexity = 10;     // Unbounded CPU for encoding
-
-    speex_encoder_ctl(encoderState, SPEEX_SET_VBR, &vbrEnabled);
-
-    // Make sure VBR support is compiled in!
-    vbrEnabled = 0;
-    speex_encoder_ctl(encoderState, SPEEX_GET_VBR, &vbrEnabled);
-    assert(vbrEnabled == 1);
-
-    speex_encoder_ctl(encoderState, SPEEX_SET_VBR_QUALITY, &quality);
     speex_encoder_ctl(encoderState, SPEEX_SET_COMPLEXITY, &complexity);
+
+    spx_int32_t vbrEnabled = vbr;
+    speex_encoder_ctl(encoderState, SPEEX_SET_VBR, &vbrEnabled);
+    if (vbr) {
+        // Make sure VBR support is compiled in!
+        vbrEnabled = 0;
+        speex_encoder_ctl(encoderState, SPEEX_GET_VBR, &vbrEnabled);
+        assert(vbrEnabled == 1);
+    }
+
+    if (vbr) {
+        speex_encoder_ctl(encoderState, SPEEX_SET_VBR_QUALITY, &quality);
+    } else {
+        spx_int32_t iQuality = quality + 0.6;
+        speex_encoder_ctl(encoderState, SPEEX_SET_QUALITY, &iQuality);
+    }
+
     speex_encoder_ctl(encoderState, SPEEX_GET_FRAME_SIZE, &frameSize);
 }
 

@@ -212,6 +212,11 @@ public:
     {
         mQuality = quality;
     }
+    
+    void setVBR(bool vbr)
+    {
+        mVBR = vbr;
+    }
 
     const std::string &getName() const {
         return mName;
@@ -229,11 +234,16 @@ public:
         return mQuality;
     }
     
+    const bool getVBR() const {
+        return mVBR;
+    }
+    
 private:
     std::string mName;
     std::string mFile;
     std::string mEncode;
     int mQuality;
+    bool mVBR;
 };
 
 

@@ -23,13 +23,13 @@ public:
     virtual const char *getTypeSymbol() = 0;
     virtual const char *getName() = 0;
     
-    static AudioEncoder *create(std::string name, float quality);
+    static AudioEncoder *create(std::string name, float quality, bool vbr);
 };
 
 
 class SpeexEncoder : public AudioEncoder {
 public:
-    SpeexEncoder(float quality);
+    SpeexEncoder(float quality, bool vbr);
     virtual ~SpeexEncoder();
     virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
 

@@ -140,7 +140,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
     std::vector<uint8_t> data;
-    AudioEncoder *enc = AudioEncoder::create(sound.getEncode(), sound.getQuality());
+    AudioEncoder *enc = AudioEncoder::create(sound.getEncode(), sound.getQuality(), sound.getVBR());
     assert(enc != 0);
 
     float kbps;

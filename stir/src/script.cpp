@@ -505,12 +505,18 @@ Sound::Sound(lua_State *L)
         setQuality(lua_tonumber(L, -1));
     }
 
+    if (Script::argMatch(L, "vbr")) {
+        setVBR(lua_toboolean(L, -1));
+    } else {
+        setVBR(false);
+    }
+
     if (!Script::argEnd(L))
         return;
 
     // Validate the encoder parameters immediately, so we can raise an error
     // during script execution rather than during actual audio compression.
-    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality());
+    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality(), getVBR());
     if (enc)
         delete enc;
     else
