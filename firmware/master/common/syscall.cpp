@@ -251,19 +251,27 @@ uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
 }
 
 uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) {
-    return __sync_fetch_and_or(p, t);
+    if (SvmMemory::mapRAM(p, sizeof *p))
+        return __sync_fetch_and_or(p, t);
+    return 0;
 }
 
 uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) {
-    return __sync_fetch_and_xor(p, t);
+    if (SvmMemory::mapRAM(p, sizeof *p))
+        return __sync_fetch_and_xor(p, t);
+    return 0;
 }
 
 uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) {
-    return __sync_fetch_and_nand(p, t);
+    if (SvmMemory::mapRAM(p, sizeof *p))
+        return __sync_fetch_and_nand(p, t);
+    return 0;
 }
 
 uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) {
-    return __sync_fetch_and_and(p, t);
+    if (SvmMemory::mapRAM(p, sizeof *p))
+        return __sync_fetch_and_and(p, t);
+    return 0;
 }
 
 #define MEMSET_BODY() {                                                 \
