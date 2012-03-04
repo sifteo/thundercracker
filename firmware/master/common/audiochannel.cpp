@@ -38,13 +38,14 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
-    int mixable = MIN(buf.readAvailable() / sizeof(*buffer), len);
+    int mixable = MIN(buf.readAvailable() / sizeof *buffer, len);
+
     for (int i = 0; i < mixable; i++) {
         ASSERT(buf.readAvailable() >= 2);
         int16_t src = buf.dequeue() | (buf.dequeue() << 8);
 
         // Mix this sample, after volume adjustment, with the existing buffer contents
-        int32_t sample = *buffer + ((src * (int32_t)this->volume) / Audio::MAX_VOLUME);
+        int32_t sample = *buffer + ((src * (int32_t)volume) / Audio::MAX_VOLUME);
             
         // TODO - more subtle compression instead of hard limiter
         *buffer = Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
