@@ -786,7 +786,7 @@ void Game::enterScore()
 }
 
 
-void Game::playSound( _SYSAudioModule &sound )
+void Game::playSound( const AssetAudio &sound )
 {
     if( &sound == m_pSoundThisFrame )
         return;
@@ -806,7 +806,7 @@ void Game::playSound( _SYSAudioModule &sound )
     m_pSoundThisFrame = &sound;
 }
 
-_SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+const AssetAudio *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
   &slosh_multi_01,
     &slosh_multi_02,

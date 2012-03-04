@@ -11,7 +11,7 @@ extern Cube gCubes[NUM_CUBES];
 // Audio Smutz
 #if SFX_ON
 extern AudioChannel gChannelSfx;
-void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
+void PlaySfx(const AssetAudio& handle, bool preempt=true);
 #else
 #define PlaySfx(...)
 #endif
@@ -19,7 +19,7 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
 
 #if MUSIC_ON
 extern AudioChannel gChannelMusic;
-void PlayMusic(_SYSAudioModule& music, bool loop=true);
+void PlayMusic(const AssetAudio& music, bool loop=true);
 #else
 #define PlayMusic(...)
 #endif

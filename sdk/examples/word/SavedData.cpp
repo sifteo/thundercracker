@@ -64,7 +64,7 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
                 NumEndingTypes
             };
 
-            _SYSAudioModule* EndingJingles[NumEndingTypes] =
+            const AssetAudio* EndingJingles[NumEndingTypes] =
             {
                 &timeup_01, &timeup_02, &timeup_03
             };
