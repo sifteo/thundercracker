@@ -1,14 +1,7 @@
-Correctness:
-
-- Flash block packing and alignment!
-
 Optimization opportunities:
 
 - More thorough (bidirectional) align-slot filling in SVMAlignPass
 - Optimize out redundant base pointer validations
-- Preserve r1-r7 across function calls. Right now these regs
-  are being marked as killed, causing shared parameters to spill
-  into other registers unnecessarily.
 - More work on identifying opportunities to use imm12 addressing
 - Equal optimization weight for all 16-bit instructions? LDRpc alone is
   better than LDRpc plus MOVs, for example.
