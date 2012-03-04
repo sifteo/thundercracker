@@ -38,9 +38,8 @@ static void returnFromYield() {
 
 extern "C" {
 
-// TODO: implement!
 void _SYS_ret() {
-    ASSERT(0 && "Not yet implemented");
+    SvmRuntime::ret();
 }
 
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {

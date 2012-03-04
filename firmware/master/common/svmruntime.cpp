@@ -48,8 +48,8 @@ void SvmRuntime::run(uint16_t appId)
     SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
     setSP(SvmMemory::VIRTUAL_RAM_TOP);
 
-    // Tail call into user code
-    call(pInfo.entry);
+    // Tail call into user code. main() does not have a CallFrame.
+    enterFunction(pInfo.entry);
     SvmCpu::run();
 }
 
@@ -81,30 +81,85 @@ void SvmRuntime::exit()
 
 void SvmRuntime::call(reg_t addr)
 {
-#if 0 // TODO: Implement call/return
-    StackFrame frame = {
-        SvmCpu::reg(7),
-        SvmCpu::reg(6),
-        SvmCpu::reg(5),
-        SvmCpu::reg(4),
-        SvmCpu::reg(3),
-        SvmCpu::reg(2),
-        SvmCpu::reg(SvmCpu::REG_FP),
-        SvmCpu::reg(SvmCpu::REG_SP)
-    };
+    // Allocate a CallFrame for this function
+    adjustSP(-(int)(sizeof(CallFrame) / sizeof(uint32_t)));
+    CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::reg(REG_SP));
 
-    reg_t sp = SvmCpu::reg(SvmCpu::REG_SP);
-    const intptr_t framesize = sizeof(frame);
-    reg_t *stk = reinterpret_cast<reg_t*>(sp) - framesize;
-    memcpy(stk, &frame, framesize);
+    reg_t sFP = SvmCpu::reg(REG_FP);
+    reg_t sR2 = SvmCpu::reg(2);
+    reg_t sR3 = SvmCpu::reg(3);
+    reg_t sR4 = SvmCpu::reg(4);
+    reg_t sR5 = SvmCpu::reg(5);
+    reg_t sR6 = SvmCpu::reg(6);
+    reg_t sR7 = SvmCpu::reg(7);
 
-    adjustSP(framesize);
+    // Because this is a store to RAM, on simulated builds
+    // we may need to squash 64-bit pointers.
+    SvmMemory::squashPhysicalAddr(sFP);
+    SvmMemory::squashPhysicalAddr(sR2);
+    SvmMemory::squashPhysicalAddr(sR3);
+    SvmMemory::squashPhysicalAddr(sR4);
+    SvmMemory::squashPhysicalAddr(sR5);
+    SvmMemory::squashPhysicalAddr(sR6);
+    SvmMemory::squashPhysicalAddr(sR7);
 
-    SvmCpu::setReg(SvmCpu::REG_LR, SvmCpu::reg(SvmCpu::REG_PC));
+    fp->pc = reconstructCodeAddr();
+    fp->fp = sFP;
+    fp->r2 = sR2;
+    fp->r3 = sR3;
+    fp->r4 = sR4;
+    fp->r5 = sR5;
+    fp->r6 = sR6;
+    fp->r7 = sR7;
+
+    // This is now the current frame
+    SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fp));
+
+#ifdef SVM_TRACE
+    LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
+        "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
+        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+        fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
 #endif
 
+    enterFunction(addr);
+}
+
+void SvmRuntime::enterFunction(reg_t addr)
+{
+    // Allocate stack space for this function, and enter it
     adjustSP(-(addr >> 24));
     branch(addr);
+}
+
+void SvmRuntime::ret()
+{
+    CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::reg(REG_FP));
+
+    if (fp) {
+        // Restore the saved frame
+
+#ifdef SVM_TRACE
+        LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
+            "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
+            fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
+#endif
+
+        SvmCpu::setReg(REG_FP, fp->fp);
+        SvmCpu::setReg(2, fp->r2);
+        SvmCpu::setReg(3, fp->r3);
+        SvmCpu::setReg(4, fp->r4);
+        SvmCpu::setReg(5, fp->r5);
+        SvmCpu::setReg(6, fp->r6);
+        SvmCpu::setReg(7, fp->r7);
+
+        setSP(reinterpret_cast<reg_t>(fp + 1));
+        branch(fp->pc);
+
+    } else {
+        // No more functions on the stack. Return from main() is exit().
+        exit();
+    }
 }
 
 void SvmRuntime::svc(uint8_t imm8)

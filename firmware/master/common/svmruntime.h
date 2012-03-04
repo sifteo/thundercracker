@@ -41,28 +41,29 @@ public:
     static void exit();
 
     static void call(reg_t addr);
+    static void ret();
     static void svc(uint8_t imm8);
 
     static void fault(FaultCode code);
     
     /**
-     * For debugging use; using the current codeBlock and PC,
-     * reconstruct the current virtual program counter.
+     * Using the current codeBlock and PC, reconstruct the current
+     * virtual program counter. Used for debugging, and for function calls.
      */
     static unsigned reconstructCodeAddr() {
         return SvmMemory::reconstructCodeAddr(codeBlock, SvmCpu::reg(SvmCpu::REG_PC));
     }
 
 private:
-    struct StackFrame {
-        reg_t r7;
-        reg_t r6;
-        reg_t r5;
-        reg_t r4;
-        reg_t r3;
-        reg_t r2;
-        reg_t fp;
-        reg_t sp;
+    struct CallFrame {
+        uint32_t pc;
+        uint32_t fp;
+        uint32_t r2;
+        uint32_t r3;
+        uint32_t r4;
+        uint32_t r5;
+        uint32_t r6;
+        uint32_t r7;
     };
 
     static FlashBlockRef codeBlock;
@@ -72,6 +73,7 @@ private:
     static void adjustSP(int words);
     static void setSP(reg_t addr);
 
+    static void enterFunction(reg_t addr);
     static void branch(reg_t addr);
     static void validate(reg_t addr);
     static void syscall(unsigned num);

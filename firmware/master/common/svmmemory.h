@@ -167,7 +167,7 @@ public:
 
     /**
      * Reconstruct a code address, given a FlashBlock and low-level PC.
-     * This is currently just used for creating readable fault addresses.
+     * Used for debugging, as well as function calls.
      */
     static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc) {
         if (ref.isHeld())
@@ -207,15 +207,15 @@ public:
      * This operation only needs to be performed on 32-bit stores. Not on
      * loads, not on other kinds of stores.
      */
-#ifdef SIFTEO_SIMULATOR
     static void squashPhysicalAddr(Svm::reg_t &r) {
+#ifdef SIFTEO_SIMULATOR
         if (r != (uint32_t)r) {
             uintptr_t offset = reinterpret_cast<uint8_t*>(r) - userRAM; 
             if (offset < RAM_SIZE_IN_BYTES)
                 r = offset + VIRTUAL_RAM_BASE;
         }
-    }   
 #endif
+    }   
 
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES];    
