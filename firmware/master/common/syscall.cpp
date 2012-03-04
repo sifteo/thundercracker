@@ -26,6 +26,15 @@
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "event.h"
+#include "tasks.h"
+
+static void returnFromYield() {
+    // Idle tasks to execute on our way back up from a yielding syscall
+    AudioMixer::instance.fetchData();
+    Tasks::work();
+    Event::dispatch();
+}
+
 
 extern "C" {
 
@@ -558,19 +567,19 @@ void _SYS_exit(void)
 void _SYS_yield(void)
 {
     Radio::halt();
-    Event::dispatch();
+    returnFromYield();
 }
 
 void _SYS_paint(void)
 {
     CubeSlots::paintCubes(CubeSlots::vecEnabled);
-    Event::dispatch();
+    returnFromYield();
 }
 
 void _SYS_finish(void)
 {
     CubeSlots::finishCubes(CubeSlots::vecEnabled);
-    Event::dispatch();
+    returnFromYield();
 }
 
 void _SYS_ticks_ns(int64_t *nanosec)

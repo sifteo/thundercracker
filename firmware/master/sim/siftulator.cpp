@@ -50,8 +50,6 @@
 
 #include "radio.h"
 #include "systime.h"
-#include "audiomixer.h"
-#include "tasks.h"
 
 /*
  * Network protocol constants
@@ -335,9 +333,6 @@ void Radio::halt()
             // Sending
             Siftulator_send();
         }
-        
-        AudioMixer::instance.fetchData();
-        Tasks::work();
     }
 
     inHalt = false;
