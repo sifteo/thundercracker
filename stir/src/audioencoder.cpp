@@ -42,9 +42,8 @@ SpeexEncoder::SpeexEncoder(float quality) :
     encoderState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODE));
     speex_bits_init(&bits);
 
-    spx_int32_t vbrMax = 100000; // Arbitrary big number
     spx_int32_t vbrEnabled = 1;
-    spx_int32_t complexity = 10;  // Unbounded CPU for encoding
+    spx_int32_t complexity = 10;     // Unbounded CPU for encoding
 
     speex_encoder_ctl(encoderState, SPEEX_SET_VBR, &vbrEnabled);
 
@@ -53,7 +52,6 @@ SpeexEncoder::SpeexEncoder(float quality) :
     speex_encoder_ctl(encoderState, SPEEX_GET_VBR, &vbrEnabled);
     assert(vbrEnabled == 1);
 
-    speex_encoder_ctl(encoderState, SPEEX_SET_VBR_MAX_BITRATE, &vbrMax);
     speex_encoder_ctl(encoderState, SPEEX_SET_VBR_QUALITY, &quality);
     speex_encoder_ctl(encoderState, SPEEX_SET_COMPLEXITY, &complexity);
     speex_encoder_ctl(encoderState, SPEEX_GET_FRAME_SIZE, &frameSize);
