@@ -38,7 +38,7 @@ bool SpeexDecoder::decodeFrame(FlashStream &in, AudioBuffer &out)
     unsigned outAvailable;
     uint8_t *outBuf = out.reserve(DECODED_FRAME_SIZE, &outAvailable);
     if (outAvailable != DECODED_FRAME_SIZE)
-        return false;   // Output flow control; nothing to do yet.
+        return true;   // Output flow control; nothing to do yet.
 
     // Temporary buffer for Speex bits
     FlashStreamBuffer<256> inStream;
@@ -56,6 +56,7 @@ bool SpeexDecoder::decodeFrame(FlashStream &in, AudioBuffer &out)
     uint8_t *frameData = inStream.read(in, frameSize);
     if (!frameData)
         return false;   // Unexpected EOF
+
     speex_bits_set_bit_buffer(&inBits, (void*) frameData, frameSize);
 
     if (speex_decode_int(this->decodeState, &inBits, (spx_int16_t*)outBuf))
