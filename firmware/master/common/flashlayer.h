@@ -262,7 +262,7 @@ public:
         return offset >= getSize();
     }
 
-    inline bool tell() const {
+    inline uint32_t tell() const {
         return offset;
     }
 
