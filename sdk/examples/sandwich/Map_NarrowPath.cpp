@@ -60,7 +60,7 @@ void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
     p->tileID = nid;
     recordCount++;
     // is it walkable? (remember to convert normalized tile position to global tile position)
-    if (pGame->GetMap()->IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
+    if (gGame.GetMap()->IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
       // open the record
       p->parentDirection = (dir+2)%4;
       p->costToThis = parent->costToThis + 1;

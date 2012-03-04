@@ -6,12 +6,13 @@ private:
 	uint32_t mQuest;
 	uint32_t mQuestMask;
 	uint32_t mUnlockMask;
-	uint32_t mKeyCount;
   	uint32_t mItemSet;
 
 public:
 	void Init();
 	bool AdvanceQuest();
+
+	inline const QuestData* Quest() const { return gQuestData+mQuest; }
 	
 	bool FlagTrigger(const TriggerData& trigger);
 	bool Flag(uint8_t questId, uint8_t flagId);
@@ -21,12 +22,10 @@ public:
 	bool IsActive(const TriggerData& trigger) const;
 	bool IsActive(uint8_t questId, uint8_t flagId) const;
 
-	bool HasAnyItems() const { return mItemSet || mKeyCount > 0; }
+	bool HasAnyItems() const { return mItemSet != 0; }
   	bool PickupItem(int itemId);
-  	bool HasBasicKey() const { return mKeyCount > 0; }
   	bool HasItem(int itemId) const { return (mItemSet & (1<<itemId)) != 0; }
   	unsigned GetItems(uint8_t* buf); // buf must have a capacity of 16 elements
- 	bool DecrementBasicKeyCount();
 
 
 private:

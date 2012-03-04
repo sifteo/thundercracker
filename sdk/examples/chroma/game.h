@@ -14,6 +14,8 @@
 #include "config.h"
 
 using namespace Sifteo;
+struct PuzzleCubeData;
+struct Puzzle;
 
 //singleton class
 class Game
@@ -33,12 +35,14 @@ public:
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
+        STATE_GOODJOB,
+        STATE_NEXTPUZZLE,
 	} GameState;
 
 	typedef enum
 	{
-		MODE_SHAKES,
-		MODE_TIMED,
+        MODE_SURVIVAL,
+        MODE_BLITZ,
 		MODE_PUZZLE,
 	} GameMode;
 
@@ -58,6 +62,8 @@ public:
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
     static const int MAX_MULTIPLIER = 7;
+    static const float GOODJOB_TIME;
+
 
     //number of dots needed for certain thresholds
     enum
@@ -76,7 +82,7 @@ public:
 
 	void Init();
 	void Update();
-	void Reset();
+    void Reset( bool bInGame = true );
 
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
@@ -84,14 +90,14 @@ public:
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	inline GameState getState() const { return m_state; }
-    inline void setState( GameState state ) { m_state = state; }
+    void setState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
     inline void addLevel() { m_iLevel++; }
-    inline unsigned int getDisplayedLevel() const { return m_iLevel + 1; }
+    inline unsigned int getDisplayedLevel() const { return m_iLevel; }
 
 	TimeKeeper &getTimer() { return m_timer; }
     unsigned int getHighScore( unsigned int index ) const;
@@ -124,7 +130,11 @@ public:
     void BlowAll( unsigned int color );
     void EndGame();
 
-    inline void Stabilize() { m_bStabilized = true; }
+    inline void Stabilize()
+    {
+        if( !m_bIsChainHappening )
+            m_bStabilized = true;
+    }
 
     bool AreNoCubesEmpty() const;
     unsigned int CountEmptyCubes() const;
@@ -133,12 +143,19 @@ public:
     void UpCombo();
     inline unsigned int GetComboCount() const { return m_comboCount; }
     void UpMultiplier();
+    const Puzzle *GetPuzzle();
+    const PuzzleCubeData *GetPuzzleData( unsigned int id );
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
+    bool AreMovesLegal() const;
 
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
     //add one piece to the game
     void RespawnOnePiece();
+    void check_puzzle();
+    void gotoNextPuzzle( bool bAdvance );
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
@@ -153,7 +170,7 @@ private:
 	unsigned int m_iLevel;
 	GameState m_state;
 	GameMode m_mode;
-	float m_splashTime;
+    float m_stateTime;
 	TimeKeeper m_timer;
     float m_fLastTime;
     float m_fLastSloshTime;
@@ -170,6 +187,7 @@ private:
     const _SYSAudioModule *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
+    static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
     //how long until we respawn one piece in timer mode
     float m_fTimeTillRespawn;
@@ -185,6 +203,7 @@ private:
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on
     bool m_bStabilized;
+    bool m_bIsChainHappening;
 };
 
 #endif

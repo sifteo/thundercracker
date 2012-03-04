@@ -230,7 +230,6 @@ class VidMode_BG0 : public VidMode {
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
-
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
                         asset.width, asset.height, asset.width, BG0_width);
     }

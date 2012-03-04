@@ -90,15 +90,8 @@ void NeighborSlot::resetSlots(_SYSCubeIDVector cv) {
 }
 
 void NeighborSlot::resetPairs(_SYSCubeIDVector cv) {
-    while(cv) {
-        _SYSCubeID cubeId = Intrinsic::CLZ(cv);
-        for(_SYSCubeID i=0; i<cubeId; ++i) { 
-            gCubesToSides->lookup(i, cubeId)->clear();
-        }
-        for(_SYSCubeID i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
-            gCubesToSides->lookup(cubeId, i)->clear();
-        }
-        cv ^= Intrinsic::LZ(cubeId);
+    for (NeighborPair *p = gCubesToSides; p!= gCubesToSides+NUM_UNIQUE_PAIRS; ++p) {
+        p->clear();
     }
 }
 
@@ -122,7 +115,6 @@ void NeighborSlot::clearSide(_SYSSideID side) {
         for(_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
             if (instances[otherId].neighbors.sides[otherSide] == id()) {
                 instances[otherId].neighbors.sides[otherSide] = 0xff;
-
                 Event::callNeighborEvent(_SYS_NEIGHBOR_REMOVE, id(), side, otherId, otherSide);
                 return;
             }

@@ -44,6 +44,7 @@ unsigned ScoredCubeState_EndOfRound::update(float dt, float stateTime)
 
 void ScoredCubeState_EndOfRound::paint()
 {
+#if (0)
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
     bool neighbored =
@@ -62,11 +63,11 @@ void ScoredCubeState_EndOfRound::paint()
             break;
 
         default:
-            vid.BG0_drawAsset(Vec2(0,0), LetterBG);
+            vid.BG0_drawAsset(Vec2(0,0), TileBG);
             break;
         }
 
-        paintTeeth(vid, ImageIndex_Teeth, true, true);
+        paintBorder(vid, ImageIndex_Teeth, true, true);
         return;
     }
     else if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH * 2.f)
@@ -141,4 +142,5 @@ void ScoredCubeState_EndOfRound::paint()
 
         break;
     }
+#endif
 }

@@ -5,7 +5,6 @@
  */
 
 #include "Intro.h"
-#include "string.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"
 #include "game.h"
@@ -61,23 +60,32 @@ bool Intro::Update( float dt, Banner &banner )
             case STATE_READY:
                 if( Game::Inst().getState() == Game::STATE_PLAYING )
                 {
-                    if( Game::Inst().getMode() == Game::MODE_SHAKES )
+                    if( Game::Inst().getMode() == Game::MODE_SURVIVAL )
                     {
-                        String<16> buf;
-                        buf << "Level " << Game::Inst().getDisplayedLevel();
+                        String<32> buf;
+                        if( Game::Inst().getDisplayedLevel() == 1 )
+                            buf << "1 Cube cleared";
+                        else
+                            buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
                         banner.SetMessage( buf, READYSETGO_BANNER_TIME );
                     }
                     return false;
                 }
-                else if( Game::Inst().getMode() == Game::MODE_SHAKES )
-                    banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
-                else
+                else if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     banner.SetMessage( "60 seconds", READYSETGO_BANNER_TIME );
+                else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
+                {
+                    Game::Inst().setState( Game::STATE_PLAYING );
+                    return false;
+                }
+                else
+                    banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_SET:
-                if( Game::Inst().getMode() == Game::MODE_SHAKES )
+                if( Game::Inst().getMode() == Game::MODE_BLITZ )
+                    banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
+                else
                     return false;
-                banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
                 break;
             case STATE_GO:
                 banner.SetMessage( "Go!", READYSETGO_BANNER_TIME );
@@ -111,6 +119,7 @@ bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &
                 for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
                 {
                     GridSlot *pSlot = pWrapper->GetSlot( i, j );
+
                     int frame = baseFrame;
 
                     //middle ones are first

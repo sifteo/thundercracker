@@ -1,42 +1,55 @@
 <item-database>
 
-	<item id="bread" type="inventory">
+	<item id="bread" storage="inventory">
 		<name>Lembas Bread</name>
 		<description>
 			Lembas Bread
 			Fresh from Middle-Earth
 		</description>
 	</item>
-	<item id="tomato" type="inventory">
+	<item id="tomato" storage="inventory">
 		<name>Heirluminous Tomato</name>
 		<description>
 			An Heirluminous Tomato
 			Glows in the dark!
 		</description>
 	</item>
-	<item id="lettuce" type="inventory">
+	<item id="lettuce" storage="inventory">
 		<name>Lettuce of Courage</name>
 		<description>
 			Lettuce of Courage.
 			Green. Leafy. Justice.
 		</description>
 	</item>
-	<item id="ham" type="inventory">
+	<item id="ham" storage="inventory">
 		<name>Moldy Ham</name>
 		<description>
 			Smelly Ham.
 			... probably still good.
 		</description>
 	</item>
-
-	<item id="basic_key" type="key">
+	<item id="bomb" storage="equipment">
+		<name>Bomb</name>
+		<description>
+			Oh dear! Someone set
+			us up a Bomb!
+		</description>
+	</item>
+	<item id="babomb" storage="equipment">
+		<name>Ba-Bomb</name>
+		<description>
+			Oh.  Another bomb.
+			Ho-hum.
+		</description>
+	</item>
+	<item id="basic_key" storage="equipment" trigger="key">
 		<name>Basic Key</name>
 		<description>
 			Just a plain-old Key
 			Nothing fancy
 		</description>
 	</item>
-	<item id="skeleton_key" type="key">
+	<item id="skeleton_key" storage="equipment" trigger="key">
 		<name>Skeleton Key</name>
 		<description>
 			A skeleton key.
@@ -44,19 +57,4 @@
 		</description>
 	</item>
 
-
-	<item id="bomb" type="equipment">
-		<name>Bomb</name>
-		<description>
-			Oh dear! Someone set
-			us up a Bomb!
-		</description>
-	</item>
-	<item id="babomb" type="equipment">
-		<name>Ba-Bomb</name>
-		<description>
-			Oh.  Another bomb.
-			Ho-hum.
-		</description>
-	</item>
 </item-database>

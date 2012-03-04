@@ -38,6 +38,7 @@ public:
 	void Reset();
 	
     void checkNeighbors();
+	void press( int cube );
 
 private:
     float m_fLastTime;

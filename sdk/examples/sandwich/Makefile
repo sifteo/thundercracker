@@ -13,6 +13,9 @@ OBJS = \
 	Dialog.o \
 	DrawingHelpers.o \
 	Game.o \
+	Game_IntroCutscene.o \
+	Game_WinScreen.o \
+	Game_MainLoop.o \
 	GameState.o \
 	IdleView.o \
 	InventoryView.o \
@@ -52,5 +55,5 @@ CONTENT_TOOLS = \
 	misc.py
 
 
-content_crc.txt: $(CONTENT_TOOLS) *.tmx *-database.xml
+content_crc.txt: $(CONTENT_TOOLS) Content/*
 	python sandwich.py

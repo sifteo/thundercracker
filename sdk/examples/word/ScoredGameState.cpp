@@ -15,13 +15,24 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     }
     else
     {
-        if (GameStateMachine::getNumAnagramsRemaining() <= 0 &&
-            GameStateMachine::getNumCubesInState(CubeStateIndex_NewWordScored) <= 0)
+        if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
+            GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0)
         {
-            // wait for all the cube states to exit the new word state
-            // then shuffle
-            WordGame::playAudio(shake, AudioChannelIndex_Shake);
-            return GameStateIndex_ShuffleScored;        }
+            switch (Dictionary::getPuzzleIndex() - 1)
+            {
+            case 8:  // quiet
+            case 17: // terms
+            case 24: // cause
+            case 30: // before... mosaic
+            case 31: // mosaic
+                return GameStateIndex_StoryCityProgression;
+            default:
+                // wait for all the cube states to exit the new word state
+                // then shuffle
+                WordGame::playAudio(shake, AudioChannelIndex_Shake);
+                return GameStateIndex_ShuffleScored;
+            }
+        }
 
         return GameStateIndex_PlayScored;
     }
@@ -33,7 +44,8 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_Input:
-#ifndef SIFTEO_SIMULATORzzz
+#if (0) // TODO put in the pause menu
+#ifndef SIFTEO_SIMULATOR
         // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
             GameStateMachine::getSecondsLeft() > 3)
@@ -41,6 +53,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
             return GameStateIndex_ShuffleScored;
         }
+#endif
 #endif
         break;
 
@@ -135,8 +148,9 @@ void ScoredGameState::createNewAnagram()
                          data.mNewAnagram.mNumBonusAnagrams,
                          data.mNewAnagram.mLeadingSpaces);
 
-    GameStateMachine::setCurrentMaxLettersPerCube(
-            (unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
+    // TODO data-driven
+    GameStateMachine::setCurrentMaxLettersPerCube(2);
+            //(unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
 
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
@@ -181,78 +195,88 @@ void ScoredGameState::createNewAnagram()
         }
         spacesAdded[i] = '\0';
     }
-    // scramble the string (random permutation)
+
     char scrambled[MAX_LETTERS_PER_WORD + 1];
-    _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
-
-    switch (GameStateMachine::getCurrentMaxLettersPerCube())
+    // TODO data-driven, scramble or not
+    if (Dictionary::getPuzzleIndex() - 1 <= 12)
     {
-    case 1:
-        for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerWord(); ++i)
-        {
-            if (spacesAdded[i] == '\0')
-            {
-                break;
-            }
+        _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
+    }
+    else
+    {
+        // scramble the string (random permutation)
+        _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
 
-            // for each letter, place it randomly in the scrambled array
-        for (unsigned j = WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerWord());
-                 true;
-                 j = (j + 1) % GameStateMachine::getCurrentMaxLettersPerWord())
+        switch (GameStateMachine::getCurrentMaxLettersPerCube())
+        {
+        case 1:
+            for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerWord(); ++i)
             {
-                if (scrambled[j] == '\0')
+                if (spacesAdded[i] == '\0')
                 {
-                    scrambled[j] = spacesAdded[i];
                     break;
                 }
-            }
-        }
-        break;
 
-    default:
-        {
-            // first scramble the cube to word fragments mapping
-            int cubeIndexes[NUM_CUBES];
-            for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
-            {
-                cubeIndexes[i] = i;
-            }
-
-            int scrambledCubes[NUM_CUBES];
-            for (int i = 0; i < (int)arraysize(scrambledCubes); ++i)
-            {
-                for (unsigned j = WordGame::random.randrange(NUM_CUBES);
+                // for each letter, place it randomly in the scrambled array
+            for (unsigned j = WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerWord());
                      true;
-                     j = ((j + 1) % NUM_CUBES))
+                     j = (j + 1) % GameStateMachine::getCurrentMaxLettersPerWord())
                 {
-                    if (cubeIndexes[j] >= 0)
+                    if (scrambled[j] == '\0')
                     {
-                        scrambledCubes[i] = cubeIndexes[j];
-                        cubeIndexes[j] = -1;
+                        scrambled[j] = spacesAdded[i];
                         break;
                     }
                 }
             }
+            break;
 
-            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+        default:
             {
-                // for each letter, place it randomly in the scrambled array
-                unsigned cubeIndex = (unsigned)scrambledCubes[ci];
-                unsigned ltrStartSrc = cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube();
-                unsigned ltrStartDest = ci * GameStateMachine::getCurrentMaxLettersPerCube();
-                unsigned shift =
-                        WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube());
-                for (unsigned i = ltrStartSrc;
-                     i < GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartSrc;
-                     ++i)
+                // first scramble the cube to word fragments mapping
+                int cubeIndexes[NUM_CUBES];
+                for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
                 {
-                    scrambled[ltrStartDest + ((i - ltrStartSrc) + shift) % GameStateMachine::getCurrentMaxLettersPerCube()] =
-                            spacesAdded[i];
+                    cubeIndexes[i] = i;
+                }
+
+                int scrambledCubes[NUM_CUBES];
+                for (int i = 0; i < (int)arraysize(scrambledCubes); ++i)
+                {
+                    for (unsigned j = WordGame::random.randrange(NUM_CUBES);
+                         true;
+                         j = ((j + 1) % NUM_CUBES))
+                    {
+                        if (cubeIndexes[j] >= 0)
+                        {
+                            scrambledCubes[i] = cubeIndexes[j];
+                            cubeIndexes[j] = -1;
+                            break;
+                        }
+                    }
+                }
+
+                for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+                {
+                    // for each letter, place it randomly in the scrambled array
+                    unsigned cubeIndex = (unsigned)scrambledCubes[ci];
+                    unsigned ltrStartSrc = cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube();
+                    unsigned ltrStartDest = ci * GameStateMachine::getCurrentMaxLettersPerCube();
+                    unsigned shift =
+                            WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube());
+                    for (unsigned i = ltrStartSrc;
+                         i < GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartSrc;
+                         ++i)
+                    {
+                        scrambled[ltrStartDest + ((i - ltrStartSrc) + shift) % GameStateMachine::getCurrentMaxLettersPerCube()] =
+                                spacesAdded[i];
+                    }
                 }
             }
+            break;
         }
-        break;
     }
+
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
     ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
            _SYS_strnlen(spacesAdded, GameStateMachine::getCurrentMaxLettersPerWord() + 1));

@@ -46,6 +46,7 @@ hyperdot_idle = image{"hyperball_idle.png", height=32}
 hyperdot_explode = image{"hyperball_explode.png", height=32}
 hyperdot_activation = image{"hyperball_activation.png", height=16}
 rockdot = image{"rock.png", height=32}
+rock_explode = image{"rock_explosion.png", height=32, pinned=true}
 rainball_idle = image{"rainball_idle.png", height=32}
 rainball_explode = image{"rainball_explode.png", height=32}
 mults = image{"mults.png", height=16, pinned=true}

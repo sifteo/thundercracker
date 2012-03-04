@@ -1,0 +1,2 @@
+tc-siftulator -n 3 &
+./betterflow.sim

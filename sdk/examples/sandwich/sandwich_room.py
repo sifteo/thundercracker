@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, math
+import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_trigger import *
 
 # constants
@@ -108,7 +108,8 @@ class Room:
 			for (x,y) in misc.spiral_into_madness():
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y) and self.subdiv_masks[x+(y<<3)] & 1:
 					return (x,y)
-	
+		return (0,0)
+		
 	def secondary_center(self):
 		# todo bridges
 		assert self.subdiv_type != SUBDIV_NONE, "non-subdivided rooms don't have a secondary center"

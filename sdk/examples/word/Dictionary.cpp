@@ -30,7 +30,8 @@ bool Dictionary::pickWord(char* buffer,
     {
         _SYS_strlcpy(buffer, puzzles[sPickIndex], MAX_LETTERS_PER_WORD + 1);
 
-        numAnagrams = puzzlesNumGoalAnagrams[sPickIndex];
+        // TODO make data-driven
+        numAnagrams = MAX(1, puzzlesNumGoalAnagrams[sPickIndex]);
         numBonusAnagrams = puzzlesNumBonusAnagrams[sPickIndex];
         leadingSpaces = puzzlesUseLeadingSpaces[sPickIndex];
         sPickIndex = (sPickIndex + 1) % NUM_PUZZLES;
@@ -43,6 +44,12 @@ bool Dictionary::pickWord(char* buffer,
         return true;
     }
     return false;
+}
+
+unsigned Dictionary::getPuzzleIndex()
+{
+    // TODO data-driven
+    return sPickIndex;
 }
 
 bool Dictionary::isWord(const char* string, bool& isBonus)

@@ -1,6 +1,6 @@
 import lxml.etree
 import os
-import os.path
+import posixpath
 import re
 import tmx
 import misc
