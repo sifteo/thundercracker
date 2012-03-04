@@ -57,7 +57,20 @@ void SvmRuntime::fault(FaultCode code)
 {
     // TODO: implement
 
-    LOG(("*** VM FAULT code %d, at PC=%08x\n", code, reconstructCodeAddr()));
+    LOG(("***\n"
+         "*** VM FAULT code %d\n"
+         "***\n"
+         "***   PC: %08x SP: %"PRIxPTR"\n"
+         "***  GPR: %08x %08x %08x %08x\n"
+         "***       %08x %08x %08x %08x\n"
+         "***\n",
+         code, reconstructCodeAddr(),
+         SvmCpu::reg(REG_SP),
+         (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
+         (unsigned) SvmCpu::reg(2), (unsigned) SvmCpu::reg(3),
+         (unsigned) SvmCpu::reg(4), (unsigned) SvmCpu::reg(5),
+         (unsigned) SvmCpu::reg(6), (unsigned) SvmCpu::reg(7)));
+
     ASSERT(0);
 }
 
