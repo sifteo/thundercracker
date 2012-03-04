@@ -39,7 +39,10 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
      *      numValidBytes result when we hit a terminator instruction.
      */
 
+#ifdef SVM_TRACE
     LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
+#endif
+
     return numValidBytes;
 }
 
@@ -85,7 +88,11 @@ bool SvmValidator::isValid16(uint16_t instr)
         // 10111111 00000000     nop
         return true;
     }
+
+#ifdef SVM_TRACE
     LOG(("VALIDATOR: invalid 16bit instruction: 0x%x\n", instr));
+#endif
+
     return false;
 }
 
@@ -109,6 +116,10 @@ bool SvmValidator::isValid32(uint32_t instr)
     if ((instr & DivMask) == DivTest) {
         return true;
     }
+
+#ifdef SVM_TRACE
     LOG(("VALIDATOR: invalid 32-bit instruction: 0x%x\n", instr));
+#endif
+
     return false;
 }

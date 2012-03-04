@@ -101,7 +101,6 @@ static struct Siftulator {
 void SysTime::init()
 {
     self.simTicks = 0;
-
 }
 
 SysTime::Ticks SysTime::ticks()

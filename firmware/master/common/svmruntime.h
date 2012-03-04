@@ -33,6 +33,8 @@ public:
         F_CODE_FETCH,           // Runtime code fetch error
         F_CODE_ALIGNMENT,       // Runtime code alignment error
         F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
+        F_RESERVED_SVC,         // Reserved SVC encoding
+        F_RESERVED_ADDROP,      // Reserved ADDROP encoding
     };
     
     static void run(uint16_t appId);

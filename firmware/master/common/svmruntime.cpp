@@ -96,19 +96,16 @@ void SvmRuntime::call(reg_t addr)
 
 void SvmRuntime::svc(uint8_t imm8)
 {
-    LOG(("svc, imm8 %d\n", imm8));
     if ((imm8 & (1 << 7)) == 0) {
         svcIndirectOperation(imm8);
         return;
     }
     if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
-        LOG(("direct syscall #%d\n", syscallNum));
         syscall(syscallNum);
         return;
     }
     if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
-        LOG(("SP = validate(SP - imm5*4)\n"));
         uint8_t imm5 = imm8 & 0x1f;
         adjustSP(imm5);
         return;
@@ -119,28 +116,24 @@ void SvmRuntime::svc(uint8_t imm8)
 
     switch (sub) {
     case 0x1c:  { // 0b11100
-        LOG(("svc: r8-9 = validate(r%d)\n", r));
         validate(SvmCpu::reg(r));
         return;
     }
     case 0x1d:  // 0b11101
-        ASSERT(0 && "svc: reserved\n");
+        fault(F_RESERVED_SVC);
         return;
     case 0x1e: { // 0b11110
-        LOG(("svc: Indirect call(r%d)\n", r));
         call(SvmCpu::reg(r));
         return;
     }
     case 0x1f:  // 0b11110
-        LOG(("svc: Indirect tail call(r%d)\n", r));
         call(SvmCpu::reg(r));
         _SYS_ret();
         return;
     default:
-        ASSERT(0 && "unknown sub op for svc");
+        fault(F_RESERVED_SVC);
         break;
     }
-    ASSERT(0 && "unhandled SVC");
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
@@ -151,26 +144,19 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     uint32_t *blockBase = reinterpret_cast<uint32_t*>(codeBlock->getData());
     uint32_t literal = blockBase[imm8];
 
-    LOG(("indirect, literal 0x%08x @ (0x%08x+%03x)\n", literal,
-        codeBlock->getAddress(), (int)(imm8 * sizeof(uint32_t))));
-
     if ((literal & CallMask) == CallTest) {
-        LOG(("indirect call\n"));
         call(literal);
     }
     else if ((literal & TailCallMask) == TailCallTest) {
-        LOG(("indirect tail call\n"));
         call(literal);
         _SYS_ret();
     }
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        LOG(("indirect syscall #%d\n", imm15));
         syscall(imm15);
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        LOG(("indirect tail syscall #%d\n", imm15));
         syscall(imm15);
         _SYS_ret();
     }
@@ -183,27 +169,21 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
     }
     else {
-        ASSERT(0 && "unhandled svc Indirect Operation");
+        fault(F_RESERVED_SVC);
     }
 }
 
 void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 {
     switch (opnum) {
-    case 0: {
-        LOG(("addrOp: long branch to 0x%"PRIxPTR"\n", address));
+    case 0:
         branch(address);
         break;
-    }
-    case 1:
-        LOG(("addrOp: Asynchronous preload\n"));
-        break;
     case 2:
-        LOG(("addrOp: Assign to r8-9\n"));
         validate(address);
         break;
     default:
-        LOG(("unknown addrOp: %d (0x%"PRIxPTR")\n", opnum, address));
+        fault(F_RESERVED_ADDROP);
         break;
     }
 }
@@ -220,9 +200,6 @@ void SvmRuntime::validate(reg_t address)
 
     SvmCpu::setReg(8, reinterpret_cast<reg_t>(bro));
     SvmCpu::setReg(9, reinterpret_cast<reg_t>(brw));
-
-    LOG(("validated: %p:%p for address 0x%"PRIxPTR"\n",
-        bro, brw, address));
 }
 
 void SvmRuntime::syscall(unsigned num)
@@ -249,12 +226,14 @@ void SvmRuntime::syscall(unsigned num)
         return;
     }
 
+#ifdef SVM_TRACE
     LOG(("SYSCALL: enter _SYS_%d(%x, %x, %x, %x, %x, %x, %x, %x)\n",
         num,
         (unsigned)SvmCpu::reg(0), (unsigned)SvmCpu::reg(1),
         (unsigned)SvmCpu::reg(2), (unsigned)SvmCpu::reg(3),
         (unsigned)SvmCpu::reg(4), (unsigned)SvmCpu::reg(5),
         (unsigned)SvmCpu::reg(6), (unsigned)SvmCpu::reg(7)));
+#endif
 
     uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
                          SvmCpu::reg(2), SvmCpu::reg(3),
@@ -264,8 +243,10 @@ void SvmRuntime::syscall(unsigned num)
     uint32_t result0 = result;
     uint32_t result1 = result >> 32;
 
+#ifdef SVM_TRACE
     LOG(("SYSCALL: leave _SYS_%d() -> %x:%x\n",
         num, result1, result0));
+#endif
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
@@ -280,8 +261,6 @@ void SvmRuntime::setSP(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
     
-    LOG(("SP = 0x%"PRIxPTR"\n", addr));
-
     if (!SvmMemory::mapRAM(addr, 0, pa))
         fault(F_BAD_STACK);
 

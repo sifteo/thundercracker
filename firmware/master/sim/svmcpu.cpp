@@ -719,7 +719,7 @@ static uint16_t fetch()
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
-#if 1
+#ifdef SVM_TRACE
     LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(), *pc));
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
