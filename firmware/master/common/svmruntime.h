@@ -40,9 +40,10 @@ public:
     static void run(uint16_t appId);
     static void exit();
 
-    static void call(reg_t addr);
-    static void ret();
     static void svc(uint8_t imm8);
+    static void call(reg_t addr);
+    static void tailcall(reg_t addr);    
+    static void ret();
 
     static void fault(FaultCode code);
     
@@ -70,6 +71,7 @@ private:
     static FlashBlockRef dataBlock;
     static SvmMemory::PhysAddr stackLimit;
 
+    static void resetSP();
     static void adjustSP(int words);
     static void setSP(reg_t addr);
 

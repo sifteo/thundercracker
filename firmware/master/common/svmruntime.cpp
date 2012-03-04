@@ -46,7 +46,7 @@ void SvmRuntime::run(uint16_t appId)
 
     // Stack setup
     SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
-    setSP(SvmMemory::VIRTUAL_RAM_TOP);
+    resetSP();
 
     // Tail call into user code. main() does not have a CallFrame.
     enterFunction(pInfo.entry);
@@ -125,6 +125,29 @@ void SvmRuntime::call(reg_t addr)
     enterFunction(addr);
 }
 
+void SvmRuntime::tailcall(reg_t addr)
+{
+    // Equivalent to a call() followed by a ret(), but without
+    // allocating a new CallFrame on the stack.
+    
+    reg_t fp = SvmCpu::reg(REG_FP);
+
+    if (fp) {
+        // Restore stack to bottom of the saved frame
+        setSP(fp);
+    } else {
+        // Tailcall from main(), restore stack to top
+        resetSP();
+    }
+
+#ifdef SVM_TRACE
+    LOG(("TAILCALL: %08x, sp-%u, Keeping frame %"PRIxPTR"\n",
+        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24), fp));
+#endif
+
+    enterFunction(addr);
+}
+
 void SvmRuntime::enterFunction(reg_t addr)
 {
     // Allocate stack space for this function, and enter it
@@ -195,8 +218,7 @@ void SvmRuntime::svc(uint8_t imm8)
         return;
     }
     case 0x1f:  // 0b11110
-        call(SvmCpu::reg(r));
-        _SYS_ret();
+        tailcall(SvmCpu::reg(r));
         return;
     default:
         fault(F_RESERVED_SVC);
@@ -216,8 +238,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         call(literal);
     }
     else if ((literal & TailCallMask) == TailCallTest) {
-        call(literal);
-        _SYS_ret();
+        tailcall(literal);
     }
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
@@ -226,7 +247,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
         syscall(imm15);
-        _SYS_ret();
+        ret();
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
@@ -318,6 +339,11 @@ void SvmRuntime::syscall(unsigned num)
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
+}
+
+void SvmRuntime::resetSP()
+{
+    setSP(SvmMemory::VIRTUAL_RAM_TOP);
 }
 
 void SvmRuntime::adjustSP(int words)
