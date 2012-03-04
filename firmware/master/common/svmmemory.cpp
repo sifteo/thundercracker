@@ -19,10 +19,15 @@ bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
     if ((offset = reinterpret_cast<PhysAddr>(va) - userRAM) <= RAM_SIZE_IN_BYTES) {
         // Already a valid PA. This check is required for handling addresses
         // that result from pointer arithmetic on SP.
+
         pa = reinterpret_cast<PhysAddr>(va);
 
-    } else if ((offset = va - VIRTUAL_RAM_BASE) <= RAM_SIZE_IN_BYTES) {
-        // Standard RAM address virtual-to-physical translation
+    } else if ((offset = (uint32_t)va - VIRTUAL_RAM_BASE) <= RAM_SIZE_IN_BYTES) {
+        // Standard RAM address virtual-to-physical translation.
+        // Note that 'va' may have junk in the upper 32 bits on 64-bit hosts,
+        // due to overflow from 32-bit subtraction operations that have been emulated
+        // in 64-bit registers.
+
         pa = userRAM + offset;
 
     } else {
