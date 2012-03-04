@@ -1,6 +1,8 @@
 BetterflowAssets = group{quality=10}
 
 BgTile = image{ "bg.png" }
+IconBlue = image{ "icon_blue.png" }
+IconGreen = image{ "icon_green.png" }
 Icon = image{ "icon.png" }
 
 --[[
