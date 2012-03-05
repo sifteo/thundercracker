@@ -17,8 +17,7 @@ OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
 ASSETDEPS += *.png $(ASSETS).lua
 
-default: betterflow.sim
-	tc-siftulator -n 3 &
-	./betterflow.sim > output.txt
+#default: betterflow.sim
+#	./go
 
 include $(TC_DIR)/firmware/master/Makefile.rules

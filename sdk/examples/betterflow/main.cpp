@@ -56,7 +56,7 @@ static void DrawColumn(Cube* pCube, int x) {
 	}
 }
 
-// wrapper for paint()
+// wrapper for paint() that updates the footer
 static int gCurrentTip = 0;
 static float gPrevTime;
 static void Paint(Cube *pCube) {
@@ -64,7 +64,6 @@ static void Paint(Cube *pCube) {
 	float dt = time - gPrevTime;
 	if (dt > 4.f) {
 		gPrevTime = time - fmodf(dt, 4.f);
-		gCurrentTip = (gCurrentTip+1) % NUM_TIPS;
 		const AssetImage& tip = *gTips[gCurrentTip];
         _SYS_vbuf_writei(
         	&pCube->vbuf.sys, 
@@ -73,10 +72,12 @@ static void Paint(Cube *pCube) {
             0, 
             tip.width * tip.height
         );
+		gCurrentTip = (gCurrentTip+1) % NUM_TIPS;
 	}
 	System::paint();
 }
 
+// retrieve the acceleration of the cube due to tilting
 const float kAccelThreshold = 0.85f;
 static float GetAccel(Cube *pCube) {
 	float accel = 0.25f * pCube->virtualAccel().x;
@@ -148,17 +149,34 @@ void siftmain() {
     for (int x = -1; x < 17; x++) { DrawColumn(pCube, x); }
     Paint(pCube);
     // initialize physics
-	float velocity = 0;
     float position = 0;
 	int prev_ut = 0;
 	gPrevTime = System::clock();
-	// wait for a tilt
 	for(;;) {
+		// wait for a tilt or touch
+		bool prevTouch = pCube->touching();
 		while(fabs(GetAccel(pCube)) < kAccelThreshold) {
 			Paint(pCube);
+			bool touch = pCube->touching();
+			// when touching any icon but the last one
+			if (ComputeSelected(position) != NUM_ICONS-1 && touch && !prevTouch) {
+				goto Selected;
+			} else {
+				prevTouch = touch;
+			}
+
 		}
-	    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, LabelEmpty.tiles, 0, LabelEmpty.width * LabelEmpty.height);
+		// hide label
+	    _SYS_vbuf_writei(
+	    	&pCube->vbuf.sys, 
+	    	offsetof(_SYSVideoRAM, bg1_tiles) / 2, 
+	    	LabelEmpty.tiles, 0, 
+	    	LabelEmpty.width * 
+	    	LabelEmpty.height
+	    );
 		bool doneTilting = false;
+		float velocity = 0;
+		position = StoppingPositionFor(ComputeSelected(position));
 		while(!doneTilting) {
 			// update physics
 			const float accel = GetAccel(pCube);
@@ -168,18 +186,17 @@ void siftmain() {
 			const bool isRighty = position > 96.f*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
 				velocity += accel * dt;
-				velocity *= 0.95f;
+				velocity *= 0.99f;
 			} else {
-				const float stiffness = 0.2f;
+				const float stiffness = 0.333f;
 				const int selected = ComputeSelected(position);
 				const float stopping_position = StoppingPositionFor(selected);
 				velocity += stiffness * (stopping_position - position) * dt;
 				velocity *= 0.875f;
-				doneTilting = fabs(stopping_position - position) < 0.5f;
+				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
 			}
 			position += velocity * dt;
 			const float pad = 24.f;
-			//position = clamp(position, -pad, 96.f*(NUM_ICONS-1)+pad);
 			// update view
 			int ui = position + 0.5f;
 			int ut = position / 8;
@@ -195,13 +212,51 @@ void siftmain() {
 			Paint(pCube);
 		}
 		{
+			// show the title of the game
 			const AssetImage& label = *gLabels[ComputeSelected(position)];
 		    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 		}
 	}
+	Selected:
+	// hide bg1
+	//_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 12, 0, Tip0.height); // just footer
+	canvas.set();
+	
+	// isolate the selected icon
+	canvas.BG0_setPanning(Vec2(0,0));
+	for(int row=0; row<18; ++row)
+	for(int col=0; col<18; ++col) {
+		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
+	}
+	canvas.BG0_drawAsset(Vec2(3,2), *gIcons[ComputeSelected(position)]);
+	System::paintSync();
+	System::paintSync();
 
-//	canvas.setWindow(16,80);
-//	for (int x = prev_ut; x < prev_ut+18; x++) { DrawColumn(pCube, x); }
-
+	// scroll-out icon with a parabolic arc
+	const float k = 5.f;
+	int pany = 0;
+	int i=0;
+	int prevBottom = 12;
+	while(pany>-128) {
+		i++;
+		float u = i/30.f;
+		u = (1.-k*u);
+		pany = int(8*(1.f-u*u));
+		if (pany < -32) {
+			// TODO: make this math a little less hacky.  I think sometimes
+			// I cut off the bottom row before it's offscreen :(
+			int newBottom = 15 + (pany/8);
+			while(newBottom < prevBottom && prevBottom>=0) {
+				for(int col=0; col<18; ++col) {
+					canvas.BG0_drawAsset(Vec2(col, prevBottom), BgTile);
+				}
+				prevBottom--;
+			}
+		}
+		canvas.BG0_setPanning(Vec2(0, pany));
+		System::paint();
+	}
+	// TODO: actually choose game
+	LOG(("Selected Game: %d\n", ComputeSelected(position)));
 	for(;;) { System::paint(); }
 }

@@ -1,2 +1,3 @@
 tc-siftulator -n 3 &
+sleep 1s
 ./betterflow.sim
