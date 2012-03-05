@@ -20,7 +20,7 @@ const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROL
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 const float GridSlot::START_FADING_TIME = 1.75f;
 const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
-const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 1.5f;
+const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 0.75f;
 const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
 //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
 const float GridSlot::MULTIPLIER_NUMBER_PERCENTON = 0.7f;
