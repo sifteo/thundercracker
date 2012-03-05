@@ -18,7 +18,7 @@ namespace Buddies {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const bool kLoadAssets = true;
-const unsigned int kNumCubes = 2; // Number of cubes used in this game
+const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
 // Tuning (All Modes)
