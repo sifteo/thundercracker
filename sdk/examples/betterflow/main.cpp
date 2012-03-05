@@ -127,6 +127,11 @@ void siftmain() {
 	Cube *pCube = gCubes;
 	_SYS_vbuf_pokeb(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_BG1);
 	Canvas canvas(pCube->vbuf);
+	for(;;) {
+	// HACK ALERT: Relies on the fact that vram is the same for both modes
+	canvas.clear();
+	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+	BG1Helper(*pCube).Flush();
     // Allocate tiles for the static upper label, and draw it.
     {
     	const AssetImage& label = *gLabels[0];
@@ -254,5 +259,8 @@ void siftmain() {
 	}
 	// TODO: actually choose game
 	LOG(("Selected Game: %d\n", ComputeSelected(position)));
-	for(;;) { System::paint(); }
+	for(int i=0; i<32; ++i) {
+		System::paint();
+	}
+	}
 }

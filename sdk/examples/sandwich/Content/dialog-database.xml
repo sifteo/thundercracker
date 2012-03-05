@@ -1,36 +1,72 @@
 <dialog-database>
+
+	<dialog id="lembas_bread_description" npc="lembas_bread">
+		<text image="pearl_detail">
+			The foundation of a
+			delicious sandwich.
+		</text>
+	</dialog>
+
 	<dialog id="sprout_hello" npc="sprout">
+		<text image="sprout_detail">
+			unused
+		</text>
+		<text image="sprout_detail">
+			unused
+		</text>
+
+	</dialog>
+
+	<dialog id="burgher_unused" npc="sprout">
+		<text image="burgher_detail">
+			unused
+		</text>
+	</dialog>
+		
+	<dialog id="sprout_followMe1" npc="sprout">
 		<text image="sprout_detail">
 			Hello, Princess Pearl!
 			It's me, Sprout!
 		</text>
-		<text image="pearl_detail">
+		<text image="sprout_detail">
+			Follow me to
+			Castle Hoagie.
+		</text>
+
+	</dialog>
+	
+	<dialog id="sprout_followMe2" npc="sprout">
+
+		<text image="sprout_detail">
 			Fancy meeting you
 			here in the woods!
 		</text>
 		<text image="sprout_detail">
-			I saw a tomato around
-			here somewhere.
-		</text>
-	</dialog>
-
-	<dialog id="burgher_hello" npc="burgher">
-		<text image="burgher_detail">
-			You'll never find the
-			final pieces of the 
-			sandwich! Muahahaha!
-		</text>
-		<text image="pearl_detail">
-			I'll show you!
+			The castle is right
+			up around the bend.
 		</text>
 	</dialog>
 	
+	<dialog id="sprout_followMe3" npc="sprout">
+
+		<text image="sprout_detail">
+			You made it!
+			Just follow the path.
+		</text>
+	</dialog>
+
+		
 	<dialog id="king_intro" npc="sprout">
 		<text image="sprout_detail">
 			I'm the king.			
 		</text>
 		<text image="sprout_detail">
-			Introduce the game here.
+			The Sandwich Eternis
+			has been stolen!
+		</text>
+		<text image="sprout_detail">
+			Find the 5 ingredients
+			and bring them home!
 		</text>
 	</dialog>
 </dialog-database>

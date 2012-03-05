@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="48" height="56" tilewidth="16" tileheight="16">
  <properties>
   <property name="ambient" value="butterfly"/>
@@ -625,17 +624,6 @@
   <object name="DungeonGate" type="Gateway" x="560" y="448" width="32" height="32">
    <properties>
     <property name="target" value="dungeon:DungeonGate"/>
-   </properties>
-  </object>
-  <object name="Tomato" type="Item" x="432" y="576" width="32" height="32">
-   <properties>
-    <property name="id" value="tomato"/>
-    <property name="quest" value="tutorial"/>
-   </properties>
-  </object>
-  <object name="Sprout" type="NPC" x="16" y="176" width="32" height="32">
-   <properties>
-    <property name="id" value="sprout_hello"/>
    </properties>
   </object>
  </objectgroup>
