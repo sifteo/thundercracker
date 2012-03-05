@@ -1,0 +1,12 @@
+FLASH[0]: Sending asset group 0
+FLASH[1]: Sending asset group 0
+FLASH[2]: Sending asset group 0
+1 cubes connected
+resuming game runtime...
+2 cubes connected
+resuming game runtime...
+3 cubes connected
+resuming game runtime...
+FLASH[1]: Finished loading group 0x1000334e0 in 2.881 seconds
+FLASH[0]: Finished loading group 0x1000334e0 in 3.077 seconds
+FLASH[2]: Finished loading group 0x1000334e0 in 3.276 seconds
