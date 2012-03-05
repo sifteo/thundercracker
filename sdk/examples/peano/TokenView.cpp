@@ -83,6 +83,11 @@ void TokenView::DidJoinGroup()
 
     mTimeout = Game::rand.uniform(0.2f, 0.25f);
     mStatus = StatusQueued;
+    //disable any shown sprites
+    for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
+    {
+        GetCube()->backgroundLayer.hideSprite(i);
+    }
     if (grp != NULL)
     {
         PaintNow();
