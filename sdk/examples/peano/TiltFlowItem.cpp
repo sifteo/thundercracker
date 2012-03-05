@@ -4,9 +4,8 @@ namespace TotalsGame
 
     Vec2 TiltFlowItem::GetSourcePosition() {return sourcePosition;}
 
-    TiltFlowItem::TiltFlowItem (/*Color color TODO */)
-    {
-      // TODO this.color = color;
+    TiltFlowItem::TiltFlowItem ()
+    {      
       name = "";
       description = "";
       images = NULL;
@@ -21,7 +20,6 @@ namespace TotalsGame
         numImages = 1;
       name = "";
       description = " ";
-      //TODO this.color = Color.Mask;
         imageIndex = 0;
         id = 0;
     }
@@ -34,7 +32,6 @@ namespace TotalsGame
       numImages = _numImages;
       name = "";
       description = " ";
-      //TODO this.color = Color.Mask;
       imageIndex = 0;
       id = 0;
     }

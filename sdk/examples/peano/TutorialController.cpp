@@ -77,12 +77,12 @@ WaitForTouchEventHanlder waitForTouchEventHandler[2];
 
 
 
-    /* TODO
+    /* TODO lost and found
      mGame.CubeSet.LostCubeEvent += OnLostCube;
      mGame.CubeSet.NewCubeEvent += OnNewCube;
      */
 
-/* TODO
+/*
  void OnLostCube(Cube c) {
  if (!c.IsUnused()) {
  var blanky = mGame.CubeSet.FindAnyIdle();
@@ -190,8 +190,6 @@ Game::GameState Run() {
 
     // now show top-down
     narrator->SetMessage("Try connecting Keys\nTop-to-Bottom...");
-    firstToken->Lock();
-    secondToken->Lock();
     {
         TokenGroup *grp = (TokenGroup*)firstToken->token->current;
         delete grp;
@@ -202,8 +200,6 @@ Game::GameState Run() {
         firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
         secondToken->SetHideMode(TokenView::BIT_TOP | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
     }
-    firstToken->Unlock();
-    secondToken->Unlock();
 
     Game::neighborEventHandler = &connectTwoCubesVerticalEventHandler;
 
@@ -223,8 +219,6 @@ Game::GameState Run() {
 
     // mix up
     narrator->SetMessage("Okay, let's mix them up a little...", NarratorView::EmoteMix01);
-    firstToken->Lock();
-    secondToken->Lock();
     {
         TokenGroup *grp = (TokenGroup*)firstToken->token->current;
         delete grp;
@@ -237,9 +231,6 @@ Game::GameState Run() {
         firstToken->HideOps();
         secondToken->HideOps();
     }
-    firstToken->Unlock();
-    secondToken->Unlock();
-
 
     //set window to bottom half of screen so we can animate peano
     //while text window is open above
@@ -541,7 +532,6 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
                 firstToken->DidJoinGroup();
                 secondToken->DidJoinGroup();
             }
-            //TODO redundant? firstToken.Cube.ClearEvents();
             PLAY_SFX(sfx_Tutorial_Correct);
         }
     }
@@ -565,7 +555,6 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
                 firstToken->DidJoinGroup();
                 secondToken->DidJoinGroup();
             }
-            //TODO redundant? firstToken.Cube.ClearEvents();
             PLAY_SFX(sfx_Tutorial_Correct);
         }
     }

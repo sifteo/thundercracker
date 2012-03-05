@@ -18,7 +18,6 @@ namespace TotalsGame
         bool overlayShown;
 
     public:
-        //TODO duplicate work in processing bg1!
         VidMode_BG0_SPR_BG1 backgroundLayer;
         BG1Helper foregroundLayer;
 

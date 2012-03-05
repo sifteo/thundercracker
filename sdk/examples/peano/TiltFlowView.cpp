@@ -71,19 +71,18 @@ void TiltFlowView::Tick()
     bool wantsCubePaint = false;
 
     int newMarquee = menu->GetSimTime() / kMarqueeDelay;
-    if (newMarquee != mMarquee) {
+    if (newMarquee != mMarquee)
+    {
         mMarquee = newMarquee;
-        if (OkayToPaint()) {
-            PaintFooter(GetCube());
-            wantsCubePaint = true;
-        }
+        PaintFooter(GetCube());
+        wantsCubePaint = true;
     }
 
-    if (mDirty) {
-        if (OkayToPaint()) {
-            PaintInner(GetCube());
-            wantsCubePaint = true;
-        }
+    if (mDirty)
+    {
+        PaintInner(GetCube());
+        wantsCubePaint = true;
+
         mDirty = false;
     }
 
@@ -176,14 +175,10 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x, int w) {
     const int h = 80; // magic
     if (item->HasImage()) {
         if (x==0 && w<80) {
-            PixelToTileImage(item->GetImage(), Vec2(w-80, y), item->GetSourcePosition(), Vec2(80, h)); //todo wtf is this extra parameters?! , 1, 0);
+            PixelToTileImage(item->GetImage(), Vec2(w-80, y), item->GetSourcePosition(), Vec2(80, h));
         } else {
-            PixelToTileImage(item->GetImage(), Vec2(x, y), item->GetSourcePosition(), Vec2(w, h));//TODO same as above!, 1, 0);
+            PixelToTileImage(item->GetImage(), Vec2(x, y), item->GetSourcePosition(), Vec2(w, h));
         }
-    }
-    else
-    {
-        //TODO   Cube.FillRect(item.color, x, y, w, h);
     }
 }
 
@@ -224,18 +219,21 @@ void TiltFlowView::UpdateMenu() {
             GetCube()->GetTilt().x == 1 ||
             (GetCube()->GetTilt().x < 1 && mItem == menu->GetNumItems()-1 && mOffsetX >= 0) ||
             (GetCube()->GetTilt().x > 1 && mItem == 0 && mOffsetX <= 0)
-            ) {
-        //menu.firstTime = false;
+            )
+    {
         //TODO        Jukebox.SfxHalt("PV_menu_tilt");
         CoastToStop();
 
-        if (showingDetails) {
+        if (showingDetails)
+        {
             menu->GetDetails()->ShowDescription(mOffsetX == 0 ? GetItem()->description : " ");
         }
 
-    } else /*if (!menu.firstTime)*/ {
-
-        if (showingDetails) {
+    }
+    else
+    {
+        if (showingDetails)
+        {
             menu->GetDetails()->ShowDescription(" ");
         }
 

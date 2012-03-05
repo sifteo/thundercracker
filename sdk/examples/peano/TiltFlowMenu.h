@@ -9,7 +9,7 @@ class TiltFlowView;
 class TiltFlowItem;
 class TiltFlowDetailView;
 
-  class TiltFlowMenu /* TODO : IDisposable*/ {
+  class TiltFlowMenu {
 public:
     static const float kPickDelay = 0.25f;
     static const float kRestDelay = 0.1f;

@@ -63,7 +63,9 @@ void ClearCubeViews()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         //cubes[0]->SetView(NULL);
-        Game::cubes[i].GetView()->SetCube(NULL);
+        View *v = Game::cubes[i].GetView();
+        if(v)
+            v->SetCube(NULL);
     }
 }
 
@@ -181,26 +183,6 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
         }
     }
-    /*
-             .Transition("sting", "Next", "init")
-             .Transition("init", "NewPlayer", "tutorial")
-             .Transition("init", "ReturningPlayer", "menu")
-             .Transition("menu", "Tutorial", "tutorial")
-             .Transition("menu", "Play", "interstitial")
-             .Transition("tutorial", "Next", "interstitial")
-             .Transition("interstitial", "Next", "puzzle")
-             .Transition("puzzle", "Quit", "menu")
-             .Transition("puzzle", "Complete", "advance")
-             .Transition("advance", "RandComplete", "interstitial")//TODO"menu")
-             .Transition("advance", "GameComplete", "victory")
-             .Transition("advance", "NextPuzzle", "puzzle")
-             .Transition("advance", "NextChapter", "victory")
-             .Transition("victory", "Next", "isover")
-             .Transition("isover", "Yes", "menu")
-             .Transition("isover", "No", "interstitial")
-             
-             .SetState("sting");
-             */
 }
 
 void UpdateDt()
@@ -227,8 +209,7 @@ bool IsPlayingRandom()
 }
 
 GameState Initialize()
-{/* TODO
-          return saveData.hasDoneTutorial ?
+{/* TODO  return saveData.hasDoneTutorial ?
           "ReturningPlayer" : "NewPlayer";
           */
     return GameState_Menu;
@@ -249,7 +230,7 @@ GameState Advance()
     int chapter, puzzle;
     bool success;
     success = currentPuzzle->GetNext(NUM_CUBES, &chapter, &puzzle);
-    if (success)
+    if (!success)
     {
         saveData.AddSolvedPuzzle(currentPuzzle->chapterIndex, currentPuzzle->puzzleIndex);
         delete Game::currentPuzzle;

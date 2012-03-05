@@ -87,15 +87,6 @@ public:
 
     void Update () {
         if (mOpen && !mOver) {
-            /* TODO need this? nah
-            if (OkayToPaint()) {
-                int yPad = 32;
-                Cube.Image("narrator_" + mType, 0, yPad, 0, yPad, 128, 128-yPad);
-                for(int i=0; i<mParticles.Length; ++i) {
-                    mParticles[i].Paint(Cube, mType);
-                }
-                Cube.Paint();
-            } */
             for(int i=0; i<8; ++i) {
                 mParticles[i].Update();
             }

@@ -31,7 +31,7 @@ void EventHandler::OnCubeShake(TotalsCube *cube)
 Game::GameState Run()
 {
 
-    //TODO
+    //TODO lost and found
     //mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
     //mGame.CubeSet.NewCubeEvent += delegate { Skip(); };
 

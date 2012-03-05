@@ -37,7 +37,7 @@ NarratorView::NarratorView(TotalsCube *c):View(c)
 int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
-   // if (!strcmp(mString,msg) && mEmote == emote) { return; }
+    // if (!strcmp(mString,msg) && mEmote == emote) { return; }
     mString = msg;
     mEmote = emote;
 
@@ -46,39 +46,37 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
     else
         GetCube()->DisableTextOverlay();
 
-    /* TODO
+    /* TODO bunch of old paint calls
   is it really necessary to draw the images here?
   theyll get drawnagain in Paint()
   */
 
-    if (OkayToPaint()) {
-        if (mEmote != EmoteNone) {
-            //            GetCube().Image(emotes[mEmote], Vec2(16, 65, 0, 0, 94, 43);
-        } else {
-            //          Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
-        }
-        if (mString[0]) {
-            PLAY_SFX(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
-//            PaintText();
-        } else {
-            //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);
-        }
-        //        Cube.Paint();
+
+    if (mEmote != EmoteNone) {
+        //            GetCube().Image(emotes[mEmote], Vec2(16, 65, 0, 0, 94, 43);
+    } else {
+        //          Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
     }
+    if (mString[0]) {
+        PLAY_SFX(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
+        //            PaintText();
+    } else {
+        //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);
+    }
+    //        Cube.Paint();
+
 }
 
 void NarratorView::SetEmote(Emote emote) {
-    /* TODO see note in SetMessage */
     if (mEmote != emote) {
         mEmote = emote;
-        if (OkayToPaint()) {
-            if (mEmote!=EmoteNone) {
-                //            Cube.Image("narrator_" + mEmote, 16, 65, 0, 0, 94, 43);
-            } else {
-                //            Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
-            }
-            //          Cube.Paint();
+
+        if (mEmote!=EmoteNone) {
+            //            Cube.Image("narrator_" + mEmote, 16, 65, 0, 0, 94, 43);
+        } else {
+            //            Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
         }
+        //          Cube.Paint();
     }
 }
 
@@ -88,10 +86,8 @@ void NarratorView::SetTransitionAmount(float u) {
         //        Paint();
     } else {
         mOffset = (16-7)* u;
-        if (OkayToPaint()) {
-                      GetCube()->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
-            //          Cube.Paint();
-        }
+        GetCube()->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
+        //          Cube.Paint();
     }
 
 }
@@ -123,12 +119,12 @@ void NarratorView::Paint() {
 
 void NarratorView::PaintText()
 {
-      const int pad = 8;
-      //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
-      GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
-  //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
+    const int pad = 8;
+    //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
+    GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
+    //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
 
-      //text wil actually be drawn after this frame completes
+    //text wil actually be drawn after this frame completes
 }
 
 

@@ -23,7 +23,7 @@ public:
 
 
 
-/* todo
+/* todo lost and found
         void OnCubeLost(Cube cube) {
           if (!cube.IsUnused()) {
             cube.MoveViewTo(mGame.CubeSet.FindAnyIdle());
@@ -33,7 +33,8 @@ public:
 
 void MenuController::TextFieldView::Paint(TotalsCube *c)
 {
-    /* TODO        c.FillScreen(new Color(200, 200, 200));
+    /* TODO render text
+        c.FillScreen(new Color(200, 200, 200));
              Library.Verdana.PaintCentered(c, "(reinforce choice)", 64, 64);
              */
 }
@@ -105,13 +106,6 @@ void MenuController::TransitionView::Paint()
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
     }
 }
-
-/* todo
-         void OnCubeLost(Cube cube) {
-         if (!cube.IsUnused()) {
-         cube.MoveViewTo(mGame.CubeSet.FindAnyIdle());
-         }
-         } */
 
 Game::GameState Run()
 {

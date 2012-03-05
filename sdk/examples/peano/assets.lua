@@ -180,6 +180,7 @@ sfx_Tutorial_Correct = sound { "PV_tutorial_correct.raw" }
 sfx_Tutorial_Stinger_01 = sound { "PV_tutorial_stinger_01.raw" }
 sfx_Dialogue_Balloon = sound { "PV_dialogue_balloon.raw" }
 sfx_Tutorial_Oops = sound { "PV_tutorial_oops.raw" }
+sfx_Chapter_Victory = sound { "PV_chapter_victory.raw" }
 
 
 

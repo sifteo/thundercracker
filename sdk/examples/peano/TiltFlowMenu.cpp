@@ -39,11 +39,7 @@ namespace TotalsGame
     details = _details;
     toggledItem = NULL;
     }
-/* TODO
-    public void TiltFlowMenu::Dispose() {
-      view.Cube = null;
-    }
-*/
+
     float TiltFlowMenu::GetSimTime()
     {
         return mSimTime;
@@ -94,7 +90,6 @@ namespace TotalsGame
     void TiltFlowMenu::Pick()
     {
         if (!IsPicked()) {
-        // todo Log.Debug("Selected {0}", view.Item.name);
         mPickTime = mSimTime;
       }
     }

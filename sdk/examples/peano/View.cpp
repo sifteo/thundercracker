@@ -51,28 +51,4 @@ TotalsCube *View::GetCube()
     return mCube;
 }
 
-void View::Lock() {
-    mLockCount++;
-}
-
-void View::Unlock() {
-    if (IsLocked()) {
-        mLockCount--;
-        if (mLockCount == 0 /*&& mDirty*/) {
-            //TODO Paint();
-        }
-    }
-}
-
-bool View::IsLocked()
-{
-    return mLockCount > 0;
-}
-
-bool View::OkayToPaint()
-{
-    return mCube != NULL && mLockCount == 0 /*&& mPaintOverride == null*/;
-}
-
-
 }

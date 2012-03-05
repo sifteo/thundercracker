@@ -9,6 +9,6 @@
 #define SFX_ON        	0
 #define LOAD_ASSETS   	1
 
-#define DISABLE_CHAPTERS 1
+#define DISABLE_CHAPTERS 0
 
 #endif

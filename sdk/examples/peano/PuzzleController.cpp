@@ -3,6 +3,7 @@
 #include "assets.gen.h"
 #include "PauseHelper.h"
 #include "ConfirmationMenu.h"
+#include "NarratorView.h"
 
 namespace TotalsGame {
 
@@ -77,10 +78,11 @@ void OnSetup ()
         Game::cubes[0].AddEventHandler(&eventHandlers[i]);
     }
 
-    //TODO game.CubeSet.LostCubeEvent += OnCubeLost;
+    //
 }
 
-/* TODO
+/* TODO lost and found
+  game.CubeSet.LostCubeEvent += OnCubeLost;
          on cube found put a blank view on it
          void OnCubeLost(Cube c) {
          if (!c.IsUnused()) {
@@ -229,37 +231,41 @@ Game::GameState Run()
         int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
         if (count > 0)
         {
-#if 0 //todo
-            var nv = new NarratorView();
-            nv.Cube = game.CubeSet[0];
+            NarratorView nv(&Game::cubes[0]);
             const float kTransitionTime = 0.2f;
-            Jukebox.PlayShutterOpen();
-            for(var t=0f; t<kTransitionTime; t+=game.dt) {
+            AudioPlayer::PlayShutterOpen();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
                 nv.SetTransitionAmount(t/kTransitionTime);
-                yield return 0;
+                Game::Wait(0);
             }
-            nv.SetTransitionAmount(1f);
-            yield return 0.5f;
+            nv.SetTransitionAmount(1);
+            Game::Wait(0.5f);
             if (count == 1) {
-                nv.SetMessage("1 code to go...", "mix01");
+                nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
                 int i=0;
-                yield return 0;
-                for(var t=0f; t<3f; t+=game.dt) {
+                Game::Wait(0);
+                for(float t=0; t<3; t+=Game::dt) {
                     i = 1-i;
-                    nv.SetEmote("mix0"+(i+1));
-                    yield return 0;
+                    nv.SetEmote(i==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
+                    Game::Wait(0);
                 }
             } else {
-                nv.SetMessage(string.Format("{0} codes to go...", count));
-                yield return 2f;
+                static String<20> msg;
+                msg.clear();
+                msg << count << " codes to go...";
+                nv.SetMessage(msg);
+                Game::Wait(2);
             }
-            Jukebox.PlayShutterClose();
-            for(var t=0f; t<kTransitionTime; t+=game.dt) {
-                nv.SetTransitionAmount(1f-t/kTransitionTime);
-                yield return 0;
+            AudioPlayer::PlayShutterClose();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+                nv.SetTransitionAmount(1-t/kTransitionTime);
+                Game::Wait(0);
             }
-            nv.SetTransitionAmount(0f);
-#endif
+            nv.SetTransitionAmount(0);
+            Game::Wait(0);
+
+            Game::cubes[0].SetView(NULL);
+
         }
     }
 
@@ -303,7 +309,7 @@ void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Si
 
 void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
-    /*TODO          if (IsPaused() TODO|| mRemoveEventBuffer.Count > 0)
+    /*TODO          if (IsPaused() || mRemoveEventBuffer.Count > 0)
              {
              mRemoveEventBuffer.Add(new RemoveEvent() { c = c, s = s, nc = nc, ns = ns });
              return;
@@ -341,7 +347,7 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
     grp->AlertDidGroupDisconnect();
     delete grp;
 }
-/*TODO
+/*TODO remove-event buffer
          void ProcessRemoveEventBuffer() {
          var args = mRemoveEventBuffer;
          mRemoveEventBuffer = new List<RemoveEvent>(args.Count);

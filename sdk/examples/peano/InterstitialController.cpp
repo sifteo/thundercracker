@@ -10,7 +10,7 @@ namespace InterstitialController
 
 
 
-    /* TODO
+    /* TODO lost and found
       mGame.CubeSet.NewCubeEvent += cube => new BlankView(cube);
       mGame.CubeSet.LostCubeEvent += delegate(Cube cube) {
         if (!mDone && cube.userData is InterstitialView) {

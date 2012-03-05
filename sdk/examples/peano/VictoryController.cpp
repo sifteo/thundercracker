@@ -7,12 +7,12 @@ namespace TotalsGame
 {
 namespace VictoryController
 {
-/* TODO
+/* TODO lost and found
  mGame.CubeSet.NewCubeEvent += cb => new BlankView(cb);
  mGame.CubeSet.LostCubeEvent += OnLostCube;
  */
 
-/* TODO
+/*
 void OnLostCube(Cube c) {
 if (!c.IsUnused()) {
 var blanky = mGame.CubeSet.FindAnyIdle();
@@ -39,7 +39,7 @@ Game::GameState Run() {
     nv = new(nvBuffer) NarratorView(&Game::cubes[0]);
 
     for(int i=1; i<NUM_CUBES; ++i) {
-        new(blankBuffers) BlankView(&Game::cubes[0], NULL);
+        new(blankBuffers) BlankView(&Game::cubes[i], NULL);
     }
     static const float kTransitionTime = 0.2f;
     Game::Wait(0.5f);
@@ -58,11 +58,10 @@ Game::GameState Run() {
 
     AudioPlayer::PlayNeighborRemove();
     Game::Wait(0.1f);
-    //TODO     PLAY_SFX(sfx_Chapter_Victory);
+    PLAY_SFX(sfx_Chapter_Victory);
     vv = new(vvBuffer) VictoryView(&Game::cubes[0], Game::previousPuzzle->chapterIndex);
     Game::Wait(1);
     vv->Open();
-    //Jukebox.Sfx("win");
     Game::Wait(3.5f);
     vv->EndUpdates();
     for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
@@ -129,12 +128,8 @@ Game::GameState Run() {
     nv->SetTransitionAmount(0);
 
     Game::Wait(0.5f);
+    Game::ClearCubeEventHandlers();
 
-
-    /* TODO
-     mGame.CubeSet.ClearEvents();
-     mGame.CubeSet.ClearUserData();
-     */
 #endif //!DISABLE_CHAPTERS
     return Game::GameState_IsOver;
 }

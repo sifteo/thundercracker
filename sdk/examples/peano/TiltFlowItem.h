@@ -20,14 +20,13 @@ namespace TotalsGame
     static const int Passive = -2357;   //arbitrary value
 
     int id;
-//TODO    public readonly Color color;
     const char *GetName();
     const char *description;
     const AssetImage *GetImages();
     int GetNumImages();
     Vec2 GetSourcePosition();
 
-    TiltFlowItem (/*Color color TODO */);
+    TiltFlowItem ();
 
     TiltFlowItem(const AssetImage *image);
 
