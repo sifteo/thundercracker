@@ -66,6 +66,12 @@ static void onShake(void *context, _SYSCubeID cid)
 }
 
 
+static void onTouch(void *context, _SYSCubeID cid)
+{
+    s_menu.press( cid - CUBE_ID_BASE );
+}
+
+
 static void onNeighborAdd(void *context,
     _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
@@ -79,6 +85,7 @@ void RunMenu()
 
     _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
+	_SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, NULL);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, NULL);
 
     while (s_menu.Update()) {}
@@ -155,6 +162,11 @@ void MenuController::Reset()
 void MenuController::checkNeighbors()
 {
     m_Menu.checkNeighbors();
+}
+
+void MenuController::press( int cube )
+{
+    m_Menu.press( cube );
 }
 
 

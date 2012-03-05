@@ -132,12 +132,12 @@ void Game::IrisOut(ViewSlot* view) {
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
-      mode.BG0_putTile(Vec2(x, i), *Black.tiles);
-      mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
+      mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
+      mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
     }
     for(unsigned y=i+1; y<16-i-1; ++y) {
-      mode.BG0_putTile(Vec2(i, y), *Black.tiles);
-      mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
+      mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
+      mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
     }
     System::paintSync();
   }
@@ -201,6 +201,10 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           ovrly.Flush();
           Paint(true);
           #if GFX_ARTIFACT_WORKAROUNDS
+            vslot->GetCube()->vbuf.touch();
+            Paint(true);
+            vslot->GetCube()->vbuf.touch();
+            Paint(true);
             vslot->GetCube()->vbuf.touch();
             Paint(true);
           #endif
@@ -519,9 +523,11 @@ static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* o
 }
 
 void Game::CheckMapNeighbors() {
+  ViewSlot *root = mPlayer.View();
+  if (!root->IsShowingRoom()) { return; }
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  bool chchchchanges = VisitMapView(visited, mPlayer.View(), mPlayer.Location());
+  bool chchchchanges = VisitMapView(visited, root, root->GetRoomView()->Location());
   
   if (chchchchanges) {
     PlaySfx(sfx_neighbor);

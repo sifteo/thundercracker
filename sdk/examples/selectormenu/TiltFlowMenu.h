@@ -89,6 +89,8 @@ public:
   //CES HACKERY
   //will set up this view to receive a cover from the given view
   void setUpIncomingCover( TiltFlowView &view );
+  //BEST BUY HACKERY 
+  inline void setLastNeighbor( Side side ) { mLastNeighboredSide = side; }
 
 private:
   Status mStatus;
@@ -192,6 +194,7 @@ public:
 
 	void showLogo();
     void checkNeighbors();
+	void press( int cube );
 
 private:
     //void CheckMenuNeighbors();

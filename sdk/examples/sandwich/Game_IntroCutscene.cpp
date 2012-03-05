@@ -9,7 +9,7 @@ Cube* Game::IntroCutscene() {
 			gfx.hideSprite(s);
 		}
 		BG1Helper overlay(gCubes[i]);
-		overlay.DrawAsset(Vec2(0,0), Title);
+		overlay.DrawAsset(Vec2(0,0), SandwichTitle);
 		overlay.Flush();
 		gfx.BG1_setPanning(Vec2(0,64));
 		gCubes[i].vbuf.touch();
@@ -138,12 +138,12 @@ Cube* Game::IntroCutscene() {
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
 		for(unsigned x=i; x<16-i; ++x) {
-			mode.BG0_putTile(Vec2(x, i), *Black.tiles);
-			mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
+			mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
+			mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
 		}
 		for(unsigned y=i+1; y<16-i-1; ++y) {
-			mode.BG0_putTile(Vec2(i, y), *Black.tiles);
-			mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
+			mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
+			mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
 		}
 		System::paintSync();
 	}
