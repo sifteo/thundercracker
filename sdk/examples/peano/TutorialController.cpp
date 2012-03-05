@@ -1,3 +1,4 @@
+#include "config.h"
 #include "TutorialController.h"
 #include "AudioPlayer.h"
 #include "Game.h"

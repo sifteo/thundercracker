@@ -58,7 +58,7 @@ void ConfirmationChoiceView::Paint ()
     TransitionView::Paint();
     if (GetIsLastFrame())
     {
-        GetCube()->Image(image, Vec2(3, 1)); //TODO 1 is a bad approximationg for 12/8
+        GetCube()->Image(image, Vec2(3, 1));
     }
 }
 

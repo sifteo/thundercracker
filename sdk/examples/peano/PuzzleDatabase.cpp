@@ -99,7 +99,6 @@ bool HasPuzzleBeenSolved(int chapter, int puzzle)
 
 bool CanBePlayedWithCurrentCubeSet(int chapter)
 {
-    //todo
     return -1 != FirstPuzzleForCurrentCubeSetInChapter(chapter);
 }
 
