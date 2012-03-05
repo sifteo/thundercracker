@@ -10,6 +10,8 @@ Tip0 = image{ "Tip0.png" }
 Tip1 = image{ "Tip1.png" }
 Tip2 = image{ "Tip2.png" }
 
+Footer = image{ "Footer.png" }
+
 LabelEmpty = image{ "LabelEmpty.png" }
 LabelSandwich = image{ "LabelSandwich.png" }
 LabelChroma = image{ "LabelChroma.png" }

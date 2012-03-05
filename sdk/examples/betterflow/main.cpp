@@ -80,11 +80,7 @@ static void Paint(Cube *pCube) {
 // retrieve the acceleration of the cube due to tilting
 const float kAccelThreshold = 0.85f;
 static float GetAccel(Cube *pCube) {
-	float accel = 0.25f * pCube->virtualAccel().x;
-	#if SIFTEO_SIMULATOR
-		accel = -accel;
-	#endif
-	return accel;
+	return -0.25f * pCube->virtualAccel().x;
 }
 
 // entry point
@@ -187,19 +183,24 @@ void siftmain() {
 			if (isTilting && !isLefty && !isRighty) {
 				velocity += accel * dt;
 				velocity *= 0.99f;
+				position += velocity * dt;
 			} else {
 				const float stiffness = 0.333f;
 				const int selected = ComputeSelected(position);
 				const float stopping_position = StoppingPositionFor(selected);
 				velocity += stiffness * (stopping_position - position) * dt;
 				velocity *= 0.875f;
+				position += velocity * dt;
+				position = Lerp(position, stopping_position, 0.15f);
 				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
 			}
-			position += velocity * dt;
 			const float pad = 24.f;
 			// update view
 			int ui = position + 0.5f;
 			int ut = position / 8;
+			// TODO: Sometimes, on really fast accelerations, there's a column
+			// 		of garbage tiles on the side of the screen; is this a firmware
+			//		bug or a logic bug here?
 			while(prev_ut < ut) {
 				DrawColumn(pCube, prev_ut + 17);
 				prev_ut++;
@@ -218,42 +219,37 @@ void siftmain() {
 		}
 	}
 	Selected:
-	// hide bg1
-	//_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 12, 0, Tip0.height); // just footer
-	canvas.set();
-	
 	// isolate the selected icon
 	canvas.BG0_setPanning(Vec2(0,0));
-	for(int row=0; row<18; ++row)
-	for(int col=0; col<18; ++col) {
+	// kinda sub-optimal :P
+	for(int row=0; row<12; ++row)
+	for(int col=0; col<16; ++col) {
 		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
 	}
-	canvas.BG0_drawAsset(Vec2(3,2), *gIcons[ComputeSelected(position)]);
+	canvas.BG0_drawAsset(Vec2(0, 12), Footer);
+	// TODO: Phase-Out BG1Helper code with optimized code
+	{
+		BG1Helper overlay(*pCube);
+		overlay.DrawAsset(Vec2(3, 2), *gIcons[ComputeSelected(position)]);
+		overlay.Flush();
+	}
 	System::paintSync();
+	// GFX Workaround
+	pCube->vbuf.touch();
 	System::paintSync();
 
 	// scroll-out icon with a parabolic arc
 	const float k = 5.f;
-	int pany = 0;
 	int i=0;
 	int prevBottom = 12;
-	while(pany>-128) {
+	int offset = 0;
+	while(offset>-128) {
 		i++;
-		float u = i/30.f;
+		float u = i/33.f;
 		u = (1.-k*u);
-		pany = int(8*(1.f-u*u));
-		if (pany < -32) {
-			// TODO: make this math a little less hacky.  I think sometimes
-			// I cut off the bottom row before it's offscreen :(
-			int newBottom = 15 + (pany/8);
-			while(newBottom < prevBottom && prevBottom>=0) {
-				for(int col=0; col<18; ++col) {
-					canvas.BG0_drawAsset(Vec2(col, prevBottom), BgTile);
-				}
-				prevBottom--;
-			}
-		}
-		canvas.BG0_setPanning(Vec2(0, pany));
+		offset = int(12*(1.f-u*u));
+		// HACK ALERT: Relies on the fact that vram is the same for both modes
+		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
 		System::paint();
 	}
 	// TODO: actually choose game
