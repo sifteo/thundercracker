@@ -281,8 +281,8 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         if( Math::fmodf( (float)System::clock(), MULTIPLIER_NUMBER_PERIOD ) / MULTIPLIER_NUMBER_PERIOD < MULTIPLIER_NUMBER_PERCENTON )
                         {
                             vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
-                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 16, 32 );
-                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 8 );
+                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
+                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 6 );
                         }
                     }
                 }

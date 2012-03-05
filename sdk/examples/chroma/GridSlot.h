@@ -18,8 +18,8 @@ class GridSlot
 public:
     static const unsigned int NUM_COLORS = 8;
     static const unsigned int NUM_SPAWN_FRAMES = 4;
-    static const unsigned int MULT_SPRITE_ID = 1;
-    static const unsigned int MULT_SPRITE_NUM_ID = 2;
+    static const unsigned int MULT_SPRITE_ID = 2;
+    static const unsigned int MULT_SPRITE_NUM_ID = 1;
     static const float MULTIPLIER_LIGHTNING_PERIOD;
     static const float MULTIPLIER_NUMBER_PERIOD;
     //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
