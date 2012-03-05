@@ -64,7 +64,7 @@ void ConfirmationChoiceView::Paint ()
 
 
 
-bool Coroutine(const char *msg)
+bool Run(const char *msg)
 {
 
     InterstitialView *label;

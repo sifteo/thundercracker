@@ -8,7 +8,7 @@ namespace MenuController
 {
 
 
-Game::GameState Coroutine();
+Game::GameState Run();
 
 
 class TransitionView : public View

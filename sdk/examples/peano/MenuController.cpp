@@ -113,7 +113,7 @@ void MenuController::TransitionView::Paint()
          }
          } */
 
-Game::GameState Coroutine()
+Game::GameState Run()
 {
     TransitionView *tv;
     TiltFlowDetailView *labelView;
@@ -145,12 +145,12 @@ WelcomeBack:
 
     AudioPlayer::PlayShutterOpen();
     labelView->TransitionSync(kDuration, true);
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     tv->SetTransitionAmount(1);
 
@@ -198,13 +198,13 @@ WelcomeBack:
         while(!menu->IsDone())
         {
             menu->Tick();
-            CORO_YIELD(0);
+            Game::Wait(0);
         }
 
         // close labelView
         AudioPlayer::PlayShutterClose();
         labelView->TransitionSync(kDuration, false);
-        CORO_YIELD(0);
+        Game::Wait(0);
         // transition out
         AudioPlayer::PlayShutterClose();
         /* putting the tilt menu on cube 0 secretly deletes the transition view. remake.
@@ -213,10 +213,10 @@ WelcomeBack:
         //tv->SetCube(menu->GetView()->GetCube());
         for(float t=0; t<kDuration; t+=Game::dt) {
             tv->SetTransitionAmount(1.0f-t/kDuration);
-            CORO_YIELD(0);
+            Game::Wait(0);
         }
         tv->SetTransitionAmount(0);
-        CORO_YIELD(0);
+        Game::Wait(0);
 
         switch(menu->GetResultItem()->id)
         {
@@ -262,16 +262,16 @@ Setup:
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
 
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
     labelView->message = "Game Setup";
     AudioPlayer::PlayShutterOpen();
     labelView->TransitionSync(kDuration, true);
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
@@ -313,7 +313,7 @@ Setup:
         while(!menu->IsDone())
         {
             menu->Tick();
-            CORO_YIELD(0);
+            Game::Wait(0);
             if (menu->GetToggledItem() != NULL) {
                 switch(menu->GetToggledItemIndex())
                 {
@@ -348,16 +348,16 @@ Setup:
     // close labelView
     AudioPlayer::PlayShutterClose();
     labelView->TransitionSync(kDuration, false);
-    CORO_YIELD(0);
+    Game::Wait(0);
     // transition out
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     AudioPlayer::PlayShutterClose();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(1.0f-t/kDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     tv->SetTransitionAmount(0);
-    CORO_YIELD(0);
+    Game::Wait(0);
 
     if (menu->GetResultItem()->id == Back) {
         goto WelcomeBack;
@@ -368,10 +368,10 @@ Setup:
     // CONFIRM CLEAR DATA
     //-----------------------------------------------------------------------
     {
-        if (ConfirmationMenu::Coroutine("Clear Data?")) {
+        if (ConfirmationMenu::Run("Clear Data?")) {
             Game::saveData.Reset();
         }
-        CORO_YIELD(0);
+        Game::Wait(0);
         tv->SetCube(&Game::cubes[0]);
         labelView->SetCube(&Game::cubes[1]);
         goto Setup;
@@ -385,16 +385,16 @@ Setup:
 
 ChapterSelect:
 #if !DISABLE_CHAPTERS
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
     labelView->message = "Select a Level";
     AudioPlayer::PlayShutterOpen();
     labelView->TransitionSync(kDuration, true);
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
@@ -436,23 +436,23 @@ ChapterSelect:
 
     while(!menu->IsDone()) {
         menu->Tick();
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
     // close labelView
     AudioPlayer::PlayShutterClose();
     labelView->TransitionSync(kDuration, false);
-    CORO_YIELD(0);
+    Game::Wait(0);
 
     // transition out
     AudioPlayer::PlayShutterClose();
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(1.0f-t/kDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     tv->SetTransitionAmount(0);
-    CORO_YIELD(0);
+    Game::Wait(0);
 
     if (menu->GetResultItem()->id == 1977) {
         goto WelcomeBack;

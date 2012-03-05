@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sifteo.h"
-#include "coroutine.h"
 #include "View.h"
 #include "Fraction.h"
 

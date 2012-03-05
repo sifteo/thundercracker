@@ -93,7 +93,7 @@ void OnSetup ()
 // MAIN CORO
 //-------------------------------------------------------------------------
 
-Game::GameState Coroutine()
+Game::GameState Run()
 {
     OnSetup();
 
@@ -111,7 +111,7 @@ Game::GameState Coroutine()
         new(blankViewBuffer[i]) BlankView(&Game::cubes[0], NULL);
     }
     Game::DrawVaultDoorsClosed();
-    CORO_YIELD(0.25);
+    Game::Wait(0.25);
 
     for(int i = 0; i < puzzle->GetNumTokens(); i++)
     {
@@ -121,12 +121,12 @@ Game::GameState Coroutine()
             tv->PaintNow();
         }
 
-        CORO_YIELD(0.1f);
+        Game::Wait(0.1f);
 
     }
 
     { // flourish in
-        CORO_YIELD(1.1f);
+        Game::Wait(1.1f);
         // show total
         PLAY_SFX(sfx_Tutorial_Mix_Nums);
 
@@ -134,7 +134,7 @@ Game::GameState Coroutine()
         {
             puzzle->GetToken(i)->GetTokenView()->ShowOverlay();
         }
-        CORO_YIELD(3.0f);
+        Game::Wait(3.0f);
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             puzzle->GetToken(i)->GetTokenView()->HideOverlay();
@@ -149,7 +149,7 @@ Game::GameState Coroutine()
         { // game loop
             while(!puzzle->IsComplete()) {
                 // most stuff is handled by events and view updaters
-                CORO_YIELD(0);
+                Game::Wait(0);
 
                 // should pause?
                 pauseHelper->Update();
@@ -173,7 +173,7 @@ Game::GameState Coroutine()
                     }
 
                     // do menu
-                    if (ConfirmationMenu::Coroutine("Return to Menu?"))
+                    if (ConfirmationMenu::Run("Return to Menu?"))
                     {
                         Game::neighborEventHandler = NULL;
                         return Game::GameState_Menu;
@@ -189,7 +189,7 @@ Game::GameState Coroutine()
 
                         Game::cubes[i].SetView(puzzle->GetToken(i)->GetTokenView());
                         ((TokenView*)Game::cubes[i].GetView())->PaintNow();
-                        CORO_YIELD(0.1f);
+                        Game::Wait(0.1f);
                     }
 
                     pauseHelper->Reset();
@@ -204,13 +204,13 @@ Game::GameState Coroutine()
 
 
     { // flourish out
-        CORO_YIELD(1);
+        Game::Wait(1);
         PLAY_SFX(sfx_Level_Clear);
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             puzzle->GetToken(i)->GetTokenView()->ShowLit();
         }
-        CORO_YIELD(3);
+        Game::Wait(3);
     }
 
     { // transition out
@@ -220,7 +220,7 @@ Game::GameState Coroutine()
             puzzle->GetToken(i)->GetTokenView()->GetCube()->foregroundLayer.Flush();
 
             Game::cubes[i].CloseShuttersSync(&Background);
-            CORO_YIELD(0.1f);
+            Game::Wait(0.1f);
         }
     }
 

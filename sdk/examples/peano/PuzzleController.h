@@ -13,7 +13,7 @@ class PauseHelper;
 namespace PuzzleController
 {       
 
-    Game::GameState Coroutine();
+    Game::GameState Run();
 
 }
 }

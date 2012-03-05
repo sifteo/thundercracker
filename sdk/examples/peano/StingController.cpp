@@ -28,7 +28,7 @@ void EventHandler::OnCubeShake(TotalsCube *cube)
     skip = true;
 }
 
-Game::GameState Coroutine()
+Game::GameState Run()
 {
 
     //TODO
@@ -47,26 +47,30 @@ Game::GameState Coroutine()
     }
     System::paint();
 
-    CORO_YIELD(0.1f);
+    Game::Wait(0.1f);
     PLAY_SFX(sfx_Stinger_02);
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].OpenShuttersSync(&Title);
         ((BlankView*)Game::cubes[i].GetView())->SetImage(&Title);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
-    CORO_YIELD(3.0);//todo bail when skip==true
+    float t = System::clock();
+    while(!skip && t+3 > System::clock())
+    {
+        System::paint();
+    }
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].CloseShuttersSync(&Title);
         ((BlankView*)Game::cubes[i].GetView())->SetImage(NULL);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
 
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();

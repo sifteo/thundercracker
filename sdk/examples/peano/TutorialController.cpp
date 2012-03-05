@@ -1,6 +1,5 @@
 #include "TutorialController.h"
 #include "AudioPlayer.h"
-#include "coroutine.h"
 #include "Game.h"
 #include "NarratorView.h"
 #include "Puzzle.h"
@@ -99,7 +98,7 @@ WaitForTouchEventHanlder waitForTouchEventHandler[2];
 
 
 
-Game::GameState Coroutine() {
+Game::GameState Run() {
     const float kTransitionDuration = 0.2f;
     static char narratorViewBuffer[sizeof(NarratorView)];
     static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
@@ -119,28 +118,28 @@ Game::GameState Coroutine() {
     // initial blanks
     for(int i = 1; i < NUM_CUBES; i++)
     {
-        new(blankViewBuffer[i]) BlankView(&Game::cubes[0], NULL);
+        new(blankViewBuffer[i]) BlankView(&Game::cubes[i], NULL);
     }
-    CORO_YIELD(0);
+    Game::Wait(0);
 
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
 
 
     AudioPlayer::PlayShutterOpen();
     for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=Game::dt) {
         narrator->SetTransitionAmount(remembered_t/kTransitionDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     narrator->SetTransitionAmount(-1);
 
     // wait a bit
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Hi there! I'm Peano!", NarratorView::EmoteWave);
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("We're going to learn\nto solve secret codes!");
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("These codes let you\ninto the treasure vault!", NarratorView::EmoteYay);
-    CORO_YIELD(3);
+    Game::Wait(3);
 
     // initailize puzzle
     puzzle = new Puzzle(2);
@@ -154,39 +153,39 @@ Game::GameState Coroutine() {
 
     // open shutters
     narrator->SetMessage("");
-    CORO_YIELD(1);
+    Game::Wait(1);
     Game::cubes[1].OpenShuttersSync(&Background);
     // initialize two token views
     firstToken = new(tokenViewBuffer[0]) TokenView(&Game::cubes[1], puzzle->GetToken(0), true);
     firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
-    CORO_YIELD(0.25f);
+    Game::Wait(0.25f);
     Game::cubes[2].OpenShuttersSync(&Background);
     secondToken = new(tokenViewBuffer[1]) TokenView(&Game::cubes[2], puzzle->GetToken(1), true);
     secondToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
 
     // wait for neighbor
     narrator->SetMessage("These are called Keys.");
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("Notice how each Key\nhas a number.");
-    CORO_YIELD(3);
+    Game::Wait(3);
 
     narrator->SetMessage("Connect two Keys\nto combine them.");
     Game::neighborEventHandler = &connectTwoCubesHorizontalEventHandler;
 
     while(firstToken->token->current == firstToken->token)
     {
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
     Game::neighborEventHandler = NULL;
 
     // flourish 1
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Awesome!", NarratorView::EmoteYay);
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("The combined Key is\n1+2=3!");
-    CORO_YIELD(3);
+    Game::Wait(3);
 
     // now show top-down
     narrator->SetMessage("Try connecting Keys\nTop-to-Bottom...");
@@ -209,17 +208,17 @@ Game::GameState Coroutine() {
 
     while(firstToken->token->current == firstToken->token)
     {
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
     Game::neighborEventHandler = NULL;
 
     // flourish 2
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Good job!", NarratorView::EmoteYay);
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("See how this\ncombination equals 2-1=1.");
-    CORO_YIELD(3);
+    Game::Wait(3);
 
     // mix up
     narrator->SetMessage("Okay, let's mix them up a little...", NarratorView::EmoteMix01);
@@ -283,7 +282,7 @@ Game::GameState Coroutine() {
         // thread in the real numbers
         rememberedFinishCountdown = 2;
         while(rememberedFinishCountdown > 0) {
-            CORO_YIELD(0);
+            Game::Wait(0);
             rememberedTimeout -= Game::dt;
             while(rememberedFinishCountdown > 0 && rememberedTimeout < 0) {
                 --rememberedFinishCountdown;
@@ -302,19 +301,19 @@ Game::GameState Coroutine() {
 
     while(firstToken->token->current->GetValue() != Fraction(6))
     {
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     PLAY_SFX(sfx_Tutorial_Correct);
     PLAY_SFX2(sfx_Tutorial_Oops, false);
     Game::ClearCubeEventHandlers();
     Game::neighborEventHandler = NULL;
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Radical!", NarratorView::EmoteYay);
-    CORO_YIELD(3.5f);
+    Game::Wait(3.5f);
 
     // close shutters
     narrator->SetMessage("");
-    CORO_YIELD(1);
+    Game::Wait(1);
     secondToken->SetCube(NULL);
     //Game::cubes[2]->SetView(NULL);
     Game::cubes[2].foregroundLayer.Clear();
@@ -329,68 +328,68 @@ Game::GameState Coroutine() {
     Game::cubes[1].CloseShuttersSync(&Background);
     new(blankViewBuffer[1]) BlankView(&Game::cubes[1], NULL);
 
-    CORO_YIELD(1);
+    Game::Wait(1);
     narrator->SetMessage("Keep combining to build\neven more numbers!", NarratorView::EmoteYay);
-    CORO_YIELD(2);
+    Game::Wait(2);
 
     Game::cubes[1].SetView(NULL);
     Game::cubes[1].OpenShuttersSync(&Tutorial_Groups);
     new(blankViewBuffer[1]) BlankView(&Game::cubes[1], &Tutorial_Groups);
 
-    CORO_YIELD(5);
+    Game::Wait(5);
     narrator->SetMessage("");
-    CORO_YIELD(1);
+    Game::Wait(1);
     Game::cubes[1].SetView(NULL);
     Game::cubes[1].CloseShuttersSync(&Tutorial_Groups);
     new(blankViewBuffer[1]) BlankView(&Game::cubes[1], NULL);
 
-    CORO_YIELD(1);
+    Game::Wait(1);
     narrator->SetMessage("If you get stuck,\nyou can shake\nfor a hint.");
     puzzle->target = (TokenGroup*)firstToken->token->current;
     firstToken->token->PopGroup();
     secondToken->token->PopGroup();
     firstToken->DidGroupDisconnect();
     secondToken->DidGroupDisconnect();
-    CORO_YIELD(2);
+    Game::Wait(2);
 
     //Game::cubes[1]->SetView(NULL);
     Game::cubes[1].OpenShuttersSync(&Background);
     firstToken->SetCube(&Game::cubes[1]);
     firstToken->PaintNow();
-    CORO_YIELD(0.1f);
+    Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
     secondToken->SetCube(NULL);
     Game::cubes[2].OpenShuttersSync(&Background);
     secondToken->SetCube(&Game::cubes[2]);
     secondToken->PaintNow();
-    CORO_YIELD(1);
+    Game::Wait(1);
 
     narrator->SetMessage("Try it out!  Shake one!");
     Game::cubes[1].AddEventHandler(&waitForShakeEventHandler[0]);
     Game::cubes[2].AddEventHandler(&waitForShakeEventHandler[1]);
     while(!(waitForShakeEventHandler[0].DidShake()||waitForShakeEventHandler[1].DidShake())) {
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     Game::ClearCubeEventHandlers();
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Nice!", NarratorView::EmoteYay);
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("Careful!\nYou only get a few hints!");
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("If you forget\nthe target,\npress the screen.");
-    CORO_YIELD(2);
+    Game::Wait(2);
     narrator->SetMessage("Try it out!  Press one!");
 
     Game::cubes[1].AddEventHandler(&waitForTouchEventHandler[0]);
     Game::cubes[2].AddEventHandler(&waitForTouchEventHandler[1]);
     while(!(waitForTouchEventHandler[0].DidTouch()||waitForTouchEventHandler[1].DidTouch())) {
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
 
-    CORO_YIELD(0.5f);
+    Game::Wait(0.5f);
     narrator->SetMessage("Great!", NarratorView::EmoteYay);
-    CORO_YIELD(3);
+    Game::Wait(3);
     firstToken->token->GetPuzzle()->target = NULL;
 
     Game::cubes[2].foregroundLayer.Clear();
@@ -408,13 +407,13 @@ Game::GameState Coroutine() {
 
     // transition out narrator
     narrator->SetMessage("Let's try it\nfor real, now!", NarratorView::EmoteWave);
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("Remember, you need\nto use every Key!");
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("Press-and-hold a cube\nto access the main menu.");
-    CORO_YIELD(3);
+    Game::Wait(3);
     narrator->SetMessage("Good luck!", NarratorView::EmoteWave);
-    CORO_YIELD(3);
+    Game::Wait(3);
 
     narrator->SetMessage("");
     narrator->GetCube()->UpdateTextOverlay();
@@ -423,10 +422,10 @@ Game::GameState Coroutine() {
     Game::cubes[0].SetView(NULL);
     for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=Game::dt) {
         narrator->SetTransitionAmount(1.0f-remembered_t/kTransitionDuration);
-        CORO_YIELD(0);
+        Game::Wait(0);
     }
     new(blankViewBuffer[0]) BlankView(&Game::cubes[0], NULL);
-    CORO_YIELD(0.5);
+    Game::Wait(0.5);
 
     Game::saveData.CompleteTutorial();
     if (Game::currentPuzzle == NULL) {

@@ -22,7 +22,7 @@ namespace InterstitialController
 
 
 
-Game::GameState Coroutine() {
+Game::GameState Run() {
 
     const float kTransitionTime = 0.5f;
     static char ivBuffer[sizeof(InterstitialView)];
@@ -50,14 +50,14 @@ Game::GameState Coroutine() {
         new(blankViewBuffer[i]) BlankView(&Game::cubes[i], NULL);
     }
 
-    CORO_YIELD(0.333f);
+    Game::Wait(0.333f);
     AudioPlayer::PlayShutterOpen();
     iv->TransitionSync(kTransitionTime, true);
     PLAY_SFX(sfx_Tutorial_Correct);
-    CORO_YIELD(3);
+    Game::Wait(3);
     AudioPlayer::PlayShutterClose();
     iv->TransitionSync(kTransitionTime, false);
-    CORO_YIELD(0.333f);
+    Game::Wait(0.333f);
 
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();

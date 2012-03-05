@@ -9,7 +9,7 @@ namespace TotalsGame {
     {                      
 
 
-        Game::GameState Coroutine();
+        Game::GameState Run();
     }
 }
 

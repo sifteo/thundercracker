@@ -2,9 +2,8 @@
 
 #include "InterstitialView.h"
 #include "assets.gen.h"
-#include"Game.h"
+#include "Game.h"
 #include "AudioPlayer.h"
-#include "coroutine.h"
 #include "MenuController.h"
 
 namespace TotalsGame
@@ -13,7 +12,7 @@ namespace TotalsGame
 namespace ConfirmationMenu
 {
 
-bool Coroutine(const char *msg);
+bool Run(const char *msg);
 
 
 class ConfirmationChoiceView : public MenuController::TransitionView {

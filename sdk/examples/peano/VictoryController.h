@@ -7,7 +7,7 @@ namespace TotalsGame
     
     namespace VictoryController 
     {
-        Game::GameState Coroutine();
+        Game::GameState Run();
     }    
 }
 
