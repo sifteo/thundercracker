@@ -1,4 +1,5 @@
-#include "StateMachine.h"
+#pragma once
+
 #include "View.h"
 #include "BlankView.h"
 #include "assets.gen.h"

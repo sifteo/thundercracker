@@ -1,6 +1,5 @@
 #pragma once
 
-#include "StateMachine.h"
 #include "Game.h"
 #include "InterstitialView.h"
 #include "BlankView.h"

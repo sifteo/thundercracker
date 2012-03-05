@@ -4,7 +4,6 @@
 
 #include "sifteo.h"
 #include "PuzzleDatabase.h"
-#include "StateMachine.h"
 #include "SaveData.h"
 #include "TotalsCube.h"
 #include "Puzzle.h"
