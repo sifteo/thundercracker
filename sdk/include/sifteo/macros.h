@@ -7,69 +7,36 @@
 #ifndef _SIFTEO_MACROS_H
 #define _SIFTEO_MACROS_H
 
-#ifdef SIFTEO_SIMULATOR
-#include <stdio.h>
-#include <assert.h>
-#else
-#ifdef FW_BUILD // ie, not a game build
-#include "usart.h"
-#endif
-#endif
+#include <sifteo/abi.h>
+
+#define STRINGIFY(_x)   #_x
+#define TOSTRING(_x)    STRINGIFY(_x)
+#define SOURCELOC_STR   __FILE__ ":" TOSTRING(__LINE__)
 
 /*
- * When we're doing an embedded build with Newlib, use integer-only
- * printf() functions, so we can avoid linking in atod() and all of the
- * giant dependencies that this entails.
- *
- * This means that specifiers like %f and %g will not work!
- *
- * (Of course, they wouldn't work anyway if we were running without dynamic
- * memory allocation support, as atod requires a malloc'ed buffer.)
- */
- 
-#ifdef _NEWLIB_STDIO_H
-#define printf      iprintf
-#define sprintf     siprintf
-#define snprintf    sniprintf
-#define vsnprintf   vsniprintf
-#endif
-
-/*
- * ASSERT is not an error handling mechanism! They are only present in
- * simulator builds. Use ASSERTs to catch errors that shouldn't be
- * possible; cases where without the ASSERT, you'd be crashing or
- * corrupting memory. Use ASSERT to catch errors, not to fix them!
+ * These LOG and ASSERT macros are eliminated at link-time on release builds.
+ * On debug builds, the actual log messages and assert failure messages are
+ * included in a separate debug symbol ELF section, not in your application's
+ * normal data section.
  */
 
-#ifdef SIFTEO_SIMULATOR
-#   ifdef DEBUG
-#      define DEBUG_LOG(_x)   printf _x
-#   else
-#      define DEBUG_LOG(_x)
-#   endif
-#   define LOG(_x)            printf _x
-#if QTCREATOR
-#   define ASSERT(_x)         if(!(_x)) {asm("int $0x3");} 
-#elif QTCREATOR_TERMINAL // FIXME figure out how to trap int 3 in Qt Terminal
-extern void assertWrapper(bool b);
-#   define ASSERT(_x)        assertWrapper(_x)
-#else
-#   define ASSERT(_x)         assert(_x)
-#endif
-#   define DEBUG_ONLY(x)      x
-#else
-#   define DEBUG_LOG(_x)
-#   define LOG(_x)
-#   define ASSERT(_x)
-#   define DEBUG_ONLY(x)
-#endif
+#define LOG(_x) do { \
+    if (_SYS_lti_isDebug()) \
+        _SYS_lti_log _x ; \
+} while (0)
 
-// debug dump to uart - only defined for firmware internal code, not games
-#ifdef SIFTEO_SIMULATOR
-#   define UART(_x)
-#else
-#   define UART(_x)     Usart::Dbg.write(_x)
-#endif
+#define DEBUG_ONLY(_x) do { \
+    if (_SYS_lti_isDebug()) { \
+        _x \
+    } \
+} while (0)
+
+#define ASSERT(_x) do { \
+    if (_SYS_lti_isDebug() && !(_x)) { \
+        _SYS_lti_log("ASSERT failure at " SOURCELOC_STR ", (" #_x ")"); \
+        _SYS_abort(); \
+    } \
+} while (0)
 
 // Produces a 'size of array is negative' compile error when the assert fails
 #define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
