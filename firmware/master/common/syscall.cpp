@@ -938,5 +938,11 @@ void *_SYS_getVectorContext(_SYSVectorID vid)
     return NULL;
 }
 
+void _SYS_log(uint32_t tag, uint32_t v1, uint32_t v2, uint32_t v3,
+    uint32_t v4, uint32_t v5, uint32_t v6, uint32_t v7)
+{
+    LOG(("LOG: %08x\n", tag));
+}
+
 
 }  // extern "C"
