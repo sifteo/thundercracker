@@ -434,7 +434,13 @@ void _SYS_lti_log(const char *fmt, ...);
 #  define _SC(n)
 #endif
 
-void _SYS_ret() _SC(0);
+void _SYS_ret(void) _SC(0) __attribute__((noreturn));
+void _SYS_abort(void) _SC(105) __attribute__((noreturn));
+void _SYS_exit(void) _SC(74) __attribute__((noreturn));
+
+void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
+void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
+void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: reserved [31:27], arity [26:24] string_table_offset [23:0]
@@ -508,11 +514,6 @@ int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
-
-void _SYS_exit(void) _SC(74);    /// Equivalent to return from siftmain()
-void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
-void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
-void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 void _SYS_ticks_ns(int64_t *nanosec) _SC(12);    /// Return the monotonic system timer, in nanoseconds
 
