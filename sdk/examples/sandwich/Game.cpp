@@ -516,10 +516,16 @@ void Game::OnTriggerEvent(unsigned id) {
           p->Restore();
         }
       }
-      LOG(("ADVANCE QUEST AND REGRESH\n"));
       break;
     case EVENT_ADVANCE_QUEST_AND_TELEPORT:
-      LOG(("ADVANCE QUEST AND TELEPORT\n"));
+      mState.AdvanceQuest();
+      const QuestData* quest = mState.Quest();
+      const MapData& map = gMapData[quest->mapId];
+      const RoomData& room = map.rooms[quest->roomId];
+      TeleportTo(map, Vec2 (
+        128 * (quest->roomId % map.width) + 16 * room.centerX,
+        128 * (quest->roomId / map.width) + 16 * room.centerY
+      ));
       break;
   }
 }

@@ -93,7 +93,6 @@ class Trigger:
 		if "ontrigger" in obj.props:
 			triggerEventName = obj.props["ontrigger"].lower()
 			assert triggerEventName in KEYWORD_TO_TRIGGER_EVENT
-			print "FOUND TRIGGER:", triggerEventName
 			self.event = KEYWORD_TO_TRIGGER_EVENT[triggerEventName]
 		else:
 			self.event = EVENT_NONE
