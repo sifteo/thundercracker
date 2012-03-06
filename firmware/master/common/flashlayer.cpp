@@ -27,7 +27,7 @@ void FlashBlock::init()
 
 void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 {
-    assert((blockAddr & BLOCK_MASK) == 0);
+    ASSERT((blockAddr & BLOCK_MASK) == 0);
 
     if (ref.isHeld() && ref->address == blockAddr) {
         // Cache layer 1: Repeated access to the same block. Keep existing ref.
@@ -43,7 +43,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
         // code validator.
 
         FlashBlock *recycled = recycleBlock();
-        assert(recycled->refCount == 0);
+        ASSERT(recycled->refCount == 0);
         FLASHLAYER_STATS_ONLY(stats.miss++);
 
         recycled->validCodeBytes = 0;
@@ -115,7 +115,7 @@ FlashBlock *FlashBlock::recycleBlock()
     if (idleBlocks)
         return &instances[Intrinsic::CLZ(idleBlocks)];
 
-    assert(availableBlocks && "Oh no, all cache blocks are in use. Is there a reference leak?");
+    ASSERT(availableBlocks && "Oh no, all cache blocks are in use. Is there a reference leak?");
     return &instances[Intrinsic::CLZ(availableBlocks)];
 }
 

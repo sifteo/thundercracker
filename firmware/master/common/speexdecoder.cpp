@@ -17,7 +17,7 @@ void SpeexDecoder::init()
         speex_decoder_destroy(decodeState);
 
     decodeState = speex_decoder_init(speex_lib_get_mode(SIFT_SPEEX_MODE));
-    assert(decodeState != 0);
+    ASSERT(decodeState != 0);
 
     int enh = 1;
     speex_decoder_ctl(decodeState, SPEEX_SET_ENH, &enh); // enhancement on

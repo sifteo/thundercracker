@@ -295,7 +295,7 @@ void Radio::halt()
      */
 
     static bool inHalt = false;
-    assert(inHalt == false);
+    ASSERT(inHalt == false);
     inHalt = true;
 
     if (!self.isConnected) {

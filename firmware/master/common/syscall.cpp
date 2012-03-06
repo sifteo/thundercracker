@@ -789,13 +789,13 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     SvmMemory::PhysAddr srcPA;
 
-    assert((bytes & 1) == 0);
+    ASSERT((bytes & 1) == 0);
     while (bytes) {
         uint32_t chunk = bytes;
         if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
             return;
 
-        assert((chunk & 1) == 0);
+        ASSERT((chunk & 1) == 0);
         srcVA += chunk;
         bytes -= chunk;
 

@@ -103,9 +103,9 @@ public:
 
 private:
     inline void incRef() {
-        assert(refCount < 0xFF);
-        assert(refCount == 0 || (referencedBlocksMap & bit()));
-        assert(refCount != 0 || !(referencedBlocksMap & bit()));
+        ASSERT(refCount < 0xFF);
+        ASSERT(refCount == 0 || (referencedBlocksMap & bit()));
+        ASSERT(refCount != 0 || !(referencedBlocksMap & bit()));
 
         if (!refCount++)
             referencedBlocksMap |= bit();
@@ -117,8 +117,8 @@ private:
     }
 
     inline void decRef() {
-        assert(refCount != 0);
-        assert(referencedBlocksMap & bit());
+        ASSERT(refCount != 0);
+        ASSERT(referencedBlocksMap & bit());
 
         if (!--refCount)
             referencedBlocksMap &= ~bit();
@@ -258,7 +258,7 @@ public:
     }
 
     inline bool eof() const {
-        assert(offset <= getSize());
+        ASSERT(offset <= getSize());
         return offset >= getSize();
     }
 
@@ -267,12 +267,12 @@ public:
     }
 
     inline void seek(uint32_t o) {
-        assert(o <= getSize());
+        ASSERT(o <= getSize());
         offset = o;
     }
 
     inline uint32_t remaining() const {
-        assert(offset <= getSize());
+        ASSERT(offset <= getSize());
         return getSize() - offset;
     }
 
@@ -308,7 +308,7 @@ public:
 
     /// Returns NULL on unexpected EOF.
     uint8_t *read(FlashStream &stream, uint32_t length) {
-        assert(length < bufSize);
+        ASSERT(length < bufSize);
         uint32_t bufferedBytes = writePtr - readPtr;
 
         if (bufferedBytes < length) {
