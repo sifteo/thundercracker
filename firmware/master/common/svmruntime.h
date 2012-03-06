@@ -20,24 +20,6 @@ class SvmRuntime {
 public:
     SvmRuntime();  // Do not implement
 
-    enum FaultCode {
-        F_UNKNOWN = 0,
-        F_STACK_OVERFLOW,       // Stack allocation failure
-        F_BAD_STACK,            // Validation-time stack address error
-        F_BAD_CODE_ADDRESS,     // Branch-time code address error
-        F_BAD_SYSCALL,          // Unsupported syscall number
-        F_LOAD_ADDRESS,         // Runtime load address error
-        F_STORE_ADDRESS,        // Runtime store address error
-        F_LOAD_ALIGNMENT,       // Runtime load alignment error
-        F_STORE_ALIGNMENT,      // Runtime store alignment error
-        F_CODE_FETCH,           // Runtime code fetch error
-        F_CODE_ALIGNMENT,       // Runtime code alignment error
-        F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
-        F_RESERVED_SVC,         // Reserved SVC encoding
-        F_RESERVED_ADDROP,      // Reserved ADDROP encoding
-        F_ABORT,                // User call to _SYS_abort()
-    };
-    
     static void run(uint16_t appId);
     static void exit();
 
@@ -45,8 +27,6 @@ public:
     static void call(reg_t addr);
     static void tailcall(reg_t addr);    
     static void ret();
-
-    static void fault(FaultCode code);
     
     /**
      * Using the current codeBlock and PC, reconstruct the current

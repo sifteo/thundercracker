@@ -25,6 +25,7 @@
 #include "prng.h"
 #include "svmmemory.h"
 #include "svmruntime.h"
+#include "svmdebug.h"
 #include "event.h"
 #include "tasks.h"
 
@@ -43,7 +44,7 @@ void _SYS_ret() {
 }
 
 void _SYS_abort() {
-    SvmRuntime::fault(SvmRuntime::F_ABORT);
+    SvmDebug::fault(Svm::F_ABORT);
 }
 
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {
@@ -938,10 +939,27 @@ void *_SYS_getVectorContext(_SYSVectorID vid)
     return NULL;
 }
 
-void _SYS_log(uint32_t tag, uint32_t v1, uint32_t v2, uint32_t v3,
+void _SYS_log(uint32_t t, uint32_t v1, uint32_t v2, uint32_t v3,
     uint32_t v4, uint32_t v5, uint32_t v6, uint32_t v7)
 {
-    LOG(("LOG: %08x\n", tag));
+    SvmLogTag tag(t);
+    uint32_t arity = tag.getArity();
+    uint32_t *buffer = SvmDebug::logReserve(tag);
+
+    switch (arity) {
+    case 7: buffer[6] = v7;
+    case 6: buffer[5] = v6;
+    case 5: buffer[4] = v5;
+    case 4: buffer[3] = v4;
+    case 3: buffer[2] = v3;
+    case 2: buffer[1] = v2;
+    case 1: buffer[0] = v1;
+    case 0:
+    default:
+        break;
+    }
+
+    SvmDebug::logCommit(tag, buffer);
 }
 
 

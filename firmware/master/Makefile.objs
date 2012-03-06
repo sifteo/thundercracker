@@ -29,6 +29,7 @@ OBJS_SIM = \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
     $(MASTER_DIR)/sim/svmcpu.sim.o \
+    $(MASTER_DIR)/sim/svmdebug.sim.o \
 	$(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o
 
@@ -53,4 +54,6 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/rctimer.stm32.o \
-    $(MASTER_DIR)/stm32/usb.stm32.o
+    $(MASTER_DIR)/stm32/usb.stm32.o \
+    $(MASTER_DIR)/stm32/svmcpu.stm32.o \
+    $(MASTER_DIR)/stm32/svmdebug.stm32.o

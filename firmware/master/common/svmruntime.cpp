@@ -8,6 +8,7 @@
 #include "flashlayer.h"
 #include "svm.h"
 #include "svmmemory.h"
+#include "svmdebug.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -27,6 +28,10 @@ void SvmRuntime::run(uint16_t appId)
     Elf::ProgramInfo pInfo;
     if (!pInfo.init(elf))
         return;
+
+    // On simulation, with the built-in debugger, point SvmDebug to
+    // the proper ELF binary to load debug symbols from.
+    SvmDebug::setSymbolSourceELF(elf);
 
     // Initialize rodata segment
     SvmMemory::setFlashSegment(pInfo.rodata.data);
@@ -51,27 +56,6 @@ void SvmRuntime::run(uint16_t appId)
     // Tail call into user code. main() does not have a CallFrame.
     enterFunction(pInfo.entry);
     SvmCpu::run();
-}
-
-void SvmRuntime::fault(FaultCode code)
-{
-    // TODO: implement
-
-    LOG(("***\n"
-         "*** VM FAULT code %d\n"
-         "***\n"
-         "***   PC: %08x SP: %"PRIxPTR"\n"
-         "***  GPR: %08x %08x %08x %08x\n"
-         "***       %08x %08x %08x %08x\n"
-         "***\n",
-         code, reconstructCodeAddr(),
-         SvmCpu::reg(REG_SP),
-         (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
-         (unsigned) SvmCpu::reg(2), (unsigned) SvmCpu::reg(3),
-         (unsigned) SvmCpu::reg(4), (unsigned) SvmCpu::reg(5),
-         (unsigned) SvmCpu::reg(6), (unsigned) SvmCpu::reg(7)));
-
-    ASSERT(0);
 }
 
 void SvmRuntime::exit()
@@ -211,7 +195,7 @@ void SvmRuntime::svc(uint8_t imm8)
         return;
     }
     case 0x1d:  // 0b11101
-        fault(F_RESERVED_SVC);
+        SvmDebug::fault(F_RESERVED_SVC);
         return;
     case 0x1e: { // 0b11110
         call(SvmCpu::reg(r));
@@ -221,7 +205,7 @@ void SvmRuntime::svc(uint8_t imm8)
         tailcall(SvmCpu::reg(r));
         return;
     default:
-        fault(F_RESERVED_SVC);
+        SvmDebug::fault(F_RESERVED_SVC);
         break;
     }
 }
@@ -258,7 +242,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
     }
     else {
-        fault(F_RESERVED_SVC);
+        SvmDebug::fault(F_RESERVED_SVC);
     }
 }
 
@@ -272,7 +256,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
         validate(address);
         break;
     default:
-        fault(F_RESERVED_ADDROP);
+        SvmDebug::fault(F_RESERVED_ADDROP);
         break;
     }
 }
@@ -306,12 +290,12 @@ void SvmRuntime::syscall(unsigned num)
     };
 
     if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
-        fault(F_BAD_SYSCALL);
+        SvmDebug::fault(F_BAD_SYSCALL);
         return;
     }
     SvmSyscall fn = SyscallTable[num];
     if (!fn) {
-        fault(F_BAD_SYSCALL);
+        SvmDebug::fault(F_BAD_SYSCALL);
         return;
     }
 
@@ -356,10 +340,10 @@ void SvmRuntime::setSP(reg_t addr)
     SvmMemory::PhysAddr pa;
     
     if (!SvmMemory::mapRAM(addr, 0, pa))
-        fault(F_BAD_STACK);
+        SvmDebug::fault(F_BAD_STACK);
 
     if (pa < stackLimit)
-        fault(F_STACK_OVERFLOW);
+        SvmDebug::fault(F_STACK_OVERFLOW);
 
     SvmCpu::setReg(SvmCpu::REG_SP, reinterpret_cast<reg_t>(pa));
 }
@@ -369,7 +353,7 @@ void SvmRuntime::branch(reg_t addr)
     SvmMemory::PhysAddr pa;
 
     if (!SvmMemory::mapROCode(codeBlock, addr, pa))
-        fault(F_BAD_CODE_ADDRESS);
+        SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
     SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    
 }
