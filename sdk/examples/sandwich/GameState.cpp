@@ -10,7 +10,7 @@ void GameState::Init() {
 
 bool GameState::AdvanceQuest() {
 	#if PLAYTESTING_HACKS
-	mQuest = (mQuest + 1) % gQuestCount;
+	mQuest = (mQuest + 1) % (gQuestCount-1);
 	mQuestMask = 0;
 	return true;
 	#else

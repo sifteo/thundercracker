@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="48" height="56" tilewidth="16" tileheight="16">
  <properties>
   <property name="ambient" value="butterfly"/>
  </properties>
  <tileset firstgid="1" name="forest" tilewidth="16" tileheight="16">
-  <image source="forest.png" width="128" height="208"/>
+  <image source="forest.png" width="128" height="272"/>
   <tile id="2">
    <properties>
     <property name="wall" value=""/>
@@ -281,12 +282,12 @@
   </tile>
   <tile id="61">
    <properties>
-    <property name="obstacle" value=""/>
+    <property name="_obstacle" value=""/>
    </properties>
   </tile>
   <tile id="62">
    <properties>
-    <property name="obstacle" value=""/>
+    <property name="_obstacle" value=""/>
    </properties>
   </tile>
   <tile id="63">
