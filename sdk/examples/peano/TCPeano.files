@@ -75,8 +75,6 @@ TutorialController.h
 NarratorView.h
 Makefile
 NarratorView.cpp
-Dialog.h
-Dialog.cpp
 DialogWindow.h
 DialogWindow.cpp
 ConfirmationMenu.h
@@ -94,3 +92,5 @@ VictoryController.h
 config.h
 TutorialController.cpp
 VictoryController.cpp
+DialogWindow.h
+DialogWindow.cpp

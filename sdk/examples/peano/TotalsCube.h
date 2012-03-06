@@ -12,9 +12,6 @@ namespace TotalsGame
 	class TotalsCube: public Sifteo::Cube
 	{
 		View *view;
-        const char *overlayText;
-        int overlayYTop, overlayYSize;
-        int overlayBg[3], overlayFg[3];
         bool overlayShown;
 
     public:
@@ -75,7 +72,6 @@ public:
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
         void DisableTextOverlay();
-        void UpdateTextOverlay();
         bool IsTextOverlayEnabled();
 
         void DispatchOnCubeShake(TotalsCube *c);

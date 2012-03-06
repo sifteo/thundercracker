@@ -218,7 +218,7 @@ Game::GameState Run() {
     Game::Wait(3);
 
     // mix up
-    narrator->SetMessage("Okay, let's mix them up a little...", NarratorView::EmoteMix01);
+    narrator->SetMessage("Okay, let's mix\nthem up a little...", NarratorView::EmoteMix01);
     {
         TokenGroup *grp = (TokenGroup*)firstToken->token->current;
         delete grp;
@@ -237,7 +237,9 @@ Game::GameState Run() {
     System::paintSync();
     narrator->GetCube()->backgroundLayer.set();
     narrator->GetCube()->backgroundLayer.clear();
-    narrator->GetCube()->backgroundLayer.setWindow(64,64);
+    narrator->GetCube()->foregroundLayer.Clear();
+    narrator->GetCube()->foregroundLayer.Flush();
+    narrator->GetCube()->backgroundLayer.setWindow(72,56);
 
 
     // press your luck flourish
@@ -251,20 +253,19 @@ Game::GameState Run() {
             rememberedTimeout -= Game::dt;
             while (rememberedTimeout < 0) {
                 (rememberedCubeId==0?firstToken:secondToken)->PaintRandomNumeral();
-                //narrator->SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
+                narrator->SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
                 rememberedCubeId = (rememberedCubeId+1) % 2;
                 rememberedTimeout += period;
             }
 
-            narrator->GetCube()->Image(rememberedCubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,2), Vec2(16,8));
+            narrator->GetCube()->Image(rememberedCubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
             firstToken->PaintNow();
             secondToken->PaintNow();
             System::paintSync();
             Game::UpdateDt();
         }
 
-        narrator->GetCube()->backgroundLayer.setWindow(0,128);
-        narrator->Paint();
+        narrator->SetMessage("");
         System::paint();
 
         firstToken->token->val = 2;
@@ -293,7 +294,10 @@ Game::GameState Run() {
 
     while(firstToken->token->current->GetValue() != Fraction(6))
     {
-        Game::Wait(0);
+        firstToken->Update();
+        secondToken->Update();
+        Game::UpdateDt();
+        System::yield();
     }
     PLAY_SFX(sfx_Tutorial_Correct);
     PLAY_SFX2(sfx_Tutorial_Oops, false);
@@ -410,7 +414,6 @@ Game::GameState Run() {
     Game::Wait(3);
 
     narrator->SetMessage("");
-    narrator->GetCube()->UpdateTextOverlay();
 
     AudioPlayer::PlayShutterClose();
     Game::cubes[0].SetView(NULL);
@@ -569,9 +572,9 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
     void MakeSixEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
         TutorialController::OnNeighborAdd(&Game::cubes[c0], s0, &Game::cubes[c1], s1);
-        if (!firstToken->token->current->GetValue() == Fraction(6)) {
+        if (firstToken->token->current->GetValue() != Fraction(6)) {
             PLAY_SFX2(sfx_Tutorial_Oops, false);
-            narrator->SetMessage("Oops, let's try again...", NarratorView::EmoteSad);
+            narrator->SetMessage("Oops,\nlet's try again...", NarratorView::EmoteSad);
         }
     }
 
@@ -579,7 +582,7 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
     {
         TutorialController::OnNeighborRemove(&Game::cubes[c0],s0, &Game::cubes[c1], s1);
         if (firstToken->token->current == firstToken->token) {
-            narrator->SetMessage("Can you build the number 6?");
+            narrator->SetMessage("Can you build\nthe number 6?");
         }
     }
 

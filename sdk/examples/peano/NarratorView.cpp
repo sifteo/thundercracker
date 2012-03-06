@@ -37,34 +37,28 @@ NarratorView::NarratorView(TotalsCube *c):View(c)
 int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
-    // if (!strcmp(mString,msg) && mEmote == emote) { return; }
+    bool hadMessage = mString[0] != 0;
+
     mString = msg;
     mEmote = emote;
 
     if(mString[0])
+    {
+        if(!hadMessage)
+        {
+            Paint();
+            GetCube()->foregroundLayer.Flush();
+        }
         GetCube()->EnableTextOverlay(msg, 8, 40, 255,255,255, 0,0,0);
+    }
     else
+    {
         GetCube()->DisableTextOverlay();
-
-    /* TODO bunch of old paint calls
-  is it really necessary to draw the images here?
-  theyll get drawnagain in Paint()
-  */
-
-
-    if (mEmote != EmoteNone) {
-        //            GetCube().Image(emotes[mEmote], Vec2(16, 65, 0, 0, 94, 43);
-    } else {
-        //          Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
+        Paint();
     }
-    if (mString[0]) {
+
+    if (mString[0])
         PLAY_SFX(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
-        //            PaintText();
-    } else {
-        //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);
-    }
-    //        Cube.Paint();
-
 }
 
 void NarratorView::SetEmote(Emote emote) {
@@ -113,18 +107,8 @@ void NarratorView::Paint() {
 
 
     if(mString[0]) {
-        PaintText();
+        GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
     }
-}
-
-void NarratorView::PaintText()
-{
-    const int pad = 8;
-    //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
-    GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
-    //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
-
-    //text wil actually be drawn after this frame completes
 }
 
 

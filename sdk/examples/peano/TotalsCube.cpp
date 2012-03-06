@@ -19,15 +19,6 @@ namespace TotalsGame
         backgroundLayer.set();
         foregroundLayer.Flush();
 
-        overlayText = NULL;
-        overlayYTop = 0;
-        overlayYSize = 0;
-        overlayBg[0] = 0;
-        overlayBg[1] = 0;
-        overlayBg[2] = 0;
-        overlayFg[0] = 0;
-        overlayFg[1] = 0;
-        overlayFg[2] = 0;
         overlayShown = false;        
 	}
 
@@ -494,52 +485,27 @@ namespace TotalsGame
 
     void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
     {
-        overlayText = text;
-        overlayYTop = yTop;
-        overlayYSize = ySize;
-        overlayBg[0] = br;
-        overlayBg[1] = bg;
-        overlayBg[2] = bb;
-        overlayFg[0] = fr;
-        overlayFg[1] = fg;
-        overlayFg[2] = fb;
-        overlayShown = false;
+        DialogWindow dw(this);
+        dw.SetBackgroundColor(br, bg, bb);
+        dw.SetForegroundColor(fr, fg, fb);
+        dw.DoDialog(text, yTop, ySize);
+        overlayShown = true;
     }
 
     void TotalsCube::DisableTextOverlay()
     {
-        overlayText = NULL;
-    }
+        //turn it off
+        System::paintSync();
 
-    void TotalsCube::UpdateTextOverlay()
-    {
-        if(overlayText && !overlayShown)
-        {
-            //turn it on
-            DialogWindow dw(this);
-            dw.SetBackgroundColor(overlayBg[0], overlayBg[1], overlayBg[2]);
-            dw.SetForegroundColor(overlayFg[0], overlayFg[1], overlayFg[2]);
-            dw.DoDialog(overlayText, overlayYTop, overlayYSize);
-            overlayShown = true;
-        }
-        else if(!overlayText && overlayShown)
-        {
-            //turn it off
-            System::paintSync();
-            vbuf.touch();
-            System::paintSync();
+        backgroundLayer.set();
+        backgroundLayer.clear();
+        backgroundLayer.setWindow(0, 128);
+        foregroundLayer.Clear();
+        view->Paint();
+        foregroundLayer.Flush();
+        System::paintSync();
 
-            backgroundLayer.set();
-            backgroundLayer.clear();
-            backgroundLayer.setWindow(0, 128);
-            foregroundLayer.Clear();
-            view->Paint();
-            foregroundLayer.Flush();
-            System::paintSync();
-
-            overlayShown = false;
-        }
-
+        overlayShown = false;
     }
 
     bool TotalsCube::IsTextOverlayEnabled()
