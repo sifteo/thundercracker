@@ -36,7 +36,7 @@ namespace {
         
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
-        void transformLog(CallSite &CS);
+        void transformLog(CallSite &CS, uint32_t flags = 0);
     };
 }
 
@@ -75,7 +75,7 @@ bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
     return false;
 }
 
-void LateLTIPass::transformLog(CallSite &CS)
+void LateLTIPass::transformLog(CallSite &CS, uint32_t flags)
 {
     // We convert _SYS_lti_log(fmt, ...) to _SYS_log(tag, ...),
     // where tag includes such things as the function's arity,
@@ -99,6 +99,7 @@ void LateLTIPass::transformLog(CallSite &CS)
     // We support a limited number of log arguments
     int numLogArgs = CS.arg_size() - 1;
     assert(numLogArgs >= 0);
+    flags |= numLogArgs << 24;
     if (numLogArgs > maxArgs)
         report_fatal_error(Twine("_SYS_lti_log() with too many arguments. ")
             + Twine(numLogArgs) + Twine(" supplied, only ") + Twine(maxArgs)
@@ -126,9 +127,13 @@ void LateLTIPass::transformLog(CallSite &CS)
     GlobalVariable *GV = new GlobalVariable(*M, StrConstant->getType(),
                                             true, GlobalValue::PrivateLinkage,
                                             StrConstant, "", 0, false);
-    GV->setSection(".logstr");
+    GV->setAlignment(1);
+    GV->setName("logstr");
+    GV->setSection(".debug_logstr");
 
-    // XXX...
-    
-    CS.setArgument(0, CastInst::CreatePointerCast(GV, i32, "", I));
+    // Cast from pointer to integer, then add our flags word
+    Value *castV = CastInst::CreatePointerCast(GV, i32, "", I);
+    Value *flagsV = BinaryOperator::CreateAdd(castV,
+        ConstantInt::get(i32, flags), "", I);
+    CS.setArgument(0, flagsV);
 }

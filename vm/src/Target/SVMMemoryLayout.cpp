@@ -305,6 +305,10 @@ SVMProgramSection SVMMemoryLayout::getSectionKind(const MCSectionData *SD) const
     SectionKind k = S->getKind();
     const MCSectionELF *SE = dyn_cast<MCSectionELF>(S);
     assert(SE);
+    StringRef Name = SE->getSectionName();
+
+    if (Name.startswith(".debug_"))
+        return SPS_DEBUG;
 
     if (k.isBSS())
         return SPS_BSS;
