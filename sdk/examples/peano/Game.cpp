@@ -194,11 +194,13 @@ void UpdateDt()
 
 void Wait(float delay)
 {
+    System::paint();
+    UpdateCubeViews();
+    PaintCubeViews();
+
     float t=System::clock();
     do {
-        UpdateCubeViews();
-        PaintCubeViews();
-        System::paint();
+        System::yield();
         UpdateDt();
     } while(System::clock()<t+delay);
 }
