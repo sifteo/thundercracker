@@ -54,6 +54,7 @@ mult_numbers = image{"mult_numbers.png", height=16, pinned=true}
 --timer
 timerStem = image{"timerstem.png", height=32}
 timerSprite = image{"timerSprite.png", height=32, pinned=true}
+timerLow = image{"timer_5sec.png", height=32, pinned=true}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 ExplodeGem1 = image{"Gem1Explode.png", height=32}
@@ -93,5 +94,4 @@ slide_39 = sound{"slide_39.raw", encode="PCM"}
 slosh_multi_01 = sound{"slosh_multi_01.raw", encode="PCM"}
 slosh_multi_02 = sound{"slosh_multi_02.raw", encode="PCM"}
 StingerIV2 = sound{"StingerIV2.raw", encode="PCM"}
-timer_blink = sound{"timer_blink.raw", encode="PCM"}
 timer_explode = sound{"timer_explode.raw", encode="PCM"}
