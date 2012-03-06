@@ -12,6 +12,7 @@ namespace PuzzleController
 
 class EventHandler: public TotalsCube::EventHandler
 {
+public:
     void OnCubeShake(TotalsCube *cube) {};
     void OnCubeTouch(TotalsCube *cube, bool touching) {};
     //TODO connect, disconnect
@@ -20,11 +21,33 @@ EventHandler eventHandlers[NUM_CUBES];
 
 class NeighborEventHandler: public Game::NeighborEventHandler
 {
+public:
     void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
     void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 };
 NeighborEventHandler neighborEventHandler;
 
+struct RemoveEvent
+{
+    Cube::ID c0;
+    Cube::Side s0;
+    Cube::ID c1;
+    Cube::Side s1;
+
+    void Set(Cube::ID _c0, Cube::Side _s0, Cube::ID _c1, Cube::Side _s1)
+    {
+        c0 = _c0;
+        s0 = _s0;
+        c1 = _c1;
+        s1 = _s1;
+    }
+};
+//this really should be enough.  can always disconnect all and start ignoring them.
+#define MAX_REMOVE_EVENTS (NUM_CUBES*2)
+RemoveEvent removeEvents[MAX_REMOVE_EVENTS];
+int numRemoveEvents = 0;
+
+void ProcessRemoveEventBuffer();
 
 Puzzle *puzzle;
 bool paused;
@@ -32,9 +55,7 @@ bool paused;
 
 void OnSetup ()
 {
-    bool paused = false;
-    PauseHelper *pauseHelper = NULL;
-
+    numRemoveEvents = 0;
     AudioPlayer::PlayInGameMusic();
 
     String<10> stringRep;
@@ -196,6 +217,7 @@ Game::GameState Run()
 
                     pauseHelper->Reset();
                     paused = false;
+                    ProcessRemoveEventBuffer();
                 }
             }
         }
@@ -281,7 +303,7 @@ Game::GameState Run()
 //-------------------------------------------------------------------------
 void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
-    if (paused /*TODO|| mRemoveEventBuffer.Count > 0*/) { return; }
+    if (paused || numRemoveEvents > 0) { return; }
 
     // validate args
     TokenView *v = (TokenView*)Game::cubes[c0].GetView();
@@ -309,12 +331,19 @@ void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Si
 
 void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
-    /*TODO          if (IsPaused() || mRemoveEventBuffer.Count > 0)
-             {
-             mRemoveEventBuffer.Add(new RemoveEvent() { c = c, s = s, nc = nc, ns = ns });
-             return;
-             }
-             */
+    if (paused || numRemoveEvents > 0)
+    {
+        if(numRemoveEvents < MAX_REMOVE_EVENTS)
+        {
+            removeEvents[numRemoveEvents].Set(c0, s0, c1, s1);
+        }
+        //overflowing the array will signal to disconnect everything
+        //since we can't keep track of any more
+        numRemoveEvents++;
+        return;
+
+    }
+
 
     // validate args
     TokenView *v = (TokenView*)Game::cubes[c0].GetView();
@@ -347,16 +376,35 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
     grp->AlertDidGroupDisconnect();
     delete grp;
 }
-/*TODO remove-event buffer
-         void ProcessRemoveEventBuffer() {
-         var args = mRemoveEventBuffer;
-         mRemoveEventBuffer = new List<RemoveEvent>(args.Count);
-         foreach(var arg in args) {
-         OnNeighborRemove(arg.c, arg.s, arg.nc, arg.ns);
-         }
-         } */
 
 
+void ProcessRemoveEventBuffer()
+{
+    if(numRemoveEvents <= MAX_REMOVE_EVENTS)
+    {
+        int count = numRemoveEvents;
+        numRemoveEvents = 0;    //needed for OnNeighborRemove to actually do work
+        for(int i = 0; i < count; i++)
+        {
+            neighborEventHandler.OnNeighborRemove(removeEvents[i].c0, removeEvents[i].s0, removeEvents[i].c1, removeEvents[i].s1);
+        }
+    }
+    else
+    {
+        numRemoveEvents = 0;
+        //more disconnects occured than we can record.
+        //disconnect everything
+        for(int i = 0; i < NUM_CUBES; i++)
+        {
+            for(int j = i+1; j < NUM_CUBES; j++)
+            {
+                //neighbor remove handler ignores sides
+                neighborEventHandler.OnNeighborRemove(i, 0, j, 0);
+            }
+
+        }
+    }
+}
 
 }
 
