@@ -78,7 +78,8 @@ static void Paint(Cube *pCube) {
 }
 
 // retrieve the acceleration of the cube due to tilting
-const float kAccelThreshold = 0.85f;
+const float kAccelThresholdOn = 1.15f;
+const float kAccelThresholdOff = 0.85f;
 static float GetAccel(Cube *pCube) {
 	return -0.25f * pCube->virtualAccel().x;
 }
@@ -93,7 +94,7 @@ void siftmain() {
 			p->loadAssets(BetterflowAssets);
 			VidMode_BG0_ROM rom(p->vbuf);
 			rom.init();
-			rom.BG0_text(Vec2(1,1), "Loading!?!");
+			rom.BG0_text(Vec2(1,1), "Loading...");
 		}
 		bool done = false;
 		while(!done) {
@@ -156,7 +157,7 @@ void siftmain() {
 	for(;;) {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();
-		while(fabs(GetAccel(pCube)) < kAccelThreshold) {
+		while(fabs(GetAccel(pCube)) < kAccelThresholdOn) {
 			Paint(pCube);
 			bool touch = pCube->touching();
 			// when touching any icon but the last one
@@ -182,7 +183,7 @@ void siftmain() {
 			// update physics
 			const float accel = GetAccel(pCube);
 			const float dt = 0.225f;
-			const bool isTilting = fabs(accel) > kAccelThreshold;
+			const bool isTilting = fabs(accel) > kAccelThresholdOff;
 			const bool isLefty = position < 0.f - 0.05f;
 			const bool isRighty = position > 96.f*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
@@ -251,7 +252,7 @@ void siftmain() {
 	while(offset>-128) {
 		i++;
 		float u = i/33.f;
-		u = (1.-k*u);
+		u = (1.f-k*u);
 		offset = int(12*(1.f-u*u));
 		// HACK ALERT: Relies on the fact that vram is the same for both modes
 		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
