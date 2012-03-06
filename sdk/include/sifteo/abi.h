@@ -407,6 +407,17 @@ struct _SYSPseudoRandomState {
     uint32_t a, b, c, d;
 };
 
+
+/**
+ * Link-time intrinsics.
+ *
+ * These functions are replaced during link-time optimization.
+ */
+
+unsigned _SYS_lti_isDebug();
+void _SYS_lti_log(const char *fmt, ...);
+
+
 /**
  * Low-level system call interface.
  *
@@ -424,6 +435,10 @@ struct _SYSPseudoRandomState {
 #endif
 
 void _SYS_ret() _SC(0);
+
+// Lightweight event logging support: string identifier plus 0-7 integers.
+// Tag bits: reserved [31:27], arity [26:24] string_table_offset [23:0]
+void _SYS_log(uint32_t tag, ...) _SC(25);
 
 // Compiler floating point support
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
@@ -548,6 +563,7 @@ void _SYS_audio_resume(_SYSAudioHandle h) _SC(67);
 int  _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
 void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(65);
 uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(64);
+
 
 #ifdef __cplusplus
 }  // extern "C"

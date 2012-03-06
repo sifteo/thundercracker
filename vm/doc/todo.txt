@@ -16,6 +16,10 @@ SDK optimization:
 
 Debugging support:
 
+- LTO constant folding for "debug" varaiable, allowing conditional code
+- Debug printf/logging support. Calls and format strings eliminated at
+  link-time for non-debug builds.
+
 - What's left to implement in order to get working Dwarf symbols?
 - gdb stub! (Would this work with stock ARM gdb, or would we need a
   special build?)

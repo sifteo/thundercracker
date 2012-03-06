@@ -50,6 +50,8 @@ extern "C" void LLVMInitializeSVMTargetInfo();
 
 namespace llvm {
     ModulePass *createInlineGlobalCtorsPass();
+    BasicBlockPass *createEarlyLTIPass();
+    BasicBlockPass *createLateLTIPass();
 }
 
 static const char HelpText[] =
@@ -246,9 +248,21 @@ static void AddStandardLinkPasses(PassManagerBase &PM, unsigned OptLevel)
     }
 }
 
+// Custom passes that occur before all link-time optimization
+static void AddEarlyPasses(PassManagerBase &PM)
+{
+    // Early LTI expansion handles things likely to result in dead code
+    // elimination and constant folding.
+    PM.add(createEarlyLTIPass());
+}
+
 // Custom passes that occur between two rounds of optimization.
 static void AddMiddlePasses(PassManagerBase &PM)
 {
+    // Do late LTI expansion. This expects to have at least one round of
+    // optimization run since early LTI expansion has occurred.
+    PM.add(createLateLTIPass());
+
     // After IPO, which may completely eliminate constructors, convert
     // any remaining constructors into calls at the top of main().
     // This may result in additional inlining and dead code elimination.
@@ -331,6 +345,7 @@ int main(int argc, char **argv)
     FPM.add(new TargetData(*Target.getTargetData()));
 
     // Link-time optimization
+    AddEarlyPasses(PM);
     AddStandardLinkPasses(PM, OLvl);
 
     // Additional optimizations, both before and after our custom 'middle' passes

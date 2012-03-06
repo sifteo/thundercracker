@@ -85,7 +85,6 @@ void SVMAsmBackend::ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value
     case SVM::fixup_abscpi:
         // Word count from beginning of block
         Value = (Value % SVMTargetMachine::getBlockSize()) / 4;
-        assert(Value != 0 && "Suspicious abscpi reference");
         break;
 
     default:

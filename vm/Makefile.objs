@@ -1,6 +1,8 @@
 OBJS = \
 	src/slinky.o \
 	src/Transforms/InlineGlobalCtors.o \
+	src/Transforms/EarlyLTI.o \
+	src/Transforms/LateLTI.o \
 	src/Target/SVMAsmPrinter.o \
 	src/Target/SVMInstPrinter.o \
 	src/Target/SVMFrameLowering.o \
