@@ -184,7 +184,7 @@ void CubeWrapper::Draw()
                 }
 				case STATE_EMPTY:
 				{
-                    m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
                     /*int level = Game::Inst().getDisplayedLevel();
 
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
@@ -286,7 +286,7 @@ void CubeWrapper::Draw()
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeNewGame, 0);
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 

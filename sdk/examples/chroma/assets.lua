@@ -10,8 +10,11 @@ MessageBox4 = image{"message4.png"}
 --just for CES messages
 MsgGameOver = image{"gameover.png"}
 MsgHighScores = image{"highscores.png"}
-MsgShakeNewGame = image{"shakenewgame.png"}
-MsgShakeToRefill = image{"shaketorefill.png"}
+
+--UI
+UI_Touch_Replay = image{"UI_screen_touch_replay.png"}
+UI_NCubesCleared = image{"ui_nCubesCleared.png"}
+
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
