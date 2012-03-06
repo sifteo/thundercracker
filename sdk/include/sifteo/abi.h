@@ -428,15 +428,17 @@ void _SYS_lti_log(const char *fmt, ...);
  * integer result.
  */
 
-#ifdef __clang__
-#  define _SC(n)  __asm__ ("_SYS_" #n)
-#else
+#ifdef FW_BUILD
 #  define _SC(n)
+#  define NORETURN
+#else
+#  define _SC(n)    __asm__ ("_SYS_" #n)
+#  define NORETURN  __attibute__ ((noreturn))
 #endif
 
-void _SYS_ret(void) _SC(0) __attribute__((noreturn));
-void _SYS_abort(void) _SC(105) __attribute__((noreturn));
-void _SYS_exit(void) _SC(74) __attribute__((noreturn));
+void _SYS_ret(void) _SC(0) NORETURN;
+void _SYS_abort(void) _SC(105) NORETURN;
+void _SYS_exit(void) _SC(74) NORETURN;
 
 void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame

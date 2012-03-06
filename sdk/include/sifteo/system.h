@@ -7,7 +7,7 @@
 #ifndef _SIFTEO_SYSTEM_H
 #define _SIFTEO_SYSTEM_H
 
-#include "abi.h"
+#include <sifteo/abi.h>
 
 namespace Sifteo {
 
