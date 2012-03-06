@@ -23,7 +23,7 @@
     /*   22 */ (SvmSyscall)_SYS_fetch_and_xor_4,
     /*   23 */ (SvmSyscall)_SYS_fetch_and_nand_4,
     /*   24 */ (SvmSyscall)_SYS_fetch_and_and_4,
-    /*   25 */ (SvmSyscall)0,
+    /*   25 */ (SvmSyscall)_SYS_log,
     /*   26 */ (SvmSyscall)_SYS_un_f64,
     /*   27 */ (SvmSyscall)_SYS_un_f32,
     /*   28 */ (SvmSyscall)_SYS_gt_f64,
@@ -103,3 +103,4 @@
     /*  102 */ (SvmSyscall)_SYS_vbuf_writei,
     /*  103 */ (SvmSyscall)_SYS_vbuf_wrect,
     /*  104 */ (SvmSyscall)_SYS_setVector,
+    /*  105 */ (SvmSyscall)_SYS_abort,

@@ -35,6 +35,7 @@ public:
         F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
         F_RESERVED_SVC,         // Reserved SVC encoding
         F_RESERVED_ADDROP,      // Reserved ADDROP encoding
+        F_ABORT,                // User call to _SYS_abort()
     };
     
     static void run(uint16_t appId);

@@ -42,6 +42,10 @@ void _SYS_ret() {
     SvmRuntime::ret();
 }
 
+void _SYS_abort() {
+    SvmRuntime::fault(SvmRuntime::F_ABORT);
+}
+
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {
     float r = reinterpret_cast<float&>(a) + reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
