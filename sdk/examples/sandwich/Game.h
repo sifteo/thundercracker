@@ -84,6 +84,8 @@ private:
 
   void OnUseEquipment();
 
+  void OnTriggerEvent(unsigned id);
+
 };
 
 extern Game gGame;

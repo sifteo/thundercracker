@@ -22,6 +22,10 @@ using namespace Sifteo;
 #define ITEM_TRIGGER_NONE   0
 #define ITEM_TRIGGER_KEY    1
 
+#define EVENT_NONE                          0
+#define EVENT_ADVANCE_QUEST_AND_REFRESH     1
+#define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
+
 struct QuestData {
     uint8_t mapId;
     uint8_t roomId;
@@ -49,6 +53,7 @@ struct TriggerData {
     uint8_t questEnd; // 0xff means means never-stop
     uint8_t flagId; // could be 1-32 is local, 33-64 is global
     uint8_t room;
+    uint8_t eventType;
 };
 
 struct DoorData {

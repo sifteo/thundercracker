@@ -198,24 +198,24 @@ class Room:
 	def write_source_to(self, src):
 		src.write("    {\n")
 		# collision mask rows
-		src.write("        { ")
+		src.write("        {")
 		for row in range(8):
 			rowMask = 0
 			for col in range(8):
 				if not iswalkable(self.tileat(col, row)):
 					rowMask |= (1<<col)
-			src.write("0x%x, " % rowMask)
+			src.write("0x%x," % rowMask)
 		src.write("},\n")
 		# tiles
 		src.write("        { ")
 		for ty in range(8):
 			#src.write("            ")
 			for tx in range(8):
-				src.write("0x%x, " % self.tileat(tx,ty).lid)
+				src.write("0x%x," % self.tileat(tx,ty).lid)
 			#src.write("\n")
 		src.write("},\n")
 		# centerx, centery
 		cx,cy = self.primary_center()
-		src.write("        0x%x, 0x%x, \n" % (cx, cy))
+		src.write("        0x%x,0x%x,\n" % (cx, cy))
 		src.write("    },\n")		
 

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="64" height="56" tilewidth="16" tileheight="16">
  <properties>
   <property name="ambient" value="butterfly"/>
@@ -649,11 +650,15 @@
   <object name="Sprout1" type="NPC" x="455" y="653" width="32" height="32">
    <properties>
     <property name="id" value="sprout_followMe1"/>
+    <property name="onTrigger" value="advanceQuestAndRefresh"/>
+    <property name="quest" value="followSprout1"/>
    </properties>
   </object>
   <object name="Sprout3" type="NPC" x="432" y="272" width="32" height="32">
    <properties>
     <property name="id" value="sprout_followMe3"/>
+    <property name="onTrigger" value="advanceQuestAndRefresh"/>
+    <property name="quest" value="followSprout3"/>
    </properties>
   </object>
   <object name="CastleGate" type="Gateway" x="431" y="11" width="32" height="32">
@@ -669,6 +674,8 @@
   <object name="Sprout2" type="NPC" x="396" y="418" width="32" height="32">
    <properties>
     <property name="id" value="sprout_followMe2"/>
+    <property name="onTrigger" value="advanceQuestAndRefresh"/>
+    <property name="quest" value="followSprout2"/>
    </properties>
   </object>
   <object name="Key2" type="Item" x="559" y="321" width="32" height="32">
