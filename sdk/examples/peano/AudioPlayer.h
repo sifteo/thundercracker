@@ -40,10 +40,13 @@ namespace TotalsGame
         static void PlayNeighborRemove();
 
 	private:
-        static const int NumSfxChannels = 1;
-
+        static const int NumSfxChannels = 3;
+#if SFX_ON
 		static AudioChannel channelSfx[NumSfxChannels];
+#endif
+#if MUSIC_ON
 		static AudioChannel channelMusic;
+#endif
 	};
 
 }

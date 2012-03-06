@@ -5,43 +5,62 @@
 
 namespace TotalsGame
 {
+#if SFX_ON
     AudioChannel AudioPlayer::channelSfx[NumSfxChannels];
+#endif
+#if MUSIC_ON
     AudioChannel AudioPlayer::channelMusic;
+#endif
 
 	void AudioPlayer::Init()
 	{
+#if SFX_ON
 		for(int i = 0; i < NumSfxChannels; i++)
 			channelSfx[i].init();
+#endif
+#if MUSIC_ON
 		channelMusic.init();
+#endif
 	}
 
     void AudioPlayer::MuteMusic(bool mute)
     {
+#if MUSIC_ON
         channelMusic.setVolume(mute?0:Audio::MAX_VOLUME);
+#endif
     }
 
     void AudioPlayer::MuteSfx(bool mute)
     {
+#if SFX_ON
         for(int i = 0; i < NumSfxChannels; i++)
         {
             channelSfx[i].setVolume(mute?0:Audio::MAX_VOLUME);
         }
+#endif
     }
 
     bool AudioPlayer::MusicMuted()
     {
+#if MUSIC_ON
         return channelMusic.volume() == 0;
-        return false;
+#else
+        return false;        
+#endif
     }
 
     bool AudioPlayer::SfxMuted()
     {
+#if SFX_ON
         return channelSfx[0].volume() == 0;
+#else
         return false;
+#endif
     }
 
 	void AudioPlayer::PlaySfx(_SYSAudioModule& handle, bool preempt)
 	{
+#if SFX_ON
 		//find a nonplaying channel
 		int index = 0;
 		for(int i = 0; i < NumSfxChannels; i++)
@@ -64,15 +83,18 @@ namespace TotalsGame
 			}
 		}
 		channelSfx[index].play(handle);
+#endif
 	}
 
 	void AudioPlayer::PlayMusic(_SYSAudioModule& music, bool loop)
     {
+#if MUSIC_ON
 		if (channelMusic.isPlaying())
 		{
 			channelMusic.stop();
 		}
 		channelMusic.play(music, loop ? LoopRepeat : LoopOnce);
+#endif
 	}
 
 
