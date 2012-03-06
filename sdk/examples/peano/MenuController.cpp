@@ -152,11 +152,11 @@ WelcomeBack:
     // WELCOME BACK
     //-----------------------------------------------------------------------
 
-#define ADD_ITEM(graphic, name, desc)\
+#define ADD_ITEM(graphic, name, desc) do{\
     new (&initialItems[numInitialItems]) TiltFlowItem(&graphic);\
     initialItems[numInitialItems].id = name;\
     initialItems[numInitialItems].description = desc;\
-    numInitialItems++;
+    numInitialItems++;}while(0)
 
 
     enum
@@ -172,19 +172,19 @@ WelcomeBack:
     static TiltFlowItem initialItems[5];
     numInitialItems = 0;
 
-    if (Game::currentPuzzle != NULL /* TODO || !mGame->saveData.AllChaptersSolved() */)
+    if (Game::currentPuzzle != NULL || !Game::saveData.AllChaptersSolved())
     {
-        ADD_ITEM(Icon_Continue, Continue,0) //"continue", "Continue from your auto-save data.")
+        ADD_ITEM(Icon_Continue, Continue, "Continue from your auto-save data.");
     }
 
-    ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!")
-            ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!")
-        #if !DISABLE_CHAPTERS
-            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
-        #endif //!DISABLE_CHAPTERS
-            ADD_ITEM(Icon_Setup, Setup, "Change your game settings.")
-        #undef ADD_ITEM
-            
+    ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!");
+    ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!");
+#if !DISABLE_CHAPTERS
+    ADD_ITEM(Icon_Level_Select, Level, "Replay any level.");
+#endif //!DISABLE_CHAPTERS
+    ADD_ITEM(Icon_Setup, Setup, "Change your game settings.");
+#undef ADD_ITEM
+
     {
         static TiltFlowItem *items[5]={&initialItems[0], &initialItems[1], &initialItems[2], &initialItems[3], &initialItems[4]};
         static char menuBuffer[sizeof(TiltFlowMenu)];
