@@ -384,12 +384,14 @@ Game::GameState Run() {
     Game::Wait(3);
     firstToken->token->GetPuzzle()->target = NULL;
 
+    Game::cubes[2].HideSprites();
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].SetView(NULL);
     Game::cubes[2].CloseShuttersSync(&Background);
     new(blankViewBuffer[2]) BlankView(&Game::cubes[2], NULL);
 
+    Game::cubes[1].HideSprites();
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].SetView(NULL);
@@ -419,6 +421,18 @@ Game::GameState Run() {
     new(blankViewBuffer[0]) BlankView(&Game::cubes[0], NULL);
     Game::Wait(0.5);
 
+    delete firstToken;
+    delete secondToken;
+    delete puzzle->target;
+    delete puzzle;
+
+    Game::ClearCubeEventHandlers();
+    Game::ClearCubeViews();
+
+    //free up our tokens
+    Token::ResetAllocationPool();
+    TokenGroup::ResetAllocationPool();
+
     Game::saveData.CompleteTutorial();
     if (Game::currentPuzzle == NULL) {
 #if !DISABLE_CHAPTERS
@@ -429,16 +443,6 @@ Game::GameState Run() {
         }
 #endif // #if !DISABLE_CHAPTERS
     }
-
-
-
-    delete firstToken;
-    delete secondToken;
-    delete puzzle->target;
-    delete puzzle;
-
-    Game::ClearCubeEventHandlers();
-    Game::ClearCubeViews();
 
     return Game::GameState_Interstitial;
 

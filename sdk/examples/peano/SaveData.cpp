@@ -124,6 +124,11 @@ void SaveData::CompleteTutorial()
     }
 }
 
+bool SaveData::HasCompletedTutorial()
+{
+    return hasDoneTutorial;
+}
+
 
 }
 

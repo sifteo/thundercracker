@@ -183,10 +183,7 @@ Game::GameState Run()
                     // transition out
                     for(int t=0; t<puzzle->GetNumTokens(); ++t)
                     {
-                        for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
-                        {
-                            Game::cubes[t].backgroundLayer.hideSprite(i);
-                        }
+                        Game::cubes[t].HideSprites();
                         Game::cubes[t].foregroundLayer.Clear();
                         Game::cubes[t].foregroundLayer.Flush();
                         Game::cubes[t].SetView(NULL);

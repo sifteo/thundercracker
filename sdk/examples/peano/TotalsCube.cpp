@@ -547,4 +547,12 @@ namespace TotalsGame
         return overlayShown;
     }
 
+    void TotalsCube::HideSprites()
+    {
+        for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
+        {
+            backgroundLayer.hideSprite(i);
+        }
+    }
+
 }

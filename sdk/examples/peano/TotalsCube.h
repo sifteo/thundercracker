@@ -44,6 +44,8 @@ namespace TotalsGame
 
         Vec2 GetTilt();
 
+        void HideSprites();
+
 private:
 		EventHandler *eventHandler;
 

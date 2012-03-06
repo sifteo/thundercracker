@@ -115,6 +115,8 @@ void Run(TotalsCube *_cubes, int nCubes)
 {
     cubes = _cubes;
 
+    TotalsGame::AudioPlayer::Init();
+
     //loading assets resets video mode to bg0 only.
     //reset to bg_spr_bg1 as needed
     for(int i = 0; i < NUM_CUBES; i++)
@@ -150,7 +152,8 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
 
         case GameState_Init:
-            Initialize();
+            nextState = Initialize();
+            break;
 
         case GameState_Puzzle:
             nextState = PuzzleController::Run();
@@ -211,10 +214,12 @@ bool IsPlayingRandom()
 }
 
 GameState Initialize()
-{/* TODO  return saveData.hasDoneTutorial ?
-          "ReturningPlayer" : "NewPlayer";
-          */
+{
+#if SKIP_INTRO_TUTORIAL
     return GameState_Menu;
+#else
+    return saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+#endif
 }
 
 GameState Advance()

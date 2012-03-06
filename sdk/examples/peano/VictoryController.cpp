@@ -64,10 +64,8 @@ Game::GameState Run() {
     vv->Open();
     Game::Wait(3.5f);
     vv->EndUpdates();
-    for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
-    {
-        vv->GetCube()->backgroundLayer.hideSprite(i);
-    }
+
+    vv->GetCube()->HideSprites();
 
     nv->SetCube(&Game::cubes[0]);
     Game::Wait(0.5f);

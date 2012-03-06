@@ -22,6 +22,7 @@ public:
     bool IsChapterSolved(int chapter);
     bool AllChaptersSolved();
     void CompleteTutorial();
+    bool HasCompletedTutorial();
     void Reset();
 
     bool IsChapterUnlockedWithCurrentCubeSet(int i);

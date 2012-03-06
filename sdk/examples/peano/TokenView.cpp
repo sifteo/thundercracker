@@ -84,10 +84,8 @@ void TokenView::DidJoinGroup()
     mTimeout = Game::rand.uniform(0.2f, 0.25f);
     mStatus = StatusQueued;
     //disable any shown sprites
-    for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
-    {
-        GetCube()->backgroundLayer.hideSprite(i);
-    }
+    GetCube()->HideSprites();
+
     if (grp != NULL)
     {
         PaintNow();
@@ -168,10 +166,7 @@ void TokenView::SetState(Status state, bool resetTimer, bool resetExpr)
             TotalsCube *cube = GetCube();
             if(cube)
             {
-                for(int i = 0; i < _SYS_VRAM_SPRITES; i++)
-                {
-                    GetCube()->backgroundLayer.hideSprite(i);
-                }
+                GetCube()->HideSprites();
             }
         }
         PaintNow();

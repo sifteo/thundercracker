@@ -75,7 +75,7 @@ Game::GameState Run()
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 
-    return Game::GameState_Menu;
+    return Game::GameState_Init;
 }
 
 }
