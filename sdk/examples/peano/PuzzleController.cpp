@@ -15,7 +15,6 @@ class EventHandler: public TotalsCube::EventHandler
 public:
     void OnCubeShake(TotalsCube *cube) {};
     void OnCubeTouch(TotalsCube *cube, bool touching) {};
-    //TODO connect, disconnect
 };
 EventHandler eventHandlers[NUM_CUBES];
 

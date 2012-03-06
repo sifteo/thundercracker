@@ -7,6 +7,7 @@ namespace TotalsGame
 {
 #if SFX_ON
     AudioChannel AudioPlayer::channelSfx[NumSfxChannels];
+    const _SYSAudioModule *AudioPlayer::whatsPlaying[NumSfxChannels];
 #endif
 #if MUSIC_ON
     AudioChannel AudioPlayer::channelMusic;
@@ -58,6 +59,19 @@ namespace TotalsGame
 #endif
     }
 
+    void AudioPlayer::HaltSfx(const _SYSAudioModule &handle)
+    {
+#if SFX_ON
+        for(int i = 0; i < NumSfxChannels; i++)
+        {
+            if(whatsPlaying[i] == &handle)
+            {
+                channelSfx[i].stop();
+            }
+        }
+#endif
+    }
+
 	void AudioPlayer::PlaySfx(_SYSAudioModule& handle, bool preempt)
 	{
 #if SFX_ON
@@ -83,6 +97,7 @@ namespace TotalsGame
 			}
 		}
 		channelSfx[index].play(handle);
+        whatsPlaying[index] = &handle;
 #endif
 	}
 

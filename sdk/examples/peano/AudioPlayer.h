@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sifteo.h>
+#include "sifteo.h"
 #include "config.h"
 
 #if MUSIC_ON
@@ -32,6 +32,7 @@ namespace TotalsGame
         static void MuteSfx(bool mute);
         static bool MusicMuted();
         static bool SfxMuted();
+        static void HaltSfx(const _SYSAudioModule &handle);
 
 		static void PlayShutterOpen();
 		static void PlayShutterClose();
@@ -43,6 +44,7 @@ namespace TotalsGame
         static const int NumSfxChannels = 3;
 #if SFX_ON
 		static AudioChannel channelSfx[NumSfxChannels];
+        static const _SYSAudioModule *whatsPlaying[NumSfxChannels];
 #endif
 #if MUSIC_ON
 		static AudioChannel channelMusic;

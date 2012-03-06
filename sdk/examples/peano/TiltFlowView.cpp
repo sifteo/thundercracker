@@ -166,7 +166,6 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
 
 void TiltFlowView::PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s)
 {
-    //todo tiles or sprites?
     GetCube()->ClipImage(image, p/8);//, o/8, s/8);
 }
 
@@ -221,7 +220,7 @@ void TiltFlowView::UpdateMenu() {
             (GetCube()->GetTilt().x > 1 && mItem == 0 && mOffsetX <= 0)
             )
     {
-        //TODO        Jukebox.SfxHalt("PV_menu_tilt");
+        AudioPlayer::HaltSfx(sfx_Menu_Tilt);
         CoastToStop();
 
         if (showingDetails)
