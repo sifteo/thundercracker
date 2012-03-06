@@ -430,15 +430,15 @@ void _SYS_lti_log(const char *fmt, ...);
 
 #ifdef FW_BUILD
 #  define _SC(n)
-#  define NORETURN
+#  define _NORET
 #else
 #  define _SC(n)    __asm__ ("_SYS_" #n)
-#  define NORETURN  __attibute__ ((noreturn))
+#  define _NORET    __attribute__ ((noreturn))
 #endif
 
-void _SYS_ret(void) _SC(0) NORETURN;
-void _SYS_abort(void) _SC(105) NORETURN;
-void _SYS_exit(void) _SC(74) NORETURN;
+void _SYS_ret(void) _SC(0) _NORET;
+void _SYS_abort(void) _SC(105) _NORET;
+void _SYS_exit(void) _SC(74) _NORET;
 
 void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
@@ -446,7 +446,7 @@ void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: reserved [31:27], arity [26:24] string_table_offset [23:0]
-void _SYS_log(uint32_t tag, ...) _SC(25);
+void _SYS_log(uint32_t tag, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4, uint32_t v5, uint32_t v6, uint32_t v7) _SC(25);
 
 // Compiler floating point support
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
