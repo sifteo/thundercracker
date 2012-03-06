@@ -230,7 +230,11 @@ GameState Advance()
     if (Game::currentPuzzle == NULL)
 #endif //!DISABLE_CHAPTERS
     {
-        return GameState_Interstitial; //todo GameState_Menu
+#if MENU_BETWEEN_RANDOM_PUZZLES
+        return GameState_Menu;
+#else
+        return GameState_Interstitial;
+#endif
     }
 #if !DISABLE_CHAPTERS
     currentPuzzle->SaveAsSolved();
