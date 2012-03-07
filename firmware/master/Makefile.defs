@@ -53,11 +53,6 @@ ifneq ($(QTCREATOR_TERMINAL),)
 	CFLAGS += -DQTCREATOR_TERMINAL
 endif
 
-# 32-bit mingw needs this for the __sync_fetch_* family of routines in syscalls.cpp
-ifeq ($(BUILD_PLATFORM), windows32)
-    CFLAGS += -march=native
-endif
-
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
@@ -92,6 +87,12 @@ endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
+
+# 32-bit mingw needs this for the __sync_fetch_* family of routines in syscalls.cpp
+ifeq ($(BUILD_PLATFORM), windows32)
+    CFLAGS_SIM += -march=native
+endif
+
 CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 

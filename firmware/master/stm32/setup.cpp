@@ -11,7 +11,6 @@
 #include "radio.h"
 #include "usb.h"
 #include "flashlayer.h"
-#include "runtime.h"
 #include "board.h"
 #include "vectors.h"
 #include "systime.h"
@@ -22,18 +21,21 @@
 #include "audiooutdevice.h"
 #include "usart.h"
 #include "button.h"
+#include "svmruntime.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" unsigned __bss_start;
-extern "C" unsigned __bss_end;
-extern "C" unsigned __data_start;
-extern "C" unsigned __data_end;
-extern "C" unsigned __data_src;
-extern "C" initFunc_t __init_array_start;
-extern "C" initFunc_t __init_array_end;
+extern "C" {
+    unsigned __bss_start;
+    unsigned __bss_end;
+    unsigned __data_start;
+    unsigned __data_end;
+    unsigned __data_src;
+    initFunc_t __init_array_start;
+    initFunc_t __init_array_end;
+}
 
 extern "C" void _start()
 {
@@ -195,7 +197,7 @@ extern "C" void _start()
     SysTime::init();
     Radio::open();
     Tasks::init();
-    FlashLayer::init();
+    FlashBlock::init();
     Button::init();
 
     AudioMixer::instance.init();
@@ -219,7 +221,7 @@ extern "C" void _start()
      * Launch our game runtime!
      */
 
-    Runtime::run();
+    SvmRuntime::run(111);
 }
 
 extern "C" void *_sbrk(intptr_t increment)
