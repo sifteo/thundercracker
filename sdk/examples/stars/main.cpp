@@ -128,8 +128,7 @@ public:
          * We respond to the accelerometer
          */
          
-        _SYSAccelState accel;
-        _SYS_getAccel(cube.id(), &accel);
+        Vec2 accel = cube.physicalAccel();
         Float2 tilt(accel.x, accel.y);
         tilt *= starTiltSpeed;
         
