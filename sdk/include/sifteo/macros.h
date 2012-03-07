@@ -75,7 +75,7 @@
 
     #define ASSERT(_x) do { \
         if (_SYS_lti_isDebug() && !(_x)) { \
-            _SYS_lti_log("ASSERT failure at " SOURCELOC_STR ", (" #_x ")"); \
+            _SYS_lti_log("ASSERT failure at " SOURCELOC_STR ", (" #_x ")\n"); \
             _SYS_abort(); \
         } \
     } while (0)
