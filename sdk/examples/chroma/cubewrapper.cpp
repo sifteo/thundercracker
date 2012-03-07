@@ -223,34 +223,7 @@ void CubeWrapper::Draw()
 
             if( m_cube.id() == 0 + CUBE_ID_BASE)
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
-
-                if( Game::Inst().getMode() == Game::MODE_BLITZ )
-                {
-                    int score = Game::Inst().getScore();
-
-                    //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
-                    //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
-                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
-                                       Banner::CENTER, score );
-                }
-                else
-                {
-                    m_vid.BG0_drawPartialAsset( Vec2( 0, 7), Vec2( 0, 7), Vec2( 16, 9), MessageBox4 );
-
-                    String<64> buf;
-
-                    if( Game::Inst().getDisplayedLevel() == 1 )
-                        buf << "1 Cube cleared";
-                    else
-                        buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
-                    DrawMessageBoxWithText( buf, false, 2 );
-                }
-            }
-            else if( m_cube.id() == 1 + CUBE_ID_BASE )
-            {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
-                //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_Highscores, 0);
 
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
@@ -258,6 +231,10 @@ void CubeWrapper::Draw()
 
                     Banner::DrawScore( m_bg1helper, Vec2( 7, 5+2*i ), Banner::RIGHT, score );
                 }
+            }
+            else if( m_cube.id() == 1 + CUBE_ID_BASE )
+            {
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
@@ -1793,7 +1770,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
     m_dirty = false;
 
     if( bDrawBox )
-        m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+        m_vid.BG0_drawAsset(Vec2(0,0), UI_BG, 0);
 
     //count how many lines of text we have
     int charCnt = 0;

@@ -1,15 +1,16 @@
 GameAssets = group{quality=10}
 --UI
 Font = image{"font-8x16.png", width=8, height=16}
+WhiteFont = image{"WhiteFont.png", width=8, height=16}
 BannerImg = image{"banner.png"}
-MessageBox4 = image{"message4.png"}
---just for CES messages
-MsgGameOver = image{"gameover.png"}
-MsgHighScores = image{"highscores.png"}
-
 --UI
 UI_Touch_Replay = image{"UI_screen_touch_replay.png"}
+UI_ExitGame = image{"UI_end_game_exit.png"}
 UI_NCubesCleared = image{"ui_nCubesCleared.png"}
+UI_BG = image{"UI_universalBG.png"}
+UI_Highscores = image{"UI_highScore_bg.png"}
+UI_Highscores_lowscore = image{"UI_highScore_bg_lowScore.png"}
+UI_Highlight = image{"UI_highlight.png"}
 
 --the gems
 Gem0 = image{"Gem0.png", height=32}
