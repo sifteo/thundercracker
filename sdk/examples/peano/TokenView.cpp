@@ -252,7 +252,7 @@ void TokenView::PaintNow()
 
     c->foregroundLayer.Clear();
 
-    c->Image(mLit ? &BackgroundLit : &Background, Vec2(0,0));
+    c->Image(&Background, Vec2(0,0));
     SideStatus bottomStatus = SideStatusOpen;
     SideStatus rightStatus = SideStatusOpen;
     SideStatus topStatus = SideStatusOpen;
@@ -421,7 +421,17 @@ void TokenView::PaintBottom(bool lit)
 
 void TokenView::PaintCenterCap(uint8_t masks[4])
 {
-    //uint8_t masks[4] = {15,15,15,15};
+    const AssetImage &center = mLit ? Center_Lit : Center;
+    const AssetImage &horizontal = mLit ? Horizontal_Lit : Horizontal;
+    const AssetImage &vertical = mLit ? Vertical_Lit : Vertical;
+    const AssetImage &majorN = mLit ? MajorN_Lit : MajorN;
+    const AssetImage &majorS = mLit ? MajorS_Lit : MajorS;
+    const AssetImage &majorE = mLit ? MajorE_Lit : MajorE;
+    const AssetImage &majorW = mLit ? MajorW_Lit : MajorW;
+    const AssetImage &majorNE = mLit ? MajorNE_Lit : MajorNE;
+    const AssetImage &majorSE = mLit ? MajorSE_Lit : MajorSE;
+    const AssetImage &majorNW = mLit ? MajorNW_Lit : MajorNW;
+    const AssetImage &majorSW = mLit ? MajorSW_Lit : MajorSW;
 
     // compute the screen state union (assuming it's valid)
     uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
@@ -429,8 +439,6 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 
     ASSERT(vunion < (1<<6));
 
-    // flood fill the background to start (not optimal, but this is a demo, dogg)
-    c->backgroundLayer.BG0_drawAsset(Vec2(0,0), Background);
     if (vunion == 0x00) { return; }
 
     // determine the "lowest" bit
@@ -439,25 +447,25 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 
     // Center
     for(unsigned i=5; i<9; ++i) {
-        c->backgroundLayer.BG0_drawAsset(Vec2(i,4), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(i,9), Center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(i,4), center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(i,9), center, lowestBit);
     }
     for(unsigned i=5; i<9; ++i)
         for(unsigned j=4; j<10; ++j) {
-            c->backgroundLayer.BG0_drawAsset(Vec2(j,i), Center, lowestBit);
+            c->backgroundLayer.BG0_drawAsset(Vec2(j,i), center, lowestBit);
         }
 
     // Horizontal
-    c->backgroundLayer.BG0_drawAsset(Vec2(3,0), Horizontal, masks[SIDE_TOP]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(3,13), Horizontal, masks[SIDE_BOTTOM]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(3,14), Horizontal, masks[SIDE_BOTTOM]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(3,15), Horizontal, masks[SIDE_BOTTOM]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(3,0), horizontal, masks[SIDE_TOP]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(3,13), horizontal, masks[SIDE_BOTTOM]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(3,14), horizontal, masks[SIDE_BOTTOM]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(3,15), horizontal, masks[SIDE_BOTTOM]);
 
     // Vertical
-    c->backgroundLayer.BG0_drawAsset(Vec2(0,3), Vertical, masks[SIDE_LEFT]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(13,3), Vertical, masks[SIDE_RIGHT]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(14,3), Vertical, masks[SIDE_RIGHT]);
-    c->backgroundLayer.BG0_drawAsset(Vec2(15,3), Vertical, masks[SIDE_RIGHT]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(0,3), vertical, masks[SIDE_LEFT]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(13,3), vertical, masks[SIDE_RIGHT]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(14,3), vertical, masks[SIDE_RIGHT]);
+    c->backgroundLayer.BG0_drawAsset(Vec2(15,3), vertical, masks[SIDE_RIGHT]);
 
     // Minor Diagonals
     if (vunion & 0x10) {
@@ -469,24 +477,24 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 
     // Major Diagonals
     if (lowestBit > 1) {
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), Center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), center, lowestBit);
+        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), center, lowestBit);
     } else {
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), majorNW, vunion & 0x03);
+        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), majorSW, vunion & 0x03);
+        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), majorSE, 3 - (vunion & 0x03));
+        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), majorNE, 3 - (vunion & 0x03));
     }
 
     static const uint8_t keyIndices[] = { 0, 1, 3, 5, 8, 10, 13, 16, 20, 22, 25, 28, 32, 35, 39, 43, 48, 50, 53, 56, 60, 63, 67, 71, 76, 79, 83, 87, 92, 96, 101, 106, };
 
     // Major Joints
-    c->Image(&MajorN, Vec2(3,1), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-    c->Image(&MajorW, Vec2(1,3), keyIndices[vunion] + CountBits(vunion ^ masks[1]));
-    c->Image(&MajorS, Vec2(3,10), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
-    c->Image(&MajorE, Vec2(10,3), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+    c->Image(&majorN, Vec2(3,1), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+    c->Image(&majorW, Vec2(1,3), keyIndices[vunion] + CountBits(vunion ^ masks[1]));
+    c->Image(&majorS, Vec2(3,10), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+    c->Image(&majorE, Vec2(10,3), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
 }
 
 

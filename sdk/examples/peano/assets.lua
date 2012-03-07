@@ -1,6 +1,5 @@
 GameAssets = group{quality=10}
 Background = image{"background.png"}
-BackgroundLit = image{"background_lit.png"}
 
 Accent = image{ "accent.png" }
 Accent_Current = image{ "accent_current.png" }
@@ -139,22 +138,30 @@ VaultDoor = image{"vault_door.png", width=128, height=128}
 Center = image{"assets_center.png", width=8, height=8}
 Horizontal = image{"assets_horizontal.png", width=64, height=8}
 Vertical = image{"assets_vertical.png", width=8, height=64}
-
 MajorN = image{"assets_jointN.png", width=64, height=24}
 MajorW = image{"assets_jointW.png", width=24, height=64}
 MajorS = image{"assets_jointS.png", width=64, height=24}
 MajorE = image{"assets_jointE.png", width=24, height=64}
-
 MajorNW = image{"assets_jointNW.png", width=8, height=8}
 MajorSW = image{"assets_jointSW.png", width=8, height=8}
 MajorSE = image{"assets_jointSE.png", width=8, height=8}
 MajorNE = image{"assets_jointNE.png", width=8, height=8}
-
 MinorNW = image{"assets_minorNW.png", width=8, height=8}
 MinorSW = image{"assets_minorSW.png", width=8, height=8}
 MinorSE = image{"assets_minorSE.png", width=8, height=8}
 MinorNE = image{"assets_minorNE.png", width=8, height=8}
 
+Center_Lit = image{"assets_center_lit.png", width=8, height=8}
+Horizontal_Lit = image{"assets_horizontal_lit.png", width=64, height=8}
+Vertical_Lit = image{"assets_vertical_lit.png", width=8, height=64}
+MajorN_Lit = image{"assets_jointN_lit.png", width=64, height=24}
+MajorW_Lit = image{"assets_jointW_lit.png", width=24, height=64}
+MajorS_Lit = image{"assets_jointS_lit.png", width=64, height=24}
+MajorE_Lit = image{"assets_jointE_lit.png", width=24, height=64}
+MajorNW_Lit = image{"assets_jointNW_lit.png", width=8, height=8}
+MajorSW_Lit = image{"assets_jointSW_lit.png", width=8, height=8}
+MajorSE_Lit = image{"assets_jointSE_lit.png", width=8, height=8}
+MajorNE_Lit = image{"assets_jointNE_lit.png", width=8, height=8}
 
 sfx_Stinger_02 = sound{ "PV_Stinger_02.raw", encode="PCM" }
 sfx_Slide_LessScrape_01 = sound{ "PV_slide_lessScrape_01.raw", encode="PCM" }
