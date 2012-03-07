@@ -133,7 +133,18 @@ bool SVMAlignPass::runOnMachineBasicBlock(MachineBasicBlock &MBB)
             
             // Non-tail call that *is* aligned. Insert a NOP beforehand, so that
             // the return address will be aligned on a halfword boundary.
-            
+            //
+            // We also do this for syscalls, not because syscalls themselves
+            // require an aligned return address, but because certain syscalls
+            // can trigger event dispatch, which *does* require aligned return
+            // addresses. One future optimization opportunity is to skip this
+            // alignment for syscalls that never need event dispatch.
+            //
+            // Right now, we already skip this alignment on many common syscalls
+            // since we do not align SYS64_CALL instructions, which are used for
+            // many common operations, but *not* for the main event disptachers:
+            // _SYS_yield(), _SYS_paint(), and _SYS_finish().
+
             assert(Size == 2);
             BuildMI(MBB, I, I->getDebugLoc(), TII.get(SVM::NOP));
             Changed = true;
