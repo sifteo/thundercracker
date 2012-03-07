@@ -67,7 +67,7 @@ public:
 	void checkEmpty();
 
 	void checkRefill();
-	void Refill( bool bAddLevel = false );
+    void Refill();
 
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );

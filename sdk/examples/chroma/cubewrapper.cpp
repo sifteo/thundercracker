@@ -166,7 +166,7 @@ void CubeWrapper::Draw()
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
-                    int level = Game::Inst().getDisplayedLevel() + 1;
+                    int level = Game::Inst().getDisplayedLevel();
 
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 3 ),
                                        Banner::CENTER, level );
@@ -958,7 +958,7 @@ void CubeWrapper::checkRefill()
 	{
         setState( STATE_REFILL );
         m_intro.Reset( true );
-        Refill( Game::Inst().getMode() == Game::MODE_SURVIVAL );
+        Refill();
 
         /*if( Game::Inst().getMode() == Game::MODE_SURVIVAL && Game::Inst().getScore() > 0 )
 		{
@@ -971,7 +971,7 @@ void CubeWrapper::checkRefill()
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
-            Refill( false );
+            Refill();
 		}
         /*else if( Game::Inst().getShakesLeft() > 0 )
 		{
@@ -1000,16 +1000,13 @@ void CubeWrapper::checkRefill()
  
 
 //massively ugly, but wanted to stick to the python functionality 
-void CubeWrapper::Refill( bool bAddLevel )
+void CubeWrapper::Refill()
 {
     if( Game::Inst().getMode() == Game::MODE_PUZZLE )
     {
         fillPuzzleCube();
         return;
     }
-
-	if( bAddLevel )
-		Game::Inst().addLevel();
 
     const Level &level = Game::Inst().getLevel();
 
@@ -1433,7 +1430,10 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 void CubeWrapper::checkEmpty()
 {
     if( Game::Inst().getMode() == Game::MODE_SURVIVAL && isEmpty() && m_state != STATE_EMPTY )
+    {
+        Game::Inst().addLevel();
         setState( STATE_EMPTY );
+    }
 }
 
 
