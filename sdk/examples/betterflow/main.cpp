@@ -33,7 +33,7 @@ static void DrawColumn(Cube* pCube, int x) {
     uint16_t addr = UnsignedMod(x, 18);
     x -= 3; // because the first icon is 24px inset
 	const uint16_t local_x = UnsignedMod(x, 12);
-	const int iconId = (x +120)/ 12 - 10; // weird math to avoid negative-floor
+	const int iconId = x < 0 ? -1 : x / 10;
 	// icon or blank column?
 	if (local_x < 10 && iconId >= 0 && iconId < NUM_ICONS) {
 		// drawing an icon column
