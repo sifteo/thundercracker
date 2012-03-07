@@ -594,10 +594,15 @@ void _SYS_finish(void)
     returnFromYield();
 }
 
-void _SYS_ticks_ns(int64_t *nanosec)
+int64_t _SYS_ticks_ns(void)
 {
-    if (SvmMemory::mapRAM(nanosec, sizeof *nanosec))
-        *nanosec = SysTime::ticks();
+    return SysTime::ticks();
+}
+
+uint32_t _SYS_ticks_float_s(void)
+{
+    float r = SysTime::ticks() * 1e-9;
+    return reinterpret_cast<uint32_t&>(r);
 }
 
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
@@ -627,10 +632,12 @@ void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
         CubeSlots::instances[cid].loadAssets(group);
 }
 
-void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
+struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid))
-        CubeSlots::instances[cid].getAccelState(state);
+    struct _SYSAccelState r = { 0 };
+    if (CubeSlots::validID(cid))
+        CubeSlots::instances[cid].getAccelState(&r);
+    return r;
 }
 
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
@@ -639,16 +646,20 @@ void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
     }
 }
 
-void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state)
+struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid))
-        AccelState::instances[cid].getTiltState(state);
+    struct _SYSTiltState r = { 0 };
+    if (CubeSlots::validID(cid))
+        AccelState::instances[cid].getTiltState(&r);
+    return r;
 }
 
-void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state)
+_SYSShakeState _SYS_getShake(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid))
-        AccelState::instances[cid].getShakeState(state);
+    _SYSShakeState r = NOT_SHAKING;
+    if (CubeSlots::validID(cid))
+        AccelState::instances[cid].getShakeState(&r);
+    return r;
 }
 
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
@@ -666,11 +677,12 @@ uint8_t _SYS_isTouching(_SYSCubeID cid)
     return 0;
 }
 
-void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
+uint16_t _SYS_getRawBatteryV(_SYSCubeID cid)
 {
     // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
-    if (SvmMemory::mapRAM(v, sizeof v) && CubeSlots::validID(cid))
-        *v = CubeSlots::instances[cid].getRawBatteryV();
+    if (CubeSlots::validID(cid))
+        return CubeSlots::instances[cid].getRawBatteryV();
+    return 0;
 }
 
 void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
@@ -722,20 +734,22 @@ void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
     }
 }
 
-void _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word)
+uint16_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
     if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
         VRAM::truncateWordAddr(addr);
-        *word = VRAM::peek(*vbuf, addr);
+        return VRAM::peek(*vbuf, addr);
     }
+    return 0;
 }
 
-void _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte)
+uint8_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
     if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
         VRAM::truncateByteAddr(addr);
-        *byte = VRAM::peekb(*vbuf, addr);
+        return VRAM::peekb(*vbuf, addr);
     }
+    return 0;
 }
 
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,

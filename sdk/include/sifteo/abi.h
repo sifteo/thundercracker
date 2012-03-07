@@ -428,7 +428,7 @@ void _SYS_lti_log(const char *fmt, ...);
  * integer result.
  */
 
-#ifdef FW_BUILD
+#if defined(FW_BUILD) || !defined(__clang__)
 #  define _SC(n)
 #  define _NORET
 #else
@@ -517,7 +517,8 @@ void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
 
-void _SYS_ticks_ns(int64_t *nanosec) _SC(12);    /// Return the monotonic system timer, in nanoseconds
+uint32_t _SYS_ticks_float_s(void) _SC(12);   /// Return the monotonic system timer, in floating point seconds
+int64_t _SYS_ticks_ns(void) _SC(106);        /// Return the monotonic system timer, in 64-bit integer nanoseconds
 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(104);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(105);
@@ -530,13 +531,13 @@ void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(81);
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(82);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(83);
 
-void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state) _SC(84);
+struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(84);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(85);
-void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state) _SC(86);
-void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state) _SC(87);
+struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(86);
+_SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
 
 // XXX: Temporary for testing/demoing
-void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v) _SC(88);
+uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]) _SC(89);
 
 uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
@@ -547,8 +548,8 @@ void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
 void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(13);
 void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(14);
-void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word) _SC(15);
-void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte) _SC(16);
+uint16_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(15);
+uint8_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(16);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);

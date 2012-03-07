@@ -108,18 +108,14 @@ class VideoBuffer {
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
-        uint16_t word;
-        _SYS_vbuf_peek(&sys, addr, &word);
-        return word;
+        return _SYS_vbuf_peek(&sys, addr);
     }
 
     /**
      * Read one byte of VRAM
      */
     uint8_t peekb(uint16_t addr) const {
-        uint8_t byte;
-        _SYS_vbuf_peekb(&sys, addr, &byte);
-        return byte;
+        return _SYS_vbuf_peekb(&sys, addr);
     }
 
     /**
@@ -400,9 +396,7 @@ public:
 
     bool isInMode()
     {
-      uint8_t byte;
-      _SYS_vbuf_peekb(&buf.sys, offsetof(_SYSVideoRAM, mode), &byte);
-      return byte == _SYS_VM_BG0_SPR_BG1;
+        return buf.peek(offsetof(_SYSVideoRAM, mode)) == _SYS_VM_BG0_SPR_BG1;
     }
 
     void BG1_setPanning(const Vec2 &pos)
@@ -413,48 +407,30 @@ public:
 
     void setSpriteImage(int id, int tile)
     {
-      uint16_t word = VideoBuffer::indexWord(tile);
-      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                       sizeof(_SYSSpriteInfo)/2 * id );
-      _SYS_vbuf_poke(&buf.sys, addr, word);
+        uint16_t word = VideoBuffer::indexWord(tile);
+        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+                          sizeof(_SYSSpriteInfo)/2 * id );
+        _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 
-	void setSpriteImage(int id, const PinnedAssetImage &image)
-	{
-		resizeSprite(id, image.width * TILE, image.height * TILE);
-		setSpriteImage(id, image.index);
-	}
+    void setSpriteImage(int id, const PinnedAssetImage &image)
+    {
+        resizeSprite(id, image.width * TILE, image.height * TILE);
+        setSpriteImage(id, image.index);
+    }
 
-	void setSpriteImage(int id, const PinnedAssetImage &image, int frame)
-	{
-		resizeSprite(id, image.width * TILE, image.height * TILE);
-		setSpriteImage(id, image.index + (image.width * image.height) * frame);
-	}
+    void setSpriteImage(int id, const PinnedAssetImage &image, int frame)
+    {
+        resizeSprite(id, image.width * TILE, image.height * TILE);
+        setSpriteImage(id, image.index + (image.width * image.height) * frame);
+    }
 
     bool isSpriteHidden(int id)
     {
-        uint16_t word;
-        uint16_t addr;
-
-#ifdef DEBUG
-        // check all the sprite parameters, for debugging
-
-        // check image
-        addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-
-        // get position, to debug
-        addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-#endif
-
         // check size
-        addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-        return (word == 0);
+        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                          sizeof(_SYSSpriteInfo)/2 * id );
+        return buf.peek(addr) == 0;
     }
 
     void resizeSprite(int id, int px, int py)

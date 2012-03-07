@@ -28,6 +28,15 @@ class System {
     }
 
     /**
+     * Exit with a fault, for fatal error handling. This is the same
+     * kind of fatal error that occurs when an ASSERT() fails.
+     */
+
+    static void abort() {
+        _SYS_abort();
+    }
+
+    /**
      * Temporarily give up control of the CPU. During a yield(), event
      * callbacks may run. If the system as a whole has nothing better to
      * do, the CPU will be put into a lower-power mode until some kind
@@ -106,9 +115,9 @@ class System {
      */
 
     static float clock() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        return nanosec * 1e-9;
+        // This is just shorthand for (_SYS_ticks_ns() * 1e-9).
+        uint32_t result = _SYS_ticks_float_s();
+        return reinterpret_cast<float&>(result);
     }
 
     /**
@@ -117,9 +126,7 @@ class System {
      */
 
     static int64_t clockNS() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        return nanosec;
+        return _SYS_ticks_ns();
     }
 	
 	static void solicitCubes(_SYSCubeID min, _SYSCubeID max) {

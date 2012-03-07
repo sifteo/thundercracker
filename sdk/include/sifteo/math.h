@@ -260,9 +260,7 @@ struct Random {
      */
     
     void seed() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        seed((uint32_t) nanosec);
+        seed((uint32_t) _SYS_ticks_ns());
     }
 
     /**

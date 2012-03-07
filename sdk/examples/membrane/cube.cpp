@@ -64,9 +64,7 @@ void GameCube::placeMarker(int id)
 
 Float2 GameCube::velocityFromTilt()
 {
-    _SYSAccelState accel;
-    _SYS_getAccel(cube.id(), &accel);
-    
+    Vec2 accel = cube.physicalAccel();
     const float coeff = 0.1f;
     return Float2( accel.x * coeff, accel.y * coeff );
 }

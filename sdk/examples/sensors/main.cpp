@@ -76,9 +76,9 @@ void siftmain()
              * Ugly in all sorts of ways...
              */
 
-            _SYS_getAccel(id, &accel);
+            accel = _SYS_getAccel(id);
             _SYS_getNeighbors(id, &nb);
-            _SYS_getRawBatteryV(id, &battery);
+            battery = _SYS_getRawBatteryV(id);
             _SYS_getCubeHWID(id, &hwid);
 
             static String<128> str;

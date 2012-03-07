@@ -33,8 +33,7 @@ void siftmain()
     cube.enable();
 
     while (1) {
-        _SYSAccelState state;
-        _SYS_getAccel(cube.id(), &state);
+        _SYSAccelState state = _SYS_getAccel(cube.id());
 
         fpMonster += state.x;
 

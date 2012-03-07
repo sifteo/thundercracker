@@ -88,14 +88,14 @@ class Cube {
     typedef _SYSCubeID ID;
     typedef _SYSSideID Side;
     typedef _SYSNeighborState Neighborhood;
-	typedef _SYSTiltState  TiltState;
+    typedef _SYSTiltState  TiltState;
 
-	/*
-	 * Default constructor leaves mID zero'ed, so that Cube objects
-	 * are allocated in the BSS segment rather than read-write data.
-	 */
+    /*
+     * Default constructor leaves mID zero'ed, so that Cube objects
+     * are allocated in the BSS segment rather than read-write data.
+     */
 
-	Cube() {}
+    Cube() {}
     Cube(ID id)
         : mID(id) {}
 
@@ -105,9 +105,9 @@ class Cube {
      */
 
     void enable(ID id=CUBE_ID_UNDEFINED) {
-		if (id != CUBE_ID_UNDEFINED) {
-			mID = id;
-		}
+        if (id != CUBE_ID_UNDEFINED) {
+            mID = id;
+        }
         ASSERT(mID != CUBE_ID_UNDEFINED);
         vbuf.init();
         _SYS_setVideoBuffer(mID, &vbuf.sys);
@@ -149,7 +149,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
+            _SYS_getNeighbors(mID, &state);
         return state.sides[side];
     }
     
@@ -165,25 +165,21 @@ class Cube {
     Side physicalSideOf(ID cube) const {
         ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
         _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
+            _SYS_getNeighbors(mID, &state);
         for(Side side=0; side<NUM_SIDES; ++side) {
             if (state.sides[side] == cube) { return side; }
         }
         return SIDE_UNDEFINED;
     }
     
-	Vec2 physicalAccel() const {
-	  _SYSAccelState state;
-	  _SYS_getAccel(mID, &state);
-	  return Vec2(state.x, state.y);
-	}
+    Vec2 physicalAccel() const {
+        _SYSAccelState state = _SYS_getAccel(mID);
+        return Vec2(state.x, state.y);
+    }
 
-	TiltState getTiltState() const {
-		TiltState state;
-		_SYS_getTilt(mID, &state);
-
-		return state;
-	}
+    TiltState getTiltState() const {
+        return _SYS_getTilt(mID);
+    }
 
     /**
      * Retrieve the current LCD rotation from the video buffer.
@@ -220,24 +216,24 @@ class Cube {
       #endif
     }
     
-	void setOrientation(Side topSide) {
-		ASSERT(topSide >= 0);
+    void setOrientation(Side topSide) {
+        ASSERT(topSide >= 0);
         ASSERT(topSide < 4);
-	  	VidMode mode(vbuf);
-	  	mode.setRotation(kSideToRotation[topSide]);
-	}
-	
-	void orientTo(const Cube& src) {
-		Side srcSide = src.physicalSideOf(mID);
-		Side dstSide = physicalSideOf(src.mID);
-		ASSERT(srcSide != SIDE_UNDEFINED);
-		ASSERT(dstSide != SIDE_UNDEFINED);
-		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
-		if (srcSide < 0) { srcSide += NUM_SIDES; }
-		setOrientation(kOrientationTable[dstSide][srcSide]);
-	}
-	
-	Side physicalToVirtual(Side side) const {
+        VidMode mode(vbuf);
+        mode.setRotation(kSideToRotation[topSide]);
+    }
+    
+    void orientTo(const Cube& src) {
+        Side srcSide = src.physicalSideOf(mID);
+        Side dstSide = physicalSideOf(src.mID);
+        ASSERT(srcSide != SIDE_UNDEFINED);
+        ASSERT(dstSide != SIDE_UNDEFINED);
+        srcSide = (srcSide - src.orientation()) % NUM_SIDES;
+        if (srcSide < 0) { srcSide += NUM_SIDES; }
+        setOrientation(kOrientationTable[dstSide][srcSide]);
+    }
+    
+    Side physicalToVirtual(Side side) const {
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         ASSERT(side >= 0);
         ASSERT(side < 4);
@@ -245,17 +241,17 @@ class Cube {
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side - rot) % NUM_SIDES;
         return side < 0 ? side + NUM_SIDES : side;
-	}
-	
-	Side virtualToPhysical(Side side) const {
+    }
+    
+    Side virtualToPhysical(Side side) const {
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         ASSERT(side >= 0);
         ASSERT(side < 4);
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         return (side + rot) % NUM_SIDES;
-	}
-	
+    }
+    
     /**
      * Like physicalNeighborAt, but relative to the current LCD rotation.
      */
@@ -276,11 +272,11 @@ class Cube {
         return physicalToVirtual(physicalSideOf(cube));
     }
     
-	Vec2 virtualAccel() const {
-		Side rot = orientation();
-		ASSERT(rot != SIDE_UNDEFINED);
-	  	return physicalAccel() * kSideToQ[rot];
-	}
+    Vec2 virtualAccel() const {
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        return physicalAccel() * kSideToQ[rot];
+    }
 
     bool touching() const {
         return _SYS_isTouching(mID);
