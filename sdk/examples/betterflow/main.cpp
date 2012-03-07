@@ -7,7 +7,7 @@ using namespace Sifteo;
 #define LOAD_ASSETS			1
 #define NUM_ICONS 			4
 #define NUM_TIPS			3
-#define ELEMENT_PADDING 	24.f
+#define ELEMENT_PADDING 	16.f
 #define ICON_WIDTH      	80.f
 #define MAX_NORMAL_SPEED 	40.f
 #define ACCEL_SCALING_FACTOR -0.25f
