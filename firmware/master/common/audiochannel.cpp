@@ -88,7 +88,7 @@ void AudioChannelSlot::fetchData()
 
 void AudioChannelSlot::fetchRaw(FlashStream &in, AudioBuffer &out)
 {
-    uint32_t len = out.writeAvailable();
+    unsigned len = out.writeAvailable();
     uint8_t *buf = out.reserve(len, &len);
     len = in.read(buf, len);
     in.advance(len);
