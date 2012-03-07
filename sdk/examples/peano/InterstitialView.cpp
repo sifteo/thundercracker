@@ -25,12 +25,10 @@ void InterstitialView::TransitionSync(float duration, bool opening)
 {
     for(float t=0; t<duration; t+=Game::dt) {
         SetTransitionAmount((opening? t : 1-t)/duration);
-        Paint();
         System::paintSync();
         Game::UpdateDt();
     }
-    SetTransitionAmount(opening? 1 : 0);
-    Paint();
+    SetTransitionAmount(opening? 1 : 0);    
 }
 
 void InterstitialView::SetTransition(int offset)
@@ -42,7 +40,15 @@ void InterstitialView::SetTransition(int offset)
     {
         mBackwards = offset < mOffset;
         mOffset = offset;
-        //TODO      Paint();
+        if (GetCube()->IsTextOverlayEnabled())
+        {
+            GetCube()->DisableTextOverlay();
+        }
+        Paint();
+        if (mOffset >= 17 && message && message[0] && !GetCube()->IsTextOverlayEnabled())
+        {
+            GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+        }
     }
 }
 
@@ -71,9 +77,7 @@ void InterstitialView::Paint()
 {
     PaintWithOffset(GetCube(), mOffset, mBackwards);
     if (mOffset >= 17)
-    {
-        //TODO        if (message.Length > 0) Library.PskFont.PaintCentered(c, message, 64, 8+16);
-
+    {       
         if (image && GetCube()->backgroundLayer.isSpriteHidden(0))
         {
             GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);

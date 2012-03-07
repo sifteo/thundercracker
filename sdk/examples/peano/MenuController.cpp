@@ -62,7 +62,13 @@ void MenuController::TransitionView::SetTransition(int offset)
     {
         mBackwards = offset < mOffset;
         mOffset = offset;
-        //TODO Paint();
+
+        Paint();
+        System::paintSync();
+    }
+    else
+    {
+        System::yield();
     }
 }
 
@@ -122,17 +128,17 @@ Game::GameState Run()
 
 
     // transition in
-    static char tvBuffer[sizeof(TransitionView)];
-    tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
-
-    static char labelBuffer[sizeof(TiltFlowDetailView)];
-    labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
-
     for(int i=2; i<NUM_CUBES; ++i)
     {
         static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
         new(blankViewBuffer[i]) BlankView(&Game::cubes[0], NULL);
     }
+
+    static char tvBuffer[sizeof(TransitionView)];
+    tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
+
+    static char labelBuffer[sizeof(TiltFlowDetailView)];
+    labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
 
 WelcomeBack:
     labelView->message = "Main Menu";
@@ -144,7 +150,7 @@ WelcomeBack:
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        Game::Wait(0);
+        Game::UpdateDt();
     }
     tv->SetTransitionAmount(1);
 
@@ -198,7 +204,6 @@ WelcomeBack:
         // close labelView
         AudioPlayer::PlayShutterClose();
         labelView->TransitionSync(kDuration, false);
-        Game::Wait(0);
         // transition out
         AudioPlayer::PlayShutterClose();
         /* putting the tilt menu on cube 0 secretly deletes the transition view. remake.
@@ -207,10 +212,9 @@ WelcomeBack:
         //tv->SetCube(menu->GetView()->GetCube());
         for(float t=0; t<kDuration; t+=Game::dt) {
             tv->SetTransitionAmount(1.0f-t/kDuration);
-            Game::Wait(0);
+            Game::UpdateDt();
         }
         tv->SetTransitionAmount(0);
-        Game::Wait(0);
 
         switch(menu->GetResultItem()->id)
         {
@@ -265,7 +269,7 @@ Setup:
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        Game::Wait(0);
+        Game::UpdateDt();
     }
     tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
@@ -348,10 +352,9 @@ Setup:
     AudioPlayer::PlayShutterClose();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(1.0f-t/kDuration);
-        Game::Wait(0);
+        Game::UpdateDt();
     }
     tv->SetTransitionAmount(0);
-    Game::Wait(0);
 
     if (menu->GetResultItem()->id == Back) {
         goto WelcomeBack;
@@ -388,7 +391,7 @@ ChapterSelect:
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(t/kDuration);
-        Game::Wait(0);
+        Game::UpdateDt();
     }
     tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
@@ -443,10 +446,9 @@ ChapterSelect:
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv->SetTransitionAmount(1.0f-t/kDuration);
-        Game::Wait(0);
+        Game::UpdateDt();
     }
     tv->SetTransitionAmount(0);
-    Game::Wait(0);
 
     if (menu->GetResultItem()->id == 1977) {
         goto WelcomeBack;

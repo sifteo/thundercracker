@@ -17,16 +17,16 @@ TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
 
 
 void TiltFlowDetailView::ShowDescription(const char * desc) {
-    bool hadDescription = mDescription != 0;
     if (mDescription == desc) { return; }    //should be using same string pointer
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
     }
     mDescription = desc;
 
-    if(hadDescription && GetCube()->IsTextOverlayEnabled())
+    if(GetCube()->IsTextOverlayEnabled())
     {
-        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+        //text box is already up, but we need to redraw it
+        GetCube()->DisableTextOverlay();
     }
 }
 
@@ -34,33 +34,42 @@ void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
         mDescription = "";
-        if(GetCube()->IsTextOverlayEnabled())
-        {
-            GetCube()->DisableTextOverlay();
-        }
-        Paint();
+        //Paint();
     }
 }
 
 void TiltFlowDetailView::Update () {
+    TotalsCube *c = GetCube();
+
     if (mDescription[0]) {
+        if(mAmount < 1 && c->IsTextOverlayEnabled())
+            c->DisableTextOverlay();
+
         while (mAmount < 1) {
             mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
             Paint();
             System::paintSync();
             Game::UpdateDt();
         }
+
+        if (mDescription[0] && !GetCube()->IsTextOverlayEnabled()) {
+            GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+        }
+
     } else {
+        if(mAmount > 0 && c->IsTextOverlayEnabled())
+            c->DisableTextOverlay();
+
         while (mAmount > 0) {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
             System::paintSync();
             Game::UpdateDt();
         }
-    }
 
-    if (mAmount == 1 && !GetCube()->IsTextOverlayEnabled()) {
-        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+        if (message[0] && !c->IsTextOverlayEnabled()) {
+            c->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+        }
     }
 }
 
