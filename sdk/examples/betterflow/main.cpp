@@ -188,12 +188,14 @@ void siftmain() {
 	    );
 		bool doneTilting = false;
 		float velocity = 0;
+		float lastPaint = System::clock();
 		position = StoppingPositionFor(ComputeSelected(position));
 		while(!doneTilting) {
+			float now = System::clock();
 			// update physics
 			const float accel = GetAccel(pCube);
-			const float dt = 0.225f;
 			const bool isTilting = fabs(accel) > kAccelThresholdOff;
+			float dt = (now - lastPaint) * 13.1f;
 			const bool isLefty = position < 0.f - 0.05f;
 			const bool isRighty = position > PIXELS_PER_ICON*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
@@ -240,6 +242,7 @@ void siftmain() {
 				Paint(pCube);
 			}
 			prev_ui = ui;
+			lastPaint = now;
 		}
 		{
 			// show the title of the game
