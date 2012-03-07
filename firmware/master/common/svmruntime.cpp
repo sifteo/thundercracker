@@ -304,12 +304,13 @@ void SvmRuntime::syscall(unsigned num)
     }
 
 #ifdef SVM_TRACE
-    LOG(("SYSCALL: enter _SYS_%d(%x, %x, %x, %x, %x, %x, %x, %x)\n",
+    LOG(("SYSCALL: enter _SYS_%d(%"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"
+        PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR")\n",
         num,
-        (unsigned)SvmCpu::reg(0), (unsigned)SvmCpu::reg(1),
-        (unsigned)SvmCpu::reg(2), (unsigned)SvmCpu::reg(3),
-        (unsigned)SvmCpu::reg(4), (unsigned)SvmCpu::reg(5),
-        (unsigned)SvmCpu::reg(6), (unsigned)SvmCpu::reg(7)));
+        SvmCpu::reg(0), SvmCpu::reg(1),
+        SvmCpu::reg(2), SvmCpu::reg(3),
+        SvmCpu::reg(4), SvmCpu::reg(5),
+        SvmCpu::reg(6), SvmCpu::reg(7)));
 #endif
 
     uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
