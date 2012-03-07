@@ -174,15 +174,15 @@ WelcomeBack:
 
     if (Game::currentPuzzle != NULL || !Game::saveData.AllChaptersSolved())
     {
-        ADD_ITEM(Icon_Continue, Continue, "Continue from your auto-save data.");
+        ADD_ITEM(Icon_Continue, Continue, "Continue from your\nauto-save data.");
     }
 
     ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!");
-    ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!");
+    ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teachn\nyou how to play!");
 #if !DISABLE_CHAPTERS
     ADD_ITEM(Icon_Level_Select, Level, "Replay any level.");
 #endif //!DISABLE_CHAPTERS
-    ADD_ITEM(Icon_Setup, Setup, "Change your game settings.");
+    ADD_ITEM(Icon_Setup, Setup, "Change your\ngame settings.");
 #undef ADD_ITEM
 
     {
@@ -294,10 +294,10 @@ Setup:
         };
 
 #define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
-        SET_PARAMS(difficultyItems, Toggle_Difficulty, (int)Game::difficulty, "Toggle multiplication and division.");
-        SET_PARAMS(musicItems, Toggle_Music, AudioPlayer::MusicMuted(), "Toggle background music.");
+        SET_PARAMS(difficultyItems, Toggle_Difficulty, (int)Game::difficulty, "Toggle multiplication\nand division.");
+        SET_PARAMS(musicItems, Toggle_Music, AudioPlayer::MusicMuted(), "Toggle\nbackground music.");
         SET_PARAMS(sfxItems, Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
-        SET_PARAMS(clearDataItem, Clear_Data, 0, "Clear your auto-save data.");
+        SET_PARAMS(clearDataItem, Clear_Data, 0, "Clear your\nauto-save data.");
         SET_PARAMS(backItem, Back, 0, "Return to the main menu.");
 #undef SET_PARAMS
 

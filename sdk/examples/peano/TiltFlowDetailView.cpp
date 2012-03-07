@@ -17,19 +17,28 @@ TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
 
 
 void TiltFlowDetailView::ShowDescription(const char * desc) {
+    bool hadDescription = mDescription != 0;
     if (mDescription == desc) { return; }    //should be using same string pointer
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
     }
     mDescription = desc;
-    //TODO Paint();
+
+    if(hadDescription && GetCube()->IsTextOverlayEnabled())
+    {
+        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+    }
 }
 
 void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
-        mDescription = "";        
-        GetCube()->DisableTextOverlay();
+        mDescription = "";
+        if(GetCube()->IsTextOverlayEnabled())
+        {
+            GetCube()->DisableTextOverlay();
+        }
+        Paint();
     }
 }
 
@@ -50,7 +59,9 @@ void TiltFlowDetailView::Update () {
         }
     }
 
-
+    if (mAmount == 1 && !GetCube()->IsTextOverlayEnabled()) {
+        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+    }
 }
 
 void TiltFlowDetailView::Paint() {
@@ -70,16 +81,6 @@ void TiltFlowDetailView::Paint() {
             GetCube()->backgroundLayer.hideSprite(0);   //enabled by interstitialview
         }
     }
-/*
-    if (mAmount == 1) {
-        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
-        //TODO      Library.PskFont.Paint(c, mDescription, new Int2(8, 24), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128-8-8, 128-32-32));
-    }
-    else
-    {
-        GetCube()->DisableTextOverlay();
-    }
-   */
 }
 }
 
