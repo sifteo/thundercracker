@@ -10,7 +10,6 @@ AR_STM32 = arm-none-eabi-ar
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
-SPEEXENC = $(TC_DIR)/speex/encoder/speexencoder$(BIN_EXT)
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -54,8 +53,13 @@ ifneq ($(QTCREATOR_TERMINAL),)
 	CFLAGS += -DQTCREATOR_TERMINAL
 endif
 
+# 32-bit mingw needs this for the __sync_fetch_* family of routines in syscalls.cpp
+ifeq ($(BUILD_PLATFORM), windows32)
+    CFLAGS += -march=native
+endif
+
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused
+CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
 # generate dependency files
 CFLAGS += -MD -MP
