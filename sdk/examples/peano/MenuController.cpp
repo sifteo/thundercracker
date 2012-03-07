@@ -405,13 +405,13 @@ ChapterSelect:
                 if (Game::saveData.IsChapterUnlockedWithCurrentCubeSet(i)) {
                     TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(&Database::ImageForChapter(i));
                     item->id = i;
-                    item->description="Replay this level from the beginning." ;
+                    item->description="Replay this level\nfrom the beginning." ;
                     chapterItems[numChapterItems] = item;
                     numChapterItems++;
                 } else {
                     TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(&Icon_Locked);
                     item->id = TiltFlowItem::Passive;
-                    item->description="Unlock this level by solving the previous levels." ;
+                    item->description="Unlock this level\nby solving the previous\nlevels." ;
                     chapterItems[numChapterItems] = item;
                     numChapterItems++;
                 }
