@@ -6,10 +6,15 @@
  */
 
 /*
- * This pass aligns all basic blocks and all 32-bit instructions to
- * a 32-bit boundary. Basic blocks are always aligned trivially via
- * setAlignment(), but 32-bit instructions are aligned by inserting
- * NOPs or moving instructions.
+ * This pass aligns all branch targets and all 32-bit instructions to
+ * a 32-bit boundary:
+ *
+ *  1) Basic blocks are always aligned trivially via setAlignment()
+ *
+ *  2) 32-bit instructions are aligned by inserting NOPs or moving instructions.
+ *
+ *  3) Non-tail calls are aligned such that the *next* instruction is on
+ *     a 32-bit boundary.
  *
  * The instruction alignment done in this manner has a couple benefits:
  *
