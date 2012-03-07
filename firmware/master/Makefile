@@ -80,7 +80,12 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
-.PHONY: all clean
+syscall-table:
+	python $(TC_DIR)/vm/tools/syscall-table.py \
+	   < $(TC_DIR)/sdk/include/sifteo/abi.h \
+	   > $(MASTER_DIR)/common/syscall-table.def
+
+.PHONY: all clean syscall-table
 
 # Several steps, to work around Win32 command line length limits
 clean:
