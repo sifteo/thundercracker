@@ -9,6 +9,7 @@ using namespace Sifteo;
 #define NUM_TIPS			3
 #define ELEMENT_PADDING 	24.f
 #define ICON_WIDTH      	80.f
+#define MAX_NORMAL_SPEED 	40.f
 #define ACCEL_SCALING_FACTOR -0.25f
 
 // computed/hardware constants
@@ -201,6 +202,9 @@ void siftmain() {
 			if (isTilting && !isLefty && !isRighty) {
 				velocity += accel * dt;
 				velocity *= 0.99f;
+				if(fabs(velocity) > MAX_NORMAL_SPEED) {
+					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED);
+				}
 				position += velocity * dt;
 			} else {
 				const float stiffness = 0.333f;
