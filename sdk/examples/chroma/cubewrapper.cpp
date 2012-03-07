@@ -424,7 +424,7 @@ void CubeWrapper::Update(float t, float dt)
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
         //check for shaking
-        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
             m_fShakeTime = -1.0f;
             checkRefill();
@@ -488,7 +488,7 @@ void CubeWrapper::Update(float t, float dt)
     }
     else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
-        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
             Game::Inst().setTestMatchFlag();
             m_fShakeTime = -1.0f;
@@ -496,7 +496,7 @@ void CubeWrapper::Update(float t, float dt)
     }
     else if( Game::Inst().getState() == Game::STATE_NEXTPUZZLE )
     {
-        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
             Game::Inst().setState( Game::STATE_INTRO );
             m_fShakeTime = -1.0f;
