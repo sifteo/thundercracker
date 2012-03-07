@@ -185,18 +185,12 @@ void CubeWrapper::Draw()
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
-                    /*int level = Game::Inst().getDisplayedLevel();
+                    int level = Game::Inst().getDisplayedLevel();
 
-                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
-                                       Banner::CENTER, level );*/
+                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 3 ),
+                                       Banner::CENTER, level );
 
-                    /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-                    m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
-                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
-
-                    m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );*/
-
-                    //m_queuedFlush = true;
+                    m_queuedFlush = true;
 					break;
 				}
                 /*case STATE_CUBEBONUS:
