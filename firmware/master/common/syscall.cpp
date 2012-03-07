@@ -599,12 +599,6 @@ int64_t _SYS_ticks_ns(void)
     return SysTime::ticks();
 }
 
-uint32_t _SYS_ticks_float_s(void)
-{
-    float r = SysTime::ticks() * 1e-9;
-    return reinterpret_cast<uint32_t&>(r);
-}
-
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {
     CubeSlots::solicitCubes(min, max);

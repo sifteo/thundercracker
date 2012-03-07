@@ -114,10 +114,8 @@ class System {
      * monotonically increasing.
      */
 
-    static float clock() {
-        // This is just shorthand for (_SYS_ticks_ns() * 1e-9).
-        uint32_t result = _SYS_ticks_float_s();
-        return reinterpret_cast<float&>(result);
+    static double clock() {
+        return _SYS_ticks_ns() * 1e-9;
     }
 
     /**

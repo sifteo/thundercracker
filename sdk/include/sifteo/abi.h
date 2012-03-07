@@ -517,8 +517,7 @@ void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
 
-uint32_t _SYS_ticks_float_s(void) _SC(12);   /// Return the monotonic system timer, in floating point seconds
-int64_t _SYS_ticks_ns(void) _SC(107);        /// Return the monotonic system timer, in 64-bit integer nanoseconds
+int64_t _SYS_ticks_ns(void) _SC(12);  /// Return the monotonic system timer, in 64-bit integer nanoseconds
 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(104);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(105);
