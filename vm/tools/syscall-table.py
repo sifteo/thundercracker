@@ -9,7 +9,8 @@
 
 import sys, re
 
-regex = re.compile(r"^\s*\w+\s+(\w+)\s*\(.*\)\s+_SC\((\d+)\);");
+regex = re.compile(r"^.*(_SYS_\w+)\s*\(.*\)\s+_SC\((\d+)\)");
+fallback = re.compile(r"_SC\((\d+)\)");
 highestNum = 0
 callMap = {}
 typedef = "(SvmSyscall)"
@@ -22,6 +23,9 @@ for line in sys.stdin:
         if num in callMap:
             raise Exception("Duplicate syscall #%d" % num)
         callMap[num] = name
+    
+    elif fallback.search(line):
+        raise Exception("Regex might have missed a syscall on line: %r" % line);
 
 for i in range(highestNum+1):
     print "    /* %4d */ %s%s," % (i, typedef, callMap.get(i) or "0")
