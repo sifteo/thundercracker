@@ -786,9 +786,10 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
         while (chunk) {
             VRAM::truncateWordAddr(addr);
             VRAM::poke(*vbuf, addr, *reinterpret_cast<uint16_t*>(srcPA));
-            chunk--;
             addr++;
-            src += sizeof(uint16_t);
+
+            chunk -= sizeof(uint16_t);
+            srcPA += sizeof(uint16_t);
         }
     }
 }
