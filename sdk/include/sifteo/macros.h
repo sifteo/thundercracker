@@ -11,7 +11,7 @@
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
-#define SOURCELOC_STR   __FILE__ ":" TOSTRING(__LINE__)
+#define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
 #ifdef FW_BUILD
 
@@ -77,7 +77,7 @@
 
     #define ASSERT(_x) do { \
         if (_SYS_lti_isDebug() && !(_x)) { \
-            _SYS_lti_log("ASSERT failure at " SOURCELOC_STR ", (" #_x ")\n"); \
+            _SYS_lti_log("ASSERT failure at " SRCLINE ", (" #_x ")\n"); \
             _SYS_abort(); \
         } \
     } while (0)
