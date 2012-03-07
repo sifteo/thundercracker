@@ -58,7 +58,7 @@ enum Conditions {
 };
 
 static inline bool getNeg() {
-    return regs[REG_CPSR] & (1 << 31);
+    return (regs[REG_CPSR] >> 31) & 1;
 }
 static inline void setNeg(bool f) {
     if (f)
@@ -68,7 +68,7 @@ static inline void setNeg(bool f) {
 }
 
 static inline bool getZero() {
-    return regs[REG_CPSR] & (1 << 30);
+    return (regs[REG_CPSR] >> 30) & 1;
 }
 static inline void setZero(bool f) {
     if (f)
@@ -78,7 +78,7 @@ static inline void setZero(bool f) {
 }
 
 static inline bool getCarry() {
-    return regs[REG_CPSR] & (1 << 29);
+    return (regs[REG_CPSR] >> 29) & 1;
 }
 static inline void setCarry(bool f) {
     if (f)
@@ -88,7 +88,7 @@ static inline void setCarry(bool f) {
 }
 
 static inline int getOverflow() {
-    return regs[REG_CPSR] & (1 << 28);
+    return (regs[REG_CPSR] >> 28) & 1;
 }
 static inline void setOverflow(bool f) {
     if (f)
@@ -127,12 +127,16 @@ static inline reg_t opASR(reg_t a, reg_t b) {
     return result;
 }
 
-static inline reg_t opADD(reg_t a, reg_t b) {
-    uint64_t result = (uint64_t)a + (uint64_t)b;
-    setNZ(result);
-    setOverflow((uint32_t)result != result);
-    setCarry((result >> 32) & 1);
-    return (reg_t)result;
+static inline reg_t opADD(reg_t a, reg_t b, reg_t carry) {
+    // Based on AddWithCarry() in the ARMv7 ARM, page A2-8
+    uint64_t uSum32 = (uint64_t)(uint32_t)a + (uint32_t)b + (uint32_t)carry;
+    int64_t sSum32 = (int64_t)(int32_t)a + (int32_t)b + (uint32_t)carry;
+    setNZ(sSum32);
+    setOverflow((int32_t)sSum32 != sSum32);
+    setCarry((uint32_t)uSum32 != uSum32);
+
+    // Preserve full reg_t width in result, even though we use 32-bit value for flags
+    return a + b + carry;
 }
 
 static inline reg_t opAND(reg_t a, reg_t b) {
@@ -216,7 +220,7 @@ static void emulateADDReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], regs[Rm]);
+    regs[Rd] = opADD(regs[Rn], regs[Rm], 0);
 }
 
 static void emulateSUBReg(uint16_t instr)
@@ -225,25 +229,25 @@ static void emulateSUBReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], (uint32_t)-regs[Rm]);
+    regs[Rd] = opADD(regs[Rn], ~regs[Rm], 1);
 }
 
 static void emulateADD3Imm(uint16_t instr)
 {
-    unsigned imm3 = (instr >> 6) & 0x7;
+    reg_t imm3 = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], imm3);
+    regs[Rd] = opADD(regs[Rn], imm3, 0);
 }
 
 static void emulateSUB3Imm(uint16_t instr)
 {
-    unsigned imm3 = (instr >> 6) & 0x7;
+    reg_t imm3 = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(regs[Rn], (uint32_t)-imm3);
+    regs[Rd] = opADD(regs[Rn], ~imm3, 1);
 }
 
 static void emulateMovImm(uint16_t instr)
@@ -257,25 +261,25 @@ static void emulateMovImm(uint16_t instr)
 static void emulateCmpImm(uint16_t instr)
 {
     unsigned Rn = (instr >> 8) & 0x7;
-    unsigned imm8 = instr & 0xff;
+    reg_t imm8 = instr & 0xff;
 
-    reg_t result = opADD(regs[Rn], (uint32_t)-imm8);
+    reg_t result = opADD(regs[Rn], ~imm8, 1);
 }
 
 static void emulateADD8Imm(uint16_t instr)
 {
     unsigned Rdn = (instr >> 8) & 0x7;
-    unsigned imm8 = instr & 0xff;
+    reg_t imm8 = instr & 0xff;
 
-    regs[Rdn] = opADD(regs[Rdn], imm8);
+    regs[Rdn] = opADD(regs[Rdn], imm8, 0);
 }
 
 static void emulateSUB8Imm(uint16_t instr)
 {
     unsigned Rdn = (instr >> 8) & 0x7;
-    unsigned imm8 = instr & 0xff;
+    reg_t imm8 = instr & 0xff;
 
-    regs[Rdn] = opADD(regs[Rdn], (uint32_t)-imm8);
+    regs[Rdn] = opADD(regs[Rdn], ~imm8, 1);
 }
 
 ///////////////////////////////////
@@ -330,7 +334,7 @@ static void emulateADCReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = opADD(regs[Rdn], regs[Rm] + (getCarry() ? 1 : 0));
+    regs[Rdn] = opADD(regs[Rdn], regs[Rm], getCarry());
 }
 
 static void emulateSBCReg(uint16_t instr)
@@ -338,7 +342,7 @@ static void emulateSBCReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = opADD(regs[Rdn], (uint32_t)(-regs[Rm] - (getCarry() ? 0 : 1)));
+    regs[Rdn] = opADD(regs[Rdn], ~regs[Rm], getCarry());
 }
 
 static void emulateRORReg(uint16_t instr)
@@ -362,7 +366,7 @@ static void emulateRSBImm(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = opADD(0, -regs[Rn]);
+    regs[Rd] = opADD(~regs[Rn], 0, 1);
 }
 
 static void emulateCMPReg(uint16_t instr)
@@ -370,7 +374,7 @@ static void emulateCMPReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
     
-    opADD(regs[Rdn], -regs[Rm]);
+    opADD(regs[Rdn], ~regs[Rm], 1);
 }
 
 static void emulateCMNReg(uint16_t instr)
@@ -378,7 +382,7 @@ static void emulateCMNReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    opADD(regs[Rdn], regs[Rm]);
+    opADD(regs[Rdn], regs[Rm], 0);
 }
 
 static void emulateORRReg(uint16_t instr)
