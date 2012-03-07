@@ -35,16 +35,37 @@ static DebugSectionInfo *findDebugSection(const char *name)
     return NULL;
 }
 
+static const char* faultStr(FaultCode code)
+{
+    switch (code) {
+    case F_STACK_OVERFLOW:      return "Stack allocation failure";
+    case F_BAD_STACK:           return "Validation-time stack address error";
+    case F_BAD_CODE_ADDRESS:    return "Branch-time code address error";
+    case F_BAD_SYSCALL:         return "Unsupported syscall number";
+    case F_LOAD_ADDRESS:        return "Runtime load address error";
+    case F_STORE_ADDRESS:       return "Runtime store address error";
+    case F_LOAD_ALIGNMENT:      return "Runtime load alignment error";
+    case F_STORE_ALIGNMENT:     return "Runtime store alignment error";
+    case F_CODE_FETCH:          return "Runtime code fetch error";
+    case F_CODE_ALIGNMENT:      return "Runtime code alignment error";
+    case F_CPU_SIM:             return "Unhandled ARM instruction in sim (validator bug)";
+    case F_RESERVED_SVC:        return "Reserved SVC encoding";
+    case F_RESERVED_ADDROP:     return "Reserved ADDROP encoding";
+    case F_ABORT:               return "User call to _SYS_abort()";
+    default:                    return "unknown error";
+    }
+}
+
 void SvmDebug::fault(FaultCode code)
 {
     LOG(("***\n"
-         "*** VM FAULT code %d\n"
+         "*** VM FAULT code %d (%s)\n"
          "***\n"
          "***   PC: %08x SP: %"PRIxPTR"\n"
          "***  GPR: %08x %08x %08x %08x\n"
          "***       %08x %08x %08x %08x\n"
          "***\n",
-         code,
+         code, faultStr(code),
          SvmRuntime::reconstructCodeAddr(),
          SvmCpu::reg(REG_SP),
          (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
