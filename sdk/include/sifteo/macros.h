@@ -67,6 +67,8 @@
             _SYS_lti_log _x ; \
     } while (0)
 
+    #define DEBUG_LOG(_x)   LOG(_x)
+
     #define DEBUG_ONLY(_x) do { \
         if (_SYS_lti_isDebug()) { \
             _x \
