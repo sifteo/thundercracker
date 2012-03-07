@@ -2,10 +2,6 @@ GameAssets = group{quality=10}
 --UI
 Font = image{"font-8x16.png", width=8, height=16}
 BannerImg = image{"banner.png"}
-MessageBox0 = image{"message0.png"}
-MessageBox1 = image{"message1.png"}
-MessageBox2 = image{"message2.png"}
-MessageBox3 = image{"message3.png"}
 MessageBox4 = image{"message4.png"}
 --just for CES messages
 MsgGameOver = image{"gameover.png"}

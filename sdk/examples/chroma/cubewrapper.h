@@ -32,8 +32,6 @@ public:
     static const float IDLE_FINISH_THRESHOLD;
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
-    static const float TIME_PER_MESSAGE_FRAME;
-    static const int NUM_MESSAGE_FRAMES = 4;
 
     static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
@@ -44,7 +42,6 @@ public:
 	typedef enum
 	{
 		STATE_PLAYING,
-        STATE_MESSAGING,
 		STATE_EMPTY,
         STATE_REFILL,
         //STATE_CUBEBONUS,

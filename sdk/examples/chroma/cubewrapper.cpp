@@ -23,17 +23,8 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 //const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
-const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
 const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 //const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
-
-
-static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
-    &MessageBox0,
-    &MessageBox1,
-    &MessageBox2,
-    &MessageBox3,
-};
 
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
@@ -172,16 +163,6 @@ void CubeWrapper::Draw()
 
 					break;
 				}
-                case STATE_MESSAGING:
-                {
-                    int frame = m_stateTime / TIME_PER_MESSAGE_FRAME;
-
-                    if( frame >= NUM_MESSAGE_FRAMES )
-                        frame = NUM_MESSAGE_FRAMES - 1;
-                    const Sifteo::AssetImage &img = *MESSAGE_IMGS[frame];
-                    m_vid.BG0_drawAsset(Vec2(0,16 - img.height), img, 0);
-                    break;
-                }
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
@@ -400,21 +381,6 @@ void CubeWrapper::Update(float t, float dt)
         m_glimmer.Update( dt );
     }
 
-    if( m_state == STATE_MESSAGING )
-    {
-        if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
-        {
-            int count = Game::Inst().CountEmptyCubes();
-            //bonuses for multiple cubes being empty
-            /*if( count > 1 )
-            {
-                setState( STATE_CUBEBONUS );
-                Game::Inst().addScore( count * PTS_PER_EMPTIED_CUBE );
-            }
-            else*/
-                setState( STATE_EMPTY );
-        }
-    }
     /*else if( m_state == STATE_CUBEBONUS )
     {
         if( m_stateTime > SHOW_BONUS_TIME )
@@ -1466,8 +1432,8 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( Game::Inst().getMode() == Game::MODE_SURVIVAL && isEmpty() && m_state != STATE_MESSAGING && m_state != STATE_EMPTY )
-        setState( STATE_MESSAGING );
+    if( Game::Inst().getMode() == Game::MODE_SURVIVAL && isEmpty() && m_state != STATE_EMPTY )
+        setState( STATE_EMPTY );
 }
 
 
@@ -1482,11 +1448,6 @@ void CubeWrapper::setState( CubeState state )
 {
     m_state = state;
     m_stateTime = 0.0f;
-
-    if( state == STATE_MESSAGING )
-    {
-        Game::Inst().playSound(message_pop_03_fx);
-    }
 }
 
 
