@@ -54,6 +54,7 @@ ifneq ($(QTCREATOR_TERMINAL),)
 endif
 
 # Disable unwanted warnings, but be generally pretty pedantic
+# XXX - no-strict-aliasing is needed in syscall.cpp, perhaps only apply to that file
 CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
 # generate dependency files
@@ -68,7 +69,7 @@ LDFLAGS += -lm
 # but it may have additional C++-specific flags set as well.
 
 # Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-use-cxa-atexit
 
 include $(TC_DIR)/Makefile.platform
 
