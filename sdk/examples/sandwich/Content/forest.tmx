@@ -687,5 +687,10 @@
   <object name="Game Start" type="Comment" x="288" y="688" width="64" height="64"/>
   <object name="door would go here" type="Comment" x="289" y="110" width="64" height="64"/>
   <object name="door would go here" type="Comment" x="801" y="371" width="64" height="64"/>
+  <object name="Bread" type="Item" x="437" y="563" width="32" height="32">
+   <properties>
+    <property name="id" value="bread"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
