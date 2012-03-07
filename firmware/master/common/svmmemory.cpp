@@ -101,7 +101,13 @@ void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
 bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 {
-    uint32_t flashOffset = (uint32_t)va & 0xfffffc;
+    // User-supplied code addresses must be 32-bit aligned, so we can ensure
+    // they don't point partway through a 32-bit Thumb-2 instruction!
+    uint32_t flashOffset = (uint32_t)va & 0xffffff;
+    if (va & 3)
+        return false;
+
+    // Bounds check, and map to a physical block address
     if (flashOffset >= flashSeg.getSize())
         return false;
     flashOffset += flashSeg.getAddress();
