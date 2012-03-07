@@ -88,7 +88,6 @@ bool Run(const char *msg)
 
     AudioPlayer::PlayShutterOpen();
     label->TransitionSync(kTransitionTime, true);
-    label->Paint();
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
