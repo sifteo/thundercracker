@@ -129,6 +129,7 @@ static void formatLog(char *out, size_t outSize, char *fmt,
                     args++;
                     break;
 
+                // 32-bit float parameters
                 case 'f':
                 case 'F':
                 case 'e':
@@ -156,7 +157,6 @@ static void formatLog(char *out, size_t outSize, char *fmt,
         } while (!done);
     }
 }
-
 
 uint32_t *SvmDebug::logReserve(SvmLogTag tag)
 {
