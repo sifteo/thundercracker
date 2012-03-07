@@ -3,12 +3,21 @@
 using namespace Sifteo;
 
 // Constants
-#define NUM_CUBES 		3
-#define LOAD_ASSETS		1
-#define SFX_ON 			0
-#define MUSIC_ON 		0
-#define NUM_ICONS 		4
-#define NUM_TIPS		3
+#define NUM_CUBES 			3
+#define LOAD_ASSETS			1
+#define NUM_ICONS 			4
+#define NUM_TIPS			3
+#define ELEMENT_PADDING 	24.f
+#define ICON_WIDTH      	80.f
+#define ACCEL_SCALING_FACTOR -0.25f
+
+// computed/hardware constants
+#define NUM_TILES_X			18
+#define NUM_VISIBLE_TILES_X (NUM_TILES_X - 2)
+#define NUM_TILES_Y			18
+#define NUM_VISIBLE_TILES_Y (NUM_TILES_Y - 2)
+#define PIXELS_PER_ICON		(ELEMENT_PADDING + ICON_WIDTH)
+#define COLUMNS_PER_ICON	((int)(PIXELS_PER_ICON / 8)) // columns taken up by the icon plus padding
 
 //typedef VidMode_BG0 Canvas;
 typedef VidMode_BG0 Canvas;
@@ -22,27 +31,27 @@ static const AssetImage* gLabels[NUM_ICONS] = { &LabelChroma, &LabelSandwich, &L
 // Modulo operator that always returns an unsigned result
 inline unsigned UnsignedMod(int x, unsigned y) { const int z = x % (int)y; return z < 0 ? z+y : z; }
 inline float Lerp(float min, float max, float u) { return min + u * (max - min); }
-inline int ComputeSelected(float u) { int s = (u + (48.f))/96.f; return clamp(s, 0, NUM_ICONS-1); }
-inline float StoppingPositionFor(int selected) { return 96.f * (selected); }
+inline int ComputeSelected(float u) { int s = (u + (PIXELS_PER_ICON / 2.f))/(ICON_WIDTH + ELEMENT_PADDING); return clamp(s, 0, NUM_ICONS-1); }
+inline float StoppingPositionFor(int selected) { return (ICON_WIDTH + ELEMENT_PADDING) * (selected); }
 
 // positions are in pixel units
 // columns are in tile-units
 // each icon is 80px/10tl wide with a 16px/2tl spacing
 static void DrawColumn(Cube* pCube, int x) {
 	// x is the column in "global" space
-    uint16_t addr = UnsignedMod(x, 18);
     x -= 3; // because the first icon is 24px inset
-	const uint16_t local_x = UnsignedMod(x, 12);
-	const int iconId = x < 0 ? -1 : x / 10;
+    uint16_t addr = UnsignedMod(x, NUM_TILES_X);
+	const uint16_t local_x = UnsignedMod(x, COLUMNS_PER_ICON);
+	const int iconId = x < 0 ? -1 : x / COLUMNS_PER_ICON;
 	// icon or blank column?
 	if (local_x < 10 && iconId >= 0 && iconId < NUM_ICONS) {
 		// drawing an icon column
-		const AssetImage* pImg = gIcons[x / 12];
+		const AssetImage* pImg = gIcons[x / COLUMNS_PER_ICON];
 		const uint16_t *src = pImg->tiles + UnsignedMod(local_x, pImg->width);
-		addr += 2*18;
+		addr += 2*NUM_TILES_X;
 		for(int row=0; row<10; ++row) {
 	        _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
-    	    addr += 18;
+    	    addr += NUM_TILES_X;
         	src += pImg->width;
 
 		}
@@ -81,7 +90,7 @@ static void Paint(Cube *pCube) {
 const float kAccelThresholdOn = 1.15f;
 const float kAccelThresholdOff = 0.85f;
 static float GetAccel(Cube *pCube) {
-	return -0.25f * pCube->virtualAccel().x;
+	return ACCEL_SCALING_FACTOR * pCube->virtualAccel().x;
 }
 
 // entry point
@@ -140,7 +149,7 @@ void siftmain() {
     	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 	}
 	// Allocate tiles for the footer, and draw it.
-    _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 12, ((1 << Tip0.width) - 1), Tip0.height);
+    _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (NUM_VISIBLE_TILES_Y - Tip0.height), ((1 << Tip0.width) - 1), Tip0.height);
     _SYS_vbuf_writei(
     	&pCube->vbuf.sys, 
     	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + LabelEmpty.width * LabelEmpty.height,
@@ -148,7 +157,7 @@ void siftmain() {
         0, 
         Tip0.width * Tip0.height
     );
-    for (int x = -1; x < 17; x++) { DrawColumn(pCube, x); }
+    for (int x = -1; x < NUM_TILES_X - 1; x++) { DrawColumn(pCube, x); }
     Paint(pCube);
     // initialize physics
     float position = 0;
@@ -186,7 +195,7 @@ void siftmain() {
 			const float dt = 0.225f;
 			const bool isTilting = fabs(accel) > kAccelThresholdOff;
 			const bool isLefty = position < 0.f - 0.05f;
-			const bool isRighty = position > 96.f*(NUM_ICONS-1) + 0.05f;
+			const bool isRighty = position > PIXELS_PER_ICON*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
 				velocity += accel * dt;
 				velocity *= 0.99f;
@@ -246,11 +255,12 @@ void siftmain() {
 	for(int col=0; col<16; ++col) {
 		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
 	}
-	canvas.BG0_drawAsset(Vec2(0, 12), Footer);
+	canvas.BG0_drawAsset(Vec2(0, NUM_VISIBLE_TILES_Y - Footer.height), Footer);
 	// TODO: Phase-Out BG1Helper code with optimized code
 	{
+		const AssetImage* icon = gIcons[ComputeSelected(position)];
 		BG1Helper overlay(*pCube);
-		overlay.DrawAsset(Vec2(3, 2), *gIcons[ComputeSelected(position)]);
+		overlay.DrawAsset(Vec2((NUM_VISIBLE_TILES_X - icon->width) / 2, 2), *icon);
 		overlay.Flush();
 	}
 	System::paintSync();
