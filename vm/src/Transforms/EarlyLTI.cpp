@@ -19,6 +19,8 @@ namespace llvm {
     BasicBlockPass *createEarlyLTIPass();
 }
 
+extern cl::opt<bool> ELFDebug;
+
 namespace {
     class EarlyLTIPass : public BasicBlockPass {
     public:
@@ -75,7 +77,6 @@ void EarlyLTIPass::replaceWithConstant(CallSite &CS, uint32_t value)
 bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
 {
     if (Name == "_SYS_lti_isDebug") {
-        extern cl::opt<bool> ELFDebug;
         replaceWithConstant(CS, ELFDebug);
         return true;
     }
