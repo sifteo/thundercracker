@@ -59,26 +59,26 @@ const static Vec2 positions[] =
     Vec2(3, 2),
     Vec2(2, 2),
     Vec2(3, 3), // [26]
-    Vec2(56, 24), // [27]
-    Vec2(24, 24), // [28]
+    Vec2(56, 0), // [27]
+    Vec2(24, 0), // [28]
 };
 
 const static AnimObjData animObjData[] =
 {
     // AnimIndex_Tile2Idle
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[0]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},
     {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
     // AnimIndex_Tile2MetaSlideL
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 10, &positions[7]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]},
     {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 7, &positions[2]},
 
     // AnimIndex_Tile2MetaSlideR
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 7, &positions[10]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]},
     {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 10, &positions[16]},
 
     // AnimIndex_Tile2MetaOldWord
-    {&Tile2MetaGlow, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[0]},
+    {&Tile2Glow, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},
     {&Tile2MetaGlow, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
     // CityProgression

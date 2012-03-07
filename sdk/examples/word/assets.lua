@@ -10,10 +10,14 @@ BorderRight = image{"wp2_border_right.png", quality=10}
 BorderSlotBlank = image{"border_available01.png", quality=10}
 BorderSlotNormal = image{"border_created_basic01.png", quality=10}
 BorderSlotBonus = image{"border_created_bonus01.png", quality=10}
-Tile2 = image{"wp2_tile01.png", quality=10}
-Tile2Glow = image{"wp2_tile02.png", quality=10}
+Tile2 = image{"tile_ivory_idle00.png", quality=10}
+Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Meta = image{"wp2_tile05.png", quality=10}
-Tile2MetaGlow = image{"wp2_tile06.png", quality=10}
+Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=10}
+Tile3 = image{"tile_ivory_narrow_idle00.png", quality=10}
+Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=10}
+Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=10}
+Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=10}
 Font1Letter = image{"font_2ltr.png"}--, width=120, height=88, quality=0}
 Font2Letter = image{"font_2ltr.png", width=48, height=40, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}

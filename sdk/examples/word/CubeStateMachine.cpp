@@ -677,6 +677,7 @@ void CubeStateMachine::update(float dt)
                 queueAnim(AnimType_HintSlideR, CubeAnim_Main);
                 break;
             }
+            mHintRequested = false;
         }
         break;
 
