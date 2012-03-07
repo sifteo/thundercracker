@@ -65,11 +65,10 @@ void siftmain()
     
     while (1) {
         // Scroll based on accelerometer tilt
-        _SYSAccelState state;
-        _SYS_getAccel(cube.id(), &state);
+        Vec2 acc = cube.physicalAccel();
 
         // Floating point pixels
-        x += state.x * (40.0f / 128.0f);
+        x += acc.x * (40.0f / 128.0f);
         
         // Integer pixels
         int xi = x + 0.5f;
