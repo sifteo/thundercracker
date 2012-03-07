@@ -34,6 +34,10 @@ public:
         return (tag >> 24) & 7;
     }
     
+    inline uint32_t getValue() {
+        return tag;
+    }
+    
 private:
     uint32_t tag;
 };
