@@ -8,9 +8,12 @@
 #include "svmdebug.h"
 #include "svmruntime.h"
 #include "elfdefs.h"
-#include "flash.h"
+#include "flash.h"
 using namespace Svm;
 
+#ifndef PRIxPTR // for mingw
+#define PRIxPTR "x"
+#endif
 
 static const unsigned MAX_DEBUG_SECTIONS = 32;
 

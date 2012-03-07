@@ -10,7 +10,6 @@ AR_STM32 = arm-none-eabi-ar
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
-SPEEXENC = $(TC_DIR)/speex/encoder/speexencoder$(BIN_EXT)
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -55,7 +54,8 @@ ifneq ($(QTCREATOR_TERMINAL),)
 endif
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused
+# XXX - no-strict-aliasing is needed in syscall.cpp, perhaps only apply to that file
+CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
 # generate dependency files
 CFLAGS += -MD -MP
@@ -69,7 +69,7 @@ LDFLAGS += -lm
 # but it may have additional C++-specific flags set as well.
 
 # Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-use-cxa-atexit
 
 include $(TC_DIR)/Makefile.platform
 
@@ -88,6 +88,12 @@ endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
+
+# 32-bit mingw needs this for the __sync_fetch_* family of routines in syscalls.cpp
+ifeq ($(BUILD_PLATFORM), windows32)
+    CFLAGS_SIM += -march=native
+endif
+
 CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 

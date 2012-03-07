@@ -13,6 +13,10 @@
 #include <sifteo/abi.h>
 #include <string.h>
 
+#ifndef PRIxPTR // for mingw
+#define PRIxPTR "x"
+#endif
+
 using namespace Svm;
 
 FlashBlockRef SvmRuntime::codeBlock;
