@@ -18,8 +18,7 @@ static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vb
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
+    _SYSAccelState state = _SYS_getAccel(cid);
 
     String<64> str;
     str << "Tilt: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
