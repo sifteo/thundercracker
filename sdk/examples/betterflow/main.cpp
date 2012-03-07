@@ -10,6 +10,7 @@ using namespace Sifteo;
 #define ELEMENT_PADDING 	16.f
 #define ICON_WIDTH      	80.f
 #define MAX_NORMAL_SPEED 	40.f
+#define MAX_SPEED_MULTIPLIER 3
 #define ACCEL_SCALING_FACTOR -0.25f
 
 // computed/hardware constants
@@ -92,8 +93,11 @@ static void Paint(Cube *pCube) {
 // retrieve the acceleration of the cube due to tilting
 const float kAccelThresholdOn = 1.15f;
 const float kAccelThresholdOff = 0.85f;
-static float GetAccel(Cube *pCube) {
+static float GetXAccel(Cube *pCube) {
 	return ACCEL_SCALING_FACTOR * pCube->virtualAccel().x;
+}
+static float GetYAccel(Cube *pCube) {
+	return ACCEL_SCALING_FACTOR * pCube->virtualAccel().y;
 }
 
 // entry point
@@ -171,7 +175,7 @@ void siftmain() {
 	for(;;) {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();
-		while(fabs(GetAccel(pCube)) < kAccelThresholdOn) {
+		while(fabs(GetXAccel(pCube)) < kAccelThresholdOn) {
 			Paint(pCube);
 			bool touch = pCube->touching();
 			// when touching any icon but the last one
@@ -197,7 +201,7 @@ void siftmain() {
 		while(!doneTilting) {
 			float now = System::clock();
 			// update physics
-			const float accel = GetAccel(pCube);
+			const float accel = GetXAccel(pCube);
 			const bool isTilting = fabs(accel) > kAccelThresholdOff;
 			float dt = (now - lastPaint) * 13.1f;
 			
@@ -206,13 +210,18 @@ void siftmain() {
 			const bool isRighty = position > PIXELS_PER_ICON*(NUM_ICONS-1) + 0.05f;
 			
 			if (isTilting && !isLefty && !isRighty) {
-				
 				// normal scrolling
 				velocity += accel * dt;
 				
 				// clamp maximum velocity based on cube angle
 				if(fabs(velocity) > MAX_NORMAL_SPEED * (fabs(accel) / ONE_G)) {
 					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED) * (fabs(accel) / ONE_G);
+				}
+				
+				float vaccel = GetYAccel(pCube);
+				if(fabs(vaccel) > kAccelThresholdOn) {
+					LOG(("scaling factor: %f\n", (1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G))));
+					velocity *= 1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G);
 				}
 				
 				position += velocity * dt;
