@@ -41,10 +41,11 @@ inline float StoppingPositionFor(int selected) { return (ICON_WIDTH + ELEMENT_PA
 // each icon is 80px/10tl wide with a 16px/2tl spacing
 static void DrawColumn(Cube* pCube, int x) {
 	// x is the column in "global" space
-    x -= 3; // because the first icon is 24px inset
     uint16_t addr = UnsignedMod(x, NUM_TILES_X);
+    x -= 3; // first icon is 24px inset
 	const uint16_t local_x = UnsignedMod(x, COLUMNS_PER_ICON);
 	const int iconId = x < 0 ? -1 : x / COLUMNS_PER_ICON;
+
 	// icon or blank column?
 	if (local_x < 10 && iconId >= 0 && iconId < NUM_ICONS) {
 		// drawing an icon column
@@ -161,6 +162,7 @@ void siftmain() {
     );
     for (int x = -1; x < NUM_TILES_X - 1; x++) { DrawColumn(pCube, x); }
     Paint(pCube);
+
     // initialize physics
     float position = 0;
 	int prev_ut = 0;
@@ -178,8 +180,8 @@ void siftmain() {
 			} else {
 				prevTouch = touch;
 			}
-
 		}
+		
 		// hide label
 	    _SYS_vbuf_writei(
 	    	&pCube->vbuf.sys, 
@@ -198,17 +200,24 @@ void siftmain() {
 			const float accel = GetAccel(pCube);
 			const bool isTilting = fabs(accel) > kAccelThresholdOff;
 			float dt = (now - lastPaint) * 13.1f;
+			
+			// have we scrolled past the end of the menu?
 			const bool isLefty = position < 0.f - 0.05f;
 			const bool isRighty = position > PIXELS_PER_ICON*(NUM_ICONS-1) + 0.05f;
+			
 			if (isTilting && !isLefty && !isRighty) {
+				
+				// normal scrolling
 				velocity += accel * dt;
 				
 				// clamp maximum velocity based on cube angle
 				if(fabs(velocity) > MAX_NORMAL_SPEED * (fabs(accel) / ONE_G)) {
 					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED) * (fabs(accel) / ONE_G);
 				}
+				
 				position += velocity * dt;
 			} else {
+				// pull to stopping position
 				const float stiffness = 0.333f;
 				const int selected = ComputeSelected(position);
 				const float stopping_position = StoppingPositionFor(selected);
@@ -218,20 +227,10 @@ void siftmain() {
 				position = Lerp(position, stopping_position, 0.15f);
 				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
 			}
-			const float pad = 24.f;
+			
 			// update view
 			int ui = position + 0.5f;
 			int ut = position / 8;
-			// TODO: Sometimes, on really fast accelerations, there's a column
-			// 		of garbage tiles on the side of the screen; is this a firmware
-			//		bug or a logic bug here?
-			// numist: It's an application logic bug triggered by not being aware
-			//         of the underlying organization of the hardware.
-			//         To detect, count pixels moved since the last paint call, and
-			//         if it's larger than a tile, switch to paintSync so the new
-			//         column is guaranteed to arrive before the render.
-			//         Actual number to check should be just below a tile to avoid
-			//         getting caught by the PLL.
 			while(prev_ut < ut) {
 				DrawColumn(pCube, prev_ut + 17);
 				prev_ut++;
@@ -266,6 +265,7 @@ void siftmain() {
 	}
 	canvas.BG0_drawAsset(Vec2(0, NUM_VISIBLE_TILES_Y - Footer.height), Footer);
 	// TODO: Phase-Out BG1Helper code with optimized code
+	// numist: it's not slow enough to warrant optimization right now.
 	{
 		const AssetImage* icon = gIcons[ComputeSelected(position)];
 		BG1Helper overlay(*pCube);
