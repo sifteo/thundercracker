@@ -19,6 +19,7 @@ using namespace Sifteo;
 #define NUM_VISIBLE_TILES_Y (NUM_TILES_Y - 2)
 #define PIXELS_PER_ICON		(ELEMENT_PADDING + ICON_WIDTH)
 #define COLUMNS_PER_ICON	((int)(PIXELS_PER_ICON / 8)) // columns taken up by the icon plus padding
+#define ONE_G				fabs(64 * ACCEL_SCALING_FACTOR)
 
 //typedef VidMode_BG0 Canvas;
 typedef VidMode_BG0 Canvas;
@@ -201,9 +202,10 @@ void siftmain() {
 			const bool isRighty = position > PIXELS_PER_ICON*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
 				velocity += accel * dt;
-				velocity *= 0.99f;
-				if(fabs(velocity) > MAX_NORMAL_SPEED) {
-					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED);
+				
+				// clamp maximum velocity based on cube angle
+				if(fabs(velocity) > MAX_NORMAL_SPEED * (fabs(accel) / ONE_G)) {
+					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED) * (fabs(accel) / ONE_G);
 				}
 				position += velocity * dt;
 			} else {
