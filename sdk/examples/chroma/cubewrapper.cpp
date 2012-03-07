@@ -185,7 +185,7 @@ void CubeWrapper::Draw()
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
-                    int level = Game::Inst().getDisplayedLevel();
+                    int level = Game::Inst().getDisplayedLevel() + 1;
 
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 3 ),
                                        Banner::CENTER, level );
