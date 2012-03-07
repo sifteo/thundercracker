@@ -109,7 +109,8 @@ bool SVMAlignPass::runOnMachineBasicBlock(MachineBasicBlock &MBB)
 
     // Find and fill all align slots
     for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
-        int Size = I->getDesc().getSize();
+        const MCInstrDesc &Desc = I->getDesc();
+        int Size = Desc.getSize();
         assert(Size == 0 || Size == 2 || Size == 4);
         
         if (Size == 4 && (halfwordCount & 1)) {
@@ -126,6 +127,17 @@ bool SVMAlignPass::runOnMachineBasicBlock(MachineBasicBlock &MBB)
             Changed = true;
             halfwordCount++;
             assert((halfwordCount & 1) == 0);
+
+        } else if ((I->getOpcode() == SVM::CALL || I->getOpcode() == SVM::CALLr)
+            && !(halfwordCount & 1)) {
+            
+            // Non-tail call that *is* aligned. Insert a NOP beforehand, so that
+            // the return address will be aligned on a halfword boundary.
+            
+            assert(Size == 2);
+            BuildMI(MBB, I, I->getDebugLoc(), TII.get(SVM::NOP));
+            Changed = true;
+            halfwordCount++;
         }
 
         // Count the original instruction, without align slot filler
