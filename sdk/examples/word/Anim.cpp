@@ -2,38 +2,6 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 
-/*enum AnimIndex
-{
-    AnimIndex_Tile1Idle,
-    AnimIndex_Tile1SlideL,
-    AnimIndex_Tile1SlideR,
-    AnimIndex_Tile1OldWord,
-    AnimIndex_Tile1NewWord,
-    AnimIndex_Tile1EndofRoundScored,
-    AnimIndex_Tile1ShuffleScored,
-    AnimIndex_Tile1CityProgression,
-
-    AnimIndex_Tile2Idle,
-    AnimIndex_Tile2SlideL,
-    AnimIndex_Tile2SlideR,
-    AnimIndex_Tile2OldWord,
-    AnimIndex_Tile2NewWord,
-    AnimIndex_Tile2EndofRoundScored,
-    AnimIndex_Tile2ShuffleScored,
-    AnimIndex_Tile2CityProgression,
-
-    AnimIndex_Tile3Idle,
-    AnimIndex_Tile3SlideL,
-    AnimIndex_Tile3SlideR,
-    AnimIndex_Tile3OldWord,
-    AnimIndex_Tile3NewWord,
-    AnimIndex_Tile3EndofRoundScored,
-    AnimIndex_Tile3ShuffleScored,
-    AnimIndex_Tile3CityProgression,
-
-    NumAnimIndexes
-};
-*/
 enum Layer
 {
     Layer_BG0,
@@ -92,6 +60,7 @@ const static Vec2 positions[] =
     Vec2(2, 2),
     Vec2(3, 3), // [26]
     Vec2(56, 24), // [27]
+    Vec2(24, 24), // [28]
 };
 
 const static AnimObjData animObjData[] =
@@ -118,11 +87,12 @@ const static AnimObjData animObjData[] =
     // HintIdle
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]},
 
+    // HintLocked
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]},
 };
 
 const static AnimData animData[] =
 {
-
     //AnimIndex_Tile1Idle,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1SlideL,
@@ -147,6 +117,14 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintDisppear,
     { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintSlideL,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintSlideR,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintLock,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintLocked,
+    { 1.f, true, 1, &animObjData[0]},
 
     // AnimIndex_Tile2Idle
     { 1.f, true, 2, &animObjData[0]},
@@ -167,10 +145,18 @@ const static AnimData animData[] =
     //AnimType_HintAppear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintIdle,
-    { 1.f, true, 1, &animObjData[0]},
+    { 1.f, true, 1, &animObjData[9]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintDisppear,
+    { 1.f, true, 1, &animObjData[0]},
+    // AnimIndex_HIntSlideL
+    { 0.5f, false, 2, &animObjData[2]},
+    // AnimIndex_HIntSlideR
+    { 0.5f, false, 2, &animObjData[4]},
+    //AnimType_HintLock,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintLocked,
     { 1.f, true, 1, &animObjData[0]},
 
     //AnimIndex_Tile3Idle,
@@ -192,10 +178,18 @@ const static AnimData animData[] =
     //AnimType_HintAppear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintIdle,
-    { 1.f, true, 1, &animObjData[0]},
+    { 1.f, true, 1, &animObjData[9]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintDisppear,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintSlideL,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintSlideR,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintLock,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_HintLocked,
     { 1.f, true, 1, &animObjData[0]},
 
 };
@@ -234,9 +228,15 @@ bool animPaint(AnimType animT,
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
         Vec2 clipOffset(0,0);
-        Vec2 size(objData.mAsset->width, objData.mAsset->height);
-        if (objData.mLayer != Layer_Sprite)
+        Vec2 size(0, 0);
+        if (objData.mLayer == Layer_Sprite)
         {
+            size = Vec2(objData.mSpriteAsset->width, objData.mSpriteAsset->height);
+        }
+        else
+        {
+            ASSERT(objData.mAsset);
+            size = Vec2(objData.mAsset->width, objData.mAsset->height);
             // FIXME write utility AABB class
             if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
             {
@@ -257,7 +257,6 @@ bool animPaint(AnimType animT,
         }
         ASSERT(size.x > 0);
         ASSERT(size.y > 0);
-        ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
         if ((anim % NumAnimTypes) != AnimType_NotWord)
         {
@@ -350,7 +349,7 @@ bool animPaint(AnimType animT,
     };
 
     const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-    if (params && params->mCubeID == 0)
+    if (params && params->mCubeID == CUBE_ID_BASE)
     {
         for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
         {

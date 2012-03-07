@@ -16,10 +16,15 @@ enum AnimType
     AnimType_EndofRound,
     AnimType_Shuffle,
     AnimType_CityProgression,
+
     AnimType_HintAppear,
     AnimType_HintIdle,
     AnimType_HintShake,
     AnimType_HintDisppear,
+    AnimType_HintSlideL,
+    AnimType_HintSlideR,
+    AnimType_HintLock,
+    AnimType_HintLocked,
 
     NumAnimTypes
 };

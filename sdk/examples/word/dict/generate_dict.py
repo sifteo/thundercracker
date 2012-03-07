@@ -408,8 +408,8 @@ def generate_dict():
                         if freq < min_freq:
                             min_freq = freq
                         anagram_freqs[freq] += 1
-                    row_dict['Min. Freq.'] = min_freq
-                    row_dict['Max. Freq.'] = max_freq
+                    row_dict['Min. Freq.'] = min_freq + 1
+                    row_dict['Max. Freq.'] = max_freq + 1
                     
                     for freq in range(0, 10):  
                         try:
@@ -449,7 +449,7 @@ def generate_dict():
                             freq = get_word_freq(a, dictionary)
                             if freq < full_length_freq:
                                 full_length_freq = freq
-                    row_dict['Full-length Freq.'] = full_length_freq
+                    row_dict['Full-length Freq.'] = full_length_freq + 1
                     writer.writerow(row_dict)
                 except IOError:
                     print "failed to write example file: ", sys.exc_info()[0]
@@ -473,19 +473,26 @@ def generate_dict():
             fi.write("    " + str(len(anagrams_nonbonus)) + ",\t// " + word + ", nonbonus anagrams: " + str(anagrams_nonbonus) + "\n")
     fi.write("};\n\n")
 
-    fi.write("const static unsigned char puzzlesNumBonusAnagrams[] =\n")
+    fi.write("const static unsigned char puzzlesNumPossibleAnagrams[] =\n")
     fi.write("{\n")
     for word, value in sorted_word_list_used:
-        if letters_per_cube[len(word) - 1] > 1:
+        if letters_per_cube[len(word) - 1] > 1:            
             anagrams = find_anagrams(word, dictionary, ltrs_p_c).keys()
-            anagrams_nonbonus = []
-            anagrams_bonus = []            
-            for a in anagrams:
-                if get_word_freq(a, dictionary) <= min_freq_bonus:
-                    anagrams_nonbonus.append(a)
-                else:
-                    anagrams_bonus.append(a)
-            fi.write("    " + str(len(anagrams_bonus)) + ",\t// " + word + ", bonus anagrams: " + str(anagrams_bonus) + "\n")
+            fi.write("    " + str(len(anagrams)) + ",\t// " + word + ", all anagrams: " + str(anagrams) + "\n")
+    fi.write("};\n\n")
+
+    for word, value in sorted_word_list_used:
+        fi.write("const static unsigned _puzzlesPossibleWordIndexes_" + word + "[] =\n")
+        fi.write("{\n")
+        anagrams = find_anagrams(word, dictionary, ltrs_p_c).keys()
+        for a in anagrams:
+            fi.write("    " + str(sorted_output_dict.index(a)) + ",\t// " + a + ",\n")
+        fi.write("};\n\n")
+    
+    fi.write("const static unsigned *puzzlesPossibleWordIndexes[] =\n")
+    fi.write("{\n")
+    for word, value in sorted_word_list_used:        
+        fi.write("    _puzzlesPossibleWordIndexes_" + word + ",\t// " + word + ",\n");
     fi.write("};\n\n")
 
     fi.write("const static bool puzzlesUseLeadingSpaces[] =\n")
