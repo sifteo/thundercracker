@@ -1,5 +1,6 @@
 GameAssets = group{quality=10}
 Background = image{"background.png"}
+Background_Lit = image{"background_lit.png"}
 
 Accent = image{ "accent.png" }
 Accent_Current = image{ "accent_current.png" }

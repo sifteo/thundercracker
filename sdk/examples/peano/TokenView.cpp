@@ -256,7 +256,7 @@ void TokenView::PaintNow()
         c->backgroundLayer.resizeSprite(i,0,0);
     }
 
-    c->Image(&Background, Vec2(0,0));
+    c->Image(mLit ? &Background_Lit : &Background, Vec2(0,0));
     SideStatus bottomStatus = SideStatusOpen;
     SideStatus rightStatus = SideStatusOpen;
     SideStatus topStatus = SideStatusOpen;
@@ -539,8 +539,7 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
                 renderedDigit == 7 || renderedDigit == 8 || renderedDigit == 9 ||
                 renderedDigit == 0)
         {
-            int frame;
-            frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
+            int frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
             if(0 != frame && 2 != frame)
             {
                 c->backgroundLayer.BG0_drawPartialAsset(Vec2(5,3), Vec2(2,2), Vec2(4,1), MajorN, frame);
@@ -549,9 +548,13 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 
             if(2 == frame)
                 c->foregroundLayer.DrawAsset(Vec2(3,3), MajorN_Frame2_AccentDigit);
+        }
 
-
-            frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
+        if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 ||
+                renderedDigit == 8 || renderedDigit == 9 ||
+                renderedDigit == 0)
+        {
+            int frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
             if(111 != frame && 109 != frame)
             {
                 c->backgroundLayer.BG0_drawPartialAsset(Vec2(5,10), Vec2(2,0), Vec2(4,1), MajorS, frame);
