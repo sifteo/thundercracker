@@ -13,15 +13,6 @@ namespace MenuController
 
 static const int MAX_CHAPTERS=7;
 
-class TextFieldView : View
-{
-public:
-    void Paint(TotalsCube *c);
-};
-
-
-
-
 
 /* todo lost and found
         void OnCubeLost(Cube cube) {
@@ -29,16 +20,6 @@ public:
             cube.MoveViewTo(mGame.CubeSet.FindAnyIdle());
           }
         } */
-
-
-void MenuController::TextFieldView::Paint(TotalsCube *c)
-{
-    /* TODO render text
-        c.FillScreen(new Color(200, 200, 200));
-             Library.Verdana.PaintCentered(c, "(reinforce choice)", 64, 64);
-             */
-}
-
 
 
 MenuController::TransitionView::TransitionView(TotalsCube *c): View(c)
