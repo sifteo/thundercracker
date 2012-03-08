@@ -125,7 +125,7 @@ void CubeWrapper::Draw()
                     if( Game::Inst().getMode() == Game::MODE_PUZZLE)
                     {
                         const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
-                        if( m_cube.id() == 2 + CUBE_ID_BASE && pPuzzle->m_numCubes < 3 )
+                        if( Game::Inst().getWrapperIndex( this ) == 2 && pPuzzle->m_numCubes < 3 )
                         {
                             DrawMessageBoxWithText( pPuzzle->m_pInstr );
                             break;
@@ -223,7 +223,7 @@ void CubeWrapper::Draw()
 
             //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
-            if( m_cube.id() == 0 + CUBE_ID_BASE)
+            if( Game::Inst().getWrapperIndex( this ) == 0 )
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), UI_Highscores, 0);
 
@@ -234,11 +234,11 @@ void CubeWrapper::Draw()
                     Banner::DrawScore( m_bg1helper, Vec2( 7, 4+2*i ), Banner::RIGHT, score );
                 }
             }
-            else if( m_cube.id() == 1 + CUBE_ID_BASE )
+            else if( Game::Inst().getWrapperIndex( this ) == 1 )
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
             }
-            else if( m_cube.id() == 2 + CUBE_ID_BASE )
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
@@ -259,7 +259,7 @@ void CubeWrapper::Draw()
         }
         case Game::STATE_NEXTPUZZLE:
         {
-            if( m_cube.id() == 0 + CUBE_ID_BASE)
+            if( Game::Inst().getWrapperIndex( this ) == 0 )
             {
                 const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
 
@@ -270,7 +270,7 @@ void CubeWrapper::Draw()
                     DrawMessageBoxWithText( buf );
                 }
             }
-            else if( m_cube.id() == 1 + CUBE_ID_BASE)
+            else if( Game::Inst().getWrapperIndex( this ) == 1 )
             {
                 const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
 
@@ -279,7 +279,7 @@ void CubeWrapper::Draw()
                     DrawMessageBoxWithText( pPuzzle->m_pInstr );
                 }
             }
-            else if( m_cube.id() == 2 + CUBE_ID_BASE)
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
                 DrawMessageBoxWithText( "Shake to Begin" );
             }
@@ -1736,7 +1736,7 @@ void CubeWrapper::ClearSprite( unsigned int id )
 
 void CubeWrapper::fillPuzzleCube()
 {
-    const PuzzleCubeData *pData = Game::Inst().GetPuzzleData( m_cube.id() - CUBE_ID_BASE );
+    const PuzzleCubeData *pData = Game::Inst().GetPuzzleData( Game::Inst().getWrapperIndex( this ) );
 
     if( !pData )
         return;

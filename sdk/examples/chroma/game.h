@@ -88,6 +88,7 @@ public:
 
     CubeWrapper *GetWrapper( Cube *pCube );
     CubeWrapper *GetWrapper( unsigned int index );
+    int getWrapperIndex( const CubeWrapper *pWrapper );
 
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }

@@ -121,7 +121,14 @@ void Game::Update()
         {
             setState( STATE_INTRO );
             if( choice < MODE_CNT )
+            {
                 m_mode = (GameMode)choice;
+
+                for( int i = 0; i < NUM_CUBES; i++ )
+                {
+                    m_cubes[i].Reset();
+                }
+            }
             else
                 ASSERT( 0 );  //TODO settings!
         }
@@ -308,6 +315,18 @@ CubeWrapper *Game::GetWrapper( Cube *pCube )
 CubeWrapper *Game::GetWrapper( unsigned int index )
 {
     return &m_cubes[index];
+}
+
+
+int Game::getWrapperIndex( const CubeWrapper *pWrapper )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( &m_cubes[i] == pWrapper )
+            return i;
+    }
+
+    return -1;
 }
 
 
