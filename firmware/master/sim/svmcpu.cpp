@@ -13,6 +13,10 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifndef PRIxPTR // for mingw
+#define PRIxPTR "x"
+#endif
+
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
@@ -784,7 +788,7 @@ static uint16_t fetch()
 #ifdef SVM_TRACE
     LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(), *pc));
     for (unsigned r = 0; r < 8; r++) {
-        LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
+        LOG((" r%d=%016"PRIxPTR"", r, regs[r]));
     }
     LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n",
         getNeg() ? 'N' : ' ',
