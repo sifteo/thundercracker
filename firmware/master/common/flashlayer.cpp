@@ -56,10 +56,10 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
     busyBlocksMap |= ref->bit();
 
 #ifdef FLASHLAYER_STATS
-    if (++stats.total >= 1000) {
-        DEBUG_LOG(("Flashlayer, stats for last %u accesses: "
-            "%u same-block hits, %u other-block hits, %u misses, %u refs\n",
-            stats.hit_same, stats.hit_other, stats.miss,
+    if (++stats.total >= 10000) {
+        LOG(("Flashlayer, stats for last %u accesses: "
+            "%6u same-block hits, %6u other-block hits, %6u misses, %2u refs\n",
+            stats.total, stats.hit_same, stats.hit_other, stats.miss,
             stats.global_refcount));
 
         stats.total = 0;
