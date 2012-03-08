@@ -194,7 +194,7 @@ SVC encodings:
   11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
 
 Direct syscalls shall be used for very common operations: memcpy, memset,
-floating point, return, SP adjust, etc.
+floating point, return, etc.
 
 When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
 four and added to the base of the current page, to form the address of a
@@ -205,19 +205,23 @@ four and added to the base of the current page, to form the address of a
   0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
   10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
   10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
-  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
-  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
+  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on (a)
+  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on (F+a)
 
   (F = 0x80000000, flash segment virtual address)
 
 Address operations are like syscalls, but they have a 24-bit immediate which
-is always interpreted as a validated flash address:
+is large enough to hold any arbitrary flash or RAM address. Defined addrop
+numbers:
 
   0  Long branch
   1  Asynchronous preload
   2  Assign to r8-9
-  
-  
+  3  SP = validate(SP - a*4)
+  4  Long stack store: SP[a & 0x1FFFFF] = R[a >> 21]
+  5  Long stack load:  R[a >> 21] = SP[a & 0x1FFFFF]
+
+
 Calling Convention
 ------------------
 
