@@ -201,6 +201,8 @@ void SvmRuntime::ret()
 
 void SvmRuntime::svc(uint8_t imm8)
 {
+    SvmCpu::pushIrqContext();
+
     if ((imm8 & (1 << 7)) == 0) {
         svcIndirectOperation(imm8);
 
@@ -239,6 +241,8 @@ void SvmRuntime::svc(uint8_t imm8)
         eventDispatchFlag = 0;
         Event::dispatch();
     }
+
+    SvmCpu::popIrqContext();
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
@@ -400,7 +404,7 @@ void SvmRuntime::branch(reg_t addr)
     if (!SvmMemory::mapROCode(codeBlock, addr, pa))
         SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
-    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    
+    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
 }
 
 void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)

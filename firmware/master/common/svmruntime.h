@@ -25,7 +25,7 @@ public:
 
     static void svc(uint8_t imm8);
     static void call(reg_t addr);
-    static void tailcall(reg_t addr);    
+    static void tailcall(reg_t addr);
     static void ret();
 
     /**
@@ -125,7 +125,7 @@ private:
     static void resetSP();
     static void adjustSP(int words);
     static void setSP(reg_t addr);
-    
+
     static void longLDRSP(unsigned reg, unsigned offset);
     static void longSTRSP(unsigned reg, unsigned offset);
 

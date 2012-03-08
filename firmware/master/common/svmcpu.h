@@ -18,6 +18,9 @@ namespace SvmCpu {
     reg_t reg(uint8_t r);
     void setReg(uint8_t r, reg_t val);
 
+    void pushIrqContext();
+    void popIrqContext();
+
 } // namespace SvmCpu
 
 #endif // SVMCPU_H
