@@ -1,12 +1,9 @@
 # we expect $(TC_DIR)/sdk/Makefile.defs has already been included
 
+
+######## Normal target rules
+
 all: $(BIN)
-
-disassemble: $(BIN)
-	@$(LLVM_BIN)/llvm-dis $(BIN) -o -
-
-symlist: $(BIN)
-	@$(LLVM_BIN)/llvm-nm $(BIN) | grep "U "
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
@@ -17,9 +14,28 @@ $(BIN): $(OBJS)
 $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
 
-.PHONY: clean all disassemble
-
 clean:
 	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
 
+.PHONY: clean all
+
 -include $(OBJS:%.o=%.d)
+
+######## Development utility rules
+
+llvm-dis: $(BIN)
+	@$(LLVM_BIN)/llvm-dis $(BIN) -o - | less
+
+objdump: $(BIN)
+	arm-none-eabi-objdump -d $(BIN) | less
+
+asm: program.s
+	less $^
+
+program.s: $(OBJS)
+	$(LD) -asm -o $@ $^ $(LDFLAGS)
+
+symlist: $(BIN)
+	@$(LLVM_BIN)/llvm-nm $(BIN) | grep "U "
+
+.PHONY: llvm-dis objdump asm symlist
