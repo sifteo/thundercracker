@@ -9,6 +9,7 @@
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebug.h"
+#include "event.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -22,6 +23,8 @@ using namespace Svm;
 FlashBlockRef SvmRuntime::codeBlock;
 FlashBlockRef SvmRuntime::dataBlock;
 SvmMemory::PhysAddr SvmRuntime::stackLimit;
+reg_t SvmRuntime::eventFrame;
+bool SvmRuntime::eventDispatchFlag;
 
 
 void SvmRuntime::run(uint16_t appId)
@@ -145,7 +148,8 @@ void SvmRuntime::enterFunction(reg_t addr)
 
 void SvmRuntime::ret()
 {
-    CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::reg(REG_FP));
+    reg_t regFP = SvmCpu::reg(REG_FP);
+    CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
     if (fp) {
         // Restore the saved frame
@@ -171,46 +175,54 @@ void SvmRuntime::ret()
         // No more functions on the stack. Return from main() is exit().
         exit();
     }
+    
+    // If we're returning from an event handler, see if we still need
+    // to dispatch any other pending events.
+    if (eventFrame == regFP) {
+        eventFrame = 0;
+        dispatchEventsOnReturn();
+    }
 }
 
 void SvmRuntime::svc(uint8_t imm8)
 {
     if ((imm8 & (1 << 7)) == 0) {
         svcIndirectOperation(imm8);
-        return;
-    }
-    if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
+
+    } else if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
         syscall(syscallNum);
-        return;
-    }
-    if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
+
+    } else if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         uint8_t imm5 = imm8 & 0x1f;
         adjustSP(imm5);
-        return;
+
+    } else {
+        uint8_t sub = (imm8 >> 3) & 0x1f;
+        unsigned r = imm8 & 0x7;
+
+        switch (sub) {
+        case 0x1c:  // 0b11100
+            validate(SvmCpu::reg(r));
+            break;
+        case 0x1d:  // 0b11101
+            SvmDebug::fault(F_RESERVED_SVC);
+            break;
+        case 0x1e:  // 0b11110
+            call(SvmCpu::reg(r));
+            break;
+        case 0x1f:  // 0b11110
+            tailcall(SvmCpu::reg(r));
+            break;
+        default:
+            SvmDebug::fault(F_RESERVED_SVC);
+            break;
+        }
     }
 
-    uint8_t sub = (imm8 >> 3) & 0x1f;
-    unsigned r = imm8 & 0x7;
-
-    switch (sub) {
-    case 0x1c:  { // 0b11100
-        validate(SvmCpu::reg(r));
-        return;
-    }
-    case 0x1d:  // 0b11101
-        SvmDebug::fault(F_RESERVED_SVC);
-        return;
-    case 0x1e: { // 0b11110
-        call(SvmCpu::reg(r));
-        return;
-    }
-    case 0x1f:  // 0b11110
-        tailcall(SvmCpu::reg(r));
-        return;
-    default:
-        SvmDebug::fault(F_RESERVED_SVC);
-        break;
+    if (eventDispatchFlag) {
+        eventDispatchFlag = 0;
+        Event::dispatch();
     }
 }
 

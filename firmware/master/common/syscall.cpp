@@ -33,7 +33,7 @@ static void returnFromYield() {
     // Idle tasks to execute on our way back up from a yielding syscall
     AudioMixer::instance.fetchData();
     Tasks::work();
-    Event::dispatch();
+    SvmRuntime::dispatchEventsOnReturn();
 }
 
 

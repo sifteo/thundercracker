@@ -11,7 +11,6 @@
 
 using namespace Sifteo;
 
-bool Event::dispatchInProgress;
 uint32_t Event::pending;
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 
@@ -19,12 +18,14 @@ Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 void Event::dispatch()
 {
     /*
-     * Skip event dispatch if we're already in an event handler
+     * Find the next event that needs to be dispatched, if any, and
+     * dispatch it. In order to avoid allocating an unbounded number of
+     * user-mode stack frames, this function is limited to dispatching
+     * at most one event at a time.
      */
 
-    if (dispatchInProgress)
+    if (!SvmRuntime::canSendEvent())
         return;
-    dispatchInProgress = true;
 
     /*
      * Process events, by type
@@ -39,27 +40,25 @@ void Event::dispatch()
         // Currently all events are dispatched per-cube, even the neighbor
         // events. Loop over the Cube IDs from cubesPending.
 
-        uint32_t cubesPending = vi.cubesPending;
-	    while (cubesPending) {
-            _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(cubesPending);
-            
+	    while (vi.cubesPending) {
+            _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(vi.cubesPending);
+            Atomic::And(vi.cubesPending, ~Intrinsic::LZ(cid));
+
             // Type-specific event dispatch
 
             if (vidMask & _SYS_NEIGHBOR_EVENTS) {
                 // Handle all neighbor events for this cube slot
-                NeighborSlot::instances[cid].computeEvents();
+                // XXX: Need to make Neighbor code able to dispatch single events at a time.
+                //NeighborSlot::instances[cid].computeEvents();
                 vidMask = _SYS_NEIGHBOR_EVENTS;
             } else {
                 // Handle one normal cube event
-                callCubeEvent(vid, cid);
+                if (callCubeEvent(vid, cid));
+                    return;
             }
-
-            Atomic::And(cubesPending, ~Intrinsic::LZ(cid));
         }
-        vi.cubesPending = 0;
-            
+
+        // Once all cubesPending bits are clear, clear the vector bit.
         Atomic::And(pending, ~vidMask);
     }
-
-    dispatchInProgress = false;
 }
