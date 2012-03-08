@@ -134,6 +134,11 @@ FlashBlock *FlashBlock::recycleBlock()
     return &instances[0];
 }
 
+void FlashBlock::preload(uint32_t blockAddr)
+{
+    // XXX: Implement me
+}
+
 uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
 {
     uint32_t chunk = MIN(maxLength, remaining());

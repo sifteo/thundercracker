@@ -268,8 +268,21 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
     case 0:
         branch(address);
         break;
+    case 1:
+        if (!SvmMemory::preload(address))
+            SvmDebug::fault(F_PRELOAD_ADDRESS);
+        break;
     case 2:
         validate(address);
+        break;
+    case 3:
+        adjustSP(address);
+        break;
+    case 4:
+        longSTRSP((address >> 21) & 7, address & 0x1FFFFF);
+        break;
+    case 5:
+        longLDRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
     default:
         SvmDebug::fault(F_RESERVED_ADDROP);
@@ -373,4 +386,32 @@ void SvmRuntime::branch(reg_t addr)
         SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
     SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));    
+}
+
+void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
+{
+    SvmMemory::VirtAddr va = SvmCpu::reg(SvmCpu::REG_SP) + (offset << 2);
+    SvmMemory::PhysAddr pa;
+
+    ASSERT((va & 3) == 0);
+    ASSERT(reg < 8);
+
+    if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
+        SvmCpu::setReg(reg, *reinterpret_cast<uint32_t*>(pa));
+    else
+        SvmDebug::fault(F_LONG_STACK_LOAD);
+}
+
+void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
+{
+    SvmMemory::VirtAddr va = SvmCpu::reg(SvmCpu::REG_SP) + (offset << 2);
+    SvmMemory::PhysAddr pa;
+
+    ASSERT((va & 3) == 0);
+    ASSERT(reg < 8);
+
+    if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
+        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
+    else
+        SvmDebug::fault(F_LONG_STACK_STORE);
 }

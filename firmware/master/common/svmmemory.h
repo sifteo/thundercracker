@@ -123,6 +123,13 @@ public:
     static bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out);
 
     /**
+     * Asynchronously preload the given VirtAddr. If it's a flash address, this
+     * may try to page in that flash block ahead-of-time. Returns false
+     * on bad address.
+     */
+    static bool preload(VirtAddr va);
+
+    /**
      * Convenient type-safe wrapper around copyROData.
      */
     template <typename T>

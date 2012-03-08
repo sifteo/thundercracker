@@ -52,6 +52,9 @@ enum FaultCode {
     F_RESERVED_SVC,         // Reserved SVC encoding
     F_RESERVED_ADDROP,      // Reserved ADDROP encoding
     F_ABORT,                // User call to _SYS_abort()
+    F_LONG_STACK_LOAD,      // Bad address in long stack LDR addrop
+    F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
+    F_PRELOAD_ADDRESS,      // Bad address for async preload
 };
 
 ///////////////////////////////////////

@@ -98,6 +98,7 @@ public:
 #endif
 
     static void init();
+    static void preload(uint32_t blockAddr);
     static void get(FlashBlockRef &ref, uint32_t blockAddr);
     static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
     static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);

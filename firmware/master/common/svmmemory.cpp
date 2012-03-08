@@ -72,6 +72,24 @@ bool SvmMemory::mapROData(FlashBlockRef &ref, VirtAddr va,
     return true;
 }
 
+bool SvmMemory::preload(VirtAddr va)
+{
+    if (!(va & VIRTUAL_FLASH_BASE)) {
+        // Not flash? Nothing to preload.
+        return true;
+    }
+
+    uint32_t flashOffset = (uint32_t)va & ~VIRTUAL_FLASH_BASE;
+    if (flashOffset >= flashSeg.getSize()) {
+        // Bad address
+        return false;
+    }
+    flashOffset += flashSeg.getAddress();
+
+    FlashBlock::preload(flashOffset);
+    return true;
+}
+
 void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
     PhysAddr &bro, PhysAddr &brw)
 {
