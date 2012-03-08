@@ -432,7 +432,7 @@ void TokenView::PaintBottom(bool lit)
 }
 
 void TokenView::PaintCenterCap(uint8_t masks[4])
-{printf("center cap begin!\n");
+{
     // compute the screen state union (assuming it's valid)
     uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
     TotalsCube *c = GetCube();
@@ -445,8 +445,10 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     unsigned lowestBit = 0;
     while(!(vunion & (1<<lowestBit))) { lowestBit++; }
 
+    bool showingOverlay = mStatus == StatusOverlay;
+
     // Center
-    if(lowestBit < 5)   //5 is completely transparent.  the rest, completely opaque
+    if(lowestBit < 5 && !showingOverlay)   //5 is completely transparent.  the rest, completely opaque
     {
         for(unsigned i=5; i<9; ++i) {
             c->backgroundLayer.BG0_drawAsset(Vec2(i,4), Center, lowestBit);
@@ -475,11 +477,9 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 #undef HORIZONTAL_AT
 
 #define VERTICTAL_AT(x, y, side)    do {\
-     c->foregroundLayer.DrawAsset(Vec2(x,y), Vertical_Top, masks[side]); \
-    if(masks[side]) {\
-        c->backgroundLayer.BG0_drawAsset(Vec2(x,y+2), Vertical_Center, masks[side]); \
-    }\
-    c->foregroundLayer.DrawAsset(Vec2(x,y+6), Vertical_Bottom, masks[side]); }while(0)
+     if(!showingOverlay) c->foregroundLayer.DrawAsset(Vec2(x,y), Vertical_Top, masks[side]); \
+    if(masks[side]) c->backgroundLayer.BG0_drawAsset(Vec2(x,y+2), Vertical_Center, masks[side]); \
+    if(!showingOverlay) c->foregroundLayer.DrawAsset(Vec2(x,y+6), Vertical_Bottom, masks[side]); }while(0)
 
     // Vertical
     VERTICTAL_AT(0,3,SIDE_LEFT);
@@ -489,39 +489,44 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
 #undef VERTICTAL_AT
 
     // Minor Diagonals
-    printf("\tminor diagonals\n");
     if (vunion & 0x10) {
-        c->backgroundLayer.BG0_drawAsset(Vec2(2,2), MinorNW, 1);
-        c->backgroundLayer.BG0_drawAsset(Vec2(2,11), MinorSW, 1);
-        c->backgroundLayer.BG0_drawAsset(Vec2(11,11), MinorSE, 0);
-        c->backgroundLayer.BG0_drawAsset(Vec2(11,2), MinorNE, 0);
+        c->foregroundLayer.DrawAsset(Vec2(2,2), MinorNW, 1);
+        c->foregroundLayer.DrawAsset(Vec2(2,11), MinorSW, 1);
+        c->foregroundLayer.DrawAsset(Vec2(11,11), MinorSE, 0);
+        c->foregroundLayer.DrawAsset(Vec2(11,2), MinorNE, 0);
     }
 
     // Major Diagonals
-    printf("\tmajor diagonals\n");
-    if (lowestBit > 1) {
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), Center, lowestBit);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), Center, lowestBit);
-    } else {
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
-        c->backgroundLayer.BG0_drawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
-        c->backgroundLayer.BG0_drawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+    if(!showingOverlay)
+    {
+        if (lowestBit > 1) {
+            c->backgroundLayer.BG0_drawAsset(Vec2(4,4), Center, lowestBit);
+            c->backgroundLayer.BG0_drawAsset(Vec2(4,9), Center, lowestBit);
+            c->backgroundLayer.BG0_drawAsset(Vec2(9,9), Center, lowestBit);
+            c->backgroundLayer.BG0_drawAsset(Vec2(9,4), Center, lowestBit);
+        } else {
+            c->foregroundLayer.DrawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
+            c->foregroundLayer.DrawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
+            c->foregroundLayer.DrawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
+            c->foregroundLayer.DrawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+        }
     }
 
     static const uint8_t keyIndices[] = { 0, 1, 3, 5, 8, 10, 13, 16, 20, 22, 25, 28, 32, 35, 39, 43, 48, 50, 53, 56, 60, 63, 67, 71, 76, 79, 83, 87, 92, 96, 101, 106, };
 
-    // Major Joints
-    printf("\tmajor joints 1\n");
-    c->foregroundLayer.DrawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-    printf("\tmajor joints 2\n");
-    c->foregroundLayer.DrawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
-    printf("\tmajor joints 3\n");
-    c->foregroundLayer.DrawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
-    printf("\tmajor joints 4\n");
-    c->foregroundLayer.DrawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+    // Major Joints            
+    if(!showingOverlay)
+    {
+        c->foregroundLayer.DrawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->foregroundLayer.DrawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
+        c->foregroundLayer.DrawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        c->foregroundLayer.DrawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+    }
+    else
+    {
+        c->foregroundLayer.DrawPartialAsset(Vec2(3,1), Vec2(0,0), Vec2(MajorN.width, 2), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->foregroundLayer.DrawPartialAsset(Vec2(3,11),Vec2(0,1), Vec2(MajorS.width, MajorS.height-1), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+    }
 }
 
 
