@@ -456,8 +456,7 @@ void CubeWrapper::Update(float t, float dt)
         m_banner.Update(t);
 
         //tilt state
-        _SYSAccelState state;
-        _SYS_getAccel(m_cube.id(), &state);
+        _SYSAccelState state = _SYS_getAccel(m_cube.id());
 
         //try spring to target
         Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
