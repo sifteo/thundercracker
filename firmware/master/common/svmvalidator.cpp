@@ -38,6 +38,20 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
      *      progress through the block, but only saving a copy of the
      *      numValidBytes result when we hit a terminator instruction.
      */
+    
+    /*
+     * XXX: We also must validate local branch targets! This could be tricky,
+     *      since the result of branch target validation affects which
+     *      instructions are valid, which affects which branch destinations
+     *      are valid. Reverse branches can always be validated in one pass,
+     *      but we'll likely need a multi-pass algorithm to account for
+     *      forward branches.
+     *
+     *      Worst case, if there's no way to do this that's fast and
+     *      guaranteed to converge, we can always include an explicit
+     *      compile-time marker which indicates the end of code and beginning
+     *      of data, at a small space penalty per-block.
+     */
 
 #ifdef SVM_TRACE
     LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
