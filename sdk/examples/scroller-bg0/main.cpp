@@ -9,6 +9,8 @@
 
 using namespace Sifteo;
 
+#define DT_RATIO 15.f
+
 static Cube cube(0);
 
 void load()
@@ -58,16 +60,20 @@ void siftmain()
     for (int x = -1; x < 17; x++)
         draw_bg_column(x);
                    
+	float lastPaint = System::clock();
     float x = 0;
     int prev_xt = 0;
+	int prev_xi = 0;
     
     while (1) {
+		float now = System::clock();
+
         // Scroll based on accelerometer tilt
         _SYSAccelState state;
         _SYS_getAccel(cube.id(), &state);
 
         // Floating point pixels
-        x += state.x * (40.0f / 128.0f);
+        x += state.x * (now - lastPaint) * DT_RATIO;
         
         // Integer pixels
         int xi = x + 0.5f;
@@ -90,6 +96,14 @@ void siftmain()
         // Firmware handles all pixel-level scrolling
         vid.BG0_setPanning(Vec2(xi, 0));
         
-        System::paint();
+		if(abs(prev_xi - xi) > 7) {
+			LOG(("pixel delta: %d, sync\n", prev_xi - xi));
+			System::paintSync();
+		} else {
+	        System::paint();
+		}
+		
+		prev_xi = xi;
+		lastPaint = now;
     }
 }
