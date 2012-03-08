@@ -18,6 +18,7 @@
 #define SVM_BLOCKSIZEACCUMULATOR_H
 
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/support/raw_ostream.h"
 
 namespace llvm {
 
@@ -29,6 +30,8 @@ namespace llvm {
     public:
         void clear();
         unsigned getByteCount() const;
+        
+        void describe(raw_ostream &OS);
 
         void AddInstr(const MachineInstr *MI);
         void AddInstr(unsigned bytes);

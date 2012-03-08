@@ -9,6 +9,7 @@
 #define SVM_ASMPRINTER_H
 
 #include "SVMMCInstlower.h"
+#include "SVMBlockSizeAccumulator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -43,11 +44,13 @@ namespace llvm {
         BlockConstPoolTy BlockConstPool;
 
         unsigned CurrentFnSplitOrdinal;
+        SVMBlockSizeAccumulator BSA;
 
         void emitBlockBegin();
         void emitBlockEnd();
         void emitBlockSplit(const MachineInstr *MI);
         void emitFunctionLabelImpl(MCSymbol *Sym);
+        void emitBlockOffsetComment();
 
         void emitBlockConstPool();
         void emitConstRefComment(const MachineOperand &MO);

@@ -73,6 +73,13 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
         break;
     }
 
+    // A small kludge for reporting MBB alignment to BSA...
+    const MachineBasicBlock *MBB = MI->getParent();
+    if (MI == MBB->begin())
+        BSA.InstrAlign(MBB->getAlignment());
+
+    BSA.AddInstr(MI);
+    emitBlockOffsetComment();
     OutStreamer.EmitInstruction(MCI);
 }
 
@@ -116,10 +123,11 @@ void SVMAsmPrinter::emitFunctionLabelImpl(MCSymbol *Sym)
 void SVMAsmPrinter::emitBlockBegin()
 {
     BlockConstPool.clear();
+    BSA.clear();
 
     OutStreamer.EmitValueToAlignment(
         SVMTargetMachine::getBlockSize(),
-        SVMTargetMachine::getPaddingByte());    
+        SVMTargetMachine::getPaddingByte());
 }
 
 void SVMAsmPrinter::emitBlockEnd()
@@ -199,6 +207,21 @@ void SVMAsmPrinter::emitConstRefComment(const MachineOperand &MO)
         OS << Entry.Val.ConstVal->getName();
     else
         OS << *(Value*)Entry.Val.ConstVal;            
+    OS << "\n";
+}
+
+void SVMAsmPrinter::emitBlockOffsetComment()
+{
+    raw_ostream &OS = OutStreamer.GetCommentOS();
+
+    unsigned byteCount = BSA.getByteCount();
+    if (byteCount > SVMTargetMachine::getBlockSize())
+        report_fatal_error("Block overflow (" + Twine(byteCount) + " bytes) "
+            "in function " + Twine(CurrentFnSym->getName()) + "." +
+            Twine(CurrentFnSplitOrdinal));
+
+    OS << "BSA: ";
+    BSA.describe(OS);
     OS << "\n";
 }
 

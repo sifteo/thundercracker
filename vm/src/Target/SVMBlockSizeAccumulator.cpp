@@ -36,6 +36,7 @@ unsigned SVMBlockSizeAccumulator::getByteCount() const
     Size = RoundUpToAlignment(Size, SVMTargetMachine::getBundleSize());
     Size += InstrSizeTotal;
 
+    Size = RoundUpToAlignment(Size, SVMTargetMachine::getBundleSize());
     Size += InstrSuffixTotal;
     
     Size = RoundUpToAlignment(Size, ConstAlignment);
@@ -46,11 +47,12 @@ unsigned SVMBlockSizeAccumulator::getByteCount() const
 
 void SVMBlockSizeAccumulator::InstrAlign(unsigned A)
 {
-    InstrSizeTotal = RoundUpToAlignment(InstrSizeTotal, A);
+    if (A)
+        InstrSizeTotal = RoundUpToAlignment(InstrSizeTotal, A);
 }
 
 void SVMBlockSizeAccumulator::AddInstr(unsigned bytes)
-{    
+{
     // Add an abstract instruction, with only a specific size.
     assert(bytes == 0 || bytes == 2 || bytes == 4);
     assert(bytes != 4 || (InstrSizeTotal & 3) == 0);
@@ -115,4 +117,16 @@ void SVMBlockSizeAccumulator::AddInstr(const MachineInstr *MI)
     // Add a specific instruction and all of its referenced constants
     AddInstr(MI->getDesc().getSize());
     AddConstantsForInstr(MI);
+}
+
+void SVMBlockSizeAccumulator::describe(raw_ostream &OS)
+{
+    // Emit a human readable description of the block size state,
+    // for assembly comments.
+
+    OS << "inst=0x" << Twine::utohexstr(InstrSizeTotal) << "/"
+        << (InstrSizeTotal / 4) << "w "
+        << "const=0x" << Twine::utohexstr(ConstSizeTotal) << "/"
+        << (ConstSizeTotal / 4) << "w "
+        << "total=0x" << Twine::utohexstr(getByteCount());
 }
