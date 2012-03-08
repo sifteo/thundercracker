@@ -133,7 +133,8 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
             c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(x/8, 16-4-1));
             c->FillArea(&Dark_Purple, Vec2((x+w)/8, 1), Vec2(16-(x+w)/8, 16-4-1));
             if (mDrawLabel) {
-                //TODO Library.Verdana.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,20)); // magic
+                //TODO draw text?  for the life of me i can't see what this does in the original
+                //Library.Verdana.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,20)); // magic
             }
         }
     } else {
