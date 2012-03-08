@@ -86,6 +86,9 @@ public:
 	void Update();
     void Reset( bool bInGame = true );
 
+    CubeWrapper *GetWrapper( Cube *pCube );
+    CubeWrapper *GetWrapper( unsigned int index );
+
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
 

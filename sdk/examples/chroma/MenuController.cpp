@@ -60,7 +60,13 @@ void MenuController::Reset()
 }
 
 
-CubeWrapper &MenuController::GetWrapper( unsigned int id )
+CubeWrapper *MenuController::GetWrapper( Cube *pCube )
 {
-    return Game::Inst().m_cubes[ id ];
+    return Game::Inst().GetWrapper( pCube );
+}
+
+
+CubeWrapper *MenuController::GetWrapper( unsigned int index )
+{
+    return Game::Inst().GetWrapper( index );
 }

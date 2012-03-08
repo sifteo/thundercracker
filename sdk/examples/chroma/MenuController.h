@@ -32,7 +32,8 @@ public:
 	void Reset();
 	
     void checkNeighbors();
-    CubeWrapper &GetWrapper( unsigned int id );
+    CubeWrapper *GetWrapper( Cube *pCube );
+    CubeWrapper *GetWrapper( unsigned int index );
 
 private:
     float m_fLastTime;
