@@ -171,6 +171,8 @@ void CubeWrapper::Draw()
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 3 ),
                                        Banner::CENTER, level );
 
+                    m_vid.BG1_setPanning( Vec2( 0, -4 ) );
+
                     m_queuedFlush = true;
 					break;
 				}
@@ -229,7 +231,7 @@ void CubeWrapper::Draw()
                 {
                     int score = Game::Inst().getHighScore(i);
 
-                    Banner::DrawScore( m_bg1helper, Vec2( 7, 5+2*i ), Banner::RIGHT, score );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 4+2*i ), Banner::RIGHT, score );
                 }
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
@@ -936,6 +938,8 @@ void CubeWrapper::checkRefill()
         setState( STATE_REFILL );
         m_intro.Reset( true );
         Refill();
+
+        m_vid.BG1_setPanning( Vec2( 0, 0 ) );
 
         /*if( Game::Inst().getMode() == Game::MODE_SURVIVAL && Game::Inst().getScore() > 0 )
 		{

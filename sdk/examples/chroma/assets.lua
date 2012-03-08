@@ -12,6 +12,11 @@ UI_Highscores = image{"UI_highScore_bg.png"}
 UI_Highscores_lowscore = image{"UI_highScore_bg_lowScore.png"}
 UI_Highlight = image{"UI_highlight.png"}
 
+--points text
+PointFont = image{"points.png", height=16}
+BannerPoints = image{"Bannerpoints.png", height=16}
+BannerPointsWhite = image{"BannerpointsWhite.png", height=16}
+
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
@@ -71,9 +76,6 @@ DieDown = image{"DieDown.png", height=64, pinned=true}
 DieRight = image{"DieRight.png", height=16, pinned=true}
 --idle glimmer
 GlimmerImg = image{"Glimmer.png", height=32}
---points text
-PointFont = image{"points.png", height=16}
-BannerPoints = image{"Bannerpoints.png", height=16}
 
 --sounds
 astrokraut = sound{"astrokraut.raw", encode="PCM"}
