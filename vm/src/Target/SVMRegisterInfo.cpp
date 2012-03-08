@@ -151,7 +151,7 @@ void SVMRegisterInfo::rewriteLongStackOp(MachineBasicBlock::iterator &II,
 
     assert((Offset & 3) == 0);
     assert(Offset <= 0x1FFFFF);
-    Op |= Offset;
+    Op |= Offset >> 2;
 
     unsigned reg = MI.getOperand(0).getReg();
     assert(reg >= SVM::R0 && reg <= SVM::R7);

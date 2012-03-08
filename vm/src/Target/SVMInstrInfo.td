@@ -86,22 +86,22 @@ def RET : S_call<(outs), (ins), "s.ret", [(SVMRet)]> {
 
 let isCall = 1, Defs = [R0, R1] in {
 
-    def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
-        "s.call\t$offset11", [(SVMCall callTarget:$offset11)]>;
+    def CALL : S_ind<(outs), (ins AbsCPIop:$addr9),
+        "s.call\t$addr9", [(SVMCall callTarget:$addr9)]>;
 
-    def CALLr : S_ind<(outs), (ins GPReg:$Rs),
-        "s.call\t$Rs", [(SVMCall GPReg:$Rs)]>;
+    def CALLr : S_callr<0, (outs), (ins GPReg:$Rs),
+        "s.callr\t$Rs", [(SVMCall GPReg:$Rs)]>;
 
     def SYS64_CALL : S_call<(outs), (ins i32imm:$imm6),
         "s.sys\t$imm6", [(SVMSys64Call imm:$imm6)]>; 
 
     let isReturn = 1, isTerminator = 1 in {
 
-        def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
-            "s.tcall\t$offset11", [(SVMTailCall tailCallTarget:$offset11)]>;
+        def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$addr9),
+            "s.tcall\t$addr9", [(SVMTailCall tailCallTarget:$addr9)]>;
 
-        def TAIL_CALLr : S_ind<(outs), (ins GPReg:$Rs),
-            "s.tcall\t$Rs", [(SVMTailCall GPReg:$Rs)]>;
+        def TAIL_CALLr : S_callr<1, (outs), (ins GPReg:$Rs),
+            "s.tcallr\t$Rs", [(SVMTailCall GPReg:$Rs)]>;
     }
 }
 
@@ -148,8 +148,8 @@ def B : T18<(outs), (ins bTarget:$offset11),
 }
 
 // Long unconditional branch (via indirect svc)
-def LB : S_ind<(outs), (ins AbsCPIop:$offset11),
-    "s.lb\t$offset11", []> {
+def LB : S_ind<(outs), (ins AbsCPIop:$addr9),
+    "s.lb\t$addr9", []> {
     let isBranch = 1;
     let isTerminator = 1;
 }
@@ -485,17 +485,17 @@ def ADDsp : T12<1, (outs GPReg:$Rd), (ins ADDRsp:$offset10),
 // Dynamic stack allocation
 let Uses = [SP], Defs = [SP] in {
     def SPADJ : S_subsp<(outs), (ins i32imm:$offset7), "s.spadj $offset7", []>;
-    def SPADJi : S_ind<(outs), (ins AbsCPIop:$offset11), "s.spadji $offset11", []>;
+    def SPADJi : S_ind<(outs), (ins AbsCPIop:$addr9), "s.spadji $addr9", []>;
 }
 
 // Long (SVC-assisted) stack loads/stores, used when dealing with huge stack frames
-def STRspi : S_ind<(outs), (ins GPReg:$Rd, AbsCPIop:$offset11),
-    "s.strspi $Rd, $offset11", []> {
+def STRspi : S_ind<(outs), (ins GPReg:$Rd, AbsCPIop:$addr9),
+    "s.strspi $Rd, $addr9", []> {
     let Uses = [SP];
     let mayStore = 1;
 }    
-def LDRspi : S_ind<(outs GPReg:$Rd), (ins AbsCPIop:$offset11),
-    "s.ldrspi $Rd, $offset11", []> {
+def LDRspi : S_ind<(outs GPReg:$Rd), (ins AbsCPIop:$addr9),
+    "s.ldrspi $Rd, $addr9", []> {
     let Uses = [SP];
     let mayLoad = 1;
 }
