@@ -772,9 +772,7 @@ static void exitException()
 
     regs[REG_SP] += sizeof(HwContext);
 
-    // XXX: not loading returnAddr into PC here until the difference between
-    // stacked and non-stacked regs is sorted out
-//    regs[REG_PC]    = ctx->returnAddr;
+    regs[REG_PC]    = ctx->returnAddr;
 }
 
 static void emulateSVC(uint16_t instr)
@@ -1009,6 +1007,9 @@ void run()
 }
 
 /*
+ * During SVC handling, the runtime wants to operate on user space's registers,
+ * which have been pushed to the stack, which we provide access to here.
+ *
  * Register accessors really want to be inline, but putting that off for now, as
  * it will require a bit more code re-org to access platform specific members
  * in the common header file, etc.
@@ -1033,8 +1034,7 @@ reg_t stackedReg(uint8_t r)
     case 10:        return sr->irq.r10;
     case 11:        return sr->irq.r11;
     case 12:        return sr->hw.r12;
-//    case REG_PC:    LOG(("getting pc\n")); return sr->hw.returnAddr;
-    case REG_PC:    LOG(("getting pc\n")); return regs[REG_PC];
+    case REG_PC:    return sr->hw.returnAddr;
     default:        ASSERT(0 && "invalid register"); break;
     }
 }
@@ -1058,8 +1058,7 @@ void setStackedReg(uint8_t r, reg_t val)
     case 10:        sr->irq.r10 = val; break;
     case 11:        sr->irq.r11 = val; break;
     case 12:        sr->hw.r12 = val; break;
-//    case REG_PC:    LOG(("setting pc to %x\n", val)); sr->hw.returnAddr = val; break;
-    case REG_PC:    LOG(("setting pc to %x\n", val)); regs[REG_PC] = val; break;
+    case REG_PC:    sr->hw.returnAddr = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
 }
