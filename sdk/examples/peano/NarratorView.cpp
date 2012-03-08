@@ -38,6 +38,7 @@ int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
     bool hadMessage = mString[0] != 0;
+    bool emoteChanged = emote != mEmote;
 
     mString = msg;
     mEmote = emote;
@@ -48,6 +49,11 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         {
             Paint();
             GetCube()->foregroundLayer.Flush();
+        }
+        else if(emoteChanged)
+        {
+            GetCube()->DisableTextOverlay();
+            Paint();
         }
         GetCube()->EnableTextOverlay(msg, 8, 40, 255,255,255, 0,0,0);
     }
