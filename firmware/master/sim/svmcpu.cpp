@@ -697,6 +697,51 @@ static void emulateDIV(uint32_t instr)
     }
 }
 
+/*
+ * Only vaguely faithful exception emulation :)
+ * Assume we're always in User mode & accessing the User stack pointer.
+ *
+ * cortex-m3 pushes a HwContext to the appropriate stack, User or Main,
+ * to allow C-language interrupt handlers to be AAPCS compliant.
+ */
+static void enterException(reg_t returnAddr)
+{
+    // TODO: verify that we're not stacking to invalid memory
+    regs[REG_SP] -= sizeof(HwContext);
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    ctx->r0         = regs[0];
+    ctx->r1         = regs[1];
+    ctx->r2         = regs[2];
+    ctx->r3         = regs[3];
+    ctx->r12        = regs[12];
+    ctx->lr         = regs[REG_LR];
+    ctx->returnAddr = returnAddr;
+    ctx->xpsr       = regs[REG_CPSR];   // XXX; must also or in frameptralign
+
+    ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
+
+    regs[REG_LR] = 0xfffffff9;  // indicate that we're coming from User mode, using User stack
+}
+
+/*
+ * Pop HW context
+ */
+static void exitException()
+{
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    regs[0]         = ctx->r0;
+    regs[1]         = ctx->r1;
+    regs[2]         = ctx->r2;
+    regs[3]         = ctx->r3;
+    regs[12]        = ctx->r12;
+    regs[REG_LR]    = ctx->lr;
+    regs[REG_CPSR]  = ctx->xpsr;
+
+    regs[REG_SP] += sizeof(HwContext);
+
+    regs[REG_PC]    = ctx->returnAddr;
+}
+
 static void emulateSVC(uint16_t instr)
 {
     uint8_t imm8 = instr & 0xff;
