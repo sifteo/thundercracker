@@ -194,8 +194,8 @@ void SvmRuntime::svc(uint8_t imm8)
         syscall(syscallNum);
 
     } else if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
-        uint8_t imm5 = imm8 & 0x1f;
-        adjustSP(imm5);
+        int imm5 = imm8 & 0x1f;
+        adjustSP(-imm5);
 
     } else {
         uint8_t sub = (imm8 >> 3) & 0x1f;
@@ -276,7 +276,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
         validate(address);
         break;
     case 3:
-        adjustSP(address);
+        adjustSP(-(int)address);
         break;
     case 4:
         longSTRSP((address >> 21) & 7, address & 0x1FFFFF);
