@@ -1014,10 +1014,11 @@ void run()
  * in the common header file, etc.
  */
 
-reg_t reg(uint8_t r)
+reg_t stackedReg(uint8_t r)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
+    // NOTE: SP is never stacked, so not handled here
     switch (r) {
     case 0:         return sr->hw.r0;
     case 1:         return sr->hw.r1;
@@ -1032,17 +1033,17 @@ reg_t reg(uint8_t r)
     case 10:        return sr->irq.r10;
     case 11:        return sr->irq.r11;
     case 12:        return sr->hw.r12;
-    case REG_SP:    return regs[REG_SP];
 //    case REG_PC:    LOG(("getting pc\n")); return sr->hw.returnAddr;
     case REG_PC:    LOG(("getting pc\n")); return regs[REG_PC];
     default:        ASSERT(0 && "invalid register"); break;
     }
 }
 
-void setReg(uint8_t r, reg_t val)
+void setStackedReg(uint8_t r, reg_t val)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
+    // NOTE: SP is never stacked, so not handled here
     switch (r) {
     case 0:         sr->hw.r0 = val; break;
     case 1:         sr->hw.r1 = val; break;
@@ -1057,11 +1058,20 @@ void setReg(uint8_t r, reg_t val)
     case 10:        sr->irq.r10 = val; break;
     case 11:        sr->irq.r11 = val; break;
     case 12:        sr->hw.r12 = val; break;
-    case REG_SP:    regs[REG_SP] = val; break;
 //    case REG_PC:    LOG(("setting pc to %x\n", val)); sr->hw.returnAddr = val; break;
     case REG_PC:    LOG(("setting pc to %x\n", val)); regs[REG_PC] = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
+}
+
+reg_t reg(uint8_t r)
+{
+    return regs[r];
+}
+
+void setReg(uint8_t r, reg_t val)
+{
+    regs[r] = val;
 }
 
 /*

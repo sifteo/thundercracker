@@ -74,15 +74,15 @@ void SvmRuntime::call(reg_t addr)
 {
     // Allocate a CallFrame for this function
     adjustSP(-(int)(sizeof(CallFrame) / sizeof(uint32_t)));
-    CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::reg(REG_SP));
+    CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::stackedReg(REG_SP));
 
-    reg_t sFP = SvmCpu::reg(REG_FP);
-    reg_t sR2 = SvmCpu::reg(2);
-    reg_t sR3 = SvmCpu::reg(3);
-    reg_t sR4 = SvmCpu::reg(4);
-    reg_t sR5 = SvmCpu::reg(5);
-    reg_t sR6 = SvmCpu::reg(6);
-    reg_t sR7 = SvmCpu::reg(7);
+    reg_t sFP = SvmCpu::stackedReg(REG_FP);
+    reg_t sR2 = SvmCpu::stackedReg(2);
+    reg_t sR3 = SvmCpu::stackedReg(3);
+    reg_t sR4 = SvmCpu::stackedReg(4);
+    reg_t sR5 = SvmCpu::stackedReg(5);
+    reg_t sR6 = SvmCpu::stackedReg(6);
+    reg_t sR7 = SvmCpu::stackedReg(7);
 
     // Because this is a store to RAM, on simulated builds
     // we may need to squash 64-bit pointers.
@@ -104,7 +104,7 @@ void SvmRuntime::call(reg_t addr)
     fp->r7 = sR7;
 
     // This is now the current frame
-    SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fp));
+    SvmCpu::setStackedReg(REG_FP, reinterpret_cast<reg_t>(fp));
 
 #ifdef SVM_TRACE
     LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
@@ -121,7 +121,7 @@ void SvmRuntime::tailcall(reg_t addr)
     // Equivalent to a call() followed by a ret(), but without
     // allocating a new CallFrame on the stack.
     
-    reg_t fp = SvmCpu::reg(REG_FP);
+    reg_t fp = SvmCpu::stackedReg(REG_FP);
 
     if (fp) {
         // Restore stack to bottom of the saved frame
@@ -148,7 +148,7 @@ void SvmRuntime::enterFunction(reg_t addr)
 
 void SvmRuntime::ret()
 {
-    reg_t regFP = SvmCpu::reg(REG_FP);
+    reg_t regFP = SvmCpu::stackedReg(REG_FP);
     CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
     if (fp) {
@@ -174,14 +174,14 @@ void SvmRuntime::ret()
             fpPA = 0;
         }
 
-        SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
+        SvmCpu::setStackedReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
 
-        SvmCpu::setReg(2, fp->r2);
-        SvmCpu::setReg(3, fp->r3);
-        SvmCpu::setReg(4, fp->r4);
-        SvmCpu::setReg(5, fp->r5);
-        SvmCpu::setReg(6, fp->r6);
-        SvmCpu::setReg(7, fp->r7);
+        SvmCpu::setStackedReg(2, fp->r2);
+        SvmCpu::setStackedReg(3, fp->r3);
+        SvmCpu::setStackedReg(4, fp->r4);
+        SvmCpu::setStackedReg(5, fp->r5);
+        SvmCpu::setStackedReg(6, fp->r6);
+        SvmCpu::setStackedReg(7, fp->r7);
 
         setSP(reinterpret_cast<reg_t>(fp + 1));
         branch(fp->pc);
@@ -220,16 +220,16 @@ void SvmRuntime::svc(uint8_t imm8)
 
         switch (sub) {
         case 0x1c:  // 0b11100
-            validate(SvmCpu::reg(r));
+            validate(SvmCpu::stackedReg(r));
             break;
         case 0x1d:  // 0b11101
             SvmDebug::fault(F_RESERVED_SVC);
             break;
         case 0x1e:  // 0b11110
-            call(SvmCpu::reg(r));
+            call(SvmCpu::stackedReg(r));
             break;
         case 0x1f:  // 0b11110
-            tailcall(SvmCpu::reg(r));
+            tailcall(SvmCpu::stackedReg(r));
             break;
         default:
             SvmDebug::fault(F_RESERVED_SVC);
@@ -319,8 +319,8 @@ void SvmRuntime::validate(reg_t address)
     SvmMemory::PhysAddr bro, brw;
     SvmMemory::validateBase(dataBlock, address, bro, brw);
 
-    SvmCpu::setReg(8, reinterpret_cast<reg_t>(bro));
-    SvmCpu::setReg(9, reinterpret_cast<reg_t>(brw));
+    SvmCpu::setStackedReg(8, reinterpret_cast<reg_t>(bro));
+    SvmCpu::setStackedReg(9, reinterpret_cast<reg_t>(brw));
 }
 
 void SvmRuntime::syscall(unsigned num)
@@ -351,16 +351,16 @@ void SvmRuntime::syscall(unsigned num)
     LOG(("SYSCALL: enter _SYS_%d(%"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"
         PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR")\n",
         num,
-        SvmCpu::reg(0), SvmCpu::reg(1),
-        SvmCpu::reg(2), SvmCpu::reg(3),
-        SvmCpu::reg(4), SvmCpu::reg(5),
-        SvmCpu::reg(6), SvmCpu::reg(7)));
+        SvmCpu::stackedReg(0), SvmCpu::stackedReg(1),
+        SvmCpu::stackedReg(2), SvmCpu::stackedReg(3),
+        SvmCpu::stackedReg(4), SvmCpu::stackedReg(5),
+        SvmCpu::stackedReg(6), SvmCpu::stackedReg(7)));
 #endif
 
-    uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
-                         SvmCpu::reg(2), SvmCpu::reg(3),
-                         SvmCpu::reg(4), SvmCpu::reg(5),
-                         SvmCpu::reg(6), SvmCpu::reg(7));
+    uint64_t result = fn(SvmCpu::stackedReg(0), SvmCpu::stackedReg(1),
+                         SvmCpu::stackedReg(2), SvmCpu::stackedReg(3),
+                         SvmCpu::stackedReg(4), SvmCpu::stackedReg(5),
+                         SvmCpu::stackedReg(6), SvmCpu::stackedReg(7));
 
     uint32_t result0 = result;
     uint32_t result1 = result >> 32;
@@ -370,8 +370,8 @@ void SvmRuntime::syscall(unsigned num)
         num, result1, result0));
 #endif
 
-    SvmCpu::setReg(0, result0);
-    SvmCpu::setReg(1, result1);
+    SvmCpu::setStackedReg(0, result0);
+    SvmCpu::setStackedReg(1, result1);
 }
 
 void SvmRuntime::resetSP()
@@ -404,7 +404,7 @@ void SvmRuntime::branch(reg_t addr)
     if (!SvmMemory::mapROCode(codeBlock, addr, pa))
         SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
-    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
+    SvmCpu::setStackedReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
 }
 
 void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
@@ -416,7 +416,7 @@ void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        SvmCpu::setReg(reg, *reinterpret_cast<uint32_t*>(pa));
+        SvmCpu::setStackedReg(reg, *reinterpret_cast<uint32_t*>(pa));
     else
         SvmDebug::fault(F_LONG_STACK_LOAD);
 }
@@ -430,7 +430,7 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
+        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::stackedReg(reg);
     else
         SvmDebug::fault(F_LONG_STACK_STORE);
 }
