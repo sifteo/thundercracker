@@ -9,19 +9,18 @@
 #include "vram.h"
 #include "event.h"
 
-#define CUBE_ID_MASK (0x1F)
-#define HAS_NEIGHBOR_MASK (0x80)
-
-#define NO_SIDE (-1)
+#define CUBE_ID_MASK        (0x1F)
+#define HAS_NEIGHBOR_MASK   (0x80)
+#define FULL_MASK           (CUBE_ID_MASK | HAS_NEIGHBOR_MASK)
+#define NO_SIDE             (-1)
+#define NUM_UNIQUE_PAIRS    ((_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)) >> 1)
 
 using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 
-#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)) >> 1)
 
 struct NeighborPair {
-
     _SYSSideID side0 : 4;
     _SYSSideID side1 : 4;
     inline bool fullyConnected() const { return side0 != NO_SIDE && side1 != NO_SIDE; }
@@ -29,9 +28,9 @@ struct NeighborPair {
     inline void clear() { side0=NO_SIDE; side1=NO_SIDE; }
     NeighborPair() : side0(NO_SIDE), side1(NO_SIDE) {}
 
-
-
-    _SYSSideID setSideAndGetOtherSide(_SYSCubeID cid0, _SYSCubeID cid1, _SYSSideID side, NeighborPair** outPair) {
+    _SYSSideID setSideAndGetOtherSide(_SYSCubeID cid0, _SYSCubeID cid1,
+        _SYSSideID side, NeighborPair** outPair)
+    {
         // abstract the order-of-arguments invariant of lookup()
         if (cid0 < cid1) {
             *outPair = lookup(cid0, cid1);
@@ -44,7 +43,8 @@ struct NeighborPair {
         }
     }
 
-    inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
+    inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1)
+    {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
         const unsigned n = _SYS_NUM_CUBE_SLOTS - cid0;
@@ -54,30 +54,50 @@ struct NeighborPair {
 
 static NeighborPair gCubesToSides[NUM_UNIQUE_PAIRS];
 
-void NeighborSlot::computeEvents() {
-    uint8_t rawNeighbors[4];
-    CubeSlots::instances[id()].getRawNeighbors(rawNeighbors);
-    for(_SYSSideID side=0; side<4; ++side) {
-        if (prevNeighbors[side] & HAS_NEIGHBOR_MASK) {
-            if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
-                if ((prevNeighbors[side] & CUBE_ID_MASK) != (rawNeighbors[side] & CUBE_ID_MASK)) {
-                    // detected "switch" (addNeighborToSide will take care of removing the old one)
-                    removeNeighborFromSide(prevNeighbors[side] & CUBE_ID_MASK, side);
-                    addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
-                }
-            } else {
-                // detected remove
-                removeNeighborFromSide(prevNeighbors[side] & CUBE_ID_MASK, side);
+
+bool NeighborSlot::sendNextEvent()
+{
+    /*
+     * Send at most one neighbor event. If we can dispatch an event, we
+     * return 'true', and Event will call us back later to try and get
+     * another event. If no events can be disptached, returns 'false'.
+     */
+
+    const uint8_t *rawNeighbors = CubeSlots::instances[id()].getRawNeighbors();
+
+    for (_SYSSideID side=0; side<4; ++side) {
+        uint8_t prevNeighbor = prevNeighbors[side];
+        uint8_t rawNeighbor = rawNeighbors[side];
+
+        if (prevNeighbor & HAS_NEIGHBOR_MASK) {
+            // Used to be neighbored. If we're no longer neighbored, OR if we're
+            // now neighbored to a different cube, start out by processing a Remove,
+            // then do an Add.
+
+            if ((rawNeighbor & HAS_NEIGHBOR_MASK) == 0) {
+                if (removeNeighborFromSide(prevNeighbor & CUBE_ID_MASK, side))
+                    return true;
+
+            } else if ((prevNeighbor & CUBE_ID_MASK) != (rawNeighbor & CUBE_ID_MASK)) {
+                if (removeNeighborFromSide(prevNeighbor & CUBE_ID_MASK, side))
+                    return true;
+                if (addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side))
+                    return true;
             }
+
         } else if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
-            // detected add
-            addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
+            // Adding a new neighbor.
+
+            if (addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side))
+                return true;
         }
-    }    
-    prevNeighbors[0] = rawNeighbors[0];
-    prevNeighbors[1] = rawNeighbors[1];
-    prevNeighbors[2] = rawNeighbors[2];
-    prevNeighbors[3] = rawNeighbors[3];
+
+        // If we made it this far, commit the state to memory.
+        prevNeighbors[side] = rawNeighbors[side];
+    }
+
+    // No more events
+    return false;
 }
 
 void NeighborSlot::resetSlots(_SYSCubeIDVector cv) {
@@ -95,37 +115,51 @@ void NeighborSlot::resetPairs(_SYSCubeIDVector cv) {
     }
 }
 
-void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
+bool NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
     _SYSSideID dstSide = gCubesToSides->setSideAndGetOtherSide(id(), dstId, side, &pair);
+
     if (pair->fullyConnected() && neighbors.sides[side] != dstId) {
-        clearSide(side);
-        instances[dstId].clearSide(dstSide);
+        if (clearSide(side))
+            return true;
+        if (instances[dstId].clearSide(dstSide))
+            return true;
+
         neighbors.sides[side] = dstId;
         instances[dstId].neighbors.sides[dstSide] = id();
 
-        Event::callNeighborEvent(_SYS_NEIGHBOR_ADD, id(), side, dstId, dstSide);
+        if (Event::callNeighborEvent(_SYS_NEIGHBOR_ADD, id(), side, dstId, dstSide))
+            return true;
     }
+    
+    return false;
 }
 
-void NeighborSlot::clearSide(_SYSSideID side) {
+bool NeighborSlot::clearSide(_SYSSideID side) {
+    // Send a 'remove' event for anyone who's neighbored with "side".
+    // Sends at most one event.
+
     _SYSCubeID otherId = neighbors.sides[side];
-    if (otherId != 0xff) {
-        neighbors.sides[side] = 0xff;
-        for(_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
-            if (instances[otherId].neighbors.sides[otherSide] == id()) {
-                instances[otherId].neighbors.sides[otherSide] = 0xff;
-                Event::callNeighborEvent(_SYS_NEIGHBOR_REMOVE, id(), side, otherId, otherSide);
-                return;
-            }
+    neighbors.sides[side] = 0xff;
+    if (otherId == 0xff)
+        return false;
+
+    for (_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
+        if (instances[otherId].neighbors.sides[otherSide] == id()) {
+            instances[otherId].neighbors.sides[otherSide] = 0xff;
+
+            Event::callNeighborEvent(_SYS_NEIGHBOR_REMOVE, id(), side, otherId, otherSide);
+            return true;
         }
-    }    
+    }
+
+    return false;
 }
 
-void NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
+bool NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
     gCubesToSides->setSideAndGetOtherSide(id(), dstId, NO_SIDE, &pair);
-    if (pair->fullyDisconnected() && neighbors.sides[side] == dstId) {
-        clearSide(side);
-    }
+    if (pair->fullyDisconnected() && neighbors.sides[side] == dstId)
+        return clearSide(side);
+    return false;
 }

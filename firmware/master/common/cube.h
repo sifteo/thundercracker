@@ -13,8 +13,6 @@
 #include "cubeslots.h"
 #include "systime.h"
 
-//#include "cubecodec.h"
-
 #ifndef USE_MOCK_CUBE_CODEC
   #include "cubecodec.h"
 #else
@@ -90,7 +88,9 @@ class CubeSlot {
         *state = accelState;
     }
 
-    void getRawNeighbors(uint8_t buf[4]);
+    inline const uint8_t *getRawNeighbors() const {
+        return neighbors;
+    }
 
     bool isTouching() const;
     

@@ -36,6 +36,7 @@ static void onTouch(counts_t *counts, _SYSCubeID cid)
 static void onNeighborAdd(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Add: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborAdd++;
     counts[c1].neighborAdd++;
 }
@@ -43,6 +44,7 @@ static void onNeighborAdd(counts_t *counts,
 static void onNeighborRemove(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Remove: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborRemove++;
     counts[c1].neighborRemove++;
 }

@@ -42,17 +42,27 @@ void Event::dispatch()
 
 	    while (vi.cubesPending) {
             _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(vi.cubesPending);
-            Atomic::And(vi.cubesPending, ~Intrinsic::LZ(cid));
 
             // Type-specific event dispatch
 
             if (vidMask & _SYS_NEIGHBOR_EVENTS) {
-                // Handle all neighbor events for this cube slot
-                // XXX: Need to make Neighbor code able to dispatch single events at a time.
-                //NeighborSlot::instances[cid].computeEvents();
+                // Handle the first neighbor event for this cube slot.
+                // Since there may be many events, we only mark the slot
+                // as complete when sendNextEvent() returns false.
+
+                if (NeighborSlot::instances[cid].sendNextEvent())
+                    return;
+
+                Atomic::And(vi.cubesPending, ~Intrinsic::LZ(cid));
                 vidMask = _SYS_NEIGHBOR_EVENTS;
+
             } else {
-                // Handle one normal cube event
+                // Handle one normal cube event.
+                // We can clear the pending bit first, so that on the next
+                // Dispatch() we immediately skip to the next pending event
+                // if any.
+
+                Atomic::And(vi.cubesPending, ~Intrinsic::LZ(cid));
                 if (callCubeEvent(vid, cid));
                     return;
             }

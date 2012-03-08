@@ -18,11 +18,6 @@
  * Neighbors are not removed until both cubes report the unpairing
  *      This reduces the amount of neighboring event noise coming from the 
  *      firmware.
- * 
- * gCoalescedPairs stores a global (cube X cube) -> (side X side) maps
- * 
- * coalescedNeighbors stores the "corrected" neighboring state, which should
- *      be used by the application, rather than the raw neighbors.
  */
 
 class NeighborSlot {
@@ -36,7 +31,8 @@ public:
         return i;
     }
     
-    void computeEvents();
+    bool sendNextEvent();
+
     static void resetSlots(_SYSCubeIDVector cv);
     static void resetPairs(_SYSCubeIDVector cv);
     
@@ -45,15 +41,13 @@ public:
     }
     
 private:
-    void addNeighborToSide(_SYSCubeID id, _SYSSideID side);
-    void clearSide(_SYSSideID side);
-    void removeNeighborFromSide(_SYSCubeID id, _SYSSideID side);
+    bool addNeighborToSide(_SYSCubeID id, _SYSSideID side);
+    bool clearSide(_SYSSideID side);
+    bool removeNeighborFromSide(_SYSCubeID id, _SYSSideID side);
 
-    uint8_t prevNeighbors[4]; // this is in the format the raw neighbors -- it's more than just a cubeID
-    _SYSNeighborState neighbors; // these are just cubeIDs
+    uint8_t prevNeighbors[4];       // this is in the format the raw neighbors -- it's more than just a cubeID
+    _SYSNeighborState neighbors;    // these are just cubeIDs
 };
-
-
 
 
 #endif

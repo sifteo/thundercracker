@@ -660,7 +660,7 @@ void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
 {
     // XXX: Temporary for testing/demoing
     if (SvmMemory::mapRAM(buf, sizeof buf) && CubeSlots::validID(cid))
-        CubeSlots::instances[cid].getRawNeighbors(buf);
+        memcpy(buf, CubeSlots::instances[cid].getRawNeighbors(), 4);
 }
 
 uint8_t _SYS_isTouching(_SYSCubeID cid)

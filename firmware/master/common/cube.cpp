@@ -346,14 +346,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     }
 }
 
-void CubeSlot::getRawNeighbors(uint8_t buf[4]) {
-    // XXX: Raw neighbor data for testing/demoing only
-    buf[0] = neighbors[0];
-    buf[1] = neighbors[1];
-    buf[2] = neighbors[2];
-    buf[3] = neighbors[3];
-}
-
 // Are we being touched right now?
 bool CubeSlot::isTouching() const {
     // touch state is transmitted in the NB0_FLAG_TOUCH bit
