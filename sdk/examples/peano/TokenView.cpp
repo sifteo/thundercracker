@@ -521,6 +521,49 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
         c->foregroundLayer.DrawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
         c->foregroundLayer.DrawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
         c->foregroundLayer.DrawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+
+        //small hack to keep foreground tile count under 144.
+        //a few numbers are slightly obscured at the top and bottom
+        //by all this stuff in the foreground.
+        //for most frames, the center 4 tiles at the bottom/top of north/south
+        //can safely be put in the background.
+        //when needed, put a hack tile in the foreground to show the few
+        //pixels of the number that were obscured.
+        //the first and last frame of north/south are completely transparent
+        //so dont put them on the background.
+
+        //in case of certain digits
+        //draw center 4 of north/south, not frame 0/111 to backbuffer
+        //on frame 2/109, hack to frontbuffer
+        if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 ||
+                renderedDigit == 7 || renderedDigit == 8 || renderedDigit == 9 ||
+                renderedDigit == 0)
+        {
+            int frame;
+            frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
+            if(0 != frame && 2 != frame)
+            {
+                c->backgroundLayer.BG0_drawPartialAsset(Vec2(5,3), Vec2(2,2), Vec2(4,1), MajorN, frame);
+                c->foregroundLayer.DrawAsset(Vec2(5,3), Transparent_4x1);
+            }
+
+            if(2 == frame)
+                c->foregroundLayer.DrawAsset(Vec2(3,3), MajorN_Frame2_AccentDigit);
+
+
+            frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
+            if(111 != frame && 109 != frame)
+            {
+                c->backgroundLayer.BG0_drawPartialAsset(Vec2(5,10), Vec2(2,0), Vec2(4,1), MajorS, frame);
+                c->foregroundLayer.DrawAsset(Vec2(5,10), Transparent_4x1);
+            }
+
+            if(109 == frame)
+                c->foregroundLayer.DrawAsset(Vec2(3,10), MajorS_Frame109_AccentDigit);
+
+        }
+
+
     }
     else
     {

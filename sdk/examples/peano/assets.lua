@@ -145,7 +145,9 @@ Vertical_Top = image{"assets_vertical_top.png", width=8, height=16}
 Vertical_Center = image{"assets_vertical_center.png", width=8, height=32}
 Vertical_Bottom = image{"assets_vertical_bottom.png", width=8, height=16}
 
-
+MajorN_Frame2_AccentDigit = image{"assets_jointN_frame2_accentdigit.png"}
+MajorS_Frame109_AccentDigit = image{"assets_jointS_frame109_accentdigit.png"}
+Transparent_4x1 = image {"transparent_4x1.png"}
 
 MajorN = image{"assets_jointN.png", width=64, height=24}
 MajorW = image{"assets_jointW.png", width=24, height=64}
