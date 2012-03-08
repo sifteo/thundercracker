@@ -697,6 +697,18 @@ static void emulateDIV(uint32_t instr)
     }
 }
 
+// registers that get saved to the stack automatically by hardware
+struct HwContext {
+    reg_t r0;
+    reg_t r1;
+    reg_t r2;
+    reg_t r3;
+    reg_t r12;
+    reg_t lr;
+    reg_t returnAddr;
+    reg_t xpsr;
+};
+
 /*
  * Only vaguely faithful exception emulation :)
  * Assume we're always in User mode & accessing the User stack pointer.
