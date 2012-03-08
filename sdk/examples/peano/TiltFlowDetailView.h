@@ -20,8 +20,6 @@ public:
 
     void HideDescription();
 
-    void Update ();
-
     void Paint();
 
     //for placement new

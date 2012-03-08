@@ -141,10 +141,11 @@ Game::GameState Run()
     labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
 
 WelcomeBack:
-    labelView->message = "Main Menu";
+    labelView->message = "";
 
     AudioPlayer::PlayShutterOpen();
-    labelView->TransitionSync(kDuration, true);
+    labelView->message = "Main Menu";
+    labelView->TransitionSync(kDuration, true);        
     Game::Wait(0.25f);
 
     AudioPlayer::PlayShutterOpen();
@@ -203,6 +204,8 @@ WelcomeBack:
 
         // close labelView
         AudioPlayer::PlayShutterClose();
+        labelView->message = "";
+        labelView->HideDescription();
         labelView->TransitionSync(kDuration, false);
         // transition out
         AudioPlayer::PlayShutterClose();
@@ -213,6 +216,7 @@ WelcomeBack:
         for(float t=0; t<kDuration; t+=Game::dt) {
             tv->SetTransitionAmount(1.0f-t/kDuration);
             Game::UpdateDt();
+            System::paintSync();
         }
         tv->SetTransitionAmount(0);
 
@@ -222,6 +226,14 @@ WelcomeBack:
         {
             if (Game::currentPuzzle == NULL) {
                 Game::currentPuzzle = Game::saveData.FindNextPuzzle();
+            }
+            else
+            {
+                //puzzle is still hanging around but the tokens and tokengroups have been cleared
+                //recreate it
+                int c = Game::currentPuzzle->chapterIndex;
+                int p = Game::currentPuzzle->puzzleIndex;
+                Game::currentPuzzle = Database::GetPuzzleInChapter(c, p);
             }
 
             return Game::GameState_Interstitial;
@@ -260,10 +272,10 @@ Setup:
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     labelView = new(labelBuffer) TiltFlowDetailView(&Game::cubes[1]);
 
-    Game::Wait(0.25f);
-    labelView->message = "Game Setup";
+    Game::Wait(0.25f);    
     AudioPlayer::PlayShutterOpen();
-    labelView->TransitionSync(kDuration, true);
+    labelView->message = "Game Setup";
+    labelView->TransitionSync(kDuration, true);    
     Game::Wait(0.25f);
 
     AudioPlayer::PlayShutterOpen();
@@ -272,7 +284,7 @@ Setup:
         Game::UpdateDt();
     }
     tv->SetTransitionAmount(1);
-    //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
+    //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);    
 
     enum
     {
@@ -345,8 +357,7 @@ Setup:
 
     // close labelView
     AudioPlayer::PlayShutterClose();
-    labelView->TransitionSync(kDuration, false);
-    Game::Wait(0);
+    labelView->TransitionSync(kDuration, false);    
     // transition out
     tv = new(tvBuffer) TransitionView(&Game::cubes[0]);
     AudioPlayer::PlayShutterClose();
@@ -354,7 +365,6 @@ Setup:
         tv->SetTransitionAmount(1.0f-t/kDuration);
         Game::UpdateDt();
     }
-    tv->SetTransitionAmount(0);
 
     if (menu->GetResultItem()->id == Back) {
         goto WelcomeBack;
@@ -367,8 +377,7 @@ Setup:
     {
         if (ConfirmationMenu::Run("Clear Data?")) {
             Game::saveData.Reset();
-        }
-        Game::Wait(0);
+        }        
         tv->SetCube(&Game::cubes[0]);
         labelView->SetCube(&Game::cubes[1]);
         goto Setup;

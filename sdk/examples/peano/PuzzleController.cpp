@@ -195,6 +195,10 @@ Game::GameState Run()
                     if (ConfirmationMenu::Run("Return to Menu?"))
                     {
                         Game::neighborEventHandler = NULL;
+                        Game::ClearCubeEventHandlers();
+                        Game::ClearCubeViews();
+                        Token::ResetAllocationPool();
+                        TokenGroup::ResetAllocationPool();
                         return Game::GameState_Menu;
                     }
 
@@ -235,11 +239,14 @@ Game::GameState Run()
 
     { // transition out
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
-        {
-            puzzle->GetToken(i)->GetTokenView()->GetCube()->foregroundLayer.Clear();
-            puzzle->GetToken(i)->GetTokenView()->GetCube()->foregroundLayer.Flush();
+        {                      
+            TotalsCube *c = puzzle->GetToken(i)->GetTokenView()->GetCube();
+            c->HideSprites();
+            c->foregroundLayer.Clear();
+            c->foregroundLayer.Flush();
+            c->SetView(NULL);
 
-            Game::cubes[i].CloseShuttersSync(&Background);
+            c->CloseShuttersSync(&Background);
             Game::Wait(0.1f);
         }
     }
@@ -252,28 +259,47 @@ Game::GameState Run()
             NarratorView nv(&Game::cubes[0]);
             const float kTransitionTime = 0.2f;
             AudioPlayer::PlayShutterOpen();
-            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {                
                 nv.SetTransitionAmount(t/kTransitionTime);
                 Game::Wait(0);
             }
-            nv.SetTransitionAmount(1);
+            nv.SetTransitionAmount(-1);
             Game::Wait(0.5f);
             if (count == 1) {
                 nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
+
+                //set window to bottom half of screen so we can animate peano
+                //while text window is open above
+                System::paintSync();
+                nv.GetCube()->backgroundLayer.set();
+                nv.GetCube()->backgroundLayer.clear();
+                nv.GetCube()->foregroundLayer.Clear();
+                nv.GetCube()->foregroundLayer.Flush();
+                nv.GetCube()->backgroundLayer.setWindow(72,56);
+
+                float t = 3 + System::clock();
+                float timeout = 0.0;
                 int i=0;
-                Game::Wait(0);
-                for(float t=0; t<3; t+=Game::dt) {
-                    i = 1-i;
-                    nv.SetEmote(i==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
-                    Game::Wait(0);
+                while(System::clock() < t) {
+                    timeout -= Game::dt;
+                    while (timeout < 0) {
+                        i = 1 - i;
+                        timeout += 0.05;
+                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                    }
+                    System::paintSync();
+                    Game::UpdateDt();
                 }
             } else {
                 static String<20> msg;
                 msg.clear();
                 msg << count << " codes to go...";
                 nv.SetMessage(msg);
-                Game::Wait(2);
+                Game::Wait(2);                
             }
+
+            nv.SetMessage("");
+
             AudioPlayer::PlayShutterClose();
             for(float t=0; t<kTransitionTime; t+=Game::dt) {
                 nv.SetTransitionAmount(1-t/kTransitionTime);
@@ -289,7 +315,8 @@ Game::GameState Run()
 
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
-    delete puzzle;
+    Token::ResetAllocationPool();
+    TokenGroup::ResetAllocationPool();
 
     return Game::GameState_Advance;
 }

@@ -55,7 +55,8 @@ void TiltFlowView::Tick()
     const float kUpdateTime = 1.0f / 50.0f;
     while(menu->GetSimTime() - mLastUpdate > kUpdateTime) {
         if (menu->IsPicked()) {
-            menu->GetDetails()->HideDescription();
+            menu->GetDetails()->message = "";
+            menu->GetDetails()->HideDescription();            
             CoastToStop();
         } else {
             UpdateMenu();

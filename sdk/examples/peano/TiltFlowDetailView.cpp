@@ -18,60 +18,58 @@ TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
 
 void TiltFlowDetailView::ShowDescription(const char * desc) {
     if (mDescription == desc) { return; }    //should be using same string pointer
+
+    mDescription = desc;
+
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
-    }
-    mDescription = desc;
+    }    
 
     if(GetCube()->IsTextOverlayEnabled())
     {
         //text box is already up, but we need to redraw it
         GetCube()->DisableTextOverlay();
     }
+
+    while(mAmount < 1)
+    {
+        mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
+        Paint();
+        System::paintSync();
+        Game::UpdateDt();
+    }
+
+    GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+
 }
 
 void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
-        PLAY_SFX(sfx_Menu_Tilt_Stop);
+        if(mAmount > 0)
+            PLAY_SFX(sfx_Menu_Tilt_Stop);
+
         mDescription = "";
-        //Paint();
-    }
-}
 
-void TiltFlowDetailView::Update () {
-    TotalsCube *c = GetCube();
-
-    if (mDescription[0]) {
-        if(mAmount < 1 && c->IsTextOverlayEnabled())
-            c->DisableTextOverlay();
-
-        while (mAmount < 1) {
-            mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
-            Paint();
-            System::paintSync();
-            Game::UpdateDt();
+        if(GetCube()->IsTextOverlayEnabled())
+        {
+            GetCube()->DisableTextOverlay();
         }
 
-        if (mDescription[0] && !GetCube()->IsTextOverlayEnabled()) {
-            GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
-        }
-
-    } else {
-        if(mAmount > 0 && c->IsTextOverlayEnabled())
-            c->DisableTextOverlay();
-
-        while (mAmount > 0) {
+        while(mAmount > 0)
+        {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
             System::paintSync();
             Game::UpdateDt();
         }
 
-        if (message[0] && !c->IsTextOverlayEnabled()) {
-            c->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+        if(message[0])
+        {
+            GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
         }
     }
 }
+
 
 void TiltFlowDetailView::Paint() {
     TotalsCube *c = GetCube();

@@ -400,28 +400,6 @@ namespace TotalsGame
         f.ToString(&string);
         DrawString(string, pos);
     }
-/* never used.  removing is easier than fixing snprintf call
-    void TotalsCube::DrawDecimal(float d, const Vec2 &pos)
-    {
-        char string[10];
-        snprintf(string, 10, "%f", d);
-
-        char *dot = strchr(string, '.');
-        if (!dot)
-        {
-                DrawString(string, pos);
-        }
-        else
-        {
-            int decimalCount = 1;
-            while(decimalCount < 3 && *(dot+decimalCount))
-                decimalCount++;
-            *(dot+decimalCount) = 0;
-            DrawString(string, pos);
-        }
-
-    }
-    */
 
     void TotalsCube::DrawString(const char *string, const Vec2 &center)
     {

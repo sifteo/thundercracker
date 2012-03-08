@@ -196,10 +196,10 @@ void UpdateDt()
 }
 
 void Wait(float delay)
-{
-    System::paint();
+{    
     UpdateCubeViews();
     PaintCubeViews();
+    System::paint();
 
     float t=System::clock();
     do {
@@ -238,7 +238,8 @@ GameState Advance()
     }
 #if !DISABLE_CHAPTERS
     currentPuzzle->SaveAsSolved();
-    int chapter, puzzle;
+    int chapter = currentPuzzle->chapterIndex;
+    int puzzle = currentPuzzle->puzzleIndex;
     bool success;
     success = currentPuzzle->GetNext(NUM_CUBES, &chapter, &puzzle);
     if (!success)

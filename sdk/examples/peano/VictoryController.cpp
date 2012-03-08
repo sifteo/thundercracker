@@ -55,6 +55,7 @@ Game::GameState Run() {
     nv->SetMessage("Codes accepted!\nGet ready!", NarratorView::EmoteYay);
     Game::Wait(3);
     nv->SetMessage("");
+    nv->Paint();
 
     AudioPlayer::PlayNeighborRemove();
     Game::Wait(0.1f);
@@ -62,7 +63,14 @@ Game::GameState Run() {
     vv = new(vvBuffer) VictoryView(&Game::cubes[0], Game::previousPuzzle->chapterIndex);
     Game::Wait(1);
     vv->Open();
-    Game::Wait(3.5f);
+    float time = 3.5f + System::clock();
+    while(System::clock() < time)
+    {
+        vv->Update();
+        vv->Paint();
+        System::paint();
+        Game::UpdateDt();
+    }
     vv->EndUpdates();
 
     vv->GetCube()->HideSprites();
@@ -81,37 +89,55 @@ Game::GameState Run() {
         nv->SetMessage("You can replay\nany chapter.");
         Game::Wait(2.75f);
         nv->SetMessage("Or I can create\nrandom puzzles for you!", NarratorView::EmoteMix01);
-        int i = 0;
-        Game::Wait(0);
-        for(float t=0; t<3; t+=Game::dt) {
-            i = 1-i;
-            if(i==0)
-            {
-                nv->SetEmote(NarratorView::EmoteMix01);
-            }
-            else
-            {
-                nv->SetEmote(NarratorView::EmoteMix02);
-            }
+        {
             Game::Wait(0);
+            System::paintSync();
+            nv->GetCube()->backgroundLayer.set();
+            nv->GetCube()->backgroundLayer.clear();
+            nv->GetCube()->foregroundLayer.Clear();
+            nv->GetCube()->foregroundLayer.Flush();
+            nv->GetCube()->backgroundLayer.setWindow(72,56);
+
+            float t = 3 + System::clock();
+            float timeout = 0.0;
+            int i=0;
+            while(System::clock() < t) {
+                timeout -= Game::dt;
+                while (timeout < 0) {
+                    i = 1 - i;
+                    timeout += 0.05;
+                    nv->GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                }
+                System::paintSync();
+                Game::UpdateDt();
+            }
         }
         nv->SetMessage("Thanks for playing!", NarratorView::EmoteYay);
         Game::Wait(3);
     } else {
         nv->SetMessage("Are you ready for\nthe next chapter?", NarratorView::EmoteMix01);
-        int i = 0;
-        Game::Wait(0);
-        for(float t=0; t<3; t+=Game::dt) {
-            i = 1 - i;
-            if(i==0)
-            {
-                nv->SetEmote(NarratorView::EmoteMix01);
-            }
-            else
-            {
-                nv->SetEmote(NarratorView::EmoteMix02);
-            }
+        {
             Game::Wait(0);
+            System::paintSync();
+            nv->GetCube()->backgroundLayer.set();
+            nv->GetCube()->backgroundLayer.clear();
+            nv->GetCube()->foregroundLayer.Clear();
+            nv->GetCube()->foregroundLayer.Flush();
+            nv->GetCube()->backgroundLayer.setWindow(72,56);
+
+            float t = 3 + System::clock();
+            float timeout = 0.0;
+            int i=0;
+            while(System::clock() < t) {
+                timeout -= Game::dt;
+                while (timeout < 0) {
+                    i = 1 - i;
+                    timeout += 0.05;
+                    nv->GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                }
+                System::paintSync();
+                Game::UpdateDt();
+            }
         }
         nv->SetMessage("Let's go!", NarratorView::EmoteYay);
         Game::Wait(2.5f);
@@ -121,7 +147,9 @@ Game::GameState Run() {
     AudioPlayer::PlayShutterClose();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         nv->SetTransitionAmount(1-t/kTransitionTime);
-        Game::Wait(0);
+        nv->Paint();
+        System::paintSync();
+        Game::UpdateDt();
     }
     nv->SetTransitionAmount(0);
 

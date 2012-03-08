@@ -23,12 +23,23 @@ void InterstitialView::SetTransitionAmount(float u)
 
 void InterstitialView::TransitionSync(float duration, bool opening)
 {
+    if (GetCube()->IsTextOverlayEnabled())
+    {
+        GetCube()->DisableTextOverlay();
+    }
+
     for(float t=0; t<duration; t+=Game::dt) {
-        SetTransitionAmount((opening? t : 1-t)/duration);
+        SetTransitionAmount((opening? t : duration-t)/duration);
         System::paintSync();
         Game::UpdateDt();
     }
-    SetTransitionAmount(opening? 1 : 0);    
+    SetTransitionAmount(opening? 1 : 0);
+    System::paint();
+
+    if (mOffset >= 17 && message[0] && !GetCube()->IsTextOverlayEnabled())
+    {
+        GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+    }
 }
 
 void InterstitialView::SetTransition(int offset)
@@ -36,20 +47,11 @@ void InterstitialView::SetTransition(int offset)
     offset = CollapsesPauses(offset);
     offset = MIN(offset, 17);
     offset = MAX(offset, 0);
-    if (mOffset != offset)
-    {
-        mBackwards = offset < mOffset;
-        mOffset = offset;
-        if (GetCube()->IsTextOverlayEnabled())
-        {
-            GetCube()->DisableTextOverlay();
-        }
-        Paint();
-        if (mOffset >= 17 && message && message[0] && !GetCube()->IsTextOverlayEnabled())
-        {
-            GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
-        }
-    }
+
+    mBackwards = offset < mOffset;
+    mOffset = offset;
+    InterstitialView::Paint();
+
 }
 
 int InterstitialView::CollapsesPauses(int off)
@@ -78,7 +80,7 @@ void InterstitialView::Paint()
     PaintWithOffset(GetCube(), mOffset, mBackwards);
     if (mOffset >= 17)
     {       
-        if (image && GetCube()->backgroundLayer.isSpriteHidden(0))
+        if (image && message[0] && GetCube()->backgroundLayer.isSpriteHidden(0))
         {
             GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
             GetCube()->backgroundLayer.moveSprite(0, Vec2(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
@@ -104,7 +106,7 @@ void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
     if (off < 7) {
         // moving to the left
         c->ClipImage(&VaultDoor, Vec2(7-off, 7));
-        c->ClipImage(&VaultDoor, Vec2(7-17-off,7));
+        c->ClipImage(&VaultDoor, Vec2(7-16-off,7));
         c->ClipImage(&VaultDoor, Vec2(7-off, 7-16));
         c->ClipImage(&VaultDoor, Vec2(7-16-off, 7-16));
     } else if (off < 7+6)

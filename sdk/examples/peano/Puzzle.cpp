@@ -126,16 +126,14 @@ namespace TotalsGame {
     
     bool Puzzle::GetNext(int *chapter, int *puzzle)
     {
-        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
+        if (*chapter == -1) { *chapter = *puzzle = -1; return false; }
 #if !DISABLE_CHAPTERS
-        if (puzzleIndex < Database::NumPuzzlesInChapter(chapterIndex)-1) {
-            *chapter = chapterIndex;
-            *puzzle = puzzleIndex + 1;
+        if (*puzzle < Database::NumPuzzlesInChapter(*chapter)-1) {
+            *puzzle = *puzzle + 1;
             return true;
         }
-        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
-        if (chapterIndex < Database::NumChapters() - 1) {
-            *chapter = chapterIndex + 1;
+        if (*chapter < Database::NumChapters() - 1) {
+            *chapter = *chapter + 1;
             *puzzle = 0;
             return true;
         }        
