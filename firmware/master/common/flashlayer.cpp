@@ -44,11 +44,17 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 
         FlashBlock *recycled = recycleBlock();
         ASSERT(recycled->refCount == 0);
+        ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_BLOCKS]);
         FLASHLAYER_STATS_ONLY(stats.miss++);
 
         recycled->validCodeBytes = 0;
         recycled->address = blockAddr;
-        Flash::read(blockAddr, recycled->getData(), BLOCK_SIZE);
+
+        uint8_t *data = recycled->getData();
+        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
+        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
+
+        Flash::read(blockAddr, data, BLOCK_SIZE);
         ref.set(recycled);
     }
     
@@ -107,16 +113,25 @@ FlashBlock *FlashBlock::recycleBlock()
     // This block *must* have a refcount of zero, so we only search the
     // blocks that are zero in referencedBlocksMap. Additionally, we prefer
     // to look at blocks that haven't been used since the last cache miss.
+    //
+    // XXX: This algorithm doesn't actually work in practice, the idleBlocks
+    //      mask isn't inclusive enough and we end up thrashing a lot. Fix me!!
 
-    uint32_t availableBlocks = ~referencedBlocksMap;
+    STATIC_ASSERT(NUM_BLOCKS <= 32);
+    const uint32_t allBlocks = ((1 << NUM_BLOCKS) - 1) << (32 - NUM_BLOCKS);
+    uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
     uint32_t idleBlocks = availableBlocks & ~busyBlocksMap;
     busyBlocksMap = 0;
 
     if (idleBlocks)
         return &instances[Intrinsic::CLZ(idleBlocks)];
 
-    ASSERT(availableBlocks && "Oh no, all cache blocks are in use. Is there a reference leak?");
-    return &instances[Intrinsic::CLZ(availableBlocks)];
+    if (availableBlocks)
+        return &instances[Intrinsic::CLZ(availableBlocks)];
+
+    // This is really bad!
+    ASSERT(0 && "Oh no, all cache blocks are in use. Is there a reference leak?");
+    return &instances[0];
 }
 
 uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)

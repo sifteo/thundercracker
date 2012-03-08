@@ -31,6 +31,7 @@ public:
     static const unsigned NUM_BLOCKS = 16;
     static const unsigned BLOCK_SIZE = 256;     // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
+    static const unsigned MAX_REFCOUNT = NUM_BLOCKS;
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
 
@@ -103,7 +104,7 @@ public:
 
 private:
     inline void incRef() {
-        ASSERT(refCount < 0xFF);
+        ASSERT(refCount <= MAX_REFCOUNT);
         ASSERT(refCount == 0 || (referencedBlocksMap & bit()));
         ASSERT(refCount != 0 || !(referencedBlocksMap & bit()));
 
@@ -112,11 +113,12 @@ private:
 
         FLASHLAYER_STATS_ONLY({
             stats.global_refcount++;
-            ASSERT(stats.global_refcount <= NUM_BLOCKS);
+            ASSERT(stats.global_refcount <= MAX_REFCOUNT);
         })
     }
 
     inline void decRef() {
+        ASSERT(refCount <= MAX_REFCOUNT);
         ASSERT(refCount != 0);
         ASSERT(referencedBlocksMap & bit());
 
@@ -154,7 +156,12 @@ public:
     }
     
     inline bool isHeld() const {
-        return block != 0;
+        if (block) {
+            ASSERT(block->refCount != 0);
+            ASSERT(block->refCount <= block->MAX_REFCOUNT);
+            return true;
+        }
+        return false;
     }
 
     inline void set(FlashBlock *b) {
