@@ -99,6 +99,7 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
+    m_menu.Init();
 }
 
 
@@ -110,6 +111,22 @@ void Game::Update()
     m_stateTime += dt;
 
     bool needsync = false;
+
+    //painting is handled by menu manager
+    if( m_state == STATE_MAINMENU )
+    {
+        int choice;
+
+        if( !m_menu.Update( choice ) )
+        {
+            setState( STATE_INTRO );
+            if( choice < MODE_CNT )
+                m_mode = (GameMode)choice;
+            else
+                ASSERT( 0 );  //TODO settings!
+        }
+        return;
+    }
 
     if( m_bForcePaintSync )
     {
