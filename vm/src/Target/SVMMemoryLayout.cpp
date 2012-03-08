@@ -208,8 +208,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
         FNStackMap_t::const_iterator I = FNStackMap.find(Offset);
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
-        assert(SPAdj >= 0 && !(SPAdj & 3) &&
-            SPAdj <= (int)SVMTargetMachine::getMaxStackFrameBytes());
+        assert(SPAdj >= 0 && !(SPAdj & 3) && SPAdj <= (0x7F * 4));
         SPAdj <<= 22;
 
         if (Deco.isCall) {

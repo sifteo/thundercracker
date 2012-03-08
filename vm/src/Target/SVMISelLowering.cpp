@@ -143,6 +143,7 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setOperationAction(ISD::UREM, MVT::i32, Expand);
     setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
     setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
+    setOperationAction(ISD::CTPOP, MVT::i32, Expand);
 
     // Normal conditional branch
     setOperationAction(ISD::BR_CC, MVT::i32, Custom);

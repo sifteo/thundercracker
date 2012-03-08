@@ -8,10 +8,14 @@
 #include "SVM.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMRegisterInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Type.h"
+#include "llvm/Function.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "SVMGenRegisterInfo.inc"
@@ -54,6 +58,17 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
     Offset += MFI->getOffsetAdjustment();
 
+    // Extract offsets from instructions that have immediate offsets too
+    switch (MI.getOpcode()) {
+    case SVM::LDRsp:
+    case SVM::STRsp:
+        Offset += MI.getOperand(i+1).getImm();
+        MI.getOperand(i+1).ChangeToImmediate(0);
+        break;
+    }
+
+    int Remaining = Offset;
+
     if (MI.isDebugValue()) {
         MI.getOperand(i).ChangeToImmediate(Offset);
         return;
@@ -67,9 +82,9 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     case SVM::LDRsp:
     case SVM::STRsp:
     case SVM::ADDsp: {
-        unsigned Imm = std::min(Offset & ~3, 1020);
+        unsigned Imm = std::min(Remaining & ~3, 1020);
         MI.getOperand(i).ChangeToImmediate(Imm);
-        Offset -= Imm;
+        Remaining -= Imm;
         break;
     }
     
@@ -78,7 +93,7 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     // If there's a residual, rewrite the instruction further.
-    if (Offset == 0)
+    if (Remaining == 0)
         return;
 
     switch (MI.getOpcode()) {
@@ -87,25 +102,68 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         // the residual offset. Doesn't require any additional registers.
     case SVM::ADDsp:
         do {
-            unsigned Imm = std::min(Offset, 255);
+            unsigned Imm = std::min(Remaining, 0xFF);
             II++;
             BuildMI(MBB, II, dl, TII.get(SVM::ADDSi8))
                 .addReg(MI.getOperand(0).getReg())
                 .addReg(MI.getOperand(0).getReg())
                 .addImm(Imm);
             II--;
-            Offset -= Imm;
-        } while (Offset != 0);
+            Remaining -= Imm;
+        } while (Remaining != 0);
+        break;
+
+        // Large stack load/stores -> addrops. For correctness, we need
+        // to be able to do spills to large stack frames without corrupting
+        // state like r8-r9 or using any additional registers. So, we use
+        // this slow addrop to do all the work.
+    case SVM::STRsp:
+        rewriteLongStackOp(II, 0xc4000000, Offset, SVM::STRspi);
+        break;
+    case SVM::LDRsp:
+        rewriteLongStackOp(II, 0xc5000000, Offset, SVM::LDRspi);
         break;
 
     default:
         assert(0 && "Unsupported SP offset in eliminateFrameIndex()");
     }
-
-    assert(Offset == 0);
 }
 
 unsigned int SVMRegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
     return SVM::SP;
 }
+
+void SVMRegisterInfo::rewriteLongStackOp(MachineBasicBlock::iterator &II,
+    uint32_t Op, int Offset, unsigned Instr) const
+{
+    /*
+     * Replace a native stack load/store at *II with a long stack load/store
+     * SVC. This rewrite needs to allow spilling to and from large stack frames
+     * without corrupting any other machine state.
+     */
+
+    MachineInstr &MI = *II;
+    DebugLoc dl = MI.getDebugLoc();
+    MachineBasicBlock &MBB = *MI.getParent();
+    MachineFunction &MF = *MI.getParent()->getParent();
+    LLVMContext &Ctx = MF.getFunction()->getContext();
+
+    assert((Offset & 3) == 0);
+    assert(Offset <= 0x1FFFFF);
+    Op |= Offset;
+
+    unsigned reg = MI.getOperand(0).getReg();
+    assert(reg >= SVM::R0 && reg <= SVM::R7);
+    Op |= (reg - SVM::R0) << 21;
+
+    Constant *C = ConstantInt::get(Type::getInt32Ty(Ctx), Op);
+    unsigned cpi = MF.getConstantPool()->getConstantPoolIndex(C, 4);
+
+    II++;
+    BuildMI(MBB, II, dl, TII.get(Instr)).addReg(reg).addConstantPoolIndex(cpi);
+    II--;
+
+    MI.eraseFromParent();
+}
+

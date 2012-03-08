@@ -38,7 +38,6 @@ public:
     static uint32_t getFlashBase();
     static uint32_t getRAMBase();
     static uint8_t getPaddingByte();
-    static uint32_t getMaxStackFrameBytes();
 
     virtual const SVMInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering  *getFrameLowering() const { return &FrameLowering; }

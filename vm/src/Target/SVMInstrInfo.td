@@ -481,3 +481,21 @@ def ADDsp : T12<1, (outs GPReg:$Rd), (ins ADDRsp:$offset10),
     "add\t$Rd, SP, #$offset10", [(set GPReg:$Rd, ADDRsp:$offset10)]> {
     let Uses = [SP];
 }
+
+// Dynamic stack allocation
+let Uses = [SP], Defs = [SP] in {
+    def SPADJ : S_subsp<(outs), (ins i32imm:$offset7), "s.spadj $offset7", []>;
+    def SPADJi : S_ind<(outs), (ins AbsCPIop:$offset11), "s.spadji $offset11", []>;
+}
+
+// Long (SVC-assisted) stack loads/stores, used when dealing with huge stack frames
+def STRspi : S_ind<(outs), (ins GPReg:$Rd, AbsCPIop:$offset11),
+    "s.strspi $Rd, $offset11", []> {
+    let Uses = [SP];
+    let mayStore = 1;
+}    
+def LDRspi : S_ind<(outs GPReg:$Rd), (ins AbsCPIop:$offset11),
+    "s.ldrspi $Rd, $offset11", []> {
+    let Uses = [SP];
+    let mayLoad = 1;
+}

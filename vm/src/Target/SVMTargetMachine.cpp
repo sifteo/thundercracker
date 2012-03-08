@@ -72,8 +72,3 @@ uint8_t SVMTargetMachine::getPaddingByte()
      */
     return 0xFF;
 }
-
-uint32_t SVMTargetMachine::getMaxStackFrameBytes()
-{
-    return 0x7F * 4;
-}

@@ -29,6 +29,10 @@ struct SVMRegisterInfo : public SVMGenRegisterInfo {
     virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
         int SPAdj, RegScavenger *RS = NULL) const;
     virtual unsigned int getFrameRegister(const MachineFunction &MF) const;
+
+private:
+    void rewriteLongStackOp(MachineBasicBlock::iterator &II, uint32_t Op,
+        int Offset, unsigned Instr) const;
 };
 
 } // end namespace llvm
