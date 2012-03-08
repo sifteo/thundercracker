@@ -81,53 +81,53 @@ Nan = image { "nan.png" }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }
 
-NormalDigit_0 = image { "0w.png" }
-NormalDigit_1 = image { "1w.png" }
-NormalDigit_2 = image { "2w.png" }
-NormalDigit_3 = image { "3w.png" }
-NormalDigit_4 = image { "4w.png" }
-NormalDigit_5 = image { "5w.png" }
-NormalDigit_6 = image { "6w.png" }
-NormalDigit_7 = image { "7w.png" }
-NormalDigit_8 = image { "8w.png" }
-NormalDigit_9 = image { "9w.png" }
+NormalDigit_0 = image { "0w.png", pinned=true }
+NormalDigit_1 = image { "1w.png", pinned=true }
+NormalDigit_2 = image { "2w.png", pinned=true }
+NormalDigit_3 = image { "3w.png", pinned=true }
+NormalDigit_4 = image { "4w.png", pinned=true }
+NormalDigit_5 = image { "5w.png", pinned=true }
+NormalDigit_6 = image { "6w.png", pinned=true }
+NormalDigit_7 = image { "7w.png", pinned=true }
+NormalDigit_8 = image { "8w.png", pinned=true }
+NormalDigit_9 = image { "9w.png", pinned=true }
 
-AccentDigit_0 = image { "0.png" }
-AccentDigit_1 = image { "1.png" }
-AccentDigit_2 = image { "2.png" }
-AccentDigit_3 = image { "3.png" }
-AccentDigit_4 = image { "4.png" }
-AccentDigit_5 = image { "5.png" }
-AccentDigit_6 = image { "6.png" }
-AccentDigit_7 = image { "7.png" }
-AccentDigit_8 = image { "8.png" }
-AccentDigit_9 = image { "9.png" }
+AccentDigit_0 = image { "0.png", pinned=true }
+AccentDigit_1 = image { "1.png", pinned=true }
+AccentDigit_2 = image { "2.png", pinned=true }
+AccentDigit_3 = image { "3.png", pinned=true }
+AccentDigit_4 = image { "4.png", pinned=true }
+AccentDigit_5 = image { "5.png", pinned=true }
+AccentDigit_6 = image { "6.png", pinned=true }
+AccentDigit_7 = image { "7.png", pinned=true }
+AccentDigit_8 = image { "8.png", pinned=true }
+AccentDigit_9 = image { "9.png", pinned=true }
 
-Lit_Bottom = image { "lit_bottom.png" }
-Lit_Bottom_Add = image { "lit_bottom_add.png" }
-Lit_Bottom_Div = image { "lit_bottom_div.png" }
-Lit_Bottom_Mul = image { "lit_bottom_mul.png" }
-Lit_Bottom_Sub = image { "lit_bottom_sub.png" }
-Lit_Left = image { "lit_left.png" }
-Lit_Right = image { "lit_right.png" }
-Lit_Right_Add = image { "lit_right_add.png" }
-Lit_Right_Div = image { "lit_right_div.png" }
-Lit_Right_Mul = image { "lit_right_mul.png" }
-Lit_Right_Sub = image { "lit_right_sub.png" }
-Lit_Top = image { "lit_top.png" }
+Lit_Bottom = image { "lit_bottom.png", pinned=true }
+Lit_Bottom_Add = image { "lit_bottom_add.png", pinned=true }
+Lit_Bottom_Div = image { "lit_bottom_div.png", pinned=true }
+Lit_Bottom_Mul = image { "lit_bottom_mul.png", pinned=true }
+Lit_Bottom_Sub = image { "lit_bottom_sub.png", pinned=true }
+Lit_Left = image { "lit_left.png", pinned=true }
+Lit_Right = image { "lit_right.png", pinned=true }
+Lit_Right_Add = image { "lit_right_add.png", pinned=true }
+Lit_Right_Div = image { "lit_right_div.png", pinned=true }
+Lit_Right_Mul = image { "lit_right_mul.png", pinned=true }
+Lit_Right_Sub = image { "lit_right_sub.png", pinned=true }
+Lit_Top = image { "lit_top.png", pinned=true }
 
-Unlit_Bottom = image { "unlit_bottom.png" }
-Unlit_Bottom_Add = image { "unlit_bottom_add.png" }
-Unlit_Bottom_Div = image { "unlit_bottom_div.png" }
-Unlit_Bottom_Mul = image { "unlit_bottom_mul.png" }
-Unlit_Bottom_Sub = image { "unlit_bottom_sub.png" }
-Unlit_Left = image { "unlit_left.png" }
-Unlit_Right = image { "unlit_right.png" }
-Unlit_Right_Add = image { "unlit_right_add.png" }
-Unlit_Right_Div = image { "unlit_right_div.png" }
-Unlit_Right_Mul = image { "unlit_right_mul.png" }
-Unlit_Right_Sub = image { "unlit_right_sub.png" }
-Unlit_Top = image { "unlit_top.png" }
+Unlit_Bottom = image { "unlit_bottom.png", pinned=true }
+Unlit_Bottom_Add = image { "unlit_bottom_add.png", pinned=true }
+Unlit_Bottom_Div = image { "unlit_bottom_div.png", pinned=true }
+Unlit_Bottom_Mul = image { "unlit_bottom_mul.png", pinned=true }
+Unlit_Bottom_Sub = image { "unlit_bottom_sub.png", pinned=true }
+Unlit_Left = image { "unlit_left.png", pinned=true }
+Unlit_Right = image { "unlit_right.png", pinned=true }
+Unlit_Right_Add = image { "unlit_right_add.png", pinned=true }
+Unlit_Right_Div = image { "unlit_right_div.png", pinned=true }
+Unlit_Right_Mul = image { "unlit_right_mul.png", pinned=true }
+Unlit_Right_Sub = image { "unlit_right_sub.png", pinned=true }
+Unlit_Top = image { "unlit_top.png", pinned=true }
 
 
 
@@ -136,8 +136,17 @@ Title = image{"title.png", width=128, height=128}
 VaultDoor = image{"vault_door.png", width=128, height=128}
 
 Center = image{"assets_center.png", width=8, height=8}
-Horizontal = image{"assets_horizontal.png", width=64, height=8}
-Vertical = image{"assets_vertical.png", width=8, height=64}
+
+Horizontal_Left = image{"assets_horizontal_left.png", width=16, height=8}
+Horizontal_Center = image{"assets_horizontal_center.png", width=32, height=8}
+Horizontal_Right = image{"assets_horizontal_right.png", width=16, height=8}
+
+Vertical_Top = image{"assets_vertical_top.png", width=8, height=16}
+Vertical_Center = image{"assets_vertical_center.png", width=8, height=32}
+Vertical_Bottom = image{"assets_vertical_bottom.png", width=8, height=16}
+
+
+
 MajorN = image{"assets_jointN.png", width=64, height=24}
 MajorW = image{"assets_jointW.png", width=24, height=64}
 MajorS = image{"assets_jointS.png", width=64, height=24}
@@ -151,17 +160,6 @@ MinorSW = image{"assets_minorSW.png", width=8, height=8}
 MinorSE = image{"assets_minorSE.png", width=8, height=8}
 MinorNE = image{"assets_minorNE.png", width=8, height=8}
 
-Center_Lit = image{"assets_center_lit.png", width=8, height=8}
-Horizontal_Lit = image{"assets_horizontal_lit.png", width=64, height=8}
-Vertical_Lit = image{"assets_vertical_lit.png", width=8, height=64}
-MajorN_Lit = image{"assets_jointN_lit.png", width=64, height=24}
-MajorW_Lit = image{"assets_jointW_lit.png", width=24, height=64}
-MajorS_Lit = image{"assets_jointS_lit.png", width=64, height=24}
-MajorE_Lit = image{"assets_jointE_lit.png", width=24, height=64}
-MajorNW_Lit = image{"assets_jointNW_lit.png", width=8, height=8}
-MajorSW_Lit = image{"assets_jointSW_lit.png", width=8, height=8}
-MajorSE_Lit = image{"assets_jointSE_lit.png", width=8, height=8}
-MajorNE_Lit = image{"assets_jointNE_lit.png", width=8, height=8}
 
 sfx_Stinger_02 = sound{ "PV_Stinger_02.raw", encode="PCM" }
 sfx_Slide_LessScrape_01 = sound{ "PV_slide_lessScrape_01.raw", encode="PCM" }
