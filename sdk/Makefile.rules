@@ -35,7 +35,7 @@ asm: program.s
 program.s: $(OBJS)
 	$(LD) -asm -o $@ $^ $(LDFLAGS)
 
-symlist: $(BIN)
-	@$(LLVM_BIN)/llvm-nm $(BIN) | grep "U "
+readelf: $(BIN)
+	arm-none-eabi-readelf -a $(BIN) | less
 
-.PHONY: llvm-dis objdump asm symlist
+.PHONY: llvm-dis objdump asm readelf
