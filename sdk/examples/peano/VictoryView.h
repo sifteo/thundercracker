@@ -13,8 +13,8 @@ struct VictoryParticle {
     Float2 velocity;
 
     void Initialize() {
-        sizeIndex = 1 + Game::rand.randrange(3);
-        size = sizeIndex * 8;
+        sizeIndex = Game::rand.randrange(3);
+        size = (sizeIndex+1) * 8;
         position.set(64, 92);
         velocity.setPolar(
                     Game::rand.uniform(-0.2f * M_PI, -0.8f * M_PI),
@@ -33,11 +33,10 @@ struct VictoryParticle {
     }
 
     bool IsOnScreen() {
-        int hw = size/2;
-        return position.x > -hw &&
-                position.x < 128 + hw &&
-                position.y > -hw &&
-                position.y < 128 + hw;
+        return position.x > -size &&
+                position.x < 128 &&
+                position.y > -size &&
+                position.y < 128;
     }
 
     bool Paint(TotalsCube *c, int type, int id) {
@@ -53,6 +52,10 @@ struct VictoryParticle {
             c->backgroundLayer.setSpriteImage(id, *sprites[type][sizeIndex], 0);
             c->backgroundLayer.moveSprite(id, position.x, position.y);
             return true;
+        }
+        else if(!c->backgroundLayer.isSpriteHidden(id))
+        {
+            c->backgroundLayer.resizeSprite(id, 0,0);
         }
         return false;
     }
@@ -100,7 +103,7 @@ public:
             {
                 &Narrator_Diamond,   &Narrator_Ruby, &Narrator_Emerald, &Narrator_Coin
             };
-            GetCube()->Image(narratorTypes[mType], Vec2(0,0));
+            GetCube()->Image(narratorTypes[mType], Vec2(0,16-narratorTypes[mType]->height));
 
             for(int i=0; i<8; ++i) {
                 mParticles[i].Paint(GetCube(), mType, i);
@@ -108,7 +111,7 @@ public:
         }
         else
         {
-            GetCube()->Image(&Narrator_GetReady, Vec2(0,0));
+            GetCube()->Image(&Narrator_GetReady, Vec2(0,16-Narrator_GetReady.height));
         }
     }
 
