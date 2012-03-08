@@ -8,8 +8,8 @@ all: $(BIN)
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
-$(BIN): $(OBJS)
-	$(LD) -o $@ $^ $(LDFLAGS)
+$(BIN): $(OBJS) $(LD)
+	$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
 $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
@@ -32,8 +32,8 @@ objdump: $(BIN)
 asm: program.s
 	less $^
 
-program.s: $(OBJS)
-	$(LD) -asm -o $@ $^ $(LDFLAGS)
+program.s: $(OBJS) $(LD)
+	$(LD) -asm -o $@ $(OBJS) $(LDFLAGS)
 
 readelf: $(BIN)
 	arm-none-eabi-readelf -a $(BIN) | less
