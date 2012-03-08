@@ -152,7 +152,9 @@ void SvmRuntime::ret()
     CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
     if (fp) {
-        // Restore the saved frame
+        // Restore the saved frame. Note that REG_FP, and therefore 'fp',
+        // are trusted, however the saved value at fp->fp needs to be validated
+        // before it can be loaded into the trusted FP register.
 
 #ifdef SVM_TRACE
         LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
@@ -160,7 +162,20 @@ void SvmRuntime::ret()
             fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
 #endif
 
-        SvmCpu::setReg(REG_FP, fp->fp);
+        SvmMemory::VirtAddr fpVA = fp->fp;
+        SvmMemory::PhysAddr fpPA;
+        if (fpVA) {
+            if (!SvmMemory::mapRAM(fpVA, sizeof(CallFrame), fpPA)) {
+                SvmDebug::fault(F_RETURN_FRAME);
+                return;
+            }
+        } else {
+            // Zero is a legal FP value, used as a sentinel.
+            fpPA = 0;
+        }
+
+        SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
+
         SvmCpu::setReg(2, fp->r2);
         SvmCpu::setReg(3, fp->r3);
         SvmCpu::setReg(4, fp->r4);
