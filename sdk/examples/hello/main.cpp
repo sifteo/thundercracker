@@ -77,6 +77,8 @@ void siftmain()
 
     while (1) {
         float t = System::clock();
+        LOG(("Time = %f\n", t));
+
         String<64> timeStr;
         timeStr << "Time: " << Fixed((int)t, 4) << "." << ((int)(t * 10) % 10);
 
