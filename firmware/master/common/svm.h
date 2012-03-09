@@ -56,7 +56,31 @@ enum FaultCode {
     F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
     F_PRELOAD_ADDRESS,      // Bad address for async preload
     F_RETURN_FRAME,         // Bad saved FP value detected during ret()
+
+    F_NUM_FAULT_TYPES,      // Must be last!
 };
+
+#define FAULT_NAME_STRINGS  \
+    "F_UNKNOWN", \
+    "F_STACK_OVERFLOW", \
+    "F_BAD_STACK", \
+    "F_BAD_CODE_ADDRESS", \
+    "F_BAD_SYSCALL", \
+    "F_LOAD_ADDRESS", \
+    "F_STORE_ADDRESS", \
+    "F_LOAD_ALIGNMENT", \
+    "F_STORE_ALIGNMENT", \
+    "F_CODE_FETCH", \
+    "F_CODE_ALIGNMENT", \
+    "F_CPU_SIM", \
+    "F_RESERVED_SVC", \
+    "F_RESERVED_ADDROP", \
+    "F_ABORT", \
+    "F_LONG_STACK_LOAD", \
+    "F_LONG_STACK_STORE", \
+    "F_PRELOAD_ADDRESS", \
+    "F_RETURN_FRAME", \
+
 
 ///////////////////////////////////////
 // 16-bit thumb instruction validators

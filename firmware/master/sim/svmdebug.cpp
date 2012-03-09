@@ -35,16 +35,26 @@ static DebugSectionInfo *findDebugSection(const char *name)
     return NULL;
 }
 
-void SvmDebug::fault(FaultCode code)
+static const char *getFaultName(FaultCode code)
 {
+    static const char *faultNames[] = { FAULT_NAME_STRINGS };
+    STATIC_ASSERT(sizeof faultNames / sizeof faultNames[0] == F_NUM_FAULT_TYPES);
+    if (code >= F_NUM_FAULT_TYPES)
+        return "Unknown";
+    else
+        return faultNames[code];
+}
+    
+void SvmDebug::fault(FaultCode code)
+{    
     LOG(("***\n"
-         "*** VM FAULT code %d\n"
+         "*** VM FAULT code %d (%s)\n"
          "***\n"
          "***   PC: %08x SP: %"PRIxPTR"\n"
          "***  GPR: %08x %08x %08x %08x\n"
          "***       %08x %08x %08x %08x\n"
          "***\n",
-         code,
+         code, getFaultName(code),
          SvmRuntime::reconstructCodeAddr(),
          SvmCpu::reg(REG_SP),
          (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
