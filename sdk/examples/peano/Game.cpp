@@ -199,7 +199,7 @@ void Wait(float delay)
 {    
     UpdateCubeViews();
     PaintCubeViews();
-    System::paint();
+    System::paintSync();
 
     float t=System::clock();
     do {

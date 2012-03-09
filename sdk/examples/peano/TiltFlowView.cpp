@@ -75,15 +75,12 @@ void TiltFlowView::Tick()
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-        PaintFooter(GetCube());
         wantsCubePaint = true;
     }
 
     if (mDirty)
     {
-        PaintInner(GetCube());
         wantsCubePaint = true;
-
         mDirty = false;
     }
 
