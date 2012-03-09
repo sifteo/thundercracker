@@ -119,11 +119,9 @@ void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
 bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 {
-    // User-supplied code addresses must be 32-bit aligned, so we can ensure
-    // they don't point partway through a 32-bit Thumb-2 instruction!
-    uint32_t flashOffset = (uint32_t)va & 0xffffff;
-    if (va & 3)
-        return false;
+    // Callers expect us to ignore the two LSBs. All real branch addresses
+    // are 32-bit aligned, and some callers use these bits for special purposes.
+    uint32_t flashOffset = (uint32_t)va & 0xfffffc;
 
     // Bounds check, and map to a physical block address
     if (flashOffset >= flashSeg.getSize())
