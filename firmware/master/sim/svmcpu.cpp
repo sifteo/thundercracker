@@ -137,7 +137,7 @@ static inline void setNZ(int32_t result) {
 }
 
 static inline void branchOffsetPC(int offset) {
-    setReg(REG_PC, (reg(REG_PC) + offset + 2) & ~(reg_t)1);
+    regs[REG_PC] = (regs[REG_PC] + offset + 2) & ~(reg_t)1;
 }
 
 static inline reg_t opLSL(reg_t a, reg_t b) {
@@ -1023,7 +1023,7 @@ void run(reg_t sp, reg_t pc)
  * in the common header file, etc.
  */
 
-reg_t stackedReg(uint8_t r)
+reg_t reg(uint8_t r)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
@@ -1047,7 +1047,7 @@ reg_t stackedReg(uint8_t r)
     }
 }
 
-void setStackedReg(uint8_t r, reg_t val)
+void setReg(uint8_t r, reg_t val)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
@@ -1069,16 +1069,6 @@ void setStackedReg(uint8_t r, reg_t val)
     case REG_PC:    sr->hw.returnAddr = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
-}
-
-reg_t reg(uint8_t r)
-{
-    return regs[r];
-}
-
-void setReg(uint8_t r, reg_t val)
-{
-    regs[r] = val;
 }
 
 /*
@@ -1113,7 +1103,7 @@ void pushIrqContext()
 
 void popIrqContext()
 {
-    IrqContext *ctx = reinterpret_cast<IrqContext*>(SvmCpu::reg(REG_SP));
+    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
 
     regs[4] = ctx->r4;
     regs[5] = ctx->r5;
