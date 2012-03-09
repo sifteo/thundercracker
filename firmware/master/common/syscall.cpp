@@ -39,10 +39,6 @@ static void returnFromYield() {
 
 extern "C" {
 
-void _SYS_ret() {
-    SvmRuntime::ret();
-}
-
 void _SYS_abort() {
     SvmDebug::fault(Svm::F_ABORT);
 }

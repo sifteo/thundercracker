@@ -185,13 +185,17 @@ BKPT or the permanently undefined regions as well, if we require more than
 
 SVC encodings:
 
-  11011111 0xxxxxxx     (1) Indirect operation
-  11011111 10xxxxxx     (2) Direct syscall #0-63
-  11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
-  11011111 11100rrr     (4) r8-9 = validate(rN)
-  11011111 11101rrr     (5) Reserved
-  11011111 11110rrr     (6) Call validate(rN), with SP adjust
-  11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
+  11011111 00000000     (1) Return
+  11011111 0xxxxxxx     (2) Indirect operation
+  11011111 10xxxxxx     (3) Direct syscall #0-63
+  11011111 110xxxxx     (4) SP = validate(SP - imm5*4)
+  11011111 11100rrr     (5) r8-9 = validate(rN)
+  11011111 11101rrr     (6) Reserved
+  11011111 11110rrr     (7) Call validate(rN), with SP adjust
+  11011111 11111rrr     (8) Tail call validate(rN), with SP adjust
+
+Since 0 is never a valid indirect address (every code page by definition
+has a valid instruction at the beginning), code 0x00 is reserved for Return.
 
 Direct syscalls shall be used for very common operations: memcpy, memset,
 floating point, return, etc.

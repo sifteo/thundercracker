@@ -1,4 +1,4 @@
-    /*    0 */ (SvmSyscall)_SYS_ret,
+    /*    0 */ (SvmSyscall)_SYS_abort,
     /*    1 */ (SvmSyscall)_SYS_memset8,
     /*    2 */ (SvmSyscall)_SYS_memset16,
     /*    3 */ (SvmSyscall)_SYS_memset32,
@@ -105,5 +105,3 @@
     /*  104 */ (SvmSyscall)_SYS_setVector,
     /*  105 */ (SvmSyscall)_SYS_getVectorHandler,
     /*  106 */ (SvmSyscall)_SYS_getVectorContext,
-    /*  107 */ (SvmSyscall)0,
-    /*  108 */ (SvmSyscall)_SYS_abort,
