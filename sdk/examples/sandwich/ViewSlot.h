@@ -38,7 +38,7 @@ public:
 	inline unsigned ViewType() const { return mFlags.view ; }
 	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
 	inline bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
-	inline bool IsShowingLocation() const { return IsShowingRoom() || IsShowingLocation(); }
+	inline bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
 	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
 	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
 	inline InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
@@ -59,10 +59,10 @@ public:
 	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
 private:
-	bool SetLocationView(Vec2 location, Cube::Side side, bool force, bool doFlush);
+	bool SetLocationView(unsigned roomId, Cube::Side side, bool force, bool doFlush);
 	void SetSecondaryView(unsigned viewId, bool doFlush);
 	void SanityCheckVram();
-	void EvictSecondaryView(unsigned viewId);
+	void EvictSecondaryView(unsigned viewId, bool doFlush);
 	ViewSlot* FindIdleView();
 };
 

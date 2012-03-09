@@ -30,6 +30,7 @@ private:
 
 public:  
   // getters
+  unsigned Id() const { return mRoomId; }
   Vec2 Location() const;
   Room* GetRoom() const;
   
