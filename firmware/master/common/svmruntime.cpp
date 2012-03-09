@@ -58,16 +58,11 @@ void SvmRuntime::run(uint16_t appId)
 
     // Stack setup
     SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
-    setSPDirect(SvmMemory::VIRTUAL_RAM_TOP);    // reset stack
 
-    // Tail call into user code. main() does not have a CallFrame.
-    // This is just like enterFunction() except we want to directly branch into
-    // the app, as opposed to setting the PC for user code.
-    int spAdjust = (pInfo.entry >> 24) * 4;
-    setSPDirect(SvmCpu::reg(REG_SP) - spAdjust); // Allocate stack space for this function
-    branchDirect(pInfo.entry);
+    reg_t sp = mapSP(SvmMemory::VIRTUAL_RAM_TOP);   // reset sp
+    int spAdjust = (pInfo.entry >> 24) * 4;         // Allocate stack space for this function
 
-    SvmCpu::run();
+    SvmCpu::run(mapSP(sp - spAdjust), mapBranchTarget(pInfo.entry));
 }
 
 void SvmRuntime::exit()
@@ -391,19 +386,10 @@ void SvmRuntime::adjustSP(int words)
 
 void SvmRuntime::setSP(reg_t addr)
 {
-    SvmMemory::PhysAddr pa;
-    
-    if (!SvmMemory::mapRAM(addr, 0, pa))
-        SvmDebug::fault(F_BAD_STACK);
-
-    if (pa < stackLimit)
-        SvmDebug::fault(F_STACK_OVERFLOW);
-
-    SvmCpu::setStackedReg(SvmCpu::REG_SP, reinterpret_cast<reg_t>(pa));
+    SvmCpu::setStackedReg(SvmCpu::REG_SP, mapSP(addr));
 }
 
-// same as setSP, but sets the register directly, instead of the stacked register
-void SvmRuntime::setSPDirect(reg_t addr)
+reg_t SvmRuntime::mapSP(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
@@ -413,29 +399,22 @@ void SvmRuntime::setSPDirect(reg_t addr)
     if (pa < stackLimit)
         SvmDebug::fault(F_STACK_OVERFLOW);
 
-    SvmCpu::setReg(SvmCpu::REG_SP, reinterpret_cast<reg_t>(pa));
+    return reinterpret_cast<reg_t>(pa);
 }
 
 void SvmRuntime::branch(reg_t addr)
 {
-    SvmMemory::PhysAddr pa;
-
-    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
-        SvmDebug::fault(F_BAD_CODE_ADDRESS);
-
-    SvmCpu::setStackedReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
+    SvmCpu::setStackedReg(SvmCpu::REG_PC, mapBranchTarget(addr));
 }
 
-// just like branch(), except do not operate on stacked register - set the PC directly.
-// only used on app entry at the moment.
-void SvmRuntime::branchDirect(reg_t addr)
+reg_t SvmRuntime::mapBranchTarget(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
     if (!SvmMemory::mapROCode(codeBlock, addr, pa))
         SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
-    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
+    return reinterpret_cast<reg_t>(pa);
 }
 
 void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)

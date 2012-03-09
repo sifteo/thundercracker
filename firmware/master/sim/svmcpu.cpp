@@ -997,8 +997,11 @@ void init()
     memset(regs, 0, sizeof(regs));
 }
 
-void run()
+void run(reg_t sp, reg_t pc)
 {
+    regs[REG_SP] = sp;
+    regs[REG_PC] = pc;
+
     for (;;) {
         uint16_t instr = fetch();
         if (instructionSize(instr) == InstrBits16) {
