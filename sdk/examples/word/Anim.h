@@ -8,6 +8,7 @@
 enum AnimType
 {
     AnimType_None = -1,
+
     AnimType_NotWord,
     AnimType_SlideL,
     AnimType_SlideR,
@@ -16,15 +17,15 @@ enum AnimType
     AnimType_EndofRound,
     AnimType_Shuffle,
     AnimType_CityProgression,
-
     AnimType_HintAppear,
     AnimType_HintIdle,
     AnimType_HintShake,
     AnimType_HintDisppear,
-    AnimType_HintSlideL,
-    AnimType_HintSlideR,
-    AnimType_HintLock,
-    AnimType_HintLocked,
+    AnimType_SlideLHint,
+    AnimType_SlideRHint,
+    AnimType_LockHint,
+    AnimType_LockedHintNotWord,
+    AnimType_LockedHintOldWord,
 
     NumAnimTypes
 };

@@ -11,7 +11,7 @@ CubeStateMachine::CubeStateMachine() :
         StateMachine(0), mNumLetters(0), mPuzzlePieceIndex(0), mIdleTime(0.f),
         mPainting(false), mHintRequested(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
+        mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
 {
     mLetters[0] = '\0';
     for (unsigned i = 0; i < arraysize(mAnimTypes); ++i)
@@ -74,7 +74,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 {
                 case 2:
                 case 3:
-                    if (!mBG0PanningLocked && mLettersStart == mLettersStartTarget)
+                    if (!mBG0PanningLocked)
                     {
                         const float BG0_PANNING_WRAP = 144.f;
 
@@ -101,8 +101,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                             {
                                 queueAnim(AnimType_SlideR);//, vid); // FIXME
                             }
-                            mLettersStartTarget += state.x - 1 + GameStateMachine::getCurrentMaxLettersPerCube();
-                            mLettersStartTarget = (mLettersStartTarget % GameStateMachine::getCurrentMaxLettersPerCube());
+
+                            unsigned newStart = mLettersStart + state.x - 1 + GameStateMachine::getCurrentMaxLettersPerCube();
+                            newStart = (newStart % GameStateMachine::getCurrentMaxLettersPerCube());
+                            setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but
                             // need to break word now
                             WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
@@ -127,23 +129,23 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         if (data.mInput.mCubeID == mCube->id())
         {
             mIdleTime = 0.f;
-        }
 
-        switch (getAnim())
-        {
-        case AnimType_NotWord:
-        case AnimType_SlideL:
-        case AnimType_SlideR:
-        case AnimType_OldWord:
-        case AnimType_NewWord:
-            if (mAnimTypes[CubeAnim_Hint] == AnimType_HintIdle)
+            switch (getAnim())
             {
-                mHintRequested = true;
-            }
-            break;
+            case AnimType_NotWord:
+            case AnimType_SlideL:
+            case AnimType_SlideR:
+            case AnimType_OldWord:
+            case AnimType_NewWord:
+                if (mAnimTypes[CubeAnim_Hint] == AnimType_HintIdle)
+                {
+                    mHintRequested = true;
+                }
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
         }
         break;
 
@@ -175,12 +177,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (mAnimTypes[CubeAnim_Main])
         {
         default:
-        case AnimType_SlideL:
-        case AnimType_SlideR:
-            break;
-
-        case AnimType_NotWord:
-        case AnimType_OldWord:
             break;
 
         case AnimType_NewWord:
@@ -219,6 +215,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
         case AnimType_NotWord:
         case AnimType_OldWord:
+        case AnimType_LockedHintNotWord:
+        case AnimType_LockedHintOldWord:
             {
                 bool isOldWord = false;
                 if (canBeginWord())
@@ -232,7 +230,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         if (isOldWord)
                         {
                             GameStateMachine::sOnEvent(EventID_OldWordFound, wordFoundData);
-                            queueAnim(AnimType_OldWord);
+                            if (mAnimTypes[CubeAnim_Main] == AnimType_LockedHintNotWord)
+                            {
+                                queueAnim(AnimType_LockedHintOldWord);
+                            }
+                            else
+                            {
+                                queueAnim(AnimType_OldWord);
+                            }
                         }
                         else
                         {
@@ -245,13 +250,37 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         EventData wordBrokenData;
                         wordBrokenData.mWordBroken.mCubeIDStart = getCube().id();
                         GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
+                        switch (mAnimTypes[CubeAnim_Main])
+                        {
+                        case AnimType_LockedHintNotWord:
+                            break;
 
-                        queueAnim(AnimType_NotWord);
+                        case AnimType_LockedHintOldWord:
+                            queueAnim(AnimType_LockedHintNotWord);
+                            break;
+
+                        default:
+                            queueAnim(AnimType_NotWord);
+                            break;
+                        }
+
                     }
                 }
                 else if (hasNoNeighbors())
                 {
-                    queueAnim(AnimType_NotWord);
+                    switch (mAnimTypes[CubeAnim_Main])
+                    {
+                    case AnimType_LockedHintNotWord:
+                        break;
+
+                    case AnimType_LockedHintOldWord:
+                        queueAnim(AnimType_LockedHintNotWord);
+                        break;
+
+                    default:
+                        queueAnim(AnimType_NotWord);
+                        break;
+                    }
                 }
             }
             break;
@@ -306,17 +335,26 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_WordBroken:
-        if (!canBeginWord() &&
-            isConnectedToCubeOnSide(data.mWordBroken.mCubeIDStart))
+        switch (getAnim())
         {
-            queueAnim(AnimType_NotWord);
+        case AnimType_OldWord:
+        case AnimType_NewWord:
+            if (!canBeginWord() &&
+                isConnectedToCubeOnSide(data.mWordBroken.mCubeIDStart))
+            {
+                queueAnim(AnimType_NotWord);
+            }
+            break;
+
+        default:
+            break;
         }
         break;
 
     case EventID_NewAnagram:
         {
             unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
-            mLettersStart = mLettersStartTarget = 0;
+            setLettersStart(0);
             for (unsigned i = 0; i < arraysize(mLetters); ++i)
             {
                 mLetters[i] = '\0';
@@ -354,25 +392,35 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
         return 0;
     }
 
+    unsigned start = mLettersStart;
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_SlideL:
     case AnimType_SlideR:
+    case AnimType_SlideLHint:
+    case AnimType_SlideRHint:
         if (!forPaint)
         {
             return 0;
         }
+        start = mLettersStartOld;
         // fall through
     default:
-        if (mLettersStart == 0)
+        if (start == 0)
         {
-            _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+            _SYS_strlcpy(buffer,
+                         mLetters,
+                         GameStateMachine::getCurrentMaxLettersPerCube() + 1);
         }
         else
         {
-            DEBUG_LOG(("letters start: %d\n", mLettersStart));
-            _SYS_strlcpy(buffer, &mLetters[mLettersStart], GameStateMachine::getCurrentMaxLettersPerCube() + 1 - mLettersStart);
-            _SYS_strlcat(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+            //DEBUG_LOG(("letters start: %d\n", mLettersStart));
+            _SYS_strlcpy(buffer,
+                         &mLetters[start],
+                         GameStateMachine::getCurrentMaxLettersPerCube() + 1 - start);
+            _SYS_strlcat(buffer,
+                         mLetters,
+                         GameStateMachine::getCurrentMaxLettersPerCube() + 1);
         }
         break;
 
@@ -386,27 +434,31 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
-    // FIXME check for uninterruptible anim flag vs. interrupt override arg
-    if (cubeAnim != CubeAnim_Main || mLettersStart == mLettersStartTarget)
-    {
-        mAnimTypes[cubeAnim] = anim;
-        mAnimTimes[cubeAnim] = 0.f;
-        // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
+    DEBUG_LOG(("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
+               getCube().id(), anim, cubeAnim));
+    mAnimTypes[cubeAnim] = anim;
+    mAnimTimes[cubeAnim] = 0.f;
+    // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
 
-        switch (anim)
+    switch (anim)
+    {
+    case AnimType_NewWord:
+        switch (mAnimTypes[CubeAnim_Hint])
         {
-        case AnimType_NewWord:
-            if (mAnimTypes[CubeAnim_Hint] == AnimType_HintLocked)
-            {
-                // delivered hint resets after making a new word
-                mAnimTypes[CubeAnim_Hint] = AnimType_None;
-            }
+        case AnimType_HintAppear:
+        case AnimType_HintIdle:
+        case AnimType_HintShake:
             break;
 
         default:
+            // delivered hint resets after making a new word
+            mAnimTypes[CubeAnim_Hint] = AnimType_None;
             break;
         }
+        break;
 
+    default:
+        break;
     }
 
 }
@@ -425,30 +477,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
         {
-            switch (i)
-            {
-            case CubeAnim_Main:
-                {
-                    bool ltrOrderChange = false;
-                    if (mLettersStart != mLettersStartTarget)
-                    {
-                        mLettersStart = mLettersStartTarget;
-                        ltrOrderChange = true;
-                    }
-                    queueNextAnim((CubeAnim)i);//, vid, bg1, params);
-                    if (ltrOrderChange)
-                    {
-                        // new state is ready to react to level order change
-                        WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
-                    }
-                }
-                break;
-
-            default:
-                queueNextAnim((CubeAnim)i);//, vid, bg1, params);
-                break;
-
-            }
+            queueNextAnim((CubeAnim)i);//, vid, bg1, params);
         }
     }
 }
@@ -467,9 +496,9 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
     default:
         return AnimType_NotWord;
 
-    case AnimType_HintSlideL:
-    case AnimType_HintSlideR:
-        return AnimType_HintLocked;
+    case AnimType_SlideLHint:
+    case AnimType_SlideRHint:
+        return AnimType_LockedHintNotWord;
     }
 }
 
@@ -634,16 +663,20 @@ void CubeStateMachine::update(float dt)
         break;
 
     case AnimType_NotWord:
+    case AnimType_OldWord:
         if (mHintRequested)
         {
             GameStateMachine::sOnEvent(EventID_UpdateHintSolution, EventData());
             // now determine which way to slide, if any, to put in hint configuration
             unsigned i = 0;
             bool allMatch = true;
-            for (i=0; i < arraysize(mLetters); ++i)
+            unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
+            // for all possible values of a letter start offset
+            for (i=0; i < maxLetters; ++i)
             {
                 allMatch = true;
-                for (unsigned j=0; j < arraysize(mLetters); ++j)
+                // compare all the letters, using the offset
+                for (unsigned j=0; j < maxLetters; ++j)
                 {
                     if (mLetters[(j + i) % arraysize(mLetters)] !=
                             mHintSolution[j])
@@ -662,21 +695,23 @@ void CubeStateMachine::update(float dt)
                 }
             }
             ASSERT(allMatch); // make sure hint and scrambled letters can match
-            mLettersStartTarget = i;
-            switch (i)
+            switch ((mLettersStart + maxLetters - i) % maxLetters)
             {
             default:
-                queueAnim(AnimType_HintLocked, CubeAnim_Main);
+                queueAnim(AnimType_LockedHintNotWord, CubeAnim_Main);
+                ASSERT(i == mLettersStart); // how else could you get here?
                 break;
 
             case 1:
-                queueAnim(AnimType_HintSlideL, CubeAnim_Main);
+                queueAnim(AnimType_SlideLHint, CubeAnim_Main);
                 break;
 
             case 2:
-                queueAnim(AnimType_HintSlideR, CubeAnim_Main);
+                queueAnim(AnimType_SlideRHint, CubeAnim_Main);
                 break;
             }
+
+            setLettersStart(i);
             mHintRequested = false;
         }
         break;
@@ -1296,4 +1331,15 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     params->mCubeID = getCube().id();
     return true;
+}
+
+void CubeStateMachine::setLettersStart(unsigned s)
+{
+    if (s != mLettersStart)
+    {
+        mLettersStartOld = mLettersStart;
+        mLettersStart = s;
+        // new state is ready to react to level order change
+        WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+    }
 }

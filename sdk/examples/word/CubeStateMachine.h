@@ -85,6 +85,7 @@ private:
     void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
     bool getAnimParams(AnimParams *params);
+    void setLettersStart(unsigned s);
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
@@ -104,7 +105,8 @@ private:
     float mBG0TargetPanning;
     bool mBG0PanningLocked;
     unsigned mLettersStart;
-    unsigned mLettersStartTarget;
+    unsigned mLettersStartOld;
+
     ImageIndex mImageIndex;
 
     Cube* mCube;

@@ -67,19 +67,19 @@ const static AnimObjData animObjData[] =
 {
     // AnimIndex_Tile2Idle
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
-    // AnimIndex_Tile2MetaSlideL
+    // AnimIndex_Tile2SlideL
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]},
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 7, &positions[2]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[2]},
 
-    // AnimIndex_Tile2MetaSlideR
+    // AnimIndex_Tile2SlideR
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]},
-    {&Tile2Meta, &Tile2Meta, 0, Layer_BG0, 0x0, 10, &positions[16]},
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},
 
-    // AnimIndex_Tile2MetaOldWord
+    // AnimIndex_Tile2OldWord
     {&Tile2Glow, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},
-    {&Tile2MetaGlow, &Tile2Meta, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[1]},
 
     // CityProgression
     {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]},
@@ -117,13 +117,15 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintDisppear,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintSlideL,
+    //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintSlideR,
+    //AnimType_SlideRHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintLock,
+    //AnimType_LockHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintLocked,
+    //AnimType_LockedHintNotWord,
+    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_LockedHintOldWord,
     { 1.f, true, 1, &animObjData[0]},
 
     // AnimIndex_Tile2Idle
@@ -154,10 +156,12 @@ const static AnimData animData[] =
     { 0.5f, false, 2, &animObjData[2]},
     // AnimIndex_HIntSlideR
     { 0.5f, false, 2, &animObjData[4]},
-    //AnimType_HintLock,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintLocked,
-    { 1.f, true, 1, &animObjData[0]},
+    //AnimType_LockHint,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimType_LockedHintNotWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimType_LockedHintOldWord,
+    { 1.f, true, 2, &animObjData[6]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
@@ -183,15 +187,16 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintDisppear,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintSlideL,
+    //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintSlideR,
+    //AnimType_SlideRHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintLock,
+    //AnimType_LockHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintLocked,
-    { 1.f, true, 1, &animObjData[0]},
-
+    //AnimType_LockedHintNotWord,
+    { 1.f, true, 2, &animObjData[0]},
+    //AnimType_LockedHintOldWord,
+    { 1.f, true, 2, &animObjData[6]},
 };
 
 bool animPaint(AnimType animT,
@@ -258,11 +263,22 @@ bool animPaint(AnimType animT,
         ASSERT(size.x > 0);
         ASSERT(size.y > 0);
         unsigned assetFrame = 0;
-        if ((anim % NumAnimTypes) != AnimType_NotWord)
+#ifdef DEBUGzz
+        switch (animT)
         {
-            DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
+        case AnimType_HintAppear:
+        case AnimType_HintIdle:
+        case AnimType_HintShake:
+        case AnimType_HintDisppear:
+        case AnimType_LockHint:
+        case AnimType_LockedHint:
+        case AnimType_NotWord:
+            break;
+        default:
+            DEBUG_LOG(("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame));
+            break;
         }
-
+#endif
         unsigned fontFrame = font.frames + 1;
         if (params && params->mLetters && bg1)
         {
@@ -320,10 +336,10 @@ bool animPaint(AnimType animT,
     else if (bg1)
     {
         // draw right border
-        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
+        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 1), Vec2(2, 14), BorderRight);
         bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
         bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
+        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
     }
 
 
