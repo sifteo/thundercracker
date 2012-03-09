@@ -36,7 +36,9 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType
 
 int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
 {
-    ASSERT(!(state & STATE_STOPPED));
+    // Early out if this channel is in the process of being stopped by the main thread.
+    if (state & STATE_STOPPED)
+        return 0;
 
     int mixable = MIN(buf.readAvailable() / sizeof *buffer, len);
 

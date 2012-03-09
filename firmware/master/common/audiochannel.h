@@ -38,7 +38,11 @@ public:
     }
 
     bool isPaused() const {
-        return state & STATE_PAUSED;
+        return (state & STATE_PAUSED) != 0;
+    }
+
+    bool isStopped() const {
+        return (state & STATE_STOPPED) != 0;
     }
 
     void resume() {
