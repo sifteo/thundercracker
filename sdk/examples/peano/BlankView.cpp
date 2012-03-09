@@ -3,13 +3,17 @@
 namespace TotalsGame 
 {
 
+BlankView::BlankView(): View(NULL)
+{
+    assetImage = NULL;
+}
 
 	BlankView::BlankView(TotalsCube *c, const Sifteo::AssetImage *image) : View(c)
 	{
 		assetImage = image;
 	}
 
-	void BlankView::SetImage(const Sifteo::AssetImage *image, bool andPaint) 
+    void BlankView::SetImage(const Sifteo::AssetImage *image, bool andPaint)
 	{
 		if (assetImage != image) 
 		{
@@ -19,7 +23,7 @@ namespace TotalsGame
 				Paint(); 
 			}
 		}
-	}
+    }
 
 	bool BlankView::HasImage()
 	{

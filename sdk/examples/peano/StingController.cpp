@@ -35,13 +35,12 @@ Game::GameState Run()
     //mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
     //mGame.CubeSet.NewCubeEvent += delegate { Skip(); };
 
-    static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
+    BlankView blankViews[NUM_CUBES];
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        new(blankViewBuffer[i]) BlankView(&Game::cubes[i], NULL);
+        blankViews[i].SetCube(&Game::cubes[i]);
         Game::cubes[i].AddEventHandler(&eventHandlers[i]);
-
         //force a paint to initialize the screen
         Game::cubes[i].GetView()->Paint();
     }
@@ -53,7 +52,7 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].OpenShuttersSync(&Title);
-        ((BlankView*)Game::cubes[i].GetView())->SetImage(&Title);
+        blankViews[i].SetImage(&Title);
         Game::Wait(0);
     }
 
@@ -66,7 +65,7 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].CloseShuttersSync(&Title);
-        ((BlankView*)Game::cubes[i].GetView())->SetImage(NULL);
+        blankViews[i].SetImage(NULL);
         Game::Wait(0);
     }
 

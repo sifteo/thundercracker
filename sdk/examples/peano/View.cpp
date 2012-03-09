@@ -9,7 +9,8 @@ View::View(TotalsCube *_cube)
     mCube = NULL;
     mLockCount = 0;
     SetCube(_cube);
-    mCube->SetView(this);
+    if(mCube)
+        mCube->SetView(this);
 }
 
 void View::PaintViews(TotalsCube *cubes, int numCubes)

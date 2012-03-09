@@ -12,11 +12,12 @@ namespace TotalsGame
 	{
 	public:
 
+        BlankView();
 		BlankView(TotalsCube *c, const Sifteo::AssetImage *image);
 
 		virtual ~BlankView() {}
 
-		void SetImage(const Sifteo::AssetImage *image, bool andPaint=true);
+        void SetImage(const Sifteo::AssetImage *image, bool andPaint=true);
 
 		bool HasImage();
 
