@@ -16,31 +16,29 @@ TokenView::Status TokenView::GetCurrentStatus()
     return mStatus;
 }
 
-TokenView::TokenView(TotalsCube *cube, Token *_token, bool showDigitOnInit)
-    : View(cube), eventHandler(this)
+TokenView::TokenView()
+    : eventHandler(this)
 {
-    /* warning: big hack TODO
-          view constructor calls virtual DidAttachToCube
-          since we're currently in a constructor the virtual call
-          goes to the base class, not *this* class.
-          I'll just call it manually to make it work.
-          */
-    TokenView::DidAttachToCube(cube);
+    Reset();
+}
 
-    token = _token;
+void TokenView::Reset()
+{
     mCurrentExpression = token;
-    token->view = this;
     mLit = false;
 
     mStatus = StatusIdle;
     mTimeout = -1.0f;
-    mDigitId = -1;
     mHideMask = 0;
     useAccentDigit = false;
+}
 
-    if (showDigitOnInit) { renderedDigit = token->val; }
-    if (!showDigitOnInit) { mDigitId = 0; }
-
+void TokenView::SetToken(Token *t)
+{
+    token = t;
+    token->view = this;
+    renderedDigit = token->val;
+    mDigitId = 0;
 }
 
 void TokenView::HideOps()

@@ -25,13 +25,11 @@ bool ConfirmationChoiceView::Triggered()
     return mTriggered;
 }
 
-ConfirmationChoiceView::ConfirmationChoiceView(TotalsCube *c, const AssetImage *_image):
-    MenuController::TransitionView(c), eventHandler(this)
+ConfirmationChoiceView::ConfirmationChoiceView(const AssetImage *_image):
+    eventHandler(this)
 {
     image = _image;
     mTriggered = false;
-
-    DidAttachToCube(c);
 }
 
 void ConfirmationChoiceView::DidAttachToCube (TotalsCube *c)
@@ -67,56 +65,52 @@ void ConfirmationChoiceView::Paint ()
 bool Run(const char *msg)
 {
 
-    InterstitialView *label;
-    ConfirmationChoiceView *yes;
-    ConfirmationChoiceView *no;
     static const float kTransitionTime = 0.333f;
     bool result;
 
 
-    static char buffers[2][sizeof(ConfirmationChoiceView)];
-    yes = new(buffers[0]) ConfirmationChoiceView(&Game::cubes[0], &Icon_Yes);
-    no = new(buffers[1]) ConfirmationChoiceView(&Game::cubes[1], &Icon_No);
+    ConfirmationChoiceView yes(&Icon_Yes), no(&Icon_No);
+    Game::cubes[0].SetView(&yes);
+    Game::cubes[1].SetView(&no);
+
     result = false;
 
-    static char ivBuffer[sizeof(InterstitialView)];
-    label = new(ivBuffer) InterstitialView(&Game::cubes[2]);
-
-    label->image = NULL;
-    label->message = msg;
+    InterstitialView label;
+    Game::cubes[2].SetView(&label);
+    label.message = msg;
 
 
     AudioPlayer::PlayShutterOpen();
-    label->TransitionSync(kTransitionTime, true);
+    label.TransitionSync(kTransitionTime, true);
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        yes->SetTransitionAmount(t/kTransitionTime);
-        yes->Paint();
+        yes.SetTransitionAmount(t/kTransitionTime);
+        yes.Paint();
         System::paintSync();
         Game::UpdateDt();
     }
-    yes->SetTransitionAmount(1);
-    yes->Paint();
+    yes.SetTransitionAmount(1);
+    yes.Paint();
 
     AudioPlayer::PlayShutterOpen();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        no->SetTransitionAmount(t/kTransitionTime);
-        no->Paint();
+        no.SetTransitionAmount(t/kTransitionTime);
+        no.Paint();
         System::paintSync();
         Game::UpdateDt();
     }
-    no->SetTransitionAmount(1);
-    no->Paint();   //need to render one last frame before we go synchronous
+    no.SetTransitionAmount(1);
+    no.Paint();   //need to render one last frame before we go synchronous
 
-    while(!(yes->Triggered() || no->Triggered())) {
+    while(!(yes.Triggered() || no.Triggered())) {
         System::paint();
         Game::UpdateDt();
     }
-    result = yes->Triggered();
+    result = yes.Triggered();
 
-    first = result ? no : yes;
-    second = result ? yes : no;
+    first = result ? &no : &yes;
+    second = result ? &yes : &no;
 
     AudioPlayer::PlayShutterClose();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
@@ -139,7 +133,7 @@ bool Run(const char *msg)
     second->Paint();
 
     AudioPlayer::PlayShutterClose();
-    label->TransitionSync(kTransitionTime, false);
+    label.TransitionSync(kTransitionTime, false);
 
     return result;
 

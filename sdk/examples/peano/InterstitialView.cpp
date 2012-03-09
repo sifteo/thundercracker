@@ -6,7 +6,7 @@ namespace TotalsGame {
 
 //DEFINE_POOL(InterstitialView);
 
-InterstitialView::InterstitialView(TotalsCube *c) : View(c)
+InterstitialView::InterstitialView()
 {
     message = "Starting Simple";
     image = NULL;

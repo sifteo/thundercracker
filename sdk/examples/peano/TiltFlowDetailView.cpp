@@ -6,7 +6,7 @@ namespace TotalsGame {
 
 //DEFINE_POOL(TiltFlowDetailView);
 
-TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
+TiltFlowDetailView::TiltFlowDetailView()
 {
     message = "";
     image = &Neighbor_For_Details;

@@ -17,7 +17,7 @@ class TransitionView : public View
 
 public:
 
-    TransitionView(TotalsCube *c);
+    TransitionView();
     virtual ~TransitionView() {}
 
     void SetTransitionAmount(float u);
@@ -34,9 +34,6 @@ private:
 public:
     void Paint();
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
 };
 }
 

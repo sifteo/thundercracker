@@ -13,20 +13,11 @@ namespace TotalsGame
 	public:
 
         BlankView();
-		BlankView(TotalsCube *c, const Sifteo::AssetImage *image);
 		virtual ~BlankView() {}
 
         virtual void Paint();
 
-        const Sifteo::AssetImage *assetImage;
-
-        //for placement new
-        void* operator new (size_t size, void* ptr) throw() {return ptr;}
-        void operator delete(void *ptr) {}
-	
-	private:		
-
-
+        const Sifteo::AssetImage *assetImage;     
 	};
 
 }

@@ -123,29 +123,27 @@ Game::GameState Run()
 
     bool transitioningOut;
 
-    static char blankViewBuffer[NUM_CUBES][sizeof(BlankView)];
-    static char tokenViewBuffer[NUM_CUBES][sizeof(TokenView)];
-    static char pauseHelperBuffer[sizeof(PauseHelper)];
-
+    BlankView blankViews[NUM_CUBES];
 
     for(int i = puzzle->GetNumTokens(); i < NUM_CUBES; i++)
     {
-        new(blankViewBuffer[i]) BlankView(&Game::cubes[0], NULL);
+        Game::cubes[i].SetView(blankViews + i);
     }
-    Game::DrawVaultDoorsClosed();
     Game::Wait(0.25);
 
+    TokenView tv[NUM_CUBES];
     for(int i = 0; i < puzzle->GetNumTokens(); i++)
     {
+        Game::cubes[i].SetView(tv+i);
+        tv[i].SetToken(puzzle->GetToken(i));
         Game::cubes[i].OpenShuttersSync(&Background);
-        {
-            TokenView *tv = new(tokenViewBuffer[i]) TokenView(&Game::cubes[i], puzzle->GetToken(i), true);
-            tv->PaintNow();
-        }
-
-        Game::Wait(0.1f);
-
+        tv[i].token = puzzle->GetToken(i);
+        tv[i].PaintNow();
     }
+
+    Game::Wait(0.1f);
+
+
 
     { // flourish in
         Game::Wait(1.1f);
@@ -164,7 +162,7 @@ Game::GameState Run()
     }
 
     { // gameplay
-        pauseHelper = new(pauseHelperBuffer) PauseHelper();
+        PauseHelper pauseHelper;
 
         // subscribe to events
         Game::neighborEventHandler = &neighborEventHandler;
@@ -174,8 +172,8 @@ Game::GameState Run()
                 Game::Wait(0);
 
                 // should pause?
-                pauseHelper->Update();
-                if (pauseHelper->IsTriggered())
+                pauseHelper.Update();
+                if (pauseHelper.IsTriggered())
                 {
                     paused = true;
 
@@ -188,7 +186,7 @@ Game::GameState Run()
                         Game::cubes[t].SetView(NULL);
 
                         Game::cubes[t].CloseShuttersSync(&Background);
-                        new(blankViewBuffer[t]) BlankView(&Game::cubes[t], NULL);
+                        Game::cubes[t].SetView(blankViews + t);
                     }
 
                     // do menu
@@ -215,7 +213,7 @@ Game::GameState Run()
                         Game::Wait(0.1f);
                     }
 
-                    pauseHelper->Reset();
+                    pauseHelper.Reset();
                     paused = false;
                     ProcessRemoveEventBuffer();
                 }
@@ -256,7 +254,8 @@ Game::GameState Run()
         int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
         if (count > 0)
         {
-            NarratorView nv(&Game::cubes[0]);
+            NarratorView nv;
+            Game::cubes[0].SetView(&nv);
             const float kTransitionTime = 0.2f;
             AudioPlayer::PlayShutterOpen();
             for(float t=0; t<kTransitionTime; t+=Game::dt) {                
@@ -291,6 +290,7 @@ Game::GameState Run()
                     Game::UpdateDt();
                 }
             } else {
+                //static because nv.SetMessage doesnt strcpy, keeps pointer.
                 static String<20> msg;
                 msg.clear();
                 msg << count << " codes to go...";

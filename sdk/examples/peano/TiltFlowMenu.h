@@ -14,7 +14,7 @@ public:
     static const float kPickDelay = 0.25f;
     static const float kRestDelay = 0.1f;
 
-    TiltFlowMenu(TiltFlowItem **_items, int _numItems, TiltFlowDetailView *_details);
+    TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowView *tfv, TiltFlowDetailView *_details);
 
     TiltFlowItem *GetItem(int i);
     int GetNumItems();
@@ -32,7 +32,7 @@ public:
     void Pick();
 
 private:
-    TiltFlowItem **items;
+    TiltFlowItem *items;
     int numItems;
     float mSimTime;
     float mPickTime;
@@ -40,10 +40,6 @@ private:
     TiltFlowDetailView *details;
     TiltFlowItem *toggledItem;
 
-  public:
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
   };
 }
 

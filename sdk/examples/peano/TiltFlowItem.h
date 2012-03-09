@@ -36,15 +36,13 @@ namespace TotalsGame
     int GetOpt();
     void SetOpt(int val);
 
+    void SetImage(const AssetImage *image);
+    void SetImages(const AssetImage **_images, int _numImages);
     const AssetImage *GetImage();
 
     bool IsToggle();
 
     bool HasImage();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
   };
 }
 

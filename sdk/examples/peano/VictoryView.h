@@ -69,7 +69,7 @@ class VictoryView : public View {
     uint8_t mType;
 
 public:
-    VictoryView(TotalsCube *c, int index): View(c) {
+    VictoryView(int index) {
         mType = index % 4;
         mOpen = false;
         mOver = false;

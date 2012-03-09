@@ -13,7 +13,7 @@ namespace TotalsGame {
     float mAmount;
     const char *mDescription;
 public:
-    TiltFlowDetailView(TotalsCube *c);
+    TiltFlowDetailView();
     virtual ~TiltFlowDetailView() {}
 
     void ShowDescription(const char * desc);
@@ -21,10 +21,6 @@ public:
     void HideDescription();
 
     void Paint();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
 
   };
 }

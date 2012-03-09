@@ -31,7 +31,7 @@ class ConfirmationChoiceView : public MenuController::TransitionView {
 public:
     bool Triggered();
 
-    ConfirmationChoiceView(TotalsCube *c, const AssetImage *_image);
+    ConfirmationChoiceView(const AssetImage *_image);
 
     void DidAttachToCube (TotalsCube *c);
     void WillDetachFromCube (TotalsCube *c);
@@ -39,10 +39,6 @@ public:
     void OnButton(TotalsCube *c, bool pressed);
 
     void Paint ();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
 
 };
 

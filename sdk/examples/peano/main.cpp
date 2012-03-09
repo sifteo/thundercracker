@@ -7,8 +7,8 @@
 
 using namespace Sifteo;
 
-void *operator new(size_t) throw();
-void operator delete(void*) throw();
+void *operator new(size_t) throw() {return NULL;}
+void operator delete(void*) throw() {}
 
 static TotalsGame::TotalsCube cubes[NUM_CUBES];
 

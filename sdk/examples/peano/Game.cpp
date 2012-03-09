@@ -62,10 +62,7 @@ void ClearCubeViews()
 {
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        //cubes[0]->SetView(NULL);
-        View *v = Game::cubes[i].GetView();
-        if(v)
-            v->SetCube(NULL);
+        cubes[i].SetView(NULL);
     }
 }
 

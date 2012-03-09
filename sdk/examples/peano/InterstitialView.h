@@ -13,7 +13,7 @@ class InterstitialView : public View
 {
 
 public:
-    InterstitialView(TotalsCube *c);
+    InterstitialView();
     virtual ~InterstitialView() {};
 
     static const int kPad = 1;
@@ -41,12 +41,6 @@ private:
 protected:
     int mImageOffset;
 
-public:
-
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
 };
 }
 

@@ -85,14 +85,14 @@ namespace TotalsGame
             {
                 view->WillDetachFromCube(this);
             }
-            //now that all views are statically allocated, delete is useless.
-            //in fact not deleting them is good because it mimics c#'s
-            //behavior better.
-            //delete view;
             view = v;
             if(view)
             {
-                view->DidAttachToCube(this);
+                view->mCube = this;
+                if(view)
+                {
+                    view->DidAttachToCube(this);
+                }
             }
         }
 

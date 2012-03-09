@@ -27,7 +27,12 @@ const AssetImage *NarratorView::emotes[] =
     &Narrator_Base,
 };
 
-NarratorView::NarratorView(TotalsCube *c):View(c)
+NarratorView::NarratorView()
+{
+    Reset();
+}
+
+void NarratorView::Reset()
 {
     mOffset = 0;
     mString="";

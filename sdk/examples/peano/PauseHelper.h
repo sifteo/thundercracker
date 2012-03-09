@@ -35,11 +35,6 @@ public:
     {
         return mSeconds > 1.0f;
     }
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-
 };
 
 

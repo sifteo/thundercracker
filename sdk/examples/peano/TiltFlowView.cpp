@@ -10,16 +10,10 @@ const PinnedAssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_S
 const float TiltFlowView::kMinAccel = 1;
 const float TiltFlowView::kMaxAccel = 2.5f;
 
-TiltFlowMenu *TiltFlowView::GetTiltFlowMenu()
-{
-    return menu;
-}
 
-TiltFlowView::TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu):
-    View(c), eventHandler(this)
+TiltFlowView::TiltFlowView():
+    eventHandler(this)
 {
-    menu = _menu;
-
     mItem = 0;
     mOffsetX = 0;
     mAccel = kMinAccel;
@@ -27,17 +21,7 @@ TiltFlowView::TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu):
     mDrawLabel = true;
     mDirty = true;
     mMarquee = 0;
-    mLastUpdate = 0;
-
-    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
-
-    /* warning: big hack TODO
-          view constructor calls virtual DidAttachToCube
-          since we're currently in a constructor the virtual call
-          goes to the base class, not *this* class.
-          I'll just call it manually to make it work.
-          */
-    DidAttachToCube(c);
+    mLastUpdate = 0;    
 }
 
 int TiltFlowView::GetItemIndex()
@@ -93,6 +77,7 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
+    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
 }
 
 void TiltFlowView::WillDetachFromCube(TotalsCube *c) {

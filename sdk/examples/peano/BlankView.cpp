@@ -3,15 +3,10 @@
 namespace TotalsGame 
 {
 
-BlankView::BlankView(): View(NULL)
+BlankView::BlankView()
 {
     assetImage = NULL;
 }
-
-	BlankView::BlankView(TotalsCube *c, const Sifteo::AssetImage *image) : View(c)
-	{
-		assetImage = image;
-	}
 
     void BlankView::Paint()
 	{

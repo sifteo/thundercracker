@@ -34,7 +34,9 @@ private:
 
 
   public:
-    NarratorView(TotalsCube *c);
+    NarratorView();
+
+    void Reset();
 
     void SetMessage(const char *msg, Emote emote=EmoteNone);
 
@@ -44,10 +46,7 @@ private:
 
     void Paint();
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-  };
+   };
 
 }
 

@@ -39,7 +39,7 @@ Game::GameState Run()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        blankViews[i].SetCube(&Game::cubes[i]);
+        Game::cubes[i].SetView(blankViews + i);
         Game::cubes[i].AddEventHandler(&eventHandlers[i]);
     }
 

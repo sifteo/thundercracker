@@ -66,8 +66,12 @@ namespace TotalsGame {
     // PUBLIC METHODS
     //-------------------------------------------------------------------------
 
-    TokenView(TotalsCube *cube, Token *_token, bool showDigitOnInit=true);
+    TokenView();
 	virtual ~TokenView() {}
+
+    void Reset();
+
+    void SetToken(Token *t);
 
     void HideOps() ;
 
@@ -89,10 +93,6 @@ namespace TotalsGame {
     void HideOverlay();
 
     void SetHideMode(int mask);
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
 
 private:
     bool NotHiding(Cube::Side side) ;

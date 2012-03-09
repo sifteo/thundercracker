@@ -26,12 +26,8 @@ namespace TotalsGame {
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;
-    static const PinnedAssetImage *kMarquee[2];
+    static const PinnedAssetImage *kMarquee[2];    
 
-private:
-    TiltFlowMenu *menu;
-public:
-    TiltFlowMenu *GetTiltFlowMenu();
 private:
     int mItem ;
     float mOffsetX ;
@@ -42,17 +38,14 @@ private:
     int mMarquee;
     float mLastUpdate;
 public:
-    TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu);
-    virtual ~TiltFlowView() {}
+    TiltFlowView();
 
     int GetItemIndex();
     TiltFlowItem *GetItem();
 
     void Tick();
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
+    TiltFlowMenu *menu;
 
     //-------------------------------------------------------------------------
     // VIEW METHODS
