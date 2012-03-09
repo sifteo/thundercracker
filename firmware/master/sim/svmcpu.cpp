@@ -44,6 +44,7 @@ struct IrqContext {
     reg_t r9;
     reg_t r10;
     reg_t r11;
+    reg_t sp;
 };
 
 struct SavedRegs {
@@ -753,7 +754,7 @@ static void enterException(reg_t returnAddr)
 
     ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
 
-    regs[REG_LR] = 0xfffffff9;  // indicate that we're coming from User mode, using User stack
+    regs[REG_LR] = 0xfffffffd;  // indicate that we're coming from User mode, using User stack
 }
 
 /*
@@ -761,6 +762,10 @@ static void enterException(reg_t returnAddr)
  */
 static void exitException()
 {
+    // XXXXXXXXXXXX: this is broken at the moment, since the user stack pointer
+    // might have been edited during exception handling, and since hardwware unstacks
+    // based on SP, we might access ctx from an incorrect address.
+    // Still figuring out the correct approach.
     HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
     regs[0]         = ctx->r0;
     regs[1]         = ctx->r1;
@@ -1019,7 +1024,6 @@ reg_t stackedReg(uint8_t r)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
-    // NOTE: SP is never stacked, so not handled here
     switch (r) {
     case 0:         return sr->hw.r0;
     case 1:         return sr->hw.r1;
@@ -1034,6 +1038,7 @@ reg_t stackedReg(uint8_t r)
     case 10:        return sr->irq.r10;
     case 11:        return sr->irq.r11;
     case 12:        return sr->hw.r12;
+    case REG_SP:    return sr->irq.sp;
     case REG_PC:    return sr->hw.returnAddr;
     default:        ASSERT(0 && "invalid register"); break;
     }
@@ -1043,7 +1048,6 @@ void setStackedReg(uint8_t r, reg_t val)
 {
     SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
 
-    // NOTE: SP is never stacked, so not handled here
     switch (r) {
     case 0:         sr->hw.r0 = val; break;
     case 1:         sr->hw.r1 = val; break;
@@ -1058,6 +1062,7 @@ void setStackedReg(uint8_t r, reg_t val)
     case 10:        sr->irq.r10 = val; break;
     case 11:        sr->irq.r11 = val; break;
     case 12:        sr->hw.r12 = val; break;
+    case REG_SP:    sr->irq.sp = val; break;
     case REG_PC:    sr->hw.returnAddr = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
@@ -1090,6 +1095,7 @@ void pushIrqContext()
     ctx->r9 = regs[9];
     ctx->r10 = regs[10];
     ctx->r11 = regs[11];
+    ctx->sp = regs[REG_SP];
 
     SvmMemory::squashPhysicalAddr(ctx->r4);
     SvmMemory::squashPhysicalAddr(ctx->r5);
@@ -1099,6 +1105,7 @@ void pushIrqContext()
     SvmMemory::squashPhysicalAddr(ctx->r9);
     SvmMemory::squashPhysicalAddr(ctx->r10);
     SvmMemory::squashPhysicalAddr(ctx->r11);
+    SvmMemory::squashPhysicalAddr(ctx->sp);
 }
 
 void popIrqContext()
@@ -1113,6 +1120,7 @@ void popIrqContext()
     regs[9] = ctx->r9;
     regs[10] = ctx->r10;
     regs[11] = ctx->r11;
+    regs[REG_SP] = ctx->sp;
 
     regs[REG_SP] += sizeof(IrqContext);
 }

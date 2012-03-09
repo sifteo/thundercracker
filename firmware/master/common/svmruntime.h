@@ -125,6 +125,7 @@ private:
     static void resetSP();
     static void adjustSP(int words);
     static void setSP(reg_t addr);
+    static void setSPDirect(reg_t addr);
 
     static void longLDRSP(unsigned reg, unsigned offset);
     static void longSTRSP(unsigned reg, unsigned offset);

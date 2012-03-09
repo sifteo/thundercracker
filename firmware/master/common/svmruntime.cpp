@@ -58,12 +58,13 @@ void SvmRuntime::run(uint16_t appId)
 
     // Stack setup
     SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
-    resetSP();
+    setSPDirect(SvmMemory::VIRTUAL_RAM_TOP);    // reset stack
 
     // Tail call into user code. main() does not have a CallFrame.
     // This is just like enterFunction() except we want to directly branch into
     // the app, as opposed to setting the PC for user code.
-    adjustSP(-(pInfo.entry >> 24)); // Allocate stack space for this function
+    int spAdjust = (pInfo.entry >> 24) * 4;
+    setSPDirect(SvmCpu::reg(REG_SP) - spAdjust); // Allocate stack space for this function
     branchDirect(pInfo.entry);
 
     SvmCpu::run();
@@ -385,13 +386,27 @@ void SvmRuntime::resetSP()
 
 void SvmRuntime::adjustSP(int words)
 {
-    setSP(SvmCpu::reg(SvmCpu::REG_SP) + 4*words);
+    setSP(SvmCpu::stackedReg(SvmCpu::REG_SP) + 4*words);
 }
 
 void SvmRuntime::setSP(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
     
+    if (!SvmMemory::mapRAM(addr, 0, pa))
+        SvmDebug::fault(F_BAD_STACK);
+
+    if (pa < stackLimit)
+        SvmDebug::fault(F_STACK_OVERFLOW);
+
+    SvmCpu::setStackedReg(SvmCpu::REG_SP, reinterpret_cast<reg_t>(pa));
+}
+
+// same as setSP, but sets the register directly, instead of the stacked register
+void SvmRuntime::setSPDirect(reg_t addr)
+{
+    SvmMemory::PhysAddr pa;
+
     if (!SvmMemory::mapRAM(addr, 0, pa))
         SvmDebug::fault(F_BAD_STACK);
 
@@ -425,7 +440,7 @@ void SvmRuntime::branchDirect(reg_t addr)
 
 void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
 {
-    SvmMemory::VirtAddr va = SvmCpu::reg(SvmCpu::REG_SP) + (offset << 2);
+    SvmMemory::VirtAddr va = SvmCpu::stackedReg(SvmCpu::REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
 
     ASSERT((va & 3) == 0);
@@ -439,7 +454,7 @@ void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
 
 void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
 {
-    SvmMemory::VirtAddr va = SvmCpu::reg(SvmCpu::REG_SP) + (offset << 2);
+    SvmMemory::VirtAddr va = SvmCpu::stackedReg(SvmCpu::REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
 
     ASSERT((va & 3) == 0);
