@@ -22,6 +22,8 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 			for(int col=0; col<16; ++col) {
 				gfx.BG0_putTile(Vec2(col,row), *BlackTile.tiles);
 			}
+			Cube& c = *Parent()->GetCube();
+			c.setOrientation((c.orientation() + 4 - side)%4);
 		}
 	} else {
 		// plot the corner tile

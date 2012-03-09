@@ -225,8 +225,8 @@ class Cube {
 	
 	void orientTo(const Cube& src) {
 		Side srcSide = src.physicalSideOf(mID);
+    if (srcSide == SIDE_UNDEFINED) { return; }
 		Side dstSide = physicalSideOf(src.mID);
-		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
 		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
 		if (srcSide < 0) { srcSide += NUM_SIDES; }
