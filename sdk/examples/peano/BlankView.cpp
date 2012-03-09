@@ -13,24 +13,7 @@ BlankView::BlankView(): View(NULL)
 		assetImage = image;
 	}
 
-    void BlankView::SetImage(const Sifteo::AssetImage *image, bool andPaint)
-	{
-		if (assetImage != image) 
-		{
-			assetImage = image;
-			if (andPaint) 
-			{ 
-				Paint(); 
-			}
-		}
-    }
-
-	bool BlankView::HasImage()
-	{
-		return assetImage != NULL;
-	}
-
-	void BlankView::Paint() 
+    void BlankView::Paint()
 	{
 		if (assetImage) 
 		{
@@ -41,11 +24,6 @@ BlankView::BlankView(): View(NULL)
 			GetCube()->DrawVaultDoorsClosed();
 		}
 	}
-
-	void BlankView::Update () 
-	{
-	}
-
 
 }
 

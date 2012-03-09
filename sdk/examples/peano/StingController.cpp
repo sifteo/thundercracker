@@ -41,10 +41,7 @@ Game::GameState Run()
     {
         blankViews[i].SetCube(&Game::cubes[i]);
         Game::cubes[i].AddEventHandler(&eventHandlers[i]);
-        //force a paint to initialize the screen
-        Game::cubes[i].GetView()->Paint();
     }
-    System::paint();
 
     Game::Wait(0.1f);
     PLAY_SFX(sfx_Stinger_02);
@@ -52,7 +49,7 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].OpenShuttersSync(&Title);
-        blankViews[i].SetImage(&Title);
+        blankViews[i].assetImage = &Title;
         Game::Wait(0);
     }
 
@@ -65,7 +62,7 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].CloseShuttersSync(&Title);
-        blankViews[i].SetImage(NULL);
+        blankViews[i].assetImage = NULL;
         Game::Wait(0);
     }
 
