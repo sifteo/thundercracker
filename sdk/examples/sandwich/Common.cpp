@@ -19,7 +19,7 @@ Cube::Side InferDirection(Vec2 u) {
 //------------------------------------------------------------------------------
 
 #if SFX_ON
-void PlaySfx(_SYSAudioModule& handle, bool preempt) {
+void PlaySfx(const AssetAudio& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
       gChannelSfx.stop();
@@ -32,7 +32,7 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt) {
 #endif
 
 #if MUSIC_ON
-void PlayMusic(_SYSAudioModule& music, bool loop) {
+void PlayMusic(const AssetAudio& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
