@@ -540,11 +540,9 @@ void Game::OnTriggerEvent(unsigned id) {
 
 static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
+  if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  if (origin) {
-    view->GetCube()->orientTo(*(origin->GetCube()));
-  }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
     result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }

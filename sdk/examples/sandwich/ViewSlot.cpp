@@ -144,7 +144,7 @@ void ViewSlot::Restore(bool doFlush) {
 			gGame.Paint(true);
 			GetCube()->vbuf.touch();
 		#endif
-			gGame.Paint(true);
+		gGame.Paint(true);
 	}
 }
 
