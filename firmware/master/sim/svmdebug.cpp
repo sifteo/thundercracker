@@ -52,6 +52,10 @@ static const char* faultStr(FaultCode code)
     case F_RESERVED_SVC:        return "Reserved SVC encoding";
     case F_RESERVED_ADDROP:     return "Reserved ADDROP encoding";
     case F_ABORT:               return "User call to _SYS_abort()";
+    case F_LONG_STACK_LOAD:     return "Bad address in long stack LDR addrop";
+    case F_LONG_STACK_STORE:    return "Bad address in long stack STR addrop";
+    case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
+    case F_RETURN_FRAME:        return "Bad saved FP value detected during ret()";
     default:                    return "unknown error";
     }
 }
