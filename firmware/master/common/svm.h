@@ -21,6 +21,7 @@ typedef uintptr_t reg_t;
 // Register numbers
 static const unsigned REG_FP = 11;
 static const unsigned REG_SP = 13;
+static const unsigned REG_LR = 14;
 static const unsigned REG_PC = 15;
 static const unsigned REG_CPSR = 16;
 static const unsigned NUM_REGS = 17;

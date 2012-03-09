@@ -13,10 +13,44 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifndef PRIxPTR // for mingw
+#define PRIxPTR "x"
+#endif
+
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
 
+// registers that get saved to the stack automatically by hardware
+struct HwContext {
+    reg_t r0;
+    reg_t r1;
+    reg_t r2;
+    reg_t r3;
+    reg_t r12;
+    reg_t lr;
+    reg_t returnAddr;
+    reg_t xpsr;
+};
+
+// registers that we want to store on the stack during exception handling
+// which do not get saved by hardware
+struct IrqContext {
+    reg_t r4;
+    reg_t r5;
+    reg_t r6;
+    reg_t r7;
+    reg_t r8;
+    reg_t r9;
+    reg_t r10;
+    reg_t r11;
+    reg_t sp;
+};
+
+struct SavedRegs {
+    IrqContext irq;
+    HwContext hw;
+};
 
 /***************************************************************************
  * Utilities
@@ -697,10 +731,64 @@ static void emulateDIV(uint32_t instr)
     }
 }
 
+/*
+ * Only vaguely faithful exception emulation :)
+ * Assume we're always in User mode & accessing the User stack pointer.
+ *
+ * cortex-m3 pushes a HwContext to the appropriate stack, User or Main,
+ * to allow C-language interrupt handlers to be AAPCS compliant.
+ */
+static void enterException(reg_t returnAddr)
+{
+    // TODO: verify that we're not stacking to invalid memory
+    regs[REG_SP] -= sizeof(HwContext);
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    ctx->r0         = regs[0];
+    ctx->r1         = regs[1];
+    ctx->r2         = regs[2];
+    ctx->r3         = regs[3];
+    ctx->r12        = regs[12];
+    ctx->lr         = regs[REG_LR];
+    ctx->returnAddr = returnAddr;
+    ctx->xpsr       = regs[REG_CPSR];   // XXX; must also or in frameptralign
+
+    ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
+
+    regs[REG_LR] = 0xfffffffd;  // indicate that we're coming from User mode, using User stack
+}
+
+/*
+ * Pop HW context
+ */
+static void exitException()
+{
+    // XXXXXXXXXXXX: this is broken at the moment, since the user stack pointer
+    // might have been edited during exception handling, and since hardwware unstacks
+    // based on SP, we might access ctx from an incorrect address.
+    // Still figuring out the correct approach.
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    regs[0]         = ctx->r0;
+    regs[1]         = ctx->r1;
+    regs[2]         = ctx->r2;
+    regs[3]         = ctx->r3;
+    regs[12]        = ctx->r12;
+    regs[REG_LR]    = ctx->lr;
+    regs[REG_CPSR]  = ctx->xpsr;
+
+    regs[REG_SP] += sizeof(HwContext);
+
+    regs[REG_PC]    = ctx->returnAddr;
+}
+
 static void emulateSVC(uint16_t instr)
 {
+    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
+    enterException(nextInstruction);
+
     uint8_t imm8 = instr & 0xff;
     SvmRuntime::svc(imm8);
+
+    exitException();
 }
 
 
@@ -727,7 +815,7 @@ static uint16_t fetch()
 #ifdef SVM_TRACE
     LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(), *pc));
     for (unsigned r = 0; r < 8; r++) {
-        LOG((" r%d=%x:%08x", r, (unsigned)(regs[r] >> 32), (unsigned) regs[r]));
+        LOG((" r%d=%016"PRIxPTR"", r, regs[r]));
     }
     LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n",
         getNeg() ? 'N' : ' ',
@@ -923,6 +1011,63 @@ void run()
     }
 }
 
+/*
+ * During SVC handling, the runtime wants to operate on user space's registers,
+ * which have been pushed to the stack, which we provide access to here.
+ *
+ * Register accessors really want to be inline, but putting that off for now, as
+ * it will require a bit more code re-org to access platform specific members
+ * in the common header file, etc.
+ */
+
+reg_t stackedReg(uint8_t r)
+{
+    SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
+
+    switch (r) {
+    case 0:         return sr->hw.r0;
+    case 1:         return sr->hw.r1;
+    case 2:         return sr->hw.r2;
+    case 3:         return sr->hw.r3;
+    case 4:         return sr->irq.r4;
+    case 5:         return sr->irq.r5;
+    case 6:         return sr->irq.r6;
+    case 7:         return sr->irq.r7;
+    case 8:         return sr->irq.r8;
+    case 9:         return sr->irq.r9;
+    case 10:        return sr->irq.r10;
+    case 11:        return sr->irq.r11;
+    case 12:        return sr->hw.r12;
+    case REG_SP:    return sr->irq.sp;
+    case REG_PC:    return sr->hw.returnAddr;
+    default:        ASSERT(0 && "invalid register"); break;
+    }
+}
+
+void setStackedReg(uint8_t r, reg_t val)
+{
+    SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
+
+    switch (r) {
+    case 0:         sr->hw.r0 = val; break;
+    case 1:         sr->hw.r1 = val; break;
+    case 2:         sr->hw.r2 = val; break;
+    case 3:         sr->hw.r3 = val; break;
+    case 4:         sr->irq.r4 = val; break;
+    case 5:         sr->irq.r5 = val; break;
+    case 6:         sr->irq.r6 = val; break;
+    case 7:         sr->irq.r7 = val; break;
+    case 8:         sr->irq.r8 = val; break;
+    case 9:         sr->irq.r9 = val; break;
+    case 10:        sr->irq.r10 = val; break;
+    case 11:        sr->irq.r11 = val; break;
+    case 12:        sr->hw.r12 = val; break;
+    case REG_SP:    sr->irq.sp = val; break;
+    case REG_PC:    sr->hw.returnAddr = val; break;
+    default:        ASSERT(0 && "invalid register"); break;
+    }
+}
+
 reg_t reg(uint8_t r)
 {
     return regs[r];
@@ -931,6 +1076,53 @@ reg_t reg(uint8_t r)
 void setReg(uint8_t r, reg_t val)
 {
     regs[r] = val;
+}
+
+/*
+ * These will be single instruction ldm/stm on ARM.
+ */
+
+void pushIrqContext()
+{
+    regs[REG_SP] -= sizeof(IrqContext);
+    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
+
+    ctx->r4 = regs[4];
+    ctx->r5 = regs[5];
+    ctx->r6 = regs[6];
+    ctx->r7 = regs[7];
+    ctx->r8 = regs[8];
+    ctx->r9 = regs[9];
+    ctx->r10 = regs[10];
+    ctx->r11 = regs[11];
+    ctx->sp = regs[REG_SP];
+
+    SvmMemory::squashPhysicalAddr(ctx->r4);
+    SvmMemory::squashPhysicalAddr(ctx->r5);
+    SvmMemory::squashPhysicalAddr(ctx->r6);
+    SvmMemory::squashPhysicalAddr(ctx->r7);
+    SvmMemory::squashPhysicalAddr(ctx->r8);
+    SvmMemory::squashPhysicalAddr(ctx->r9);
+    SvmMemory::squashPhysicalAddr(ctx->r10);
+    SvmMemory::squashPhysicalAddr(ctx->r11);
+    SvmMemory::squashPhysicalAddr(ctx->sp);
+}
+
+void popIrqContext()
+{
+    IrqContext *ctx = reinterpret_cast<IrqContext*>(SvmCpu::reg(REG_SP));
+
+    regs[4] = ctx->r4;
+    regs[5] = ctx->r5;
+    regs[6] = ctx->r6;
+    regs[7] = ctx->r7;
+    regs[8] = ctx->r8;
+    regs[9] = ctx->r9;
+    regs[10] = ctx->r10;
+    regs[11] = ctx->r11;
+    regs[REG_SP] = ctx->sp;
+
+    regs[REG_SP] += sizeof(IrqContext);
 }
 
 }  // namespace SvmCpu
