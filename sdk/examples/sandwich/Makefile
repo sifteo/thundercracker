@@ -1,5 +1,5 @@
 ifndef TC_DIR
-TC_DIR = ../../../
+TC_DIR = ../../..
 endif
 
 APP = sandwichcraft
