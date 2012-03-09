@@ -27,7 +27,7 @@ llvm-dis: $(BIN)
 	@$(LLVM_BIN)/llvm-dis $(BIN) -o - | less
 
 objdump: $(BIN)
-	arm-none-eabi-objdump -d $(BIN) | less
+	arm-none-eabi-objdump -d $(BIN) | arm-none-eabi-c++filt | less
 
 asm: program.s
 	less $^
