@@ -417,35 +417,37 @@ def LDR    : T32_LD <0b0001101, "ldr">;
 def LDRSB  : T32_LD <0b0011001, "ldrsb">;
 def LDRSH  : T32_LD <0b0011011, "ldrsh">;
 
-def : Pat< (store GPReg:$Rt, BP), (STR GPReg:$Rt, BP, 0)>;
+// Offset stores (RAM is implied, memory is always linear)
 def : Pat< (store GPReg:$Rt, (add BP, imm12:$off)), (STR GPReg:$Rt, BP, imm12:$off)>;
-
-def : Pat< (truncstorei16 GPReg:$Rt, BP), (STRH GPReg:$Rt, BP, 0)>;
 def : Pat< (truncstorei16 GPReg:$Rt, (add BP, imm12:$off)), (STRH GPReg:$Rt, BP, imm12:$off)>;
-
-def : Pat< (truncstorei8 GPReg:$Rt, BP), (STRB GPReg:$Rt, BP, 0)>;
 def : Pat< (truncstorei8 GPReg:$Rt, (add BP, imm12:$off)), (STRB GPReg:$Rt, BP, imm12:$off)>;
 
-def : Pat< (load BP), (LDR BP, 0)>;
+// Offset loads. Currently disabled, since these are not guaranteed
+// to work correctly on nonlinear memory such as cached flash!
+// XXX: Be smarter about identifying cases where it's safe to use these forms.
+/*
 def : Pat< (load (add BP, imm12:$off)), (LDR BP, imm12:$off)>;
-
-def : Pat< (zextloadi16 BP), (LDRH BP, 0)>;
 def : Pat< (zextloadi16 (add BP, imm12:$off)), (LDRH BP, imm12:$off)>;
-
-def : Pat< (zextloadi8 BP), (LDRB BP, 0)>;
 def : Pat< (zextloadi8 (add BP, imm12:$off)), (LDRB BP, imm12:$off)>;
-
-def : Pat< (sextloadi16 BP), (LDRSH BP, 0)>;
 def : Pat< (sextloadi16 (add BP, imm12:$off)), (LDRSH BP, imm12:$off)>;
-
-def : Pat< (sextloadi8 BP), (LDRSB BP, 0)>;
 def : Pat< (sextloadi8 (add BP, imm12:$off)), (LDRSB BP, imm12:$off)>;
-
-def : Pat< (extloadi16 BP), (LDRH BP, 0)>;
 def : Pat< (extloadi16 (add BP, imm12:$off)), (LDRH BP, imm12:$off)>;
-
-def : Pat< (extloadi8 BP), (LDRB BP, 0)>;
 def : Pat< (extloadi8 (add BP, imm12:$off)), (LDRB BP, imm12:$off)>;
+*/
+
+// Direct stores
+def : Pat< (store GPReg:$Rt, BP), (STR GPReg:$Rt, BP, 0)>;
+def : Pat< (truncstorei16 GPReg:$Rt, BP), (STRH GPReg:$Rt, BP, 0)>;
+def : Pat< (truncstorei8 GPReg:$Rt, BP), (STRB GPReg:$Rt, BP, 0)>;
+
+// Direct loads, with sign/zero/any extend
+def : Pat< (load BP), (LDR BP, 0)>;
+def : Pat< (zextloadi16 BP), (LDRH BP, 0)>;
+def : Pat< (zextloadi8 BP), (LDRB BP, 0)>;
+def : Pat< (sextloadi16 BP), (LDRSH BP, 0)>;
+def : Pat< (sextloadi8 BP), (LDRSB BP, 0)>;
+def : Pat< (extloadi16 BP), (LDRH BP, 0)>;
+def : Pat< (extloadi8 BP), (LDRB BP, 0)>;
 
 
 /****************************************************************

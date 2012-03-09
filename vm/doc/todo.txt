@@ -1,12 +1,20 @@
-Optimization opportunities:
+Huge optimizations:
+
+- Intelligent function splitting and/or un-inlining!
+- Flash block packing!
+
+Medium-sized optimizations:
+
+- Generate offset loads, when we can guarantee it's safe to do so.
+- Optimize out redundant base pointer validations
+
+Smaller optimizations:
 
 - More thorough (bidirectional) align-slot filling in SVMAlignPass
-- Optimize out redundant base pointer validations
 - More work on identifying opportunities to use imm12 addressing
 - Equal optimization weight for all 16-bit instructions? LDRpc alone is
   better than LDRpc plus MOVs, for example.
-- Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)
-- More efficient comparison generation (See ARMTargetLowering::getARMCmp)
+- More efficient comparison generation? (See ARMTargetLowering::getARMCmp)
 
 SDK optimization:
 
@@ -21,3 +29,5 @@ Debugging support:
   special build?)
 
 - Better error and warning messages for slinky!
+
+- Debug symbols and backtraces in simulator SvmDebug
