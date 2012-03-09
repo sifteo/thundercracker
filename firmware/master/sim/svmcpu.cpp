@@ -35,6 +35,7 @@ struct HwContext {
 
 // registers that we want to store on the stack during exception handling
 // which do not get saved by hardware
+// TODO: may be able to get away without stacking all these
 struct IrqContext {
     reg_t r4;
     reg_t r5;
@@ -44,10 +45,9 @@ struct IrqContext {
     reg_t r9;
     reg_t r10;
     reg_t r11;
-    reg_t sp;
 };
 
-struct SavedRegs {
+struct StackedRegs {
     IrqContext irq;
     HwContext hw;
 };
@@ -762,10 +762,6 @@ static void enterException(reg_t returnAddr)
  */
 static void exitException()
 {
-    // XXXXXXXXXXXX: this is broken at the moment, since the user stack pointer
-    // might have been edited during exception handling, and since hardwware unstacks
-    // based on SP, we might access ctx from an incorrect address.
-    // Still figuring out the correct approach.
     HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
     regs[0]         = ctx->r0;
     regs[1]         = ctx->r1;
@@ -1025,7 +1021,7 @@ void run(reg_t sp, reg_t pc)
 
 reg_t reg(uint8_t r)
 {
-    SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
+    StackedRegs *sr = reinterpret_cast<StackedRegs*>(regs[REG_SP]);
 
     switch (r) {
     case 0:         return sr->hw.r0;
@@ -1041,7 +1037,8 @@ reg_t reg(uint8_t r)
     case 10:        return sr->irq.r10;
     case 11:        return sr->irq.r11;
     case 12:        return sr->hw.r12;
-    case REG_SP:    return sr->irq.sp;
+    // SP is a special case - must account for the size of our stacked regs
+    case REG_SP:    return regs[REG_SP] + sizeof(StackedRegs);
     case REG_PC:    return sr->hw.returnAddr;
     default:        ASSERT(0 && "invalid register"); break;
     }
@@ -1049,7 +1046,7 @@ reg_t reg(uint8_t r)
 
 void setReg(uint8_t r, reg_t val)
 {
-    SavedRegs *sr = reinterpret_cast<SavedRegs*>(regs[REG_SP]);
+    StackedRegs *sr = reinterpret_cast<StackedRegs*>(regs[REG_SP]);
 
     switch (r) {
     case 0:         sr->hw.r0 = val; break;
@@ -1065,8 +1062,19 @@ void setReg(uint8_t r, reg_t val)
     case 10:        sr->irq.r10 = val; break;
     case 11:        sr->irq.r11 = val; break;
     case 12:        sr->hw.r12 = val; break;
-    case REG_SP:    sr->irq.sp = val; break;
     case REG_PC:    sr->hw.returnAddr = val; break;
+    case REG_SP: {
+        /*
+         * SP is a special case. We need to move our stacked registers to
+         * the newly requested location and update the user SP such that when
+         * HW unstacking occurs, it finds the stacked values correctly.
+         */
+        val -= sizeof(StackedRegs);
+        StackedRegs *dest = reinterpret_cast<StackedRegs*>(val);
+        memmove(dest, sr, sizeof *sr);
+        regs[REG_SP] = val;
+        break;
+    }
     default:        ASSERT(0 && "invalid register"); break;
     }
 }
@@ -1088,7 +1096,6 @@ void pushIrqContext()
     ctx->r9 = regs[9];
     ctx->r10 = regs[10];
     ctx->r11 = regs[11];
-    ctx->sp = regs[REG_SP];
 
     SvmMemory::squashPhysicalAddr(ctx->r4);
     SvmMemory::squashPhysicalAddr(ctx->r5);
@@ -1098,7 +1105,6 @@ void pushIrqContext()
     SvmMemory::squashPhysicalAddr(ctx->r9);
     SvmMemory::squashPhysicalAddr(ctx->r10);
     SvmMemory::squashPhysicalAddr(ctx->r11);
-    SvmMemory::squashPhysicalAddr(ctx->sp);
 }
 
 void popIrqContext()
@@ -1113,7 +1119,6 @@ void popIrqContext()
     regs[9] = ctx->r9;
     regs[10] = ctx->r10;
     regs[11] = ctx->r11;
-    regs[REG_SP] = ctx->sp;
 
     regs[REG_SP] += sizeof(IrqContext);
 }
