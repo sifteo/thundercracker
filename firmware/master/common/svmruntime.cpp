@@ -61,7 +61,11 @@ void SvmRuntime::run(uint16_t appId)
     resetSP();
 
     // Tail call into user code. main() does not have a CallFrame.
-    enterFunction(pInfo.entry);
+    // This is just like enterFunction() except we want to directly branch into
+    // the app, as opposed to setting the PC for user code.
+    adjustSP(-(pInfo.entry >> 24)); // Allocate stack space for this function
+    branchDirect(pInfo.entry);
+
     SvmCpu::run();
 }
 
@@ -405,6 +409,18 @@ void SvmRuntime::branch(reg_t addr)
         SvmDebug::fault(F_BAD_CODE_ADDRESS);
 
     SvmCpu::setStackedReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
+}
+
+// just like branch(), except do not operate on stacked register - set the PC directly.
+// only used on app entry at the moment.
+void SvmRuntime::branchDirect(reg_t addr)
+{
+    SvmMemory::PhysAddr pa;
+
+    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
+        SvmDebug::fault(F_BAD_CODE_ADDRESS);
+
+    SvmCpu::setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(pa));
 }
 
 void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)

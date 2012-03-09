@@ -131,6 +131,7 @@ private:
 
     static void enterFunction(reg_t addr);
     static void branch(reg_t addr);
+    static void branchDirect(reg_t addr);
     static void validate(reg_t addr);
     static void syscall(unsigned num);
     static void svcIndirectOperation(uint8_t imm8);
