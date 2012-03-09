@@ -21,30 +21,22 @@ int NumChapters()
 
 int NumPuzzlesInChapter(int chapter)
 {
-    return TheData::everything.chapters[chapter]->nPuzzles;
+    return TheData::everything.chapters[chapter].nPuzzles;
 }
 
 int NumTokensInPuzzle(int chapter, int puzzle)
 {
-    return TheData::everything.chapters[chapter]->puzzles[puzzle]->nTokens;
+    return TheData::everything.chapters[chapter].puzzles[puzzle].nTokens;
 }
-#if 0
-Guid GuidForPuzzle(int chapter, int puzzle)
-{
-    if(chapter == -1 || puzzle == -1)
-        return Guid::Empty;
-    return Guid(TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
-}
-#endif
     
 const AssetImage &ImageForChapter(int chapter)
 {
-    return TheData::everything.chapters[chapter]->icon;
+    return TheData::everything.chapters[chapter].icon;
 }
 
 const char *NameOfChapter(int chapter)
 {
-    return TheData::everything.chapters[chapter]->name;
+    return TheData::everything.chapters[chapter].name;
 }
 
 Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
@@ -52,7 +44,7 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
     int numTokens = NumTokensInPuzzle(chapter, puzzle);
     Puzzle *result = new Puzzle(numTokens, chapter, puzzle);
     for(int i=0; i<numTokens; ++i) {
-        int token = TheData::everything.chapters[chapter]->puzzles[puzzle]->tokens[i];
+        int token = TheData::everything.chapters[chapter].puzzles[puzzle].tokens[i];
         int val = token & 0xf;
         Op opRight = (Op)((token >> 4) & 0x3);
         Op opLeft = (Op)((token >> 6) & 0x3);
@@ -61,11 +53,11 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
         result->GetToken(i)->SetOpBottom(opLeft);
     }
 
-    int numGroups = TheData::everything.chapters[chapter]->puzzles[puzzle]->nGroups;
+    int numGroups = TheData::everything.chapters[chapter].puzzles[puzzle].nGroups;
     if (numGroups > 0) {
         TokenGroup *groups[NUM_CUBES] = {0};
         for(int i=0; i<numGroups; ++i) {
-            int group = TheData::everything.chapters[chapter]->puzzles[puzzle]->groups[i];
+            int group = TheData::everything.chapters[chapter].puzzles[puzzle].groups[i];
 
             int x_srcId = (group & 0x7f)/10;
             int x_src = (group & 0x7f)%10;
@@ -116,9 +108,9 @@ void SavePuzzleAsSolved(int chapter, int puzzle)
 
 int FirstPuzzleForCurrentCubeSetInChapter(int chapter)
 {
-    for(int i = 0; i < TheData::everything.chapters[chapter]->nPuzzles; i++)
+    for(int i = 0; i < TheData::everything.chapters[chapter].nPuzzles; i++)
     {
-        if(TheData::everything.chapters[chapter]->puzzles[i]->nTokens <= NUM_CUBES)
+        if(TheData::everything.chapters[chapter].puzzles[i].nTokens <= NUM_CUBES)
             return i;
     }
     return -1;
