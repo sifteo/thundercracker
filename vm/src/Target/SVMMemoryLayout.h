@@ -101,7 +101,7 @@ namespace llvm {
 
         typedef std::vector<SVMLateFixup> LateFixupList_t;
         typedef std::map<const MCSectionData*, uint32_t> SectionOffsetMap_t;
-        typedef std::map<uint32_t, int> FNStackMap_t;
+        typedef std::map<std::pair<const MCSectionData *, uint32_t>, int> FNStackMap_t;
 
         LateFixupList_t LateFixupList;
         FNStackMap_t FNStackMap;
