@@ -32,6 +32,7 @@ public:
     bool Triggered();
 
     ConfirmationChoiceView(const AssetImage *_image);
+    virtual ~ConfirmationChoiceView() {}
 
     void DidAttachToCube (TotalsCube *c);
     void WillDetachFromCube (TotalsCube *c);

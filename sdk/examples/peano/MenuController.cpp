@@ -214,6 +214,8 @@ void RunWelcomeBack(void)
             Game::Wait(0);
         }
 
+        Game::ClearCubeEventHandlers();
+
         // close labelView
         AudioPlayer::PlayShutterClose();
         labelView.message = "";
@@ -247,7 +249,7 @@ void RunWelcomeBack(void)
             }
 
             nextGameState = Game::GameState_Interstitial;
-            return;
+            goto end;
         }
         case RandomPuzzle:
         {
@@ -278,6 +280,7 @@ void RunWelcomeBack(void)
     }
 
     end:
+    Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
 void RunSetup()
@@ -333,6 +336,7 @@ void RunSetup()
 #undef SET_PARAMS
 
         TiltFlowView tiltFlowView;
+        Game::cubes[0].SetView(&tiltFlowView);
         TiltFlowMenu menu(items, 5, &tiltFlowView, &labelView);
 
         while(!menu.IsDone())
@@ -369,6 +373,7 @@ void RunSetup()
             }
         }
 
+        Game::ClearCubeEventHandlers();
 
      // close labelView
         AudioPlayer::PlayShutterClose();
@@ -401,6 +406,7 @@ void RunSetup()
         }        
     }
     end:
+    Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
 
@@ -430,13 +436,12 @@ void RunChapterSelect()
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
 
     TiltFlowItem chapterItems[MAX_CHAPTERS+1];
-    int numChapterItems;
-    numChapterItems = 0;
+    int numChapterItems = 0;
 
     for(int i=0; i<Database::NumChapters(); ++i) {
         // only show chapters which can be played with the current cubeset
         if (Database::CanBePlayedWithCurrentCubeSet(i)) {
-            TiltFlowItem *item = chapterItems+i;
+            TiltFlowItem *item = chapterItems+numChapterItems;
             if (Game::saveData.IsChapterUnlockedWithCurrentCubeSet(i)) {
                 item->SetImage(&Database::ImageForChapter(i));
                 item->id = i;
@@ -457,6 +462,7 @@ void RunChapterSelect()
     numChapterItems++;
 
     TiltFlowView tiltFlowView;
+    Game::cubes[0].SetView(&tiltFlowView);
     TiltFlowMenu menu(chapterItems, numChapterItems, &tiltFlowView, &labelView);
 
     while(!menu.IsDone()) {
@@ -489,6 +495,7 @@ void RunChapterSelect()
         {
             int first = Database::FirstPuzzleForCurrentCubeSetInChapter(chapter);
             Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, first);
+            nextGameState = Game::GameState_Interstitial;
         }
         else
         {
@@ -502,9 +509,6 @@ void RunChapterSelect()
     end:
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
-
-    nextGameState = Game::GameState_Interstitial;
-
 }
 
 

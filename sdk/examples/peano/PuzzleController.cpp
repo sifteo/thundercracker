@@ -137,7 +137,6 @@ Game::GameState Run()
         Game::cubes[i].SetView(tv+i);
         tv[i].SetToken(puzzle->GetToken(i));
         Game::cubes[i].OpenShuttersSync(&Background);
-        tv[i].token = puzzle->GetToken(i);
         tv[i].PaintNow();
     }
 
@@ -197,6 +196,8 @@ Game::GameState Run()
                         Game::ClearCubeViews();
                         Token::ResetAllocationPool();
                         TokenGroup::ResetAllocationPool();
+                        delete puzzle;
+                        Game::currentPuzzle = NULL;
                         return Game::GameState_Menu;
                     }
 
@@ -244,7 +245,7 @@ Game::GameState Run()
             c->foregroundLayer.Flush();
             c->SetView(NULL);
 
-            c->CloseShuttersSync(&Background);
+            c->CloseShuttersSync(&Background_Lit);
             Game::Wait(0.1f);
         }
     }
@@ -311,6 +312,11 @@ Game::GameState Run()
             Game::cubes[0].SetView(NULL);
 
         }
+    }
+    else
+    {
+        //advance deletes chapter created puzzles
+        delete puzzle;
     }
 
     Game::ClearCubeEventHandlers();

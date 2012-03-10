@@ -135,6 +135,9 @@ bool Run(const char *msg)
     AudioPlayer::PlayShutterClose();
     label.TransitionSync(kTransitionTime, false);
 
+    Game::ClearCubeEventHandlers();
+    Game::ClearCubeViews();
+
     return result;
 
 }

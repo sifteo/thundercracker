@@ -39,6 +39,7 @@ private:
     float mLastUpdate;
 public:
     TiltFlowView();
+    virtual ~TiltFlowView() {}
 
     int GetItemIndex();
     TiltFlowItem *GetItem();
