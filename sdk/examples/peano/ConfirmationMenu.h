@@ -18,6 +18,7 @@ bool Run(const char *msg);
 class ConfirmationChoiceView : public MenuController::TransitionView {
     const AssetImage *image;
     bool mTriggered;
+    bool mGotTouchOn;
 
     class EventHandler: public TotalsCube::EventHandler
     {

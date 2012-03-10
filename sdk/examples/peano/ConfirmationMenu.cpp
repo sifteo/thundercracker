@@ -30,6 +30,7 @@ ConfirmationChoiceView::ConfirmationChoiceView(const AssetImage *_image):
 {
     image = _image;
     mTriggered = false;
+    mGotTouchOn = false;
 }
 
 void ConfirmationChoiceView::DidAttachToCube (TotalsCube *c)
@@ -44,7 +45,10 @@ void ConfirmationChoiceView::WillDetachFromCube (TotalsCube *c)
 
 void ConfirmationChoiceView::OnButton(TotalsCube *c, bool pressed)
 {
-    if (!pressed)
+    if(pressed)
+        mGotTouchOn = true;
+
+    if (!pressed && mGotTouchOn)
     {
         mTriggered = true;
         PLAY_SFX(sfx_Menu_Tilt_Stop);
