@@ -20,6 +20,13 @@ Smaller optimizations:
 
 Correctness:
 
+- SVM Test suite!
+
+- Rigorous memory validation
+    - Include exception frame size in stackLimit
+    - Finish unfinished parts of SvmValidator (Branch targets especially)
+    - Test SvmValidator and SvmRuntime with a code fuzzer!
+
 - Extended calling convention
     - more than 8 args
     - by-value, structs...
