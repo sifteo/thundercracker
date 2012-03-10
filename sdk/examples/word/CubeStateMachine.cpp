@@ -446,7 +446,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
 {
     AnimType oldAnim = mAnimTypes[cubeAnim];
     AnimType anim = getNextAnim(cubeAnim);
-    queueAnim(anim);//, vid, bg1, params);
+    queueAnim(anim, cubeAnim);//, vid, bg1, params);
     if (anim != oldAnim)
     {
         switch (cubeAnim)
@@ -508,6 +508,12 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
     case AnimType_SlideLHint:
     case AnimType_SlideRHint:
         return AnimType_LockedHintNotWord;
+
+    case AnimType_HintIdle:
+        return AnimType_HintShake;
+
+    case AnimType_HintShake:
+        return AnimType_HintIdle;
     }
 }
 

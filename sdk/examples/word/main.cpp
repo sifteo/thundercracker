@@ -20,7 +20,7 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
     WordGame::onEvent(EventID_Touch, data);
     */
 
-#ifdef DEBUG
+#ifdef DEBUGzz
     DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
     EventData data;
     data.mInput.mCubeID = cid;

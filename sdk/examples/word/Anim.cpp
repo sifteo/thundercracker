@@ -77,6 +77,14 @@ const static Vec2 positions[] =
     Vec2(6, 11), // [42]
     Vec2(8, 11), // [43]
     Vec2(12, 11), // [44]
+    Vec2(53, 2), // [45]
+    Vec2(59, 2), // [27]
+    Vec2(52, 2), // [27]
+    Vec2(60, 2), // [27]
+    Vec2(54, 2), // [27]
+    Vec2(58, 2), // [27]
+    Vec2(54, 2), // [27]
+    Vec2(58, 2), // [27]
 };
 
 const static AnimObjData animObjData[] =
@@ -118,6 +126,7 @@ const static AnimObjData animObjData[] =
     {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
     {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
     {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[44]},
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[45]}, // HintShake
 };
 
 const static AnimData animData[] =
@@ -176,9 +185,9 @@ const static AnimData animData[] =
     //AnimType_HintAppear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintIdle,
-    { 1.f, true, 1, &animObjData[9]},
+    { 3.f, false, 1, &animObjData[9]},
     //AnimType_HintShake,
-    { 1.f, true, 1, &animObjData[0]},
+    { 0.3f, false, 1, &animObjData[37]},
     //AnimType_HintDisppear,
     { 1.f, true, 1, &animObjData[0]},
     // AnimIndex_HIntSlideL
