@@ -301,7 +301,7 @@ static void popIrqContext()
 
 static void emulateSVC(uint16_t instr)
 {
-    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
+    reg_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
     emulateEnterException(nextInstruction);
     pushIrqContext();
 
@@ -314,7 +314,7 @@ static void emulateSVC(uint16_t instr)
 
 static void emulateFault(FaultCode code)
 {
-    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
+    reg_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
     emulateEnterException(nextInstruction);
     pushIrqContext();
 
