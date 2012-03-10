@@ -738,7 +738,7 @@ static void emulateDIV(uint32_t instr)
  * cortex-m3 pushes a HwContext to the appropriate stack, User or Main,
  * to allow C-language interrupt handlers to be AAPCS compliant.
  */
-static void enterException(reg_t returnAddr)
+static void emulateEnterException(reg_t returnAddr)
 {
     // TODO: verify that we're not stacking to invalid memory
     regs[REG_SP] -= sizeof(HwContext);
@@ -760,7 +760,7 @@ static void enterException(reg_t returnAddr)
 /*
  * Pop HW context
  */
-static void exitException()
+static void emulateExitException()
 {
     HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
     regs[0]         = ctx->r0;
@@ -779,12 +779,12 @@ static void exitException()
 static void emulateSVC(uint16_t instr)
 {
     uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
-    enterException(nextInstruction);
+    emulateEnterException(nextInstruction);
 
     uint8_t imm8 = instr & 0xff;
     SvmRuntime::svc(imm8);
 
-    exitException();
+    emulateExitException();
 }
 
 
@@ -809,7 +809,7 @@ static uint16_t fetch()
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #ifdef SVM_TRACE
-    LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(), *pc));
+    LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(regs[REG_PC]), *pc));
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%016"PRIxPTR"", r, regs[r]));
     }
