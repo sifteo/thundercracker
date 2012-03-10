@@ -22,6 +22,10 @@ Correctness:
 
 - SVM Test suite!
 
+- Register stacking, security
+    - Trusted registers must not be stored in untrusted RAM while we may
+      write to it on userspace's behalf.
+
 - Rigorous memory validation
     - Include exception frame size in stackLimit
     - Finish unfinished parts of SvmValidator (Branch targets especially)
