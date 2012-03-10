@@ -103,34 +103,35 @@ void SVMMemoryLayout::RecordRelocation(const MCAssembler &Asm,
     const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
 {
     SVM::Fixups kind = (SVM::Fixups) Fixup.getKind();
-        
     switch (kind) {
-        
-    case SVM::fixup_fnstack:
-        /*
-         * Function stack adjustment annotation. The adjustment amount is
-         * stored in the first argument of a binary op.
-         * (See SVMMCCodeEmitter::EncodeInstruction)
-         *
-         * We store this offset for later, in our FNStackMap, indexed
-         * by the address of the FNStack pseudo-op itself.
-         */
-        FNStackMap[Layout.getFragmentOffset(Fragment)] =
-            (int) Target.getConstant();
-        break;
-    
-    default:
-        /*
-         * All other fixups are applied later, in ApplyLateFixups().
-         * This is necessary because other fixup types can depend on
-         * the FNStack values collected above.
-         */
-        SVMLateFixup LF((MCFragment *) Fragment, Fixup, Target);
-        LateFixupList.push_back(LF);
 
-        // This gets OR'ed with the fixup later. Zero it.
-        FixedValue = 0;
-        break;
+        case SVM::fixup_fnstack: {
+            /*
+             * Function stack adjustment annotation. The adjustment amount is
+             * stored in the first argument of a binary op.
+             * (See SVMMCCodeEmitter::EncodeInstruction)
+             *
+             * We store this offset for later, in our FNStackMap, indexed
+             * by the address of the FNStack pseudo-op itself.
+             */
+            FNStackMap[std::make_pair(Fragment->getParent(),
+                Layout.getFragmentOffset(Fragment))] = (int)Target.getConstant();
+            break;
+        }
+    
+        default: {
+            /*
+             * All other fixups are applied later, in ApplyLateFixups().
+             * This is necessary because other fixup types can depend on
+             * the FNStack values collected above.
+             */
+            SVMLateFixup LF((MCFragment *) Fragment, Fixup, Target);
+            LateFixupList.push_back(LF);
+
+            // This gets OR'ed with the fixup later. Zero it.
+            FixedValue = 0;
+            break;
+        }
     }
 }
 
@@ -164,13 +165,11 @@ uint32_t SVMMemoryLayout::getEntryAddress(const MCAssembler &Asm,
 SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSymbol *S, bool useCodeAddresses) const
 {
-    const MCSymbolData *SD = &Asm.getSymbolData(*S);
     SVMSymbolInfo SI;
     SVMDecorations Deco;
     StringRef Name = Deco.Decode(S->getName());
-
-    // Follow aliases after capturing the original Name.
-    S = &S->AliasedSymbol();
+    const MCSymbol *AS = &S->AliasedSymbol();
+    const MCSymbolData *SD = &Asm.getSymbolData(*AS);
 
     if (Deco.isSys) {
         // Numeric syscall
@@ -184,14 +183,16 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
         return SI;
     }
 
-    if (!S->isDefined())
+    if (!AS->isDefined())
         report_fatal_error("Taking address of undefined symbol '" +
             Twine(Name) + "'");
 
-    // Symbol has a value in our module
+    // Symbol has a value in our module. Calculate the full virtual address.
     uint32_t Offset = Layout.getSymbolOffset(SD);
+    const MCSectionData *SecD = &Asm.getSectionData(AS->getSection());
+    uint32_t VA = getSectionMemAddress(SecD) + Offset + Deco.offset;
 
-    if (useCodeAddresses && S->getSection().getKind().isText()) {
+    if (useCodeAddresses && AS->getSection().getKind().isText()) {
         /*
          * Code address:
          *   - Relative to segment base
@@ -201,24 +202,24 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          */
          
         assert(Deco.offset == 0);
-
-        if ((Offset & 0xfffffc) != Offset)
+        if ((VA & 0xfffffffc) != VA)
             report_fatal_error("Code symbol '" + Twine(Name) +
-                "' has illegal address 0x" + Twine::utohexstr(Offset));
+                "' has illegal address 0x" + Twine::utohexstr(VA));
+        uint32_t shortVA = VA & 0xfffffc;
 
-        FNStackMap_t::const_iterator I = FNStackMap.find(Offset);
+        FNStackMap_t::const_iterator I = FNStackMap.find(std::make_pair(SecD, Offset));
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
         assert(SPAdj >= 0 && !(SPAdj & 3) && SPAdj <= (0x7F * 4));
         SPAdj <<= 22;
 
         if (Deco.isCall) {
             // A Call, with SP adjustment and tail-call flag
-            SI.Value = Offset | SPAdj | Deco.isTailCall;
+            SI.Value = shortVA | SPAdj | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
 
         } else if (Deco.isLongBranch) {
             // Encode the Long Branch addrop
-            SI.Value = 0xE0000000 | Offset;
+            SI.Value = 0xE0000000 | shortVA;
             SI.Kind = SVMSymbolInfo::LB;
 
         } else {
@@ -227,7 +228,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
             // This is important for function pointers, including the entry
             // point address for main().
 
-            SI.Value = Offset | SPAdj;
+            SI.Value = shortVA | SPAdj;
             SI.Kind = SVMSymbolInfo::LOCAL;
         }
 
@@ -236,8 +237,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          * Data address. No decoration at all.
          */
 
-        SI.Value = getSectionMemAddress(&Asm.getSectionData(S->getSection()))
-            + Offset + Deco.offset;
+        SI.Value = VA;
         SI.Kind = SVMSymbolInfo::LOCAL;
     }
 
