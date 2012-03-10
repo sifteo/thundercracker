@@ -211,6 +211,122 @@ static bool conditionPassed(uint8_t cond)
 
 
 /***************************************************************************
+ * Exception Handling
+ ***************************************************************************/
+
+/*
+ * Only vaguely faithful exception emulation :)
+ * Assume we're always in User mode & accessing the User stack pointer.
+ *
+ * cortex-m3 pushes a HwContext to the appropriate stack, User or Main,
+ * to allow C-language interrupt handlers to be AAPCS compliant.
+ */
+static void emulateEnterException(reg_t returnAddr)
+{
+    // TODO: verify that we're not stacking to invalid memory
+    regs[REG_SP] -= sizeof(HwContext);
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    ctx->r0         = regs[0];
+    ctx->r1         = regs[1];
+    ctx->r2         = regs[2];
+    ctx->r3         = regs[3];
+    ctx->r12        = regs[12];
+    ctx->lr         = regs[REG_LR];
+    ctx->returnAddr = returnAddr;
+    ctx->xpsr       = regs[REG_CPSR];   // XXX; must also or in frameptralign
+
+    ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
+
+    regs[REG_LR] = 0xfffffffd;  // indicate that we're coming from User mode, using User stack
+}
+
+/*
+ * Pop HW context
+ */
+static void emulateExitException()
+{
+    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    regs[0]         = ctx->r0;
+    regs[1]         = ctx->r1;
+    regs[2]         = ctx->r2;
+    regs[3]         = ctx->r3;
+    regs[12]        = ctx->r12;
+    regs[REG_LR]    = ctx->lr;
+    regs[REG_CPSR]  = ctx->xpsr;
+
+    regs[REG_SP] += sizeof(HwContext);
+
+    regs[REG_PC]    = ctx->returnAddr;
+}
+
+static void pushIrqContext()
+{
+    regs[REG_SP] -= sizeof(IrqContext);
+    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
+
+    ctx->r4 = regs[4];
+    ctx->r5 = regs[5];
+    ctx->r6 = regs[6];
+    ctx->r7 = regs[7];
+    ctx->r8 = regs[8];
+    ctx->r9 = regs[9];
+    ctx->r10 = regs[10];
+    ctx->r11 = regs[11];
+
+    SvmMemory::squashPhysicalAddr(ctx->r4);
+    SvmMemory::squashPhysicalAddr(ctx->r5);
+    SvmMemory::squashPhysicalAddr(ctx->r6);
+    SvmMemory::squashPhysicalAddr(ctx->r7);
+    SvmMemory::squashPhysicalAddr(ctx->r8);
+    SvmMemory::squashPhysicalAddr(ctx->r9);
+    SvmMemory::squashPhysicalAddr(ctx->r10);
+    SvmMemory::squashPhysicalAddr(ctx->r11);
+}
+
+static void popIrqContext()
+{
+    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
+
+    regs[4] = ctx->r4;
+    regs[5] = ctx->r5;
+    regs[6] = ctx->r6;
+    regs[7] = ctx->r7;
+    regs[8] = ctx->r8;
+    regs[9] = ctx->r9;
+    regs[10] = ctx->r10;
+    regs[11] = ctx->r11;
+
+    regs[REG_SP] += sizeof(IrqContext);
+}
+
+static void emulateSVC(uint16_t instr)
+{
+    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
+    emulateEnterException(nextInstruction);
+    pushIrqContext();
+
+    uint8_t imm8 = instr & 0xff;
+    SvmRuntime::svc(imm8);
+
+    popIrqContext();
+    emulateExitException();
+}
+
+static void emulateFault(FaultCode code)
+{
+    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
+    emulateEnterException(nextInstruction);
+    pushIrqContext();
+
+    // Faults occur inside exception context too, just like SVCs.
+    SvmDebug::fault(code);
+
+    popIrqContext();
+    emulateExitException();
+}
+
+
+/***************************************************************************
  * Instruction Emulation
  ***************************************************************************/
 
@@ -553,9 +669,9 @@ static void emulateSTRSPImm(uint16_t instr)
     reg_t addr = regs[REG_SP] + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_STORE_ADDRESS);
+        emulateFault(F_STORE_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        SvmDebug::fault(F_STORE_ALIGNMENT);
+        emulateFault(F_STORE_ALIGNMENT);
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
@@ -569,9 +685,9 @@ static void emulateLDRSPImm(uint16_t instr)
     reg_t addr = regs[REG_SP] + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_LOAD_ADDRESS);
+        emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        SvmDebug::fault(F_LOAD_ALIGNMENT);
+        emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -594,9 +710,9 @@ static void emulateLDRLitPool(uint16_t instr)
     reg_t addr = ((regs[REG_PC] + 3) & ~3) + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_LOAD_ADDRESS);
+        emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        SvmDebug::fault(F_LOAD_ALIGNMENT);
+        emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -614,9 +730,9 @@ static void emulateSTR(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_STORE_ADDRESS);
+        emulateFault(F_STORE_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        SvmDebug::fault(F_STORE_ALIGNMENT);
+        emulateFault(F_STORE_ALIGNMENT);
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
@@ -630,9 +746,9 @@ static void emulateLDR(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_LOAD_ADDRESS);
+        emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        SvmDebug::fault(F_LOAD_ALIGNMENT);
+        emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -647,11 +763,11 @@ static void emulateSTRBH(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_STORE_ADDRESS);
+        emulateFault(F_STORE_ADDRESS);
 
     if (instr & HalfwordBit) {
         if (!SvmMemory::isAddrAligned(addr, 2))
-            SvmDebug::fault(F_STORE_ALIGNMENT);
+            emulateFault(F_STORE_ALIGNMENT);
         *reinterpret_cast<uint16_t*>(addr) = regs[Rt];
     } else {
         *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
@@ -669,7 +785,7 @@ static void emulateLDRBH(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        SvmDebug::fault(F_LOAD_ADDRESS);
+        emulateFault(F_LOAD_ADDRESS);
 
     switch (instr & (HalfwordBit | SignExtBit)) {
     case 0:
@@ -677,7 +793,7 @@ static void emulateLDRBH(uint32_t instr)
         break;
     case HalfwordBit:
         if (!SvmMemory::isAddrAligned(addr, 2))
-            SvmDebug::fault(F_LOAD_ALIGNMENT);
+            emulateFault(F_LOAD_ALIGNMENT);
         regs[Rt] = *reinterpret_cast<uint16_t*>(addr);
         break;
     case SignExtBit:
@@ -686,7 +802,7 @@ static void emulateLDRBH(uint32_t instr)
         break;
     case HalfwordBit | SignExtBit:
         if (!SvmMemory::isAddrAligned(addr, 2))
-            SvmDebug::fault(F_LOAD_ALIGNMENT);
+            emulateFault(F_LOAD_ALIGNMENT);
         regs[Rt] = (uint32_t) SignExtend<signed int, 16>
             (*reinterpret_cast<uint16_t*>(addr));
         break;
@@ -731,62 +847,6 @@ static void emulateDIV(uint32_t instr)
     }
 }
 
-/*
- * Only vaguely faithful exception emulation :)
- * Assume we're always in User mode & accessing the User stack pointer.
- *
- * cortex-m3 pushes a HwContext to the appropriate stack, User or Main,
- * to allow C-language interrupt handlers to be AAPCS compliant.
- */
-static void emulateEnterException(reg_t returnAddr)
-{
-    // TODO: verify that we're not stacking to invalid memory
-    regs[REG_SP] -= sizeof(HwContext);
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
-    ctx->r0         = regs[0];
-    ctx->r1         = regs[1];
-    ctx->r2         = regs[2];
-    ctx->r3         = regs[3];
-    ctx->r12        = regs[12];
-    ctx->lr         = regs[REG_LR];
-    ctx->returnAddr = returnAddr;
-    ctx->xpsr       = regs[REG_CPSR];   // XXX; must also or in frameptralign
-
-    ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
-
-    regs[REG_LR] = 0xfffffffd;  // indicate that we're coming from User mode, using User stack
-}
-
-/*
- * Pop HW context
- */
-static void emulateExitException()
-{
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
-    regs[0]         = ctx->r0;
-    regs[1]         = ctx->r1;
-    regs[2]         = ctx->r2;
-    regs[3]         = ctx->r3;
-    regs[12]        = ctx->r12;
-    regs[REG_LR]    = ctx->lr;
-    regs[REG_CPSR]  = ctx->xpsr;
-
-    regs[REG_SP] += sizeof(HwContext);
-
-    regs[REG_PC]    = ctx->returnAddr;
-}
-
-static void emulateSVC(uint16_t instr)
-{
-    uint32_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
-    emulateEnterException(nextInstruction);
-
-    uint8_t imm8 = instr & 0xff;
-    SvmRuntime::svc(imm8);
-
-    emulateExitException();
-}
-
 
 /***************************************************************************
  * Instruction Dispatch
@@ -802,9 +862,9 @@ static uint16_t fetch()
      */
 
     if (!SvmMemory::isAddrValid(regs[REG_PC]))
-        SvmDebug::fault(F_CODE_FETCH);
+        emulateFault(F_CODE_FETCH);
     if (!SvmMemory::isAddrAligned(regs[REG_PC], 2))
-        SvmDebug::fault(F_LOAD_ALIGNMENT);
+        emulateFault(F_LOAD_ALIGNMENT);
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
@@ -948,7 +1008,7 @@ static void execute16(uint16_t instr)
 
     // should never get here since we should only be executing validated instructions
     LOG(("SVMCPU: invalid 16bit instruction: 0x%x\n", instr));
-    SvmDebug::fault(F_CPU_SIM);
+    emulateFault(F_CPU_SIM);
 }
 
 static void execute32(uint32_t instr)
@@ -980,7 +1040,7 @@ static void execute32(uint32_t instr)
 
     // should never get here since we should only be executing validated instructions
     LOG(("SVMCPU: invalid 32bit instruction: 0x%x\n", instr));
-    SvmDebug::fault(F_CPU_SIM);
+    emulateFault(F_CPU_SIM);
 }
 
 
@@ -1077,55 +1137,6 @@ void setReg(uint8_t r, reg_t val)
     }
     default:        ASSERT(0 && "invalid register"); break;
     }
-}
-
-reg_t debugGetNonStackedReg(uint8_t r)
-{
-    return regs[r];
-}
-
-/*
- * These will be single instruction ldm/stm on ARM.
- */
-
-void pushIrqContext()
-{
-    regs[REG_SP] -= sizeof(IrqContext);
-    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
-
-    ctx->r4 = regs[4];
-    ctx->r5 = regs[5];
-    ctx->r6 = regs[6];
-    ctx->r7 = regs[7];
-    ctx->r8 = regs[8];
-    ctx->r9 = regs[9];
-    ctx->r10 = regs[10];
-    ctx->r11 = regs[11];
-
-    SvmMemory::squashPhysicalAddr(ctx->r4);
-    SvmMemory::squashPhysicalAddr(ctx->r5);
-    SvmMemory::squashPhysicalAddr(ctx->r6);
-    SvmMemory::squashPhysicalAddr(ctx->r7);
-    SvmMemory::squashPhysicalAddr(ctx->r8);
-    SvmMemory::squashPhysicalAddr(ctx->r9);
-    SvmMemory::squashPhysicalAddr(ctx->r10);
-    SvmMemory::squashPhysicalAddr(ctx->r11);
-}
-
-void popIrqContext()
-{
-    IrqContext *ctx = reinterpret_cast<IrqContext*>(regs[REG_SP]);
-
-    regs[4] = ctx->r4;
-    regs[5] = ctx->r5;
-    regs[6] = ctx->r6;
-    regs[7] = ctx->r7;
-    regs[8] = ctx->r8;
-    regs[9] = ctx->r9;
-    regs[10] = ctx->r10;
-    regs[11] = ctx->r11;
-
-    regs[REG_SP] += sizeof(IrqContext);
 }
 
 }  // namespace SvmCpu

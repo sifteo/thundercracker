@@ -18,17 +18,6 @@ namespace SvmCpu {
     reg_t reg(uint8_t r);
     void setReg(uint8_t r, reg_t val);
 
-    void pushIrqContext();
-    void popIrqContext();
-
-#ifdef SIFTEO_SIMULATOR
-    /*
-     * Debug only getter for non-stacked registers so we can print them
-     * out properly, even if we fault when not in exception context.
-     */
-    reg_t debugGetNonStackedReg(uint8_t r);
-#endif
-
 } // namespace SvmCpu
 
 #endif // SVMCPU_H

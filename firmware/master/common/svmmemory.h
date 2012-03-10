@@ -184,6 +184,15 @@ public:
     }
 
     /**
+     * Reconstruct a RAM address, doing a Physical to Virtual translation.
+     * Used for debugging only.
+     */
+    static VirtAddr physToVirtRAM(PhysAddr pa) {
+        uintptr_t offset = pa - userRAM; 
+        return (VirtAddr)offset + VIRTUAL_RAM_BASE;
+    }
+
+    /**
      * Quick predicates to check a physical address. Used only in simulation.
      */
 #ifdef SIFTEO_SIMULATOR

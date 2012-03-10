@@ -65,21 +65,30 @@ void SvmDebug::fault(FaultCode code)
     LOG(("***\n"
          "*** VM FAULT code %d (%s)\n"
          "***\n"
-         "***   PC: %08x SP: %"PRIxPTR"\n"
+         "***   PC: va=%08x pa=%"PRIxPTR"%s\n"
+         "***   SP: va=%08x pa=%"PRIxPTR"%s\n"
          "***  GPR: %08x %08x %08x %08x\n"
          "***       %08x %08x %08x %08x\n"
          "***\n",
          code, faultStr(code),
-         SvmRuntime::reconstructCodeAddr(SvmCpu::debugGetNonStackedReg(REG_PC)),
+ 
+         (unsigned)SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC)),
+         SvmCpu::reg(REG_PC),
+         SvmMemory::isAddrValid(SvmCpu::reg(REG_PC)) ? "" : " (INVALID)",
+
+         (unsigned)SvmMemory::physToVirtRAM(reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
          SvmCpu::reg(REG_SP),
-         (unsigned) SvmCpu::debugGetNonStackedReg(0),
-         (unsigned) SvmCpu::debugGetNonStackedReg(1),
-         (unsigned) SvmCpu::debugGetNonStackedReg(2),
-         (unsigned) SvmCpu::debugGetNonStackedReg(3),
-         (unsigned) SvmCpu::debugGetNonStackedReg(4),
-         (unsigned) SvmCpu::debugGetNonStackedReg(5),
-         (unsigned) SvmCpu::debugGetNonStackedReg(6),
-         (unsigned) SvmCpu::debugGetNonStackedReg(7)));
+         SvmMemory::isAddrValid(SvmCpu::reg(REG_SP)) ? "" : " (INVALID)",
+
+         (unsigned) SvmCpu::reg(0),
+         (unsigned) SvmCpu::reg(1),
+         (unsigned) SvmCpu::reg(2),
+         (unsigned) SvmCpu::reg(3),
+         (unsigned) SvmCpu::reg(4),
+         (unsigned) SvmCpu::reg(5),
+         (unsigned) SvmCpu::reg(6),
+         (unsigned) SvmCpu::reg(7)
+    ));
 
     SvmRuntime::exit();
 }

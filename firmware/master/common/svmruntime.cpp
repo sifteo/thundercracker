@@ -202,8 +202,6 @@ void SvmRuntime::ret()
 
 void SvmRuntime::svc(uint8_t imm8)
 {
-    SvmCpu::pushIrqContext();
-
     if ((imm8 & (1 << 7)) == 0) {
         if (imm8 == 0)
             ret();
@@ -245,8 +243,6 @@ void SvmRuntime::svc(uint8_t imm8)
         eventDispatchFlag = 0;
         Event::dispatch();
     }
-
-    SvmCpu::popIrqContext();
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
