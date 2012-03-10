@@ -445,7 +445,7 @@ void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: reserved [31:27], arity [26:24] string_table_offset [23:0]
-void _SYS_log(uint32_t tag, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4, uint32_t v5, uint32_t v6, uint32_t v7) _SC(25);
+void _SYS_log(uint32_t tag, uintptr_t v1, uintptr_t v2, uintptr_t v3, uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7) _SC(25);
 
 // Compiler floating point support
 uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
