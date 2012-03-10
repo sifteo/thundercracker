@@ -11,8 +11,13 @@ all: $(BIN)
 $(BIN): $(OBJS) $(LD)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
+ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h
+ifneq ($(ASSETS_BUILD_PROOF),)
+    ASSET_GEN_FILES += -o $(ASSETS).html
+endif
+
 $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
-	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
+	$(STIR) $(ASSETS).lua $(ASSET_GEN_FILES) -v
 
 clean:
 	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
