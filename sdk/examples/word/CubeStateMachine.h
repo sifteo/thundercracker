@@ -54,7 +54,7 @@ public:
 
     void updateAnim(VidMode_BG0_SPR_BG1 &vid,
                      BG1Helper *bg1 = 0,
-                     const AnimParams *params = 0);
+                     AnimParams *params = 0);
     AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
     bool canBeginWord();

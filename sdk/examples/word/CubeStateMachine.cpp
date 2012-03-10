@@ -439,28 +439,6 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
     mAnimTypes[cubeAnim] = anim;
     mAnimTimes[cubeAnim] = 0.f;
     // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
-
-    switch (anim)
-    {
-    case AnimType_NewWord:
-        switch (mAnimTypes[CubeAnim_Hint])
-        {
-        case AnimType_HintAppear:
-        case AnimType_HintIdle:
-        case AnimType_HintShake:
-            break;
-
-        default:
-            // delivered hint resets after making a new word
-            mAnimTypes[CubeAnim_Hint] = AnimType_None;
-            break;
-        }
-        break;
-
-    default:
-        break;
-    }
-
 }
 
 void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
@@ -470,10 +448,14 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
 
 void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
                                   BG1Helper *bg1,
-                                  const AnimParams *params)
+                                  AnimParams *params)
 {
     for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
+        if (params)
+        {
+            params->mBorders = (i == CubeAnim_Main); // FIXME fold border code into anim
+        }
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
         {
@@ -713,6 +695,7 @@ void CubeStateMachine::update(float dt)
 
             setLettersStart(i);
             mHintRequested = false;
+            queueAnim(AnimType_None, CubeAnim_Hint);
         }
         break;
 
@@ -1202,8 +1185,17 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
 
     if (mAnimTypes[CubeAnim_Hint] == AnimType_None)
     {
-        // TODO optimize
-        vid.hideSprite(0); // TODO sprite IDs
+        switch (mAnimTypes[CubeAnim_Main])
+        {
+        case AnimType_SlideLHint:
+        case AnimType_SlideRHint:
+            break;
+
+        default:
+            vid.hideSprite(0); // TODO sprite IDs
+            break;
+        }
+
     }
 
     switch (GameStateMachine::getCurrentMaxLettersPerCube())

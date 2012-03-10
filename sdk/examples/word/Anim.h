@@ -35,6 +35,7 @@ struct AnimParams
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
+    bool mBorders;
 
 };
 
