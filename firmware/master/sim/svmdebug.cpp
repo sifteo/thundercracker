@@ -70,7 +70,7 @@ void SvmDebug::fault(FaultCode code)
          "***       %08x %08x %08x %08x\n"
          "***\n",
          code, faultStr(code),
-         SvmRuntime::reconstructCodeAddr(),
+         SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC)),
          SvmCpu::reg(REG_SP),
          (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
          (unsigned) SvmCpu::reg(2), (unsigned) SvmCpu::reg(3),

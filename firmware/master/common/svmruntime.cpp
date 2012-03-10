@@ -94,7 +94,7 @@ void SvmRuntime::call(reg_t addr)
     SvmMemory::squashPhysicalAddr(sR6);
     SvmMemory::squashPhysicalAddr(sR7);
 
-    fp->pc = reconstructCodeAddr();
+    fp->pc = reconstructCodeAddr(SvmCpu::reg(REG_PC));
     fp->fp = sFP;
     fp->r2 = sR2;
     fp->r3 = sR3;

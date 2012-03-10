@@ -39,8 +39,8 @@ public:
      * Using the current codeBlock and PC, reconstruct the current
      * virtual program counter. Used for debugging, and for function calls.
      */
-    static unsigned reconstructCodeAddr() {
-        return SvmMemory::reconstructCodeAddr(codeBlock, SvmCpu::reg(SvmCpu::REG_PC));
+    static unsigned reconstructCodeAddr(reg_t pc) {
+        return SvmMemory::reconstructCodeAddr(codeBlock, pc);
     }
     
     /**
@@ -49,7 +49,7 @@ public:
      * untrusted stack memory, and when it's not already in an event handler.
      */
     static bool canSendEvent() {
-        return eventFrame == 0 && (SvmCpu::reg(SvmCpu::REG_PC) & 3) == 0;
+        return eventFrame == 0 && (SvmCpu::reg(REG_PC) & 3) == 0;
     }
     
     /**
@@ -67,7 +67,7 @@ public:
     static void sendEvent(reg_t addr) {
         ASSERT(canSendEvent());
         call(addr);
-        eventFrame = SvmCpu::reg(SvmCpu::REG_FP);
+        eventFrame = SvmCpu::reg(REG_FP);
     }
     static void sendEvent(reg_t addr, reg_t r0) {
         sendEvent(addr);
