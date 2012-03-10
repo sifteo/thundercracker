@@ -311,11 +311,13 @@ Game::GameState Run() {
     //Game::cubes[2]->SetView(NULL);
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
+    Game::cubes[2].HideSprites();
     Game::cubes[2].CloseShuttersSync(&Background);
     Game::cubes[2].SetView(blankViews+2);
 
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
+    Game::cubes[1].HideSprites();
     Game::cubes[1].CloseShuttersSync(&Background);
     Game::cubes[1].SetView(blankViews+1);
 
@@ -324,35 +326,34 @@ Game::GameState Run() {
     Game::Wait(2);
 
     Game::cubes[1].OpenShuttersSync(&Tutorial_Groups);
-    Game::cubes[1].SetView(blankViews + 1);
     blankViews[1].assetImage = &Tutorial_Groups;
 
     Game::Wait(5);
     narrator.SetMessage("");
     Game::Wait(1);
-    Game::cubes[1].SetView(NULL);
     Game::cubes[1].CloseShuttersSync(&Tutorial_Groups);
     blankViews[1].assetImage = NULL;
 
     Game::Wait(1);
     narrator.SetMessage("If you get stuck,\nyou can shake\nfor a hint.");
+    Game::Wait(2);
+
     puzzle->target = (TokenGroup*)firstToken.token->current;
     firstToken.token->PopGroup();
     secondToken.token->PopGroup();
-    firstToken.DidGroupDisconnect();
-    secondToken.DidGroupDisconnect();
-    Game::Wait(2);
+
+
 
     //Game::cubes[1]->SetView(NULL);
     Game::cubes[1].OpenShuttersSync(&Background);
     Game::cubes[1].SetView(&firstToken);
-    firstToken.PaintNow();
+    firstToken.DidGroupDisconnect();
     Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
     Game::cubes[2].OpenShuttersSync(&Background);
     Game::cubes[2].SetView(&secondToken);
-    secondToken.PaintNow();
+    secondToken.DidGroupDisconnect();
     Game::Wait(1);
 
     narrator.SetMessage("Try it out!  Shake one!");
