@@ -7,6 +7,8 @@
 
 enum AnimType
 {
+    AnimType_None = -1,
+
     AnimType_NotWord,
     AnimType_SlideL,
     AnimType_SlideR,
@@ -15,6 +17,15 @@ enum AnimType
     AnimType_EndofRound,
     AnimType_Shuffle,
     AnimType_CityProgression,
+    AnimType_HintAppear,
+    AnimType_HintIdle,
+    AnimType_HintShake,
+    AnimType_HintDisppear,
+    AnimType_SlideLHint,
+    AnimType_SlideRHint,
+    AnimType_LockHint,
+    AnimType_LockedHintNotWord,
+    AnimType_LockedHintOldWord,
 
     NumAnimTypes
 };
@@ -23,6 +34,8 @@ struct AnimParams
 {
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     bool mLeftNeighbor, mRightNeighbor;
+    Cube::ID mCubeID;
+    bool mBorders;
 
 };
 

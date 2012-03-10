@@ -2,7 +2,8 @@
 #define SCOREDGAMESTATE_H
 
 #include "State.h"
-
+#include "config.h"
+#include "Constants.h"
 
 class ScoredGameState : public State
 {
@@ -13,6 +14,8 @@ public:
     static void createNewAnagram();
 
     static void onAudioEvent(unsigned eventID, const EventData& data);
+
+private:
 
 };
 
