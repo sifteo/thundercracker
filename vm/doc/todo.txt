@@ -15,6 +15,15 @@ Smaller optimizations:
 - Equal optimization weight for all 16-bit instructions? LDRpc alone is
   better than LDRpc plus MOVs, for example.
 - More efficient comparison generation? (See ARMTargetLowering::getARMCmp)
+- (Easy) Deduplicate log strings. Probably can be done trivially by changing
+  flags on these GlobalValues.
+
+Correctness:
+
+- Extended calling convention
+    - more than 8 args
+    - by-value, structs...
+    - varargs
 
 SDK optimization:
 

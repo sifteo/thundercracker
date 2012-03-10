@@ -352,8 +352,10 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (!Ins.empty())
         InFlag = Chain.getValue(1);
 
-    return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins,
-                           dl, DAG, InVals);
+    if (isTailCall)
+        return Chain;
+    else
+        return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG, InVals);
 }
 
 SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
