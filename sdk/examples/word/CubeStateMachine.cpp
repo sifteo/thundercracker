@@ -438,12 +438,39 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
                getCube().id(), anim, cubeAnim));
     mAnimTypes[cubeAnim] = anim;
     mAnimTimes[cubeAnim] = 0.f;
+
     // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
 }
 
 void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
 {
-    queueAnim(getNextAnim(cubeAnim));//, vid, bg1, params);
+    AnimType oldAnim = mAnimTypes[cubeAnim];
+    AnimType anim = getNextAnim(cubeAnim);
+    queueAnim(anim);//, vid, bg1, params);
+    if (anim != oldAnim)
+    {
+        switch (cubeAnim)
+        {
+        case CubeAnim_Main:
+            switch (oldAnim)
+            {
+            case AnimType_SlideL:
+            case AnimType_SlideR:
+            case AnimType_SlideLHint:
+            case AnimType_SlideRHint:
+                WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+                break;
+
+            default:
+                break;
+            }
+
+            break;
+
+        default:
+            break;
+        }
+    }
 }
 
 void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
