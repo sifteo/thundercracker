@@ -811,7 +811,7 @@ static uint16_t fetch()
 #ifdef SVM_TRACE
     LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(regs[REG_PC]), *pc));
     for (unsigned r = 0; r < 8; r++) {
-        LOG((" r%d=%016"PRIxPTR"", r, regs[r]));
+        LOG((" r%d=%08"PRIxPTR"", r, regs[r]));
     }
     LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n",
         getNeg() ? 'N' : ' ',
