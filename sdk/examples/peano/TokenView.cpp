@@ -24,12 +24,13 @@ TokenView::TokenView()
 
 void TokenView::Reset()
 {
-    mCurrentExpression = token;
+    mCurrentExpression = NULL;
     mLit = false;
 
     mStatus = StatusIdle;
     mTimeout = -1.0f;
     mHideMask = 0;
+    mDigitId = 0;
     useAccentDigit = false;
 }
 
@@ -38,7 +39,8 @@ void TokenView::SetToken(Token *t)
     token = t;
     token->view = this;
     renderedDigit = token->val;
-    mDigitId = 0;
+    mCurrentExpression = token;
+    mDigitId = -1;
 }
 
 void TokenView::HideOps()
@@ -176,6 +178,11 @@ void TokenView::DidAttachToCube(TotalsCube *c)
     c->AddEventHandler(&eventHandler);
 }
 
+void TokenView::WillDetachFromCube(TotalsCube *c)
+{
+    c->RemoveEventHandler(&eventHandler);
+}
+
 void TokenView::OnShakeStarted(TotalsCube *c)
 {
     if (token->GetPuzzle()->target == NULL || token->current != token) { return; }
@@ -203,11 +210,6 @@ void TokenView::OnButtonEvent(TotalsCube *c, bool isPressed) {
         BlinkOverlay();
         PLAY_SFX(sfx_Target_Overlay);
     }
-}
-
-void TokenView::WillDetachFromCube(TotalsCube *c)
-{
-    c->RemoveEventHandler(&eventHandler);
 }
 
 void TokenView::Update()
@@ -533,10 +535,10 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
         //in case of certain digits
         //draw center 4 of north/south, not frame 0/111 to backbuffer
         //on frame 2/109, hack to frontbuffer
-        if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 ||
+        if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 || renderedDigit == 6 ||
                 renderedDigit == 7 || renderedDigit == 8 || renderedDigit == 9 ||
                 renderedDigit == 0)
-        {
+        {   //top
             int frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
             if(0 != frame && 2 != frame)
             {
@@ -549,9 +551,8 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
         }
 
         if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 ||
-                renderedDigit == 8 || renderedDigit == 9 ||
-                renderedDigit == 0)
-        {
+                renderedDigit == 6 || renderedDigit == 8 || renderedDigit == 0)
+        {   //bottom
             int frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
             if(111 != frame && 109 != frame)
             {
