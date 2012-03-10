@@ -183,8 +183,9 @@ void SvmRuntime::ret()
         SvmCpu::setReg(6, fp->r6);
         SvmCpu::setReg(7, fp->r7);
 
+        reg_t target = fp->pc;
         setSP(reinterpret_cast<reg_t>(fp + 1));
-        branch(fp->pc);
+        branch(target);
 
     } else {
         // No more functions on the stack. Return from main() is exit().
