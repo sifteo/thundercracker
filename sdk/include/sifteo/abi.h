@@ -436,8 +436,7 @@ void _SYS_lti_log(const char *fmt, ...);
 #  define _NORET    __attribute__ ((noreturn))
 #endif
 
-void _SYS_ret(void) _SC(0) _NORET;
-void _SYS_abort(void) _SC(108) _NORET;
+void _SYS_abort(void) _SC(0) _NORET;
 void _SYS_exit(void) _SC(74) _NORET;
 
 void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware

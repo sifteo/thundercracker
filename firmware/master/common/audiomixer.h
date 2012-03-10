@@ -37,7 +37,7 @@ public:
 
     uint32_t pos(_SYSAudioHandle handle);
 
-    bool active() const { return activeChannelMask != 0; }
+    bool active() const { return playingChannelMask != 0; }
 
     int pullAudio(int16_t *buffer, int numsamples);
     void fetchData();
@@ -45,15 +45,13 @@ public:
 
 private:
     uint32_t enabledChannelMask;    // channels userspace has provided buffers for
-    uint32_t activeChannelMask;     // channels that are actively playing
-    uint32_t stoppedChannelMask;    // channels that have finished that need to be cleaned up
+    uint32_t playingChannelMask;    // channels that are actively playing
 
     _SYSAudioHandle nextHandle;
 
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask);
-    void stopChannel(AudioChannelSlot *ch);
 };
 
 #endif /* AUDIOMIXER_H_ */

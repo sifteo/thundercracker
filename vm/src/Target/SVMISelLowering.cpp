@@ -352,8 +352,10 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (!Ins.empty())
         InFlag = Chain.getValue(1);
 
-    return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins,
-                           dl, DAG, InVals);
+    if (isTailCall)
+        return Chain;
+    else
+        return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG, InVals);
 }
 
 SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
@@ -368,6 +370,8 @@ SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     // Copy return values to vregs
     for (unsigned i = 0; i != RVLocs.size(); ++i) {
         CCValAssign VA = RVLocs[i];
+        assert(VA.isRegLoc() && "Only register return values are supported");
+        
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
             VA.getLocVT(), InFlag);
         Chain = Val.getValue(1);
@@ -394,7 +398,28 @@ SDValue SVMTargetLowering::LowerReturn(SDValue Chain,
                                        const SmallVectorImpl<SDValue> &OutVals,
                                        DebugLoc dl, SelectionDAG &DAG) const
 {
-    return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain);
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+        getTargetMachine(), RVLocs, *DAG.getContext());
+    CCInfo.AnalyzeReturn(Outs, RetCC_SVM);
+
+    // Copy return values to physical output regs, and mark them as live
+
+    SDValue Flag;
+    for (unsigned i = 0; i != RVLocs.size(); ++i) {
+        CCValAssign VA = RVLocs[i];
+        assert(VA.isRegLoc() && "Only register return values are supported");
+
+        Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
+        Flag = Chain.getValue(1);
+        
+        DAG.getMachineFunction().getRegInfo().addLiveOut(VA.getLocReg());
+    }
+
+    if (Flag.getNode())
+        return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain, Flag);
+    else
+        return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain);
 }
 
 SDValue SVMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG)

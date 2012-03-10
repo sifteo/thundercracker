@@ -23,10 +23,8 @@ public:
     static void run(uint16_t appId);
     static void exit();
 
+    // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);
-    static void call(reg_t addr);
-    static void tailcall(reg_t addr);
-    static void ret();
 
     /**
      * Call Event::Dispatch() on our way out of the next svc(). Events can't
@@ -121,6 +119,10 @@ private:
     static SvmMemory::PhysAddr stackLimit;
     static reg_t eventFrame;
     static bool eventDispatchFlag;
+
+    static void call(reg_t addr);
+    static void tailcall(reg_t addr);    
+    static void ret();
 
     static void resetSP();
     static void adjustSP(int words);

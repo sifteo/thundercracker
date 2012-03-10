@@ -18,8 +18,7 @@ AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     enabledChannelMask(0),
-    activeChannelMask(0),
-    stoppedChannelMask(0),
+    playingChannelMask(0),
     nextHandle(0)
 {
 }
@@ -27,6 +26,8 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
+    enabledChannelMask = 0;
+    playingChannelMask = 0;
 }
 
 /*
@@ -56,19 +57,18 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
     // NOTE - *must* bail ASAP if we don't have anything to do. we really
     // want to minimize the work done in this ISR since it's happening so
     // frequently
-    if (activeChannelMask == 0) {
+    if (!active())
         return 0;
-    }
+
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
     int samplesMixed = 0;
-    // iterate through active channels that are not waiting to be stopped
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
         AudioChannelSlot &ch = channelSlots[idx];
-        Atomic::ClearLZ(mask, idx);
+        mask &= ~Intrinsic::LZ(idx);
 
         if (ch.isPaused()) {
             continue;
@@ -80,9 +80,6 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
         // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
             samplesMixed = mixed;
-        }
-        else if (mixed < 0) {
-            Atomic::SetLZ(stoppedChannelMask, idx);
         }
     }
     return samplesMixed;
@@ -97,18 +94,16 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
  */
 void AudioMixer::fetchData()
 {
-    // first, handle any channels that have finished since we last rolled around
-    while (stoppedChannelMask) {
-        unsigned idx = Intrinsic::CLZ(stoppedChannelMask);
-        stopChannel(&channelSlots[idx]);
-        Atomic::ClearLZ(stoppedChannelMask, idx);
-    }
-
-    uint32_t mask = activeChannelMask;
+    uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        channelSlots[idx].fetchData();
-        Atomic::ClearLZ(mask, idx);
+        AudioChannelSlot &ch = channelSlots[idx];
+        mask &= ~Intrinsic::LZ(idx);
+
+        if (ch.isStopped())
+            Atomic::ClearLZ(playingChannelMask, idx);
+        else
+            ch.fetchData();
     }
 }
 
@@ -133,8 +128,8 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
 {
     // NB: "mod" is a temporary contiguous copy of SYSAudioModule in RAM.
     
-    // find channels that are enabled, not active & not marked as stopped
-    uint32_t selector = enabledChannelMask & ~activeChannelMask & ~stoppedChannelMask;
+    // find channels that are enabled but not playing
+    uint32_t selector = enabledChannelMask & ~playingChannelMask;
     if (selector == 0) {
         return false;
     }
@@ -146,48 +141,34 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
     *handle = ch.handle;
 
     ch.play(mod, loopMode);
-
-    Atomic::SetLZ(activeChannelMask, idx);
+    Atomic::SetLZ(playingChannelMask, idx);
 
     return true;
 }
 
 bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 {
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
-    return channelForHandle(handle, mask) != 0;
+    return channelForHandle(handle, playingChannelMask) != 0;
 }
 
 void AudioMixer::stop(_SYSAudioHandle handle)
 {
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
-    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
-        stopChannel(ch);
+    if (AudioChannelSlot *ch = channelForHandle(handle, playingChannelMask)) {
+        ch->stop();
+        Atomic::ClearLZ(playingChannelMask, ch - channelSlots);
     }
-}
-
-void AudioMixer::stopChannel(AudioChannelSlot *ch)
-{
-    unsigned channelIndex = ch - channelSlots;
-    ASSERT(channelIndex < _SYS_AUDIO_MAX_CHANNELS);
-    ASSERT(activeChannelMask & Intrinsic::LZ(channelIndex));
-
-    ch->stop();
-    Atomic::ClearLZ(activeChannelMask, channelIndex);
 }
 
 void AudioMixer::pause(_SYSAudioHandle handle)
 {
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
-    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, playingChannelMask)) {
         ch->pause();
     }
 }
 
 void AudioMixer::resume(_SYSAudioHandle handle)
 {
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
-    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, playingChannelMask)) {
         ch->resume();
     }
 }
@@ -209,8 +190,7 @@ int AudioMixer::volume(_SYSAudioHandle handle)
 
 uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
-    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, playingChannelMask)) {
         ch = 0;
         // TODO - implement
     }
@@ -221,10 +201,11 @@ AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t 
 {
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        if (channelSlots[idx].handle == handle) {
-            return &channelSlots[idx];
-        }
-        Atomic::ClearLZ(mask, idx);
+        AudioChannelSlot &ch = channelSlots[idx];
+        mask &= ~Intrinsic::LZ(idx);
+
+        if (ch.handle == handle)
+            return &ch;
     }
     return 0;
 }

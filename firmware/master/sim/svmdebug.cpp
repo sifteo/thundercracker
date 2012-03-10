@@ -59,9 +59,9 @@ static const char* faultStr(FaultCode code)
     default:                    return "unknown error";
     }
 }
-
+    
 void SvmDebug::fault(FaultCode code)
-{
+{    
     LOG(("***\n"
          "*** VM FAULT code %d (%s)\n"
          "***\n"

@@ -204,7 +204,10 @@ void SvmRuntime::svc(uint8_t imm8)
     SvmCpu::pushIrqContext();
 
     if ((imm8 & (1 << 7)) == 0) {
-        svcIndirectOperation(imm8);
+        if (imm8 == 0)
+            ret();
+        else
+            svcIndirectOperation(imm8);
 
     } else if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;

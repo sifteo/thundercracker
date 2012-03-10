@@ -36,6 +36,6 @@ program.s: $(OBJS) $(LD)
 	$(LD) -asm -o $@ $(OBJS) $(LDFLAGS)
 
 readelf: $(BIN)
-	arm-none-eabi-readelf -a $(BIN) | less
+	arm-none-eabi-readelf -a $(BIN) | arm-none-eabi-c++filt | less
 
 .PHONY: llvm-dis objdump asm readelf

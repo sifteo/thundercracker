@@ -59,6 +59,7 @@ enum FaultCode {
     F_RETURN_FRAME,         // Bad saved FP value detected during ret()
 };
 
+
 ///////////////////////////////////////
 // 16-bit thumb instruction validators
 ///////////////////////////////////////
