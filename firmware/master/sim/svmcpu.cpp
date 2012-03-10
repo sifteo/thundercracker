@@ -1079,6 +1079,11 @@ void setReg(uint8_t r, reg_t val)
     }
 }
 
+reg_t debugGetNonStackedReg(uint8_t r)
+{
+    return regs[r];
+}
+
 /*
  * These will be single instruction ldm/stm on ARM.
  */

@@ -70,12 +70,16 @@ void SvmDebug::fault(FaultCode code)
          "***       %08x %08x %08x %08x\n"
          "***\n",
          code, faultStr(code),
-         SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC)),
+         SvmRuntime::reconstructCodeAddr(SvmCpu::debugGetNonStackedReg(REG_PC)),
          SvmCpu::reg(REG_SP),
-         (unsigned) SvmCpu::reg(0), (unsigned) SvmCpu::reg(1),
-         (unsigned) SvmCpu::reg(2), (unsigned) SvmCpu::reg(3),
-         (unsigned) SvmCpu::reg(4), (unsigned) SvmCpu::reg(5),
-         (unsigned) SvmCpu::reg(6), (unsigned) SvmCpu::reg(7)));
+         (unsigned) SvmCpu::debugGetNonStackedReg(0),
+         (unsigned) SvmCpu::debugGetNonStackedReg(1),
+         (unsigned) SvmCpu::debugGetNonStackedReg(2),
+         (unsigned) SvmCpu::debugGetNonStackedReg(3),
+         (unsigned) SvmCpu::debugGetNonStackedReg(4),
+         (unsigned) SvmCpu::debugGetNonStackedReg(5),
+         (unsigned) SvmCpu::debugGetNonStackedReg(6),
+         (unsigned) SvmCpu::debugGetNonStackedReg(7)));
 
     SvmRuntime::exit();
 }
