@@ -689,7 +689,32 @@ static void emulateADDSpImm(uint16_t instr)
     unsigned Rd = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    regs[Rd] = regs[REG_SP] + (imm8 << 2);
+    /*
+     * NB: We need to squash SP here on 64-bit systems, in order to keep
+     *     usermode stack pointers consistent. On real hardware, addresses
+     *     taken from the stack will always be 32-bit physical addresses,
+     *     whereas addresses formed in other ways will be 32-bit virtual
+     *     addresses. This is fine, since either form is valid, and there's
+     *     no guarantee that pointer math between stack and heap addresses
+     *     will produce a meaningful result.
+     *
+     *     However! On 64-bit, with our pointer-squashing, we need to worry
+     *     about the difference between real 64-bit physical addresses, and
+     *     addresses that have been squashed back to 32-bit. Normally stack
+     *     addresses stay physical as they're copied from SP to r0-7, but that
+     *     means that stack addresses which have been kept only in registers
+     *     will differ from stack addresses that have ever made a trip into
+     *     (32-bit) guest memory and have been squashed.
+     *
+     *     So, to keep all stack addresses consistent, we choose to use 32-bit
+     *     virtual addresses everywhere when we're on 64-bit hosts. On 32-bit
+     *     hosts, the squash will have no effect and we'll still be using
+     *     32-bit physical addresses.
+     */
+    reg_t sp = regs[REG_SP];
+    SvmMemory::squashPhysicalAddr(sp);
+    
+    regs[Rd] = sp + (imm8 << 2);
 }
 
 static void emulateLDRLitPool(uint16_t instr)
