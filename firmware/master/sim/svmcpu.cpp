@@ -272,15 +272,6 @@ static void pushIrqContext()
     ctx->r9 = regs[9];
     ctx->r10 = regs[10];
     ctx->r11 = regs[11];
-
-    SvmMemory::squashPhysicalAddr(ctx->r4);
-    SvmMemory::squashPhysicalAddr(ctx->r5);
-    SvmMemory::squashPhysicalAddr(ctx->r6);
-    SvmMemory::squashPhysicalAddr(ctx->r7);
-    SvmMemory::squashPhysicalAddr(ctx->r8);
-    SvmMemory::squashPhysicalAddr(ctx->r9);
-    SvmMemory::squashPhysicalAddr(ctx->r10);
-    SvmMemory::squashPhysicalAddr(ctx->r11);
 }
 
 static void popIrqContext()
@@ -873,12 +864,12 @@ static uint16_t fetch()
     for (unsigned r = 0; r < 8; r++) {
         LOG((" r%d=%08"PRIxPTR"", r, regs[r]));
     }
-    LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR"\n",
+    LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR" fp=%"PRIxPTR"\n",
         getNeg() ? 'N' : ' ',
         getZero() ? 'Z' : ' ',
         getCarry() ? 'C' : ' ',
         getOverflow() ? 'V' : ' ',
-        regs[8], regs[9], regs[REG_SP]));
+        regs[8], regs[9], regs[REG_SP], regs[REG_FP]));
 #endif
 
     regs[REG_PC] += sizeof(uint16_t);
