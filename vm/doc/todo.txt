@@ -25,6 +25,12 @@ Correctness:
     - by-value, structs...
     - varargs
 
+Nice to have:
+
+- Bogosort code blocks, constpool entries, etc. Spacial ordering beyond a
+  one-block granularity matters not at all at runtime, so this may be a cheap
+  method to obfuscate binaries with no real performance penalty.
+
 SDK optimization:
 
 - Optimize out double-precision math in System::clock() in most cases, by
@@ -39,4 +45,4 @@ Debugging support:
 
 - Better error and warning messages for slinky!
 
-- Debug symbols and backtraces in simulator SvmDebug
+- Debug symbols and backtraces in simulator SvmDebug! (High priority!)
