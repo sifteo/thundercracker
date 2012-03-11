@@ -27,8 +27,8 @@ NumericMode mode;
 
 SaveData saveData;
 
-float mTime;
 float dt;
+int64_t timeInt;
 
 
 void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
@@ -134,7 +134,7 @@ void Run(TotalsCube *_cubes, int nCubes)
     difficulty = DifficultyHard;
     mode = NumericModeFraction;
 
-    mTime = System::clock();
+    timeInt = System::clockNS();
 
     //TODO		saveData.Load();
 
@@ -187,9 +187,11 @@ void Run(TotalsCube *_cubes, int nCubes)
 
 void UpdateDt()
 {
-    float time = System::clock();
-    dt = time - mTime;
-    mTime = time;
+    int64_t now = System::clockNS();
+    int64_t dtInt = now - timeInt;
+    timeInt = now;
+
+    dt = dtInt / 1000000000.0f;
 }
 
 void Wait(float delay)
@@ -198,11 +200,15 @@ void Wait(float delay)
     PaintCubeViews();
     System::paintSync();
 
-    float t=System::clock();
+    int64_t t=System::clockNS();
+
+    //convert to ms before goint to ns to avoid float overflow
+    int64_t delayMS = delay * 1000.0f;
+    t += delayMS * 1000000;
     do {
         System::yield();
         UpdateDt();
-    } while(System::clock()<t+delay);
+    } while(System::clockNS() < t);
 }
 
 bool IsPlayingRandom()

@@ -61,7 +61,6 @@ namespace TotalsGame {
 		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
 
-		extern float mTime;
 		extern float dt;
 
 		void Run(TotalsCube *cubes, int nCubes);
