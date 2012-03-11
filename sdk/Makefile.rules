@@ -23,8 +23,8 @@ clean:
 
 ######## Development utility rules
 
-llvm-dis: $(BIN)
-	@$(LLVM_BIN)/llvm-dis $(BIN) -o - | less
+llvm-dis: $(OBJS)
+	$(LLVM_BIN)/llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
 
 objdump: $(BIN)
 	arm-none-eabi-objdump -d $(BIN) | arm-none-eabi-c++filt | less
