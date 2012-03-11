@@ -211,6 +211,7 @@ void siftmain() {
 			
 			if (isTilting && !isLefty && !isRighty) {
 				// normal scrolling
+                const float max_x = StoppingPositionFor(NUM_ICONS - 1);
 				velocity += accel * dt;
 				
 				// clamp maximum velocity based on cube angle
@@ -220,11 +221,15 @@ void siftmain() {
 				
 				float vaccel = GetYAccel(pCube);
 				if(vaccel > kAccelThresholdOn) {
-					LOG(("scaling factor: %f\n", (1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G))));
 					velocity *= 1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G);
 				}
 				
-				position += velocity * dt;
+				// don't go past the backstop unless we have inertia
+				if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || fabs(velocity) > 10) {
+    			    position += velocity * dt;
+				} else {
+                    velocity = 0;
+				}
 			} else {
 				// pull to stopping position
 				const float stiffness = 0.333f;
