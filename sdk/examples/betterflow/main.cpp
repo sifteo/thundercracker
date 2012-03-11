@@ -251,7 +251,7 @@ void siftmain() {
 			}
 			
 			// update view
-			int ui = position + 0.5f;
+			int ui = position;
 			int ut = position / 8;
 			while(prev_ut < ut) {
 				DrawColumn(pCube, prev_ut + 17);
