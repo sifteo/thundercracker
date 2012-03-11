@@ -92,26 +92,7 @@ namespace TotalsGame
 
 		class OpHelper {
 		public:
-			static Fraction Compute(Fraction left, Op op, Fraction right) 		
-			{
-				Fraction ret;
-				switch(op)
-				{
-				case OpAdd:
-					ret = left + right;
-					break;
-				case OpSubtract:
-					ret = left - right;
-					break;
-				case OpMultiply:
-					ret = left * right;
-					break;
-				case OpDivide:
-					ret = left / right;
-					break;
-				}				
-				return ret;
-			}
+            static Fraction Compute(Fraction left, Op op, Fraction right);
 		};
 
 	};

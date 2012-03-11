@@ -625,6 +625,27 @@ void TokenView::PaintDigit()
 }
 
 
+Fraction TokenGroup::OpHelper::Compute(Fraction left, Op op, Fraction right)
+{
+    Fraction ret;
+    switch(op)
+    {
+    case OpAdd:
+        ret = left + right;
+        break;
+    case OpSubtract:
+        ret = left - right;
+        break;
+    case OpMultiply:
+        ret = left * right;
+        break;
+    case OpDivide:
+        ret = left / right;
+        break;
+    }
+    return ret;
+}
+
 
 // // // //
 }
