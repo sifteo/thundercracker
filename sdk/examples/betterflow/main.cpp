@@ -99,6 +99,16 @@ static float GetXAccel(Cube *pCube) {
 static float GetYAccel(Cube *pCube) {
 	return ACCEL_SCALING_FACTOR * pCube->virtualAccel().y;
 }
+static float VelocityMultiplier(float yaccel) {
+	return yaccel > kAccelThresholdOff ? (1 + (yaccel * MAX_SPEED_MULTIPLIER / ONE_G)) : 1;
+}
+static float MaxVelocity(float xaccel, float yaccel) {
+	return MAX_NORMAL_SPEED *
+	       // x-axis linear limit
+	       (fabs(xaccel) / ONE_G) *
+	       // y-axis multiplier
+	       VelocityMultiplier(yaccel);
+}
 
 // entry point
 void siftmain() {
@@ -212,16 +222,13 @@ void siftmain() {
 			if (isTilting && !isLefty && !isRighty) {
 				// normal scrolling
                 const float max_x = StoppingPositionFor(NUM_ICONS - 1);
-				velocity += accel * dt;
+
+				float vaccel = GetYAccel(pCube);
+				velocity += (accel * dt) * VelocityMultiplier(vaccel);
 				
 				// clamp maximum velocity based on cube angle
-				if(fabs(velocity) > MAX_NORMAL_SPEED * (fabs(accel) / ONE_G)) {
-					velocity = (velocity < 0 ? 0 - MAX_NORMAL_SPEED : MAX_NORMAL_SPEED) * (fabs(accel) / ONE_G);
-				}
-				
-				float vaccel = GetYAccel(pCube);
-				if(vaccel > kAccelThresholdOn) {
-					velocity *= 1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G);
+				if(fabs(velocity) > MaxVelocity(accel, vaccel)) {
+					velocity = (velocity < 0 ? 0 - MaxVelocity(accel, vaccel) : MaxVelocity(accel, vaccel));
 				}
 				
 				// don't go past the backstop unless we have inertia
@@ -235,8 +242,9 @@ void siftmain() {
 				const float stiffness = 0.333f;
 				const int selected = ComputeSelected(position);
 				const float stopping_position = StoppingPositionFor(selected);
-				velocity += stiffness * (stopping_position - position) * dt;
-				velocity *= 0.75f;
+				
+				velocity += stopping_position - position;
+				velocity *= stiffness;
 				position += velocity * dt;
 				position = Lerp(position, stopping_position, 0.15f);
 				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
