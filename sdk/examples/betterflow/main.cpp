@@ -69,10 +69,10 @@ static void DrawColumn(Cube* pCube, int x) {
 	}
 }
 
-// wrapper for paint() that updates the footer
+// update the footer
 static int gCurrentTip = 0;
 static float gPrevTime;
-static void Paint(Cube *pCube) {
+static void DrawFooter(Cube *pCube) {
 	float time = System::clock();
 	float dt = time - gPrevTime;
 	if (dt > 4.f) {
@@ -87,7 +87,6 @@ static void Paint(Cube *pCube) {
         );
 		gCurrentTip = (gCurrentTip+1) % NUM_TIPS;
 	}
-	System::paint();
 }
 
 // retrieve the acceleration of the cube due to tilting
@@ -175,7 +174,8 @@ void siftmain() {
         Tip0.width * Tip0.height
     );
     for (int x = -1; x < NUM_TILES_X - 1; x++) { DrawColumn(pCube, x); }
-    Paint(pCube);
+    DrawFooter(pCube);
+	System::paint();
 
     // initialize physics
     float position = 0;
@@ -185,7 +185,8 @@ void siftmain() {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();
 		while(fabs(GetXAccel(pCube)) < kAccelThresholdOn) {
-			Paint(pCube);
+			DrawFooter(pCube);
+			System::paint();
 			bool touch = pCube->touching();
 			// when touching any icon but the last one
 			if (ComputeSelected(position) != NUM_ICONS-1 && touch && !prevTouch) {
@@ -268,10 +269,11 @@ void siftmain() {
 			}
 			
 			canvas.BG0_setPanning(Vec2(ui, 0));
+			DrawFooter(pCube);
 			if(paintSync) {
 				System::paintSync();
 			} else {
-				Paint(pCube);
+				System::paint();
 			}
 			lastPaint = now;
 		}
