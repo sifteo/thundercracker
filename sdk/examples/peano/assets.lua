@@ -72,8 +72,8 @@ icon_experts_only = image { "icon_experts_only.png"}
 icon_squares = image { "icon_squares.png"}
 icon_stacking_up = image { "icon_stacking_up.png"}
 
-Press_To_Select = image { "press_to_select.png", pinned=true }
-Tilt_For_More = image { "tilt_for_more.png", pinned=true}
+Press_To_Select = image { "press_to_select.png"}
+Tilt_For_More = image { "tilt_for_more.png"}
 Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
 
 Dark_Purple = image { "dark_purple.png" }

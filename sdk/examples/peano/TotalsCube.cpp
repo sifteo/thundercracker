@@ -174,9 +174,9 @@ namespace TotalsGame
             tile += -y*image->width;
             y = 0;
         }
-        if(maxy > 16)
+        if(maxy > 18)
         {
-            maxy = 16;
+            maxy = 18;
         }
         for(; y < maxy; y++)
         {
@@ -189,9 +189,9 @@ namespace TotalsGame
                 tile += -x;
                 x = 0;
             }
-            if(maxx > 16)
+            if(maxx > 18)
             {
-                maxx = 16;
+                maxx = 18;
             }
 
             for(;x < maxx; x++)
@@ -221,17 +221,17 @@ namespace TotalsGame
             p.y = 0;
         }
 
-        if(p.x + s.x > 16)
+        if(p.x + s.x > 18)
         {
-            s.x = 16 - p.x;
+            s.x = 18 - p.x;
         }
 
-        if(p.y + s.y > 16)
+        if(p.y + s.y > 18)
         {
-            s.y = 16 - p.y;
+            s.y = 18 - p.y;
         }
 
-        if(s.x == 0 || s.y == 0)
+        if(s.x <= 0 || s.y <= 0)
         {
             return;
         }
@@ -266,17 +266,17 @@ namespace TotalsGame
             p.y = 0;
         }
 
-        if(p.x + s.x > 16)
+        if(p.x + s.x > 18)
         {
-            s.x = 16 - p.x;
+            s.x = 18 - p.x;
         }
 
-        if(p.y + s.y > 16)
+        if(p.y + s.y > 18)
         {
-            s.y = 16 - p.y;
+            s.y = 18 - p.y;
         }
 
-        if(s.x == 0 || s.y == 0)
+        if(s.x <= 0 || s.y <= 0)
         {
             return;
         }

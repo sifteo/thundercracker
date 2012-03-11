@@ -26,7 +26,7 @@ namespace TotalsGame {
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;
-    static const PinnedAssetImage *kMarquee[2];    
+    static const AssetImage *kMarquee[2];
 
 private:
     int mItem ;
@@ -37,6 +37,7 @@ private:
     bool mDirty;
     int mMarquee;
     float mLastUpdate;
+    int mLastTileX;
 public:
     TiltFlowView();
     virtual ~TiltFlowView() {}
@@ -56,7 +57,6 @@ public:
 
     void WillDetachFromCube(TotalsCube *c);
 
-    void Paint();
 private:
     void PaintFooter(TotalsCube *c);
 public:
@@ -64,7 +64,7 @@ public:
 private:
     void PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s);
 
-    void DoPaintItem(TiltFlowItem *item, int x, int w);
+    void DoPaintItem(TiltFlowItem *item, int x);
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -82,8 +82,6 @@ private:
     void CoastToStop();
 
     void StopScrolling();
-
-    void ClipIt(int ox, int *x, int *w);
   };
 }
 

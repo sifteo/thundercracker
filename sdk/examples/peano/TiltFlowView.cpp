@@ -5,7 +5,7 @@
 
 namespace TotalsGame {
 
-const PinnedAssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
+const AssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
 
 const float TiltFlowView::kMinAccel = 1;
 const float TiltFlowView::kMaxAccel = 2.5f;
@@ -20,8 +20,9 @@ TiltFlowView::TiltFlowView():
     mRestTime = -1;
     mDrawLabel = true;
     mDirty = true;
-    mMarquee = 0;
-    mLastUpdate = 0;    
+    mMarquee = -1;
+    mLastUpdate = 0;
+    mLastTileX = -1;
 }
 
 int TiltFlowView::GetItemIndex()
@@ -53,22 +54,24 @@ void TiltFlowView::Tick()
         mLastUpdate += kUpdateTime;
     }
 
-    bool wantsCubePaint = false;
+    TotalsCube *c = GetCube();
 
     int newMarquee = menu->GetSimTime() / kMarqueeDelay;
+    if(menu->IsPicked())
+        newMarquee = -1;
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-        wantsCubePaint = true;
+        c->foregroundLayer.DrawPartialAsset(Vec2(0,0), Vec2(0, 15), Vec2(16,1), VaultDoor); // header image
+        PaintFooter(c);
+        c->foregroundLayer.Flush();
     }
 
     if (mDirty)
     {
-        wantsCubePaint = true;
-        mDirty = false;
+        mLastTileX = -1;
+        PaintInner(c);
     }
-
-    if (wantsCubePaint) { GetCube()->GetView()->Paint(); }
 }
 
 //-------------------------------------------------------------------------
@@ -77,91 +80,59 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
-    c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, 16-4-1));
+    c->FillArea(&Dark_Purple, Vec2(0, 0), Vec2(18, 18));
 }
 
 void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
     c->RemoveEventHandler(&eventHandler);
-}
-
-void TiltFlowView::Paint() {
-    TotalsCube *c = GetCube();
-    PaintInner(c);
-    c->ClipImage(&VaultDoor, Vec2(0, 1-16)); // header image
-    PaintFooter(c);
+    c->foregroundLayer.Flush();
 }
 
 void TiltFlowView::PaintFooter(TotalsCube *c) {
-    c->ClipImage(&VaultDoor, Vec2(0, 16-4));
-    const PinnedAssetImage *image = kMarquee[mMarquee % 2];
-
     if(menu->IsPicked())
     {
-        c->backgroundLayer.hideSprite(0)   ;
+        c->foregroundLayer.DrawPartialAsset(Vec2(0, 12), Vec2(0,0), Vec2(16,4), VaultDoor);
     }
     else
     {
-        c->backgroundLayer.setSpriteImage(0, *image, 0);
-        c->backgroundLayer.moveSprite(0, Vec2((128-8*image->width)>>1, 128-26));
+        c->foregroundLayer.DrawAsset(Vec2(0, 12), *kMarquee[mMarquee % 2]);
     }
 }
 
 void TiltFlowView::PaintInner(TotalsCube *c) {    
-    if (menu->IsPicked()) {
-        int x, w;
-        ClipIt(24, &x, &w); // magic
-        if (w > 0) {
-            DoPaintItem(GetItem(), x, w);
-            c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(x/8, 16-4-1));
-            c->FillArea(&Dark_Purple, Vec2((x+w)/8, 1), Vec2(16-(x+w)/8, 16-4-1));
-            if (mDrawLabel) {
-                //TODO draw text?  for the life of me i can't see what this does in the original
-                //Library.Verdana.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,20)); // magic
-            }
-        }
-    } else {
-        c->FillArea(&Dark_Purple, Vec2((mOffsetX+24+80)/8, 1), Vec2(2, 16-4-1));
-        c->FillArea(&Dark_Purple, Vec2((mOffsetX-72+80)/8, 1), Vec2(2, 16-4-1));
-
-        int x, w;
-        ClipIt(24, &x, &w); // magic
-        if (w > 0)
-        {
-            DoPaintItem(GetItem(), x, w);
-        }
-        if (mItem > 0)
-        {
-            ClipIt(-72, &x, &w); // magic
-            if (w > 0)
-            {
-                DoPaintItem(menu->GetItem(mItem-1), x, w);
-            }
-        }
-        if (mItem < menu->GetNumItems()-1)
-        {
-            ClipIt(120, &x, &w); // magic
-            if (w > 0)
-            {
-                DoPaintItem(menu->GetItem(mItem+1),x, 80);
-            }
-        }
+    if(menu->IsDone())
+    {
+        //TODO draw centered item sans panning.  need to adjust art because y=12
+        GetCube()->FillArea(&Dark_Purple, Vec2(0,0), Vec2(18,18));
+        GetCube()->backgroundLayer.BG0_setPanning(Vec2(0,0));
+        return;
     }
+    //left edge of center item
+    int screenX = 96 * mItem - mOffsetX;
+    int tileX = screenX / 8;
+    int scrollX = screenX % 8;
+
+    if(tileX != mLastTileX)
+    {
+        mLastTileX = tileX;
+        int centerLeftTile = 12 * mItem;
+        int baseScreenTileX = 3 + centerLeftTile - tileX;
+
+        GetCube()->FillArea(&Dark_Purple, Vec2(0,3), Vec2(18,10));
+
+        if(mItem > 0 && !menu->IsPicked())
+            DoPaintItem(menu->GetItem(mItem-1), baseScreenTileX - 12);
+        DoPaintItem(GetItem(), baseScreenTileX);
+        if(mItem < menu->GetNumItems()-1 && !menu->IsPicked())
+            DoPaintItem(menu->GetItem(mItem+1), baseScreenTileX + 12);
+    }
+
+    GetCube()->backgroundLayer.BG0_setPanning(Vec2(scrollX, 12));
 }
 
-void TiltFlowView::PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s)
-{
-    GetCube()->ClipImage(image, p/8);//, o/8, s/8);
-}
-
-void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x, int w) {
-    const int y = 12; // magic
-    const int h = 80; // magic
+void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x) {
     if (item->HasImage()) {
-        if (x==0 && w<80) {
-            PixelToTileImage(item->GetImage(), Vec2(w-80, y), item->GetSourcePosition(), Vec2(80, h));
-        } else {
-            PixelToTileImage(item->GetImage(), Vec2(x, y), item->GetSourcePosition(), Vec2(w, h));
-        }
+        GetCube()->ClipImage(item->GetImage(), Vec2(x, 3));
     }
 }
 
@@ -233,9 +204,9 @@ void TiltFlowView::UpdateMenu() {
 
         if (vSign > 0) {
             if (mItem > 0) {
-                if (mOffsetX > 45) { // magic
+                if (mOffsetX > 48) { // magic
                     mItem--;
-                    mOffsetX -= 90; // magic
+                    mOffsetX -= 96; // magic
                 } else {
                     mOffsetX += kTiltVel * mAccel;
                     mAccel = clamp(mAccel * kGravity, kMinAccel, kMaxAccel) * deepMult;
@@ -243,9 +214,9 @@ void TiltFlowView::UpdateMenu() {
             }
         } else {
             if (mItem < menu->GetNumItems()-1) {
-                if (mOffsetX < -45) { // magic
+                if (mOffsetX < -48) { // magic
                     mItem++;
-                    mOffsetX += 90; // magic
+                    mOffsetX += 96; // magic
                 } else {
                     mOffsetX -= kTiltVel * mAccel;
                     mAccel = clamp(mAccel * kGravity, kMinAccel, kMaxAccel) * deepMult;
@@ -280,16 +251,7 @@ void TiltFlowView::StopScrolling() {
     mRestTime = menu->GetSimTime();
     mDrawLabel = false;
     mDirty = true;
-}
-
-void TiltFlowView::ClipIt(int ox, int *x, int *w) {
-    *x = ox + mOffsetX;  //TODO go back through this file and put the 'floor's back in
-    *w = 80;
-    if (*x < 0) {
-        *w += *x;
-        *x = 0;
-    }
-    *w -= (*x+*w>128) ? 80-(128-*x) : 0;
+    mLastTileX = -1;
 }
 
 }
