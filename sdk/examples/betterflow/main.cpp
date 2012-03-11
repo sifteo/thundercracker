@@ -247,6 +247,10 @@ void siftmain() {
 				position += velocity * dt;
 				position = Lerp(position, stopping_position, 0.15f);
 				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
+				if(doneTilting) {
+					// prevent being off by one pixel when we stop
+					position = stopping_position;
+				}
 			}
 			
 			// update view
