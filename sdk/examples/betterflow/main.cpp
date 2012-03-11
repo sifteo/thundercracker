@@ -219,7 +219,7 @@ void siftmain() {
 				}
 				
 				float vaccel = GetYAccel(pCube);
-				if(fabs(vaccel) > kAccelThresholdOn) {
+				if(vaccel > kAccelThresholdOn) {
 					LOG(("scaling factor: %f\n", (1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G))));
 					velocity *= 1 + (vaccel * MAX_SPEED_MULTIPLIER / ONE_G);
 				}
