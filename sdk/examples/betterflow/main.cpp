@@ -231,7 +231,7 @@ void siftmain() {
 				const int selected = ComputeSelected(position);
 				const float stopping_position = StoppingPositionFor(selected);
 				velocity += stiffness * (stopping_position - position) * dt;
-				velocity *= 0.875f;
+				velocity *= 0.75f;
 				position += velocity * dt;
 				position = Lerp(position, stopping_position, 0.15f);
 				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
