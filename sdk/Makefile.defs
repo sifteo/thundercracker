@@ -28,5 +28,9 @@ CFLAGS += -MD -MP
 CFLAGS += -g
 LDFLAGS += -g
 
+ifneq ($(DISABLE_INLINING),)
+    LDFLAGS += -disable-inlining
+endif
+
 # C++ inherits CFLAGS too
 CCFLAGS += $(CFLAGS)
