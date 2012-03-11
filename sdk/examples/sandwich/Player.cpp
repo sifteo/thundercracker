@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 
 void Player::Init(Cube* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  ViewSlot *pView = pGame->ViewBegin() + (pPrimary - gCubes);
+  ViewSlot *pView = gGame.ViewBegin() + (pPrimary - gCubes);
   mCurrent.view = (RoomView*)(pView);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
@@ -25,7 +25,20 @@ void Player::Init(Cube* pPrimary) {
 }
 
 Room* Player::GetRoom() const {
-  return pGame->GetMap()->GetRoom(Location());
+  return gGame.GetMap()->GetRoom(Location());
+}
+
+bool Player::HasBasicKey() const {
+  if (mEquipment) {
+    return gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_KEY;
+  }
+  return false;
+}
+
+void Player::UseBasicKey() {
+  ASSERT(HasBasicKey());
+  gGame.GetState()->FlagTrigger(mEquipment->trigger);
+  mEquipment = 0;
 }
 
 void Player::Move(int dx, int dy) { 

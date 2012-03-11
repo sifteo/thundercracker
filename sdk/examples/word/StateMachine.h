@@ -10,8 +10,8 @@ public:
     StateMachine(unsigned startState);
 
     virtual void update(float dt);
-    virtual void onEvent(unsigned eventID, const EventData& data);
-    unsigned getCurrentStateIndex() { return mStateIndex; }
+    virtual unsigned onEvent(unsigned eventID, const EventData& data);
+    unsigned getCurrentStateIndex() const { return mStateIndex; }
     float getTime() const { return mStateTime; }
 
 protected:

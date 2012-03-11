@@ -17,22 +17,28 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
 /* TODO Touch    EventData data;
     data.mInput.mCubeID = cid;
-    WordGame::onEvent(EventID_Input, data);
+    WordGame::onEvent(EventID_Touch, data);
     */
+
+#ifdef DEBUGzz
+    DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
+    EventData data;
+    data.mInput.mCubeID = cid;
+    WordGame::onEvent(EventID_Shake, data);
+#endif
 }
 
 void onCubeEventShake(void *context, _SYSCubeID cid)
 {
-    DEBUG_LOG(("cube event shake:\t%d\n", cid));
+    DEBUG_LOG(("cube event shake, ID:\t%d\n", cid));
     EventData data;
     data.mInput.mCubeID = cid;
-    WordGame::onEvent(EventID_Input, data);
+    WordGame::onEvent(EventID_Shake, data);
 }
 
 void onCubeEventTilt(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event tilt:\t%d\n", cid));
-    //WordGame::onEvent(EventID_Input, EventData());
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Tilt, data);
@@ -76,7 +82,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
-#ifndef DEBUGzzz
+#ifndef DEBUG
     if (LOAD_ASSETS)
     {
         // start loading assets

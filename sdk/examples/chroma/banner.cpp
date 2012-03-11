@@ -5,7 +5,7 @@
  */
 
 #include "banner.h"
-#include "string.h"
+#include "game.h"
 #include "assets.gen.h"
 
 
@@ -55,6 +55,7 @@ void Banner::Update(float t)
 		{
             m_Msg.clear();
             m_fEndTime = -1.0f;
+            Game::Inst().SetChain( false );
 		}
         m_tiles++;
 

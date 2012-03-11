@@ -145,7 +145,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-		_SYS_getNeighbors(mID, &state);
+		    _SYS_getNeighbors(mID, &state);
         return state.sides[side];
     }
     
@@ -161,7 +161,7 @@ class Cube {
     Side physicalSideOf(ID cube) const {
         ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
         _SYSNeighborState state;
-		_SYS_getNeighbors(mID, &state);
+		    _SYS_getNeighbors(mID, &state);
         for(Side side=0; side<NUM_SIDES; ++side) {
             if (state.sides[side] == cube) { return side; }
         }
