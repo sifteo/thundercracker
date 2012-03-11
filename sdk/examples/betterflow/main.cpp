@@ -9,7 +9,6 @@ using namespace Sifteo;
 #define NUM_TIPS			3
 #define ELEMENT_PADDING 	16.f
 #define ICON_WIDTH      	80.f
-#define MAX_NORMAL_SPEED 	40.f
 #define MAX_SPEED_MULTIPLIER 3
 #define ACCEL_SCALING_FACTOR -0.25f
 
@@ -102,7 +101,8 @@ static float VelocityMultiplier(float yaccel) {
 	return yaccel > kAccelThresholdOff ? (1 + (yaccel * MAX_SPEED_MULTIPLIER / ONE_G)) : 1;
 }
 static float MaxVelocity(float xaccel, float yaccel) {
-	return MAX_NORMAL_SPEED *
+	const float max_normal_speed = 40.f;
+	return max_normal_speed *
 	       // x-axis linear limit
 	       (fabs(xaccel) / ONE_G) *
 	       // y-axis multiplier
@@ -222,6 +222,7 @@ void siftmain() {
 			if (isTilting && !isLefty && !isRighty) {
 				// normal scrolling
                 const float max_x = StoppingPositionFor(NUM_ICONS - 1);
+				const float inertia_threshold = 10.f;
 
 				float vaccel = GetYAccel(pCube);
 				velocity += (accel * dt) * VelocityMultiplier(vaccel);
@@ -232,7 +233,7 @@ void siftmain() {
 				}
 				
 				// don't go past the backstop unless we have inertia
-				if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || fabs(velocity) > 10) {
+				if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || fabs(velocity) > inertia_threshold) {
     			    position += velocity * dt;
 				} else {
                     velocity = 0;
