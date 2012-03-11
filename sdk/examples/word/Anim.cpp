@@ -153,7 +153,7 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisppear,
+    //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
@@ -188,7 +188,7 @@ const static AnimData animData[] =
     { 3.f, false, 1, &animObjData[9]},
     //AnimType_HintShake,
     { 0.3f, false, 1, &animObjData[37]},
-    //AnimType_HintDisppear,
+    //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     // AnimIndex_HIntSlideL
     { 0.5f, false, 3, &animObjData[11]},
@@ -223,7 +223,7 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[9]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisppear,
+    //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
@@ -268,6 +268,25 @@ bool animPaint(AnimType animT,
         unsigned char frame =
                 (unsigned char) ((float)objData.mNumFrames * animPct);
         frame = MIN(frame, objData.mNumFrames - 1);
+
+        unsigned fontFrame = font.frames + 1;
+        bool drawLetterOnTile = false;
+        bool skipObject = false;
+        if (params && params->mLetters && bg1)
+        {
+            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
+            {
+                fontFrame = params->mLetters[i] - (int)'A';
+                drawLetterOnTile = (fontFrame < font.frames);
+                skipObject = !drawLetterOnTile;
+            }
+        }
+
+        if (skipObject)
+        {
+            continue;
+        }
+
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
         Vec2 clipOffset(0,0);
@@ -312,7 +331,7 @@ bool animPaint(AnimType animT,
         case AnimType_HintAppear:
         case AnimType_HintIdle:
         case AnimType_HintShake:
-        case AnimType_HintDisppear:
+        case AnimType_HintDisappear:
         case AnimType_LockHint:
         case AnimType_LockedHint:
         case AnimType_NotWord:
@@ -322,16 +341,8 @@ bool animPaint(AnimType animT,
             break;
         }
 #endif
-        unsigned fontFrame = font.frames + 1;
-        if (params && params->mLetters && bg1)
-        {
-            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
-            {
-                fontFrame = params->mLetters[i] - (int)'A';
-            }
-        }
 
-        if (fontFrame < font.frames && objData.mLayer == Layer_BG0)
+        if (drawLetterOnTile && objData.mLayer == Layer_BG0)
         {
             Vec2 letterPos(pos);
             letterPos.y += 4; // TODO
@@ -410,7 +421,8 @@ bool animPaint(AnimType animT,
         };
 
         const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-        if (params && params->mCubeID == CUBE_ID_BASE)
+        // this makes the icon bar not obvious enough
+        //if (params && params->mCubeID == CUBE_ID_BASE)
         {
             for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
             {

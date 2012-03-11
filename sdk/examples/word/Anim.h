@@ -20,7 +20,7 @@ enum AnimType
     AnimType_HintAppear,
     AnimType_HintIdle,
     AnimType_HintShake,
-    AnimType_HintDisppear,
+    AnimType_HintDisappear,
     AnimType_SlideLHint,
     AnimType_SlideRHint,
     AnimType_LockHint,

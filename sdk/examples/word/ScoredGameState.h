@@ -16,7 +16,10 @@ public:
     static void onAudioEvent(unsigned eventID, const EventData& data);
 
 private:
+    unsigned char findNumHintsAvailable() const;
+    void makeHintsAvailable(unsigned char num) const;
 
+    unsigned char mNumHints;
 };
 
 #endif // SCOREDGAMESTATE_H

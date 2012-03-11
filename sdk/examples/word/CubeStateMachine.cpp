@@ -415,9 +415,12 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
         else
         {
             //DEBUG_LOG(("letters start: %d\n", mLettersStart));
+            // copy from the (offset) start to the end of the letters
             _SYS_strlcpy(buffer,
                          &mLetters[start],
                          GameStateMachine::getCurrentMaxLettersPerCube() + 1 - start);
+            // fill in the rest of the buffer with the substring of the letters
+            // that came after the end of the mLetters buffer, and zero terminate
             _SYS_strlcat(buffer,
                          mLetters,
                          GameStateMachine::getCurrentMaxLettersPerCube() + 1);
@@ -510,7 +513,29 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
         return AnimType_LockedHintNotWord;
 
     case AnimType_HintIdle:
-        return AnimType_HintShake;
+        // if they are able to utilize a hint now, prompt to activate
+        switch (mAnimTypes[CubeAnim_Main])
+        {
+        case AnimType_NotWord:
+        case AnimType_OldWord:
+            {
+                bool hasLetter = false;
+                for (unsigned i=0; i<GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
+                {
+                    if (mLetters[i] >= 'A' && mLetters[i] <= 'Z')
+                    {
+                        hasLetter = true;
+                        break;
+                    }
+                }
+                return hasLetter ? AnimType_HintShake : AnimType_HintIdle;
+            }
+            break;
+
+        default:
+            break;
+        }
+        return AnimType_HintIdle;
 
     case AnimType_HintShake:
         return AnimType_HintIdle;

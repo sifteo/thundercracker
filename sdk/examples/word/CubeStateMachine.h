@@ -66,8 +66,10 @@ public:
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
 
-    bool canMakeHintAvailable() const { return mAnimTypes[CubeAnim_Hint] == AnimType_None; }
+    bool isHintAvailable() const { return mAnimTypes[CubeAnim_Hint] != AnimType_None && mAnimTypes[CubeAnim_Hint] != AnimType_HintDisappear; }
+    bool canMakeHintAvailable() const { return !isHintAvailable(); }
     void makeHintAvailable() { queueAnim(AnimType_HintIdle, CubeAnim_Hint); } // TODO hint appear anim
+    void removeHint() { queueAnim(AnimType_None, CubeAnim_Hint); }
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
