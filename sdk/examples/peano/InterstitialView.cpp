@@ -1,6 +1,7 @@
 #include "InterstitialView.h"
 #include "TotalsCube.h"
 #include "Game.h"
+#include "AudioPlayer.h"
 
 namespace TotalsGame {
 
@@ -23,6 +24,15 @@ void InterstitialView::SetTransitionAmount(float u)
 
 void InterstitialView::TransitionSync(float duration, bool opening)
 {
+    if(opening)
+    {
+        AudioPlayer::PlayShutterOpen();
+    }
+    else
+    {
+        AudioPlayer::PlayShutterClose();
+    }
+
     if (GetCube()->IsTextOverlayEnabled())
     {
         GetCube()->DisableTextOverlay();

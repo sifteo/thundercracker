@@ -38,6 +38,8 @@ public:
     void DidAttachToCube (TotalsCube *c);
     void WillDetachFromCube (TotalsCube *c);
 
+    void AnimateDoors(bool opening);
+
     void OnButton(TotalsCube *c, bool pressed);
 
     void Paint ();

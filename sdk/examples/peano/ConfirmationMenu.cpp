@@ -5,6 +5,8 @@ namespace TotalsGame {
 namespace ConfirmationMenu
 {
 
+static const float kTransitionTime = 0.333f;
+
 ConfirmationChoiceView *first;
 ConfirmationChoiceView *second;
 
@@ -55,6 +57,19 @@ void ConfirmationChoiceView::OnButton(TotalsCube *c, bool pressed)
     }
 }
 
+void ConfirmationChoiceView::AnimateDoors(bool opening)
+{
+    AudioPlayer::PlayShutterOpen();
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        SetTransitionAmount(opening ? t/kTransitionTime : 1-t/kTransitionTime);
+        Paint();
+        System::paintSync();
+        Game::UpdateDt();
+    }
+    SetTransitionAmount(opening? 1 : 0);
+    Paint();
+}
+
 void ConfirmationChoiceView::Paint ()
 {
     TransitionView::Paint();
@@ -67,11 +82,8 @@ void ConfirmationChoiceView::Paint ()
 
 
 bool Run(const char *msg)
-{
-
-    static const float kTransitionTime = 0.333f;
+{    
     bool result;
-
 
     ConfirmationChoiceView yes(&Icon_Yes), no(&Icon_No);
     Game::cubes[0].SetView(&yes);
@@ -83,29 +95,10 @@ bool Run(const char *msg)
     Game::cubes[2].SetView(&label);
     label.message = msg;
 
-
-    AudioPlayer::PlayShutterOpen();
     label.TransitionSync(kTransitionTime, true);
 
-    AudioPlayer::PlayShutterOpen();
-    for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        yes.SetTransitionAmount(t/kTransitionTime);
-        yes.Paint();
-        System::paintSync();
-        Game::UpdateDt();
-    }
-    yes.SetTransitionAmount(1);
-    yes.Paint();
-
-    AudioPlayer::PlayShutterOpen();
-    for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        no.SetTransitionAmount(t/kTransitionTime);
-        no.Paint();
-        System::paintSync();
-        Game::UpdateDt();
-    }
-    no.SetTransitionAmount(1);
-    no.Paint();   //need to render one last frame before we go synchronous
+    yes.AnimateDoors(true);
+    no.AnimateDoors(true);
 
     while(!(yes.Triggered() || no.Triggered())) {
         System::paint();
@@ -116,27 +109,9 @@ bool Run(const char *msg)
     first = result ? &no : &yes;
     second = result ? &yes : &no;
 
-    AudioPlayer::PlayShutterClose();
-    for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        first->SetTransitionAmount(1-t/kTransitionTime);
-        first->Paint();
-        System::paintSync();
-        Game::UpdateDt();
-    }
-    first->SetTransitionAmount(0);
-    first->Paint();
+    yes.AnimateDoors(false);
+    no.AnimateDoors(false);
 
-    AudioPlayer::PlayShutterClose();
-    for(float t=0; t<kTransitionTime; t+=Game::dt) {
-        second->SetTransitionAmount(1-t/kTransitionTime);
-        second->Paint();
-        System::paintSync();
-        Game::UpdateDt();
-    }
-    second->SetTransitionAmount(0);
-    second->Paint();
-
-    AudioPlayer::PlayShutterClose();
     label.TransitionSync(kTransitionTime, false);
 
     Game::ClearCubeEventHandlers();

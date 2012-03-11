@@ -153,8 +153,7 @@ void RunWelcomeBack(void)
         Game::cubes[i].SetView(blankViews + i);
     }
 
-    labelView.message = "";
-    AudioPlayer::PlayShutterOpen();
+    labelView.message = "";    
     labelView.message = "Main Menu";
     labelView.TransitionSync(kDuration, true);
     Game::Wait(0.25f);
@@ -217,13 +216,12 @@ void RunWelcomeBack(void)
         Game::ClearCubeEventHandlers();
 
         // close labelView
-        AudioPlayer::PlayShutterClose();
         labelView.message = "";
         labelView.HideDescription();
         labelView.TransitionSync(kDuration, false);
+
         // transition out
         AudioPlayer::PlayShutterClose();
-
         Game::cubes[0].SetView(&tv);
         for(float t=0; t<kDuration; t+=Game::dt) {
             tv.SetTransitionAmount(1.0f-t/kDuration);
@@ -292,7 +290,6 @@ void RunSetup()
     Game::cubes[1].SetView(&labelView);
 
     Game::Wait(0.25f);    
-    AudioPlayer::PlayShutterOpen();
     labelView.message = "Game Setup";
     labelView.TransitionSync(kDuration, true);
     Game::Wait(0.25f);
@@ -376,7 +373,6 @@ void RunSetup()
         Game::ClearCubeEventHandlers();
 
      // close labelView
-        AudioPlayer::PlayShutterClose();
         labelView.TransitionSync(kDuration, false);
         // transition out
         {
@@ -421,7 +417,6 @@ void RunChapterSelect()
     TiltFlowDetailView labelView;
     Game::cubes[1].SetView(&labelView);
     labelView.message = "Select a Level";
-    AudioPlayer::PlayShutterOpen();
     labelView.TransitionSync(kDuration, true);
     Game::Wait(0.25f);
 
@@ -470,7 +465,6 @@ void RunChapterSelect()
         Game::Wait(0);
     }
     // close labelView
-    AudioPlayer::PlayShutterClose();
     Game::cubes[1].SetView(&labelView);
     labelView.TransitionSync(kDuration, false);
     Game::Wait(0);
