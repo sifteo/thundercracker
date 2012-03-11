@@ -93,3 +93,4 @@ TutorialController.cpp
 VictoryController.cpp
 DialogWindow.h
 DialogWindow.cpp
+VictoryView.cpp
