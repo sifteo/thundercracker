@@ -417,9 +417,27 @@ def LDRSB  : T32_LD <0b0011001, "ldrsb">;
 def LDRSH  : T32_LD <0b0011011, "ldrsh">;
 
 // Offset stores (RAM is implied, memory is always linear)
+//
+// XXX: These are disabled for now too, due to a subtle bug... In validation,
+//      we need to make some basic assumptions about the pointer we're getting.
+//      For example, we need to know whether it's RAM or Flash. With these patterns,
+//      however, there's no guarantee of this. We might be matching part of a shared
+//      subexpression in which the argument to (add) is not actually a valid pointer
+//      at all. I hit this in Chroma's Game() constructor, for example, where a subtract
+//      of 1024 was being factored out (and left as a 'subs' instruction) whereas a
+//      subsequent add (of greater than 1024) was being folded into these stores.
+//      This breaks when (pointer - 1024) is prior to the start of RAM.
+//
+//      To fix this properly, we'll need to be able to have some more rigorous
+//      notion of a pointer + base address probably.
+//
+//      For future work, I saved an input file that reproduces this bug:
+//        vm/doc/offset-store-bug.bc
+/*
 def : Pat< (store GPReg:$Rt, (add BP, imm12:$off)), (STR GPReg:$Rt, BP, imm12:$off)>;
 def : Pat< (truncstorei16 GPReg:$Rt, (add BP, imm12:$off)), (STRH GPReg:$Rt, BP, imm12:$off)>;
 def : Pat< (truncstorei8 GPReg:$Rt, (add BP, imm12:$off)), (STRB GPReg:$Rt, BP, imm12:$off)>;
+*/
 
 // Offset loads. Currently disabled, since these are not guaranteed
 // to work correctly on nonlinear memory such as cached flash!
