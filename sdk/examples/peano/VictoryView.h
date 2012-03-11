@@ -9,37 +9,27 @@ namespace TotalsGame {
 
 struct VictoryParticle {
     uint8_t size, sizeIndex;
-    Float2 position;
-    Float2 velocity;
+    Float2 initialPosition;
+    Float2 initialVelocity;
 
     void Initialize() {
         sizeIndex = Game::rand.randrange(3);
         size = (sizeIndex+1) * 8;
-        position.set(64, 92);
-        velocity.setPolar(
+        initialPosition.set(64, 92);
+        initialVelocity.setPolar(
                     Game::rand.uniform(-0.2f * M_PI, -0.8f * M_PI),
                     Game::rand.uniform(65, 75)
                     );
     }
 
-    void Update() {
-        while(Game::dt > 0.25f) {
-            velocity.y += 0.25f * 65;
-            position += 0.25f * velocity;
-            Game::dt -= 0.25f;
-        }
-        velocity.y += Game::dt * 65;
-        position += Game::dt * velocity;
+    bool IsOnScreen(const Float2 &p) {
+        return p.x > -(size) &&
+                p.x < (128) &&
+                p.y > -(size) &&
+                p.y < (128);
     }
 
-    bool IsOnScreen() {
-        return position.x > -size &&
-                position.x < 128 &&
-                position.y > -size &&
-                position.y < 128;
-    }
-
-    bool Paint(TotalsCube *c, int type, int id) {
+    bool Paint(TotalsCube *c, int type, int id, float time) {
         static const PinnedAssetImage *sprites[4][3] =
         {
             {&Diamond_8,&Diamond_16, &Diamond_24},
@@ -48,9 +38,12 @@ struct VictoryParticle {
             {&Coin_8, &Coin_16, &Coin_24}
         };
 
-        if (IsOnScreen()) {
+        const Float2 halfG(0, 32.5);
+        Float2 p = initialPosition + initialVelocity * time + halfG * time * time;
+
+        if (IsOnScreen(p)) {
             c->backgroundLayer.setSpriteImage(id, *sprites[type][sizeIndex], 0);
-            c->backgroundLayer.moveSprite(id, position.x, position.y);
+            c->backgroundLayer.moveSprite(id, p.x, p.y);
             return true;
         }
         else if(!c->backgroundLayer.isSpriteHidden(id))
@@ -67,6 +60,7 @@ class VictoryView : public View {
     bool mOver;
     VictoryParticle mParticles[8];
     uint8_t mType;
+    float time;
 
 public:
     VictoryView(int index) {
@@ -81,6 +75,7 @@ public:
             for(int i=0; i<8; ++i) {
                 mParticles[i].Initialize();
             }
+            time = 0;
         }
     }
 
@@ -90,9 +85,7 @@ public:
 
     void Update () {
         if (mOpen && !mOver) {
-            for(int i=0; i<8; ++i) {
-                mParticles[i].Update();
-            }
+            time += Game::dt;
         }
     }
 
@@ -106,7 +99,7 @@ public:
             GetCube()->Image(narratorTypes[mType], Vec2(0,16-narratorTypes[mType]->height));
 
             for(int i=0; i<8; ++i) {
-                mParticles[i].Paint(GetCube(), mType, i);
+                mParticles[i].Paint(GetCube(), mType, i, time);
             }
         }
         else
