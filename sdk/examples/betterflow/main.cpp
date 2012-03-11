@@ -180,7 +180,6 @@ void siftmain() {
     // initialize physics
     float position = 0;
 	int prev_ut = 0;
-	int prev_ui = 0;
 	gPrevTime = System::clock();
 	for(;;) {
 		// wait for a tilt or touch
@@ -253,6 +252,8 @@ void siftmain() {
 			// update view
 			int ui = position;
 			int ut = position / 8;
+			int paintSync = abs(prev_ut - ut) > 0;
+			
 			while(prev_ut < ut) {
 				DrawColumn(pCube, prev_ut + 17);
 				prev_ut++;
@@ -261,14 +262,13 @@ void siftmain() {
 				DrawColumn(pCube, prev_ut - 2);
 				prev_ut--;
 			}
+			
 			canvas.BG0_setPanning(Vec2(ui, 0));
-			if(abs(prev_ui - ui) > 7) {
-				LOG(("pixel delta: %d, sync\n", prev_ui - ui));
+			if(paintSync) {
 				System::paintSync();
 			} else {
 				Paint(pCube);
 			}
-			prev_ui = ui;
 			lastPaint = now;
 		}
 		{
