@@ -53,11 +53,7 @@ Game::GameState Run()
         Game::Wait(0);
     }
 
-    float t = System::clock();
-    while(!skip && t+3 > System::clock())
-    {
-        System::paint();
-    }
+    Game::Wait(3);
 
     for(int i = 0; i < NUM_CUBES; i++)
     {

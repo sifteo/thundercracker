@@ -86,7 +86,7 @@ void PaintCubeViews()
 {
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        TotalsCube *c = &cubes[0];
+        TotalsCube *c = &cubes[i];
         if(c && !c->IsTextOverlayEnabled())
         {
             View *v = c->GetView();
