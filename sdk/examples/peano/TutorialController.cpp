@@ -27,7 +27,7 @@ public:
 
 
 class ConnectTwoCubesVerticalEventHandler: public Game::NeighborEventHandler
-{
+{    
 public:
     void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 };
@@ -59,23 +59,16 @@ public:
     bool DidTouch();
 };
 
-float remembered_t;
 Puzzle *puzzle;
-TokenView firstToken, secondToken;
-float rememberedTimeout;
-int rememberedCubeId;
-int rememberedFinishCountdown ;
+
 
 NarratorView narrator;
-
+TokenView firstToken, secondToken;
 ConnectTwoCubesHorizontalEventHandler connectTwoCubesHorizontalEventHandler;
 ConnectTwoCubesVerticalEventHandler connectTwoCubesVerticalEventHandler;
 MakeSixEventHandler makeSixEventHandler;
 WaitForShakeEventHandler waitForShakeEventHandler[2];
 WaitForTouchEventHanlder waitForTouchEventHandler[2];
-
-
-
 
     /* TODO lost and found
      mGame.CubeSet.LostCubeEvent += OnLostCube;
@@ -123,8 +116,8 @@ Game::GameState Run() {
 
 
     AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=Game::dt) {
-        narrator.SetTransitionAmount(remembered_t/kTransitionDuration);
+    for(float t=0; t<kTransitionDuration; t+=Game::dt) {
+        narrator.SetTransitionAmount(t/kTransitionDuration);
         Game::Wait(0);
     }
     narrator.SetTransitionAmount(-1);
@@ -243,20 +236,20 @@ Game::GameState Run() {
     // press your luck flourish
     {
         PLAY_SFX(sfx_Tutorial_Mix_Nums);
-        rememberedTimeout = period;
-        rememberedCubeId = 0;
-        remembered_t=0;
-        while(remembered_t<3.0f) {
-            remembered_t += Game::dt;
-            rememberedTimeout -= Game::dt;
-            while (rememberedTimeout < 0) {
-                (rememberedCubeId==0?firstToken:secondToken).PaintRandomNumeral();
-                narrator.SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
-                rememberedCubeId = (rememberedCubeId+1) % 2;
-                rememberedTimeout += period;
+        float timeout = period;
+        int cubeId = 0;
+        float t=0;
+        while(t<3.0f) {
+            t += Game::dt;
+            timeout -= Game::dt;
+            while (timeout < 0) {
+                (cubeId==0?firstToken:secondToken).PaintRandomNumeral();
+                narrator.SetEmote(cubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
+                cubeId = (cubeId+1) % 2;
+                timeout += period;
             }
 
-            narrator.GetCube()->Image(rememberedCubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+            narrator.GetCube()->Image(cubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
             firstToken.PaintNow();
             secondToken.PaintNow();
             System::paintSync();
@@ -271,15 +264,15 @@ Game::GameState Run() {
         secondToken.token->val = 3;
         secondToken.token->SetOpBottom(OpDivide);
         // thread in the real numbers
-        rememberedFinishCountdown = 2;
-        while(rememberedFinishCountdown > 0) {
+        float finishCountdown = 2;
+        while(finishCountdown > 0) {
             Game::Wait(0);
-            rememberedTimeout -= Game::dt;
-            while(rememberedFinishCountdown > 0 && rememberedTimeout < 0) {
-                --rememberedFinishCountdown;
-                (rememberedCubeId==1?firstToken:secondToken).ResetNumeral();
-                rememberedCubeId++;
-                rememberedTimeout += period;
+            timeout -= Game::dt;
+            while(finishCountdown > 0 && timeout < 0) {
+                --finishCountdown;
+                (cubeId==1?firstToken:secondToken).ResetNumeral();
+                cubeId++;
+                timeout += period;
             }
         }
     }
@@ -412,8 +405,8 @@ Game::GameState Run() {
 
     AudioPlayer::PlayShutterClose();
     Game::cubes[0].SetView(NULL);
-    for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=Game::dt) {
-        narrator.SetTransitionAmount(1.0f-remembered_t/kTransitionDuration);
+    for(float t=0; t<kTransitionDuration; t+=Game::dt) {
+        narrator.SetTransitionAmount(1.0f-t/kTransitionDuration);
         Game::Wait(0);
     }
     Game::cubes[0].SetView(blankViews+0);
