@@ -272,7 +272,7 @@ bool animPaint(AnimType animT,
         unsigned fontFrame = font.frames + 1;
         bool drawLetterOnTile = false;
         bool skipObject = false;
-        if (params && params->mLetters && bg1)
+        if (params && params->mLetters && params->mLetters[0] && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
             {

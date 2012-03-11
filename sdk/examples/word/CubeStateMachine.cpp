@@ -1256,19 +1256,20 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
 
     }
 
+    Cube &c = getCube();
+    AnimParams params;
+    getAnimParams(&params);
+    updateAnim(vid, &bg1, &params);
+
+#if (0)
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
         {
-            Cube &c = getCube();
-            AnimParams params;
-            getAnimParams(&params);
-            updateAnim(vid, &bg1, &params);
         }
       break;
 
     case 3:
-#if (0)
         /* TODO remove
 vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
         vid.BG0_drawPartialAsset(Vec2(17, 0),
@@ -1300,11 +1301,9 @@ vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
                 vid.BG0_drawAsset(Vec2(12,6), font, frame);
             }
         }
-#endif
       break;
 
     default:
-#if (0)
         vid.BG0_drawAsset(Vec2(0,0), TileBG);
         {
             unsigned frame = *str - (int)'A';
@@ -1336,9 +1335,9 @@ vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
                 */
             }
         }
-#endif
         break;
     }
+#endif
 }
 
 void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
@@ -1371,15 +1370,26 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
 {
     ASSERT(params);
     Cube &c = getCube();
-
-    if (!getLetters(params->mLetters, true))
+    params->mLetters[0] = '\0';
+    switch (mAnimTypes[CubeAnim_Main])
     {
-        return false;
+    case AnimType_EndofRound:
+    case AnimType_Shuffle:
+    case AnimType_CityProgression:
+        break;
+
+    default:
+        if (!getLetters(params->mLetters, true))
+        {
+            return false;
+        }
+        break;
     }
 
     params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     params->mCubeID = getCube().id();
+    params->mBorders = false; // FIXME roll into border rendering CubeAnim
     return true;
 }
 
