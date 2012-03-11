@@ -203,9 +203,13 @@ bool SVMAlignPass::hasRegHazard(const MachineInstr &MI,
             // Redefining a register that is used
             if (MO.isDef() && isRegInSet(RegUses, MO.getReg()))
                 return true;
+
+            // Defining a register that will be overwritten
+            if (MO.isDef() && isRegInSet(RegDefs, MO.getReg()))
+                return true;            
         }
     }
-    
+
     return false;
 }
 

@@ -138,6 +138,7 @@ def Bcc : T16<(outs), (ins bccTarget:$offset8, CCop:$cc, CPSRReg:$c),
     "b$cc\t$offset8", []> {
     let isBranch = 1;
     let isTerminator = 1;
+    let Uses = [CPSR];
 }
 
 def B : T18<(outs), (ins bTarget:$offset11),
