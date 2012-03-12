@@ -129,7 +129,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         if (data.mInput.mCubeID == mCube->id())
         {
             mIdleTime = 0.f;
-
+            char letters[MAX_LETTERS_PER_CUBE + 1];
             switch (getAnim())
             {
             case AnimType_NotWord:
@@ -137,7 +137,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case AnimType_SlideR:
             case AnimType_OldWord:
             case AnimType_NewWord:
-                if (mAnimTypes[CubeAnim_Hint] == AnimType_HintIdle)
+                if (mAnimTypes[CubeAnim_Hint] == AnimType_HintIdle &&
+                    getLetters(letters) && findNumLetters(letters) > 0)
                 {
                     mHintRequested = true;
                 }
@@ -360,6 +361,24 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     return StateMachine::onEvent(eventID, data);
 }
 
+unsigned CubeStateMachine::findNumLetters(char *string)
+{
+    if (string == 0)
+    {
+        return 0;
+    }
+
+    unsigned count = 0;
+    for (unsigned i=0; i<GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
+    {
+        if (string[i] < 'A' || string[i] > 'Z')
+        {
+            return count;
+        }
+        ++count;
+    }
+    return count;
+}
 
 unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
 {

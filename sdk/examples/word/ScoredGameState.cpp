@@ -67,8 +67,7 @@ void ScoredGameState::makeHintsAvailable(unsigned char num) const
         if (csmAddHint &&
             csmAddHint->canMakeHintAvailable() &&
             csmAddHint->getLetters(letters) &&
-                letters[0] != '\0' &&
-                letters[0] != ' ')
+            CubeStateMachine::findNumLetters(letters) > 0)
         {
             csmAddHint->makeHintAvailable();
             --num;
