@@ -1,18 +1,29 @@
 GameAssets = group{}
 
-Star = image{"star-8.png", pinned=true, width=8, height=8, quality=10}
+Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
+HintSprite = image{"hint_bulb.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
-BorderSlotBlank = image{"wp2_border_bottom_slot_blank.png", quality=10}
-BorderSlotNormal = image{"wp2_border_bottom_slot_normal.png", quality=10}
-BorderSlotBonus = image{"wp2_border_bottom_slot_bonus.png", quality=10}
-Tile2 = image{"wp2_tile01.png", quality=10}
-Tile2Glow = image{"wp2_tile02.png", quality=10}
-Font1Letter = image{"WC_letters.png", width=120, height=88, quality=0}
-Font2Letter = image{"font_2ltr.png", width=48, height=48, quality=10}
+BorderSlotBlank = image{"border_available01.png", quality=10}
+BorderSlotNormal = image{"border_created_basic01.png", quality=10}
+BorderSlotBonus = image{"border_created_bonus01.png", quality=10}
+BorderLockedBR = image{"border_locked_br.png", quality=10}
+BorderLockedUR = image{"border_locked_ur.png", quality=10}
+BorderLockedBL = image{"border_locked_bl.png", quality=10}
+BorderLockedUL = image{"border_locked_ul.png", quality=10}
+Tile2 = image{"tile_ivory_idle00.png", quality=10}
+Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
+Tile2Meta = image{"wp2_tile05.png", quality=10}
+Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=10}
+Tile3 = image{"tile_ivory_narrow_idle00.png", quality=10}
+Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=10}
+Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=10}
+Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=10}
+Font1Letter = image{"font_2ltr.png"}--, width=120, height=88, quality=0}
+Font2Letter = image{"font_2ltr.png", width=48, height=40, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
 TileBG = image{"wp2_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
@@ -21,11 +32,6 @@ HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}
 FontBonus = image{"score_font_bonus.png", width=8, height=16, quality=10}
-FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
-TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
-TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
-TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
 
 blip = sound{"blip.raw", encode="PCM"}
 bonus = sound{"bonus.raw", encode="PCM"}

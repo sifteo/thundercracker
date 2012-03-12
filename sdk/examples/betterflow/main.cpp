@@ -2,122 +2,111 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-#define NUM_CUBES 3
-#define LOAD_ASSETS 1
-static Cube gCubes[NUM_CUBES];
+// Constants
+#define NUM_CUBES 		3
+#define LOAD_ASSETS		1
+#define SFX_ON 			0
+#define MUSIC_ON 		0
+#define NUM_ICONS 		4
+#define NUM_TIPS		3
 
+//typedef VidMode_BG0 Canvas;
 typedef VidMode_BG0 Canvas;
 
-#define NUM_ICONS 6
-static const AssetImage* gIcons[NUM_ICONS] = {
-	&Icon, &IconGreen, &IconBlue, &Icon, &IconGreen, &IconBlue
-};
+// Static Globals
+static Cube gCubes[NUM_CUBES];
+static const AssetImage* gIcons[NUM_ICONS] = { &IconChroma, &IconSandwich, &IconPeano, &IconBuddy };
+static const AssetImage* gTips[NUM_TIPS] = { &Tip0, &Tip1, &Tip2 };
+static const AssetImage* gLabels[NUM_ICONS] = { &LabelChroma, &LabelSandwich, &LabelPeano, &LabelBuddy };
 
-static void DrawClipped(Cube *pCube, Vec2 point, const Sifteo::AssetImage& asset, unsigned frame=0) {
-	ASSERT( frame < asset.frames );
-	if (point.x < 0) {
-		int gutter = -point.x;
-        _SYS_vbuf_wrect(
-            &pCube->vbuf.sys, 
-            Canvas(pCube->vbuf).BG0_addr(Vec2(point.x, point.y)) + gutter,
-            asset.tiles + asset.width * asset.height * frame + gutter, 
-            0,
-            asset.width - gutter, 
-            asset.height, 
-            asset.width, 
-            Canvas::BG0_width
-        );
-	} else {
-        int extrema = point.x + asset.width;
-        int clip = extrema - Canvas::BG0_width;
-        _SYS_vbuf_wrect(
-            &pCube->vbuf.sys, 
-            Canvas(pCube->vbuf).BG0_addr(point), 
-            asset.tiles + asset.width * asset.height * frame, 
-            0,
-            asset.width-(clip>0?clip:0), 
-            asset.height, 
-            asset.width, Canvas::BG0_width
-        );
-	}
-
-}
-
-
-unsigned unsigned_mod(int x, unsigned y) {
-    // Modulo operator that always returns an unsigned result
-
-    int z = x % (int)y;
-    if (z < 0) z += y;
-    return z;
-}
+// Modulo operator that always returns an unsigned result
+inline unsigned UnsignedMod(int x, unsigned y) { const int z = x % (int)y; return z < 0 ? z+y : z; }
+inline float Lerp(float min, float max, float u) { return min + u * (max - min); }
+inline int ComputeSelected(float u) { int s = (u + (48.f))/96.f; return clamp(s, 0, NUM_ICONS-1); }
+inline float StoppingPositionFor(int selected) { return 96.f * (selected); }
 
 // positions are in pixel units
 // columns are in tile-units
 // each icon is 80px/10tl wide with a 16px/2tl spacing
-
 static void DrawColumn(Cube* pCube, int x) {
-	// is this a blank column or an icon column?
-
-    uint16_t addr = unsigned_mod(x, 18);
-    x -= 3;
-	uint16_t local_x = unsigned_mod(x, 12);
-	Canvas g(pCube->vbuf);
-	int iconId = (x +120)/ 12 - 10;
+	// x is the column in "global" space
+    uint16_t addr = UnsignedMod(x, 18);
+    x -= 3; // because the first icon is 24px inset
+	const uint16_t local_x = UnsignedMod(x, 12);
+	const int iconId = (x +120)/ 12 - 10; // weird math to avoid negative-floor
+	// icon or blank column?
 	if (local_x < 10 && iconId >= 0 && iconId < NUM_ICONS) {
-		
-		const AssetImage* pImg = gIcons[x / 12];
-		const uint16_t *src = pImg->tiles + unsigned_mod(local_x, pImg->width);
 		// drawing an icon column
+		const AssetImage* pImg = gIcons[x / 12];
+		const uint16_t *src = pImg->tiles + UnsignedMod(local_x, pImg->width);
+		addr += 2*18;
 		for(int row=0; row<10; ++row) {
 	        _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
     	    addr += 18;
         	src += pImg->width;
 
 		}
-
 	} else {
-		
 		// drawing a blank column
+		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row), BgTile);
+			g.BG0_drawAsset(Vec2(addr, row+2), BgTile);
 		}
-
-	}
-
-
-	for(int row=0; row<10; ++row) {
 
 	}
 }
 
+// wrapper for paint() that updates the footer
+static int gCurrentTip = 0;
+static float gPrevTime;
+static void Paint(Cube *pCube) {
+	float time = System::clock();
+	float dt = time - gPrevTime;
+	if (dt > 4.f) {
+		gPrevTime = time - fmodf(dt, 4.f);
+		const AssetImage& tip = *gTips[gCurrentTip];
+        _SYS_vbuf_writei(
+        	&pCube->vbuf.sys, 
+        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + LabelEmpty.width * LabelEmpty.height,
+            tip.tiles, 
+            0, 
+            tip.width * tip.height
+        );
+		gCurrentTip = (gCurrentTip+1) % NUM_TIPS;
+	}
+	System::paint();
+}
+
+// retrieve the acceleration of the cube due to tilting
+const float kAccelThresholdOn = 1.15f;
+const float kAccelThresholdOff = 0.85f;
+static float GetAccel(Cube *pCube) {
+	return -0.25f * pCube->virtualAccel().x;
+}
+
+// entry point
 void siftmain() {
-
 	// enable cube slots
-	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
-    	p->enable(p-gCubes);
-  	}
-
+	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) { p->enable(p-gCubes); }
   	// load assets
 	#if LOAD_ASSETS
-	for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
-		p->loadAssets(BetterflowAssets);
-		VidMode_BG0_ROM rom(p->vbuf);
-		rom.init();
-		rom.BG0_text(Vec2(1,1), "Loading!?!");
-	}
-	bool done = false;
-	while(!done) {
-		done = true;
 		for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
+			p->loadAssets(BetterflowAssets);
 			VidMode_BG0_ROM rom(p->vbuf);
-			rom.BG0_progressBar(Vec2(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
-			done &= p->assetDone(BetterflowAssets);
+			rom.init();
+			rom.BG0_text(Vec2(1,1), "Loading...");
 		}
-		System::paint();
-	}
+		bool done = false;
+		while(!done) {
+			done = true;
+			for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
+				VidMode_BG0_ROM rom(p->vbuf);
+				rom.BG0_progressBar(Vec2(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
+				done &= p->assetDone(BetterflowAssets);
+			}
+			System::paint();
+		}
 	#endif
-
 	// blank screens
 	for(Cube* p=gCubes; p!=gCubes+NUM_CUBES; ++p) {
 		Canvas g(p->vbuf);
@@ -129,44 +118,150 @@ void siftmain() {
 		}
 
 	}
-
 	// sync up
 	System::paintSync();
 	for(Cube* p=gCubes; p!=gCubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
 	System::paintSync();
 	for(Cube* p=gCubes; p!=gCubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
 	System::paintSync();
-	
+	// initialize view
 	Cube *pCube = gCubes;
+	_SYS_vbuf_pokeb(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_BG1);
 	Canvas canvas(pCube->vbuf);
-	canvas.setWindow(16,80);
-
-    for (int x = -1; x < 17; x++) {
-    	DrawColumn(pCube, x);
-    }
-    float t = 0;
-	float u = 0;
-	int prev_ut = 0;
 	for(;;) {
+	// HACK ALERT: Relies on the fact that vram is the same for both modes
+	canvas.clear();
+	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+	BG1Helper(*pCube).Flush();
+    // Allocate tiles for the static upper label, and draw it.
+    {
+    	const AssetImage& label = *gLabels[0];
+    	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
+    	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+	}
+	// Allocate tiles for the footer, and draw it.
+    _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 12, ((1 << Tip0.width) - 1), Tip0.height);
+    _SYS_vbuf_writei(
+    	&pCube->vbuf.sys, 
+    	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + LabelEmpty.width * LabelEmpty.height,
+        Tip0.tiles, 
+        0, 
+        Tip0.width * Tip0.height
+    );
+    for (int x = -1; x < 17; x++) { DrawColumn(pCube, x); }
+    Paint(pCube);
+    // initialize physics
+    float position = 0;
+	int prev_ut = 0;
+	gPrevTime = System::clock();
+	for(;;) {
+		// wait for a tilt or touch
+		bool prevTouch = pCube->touching();
+		while(fabs(GetAccel(pCube)) < kAccelThresholdOn) {
+			Paint(pCube);
+			bool touch = pCube->touching();
+			// when touching any icon but the last one
+			if (ComputeSelected(position) != NUM_ICONS-1 && touch && !prevTouch) {
+				goto Selected;
+			} else {
+				prevTouch = touch;
+			}
 
-		// do telem
-		t += 0.15f * pCube->virtualAccel().x;
-		if (t < 0.f) { t = 0.f; }
-		else if (t > 96 * (NUM_ICONS-1)) { t = 96 * (NUM_ICONS-1); }
-		u = 0.75f * u + + 0.25f * t;
+		}
+		// hide label
+	    _SYS_vbuf_writei(
+	    	&pCube->vbuf.sys, 
+	    	offsetof(_SYSVideoRAM, bg1_tiles) / 2, 
+	    	LabelEmpty.tiles, 0, 
+	    	LabelEmpty.width * 
+	    	LabelEmpty.height
+	    );
+		bool doneTilting = false;
+		float velocity = 0;
+		position = StoppingPositionFor(ComputeSelected(position));
+		while(!doneTilting) {
+			// update physics
+			const float accel = GetAccel(pCube);
+			const float dt = 0.225f;
+			const bool isTilting = fabs(accel) > kAccelThresholdOff;
+			const bool isLefty = position < 0.f - 0.05f;
+			const bool isRighty = position > 96.f*(NUM_ICONS-1) + 0.05f;
+			if (isTilting && !isLefty && !isRighty) {
+				velocity += accel * dt;
+				velocity *= 0.99f;
+				position += velocity * dt;
+			} else {
+				const float stiffness = 0.333f;
+				const int selected = ComputeSelected(position);
+				const float stopping_position = StoppingPositionFor(selected);
+				velocity += stiffness * (stopping_position - position) * dt;
+				velocity *= 0.875f;
+				position += velocity * dt;
+				position = Lerp(position, stopping_position, 0.15f);
+				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
+			}
+			const float pad = 24.f;
+			// update view
+			int ui = position + 0.5f;
+			int ut = position / 8;
+			// TODO: Sometimes, on really fast accelerations, there's a column
+			// 		of garbage tiles on the side of the screen; is this a firmware
+			//		bug or a logic bug here?
+			while(prev_ut < ut) {
+				DrawColumn(pCube, prev_ut + 17);
+				prev_ut++;
+			}
+			while(prev_ut > ut) {
+				DrawColumn(pCube, prev_ut - 2);
+				prev_ut--;
+			}
+			canvas.BG0_setPanning(Vec2(ui, 0));
+			Paint(pCube);
+		}
+		{
+			// show the title of the game
+			const AssetImage& label = *gLabels[ComputeSelected(position)];
+		    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+		}
+	}
+	Selected:
+	// isolate the selected icon
+	canvas.BG0_setPanning(Vec2(0,0));
+	// kinda sub-optimal :P
+	for(int row=0; row<12; ++row)
+	for(int col=0; col<16; ++col) {
+		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
+	}
+	canvas.BG0_drawAsset(Vec2(0, 12), Footer);
+	// TODO: Phase-Out BG1Helper code with optimized code
+	{
+		BG1Helper overlay(*pCube);
+		overlay.DrawAsset(Vec2(3, 2), *gIcons[ComputeSelected(position)]);
+		overlay.Flush();
+	}
+	System::paintSync();
+	// GFX Workaround
+	pCube->vbuf.touch();
+	System::paintSync();
 
-		// update view
-		int ui = u + 0.5f;
-		int ut = u / 8;
-		while(prev_ut < ut) {
-			DrawColumn(pCube, prev_ut + 17);
-			prev_ut++;
-		}
-		while(prev_ut > ut) {
-			DrawColumn(pCube, prev_ut - 2);
-			prev_ut--;
-		}
-		canvas.BG0_setPanning(Vec2(ui, 0));
+	// scroll-out icon with a parabolic arc
+	const float k = 5.f;
+	int i=0;
+	int prevBottom = 12;
+	int offset = 0;
+	while(offset>-128) {
+		i++;
+		float u = i/33.f;
+		u = (1.f-k*u);
+		offset = int(12*(1.f-u*u));
+		// HACK ALERT: Relies on the fact that vram is the same for both modes
+		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
 		System::paint();
+	}
+	// TODO: actually choose game
+	LOG(("Selected Game: %d\n", ComputeSelected(position)));
+	for(int i=0; i<32; ++i) {
+		System::paint();
+	}
 	}
 }

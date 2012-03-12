@@ -5,9 +5,9 @@ import re
 import tmx
 import misc
 
-EXP_REGULAR = re.compile(r"^([a-z]+)$")
-EXP_PLUS = re.compile(r"^([a-z]+)\+(\d+)$")
-EXP_MINUS = re.compile(r"^([a-z]+)\-(\d+)$")
+EXP_REGULAR = re.compile(r"^([\w]+)$")
+EXP_PLUS = re.compile(r"^([\w]+)\+(\d+)$")
+EXP_MINUS = re.compile(r"^([\w]+)\-(\d+)$")
 
 class QuestDatabase:
 	def __init__(self, world, path):
@@ -24,6 +24,7 @@ class QuestDatabase:
 		self.unlockables_dict = dict((flag.id, flag) for flag in self.unlockables)
 	
 	def getquest(self, name):
+		name = name.lower()
 		m = EXP_REGULAR.match(name)
 		if m is not None:
 			return self.quest_dict[name]
@@ -47,6 +48,7 @@ class Quest:
 	def __init__(self, index, xml):
 		self.index = index
 		self.id = xml.get("id").lower()
+		print "Quest:", self.id
 		self.map = xml.get("map").lower()
 		self.x = int(xml.get("x"))
 		self.y = int(xml.get("y"))

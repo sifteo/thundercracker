@@ -375,6 +375,8 @@ void Game::OnPickup(Room *pRoom) {
     );
     mPlayer.CurrentView()->HideItem();        
   }
+
+  OnTriggerEvent(pItem->trigger.eventType);
 }
 
 unsigned Game::OnPassiveTrigger() {
@@ -457,6 +459,8 @@ void Game::OnActiveTrigger() {
       128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
     ));
 
+    OnTriggerEvent(pGate->trigger.eventType);
+
   } else if (mPlayer.GetRoom()->HasNPC()) {
     
     //-------------------------------------------------------------------------
@@ -471,6 +475,7 @@ void Game::OnActiveTrigger() {
     mPlayer.CurrentView()->Parent()->Restore();
     System::paintSync();
 
+    OnTriggerEvent(pNpc->trigger.eventType);
   }  
 
   if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
@@ -499,6 +504,30 @@ void Game::OnUseEquipment() {
     OnDropEquipment(pRoom); // default
   }
   
+}
+
+void Game::OnTriggerEvent(unsigned id) {
+  switch(id) {
+    case EVENT_ADVANCE_QUEST_AND_REFRESH:
+      mState.AdvanceQuest();
+      mMap.RefreshTriggers();
+      for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+        if (p->IsShowingRoom()) {
+          p->Restore();
+        }
+      }
+      break;
+    case EVENT_ADVANCE_QUEST_AND_TELEPORT:
+      mState.AdvanceQuest();
+      const QuestData* quest = mState.Quest();
+      const MapData& map = gMapData[quest->mapId];
+      const RoomData& room = map.rooms[quest->roomId];
+      TeleportTo(map, Vec2 (
+        128 * (quest->roomId % map.width) + 16 * room.centerX,
+        128 * (quest->roomId / map.width) + 16 * room.centerY
+      ));
+      break;
+  }
 }
 
 //------------------------------------------------------------------

@@ -13,6 +13,14 @@ KEYWORD_TO_TRIGGER_TYPE = {
 #	"trapdoor": TRIGGER_TRAPDOOR
 }
 
+EVENT_NONE = 0
+EVENT_ADVANCE_QUEST_AND_REFRESH = 1
+EVENT_ADVANCE_QUEST_AND_TELEPORT = 2
+KEYWORD_TO_TRIGGER_EVENT = {
+	"advancequestandrefresh": EVENT_ADVANCE_QUEST_AND_REFRESH,
+	"advancequestandteleport": EVENT_ADVANCE_QUEST_AND_TELEPORT
+}
+
 
 class Trigger:
 	def __init__(self, room, obj):
@@ -20,6 +28,7 @@ class Trigger:
 		self.room = room
 		self.raw = obj
 		self.type = KEYWORD_TO_TRIGGER_TYPE[obj.type]
+		
 		# deterine quest state
 		self.quest = None
 		self.minquest = None
@@ -80,6 +89,14 @@ class Trigger:
 		elif self.unlockflag is not None: self.flagid = self.unlockflag.gindex
 		else: self.flagid = 0
 
+		# check for special onTrigger flags
+		if "ontrigger" in obj.props:
+			triggerEventName = obj.props["ontrigger"].lower()
+			assert triggerEventName in KEYWORD_TO_TRIGGER_EVENT
+			self.event = KEYWORD_TO_TRIGGER_EVENT[triggerEventName]
+		else:
+			self.event = EVENT_NONE
+
 
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
@@ -92,12 +109,12 @@ class Trigger:
 
 	
 	def write_trigger_to(self, src):
-		src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }" % (self.qbegin, self.qend, self.flagid, self.room.lid))
+		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x}" % (self.qbegin, self.qend, self.flagid, self.room.lid, self.event))
 
 	def write_item_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		src.write(", 0x%x }, " % self.item.numeric_id)
+		src.write(",0x%x}, " % self.item.numeric_id)
 	
 	def write_gateway_to(self, src):
 		src.write("{ ")
@@ -105,12 +122,12 @@ class Trigger:
 		mapid = self.room.map.world.map_dict[self.target_map].index
 		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
 		x,y = self.local_position()
-		src.write(", 0x%x, 0x%x, 0x%x, 0x%x }, " % (mapid, gateid, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (mapid, gateid, x, y))
 	
 	def write_npc_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(", 0x%x, 0x%x, 0x%x }, " % (self.dialog.index, x, y))
+		src.write(",0x%x,0x%x,0x%x}, " % (self.dialog.index, x, y))
 
 

@@ -18,6 +18,11 @@ GameStateMachine::GameStateMachine(Cube cubes[]) :
 {
     ASSERT(cubes != 0);
     sInstance = this;
+    for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
+    {
+        mLevelProgressData.mPuzzleProgress[i] = CheckMarkState_Hidden;
+    }
+
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
         mCubeStateMachines[i].setCube(cubes[i]);

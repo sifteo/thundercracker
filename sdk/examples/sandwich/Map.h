@@ -46,7 +46,8 @@ public:
   void Init();
 
   void SetData(const MapData& map);
-  
+  void RefreshTriggers();
+
   Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
   Room* GetRoom(Vec2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
 
