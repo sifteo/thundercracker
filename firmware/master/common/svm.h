@@ -31,6 +31,17 @@ enum InstructionSize {
     InstrBits32
 };
 
+/***************************************************************************
+ * Utilities
+ ***************************************************************************/
+
+// http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
+template <typename T, unsigned B>
+static inline T SignExtend(const T x) {
+    struct { T x:B; } s;
+    return s.x = x;
+}
+
 static InstructionSize instructionSize(uint16_t instr) {
     // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
     // 0xe800 == 0b11101 << 11

@@ -61,22 +61,6 @@ static struct  {
     HwContext hw;
 } userRegs;
 
-/***************************************************************************
- * Utilities
- ***************************************************************************/
-
-template <typename T>
-static inline T Align(T x, T y) {
-    return y * (x / y);
-}
-
-// http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
-template <typename T, unsigned B>
-static inline T SignExtend(const T x) {
-    struct { T x:B; } s;
-    return s.x = x;
-}
-
 
 /***************************************************************************
  * Flags and Condition Codes
