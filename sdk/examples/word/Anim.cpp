@@ -361,8 +361,30 @@ bool animPaint(AnimType animT,
         {
             vid.moveSprite(0, objData.mPositions[frame]);
             vid.resizeSprite(0, size);
-            vid.setSpriteImage(0, *objData.mSpriteAsset);
+            vid.setSpriteImage(0, *objData.mSpriteAsset, assetFrame);
         }
+    }
+
+    // do procedural sprite stuff, it may not be a good fit for the data
+    // driven approach
+    switch (animT)
+    {
+    case AnimType_NewWord:
+        {
+            float t = 4.f * animTime/data.mDuration;
+            t = fmodf(t, 1.0f);
+            unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
+            for (unsigned i=1; i<8; ++i)
+            {
+                //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
+                vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
+                vid.resizeSprite(i, Sparkle.width, Sparkle.height);
+                vid.setSpriteImage(i, Sparkle, assetFrame);
+            }
+        }
+        break;
+    default:
+        break;
     }
 
     if (params && params->mBorders)
@@ -397,7 +419,6 @@ bool animPaint(AnimType animT,
             bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
             vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
         }
-
 
         const LevelProgressData &progressData =
                 GameStateMachine::getInstance().getLevelProgressData();

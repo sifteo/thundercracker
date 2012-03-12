@@ -174,32 +174,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_EnterState:
-        switch (mAnimTypes[CubeAnim_Main])
-        {
-        default:
-            break;
-
-        case AnimType_NewWord:
-            {
-                Cube& c = getCube();
-                mImageIndex = ImageIndex_ConnectedWord;
-                if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-                    c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-                {
-                    mImageIndex = ImageIndex_ConnectedLeftWord;
-                }
-                else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-                         c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-                {
-                    mImageIndex = ImageIndex_ConnectedRightWord;
-                }
-            }
-            //WordGame::instance()->setNeedsPaintSync();
-            break;
-        }
-        {
-            queueNextAnim();//vid, bg1, params);
-        }
+        queueNextAnim();//vid, bg1, params);
         mIdleTime = 0.f;
         paint();
         WordGame::instance()->setNeedsPaintSync();
@@ -445,6 +420,49 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
     WordGame::instance()->setNeedsPaintSync();
 
     // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
+
+    switch (anim)
+    {
+    default:
+        break;
+
+    case AnimType_NewWord:
+        {
+            Cube& c = getCube();
+            mImageIndex = ImageIndex_ConnectedWord;
+            if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
+                c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
+            {
+                mImageIndex = ImageIndex_ConnectedLeftWord;
+            }
+            else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
+                     c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
+            {
+                mImageIndex = ImageIndex_ConnectedRightWord;
+            }
+
+            // setup sprite params
+            for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
+            {
+                calcSpriteParams(i);
+            }
+        }
+        //WordGame::instance()->setNeedsPaintSync();
+        break;
+    }
+
+}
+
+void CubeStateMachine::calcSpriteParams(unsigned i)
+{
+    mSpriteParams.mPositions[i].x = 56.f;
+    mSpriteParams.mPositions[i].y = 56.f;
+    float angle = i * M_PI_4;
+    mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
+                                                                     angle * 1.25f),
+                                            WordGame::random.uniform(32.f, 52.f));
+    mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
+    mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
 }
 
 void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
@@ -469,7 +487,6 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
             default:
                 break;
             }
-
             break;
 
         default:
@@ -760,6 +777,25 @@ void CubeStateMachine::update(float dt)
         break;
 
     case AnimType_NewWord:
+        for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
+        {
+            // eased approach
+            const Float2 &v =
+                    (mSpriteParams.mEndPositions[i] - mSpriteParams.mPositions[i]);
+            if (v.len2() < 2.f)
+            {
+                calcSpriteParams(i);
+            }
+            else if (mSpriteParams.mStartDelay[i] <= 0.f)
+            {
+                mSpriteParams.mPositions[i] += 6.f * dt * v;
+            }
+            else
+            {
+                mSpriteParams.mStartDelay[i] -= dt;
+            }
+        }
+
         if (mAnimTimes[CubeAnim_Main] <= 1.5f)
         {
             // do nothing
@@ -1253,8 +1289,20 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
         default:
             vid.hideSprite(0); // TODO sprite IDs
             break;
-        }
+        }        
+    }
 
+    switch (mAnimTypes[CubeAnim_Main])
+    {
+    case AnimType_NewWord:
+        break;
+
+    default:
+        for (unsigned i=1; i<8; ++i)
+        {
+            vid.hideSprite(i);
+        }
+        break;
     }
 
     Cube &c = getCube();
@@ -1372,6 +1420,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     ASSERT(params);
     Cube &c = getCube();
     params->mLetters[0] = '\0';
+    params->mSpriteParams = 0;
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_EndofRound:
@@ -1379,6 +1428,9 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     case AnimType_CityProgression:
         break;
 
+    case AnimType_NewWord:
+        params->mSpriteParams = &mSpriteParams;
+        // fall through
     default:
         if (!getLetters(params->mLetters, true))
         {

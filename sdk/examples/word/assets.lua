@@ -1,6 +1,6 @@
 GameAssets = group{}
 
-Star = image{"star-8.png", pinned=true, width=8, height=8, quality=10}
+Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_bulb.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}

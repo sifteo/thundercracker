@@ -88,6 +88,7 @@ private:
 
     bool getAnimParams(AnimParams *params);
     void setLettersStart(unsigned s);
+    void calcSpriteParams(unsigned i);
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
@@ -110,6 +111,7 @@ private:
     unsigned mLettersStartOld;
 
     ImageIndex mImageIndex;
+    SpriteParams mSpriteParams;
 
     Cube* mCube;
     TitleCubeState mTitleState;
