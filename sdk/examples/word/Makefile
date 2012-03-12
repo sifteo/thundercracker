@@ -13,7 +13,8 @@ TitleExitCubeState.o TileTransparencyLookup.o \
 TileTransparencyLookupData.o PartialAnimationData.o \
 ScoredCubeState_Shuffle.o ScoredGameState_Shuffle.o \
 ScoredCubeState_StartOfRound.o ScoredGameState_StartOfRound.o \
-Utility.o Anim.o StoryGameState_CityProgression.o
+Utility.o Anim.o StoryGameState_CityProgression.o \
+qsort.o bsearch.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 
