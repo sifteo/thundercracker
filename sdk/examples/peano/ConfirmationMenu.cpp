@@ -27,7 +27,7 @@ bool ConfirmationChoiceView::Triggered()
     return mTriggered;
 }
 
-ConfirmationChoiceView::ConfirmationChoiceView(const AssetImage *_image):
+ConfirmationChoiceView::ConfirmationChoiceView(const PinnedAssetImage *_image):
     eventHandler(this)
 {
     image = _image;
