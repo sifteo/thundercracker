@@ -351,8 +351,6 @@ uint32_t _SYS_strnlen(const char *str, uint32_t maxLen)
     
     uint32_t len = 0;
 
-    LOG(("Strnlen on VA=%x\n", (unsigned)va));
-
     while (len < maxLen) {
         uint32_t chunk = maxLen - len;
         if (!SvmMemory::mapROData(ref, va, chunk, pa))
