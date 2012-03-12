@@ -114,25 +114,25 @@ const static AnimObjData animObjData[] =
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideRHint
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[37]}, // FIXME keyframe
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
+    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_HintLockedNotWord
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
+    //{&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
+    //{&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
     {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[40]},
     {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[41]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
+    //{&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
+    //{&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
     {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[44]},
-    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
+    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_HintLockedOldWord
     {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
+    //{&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
+    //{&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
     {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[40]},
     {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[41]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
+    //{&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
+    //{&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
     {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[44]},
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[45]}, // HintShake
 };
@@ -195,7 +195,7 @@ const static AnimData animData[] =
     //AnimType_HintIdle,
     { 3.f, false, 1, &animObjData[9]},
     //AnimType_HintShake,
-    { 0.3f, false, 1, &animObjData[37]},
+    { 0.3f, false, 1, &animObjData[29]},
     //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     // AnimIndex_HIntSlideL
@@ -205,9 +205,9 @@ const static AnimData animData[] =
     //AnimType_LockHint,
     { 1.f, true, 2, &animObjData[0]},
     //AnimType_LockedHintNotWord,
-    { 1.f, true, 10, &animObjData[17]},
+    { 1.f, true, 6, &animObjData[17]},
     //AnimType_LockedHintOldWord,
-    { 1.f, true, 10, &animObjData[27]},
+    { 1.f, true, 6, &animObjData[23]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
