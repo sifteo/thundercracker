@@ -165,7 +165,9 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
 
         case GameState_Tutorial:
+#if !SKIP_TUTORIAL
             nextState = TutorialController::Run();
+#endif //#if !SKIP_TUTORIAL
             break;
 
         case GameState_Victory:

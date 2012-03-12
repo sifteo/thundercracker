@@ -1,3 +1,5 @@
+#if !SKIP_TUTORIAL
+
 #include "config.h"
 #include "TutorialController.h"
 #include "AudioPlayer.h"
@@ -625,3 +627,4 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
 }
 
 }
+#endif //#if !SKIP_TUTORIAL

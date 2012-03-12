@@ -105,8 +105,12 @@ MenuState menuState;
 Game::GameState nextGameState;
 
 void RunWelcomeBack();
+#if  !SKIP_CONFIG
 void RunSetup();
+#endif //#if  !SKIP_CONFIG
+#if !SKIP_CHAPTER
 void RunChapterSelect();
+#endif //#if !SKIP_CHAPTER
 
 static const float kDuration = 0.333f;
 
@@ -125,10 +129,14 @@ Game::GameState Run()
             RunWelcomeBack();
             break;
         case MenuState_Setup:
+#if  !SKIP_CONFIG
             RunSetup();
+#endif //#if  !SKIP_CONFIG
             break;
         case MenuState_ChapterSelect:
+#if !SKIP_CHAPTER
             RunChapterSelect();
+#endif //#if !SKIP_CHAPTER
             break;
         }
     }
@@ -281,6 +289,8 @@ void RunWelcomeBack(void)
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
+
+#if  !SKIP_CONFIG
 void RunSetup()
 {
     TransitionView tv;
@@ -405,14 +415,14 @@ void RunSetup()
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
-
+#endif //#if  !SKIP_CONFIG
     //-----------------------------------------------------------------------
     // CHAPTER SELECT
     //-----------------------------------------------------------------------
 
+#if !SKIP_CHAPTER
 void RunChapterSelect()
 {
-#if !DISABLE_CHAPTERS
     Game::Wait(0.25f);
     TiltFlowDetailView labelView;
     Game::cubes[1].SetView(&labelView);
@@ -498,13 +508,11 @@ void RunChapterSelect()
         }
     }
 
-
-#endif //!DISABLE_CHAPTERS
     end:
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
-
+#endif //#endif //!DISABLE_CHAPTERS
 
 }
 }

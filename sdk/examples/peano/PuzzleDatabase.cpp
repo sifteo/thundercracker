@@ -1,7 +1,5 @@
 #include "config.h"
 
-#if !DISABLE_CHAPTERS
-
 #include "Game.h"
 #include "PuzzleDatabase.h"
 #include "puzzles.gen.h"
@@ -118,6 +116,6 @@ int FirstPuzzleForCurrentCubeSetInChapter(int chapter)
 }
 }
 
-#endif// !DISABLE_CHAPTERS
+
 
 

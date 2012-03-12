@@ -2,6 +2,8 @@
 
 #include "Game.h"
 
+#if !SKIP_TUTORIAL
+
 namespace TotalsGame {
 
 
@@ -13,3 +15,4 @@ namespace TotalsGame {
     }
 }
 
+#endif //#if !SKIP_TUTORIAL
