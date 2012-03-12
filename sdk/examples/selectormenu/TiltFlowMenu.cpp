@@ -255,6 +255,19 @@ void TiltFlowMenu::checkNeighbors()
 }
 
 
+void TiltFlowMenu::press( int cube )
+{
+    TiltFlowView &view = mViews[cube];
+    if (&view == mKeyView && view.GetItem() < 3) {
+
+		//BEST BUY HACKERY
+
+        Pick( view );
+		view.setLastNeighbor( DOWN );
+        //view.setUpIncomingCover( view );
+    }
+}
+
   //---------------------------------------------------------------------------
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
@@ -792,9 +805,16 @@ void TiltFlowView::StopScrolling() {
 //will set up this view to receive a cover from the given view
 void TiltFlowView::setUpIncomingCover( TiltFlowView &view )
 {
-	mpCube->orientTo( *view.mpCube );
-	//just to set it's mLastNeighboredSide
-	getNeighbor();
+	if( &view == this )
+	{
+		mLastNeighboredSide = UP;
+	}
+	else
+	{
+		mpCube->orientTo( *view.mpCube );
+		//just to set it's mLastNeighboredSide
+		getNeighbor();
+	}
 	SetStatus( TiltFlowView::STATUS_STARTING );
 }
 

@@ -2,10 +2,6 @@
 
 Math::Random gRandom;
 
-const PinnedAssetImage* const kStorageTypeToIcon[3] = {
-  &InventoryIcons, &KeyIcons, &EquipmentIcons
-};
-
 Cube::Side InferDirection(Vec2 u) {
 	if (u.x > 0) {
 		return SIDE_RIGHT;
@@ -22,8 +18,8 @@ Cube::Side InferDirection(Vec2 u) {
 // Sfx Utilities
 //------------------------------------------------------------------------------
 
-void PlaySfx(_SYSAudioModule& handle, bool preempt) {
 #if SFX_ON
+void PlaySfx(_SYSAudioModule& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
       gChannelSfx.stop();
@@ -32,14 +28,14 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt) {
     }
   }
   gChannelSfx.play(handle);
-#endif
 }
+#endif
 
-void PlayMusic(_SYSAudioModule& music, bool loop) {
 #if MUSIC_ON
+void PlayMusic(_SYSAudioModule& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
   gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
-#endif
 }
+#endif

@@ -9,7 +9,7 @@ enum EventID
     EventID_ClockTick,
     EventID_EnterState,
     EventID_ExitState,
-    EventID_Input,
+    EventID_Shake,
     EventID_Tilt,
     EventID_NewAnagram,
     EventID_NewWordFound,
@@ -17,6 +17,8 @@ enum EventID
     EventID_WordBroken,
     EventID_GameStateChanged,
     EventID_LetterOrderChange,
+    EventID_UpdateHintSolution,
+    EventID_HintSolutionUpdated,
 
     NumEventIds
 };

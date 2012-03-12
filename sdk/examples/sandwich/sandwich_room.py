@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, math
+import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_trigger import *
 
 # constants
@@ -108,7 +108,8 @@ class Room:
 			for (x,y) in misc.spiral_into_madness():
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y) and self.subdiv_masks[x+(y<<3)] & 1:
 					return (x,y)
-	
+		return (0,0)
+		
 	def secondary_center(self):
 		# todo bridges
 		assert self.subdiv_type != SUBDIV_NONE, "non-subdivided rooms don't have a secondary center"
@@ -197,24 +198,24 @@ class Room:
 	def write_source_to(self, src):
 		src.write("    {\n")
 		# collision mask rows
-		src.write("        { ")
+		src.write("        {")
 		for row in range(8):
 			rowMask = 0
 			for col in range(8):
 				if not iswalkable(self.tileat(col, row)):
 					rowMask |= (1<<col)
-			src.write("0x%x, " % rowMask)
+			src.write("0x%x," % rowMask)
 		src.write("},\n")
 		# tiles
 		src.write("        { ")
 		for ty in range(8):
 			#src.write("            ")
 			for tx in range(8):
-				src.write("0x%x, " % self.tileat(tx,ty).lid)
+				src.write("0x%x," % self.tileat(tx,ty).lid)
 			#src.write("\n")
 		src.write("},\n")
 		# centerx, centery
 		cx,cy = self.primary_center()
-		src.write("        0x%x, 0x%x, \n" % (cx, cy))
+		src.write("        0x%x,0x%x,\n" % (cx, cy))
 		src.write("    },\n")		
 

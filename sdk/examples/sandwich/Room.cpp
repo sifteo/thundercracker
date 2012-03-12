@@ -2,7 +2,7 @@
 #include "Game.h"
 
 unsigned Room::Id() const {
-  return (int)(this - pGame->GetMap()->GetRoom(0));
+  return (int)(this - gGame.GetMap()->GetRoom(0));
 }
 
 Vec2 Room::LocalCenter(unsigned subdiv) const { 
@@ -20,28 +20,28 @@ Vec2 Room::LocalCenter(unsigned subdiv) const {
 }
 
 Vec2 Room::Location() const {
-  return pGame->GetMap()->GetLocation(Id());
+  return gGame.GetMap()->GetLocation(Id());
 }
 
 const RoomData* Room::Data() const {
-  return pGame->GetMap()->GetRoomData(Id());
+  return gGame.GetMap()->GetRoomData(Id());
 }
 
 bool Room::HasOpenDoor() const {
-  return HasDoor() && !pGame->GetState()->IsActive(pGame->GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
 }
 
 bool Room::HasClosedDoor() const {
-  return HasDoor() && pGame->GetState()->IsActive(pGame->GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
-  return pGame->GetState()->Flag(pGame->GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
 }
 
 const uint8_t* Room::OverlayBegin() const {
-  return pGame->GetMap()->Data()->rle_overlay + mOverlayIndex;
+  return gGame.GetMap()->Data()->rle_overlay + mOverlayIndex;
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {

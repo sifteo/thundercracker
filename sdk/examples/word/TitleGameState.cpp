@@ -21,7 +21,7 @@ unsigned TitleGameState::onEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
         break;
 
-    case EventID_Input:
+    case EventID_Shake:
         WordGame::playAudio(shake, AudioChannelIndex_Shake);
         return GameStateIndex_StartOfRoundScored;
 

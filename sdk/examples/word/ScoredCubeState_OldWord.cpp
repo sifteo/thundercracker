@@ -12,6 +12,7 @@ ScoredCubeState_OldWord::ScoredCubeState_OldWord()
 
 unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& data)
 {
+#if (0)
     switch (eventID)
     {
     // TODO debug: case EventID_Paint:
@@ -90,6 +91,7 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
     }
+#endif
     return getStateMachine().getCurrentStateIndex();
 }
 
@@ -101,35 +103,5 @@ unsigned ScoredCubeState_OldWord::update(float dt, float stateTime)
 
 void ScoredCubeState_OldWord::paint()
 {
-    Cube& c = getStateMachine().getCube();
-    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    vid.init();
 
-    switch (GameStateMachine::getCurrentMaxLettersPerCube())
-    {
-    case 2:
-        paintLetters(vid, Font2Letter, true);
-        break;
-
-    case 3:
-        paintLetters(vid, Font3Letter, true);
-        break;
-
-    default:
-        paintLetters(vid, Font1Letter, true);
-        break;
-    }
-
-    ImageIndex ii = ImageIndex_Connected;
-    if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-        c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-    {
-        ii = ImageIndex_ConnectedLeft;
-    }
-    else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-             c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-    {
-        ii = ImageIndex_ConnectedRight;
-    }
-    paintTeeth(vid, ii, true, false, true, false);
 }

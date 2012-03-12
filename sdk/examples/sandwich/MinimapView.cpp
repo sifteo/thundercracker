@@ -6,7 +6,7 @@ void MinimapView::Init() {
 	Parent()->HideSprites();
 	BG1Helper(*Parent()->GetCube()).Flush();
 	ViewMode g = Parent()->Graphics();
-	Map *pMap = pGame->GetMap();
+	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;
 	unsigned padTop = (16 - pData->height) >> 1;
@@ -16,7 +16,7 @@ void MinimapView::Init() {
 	// fill in the top
 	for(unsigned row=0; row<padTop; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), Black);
+			g.BG0_drawAsset(Vec2(col, row), BlackTile);
 		}
 	}
 
@@ -25,7 +25,7 @@ void MinimapView::Init() {
 		unsigned y = row + padTop;
 		// fill in the left
 		for(unsigned col=0; col<padLeft; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), Black);
+			g.BG0_drawAsset(Vec2(col, y), BlackTile);
 		}
 		// fill in the map data
 		for(unsigned col=0; col<pData->width; ++col) {
@@ -35,14 +35,14 @@ void MinimapView::Init() {
 
 		// fill in the right
 		for (unsigned col=padLeft+pData->width; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), Black);
+			g.BG0_drawAsset(Vec2(col, y), BlackTile);
 		}
 	}
 
 	// fill in the bottom
 	for(unsigned row=padTop+pData->height; row<18; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), Black);
+			g.BG0_drawAsset(Vec2(col, row), BlackTile);
 		}
 	}
 
@@ -56,7 +56,7 @@ void MinimapView::Init() {
 	g.setSpriteImage(SPRITE_DOT_ID, MinimapDot);
 	g.moveSprite(
 		SPRITE_DOT_ID, 
-		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+		(gGame.GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
 	);
 }
 
@@ -67,12 +67,12 @@ void MinimapView::Restore() {
 void MinimapView::Update(float dt) {
 	Parent()->Graphics().moveSprite(
 		SPRITE_DOT_ID, 
-		(pGame->GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
+		(gGame.GetPlayer()->Position()<<3) / 128 + Vec2(mCanvasOffsetX, mCanvasOffsetY)
 	);
 }
 
 unsigned MinimapView::ComputeTileId(int lx, int ly) {
-	Map *pMap = pGame->GetMap();
+	Map *pMap = gGame.GetMap();
 	unsigned t = ly > 0 && pMap->GetPortalY(lx, ly-1);
 	unsigned l = lx > 0 && pMap->GetPortalX(lx-1, ly);
 	unsigned b = ly < pMap->Data()->height-1 && pMap->GetPortalY(lx, ly);

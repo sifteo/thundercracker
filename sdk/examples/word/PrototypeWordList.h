@@ -2,13 +2,15 @@
 #define PROTOTYPEWORDLIST_H
 
 #include <sifteo.h>
+#include "Dictionary.h"
 
 class PrototypeWordList
 {
 public:
     PrototypeWordList();
     static bool pickWord(char* buffer);
-    static bool isWord(const char* string, bool& isCommon);
+    static bool isWord(const char* string, bool& isCommon, WordID& wordID);
+    static bool getWordFromID(WordID wid, char *buffer);
 
     static bool bitsToString(uint64_t bits, char* buffer);
 
