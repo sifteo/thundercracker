@@ -22,6 +22,10 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
         // fall through
     case EventID_Paint:
         paint();
+        if (eventID == EventID_EnterState)
+        {
+            WordGame::instance()->setNeedsPaintSync();
+        }
         break;
 
     case EventID_GameStateChanged:
@@ -102,8 +106,7 @@ void TitleCubeState::paint()
 
                 BG1Helper bg1(getStateMachine().getCube());
                 bg1.DrawAsset(Vec2(8, 0), anim, frame);
-                bg1.Flush(); // TODO only flush if mask has changed recently
-                WordGame::instance()->setNeedsPaintSync();
+                bg1.Flush();
             }
         }
         break;
@@ -124,8 +127,7 @@ void TitleCubeState::paint()
 
             BG1Helper bg1(getStateMachine().getCube());
             bg1.DrawAsset(Vec2(5, 4), anim, frame);
-            bg1.Flush(); // TODO only flush if mask has changed recently
-            WordGame::instance()->setNeedsPaintSync();
+            bg1.Flush();
         }
         break;
 

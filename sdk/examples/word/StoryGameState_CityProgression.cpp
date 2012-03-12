@@ -17,7 +17,7 @@ unsigned StoryGameState_CityProgression::onEvent(unsigned eventID, const EventDa
 {
     switch (eventID)
     {
-    case EventID_Input:
+    case EventID_Shake:
         WordGame::playAudio(shake, AudioChannelIndex_Shake);
         return GameStateIndex_ShuffleScored;
     }

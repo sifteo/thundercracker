@@ -41,12 +41,12 @@ const static char* puzzles[] =
 const static unsigned char puzzlesNumGoalAnagrams[] =
 {
     2,	// TEN, nonbonus anagrams: ['NET', 'TEN']
-    2,	// PAT, nonbonus anagrams: ['TAP', 'PAT']
-    2,	// ARM, nonbonus anagrams: ['RAM', 'ARM']
+    3,	// PAT, nonbonus anagrams: ['TAP', 'PAT', 'APT']
+    3,	// ARM, nonbonus anagrams: ['MAR', 'RAM', 'ARM']
     2,	// BAD, nonbonus anagrams: ['BAD', 'DAB']
     2,	// PAN, nonbonus anagrams: ['NAP', 'PAN']
     2,	// BEST, nonbonus anagrams: ['BETS', 'BEST']
-    2,	// PEST, nonbonus anagrams: ['PEST', 'PETS']
+    3,	// PEST, nonbonus anagrams: ['STEP', 'PEST', 'PETS']
     2,	// RUST, nonbonus anagrams: ['RUTS', 'RUST']
     2,	// QUIET, nonbonus anagrams: ['QUIET', 'QUITE']
     2,	// MIDDLE, nonbonus anagrams: ['MIDDLE', 'MILE']
@@ -71,43 +71,302 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     4,	// CENTS, nonbonus anagrams: ['CENTS', 'SCENT', 'SEC', 'CENT']
     6,	// DESIGN, nonbonus anagrams: ['DESIGN', 'SIGNED', 'SIGN', 'SINGED', 'SING', 'SIDE']
     5,	// WOMAN, nonbonus anagrams: ['WOMAN', 'OWN', 'WON', 'NOW', 'MAN']
-    0,	// MOSAIC, nonbonus anagrams: []
+    1,	// MOSAIC, nonbonus anagrams: ['MOSAIC']
 };
 
-const static unsigned char puzzlesNumBonusAnagrams[] =
+const static unsigned char puzzlesNumPossibleAnagrams[] =
 {
-    0,	// TEN, bonus anagrams: []
-    1,	// PAT, bonus anagrams: ['APT']
-    1,	// ARM, bonus anagrams: ['MAR']
-    0,	// BAD, bonus anagrams: []
-    0,	// PAN, bonus anagrams: []
-    0,	// BEST, bonus anagrams: []
-    1,	// PEST, bonus anagrams: ['STEP']
-    0,	// RUST, bonus anagrams: []
-    1,	// QUIET, bonus anagrams: ['ETUI']
-    0,	// MIDDLE, bonus anagrams: []
-    0,	// FIGHT, bonus anagrams: []
-    0,	// TURNED, bonus anagrams: []
-    0,	// BECOME, bonus anagrams: []
-    0,	// ROYAL, bonus anagrams: []
-    0,	// UNLESS, bonus anagrams: []
-    0,	// VESSEL, bonus anagrams: []
-    0,	// FRONT, bonus anagrams: []
-    0,	// TERMS, bonus anagrams: []
-    0,	// REPLY, bonus anagrams: []
-    0,	// WINTER, bonus anagrams: []
-    1,	// CRIED, bonus anagrams: ['IRED']
-    0,	// FINISH, bonus anagrams: []
-    0,	// ISSUE, bonus anagrams: []
-    0,	// PRESS, bonus anagrams: []
-    0,	// CAUSE, bonus anagrams: []
-    0,	// MOTION, bonus anagrams: []
-    1,	// THESE, bonus anagrams: ['ETH']
-    0,	// WHOLE, bonus anagrams: []
-    0,	// CENTS, bonus anagrams: []
-    0,	// DESIGN, bonus anagrams: []
-    1,	// WOMAN, bonus anagrams: ['NAM']
-    3,	// MOSAIC, bonus anagrams: ['ASCI', 'MOAS', 'MOSAIC']
+    2,	// TEN, all anagrams: ['NET', 'TEN']
+    3,	// PAT, all anagrams: ['TAP', 'PAT', 'APT']
+    3,	// ARM, all anagrams: ['MAR', 'RAM', 'ARM']
+    2,	// BAD, all anagrams: ['BAD', 'DAB']
+    2,	// PAN, all anagrams: ['NAP', 'PAN']
+    2,	// BEST, all anagrams: ['BETS', 'BEST']
+    3,	// PEST, all anagrams: ['STEP', 'PEST', 'PETS']
+    2,	// RUST, all anagrams: ['RUTS', 'RUST']
+    3,	// QUIET, all anagrams: ['ETUI', 'QUIET', 'QUITE']
+    2,	// MIDDLE, all anagrams: ['MIDDLE', 'MILE']
+    2,	// FIGHT, all anagrams: ['FIT', 'FIGHT']
+    2,	// TURNED, all anagrams: ['TURN', 'TURNED']
+    2,	// BECOME, all anagrams: ['BECOME', 'COME']
+    2,	// ROYAL, all anagrams: ['ROYAL', 'LAY']
+    2,	// UNLESS, all anagrams: ['UNLESS', 'LESS']
+    2,	// VESSEL, all anagrams: ['VESSEL', 'LESS']
+    3,	// FRONT, all anagrams: ['NOT', 'FRONT', 'TON']
+    3,	// TERMS, all anagrams: ['TERM', 'SET', 'TERMS']
+    3,	// REPLY, all anagrams: ['REPLY', 'REP', 'PER']
+    3,	// WINTER, all anagrams: ['WIRE', 'RENT', 'WINTER']
+    3,	// CRIED, all anagrams: ['IRED', 'RIDE', 'CRIED']
+    3,	// FINISH, all anagrams: ['FISH', 'FINISH', 'SHIN']
+    3,	// ISSUE, all anagrams: ['SUE', 'ISSUE', 'USE']
+    3,	// PRESS, all anagrams: ['PRESS', 'REP', 'PER']
+    4,	// CAUSE, all anagrams: ['USE', 'CAUSE', 'SUE', 'ACE']
+    4,	// MOTION, all anagrams: ['MOTION', 'MONO', 'OMIT', 'MOON']
+    4,	// THESE, all anagrams: ['THESE', 'THE', 'ETH', 'SEE']
+    4,	// WHOLE, all anagrams: ['HOW', 'HOLE', 'WHO', 'WHOLE']
+    4,	// CENTS, all anagrams: ['CENTS', 'SCENT', 'SEC', 'CENT']
+    6,	// DESIGN, all anagrams: ['DESIGN', 'SIGNED', 'SIGN', 'SINGED', 'SING', 'SIDE']
+    6,	// WOMAN, all anagrams: ['WOMAN', 'OWN', 'NAM', 'WON', 'NOW', 'MAN']
+    3,	// MOSAIC, all anagrams: ['ASCI', 'MOAS', 'MOSAIC']
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_TEN[] =
+{
+    39,	// NET,
+    73,	// TEN,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_PAT[] =
+{
+    72,	// TAP,
+    45,	// PAT,
+    1,	// APT,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_ARM[] =
+{
+    29,	// MAR,
+    52,	// RAM,
+    2,	// ARM,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_BAD[] =
+{
+    4,	// BAD,
+    13,	// DAB,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_PAN[] =
+{
+    38,	// NAP,
+    44,	// PAN,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_BEST[] =
+{
+    7,	// BETS,
+    6,	// BEST,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_PEST[] =
+{
+    70,	// STEP,
+    47,	// PEST,
+    48,	// PETS,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_RUST[] =
+{
+    59,	// RUTS,
+    58,	// RUST,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_QUIET[] =
+{
+    16,	// ETUI,
+    50,	// QUIET,
+    51,	// QUITE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_MIDDLE[] =
+{
+    30,	// MIDDLE,
+    31,	// MILE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_FIGHT[] =
+{
+    20,	// FIT,
+    17,	// FIGHT,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_TURNED[] =
+{
+    79,	// TURN,
+    80,	// TURNED,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_BECOME[] =
+{
+    5,	// BECOME,
+    11,	// COME,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_ROYAL[] =
+{
+    57,	// ROYAL,
+    26,	// LAY,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_UNLESS[] =
+{
+    81,	// UNLESS,
+    27,	// LESS,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_VESSEL[] =
+{
+    83,	// VESSEL,
+    27,	// LESS,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_FRONT[] =
+{
+    40,	// NOT,
+    21,	// FRONT,
+    78,	// TON,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_TERMS[] =
+{
+    74,	// TERM,
+    63,	// SET,
+    75,	// TERMS,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_REPLY[] =
+{
+    55,	// REPLY,
+    54,	// REP,
+    46,	// PER,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_WINTER[] =
+{
+    87,	// WIRE,
+    53,	// RENT,
+    86,	// WINTER,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_CRIED[] =
+{
+    24,	// IRED,
+    56,	// RIDE,
+    12,	// CRIED,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_FINISH[] =
+{
+    19,	// FISH,
+    18,	// FINISH,
+    64,	// SHIN,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_ISSUE[] =
+{
+    71,	// SUE,
+    25,	// ISSUE,
+    82,	// USE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_PRESS[] =
+{
+    49,	// PRESS,
+    54,	// REP,
+    46,	// PER,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_CAUSE[] =
+{
+    82,	// USE,
+    8,	// CAUSE,
+    71,	// SUE,
+    0,	// ACE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_MOTION[] =
+{
+    36,	// MOTION,
+    33,	// MONO,
+    42,	// OMIT,
+    34,	// MOON,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_THESE[] =
+{
+    77,	// THESE,
+    76,	// THE,
+    15,	// ETH,
+    62,	// SEE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_WHOLE[] =
+{
+    23,	// HOW,
+    22,	// HOLE,
+    84,	// WHO,
+    85,	// WHOLE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_CENTS[] =
+{
+    10,	// CENTS,
+    60,	// SCENT,
+    61,	// SEC,
+    9,	// CENT,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_DESIGN[] =
+{
+    14,	// DESIGN,
+    67,	// SIGNED,
+    66,	// SIGN,
+    69,	// SINGED,
+    68,	// SING,
+    65,	// SIDE,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_WOMAN[] =
+{
+    88,	// WOMAN,
+    43,	// OWN,
+    37,	// NAM,
+    89,	// WON,
+    41,	// NOW,
+    28,	// MAN,
+};
+
+const static unsigned _puzzlesPossibleWordIndexes_MOSAIC[] =
+{
+    3,	// ASCI,
+    32,	// MOAS,
+    35,	// MOSAIC,
+};
+
+const static unsigned *puzzlesPossibleWordIndexes[] =
+{
+    _puzzlesPossibleWordIndexes_TEN,	// TEN,
+    _puzzlesPossibleWordIndexes_PAT,	// PAT,
+    _puzzlesPossibleWordIndexes_ARM,	// ARM,
+    _puzzlesPossibleWordIndexes_BAD,	// BAD,
+    _puzzlesPossibleWordIndexes_PAN,	// PAN,
+    _puzzlesPossibleWordIndexes_BEST,	// BEST,
+    _puzzlesPossibleWordIndexes_PEST,	// PEST,
+    _puzzlesPossibleWordIndexes_RUST,	// RUST,
+    _puzzlesPossibleWordIndexes_QUIET,	// QUIET,
+    _puzzlesPossibleWordIndexes_MIDDLE,	// MIDDLE,
+    _puzzlesPossibleWordIndexes_FIGHT,	// FIGHT,
+    _puzzlesPossibleWordIndexes_TURNED,	// TURNED,
+    _puzzlesPossibleWordIndexes_BECOME,	// BECOME,
+    _puzzlesPossibleWordIndexes_ROYAL,	// ROYAL,
+    _puzzlesPossibleWordIndexes_UNLESS,	// UNLESS,
+    _puzzlesPossibleWordIndexes_VESSEL,	// VESSEL,
+    _puzzlesPossibleWordIndexes_FRONT,	// FRONT,
+    _puzzlesPossibleWordIndexes_TERMS,	// TERMS,
+    _puzzlesPossibleWordIndexes_REPLY,	// REPLY,
+    _puzzlesPossibleWordIndexes_WINTER,	// WINTER,
+    _puzzlesPossibleWordIndexes_CRIED,	// CRIED,
+    _puzzlesPossibleWordIndexes_FINISH,	// FINISH,
+    _puzzlesPossibleWordIndexes_ISSUE,	// ISSUE,
+    _puzzlesPossibleWordIndexes_PRESS,	// PRESS,
+    _puzzlesPossibleWordIndexes_CAUSE,	// CAUSE,
+    _puzzlesPossibleWordIndexes_MOTION,	// MOTION,
+    _puzzlesPossibleWordIndexes_THESE,	// THESE,
+    _puzzlesPossibleWordIndexes_WHOLE,	// WHOLE,
+    _puzzlesPossibleWordIndexes_CENTS,	// CENTS,
+    _puzzlesPossibleWordIndexes_DESIGN,	// DESIGN,
+    _puzzlesPossibleWordIndexes_WOMAN,	// WOMAN,
+    _puzzlesPossibleWordIndexes_MOSAIC,	// MOSAIC,
 };
 
 const static bool puzzlesUseLeadingSpaces[] =
