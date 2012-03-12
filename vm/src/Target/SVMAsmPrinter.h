@@ -19,7 +19,7 @@ namespace llvm {
     class SVMAsmPrinter : public AsmPrinter {
     public:
         explicit SVMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-            : AsmPrinter(TM, Streamer) {}
+            : AsmPrinter(TM, Streamer), CurrentMBB(0) {}
 
         const char *getPassName() const {
             return "SVM Assembly Printer";
@@ -45,6 +45,7 @@ namespace llvm {
 
         unsigned CurrentFnSplitOrdinal;
         SVMBlockSizeAccumulator BSA;
+        const MachineBasicBlock *CurrentMBB;
 
         void emitBlockBegin();
         void emitBlockEnd();

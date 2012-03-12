@@ -75,8 +75,10 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
 
     // A small kludge for reporting MBB alignment to BSA...
     const MachineBasicBlock *MBB = MI->getParent();
-    if (MI == MBB->begin())
+    if (MBB != CurrentMBB) {
+        CurrentMBB = MBB;
         BSA.InstrAlign(MBB->getAlignment());
+    }
 
     BSA.AddInstr(MI);
     emitBlockOffsetComment();
