@@ -85,6 +85,14 @@ const static Vec2 positions[] =
     Vec2(58, 2), // [27]
     Vec2(54, 2), // [27]
     Vec2(58, 2), // [27]
+    Vec2(56, 2), // [29]
+    Vec2(58, 2), // [30]2
+    Vec2(60, 2), // [31]2
+    Vec2(64, 2), // [32]4
+    Vec2(72, 2), // [33]8
+    Vec2(80, 2), // [34]8
+    Vec2(84, 2), // [35]4
+    Vec2(88, 2), // [36]4
 };
 
 const static AnimObjData animObjData[] =
@@ -105,7 +113,7 @@ const static AnimObjData animObjData[] =
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[29]},
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideRHint
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[29]}, // FIXME keyframe
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[37]}, // FIXME keyframe
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
     {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
