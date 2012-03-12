@@ -5,7 +5,7 @@ STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
 LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
 CC := $(LLVM_BIN)/clang
 
-BIN := program.elf
+BIN := $(APP).elf
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
