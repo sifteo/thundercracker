@@ -232,7 +232,7 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
             InVals.push_back(ArgValue);
 
         } else {
-            llvm_unreachable("Non-register parameters not yet supported");
+            report_fatal_error("Non-register parameters not yet supported");
         }
     }
     
@@ -337,7 +337,7 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
             Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
             
         } else {
-            llvm_unreachable("Non-register parameters not yet supported");
+            report_fatal_error("Non-register parameters not yet supported");
         }
     }
     
