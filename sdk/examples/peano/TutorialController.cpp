@@ -62,8 +62,8 @@ public:
 Puzzle *puzzle;
 
 
-NarratorView narrator;
-TokenView firstToken, secondToken;
+NarratorView *pNarrator;
+TokenView *pFirstToken, *pSecondToken;
 ConnectTwoCubesHorizontalEventHandler connectTwoCubesHorizontalEventHandler;
 ConnectTwoCubesVerticalEventHandler connectTwoCubesVerticalEventHandler;
 MakeSixEventHandler makeSixEventHandler;
@@ -93,6 +93,15 @@ WaitForTouchEventHanlder waitForTouchEventHandler[2];
 
 
 Game::GameState Run() {
+
+    NarratorView narrator;
+    TokenView firstToken, secondToken;
+
+    pNarrator = &narrator;
+    pFirstToken = &firstToken;
+    pSecondToken = &secondToken;
+
+
     const float kTransitionDuration = 0.2f; 
     const float period = 0.05f;
 
@@ -493,8 +502,8 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
     }
 
 
-    Token *t = firstToken.token;
-    Token *nt = secondToken.token;
+    Token *t = pFirstToken->token;
+    Token *nt = pSecondToken->token;
     // resolve soln
     if (t->current == NULL || nt->current == NULL || t->current != nt->current) {
         return;
@@ -502,8 +511,8 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
     TokenGroup *grp = (TokenGroup*)t->current;
     t->PopGroup();
     nt->PopGroup();
-    firstToken.DidGroupDisconnect();
-    secondToken.DidGroupDisconnect();
+    pFirstToken->DidGroupDisconnect();
+    pSecondToken->DidGroupDisconnect();
     delete grp;
     //Jukebox.PlayNeighborRemove();
 }
@@ -514,18 +523,18 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
 
     void ConnectTwoCubesHorizontalEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
-        if ((s0 == SIDE_RIGHT && s1 == SIDE_LEFT && c1 == secondToken.GetCube()->id())
-            ||(s0 == SIDE_LEFT && s1 == SIDE_RIGHT && c0 == secondToken.GetCube()->id()))
+        if ((s0 == SIDE_RIGHT && s1 == SIDE_LEFT && c1 == pSecondToken->GetCube()->id())
+            ||(s0 == SIDE_LEFT && s1 == SIDE_RIGHT && c0 == pSecondToken->GetCube()->id()))
         {
             Game::neighborEventHandler = NULL;
-            TokenGroup *grp = TokenGroup::Connect(firstToken.token, kSideToUnit[SIDE_RIGHT], secondToken.token);
+            TokenGroup *grp = TokenGroup::Connect(pFirstToken->token, kSideToUnit[SIDE_RIGHT], pSecondToken->token);
             if (grp != NULL)
             {
-                firstToken.WillJoinGroup();
-                secondToken.WillJoinGroup();
+                pFirstToken->WillJoinGroup();
+                pSecondToken->WillJoinGroup();
                 grp->SetCurrent(grp);
-                firstToken.DidJoinGroup();
-                secondToken.DidJoinGroup();
+                pFirstToken->DidJoinGroup();
+                pSecondToken->DidJoinGroup();
             }
             PLAY_SFX(sfx_Tutorial_Correct);
         }
@@ -537,18 +546,18 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
 
     void ConnectTwoCubesVerticalEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
-        if ((s0 == SIDE_TOP && s1 == SIDE_BOTTOM && c1 == secondToken.GetCube()->id())
-            ||(s0 == SIDE_BOTTOM && s1 == SIDE_TOP && c0 == secondToken.GetCube()->id()))
+        if ((s0 == SIDE_TOP && s1 == SIDE_BOTTOM && c1 == pSecondToken->GetCube()->id())
+            ||(s0 == SIDE_BOTTOM && s1 == SIDE_TOP && c0 == pSecondToken->GetCube()->id()))
         {
             Game::neighborEventHandler = NULL;
-            TokenGroup *grp = TokenGroup::Connect(firstToken.token, kSideToUnit[SIDE_TOP], secondToken.token);
+            TokenGroup *grp = TokenGroup::Connect(pFirstToken->token, kSideToUnit[SIDE_TOP], pSecondToken->token);
             if (grp != NULL)
             {
-                firstToken.WillJoinGroup();
-                secondToken.WillJoinGroup();
+                pFirstToken->WillJoinGroup();
+                pSecondToken->WillJoinGroup();
                 grp->SetCurrent(grp);
-                firstToken.DidJoinGroup();
-                secondToken.DidJoinGroup();
+                pFirstToken->DidJoinGroup();
+                pSecondToken->DidJoinGroup();
             }
             PLAY_SFX(sfx_Tutorial_Correct);
         }
@@ -560,17 +569,17 @@ void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns
     void MakeSixEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
         TutorialController::OnNeighborAdd(&Game::cubes[c0], s0, &Game::cubes[c1], s1);
-        if (firstToken.token->current->GetValue() != Fraction(6)) {
+        if (pFirstToken->token->current->GetValue() != Fraction(6)) {
             PLAY_SFX2(sfx_Tutorial_Oops, false);
-            narrator.SetMessage("Oops,\nlet's try again...", NarratorView::EmoteSad);
+            pNarrator->SetMessage("Oops,\nlet's try again...", NarratorView::EmoteSad);
         }
     }
 
     void MakeSixEventHandler::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
         TutorialController::OnNeighborRemove(&Game::cubes[c0],s0, &Game::cubes[c1], s1);
-        if (firstToken.token->current == firstToken.token) {
-            narrator.SetMessage("Can you build\nthe number 6?");
+        if (pFirstToken->token->current == pFirstToken->token) {
+            pNarrator->SetMessage("Can you build\nthe number 6?");
         }
     }
 
