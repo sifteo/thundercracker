@@ -22,7 +22,7 @@ uint32_t *SvmDebug::logReserve(SvmLogTag tag)
     return buffer;
 }
 
-void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer)
+void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 {
     // XXX: Stub
 }

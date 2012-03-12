@@ -1002,7 +1002,12 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                     SvmDebug::fault(F_LOG_FETCH);
                     return;
                 }
-                uint32_t bytes = strnlen((const char *)buffer, chunkSize);
+
+                // strnlen is not easily available on mingw...
+                const char *str = reinterpret_cast<const char*>(buffer);
+                const char *end = static_cast<const char*>(memchr(str, '\0', chunkSize));
+                uint32_t bytes = end ? (size_t) (end - str) : chunkSize;
+
                 SvmDebug::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
                 if (bytes < chunkSize)
                     return;
