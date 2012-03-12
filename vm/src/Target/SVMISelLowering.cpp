@@ -232,7 +232,8 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
             InVals.push_back(ArgValue);
 
         } else {
-            report_fatal_error("Non-register parameters not yet supported");
+            report_fatal_error("Non-register parameters not yet supported, in "
+                + Twine(MF.getFunction()->getName()));
         }
     }
     
@@ -248,6 +249,8 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      DebugLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) const
 {
+    MachineFunction &MF = DAG.getMachineFunction();
+
     // Let the calling convention assign locations to each operand
     SmallVector<CCValAssign, 16> ArgLocs;
     CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
@@ -337,7 +340,8 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
             Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
             
         } else {
-            report_fatal_error("Non-register parameters not yet supported");
+            report_fatal_error("Non-register parameters not yet supported, in "
+                + Twine(MF.getFunction()->getName()));
         }
     }
     
