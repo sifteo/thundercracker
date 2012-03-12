@@ -70,6 +70,7 @@ public:
     bool canMakeHintAvailable() const { return !isHintAvailable(); }
     void makeHintAvailable() { queueAnim(AnimType_HintIdle, CubeAnim_Hint); } // TODO hint appear anim
     void removeHint() { queueAnim(AnimType_None, CubeAnim_Hint); }
+    static unsigned findNumLetters(char *string);
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
