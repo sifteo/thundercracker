@@ -943,8 +943,8 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
     uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7)
 {
     SvmLogTag tag(t);
+    uint32_t type = tag.getType();
     uint32_t arity = tag.getArity();
-    uint32_t *buffer = SvmDebug::logReserve(tag);
 
     SvmMemory::squashPhysicalAddr(v1);
     SvmMemory::squashPhysicalAddr(v2);
@@ -954,20 +954,71 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
     SvmMemory::squashPhysicalAddr(v6);
     SvmMemory::squashPhysicalAddr(v7);
 
-    switch (arity) {
-    case 7: buffer[6] = v7;
-    case 6: buffer[5] = v6;
-    case 5: buffer[4] = v5;
-    case 4: buffer[3] = v4;
-    case 3: buffer[2] = v3;
-    case 2: buffer[1] = v2;
-    case 1: buffer[0] = v1;
-    case 0:
-    default:
-        break;
-    }
+    switch (type) {
 
-    SvmDebug::logCommit(tag, buffer);
+        // Stow all arguments, plus the log tag. The post-processor
+        // will do some printf()-like formatting on the stored arguments.
+        case _SYS_LOGTYPE_FMT: {
+            uint32_t *buffer = SvmDebug::logReserve(tag);        
+            switch (arity) {
+                case 7: buffer[6] = v7;
+                case 6: buffer[5] = v6;
+                case 5: buffer[4] = v5;
+                case 4: buffer[3] = v4;
+                case 3: buffer[2] = v3;
+                case 2: buffer[1] = v2;
+                case 1: buffer[0] = v1;
+                case 0:
+                default: break;
+            }
+            SvmDebug::logCommit(tag, buffer, arity * sizeof(uint32_t));
+            return;
+        }
+
+        // String messages: Only v1 is used (as a pointer), and we emit
+        // zero or more log records until we hit the NUL terminator.
+        case _SYS_LOGTYPE_STRING: {
+            const unsigned chunkSize = SvmDebug::LOG_BUFFER_BYTES;
+            FlashBlockRef ref;
+            for (;;) {
+                uint32_t *buffer = SvmDebug::logReserve(tag);
+                if (!SvmMemory::copyROData(ref, (SvmMemory::PhysAddr)buffer,
+                                    (SvmMemory::VirtAddr)v1, chunkSize)) {
+                    SvmDebug::fault(F_LOG_FETCH);
+                    return;
+                }
+                uint32_t bytes = strnlen((const char *)buffer, chunkSize);
+                SvmDebug::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
+                if (bytes < chunkSize)
+                    return;
+            }
+        }
+        
+        // Hex dumps: Like strings, v1 is used as a pointer. The inline
+        // parameter from 'tag' is the length of the dump, in bytes. If we're
+        // dumping more than what fits in a single log record, emit multiple
+        // log records.
+        case _SYS_LOGTYPE_HEXDUMP: {
+            FlashBlockRef ref;
+            uint32_t remaining = tag.getParam();
+            while (remaining) {
+                uint32_t chunkSize = MIN(SvmDebug::LOG_BUFFER_BYTES, remaining);
+                uint32_t *buffer = SvmDebug::logReserve(tag);
+                if (!SvmMemory::copyROData(ref, (SvmMemory::PhysAddr)buffer,
+                                    (SvmMemory::VirtAddr)v1, chunkSize)) {
+                    SvmDebug::fault(F_LOG_FETCH);
+                    return;
+                }
+                SvmDebug::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
+                remaining -= chunkSize;
+            }
+            return;
+        }
+
+        default:
+            ASSERT(0 && "Unknown _SYS_log() tag type");
+            return;
+    }
 }
 
 

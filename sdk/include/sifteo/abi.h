@@ -412,11 +412,29 @@ struct _SYSPseudoRandomState {
  * Link-time intrinsics.
  *
  * These functions are replaced during link-time optimization.
+ *
+ * Logging supports many standard printf() format specifiers:
+ *   - Literal characters, and %%
+ *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
+ *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
+ *   - Four chars packed into a 32-bit integer: %C
+ *   - Binary integers: %b
+ *   - C-style strings: %s
+ *   - Hex-dump of fixed width buffers: %<width>h
  */
 
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
 
+/**
+ * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
+ * Normally these don't need to be used in usermode code, they're inserted
+ * automatically by slinky when expanding _SYS_lti_log().
+ */
+
+#define _SYS_LOGTYPE_FMT        0       // param = strtab offest
+#define _SYS_LOGTYPE_STRING     1       // param = 0, v1 = ptr
+#define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
 
 /**
  * Low-level system call interface.
@@ -444,7 +462,7 @@ void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
 void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
-// Tag bits: reserved [31:27], arity [26:24] string_table_offset [23:0]
+// Tag bits: type [31:27], arity [26:24] param [23:0]
 void _SYS_log(uint32_t tag, uintptr_t v1, uintptr_t v2, uintptr_t v3, uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7) _SC(25);
 
 // Compiler floating point support

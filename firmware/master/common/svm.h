@@ -68,6 +68,7 @@ enum FaultCode {
     F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
     F_PRELOAD_ADDRESS,      // Bad address for async preload
     F_RETURN_FRAME,         // Bad saved FP value detected during ret()
+    F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
 };
 
 

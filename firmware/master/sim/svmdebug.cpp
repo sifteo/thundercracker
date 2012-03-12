@@ -56,6 +56,7 @@ static const char* faultStr(FaultCode code)
     case F_LONG_STACK_STORE:    return "Bad address in long stack STR addrop";
     case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
     case F_RETURN_FRAME:        return "Bad saved FP value detected during ret()";
+    case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log() data";
     default:                    return "unknown error";
     }
 }
@@ -125,6 +126,9 @@ static void formatLog(char *out, size_t outSize, char *fmt,
         }
 
         bool done = false;
+        bool dot = false;
+        bool leadingZero = false;
+        int width = 0;
         do {
             char spec = *(fmt++);
             char saved = *fmt;
@@ -143,10 +147,18 @@ static void formatLog(char *out, size_t outSize, char *fmt,
                 case '7':
                 case '8':
                 case '9':
+                    if (width == 0 && spec == '0')
+                        leadingZero = true;
+                    width = (width * 10) + (spec - '0');
+                    break;
+
                 case ' ':
                 case '-':
                 case '+':
+                    break;
+
                 case '.':
+                    dot = true;
                     break;
 
                 // Literal '%'
@@ -155,7 +167,35 @@ static void formatLog(char *out, size_t outSize, char *fmt,
                     done = true;
                     break;
 
-                // Integer parameters
+                // Pointers, formatted as 32-bit hex values
+                case 'p':
+                    done = true;
+                    ASSERT(argCount && "Too few arguments in format string");
+                    out += snprintf(out, outEnd - out, "0x%08x", *args);
+                    argCount--;
+                    args++;
+                    break;
+
+                // Binary integers
+                case 'b':
+                    done = true;
+                    ASSERT(argCount && "Too few arguments in format string");
+                    for (int i = 31; i >= 0 && out != outEnd; --i) {
+                        unsigned bits = (*args) >> i;
+
+                        if (bits != 0) {
+                            // There's a '1' at or to the left of the current bit
+                            out += snprintf(out, outEnd - out, "%d", bits & 1);
+                        } else if (i < width) {
+                            // Pad with blanks or zeroes
+                            *(out++) = leadingZero ? '0' : ' ';
+                        }
+                    }
+                    argCount--;
+                    args++;
+                    break;
+
+                // Integer parameters, passed to printf()
                 case 'd':
                 case 'i':
                 case 'o':
@@ -170,7 +210,7 @@ static void formatLog(char *out, size_t outSize, char *fmt,
                     args++;
                     break;
 
-                // 32-bit float parameters
+                // 32-bit float parameters, passed to printf()
                 case 'f':
                 case 'F':
                 case 'e':
@@ -181,6 +221,20 @@ static void formatLog(char *out, size_t outSize, char *fmt,
                     ASSERT(argCount && "Too few arguments in format string");
                     out += snprintf(out, outEnd - out, segment,
                         (double) reinterpret_cast<float&>(*args));
+                    argCount--;
+                    args++;
+                    break;
+
+                // 'C' specifier: Four characters packed into a 32-bit int.
+                // Stops when it hits a NUL.
+                case 'C':
+                    done = true;
+                    for (unsigned i = 0; outEnd != out && i < 4; i++) {
+                        char c = (*args) >> (i * 8);
+                        if (!c)
+                            break;
+                        *(out++) = c;
+                    }
                     argCount--;
                     args++;
                     break;
@@ -209,30 +263,57 @@ uint32_t *SvmDebug::logReserve(SvmLogTag tag)
     return buffer;
 }
 
-void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer)
+void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 {
     // On real hardware, log decoding would be deferred to the host machine.
     // In simulation, we can decode right away. Note that we use the raw Flash
     // interface instead of going through the cache, since we don't want
     // debug log decoding to affect caching behavior.
 
-    DebugSectionInfo *strTab = findDebugSection(".debug_logstr");
-
-    if (!strTab) {
-        LOG(("SVMLOG: No symbol table found. Raw data:\n"
-             "\t[%08x] %08x %08x %08x %08x %08x %08x %08x\n",
-             tag.getValue(), buffer[0], buffer[1], buffer[2],
-             buffer[3], buffer[4], buffer[5], buffer[6]));
-        return;
-    }
-
-    char fmt[1024];
-    FlashRange rFmt = strTab->data.split(tag.getStringOffset(), sizeof fmt);
-    Flash::read(rFmt.getAddress(), (uint8_t*)fmt, rFmt.getSize());
-
     char outBuffer[1024];
-    formatLog(outBuffer, sizeof outBuffer, fmt, buffer, tag.getArity());
-    LOG(("%s", outBuffer));
+
+    switch (tag.getType()) {
+        
+        // Stow all arguments, plus the log tag. The post-processor
+        // will do some printf()-like formatting on the stored arguments.
+        case _SYS_LOGTYPE_FMT: {
+            DebugSectionInfo *strTab = findDebugSection(".debug_logstr");
+            if (!strTab) {
+                LOG(("SVMLOG: No symbol table found. Raw data:\n"
+                     "\t[%08x] %08x %08x %08x %08x %08x %08x %08x\n",
+                     tag.getValue(), buffer[0], buffer[1], buffer[2],
+                     buffer[3], buffer[4], buffer[5], buffer[6]));
+                return;
+            }
+
+            char fmt[1024];
+            FlashRange rFmt = strTab->data.split(tag.getParam(), sizeof fmt);
+            Flash::read(rFmt.getAddress(), (uint8_t*)fmt, rFmt.getSize());
+
+            formatLog(outBuffer, sizeof outBuffer, fmt, buffer, tag.getArity());
+            LOG(("%s", outBuffer));
+            return;
+        }
+        
+        // Print a string from the log buffer
+        case _SYS_LOGTYPE_STRING: {
+            memcpy(outBuffer, buffer, bytes);
+            outBuffer[bytes] = '\0';
+            LOG(("%s", outBuffer));
+            return;
+        }
+
+        // Fixed width hex-dump
+        case _SYS_LOGTYPE_HEXDUMP: {
+            uint32_t size = MIN(SvmDebug::LOG_BUFFER_BYTES, tag.getParam());
+            for (unsigned i = 0; i != size; i++)
+                LOG(("%02x ", ((uint8_t*)buffer)[i]));
+            return;
+        }
+        
+        default:
+            ASSERT(0 && "Decoding unknown log type. (syscall layer should have caught this!)");
+    }
 }
 
 void SvmDebug::setSymbolSourceELF(const FlashRange &elf)
