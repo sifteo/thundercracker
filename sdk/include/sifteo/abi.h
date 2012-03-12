@@ -511,6 +511,11 @@ uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(22);
 uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(23);
 uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(24);
 
+// Compiler support for 64-bit operations
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(107);
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(108);
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(109);
+
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(8);
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(9);
 

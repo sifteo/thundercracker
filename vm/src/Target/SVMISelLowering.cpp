@@ -116,6 +116,11 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_23");
     setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_24");
 
+    // 64-bit Integer operations
+    setLibcallName(RTLIB::SHL_I64, "_SYS_107");
+    setLibcallName(RTLIB::SRL_I64, "_SYS_108");
+    setLibcallName(RTLIB::SRA_I64, "_SYS_109");
+
     // Register classes to allocate into
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
 

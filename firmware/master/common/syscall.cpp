@@ -266,6 +266,21 @@ uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) {
     return 0;
 }
 
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    return a << b;
+}
+
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    return a >> b;
+}
+
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) {
+    int64_t a = aL | (uint64_t)aH << 32;
+    return a >> b;
+}
+
 #define MEMSET_BODY() {                                                 \
     if (SvmMemory::mapRAM(dest,                                         \
             SvmMemory::arraySize(sizeof *dest, count))) {               \

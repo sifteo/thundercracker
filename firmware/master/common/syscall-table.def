@@ -105,3 +105,6 @@
     /*  104 */ (SvmSyscall)_SYS_setVector,
     /*  105 */ (SvmSyscall)_SYS_getVectorHandler,
     /*  106 */ (SvmSyscall)_SYS_getVectorContext,
+    /*  107 */ (SvmSyscall)_SYS_shl_i64,
+    /*  108 */ (SvmSyscall)_SYS_srl_i64,
+    /*  109 */ (SvmSyscall)_SYS_sra_i64,
