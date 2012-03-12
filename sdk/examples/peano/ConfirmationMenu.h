@@ -16,7 +16,7 @@ bool Run(const char *msg);
 
 
 class ConfirmationChoiceView : public MenuController::TransitionView {
-    const AssetImage *image;
+    const PinnedAssetImage *image;
     bool mTriggered;
     bool mGotTouchOn;
 
@@ -32,7 +32,7 @@ class ConfirmationChoiceView : public MenuController::TransitionView {
 public:
     bool Triggered();
 
-    ConfirmationChoiceView(const AssetImage *_image);
+    ConfirmationChoiceView(const PinnedAssetImage *_image);
     virtual ~ConfirmationChoiceView() {}
 
     void DidAttachToCube (TotalsCube *c);

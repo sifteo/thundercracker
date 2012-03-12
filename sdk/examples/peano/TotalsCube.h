@@ -51,11 +51,11 @@ public:
         void RemoveEventHandler(EventHandler *e);
         void ResetEventHandlers();
 
-        float OpenShuttersAsync(const AssetImage *image);
-        float CloseShuttersAsync(const AssetImage *image);
+        float OpenShuttersAsync(const PinnedAssetImage *image);
+        float CloseShuttersAsync(const PinnedAssetImage *image);
 				
-        void OpenShuttersSync(const AssetImage *image);
-        void CloseShuttersSync(const AssetImage *image);
+        void OpenShuttersSync(const PinnedAssetImage *image);
+        void CloseShuttersSync(const PinnedAssetImage *image);
 
 		void DrawVaultDoorsClosed();
 
@@ -80,8 +80,8 @@ public:
 //	private:
 
 		// for these methods, 0 <= offset <= 32
-		void DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage);
-		void DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage);
+		void DrawVaultDoorsOpenStep1(int offset, const PinnedAssetImage *innerImage);
+		void DrawVaultDoorsOpenStep2(int offset, const PinnedAssetImage *innerImage);
 	};
 
 }

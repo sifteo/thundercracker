@@ -12,14 +12,14 @@ static int strcmp(const char *a, const char *b)
     return dif;
 }*/
 
-const AssetImage *NarratorView::emotes[] =
+const PinnedAssetImage *NarratorView::emotes[] =
 {
     &Narrator_Coin,
     &Narrator_Diamond,
     &Narrator_Emerald,
     &Narrator_GetReady,
-    &Narrator_Mix01,
-    &Narrator_Mix02,
+//    &Narrator_Mix01,
+//    &Narrator_Mix02,
     &Narrator_Ruby,
     &Narrator_Sad,
     &Narrator_Wave,
@@ -105,12 +105,24 @@ void NarratorView::Paint() {
         return;
     }
 
-    if(mEmote != EmoteNone)
+    //if(mEmote != EmoteNone)
     {
         //draw the top half since the emotes arent full screen.
-        c->Image(&Narrator_Base, Vec2(0,0), Vec2(0,0), Vec2(16, 16-emotes[mEmote]->height));
+        c->Image(&Narrator_Base, Vec2(0,0));//, Vec2(0,0), Vec2(16, 16-emotes[mEmote]->height));
     }
+    
+    if(mEmote ==EmoteMix01)
+    {
+        c->Image(&Narrator_Mix01, Vec2(0,Narrator_Mix01.height));
+    }
+    else if(mEmote ==EmoteMix02)
+    {
+                c->Image(&Narrator_Mix02, Vec2(0,16-Narrator_Mix02.height));
+    }
+    else if(mEmote != EmoteNone)
+    {
     c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
+    }
 
     if (mOffset > 0) {
         c->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);

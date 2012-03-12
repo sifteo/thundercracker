@@ -8,7 +8,7 @@ namespace TotalsGame {
 
   class NarratorView : public View {
 
-      static const AssetImage *emotes[];
+      static const PinnedAssetImage *emotes[];
 
   public:
       enum Emote
@@ -17,13 +17,19 @@ namespace TotalsGame {
             EmoteDiamond,
             EmoteEmerald,
             EmoteGetReady,
-            EmoteMix01,
-            EmoteMix02,
+            //EmoteMix01,
+            //EmoteMix02,
             EmoteRuby,
             EmoteSad,
             EmoteWave,
             EmoteYay,
+       
+          
+          EmoteMix01,
+          EmoteMix02,
 
+          
+          
           EmoteNone
       };
 private:

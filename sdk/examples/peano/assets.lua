@@ -1,6 +1,6 @@
 GameAssets = group{quality=10}
-Background = image{"background.png"}
-Background_Lit = image{"background_lit.png"}
+Background = image{"background.png", pinned=true}
+Background_Lit = image{"background_lit.png",pinned=true}
 
 Accent = image{ "accent.png" }
 Accent_Current = image{ "accent_current.png" }
@@ -32,52 +32,52 @@ Emerald_24 = image { "emerald_24.png", pinned=true }
 
 
 Narrator_Balloon = image { "narrator_balloon.png" }
-Narrator_Base = image { "narrator_base.png" }
-Narrator_Coin = image { "narrator_coin.png" }
-Narrator_Diamond = image { "narrator_diamond.png" }
-Narrator_Emerald = image { "narrator_emerald.png" }
-Narrator_GetReady = image { "narrator_getready.png" }
-Narrator_Ruby = image { "narrator_ruby.png" }
-Narrator_Sad = image { "narrator_sad.png" }
-Narrator_Wave = image { "narrator_wave.png" }
-Narrator_Yay = image { "narrator_yay.png" }
+Narrator_Base = image { "narrator_base.png",pinned=true }
+Narrator_Coin = image { "narrator_coin.png",pinned=true }
+Narrator_Diamond = image { "narrator_diamond.png" ,pinned=true}
+Narrator_Emerald = image { "narrator_emerald.png" ,pinned=true}
+Narrator_GetReady = image { "narrator_getready.png" ,pinned=true}
+Narrator_Ruby = image { "narrator_ruby.png" ,pinned=true}
+Narrator_Sad = image { "narrator_sad.png" ,pinned=true}
+Narrator_Wave = image { "narrator_wave.png" ,pinned=true}
+Narrator_Yay = image { "narrator_yay.png" ,pinned=true}
 Narrator_Mix01 = image { "narrator_mix01.png" }
 Narrator_Mix02 = image { "narrator_mix02.png" }
 
-Icon_Back = image { "icon_back.png"}
-Icon_Clear_Data = image { "icon_clear_data.png"}
-Icon_Easy = image { "icon_easy.png"}
-Icon_Hard = image { "icon_hard.png"}
-Icon_Locked = image { "icon_locked.png"}
-Icon_Main_Menu = image { "icon_main_menu.png"}
-Icon_Medium = image { "icon_medium.png"}
-Icon_Music_Off = image { "icon_music_off.png"}
-Icon_Music_On = image { "icon_music_on.png"}
-Icon_No = image { "icon_no.png"}
-Icon_Resume = image { "icon_resume.png"}
-Icon_Sfx_Off = image { "icon_sfx_off.png"}
-Icon_Sfx_On = image { "icon_sfx_on.png"}
-Icon_Yes = image { "icon_yes.png"}
-Icon_Continue = image { "icon_continue.png"}
-Icon_Random = image { "icon_random.png"}
-Icon_Howtoplay = image { "icon_howtoplay.png"}
-Icon_Level_Select = image { "icon_level_select.png"}
-Icon_Setup = image { "icon_setup.png"}
+Icon_Back = image { "icon_back.png",pinned=true}
+Icon_Clear_Data = image { "icon_clear_data.png",pinned=true}
+Icon_Easy = image { "icon_easy.png",pinned=true}
+Icon_Hard = image { "icon_hard.png",pinned=true}
+Icon_Locked = image { "icon_locked.png",pinned=true}
+Icon_Main_Menu = image { "icon_main_menu.png",pinned=true}
+Icon_Medium = image { "icon_medium.png",pinned=true}
+Icon_Music_Off = image { "icon_music_off.png",pinned=true}
+Icon_Music_On = image { "icon_music_on.png",pinned=true}
+Icon_No = image { "icon_no.png",pinned=true}
+Icon_Resume = image { "icon_resume.png",pinned=true}
+Icon_Sfx_Off = image { "icon_sfx_off.png",pinned=true}
+Icon_Sfx_On = image { "icon_sfx_on.png",pinned=true}
+Icon_Yes = image { "icon_yes.png",pinned=true}
+Icon_Continue = image { "icon_continue.png",pinned=true}
+Icon_Random = image { "icon_random.png",pinned=true}
+Icon_Howtoplay = image { "icon_howtoplay.png",pinned=true}
+Icon_Level_Select = image { "icon_level_select.png",pinned=true}
+Icon_Setup = image { "icon_setup.png",pinned=true}
 
-icon_starting_simple = image { "icon_starting_simple.png"}
-icon_two_tuples = image { "icon_two_tuples.png"}
-icon_bend_it = image { "icon_bend_it.png"}
-icon_crosses = image { "icon_crosses.png"}
-icon_experts_only = image { "icon_experts_only.png"}
-icon_squares = image { "icon_squares.png"}
-icon_stacking_up = image { "icon_stacking_up.png"}
+icon_starting_simple = image { "icon_starting_simple.png",pinned=true}
+icon_two_tuples = image { "icon_two_tuples.png",pinned=true}
+icon_bend_it = image { "icon_bend_it.png",pinned=true}
+icon_crosses = image { "icon_crosses.png",pinned=true}
+icon_experts_only = image { "icon_experts_only.png",pinned=true}
+icon_squares = image { "icon_squares.png",pinned=true}
+icon_stacking_up = image { "icon_stacking_up.png",pinned=true}
 
 Press_To_Select = image { "press_to_select.png"}
 Tilt_For_More = image { "tilt_for_more.png"}
 Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
 
 Dark_Purple = image { "dark_purple.png" }
-Tutorial_Groups = image { "tutorial_groups.png" }
+-- Tutorial_Groups = image { "tutorial_groups.png" }
 Nan = image { "nan.png" }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }
@@ -133,7 +133,7 @@ Unlit_Top = image { "unlit_top.png", pinned=true }
 
 
 
-Title = image{"title.png", width=128, height=128}
+Title = image{"title.png", width=128, height=128, pinned=true}
 VaultDoor = image{"vault_door.png", width=128, height=128}
 
 Center = image{"assets_center.png", width=8, height=8}

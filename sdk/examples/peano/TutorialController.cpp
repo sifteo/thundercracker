@@ -1,5 +1,3 @@
-#if !SKIP_TUTORIAL
-
 #include "config.h"
 #include "TutorialController.h"
 #include "AudioPlayer.h"
@@ -11,6 +9,8 @@
 #include "BlankView.h"
 #include "Token.h"
 #include "TokenGroup.h"
+
+#if !SKIP_TUTORIAL
 
 namespace TotalsGame
 {
@@ -220,7 +220,7 @@ Game::GameState Run() {
     Game::Wait(3);
 
     // mix up
-    narrator.SetMessage("Okay, let's mix\nthem up a little...", NarratorView::EmoteMix01);
+    narrator.SetMessage("Okay, let's mix\nthem up a little...");
     {
         TokenGroup *grp = (TokenGroup*)firstToken.token->current;
         delete grp;

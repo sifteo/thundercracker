@@ -137,7 +137,7 @@ void Run(TotalsCube *_cubes, int nCubes)
     timeInt = System::clockNS();
 
     //TODO		saveData.Load();
-
+Game::currentPuzzle = Game::saveData.FindNextPuzzle();
     GameState nextState = GameState_Sting;
 
     while(1)
@@ -157,7 +157,7 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
 
         case GameState_Menu:
-            nextState = MenuController::Run();
+                nextState = GameState_Interstitial;//MenuController::Run();
             break;
 
         case GameState_Interstitial:
@@ -223,7 +223,8 @@ GameState Initialize()
 #if SKIP_INTRO_TUTORIAL
     return GameState_Menu;
 #else
-    return saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+    //Game::currentPuzzle = Game::saveData.FindNextPuzzle();
+    return GameState_Interstitial;//saveData.HasCompletedTutorial() ? GameState_Interstitial : GameState_Tutorial;
 #endif
 }
 

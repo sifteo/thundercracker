@@ -298,7 +298,7 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), VaultDoor, 0);
 	}
 
-    void TotalsCube::OpenShuttersSync(const AssetImage *image)
+    void TotalsCube::OpenShuttersSync(const PinnedAssetImage *image)
     {	
 		AudioPlayer::PlayShutterOpen();
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
@@ -321,7 +321,7 @@ namespace TotalsGame
 		}
     }
 
-    void TotalsCube::CloseShuttersSync(const AssetImage *image)
+    void TotalsCube::CloseShuttersSync(const PinnedAssetImage *image)
     {
         AudioPlayer::PlayShutterClose();
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
@@ -346,7 +346,7 @@ namespace TotalsGame
 
 
 
-	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
+	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const PinnedAssetImage *innerImage) 
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
@@ -355,7 +355,7 @@ namespace TotalsGame
 		int yBottom = y + (offset+4)/8;
 
 		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
+            Image(innerImage, Vec2(0,0));
 
         backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-x,16-yTop), Vec2(x,yTop), VaultDoor);			//Top left
         backgroundLayer.BG0_drawPartialAsset(Vec2(x,0), Vec2(0,16-yTop), Vec2(16-x,yTop), VaultDoor);			//top right
@@ -370,7 +370,7 @@ namespace TotalsGame
 		*/
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
+	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const PinnedAssetImage *innerImage) 
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
@@ -379,7 +379,7 @@ namespace TotalsGame
 		int xRight = y + (offset+4)/8;
 
 		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
+            Image(innerImage, Vec2(0,0));
 
         backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(y-4)), Vec2(xLeft,y-4), VaultDoor);			//Top left
         backgroundLayer.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(y-4)), Vec2(16-xRight,y-4), VaultDoor);		//Top right

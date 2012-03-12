@@ -74,7 +74,7 @@ void VictoryView::Update () {
 void VictoryView::Paint () {
     if(mOpen)
     {
-        static const AssetImage *narratorTypes[] =
+        static const PinnedAssetImage *narratorTypes[] =
         {
             &Narrator_Diamond,   &Narrator_Ruby, &Narrator_Emerald, &Narrator_Coin
         };

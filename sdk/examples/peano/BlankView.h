@@ -17,7 +17,7 @@ namespace TotalsGame
 
         virtual void Paint();
 
-        const Sifteo::AssetImage *assetImage;     
+        const Sifteo::PinnedAssetImage *assetImage;     
 	};
 
 }

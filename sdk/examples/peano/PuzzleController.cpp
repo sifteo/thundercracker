@@ -266,7 +266,7 @@ Game::GameState Run()
             nv.SetTransitionAmount(-1);
             Game::Wait(0.5f);
             if (count == 1) {
-                nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
+                nv.SetMessage("1 code to go...");
 
                 //set window to bottom half of screen so we can animate peano
                 //while text window is open above
