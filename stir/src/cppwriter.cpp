@@ -56,7 +56,7 @@ void CPPWriter::writeString(const std::vector<uint8_t> &data)
 
     unsigned i = 0;
     
-    while (i < data.size()) {
+    do {
         unsigned lineLength = 2;
         mStream << "\"";
 
@@ -76,7 +76,7 @@ void CPPWriter::writeString(const std::vector<uint8_t> &data)
         }
 
         mStream << "\"\n";
-    }
+    } while (i < data.size());
 }
 
 void CPPWriter::writeArray(const std::vector<uint8_t> &data)
