@@ -27,14 +27,6 @@
 #include "svmruntime.h"
 #include "svmdebug.h"
 #include "event.h"
-#include "tasks.h"
-
-static void returnFromYield() {
-    // Idle tasks to execute on our way back up from a yielding syscall
-    AudioMixer::instance.fetchData();
-    Tasks::work();
-    SvmRuntime::dispatchEventsOnReturn();
-}
 
 
 extern "C" {
@@ -578,19 +570,19 @@ void _SYS_exit(void)
 void _SYS_yield(void)
 {
     Radio::halt();
-    returnFromYield();
+    SvmRuntime::dispatchEventsOnReturn();
 }
 
 void _SYS_paint(void)
 {
     CubeSlots::paintCubes(CubeSlots::vecEnabled);
-    returnFromYield();
+    SvmRuntime::dispatchEventsOnReturn();
 }
 
 void _SYS_finish(void)
 {
     CubeSlots::finishCubes(CubeSlots::vecEnabled);
-    returnFromYield();
+    SvmRuntime::dispatchEventsOnReturn();
 }
 
 int64_t _SYS_ticks_ns(void)

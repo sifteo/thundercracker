@@ -10,6 +10,7 @@
 #include "svmmemory.h"
 #include "svmdebug.h"
 #include "event.h"
+#include "tasks.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -372,6 +373,10 @@ void SvmRuntime::syscall(unsigned num)
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
+
+    // Poll for pending userspace tasks on our way up. This is akin to a
+    // deferred procedure call (DPC) in Win32.
+    Tasks::work();
 }
 
 void SvmRuntime::resetSP()

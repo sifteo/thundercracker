@@ -48,6 +48,9 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
+    // Always try to fetch audio data
+    AudioMixer::instance.fetchData();
+    
     while (pendingMask) {
         unsigned idx = Intrinsic::CLZ(pendingMask);
         // clear before calling back since callback might take a while and
