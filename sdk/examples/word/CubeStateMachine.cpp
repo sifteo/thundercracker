@@ -449,20 +449,72 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
         }
         //WordGame::instance()->setNeedsPaintSync();
         break;
+
+    case AnimType_LockedHintNotWord:
+    case AnimType_LockedHintOldWord:
+        // setup sprite params
+        for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
+        {
+            calcSpriteParams(i);
+        }
+        break;
     }
 
 }
 
+void CubeStateMachine::updateSpriteParams(float dt)
+{
+    for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
+    {
+        // eased approach
+        const Float2 &v =
+                (mSpriteParams.mEndPositions[i] - mSpriteParams.mPositions[i]);
+        if (v.len2() < 2.f)
+        {
+            calcSpriteParams(i);
+        }
+        else if (mSpriteParams.mStartDelay[i] <= 0.f)
+        {
+            mSpriteParams.mPositions[i] += 6.f * dt * v;
+        }
+        else
+        {
+            mSpriteParams.mStartDelay[i] -= dt;
+        }
+    }
+}
+
 void CubeStateMachine::calcSpriteParams(unsigned i)
 {
-    mSpriteParams.mPositions[i].x = 56.f;
-    mSpriteParams.mPositions[i].y = 56.f;
-    float angle = i * M_PI_4;
-    mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
-                                                                     angle * 1.25f),
-                                            WordGame::random.uniform(32.f, 52.f));
-    mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
-    mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
+    switch (getAnim())
+    {
+    default:
+    case AnimType_NewWord:
+        {
+            mSpriteParams.mPositions[i].x = 56.f;
+            mSpriteParams.mPositions[i].y = 56.f;
+            float angle = i * M_PI_4;
+            mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
+                                                                             angle * 1.25f),
+                                                    WordGame::random.uniform(32.f, 52.f));
+            mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
+            mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
+        }
+        break;
+
+    case AnimType_LockedHintNotWord:
+    case AnimType_LockedHintOldWord:
+        {
+            float angle = i * M_PI_4;
+            float nextAngle = ((i + 1) % arraysize(mSpriteParams.mPositions)) * M_PI_4;
+            mSpriteParams.mPositions[i].setPolar(angle, 52.f);
+            mSpriteParams.mPositions[i] += Float2(56, 56);
+            mSpriteParams.mEndPositions[i].setPolar(nextAngle, 52.f);
+            mSpriteParams.mEndPositions[i] += Float2(56, 56);
+            mSpriteParams.mStartDelay[i] = 0.f;
+        }
+        break;
+    }
 }
 
 void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
@@ -776,25 +828,13 @@ void CubeStateMachine::update(float dt)
         }
         break;
 
+    case AnimType_LockedHintNotWord:
+    case AnimType_LockedHintOldWord:
+        updateSpriteParams(dt);
+        break;
+
     case AnimType_NewWord:
-        for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
-        {
-            // eased approach
-            const Float2 &v =
-                    (mSpriteParams.mEndPositions[i] - mSpriteParams.mPositions[i]);
-            if (v.len2() < 2.f)
-            {
-                calcSpriteParams(i);
-            }
-            else if (mSpriteParams.mStartDelay[i] <= 0.f)
-            {
-                mSpriteParams.mPositions[i] += 6.f * dt * v;
-            }
-            else
-            {
-                mSpriteParams.mStartDelay[i] -= dt;
-            }
-        }
+        updateSpriteParams(dt);
 
         if (mAnimTimes[CubeAnim_Main] <= 1.5f)
         {
@@ -1295,6 +1335,8 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_NewWord:
+    case AnimType_LockedHintNotWord:
+    case AnimType_LockedHintOldWord:
         break;
 
     default:
@@ -1429,6 +1471,8 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         break;
 
     case AnimType_NewWord:
+    case AnimType_LockedHintNotWord:
+    case AnimType_LockedHintOldWord:
         params->mSpriteParams = &mSpriteParams;
         // fall through
     default:

@@ -86,9 +86,11 @@ private:
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
-    bool getAnimParams(AnimParams *params);
     void setLettersStart(unsigned s);
+
+    bool getAnimParams(AnimParams *params);
     void calcSpriteParams(unsigned i);
+    void updateSpriteParams(float dt);
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];

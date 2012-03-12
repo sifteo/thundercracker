@@ -152,7 +152,7 @@ const static AnimData animData[] =
     //AnimIndex_Tile1EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1ShuffleScored,
-    { 1.f, true, 2, &animObjData[0]},
+    { 0.5f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1CityProgression
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintAppear,
@@ -222,7 +222,7 @@ const static AnimData animData[] =
     //AnimIndex_Tile3EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3ShuffleScored,
-    { 1.f, true, 2, &animObjData[0]},
+    { 0.5f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3CityProgression
     { 1.f, true, 1, &animObjData[8]},
     //AnimType_HintAppear,
@@ -375,24 +375,18 @@ bool animPaint(AnimType animT,
 
     // do procedural sprite stuff, it may not be a good fit for the data
     // driven approach
-    switch (animT)
+    if (params && params->mSpriteParams)
     {
-    case AnimType_NewWord:
+        float t = 4.f * animTime/data.mDuration;
+        t = fmodf(t, 1.0f);
+        unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
+        for (unsigned i=1; i<8; ++i)
         {
-            float t = 4.f * animTime/data.mDuration;
-            t = fmodf(t, 1.0f);
-            unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
-            for (unsigned i=1; i<8; ++i)
-            {
-                //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
-                vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
-                vid.resizeSprite(i, Sparkle.width, Sparkle.height);
-                vid.setSpriteImage(i, Sparkle, assetFrame);
-            }
+            //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
+            vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
+            vid.resizeSprite(i, Sparkle.width, Sparkle.height);
+            vid.setSpriteImage(i, Sparkle, assetFrame);
         }
-        break;
-    default:
-        break;
     }
 
     if (params && params->mBorders)
