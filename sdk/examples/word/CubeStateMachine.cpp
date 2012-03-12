@@ -60,8 +60,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     {
                         const float BG0_PANNING_WRAP = 144.f;
 
-                        _SYSTiltState state;
-                        _SYS_getTilt(getCube().id(), &state);
+                        _SYSTiltState state = _SYS_getTilt(getCube().id());
                         if (state.x != 1)
                         {
 
