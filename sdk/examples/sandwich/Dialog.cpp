@@ -125,10 +125,8 @@ static uint16_t color_lerp(uint8_t alpha) {
                    (bg_b * invalpha + fg_b * alpha) / 0xff );
 }
 
-Dialog::Dialog(Cube* pCube) : mCube(pCube) {
-}
-
-void Dialog::Init() {
+void Dialog::Init(Cube *cube) {
+    mCube = cube;
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
     mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
@@ -137,9 +135,9 @@ void Dialog::Init() {
 const char* Dialog::Show(const char* str) {
     unsigned count, length;
     MeasureText(str, &count, &length);
-	mPosition.x = (128 - length) >> 1;
+	mPositionX = (128 - length) >> 1;
     DrawText(str);
-    mPosition.y += kFontHeight+1;
+    mPositionY += kFontHeight+1;
     return str + count;
 }
 
@@ -147,8 +145,8 @@ void Dialog::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-    uint16_t dest = (mPosition.y << 4) | (mPosition.x >> 3);
-    unsigned shift = mPosition.x & 7;
+    uint16_t dest = (mPositionY << 4) | (mPositionX >> 3);
+    unsigned shift = mPositionX & 7;
 
     for (unsigned i = 0; i < kFontHeight; i++) {
         mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] << shift));
@@ -165,7 +163,7 @@ void Dialog::DrawGlyph(char ch) {
         }
     }
 
-    mPosition.x += escapement;
+    mPositionX += escapement;
 }
 
 unsigned Dialog::MeasureGlyph(char ch) {
@@ -195,7 +193,7 @@ void Dialog::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
 }
 
 void Dialog::Erase() {
-    mPosition.y = 5;
+    mPositionY = 5;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
     	mCube->vbuf.poke(i, 0);
     }

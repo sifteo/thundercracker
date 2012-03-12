@@ -1,6 +1,32 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_room import *
 
+class MapDatabase:
+	def __init__(self, world, path):
+		self.world = world
+		self.path = path
+		doc = lxml.etree.parse(path)
+		maps = [ Map(self, xml) for xml in doc.findall("map")]
+		maps_by_name = [ (m.id,m) for m in maps]
+		maps_by_name.sort()
+		self.maps = [ m for _,m in maps_by_name ]
+		for i,m in enumerate(self.maps): m.index = i
+		self.map_dict = dict((map.id, map) for map in self.maps)
+		#validate maps
+		assert len(self.maps) > 0
+		# validate map links
+		for map in self.maps:
+			for gate in map.list_triggers_of_type(TRIGGER_GATEWAY):
+				assert gate.target_map in self.map_dict, "gateway to unknown map: " + gate.target_map
+				tmap = self.map_dict[gate.target_map]
+				found = False
+				for othergate in tmap.list_triggers_of_type(TRIGGER_GATEWAY):
+					if othergate.id == gate.target_gate:
+						found = True
+						break
+				assert found, "link to unknown map-gate: " + gate.target_gate
+
+
 class Door:
 	def __init__(self, room):
 		self.id = "_door_%s_%d" % (room.map.id, room.lid)
@@ -17,10 +43,13 @@ class AnimatedTile:
 		assert self.numframes < 16, "tile animation too long (capacity 15)"
 
 class Map:
-	def __init__(self, world, path):
+	def __init__(self, db, xml):
+		world = db.world
+		path = posixpath.join(world.dir, xml.get("id")+".tmx")
 		print "Reading Map: ", path
 		self.world = world
 		self.id = posixpath.basename(path)[:-4].lower()
+		self.readable_name = xml.findtext("name")
 		self.raw = tmx.Map(path)
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
@@ -232,7 +261,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(bg)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
+			"    { \"%(readable_name)s\", &TileSet_%(bg)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
 			"%(name)s_xportals, %(name)s_yportals, " \
 			"%(item)s, %(gate)s, %(npc)s, %(trapdoor)s, %(door)s, " \
 			"%(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
@@ -240,6 +269,7 @@ class Map:
 			"0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(ambient)x, " \
 			"0x%(w)x, 0x%(h)x },\n" % \
 			{ 
+				"readable_name": self.readable_name,
 				"name": self.id,
 				"bg": posixpath.splitext(self.background_id)[0],
 				"overlay": "&Overlay_" + posixpath.splitext(self.overlay_id)[0] if self.overlay is not None else "0",

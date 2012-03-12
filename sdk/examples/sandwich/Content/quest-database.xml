@@ -1,19 +1,18 @@
 <quest-database>
-
+	<quest id="tutorial" map="castle" x="3" y="4" />
 
 	<quest id="followSprout1" map="forest" x="2" y="5" />
 	<quest id="followSprout2" map="forest" x="2" y="5" />
 	<quest id="followSprout3" map="forest" x="2" y="5" />
 	<quest id="getBread" map="forest" x="2" y="5" />
-	<!--quest id="getMeat" map="forest" x="2" y="5" /-->
 	
-	<quest id="linearcriticalpath" map="linearcriticalpath" x="0" y="6" />
+	<!--quest id="linearcriticalpath" map="linearcriticalpath" x="0" y="6" />
 	<quest id="longerdeadends" map="longerdeadends" x="0" y="6" />	
 	<quest id="openSpaceLandmarks" map="openSpaceLandmarks" x="1" y="6" />	
 	<quest id="pitpointers" map="pitpointers" x="5" y="5" />
 
 
-	<quest id="tutorial" map="forest" x="0" y="5" />
+	<quest id="tutorial" map="forest" x="0" y="5" /-->
 
 
 </quest-database>

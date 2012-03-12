@@ -128,7 +128,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
 void Game::IrisOut(ViewSlot* view) {
   view->HideSprites();
-  view->Overlay().Flush();
+  BG1Helper(*view->GetCube()).Flush();
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -175,7 +175,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 
 
 void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
-    Dialog view(vslot->GetCube());
+    Dialog view;
     ViewMode mode = vslot->Graphics();
     PlaySfx(sfx_neighbor);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
@@ -196,7 +196,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
             mode.setWindow(0, 80);
             _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(Vec2(0,0)), bg0_tiles, 180);
           }
-          BG1Helper ovrly = vslot->Overlay();
+          BG1Helper ovrly(*vslot->GetCube());
           ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
           ovrly.Flush();
           Paint(true);
@@ -210,7 +210,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           #endif
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
-          view.Init();
+          view.Init(vslot->GetCube());
         }
         view.Erase();
         Paint(true);
@@ -260,8 +260,8 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint(true);
   #endif
   gfx.setWindow(80+16,128-80-16);
-  Dialog view(pView->GetCube());
-  view.Init();
+  Dialog view;
+  view.Init(pView->GetCube());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
@@ -411,7 +411,7 @@ unsigned Game::OnPassiveTrigger() {
       if (p != pView) { p->HideLocation(); }
     }
     pView->HideSprites();
-    pView->Overlay().Flush();
+    BG1Helper(*pView->GetCube()).Flush();
     Paint(true);
 
     Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);

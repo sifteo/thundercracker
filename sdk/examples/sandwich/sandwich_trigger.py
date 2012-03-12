@@ -119,8 +119,8 @@ class Trigger:
 	def write_gateway_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		mapid = self.room.map.world.map_dict[self.target_map].index
-		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
+		mapid = self.room.map.world.maps.map_dict[self.target_map].index
+		gateid = self.room.map.world.maps.map_dict[self.target_map].gate_dict[self.target_gate].index
 		x,y = self.local_position()
 		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (mapid, gateid, x, y))
 	

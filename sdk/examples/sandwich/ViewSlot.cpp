@@ -160,6 +160,9 @@ void ViewSlot::Update(float dt) {
 	case VIEW_MINIMAP:
 		mView.minimap.Update(dt);
 		break;
+	case VIEW_EDGE:
+		mView.edge.Update(dt);
+		break;
 	}
 }
   
@@ -169,15 +172,8 @@ bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
 	Cube::Side side = SIDE_UNDEFINED;
 	if (loc.x == -1) {
 		loc.x = 0;
-		if (loc.y == -1) {
-			loc.y = 0;
-			side = SIDE_TOP_LEFT;
-		} else if (loc.y < map.height) {
-			loc.y = 0;
+		if (loc.y >= 0 && loc.y < map.height) {
 			side = SIDE_LEFT;
-		} else if (loc.y == map.height) {
-			loc.y = map.height-1;
-			side = SIDE_BOTTOM_LEFT;
 		} else {
 			goto OutOfBounds;
 		}
@@ -195,35 +191,18 @@ bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
 		}
 	} else if (loc.x == map.width) {
 		loc.x = map.width-1;
-		if (loc.y == -1) {
-			loc.y = 0;
-			side = SIDE_TOP_RIGHT;
-		} else if (loc.y < map.height) {
-			loc.y = 0;
+		if (loc.y >= 0 && loc.y < map.height) {
 			side = SIDE_RIGHT;
-		} else if (loc.y == map.height) {
-			loc.y = map.height-1;
-			side = SIDE_BOTTOM_RIGHT;
 		} else {
 			goto OutOfBounds;
 		}
+	} else {
+		goto OutOfBounds;
 	}
 	return SetLocationView(gGame.GetMap()->GetRoomId(loc), side, force, doFlush);
 	OutOfBounds:
 	HideLocation(doFlush);
 	return false;
-	/*
-	if (!gGame.GetMap()->Contains(loc)) {
-		HideLocation(doFlush);
-	} else {
-		unsigned rid = gGame.GetMap()->GetRoomId(loc);
-		if (force || !IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
-			SetSecondaryView(VIEW_ROOM, doFlush, rid);
-			return true;
-		}
-	}
-	return false;
-	*/
 }
 
 ViewSlot* ViewSlot::FindIdleView() {

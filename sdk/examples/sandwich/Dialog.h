@@ -5,11 +5,11 @@
 class Dialog {
 private:
     Cube* mCube;
-    Vec2 mPosition;
+    int16_t mPositionX;
+    int16_t mPositionY;
 
 public:
-    Dialog(Cube *mCube);
-    void Init();
+    void Init(Cube *cube);
     Cube* GetCube() const { return mCube; }
     void ShowAll(const char* lines);
     const char* Show(const char* msg);

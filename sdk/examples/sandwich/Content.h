@@ -115,6 +115,8 @@ struct BridgeSubdivisionData {
 // todo - microoptimize bits
 // todo - replace pointers with <32bit offsets-from-known-locations?
 struct MapData {
+    const char* name;
+
     // stir pointers
     const AssetImage* tileset;
     const AssetImage* overlay;
