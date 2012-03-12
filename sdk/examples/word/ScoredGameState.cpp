@@ -38,50 +38,84 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     }
 }
 
+unsigned char ScoredGameState::findNumHintsAvailable() const
+{
+    unsigned char result = 0;
+    for (Cube::ID i = CUBE_ID_BASE;
+         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
+         ++i)
+    {
+        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
+        if (csmAddHint &&
+            csmAddHint->isHintAvailable())
+        {
+            ++result;
+        }
+    }
+    return result;
+}
+
+void ScoredGameState::makeHintsAvailable(unsigned char num) const
+{
+    char letters[MAX_LETTERS_PER_CUBE + 1];
+    // add a hint to a cube that has letters first
+    for (Cube::ID i = CUBE_ID_BASE;
+         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE && num > 0;
+         ++i)
+    {
+        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
+        if (csmAddHint &&
+            csmAddHint->canMakeHintAvailable() &&
+            csmAddHint->getLetters(letters) &&
+                letters[0] != '\0' &&
+                letters[0] != ' ')
+        {
+            csmAddHint->makeHintAvailable();
+            --num;
+        }
+    }
+
+    for (Cube::ID i = CUBE_ID_BASE;
+         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE && num > 0;
+         ++i)
+    {
+        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
+        if (csmAddHint &&
+            csmAddHint->canMakeHintAvailable())
+        {
+            csmAddHint->makeHintAvailable();
+            --num;
+        }
+    }
+    // OK to fail to make all hints available, in case of cubes disconnected
+}
+
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
     onAudioEvent(eventID, data);
     switch (eventID)
     {
     // TODO put in the pause menu on touch
+    case EventID_NewAnagram:
+        // reset hints,
+        for (Cube::ID i = CUBE_ID_BASE;
+             i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
+             ++i)
+        {
+            CubeStateMachine *csm = GameStateMachine::findCSMFromID(i);
+            if (csm)
+            {
+                csm->removeHint();
+            }
+        }
+        makeHintsAvailable(mNumHints);
+        break;
+
     case EventID_NewWordFound:
         {
-            bool madeHintAvailable = false;
-            char letters[MAX_LETTERS_PER_CUBE + 1];
-            // add a hint to a cube that has letters first
-            for (Cube::ID i = CUBE_ID_BASE;
-                 i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
-                 ++i)
-            {
-                CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
-                if (csmAddHint &&
-                    csmAddHint->canMakeHintAvailable() &&
-                    csmAddHint->getLetters(letters) &&
-                        letters[0] != '\0' &&
-                        letters[0] != ' ')
-                {
-                    csmAddHint->makeHintAvailable();
-                    madeHintAvailable = true;
-                    break;
-                }
-            }
-
-            if (!madeHintAvailable)
-            {
-                for (Cube::ID i = CUBE_ID_BASE;
-                     i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
-                     ++i)
-                {
-                    CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
-                    if (csmAddHint &&
-                        csmAddHint->canMakeHintAvailable())
-                    {
-                        csmAddHint->makeHintAvailable();
-                        madeHintAvailable = true;
-                        break;
-                    }
-                }
-            }
+            // count total hints and add one
+            mNumHints = findNumHintsAvailable() + 1;
+            makeHintsAvailable(1);
         }
 #if (0)
 #ifndef SIFTEO_SIMULATOR

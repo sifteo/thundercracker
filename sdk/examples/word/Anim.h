@@ -20,7 +20,7 @@ enum AnimType
     AnimType_HintAppear,
     AnimType_HintIdle,
     AnimType_HintShake,
-    AnimType_HintDisppear,
+    AnimType_HintDisappear,
     AnimType_SlideLHint,
     AnimType_SlideRHint,
     AnimType_LockHint,
@@ -30,13 +30,20 @@ enum AnimType
     NumAnimTypes
 };
 
+struct SpriteParams
+{
+    Float2 mPositions[_SYS_VRAM_SPRITES];
+    Float2 mEndPositions[_SYS_VRAM_SPRITES];
+    float mStartDelay[_SYS_VRAM_SPRITES];
+};
+
 struct AnimParams
 {
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
     bool mBorders;
-
+    SpriteParams *mSpriteParams;
 };
 
 bool animPaint(AnimType anim,
