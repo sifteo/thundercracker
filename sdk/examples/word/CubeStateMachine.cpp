@@ -194,7 +194,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     mImageIndex = ImageIndex_ConnectedRightWord;
                 }
             }
-            WordGame::instance()->setNeedsPaintSync();
+            //WordGame::instance()->setNeedsPaintSync();
             break;
         }
         {
@@ -202,6 +202,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         mIdleTime = 0.f;
         paint();
+        WordGame::instance()->setNeedsPaintSync();
         break;
 
     case EventID_AddNeighbor:
@@ -441,6 +442,7 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
                getCube().id(), anim, cubeAnim));
     mAnimTypes[cubeAnim] = anim;
     mAnimTimes[cubeAnim] = 0.f;
+    WordGame::instance()->setNeedsPaintSync();
 
     // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
 }
@@ -908,7 +910,6 @@ void CubeStateMachine::paint()
     paintBorder(vid, ii, true, false, true, false);
     */
     bg1.Flush(); // TODO only flush if mask has changed recently
-    WordGame::instance()->setNeedsPaintSync();
 
     mPainting = false;
 }
@@ -1226,7 +1227,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
     }
 
     bg1.Flush(); // TODO only flush if mask has changed recently
-    WordGame::instance()->setNeedsPaintSync();
+    //WordGame::instance()->setNeedsPaintSync();
 #endif // (0)
 }
 

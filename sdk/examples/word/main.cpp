@@ -145,13 +145,13 @@ void siftmain()
             lastPaint = now;
         }
 
-        if (game.needsPaintSync())
+        if (true || game.needsPaintSync()) // TODO can't seem to fix BG1 weirdness w/o this
         {
             game.paintSync();
         }
         else
         {
-            System::paint();
+            System::paint(); // (will do nothing if screens haven't changed
         }
     }
 }
