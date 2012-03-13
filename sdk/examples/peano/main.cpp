@@ -33,11 +33,7 @@ void siftmain() {
     System::paint();
     if (done) break;
   }
-  for (int i = 0; i < NUM_CUBES; i++) {
-    VidMode_BG0 mode(cubes[i].vbuf);
-    mode.init();
-    mode.BG0_drawAsset(Vec2(0,0), Background);
-  }
+
 #endif
     
     TotalsGame::Game::Run(cubes, NUM_CUBES);
