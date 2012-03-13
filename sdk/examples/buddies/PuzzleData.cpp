@@ -5,6 +5,7 @@
 #include "PuzzleData.h"
 #include "Puzzle.h"
 #include "Piece.h"
+#include <sifteo/string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,12 +208,22 @@ Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 // This is the default state (all buddies with their original parts in the right position).
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const char kCutsceneTextStartDefault[][64] =
+{
+    "Default",
+};
+const char kCutsceneTextEndDefault[][64] =
+{
+    "Default",
+};
+
 const unsigned int kBuddyIdsDefault[] = {0, 1, 2, 3, 4, 5};
+
 const Puzzle kPuzzleDefault =
     Puzzle(
         "Default",
-        "Default",
-        "Default",
+        kCutsceneTextStartDefault, arraysize(kCutsceneTextStartDefault),
+        kCutsceneTextEndDefault, arraysize(kCutsceneTextEndDefault),
         "Default",
         kBuddyIdsDefault,
         kNumCubes,
@@ -241,6 +252,47 @@ const Puzzle kPuzzleDefault =
 // all are solved.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const char kCutsceneTextStart0[][64] =
+{
+    "[A]Gimme a kiss",
+    "[B]Can I use\nyour mouth?",
+    "[A]...",
+    "[A]OK",
+};
+const char kCutsceneTextEnd0[][64] =
+{
+    "[B]Muuuahhh",
+    "[A]Hot n'\nheavy!",
+};
+
+const char kCutsceneTextStart1[][64] =
+{
+    "[A]Let's get\nCRAZY!",
+};
+const char kCutsceneTextEnd1[][64] =
+{
+    "[B]My head\nhurts.",
+};
+
+const char kCutsceneTextStart2[][64] =
+{
+    "[A]How do I get\ncool hair",
+    "[A]like you?",
+};
+const char kCutsceneTextEnd2[][64] =
+{
+    "[A]Now I look\nlike Kelly!",
+};
+
+const char kCutsceneTextStart3[][64] =
+{
+    "[A]See the world\nfrom my eyes!",
+};
+const char kCutsceneTextEnd3[][64] =
+{
+    "[A]That's much\nbetter.",
+};
+
 const unsigned int kBuddiesPuzzle0[] = {0, 1};
 const unsigned int kBuddiesPuzzle1[] = {1, 2};
 const unsigned int kBuddiesPuzzle2[] = {3, 4};
@@ -251,41 +303,37 @@ const Puzzle kPuzzles[] =
 {
     Puzzle(
         "Big Mouth",
-        "Gimme a kiss!",
-        "Muuuahhh",
+        kCutsceneTextStart0, arraysize(kCutsceneTextStart0),
+        kCutsceneTextEnd0, arraysize(kCutsceneTextEnd0),
         "Swap Mouths",
-        kBuddiesPuzzle0,
-        arraysize(kBuddiesPuzzle0),
+        kBuddiesPuzzle0, arraysize(kBuddiesPuzzle0),
         0,
         kAuthoredStartStateMouths,
         kAuthoredEndStateMouths),
     Puzzle(
         "All Mixed Up",
-        "Let's get\nCRAZY!",
-        "My head\nhurts.",
+        kCutsceneTextStart1, arraysize(kCutsceneTextStart1),
+        kCutsceneTextEnd1, arraysize(kCutsceneTextEnd1),
         "Unscramble",
-        kBuddiesPuzzle1,
-        arraysize(kBuddiesPuzzle1),
+        kBuddiesPuzzle1, arraysize(kBuddiesPuzzle1),
         3,
         kAuthoredStartStateMixedUp,
         kAuthoredEndStateMixedUp),
     Puzzle(
         "Bad Hair Day",
-        "How do I get\ncool hair\nlike you?",
-        "That's much\nbetter.",
+        kCutsceneTextStart2, arraysize(kCutsceneTextStart2),
+        kCutsceneTextEnd2, arraysize(kCutsceneTextEnd2),
         "Swap Hair",
-        kBuddiesPuzzle2,
-        arraysize(kBuddiesPuzzle2),
+        kBuddiesPuzzle2, arraysize(kBuddiesPuzzle2),
         0,
         kAuthoredStartStateHair,
         kAuthoredEndStateHair),
     Puzzle(
         "Private Eyes",
-        "See the world\nfrom my eyes!",
-        "That's much\nbetter.",
+        kCutsceneTextStart3, arraysize(kCutsceneTextStart3),
+        kCutsceneTextEnd3, arraysize(kCutsceneTextEnd3),
         "Swap Eyes",
-        kBuddiesPuzzle3,
-        arraysize(kBuddiesPuzzle3),
+        kBuddiesPuzzle3, arraysize(kBuddiesPuzzle3),
         0,
         kAuthoredStartStateEyes,
         kAuthoredEndStateEyes),

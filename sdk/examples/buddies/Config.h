@@ -43,6 +43,7 @@ const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap anima
 const float kShuffleFaceCompleteTimerDuration = 2.0f;
 
 // Story Mode
+const float kCutsceneTextDelay = 2.5f;
 const float kHintBlinkTimerDuration = 0.5f; // Blink rate for story mode hints
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

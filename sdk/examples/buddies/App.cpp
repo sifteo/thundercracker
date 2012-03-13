@@ -331,6 +331,7 @@ App::App()
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
+    , mStoryCutsceneIndex(0)
 {
     for (unsigned int i = 0; i < arraysize(mTouching); ++i)
     {
@@ -811,7 +812,15 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextStart() == 1)
+            {
+                mDelayTimer = kStateTimeDelayLong;
+            }
+            else
+            {
+                mDelayTimer = kCutsceneTextDelay;
+            }
+            mStoryCutsceneIndex = 0;
             break;
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
@@ -858,7 +867,15 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CUTSCENE_END:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd() == 1)
+            {
+                mDelayTimer = kStateTimeDelayLong;
+            }
+            else
+            {
+                mDelayTimer = kCutsceneTextDelay;
+            }
+            mStoryCutsceneIndex = 0;
             break;
         }
         case GAME_STATE_STORY_CHAPTER_END:
@@ -1053,7 +1070,14 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
-                StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
+                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextStart())
+                {
+                    StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
+                }
+                else
+                {
+                    mDelayTimer += kCutsceneTextDelay;
+                }
             }
             break;
         }
@@ -1190,7 +1214,14 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
-                StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd())
+                {
+                    StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                }
+                else
+                {
+                    mDelayTimer += kCutsceneTextDelay;
+                }
             }
             break;
         }
@@ -1345,7 +1376,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart());
+                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex));
             }
             else
             {
@@ -1493,7 +1524,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd());
+                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex));
             }
             else
             {
@@ -1904,6 +1935,7 @@ void App::OnSwapExchange()
 void App::OnSwapFinish()
 {
     mSwapState = SWAP_STATE_NONE;
+    mSwapAnimationSlideTimer = 0.0f;
     
     if (mGameState == GAME_STATE_FREE_PLAY)
     {

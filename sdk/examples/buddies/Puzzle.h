@@ -29,18 +29,22 @@ class Puzzle
 public:
     Puzzle(
         const char *chapterTitle,
-        const char *cutsceneTextStart,
-        const char *cutsceneTextEnd,
+        const char cutsceneTextStart[][64], unsigned int numCutsceneTextStart,
+        const char cutsceneTextEnd[][64], unsigned int numCutsceneTextEnd,
         const char *clue,
-        const unsigned int buddies[],
-        unsigned int numBuddies,
+        const unsigned int buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
         const Piece startState[kMaxBuddies][NUM_SIDES],
         const Piece endState[kMaxBuddies][NUM_SIDES]);
     
     const char *GetChapterTitle() const;
-    const char *GetCutsceneTextStart() const;
-    const char *GetCutsceneTextEnd() const;
+    
+    unsigned int GetNumCutsceneTextStart() const;
+    const char *GetCutsceneTextStart(unsigned int cutsceneIndex) const;
+    
+    unsigned int GetNumCutsceneTextEnd() const;
+    const char *GetCutsceneTextEnd(unsigned int cutsceneIndex) const;
+    
     const char *GetClue() const;
     
     unsigned int GetBuddy(unsigned int buddyIndex) const;
@@ -53,8 +57,10 @@ public:
     
 private:
     const char *mChapterTitle;
-    const char *mCutsceneTextStart;
-    const char *mCutsceneTextEnd;
+    const char *mCutsceneTextStart[16];
+    unsigned int mNumCutsceneTextStart;
+    const char *mCutsceneTextEnd[16];
+    unsigned int mNumCutsceneTextEnd;
     const char *mClue;
     unsigned int mBuddies[kMaxBuddies];
     unsigned int mNumBuddies;

@@ -53,7 +53,7 @@ struct Piece
     int mBuddy;
     int mPart;
     int mRotation;
-    bool mMustSolve;
+    bool mMustSolve; // TODO: This doesn't apply to "start" pieces, so does it belong in here?
     Attribute mAttribute;
 };
 

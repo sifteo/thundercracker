@@ -40,7 +40,8 @@ MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
 -- Story Mode
 CutsceneBackground = image{"assets/cutscene_bg.png"}
 CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
-CutsceneTextBubble = image{"assets/ui_textbox.png"}
+CutsceneTextBubbleLeft = image{"assets/ui_textbox_left.png"}
+CutsceneTextBubbleRight = image{"assets/ui_textbox_right.png"}
 ChapterTitle = image{"assets/ui_chapter_title.png"}
 ChapterOverlay = image{"assets/ui_chapter_overlay.png"}
 ChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}

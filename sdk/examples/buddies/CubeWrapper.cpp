@@ -242,8 +242,16 @@ void CubeWrapper::DrawCutscene(const char *text)
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
     
-    mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
-    mBg1Helper.DrawText(Vec2(1, 1), Font, text);
+    if (text[0] == '[')
+    {
+        mBg1Helper.DrawAsset(Vec2(0, 0), text[1] == 'A' ? CutsceneTextBubbleLeft : CutsceneTextBubbleRight);
+        mBg1Helper.DrawText(Vec2(1, 1), Font, text + 3);
+    }
+    else
+    {
+        mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubbleLeft);
+        mBg1Helper.DrawText(Vec2(1, 1), Font, text);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -23,17 +23,18 @@ namespace Buddies {
 
 Puzzle::Puzzle(
     const char *chapterTitle,
-    const char *cutsceneTextStart,
-    const char *cutsceneTextEnd,
+    const char cutsceneTextStart[][64], unsigned int numCutsceneTextStart,
+    const char cutsceneTextEnd[][64], unsigned int numCutsceneTextEnd,
     const char *clue,
-    const unsigned int buddies[],
-    unsigned int numBuddies,
+    const unsigned int buddies[], unsigned int numBuddies,
     unsigned int numShuffles,
     const Piece startState[kMaxBuddies][NUM_SIDES],
     const Piece endState[kMaxBuddies][NUM_SIDES])
     : mChapterTitle(chapterTitle)
-    , mCutsceneTextStart(cutsceneTextStart)
-    , mCutsceneTextEnd(cutsceneTextEnd)
+    , mCutsceneTextStart()
+    , mNumCutsceneTextStart(numCutsceneTextStart)
+    , mCutsceneTextEnd()
+    , mNumCutsceneTextEnd(numCutsceneTextEnd)
     , mClue(clue)
     , mBuddies()
     , mNumBuddies(numBuddies)
@@ -41,6 +42,18 @@ Puzzle::Puzzle(
     , mStartState()
     , mEndState()
 {
+    ASSERT(mNumCutsceneTextStart < arraysize(mCutsceneTextStart));
+    for (unsigned int i = 0; i < mNumCutsceneTextStart; ++i)
+    {
+        mCutsceneTextStart[i] = cutsceneTextStart[i];
+    }
+    
+    ASSERT(mNumCutsceneTextEnd < arraysize(mCutsceneTextEnd));
+    for (unsigned int i = 0; i < mNumCutsceneTextEnd; ++i)
+    {
+        mCutsceneTextEnd[i] = cutsceneTextEnd[i];
+    }
+    
     ASSERT(mNumBuddies < arraysize(mBuddies));
     for (unsigned int i = 0; i < mNumBuddies; ++i)
     {
@@ -68,17 +81,35 @@ const char *Puzzle::GetChapterTitle() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *Puzzle::GetCutsceneTextStart() const
+const char *Puzzle::GetCutsceneTextStart(unsigned int cutsceneIndex) const
 {
-    return mCutsceneTextStart;
+    ASSERT(cutsceneIndex < arraysize(mCutsceneTextStart));
+    return mCutsceneTextStart[cutsceneIndex];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *Puzzle::GetCutsceneTextEnd() const
+unsigned int Puzzle::GetNumCutsceneTextStart() const
 {
-    return mCutsceneTextEnd;
+    return mNumCutsceneTextStart;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char *Puzzle::GetCutsceneTextEnd(unsigned int cutsceneIndex) const
+{
+    ASSERT(cutsceneIndex < arraysize(mCutsceneTextEnd));
+    return mCutsceneTextEnd[cutsceneIndex];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Puzzle::GetNumCutsceneTextEnd() const
+{
+    return mNumCutsceneTextEnd;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
