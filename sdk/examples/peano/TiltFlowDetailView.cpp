@@ -1,6 +1,7 @@
 #include "TiltFlowDetailView.h"
 #include "assets.gen.h"
 #include "Game.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 
@@ -80,8 +81,10 @@ void TiltFlowDetailView::Paint() {
         int bottom = (INTERPOLATE(4, 16-4, clamp(1.1f * mAmount,0.0f,1.0f)));
 #undef INTERPOLATE
         c->FillArea(&Dark_Purple, Vec2(0,1), Vec2(16,bottom-1));
-        c->ClipImage(&VaultDoor, Vec2(0,1-16));
-        c->ClipImage(&VaultDoor, Vec2(0, bottom));
+
+        const Skins::Skin &skin = Skins::GetSkin();
+        c->ClipImage(&skin.vault_door, Vec2(0,1-16));
+        c->ClipImage(&skin.vault_door, Vec2(0, bottom));
 
         if(!GetCube()->backgroundLayer.isSpriteHidden(0))
         {

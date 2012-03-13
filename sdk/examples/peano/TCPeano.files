@@ -94,3 +94,6 @@ VictoryController.cpp
 DialogWindow.h
 DialogWindow.cpp
 VictoryView.cpp
+Skins.cpp
+Skins.cpp
+Skins.h

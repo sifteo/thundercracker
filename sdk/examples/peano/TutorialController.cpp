@@ -9,6 +9,7 @@
 #include "BlankView.h"
 #include "Token.h"
 #include "TokenGroup.h"
+#include "Skins.h"
 
 namespace TotalsGame
 {
@@ -94,6 +95,8 @@ WaitForTouchEventHanlder waitForTouchEventHandler[2];
 
 Game::GameState Run() {
 
+    const Skins::Skin &skin = Skins::GetSkin();
+
     NarratorView narrator;
     TokenView firstToken, secondToken;
 
@@ -153,13 +156,13 @@ Game::GameState Run() {
     // open shutters
     narrator.SetMessage("");
     Game::Wait(1);
-    Game::cubes[1].OpenShuttersSync(&Background);
+    Game::cubes[1].OpenShuttersSync(&skin.background);
     // initialize two token views
     firstToken.SetToken(puzzle->GetToken(0));
     Game::cubes[1].SetView(&firstToken);
     firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
     Game::Wait(0.25f);
-    Game::cubes[2].OpenShuttersSync(&Background);
+    Game::cubes[2].OpenShuttersSync(&skin.background);
     secondToken.SetToken(puzzle->GetToken(1));
     Game::cubes[2].SetView(&secondToken);
     secondToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
@@ -314,13 +317,13 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].HideSprites();
-    Game::cubes[2].CloseShuttersSync(&Background);
+    Game::cubes[2].CloseShuttersSync(&skin.background);
     Game::cubes[2].SetView(blankViews+2);
 
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].HideSprites();
-    Game::cubes[1].CloseShuttersSync(&Background);
+    Game::cubes[1].CloseShuttersSync(&skin.background);
     Game::cubes[1].SetView(blankViews+1);
 
     Game::Wait(1);
@@ -347,13 +350,13 @@ Game::GameState Run() {
 
 
     //Game::cubes[1]->SetView(NULL);
-    Game::cubes[1].OpenShuttersSync(&Background);
+    Game::cubes[1].OpenShuttersSync(&skin.background);
     Game::cubes[1].SetView(&firstToken);
     firstToken.DidGroupDisconnect();
     Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
-    Game::cubes[2].OpenShuttersSync(&Background);
+    Game::cubes[2].OpenShuttersSync(&skin.background);
     Game::cubes[2].SetView(&secondToken);
     secondToken.DidGroupDisconnect();
     Game::Wait(1);
@@ -389,14 +392,14 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].SetView(NULL);
-    Game::cubes[2].CloseShuttersSync(&Background);
+    Game::cubes[2].CloseShuttersSync(&skin.background);
     Game::cubes[2].SetView(blankViews+2);
     blankViews[2].assetImage = NULL;
 
     Game::cubes[1].HideSprites();
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
-    Game::cubes[1].CloseShuttersSync(&Background);
+    Game::cubes[1].CloseShuttersSync(&skin.background);
     Game::cubes[1].SetView(blankViews+1);
     blankViews[1].assetImage = NULL;
 

@@ -2,6 +2,7 @@
 #include "TotalsCube.h"
 #include "Game.h"
 #include "AudioPlayer.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 
@@ -113,18 +114,20 @@ void InterstitialView::PaintWithOffsetNorm(TotalsCube *c, float u, bool backward
 
 void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
 {
+    const Skins::Skin &skin = Skins::GetSkin();
+
     if (off < 7) {
         // moving to the left
-        c->ClipImage(&VaultDoor, Vec2(7-off, 7));
-        c->ClipImage(&VaultDoor, Vec2(7-16-off,7));
-        c->ClipImage(&VaultDoor, Vec2(7-off, 7-16));
-        c->ClipImage(&VaultDoor, Vec2(7-16-off, 7-16));
+        c->ClipImage(&skin.vault_door, Vec2(7-off, 7));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-off,7));
+        c->ClipImage(&skin.vault_door, Vec2(7-off, 7-16));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-off, 7-16));
     } else if (off < 7+6)
     {
         // moving up
         off -= 7;
-        c->ClipImage(&VaultDoor, Vec2(0, 7-off));
-        c->ClipImage(&VaultDoor, Vec2(0, 7-off-16));
+        c->ClipImage(&skin.vault_door, Vec2(0, 7-off));
+        c->ClipImage(&skin.vault_door, Vec2(0, 7-off-16));
     } else {
         // opening
         off -= (7 + 6);
@@ -132,8 +135,8 @@ void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
         {
             c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, off));
         }
-        c->ClipImage(&VaultDoor, Vec2(0, 1-16));
-        c->ClipImage(&VaultDoor, Vec2(0, 1+off));
+        c->ClipImage(&skin.vault_door, Vec2(0, 1-16));
+        c->ClipImage(&skin.vault_door, Vec2(0, 1+off));
     }
 }
 

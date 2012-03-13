@@ -1,8 +1,49 @@
 GameAssets = group{quality=10}
-Background = image{"background.png"}
-Background_Lit = image{"background_lit.png"}
 
-Accent = image{ "accent.png" }
+function skin(name)
+    local path = "skins/"..name.."/"
+    local prefix = "Skin_"..name.."_"
+
+    _G[prefix.."VaultDoor"] = image{path.."vault_door.png", width=128, height=128}
+    _G[prefix.."Background"] = image{path.."background.png"}
+    _G[prefix.."Background_Lit"] = image{path.."background_lit.png"}
+    _G[prefix.."Accent"] = image{ path.."accent.png" }
+
+    _G[prefix.."Lit_Bottom"] = image { path.."lit_bottom.png", pinned=true }
+    _G[prefix.."Lit_Bottom_Add"] = image { path.."lit_bottom_add.png", pinned=true }
+    _G[prefix.."Lit_Bottom_Div"] = image { path.."lit_bottom_div.png", pinned=true }
+    _G[prefix.."Lit_Bottom_Mul"] = image { path.."lit_bottom_mul.png", pinned=true }
+    _G[prefix.."Lit_Bottom_Sub"] = image { path.."lit_bottom_sub.png", pinned=true }
+    _G[prefix.."Lit_Left"] = image { path.."lit_left.png", pinned=true }
+    _G[prefix.."Lit_Right"] = image { path.."lit_right.png", pinned=true }
+    _G[prefix.."Lit_Right_Add"] = image { path.."lit_right_add.png", pinned=true }
+    _G[prefix.."Lit_Right_Div"] = image { path.."lit_right_div.png", pinned=true }
+    _G[prefix.."Lit_Right_Mul"] = image { path.."lit_right_mul.png", pinned=true }
+    _G[prefix.."Lit_Right_Sub"] = image { path.."lit_right_sub.png", pinned=true }
+    _G[prefix.."Lit_Top"] = image { path.."lit_top.png", pinned=true }
+
+    _G[prefix.."Unlit_Bottom"] = image { path.."unlit_bottom.png", pinned=true }
+    _G[prefix.."Unlit_Bottom_Add"] = image { path.."unlit_bottom_add.png", pinned=true }
+    _G[prefix.."Unlit_Bottom_Div"] = image { path.."unlit_bottom_div.png", pinned=true }
+    _G[prefix.."Unlit_Bottom_Mul"] = image { path.."unlit_bottom_mul.png", pinned=true }
+    _G[prefix.."Unlit_Bottom_Sub"] = image { path.."unlit_bottom_sub.png", pinned=true }
+    _G[prefix.."Unlit_Left"] = image { path.."unlit_left.png", pinned=true }
+    _G[prefix.."Unlit_Right"] = image { path.."unlit_right.png", pinned=true }
+    _G[prefix.."Unlit_Right_Add"] = image { path.."unlit_right_add.png", pinned=true }
+    _G[prefix.."Unlit_Right_Div"] = image { path.."unlit_right_div.png", pinned=true }
+    _G[prefix.."Unlit_Right_Mul"] = image { path.."unlit_right_mul.png", pinned=true }
+    _G[prefix.."Unlit_Right_Sub"] = image { path.."unlit_right_sub.png", pinned=true }
+    _G[prefix.."Unlit_Top"] = image { path.."unlit_top.png", pinned=true }
+end
+
+skin("blue")
+skin("Default")
+--skin("gree")
+--skin("purple")
+--skin("red")
+--skin("turquoise")
+
+
 Accent_Current = image{ "accent_current.png" }
 Accent_Target = image{ "accent_target.png" }
 
@@ -104,37 +145,9 @@ AccentDigit_7 = image { "7.png", pinned=true }
 AccentDigit_8 = image { "8.png", pinned=true }
 AccentDigit_9 = image { "9.png", pinned=true }
 
-Lit_Bottom = image { "lit_bottom.png", pinned=true }
-Lit_Bottom_Add = image { "lit_bottom_add.png", pinned=true }
-Lit_Bottom_Div = image { "lit_bottom_div.png", pinned=true }
-Lit_Bottom_Mul = image { "lit_bottom_mul.png", pinned=true }
-Lit_Bottom_Sub = image { "lit_bottom_sub.png", pinned=true }
-Lit_Left = image { "lit_left.png", pinned=true }
-Lit_Right = image { "lit_right.png", pinned=true }
-Lit_Right_Add = image { "lit_right_add.png", pinned=true }
-Lit_Right_Div = image { "lit_right_div.png", pinned=true }
-Lit_Right_Mul = image { "lit_right_mul.png", pinned=true }
-Lit_Right_Sub = image { "lit_right_sub.png", pinned=true }
-Lit_Top = image { "lit_top.png", pinned=true }
-
-Unlit_Bottom = image { "unlit_bottom.png", pinned=true }
-Unlit_Bottom_Add = image { "unlit_bottom_add.png", pinned=true }
-Unlit_Bottom_Div = image { "unlit_bottom_div.png", pinned=true }
-Unlit_Bottom_Mul = image { "unlit_bottom_mul.png", pinned=true }
-Unlit_Bottom_Sub = image { "unlit_bottom_sub.png", pinned=true }
-Unlit_Left = image { "unlit_left.png", pinned=true }
-Unlit_Right = image { "unlit_right.png", pinned=true }
-Unlit_Right_Add = image { "unlit_right_add.png", pinned=true }
-Unlit_Right_Div = image { "unlit_right_div.png", pinned=true }
-Unlit_Right_Mul = image { "unlit_right_mul.png", pinned=true }
-Unlit_Right_Sub = image { "unlit_right_sub.png", pinned=true }
-Unlit_Top = image { "unlit_top.png", pinned=true }
-
-
-
 
 Title = image{"title.png", width=128, height=128}
-VaultDoor = image{"vault_door.png", width=128, height=128}
+
 
 Center = image{"assets_center.png", width=8, height=8}
 

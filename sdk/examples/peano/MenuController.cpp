@@ -6,6 +6,7 @@
 #include "ConfirmationMenu.h"
 #include "TiltFlowDetailView.h"
 #include "BlankView.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 namespace MenuController
@@ -71,13 +72,14 @@ bool MenuController::TransitionView::GetIsLastFrame() {
 
 void MenuController::TransitionView::Paint()
 {
+    const Skins::Skin &skin = Skins::GetSkin();
     TotalsCube *c = GetCube();
     if (mOffset < 7) {
         // moving to the left
-        c->ClipImage(&VaultDoor, Vec2(7-mOffset, 7));
-        c->ClipImage(&VaultDoor, Vec2(7-16-mOffset, 7));
-        c->ClipImage(&VaultDoor, Vec2(7-mOffset, 7-16));
-        c->ClipImage(&VaultDoor, Vec2(7-16-mOffset,7-16));
+        c->ClipImage(&skin.vault_door, Vec2(7-mOffset, 7));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-mOffset, 7));
+        c->ClipImage(&skin.vault_door, Vec2(7-mOffset, 7-16));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-mOffset,7-16));
     } else {
         // opening
         int off = mOffset - 7;
@@ -89,8 +91,8 @@ void MenuController::TransitionView::Paint()
             c->FillArea(&Dark_Purple, Vec2(0, top), Vec2(16, bottom-top));
         }
 
-        c->ClipImage(&VaultDoor, Vec2(0, top-16));
-        c->ClipImage(&VaultDoor, Vec2(0, bottom));
+        c->ClipImage(&skin.vault_door, Vec2(0, top-16));
+        c->ClipImage(&skin.vault_door, Vec2(0, bottom));
     }
 }
 

@@ -4,6 +4,7 @@
 #include "PauseHelper.h"
 #include "ConfirmationMenu.h"
 #include "NarratorView.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 
@@ -205,13 +206,13 @@ Game::GameState Run()
     {
         Game::cubes[i].SetView(tv+i);
         tv[i].SetToken(puzzle->GetToken(i));
-        Game::cubes[i].OpenShuttersSync(&Background);
+        Game::cubes[i].OpenShuttersSync(&Skins::GetSkin().background);
         tv[i].PaintNow();
     }
 
     Game::Wait(0.1f);
 
-
+    const Skins::Skin &skin = Skins::GetSkin();
 
     { // flourish in
         Game::Wait(1.1f);
@@ -253,7 +254,7 @@ Game::GameState Run()
                         Game::cubes[t].foregroundLayer.Flush();
                         Game::cubes[t].SetView(NULL);
 
-                        Game::cubes[t].CloseShuttersSync(&Background);
+                        Game::cubes[t].CloseShuttersSync(&skin.background);
                         Game::cubes[t].SetView(blankViews + t);
                     }
 
@@ -276,7 +277,7 @@ Game::GameState Run()
                     {
                         Game::cubes[i].SetView(NULL);
 
-                        Game::cubes[i].OpenShuttersSync(&Background);
+                        Game::cubes[i].OpenShuttersSync(&skin.background);
 
                         Game::cubes[i].SetView(puzzle->GetToken(i)->GetTokenView());
                         ((TokenView*)Game::cubes[i].GetView())->PaintNow();
@@ -314,7 +315,7 @@ Game::GameState Run()
             c->foregroundLayer.Flush();
             c->SetView(NULL);
 
-            c->CloseShuttersSync(&Background_Lit);
+            c->CloseShuttersSync(&skin.background_lit);
             Game::Wait(0.1f);
         }
     }
