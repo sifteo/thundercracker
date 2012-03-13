@@ -134,7 +134,7 @@ void DrawScoreBanner(CubeWrapper &cubeWrapper, int minutes, int seconds)
 void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     String<128> buffer;
-    buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetChapterTitle() << "\"";
+    buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetTitle() << "\"";
     
     cubeWrapper.DrawBackground(ChapterTitle);
     cubeWrapper.DrawUiText(Vec2(1, 6), FontOrange, buffer.c_str());
@@ -674,8 +674,8 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
             
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
+                    mCubeWrappers[i].SetPiece(j, puzzle.GetPieceStart(i, j));
+                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetPieceEnd(i, j));
                 }
             }
             else
@@ -684,8 +684,8 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 // should fit with the active puzzle better...
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(mCubeWrappers[i].GetBuddyId(), j));
-                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(mCubeWrappers[i].GetBuddyId(), j));
+                    mCubeWrappers[i].SetPiece(j, puzzle.GetPieceStart(mCubeWrappers[i].GetBuddyId(), j));
+                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
                 }
             }
         }

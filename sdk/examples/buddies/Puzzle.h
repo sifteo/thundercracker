@@ -30,60 +30,56 @@ public:
     Puzzle();
 
     Puzzle(
-        const char *chapterTitle,
+        const char *title,
         const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
         const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
         const char *clue,
         const unsigned int buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
-        const Piece startState[kMaxBuddies][NUM_SIDES],
-        const Piece endState[kMaxBuddies][NUM_SIDES]);
+        const Piece piecesStart[kMaxBuddies][NUM_SIDES],
+        const Piece piecesEnd[kMaxBuddies][NUM_SIDES]);
     
-    const char *GetChapterTitle() const;
-    void SetChapterTitle(const char *chapterTitle);
+    void Reset();
     
-    void ClearCutsceneTextStart();
+    const char *GetTitle() const;
+    void SetTitle(const char *title);
+    
     void AddCutsceneTextStart(const char *cutsceneTextStart);
-    
     const char *GetCutsceneTextStart(unsigned int cutsceneIndex) const;
     unsigned int GetNumCutsceneTextStart() const;
     
-    void ClearCutsceneTextEnd();
     void AddCutsceneTextEnd(const char *cutsceneTextEnd);
-    
     const char *GetCutsceneTextEnd(unsigned int cutsceneIndex) const;
     unsigned int GetNumCutsceneTextEnd() const;
     
     const char *GetClue() const;
     void SetClue(const char *clue);
     
-    void ClearBuddies();
-    void AddBuddy(unsigned int buddyId);
-    
-    unsigned int GetBuddy(unsigned int buddyIndex) const;
-    unsigned int GetNumBuddies() const;
-    
     unsigned int GetNumShuffles() const;
     void SetNumShuffles(unsigned int numSuhffles);
     
-    const Piece &GetStartState(unsigned int buddy, Sifteo::Cube::Side side) const;
-    void SetStartState(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
+    void AddBuddy(unsigned int buddyId);
+    unsigned int GetBuddy(unsigned int buddyIndex) const;
+    unsigned int GetNumBuddies() const;
     
-    const Piece &GetEndState(unsigned int buddy, Sifteo::Cube::Side side) const;
-    void SetEndState(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
+    const Piece &GetPieceStart(unsigned int buddy, Sifteo::Cube::Side side) const;
+    void SetPieceStart(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
+    
+    const Piece &GetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side) const;
+    void SetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
     
 private:
-    const char *mChapterTitle;
+    const char *mTitle;
     const char *mCutsceneTextStart[16];
     unsigned int mNumCutsceneTextStart;
     const char *mCutsceneTextEnd[16];
     unsigned int mNumCutsceneTextEnd;
     const char *mClue;
+    unsigned int mNumShuffles;
     unsigned int mBuddies[kMaxBuddies];
     unsigned int mNumBuddies;
-    unsigned int mNumShuffles;
-    Piece mStartState[kMaxBuddies][NUM_SIDES];
-    Piece mEndState[kMaxBuddies][NUM_SIDES];    
+    Piece mPiecesStart[kMaxBuddies][NUM_SIDES];
+    Piece mPiecesEnd[kMaxBuddies][NUM_SIDES];    
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
