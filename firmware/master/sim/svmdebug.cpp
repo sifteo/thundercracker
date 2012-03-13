@@ -28,15 +28,15 @@ static const char* faultStr(FaultCode code)
     case F_STORE_ALIGNMENT:     return "Runtime store alignment error";
     case F_CODE_FETCH:          return "Runtime code fetch error";
     case F_CODE_ALIGNMENT:      return "Runtime code alignment error";
-    case F_CPU_SIM:             return "Unhandled ARM instruction in sim (validator bug)";
+    case F_CPU_SIM:             return "Unhandled ARM instruction in sim";
     case F_RESERVED_SVC:        return "Reserved SVC encoding";
     case F_RESERVED_ADDROP:     return "Reserved ADDROP encoding";
-    case F_ABORT:               return "User call to _SYS_abort()";
+    case F_ABORT:               return "User call to _SYS_abort";
     case F_LONG_STACK_LOAD:     return "Bad address in long stack LDR addrop";
     case F_LONG_STACK_STORE:    return "Bad address in long stack STR addrop";
     case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
-    case F_RETURN_FRAME:        return "Bad saved FP value detected during ret()";
-    case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log() data";
+    case F_RETURN_FRAME:        return "Bad saved FP value detected during return";
+    case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log data";
     default:                    return "unknown error";
     }
 }
