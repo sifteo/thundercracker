@@ -103,8 +103,7 @@ private:
     unsigned int mBuddyId;
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
-    Vec2 mPieceOffsets[NUM_SIDES];
-    float mPieceAnimT;
+    Sifteo::Vec2 mPieceOffsets[NUM_SIDES];
     Sifteo::Cube::Side mPieceBlinking;
     float mPieceBlinkTimer;
     bool mPieceBlinkingOn;

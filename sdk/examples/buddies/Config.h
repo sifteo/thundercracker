@@ -27,14 +27,10 @@ const GameState kStateDefault = GAME_STATE_MAIN_MENU;
 const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
-// Tuning (All Modes)
+// Tuning
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;
-const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
-const float kSwapAnimationSlide = 1.0f;
-const float kPieceAnimX = 0.0f;
-const float kPieceAnimY = 0.0f;
-const float kPieceAnimPeriod = 1.0f;
+const float kSwapAnimationSlide = 0.5f;
 
 // Free Play
 const float kFreePlayShakeThrottleDuration = 1.5f;

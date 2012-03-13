@@ -87,7 +87,6 @@ CubeWrapper::CubeWrapper()
     , mPieces()
     , mPiecesSolution()
     , mPieceOffsets()
-    , mPieceAnimT(0.0f)
     , mPieceBlinking(SIDE_UNDEFINED)
     , mPieceBlinkTimer(0.0f)
     , mPieceBlinkingOn(false)
@@ -112,7 +111,6 @@ void CubeWrapper::Reset()
         mPiecesSolution[i] = Piece();
         mPieceOffsets[i] = Vec2(0, 0);
     }
-    mPieceAnimT = 0.0f;
     mPieceBlinking = SIDE_UNDEFINED;
     mPieceBlinkTimer = 0.0f;
     mPieceBlinkingOn = false;
@@ -125,12 +123,6 @@ void CubeWrapper::Reset()
 
 void CubeWrapper::Update(float dt)
 {
-    mPieceAnimT += dt;
-    while (mPieceAnimT > kPieceAnimPeriod)
-    {
-        mPieceAnimT -= kPieceAnimPeriod;
-    }
-    
     if (mPieceBlinking >= 0 && mPieceBlinking < NUM_SIDES)
     {
         ASSERT(mPieceBlinkTimer > 0.0f);
