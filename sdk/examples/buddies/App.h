@@ -111,14 +111,16 @@ private:
         SWAP_STATE_NONE = 0,
         SWAP_STATE_OUT,
         SWAP_STATE_IN,
-        SWAP_STATE_ROTATE,
+        //SWAP_STATE_ROTATE,
         
         NUM_SWAP_STATES
     };
     SwapState mSwapState;
     unsigned int mSwapPiece0;
     unsigned int mSwapPiece1;
-    int mSwapAnimationCounter;
+    float mSwapAnimationSlideTimer;
+    float mSwapAnimationRotateTimer;
+    
     float mFaceCompleteTimers[kNumCubes];
     
     // Hinting

@@ -78,22 +78,6 @@ unsigned int GetRandomOtherPiece(bool moved[], unsigned int num_moved, unsigned 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-int AnyTouching(App& app)
-{
-    for (unsigned int i = 0; i < kNumCubes; ++i)
-    {
-        if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).IsTouching())
-        {
-            return i;
-        }
-    }
-    
-    return -1;
-}
-*/
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool AllSolved(App& app)
 {
@@ -336,7 +320,8 @@ App::App()
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
-    , mSwapAnimationCounter(0)
+    , mSwapAnimationSlideTimer(0)
+    , mSwapAnimationRotateTimer(0.0f)
     , mFaceCompleteTimers()
     , mHintTimer(0.0f)
     , mHintPiece0(-1)
@@ -386,7 +371,7 @@ void App::Init()
 
 void App::Reset()
 {
-    StartGameState(GAME_STATE_MAIN_MENU);
+    StartGameState(kStateDefault);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -980,7 +965,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_SCRAMBLING:
         {
-            if (mSwapAnimationCounter == 0)
+            if (mSwapAnimationSlideTimer <= 0.0f)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
@@ -1089,7 +1074,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_SCRAMBLING:
         {
-            if (mSwapAnimationCounter == 0)
+            if (mSwapAnimationSlideTimer <= 0.0f)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
@@ -1713,32 +1698,35 @@ void App::UpdateSwap(float dt)
 {
     if (mSwapState == SWAP_STATE_OUT)
     {
-        bool done = UpdateCounter(mSwapAnimationCounter, kSwapAnimationSpeed);
+        bool done = UpdateTimer(mSwapAnimationSlideTimer, dt);
+        
+        float slide_tick = kSwapAnimationSlide / float(kSwapAnimationCount);
+        int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick;
         
         if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
-                Vec2(0, -kSwapAnimationCount + mSwapAnimationCounter));
+                Vec2(0, -kSwapAnimationCount + swap_anim_counter));
         }
          else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
-                Vec2(-kSwapAnimationCount + mSwapAnimationCounter, 0));
+                Vec2(-kSwapAnimationCount + swap_anim_counter, 0));
         }
         
         if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
         {        
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
-                Vec2(0, -kSwapAnimationCount + mSwapAnimationCounter));
+                Vec2(0, -kSwapAnimationCount + swap_anim_counter));
         }
         else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
-                Vec2(-kSwapAnimationCount + mSwapAnimationCounter, 0));
+                Vec2(-kSwapAnimationCount + swap_anim_counter, 0));
         }
         
         if (done)
@@ -1748,35 +1736,73 @@ void App::UpdateSwap(float dt)
     }
     else if (mSwapState == SWAP_STATE_IN)
     {
-        bool done = UpdateCounter(mSwapAnimationCounter, kSwapAnimationSpeed);
+        if (mSwapAnimationSlideTimer > 0.0f)
+        {
+            UpdateTimer(mSwapAnimationSlideTimer, dt);
+            
+            float slide_tick = kSwapAnimationSlide / float(kSwapAnimationCount);
+            int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick;
+            
+            if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
+            {
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
+                    mSwapPiece0 % NUM_SIDES,
+                    Vec2(0, -swap_anim_counter));
+            }
+            else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
+            {
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
+                    mSwapPiece0 % NUM_SIDES,
+                    Vec2(-swap_anim_counter, 0));
+            }
+            
+            if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
+            {
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+                    mSwapPiece1 % NUM_SIDES,
+                    Vec2(0, -swap_anim_counter));
+            }
+            else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
+            {
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+                    mSwapPiece1 % NUM_SIDES,
+                    Vec2(-swap_anim_counter, 0));
+            }
+        }
         
-        if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
+        if (mSwapAnimationRotateTimer > 0.0f)
         {
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece0 % NUM_SIDES,
-                Vec2(0, -mSwapAnimationCounter));
-        }
-        else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
-        {
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece0 % NUM_SIDES,
-                Vec2(-mSwapAnimationCounter, 0));
+            if (UpdateTimer(mSwapAnimationRotateTimer, dt))
+            {            
+                Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
+                if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
+                {
+                    if (--piece0.mRotation < 0)
+                    {
+                        piece0.mRotation += NUM_SIDES;
+                    }
+                }
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
+                
+                Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
+                if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+                {
+                    if (--piece1.mRotation < 0)
+                    {
+                        piece1.mRotation += NUM_SIDES;
+                    }
+                }
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+                
+                if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) ||
+                    !IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+                {
+                    mSwapAnimationRotateTimer += kSwapAnimationSlide / NUM_SIDES;
+                }
+            }
         }
         
-        if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
-        {
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(0, -mSwapAnimationCounter));
-        }
-        else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
-        {
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(-mSwapAnimationCounter, 0));
-        }
-        
-        if (done)
+        //if (done)
         {
             const Piece &piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
             const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
@@ -1788,18 +1814,19 @@ void App::UpdateSwap(float dt)
             }
             else
             {
-                mSwapState = SWAP_STATE_ROTATE;
-                mDelayTimer = kSwapAnimationTurn;
+                //mSwapState = SWAP_STATE_ROTATE;
+                //mDelayTimer = kSwapAnimationTurn;
             }
         }
     }
+    /*
     else if (mSwapState == SWAP_STATE_ROTATE)
     {
         if (UpdateTimer(mDelayTimer, dt))
         {
             Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
             Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
-                
+            
             if (IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
                 IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
             {
@@ -1830,6 +1857,7 @@ void App::UpdateSwap(float dt)
             }
         }
     }
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1840,7 +1868,7 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
     mSwapPiece0 = swapPiece0;
     mSwapPiece1 = swapPiece1;
     mSwapState = SWAP_STATE_OUT;
-    mSwapAnimationCounter = kSwapAnimationCount;
+    mSwapAnimationSlideTimer = kSwapAnimationSlide;
     
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, Vec2(0, 0));
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, Vec2(0, 0));
@@ -1855,7 +1883,8 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
 void App::OnSwapExchange()
 {
     mSwapState = SWAP_STATE_IN;
-    mSwapAnimationCounter = kSwapAnimationCount;
+    mSwapAnimationSlideTimer = kSwapAnimationSlide;
+    mSwapAnimationRotateTimer = kSwapAnimationSlide / NUM_SIDES;
     
     Piece temp = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
     Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);

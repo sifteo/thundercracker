@@ -543,7 +543,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         point.y = max_tiles_y + height;
     }
     
-    // TODO: Cleanup partial draws
+    // Draw partial or full asset
     if (point.x > -width && point.x < 0)
     {
         int tiles_off = -point.x;
