@@ -208,16 +208,16 @@ Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 // This is the default state (all buddies with their original parts in the right position).
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char kCutsceneTextStartDefault[][64] =
+const char kCutsceneTextStartDefault[][32] =
 {
     "Default",
 };
-const char kCutsceneTextEndDefault[][64] =
+const char kCutsceneTextEndDefault[][32] =
 {
     "Default",
 };
 
-const unsigned int kBuddyIdsDefault[] = {0, 1, 2, 3, 4, 5};
+const unsigned int kBuddyIdsDefault[] = { 0, 1, 2, 3, 4, 5 };
 
 const Puzzle kPuzzleDefault =
     Puzzle(
@@ -252,52 +252,52 @@ const Puzzle kPuzzleDefault =
 // all are solved.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char kCutsceneTextStart0[][64] =
+const char kCutsceneTextStart0[][32] =
 {
     "[A]Gimme a kiss",
     "[B]Can I use\nyour mouth?",
     "[A]...",
     "[A]OK",
 };
-const char kCutsceneTextEnd0[][64] =
+const char kCutsceneTextEnd0[][32] =
 {
     "[B]Muuuahhh",
     "[A]Hot n'\nheavy!",
 };
 
-const char kCutsceneTextStart1[][64] =
+const char kCutsceneTextStart1[][32] =
 {
     "[A]Let's get\nCRAZY!",
 };
-const char kCutsceneTextEnd1[][64] =
+const char kCutsceneTextEnd1[][32] =
 {
     "[B]My head\nhurts.",
 };
 
-const char kCutsceneTextStart2[][64] =
+const char kCutsceneTextStart2[][32] =
 {
     "[A]How do I get\ncool hair",
     "[A]like you?",
 };
-const char kCutsceneTextEnd2[][64] =
+const char kCutsceneTextEnd2[][32] =
 {
     "[A]Now I look\nlike Kelly!",
 };
 
-const char kCutsceneTextStart3[][64] =
+const char kCutsceneTextStart3[][32] =
 {
     "[A]See the world\nfrom my eyes!",
 };
-const char kCutsceneTextEnd3[][64] =
+const char kCutsceneTextEnd3[][32] =
 {
     "[A]That's much\nbetter.",
 };
 
-const unsigned int kBuddiesPuzzle0[] = {0, 1};
-const unsigned int kBuddiesPuzzle1[] = {1, 2};
-const unsigned int kBuddiesPuzzle2[] = {3, 4};
-const unsigned int kBuddiesPuzzle3[] = {5, 0};
-const unsigned int kBuddiesPuzzle4[] = {0, 1};
+const unsigned int kBuddiesPuzzle0[] = { 0, 1 };
+const unsigned int kBuddiesPuzzle1[] = { 1, 2 };
+const unsigned int kBuddiesPuzzle2[] = { 3, 4 };
+const unsigned int kBuddiesPuzzle3[] = { 5, 0 };
+const unsigned int kBuddiesPuzzle4[] = { 0, 1 };
 
 const Puzzle kPuzzles[] =
 {

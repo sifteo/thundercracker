@@ -29,8 +29,8 @@ class Puzzle
 public:
     Puzzle(
         const char *chapterTitle,
-        const char cutsceneTextStart[][64], unsigned int numCutsceneTextStart,
-        const char cutsceneTextEnd[][64], unsigned int numCutsceneTextEnd,
+        const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
+        const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
         const char *clue,
         const unsigned int buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
