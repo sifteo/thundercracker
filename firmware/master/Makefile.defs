@@ -74,8 +74,10 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-use-cxa-atexit
 include $(TC_DIR)/Makefile.platform
 
 ifeq ($(BUILD_PLATFORM), windows32)
-    # portaudio requirements
-    LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
+    LDFLAGS_SIM +=  -L$(TC_DIR)/deps/win32/speex/lib \
+                    -L$(TC_DIR)/deps/win32/portaudio/lib
+    # note : portaudio had to come *before* winmm on my machine
+    LDFLAGS_SIM +=  -lws2_32 -lole32 -lspeex -lportaudio -lwinmm
 endif
 ifeq ($(BUILD_PLATFORM), Darwin)
     # these are all required by portaudio, believe it or not

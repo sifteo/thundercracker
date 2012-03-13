@@ -18,18 +18,6 @@ include stm32/st-usb/st-usb.mk
 OBJS_STM32 +=   $(OBJS_USB_STM32) \
                 $(SPEEX_OBJS_STM32)
 
-
-ifeq ($(BUILD_PLATFORM), windows32)
-	# TBD if there's a better way, but windows ar or libtool needs to have all the
-	# individual object files available from any static libs you want to merge
-	# in. these have been extracted in the deps folder via `ar -x libfoo.a`
-	SIM_STATIC_OBJS += $(DEPS_DIR)/speex/lib/obj/*.o $(DEPS_DIR)/portaudio/lib/obj/*.o
-else
-	SIM_STATIC_LIBS += \
-		$(DEPS_DIR)/speex/lib/libspeex.a \
-		$(DEPS_DIR)/portaudio/lib/libportaudio.a
-endif
-
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include -DFW_BUILD
 CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
@@ -66,7 +54,7 @@ CDEPS := \
 all: $(BINS)
 
 $(BIN_SIM): $(OBJS_SIM)
-	$(CC_SIM) -o $@ $^ $(SIM_STATIC_OBJS) $(SIM_STATIC_LIBS) $(LDFLAGS_SIM)
+	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
 $(BIN_STM32): $(OBJS_STM32)
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
