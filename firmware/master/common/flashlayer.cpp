@@ -152,7 +152,7 @@ FlashBlock *FlashBlock::recycleBlock()
     ASSERT(availableBlocks &&
         "Oh no, all cache blocks are in use. Is there a reference leak?");
 
-    FlashBlock *bestBlock;
+    FlashBlock *bestBlock = 0;
     uint32_t bestAge = 0;
 
     do {

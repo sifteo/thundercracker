@@ -66,19 +66,20 @@ void SvmDebug::fault(FaultCode code)
     LOG(("***\n"
          "*** VM FAULT code %d (%s)\n"
          "***\n"
-         "***   PC: va=%08x pa=%"PRIxPTR"%s\n"
-         "***   SP: va=%08x pa=%"PRIxPTR"%s\n"
+         "***   PC: va=%08x pa=%p%s\n"
+         "***   SP: va=%08x pa=%p%s\n"
          "***  GPR: %08x %08x %08x %08x\n"
          "***       %08x %08x %08x %08x\n"
          "***\n",
          code, faultStr(code),
  
          (unsigned)SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC)),
-         SvmCpu::reg(REG_PC),
+         reinterpret_cast<void*>(SvmCpu::reg(REG_PC)),
          SvmMemory::isAddrValid(SvmCpu::reg(REG_PC)) ? "" : " (INVALID)",
 
-         (unsigned)SvmMemory::physToVirtRAM(reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
-         SvmCpu::reg(REG_SP),
+         (unsigned)SvmMemory::physToVirtRAM(
+             reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
+         reinterpret_cast<void*>(SvmCpu::reg(REG_SP)),
          SvmMemory::isAddrValid(SvmCpu::reg(REG_SP)) ? "" : " (INVALID)",
 
          (unsigned) SvmCpu::reg(0),
