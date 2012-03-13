@@ -435,7 +435,11 @@ void CubeWrapper::Update(float t, float dt)
     {
         if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
-            Game::Inst().setTestMatchFlag();
+            if( Game::Inst().getWrapperIndex( this ) == 1 )
+                Game::Inst().ReturnToMainMenu();
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
+                Game::Inst().setTestMatchFlag();
+
             m_fShakeTime = -1.0f;
         }
     }

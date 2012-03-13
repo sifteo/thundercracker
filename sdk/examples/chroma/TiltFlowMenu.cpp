@@ -18,17 +18,29 @@ TiltFlowMenu *TiltFlowMenu::Inst()
     return s_pInst;
 }
 
-TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ),
-    mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
-	mDone( false ), mNeighborDirty( true )
+TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) :
+    mNumCubes( numCubes ), mNumItems( numItems )
 {
     s_pInst = this;
+
+    Reset();
+
+    mItems = pItems;
+}
+
+
+void TiltFlowMenu::Reset()
+{
+    mStatus = CHOOSING;
+    mSimTime = 0.0f;
+    mUpdateTime = 0.0f;
+    mPickTime = 0.0f;
+    mDone = false;
+    mNeighborDirty = true;
 
     mKeyView = &mViews[0];
     mKeyView->SetStatus(TiltFlowView::STATUS_MENU);
     mKeyView->SetItem(0);
-
-    mItems = pItems;
 }
 
 

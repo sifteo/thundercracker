@@ -155,6 +155,8 @@ public:
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
+    void ReturnToMainMenu();
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();

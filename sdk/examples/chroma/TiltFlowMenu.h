@@ -167,6 +167,7 @@ public:
 
     TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes);
 
+    void Reset();
     void AssignViews();
 
     //return true unless done

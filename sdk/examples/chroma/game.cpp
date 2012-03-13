@@ -1078,3 +1078,12 @@ bool Game::AreMovesLegal() const
 
     return getState() == STATE_PLAYING;
 }
+
+
+
+void Game::ReturnToMainMenu()
+{
+    Reset( false );
+    //setState( STATE_MAINMENU );
+    m_menu.Reset();
+}

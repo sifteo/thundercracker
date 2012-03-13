@@ -57,6 +57,7 @@ bool MenuController::Update( int &choice )
 
 void MenuController::Reset()
 {
+    m_Menu.Reset();
 }
 
 
