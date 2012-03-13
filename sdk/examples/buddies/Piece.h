@@ -40,7 +40,7 @@ struct Piece
     Piece(
         int buddy,
         int part,
-        bool must_solve,
+        bool must_solve = false,
         Attribute attribute = ATTR_NONE)
         : mBuddy(buddy)
         , mPart(part)

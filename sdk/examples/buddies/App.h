@@ -64,7 +64,7 @@ private:
     void DrawGameState();
     void DrawGameStateCube(CubeWrapper &cubeWrapper);
     
-    void ShufflePieces();
+    void ShufflePieces(unsigned int numCubes);
     
     void ChooseHint();
     void StartHint();
@@ -134,7 +134,7 @@ private:
     
     // Shuffle Mode
     unsigned int mShuffleMoveCounter;
-    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     
     // Story Mode
     unsigned int mStoryPuzzleIndex;

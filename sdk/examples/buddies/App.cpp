@@ -380,6 +380,8 @@ void App::Init()
         mCubeWrappers[i].Enable(i);
     }
     
+    InitializePuzzles();
+    
 #ifdef SIFTEO_SIMULATOR
     mChannel.init();
 #endif
@@ -660,12 +662,9 @@ void App::OnShake(Cube::ID cubeId)
 
 void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
 {
-    ASSERT(kNumCubes >= GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
-    
     for (unsigned int i = 0; i < puzzle.GetNumBuddies(); ++i)
     {
-        ASSERT(i < arraysize(mCubeWrappers));
-        if (mCubeWrappers[i].IsEnabled())
+        if (i < arraysize(mCubeWrappers) && mCubeWrappers[i].IsEnabled())
         {
             mCubeWrappers[i].Reset();
             
@@ -778,7 +777,7 @@ void App::StartGameState(GameState gameState)
             {
                 mShufflePiecesMoved[i] = false;
             }
-            ShufflePieces();
+            ShufflePieces(kNumCubes);
             break;
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
@@ -853,7 +852,7 @@ void App::StartGameState(GameState gameState)
             {
                 mShufflePiecesMoved[i] = false;
             }
-            ShufflePieces();
+            ShufflePieces(GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
             break;
         }
         case GAME_STATE_STORY_PLAY:
@@ -1004,7 +1003,7 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
-                    ShufflePieces();
+                    ShufflePieces(kNumCubes);
                 }
             }
             break;
@@ -1120,7 +1119,7 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
-                    ShufflePieces();
+                    ShufflePieces(GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
                 }
             }
             break;
@@ -1576,14 +1575,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::ShufflePieces()
+void App::ShufflePieces(unsigned int numCubes)
 {   
     ++mShuffleMoveCounter;
     
-    unsigned int piece0 =
-        GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
-    unsigned int piece1 =
-        GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
+    unsigned int numPieces = numCubes * NUM_SIDES;
+    ASSERT(numPieces <= arraysize(mShufflePiecesMoved));
+    
+    unsigned int piece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, numPieces);
+    unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, numPieces, piece0);
     
     OnSwapBegin(piece0, piece1);
 }
