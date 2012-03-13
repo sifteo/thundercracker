@@ -120,7 +120,6 @@ class Menu {
 	float lastPaint;
 	int prev_ut;
 	float velocity;
-	bool tilting;
 	
 	// state handling
 	void changeState(MenuState);
@@ -474,7 +473,6 @@ void Menu::transFromStatic() {
  */
 void Menu::transToTilting() {
 	ASSERT(fabs(xaccel) > kAccelThresholdOn);
-	tilting = true;
 }
 
 void Menu::stateTilting() {
@@ -529,10 +527,10 @@ void Menu::stateInertia() {
 	
 	// do not pull to item unless tilting has stopped.
 	if(fabs(xaccel) < kAccelThresholdOff) {
-		tilting = false;
+		tiltDirection = 0;
 	}
 	// if still tilting, do not bounce back to the stopping position.
-	if(tilting == true && (tiltDirection < 0 && velocity >= 0 || tiltDirection > 0 && velocity <= 0)) {
+	if((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
 			return;
 	}
 
@@ -551,7 +549,8 @@ void Menu::stateInertia() {
 }
 
 void Menu::transFromInertia() {
-	if (!tilting && fabs(xaccel) > kAccelThresholdOn) {
+	if (fabs(xaccel) > kAccelThresholdOn &&
+		!((tiltDirection < 0 && xaccel < 0.f) || (tiltDirection > 0 && xaccel > 0.f))) {
 		changeState(MENU_STATE_TILTING);
 	}
 	if (stateFinished) { // stateFinished formerly doneTilting
