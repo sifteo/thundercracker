@@ -113,12 +113,14 @@ class Menu {
 	bool prevTouch;
 	// inertial state: where to stop
 	float stopping_position;
+	int tiltDirection;
 	// scrolling states (Inertia and Tilt)
 	float position;
 	float dt;
 	float lastPaint;
 	int prev_ut;
 	float velocity;
+	bool tilting;
 	
 	// state handling
 	void changeState(MenuState);
@@ -470,7 +472,10 @@ void Menu::transFromStatic() {
  * Events:
  * none.
  */
-void Menu::transToTilting() {}
+void Menu::transToTilting() {
+	ASSERT(fabs(xaccel) > kAccelThresholdOn);
+	tilting = true;
+}
 
 void Menu::stateTilting() {
 	// normal scrolling
@@ -512,25 +517,41 @@ void Menu::transFromTilting() {
  */
 void Menu::transToInertia() {
 	stopping_position = stoppingPositionFor(computeSelected());
+	if(fabs(xaccel) > kAccelThresholdOff) {
+		tiltDirection = (kAccelScalingFactor * xaccel < 0) ? 1 : -1;
+	} else {
+		tiltDirection = 0;
+	}
 }
 
 void Menu::stateInertia() {
 	const float stiffness = 0.333f;
 	
+	// do not pull to item unless tilting has stopped.
+	if(fabs(xaccel) < kAccelThresholdOff) {
+		tilting = false;
+	}
+	// if still tilting, do not bounce back to the stopping position.
+	if(tilting == true && (tiltDirection < 0 && velocity >= 0 || tiltDirection > 0 && velocity <= 0)) {
+			return;
+	}
+
 	velocity += stopping_position - position;
 	velocity *= stiffness;
 	position += velocity * dt;
 	position = lerp(position, stopping_position, 0.15f);
+
 	stateFinished = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
 	if(stateFinished) {
 		// prevent being off by one pixel when we stop
 		position = stopping_position;
 	}
+
 	updateBG0();
 }
 
 void Menu::transFromInertia() {
-	if (fabs(xaccel) > kAccelThresholdOn) {
+	if (!tilting && fabs(xaccel) > kAccelThresholdOn) {
 		changeState(MENU_STATE_TILTING);
 	}
 	if (stateFinished) { // stateFinished formerly doneTilting
