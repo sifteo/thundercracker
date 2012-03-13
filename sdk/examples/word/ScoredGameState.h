@@ -8,6 +8,7 @@
 class ScoredGameState : public State
 {
 public:    
+    ScoredGameState();
     virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 

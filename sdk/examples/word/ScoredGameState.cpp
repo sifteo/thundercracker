@@ -7,6 +7,8 @@
 #include "WordGame.h"
 #include "Utility.h"
 
+ScoredGameState::ScoredGameState() : mNumHints(3) {}
+
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
     if (GameStateMachine::getSecondsLeft() <= 0)
@@ -96,6 +98,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO put in the pause menu on touch
     case EventID_NewAnagram:
+    case EventID_EnterState:
         // reset hints,
         for (Cube::ID i = CUBE_ID_BASE;
              i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;

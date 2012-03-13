@@ -478,7 +478,6 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
         }
         break;
     }
-
 }
 
 void CubeStateMachine::updateSpriteParams(float dt)

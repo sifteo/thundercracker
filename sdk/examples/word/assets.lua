@@ -16,6 +16,7 @@ BorderLockedBL = image{"border_locked_bl.png", quality=10}
 BorderLockedUL = image{"border_locked_ul.png", quality=10}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
+Tile2Blank = image{"tile_ivory_blank.png", quality=10}
 Tile2Meta = image{"wp2_tile05.png", quality=10}
 Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=10}
 Tile3 = image{"tile_ivory_narrow_idle00.png", quality=10}

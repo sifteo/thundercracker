@@ -97,25 +97,25 @@ const static Vec2 positions[] =
 
 const static AnimObjData animObjData[] =
 {    
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimIndex_Tile2SlideL
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[2]},    
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimIndex_Tile2SlideR
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},    
-    {&Tile2Glow, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimIndex_Tile2OldWord
-    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimIndex_Tile2SlideL
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimIndex_Tile2SlideR
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
+    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimIndex_Tile2OldWord
+    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]}, // CityProgression
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]}, // HintIdle
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideLHint
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[2]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideLHint
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[29]},
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideRHint
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideRHint
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[37]}, // FIXME keyframe
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_HintLockedNotWord
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_HintLockedNotWord
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
     //{&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
     //{&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
@@ -279,20 +279,15 @@ bool animPaint(AnimType animT,
 
         unsigned fontFrame = font.frames + 1;
         bool drawLetterOnTile = false;
-        bool skipObject = false;
+        bool blankLetterTile = false;
         if (params && params->mLetters && params->mLetters[0] && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
             {
                 fontFrame = params->mLetters[i] - (int)'A';
                 drawLetterOnTile = (fontFrame < font.frames);
-                skipObject = !drawLetterOnTile;
+                blankLetterTile = !drawLetterOnTile;
             }
-        }
-
-        if (skipObject)
-        {
-            continue;
         }
 
         // clip to screen
@@ -350,16 +345,23 @@ bool animPaint(AnimType animT,
         }
 #endif
 
-        if (drawLetterOnTile && objData.mLayer == Layer_BG0)
+        if (objData.mLayer == Layer_BG0)
         {
-            Vec2 letterPos(pos);
-            letterPos.y += 4; // TODO
-            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
-            bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
-        }
-        else if (objData.mLayer == Layer_BG0)
-        {
-            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
+            if (blankLetterTile)
+            {
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
+            }
+            else
+            {
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+            }
+
+            if (drawLetterOnTile)
+            {
+                Vec2 letterPos(pos);
+                letterPos.y += 4; // TODO
+                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
+            }
         }
         else if (objData.mLayer == Layer_BG1)
         {
