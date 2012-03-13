@@ -111,7 +111,6 @@ private:
         SWAP_STATE_NONE = 0,
         SWAP_STATE_OUT,
         SWAP_STATE_IN,
-        //SWAP_STATE_ROTATE,
         
         NUM_SWAP_STATES
     };
