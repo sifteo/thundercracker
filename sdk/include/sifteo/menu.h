@@ -77,13 +77,16 @@ class Menu {
 	
  private:
 	static const float kIconWidth = 80.f;
-	static const float kElementPadding = 16.f;
+	static const float kIconPadding = 16.f;
 	static const float kPixelsPerIcon;
 	static const float kMaxSpeedMultiplier = 3.f;
 	static const float kAccelScalingFactor = -0.25f;
 	static const float kOneG;
 	static const uint8_t kNumTilesX = 18;
+	static const uint8_t kNumVisibleTilesX = 16;
 	static const uint8_t kNumVisibleTilesY = 16;
+	static const uint8_t kFooterHeight = 4;
+	static const uint8_t kHeaderHeight = 2;
 	static const float kAccelThresholdOn = 1.15f;
 	static const float kAccelThresholdOff = 0.85f;
 
@@ -160,10 +163,13 @@ class Menu {
 };
 
 // constant folding
-const float Menu::kPixelsPerIcon = kIconWidth + kElementPadding;
+const float Menu::kPixelsPerIcon = kIconWidth + kIconPadding;
 const float Menu::kOneG = fabs(64 * kAccelScalingFactor);
 
 Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) {
+	ASSERT((int)kIconWidth % 8 == 0);
+	ASSERT((int)kIconPadding % 8 == 0);
+	
 	currentEvent.type = MENU_UNEVENTFUL;
 	pCube = mainCube;
 	changeState(MENU_STATE_START);
@@ -174,16 +180,33 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) 
 	// calculate the number of items
 	uint8_t i = 0;
 	while(items[i].icon != NULL) {
+		ASSERT(items[i].icon->width == (int)kIconWidth / 8);
 		i++;
+		if(items[i].label != NULL) {
+			ASSERT(items[i].label->width == kNumVisibleTilesX);
+			ASSERT(items[i].label->height == kHeaderHeight);
+		}
 	}
 	numItems = i;
 	
 	// calculate the number of tips
 	i = 0;
 	while(assets->tips[i] != NULL) {
+		ASSERT(assets->tips[i]->width == kNumVisibleTilesX);
+		ASSERT(assets->tips[i]->height == kFooterHeight);
 		i++;
 	}
 	numTips = i;
+	
+	// sanity check the rest of the assets
+	ASSERT(assets->bg);
+	ASSERT(assets->bg->width == assets->bg->height == 1);
+	ASSERT(assets->footer);
+	ASSERT(assets->footer->width == kNumVisibleTilesX);
+	ASSERT(assets->footer->height == kFooterHeight);
+	ASSERT(assets->header);
+	ASSERT(assets->header->width == kNumVisibleTilesX);
+	ASSERT(assets->header->height == kHeaderHeight);
 }
 
 /*
@@ -688,19 +711,23 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 }
 
 void Menu::drawFooter() {
+	const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
 	const float kSecondsPerTip = 4.f;
 	float time = System::clock();
 	if (time - prevTipTime > kSecondsPerTip) {
 		prevTipTime = time - fmodf(time - prevTipTime, kSecondsPerTip);
-		const AssetImage& tip = *assets->tips[currentTip];
+
+		if (numTips > 0) {
+			currentTip = (currentTip+1) % numTips;
+		}
+		
         _SYS_vbuf_writei(
         	&pCube->vbuf.sys, 
         	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + assets->header->width * assets->header->height,
-            tip.tiles, 
+            footer.tiles, 
             0, 
-            tip.width * tip.height
+            footer.width * footer.height
         );
-		currentTip = (currentTip+1) % numTips;
 	}
 }
 
