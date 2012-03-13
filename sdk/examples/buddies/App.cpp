@@ -1838,7 +1838,8 @@ void App::UpdateSwap(float dt)
             const Piece &piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
             const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
             
-            if (IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
+            if (mSwapAnimationSlideTimer <= 0.0f &&
+                IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
                 IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
             {
                 OnSwapFinish();
