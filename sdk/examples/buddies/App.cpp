@@ -1937,6 +1937,9 @@ void App::OnSwapFinish()
     mSwapState = SWAP_STATE_NONE;
     mSwapAnimationSlideTimer = 0.0f;
     
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, Vec2(0, 0));
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, Vec2(0, 0));
+    
     if (mGameState == GAME_STATE_FREE_PLAY)
     {
         if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
