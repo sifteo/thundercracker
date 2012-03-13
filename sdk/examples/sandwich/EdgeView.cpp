@@ -46,6 +46,8 @@ void EdgeView::Restore() {
 }
 
 void EdgeView::Update(float dt) {
+	if (!mGateway) { return; }
+
 	CORO_BEGIN;
 
 	gGame.NeedsSync();
