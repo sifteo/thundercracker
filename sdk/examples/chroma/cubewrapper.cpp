@@ -82,6 +82,7 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
+    m_bubbles.Reset();
     m_numQueuedClears = 0;
 
     m_dirty = true;
@@ -151,6 +152,7 @@ void CubeWrapper::Draw()
                             m_aExplosions[i].Draw( m_vid, i );
                     }
 
+                    m_bubbles.Draw( m_vid );
 
                     m_queuedFlush = true;
 
@@ -393,6 +395,7 @@ void CubeWrapper::Update(float t, float dt)
         }
 
         m_banner.Update(t);
+        m_bubbles.Update(dt);
 
         //tilt state
         _SYSAccelState state;

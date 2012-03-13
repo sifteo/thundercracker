@@ -90,6 +90,7 @@ UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
 --for clearing
 White = image{"White.png"}
 
+bubbles = image{"bubbles.png", height=16, pinned=true}
 
 --sounds
 astrokraut = sound{"astrokraut.raw", encode="PCM"}

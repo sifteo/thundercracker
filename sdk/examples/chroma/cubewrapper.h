@@ -10,6 +10,7 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
+#include "Bubbles.h"
 #include "Intro.h"
 #include "GameOver.h"
 #include "Glimmer.h"
@@ -189,6 +190,7 @@ private:
 
     //allow up to 4 rock explosions simultaneously
     RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
+    BubbleSpawner m_bubbles;
 };
 
 #endif
