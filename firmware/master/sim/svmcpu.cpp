@@ -562,7 +562,7 @@ static void emulateSXTH(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = (uint32_t) SignExtend<signed int, 16>(regs[Rm]);
+    regs[Rdn] = (uint32_t) signExtend(regs[Rm], 16);
 }
 
 static void emulateSXTB(uint16_t instr)
@@ -570,7 +570,7 @@ static void emulateSXTB(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = (uint32_t) SignExtend<signed int, 8>(regs[Rm]);
+    regs[Rdn] = (uint32_t) signExtend(regs[Rm], 8);
 }
 
 static void emulateUXTH(uint16_t instr)
@@ -609,7 +609,7 @@ static void emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x7FF;
-    branchOffsetPC(SignExtend<signed int, 12>(imm11 << 1));
+    branchOffsetPC(signExtend(imm11 << 1, 12));
 }
 
 static void emulateCondB(uint16_t instr)
@@ -617,9 +617,8 @@ static void emulateCondB(uint16_t instr)
     unsigned cond = (instr >> 8) & 0xf;
     unsigned imm8 = instr & 0xff;
 
-    if (conditionPassed(cond)) {
-        branchOffsetPC(SignExtend<signed int, 9>(imm8 << 1));
-    }
+    if (conditionPassed(cond))
+        branchOffsetPC(signExtend(imm8 << 1, 9));
 }
 
 static void emulateCBZ_CBNZ(uint16_t instr)
@@ -801,14 +800,12 @@ static void emulateLDRBH(uint32_t instr)
         regs[Rt] = *reinterpret_cast<uint16_t*>(addr);
         break;
     case SignExtBit:
-        regs[Rt] = (uint32_t) SignExtend<signed int, 8>
-            (*reinterpret_cast<uint8_t*>(addr));
+        regs[Rt] = (uint32_t)signExtend(*reinterpret_cast<uint8_t*>(addr), 8);
         break;
     case HalfwordBit | SignExtBit:
         if (!SvmMemory::isAddrAligned(addr, 2))
             emulateFault(F_LOAD_ALIGNMENT);
-        regs[Rt] = (uint32_t) SignExtend<signed int, 16>
-            (*reinterpret_cast<uint16_t*>(addr));
+        regs[Rt] = (uint32_t)signExtend(*reinterpret_cast<uint16_t*>(addr), 16);
         break;
     }
 }

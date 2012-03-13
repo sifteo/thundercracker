@@ -35,11 +35,13 @@ enum InstructionSize {
  * Utilities
  ***************************************************************************/
 
-// http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
-template <typename T, unsigned B>
-static inline T SignExtend(const T x) {
-    struct { T x:B; } s;
-    return s.x = x;
+// Extend a W-bit wide two's complement value to 32-bit.
+static inline int32_t signExtend(uint32_t value, unsigned w) {
+    const uint32_t msb = 1 << (w - 1);
+    const uint32_t upper = (uint32_t)-1 << w;
+    if (value & msb)
+        value |= upper;
+    return value;
 }
 
 static InstructionSize instructionSize(uint16_t instr) {
