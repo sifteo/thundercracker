@@ -15,10 +15,6 @@
 #include <sifteo/abi.h>
 #include <string.h>
 
-#ifndef PRIxPTR // for mingw
-#define PRIxPTR "x"
-#endif
-
 using namespace Svm;
 
 FlashBlockRef SvmRuntime::codeBlock;
@@ -133,8 +129,9 @@ void SvmRuntime::tailcall(reg_t addr)
     }
 
 #ifdef SVM_TRACE
-    LOG(("TAILCALL: %08x, sp-%u, Keeping frame %"PRIxPTR"\n",
-        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24), fp));
+    LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
+        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+        reinterpret_cast<void*>(fp)));
 #endif
 
     enterFunction(addr);
@@ -349,13 +346,16 @@ void SvmRuntime::syscall(unsigned num)
     }
 
 #ifdef SVM_TRACE
-    LOG(("SYSCALL: enter _SYS_%d(%"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"
-        PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR", %"PRIxPTR")\n",
+    LOG(("SYSCALL: enter _SYS_%d(%p, %p, %p, %p, %p, %p, %p, %p)\n",
         num,
-        SvmCpu::reg(0), SvmCpu::reg(1),
-        SvmCpu::reg(2), SvmCpu::reg(3),
-        SvmCpu::reg(4), SvmCpu::reg(5),
-        SvmCpu::reg(6), SvmCpu::reg(7)));
+        reinterpret_cast<void*>(SvmCpu::reg(0)),
+        reinterpret_cast<void*>(SvmCpu::reg(1)),
+        reinterpret_cast<void*>(SvmCpu::reg(2)),
+        reinterpret_cast<void*>(SvmCpu::reg(3)),
+        reinterpret_cast<void*>(SvmCpu::reg(4)),
+        reinterpret_cast<void*>(SvmCpu::reg(5)),
+        reinterpret_cast<void*>(SvmCpu::reg(6)),
+        reinterpret_cast<void*>(SvmCpu::reg(7))));
 #endif
 
     uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),

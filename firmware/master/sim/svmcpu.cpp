@@ -13,10 +13,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#ifndef PRIxPTR // for mingw
-#define PRIxPTR "x"
-#endif
-
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
@@ -879,14 +875,21 @@ static uint16_t fetch()
 #ifdef SVM_TRACE
     LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(regs[REG_PC]), *pc));
     for (unsigned r = 0; r < 8; r++) {
-        LOG((" r%d=%08"PRIxPTR"", r, regs[r]));
+        // Display as a fixed-width low word and a variable-width high word.
+        // The high word will usually be zero, and it helps to demarcate the
+	// word boundary. On 32-bit hosts, the top word is *always* zero.
+        reg_t val = regs[r];
+        LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
     }
-    LOG((" (%c%c%c%c) | r8=%"PRIxPTR" r9=%"PRIxPTR" sp=%"PRIxPTR" fp=%"PRIxPTR"\n",
+    LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
         getNeg() ? 'N' : ' ',
         getZero() ? 'Z' : ' ',
         getCarry() ? 'C' : ' ',
         getOverflow() ? 'V' : ' ',
-        regs[8], regs[9], regs[REG_SP], regs[REG_FP]));
+        reinterpret_cast<void*>(regs[8]),
+        reinterpret_cast<void*>(regs[9]),
+        reinterpret_cast<void*>(regs[REG_SP]),
+        reinterpret_cast<void*>(regs[REG_FP])));
 #endif
 
     regs[REG_PC] += sizeof(uint16_t);
