@@ -17,8 +17,9 @@ namespace Buddies {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct Piece
+class Piece
 {
+public:
     enum Attribute
     {
         ATTR_NONE = 0,
@@ -28,42 +29,37 @@ struct Piece
         NUM_ATTRIBUTES
     };
     
-    Piece()
-        : mBuddy(0)
-        , mPart(0)
-        , mRotation(0)
-        , mMustSolve(true)
-        , mAttribute(ATTR_NONE)
-    {
-    }
-    
+    Piece();
     Piece(
         int buddy,
         int part,
         bool must_solve = false,
-        Attribute attribute = ATTR_NONE)
-        : mBuddy(buddy)
-        , mPart(part)
-        , mRotation(0)
-        , mMustSolve(must_solve)
-        , mAttribute(attribute)
-    {
-    }
+        Attribute attribute = ATTR_NONE);
     
+    int GetBuddy() const;
+    void SetBuddy(int buddy);
+    
+    int GetPart() const;
+    void SetPart(int part);
+    
+    int GetRotation() const;
+    void SetRotation(int rotation);
+    
+    bool GetMustSolve() const;
+    void SetMustSolve(bool mustSolve);
+    
+    Attribute GetAttribute() const;
+    void SetAttribute(Attribute attribute);
+    
+    bool Compare(const Piece &rhs) const;
+    
+private:    
     int mBuddy;
     int mPart;
     int mRotation;
     bool mMustSolve; // TODO: This doesn't apply to "start" pieces, so does it belong in here?
     Attribute mAttribute;
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-inline bool Compare(const Piece &lhs, const Piece &rhs)
-{
-    return lhs.mBuddy == rhs.mBuddy && lhs.mPart == rhs.mPart;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

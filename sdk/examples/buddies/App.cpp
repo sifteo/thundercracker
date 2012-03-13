@@ -271,13 +271,13 @@ bool IsBuddyUsed(App &app, unsigned buddyId)
 
 bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
 {
-    int rotation = side - piece.mPart;
+    int rotation = side - piece.GetPart();
     if (rotation < 0)
     {
         rotation += NUM_SIDES;
     }
     
-    return piece.mRotation == rotation;
+    return piece.GetRotation() == rotation;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,18 +303,29 @@ int ClampMod(int value, int modulus)
 
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
-    "SHUFFLE_STATE_NONE",
-    "SHUFFLE_STATE_START",
+    "GAME_STATE_NONE",
+    "GAME_STATE_MAIN_MENU",
+    "GAME_STATE_FREE_PLAY",
+    "GAME_STATE_SHUFFLE_START",
     "GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE",
     "GAME_STATE_SHUFFLE_SCRAMBLING",
     "GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES",
     "GAME_STATE_SHUFFLE_PLAY",
+    "GAME_STATE_SHUFFLE_HINT",
     "GAME_STATE_SHUFFLE_SOLVED",
     "GAME_STATE_SHUFFLE_SCORE",
     "GAME_STATE_STORY_START",
-    "GAME_STATE_STORY_INSTRUCTIONS",
+    "GAME_STATE_STORY_CHAPTER_START",
+    "GAME_STATE_STORY_CUTSCENE_START",
+    "GAME_STATE_STORY_DISPLAY_START_STATE",
+    "GAME_STATE_STORY_SCRAMBLING",
+    "GAME_STATE_STORY_CLUE",
     "GAME_STATE_STORY_PLAY",
+    "GAME_STATE_STORY_HINT_CLUE",
+    "GAME_STATE_STORY_HINT_MOVE",
     "GAME_STATE_STORY_SOLVED",
+    "GAME_STATE_STORY_CUTSCENE_END",
+    "GAME_STATE_STORY_CHAPTER_END",
 };
 
 const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels by design
@@ -528,8 +539,8 @@ void App::OnNeighborAdd(
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isFixed =
-            GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
-            GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
+            GetCubeWrapper(cubeId0).GetPiece(cubeSide0).GetAttribute() == Piece::ATTR_FIXED ||
+            GetCubeWrapper(cubeId1).GetPiece(cubeSide1).GetAttribute() == Piece::ATTR_FIXED;
         
         bool isValidGameState =
             mGameState == GAME_STATE_FREE_PLAY ||
@@ -1609,21 +1620,21 @@ void App::ChooseHint()
                             const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
                             const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
                             
-                            if (mCubeWrappers[iCube0].GetPieceSolution(iSide0).mMustSolve &&
-                                piece0.mAttribute != Piece::ATTR_FIXED &&
-                                mCubeWrappers[iCube1].GetPieceSolution(iSide1).mMustSolve &&
-                                piece1.mAttribute != Piece::ATTR_FIXED)
+                            if (mCubeWrappers[iCube0].GetPieceSolution(iSide0).GetMustSolve() &&
+                                piece0.GetAttribute() != Piece::ATTR_FIXED &&
+                                mCubeWrappers[iCube1].GetPieceSolution(iSide1).GetMustSolve() &&
+                                piece1.GetAttribute() != Piece::ATTR_FIXED)
                             {
                                 const Piece &pieceSolution0 =
                                     mCubeWrappers[iCube0].GetPieceSolution(iSide0);
                                 const Piece &pieceSolution1 =
                                     mCubeWrappers[iCube1].GetPieceSolution(iSide1);
                                 
-                                if (!Compare(piece0, pieceSolution0) &&
-                                    !Compare(piece1, pieceSolution1))
+                                if (!piece0.Compare(pieceSolution0) &&
+                                    !piece1.Compare(pieceSolution1))
                                 {
-                                    if (Compare(piece0, pieceSolution1) &&
-                                        Compare(piece1, pieceSolution0))
+                                    if (piece0.Compare(pieceSolution1) &&
+                                        piece1.Compare(pieceSolution0))
                                     {
                                         mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
                                         mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
@@ -1648,7 +1659,7 @@ void App::ChooseHint()
                 const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
                 const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
                 
-                if (piece0.mAttribute != Piece::ATTR_FIXED && !Compare(piece0, pieceSolution0))
+                if (piece0.GetAttribute() != Piece::ATTR_FIXED && !piece0.Compare(pieceSolution0))
                 {
                     for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
                     {
@@ -1661,7 +1672,7 @@ void App::ChooseHint()
                                     const Piece &pieceSolution1 =
                                         mCubeWrappers[iCube1].GetPieceSolution(iSide1);
                                     
-                                    if (Compare(piece0, pieceSolution1))
+                                    if (piece0.Compare(pieceSolution1))
                                     {
                                         mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
                                         mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
@@ -1689,7 +1700,7 @@ void App::ChooseHint()
                 const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
                 const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
                 
-                if (piece0.mAttribute != Piece::ATTR_FIXED && !Compare(piece0, pieceSolution0))
+                if (piece0.GetAttribute() != Piece::ATTR_FIXED && !piece0.Compare(pieceSolution0))
                 {
                     // Once we found a piece that's not in the correct spot, we know that there
                     // isn't a "right" place to swap it this turn (since the above loop failed)
@@ -1826,9 +1837,10 @@ void App::UpdateSwap(float dt)
                 Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
                 if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
                 {
-                    if (--piece0.mRotation < 0)
+                    piece0.SetRotation(piece0.GetRotation() - 1);
+                    if (piece0.GetRotation() < 0)
                     {
-                        piece0.mRotation += NUM_SIDES;
+                        piece0.SetRotation(piece0.GetRotation() + NUM_SIDES);
                     }
                 }
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
@@ -1836,9 +1848,10 @@ void App::UpdateSwap(float dt)
                 Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
                 if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
                 {
-                    if (--piece1.mRotation < 0)
+                    piece1.SetRotation(piece1.GetRotation() - 1);
+                    if (piece1.GetRotation() < 0)
                     {
-                        piece1.mRotation += NUM_SIDES;
+                        piece1.SetRotation(piece1.GetRotation() + NUM_SIDES);
                     }
                 }
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
@@ -1901,25 +1914,25 @@ void App::OnSwapExchange()
     
     if (side0 == side1)
     {
-        piece0new.mRotation += 2;
-        piece1new.mRotation += 2;
+        piece0new.SetRotation(piece0new.GetRotation() + 2);
+        piece1new.SetRotation(piece1new.GetRotation() + 2);
     }
     else if (side0 % 2 != side1 % 2)
     {
         if ((side0 + 1) % NUM_SIDES == side1)
         {
-            piece0new.mRotation += 1;
-            piece1new.mRotation += 3; 
+            piece0new.SetRotation(piece0new.GetRotation() + 1);
+            piece1new.SetRotation(piece1new.GetRotation() + 3);
         }
         else
         {
-            piece0new.mRotation += 3;
-            piece1new.mRotation += 1;
+            piece0new.SetRotation(piece0new.GetRotation() + 3);
+            piece1new.SetRotation(piece1new.GetRotation() + 1);
         }
     }
     
-    piece0new.mRotation = ClampMod(piece0new.mRotation, NUM_SIDES);
-    piece1new.mRotation = ClampMod(piece1new.mRotation, NUM_SIDES);
+    piece0new.SetRotation(ClampMod(piece0new.GetRotation(), NUM_SIDES));
+    piece1new.SetRotation(ClampMod(piece1new.GetRotation(), NUM_SIDES));
     
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(side0, piece0new);
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(side1, piece1new);
@@ -1971,17 +1984,15 @@ void App::OnSwapFinish()
     {
         bool swap0Solved =
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
-            Compare(
-                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES),
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).Compare(
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).mMustSolve;
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).GetMustSolve();
         
         bool swap1Solved =
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
-            Compare(
-                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES),
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).Compare(
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).mMustSolve;
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).GetMustSolve();
         
         if (swap0Solved || swap1Solved)
         {
@@ -2026,17 +2037,15 @@ void App::OnSwapFinish()
     {
         bool swap0Solved =
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
-            Compare(
-                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES),
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).Compare(
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).mMustSolve;
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).GetMustSolve();
         
         bool swap1Solved =
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
-            Compare(
-                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES),
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).Compare(
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).mMustSolve;
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).GetMustSolve();
         
         if (swap0Solved || swap1Solved)
         {

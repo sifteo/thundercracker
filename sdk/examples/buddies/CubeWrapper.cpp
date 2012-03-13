@@ -443,10 +443,10 @@ bool CubeWrapper::IsSolved() const
     
     for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
     {
-        if (mPiecesSolution[i].mMustSolve)
+        if (mPiecesSolution[i].GetMustSolve())
         {
-            if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
-                mPieces[i].mPart != mPiecesSolution[i].mPart)
+            if (mPieces[i].GetBuddy() != mPiecesSolution[i].GetBuddy() ||
+                mPieces[i].GetPart() != mPiecesSolution[i].GetPart())
             {
                 return false;
             }
@@ -481,8 +481,8 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    const AssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
-    unsigned int frame = (piece.mRotation * NUM_SIDES) + piece.mPart;
+    const AssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
+    unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
     ASSERT(frame < asset.frames);
     
     Vec2 point = kPartPositions[side];

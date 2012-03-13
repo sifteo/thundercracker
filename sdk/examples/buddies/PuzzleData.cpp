@@ -69,10 +69,10 @@ void InitializePuzzles()
         sPuzzleDefault.SetPieceStart( i, SIDE_BOTTOM, Piece(i, 2));
         sPuzzleDefault.SetPieceStart( i, SIDE_RIGHT,  Piece(i, 3));
         
-        sPuzzleDefault.SetPieceEnd(   i, SIDE_TOP,    Piece(i, 0));
-        sPuzzleDefault.SetPieceEnd(   i, SIDE_LEFT,   Piece(i, 1));
-        sPuzzleDefault.SetPieceEnd(   i, SIDE_BOTTOM, Piece(i, 2));
-        sPuzzleDefault.SetPieceEnd(   i, SIDE_RIGHT,  Piece(i, 3));
+        sPuzzleDefault.SetPieceEnd(   i, SIDE_TOP,    Piece(i, 0, true));
+        sPuzzleDefault.SetPieceEnd(   i, SIDE_LEFT,   Piece(i, 1, true));
+        sPuzzleDefault.SetPieceEnd(   i, SIDE_BOTTOM, Piece(i, 2, true));
+        sPuzzleDefault.SetPieceEnd(   i, SIDE_RIGHT,  Piece(i, 3, true));
     }
     
     ////////////////////////////////////////////////////////////////////////////////
