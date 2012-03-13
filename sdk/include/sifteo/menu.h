@@ -322,6 +322,15 @@ void Menu::paintSync() {
  * \__ \ || (_| | ||  __/ | | | | (_| | | | | (_| | | | | | | (_| |
  * |___/\__\__,_|\__\___| |_| |_|\__,_|_| |_|\__,_|_|_|_| |_|\__, |
  *                                                           |___/
+ *
+ * States are represented by three functions per state:
+ * transTo$TATE() - called whenever transitioning into the state.
+ * state$TATE() - the state itself, called every loop of the event pump.
+ * transFrom$TATE() - called before every loop of the event pump, responsible
+ *                    for transitioning to other states.
+ *
+ * States are identified by MENU_STATE_$TATE values in enum MenuState, and are
+ * mapped to their respective functions in changeState and pollEvent.
  */
 
 void Menu::changeState(MenuState newstate) {
@@ -570,6 +579,27 @@ void Menu::transFromFinish() {
  * |  __/\ V /  __/ | | | |_  | | | | (_| | | | | (_| | | | | | | (_| |
  *  \___| \_/ \___|_| |_|\__| |_| |_|\__,_|_| |_|\__,_|_|_|_| |_|\__, |
  *                                                               |___/
+ *
+ * Stateful events are dispatched by setting MenuEvent.type (and
+ * MenuEvent.neighbor/MenuEvent.item as appropriate) in a transTo$TATE or
+ * state$TATE method and returning immediately.
+ *
+ * All events are immediately caught by the dispatchEvent method in pollEvent,
+ * which copies it into the caller's event structure, and returns control to
+ * the caller to handle the event.
+ *
+ * If the caller would like to prevent the default handling of the event,
+ * calling Menu::preventDefault will clear the event. This is useful for
+ * multistate items (the MENU_ITEM_PRESS event can replace the item's icon
+ * using replaceIcon to reflect the new state instead of animating out of the
+ * menu).
+ * NOTE: MENU_PREPAINT should never have its default behaviour disabled as the
+ * menu tracks internally if a synchronous paint is needed. If the caller needs
+ * a synchronous paint for the other cubes in the system, Menu::paintSync will
+ * force a synchronous paint for the current paint operation.
+ *
+ * Default event handling is performed at the beginning of pollEvent, before
+ * re-entering the state machine.
  */
 
 void Menu::handleNeighborAdd() {
@@ -705,7 +735,6 @@ void Menu::drawColumn(int x) {
 }
 
 unsigned Menu::unsignedMod(int x, unsigned y) {
-//LOG(("%s\n", __FUNCTION__));
 	const int z = x % (int)y;
 	return z < 0 ? z+y : z;
 }
