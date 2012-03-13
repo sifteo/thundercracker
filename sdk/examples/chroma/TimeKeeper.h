@@ -17,6 +17,8 @@ public:
     static const float TIME_INITIAL;
     //how long does it take the dot to go around?
     static const float TIMER_SPRITE_PERIOD;
+    static const float TIMER_LOW_SPRITE_PERIOD;
+
     static const int TIMER_STEMS = 14;
     static const unsigned int BLINK_OFF_FRAMES = 7;
     static const unsigned int BLINK_ON_FRAMES = 10;
@@ -35,7 +37,7 @@ public:
 
 private:
 	float m_fTimer;
-    unsigned int m_blinkCounter;
+    //unsigned int m_blinkCounter;
 };
 
 #endif
