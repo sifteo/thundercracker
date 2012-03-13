@@ -120,6 +120,8 @@ class Menu {
 	float lastPaint;
 	int prev_ut;
 	float velocity;
+	// finish state
+	int finishIteration;
 	
 	// state handling
 	void changeState(MenuState);
@@ -225,8 +227,15 @@ void Menu::pollEvent(struct MenuEvent *ev) {
 	if(currentEvent.type != MENU_UNEVENTFUL) {
 		performDefault();
 	}
+	/* state changes can happen in the default event handler which may dispatch
+	 * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
+	 * MENU_PREPAINT).
+	 */
+	if(dispatchEvent(ev)) {
+		return;
+	}
 	
-	// keep track of time so if our framerate changes, we don't change apparent speed
+	// keep track of time so if our framerate changes, apparent speed persists
 	float now = System::clock();
 	const float kTimeDilator = 13.1f;
 	dt = (now - lastPaint) * kTimeDilator;
@@ -568,13 +577,45 @@ void Menu::transFromInertia() {
  * MENU_EXIT fired after the last iteration has been painted, indicating that
  *           the menu is finished and the caller should leave its event loop.
  */
-void Menu::transToFinish() {}
+void Menu::transToFinish() {
+	// prepare screen for item animation
+	VidMode_BG0 canvas(pCube->vbuf);
+	// isolate the selected icon
+	canvas.BG0_setPanning(Vec2(0,0));
+
+	// blank out the background layer
+	for(int row=0; row<12; ++row)
+	for(int col=0; col<16; ++col) {
+		canvas.BG0_drawAsset(Vec2(col, row), *assets->bg);
+	}
+	canvas.BG0_drawAsset(Vec2(0, kNumVisibleTilesY - assets->footer->height), *assets->footer);
+	{
+		const AssetImage* icon = items[computeSelected()].icon;
+		BG1Helper overlay(*pCube);
+		overlay.DrawAsset(Vec2((kNumVisibleTilesX - icon->width) / 2, 2), *icon);
+		overlay.Flush();
+	}
+	finishIteration = 0;
+	shouldPaintSync = true;
+	currentEvent.type = MENU_PREPAINT;
+}
 
 void Menu::stateFinish() {
-	// TODO: animate out first. then:
-	currentEvent.type = MENU_EXIT;
-	currentEvent.item = computeSelected();
-	stateFinished = true;
+	const float k = 5.f;
+	int offset = 0;
+
+	finishIteration++;
+	float u = finishIteration/33.f;
+	u = (1.f-k*u);
+	offset = int(12*(1.f-u*u));
+	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
+	currentEvent.type = MENU_PREPAINT;
+	
+	if(offset <= -128) {
+		currentEvent.type = MENU_EXIT;
+		currentEvent.item = computeSelected();
+		stateFinished = true;
+	}
 }
 
 void Menu::transFromFinish() {
