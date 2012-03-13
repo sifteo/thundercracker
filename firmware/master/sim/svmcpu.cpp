@@ -873,7 +873,8 @@ static uint16_t fetch()
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #ifdef SVM_TRACE
-    LOG(("[%08x: %04x]", SvmRuntime::reconstructCodeAddr(regs[REG_PC]), *pc));
+    LOG(("[va=%08x pa=%p i=%04x]",
+        SvmRuntime::reconstructCodeAddr(regs[REG_PC]), pc, *pc));
     for (unsigned r = 0; r < 8; r++) {
         // Display as a fixed-width low word and a variable-width high word.
         // The high word will usually be zero, and it helps to demarcate the
