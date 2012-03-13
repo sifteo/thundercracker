@@ -33,7 +33,8 @@ public:
   unsigned Id() const { return mRoomId; }
   Vec2 Location() const;
   Room* GetRoom() const;
-  
+  bool GatewayTouched() const;
+
   // methods
   void Init(unsigned rid);
   void Restore();

@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "MapHelpers.h"
 
 void EdgeView::Init(int roomId, Cube::Side side) {
 	CORO_RESET;
@@ -18,15 +19,7 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 	if (pRoom->HasGateway()) {
 		// compute which "side" of the room the gateway is on
 		mGateway = pRoom->TriggerAsGate();
-		int dx = mGateway->x - 64;
-		int dy = mGateway->y - 64;
-		int adx = abs(dx);
-		int ady = abs(dy);
-		if (adx > ady) {
-			gateSide = dx > 0 ? SIDE_RIGHT : SIDE_LEFT;
-		} else if (ady > adx) {
-			gateSide = dy > 0 ? SIDE_BOTTOM : SIDE_TOP;
-		}
+		gateSide = ComputeGateSide(mGateway);
 		if (gateSide == mSide) {
 			// render gateway special
 			for(int row=0; row<16; ++row)

@@ -170,15 +170,22 @@ bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
 	Cube::Side side = SIDE_UNDEFINED;
-	if (loc.x == -1) {
-		loc.x = 0;
+	if (loc.x < -1) {
+		HideLocation(doFlush);
+		return false;
+	} else if (loc.x == -1) {
 		if (loc.y >= 0 && loc.y < map.height) {
+			loc.x = 0;
 			side = SIDE_LEFT;
 		} else {
-			goto OutOfBounds;
+			HideLocation(doFlush);
+			return false;
 		}
 	} else if (loc.x < map.width) {
-		if (loc.y == -1) {
+		if (loc.y < -1) {
+			HideLocation(doFlush);
+			return false;
+		} else if (loc.y == -1) {
 			loc.y = 0;
 			side = SIDE_TOP;
 		} else if (loc.y < map.height) {
@@ -187,22 +194,22 @@ bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
 			loc.y = map.height-1;
 			side = SIDE_BOTTOM;
 		} else {
-			goto OutOfBounds;
+			HideLocation(doFlush);
+			return false;
 		}
 	} else if (loc.x == map.width) {
-		loc.x = map.width-1;
 		if (loc.y >= 0 && loc.y < map.height) {
+			loc.x = map.width-1;
 			side = SIDE_RIGHT;
 		} else {
-			goto OutOfBounds;
+			HideLocation(doFlush);
+			return false;
 		}
 	} else {
-		goto OutOfBounds;
+		HideLocation(doFlush);
+		return false;
 	}
 	return SetLocationView(gGame.GetMap()->GetRoomId(loc), side, force, doFlush);
-	OutOfBounds:
-	HideLocation(doFlush);
-	return false;
 }
 
 ViewSlot* ViewSlot::FindIdleView() {

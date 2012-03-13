@@ -11,8 +11,9 @@ private:
 	uint8_t t;
 
 public:
-	unsigned Id() const { return mRoomId;}
-	Cube::Side Side() const { return mSide; }
+	inline unsigned Id() const { return mRoomId;}
+	inline Cube::Side Side() const { return mSide; }
+	inline bool ShowingGateway() const { return mGateway!=0; }
 
 	void Init(int roomId, Cube::Side side);
 	void Restore();

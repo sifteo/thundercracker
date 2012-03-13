@@ -443,41 +443,48 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::OnEnterGateway(Room*pRoom) {
+  //---------------------------------------------------------------------------
+  // PLAYER TRIGGERED GATEWAY
+  const GatewayData* pGate = pRoom->TriggerAsGate();
+  const MapData& targetMap = gMapData[pGate->targetMap];
+  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
+  if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2(pGate->x, pGate->y));
+  mPlayer.SetEquipment(0);
+  TeleportTo(gMapData[pGate->targetMap], Vec2(
+    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+  ));
+  OnTriggerEvent(pGate->trigger.eventType);
+  RestorePearlIdle();
+}
+
+void Game::OnNpcChatter(Room *pRoom) {
+  //-------------------------------------------------------------------------
+  // PLAYER TRIGGERED NPC DIALOG
+  mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+  mPlayer.CurrentView()->UpdatePlayer();
+  for(int i=0; i<16; ++i) { Paint(true); }
+  const NpcData* pNpc = pRoom->TriggerAsNPC();
+  if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
+  System::paintSync();
+  mPlayer.CurrentView()->Parent()->Restore();
+  System::paintSync();
+  OnTriggerEvent(pNpc->trigger.eventType);
+  RestorePearlIdle();
+}
 void Game::OnActiveTrigger() {
-  if (mPlayer.GetRoom()->HasGateway()) {
-
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED GATEWAY
-    const GatewayData* pGate = mPlayer.GetRoom()->TriggerAsGate();
-    const MapData& targetMap = gMapData[pGate->targetMap];
-    const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-    if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2(pGate->x, pGate->y));
-    mPlayer.SetEquipment(0);
-    TeleportTo(gMapData[pGate->targetMap], Vec2(
-      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-    ));
-
-    OnTriggerEvent(pGate->trigger.eventType);
-
-  } else if (mPlayer.GetRoom()->HasNPC()) {
-    
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED NPC DIALOG
-    mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-    mPlayer.CurrentView()->UpdatePlayer();
-    for(int i=0; i<16; ++i) { Paint(true); }
-    const NpcData* pNpc = mPlayer.GetRoom()->TriggerAsNPC();
-    if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
-    System::paintSync();
-    mPlayer.CurrentView()->Parent()->Restore();
-    System::paintSync();
-
-    OnTriggerEvent(pNpc->trigger.eventType);
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasGateway()) {
+    OnEnterGateway(pRoom);
+  } else if (pRoom->HasNPC()) {
+    OnNpcChatter(pRoom);
   }  
+}
 
+void Game::RestorePearlIdle() {
   if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
     // Always look "south" after an action
     mPlayer.SetDirection(SIDE_BOTTOM);

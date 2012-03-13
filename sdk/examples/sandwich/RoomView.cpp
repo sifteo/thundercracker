@@ -1,6 +1,7 @@
 #include "RoomView.h"
 #include "Game.h"
 #include "DrawingHelpers.h"
+#include "MapHelpers.h"
 
 #define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
@@ -86,6 +87,18 @@ Room* RoomView::GetRoom() const {
 
 Vec2 RoomView::Location() const {
   return gGame.GetMap()->GetLocation(mRoomId);
+}
+
+bool RoomView::GatewayTouched() const {
+  const Room* pRoom = GetRoom();
+  if (pRoom->HasGateway()) {
+    const Cube::Side side = ComputeGateSide(pRoom->TriggerAsGate());
+    if (side != SIDE_UNDEFINED) {
+      const ViewSlot *view = Parent()->VirtualNeighborAt(side);
+      return view && view->Touched() && view->IsShowingGatewayEdge();
+    }
+  }
+  return false;
 }
 
 

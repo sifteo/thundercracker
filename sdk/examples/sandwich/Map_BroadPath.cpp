@@ -51,6 +51,7 @@ bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLoca
   return true;
 }
 
+// TODO: stack alloc?
 static uint8_t sVisitMask[NUM_CUBES];
 
 BroadPath::BroadPath() {
@@ -64,9 +65,7 @@ bool BroadPath::PopStep(BroadLocation newRoot, BroadLocation* outNext) {
     steps[0] = -1;
     return false;
   }
-  for(int i=0; i<2*NUM_CUBES; ++i) {
-    steps[i] = steps[i+1];
-  }
+  for(int i=0; i<2*NUM_CUBES; ++i) { steps[i] = steps[i+1]; }
   steps[NUM_CUBES-2] = -1;
   if (*steps >= 0 && gGame.GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
     return true;
@@ -83,6 +82,13 @@ void BroadPath::Cancel() {
 static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int depth) {
   BroadLocation next;
   if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
+    if (depth > 1) {
+      ViewSlot *nextView = loc.view->Parent()->VirtualNeighborAt(side);
+      if (nextView && nextView->IsShowingGatewayEdge() && nextView->Touched()) {
+        outPath->steps[depth-1] = -1;
+        return true;
+      }
+    }
     return false;
   }
   sVisitMask[next.view->Parent()->GetCubeID()] |= (1<<next.subdivision);

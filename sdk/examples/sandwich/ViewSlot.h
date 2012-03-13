@@ -37,6 +37,7 @@ public:
 	inline unsigned ViewType() const { return mFlags.view ; }
 	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
 	inline bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
+	inline bool IsShowingGatewayEdge() const { return IsShowingEdge() && mView.edge.ShowingGateway(); }
 	inline bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
 	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
 	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }

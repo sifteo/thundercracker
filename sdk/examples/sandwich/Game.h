@@ -81,10 +81,12 @@ private:
 
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
-
   void OnUseEquipment();
-
+  void OnEnterGateway(Room *pRoom);
+  void OnNpcChatter(Room *pRoom);
   void OnTriggerEvent(unsigned id);
+
+  void RestorePearlIdle();
 
 };
 
