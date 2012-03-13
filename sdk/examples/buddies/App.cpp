@@ -283,6 +283,24 @@ bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+int ClampMod(int value, int modulus)
+{
+    while (value < 0)
+    {
+        value += modulus;
+    }
+    
+    while (value >= modulus)
+    {
+        value -= modulus;
+    }
+    
+    return value;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
@@ -1872,12 +1890,39 @@ void App::OnSwapExchange()
     mSwapAnimationSlideTimer = kSwapAnimationSlide;
     mSwapAnimationRotateTimer = kSwapAnimationSlide / NUM_SIDES;
     
-    Piece temp = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
-    Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
-    Piece piece1 = temp;
+    int side0 = mSwapPiece0 % NUM_SIDES;
+    int side1 = mSwapPiece1 % NUM_SIDES;
     
-    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
-    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+    Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(side0);
+    Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(side1);
+    
+    Piece piece0new = piece1;
+    Piece piece1new = piece0;
+    
+    if (side0 == side1)
+    {
+        piece0new.mRotation += 2;
+        piece1new.mRotation += 2;
+    }
+    else if (side0 % 2 != side1 % 2)
+    {
+        if ((side0 + 1) % NUM_SIDES == side1)
+        {
+            piece0new.mRotation += 1;
+            piece1new.mRotation += 3; 
+        }
+        else
+        {
+            piece0new.mRotation += 3;
+            piece1new.mRotation += 1;
+        }
+    }
+    
+    piece0new.mRotation = ClampMod(piece0new.mRotation, NUM_SIDES);
+    piece1new.mRotation = ClampMod(piece1new.mRotation, NUM_SIDES);
+    
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(side0, piece0new);
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(side1, piece1new);
     
     // Mark both as moved...
     mShufflePiecesMoved[mSwapPiece0] = true;
