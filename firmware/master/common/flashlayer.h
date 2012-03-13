@@ -7,6 +7,7 @@
 #define FLASH_LAYER_H_
 
 #include "svmvalidator.h"
+#include "systime.h"
 #include <sifteo/machine.h>
 #include <stdint.h>
 
@@ -18,6 +19,18 @@
 #endif
 
 class FlashBlockRef;
+
+struct FlashStats {
+    unsigned blockHitSame;
+    unsigned blockHitOther;
+    unsigned blockMiss;
+    unsigned blockTotal;
+    unsigned streamBytes;
+    unsigned globalRefcount;
+    SysTime::Ticks timestamp;
+};
+
+extern FlashStats gFlashStats;
 
 
 /**
@@ -38,16 +51,7 @@ public:
 private:
     friend class FlashBlockRef;
 
-    struct Stats {
-#ifdef FLASHLAYER_STATS
-        unsigned hit_same;
-        unsigned hit_other;
-        unsigned miss;
-        unsigned total;
-        unsigned global_refcount;
-#endif
-    };
-
+    uint32_t stamp;
     uint32_t address;
     uint16_t validCodeBytes;
     uint8_t refCount;
@@ -55,8 +59,7 @@ private:
     static uint8_t mem[NUM_BLOCKS][BLOCK_SIZE];
     static FlashBlock instances[NUM_BLOCKS];
     static uint32_t referencedBlocksMap;
-    static uint32_t busyBlocksMap;
-    static Stats stats;
+    static uint32_t latestStamp;
 
 public:
     inline unsigned id() {
@@ -113,8 +116,8 @@ private:
             referencedBlocksMap |= bit();
 
         FLASHLAYER_STATS_ONLY({
-            stats.global_refcount++;
-            ASSERT(stats.global_refcount <= MAX_REFCOUNT);
+            gFlashStats.globalRefcount++;
+            ASSERT(gFlashStats.globalRefcount <= MAX_REFCOUNT);
         })
     }
 
@@ -127,8 +130,8 @@ private:
             referencedBlocksMap &= ~bit();
 
         FLASHLAYER_STATS_ONLY({
-            ASSERT(stats.global_refcount > 0);
-            stats.global_refcount--;
+            ASSERT(gFlashStats.globalRefcount > 0);
+            gFlashStats.globalRefcount--;
         })
     }
     
