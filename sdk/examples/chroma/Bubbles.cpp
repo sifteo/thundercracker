@@ -94,13 +94,17 @@ void Bubble::Update( float dt )
 {
     m_fTimeAlive += dt;
 
-    if( m_fTimeAlive > BUBBLE_LIFETIME )
+    if( m_fTimeAlive >= BUBBLE_LIFETIME )
         Disable();
 }
 
 void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index )
 {
+    unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * bubbles.frames;
+
+    if( frame >= bubbles.frames )
+        frame = bubbles.frames - 1;
     vid.resizeSprite(index, bubbles.width*8, bubbles.height*8);
-    vid.setSpriteImage(index, bubbles, 15);
+    vid.setSpriteImage(index, bubbles, frame);
     vid.moveSprite(index, m_pos.x, m_pos.y);
 }
