@@ -119,6 +119,7 @@ void RoomView::UpdatePlayer() {
   if (gGame.GetPlayer()->Equipment()) {
     gfx.moveSprite(EQUIP_SPRITE_ID, localPosition.x-8, localPosition.y-ITEM_OFFSET);
   }
+  ASSERT(0);
 }
 
 void RoomView::DrawPlayerFalling(int height) {
@@ -217,6 +218,7 @@ void RoomView::DrawBackground() {
       ovrly.DrawAsset(Vec2((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
   }
 
+  ASSERT(0);
   ovrly.Flush();
 }
 

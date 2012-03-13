@@ -26,6 +26,18 @@ static const unsigned REG_PC = 15;
 static const unsigned REG_CPSR = 16;
 static const unsigned NUM_REGS = 17;
 
+// ABI 'call' stack frame layout
+struct CallFrame {
+    uint32_t pc;
+    uint32_t fp;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r4;
+    uint32_t r5;
+    uint32_t r6;
+    uint32_t r7;
+};
+
 enum InstructionSize {
     InstrBits16,
     InstrBits32

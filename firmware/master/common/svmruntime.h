@@ -103,17 +103,6 @@ public:
     }
 
 private:
-    struct CallFrame {
-        uint32_t pc;
-        uint32_t fp;
-        uint32_t r2;
-        uint32_t r3;
-        uint32_t r4;
-        uint32_t r5;
-        uint32_t r6;
-        uint32_t r7;
-    };
-
     static FlashBlockRef codeBlock;
     static FlashBlockRef dataBlock;
     static SvmMemory::PhysAddr stackLimit;

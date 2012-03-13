@@ -63,6 +63,10 @@ public:
     static void fault(FaultCode code);
 
     static void setSymbolSourceELF(const FlashRange &elf);
+
+#ifdef SIFTEO_SIMULATOR
+    static void formatAddress(uint32_t address, char *buf, uint32_t bufSize);
+#endif
 };
 
 

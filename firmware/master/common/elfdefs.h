@@ -203,6 +203,14 @@ static const Elf32_Word SHF_TLS                 = 0x400;
 static const Elf32_Word SHF_MASKOS              = 0x0ff00000;
 static const Elf32_Word SHF_MASKPROC            = 0xf0000000;
 
+// values for low nybble of st_info
+static const unsigned char STT_NOTYPE       = 0;
+static const unsigned char STT_OBJECT       = 1;
+static const unsigned char STT_FUNC         = 2;
+static const unsigned char STT_SECTION      = 3;
+static const unsigned char STT_FILE         = 4;
+
+
 }   // namespace Elf
 
 #endif // ELFDEFS_H
