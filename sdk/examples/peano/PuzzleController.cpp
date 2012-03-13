@@ -111,13 +111,82 @@ void OnSetup ()
          }
          }
          */
+void ShowPuzzleCount()
+{
+    if(!Game::IsPlayingRandom())
+    { // opening remarks
+        int count = 1 + puzzle->CountAfterThisInChapterWithCurrentCubeSet();
+        if (count > 0)
+        {
+            NarratorView nv;
+            Game::cubes[0].SetView(&nv);
+            const float kTransitionTime = 0.2f;
+            AudioPlayer::PlayShutterOpen();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+                nv.SetTransitionAmount(t/kTransitionTime);
+                Game::Wait(0);
+            }
+            nv.SetTransitionAmount(-1);
+            Game::Wait(0.5f);
+            if (count == 1) {
+                nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
+
+                //set window to bottom half of screen so we can animate peano
+                //while text window is open above
+                System::paintSync();
+                nv.GetCube()->backgroundLayer.set();
+                nv.GetCube()->backgroundLayer.clear();
+                nv.GetCube()->foregroundLayer.Clear();
+                nv.GetCube()->foregroundLayer.Flush();
+                nv.GetCube()->backgroundLayer.setWindow(72,56);
+
+                float t = 3 + System::clock();
+                float timeout = 0.0;
+                int i=0;
+                while(System::clock() < t) {
+                    timeout -= Game::dt;
+                    while (timeout < 0) {
+                        i = 1 - i;
+                        timeout += 0.05;
+                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                    }
+                    System::paintSync();
+                    Game::UpdateDt();
+                }
+            } else {
+                //static because nv.SetMessage doesnt strcpy, keeps pointer.
+                static String<20> msg;
+                msg.clear();
+                msg << count << " codes to go...";
+                nv.SetMessage(msg);
+                Game::Wait(2);
+            }
+
+            nv.SetMessage("");
+
+            AudioPlayer::PlayShutterClose();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+                nv.SetTransitionAmount(1-t/kTransitionTime);
+                Game::Wait(0);
+            }
+            nv.SetTransitionAmount(0);
+            Game::Wait(0);
+
+            Game::cubes[0].SetView(NULL);
+
+        }
+    }
+}
+
 //-------------------------------------------------------------------------
 // MAIN CORO
 //-------------------------------------------------------------------------
 
 Game::GameState Run()
 {
+
     OnSetup();
+    ShowPuzzleCount();
 
     PauseHelper *pauseHelper;
 
@@ -250,70 +319,7 @@ Game::GameState Run()
         }
     }
 
-    if (!Game::IsPlayingRandom())
-    { // closing remarks
-        int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
-        if (count > 0)
-        {
-            NarratorView nv;
-            Game::cubes[0].SetView(&nv);
-            const float kTransitionTime = 0.2f;
-            AudioPlayer::PlayShutterOpen();
-            for(float t=0; t<kTransitionTime; t+=Game::dt) {                
-                nv.SetTransitionAmount(t/kTransitionTime);
-                Game::Wait(0);
-            }
-            nv.SetTransitionAmount(-1);
-            Game::Wait(0.5f);
-            if (count == 1) {
-                nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
-
-                //set window to bottom half of screen so we can animate peano
-                //while text window is open above
-                System::paintSync();
-                nv.GetCube()->backgroundLayer.set();
-                nv.GetCube()->backgroundLayer.clear();
-                nv.GetCube()->foregroundLayer.Clear();
-                nv.GetCube()->foregroundLayer.Flush();
-                nv.GetCube()->backgroundLayer.setWindow(72,56);
-
-                float t = 3 + System::clock();
-                float timeout = 0.0;
-                int i=0;
-                while(System::clock() < t) {
-                    timeout -= Game::dt;
-                    while (timeout < 0) {
-                        i = 1 - i;
-                        timeout += 0.05;
-                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
-                    }
-                    System::paintSync();
-                    Game::UpdateDt();
-                }
-            } else {
-                //static because nv.SetMessage doesnt strcpy, keeps pointer.
-                static String<20> msg;
-                msg.clear();
-                msg << count << " codes to go...";
-                nv.SetMessage(msg);
-                Game::Wait(2);                
-            }
-
-            nv.SetMessage("");
-
-            AudioPlayer::PlayShutterClose();
-            for(float t=0; t<kTransitionTime; t+=Game::dt) {
-                nv.SetTransitionAmount(1-t/kTransitionTime);
-                Game::Wait(0);
-            }
-            nv.SetTransitionAmount(0);
-            Game::Wait(0);
-
-            Game::cubes[0].SetView(NULL);
-
-        }
-    }
-    else
+    if (Game::IsPlayingRandom())
     {
         //advance deletes chapter created puzzles
         delete puzzle;
