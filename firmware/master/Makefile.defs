@@ -92,7 +92,7 @@ endif
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
 
-# 32-bit mingw needs this for the __sync_fetch_* family of routines in syscalls.cpp
+# 32-bit mingw needs this for the __sync_fetch_* family of routines
 ifeq ($(BUILD_PLATFORM), windows32)
     CFLAGS_SIM += -march=native
 endif
