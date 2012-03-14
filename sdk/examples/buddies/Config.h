@@ -25,8 +25,8 @@ namespace Buddies {
 const bool kLoadAssets = true;
 const GameState kStateDefault = GAME_STATE_MAIN_MENU;
 const unsigned int kNumCubes = 3; // Number of cubes used in this game
-const unsigned int kMaxBuddies = 15; // Number of characters
-const unsigned int kNumPuzzles = kMaxBuddies * 5;
+const unsigned int kMaxBuddies = 6; // Number of characters (eventually will be 15)
+const unsigned int kPuzzlesPerBuddy = 5;
 
 // Tuning
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
