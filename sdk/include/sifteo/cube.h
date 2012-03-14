@@ -91,35 +91,36 @@ class Cube {
     typedef _SYSTiltState  TiltState;
 
     /*
-     * Default constructor leaves mID zero'ed, so that Cube objects
+     * Default constructor leaves id() zero'ed, so that Cube objects
      * are allocated in the BSS segment rather than read-write data.
      */
 
     Cube() {}
-    Cube(ID id)
-        : mID(id) {}
+    Cube(ID id) {
+        vbuf.cubeID = id;
+    }
 
     /**
      * Prepare this cube for use. Tell the system to start trying to
      * connect to a cube, and initialize the VideoBUffer.
      */
 
-    void enable(ID id=CUBE_ID_UNDEFINED) {
-        if (id != CUBE_ID_UNDEFINED) {
-            mID = id;
+    void enable(ID newID=CUBE_ID_UNDEFINED) {
+        if (newID != CUBE_ID_UNDEFINED) {
+            vbuf.cubeID = newID;
         }
-        ASSERT(mID != CUBE_ID_UNDEFINED);
+        ASSERT(id() != CUBE_ID_UNDEFINED);
         vbuf.init();
-        _SYS_setVideoBuffer(mID, &vbuf.sys);
-        _SYS_enableCubes(Intrinsic::LZ(mID));
+        _SYS_setVideoBuffer(id(), &vbuf.sys);
+        _SYS_enableCubes(Intrinsic::LZ(id()));
     }
 
     void disable() {
-        _SYS_disableCubes(Intrinsic::LZ(mID));
+        _SYS_disableCubes(Intrinsic::LZ(id()));
     }
     
     void loadAssets(AssetGroup &group) {
-        _SYS_loadAssets(mID, &group.sys);
+        _SYS_loadAssets(id(), &group.sys);
     }
 
     /**
@@ -138,7 +139,8 @@ class Cube {
     }
 
     ID id() const {
-        return mID;
+        // Our vbuf already stores a cube ID.
+        return vbuf.cubeID;
     }
     
     /**
@@ -149,7 +151,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-            _SYS_getNeighbors(mID, &state);
+            _SYS_getNeighbors(id(), &state);
         return state.sides[side];
     }
     
@@ -165,7 +167,7 @@ class Cube {
     Side physicalSideOf(ID cube) const {
         ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
         _SYSNeighborState state;
-            _SYS_getNeighbors(mID, &state);
+            _SYS_getNeighbors(id(), &state);
         for(Side side=0; side<NUM_SIDES; ++side) {
             if (state.sides[side] == cube) { return side; }
         }
@@ -173,12 +175,12 @@ class Cube {
     }
     
     Vec2 physicalAccel() const {
-        _SYSAccelState state = _SYS_getAccel(mID);
+        _SYSAccelState state = _SYS_getAccel(id());
         return Vec2(state.x, state.y);
     }
 
     TiltState getTiltState() const {
-        return _SYS_getTilt(mID);
+        return _SYS_getTilt(id());
     }
 
     /**
@@ -224,8 +226,8 @@ class Cube {
     }
     
     void orientTo(const Cube& src) {
-        Side srcSide = src.physicalSideOf(mID);
-        Side dstSide = physicalSideOf(src.mID);
+        Side srcSide = src.physicalSideOf(id());
+        Side dstSide = physicalSideOf(src.id());
         ASSERT(srcSide != SIDE_UNDEFINED);
         ASSERT(dstSide != SIDE_UNDEFINED);
         srcSide = (srcSide - src.orientation()) % NUM_SIDES;
@@ -279,13 +281,10 @@ class Cube {
     }
 
     bool touching() const {
-        return _SYS_isTouching(mID);
+        return _SYS_isTouching(id());
     }
 
     VideoBuffer vbuf;
-
- private:
-    ID mID;
 };
 
 

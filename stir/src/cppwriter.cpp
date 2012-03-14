@@ -188,6 +188,7 @@ void CPPSourceWriter::writeImage(const Image &image)
             indent << "/* width   */ " << width << ",\n" <<
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
             indent << "/* index   */ " << pool.index(grid.tile(0, 0)) <<
             ",\n};\n\n";
             
@@ -224,6 +225,7 @@ void CPPSourceWriter::writeImage(const Image &image)
             indent << "/* width   */ " << width << ",\n" <<
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
             indent << "/* tiles   */ " << image.getName() << "_tiles,\n" <<
             "};\n\n";
     }

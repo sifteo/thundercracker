@@ -164,7 +164,7 @@ public:
         return mName;
     }
 
-    Group *getGroup() {
+    Group *getGroup() const {
         return mGroup;
     }
 

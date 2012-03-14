@@ -125,7 +125,11 @@ class VideoBuffer {
         return ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE);
     }
 
-    _SYSVideoBuffer sys;    
+    /// Contains the raw video data for this cube
+    _SYSVideoBuffer sys;
+
+    /// Cube ID that the buffer is associated with.Required for asset address lookup.
+    _SYSCubeID cubeID;
 };
 
 
@@ -225,7 +229,7 @@ class VidMode_BG0 : public VidMode {
         ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
                         asset.width, asset.height, asset.width, BG0_width);
     }
@@ -240,7 +244,7 @@ class VidMode_BG0 : public VidMode {
         uint16_t addr = BG0_addr(point);
         ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x <= BG0_width * BG0_height );
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
 
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
                         size.x, size.y, asset.width, BG0_width);
@@ -413,16 +417,18 @@ public:
         _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 
-    void setSpriteImage(int id, const PinnedAssetImage &image)
+    void setSpriteImage(int id, const PinnedAssetImage &asset)
     {
-        resizeSprite(id, image.width * TILE, image.height * TILE);
-        setSpriteImage(id, image.index);
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        resizeSprite(id, asset.width * TILE, asset.height * TILE);
+        setSpriteImage(id, base + asset.index);
     }
 
-    void setSpriteImage(int id, const PinnedAssetImage &image, int frame)
+    void setSpriteImage(int id, const PinnedAssetImage &asset, int frame)
     {
-        resizeSprite(id, image.width * TILE, image.height * TILE);
-        setSpriteImage(id, image.index + (image.width * image.height) * frame);
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        resizeSprite(id, asset.width * TILE, asset.height * TILE);
+        setSpriteImage(id, base + asset.index + (asset.width * asset.height) * frame);
     }
 
     bool isSpriteHidden(int id)
@@ -522,7 +528,7 @@ class VidMode_BG2 : public VidMode {
     void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         uint16_t addr = BG2_addr(point);
         unsigned offset = asset.width * asset.height * frame;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
 
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
                         asset.width, asset.height, asset.width, BG2_width);

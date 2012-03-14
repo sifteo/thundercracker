@@ -57,6 +57,7 @@ class AssetImage {
     unsigned height;
     unsigned frames;
 
+    AssetGroup *group;
     const uint16_t *tiles;
 };
 
@@ -72,6 +73,7 @@ class PinnedAssetImage {
     unsigned height;
     unsigned frames;
 
+    AssetGroup *group;
     uint16_t index;
 };
 

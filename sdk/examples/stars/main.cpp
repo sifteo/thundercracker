@@ -140,7 +140,7 @@ public:
         for (unsigned i = 0; i < numStars; i++) {
             const Float2 center(64 - 3.5f, 64 - 3.5f);
             vid.resizeSprite(i, 8, 8);
-            vid.setSpriteImage(i, Star.index + (frame % Star.frames) * Star.width * Star.height);
+            vid.setSpriteImage(i, Star, frame % Star.frames);
             vid.moveSprite(i, stars[i].pos + center);
             
             stars[i].pos += timeStep * (stars[i].velocity + tilt);
@@ -183,6 +183,7 @@ private:
         
         while ((c = *(str++))) {
             uint16_t index = (c - ' ') * 2 + Font.index;
+            index += Font.group->cubes[cube.id()].baseAddr;
             cube.vbuf.pokei(addr, index);
             cube.vbuf.pokei(addr + 16, index + 1);
             addr++;
@@ -201,6 +202,10 @@ private:
 
 void siftmain()
 {
+    // XXX: Test for relocatable asset groups
+    GameAssets.cubes[0].baseAddr = 512 * 8;
+    GameAssets.cubes[1].baseAddr = 512 * 6;
+    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     

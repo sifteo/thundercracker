@@ -29,6 +29,9 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
 static void init()
 {
+    // XXX: Test for relocatable asset groups
+    GameAssets.cubes[0].baseAddr = 512 * 8;
+    
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         cubes[i].enable();
         cubes[i].loadAssets(GameAssets);
