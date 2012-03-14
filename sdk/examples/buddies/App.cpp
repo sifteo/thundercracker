@@ -1564,7 +1564,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
-                cubeWrapper.DrawBackground(UiBackground);
+                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
                 cubeWrapper.DrawUiAsset(
                     Vec2(0, 0),
                     cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
@@ -1579,7 +1579,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
-                cubeWrapper.DrawBackground(UiBackground);
+                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
                 cubeWrapper.DrawUiAsset(
                     Vec2(0, 0),
                     cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
