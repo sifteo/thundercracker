@@ -9,7 +9,7 @@
 
 const unsigned char MAX_HINTS = 3;
 
-ScoredGameState::ScoredGameState() : mNumHints(0) {}
+ScoredGameState::ScoredGameState() : mNumHints(3) {}
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
