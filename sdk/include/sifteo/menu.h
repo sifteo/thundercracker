@@ -69,7 +69,7 @@ typedef enum {
 class Menu {
  public:
     Menu(Cube *, struct MenuAssets*, struct MenuItem*);
-	void pollEvent(struct MenuEvent *);
+	bool pollEvent(struct MenuEvent *);
 	void preventDefault();
 	void reset();
 	void replaceIcon(uint8_t, AssetImage *);
@@ -222,7 +222,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) 
  * 
  */
 
-void Menu::pollEvent(struct MenuEvent *ev) {
+bool Menu::pollEvent(struct MenuEvent *ev) {
 	// handle/clear pending events
 	if(currentEvent.type != MENU_UNEVENTFUL) {
 		performDefault();
@@ -232,7 +232,7 @@ void Menu::pollEvent(struct MenuEvent *ev) {
 	 * MENU_PREPAINT).
 	 */
 	if(dispatchEvent(ev)) {
-		return;
+		return (ev->type != MENU_EXIT);
 	}
 	
 	// keep track of time so if our framerate changes, apparent speed persists
@@ -268,7 +268,7 @@ void Menu::pollEvent(struct MenuEvent *ev) {
 			break;
 	}
 	if(dispatchEvent(ev)) {
-		return;
+		return (ev->type != MENU_EXIT);
 	}
 	
 	// run loop
@@ -292,7 +292,7 @@ void Menu::pollEvent(struct MenuEvent *ev) {
 			break;
 	}
 	if(dispatchEvent(ev)) {
-		return;
+		return (ev->type != MENU_EXIT);
 	}
 
 	// no special events, paint a frame.
@@ -300,7 +300,7 @@ void Menu::pollEvent(struct MenuEvent *ev) {
 	currentEvent.type = MENU_PREPAINT;
 	dispatchEvent(ev);
 	lastPaint = now;
-	return;
+	return true;
 }
 
 void Menu::preventDefault() {
