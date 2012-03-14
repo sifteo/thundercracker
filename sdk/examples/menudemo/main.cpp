@@ -65,27 +65,35 @@ void siftmain() {
 	
 	struct MenuEvent e;
 	while(1) {
-		m.pollEvent(&e);
-		// if(e.type == MENU_PREPAINT) {
-		// 	m.paintSync();
-		// }
-		switch(e.type) {
-			case MENU_EXIT:
-				LOG(("Selected Game: %d\n", e.item));
-				break;
-			case MENU_ITEM_PRESS:
-				// Buddy is not here yet, so don't do anything on press
-				if(e.item == 3) {
-					m.preventDefault();
-				}
-				break;
-			case MENU_NEIGHBOR_ADD:
-			case MENU_NEIGHBOR_REMOVE:
-			case MENU_ITEM_ARRIVE:
-			case MENU_ITEM_DEPART:
-			case MENU_PREPAINT:
-			default:
-				break;
+		while(m.pollEvent(&e)) {
+			switch(e.type) {
+				case MENU_EXIT:
+					// this is not possible when pollEvent is used as the condition to the while loop.
+					break;
+				case MENU_ITEM_PRESS:
+					// Buddy is not here yet, so don't do anything on press
+					if(e.item == 3) {
+						m.preventDefault();
+					}
+					break;
+				case MENU_NEIGHBOR_ADD:
+					// intentional fall-through
+				case MENU_NEIGHBOR_REMOVE:
+					LOG(("found/lost cube %d on side %d of menu (neighbor's %d side)\n",
+						 e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+					break;
+				case MENU_ITEM_ARRIVE:
+				case MENU_ITEM_DEPART:
+					LOG(("arriving at/departing from menu item %d\n", e.item));
+					break;
+				case MENU_PREPAINT:
+					// if you are drawing/animating the other cubes, do your work here
+				case MENU_UNEVENTFUL:
+					// this should never happen. if it does, it should be ignored.
+					break;
+			}
 		}
+		ASSERT(e.type == MENU_EXIT);
+		LOG(("Selected Game: %d\n", e.item));
 	}
 }
