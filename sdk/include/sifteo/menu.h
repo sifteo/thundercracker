@@ -288,8 +288,6 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 		case MENU_STATE_FINISH:
 			stateFinish();
 			break;
-		default:
-			break;
 	}
 	if(dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
