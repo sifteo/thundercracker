@@ -12,8 +12,8 @@
 const float BubbleSpawner::MIN_SHORT_SPAWN = 0.1f;
 const float BubbleSpawner::MAX_SHORT_SPAWN = 0.6f;
 //min/max for long period
-const float BubbleSpawner::MIN_LONG_SPAWN = 8.0f;
-const float BubbleSpawner::MAX_LONG_SPAWN = 12.0f;
+const float BubbleSpawner::MIN_LONG_SPAWN = 6.0f;
+const float BubbleSpawner::MAX_LONG_SPAWN = 8.0f;
 //chance that we do a short period
 const float BubbleSpawner::SHORT_PERIOD_CHANCE = 0.75f;
 
