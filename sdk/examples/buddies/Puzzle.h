@@ -44,6 +44,9 @@ public:
     const char *GetTitle() const;
     void SetTitle(const char *title);
     
+    const char *GetClue() const;
+    void SetClue(const char *clue);
+    
     void AddCutsceneTextStart(const char *cutsceneTextStart);
     const char *GetCutsceneTextStart(unsigned int cutsceneIndex) const;
     unsigned int GetNumCutsceneTextStart() const;
@@ -51,9 +54,6 @@ public:
     void AddCutsceneTextEnd(const char *cutsceneTextEnd);
     const char *GetCutsceneTextEnd(unsigned int cutsceneIndex) const;
     unsigned int GetNumCutsceneTextEnd() const;
-    
-    const char *GetClue() const;
-    void SetClue(const char *clue);
     
     unsigned int GetNumShuffles() const;
     void SetNumShuffles(unsigned int numSuhffles);
@@ -70,14 +70,14 @@ public:
     
 private:
     const char *mTitle;
-    const char *mCutsceneTextStart[16];
-    unsigned int mNumCutsceneTextStart;
-    const char *mCutsceneTextEnd[16];
-    unsigned int mNumCutsceneTextEnd;
     const char *mClue;
-    unsigned int mNumShuffles;
-    unsigned int mBuddies[kMaxBuddies];
-    unsigned int mNumBuddies;
+    const char *mCutsceneTextStart[8];
+    const char *mCutsceneTextEnd[8];
+    unsigned char mBuddies[kMaxBuddies];
+    unsigned char mNumCutsceneTextStart : 3;
+    unsigned char mNumCutsceneTextEnd : 3;
+    unsigned char mNumShuffles : 8;
+    unsigned char mNumBuddies : 5;
     Piece mPiecesStart[kMaxBuddies][NUM_SIDES];
     Piece mPiecesEnd[kMaxBuddies][NUM_SIDES];    
 };

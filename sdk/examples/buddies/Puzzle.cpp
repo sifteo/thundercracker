@@ -23,13 +23,13 @@ namespace Buddies {
 
 Puzzle::Puzzle()
     : mTitle(NULL)
-    , mCutsceneTextStart()
-    , mNumCutsceneTextStart(0)
-    , mCutsceneTextEnd()
-    , mNumCutsceneTextEnd(0)
     , mClue(NULL)
-    , mNumShuffles(0)
+    , mCutsceneTextStart()
+    , mCutsceneTextEnd()
     , mBuddies()
+    , mNumCutsceneTextStart(0)
+    , mNumCutsceneTextEnd(0)
+    , mNumShuffles(0)
     , mNumBuddies(0)
     , mPiecesStart()
     , mPiecesEnd()
@@ -63,13 +63,13 @@ Puzzle::Puzzle(
     const Piece piecesStart[kMaxBuddies][NUM_SIDES],
     const Piece piecesEnd[kMaxBuddies][NUM_SIDES])
     : mTitle(title)
-    , mCutsceneTextStart()
-    , mNumCutsceneTextStart(numCutsceneTextStart)
-    , mCutsceneTextEnd()
-    , mNumCutsceneTextEnd(numCutsceneTextEnd)
     , mClue(clue)
-    , mNumShuffles(numShuffles)
+    , mCutsceneTextStart()
+    , mCutsceneTextEnd()
     , mBuddies()
+    , mNumCutsceneTextStart(numCutsceneTextStart)
+    , mNumCutsceneTextEnd(numCutsceneTextEnd)
+    , mNumShuffles(numShuffles)
     , mNumBuddies(numBuddies)
     , mPiecesStart()
     , mPiecesEnd()
@@ -159,6 +159,22 @@ void Puzzle::SetTitle(const char *title)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const char *Puzzle::GetClue() const
+{
+    return mClue;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Puzzle::SetClue(const char *clue)
+{
+    mClue = clue;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Puzzle::AddCutsceneTextStart(const char *cutsceneTextStart)
 {
     ASSERT(mNumCutsceneTextStart < arraysize(mCutsceneTextStart));
@@ -206,22 +222,6 @@ const char *Puzzle::GetCutsceneTextEnd(unsigned int cutsceneIndex) const
 unsigned int Puzzle::GetNumCutsceneTextEnd() const
 {
     return mNumCutsceneTextEnd;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const char *Puzzle::GetClue() const
-{
-    return mClue;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Puzzle::SetClue(const char *clue)
-{
-    mClue = clue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
