@@ -37,6 +37,21 @@ UiBackground = image{"assets/ui_background.png"}
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
 MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
 
+-- Shuffle Mode
+ShuffleTitleScreen = image{"assets/pre_post_shuffle/titlescreen_shuffle.png"}
+ShuffleNeighbor = image{"assets/pre_post_shuffle/neighbor.png"}
+ShufflePanelBestTimesHighScore = image{"assets/pre_post_shuffle/panel_best_times_highscore.png"}
+ShufflePanelBestTimes = image{"assets/pre_post_shuffle/panel_best_times.png"}
+ShuffleCongratulations = image{"assets/pre_post_shuffle/panel_congratulations.png"}
+ShuffleShakeToPlayAgain = image{"assets/pre_post_shuffle/panel_shake_to_play_again.png"}
+ShuffleTouchToExit = image{"assets/pre_post_shuffle/panel_touch_to_exit.png"}
+ShuffleTouchToSwap = image{"assets/pre_post_shuffle/touch_to_swap.png"}
+ShuffleShakeToShuffle = image{"assets/pre_post_shuffle/shake_to_shuffle.png"}
+ShuffleRibbon = image{"assets/pre_post_shuffle/ribbon.png"}
+ShuffleSpriteFrontGluv = image{"assets/pre_post_shuffle/sprite_front_gluv.png", pinned = true}
+ShuffleSpriteFrontRike = image{"assets/pre_post_shuffle/sprite_front_rike.png", pinned = true}
+ShuffleSpriteFrontZorg = image{"assets/pre_post_shuffle/sprite_front_zorg.png", pinned = true}
+
 -- Story Mode
 CutsceneBackground = image{"assets/cutscene_bg.png"}
 CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
