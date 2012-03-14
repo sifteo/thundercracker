@@ -131,6 +131,34 @@ void DrawScoreBanner(CubeWrapper &cubeWrapper, int minutes, int seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DrawShuffleScore(CubeWrapper &cubeWrapper, int minutes, int seconds)
+{
+    cubeWrapper.DrawBackground(ShufflePanelBestTimes);
+    
+    String<16> buffer1st;
+    buffer1st << "1st " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
+    
+    cubeWrapper.DrawUiText(Vec2(4, 4), FontOrange, buffer1st.c_str());
+    
+    String<16> buffer2nd;
+    buffer2nd << "2nd " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
+    
+    cubeWrapper.DrawUiText(Vec2(4, 6), FontOrange, buffer2nd.c_str());
+    
+    String<16> buffer3rd;
+    buffer3rd << "3rd " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
+    
+    cubeWrapper.DrawUiText(Vec2(4, 8), FontOrange, buffer3rd.c_str());
+    
+    String<16> bufferYours;
+    bufferYours << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+    
+    cubeWrapper.DrawUiText(Vec2(3, 11), FontRed, bufferYours.c_str());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     String<128> buffer;
@@ -1488,15 +1516,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SCORE:
         {
+            // TODO: High Scores
+        
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
-                cubeWrapper.DrawBackground(ShufflePanelBestTimes);
-                
-                // TODO: Best Times
-                // TODO: Ribbon
-                //int minutes = int(mScoreTimer) / 60;
-                //int seconds = int(mScoreTimer - (minutes * 60.0f));
-                //DrawScoreBanner(cubeWrapper, minutes, seconds);
+                int minutes = int(mScoreTimer) / 60;
+                int seconds = int(mScoreTimer - (minutes * 60.0f));
+                DrawShuffleScore(cubeWrapper, minutes, seconds);
             }
             if (cubeWrapper.GetId() == 1)
             {
