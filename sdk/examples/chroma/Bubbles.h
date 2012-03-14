@@ -19,12 +19,14 @@ public:
     static const int SPAWN_EXTENT = 32;
     static const float BUBBLE_LIFETIME;
     static const float TILT_VEL;
+    static const float BEHIND_CHROMITS_THRESHOLD;
+    static const float CHROMIT_OBSCURE_DIST_2;
 
     Bubble();
     void Spawn();
     void Disable();
     void Update( float dt, const Float2 &tilt );
-    void Draw( VidMode_BG0_SPR_BG1 &vid, int index );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper );
     inline bool isAlive() const { return m_fTimeAlive >= 0.0f; }
 
 private:
@@ -46,7 +48,7 @@ public:
     BubbleSpawner();
     void Reset();
     void Update( float dt, const Float2 &tilt );
-    void Draw( VidMode_BG0_SPR_BG1 &vid );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper );
 private:
     Bubble m_aBubbles[MAX_BUBBLES];
     float m_fTimeTillSpawn;

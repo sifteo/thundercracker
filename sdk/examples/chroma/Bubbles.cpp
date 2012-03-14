@@ -5,7 +5,9 @@
  */
 
 #include "Bubbles.h"
+#include "Cubewrapper.h"
 #include "game.h"
+#include "GridSlot.h"
 #include "assets.gen.h"
 
 //min/max for short period
@@ -64,13 +66,13 @@ void BubbleSpawner::Update( float dt, const Float2 &tilt )
 
 
 
-void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid )
+void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 {
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
         unsigned int spriteindex = BUBBLE_SPRITEINDEX + i;
         if( m_aBubbles[i].isAlive() )
-            m_aBubbles[i].Draw( vid, spriteindex );
+            m_aBubbles[i].Draw( vid, spriteindex, pWrapper );
         else
             vid.resizeSprite(spriteindex, 0, 0);
     }
@@ -79,6 +81,8 @@ void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid )
 
 const float Bubble::BUBBLE_LIFETIME = 2.5f;
 const float Bubble::TILT_VEL = 128.0f;
+const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
+const float Bubble::CHROMIT_OBSCURE_DIST_2 = 150.0f;
 
 Bubble::Bubble() : m_fTimeAlive( -1.0f )
 {
@@ -106,13 +110,40 @@ void Bubble::Update( float dt, const Float2 &tilt )
         Disable();
 }
 
-void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index )
+void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
 {
     unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * bubbles.frames;
+    bool visible = true;
 
     if( frame >= bubbles.frames )
         frame = bubbles.frames - 1;
-    vid.resizeSprite(index, bubbles.width*8, bubbles.height*8);
-    vid.setSpriteImage(index, bubbles, frame);
-    vid.moveSprite(index, m_pos.x, m_pos.y);
+
+    //sometimes bubbles are obscured by chromits
+    if( m_fTimeAlive / BUBBLE_LIFETIME < BEHIND_CHROMITS_THRESHOLD )
+    {
+        //find our center
+        Float2 center( m_pos.x + bubbles.width*4, m_pos.y + bubbles.height*4 );
+        Vec2 gridslot( center.x / 32, center.y / 32 );
+
+        GridSlot *pSlot = pWrapper->GetSlot( gridslot.y, gridslot.x );
+
+        if( pSlot && !pSlot->isEmpty() )
+        {
+            //if our center is inside a certain radius, we are hidden
+            Float2 slotcenter( gridslot.x * 32 + 16, gridslot.y * 32 + 16 );
+            Float2 diff = center - slotcenter;
+
+            if( diff.len2() < CHROMIT_OBSCURE_DIST_2 )
+                visible = false;
+        }
+    }
+
+    if( visible )
+    {
+        vid.resizeSprite(index, bubbles.width*8, bubbles.height*8);
+        vid.setSpriteImage(index, bubbles, frame);
+        vid.moveSprite(index, m_pos.x, m_pos.y);
+    }
+    else
+        vid.resizeSprite(index, 0, 0);
 }

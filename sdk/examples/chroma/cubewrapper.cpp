@@ -152,7 +152,7 @@ void CubeWrapper::Draw()
                             m_aExplosions[i].Draw( m_vid, i );
                     }
 
-                    m_bubbles.Draw( m_vid );
+                    m_bubbles.Draw( m_vid, this );
 
                     m_queuedFlush = true;
 
