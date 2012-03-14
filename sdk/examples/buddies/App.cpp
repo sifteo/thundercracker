@@ -378,7 +378,7 @@ App::App()
     , mHintPieceSkip(-1)
     , mHintCubeTouched(CUBE_ID_UNDEFINED)
     , mFreePlayShakeThrottleTimer(0.0f)
-    , mShuffleBannerIndex(0)
+    , mShuffleUiIndex(0)
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
@@ -822,7 +822,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
-            mShuffleBannerIndex = 0;
+            mShuffleUiIndex = 0;
             mDelayTimer = kStateTimeDelayLong;
             break;   
         }
@@ -841,6 +841,7 @@ void App::StartGameState(GameState gameState)
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
             mDelayTimer = kStateTimeDelayLong;
+            mShuffleUiIndex = 0;
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -1072,7 +1073,7 @@ void App::UpdateGameState(float dt)
         
             if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
             {
-                mShuffleBannerIndex = (mShuffleBannerIndex + 1) % 3;
+                mShuffleUiIndex = (mShuffleUiIndex + 1) % 3;
             }
             break;
         }
@@ -1089,9 +1090,9 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (UpdateTimer(mDelayTimer, dt))
+            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
             {
-                StartGameState(GAME_STATE_SHUFFLE_PLAY);
+                mShuffleUiIndex = (mShuffleUiIndex + 1) % 2;
             }
             
             if (AnyTouchBegin())
@@ -1420,12 +1421,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             
-            if (mShuffleBannerIndex == 0 || mShuffleBannerIndex == 1)
+            if (mShuffleUiIndex == 0 || mShuffleUiIndex == 1)
             {
-                unsigned int bannerIndex = (mShuffleBannerIndex + cubeWrapper.GetId()) % 2;
+                unsigned int bannerIndex = (mShuffleUiIndex + cubeWrapper.GetId()) % 2;
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), bannerIndex ? ShuffleShakeToShuffle : ShuffleTouchToSwap);
             }
-            else if (mShuffleBannerIndex == 2)
+            else if (mShuffleUiIndex == 2)
             {
                 // Don't display a banner in this case
             }
@@ -1438,9 +1439,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (cubeWrapper.GetId() == 0)
+            if (cubeWrapper.GetId() == 0 && mShuffleUiIndex == 1)
             {
-                // TODO: Alternate this on/off with a timer
                 cubeWrapper.DrawBackground(ShuffleNeighbor);
             }
             else
