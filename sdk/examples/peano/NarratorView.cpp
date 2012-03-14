@@ -3,14 +3,6 @@
 #include "TotalsCube.h"
 
 namespace TotalsGame {
-/*
-static int strcmp(const char *a, const char *b)
-{
-    int dif = 0;
-    while(!dif && *a && *b)
-        dif = *a++ - *b++;
-    return dif;
-}*/
 
 const AssetImage *NarratorView::emotes[] =
 {
@@ -38,8 +30,6 @@ void NarratorView::Reset()
     mString="";
     mEmote=EmoteNone;
 }
-
-int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
     bool hadMessage = mString[0] != 0;

@@ -1,11 +1,6 @@
 #pragma once
 
-#include "config.h"
-
-#if !DISABLE_CHAPTERS
-
 #include "Puzzle.h"
-//#include "Guid.h"
 
 namespace TotalsGame
 {
@@ -25,4 +20,4 @@ namespace Database
 }
 }
 
-#endif // !DISABLE_CHAPTERS
+

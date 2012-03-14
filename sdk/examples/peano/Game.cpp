@@ -169,9 +169,7 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
 
         case GameState_Victory:
-#if !DISABLE_CHAPTERS
             nextState = VictoryController::Run();
-#endif
             break;
 
         case GameState_IsOver:
@@ -229,9 +227,7 @@ GameState Advance()
 {
     delete previousPuzzle;
     previousPuzzle = currentPuzzle;
-#if !DISABLE_CHAPTERS
     if (Game::currentPuzzle == NULL)
-#endif //!DISABLE_CHAPTERS
     {
 #if MENU_BETWEEN_RANDOM_PUZZLES
         return GameState_Menu;
@@ -239,7 +235,7 @@ GameState Advance()
         return GameState_Interstitial;
 #endif
     }
-#if !DISABLE_CHAPTERS
+
     currentPuzzle->SaveAsSolved();
     int chapter = currentPuzzle->chapterIndex;
     int puzzle = currentPuzzle->puzzleIndex;
@@ -265,7 +261,6 @@ GameState Advance()
         Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
         return GameState_Victory;
     }
-#endif // !DISABLE_CHAPTERS
 }
 
 GameState IsGameOver()

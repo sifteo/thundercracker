@@ -1,7 +1,3 @@
-#include "config.h"
-
-#if !DISABLE_CHAPTERS
-
 #include "Game.h"
 #include "PuzzleDatabase.h"
 #include "puzzles.gen.h"
@@ -94,18 +90,6 @@ bool CanBePlayedWithCurrentCubeSet(int chapter)
     return -1 != FirstPuzzleForCurrentCubeSetInChapter(chapter);
 }
 
-void SaveChapterAsSolved(int chapter)
-{
-    Game::saveData.AddSolvedChapter(chapter);//TheData::everything.chapters[chapter]->guid);
-      Game::saveData.Save();
-}
-
-void SavePuzzleAsSolved(int chapter, int puzzle)
-{
-    Game::saveData.AddSolvedPuzzle(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
-      Game::saveData.Save();
-}
-
 int FirstPuzzleForCurrentCubeSetInChapter(int chapter)
 {
     for(int i = 0; i < TheData::everything.chapters[chapter].nPuzzles; i++)
@@ -118,6 +102,6 @@ int FirstPuzzleForCurrentCubeSetInChapter(int chapter)
 }
 }
 
-#endif// !DISABLE_CHAPTERS
+
 
 

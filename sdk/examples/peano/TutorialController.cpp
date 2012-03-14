@@ -438,13 +438,11 @@ Game::GameState Run() {
 
     Game::saveData.CompleteTutorial();
     if (Game::currentPuzzle == NULL) {
-#if !DISABLE_CHAPTERS
         if (!Game::saveData.AllChaptersSolved()) {
             Game::currentPuzzle = Game::saveData.FindNextPuzzle();
         } else {
             Game::currentPuzzle = Database::GetPuzzleInChapter(0, 0);
         }
-#endif // #if !DISABLE_CHAPTERS
     }
 
     return Game::GameState_Interstitial;

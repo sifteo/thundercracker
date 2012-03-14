@@ -26,8 +26,6 @@ c.MoveViewTo(blanky);
 */
 
 Game::GameState Run() {
-#if !DISABLE_CHAPTERS
-
     bool isLast;
 
     NarratorView nv;
@@ -153,7 +151,6 @@ Game::GameState Run() {
     Game::Wait(0.5f);
     Game::ClearCubeEventHandlers();
 
-#endif //!DISABLE_CHAPTERS
     return Game::GameState_IsOver;
 }
 

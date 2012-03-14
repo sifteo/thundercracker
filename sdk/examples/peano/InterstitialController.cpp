@@ -29,12 +29,9 @@ Game::GameState Run() {
     InterstitialView iv;
     Game::cubes[0].SetView(&iv);
 
-#if !DISABLE_CHAPTERS
     if (Game::IsPlayingRandom()) {
-#endif //!DISABLE_CHAPTERS
         iv.message = "Random!";
         iv.image = &Hint_6;
-#if !DISABLE_CHAPTERS
     } else {
         iv.message = Database::NameOfChapter(Game::currentPuzzle->chapterIndex);
         static const PinnedAssetImage *hints[] =
@@ -43,7 +40,6 @@ Game::GameState Run() {
         };
         iv.image = hints[Game::currentPuzzle->chapterIndex];
     }
-#endif //!DISABLE_CHAPTERS
     BlankView blankViews[NUM_CUBES];
     for(int i = 1; i < NUM_CUBES; i++)
     {

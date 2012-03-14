@@ -106,10 +106,8 @@ namespace TotalsGame {
     }*/
 	void Puzzle::SaveAsSolved()     
 	{
-#if !DISABLE_CHAPTERS
         Game::saveData.AddSolvedPuzzle(chapterIndex, puzzleIndex);
         Game::saveData.Save();
-#endif //DISABLE_CHAPTERS
     }
 
 	/*
@@ -127,7 +125,6 @@ namespace TotalsGame {
     bool Puzzle::GetNext(int *chapter, int *puzzle)
     {
         if (*chapter == -1) { *chapter = *puzzle = -1; return false; }
-#if !DISABLE_CHAPTERS
         if (*puzzle < Database::NumPuzzlesInChapter(*chapter)-1) {
             *puzzle = *puzzle + 1;
             return true;
@@ -138,18 +135,15 @@ namespace TotalsGame {
             return true;
         }        
         *chapter = *puzzle = -1;
-#endif //DISABLE_CHAPTERS
         return false;
     }
     
     bool Puzzle::GetNext(int maxCubeCount, int *chapter, int *puzzle)
     {
         bool success = false;
-#if !DISABLE_CHAPTERS
         do {
             success = GetNext(chapter, puzzle);
         } while(success && Database::NumTokensInPuzzle(*chapter, *puzzle) > maxCubeCount);
-#endif //#if !DISABLE_CHAPTERS
         return success;
     }
 
@@ -157,7 +151,6 @@ namespace TotalsGame {
     {
       if (chapterIndex == -1) { return 0; }
       int result = 0;
-#if !DISABLE_CHAPTERS
       for(int i=puzzleIndex+1; i<Database::NumPuzzlesInChapter(chapterIndex); ++i)
       {
         if (Database::NumTokensInPuzzle(chapterIndex, i) <= NUM_CUBES)
@@ -165,7 +158,6 @@ namespace TotalsGame {
           result++;
         }
       }
-#endif //#if !DISABLE_CHAPTERS
       return result;
     }
 
