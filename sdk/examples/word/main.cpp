@@ -82,7 +82,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
-#ifndef DEBUG
+#ifndef DEBUGzz
     if (LOAD_ASSETS)
     {
         // start loading assets

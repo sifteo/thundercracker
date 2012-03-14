@@ -66,10 +66,6 @@ public:
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
 
-    bool isHintAvailable() const { return mAnimTypes[CubeAnim_Hint] != AnimType_None && mAnimTypes[CubeAnim_Hint] != AnimType_HintDisappear; }
-    bool canMakeHintAvailable() const { return !isHintAvailable(); }
-    void makeHintAvailable() { queueAnim(AnimType_HintIdle, CubeAnim_Hint); } // TODO hint appear anim
-    void removeHint() { queueAnim(AnimType_None, CubeAnim_Hint); }
     static unsigned findNumLetters(char *string);
 
 private:
@@ -105,7 +101,6 @@ private:
     float mAnimTimes[NumCubeAnims];
 
     bool mPainting;
-    bool mHintRequested;
 
     float mBG0Panning;
     float mBG0TargetPanning;
