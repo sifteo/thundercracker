@@ -43,10 +43,27 @@ struct MenuItem {
 	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank header).
 };
 
+struct MenuNeighbor {
+	bool operator==(const struct MenuNeighbor& rhs) const
+ 	{
+ 	   return (masterSide == rhs.masterSide)
+ 	       && (neighbor == rhs.neighbor)
+ 	       && (neighborSide == rhs.neighborSide);
+ 	}
+ 	bool operator!=(const struct MenuNeighbor& rhs) const
+ 	{
+ 	  return !operator==(rhs);
+ 	}
+
+	_SYSSideID masterSide;
+	_SYSCubeID neighbor;
+	_SYSSideID neighborSide;
+};
+
 struct MenuEvent {
 	MenuEventType type;
 	union {
-		Cube *neighbor;
+		struct MenuNeighbor neighbor;
 		uint8_t item;
 	};
 };
@@ -96,6 +113,7 @@ class Menu {
 	uint8_t numTips;
 	struct MenuItem *items;
 	uint8_t numItems;
+	struct MenuNeighbor neighbors[NUM_SIDES];
 	// event breadcrumb
 	struct MenuEvent currentEvent;
 	// state tracking
@@ -154,6 +172,7 @@ class Menu {
 	void handlePrepaint();
 	
 	// library
+	void detectNeighbors();
 	uint8_t computeSelected();
 	static unsigned unsignedMod(int, unsigned);
 	void drawColumn(int);
@@ -240,8 +259,13 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	const float kTimeDilator = 13.1f;
 	dt = (now - lastPaint) * kTimeDilator;
 	
-	// TODO: neighbour added/lost?
-	
+	// neighbor changes?
+	if(currentState != MENU_STATE_START) {
+		detectNeighbors();
+	}
+	if(dispatchEvent(ev)) {
+		return (ev->type != MENU_EXIT);
+	}
 	
 	// update commonly-used data
 	shouldPaintSync = false;
@@ -418,6 +442,13 @@ void Menu::transFromStart() {
 	if (stateFinished) {
 		position = 0.f;
 		prev_ut = 0;
+
+		for(int i = 0; i < NUM_SIDES; i++) {
+			neighbors[i].neighborSide = SIDE_UNDEFINED;
+			neighbors[i].neighbor = CUBE_ID_UNDEFINED;
+			neighbors[i].masterSide = SIDE_UNDEFINED;
+		}
+
 		updateBG0();
 		changeState(MENU_STATE_STATIC);
 	}
@@ -754,6 +785,50 @@ if(currentEvent.type != MENU_UNEVENTFUL && currentEvent.type != MENU_PREPAINT) L
  * |_|_|_.__/|_|  \__,_|_|   \__, |
  *                           |___/
  */
+
+void Menu::detectNeighbors() {
+	MenuNeighbor n;
+	for(_SYSSideID i = 0; i < NUM_SIDES; i++) {
+		n.neighborSide = SIDE_UNDEFINED;
+		n.neighbor = CUBE_ID_UNDEFINED;
+		n.masterSide = SIDE_UNDEFINED;
+
+		if(pCube->hasPhysicalNeighborAt(i)) {
+			Cube c(pCube->physicalNeighborAt(i));
+			n.neighborSide = c.physicalSideOf(pCube->id());
+			n.neighbor = c.id();
+			n.masterSide = i;
+		}
+
+		if (n != neighbors[i]) {
+			// Neighbor was set but is now different/gone
+			if(neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
+				// Generate a lost neighbor event, with the ghost of the lost cube.
+				currentEvent.type = MENU_NEIGHBOR_REMOVE;
+				currentEvent.neighbor = neighbors[i];
+
+				/* Act as if the neighbor was lost, even if it wasn't. We'll
+				 * synthesize another event on the next run of the event loop
+				 * if the neighbor was replaced by another cube in less than
+				 * one polling cycle.
+				 */
+				neighbors[i].neighborSide = SIDE_UNDEFINED;
+				neighbors[i].neighbor = CUBE_ID_UNDEFINED;
+				neighbors[i].masterSide = SIDE_UNDEFINED;
+			} else {
+				neighbors[i] = n;
+				currentEvent.type = MENU_NEIGHBOR_ADD;
+				currentEvent.neighbor = n;
+			}
+
+			/* We don't have a method of queueing events, so return as soon as
+			 * a change is discovered. If there are other changes, the next run
+			 * of the event loop will discover them.
+			 */
+			return;
+		}
+	}
+}
 
 uint8_t Menu::computeSelected() {
 	int s = (position + (kPixelsPerIcon / 2.f))/kPixelsPerIcon;
