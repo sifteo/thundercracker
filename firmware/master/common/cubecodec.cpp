@@ -408,6 +408,20 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     progress += count;
     loadBufferAvail -= count;
 
+    /*
+     * We access flash data through the cache, instead of FlashStream, for
+     * important reasons. Even though it may seem like asset loading is
+     * a purely streaming operation, it actually isn't:
+     *
+     *   - When loading to multiple cubes concurrently, the same data is often
+     *     reused, and the cache can in fact cut down bus traffic quite a bit.
+     *
+     *   - We consume loadstream data in potentially very tiny chunks, which
+     *     would come with significant overhead if we made separate SPI
+     *     bus transactions out of each. By utilizing the block cache, we can
+     *     amortize this cost over many packets.
+     */
+
     while (count) {
         uint32_t chunk = count;
         if (!SvmMemory::mapROData(ref, dataVA, chunk, dataPA))
