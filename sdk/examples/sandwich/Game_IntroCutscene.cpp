@@ -8,7 +8,6 @@ Cube* Game::IntroCutscene() {
 		for(unsigned s=0; s<8; ++s) {
 			gfx.hideSprite(s);
 		}
-        System::abort();
 		BG1Helper overlay(gCubes[i]);
 		overlay.DrawAsset(Vec2(0,0), SandwichTitle);
 		overlay.Flush();

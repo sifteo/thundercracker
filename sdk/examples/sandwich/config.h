@@ -5,9 +5,9 @@
 #define NUM_CUBES				3
 #define MUSIC_ON      				1
 #define SFX_ON        				1
-#define LOAD_ASSETS   				0
+#define LOAD_ASSETS   				1
 #define GFX_ARTIFACT_WORKAROUNDS	1
-#define PLAYTESTING_HACKS			0
+#define PLAYTESTING_HACKS			1
 
 #if SIFTEO_SIMULATOR
 	// these settings only applied to the emulator build

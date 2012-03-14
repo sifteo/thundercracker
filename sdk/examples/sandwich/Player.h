@@ -28,7 +28,7 @@ public:
 
   inline BroadLocation* Current() { return &mCurrent; }
   inline BroadLocation* Target() { return &mTarget; }
-  inline RoomView* CurrentView() { _SYS_abort(); return mCurrent.view; }
+  inline RoomView* CurrentView() { return mCurrent.view; }
   inline RoomView* TargetView() { return mTarget.view; }
   inline Room* CurrentRoom() { return mCurrent.view->GetRoom(); }
   inline Room* TargetRoom() { return mTarget.view->GetRoom(); }
