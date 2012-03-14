@@ -1,6 +1,6 @@
-#include "config.h"
-
 #include "InterstitialController.h"
+#include "InterstitialView.h"
+#include "AudioPlayer.h"
 
 namespace TotalsGame {
 
@@ -40,10 +40,10 @@ Game::GameState Run() {
         };
         iv.image = hints[Game::currentPuzzle->chapterIndex];
     }
-    BlankView blankViews[NUM_CUBES];
+
     for(int i = 1; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].SetView(blankViews + i);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
 
     Game::Wait(0.333f);

@@ -1,4 +1,6 @@
 #include "StingController.h"
+#include "AudioPlayer.h"
+#include "assets.gen.h"
 
 namespace TotalsGame 
 {
@@ -35,11 +37,9 @@ Game::GameState Run()
     //mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
     //mGame.CubeSet.NewCubeEvent += delegate { Skip(); };
 
-    BlankView blankViews[NUM_CUBES];
-
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].SetView(blankViews + i);
+        Game::cubes[i].DrawVaultDoorsClosed();
         Game::cubes[i].AddEventHandler(&eventHandlers[i]);
     }
 
@@ -49,7 +49,7 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].OpenShuttersSync(&Title);
-        blankViews[i].assetImage = &Title;
+        Game::cubes[i].Image(&Title, Vec2(0,0));
         Game::Wait(0);
     }
 
@@ -62,7 +62,6 @@ Game::GameState Run()
     for(int i = 0; i < NUM_CUBES; i++)
     {
         Game::cubes[i].CloseShuttersSync(&Title);
-        blankViews[i].assetImage = NULL;
         Game::Wait(0);
     }
 

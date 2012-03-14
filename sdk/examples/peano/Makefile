@@ -6,7 +6,7 @@ OBJS_SIM = $(ASSETS).gen.sim.o \
 	puzzles.gen.sim.o main.sim.o Puzzle.sim.o ShapeMask.sim.o Token.sim.o Fraction.sim.o \
         TokenGroup.sim.o Game.sim.o \
         PuzzleDatabase.sim.o SaveData.sim.o TotalsCube.sim.o \
-	BlankView.sim.o AudioPlayer.sim.o View.sim.o StingController.sim.o \
+        AudioPlayer.sim.o View.sim.o StingController.sim.o \
 	TokenView.sim.o PuzzleController.sim.o TiltFlowDetailView.sim.o \
 	InterstitialView.sim.o MenuController.sim.o TiltFlowMenu.sim.o \
         TiltFlowView.sim.o NarratorView.sim.o DialogWindow.sim.o \
@@ -19,7 +19,7 @@ OBJS_STM32 = $(ASSETS).gen.stm32.o \
         puzzles.gen.stm32.o main.stm32.o ShapeMask.stm32.o Puzzle.stm32.o Token.stm32.o Fraction.stm32.o \
         TokenGroup.stm32.o Game.stm32.o \
         PuzzleDatabase.stm32.o SaveData.stm32.o TotalsCube.stm32.o \
-	BlankView.stm32.o AudioPlayer.stm32.o View.stm32.o StingController.stm32.o \
+        AudioPlayer.stm32.o View.stm32.o StingController.stm32.o \
 	TokenView.stm32.o PuzzleController.stm32.o TiltFlowDetailView.stm32.o \
 	InterstitialView.stm32.o MenuController.stm32.o TiltFlowMenu.stm32.o \
         TiltFlowView.stm32.o NarratorView.stm32.o DialogWindow.stm32.o \

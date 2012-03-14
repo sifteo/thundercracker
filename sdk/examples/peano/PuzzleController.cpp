@@ -1,5 +1,4 @@
 #include "PuzzleController.h"
-#include "BlankView.h"
 #include "assets.gen.h"
 #include "PauseHelper.h"
 #include "ConfirmationMenu.h"
@@ -193,11 +192,9 @@ Game::GameState Run()
 
     bool transitioningOut;
 
-    BlankView blankViews[NUM_CUBES];
-
     for(int i = puzzle->GetNumTokens(); i < NUM_CUBES; i++)
     {
-        Game::cubes[i].SetView(blankViews + i);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
     Game::Wait(0.25);
 
@@ -255,7 +252,7 @@ Game::GameState Run()
                         Game::cubes[t].SetView(NULL);
 
                         Game::cubes[t].CloseShuttersSync(&skin.background);
-                        Game::cubes[t].SetView(blankViews + t);
+                        Game::cubes[t].DrawVaultDoorsClosed();
                     }
 
                     // do menu

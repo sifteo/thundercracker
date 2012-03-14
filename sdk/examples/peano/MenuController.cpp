@@ -5,7 +5,6 @@
 #include "TiltFlowView.h"
 #include "ConfirmationMenu.h"
 #include "TiltFlowDetailView.h"
-#include "BlankView.h"
 #include "Skins.h"
 
 namespace TotalsGame {
@@ -138,10 +137,8 @@ Game::GameState Run()
     return nextGameState;
 }
 
-
-void RunWelcomeBack(void)
+int DoMenu(const char *name, TiltFlowItem *items, int nItems)
 {
-
     TransitionView tv;
     Game::cubes[0].SetView(&tv);
 
@@ -149,14 +146,12 @@ void RunWelcomeBack(void)
     Game::cubes[1].SetView(&labelView);
 
     // transition in
-    BlankView blankViews[NUM_CUBES];
     for(int i=2; i<NUM_CUBES; ++i)
     {
-        Game::cubes[i].SetView(blankViews + i);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
 
-    labelView.message = "";    
-    labelView.message = "Main Menu";
+    labelView.message = name;
     labelView.TransitionSync(kDuration, true);
     Game::Wait(0.25f);
 
@@ -167,16 +162,44 @@ void RunWelcomeBack(void)
     }
     tv.SetTransitionAmount(1);
 
-    //-----------------------------------------------------------------------
-    // WELCOME BACK
-    //-----------------------------------------------------------------------
+    TiltFlowView tiltFlowView;
+    Game::cubes[0].SetView(&tiltFlowView);
+    TiltFlowMenu menu(items, nItems, &tiltFlowView, &labelView);
 
+    while(!menu.IsDone())
+    {
+        menu.Tick();
+        Game::Wait(0);
+    }
+
+    Game::ClearCubeEventHandlers();
+
+    // close labelView
+    labelView.message = "";
+    labelView.HideDescription();
+    labelView.TransitionSync(kDuration, false);
+
+    // transition out
+    AudioPlayer::PlayShutterClose();
+    Game::cubes[0].SetView(&tv);
+    for(float t=0; t<kDuration; t+=Game::dt) {
+        tv.SetTransitionAmount(1.0f-t/kDuration);
+        Game::UpdateDt();
+        System::paintSync();
+    }
+    tv.SetTransitionAmount(0);
+
+    return menu.GetResultItem()->id;
+}
+
+
+void RunWelcomeBack()
+{
 #define ADD_ITEM(graphic, name, desc) do{\
     initialItems[numInitialItems].SetImage(&graphic);\
     initialItems[numInitialItems].id = name;\
     initialItems[numInitialItems].description = desc;\
     numInitialItems++;}while(0)
-
 
     enum
     {
@@ -186,7 +209,6 @@ void RunWelcomeBack(void)
         Level,
         Setup
     };
-
 
     TiltFlowItem initialItems[5];
     int numInitialItems = 0;
@@ -198,90 +220,60 @@ void RunWelcomeBack(void)
 
     ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!");
     ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teachn\nyou how to play!");
-#if !DISABLE_CHAPTERS
     ADD_ITEM(Icon_Level_Select, Level, "Replay any level.");
-#endif //!DISABLE_CHAPTERS
     ADD_ITEM(Icon_Setup, Setup, "Change your\ngame settings.");
 #undef ADD_ITEM
 
+    int resultId = DoMenu("Main Menu", initialItems, numInitialItems);
+
+    switch(resultId)
     {
-        TiltFlowView tiltFlowView;
-        Game::cubes[0].SetView(&tiltFlowView);
-        TiltFlowMenu menu(initialItems, numInitialItems, &tiltFlowView, &labelView);
+    case Continue:
+    {
+        if (Game::currentPuzzle == NULL) {
+            Game::currentPuzzle = Game::saveData.FindNextPuzzle();
+        }
+        else
+        {
+            //puzzle is still hanging around but the tokens and tokengroups have been cleared
+            //recreate it
+            int c = Game::currentPuzzle->chapterIndex;
+            int p = Game::currentPuzzle->puzzleIndex;
+            Game::currentPuzzle = Database::GetPuzzleInChapter(c, p);
+        }
 
-        while(!menu.IsDone())
-        {
-            menu.Tick();
-            Game::Wait(0);
-        }
-
-        Game::ClearCubeEventHandlers();
-
-        // close labelView
-        labelView.message = "";
-        labelView.HideDescription();
-        labelView.TransitionSync(kDuration, false);
-
-        // transition out
-        AudioPlayer::PlayShutterClose();
-        Game::cubes[0].SetView(&tv);
-        for(float t=0; t<kDuration; t+=Game::dt) {
-            tv.SetTransitionAmount(1.0f-t/kDuration);
-            Game::UpdateDt();
-            System::paintSync();
-        }
-        tv.SetTransitionAmount(0);
-
-        switch(menu.GetResultItem()->id)
-        {
-        case Continue:
-        {
-            if (Game::currentPuzzle == NULL) {
-                Game::currentPuzzle = Game::saveData.FindNextPuzzle();
-            }
-            else
-            {
-                //puzzle is still hanging around but the tokens and tokengroups have been cleared
-                //recreate it
-                int c = Game::currentPuzzle->chapterIndex;
-                int p = Game::currentPuzzle->puzzleIndex;
-                Game::currentPuzzle = Database::GetPuzzleInChapter(c, p);
-            }
-
-            nextGameState = Game::GameState_Interstitial;
-            goto end;
-        }
-        case RandomPuzzle:
-        {
-            Game::currentPuzzle = NULL;
-            nextGameState = Game::GameState_Interstitial;
-            goto end;
-            break;
-        }
-        case Tutorial:
-        {
-            nextGameState = Game::GameState_Tutorial;
-            goto end;
-            break;
-        }
-        case Level:
-        {
-            menuState = MenuState_ChapterSelect;
-            goto end;
-            break;
-        }
-        case Setup:
-        {
-            menuState = MenuState_Setup;
-            goto end;
-            break;
-        }
-        }
+        nextGameState = Game::GameState_Interstitial;
+        goto end;
     }
-
-    end:
-    Game::ClearCubeEventHandlers();
-    Game::ClearCubeViews();
+    case RandomPuzzle:
+    {
+        Game::currentPuzzle = NULL;
+        nextGameState = Game::GameState_Interstitial;
+        goto end;
+        break;
+    }
+    case Tutorial:
+    {
+        nextGameState = Game::GameState_Tutorial;
+        goto end;
+        break;
+    }
+    case Level:
+    {
+        menuState = MenuState_ChapterSelect;
+        goto end;
+        break;
+    }
+    case Setup:
+    {
+        menuState = MenuState_Setup;
+        goto end;
+        break;
+    }
+    }
+end:
+Game::ClearCubeEventHandlers();
+Game::ClearCubeViews();
 }
 void RunSetup()
 {
@@ -291,7 +283,7 @@ void RunSetup()
     TiltFlowDetailView labelView;
     Game::cubes[1].SetView(&labelView);
 
-    Game::Wait(0.25f);    
+    Game::Wait(0.25f);
     labelView.message = "Game Setup";
     labelView.TransitionSync(kDuration, true);
     Game::Wait(0.25f);
@@ -302,7 +294,7 @@ void RunSetup()
         Game::UpdateDt();
     }
     tv.SetTransitionAmount(1);
-    //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);    
+    //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
 
     enum
     {
@@ -374,7 +366,7 @@ void RunSetup()
 
         Game::ClearCubeEventHandlers();
 
-     // close labelView
+        // close labelView
         labelView.TransitionSync(kDuration, false);
         // transition out
         {
@@ -401,37 +393,19 @@ void RunSetup()
     {
         if (ConfirmationMenu::Run("Clear Data?")) {
             Game::saveData.Reset();
-        }        
+        }
     }
-    end:
+end:
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }
 
-    //-----------------------------------------------------------------------
-    // CHAPTER SELECT
-    //-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+// CHAPTER SELECT
+//-----------------------------------------------------------------------
 
 void RunChapterSelect()
-{
-#if !DISABLE_CHAPTERS
-    Game::Wait(0.25f);
-    TiltFlowDetailView labelView;
-    Game::cubes[1].SetView(&labelView);
-    labelView.message = "Select a Level";
-    labelView.TransitionSync(kDuration, true);
-    Game::Wait(0.25f);
-
-    AudioPlayer::PlayShutterOpen();
-    TransitionView tv;
-    Game::cubes[0].SetView(&tv);
-    for(float t=0; t<kDuration; t+=Game::dt) {
-        tv.SetTransitionAmount(t/kDuration);
-        Game::UpdateDt();
-    }
-    tv.SetTransitionAmount(1);
-    //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
-
+{   
     TiltFlowItem chapterItems[MAX_CHAPTERS+1];
     int numChapterItems = 0;
 
@@ -452,41 +426,23 @@ void RunChapterSelect()
         }
     }
 
+    const int BackId = 234; //arbitrary
+
     TiltFlowItem *item = chapterItems + numChapterItems;
     item->SetImage(&Icon_Back);
-    item->id = 1977;  //anything to differentiate NULL from 0.  1977 is NULL
+    item->id = BackId;
     item->description="Return to the main menu.";
     numChapterItems++;
 
-    TiltFlowView tiltFlowView;
-    Game::cubes[0].SetView(&tiltFlowView);
-    TiltFlowMenu menu(chapterItems, numChapterItems, &tiltFlowView, &labelView);
+    int resultId = DoMenu("Select a Level", chapterItems, numChapterItems);
 
-    while(!menu.IsDone()) {
-        menu.Tick();
-        Game::Wait(0);
-    }
-    // close labelView
-    Game::cubes[1].SetView(&labelView);
-    labelView.TransitionSync(kDuration, false);
-    Game::Wait(0);
-
-    // transition out
-    AudioPlayer::PlayShutterClose();
-    Game::cubes[0].SetView(&tv);
-    for(float t=0; t<kDuration; t+=Game::dt) {
-        tv.SetTransitionAmount(1.0f-t/kDuration);
-        Game::UpdateDt();
-    }
-    tv.SetTransitionAmount(0);
-
-    if (menu.GetResultItem()->id == 1977) {
+    if (resultId == BackId) {
         menuState = MenuState_WelcomeBack;
         goto end;
     }
     else
     {
-        int chapter = menu.GetResultItem()->id;
+        int chapter = resultId;
         if(chapter < Database::NumChapters())
         {
             int first = Database::FirstPuzzleForCurrentCubeSetInChapter(chapter);
@@ -500,9 +456,7 @@ void RunChapterSelect()
         }
     }
 
-
-#endif //!DISABLE_CHAPTERS
-    end:
+end:
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
 }

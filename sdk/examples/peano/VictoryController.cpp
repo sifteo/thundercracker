@@ -1,7 +1,6 @@
 #include "VictoryController.h"
 #include "NarratorView.h"
 #include "VictoryView.h"
-#include "BlankView.h"
 
 namespace TotalsGame
 {
@@ -31,9 +30,8 @@ Game::GameState Run() {
     NarratorView nv;
     Game::cubes[0].SetView(&nv);
 
-    BlankView blankViews[NUM_CUBES];
     for(int i=1; i<NUM_CUBES; ++i) {
-        Game::cubes[i].SetView(blankViews+i);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
     static const float kTransitionTime = 0.2f;
     Game::Wait(0.5f);

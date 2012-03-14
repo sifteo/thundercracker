@@ -6,7 +6,6 @@
 #include "Puzzle.h"
 #include "assets.gen.h"
 #include "TokenView.h"
-#include "BlankView.h"
 #include "Token.h"
 #include "TokenGroup.h"
 #include "Skins.h"
@@ -118,10 +117,9 @@ Game::GameState Run() {
     Game::cubes[0].SetView(&narrator);
 
     // initial blanks
-    BlankView blankViews[NUM_CUBES];
     for(int i = 1; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].SetView(blankViews + i);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
 
     Game::Wait(0.5f);
@@ -318,26 +316,26 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].HideSprites();
     Game::cubes[2].CloseShuttersSync(&skin.background);
-    Game::cubes[2].SetView(blankViews+2);
+    Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].HideSprites();
     Game::cubes[1].CloseShuttersSync(&skin.background);
-    Game::cubes[1].SetView(blankViews+1);
+    Game::cubes[1].DrawVaultDoorsClosed();
 
     Game::Wait(1);
     narrator.SetMessage("Keep combining to build\neven more numbers!", NarratorView::EmoteYay);
     Game::Wait(2);
 
     Game::cubes[1].OpenShuttersSync(&Tutorial_Groups);
-    blankViews[1].assetImage = &Tutorial_Groups;
+    Game::cubes[1].Image(&Tutorial_Groups, Vec2(0,0));
 
     Game::Wait(5);
     narrator.SetMessage("");
     Game::Wait(1);
     Game::cubes[1].CloseShuttersSync(&Tutorial_Groups);
-    blankViews[1].assetImage = NULL;
+    Game::cubes[1].DrawVaultDoorsClosed();
 
     Game::Wait(1);
     narrator.SetMessage("If you get stuck,\nyou can shake\nfor a hint.");
@@ -393,15 +391,13 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].SetView(NULL);
     Game::cubes[2].CloseShuttersSync(&skin.background);
-    Game::cubes[2].SetView(blankViews+2);
-    blankViews[2].assetImage = NULL;
+    Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].HideSprites();
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].CloseShuttersSync(&skin.background);
-    Game::cubes[1].SetView(blankViews+1);
-    blankViews[1].assetImage = NULL;
+    Game::cubes[1].DrawVaultDoorsClosed();
 
     // transition out narrator
     narrator.SetMessage("Let's try it\nfor real, now!", NarratorView::EmoteWave);
@@ -421,8 +417,7 @@ Game::GameState Run() {
         narrator.SetTransitionAmount(1.0f-t/kTransitionDuration);
         Game::Wait(0);
     }
-    Game::cubes[0].SetView(blankViews+0);
-    blankViews[0].assetImage = NULL;
+    Game::cubes[0].DrawVaultDoorsClosed();
 
     Game::Wait(0.5);
 
