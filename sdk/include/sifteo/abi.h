@@ -72,7 +72,8 @@ struct _SYSAssetGroupHeader {
 };
 
 struct _SYSAssetGroupCube {
-    uint32_t baseAddr;          /// IN     Base address where this group is installed
+    uint16_t baseAddr;          /// IN     Installed base address, in tiles
+    uint16_t reserved;          /// IN     Must be zero
     uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
