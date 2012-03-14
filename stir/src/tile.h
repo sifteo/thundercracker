@@ -93,7 +93,7 @@ struct TilePalette {
 
 struct TileOptions {
     TileOptions(double _quality=0, bool _pinned=false)
-        : quality(_quality), pinned(_pinned), chromaKey(false)
+        : quality(_quality), pinned(_pinned), chromaKey(true)
         {}
 
     double getMaxMSE() const;
