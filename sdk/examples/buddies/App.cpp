@@ -388,6 +388,26 @@ const AssetImage &GetBuddyFullAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+unsigned int GetRandomOtherBuddyId(App &app, unsigned int buddyId)
+{
+    Random random;
+    int selection = random.randrange(kMaxBuddies - kNumCubes);
+    
+    for (int j = 0; j < selection; ++j)
+    {
+        buddyId = (buddyId + 1) % kMaxBuddies;
+        while (IsBuddyUsed(app, buddyId))
+        {
+            buddyId = (buddyId + 1) % kMaxBuddies;
+        }
+    }
+    
+    return buddyId;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "GAME_STATE_NONE",
@@ -713,19 +733,8 @@ void App::OnShake(Cube::ID cubeId)
         {
             mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
         
-            Random random;
-            int selection = random.randrange(kMaxBuddies - kNumCubes);
-            
-            unsigned buddyId = mCubeWrappers[cubeId].GetBuddyId();
-            for (int i = 0; i < selection; ++i)
-            {
-                buddyId = (buddyId + 1) % kMaxBuddies;
-                while (IsBuddyUsed(*this, buddyId))
-                {
-                    buddyId = (buddyId + 1) % kMaxBuddies;
-                }
-            }
-            mCubeWrappers[cubeId].SetBuddyId(buddyId);
+            unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
+            mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
             
             ResetCubesToPuzzle(GetPuzzleDefault(), false);
         }
@@ -1145,21 +1154,8 @@ void App::UpdateGameState(float dt)
                 {
                     if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
-                        // TODO: Put into a function
-                    
-                        Random random;
-                        int selection = random.randrange(kMaxBuddies - kNumCubes);
-                        
-                        unsigned buddyId = mCubeWrappers[i].GetBuddyId();
-                        for (int j = 0; j < selection; ++j)
-                        {
-                            buddyId = (buddyId + 1) % kMaxBuddies;
-                            while (IsBuddyUsed(*this, buddyId))
-                            {
-                                buddyId = (buddyId + 1) % kMaxBuddies;
-                            }
-                        }
-                        mCubeWrappers[i].SetBuddyId(buddyId);
+                        unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                        mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
                         mShuffleUiIndex = 2; // TODO: Clear touch message for only this cube
