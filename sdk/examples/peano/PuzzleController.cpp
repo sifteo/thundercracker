@@ -218,13 +218,14 @@ Game::GameState Run()
 
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
-            puzzle->GetToken(i)->GetTokenView()->ShowOverlay();
+            tv[i].ShowOverlay();
         }
-        Game::Wait(3.0f);
+        Game::Wait(3.0f);        
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
-            puzzle->GetToken(i)->GetTokenView()->HideOverlay();
+            tv[i].HideOverlay();
         }
+        System::paint();
     }
 
     { // gameplay
@@ -234,8 +235,12 @@ Game::GameState Run()
         Game::neighborEventHandler = &neighborEventHandler;
         { // game loop
             while(!puzzle->IsComplete()) {
-                // most stuff is handled by events and view updaters
+
                 Game::Wait(0);
+                for(int i = 0; i < NUM_CUBES; i++)
+                {
+                    tv[i].Update();
+                }
 
                 // should pause?
                 pauseHelper.Update();

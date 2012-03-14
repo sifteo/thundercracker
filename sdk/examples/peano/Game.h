@@ -46,7 +46,6 @@ namespace TotalsGame {
 		void ClearCubeEventHandlers();
 		void DrawVaultDoorsClosed();
 		void PaintCubeViews();
-        void UpdateCubeViews();
 
         extern TotalsCube *cubes;
 

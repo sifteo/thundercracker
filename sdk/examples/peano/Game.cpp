@@ -96,18 +96,6 @@ void PaintCubeViews()
     }
 }
 
-void UpdateCubeViews()
-{
-    for(int i = 0; i < NUM_CUBES; i++)
-    {
-
-        View *v = cubes[i].GetView();
-        if(v)
-            v->Update();
-
-    }
-}
-
 void Run(TotalsCube *_cubes, int nCubes)
 {
     cubes = _cubes;
@@ -194,7 +182,6 @@ void UpdateDt()
 
 void Wait(float delay)
 {    
-    UpdateCubeViews();
     PaintCubeViews();
     System::paintSync();
 
