@@ -82,6 +82,8 @@ void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 const float Bubble::BUBBLE_LIFETIME = 2.5f;
 const float Bubble::TILT_VEL = 128.0f;
 const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
+//at this depth, bubbles will move away from chromits
+const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.8888888f;
 const float Bubble::CHROMIT_OBSCURE_DIST_2 = 150.0f;
 
 Bubble::Bubble() : m_fTimeAlive( -1.0f )
@@ -134,7 +136,15 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
             Float2 diff = center - slotcenter;
 
             if( diff.len2() < CHROMIT_OBSCURE_DIST_2 )
+            {
                 visible = false;
+
+                //move away from chromit
+                if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
+                {
+                    m_pos += diff;
+                }
+            }
         }
     }
 

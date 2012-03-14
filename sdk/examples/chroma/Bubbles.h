@@ -20,6 +20,8 @@ public:
     static const float BUBBLE_LIFETIME;
     static const float TILT_VEL;
     static const float BEHIND_CHROMITS_THRESHOLD;
+    //at this depth, bubbles will move away from chromits
+    static const float CHROMITS_COLLISION_DEPTH;
     static const float CHROMIT_OBSCURE_DIST_2;
 
     Bubble();
