@@ -21,6 +21,7 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
     String<64> str;
     str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
+    LOG_STR(str);
 
     VidMode_BG0 vid(cubes[cid].vbuf);
     vid.BG0_text(Vec2(2,3), Font, str);
@@ -40,10 +41,6 @@ static void init()
         cubes[i].loadAssets(BootAssets);
     }
     BootAssets.wait();
-    
-    // XXX bug workaround
-    for (unsigned i = 0; i < 10; i++)
-        System::paint();
 
     // Start asynchronously loading the MainAssets
     for (unsigned i = 0; i < NUM_CUBES; i++) {
@@ -64,11 +61,10 @@ static void init()
             VidMode_BG0 vid(cubes[i].vbuf);
 
             Vec2 pan(-cubes[i].assetProgress(MainAssets,
-                        vid.LCD_width + 2*Kirby.pixelWidth()) - Kirby.pixelWidth(),
-                    -(vid.LCD_height - Kirby.pixelHeight()) / 2);
+                        vid.LCD_width - Kirby.pixelWidth()),
+                    -(int)(vid.LCD_height - Kirby.pixelHeight()) / 2);
 
-            LOG(("Kirby running, pan(%d, %d)\n", pan.x, pan.y));
-
+            LOG_VEC2(pan);
             vid.BG0_drawAsset(Vec2(0,0), Kirby, frame);
             vid.BG0_setPanning(pan);
         }
@@ -81,7 +77,7 @@ static void init()
          * so in order to load assets quickly we need to explicitly leave some
          * time for the system to send asset data over the radio.
          */
-        //for (unsigned i = 0; i < 8; i++)
+        for (unsigned i = 0; i < 4; i++)
             System::paint();
     }
 }
