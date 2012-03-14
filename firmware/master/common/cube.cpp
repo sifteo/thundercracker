@@ -560,6 +560,11 @@ uint64_t CubeSlot::getHWID()
      */
 
     if (!(CubeSlots::hwidValid & bit())) {
+        if (!enabled() || !connected()) {
+            // Cube disappeared! Cancel.
+            return _SYS_INVALID_HWID;
+        }
+
         // If no assets are loading / have loaded, send our own reset.
         // (We don't want to stomp on an ongoing asset download!)
         if (!loadGroup)
