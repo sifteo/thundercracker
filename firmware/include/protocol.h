@@ -319,7 +319,12 @@ typedef struct {
  * address and doing block erases. There is also quite a lot of
  * reserved code-space, so this would be a plentiful area to add
  * expansion to the protocol if necessary.
+ *
+ * The decoder will automatically erase a flash block any time the first
+ * tile in a block is about to be programmed.
  */
+
+#define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
 #define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
 #define FLS_FIFO_USABLE         63      // Usable size of FIFO (One byte for full/empty disambiguation)
@@ -340,8 +345,7 @@ typedef struct {
 #define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
 #define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address
-#define FLS_OP_ERASE            0xe2    // Followed by count-1 of 64K blocks, and a 1-byte checksum
 
-#define FLS_OP_RESERVED_0       0xe3    // From here until 0xFF are all reserved codes currently
+#define FLS_OP_RESERVED_0       0xe2    // From here until 0xFF are all reserved codes currently
 
 #endif

@@ -93,8 +93,6 @@ static __bit nibIndex;
 static void state_OPCODE(void) __naked;
 static void state_ADDR_LOW(void) __naked;
 static void state_ADDR_HIGH(void) __naked;
-static void state_ERASE_COUNT(void) __naked;
-static void state_ERASE_CHECK(void) __naked;
 static void state_LUT1_COLOR1(void) __naked;
 static void state_LUT1_COLOR2(void) __naked;
 static void state_LUT16_VEC1(void) __naked;
@@ -223,6 +221,7 @@ static void state_OPCODE(void) __naked
 
     case FLS_OP_TILE_P0:
         // Trivial solid-color tile, no repeats
+        flash_autoerase();
         __asm
             mov   a, _byte
             anl   a, #0xF
@@ -241,24 +240,28 @@ static void state_OPCODE(void) __naked
         STATE_RETURN();
         
     case FLS_OP_TILE_P1_R4:
+        flash_autoerase();
         counter = 64;
         ovl.rle1 = 0xFF;
         state = state_TILE_P1_R4;
         STATE_RETURN();
 
     case FLS_OP_TILE_P2_R4:
+        flash_autoerase();
         counter = 64;
         ovl.rle1 = 0xFF;
         state = state_TILE_P2_R4;
         STATE_RETURN();
 
     case FLS_OP_TILE_P4_R4:
+        flash_autoerase();
         counter = 64;
         ovl.rle1 = 0xFF;
         state = state_TILE_P4_R4;
         STATE_RETURN();
         
     case FLS_OP_TILE_P16:
+        flash_autoerase();
         counter = 8;
         state = state_TILE_P16_MASK;
         STATE_RETURN();
@@ -270,11 +273,8 @@ static void state_OPCODE(void) __naked
             state = state_ADDR_LOW;
             STATE_RETURN();
 
-        case FLS_OP_ERASE:
-            state = state_ERASE_COUNT;
-            STATE_RETURN();
-            
         default:
+            // Reserved
             STATE_RETURN();
         }
         
@@ -295,22 +295,6 @@ static void state_ADDR_LOW(void) __naked
 static void state_ADDR_HIGH(void) __naked
 {
     flash_addr_lat2 = byte & 0xFE;
-    state = state_OPCODE;
-    STATE_RETURN();
-}
-
-static void state_ERASE_COUNT(void) __naked
-{
-    counter = byte;
-    state = state_ERASE_CHECK;
-    STATE_RETURN();
-}
-
-static void state_ERASE_CHECK(void) __naked
-{
-    uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
-    if (check == byte)
-        flash_erase(counter);
     state = state_OPCODE;
     STATE_RETURN();
 }
@@ -399,6 +383,7 @@ static void state_TILE_P1_R4(void) __naked
     no_runs:
         if (!counter || (counter & 0x80))
             if (opcode & FLS_ARG_MASK) {
+                flash_autoerase();
                 opcode--;
                 counter += 64;
             } else {
@@ -447,6 +432,7 @@ static void state_TILE_P2_R4(void) __naked
     no_runs:
         if (!counter || (counter & 0x80))
             if (opcode & FLS_ARG_MASK) {
+                flash_autoerase();
                 opcode--;
                 counter += 64;
             } else {
@@ -492,6 +478,7 @@ static void state_TILE_P4_R4(void) __naked
     no_runs:
        if (!counter || (counter & 0x80))
            if (opcode & FLS_ARG_MASK) {
+               flash_autoerase();
                opcode--;
                counter += 64;
            } else {
@@ -520,6 +507,7 @@ static void state_TILE_P4_R4(void) __naked
         if (--counter) {                        \
             state = state_TILE_P16_MASK;        \
         } else if (opcode & FLS_ARG_MASK) {     \
+            flash_autoerase();                  \
             opcode--;                           \
             counter = 8;                        \
             state = state_TILE_P16_MASK;        \
