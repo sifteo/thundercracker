@@ -682,17 +682,20 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
             if (resetBuddies)
             {
                 mCubeWrappers[i].SetBuddyId(puzzle.GetBuddy(i));
-            
+                
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(j, puzzle.GetPieceStart(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetPieceEnd(i, j));
+                    mCubeWrappers[i].SetPiece(
+                        j, puzzle.GetPieceStart(i, j));
+                    mCubeWrappers[i].SetPieceSolution(
+                        j, puzzle.GetPieceEnd(i, j));
                 }
             }
             else
             {
-                // TODO: This is definitely hacky... the special-case for Free Play shuffle
-                // should fit with the active puzzle better...
+                // TODO: This is definitely hacky... instead of igoring the active puzzle,
+                // the Free Play shake shuffle should alter the current Puzzle. But then we'd
+                // need to keep an editable copy of Puzzle around...
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
                     mCubeWrappers[i].SetPiece(
