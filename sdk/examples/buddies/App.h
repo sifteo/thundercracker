@@ -134,6 +134,7 @@ private:
     
     // Shuffle Mode
     unsigned int mShuffleUiIndex;
+    bool mShuffleUiIndexSync[kNumCubes];
     unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     

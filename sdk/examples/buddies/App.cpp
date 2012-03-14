@@ -469,6 +469,7 @@ App::App()
     , mHintCubeTouched(CUBE_ID_UNDEFINED)
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShuffleUiIndex(0)
+    , mShuffleUiIndexSync()
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
@@ -481,6 +482,11 @@ App::App()
     for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
     {
         mFaceCompleteTimers[i] = 0.0f;
+    }
+    
+    for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
+    {
+        mShuffleUiIndexSync[i] = false;
     }
     
     for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
@@ -921,6 +927,10 @@ void App::StartGameState(GameState gameState)
             mScoreMoves = 0;
             mDelayTimer = kStateTimeDelayLong;
             mShuffleUiIndex = 0;
+            for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
+            {
+                mShuffleUiIndexSync[i] = false;
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -1158,7 +1168,7 @@ void App::UpdateGameState(float dt)
                         mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
-                        mShuffleUiIndex = 2; // TODO: Clear touch message for only this cube
+                        mShuffleUiIndexSync[i] = true;
                     }
                 }
             }
@@ -1521,14 +1531,14 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             
-            if (mShuffleUiIndex == 0 || mShuffleUiIndex == 1)
+            if ((mShuffleUiIndex == 0 || mShuffleUiIndex == 1) && !mShuffleUiIndexSync[cubeWrapper.GetId()])
             {
                 unsigned int bannerIndex = (mShuffleUiIndex + cubeWrapper.GetId()) % 2;
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), bannerIndex ? ShuffleShakeToShuffle : ShuffleTouchToSwap);
             }
             else if (mShuffleUiIndex == 2)
             {
-                // Don't display a banner in this case
+                mShuffleUiIndexSync[cubeWrapper.GetId()] = false;
             }
             break;
         }
