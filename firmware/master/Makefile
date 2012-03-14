@@ -1,5 +1,5 @@
 BIN_SIM = master-sim
-BIN_STM32 = master-stm32.a
+BIN_STM32 = master-stm32.elf
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)

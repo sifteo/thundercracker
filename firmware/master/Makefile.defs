@@ -89,7 +89,6 @@ else
 	LDFLAGS_SIM += -lspeex -lportaudio
 endif
 
-LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
 
 # 32-bit mingw needs this for the __sync_fetch_* family of routines
@@ -100,7 +99,6 @@ endif
 CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 
-LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 
 ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
@@ -108,16 +106,15 @@ ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
 CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
-# TODO - provide $(APP) or similar to specify name of map file
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
-              -Wl,-Map=MAPFILE.map,--cref,--gc-sections,-u,IVT \
+              -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 
 # We use the C++ standard library only for simulator builds
 LDFLAGS_SIM += $(LIB_STDCPP)
 
 #Determines whether the jtagkey2 or the olimex cfg files should be used for programming
-ifeq ($(OLIMEX), 1)
+ifneq ($(OLIMEX),)
 	PROG_CONFIG := olimex.cfg
 else 
 	PROG_CONFIG := jtagkey2.cfg
