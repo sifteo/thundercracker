@@ -695,8 +695,10 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 // should fit with the active puzzle better...
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(j, puzzle.GetPieceStart(mCubeWrappers[i].GetBuddyId(), j));
-                    mCubeWrappers[i].SetPieceSolution(j, puzzle.GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
+                    mCubeWrappers[i].SetPiece(
+                        j, puzzle.GetPieceStart(mCubeWrappers[i].GetBuddyId(), j));
+                    mCubeWrappers[i].SetPieceSolution(
+                        j, puzzle.GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
                 }
             }
         }
