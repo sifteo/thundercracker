@@ -18,14 +18,17 @@ void SaveData::AddSolvedPuzzle(int chapter, int puzzle)
     if(chapter != -1 && puzzle != -1 && !IsPuzzleSolved(chapter, puzzle))
     {
         solvedPuzzles[chapter] |= 1 << puzzle;
-        SaveData();
+        Save();
     }
 }
 
 void SaveData::AddSolvedChapter(int chapter)
 {
     if(chapter != -1)
+    {
         solvedChapters |= 1 << chapter;
+        Save();
+    }
 
 }
 
