@@ -17,22 +17,28 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
 /* TODO Touch    EventData data;
     data.mInput.mCubeID = cid;
-    WordGame::onEvent(EventID_Input, data);
+    WordGame::onEvent(EventID_Touch, data);
     */
+
+#ifdef DEBUG
+    DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
+    EventData data;
+    data.mInput.mCubeID = cid;
+    WordGame::onEvent(EventID_Shake, data);
+#endif
 }
 
 void onCubeEventShake(void *context, _SYSCubeID cid)
 {
-    DEBUG_LOG(("cube event shake:\t%d\n", cid));
+    DEBUG_LOG(("cube event shake, ID:\t%d\n", cid));
     EventData data;
     data.mInput.mCubeID = cid;
-    WordGame::onEvent(EventID_Input, data);
+    WordGame::onEvent(EventID_Shake, data);
 }
 
 void onCubeEventTilt(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event tilt:\t%d\n", cid));
-    //WordGame::onEvent(EventID_Input, EventData());
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Tilt, data);
@@ -121,6 +127,7 @@ void siftmain()
 
     // main loop
     WordGame game(cubes); // must not be static!
+    // TODO use clockNS, to avoid precision bugs with long play sessions
     float lastTime = System::clock();
     float lastPaint = System::clock();
     while (1)
@@ -138,13 +145,13 @@ void siftmain()
             lastPaint = now;
         }
 
-        if (game.needsPaintSync())
+        if (true || game.needsPaintSync()) // TODO can't seem to fix BG1 weirdness w/o this
         {
             game.paintSync();
         }
         else
         {
-            System::paint();
+            System::paint(); // (will do nothing if screens haven't changed
         }
     }
 }

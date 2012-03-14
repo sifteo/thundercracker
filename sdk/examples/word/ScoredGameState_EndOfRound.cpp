@@ -22,7 +22,7 @@ unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         WordGame::playAudio(teeth_close, AudioChannelIndex_Teeth);
         break;
 
-    case EventID_Input:
+    case EventID_Shake:
         if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
         {
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
