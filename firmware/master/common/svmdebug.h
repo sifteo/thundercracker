@@ -70,6 +70,7 @@ public:
 
 #ifdef SIFTEO_SIMULATOR
     static std::string formatAddress(uint32_t address);
+    static std::string formatAddress(void *address);
 #endif
 };
 

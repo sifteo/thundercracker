@@ -6,6 +6,7 @@
 #include <string.h>
 #include "svm.h"
 #include "svmdebug.h"
+#include "svmmemory.h"
 #include "svmruntime.h"
 #include "elfdefs.h"
 #include "elfdebuginfo.h"
@@ -119,6 +120,11 @@ void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 std::string SvmDebug::formatAddress(uint32_t address)
 {
     return gELFDebugInfo.formatAddress(address);
+}
+
+std::string SvmDebug::formatAddress(void *address)
+{
+    return gELFDebugInfo.formatAddress(SvmMemory::physToVirtRAM((uint8_t*)address));
 }
 
 void SvmDebug::setSymbolSourceELF(const FlashRange &elf)
