@@ -112,11 +112,8 @@ class CubeSlot {
     void waitForPaint();
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
+    uint64_t getHWID();
 
-    const _SYSCubeHWID & getHWID() const {
-        return hwid;
-    }
-    
     uint16_t getRawBatteryV() const {
         return rawBatteryV;
     }
@@ -168,11 +165,13 @@ class CubeSlot {
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
     uint8_t neighbors[4];
+    uint8_t hwid[6];
 
-    // Sensors
+    // Other sensor data
     uint16_t rawBatteryV;
     _SYSAccelState accelState;
-    _SYSCubeHWID hwid;
+    
+    void requestFlashReset();
 };
 
 #endif

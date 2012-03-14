@@ -87,7 +87,7 @@
     /*   86 */ (SvmSyscall)_SYS_getTilt,
     /*   87 */ (SvmSyscall)_SYS_getShake,
     /*   88 */ (SvmSyscall)_SYS_getRawBatteryV,
-    /*   89 */ (SvmSyscall)_SYS_getRawNeighbors,
+    /*   89 */ (SvmSyscall)0,
     /*   90 */ (SvmSyscall)_SYS_isTouching,
     /*   91 */ (SvmSyscall)_SYS_getCubeHWID,
     /*   92 */ (SvmSyscall)_SYS_vbuf_init,

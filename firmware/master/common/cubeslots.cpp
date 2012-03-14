@@ -22,6 +22,7 @@ _SYSCubeIDVector CubeSlots::frameACKValid = 0;
 _SYSCubeIDVector CubeSlots::neighborACKValid = 0;
 _SYSCubeIDVector CubeSlots::expectStaleACK = 0;
 _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
+_SYSCubeIDVector CubeSlots::hwidValid = 0;
 
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
@@ -60,6 +61,7 @@ void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
     Sifteo::Atomic::And(CubeSlots::flashResetSent, ~cv);
     Sifteo::Atomic::And(CubeSlots::flashACKValid, ~cv);
     Sifteo::Atomic::And(CubeSlots::neighborACKValid, ~cv);
+    Sifteo::Atomic::And(CubeSlots::hwidValid, ~cv);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 

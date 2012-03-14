@@ -73,13 +73,6 @@ _SYSShakeState _SYS_getShake(_SYSCubeID cid)
     return r;
 }
 
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
-{
-    // XXX: Temporary for testing/demoing
-    if (SvmMemory::mapRAM(buf, sizeof buf) && CubeSlots::validID(cid))
-        memcpy(buf, CubeSlots::instances[cid].getRawNeighbors(), 4);
-}
-
 uint8_t _SYS_isTouching(_SYSCubeID cid)
 {
     if (CubeSlots::validID(cid)) {
@@ -96,15 +89,11 @@ uint16_t _SYS_getRawBatteryV(_SYSCubeID cid)
     return 0;
 }
 
-void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
+uint64_t _SYS_getCubeHWID(_SYSCubeID cid)
 {
-    // XXX: Maybe temporary?
-
-    // XXX: Right now this is only guaranteed to be known after asset downloading, since
-    //      there is no code yet to explicitly request it (via a flash reset)
-
-    if (SvmMemory::mapRAM(hwid, sizeof hwid) && CubeSlots::validID(cid))
-        *hwid = CubeSlots::instances[cid].getHWID();
+    if (CubeSlots::validID(cid))
+        return CubeSlots::instances[cid].getHWID();
+    return 0;
 }
 
 }  // extern "C"

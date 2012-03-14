@@ -30,6 +30,7 @@ namespace CubeSlots {
     extern _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
     extern _SYSCubeIDVector expectStaleACK;     /// Expect this cube to send us one stale (buffered) ACK
     extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
+    extern _SYSCubeIDVector hwidValid;          /// Has a valid cube hardware ID
     
     extern _SYSCubeID minCubes;
     extern _SYSCubeID maxCubes;

@@ -24,9 +24,6 @@ namespace Sifteo {
 /**
  * These lookup tables should be relocated to an external translation unit;
  * their inclusion here is tomporary.
- * 
- * Also todo: replace raw neighbors with coalesced neighbors onces that's up and
- * working.
  */
 
 // unit vectors for directions
@@ -151,7 +148,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-            _SYS_getNeighbors(id(), &state);
+        _SYS_getNeighbors(id(), &state);
         return state.sides[side];
     }
     
@@ -272,6 +269,19 @@ class Cube {
 
     bool touching() const {
         return _SYS_isTouching(id());
+    }
+    
+    /**
+     * Return the cube's unique 48-bit hardware ID. This ID uniquely
+     * identifies the cube that this slot is paired with.
+     *
+     * The system caches these IDs, so usually this function will return
+     * nearly instantly. However, if the HWID is not yet known, this may block
+     * while we wait on a radio round-trip to discover the HWID.
+     */
+
+    uint64_t hardwareID() const {
+        return _SYS_getCubeHWID(id());
     }
 
     VideoBuffer vbuf;

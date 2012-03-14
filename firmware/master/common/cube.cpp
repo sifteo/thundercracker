@@ -12,6 +12,7 @@
 #include "event.h"
 #include "flashlayer.h"
 #include "svmdebug.h"
+#include "tasks.h"
 
 #include "neighbors.h"
 
@@ -72,8 +73,8 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     // XXX: Pick a base address too!
     ac->progress = 0;
 
-    LOG(("FLASH[%d]: Sending asset group %s\n",
-        id(), SvmDebug::formatAddress(a).c_str()));
+    LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
+        id(), SvmDebug::formatAddress(a).c_str(), ac->baseAddr));
 
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
@@ -81,13 +82,18 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     });
 
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
-    Atomic::And(CubeSlots::flashResetSent, ~bit());
-    Atomic::Or(CubeSlots::flashResetWait, bit());
+    requestFlashReset();
     Atomic::Or(CubeSlots::flashAddrPending, bit());
 
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
     loadGroup = a;
+}
+
+void CubeSlot::requestFlashReset()
+{
+    Atomic::And(CubeSlots::flashResetSent, ~bit());
+    Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
@@ -348,8 +354,10 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
         // Has valid hardware ID
-        
-        memcpy(hwid.bytes, ack->hwid, sizeof ack->hwid);
+
+        STATIC_ASSERT(sizeof hwid == sizeof ack->hwid);
+        memcpy(hwid, ack->hwid, sizeof ack->hwid);
+        Atomic::SetLZ(CubeSlots::hwidValid, id());
     }
 }
 
@@ -394,6 +402,7 @@ void CubeSlot::waitForPaint()
             && pendingFrames <= fpMax)
             break;
 
+        Tasks::work();
         Radio::halt();
     }
 }
@@ -441,6 +450,7 @@ void CubeSlot::waitForFinish()
             break;
         }
 
+        Tasks::work();
         Radio::halt();
     }
 }
@@ -539,6 +549,31 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
      * 'fastPeriod' defined above.
      */
     paintTimestamp = timestamp;
+}
+
+uint64_t CubeSlot::getHWID()
+{
+    /*
+     * Return this cube's Hardware ID. If we don't know the ID yet, this
+     * blocks until the ID can be retrieved over the radio. (This happens
+     * as a side-effect of completing a Flash Reset.)
+     */
+
+    if (!(CubeSlots::hwidValid & bit())) {
+        // If no assets are loading / have loaded, send our own reset.
+        // (We don't want to stomp on an ongoing asset download!)
+        if (!loadGroup)
+            requestFlashReset();
+
+        do {
+            Tasks::work();
+            Radio::halt();
+        } while (!(CubeSlots::hwidValid & bit()));
+    }
+    
+    uint64_t result = 0;
+    memcpy(&result, hwid, sizeof hwid);
+    return result;
 }
 
 #endif // DISABLE_CUBE

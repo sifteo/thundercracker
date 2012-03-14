@@ -21,9 +21,17 @@ struct Fixed {
 };
 
 struct Hex {
-    Hex(int value, unsigned width=8, bool leadingZeroes=true)
+    Hex(uint32_t value, unsigned width=8, bool leadingZeroes=true)
         : value(value), width(width), leadingZeroes(leadingZeroes) {}
-    int value;
+    uint32_t value;
+    unsigned width;
+    bool leadingZeroes;
+};
+
+struct Hex64 {
+    Hex64(uint64_t value, unsigned width=16, bool leadingZeroes=true)
+        : value(value), width(width), leadingZeroes(leadingZeroes) {}
+    uint64_t value;
     unsigned width;
     bool leadingZeroes;
 };
@@ -111,6 +119,18 @@ public:
 
     String& operator<<(const Hex &src) {
         _SYS_strlcat_int_hex(buffer, src.value, src.width, src.leadingZeroes, _capacity);
+        return *this;
+    }
+
+    String& operator<<(const Hex64 &src) {
+        uint32_t high = src.value >> 32;
+        uint32_t low = src.value;
+        if (src.width > 8 || high != 0) {
+            _SYS_strlcat_int_hex(buffer, high, src.width - 8, src.leadingZeroes, _capacity);
+            _SYS_strlcat_int_hex(buffer, low, 8, true, _capacity);
+        } else {
+            _SYS_strlcat_int_hex(buffer, low, src.width, src.leadingZeroes, _capacity);
+        }
         return *this;
     }
     

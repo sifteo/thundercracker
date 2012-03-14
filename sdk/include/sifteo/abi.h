@@ -360,14 +360,6 @@ typedef enum {
 } _SYSShakeState;
 
 /**
- * Every cube has an arbitrary unique hardware ID.
- */
-
-struct _SYSCubeHWID {
-    uint8_t bytes[6];
-};
-
-/**
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary, via _SYS_setVector / _SYS_getVector.
  */
@@ -560,10 +552,9 @@ _SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
 
 // XXX: Temporary for testing/demoing
 uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]) _SC(89);
 
 uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
-void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid) _SC(91);
+uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(91);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
