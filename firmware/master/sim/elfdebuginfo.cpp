@@ -6,7 +6,8 @@
 #include <cxxabi.h>
 #include "elfdebuginfo.h"
 #include "flash.h"
-
+#include <string.h>
+#include <stdlib.h>
 
 void ELFDebugInfo::init(const FlashRange &elf)
 {
