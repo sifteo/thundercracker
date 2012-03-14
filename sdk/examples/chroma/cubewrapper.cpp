@@ -1742,6 +1742,15 @@ void CubeWrapper::ClearSprite( unsigned int id )
 }
 
 
+void CubeWrapper::TurnOffSprites()
+{
+    ClearSprite( GridSlot::MULT_SPRITE_ID );
+    ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
+
+    m_bubbles.Reset( m_vid );
+}
+
+
 
 void CubeWrapper::fillPuzzleCube()
 {

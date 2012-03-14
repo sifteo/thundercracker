@@ -911,6 +911,11 @@ bool Game::DoesHyperDotExist()
 
 void Game::EndGame()
 {
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].TurnOffSprites();
+    }
+
     enterScore();
     setState( STATE_DYING );
 

@@ -123,6 +123,7 @@ public:
     //search for a multiplier dot and increase it
     void UpMultiplier();
     void ClearSprite( unsigned int id );
+    void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
 
