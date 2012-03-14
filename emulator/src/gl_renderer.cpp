@@ -79,8 +79,10 @@ bool GLRenderer::init()
      * Per-cube initialization is lazy
      */
 
-    for (unsigned i = 0; i < System::MAX_CUBES; i++)
-        cubes[i].initialized = false;
+    for (unsigned i = 0; i < System::MAX_CUBES; i++) {
+        cubes[i].fbInitialized = false;
+        cubes[i].flashInitialized = false;
+    }
 
     return true;
 }
@@ -268,9 +270,9 @@ void GLRenderer::beginOverlay()
     glShadeModel(GL_FLAT);    
 }
 
-unsigned GLRenderer::measureText(const char *str)
+int GLRenderer::measureText(const char *str)
 {
-    unsigned x = 0, w = 0;
+    int x = 0, w = 0;
     uint32_t id;
     
     while ((id = *(str++))) {
@@ -284,7 +286,7 @@ unsigned GLRenderer::measureText(const char *str)
     return w;
 }
 
-void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const char *str)
+void GLRenderer::overlayText(int x, int y, const float color[4], const char *str)
 {
     const float TEXTURE_WIDTH = 128.0f;
     const float TEXTURE_HEIGHT = 256.0f;
@@ -337,8 +339,8 @@ void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const
     glDisable(GL_TEXTURE_2D);
 }         
 
-void GLRenderer::overlayRect(unsigned x, unsigned y,
-                             unsigned w, unsigned h, const float color[4])
+void GLRenderer::overlayRect(int x, int y,
+                             int w, int h, const float color[4])
 {
     overlayVA.clear();
     VertexT a, b, c, d;
@@ -351,12 +353,15 @@ void GLRenderer::overlayRect(unsigned x, unsigned y,
             
     b = a;
     b.vx += w;
+    b.tx = 1;
     
     d = a;
     d.vy += h;
+    d.ty = 1;
     
     c = b;
     c.vy = d.vy;
+    c.ty = 1;
             
     overlayVA.push_back(a);
     overlayVA.push_back(b);
@@ -410,11 +415,11 @@ void GLRenderer::drawBackground(float extent, float scale)
     glEnable(GL_DEPTH_TEST);
 }    
 
-void GLRenderer::initCube(unsigned id)
+void GLRenderer::initCubeFB(unsigned id)
 {
     GLCube &cube = cubes[id];
     
-    cube.initialized = true;
+    cube.fbInitialized = true;
 
     glGenTextures(NUM_LCD_TEXTURES, &cube.texFiltered[0]);
     glGenTextures(NUM_LCD_TEXTURES, &cube.texAccurate[0]);
@@ -576,8 +581,8 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-    if (!cubes[id].initialized) {
-        initCube(id);
+    if (!cubes[id].fbInitialized) {
+        initCubeFB(id);
         
         // Re-upload framebuffer, even if the LCD hasn't changed
         framebufferChanged = true;
@@ -879,4 +884,56 @@ const GLRenderer::Glyph *GLRenderer::findGlyph(uint32_t id)
     }
 
     return NULL;
+}
+
+void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
+    const uint8_t *data, bool dataChanged)
+{
+    GLCube &cube = cubes[id];
+    
+    if (!cube.flashInitialized)
+        glGenTextures(1, &cube.flashTex);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cube.flashTex);
+
+    if (!cube.flashInitialized || dataChanged) {
+        /*
+         * Convert linear flash memory into a grid of tile images.
+         */
+
+        const unsigned tilesWide = 64;
+        const unsigned tilesHigh = 128;
+        const unsigned tileSize = 8;
+        const unsigned pixelsWide = tilesWide * tileSize;
+        const unsigned pixelsHigh = tilesHigh * tileSize;
+
+        const uint16_t *src = reinterpret_cast<const uint16_t*>(data);
+        static uint16_t dest[pixelsWide * pixelsHigh];
+
+        for (unsigned tileY = 0; tileY != tilesHigh; ++tileY)
+            for (unsigned tileX = 0; tileX != tilesWide; ++tileX)
+                for (unsigned pixelY = 0; pixelY != tileSize; ++pixelY)
+                    for (unsigned pixelX = 0; pixelX != tileSize; ++pixelX) {
+                        uint16_t color = *(src++);
+                        color = (color >> 8) | (color << 8);
+                        dest[ (tileX * tileSize) + pixelX  +
+                             ((tileY * tileSize) + pixelY) * pixelsWide ] = color;
+                    }
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, pixelsWide, pixelsHigh,
+                     0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dest);
+
+        cube.flashInitialized = true;
+    }
+    
+    static const float color[4] = { 1, 1, 1, 1 };
+    overlayRect(x, y, w, h, color);
+    glDisable(GL_TEXTURE_2D);
 }

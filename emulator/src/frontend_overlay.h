@@ -41,16 +41,19 @@ public:
     void init(GLRenderer *renderer, System *sys);
 
     void draw();
-    void drawCube(FrontendCube *fe, unsigned x, unsigned y);
+    void drawCubeStatus(FrontendCube *fe, int x, int y);
+    void drawCubeInspector(FrontendCube *fe, int x, int y, int width, int height);
+
     void toggleHelp();
-    
+    void toggleInspector();
+
     void postMessage(std::string msg);
     
 private:
     static const unsigned margin = 5;
     static const unsigned lineSpacing = 20;
     
-    void moveTo(unsigned _x, unsigned _y) {
+    void moveTo(int _x, int _y) {
         x = _x;
         y = _y;
     }
@@ -65,6 +68,7 @@ private:
     std::string message;
     unsigned messageTimer;
     bool helpVisible;
+    bool inspectorVisible;
     
     ElapsedTime slowTimer;
     ElapsedTime fastTimer;
@@ -74,11 +78,12 @@ private:
     Color realTimeColor;
     float filteredTimeRatio;
     
-    unsigned x, y;
+    int x, y;
     
     struct {
         char fps[16];
         EventRateProbe lcd_wr;
+        uint32_t flashModifyCount;
     } cubes[System::MAX_CUBES];
 };
 
