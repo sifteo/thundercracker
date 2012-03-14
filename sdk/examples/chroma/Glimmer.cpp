@@ -118,7 +118,10 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
             if( pSlot->isAlive() )
             {
                 if( pSlot->IsFixed() )
-                    bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
+                {
+                    if( pSlot->getMultiplier() <= 1 )
+                        bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
+                }
                 else if( pSlot->getColor() != GridSlot::ROCKCOLOR )
                     bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
             }

@@ -9,14 +9,26 @@ all: $(BINS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
 
 ocd:
-	openocd -f $(MASTER_DIR)/stm32/openocd.cfg
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt"
+
+unlock:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "stm32f1x unlock 0" \
+		-c reset \
+		-c exit
 
 program: $(BIN_STM32)
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 		-c init \
 		-c "reset halt" \
 		-c "flash write_image erase $<" \
-		-c "reset run"
+		-c "verify_image $<" \
+		-c "reset run" \
+		-c exit
 
 gdb:
 	$(GDB_STM32) -x $(MASTER_DIR)/stm32/gdb.conf $(BIN_STM32)
