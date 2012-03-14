@@ -131,29 +131,71 @@ void DrawScoreBanner(CubeWrapper &cubeWrapper, int minutes, int seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawShuffleScore(CubeWrapper &cubeWrapper, int minutes, int seconds)
+void DrawShuffleScore(CubeWrapper &cubeWrapper, int minutes, int seconds, int place)
 {
-    cubeWrapper.DrawBackground(ShufflePanelBestTimes);
+    switch (place)
+    {
+        case 0:
+            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore1);
+            break;
+        case 1:
+            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore2);
+            break;
+        case 2:
+            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore3);
+            break;
+        default:
+            cubeWrapper.DrawBackground(ShufflePanelBestTimes);
+            break;
+    }
     
     String<16> buffer1st;
-    buffer1st << "1st " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
-    
-    cubeWrapper.DrawUiText(Vec2(4, 4), FontOrange, buffer1st.c_str());
+    if (place == 0)
+    {
+        buffer1st << "1st " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 4), FontRed, buffer1st.c_str());
+    }
+    else
+    {
+        buffer1st << "1st " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 4), FontOrange, buffer1st.c_str());
+    }
     
     String<16> buffer2nd;
-    buffer2nd << "2nd " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
-    
-    cubeWrapper.DrawUiText(Vec2(4, 6), FontOrange, buffer2nd.c_str());
+    if (place == 1)
+    {
+        buffer2nd << "2nd " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 6), FontRed, buffer2nd.c_str());
+    }
+    else
+    {
+        buffer2nd << "2nd " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 6), FontOrange, buffer2nd.c_str());
+    }
     
     String<16> buffer3rd;
-    buffer3rd << "3rd " << Fixed(0, 2, true) << ":" << Fixed(0, 2, true);
+    if (place == 2)
+    {
+        buffer3rd << "3rd " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 8), FontRed, buffer3rd.c_str());
+    }
+    else
+    {
+        buffer3rd << "3rd " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
+        cubeWrapper.DrawUiText(Vec2(4, 8), FontOrange, buffer3rd.c_str());
+    }
     
-    cubeWrapper.DrawUiText(Vec2(4, 8), FontOrange, buffer3rd.c_str());
+    if (place > 2)
+    {
+        String<16> bufferYours;
+        bufferYours << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
     
-    String<16> bufferYours;
-    bufferYours << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-    
-    cubeWrapper.DrawUiText(Vec2(3, 11), FontRed, bufferYours.c_str());
+        cubeWrapper.DrawUiText(Vec2(3, 11), FontRed, bufferYours.c_str());
+    }
+    else
+    {
+        
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1516,13 +1558,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SCORE:
         {
-            // TODO: High Scores
-        
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
                 int minutes = int(mScoreTimer) / 60;
                 int seconds = int(mScoreTimer - (minutes * 60.0f));
-                DrawShuffleScore(cubeWrapper, minutes, seconds);
+                int place = 4; // TODO: Detech and pass in real value
+                DrawShuffleScore(cubeWrapper, minutes, seconds, place);
             }
             if (cubeWrapper.GetId() == 1)
             {

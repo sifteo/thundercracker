@@ -49,7 +49,9 @@ MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
 -- Shuffle Mode
 ShuffleTitleScreen = image{"assets/pre_post_shuffle/titlescreen_shuffle.png"}
 ShuffleNeighbor = image{"assets/pre_post_shuffle/neighbor.png"}
-ShufflePanelBestTimesHighScore = image{"assets/pre_post_shuffle/panel_best_times_highscore.png"}
+ShufflePanelBestTimesHighScore1 = image{"assets/pre_post_shuffle/panel_best_times_highscore_1.png"}
+ShufflePanelBestTimesHighScore2 = image{"assets/pre_post_shuffle/panel_best_times_highscore_2.png"}
+ShufflePanelBestTimesHighScore3 = image{"assets/pre_post_shuffle/panel_best_times_highscore_3.png"}
 ShufflePanelBestTimes = image{"assets/pre_post_shuffle/panel_best_times.png"}
 ShuffleCongratulations = image{"assets/pre_post_shuffle/panel_congratulations.png"}
 ShuffleShakeToPlayAgain = image{"assets/pre_post_shuffle/panel_shake_to_play_again.png"}
