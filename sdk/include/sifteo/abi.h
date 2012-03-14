@@ -430,6 +430,15 @@ void _SYS_lti_log(const char *fmt, ...);
 #define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
 
 /**
+ * Hardware IDs are 48-bit / 6-byte numbers that uniquely identify a
+ * particular cube. A valid HWIDs never contains 0xFF bytes.
+ */
+
+#define _SYS_HWID_BYTES         6
+#define _SYS_HWID_BITS          48
+#define _SYS_INVALID_HWID       ((uint64_t)-1)
+
+/**
  * Low-level system call interface.
  *
  * System calls #0-63 are faster and smaller than normal function calls,

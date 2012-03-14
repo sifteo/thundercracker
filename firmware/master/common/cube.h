@@ -165,7 +165,7 @@ class CubeSlot {
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
     uint8_t neighbors[4];
-    uint8_t hwid[6];
+    uint8_t hwid[_SYS_HWID_BYTES];
 
     // Other sensor data
     uint16_t rawBatteryV;

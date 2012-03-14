@@ -93,7 +93,7 @@ uint64_t _SYS_getCubeHWID(_SYSCubeID cid)
 {
     if (CubeSlots::validID(cid))
         return CubeSlots::instances[cid].getHWID();
-    return 0;
+    return _SYS_INVALID_HWID;
 }
 
 }  // extern "C"
