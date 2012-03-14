@@ -8,30 +8,33 @@
 
 #include "elfdefs.h"
 #include "flashlayer.h"
+#include <vector>
+#include <map>
+#include <string>
 
 class ELFDebugInfo {
 public:
     void init(const FlashRange &elf);
-    
-    bool readString(const char *section, uint32_t offset,
-        char *buffer, uint32_t bufferSize);
 
-    bool findNearestSymbol(uint32_t address, Elf::Symbol &symbol,
-        char *name, uint32_t nameBufSize);
-
-    void formatAddress(uint32_t address, char *buf, uint32_t bufSize);
+    std::string readString(const std::string &section, uint32_t offset);
+    bool findNearestSymbol(uint32_t address, Elf::Symbol &symbol, std::string &name);
+    std::string formatAddress(uint32_t address);
 
 private:
     struct SectionInfo {
         Elf::SectionHeader header;
         FlashRange data;
-        char name[64];
     };
 
-    static const unsigned MAX_DEBUG_SECTIONS = 32;
-    SectionInfo sections[MAX_DEBUG_SECTIONS];
+    typedef std::vector<SectionInfo> sections_t;
+    typedef std::map<std::string, SectionInfo*> sectionMap_t;
 
-    const SectionInfo *findSection(const char *name) const;
+    sections_t sections;
+    sectionMap_t sectionMap;
+
+    static void demangle(std::string &name);
+    std::string readString(const SectionInfo *SI, uint32_t offset);
+    const SectionInfo *findSection(const std::string &name);
 };
 
 #endif // ELF_DEBUG_INFO_H

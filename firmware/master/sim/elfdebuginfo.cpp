@@ -3,20 +3,10 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include <string.h>
+#include <cxxabi.h>
 #include "elfdebuginfo.h"
 #include "flash.h"
 
-
-const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const char *name) const
-{
-    for (unsigned i = 0; i < MAX_DEBUG_SECTIONS; i++) {
-        const SectionInfo *SI = &sections[i];
-        if (!strcmp(SI->name, name))
-            return SI;
-    }
-    return 0;
-}
 
 void ELFDebugInfo::init(const FlashRange &elf)
 {
@@ -26,15 +16,17 @@ void ELFDebugInfo::init(const FlashRange &elf)
      * so that we can read debug symbols at runtime.
      */
 
-    memset(sections, 0, sizeof sections);
+    sections.clear();
+    sectionMap.clear();
 
     FlashBlockRef ref;
     FlashBlock::get(ref, elf.getAddress());
     Elf::FileHeader *header = reinterpret_cast<Elf::FileHeader*>(ref->getData());
 
     // First pass, copy out all the headers.
-    for (unsigned i = 0; i < header->e_shnum && i < MAX_DEBUG_SECTIONS; i++) {
-        SectionInfo &SI = sections[i];
+    for (unsigned i = 0; i < header->e_shnum; i++) {
+        sections.push_back(SectionInfo());
+        SectionInfo &SI = sections.back();
         Elf::SectionHeader *pHdr = &SI.header;
         FlashRange rHdr = elf.split(header->e_shoff + i * header->e_shentsize, sizeof *pHdr);
         ASSERT(rHdr.getSize() == sizeof *pHdr);
@@ -42,33 +34,45 @@ void ELFDebugInfo::init(const FlashRange &elf)
         SI.data = elf.split(pHdr->sh_offset, pHdr->sh_size);
     }
 
-    // Assign section names
-    if (header->e_shstrndx < header->e_shnum && header->e_shstrndx < MAX_DEBUG_SECTIONS) {
-        FlashRange strTab = sections[header->e_shstrndx].data;
-        for (unsigned i = 0; i < header->e_shnum && i < MAX_DEBUG_SECTIONS; i++) {
+    // Read section names, set up sectionMap.
+    if (header->e_shstrndx < sections.size()) {
+        const SectionInfo *strTab = &sections[header->e_shstrndx];
+        for (unsigned i = 0, e = sections.size(); i != e; ++i) {
             SectionInfo &SI = sections[i];
-            FlashRange rStr = strTab.split(SI.header.sh_name, sizeof SI.name);
-            Flash::read(rStr.getAddress(), (uint8_t*)SI.name, rStr.getSize());
-            SI.name[sizeof SI.name - 1] = 0;
+            sectionMap[readString(strTab, SI.header.sh_name)] = &SI;
         }
     }
 }
 
-bool ELFDebugInfo::readString(const char *section, uint32_t offset,
-    char *buffer, uint32_t bufferSize)
+const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const std::string &name)
 {
-    const SectionInfo *SI = findSection(section);
-    if (SI) {
-        FlashRange r = SI->data.split(offset, bufferSize - 1);
-        Flash::read(r.getAddress(), (uint8_t*)buffer, r.getSize());
-        buffer[bufferSize - 1] = '\0';
-        return true;
-    }
-    return false;
+    sectionMap_t::iterator I = sectionMap.find(name);
+    if (I == sectionMap.end())
+        return 0;
+    else
+        return I->second;
 }
 
-bool ELFDebugInfo::findNearestSymbol(uint32_t address, Elf::Symbol &symbol,
-    char *name, uint32_t nameBufSize)
+std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset)
+{
+    char buf[1024];
+    FlashRange r = SI->data.split(offset, sizeof buf - 1);
+    Flash::read(r.getAddress(), (uint8_t*)buf, r.getSize());
+    buf[r.getSize()] = '\0';
+    return buf;
+}
+
+std::string ELFDebugInfo::readString(const std::string &section, uint32_t offset)
+{
+    const SectionInfo *SI = findSection(section);
+    if (SI)
+        return readString(SI, offset);
+    else
+        return "";
+}
+
+bool ELFDebugInfo::findNearestSymbol(uint32_t address,
+    Elf::Symbol &symbol, std::string &name)
 {
     // Look for the nearest ELF symbol which contains 'address'.
     // If we find anything, returns 'true' and leaves the symbol information
@@ -99,23 +103,43 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address, Elf::Symbol &symbol,
     if ((symbol.st_info & 0xF) == Elf::STT_FUNC)
         symbol.st_value &= ~1;
 
-    strncpy(name, "(unknown)", nameBufSize);
     if (bestOffset == worstOffset) {
         memset(&symbol, 0, sizeof symbol);
+        name = "(unknown)";
         return false;
     }
 
-    return readString(".strtab", symbol.st_name, name, nameBufSize);
+    name = readString(".strtab", symbol.st_name);
+    return true;
 }
 
-void ELFDebugInfo::formatAddress(uint32_t address, char *buf, uint32_t bufSize)
+std::string ELFDebugInfo::formatAddress(uint32_t address)
 {
     Elf::Symbol symbol;
+    std::string name;
 
-    findNearestSymbol(address, symbol, buf, bufSize);
-    uint32_t nameLen = strlen(buf);
+    findNearestSymbol(address, symbol, name);
+    demangle(name);
     uint32_t offset = address - symbol.st_value;
 
-    if (offset != 0)
-        snprintf(buf + nameLen, bufSize - nameLen, "+0x%x", offset);
+    if (offset != 0) {
+        char buf[16];
+        snprintf(buf, sizeof buf, "+0x%x", offset);
+        name += buf;
+    }
+
+    return name;
+}
+
+void ELFDebugInfo::demangle(std::string &name)
+{
+    // This uses the demangler built into GCC's libstdc++.
+    // It uses the same name mangling style as clang.
+
+    int status;
+    char *result = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+    if (status == 0) {
+        name = result;
+        free(result);
+    }
 }

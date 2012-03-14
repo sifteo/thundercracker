@@ -176,16 +176,16 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
         // Stow all arguments, plus the log tag. The post-processor
         // will do some printf()-like formatting on the stored arguments.
         case _SYS_LOGTYPE_FMT: {
-            char fmt[1024];
-            if (DI.readString(".debug_logstr", tag.getParam(),
-                fmt, sizeof fmt)) {
-                formatLog(outBuffer, sizeof outBuffer, fmt, buffer, tag.getArity());
-                LOG(("%s", outBuffer));
-            } else {
+            std::string fmt = DI.readString(".debug_logstr", tag.getParam());
+            if (fmt.empty()) {
                 LOG(("SVMLOG: No symbol table found. Raw data:\n"
                      "\t[%08x] %08x %08x %08x %08x %08x %08x %08x\n",
                      tag.getValue(), buffer[0], buffer[1], buffer[2],
                      buffer[3], buffer[4], buffer[5], buffer[6]));
+            } else {
+                formatLog(outBuffer, sizeof outBuffer, (char*) fmt.c_str(),
+                    buffer, tag.getArity());
+                LOG(("%s", outBuffer));
             }
             return tag.getArity() * sizeof(uint32_t);
         }

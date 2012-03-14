@@ -44,8 +44,7 @@ static const char* faultStr(FaultCode code)
 void SvmDebug::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
-    char symbolName[512];
-    formatAddress(pcVA, symbolName, sizeof symbolName);
+    std::string pcName = formatAddress(pcVA);
 
     LOG(("***\n"
          "*** VM FAULT code %d (%s)\n"
@@ -62,7 +61,7 @@ void SvmDebug::fault(FaultCode code)
          pcVA,
          reinterpret_cast<void*>(SvmCpu::reg(REG_PC)),
          SvmMemory::isAddrValid(SvmCpu::reg(REG_PC)) ? "" : " (INVALID)",
-         symbolName,
+         pcName.c_str(),
 
          (unsigned)SvmMemory::physToVirtRAM(
              reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
@@ -83,11 +82,11 @@ void SvmDebug::fault(FaultCode code)
     SvmMemory::PhysAddr fpPA;
     while (SvmMemory::mapRAM(fpVA, sizeof(CallFrame), fpPA)) {
         CallFrame *frame = reinterpret_cast<CallFrame*>(fpPA);
-        formatAddress(frame->pc, symbolName, sizeof symbolName);
+        std::string symbolName = formatAddress(frame->pc);
 
         LOG(("***  [%08x] pc=%08x  %s\n",
             (unsigned)SvmMemory::physToVirtRAM(fpPA),
-            frame->pc, symbolName));
+            frame->pc, symbolName.c_str()));
 
         fpVA = frame->fp;
     }
@@ -117,9 +116,9 @@ void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
     ASSERT(decodedSize == bytes);
 }
 
-void SvmDebug::formatAddress(uint32_t address, char *buf, uint32_t bufSize)
+std::string SvmDebug::formatAddress(uint32_t address)
 {
-    gELFDebugInfo.formatAddress(address, buf, bufSize);
+    return gELFDebugInfo.formatAddress(address);
 }
 
 void SvmDebug::setSymbolSourceELF(const FlashRange &elf)

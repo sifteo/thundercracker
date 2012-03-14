@@ -19,6 +19,10 @@
 #include "svm.h"
 #include "flashlayer.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include <string>
+#endif
+
 using namespace Svm;
 
 
@@ -65,7 +69,7 @@ public:
     static void setSymbolSourceELF(const FlashRange &elf);
 
 #ifdef SIFTEO_SIMULATOR
-    static void formatAddress(uint32_t address, char *buf, uint32_t bufSize);
+    static std::string formatAddress(uint32_t address);
 #endif
 };
 
