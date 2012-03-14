@@ -22,22 +22,22 @@
  * See: http://isthe.com/chongo/tech/comp/fnv/
  */
 namespace std {
-	namespace tr1 {
-		template<> struct hash<Stir::Tile::Identity> {
-			std::size_t operator()(Stir::Tile::Identity const &key) const {			
-				uint32_t h = 2166136261UL;
-				unsigned len = sizeof(key.pixels) / sizeof(uint32_t);
-				uint32_t *data = (uint32_t*) &key.pixels[0];
-				
-				do {
-					h ^= *(data++);
-					h *= 16777619UL;
-				} while (--len);
-				
-				return h;
-			}
-		};
-	}
+    namespace tr1 {
+        template<> struct hash<Stir::Tile::Identity> {
+            std::size_t operator()(Stir::Tile::Identity const &key) const {         
+                uint32_t h = 2166136261UL;
+                unsigned len = sizeof(key.pixels) / sizeof(uint32_t);
+                uint32_t *data = (uint32_t*) &key.pixels[0];
+                
+                do {
+                    h ^= *(data++);
+                    h *= 16777619UL;
+                } while (--len);
+                
+                return h;
+            }
+        };
+    }
 }
 
 namespace Stir {
@@ -46,23 +46,23 @@ std::tr1::unordered_map<Tile::Identity, TileRef> Tile::instances;
 
 Tile::Tile(const Identity &id)
     : mHasSobel(false), mHasDec4(false), mID(id)
-	{}
+    {}
 
 TileRef Tile::instance(const Identity &id)
 {
-	/*
-	 * Return an existing Tile matching the given identity, or create a new one if necessary.
-	 */
-	 
-	std::tr1::unordered_map<Identity, TileRef>::iterator i = instances.find(id);
-		
-	if (i == instances.end()) {
-		TileRef tr(new Tile(id));
-		instances[id] = tr;
-		return tr;
-	} else {
-		return i->second;
-	}
+    /*
+     * Return an existing Tile matching the given identity, or create a new one if necessary.
+     */
+     
+    std::tr1::unordered_map<Identity, TileRef>::iterator i = instances.find(id);
+        
+    if (i == instances.end()) {
+        TileRef tr(new Tile(id));
+        instances[id] = tr;
+        return tr;
+    } else {
+        return i->second;
+    }
 }
 
 TileRef Tile::instance(const TileOptions &opt, uint8_t *rgba, size_t stride)
@@ -71,12 +71,12 @@ TileRef Tile::instance(const TileOptions &opt, uint8_t *rgba, size_t stride)
      * Load a tile image from a full-color RGBA source bitmap.
      */
 
-	Identity id;
+    Identity id;
     const uint8_t alphaThreshold = 0x80;
     uint8_t *row, *pixel;
     unsigned x, y;
-	
-	id.options = opt;
+    
+    id.options = opt;
 
     // First pass.. are there any transparent pixels?
     for (row = rgba, y = SIZE; y; --y, row += stride)
@@ -134,7 +134,7 @@ TileRef Tile::instance(const TileOptions &opt, uint8_t *rgba, size_t stride)
             dest++;
         }    
 
-	return instance(id);
+    return instance(id);
 }
 
 double TileOptions::getMaxMSE() const
@@ -351,8 +351,8 @@ TileRef Tile::reduce(ColorReducer &reducer) const
 
     RGB565 run;
 
-	Identity reduced;	
-	reduced.options = mID.options;
+    Identity reduced;   
+    reduced.options = mID.options;
 
     // Hysteresis amount
     double limit = mID.options.getMaxMSE() * 0.05;
@@ -430,7 +430,7 @@ TileRef TileStack::median()
     } else {
         // General-case median algorithm
 
-		Tile::Identity median;
+        Tile::Identity median;
         std::vector<RGB565> colors(tiles.size());
 
         // The median algorithm repeats independently for every pixel in the tile.
@@ -623,43 +623,43 @@ void TilePool::optimizeTilesPass(Logger &log,
     // A single pass from the multi-pass optimizeTiles() algorithm
 
     std::tr1::unordered_map<Tile *, TileStack *> memo;
-	
+    
     for (Serial serial = 0; serial < tiles.size(); serial++) {
         TileRef tr = tiles[serial];
 
         if (tr->options().pinned == pinned) {
             TileStack *c = NULL;
 
-			if (!pinned) {
-				/*
-				 * Assuming we aren't gathering pinned tiles, we start by looking for
-				 * the closest existing stack. This is a very slow step, but we can
-				 * save a lot of time on common datasets (with plenty of duplicated tiles)
-				 * by memoizing the results.
-				 *
-				 * This memoization is easy because tiles are unique and immutable.
-				 * We only keep the memo for the duration of one optimization pass; the whole
-				 * point of a multi-pass algorithm is that we expect the result of closest()
-				 * to change between the gathering and optimization passes.
-				 *
-				 * Note that this memoization does actually change the algorithmic complexity
-				 * of our optimization passes. Instead of doing what may be an O(N^2) algorithm
-				 * on each pass, this is significantly faster (up to O(N) in the best case). We
-				 * end up deferring much more of the optimization to the second pass, whereas
-				 * without memoization we end up getting very close to a solution in one pass,
-				 * at the expense of quite a lot of performance.
-				 *
-				 * So in our case, two passes can be much faster than one. Yay.
-				 */
+            if (!pinned) {
+                /*
+                 * Assuming we aren't gathering pinned tiles, we start by looking for
+                 * the closest existing stack. This is a very slow step, but we can
+                 * save a lot of time on common datasets (with plenty of duplicated tiles)
+                 * by memoizing the results.
+                 *
+                 * This memoization is easy because tiles are unique and immutable.
+                 * We only keep the memo for the duration of one optimization pass; the whole
+                 * point of a multi-pass algorithm is that we expect the result of closest()
+                 * to change between the gathering and optimization passes.
+                 *
+                 * Note that this memoization does actually change the algorithmic complexity
+                 * of our optimization passes. Instead of doing what may be an O(N^2) algorithm
+                 * on each pass, this is significantly faster (up to O(N) in the best case). We
+                 * end up deferring much more of the optimization to the second pass, whereas
+                 * without memoization we end up getting very close to a solution in one pass,
+                 * at the expense of quite a lot of performance.
+                 *
+                 * So in our case, two passes can be much faster than one. Yay.
+                 */
 
-				std::tr1::unordered_map<Tile *, TileStack *>::iterator i = memo.find(&*tr);
-				if (i == memo.end()) {
-					c = closest(tr);
-					memo[&*tr] = c;
-				} else {
-					c = memo[&*tr];
-				}
-			}			
+                std::tr1::unordered_map<Tile *, TileStack *>::iterator i = memo.find(&*tr);
+                if (i == memo.end()) {
+                    c = closest(tr);
+                    memo[&*tr] = c;
+                } else {
+                    c = memo[&*tr];
+                }
+            }           
 
             if (!c) {
                 // Need to create a fresh stack
