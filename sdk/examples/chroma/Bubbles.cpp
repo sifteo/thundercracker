@@ -53,6 +53,10 @@ void BubbleSpawner::Update( float dt )
 
         if( m_fTimeTillSpawn < 0.0f )
         {
+            if( Game::random.random() < SHORT_PERIOD_CHANCE )
+                m_fTimeTillSpawn = Game::random.uniform( MIN_SHORT_SPAWN, MAX_SHORT_SPAWN );
+            else
+                m_fTimeTillSpawn = Game::random.uniform( MIN_LONG_SPAWN, MAX_LONG_SPAWN );
             m_aBubbles[slotAvailable].Spawn();
         }
     }
