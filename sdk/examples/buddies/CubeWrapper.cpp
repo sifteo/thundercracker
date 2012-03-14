@@ -229,7 +229,41 @@ void CubeWrapper::UpdateCutscene()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawCutscene(const char *text)
+void CubeWrapper::DrawCutsceneShuffle()
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    
+    Video().BG0_drawAsset(Vec2(0, 0), ShuffleCongratulations);
+    
+    switch (GetId())
+    {
+        default:
+        case 0:
+            Video().setSpriteImage(0, ShuffleSpriteFrontZorg, 0);
+            break;
+        case 1:
+            Video().setSpriteImage(0, ShuffleSpriteFrontRike, 0);
+            break;
+        case 2:
+            Video().setSpriteImage(0, ShuffleSpriteFrontGluv, 0);
+            break;
+    }
+    
+    int jump_offset = 8;
+    
+    Video().moveSprite(
+        0,
+        Vec2(
+            VidMode::LCD_width / 2 - 32,
+            mCutsceneSpriteJump0 ?
+                VidMode::LCD_height / 2 - 32 :
+                VidMode::LCD_height / 2 - 32 + jump_offset));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawCutsceneStory(const char *text)
 {
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);

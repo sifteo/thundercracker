@@ -52,7 +52,8 @@ public:
     
     // Special-Case Cutscene Stuff
     void UpdateCutscene();
-    void DrawCutscene(const char *text);
+    void DrawCutsceneShuffle();
+    void DrawCutsceneStory(const char *text);
     
     // Asset Loading
     bool IsLoadingAssets();

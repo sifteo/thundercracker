@@ -1225,6 +1225,14 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].UpdateCutscene();
+                }
+            }
+            
             if (UpdateTimer(mDelayTimer, dt))
             {
                 StartGameState(GAME_STATE_SHUFFLE_SCORE);
@@ -1552,8 +1560,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
-            cubeWrapper.DrawBackground(ShuffleCongratulations);
-            // TODO: Bouncing sprites
+            cubeWrapper.DrawCutsceneShuffle();
             break;
         }
         case GAME_STATE_SHUFFLE_SCORE:
@@ -1584,7 +1591,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex));
+                cubeWrapper.DrawCutsceneStory(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex));
             }
             else
             {
@@ -1732,7 +1739,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutscene(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex));
+                cubeWrapper.DrawCutsceneStory(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex));
             }
             else
             {
