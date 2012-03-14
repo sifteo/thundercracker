@@ -7,7 +7,7 @@
 #include "WordGame.h"
 #include "Utility.h"
 
-ScoredGameState::ScoredGameState() : mNumHints(3) {}
+ScoredGameState::ScoredGameState() : mNumHints(0) {}
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {

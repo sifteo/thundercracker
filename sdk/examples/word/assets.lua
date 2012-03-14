@@ -7,6 +7,8 @@ BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
+BorderRightNoNeighbor = image{"wp2_border_right_noneighbor.png", quality=10}
+BorderLeftNoNeighbor = image{"wp2_border_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available01.png", quality=10}
 BorderSlotNormal = image{"border_created_basic01.png", quality=10}
 BorderSlotBonus = image{"border_created_bonus01.png", quality=10}

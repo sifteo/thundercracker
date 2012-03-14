@@ -367,7 +367,7 @@ bool animPaint(AnimType animT,
         {
             bg1->DrawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
         }
-        else
+        else if (false)
         {
             vid.moveSprite(0, objData.mPositions[frame]);
             vid.resizeSprite(0, size);
@@ -396,7 +396,9 @@ bool animPaint(AnimType animT,
         // TODO fold border painting into the paint code
         const bool leftNeighbor = params ? params->mLeftNeighbor : false;
         const bool rightNeighbor = params ? params->mRightNeighbor : false;
-        if (leftNeighbor || (rightNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+        const bool formsWord =
+                (animT == AnimType_NewWord || animT == AnimType_OldWord);
+        if (false && (leftNeighbor || (rightNeighbor && !formsWord)))
         {
             // don't draw left border
             vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
@@ -404,13 +406,18 @@ bool animPaint(AnimType animT,
         else if (bg1)
         {
             // draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
+            vid.BG0_drawPartialAsset(Vec2(0, 2),
+                                     Vec2(0, 1),
+                                     Vec2(2, 14),
+                                     (leftNeighbor || formsWord) ?
+                                         BorderLeft :
+                                         BorderLeftNoNeighbor);
             bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
             bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
             vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
         }
 
-        if (rightNeighbor || (leftNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+        if (false && (rightNeighbor || (leftNeighbor && !formsWord)))
         {
             // don't draw right border
             vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
@@ -418,7 +425,12 @@ bool animPaint(AnimType animT,
         else if (bg1)
         {
             // draw right border
-            vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 1), Vec2(2, 14), BorderRight);
+            vid.BG0_drawPartialAsset(Vec2(14, 0),
+                                     Vec2(0, 1),
+                                     Vec2(2, 14),
+                                     (rightNeighbor || formsWord) ?
+                                         BorderRight :
+                                         BorderRightNoNeighbor);
             bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
             bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
             vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
