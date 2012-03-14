@@ -395,7 +395,7 @@ void CubeWrapper::Update(float t, float dt)
         }
 
         m_banner.Update(t);
-        m_bubbles.Update(dt);
+        m_bubbles.Update(dt, getTiltDir() );
 
         //tilt state
         _SYSAccelState state;

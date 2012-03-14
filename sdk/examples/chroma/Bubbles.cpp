@@ -35,14 +35,14 @@ void BubbleSpawner::Reset()
 }
 
 
-void BubbleSpawner::Update( float dt )
+void BubbleSpawner::Update( float dt, const Float2 &tilt )
 {
     int slotAvailable = -1;
 
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
         if( m_aBubbles[i].isAlive() )
-            m_aBubbles[i].Update( dt );
+            m_aBubbles[i].Update( dt, tilt );
         else if( slotAvailable < 0 )
             slotAvailable = i;
     }
@@ -78,6 +78,7 @@ void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid )
 
 
 const float Bubble::BUBBLE_LIFETIME = 2.5f;
+const float Bubble::TILT_VEL = 128.0f;
 
 Bubble::Bubble() : m_fTimeAlive( -1.0f )
 {
@@ -94,9 +95,12 @@ void Bubble::Disable()
     m_fTimeAlive = -1.0f;
 }
 
-void Bubble::Update( float dt )
+void Bubble::Update( float dt, const Float2 &tilt )
 {
     m_fTimeAlive += dt;
+
+    m_pos.x -= tilt.x / 64.0f * TILT_VEL * dt;
+    m_pos.y -= tilt.y / 64.0f * TILT_VEL * dt;
 
     if( m_fTimeAlive >= BUBBLE_LIFETIME )
         Disable();
