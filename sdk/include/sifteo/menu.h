@@ -326,8 +326,17 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 }
 
 void Menu::preventDefault() {
-	// paints shouldn't be prevented--the caller doesn't know whether to paintSync or paint.
+	/* paint shouldn't be prevented
+	 * the caller doesn't know whether to paintSync or paint and shouldn't be
+	 * painting while the menu owns the context.
+	 */
 	ASSERT(currentEvent.type != MENU_PREPAINT);
+	/* exit shouldn't be prevented
+	 * the default handler is responsible for resetting the menu if the event
+	 * pump is restarted.
+	 */
+	ASSERT(currentEvent.type != MENU_EXIT);
+
 	clearEvent();
 }
 
@@ -694,22 +703,22 @@ void Menu::transFromFinish() {
 
 void Menu::handleNeighborAdd() {
 	LOG(("Default handler: neighborAdd\n"));
-	// play a sound
+	// TODO: play a sound
 }
 
 void Menu::handleNeighborRemove() {
 	LOG(("Default handler: neighborRemove\n"));
-	// play a sound
+	// TODO: play a sound
 }
 
 void Menu::handleItemArrive() {
 	LOG(("Default handler: itemArrive\n"));
-	// play a sound
+	// TODO: play a sound
 }
 
 void Menu::handleItemDepart() {
 	LOG(("Default handler: itemDepart\n"));
-	// play a sound
+	// TODO: play a sound
 }
 
 void Menu::handleItemPress() {
@@ -724,9 +733,7 @@ void Menu::handleExit() {
 }
 
 void Menu::handlePrepaint() {
-//	LOG(("Default handler: prepaint\n"));
 	if(shouldPaintSync) {
-		LOG(("paint: sync\n"));
 		System::paintSync();
 	} else {
 		System::paint();
@@ -769,7 +776,6 @@ void Menu::clearEvent() {
 }
 
 bool Menu::dispatchEvent(struct MenuEvent *ev) {
-if(currentEvent.type != MENU_UNEVENTFUL && currentEvent.type != MENU_PREPAINT) LOG(("Dispatch event: %d\n", currentEvent.type));
 	if(currentEvent.type != MENU_UNEVENTFUL) {
 		*ev = currentEvent;
 		return true;
@@ -787,17 +793,17 @@ if(currentEvent.type != MENU_UNEVENTFUL && currentEvent.type != MENU_PREPAINT) L
  */
 
 void Menu::detectNeighbors() {
-	MenuNeighbor n;
 	for(_SYSSideID i = 0; i < NUM_SIDES; i++) {
-		n.neighborSide = SIDE_UNDEFINED;
-		n.neighbor = CUBE_ID_UNDEFINED;
-		n.masterSide = SIDE_UNDEFINED;
-
+		MenuNeighbor n;
 		if(pCube->hasPhysicalNeighborAt(i)) {
 			Cube c(pCube->physicalNeighborAt(i));
 			n.neighborSide = c.physicalSideOf(pCube->id());
 			n.neighbor = c.id();
 			n.masterSide = i;
+		} else {
+			n.neighborSide = SIDE_UNDEFINED;
+			n.neighbor = CUBE_ID_UNDEFINED;
+			n.masterSide = SIDE_UNDEFINED;
 		}
 
 		if (n != neighbors[i]) {
