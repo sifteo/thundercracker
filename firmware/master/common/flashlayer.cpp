@@ -98,12 +98,12 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 
             for (unsigned i = 0; i < NUM_BLOCKS; i++) {
                 FlashBlock &block = instances[i];
-                SvmMemory::VirtAddr va = SvmMemory::VIRTUAL_FLASH_BASE + block.address;
+                SvmMemory::VirtAddr va = SvmMemory::flashToVirtAddr(block.address);
                 std::string name = SvmDebug::formatAddress(va);
 
-                LOG(("\tblock %02d: addr=0x%08x stamp=0x%08x cb=0x%03x ref=%d  %s\n",
-                    i, (unsigned)va, block.stamp, block.validCodeBytes,
-                    block.refCount, name.c_str()));
+                LOG(("\tblock %02d: addr=0x%06x stamp=0x%08x cb=0x%03x ref=%d va=%08x  %s\n",
+                    i, block.address, block.stamp, block.validCodeBytes,
+                    block.refCount, (unsigned)va, name.c_str()));
             }
         }
     }

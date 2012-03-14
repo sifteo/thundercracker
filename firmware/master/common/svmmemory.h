@@ -191,6 +191,17 @@ public:
         uintptr_t offset = pa - userRAM; 
         return (VirtAddr)offset + VIRTUAL_RAM_BASE;
     }
+    
+    /**
+     * Convert a flash block address to a VA in the current segment.
+     * If the block address is not in the current segment at all, returns zero.
+     */
+    static VirtAddr flashToVirtAddr(uint32_t addr) {
+        uint32_t offset = addr - flashSeg.getAddress();
+        if (offset < flashSeg.getSize())
+            return offset + VIRTUAL_FLASH_BASE;
+        return 0;
+    }
 
     /**
      * Quick predicates to check a physical address. Used only in simulation.
