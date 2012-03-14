@@ -155,19 +155,27 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         // Not waiting on a reset. See if we need to send asset data.
 
         _SYSAssetGroup *group = loadGroup;
-        if (group && !(group->doneCubes & bit()) &&
-            codec.flashSend(tx.packet, group, assetCube(group), bit())) {
+        if (group && !(group->doneCubes & bit())) {
+            
+            bool done = false;
+            bool escape = codec.flashSend(tx.packet, group, assetCube(group), bit(), done);
 
-            /* Finished asset loading */
-            Atomic::SetLZ(group->doneCubes, id());
-            Event::setPending(_SYS_CUBE_ASSETDONE, id());
+            if (done ) {
+                /* Finished sending the group, and the cube finished writing it. */
+                Atomic::SetLZ(group->doneCubes, id());
+                Event::setPending(_SYS_CUBE_ASSETDONE, id());
 
-            DEBUG_ONLY({
-                // In debug builds only, we log the asset download time
-                float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                     id(), SvmDebug::formatAddress(group).c_str(), seconds));
-            })
+                DEBUG_ONLY({
+                    // In debug builds only, we log the asset download time
+                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                    LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
+                         id(), SvmDebug::formatAddress(group).c_str(), seconds));
+                })
+            }
+
+            // We can't put anything else in this packet if an escape was written
+            if (escape)
+                return true;
         }
     }
 

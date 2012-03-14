@@ -99,7 +99,7 @@ class CubeCodec {
 
     bool flashReset(PacketBuffer &buf);
     bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-        _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit);
+        _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit, bool &done);
 
     void flashAckBytes(uint8_t count) {
         loadBufferAvail += count;

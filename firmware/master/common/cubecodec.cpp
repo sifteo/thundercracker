@@ -342,6 +342,11 @@ void CubeCodec::flushDSRuns(bool rleSafe)
 
 bool CubeCodec::flashReset(PacketBuffer &buf)
 {
+    // Warning, a flash reset does not wait for the cube's
+    // decode buffer to drain. We need to wait until the previous asset
+    // group is fully written to flash before a reset for the next group
+    // can be sent!
+    
     // No room in output buffer
     if (!txBits.hasRoomForFlush(buf, 12))
         return false;
@@ -355,7 +360,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 }
 
 bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-    _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit)
+    _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit, bool &done)
 {
     /*
      * Since we're dealing with asset group pointers as well as
@@ -371,7 +376,8 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      * After this initial check, any further checks exist only as
      * protection against buggy or malicious user code.
      *
-     * Returns 'true' if we finish sending an asset group.
+     * Returns 'true' if and only if we sent a flashEscape.
+     * Sets 'done' to 'true' if and only if the assset group is fully written.
      */
 
     /*
@@ -412,8 +418,11 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
 
     // Read 'progress' from untrusted memory only once, and validate it.
     uint32_t progress = ac->progress;
-    if (progress >= header.dataSize)
+    if (progress >= header.dataSize) {
+        if (loadBufferAvail == FLS_FIFO_USABLE)
+            done = true;
         return false;
+    }
 
     /*
      * The escape command indicates that the entire remainder of 'buf' is
@@ -447,7 +456,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
         count -= 3;
         loadBufferAvail -= 3;
         if (!count)
-            return false;
+            return true;
     }
 
     /*
@@ -487,5 +496,8 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
 
     ac->progress = progress;
     ASSERT(progress <= header.dataSize);
-    return progress >= header.dataSize;
+    if (progress >= header.dataSize && loadBufferAvail == FLS_FIFO_USABLE)
+        done = true;
+
+    return true;
 }
