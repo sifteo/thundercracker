@@ -21,6 +21,7 @@ _SYSCubeIDVector CubeSlots::flashACKValid = 0;
 _SYSCubeIDVector CubeSlots::frameACKValid = 0;
 _SYSCubeIDVector CubeSlots::neighborACKValid = 0;
 _SYSCubeIDVector CubeSlots::expectStaleACK = 0;
+_SYSCubeIDVector CubeSlots::flashAddrPending = 0;
 
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;

@@ -8,6 +8,7 @@
 #include <sifteo/machine.h>
 
 #include "cubecodec.h"
+#include "cubeslots.h"
 #include "svmmemory.h"
 
 using namespace Sifteo;
@@ -354,7 +355,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 }
 
 bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-                          _SYSAssetGroupCube *ac)
+    _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit)
 {
     /*
      * Since we're dealing with asset group pointers as well as
@@ -373,42 +374,81 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      * Returns 'true' if we finish sending an asset group.
      */
 
-    // Cube has no room in its buffer
-    if (!loadBufferAvail)
+    /*
+     * We have a state bit in CubeSlots to keep track of whether we
+     * need to send an addressing command to the decoder, so that it
+     * knows this asset group's load address. Addressing commands are
+     * part of the loadstream that we send over the radio, but they're
+     * created dynamically rather than coming straight from flash.
+     */
+     bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+
+    /*
+     * How much space do we need? The minimum unit of asset data is
+     * just a byte, but an addressing command is three bytes. If we don't
+     * have enough, we need to be able to determine this before sending a
+     * flash escape. Once we send the escape, we're committed.
+     */
+    const unsigned escapeSizeInBits = 12;
+    unsigned dataSizeInBytes = flashAddrPending ? 3 : 1;
+    unsigned dataSizeInBits = dataSizeInBytes << 3;
+    if (!txBits.hasRoomForFlush(buf, escapeSizeInBits + dataSizeInBits))
         return false;
 
-    // No room in output buffer
-    if (!txBits.hasRoomForFlush(buf, 12 + 8))
+    // The cube also must have enough buffer space to receive our minimum data
+    if (loadBufferAvail < dataSizeInBytes)
         return false;
 
-    // Per-cube asset state pointer is invalid
+    // Per-cube asset state pointer is invalid?
     if (!ac)
         return false;
 
-    // Read (cached) asset group header
+    // Read (cached) asset group header. Must be valid.
     const _SYSAssetGroupHeader *headerVA =
         reinterpret_cast<const _SYSAssetGroupHeader*>(group->pHdr);
     _SYSAssetGroupHeader header;
     if (!SvmMemory::copyROData(header, headerVA))
         return false;
 
+    // Read 'progress' from untrusted memory only once, and validate it.
     uint32_t progress = ac->progress;
-    if (progress > header.dataSize)
+    if (progress >= header.dataSize)
         return false;
 
-    FlashBlockRef ref;
-    SvmMemory::PhysAddr dataPA;
-    SvmMemory::VirtAddr dataVA = reinterpret_cast<SvmMemory::VirtAddr>(headerVA);
-    dataVA += header.hdrSize;
-    dataVA += progress;
+    /*
+     * The escape command indicates that the entire remainder of 'buf' is
+     * data for the flash codec. We can figure out how much data to send
+     * now. We're limited by the size of the packet buffer, the size of
+     * the data left to send, and the amount of space in the cube's FIFO.
+     */
 
     flashEscape(buf);
+    uint32_t count = MIN(buf.bytesFree(), loadBufferAvail);
+    ASSERT(count >= dataSizeInBytes);
 
-    // We're limited by the size of the packet, the asset, and the cube's FIFO
-    uint32_t count = MIN(buf.bytesFree(), header.dataSize - progress);
-    count = MIN(count, loadBufferAvail);
-    progress += count;
-    loadBufferAvail -= count;
+    /*
+     * If we need to send an address command, send that first. If we can
+     * still cram in some actual loadstream data, awesome, but this is
+     * the only part that must succeed.
+     */
+
+    if (flashAddrPending) {
+        uint16_t addr = ac->baseAddr;
+        ASSERT(buf.bytesFree() >= 3);
+
+        // Opcode, lat1, lat2
+        buf.append(0xe1);
+        buf.append(addr << 1);
+        buf.append((addr >> 6) & 0xfe);
+
+        Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
+        ASSERT(count >= 3);
+        ASSERT(loadBufferAvail >= 3);
+        count -= 3;
+        loadBufferAvail -= 3;
+        if (!count)
+            return false;
+    }
 
     /*
      * We access flash data through the cache, instead of FlashStream, for
@@ -424,7 +464,18 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      *     amortize this cost over many packets.
      */
 
+    FlashBlockRef ref;
+    SvmMemory::VirtAddr dataVA = reinterpret_cast<SvmMemory::VirtAddr>(headerVA);
+    dataVA += header.hdrSize;
+    dataVA += progress;
+
+    count = MIN(count, header.dataSize - progress);
+    progress += count;
+    ASSERT(loadBufferAvail >= count);
+    loadBufferAvail -= count;
+
     while (count) {
+        SvmMemory::PhysAddr dataPA;
         uint32_t chunk = count;
         if (!SvmMemory::mapROData(ref, dataVA, chunk, dataPA))
             return false;

@@ -124,6 +124,7 @@ class CubeSlot {
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
+
     // number of cube (ie, not master) ticks for a neighbor tx slot.
     // represents cube bit period * num total bits in a tx sequence.
     // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c

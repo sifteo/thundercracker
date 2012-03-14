@@ -83,6 +83,7 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(CubeSlots::flashResetSent, ~bit());
     Atomic::Or(CubeSlots::flashResetWait, bit());
+    Atomic::Or(CubeSlots::flashAddrPending, bit());
 
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
@@ -155,7 +156,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
         _SYSAssetGroup *group = loadGroup;
         if (group && !(group->doneCubes & bit()) &&
-            codec.flashSend(tx.packet, group, assetCube(group))) {
+            codec.flashSend(tx.packet, group, assetCube(group), bit())) {
 
             /* Finished asset loading */
             Atomic::SetLZ(group->doneCubes, id());
