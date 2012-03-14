@@ -13,6 +13,7 @@
  */
 
 #define IRQ_HANDLER     extern "C" void __attribute__ ((interrupt ("IRQ")))
+#define NAKED_HANDLER   extern "C" void __attribute__ ((naked))
 
 extern "C" void _start();
 
@@ -21,7 +22,7 @@ IRQ_HANDLER ISR_HardFault();
 IRQ_HANDLER ISR_MemManage();
 IRQ_HANDLER ISR_BusFault();
 IRQ_HANDLER ISR_UsageFault();
-IRQ_HANDLER ISR_SVCall();
+NAKED_HANDLER ISR_SVCall();
 IRQ_HANDLER ISR_Debug();
 IRQ_HANDLER ISR_PendSV();
 IRQ_HANDLER ISR_SysTick();
