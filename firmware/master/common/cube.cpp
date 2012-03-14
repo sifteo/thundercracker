@@ -153,24 +153,20 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     } else {
         // Not waiting on a reset. See if we need to send asset data.
 
-        bool done = false;
         _SYSAssetGroup *group = loadGroup;
-
         if (group && !(group->doneCubes & bit()) &&
-            codec.flashSend(tx.packet, group, assetCube(group), done)) {
+            codec.flashSend(tx.packet, group, assetCube(group))) {
 
-            if (done) {
-                /* Finished asset loading */
-                Atomic::SetLZ(group->doneCubes, id());
-                Event::setPending(_SYS_CUBE_ASSETDONE, id());
+            /* Finished asset loading */
+            Atomic::SetLZ(group->doneCubes, id());
+            Event::setPending(_SYS_CUBE_ASSETDONE, id());
 
-                DEBUG_ONLY({
-                    // In debug builds only, we log the asset download time
-                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                    LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                         id(), SvmDebug::formatAddress(group).c_str(), seconds));
-                })
-            }
+            DEBUG_ONLY({
+                // In debug builds only, we log the asset download time
+                float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
+                     id(), SvmDebug::formatAddress(group).c_str(), seconds));
+            })
         }
     }
 

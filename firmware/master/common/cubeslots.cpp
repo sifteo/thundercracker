@@ -13,10 +13,6 @@ using namespace Sifteo;
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
-
-/*
- * Slot instances
- */
 _SYSCubeIDVector CubeSlots::vecEnabled = 0;
 _SYSCubeIDVector CubeSlots::vecConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
@@ -26,32 +22,37 @@ _SYSCubeIDVector CubeSlots::frameACKValid = 0;
 _SYSCubeIDVector CubeSlots::neighborACKValid = 0;
 _SYSCubeIDVector CubeSlots::expectStaleACK = 0;
 
-
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
-void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max) {
+
+void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
+{
 	minCubes = min;
 	maxCubes = max;
 }
 
-void CubeSlots::enableCubes(_SYSCubeIDVector cv) {
+void CubeSlots::enableCubes(_SYSCubeIDVector cv)
+{
     NeighborSlot::resetSlots(cv);
     Sifteo::Atomic::Or(CubeSlots::vecEnabled, cv);
 }
 
-void CubeSlots::disableCubes(_SYSCubeIDVector cv) {
+void CubeSlots::disableCubes(_SYSCubeIDVector cv)
+{
     Sifteo::Atomic::And(CubeSlots::vecEnabled, ~cv);
 }
 
-void CubeSlots::connectCubes(_SYSCubeIDVector cv) {
+void CubeSlots::connectCubes(_SYSCubeIDVector cv)
+{
     Sifteo::Atomic::Or(CubeSlots::vecConnected, cv);
 
     // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
     Sifteo::Atomic::Or(CubeSlots::expectStaleACK, cv);
 }
 
-void CubeSlots::disconnectCubes(_SYSCubeIDVector cv) {
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
     Sifteo::Atomic::And(CubeSlots::vecConnected, ~cv);
 
     Sifteo::Atomic::And(CubeSlots::flashResetWait, ~cv);
@@ -60,6 +61,7 @@ void CubeSlots::disconnectCubes(_SYSCubeIDVector cv) {
     Sifteo::Atomic::And(CubeSlots::neighborACKValid, ~cv);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
+
     // TODO: if any of the cubes in cv are currently part of a
     // neighbor-pair with any cubes that are still active, those
     // active cubes neeed to remove their now-defunct neighbors

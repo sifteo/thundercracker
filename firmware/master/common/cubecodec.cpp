@@ -354,7 +354,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 }
 
 bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-                          _SYSAssetGroupCube *ac, bool &done)
+                          _SYSAssetGroupCube *ac)
 {
     /*
      * Since we're dealing with asset group pointers as well as
@@ -369,6 +369,8 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      *
      * After this initial check, any further checks exist only as
      * protection against buggy or malicious user code.
+     *
+     * Returns 'true' if we finish sending an asset group.
      */
 
     // Cube has no room in its buffer
@@ -434,8 +436,5 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
 
     ac->progress = progress;
     ASSERT(progress <= header.dataSize);
-    if (progress >= header.dataSize)
-        done = true;
-
-    return true;
+    return progress >= header.dataSize;
 }
