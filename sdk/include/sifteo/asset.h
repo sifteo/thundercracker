@@ -27,6 +27,14 @@ class AssetGroup {
  public:
 
     /**
+     * Is this asset group still being downloaded?
+     */
+
+    bool isLoading() {
+        return (sys.reqCubes & ~sys.doneCubes) != 0;
+    }
+
+    /**
      * Wait until this asset group is available on all cubes that it
      * was requested on via Cube::loadAssets(). Assets load
      * asynchronously, but it's sometimes necessary to block until
@@ -34,7 +42,7 @@ class AssetGroup {
      */
 
     void wait() {
-        while (sys.reqCubes & ~sys.doneCubes)
+        while (isLoading())
             _SYS_yield();
     }
 
@@ -59,6 +67,14 @@ class AssetImage {
 
     AssetGroup *group;
     const uint16_t *tiles;
+    
+    unsigned pixelWidth() const {
+        return width * 8;
+    }
+    
+    unsigned pixelHeight() const {
+        return height * 8;
+    }
 };
 
 
@@ -75,6 +91,14 @@ class PinnedAssetImage {
 
     AssetGroup *group;
     uint16_t index;
+
+    unsigned pixelWidth() const {
+        return width * 8;
+    }
+    
+    unsigned pixelHeight() const {
+        return height * 8;
+    }
 };
 
 

@@ -202,8 +202,21 @@ class VidMode_BG0 : public VidMode {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
     }
 
+    /// Clear to a specific tile index
     void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
+    }
+
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
+    }
+
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
     }
 
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
@@ -388,6 +401,7 @@ public:
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
     }
 
+    /// Clear to a specific tile index
     void clear(uint16_t tile=0)
     {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
@@ -396,6 +410,18 @@ public:
         _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
         _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
         _SYS_vbuf_fill(&buf.sys, _SYS_VA_SPR, 0, 8*5/2);
+    }
+
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
+    }
+
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
     }
 
     bool isInMode()
@@ -493,8 +519,21 @@ class VidMode_BG2 : public VidMode {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG2);
     }
 
+    /// Clear to a specific tile index
     void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, tile, BG2_width * BG2_height);
+    }
+
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
+    }
+
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
     }
 
     static const unsigned BG2_width = _SYS_VRAM_BG2_WIDTH;
