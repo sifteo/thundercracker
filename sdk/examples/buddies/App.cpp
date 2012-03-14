@@ -990,7 +990,7 @@ void App::UpdateGameState(float dt)
                             mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, VidMode::TILE));
                             mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0));
                         }
-                        else
+                        else if (mTouching[i] == TOUCH_STATE_END)
                         {
                             mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
