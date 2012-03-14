@@ -20,19 +20,20 @@ const float BubbleSpawner::MAX_LONG_SPAWN = 8.0f;
 const float BubbleSpawner::SHORT_PERIOD_CHANCE = 0.75f;
 
 
-BubbleSpawner::BubbleSpawner()
+BubbleSpawner::BubbleSpawner( VidMode_BG0_SPR_BG1 &vid )
 {
-    Reset();
+    Reset( vid );
 }
 
 
-void BubbleSpawner::Reset()
+void BubbleSpawner::Reset( VidMode_BG0_SPR_BG1 &vid )
 {
     m_fTimeTillSpawn = Game::random.uniform( MAX_SHORT_SPAWN, MIN_LONG_SPAWN );
 
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
         m_aBubbles[i].Disable();
+        vid.resizeSprite(BUBBLE_SPRITEINDEX + i, 0, 0);
     }
 }
 

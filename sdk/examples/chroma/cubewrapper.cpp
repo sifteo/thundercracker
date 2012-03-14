@@ -30,7 +30,8 @@ const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true )
+        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
+        m_bubbles( m_vid )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -82,7 +83,7 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
-    m_bubbles.Reset();
+    m_bubbles.Reset( m_vid );
     m_numQueuedClears = 0;
 
     m_dirty = true;
@@ -1420,6 +1421,7 @@ void CubeWrapper::checkEmpty()
     if( Game::Inst().getMode() == Game::MODE_SURVIVAL && isEmpty() && m_state != STATE_EMPTY )
     {
         Game::Inst().addLevel();
+        m_bubbles.Reset( m_vid );
         setState( STATE_EMPTY );
     }
 }

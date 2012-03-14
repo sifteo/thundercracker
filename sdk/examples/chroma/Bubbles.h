@@ -47,8 +47,8 @@ public:
     static const float SHORT_PERIOD_CHANCE;
     static const unsigned int BUBBLE_SPRITEINDEX = 4;
 
-    BubbleSpawner();
-    void Reset();
+    BubbleSpawner( VidMode_BG0_SPR_BG1 &vid );
+    void Reset( VidMode_BG0_SPR_BG1 &vid );
     void Update( float dt, const Float2 &tilt );
     void Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper );
 private:
