@@ -301,6 +301,23 @@ int ClampMod(int value, int modulus)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+const AssetImage &GetBuddyFullAsset(int buddyId)
+{
+    switch (buddyId)
+    {
+        default:
+        case 0: return BuddyFull0;
+        case 1: return BuddyFull1;
+        case 2: return BuddyFull2;
+        case 3: return BuddyFull3;
+        case 4: return BuddyFull4;
+        case 5: return BuddyFull5;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "GAME_STATE_NONE",
@@ -361,6 +378,7 @@ App::App()
     , mHintPieceSkip(-1)
     , mHintCubeTouched(CUBE_ID_UNDEFINED)
     , mFreePlayShakeThrottleTimer(0.0f)
+    , mShuffleBannerIndex(0)
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
@@ -802,6 +820,12 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
+        case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
+        {
+            mShuffleBannerIndex = 0;
+            mDelayTimer = kStateTimeDelayLong;
+            break;   
+        }
         case GAME_STATE_SHUFFLE_SHUFFLING:
         {
             mShuffleMoveCounter = 0;
@@ -1039,6 +1063,16 @@ void App::UpdateGameState(float dt)
             if (UpdateTimer(mDelayTimer, dt))
             {
                 StartGameState(GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE);
+            }
+            break;
+        }
+        case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
+        {
+            // TODO: Touch to swap
+        
+            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
+            {
+                mShuffleBannerIndex = (mShuffleBannerIndex + 1) % 3;
             }
             break;
         }
@@ -1384,13 +1418,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
-            // TODO: Draw full buddy as BG0
-            // TODO: Alternate BG1 banners for shake/touch
+            cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             
-            cubeWrapper.DrawBackground(UiBackground);
-            cubeWrapper.DrawUiAsset(
-                Vec2(0, 0),
-                cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
+            if (mShuffleBannerIndex == 0 || mShuffleBannerIndex == 1)
+            {
+                unsigned int bannerIndex = (mShuffleBannerIndex + cubeWrapper.GetId()) % 2;
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), bannerIndex ? ShuffleShakeToShuffle : ShuffleTouchToSwap);
+            }
+            else if (mShuffleBannerIndex == 2)
+            {
+                // Don't display a banner in this case
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_SHUFFLING:

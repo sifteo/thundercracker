@@ -133,6 +133,7 @@ private:
     float mFreePlayShakeThrottleTimer;
     
     // Shuffle Mode
+    unsigned int mShuffleBannerIndex;
     unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     

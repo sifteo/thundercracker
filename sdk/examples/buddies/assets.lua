@@ -8,6 +8,14 @@ BuddyFaceBackground3 = image{"assets/bg4.png"}
 BuddyFaceBackground4 = image{"assets/bg5.png"}
 BuddyFaceBackground5 = image{"assets/bg6.png"}
 
+-- Face (Full)
+BuddyFull0 = image{"assets/buddy_full_1.png"}
+BuddyFull1 = image{"assets/buddy_full_2.png"}
+BuddyFull2 = image{"assets/buddy_full_3.png"}
+BuddyFull3 = image{"assets/buddy_full_4.png"}
+BuddyFull4 = image{"assets/buddy_full_5.png"}
+BuddyFull5 = image{"assets/buddy_full_6.png"}
+
 -- Face Parts (Sprites)
 BuddyFaceParts0 = image{"assets/parts1.png", height = 48}
 BuddyFaceParts1 = image{"assets/parts2.png", height = 48}
