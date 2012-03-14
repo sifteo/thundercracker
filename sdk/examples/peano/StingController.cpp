@@ -53,7 +53,11 @@ Game::GameState Run()
         Game::Wait(0);
     }
 
-    Game::Wait(3);
+    int64_t t = System::clockNS() + 3 * int64_t(1000000000);
+    while(!skip && t > System::clockNS())
+    {
+        System::paint();
+    }
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
