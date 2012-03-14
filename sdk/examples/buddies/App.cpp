@@ -1139,8 +1139,34 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
-            // TODO: Touch to swap
-        
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        // TODO: Put into a function
+                    
+                        Random random;
+                        int selection = random.randrange(kMaxBuddies - kNumCubes);
+                        
+                        unsigned buddyId = mCubeWrappers[i].GetBuddyId();
+                        for (int j = 0; j < selection; ++j)
+                        {
+                            buddyId = (buddyId + 1) % kMaxBuddies;
+                            while (IsBuddyUsed(*this, buddyId))
+                            {
+                                buddyId = (buddyId + 1) % kMaxBuddies;
+                            }
+                        }
+                        mCubeWrappers[i].SetBuddyId(buddyId);
+                        
+                        ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                        mShuffleUiIndex = 2; // TODO: Clear touch message for only this cube
+                    }
+                }
+            }
+            
             if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
             {
                 mShuffleUiIndex = (mShuffleUiIndex + 1) % 3;
