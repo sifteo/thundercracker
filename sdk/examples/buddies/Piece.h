@@ -22,7 +22,7 @@ class Piece
 public:
     enum Attribute
     {
-        ATTR_NONE = 0,
+        ATTR_NONE = 0U,
         ATTR_FIXED,
         ATTR_HIDDEN,
         
@@ -53,12 +53,12 @@ public:
     
     bool Compare(const Piece &rhs) const;
     
-private:    
-    int mBuddy;
-    int mPart;
-    int mRotation;
-    bool mMustSolve; // TODO: This doesn't apply to "start" pieces, so does it belong in here?
-    Attribute mAttribute;
+private:
+    unsigned int mBuddy  : 5;
+    int mPart            : 3;
+    int mRotation        : 3;
+    bool mMustSolve      : 1;
+    Attribute mAttribute : 3;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

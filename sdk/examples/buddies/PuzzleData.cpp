@@ -45,6 +45,7 @@ Puzzle sPuzzles[4]; // TODO: Expand to 15 once I slimmify the data format.
 
 void InitializePuzzles()
 {
+    DEBUG_LOG(("sizeof(Piece) = %lu\n", sizeof(Piece)));
     DEBUG_LOG((
         "sizeof(Puzzle) = %lu x %lu = %lu\n",
         sizeof(Puzzle), arraysize(sPuzzles), sizeof(sPuzzles)));
