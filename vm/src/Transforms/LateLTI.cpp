@@ -37,6 +37,7 @@ namespace {
         
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
+        void metadataString(CallSite &CS);
     };
 }
 
@@ -71,6 +72,31 @@ bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
         LogTransform(CS);
         return true;
     }
+    
+    if (Name == "_SYS_lti_metadata_str") {
+        metadataString(CS);
+    }
 
     return false;
+}
+
+void LateLTIPass::metadataString(CallSite &CS)
+{
+    if (CS.arg_size() != 2)
+        report_fatal_error("Wrong number of arguments for _SYS_lti_metadata_str");
+
+    ConstantInt *CIType = dyn_cast<ConstantInt>(CS.getArgument(0));
+    if (!CIType)
+        report_fatal_error("Metadata type must be a constant integer.");
+    uint16_t type = CIType->getZExtValue();
+    if (type != CIType->getZExtValue())
+        report_fatal_error("Metadata type argument is too large at " + Twine(CS.getInstruction()->getDebugLoc());
+
+    std::string str;
+    if (!GetConstantStringInfo(CS.getArgument(1), str))
+        report_fatal_error("String for _SYS_lti_metadata_str() is not verifiably constant.");
+
+    printf("Metadata: %d '%s'\n", type, str.c_str());
+
+    CS.getInstruction()->eraseFromParent();
 }

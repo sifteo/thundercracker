@@ -61,10 +61,9 @@ namespace {
 
             } while (fmtBegin != fmtEnd);
 
-/*
             if (argBegin != argEnd)
                 reportError("Too many parameters");
-*/
+
             flush();
         }
 
@@ -276,7 +275,7 @@ namespace {
     };
     
 }
-    
+
 namespace llvm {
 
     void LogTransform(CallSite &CS, uint32_t flags = 0)
