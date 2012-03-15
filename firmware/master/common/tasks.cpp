@@ -15,7 +15,7 @@ using namespace Sifteo;
 
 uint32_t Tasks::pendingMask;
 
-Tasks::Task Tasks::TaskList[MAX_TASKS] = {
+Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     { 0 },
@@ -36,6 +36,7 @@ void Tasks::init()
 */
 void Tasks::setPending(TaskID id, void* p)
 {
+    ASSERT(id < arraysize(TaskList));
     ASSERT(TaskList[id].callback != NULL);
     TaskList[id].param = p;
     Atomic::SetLZ(pendingMask, id);

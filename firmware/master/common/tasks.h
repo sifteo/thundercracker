@@ -32,7 +32,7 @@ private:
         void *param;
     };
 
-    static Task TaskList[MAX_TASKS];
+    static Task TaskList[];
 };
 
 #endif // TASKS_H
