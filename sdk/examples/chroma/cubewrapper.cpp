@@ -228,13 +228,37 @@ void CubeWrapper::Draw()
 
             if( Game::Inst().getWrapperIndex( this ) == 0 )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), UI_Highscores, 0);
+                int highScoreIndex = -1;
+                unsigned int myScore = Game::Inst().getScore();
+
+                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                {
+                    if( myScore == Game::Inst().getHighScore(i) )
+                    {
+                        highScoreIndex = i;
+                        break;
+                    }
+                }
+
+                if( highScoreIndex >= 0 )
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Highscores, 0);
+                    m_vid.BG0_drawAsset(Vec2(0,HIGH_SCORE_OFFSET+2*highScoreIndex), UI_Highlight, 0);
+                }
+                else
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Highscores_lowscore, 0);
+                    Banner::DrawScore( m_bg1helper, Vec2( 11, 14 ), Banner::CENTER, myScore );
+                }
 
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
 
-                    Banner::DrawScore( m_bg1helper, Vec2( 7, 4+2*i ), Banner::RIGHT, score );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, HIGH_SCORE_OFFSET+2*i ), Banner::RIGHT, score );
+
+                    if( i == Game::NUM_HIGH_SCORES - 2 && highScoreIndex < 0 )
+                        break;
                 }
             }
             else if( Game::Inst().getWrapperIndex( this ) == 1 )

@@ -99,7 +99,7 @@ public:
     void setState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
-	inline unsigned int getScore() const { return m_iScore; }
+    unsigned int getScore() const;
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
     inline void addLevel() { m_iLevel++; }

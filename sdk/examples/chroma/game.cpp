@@ -350,6 +350,15 @@ void Game::setState( GameState state )
 }
 
 
+unsigned int Game::getScore() const
+{
+    if( m_mode == MODE_BLITZ )
+        return m_iScore;
+    else
+        return getDisplayedLevel();
+}
+
+
 void Game::TestMatches()
 {
     if( !Game::Inst().AreMovesLegal() )
