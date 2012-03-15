@@ -417,30 +417,42 @@ struct _SYSPseudoRandomState {
  * Sifteo Virtual Machine.
  *
  * In addition to standard read-only data, read-write data, and BSS segments,
- * we support a special metadata segment. This contains a sequence of back
- * to back metadata records which can be interpreted as a key-value dictionary.
+ * we support a special metadata segment. This contains a key-value dictionary
+ * of metadata records.
  *
- * Each record in the metadata segment begins with an aligned 32-bit header
- * containing the record key and size. Size is encoded in the low 8 bits of the
- * type header. It is in units of 32-bit words, not including the header.
+ * The contents of the metadata segment is structured as first an array of
+ * key/size words, then a stream of variable-size values. The values must be
+ * aligned according to their natural ABI alignment, and they must not cross
+ * a memory page boundary.
+ *
+ * Since the p_paddr field in the phdr is typically unused, we overload that
+ * to store the number of keys in the array.
+ *
+ * Strings are zero-terminated. Additional padding bytes may appear after
+ * any value.
  */
 
 #define _SYS_ELF_PT_METADATA        0x7f7c0000      // Metadata phdr type
-#define _SYS_METADATA_SIZE_MASK     0x000000ff      // Words of data to follow
-#define _SYS_METADATA_TYPE_MASK     0xffffff00
 
-/// Metadata keys
-#define _SYS_METADATA_TITLE         0x00000100      // Variable-length string
-#define _SYS_METADATA_ICON_80x80    0x00000202      // _SYSMetadataPinnedImage
+struct _SYSMetadataKey {
+    uint16_t    stride;             // Byte offset from this value to the next
+    uint16_t    type;               // _SYS_METADATA_*
+};
 
-// XXX: TBD, bootstrap asset groups, asset group slots...
+/// Metadata types
+#define _SYS_METADATA_NONE          0x0000  // Ignored. (padding)
+#define _SYS_METADATA_UUID          0x0001  // Binary UUID for this specific build
+#define _SYS_METADATA_AGSLOT        0x0002  // Array of _SYSAssetGroupSlotMetadata
+#define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
+#define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
+#define _STS_METADATA_VERSION_STR   0x0005  // Version string
+#define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataPinnedImage
 
 struct _SYSMetadataPinnedImage {
     uint32_t    groupHdr;       // File offset for _SYSAssetGroupHeader    
-    uint16_t    baseAddr;       // Tile base address
+    uint16_t    index;          // First tile index in image
     uint16_t    reserved;       // Must be zero
 };
-
 
 /**
  * Link-time intrinsics.
@@ -459,6 +471,7 @@ struct _SYSMetadataPinnedImage {
 
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
+void _SYS_lti_metadata_str(uint16_t type, const char *str);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.

@@ -84,6 +84,8 @@ static void init()
 
 void siftmain()
 {
+    _SYS_lti_metadata_str(_SYS_METADATA_TITLE_STR, "Hello World SDK Example");
+
     init();
 
     _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
