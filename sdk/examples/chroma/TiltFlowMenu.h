@@ -41,7 +41,7 @@ public:
 
   static const int LABEL_OFFSET = 0;
   static const int TIP_Y_OFFSET = 12;
-  static const int COVER_Y_OFFSET = -20;
+  static const int COVER_Y_OFFSET = -23;
 
   static const int NUM_TIPS = 2;
   static const Sifteo::AssetImage *TIPS[NUM_TIPS];
