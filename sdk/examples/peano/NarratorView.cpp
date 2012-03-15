@@ -81,7 +81,8 @@ void NarratorView::SetTransitionAmount(float u) {
         //        Paint();
     } else {
         mOffset = (16-7)* u;
-        GetCube()->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
+        GetCube()->Image(Narrator_Base);
+        GetCube()->DrawVaultDoorsOpenStep1(mOffset);
         //          Cube.Paint();
     }
 
@@ -95,15 +96,14 @@ void NarratorView::Paint() {
         return;
     }
 
+    c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
-        //draw the top half since the emotes arent full screen.
-        c->Image(&Narrator_Base, Vec2(0,0), Vec2(0,0), Vec2(16, 16-emotes[mEmote]->height));
+        c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
     }
-    c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
 
     if (mOffset > 0) {
-        c->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
+        c->DrawVaultDoorsOpenStep1(mOffset);
     }
 
 

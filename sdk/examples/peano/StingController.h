@@ -7,7 +7,7 @@ namespace TotalsGame
 
 	namespace StingController
 	{
-        Game::GameState Run();
+        void Run();
 
 	};
 

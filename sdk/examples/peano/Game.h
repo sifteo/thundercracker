@@ -29,8 +29,6 @@ namespace TotalsGame {
 
         enum GameState
         {
-            GameState_Sting,
-            GameState_Init,
             GameState_Menu,
             GameState_Tutorial,
             GameState_Puzzle,
@@ -68,8 +66,6 @@ namespace TotalsGame {
         void Wait(float delay);
 
         bool IsPlayingRandom();
-
-		GameState Initialize();
 
         GameState Advance();
 

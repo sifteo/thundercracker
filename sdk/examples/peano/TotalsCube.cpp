@@ -247,6 +247,11 @@ namespace TotalsGame
         }
     }
 
+    void TotalsCube::Image(const AssetImage &image)
+    {
+        backgroundLayer.BG0_drawAsset(Vec2(0,0), image);
+    }
+
     void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)
     {
         Vec2 p = pos;
@@ -301,46 +306,49 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), skin.vault_door, 0);
 	}
 
-    void TotalsCube::OpenShuttersSync(const AssetImage *image)
+    void TotalsCube::OpenShuttersToReveal(const AssetImage &image)
     {	
 		AudioPlayer::PlayShutterOpen();
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
-			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
+            Image(image);
+            DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime);
             System::paintSync();
             Game::UpdateDt();
 		}
         
-		DrawVaultDoorsOpenStep1(32, image);			
+        Image(image);
+        DrawVaultDoorsOpenStep1(32);
         System::paintSync();
         Game::UpdateDt();
 
         
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
-			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
+            Image(image);
+            DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime);
             System::paintSync();
             Game::UpdateDt();
 		}
     }
 
-    void TotalsCube::CloseShuttersSync(const AssetImage *image)
+    void TotalsCube::CloseShutters()
     {
         AudioPlayer::PlayShutterClose();
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
-			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
+            DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime);
 			System::paintSync();
             Game::UpdateDt();
 		}
         
-		DrawVaultDoorsOpenStep2(0, image);
+        DrawVaultDoorsOpenStep2(0);
 		System::paintSync();
         Game::UpdateDt();
         
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
-			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
+            DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime);
 			System::paintSync();
             Game::UpdateDt();
 		}			
@@ -349,16 +357,13 @@ namespace TotalsGame
 
 
 
-	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
+    void TotalsCube::DrawVaultDoorsOpenStep1(int offset)
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 
 		int yTop = x - (offset+4)/8;
 		int yBottom = y + (offset+4)/8;
-
-		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
 
         const Skins::Skin &skin = Skins::GetSkin();
 
@@ -375,16 +380,13 @@ namespace TotalsGame
 		*/
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
+    void TotalsCube::DrawVaultDoorsOpenStep2(int offset)
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 
 		int xLeft = x - (offset+4)/8;
 		int xRight = y + (offset+4)/8;
-
-		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
 
         const Skins::Skin &skin = Skins::GetSkin();
 

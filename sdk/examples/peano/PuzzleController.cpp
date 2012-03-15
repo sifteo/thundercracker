@@ -203,7 +203,7 @@ Game::GameState Run()
     {
         Game::cubes[i].SetView(tv+i);
         tv[i].SetToken(puzzle->GetToken(i));
-        Game::cubes[i].OpenShuttersSync(&Skins::GetSkin().background);
+        Game::cubes[i].OpenShuttersToReveal(Skins::GetSkin().background);
         tv[i].PaintNow();
     }
 
@@ -256,7 +256,7 @@ Game::GameState Run()
                         Game::cubes[t].foregroundLayer.Flush();
                         Game::cubes[t].SetView(NULL);
 
-                        Game::cubes[t].CloseShuttersSync(&skin.background);
+                        Game::cubes[t].CloseShutters();
                         Game::cubes[t].DrawVaultDoorsClosed();
                     }
 
@@ -279,7 +279,7 @@ Game::GameState Run()
                     {
                         Game::cubes[i].SetView(NULL);
 
-                        Game::cubes[i].OpenShuttersSync(&skin.background);
+                        Game::cubes[i].OpenShuttersToReveal(skin.background);
 
                         Game::cubes[i].SetView(puzzle->GetToken(i)->GetTokenView());
                         ((TokenView*)Game::cubes[i].GetView())->PaintNow();
@@ -317,7 +317,7 @@ Game::GameState Run()
             c->foregroundLayer.Flush();
             c->SetView(NULL);
 
-            c->CloseShuttersSync(&skin.background_lit);
+            c->CloseShutters();
             Game::Wait(0.1f);
         }
     }

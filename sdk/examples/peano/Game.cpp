@@ -126,19 +126,21 @@ void Run(TotalsCube *_cubes, int nCubes)
 
     //TODO		saveData.Load();
 
-    GameState nextState = GameState_Sting;
+
+    StingController::Run();
+
+    GameState nextState =
+    #if SKIP_INTRO_TUTORIAL
+        GameState_Menu;
+    #else
+        saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+    #endif
+
 
     while(1)
     {
         switch(nextState)
-        {
-        case GameState_Sting:
-            nextState = StingController::Run();
-            break;
-
-        case GameState_Init:
-            nextState = Initialize();
-            break;
+        {   
 
         case GameState_Puzzle:
             nextState = PuzzleController::Run();
@@ -199,15 +201,6 @@ void Wait(float delay)
 bool IsPlayingRandom()
 {
     return currentPuzzle == NULL;
-}
-
-GameState Initialize()
-{
-#if SKIP_INTRO_TUTORIAL
-    return GameState_Menu;
-#else
-    return saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
-#endif
 }
 
 GameState Advance()

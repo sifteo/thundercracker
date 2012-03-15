@@ -154,13 +154,13 @@ Game::GameState Run() {
     // open shutters
     narrator.SetMessage("");
     Game::Wait(1);
-    Game::cubes[1].OpenShuttersSync(&skin.background);
+    Game::cubes[1].OpenShuttersToReveal(skin.background);
     // initialize two token views
     firstToken.SetToken(puzzle->GetToken(0));
     Game::cubes[1].SetView(&firstToken);
     firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
     Game::Wait(0.25f);
-    Game::cubes[2].OpenShuttersSync(&skin.background);
+    Game::cubes[2].OpenShuttersToReveal(skin.background);
     secondToken.SetToken(puzzle->GetToken(1));
     Game::cubes[2].SetView(&secondToken);
     secondToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
@@ -315,26 +315,26 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].HideSprites();
-    Game::cubes[2].CloseShuttersSync(&skin.background);
+    Game::cubes[2].CloseShutters();
     Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].HideSprites();
-    Game::cubes[1].CloseShuttersSync(&skin.background);
+    Game::cubes[1].CloseShutters();
     Game::cubes[1].DrawVaultDoorsClosed();
 
     Game::Wait(1);
     narrator.SetMessage("Keep combining to build\neven more numbers!", NarratorView::EmoteYay);
     Game::Wait(2);
 
-    Game::cubes[1].OpenShuttersSync(&Tutorial_Groups);
+    Game::cubes[1].OpenShuttersToReveal(Tutorial_Groups);
     Game::cubes[1].Image(&Tutorial_Groups, Vec2(0,0));
 
     Game::Wait(5);
     narrator.SetMessage("");
     Game::Wait(1);
-    Game::cubes[1].CloseShuttersSync(&Tutorial_Groups);
+    Game::cubes[1].CloseShutters();
     Game::cubes[1].DrawVaultDoorsClosed();
 
     Game::Wait(1);
@@ -348,13 +348,13 @@ Game::GameState Run() {
 
 
     //Game::cubes[1]->SetView(NULL);
-    Game::cubes[1].OpenShuttersSync(&skin.background);
+    Game::cubes[1].OpenShuttersToReveal(skin.background);
     Game::cubes[1].SetView(&firstToken);
     firstToken.DidGroupDisconnect();
     Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
-    Game::cubes[2].OpenShuttersSync(&skin.background);
+    Game::cubes[2].OpenShuttersToReveal(skin.background);
     Game::cubes[2].SetView(&secondToken);
     secondToken.DidGroupDisconnect();
     Game::Wait(1);
@@ -390,13 +390,13 @@ Game::GameState Run() {
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].SetView(NULL);
-    Game::cubes[2].CloseShuttersSync(&skin.background);
+    Game::cubes[2].CloseShutters();
     Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].HideSprites();
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
-    Game::cubes[1].CloseShuttersSync(&skin.background);
+    Game::cubes[1].CloseShutters();
     Game::cubes[1].DrawVaultDoorsClosed();
 
     // transition out narrator

@@ -116,9 +116,9 @@ Game::GameState Run()
     PLAY_MUSIC(sfx_PeanosVaultMenu);
 
     menuState = MenuState_WelcomeBack;
-    //kinda lame, but i know we'll never go from the menu to sting.
-    nextGameState = Game::GameState_Sting;
-    while(nextGameState == Game::GameState_Sting)
+
+    nextGameState = Game::GameState(500);
+    while(nextGameState == Game::GameState(500))
     {
         switch(menuState)
         {
