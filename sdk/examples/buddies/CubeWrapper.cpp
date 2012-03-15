@@ -34,12 +34,12 @@ const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
     switch (buddyId)
     {
         default:
-        case 0: return BuddyFaceBackground0;
-        case 1: return BuddyFaceBackground1;
-        case 2: return BuddyFaceBackground2;
-        case 3: return BuddyFaceBackground3;
-        case 4: return BuddyFaceBackground4;
-        case 5: return BuddyFaceBackground5;
+        case 0: return BuddyBackground0;
+        case 1: return BuddyBackground1;
+        case 2: return BuddyBackground2;
+        case 3: return BuddyBackground3;
+        case 4: return BuddyBackground4;
+        case 5: return BuddyBackground5;
     }
 }
 
@@ -51,12 +51,12 @@ const AssetImage &GetBuddyFacePartsAsset(int buddyId)
     switch (buddyId)
     {
         default:
-        case 0: return BuddyFaceParts0;
-        case 1: return BuddyFaceParts1;
-        case 2: return BuddyFaceParts2;
-        case 3: return BuddyFaceParts3;
-        case 4: return BuddyFaceParts4;
-        case 5: return BuddyFaceParts5;
+        case 0: return BuddyParts0;
+        case 1: return BuddyParts1;
+        case 2: return BuddyParts2;
+        case 3: return BuddyParts3;
+        case 4: return BuddyParts4;
+        case 5: return BuddyParts5;
     }
 }
 
@@ -268,28 +268,28 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    Video().BG0_drawAsset(Vec2(0, 0), CutsceneBackground);
+    Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackground);
     
-    Video().setSpriteImage(0, CutsceneSprites, 0);
-    Video().setSpriteImage(1, CutsceneSprites, 1);
+    Video().setSpriteImage(0, StoryCutsceneSprites, 0);
+    Video().setSpriteImage(1, StoryCutsceneSprites, 1);
     
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
     
     if (text[0] == '<')
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubbleLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), Font, text + 1);
+        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleLeft);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text + 1);
     }
     else if (text[0] == '>')
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubbleRight);
-        mBg1Helper.DrawText(Vec2(1, 1), Font, text + 1);
+        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleRight);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text + 1);
     }
     else
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubbleLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), Font, text);
+        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleLeft);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text);
     }
 }
 
