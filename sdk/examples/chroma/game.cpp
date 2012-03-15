@@ -488,12 +488,15 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 }
             }
 
-            if( m_mode == MODE_BLITZ && !bannered )
+            /*if( m_mode == MODE_BLITZ && !bannered )
             {
                 String<16> aBuf;
                 aBuf << comboScore;
                 pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
-            }
+            }*/
+
+            if( m_mode == MODE_BLITZ )
+                SetChain( false );
 		}
 
 		m_iDotScore = 0;
