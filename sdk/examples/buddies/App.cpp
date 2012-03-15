@@ -1587,7 +1587,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 int minutes = int(mScoreTimer) / 60;
                 int seconds = int(mScoreTimer - (minutes * 60.0f));
-                int place = 4; // TODO: Detech and pass in real value
+                int place = 3; // TODO: Detect and pass in real value
                 DrawShuffleScore(cubeWrapper, minutes, seconds, place);
             }
             if (cubeWrapper.GetId() == 1)

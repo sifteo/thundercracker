@@ -41,31 +41,30 @@ MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
 
 -- Shuffle Mode
 ShuffleTitleScreen = image{"assets/titlescreen_shuffle.png"}
-ShuffleNeighbor = image{"assets/neighbor.png"}
-ShufflePanelBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
-ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
-ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
-ShufflePanelBestTimes = image{"assets/panel_best_times.png"}
-ShuffleCongratulations = image{"assets/panel_congratulations.png"}
-ShuffleShakeToPlayAgain = image{"assets/panel_shake_to_play_again.png"}
-ShuffleTouchToExit = image{"assets/panel_touch_to_exit.png"}
-ShuffleTouchToSwap = image{"assets/touch_to_swap.png"}
 ShuffleShakeToShuffle = image{"assets/shake_to_shuffle.png"}
-ShuffleRibbon = image{"assets/ribbon.png"}
+ShuffleTouchToSwap = image{"assets/touch_to_swap.png"}
+ShuffleNeighbor = image{"assets/neighbor.png"}
+ShuffleCongratulations = image{"assets/panel_congratulations.png"}
 ShuffleSpriteFrontGluv = image{"assets/sprite_front_gluv.png", pinned = true}
 ShuffleSpriteFrontRike = image{"assets/sprite_front_rike.png", pinned = true}
 ShuffleSpriteFrontZorg = image{"assets/sprite_front_zorg.png", pinned = true}
+ShufflePanelBestTimes = image{"assets/panel_best_times.png"}
+ShufflePanelBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
+ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
+ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
+ShuffleShakeToPlayAgain = image{"assets/panel_shake_to_play_again.png"}
+ShuffleTouchToExit = image{"assets/panel_touch_to_exit.png"}
 
 -- Story Mode
+StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscene_bg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_left.png"}
 StoryCutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
-StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryChapterOverlay = image{"assets/ui_chapter_overlay.png"}
 StoryChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}
-StoryChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
 StoryChapterNext = image{"assets/ui_chapter_next.png"}
 StoryChapterRetry = image{"assets/ui_chapter_retry.png"}
+StoryChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
 
 -- Sounds (use encode="PCM" for PCM encoding)
 SoundGems = sound{"assets/gems1_4A9.raw"}
