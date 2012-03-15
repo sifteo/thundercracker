@@ -951,6 +951,10 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_SHUFFLE_SOLVED:
         {
             mDelayTimer = kStateTimeDelayLong;
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+            {
+                mFaceCompleteTimers[i] = kShuffleFaceCompleteTimerDelay;
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
