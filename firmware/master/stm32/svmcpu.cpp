@@ -36,14 +36,25 @@ static void restoreHwContext()
 
 void init()
 {
-//    memset(regs, 0, sizeof(regs));
+    memset(&userRegs, 0, sizeof userRegs);
 }
 
+/*
+ * Run an application.
+ *
+ * Set the user stack pointer to the provided value,
+ * and write the CONTROL special register to both switch to user mode,
+ * and start using the user mode stack.
+ *
+ * Finally, branch into user code.
+ */
 void run(reg_t sp, reg_t pc)
 {
     asm(
-        "mrs   %[sp_arg], psp          \n\t"
-        "bx    %[target]" : : [sp_arg] "r"(sp), [target] "r"(pc)
+        "mrs    %[sp_arg], psp          \n\t"
+        "mov    r2, #0x3                \n\t"
+        "msr    control, r2             \n\t"
+        "bx     %[target]" : : [sp_arg] "r"(sp), [target] "r"(pc)
     );
     for (;;) {
         asm volatile ("wfi");
