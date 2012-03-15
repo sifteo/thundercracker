@@ -410,7 +410,7 @@ struct _SYSPseudoRandomState {
 #define _SYS_INVALID_HWID       ((uint64_t)-1)
 
 /**
- * Binary metadata.
+ * ELF binary format.
  *
  * Loadable programs in this system are standard ELF binaries, however their
  * instruction set is a special restricted subset of Thumb-2 as defined by the
@@ -432,17 +432,19 @@ struct _SYSPseudoRandomState {
  * any value.
  */
 
-#define _SYS_ELF_PT_METADATA        0x7f7c0000      // Metadata phdr type
+/// SVM-specific program header types
+#define _SYS_ELF_PT_METADATA        0x7000f001
+#define _SYS_ELF_PT_LOAD_RLE        0x7000f002
 
 struct _SYSMetadataKey {
-    uint16_t    stride;             // Byte offset from this value to the next
-    uint16_t    type;               // _SYS_METADATA_*
+    uint16_t    stride;     // Byte offset from this value to the next
+    uint16_t    key;        // _SYS_METADATA_*
 };
 
-/// Metadata types
+/// Metadata keys
 #define _SYS_METADATA_NONE          0x0000  // Ignored. (padding)
 #define _SYS_METADATA_UUID          0x0001  // Binary UUID for this specific build
-#define _SYS_METADATA_AGSLOT        0x0002  // Array of _SYSAssetGroupSlotMetadata
+#define _SYS_METADATA_AGSLOT        0x0002  // XXX
 #define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
@@ -467,11 +469,15 @@ struct _SYSMetadataPinnedImage {
  *   - Binary integers: %b
  *   - C-style strings: %s
  *   - Hex-dump of fixed width buffers: %<width>h
+ *
+ * Supported metadata value types:
+ *   - C-style strings
+ *   - Plain old data, passed by value
  */
 
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
-void _SYS_lti_metadata_str(uint16_t type, const char *str);
+void _SYS_lti_metadata(uint16_t key, ...);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.

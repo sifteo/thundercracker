@@ -68,32 +68,30 @@ uint32_t SVMMemoryLayout::getSectionMemSize(enum SVMProgramSection s) const
     }
 }
 
-uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s, uint32_t base) const
+uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
 {
-    uint32_t align = SVMTargetMachine::getBlockSize();
+    uint32_t blockAlign = SVMTargetMachine::getBlockSize();
+    uint32_t minAlign = sizeof(uint32_t);
 
     /*
      * A note on disk alignment: RO must be aligned on disk, since we're fetching
      * from it directly, the the other sections need no extra alignment.
-     *
-     * We do align DEBUG just to make it easy to strip binaries on a block boundary,
-     * but this isn't even required.
      */
 
     switch (s) {
-    case SPS_META:  return base;
-    case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META, base), align);
-    case SPS_RW:    return getSectionDiskEnd(SPS_RO, base);
+    case SPS_META:  return SVMELF::HdrSize;
+    case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META), blockAlign);
+    case SPS_RW:    return RoundUpToAlignment(getSectionDiskEnd(SPS_RO), minAlign);
     case SPS_BSS:   return 0;
-    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW, base), align);
-    case SPS_END:   return getSectionDiskEnd(SPS_DEBUG, base);
+    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), minAlign);
+    case SPS_END:   return getSectionDiskEnd(SPS_DEBUG);
     default:        llvm_unreachable("Bad SVM Program Section");
     }
 }
 
-uint32_t SVMMemoryLayout::getSectionDiskEnd(enum SVMProgramSection s, uint32_t base) const
+uint32_t SVMMemoryLayout::getSectionDiskEnd(enum SVMProgramSection s) const
 {
-    return getSectionDiskOffset(s, base) + spsSize[s];
+    return getSectionDiskOffset(s) + spsSize[s];
 }
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(enum SVMProgramSection s) const
@@ -340,14 +338,14 @@ SVMProgramSection SVMMemoryLayout::getSectionKind(const MCSectionData *SD) const
     return SPS_DEBUG;
 }
 
-uint32_t SVMMemoryLayout::getSectionDiskOffset(const MCSectionData *SD, uint32_t base) const
+uint32_t SVMMemoryLayout::getSectionDiskOffset(const MCSectionData *SD) const
 {
     SectionOffsetMap_t::const_iterator it = SectionOffsetMap.find(SD);
 
     if (it == SectionOffsetMap.end())
         llvm_unreachable("Section not found in offset map");
 
-    return it->second + getSectionDiskOffset(getSectionKind(SD), base);
+    return it->second + getSectionDiskOffset(getSectionKind(SD));
 }
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(const MCSectionData *SD) const

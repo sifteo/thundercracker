@@ -50,7 +50,7 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
             if (Layout.getSectionFileSize(SD) == 0)
                 continue;
 
-            padToOffset(ML.getSectionDiskOffset(SD, HdrSize));
+            padToOffset(ML.getSectionDiskOffset(SD));
             Asm.WriteSectionData(SD, Layout);
         }
     }
@@ -72,19 +72,11 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
 
 void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout)
 {
-    unsigned PHNum = SPS_DEBUG;
-    unsigned PHSize = PHNum * sizeof(ELF::Elf32_Phdr);
-
     // Debug-only section headers
     unsigned SHNum = ELFDebug ? 1 + Asm.getSectionList().size() : 0;
     unsigned Strtab = ELFDebug ? EMB.getShstrtabIndex() : 0;
-
-    // Place program headers and ELF headers in the proper 'header' block,
-    // but keep the section headers at the end of the SPS_DEBUG section.
-    unsigned PHOffset = sizeof(ELF::Elf32_Ehdr);
-    HdrSize = PHOffset + PHSize;
     SHOffset = ELFDebug ?
-        RoundUpToAlignment(ML.getSectionDiskOffset(SPS_END, HdrSize), 4) : 0;
+        RoundUpToAlignment(ML.getSectionDiskOffset(SPS_END), 4) : 0;
 
     Write8(0x7f);                                   // e_ident
     Write8('E');
@@ -101,12 +93,12 @@ void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayo
     Write16(ELF::EM_ARM);                           // e_machine
     Write32(ELF::EV_CURRENT);                       // e_version
     Write32(ML.getEntryAddress(Asm, Layout));       // e_entry
-    Write32(PHOffset);                              // e_phoff
+    Write32(SVMELF::PHOffset);                      // e_phoff
     Write32(SHOffset);                              // e_shoff
     Write32(0);                                     // e_flags
     Write16(sizeof(ELF::Elf32_Ehdr));               // e_ehsize
     Write16(sizeof(ELF::Elf32_Phdr));               // e_phentsize
-    Write16(PHNum);                                 // e_phnum
+    Write16(SVMELF::PHNum);                         // e_phnum
     Write16(sizeof(ELF::Elf32_Shdr));               // e_shentsize
     Write16(SHNum);                                 // e_shnum
     Write16(Strtab);                                // e_shstrndx
@@ -120,15 +112,15 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
      * executing it.
      */
 
-    const uint32_t PT_METADATA = 0x7f7c0000;
     uint32_t Flags = ELF::PF_R;
     uint32_t Type = ELF::PT_LOAD;
-    uint32_t Align = SVMTargetMachine::getBlockSize();
+    uint32_t Align = sizeof(uint32_t);
 
     switch (S) {
 
     case SPS_RO:
         Flags |= ELF::PF_X;
+        Align = SVMTargetMachine::getBlockSize();
         break;
 
     case SPS_RW:
@@ -137,8 +129,7 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
         break;
 
     case SPS_META:
-        Type = PT_METADATA;
-        Align = 4;
+        Type = SVMELF::PT_METADATA;
         break;
 
     default:
@@ -146,7 +137,7 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
     }
 
     Write32(Type);                                  // p_type
-    Write32(ML.getSectionDiskOffset(S, HdrSize));   // p_offset
+    Write32(ML.getSectionDiskOffset(S));            // p_offset
     Write32(ML.getSectionMemAddress(S));            // p_vaddr
     Write32(0);                                     // p_paddr
     Write32(ML.getSectionDiskSize(S));              // p_filesz
@@ -180,7 +171,7 @@ void SVMELFProgramWriter::writeSectionHeader(const MCAsmLayout &Layout,
     Write32(sh_type);                               // sh_type
     Write32(SE->getFlags());                        // sh_flags
     Write32(ML.getSectionMemAddress(SD));           // sh_addr
-    Write32(ML.getSectionDiskOffset(SD, HdrSize));  // sh_offset
+    Write32(ML.getSectionDiskOffset(SD));           // sh_offset
     Write32(Layout.getSectionFileSize(SD));         // sh_size
     Write32(sh_link);                               // sh_link
     Write32(sh_info);                               // sh_info

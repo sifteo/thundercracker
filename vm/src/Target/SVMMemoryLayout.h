@@ -28,6 +28,7 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ELF.h"
 #include <map>
 #include <vector>
 
@@ -57,6 +58,23 @@ namespace llvm {
         SPS_END,                // End of all sections
     };
 
+    // SVM ELF constants
+    namespace SVMELF {
+
+        // Program header types
+        enum PT {
+            PT_METADATA = 0x7000f001,
+        };
+
+        // Program header layout
+        enum PH {
+            PHNum = SPS_DEBUG,
+            PHSize = PHNum * sizeof(ELF::Elf32_Phdr),
+            PHOffset = sizeof(ELF::Elf32_Ehdr),
+            HdrSize = PHOffset + PHSize,
+        };
+    };
+
     class SVMMemoryLayout {
     public:
 
@@ -76,13 +94,13 @@ namespace llvm {
             const MCAsmLayout &Layout, MCValue Value) const;
 
         uint32_t getSectionDiskSize(enum SVMProgramSection s) const;
-        uint32_t getSectionDiskOffset(enum SVMProgramSection s, uint32_t base) const;
-        uint32_t getSectionDiskEnd(enum SVMProgramSection s, uint32_t base) const;
+        uint32_t getSectionDiskOffset(enum SVMProgramSection s) const;
+        uint32_t getSectionDiskEnd(enum SVMProgramSection s) const;
 
         uint32_t getSectionMemSize(enum SVMProgramSection s) const;
         uint32_t getSectionMemAddress(enum SVMProgramSection s) const;
 
-        uint32_t getSectionDiskOffset(const MCSectionData *SD, uint32_t base) const;
+        uint32_t getSectionDiskOffset(const MCSectionData *SD) const;
         uint32_t getSectionMemAddress(const MCSectionData *SD) const;
 
         SVMProgramSection getSectionKind(const MCSectionData *SD) const;

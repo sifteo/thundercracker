@@ -68,7 +68,6 @@ namespace llvm {
         SVMMemoryLayout ML;
         SVMELFMetadataBuilder EMB;
         uint32_t SHOffset;
-        uint32_t HdrSize;
 
         void writePadding(unsigned N);
         void padToOffset(uint32_t O);
@@ -76,8 +75,6 @@ namespace llvm {
         void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout);
         void writeProgramHeader(SVMProgramSection S);
         void writeSectionHeader(const MCAsmLayout &Layout, const MCSectionData *SD);  
-
-        void buildSectionStringTable(const MCAssembler &Asm, const MCAsmLayout &Layout);  
     };
 
 }  // end namespace
