@@ -29,9 +29,8 @@ BuddyPartFixed = image{"assets/fixed.png"}
 BuddyPartHidden = image{"assets/hidden.png"}
 
 -- UI
-UiFont = image{"assets/font-8x16.png", height = 16}
-UiFontOrange = image{"assets/font-8x16_orange.png", height = 16}
-UiFontRed = image{"assets/font-8x16_red.png", height = 16}
+UiFontWhite = image{"assets/font-8x16_white.png", height = 16}
+UiFontBlack = image{"assets/font-8x16_black.png", height = 16}
 UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
@@ -58,10 +57,9 @@ ShuffleSpriteFrontRike = image{"assets/sprite_front_rike.png", pinned = true}
 ShuffleSpriteFrontZorg = image{"assets/sprite_front_zorg.png", pinned = true}
 
 -- Story Mode
-StoryCutsceneBackground = image{"assets/cutscene_bg.png"}
+StoryCutsceneBackgroundLeft = image{"assets/cutscene_bg_left.png"}
+StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_left.png"}
 StoryCutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
-StoryCutsceneTextBubbleLeft = image{"assets/ui_textbox_left.png"}
-StoryCutsceneTextBubbleRight = image{"assets/ui_textbox_right.png"}
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryChapterOverlay = image{"assets/ui_chapter_overlay.png"}
 StoryChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}

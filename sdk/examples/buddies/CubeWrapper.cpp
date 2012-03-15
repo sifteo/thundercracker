@@ -268,8 +268,6 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackground);
-    
     Video().setSpriteImage(0, StoryCutsceneSprites, 0);
     Video().setSpriteImage(1, StoryCutsceneSprites, 1);
     
@@ -278,18 +276,18 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
     
     if (text[0] == '<')
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text + 1);
+        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundLeft);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text + 1);
     }
     else if (text[0] == '>')
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleRight);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text + 1);
+        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundRight);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text + 1);
     }
     else
     {
-        mBg1Helper.DrawAsset(Vec2(0, 0), StoryCutsceneTextBubbleLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFont, text);
+        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundLeft);
+        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text);
     }
 }
 
