@@ -8,6 +8,11 @@
 
 #include "frontend.h"
 #include <time.h>
+// for MAX HAX
+#if __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 
 Frontend *Frontend::instance = NULL;
 
@@ -25,6 +30,18 @@ Frontend::Frontend()
 
 bool Frontend::init(System *_sys)
 {
+    // MAX HAX - chdir out of a bundle
+    #if __APPLE__
+    CFBundleRef mainbundle = CFBundleGetMainBundle();
+    CFURLRef bundleUrl = CFBundleCopyBundleURL(mainbundle);
+    CFStringRef path = CFURLCopyFileSystemPath(bundleUrl, kCFURLPOSIXPathStyle);
+    std::string dir = CFStringGetCStringPtr(path, 0);
+    CFRelease(path);
+    CFRelease(bundleUrl);
+    const size_t baseLength = dir.find_last_of('/');
+    chdir(dir.substr(0, baseLength).c_str());
+    #endif
+
     instance = this;
     sys = _sys;
     frameCount = 0;
