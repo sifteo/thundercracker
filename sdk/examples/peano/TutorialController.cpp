@@ -329,7 +329,7 @@ Game::GameState Run() {
     Game::Wait(2);
 
     Game::cubes[1].OpenShuttersToReveal(Tutorial_Groups);
-    Game::cubes[1].Image(&Tutorial_Groups, Vec2(0,0));
+    Game::cubes[1].Image(Tutorial_Groups, Vec2(0,0));
 
     Game::Wait(5);
     narrator.SetMessage("");

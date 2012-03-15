@@ -9,13 +9,13 @@ namespace StingController
 
 bool skip = false;
 
-void OnCubeTouch(Cube::ID, bool touching)
+void OnCubeTouch(void*, _SYSCubeID cid)
 {
-    if(!touching)
+    if(!Game::cubes[cid].touching())
         skip = true;
 }
 
-void OnCubeShake(Cube::ID)
+void OnCubeShake(void*, _SYSCubeID cid)
 {
     skip = true;
 }
