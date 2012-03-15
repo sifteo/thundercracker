@@ -257,5 +257,15 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
 
 }
 
+void DialogWindow::EndIt()
+{
+    System::paintSync();
+    mCube->backgroundLayer.set();
+    mCube->backgroundLayer.clear();
+    mCube->foregroundLayer.Clear();
+    mCube->backgroundLayer.setWindow(0, 128);
+    mCube->foregroundLayer.Flush();
+    System::paintSync();
+}
 
 }

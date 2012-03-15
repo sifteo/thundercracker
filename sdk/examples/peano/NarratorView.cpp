@@ -99,7 +99,7 @@ void NarratorView::Paint() {
     c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
-        c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
+        c->Image(*emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
     }
 
     if (mOffset > 0) {

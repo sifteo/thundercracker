@@ -259,7 +259,7 @@ void TokenView::PaintNow()
 
     const Skins::Skin &skin = Skins::GetSkin();
 
-    c->Image(mLit ? &skin.background_lit : &skin.background, Vec2(0,0));
+    c->Image(mLit ? skin.background_lit : skin.background, Vec2(0,0));
     SideStatus bottomStatus = SideStatusOpen;
     SideStatus rightStatus = SideStatusOpen;
     SideStatus topStatus = SideStatusOpen;
@@ -328,7 +328,7 @@ void TokenView::PaintNow()
     {
         Fraction result = token->GetCurrentTotal();
         const int yPos = 3;
-        c->Image(&skin.accent, Vec2(0,yPos));
+        c->Image(skin.accent, Vec2(0,yPos));
         if(isInGroup)
         {
             c->foregroundLayer.DrawAsset(Vec2(8-Accent_Current.width/2, yPos+1), Accent_Current);

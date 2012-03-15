@@ -57,7 +57,7 @@ public:
 		void DrawVaultDoorsClosed();
 
         void Image(const AssetImage &image);
-        void Image(const AssetImage *image, const Vec2 &pos, int frame=0);
+        void Image(const AssetImage &image, const Vec2 &pos, int frame=0);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
         void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame=0);
         void ClipImage(const AssetImage *image, const Vec2 &pos);

@@ -27,6 +27,7 @@ public:
     void SetBackgroundColor(unsigned r, unsigned g, unsigned b);
     void SetForegroundColor(unsigned r, unsigned g, unsigned b);
     void DoDialog(const char *text, int yTop, int ySize);
+    void EndIt();
 };
 
 }

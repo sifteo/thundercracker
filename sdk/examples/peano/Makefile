@@ -43,7 +43,7 @@ PeanoTools.exe: PeanoTools/*.cs
 
 GENERATED_FILES += puzzles.gen.cpp 
 GENERATED_FILES += puzzles.gen.h
-puzzles.gen.cpp puzzles.gen.h : puzzles.xml mungePuzzles.py dummy.txt
+puzzles.gen.cpp puzzles.gen.h : puzzles.xml mungePuzzles.py #dummy.txt
 	python mungePuzzles.py
 
 GENERATED_FILES += dummy.txt

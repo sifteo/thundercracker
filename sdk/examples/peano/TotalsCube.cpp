@@ -143,9 +143,9 @@ namespace TotalsGame
         }
     }
 	
-    void TotalsCube::Image(const AssetImage *image, const Vec2 &pos, int frame)
+    void TotalsCube::Image(const AssetImage &image, const Vec2 &pos, int frame)
 	{
-        backgroundLayer.BG0_drawAsset(pos, *image, frame);
+        backgroundLayer.BG0_drawAsset(pos, image, frame);
 	}
 
 	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
