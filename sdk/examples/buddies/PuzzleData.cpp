@@ -43,6 +43,7 @@ namespace Buddies { namespace {
 
 Puzzle sPuzzleDefault;
 Puzzle sPuzzles[kMaxBuddies * kPuzzlesPerBuddy];
+unsigned int sNumPuzzles = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,17 +91,17 @@ void InitializePuzzles()
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     
-    unsigned int i = 0;
+    sNumPuzzles = 0;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Puzzle 0
     ////////////////////////////////////////////////////////////////////////////////
     
-    ASSERT(i < arraysize(sPuzzles));
+    ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
-    sPuzzles[i].Reset();
-    sPuzzles[i].SetTitle("Big Mouth");
-    sPuzzles[i].SetClue("Swap Mouths");
+    sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetTitle("Big Mouth");
+    sPuzzles[sNumPuzzles].SetClue("Swap Mouths");
     
     // Note:
     // - You can have up to 8 pages of text per cutscene
@@ -108,172 +109,173 @@ void InitializePuzzles()
     // - Use \n to split lines
     // - Start text with "<" to denote the line is for the left speaker.
     // - Start text with ">" to denote the line is for the right speaker.
-    sPuzzles[i].AddCutsceneTextStart("<Gimme a kiss!");
-    sPuzzles[i].AddCutsceneTextStart(">Can I use\nyour mouth?");
-    sPuzzles[i].AddCutsceneTextStart("<...");
-    sPuzzles[i].AddCutsceneTextStart("<OK!");
-    sPuzzles[i].AddCutsceneTextEnd(">Muuuahhh!");
-    sPuzzles[i].AddCutsceneTextEnd("<Hot n' heavy!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<Gimme a kiss!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(">Can I use your\nmouth?");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<...");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<OK!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(">Muuuahhh!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<Hot n' heavy!");
     
     // Currently you can do up to 256 shuffles.
-    sPuzzles[i].SetNumShuffles(0);
+    sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[i].AddBuddy(0); // BuddyIndex 0: Add Buddy #0 as the first buddy
-    sPuzzles[i].AddBuddy(1); // BuddyIndex 1: Add Buddy #1 as the second buddy
+    sPuzzles[sNumPuzzles].AddBuddy(0); // BuddyIndex 0: Add Buddy #0 as the first buddy
+    sPuzzles[sNumPuzzles].AddBuddy(1); // BuddyIndex 1: Add Buddy #1 as the second buddy
     
     // Start Pieces
-    sPuzzles[i].SetPieceStart( 0, SIDE_TOP,    Piece(0, 0)); // BuddyIndex, Side, Piece
-    sPuzzles[i].SetPieceStart( 0, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[i].SetPieceStart( 0, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[i].SetPieceStart( 0, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(0, 0)); // BuddyIndex, Side, Piece
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(0, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(0, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(0, 3));
     
-    sPuzzles[i].SetPieceStart( 1, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[i].SetPieceStart( 1, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[i].SetPieceStart( 1, SIDE_BOTTOM, Piece(1, 2));
-    sPuzzles[i].SetPieceStart( 1, SIDE_RIGHT,  Piece(1, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(1, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(1, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(1, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(1, 3));
     
     // End Pieces
-    sPuzzles[i].SetPieceEnd(   0, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(0, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3));
     
-    sPuzzles[i].SetPieceEnd(   1, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_RIGHT,  Piece(1, 3));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(1, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(1, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(1, 3));   
     
-    ++i;
+    ++sNumPuzzles;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Puzzle 1
     ////////////////////////////////////////////////////////////////////////////////
     
-    ASSERT(i < arraysize(sPuzzles));
+    ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
-    sPuzzles[i].Reset();
-    sPuzzles[i].SetTitle("All Mixed Up");
-    sPuzzles[i].SetClue("Unscramble");
+    sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetTitle("All Mixed Up");
+    sPuzzles[sNumPuzzles].SetClue("Unscramble");
     
-    sPuzzles[i].AddCutsceneTextStart("<Let's get\nCRAZY!");
-    sPuzzles[i].AddCutsceneTextEnd(">My head\nhurts.");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<Let's get\nCRAZY!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(">My head hurts.");
     
-    sPuzzles[i].SetNumShuffles(3);
+    sPuzzles[sNumPuzzles].SetNumShuffles(3);
     
-    sPuzzles[i].AddBuddy(1);
-    sPuzzles[i].AddBuddy(2);
+    sPuzzles[sNumPuzzles].AddBuddy(1);
+    sPuzzles[sNumPuzzles].AddBuddy(2);
     
     // Start Pieces
-    sPuzzles[i].SetPieceStart( 0, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[i].SetPieceStart( 0, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[i].SetPieceStart( 0, SIDE_BOTTOM, Piece(1, 2));
-    sPuzzles[i].SetPieceStart( 0, SIDE_RIGHT,  Piece(1, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(1, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(1, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(1, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(1, 3));
     
-    sPuzzles[i].SetPieceStart( 1, SIDE_TOP,    Piece(2, 0));
-    sPuzzles[i].SetPieceStart( 1, SIDE_LEFT,   Piece(2, 1));
-    sPuzzles[i].SetPieceStart( 1, SIDE_BOTTOM, Piece(2, 2));
-    sPuzzles[i].SetPieceStart( 1, SIDE_RIGHT,  Piece(2, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(2, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(2, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(2, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(2, 3));
     
     // End Pieces
-    sPuzzles[i].SetPieceEnd(   0, SIDE_TOP,    Piece(1, 0, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_LEFT,   Piece(1, 1, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_RIGHT,  Piece(1, 3, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(1, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(1, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(1, 3, true));
     
-    sPuzzles[i].SetPieceEnd(   1, SIDE_TOP,    Piece(2, 0, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_LEFT,   Piece(2, 1, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_BOTTOM, Piece(2, 2, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_RIGHT,  Piece(2, 3, true));  
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(2, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(2, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(2, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(2, 3, true));  
     
-    ++i;
+    ++sNumPuzzles;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Puzzle 2
     ////////////////////////////////////////////////////////////////////////////////
     
-    ASSERT(i < arraysize(sPuzzles));
+    ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
-    sPuzzles[i].Reset();
-    sPuzzles[i].SetTitle("Bad Hair Day");
-    sPuzzles[i].SetClue("Swap Hair");
+    sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetTitle("Bad Hair Day");
+    sPuzzles[sNumPuzzles].SetClue("Swap Hair");
     
-    sPuzzles[i].AddCutsceneTextStart("<How do I get\ncool hair");
-    sPuzzles[i].AddCutsceneTextStart("<like you?");
-    sPuzzles[i].AddCutsceneTextEnd("<Now I look\nlike Kelly!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<How do I get\ncool hair\nlike you?");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<Now I look\nlike Kelly!");
     
-    sPuzzles[i].SetNumShuffles(0);
+    sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[i].AddBuddy(3);
-    sPuzzles[i].AddBuddy(4);
+    sPuzzles[sNumPuzzles].AddBuddy(3);
+    sPuzzles[sNumPuzzles].AddBuddy(4);
     
     // Start Pieces
-    sPuzzles[i].SetPieceStart( 0, SIDE_TOP,    Piece(3, 0));
-    sPuzzles[i].SetPieceStart( 0, SIDE_LEFT,   Piece(3, 1));
-    sPuzzles[i].SetPieceStart( 0, SIDE_BOTTOM, Piece(3, 2));
-    sPuzzles[i].SetPieceStart( 0, SIDE_RIGHT,  Piece(3, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(3, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(3, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(3, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(3, 3));
     
-    sPuzzles[i].SetPieceStart( 1, SIDE_TOP,    Piece(4, 0));
-    sPuzzles[i].SetPieceStart( 1, SIDE_LEFT,   Piece(4, 1));
-    sPuzzles[i].SetPieceStart( 1, SIDE_BOTTOM, Piece(4, 2));
-    sPuzzles[i].SetPieceStart( 1, SIDE_RIGHT,  Piece(4, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(4, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(4, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(4, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(4, 3));
     
     // End Pieces
-    sPuzzles[i].SetPieceEnd(   0, SIDE_TOP,    Piece(4, 0, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_LEFT,   Piece(3, 1));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_BOTTOM, Piece(3, 2));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_RIGHT,  Piece(3, 3));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(4, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(3, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(3, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(3, 3));
     
-    sPuzzles[i].SetPieceEnd(   1, SIDE_TOP,    Piece(3, 0, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_LEFT,   Piece(4, 1));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_BOTTOM, Piece(4, 2));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_RIGHT,  Piece(4, 3));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(3, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(4, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(4, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(4, 3));   
     
-    ++i;
+    ++sNumPuzzles;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Puzzle 3
     ////////////////////////////////////////////////////////////////////////////////
     
-    ASSERT(i < arraysize(sPuzzles));
+    ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
-    sPuzzles[i].Reset();
-    sPuzzles[i].SetTitle("Private Eyes");
-    sPuzzles[i].SetClue("Swap Eyes");
+    sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetTitle("Private Eyes");
+    sPuzzles[sNumPuzzles].SetClue("Swap Eyes");
     
-    sPuzzles[i].AddCutsceneTextStart("<See the world\nfrom my eyes!");
-    sPuzzles[i].AddCutsceneTextEnd("<That's much\nbetter.");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<See the world\nfrom my eyes!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<That's much\nbetter.");
     
-    sPuzzles[i].SetNumShuffles(0);
+    sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[i].AddBuddy(5);
-    sPuzzles[i].AddBuddy(0);
+    sPuzzles[sNumPuzzles].AddBuddy(5);
+    sPuzzles[sNumPuzzles].AddBuddy(0);
     
     // Start Pieces
-    sPuzzles[i].SetPieceStart( 0, SIDE_TOP,    Piece(5, 0));
-    sPuzzles[i].SetPieceStart( 0, SIDE_LEFT,   Piece(5, 1));
-    sPuzzles[i].SetPieceStart( 0, SIDE_BOTTOM, Piece(5, 2));
-    sPuzzles[i].SetPieceStart( 0, SIDE_RIGHT,  Piece(5, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(5, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(5, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(5, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(5, 3));
     
-    sPuzzles[i].SetPieceStart( 1, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[i].SetPieceStart( 1, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[i].SetPieceStart( 1, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[i].SetPieceStart( 1, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(0, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(0, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(0, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(0, 3));
     
     // End Pieces
-    sPuzzles[i].SetPieceEnd(   0, SIDE_TOP,    Piece(5, 0));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1, true));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_BOTTOM, Piece(5, 2));
-    sPuzzles[i].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(5, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(5, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3, true));
     
-    sPuzzles[i].SetPieceEnd(   1, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_LEFT,   Piece(5, 1, true));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[i].SetPieceEnd(   1, SIDE_RIGHT,  Piece(5, 3, true));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(0, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(5, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(5, 3, true));   
     
-    ++i;
+    ++sNumPuzzles;
     
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
+    
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -281,7 +283,7 @@ void InitializePuzzles()
 
 unsigned int GetNumPuzzles()
 {
-    return arraysize(sPuzzles);
+    return sNumPuzzles;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
