@@ -32,20 +32,25 @@ const unsigned int kPuzzlesPerBuddy = 5;
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;
 const float kSwapAnimationSlide = 0.5f;
+const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears in shuffle mode
+const float kHintTimerOffDuration = 1.5f; // Seconds before hint disappears in shuffle mode
+const float kHintBlinkTimerDuration = 0.5f; // Blink rate for hints
 
 // Free Play
 const float kFreePlayShakeThrottleDuration = 1.5f;
 
 // Shuffle Mode
-const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears in shuffle mode
-const float kHintTimerOffDuration = 1.5f; // Seconds before hint disappears in shuffle mode
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
+const float kShuffleCharacterSplashDelay = 3.0f; // Time we see full buddy faces
+const float kShuffleBannerSwapDelay = 3.0f; // Time between banner swaps
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next
-const float kShuffleFaceCompleteTimerDuration = 2.0f;
+const float kShuffleFaceCompleteTimerDelay = 2.0f; // Time before "Face Complete" is dismissed
+const int kShuffleCutsceneJumpChance = 18; // The bigger the number, the slower they will jump
 
 // Story Mode
-const float kCutsceneTextDelay = 2.5f;
-const float kHintBlinkTimerDuration = 0.5f; // Blink rate for story mode hints
+const float kStoryCutsceneTextDelay = 2.5f;
+const int kStoryCutsceneJumpChanceA = 8;
+const int kStoryCutsceneJumpChanceB = 16;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

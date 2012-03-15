@@ -51,7 +51,7 @@ public:
         const char *text);
     
     // Special-Case Cutscene Stuff
-    void UpdateCutscene();
+    void UpdateCutscene(int jumpChanceA, int jumpChanceB);
     void DrawCutsceneShuffle();
     void DrawCutsceneStory(const char *text);
     

@@ -902,13 +902,13 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_CHARACTER_SPLASH:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kShuffleCharacterSplashDelay;
             break;
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
             mShuffleUiIndex = 0;
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kShuffleBannerSwapDelay;
             break;   
         }
         case GAME_STATE_SHUFFLE_SHUFFLING:
@@ -986,7 +986,7 @@ void App::StartGameState(GameState gameState)
             }
             else
             {
-                mDelayTimer = kCutsceneTextDelay;
+                mDelayTimer = kStoryCutsceneTextDelay;
             }
             mStoryCutsceneIndex = 0;
             break;
@@ -1041,7 +1041,7 @@ void App::StartGameState(GameState gameState)
             }
             else
             {
-                mDelayTimer = kCutsceneTextDelay;
+                mDelayTimer = kStoryCutsceneTextDelay;
             }
             mStoryCutsceneIndex = 0;
             break;
@@ -1173,7 +1173,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
+            if (UpdateTimerLoop(mDelayTimer, dt, kShuffleBannerSwapDelay))
             {
                 mShuffleUiIndex = (mShuffleUiIndex + 1) % 3;
             }
@@ -1261,7 +1261,8 @@ void App::UpdateGameState(float dt)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].UpdateCutscene();
+                    mCubeWrappers[i].UpdateCutscene(
+                        kShuffleCutsceneJumpChance, kShuffleCutsceneJumpChance);
                 }
             }
             
@@ -1289,7 +1290,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
-            mCubeWrappers[0].UpdateCutscene();
+            mCubeWrappers[0].UpdateCutscene(kStoryCutsceneJumpChanceA, kStoryCutsceneJumpChanceB);
             
             if (UpdateTimer(mDelayTimer, dt))
             {
@@ -1299,7 +1300,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    mDelayTimer += kCutsceneTextDelay;
+                    mDelayTimer += kStoryCutsceneTextDelay;
                 }
             }
             break;
@@ -1433,7 +1434,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_END:
         {
-            mCubeWrappers[0].UpdateCutscene();
+            mCubeWrappers[0].UpdateCutscene(kStoryCutsceneJumpChanceA, kStoryCutsceneJumpChanceB);
             
             if (UpdateTimer(mDelayTimer, dt))
             {
@@ -1443,7 +1444,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    mDelayTimer += kCutsceneTextDelay;
+                    mDelayTimer += kStoryCutsceneTextDelay;
                 }
             }
             break;
@@ -2220,12 +2221,12 @@ void App::OnSwapFinish()
         
         if (swap0Solved)
         {
-            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDelay;
         }
         
         if (swap1Solved)
         {
-            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDelay;
         }
         
         if (AllSolved(*this))
@@ -2273,12 +2274,12 @@ void App::OnSwapFinish()
         
         if (swap0Solved)
         {
-            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDelay;
         }
         
         if (swap1Solved)
         {
-            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDelay;
         }
         
         if (AllSolved(*this))
