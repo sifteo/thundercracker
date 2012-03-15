@@ -807,6 +807,36 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolyg
     }
 }
 
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+// Quicky Max Hack -- Wrapper for LodePNG::saveFile
+
+#if __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
+static inline std::string filenameToPath(std::string filename) {
+#if __APPLE__
+    CFBundleRef mainbundle = CFBundleGetMainBundle();
+    CFURLRef bundleUrl = CFBundleCopyBundleURL(mainbundle);
+    CFStringRef path = CFURLCopyFileSystemPath(bundleUrl, kCFURLPOSIXPathStyle);
+    std::string dir = CFStringGetCStringPtr(path, 0);
+    CFRelease(path);
+    CFRelease(bundleUrl);
+    const size_t baseLength = dir.find_last_of('/')+1;
+    return dir.substr(0, baseLength) + filename;
+#else
+    return filename;
+#endif
+}
+
+
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+
+
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
     std::vector<uint8_t> pixels(width * height * 4, 0);
@@ -818,7 +848,7 @@ void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned heigh
     encoder.getInfoPng().color.colorType = LCT_RGB;
     encoder.encode(png, pixels, width, height);
     
-    LodePNG::saveFile(png, name);
+    LodePNG::saveFile(png, filenameToPath(name));
 }
 
 void GLRenderer::saveColorBufferPNG(std::string name)
@@ -841,7 +871,7 @@ void GLRenderer::saveColorBufferPNG(std::string name)
     encoder.getInfoPng().color.colorType = LCT_RGB;
     encoder.encode(png, swappedPixels, width, height);
     
-    LodePNG::saveFile(png, name);
+    LodePNG::saveFile(png, filenameToPath(name));
 }
 
 const GLRenderer::Glyph *GLRenderer::findGlyph(uint32_t id)
