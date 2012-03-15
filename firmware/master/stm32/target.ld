@@ -1,13 +1,22 @@
 ENTRY(_start)
 
+/*
+ * Our ram is split into 3 sections:
+ * - system ram, used for .data and stack of the firmware
+ * - flash block cache, used to cache blocks of game code/data from external flash
+ * - user ram, used as .data and stack for user applications
+ */
 MEMORY
 {
-    RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 64K
+    SYSRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 28K
+    CACHERAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM), LENGTH = 4K
+    USERRAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM) + LENGTH(CACHERAM), LENGTH = 32K
+
     FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
 }
 
-/* Stack starts at the top of RAM */
-_stack = ORIGIN(RAM) + LENGTH(RAM) - 4;
+/* Main stack starts at the top of SYSRAM */
+_stack = ORIGIN(SYSRAM) + LENGTH(SYSRAM) - 4;
 
 SECTIONS
 {
@@ -70,7 +79,7 @@ SECTIONS
         __data_start = .;
         *(.data .data.*)
         __data_end = .;
-    } >RAM
+    } >SYSRAM
 
     /*
      * Zero-initialized data. Nothing is stored in flash.
@@ -81,7 +90,15 @@ SECTIONS
         __bss_start = .;
         *(.bss .bss.*);
         __bss_end = .;
-    } >RAM   
+    } >SYSRAM
+
+    .blockcache : {
+        . = ALIGN(4);
+    } >CACHERAM
+
+    .userram : {
+        . = ALIGN(4);
+    } >USERRAM
 
     /*
      * Junk we don't want.

@@ -245,7 +245,7 @@ public:
     }   
 
 private:
-    static uint8_t userRAM[RAM_SIZE_IN_BYTES];    
+    static uint8_t userRAM[RAM_SIZE_IN_BYTES] __attribute__((section(".userram")));
     static FlashRange flashSeg;
 };
 
