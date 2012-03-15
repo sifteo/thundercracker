@@ -400,7 +400,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
             }
 			break;
 		}
-		case STATE_SHOWINGSCORE:
+        /*case STATE_SHOWINGSCORE:
 		{
             if( m_score > 99 )
                 m_score = 99;
@@ -420,7 +420,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
             vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
-        /*case STATE_GONE:
+        case STATE_GONE:
 		{
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
 			break;
@@ -548,15 +548,6 @@ void GridSlot::Update(float t)
                 die();
 			break;
 		}
-		case STATE_SHOWINGSCORE:
-		{
-			if( t - m_eventTime > SCORE_FADE_DELAY )
-			{
-                m_state = STATE_GONE;
-				m_pWrapper->checkEmpty();
-			}
-			break;
-		}
         //clear this out in update, so it doesn't bash moving balls
         case STATE_GONE:
         {
@@ -618,7 +609,8 @@ void GridSlot::explode()
 
 void GridSlot::die()
 {
-	m_state = STATE_SHOWINGSCORE;
+    m_state = STATE_GONE;
+    m_pWrapper->checkEmpty();
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
 	Game::Inst().CheckChain( m_pWrapper );
