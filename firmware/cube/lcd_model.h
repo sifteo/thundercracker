@@ -5,7 +5,7 @@
  * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
-
+ 
 /*
  * This file implements the highly model-specific portions of the LCD
  * driver. Much of the LCD driver will run without changes on a wide
@@ -32,7 +32,12 @@
        defined(LCD_MODEL_TIANMA_ST7715)      || \
        defined(LCD_MODEL_TIANMA_HX8353)      )
 
-#define LCD_MODEL_GIANTPLUS_ILI9163C
+#if HWREV == 3
+#   define LCD_MODEL_TIANMA_HX8353
+#else
+#   define LCD_MODEL_GIANTPLUS_ILI9163C
+#endif
+
 #endif
 
 /********************************************************************/
