@@ -15,6 +15,7 @@
  * is packed along with a string table offset into a single 32-bit parameter.
  */
 
+#include "ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
@@ -82,7 +83,7 @@ namespace {
 
         void reportError(Twine description)
         {
-            report_fatal_error("In log format string: " + description);
+            report_fatal_error(I, "In log format string: " + description);
         }
 
         Value *createFlagsWord(uint32_t type, uint32_t arity, uint32_t param = 0)
@@ -287,7 +288,7 @@ namespace llvm {
         std::string fmtStr;
         assert(!CS.arg_empty());
         if (!GetConstantStringInfo(CS.getArgument(0), fmtStr))
-            report_fatal_error("Format string for _SYS_lti_log() is not verifiably constant.");
+            report_fatal_error(I, "Format string for _SYS_lti_log() is not verifiably constant.");
 
         // Iteratively extract log entries from the original _SYS_log() call
         std::string::iterator fmtI = fmtStr.begin(), fmtE = fmtStr.end();
