@@ -400,6 +400,47 @@ struct _SYSPseudoRandomState {
     uint32_t a, b, c, d;
 };
 
+/**
+ * Hardware IDs are 48-bit / 6-byte numbers that uniquely identify a
+ * particular cube. A valid HWIDs never contains 0xFF bytes.
+ */
+
+#define _SYS_HWID_BYTES         6
+#define _SYS_HWID_BITS          48
+#define _SYS_INVALID_HWID       ((uint64_t)-1)
+
+/**
+ * Binary metadata.
+ *
+ * Loadable programs in this system are standard ELF binaries, however their
+ * instruction set is a special restricted subset of Thumb-2 as defined by the
+ * Sifteo Virtual Machine.
+ *
+ * In addition to standard read-only data, read-write data, and BSS segments,
+ * we support a special metadata segment. This contains a sequence of back
+ * to back metadata records which can be interpreted as a key-value dictionary.
+ *
+ * Each record in the metadata segment begins with an aligned 32-bit header
+ * containing the record key and size. Size is encoded in the low 8 bits of the
+ * type header. It is in units of 32-bit words, not including the header.
+ */
+
+#define _SYS_ELF_PT_METADATA        0x7f7c0000      // Metadata phdr type
+#define _SYS_METADATA_SIZE_MASK     0x000000ff      // Words of data to follow
+#define _SYS_METADATA_TYPE_MASK     0xffffff00
+
+/// Metadata keys
+#define _SYS_METADATA_TITLE         0x00000100      // Variable-length string
+#define _SYS_METADATA_ICON_80x80    0x00000202      // _SYSMetadataPinnedImage
+
+// XXX: TBD, bootstrap asset groups, asset group slots...
+
+struct _SYSMetadataPinnedImage {
+    uint32_t    groupHdr;       // File offset for _SYSAssetGroupHeader    
+    uint16_t    baseAddr;       // Tile base address
+    uint16_t    reserved;       // Must be zero
+};
+
 
 /**
  * Link-time intrinsics.
@@ -428,15 +469,6 @@ void _SYS_lti_log(const char *fmt, ...);
 #define _SYS_LOGTYPE_FMT        0       // param = strtab offest
 #define _SYS_LOGTYPE_STRING     1       // param = 0, v1 = ptr
 #define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
-
-/**
- * Hardware IDs are 48-bit / 6-byte numbers that uniquely identify a
- * particular cube. A valid HWIDs never contains 0xFF bytes.
- */
-
-#define _SYS_HWID_BYTES         6
-#define _SYS_HWID_BITS          48
-#define _SYS_INVALID_HWID       ((uint64_t)-1)
 
 /**
  * Low-level system call interface.
