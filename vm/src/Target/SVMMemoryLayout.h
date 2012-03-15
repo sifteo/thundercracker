@@ -48,7 +48,8 @@ namespace llvm {
 
     // Section numbers for the program header
     enum SVMProgramSection {
-        SPS_RO = 0,
+        SPS_META = 0,
+        SPS_RO,
         SPS_RW,
         SPS_BSS,
         SPS_DEBUG,
@@ -76,6 +77,8 @@ namespace llvm {
 
         uint32_t getSectionDiskSize(enum SVMProgramSection s) const;
         uint32_t getSectionDiskOffset(enum SVMProgramSection s, uint32_t base) const;
+        uint32_t getSectionDiskEnd(enum SVMProgramSection s, uint32_t base) const;
+
         uint32_t getSectionMemSize(enum SVMProgramSection s) const;
         uint32_t getSectionMemAddress(enum SVMProgramSection s) const;
 

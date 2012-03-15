@@ -72,8 +72,6 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
 
 void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout)
 {
-    uint32_t Align = SVMTargetMachine::getBlockSize();
-
     unsigned PHNum = SPS_DEBUG;
     unsigned PHSize = PHNum * sizeof(ELF::Elf32_Phdr);
 
@@ -84,7 +82,7 @@ void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayo
     // Place program headers and ELF headers in the proper 'header' block,
     // but keep the section headers at the end of the SPS_DEBUG section.
     unsigned PHOffset = sizeof(ELF::Elf32_Ehdr);
-    HdrSize = RoundUpToAlignment(PHOffset + PHSize, Align);
+    HdrSize = PHOffset + PHSize;
     SHOffset = ELFDebug ?
         RoundUpToAlignment(ML.getSectionDiskOffset(SPS_END, HdrSize), 4) : 0;
 
@@ -122,21 +120,39 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
      * executing it.
      */
 
+    const uint32_t PT_METADATA = 0x7f7c0000;
     uint32_t Flags = ELF::PF_R;
+    uint32_t Type = ELF::PT_LOAD;
+    uint32_t Align = SVMTargetMachine::getBlockSize();
 
-    if (S == SPS_RO)
+    switch (S) {
+
+    case SPS_RO:
         Flags |= ELF::PF_X;
-    else
-        Flags |= ELF::PF_W;
+        break;
 
-    Write32(ELF::PT_LOAD);                          // p_type
+    case SPS_RW:
+    case SPS_BSS:
+        Flags |= ELF::PF_W;
+        break;
+
+    case SPS_META:
+        Type = PT_METADATA;
+        Align = 4;
+        break;
+
+    default:
+        break;
+    }
+
+    Write32(Type);                                  // p_type
     Write32(ML.getSectionDiskOffset(S, HdrSize));   // p_offset
     Write32(ML.getSectionMemAddress(S));            // p_vaddr
     Write32(0);                                     // p_paddr
     Write32(ML.getSectionDiskSize(S));              // p_filesz
     Write32(ML.getSectionMemSize(S));               // p_memsz
     Write32(Flags);                                 // p_flags
-    Write32(SVMTargetMachine::getBlockSize());      // p_align
+    Write32(Align);                                 // p_align
 }
 
 void SVMELFProgramWriter::writeSectionHeader(const MCAsmLayout &Layout,

@@ -7,6 +7,7 @@ Medium-sized optimizations:
 
 - Generate offset loads, when we can guarantee it's safe to do so.
 - Optimize out redundant base pointer validations
+- Compressed rwdata segment (At least some basic RLE to eliminate zeroes)
 
 Smaller optimizations:
 

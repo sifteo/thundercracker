@@ -6,6 +6,7 @@
  */
 
 #include "LogTransform.h"
+#include "MetadataTransform.h"
 #include "ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -38,7 +39,6 @@ namespace {
         
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
-        void metadataString(CallSite &CS);
     };
 }
 
@@ -69,37 +69,17 @@ bool LateLTIPass::runOnBasicBlock (BasicBlock &BB)
 
 bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
 {
+    const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+    assert(TD);
+
     if (Name == "_SYS_lti_log") {
         LogTransform(CS);
         return true;
     }
     
-    if (Name == "_SYS_lti_metadata_str") {
-        metadataString(CS);
+    if (Name == "_SYS_lti_metadata") {
+        MetadataTransform(CS, TD);
     }
 
     return false;
-}
-
-void LateLTIPass::metadataString(CallSite &CS)
-{
-    Instruction *I = CS.getInstruction();
-    
-    if (CS.arg_size() != 2)
-        report_fatal_error(I, "Wrong number of arguments for _SYS_lti_metadata_str");
-
-    ConstantInt *CIType = dyn_cast<ConstantInt>(CS.getArgument(0));
-    if (!CIType)
-        report_fatal_error(I, "Metadata type must be a constant integer.");
-    uint16_t type = CIType->getZExtValue();
-    if (type != CIType->getZExtValue())
-        report_fatal_error(I, "Metadata type argument is too large.");
-
-    std::string str;
-    if (!GetConstantStringInfo(CS.getArgument(1), str))
-        report_fatal_error(I, "String for _SYS_lti_metadata_str() is not verifiably constant.");
-
-    printf("Metadata: %d '%s'\n", type, str.c_str());
-
-    CS.getInstruction()->eraseFromParent();
 }

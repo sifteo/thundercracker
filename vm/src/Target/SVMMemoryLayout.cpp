@@ -32,6 +32,7 @@ void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layo
         case SPS_RO:
         case SPS_RW:
         case SPS_DEBUG:
+        case SPS_META:
             spsSize[sps] = RoundUpToAlignment(spsSize[sps], SD->getAlignment());
             SectionOffsetMap[SD] = spsSize[sps];
             spsSize[sps] += Layout.getSectionAddressSize(SD);
@@ -46,6 +47,7 @@ void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layo
 uint32_t SVMMemoryLayout::getSectionDiskSize(enum SVMProgramSection s) const
 {
     switch (s) {
+    case SPS_META:
     case SPS_DEBUG:
     case SPS_RO:
     case SPS_RW:    return spsSize[s];
@@ -57,6 +59,7 @@ uint32_t SVMMemoryLayout::getSectionDiskSize(enum SVMProgramSection s) const
 uint32_t SVMMemoryLayout::getSectionMemSize(enum SVMProgramSection s) const
 {
     switch (s) {
+    case SPS_META:
     case SPS_RO:
     case SPS_RW:
     case SPS_BSS:   return spsSize[s];
@@ -69,17 +72,28 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s, uint32_
 {
     uint32_t align = SVMTargetMachine::getBlockSize();
 
+    /*
+     * A note on disk alignment: RO must be aligned on disk, since we're fetching
+     * from it directly, the the other sections need no extra alignment.
+     *
+     * We do align DEBUG just to make it easy to strip binaries on a block boundary,
+     * but this isn't even required.
+     */
+
     switch (s) {
-    case SPS_RO:    return base;
-    case SPS_RW:    return getSectionDiskOffset(SPS_RO, base) +
-                           RoundUpToAlignment(spsSize[SPS_RO], align);
+    case SPS_META:  return base;
+    case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META, base), align);
+    case SPS_RW:    return getSectionDiskEnd(SPS_RO, base);
     case SPS_BSS:   return 0;
-    case SPS_DEBUG: return getSectionDiskOffset(SPS_RW, base) +
-                           RoundUpToAlignment(spsSize[SPS_RW], align);
-    case SPS_END:   return getSectionDiskOffset(SPS_DEBUG, base) +
-                           spsSize[SPS_DEBUG];
+    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW, base), align);
+    case SPS_END:   return getSectionDiskEnd(SPS_DEBUG, base);
     default:        llvm_unreachable("Bad SVM Program Section");
     }
+}
+
+uint32_t SVMMemoryLayout::getSectionDiskEnd(enum SVMProgramSection s, uint32_t base) const
+{
+    return getSectionDiskOffset(s, base) + spsSize[s];
 }
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(enum SVMProgramSection s) const
@@ -93,6 +107,7 @@ uint32_t SVMMemoryLayout::getSectionMemAddress(enum SVMProgramSection s) const
     case SPS_BSS:   return getSectionMemAddress(SPS_RW) +
                            RoundUpToAlignment(spsSize[SPS_RW], bssAlign);
     case SPS_END:   return getSectionMemAddress(SPS_BSS) + spsSize[SPS_BSS];
+    case SPS_META:
     case SPS_DEBUG: return 0;
     default:        llvm_unreachable("Bad SVM Program Section");
     }
@@ -305,6 +320,9 @@ SVMProgramSection SVMMemoryLayout::getSectionKind(const MCSectionData *SD) const
     const MCSectionELF *SE = dyn_cast<MCSectionELF>(S);
     assert(SE);
     StringRef Name = SE->getSectionName();
+
+    if (Name == ".metadata")
+        return SPS_META;
 
     if (Name.startswith(".debug_"))
         return SPS_DEBUG;
