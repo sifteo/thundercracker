@@ -7,7 +7,7 @@ MEMORY
 }
 
 /* Stack starts at the top of RAM */
-_stack = 0x20000000 + (64*1024) - 4;
+_stack = ORIGIN(RAM) + LENGTH(RAM) - 4;
 
 SECTIONS
 {
