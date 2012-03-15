@@ -80,7 +80,7 @@ GlimmerImg = image{"Glimmer.png", height=32}
 
 --UI
 --Main menu
-UI_Main_Menu_Blitz = image{"ui_main_menu_blitz.png"}
+UI_Main_Menu_Blitz = image{"ui_main_menu_rush.png"}
 UI_Main_Menu_Puzzle = image{"ui_main_menu_puzzle.png"}
 UI_Main_Menu_Survival = image{"ui_main_menu_survival.png"}
 UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
