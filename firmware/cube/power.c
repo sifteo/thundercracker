@@ -43,15 +43,24 @@ void power_init(void)
      * Basic poweron
      */
 
-    BUS_DIR = 0xFF;
-
-    ADDR_PORT = 0;
+    // Safe defaults, everything off.
     MISC_PORT = MISC_IDLE;
-    CTRL_PORT = CTRL_IDLE;
-
-    ADDR_DIR = 0;
+    CTRL_PORT = 0;
+    ADDR_PORT = 0;
+    BUS_DIR = 0xFF;
     MISC_DIR = MISC_DIR_VALUE;
     CTRL_DIR = CTRL_DIR_VALUE;
+    ADDR_DIR = 0;
+
+#if HWREV >= 3
+    // Sequence 3.3v boost, followed by 2.0v downstream
+    CTRL_PORT = CTRL_3V3_EN;
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+    CTRL_PORT = CTRL_IDLE;
+#else
+    // Turn everything on at once.
+    CTRL_PORT = CTRL_IDLE;
+#endif
 
     /*
      * Neighbor TX pins
@@ -70,20 +79,12 @@ void power_init(void)
 
 void power_sleep(void)
 {
-#ifndef REV1
     /*
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
-     * Order matters, don't cause bus contention.
+     * Order matters, don't cause bus contention!
      */
 
-    /*
-     * XXX: For the changes in Rev 2, we need to worry about sequencing
-     *      3.3v and 2.0v supply shutdown. We should also sequence the
-     *      2.0v shutdown and the flash WE/OE lines such that we can
-     *      get WE/OE driven low while in deep sleep (to avoid back-powering
-     *      the flash) without getting into any transient states where there
-     *      is contention on the data bus.
-     */
+#if HWREV >= 2   // Rev 2 was the first with sleep support
 
     lcd_sleep();                // Sleep sequence for LCD controller
     cli();                      // Stop all interrupt handlers
@@ -101,7 +102,16 @@ void power_sleep(void)
 
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = MISC_IDLE;      // Neighbor hardware idle
-    CTRL_PORT = CTRL_SLEEP;     // Turns off DC-DC converters
+
+#if HWREV >= 3
+    // Bring flash control lines low, turn off 2.0v, then 3.3v
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+    CTRL_PORT = CTRL_3V3_EN;
+    CTRL_PORT = 0;
+#else
+    // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).
+    CTRL_PORT = CTRL_FLASH_WE | CTRL_FLASH_OE;
+#endif
 
     ADDR_DIR = 0;               // Drive address bus
     MISC_DIR = 0xFF;            // All MISC pins as inputs (I2C bus pulled up)
@@ -128,5 +138,6 @@ void power_sleep(void)
          * On wakeup, the system experiences a soft reset.
          */
     }
-#endif
+
+#endif  // HWREV >= 2
 }

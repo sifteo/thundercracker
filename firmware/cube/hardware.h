@@ -45,14 +45,16 @@
 #define CTRL_CON        P3CON
 #define _CTRL_PORT		_P3
 
-__sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
+#ifdef HAVE_LCD_TE
+    __sbit __at 0xA0 CTRL_LCD_TE;
+#endif
 
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#if HWREV == 1
-#   define MISC_TOUCH   (1 << 4)
-#else
+#if HWREV >= 2
 #   define MISC_TOUCH   (1 << 7)
+#else
+#   define MISC_TOUCH   (1 << 4)
 #endif
 #define MISC_NB_IN      (1 << 6)   // T1 input
 
@@ -64,10 +66,10 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 // Both the number and name are represented here; due to the binary masking, both are critical.
 #define MISC_NB_0_TOP          (1 << 0)
 #define MISC_NB_1_LEFT         (1 << 1)
-#if HWREV == 1
-#   define MISC_NB_2_BOTTOM    (1 << 7)
-#else
+#if HWREV >= 2
 #   define MISC_NB_2_BOTTOM    (1 << 4)
+#else
+#   define MISC_NB_2_BOTTOM    (1 << 7)
 #endif
 #define MISC_NB_3_RIGHT        (1 << 5)
 
@@ -84,10 +86,10 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
-#if HWREV == 3
+#if HWREV >= 3
 #   define CTRL_FLASH_LAT1  (1 << 1)    // AMID_LE
 #   define CTRL_FLASH_LAT2  (1 << 2)    // AHIGH_LE
-#   define CTRL_DS_EN       (1 << 4)
+#   define CTRL_DS_EN       (1 << 4)    // Downstream 2.0v load switch
 #else
 #   define CTRL_FLASH_LAT1  (1 << 2)
 #   define CTRL_FLASH_LAT2  (1 << 1)
@@ -98,7 +100,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_FLASH_WE       (1 << 5)
 #define CTRL_FLASH_OE       (1 << 6)
 
-#if HWREV == 3
+#if HWREV >= 3
 #   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_DS_EN | CTRL_3V3_EN | CTRL_LCD_DCX)
 #else
 #   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | CTRL_3V3_EN | CTRL_LCD_DCX)
@@ -106,7 +108,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_FLASH_CMD  (CTRL_IDLE ^ CTRL_FLASH_WE)
 #define CTRL_LCD_CMD    (CTRL_IDLE ^ CTRL_LCD_DCX)
 #define CTRL_FLASH_OUT  (CTRL_IDLE ^ CTRL_FLASH_OE)
-#define CTRL_SLEEP      (CTRL_FLASH_WE | CTRL_FLASH_OE)
 
 // All CTRL pins are outputs
 #define CTRL_DIR_VALUE  0x00

@@ -100,8 +100,6 @@ void lcd_lut_init()
      * So, we need to set it ourselves.
      */
      
-    uint8_t i;
-    
     LCD_WRITE_BEGIN();
     LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_COLOR_LUT);
@@ -122,15 +120,35 @@ void lcd_sleep()
      */
 
     if (lcd_is_awake) {
+        lcd_is_awake = 0;
 
+#if HWREV >= 3
+        // On Rev 3 we have independent control over LCD reset and
+        // backlight, via the latches and DCX. First turn off the
+        // backlight, then hold the LCD controller in reset mode.
+        //
+        // Note that, due to this latch arrangement, we can't safely
+        // have the LCD off and *not* reset it. By bringing DCX low,
+        // we'll cause any other flash operations which may trigger
+        // lat1/lat2 to spam BLE and RST with the same value. So, right
+        // here, we're free to sequence the turn-off as we see fit, but
+        // in the long run BLE and RST need to end up at the same value
+        // or we'll see unexpected behaviour when accessing flash memory.
+
+        CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
+        CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1;  // Backlight off
+        CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
+#else
+        // On Rev 2 and earlier, we have only software control over
+        // LCD sleep. Send it a sleep command.
+        
         static const __code uint8_t table[] = {
             1, LCD_CMD_SLPIN, 0x00,
             1, LCD_CMD_DISPOFF, 0x00,
             0,
         };
-
-        lcd_is_awake = 0;
         lcd_cmd_table(table);
+#endif
     }   
 }
     
@@ -142,19 +160,35 @@ void lcd_begin_frame()
 
     /*
      * Wake up the LCD controller, if necessary.
-     *
-     * We also must turn on the backlight, and we must do this
-     * before running the initialization sequence. See the
-     * comments on the ST7735 controller, in lcd_model.h.
      */
     if (!lcd_is_awake) {
-        CTRL_PORT = CTRL_IDLE;  // Backlight on
         lcd_is_awake = 1;
-        lcd_cmd_table(lcd_setup_table);
         
-#ifdef LCD_MODEL_TIANMA_HX8353
-        lcd_lut_init();
+#if HWREV >= 3
+        // On Rev 3, we can explicitly sequence power-on.
+        // First, we take the LCD controller out of reset.
+        // Then we fully initialize it. We turn on the backlight
+        // after both initialization is complete and the first
+        // frame has finished rendering.
+
+        CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
+        CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
+
+        CTRL_PORT = CTRL_IDLE;
+        CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;  // Exit reset
+#else
+        // On Rev 2 and earlier, backlight and reset are tied to the
+        // same pin, and we must take the LCD out of reset before
+        // doing the software init sequence. So, turn on the backlight now.
+        
+        CTRL_PORT = CTRL_IDLE;
 #endif
+        
+        // Controller initialization
+        lcd_cmd_table(lcd_setup_table);
+        #ifdef LCD_MODEL_TIANMA_HX8353
+        lcd_lut_init();
+        #endif
     }
 
     LCD_WRITE_BEGIN();
@@ -194,8 +228,10 @@ void lcd_begin_frame()
     LCD_WRITE_END();
 
     // Vertical sync
+    #ifdef HAVE_LCD_TE
     if (flags & _SYS_VF_SYNC)
         while (!CTRL_LCD_TE);
+    #endif
 }    
 
 
@@ -221,7 +257,15 @@ void lcd_end_frame()
     CTRL_PORT = CTRL_IDLE;
     
     lcd_cmd_table(table);
-    
+
+#if HWREV >= 3
+    // Now that the LCD is fully ready, turn on the backlight if it isn't
+    // already on. Note that rendering from flash can cause this to happen
+    // earlier, but in BG0_ROM mode we can successfully delay backlight enable
+    // until after the first frame has fully rendered.
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
+#endif
+
     // Acknowledge this frame
     __asm
         inc     (_ack_data + RF_ACK_FRAME)
