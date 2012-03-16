@@ -7,10 +7,10 @@
 
 include "llvm/Target/Target.td"
 
-include "SVMRegisterInfo.td"
-include "SVMCallingConv.td"
-include "SVMInstrFormats.td"
-include "SVMInstrInfo.td"
+include "Target/SVMRegisterInfo.td"
+include "Target/SVMCallingConv.td"
+include "Target/SVMInstrFormats.td"
+include "Target/SVMInstrInfo.td"
 
 def SVMInstrInfo : InstrInfo;
 

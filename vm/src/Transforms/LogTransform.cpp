@@ -15,7 +15,7 @@
  * is packed along with a string table offset into a single 32-bit parameter.
  */
 
-#include "ErrorReporter.h"
+#include "Support/ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"

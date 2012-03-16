@@ -7,7 +7,7 @@ all: $(BIN)
 include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
 
-INCLUDES += -Isrc/Support -Isrc/Target
+INCLUDES += -Isrc
 FLAGS += -g
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
 

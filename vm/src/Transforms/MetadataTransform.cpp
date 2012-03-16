@@ -10,8 +10,8 @@
  * _SYS_lti_metadata() call into a global object in the ".metadata" segment.
  */
 
-#include "ErrorReporter.h"
-#include "SVMSymbolDecoration.h"
+#include "Support/ErrorReporter.h"
+#include "Target/SVMSymbolDecoration.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"

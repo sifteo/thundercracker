@@ -17,9 +17,9 @@
  * flash block boundaries.
  */
 
-#include "SVMSymbolDecoration.h"
-#include "SVMMemoryLayout.h"
-#include "SVMTargetMachine.h"
+#include "Target/SVMSymbolDecoration.h"
+#include "Target/SVMMemoryLayout.h"
+#include "Target/SVMTargetMachine.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"

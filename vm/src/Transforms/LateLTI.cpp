@@ -5,9 +5,9 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "LogTransform.h"
-#include "MetadataTransform.h"
-#include "ErrorReporter.h"
+#include "Transforms/LogTransform.h"
+#include "Transforms/MetadataTransform.h"
+#include "Support/ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
