@@ -255,7 +255,15 @@ bool animPaint(AnimType animT,
     {
         &Font1Letter, &Font2Letter, &Font3Letter,
     };
-    const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+    const static AssetImage* fontsGlow[] =
+    {
+        &Font1Letter, &Font2Letter, &Font3Letter,
+    };
+    const AssetImage& font =
+            (animT == AnimType_NewWord || animT == AnimType_OldWord) ?
+                *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1] :
+                *fontsGlow[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+
     if (animT == AnimType_None)
     {
         return false;
