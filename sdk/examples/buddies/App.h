@@ -66,6 +66,7 @@ private:
     
     void ShufflePieces(unsigned int numCubes);
     
+    bool IsHinting() const;
     void ChooseHint();
     void StartHint();
     void StopHint();
@@ -127,7 +128,6 @@ private:
     int mHintPiece0;
     int mHintPiece1;
     int mHintPieceSkip;
-    Sifteo::Cube::ID mHintCubeTouched;
     
     // Free Play Mode
     float mFreePlayShakeThrottleTimer;
@@ -141,6 +141,7 @@ private:
     // Story Mode
     unsigned int mStoryPuzzleIndex;
     unsigned int mStoryCutsceneIndex;
+    float mStoryClueTimers[kNumCubes];
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
