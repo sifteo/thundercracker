@@ -63,7 +63,7 @@ def export(file_path):
 					src_to_dst[(tx,ty)] = background_tiles.index(tile)
 	
 	# build background image
-	print "[ Writing Background Tileset: %s_background.png ]" % keyword
+	print "[ Writing Background Tileset: Content/%s_background.png ]" % keyword
 	bw = 8
 	bh = (len(background_tiles)+bw-1) / bw
 	tile_iterator = background_tiles.__iter__()
@@ -79,11 +79,11 @@ def export(file_path):
 			for y in range(16):
 				for x in range(16):
 					px[16*bx + x, 16*by + y] = tile[x + 16 * y]
-	background.save(keyword+"_background.png")
+	background.save("Content/"+keyword+"_background.png")
 
 	# build overlay image
 	if len(overlay_tiles) > 0:
-		print "[ Writing Overlay Tileset: %s_overlay.png ]" % keyword
+		print "[ Writing Overlay Tileset: Content/%s_overlay.png ]" % keyword
 		ow = 8
 		oh = (len(overlay_tiles)+ow-1) / ow
 		tile_iterator = overlay_tiles.__iter__()
@@ -99,14 +99,14 @@ def export(file_path):
 				for y in range(16):
 					for x in range(16):
 						px[16*ox + x, 16*oy + y] = tile[x + 16 * y]
-		overlay.save(keyword+"_overlay.png")
+		overlay.save("Content/"+keyword+"_overlay.png")
 	else:
 		print "[ Skipping Overlay Tileset ]"
 		overlay = None
 
 	# write tmx
-	print "[ Writing TMX TileMap: %s.tmx ]" % keyword
-	with open(keyword+".tmx", "w") as tmx:
+	print "[ Writing TMX TileMap: Content/%s.tmx ]" % keyword
+	with open("Content/"+keyword+".tmx", "w") as tmx:
 		tmx.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 		tmx.write('<map version="1.0" orientation="orthogonal" width="%d" height="%d" tilewidth="16" tileheight="16">\n' % (tw,th))
  		tmx.write('\t<properties>\n')
