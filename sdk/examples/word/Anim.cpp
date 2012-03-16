@@ -297,7 +297,7 @@ bool animPaint(AnimType animT,
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = Vec2(objData.mSpriteAsset->width, objData.mSpriteAsset->height);
+            size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
             assetFrames = objData.mSpriteAsset->frames;
         }
         else
@@ -386,7 +386,7 @@ bool animPaint(AnimType animT,
         {
             //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
             vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
-            vid.resizeSprite(i, Sparkle.width, Sparkle.height);
+            vid.resizeSprite(i, Sparkle.width * 8, Sparkle.height * 8);
             vid.setSpriteImage(i, Sparkle, assetFrame);
         }
     }

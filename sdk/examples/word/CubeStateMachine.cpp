@@ -138,6 +138,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
             setPanning(vid, 0.f);
+            vid.BG1_setPanning(Vec2(0, 0));
         }
         mIdleTime = 0.f;
         switch (data.mGameStateChanged.mNewStateIndex)

@@ -26,8 +26,10 @@ Font1Letter = image{"font_2ltr.png"}--, width=120, height=88, quality=0}
 Font2Letter = image{"font_2ltr.png", width=48, height=40, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
 TileBG = image{"bg_puzzlebox.png", quality=10}
-StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
-Title = image{"bg_puzzlebox.png", quality=10}
+StartPrompt = image{"wp2_gameselect_prompt.png", pinned=true, quality=10}
+StartBG = image{"wp2_gameselect.png", quality=10}
+StartLid = image{"wp2_gameselect_lid.png", quality=10}
+Title = image{"wp2_gameselect.png", quality=10}
 HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}

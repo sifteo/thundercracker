@@ -20,6 +20,7 @@ enum EventID
     EventID_UpdateHintSolution,
     EventID_HintSolutionUpdated,
     EventID_SpendHint,
+    EventID_Start,
 
     NumEventIds
 };
