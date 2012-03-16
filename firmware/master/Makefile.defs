@@ -69,7 +69,10 @@ LDFLAGS += -lm
 # but it may have additional C++-specific flags set as well.
 
 # Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-use-cxa-atexit
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+# when dtors are defined for static objects, gcc wants to create special handling
+# for them - disable this since those dtors will never be called
+CCFLAGS += -fno-use-cxa-atexit
 
 include $(TC_DIR)/Makefile.platform
 
