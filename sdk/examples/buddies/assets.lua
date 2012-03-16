@@ -29,8 +29,10 @@ BuddyPartFixed = image{"assets/fixed.png"}
 BuddyPartHidden = image{"assets/hidden.png"}
 
 -- UI
-UiFontWhite = image{"assets/font-8x16_white.png", height = 16}
-UiFontBlack = image{"assets/font-8x16_black.png", height = 16}
+UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
+UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
+UiFontOrange = image{"assets/fontstrip_conent_orange.png", height = 16}
+UiFontBlue = image{"assets/fontstrip_conent_blue.png", height = 16}
 UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
