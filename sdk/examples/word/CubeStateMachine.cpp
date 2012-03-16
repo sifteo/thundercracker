@@ -1480,7 +1480,6 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
             break;
         }
     }
-    ASSERT(allMatch); // make sure hint and scrambled letters can match
 
     tiltDirection = (mLettersStart + maxLetters - newLettersStart) % maxLetters;
     return allMatch && tiltDirection != 0;
