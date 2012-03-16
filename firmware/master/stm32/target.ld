@@ -85,21 +85,21 @@ SECTIONS
      * Zero-initialized data. Nothing is stored in flash.
      */
 
-    .bss : {
+    .bss (NOLOAD) : {
         . = ALIGN(4);
         __bss_start = .;
         *(.bss .bss.*);
         __bss_end = .;
     } >SYSRAM
 
-    .blockcache : {
+    .blockcache (NOLOAD) : {
         . = ALIGN(4);
         __blockcache_start = .;
         *(.blockcache);
         __blockcache_end = .;
     } >CACHERAM
 
-    .userram : {
+    .userram (NOLOAD) : {
         . = ALIGN(4);
         __userram_start = .;
         *(.userram);
