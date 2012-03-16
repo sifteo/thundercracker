@@ -13,7 +13,7 @@ using namespace Sifteo;
 #  define NUM_CUBES 1
 #endif
 
-static Cube cubes[] = { Cube(0), Cube(1) };
+static Cube cubes[NUM_CUBES];
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
@@ -37,7 +37,7 @@ static void init()
         BootAssets.cubes[i].baseAddr = 512 * 4;
         MainAssets.cubes[i].baseAddr = 512 * 6;
 
-        cubes[i].enable();
+        cubes[i].enable(i);
         cubes[i].loadAssets(BootAssets);
     }
     BootAssets.wait();
@@ -82,9 +82,24 @@ static void init()
     }
 }
 
+static void Metathing(const AssetGroup &group)
+{
+    _SYS_lti_metadata(0x1234, &group.sys, 1, (uint16_t)2, (uint8_t)3, 4, "Hello");
+    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "World");
+    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "Yeah!");
+    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "Okay, so this is a pretty long string"
+        " and perhaps it isn't all going to make it into the same flash page. "
+        "Can it overflow gracefully, or are we totally boned???");
+
+    _SYS_lti_metadata(0x5555, 0x11111111);
+    _SYS_lti_metadata(0x5555, 0x22222222);
+    _SYS_lti_metadata(0x5555, 0x33333333);
+    
+}
+
 void siftmain()
 {
-    _SYS_lti_metadata_str(_SYS_METADATA_TITLE_STR, "Hello World SDK Example");
+    Metathing(MainAssets);
 
     init();
 

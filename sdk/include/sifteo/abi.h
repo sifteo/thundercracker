@@ -444,14 +444,21 @@ struct _SYSMetadataKey {
 /// Metadata keys
 #define _SYS_METADATA_NONE          0x0000  // Ignored. (padding)
 #define _SYS_METADATA_UUID          0x0001  // Binary UUID for this specific build
-#define _SYS_METADATA_AGSLOT        0x0002  // XXX
+#define _SYS_METADATA_BOOT_ASSET    0x0002  // Array of _SYSMetadataBootAsset
 #define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataPinnedImage
+#define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
+
+struct _SYSMetadataBootAsset {
+    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
+    uint8_t     agSlotID;       // Asset group slot to load this into
+    uint8_t     reserved[3];    // Must be zero;
+};
 
 struct _SYSMetadataPinnedImage {
-    uint32_t    groupHdr;       // File offset for _SYSAssetGroupHeader    
+    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader    
     uint16_t    index;          // First tile index in image
     uint16_t    reserved;       // Must be zero
 };
@@ -473,12 +480,19 @@ struct _SYSMetadataPinnedImage {
  * Supported metadata value types:
  *   - C-style strings
  *   - Plain old data, passed by value
+ *
+ * Counters:
+ *   This is a mechanism for generating monotonic unique IDs at link-time.
+ *   Every _SYS_lti_counter() call with the same 'name' will return a
+ *   different value, starting with zero. Values are assigned in order of
+ *   decreasing priority. Counter calls which are optimized out early enough
+ *   will never allocate a value.
  */
 
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, ...);
-unsigned _SYS_lti_counter(const char *name, unsigned priority);
+unsigned _SYS_lti_counter(const char *name, int priority);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
