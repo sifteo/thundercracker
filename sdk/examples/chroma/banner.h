@@ -34,7 +34,7 @@ public:
     void SetMessage( const char *pMsg, float fTime = DEFAULT_FADE_DELAY );
 	bool IsActive() const;
 
-    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Anchor anchor, int score, int frame = -1 );
+    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Anchor anchor, int score/*, int frame = -1*/ );
 
 private:
     String<BANNER_WIDTH + 1> m_Msg;

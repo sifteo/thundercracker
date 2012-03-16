@@ -9,7 +9,7 @@
 #include "assets.gen.h"
 
 const float FloatingScore::SCORE_FADE_DELAY = 2.0f;
-const float FloatingScore::START_FADING_TIME = 0.25f;
+//const float FloatingScore::START_FADING_TIME = 0.25f;
 
 FloatingScore::FloatingScore()
 {
@@ -26,12 +26,26 @@ void FloatingScore::Draw( BG1Helper &bg1helper )
     if( m_fLifetime < 0.0f )
         return;
 
-    int frame = 0;
+    /*int frame = 0;
 
     if( m_fLifetime < START_FADING_TIME )
         frame = ( START_FADING_TIME - m_fLifetime ) / START_FADING_TIME * NUM_POINTS_FRAMES;
 
-    Banner::DrawScore( bg1helper, m_pos, Banner::LEFT, m_score, frame );
+    Banner::DrawScore( bg1helper, m_pos, Banner::LEFT, m_score, frame );*/
+    String<16> buf;
+    buf << m_score;
+
+    int iLen = buf.size();
+    if( iLen == 0 )
+        return;
+
+    unsigned int xOff = ( 16 - ( iLen * PointFont.width ) ) / 2;
+    unsigned int yOff = ( 16 - ( PointFont.height ) ) / 2;
+
+    for( int i = 0; i < iLen; i++ )
+    {
+        bg1helper.DrawAsset( Vec2( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
+    }
 }
 
 

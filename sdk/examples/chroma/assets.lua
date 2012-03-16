@@ -13,7 +13,7 @@ UI_Highscores_lowscore = image{"UI_highScore_bg_lowScore.png"}
 UI_Highlight = image{"UI_highlight.png"}
 
 --points text
-PointFont = image{"points.png", height=16}
+PointFont = image{"points.png", height=48}
 BannerPointsWhite = image{"BannerpointsWhite.png", height=16}
 
 --the gems

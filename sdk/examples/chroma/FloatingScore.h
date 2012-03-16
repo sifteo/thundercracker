@@ -14,9 +14,9 @@ using namespace Sifteo;
 class FloatingScore
 {
 public:
-    static const unsigned int NUM_POINTS_FRAMES = 4;
+    //static const unsigned int NUM_POINTS_FRAMES = 4;
     static const float SCORE_FADE_DELAY;
-    static const float START_FADING_TIME;
+    //static const float START_FADING_TIME;
 
     FloatingScore();
 

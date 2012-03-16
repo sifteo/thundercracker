@@ -75,7 +75,7 @@ bool Banner::IsActive() const
 }
 
 
-void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor anchor, int score, int frame )
+void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor anchor, int score/*, int frame*/ )
 {
     String<16> buf;
     buf << score;
@@ -110,14 +110,14 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor an
         }
     }
 
-    if( frame >= (int)FloatingScore::NUM_POINTS_FRAMES )
-        frame = (int)FloatingScore::NUM_POINTS_FRAMES - 1;
+    /*if( frame >= (int)FloatingScore::NUM_POINTS_FRAMES )
+        frame = (int)FloatingScore::NUM_POINTS_FRAMES - 1;*/
 
     for( int i = 0; i < iLen; i++ )
     {
-        if( frame >= 0 )
+        /*if( frame >= 0 )
             bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), PointFont, ( buf[i] - '0' ) * FloatingScore::NUM_POINTS_FRAMES + frame );
-        else
+        else*/
             bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
     }
 }
