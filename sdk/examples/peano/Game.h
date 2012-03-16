@@ -25,6 +25,10 @@ namespace TotalsGame {
         
         extern NeighborEventHandler *neighborEventHandler;
 
+        enum
+        {
+            RandomPuzzlesPerChapter = 5
+        };
 
 
         enum GameState
@@ -56,7 +60,7 @@ namespace TotalsGame {
 
 		extern Difficulty difficulty;
 		extern NumericMode mode;
-
+        extern int randomPuzzleCount;
 		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
 

@@ -25,6 +25,8 @@ Random rand;
 Difficulty difficulty;
 NumericMode mode;
 
+int randomPuzzleCount;
+    
 SaveData saveData;
 
 float dt;
@@ -216,11 +218,15 @@ GameState Advance()
     previousPuzzle = currentPuzzle;
     if (Game::currentPuzzle == NULL)
     {
-#if MENU_BETWEEN_RANDOM_PUZZLES
-        return GameState_Menu;
-#else
-        return GameState_Interstitial;
-#endif
+        randomPuzzleCount++;
+        if(randomPuzzleCount >= RandomPuzzlesPerChapter)
+        {
+            return GameState_Victory;
+        }
+        else
+        {
+            return GameState_Puzzle;
+        }
     }
 
     currentPuzzle->SaveAsSolved();

@@ -113,9 +113,18 @@ void OnSetup ()
          */
 void ShowPuzzleCount()
 {
-    if(!Game::IsPlayingRandom())
-    { // opening remarks
+    int count;
+    if(Game::IsPlayingRandom())
+    {
+        count = Game::RandomPuzzlesPerChapter - Game::randomPuzzleCount;
+    }
+    else
+    {
         int count = 1 + puzzle->CountAfterThisInChapterWithCurrentCubeSet();
+    }
+        
+    { // opening remarks
+        
         if (count > 0)
         {
             NarratorView nv;
