@@ -315,21 +315,23 @@ void CubeWrapper::Draw()
         }
         case Game::STATE_GAMEMENU:
         {
-            if( Game::Inst().getWrapperIndex( this ) == 1 )
+            switch( Game::Inst().getWrapperIndex( this ) )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
+                case 1:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
+                    break;
+                }
+                case 2:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
+                    m_vid.BG0_drawAsset(Vec2(3,3), UI_Main_Menu_Continue, 0);
+                    break;
+                }
+                default:
+                    m_vid.clear( GemEmpty.tiles[0] );
+                    break;
             }
-            else if( Game::Inst().getWrapperIndex( this ) == 2 )
-            {
-                m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
-                m_vid.BG0_drawAsset(Vec2(3,3), UI_Main_Menu_Continue, 0);
-            }
-
-            for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
-                m_vid.resizeSprite(i, 0, 0);
-
-            m_queuedFlush = true;
-            m_dirty = false;
 
             break;
         }
