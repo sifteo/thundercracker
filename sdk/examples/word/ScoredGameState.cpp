@@ -15,35 +15,45 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     {
         if (GameStateMachine::getInstance().getNumHints() > 0)
         {
-            EventData hintData;
+            EventData data;
             Dictionary::findNextSolutionWordPieces(NUM_CUBES,
                                                    GameStateMachine::getCurrentMaxLettersPerCube(),
-                                                   hintData.mHintSolutionUpdate.mHintSolution);
-            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, hintData);
+                                                   data.mHintSolutionUpdate.mHintSolution);
+            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
 
-            CubeStateMachine *csm =
-                    GameStateMachine::findCSMFromID(mHintCubeIDOnUpdate);
-            ASSERT(csm);
-            if (csm->canStartHint())
+            // first make sure a hint isn't already active
+            bool canStartHint = true;
+            bool canUseHint = false;
+            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
             {
-                csm->startHint();
+                Cube::ID cubeID = ci + CUBE_ID_BASE;
+                CubeStateMachine *csm =
+                    GameStateMachine::findCSMFromID(cubeID);
+                ASSERT(csm);
+                if (!csm->canStartHint())
+                {
+                    canStartHint = false;
+                    break;
+                }
+
+                if (csm->canUseHint())
+                {
+                    canUseHint = true;
+                }
             }
-            else
+
+            if (canStartHint && canUseHint)
             {
+                // then start the hint wind-up on all cubes
+                // when the wind-up finishes, the first cube that can show a hint
+                // will do so and message the rest to stop
                 for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
                 {
                     Cube::ID cubeID = ci + CUBE_ID_BASE;
-                    if (cubeID != mHintCubeIDOnUpdate)
-                    {
-                        CubeStateMachine *csm =
-                                GameStateMachine::findCSMFromID(cubeID);
-                        ASSERT(csm);
-                        if (csm->canStartHint())
-                        {
-                            csm->startHint();
-                            break;
-                        }
-                    }
+                    CubeStateMachine *csm =
+                        GameStateMachine::findCSMFromID(cubeID);
+                    ASSERT(csm);
+                    csm->startHint();
                 }
             }
         }
@@ -122,6 +132,10 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_WordBroken:
         mHintCubeIDOnUpdate = data.mWordBroken.mCubeIDStart; // wait until next update, so all events can resolve first
+        break;
+
+    case EventID_SpendHint:
+        GameStateMachine::getInstance().setNumHints(MAX(GameStateMachine::getInstance().getNumHints() - 1, 0));
         break;
 
     default:

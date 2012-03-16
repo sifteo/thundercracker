@@ -19,6 +19,7 @@ enum EventID
     EventID_LetterOrderChange,
     EventID_UpdateHintSolution,
     EventID_HintSolutionUpdated,
+    EventID_SpendHint,
 
     NumEventIds
 };

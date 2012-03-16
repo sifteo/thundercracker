@@ -197,7 +197,7 @@ const static AnimData animData[] =
     //AnimType_HintBarDisappear,
     { 0.3f, false, 1, &animObjData[13]},
     //AnimType_HintWindUpSlide,
-    { 0.4f, true, 1, &animObjData[13]},
+    { 2.0f, false, 1, &animObjData[13]},
     // AnimIndex_HintSlideL
     { 1.0f, true, 1, &animObjData[11]},
     // AnimIndex_HintSlideR

@@ -179,10 +179,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case AnimType_HintSlideR:
             {
                 unsigned newStart = 0;
-                if (calcHintTiltDirection(newStart) == 0)
+                unsigned tiltDir = 0;
+                if (!calcHintTiltDirection(newStart, tiltDir))
                 {
                     queueAnim(AnimType_None, CubeAnim_Hint);
-                    // TODO spend hint
                 }
             }
             break;
@@ -325,6 +325,18 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             _SYS_strlcpy(mHintSolution,
                          data.mHintSolutionUpdate.mHintSolution[mPuzzlePieceIndex],
                          sizeof(mHintSolution));
+        }
+        break;
+
+    case EventID_SpendHint:
+        switch (mAnimTypes[CubeAnim_Hint])
+        {
+        case AnimType_HintWindUpSlide:
+            queueAnim(AnimType_None, CubeAnim_Hint);
+            break;
+
+        default:
+            break;
         }
         break;
     }
@@ -489,19 +501,22 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
     queueAnim(anim, cubeAnim);//, vid, bg1, params);
     if (anim != oldAnim)
     {
-        switch (cubeAnim)
+        switch (oldAnim)
         {
-        case CubeAnim_Main:
-            switch (oldAnim)
-            {
-            case AnimType_SlideL:
-            case AnimType_SlideR:
-                WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
-                break;
+        case AnimType_SlideL:
+        case AnimType_SlideR:
+            WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+            break;
 
-            default:
-                break;
-            }
+        default:
+            break;
+        }
+
+        switch (anim)
+        {
+        case AnimType_HintSlideL:
+        case AnimType_HintSlideR:
+            WordGame::instance()->onEvent(EventID_SpendHint, EventData());
             break;
 
         default:
@@ -544,7 +559,28 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
 
     case AnimType_HintSlideL:
     case AnimType_HintSlideR:
-        return AnimType_HintBarDisappear;
+        return AnimType_None;// TODO HintBarDisappear;
+
+    case AnimType_HintWindUpSlide:
+        {
+            unsigned nextStartIndex;
+            unsigned tiltDir = 0;
+            if (calcHintTiltDirection(nextStartIndex, tiltDir))
+            {
+                switch (tiltDir)
+                {
+                default:
+                    return AnimType_None;
+
+                case 1:
+                    return AnimType_HintSlideL;
+
+                case 2:
+                    return AnimType_HintSlideR;
+                }
+            }
+        }
+        return AnimType_None;
     }
 }
 
@@ -708,32 +744,6 @@ void CubeStateMachine::update(float dt)
     default:
         break;
 
-    case AnimType_NotWord:
-    case AnimType_OldWord:
-        if (mAnimTypes[CubeAnim_Hint] == AnimType_HintWindUpSlide &&
-            mAnimTimes[CubeAnim_Hint] >= 0.5f)
-        {
-            unsigned newLettersStart = 0;
-            switch (calcHintTiltDirection(newLettersStart))
-            {
-            default:
-                ASSERT(newLettersStart == mLettersStart); // how else could you get here?
-                ASSERT(0);// this shouldn't happen
-                break;
-
-            case 1:
-                mNewHint = true;
-                queueAnim(AnimType_HintSlideL, CubeAnim_Hint);
-                break;
-
-            case 2:
-                mNewHint = true;
-                queueAnim(AnimType_HintSlideR, CubeAnim_Hint);
-                break;
-            }
-        }
-        break;
-
     case AnimType_NewWord:
         updateSpriteParams(dt);
 
@@ -785,22 +795,6 @@ void CubeStateMachine::update(float dt)
                 queueAnim(AnimType_OldWord);
             }
         }
-        break;
-    }
-
-
-    switch (mAnimTypes[CubeAnim_Hint])
-    {
-    case AnimType_HintSlideL:
-    case AnimType_HintSlideR:
-        if (mNewHint && mAnimTimes[CubeAnim_Hint] > 0.2f)
-        {
-            GameStateMachine::getInstance().setNumHints(GameStateMachine::getInstance().getNumHints() - 1);
-            mNewHint = false;
-        }
-        break;
-
-    default:
         break;
     }
 }
@@ -1427,17 +1421,40 @@ bool CubeStateMachine::canStartHint() const
 
     default:
         {
-            unsigned newLettersStart;
-            return calcHintTiltDirection(newLettersStart) != 0;
+            return true;
         }
     }
 }
 
-unsigned CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart) const
+bool CubeStateMachine::canUseHint() const
 {
+    unsigned newLettersStart, tiltDirection;
+    return calcHintTiltDirection(newLettersStart, tiltDirection);
+}
+
+bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
+                                             unsigned &tiltDirection) const
+{
+    unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
+    bool allLettersSame = true;
+    char letter = mLetters[0];
+    for (unsigned j=0; j < maxLetters; ++j)
+    {
+        if (mLetters[j] != letter)
+        {
+            allLettersSame = false;
+            break;
+        }
+    }
+
+    if (allLettersSame)
+    {
+        return false;
+    }
+
+    GameStateMachine::sOnEvent(EventID_UpdateHintSolution, EventData());
     // now determine which way to slide, if any, to put in hint configuration
     bool allMatch = true;
-    unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
     // for all possible values of a letter start offset
     for (newLettersStart=0; newLettersStart < maxLetters; ++newLettersStart)
     {
@@ -1463,5 +1480,6 @@ unsigned CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart) cons
     }
     ASSERT(allMatch); // make sure hint and scrambled letters can match
 
-    return (mLettersStart + maxLetters - newLettersStart) % maxLetters;
+    tiltDirection = (mLettersStart + maxLetters - newLettersStart) % maxLetters;
+    return allMatch && tiltDirection != 0;
 }
