@@ -55,7 +55,7 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         mShakeDelay = 0.f;
     }
     mPanning += dt * -2.f * accelState.x;
-    if (fabs(mPanning) > 96.f)
+    if (fabs(mPanning) > 86.f)
     {
         GameStateMachine::sOnEvent(EventID_Start, EventData());
         return CubeStateIndex_StartOfRoundScored;
@@ -129,12 +129,14 @@ void TitleCubeState::paint()
         vid.resizeSprite(0, StartPrompt.width * 8, StartPrompt.height * 8);
         {
             float shakeOffset = 0.f;
+            /* misleads player to shake
             if (mShakeDelay < 0.5f)
             {
                 const float SHAKE = 4.f;
                 shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
             }
-            vid.moveSprite(0, Vec2(40 - shakeOffset, 78));
+            */
+            vid.moveSprite(0, Vec2(39 - shakeOffset, 74));
             vid.BG1_setPanning(Vec2((unsigned)mPanning + shakeOffset, 0));
         }
         {            
