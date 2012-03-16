@@ -72,15 +72,15 @@ private:
     void SaveScores();
     void LoadScores();
     
-    bool IsHinting() const;
-    void ChooseHint();
-    void StartHint();
-    void StopHint();
-    
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
     void OnSwapExchange();
     void OnSwapFinish();
+    
+    bool IsHinting() const;
+    void ChooseHint();
+    void StartHint();
+    void StopHint();
     
     enum TouchState
     {
