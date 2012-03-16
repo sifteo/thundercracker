@@ -406,6 +406,27 @@ unsigned int GetRandomOtherBuddyId(App &app, unsigned int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void TiltNudgePieces(App& app, Cube::ID cubeId)
+{
+    Cube::TiltState tiltState = app.GetCubeWrapper(cubeId).GetTiltState();
+    
+    app.GetCubeWrapper(cubeId).SetPieceOffset(
+        SIDE_TOP,
+        Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(
+        SIDE_LEFT,
+        Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(
+        SIDE_BOTTOM,
+        Vec2(-(tiltState.x - 1) * VidMode::TILE, -(tiltState.y - 1) * VidMode::TILE));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(
+        SIDE_RIGHT,
+        Vec2(-(tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "GAME_STATE_NONE",
@@ -676,6 +697,7 @@ void App::OnNeighborAdd(
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: make into a switch
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::OnTilt(Cube::ID cubeId)
@@ -684,26 +706,19 @@ void App::OnTilt(Cube::ID cubeId)
     {
         if (mSwapState == SWAP_STATE_NONE)
         {
-            ASSERT(cubeId < arraysize(mCubeWrappers));
-            Cube::TiltState tiltState = mCubeWrappers[cubeId].GetTiltState();
-            
-            mCubeWrappers[cubeId].SetPieceOffset(
-                SIDE_TOP,
-                Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
-            mCubeWrappers[cubeId].SetPieceOffset(
-                SIDE_LEFT,
-                Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
-            mCubeWrappers[cubeId].SetPieceOffset(
-                SIDE_BOTTOM,
-                Vec2(-(tiltState.x - 1) * VidMode::TILE, -(tiltState.y - 1) * VidMode::TILE));
-            mCubeWrappers[cubeId].SetPieceOffset(
-                SIDE_RIGHT,
-                Vec2(-(tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+            TiltNudgePieces(*this, cubeId);
         }
     }
     else if (mGameState == GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES)
     {
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
+    }
+    else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
+    {
+        if (mSwapState == SWAP_STATE_NONE)
+        {
+            TiltNudgePieces(*this, cubeId);
+        }
     }
     else if (mGameState == GAME_STATE_SHUFFLE_HINT)
     {
@@ -713,6 +728,13 @@ void App::OnTilt(Cube::ID cubeId)
     else if (mGameState == GAME_STATE_STORY_CLUE)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_PLAY)
+    {
+        if (mSwapState == SWAP_STATE_NONE)
+        {
+            TiltNudgePieces(*this, cubeId);
+        }
     }
     else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
     {
@@ -727,6 +749,7 @@ void App::OnTilt(Cube::ID cubeId)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: make into a switch
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::OnShake(Cube::ID cubeId)
