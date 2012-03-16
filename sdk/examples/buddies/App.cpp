@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
+#include <limits>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include "Config.h"
@@ -111,80 +112,68 @@ bool NeedPaintSync(App& app)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawShuffleScore(CubeWrapper &cubeWrapper, int minutes, int seconds, int place)
+void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 {
-    switch (place)
+    minutes = int(scoreTimer) / 60;
+    seconds = int(scoreTimer - (minutes * 60.0f));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawShuffleScore(const App &app, CubeWrapper &cubeWrapper, float scoreTimer, unsigned int place)
+{
+    // Background
+    const AssetImage *backgrounds[] =
     {
-        case 0:
-            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore1);
-            break;
-        case 1:
-            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore2);
-            break;
-        case 2:
-            cubeWrapper.DrawBackground(ShufflePanelBestTimesHighScore3);
-            break;
-        default:
-            cubeWrapper.DrawBackground(ShufflePanelBestTimes);
-            break;
-    }
-    
-    String<16> buffer1st;
-    if (place == 0)
+        &ShufflePanelBestTimesHighScore1,
+        &ShufflePanelBestTimesHighScore2,
+        &ShufflePanelBestTimesHighScore3,
+    };
+    if (place < arraysize(backgrounds))
     {
-        buffer1st << "1st " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 4), UiFontWhite, buffer1st.c_str());
+        cubeWrapper.DrawBackground(*backgrounds[place]);
     }
     else
     {
-        buffer1st << "1st " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 4), UiFontOrange, buffer1st.c_str());
+        cubeWrapper.DrawBackground(ShufflePanelBestTimes);
     }
     
-    String<16> buffer2nd;
-    if (place == 1)
+    // Best Times Text
+    const char *labels[] =
     {
-        buffer2nd << "2nd " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 6), UiFontWhite, buffer2nd.c_str());
-    }
-    else
-    {
-        buffer2nd << "2nd " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 6), UiFontOrange, buffer2nd.c_str());
-    }
+        "1st ",
+        "2nd ",
+        "3rd ",
+    };
     
-    String<16> buffer3rd;
-    if (place == 2)
+    for (unsigned int i = 0; i < app.GetNumBestTimes(); ++i)
     {
-        buffer3rd << "3rd " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 8), UiFontWhite, buffer3rd.c_str());
-    }
-    else
-    {
-        buffer3rd << "3rd " << Fixed(99, 2, true) << ":" << Fixed(99, 2, true);
-        cubeWrapper.DrawUiText(Vec2(4, 8), UiFontOrange, buffer3rd.c_str());
-    }
-    
-    if (place > 2)
-    {
-        String<16> bufferYours;
-        bufferYours << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-    
-        cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, bufferYours.c_str());
-    }
-    else
-    {
-        String<5> bufferPlace;
-        switch (place)
-        {
-            case 0: bufferPlace << "1st!"; break;
-            case 1: bufferPlace << "2nd!"; break;
-            case 2: bufferPlace << "3rd!"; break;
-            default: break;
-        }
+        int minutes, seconds;
+        ScoreTimerToTime(app.GetBestTime(i), minutes, seconds);
         
-        cubeWrapper.DrawUiText(Vec2(9, 12), UiFontHeadingOrangeNoOutline, bufferPlace.c_str());
+        String<16> buffer;
+        buffer << labels[i] << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        
+        cubeWrapper.DrawUiText(
+            Vec2(4, 4 + (i * 2)),
+            place == i ? UiFontWhite : UiFontOrange,
+            buffer.c_str());
     }
+    
+    // Optional "Your Score" for non-high scores
+    if (place >= app.GetNumBestTimes())
+    {
+        int minutes, seconds;
+        ScoreTimerToTime(scoreTimer, minutes, seconds);
+        
+        String<16> buffer;
+        buffer << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+    
+        cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, buffer.c_str());
+    }
+    
+    // TODO: Bake in other labels
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -471,6 +460,8 @@ App::App()
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
+    , mBestTimes()
+    , mScorePlace(std::numeric_limits<unsigned int>::max())
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
@@ -492,6 +483,11 @@ App::App()
     for (unsigned int i = 0; i < arraysize(mTouching); ++i)
     {
         mTouching[i] = TOUCH_STATE_NONE;
+    }
+    
+    for (unsigned int i = 0; i < arraysize(mBestTimes); ++i)
+    {
+        mBestTimes[i] = 0.0f;
     }
     
     for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
@@ -529,6 +525,7 @@ void App::Init()
     }
     
     InitializePuzzles();
+    LoadScores();
     
 #ifdef SIFTEO_SIMULATOR
     mChannel.init();
@@ -818,6 +815,23 @@ void App::OnShake(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+unsigned int App::GetNumBestTimes() const
+{
+    return arraysize(mBestTimes);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+float App::GetBestTime(unsigned int place) const
+{
+    ASSERT(place < arraysize(mBestTimes));
+    return mBestTimes[place];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
 {
     for (unsigned int i = 0; i < puzzle.GetNumBuddies(); ++i)
@@ -964,6 +978,7 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
+            mScorePlace = std::numeric_limits<unsigned int>().max();
             mDelayTimer = kStateTimeDelayLong;
             mShuffleUiIndex = 0;
             for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
@@ -983,6 +998,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
+            SaveScores();
+            
             mDelayTimer = kStateTimeDelayLong;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
@@ -1616,10 +1633,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
-                int minutes = int(mScoreTimer) / 60;
-                int seconds = int(mScoreTimer - (minutes * 60.0f));
-                int place = 0; // TODO: Detect and pass in real value
-                DrawShuffleScore(cubeWrapper, minutes, seconds, place);
+                DrawShuffleScore(*this, cubeWrapper, mScoreTimer, mScorePlace);
             }
             if (cubeWrapper.GetId() == 1)
             {
@@ -1785,6 +1799,43 @@ void App::ShufflePieces(unsigned int numCubes)
     unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, numPieces, piece0);
     
     OnSwapBegin(piece0, piece1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::SaveScores()
+{
+    for (int i = arraysize(mBestTimes) - 1; i >= 0; --i)
+    {
+        if (mBestTimes[i] <= 0.0f || mScoreTimer < mBestTimes[i])
+        {
+            mScorePlace = i;
+        }
+    }
+    
+    if (mScorePlace < arraysize(mBestTimes))
+    {
+        for (int i = arraysize(mBestTimes) - 1; i > int(mScorePlace); --i)
+        {
+            mBestTimes[i] = mBestTimes[i - 1];
+        }
+        mBestTimes[mScorePlace] = mScoreTimer;
+    }
+    
+#ifdef SIFTEO_SIMULATOR
+    // TODO: Serialize mBestTimes
+#endif
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::LoadScores()
+{
+#ifdef SIFTEO_SIMULATOR
+    // TODO: Deserialize mBestTimes
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

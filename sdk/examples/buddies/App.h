@@ -53,6 +53,9 @@ public:
     void OnTilt(Sifteo::Cube::ID cubeId);
     void OnShake(Sifteo::Cube::ID cubeId);
     
+    unsigned int GetNumBestTimes() const;
+    float GetBestTime(unsigned int place) const;
+    
 private:
     void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
     void UpdateCubes(float dt);
@@ -65,6 +68,9 @@ private:
     void DrawGameStateCube(CubeWrapper &cubeWrapper);
     
     void ShufflePieces(unsigned int numCubes);
+    
+    void SaveScores();
+    void LoadScores();
     
     bool IsHinting() const;
     void ChooseHint();
@@ -105,6 +111,8 @@ private:
     // Scoring
     float mScoreTimer;
     unsigned int mScoreMoves;
+    float mBestTimes[3]; // TODO: Serialize
+    unsigned int mScorePlace;
     
     // Swapping
     enum SwapState
