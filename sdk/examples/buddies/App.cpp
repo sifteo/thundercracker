@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
+#include <cstdio>
 #include <limits>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
@@ -1824,7 +1825,14 @@ void App::SaveScores()
     }
     
 #ifdef SIFTEO_SIMULATOR
-    // TODO: Serialize mBestTimes
+    FILE *saveDataFile = std::fopen("SaveData.bin", "wb");
+    ASSERT(saveDataFile != NULL);
+    
+    int numWritten = std::fwrite(mBestTimes, sizeof(mBestTimes[0]), arraysize(mBestTimes), saveDataFile);
+    ASSERT(numWritten == arraysize(mBestTimes));
+    
+    int success = std::fclose(saveDataFile);
+    ASSERT(success == 0);
 #endif
 }
 
@@ -1834,7 +1842,23 @@ void App::SaveScores()
 void App::LoadScores()
 {
 #ifdef SIFTEO_SIMULATOR
-    // TODO: Deserialize mBestTimes
+    if (FILE *saveDataFile = fopen("SaveData.bin", "rb"))
+    {
+        int success0 = std::fseek(saveDataFile, 0L, SEEK_END);
+        ASSERT(success0 == 0);
+        
+        std::size_t size = std::ftell(saveDataFile);
+        ASSERT(size <= sizeof(mBestTimes));
+        
+        int success1 = std::fseek(saveDataFile, 0L, SEEK_SET);
+        ASSERT(success1 == 0);
+        
+        std::size_t numRead = std::fread(mBestTimes, sizeof(mBestTimes[0]), arraysize(mBestTimes), saveDataFile);
+        ASSERT(numRead == arraysize(mBestTimes));
+        
+        int success2 = std::fclose(saveDataFile);
+        ASSERT(success2 == 0);
+    }
 #endif
 }
 
