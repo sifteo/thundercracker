@@ -57,10 +57,10 @@ def export(file_path):
 					overlay_tiles.append(tile)
 			else:
 				if not tile in background_tiles:
-					src_to_dst[(tx,tw)] = len(background_tiles)
+					src_to_dst[(tx,ty)] = len(background_tiles)
 					background_tiles.append(tile)
 				else:
-					src_to_dst[(tx,tw)] = background_tiles.index(tile)
+					src_to_dst[(tx,ty)] = background_tiles.index(tile)
 	
 	# build background image
 	print "[ Writing Background Tileset: %s_background.png ]" % keyword
@@ -111,10 +111,32 @@ def export(file_path):
 		tmx.write('<map version="1.0" orientation="orthogonal" width="%d" height="%d" tilewidth="16" tileheight="16">\n' % (tw,th))
  		tmx.write('\t<properties>\n')
  		tmx.write('\t</properties>\n')
+ 		tmx.write('\t<tileset firstgid="1" name="%s_background" tilewidth="16" tileheight="16">\n' % keyword)
+ 		tmx.write('\t\t<image source="%s_background.png" width="%d" height="%d"/>\n' % (keyword, 16*bw, 16*bh))
+ 		tmx.write('\t</tileset>\n')
+ 		if overlay is not None:
+	 		tmx.write('\t<tileset firstgid="%d" name="%s_overlay" tilewidth="16" tileheight="16">\n' % (1+bw*bh,keyword))
+	 		tmx.write('\t\t<image source="%s_overlay.png" width="%d" height="%d"/>\n' % (keyword, 16*ow, 16*oh))
+	 		tmx.write('\t</tileset>\n')
+ 		tmx.write('\t<layer name="background" width="%d" height="%d">\n' % (tw,th))
+ 		tmx.write('\t\t<data encoding="csv">\n')
+ 		for ty in range(th):
+ 			for tx in range(tw):
+ 				tileId = 0
+ 				if (tx,ty) in src_to_dst:
+ 					tileId = 1 + src_to_dst[(tx,ty)]
+ 				if tx != tw-1 or ty != th-1:
+ 					tmx.write('%d,' % tileId)
+ 				else:
+ 					tmx.write('%d' % tileId)
+ 			tmx.write('\n')
+ 		tmx.write('\t\t</data>\n')
+ 		tmx.write('\t</layer>')
+ 		tmx.write('\t<objectgroup name="triggers" width="%d" height="%d"/>\n' % (tw,th))
  		tmx.write('</map>\n\n')
 
 if __name__ == "__main__":
-	test_path = "/Users/max/Dropbox/Sandwich/Ian Concepts/cave_interactions3.png"
+	test_path = "/Users/max/Dropbox/Sandwich/Ian Concepts/cave_interactions3 copy.png"
 	if os.path.exists(test_path):
 		export(test_path)
 	else:
