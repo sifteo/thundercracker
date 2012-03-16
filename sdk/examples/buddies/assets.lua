@@ -63,7 +63,7 @@ ShuffleTouchToExit = image{"assets/panel_touch_to_exit.png"}
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscene_bg_left.png"}
-StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_left.png"}
+StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_right.png"}
 StoryCutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
 StoryChapterOverlay = image{"assets/ui_chapter_overlay.png"}
 StoryChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}
