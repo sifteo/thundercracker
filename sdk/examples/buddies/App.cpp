@@ -421,7 +421,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_SHUFFLE_HINT",
     "GAME_STATE_SHUFFLE_SOLVED",
     "GAME_STATE_SHUFFLE_CONGRATULATIONS",
-    "GAME_STATE_SHUFFLE_SCORE",
+    "GAME_STATE_SHUFFLE_END_GAME_NAV",
     "GAME_STATE_STORY_START",
     "GAME_STATE_STORY_CHAPTER_START",
     "GAME_STATE_STORY_CUTSCENE_START",
@@ -751,13 +751,6 @@ void App::OnShake(Cube::ID cubeId)
     {
         StopHint();
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_SCORE)
-    {
-        if (cubeId == 1)
-        {
-            StartGameState(GAME_STATE_SHUFFLE_SHUFFLING);
-        }
     }
     else if (mGameState == GAME_STATE_STORY_CLUE)
     {
@@ -1270,13 +1263,17 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
-                StartGameState(GAME_STATE_SHUFFLE_SCORE);
+                StartGameState(GAME_STATE_SHUFFLE_END_GAME_NAV);
             }
             break;
         }
-        case GAME_STATE_SHUFFLE_SCORE:
+        case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+            }
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_MAIN_MENU);
             }
@@ -1598,7 +1595,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             cubeWrapper.DrawCutsceneShuffle();
             break;
         }
-        case GAME_STATE_SHUFFLE_SCORE:
+        case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
