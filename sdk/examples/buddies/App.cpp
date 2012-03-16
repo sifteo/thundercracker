@@ -1137,7 +1137,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_TITLE:
         {
-            if (UpdateTimer(mDelayTimer, dt))
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
             }
@@ -1261,10 +1261,11 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (UpdateTimer(mDelayTimer, dt))
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_SHUFFLE_END_GAME_NAV);
             }
+            
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
@@ -1281,7 +1282,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CHAPTER_START:
         {
-            if (UpdateTimer(mDelayTimer, dt))
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_STORY_CUTSCENE_START);
             }
@@ -1301,6 +1302,10 @@ void App::UpdateGameState(float dt)
                 {
                     mDelayTimer += kStoryCutsceneTextDelay;
                 }
+            }
+            else if (AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
             }
             break;
         }
@@ -1445,6 +1450,10 @@ void App::UpdateGameState(float dt)
                 {
                     mDelayTimer += kStoryCutsceneTextDelay;
                 }
+            }
+            else if (AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_STORY_CHAPTER_END);
             }
             break;
         }
