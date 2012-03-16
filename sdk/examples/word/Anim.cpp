@@ -393,6 +393,25 @@ bool animPaint(AnimType animT,
 
     if (params && params->mBorders)
     {
+        const static unsigned char NewWordBorderFrames[] =
+        {
+            1, 2, 3, 2, 1
+        };
+        const static unsigned char NewBonusWordBorderFrames[] =
+        {
+            4, 5, 6, 5, 4
+        };
+        unsigned char bottomBorderFrame = 0;
+        if (animT == AnimType_NewWord)
+        {
+            //const float ANIM_DURATION = 0.5f;
+            float t = 2.f *animTime/data.mDuration;
+            t = fmodf(t, 1.0f);
+            bottomBorderFrame =
+                    (params->mBonus) ?
+                        NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:
+                        NewWordBorderFrames[MIN(arraysize(NewWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewWordBorderFrames))))];
+        }
         // TODO fold border painting into the paint code
         const bool leftNeighbor = params ? params->mLeftNeighbor : false;
         const bool rightNeighbor = params ? params->mRightNeighbor : false;
@@ -401,7 +420,7 @@ bool animPaint(AnimType animT,
         if (false && (leftNeighbor || (rightNeighbor && !formsWord)))
         {
             // don't draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
+            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom, bottomBorderFrame);
         }
         else if (bg1)
         {
@@ -414,7 +433,7 @@ bool animPaint(AnimType animT,
                                          BorderLeftNoNeighbor);
             bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
             bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
+            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
         }
 
         if (false && (rightNeighbor || (leftNeighbor && !formsWord)))

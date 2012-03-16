@@ -43,6 +43,7 @@ struct AnimParams
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
     bool mBorders;
+    bool mBonus;
     SpriteParams *mSpriteParams;
 };
 

@@ -1394,6 +1394,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     params->mCubeID = getCube().id();
     params->mBorders = false; // FIXME roll into border rendering CubeAnim
+    params->mBonus = false; // TODO
     return true;
 }
 
