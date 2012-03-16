@@ -423,10 +423,10 @@ struct _SYSPseudoRandomState {
  * The contents of the metadata segment is structured as first an array of
  * key/size words, then a stream of variable-size values. The values must be
  * aligned according to their natural ABI alignment, and they must not cross
- * a memory page boundary.
+ * a memory page boundary. Each key occurs at most once in this table; multiple
+ * values with the same key are concatenated by the linker.
  *
- * Since the p_paddr field in the phdr is typically unused, we overload that
- * to store the number of keys in the array.
+ * The last _SYSMetadataKey has the MSB set in its 'stride' value.
  *
  * Strings are zero-terminated. Additional padding bytes may appear after
  * any value.
@@ -478,6 +478,7 @@ struct _SYSMetadataPinnedImage {
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, ...);
+unsigned _SYS_lti_counter(const char *name, unsigned priority);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.

@@ -11,6 +11,7 @@
  */
 
 #include "ErrorReporter.h"
+#include "SVMSymbolDecoration.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
@@ -81,7 +82,7 @@ void MetadataTransform(CallSite &CS, const TargetData *TD)
         true, GlobalValue::ExternalLinkage, Struct, "", 0, false);
 
     GV->setAlignment(align);
-    GV->setName("_meta$" + Twine(key));
+    GV->setName(SVMDecorations::META + Twine(key) + SVMDecorations::SEPARATOR);
     GV->setSection(".metadata");
 
     // Remove the original _SYS_lti_metadata() call

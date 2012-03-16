@@ -59,10 +59,10 @@ uint32_t SVMMemoryLayout::getSectionDiskSize(enum SVMProgramSection s) const
 uint32_t SVMMemoryLayout::getSectionMemSize(enum SVMProgramSection s) const
 {
     switch (s) {
-    case SPS_META:
     case SPS_RO:
     case SPS_RW:
     case SPS_BSS:   return spsSize[s];
+    case SPS_META:
     case SPS_DEBUG: return 0;
     default:        llvm_unreachable("Bad SVM Program Section");
     }

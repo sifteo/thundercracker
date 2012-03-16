@@ -5,6 +5,7 @@ OBJS = \
 	src/Transforms/LateLTI.o \
 	src/Transforms/LogTransform.o \
 	src/Transforms/MetadataTransform.o \
+	src/Transforms/MetadataCollector.o \
 	src/Support/ErrorReporter.o \
 	src/Target/SVMAsmPrinter.o \
 	src/Target/SVMInstPrinter.o \

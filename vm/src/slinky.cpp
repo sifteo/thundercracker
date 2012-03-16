@@ -50,6 +50,7 @@ extern "C" void LLVMInitializeSVMTargetInfo();
 
 namespace llvm {
     ModulePass *createInlineGlobalCtorsPass();
+    ModulePass *createMetadataCollectorPass();
     BasicBlockPass *createEarlyLTIPass();
     BasicBlockPass *createLateLTIPass();
 }
@@ -267,6 +268,10 @@ static void AddMiddlePasses(PassManagerBase &PM)
     // any remaining constructors into calls at the top of main().
     // This may result in additional inlining and dead code elimination.
     PM.add(createInlineGlobalCtorsPass());
+
+    // After LateLTI, we can gather all symbols from the .metadata section
+    // and generate a fully assembled metadata table ready to emit to ELF.
+    PM.add(createMetadataCollectorPass());
 }
 
 int main(int argc, char **argv)

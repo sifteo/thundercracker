@@ -39,7 +39,9 @@ namespace llvm {
         bool isTailCall;
         bool isLongBranch;
         bool isSys;
+        bool isMeta;
         unsigned sysNumber;
+        int32_t metaKey;
         int32_t offset;
 
         static const char SYS[];
@@ -47,6 +49,7 @@ namespace llvm {
         static const char TCALL[];
         static const char LB[];
         static const char OFFSET[];
+        static const char META[];
         static const char SEPARATOR[];
 
         StringRef Decode(StringRef Name);
@@ -55,6 +58,7 @@ namespace llvm {
 
     private:
         static bool testAndStripPrefix(StringRef &Name, StringRef Prefix);
+        static bool testAndStripNumberedPrefix(StringRef &Name, StringRef Prefix, int32_t &num);
     };
 
 }  // end namespace

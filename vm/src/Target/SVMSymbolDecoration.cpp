@@ -27,6 +27,7 @@ const char SVMDecorations::CALL[] = "_call$";
 const char SVMDecorations::TCALL[] = "_tcall$";
 const char SVMDecorations::LB[] = "_lb$";
 const char SVMDecorations::OFFSET[] = "_o$";
+const char SVMDecorations::META[] = "_meta$";
 const char SVMDecorations::SEPARATOR[] = "$";
 
 
@@ -64,12 +65,7 @@ StringRef SVMDecorations::Decode(StringRef Name)
     isCall = isTailCall || testAndStripPrefix(Name, CALL);
     
     // Offset prefix includes a number and a separator
-    offset = 0;
-    if (testAndStripPrefix(Name, OFFSET)) {
-        size_t len = Name.find(SEPARATOR[0]);
-        if (len != Name.npos && !Name.substr(0, len).getAsInteger(0, offset))
-            Name = Name.substr(len+1);
-    }
+    testAndStripNumberedPrefix(Name, OFFSET, offset);
 
     // XXX: Not sure why, but Clang is prepending this junk to __asm__ symbols
     testAndStripPrefix(Name, "\x01");
@@ -85,6 +81,9 @@ StringRef SVMDecorations::Decode(StringRef Name)
     // Numeric syscalls can be written in any base, using C-style numbers
     isSys = testAndStripPrefix(Name, SYS) && !Name.getAsInteger(0, sysNumber);
 
+    // Numeric metadata keys
+    isMeta = testAndStripNumberedPrefix(Name, META, metaKey);
+
     return Result;
 }
 
@@ -94,5 +93,22 @@ bool SVMDecorations::testAndStripPrefix(StringRef &Name, StringRef Prefix)
         Name = Name.substr(Prefix.size());
         return true;
     }
+    return false;
+}
+
+bool SVMDecorations::testAndStripNumberedPrefix(StringRef &Name,
+    StringRef Prefix, int32_t &num)
+{
+    // Prefix + Number + Separator
+
+    num = 0;
+    if (testAndStripPrefix(Name, Prefix)) {
+        size_t len = Name.find(SEPARATOR[0]);
+        if (len != Name.npos && !Name.substr(0, len).getAsInteger(0, num)) {
+            Name = Name.substr(len+1);
+            return true;
+        }
+    }
+    
     return false;
 }
