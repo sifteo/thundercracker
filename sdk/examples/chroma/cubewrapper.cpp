@@ -225,6 +225,8 @@ void CubeWrapper::Draw()
                 break;
             }
 
+            TurnOffSprites();
+
             //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
             if( Game::Inst().getWrapperIndex( this ) == 0 )
@@ -315,6 +317,8 @@ void CubeWrapper::Draw()
         }
         case Game::STATE_GAMEMENU:
         {
+            TurnOffSprites();
+
             switch( Game::Inst().getWrapperIndex( this ) )
             {
                 case 1:
