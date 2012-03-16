@@ -257,12 +257,12 @@ bool animPaint(AnimType animT,
     };
     const static AssetImage* fontsGlow[] =
     {
-        &Font1Letter, &Font2Letter, &Font3Letter,
+        &Font1Letter, &Font2LetterGlow, &Font3Letter,
     };
     const AssetImage& font =
             (animT == AnimType_NewWord || animT == AnimType_OldWord) ?
-                *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1] :
-                *fontsGlow[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+                *fontsGlow[GameStateMachine::getCurrentMaxLettersPerCube() - 1] :
+                *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
 
     if (animT == AnimType_None)
     {
@@ -367,7 +367,7 @@ bool animPaint(AnimType animT,
             if (drawLetterOnTile)
             {
                 Vec2 letterPos(pos);
-                letterPos.y += 4; // TODO
+                letterPos.y += 5; // TODO
                 bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
             }
         }

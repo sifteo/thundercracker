@@ -23,7 +23,8 @@ Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=10}
 Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=10}
 Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=10}
 Font1Letter = image{"font_idle_medium.png"}--, width=120, height=88, quality=0}
-Font2Letter = image{"font_idle_medium.png", width=48, height=40, quality=10}
+Font2Letter = image{"font_idle_medium.png", width=48, height=32, quality=10}
+Font2LetterGlow = image{"font_glow_medium.png", width=48, height=32, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
 TileBG = image{"bg_puzzlebox.png", quality=10}
 StartPrompt = image{"wp2_gameselect_prompt.png", pinned=true, quality=10}
