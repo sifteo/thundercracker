@@ -25,11 +25,11 @@ const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 //const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
-
+const float CubeWrapper::TOUCH_TIME_FOR_MENU = 1.7f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
-        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
+        m_fShakeTime( -1.0f ), m_fTouchTime( 0.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
         m_bubbles( m_vid )
 {
@@ -313,6 +313,26 @@ void CubeWrapper::Draw()
             }
             break;
         }
+        case Game::STATE_GAMEMENU:
+        {
+            if( Game::Inst().getWrapperIndex( this ) == 1 )
+            {
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
+            }
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
+            {
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
+                m_vid.BG0_drawAsset(Vec2(3,3), UI_Main_Menu_Continue, 0);
+            }
+
+            for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
+                m_vid.resizeSprite(i, 0, 0);
+
+            m_queuedFlush = true;
+            m_dirty = false;
+
+            break;
+        }
 		default:
 			break;
 	}
@@ -376,17 +396,6 @@ void CubeWrapper::Update(float t, float dt)
             m_gameover.Update( dt );
         return;
     }
-    else if( Game::Inst().getState() == Game::STATE_PLAYING )
-    {
-        m_timeTillGlimmer -= dt;
-
-        if( m_timeTillGlimmer < 0.0f )
-        {
-            m_timeTillGlimmer = Game::random.uniform( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
-            m_glimmer.Reset();
-        }
-        m_glimmer.Update( dt );
-    }
 
     /*else if( m_state == STATE_CUBEBONUS )
     {
@@ -396,12 +405,43 @@ void CubeWrapper::Update(float t, float dt)
 
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
+        m_timeTillGlimmer -= dt;
+
+        if( m_timeTillGlimmer < 0.0f )
+        {
+            m_timeTillGlimmer = Game::random.uniform( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
+            m_glimmer.Reset();
+        }
+        m_glimmer.Update( dt );
+
         //check for shaking
-        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
+        if( Game::Inst().getMode() == Game::MODE_BLITZ && ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
             m_fShakeTime = -1.0f;
             checkRefill();
         }
+
+        if( _SYS_isTouching( m_cube.id() ) )
+        {
+            if( isEmpty() )
+            {
+                if( Game::Inst().getMode() == Game::MODE_SURVIVAL )
+                    checkRefill();
+            }
+            else
+            {
+                m_fTouchTime += dt;
+
+                if( m_fTouchTime > TOUCH_TIME_FOR_MENU )
+                {
+                    Game::Inst().setState( Game::STATE_GAMEMENU );
+                    m_fTouchTime = 0.0f;
+                    return;
+                }
+            }
+        }
+        else
+            m_fTouchTime = 0.0f;
 
         //update all dots
         for( int i = 0; i < NUM_ROWS; i++ )
@@ -461,7 +501,7 @@ void CubeWrapper::Update(float t, float dt)
                 Game::Inst().playSlosh();
         }
     }
-    else if( Game::Inst().getState() == Game::STATE_POSTGAME )
+    /*else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
         if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
         {
@@ -480,7 +520,7 @@ void CubeWrapper::Update(float t, float dt)
             Game::Inst().setState( Game::STATE_INTRO );
             m_fShakeTime = -1.0f;
         }
-    }
+    }*/
 }
 
 
@@ -689,6 +729,37 @@ void CubeWrapper::Shake( bool bShaking )
 		m_fShakeTime = System::clock();
 	else
 		m_fShakeTime = -1.0f;
+}
+
+
+void CubeWrapper::Touch()
+{
+    switch( Game::Inst().getState() )
+    {
+        case Game::STATE_POSTGAME:
+        {
+            if( Game::Inst().getWrapperIndex( this ) == 1 )
+                Game::Inst().ReturnToMainMenu();
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
+                Game::Inst().setTestMatchFlag();
+            break;
+        }
+        case Game::STATE_NEXTPUZZLE:
+        {
+            Game::Inst().setState( Game::STATE_INTRO );
+            break;
+        }
+        case Game::STATE_GAMEMENU:
+        {
+            if( Game::Inst().getWrapperIndex( this ) == 1 )
+                Game::Inst().ReturnToMainMenu();
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
+                Game::Inst().setState( Game::STATE_PLAYING );
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 

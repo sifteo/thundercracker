@@ -38,6 +38,7 @@ public:
 		STATE_POSTGAME,
         STATE_GOODJOB,
         STATE_NEXTPUZZLE,
+        STATE_GAMEMENU,
 	} GameState;
 
 	typedef enum

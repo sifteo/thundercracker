@@ -34,6 +34,7 @@ public:
     static const float IDLE_FINISH_THRESHOLD;
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
+    static const float TOUCH_TIME_FOR_MENU;
 
     static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
@@ -62,6 +63,7 @@ public:
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
+    void Touch();
 
     Banner &getBanner() { return m_banner; }
 
@@ -166,6 +168,8 @@ private:
 	int m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
 	float m_fShakeTime;
+    //how long have we been touching the cube?
+    float m_fTouchTime;
 
     //render based on current fluid level
     //use (-128, 128) range since that matches accelerometer

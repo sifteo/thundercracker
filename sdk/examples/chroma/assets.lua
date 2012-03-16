@@ -86,6 +86,7 @@ UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
 UI_Main_Menu_TipsTouch = image{"ui_main_menu_tips_touch.png"}
 UI_Main_Menu_TipsTilt = image{"ui_main_menu_tips_tilt.png"}
 UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
+UI_Main_Menu_Continue = image{"ui_main_menu_continue.png"}
 --for clearing
 White = image{"White.png"}
 
