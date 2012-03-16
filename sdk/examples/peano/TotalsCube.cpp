@@ -330,6 +330,8 @@ namespace TotalsGame
             System::paintSync();
             Game::UpdateDt();
 		}
+        
+        Image(image, Vec2(0,0));
     }
 
     void TotalsCube::CloseShutters()
