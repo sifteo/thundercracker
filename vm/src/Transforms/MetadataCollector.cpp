@@ -126,7 +126,9 @@ bool MetadataCollectorPass::runOnModule(Module &M)
     collectValues(M);
     finalizeAll(M, TD);
     createLayout();
-    pack(M);
+    
+    if (!Layout.empty())
+        pack(M);
 
     Dict.clear();
     Layout.clear();
