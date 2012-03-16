@@ -173,6 +173,19 @@ void DrawShuffleScore(CubeWrapper &cubeWrapper, int minutes, int seconds, int pl
     
         cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, bufferYours.c_str());
     }
+    else
+    {
+        String<5> bufferPlace;
+        switch (place)
+        {
+            case 0: bufferPlace << "1st!"; break;
+            case 1: bufferPlace << "2nd!"; break;
+            case 2: bufferPlace << "3rd!"; break;
+            default: break;
+        }
+        
+        cubeWrapper.DrawUiText(Vec2(9, 12), UiFontHeadingOrangeNoOutline, bufferPlace.c_str());
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1591,7 +1604,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 int minutes = int(mScoreTimer) / 60;
                 int seconds = int(mScoreTimer - (minutes * 60.0f));
-                int place = 3; // TODO: Detect and pass in real value
+                int place = 0; // TODO: Detect and pass in real value
                 DrawShuffleScore(cubeWrapper, minutes, seconds, place);
             }
             if (cubeWrapper.GetId() == 1)
