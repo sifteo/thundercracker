@@ -697,97 +697,123 @@ void App::OnNeighborAdd(
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: make into a switch
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::OnTilt(Cube::ID cubeId)
 {
-    if (mGameState == GAME_STATE_FREE_PLAY)
+    switch (mGameState)
     {
-        if (mSwapState == SWAP_STATE_NONE)
+        case GAME_STATE_FREE_PLAY:
         {
-            TiltNudgePieces(*this, cubeId);
+            if (mSwapState == SWAP_STATE_NONE)
+            {
+                TiltNudgePieces(*this, cubeId);
+            }
+            break;
         }
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES)
-    {
-        StartGameState(GAME_STATE_SHUFFLE_PLAY);
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
-    {
-        if (mSwapState == SWAP_STATE_NONE)
+        case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            TiltNudgePieces(*this, cubeId);
+            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            break;
         }
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_HINT)
-    {
-        StopHint();
-        StartGameState(GAME_STATE_SHUFFLE_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_CLUE)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_PLAY)
-    {
-        if (mSwapState == SWAP_STATE_NONE)
+        case GAME_STATE_SHUFFLE_PLAY:
         {
-            TiltNudgePieces(*this, cubeId);
+            if (mSwapState == SWAP_STATE_NONE)
+            {
+                TiltNudgePieces(*this, cubeId);
+            }
+            break;
         }
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
-    {
-        mHintCubeTouched = CUBE_ID_UNDEFINED;
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_MOVE)
-    {
-        StopHint();
-        StartGameState(GAME_STATE_STORY_PLAY);
+        case GAME_STATE_SHUFFLE_HINT:
+        {
+            StopHint();
+            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_CLUE:
+        {
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_PLAY:
+        {
+            if (mSwapState == SWAP_STATE_NONE)
+            {
+                TiltNudgePieces(*this, cubeId);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_HINT_CLUE:
+        {
+            mHintCubeTouched = CUBE_ID_UNDEFINED;
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_HINT_MOVE:
+        {
+            StopHint();
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        default:
+        {
+            break;
+        }
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: make into a switch
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if (mGameState == GAME_STATE_FREE_PLAY)
+    switch (mGameState)
     {
-        if (mSwapState == SWAP_STATE_NONE && mFreePlayShakeThrottleTimer == 0.0f)
+        case GAME_STATE_FREE_PLAY:
         {
-            mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
-        
-            unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
-            mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
+            if (mSwapState == SWAP_STATE_NONE && mFreePlayShakeThrottleTimer == 0.0f)
+            {
+                mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
             
-            ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
+                mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
+                
+                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+            }
+            break;
         }
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE)
-    {
-        StartGameState(GAME_STATE_SHUFFLE_SHUFFLING);
-    }
-    else if (mGameState == GAME_STATE_SHUFFLE_HINT)
-    {
-        StopHint();
-        StartGameState(GAME_STATE_SHUFFLE_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_CLUE)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
-    {
-        mHintCubeTouched = CUBE_ID_UNDEFINED;
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_MOVE)
-    {
-        StopHint();
-        StartGameState(GAME_STATE_STORY_PLAY);
+        case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
+        {
+            StartGameState(GAME_STATE_SHUFFLE_SHUFFLING);
+            break;
+        }
+        case GAME_STATE_SHUFFLE_HINT:
+        {
+            StopHint();
+            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_CLUE:
+        {
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_HINT_CLUE:
+        {
+            mHintCubeTouched = CUBE_ID_UNDEFINED;
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        case GAME_STATE_STORY_HINT_MOVE:
+        {
+            StopHint();
+            StartGameState(GAME_STATE_STORY_PLAY);
+            break;
+        }
+        default:
+        {
+            break;
+        }
     }
 }
 
