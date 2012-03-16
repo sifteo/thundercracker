@@ -1369,6 +1369,7 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
+            // Timers
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 if (mFaceCompleteTimers[i] > 0.0f)
@@ -1377,37 +1378,42 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Hints
-            if (IsHinting())
-            {
-                if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
-                {
-                    if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
-                    {
-                        StopHint();
-                    }
-                }
-            }
-            else
-            {
-                if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
-                {
-                    if (UpdateTimer(mHintTimer, dt))
-                    {
-                        StartHint();
-                    }
-                }
-            }
-            
-            // Clues
+            bool clueDisplayed = false;
             for (unsigned int i = 0; i < arraysize(mStoryClueTimers); ++i)
             {
                 if (mStoryClueTimers[i] > 0.0f)
                 {
                     UpdateTimer(mStoryClueTimers[i], dt);
+                    clueDisplayed = true;
                 }
             }
             
+            // Hints (but clues take precedence)
+            if (!clueDisplayed)
+            {
+                if (IsHinting())
+                {
+                    if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
+                    {
+                        if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
+                        {
+                            StopHint();
+                        }
+                    }
+                }
+                else
+                {
+                    if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
+                    {
+                        if (UpdateTimer(mHintTimer, dt))
+                        {
+                            StartHint();
+                        }
+                    }
+                }
+            }
+            
+            // Clues
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
