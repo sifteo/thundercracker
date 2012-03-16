@@ -328,8 +328,7 @@ void CubeWrapper::Draw()
                 }
                 case 2:
                 {
-                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
-                    m_vid.BG0_drawAsset(Vec2(3,3), UI_Main_Menu_Continue, 0);
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Continue, 0);
                     break;
                 }
                 default:
