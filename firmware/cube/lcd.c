@@ -141,13 +141,14 @@ void lcd_sleep()
 #else
         // On Rev 2 and earlier, we have only software control over
         // LCD sleep. Send it a sleep command.
-        
-        static const __code uint8_t table[] = {
-            1, LCD_CMD_SLPIN, 0x00,
-            1, LCD_CMD_DISPOFF, 0x00,
-            0,
-        };
-        lcd_cmd_table(table);
+        {
+            static const __code uint8_t table[] = {
+                1, LCD_CMD_SLPIN, 0x00,
+                1, LCD_CMD_DISPOFF, 0x00,
+                0,
+            };
+            lcd_cmd_table(table);
+        }
 #endif
     }   
 }
