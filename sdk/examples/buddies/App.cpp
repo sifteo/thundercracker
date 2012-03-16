@@ -904,6 +904,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SHUFFLING:
         {
+            mDelayTimer = 0.0f;
             mShuffleMoveCounter = 0;
             for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
             {
@@ -1571,7 +1572,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_PLAY:
         case GAME_STATE_SHUFFLE_HINT:
         {
-            if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+            if (cubeWrapper.GetId() < arraysize(mTouching) && mTouching[cubeWrapper.GetId()])
+            {
+                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+            }
+            else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
                 cubeWrapper.DrawUiAsset(
