@@ -40,6 +40,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/IPO.h"
+#include "Analysis/CounterAnalysis.h"
 #include <memory>
 using namespace llvm;
 
@@ -295,6 +296,7 @@ int main(int argc, char **argv)
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
     initializeTarget(Registry);
+    initializeCounterAnalysisPass(Registry);
 
     // Initialize targets first, so that --version shows registered targets.
     LLVMInitializeSVMAsmPrinter();

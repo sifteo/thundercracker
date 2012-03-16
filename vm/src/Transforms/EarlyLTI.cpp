@@ -5,6 +5,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "Analysis/CounterAnalysis.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
@@ -29,6 +30,10 @@ namespace {
             : BasicBlockPass(ID) {}
 
         virtual bool runOnBasicBlock (BasicBlock &BB);
+
+        void getAnalysisUsage(AnalysisUsage &AU) const {
+            AU.addRequired<CounterAnalysis>();
+        }
 
         virtual const char *getPassName() const {
             return "Early link-time intrinsics";
@@ -78,6 +83,12 @@ bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
 {
     if (Name == "_SYS_lti_isDebug") {
         replaceWithConstant(CS, ELFDebug);
+        return true;
+    }
+
+    if (Name == "_SYS_lti_counter") {
+        const CounterAnalysis &CA = getAnalysis<CounterAnalysis>();
+        replaceWithConstant(CS, CA.getValueFor(CS));
         return true;
     }
 

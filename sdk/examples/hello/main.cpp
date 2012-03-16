@@ -93,8 +93,15 @@ static void Metathing(const AssetGroup &group)
 
     _SYS_lti_metadata(0x5555, 0x11111111);
     _SYS_lti_metadata(0x5555, 0x22222222);
-    _SYS_lti_metadata(0x5555, 0x33333333);
-    
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 2));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 2));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("blar", 1));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("blar", 1));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
+    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
+    _SYS_lti_metadata(0x5555, 0x33333333);    
 }
 
 void siftmain()
