@@ -72,3 +72,14 @@ void siftmain()
         game.Update();        
     }
 }
+
+
+void assertWrapper( bool value )
+{
+    if( !value )
+    {
+        int *p = 0;
+        //force crash
+        *p = 23;
+    }
+}

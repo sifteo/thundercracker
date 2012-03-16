@@ -99,6 +99,7 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
+    m_menu.Init();
 }
 
 
@@ -110,6 +111,29 @@ void Game::Update()
     m_stateTime += dt;
 
     bool needsync = false;
+
+    //painting is handled by menu manager
+    if( m_state == STATE_MAINMENU )
+    {
+        int choice;
+
+        if( !m_menu.Update( choice ) )
+        {
+            setState( STATE_INTRO );
+            if( choice < MODE_CNT )
+            {
+                m_mode = (GameMode)choice;
+
+                for( int i = 0; i < NUM_CUBES; i++ )
+                {
+                    m_cubes[i].Reset();
+                }
+            }
+            else
+                ASSERT( 0 );  //TODO settings!
+        }
+        return;
+    }
 
     if( m_bForcePaintSync )
     {
@@ -274,6 +298,37 @@ void Game::Reset(  bool bInGame )
     m_bStabilized = false;
     m_bIsChainHappening = false;
 }
+
+
+CubeWrapper *Game::GetWrapper( Cube *pCube )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( pCube == &m_cubes[i].GetCube() )
+            return &m_cubes[i];
+    }
+
+    return NULL;
+}
+
+
+CubeWrapper *Game::GetWrapper( unsigned int index )
+{
+    return &m_cubes[index];
+}
+
+
+int Game::getWrapperIndex( const CubeWrapper *pWrapper )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( &m_cubes[i] == pWrapper )
+            return i;
+    }
+
+    return -1;
+}
+
 
 void Game::setState( GameState state )
 {
@@ -1022,4 +1077,13 @@ bool Game::AreMovesLegal() const
     }
 
     return getState() == STATE_PLAYING;
+}
+
+
+
+void Game::ReturnToMainMenu()
+{
+    Reset( false );
+    //setState( STATE_MAINMENU );
+    m_menu.Reset();
 }

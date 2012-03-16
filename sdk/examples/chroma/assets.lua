@@ -1,17 +1,22 @@
 GameAssets = group{quality=10}
 --UI
 Font = image{"font-8x16.png", width=8, height=16}
+WhiteFont = image{"WhiteFont.png", width=8, height=16}
 BannerImg = image{"banner.png"}
-MessageBox0 = image{"message0.png"}
-MessageBox1 = image{"message1.png"}
-MessageBox2 = image{"message2.png"}
-MessageBox3 = image{"message3.png"}
-MessageBox4 = image{"message4.png"}
---just for CES messages
-MsgGameOver = image{"gameover.png"}
-MsgHighScores = image{"highscores.png"}
-MsgShakeNewGame = image{"shakenewgame.png"}
-MsgShakeToRefill = image{"shaketorefill.png"}
+--UI
+UI_Touch_Replay = image{"UI_screen_touch_replay.png"}
+UI_ExitGame = image{"UI_end_game_exit.png"}
+UI_NCubesCleared = image{"ui_nCubesCleared.png"}
+UI_BG = image{"UI_universalBG.png"}
+UI_Highscores = image{"UI_highScore_bg.png"}
+UI_Highscores_lowscore = image{"UI_highScore_bg_lowScore.png"}
+UI_Highlight = image{"UI_highlight.png"}
+
+--points text
+PointFont = image{"points.png", height=16}
+BannerPoints = image{"Bannerpoints.png", height=16}
+BannerPointsWhite = image{"BannerpointsWhite.png", height=16}
+
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
@@ -49,10 +54,12 @@ rockdot = image{"rock.png", height=32}
 rock_explode = image{"rock_explosion.png", height=32, pinned=true}
 rainball_idle = image{"rainball_idle.png", height=32}
 rainball_explode = image{"rainball_explode.png", height=32}
-mults = image{"mults.png", height=16, pinned=true}
+mult_lightning = image{"mult_lightning.png", height=32, pinned=true}
+mult_numbers = image{"mult_numbers.png", height=16, pinned=true}
 --timer
 timerStem = image{"timerstem.png", height=32}
 timerSprite = image{"timerSprite.png", height=32, pinned=true}
+timerLow = image{"timer_5sec.png", height=32, pinned=true}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 ExplodeGem1 = image{"Gem1Explode.png", height=32}
@@ -69,9 +76,20 @@ DieDown = image{"DieDown.png", height=64, pinned=true}
 DieRight = image{"DieRight.png", height=16, pinned=true}
 --idle glimmer
 GlimmerImg = image{"Glimmer.png", height=32}
---points text
-PointFont = image{"points.png", height=16}
-BannerPoints = image{"Bannerpoints.png", height=16}
+
+
+--UI
+--Main menu
+UI_Main_Menu_Blitz = image{"ui_main_menu_blitz.png"}
+UI_Main_Menu_Puzzle = image{"ui_main_menu_puzzle.png"}
+UI_Main_Menu_Survival = image{"ui_main_menu_survival.png"}
+UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
+UI_Main_Menu_TipsTouch = image{"ui_main_menu_tips_touch.png"}
+UI_Main_Menu_TipsTilt = image{"ui_main_menu_tips_tilt.png"}
+UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
+--for clearing
+White = image{"White.png"}
+
 
 --sounds
 astrokraut = sound{"astrokraut.raw"}
@@ -92,5 +110,11 @@ slide_39 = sound{"slide_39.raw"}
 slosh_multi_01 = sound{"slosh_multi_01.raw"}
 slosh_multi_02 = sound{"slosh_multi_02.raw"}
 StingerIV2 = sound{"StingerIV2.raw"}
-timer_blink = sound{"timer_blink.raw"}
 timer_explode = sound{"timer_explode.raw"}
+
+
+--UI audio
+changeoption = sound{"changeoption.raw"}
+ui_select = sound{"ui_select.raw"}
+settle = sound{"settle.raw"}
+game_start = sound{"game_start.raw"}

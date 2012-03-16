@@ -4,3 +4,4 @@
 *.d
 *~
 failed-*.png
+docs/doxygen/html

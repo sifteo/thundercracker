@@ -812,6 +812,11 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolyg
     }
 }
 
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+
+
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
     std::vector<uint8_t> pixels(width * height * 4, 0);

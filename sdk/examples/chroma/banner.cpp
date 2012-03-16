@@ -116,8 +116,9 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor an
         }
     }
 
+
     for( int i = 0; i < iLen; i++ )
     {
-        bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), BannerPoints, buf[i] - '0' );
+        bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
     }
 }

@@ -10,6 +10,7 @@
 #include <sifteo.h>
 #include "Level.h"
 #include "cubewrapper.h"
+#include "MenuController.h"
 #include "TimeKeeper.h"
 #include "config.h"
 
@@ -27,11 +28,11 @@ public:
 #if SPLASH_ON
         STARTING_STATE = STATE_SPLASH,
 #endif
-		STATE_MENU,
-        STATE_INTRO,
+        STATE_MAINMENU,
 #if !SPLASH_ON
-        STARTING_STATE = STATE_INTRO,
+        STARTING_STATE = STATE_MAINMENU,
 #endif
+        STATE_INTRO,
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
@@ -44,6 +45,7 @@ public:
         MODE_SURVIVAL,
         MODE_BLITZ,
 		MODE_PUZZLE,
+        MODE_CNT
 	} GameMode;
 
 	static Game &Inst();
@@ -83,6 +85,10 @@ public:
 	void Init();
 	void Update();
     void Reset( bool bInGame = true );
+
+    CubeWrapper *GetWrapper( Cube *pCube );
+    CubeWrapper *GetWrapper( unsigned int index );
+    int getWrapperIndex( const CubeWrapper *pWrapper );
 
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
@@ -149,6 +155,8 @@ public:
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
+    void ReturnToMainMenu();
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
@@ -172,6 +180,7 @@ private:
 	GameMode m_mode;
     float m_stateTime;
 	TimeKeeper m_timer;
+    MenuController m_menu;
     float m_fLastTime;
     float m_fLastSloshTime;
 
