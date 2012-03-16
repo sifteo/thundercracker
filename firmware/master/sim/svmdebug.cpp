@@ -48,7 +48,9 @@ void SvmDebug::fault(FaultCode code)
     std::string pcName = formatAddress(pcVA);
 
     LOG(("***\n"
-         "*** VM FAULT code %d (%s)\n"
+         "*** (>\")> --[ Uh oh!  A VM Fault! ]\n"
+         "***\n"
+         "***   Code %d (%s)\n"
          "***\n"
          "***   PC: va=%08x pa=%p%s at %s\n"
          "***   SP: va=%08x pa=%p%s\n"
