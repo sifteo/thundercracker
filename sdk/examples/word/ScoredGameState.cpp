@@ -7,12 +7,49 @@
 #include "WordGame.h"
 #include "Utility.h"
 
-const unsigned char MAX_HINTS = 3;
-
-ScoredGameState::ScoredGameState() : mNumHints(3) {}
+ScoredGameState::ScoredGameState() : mHintCubeIDOnUpdate(CUBE_ID_UNDEFINED) {}
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
+    if (mHintCubeIDOnUpdate != CUBE_ID_UNDEFINED)
+    {
+        if (GameStateMachine::getInstance().getNumHints() > 0)
+        {
+            EventData hintData;
+            Dictionary::findNextSolutionWordPieces(NUM_CUBES,
+                                                   GameStateMachine::getCurrentMaxLettersPerCube(),
+                                                   hintData.mHintSolutionUpdate.mHintSolution);
+            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, hintData);
+
+            CubeStateMachine *csm =
+                    GameStateMachine::findCSMFromID(mHintCubeIDOnUpdate);
+            ASSERT(csm);
+            if (csm->canStartHint())
+            {
+                csm->startHint();
+            }
+            else
+            {
+                for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+                {
+                    Cube::ID cubeID = ci + CUBE_ID_BASE;
+                    if (cubeID != mHintCubeIDOnUpdate)
+                    {
+                        CubeStateMachine *csm =
+                                GameStateMachine::findCSMFromID(cubeID);
+                        ASSERT(csm);
+                        if (csm->canStartHint())
+                        {
+                            csm->startHint();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        mHintCubeIDOnUpdate = CUBE_ID_UNDEFINED;
+    }
+
     if (GameStateMachine::getSecondsLeft() <= 0)
     {
         return GameStateIndex_EndOfRoundScored;
@@ -58,7 +95,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     case EventID_NewWordFound:
         {
             // count total hints and add one
-            mNumHints = (mNumHints + 1) % (MAX_HINTS + 1);
+            GameStateMachine::getInstance().setNumHints(MIN(GameStateMachine::getInstance().getNumHints() + 1, MAX_HINTS));
         }
 #if (0)
 #ifndef SIFTEO_SIMULATOR
@@ -81,6 +118,10 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
                                                    data.mHintSolutionUpdate.mHintSolution);
             GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
         }
+        break;
+
+    case EventID_WordBroken:
+        mHintCubeIDOnUpdate = data.mWordBroken.mCubeIDStart; // wait until next update, so all events can resolve first
         break;
 
     default:

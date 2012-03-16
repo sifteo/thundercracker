@@ -19,7 +19,7 @@ public:
 
 private:
 
-    unsigned char mNumHints;
+    Cube::ID mHintCubeIDOnUpdate;
 };
 
 #endif // SCOREDGAMESTATE_H

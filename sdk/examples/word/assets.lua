@@ -1,7 +1,7 @@
 GameAssets = group{}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
-HintSprite = image{"hint_bulb.png", pinned=true, width=16, height=16, quality=10}
+HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", quality=10}
@@ -9,13 +9,10 @@ BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
 BorderRightNoNeighbor = image{"wp2_border_right_noneighbor.png", quality=10}
 BorderLeftNoNeighbor = image{"wp2_border_left_noneighbor.png", quality=10}
-BorderSlotBlank = image{"border_available01.png", quality=10}
-BorderSlotNormal = image{"border_created_basic01.png", quality=10}
-BorderSlotBonus = image{"border_created_bonus01.png", quality=10}
-BorderLockedBR = image{"border_locked_br.png", quality=10}
-BorderLockedUR = image{"border_locked_ur.png", quality=10}
-BorderLockedBL = image{"border_locked_bl.png", quality=10}
-BorderLockedUL = image{"border_locked_ul.png", quality=10}
+BorderSlotBlank = image{"border_available.png", quality=10}
+BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
+BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
+BorderSlotHint = image{"border_hint.png", quality=10, width=16}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Blank = image{"tile_ivory_blank.png", quality=10}

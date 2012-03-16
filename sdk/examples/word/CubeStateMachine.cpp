@@ -9,7 +9,7 @@
 
 CubeStateMachine::CubeStateMachine() :
         StateMachine(0), mNumLetters(0), mPuzzlePieceIndex(0), mIdleTime(0.f),
-        mPainting(false), mBG0Panning(0.f),
+        mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
         mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
 {
@@ -166,6 +166,28 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
     case EventID_LetterOrderChange:
+        switch (mAnimTypes[CubeAnim_Hint])
+        {
+        default:
+            break;
+
+        case AnimType_HintWindUpSlide:
+            queueAnim(AnimType_None, CubeAnim_Hint);
+            break;
+
+        case AnimType_HintSlideL:
+        case AnimType_HintSlideR:
+            {
+                unsigned newStart = 0;
+                if (calcHintTiltDirection(newStart) == 0)
+                {
+                    queueAnim(AnimType_None, CubeAnim_Hint);
+                    // TODO spend hint
+                }
+            }
+            break;
+        }
+
         switch (mAnimTypes[CubeAnim_Main])
         {
         default:
@@ -380,6 +402,7 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
     DEBUG_LOG(("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
                getCube().id(), anim, cubeAnim));
+
     mAnimTypes[cubeAnim] = anim;
     mAnimTimes[cubeAnim] = 0.f;
     WordGame::instance()->setNeedsPaintSync();
@@ -690,52 +713,24 @@ void CubeStateMachine::update(float dt)
         if (mAnimTypes[CubeAnim_Hint] == AnimType_HintWindUpSlide &&
             mAnimTimes[CubeAnim_Hint] >= 0.5f)
         {
-            GameStateMachine::sOnEvent(EventID_UpdateHintSolution, EventData());
-            // now determine which way to slide, if any, to put in hint configuration
-            unsigned i = 0;
-            bool allMatch = true;
-            unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
-            // for all possible values of a letter start offset
-            for (i=0; i < maxLetters; ++i)
-            {
-                allMatch = true;
-                // compare all the letters, using the offset
-                for (unsigned j=0; j < maxLetters; ++j)
-                {
-                    if (mLetters[(j + i) % arraysize(mLetters)] !=
-                            mHintSolution[j])
-                    {
-                        allMatch = false;
-                        break;
-                    }
-                    if (allMatch)
-                    {
-                        break;
-                    }
-                }
-                if (allMatch)
-                {
-                    break;
-                }
-            }
-            ASSERT(allMatch); // make sure hint and scrambled letters can match
-            switch ((mLettersStart + maxLetters - i) % maxLetters)
+            unsigned newLettersStart = 0;
+            switch (calcHintTiltDirection(newLettersStart))
             {
             default:
-                ASSERT(i == mLettersStart); // how else could you get here?
+                ASSERT(newLettersStart == mLettersStart); // how else could you get here?
                 ASSERT(0);// this shouldn't happen
                 break;
 
             case 1:
+                mNewHint = true;
                 queueAnim(AnimType_HintSlideL, CubeAnim_Hint);
                 break;
 
             case 2:
+                mNewHint = true;
                 queueAnim(AnimType_HintSlideR, CubeAnim_Hint);
                 break;
             }
-
-            setLettersStart(i);
         }
         break;
 
@@ -790,7 +785,23 @@ void CubeStateMachine::update(float dt)
                 queueAnim(AnimType_OldWord);
             }
         }
-    break;
+        break;
+    }
+
+
+    switch (mAnimTypes[CubeAnim_Hint])
+    {
+    case AnimType_HintSlideL:
+    case AnimType_HintSlideR:
+        if (mNewHint && mAnimTimes[CubeAnim_Hint] > 0.2f)
+        {
+            GameStateMachine::getInstance().setNumHints(GameStateMachine::getInstance().getNumHints() - 1);
+            mNewHint = false;
+        }
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -1401,4 +1412,56 @@ void CubeStateMachine::setLettersStart(unsigned s)
         // new state is ready to react to level order change
         WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
     }
+}
+
+bool CubeStateMachine::canStartHint() const
+{
+    switch (mAnimTypes[CubeAnim_Hint])
+    {
+    case AnimType_HintWindUpSlide:
+    case AnimType_HintSlideL:
+    case AnimType_HintSlideR:
+    case AnimType_HintNeighborL:
+    case AnimType_HintNeighborR:
+        return false;
+
+    default:
+        {
+            unsigned newLettersStart;
+            return calcHintTiltDirection(newLettersStart) != 0;
+        }
+    }
+}
+
+unsigned CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart) const
+{
+    // now determine which way to slide, if any, to put in hint configuration
+    bool allMatch = true;
+    unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
+    // for all possible values of a letter start offset
+    for (newLettersStart=0; newLettersStart < maxLetters; ++newLettersStart)
+    {
+        allMatch = true;
+        // compare all the letters, using the offset
+        for (unsigned j=0; j < maxLetters; ++j)
+        {
+            if (mLetters[(j + newLettersStart) % arraysize(mLetters)] !=
+                    mHintSolution[j])
+            {
+                allMatch = false;
+                break;
+            }
+            if (allMatch)
+            {
+                break;
+            }
+        }
+        if (allMatch)
+        {
+            break;
+        }
+    }
+    ASSERT(allMatch); // make sure hint and scrambled letters can match
+
+    return (mLettersStart + maxLetters - newLettersStart) % maxLetters;
 }

@@ -14,7 +14,7 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
     mNumAnagramsLeft(0), mNumBonusAnagramsLeft(0),
-    mCurrentMaxLettersPerCube(1)
+    mCurrentMaxLettersPerCube(1), mNumHints(3)
 {
     ASSERT(cubes != 0);
     sInstance = this;

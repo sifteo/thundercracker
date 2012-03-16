@@ -67,6 +67,8 @@ public:
     int getPanning() const { return (int)mBG0Panning; }
 
     static unsigned findNumLetters(char *string);
+    bool canStartHint() const;
+    void startHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
@@ -88,6 +90,7 @@ private:
     bool getAnimParams(AnimParams *params);
     void calcSpriteParams(unsigned i);
     void updateSpriteParams(float dt);
+    unsigned calcHintTiltDirection(unsigned &newLettersStart) const;
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
@@ -96,7 +99,7 @@ private:
     unsigned mNumLetters;
     unsigned mPuzzlePieceIndex;
     float mIdleTime;
-
+    bool mNewHint;
     AnimType mAnimTypes[NumCubeAnims];
     float mAnimTimes[NumCubeAnims];
 
