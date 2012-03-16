@@ -154,6 +154,7 @@ void CubeWrapper::Draw()
                     }
 
                     m_bubbles.Draw( m_vid, this );
+                    m_floatscore.Draw( m_bg1helper );
 
                     m_queuedFlush = true;
 
@@ -421,6 +422,7 @@ void CubeWrapper::Update(float t, float dt)
 
         m_banner.Update(t);
         m_bubbles.Update(dt, getTiltDir() );
+        m_floatscore.Update( dt );
 
         //tilt state
         _SYSAccelState state;
@@ -1944,4 +1946,14 @@ void CubeWrapper::SpawnRockExplosion( const Vec2 &pos, unsigned int health )
     }
 
     m_aExplosions[ oldest ].Spawn( pos, health );
+}
+
+
+//each cube can have one floating score at a time
+void CubeWrapper::SpawnScore( unsigned int score, const Vec2 &slotpos )
+{
+    //find position where we should display score
+    Vec2 pos( slotpos.y * 4 + 1, slotpos.x * 4 + 1 );
+
+    m_floatscore.Spawn( score, pos );
 }

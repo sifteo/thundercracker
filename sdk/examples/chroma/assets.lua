@@ -14,7 +14,6 @@ UI_Highlight = image{"UI_highlight.png"}
 
 --points text
 PointFont = image{"points.png", height=16}
-BannerPoints = image{"Bannerpoints.png", height=16}
 BannerPointsWhite = image{"BannerpointsWhite.png", height=16}
 
 --the gems

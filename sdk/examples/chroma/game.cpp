@@ -371,7 +371,7 @@ void Game::TestMatches()
 	}
 }
 
-void Game::CheckChain( CubeWrapper *pWrapper )
+void Game::CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos )
 {
 	int total_marked = 0;
 
@@ -496,7 +496,10 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             }*/
 
             if( m_mode == MODE_BLITZ )
+            {
                 SetChain( false );
+                pWrapper->SpawnScore( comboScore, slotPos );
+            }
 		}
 
 		m_iDotScore = 0;

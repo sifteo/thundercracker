@@ -14,12 +14,9 @@
 const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
 const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
 const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
-const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = ( GridSlot::MARK_BREAK_DELAY - GridSlot::MARK_SPREAD_DELAY ) / (float) GridSlot::NUM_EXPLODE_FRAMES;
 const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
-const float GridSlot::START_FADING_TIME = 1.75f;
-const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
 const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 0.75f;
 const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
 //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
@@ -613,7 +610,7 @@ void GridSlot::die()
     m_pWrapper->checkEmpty();
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
-	Game::Inst().CheckChain( m_pWrapper );
+    Game::Inst().CheckChain( m_pWrapper, Vec2( m_row, m_col ) );
 	m_eventTime = System::clock();
 }
 

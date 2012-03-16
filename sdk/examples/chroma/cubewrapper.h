@@ -8,12 +8,13 @@
 #define _CUBEWRAPPER_H
 
 #include <sifteo.h>
-#include "GridSlot.h"
 #include "banner.h"
 #include "Bubbles.h"
-#include "Intro.h"
+#include "FloatingScore.h"
 #include "GameOver.h"
 #include "Glimmer.h"
+#include "GridSlot.h"
+#include "Intro.h"
 #include "RockExplosion.h"
 
 using namespace Sifteo;
@@ -130,6 +131,8 @@ public:
 
     void StopGlimmer();
     void SpawnRockExplosion( const Vec2 &pos, unsigned int health );
+    //each cube can have one floating score at a time
+    void SpawnScore( unsigned int score, const Vec2 &slotpos );
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -193,6 +196,7 @@ private:
     //allow up to 4 rock explosions simultaneously
     RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
     BubbleSpawner m_bubbles;
+    FloatingScore m_floatscore;
 };
 
 #endif

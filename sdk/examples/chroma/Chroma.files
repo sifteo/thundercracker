@@ -93,3 +93,5 @@ TiltFlowMenu.cpp
 MenuController.cpp
 Bubbles.h
 Bubbles.cpp
+FloatingScore.h
+FloatingScore.cpp

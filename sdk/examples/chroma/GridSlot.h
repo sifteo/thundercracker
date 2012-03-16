@@ -52,14 +52,10 @@ public:
     static const float MARK_SPREAD_DELAY;
     static const float MARK_BREAK_DELAY;
     static const float MARK_EXPLODE_DELAY;
-    static const float SCORE_FADE_DELAY;
-    static const float START_FADING_TIME;
-    static const float FADE_FRAME_TIME;
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
     static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
-    static const unsigned int NUM_POINTS_FRAMES = 4;
     static const unsigned int NUM_FIXED_FRAMES = 5;
     static const unsigned int MAX_ROCK_HEALTH = 4;
 
