@@ -74,7 +74,11 @@ void power_init(void)
     MISC_CON = 0x60;
     MISC_CON = 0x61;
     MISC_CON = 0x65;
+#if HWREV >= 2
+    MISC_CON = 0x64;
+#else
     MISC_CON = 0x67;
+#endif
 }
 
 void power_sleep(void)
