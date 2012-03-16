@@ -16,7 +16,7 @@ MEMORY
 }
 
 /* Main stack starts at the top of SYSRAM */
-_stack = ORIGIN(SYSRAM) + LENGTH(SYSRAM) - 4;
+_stack = ORIGIN(SYSRAM) + LENGTH(SYSRAM);
 
 SECTIONS
 {
@@ -94,10 +94,16 @@ SECTIONS
 
     .blockcache : {
         . = ALIGN(4);
+        __blockcache_start = .;
+        *(.blockcache);
+        __blockcache_end = .;
     } >CACHERAM
 
     .userram : {
         . = ALIGN(4);
+        __userram_start = .;
+        *(.userram);
+        __userram_end = .;
     } >USERRAM
 
     /*
