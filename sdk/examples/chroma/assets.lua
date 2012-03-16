@@ -60,14 +60,14 @@ timerStem = image{"timerstem.png", height=32}
 timerSprite = image{"timerSprite.png", height=32, pinned=true}
 timerLow = image{"timer_5sec.png", height=32, pinned=true}
 --explosions
-ExplodeGem0 = image{"Gem0Explode.png", height=32}
-ExplodeGem1 = image{"Gem1Explode.png", height=32}
-ExplodeGem2 = image{"Gem2Explode.png", height=32}
-ExplodeGem3 = image{"Gem3Explode.png", height=32}
-ExplodeGem4 = image{"Gem4Explode.png", height=32}
-ExplodeGem5 = image{"Gem5Explode.png", height=32}
-ExplodeGem6 = image{"Gem6Explode.png", height=32}
-ExplodeGem7 = image{"Gem7Explode.png", height=32}
+ExplodeGem0 = image{"GemExplode0.png", height=32}
+ExplodeGem1 = image{"GemExplode1.png", height=32}
+ExplodeGem2 = image{"GemExplode2.png", height=32}
+ExplodeGem3 = image{"GemExplode3.png", height=32}
+ExplodeGem4 = image{"GemExplode4.png", height=32}
+ExplodeGem5 = image{"GemExplode5.png", height=32}
+ExplodeGem6 = image{"GemExplode6.png", height=32}
+ExplodeGem7 = image{"GemExplode7.png", height=32}
 --death animations
 DieUp = image{"DieUp.png", height=64, pinned=true}
 DieLeft = image{"DieLeft.png", height=16, pinned=true}
