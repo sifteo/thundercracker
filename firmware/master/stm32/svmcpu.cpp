@@ -50,11 +50,14 @@ void init()
  */
 void run(reg_t sp, reg_t pc)
 {
-    asm(
-        "mrs    %[sp_arg], psp          \n\t"
+    asm volatile(
+        "msr    psp, %[sp_arg]          \n\t"
         "mov    r2, #0x3                \n\t"
         "msr    control, r2             \n\t"
-        "bx     %[target]" : : [sp_arg] "r"(sp), [target] "r"(pc)
+        "isb                            \n\t"
+        "bx     %[target]"
+        :
+        : [sp_arg] "r"(sp), [target] "r"(pc)
     );
     for (;;) {
         asm volatile ("wfi");
@@ -158,4 +161,3 @@ NAKED_HANDLER ISR_SVCall()
             [savedSp] "i"(&SvmCpu::userRegs.sp)
     );
 }
-
