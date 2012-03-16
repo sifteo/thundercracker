@@ -18,6 +18,7 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
         mShakeDelay = 0.f;
+        mPanning = -16.f;// * ((getStateMachine().getCube().id() & 1) ? -1.f : 1.f);
         paint();
         if (eventID == EventID_EnterState)
         {
@@ -55,7 +56,12 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         mShakeDelay = 0.f;
     }
     mPanning += dt * -2.f * accelState.x;
-    if (fabs(mPanning) > 86.f)
+    /*if (mPanning != 0.f)
+    {
+        DEBUG_LOG(("panning %f\n", mPanning));
+    }*/
+    //mPanning = fmodf(mPanning, 128.f);
+    if (false)//if (fabs(mPanning) > 76.f && fabs(mPanning) < 96.f)
     {
         GameStateMachine::sOnEvent(EventID_Start, EventData());
         return CubeStateIndex_StartOfRoundScored;
@@ -137,7 +143,7 @@ void TitleCubeState::paint()
             }
             */
             vid.moveSprite(0, Vec2(39 - shakeOffset, 74));
-            vid.BG1_setPanning(Vec2((unsigned)mPanning + shakeOffset, 0));
+            vid.BG1_setPanning(Vec2((int)mPanning + shakeOffset, 0));
         }
         {            
             BG1Helper bg1(getStateMachine().getCube());
