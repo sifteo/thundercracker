@@ -9,8 +9,7 @@
 #include "WordGame.h"
 #include "config.h"
 
-
-const float SMOKE_ANIM_LENGTH = 2.f;
+const float SHAKE_DELAY = 3.5f;
 
 unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 {
@@ -18,14 +17,16 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        mAnimDelay = 0.f;
-        // fall through
-    case EventID_Paint:
+        mShakeDelay = 0.f;
         paint();
         if (eventID == EventID_EnterState)
         {
             WordGame::instance()->setNeedsPaintSync();
         }
+        break;
+
+    case EventID_Paint:
+        paint();
         break;
 
     case EventID_GameStateChanged:
@@ -41,14 +42,23 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 
 unsigned TitleCubeState::update(float dt, float stateTime)
 {
-    if (mAnimDelay > 0.f)
+    mShakeDelay -= dt;
+    if (mShakeDelay <= 0.f)
     {
-        mAnimDelay -= dt;
-        mAnimDelay = MAX(0.f, mAnimDelay);
-        if (mAnimDelay <= 0.f)
-        {
-            mAnimStart = true;
-        }
+        mShakeDelay = SHAKE_DELAY;
+    }
+
+    _SYSAccelState accelState;
+    _SYS_getAccel(getStateMachine().getCube().id(), &accelState);
+    if (accelState.x != 0)
+    {
+        mShakeDelay = 0.f;
+    }
+    mPanning += dt * -2.f * accelState.x;
+    if (fabs(mPanning) > 96.f)
+    {
+        GameStateMachine::sOnEvent(EventID_Start, EventData());
+        return CubeStateIndex_StartOfRoundScored;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -114,19 +124,22 @@ void TitleCubeState::paint()
 
     default:
     case 1:
-        vid.BG0_drawAsset(Vec2(0, 0), TileBG);
-        //if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
+        vid.BG0_drawAsset(Vec2(0, 0), StartBG);
+        vid.setSpriteImage(0, StartPrompt);
+        vid.resizeSprite(0, StartPrompt.width * 8, StartPrompt.height * 8);
         {
-            const float ANIM_LENGTH = 1.0f;
-            const AssetImage& anim = StartPrompt;
-            float animTime =
-                    fmodf(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
-            animTime = MIN(animTime, 1.f);
-            unsigned frame = (unsigned) (animTime * anim.frames);
-            frame = MIN(frame, anim.frames - 1);
-
+            float shakeOffset = 0.f;
+            if (mShakeDelay < 0.5f)
+            {
+                const float SHAKE = 4.f;
+                shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
+            }
+            vid.moveSprite(0, Vec2(40 - shakeOffset, 78));
+            vid.BG1_setPanning(Vec2((unsigned)mPanning + shakeOffset, 0));
+        }
+        {            
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(5, 4), anim, frame);
+            bg1.DrawAsset(Vec2(0, 0), StartLid);
             bg1.Flush();
         }
         break;
