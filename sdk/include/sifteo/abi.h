@@ -485,8 +485,7 @@ struct _SYSMetadataPinnedImage {
  *   This is a mechanism for generating monotonic unique IDs at link-time.
  *   Every _SYS_lti_counter() call with the same 'name' will return a
  *   different value, starting with zero. Values are assigned in order of
- *   decreasing priority. Counter calls which are optimized out early enough
- *   will never allocate a value.
+ *   decreasing priority.
  */
 
 unsigned _SYS_lti_isDebug();
