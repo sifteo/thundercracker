@@ -1,8 +1,10 @@
 #pragma once
 #include "Room.h"
+#include "Sokoblock.h"
 
-#define ROOM_CAPACITY (81)
-#define PATH_CAPACITY (32)
+#define ROOM_CAPACITY   (81)
+#define PATH_CAPACITY   (32)
+#define BLOCK_CAPACITY  (2)
 #define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
@@ -27,10 +29,11 @@ struct BroadPath {
 };
 
 struct NarrowPath {
-  uint8_t moves[PATH_CAPACITY];
-  uint8_t *pFirstMove;
+  Cube::Side moves[PATH_CAPACITY];
+  Cube::Side *pFirstMove;
   inline int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
-  inline const uint8_t* End() const { return moves + PATH_CAPACITY; }
+  inline const Cube::Side* Begin() { return pFirstMove; }
+  inline const Cube::Side* End() { return moves + PATH_CAPACITY; }
 };
 
 //-----------------------------------------------------------------------------
@@ -41,6 +44,12 @@ class Map {
 private:
   const MapData* mData;
   Room mRooms[ROOM_CAPACITY];
+
+  // these non-room-based entities are naively allocated here.
+  // we may need to create some other data structure to act as 
+  // a lightweight generic pool allocator or something :P
+  int mBlockCount;
+  Sokoblock mBlock[1];
 
 public:
   void Init();
@@ -56,6 +65,10 @@ public:
   bool IsVertexWalkable(Vec2 globalVertex);
   bool FindBroadPath(BroadPath* outPath);
   bool FindNarrowPath(BroadLocation loc, Cube::Side direction, NarrowPath* outPath);
+
+  bool BlockCount() const { return mBlockCount; }
+  Sokoblock* BlockBegin() { return mBlock; }
+  Sokoblock* BlockEnd() { return mBlock + mBlockCount; }
 
 
   // Map Data Getters

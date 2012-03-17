@@ -26,6 +26,7 @@ OBJS = \
 	Player.o \
 	Room.o \
 	RoomView.o \
+	Sokoblock.o \
 	ViewSlot.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs

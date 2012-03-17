@@ -36,3 +36,5 @@ using namespace Sifteo;
 
 // Utils
 Cube::Side InferDirection(Vec2 u);
+
+int AdvanceTowards(int curr, int targ, int mag);

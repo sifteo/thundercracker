@@ -54,6 +54,53 @@ void Game::Paint(bool sync) {
 // HELPERS
 //------------------------------------------------------------------
 
+void Game::MoveBlock(Sokoblock* block, Vec2 u) {
+  if (block) {
+    block->Move(u);
+    mPlayer.TargetView()->UpdateBlock();
+
+    // Could be optimized, perhaps
+    const Cube::Side dir = InferDirection(u);
+    ViewSlot* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
+    if (view && view->IsShowingRoom()) {
+      RoomView* pRoomView = view->GetRoomView();
+      if (pRoomView->Block()) {
+        pRoomView->UpdateBlock();
+      } else {
+        pRoomView->ShowBlock(block);
+      }
+    }
+    //
+  }
+}
+
+
+int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
+  mPlayer.SetDirection(dir);
+
+  const Vec2 unit = kSideToUnit[dir];
+  if (dot(BroadDirection(), unit) != 1) { block = 0; }
+
+  // if we have any progress to use, use it here
+  if (progress != 0) {
+    mPlayer.Move(progress * unit);
+    MoveBlock(block, progress * unit);
+    Paint();
+  }
+  // while we're still moving in this direction
+  while(progress+WALK_SPEED < 16) {
+    progress += WALK_SPEED;
+    mPlayer.Move(WALK_SPEED * unit);
+    MoveBlock(block, WALK_SPEED * unit);
+    Paint();
+  }
+  // use up any remainder
+  const int leftovers = 16 - progress;
+  mPlayer.Move(leftovers * unit);
+  MoveBlock(block, leftovers * unit);
+  return WALK_SPEED - leftovers;  
+}
+
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
   mPlayer.Move(dx, dy);
@@ -535,6 +582,25 @@ void Game::OnTriggerEvent(unsigned id) {
       ));
       break;
   }
+}
+
+bool Game::OnEncounterBlock(Sokoblock* block) {
+  //-------------------------------------------------------------
+  // BLOCK PUSHING
+  // determine if the block can be pushed:
+  //  i.    ? is there a portal to the blockTarget room? ?
+  //  ii.   is the blockTarget not subdivided?
+  //  iii.  ? portal "big enough" check ?
+  //  iv.   targetRoom does not already have a block
+  const Vec2 blockTargetLoc = mPlayer.TargetRoom()->Location() + BroadDirection();
+  if (!mMap.Contains(blockTargetLoc)) { return false; }
+  Room* pRoom = mMap.GetRoom(blockTargetLoc);
+  if (pRoom->IsSubdivided()) { return false; }
+  // TODO CHECK ROOM DOES NOT ALREADY CONTAIN A BLOCK
+  //    -- MOVE ROOMVIEW::CHECKBLOCK --> ROOM
+  //for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
+  //}
+  return true;
 }
 
 //------------------------------------------------------------------

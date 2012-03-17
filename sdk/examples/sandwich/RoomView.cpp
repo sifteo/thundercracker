@@ -3,15 +3,17 @@
 #include "DrawingHelpers.h"
 #include "MapHelpers.h"
 
-#define ROOM_UNDEFINED  (0xff)
+#define ROOM_UNDEFINED      0xff
 #define BFF_SPRITE_ID       0
 #define TRIGGER_SPRITE_ID   1
 #define EQUIP_SPRITE_ID     2
 #define PLAYER_SPRITE_ID    3
+#define BLOCK_SPRITE_ID     4
 
 void RoomView::Init(unsigned roomId) {
   Parent()->HideSprites();
   ViewMode mode = Parent()->Graphics();
+  Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
   mRoomId = roomId;
   // are we showing an items?
@@ -28,7 +30,7 @@ void RoomView::Init(unsigned roomId) {
   }
   DrawBackground();
   // initialize ambient fx?
-  if (gGame.GetMap()->Data()->ambientType) {
+  if (map.Data()->ambientType) {
     if (r->HasTrigger()) {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
@@ -36,6 +38,18 @@ void RoomView::Init(unsigned roomId) {
       mode.resizeSprite(BFF_SPRITE_ID, 8, 8);
       mode.setSpriteImage(BFF_SPRITE_ID, Butterfly.index + 4 * mAmbient.bff.dir);
       mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
+    }
+  }
+
+  mBlock = 0;
+  if (!r->IsSubdivided()) {
+    // Should there be some sort of spatial hash?
+    for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
+      if (IsShowingBlock(pBlock)) {
+        // assuming for now that we're only showing one block per cube :/
+        ShowBlock(pBlock);
+        break;
+      }
     }
   }
 }
@@ -110,18 +124,48 @@ void RoomView::HideOverlay(bool flag) {
   }
 }
 
+//---------------------------------------------------------------
+// SPRITE METHODS
+//---------------------------------------------------------------
+
 void RoomView::ShowPlayer() {
   ViewMode gfx = Parent()->Graphics();
   gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   if (gGame.GetPlayer()->Equipment()) {
     gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
-    gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
   }
   UpdatePlayer();
 }
 
+void RoomView::ShowItem() {
+  Room* pRoom = GetRoom();
+  ASSERT(pRoom->HasItem());
+  ViewMode mode = Parent()->Graphics();
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
+  Vec2 p = 16 * pRoom->LocalCenter(0);
+  mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+}
+
+void RoomView::ShowBlock(Sokoblock *pBlock) {
+  mBlock = pBlock;
+  Parent()->Graphics().setSpriteImage(BLOCK_SPRITE_ID, CompanionCube);
+  UpdateBlock();
+}
+
 void RoomView::SetPlayerFrame(unsigned frame) {
   Parent()->Graphics().setSpriteImage(PLAYER_SPRITE_ID, frame);
+}
+
+void RoomView::SetEquipPosition(Vec2 p) {
+  p += 16 * GetRoom()->LocalCenter(0);
+  ViewMode gfx = Parent()->Graphics();
+  gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
+  gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
+}
+  
+void RoomView::SetItemPosition(Vec2 p) {
+  p += 16 * GetRoom()->LocalCenter(0);
+  Parent()->Graphics().moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
 void RoomView::UpdatePlayer() {
@@ -140,10 +184,17 @@ void RoomView::DrawPlayerFalling(int height) {
   mode.setSpriteImage(PLAYER_SPRITE_ID, PlayerStand.index + (2<<4));
   mode.moveSprite(PLAYER_SPRITE_ID, localCenter.x-16, localCenter.y-32-height);
   mode.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
-  if (gGame.GetPlayer()->Equipment()) {
+  if (gGame.GetPlayer()->Equipment()) { 
     mode.moveSprite(EQUIP_SPRITE_ID, localCenter.x-8, localCenter.y-16-height-ITEM_OFFSET);
   }
 }
+
+void RoomView::UpdateBlock() {
+  ASSERT(mBlock);
+  const Vec2 localPosition = mBlock->Position() - Vec2(32, 32) - 128 * Location();
+  Parent()->Graphics().moveSprite(BLOCK_SPRITE_ID, localPosition);
+}
+
 
 void RoomView::HidePlayer() {
   ViewMode gfx = Parent()->Graphics();
@@ -151,34 +202,11 @@ void RoomView::HidePlayer() {
   gfx.hideSprite(EQUIP_SPRITE_ID);
 }
 
-void RoomView::ShowItem() {
-  Room* pRoom = GetRoom();
-  ASSERT(pRoom->HasItem());
-  ViewMode mode = Parent()->Graphics();
-  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
-  mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * pRoom->LocalCenter(0);
-  mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
-}
-
-void RoomView::SetEquipPosition(Vec2 p) {
-  p += 16 * GetRoom()->LocalCenter(0);
-  ViewMode gfx = Parent()->Graphics();
-  gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
-  gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
-}
-  
-void RoomView::SetItemPosition(Vec2 p) {
-  p += 16 * GetRoom()->LocalCenter(0);
-  Parent()->Graphics().moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
-}
-
-void RoomView::HideItem() {
-  Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID);
-}
-
-void RoomView::HideEquip() {
-  Parent()->Graphics().hideSprite(EQUIP_SPRITE_ID);
+void RoomView::HideItem() { Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID); }
+void RoomView::HideEquip() { Parent()->Graphics().hideSprite(EQUIP_SPRITE_ID); }
+void RoomView::HideBlock() { 
+  Parent()->Graphics().hideSprite(BLOCK_SPRITE_ID); 
+  mBlock = 0;
 }
 
 //----------------------------------------------------------------------
@@ -252,4 +280,11 @@ void RoomView::ComputeAnimatedTiles() {
     }
     if (mAnimTileCount == ANIM_TILE_CAPACITY) { break; }
   }
+}
+
+bool RoomView::IsShowingBlock(const Sokoblock* pBlock) {
+  const Vec2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Vec2 roomTopLeft = 128 * Location();
+  const Vec2 delta = blockTopLeft - roomTopLeft;
+  return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
 }

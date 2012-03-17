@@ -105,6 +105,8 @@ struct Vec2 {
         y = _y;
     }
 
+    int norm() { return x*x + y*y; }
+
 	// Implicit conversion from float (truncation)
 	Vec2(const Float2 &other)
         : x((int)other.x), y((int)other.y) {}
@@ -114,8 +116,13 @@ struct Vec2 {
         return Vec2((int)(other.x + 0.5f), (int)(other.y + 0.5f));
     }
 
+
     int x, y;
 };
+
+inline int dot(const Vec2& u, const Vec2& v) {
+    return u.x*v.x + u.y*v.y;
+}
 
 inline Vec2 operator<<(const Vec2& u, int shift) { return Vec2(u.x<<shift, u.y<<shift); }
 inline Vec2 operator>>(const Vec2& u, int shift) { return Vec2(u.x>>shift, u.y>>shift); }

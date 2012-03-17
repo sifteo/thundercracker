@@ -36,6 +36,10 @@ public:
   inline ViewSlot* ViewBegin() { return mViews; }
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
+  inline Vec2 BroadDirection() {
+    ASSERT(mPlayer.Target()->view);
+    return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
+  }
 
   bool ShowingMinimap() const { 
     #if PLAYTESTING_HACKS
@@ -68,6 +72,8 @@ private:
 
   void WalkTo(Vec2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
+  int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
+  void MoveBlock(Sokoblock* block, Vec2 u);
   void TeleportTo(const MapData& m, Vec2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
@@ -86,7 +92,10 @@ private:
   void OnNpcChatter(Room *pRoom);
   void OnTriggerEvent(unsigned id);
 
+  bool OnEncounterBlock(Sokoblock* block);
+
   void RestorePearlIdle();
+
 
 };
 

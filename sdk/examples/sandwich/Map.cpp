@@ -9,6 +9,14 @@ void Map::SetData(const MapData& map) {
   if (mData != &map) {
     mData = &map; 
     RefreshTriggers();
+    // HACK ALERT!!
+    if (mData->tileset == &TileSet_sandbox) {
+      mBlockCount = 1;
+      //mBlock[0].SetPosition(Vec2(192, 192));
+      mBlock[0].SetPosition(
+        GetRoom(Vec2(1,1))->Center(0)
+      );
+    }
   }
 }
 

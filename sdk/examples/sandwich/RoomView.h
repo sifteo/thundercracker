@@ -3,6 +3,7 @@
 #include "View.h"
 #include "Content.h"
 #include "DrawingHelpers.h"
+#include "Sokoblock.h"
 
 class Room;
 #define ANIM_TILE_CAPACITY 4
@@ -10,6 +11,8 @@ class Room;
 
 class RoomView : public View {
 private:
+  Sokoblock *mBlock;
+
   uint8_t mRoomId;
 
   uint8_t mStartFrame;
@@ -34,6 +37,7 @@ public:
   Vec2 Location() const;
   Room* GetRoom() const;
   bool GatewayTouched() const;
+  Sokoblock* Block() const { return mBlock; }
 
   // methods
   void Init(unsigned rid);
@@ -43,21 +47,27 @@ public:
   void HideOverlay(bool flag);
   
   void ShowPlayer();
-  void SetPlayerFrame(unsigned frame);
-  void UpdatePlayer();
-  void DrawPlayerFalling(int height);
-  void HidePlayer();
-
   void ShowItem();
+  void ShowBlock(Sokoblock* pBlock);
+
+  void SetPlayerFrame(unsigned frame);
   void SetEquipPosition(Vec2 p);
   void SetItemPosition(Vec2 p);
+
+  void UpdatePlayer();
+  void DrawPlayerFalling(int height);
+  void UpdateBlock();
+
+  void HidePlayer();
   void HideItem();
   void HideEquip();
+  void HideBlock();
 
   void DrawTrapdoorFrame(int delta);
-
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
+  bool IsShowingBlock(const Sokoblock* pBlock);  
+
 };

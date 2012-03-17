@@ -7,7 +7,7 @@
 #define SFX_ON        				0
 #define LOAD_ASSETS   				1
 #define GFX_ARTIFACT_WORKAROUNDS	1
-#define PLAYTESTING_HACKS			1
+#define PLAYTESTING_HACKS			0
 
 #if SIFTEO_SIMULATOR
 	// these settings only applied to the emulator build
