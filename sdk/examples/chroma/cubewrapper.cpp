@@ -1954,7 +1954,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
         int xOffset = MAX_LINES - ( length / 2 );
 
         _SYS_strlcpy( aBuf, pTxt + lineBreakIndices[i] + 1, length );
-        m_bg1helper.DrawText( Vec2( xOffset, yOffset ), Font, aBuf );
+        m_bg1helper.DrawText( Vec2( xOffset, yOffset ), WhiteFont, aBuf );
 
         yOffset += 2;
     }
