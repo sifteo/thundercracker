@@ -71,11 +71,10 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         {
             switch (Dictionary::getPuzzleIndex() - 1)
             {
-            case 8:  // quiet
-            case 17: // terms
-            case 24: // cause
-            case 30: // before... mosaic
-            case 31: // mosaic
+            case 6:  // acre
+            case 12: // part
+            case 18: // career
+            case 24: // begun
                 return GameStateIndex_StoryCityProgression;
             default:
                 // wait for all the cube states to exit the new word state
@@ -279,17 +278,22 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    if (Dictionary::getPuzzleIndex() - 1 <= 12)
+    switch (Dictionary::getPuzzleIndex() - 1)
     {
+    case 0:
+    case 1:
+    case 4:
+    case 8:
+    case 9:
+        // don't scramble
         _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
         for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
         {
             data.mNewAnagram.mPuzzlePieceIndexes[i] = i;
         }
+        break;
 
-    }
-    else
-    {
+    default:
         // scramble the string (random permutation)
         _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
 
@@ -361,6 +365,7 @@ void ScoredGameState::createNewAnagram()
             }
             break;
         }
+        break;
     }
 
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
