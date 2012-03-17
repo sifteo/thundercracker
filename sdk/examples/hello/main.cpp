@@ -84,8 +84,6 @@ static void init()
 
 void siftmain()
 {
-    Metathing(MainAssets);
-
     init();
 
     _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
