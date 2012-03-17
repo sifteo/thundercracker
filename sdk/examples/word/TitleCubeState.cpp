@@ -61,7 +61,7 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         DEBUG_LOG(("panning %f\n", mPanning));
     }*/
     //mPanning = fmodf(mPanning, 128.f);
-    if (false)//if (fabs(mPanning) > 76.f && fabs(mPanning) < 96.f)
+    if (fabs(mPanning) > 86.f)
     {
         GameStateMachine::sOnEvent(EventID_Start, EventData());
         return CubeStateIndex_StartOfRoundScored;
