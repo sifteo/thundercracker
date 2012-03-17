@@ -1,5 +1,5 @@
 BIN_SIM = master-sim
-BIN_STM32 = master-stm32.a
+BIN_STM32 = master-stm32.elf
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -76,7 +76,29 @@ syscall-table:
 	   < $(TC_DIR)/sdk/include/sifteo/abi.h \
 	   > $(MASTER_DIR)/common/syscall-table.def
 
-.PHONY: all clean syscall-table
+ocd:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt"
+
+unlock:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "stm32f1x unlock 0" \
+		-c reset \
+		-c exit
+
+program: $(BIN_STM32)
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "flash write_image erase $<" \
+		-c "verify_image $<" \
+		-c "reset run" \
+		-c exit
+
+.PHONY: all clean syscall-table ocd unlock program
 
 # Several steps, to work around Win32 command line length limits
 clean:

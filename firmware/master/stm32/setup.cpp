@@ -27,15 +27,13 @@
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" {
-    unsigned __bss_start;
-    unsigned __bss_end;
-    unsigned __data_start;
-    unsigned __data_end;
-    unsigned __data_src;
-    initFunc_t __init_array_start;
-    initFunc_t __init_array_end;
-}
+extern unsigned     __bss_start;
+extern unsigned     __bss_end;
+extern unsigned     __data_start;
+extern unsigned     __data_end;
+extern unsigned     __data_src;
+extern initFunc_t   __init_array_start;
+extern initFunc_t   __init_array_end;
 
 extern "C" void _start()
 {
@@ -190,6 +188,7 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
+    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
     /*
      * High-level hardware initialization
      */

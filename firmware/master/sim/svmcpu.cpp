@@ -17,32 +17,6 @@ namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
 
-// registers that get saved to the stack automatically by hardware
-struct HwContext {
-    reg_t r0;
-    reg_t r1;
-    reg_t r2;
-    reg_t r3;
-    reg_t r12;
-    reg_t lr;
-    reg_t returnAddr;
-    reg_t xpsr;
-};
-
-// registers that we want to operate on during exception handling
-// which do not get saved by hardware
-// TODO: may be able to get away without saving all these
-struct IrqContext {
-    reg_t r4;
-    reg_t r5;
-    reg_t r6;
-    reg_t r7;
-    reg_t r8;
-    reg_t r9;
-    reg_t r10;
-    reg_t r11;
-};
-
 /*
  * We copy all user regs to trusted memory to operate on them during exception
  * handling. In an alternative universe, we might try to simply stack them beyond

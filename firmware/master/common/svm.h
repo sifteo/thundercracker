@@ -56,7 +56,7 @@ static inline int32_t signExtend(uint32_t value, unsigned w) {
     return value;
 }
 
-static InstructionSize instructionSize(uint16_t instr) {
+static inline InstructionSize instructionSize(uint16_t instr) {
     // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
     // 0xe800 == 0b11101 << 11
     return (instr & 0xf800) >= 0xe800 ? InstrBits32 : InstrBits16;
