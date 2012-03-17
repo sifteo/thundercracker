@@ -30,6 +30,8 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
 static void init()
 {
+    Metadata::title("Hello World SDK Example");
+    
     // Synchronously load the BootAssets. This should be quick.
     for (unsigned i = 0; i < NUM_CUBES; i++) {
 

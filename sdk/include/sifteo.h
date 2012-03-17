@@ -18,6 +18,7 @@
 #include <sifteo/macros.h>
 #include <sifteo/video.h>
 #include <sifteo/string.h>
+#include <sifteo/metadata.h>
 #include <sifteo/BG1Helper.h>
 
 #endif
