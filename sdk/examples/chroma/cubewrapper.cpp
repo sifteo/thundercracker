@@ -311,7 +311,7 @@ void CubeWrapper::Draw()
             }
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
-                DrawMessageBoxWithText( "Shake to Begin" );
+                DrawMessageBoxWithText( "Touch to Begin" );
             }
             break;
         }
@@ -1867,10 +1867,10 @@ void CubeWrapper::fillPuzzleCube()
         {
             GridSlot &slot = m_grid[j][i];
 
-            ASSERT( !slot.isAlive() );
-
             if( pData->m_aData[i][j] > 0 )
                 slot.FillColor( pData->m_aData[i][j] - 1 );
+            else
+                slot.setEmpty();
         }
     }
 }
