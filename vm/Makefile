@@ -41,6 +41,11 @@ ifeq ($(BUILD_PLATFORM), windows32)
     LIBS += -limagehlp -lpsapi
 endif
     
+# Platform UUID deps
+ifeq ($(BUILD_PLATFORM), windows32)
+    LIBS += -lrpcrt4
+endif
+    
 # The DEBUG-ness of this build must match what LLVM was compiled with.
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.
