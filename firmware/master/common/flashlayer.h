@@ -10,6 +10,7 @@
 #include "systime.h"
 #include <sifteo/machine.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef SIFTEO_SIMULATOR
 #  define FLASHLAYER_STATS
@@ -56,7 +57,7 @@ private:
     uint16_t validCodeBytes;
     uint8_t refCount;
 
-    static uint8_t mem[NUM_BLOCKS][BLOCK_SIZE] __attribute__((section(".blockcache")));
+    static uint8_t mem[NUM_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
     static FlashBlock instances[NUM_BLOCKS];
     static uint32_t referencedBlocksMap;
     static uint32_t latestStamp;

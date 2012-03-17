@@ -36,7 +36,7 @@ void Tasks::init()
 */
 void Tasks::setPending(TaskID id, void* p)
 {
-    ASSERT(id < arraysize(TaskList));
+    ASSERT((unsigned)id < arraysize(TaskList));
     ASSERT(TaskList[id].callback != NULL);
     TaskList[id].param = p;
     Atomic::SetLZ(pendingMask, id);
