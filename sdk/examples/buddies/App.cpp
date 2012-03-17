@@ -173,24 +173,59 @@ void DrawShuffleScore(const App &app, CubeWrapper &cubeWrapper, float scoreTimer
     
         cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, buffer.c_str());
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Rename these to DrawStoryChapter etc.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    cubeWrapper.DrawBackground(StoryChapterTitle);
     
-    // TODO: Bake in other labels
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<16> bufferChapter;
+    bufferChapter << "Chapter " << (puzzleIndex + 1);
+    int xChapter = (tileWidth / 2) - (bufferChapter.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
+    
+    String<64> bufferTitle;
+    bufferTitle << GetPuzzle(puzzleIndex).GetTitle();
+    int xTitle = (tileWidth / 2) - (bufferTitle.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xTitle, 8), UiFontOrange, bufferTitle.c_str());
+    
+    if (bufferChapter.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+void DrawClue(CubeWrapper &cubeWrapper, const AssetImage &background, const char *text)
 {
-    String<128> bufferChapter;
-    bufferChapter << "Chapter " << (puzzleIndex + 1);
-        
-    String<64> bufferTitle;
-    bufferTitle << GetPuzzle(puzzleIndex).GetTitle();
+    cubeWrapper.DrawBackground(background);
     
-    cubeWrapper.DrawBackground(StoryChapterTitle);
-    cubeWrapper.DrawUiText(Vec2(2, 6), UiFontHeadingOrange, bufferChapter.c_str());
-    cubeWrapper.DrawUiText(Vec2(2, 8), UiFontOrange, bufferTitle.c_str());
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<16> bufferClue;
+    bufferClue << "Clue";
+    
+    int xClue = (tileWidth / 2) - (bufferClue.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xClue, 4), UiFontHeadingOrange, bufferClue.c_str());
+    
+    String<16> bufferText;
+    bufferText << text;
+    
+    int xText = (tileWidth / 2) - (bufferText.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xText, 6), UiFontOrange, bufferText.c_str());
+    
+    if (bufferClue.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,18 +237,32 @@ void DrawChapterSummary(
     float scoreTime,
     unsigned int scoreMoves)
 {
+    cubeWrapper.DrawBackground(StoryChapterTitle);
+    
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<16> bufferChapter;
+    bufferChapter << "Chapter " << (puzzleIndex + 1);
+    int xChapter = (tileWidth / 2) - (bufferChapter.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
+    
     int minutes = int(scoreTime) / 60;
     int seconds = int(scoreTime - (minutes * 60.0f));
     
-    String<128> bufferTitle;
-    bufferTitle << "Chapter " << (puzzleIndex + 1);
+    String <16> bufferTime;
+    bufferTime << "Time:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+    int xTime = (tileWidth / 2) - (bufferTime.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xTime, 8), UiFontOrange, bufferTime.c_str());
     
-    String <128> bufferData;
-    bufferData << "Time:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true) << "\nMoves:" << scoreMoves;
+    String <16> bufferMoves;
+    bufferMoves << "Moves:" << scoreMoves;
+    int xMoves = (tileWidth / 2) - (bufferMoves.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xMoves, 10), UiFontOrange, bufferMoves.c_str());
     
-    cubeWrapper.DrawBackground(StoryChapterTitle);
-    cubeWrapper.DrawUiText(Vec2(2, 6), UiFontHeadingOrange, bufferTitle.c_str());
-    cubeWrapper.DrawUiText(Vec2(2, 8), UiFontOrange, bufferData.c_str());
+    if (bufferChapter.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,13 +270,21 @@ void DrawChapterSummary(
 
 void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
-    unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
-    
-    String<128> buffer;
-    buffer << "Chapter " << (nextPuzzleIndex + 1);
-    
     cubeWrapper.DrawBackground(StoryChapterNext);
-    cubeWrapper.DrawUiText(Vec2(3, 8), UiFontOrange, buffer.c_str());
+    
+    unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<16> buffer;
+    buffer << "Chapter " << (nextPuzzleIndex + 1);
+    int x = (tileWidth / 2) - (buffer.size() / 2);
+    
+    cubeWrapper.DrawUiText(Vec2(x, 8), UiFontOrange, buffer.c_str());
+    
+    if (buffer.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,11 +292,20 @@ void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 
 void DrawChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
-    String<128> buffer;
-    buffer << "Chapter " << (puzzleIndex + 1);
-    
     cubeWrapper.DrawBackground(StoryChapterRetry);
-    cubeWrapper.DrawUiText(Vec2(3, 8), UiFontOrange, buffer.c_str());
+    
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<16> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1);
+    int x = (tileWidth / 2) - (buffer.size() / 2);
+    
+    cubeWrapper.DrawUiText(Vec2(x, 8), UiFontOrange, buffer.c_str());
+    
+    if (buffer.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1691,9 +1757,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                cubeWrapper.DrawBackground(StoryChapterOverlayNeighbor);
-                cubeWrapper.DrawUiText(Vec2(2, 4), UiFontHeadingOrange, "Clue");
-                cubeWrapper.DrawUiText(Vec2(2, 6), UiFontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                DrawClue(cubeWrapper, StoryChapterOverlayNeighbor, GetPuzzle(mStoryPuzzleIndex).GetClue());
             }
             else
             {
@@ -1707,9 +1771,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if (mStoryClueTimers[cubeWrapper.GetId()] > 0.0f)
                 {
-                    cubeWrapper.DrawBackground(StoryChapterOverlay);
-                    cubeWrapper.DrawUiText(Vec2(2, 4), UiFontHeadingOrange, "Clue");
-                    cubeWrapper.DrawUiText(Vec2(2, 6), UiFontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                    DrawClue(cubeWrapper, StoryChapterOverlay, GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {

@@ -143,6 +143,7 @@ void CubeWrapper::DrawClear()
 {
     Video().set();
     Video().clear();
+    Video().BG1_setPanning(Vec2(0, 0));
     
     for (int i = 0; i < _SYS_VRAM_SPRITES; ++i)
     {
@@ -215,6 +216,14 @@ void CubeWrapper::DrawUiText(
 {
     ASSERT(text != NULL);
     mBg1Helper.DrawText(position, assetFont, text);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::ScrollUi(const Vec2 &position)
+{
+    Video().BG1_setPanning(position);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

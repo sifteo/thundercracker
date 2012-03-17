@@ -43,12 +43,13 @@ public:
     void DrawBuddy();
     void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawUiAsset(
-        const Vec2 &position,
+        const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiText(
-        const Vec2 &position,
+        const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &assetFont,
         const char *text);
+    void ScrollUi(const Sifteo::Vec2 &position);
     
     // Special-Case Cutscene Stuff
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
