@@ -110,7 +110,5 @@ UUIDGenerator::UUID_t UUIDGenerator::generate()
     UUID_t result;
     assert(sizeof result == sizeof uuid);
     memcpy(&result, &uuid, sizeof result);
-    printf("Generated one UUID: %08x %08x %08x %08x\n",
-        result.words[0],result.words[1],result.words[2],result.words[3]);
     return result;
 }
