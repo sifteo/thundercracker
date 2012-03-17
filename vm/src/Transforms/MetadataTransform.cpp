@@ -30,46 +30,97 @@ void MetadataTransform(CallSite &CS, const TargetData *TD)
     Instruction *I = CS.getInstruction();
     Module *M = I->getParent()->getParent()->getParent();
     LLVMContext &Ctx = I->getContext();
+    unsigned argIdx = 0;
 
-    if (CS.arg_size() < 1)
-        report_fatal_error(I, "_SYS_lti_metadata requires at least one arg");
+    if (CS.arg_size() < 2)
+        report_fatal_error(I, "_SYS_lti_metadata requires at least two args");
 
     // Parse the 'key' parameter
-    ConstantInt *CI = dyn_cast<ConstantInt>(CS.getArgument(0));
+    ConstantInt *CI = dyn_cast<ConstantInt>(CS.getArgument(argIdx++));
     if (!CI)
         report_fatal_error(I, "Metadata key must be a constant integer.");
     uint16_t key = CI->getZExtValue();
     if (key != CI->getZExtValue())
         report_fatal_error(I, "Metadata key argument is too large.");
 
+    // Parse the 'fmt' parameter
+    std::string fmt;
+    if (!GetConstantStringInfo(CS.getArgument(argIdx++), fmt))
+        report_fatal_error(I, "Metadata format must be a constant string.");
+    if (fmt.size() != CS.arg_size() - 2)
+        report_fatal_error(I, "Length of metadata format must match number of parameters");
+
     /*
-     * Parse every other parameter, ensuring its const-ness, transforming
-     * it if necessary, and packing it into an anonymous struct value.
+     * Parse every other parameter according to the format string
      */
 
     SmallVector<Constant*, 8> Members;
     unsigned align = 1;
 
-    for (unsigned idx = 1, E = CS.arg_size(); idx != E; ++idx) {
-        Value *Arg = CS.getArgument(idx);
+    for (std::string::iterator FI = fmt.begin(), FE = fmt.end();
+        FI != FE; ++FI, argIdx++) {
+        Constant *Arg = dyn_cast<Constant>(CS.getArgument(argIdx));
+        Constant *C;
+        if (!Arg)
+            report_fatal_error(I, "Metadata argument " + Twine(argIdx+1) + " is not constant");
 
-        // First look for a C-style string
-        std::string str;
-        if (GetConstantStringInfo(Arg, str)) {
-            Members.push_back(ConstantArray::get(Ctx, str, true));
-            continue;
+        /*
+         * First, non-integer types
+         */
+
+        switch (*FI) {
+            case 's': {
+                std::string str;
+                if (!GetConstantStringInfo(Arg, str))
+                    report_fatal_error(I, "Metadata formatter 's' requires a constant string");
+                Members.push_back(ConstantArray::get(Ctx, str, true));
+                continue;
+            }
+        }
+        
+        /*
+         * Integer types
+         */
+
+        if (Arg->getType()->isPointerTy())
+            Arg = ConstantExpr::getPointerCast(Arg, Type::getInt32Ty(Ctx));
+
+        if (!Arg->getType()->isIntegerTy())
+            report_fatal_error(I, "Metadata argument " + Twine(argIdx+1) +
+                " can't be converted to an integer type.");
+
+        switch (*FI) {
+
+            case 'b':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt8Ty(Ctx), true);
+                break;
+
+            case 'B':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt8Ty(Ctx), false);
+                break;
+
+            case 'h':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt16Ty(Ctx), true);
+                break;
+
+            case 'H':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt16Ty(Ctx), false);
+                break;
+
+            case 'i':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt32Ty(Ctx), true);
+                break;
+
+            case 'I':
+                C = ConstantExpr::getIntegerCast(Arg, Type::getInt32Ty(Ctx), false);
+                break;
+
+            default:
+                report_fatal_error(I, "Unsupported format character '" + Twine(*FI) + "' in metadata");
         }
 
-        // Now, any other constant value
-        Constant *C = dyn_cast<Constant>(Arg);
-        if (C) {
-            align = std::max(align, TD->getABITypeAlignment(C->getType()));
-            Members.push_back(C);
-            continue;
-        }
-
-        report_fatal_error(I, "Argument " + Twine(idx + 1) +
-            " to _SYS_lti_metadata is not constant.");
+        align = std::max(align, TD->getABITypeAlignment(C->getType()));
+        Members.push_back(C);
     }
 
     Constant *Struct = ConstantStruct::getAnon(Members);

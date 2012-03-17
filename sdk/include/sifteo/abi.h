@@ -469,6 +469,7 @@ struct _SYSMetadataPinnedImage {
  * These functions are replaced during link-time optimization.
  *
  * Logging supports many standard printf() format specifiers:
+ *
  *   - Literal characters, and %%
  *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
  *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
@@ -477,9 +478,18 @@ struct _SYSMetadataPinnedImage {
  *   - C-style strings: %s
  *   - Hex-dump of fixed width buffers: %<width>h
  *
- * Supported metadata value types:
- *   - C-style strings
- *   - Plain old data, passed by value
+ * To work around limitations in C variadic functions, _SYS_lti_metadata()
+ * supports a format string which specifies what data type each argument
+ * should be cast to. Data types here automatically imply ABI-compatible
+ * alignment and padding:
+ *
+ *   "b" = int8_t
+ *   "B" = uint8_t
+ *   "h" = int16_t
+ *   "H" = uint16_t
+ *   "i" = int32_t
+ *   "I" = uint32_t
+ *   "s" = String (NUL terminator is *not* automatically added)
  *
  * Counters:
  *   This is a mechanism for generating monotonic unique IDs at link-time.
@@ -490,7 +500,7 @@ struct _SYSMetadataPinnedImage {
 
 unsigned _SYS_lti_isDebug();
 void _SYS_lti_log(const char *fmt, ...);
-void _SYS_lti_metadata(uint16_t key, ...);
+void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 
 /**

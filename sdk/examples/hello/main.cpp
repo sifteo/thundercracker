@@ -82,28 +82,6 @@ static void init()
     }
 }
 
-static void Metathing(const AssetGroup &group)
-{
-    _SYS_lti_metadata(0x1234, &group.sys, 1, (uint16_t)2, (uint8_t)3, 4, "Hello");
-    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "World");
-    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "Yeah!");
-    _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "Okay, so this is a pretty long string"
-        " and perhaps it isn't all going to make it into the same flash page. "
-        "Can it overflow gracefully, or are we totally boned???");
-
-    _SYS_lti_metadata(0x5555, (uint8_t)0x11);
-    _SYS_lti_metadata(0x5555, (uint8_t)0x22);
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 2));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 2));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("blar", 1));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("blar", 1));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
-    _SYS_lti_metadata(0x5555, (uint8_t)_SYS_lti_counter("foobar", 0));
-    _SYS_lti_metadata(0x5555, (uint8_t)0x33);    
-}
-
 void siftmain()
 {
     Metathing(MainAssets);
