@@ -1,3 +1,6 @@
+MetadataGroup = group{}
+GameIcon = image{"icon.png", pinned=1}
+
 BootAssets = group{}
 Kirby = image{"kirby-running.png", height=24}
 WhiteTile = image{"white.png"}

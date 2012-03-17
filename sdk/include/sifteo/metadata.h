@@ -14,19 +14,45 @@ namespace Sifteo {
 class Metadata {
 public:
     /**
-     * Initialize all required metadata. Other optional metadata can be
+     * Initialize all required system metadata. Other optional metadata can be
      * added using individual methods on the Metadata class.
      */
 
-    Metadata(const char *gameTitle)
+    Metadata()
     {
-        unsigned numAGSlots = _SYS_lti_counter("Sifteo.AssetGroupSlot", -1);
-    
-        _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "sB", gameTitle, 0);
-        _SYS_lti_metadata(_SYS_METADATA_NUM_AGSLOTS, "b", numAGSlots);
+        // Metadata that's automatically inserted only once
+        if (_SYS_lti_counter("Sifteo.Metadata", 0) == 0) {
 
-        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata", 0) != 0,
-            "Only one instance of Sifteo::Metadata is allowed!");
+            // Count the total number of AssetGroupSlots in use
+            unsigned numAGSlots = _SYS_lti_counter("Sifteo.AssetGroupSlot", -1);
+            _SYS_lti_metadata(_SYS_METADATA_NUM_AGSLOTS, "b", numAGSlots);
+
+            // UUID for this particular build. Used by the system for asset caching.
+            _SYS_lti_metadata(_SYS_METADATA_UUID, "IIII",
+                _SYS_lti_uuid(0, 0), _SYS_lti_uuid(0, 1),
+                _SYS_lti_uuid(0, 2), _SYS_lti_uuid(0, 3));
+        }
+    }
+    
+    Metadata &title(const char *str)
+    {
+        _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "sB", str, 0);
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Title", 0) != 0,
+            "Duplicate Metadata::title() instance.");
+        return *this;
+    }
+    
+    Metadata &icon(const PinnedAssetImage &image)
+    {
+        STATIC_ASSERT(image.width == 10);
+        STATIC_ASSERT(image.height == 10);
+#if 0
+        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "IHH",
+            image.group->sys.pHdr, image.index, 0);
+#endif
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Icon", 0) != 0,
+            "Duplicate Metadata::icon() instance.");
+        return *this;
     }
 };
 

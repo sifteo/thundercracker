@@ -6,6 +6,8 @@
  */
 
 #include "Analysis/CounterAnalysis.h"
+#include "Analysis/UUIDGenerator.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
@@ -33,6 +35,7 @@ namespace {
 
         void getAnalysisUsage(AnalysisUsage &AU) const {
             AU.addRequired<CounterAnalysis>();
+            AU.addRequired<UUIDGenerator>();
         }
 
         virtual const char *getPassName() const {
@@ -42,6 +45,7 @@ namespace {
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
         void replaceWithConstant(CallSite &CS, uint32_t value);
+        Constant *generateUUID(LLVMContext &Ctx);
     };
 }
 
@@ -87,8 +91,12 @@ bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
     }
 
     if (Name == "_SYS_lti_counter") {
-        const CounterAnalysis &CA = getAnalysis<CounterAnalysis>();
-        replaceWithConstant(CS, CA.getValueFor(CS));
+        replaceWithConstant(CS, getAnalysis<CounterAnalysis>().getValueFor(CS));
+        return true;
+    }
+
+    if (Name == "_SYS_lti_uuid") {
+        replaceWithConstant(CS, getAnalysis<UUIDGenerator>().getValueFor(CS));
         return true;
     }
 

@@ -24,6 +24,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+typedef uint8_t bool;
 #endif
 
 /**
@@ -496,6 +498,12 @@ struct _SYSMetadataPinnedImage {
  *   Every _SYS_lti_counter() call with the same 'name' will return a
  *   different value, starting with zero. Values are assigned in order of
  *   decreasing priority.
+ *
+ * UUIDs:
+ *   We support link-time generation of standard UUIDs. For every unique
+ *   'key', the linker will generate a different UUID. Since a full UUID
+ *   is too large to return directly, each individual 32-bit word can be
+ *   accessed using values of 'index' from 0 to 3.
  */
 
 unsigned _SYS_lti_isDebug();
@@ -503,6 +511,7 @@ void _SYS_lti_abort(bool enable, const char *message);
 void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
+uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.

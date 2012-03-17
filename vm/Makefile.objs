@@ -7,6 +7,7 @@ OBJS = \
 	src/Transforms/MetadataTransform.o \
 	src/Transforms/MetadataCollector.o \
 	src/Analysis/CounterAnalysis.o \
+	src/Analysis/UUIDGenerator.o \
 	src/Support/ErrorReporter.o \
 	src/Target/SVMAsmPrinter.o \
 	src/Target/SVMInstPrinter.o \

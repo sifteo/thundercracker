@@ -49,6 +49,8 @@ void MetadataTransform(CallSite &CS, const TargetData *TD)
         report_fatal_error(I, "Metadata format must be a constant string.");
     if (fmt.size() != CS.arg_size() - 2)
         report_fatal_error(I, "Length of metadata format must match number of parameters");
+    if (fmt.size() == 0)
+        report_fatal_error(I, "Empty metadata values are not supported");
 
     /*
      * Parse every other parameter according to the format string

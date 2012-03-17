@@ -41,6 +41,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/IPO.h"
 #include "Analysis/CounterAnalysis.h"
+#include "Analysis/UUIDGenerator.h"
 #include <memory>
 using namespace llvm;
 
@@ -303,6 +304,7 @@ int main(int argc, char **argv)
     initializeInstCombine(Registry);
     initializeTarget(Registry);
     initializeCounterAnalysisPass(Registry);
+    initializeUUIDGeneratorPass(Registry);
 
     // Initialize targets first, so that --version shows registered targets.
     LLVMInitializeSVMAsmPrinter();

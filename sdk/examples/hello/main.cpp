@@ -9,8 +9,6 @@
 
 using namespace Sifteo;
 
-Metadata gMeta("Hello World SDK Example");
-
 #ifndef NUM_CUBES
 #  define NUM_CUBES 1
 #endif
@@ -33,6 +31,8 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
 static void init()
 {
+    Metadata().title("Hello World SDK Example").icon(GameIcon);
+    
     // Synchronously load the BootAssets. This should be quick.
     for (unsigned i = 0; i < NUM_CUBES; i++) {
 

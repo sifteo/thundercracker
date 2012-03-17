@@ -17,42 +17,47 @@ namespace llvm {
 class CallSite;
 class Instruction;
 
-void initializeCounterAnalysisPass(PassRegistry&);
+void initializeUUIDGeneratorPass(PassRegistry&);
 
-class CounterAnalysis : public ModulePass {
+class UUIDGenerator : public ModulePass {
 public:
     static char ID;
-    CounterAnalysis() : ModulePass(ID) {
-        initializeCounterAnalysisPass(*PassRegistry::getPassRegistry());
+    UUIDGenerator() : ModulePass(ID) {
+        initializeUUIDGeneratorPass(*PassRegistry::getPassRegistry());
     }
 
     virtual bool runOnModule(Module &M);
 
     virtual const char *getPassName() const {
-        return "Counter analysis pass";
+        return "UUID generator pass";
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesAll();
     }
 
-    unsigned getValueFor(CallSite &CS) const;
+    uint32_t getValueFor(CallSite &CS) const;
 
 private:
-    typedef std::pair<std::string, int64_t> Key_t;
-    typedef std::multimap<Key_t, const Instruction*> KeyMap_t;
-    typedef std::map<const Instruction*, unsigned> ValueMap_t;
+    struct UUID_t {
+        uint32_t words[4];
+    };
 
-    KeyMap_t KeyMap;
+    struct Args {
+        unsigned key;
+        unsigned index;
+    };
+
+    typedef std::map<unsigned, UUID_t> ValueMap_t;
     ValueMap_t ValueMap;
 
-    void keyUnpack(CallSite &CS, Key_t &k);
+    static void argUnpack(CallSite &CS, Args &a);
 
     void runOnFunction(Function &F);
     void runOnBasicBlock(BasicBlock &BB);
     void runOnCall(CallSite &CS);
-    
-    void assignValues();
+
+    static UUID_t generate();
 };
 
 }  // end namespace llvm
