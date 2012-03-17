@@ -51,8 +51,8 @@
 #define LED_RED_GPIO        GPIOPin(&GPIOB, 1)
 
 // P O W E R
-#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
-#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 14)
+#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
+#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
 
 // A U D I O
 #define AUDIO_DAC_GPIO      GPIOPin(&GPIOA, 4)
