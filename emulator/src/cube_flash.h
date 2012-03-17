@@ -79,7 +79,19 @@ class Flash {
         idle_ticks = 0;
         return percent;
     }
-    
+
+    uint32_t getWriteCount() {
+        return write_count;
+    }
+
+    uint32_t getEraseCount() {
+        return erase_count;
+    }
+
+    uint32_t getModifyCount() {
+        return write_count + erase_count;
+    }
+
     ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
         /*
          * March time forward on the current operation, if any.
@@ -250,18 +262,22 @@ class Flash {
             storage->data.ext[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
+            write_count++;
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE_SECTOR;
+            erase_count++;
         } else if (matchCommand(FlashModel::cmd_block_erase)) {
             erase(st->addr, FlashModel::BLOCK_SIZE);
             status_byte = 0;
             busy = BF_ERASE_BLOCK;
+            erase_count++;
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
             erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
             busy = BF_ERASE_CHIP;
+            erase_count++;
         }
     }
 

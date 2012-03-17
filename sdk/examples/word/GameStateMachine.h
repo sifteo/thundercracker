@@ -28,6 +28,7 @@ enum GameStateIndex
     GameStateIndex_NumStates
 };
 
+const unsigned char MAX_HINTS = 3;
 
 class GameStateMachine : public StateMachine
 {
@@ -56,6 +57,8 @@ public:
     static unsigned getCurrentMaxLettersPerWord();
     static unsigned sOnEvent(unsigned eventID, const EventData& data);
     static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
+    unsigned char getNumHints() const { return mNumHints; }
+    void setNumHints(unsigned char i) { mNumHints = i; }
 
 protected:
     virtual State& getState(unsigned index);
@@ -79,6 +82,7 @@ private:
     unsigned mNumBonusAnagramsLeft;
     unsigned mCurrentMaxLettersPerCube;
     LevelProgressData mLevelProgressData;
+    unsigned char mNumHints;
 
     static GameStateMachine* sInstance;
 };

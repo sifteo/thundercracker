@@ -5,9 +5,11 @@
 #include "config.h"
 #include "Constants.h"
 
+
 class ScoredGameState : public State
 {
 public:    
+    ScoredGameState();
     virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
@@ -16,10 +18,8 @@ public:
     static void onAudioEvent(unsigned eventID, const EventData& data);
 
 private:
-    unsigned char findNumHintsAvailable() const;
-    void makeHintsAvailable(unsigned char num) const;
 
-    unsigned char mNumHints;
+    Cube::ID mHintCubeIDOnUpdate;
 };
 
 #endif // SCOREDGAMESTATE_H
