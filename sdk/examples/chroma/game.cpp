@@ -124,6 +124,11 @@ void Game::Update()
             {
                 m_mode = (GameMode)choice;
 
+                if( m_mode == MODE_BLITZ )
+                    m_iLevel = 3;
+                else
+                    m_iLevel = 0;
+
                 for( int i = 0; i < NUM_CUBES; i++ )
                 {
                     m_cubes[i].Reset();
@@ -264,11 +269,6 @@ void Game::Reset(  bool bInGame )
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
-
-    if( m_mode == MODE_BLITZ )
-        m_iLevel = 3;
-    else
-        m_iLevel = 0;
 
     //m_bHyperDotMatched = false;
 
