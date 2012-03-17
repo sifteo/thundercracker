@@ -405,23 +405,7 @@ void Game::CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos )
             {
                 if( m_mode == MODE_SURVIVAL )
                 {
-                    //free shake
-                    /*if( m_mode == MODE_SURVIVAL && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
-                    {
-
-                    }
-                    else if( m_iDotsCleared >= DOT_THRESHOLD4 )
-                    {
-                        playSound(clear4);
-
-                        if( m_mode == MODE_SURVIVAL && !m_bHyperDotMatched )
-                        {
-                            pWrapper->getBanner().SetMessage( "Bonus Shake!" );
-                            bannered = true;
-                            m_ShakesRemaining++;
-                        }
-                    }
-                    else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
+                    if( m_iDotsCleared >= DOT_THRESHOLD3 )
                     {
                         playSound(clear3);
 

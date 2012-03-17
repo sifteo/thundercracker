@@ -180,24 +180,6 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
-                /*case STATE_CUBEBONUS:
-                {
-                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-
-                    String<3> bufCubes;
-
-                    unsigned int numCubes = Game::Inst().CountEmptyCubes();
-                    bufCubes << numCubes;
-
-                    m_bg1helper.DrawText( Vec2( 5, 3 ), Font, bufCubes );
-                    m_bg1helper.DrawText( Vec2( 7, 3 ), Font, "Cube" );
-                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "Bonus:" );
-                    Banner::DrawScore( m_bg1helper, Vec2( 7, 7 ), Banner::CENTER, numCubes * PTS_PER_EMPTIED_CUBE );
-
-                    m_queuedFlush = true;
-                    break;
-                }*/
-
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );

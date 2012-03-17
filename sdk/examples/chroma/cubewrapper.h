@@ -40,7 +40,6 @@ public:
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
     static const int PTS_PER_EMPTIED_CUBE = 100;
-    //static const float SHOW_BONUS_TIME;
     static const int HIGH_SCORE_OFFSET = 4;
 
 	typedef enum
@@ -48,7 +47,6 @@ public:
 		STATE_PLAYING,
 		STATE_EMPTY,
         STATE_REFILL,
-        //STATE_CUBEBONUS,
 	} CubeState;
 
 	CubeWrapper();
