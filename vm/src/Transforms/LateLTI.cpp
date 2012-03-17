@@ -39,6 +39,7 @@ namespace {
         
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
+        void handleAbort(CallSite &CS);
     };
 }
 
@@ -67,6 +68,20 @@ bool LateLTIPass::runOnBasicBlock (BasicBlock &BB)
     return Changed;
 }
 
+void LateLTIPass::handleAbort(CallSite &CS)
+{
+    Instruction *I = CS.getInstruction();
+    std::string msg;
+
+    if (CS.arg_size() != 1)
+        report_fatal_error(I, "_SYS_lti_abort requires exactly one arg");
+
+    if (!GetConstantStringInfo(CS.getArgument(0), msg))
+        report_fatal_error(I, "_SYS_lti_abort message must be a constant string.");
+
+    report_fatal_error(I, Twine(msg));
+}
+
 bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
 {
     const TargetData *TD = getAnalysisIfAvailable<TargetData>();
@@ -79,6 +94,12 @@ bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
     
     if (Name == "_SYS_lti_metadata") {
         MetadataTransform(CS, TD);
+        return true;
+    }
+    
+    if (Name == "_SYS_lti_abort") {
+        handleAbort(CS);
+        return true;
     }
 
     return false;
