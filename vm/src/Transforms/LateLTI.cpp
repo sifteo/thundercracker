@@ -73,13 +73,24 @@ void LateLTIPass::handleAbort(CallSite &CS)
     Instruction *I = CS.getInstruction();
     std::string msg;
 
-    if (CS.arg_size() != 1)
-        report_fatal_error(I, "_SYS_lti_abort requires exactly one arg");
+    if (CS.arg_size() != 2)
+        report_fatal_error(I, "_SYS_lti_abort requires exactly two args");
 
-    if (!GetConstantStringInfo(CS.getArgument(0), msg))
+    I->dump();
+
+    // Parse the 'enable' boolean
+    ConstantInt *CI = dyn_cast<ConstantInt>(CS.getArgument(0));
+    if (!CI)
+        report_fatal_error(I, "_SYS_lti_abort expression must be a compile-time constant");
+
+    // Parse the 'message' parameter
+    if (!GetConstantStringInfo(CS.getArgument(1), msg))
         report_fatal_error(I, "_SYS_lti_abort message must be a constant string.");
 
-    report_fatal_error(I, Twine(msg));
+    if (CI->getZExtValue())
+        report_fatal_error(I, Twine(msg));
+
+    I->eraseFromParent();
 }
 
 bool LateLTIPass::runOnCall(CallSite &CS, StringRef Name)
