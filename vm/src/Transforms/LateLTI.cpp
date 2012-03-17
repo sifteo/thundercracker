@@ -76,8 +76,6 @@ void LateLTIPass::handleAbort(CallSite &CS)
     if (CS.arg_size() != 2)
         report_fatal_error(I, "_SYS_lti_abort requires exactly two args");
 
-    I->dump();
-
     // Parse the 'enable' boolean
     ConstantInt *CI = dyn_cast<ConstantInt>(CS.getArgument(0));
     if (!CI)

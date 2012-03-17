@@ -499,7 +499,7 @@ struct _SYSMetadataPinnedImage {
  */
 
 unsigned _SYS_lti_isDebug();
-void _SYS_lti_abort(const char *message);
+void _SYS_lti_abort(bool enable, const char *message);
 void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);

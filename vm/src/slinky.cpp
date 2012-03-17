@@ -250,29 +250,35 @@ static void AddStandardLinkPasses(PassManagerBase &PM, unsigned OptLevel)
     }
 }
 
-// Custom passes that occur before all link-time optimization
-static void AddEarlyPasses(PassManagerBase &PM)
+static void AddPasses(PassManagerBase &PM,
+    FunctionPassManager &FPM, unsigned OLvl)
 {
-    // Early LTI expansion handles things likely to result in dead code
-    // elimination and constant folding.
-    PM.add(createEarlyLTIPass());
-}
-
-// Custom passes that occur between two rounds of optimization.
-static void AddMiddlePasses(PassManagerBase &PM)
-{
-    // Do late LTI expansion. This expects to have at least one round of
-    // optimization run since early LTI expansion has occurred.
-    PM.add(createLateLTIPass());
+    // Basic link-time optimization and inlining
+    AddStandardLinkPasses(PM, OLvl);
 
     // After IPO, which may completely eliminate constructors, convert
     // any remaining constructors into calls at the top of main().
     // This may result in additional inlining and dead code elimination.
     PM.add(createInlineGlobalCtorsPass());
 
+    // Early LTI expansion handles things likely to result in dead code
+    // elimination and constant folding. This expands counters, and it needs
+    // to run after InlineGlobalCtorsPass and at least one level of inlining.
+    PM.add(createEarlyLTIPass());
+
+    // First full optimization pass
+    AddOptimizationPasses(PM, FPM, OLvl);
+
+    // Do late LTI expansion. This expects to have at least one round of
+    // optimization run since early LTI expansion has occurred.
+    PM.add(createLateLTIPass());
+
     // After LateLTI, we can gather all symbols from the .metadata section
     // and generate a fully assembled metadata table ready to emit to ELF.
     PM.add(createMetadataCollectorPass());
+
+    // Final optimization pass
+    AddOptimizationPasses(PM, FPM, OLvl);
 }
 
 int main(int argc, char **argv)
@@ -350,15 +356,7 @@ int main(int argc, char **argv)
     PassManager PM;
     FunctionPassManager FPM(&mod);
     FPM.add(new TargetData(*Target.getTargetData()));
-
-    // Link-time optimization
-    AddEarlyPasses(PM);
-    AddStandardLinkPasses(PM, OLvl);
-
-    // Additional optimizations, both before and after our custom 'middle' passes
-    AddOptimizationPasses(PM, FPM, OLvl);
-    AddMiddlePasses(PM);
-    AddOptimizationPasses(PM, FPM, OLvl);
+    AddPasses(PM, FPM, OLvl);
 
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
