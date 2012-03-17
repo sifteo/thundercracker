@@ -18,16 +18,30 @@ static struct  {
     reg_t sp;
 } userRegs;
 
+
+/*
+ * These routines are temp - this should be much better, but it friggin works, so checking in!
+ */
+
 static void saveHwContext(reg_t sp)
 {
     uint32_t *spp = reinterpret_cast<uint32_t*>(sp);
-    memcpy(&userRegs.hw, spp, sizeof userRegs.hw);
+    uint32_t *hw = reinterpret_cast<uint32_t*>(&userRegs.hw);
+    userRegs.sp = sp;
+    for (unsigned i = 0; i < sizeof userRegs.hw / 4; ++i) {
+        hw[i] = spp[i];
+    }
+//    memcpy(&userRegs.hw, spp, sizeof userRegs.hw);
 }
 
 static void restoreHwContext()
 {
     uint32_t *spp = reinterpret_cast<uint32_t*>(userRegs.sp);
-    memcpy(spp, &userRegs.hw, sizeof userRegs.hw);
+    uint32_t *hw = reinterpret_cast<uint32_t*>(&userRegs.hw);
+    for (unsigned i = 0; i < sizeof userRegs.hw / 4; ++i) {
+        spp[i] = hw[i];
+    }
+//    memcpy(spp, &userRegs.hw, sizeof userRegs.hw);
 }
 
 /***************************************************************************
@@ -52,10 +66,21 @@ void run(reg_t sp, reg_t pc)
 {
     asm volatile(
         "msr    psp, %[sp_arg]          \n\t"
-        "mov    r2, #0x3                \n\t"
-        "msr    control, r2             \n\t"
+        "mov    r10, %[target]          \n\t"
+        "mov    r0, #0                  \n\t"
+        "mov    r1, #0                  \n\t"
+        "mov    r2, #0                  \n\t"
+        "mov    r3, #0                  \n\t"
+        "mov    r4, #0                  \n\t"
+        "mov    r5, #0                  \n\t"
+        "mov    r6, #0                  \n\t"
+        "mov    r7, #0                  \n\t"
+        "mov    r8, #0                  \n\t"
+        "mov    r9, #0                  \n\t"
+        "mov    r12, #0x3               \n\t"
+        "msr    control, r12            \n\t"
         "isb                            \n\t"
-        "bx     %[target]"
+        "bx     r10"
         :
         : [sp_arg] "r"(sp), [target] "r"(pc)
     );
@@ -141,6 +166,7 @@ NAKED_HANDLER ISR_SVCall()
         "ite    eq                  \n\t"   // load r0 with msp or psp based on that
         "mrseq  r0, msp             \n\t"
         "mrsne  r0, psp             \n\t"
+        "push   { lr }              \n\t"
         "bl     %[saveHW]           \n\t"   // save stacked hw regs (sp is in r0) - can optimize to asm when needed
         "ldr    r2, =%[usrirq]      \n\t"   // load pointer to userRegs.irq into r2
         "stm    r2, { r4, r5, r6, r7, r8, r9, r10, r11 }    \n\t"   // save copy of user regs
@@ -150,9 +176,10 @@ NAKED_HANDLER ISR_SVCall()
         "ldr    r2, =%[usrirq]      \n\t"   // load pointer to userRegs.irq into r2
         "ldm    r2, { r4, r5, r6, r7, r8, r9, r10, r11 }    \n\t"   // restore saved regs
         "ldr    r3, =%[savedSp]     \n\t"
+        "ldr    r3, [r3]            \n\t"
         "msr    psp, r3             \n\t"   // copy saved user sp to psp
         "bl     %[restoreHW]        \n\t"   // copy hw regs to potentially modified user sp
-        "bx     lr"
+        "pop    { pc }"
         :
         : [saveHW] "i"(SvmCpu::saveHwContext),
             [usrirq] "i"(&SvmCpu::userRegs.irq),

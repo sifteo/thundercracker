@@ -13,7 +13,11 @@ namespace SvmCpu {
     using namespace Svm;
 
     void init();
+#ifdef SIFTEO_SIMULATOR
     void run(reg_t sp, reg_t pc) __attribute__ ((noreturn));
+#else
+    void run(reg_t sp, reg_t pc) __attribute__ ((naked));
+#endif
 
     reg_t reg(uint8_t r);
     void setReg(uint8_t r, reg_t val);
