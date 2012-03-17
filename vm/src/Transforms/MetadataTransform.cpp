@@ -73,7 +73,7 @@ void MetadataTransform(CallSite &CS, const TargetData *TD)
                 std::string str;
                 if (!GetConstantStringInfo(Arg, str))
                     report_fatal_error(I, "Metadata formatter 's' requires a constant string");
-                Members.push_back(ConstantArray::get(Ctx, str, true));
+                Members.push_back(ConstantArray::get(Ctx, str, false));
                 continue;
             }
         }
