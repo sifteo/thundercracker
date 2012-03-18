@@ -28,8 +28,8 @@ const char SVMDecorations::TCALL[] = "_tcall$";
 const char SVMDecorations::LB[] = "_lb$";
 const char SVMDecorations::OFFSET[] = "_o$";
 const char SVMDecorations::META[] = "_meta$";
+const char SVMDecorations::INIT[] = "_init$";
 const char SVMDecorations::SEPARATOR[] = "$";
-
 
 Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, Twine Prefix)
 {

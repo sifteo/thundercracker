@@ -5,8 +5,10 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "Support/ErrorReporter.h"
 #include "Analysis/CounterAnalysis.h"
 #include "Analysis/UUIDGenerator.h"
+#include "Target/SVMSymbolDecoration.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -44,8 +46,9 @@ namespace {
         
     private:
         bool runOnCall(CallSite &CS, StringRef Name);
+        void replaceWithConstant(CallSite &CS, Constant *value);
         void replaceWithConstant(CallSite &CS, uint32_t value);
-        Constant *generateUUID(LLVMContext &Ctx);
+        void handleGetInitializer(CallSite &CS);
     };
 }
 
@@ -74,13 +77,49 @@ bool EarlyLTIPass::runOnBasicBlock (BasicBlock &BB)
     return Changed;
 }
 
+void EarlyLTIPass::replaceWithConstant(CallSite &CS, Constant *value)
+{
+    Instruction *I = CS.getInstruction();
+    I->replaceAllUsesWith(value);
+    I->eraseFromParent();
+}
+
 void EarlyLTIPass::replaceWithConstant(CallSite &CS, uint32_t value)
 {
     Instruction *I = CS.getInstruction();
     LLVMContext &Ctx = I->getContext();
-    Value *C = ConstantInt::get(Type::getInt32Ty(Ctx), value);
-    I->replaceAllUsesWith(C);
-    I->eraseFromParent();
+    replaceWithConstant(CS, ConstantInt::get(Type::getInt32Ty(Ctx), value));
+}
+
+void EarlyLTIPass::handleGetInitializer(CallSite &CS)
+{
+    Instruction *I = CS.getInstruction();
+    Module *M = I->getParent()->getParent()->getParent();
+
+    if (CS.arg_size() != 1)
+        report_fatal_error(I, "_SYS_lti_initializer requires exactly one arg");
+
+    // The argument likely has casts on it, to take it to void*. Remove those.
+    Value *Arg = CS.getArgument(0);
+    Arg = Arg->stripPointerCasts();
+
+    // See if we can actually look up the GV initializer
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg);
+    if (!GV)
+        report_fatal_error(I, "Argument to _SYS_lti_initializer must be a GlobalVariable");
+    Constant *Init = GV->getInitializer();
+
+    // The initializer is a raw Constant, and its address can't be taken.
+    // We need to create a new GlobalVariable to hold the initializer itself,
+    // so that we can return it as a pointer.
+    
+    GlobalVariable *InitGV = new GlobalVariable(*M, Init->getType(),
+        true, GlobalValue::PrivateLinkage, Init,
+        Twine(SVMDecorations::INIT) + GV->getName(),
+        0, false);
+
+    // Bitcast the result back to the expected type (usually void*)
+    replaceWithConstant(CS, ConstantExpr::getPointerCast(InitGV, I->getType()));
 }
 
 bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
@@ -97,6 +136,11 @@ bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
 
     if (Name == "_SYS_lti_uuid") {
         replaceWithConstant(CS, getAnalysis<UUIDGenerator>().getValueFor(CS));
+        return true;
+    }
+
+    if (Name == "_SYS_lti_initializer") {
+        handleGetInitializer(CS);
         return true;
     }
 

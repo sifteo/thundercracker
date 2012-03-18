@@ -50,6 +50,7 @@ namespace llvm {
         static const char LB[];
         static const char OFFSET[];
         static const char META[];
+        static const char INIT[];
         static const char SEPARATOR[];
 
         StringRef Decode(StringRef Name);

@@ -36,9 +36,11 @@ public:
     
     Metadata &title(const char *str)
     {
-        _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "sB", str, 0);
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Title", 0) != 0,
             "Duplicate Metadata::title() instance.");
+
+        _SYS_lti_metadata(_SYS_METADATA_TITLE_STR, "sB", str, 0);
+
         return *this;
     }
     
@@ -46,12 +48,12 @@ public:
     {
         STATIC_ASSERT(image.width == 10);
         STATIC_ASSERT(image.height == 10);
-#if 0
-        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "IHH",
-            image.group->sys.pHdr, image.index, 0);
-#endif
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Icon", 0) != 0,
             "Duplicate Metadata::icon() instance.");
+        
+        AssetGroup *G = (AssetGroup*) _SYS_lti_initializer(image.group);
+        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "IHH", G->sys.pHdr, image.index, 0);
+
         return *this;
     }
 };

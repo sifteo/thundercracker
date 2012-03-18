@@ -504,6 +504,11 @@ struct _SYSMetadataPinnedImage {
  *   'key', the linker will generate a different UUID. Since a full UUID
  *   is too large to return directly, each individual 32-bit word can be
  *   accessed using values of 'index' from 0 to 3.
+ *
+ * Static initializers:
+ *   In global varaibles which aren't themselves constant but which were
+ *   initialized to a constant, _SYS_lti_initializer() can be used to retrieve
+ *   that initializer value at link-time.
  */
 
 unsigned _SYS_lti_isDebug();
@@ -512,6 +517,7 @@ void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
+void *_SYS_lti_initializer(void *value);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
