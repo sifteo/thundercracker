@@ -43,12 +43,14 @@
     #   define ASSERT(_x)         assert(_x)
     #   define DEBUG_ONLY(x)      x
     #   define UART(_x)
+    #   define SECTION(_x)
     #else
     #   define DEBUG_LOG(_x)
     #   define LOG(_x)
     #   define ASSERT(_x)
     #   define DEBUG_ONLY(x)
     #   define UART(_x)           Usart::Dbg.write(_x)
+    #   define SECTION(_x)        __attribute__((section(_x)))
     #endif
 
 #else  // FW_BUILD
