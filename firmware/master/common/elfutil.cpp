@@ -69,37 +69,49 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
     entry = header->e_entry;
 
     /*
-        We're looking for 3 segments, identified by the following profiles:
-        - text segment - executable & read-only
-        - data segment - read/write & non-zero size on disk
-        - bss segment - read/write, zero size on disk, and non-zero size in memory
-    */
+     * We're looking for up to 4 segments, identified by the following profiles:
+     *  - text segment - executable & read-only
+     *  - data segment - read/write & non-zero size on disk
+     *  - bss segment - read/write, zero size on disk, and non-zero size in memory
+     *  - metadata segment - custom program header type
+     */
 
     for (unsigned i = 0; i < header->e_phnum; ++i, ++ph) {
-        if (ph->p_type != Elf::PT_LOAD)
-            continue;
+        FlashRange segData = elf.split(ph->p_offset, ph->p_filesz);
+        switch (ph->p_type) {
 
-        switch (ph->p_flags) {
-
-        case (Elf::PF_Exec | Elf::PF_Read):
-            rodata.data = elf.split(ph->p_offset, ph->p_filesz);
-            if (!rodata.data.isAligned()) {
-                LOG(("ELF Error: Flash data segment not aligned\n"));
+        case _SYS_ELF_PT_METADATA:
+            if (!segData.isAligned(sizeof(uint32_t))) {
+                LOG(("ELF Error: Metadata segment not aligned\n"));
                 return false;
-            }
-            rodata.vaddr = ph->p_vaddr;
-            rodata.size = ph->p_memsz;
+            }            
+            meta.data = segData;
             break;
 
-        case (Elf::PF_Read | Elf::PF_Write):
-            if (ph->p_memsz && !ph->p_filesz) {
-                bss.vaddr = ph->p_vaddr;
-                bss.size = ph->p_memsz;
+        case Elf::PT_LOAD:
+            switch (ph->p_flags) {
+
+            case (Elf::PF_Exec | Elf::PF_Read):
+                if (!segData.isAligned()) {
+                    LOG(("ELF Error: Flash data segment not aligned\n"));
+                    return false;
+                }
+                rodata.data = segData;
+                rodata.vaddr = ph->p_vaddr;
+                rodata.size = ph->p_memsz;
+                break;
+
+            case (Elf::PF_Read | Elf::PF_Write):
+                if (ph->p_memsz && !ph->p_filesz) {
+                    bss.vaddr = ph->p_vaddr;
+                    bss.size = ph->p_memsz;
             
-            } else if (ph->p_filesz) {
-                rwdata.data = elf.split(ph->p_offset, ph->p_filesz);
-                rwdata.vaddr = ph->p_vaddr;
-                rwdata.size = ph->p_memsz;
+                } else if (ph->p_filesz) {
+                    rwdata.data = segData;
+                    rwdata.vaddr = ph->p_vaddr;
+                    rwdata.size = ph->p_memsz;
+                }
+                break;
             }
             break;
         }
@@ -112,4 +124,102 @@ bool Elf::ProgramInfo::init(const FlashRange &elf)
     }
 
     return true;
+}
+
+const char *Elf::Metadata::getString(FlashBlockRef &ref, uint16_t key) const
+{
+    /*
+     * Get a NUL-terminated string metadata key. Verifies that the string
+     * actually contains a NUL terminator within the actual size of the
+     * metadata record. If the metadata key doesn't exist or it isn't
+     * a properly terminated string, we return 0.
+     */
+
+    unsigned actualSize;
+    const void *data = get(ref, key, 0, actualSize);
+
+    if (data && memchr(data, 0, actualSize))
+        return (const char *) data;
+    else
+        return 0;
+}
+
+const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key, unsigned size) const
+{
+    /*
+     * Convenience method for metadata accessors that only care about a minimum
+     * size; they don't need to see the actual size of the metadata record.
+     * This is the common case for metadata that's treated as a scalar value
+     * instead of an array.
+     */
+
+    unsigned actualSize;
+    return get(ref, key, size, actualSize);
+}
+
+const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key,
+            unsigned minSize, unsigned &actualSize) const
+{
+    /*
+     * Base accessor for metadata. Looks for 'key' within the metadata
+     * segment. If the key exists, is properly aligned, and at least
+     * 'minSize' bytes of data are valid, we return a pointer to the
+     * key within the flash block cache. If any of these requirements
+     * are not met, returns 0.
+     *
+     * On success, we return the actual size of the key via 'actualSize'.
+     * This size includes any padding inserted by the compiler after the
+     * actual key data, but it also may be used to implement variable-sized
+     * metadata records.
+     */
+
+    /*
+     * The metadata segment begins with an array of _SYSMetadataKey structs.
+     * Note that ProgramInfo::init has already verified the 32-bit alignment
+     * of this segment.
+     *
+     * We need to scan through all the keys, so that we know where the values
+     * start. Then we can calculate the proper address of the value we want,
+     * without scanning the value array.
+     */
+
+    bool foundKey = false;
+    uint32_t keyOffset = 0;
+
+    for (uint32_t I = 0, E = data.getSize() - sizeof(_SYSMetadataKey);
+        I <= E; I += sizeof(_SYSMetadataKey)) {
+
+        const _SYSMetadataKey *record =
+            FlashBlock::getValue<_SYSMetadataKey>(ref, data.getAddress() + I);
+
+        bool isLast = record->stride >> 15;
+        uint16_t stride = record->stride & 0x7FFF;
+
+        if (record->key == key) {
+            actualSize = stride;
+            foundKey = true;
+        } else if (!foundKey) {
+            keyOffset += stride;
+        }
+
+        if (isLast) {
+            // Key was missing?
+            if (!foundKey)
+                return 0;
+
+            // Now we can calculate the address of the value, yay.
+            uint8_t *value = FlashBlock::getBytes(ref,
+                data.getAddress() + I + sizeof(_SYSMetadataKey) + keyOffset,
+                actualSize);
+
+            // Too small, or hitting the edge of the block?
+            if (actualSize < minSize)
+                return 0;
+
+            return value;
+        }
+    }
+    
+    // Never found the "last key" marker :(
+    return 0;
 }

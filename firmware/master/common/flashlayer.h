@@ -107,6 +107,16 @@ public:
     static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
     static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);
 
+    template <typename T>
+    static inline T* getValue(FlashBlockRef &ref, uint32_t address) {
+        uint32_t length = sizeof(T);
+        uint8_t *p = getBytes(ref, address, length);
+        if (length == sizeof(T))
+            return reinterpret_cast<T*>(p);
+        else
+            return 0;
+    }
+
 private:
     inline void incRef() {
         ASSERT(refCount <= MAX_REFCOUNT);
@@ -232,6 +242,10 @@ public:
     
     inline bool isAligned() const {
         return (address & FlashBlock::BLOCK_MASK) == 0;
+    }
+
+    inline bool isAligned(unsigned alignment) const {
+        return (address & (alignment - 1)) == 0;
     }
 
     FlashRange split(uint32_t sliceOffset, uint32_t sliceSize) const;

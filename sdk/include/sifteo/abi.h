@@ -453,6 +453,13 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
 #define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
 
+struct _SYSUUID {
+    uint32_t data1;
+    uint16_t data2;
+    uint16_t data3;
+    uint8_t  data4[8];
+};
+
 struct _SYSMetadataBootAsset {
     uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
     uint8_t     agSlotID;       // Asset group slot to load this into

@@ -33,6 +33,24 @@ void SvmRuntime::run(uint16_t appId)
     if (!pInfo.init(elf))
         return;
 
+    // On simulator builds, log some info about the program we're running
+#ifdef SIFTEO_SIMULATOR
+    {
+        FlashBlockRef ref;
+
+        const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
+        LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
+
+        const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
+        if (uuid) {
+            LOG(("SVM: Title UUID is {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                uuid->data1, uuid->data2, uuid->data3,
+                uuid->data4[0], uuid->data4[1], uuid->data4[2], uuid->data4[3],
+                uuid->data4[4], uuid->data4[5], uuid->data4[6], uuid->data4[7]));
+        }
+    }
+#endif
+
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
     SvmDebug::setSymbolSourceELF(elf);
