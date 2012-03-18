@@ -24,6 +24,24 @@ reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
 
 
+static void logTitleInfo(Elf::ProgramInfo &pInfo)
+{
+#ifdef SIFTEO_SIMULATOR
+    FlashBlockRef ref;
+
+    const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
+    LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
+
+    const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
+    if (uuid) {
+        LOG(("SVM: Title UUID is {"));
+        for (unsigned i = 0; i < 16; i++)
+            LOG(("%02x%s", uuid->bytes[i], (i == 4 || i == 6 || i == 8 || i == 10) ? "-" : ""));
+        LOG(("}\n"));
+    }
+#endif
+}
+
 void SvmRuntime::run(uint16_t appId)
 {
     // TODO: look this up via appId
@@ -34,19 +52,8 @@ void SvmRuntime::run(uint16_t appId)
         return;
 
     // On simulator builds, log some info about the program we're running
-#ifdef SIFTEO_SIMULATOR
-    {
-        FlashBlockRef ref;
-
-        const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
-        LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
-
-        const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
-        if (uuid)
-            LOG(("SVM: Title UUID is "_SYSUUID_FMT"\n", _SYSUUID_FMT_VALUES(*uuid)));
-    }
-#endif
-
+    logTitleInfo(pInfo);
+    
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
     SvmDebug::setSymbolSourceELF(elf);

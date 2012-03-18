@@ -436,11 +436,6 @@ struct _SYSUUID {
     };
 };
 
-#define _SYSUUID_FMT                "{%08x-%04x-%04x-%04x-%04x%08x}"
-#define _SYSUUID_FMT_VALUES(_x)     ntohl((_x).words[0]), \
-    ntohs((_x).hwords[2]), ntohs((_x).hwords[3]), ntohs((_x).hwords[4]), \
-    ntohs((_x).hwords[5]), ntohl((_x).words[3])
-
 /**
  * ELF binary format.
  *
