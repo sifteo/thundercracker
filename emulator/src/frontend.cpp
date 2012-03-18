@@ -8,6 +8,11 @@
 
 #include "frontend.h"
 #include <time.h>
+// for MAX HAX
+#if __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 
 Frontend *Frontend::instance = NULL;
 
@@ -25,6 +30,18 @@ Frontend::Frontend()
 
 bool Frontend::init(System *_sys)
 {
+    // MAX HAX - chdir out of a bundle
+    #if __APPLE__
+    CFBundleRef mainbundle = CFBundleGetMainBundle();
+    CFURLRef bundleUrl = CFBundleCopyBundleURL(mainbundle);
+    CFStringRef path = CFURLCopyFileSystemPath(bundleUrl, kCFURLPOSIXPathStyle);
+    std::string dir = CFStringGetCStringPtr(path, 0);
+    CFRelease(path);
+    CFRelease(bundleUrl);
+    const size_t baseLength = dir.find_last_of('/');
+    chdir(dir.substr(0, baseLength).c_str());
+    #endif
+
     instance = this;
     sys = _sys;
     frameCount = 0;
@@ -345,6 +362,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->sys->opt_turbo ^= true;
             break;
 
+        case 'I':
+            instance->overlay.toggleInspector();
+            break;
+
         case 'R':
             /*
              * Intentionally undocumented: Toggle trace mode.
@@ -358,7 +379,6 @@ void GLFWCALL Frontend::onKey(int key, int state)
             if (instance->mouseIsPulling)
                 instance->hoverOrRotate();
             break;
-
 
         case '-':
             instance->removeCube();
@@ -710,20 +730,33 @@ void Frontend::draw()
         }
 
     renderer.beginOverlay();
-        
-    // Per-cube overlays (Only when sufficiently zoomed-in)
-    if (viewExtent < pixelViewExtent() * 1.5f)
-        for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
-            FrontendCube &c = cubes[i]; 
-            b2AABB aabb;    
-        
-            // The overlay sits just below the cube's extents
-            c.computeAABB(aabb);
-            b2Vec2 pos = worldToScreen(c.body->GetPosition() +
-                                       b2Vec2(0, 1.1f * aabb.GetExtents().y));
-                                   
-            overlay.drawCube(&c, pos.x, pos.y);
-        }
+
+    // Per-cube status overlays
+    for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
+        FrontendCube &c = cubes[i]; 
+
+        // Overlays are positioned relative to the cube's AABB.
+        b2AABB aabb;    
+        c.computeAABB(aabb);
+        const float distance = 1.1f;
+        b2Vec2 extents = aabb.GetExtents();
+
+        b2Vec2 bottomCenter = worldToScreen(c.body->GetPosition() +
+            b2Vec2(0, distance * extents.y));
+
+        b2Vec2 topRight = worldToScreen(c.body->GetPosition() +
+            b2Vec2(distance * extents.x, -distance * extents.y));
+
+        overlay.drawCubeStatus(&c,
+            0.5f + bottomCenter.x,
+            0.5f + bottomCenter.y);
+
+        overlay.drawCubeInspector(&c,
+            0.5f + topRight.x,
+            0.5f + topRight.y,
+            0.5f + worldToScreen(1.5f),
+            0.5f + worldToScreen(3.0f));
+    }
 
     // Fixed portion of the overlay, should be topmost.
     overlay.draw();
@@ -749,6 +782,13 @@ b2Vec2 Frontend::worldToScreen(b2Vec2 world)
     world -= viewCenter;
     return b2Vec2(renderer.getWidth() / 2, renderer.getHeight() / 2)
                   + renderer.getWidth() * ((0.5f / viewExtent) * world);
+}
+
+float Frontend::worldToScreen(float world)
+{
+    // Convert a scalar distance from world to screen coordinates
+    
+    return renderer.getWidth() * ((0.5f / viewExtent) * world);
 }
 
 float Frontend::zoomedViewExtent()

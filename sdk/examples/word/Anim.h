@@ -17,17 +17,24 @@ enum AnimType
     AnimType_EndofRound,
     AnimType_Shuffle,
     AnimType_CityProgression,
-    AnimType_HintAppear,
-    AnimType_HintIdle,
-    AnimType_HintShake,
-    AnimType_HintDisppear,
-    AnimType_SlideLHint,
-    AnimType_SlideRHint,
-    AnimType_LockHint,
-    AnimType_LockedHintNotWord,
+    AnimType_HintBarAppear,
+    AnimType_HintBarIdle,
+    AnimType_HintBarDisappear,
+    AnimType_HintWindUpSlide,
+    AnimType_HintSlideL,
+    AnimType_HintSlideR,
+    AnimType_HintNeighborL,
+    AnimType_HintNeighborR,
     AnimType_LockedHintOldWord,
 
     NumAnimTypes
+};
+
+struct SpriteParams
+{
+    Float2 mPositions[_SYS_VRAM_SPRITES];
+    Float2 mEndPositions[_SYS_VRAM_SPRITES];
+    float mStartDelay[_SYS_VRAM_SPRITES];
 };
 
 struct AnimParams
@@ -36,7 +43,8 @@ struct AnimParams
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
     bool mBorders;
-
+    bool mBonus;
+    SpriteParams *mSpriteParams;
 };
 
 bool animPaint(AnimType anim,

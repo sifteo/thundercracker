@@ -10,6 +10,7 @@ OBJS = \
 	Common.o \
 	Dialog.o \
 	DrawingHelpers.o \
+	EdgeView.o \
 	Game.o \
 	Game_IntroCutscene.o \
 	Game_WinScreen.o \

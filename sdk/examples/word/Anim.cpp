@@ -59,16 +59,40 @@ const static Vec2 positions[] =
     Vec2(3, 2),
     Vec2(2, 2),
     Vec2(3, 3), // [26]
-    Vec2(56, 2), // [27]
-    Vec2(24, 2), // [28]
-    Vec2(56, 2), // [29]
-    Vec2(54, 2), // [30]
-    Vec2(52, 2), // [31]
-    Vec2(48, 2), // [32]
-    Vec2(40, 2), // [33]
-    Vec2(32, 2), // [34]
-    Vec2(28, 2), // [35]
-    Vec2(24, 2), // [36]
+    Vec2(56, 16), // [27]
+    Vec2(24, 16), // [28]
+    Vec2(88, 16), // [29]
+    Vec2(86, 16), // [30]2
+    Vec2(84, 16), // [31]2
+    Vec2(80, 16), // [32]4
+    Vec2(72, 16), // [33]8
+    Vec2(64, 16), // [34]8
+    Vec2(56, 16), // [35]8
+    Vec2(48, 16), // [36]8
+    Vec2(40, 16), // [29]8
+    Vec2(36, 16), // [30]4
+    Vec2(32, 16), // [31]4
+    Vec2(30, 16), // [32]2
+    Vec2(28, 16), // [33]2
+    Vec2(26, 16), // [34]2
+    Vec2(25, 16), // [35]1
+    Vec2(24, 16), // [36]1
+    Vec2(24, 16), // [29]
+    Vec2(26, 16), // [30]2
+    Vec2(28, 16), // [31]2
+    Vec2(32, 16), // [32]4
+    Vec2(40, 16), // [33]8
+    Vec2(48, 16), // [34]8
+    Vec2(56, 16), // [35]8
+    Vec2(64, 16), // [36]8
+    Vec2(72, 16), // [29]8
+    Vec2(76, 16), // [30]4
+    Vec2(80, 16), // [31]4
+    Vec2(82, 16), // [32]2
+    Vec2(84, 16), // [33]2
+    Vec2(86, 16), // [34]2
+    Vec2(87, 16), // [35]1
+    Vec2(88, 16), // [36]1
     Vec2(2, 2), // [37]
     Vec2(6, 2), // [38]
     Vec2(8, 2), // [39]
@@ -78,55 +102,39 @@ const static Vec2 positions[] =
     Vec2(8, 11), // [43]
     Vec2(12, 11), // [44]
     Vec2(53, 2), // [45]
-    Vec2(59, 2), // [27]
-    Vec2(52, 2), // [27]
-    Vec2(60, 2), // [27]
-    Vec2(54, 2), // [27]
-    Vec2(58, 2), // [27]
-    Vec2(54, 2), // [27]
-    Vec2(58, 2), // [27]
+    Vec2(59, 2), // [46]
+    Vec2(52, 2), // [47]
+    Vec2(60, 2), // [48]
+    Vec2(54, 2), // [49]
+    Vec2(58, 2), // [50]
+    Vec2(54, 2), // [51]
+    Vec2(58, 2), // [52]
+    Vec2(56, 2), // [53]
+    Vec2(58, 2), // [54]2
+    Vec2(60, 2), // [55]2
+    Vec2(64, 2), // [56]4
+    Vec2(72, 2), // [57]8
+    Vec2(80, 2), // [58]8
+    Vec2(84, 2), // [59]4
+    Vec2(88, 2), // [60]4
 };
 
 const static AnimObjData animObjData[] =
 {    
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimIndex_Tile2SlideL
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[2]},    
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimIndex_Tile2SlideR
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},    
-    {&Tile2Glow, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimIndex_Tile2OldWord
-    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimType_NotWord
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideL
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideR
+    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
+    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimType_OldWord
+    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
     {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]}, // CityProgression
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]}, // HintIdle
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideLHint
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[2]},
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[29]},
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideRHint
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 10, &positions[16]},
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[29]}, // FIXME keyframe
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
-    {&Tile2, &Tile2, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[40]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[41]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[44]},
-    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimIndex_Tile2Idle
-    {&Tile2Glow, &Tile2Glow, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[37]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[38]},
-    {&BorderLockedUL, &BorderLockedUL, 0, Layer_BG1, 0x0, 1, &positions[39]},
-    {&BorderLockedUR, &BorderLockedUR, 0, Layer_BG1, 0x0, 1, &positions[40]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[41]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[42]},
-    {&BorderLockedBL, &BorderLockedBL, 0, Layer_BG1, 0x0, 1, &positions[43]},
-    {&BorderLockedBR, &BorderLockedBR, 0, Layer_BG1, 0x0, 1, &positions[44]},
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[45]}, // HintShake
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[29]}, // AnimType_HintSlideL
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[45]}, // AnimType_HintSlideR
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[69]}, // HintShake
 };
 
 const static AnimData animData[] =
@@ -144,7 +152,7 @@ const static AnimData animData[] =
     //AnimIndex_Tile1EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1ShuffleScored,
-    { 1.f, true, 2, &animObjData[0]},
+    { 0.5f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1CityProgression
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintAppear,
@@ -153,7 +161,7 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisppear,
+    //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
@@ -166,40 +174,40 @@ const static AnimData animData[] =
     //AnimType_LockedHintOldWord,
     { 1.f, true, 1, &animObjData[0]},
 
-    // AnimIndex_Tile2Idle
+    // AnimType_NotWord
     { 1.f, true, 2, &animObjData[0]},
-    // AnimIndex_Tile2SlideL
+    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[2]},
-    // AnimIndex_Tile2SlideR
+    // AnimType_SlideR
     { 0.5f, false, 2, &animObjData[4]},
-    // AnimIndex_Tile2OldWord
+    // AnimType_OldWord
     { 1.f, true, 2, &animObjData[6]},
-    //AnimIndex_Tile2NewWord,
+    //AnimType_NewWord,
     { 1.5f, true, 2, &animObjData[6]},
-    //AnimIndex_Tile2EndofRoundScored,
+    //AnimType_EndOfRound,
     { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile2ShuffleScored,
+    //AnimType_Shuffle,
     { 0.5f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile2CityProgression
+    //AnimType_CityProgression
     { 1.f, true, 1, &animObjData[8]},
-    //AnimType_HintAppear,
+    //AnimType_HintBarAppear,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintIdle,
+    //AnimType_HintBarIdle,
     { 3.f, false, 1, &animObjData[9]},
-    //AnimType_HintShake,
-    { 0.3f, false, 1, &animObjData[37]},
-    //AnimType_HintDisppear,
-    { 1.f, true, 1, &animObjData[0]},
-    // AnimIndex_HIntSlideL
-    { 0.5f, false, 3, &animObjData[11]},
-    // AnimIndex_HIntSlideR
-    { 0.5f, false, 3, &animObjData[14]},
-    //AnimType_LockHint,
+    //AnimType_HintBarDisappear,
+    { 0.3f, false, 1, &animObjData[13]},
+    //AnimType_HintWindUpSlide,
+    { 2.0f, false, 1, &animObjData[13]},
+    // AnimIndex_HintSlideL
+    { 1.0f, true, 1, &animObjData[11]},
+    // AnimIndex_HintSlideR
+    { 1.0f, true, 1, &animObjData[12]},
+    //AnimType_HintNeighborL
     { 1.f, true, 2, &animObjData[0]},
-    //AnimType_LockedHintNotWord,
-    { 1.f, true, 10, &animObjData[17]},
+    //AnimType_HintNeighborR
+    { 1.f, true, 6, &animObjData[13]},
     //AnimType_LockedHintOldWord,
-    { 1.f, true, 10, &animObjData[27]},
+    { 1.f, true, 6, &animObjData[13]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
@@ -214,7 +222,7 @@ const static AnimData animData[] =
     //AnimIndex_Tile3EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3ShuffleScored,
-    { 1.f, true, 2, &animObjData[0]},
+    { 0.5f, true, 2, &animObjData[0]},
     //AnimIndex_Tile3CityProgression
     { 1.f, true, 1, &animObjData[8]},
     //AnimType_HintAppear,
@@ -223,7 +231,7 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[9]},
     //AnimType_HintShake,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisppear,
+    //AnimType_HintDisappear,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
@@ -247,7 +255,15 @@ bool animPaint(AnimType animT,
     {
         &Font1Letter, &Font2Letter, &Font3Letter,
     };
-    const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+    const static AssetImage* fontsGlow[] =
+    {
+        &Font1Letter, &Font2LetterGlow, &Font3Letter,
+    };
+    const AssetImage& font =
+            (animT == AnimType_NewWord || animT == AnimType_OldWord) ?
+                *fontsGlow[GameStateMachine::getCurrentMaxLettersPerCube() - 1] :
+                *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+
     if (animT == AnimType_None)
     {
         return false;
@@ -268,6 +284,20 @@ bool animPaint(AnimType animT,
         unsigned char frame =
                 (unsigned char) ((float)objData.mNumFrames * animPct);
         frame = MIN(frame, objData.mNumFrames - 1);
+
+        unsigned fontFrame = font.frames + 1;
+        bool drawLetterOnTile = false;
+        bool blankLetterTile = false;
+        if (params && params->mLetters && params->mLetters[0] && bg1)
+        {
+            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
+            {
+                fontFrame = params->mLetters[i] - (int)'A';
+                drawLetterOnTile = (fontFrame < font.frames);
+                blankLetterTile = !drawLetterOnTile;
+            }
+        }
+
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
         Vec2 clipOffset(0,0);
@@ -275,7 +305,7 @@ bool animPaint(AnimType animT,
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = Vec2(objData.mSpriteAsset->width, objData.mSpriteAsset->height);
+            size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
             assetFrames = objData.mSpriteAsset->frames;
         }
         else
@@ -312,7 +342,7 @@ bool animPaint(AnimType animT,
         case AnimType_HintAppear:
         case AnimType_HintIdle:
         case AnimType_HintShake:
-        case AnimType_HintDisppear:
+        case AnimType_HintDisappear:
         case AnimType_LockHint:
         case AnimType_LockedHint:
         case AnimType_NotWord:
@@ -322,58 +352,99 @@ bool animPaint(AnimType animT,
             break;
         }
 #endif
-        unsigned fontFrame = font.frames + 1;
-        if (params && params->mLetters && bg1)
-        {
-            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
-            {
-                fontFrame = params->mLetters[i] - (int)'A';
-            }
-        }
 
-        if (fontFrame < font.frames && objData.mLayer == Layer_BG0)
+        if (objData.mLayer == Layer_BG0)
         {
-            Vec2 letterPos(pos);
-            letterPos.y += 4; // TODO
-            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
-            bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
-        }
-        else if (objData.mLayer == Layer_BG0)
-        {
-            vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
+            if (blankLetterTile)
+            {
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
+            }
+            else
+            {
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+            }
+
+            if (drawLetterOnTile)
+            {
+                Vec2 letterPos(pos);
+                letterPos.y += 5; // TODO
+                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
+            }
         }
         else if (objData.mLayer == Layer_BG1)
         {
             bg1->DrawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
         }
-        else
+        else // Layer_Sprite
         {
             vid.moveSprite(0, objData.mPositions[frame]);
             vid.resizeSprite(0, size);
-            vid.setSpriteImage(0, *objData.mSpriteAsset);
+            vid.setSpriteImage(0, *objData.mSpriteAsset, assetFrame);
+        }
+    }
+
+    // do procedural sprite stuff, it may not be a good fit for the data
+    // driven approach
+    if (params && params->mSpriteParams)
+    {
+        float t = 4.f * animTime/data.mDuration;
+        t = fmodf(t, 1.0f);
+        unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
+        for (unsigned i=1; i<8; ++i)
+        {
+            //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
+            vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
+            vid.resizeSprite(i, Sparkle.width * 8, Sparkle.height * 8);
+            vid.setSpriteImage(i, Sparkle, assetFrame);
         }
     }
 
     if (params && params->mBorders)
     {
+        const static unsigned char NewWordBorderFrames[] =
+        {
+            1, 2, 3, 2, 1
+        };
+        const static unsigned char NewBonusWordBorderFrames[] =
+        {
+            4, 5, 6, 5, 4
+        };
+        unsigned char bottomBorderFrame = 0;
+        if (animT == AnimType_NewWord)
+        {
+            //const float ANIM_DURATION = 0.5f;
+            float t = 2.f *animTime/data.mDuration;
+            t = fmodf(t, 1.0f);
+            bottomBorderFrame =
+                    (params->mBonus) ?
+                        NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:
+                        NewWordBorderFrames[MIN(arraysize(NewWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewWordBorderFrames))))];
+        }
         // TODO fold border painting into the paint code
         const bool leftNeighbor = params ? params->mLeftNeighbor : false;
         const bool rightNeighbor = params ? params->mRightNeighbor : false;
-        if (leftNeighbor || (rightNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+        const bool formsWord =
+                (animT == AnimType_NewWord || animT == AnimType_OldWord);
+        if (false && (leftNeighbor || (rightNeighbor && !formsWord)))
         {
             // don't draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom);
+            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom, bottomBorderFrame);
         }
         else if (bg1)
         {
             // draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 1), Vec2(2, 14), BorderLeft);
+            vid.BG0_drawPartialAsset(Vec2(0, 2),
+                                     Vec2(0, 1),
+                                     Vec2(2, 14),
+                                     (leftNeighbor || formsWord) ?
+                                         BorderLeft :
+                                         BorderLeftNoNeighbor);
             bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
             bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom);
+            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
         }
 
-        if (rightNeighbor || (leftNeighbor && animT != AnimType_NewWord && animT != AnimType_OldWord))
+        if (false && (rightNeighbor || (leftNeighbor && !formsWord)))
         {
             // don't draw right border
             vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
@@ -381,12 +452,16 @@ bool animPaint(AnimType animT,
         else if (bg1)
         {
             // draw right border
-            vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 1), Vec2(2, 14), BorderRight);
+            vid.BG0_drawPartialAsset(Vec2(14, 0),
+                                     Vec2(0, 1),
+                                     Vec2(2, 14),
+                                     (rightNeighbor || formsWord) ?
+                                         BorderRight :
+                                         BorderRightNoNeighbor);
             bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
             bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
             vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
         }
-
 
         const LevelProgressData &progressData =
                 GameStateMachine::getInstance().getLevelProgressData();
@@ -403,14 +478,15 @@ bool animPaint(AnimType animT,
         const static AssetImage *CheckMarkImagesTop[] =
         {
             0,
-            &BorderSlotBlank,
-            &BorderSlotNormal,
-            &BorderSlotBonus,
+            0,
+            &BorderSlotHint,
+            0,
 
         };
 
         const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-        if (params && params->mCubeID == CUBE_ID_BASE)
+        // this makes the icon bar not obvious enough
+        //if (params && params->mCubeID == CUBE_ID_BASE)
         {
             for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
             {
@@ -426,12 +502,17 @@ bool animPaint(AnimType animT,
                 }
                 else
                 {
-                    // row 2, top
-                    const AssetImage *image =
-                            CheckMarkImagesTop[(int)progressData.mPuzzleProgress[i]];
-                    if (image)
+                    if (i - TopRowStartIndex < MAX_HINTS)
                     {
-                        bg1->DrawAsset(Vec2(2 + i * 2, 0), *image);
+                        if (i - TopRowStartIndex  < GameStateMachine::getInstance().getNumHints())
+                        {
+                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
+                        }
+             /*           else
+                        {
+                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
+                        }
+                        */
                     }
                 }
             }

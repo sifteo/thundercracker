@@ -5,9 +5,11 @@
 #include "config.h"
 #include "Constants.h"
 
+
 class ScoredGameState : public State
 {
 public:    
+    ScoredGameState();
     virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
@@ -17,6 +19,7 @@ public:
 
 private:
 
+    Cube::ID mHintCubeIDOnUpdate;
 };
 
 #endif // SCOREDGAMESTATE_H

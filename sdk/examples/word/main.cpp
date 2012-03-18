@@ -20,7 +20,7 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
     WordGame::onEvent(EventID_Touch, data);
     */
 
-#ifdef DEBUGzz
+#ifdef DEBUG
     DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
     EventData data;
     data.mInput.mCubeID = cid;
@@ -82,7 +82,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
-#ifndef DEBUG
+#ifndef DEBUGz
     if (LOAD_ASSETS)
     {
         // start loading assets
@@ -127,6 +127,7 @@ void siftmain()
 
     // main loop
     WordGame game(cubes); // must not be static!
+    // TODO use clockNS, to avoid precision bugs with long play sessions
     float lastTime = System::clock();
     float lastPaint = System::clock();
     while (1)
@@ -144,13 +145,13 @@ void siftmain()
             lastPaint = now;
         }
 
-        if (game.needsPaintSync())
+        if (true || game.needsPaintSync()) // TODO can't seem to fix BG1 weirdness w/o this
         {
             game.paintSync();
         }
         else
         {
-            System::paint();
+            System::paint(); // (will do nothing if screens haven't changed
         }
     }
 }

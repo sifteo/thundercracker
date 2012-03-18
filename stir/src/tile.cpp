@@ -78,13 +78,6 @@ TileRef Tile::instance(const TileOptions &opt, uint8_t *rgba, size_t stride)
 	
 	id.options = opt;
 
-    // First pass.. are there any transparent pixels?
-    for (row = rgba, y = SIZE; y; --y, row += stride)
-        for (pixel = row, x = SIZE; x; --x, pixel += 4)
-            if (pixel[3] < alphaThreshold)
-                id.options.chromaKey = true;
-
-    // Second pass.. convert to RGB565, possibly with colorkey.
     RGB565 *dest = id.pixels;
     for (row = rgba, y = SIZE; y; --y, row += stride)
         for (pixel = row, x = SIZE; x; --x, pixel += 4) {
