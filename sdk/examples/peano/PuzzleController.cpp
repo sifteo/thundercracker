@@ -120,7 +120,7 @@ void ShowPuzzleCount()
     }
     else
     {
-        int count = 1 + puzzle->CountAfterThisInChapterWithCurrentCubeSet();
+        count = 1 + puzzle->CountAfterThisInChapterWithCurrentCubeSet();
     }
         
     { // opening remarks

@@ -25,7 +25,7 @@ c.MoveViewTo(blanky);
 */
 
 Game::GameState Run() {
-    bool isLast;
+    bool isLast = false;
 
     NarratorView nv;
     Game::cubes[0].SetView(&nv);
