@@ -6,11 +6,12 @@
  */
 
 extern "C" {
-#ifdef WIN32
-#include <Rpc.h>
-#else
-#include <uuid/uuid.h>
-#endif
+    #ifdef WIN32
+    #   include <Rpc.h>
+    #   include <Winsock2.h>
+    #else
+    #   include <uuid/uuid.h>
+    #endif
 }
 
 #include "UUIDGenerator.h"

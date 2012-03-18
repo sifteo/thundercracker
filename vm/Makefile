@@ -43,7 +43,7 @@ endif
     
 # Platform UUID deps
 ifeq ($(BUILD_PLATFORM), windows32)
-    LIBS += -lrpcrt4
+    LIBS += -lrpcrt4 -lws2_32
 endif
     
 # The DEBUG-ness of this build must match what LLVM was compiled with.
