@@ -52,7 +52,7 @@ Game::GameState Run() {
     AudioPlayer::PlayNeighborRemove();
     Game::Wait(0.1f);
     PLAY_SFX(sfx_Chapter_Victory);
-    VictoryView vv(Game::previousPuzzle->chapterIndex);
+    VictoryView vv(Game::IsPlayingRandom() ? 2 : Game::previousPuzzle->chapterIndex);
     Game::cubes[0].SetView(&vv);
     Game::Wait(1);
     vv.Open();
@@ -71,38 +71,44 @@ Game::GameState Run() {
     Game::cubes[0].SetView(&nv);
     Game::Wait(0.5f);
 
-    isLast = Game::previousPuzzle->chapterIndex == Database::NumChapters()-1;
-    if (isLast && Game::saveData.AllChaptersSolved()) {
+    if(!Game::IsPlayingRandom())
+    {
+        isLast = Game::previousPuzzle->chapterIndex == Database::NumChapters()-1;
+    }
+    if (Game::IsPlayingRandom() || (isLast && Game::saveData.AllChaptersSolved())) {
         nv.SetMessage("You solved\nall the codes!");
         Game::Wait(2.5f);
         nv.SetMessage("Congratulations!", NarratorView::EmoteYay);
         Game::Wait(2.25f);
         nv.SetMessage("We'll go to\nthe home screen now.");
         Game::Wait(2.75f);
-        nv.SetMessage("You can replay\nany chapter.");
-        Game::Wait(2.75f);
-        nv.SetMessage("Or I can create\nrandom puzzles for you!", NarratorView::EmoteMix01);
+        if(!Game::IsPlayingRandom())
         {
-            Game::Wait(0);
-            System::paintSync();
-            nv.GetCube()->backgroundLayer.set();
-            nv.GetCube()->backgroundLayer.clear();
-            nv.GetCube()->foregroundLayer.Clear();
-            nv.GetCube()->foregroundLayer.Flush();
-            nv.GetCube()->backgroundLayer.setWindow(72,56);
-
-            float t = 3 + System::clock();
-            float timeout = 0.0;
-            int i=0;
-            while(System::clock() < t) {
-                timeout -= Game::dt;
-                while (timeout < 0) {
-                    i = 1 - i;
-                    timeout += 0.05;
-                    nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
-                }
+            nv.SetMessage("You can replay\nany chapter.");
+            Game::Wait(2.75f);
+            nv.SetMessage("Or I can create\nrandom puzzles for you!", NarratorView::EmoteMix01);
+            {
+                Game::Wait(0);
                 System::paintSync();
-                Game::UpdateDt();
+                nv.GetCube()->backgroundLayer.set();
+                nv.GetCube()->backgroundLayer.clear();
+                nv.GetCube()->foregroundLayer.Clear();
+                nv.GetCube()->foregroundLayer.Flush();
+                nv.GetCube()->backgroundLayer.setWindow(72,56);
+
+                float t = 3 + System::clock();
+                float timeout = 0.0;
+                int i=0;
+                while(System::clock() < t) {
+                    timeout -= Game::dt;
+                    while (timeout < 0) {
+                        i = 1 - i;
+                        timeout += 0.05;
+                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                    }
+                    System::paintSync();
+                    Game::UpdateDt();
+                }
             }
         }
         nv.SetMessage("Thanks for playing!", NarratorView::EmoteYay);

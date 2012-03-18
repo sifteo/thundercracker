@@ -29,6 +29,8 @@ Game::GameState Run() {
     InterstitialView iv;
     Game::cubes[0].SetView(&iv);
 
+    Game::randomPuzzleCount = 0;
+    
     if (Game::IsPlayingRandom()) {
         iv.message = "Random!";
         iv.image = &Hint_6;

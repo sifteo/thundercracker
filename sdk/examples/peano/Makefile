@@ -43,12 +43,4 @@ PeanoTools.exe: PeanoTools/*.cs
 
 GENERATED_FILES += puzzles.gen.cpp 
 GENERATED_FILES += puzzles.gen.h
-puzzles.gen.cpp puzzles.gen.h : puzzles.xml mungePuzzles.py #dummy.txt
-	python mungePuzzles.py
-
-GENERATED_FILES += dummy.txt
-
-dummy.txt : assets.gen.h assets.gen.cpp
-	sed '/Major[NEWS]\;/s/const\ //g' -i assets.gen.h
-	sed '/Major[NEWS]_tiles/s/const\ //g' -i assets.gen.cpp
-	echo "dummy" > dummy.txt
+puzzles.gen.cpp puzzles.gen.h : puzzles.xml mungePuzzles.py
