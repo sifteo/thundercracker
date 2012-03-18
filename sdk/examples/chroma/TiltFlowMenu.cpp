@@ -211,7 +211,7 @@ void TiltFlowMenu::ReassignMenu() {
 }*/
 
 
-void TiltFlowMenu::playSound( _SYSAudioModule &sound )
+void TiltFlowMenu::playSound( const AssetAudio &sound )
 {
 #if SFX_ON
     m_SFXChannel.stop();

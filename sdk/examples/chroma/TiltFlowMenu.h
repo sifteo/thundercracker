@@ -181,7 +181,7 @@ public:
 	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
 
-    void playSound( _SYSAudioModule &sound );
+    void playSound( const AssetAudio &sound );
 
 	void showLogo();
     void checkNeighbors();
