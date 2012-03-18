@@ -1,8 +1,8 @@
 TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
-BIN = slinky$(BIN_EXT)
-all: $(BIN)
+BIN = slinky
+all: $(BIN)$(BIN_EXT)
 
 include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
@@ -60,8 +60,19 @@ FLAGS += -MMD
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 LDFLAGS := $(FLAGS) $(LIBS) $(LIB_STDCPP)
 
-$(BIN): $(OBJS) $(TABLES)
+ifeq ($(BUILD_PLATFORM), windows32)
+# We like having stripped binaries plus a separate file with
+# debug info. Do that on Win32 too.
+$(BIN)$(BIN_EXT): $(OBJS)
+	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
+	strip -s src/$(BIN)-d.exe -o $(BIN).exe
+	$(UPX) $(BIN).exe
+else
+# Default link
+$(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+endif
 
 %.o: %.cpp $(TABLES)
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o

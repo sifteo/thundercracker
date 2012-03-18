@@ -1,4 +1,5 @@
 *.exe
 *.o
 *.inc
+*.dSYM
 slinky
