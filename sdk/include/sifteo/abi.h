@@ -450,7 +450,7 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
-#define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataPinnedImage
+#define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
 #define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
 
 struct _SYSMetadataBootAsset {
@@ -459,10 +459,11 @@ struct _SYSMetadataBootAsset {
     uint8_t     reserved[3];    // Must be zero;
 };
 
-struct _SYSMetadataPinnedImage {
+// XXX: What format should the tile array be in? Right now it's a 16-bit
+//      index array, but that's awfully overkill! We can compress this.
+struct _SYSMetadataImage {
     uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader    
-    uint16_t    index;          // First tile index in image
-    uint16_t    reserved;       // Must be zero
+    uint32_t    tiles;          // Virtual address for tile array
 };
 
 /**

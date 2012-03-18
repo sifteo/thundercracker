@@ -44,7 +44,7 @@ public:
         return *this;
     }
     
-    Metadata &icon(const PinnedAssetImage &image)
+    Metadata &icon(const AssetImage &image)
     {
         STATIC_ASSERT(image.width == 10);
         STATIC_ASSERT(image.height == 10);
@@ -52,7 +52,7 @@ public:
             "Duplicate Metadata::icon() instance.");
         
         AssetGroup *G = (AssetGroup*) _SYS_lti_initializer(image.group);
-        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "IHH", G->sys.pHdr, image.index, 0);
+        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "II", G->sys.pHdr, image.tiles);
 
         return *this;
     }
