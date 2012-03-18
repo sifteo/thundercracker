@@ -83,6 +83,10 @@ void AudioChannelSlot::fetchData()
         }
         break;
 
+    case _SYS_ADPCM:
+        adpcmDec.decode(flStream, buf);
+        break;
+
     default:
         break;
     }

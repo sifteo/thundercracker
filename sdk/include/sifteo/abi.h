@@ -306,7 +306,8 @@ typedef uint32_t _SYSAudioHandle;
  */
 enum _SYSAudioType {
     _SYS_Speex = 0,
-    _SYS_PCM = 1
+    _SYS_PCM = 1,
+    _SYS_ADPCM = 2
 };
 
 enum _SYSAudioLoopType {

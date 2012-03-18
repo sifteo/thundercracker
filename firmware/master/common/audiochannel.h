@@ -11,14 +11,12 @@
 #include <stdint.h>
 #include "audiobuffer.h"
 #include "speexdecoder.h"
+#include "adpcmdecoder.h"
 #include "flashlayer.h"
 
 
 class AudioChannelSlot {
 public:
-    static const int STATE_PAUSED   = (1 << 0);
-    static const int STATE_LOOP     = (1 << 1);
-    static const int STATE_STOPPED  = (1 << 2);
 
     void init(_SYSAudioBuffer *b);
 
@@ -58,6 +56,10 @@ protected:
     friend class AudioMixer;    // mixer can tell us to fetchData()
 
 private:
+    static const int STATE_PAUSED   = (1 << 0);
+    static const int STATE_LOOP     = (1 << 1);
+    static const int STATE_STOPPED  = (1 << 2);
+
     void onPlaybackComplete();
     static void fetchRaw(FlashStream &in, AudioBuffer &out);
 
@@ -69,6 +71,7 @@ private:
     AudioBuffer buf;            // User-owned buffer for decompressed data
     FlashStream flStream;       // Location of compressed source data
     SpeexDecoder speexDec;      // Speex decoder state
+    AdPcmDecoder adpcmDec;      // ADPCM decoder state
 };
 
 #endif /* AUDIOCHANNEL_H_ */

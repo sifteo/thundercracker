@@ -17,7 +17,7 @@
 
 class AudioEncoder {
 public:
-    virtual ~AudioEncoder() {};
+    virtual ~AudioEncoder() {}
     virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps) = 0;
 
     virtual const char *getTypeSymbol() = 0;
@@ -63,6 +63,32 @@ public:
     virtual const char *getName() {
         return "Uncompressed PCM";
     }
+};
+
+class ADPCMEncoder : public AudioEncoder {
+public:
+    ADPCMEncoder() :
+        index(0),
+        predsample(0)
+    {}
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
+
+    virtual const char *getTypeSymbol() {
+        return "_SYS_ADPCM";
+    }
+
+    virtual const char *getName() {
+        return "IMA 4-bit ADPCM";
+    }
+
+private:
+    int16_t index;
+    int32_t predsample;
+
+    static const uint16_t stepSizeTable[];
+    static const int8_t indexTable[];
+
+    uint8_t encodeSample(int16_t sample);
 };
 
 #endif
