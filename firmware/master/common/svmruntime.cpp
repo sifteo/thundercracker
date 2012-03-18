@@ -42,12 +42,8 @@ void SvmRuntime::run(uint16_t appId)
         LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
 
         const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
-        if (uuid) {
-            LOG(("SVM: Title UUID is {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-                uuid->data1, uuid->data2, uuid->data3,
-                uuid->data4[0], uuid->data4[1], uuid->data4[2], uuid->data4[3],
-                uuid->data4[4], uuid->data4[5], uuid->data4[6], uuid->data4[7]));
-        }
+        if (uuid)
+            LOG(("SVM: Title UUID is "_SYSUUID_FMT"\n", _SYSUUID_FMT_VALUES(*uuid)));
     }
 #endif
 

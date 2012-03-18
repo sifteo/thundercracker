@@ -99,16 +99,27 @@ uint32_t UUIDGenerator::getValueFor(CallSite &CS) const
 
 UUIDGenerator::UUID_t UUIDGenerator::generate()
 {
-#ifdef WIN32
-    UUID uuid;
-    UuidCreate ( &uuid );
-#else
-    uuid_t uuid;
-    uuid_generate_random ( uuid );
-#endif
-
     UUID_t result;
-    assert(sizeof result == sizeof uuid);
-    memcpy(&result, &uuid, sizeof result);
+
+    #ifdef WIN32
+
+        // Win32 UUIDs, use a mixture of little-endian and an octet stream
+        UUID uuid;
+        UuidCreate(&uuid);
+        result.time_low = htonl(uuid.Data1);
+        result.time_mid = htons(uuid.Data2);
+        result.time_hi_and_version = htons(uuid.Data3);
+        memcpy(&result.clk_seq_hi_res, uuid.Data4, sizeof uuid.Data4);
+
+    #else // !WIN32
+
+        // OSF DCE standard. Uses network byte order.
+        uuid_t uuid;
+        uuid_generate_random(uuid);
+        assert(sizeof result == sizeof uuid);
+        memcpy(result.bytes, uuid, sizeof result.bytes);
+
+    #endif
+
     return result;
 }

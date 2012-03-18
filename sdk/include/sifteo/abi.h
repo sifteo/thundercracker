@@ -412,6 +412,35 @@ struct _SYSPseudoRandomState {
 #define _SYS_INVALID_HWID       ((uint64_t)-1)
 
 /**
+ * RFC4122 compatible UUIDs.
+ *
+ * These are used in game metadata, to uniquely identify a particular
+ * binary. They are stored in network byte order, with field names compatible
+ * with RFC4122.
+ */
+
+struct _SYSUUID {
+    union {
+        struct {
+            uint32_t time_low;
+            uint16_t time_mid;
+            uint16_t time_hi_and_version;
+            uint8_t clk_seq_hi_res;
+            uint8_t clk_seq_low;
+            uint8_t node[6];
+        };
+        uint8_t  bytes[16];
+        uint16_t hwords[8];
+        uint32_t words[4];
+    };
+};
+
+#define _SYSUUID_FMT                "{%08x-%04x-%04x-%04x-%04x%08x}"
+#define _SYSUUID_FMT_VALUES(_x)     ntohl((_x).words[0]), \
+    ntohs((_x).hwords[2]), ntohs((_x).hwords[3]), ntohs((_x).hwords[4]), \
+    ntohs((_x).hwords[5]), ntohl((_x).words[3])
+
+/**
  * ELF binary format.
  *
  * Loadable programs in this system are standard ELF binaries, however their
@@ -452,13 +481,6 @@ struct _SYSMetadataKey {
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
 #define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
-
-struct _SYSUUID {
-    uint32_t data1;
-    uint16_t data2;
-    uint16_t data3;
-    uint8_t  data4[8];
-};
 
 struct _SYSMetadataBootAsset {
     uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
@@ -510,8 +532,8 @@ struct _SYSMetadataImage {
  * UUIDs:
  *   We support link-time generation of standard UUIDs. For every unique
  *   'key', the linker will generate a different UUID. Since a full UUID
- *   is too large to return directly, each individual 32-bit word can be
- *   accessed using values of 'index' from 0 to 3.
+ *   is too large to return directly, it is accessed as a group of four
+ *   little-endian 32-bit words, using values of 'index' from 0 to 3.
  *
  * Static initializers:
  *   In global varaibles which aren't themselves constant but which were
