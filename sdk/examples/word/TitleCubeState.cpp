@@ -51,11 +51,14 @@ unsigned TitleCubeState::update(float dt, float stateTime)
 
     _SYSAccelState accelState;
     _SYS_getAccel(getStateMachine().getCube().id(), &accelState);
-    if (accelState.x != 0)
+    _SYSShakeState shakeState;
+    _SYS_getShake(getStateMachine().getCube().id(), &shakeState);
+
+    if (shakeState == NOT_SHAKING && accelState.x != 0)
     {
         mShakeDelay = 0.f;
+        mPanning += dt * -2.f * accelState.x;
     }
-    mPanning += dt * -2.f * accelState.x;
     /*if (mPanning != 0.f)
     {
         DEBUG_LOG(("panning %f\n", mPanning));
