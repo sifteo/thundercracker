@@ -122,11 +122,11 @@ extern "C" void _start()
         vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
 
-        /*
+#if (BOARD == BOARD_TC_MASTER_REV2)
         GPIOPin vcc33 = VCC33_ENABLE_GPIO;
         vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
-        */
+#endif
     }
 
     /*

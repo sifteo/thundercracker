@@ -4,7 +4,7 @@
 // available boards to choose from
 #define BOARD_STM32F10C         1
 #define BOARD_TC_MASTER_REV1    2
-#define BOARD_TC_MASTER_REV2	3
+#define BOARD_TC_MASTER_REV2    3
 
 // default board
 #ifndef BOARD
@@ -39,6 +39,7 @@
 #define FLASH_SCK_GPIO      GPIOPin(&GPIOB, 3)
 #define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 4)
 #define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 5)
+#define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
 
 // N E I G H B O R
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)

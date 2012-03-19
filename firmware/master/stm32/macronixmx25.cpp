@@ -6,8 +6,14 @@
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
-    writeProtect.setControl(GPIOPin::OUT_10MHZ);
+    writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
+
+#if (BOARD == BOARD_TC_MASTER_REV2)
+    GPIOPin regEnable = FLASH_REG_EN_GPIO;
+    regEnable.setControl(GPIOPin::OUT_2MHZ);
+    regEnable.setLow();
+#endif
 
     spi.init();
 

@@ -48,7 +48,7 @@ void SPIMaster::init()
 
     // NOTE: remaps *must* be applied after GPIOs have been configured as
     // alternate function, which in turn must be done after the peripheral is activated
-#if BOARD == BOARD_TC_MASTER_REV1
+#if (BOARD >= BOARD_TC_MASTER_REV1)
     if (hw == &SPI1) {
         AFIO.MAPR |= (0x4 << 24) |  // disable JTAG so we can talk to flash
                      (1 << 0);      // remap SPI1 to PB3-5
