@@ -587,19 +587,30 @@ void Game::OnTriggerEvent(unsigned id) {
 bool Game::OnEncounterBlock(Sokoblock* block) {
   //-------------------------------------------------------------
   // BLOCK PUSHING
-  // determine if the block can be pushed:
-  //  i.    ? is there a portal to the blockTarget room? ?
-  //  ii.   is the blockTarget not subdivided?
-  //  iii.  ? portal "big enough" check ?
-  //  iv.   targetRoom does not already have a block
-  const Vec2 blockTargetLoc = mPlayer.TargetRoom()->Location() + BroadDirection();
-  if (!mMap.Contains(blockTargetLoc)) { return false; }
-  Room* pRoom = mMap.GetRoom(blockTargetLoc);
+  const Vec2 dir = BroadDirection();
+  const Vec2 loc_src = mPlayer.TargetRoom()->Location();
+  const Vec2 loc_dst = loc_src + dir;
+  // no moving blocks off the map
+  if (!mMap.Contains(loc_dst)) { return false; }
+  Room* pRoom = mMap.GetRoom(loc_dst);
+  // no moving blocks into subdivided rooms
   if (pRoom->IsSubdivided()) { return false; }
-  // TODO CHECK ROOM DOES NOT ALREADY CONTAIN A BLOCK
-  //    -- MOVE ROOMVIEW::CHECKBLOCK --> ROOM
-  //for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
-  //}
+  // no moving blocks through walls or small portals
+  Cube::Side dst_enter_side = SIDE_LEFT;
+  if (dir.x < 0) { dst_enter_side = SIDE_RIGHT; }
+  else if (dir.y > 0) { dst_enter_side = SIDE_TOP; }
+  else if (dir.y < 0) { dst_enter_side = SIDE_BOTTOM; }
+  const char *sides[] = { "top", "left", "bottom", "right" };
+  if (pRoom->CountOpenTilesAlongSide(dst_enter_side) < 4) {
+    return false;
+  }
+  // no moving blocks onto other blocks
+  for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
+    if (p != block && pRoom->IsShowingBlock(p)) {
+      LOG(("BLOCK OVERLAP FAIL\n"));
+      return false;
+    }
+  }
   return true;
 }
 

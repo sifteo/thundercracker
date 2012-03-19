@@ -45,7 +45,7 @@ void RoomView::Init(unsigned roomId) {
   if (!r->IsSubdivided()) {
     // Should there be some sort of spatial hash?
     for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
-      if (IsShowingBlock(pBlock)) {
+      if (GetRoom()->IsShowingBlock(pBlock)) {
         // assuming for now that we're only showing one block per cube :/
         ShowBlock(pBlock);
         break;
@@ -280,11 +280,4 @@ void RoomView::ComputeAnimatedTiles() {
     }
     if (mAnimTileCount == ANIM_TILE_CAPACITY) { break; }
   }
-}
-
-bool RoomView::IsShowingBlock(const Sokoblock* pBlock) {
-  const Vec2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
-  const Vec2 roomTopLeft = 128 * Location();
-  const Vec2 delta = blockTopLeft - roomTopLeft;
-  return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
 }

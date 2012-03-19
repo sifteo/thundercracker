@@ -68,6 +68,5 @@ public:
 
 private:
   void ComputeAnimatedTiles();
-  bool IsShowingBlock(const Sokoblock* pBlock);  
 
 };

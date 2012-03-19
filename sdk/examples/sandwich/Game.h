@@ -42,11 +42,7 @@ public:
   }
 
   bool ShowingMinimap() const { 
-    #if PLAYTESTING_HACKS
       return false; 
-    #else
-      return true;
-    #endif
   }
 
   // methods  
