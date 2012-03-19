@@ -735,6 +735,7 @@ void App::OnNeighborAdd(
         // Clues
         if (mGameState == GAME_STATE_SHUFFLE_PLAY)
         {
+            mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
             mClueOnTimer = kClueTimerOnDuration;
         }
         
