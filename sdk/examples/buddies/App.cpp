@@ -1631,10 +1631,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             
-            if ((mShuffleUiIndex == 0 || mShuffleUiIndex == 1) && !mShuffleUiIndexSync[cubeWrapper.GetId()])
+            if (mShuffleUiIndex == 0 && !mShuffleUiIndexSync[cubeWrapper.GetId()])
             {
-                unsigned int bannerIndex = (mShuffleUiIndex + cubeWrapper.GetId()) % 2;
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), bannerIndex ? ShuffleShakeToShuffle : ShuffleTouchToSwap);
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
+            }
+            else if (mShuffleUiIndex == 1 && !mShuffleUiIndexSync[cubeWrapper.GetId()])
+            {
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleTouchToSwap);
             }
             else if (mShuffleUiIndex == 2)
             {
