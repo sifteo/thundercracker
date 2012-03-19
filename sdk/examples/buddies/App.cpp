@@ -543,13 +543,13 @@ App::App()
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
     , mClueOnTimer(0.0f)
+    , mClueOffTimers()
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShuffleUiIndex(0)
     , mShuffleUiIndexSync()
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
-    , mStoryClueTimers()
 {
     for (unsigned int i = 0; i < arraysize(mTouching); ++i)
     {
@@ -566,6 +566,11 @@ App::App()
         mFaceCompleteTimers[i] = 0.0f;
     }
     
+    for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+    {
+        mClueOffTimers[i] = 0.0f;
+    }
+    
     for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
     {
         mShuffleUiIndexSync[i] = false;
@@ -574,11 +579,6 @@ App::App()
     for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
     {
         mShufflePiecesMoved[i] = false;
-    }
-    
-    for (unsigned int i = 0; i < arraysize(mStoryClueTimers); ++i)
-    {
-        mStoryClueTimers[i] = 0.0f;
     }
 }
 
@@ -726,19 +726,21 @@ void App::OnNeighborAdd(
             StartGameState(GAME_STATE_SHUFFLE_PLAY);
         }
         
+        // Hints
         if (IsHinting())
         {
             StopHint(true);
         }
         
-        for (unsigned int i = 0; i < arraysize(mStoryClueTimers); ++i)
-        {
-            mStoryClueTimers[i] = 0.0f;
-        }
-        
+        // Clues
         if (mGameState == GAME_STATE_SHUFFLE_PLAY)
         {
             mClueOnTimer = kClueTimerOnDuration;
+        }
+        
+        for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+        {
+            mClueOffTimers[i] = 0.0f;
         }
         
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
@@ -797,10 +799,10 @@ void App::OnTilt(Cube::ID cubeId)
                 StopHint(false);
             }
             
-            ASSERT(cubeId < arraysize(mStoryClueTimers));
-            if (mStoryClueTimers[cubeId] > 0.0f)
+            ASSERT(cubeId < arraysize(mClueOffTimers));
+            if (mClueOffTimers[cubeId] > 0.0f)
             {
-                mStoryClueTimers[cubeId] = 0.0f;
+                mClueOffTimers[cubeId] = 0.0f;
             }
             mClueOnTimer = kClueTimerOnDuration;
             break;
@@ -822,10 +824,10 @@ void App::OnTilt(Cube::ID cubeId)
                 StopHint(false);
             }
             
-            ASSERT(cubeId < arraysize(mStoryClueTimers));
-            if (mStoryClueTimers[cubeId] > 0.0f)
+            ASSERT(cubeId < arraysize(mClueOffTimers));
+            if (mClueOffTimers[cubeId] > 0.0f)
             {
-                mStoryClueTimers[cubeId] = 0.0f;
+                mClueOffTimers[cubeId] = 0.0f;
             }
             break;
         }
@@ -868,10 +870,10 @@ void App::OnShake(Cube::ID cubeId)
                 StopHint(false);
             }
             
-            ASSERT(cubeId < arraysize(mStoryClueTimers));
-            if (mStoryClueTimers[cubeId] > 0.0f)
+            ASSERT(cubeId < arraysize(mClueOffTimers));
+            if (mClueOffTimers[cubeId] > 0.0f)
             {
-                mStoryClueTimers[cubeId] = 0.0f;
+                mClueOffTimers[cubeId] = 0.0f;
             }
             mClueOnTimer = kClueTimerOnDuration;
             break;
@@ -888,10 +890,10 @@ void App::OnShake(Cube::ID cubeId)
                 StopHint(false);
             }
             
-            ASSERT(cubeId < arraysize(mStoryClueTimers));
-            if (mStoryClueTimers[cubeId] > 0.0f)
+            ASSERT(cubeId < arraysize(mClueOffTimers));
+            if (mClueOffTimers[cubeId] > 0.0f)
             {
-                mStoryClueTimers[cubeId] = 0.0f;
+                mClueOffTimers[cubeId] = 0.0f;
             }
             break;
         }
@@ -1367,12 +1369,12 @@ void App::UpdateGameState(float dt)
             }
             
             // Update clue display timers
-            if (mStoryClueTimers[0] > 0.0f)
+            if (mClueOffTimers[0] > 0.0f)
             {
-                if (UpdateTimer(mStoryClueTimers[0], dt) ||
+                if (UpdateTimer(mClueOffTimers[0], dt) ||
                     (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN))
                 {
-                    mStoryClueTimers[0] = 0.0f;
+                    mClueOffTimers[0] = 0.0f;
                     mClueOnTimer = kClueTimerOnDuration;
                 }
             }
@@ -1382,12 +1384,12 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mClueOnTimer, dt))
                 {
-                    mStoryClueTimers[0] = kStateTimeDelayLong;
+                    mClueOffTimers[0] = kStateTimeDelayLong;
                 }
             }
             
             // If clues are not displayed, take care of hinting
-            if (mStoryClueTimers[0] <= 0.0f)
+            if (mClueOffTimers[0] <= 0.0f)
             {
                 if (IsHinting())
                 {
@@ -1528,11 +1530,11 @@ void App::UpdateGameState(float dt)
             }
             
             bool clueDisplayed = false;
-            for (unsigned int i = 0; i < arraysize(mStoryClueTimers); ++i)
+            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
             {
-                if (mStoryClueTimers[i] > 0.0f)
+                if (mClueOffTimers[i] > 0.0f)
                 {
-                    clueDisplayed = !UpdateTimer(mStoryClueTimers[i], dt);
+                    clueDisplayed = !UpdateTimer(mClueOffTimers[i], dt);
                 }
             }
             
@@ -1568,13 +1570,13 @@ void App::UpdateGameState(float dt)
                 {
                     if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
-                        if (mStoryClueTimers[i] > 0.0f)
+                        if (mClueOffTimers[i] > 0.0f)
                         {
-                            mStoryClueTimers[i] = 0.0f;
+                            mClueOffTimers[i] = 0.0f;
                         }
                         else
                         {
-                            mStoryClueTimers[i] = kStateTimeDelayLong;
+                            mClueOffTimers[i] = kStateTimeDelayLong;
                         }
                     }
                 }
@@ -1736,7 +1738,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             }
-            else if (mStoryClueTimers[cubeWrapper.GetId()] > 0.0f)
+            else if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(ShuffleNeighbor);
             }
@@ -1846,7 +1848,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                if (mStoryClueTimers[cubeWrapper.GetId()] > 0.0f)
+                if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     DrawStoryClue(cubeWrapper, mStoryPuzzleIndex, StoryChapterClueOnTouch, GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }

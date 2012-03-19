@@ -137,7 +137,9 @@ private:
     int mHintPiece1;
     int mHintPieceSkip;
     
+    // Clues
     float mClueOnTimer;
+    float mClueOffTimers[kNumCubes];
     
     // Free Play Mode
     float mFreePlayShakeThrottleTimer;
@@ -151,7 +153,6 @@ private:
     // Story Mode
     unsigned int mStoryPuzzleIndex;
     unsigned int mStoryCutsceneIndex;
-    float mStoryClueTimers[kNumCubes];
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
