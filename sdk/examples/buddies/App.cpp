@@ -1294,7 +1294,11 @@ void App::UpdateGameState(float dt)
                         mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
-                        mShuffleUiIndexSync[i] = true;
+                        
+                        if (mShuffleUiIndex == 0)
+                        {
+                            mShuffleUiIndexSync[i] = true;
+                        }
                     }
                 }
             }
@@ -1652,13 +1656,14 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mShuffleUiIndex == 0 && !mShuffleUiIndexSync[cubeWrapper.GetId()])
             {
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
-            }
-            else if (mShuffleUiIndex == 1 && !mShuffleUiIndexSync[cubeWrapper.GetId()])
-            {
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleTouchToSwap);
             }
-            else if (mShuffleUiIndex == 2)
+            else if (mShuffleUiIndex == 1)
+            {
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
+            }
+            
+            if (mShuffleUiIndex != 0)
             {
                 mShuffleUiIndexSync[cubeWrapper.GetId()] = false;
             }
