@@ -15,6 +15,9 @@
 
 #if BOARD == BOARD_TC_MASTER_REV2
 
+// C L O C K
+#define RCC_CFGR_PLLXTPRE   1
+
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)
 #define USB_DP_GPIO         GPIOPin(&GPIOA, 12)
@@ -66,6 +69,9 @@
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
 
 #elif BOARD == BOARD_TC_MASTER_REV1
+
+// C L O C K
+#define RCC_CFGR_PLLXTPRE   0
 
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)

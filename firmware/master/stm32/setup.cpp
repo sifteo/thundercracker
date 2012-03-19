@@ -77,21 +77,21 @@ extern "C" void _start()
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
     // fire up the PLL
-    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
-                (0 << 17) |         // PLL XTPRE - no divider
-                (1 << 16);          // PLLSRC - HSE
-    RCC.CR   |= (1 << 24);          // turn PLL on
-    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+    RCC.CFGR |= (7 << 18) |                 // PLLMUL (x9)
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16);                  // PLLSRC - HSE
+    RCC.CR   |= (1 << 24);                  // turn PLL on
+    while (!(RCC.CR & (1 << 25)));          // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
-                (0 << 22)       |   // USBPRE - divide by 3
-                (7 << 18)       |   // PLLMUL - x9
-                (0 << 17)       |   // PLLXTPRE - no divider
-                (1 << 16)       |   // PLLSRC - HSE
-                (4 << 11)       |   // PPRE2 - APB2 prescaler, divide by 2
-                (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
-                (0 << 4);           // HPRE - AHB prescaler, no divisor
+    RCC.CFGR =  (0 << 24)                 | // MCO - mcu clock output
+                (0 << 22)                 | // USBPRE - divide by 3
+                (7 << 18)                 | // PLLMUL - x9
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16)                 | // PLLSRC - HSE
+                (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
+                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable
                 (1 << 1);   // two wait states since we're @ 72MHz
