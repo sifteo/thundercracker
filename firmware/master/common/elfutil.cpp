@@ -208,9 +208,8 @@ const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key,
                 return 0;
 
             // Now we can calculate the address of the value, yay.
-            uint8_t *value = FlashBlock::getBytes(ref,
-                data.getAddress() + I + sizeof(_SYSMetadataKey) + keyOffset,
-                actualSize);
+            uint32_t valueAddr = data.getAddress() + I + sizeof(_SYSMetadataKey) + keyOffset;
+            uint8_t *value = FlashBlock::getBytes(ref, valueAddr, actualSize);
 
             // Too small, or hitting the edge of the block?
             if (actualSize < minSize)
