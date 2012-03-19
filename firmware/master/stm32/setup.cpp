@@ -187,7 +187,7 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.EXTI0);                  //  home button
+    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
 
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio

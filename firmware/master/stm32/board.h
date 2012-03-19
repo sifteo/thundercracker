@@ -68,6 +68,7 @@
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
+#define BTN_HOME_EXTI_VEC   EXTI2
 
 #elif BOARD == BOARD_TC_MASTER_REV1
 
@@ -123,6 +124,7 @@
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
+#define BTN_HOME_EXTI_VEC   EXTI0
 
 #elif BOARD == BOARD_STM32F10C
 
