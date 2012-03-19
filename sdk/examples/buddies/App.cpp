@@ -554,10 +554,10 @@ App::App()
         mTouching[i] = TOUCH_STATE_NONE;
     }
     
-    for (unsigned int i = 0; i < arraysize(mBestTimes); ++i)
-    {
-        mBestTimes[i] = 0.0f;
-    }
+    // Default high scores (will overwritten if save file is found)
+    mBestTimes[0] =  5.0f * 60.0f;
+    mBestTimes[1] = 10.0f * 60.0f;
+    mBestTimes[2] = 20.0f * 60.0f;
     
     for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
     {
