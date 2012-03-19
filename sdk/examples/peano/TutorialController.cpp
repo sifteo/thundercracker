@@ -90,6 +90,23 @@ WaitForTouchEventHanlder waitForTouchEventHandler[2];
  */
 
 
+void WaitWithTokenUpdate(float delay)
+{
+    Game::PaintCubeViews();
+    System::paintSync();
+
+    int64_t t=System::clockNS();
+
+    //convert to ms before goint to ns to avoid float overflow
+    int64_t delayMS = delay * 1000.0f;
+    t += delayMS * 1000000;
+    do {
+        pFirstToken->Update();
+        pSecondToken->Update();
+        System::paint();
+        Game::UpdateDt();
+    } while(System::clockNS() < t);
+}
 
 
 Game::GameState Run() {
@@ -177,15 +194,15 @@ Game::GameState Run() {
 
     while(firstToken.token->current == firstToken.token)
     {
-        Game::Wait(0);
+        WaitWithTokenUpdate(0);
     }
 
     Game::neighborEventHandler = NULL;
 
     // flourish 1
-    Game::Wait(0.5f);
+    WaitWithTokenUpdate(0.5f);  //two waits with token update so overlay turns off
     narrator.SetMessage("Awesome!", NarratorView::EmoteYay);
-    Game::Wait(3);
+    WaitWithTokenUpdate(3);
     narrator.SetMessage("The combined Key is\n1+2=3!");
     Game::Wait(3);
 
@@ -206,15 +223,15 @@ Game::GameState Run() {
 
     while(firstToken.token->current == firstToken.token)
     {
-        Game::Wait(0);
+        WaitWithTokenUpdate(0);
     }
 
     Game::neighborEventHandler = NULL;
 
     // flourish 2
-    Game::Wait(0.5f);
+    WaitWithTokenUpdate(0.5f);  //two waits with token update so overlay has time to turn off
     narrator.SetMessage("Good job!", NarratorView::EmoteYay);
-    Game::Wait(3);
+    WaitWithTokenUpdate(3);
     narrator.SetMessage("See how this\ncombination equals 2-1=1.");
     Game::Wait(3);
 
@@ -298,26 +315,28 @@ Game::GameState Run() {
         firstToken.Update();
         secondToken.Update();
         Game::UpdateDt();
-        System::yield();
+        System::paint();
     }
     PLAY_SFX(sfx_Tutorial_Correct);
     PLAY_SFX2(sfx_Tutorial_Oops, false);
     Game::ClearCubeEventHandlers();
     Game::neighborEventHandler = NULL;
-    Game::Wait(0.5f);
+    WaitWithTokenUpdate(0.5f);
     narrator.SetMessage("Radical!", NarratorView::EmoteYay);
-    Game::Wait(3.5f);
+    WaitWithTokenUpdate(3.5f);
 
     // close shutters
     narrator.SetMessage("");
     Game::Wait(1);
     //Game::cubes[2]->SetView(NULL);
+    Game::cubes[2].Image(Skin_Default_Background);
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].HideSprites();
     Game::cubes[2].CloseShutters();
     Game::cubes[2].DrawVaultDoorsClosed();
 
+    Game::cubes[1].Image(Skin_Default_Background);
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].HideSprites();
@@ -387,6 +406,7 @@ Game::GameState Run() {
     firstToken.token->GetPuzzle()->target = NULL;
 
     Game::cubes[2].HideSprites();
+    Game::cubes[2].Image(Skin_Default_Background);
     Game::cubes[2].foregroundLayer.Clear();
     Game::cubes[2].foregroundLayer.Flush();
     Game::cubes[2].SetView(NULL);
@@ -394,6 +414,7 @@ Game::GameState Run() {
     Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].HideSprites();
+    Game::cubes[1].Image(Skin_Default_Background);
     Game::cubes[1].foregroundLayer.Clear();
     Game::cubes[1].foregroundLayer.Flush();
     Game::cubes[1].CloseShutters();

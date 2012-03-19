@@ -32,7 +32,7 @@ void Run()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].Image(Skin_Default_VaultDoor);
+        Game::cubes[i].Image(Skin_Default_VaultDoor, Vec2(0,0));
     }
     System::paint();
 
@@ -43,6 +43,9 @@ void Run()
         Game::cubes[i].OpenShuttersToReveal(Title);
     }
 
+    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
+    void *oldShake = _SYS_getVectorHandler(_SYS_CUBE_SHAKE);
+
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
 
@@ -52,8 +55,8 @@ void Run()
         System::paint();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, NULL, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, NULL, NULL);
+    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, oldShake, NULL);
 
     for(int i = 0; i < NUM_CUBES; i++)
     {

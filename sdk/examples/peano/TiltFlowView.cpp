@@ -103,8 +103,8 @@ void TiltFlowView::PaintFooter(TotalsCube *c) {
 void TiltFlowView::PaintInner(TotalsCube *c) {    
     if(menu->IsDone())
     {
-        //TODO draw centered item sans panning.  need to adjust art because y=12
         GetCube()->FillArea(&Dark_Purple, Vec2(0,0), Vec2(18,18));
+        GetCube()->Image(*menu->GetItem(mItem)->GetImage(), Vec2(3, 1), 0);
         GetCube()->backgroundLayer.BG0_setPanning(Vec2(0,0));
         return;
     }
@@ -119,7 +119,7 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
         int centerLeftTile = 12 * mItem;
         int baseScreenTileX = 3 + centerLeftTile - tileX;
 
-        GetCube()->FillArea(&Dark_Purple, Vec2(0,3), Vec2(18,10));
+        GetCube()->FillArea(&Dark_Purple, Vec2(0,3), Vec2(18,11));
 
         if(mItem > 0 && !menu->IsPicked())
             DoPaintItem(menu->GetItem(mItem-1), baseScreenTileX - 12);
@@ -128,7 +128,7 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
             DoPaintItem(menu->GetItem(mItem+1), baseScreenTileX + 12);
     }
 
-    GetCube()->backgroundLayer.BG0_setPanning(Vec2(scrollX, 12));
+    GetCube()->backgroundLayer.BG0_setPanning(Vec2(scrollX, 16));
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x) {

@@ -260,6 +260,7 @@ Game::GameState Run()
                     // transition out
                     for(int t=0; t<puzzle->GetNumTokens(); ++t)
                     {
+                        Game::cubes[t].Image(skin.background);
                         Game::cubes[t].HideSprites();
                         Game::cubes[t].foregroundLayer.Clear();
                         Game::cubes[t].foregroundLayer.Flush();
@@ -321,12 +322,14 @@ Game::GameState Run()
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {                      
             TotalsCube *c = puzzle->GetToken(i)->GetTokenView()->GetCube();
+            Game::cubes[i].Image(skin.background_lit);
             c->HideSprites();
             c->foregroundLayer.Clear();
             c->foregroundLayer.Flush();
             c->SetView(NULL);
 
             c->CloseShutters();
+            c->DrawVaultDoorsClosed();
             Game::Wait(0.1f);
         }
     }

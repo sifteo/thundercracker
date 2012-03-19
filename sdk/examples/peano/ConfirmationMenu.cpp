@@ -16,21 +16,38 @@ bool triggered[2];
 
 static const float kTransitionTime = 0.333f;
 
-void OnCubeTouch(Cube::ID cube, bool pressed)
-{
-    if(pressed)
-        gotTouchOn[cube] = true;
+const int kPad = 1;
 
-    if (!pressed && gotTouchOn[cube])
+void OnCubeTouch(void *, Cube::ID cid)
+{
+    bool pressed = Game::cubes[cid].touching();
+    if(cid == 0 || cid ==1)
     {
-        triggered[cube] = true;
-        PLAY_SFX(sfx_Menu_Tilt_Stop);
+        if(pressed)
+            gotTouchOn[cid] = true;
+
+        if (!pressed && gotTouchOn[cid])
+        {
+            triggered[cid] = true;
+            PLAY_SFX(sfx_Menu_Tilt_Stop);
+        }
     }
 }
 
+int CollapsesPauses(int off) {
+  if (off > 7) {
+    if (off < 7 + kPad) {
+      return 7;
+    }
+    off -= kPad;
+  }
+  return off;
+}
 
 void PaintTheDoors(TotalsCube *c, int offset, bool opening)
 {
+    offset = CollapsesPauses(offset);
+
     const Skins::Skin &skin = Skins::GetSkin();
     if (offset < 7) {
         // moving to the left
@@ -54,10 +71,8 @@ void PaintTheDoors(TotalsCube *c, int offset, bool opening)
     }
 }
 
-
 void AnimateDoors(TotalsCube *c, bool opening)
 {
-    const int kPad = 1;
     if(opening)
         AudioPlayer::PlayShutterOpen();
     else
@@ -92,6 +107,7 @@ bool Run(const char *msg)
 
     gotTouchOn[0] = gotTouchOn[1] = false;
     triggered[0] = triggered[1] = false;
+    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
 
     while(!(triggered[0] || triggered[1])) {
@@ -99,13 +115,14 @@ bool Run(const char *msg)
         Game::UpdateDt();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, NULL, NULL);
+    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
 
-    AnimateDoors(Game::cubes+YES, true);
-    AnimateDoors(Game::cubes+NO, true);
+    AnimateDoors(Game::cubes+YES, false);
+    AnimateDoors(Game::cubes+NO, false);
 
     dw.EndIt();
 
+    Game::cubes[ASK].FillArea(&Dark_Purple, Vec2(0, 0), Vec2(16, 16));
     AnimateDoors(Game::cubes+ASK, false);
 
     return triggered[YES];

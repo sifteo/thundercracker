@@ -265,7 +265,6 @@ void DialogWindow::EndIt()
     mCube->foregroundLayer.Clear();
     mCube->backgroundLayer.setWindow(0, 128);
     mCube->foregroundLayer.Flush();
-    System::paintSync();
 }
 
 }
