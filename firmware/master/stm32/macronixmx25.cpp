@@ -12,7 +12,7 @@ void MacronixMX25::init()
 #if (BOARD == BOARD_TC_MASTER_REV2)
     GPIOPin regEnable = FLASH_REG_EN_GPIO;
     regEnable.setControl(GPIOPin::OUT_2MHZ);
-    regEnable.setLow();
+    regEnable.setHigh();
 #endif
 
     spi.init();
