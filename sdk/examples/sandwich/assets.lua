@@ -27,8 +27,6 @@ MinimapDot = image{"minimap_dot.png", width=8, height=8, pinned=true}
 Edge = image{ "edge.png" }
 IconPress = image{ "icon_press.png" }
 
-CompanionCube = image{ "companion_cube.png", pinned=true }
-
 dofile "content.gen.lua"
 
 music_castle = sound{ "music_castle.raw", encode="PCM"}

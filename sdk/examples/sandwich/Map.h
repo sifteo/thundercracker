@@ -4,7 +4,7 @@
 
 #define ROOM_CAPACITY   (81)
 #define PATH_CAPACITY   (32)
-#define BLOCK_CAPACITY  (2)
+#define BLOCK_CAPACITY  (8)
 #define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
@@ -48,8 +48,8 @@ private:
   // these non-room-based entities are naively allocated here.
   // we may need to create some other data structure to act as 
   // a lightweight generic pool allocator or something :P
-  int mBlockCount;
-  Sokoblock mBlock[1];
+  Sokoblock mBlock[BLOCK_CAPACITY];
+  uint8_t mBlockCount;
 
 public:
   void Init();

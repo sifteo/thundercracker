@@ -176,6 +176,11 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="40" height="24">
+  <object name="TestBlock" type="Sokoblock" x="160" y="160" width="64" height="64">
+   <properties>
+    <property name="asset" value="companion_cube"/>
+   </properties>
+  </object>
   <object name="TestTrap" type="Trapdoor" x="416" y="48" width="64" height="64">
    <properties>
     <property name="respawn" value="0,0"/>

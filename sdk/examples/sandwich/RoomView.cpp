@@ -148,7 +148,7 @@ void RoomView::ShowItem() {
 
 void RoomView::ShowBlock(Sokoblock *pBlock) {
   mBlock = pBlock;
-  Parent()->Graphics().setSpriteImage(BLOCK_SPRITE_ID, CompanionCube);
+  Parent()->Graphics().setSpriteImage(BLOCK_SPRITE_ID, pBlock->Asset());
   UpdateBlock();
 }
 

@@ -74,6 +74,12 @@ struct GatewayData {
     uint8_t y;
 };
 
+struct SokoblockData {
+    uint16_t x;
+    uint16_t y;
+    uint8_t asset;
+};
+
 struct NpcData {
     TriggerData trigger;
     uint16_t dialog;
@@ -138,6 +144,7 @@ struct MapData {
     const AnimatedTileData* animatedTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
+    const SokoblockData* sokoblocks;
 
     // trigger counts
     uint8_t itemCount;
@@ -151,6 +158,7 @@ struct MapData {
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
     uint8_t bridgeSubdivisionCount;
+    uint8_t sokoblockCount;
     uint8_t ambientType; // 0 - None
 
     // size
@@ -165,3 +173,5 @@ extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
 extern const ItemTypeData gItemTypeData[];
+
+extern const PinnedAssetImage* gSokoblockAssets[];

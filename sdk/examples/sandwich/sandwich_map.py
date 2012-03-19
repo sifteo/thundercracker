@@ -25,6 +25,16 @@ class MapDatabase:
 						found = True
 						break
 				assert found, "link to unknown map-gate: " + gate.target_gate
+		# assign IDs to unique sokoblock assets
+		self.sokoblock_assets = []
+		for m in self.maps: 
+			self.sokoblock_assets += [ block.asset for block in m.sokoblocks ]
+		self.sokoblock_assets = list(set(self.sokoblock_assets))
+		asset_to_id = dict( (asset,i) for i,asset in enumerate(self.sokoblock_assets) )
+		for m in self.maps:
+			for block in m.sokoblocks:
+				block.asset_id = asset_to_id[block.asset]
+
 
 
 class Door:
@@ -41,6 +51,16 @@ class AnimatedTile:
 		self.tile = tile
 		self.numframes = int(tile.props["animated"])
 		assert self.numframes < 16, "tile animation too long (capacity 15)"
+
+class Sokoblock:
+	def __init__(self, map, obj):
+		assert obj.pw/16 == 4 and obj.ph/16 == 4, "Sokoblocks must be 4x4 tiles"
+		assert "asset" in obj.props, "Sokoblocks must have an asset property"
+		self.obj = obj
+		self.x = obj.px + 32
+		self.y = obj.py + 32
+		self.asset = obj.props["asset"]
+		assert posixpath.exists(posixpath.join(map.world.dir, self.asset+".png"))
 
 class Map:
 	def __init__(self, db, xml):
@@ -140,6 +160,10 @@ class Map:
 			d.index = i
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
+
+		# find sokoblocks
+		self.sokoblocks = [ Sokoblock(self, obj) for obj in self.raw.objects if obj.type == "sokoblock" ]
+		assert len(self.sokoblocks) <= 8
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -150,7 +174,7 @@ class Map:
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
-		src.write("static const uint8_t %s_xportals[] = { " % self.id)
+		src.write("static const uint8_t %s_xportals[] = {" % self.id)
 
 		byte = 0
 		cnt = 0
@@ -161,11 +185,11 @@ class Map:
 				cnt = cnt + 1
 				if cnt == 8:
 					cnt = 0
-					src.write("0x%x, " % byte)
+					src.write("0x%x," % byte)
 					byte = 0
-		if cnt > 0: src.write("0x%x, " % byte)
+		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
-		src.write("static const uint8_t %s_yportals[] = { " % self.id)
+		src.write("static const uint8_t %s_yportals[] = {" % self.id)
 		byte = 0
 		cnt = 0
 		for x in range(self.width):
@@ -175,80 +199,86 @@ class Map:
 				cnt = cnt + 1
 				if cnt == 8:
 					cnt = 0
-					src.write("0x%x, " % byte)
+					src.write("0x%x," % byte)
 					byte = 0
-		if cnt > 0: src.write("0x%x, " % byte)
+		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
 		if len(self.item_dict) > 0:
-			src.write("static const ItemData %s_items[] = { " % self.id)
+			src.write("static const ItemData %s_items[] = {" % self.id)
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
 				item.write_item_to(src)
 			src.write("};\n")
 		
 		if len(self.gate_dict):
-			src.write("static const GatewayData %s_gateways[] = { " % self.id)
+			src.write("static const GatewayData %s_gateways[] = {" % self.id)
 			for gate in self.list_triggers_of_type(TRIGGER_GATEWAY):
 				gate.write_gateway_to(src)
 			src.write("};\n")
 
 		if len(self.npc_dict) > 0:
-			src.write("static const NpcData %s_npcs[] = { " % self.id)
+			src.write("static const NpcData %s_npcs[] = {" % self.id)
 			for npc in self.list_triggers_of_type(TRIGGER_NPC):
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
 		if len(self.trapped_rooms) > 0:
-			src.write("static const TrapdoorData %s_trapdoors[] = { " % self.id)
+			src.write("static const TrapdoorData %s_trapdoors[] = {" % self.id)
 			for room in self.trapped_rooms:
-				src.write("{ 0x%x, 0x%x }, " % (room.lid, room.trapRespawnRoomId))
+				src.write("{0x%x,0x%x}," % (room.lid, room.trapRespawnRoomId))
 			src.write("};\n")
 		
 		if len(self.doors) > 0:
-			src.write("static const DoorData %s_doors[] = { " % self.id)
+			src.write("static const DoorData %s_doors[] = {" % self.id)
 			for door in self.doors:
-				src.write("{ 0x%x, 0x%x }, " % (door.room.lid, door.flag.gindex))
+				src.write("{0x%x,0x%x}," % (door.room.lid, door.flag.gindex))
 			src.write("};\n")
 
 		if len(self.animatedtiles) > 0:
-			src.write("static const AnimatedTileData %s_animtiles[] = { " % self.id)
+			src.write("static const AnimatedTileData %s_animtiles[] = {" % self.id)
 			for atile in self.animatedtiles:
-				src.write("{ 0x%x, 0x%x }, " % (atile.tile.lid, atile.numframes))
+				src.write("{0x%x,0x%x}," % (atile.tile.lid, atile.numframes))
+			src.write("};\n")
+
+		if len(self.sokoblocks) > 0:
+			src.write("static const SokoblockData %s_sokoblocks[] = {" % self.id)
+			for b in self.sokoblocks:
+				src.write("{0x%x,0x%x,0x%x}," % (b.x, b.y, b.asset_id))
 			src.write("};\n")
 
 		if self.overlay is not None:
-			src.write("static const uint8_t %s_overlay_rle[] = { " % self.id)
+			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
 			emptycount = 0
 			for t in (r.overlaytileat(tid%8,tid/8) for r in self.rooms for tid in range(64)):
 				if t is not None:
 					while emptycount >= 0xff:
-						src.write("0xff, 0xff, ")
+						src.write("0xff,0xff,")
 						emptycount -= 0xff
 					if emptycount > 0:
-						src.write("0xff, 0x%x, " % emptycount)
+						src.write("0xff,0x%x," % emptycount)
 						emptycount = 0
 					src.write("0x%x, " % t.lid)
 				else:
 					emptycount += 1
 			while emptycount >= 0xff:
-				src.write("0xff, 0xff, ")
+				src.write("0xff,0xff,")
 				emptycount -= 0xff
 			if emptycount > 0:
-				src.write("0xff, 0x%x, " % emptycount)
+				src.write("0xff,0x%x," % emptycount)
 				emptycount = 0
 			src.write("};\n")
 		if len(self.diagRooms) > 0:
-			src.write("static const DiagonalSubdivisionData %s_diag[] = { " % self.id)
+			src.write("static const DiagonalSubdivisionData %s_diag[] = {" % self.id)
 			for r in self.diagRooms:
 				is_pos = 0 if r.subdiv_type == SUBDIV_DIAG_NEG else 1
 				cx,cy = r.secondary_center()
-				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, cx, cy))
+				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_pos, r.lid, cx, cy))
 			src.write("};\n")
 		if len(self.bridgeRooms) > 0:
-			src.write("static const BridgeSubdivisionData %s_bridges[] = { " % self.id)
+			src.write("static const BridgeSubdivisionData %s_bridges[] = {" % self.id)
 			for r in self.bridgeRooms:
 				is_hor = 0 if r.subdiv_type == SUBDIV_BRDG_VER else 1
 				cx,cy = r.secondary_center()
-				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_hor, r.lid, cx, cy))
+				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_hor, r.lid, cx, cy))
 			src.write("};\n")
 
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
@@ -261,13 +291,35 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { \"%(readable_name)s\", &TileSet_%(bg)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
-			"%(name)s_xportals, %(name)s_yportals, " \
-			"%(item)s, %(gate)s, %(npc)s, %(trapdoor)s, %(door)s, " \
-			"%(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(ntrapdoors)x, " \
-			"0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(ambient)x, " \
-			"0x%(w)x, 0x%(h)x },\n" % \
+			"    { \"%(readable_name)s\", " \
+			"&TileSet_%(bg)s, " \
+			"%(overlay)s, " \
+			"%(name)s_rooms, " \
+			"%(overlay_rle)s, " \
+			"%(name)s_xportals, " \
+			"%(name)s_yportals, " \
+			"%(item)s, " \
+			"%(gate)s, " \
+			"%(npc)s, " \
+			"%(trapdoor)s, " \
+			"%(door)s, " \
+			"%(animtiles)s, " \
+			"%(diagsubdivs)s, " \
+			"%(bridgesubdivs)s, " \
+			"%(sokoblocks)s, "
+			"0x%(nitems)x, " \
+			"0x%(ngates)x, " \
+			"0x%(nnpcs)x, " \
+			"0x%(ntrapdoors)x, " \
+			"0x%(doorQuestId)x, " \
+			"0x%(ndoors)x, " \
+			"0x%(nanimtiles)x, " \
+			"0x%(ndiags)x, " \
+			"0x%(nbridges)x, " \
+			"0x%(nsokoblocks)x, " \
+			"0x%(ambient)x, " \
+			"0x%(w)x, " \
+			"0x%(h)x },\n" % \
 			{ 
 				"readable_name": self.readable_name,
 				"name": self.id,
@@ -293,7 +345,9 @@ class Map:
 				"nanimtiles": len(self.animatedtiles),
 				"ndiags": len(self.diagRooms),
 				"nbridges": len(self.bridgeRooms),
-				"ambient": self.ambientType
+				"ambient": self.ambientType,
+				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
+				"nsokoblocks": len(self.sokoblocks)
 			})
 
 

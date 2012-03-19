@@ -207,7 +207,7 @@ class Room:
 			src.write("0x%x," % rowMask)
 		src.write("},\n")
 		# tiles
-		src.write("        { ")
+		src.write("        {")
 		for ty in range(8):
 			#src.write("            ")
 			for tx in range(8):
