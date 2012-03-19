@@ -80,7 +80,7 @@ private:
     bool IsHinting() const;
     void ChooseHint();
     void StartHint();
-    void StopHint();
+    void StopHint(bool reset);
     
     enum TouchState
     {

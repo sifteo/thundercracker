@@ -726,7 +726,7 @@ void App::OnNeighborAdd(
         
         if (IsHinting())
         {
-            StopHint();
+            StopHint(true);
         }
         
         for (unsigned int i = 0; i < arraysize(mStoryClueTimers); ++i)
@@ -787,7 +787,7 @@ void App::OnTilt(Cube::ID cubeId)
             
             if (IsHinting())
             {
-                StopHint();
+                StopHint(false);
             }
             break;
         }
@@ -805,7 +805,7 @@ void App::OnTilt(Cube::ID cubeId)
             
             if (IsHinting())
             {
-                StopHint();
+                StopHint(false);
             }
             
             ASSERT(cubeId < arraysize(mStoryClueTimers));
@@ -851,7 +851,7 @@ void App::OnShake(Cube::ID cubeId)
         {   
             if (IsHinting())
             {
-                StopHint();
+                StopHint(false);
             }
             break;
         }
@@ -864,7 +864,7 @@ void App::OnShake(Cube::ID cubeId)
         {
             if (IsHinting())
             {
-                StopHint();
+                StopHint(false);
             }
             
             ASSERT(cubeId < arraysize(mStoryClueTimers));
@@ -1333,7 +1333,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
                     {
-                        StopHint();
+                        StopHint(false);
                     }
                 }
             }
@@ -1483,7 +1483,7 @@ void App::UpdateGameState(float dt)
                     {
                         if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
                         {
-                            StopHint();
+                            StopHint(false);
                         }
                     }
                 }
@@ -2400,7 +2400,7 @@ void App::StartHint()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::StopHint()
+void App::StopHint(bool reset)
 {
     ASSERT(IsHinting());
     
@@ -2410,7 +2410,14 @@ void App::StopHint()
     mHintPiece0 = -1;
     mHintPiece1 = -1;
     
-    mHintTimer = kHintTimerOnDuration;
+    if (reset)
+    {
+        mHintTimer = kHintTimerOnDuration;
+    }
+    else
+    {
+        mHintTimer = kHintTimerRepeatDuration;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
