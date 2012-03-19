@@ -60,6 +60,7 @@ class Sokoblock:
 		self.x = obj.px + 32
 		self.y = obj.py + 32
 		self.asset = obj.props["asset"]
+		if self.asset.lower().endswith(".png"): self.asset = self.asset[0:-4]
 		assert posixpath.exists(posixpath.join(map.world.dir, self.asset+".png"))
 
 class Map:
