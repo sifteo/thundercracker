@@ -491,6 +491,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_FREE_PLAY",
     "GAME_STATE_SHUFFLE_START",
     "GAME_STATE_SHUFFLE_TITLE",
+    "GAME_STATE_SHUFFLE_MEMORIZE_FACES",
     "GAME_STATE_SHUFFLE_CHARACTER_SPLASH",
     "GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE",
     "GAME_STATE_SHUFFLE_SHUFFLING",
@@ -1021,6 +1022,11 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
+        case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
+        {
+            mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
         case GAME_STATE_SHUFFLE_CHARACTER_SPLASH:
         {
             mDelayTimer = kShuffleCharacterSplashDelay;
@@ -1253,6 +1259,14 @@ void App::UpdateGameState(float dt)
             break;
         }
         case GAME_STATE_SHUFFLE_TITLE:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_SHUFFLE_MEMORIZE_FACES);
+            }
+            break;
+        }
+        case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
@@ -1620,6 +1634,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_TITLE:
         {
             cubeWrapper.DrawBackground(ShuffleTitleScreen);
+            break;
+        }
+        case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
+        {
+            cubeWrapper.DrawBackground(ShuffleMemorizeFaces);
             break;
         }
         case GAME_STATE_SHUFFLE_CHARACTER_SPLASH:

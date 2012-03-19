@@ -59,6 +59,10 @@ ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png
 ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
 ShuffleShakeToPlayAgain = image{"assets/panel_shake_to_play_again.png"}
 ShuffleTouchToExit = image{"assets/panel_touch_to_exit.png"}
+ShuffleClueBlank = image{"assets/panel_clue_blank.png"}
+ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
+ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
+--ShufflePlainPanel = image{"assets/plain_panel.png"}
 
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
