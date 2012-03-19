@@ -33,9 +33,10 @@ const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle
 const float kStateTimeDelayLong = 5.0f;
 const float kSwapAnimationSlide = 0.5f;
 const float kHintTimerOnDuration = 30.0f; // Seconds before hint appears
-const float kHintTimerOffDuration = 3.0f; // Seconds before hint disappears
+const float kHintTimerOffDuration = 2.5f; // Seconds before hint disappears
 const float kHintTimerRepeatDuration = 5.0f; // Seconds before hint reappears
 const float kHintBlinkTimerDuration = 0.5f; // Blink rate for hints (tune this with kHintTimerOffDuration so the piece doesn't do a half-blink when turning off)
+const float kClueTimerOnDuration = 30.0f;
 
 // Free Play
 const float kFreePlayShakeThrottleDuration = 1.5f;
