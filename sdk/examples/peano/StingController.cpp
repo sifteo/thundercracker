@@ -7,11 +7,14 @@ namespace TotalsGame
 namespace StingController
 {
 
+    bool gotTouchOn=false;
 bool skip = false;
 
 void OnCubeTouch(void*, _SYSCubeID cid)
 {
-    if(!Game::cubes[cid].touching())
+    if(Game::cubes[cid].touching())
+        gotTouchOn = true;
+    else if(gotTouchOn) //touch off now, but got touch on before
         skip = true;
 }
 
