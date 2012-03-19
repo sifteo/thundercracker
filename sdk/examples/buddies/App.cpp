@@ -203,25 +203,28 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryClue(CubeWrapper &cubeWrapper, const AssetImage &background, const char *text)
+void DrawStoryClue(
+    CubeWrapper &cubeWrapper,
+    unsigned int puzzleIndex,
+    const AssetImage &background,
+    const char *text)
 {
     cubeWrapper.DrawBackground(background);
     
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
-    String<16> bufferClue;
-    bufferClue << "Clue";
+    String<16> bufferChapter;
+    bufferChapter << "Chapter " << (puzzleIndex + 1);
+    int xChapter = (tileWidth / 2) - (bufferChapter.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xChapter, 5), UiFontHeadingOrange, bufferChapter.c_str());
     
-    int xClue = (tileWidth / 2) - (bufferClue.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xClue, 4), UiFontHeadingOrange, bufferClue.c_str());
-    
-    String<16> bufferText;
+    String<32> bufferText;
     bufferText << text;
     
     int xText = (tileWidth / 2) - (bufferText.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xText, 6), UiFontOrange, bufferText.c_str());
+    cubeWrapper.DrawUiText(Vec2(xText, 7), UiFontOrange, bufferText.c_str());
     
-    if (bufferClue.size() % 2 != 0)
+    if (bufferChapter.size() % 2 != 0)
     {
         cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
     }
@@ -1756,7 +1759,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
-                DrawStoryClue(cubeWrapper, StoryChapterOverlayNeighbor, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                DrawStoryClue(cubeWrapper, mStoryPuzzleIndex, StoryChapterClueNeighbor, GetPuzzle(mStoryPuzzleIndex).GetClue());
             }
             else
             {
@@ -1770,7 +1773,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if (mStoryClueTimers[cubeWrapper.GetId()] > 0.0f)
                 {
-                    DrawStoryClue(cubeWrapper, StoryChapterOverlay, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                    DrawStoryClue(cubeWrapper, mStoryPuzzleIndex, StoryChapterClueOnTouch, GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {

@@ -87,6 +87,7 @@ public:
     
     // Tilt
     Sifteo::Cube::TiltState GetTiltState() const;
+    Sifteo::Vec2 GetAccelState() const;
     
     // State
     bool IsSolved() const;

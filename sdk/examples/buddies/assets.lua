@@ -65,8 +65,8 @@ StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscene_bg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_right.png"}
 StoryCutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
-StoryChapterOverlay = image{"assets/ui_chapter_overlay.png"}
-StoryChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}
+StoryChapterClueNeighbor = image{"assets/ui_chapter_clue_neighbor.png"}
+StoryChapterClueOnTouch = image{"assets/ui_chapter_clue_ontouch.png"}
 StoryChapterNext = image{"assets/ui_chapter_next.png"}
 StoryChapterRetry = image{"assets/ui_chapter_retry.png"}
 StoryChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
