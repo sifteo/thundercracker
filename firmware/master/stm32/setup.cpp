@@ -123,6 +123,8 @@ extern "C" void _start()
         vcc20.setHigh();
 
 #if (BOARD == BOARD_TC_MASTER_REV2)
+        // XXX: this only wants to be enabled when USB is connected.
+        // just leaving enabled for now during dev, and until we put power sequencing in.
         GPIOPin vcc33 = VCC33_ENABLE_GPIO;
         vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
