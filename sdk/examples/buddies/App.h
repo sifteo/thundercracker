@@ -111,7 +111,7 @@ private:
     // Scoring
     float mScoreTimer;
     unsigned int mScoreMoves;
-    float mBestTimes[3]; // TODO: Serialize
+    float mBestTimes[3];
     unsigned int mScorePlace;
     
     // Swapping
@@ -136,6 +136,8 @@ private:
     int mHintPiece0;
     int mHintPiece1;
     int mHintPieceSkip;
+    
+    float mClueOnTimer;
     
     // Free Play Mode
     float mFreePlayShakeThrottleTimer;

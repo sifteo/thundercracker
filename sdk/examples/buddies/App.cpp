@@ -542,6 +542,7 @@ App::App()
     , mHintPiece0(-1)
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
+    , mClueOnTimer(0.0f)
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShuffleUiIndex(0)
     , mShuffleUiIndexSync()
@@ -735,6 +736,11 @@ void App::OnNeighborAdd(
             mStoryClueTimers[i] = 0.0f;
         }
         
+        if (mGameState == GAME_STATE_SHUFFLE_PLAY)
+        {
+            mClueOnTimer = kClueTimerOnDuration;
+        }
+        
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isFixed =
@@ -790,6 +796,13 @@ void App::OnTilt(Cube::ID cubeId)
             {
                 StopHint(false);
             }
+            
+            ASSERT(cubeId < arraysize(mStoryClueTimers));
+            if (mStoryClueTimers[cubeId] > 0.0f)
+            {
+                mStoryClueTimers[cubeId] = 0.0f;
+            }
+            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -854,6 +867,13 @@ void App::OnShake(Cube::ID cubeId)
             {
                 StopHint(false);
             }
+            
+            ASSERT(cubeId < arraysize(mStoryClueTimers));
+            if (mStoryClueTimers[cubeId] > 0.0f)
+            {
+                mStoryClueTimers[cubeId] = 0.0f;
+            }
+            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -1069,6 +1089,7 @@ void App::StartGameState(GameState gameState)
                 mFaceCompleteTimers[i] = 0.0f;
             }
             mHintTimer = kHintTimerOnDuration;
+            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -1345,23 +1366,47 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (IsHinting())
+            // Update clue display timers
+            if (mStoryClueTimers[0] > 0.0f)
             {
-                if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
+                if (UpdateTimer(mStoryClueTimers[0], dt) ||
+                    (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN))
                 {
-                    if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
-                    {
-                        StopHint(false);
-                    }
+                    mStoryClueTimers[0] = 0.0f;
+                    mClueOnTimer = kClueTimerOnDuration;
                 }
             }
-            else
+            
+            // Check if clue should start being displayed
+            if (mClueOnTimer > 0.0f)
             {
-                if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
+                if (UpdateTimer(mClueOnTimer, dt))
                 {
-                    if (UpdateTimer(mHintTimer, dt))
+                    mStoryClueTimers[0] = kStateTimeDelayLong;
+                }
+            }
+            
+            // If clues are not displayed, take care of hinting
+            if (mStoryClueTimers[0] <= 0.0f)
+            {
+                if (IsHinting())
+                {
+                    if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
                     {
-                        StartHint();
+                        if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
+                        {
+                            StopHint(false);
+                        }
+                    }
+                }
+                else
+                {
+                    if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
+                    {
+                        if (UpdateTimer(mHintTimer, dt))
+                        {
+                            StartHint();
+                        }
                     }
                 }
             }
@@ -1487,8 +1532,7 @@ void App::UpdateGameState(float dt)
             {
                 if (mStoryClueTimers[i] > 0.0f)
                 {
-                    UpdateTimer(mStoryClueTimers[i], dt);
-                    clueDisplayed = true;
+                    clueDisplayed = !UpdateTimer(mStoryClueTimers[i], dt);
                 }
             }
             
@@ -1676,9 +1720,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (cubeWrapper.GetId() == 0 && mShuffleUiIndex == 1)
+            if (cubeWrapper.GetId() == 0 && mShuffleUiIndex == 0)
             {
-                cubeWrapper.DrawBackground(ShuffleNeighbor);
+                cubeWrapper.DrawBackground(ShuffleClueUnscramble);
             }
             else
             {
@@ -1691,6 +1735,10 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < arraysize(mTouching) && mTouching[cubeWrapper.GetId()])
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+            }
+            else if (mStoryClueTimers[cubeWrapper.GetId()] > 0.0f)
+            {
+                cubeWrapper.DrawBackground(ShuffleNeighbor);
             }
             else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
