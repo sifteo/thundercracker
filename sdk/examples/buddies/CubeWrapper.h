@@ -49,6 +49,7 @@ public:
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &assetFont,
         const char *text);
+    void ScrollBackground(const Sifteo::Vec2 &position);
     void ScrollUi(const Sifteo::Vec2 &position);
     
     // Special-Case Cutscene Stuff
