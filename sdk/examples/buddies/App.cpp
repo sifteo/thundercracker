@@ -537,8 +537,9 @@ const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "GAME_STATE_NONE",
     "GAME_STATE_MAIN_MENU",
-    "GAME_STATE_FREE_PLAY",
-    "GAME_STATE_FREE_PLAY_OPTIONS",
+    "GAME_STATE_FREEPLAY_START",
+    "GAME_STATE_FREEPLAY_PLAY",
+    "GAME_STATE_FREEPLAY_OPTIONS",
     "GAME_STATE_SHUFFLE_START",
     "GAME_STATE_SHUFFLE_TITLE",
     "GAME_STATE_SHUFFLE_MEMORIZE_FACES",
@@ -558,6 +559,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_SCRAMBLING",
     "GAME_STATE_STORY_CLUE",
     "GAME_STATE_STORY_PLAY",
+    "GAME_STATE_STORY_OPTIONS",
     "GAME_STATE_STORY_SOLVED",
     "GAME_STATE_STORY_CUTSCENE_END",
     "GAME_STATE_STORY_CHAPTER_END",
@@ -1178,7 +1180,6 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_START:
         {
-            mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
@@ -1229,9 +1230,14 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
+            mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 mFaceCompleteTimers[i] = 0.0f;
+            }
+            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+            {
+                mClueOffTimers[i] = 0.0f;
             }
             mHintTimer = kHintTimerOnDuration;
             break;
@@ -1654,6 +1660,18 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
+            if (AnyTouchHold())
+            {
+                if (UpdateTimer(mOptionsTimer, dt))
+                {
+                    StartGameState(GAME_STATE_STORY_OPTIONS);
+                }
+            }
+            else
+            {
+                mOptionsTimer = kOptionsTimerDuration;
+            }
+            
             // Timers
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
@@ -1714,6 +1732,22 @@ void App::UpdateGameState(float dt)
                         }
                     }
                 }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_OPTIONS:
+        {   
+            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_STORY_PLAY);
+            }
+            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_STORY_CHAPTER_START);
+            }
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_MAIN_MENU);
             }
             break;
         }
@@ -2060,6 +2094,22 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else
             {
                 DrawStoryChapterTitle(cubeWrapper, mStoryPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_OPTIONS:
+        {
+            if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
+            {
+                DrawOption(cubeWrapper, "Resume", true, mScoreTimer);
+            }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                DrawOption(cubeWrapper, "Restart", true, mScoreTimer);
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                DrawOption(cubeWrapper, "Exit", true, mScoreTimer);
             }
             break;
         }
