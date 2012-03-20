@@ -46,6 +46,10 @@ enum SkinType
 {
     SkinType_Default,
     SkinType_Blue,
+    SkinType_Green,
+    SkinType_Purple,
+    SkinType_Red,
+    SkinType_Turquoise,
     NumSkins
 };
 

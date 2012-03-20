@@ -38,10 +38,10 @@ end
 
 skin("blue")
 skin("Default")
---skin("gree")
---skin("purple")
---skin("red")
---skin("turquoise")
+skin("green")
+skin("purple")
+skin("red")
+skin("turquoise")
 
 
 Accent_Current = image{ "accent_current.png" }

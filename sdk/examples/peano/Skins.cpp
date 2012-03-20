@@ -42,7 +42,11 @@ namespace Skins
 const Skin skins[NumSkins] =
 {
     SKIN(Default),
-    SKIN(blue)
+    SKIN(blue),
+    SKIN(green),
+    SKIN(purple),
+    SKIN(red),
+    SKIN(turquoise)
 };
 
 
