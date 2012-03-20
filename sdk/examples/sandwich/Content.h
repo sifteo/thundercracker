@@ -21,6 +21,8 @@ using namespace Sifteo;
 
 #define ITEM_TRIGGER_NONE   0
 #define ITEM_TRIGGER_KEY    1
+#define ITEM_TRIGGER_BOOT   2
+#define ITEM_TRIGGER_BOMB   3
 
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
@@ -118,8 +120,11 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+typedef uint8_t TileSetID;
+
 // todo - microoptimize bits
 // todo - replace pointers with <32bit offsets-from-known-locations?
+// todo - separate tilesets from maps?  (e.g. animated tiles, lava tiles)
 struct MapData {
     const char* name;
 
@@ -142,6 +147,7 @@ struct MapData {
     // other placeable entities
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
+    const TileSetID* lavaTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
     const SokoblockData* sokoblocks;

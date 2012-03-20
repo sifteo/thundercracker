@@ -191,5 +191,10 @@
     <property name="respawn" value="0,0"/>
    </properties>
   </object>
+  <object name="LAVABOOTIES" type="Item" x="176" y="64" width="32" height="32">
+   <properties>
+    <property name="id" value="booties"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

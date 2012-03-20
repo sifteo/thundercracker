@@ -37,11 +37,7 @@ OBJS_SIM = $(OBJS:.o=.sim.o)
 BIN_STM32 = $(APP).stm32
 OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
-ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
-ifdef MAX_HAX
-ASSETDEPS -= content.gen.lua
-endif
-
+ASSETDEPS += **/*.png $(ASSETS).lua content.gen.lua
 CDEPS += *.h 
 
 include $(TC_DIR)/firmware/master/Makefile.rules
@@ -54,15 +50,5 @@ content.gen.cpp: content_crc.txt
 
 content.gen.lua: content_crc.txt
 
-CONTENT_TOOLS = \
-	sandwich.py \
-	sandwich_dialog.py \
-	sandwich_item.py \
-	sandwich_map.py \
-	sandwich_quest.py \
-	tmx.py \
-	misc.py
-
-
-content_crc.txt: $(CONTENT_TOOLS) Content/*
+content_crc.txt: *.py Content/*
 	python sandwich.py

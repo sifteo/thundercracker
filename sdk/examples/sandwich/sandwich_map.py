@@ -1,5 +1,6 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_room import *
+from itertools import product
 
 class MapDatabase:
 	def __init__(self, world, path):
@@ -115,12 +116,10 @@ class Map:
 		for r in self.rooms:
 			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
-		for x in range(self.width-1):
-			for y in range(self.height):
-				assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
-		for x in range(self.width):
-			for y in range(self.height-1):
-				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+		for x,y in product( range(self.width-1), range(self.height) ):
+			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+		for x,y in product( range(self.width), range(self.height-1) ):
+			assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
 		# find subdivisions
 		for r in self.rooms: 
 			r.find_subdivisions()
@@ -161,11 +160,13 @@ class Map:
 			d.index = i
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
-
 		# find sokoblocks
 		self.sokoblocks = [ Sokoblock(self, obj) for obj in self.raw.objects if obj.type == "sokoblock" ]
 		assert len(self.sokoblocks) <= 8
-				
+		# find me some lava tiles
+		self.lava_tiles = [ t for t in self.background.gettileset().tiles if "lava" in t.props ]
+		assert len(self.lava_tiles) <= 8
+
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
 	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
@@ -179,29 +180,27 @@ class Map:
 
 		byte = 0
 		cnt = 0
-		for y in range(self.height):
-			for x in range(self.width-1):
-				if self.roomat(x,y).portals[SIDE_RIGHT] != PORTAL_WALL:
-					byte = byte | (1 << cnt)
-				cnt = cnt + 1
-				if cnt == 8:
-					cnt = 0
-					src.write("0x%x," % byte)
-					byte = 0
+		for y,x in product( range(self.height), range(self.width-1) ):
+			if self.roomat(x,y).portals[SIDE_RIGHT] != PORTAL_WALL:
+				byte = byte | (1 << cnt)
+			cnt = cnt + 1
+			if cnt == 8:
+				cnt = 0
+				src.write("0x%x," % byte)
+				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
 		src.write("static const uint8_t %s_yportals[] = {" % self.id)
 		byte = 0
 		cnt = 0
-		for x in range(self.width):
-			for y in range(self.height-1):
-				if self.roomat(x,y).portals[SIDE_BOTTOM] != PORTAL_WALL:
-					byte = byte | (1 << cnt)
-				cnt = cnt + 1
-				if cnt == 8:
-					cnt = 0
-					src.write("0x%x," % byte)
-					byte = 0
+		for x,y in product( range(self.width), range(self.height-1) ):
+			if self.roomat(x,y).portals[SIDE_BOTTOM] != PORTAL_WALL:
+				byte = byte | (1 << cnt)
+			cnt = cnt + 1
+			if cnt == 8:
+				cnt = 0
+				src.write("0x%x," % byte)
+				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
 		if len(self.item_dict) > 0:
@@ -245,6 +244,12 @@ class Map:
 			for b in self.sokoblocks:
 				src.write("{0x%x,0x%x,0x%x}," % (b.x, b.y, b.asset_id))
 			src.write("};\n")
+
+		if len(self.lava_tiles) > 0:
+			src.write("static const TileSetID %s_lavatiles[] = {" % self.id)
+			for tile in self.lava_tiles:
+				src.write("0x%x," % tile.lid)
+			src.write("0x0};\n")
 
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
@@ -305,6 +310,7 @@ class Map:
 			"%(trapdoor)s, " \
 			"%(door)s, " \
 			"%(animtiles)s, " \
+			"%(lavatiles)s, " \
 			"%(diagsubdivs)s, " \
 			"%(bridgesubdivs)s, " \
 			"%(sokoblocks)s, "
@@ -348,7 +354,8 @@ class Map:
 				"nbridges": len(self.bridgeRooms),
 				"ambient": self.ambientType,
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
-				"nsokoblocks": len(self.sokoblocks)
+				"nsokoblocks": len(self.sokoblocks),
+				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0"
 			})
 
 
