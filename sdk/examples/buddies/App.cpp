@@ -122,7 +122,7 @@ void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option, float scoreTimer)
+void DrawOption(CubeWrapper &cubeWrapper, const char *option, bool displayTime, float scoreTimer = 0.0f)
 {
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
@@ -138,17 +138,20 @@ void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option, float score
     int xOption = (tileWidth / 2) - (bufferOption.size() / 2);
     cubeWrapper.DrawUiText(Vec2(xOption, 6), UiFontHeadingOrange, bufferOption.c_str());
     
-    int minutes, seconds;
-    ScoreTimerToTime(scoreTimer, minutes, seconds);
-    
-    String<16> bufferTime;
-    bufferTime << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-    int xTime = (tileWidth / 2) - (bufferTime.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTime, 10), UiFontOrange, bufferTime.c_str());
-    
-    if (bufferTouchTo.size() % 2 != 0)
+    if (displayTime)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        int minutes, seconds;
+        ScoreTimerToTime(scoreTimer, minutes, seconds);
+        
+        String<16> bufferTime;
+        bufferTime << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        int xTime = (tileWidth / 2) - (bufferTime.size() / 2);
+        cubeWrapper.DrawUiText(Vec2(xTime, 10), UiFontOrange, bufferTime.c_str());
+        
+        if (bufferTouchTo.size() % 2 != 0)
+        {
+            cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        }
     }
 }
 
@@ -535,6 +538,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_NONE",
     "GAME_STATE_MAIN_MENU",
     "GAME_STATE_FREE_PLAY",
+    "GAME_STATE_FREE_PLAY_OPTIONS",
     "GAME_STATE_SHUFFLE_START",
     "GAME_STATE_SHUFFLE_TITLE",
     "GAME_STATE_SHUFFLE_MEMORIZE_FACES",
@@ -719,7 +723,7 @@ void App::OnNeighborAdd(
             {
                 case SIDE_TOP:
                 {
-                    StartGameState(GAME_STATE_FREE_PLAY);
+                    StartGameState(GAME_STATE_FREEPLAY_START);
                     break;
                 }
                 case SIDE_LEFT:
@@ -744,7 +748,7 @@ void App::OnNeighborAdd(
             {
                 case SIDE_TOP:
                 {
-                    StartGameState(GAME_STATE_FREE_PLAY);
+                    StartGameState(GAME_STATE_FREEPLAY_START);
                     break;
                 }
                 case SIDE_LEFT:
@@ -800,7 +804,7 @@ void App::OnNeighborAdd(
             GetCubeWrapper(cubeId1).GetPiece(cubeSide1).GetAttribute() == Piece::ATTR_FIXED;
         
         bool isValidGameState =
-            mGameState == GAME_STATE_FREE_PLAY ||
+            mGameState == GAME_STATE_FREEPLAY_PLAY ||
             mGameState == GAME_STATE_SHUFFLE_PLAY ||
             mGameState == GAME_STATE_STORY_PLAY;
         
@@ -824,7 +828,7 @@ void App::OnTilt(Cube::ID cubeId)
 {
     switch (mGameState)
     {
-        case GAME_STATE_FREE_PLAY:
+        case GAME_STATE_FREEPLAY_PLAY:
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
@@ -895,7 +899,7 @@ void App::OnShake(Cube::ID cubeId)
 {
     switch (mGameState)
     {
-        case GAME_STATE_FREE_PLAY:
+        case GAME_STATE_FREEPLAY_PLAY:
         {
             if (mSwapState == SWAP_STATE_NONE && mFreePlayShakeThrottleTimer == 0.0f)
             {
@@ -1047,10 +1051,8 @@ void App::StartGameState(GameState gameState)
     
     switch (mGameState)
     {
-        case GAME_STATE_FREE_PLAY:
+        case GAME_STATE_FREEPLAY_START:
         {
-            mFreePlayShakeThrottleTimer = 0.0f;
-            
             unsigned int buddyIds[kMaxBuddies];
             for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
@@ -1074,6 +1076,13 @@ void App::StartGameState(GameState gameState)
             }
             
             ResetCubesToPuzzle(GetPuzzleDefault(), false);
+            StartGameState(GAME_STATE_FREEPLAY_PLAY);
+            break;
+        }
+        case GAME_STATE_FREEPLAY_PLAY:
+        {
+            mOptionsTimer = kOptionsTimerDuration;
+            mFreePlayShakeThrottleTimer = 0.0f;
             break;
         }
         case GAME_STATE_SHUFFLE_START:
@@ -1169,6 +1178,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_START:
         {
+            mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
@@ -1305,13 +1315,25 @@ void App::UpdateGameState(float dt)
     
     switch (mGameState)
     {
-        case GAME_STATE_FREE_PLAY:
+        case GAME_STATE_FREEPLAY_PLAY:
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
                 if (mFreePlayShakeThrottleTimer > 0.0f)
                 {
                     UpdateTimer(mFreePlayShakeThrottleTimer, dt);
+                }
+                
+                if (AnyTouchHold())
+                {
+                    if (UpdateTimer(mOptionsTimer, dt))
+                    {
+                        StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
+                    }
+                }
+                else
+                {
+                    mOptionsTimer = kOptionsTimerDuration;
                 }
                 
                 for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -1335,6 +1357,22 @@ void App::UpdateGameState(float dt)
                         }
                     }
                 }
+            }
+            break;
+        }
+        case GAME_STATE_FREEPLAY_OPTIONS:
+        {   
+            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_FREEPLAY_PLAY);
+            }
+            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_FREEPLAY_START);
+            }
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_MAIN_MENU);
             }
             break;
         }
@@ -1772,9 +1810,25 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         
             break;
         }
-        case GAME_STATE_FREE_PLAY:
+        case GAME_STATE_FREEPLAY_PLAY:
         {
             cubeWrapper.DrawBuddy();
+            break;
+        }
+        case GAME_STATE_FREEPLAY_OPTIONS:
+        {
+            if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
+            {
+                DrawOption(cubeWrapper, "Resume", false);
+            }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                DrawOption(cubeWrapper, "Restart", false);
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                DrawOption(cubeWrapper, "Exit", false);
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_TITLE:
@@ -1869,15 +1923,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                DrawShuffleOption(cubeWrapper, "Resume", mScoreTimer);
+                DrawOption(cubeWrapper, "Resume", true, mScoreTimer);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawShuffleOption(cubeWrapper, "Restart", mScoreTimer);
+                DrawOption(cubeWrapper, "Restart", true, mScoreTimer);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                DrawShuffleOption(cubeWrapper, "Exit", mScoreTimer);
+                DrawOption(cubeWrapper, "Exit", true, mScoreTimer);
             }
             break;
         }
@@ -2349,7 +2403,7 @@ void App::OnSwapFinish()
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, Vec2(0, 0));
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, Vec2(0, 0));
     
-    if (mGameState == GAME_STATE_FREE_PLAY)
+    if (mGameState == GAME_STATE_FREEPLAY_PLAY)
     {
         if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
