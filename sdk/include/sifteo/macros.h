@@ -49,6 +49,7 @@
     #   define LOG(_x)
     #   define ASSERT(_x)
     #   define DEBUG_ONLY(x)
+    #   include                   "usart.h"
     #   define UART(_x)           Usart::Dbg.write(_x)
     #   define SECTION(_x)        __attribute__((section(_x)))
     #endif
