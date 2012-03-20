@@ -122,7 +122,7 @@ void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option)
+void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option, float scoreTimer)
 {
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
@@ -131,12 +131,20 @@ void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option)
     String<16> bufferTouchTo;
     bufferTouchTo << "Touch to";
     int xTouchTo = (tileWidth / 2) - (bufferTouchTo.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTouchTo, 3), UiFontHeadingOrange, bufferTouchTo.c_str());
+    cubeWrapper.DrawUiText(Vec2(xTouchTo, 4), UiFontHeadingOrange, bufferTouchTo.c_str());
     
     String<16> bufferOption;
     bufferOption << option;
     int xOption = (tileWidth / 2) - (bufferOption.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xOption, 5), UiFontHeadingOrange, bufferOption.c_str());
+    cubeWrapper.DrawUiText(Vec2(xOption, 6), UiFontHeadingOrange, bufferOption.c_str());
+    
+    int minutes, seconds;
+    ScoreTimerToTime(scoreTimer, minutes, seconds);
+    
+    String<16> bufferTime;
+    bufferTime << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+    int xTime = (tileWidth / 2) - (bufferTime.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xTime, 10), UiFontOrange, bufferTime.c_str());
     
     if (bufferTouchTo.size() % 2 != 0)
     {
@@ -1861,15 +1869,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                DrawShuffleOption(cubeWrapper, "Resume");
+                DrawShuffleOption(cubeWrapper, "Resume", mScoreTimer);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawShuffleOption(cubeWrapper, "Restart");
+                DrawShuffleOption(cubeWrapper, "Restart", mScoreTimer);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                DrawShuffleOption(cubeWrapper, "Exit");
+                DrawShuffleOption(cubeWrapper, "Exit", mScoreTimer);
             }
             break;
         }
