@@ -128,7 +128,7 @@ class VideoBuffer {
     /// Contains the raw video data for this cube
     _SYSVideoBuffer sys;
 
-    /// Cube ID that the buffer is associated with.Required for asset address lookup.
+    /// Cube ID that the buffer is associated with. Required for asset address lookup.
     _SYSCubeID cubeID;
 };
 
