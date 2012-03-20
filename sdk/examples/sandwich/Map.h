@@ -93,8 +93,8 @@ public:
   }
   
   inline const RoomData* GetRoomData(int roomId) const {
-      ASSERT(roomId < mData->width * mData->height);
-      return mData->rooms + roomId;
+    ASSERT(roomId < mData->width * mData->height);
+    return mData->rooms + roomId;
   }
 
   inline const RoomData* GetRoomData(Vec2 location) const {
@@ -102,9 +102,15 @@ public:
   }
 
   inline uint8_t GetTileId(unsigned roomId, Vec2 tile) const {
+    ASSERT(roomId < unsigned(mData->width * mData->height));
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
     return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
+  }
+
+  inline uint8_t GetGlobalTileId(Vec2 tile) {
+    const Vec2 loc = tile >> 3;
+    return GetTileId(loc.x + mData->width * loc.y, tile - (loc<<3));
   }
 
   inline bool IsTileOpen(Vec2 location, Vec2 tile) const {
@@ -113,6 +119,12 @@ public:
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
     return ( mData->rooms[location.y * mData->width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
+  }
+
+  inline bool IsTileLava(uint8_t tid) {
+    // Effectively O(1) since the length of lavaTiles is capped
+    for(const uint8_t *p=mData->lavaTiles; p&&*p; ++p) { if (*p==tid) return true; }
+    return false;
   }
 
   inline uint8_t GetRoomId(Vec2 location) const {

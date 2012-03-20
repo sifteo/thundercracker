@@ -36,8 +36,12 @@ public:
   inline Cube::Side Direction() { return mDir; }
   inline Vec2 Position() const { return mPosition; }
   inline Vec2 Location() const { return View()->IsShowingRoom() ? View()->GetRoomView()->Location() : mPosition/128; }
+
+  inline bool TestCollision(Sokoblock* block) const { return (mPosition - block->Position()).norm() < (48*48); }
+
   inline int Status() const { return mStatus; }
   inline const ItemData* Equipment() const { return mEquipment; }
+  inline bool CanCrossLava() const { return mEquipment && gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_BOOT; }
 
   bool HasBasicKey() const;
   void UseBasicKey();

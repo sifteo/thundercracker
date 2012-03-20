@@ -88,7 +88,9 @@ private:
   void OnNpcChatter(Room *pRoom);
   void OnTriggerEvent(unsigned id);
 
-  bool OnEncounterBlock(Sokoblock* block);
+  bool TryEncounterBlock(Sokoblock* block);
+  bool TryEncounterLava(Cube::Side dir);
+
 
   void RestorePearlIdle();
 

@@ -584,7 +584,7 @@ void Game::OnTriggerEvent(unsigned id) {
   }
 }
 
-bool Game::OnEncounterBlock(Sokoblock* block) {
+bool Game::TryEncounterBlock(Sokoblock* block) {
   const Vec2 dir = BroadDirection();
   const Vec2 loc_src = mPlayer.TargetRoom()->Location();
   const Vec2 loc_dst = loc_src + dir;
@@ -609,6 +609,25 @@ bool Game::OnEncounterBlock(Sokoblock* block) {
     }
   }
   return true;
+}
+
+bool Game::TryEncounterLava(Cube::Side dir) {
+  ASSERT(0 <= dir && dir < 4);
+  const Vec2 baseTile = mPlayer.Position() >> 4;
+  switch(dir) {
+    case SIDE_TOP: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2(1,1)));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    case SIDE_LEFT:
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2(2,0)));
+    case SIDE_BOTTOM: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2(-1,1));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    default: // SIDE_RIGHT
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2(1,0)));
+  }
 }
 
 //------------------------------------------------------------------

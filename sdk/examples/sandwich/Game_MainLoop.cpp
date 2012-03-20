@@ -155,9 +155,25 @@ void Game::MainLoop() {
 	      		// iterate through the tiles in the path
 	      		Sokoblock* block = mPlayer.TargetView()->Block();
 	      		bool pushing = false;
+	      		
+	      		// this loop could possibly suffer some optimizaton
+	      		// but first I'm goint to wait until after alpha and not
+	      		// more crap is going to get shoved in there
 	      		for(const Cube::Side *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
-	      			if( !pushing && block && (mPlayer.Position() - block->Position()).norm() < (48*48) ) {
-	      				pushing = OnEncounterBlock(block);
+	      			// encounter lava?
+	      			if (mMap.Data()->lavaTiles && !mPlayer.CanCrossLava()) {
+	      				if (TryEncounterLava(*pNextMove)) {
+	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
+	      						progress = MovePlayerOneTile(((*(pNextMove-1))+2)%4, progress);
+	      					}
+	      					mPath.Cancel();
+	      					mPlayer.ClearTarget();
+	      					break;
+	      				}
+	      			}
+	      			// encounter a block?
+	      			if(!pushing && block && mPlayer.TestCollision(block)) {
+	      				pushing = TryEncounterBlock(block);
 	      				if (!pushing) {
 	      					// rewind back to the start
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
@@ -170,6 +186,7 @@ void Game::MainLoop() {
 	      			}
       				progress = MovePlayerOneTile(*pNextMove, progress, pushing?block:0);
 	      		}
+
 	      		if (pushing) {
 	      			// finish moving the block to the next cube
 	      			const Room* targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
@@ -185,6 +202,7 @@ void Game::MainLoop() {
 			    	mPlayer.AdvanceToTarget();
 	      			mPath.Cancel();
 	      		}
+
 	      	}
 		    if (mPlayer.TargetView()) { // did we land on the target?
 		    	mPlayer.AdvanceToTarget();
