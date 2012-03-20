@@ -111,15 +111,20 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
 
     // Atomic operations
-    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_21");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_22");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_23");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_24");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_110");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_111");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_112");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_113");
 
     // 64-bit Integer operations
-    setLibcallName(RTLIB::SHL_I64, "_SYS_107");
-    setLibcallName(RTLIB::SRL_I64, "_SYS_108");
-    setLibcallName(RTLIB::SRA_I64, "_SYS_109");
+    setLibcallName(RTLIB::SHL_I64, "_SYS_17");
+    setLibcallName(RTLIB::SRL_I64, "_SYS_18");
+    setLibcallName(RTLIB::SRA_I64, "_SYS_19");
+    setLibcallName(RTLIB::MUL_I64, "_SYS_20");
+    setLibcallName(RTLIB::SDIV_I64, "_SYS_21");
+    setLibcallName(RTLIB::UDIV_I64, "_SYS_22");
+    setLibcallName(RTLIB::SREM_I64, "_SYS_23");
+    setLibcallName(RTLIB::UREM_I64, "_SYS_24");
 
     // Register classes to allocate into
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);

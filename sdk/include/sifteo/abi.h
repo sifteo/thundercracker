@@ -625,15 +625,20 @@ uint32_t _SYS_un_f32(uint32_t a, uint32_t b) _SC(27);
 uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(26);
 
 // Compiler atomics support
-uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(21);
-uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(22);
-uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(23);
-uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(24);
+uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(110);
+uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(111);
+uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(112);
+uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(113);
 
 // Compiler support for 64-bit operations
-uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(107);
-uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(108);
-int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(109);
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(17);
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(18);
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(19);
+uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(20);
+int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(21);
+uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(22);
+int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(23);
+uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(24);
 
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(8);
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(9);
@@ -646,10 +651,10 @@ void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
 int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
 
-uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(17);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(18);
-void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(19);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(20);
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(89);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(107);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(108);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(109);
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
 int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);

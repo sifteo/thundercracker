@@ -53,6 +53,36 @@ int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) {
     return a >> b;
 }
 
+uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a * b;
+}
+
+int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    int64_t a = aL | (uint64_t)aH << 32;
+    int64_t b = bL | (uint64_t)bH << 32;
+    return a / b;
+}
+
+uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a / b;
+}
+
+int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    int64_t a = aL | (uint64_t)aH << 32;
+    int64_t b = bL | (uint64_t)bH << 32;
+    return a % b;
+}
+
+uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a % b;
+}
+
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
 {
     if (SvmMemory::mapRAM(state, sizeof *state))
