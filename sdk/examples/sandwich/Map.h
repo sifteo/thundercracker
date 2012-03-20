@@ -24,7 +24,7 @@ struct BroadPath {
   Cube::Side steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
   BroadPath();
   bool IsDefined() const { return *steps >= 0; }
-  bool PopStep(BroadLocation newRoot, BroadLocation* outNext);
+  bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
 };
 

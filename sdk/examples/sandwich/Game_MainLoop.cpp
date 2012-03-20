@@ -192,7 +192,7 @@ void Game::MainLoop() {
 		      		mPath.Cancel();
 		      	}
 		    }
-		} while(mPath.PopStep(*mPlayer.Current(), mPlayer.Target()));
+		} while(mPath.DequeueStep(*mPlayer.Current(), mPlayer.Target()));
   		OnActiveTrigger();
 	}
 	_SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);

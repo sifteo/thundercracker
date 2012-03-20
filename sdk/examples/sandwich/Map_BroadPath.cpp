@@ -60,7 +60,7 @@ BroadPath::BroadPath() {
   }
 }
 
-bool BroadPath::PopStep(BroadLocation newRoot, BroadLocation* outNext) {
+bool BroadPath::DequeueStep(BroadLocation newRoot, BroadLocation* outNext) {
   if (steps[0] == -1 || steps[1] == -1) {
     steps[0] = -1;
     return false;

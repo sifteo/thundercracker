@@ -585,8 +585,6 @@ void Game::OnTriggerEvent(unsigned id) {
 }
 
 bool Game::OnEncounterBlock(Sokoblock* block) {
-  //-------------------------------------------------------------
-  // BLOCK PUSHING
   const Vec2 dir = BroadDirection();
   const Vec2 loc_src = mPlayer.TargetRoom()->Location();
   const Vec2 loc_dst = loc_src + dir;
@@ -600,7 +598,6 @@ bool Game::OnEncounterBlock(Sokoblock* block) {
   if (dir.x < 0) { dst_enter_side = SIDE_RIGHT; }
   else if (dir.y > 0) { dst_enter_side = SIDE_TOP; }
   else if (dir.y < 0) { dst_enter_side = SIDE_BOTTOM; }
-  const char *sides[] = { "top", "left", "bottom", "right" };
   if (pRoom->CountOpenTilesAlongSide(dst_enter_side) < 4) {
     return false;
   }
