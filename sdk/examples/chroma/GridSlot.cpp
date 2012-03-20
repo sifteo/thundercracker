@@ -607,10 +607,10 @@ void GridSlot::explode()
 void GridSlot::die()
 {
     m_state = STATE_GONE;
-    m_pWrapper->checkEmpty();
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
     Game::Inst().CheckChain( m_pWrapper, Vec2( m_row, m_col ) );
+    m_pWrapper->checkEmpty();
 	m_eventTime = System::clock();
 }
 

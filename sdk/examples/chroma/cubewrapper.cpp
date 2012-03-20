@@ -410,12 +410,8 @@ void CubeWrapper::Update(float t, float dt)
 
         if( _SYS_isTouching( m_cube.id() ) )
         {
-            if( isEmpty() )
-            {
-                if( Game::Inst().getMode() == Game::MODE_SURVIVAL )
-                    checkRefill();
-            }
-            else
+
+            if( m_state != STATE_EMPTY )
             {
                 m_fTouchTime += dt;
 
@@ -720,9 +716,15 @@ void CubeWrapper::Shake( bool bShaking )
 
 
 void CubeWrapper::Touch()
-{
+{           
     switch( Game::Inst().getState() )
     {
+        case Game::STATE_PLAYING:
+        {
+            if( Game::Inst().getMode() == Game::MODE_SURVIVAL && m_state == STATE_EMPTY )
+                checkRefill();
+            break;
+        }
         case Game::STATE_POSTGAME:
         {
             if( Game::Inst().getWrapperIndex( this ) == 1 )
