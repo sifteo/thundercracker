@@ -1,3 +1,4 @@
+UseSprites = false
 GameAssets = group{quality = 10}
 
 -- Buddy Backgrounds
@@ -9,7 +10,6 @@ BuddyBackground4 = image{"assets/bg5.png"}
 BuddyBackground5 = image{"assets/bg6.png"}
 
 -- Buddy Parts
-UseSprites = false
 if UseSprites then
     BuddyParts0 = image{"assets/parts1_sprite.png", height = 64, pinned = true}
     BuddyParts1 = image{"assets/parts2_sprite.png", height = 64, pinned = true}
@@ -35,8 +35,13 @@ BuddyFull4 = image{"assets/buddy_full_5.png"}
 BuddyFull5 = image{"assets/buddy_full_6.png"}
 
 -- Buddy Overlays
-BuddyPartFixed = image{"assets/fixed.png"}
-BuddyPartHidden = image{"assets/hidden.png"}
+if UseSprites then
+    BuddyPartFixed = image{"assets/fixed_sprite.png", pinned = UseSprites}
+    BuddyPartHidden = image{"assets/hidden_sprite.png", pinned = UseSprites}
+else
+    BuddyPartFixed = image{"assets/fixed.png"}
+    BuddyPartHidden = image{"assets/hidden.png"}
+end
 
 -- UI
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}

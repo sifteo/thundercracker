@@ -628,15 +628,33 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         }
     }
     Video().moveSprite(spriteUnder, point);
+    
+    if (piece.GetAttribute() == Piece::ATTR_FIXED)
+    {
+        Video().setSpriteImage(spriteOver, BuddyPartFixed, 0);
+        Video().moveSprite(spriteOver, point);
+    }
+    else if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
+    {
+        Video().setSpriteImage(spriteOver, BuddyPartHidden, 0);
+        Video().moveSprite(spriteOver, point);
+        Video().hideSprite(spriteUnder);
+    }
 }
 
 #else
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    const AssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
+    AssetImage asset = GetBuddyFacePartsAsset(piece.GetBuddy());
     unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
     ASSERT(frame < asset.frames);
+    
+    if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
+    {
+        asset = BuddyPartHidden;
+        frame = 0;
+    }
     
     Vec2 point = kPartPositions[side];
     
