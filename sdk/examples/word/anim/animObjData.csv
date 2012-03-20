@@ -1,0 +1,22 @@
+"AnimType","Letters Per Cube","Asset","AltAsset","SpriteAsset","Layer","Invisible Frames"
+"AnimType_NotWord",2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+"AnimType_SlideL",2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+"AnimType_SlideR",2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+"AnimType_OldWord",2,"Tile2Glow","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2Glow","Tile2Blank",0,"Layer_BG0",0
+"AnimType_NewWord",2,"Tile2Glow","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2Glow","Tile2Blank",0,"Layer_BG0",0
+"AnimType_EndofRound",2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+"AnimType_Shuffle",2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank",0,"Layer_BG0",0
+"AnimType_CityProgression","x","LevelComplete","LevelComplete",0,"Layer_BG0",0
+"AnimType_HintBarAppear","x",0,0,"HintSprite","Layer_Sprite",0
+"AnimType_HintBarIdle","x",0,0,"HintSprite","Layer_Sprite",0
+"AnimType_HintBarDisappear","x",0,0,"HintSprite","Layer_Sprite",0
+"AnimType_HintWindUpSlide","x",0,0,"HintSprite","Layer_Sprite",0
+"AnimType_HintSlideL",2,0,0,"HintSprite","Layer_Sprite",0
+"AnimType_HintSlideR",2,0,0,"HintSprite","Layer_Sprite",0

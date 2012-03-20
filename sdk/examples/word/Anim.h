@@ -23,9 +23,6 @@ enum AnimType
     AnimType_HintWindUpSlide,
     AnimType_HintSlideL,
     AnimType_HintSlideR,
-    AnimType_HintNeighborL,
-    AnimType_HintNeighborR,
-    AnimType_LockedHintOldWord,
 
     NumAnimTypes
 };

@@ -12,10 +12,10 @@ union EventData
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
         unsigned char mPuzzlePieceIndexes[NUM_CUBES];
-        int mOffLengthIndex;
-        unsigned mNumAnagrams;
-        unsigned mNumBonusAnagrams;
-        bool mLeadingSpaces;
+        unsigned char mNumAnagrams;
+        unsigned char mNumBonusAnagrams;
+        unsigned char mLeadingSpaces;
+        unsigned char mMaxLettersPerCube;
     } mNewAnagram;
 
     struct

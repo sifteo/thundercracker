@@ -28,6 +28,9 @@ struct AnimData
     const AnimObjData *mObjs;
 };
 
+#include "AnimData.h"
+
+#if (0)
 // FIXME write a tool to hide all this array/struct nesting ugliness
 // FIXME reuse stuff with indexing
 const static Vec2 positions[] =
@@ -134,7 +137,22 @@ const static AnimObjData animObjData[] =
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[29]}, // AnimType_HintSlideL
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[45]}, // AnimType_HintSlideR
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[69]}, // HintShake    
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// 3 PER CUBE --- AnimType_NotWord
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideL
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideR
+    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
+    {&Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimType_OldWord
+    {&Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
+    {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]}, // CityProgression
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]}, // HintIdle
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[29]}, // AnimType_HintSlideL
+    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[45]}, // AnimType_HintSlideR
     { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[69]}, // HintShake
+
 };
 
 const static AnimData animData[] =
@@ -143,7 +161,7 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1SlideL,
     { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1SlideR,
+    //AnimIndex`_Tile1SlideR,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile1OldWord,
     { 1.f, true, 2, &animObjData[0]},
@@ -166,12 +184,6 @@ const static AnimData animData[] =
     //AnimType_SlideLHint,
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideRHint,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_LockHint,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_LockedHintNotWord,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_LockedHintOldWord,
     { 1.f, true, 1, &animObjData[0]},
 
     // AnimType_NotWord
@@ -202,12 +214,6 @@ const static AnimData animData[] =
     { 1.0f, true, 1, &animObjData[11]},
     // AnimIndex_HintSlideR
     { 1.0f, true, 1, &animObjData[12]},
-    //AnimType_HintNeighborL
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimType_HintNeighborR
-    { 1.f, true, 6, &animObjData[13]},
-    //AnimType_LockedHintOldWord,
-    { 1.f, true, 6, &animObjData[13]},
 
     //AnimIndex_Tile3Idle,
     { 1.f, true, 2, &animObjData[0]},
@@ -237,13 +243,8 @@ const static AnimData animData[] =
     { 1.f, true, 1, &animObjData[0]},
     //AnimType_SlideRHint,
     { 1.f, true, 1, &animObjData[0]},
-    //AnimType_LockHint,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_LockedHintNotWord,
-    { 1.f, true, 10, &animObjData[17]},
-    //AnimType_LockedHintOldWord,
-    { 1.f, true, 10, &animObjData[27]},
 };
+#endif
 
 bool animPaint(AnimType animT,
                VidMode_BG0_SPR_BG1 &vid,

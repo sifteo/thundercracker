@@ -12,7 +12,12 @@ class Dictionary
 public:
     Dictionary();
 
-    static bool pickWord(char* buffer, unsigned& numAnagrams, unsigned& numBonusAnagrams, bool& leadingSpaces);
+    static bool pickWord(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& numBonusAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube);
+
     static bool findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,
                                            char wordPieces[][MAX_LETTERS_PER_CUBE]);

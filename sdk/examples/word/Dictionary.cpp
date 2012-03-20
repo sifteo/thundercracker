@@ -22,16 +22,16 @@ Dictionary::Dictionary()
 }
 
 bool Dictionary::pickWord(char* buffer,
-                          unsigned& numAnagrams,
-                          unsigned& numBonusAnagrams,
-                          bool& leadingSpaces)
+                          unsigned char& numAnagrams,
+                          unsigned char& numBonusAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube)
 {
     ASSERT(buffer);
     if (true || GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
         _SYS_strlcpy(buffer, puzzles[sPuzzleIndex], MAX_LETTERS_PER_WORD + 1);
 
-        // TODO make data-driven
         numAnagrams = MAX(1, puzzlesNumGoalAnagrams[sPuzzleIndex]);
         sNumPossibleWords = puzzlesNumPossibleAnagrams[sPuzzleIndex];
         for (unsigned i = 0; i < sNumPossibleWords; ++i)
@@ -39,7 +39,14 @@ bool Dictionary::pickWord(char* buffer,
             sPossibleWordIDs[i] = puzzlesPossibleWordIndexes[sPuzzleIndex][i];
             sPossibleWordFound[i] = false;
         }
-        leadingSpaces = puzzlesUseLeadingSpaces[sPuzzleIndex];
+        // TODO how many leading spaces?
+        leadingSpaces = puzzlesUseLeadingSpaces[sPuzzleIndex] ? 1 : 0;
+
+        // TODO data-driven
+        maxLettersPerCube =
+                (_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) > 6) ? 3 : 2;
+
+        // update for next pick
         sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
         return true;
     }

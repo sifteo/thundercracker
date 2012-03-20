@@ -226,7 +226,8 @@ void ScoredGameState::createNewAnagram()
     Dictionary::pickWord(data.mNewAnagram.mWord,
                          data.mNewAnagram.mNumAnagrams,
                          data.mNewAnagram.mNumBonusAnagrams,
-                         data.mNewAnagram.mLeadingSpaces);
+                         data.mNewAnagram.mLeadingSpaces,
+                         data.mNewAnagram.mMaxLettersPerCube);
 
     // TODO data-driven
     GameStateMachine::setCurrentMaxLettersPerCube(2);
@@ -374,19 +375,5 @@ void ScoredGameState::createNewAnagram()
     _SYS_strlcpy(data.mNewAnagram.mWord, scrambled, sizeof data.mNewAnagram.mWord);
     wordLen = _SYS_strnlen(data.mNewAnagram.mWord, sizeof data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
-    // TODO revisit the mOffLengthIndex stuff
-    if ((wordLen % numCubes) == 0)
-    {
-        // all cubes have word fragments of the same length
-        data.mNewAnagram.mOffLengthIndex = -1;
-    }
-    else
-    {
-        // TODO odd number of multiple letters per cube
-
-        // pick a cube index randomly to have the off length
-        // word fragment
-        //data.mNewAnagram.mOddIndex = ;
-    }
     GameStateMachine::sOnEvent(EventID_NewAnagram, data);
 }

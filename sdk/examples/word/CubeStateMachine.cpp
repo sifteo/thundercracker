@@ -1235,8 +1235,8 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     case AnimType_HintWindUpSlide:
     case AnimType_HintSlideL:
     case AnimType_HintSlideR:
-    case AnimType_HintNeighborL:
-    case AnimType_HintNeighborR:
+//    case AnimType_HintNeighborL:
+//    case AnimType_HintNeighborR:
         break;
 
     default:
@@ -1417,8 +1417,8 @@ bool CubeStateMachine::canStartHint() const
     case AnimType_HintWindUpSlide:
     case AnimType_HintSlideL:
     case AnimType_HintSlideR:
-    case AnimType_HintNeighborL:
-    case AnimType_HintNeighborR:
+//    case AnimType_HintNeighborL:
+//    case AnimType_HintNeighborR:
         return false;
 
     default:
