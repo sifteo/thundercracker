@@ -9,12 +9,22 @@ BuddyBackground4 = image{"assets/bg5.png"}
 BuddyBackground5 = image{"assets/bg6.png"}
 
 -- Buddy Parts
-BuddyParts0 = image{"assets/parts1.png", height = 48}
-BuddyParts1 = image{"assets/parts2.png", height = 48}
-BuddyParts2 = image{"assets/parts3.png", height = 48}
-BuddyParts3 = image{"assets/parts4.png", height = 48}
-BuddyParts4 = image{"assets/parts5.png", height = 48}
-BuddyParts5 = image{"assets/parts6.png", height = 48}
+UseSprites = false
+if UseSprites then
+    BuddyParts0 = image{"assets/parts1_sprite.png", height = 64, pinned = true}
+    BuddyParts1 = image{"assets/parts2_sprite.png", height = 64, pinned = true}
+    BuddyParts2 = image{"assets/parts3_sprite.png", height = 64, pinned = true}
+    BuddyParts3 = image{"assets/parts4_sprite.png", height = 64, pinned = true}
+    BuddyParts4 = image{"assets/parts5_sprite.png", height = 64, pinned = true}
+    BuddyParts5 = image{"assets/parts6_sprite.png", height = 64, pinned = true}
+else
+    BuddyParts0 = image{"assets/parts1.png", height = 48}
+    BuddyParts1 = image{"assets/parts2.png", height = 48}
+    BuddyParts2 = image{"assets/parts3.png", height = 48}
+    BuddyParts3 = image{"assets/parts4.png", height = 48}
+    BuddyParts4 = image{"assets/parts5.png", height = 48}
+    BuddyParts5 = image{"assets/parts6.png", height = 48}
+end
 
 -- Buddy Full Faces
 BuddyFull0 = image{"assets/buddy_full_1.png"}

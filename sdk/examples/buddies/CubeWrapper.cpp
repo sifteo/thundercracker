@@ -46,6 +46,32 @@ const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef BUDDY_PIECES_USE_SPRITES
+
+const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
+{
+    switch (buddyId)
+    {
+        default:
+        case 0: return BuddyParts0;
+        case 1: return BuddyParts1;
+        case 2: return BuddyParts2;
+        case 3: return BuddyParts3;
+        case 4: return BuddyParts4;
+        case 5: return BuddyParts5;
+    }
+}
+
+const Vec2 kPartPositions[NUM_SIDES] =
+{
+    Vec2(32, -8),
+    Vec2(-8, 32),
+    Vec2(32, 72),
+    Vec2(72, 32),
+};
+
+#else
+
 const AssetImage &GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
@@ -60,16 +86,15 @@ const AssetImage &GetBuddyFacePartsAsset(int buddyId)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 const Vec2 kPartPositions[NUM_SIDES] =
 {
-    Vec2(40,  0), // Sprites => Vec2(32, -8),
-    Vec2( 0, 40), // Sprites => Vec2(-8, 32),
-    Vec2(40, 80), // Sprites => Vec2(32, 72),
-    Vec2(80, 40), // Sprites => Vec2(72, 32),
+    Vec2(40,  0),
+    Vec2( 0, 40),
+    Vec2(40, 80),
+    Vec2(80, 40),
 };
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -560,6 +585,53 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef BUDDY_PIECES_USE_SPRITES
+
+void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
+{
+    const PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
+    
+    unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
+    ASSERT(frame < asset.frames);
+    
+    unsigned int spriteOver = side + 0;
+    unsigned int spriteUnder = side + NUM_SIDES;
+    
+    Video().setSpriteImage(spriteUnder, asset, frame);
+    
+    Vec2 point = kPartPositions[side];
+    switch(side)
+    {
+        case SIDE_TOP:
+        {
+            point.x += mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
+            break;
+        }
+        case SIDE_LEFT:
+        {
+            point.x += mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
+            break;
+        }
+        case SIDE_BOTTOM:
+        {
+            point.x -= mPieceOffsets[side].x;
+            point.y -= mPieceOffsets[side].y;
+            break;
+        }
+        case SIDE_RIGHT:
+        {
+            point.x -= mPieceOffsets[side].x;
+            point.y += mPieceOffsets[side].y;
+            break;
+        }
+    }
+    Video().moveSprite(spriteUnder, point);
+}
+
+#else
+
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
     const AssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
@@ -670,6 +742,8 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
     }
 }
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -27,6 +27,7 @@ const GameState kStateDefault = GAME_STATE_MAIN_MENU;
 const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters (eventually will be 15)
 const unsigned int kPuzzlesPerBuddy = 5;
+//#define BUDDY_PIECES_USE_SPRITES
 
 // Tuning
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
