@@ -1,5 +1,6 @@
 #include "assets.gen.h"
 #include "Skins.h"
+#include "Game.h"
 
 namespace TotalsGame
 {
@@ -49,7 +50,37 @@ SkinType currentSkin = SkinType_Default;
 
 void SetSkin(SkinType skinType)
 {
+    if(skinType == currentSkin)
+        return;
+
     currentSkin = skinType;
+    const Skin& s = GetSkin();
+
+    //animate transition to new skin
+    for(int c = 0; c < NUM_CUBES; c++)
+    {
+        TotalsCube *cube = Game::cubes+c;
+        //bring in from top and bottom
+        for(int frame = 0; frame <= 9; frame++)
+        {
+            cube->ClipImage(&s.vault_door, Vec2(0, -18 + frame));
+            cube->ClipImage(&s.vault_door, Vec2(0, 16 - frame));
+            Game::Wait(0);
+        }
+
+        //slide it over a bit
+        for(int frame = 0; frame <= 9; frame++)
+        {
+            cube->ClipImage(&s.vault_door, Vec2(-frame, -9));
+            cube->ClipImage(&s.vault_door, Vec2(-frame, 7));
+
+            cube->ClipImage(&s.vault_door, Vec2(16-frame, -9));
+            cube->ClipImage(&s.vault_door, Vec2(16-frame, 7));
+
+            Game::Wait(0);
+        }
+
+    }
 }
 
 const Skin& GetSkin()

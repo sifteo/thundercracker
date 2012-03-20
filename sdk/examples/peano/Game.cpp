@@ -7,6 +7,7 @@
 #include "InterstitialController.h"
 #include "TutorialController.h"
 #include "VictoryController.h"
+#include "Skins.h"
 
 namespace TotalsGame
 {
@@ -168,30 +169,37 @@ void Run(TotalsCube *_cubes, int nCubes)
         {   
 
         case GameState_Puzzle:
+            Skins::SetSkin(Skins::SkinType_Blue);
             nextState = PuzzleController::Run();
             break;
 
         case GameState_Menu:
+            Skins::SetSkin(Skins::SkinType_Default);
             nextState = MenuController::Run();
             break;
 
         case GameState_Interstitial:
+            Skins::SetSkin(Skins::SkinType_Blue);
             nextState = InterstitialController::Run();
             break;
 
         case GameState_Tutorial:
+            Skins::SetSkin(Skins::SkinType_Default);
             nextState = TutorialController::Run();
             break;
 
         case GameState_Victory:
+            Skins::SetSkin(Skins::SkinType_Blue);
             nextState = VictoryController::Run();
             break;
 
         case GameState_IsOver:
+            Skins::SetSkin(Skins::SkinType_Blue);
             nextState = IsGameOver();
             break;
 
         case GameState_Advance:
+            Skins::SetSkin(Skins::SkinType_Blue);
             nextState = Advance();
             break;
         }
