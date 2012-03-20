@@ -140,7 +140,7 @@ unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUA
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
     m_Movestate( MOVESTATE_STATIONARY ),
-	m_eventTime( 0.0f ),
+	m_eventTime(),
 	m_score( 0 ),
 	m_bFixed( false ),
     m_multiplier( 1 ),
@@ -179,7 +179,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     m_bWasRainball = false;
     m_bWasInfected = false;
     m_multiplier = 1;
-    m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -272,13 +272,15 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 
                     if( m_multiplier > 1 )
                     {
-                        unsigned int frame = Math::fmodf( (float)System::clock(), MULTIPLIER_LIGHTNING_PERIOD ) / MULTIPLIER_LIGHTNING_PERIOD * mult_lightning.frames;
+                        SystemTime t = SystemTime::now();
+                        
+                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.frames);
                         vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
                         vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
                         vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
 
                         //number on bg1
-                        if( Math::fmodf( (float)System::clock(), MULTIPLIER_NUMBER_PERIOD ) / MULTIPLIER_NUMBER_PERIOD < MULTIPLIER_NUMBER_PERCENTON )
+                        if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
                         {
                             vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
                             vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
@@ -373,7 +375,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         vec.y += 1;
                     }
 
-                    float timeDiff = System::clock() - (float)m_eventTime;
+                    float timeDiff = SystemTime::now() - m_eventTime;
                     float perc = timeDiff / MARK_BREAK_DELAY;
 
                     //for some reason I'm seeing extremely small negative values at times.
@@ -407,7 +409,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
             unsigned int fadeFrame = 0;
 
-            float fadeTime = System::clock() - START_FADING_TIME - m_eventTime;
+            float fadeTime = float(SystemTime::now() - m_eventTime) - START_FADING_TIME;
 
             if( fadeTime > 0.0f )
                 fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
@@ -431,7 +433,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 }
 
 
-void GridSlot::Update(float t)
+void GridSlot::Update(SystemTime t)
 {
 	switch( m_state )
 	{
@@ -528,7 +530,7 @@ void GridSlot::Update(float t)
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
             {
-                m_animFrame = ( ( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
+                m_animFrame = ( float( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
                 spread_mark();
             }
             else
@@ -577,7 +579,7 @@ void GridSlot::mark()
         return;
     m_animFrame = 0;
 	m_state = STATE_MARKED;
-	m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
     Game::Inst().playSound(match2);
     Game::Inst().SetChain( true );
 
@@ -613,7 +615,7 @@ void GridSlot::explode()
         DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
-	m_eventTime = System::clock();
+	m_eventTime = SystemTime::now();
 }
 
 void GridSlot::die()
@@ -622,7 +624,7 @@ void GridSlot::die()
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
 	Game::Inst().CheckChain( m_pWrapper );
-	m_eventTime = System::clock();
+	m_eventTime = SystemTime::now();
 }
 
 

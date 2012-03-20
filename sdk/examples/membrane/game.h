@@ -13,34 +13,6 @@ using namespace Sifteo::Math;
 #define NUM_PARTICLES 6
 
 
-class Ticker {
-public:
-    Ticker() : accum(0) {}
-
-    Ticker(float hz) : accum(0) {
-		setRate(hz);
-	}
-
-    void setRate(float hz) {
-	    period = 1.0f / hz;
-	}
-
-    int tick(float dt) {
-		accum += dt;
-		int frames = accum / period;
-		accum -= frames * period;
-		return frames;
-	}
-    
-    float getPeriod() {
-        return period;
-    }
-    
-private:
-    float period, accum;
-};
-
-
 class Portal {
 public:
     Portal(int side);
@@ -79,7 +51,7 @@ public:
     
 private:
     Cube &cube;
-    Ticker ticker;
+    TimeTicker ticker;
     int counter;
     Vec2 pos;
 };
@@ -114,7 +86,7 @@ public:
     }
     
 private:
-    Ticker portalTicker;
+    TimeTicker portalTicker;
     unsigned numMarkers;
 };
 
@@ -196,10 +168,10 @@ private:
     Float2 pos, velocity;
     GameCube *onCube;
 
-    Ticker ticker;    
+    TimeTicker ticker;    
     Flavor flavor;
     unsigned animIndex;
-    float stateDeadline;
+    SystemTime stateDeadline;
     
     PortalPair pendingMove;
     
@@ -234,7 +206,7 @@ private:
     }
     
     Particle particles[NUM_PARTICLES];
-    Ticker physicsClock;
+    TimeTicker physicsClock;
 
     void checkMatches();
 

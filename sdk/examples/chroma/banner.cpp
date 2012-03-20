@@ -14,7 +14,6 @@ const float Banner::SCORE_TIME = 1.0f;
 
 Banner::Banner()
 {
-	m_fEndTime = -1.0f;
     m_tiles = 0;
     m_bIsScoreMsg = false;
 }
@@ -46,15 +45,15 @@ void Banner::Draw( BG1Helper &bg1helper )
 }
 
 
-void Banner::Update(float t)
+void Banner::Update(SystemTime t)
 {
     int iLen = m_Msg.size();
     if( iLen > 0 )
 	{
-		if( t > m_fEndTime )
+		if( t > m_endTime )
 		{
             m_Msg.clear();
-            m_fEndTime = -1.0f;
+            m_endTime = SystemTime();
             Game::Inst().SetChain( false );
 		}
         m_tiles++;
@@ -69,7 +68,7 @@ void Banner::SetMessage( const char *pMsg, float fTime, bool bScoreMsg )
 {
     m_Msg = pMsg;
     float msgTime = fTime;
-    m_fEndTime = System::clock() + msgTime;
+    m_endTime = SystemTime::now() + msgTime;
     m_tiles = 0;
     m_bIsScoreMsg = bScoreMsg;
 }

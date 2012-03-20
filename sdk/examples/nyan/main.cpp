@@ -13,13 +13,14 @@ using namespace Sifteo;
 #  define NUM_CUBES 1
 #endif
 
-static Cube cubes[] = { Cube(0) };
-static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf) };
+static Cube cubes[NUM_CUBES];
+static AudioChannel channel;
 
 static void init() {
     for (unsigned i=0; i<NUM_CUBES; i++) {
         cubes[i].enable();
         cubes[i].loadAssets(GameAssets);
+
         VidMode_BG0_ROM rom(cubes[i].vbuf);
         rom.init();
         rom.BG0_text(Vec2(1,1), "Loading...");
@@ -28,7 +29,8 @@ static void init() {
         bool done = true;
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            rom.BG0_progressBar(Vec2(0,7),
+                cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
             if (!cubes[i].assetDone(GameAssets))
                 done = false;
         }
@@ -37,25 +39,22 @@ static void init() {
     }
 }
 
-static AudioChannel channel;
-
 void siftmain() {
     init();
 	channel.init();
-	//channel.play(nyan, LoopRepeat);
 	channel.play(Nyan, LoopRepeat);
-    for (unsigned i=0; i<NUM_CUBES; i++) {
-		vid[i].init();
-	}
-    int frame = 0;
+
+    for (unsigned i=0; i<NUM_CUBES; i++)
+        VidMode_BG0(cubes[i].vbuf).init();
+
     while (1) {
-		float t = System::clock();
-		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			vid[i].BG0_drawAsset(Vec2(0,0), Cat, frame);
-		}
-		while(System::clock() - t < 0.05f) {
-			System::paint();
-		}
-		frame = (frame+1)%12;
+        unsigned frame = SystemTime::now().cycleFrame(0.5, Cat.frames);
+
+    	for (unsigned i=0; i<NUM_CUBES; ++i) {
+            VidMode_BG0 vid(cubes[i].vbuf);
+            vid.BG0_drawAsset(Vec2(0,0), Cat, frame);
+        }
+
+    	System::paint();
     }
 }

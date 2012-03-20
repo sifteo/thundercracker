@@ -28,7 +28,7 @@ void RockExplosion::Update()
 {
     if( m_pos.x >= 0 )
     {
-        m_animFrame = ( System::clock() - m_startTime ) * FRAMES_PER_SECOND;
+        m_animFrame = float(SystemTime::now() - m_startTime) * FRAMES_PER_SECOND;
 
         if( m_animFrame >= rock_explode.frames )
         {
@@ -64,5 +64,5 @@ void RockExplosion::Spawn( const Vec2 &pos, int whichpiece )
 {
     m_pos.set( pos.x * 8 + OFFSET[whichpiece].x, pos.y * 8 + OFFSET[whichpiece].y );
     m_animFrame = 0;
-    m_startTime = System::clock();
+    m_startTime = SystemTime::now();
 }

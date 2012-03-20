@@ -127,22 +127,21 @@ void siftmain()
 
     // main loop
     WordGame game(cubes); // must not be static!
-    // TODO use clockNS, to avoid precision bugs with long play sessions
-    float lastTime = System::clock();
-    float lastPaint = System::clock();
+
+    TimeStep ts;
+    ts.next();
+    SystemTime lastPaint = ts.end();
+
     while (1)
     {
-        float now = System::clock();
-        float dt = now - lastTime;
-        lastTime = now;
-
-        game.update(dt);
+        ts.next();
+        game.update(ts.delta());
 
         // decouple paint frequency from update frequency
-        if (now - lastPaint >= 1.f/25.f)
+        if (ts.end() - lastPaint >= 1.f/25.f)
         {
             game.onEvent(EventID_Paint, EventData());
-            lastPaint = now;
+            lastPaint = ts.end();
         }
 
         if (true || game.needsPaintSync()) // TODO can't seem to fix BG1 weirdness w/o this

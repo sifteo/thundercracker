@@ -32,12 +32,12 @@ void Particle::applyPendingMove()
 
 void Particle::markForDestruction() {
     state = S_DESTROY_PENDING;
-    stateDeadline = System::clock() + 0.75;
+    stateDeadline = SystemTime::now() + 0.75;
 }
   
 void Particle::doPhysics(float dt)
 {
-    if (state == S_DESTROY_PENDING && System::clock() > stateDeadline)
+    if (state == S_DESTROY_PENDING && stateDeadline.inPast())
         return;
 
     const Float2 center( VidMode::LCD_width / 2, VidMode::LCD_height / 2 );
@@ -121,15 +121,15 @@ void Particle::draw(GameCube *gc, int spriteId)
     }
 
     // Destruction    
-    if (state == S_DESTROY_PENDING && System::clock() > stateDeadline &&
+    if (state == S_DESTROY_PENDING && stateDeadline.inPast() &&
         gc->hilighter.doHilight(Vec2::round(pos))) {
         
-        stateDeadline = System::clock() + Game::random.uniform(0.5, 3.0);
+        stateDeadline = SystemTime::now() + Game::random.uniform(0.5, 3.0);
         state = S_RESPAWN_PENDING;
     }
     if (state == S_RESPAWN_PENDING) {
         vid.hideSprite(spriteId);
-        if (System::clock() > stateDeadline)
+        if (stateDeadline.inPast())
             instantiate(gc);
         return;
     }
