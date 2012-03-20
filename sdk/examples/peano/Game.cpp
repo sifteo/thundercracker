@@ -165,17 +165,9 @@ void Run(TotalsCube *_cubes, int nCubes)
 
     while(1)
     {
-        Skins::SkinType skin;
-
-        if(IsPlayingRandom())
-            skin = (Skins::SkinType)rand.randrange(Skins::NumSkins);
-        else
-            skin = (Skins::SkinType)(currentPuzzle->chapterIndex % Skins::NumSkins);
-
         switch(nextState)
         {           
         case GameState_Puzzle:
-            Skins::SetSkin(skin);
             nextState = PuzzleController::Run();
             break;
 
@@ -185,7 +177,6 @@ void Run(TotalsCube *_cubes, int nCubes)
             break;
 
         case GameState_Interstitial:
-            Skins::SetSkin(skin);
             nextState = InterstitialController::Run();
             break;
 
@@ -194,18 +185,15 @@ void Run(TotalsCube *_cubes, int nCubes)
             nextState = TutorialController::Run();
             break;
 
-        case GameState_Victory:
-            Skins::SetSkin(skin);
+        case GameState_Victory:            
             nextState = VictoryController::Run();
             break;
 
         case GameState_IsOver:
-            Skins::SetSkin(skin);
             nextState = IsGameOver();
             break;
 
         case GameState_Advance:
-            Skins::SetSkin(skin);
             nextState = Advance();
             break;
         }
