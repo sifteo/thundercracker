@@ -62,7 +62,7 @@ void OnSetup ()
     if (Game::IsPlayingRandom())
     {
         int nCubes = 3 + ( NUM_CUBES > 3 ? Random().randrange(NUM_CUBES-3+1) : 0 );
-        puzzle = PuzzleHelper::SelectRandomTokens(Game::difficulty, nCubes);
+        puzzle = PuzzleHelper::SelectRandomTokens(Game::GetDifficulty(), nCubes);
         // hacky reliability :P
         int retries = 0;
         do
@@ -71,7 +71,7 @@ void OnSetup ()
             {
                 retries = 0;
                 delete puzzle;  //selectrandomtokens does a new
-                puzzle = PuzzleHelper::SelectRandomTokens(Game::difficulty, nCubes);
+                puzzle = PuzzleHelper::SelectRandomTokens(Game::GetDifficulty(), nCubes);
             }
             else
             {

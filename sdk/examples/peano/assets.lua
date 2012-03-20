@@ -87,14 +87,13 @@ Narrator_Mix02 = image { "narrator_mix02.png" }
 
 Icon_Back = image { "icon_back.png"}
 Icon_Clear_Data = image { "icon_clear_data.png"}
-Icon_Easy = image { "icon_easy.png"}
-Icon_Hard = image { "icon_hard.png"}
+Icon_Expert = image { "icon_expert.png" }
 Icon_Locked = image { "icon_locked.png"}
 Icon_Main_Menu = image { "icon_main_menu.png"}
-Icon_Medium = image { "icon_medium.png"}
 Icon_Music_Off = image { "icon_music_off.png"}
 Icon_Music_On = image { "icon_music_on.png"}
 Icon_No = image { "icon_no.png"}
+Icon_Novice = image { "icon_novice.png" }
 Icon_Resume = image { "icon_resume.png"}
 Icon_Sfx_Off = image { "icon_sfx_off.png"}
 Icon_Sfx_On = image { "icon_sfx_on.png"}

@@ -21,12 +21,8 @@ Puzzle *currentPuzzle;
 Puzzle *previousPuzzle;
 
 Random rand;
-
-Difficulty difficulty;
-NumericMode mode;
-
 int randomPuzzleCount;
-    
+SkillLevel skillLevel = SkillLevel_Expert;
 SaveData saveData;
 
 float dt;
@@ -98,6 +94,36 @@ void PaintCubeViews()
     }
 }
 
+ExperienceLevel GetExperienceLevel()
+{
+    int count = 0;
+    for(int i = 0; i < Database::NumChapters(); i++)
+    {
+        if(saveData.IsChapterSolved(i))
+        {
+            count++;
+        }
+    }
+    return count > 1 ? ExperienceLevel_Master : ExperienceLevel_Neophyte;
+}
+
+Difficulty GetDifficulty()
+{
+    if (skillLevel == SkillLevel_Novice)
+    {
+        return GetExperienceLevel() == ExperienceLevel_Neophyte ? DifficultyEasy : DifficultyMedium;
+    }
+    else
+    {
+        return GetExperienceLevel() == ExperienceLevel_Neophyte ? DifficultyMedium : DifficultyHard;
+    }
+}
+
+void SaveOptions()
+{
+    //TODO
+}
+
 void Run(TotalsCube *_cubes, int nCubes)
 {
     cubes = _cubes;
@@ -120,9 +146,6 @@ void Run(TotalsCube *_cubes, int nCubes)
 
     currentPuzzle = NULL;
     previousPuzzle = NULL;
-
-    difficulty = DifficultyHard;
-    mode = NumericModeFraction;
 
     timeInt = System::clockNS();
 

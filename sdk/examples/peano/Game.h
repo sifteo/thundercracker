@@ -42,7 +42,21 @@ namespace TotalsGame {
             GameState_IsOver
         };
 
+        enum SkillLevel {
+            SkillLevel_Novice,
+            SkillLevel_Expert
+        };
 
+        enum ExperienceLevel {
+            ExperienceLevel_Neophyte,
+            ExperienceLevel_Master
+        };
+
+        extern SkillLevel skillLevel;
+        ExperienceLevel GetExperienceLevel();
+        Difficulty GetDifficulty();
+
+        void SaveOptions();
 
 		void ClearCubeViews();
 		void ClearCubeEventHandlers();
@@ -56,8 +70,6 @@ namespace TotalsGame {
 
 		extern Random rand;
 
-		extern Difficulty difficulty;
-		extern NumericMode mode;
         extern int randomPuzzleCount;
 		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		

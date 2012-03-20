@@ -298,7 +298,7 @@ void RunSetup()
 
     enum
     {
-        Toggle_Difficulty,
+        Toggle_SkillLevel,
         Toggle_Music,
         Toggle_Sfx,
         Clear_Data,
@@ -306,20 +306,20 @@ void RunSetup()
     };
 
     {
-        static const AssetImage *difficultyIcons[] = {&Icon_Easy, &Icon_Medium, &Icon_Hard};
+        static const AssetImage *skillIcons[] = {&Icon_Novice, &Icon_Expert};
         static const AssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
         static const AssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
 
         TiltFlowItem items[5];
 
-        items[0].SetImages(difficultyIcons, 3);
+        items[0].SetImages(skillIcons, 2);
         items[1].SetImages(musicIcons, 2);
         items[2].SetImages(sfxIcons, 2);
         items[3].SetImage(&Icon_Clear_Data);
         items[4].SetImage(&Icon_Back);
 
 #define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
-        SET_PARAMS(items[0], Toggle_Difficulty, (int)Game::difficulty, "Toggle multiplication\nand division.");
+        SET_PARAMS(items[0], Toggle_SkillLevel, (int)Game::skillLevel, "Toggle Mathematical Difficulty.");
         SET_PARAMS(items[1], Toggle_Music, AudioPlayer::MusicMuted(), "Toggle\nbackground music.");
         SET_PARAMS(items[2], Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
         SET_PARAMS(items[3], Clear_Data, 0, "Clear your\nauto-save data.");
@@ -340,9 +340,8 @@ void RunSetup()
                 case 0:
                     switch(menu.GetToggledItem()->GetOpt())
                     {
-                    case 0: Game::difficulty = DifficultyEasy; break;
-                    case 1: Game::difficulty = DifficultyMedium; break;
-                    case 2: Game::difficulty = DifficultyHard; break;
+                    case 0: Game::skillLevel = Game::SkillLevel_Novice; break;
+                    case 1: Game::skillLevel = Game::SkillLevel_Expert; break;
                     }
                     break;
                 case 1:
@@ -359,6 +358,8 @@ void RunSetup()
                     case 1: AudioPlayer::MuteSfx(true); break;
                     }
                 }
+
+                Game::SaveOptions();
 
                 menu.ClearToggledItem();
             }

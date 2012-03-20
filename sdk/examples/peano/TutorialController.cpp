@@ -9,6 +9,7 @@
 #include "Token.h"
 #include "TokenGroup.h"
 #include "Skins.h"
+#include "ConfirmationMenu.h"
 
 namespace TotalsGame
 {
@@ -423,9 +424,18 @@ Game::GameState Run() {
     // transition out narrator
     narrator.SetMessage("Let's try it\nfor real, now!", NarratorView::EmoteWave);
     Game::Wait(3);
-    narrator.SetMessage("Remember, you need\nto use every Key!");
+
+    //ask user for challenge level
+    narrator.SetMessage("What skill level\nare youcomfortable\nstarting with?");
+    Game::Wait(0.5f);
+    bool choice = ConfirmationMenu::Run(NULL, &Icon_Novice, &Icon_Expert);
+    Game::skillLevel = choice? Game::SkillLevel_Novice : Game::SkillLevel_Expert;
+    narrator.SetMessage("Thanks!\nYou can always change\nthis in the Settings!");
     Game::Wait(3);
+
     narrator.SetMessage("Press-and-hold a cube\nto access the main menu.");
+    Game::Wait(3);
+    narrator.SetMessage("Remember, you need\nto use every Key!");
     Game::Wait(3);
     narrator.SetMessage("Good luck!", NarratorView::EmoteWave);
     Game::Wait(3);

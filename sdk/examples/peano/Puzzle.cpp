@@ -94,7 +94,7 @@ namespace TotalsGame {
 
 	Difficulty Puzzle::GetDifficulty()
 	{
-		return Game::difficulty;
+        return Game::GetDifficulty();
 	}
 
 

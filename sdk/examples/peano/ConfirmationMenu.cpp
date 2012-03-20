@@ -7,12 +7,12 @@ namespace TotalsGame {
 namespace ConfirmationMenu
 {
 
-const int YES = 0;
-const int NO = 1;
-const int ASK = 2;
+const int YES = 1;
+const int NO = 2;
+const int ASK = 0;
 
-bool gotTouchOn[2];
-bool triggered[2];
+bool gotTouchOn[3];
+bool triggered[3];
 
 static const float kTransitionTime = 0.333f;
 
@@ -21,7 +21,7 @@ const int kPad = 1;
 void OnCubeTouch(void *, Cube::ID cid)
 {
     bool pressed = Game::cubes[cid].touching();
-    if(cid == 0 || cid ==1)
+    if(cid == YES || cid ==NO)
     {
         if(pressed)
             gotTouchOn[cid] = true;
@@ -88,29 +88,44 @@ void AnimateDoors(TotalsCube *c, bool opening)
     System::paintSync();
 }
 
-
-bool Run(const char *msg)
+//true means selected first choice (yes)
+bool Run(const char *msg, const AssetImage *choice1, const AssetImage *choice2)
 {    
     bool result = false;
 
+    if(!choice1)
+    {
+        choice1 = &Icon_Yes;
+    }
+
+    if(!choice2)
+    {
+        choice2 = &Icon_No;
+    }
+
     AnimateDoors(Game::cubes+YES, true);
-    Game::cubes[YES].Image(Icon_Yes, Vec2(3, 1));
+    Game::cubes[YES].Image(*choice1, Vec2(3, 1));
 
     AnimateDoors(Game::cubes+NO, true);
-    Game::cubes[NO].Image(Icon_No, Vec2(3, 1));
+    Game::cubes[NO].Image(*choice2, Vec2(3, 1));
+    System::paint();
 
-    AnimateDoors(Game::cubes+ASK, true);
     DialogWindow dw(Game::cubes+ASK);
-    dw.SetBackgroundColor(75, 0, 85);
-    dw.SetForegroundColor(255, 255, 255);
-    dw.DoDialog(msg, 16, 20);
 
-    gotTouchOn[0] = gotTouchOn[1] = false;
-    triggered[0] = triggered[1] = false;
+    if(msg)
+    {   //no message -> dont mess with cube 0 (for tutorial)
+        AnimateDoors(Game::cubes+ASK, true);        
+        dw.SetBackgroundColor(75, 0, 85);
+        dw.SetForegroundColor(255, 255, 255);
+        dw.DoDialog(msg, 16, 20);
+    }
+
+    gotTouchOn[0] = gotTouchOn[1] = gotTouchOn[2] = false;
+    triggered[0] = triggered[1] = triggered[2] = false;
     void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
 
-    while(!(triggered[0] || triggered[1])) {
+    while(!(triggered[YES] || triggered[NO])) {
         System::yield();
         Game::UpdateDt();
     }
@@ -120,10 +135,12 @@ bool Run(const char *msg)
     AnimateDoors(Game::cubes+YES, false);
     AnimateDoors(Game::cubes+NO, false);
 
-    dw.EndIt();
-
-    Game::cubes[ASK].FillArea(&Dark_Purple, Vec2(0, 0), Vec2(16, 16));
-    AnimateDoors(Game::cubes+ASK, false);
+    if(msg)
+    {
+        dw.EndIt();
+        Game::cubes[ASK].FillArea(&Dark_Purple, Vec2(0, 0), Vec2(16, 16));
+        AnimateDoors(Game::cubes+ASK, false);
+    }
 
     return triggered[YES];
 
