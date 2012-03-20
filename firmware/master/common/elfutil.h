@@ -23,9 +23,9 @@ namespace Elf {
         FlashRange data;
         
         const char *getString(FlashBlockRef &ref, uint16_t key) const;
-        const void *get(FlashBlockRef &ref, uint16_t key, unsigned size) const;
+        const void *get(FlashBlockRef &ref, uint16_t key, uint32_t size) const;
         const void *get(FlashBlockRef &ref, uint16_t key,
-            unsigned minSize, unsigned &actualSize) const;
+            uint32_t minSize, uint32_t &actualSize) const;
 
         template <typename T>
         inline const T* getValue(FlashBlockRef &ref, uint16_t key) const {

@@ -135,7 +135,7 @@ const char *Elf::Metadata::getString(FlashBlockRef &ref, uint16_t key) const
      * a properly terminated string, we return 0.
      */
 
-    unsigned actualSize;
+    uint32_t actualSize;
     const void *data = get(ref, key, 0, actualSize);
 
     if (data && memchr(data, 0, actualSize))
@@ -144,7 +144,7 @@ const char *Elf::Metadata::getString(FlashBlockRef &ref, uint16_t key) const
         return 0;
 }
 
-const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key, unsigned size) const
+const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key, uint32_t size) const
 {
     /*
      * Convenience method for metadata accessors that only care about a minimum
@@ -153,12 +153,12 @@ const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key, unsigned size) 
      * instead of an array.
      */
 
-    unsigned actualSize;
+    uint32_t actualSize;
     return get(ref, key, size, actualSize);
 }
 
 const void *Elf::Metadata::get(FlashBlockRef &ref, uint16_t key,
-            unsigned minSize, unsigned &actualSize) const
+            uint32_t minSize, uint32_t &actualSize) const
 {
     /*
      * Base accessor for metadata. Looks for 'key' within the metadata

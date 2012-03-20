@@ -61,6 +61,9 @@ void init()
  * and start using the user mode stack.
  *
  * Finally, branch into user code.
+ *
+ * Note: when branching with bx, target's bit[0] must be set (indicating thumb mode)
+ * or we get a usage fault since cortex-m3 cannot exchange to arm mode.
  */
 void run(reg_t sp, reg_t pc)
 {
@@ -82,7 +85,7 @@ void run(reg_t sp, reg_t pc)
         "isb                            \n\t"
         "bx     r10"
         :
-        : [sp_arg] "r"(sp), [target] "r"(pc)
+        : [sp_arg] "r"(sp), [target] "r"(pc | 0x1)
     );
     for (;;) {
         asm volatile ("wfi");
