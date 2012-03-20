@@ -58,6 +58,7 @@ public:
     
 private:
     void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
+    void ResetCubesToShuffleStart();
     void UpdateCubes(float dt);
     
     void PlaySound();
@@ -151,6 +152,7 @@ private:
     float mFreePlayShakeThrottleTimer;
     
     // Shuffle Mode
+    Piece mShufflePiecesStart[kMaxBuddies][NUM_SIDES];
     unsigned int mShuffleUiIndex;
     bool mShuffleUiIndexSync[kNumCubes];
     unsigned int mShuffleMoveCounter;

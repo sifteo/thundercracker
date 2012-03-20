@@ -600,6 +600,7 @@ App::App()
     , mClueOnTimer(0.0f)
     , mClueOffTimers()
     , mFreePlayShakeThrottleTimer(0.0f)
+    , mShufflePiecesStart()
     , mShuffleUiIndex(0)
     , mShuffleUiIndexSync()
     , mShuffleMoveCounter(0)
@@ -1020,6 +1021,27 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void App::ResetCubesToShuffleStart()
+{
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+    {
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            mCubeWrappers[i].Reset();
+            
+            for (unsigned int j = 0; j < NUM_SIDES; ++j)
+            {
+                mCubeWrappers[i].SetPiece(j, mShufflePiecesStart[i][j]);
+                mCubeWrappers[i].SetPieceSolution(
+                        j, GetPuzzleDefault().GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::UpdateCubes(float dt)
 {
     for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -1143,6 +1165,20 @@ void App::StartGameState(GameState gameState)
             for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
             {
                 mShuffleUiIndexSync[i] = false;
+            }
+            
+            // Copy in puzzle data so we can reset
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                    {
+                        ASSERT(i < arraysize(mShufflePiecesStart));
+                        ASSERT(j < arraysize(mShufflePiecesStart[i]));
+                        mShufflePiecesStart[i][j] = mCubeWrappers[i].GetPiece(j);
+                    }
+                }
             }
             break;
         }
@@ -1541,8 +1577,8 @@ void App::UpdateGameState(float dt)
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
-                // TODO: restart puzzle
-                //StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+                ResetCubesToShuffleStart();
+                StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
