@@ -93,6 +93,7 @@ private:
     };
     
     bool AnyTouchBegin() const;
+    bool AnyTouchHold() const;
     bool AnyTouchEnd() const;
     
     // Cubes
@@ -104,6 +105,7 @@ private:
     // State
     GameState mGameState;
     float mDelayTimer;
+    float mOptionsTimer;
     
     // Input
     TouchState mTouching[kNumCubes];

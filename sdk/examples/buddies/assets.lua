@@ -54,6 +54,7 @@ UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.
 UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
+UiPanel = image{"assets/plain_panel.png"}
 
 -- Main Menu
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
@@ -77,7 +78,6 @@ ShuffleTouchToExit = image{"assets/panel_touch_to_exit.png"}
 ShuffleClueBlank = image{"assets/panel_clue_blank.png"}
 ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
---ShufflePlainPanel = image{"assets/plain_panel.png"}
 
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}

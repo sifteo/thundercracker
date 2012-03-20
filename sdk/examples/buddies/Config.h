@@ -32,6 +32,7 @@ const unsigned int kPuzzlesPerBuddy = 5;
 // Tuning
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;
+const float kOptionsTimerDuration = 3.0f;
 const float kSwapAnimationSlide = 0.5f;
 const float kHintTimerOnDuration = 30.0f; // Seconds before hint appears
 const float kHintTimerOffDuration = 2.5f; // Seconds before hint disappears

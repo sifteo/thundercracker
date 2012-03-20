@@ -122,6 +122,31 @@ void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DrawShuffleOption(CubeWrapper &cubeWrapper, const char *option)
+{
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    cubeWrapper.DrawBackground(UiPanel);
+    
+    String<16> bufferTouchTo;
+    bufferTouchTo << "Touch to";
+    int xTouchTo = (tileWidth / 2) - (bufferTouchTo.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xTouchTo, 3), UiFontHeadingOrange, bufferTouchTo.c_str());
+    
+    String<16> bufferOption;
+    bufferOption << option;
+    int xOption = (tileWidth / 2) - (bufferOption.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xOption, 5), UiFontHeadingOrange, bufferOption.c_str());
+    
+    if (bufferTouchTo.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
@@ -510,6 +535,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_SHUFFLE_SHUFFLING",
     "GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES",
     "GAME_STATE_SHUFFLE_PLAY",
+    "GAME_STATE_SHUFFLE_OPTIONS",
     "GAME_STATE_SHUFFLE_SOLVED",
     "GAME_STATE_SHUFFLE_CONGRATULATIONS",
     "GAME_STATE_SHUFFLE_END_GAME_NAV",
@@ -540,6 +566,7 @@ App::App()
     , mChannel()
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
+    , mOptionsTimer(0.0f)
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
@@ -1102,6 +1129,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
+            mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 mFaceCompleteTimers[i] = 0.0f;
@@ -1386,6 +1414,18 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
+            if (AnyTouchHold())
+            {
+                if (UpdateTimer(mOptionsTimer, dt))
+                {
+                    StartGameState(GAME_STATE_SHUFFLE_OPTIONS);
+                }
+            }
+            else
+            {
+                mOptionsTimer = kOptionsTimerDuration;
+            }
+            
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 if (mFaceCompleteTimers[i] > 0.0f)
@@ -1439,6 +1479,23 @@ void App::UpdateGameState(float dt)
                 }
             }
             
+            break;
+        }
+        case GAME_STATE_SHUFFLE_OPTIONS:
+        {   
+            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            }
+            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            {
+                // TODO: restart puzzle
+                //StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+            }
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_MAIN_MENU);
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -1797,6 +1854,22 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else
             {
                 cubeWrapper.DrawBuddy();
+            }
+            break;
+        }
+        case GAME_STATE_SHUFFLE_OPTIONS:
+        {
+            if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
+            {
+                DrawShuffleOption(cubeWrapper, "Resume");
+            }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                DrawShuffleOption(cubeWrapper, "Restart");
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                DrawShuffleOption(cubeWrapper, "Exit");
             }
             break;
         }
@@ -2564,6 +2637,22 @@ bool App::AnyTouchBegin() const
     for (unsigned int i = 0; i < arraysize(mTouching); ++i)
     {
         if (mTouching[i] == TOUCH_STATE_BEGIN)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool App::AnyTouchHold() const
+{
+    for (unsigned int i = 0; i < arraysize(mTouching); ++i)
+    {
+        if (mTouching[i] == TOUCH_STATE_HOLD)
         {
             return true;
         }
