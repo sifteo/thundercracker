@@ -1,6 +1,6 @@
 #include "EdgeView.h"
 
-void EdgeView::Init(Vec2 location) {
+void EdgeView::Init(Vec2 location, Cube::Side side) {
 	
 }
 

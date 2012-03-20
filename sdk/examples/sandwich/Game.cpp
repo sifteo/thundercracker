@@ -17,8 +17,8 @@ void Game::Paint(bool sync) {
   if (sNeighborDirty) { 
     CheckMapNeighbors(); 
   }
-  float now = System::clock();
-  float dt = now - mSimTime;
+  SystemTime now = SystemTime::now();
+  TimeDelta dt = now - mSimTime;
   mSimTime = now;
   mPlayer.Update(dt);
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
@@ -122,7 +122,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   CheckMapNeighbors();
 
   // clear out any accumulated time
-  mSimTime = System::clock();
+  mSimTime = SystemTime::now();
 }
 
 void Game::IrisOut(ViewSlot* view) {
@@ -272,7 +272,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint();
   }
   view.SetAlpha(255);
-  for(float t=System::clock(); System::clock()-t<4.f && !pView->Touched();) { Paint(); }
+  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<4.f && !pView->Touched();) { Paint(); }
   pView->GetCube()->vbuf.touch();
   Paint(true);
   mPlayer.CurrentView()->Parent()->Restore();
@@ -283,7 +283,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint(true);
   #endif
   // wait a sec
-  for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
+  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<0.25f;) { Paint(); }
 }
 
 //------------------------------------------------------------------
@@ -325,11 +325,11 @@ void Game::OnPickup(Room *pRoom) {
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-      float t=System::clock();
+      SystemTime t=SystemTime::now();
       Paint();
       do {
         // this calc is kinda annoyingly complex
-        float u = (mSimTime - t) / 0.075f;
+        float u = float(mSimTime - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
@@ -354,17 +354,17 @@ void Game::OnPickup(Room *pRoom) {
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-      float t=System::clock();
+      SystemTime t=SystemTime::now();
       Paint();
       do {
         // this calc is kinda annoyingly complex
-        float u = (mSimTime - t) / 0.075f;
+        float u = float(mSimTime - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
         mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-      } while(System::clock()-t<0.075f);
+      } while(SystemTime::now()-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
@@ -417,9 +417,9 @@ unsigned Game::OnPassiveTrigger() {
     Vec2 start = 128 * pRoom->Location();
     Vec2 delta = 128 * (targetRoom->Location() - pRoom->Location());
     ViewMode mode = pView->Graphics();
-    float t=mSimTime; 
+    SystemTime t=mSimTime; 
     do {
-      float u = (mSimTime-t) / 2.333f;
+      float u = float(mSimTime-t) / 2.333f;
       u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
       Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
       DrawOffsetMap(&mode, mMap.Data(), pos);
