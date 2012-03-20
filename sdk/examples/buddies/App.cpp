@@ -514,6 +514,16 @@ unsigned int GetRandomOtherBuddyId(App &app, unsigned int buddyId)
 
 void TiltNudgePieces(App& app, Cube::ID cubeId)
 {
+#ifdef BUDDY_PIECES_USE_SPRITES
+    Vec2 accelState = app.GetCubeWrapper(cubeId).GetAccelState();
+    float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
+    float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
+    float d = 8.0f;
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
+#else
     Cube::TiltState tiltState = app.GetCubeWrapper(cubeId).GetTiltState();
     
     app.GetCubeWrapper(cubeId).SetPieceOffset(
@@ -528,6 +538,7 @@ void TiltNudgePieces(App& app, Cube::ID cubeId)
     app.GetCubeWrapper(cubeId).SetPieceOffset(
         SIDE_RIGHT,
         Vec2(-(tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+#endif        
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -833,10 +844,7 @@ void App::OnTilt(Cube::ID cubeId)
     {
         case GAME_STATE_FREEPLAY_PLAY:
         {
-            if (mSwapState == SWAP_STATE_NONE)
-            {
-                TiltNudgePieces(*this, cubeId);
-            }
+            TiltNudgePieces(*this, cubeId);
             break;
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
@@ -1361,11 +1369,13 @@ void App::UpdateGameState(float dt)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
+                // Throttle shake input so players don't accidentally shake twice in a row
                 if (mFreePlayShakeThrottleTimer > 0.0f)
                 {
                     UpdateTimer(mFreePlayShakeThrottleTimer, dt);
                 }
                 
+                // Check for holding, which enables the options menu.
                 if (AnyTouchHold())
                 {
                     if (UpdateTimer(mOptionsTimer, dt))
@@ -1396,6 +1406,14 @@ void App::UpdateGameState(float dt)
                             mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                        }
+                        else
+                        {
+                            // If we're in sprite mode, we can do gradations of nudge, so
+                            // poll the value and set the offset here.
+#ifdef BUDDY_PIECES_USE_SPRITES                        
+                            TiltNudgePieces(*this, i);
+#endif
                         }
                     }
                 }
@@ -1500,8 +1518,10 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
+            // We're in active play, so track our time for scoring purposes
             mScoreTimer += dt;
             
+            // Check for holding, which enables the options menu.
             if (AnyTouchHold())
             {
                 if (UpdateTimer(mOptionsTimer, dt))
@@ -1514,6 +1534,19 @@ void App::UpdateGameState(float dt)
                 mOptionsTimer = kOptionsTimerDuration;
             }
             
+            // If we're in sprite mode, we can do gradations of nudge, so
+            // poll the value and set the offset here.
+#ifdef BUDDY_PIECES_USE_SPRITES
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    TiltNudgePieces(*this, i);
+                }
+            }
+#endif
+            
+            // Check to see if "Face Complete" banners are done displaying
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 if (mFaceCompleteTimers[i] > 0.0f)
@@ -1522,7 +1555,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Update clue display timers
+            // Check to see if clues are done displaying
             if (mClueOffTimers[0] > 0.0f)
             {
                 if (UpdateTimer(mClueOffTimers[0], dt) ||
@@ -1694,8 +1727,10 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_PLAY:
         {
+            // We're in active play, so track our time for scoring purposes
             mScoreTimer += dt;
             
+            // Check for holding, which enables the options menu.
             if (AnyTouchHold())
             {
                 if (UpdateTimer(mOptionsTimer, dt))
@@ -1708,7 +1743,19 @@ void App::UpdateGameState(float dt)
                 mOptionsTimer = kOptionsTimerDuration;
             }
             
-            // Timers
+            // If we're in sprite mode, we can do gradations of nudge, so
+            // poll the value and set the offset here.
+#ifdef BUDDY_PIECES_USE_SPRITES
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    TiltNudgePieces(*this, i);
+                }
+            }
+#endif
+            
+            // Check to see if "Face Complete" banners are done displaying
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 if (mFaceCompleteTimers[i] > 0.0f)
@@ -1717,6 +1764,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
+            // Check to see if clues are done displaying
             bool clueDisplayed = false;
             for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
             {
@@ -1726,7 +1774,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Hints (but clues take precedence)
+            // If clues are not displayed, see if a hint should be turned on or off
             if (!clueDisplayed)
             {
                 if (IsHinting())
@@ -1751,7 +1799,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Clues
+            // Check if clues should be dismissed
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
