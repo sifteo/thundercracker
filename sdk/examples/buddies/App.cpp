@@ -525,7 +525,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_CHAPTER_END",
 };
 
-const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels by design
+const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels by design
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2073,31 +2073,32 @@ void App::UpdateSwap(float dt)
         
         float slide_tick = kSwapAnimationSlide / float(kSwapAnimationCount);
         int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick;
+        int swapOffset = -kSwapAnimationCount + swap_anim_counter;
         
         if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
-                Vec2(0, -kSwapAnimationCount + swap_anim_counter));
+                Vec2(0, swapOffset));
         }
          else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece0 % NUM_SIDES,
-                Vec2(-kSwapAnimationCount + swap_anim_counter, 0));
+                Vec2(swapOffset, 0));
         }
         
         if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
         {        
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
-                Vec2(0, -kSwapAnimationCount + swap_anim_counter));
+                Vec2(0, swapOffset));
         }
         else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
         {
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                 mSwapPiece1 % NUM_SIDES,
-                Vec2(-kSwapAnimationCount + swap_anim_counter, 0));
+                Vec2(swapOffset, 0));
         }
         
         if (done)
@@ -2111,33 +2112,36 @@ void App::UpdateSwap(float dt)
         {
             UpdateTimer(mSwapAnimationSlideTimer, dt);
             
-            float slide_tick = kSwapAnimationSlide / float(kSwapAnimationCount);
-            int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick;
+            // Extra 16 frames are for visual overshoot
+            float slide_tick = kSwapAnimationSlide / float(kSwapAnimationCount + 16);
+            int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick - 16;
+            
+            int swapOffset = -swap_anim_counter;
             
             if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
             {
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                     mSwapPiece0 % NUM_SIDES,
-                    Vec2(0, -swap_anim_counter));
+                    Vec2(0, swapOffset));
             }
             else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
             {
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
                     mSwapPiece0 % NUM_SIDES,
-                    Vec2(-swap_anim_counter, 0));
+                    Vec2(swapOffset, 0));
             }
             
             if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
             {
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                     mSwapPiece1 % NUM_SIDES,
-                    Vec2(0, -swap_anim_counter));
+                    Vec2(0, swapOffset));
             }
             else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
             {
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
                     mSwapPiece1 % NUM_SIDES,
-                    Vec2(-swap_anim_counter, 0));
+                    Vec2(swapOffset, 0));
             }
         }
         
