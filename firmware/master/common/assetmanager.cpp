@@ -27,7 +27,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 {
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/
-        installation.size = *(uint32_t*)buf;
+        installation.size = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
         buf += sizeof(installation.size);
         len -= sizeof(installation.size);
         installation.currentAddress = 0;    // XXX: only writing to beginning of flash for now
@@ -41,9 +41,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
             status = 2;
             Usb::write(&status, 1);
 #endif
-            if (!Flash::eraseSector(i)) {
-                ; // TODO
-            }
+            Flash::eraseSector(i);
         }
 #ifndef SIFTEO_SIMULATOR
         status = 0x0;
@@ -56,9 +54,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 
     unsigned chunk = MIN(installation.size - installation.currentAddress, len);
 
-    if (!Flash::write(installation.currentAddress, buf, chunk)) {
-        ; // TODO
-    }
+    Flash::write(installation.currentAddress, buf, chunk);
     installation.currentAddress += chunk;
 
     addToCrc(buf, chunk);
@@ -78,6 +74,9 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
         installation.crcwordBytes = 0;
         installation.crcword = 0;
 
+        // wait for the last transaction to finish
+        while (Flash::writeInProgress())
+            ;
         // debug: read back out and verify CRC
         uint8_t b[Flash::PAGE_SIZE];
         unsigned addr = 0;

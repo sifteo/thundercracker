@@ -4,7 +4,7 @@
 // available boards to choose from
 #define BOARD_STM32F10C         1
 #define BOARD_TC_MASTER_REV1    2
-#define BOARD_TC_MASTER_REV2	3
+#define BOARD_TC_MASTER_REV2    3
 
 // default board
 #ifndef BOARD
@@ -14,6 +14,9 @@
 #include "hardware.h"
 
 #if BOARD == BOARD_TC_MASTER_REV2
+
+// C L O C K
+#define RCC_CFGR_PLLXTPRE   1
 
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)
@@ -36,6 +39,7 @@
 #define FLASH_SCK_GPIO      GPIOPin(&GPIOB, 3)
 #define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 4)
 #define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 5)
+#define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
 
 // N E I G H B O R
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)
@@ -64,8 +68,12 @@
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
+#define BTN_HOME_EXTI_VEC   EXTI2
 
 #elif BOARD == BOARD_TC_MASTER_REV1
+
+// C L O C K
+#define RCC_CFGR_PLLXTPRE   0
 
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)
@@ -116,6 +124,7 @@
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
+#define BTN_HOME_EXTI_VEC   EXTI0
 
 #elif BOARD == BOARD_STM32F10C
 

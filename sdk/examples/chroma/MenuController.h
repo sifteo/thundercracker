@@ -36,7 +36,7 @@ public:
     CubeWrapper *GetWrapper( unsigned int index );
 
 private:
-    float m_fLastTime;
+    TimeStep m_timeStep;
     TiltFlowMenu m_Menu;
 };
 

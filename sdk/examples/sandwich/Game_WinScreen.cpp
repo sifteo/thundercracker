@@ -36,20 +36,20 @@ void Game::WinScreen() {
 
 	ShowDialog(views[0], NPC_Detail_pearl_detail, "At last!\nThe Sandwich Eternis\nis complete!");
 	
-	float t = System::clock();
-	do { System::paint(); } while(System::clock() - t < 2.f);
+	SystemTime t = SystemTime::now();
+	do { System::paint(); } while(SystemTime::now() - t < 2.f);
 	if (views[1] == mPlayer.View()) { views[1]++; }
 	
 	ShowDialog(views[1], NPC_Detail_sprout_detail, "The kingdom is saved!");
 	
-	t = System::clock();
-	do { System::paint(); } while(System::clock() - t < 2.f);
+	t = SystemTime::now();
+	do { System::paint(); } while(SystemTime::now() - t < 2.f);
 	while (views[2] == views[0] || views[2] == views[1]) { views[2]++; }
 	
 	ShowDialog(views[2], NPC_Detail_burgher_detail, "Noooo!!!");
 	
-	t = System::clock();
-	do { System::paint(); } while(System::clock() - t < 5.f);
+	t = SystemTime::now();
+	do { System::paint(); } while(SystemTime::now() - t < 5.f);
 
 	System::paintSync();
 	for(int i=0; i<3; ++i) {
@@ -64,9 +64,7 @@ void Game::WinScreen() {
 	}
 	System::paintSync();
 
-	t = System::clock();
-	do { System::paint(); } while(System::clock() - t < 5.f);
-
-
+	t = SystemTime::now();
+	do { System::paint(); } while(SystemTime::now() - t < 5.f);
 }
 

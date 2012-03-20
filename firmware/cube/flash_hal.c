@@ -83,8 +83,10 @@ static __bit flash_poll_data;  // What data bit are we expecting?
 #define BYTE_MODE   1
 #define WORD_MODE   2
 
-#ifndef FLASH_PROGRAM_MODE
+#if HWREV == 1
 #define FLASH_PROGRAM_MODE WORD_MODE
+#else
+#define FLASH_PROGRAM_MODE BYTE_MODE
 #endif
 
 static void flash_prefix_aa_55()

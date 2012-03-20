@@ -2,8 +2,8 @@
 
 
 void WaitForSeconds(float dt) {
-  float t = System::clock();
-  do { System::paint(); } while(System::clock() - t < dt);
+  SystemTime deadline = SystemTime::now() + dt;
+  do { System::paint(); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------

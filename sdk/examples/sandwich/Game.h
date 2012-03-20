@@ -19,7 +19,7 @@ private:
   GameState mState;
   Map mMap;
   Player mPlayer;
-  float mSimTime;
+  SystemTime mSimTime;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;

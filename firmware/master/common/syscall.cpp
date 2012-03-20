@@ -277,8 +277,11 @@ void _SYS_finish(void)
 
 void _SYS_ticks_ns(int64_t *nanosec)
 {
-    if (Runtime::checkUserPointer(nanosec, sizeof *nanosec))
-        *nanosec = SysTime::ticks();
+    if (Runtime::checkUserPointer(nanosec, sizeof *nanosec)) {
+        int64_t t = SysTime::ticks();
+        ASSERT(t > 0);
+        *nanosec = t;
+    }
 }
 
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
