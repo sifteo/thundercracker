@@ -112,7 +112,15 @@ SysTime::Ticks SysTime::ticks()
      * This does it in 64-bit math, with 60.4 fixed-point.
      */
 
-    return (self.simTicks * hzTicks(TICK_HZ / 16)) >> 4;
+    /*
+     * Userspace expects a tick value of 0 to never occur. It's reserved
+     * to represent invalid timestamps. We could solve this just by initializing
+     * simTicks to a nonzero value, BUT in the pre-runtime branch we could
+     * end up executing game code before SysTime::init(), due to static
+     * constructors. Blah. So just add a tick here.
+     */
+    
+    return 1 + ((self.simTicks * hzTicks(TICK_HZ / 16)) >> 4);
 }
 
 void Radio::open()

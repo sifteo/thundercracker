@@ -8,6 +8,7 @@
 #define _SIFTEO_H
 
 #include <sifteo/abi.h>
+#include <sifteo/time.h>
 #include <sifteo/cube.h>
 #include <sifteo/machine.h>
 #include <sifteo/math.h>

@@ -12,11 +12,15 @@
 #include <stdint.h>
 
 /*
- * Hardware revisions
+ * Hardware revisions:
+ *
+ *    0 - Early prototype dev board
+ *    1 - Rev 1 PCB
+ *    2 - Rev 2 PCB (March 2012)
  */
 
-#define HWREV_LATEST    3
-#define HWREV_DEFAULT   2
+#define HWREV_LATEST    2
+#define HWREV_DEFAULT   1
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
 #endif
@@ -51,7 +55,7 @@
 
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#if HWREV >= 2
+#if HWREV >= 1
 #   define MISC_TOUCH   (1 << 7)
 #else
 #   define MISC_TOUCH   (1 << 4)
@@ -66,7 +70,7 @@
 // Both the number and name are represented here; due to the binary masking, both are critical.
 #define MISC_NB_0_TOP          (1 << 0)
 #define MISC_NB_1_LEFT         (1 << 1)
-#if HWREV >= 2
+#if HWREV >= 1
 #   define MISC_NB_2_BOTTOM    (1 << 4)
 #else
 #   define MISC_NB_2_BOTTOM    (1 << 7)
@@ -86,7 +90,7 @@
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
-#if HWREV >= 3
+#if HWREV >= 2
 #   define CTRL_FLASH_LAT1  (1 << 1)    // AMID_LE
 #   define CTRL_FLASH_LAT2  (1 << 2)    // AHIGH_LE
 #   define CTRL_DS_EN       (1 << 4)    // Downstream 2.0v load switch
@@ -100,7 +104,7 @@
 #define CTRL_FLASH_WE       (1 << 5)
 #define CTRL_FLASH_OE       (1 << 6)
 
-#if HWREV >= 3
+#if HWREV >= 2
 #   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_DS_EN | CTRL_3V3_EN | CTRL_LCD_DCX)
 #else
 #   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | CTRL_3V3_EN | CTRL_LCD_DCX)

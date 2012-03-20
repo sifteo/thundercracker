@@ -122,8 +122,8 @@ void lcd_sleep()
     if (lcd_is_awake) {
         lcd_is_awake = 0;
 
-#if HWREV >= 3
-        // On Rev 3 we have independent control over LCD reset and
+#if HWREV >= 2
+        // On Rev 2 we have independent control over LCD reset and
         // backlight, via the latches and DCX. First turn off the
         // backlight, then hold the LCD controller in reset mode.
         //
@@ -139,7 +139,7 @@ void lcd_sleep()
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1;  // Backlight off
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
 #else
-        // On Rev 2 and earlier, we have only software control over
+        // On Rev 1 and earlier, we have only software control over
         // LCD sleep. Send it a sleep command.
         {
             static const __code uint8_t table[] = {
@@ -165,8 +165,8 @@ void lcd_begin_frame()
     if (!lcd_is_awake) {
         lcd_is_awake = 1;
         
-#if HWREV >= 3
-        // On Rev 3, we can explicitly sequence power-on.
+#if HWREV >= 2
+        // On Rev 2, we can explicitly sequence power-on.
         // First, we take the LCD controller out of reset.
         // Then we fully initialize it. We turn on the backlight
         // after both initialization is complete and the first
@@ -178,7 +178,7 @@ void lcd_begin_frame()
         CTRL_PORT = CTRL_IDLE;
         CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;  // Exit reset
 #else
-        // On Rev 2 and earlier, backlight and reset are tied to the
+        // On Rev 1 and earlier, backlight and reset are tied to the
         // same pin, and we must take the LCD out of reset before
         // doing the software init sequence. So, turn on the backlight now.
         
@@ -259,7 +259,7 @@ void lcd_end_frame()
     
     lcd_cmd_table(table);
 
-#if HWREV >= 3
+#if HWREV >= 2
     // Now that the LCD is fully ready, turn on the backlight if it isn't
     // already on. Note that rendering from flash can cause this to happen
     // earlier, but in BG0_ROM mode we can successfully delay backlight enable

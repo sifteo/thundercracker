@@ -17,12 +17,13 @@ public:
     static void init();
 
     static void read(uint32_t address, uint8_t *buf, unsigned len);
-    static bool write(uint32_t address, const uint8_t *buf, unsigned len);
-    static bool eraseSector(uint32_t address);
-    static bool chipErase();
+    static void write(uint32_t address, const uint8_t *buf, unsigned len);
+    static void eraseSector(uint32_t address);
+    static void chipErase();
+    static bool writeInProgress();
 
     // sim only
-    static bool flush();
+    static void flush();
 };
 
 #endif // FLASH_H

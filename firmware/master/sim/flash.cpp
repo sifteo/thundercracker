@@ -20,18 +20,23 @@ void Flash::read(uint32_t address, uint8_t *buf, unsigned len) {
     flash.read(address, buf, len);
 }
 
-bool Flash::write(uint32_t address, const uint8_t *buf, unsigned len) {
-    return flash.write(address, buf, len);
+void Flash::write(uint32_t address, const uint8_t *buf, unsigned len) {
+    flash.write(address, buf, len);
 }
 
-bool Flash::eraseSector(uint32_t address) {
-    return flash.eraseSector(address);
+void Flash::eraseSector(uint32_t address) {
+    flash.eraseSector(address);
 }
 
-bool Flash::chipErase() {
-    return flash.chipErase();
+void Flash::chipErase() {
+    flash.chipErase();
 }
 
-bool Flash::flush() {
-    return flash.flush();
+void Flash::flush() {
+    flash.flush();
+}
+
+bool Flash::writeInProgress() {
+    // this is never async in the simulator
+    return false;
 }

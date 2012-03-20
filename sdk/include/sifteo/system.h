@@ -108,24 +108,6 @@ class System {
         _SYS_paint();
         _SYS_finish();
     }
-
-    /**
-     * Return the elapsed system time, in seconds. Guaranteed to be
-     * monotonically increasing.
-     */
-
-    static double clock() {
-        return _SYS_ticks_ns() * 1e-9;
-    }
-
-    /**
-     * Return the elapsed system time, in nanoseconds. Guaranteed to be
-     * monotonically increasing.
-     */
-
-    static int64_t clockNS() {
-        return _SYS_ticks_ns();
-    }
 	
 	static void solicitCubes(_SYSCubeID min, _SYSCubeID max) {
 		_SYS_solicitCubes(min, max);

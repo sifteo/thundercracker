@@ -34,7 +34,7 @@ void power_init(void)
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
 
-#ifndef WAKE_ON_POWERUP
+#ifdef SLEEP_ON_POWERUP
     if (!powerupReason)
         power_sleep();
 #endif
@@ -52,7 +52,7 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 3
+#if HWREV >= 2
     // Sequence 3.3v boost, followed by 2.0v downstream
     CTRL_PORT = CTRL_3V3_EN;
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
@@ -74,7 +74,11 @@ void power_init(void)
     MISC_CON = 0x60;
     MISC_CON = 0x61;
     MISC_CON = 0x65;
+#if HWREV >= 1
+    MISC_CON = 0x64;
+#else
     MISC_CON = 0x67;
+#endif
 }
 
 void power_sleep(void)
@@ -84,7 +88,7 @@ void power_sleep(void)
      * Order matters, don't cause bus contention!
      */
 
-#if HWREV >= 2   // Rev 2 was the first with sleep support
+#if HWREV >= 1   // Rev 1 was the first with sleep support
 
     lcd_sleep();                // Sleep sequence for LCD controller
     cli();                      // Stop all interrupt handlers
@@ -103,7 +107,7 @@ void power_sleep(void)
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = MISC_IDLE;      // Neighbor hardware idle
 
-#if HWREV >= 3
+#if HWREV >= 2
     // Bring flash control lines low, turn off 2.0v, then 3.3v
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
     CTRL_PORT = CTRL_3V3_EN;
@@ -139,5 +143,5 @@ void power_sleep(void)
          */
     }
 
-#endif  // HWREV >= 2
+#endif  // HWREV >= 1
 }

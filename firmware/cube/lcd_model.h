@@ -32,7 +32,7 @@
        defined(LCD_MODEL_TIANMA_ST7715)      || \
        defined(LCD_MODEL_TIANMA_HX8353)      )
 
-#if HWREV >= 3
+#if HWREV >= 2
 #   define LCD_MODEL_TIANMA_HX8353
 #else
 #   define LCD_MODEL_GIANTPLUS_ILI9163C

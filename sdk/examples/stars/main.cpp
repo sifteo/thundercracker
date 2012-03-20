@@ -45,7 +45,7 @@ public:
         vid.set();
     }
     
-    void update(float timeStep)
+    void update(TimeDelta timeStep)
     {
         /*
          * Action triggers
@@ -238,15 +238,12 @@ void siftmain()
     for (unsigned i = 0; i < arraysize(demos); i++)
         demos[i].init();
     
-    float lastTime = System::clock();
+    TimeStep ts;
     while (1) {
-        float now = System::clock();
-        float dt = now - lastTime;
-        lastTime = now;
-
         for (unsigned i = 0; i < arraysize(demos); i++)
-            demos[i].update(dt);
+            demos[i].update(ts.delta());
         
         System::paint();
+        ts.next();
     }
 }

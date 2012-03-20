@@ -16,10 +16,10 @@ public:
 
     bool init();
     void read(uint32_t address, uint8_t *buf, unsigned len);
-    bool write(uint32_t address, const uint8_t *buf, unsigned len);
-    bool eraseSector(uint32_t address);
-    bool chipErase();
-    bool flush();
+    void write(uint32_t address, const uint8_t *buf, unsigned len);
+    void eraseSector(uint32_t address);
+    void chipErase();
+    void flush();
 
 private:
     FILE *file;

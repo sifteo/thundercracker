@@ -15,7 +15,7 @@
 #include "vectors.h"
 #include "systime.h"
 #include "gpio.h"
-#include "macronixmx25.h"
+#include "flash.h"
 #include "tasks.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
@@ -74,21 +74,21 @@ extern "C" void _start()
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
     // fire up the PLL
-    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
-                (0 << 17) |         // PLL XTPRE - no divider
-                (1 << 16);          // PLLSRC - HSE
-    RCC.CR   |= (1 << 24);          // turn PLL on
-    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+    RCC.CFGR |= (7 << 18) |                 // PLLMUL (x9)
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16);                  // PLLSRC - HSE
+    RCC.CR   |= (1 << 24);                  // turn PLL on
+    while (!(RCC.CR & (1 << 25)));          // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
-                (0 << 22)       |   // USBPRE - divide by 3
-                (7 << 18)       |   // PLLMUL - x9
-                (0 << 17)       |   // PLLXTPRE - no divider
-                (1 << 16)       |   // PLLSRC - HSE
-                (4 << 11)       |   // PPRE2 - APB2 prescaler, divide by 2
-                (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
-                (0 << 4);           // HPRE - AHB prescaler, no divisor
+    RCC.CFGR =  (0 << 24)                 | // MCO - mcu clock output
+                (0 << 22)                 | // USBPRE - divide by 3
+                (7 << 18)                 | // PLLMUL - x9
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16)                 | // PLLSRC - HSE
+                (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
+                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable
                 (1 << 1);   // two wait states since we're @ 72MHz
@@ -119,11 +119,13 @@ extern "C" void _start()
         vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
 
-        /*
+#if (BOARD == BOARD_TC_MASTER_REV2)
+        // XXX: this only wants to be enabled when USB is connected.
+        // just leaving enabled for now during dev, and until we put power sequencing in.
         GPIOPin vcc33 = VCC33_ENABLE_GPIO;
         vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
-        */
+#endif
     }
 
     /*
@@ -151,8 +153,7 @@ extern "C" void _start()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
 #ifndef DEBUG
-    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
-    MacronixMX25::instance.init();
+    Flash::init();
 #else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
@@ -183,7 +184,7 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.EXTI0);                  //  home button
+    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
 
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio

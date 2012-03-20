@@ -57,24 +57,25 @@ static void DrawColumn(Cube* pCube, int x) {
 }
 
 // wrapper for paint() that updates the footer
-static int gCurrentTip = 0;
-static float gPrevTime;
 static void Paint(Cube *pCube) {
-	float time = System::clock();
-	float dt = time - gPrevTime;
-	if (dt > 4.f) {
-		gPrevTime = time - fmodf(dt, 4.f);
+	static TimeStep ts;
+	static TimeDelta delta = 0.0f;
+	static int gCurrentTip = 0;
+	
+	delta += ts.delta();
+    if (delta.pullFrames(4.0f)) {
 		const AssetImage& tip = *gTips[gCurrentTip];
-        _SYS_vbuf_writei(
-        	&pCube->vbuf.sys, 
-        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + LabelEmpty.width * LabelEmpty.height,
-            tip.tiles, 
-            0, 
-            tip.width * tip.height
-        );
+		_SYS_vbuf_writei(
+			&pCube->vbuf.sys, 
+			offsetof(_SYSVideoRAM, bg1_tiles) / 2 + LabelEmpty.width * LabelEmpty.height,
+			tip.tiles, 
+			0, 
+			tip.width * tip.height
+		);
 		gCurrentTip = (gCurrentTip+1) % NUM_TIPS;
 	}
 	System::paint();
+	ts.next();
 }
 
 // retrieve the acceleration of the cube due to tilting
@@ -153,7 +154,6 @@ void siftmain() {
     // initialize physics
     float position = 0;
 	int prev_ut = 0;
-	gPrevTime = System::clock();
 	for(;;) {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();

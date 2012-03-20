@@ -7,8 +7,59 @@
 #include "WordGame.h"
 #include "Utility.h"
 
+ScoredGameState::ScoredGameState() : mHintCubeIDOnUpdate(CUBE_ID_UNDEFINED) {}
+
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
+    if (mHintCubeIDOnUpdate != CUBE_ID_UNDEFINED)
+    {
+        if (GameStateMachine::getInstance().getNumHints() > 0)
+        {
+            EventData data;
+            Dictionary::findNextSolutionWordPieces(NUM_CUBES,
+                                                   GameStateMachine::getCurrentMaxLettersPerCube(),
+                                                   data.mHintSolutionUpdate.mHintSolution);
+            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
+
+            // first make sure a hint isn't already active
+            bool canStartHint = true;
+            bool canUseHint = false;
+            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+            {
+                Cube::ID cubeID = ci + CUBE_ID_BASE;
+                CubeStateMachine *csm =
+                    GameStateMachine::findCSMFromID(cubeID);
+                ASSERT(csm);
+                if (!csm->canStartHint())
+                {
+                    canStartHint = false;
+                    break;
+                }
+
+                if (csm->canUseHint())
+                {
+                    canUseHint = true;
+                }
+            }
+
+            if (canStartHint && canUseHint)
+            {
+                // then start the hint wind-up on all cubes
+                // when the wind-up finishes, the first cube that can show a hint
+                // will do so and message the rest to stop
+                for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+                {
+                    Cube::ID cubeID = ci + CUBE_ID_BASE;
+                    CubeStateMachine *csm =
+                        GameStateMachine::findCSMFromID(cubeID);
+                    ASSERT(csm);
+                    csm->startHint();
+                }
+            }
+        }
+        mHintCubeIDOnUpdate = CUBE_ID_UNDEFINED;
+    }
+
     if (GameStateMachine::getSecondsLeft() <= 0)
     {
         return GameStateIndex_EndOfRoundScored;
@@ -20,11 +71,10 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         {
             switch (Dictionary::getPuzzleIndex() - 1)
             {
-            case 8:  // quiet
-            case 17: // terms
-            case 24: // cause
-            case 30: // before... mosaic
-            case 31: // mosaic
+            case 6:  // acre
+            case 12: // part
+            case 18: // career
+            case 24: // begun
                 return GameStateIndex_StoryCityProgression;
             default:
                 // wait for all the cube states to exit the new word state
@@ -38,56 +88,6 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     }
 }
 
-unsigned char ScoredGameState::findNumHintsAvailable() const
-{
-    unsigned char result = 0;
-    for (Cube::ID i = CUBE_ID_BASE;
-         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
-         ++i)
-    {
-        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
-        if (csmAddHint &&
-            csmAddHint->isHintAvailable())
-        {
-            ++result;
-        }
-    }
-    return result;
-}
-
-void ScoredGameState::makeHintsAvailable(unsigned char num) const
-{
-    char letters[MAX_LETTERS_PER_CUBE + 1];
-    // add a hint to a cube that has letters first
-    for (Cube::ID i = CUBE_ID_BASE;
-         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE && num > 0;
-         ++i)
-    {
-        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
-        if (csmAddHint &&
-            csmAddHint->canMakeHintAvailable() &&
-            csmAddHint->getLetters(letters) &&
-            CubeStateMachine::findNumLetters(letters) > 0)
-        {
-            csmAddHint->makeHintAvailable();
-            --num;
-        }
-    }
-
-    for (Cube::ID i = CUBE_ID_BASE;
-         i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE && num > 0;
-         ++i)
-    {
-        CubeStateMachine *csmAddHint = GameStateMachine::findCSMFromID(i);
-        if (csmAddHint &&
-            csmAddHint->canMakeHintAvailable())
-        {
-            csmAddHint->makeHintAvailable();
-            --num;
-        }
-    }
-    // OK to fail to make all hints available, in case of cubes disconnected
-}
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
@@ -96,25 +96,15 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO put in the pause menu on touch
     case EventID_NewAnagram:
+    case EventID_EnterState:
         // reset hints,
-        for (Cube::ID i = CUBE_ID_BASE;
-             i < MIN(NUM_CUBES, 3) + CUBE_ID_BASE;
-             ++i)
-        {
-            CubeStateMachine *csm = GameStateMachine::findCSMFromID(i);
-            if (csm)
-            {
-                csm->removeHint();
-            }
-        }
-        makeHintsAvailable(mNumHints);
+
         break;
 
     case EventID_NewWordFound:
         {
             // count total hints and add one
-            mNumHints = findNumHintsAvailable() + 1;
-            makeHintsAvailable(1);
+            GameStateMachine::getInstance().setNumHints(MIN(GameStateMachine::getInstance().getNumHints() + 1, MAX_HINTS));
         }
 #if (0)
 #ifndef SIFTEO_SIMULATOR
@@ -137,6 +127,14 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
                                                    data.mHintSolutionUpdate.mHintSolution);
             GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
         }
+        break;
+
+    case EventID_WordBroken:
+        mHintCubeIDOnUpdate = data.mWordBroken.mCubeIDStart; // wait until next update, so all events can resolve first
+        break;
+
+    case EventID_SpendHint:
+        GameStateMachine::getInstance().setNumHints(MAX(GameStateMachine::getInstance().getNumHints() - 1, 0));
         break;
 
     default:
@@ -280,17 +278,22 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    if (Dictionary::getPuzzleIndex() - 1 <= 12)
+    switch (Dictionary::getPuzzleIndex() - 1)
     {
+    case 0:
+    case 1:
+    case 4:
+    case 8:
+    case 9:
+        // don't scramble
         _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
         for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
         {
             data.mNewAnagram.mPuzzlePieceIndexes[i] = i;
         }
+        break;
 
-    }
-    else
-    {
+    default:
         // scramble the string (random permutation)
         _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
 
@@ -362,6 +365,7 @@ void ScoredGameState::createNewAnagram()
             }
             break;
         }
+        break;
     }
 
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));

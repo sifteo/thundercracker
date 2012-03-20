@@ -47,7 +47,9 @@ void _SYS_finish(void)
 
 int64_t _SYS_ticks_ns(void)
 {
-    return SysTime::ticks();
+    int64_t ns = SysTime::Ticks();
+    ASSERT(ns > 0);
+    return ns;
 }
 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
