@@ -68,8 +68,9 @@ void siftmain()
             VidMode_BG0_ROM vid(cube.vbuf);
             String<128> str;
 
+            uint64_t hwid = cube.hardwareID();
             str << "I am cube #" << cube.id() << "\n";
-            str << Hex64(cube.hardwareID(), 12) << "\n\n";
+            str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
             _SYS_getNeighbors(cube.id(), &nb);

@@ -808,6 +808,11 @@ rx_ack:
         ; Are we just sending the normal ack_data from internal RAM, or is this a "full"
         ; packet? Do this test now, and keep the result in the carry flag. If C=1, it is
         ; a full packet. Clamp the first loop to the size of the memory packet.
+        ;
+        ; Note that _ack_len may have been larger than RF_ACK_LEN_MAX, due to
+        ; the (non-power-of-two) max length being ORed with smaller lengths.
+        ; This is fine, since we're already clamping to MEM_ACK_LEN, then
+        ; separately referencing the HWID length.
         
         add     a, #(0xFF - RF_MEM_ACK_LEN)
         jnc     3$

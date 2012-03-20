@@ -404,12 +404,12 @@ struct _SYSPseudoRandomState {
 };
 
 /**
- * Hardware IDs are 48-bit / 6-byte numbers that uniquely identify a
+ * Hardware IDs are 64-bit numbers that uniquely identify a
  * particular cube. A valid HWIDs never contains 0xFF bytes.
  */
 
-#define _SYS_HWID_BYTES         6
-#define _SYS_HWID_BITS          48
+#define _SYS_HWID_BYTES         8
+#define _SYS_HWID_BITS          64
 #define _SYS_INVALID_HWID       ((uint64_t)-1)
 
 /**

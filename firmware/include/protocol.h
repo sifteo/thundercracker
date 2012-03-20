@@ -241,7 +241,7 @@
 #define RF_ACK_BATTERY_V        8
 #define RF_ACK_HWID             10
 
-#define HWID_LEN                6
+#define HWID_LEN                8
 
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
