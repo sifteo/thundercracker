@@ -129,7 +129,11 @@ private:
     float mSwapAnimationSlideTimer;
     float mSwapAnimationRotateTimer;
     
+    // Face Complete
     float mFaceCompleteTimers[kNumCubes];
+    
+    // Scrolling
+    Sifteo::Vec2 mBackgroundScroll;
     
     // Hinting
     float mHintTimer;

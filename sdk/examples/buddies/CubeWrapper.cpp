@@ -200,6 +200,26 @@ void CubeWrapper::DrawBackground(const AssetImage &asset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::DrawBackgroundPartial(
+    const Sifteo::Vec2 &position,
+    const Sifteo::Vec2 &offset,
+    const Sifteo::Vec2 &size,
+    const Sifteo::AssetImage &asset)
+{
+    Video().BG0_drawPartialAsset(position, offset, size, asset);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::ScrollBackground(const Vec2 &position)
+{
+    Video().BG0_setPanning(position);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CubeWrapper::DrawUiAsset(
     const Vec2 &position,
     const AssetImage &asset, unsigned int assetFrame)
@@ -222,14 +242,6 @@ void CubeWrapper::DrawUiText(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::ScrollBackground(const Vec2 &position)
-{
-    Video().BG0_setPanning(position);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void CubeWrapper::ScrollUi(const Vec2 &position)
 {
     Video().BG1_setPanning(position);
@@ -247,11 +259,17 @@ void CubeWrapper::UpdateCutscene(int jumpChanceA, int jumpChanceB)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawCutsceneShuffle()
+void CubeWrapper::DrawCutsceneShuffle(const Sifteo::Vec2 &scroll)
 {
     ASSERT(1 <= _SYS_VRAM_SPRITES);
-    
-    Video().BG0_drawAsset(Vec2(0, 0), ShuffleCongratulations);
+    const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
+    const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
+            
+    Video().BG0_drawPartialAsset(
+        Vec2(0, 0),
+        Vec2(-scroll.x, 0),
+        Vec2(maxTilesX + scroll.x, maxTilesY),
+        ShuffleCongratulations);
     
     switch (GetId())
     {
@@ -272,7 +290,7 @@ void CubeWrapper::DrawCutsceneShuffle()
     Video().moveSprite(
         0,
         Vec2(
-            VidMode::LCD_width / 2 - 32,
+            (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE),
             mCutsceneSpriteJump0 ?
                 VidMode::LCD_height / 2 - 32 :
                 VidMode::LCD_height / 2 - 32 + jump_offset));

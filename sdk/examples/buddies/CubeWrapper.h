@@ -41,7 +41,15 @@ public:
     bool DrawNeedsSync();
     
     void DrawBuddy();
+    
     void DrawBackground(const Sifteo::AssetImage &asset);
+    void DrawBackgroundPartial(
+        const Sifteo::Vec2 &position,
+        const Sifteo::Vec2 &offset,
+        const Sifteo::Vec2 &size,
+        const Sifteo::AssetImage &asset);
+    void ScrollBackground(const Sifteo::Vec2 &position);
+    
     void DrawUiAsset(
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
@@ -49,12 +57,11 @@ public:
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &assetFont,
         const char *text);
-    void ScrollBackground(const Sifteo::Vec2 &position);
     void ScrollUi(const Sifteo::Vec2 &position);
     
     // Special-Case Cutscene Stuff
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
-    void DrawCutsceneShuffle();
+    void DrawCutsceneShuffle(const Sifteo::Vec2 &scroll);
     void DrawCutsceneStory(const char *text);
     
     // Asset Loading
