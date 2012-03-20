@@ -47,7 +47,7 @@ void _SYS_finish(void)
 
 int64_t _SYS_ticks_ns(void)
 {
-    int64_t ns = SysTime::Ticks();
+    int64_t ns = SysTime::ticks();
     ASSERT(ns > 0);
     return ns;
 }
