@@ -28,6 +28,7 @@ void Game::MainLoop() {
 	pMinimap = 0;
 	mAnimFrames = 0;
 	mNeedsSync = 0;
+	mSimTime = SystemTime::now();
 	mState.Init();
 	mMap.Init();
 	mPlayer.Init(pPrimary);
@@ -37,7 +38,6 @@ void Game::MainLoop() {
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
-	mSimTime = SystemTime::now();
 	_SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
 	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
 	CheckMapNeighbors();
