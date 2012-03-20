@@ -26,7 +26,7 @@ static NRF24L01 NordicRadio(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO));   //   MOSI
 
-#if BOARD == BOARD_TC_MASTER_REV1
+#if (BOARD >= BOARD_TC_MASTER_REV1)
 IRQ_HANDLER ISR_EXTI9_5()
 {
     NordicRadio.isr();

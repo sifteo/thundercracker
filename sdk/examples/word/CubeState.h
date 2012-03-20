@@ -44,22 +44,19 @@ public:
     CubeState() :
         mStateMachine(0), mEyeState(EyeState_Center), mEyeDirChangeDelay(0.f),
         mEyeBlinkDelay(0.f), mAsleep(false) { }
+
     void setStateMachine(CubeStateMachine& csm);
     CubeStateMachine& getStateMachine();
 
 protected:
-
     virtual unsigned update(float dt, float stateTime);
 
 private:
     CubeStateMachine* mStateMachine;
-
     EyeState mEyeState;
     float mEyeDirChangeDelay;
     float mEyeBlinkDelay;
     bool mAsleep;
-
-
 };
 
 #endif // CUBESTATE_H

@@ -12,7 +12,14 @@ namespace Cube {
 
 bool FlashStorage::init(const char *filename)
 {
-    memset(&data, 0xFF, sizeof data);
+    // Initialize internal (OTP) storage to its erased state
+    memset(&data.nvm, 0xFF, sizeof data.nvm);
+    
+    // Initialize external storage to all zeroes, so we force
+    // the firmware to erase all areas before they're used. It shouldn't
+    // be making assumptions about blocks being already-erased unless it
+    // knows this for certain.
+    memset(&data.ext, 0x00, sizeof data.ext);
     
     if (filename) {
         size_t result;

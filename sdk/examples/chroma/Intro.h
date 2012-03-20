@@ -33,7 +33,7 @@ public:
 
     Intro();
     void Reset( bool ingamereset = false );
-    bool Update( float dt, Banner &banner );
+    bool Update( SystemTime t, TimeDelta dt, Banner &banner );
     //return whether we touched bg1 or not
     bool Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper );
     inline IntroState getState() const { return m_state; }

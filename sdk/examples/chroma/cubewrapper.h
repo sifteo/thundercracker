@@ -32,8 +32,6 @@ public:
     static const float IDLE_FINISH_THRESHOLD;
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
-    static const float TIME_PER_MESSAGE_FRAME;
-    static const int NUM_MESSAGE_FRAMES = 4;
 
     static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
@@ -44,7 +42,6 @@ public:
 	typedef enum
 	{
 		STATE_PLAYING,
-        STATE_MESSAGING,
 		STATE_EMPTY,
         STATE_REFILL,
         //STATE_CUBEBONUS,
@@ -57,7 +54,7 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
-    void Update(float t, float dt);
+    void Update(SystemTime t, TimeDelta dt);
 	void vidInit();
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
@@ -70,7 +67,7 @@ public:
 	void checkEmpty();
 
 	void checkRefill();
-	void Refill( bool bAddLevel = false );
+    void Refill();
 
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
@@ -162,7 +159,7 @@ private:
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
-	float m_fShakeTime;
+	SystemTime m_ShakeTime;
 
     //render based on current fluid level
     //use (-128, 128) range since that matches accelerometer

@@ -29,7 +29,7 @@ public:
 private:
     Vec2 m_pos;
     unsigned int m_animFrame;
-    float m_startTime;
+    SystemTime m_startTime;
 };
 
 #endif

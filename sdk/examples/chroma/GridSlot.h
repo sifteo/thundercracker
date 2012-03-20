@@ -18,9 +18,12 @@ class GridSlot
 public:
     static const unsigned int NUM_COLORS = 8;
     static const unsigned int NUM_SPAWN_FRAMES = 4;
-    static const unsigned int MULTIPLIER_MOTION_AMPLITUDE = 2;
-    static const unsigned int MULT_SPRITE_ID = 1;
-    static const float MULTIPLIER_MOTION_PERIOD_MODIFIER;
+    static const unsigned int MULT_SPRITE_ID = 2;
+    static const unsigned int MULT_SPRITE_NUM_ID = 1;
+    static const float MULTIPLIER_LIGHTNING_PERIOD;
+    static const float MULTIPLIER_NUMBER_PERIOD;
+    //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
+    static const float MULTIPLIER_NUMBER_PERCENTON;
 
     //these are special dots
     enum
@@ -87,7 +90,7 @@ public:
 	//draw self on given vid at given vec
     void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
-    void Update(float t);
+    void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
     bool isEmpty() const { return m_state == STATE_GONE || m_state == STATE_SHOWINGSCORE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
@@ -142,7 +145,7 @@ private:
 	SLOT_STATE m_state;
     MOVE_STATE m_Movestate;
 	unsigned int m_color;
-	float m_eventTime;
+	SystemTime m_eventTime;
 	CubeWrapper *m_pWrapper;
 	unsigned int m_row;
 	unsigned int m_col;

@@ -109,6 +109,7 @@ class Frontend {
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
     b2Vec2 worldToScreen(b2Vec2 world);
+    float worldToScreen(float x);
 
     void addCube();
     void removeCube();

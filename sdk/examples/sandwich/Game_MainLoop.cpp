@@ -37,7 +37,7 @@ void Game::MainLoop() {
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
-	mSimTime = System::clock();
+	mSimTime = SystemTime::now();
 	_SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
 	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
 	CheckMapNeighbors();
@@ -112,13 +112,15 @@ void Game::MainLoop() {
 	      			mPlayer.CurrentRoom()->OpenDoor();
 	      			mPlayer.CurrentView()->DrawBackground();
 	      			mPlayer.CurrentView()->HideEquip();
-	      			float timeout = System::clock();
+	      			SystemTime timeout = SystemTime::now();
 	          		#if GFX_ARTIFACT_WORKAROUNDS
 	      			Paint(true);
 	      			mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
 	          		#endif
 	      			Paint(true);
-	      			do { Paint(); } while(System::clock() - timeout <  0.5f);
+	      			do {
+	      				Paint();
+	      			} while(SystemTime::now() - timeout <  0.5f);
 	      			PlaySfx(sfx_doorOpen);
 	          		// finish up
 	      			for(; progress+WALK_SPEED<=128; progress+=WALK_SPEED) {

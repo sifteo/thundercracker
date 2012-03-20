@@ -35,7 +35,7 @@ Game &Game::Inst()
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SURVIVAL ), m_stateTime( 0.0f ),
-                m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
+                m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
                 m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
@@ -77,8 +77,6 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].vidInit();
 
-    m_fLastTime = System::clock();
-
 #if SFX_ON
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
@@ -99,17 +97,41 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
+    m_menu.Init();
 }
 
 
 void Game::Update()
 {
-    float t = System::clock();
-    float dt = t - m_fLastTime;
-    m_fLastTime = t;
+    m_timeStep.next();
+    SystemTime t = m_timeStep.end();
+    TimeDelta dt = m_timeStep.delta();
     m_stateTime += dt;
 
     bool needsync = false;
+
+    //painting is handled by menu manager
+    if( m_state == STATE_MAINMENU )
+    {
+        int choice;
+
+        if( !m_menu.Update( choice ) )
+        {
+            setState( STATE_INTRO );
+            if( choice < MODE_CNT )
+            {
+                m_mode = (GameMode)choice;
+
+                for( int i = 0; i < NUM_CUBES; i++ )
+                {
+                    m_cubes[i].Reset();
+                }
+            }
+            else
+                ASSERT( 0 );  //TODO settings!
+        }
+        return;
+    }
 
     if( m_bForcePaintSync )
     {
@@ -127,7 +149,7 @@ void Game::Update()
             m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
 #endif
-			m_timer.Init( System::clock() );
+			m_timer.Init( SystemTime::now() );
 		}
 	}
     else if( m_state == STATE_GOODJOB )
@@ -196,7 +218,7 @@ void Game::Update()
 	}
 
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Update( System::clock(), dt );
+        m_cubes[i].Update( t, dt );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
@@ -274,6 +296,37 @@ void Game::Reset(  bool bInGame )
     m_bStabilized = false;
     m_bIsChainHappening = false;
 }
+
+
+CubeWrapper *Game::GetWrapper( Cube *pCube )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( pCube == &m_cubes[i].GetCube() )
+            return &m_cubes[i];
+    }
+
+    return NULL;
+}
+
+
+CubeWrapper *Game::GetWrapper( unsigned int index )
+{
+    return &m_cubes[index];
+}
+
+
+int Game::getWrapperIndex( const CubeWrapper *pWrapper )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( &m_cubes[i] == pWrapper )
+            return i;
+    }
+
+    return -1;
+}
+
 
 void Game::setState( GameState state )
 {
@@ -816,12 +869,12 @@ _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 //play a random slosh sound
 void Game::playSlosh()
 {
-    if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
+    if( m_lastSloshTime.isValid() && SystemTime::now() - m_lastSloshTime > SLOSH_THRESHOLD )
     {
         int index = random.randrange( NUM_SLOSH_SOUNDS );
         playSound(*SLOSH_SOUNDS[index]);
 
-        m_fLastSloshTime = System::clock();
+        m_lastSloshTime = SystemTime::now();
     }
 }
 
@@ -1022,4 +1075,13 @@ bool Game::AreMovesLegal() const
     }
 
     return getState() == STATE_PLAYING;
+}
+
+
+
+void Game::ReturnToMainMenu()
+{
+    Reset( false );
+    //setState( STATE_MAINMENU );
+    m_menu.Reset();
 }

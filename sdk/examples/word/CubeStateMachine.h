@@ -66,11 +66,12 @@ public:
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
 
-    bool isHintAvailable() const { return mAnimTypes[CubeAnim_Hint] != AnimType_None && mAnimTypes[CubeAnim_Hint] != AnimType_HintDisappear; }
-    bool canMakeHintAvailable() const { return !isHintAvailable(); }
-    void makeHintAvailable() { queueAnim(AnimType_HintIdle, CubeAnim_Hint); } // TODO hint appear anim
-    void removeHint() { queueAnim(AnimType_None, CubeAnim_Hint); }
     static unsigned findNumLetters(char *string);
+    bool canStartHint() const;
+    bool canUseHint() const;
+
+    void startHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
+    void stopHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
@@ -92,6 +93,8 @@ private:
     bool getAnimParams(AnimParams *params);
     void calcSpriteParams(unsigned i);
     void updateSpriteParams(float dt);
+    bool calcHintTiltDirection(unsigned &newLettersStart,
+                               unsigned &tiltDirection) const;
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
@@ -100,12 +103,11 @@ private:
     unsigned mNumLetters;
     unsigned mPuzzlePieceIndex;
     float mIdleTime;
-
+    bool mNewHint;
     AnimType mAnimTypes[NumCubeAnims];
     float mAnimTimes[NumCubeAnims];
 
     bool mPainting;
-    bool mHintRequested;
 
     float mBG0Panning;
     float mBG0TargetPanning;

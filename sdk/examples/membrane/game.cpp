@@ -20,9 +20,9 @@ void Game::title()
     }
 
     unsigned frame = 0;
-    float titleDeadline = System::clock() + titleTime;
+    SystemTime titleDeadline = SystemTime::now() + titleTime;
     
-    while (System::clock() < titleDeadline) {
+    while (SystemTime::now() < titleDeadline) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0 vid(getGameCube(i).cube.vbuf);
             vid.BG0_drawAsset(Vec2(0,0), Title, frame % Title.frames);
@@ -113,18 +113,16 @@ void Game::draw()
 
 void Game::run()
 {
-    float lastTime = System::clock();
+    TimeStep ts;
 
     while (1) {
-        float now = System::clock();
-        float dt = now - lastTime;
-        lastTime = now;
+        ts.next();
         
         // Real-time for animations
-        animate(dt);
+        animate(ts.delta());
         
         // Fixed timesteps for physics
-        for (int i = physicsClock.tick(dt); i; i--)
+        for (int i = physicsClock.tick(ts.delta()); i; i--)
             doPhysics(physicsClock.getPeriod());
 
         // Put stuff on the screen!

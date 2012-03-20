@@ -42,7 +42,7 @@ void Intro::Reset( bool ingamereset)
 }
 
 
-bool Intro::Update( float dt, Banner &banner )
+bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
 {
     m_fTimer += dt;
 
@@ -60,15 +60,6 @@ bool Intro::Update( float dt, Banner &banner )
             case STATE_READY:
                 if( Game::Inst().getState() == Game::STATE_PLAYING )
                 {
-                    if( Game::Inst().getMode() == Game::MODE_SURVIVAL )
-                    {
-                        String<32> buf;
-                        if( Game::Inst().getDisplayedLevel() == 1 )
-                            buf << "1 Cube cleared";
-                        else
-                            buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
-                        banner.SetMessage( buf, READYSETGO_BANNER_TIME );
-                    }
                     return false;
                 }
                 else if( Game::Inst().getMode() == Game::MODE_BLITZ )
@@ -98,7 +89,7 @@ bool Intro::Update( float dt, Banner &banner )
         }
     }
 
-    banner.Update( dt );
+    banner.Update( t );
 
     return true;
 }
