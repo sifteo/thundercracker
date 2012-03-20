@@ -143,17 +143,17 @@ namespace TotalsGame
         }
     }
 	
-    void TotalsCube::Image(const AssetImage &image, const Vec2 &pos, int frame)
+    void TotalsCube::Image(const AssetImage &image, Vec2 pos, int frame)
 	{
         backgroundLayer.BG0_drawAsset(pos, image, frame);
 	}
 
-	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
+    void TotalsCube::Image(const AssetImage *image, Vec2 coord, Vec2 offset, Vec2 size)
 	{
         backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
-    void TotalsCube::Image(const PinnedAssetImage *image, const Vec2 &coord, int frame)
+    void TotalsCube::Image(const PinnedAssetImage *image, Vec2 coord, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         for(int y = coord.y; y < coord.y + (int)image->height; y++)
@@ -165,7 +165,7 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame)
+    void TotalsCube::ClipImage(const PinnedAssetImage *image, Vec2 pos, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         int y = pos.y;
@@ -205,7 +205,7 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::FillArea(const AssetImage *image, const Vec2 &pos, const Vec2 &size)
+    void TotalsCube::FillArea(const AssetImage *image, Vec2 pos, Vec2 size)
     {
         Vec2 p = pos;
         Vec2 s = size;
@@ -252,7 +252,7 @@ namespace TotalsGame
         backgroundLayer.BG0_drawAsset(Vec2(0,0), image);
     }
 
-    void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)
+    void TotalsCube::ClipImage(const AssetImage *image, Vec2 pos)
     {
         Vec2 p = pos;
         Vec2 o(0,0);
@@ -405,14 +405,14 @@ namespace TotalsGame
 	}
 
 
-    void TotalsCube::DrawFraction(Fraction f, const Vec2 &pos)
+    void TotalsCube::DrawFraction(Fraction f, Vec2 pos)
     {
         String<10> string;
         f.ToString(&string);
         DrawString(string, pos);
     }
 
-    void TotalsCube::DrawString(const char *string, const Vec2 &center)
+    void TotalsCube::DrawString(const char *string, Vec2 center)
     {
         int hw = 0;
         const char *s = string;

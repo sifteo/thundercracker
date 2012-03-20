@@ -26,7 +26,7 @@ namespace TotalsGame
         return src->GetCount() + dst->GetCount();
     }
 	
-    bool TokenGroup::TokenAt(const Vec2 &p, Token **t) 
+    bool TokenGroup::TokenAt(Vec2 p, Token **t) 
 	{
       return
 		  src->TokenAt(p - srcPos, t) ||

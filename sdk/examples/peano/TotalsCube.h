@@ -57,16 +57,16 @@ public:
 		void DrawVaultDoorsClosed();
 
         void Image(const AssetImage &image);
-        void Image(const AssetImage &image, const Vec2 &pos, int frame=0);
-		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
-        void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame=0);
-        void ClipImage(const AssetImage *image, const Vec2 &pos);
-        void ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame = 0);
-        void FillArea(const AssetImage *image, const Vec2 &pos, const Vec2 &size);
+        void Image(const AssetImage &image, Vec2 pos, int frame=0);
+        void Image(const AssetImage *image, Vec2 coord, Vec2 offset, Vec2 size);
+        void Image(const PinnedAssetImage *image, Vec2 coord, int frame=0);
+        void ClipImage(const AssetImage *image, Vec2 pos);
+        void ClipImage(const PinnedAssetImage *image, Vec2 pos, int frame = 0);
+        void FillArea(const AssetImage *image, Vec2 pos, Vec2 size);
 	
-        void DrawFraction(Fraction f, const Vec2 &pos);
-        //void DrawDecimal(float d, const Vec2 &pos);
-        void DrawString(const char *string, const Vec2 &center);
+        void DrawFraction(Fraction f, Vec2 pos);
+        //void DrawDecimal(float d, Vec2 pos);
+        void DrawString(const char *string, Vec2 center);
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
         void DisableTextOverlay();

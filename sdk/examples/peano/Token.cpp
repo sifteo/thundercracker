@@ -52,7 +52,7 @@ ShapeMask Token::GetMask()
     return ShapeMask::Unity;
 }
 
-bool Token::TokenAt(const Vec2 &p, Token **t)
+bool Token::TokenAt(Vec2 p, Token **t)
 {
     if (p.x == 0 && p.y == 0)
     {

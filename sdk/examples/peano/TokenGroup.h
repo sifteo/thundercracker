@@ -28,7 +28,7 @@ namespace TotalsGame
 		virtual ShapeMask GetMask();
 		virtual int GetDepth();
 		virtual int GetCount();
-		virtual bool TokenAt(const Vec2 &p, Token **t);
+		virtual bool TokenAt(Vec2 p, Token **t);
 		virtual bool PositionOf(Token *t, Vec2 *p);
 		virtual bool Contains(Token *t);
         virtual void SetCurrent(IExpression *exp);
