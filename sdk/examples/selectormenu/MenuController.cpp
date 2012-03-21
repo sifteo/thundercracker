@@ -172,7 +172,7 @@ void MenuController::press( int cube )
 } //namespace SelectorMenu
 
 
-void siftmain()
+void main()
 {
     SelectorMenu::RunMenu();
 }

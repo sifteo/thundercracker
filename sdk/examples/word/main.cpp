@@ -65,7 +65,7 @@ void accel(_SYSCubeID c)
     DEBUG_LOG(("accelerometer changed\n"));
 }
 
-void siftmain()
+void main()
 {
     DEBUG_LOG(("Hello, Word Play 2\n"));
 

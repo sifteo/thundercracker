@@ -220,7 +220,7 @@ void randomGems()
 }
 
 
-void siftmain()
+void main()
 {
     load();
 

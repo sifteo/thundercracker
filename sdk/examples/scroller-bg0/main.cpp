@@ -50,7 +50,7 @@ void draw_bg_column(int x)
     }
 }
 
-void siftmain()
+void main()
 {
     load();
     

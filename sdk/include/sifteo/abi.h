@@ -44,13 +44,9 @@ typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-firs
 /**
  * Entry point. Our standard entry point is main(), with no arguments
  * or return values, declared using C linkage.
- *
- * The old name "siftmain" is supported for backward compatibility only.
  */
 
-#define siftmain main
-
-#ifdef __clang__     // Workaround for gcc's complaints about main() not returning int
+#ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
 void main(void);
 #endif
 

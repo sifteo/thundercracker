@@ -60,7 +60,7 @@ static void init()
 	game.Init();
 }
 
-void siftmain()
+void main()
 {
     init();
 

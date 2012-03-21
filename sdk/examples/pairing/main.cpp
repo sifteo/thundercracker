@@ -41,9 +41,9 @@ static void init()
     }
 }
 
-void siftmain()
+void main()
 {
-    LOG(("siftmain\n"));
+    LOG(("main\n"));
     
     System::solicitCubes(3, 6);
 

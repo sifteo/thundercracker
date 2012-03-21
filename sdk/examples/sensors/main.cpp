@@ -49,7 +49,7 @@ static void onNeighborRemove(counts_t *counts,
     counts[c1].neighborRemove++;
 }
 
-void siftmain()
+void main()
 {
     static counts_t counts[NUM_CUBES];
     

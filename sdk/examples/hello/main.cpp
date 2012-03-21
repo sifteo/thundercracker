@@ -87,7 +87,7 @@ static void init()
     }
 }
 
-void siftmain()
+void main()
 {
     init();
 

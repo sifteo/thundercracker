@@ -39,7 +39,7 @@ static void init() {
     }
 }
 
-void siftmain() {
+void main() {
     init();
 	channel.init();
 	channel.play(Nyan, LoopRepeat);

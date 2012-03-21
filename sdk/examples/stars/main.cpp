@@ -199,7 +199,7 @@ private:
 };
 
 
-void siftmain()
+void main()
 {
     // XXX: Test for relocatable asset groups
     GameAssets.cubes[0].baseAddr = 512 * 8;

@@ -137,7 +137,7 @@ static void fade_in_and_out() {
     }
 }
 
-void siftmain()
+void main()
 {
     cube.enable();
 

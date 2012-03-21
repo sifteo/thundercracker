@@ -36,7 +36,7 @@ void draw_bg_column(unsigned x)
     }
 }
 
-void siftmain()
+void main()
 {
     load();
     

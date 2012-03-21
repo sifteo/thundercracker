@@ -11,7 +11,7 @@ void operator delete(void*) throw();
 
 static TotalsGame::TotalsCube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
 
-void siftmain() {
+void main() {
   for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
     cubes[i].enable(i);
     cubes[i].loadAssets(GameAssets);
@@ -232,7 +232,7 @@ static void OnNeighborRem(void *context,
   }
 }
 
-void siftmain() {
+void main() {
   for (unsigned i = 0; i < NUM_CUBES; i++) {
     cubes[i].enable(i);
     cubes[i].loadAssets(GameAssets);

@@ -86,7 +86,7 @@ static float GetAccel(Cube *pCube) {
 }
 
 // entry point
-void siftmain() {
+void main() {
 	// enable cube slots
 	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) { p->enable(p-gCubes); }
   	// load assets
