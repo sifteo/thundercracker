@@ -203,7 +203,7 @@ void brickScroll()
 
 void randomGems()
 {
-    Math::Random random;
+    Random random;
     VidMode_BG0 vid(cube.vbuf);
 
     vid.setWindow(0, 128);

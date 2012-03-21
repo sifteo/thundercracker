@@ -24,7 +24,7 @@ void PlayMusic(const AssetAudio& music, bool loop=true);
 #define PlayMusic(...)
 #endif
 
-extern Math::Random gRandom;
+extern Random gRandom;
 
 using namespace Sifteo;
 

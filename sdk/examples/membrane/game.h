@@ -7,7 +7,6 @@
 #include "assets.gen.h"
 
 using namespace Sifteo;
-using namespace Sifteo::Math;
 
 #define NUM_CUBES     3
 #define NUM_PARTICLES 6
