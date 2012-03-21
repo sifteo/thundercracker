@@ -229,8 +229,6 @@ void ScoredGameState::createNewAnagram()
                          data.mNewAnagram.mLeadingSpaces,
                          data.mNewAnagram.mMaxLettersPerCube);
 
-    // TODO data-driven
-    GameStateMachine::setCurrentMaxLettersPerCube(2);
             //(unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
 
     // add any leading and/or trailing spaces to odd-length words
@@ -238,6 +236,10 @@ void ScoredGameState::createNewAnagram()
     _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
 
     unsigned wordLen = _SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1);
+
+    // TODO data-driven
+    GameStateMachine::setCurrentMaxLettersPerCube(wordLen > 6 ? 3 : 2);
+
     ASSERT(GameStateMachine::getCurrentMaxLettersPerWord() >= wordLen);
     unsigned numBlanks =
             GameStateMachine::getCurrentMaxLettersPerWord() - wordLen;

@@ -90,6 +90,94 @@ const static Vec2 positions[] =
     Vec2(86, 16),    // 85
     Vec2(87, 16),    // 86
     Vec2(88, 16),    // 87
+    Vec2(2, 2),    // 88
+    Vec2(6, 2),    // 89
+    Vec2(10, 2),    // 90
+    Vec2(2, 2),    // 91
+    Vec2(6, 2),    // 92
+    Vec2(10, 2),    // 93
+    Vec2(2, 2),    // 94
+    Vec2(6, 2),    // 95
+    Vec2(10, 2),    // 96
+    Vec2(2, 2),    // 97
+    Vec2(6, 2),    // 98
+    Vec2(10, 2),    // 99
+    Vec2(2, 2),    // 100
+    Vec2(6, 2),    // 101
+    Vec2(10, 2),    // 102
+    Vec2(88, 16),    // 103
+    Vec2(86, 16),    // 104
+    Vec2(84, 16),    // 105
+    Vec2(80, 16),    // 106
+    Vec2(72, 16),    // 107
+    Vec2(64, 16),    // 108
+    Vec2(56, 16),    // 109
+    Vec2(48, 16),    // 110
+    Vec2(40, 16),    // 111
+    Vec2(36, 16),    // 112
+    Vec2(32, 16),    // 113
+    Vec2(30, 16),    // 114
+    Vec2(28, 16),    // 115
+    Vec2(26, 16),    // 116
+    Vec2(25, 16),    // 117
+    Vec2(24, 16),    // 118
+    Vec2(24, 16),    // 119
+    Vec2(26, 16),    // 120
+    Vec2(28, 16),    // 121
+    Vec2(32, 16),    // 122
+    Vec2(40, 16),    // 123
+    Vec2(48, 16),    // 124
+    Vec2(56, 16),    // 125
+    Vec2(64, 16),    // 126
+    Vec2(72, 16),    // 127
+    Vec2(76, 16),    // 128
+    Vec2(80, 16),    // 129
+    Vec2(82, 16),    // 130
+    Vec2(84, 16),    // 131
+    Vec2(86, 16),    // 132
+    Vec2(87, 16),    // 133
+    Vec2(88, 16),    // 134
+    Vec2(2, 2),    // 135
+    Vec2(2, 2),    // 136
+    Vec2(3, 2),    // 137
+    Vec2(4, 2),    // 138
+    Vec2(5, 2),    // 139
+    Vec2(6, 2),    // 140
+    Vec2(7, 2),    // 141
+    Vec2(8, 2),    // 142
+    Vec2(9, 2),    // 143
+    Vec2(10, 2),    // 144
+    Vec2(6, 2),    // 145
+    Vec2(5, 2),    // 146
+    Vec2(5, 2),    // 147
+    Vec2(4, 2),    // 148
+    Vec2(3, 2),    // 149
+    Vec2(2, 2),    // 150
+    Vec2(2, 2),    // 151
+    Vec2(10, 2),    // 152
+    Vec2(9, 2),    // 153
+    Vec2(9, 2),    // 154
+    Vec2(8, 2),    // 155
+    Vec2(7, 2),    // 156
+    Vec2(6, 2),    // 157
+    Vec2(6, 2),    // 158
+    Vec2(5, 2),    // 159
+    Vec2(3, 2),    // 160
+    Vec2(4, 2),    // 161
+    Vec2(5, 2),    // 162
+    Vec2(6, 2),    // 163
+    Vec2(7, 2),    // 164
+    Vec2(8, 2),    // 165
+    Vec2(8, 2),    // 166
+    Vec2(8, 2),    // 167
+    Vec2(8, 2),    // 168
+    Vec2(8, 2),    // 169
+    Vec2(7, 2),    // 170
+    Vec2(6, 2),    // 171
+    Vec2(5, 2),    // 172
+    Vec2(4, 2),    // 173
+    Vec2(3, 2),    // 174
+    Vec2(2, 2),    // 175
 };
 
 const static AnimObjData animObjData[] =
@@ -115,10 +203,47 @@ const static AnimObjData animObjData[] =
     { 0, 0, &HintSprite, Layer_Sprite, 0, 8, &positions[48] },    // AnimType_HintWindUpSlide 18
     { 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[56] },    // AnimType_HintSlideL 19
     { 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[72] },    // AnimType_HintSlideR 20
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[88] },    // AnimType_NotWord 21
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[89] },    // AnimType_NotWord 22
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[90] },    // AnimType_NotWord 23
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 10, &positions[135] },    // AnimType_SlideL 24
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[145] },    // AnimType_SlideL 25
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[152] },    // AnimType_SlideL 26
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[159] },    // AnimType_SlideR 27
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 10, &positions[166] },    // AnimType_SlideR 28
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[0] },    // AnimType_SlideR 29
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[91] },    // AnimType_OldWord 30
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[92] },    // AnimType_OldWord 31
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[93] },    // AnimType_OldWord 32
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[94] },    // AnimType_NewWord 33
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[95] },    // AnimType_NewWord 34
+    { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[96] },    // AnimType_NewWord 35
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[97] },    // AnimType_EndofRound 36
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[98] },    // AnimType_EndofRound 37
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[99] },    // AnimType_EndofRound 38
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[100] },    // AnimType_Shuffle 39
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[101] },    // AnimType_Shuffle 40
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[102] },    // AnimType_Shuffle 41
+    { 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[103] },    // AnimType_HintSlideL 42
+    { 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[119] },    // AnimType_HintSlideR 43
 };
 
 const static AnimData animData[] =
 {
+    { 1.f, true, 1, &animObjData[0]},    // AnimType_NotWord
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideL
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideR
+    { 1.f, true, 1, &animObjData[0]},    // AnimType_OldWord
+    { 1.5f, true, 1, &animObjData[0]},    // AnimType_NewWord
+    { 1.f, true, 1, &animObjData[0]},    // AnimType_EndofRound
+    { 0.5f, true, 1, &animObjData[0]},    // AnimType_Shuffle
+    { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
+    { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
+    { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
+    { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
+    { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
+    { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideL
+    { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideR
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -133,33 +258,19 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
-    { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
-    { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
-    { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
-    { 1.f, true, 2, &animObjData[6]},    // AnimType_OldWord
-    { 1.5f, true, 2, &animObjData[8]},    // AnimType_NewWord
-    { 1.f, true, 2, &animObjData[10]},    // AnimType_EndofRound
-    { 0.5f, true, 2, &animObjData[12]},    // AnimType_Shuffle
+    { 1.f, true, 3, &animObjData[21]},    // AnimType_NotWord
+    { 0.5f, false, 3, &animObjData[24]},    // AnimType_SlideL
+    { 0.5f, false, 3, &animObjData[27]},    // AnimType_SlideR
+    { 1.f, true, 3, &animObjData[30]},    // AnimType_OldWord
+    { 1.5f, true, 3, &animObjData[33]},    // AnimType_NewWord
+    { 1.f, true, 3, &animObjData[36]},    // AnimType_EndofRound
+    { 0.5f, true, 3, &animObjData[39]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
     { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
     { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
     { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
-    { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
-    { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
-    { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
-    { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
-    { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
-    { 1.f, true, 2, &animObjData[6]},    // AnimType_OldWord
-    { 1.5f, true, 2, &animObjData[8]},    // AnimType_NewWord
-    { 1.f, true, 2, &animObjData[10]},    // AnimType_EndofRound
-    { 0.5f, true, 2, &animObjData[12]},    // AnimType_Shuffle
-    { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
-    { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
-    { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
-    { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
-    { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
-    { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
-    { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
+    { 1.f, true, 1, &animObjData[42]},    // AnimType_HintSlideL
+    { 1.f, true, 1, &animObjData[43]},    // AnimType_HintSlideR
 };
 

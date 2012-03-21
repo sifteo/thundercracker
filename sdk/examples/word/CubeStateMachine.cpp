@@ -102,7 +102,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 queueAnim(AnimType_SlideR);//, vid); // FIXME
                             }
 
-                            unsigned newStart = mLettersStart + state.x - 1 + GameStateMachine::getCurrentMaxLettersPerCube();
+                            unsigned newStart =
+                                    mLettersStart +
+                                    (GameStateMachine::getCurrentMaxLettersPerCube() - 1) +
+                                    (2 - state.x);
                             newStart = (newStart % GameStateMachine::getCurrentMaxLettersPerCube());
                             setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but

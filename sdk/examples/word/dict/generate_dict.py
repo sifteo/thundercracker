@@ -12,7 +12,7 @@ import codecs
 
 seed_word_lens = [3, 4, 5, 6, 8, 9] # FIXME 7 letter words. why not?
 min_nonbonus_anagrams = 2
-min_freq_bonus = 6
+min_freq_bonus = 4
 word_list_leading_spaces = {}
 generate_examples = False
 
@@ -21,6 +21,7 @@ def strip_accents(s):
    return ''.join((c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
 
 def find_anagrams(string, dictionary, letters_per_cube):
+    #print "find_anagrams: " + string + " " + str(letters_per_cube)
     words = {}
     if letters_per_cube == 1:
         for k in range(len(string) + 1):
@@ -104,7 +105,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
                                 
     #print string
     #if len(string) == 9:
-     #   print string +": " + str(words)
+    print string +": [" + str(letters_per_cube) + "] " +str(words)
     return words
 
 def get_word_freq_slow(word, freq_dicts):
@@ -461,6 +462,7 @@ def generate_dict():
     fi.write("const static unsigned char puzzlesNumGoalAnagrams[] =\n")
     fi.write("{\n")
     for word, value in sorted_word_list_used:
+        ltrs_p_c = letters_per_cube[len(word) - 1]    
         if letters_per_cube[len(word) - 1] > 1:            
             anagrams = find_anagrams(word, dictionary, ltrs_p_c).keys()
             anagrams_nonbonus = []
@@ -476,12 +478,14 @@ def generate_dict():
     fi.write("const static unsigned char puzzlesNumPossibleAnagrams[] =\n")
     fi.write("{\n")
     for word, value in sorted_word_list_used:
+        ltrs_p_c = letters_per_cube[len(word) - 1]    
         if letters_per_cube[len(word) - 1] > 1:            
             anagrams = find_anagrams(word, dictionary, ltrs_p_c).keys()
             fi.write("    " + str(len(anagrams)) + ",\t// " + word + ", all anagrams: " + str(anagrams) + "\n")
     fi.write("};\n\n")
 
     for word, value in sorted_word_list_used:
+        ltrs_p_c = letters_per_cube[len(word) - 1]
         fi.write("const static unsigned _puzzlesPossibleWordIndexes_" + word + "[] =\n")
         fi.write("{\n")
         anagrams = find_anagrams(word, dictionary, ltrs_p_c).keys()

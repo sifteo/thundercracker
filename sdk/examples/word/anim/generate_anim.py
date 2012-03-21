@@ -76,13 +76,13 @@ def generate_anim():
         #print anim_data
     
     # for each number of letters max per cube
-    for anim_data_per_max_letters in anim_data:
+    for i in range(0, 3):
         # for each anim datum, figure out how many anim objects and where they start in the array
-        for anim in anim_data_per_max_letters:
+        for anim in anim_data[i]:
             anim['NumObjs'] = 0
             j = 0
             for anim_obj in anim_obj_data:
-                if anim_obj['AnimType'] == anim['AnimType'] and (anim['Letters Per Cube'] == 'x' or anim_obj['Letters Per Cube'] == 'x' or anim_obj['Letters Per Cube'] == anim['Letters Per Cube']):
+                if anim_obj['AnimType'] == anim['AnimType'] and (anim['Letters Per Cube'] == 'x' or anim['Letters Per Cube'] == str(i+1)) and (anim_obj['Letters Per Cube'] == 'x' or anim_obj['Letters Per Cube'] == str(i+1)):
                     anim['NumObjs'] = (anim['NumObjs'] + 1)
                     #print anim
                     if not ('Obj Index' in anim):
