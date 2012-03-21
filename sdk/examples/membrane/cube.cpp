@@ -64,9 +64,7 @@ void GameCube::placeMarker(int id)
 
 Float2 GameCube::velocityFromTilt()
 {
-    Vec2 accel = cube.physicalAccel();
-    const float coeff = 0.1f;
-    return Float2( accel.x * coeff, accel.y * coeff );
+    return cube.physicalAccel() * 0.1f;
 }
 
 bool GameCube::reportMatches(unsigned bits)
@@ -82,7 +80,7 @@ bool GameCube::reportMatches(unsigned bits)
 }
 
 CubeHilighter::CubeHilighter(Cube &cube)
-    : cube(cube), ticker(6), counter(0), pos(-1,-1)
+    : cube(cube), ticker(6), counter(0), pos(Vec2(-1,-1))
 {}
 
 void CubeHilighter::init()
@@ -123,7 +121,7 @@ void CubeHilighter::draw()
                    ((uint8_t)x) | ((uint16_t)(uint8_t)y << 8));
 }
 
-bool CubeHilighter::doHilight(Vec2 requestedPos)
+bool CubeHilighter::doHilight(Int2 requestedPos)
 {
     bool posMatch = pos.x == requestedPos.x && pos.y == requestedPos.y;
 

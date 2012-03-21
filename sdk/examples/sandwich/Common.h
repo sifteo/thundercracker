@@ -35,4 +35,4 @@ using namespace Sifteo;
 #define CORO_END mState=-1;case -1:;}
 
 // Utils
-Cube::Side InferDirection(Vec2 u);
+Cube::Side InferDirection(Int2 u);

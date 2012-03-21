@@ -127,10 +127,9 @@ public:
         /*
          * We respond to the accelerometer
          */
-         
-        Vec2 accel = cube.physicalAccel();
-        Float2 tilt(accel.x, accel.y);
-        tilt *= starTiltSpeed;
+
+        Int2 accel = cube.physicalAccel();
+        Float2 tilt = accel * starTiltSpeed;
         
         /*
          * Update starfield animation
@@ -138,12 +137,12 @@ public:
         
         VidMode_BG0_SPR_BG1 vid(cube.vbuf);
         for (unsigned i = 0; i < numStars; i++) {
-            const Float2 center(64 - 3.5f, 64 - 3.5f);
+            const Float2 center = { 64 - 3.5f, 64 - 3.5f };
             vid.resizeSprite(i, 8, 8);
             vid.setSpriteImage(i, Star, frame % Star.frames);
             vid.moveSprite(i, stars[i].pos + center);
             
-            stars[i].pos += timeStep * (stars[i].velocity + tilt);
+            stars[i].pos += float(timeStep) * (stars[i].velocity + tilt);
             
             if (stars[i].pos.x > 80 || stars[i].pos.x < -80 ||
                 stars[i].pos.y > 80 || stars[i].pos.y < -80)
@@ -157,12 +156,12 @@ public:
         frame++;
         fpsTimespan += timeStep;
 
-        Float2 bgVelocity(accel.x * bgTiltSpeed, accel.y * bgTiltSpeed - bgScrollSpeed);
-        bg += timeStep * bgVelocity;
-        vid.BG0_setPanning(Vec2::round(bg));
-        
+        Float2 bgVelocity = accel * bgTiltSpeed + Vec2(0.0f, -1.0f) * bgScrollSpeed;
+        bg += float(timeStep) * bgVelocity;
+        vid.BG0_setPanning(bg.round());
+
         text += (textTarget - text) * textSpeed;
-        vid.BG1_setPanning(Vec2::round(text));
+        vid.BG1_setPanning(text.round());
     }
 
 private:   

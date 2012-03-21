@@ -11,7 +11,7 @@ class EdgeView : View {
 private:
 
 public:
-	void Init(Vec2 location, Cube::Side side);
+	void Init(Int2 location, Cube::Side side);
 	void Restore();
 	void Update(float dt);	
 };

@@ -18,7 +18,7 @@ static Cube cubes[NUM_CUBES];
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
-    Vec2 accel = cubes[cid].physicalAccel();
+    Byte2 accel = cubes[cid].physicalAccel();
 
     String<64> str;
     str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
@@ -65,9 +65,9 @@ static void init()
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0 vid(cubes[i].vbuf);
 
-            Vec2 pan(-cubes[i].assetProgress(MainAssets,
-                        vid.LCD_width - Kirby.pixelWidth()),
-                    -(int)(vid.LCD_height - Kirby.pixelHeight()) / 2);
+            Int2 pan = Vec2(-cubes[i].assetProgress(MainAssets,
+                                vid.LCD_width - Kirby.pixelWidth()),
+                            -(int)(vid.LCD_height - Kirby.pixelHeight()) / 2);
 
             LOG_VEC2(pan);
             vid.BG0_drawAsset(Vec2(0,0), Kirby, frame);

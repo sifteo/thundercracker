@@ -5,7 +5,7 @@ unsigned Room::Id() const {
   return (int)(this - gGame.GetMap()->GetRoom(0));
 }
 
-Vec2 Room::LocalCenter(unsigned subdiv) const { 
+Int2 Room::LocalCenter(unsigned subdiv) const { 
   if (subdiv) {
     ASSERT(mUserdataType == USERDATA_SUBDIV);
     if (mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG) {
@@ -19,7 +19,7 @@ Vec2 Room::LocalCenter(unsigned subdiv) const {
   return Vec2(Data()->centerX, Data()->centerY); 
 }
 
-Vec2 Room::Location() const {
+Int2 Room::Location() const {
   return gGame.GetMap()->GetLocation(Id());
 }
 

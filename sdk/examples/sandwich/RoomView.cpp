@@ -71,7 +71,7 @@ void RoomView::Update(float dt) {
   // item hover
   if (GetRoom()->HasItem()) {
     const unsigned hoverTime = (gGame.AnimFrame() - mStartFrame) % HOVER_COUNT;
-    Vec2 p = 16 * GetRoom()->LocalCenter(0);
+    Int2 p = 16 * GetRoom()->LocalCenter(0);
     mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + kHoverTable[hoverTime]);
   }
 }
@@ -84,7 +84,7 @@ Room* RoomView::GetRoom() const {
   return gGame.GetMap()->GetRoom(mRoomId);
 }
 
-Vec2 RoomView::Location() const {
+Int2 RoomView::Location() const {
   return gGame.GetMap()->GetLocation(mRoomId);
 }
 
@@ -112,7 +112,7 @@ void RoomView::SetPlayerFrame(unsigned frame) {
 }
 
 void RoomView::UpdatePlayer() {
-  Vec2 localPosition = gGame.GetPlayer()->Position() - 128 * Location();
+  Int2 localPosition = gGame.GetPlayer()->Position() - 128 * Location();
   ViewMode gfx = Parent()->Graphics();
   gfx.setSpriteImage(PLAYER_SPRITE_ID, gGame.GetPlayer()->AnimFrame());
   gfx.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
@@ -123,7 +123,7 @@ void RoomView::UpdatePlayer() {
 
 void RoomView::DrawPlayerFalling(int height) {
   ViewMode mode = Parent()->Graphics();
-  Vec2 localCenter = 16 * GetRoom()->LocalCenter(0);
+  Int2 localCenter = 16 * GetRoom()->LocalCenter(0);
   mode.setSpriteImage(PLAYER_SPRITE_ID, PlayerStand.index + (2<<4));
   mode.moveSprite(PLAYER_SPRITE_ID, localCenter.x-16, localCenter.y-32-height);
   mode.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
@@ -144,18 +144,18 @@ void RoomView::ShowItem() {
   ViewMode mode = Parent()->Graphics();
   mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
   mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * pRoom->LocalCenter(0);
+  Int2 p = 16 * pRoom->LocalCenter(0);
   mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
-void RoomView::SetEquipPosition(Vec2 p) {
+void RoomView::SetEquipPosition(Int2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
   ViewMode gfx = Parent()->Graphics();
   gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
   gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
 }
   
-void RoomView::SetItemPosition(Vec2 p) {
+void RoomView::SetItemPosition(Int2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
   Parent()->Graphics().moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
@@ -174,7 +174,7 @@ void RoomView::HideEquip() {
 
 void RoomView::DrawTrapdoorFrame(int frame) {
   ViewMode mode = Parent()->Graphics();
-  Vec2 firstTile = GetRoom()->LocalCenter(0) - Vec2(2,2);
+  Int2 firstTile = GetRoom()->LocalCenter(0) - Vec2(2,2);
   for(unsigned y=0; y<4; ++y)
   for(unsigned x=0; x<4; ++x) {
     mode.BG0_drawAsset(

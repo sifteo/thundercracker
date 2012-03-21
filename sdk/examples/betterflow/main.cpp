@@ -50,7 +50,7 @@ static void DrawColumn(Cube* pCube, int x) {
 		// drawing a blank column
 		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row+2), BgTile);
+			g.BG0_drawAsset(Vec2<int>(addr, row+2), BgTile);
 		}
 
 	}

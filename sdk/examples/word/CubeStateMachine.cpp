@@ -487,7 +487,7 @@ void CubeStateMachine::calcSpriteParams(unsigned i)
             mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
                                                                              angle * 1.25f),
                                                     WordGame::random.uniform(32.f, 52.f));
-            mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
+            mSpriteParams.mEndPositions[i] += Vec2(56.f, 56.f);
             mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
         }
         break;
@@ -942,7 +942,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         &TeethNewWord5,
     };
 
-    const Vec2 TEETH_NUM_POS(4, 6);
+    const Int2 TEETH_NUM_POS = {4, 6};
     STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < (ImageIndex)arraysize(teethImages));
@@ -1340,9 +1340,8 @@ vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
 #endif
 }
 
-void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
+void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, Int2 position, const char* string)
 {
-    Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
 
     const unsigned MAX_SCORE_STRLEN = 7;

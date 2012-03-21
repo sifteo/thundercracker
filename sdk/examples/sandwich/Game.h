@@ -66,9 +66,9 @@ private:
   // helpers
   void CheckMapNeighbors();
 
-  void WalkTo(Vec2 position, bool dosfx=true);
+  void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
-  void TeleportTo(const MapData& m, Vec2 position);
+  void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);

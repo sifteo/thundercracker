@@ -39,7 +39,7 @@ public:
     inline IntroState getState() const { return m_state; }
 	
 private:
-    Vec2 LerpPosition( Vec2 &start, Vec2 &end, float timePercent );
+    Int2 LerpPosition( Int2 &start, Int2 &end, float timePercent );
 
     IntroState m_state;
 	float m_fTimer;

@@ -67,7 +67,7 @@ void ViewSlot::EvictSecondaryView(unsigned viewId) {
 	}
 }
 
-bool ViewSlot::SetLocationView(Vec2 location, Cube::Side side, bool force, bool doFlush) {
+bool ViewSlot::SetLocationView(Int2 location, Cube::Side side, bool force, bool doFlush) {
 	unsigned view = side == SIDE_NONE ? VIEW_ROOM : VIEW_EDGE;
 	if (!force && mFlags.view == view) {
 		if (view == VIEW_ROOM && mView.room.Location() == location) { return false; }
@@ -163,7 +163,7 @@ void ViewSlot::Update(float dt) {
 	}
 }
   
-bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
+bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gMap->Data();
 	Cube::Side side = SIDE_NONE;
@@ -270,7 +270,7 @@ ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
 #endif
 
 Cube::Side ViewSlot::VirtualTiltDirection() const {
-  Vec2 accel = GetCube()->virtualAccel();
+  Int2 accel = GetCube()->virtualAccel();
   if (accel.y < -TILT_THRESHOLD) {
     return 0;
   } else if (accel.x < -TILT_THRESHOLD) {

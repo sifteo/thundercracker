@@ -739,7 +739,7 @@ bool Game::no_match_mismatch_side() const
     side, but the gems can never touch.
     */
 
-	Vec2 aBuddies[3];
+	Int2 aBuddies[3];
 	int iNumBuddies = 0;
 
 	for( int i = 0; i < NUM_CUBES; i++ )

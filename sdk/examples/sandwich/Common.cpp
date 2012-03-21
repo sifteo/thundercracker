@@ -2,7 +2,7 @@
 
 Math::Random gRandom;
 
-Cube::Side InferDirection(Vec2 u) {
+Cube::Side InferDirection(Int2 u) {
 	if (u.x > 0) {
 		return SIDE_RIGHT;
 	} else if (u.x < 0) {
