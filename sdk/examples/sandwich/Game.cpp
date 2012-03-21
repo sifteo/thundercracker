@@ -535,10 +535,10 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
   if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
   System::paintSync();
-  mPlayer.CurrentView()->Parent()->Restore();
-  System::paintSync();
   OnTriggerEvent(pNpc->trigger.eventType);
+  mPlayer.CurrentView()->Parent()->Restore(false);
   RestorePearlIdle();
+  System::paintSync();
 }
 
 void Game::OnDropEquipment(Room *pRoom) {
@@ -568,7 +568,7 @@ void Game::OnTriggerEvent(unsigned id) {
       mMap.RefreshTriggers();
       for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
         if (p->IsShowingRoom()) {
-          p->Restore();
+          p->Restore(false);
         }
       }
       break;

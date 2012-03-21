@@ -16,10 +16,10 @@ void Game::MainLoop() {
 	}
 
 	#if FAST_FORWARD
-	Cube* pPrimary = gCubes;
+		Cube* pPrimary = gCubes;
 	#else
-	PlayMusic(music_sting, false);
-	Cube* pPrimary = IntroCutscene();
+		PlayMusic(music_sting, false);
+		Cube* pPrimary = IntroCutscene();
 	#endif
 
 	//---------------------------------------------------------------------------
