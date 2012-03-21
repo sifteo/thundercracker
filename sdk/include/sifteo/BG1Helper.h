@@ -68,7 +68,7 @@ public:
         Clear();
     }
 
-    void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    void DrawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;
@@ -86,7 +86,7 @@ public:
         ASSERT( getBitSetCount() <= MAX_TILES );
     }
 
-    void DrawAsset( const Vec2 &point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0 )
+    void DrawAsset(Int2 point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;
@@ -108,7 +108,7 @@ public:
     }
 
 	//draw a partial asset.  Pass in the position, xy min points, and width/height
-    void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    void DrawPartialAsset(Int2 point, Int2 offset, Int2 size, const Sifteo::AssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         ASSERT( size.x > 0 && size.y > 0 );
@@ -128,16 +128,16 @@ public:
     }
 
 
-    void DrawText(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    void DrawText(Int2 point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             DrawAsset(point, font, index);
     }
 
 
-    void DrawText( const Vec2 &point, const Sifteo::AssetImage &font, const char *str )
+    void DrawText(Int2 point, const Sifteo::AssetImage &font, const char *str)
     {
-        Vec2 p = point;
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {

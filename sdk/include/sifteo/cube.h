@@ -21,50 +21,32 @@
 
 namespace Sifteo {
 
-/**
- * These lookup tables should be relocated to an external translation unit;
- * their inclusion here is tomporary.
- */
-
 // unit vectors for directions
-static const Vec2 kSideToUnit[4] = {
-  Vec2(0, -1),
-  Vec2(-1, 0),
-  Vec2(0, 1),
-  Vec2(1, 0)
+static const Byte2 kSideToUnit[4] = {
+  {  0, -1 },
+  { -1,  0 },
+  {  0,  1 },
+  {  1,  0 }
 };
 
 // complex rotation vectors for directions
-static const Vec2 kSideToQ[4] = { 
-  Vec2(1,0),
-  Vec2(0,1),
-  Vec2(-1,0),
-  Vec2(0,-1)
+static const Byte2 kSideToQ[4] = { 
+  {  1,  0 },
+  {  0,  1 },
+  { -1,  0 },
+  {  0, -1 }
 };
 
-#ifdef SIFTEO_SIMULATOR
-
 // internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
-  VidMode::ROT_NORMAL,
-  VidMode::ROT_LEFT_90,
-  VidMode::ROT_180,
-  VidMode::ROT_RIGHT_90
-};
-
-#else
-// internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
+static const uint8_t kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
   VidMode::ROT_RIGHT_90,
   VidMode::ROT_180,
   VidMode::ROT_LEFT_90
 };
 
-#endif
-
 // internal -- used by orientTo()
-static const int kOrientationTable[4][4] = {
+static const uint8_t kOrientationTable[4][4] = {
   {2,1,0,3},
   {3,2,1,0},
   {0,3,2,1},
@@ -171,7 +153,7 @@ class Cube {
         return SIDE_UNDEFINED;
     }
     
-    Vec2 physicalAccel() const {
+    Byte2 physicalAccel() const {
         _SYSAccelState state = _SYS_getAccel(id());
         return Vec2(state.x, state.y);
     }
@@ -209,7 +191,7 @@ class Cube {
         ASSERT(topSide >= 0);
         ASSERT(topSide < 4);
         VidMode mode(vbuf);
-        mode.setRotation(kSideToRotation[topSide]);
+        mode.setRotation(VidMode::Rotation(kSideToRotation[topSide]));
     }
     
     void orientTo(const Cube& src) {
@@ -261,7 +243,7 @@ class Cube {
         return physicalToVirtual(physicalSideOf(cube));
     }
     
-    Vec2 virtualAccel() const {
+    Byte2 virtualAccel() const {
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         return physicalAccel() * kSideToQ[rot];

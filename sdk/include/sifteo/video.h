@@ -222,7 +222,7 @@ class VidMode_BG0 : public VidMode {
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
     static const unsigned BG0_height = _SYS_VRAM_BG0_WIDTH;
 
-    void BG0_setPanning(Vec2 pixels) {
+    void BG0_setPanning(Int2 pixels) {
         pixels.x = pixels.x % (int)(BG0_width * TILE);
         pixels.y = pixels.y % (int)(BG0_height * TILE);
         if (pixels.x < 0) pixels.x += BG0_width * TILE;
@@ -230,15 +230,15 @@ class VidMode_BG0 : public VidMode {
         buf.poke(offsetof(_SYSVideoRAM, bg0_x) / 2, pixels.x | (pixels.y << 8));
     }
 
-    uint16_t BG0_addr(const Vec2 &point) {
+    uint16_t BG0_addr(Int2 point) {
         return point.x + (point.y * BG0_width);
     }
 
-    void BG0_putTile(const Vec2 &point, unsigned index) {
+    void BG0_putTile(Int2 point, unsigned index) {
         buf.pokei(BG0_addr(point), index);
     }
 
-    void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG0_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
@@ -248,7 +248,7 @@ class VidMode_BG0 : public VidMode {
     }
 
     //draw a partial asset.  Pass in the position, xy min points, and width/height
-    void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG0_drawPartialAsset(Int2 point, Int2 offset, Int2 size, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         ASSERT( offset.x >= 0 && offset.y >= 0 );
         ASSERT( size.x >= 0 && size.y >= 0 );
@@ -273,14 +273,14 @@ class VidMode_BG0 : public VidMode {
      *      here! Ugh.
      */
 
-    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    void BG0_text(Int2 point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             BG0_drawAsset(point, font, index);
     }
 
-    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
-        Vec2 p = point;
+    void BG0_text(Int2 point, const Sifteo::AssetImage &font, const char *str) {
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {
@@ -332,12 +332,12 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
-    void BG0_text(const Vec2 &point, char c) {
+    void BG0_text(Int2 point, char c) {
         BG0_putTile(point, c - ' ');
     }
 
-    void BG0_text(const Vec2 &point, const char *str) {
-        Vec2 p = point;
+    void BG0_text(Int2 point, const char *str) {
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {
@@ -352,7 +352,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         }
     }
 
-    void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
+    void BG0_progressBar(Int2 point, int pixelWidth, int tileHeight=1) {
         /*
          * XXX: This is kind of the hugest hack.. we should have some good way
          *      of using "well-known assets" from ROM somehow. This could either
@@ -429,7 +429,7 @@ public:
         return buf.peek(offsetof(_SYSVideoRAM, mode)) == _SYS_VM_BG0_SPR_BG1;
     }
 
-    void BG1_setPanning(const Vec2 &pos)
+    void BG1_setPanning(Int2 pos)
     {
         _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
             ((uint8_t)pos.x) | ((uint16_t)(uint8_t)pos.y << 8));
@@ -474,7 +474,7 @@ public:
         _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
     }
     
-    void resizeSprite(int id, const Vec2 &size)
+    void resizeSprite(int id, Int2 size)
     {
         resizeSprite(id, size.x, size.y);
     }
@@ -489,7 +489,7 @@ public:
         _SYS_vbuf_spr_move(&buf.sys, id, px, py);
     }
 
-    void moveSprite(int id, const Vec2 &pos)
+    void moveSprite(int id, Int2 pos)
     {
         _SYS_vbuf_spr_move(&buf.sys, id, pos.x, pos.y);
     }
@@ -556,15 +556,15 @@ class VidMode_BG2 : public VidMode {
                         (const uint16_t *)&a, 6);
     }
 
-    uint16_t BG2_addr(const Vec2 &point) {
+    uint16_t BG2_addr(Int2 point) {
         return point.x + (point.y * BG2_width);
     }
 
-    void BG2_putTile(const Vec2 &point, unsigned index) {
+    void BG2_putTile(Int2 point, unsigned index) {
         buf.pokei(BG2_addr(point), index);
     }
 
-    void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG2_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         uint16_t addr = BG2_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         unsigned base = asset.group->cubes[buf.cubeID].baseAddr;

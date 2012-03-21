@@ -96,126 +96,135 @@ float inline cosf(float x)
 
 
 /**
- * 2-element float vector
+ * Generalized two-element cartesian coordinate vector.
  */
 
-struct Float2 {
-    Float2()
-        : x(0), y(0) {}
+template <typename T> struct Vector2 {
+    T x, y;
 
-    Float2(float _x, float _y)
-        : x(_x), y(_y) {}
-
-    static Float2 polar(float angle, float magnitude) {
-        Float2 f;
-        f.setPolar(angle, magnitude);
-        return f;
-    }
-
-    void set(float _x, float _y) {
+    /**
+     * Modify this vector's value in-place.
+     */
+    void set(T _x, T _y) {
         x = _x;
         y = _y;
     }
 
+    /**
+     * Set this vector to a new cartesian value, given a value in polar coordinates.
+     */
     void setPolar(float angle, float magnitude) {
-		float s, c;
-		sincosf(angle, &s, &c);
+        float s, c;
+        sincosf(angle, &s, &c);
         x = c * magnitude;
         y = s * magnitude;
     }
-	
-	Float2 rotate(float angle) const {
-		float s, c;
-		sincosf(angle, &s, &c);
-        return Float2(x*c - y*s, x*s + y*c);
-	}
-		
-    inline float len2() const {
-		return ( x * x + y * y );
-	}
+
+    /**
+     * Rotate this vector about the origin counterclockwise by 'angle' radians.
+     */
+    Vector2<T> rotate(float angle) const {
+        float s, c;
+        sincosf(angle, &s, &c);
+        Vector2<T> result = { x*c - y*s, x*s + y*c };
+        return result;
+    }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector, squared.
+     * This avoids the costly square root calculation.
+     */
+    T len2() const {
+        return ( x * x + y * y );
+    }
     
-    float x, y;
-};
-
-inline Float2 operator-(const Float2& u) { return Float2(-u.x, -u.y); }
-inline Float2 operator+(const Float2& u, const Float2& v) { return Float2(u.x+v.x, u.y+v.y); }
-inline Float2 operator += (Float2& u, const Float2& v) { return Float2(u.x+=v.x, u.y+=v.y); }
-inline Float2 operator-(const Float2& u, const Float2& v) { return Float2(u.x-v.x, u.y-v.y); }
-inline Float2 operator -= (Float2& u, const Float2& v) { return Float2(u.x-=v.x, u.y-=v.y); }
-inline Float2 operator*(float k, const Float2& v) { return Float2(k*v.x, k*v.y); }
-inline Float2 operator*(const Float2& v, float k) { return Float2(k*v.x, k*v.y); }
-inline Float2 operator*(const Float2& u, const Float2& v) { return Float2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
-inline Float2 operator/(const Float2& u, float k) { return Float2(u.x/k, u.y/k); }
-inline Float2 operator += (Float2& u, float k) { return Float2(u.x+=k, u.y+=k); }
-inline Float2 operator *= (Float2& u, float k) { return Float2(u.x*=k, u.y*=k); }
-inline bool operator==(const Float2& u, const Float2& v) { return u.x == v.x && u.y == v.y; }
-inline bool operator!=(const Float2& u, const Float2& v) { return u.x != v.x || u.y != v.y; }
-
-/**
- * 2-element integer vector
- */
-
-struct Vec2 {
-	Vec2()
-        : x(0), y(0) {}
-
-	Vec2(int _x, int _y)
-        : x(_x), y(_y) {}
-
-    void set(int _x, int _y) {
-        x = _x;
-        y = _y;
+    /**
+     * Round a floating point vector to the nearest integer.
+     */
+    Vector2<int> round() const {
+        Vector2<int> result = { x + 0.5f, y + 0.5f };
+        return result;
     }
 
-	// Implicit conversion from float (truncation)
-	Vec2(const Float2 &other)
-        : x((int)other.x), y((int)other.y) {}
-
-    // Explicit rounding
-    static Vec2 round(const Float2 &other) {
-        return Vec2((int)(other.x + 0.5f), (int)(other.y + 0.5f));
+    /**
+     * Explicitly cast this vector to another vector type, using
+     * default C++ truncation or extension rules.
+     */
+    template <typename R> Vector2<R> cast() const {
+        Vector2<R> result = { x, y };
+        return result;
     }
-
-    int x, y;
+    
+    /// Shortcuts for common explicit casts
+    Vector2<int> toInt() const { return cast<int>(); }
+    Vector2<int> toFloat() const { return cast<float>(); }
+    Vector2<int> toDouble() const { return cast<double>(); }
+    
+    /// Implicit casts
+    operator Vector2<int>            () const { return cast<int>(); }
+    operator Vector2<unsigned>       () const { return cast<unsigned>(); }
+    operator Vector2<short>          () const { return cast<short>(); }
+    operator Vector2<unsigned short> () const { return cast<unsigned short>(); }
+    operator Vector2<int8_t>         () const { return cast<int8_t>(); }
+    operator Vector2<uint8_t>        () const { return cast<uint8_t>(); }
+    operator Vector2<float>          () const { return cast<float>(); }
+    operator Vector2<double>         () const { return cast<double>(); }
 };
 
-inline Vec2 operator<<(const Vec2& u, int shift) { return Vec2(u.x<<shift, u.y<<shift); }
-inline Vec2 operator>>(const Vec2& u, int shift) { return Vec2(u.x>>shift, u.y>>shift); }
-inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
-inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
-inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
-inline Vec2 operator -= (Vec2& u, const Vec2& v) { return Vec2(u.x-=v.x, u.y-=v.y); }
-inline Vec2 operator*(int k, const Vec2& v) { return Vec2(k*v.x, k*v.y); }
-inline Vec2 operator*(const Vec2& v, int k) { return Vec2(k*v.x, k*v.y); }
-inline Vec2 operator*(const Vec2& u, const Vec2& v) { return Vec2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
-inline Vec2 operator/(const Vec2& u, const int k) { return Vec2(u.x/k, u.y/k); }
-inline bool operator==(const Vec2& u, const Vec2& v) { return u.x == v.x && u.y == v.y; }
-inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y != v.y; }
-
-
+typedef Vector2<int>                Int2;
+typedef Vector2<unsigned>           UInt2;
+typedef Vector2<short>              Short2;
+typedef Vector2<unsigned short>     UShort2;
+typedef Vector2<int8_t>             Byte2;
+typedef Vector2<uint8_t>            UByte2;
+typedef Vector2<float>              Float2;
+typedef Vector2<double>             Double2;
 
 /**
- * Integer rectangle, stored as Left Top Right Bottom (LTRB).
+ * Create a Vector2, from a set of (x,y) coordinates.
+ * This is a standalone function, instead of a constructor,
+ * so that Vector2 can remain a POD type, and it can be used
+ * in unions.
  */
+ 
+template <typename T> inline Vector2<T> Vec2(T x, T y) {
+    Vector2<T> result;
+    result.set(x, y);
+    return result;
+}
 
-struct Rect {
-    Rect(int _left, int _top, int _right, int _bottom)
-        : left(_left), top(_top), right(_right), bottom(_bottom) {}
+// Vector operations
+template <typename T> inline Vector2<T> operator-(Vector2<T> u) { return Vec2<T>(-u.x, -u.y); }
+template <typename T> inline Vector2<T> operator+=(Vector2<T> &u, Vector2<T> v) { return Vec2<T>(u.x+=v.x, u.y+=v.y); }
+template <typename T> inline Vector2<T> operator-=(Vector2<T> &u, Vector2<T> v) { return Vec2<T>(u.x-=v.x, u.y-=v.y); }
+template <typename T> inline Vector2<T> operator+(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x+v.x, u.y+v.y); }
+template <typename T> inline Vector2<T> operator-(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x-v.x, u.y-v.y); }
+template <typename T> inline Vector2<T> operator*(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x*v.x, u.y*v.y); }
+template <typename T> inline bool operator==(Vector2<T> u, Vector2<T> v) { return u.x == v.x && u.y == v.y; }
+template <typename T> inline bool operator!=(Vector2<T> u, Vector2<T> v) { return u.x != v.x || u.y != v.y; }
 
-    int left, top, right, bottom;
-};
+// Scalar int promotion
+template <typename T> inline Int2 operator*(int k, Vector2<T> v) { return Vec2<int>(k*v.x, k*v.y); }
+template <typename T> inline Int2 operator*(Vector2<T> v, int k) { return Vec2<int>(k*v.x, k*v.y); }
+template <typename T> inline Int2 operator/(Vector2<T> v, int k) { return Vec2<int>(v.x/k, v.y/k); }
+template <typename T> inline Int2 operator+=(Vector2<T> &u, int k) { return Vec2<int>(u.x+=k, u.y+=k); }
+template <typename T> inline Int2 operator*=(Vector2<T> &u, int k) { return Vec2<int>(u.x*=k, u.y*=k); }
+template <typename T> inline Int2 operator<<(Vector2<T> u, int shift) { return Vec2<int>(u.x<<shift, u.y<<shift); }
+template <typename T> inline Int2 operator>>(Vector2<T> u, int shift) { return Vec2<int>(u.x>>shift, u.y>>shift); }
 
+// Scalar float promotion
+template <typename T> inline Float2 operator*(float k, Vector2<T> v) { return Vec2<float>(k*v.x, k*v.y); }
+template <typename T> inline Float2 operator*(Vector2<T> v, float k) { return Vec2<float>(k*v.x, k*v.y); }
+template <typename T> inline Float2 operator/(Vector2<T> v, float k) { return Vec2<float>(v.x/k, v.y/k); }
+template <typename T> inline Float2 operator+=(Vector2<T> &u, float k) { return Vec2<float>(u.x+=k, u.y+=k); }
+template <typename T> inline Float2 operator*=(Vector2<T> &u, float k) { return Vec2<float>(u.x*=k, u.y*=k); }
 
-/**
- * Integer rectangle, stored as an origin point and width/height.
- */
-
-struct RectWH {
-    RectWH(int _x, int _y, int _width, int _height)
-        : x(_x), y(_y), width(_width), height(_height) {}
-
-    int x, y, width, height;
-};
+// Scalar double promotion
+template <typename T> inline Double2 operator*(double k, Vector2<T> v) { return Vec2<double>(k*v.x, k*v.y); }
+template <typename T> inline Double2 operator*(Vector2<T> v, double k) { return Vec2<double>(k*v.x, k*v.y); }
+template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return Vec2<double>(v.x/k, v.y/k); }
+template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return Vec2<double>(u.x+=k, u.y+=k); }
+template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return Vec2<double>(u.x*=k, u.y*=k); }
 
 
 /**
@@ -374,6 +383,11 @@ struct AffineMatrix {
                             0, 1, y);
     }
 
+    static AffineMatrix translation(Float2 v) {
+        return AffineMatrix(1, 0, v.x,
+                            0, 1, v.y);
+    }
+
     static AffineMatrix rotation(float angle) {
         float s, c;
         sincosf(angle, &s, &c);
@@ -396,6 +410,10 @@ struct AffineMatrix {
 
     void translate(float x, float y) {
         *this *= translation(x, y);
+    }
+
+    void translate(Float2 v) {
+        *this *= translation(v);
     }
 
     void rotate(float angle) {
