@@ -35,9 +35,7 @@ void Game::Paint(bool sync) {
   mAnimFrames++;
 
   #if PLAYTESTING_HACKS
-    Cube* pCube = mPlayer.View()->GetCube();
-    _SYSShakeState shakeState = _SYS_getShake(pCube->id());
-    if (shakeState == SHAKING) {
+    if (mPlayer.View()->GetCube()->isShaking()) {
       if (sShakeTime < 0.0f) {
         sShakeTime = 0.f;
       } else {

@@ -175,6 +175,10 @@ class Cube {
         return _SYS_getTilt(id());
     }
 
+    bool isShaking() const {
+      return _SYS_getShake(id()) == SHAKING;
+    }
+
     /**
      * Retrieve the current LCD rotation from the video buffer.
      */
