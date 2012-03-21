@@ -105,7 +105,7 @@ void CubeWrapper::Draw()
 	{
 		case Game::STATE_SPLASH:
 		{
-			m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
+            //m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
 			break;
 		}
         case Game::STATE_INTRO:
@@ -134,6 +134,9 @@ void CubeWrapper::Draw()
                             DrawMessageBoxWithText( pPuzzle->m_pInstr );
                             break;
                         }
+
+                        if( isEmpty() )
+                            m_vid.BG0_drawAsset(Vec2(0,0), Lumes_Neutral, 0);
                     }
 
                     DrawGrid();
@@ -269,7 +272,47 @@ void CubeWrapper::Draw()
         case Game::STATE_GOODJOB:
         {
             TurnOffSprites();
-            DrawMessageBoxWithText( "Good Job" );
+
+            if( Game::Inst().getStateTime() < Game::LUMES_FACE_TIME )
+            {
+                m_bg1helper.Clear();
+                m_bg1helper.Flush();
+                m_vid.BG0_drawAsset(Vec2(0,0), Lumes_Happy, 0);
+            }
+            else
+                DrawMessageBoxWithText( "Good Job" );
+            break;
+        }
+        case Game::STATE_FAILPUZZLE:
+        {
+            TurnOffSprites();
+
+            if( Game::Inst().getStateTime() < Game::LUMES_FACE_TIME )
+                m_vid.BG0_drawAsset(Vec2(0,0), Lumes_Sad, 0);
+            else
+            {
+                switch( Game::Inst().getWrapperIndex( this ) )
+                {
+                    case 0:
+                    {
+                        DrawMessageBoxWithText( "Oops.  Try again!" );
+                        break;
+                    }
+                    case 1:
+                    {
+                        m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
+                        break;
+                    }
+                    case 2:
+                    {
+                        m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Continue, 0);
+                        break;
+                    }
+                    default:
+                        m_vid.clear( GemEmpty.tiles[0] );
+                        break;
+                }
+            }
             break;
         }
         case Game::STATE_NEXTPUZZLE:
@@ -296,7 +339,9 @@ void CubeWrapper::Draw()
             }
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
-                DrawMessageBoxWithText( "Touch to Begin" );
+                m_bg1helper.Clear();
+                m_bg1helper.Flush();
+                m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Continue, 0);
             }
             break;
         }
@@ -751,6 +796,14 @@ void CubeWrapper::Touch()
                 Game::Inst().ReturnToMainMenu();
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
                 Game::Inst().setState( Game::STATE_PLAYING );
+            break;
+        }
+        case Game::STATE_FAILPUZZLE:
+        {
+            if( Game::Inst().getWrapperIndex( this ) == 1 )
+                Game::Inst().ReturnToMainMenu();
+            else if( Game::Inst().getWrapperIndex( this ) == 2 )
+                Game::Inst().gotoNextPuzzle( false );
             break;
         }
         default:

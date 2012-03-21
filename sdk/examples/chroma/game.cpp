@@ -20,7 +20,8 @@ unsigned int Game::s_HighCubes[ Game::NUM_HIGH_SCORES ] =
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
 const float Game::COMBO_TIME_THRESHOLD = 2.5f;
-const float Game::GOODJOB_TIME = 2.0f;
+const float Game::LUMES_FACE_TIME = 2.0f;
+const float Game::FULLGOODJOB_TIME = 4.0f;
 
 
 Math::Random Game::random;
@@ -161,7 +162,7 @@ void Game::Update()
 	}
     else if( m_state == STATE_GOODJOB )
     {
-        if( m_stateTime > GOODJOB_TIME )
+        if( m_stateTime > FULLGOODJOB_TIME )
         {
             gotoNextPuzzle( true );
         }
@@ -1000,7 +1001,8 @@ void Game::check_puzzle()
         {
             //did we lose?
             if( NoMatches() )
-                gotoNextPuzzle( false );
+                setState( STATE_FAILPUZZLE );
+                //gotoNextPuzzle( false );
             return;
         }
     }

@@ -37,6 +37,7 @@ public:
         STATE_DYING,
 		STATE_POSTGAME,
         STATE_GOODJOB,
+        STATE_FAILPUZZLE,
         STATE_NEXTPUZZLE,
         STATE_GAMEMENU,
 	} GameState;
@@ -65,7 +66,9 @@ public:
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
     static const int MAX_MULTIPLIER = 7;
-    static const float GOODJOB_TIME;
+    static const float LUMES_FACE_TIME;
+    //show lumes + "Good job"
+    static const float FULLGOODJOB_TIME;
 
 
     //number of dots needed for certain thresholds
@@ -97,6 +100,7 @@ public:
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	inline GameState getState() const { return m_state; }
+    inline float getStateTime() const { return m_stateTime; }
     void setState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
@@ -157,6 +161,7 @@ public:
     bool AreMovesLegal() const;
 
     void ReturnToMainMenu();
+    void gotoNextPuzzle( bool bAdvance );
 
 private:
 	void TestMatches();
@@ -164,7 +169,6 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void gotoNextPuzzle( bool bAdvance );
 
 	bool m_bTestMatches;
 	//how much our current dot is worth

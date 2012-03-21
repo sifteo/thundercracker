@@ -44,7 +44,7 @@ FixedExplode5 = image{"fixedExplode5.png", height=32}
 FixedExplode6 = image{"fixedExplode6.png", height=32}
 FixedExplode7 = image{"fixedExplode7.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
-Cover = image{"cover.png"}
+--Cover = image{"cover.png"}
 --special dots
 hyperdot_idle = image{"hyperball_idle.png", height=32}
 hyperdot_explode = image{"hyperball_explode.png", height=32}
@@ -92,6 +92,11 @@ UI_Game_Menu_Continue = image{"ui_game_menu_continue.png"}
 White = image{"White.png"}
 
 bubbles = image{"bubbles.png", height=16, pinned=true}
+
+--lumes
+Lumes_Happy = image{"lumes_happy.png"}
+Lumes_Neutral = image{"lumes_inprogress.png"}
+Lumes_Sad = image{"lumes_sad.png"}
 
 --sounds
 astrokraut = sound{"astrokraut.raw", encode="PCM"}
