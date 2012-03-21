@@ -268,6 +268,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_GOODJOB:
         {
+            TurnOffSprites();
             DrawMessageBoxWithText( "Good Job" );
             break;
         }
