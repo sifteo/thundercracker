@@ -112,7 +112,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                             // need to break word now
                             WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                         }
-
                     }
                     break;
 

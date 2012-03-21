@@ -138,46 +138,53 @@ const static Vec2 positions[] =
     Vec2(87, 16),    // 133
     Vec2(88, 16),    // 134
     Vec2(2, 2),    // 135
-    Vec2(2, 2),    // 136
-    Vec2(3, 2),    // 137
-    Vec2(4, 2),    // 138
-    Vec2(5, 2),    // 139
-    Vec2(6, 2),    // 140
-    Vec2(7, 2),    // 141
-    Vec2(8, 2),    // 142
-    Vec2(9, 2),    // 143
+    Vec2(3, 2),    // 136
+    Vec2(4, 2),    // 137
+    Vec2(5, 2),    // 138
+    Vec2(6, 2),    // 139
+    Vec2(7, 2),    // 140
+    Vec2(8, 2),    // 141
+    Vec2(9, 2),    // 142
+    Vec2(10, 2),    // 143
     Vec2(10, 2),    // 144
     Vec2(6, 2),    // 145
-    Vec2(5, 2),    // 146
+    Vec2(6, 2),    // 146
     Vec2(5, 2),    // 147
     Vec2(4, 2),    // 148
     Vec2(3, 2),    // 149
     Vec2(2, 2),    // 150
     Vec2(2, 2),    // 151
     Vec2(10, 2),    // 152
-    Vec2(9, 2),    // 153
+    Vec2(10, 2),    // 153
     Vec2(9, 2),    // 154
     Vec2(8, 2),    // 155
     Vec2(7, 2),    // 156
     Vec2(6, 2),    // 157
     Vec2(6, 2),    // 158
-    Vec2(5, 2),    // 159
-    Vec2(3, 2),    // 160
-    Vec2(4, 2),    // 161
-    Vec2(5, 2),    // 162
-    Vec2(6, 2),    // 163
-    Vec2(7, 2),    // 164
-    Vec2(8, 2),    // 165
-    Vec2(8, 2),    // 166
-    Vec2(8, 2),    // 167
-    Vec2(8, 2),    // 168
+    Vec2(2, 2),    // 159
+    Vec2(2, 2),    // 160
+    Vec2(3, 2),    // 161
+    Vec2(4, 2),    // 162
+    Vec2(5, 2),    // 163
+    Vec2(6, 2),    // 164
+    Vec2(6, 2),    // 165
+    Vec2(6, 2),    // 166
+    Vec2(6, 2),    // 167
+    Vec2(7, 2),    // 168
     Vec2(8, 2),    // 169
-    Vec2(7, 2),    // 170
-    Vec2(6, 2),    // 171
-    Vec2(5, 2),    // 172
-    Vec2(4, 2),    // 173
-    Vec2(3, 2),    // 174
-    Vec2(2, 2),    // 175
+    Vec2(9, 2),    // 170
+    Vec2(10, 2),    // 171
+    Vec2(10, 2),    // 172
+    Vec2(10, 2),    // 173
+    Vec2(9, 2),    // 174
+    Vec2(8, 2),    // 175
+    Vec2(7, 2),    // 176
+    Vec2(6, 2),    // 177
+    Vec2(5, 2),    // 178
+    Vec2(4, 2),    // 179
+    Vec2(3, 2),    // 180
+    Vec2(2, 2),    // 181
+    Vec2(2, 2),    // 182
 };
 
 const static AnimObjData animObjData[] =
@@ -210,8 +217,8 @@ const static AnimObjData animObjData[] =
     { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[145] },    // AnimType_SlideL 25
     { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[152] },    // AnimType_SlideL 26
     { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[159] },    // AnimType_SlideR 27
-    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 10, &positions[166] },    // AnimType_SlideR 28
-    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[0] },    // AnimType_SlideR 29
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 7, &positions[166] },    // AnimType_SlideR 28
+    { &Tile3, &Tile3Blank, 0, Layer_BG0, 0, 10, &positions[173] },    // AnimType_SlideR 29
     { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[91] },    // AnimType_OldWord 30
     { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[92] },    // AnimType_OldWord 31
     { &Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0, 1, &positions[93] },    // AnimType_OldWord 32
