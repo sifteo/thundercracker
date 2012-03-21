@@ -70,8 +70,10 @@ private:
     
     void ShufflePieces(unsigned int numCubes);
     
-    void SaveScores();
-    void LoadScores();
+    void InsertScore();
+    
+    void SaveData();
+    void LoadData();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -119,8 +121,11 @@ private:
     // Scoring
     float mScoreTimer;
     unsigned int mScoreMoves;
-    float mBestTimes[3];
     unsigned int mScorePlace;
+    
+    // Save Data
+    unsigned char mSaveDataStoryProgress;
+    float mSaveDataBestTimes[3];
     
     // Swapping
     enum SwapState

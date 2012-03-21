@@ -30,6 +30,7 @@ public:
     Puzzle();
 
     Puzzle(
+        unsigned int book,
         const char *title,
         const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
         const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
@@ -40,6 +41,9 @@ public:
         const Piece piecesEnd[kMaxBuddies][NUM_SIDES]);
     
     void Reset();
+    
+    unsigned int GetBook() const;
+    void SetBook(unsigned int book);
     
     const char *GetTitle() const;
     void SetTitle(const char *title);
@@ -69,6 +73,7 @@ public:
     void SetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
     
 private:
+    unsigned char mBook : 4;
     const char *mTitle;
     const char *mClue;
     const char *mCutsceneTextStart[8];

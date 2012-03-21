@@ -597,8 +597,9 @@ App::App()
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
-    , mBestTimes()
     , mScorePlace(std::numeric_limits<unsigned int>::max())
+    , mSaveDataStoryProgress(0)
+    , mSaveDataBestTimes()
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
@@ -624,9 +625,9 @@ App::App()
     }
     
     // Default high scores (will overwritten if save file is found)
-    mBestTimes[0] =  5.0f * 60.0f;
-    mBestTimes[1] = 10.0f * 60.0f;
-    mBestTimes[2] = 20.0f * 60.0f;
+    mSaveDataBestTimes[0] =  5.0f * 60.0f;
+    mSaveDataBestTimes[1] = 10.0f * 60.0f;
+    mSaveDataBestTimes[2] = 20.0f * 60.0f;
     
     for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
     {
@@ -663,7 +664,17 @@ void App::Init()
     }
     
     InitializePuzzles();
-    LoadScores();
+    
+    // Check all books are sequential
+    if (GetNumPuzzles() > 1)
+    {
+        for (unsigned int i = 1; i < GetNumPuzzles(); ++i)
+        {
+            ASSERT(GetPuzzle(i).GetBook() >= GetPuzzle(i - 1).GetBook());
+        }
+    }
+    
+    LoadData();
     
 #ifdef SIFTEO_SIMULATOR
     mChannel.init();
@@ -974,7 +985,7 @@ void App::OnShake(Cube::ID cubeId)
 
 unsigned int App::GetNumBestTimes() const
 {
-    return arraysize(mBestTimes);
+    return arraysize(mSaveDataBestTimes);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -982,8 +993,8 @@ unsigned int App::GetNumBestTimes() const
 
 float App::GetBestTime(unsigned int place) const
 {
-    ASSERT(place < arraysize(mBestTimes));
-    return mBestTimes[place];
+    ASSERT(place < arraysize(mSaveDataBestTimes));
+    return mSaveDataBestTimes[place];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1203,7 +1214,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            SaveScores();
+            InsertScore();
+            SaveData();
             
             mDelayTimer = kStateTimeDelayLong;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
@@ -1231,6 +1243,7 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
                 }
             }
+            
             mStoryPuzzleIndex = 0;
             StartGameState(GAME_STATE_STORY_CHAPTER_START);
             break;
@@ -1294,6 +1307,11 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_SOLVED:
         {
             mDelayTimer = kStateTimeDelayLong;
+            if ((mStoryPuzzleIndex + 1) > mSaveDataStoryProgress)
+            {
+                mSaveDataStoryProgress = mStoryPuzzleIndex + 1;
+                SaveData();
+            }
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_END_1:
@@ -2038,8 +2056,14 @@ void App::UpdateGameState(float dt)
         {
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                mStoryPuzzleIndex = (mStoryPuzzleIndex + 1) % GetNumPuzzles();
-                StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                if (++mStoryPuzzleIndex == GetNumPuzzles())
+                {
+                    StartGameState(GAME_STATE_MAIN_MENU);
+                }
+                else
+                {
+                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                }
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
@@ -2566,31 +2590,45 @@ void App::ShufflePieces(unsigned int numCubes)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::SaveScores()
+void App::InsertScore()
 {
-    for (int i = arraysize(mBestTimes) - 1; i >= 0; --i)
+    for (int i = arraysize(mSaveDataBestTimes) - 1; i >= 0; --i)
     {
-        if (mBestTimes[i] <= 0.0f || mScoreTimer < mBestTimes[i])
+        if (mSaveDataBestTimes[i] <= 0.0f || mScoreTimer < mSaveDataBestTimes[i])
         {
             mScorePlace = i;
         }
     }
     
-    if (mScorePlace < arraysize(mBestTimes))
+    if (mScorePlace < arraysize(mSaveDataBestTimes))
     {
-        for (int i = arraysize(mBestTimes) - 1; i > int(mScorePlace); --i)
+        for (int i = arraysize(mSaveDataBestTimes) - 1; i > int(mScorePlace); --i)
         {
-            mBestTimes[i] = mBestTimes[i - 1];
+            mSaveDataBestTimes[i] = mSaveDataBestTimes[i - 1];
         }
-        mBestTimes[mScorePlace] = mScoreTimer;
+        mSaveDataBestTimes[mScorePlace] = mScoreTimer;
     }
-    
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::SaveData()
+{
 #ifdef SIFTEO_SIMULATOR
+    DEBUG_LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
+        mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+    
     FILE *saveDataFile = std::fopen("SaveData.bin", "wb");
     ASSERT(saveDataFile != NULL);
     
-    int numWritten = std::fwrite(mBestTimes, sizeof(mBestTimes[0]), arraysize(mBestTimes), saveDataFile);
-    ASSERT(numWritten == arraysize(mBestTimes));
+    int numWritten0 =
+        std::fwrite(&mSaveDataStoryProgress, sizeof(mSaveDataStoryProgress), 1, saveDataFile);
+    ASSERT(numWritten0 == 1);
+    
+    int numWritten1 =
+        std::fwrite(mSaveDataBestTimes, sizeof(mSaveDataBestTimes[0]), arraysize(mSaveDataBestTimes), saveDataFile);
+    ASSERT(numWritten1 == arraysize(mSaveDataBestTimes));
     
     int success = std::fclose(saveDataFile);
     ASSERT(success == 0);
@@ -2600,7 +2638,7 @@ void App::SaveScores()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::LoadScores()
+void App::LoadData()
 {
 #ifdef SIFTEO_SIMULATOR
     if (FILE *saveDataFile = fopen("SaveData.bin", "rb"))
@@ -2609,16 +2647,32 @@ void App::LoadScores()
         ASSERT(success0 == 0);
         
         std::size_t size = std::ftell(saveDataFile);
-        ASSERT(size <= sizeof(mBestTimes));
         
-        int success1 = std::fseek(saveDataFile, 0L, SEEK_SET);
-        ASSERT(success1 == 0);
-        
-        std::size_t numRead = std::fread(mBestTimes, sizeof(mBestTimes[0]), arraysize(mBestTimes), saveDataFile);
-        ASSERT(numRead == arraysize(mBestTimes));
-        
-        int success2 = std::fclose(saveDataFile);
-        ASSERT(success2 == 0);
+        if (size != (sizeof(mSaveDataStoryProgress) + sizeof(mSaveDataBestTimes)))
+        {
+            DEBUG_LOG(("SaveData.bin is wrong size. Re-saving..."));
+            SaveData();
+        }
+        else
+        {
+            int success1 = std::fseek(saveDataFile, 0L, SEEK_SET);
+            ASSERT(success1 == 0);
+            
+            std::size_t numRead0 =
+                std::fread(&mSaveDataStoryProgress, sizeof(mSaveDataStoryProgress), 1, saveDataFile);
+            ASSERT(numRead0 == 1);
+            
+            std::size_t numRead1 =
+                std::fread(mSaveDataBestTimes, sizeof(mSaveDataBestTimes[0]), arraysize(mSaveDataBestTimes), saveDataFile);
+            ASSERT(numRead1 == arraysize(mSaveDataBestTimes));
+            
+            int success2 = std::fclose(saveDataFile);
+            ASSERT(success2 == 0);
+            
+            DEBUG_LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
+                mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+    
+        }
     }
 #endif
 }
@@ -3171,7 +3225,10 @@ bool App::AnyTouchEnd() const
 
 bool App::HasUnlocked() const
 {
-    return (mStoryPuzzleIndex + 1) == GetNumPuzzles(); // || true; // <== For testing
+    return
+        (mStoryPuzzleIndex + 1) < GetNumPuzzles() &&
+        (mStoryPuzzleIndex + 1) == mSaveDataStoryProgress &&
+        GetPuzzle(mSaveDataStoryProgress).GetBook() > GetPuzzle(mStoryPuzzleIndex).GetBook();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

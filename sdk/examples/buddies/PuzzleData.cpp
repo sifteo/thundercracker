@@ -65,6 +65,7 @@ void InitializePuzzles()
     ////////////////////////////////////////////////////////////////////////////////
     
     sPuzzleDefault.Reset();
+    sPuzzleDefault.SetBook(0);
     sPuzzleDefault.SetTitle("Default");
     sPuzzleDefault.SetClue("Default");
     
@@ -100,6 +101,7 @@ void InitializePuzzles()
     ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
     sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetBook(0);
     sPuzzles[sNumPuzzles].SetTitle("Big Mouth");
     sPuzzles[sNumPuzzles].SetClue("Swap Mouths");
     
@@ -153,6 +155,7 @@ void InitializePuzzles()
     ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
     sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetBook(0);
     sPuzzles[sNumPuzzles].SetTitle("All Mixed Up");
     sPuzzles[sNumPuzzles].SetClue("Unscramble");
     
@@ -195,6 +198,7 @@ void InitializePuzzles()
     ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
     sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetBook(1);
     sPuzzles[sNumPuzzles].SetTitle("Bad Hair Day");
     sPuzzles[sNumPuzzles].SetClue("Swap Hair");
     
@@ -237,6 +241,7 @@ void InitializePuzzles()
     ASSERT(sNumPuzzles < arraysize(sPuzzles));
     
     sPuzzles[sNumPuzzles].Reset();
+    sPuzzles[sNumPuzzles].SetBook(3);
     sPuzzles[sNumPuzzles].SetTitle("Private Eyes");
     sPuzzles[sNumPuzzles].SetClue("Swap Eyes");
     
