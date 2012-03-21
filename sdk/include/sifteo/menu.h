@@ -222,7 +222,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) 
 	
 	// sanity check the rest of the assets
 	ASSERT(assets->bg);
-	ASSERT(assets->bg->width == assets->bg->height == 1);
+	ASSERT(assets->bg->width == 1 && assets->bg->height == 1);
 	ASSERT(assets->footer);
 	ASSERT(assets->footer->width == kNumVisibleTilesX);
 	ASSERT(assets->footer->height == kFooterHeight);
