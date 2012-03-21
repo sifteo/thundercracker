@@ -68,6 +68,7 @@ UiBackground = image{"assets/ui_background.png"}
 UiPanel = image{"assets/plain_panel.png"}
 UiClueBlank = image{"assets/panel_clue_blank.png"}
 UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
+UiCongratulations = image{"assets/panel_congratulations.png"}
 
 -- Main Menu
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
@@ -80,7 +81,6 @@ ShuffleTouchToSwap = image{"assets/touch_to_swap.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
 ShuffleNeighbor = image{"assets/neighbor.png"}
 ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
-ShuffleCongratulations = image{"assets/panel_congratulations.png"}
 ShuffleBestTimes = image{"assets/panel_best_times.png"}
 ShuffleBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
 ShuffleBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
@@ -95,6 +95,7 @@ StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryProgress = image{"assets/panel_progression.png"}
+StoryRibbonNewCharacter = image{"assets/ribbon_new_character.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}
 
 -- Sounds (use encode = "PCM" for PCM encoding)

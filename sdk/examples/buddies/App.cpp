@@ -576,7 +576,11 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_PLAY",
     "GAME_STATE_STORY_OPTIONS",
     "GAME_STATE_STORY_SOLVED",
-    "GAME_STATE_STORY_CUTSCENE_END",
+    "GAME_STATE_STORY_CUTSCENE_END_1",
+    "GAME_STATE_STORY_CUTSCENE_END_2",
+    "GAME_STATE_STORY_UNLOCKED_1",
+    "GAME_STATE_STORY_UNLOCKED_2",
+    "GAME_STATE_STORY_UNLOCKED_3",
     "GAME_STATE_STORY_CHAPTER_END",
 };
 
@@ -1319,8 +1323,20 @@ void App::StartGameState(GameState gameState)
             mStoryCutsceneIndex = 0;
             break;
         }
-        case GAME_STATE_STORY_CHAPTER_END:
+        case GAME_STATE_STORY_UNLOCKED_1:
         {
+            mBackgroundScroll = Vec2(0, 0);
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_2:
+        {
+            mDelayTimer = kStateTimeDelayShort;
+            mBackgroundScroll = Vec2(0, 0);
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_3:
+        {
+            mBackgroundScroll = Vec2(0, 0);
             break;
         }
         default:
@@ -1915,7 +1931,16 @@ void App::UpdateGameState(float dt)
             {
                 if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd())
                 {
-                    StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                    // TODO: Fix copy/pasta
+                    bool newCharacterUnlocked = true; // Debug Variable
+                    if ((mStoryPuzzleIndex + 1) == GetNumPuzzles() || newCharacterUnlocked)
+                    {
+                        StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                    }
+                    else
+                    {
+                        StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                    }
                 }
                 else
                 {
@@ -1924,8 +1949,55 @@ void App::UpdateGameState(float dt)
             }
             else if (AnyTouchBegin())
             {
-                StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                // TODO: Fix copy/pasta
+                bool newCharacterUnlocked = true; // Debug Variable
+                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles() || newCharacterUnlocked)
+                {
+                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                }
+                else
+                {
+                    StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                }
             }
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_1:
+        {
+            if (mBackgroundScroll.x > -16)
+            {
+                --mBackgroundScroll.x;
+            }
+            else
+            {
+                StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_2:
+        {
+            if (mDelayTimer > 0.0f)
+            {
+                if (mBackgroundScroll.y < 11)
+                {
+                    ++mBackgroundScroll.y;
+                }
+                else
+                {
+                    UpdateTimer(mDelayTimer, dt);
+                }
+            }
+            else
+            {
+                if (mBackgroundScroll.y < int(16 + StoryRibbonNewCharacter.height))
+                {
+                    ++mBackgroundScroll.y;
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_3:
+        {
             break;
         }
         case GAME_STATE_STORY_CHAPTER_END:
@@ -2302,6 +2374,66 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 DrawStoryChapterSummary(cubeWrapper, mStoryPuzzleIndex);
             }
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_1:
+        {
+            const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
+            const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
+            
+            cubeWrapper.DrawBackgroundPartial(
+                Vec2(0, 0),
+                Vec2(-mBackgroundScroll.x, 0),
+                Vec2(maxTilesX + mBackgroundScroll.x, maxTilesY),
+                UiBackground);
+            
+            cubeWrapper.DrawBackgroundPartial(
+                Vec2(maxTilesX + mBackgroundScroll.x, 0),
+                Vec2(0, 0),
+                Vec2(-mBackgroundScroll.x, maxTilesY),
+                UiCongratulations);
+            
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_2:
+        {
+            const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
+            const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
+            
+            cubeWrapper.DrawBackground(UiCongratulations);
+            
+            if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
+            {
+                int y = mBackgroundScroll.y - StoryRibbonNewCharacter.height;
+                int assetOffset = 0;
+                int assetHeight = StoryRibbonNewCharacter.height;
+                
+                if (mBackgroundScroll.y < int(StoryRibbonNewCharacter.height))
+                {
+                    y = 0;
+                    assetOffset = StoryRibbonNewCharacter.height - mBackgroundScroll.y;
+                    assetHeight = mBackgroundScroll.y;
+                }
+                else if (mBackgroundScroll.y > int(maxTilesY))
+                {
+                    assetOffset = 0;
+                    assetHeight = StoryRibbonNewCharacter.height - (mBackgroundScroll.y - maxTilesY);
+                }
+                
+                if (assetHeight > 0)
+                {
+                    cubeWrapper.DrawUiAssetPartial(
+                        Vec2(0, y),
+                        Vec2(0, assetOffset),
+                        Vec2(maxTilesX, assetHeight),
+                        StoryRibbonNewCharacter);
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_UNLOCKED_3:
+        {
+            
             break;
         }
         case GAME_STATE_STORY_CHAPTER_END:

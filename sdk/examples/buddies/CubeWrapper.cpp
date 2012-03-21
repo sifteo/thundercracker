@@ -255,6 +255,18 @@ void CubeWrapper::DrawUiAsset(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::DrawUiAssetPartial(
+    const Sifteo::Vec2 &position,
+    const Sifteo::Vec2 &offset,
+    const Sifteo::Vec2 &size,
+    const Sifteo::AssetImage &asset, unsigned int assetFrame)
+{
+    mBg1Helper.DrawPartialAsset(position, offset, size, asset, assetFrame);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CubeWrapper::DrawUiText(
     const Vec2 &position,
     const AssetImage &assetFont,
@@ -294,7 +306,7 @@ void CubeWrapper::DrawCutsceneShuffle(const Sifteo::Vec2 &scroll)
         Vec2(0, 0),
         Vec2(-scroll.x, 0),
         Vec2(maxTilesX + scroll.x, maxTilesY),
-        ShuffleCongratulations);
+        UiCongratulations);
     
     switch (GetId())
     {

@@ -53,6 +53,11 @@ public:
     void DrawUiAsset(
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+    void DrawUiAssetPartial(
+        const Sifteo::Vec2 &position,
+        const Sifteo::Vec2 &offset,
+        const Sifteo::Vec2 &size,
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiText(
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &assetFont,
