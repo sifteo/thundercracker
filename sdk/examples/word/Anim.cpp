@@ -258,7 +258,7 @@ bool animPaint(AnimType animT,
     };
     const static AssetImage* fontsGlow[] =
     {
-        &Font1Letter, &Font2LetterGlow, &Font3Letter,
+        &Font1LetterGlow, &Font2LetterGlow, &Font3LetterGlow,
     };
     const AssetImage& font =
             (animT == AnimType_NewWord || animT == AnimType_OldWord) ?
