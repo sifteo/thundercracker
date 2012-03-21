@@ -367,6 +367,33 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::DrawUnlocked3Sprite(const Sifteo::Vec2 &scroll)
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
+    
+    int jump_offset = 4;
+    
+    int x = (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE);
+    int y = mCutsceneSpriteJump0 ? 28 - jump_offset : 28;
+    y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
+    
+    Video().moveSprite(0, Vec2(x, y));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawUnlocked4Sprite(const Sifteo::Vec2 &scroll)
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
+    Video().moveSprite(0, Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool CubeWrapper::IsLoadingAssets()
 {
     ASSERT(IsEnabled());

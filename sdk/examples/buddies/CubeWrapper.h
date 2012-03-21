@@ -64,10 +64,12 @@ public:
         const char *text);
     void ScrollUi(const Sifteo::Vec2 &position);
     
-    // Special-Case Cutscene Stuff
+    // Special-Case Buddy Sprite Stuff
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
     void DrawCutsceneShuffle(const Sifteo::Vec2 &scroll);
     void DrawCutsceneStory(const char *text);
+    void DrawUnlocked3Sprite(const Sifteo::Vec2 &scroll);
+    void DrawUnlocked4Sprite(const Sifteo::Vec2 &scroll);
     
     // Asset Loading
     bool IsLoadingAssets();

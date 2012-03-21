@@ -2011,6 +2011,17 @@ void App::UpdateGameState(float dt)
                     {
                         StartGameState(GAME_STATE_STORY_UNLOCKED_4);
                     }
+                    else
+                    {
+                        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                        {
+                            if (mCubeWrappers[i].IsEnabled())
+                            {
+                                // TODO: Make variable
+                                mCubeWrappers[i].UpdateCutscene(4, 4);
+                            }
+                        }
+                    }
                 }
             }
             break;
@@ -2471,6 +2482,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     assetHeight = UiRibbonGluv.height - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
+                cubeWrapper.DrawUnlocked3Sprite(mBackgroundScroll);
+                
                 ASSERT(assetOffset >= 0 && assetOffset <  int(UiRibbonGluv.height));
                 ASSERT(assetHeight >  0 && assetHeight <= int(UiRibbonGluv.height));
                 cubeWrapper.DrawUiAssetPartial(
@@ -2496,7 +2509,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(0, 0),
                     Vec2(kMaxTilesX - mBackgroundScroll.x, kMaxTilesY),
                     UiCongratulations);
-                    
+                
+                cubeWrapper.DrawUnlocked4Sprite(mBackgroundScroll);
+                        
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(mBackgroundScroll.x, 11),
                     Vec2(0, 0),
