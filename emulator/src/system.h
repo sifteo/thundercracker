@@ -26,7 +26,7 @@ class System {
  public:
     VirtualTime time;
 
-    static const unsigned DEFAULT_CUBES = 2;
+    static const unsigned DEFAULT_CUBES = 3;
     static const unsigned MAX_CUBES = 32;
 
     Cube::Hardware cubes[MAX_CUBES];

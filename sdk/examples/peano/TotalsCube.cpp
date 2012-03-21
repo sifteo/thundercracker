@@ -99,9 +99,10 @@ namespace TotalsGame
 
     }
 
-    Vec2 TotalsCube::GetTilt()
+    Vector2<int> TotalsCube::GetTilt()
     {
-        Cube::TiltState s = getTiltState();return Vec2(s.x, s.y);
+        Cube::TiltState s = getTiltState();
+        return Vec2(s.x, s.y);
     }
 
     bool TotalsCube::DoesNeighbor(TotalsCube *other)
@@ -143,17 +144,17 @@ namespace TotalsGame
         }
     }
 	
-    void TotalsCube::Image(const AssetImage &image, Vec2 pos, int frame)
+    void TotalsCube::Image(const Sifteo::AssetImage &image, Vector2<int> pos, int frame)
 	{
         backgroundLayer.BG0_drawAsset(pos, image, frame);
 	}
 
-    void TotalsCube::Image(const AssetImage *image, Vec2 coord, Vec2 offset, Vec2 size)
+    void TotalsCube::Image(const Sifteo::AssetImage *image, Vector2<int> coord, Vector2<int> offset, Vector2<int> size)
 	{
         backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
-    void TotalsCube::Image(const PinnedAssetImage *image, Vec2 coord, int frame)
+    void TotalsCube::Image(const PinnedAssetImage *image, Vector2<int> coord, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         for(int y = coord.y; y < coord.y + (int)image->height; y++)
@@ -165,7 +166,7 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::ClipImage(const PinnedAssetImage *image, Vec2 pos, int frame)
+    void TotalsCube::ClipImage(const PinnedAssetImage *image, Vector2<int> pos, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         int y = pos.y;
@@ -205,10 +206,10 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::FillArea(const AssetImage *image, Vec2 pos, Vec2 size)
+    void TotalsCube::FillArea(const Sifteo::AssetImage *image, Vector2<int> pos, Vector2<int> size)
     {
-        Vec2 p = pos;
-        Vec2 s = size;
+        Vector2<int> p = pos;
+        Vector2<int> s = size;
 
         if(p.x < 0)
         {
@@ -247,16 +248,16 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::Image(const AssetImage &image)
+    void TotalsCube::Image(const Sifteo::AssetImage &image)
     {
         backgroundLayer.BG0_drawAsset(Vec2(0,0), image);
     }
 
-    void TotalsCube::ClipImage(const AssetImage *image, Vec2 pos)
+    void TotalsCube::ClipImage(const Sifteo::AssetImage *image, Vector2<int> pos)
     {
-        Vec2 p = pos;
-        Vec2 o(0,0);
-        Vec2 s(image->width, image->height);
+        Vector2<int> p = pos;
+        Vector2<int> o = Vec2(0,0);
+        Vector2<int> s = Vec2(image->width, image->height);
 
         if(p.x < 0)
         {
@@ -306,7 +307,7 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), skin.vault_door, 0);
 	}
 
-    void TotalsCube::OpenShuttersToReveal(const AssetImage &image)
+    void TotalsCube::OpenShuttersToReveal(const Sifteo::AssetImage &image)
     {	
 		AudioPlayer::PlayShutterOpen();
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
@@ -405,14 +406,14 @@ namespace TotalsGame
 	}
 
 
-    void TotalsCube::DrawFraction(Fraction f, Vec2 pos)
+    void TotalsCube::DrawFraction(Fraction f, Vector2<int> pos)
     {
-        String<10> string;
+        Sifteo::String<10> string;
         f.ToString(&string);
         DrawString(string, pos);
     }
 
-    void TotalsCube::DrawString(const char *string, Vec2 center)
+    void TotalsCube::DrawString(const char *string, Vector2<int> center)
     {
         int hw = 0;
         const char *s = string;
@@ -436,7 +437,7 @@ namespace TotalsGame
             }
             s++;
         }
-        Vec2 p = center - Vec2(hw, 8);
+        Vector2<int> p = center - Vec2(hw, 8);
 
         int curSprite = 0;
         s = string;

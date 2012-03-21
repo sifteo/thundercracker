@@ -45,7 +45,7 @@ public:
 
     static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
-    static bool playAudio(_SYSAudioModule &mod,
+    static bool playAudio(const AssetAudio &mod,
                           AudioChannelIndex channel = AudioChannelIndex_Music,
                           _SYSAudioLoopType loopMode = LoopOnce,
                           AudioPriority priority = AudioPriority_Normal);
@@ -53,7 +53,7 @@ public:
     static Math::Random random;
 
 private:
-    bool _playAudio(_SYSAudioModule &mod, AudioChannelIndex channel,
+    bool _playAudio(const AssetAudio &mod, AudioChannelIndex channel,
                     _SYSAudioLoopType loopMode,
                     AudioPriority priority);
     void _onEvent(unsigned eventID, const EventData& data);

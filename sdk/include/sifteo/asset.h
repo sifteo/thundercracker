@@ -7,13 +7,16 @@
 #ifndef _SIFTEO_ASSET_H
 #define _SIFTEO_ASSET_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 #include <stdint.h>
 #include <sifteo/abi.h>
 #include <sifteo/limits.h>
 
 namespace Sifteo {
 
-//typedef _SYSAssetGroupID AssetGroupID;
 
 /**
  * An asset group. At build time, STIR creates a statically
@@ -28,6 +31,14 @@ class AssetGroup {
  public:
 
     /**
+     * Is this asset group still being downloaded?
+     */
+
+    bool isLoading() {
+        return (sys.reqCubes & ~sys.doneCubes) != 0;
+    }
+
+    /**
      * Wait until this asset group is available on all cubes that it
      * was requested on via Cube::loadAssets(). Assets load
      * asynchronously, but it's sometimes necessary to block until
@@ -35,13 +46,14 @@ class AssetGroup {
      */
 
     void wait() {
-        while (sys.reqCubes & ~sys.doneCubes)
+        while (isLoading())
             _SYS_yield();
     }
 
     _SYSAssetGroup sys;
     _SYSAssetGroupCube cubes[CUBE_ALLOCATION];
 };
+
 
 /**
  * A plain, tile-mapped asset image.
@@ -57,7 +69,16 @@ class AssetImage {
     unsigned height;
     unsigned frames;
 
+    AssetGroup *group;
     const uint16_t *tiles;
+    
+    unsigned pixelWidth() const {
+        return width * 8;
+    }
+    
+    unsigned pixelHeight() const {
+        return height * 8;
+    }
 };
 
 
@@ -72,10 +93,29 @@ class PinnedAssetImage {
     unsigned height;
     unsigned frames;
 
+    AssetGroup *group;
     uint16_t index;
+
+    unsigned pixelWidth() const {
+        return width * 8;
+    }
+    
+    unsigned pixelHeight() const {
+        return height * 8;
+    }
 };
-    
-    
+
+
+/**
+ * An audio asset, using any supported compression codec.
+ */
+
+class AssetAudio {
+ public:
+    _SYSAudioModule sys;
+};
+
+
 };  // namespace Sifteo
 
 #endif

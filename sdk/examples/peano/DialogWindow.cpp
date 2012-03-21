@@ -1,5 +1,8 @@
 #include "DialogWindow.h"
 #include "assets.gen.h"
+
+using namespace Sifteo;
+
 namespace TotalsGame
 {
 

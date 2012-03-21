@@ -12,16 +12,16 @@
 #include "cubewrapper.h"
 
 
-Vec2 GLIMMER_ORDER_1[] = { Vec2( 0, 0 ) };
-Vec2 GLIMMER_ORDER_2[] = { Vec2( 1, 0 ), Vec2( 0, 1 ) };
-Vec2 GLIMMER_ORDER_3[] = { Vec2( 2, 0 ), Vec2( 1, 1 ), Vec2( 0, 2 ) };
-Vec2 GLIMMER_ORDER_4[] = { Vec2( 3, 0 ), Vec2( 1, 2 ), Vec2( 2, 1 ), Vec2( 0, 3 ) };
-Vec2 GLIMMER_ORDER_5[] = { Vec2( 3, 1 ), Vec2( 2, 2 ), Vec2( 1, 3 ) };
-Vec2 GLIMMER_ORDER_6[] = { Vec2( 3, 2 ), Vec2( 2, 3 ) };
-Vec2 GLIMMER_ORDER_7[] = { Vec2( 3, 3 ) };
+Int2 GLIMMER_ORDER_1[] = { Vec2( 0, 0 ) };
+Int2 GLIMMER_ORDER_2[] = { Vec2( 1, 0 ), Vec2( 0, 1 ) };
+Int2 GLIMMER_ORDER_3[] = { Vec2( 2, 0 ), Vec2( 1, 1 ), Vec2( 0, 2 ) };
+Int2 GLIMMER_ORDER_4[] = { Vec2( 3, 0 ), Vec2( 1, 2 ), Vec2( 2, 1 ), Vec2( 0, 3 ) };
+Int2 GLIMMER_ORDER_5[] = { Vec2( 3, 1 ), Vec2( 2, 2 ), Vec2( 1, 3 ) };
+Int2 GLIMMER_ORDER_6[] = { Vec2( 3, 2 ), Vec2( 2, 3 ) };
+Int2 GLIMMER_ORDER_7[] = { Vec2( 3, 3 ) };
 
 //list of locations to glimmer in order
-Vec2 *Glimmer::GLIMMER_ORDER[NUM_GLIMMER_GROUPS] =
+Int2 *Glimmer::GLIMMER_ORDER[NUM_GLIMMER_GROUPS] =
 {
     GLIMMER_ORDER_1,
     GLIMMER_ORDER_2,
@@ -92,7 +92,7 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
     {
         if( i < NUM_PER_GROUP[ m_group ] )
         {
-            Vec2 &loc = GLIMMER_ORDER[ m_group ][i];
+            Int2 &loc = GLIMMER_ORDER[ m_group ][i];
             resizeSprite(cube, i, GlimmerImg.width*8, GlimmerImg.height*8);
             moveSprite(cube, i, loc.x * 32, loc.y * 32);
         }
@@ -112,7 +112,7 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
     {
         if( i < NUM_PER_GROUP[ m_group ] )
         {
-            Vec2 &loc = GLIMMER_ORDER[ m_group ][i];
+            Int2 &loc = GLIMMER_ORDER[ m_group ][i];
             GridSlot *pSlot = pWrapper->GetSlot( loc.x, loc.y );
 
             if( pSlot->isAlive() )

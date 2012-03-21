@@ -1,0 +1,36 @@
+# Tool definitions
+include $(TC_DIR)/Makefile.platform
+SDK_DIR := $(TC_DIR)/sdk
+STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
+LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
+CC := $(LLVM_BIN)/clang
+
+BIN := $(APP).elf
+ASSETS = assets
+
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
+CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
+CFLAGS += -I$(SDK_DIR)/include
+
+# Compile for a minimal environment, generate LLVM object files
+CFLAGS += -ffreestanding -emit-llvm -m32 -fno-stack-protector
+
+# Disable unwanted warnings, but be generally pretty pedantic
+CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
+
+# Disable unwanted C++ features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+
+# generate dependency files
+CFLAGS += -MD -MP
+
+# Debug symbols
+CFLAGS += -g
+LDFLAGS += -g
+
+ifneq ($(DISABLE_INLINING),)
+    LDFLAGS += -disable-inlining
+endif
+
+# C++ inherits CFLAGS too
+CCFLAGS += $(CFLAGS)

@@ -56,8 +56,8 @@ Game::GameState Run() {
     Game::cubes[0].SetView(&vv);
     Game::Wait(1);
     vv.Open();
-    float time = 3.5f + System::clock();
-    while(System::clock() < time)
+    SystemTime time = SystemTime::now() + 3.5f;
+    while(SystemTime::now() < time)
     {
         vv.Update();
         vv.Paint();
@@ -96,10 +96,10 @@ Game::GameState Run() {
                 nv.GetCube()->foregroundLayer.Flush();
                 nv.GetCube()->backgroundLayer.setWindow(72,56);
 
-                float t = 3 + System::clock();
+                SystemTime t = SystemTime::now() + 3.0f;
                 float timeout = 0.0;
                 int i=0;
-                while(System::clock() < t) {
+                while(SystemTime::now() < t) {
                     timeout -= Game::dt;
                     while (timeout < 0) {
                         i = 1 - i;
@@ -124,10 +124,10 @@ Game::GameState Run() {
             nv.GetCube()->foregroundLayer.Flush();
             nv.GetCube()->backgroundLayer.setWindow(72,56);
 
-            float t = 3 + System::clock();
+            SystemTime t = SystemTime::now() + 3.0f;
             float timeout = 0.0;
             int i=0;
-            while(System::clock() < t) {
+            while(SystemTime::now() < t) {
                 timeout -= Game::dt;
                 while (timeout < 0) {
                     i = 1 - i;

@@ -50,7 +50,7 @@ public:
   
   	void HideSprites();
 
-	bool ShowLocation(Vec2 location, bool force, bool doFlush=true);
+	bool ShowLocation(Int2 location, bool force, bool doFlush=true);
 	bool HideLocation(bool doFlush=true);
 
 	void RefreshInventory(bool doFlush=true);
@@ -59,7 +59,7 @@ public:
 	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
 private:
-	bool SetLocationView(Vec2 location, Cube::Side side, bool force, bool doFlush);
+	bool SetLocationView(Int2 location, Cube::Side side, bool force, bool doFlush);
 	void SetSecondaryView(unsigned viewId, bool doFlush);
 	void SanityCheckVram();
 	void EvictSecondaryView(unsigned viewId);

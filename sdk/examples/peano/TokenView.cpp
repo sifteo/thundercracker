@@ -7,7 +7,7 @@
 
 namespace TotalsGame
 {
-const Vec2 TokenView::Mid(7,7);
+const Vector2<int> TokenView::Mid = Vec2(7,7);
 int TokenView::sHintParity = 0;
 const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };
 
@@ -328,11 +328,11 @@ void TokenView::PaintNow()
         c->Image(skin.accent, Vec2(0,yPos));
         if(isInGroup)
         {
-            c->foregroundLayer.DrawAsset(Vec2(8-Accent_Current.width/2, yPos+1), Accent_Current);
+            c->foregroundLayer.DrawAsset(Vec2<int>(8-Accent_Current.width/2, yPos+1), Accent_Current);
         }
         else
         {
-            c->foregroundLayer.DrawAsset(Vec2(8-Accent_Target.width/2, yPos+1), Accent_Target);
+            c->foregroundLayer.DrawAsset(Vec2<int>(8-Accent_Target.width/2, yPos+1), Accent_Target);
         }
 
         if (result.IsNan())
@@ -359,14 +359,14 @@ void TokenView::PaintTop(bool lit) {
     const Skins::Skin &skin = Skins::GetSkin();
     const PinnedAssetImage &asset = lit? skin.lit_top : skin.unlit_top;
     GetCube()->backgroundLayer.setSpriteImage(6, asset, 0);
-    GetCube()->backgroundLayer.moveSprite(6, 8*Vec2(Mid.x - asset.width/2, 0));
+    GetCube()->backgroundLayer.moveSprite(6, 8*Vec2<int>(Mid.x - asset.width/2, 0));
 }
 void TokenView::PaintLeft(bool lit) {
     if (mStatus == StatusOverlay) { return; }
     const Skins::Skin &skin = Skins::GetSkin();
     const PinnedAssetImage &asset = lit? skin.lit_left : skin.unlit_left;
     GetCube()->backgroundLayer.setSpriteImage(1, asset, 0);
-    GetCube()->backgroundLayer.moveSprite(1, 8*Vec2(0, Mid.y - asset.height/2));
+    GetCube()->backgroundLayer.moveSprite(1, 8*Vec2<int>(0, Mid.y - asset.height/2));
 }
 void TokenView::PaintRight(bool lit) {
     if (mStatus == StatusOverlay) { return; }
@@ -456,7 +456,7 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     // Center
     if(lowestBit < 5 && !showingOverlay)   //5 is completely transparent.  the rest, completely opaque
     {
-        for(unsigned i=5; i<9; ++i) {
+        for(int i=5; i<9; ++i) {
             c->backgroundLayer.BG0_drawAsset(Vec2(i,4), Center, lowestBit);
             c->backgroundLayer.BG0_drawAsset(Vec2(i,9), Center, lowestBit);
         }
@@ -575,8 +575,8 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     }
     else
     {
-        c->foregroundLayer.DrawPartialAsset(Vec2(3,1), Vec2(0,0), Vec2(MajorN.width, 2), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-        c->foregroundLayer.DrawPartialAsset(Vec2(3,11),Vec2(0,1), Vec2(MajorS.width, MajorS.height-1), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        c->foregroundLayer.DrawPartialAsset(Vec2(3,1), Vec2(0,0), Vec2<int>(MajorN.width, 2), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->foregroundLayer.DrawPartialAsset(Vec2(3,11),Vec2(0,1), Vec2<int>(MajorS.width, MajorS.height-1), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
     }
 }
 
@@ -621,7 +621,7 @@ void TokenView::PaintDigit()
     if(digit >=0 && digit <= 9)
     {
         int index = useAccentDigit? digit + 10 : digit;
-        Vec2 p;
+        Vector2<int> p;
         p.x = 8*(TokenView::Mid.x - assets[index]->width / 2);
         p.y = 8*(TokenView::Mid.y - assets[index]->height / 2);
         GetCube()->backgroundLayer.setSpriteImage(0, *assets[index], 0);

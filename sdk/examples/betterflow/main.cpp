@@ -50,7 +50,7 @@ static void DrawColumn(Cube* pCube, int x) {
 		// drawing a blank column
 		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row+2), BgTile);
+			g.BG0_drawAsset(Vec2<int>(addr, row+2), BgTile);
 		}
 
 	}
@@ -86,7 +86,7 @@ static float GetAccel(Cube *pCube) {
 }
 
 // entry point
-void siftmain() {
+void main() {
 	// enable cube slots
 	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) { p->enable(p-gCubes); }
   	// load assets

@@ -10,7 +10,7 @@ static Dialog mDialog(0);
 void InventoryView::Init() {
 	CORO_RESET;
 	mSelected = 0;
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;
 	mAccumX = 0;
@@ -45,7 +45,7 @@ void InventoryView::Update(float dt) {
 			{
 				Cube::Side side = UpdateAccum();
 				if (side != SIDE_UNDEFINED) {
-					Vec2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side];
+                    Int2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
 					int count = gGame.GetState()->GetItems(items);
@@ -145,7 +145,7 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;
 	const int radix = 8;

@@ -20,7 +20,7 @@ public:
     //max at a time
     static const int MAX_GLIMMERS = 4;
     //list of locations to glimmer in order
-    static Vec2 *GLIMMER_ORDER[NUM_GLIMMER_GROUPS];
+    static Int2 *GLIMMER_ORDER[NUM_GLIMMER_GROUPS];
     static int NUM_PER_GROUP[NUM_GLIMMER_GROUPS];
 
     Glimmer();

@@ -48,8 +48,7 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         mShakeDelay = SHAKE_DELAY;
     }
 
-    _SYSAccelState accelState;
-    _SYS_getAccel(getStateMachine().getCube().id(), &accelState);
+    _SYSAccelState accelState = _SYS_getAccel(getStateMachine().getCube().id());
     if (accelState.x != 0)
     {
         mShakeDelay = 0.f;
@@ -134,8 +133,8 @@ void TitleCubeState::paint()
                 const float SHAKE = 4.f;
                 shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
             }
-            vid.moveSprite(0, Vec2(40 - shakeOffset, 78));
-            vid.BG1_setPanning(Vec2((unsigned)mPanning + shakeOffset, 0));
+            vid.moveSprite(0, Vec2(40.f - shakeOffset, 78.f));
+            vid.BG1_setPanning(Vec2<int>((unsigned)mPanning + shakeOffset, 0));
         }
         {            
             BG1Helper bg1(getStateMachine().getCube());

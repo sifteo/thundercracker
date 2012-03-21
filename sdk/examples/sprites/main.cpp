@@ -24,7 +24,7 @@ void load()
     } while (!cube.assetDone(GameAssets));
 }
 
-void siftmain()
+void main()
 {
     load();
     

@@ -4,6 +4,8 @@
 #include "View.h"
 #include "Fraction.h"
 
+using namespace Sifteo::Math;
+
 namespace TotalsGame
 {
 
@@ -15,8 +17,8 @@ namespace TotalsGame
         bool overlayShown;
 
     public:
-        VidMode_BG0_SPR_BG1 backgroundLayer;
-        BG1Helper foregroundLayer;
+        Sifteo::VidMode_BG0_SPR_BG1 backgroundLayer;
+        Sifteo::BG1Helper foregroundLayer;
 
 		class EventHandler
 		{            
@@ -39,7 +41,7 @@ namespace TotalsGame
 
         bool DoesNeighbor(TotalsCube *other);
 
-        Vec2 GetTilt();
+        Vector2<int> GetTilt();
 
         void HideSprites();
 
@@ -51,22 +53,22 @@ public:
         void RemoveEventHandler(EventHandler *e);
         void ResetEventHandlers();
 
-        void OpenShuttersToReveal(const AssetImage &image);
+        void OpenShuttersToReveal(const Sifteo::AssetImage &image);
         void CloseShutters();
 				
 		void DrawVaultDoorsClosed();
 
-        void Image(const AssetImage &image);
-        void Image(const AssetImage &image, Vec2 pos, int frame=0);
-        void Image(const AssetImage *image, Vec2 coord, Vec2 offset, Vec2 size);
-        void Image(const PinnedAssetImage *image, Vec2 coord, int frame=0);
-        void ClipImage(const AssetImage *image, Vec2 pos);
-        void ClipImage(const PinnedAssetImage *image, Vec2 pos, int frame = 0);
-        void FillArea(const AssetImage *image, Vec2 pos, Vec2 size);
+        void Image(const Sifteo::AssetImage &image);
+        void Image(const Sifteo::AssetImage &image, Vector2<int> pos, int frame=0);
+        void Image(const Sifteo::AssetImage *image, Vector2<int> coord, Vector2<int> offset, Vector2<int> size);
+        void Image(const Sifteo::PinnedAssetImage *image, Vector2<int> coord, int frame=0);
+        void ClipImage(const Sifteo::AssetImage *image, Vector2<int> pos);
+        void ClipImage(const Sifteo::PinnedAssetImage *image, Vector2<int> pos, int frame = 0);
+        void FillArea(const Sifteo::AssetImage *image, Vector2<int> pos, Vector2<int> size);
 	
-        void DrawFraction(Fraction f, Vec2 pos);
+        void DrawFraction(Fraction f, Vector2<int> pos);
         //void DrawDecimal(float d, Vec2 pos);
-        void DrawString(const char *string, Vec2 center);
+        void DrawString(const char *string, Vector2<int> center);
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
         void DisableTextOverlay();

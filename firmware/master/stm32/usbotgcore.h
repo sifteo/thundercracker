@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef USB_OTG_CORE_H
 #define USB_OTG_CORE_H
 

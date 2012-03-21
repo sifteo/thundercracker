@@ -12,7 +12,7 @@ void operator delete(void*) throw() {}
 
 static TotalsGame::TotalsCube cubes[NUM_CUBES];
 
-void siftmain() {
+void main() {
   for (int i = 0; i < NUM_CUBES; i++) {
     cubes[i].enable(i);
 #if LOAD_ASSETS

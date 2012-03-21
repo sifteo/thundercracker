@@ -1,20 +1,15 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo.h>
 #include "radio.h"
 #include "usb.h"
 #include "flashlayer.h"
-#include "runtime.h"
 #include "board.h"
 #include "vectors.h"
 #include "systime.h"
@@ -25,18 +20,19 @@
 #include "audiooutdevice.h"
 #include "usart.h"
 #include "button.h"
+#include "svmruntime.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" unsigned __bss_start;
-extern "C" unsigned __bss_end;
-extern "C" unsigned __data_start;
-extern "C" unsigned __data_end;
-extern "C" unsigned __data_src;
-extern "C" initFunc_t __init_array_start;
-extern "C" initFunc_t __init_array_end;
+extern unsigned     __bss_start;
+extern unsigned     __bss_end;
+extern unsigned     __data_start;
+extern unsigned     __data_end;
+extern unsigned     __data_src;
+extern initFunc_t   __init_array_start;
+extern initFunc_t   __init_array_end;
 
 extern "C" void _start()
 {
@@ -192,6 +188,7 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
+    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
     /*
      * High-level hardware initialization
      */
@@ -199,7 +196,7 @@ extern "C" void _start()
     SysTime::init();
     Radio::open();
     Tasks::init();
-    FlashLayer::init();
+    FlashBlock::init();
     Button::init();
 
     AudioMixer::instance.init();
@@ -215,7 +212,7 @@ extern "C" void _start()
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
         Tasks::work();
-        Sifteo::System::yield();
+        System::yield();
     }
 #endif
 
@@ -223,7 +220,7 @@ extern "C" void _start()
      * Launch our game runtime!
      */
 
-    Runtime::run();
+    SvmRuntime::run(111);
 }
 
 extern "C" void *_sbrk(intptr_t increment)

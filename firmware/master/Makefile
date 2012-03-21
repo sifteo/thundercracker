@@ -1,5 +1,5 @@
-BIN_SIM = master-sim.a
-BIN_STM32 = master-stm32.a
+BIN_SIM = master-sim
+BIN_STM32 = master-stm32.elf
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -18,20 +18,8 @@ include stm32/st-usb/st-usb.mk
 OBJS_STM32 +=   $(OBJS_USB_STM32) \
                 $(SPEEX_OBJS_STM32)
 
-
-ifeq ($(BUILD_PLATFORM), windows32)
-	# TBD if there's a better way, but windows ar or libtool needs to have all the
-	# individual object files available from any static libs you want to merge
-	# in. these have been extracted in the deps folder via `ar -x libfoo.a`
-	SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o $(DEPS_DIR)/portaudio/lib/obj/*.o
-else
-	SIM_STATIC_LIBS = \
-		$(DEPS_DIR)/speex/lib/libspeex.a \
-		$(DEPS_DIR)/portaudio/lib/libportaudio.a
-endif
-
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -Icommon -I../include -DFW_BUILD
+CFLAGS := -Icommon -I../include -DNO_USERSPACE_HEADERS
 CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
 # NOTE: ST defines here are temporary until we integrate our own USB code
 CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
@@ -48,6 +36,9 @@ ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
 endif
 
+ifneq ($(SVM_TRACE),)
+    CFLAGS_SIM += -DSVM_TRACE
+endif
 
 include Makefile.defs
 
@@ -58,24 +49,15 @@ CDEPS := \
 	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
 	$(SPEEX_DEPS) \
-	$(SDK_DIR)/include/sifteo/*.h $(STIR)
+	$(SDK_DIR)/include/sifteo/*.h
 
 all: $(BINS)
 
-ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(LIBTOOL_SIM) -static -o $@ $^ $(SIM_STATIC_LIBS)
-else
-$(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(AR) rcs $@ $^ $(SIM_STATIC_OBJS)
-endif
+	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
 $(BIN_STM32): $(OBJS_STM32)
-	rm -f $@
-	$(AR_STM32) r $@ $^
-	$(RANLIB_STM32) $@
+	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
 %.sim.o: %.cpp $(CDEPS)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
@@ -89,7 +71,37 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
-.PHONY: all clean
+syscall-table:
+	python $(TC_DIR)/vm/tools/syscall-table.py \
+	   < $(TC_DIR)/sdk/include/sifteo/abi.h \
+	   > $(MASTER_DIR)/common/syscall-table.def
 
+ocd:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt"
+
+unlock:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "stm32f1x unlock 0" \
+		-c reset \
+		-c exit
+
+program: $(BIN_STM32)
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "flash write_image erase $<" \
+		-c "verify_image $<" \
+		-c "reset run" \
+		-c exit
+
+.PHONY: all clean syscall-table ocd unlock program
+
+# Several steps, to work around Win32 command line length limits
 clean:
-	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32) 
+	rm -f $(BINS)
+	rm -f $(OBJS_SIM)
+	rm -f $(OBJS_STM32) 

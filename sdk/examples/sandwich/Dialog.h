@@ -5,7 +5,7 @@
 class Dialog {
 private:
     Cube* mCube;
-    Vec2 mPosition;
+    Int2 mPosition;
 
 public:
     Dialog(Cube *mCube);

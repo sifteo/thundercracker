@@ -40,7 +40,7 @@ header.write("struct ChapterDef\n")
 header.write("{\n")
 header.write("\t/* const */ PuzzleDef *puzzles;\n")
 header.write("\tconst char *name;\n")
-header.write("\tconst AssetImage &icon;\n")
+header.write("\tconst Sifteo::AssetImage &icon;\n")
 header.write("\t/* const */ uint8_t nPuzzles;\n")
 header.write("};\n")
 

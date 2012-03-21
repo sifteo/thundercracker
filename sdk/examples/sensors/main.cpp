@@ -36,6 +36,7 @@ static void onTouch(counts_t *counts, _SYSCubeID cid)
 static void onNeighborAdd(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Add: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborAdd++;
     counts[c1].neighborAdd++;
 }
@@ -43,19 +44,18 @@ static void onNeighborAdd(counts_t *counts,
 static void onNeighborRemove(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Remove: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborRemove++;
     counts[c1].neighborRemove++;
 }
 
-void siftmain()
+void main()
 {
     static counts_t counts[NUM_CUBES];
     
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         cubes[i].enable(i);
-
-        VidMode_BG0_ROM vid(cubes[i].vbuf);
-        vid.init();
+        VidMode_BG0_ROM(cubes[i].vbuf).init();
     }
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
@@ -64,49 +64,30 @@ void siftmain()
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            _SYSCubeID id = cubes[i].id();
-            VidMode_BG0_ROM vid(cubes[i].vbuf);
+            Cube &cube = cubes[i]; 
+            VidMode_BG0_ROM vid(cube.vbuf);
+            String<128> str;
+
+            uint64_t hwid = cube.hardwareID();
+            str << "I am cube #" << cube.id() << "\n";
+            str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
-            _SYSCubeHWID hwid;
-            _SYSAccelState accel;
-            uint16_t battery;
-
-            /*
-             * Ugly in all sorts of ways...
-             */
-
-            _SYS_getAccel(id, &accel);
-            _SYS_getNeighbors(id, &nb);
-            _SYS_getRawBatteryV(id, &battery);
-            _SYS_getCubeHWID(id, &hwid);
-
-            static String<128> str;
-            str.clear();
-
-            str << "I am cube #" << id << "\n";
-            
-            str << Hex(hwid.bytes[0], 2)
-                << Hex(hwid.bytes[1], 2)
-                << Hex(hwid.bytes[2], 2)
-                << Hex(hwid.bytes[3], 2)
-                << Hex(hwid.bytes[4], 2)
-                << Hex(hwid.bytes[5], 2)
-                << "\n\n";
-                
+            _SYS_getNeighbors(cube.id(), &nb);
             str << "nb "
                 << Hex(nb.sides[0], 2) << " "
                 << Hex(nb.sides[1], 2) << " "
                 << Hex(nb.sides[2], 2) << " "
                 << Hex(nb.sides[3], 2) << "\n";
             
-            str << "   +" << counts[id].neighborAdd
-                << ", -" << counts[id].neighborRemove
+            str << "   +" << counts[cube.id()].neighborAdd
+                << ", -" << counts[cube.id()].neighborRemove
                 << "\n\n";
-            
-            str << "bat:   " << Hex(battery, 4) << "\n";
-            str << "touch: " << counts[id].touch << "\n\n";
-            
+
+            str << "bat:   " << Hex(_SYS_getRawBatteryV(cube.id()), 4) << "\n";
+            str << "touch: " << counts[cube.id()].touch << "\n\n";
+
+            Vec2 accel = cube.physicalAccel();
             str << "acc: " << Fixed(accel.x, 3) << " "
                 << Fixed(accel.y, 3) << "\n";
 

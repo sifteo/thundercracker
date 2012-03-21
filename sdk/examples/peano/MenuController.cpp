@@ -306,9 +306,9 @@ void RunSetup()
     };
 
     {
-        static const AssetImage *skillIcons[] = {&Icon_Novice, &Icon_Expert};
-        static const AssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
-        static const AssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
+        static const Sifteo::AssetImage *skillIcons[] = {&Icon_Novice, &Icon_Expert};
+        static const Sifteo::AssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
+        static const Sifteo::AssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
 
         TiltFlowItem items[5];
 

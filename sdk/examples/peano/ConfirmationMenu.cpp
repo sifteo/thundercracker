@@ -89,7 +89,7 @@ void AnimateDoors(TotalsCube *c, bool opening)
 }
 
 //true means selected first choice (yes)
-bool Run(const char *msg, const AssetImage *choice1, const AssetImage *choice2)
+bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::AssetImage *choice2)
 {    
     bool result = false;
 

@@ -6,7 +6,7 @@
 
 namespace TotalsGame {
 
-const AssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
+const Sifteo::AssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
 
 const float TiltFlowView::kMinAccel = 1;
 const float TiltFlowView::kMaxAccel = 2.5f;

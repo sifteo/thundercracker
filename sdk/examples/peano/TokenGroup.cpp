@@ -26,14 +26,14 @@ namespace TotalsGame
         return src->GetCount() + dst->GetCount();
     }
 	
-    bool TokenGroup::TokenAt(Vec2 p, Token **t) 
+    bool TokenGroup::TokenAt(Vector2<int> p, Token **t)
 	{
       return
 		  src->TokenAt(p - srcPos, t) ||
         dst->TokenAt(p - dstPos, t);
     }
 
-	bool TokenGroup::PositionOf(Token *t, Vec2 *p) 
+    bool TokenGroup::PositionOf(Token *t, Vector2<int> *p)
 	{
       if (src->PositionOf(t, p)) 
 	  {
@@ -67,8 +67,8 @@ namespace TotalsGame
     }
 
      TokenGroup::TokenGroup(
-         IExpression *src, Vec2 srcPos, Token *srcToken, Cube::Side srcSide,
-         IExpression *dst, Vec2 dstPos, Token *dstToken,
+         IExpression *src, Vector2<int> srcPos, Token *srcToken, Cube::Side srcSide,
+         IExpression *dst, Vector2<int> dstPos, Token *dstToken,
          Fraction val,
          ShapeMask mask
          )
@@ -103,20 +103,20 @@ namespace TotalsGame
              this->dst = dst;
              this->dstToken = dstToken;
              void *userData = NULL;
-             Vec2 sp, dp;
+             Vector2<int> sp, dp;
              src->PositionOf(srcToken, &sp);
              dst->PositionOf(dstToken, &dp);
-             Vec2 d = kSideToUnit[srcSide];
+             Vector2<int> d = kSideToUnit[srcSide];
              ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mMask, &srcPos, &dstPos);
              mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
              mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
 
-     TokenGroup *TokenGroup::Connect(IExpression *src, Token *srcToken, Vec2 d, IExpression *dst, Token *dstToken) {
+     TokenGroup *TokenGroup::Connect(IExpression *src, Token *srcToken, Vector2<int> d, IExpression *dst, Token *dstToken) {
          if (d.x < 0 || d.y < 0) { return Connect(dst, dstToken, d * -1, src, srcToken); }
          ShapeMask mask;
-         Vec2 d1, d2;
-         Vec2 sp, dp;
+         Vector2<int> d1, d2;
+         Vector2<int> sp, dp;
          src->PositionOf(srcToken, &sp);
          dst->PositionOf(dstToken, &dp);
          if (!ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mask, &d1, &d2)) {

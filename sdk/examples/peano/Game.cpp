@@ -27,7 +27,7 @@ SkillLevel skillLevel = SkillLevel_Expert;
 SaveData saveData;
 
 float dt;
-int64_t timeInt;
+SystemTime systemTime;
 
 
 void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
@@ -148,7 +148,7 @@ void Run(TotalsCube *_cubes, int nCubes)
     currentPuzzle = NULL;
     previousPuzzle = NULL;
 
-    timeInt = System::clockNS();
+    systemTime = SystemTime::now();
 
     //TODO		saveData.Load();
 
@@ -202,11 +202,11 @@ void Run(TotalsCube *_cubes, int nCubes)
 
 void UpdateDt()
 {
-    int64_t now = System::clockNS();
-    int64_t dtInt = now - timeInt;
-    timeInt = now;
+    SystemTime now = SystemTime::now();
+    TimeDelta timeDelta = now - systemTime;
+    systemTime = now;
 
-    dt = dtInt / 1000000000.0f;
+    dt = timeDelta;
 }
 
 void Wait(float delay)
@@ -214,15 +214,13 @@ void Wait(float delay)
     PaintCubeViews();
     System::paintSync();
 
-    int64_t t=System::clockNS();
+    SystemTime t = SystemTime::now();
 
-    //convert to ms before goint to ns to avoid float overflow
-    int64_t delayMS = delay * 1000.0f;
-    t += delayMS * 1000000;
+    t += delay;
     do {
         System::yield();
         UpdateDt();
-    } while(System::clockNS() < t);
+    } while(SystemTime::now() < t);
 }
 
 bool IsPlayingRandom()

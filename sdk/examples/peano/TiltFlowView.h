@@ -26,7 +26,7 @@ namespace TotalsGame {
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;
-    static const AssetImage *kMarquee[2];
+    static const Sifteo::AssetImage *kMarquee[2];
 
 private:
     int mItem ;
@@ -62,7 +62,7 @@ private:
 public:
     void PaintInner(TotalsCube *c);
 private:
-    void PixelToTileImage(const AssetImage *image, Vec2 p, Vec2 o, Vec2 s);
+    void PixelToTileImage(const Sifteo::AssetImage *image, Vector2<int> p, Vector2<int> o, Vector2<int> s);
 
     void DoPaintItem(TiltFlowItem *item, int x);
 

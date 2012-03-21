@@ -211,7 +211,7 @@ void TiltFlowMenu::ReassignMenu() {
 }*/
 
 
-void TiltFlowMenu::playSound( _SYSAudioModule &sound )
+void TiltFlowMenu::playSound( const AssetAudio &sound )
 {
 #if SFX_ON
     m_SFXChannel.stop();
@@ -350,17 +350,17 @@ void TiltFlowView::PaintInfo() {
    /*
   if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   DoPaintItem(Item, 24, 80); // magic
-  TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,24)); // magic
+  TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,24)); // magic
   */
 }
 
 const float SCROLL_AMOUNT = 220.0f;
 
 Float2 SCROLL_DIRS[] = {
-	Float2( 0.0f, SCROLL_AMOUNT ),
-	Float2( SCROLL_AMOUNT, 0.0f ),
-	Float2( 0.0f, -SCROLL_AMOUNT ),
-	Float2( -SCROLL_AMOUNT, 0.0f ),
+	{ 0.0f, SCROLL_AMOUNT },
+	{ SCROLL_AMOUNT, 0.0f },
+	{ 0.0f, -SCROLL_AMOUNT },
+	{ -SCROLL_AMOUNT, 0.0f },
 };
 
 void TiltFlowView::PaintMenu() {
@@ -376,7 +376,7 @@ void TiltFlowView::PaintMenu() {
       vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
   }*/
 
-  Vec2 offset( 24, 0 );
+  Int2 offset = { 24, 0 };
 
   DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), offset.x, offset.y);
 
@@ -392,7 +392,7 @@ void TiltFlowView::PaintMenu() {
 	  }
 
 	  if (mDrawLabel) {
-		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
+		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
 		  bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
 	  }
 
@@ -414,8 +414,8 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
-      Vec2 offset = Vec2( 0, 0 );
-      Vec2 size = Vec2( pItem->mImage.width, pItem->mImage.height );
+      Int2 offset = Vec2( 0, 0 );
+      Int2 size = Vec2( pItem->mImage.width, pItem->mImage.height );
 
       int leftMostTile = -mOffsetX / 8 - 1;
       int rightMostTile = leftMostTile + VidMode_BG0::BG0_width - 1;
@@ -490,19 +490,19 @@ void TiltFlowView::PaintItem() {
   if (w > 0) {
     DoPaintItem(Item, x, w);
     if (mDrawLabel) {
-      TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,20)); // magic
+      TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,20)); // magic
     }
   }*/
 }
 
 
-Vec2 TiltFlowView::LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent )
+Int2 TiltFlowView::LerpPosition( const Int2 &start, const Int2 &end, float timePercent )
 {
 	if( timePercent < 0.0f )
 		timePercent = 0.0f;
 	if( timePercent > 1.0f )
 		timePercent = 1.0f;
-    Vec2 result( start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent );
+    Int2 result = { start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent };
 
     return result;
 }
@@ -543,7 +543,7 @@ void TiltFlowView::OnNeighborRemove(Cube c, Side s, Cube nc, Side ns) {
 void TiltFlowView::RelateToMenu() {
   Status oldStatus = mStatus;
   int oldItem = mItem;
-  Vec2 pos;
+  Int2 pos;
   if (TiltFlowMenu::Inst()->GetKeyView()->PositionOf(Cube, out pos)) {
     if (pos.y == 0) {
       mItem = TiltFlowMenu::Inst()->GetKeyView()->mItem + pos.x;
@@ -682,54 +682,54 @@ void TiltFlowView::StopScrolling() {
   TODO
   neighboring doesn't happen for tiltflow now
 
-bool PositionOf(Cube c, out Vec2 pos) {
+bool PositionOf(Cube c, out Int2 pos) {
   if (Cube == c) {
-    pos = Vec2.Zero;
+    pos = Vec2(0,0);
     return true;
   }
   if (Cube == NULL || Cube.Neighbors.IsEmpty) {
-    pos = Vec2.Zero;
+    pos = Vec2(0,0);
     return false;
   }
   foreach(var view in TiltFlowMenu::Inst()->Views) { view.mVisited = false; }
-  mGridPosition = Vec2.Zero;
+  mGridPosition = Vec2(0,0);
   mVisited = true;
   for(int i=0; i<4; ++i) {
-    Vec2 p;
+    Int2 p;
     if (PositionOfVisit(this, c, (Side)i, out p)) {
       pos = p;
       return true;
     }
   }
-  pos = Vec2.Zero;
+  pos = Vec2(0,0);
   return false;
 }
 
-bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) {
+bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Int2 result) {
   var n = origin.Cube.Neighbors[s];
   if (n == NULL) {
-    result = Vec2.Zero;
+    result = Vec2(0,0);
     return false;
   };
   var view = n.userData as TiltFlowView;
   if (view.mVisited) {
-    result = Vec2.Zero;
+    result = Vec2(0,0);
     return false;
   }
   view.mVisited = true;
-  view.mGridPosition = origin.mGridPosition + Vec2.Side(s);
+  view.mGridPosition = origin.mGridPosition + Int2.Side(s);
   if (view.Cube == target) {
     result = view.mGridPosition;
     return true;
   } else {
     for(int i=0; i<4; ++i) {
-      Vec2 p;
+      Int2 p;
       if (PositionOfVisit(view, target, (Side)i, out p)) {
         result = p;
         return true;
       }
     }
-    result = Vec2.Zero;
+    result = Vec2(0,0);
     return false;
   }
 

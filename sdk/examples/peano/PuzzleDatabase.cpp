@@ -25,7 +25,7 @@ int NumTokensInPuzzle(int chapter, int puzzle)
     return TheData::everything.chapters[chapter].puzzles[puzzle].nTokens;
 }
     
-const AssetImage &ImageForChapter(int chapter)
+const Sifteo::AssetImage &ImageForChapter(int chapter)
 {
     return TheData::everything.chapters[chapter].icon;
 }

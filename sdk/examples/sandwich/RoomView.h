@@ -30,7 +30,7 @@ private:
 
 public:  
   // getters
-  Vec2 Location() const;
+  Int2 Location() const;
   Room* GetRoom() const;
   
   // methods
@@ -47,8 +47,8 @@ public:
   void HidePlayer();
 
   void ShowItem();
-  void SetEquipPosition(Vec2 p);
-  void SetItemPosition(Vec2 p);
+  void SetEquipPosition(Int2 p);
+  void SetItemPosition(Int2 p);
   void HideItem();
   void HideEquip();
 

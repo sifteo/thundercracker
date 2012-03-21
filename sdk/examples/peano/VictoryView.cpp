@@ -29,8 +29,8 @@ bool VictoryParticle::Paint(TotalsCube *c, int type, int id, float time) {
         {&Coin_8, &Coin_16, &Coin_24}
     };
 
-    const Float2 halfG(0, 32.5);
-    Float2 p = initialPosition + initialVelocity * time + halfG * time * time;
+    const Vector2<float> halfG = Vec2(0.0f, 32.5f);
+    Vector2<float> p = initialPosition + initialVelocity * time + halfG * time * time;
 
     if (IsOnScreen(p)) {
         c->backgroundLayer.setSpriteImage(id, *sprites[type][sizeIndex], 0);
@@ -74,11 +74,11 @@ void VictoryView::Update () {
 void VictoryView::Paint () {
     if(mOpen)
     {
-        static const AssetImage *narratorTypes[] =
+        static const Sifteo::AssetImage *narratorTypes[] =
         {
             &Narrator_Diamond,   &Narrator_Ruby, &Narrator_Emerald, &Narrator_Coin
         };
-        GetCube()->Image(*narratorTypes[mType], Vec2(0,16-narratorTypes[mType]->height));
+        GetCube()->Image(*narratorTypes[mType], Vec2<int>(0,16-narratorTypes[mType]->height));
 
         for(int i=0; i<8; ++i) {
             mParticles[i].Paint(GetCube(), mType, i, time);
@@ -86,7 +86,7 @@ void VictoryView::Paint () {
     }
     else
     {
-        GetCube()->Image(Narrator_GetReady, Vec2(0,16-Narrator_GetReady.height));
+        GetCube()->Image(Narrator_GetReady, Vec2<int>(0,16-Narrator_GetReady.height));
     }
 }
 

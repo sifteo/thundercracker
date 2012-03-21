@@ -52,7 +52,7 @@ ShapeMask Token::GetMask()
     return ShapeMask::Unity;
 }
 
-bool Token::TokenAt(Vec2 p, Token **t)
+bool Token::TokenAt(Vector2<int> p, Token **t)
 {
     if (p.x == 0 && p.y == 0)
     {
@@ -63,7 +63,7 @@ bool Token::TokenAt(Vec2 p, Token **t)
     return false;
 }
 
-bool Token::PositionOf(Token *t, Vec2 *p)
+bool Token::PositionOf(Token *t, Vector2<int> *p)
 {
     p->set(0,0);
     return t == this;
@@ -103,9 +103,9 @@ SideStatus Token::StatusOfSide(Cube::Side side, IExpression *current)
     {
         return SideStatusOpen;
     }
-    Vec2 pos;
+    Vector2<int> pos;
     current->PositionOf(this, &pos);
-    Vec2 del = kSideToUnit[side];
+    Vector2<int> del = kSideToUnit[side];
     if (!current->GetMask().BitAt(pos+del))
     {
         return SideStatusOpen;

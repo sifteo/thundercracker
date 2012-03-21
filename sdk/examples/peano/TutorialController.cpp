@@ -96,17 +96,15 @@ void WaitWithTokenUpdate(float delay)
     Game::PaintCubeViews();
     System::paintSync();
 
-    int64_t t=System::clockNS();
+    SystemTime t = SystemTime::now();
 
-    //convert to ms before goint to ns to avoid float overflow
-    int64_t delayMS = delay * 1000.0f;
-    t += delayMS * 1000000;
+    t += delay;
     do {
         pFirstToken->Update();
         pSecondToken->Update();
         System::paint();
         Game::UpdateDt();
-    } while(System::clockNS() < t);
+    } while(SystemTime::now() < t);
 }
 
 

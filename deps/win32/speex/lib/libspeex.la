@@ -5,10 +5,10 @@
 # It is necessary for linking the library.
 
 # The name that we can dlopen(3).
-dlname='../bin/libspeex-1.dll'
+dlname=''
 
 # Names of this library.
-library_names='libspeex.dll.a'
+library_names=''
 
 # The name of the static archive.
 old_library='libspeex.a'
@@ -22,7 +22,7 @@ age=5
 revision=0
 
 # Is this an already installed library?
-installed=yes
+installed=no
 
 # Should we warn about portability when linking against -modules?
 shouldnotlink=no
@@ -32,4 +32,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/c/code/thundercracker/speex/prebuilt/win32/lib'
+libdir='/usr/local/lib'

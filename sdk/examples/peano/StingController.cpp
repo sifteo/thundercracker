@@ -49,8 +49,8 @@ void Run()
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
 
-    int64_t t = System::clockNS() + 3 * int64_t(1000000000);
-    while(!skip && t > System::clockNS())
+    SystemTime t = SystemTime::now() + 3.0f;
+    while(!skip && t > SystemTime::now())
     {
         System::paint();
     }

@@ -57,7 +57,7 @@ void OnSetup ()
     numRemoveEvents = 0;
     AudioPlayer::PlayInGameMusic();
 
-    String<10> stringRep;
+    Sifteo::String<10> stringRep;
     int stringRepLength;
     if (Game::IsPlayingRandom())
     {
@@ -149,10 +149,10 @@ void ShowPuzzleCount()
                 nv.GetCube()->foregroundLayer.Flush();
                 nv.GetCube()->backgroundLayer.setWindow(72,56);
 
-                float t = 3 + System::clock();
+                SystemTime t = SystemTime::now() + 3.0f;
                 float timeout = 0.0;
                 int i=0;
-                while(System::clock() < t) {
+                while(SystemTime::now() < t) {
                     timeout -= Game::dt;
                     while (timeout < 0) {
                         i = 1 - i;
@@ -164,7 +164,7 @@ void ShowPuzzleCount()
                 }
             } else {
                 //static because nv.SetMessage doesnt strcpy, keeps pointer.
-                static String<20> msg;
+                static Sifteo::String<20> msg;
                 msg.clear();
                 msg << count << " codes to go...";
                 nv.SetMessage(msg);

@@ -3,11 +3,13 @@
 #include "sifteo.h"
 #include <stddef.h>
 
+using namespace Sifteo::Math;
+
 namespace TotalsGame {
 
 	struct Connection {
-		Vec2 pos;
-		Vec2 dir;
+        Vector2<int> pos;
+        Vector2<int> dir;
 
         bool Matches(const Connection &c);
 
@@ -19,24 +21,24 @@ namespace TotalsGame {
 	};
 
 	struct ShapeMask {
-		Vec2 size;
+        Vector2<int> size;
 		long bits;
 
 		static const ShapeMask Zero;
 		static const ShapeMask Unity;
 
-        ShapeMask(Vec2 size, bool *flags, size_t numFlags);
+        ShapeMask(Vector2<int> size, bool *flags, size_t numFlags);
 
-        ShapeMask(Vec2 size, long bits);
+        ShapeMask(Vector2<int> size, long bits);
 
         ShapeMask();
 
         ShapeMask GetRotation();
         ShapeMask GetReflection();
 
-        bool BitAt(Vec2 p);
+        bool BitAt(Vector2<int> p) const;
 
-        ShapeMask SubMask(Vec2 p, Vec2 s);
+        ShapeMask SubMask(Vector2<int> p, Vector2<int> s);
 
         bool Matches(const ShapeMask &mask);
 		
@@ -46,8 +48,8 @@ namespace TotalsGame {
 
 
 		static bool TryConcat(
-			ShapeMask m1, ShapeMask m2, Vec2 offset, 
-			ShapeMask *result,Vec2 *d1, Vec2 *d2
+            const ShapeMask &m1, const ShapeMask &m2, Vector2<int> offset,
+            ShapeMask *result, Vector2<int> *d1, Vector2<int> *d2
             );
     };
 

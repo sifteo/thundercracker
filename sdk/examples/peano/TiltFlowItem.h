@@ -3,16 +3,18 @@
 #include "sifteo.h"
 #include <stddef.h>
 
+using namespace Sifteo;
+
 namespace TotalsGame
 {
 
   class TiltFlowItem
   {
       const char *name;
-      Vec2 sourcePosition;
+      Vector2<int> sourcePosition;
       int imageIndex;
-      const AssetImage **images;
-      const AssetImage *singleImage;
+      const Sifteo::AssetImage **images;
+      const Sifteo::AssetImage *singleImage;
       int numImages;
       int opt;
 
@@ -22,23 +24,23 @@ namespace TotalsGame
     int id;
     const char *GetName();
     const char *description;
-    const AssetImage *GetImages();
+    const Sifteo::AssetImage *GetImages();
     int GetNumImages();
-    Vec2 GetSourcePosition();
+    Vector2<int> GetSourcePosition();
 
     TiltFlowItem ();
 
-    TiltFlowItem(const AssetImage *image);
+    TiltFlowItem(const Sifteo::AssetImage *image);
 
     void IncrementImageIndex();
 
-    TiltFlowItem(const AssetImage **_images, int _numImages);
+    TiltFlowItem(const Sifteo::AssetImage **_images, int _numImages);
     int GetOpt();
     void SetOpt(int val);
 
-    void SetImage(const AssetImage *image);
-    void SetImages(const AssetImage **_images, int _numImages);
-    const AssetImage *GetImage();
+    void SetImage(const Sifteo::AssetImage *image);
+    void SetImages(const Sifteo::AssetImage **_images, int _numImages);
+    const Sifteo::AssetImage *GetImage();
 
     bool IsToggle();
 

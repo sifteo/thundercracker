@@ -8,6 +8,8 @@
 #include "TotalsCube.h"
 #include "Puzzle.h"
 
+using namespace Sifteo;
+
 namespace TotalsGame {
 
     class Puzzle;
@@ -74,7 +76,7 @@ namespace TotalsGame {
 		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
 
-		extern float dt;
+        extern float dt;
 
 		void Run(TotalsCube *cubes, int nCubes);
 

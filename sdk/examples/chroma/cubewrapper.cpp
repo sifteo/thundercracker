@@ -29,7 +29,7 @@ const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
-        m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
+        m_curFluidDir(Vec2( 0, 0 )), m_curFluidVel(Vec2( 0, 0 )), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
@@ -168,7 +168,7 @@ void CubeWrapper::Draw()
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
                     int level = Game::Inst().getDisplayedLevel();
 
-                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 3 ),
+                    Banner::DrawScore( m_bg1helper, Vec2<int>( Banner::CENTER_PT, 3 ),
                                        Banner::CENTER, level );
 
                     m_vid.BG1_setPanning( Vec2( 0, -4 ) );
@@ -231,7 +231,7 @@ void CubeWrapper::Draw()
                 {
                     int score = Game::Inst().getHighScore(i);
 
-                    Banner::DrawScore( m_bg1helper, Vec2( 7, 4+2*i ), Banner::RIGHT, score );
+                    Banner::DrawScore( m_bg1helper, Vec2<int>( 7, 4+2*i ), Banner::RIGHT, score );
                 }
             }
             else if( Game::Inst().getWrapperIndex( this ) == 1 )
@@ -395,11 +395,10 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
         m_banner.Update(t);
 
         //tilt state
-        _SYSAccelState state;
-        _SYS_getAccel(m_cube.id(), &state);
+        _SYSAccelState state = _SYS_getAccel(m_cube.id());
 
         //try spring to target
-        Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+        Float2 delta = Vec2<float>( state.x, state.y ) - m_curFluidDir;
 
         //hooke's law
         Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
@@ -423,7 +422,7 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
         Float2 oldvel = m_curFluidVel;
 
         m_curFluidVel += force;
-        m_curFluidDir += m_curFluidVel * dt;
+        m_curFluidDir += m_curFluidVel * float(dt);
 
         if( m_curFluidVel.x > TILT_SOUND_EPSILON || m_curFluidVel.y > TILT_SOUND_EPSILON )
         {
@@ -1022,7 +1021,7 @@ void CubeWrapper::Refill()
 	}
 
 	unsigned int numEmpties = 0;
-	Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+	Int2 aEmptyLocs[NUM_ROWS * NUM_COLS];
 
     //strip out existing gem values.
 	for( int i = 0; i < NUM_ROWS; i++ )
@@ -1188,7 +1187,7 @@ void CubeWrapper::RespawnOnePiece()
 {
     //grab a random empty location
     unsigned int numEmpties = 0;
-    Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+    Int2 aEmptyLocs[NUM_ROWS * NUM_COLS];
 
     for( int i = 0; i < NUM_ROWS; i++ )
     {
@@ -1385,7 +1384,7 @@ unsigned int CubeWrapper::getNumCornerDots() const
 
 //returns if we have one and only one fixed dot (and zero floating dots)
 //fills in the position of that dot
-bool CubeWrapper::getFixedDot( Vec2 &pos ) const
+bool CubeWrapper::getFixedDot( Int2 &pos ) const
 {
 	int count = 0;
 
@@ -1447,7 +1446,7 @@ void CubeWrapper::FlushBG1()
 }
 
 
-void CubeWrapper::QueueClear( Vec2 &pos )
+void CubeWrapper::QueueClear( Int2 &pos )
 {
     m_queuedClears[m_numQueuedClears] = pos;
     m_numQueuedClears++;
@@ -1459,7 +1458,7 @@ void CubeWrapper::QueueClear( Vec2 &pos )
 void CubeWrapper::SpawnSpecial( unsigned int color )
 {
     unsigned int numEmpties = 0;
-    Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+    Int2 aEmptyLocs[NUM_ROWS * NUM_COLS];
 
     for( int i = 0; i < NUM_ROWS; i++ )
     {
@@ -1593,7 +1592,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
     //only check for spots that haven't been found already
     if( !bCorners )
     {
-        const Vec2 cornerLocs[] = {
+        const Int2 cornerLocs[] = {
             Vec2( 0, 0 ),
             Vec2( 0, NUM_COLS - 1 ),
             Vec2( NUM_ROWS - 1, 0 ),
@@ -1623,7 +1622,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
     if( !side1 )
     {
         STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
-        const Vec2 locs[] = {
+        const Int2 locs[] = {
             Vec2( 0, 1 ),
             Vec2( 1, 3 ),
             Vec2( 2, 0 ),
@@ -1652,7 +1651,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
       */
     if( !side2 )
     {
-        const Vec2 locs[] = {
+        const Int2 locs[] = {
             Vec2( 0, 2 ),
             Vec2( 1, 0 ),
             Vec2( 2, 3 ),
@@ -1880,7 +1879,7 @@ void CubeWrapper::StopGlimmer()
 }
 
 
-void CubeWrapper::SpawnRockExplosion( const Vec2 &pos, unsigned int health )
+void CubeWrapper::SpawnRockExplosion( const Int2 &pos, unsigned int health )
 {
     //find an unused explosion.
     for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )

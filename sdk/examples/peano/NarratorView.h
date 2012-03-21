@@ -8,7 +8,7 @@ namespace TotalsGame {
 
   class NarratorView : public View {
 
-      static const AssetImage *emotes[];
+      static const Sifteo::AssetImage *emotes[];
 
   public:
       enum Emote

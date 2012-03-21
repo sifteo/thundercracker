@@ -86,7 +86,7 @@ private:
                     bool paintTime=false,
                     float animStartTime=0.f);
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
-    void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
+    void paintScoreNumbers(BG1Helper &bg1, Int2 position, const char* string);
 
     void setLettersStart(unsigned s);
 
@@ -99,7 +99,7 @@ private:
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     char mHintSolution[MAX_LETTERS_PER_CUBE + 1];
-    Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
+    Int2 mTilePositions[MAX_LETTERS_PER_CUBE];
     unsigned mNumLetters;
     unsigned mPuzzlePieceIndex;
     float mIdleTime;

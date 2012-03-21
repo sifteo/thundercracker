@@ -2,7 +2,7 @@
 namespace TotalsGame
 {
 
-Vec2 TiltFlowItem::GetSourcePosition() {return sourcePosition;}
+Vector2<int> TiltFlowItem::GetSourcePosition() {return sourcePosition;}
 
 TiltFlowItem::TiltFlowItem ()
 {
@@ -13,7 +13,7 @@ TiltFlowItem::TiltFlowItem ()
     id = 0;
 }
 
-TiltFlowItem::TiltFlowItem(const AssetImage *image)
+TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage *image)
 {
     singleImage = image;
     images = &singleImage;
@@ -28,7 +28,7 @@ TiltFlowItem::TiltFlowItem(const AssetImage *image)
 
 void TiltFlowItem::IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
 
-TiltFlowItem::TiltFlowItem(const AssetImage **_images, int _numImages)
+TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage **_images, int _numImages)
 {
     images = _images;
     numImages = _numImages;
@@ -41,20 +41,20 @@ TiltFlowItem::TiltFlowItem(const AssetImage **_images, int _numImages)
 int TiltFlowItem::GetOpt() {return opt;}
 void TiltFlowItem::SetOpt(int val) { imageIndex = val % numImages; }
 
-const AssetImage *TiltFlowItem::GetImage() {return images[imageIndex];}
+const Sifteo::AssetImage *TiltFlowItem::GetImage() {return images[imageIndex];}
 
 bool TiltFlowItem::IsToggle() { return images != NULL && numImages > 1; }
 
 bool TiltFlowItem::HasImage() { return images != NULL;  }
 
-void TiltFlowItem::SetImage(const AssetImage *image)
+void TiltFlowItem::SetImage(const Sifteo::AssetImage *image)
 {
     singleImage = image;
     images = &singleImage;
     numImages = 1;
 }
 
-void TiltFlowItem::SetImages(const AssetImage **_images, int _numImages)
+void TiltFlowItem::SetImages(const Sifteo::AssetImage **_images, int _numImages)
 {
     images = _images;
     numImages = _numImages;

@@ -5,6 +5,8 @@
 #include "assets.gen.h"
 #include "ObjectPool.h"
 
+using namespace Sifteo;
+
 namespace TotalsGame {
 
     class TotalsCube;

@@ -22,24 +22,24 @@ struct ACell {
 inline int abs(int x) { return x < 0 ? -x : x; }
 
 struct AStar {
-  Vec2 offset;
-  Vec2 src;
-  Vec2 dst;
+  Int2 offset;
+  Int2 src;
+  Int2 dst;
   int cellPitch;
   int cellRowCount;
   int recordCount;
   ARecord records[A_STAR_CAP];
   ACell cells[A_STAR_CAP];
 
-  inline uint8_t TileToID(Vec2 tile) const { return tile.x + cellPitch * tile.y; }
-  inline Vec2 IDToTile(uint8_t tid) const { tid &= (~0x80); return Vec2(tid % cellPitch, tid / cellPitch);}
-  inline uint8_t Heuristic(Vec2 tile) const { return abs(tile.x - dst.x) + abs(tile.y - dst.y); }
+  inline uint8_t TileToID(Int2 tile) const { return tile.x + cellPitch * tile.y; }
+  inline Int2 IDToTile(uint8_t tid) const { tid &= (~0x80); return Vec2(tid % cellPitch, tid / cellPitch);}
+  inline uint8_t Heuristic(Int2 tile) const { return abs(tile.x - dst.x) + abs(tile.y - dst.y); }
   void VisitNeighbor(ARecord* parent, Cube::Side dir);
 };
 
 void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
-  Vec2 tile = IDToTile(parent->tileID);
-  Vec2 ntile = tile + kSideToUnit[dir];
+  Int2 tile = IDToTile(parent->tileID);
+  Int2 ntile = tile + kSideToUnit[dir].toInt();
   if (ntile.x < 0 || ntile.y < 0 || ntile.x >= cellPitch || ntile.y >= cellRowCount) {
     return;
   }
@@ -76,8 +76,8 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   BroadLocation dbloc;
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
 
-  Vec2 loc = bloc.view->Location();
-  Vec2 dloc = loc + kSideToUnit[dir];
+  Int2 loc = bloc.view->Location();
+  Int2 dloc = loc + kSideToUnit[dir].toInt();
   Room* src = GetRoom(loc);
   Room* dst = GetRoom(dloc);
   
@@ -96,7 +96,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
     LOG(("-------\n"));
     for(int row=0; row<as.cellRowCount; ++row) {
       for(int col=0; col<as.cellPitch; ++col) {
-        Vec2 tile = Vec2(col, row);
+        Int2 tile = Vec2(col, row);
         if (tile == as.src) {
           LOG(("s"));
         } else if (tile == as.dst) {
@@ -132,7 +132,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
     }
     if (pSelected) {
       // get location and close the selected node
-      Vec2 tile = as.IDToTile(pSelected->tileID);
+      Int2 tile = as.IDToTile(pSelected->tileID);
       pSelected->tileID |= 0x80;
       if (tile == as.dst) {
         // SUCCESS
@@ -141,7 +141,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
         while(tile != as.src) {
           (outPath->pFirstMove)--;
           *(outPath->pFirstMove) = (pSelected->parentDirection + 2) % 4;
-          tile += kSideToUnit[pSelected->parentDirection];
+          tile += kSideToUnit[pSelected->parentDirection].toInt();
           pSelected = as.records + as.cells[as.TileToID(tile)].record;
         }
         return true;

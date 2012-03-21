@@ -12,7 +12,7 @@ namespace TotalsGame
 namespace ConfirmationMenu
 {
 
-bool Run(const char *msg, const AssetImage *choice1=NULL, const AssetImage *choice2=NULL);
+bool Run(const char *msg, const Sifteo::AssetImage *choice1=NULL, const Sifteo::AssetImage *choice2=NULL);
 
 }
 }

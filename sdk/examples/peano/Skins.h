@@ -4,6 +4,8 @@
 #include "assets.gen.h"
 #include "Skins.h"
 
+using namespace Sifteo;
+
 namespace TotalsGame
 {
 namespace Skins

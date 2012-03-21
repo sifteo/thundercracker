@@ -8,8 +8,8 @@ void WaitForSeconds(float dt);
 
 void DrawRoom(ViewMode* gfx, const MapData* pMap, int roomId);
 void DrawRoomOverlay(BG1Helper* ovrly, const MapData* pMap, unsigned tid, const uint8_t *pRle);
-void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Vec2 pos);
-bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Vec2 from, Vec2 to);
+void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos);
+bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Int2 from, Int2 to);
 
 struct ButterflyFriend {
     

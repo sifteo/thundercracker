@@ -17,6 +17,7 @@
 #define PLAY_SFX2(a,b) do{}while(0)
 #endif
 
+using namespace Sifteo;
 
 namespace TotalsGame
 {
@@ -25,14 +26,14 @@ namespace TotalsGame
 	public:
 		static void Init();
 
-		static void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
-		static void PlayMusic(_SYSAudioModule& music, bool loop=true);
+		static void PlaySfx(const AssetAudio& handle, bool preempt=true);
+		static void PlayMusic(const AssetAudio& music, bool loop=true);
 
         static void MuteMusic(bool mute);
         static void MuteSfx(bool mute);
         static bool MusicMuted();
         static bool SfxMuted();
-        static void HaltSfx(const _SYSAudioModule &handle);
+        static void HaltSfx(const AssetAudio &handle);
 
 		static void PlayShutterOpen();
 		static void PlayShutterClose();
@@ -44,7 +45,7 @@ namespace TotalsGame
         static const int NumSfxChannels = 3;
 #if SFX_ON
 		static AudioChannel channelSfx[NumSfxChannels];
-        static const _SYSAudioModule *whatsPlaying[NumSfxChannels];
+        static const AssetAudio *whatsPlaying[NumSfxChannels];
 #endif
 #if MUSIC_ON
 		static AudioChannel channelMusic;

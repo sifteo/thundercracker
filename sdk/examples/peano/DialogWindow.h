@@ -8,7 +8,7 @@ namespace TotalsGame
 class DialogWindow {
 private:
     TotalsCube* mCube;
-    Vec2 mPosition;
+    Vector2<int> mPosition;
     uint16_t fg, bg;
 
 
