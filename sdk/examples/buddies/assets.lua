@@ -69,6 +69,7 @@ UiPanel = image{"assets/plain_panel.png"}
 UiClueBlank = image{"assets/panel_clue_blank.png"}
 UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 UiCongratulations = image{"assets/panel_congratulations.png"}
+UiRibbonGluv = image{"assets/ribbon_gluv.png"}
 
 -- Main Menu
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
