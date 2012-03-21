@@ -1,0 +1,94 @@
+Bundled load/store encodings
+----------------------------
+
+Using native code, segmented into easy-to-verify "bundles" of instructions.
+
+16-bit instructions, 64-bit bundles, no NULL detection
+
+1.  mov Rb, r8
+2.  cmp Ro, r9
+3.  bcs _fault
+4.  ld/st Rd, Rb, Ro
+
+32-bit instructions, 64-bit bundles, no NULL detection
+
+1/2.  bfi r8, Rn, #0, #15
+3/4.  ld/st (high)
+
+16-bit instructions, 64-bit bundles, with NULL detection
+
+1.  add Rn, r8              # Virtual address base, negated
+2.  uxth Rn, Rn             # Chop off high 16 bits
+3.  add Rn, r9              # Physical address base
+4.  ld/st Rt, [Rn, #imm5]   # Any 16-bit byte/word/half load/store op
+
+... any of the above would only handle RAM addresses, not generalized virtual
+addresses. Can the compiler determine statically that most addresses are for
+RAM? If not, it would be difficult to use these encodings efficiently.
+
+Additionally, the "bundle" strategy would greatly decrease code density. All
+basic blocks would be aligned, and these load/store sequences would be quite
+large compared to the alternative.
+
+Except: The CMP approach above would be able to branch to a local fault
+handler, which could handle the more generalized data addresses. But how do
+we jump back? Syscalls would solve this problem, but a conditional syscall
+would require an IT prefix on Thumb, which makes it too long.
+
+Assisted load/store encodings
+-----------------------------
+
+Where all loads/stores must use a trap in some capacity, either to do the
+operation itself or to set up a trusted base pointer. Since the base pointer
+is short-lived (not preserved across calls/traps) it could even refer to data
+memory resident in the cache.
+
+32-bit instructions, 32-bit bundles, assisted base addressing:
+
+1.   svc NNNNNrrr       # N=opcode, R=Rb;  r8 = validate(Rb)
+~
+1/2. ld/st Rt(low), r8, #imm12
+
+This approach requires bundling and the additional validation complexity that
+this entails, but it would make it much faster to access e.g. members of an
+object. Things like array indexing and iteration will still be slow, but one
+of the big advantages is that the SVC implementation can be very simple, since
+it doesn't have to actually implement the load/store semantics.
+
+16-bit instructions, no bundles, high code density:
+
+1.   svc NNdddsss       # d=Rd, s=Rs, N=op (ldr, str, ldrh, strh...?)
+
+Observation: In Chroma, loads and stores are fully 25% of the game's
+instructions. Code density here is going to be really important, and we can't
+go throwing it out the window by using 64-bit bundles. In particular, the
+immediate forms are very common. So, the assisted base addressing approach
+above seems quite prudent, but requiring a 32-bit Thumb-2 instruction is
+rather suboptimal.
+
+Is there a way we can safely allow the 16-bit form of load/store?
+
+Or maybe we can access objects more efficiently by using syscalls to bulk
+copy to/from stack buffers?
+
+Make r8-r11 into four dedicated base-pointer registers. Can be used as source
+in 32-bit LDR/STR+immediate instrucion, but otherwise can't be used directly.
+Not preserved across calls or long branches.
+
+XXX: If we allow them to point into cached flash pages, it becomes problematic
+to have more than one base register, since any cache load can evict other
+pages, and there isn't a good way to track which pages still have live
+pointers. For this reason, it may be sensible to have only r8 as a pointer
+register.
+
+Code density: Base pointer load can be a 16-bit SVC. Basic blocks must be
+32-bit aligned, and all loads/stores would be 32-bit (with the use of a 12-bit
+immediate offset)
+
+If we allow direct access to cache pages, we still can't allow stores, and we
+need to be cognizant that an immediate offset may reach past the end of the
+cache page. This means only LDR is actually safe, and even then it's only safe
+if the cache is allocated immediately preceding the runtime address space so
+that overflowed loads can only read unprivileged memory.
+
+Does this mean we need separate read-only and read/write base registers?

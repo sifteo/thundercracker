@@ -1,22 +1,17 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _CUBE_H
 #define _CUBE_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 #include "radio.h"
-#include "runtime.h"
+#include "svmmemory.h"
 #include "cubeslots.h"
 #include "systime.h"
-
-//#include "cubecodec.h"
 
 #ifndef USE_MOCK_CUBE_CODEC
   #include "cubecodec.h"
@@ -58,7 +53,7 @@ class CubeSlot {
 
     _SYSCubeIDVector bit() const {
         STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
-        return Sifteo::Intrinsic::LZ(id());
+        return Intrinsic::LZ(id());
     }
 
     bool enabled() const {
@@ -70,11 +65,11 @@ class CubeSlot {
     }
 	
 	void setConnected() {
-		CubeSlots::connectCubes(Sifteo::Intrinsic::LZ(id()));
+		CubeSlots::connectCubes(Intrinsic::LZ(id()));
 	}
 	
 	void setDisconnected() {
-		CubeSlots::disconnectCubes(Sifteo::Intrinsic::LZ(id()));
+		CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
 	}
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
@@ -93,7 +88,9 @@ class CubeSlot {
         *state = accelState;
     }
 
-    void getRawNeighbors(uint8_t buf[4]);
+    inline const uint8_t *getRawNeighbors() const {
+        return neighbors;
+    }
 
     bool isTouching() const;
     
@@ -104,8 +101,10 @@ class CubeSlot {
          * NULL.
          */
         _SYSCubeID i = id();
-        if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
-            return &group->cubes[i];
+        _SYSAssetGroupCube *cubes = reinterpret_cast<_SYSAssetGroupCube*>(group->pCubes);
+
+        if (SvmMemory::mapRAM(cubes, (sizeof cubes[0]) * (i + 1)))
+            return &cubes[i];
         return 0;
     }
 
@@ -113,11 +112,8 @@ class CubeSlot {
     void waitForPaint();
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
+    uint64_t getHWID();
 
-    const _SYSCubeHWID & getHWID() const {
-        return hwid;
-    }
-    
     uint16_t getRawBatteryV() const {
         return rawBatteryV;
     }
@@ -125,6 +121,7 @@ class CubeSlot {
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
+
     // number of cube (ie, not master) ticks for a neighbor tx slot.
     // represents cube bit period * num total bits in a tx sequence.
     // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c
@@ -168,11 +165,13 @@ class CubeSlot {
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
     uint8_t neighbors[4];
+    uint8_t hwid[_SYS_HWID_BYTES];
 
-    // Sensors
+    // Other sensor data
     uint16_t rawBatteryV;
     _SYSAccelState accelState;
-    _SYSCubeHWID hwid;
+    
+    void requestFlashReset();
 };
 
 #endif

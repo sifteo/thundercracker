@@ -192,8 +192,8 @@ void Game::MainLoop() {
 	      		if (pushing) {
 	      			// finish moving the block to the next cube
 	      			const Room* targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
-	      			const Vec2 targ = targRoom->Center(0);
-	      			Vec2 curr= block->Position();
+	      			const Int2 targ = targRoom->Center(0);
+	      			Int2 curr= block->Position();
 	      			while(curr != targ) {
 	      				curr.x = AdvanceTowards(curr.x, targ.x, WALK_SPEED);
 	      				curr.y = AdvanceTowards(curr.y, targ.y, WALK_SPEED);

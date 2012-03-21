@@ -135,9 +135,9 @@ void Dialog::Init(Cube *cube) {
 const char* Dialog::Show(const char* str) {
     unsigned count, length;
     MeasureText(str, &count, &length);
-	mPositionX = (128 - length) >> 1;
+	mPosition.x = (128 - length) >> 1;
     DrawText(str);
-    mPositionY += kFontHeight+1;
+    mPosition.y += kFontHeight+1;
     return str + count;
 }
 
@@ -145,8 +145,8 @@ void Dialog::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-    uint16_t dest = (mPositionY << 4) | (mPositionX >> 3);
-    unsigned shift = mPositionX & 7;
+    uint16_t dest = (mPosition.y << 4) | (mPosition.x >> 3);
+    unsigned shift = mPosition.x & 7;
 
     for (unsigned i = 0; i < kFontHeight; i++) {
         mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] << shift));
@@ -163,7 +163,7 @@ void Dialog::DrawGlyph(char ch) {
         }
     }
 
-    mPositionX += escapement;
+    mPosition.x += escapement;
 }
 
 unsigned Dialog::MeasureGlyph(char ch) {
@@ -193,7 +193,7 @@ void Dialog::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
 }
 
 void Dialog::Erase() {
-    mPositionY = 5;
+    mPosition.y = 5;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
     	mCube->vbuf.poke(i, 0);
     }

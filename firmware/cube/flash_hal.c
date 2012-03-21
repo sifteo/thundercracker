@@ -111,41 +111,31 @@ static void flash_write_unlock()
 #endif
 }
     
-void flash_erase(uint8_t blockCount)
+void flash_autoerase(void)
 {
     /*
-     * Erase a number of blocks, or the entire chip.
+     * Erase one sector (64Kb) at the current address, if and only if
+     * we're pointed to the first byte of a flash block. Guaranteed
+     * to be called at tile boundaries only.
      *
-     * blockCount is as specified in the load stream, as a count of
-     * 64K blocks minus one.  I.e. flash_erase(0) erases one block,
-     * flash_erase(1) erases two, and flash_erase(FLASH_NUM_BLOCKS -
-     * 1) or higher would do a full-chip erase, assuming the current
-     * address is zero.
-     *
-     * Sector/block erase addresses are given on the highest 6 bits,
-     * so if bits are set anywhere else in the address, we assume it's a
-     * mistake elsewhere.
-     *
-     * Erases are ignored if the address is unaligned. This is one of
-     * our safety measures against corrupted loadstreams causing
-     * repeated erases which could wear out the flash quickly.
+     * This is invoked prior to every decompressed tile, so that we
+     * automatically erase blocks as we reach them during decompression.
      *
      * Erase operations are self-contained: we do all address setup
      * (including lat2) and we wait for the erase to finish.
      */
 
-    uint8_t num_extra_sectors;
-
-    if (flash_addr_low)
-        return;
+    // Check sector alignment
     if (flash_addr_lat1)
         return;
-    if (flash_addr_lat2 & 1)    // low bit must be 0 since that's the lcd write strobe
+    if (flash_addr_lat2 & 7)
         return;
 
-    for (;;) {
-        CTRL_PORT = CTRL_IDLE;
-        BUS_DIR = 0;
+    CTRL_PORT = CTRL_IDLE;
+    BUS_DIR = 0;
+
+    // XXX: Critical section only needed for WORD_MODE hack below.
+    radio_critical_section({
 
         // Common unlock prefix for all erase ops
         flash_prefix_aa_55();
@@ -156,53 +146,37 @@ void flash_erase(uint8_t blockCount)
         #endif
         flash_prefix_aa_55();
 
-        if (blockCount >= (FLASH_NUM_BLOCKS - 1) && flash_addr_lat2 == 0) {
+        // Sector erase. (Low bits of address are Don't Care)
+        ADDR_PORT = flash_addr_lat2;
+        CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+        ADDR_PORT = 0;
+        BUS_PORT = 0x30;
+        FLASH_CMD_STROBE();
 
-            // Whole-chip erase
-            #if FLASH_PROGRAM_MODE == BYTE_MODE
-            FLASH_CMD_PREFIX(0xAAA, 0x10);
-            #elif FLASH_PROGRAM_MODE == WORD_MODE
-            FLASH_CMD_PREFIX(0x555, 0x10);
-            #endif
+        #if FLASH_PROGRAM_MODE == WORD_MODE
+            // XXX - we need to make up for our WORD/BYTE screwiness and erase
+            //       an extra sector. In WORD mode, the device sectors are
+            //       64 kbytes or 32 kwords, so they appear as 32 kB to us.
+            //
+            // NOTE: after the first sector erase command has been received,
+            // subsequent commands may be received within a 50us timeout
+            // without having to send another unlock sequence.
+            // ie, don't put anything else in this loop :)
+            // longer term, master should only be telling us exactly
+            // what it wants us to erase
 
-            // Data# polling: Wait for a '1' bit
-            FLASH_OUT();
-            __asm  1$:  jnb     BUS_PORT.7, 1$  __endasm;
-            break;
+            ADDR_PORT = flash_addr_lat2 + 4;
+            CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+            ADDR_PORT = 0;
+            BUS_PORT = 0x30;
+            FLASH_CMD_STROBE();
+        #endif
+    )};
 
-        } else {
-            // Single block
+    // Wait for completion
+    FLASH_OUT();
+    __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
 
-            // XXX - we need to make up for our WORD/BYTE screwiness and erase extra
-            //          sectors to ensure the area that the master actually wants
-            //          to program is successfully erased.
-            num_extra_sectors = 4;
-            radio_critical_section({
-                while (num_extra_sectors--) {
-                    // NOTE: after the first sector erase command has been received,
-                    // subsequent commands may be received within a 50us timeout
-                    // without having to send another unlock sequence.
-                    // ie, don't put anything else in this loop :)
-                    // longer term, master should only be telling us exactly
-                    // what it wants us to erase
-                    ADDR_PORT = flash_addr_lat2 + (num_extra_sectors * 2);
-                    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-                    ADDR_PORT = 0;
-                    BUS_PORT = 0x30;
-                    FLASH_CMD_STROBE();
-                }
-            )};
-
-            FLASH_OUT();
-            __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
-
-            if (!blockCount)
-                break;
-
-            blockCount--;
-            flash_addr_lat2 += 4;
-        }
-    }
     flash_program_start();
 }
 

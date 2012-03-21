@@ -1,7 +1,12 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "macronixmx25.h"
 #include "flash.h"
 #include "board.h"
-#include "sifteo/macros.h"
+#include "macros.h"
 
 void MacronixMX25::init()
 {

@@ -3,38 +3,31 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef AUDIO_H_
-#define AUDIO_H_
+#ifndef _SIFTEO_AUDIO_H_
+#define _SIFTEO_AUDIO_H_
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
+#include <sifteo/asset.h>
 #include <sifteo/abi.h>
 
 namespace Sifteo {
 
-// XXX better place to put these?
-class Audio {
-public:
-    static const int MAX_VOLUME = 256;      // Guaranteed to be a power of two    
-    static const _SYSAudioHandle INVALID_HANDLE = -1;
-};
 
 class AudioChannel {
 public:
 
-    AudioChannel() : handle(Audio::INVALID_HANDLE)
+    AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
     void init() {
         _SYS_audio_enableChannel(&buf);
     }
 
-#if 0
-    bool play(const _SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod, &handle, loopMode);
-    }
-#endif
-    
-    bool play(_SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod, &handle, loopMode);
+    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopOnce) {
+        return _SYS_audio_play(&mod.sys, &handle, loopMode);
     }
 
     bool isPlaying() const {

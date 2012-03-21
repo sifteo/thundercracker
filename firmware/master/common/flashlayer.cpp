@@ -1,100 +1,210 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "flashlayer.h"
 #include "flash.h"
-#include <sifteo.h>
-
+#include "svmdebug.h"
+#include "svmmemory.h"
 #include <string.h>
 
-FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
-uint32_t FlashLayer::validBlocksMask = 0;
-uint32_t FlashLayer::freeBlocksMask = 0;
-
-#ifdef SIFTEO_SIMULATOR
-FlashLayer::Stats FlashLayer::stats;
+#ifdef FLASHLAYER_STATS
+struct FlashStats gFlashStats;
 #endif
 
-void FlashLayer::init()
+uint8_t FlashBlock::mem[NUM_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
+FlashBlock FlashBlock::instances[NUM_BLOCKS];
+uint32_t FlashBlock::referencedBlocksMap;
+uint32_t FlashBlock::latestStamp;
+unsigned FlashBlock::TERRIHACK;
+
+void FlashBlock::init()
 {
-    memset(blocks, 0, sizeof(blocks));
-    // all blocks begin their lives free
+    // All blocks start out with no valid data
     for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
-        Atomic::SetLZ(freeBlocksMask, i);
+        instances[i].address = INVALID_ADDRESS;
     }
 }
 
-bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
+void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 {
-    CachedBlock *b = getCachedBlock(offset);
-    if (b == 0) {
-#ifdef SIFTEO_SIMULATOR
-        stats.misses++;
-#endif
-        b = getFreeBlock();
-        if (b == 0) {
-            return false;
+    ASSERT((blockAddr & BLOCK_MASK) == 0);
+
+    TERRIHACK++;
+    Atomic::Barrier();
+
+    if (ref.isHeld() && ref->address == blockAddr) {
+        // Cache layer 1: Repeated access to the same block. Keep existing ref.
+        FLASHLAYER_STATS_ONLY(gFlashStats.blockHitSame++);
+
+    } else if (FlashBlock *cached = lookupBlock(blockAddr)) {
+        // Cache layer 2: Block exists elsewhere in the cache
+        FLASHLAYER_STATS_ONLY(gFlashStats.blockHitOther++);
+        ref.set(cached);
+
+    } else {
+        // Cache miss. Find a free block and reload it. Reset the lazy
+        // code validator.
+
+        FlashBlock *recycled = recycleBlock();
+        ASSERT(recycled->refCount == 0);
+        ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_BLOCKS]);
+        FLASHLAYER_STATS_ONLY(gFlashStats.blockMiss++);
+
+        recycled->validCodeBytes = 0;
+        recycled->address = blockAddr;
+
+        uint8_t *data = recycled->getData();
+        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
+        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
+
+        Flash::read(blockAddr, data, BLOCK_SIZE);
+        ref.set(recycled);
+    }
+    
+    // Update this block's access stamp (See recycleBlock)
+    ref->stamp = ++latestStamp;
+
+    Atomic::Barrier();
+    TERRIHACK--;
+
+#ifdef FLASHLAYER_STATS
+    if (++gFlashStats.blockTotal >= 1000) {
+        SysTime::Ticks now = SysTime::ticks();
+        SysTime::Ticks tickDiff = now - gFlashStats.timestamp;
+        float dt = tickDiff / (float) SysTime::sTicks(1);
+
+        if (dt > 1.0f) {
+            gFlashStats.timestamp = now;
+        
+            uint32_t totalBytes = gFlashStats.streamBytes
+                + gFlashStats.blockMiss * BLOCK_SIZE;
+
+            const float flashBusMHZ = 18.0f;
+            const float bytesToMBits = 10.0f * 1e-6;
+            float effectiveMHZ = totalBytes / dt * bytesToMBits;
+
+            LOG(("Flashlayer: %9.1f acc/s, %8.1f same/s, "
+                "%8.1f cached/s, %8.1f miss/s, %5.1f stream kB/s, "
+                "%8.2f%% bus utilization\n",
+                gFlashStats.blockTotal / dt,
+                gFlashStats.blockHitSame / dt,
+                gFlashStats.blockHitOther / dt,
+                gFlashStats.blockMiss / dt,
+                gFlashStats.streamBytes / dt * 1e-3,
+                effectiveMHZ / flashBusMHZ * 100.0f));
+
+            gFlashStats.blockTotal = 0;
+            gFlashStats.blockHitSame = 0;
+            gFlashStats.blockHitOther = 0;
+            gFlashStats.blockMiss = 0;
+            gFlashStats.streamBytes = 0;
+
+            for (unsigned i = 0; i < NUM_BLOCKS; i++) {
+                FlashBlock &block = instances[i];
+                SvmMemory::VirtAddr va = SvmMemory::flashToVirtAddr(block.address);
+                std::string name = SvmDebug::formatAddress(va);
+
+                LOG(("\tblock %02d: addr=0x%06x stamp=0x%08x cb=0x%03x ref=%d va=%08x  %s\n",
+                    i, block.address, block.stamp, block.validCodeBytes,
+                    block.refCount, (unsigned)va, name.c_str()));
+            }
         }
-
-        // find the start address of the block that contains this offset,
-        // and read in the entire block.
-        b->address = (offset / BLOCK_SIZE) * BLOCK_SIZE;
-        Flash::read(b->address, (uint8_t*)b->data, BLOCK_SIZE);
-
-        // mark it as both valid & no longer free
-        unsigned idx = b - blocks;
-        ASSERT(idx < NUM_BLOCKS);
-        Atomic::SetLZ(validBlocksMask, idx);
-        Atomic::ClearLZ(freeBlocksMask, idx);
-    }
-#ifdef SIFTEO_SIMULATOR
-    else {
-        stats.hits++;
-    }
-
-    if (stats.hits + stats.misses >= 1000) {
-        DEBUG_LOG(("Flashlayer, stats for last 1000 accesses: %u hits, %u misses\n", stats.hits, stats.misses));
-        stats.hits = stats.misses = 0;
     }
 #endif
-
-    if (offset + len > b->address + sizeof(b->data)) {
-        // requested region crosses block boundary :(
-        r->_size = b->address + BLOCK_SIZE - offset;
-    }
-    else {
-        r->_size = len;
-    }
-
-    r->_address = offset;
-    r->_data = b->data + (offset % BLOCK_SIZE);
-    return true;
 }
 
-void FlashLayer::releaseRegion(const FlashRegion &r) {
-    if (CachedBlock *b = getCachedBlock(r._address)) {
-        unsigned idx = b - blocks;
-        ASSERT(idx < NUM_BLOCKS);
-        Atomic::SetLZ(freeBlocksMask, idx);
-    }
+uint8_t *FlashBlock::getByte(FlashBlockRef &ref, uint32_t address)
+{
+    uint32_t offset = address & BLOCK_MASK;
+    get(ref, address & ~BLOCK_MASK);
+    return ref->getData() + offset;
 }
 
-FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address) {
-    uint32_t mask = validBlocksMask;
-    while (mask) {
-        unsigned idx = Intrinsic::CLZ(mask);
-        CachedBlock *b = &blocks[idx];
-        if (address >= b->address && address < b->address + BLOCK_SIZE) {
+uint8_t *FlashBlock::getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length)
+{
+    uint32_t offset = address & BLOCK_MASK;
+    uint32_t maxLength = BLOCK_SIZE - offset;
+    if (length > maxLength)
+        length = maxLength;
+
+    return getByte(ref, address);
+}   
+
+FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
+{
+    // Any slot in the cache may have a valid block, even if
+    // the refcount is zero. Right now there's no faster way to find
+    // a block than performing a linear search.
+    
+    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+        FlashBlock *b = &instances[i];
+        if (b->address == blockAddr)
             return b;
-        }
-        Atomic::ClearLZ(mask, idx);
     }
-    return 0;
+    return NULL;
 }
 
-FlashLayer::CachedBlock* FlashLayer::getFreeBlock() {
-    if (freeBlocksMask == 0) {
-        return 0;
-    }
+FlashBlock *FlashBlock::recycleBlock()
+{
+    // Look for a block we can recycle, in order to service a cache miss.
+    // This block *must* have a refcount of zero, so we only search the
+    // blocks that are zero in referencedBlocksMap.
+    //
+    // Of these blocks, we look for the one that's most stale. We have a simple
+    // 32-bit timestamp which is updated every time a cache hit occurs. We
+    // can quickly scan through and find the block with the oldest stamp.
 
-    unsigned idx = Intrinsic::CLZ(freeBlocksMask);
-    return &blocks[idx];
+    STATIC_ASSERT(NUM_BLOCKS <= 32);
+    const uint32_t allBlocks = ((1 << NUM_BLOCKS) - 1) << (32 - NUM_BLOCKS);
+    uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
+    ASSERT(availableBlocks &&
+        "Oh no, all cache blocks are in use. Is there a reference leak?");
+
+    FlashBlock *bestBlock = 0;
+    uint32_t bestAge = 0;
+
+    do {
+        unsigned idx = Intrinsic::CLZ(availableBlocks);
+        FlashBlock *block = &instances[idx];
+        uint32_t age = latestStamp - block->stamp;  // Wraparound-safe
+
+        if (age >= bestAge) {
+            bestBlock = block;
+            bestAge = age;
+        }
+        
+        availableBlocks &= ~Intrinsic::LZ(idx);
+    } while (availableBlocks);
+
+    return bestBlock;
+}
+
+void FlashBlock::preload(uint32_t blockAddr)
+{
+    // XXX: Implement me
+}
+
+uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
+{
+    uint32_t chunk = MIN(maxLength, remaining());
+    if (chunk)
+        Flash::read(getAddress() + offset, dest, chunk);
+    FLASHLAYER_STATS_ONLY(gFlashStats.streamBytes += chunk);
+    return chunk;
+}
+
+FlashRange FlashRange::split(uint32_t sliceOffset, uint32_t sliceSize) const
+{
+    // Catch underflow
+    if (sliceOffset >= size)
+        return FlashRange(getAddress(), 0);
+
+    // Truncate overflows
+    uint32_t maxSliceSize = getSize() - sliceOffset;
+    if (sliceSize > maxSliceSize)
+        sliceSize = maxSliceSize;
+    
+    return FlashRange(getAddress() + sliceOffset, sliceSize);
 }

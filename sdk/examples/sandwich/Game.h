@@ -36,7 +36,7 @@ public:
   inline ViewSlot* ViewBegin() { return mViews; }
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
-  inline Vec2 BroadDirection() {
+  inline Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);
     return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
   }
@@ -66,11 +66,11 @@ private:
   // helpers
   void CheckMapNeighbors();
 
-  void WalkTo(Vec2 position, bool dosfx=true);
+  void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
   int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
-  void MoveBlock(Sokoblock* block, Vec2 u);
-  void TeleportTo(const MapData& m, Vec2 position);
+  void MoveBlock(Sokoblock* block, Int2 u);
+  void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);

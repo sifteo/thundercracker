@@ -1,6 +1,0 @@
-*.stm32
-*.exe
-*.o
-*.gen.cpp
-*.gen.h
-assets.html

@@ -5,7 +5,7 @@ unsigned Room::Id() const {
   return (int)(this - gGame.GetMap()->GetRoom(0));
 }
 
-Vec2 Room::LocalCenter(unsigned subdiv) const { 
+Int2 Room::LocalCenter(unsigned subdiv) const { 
   if (subdiv) {
     ASSERT(mUserdataType == USERDATA_SUBDIV);
     if (mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG) {
@@ -19,7 +19,7 @@ Vec2 Room::LocalCenter(unsigned subdiv) const {
   return Vec2(Data()->centerX, Data()->centerY); 
 }
 
-Vec2 Room::Location() const {
+Int2 Room::Location() const {
   return gGame.GetMap()->GetLocation(Id());
 }
 
@@ -66,22 +66,22 @@ void Room::Clear() {
 
 bool Room::IsShowingBlock(const Sokoblock* pBlock) {
   ASSERT(pBlock);
-  const Vec2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
-  const Vec2 roomTopLeft = 128 * Location();
-  const Vec2 delta = blockTopLeft - roomTopLeft;
+  const Int2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Int2 roomTopLeft = 128 * Location();
+  const Int2 delta = blockTopLeft - roomTopLeft;
   return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
 }
 
 unsigned Room::CountOpenTilesAlongSide(Cube::Side side) {
   ASSERT(0 <= side && side < 4);
-  const Vec2 loc = Location();
+  const Int2 loc = Location();
   const Map& map = *gGame.GetMap();
   const RoomData& data = *Data();
   unsigned cnt = 0;
   switch(side) {
     case SIDE_TOP:
       if (loc.y > 0 && map.GetPortalY(loc.x, loc.y-1)) {
-        cnt = 8-Intrinsic::POPCOUNT(data.collisionMaskRows[0]);
+        cnt = 8-__builtin_popcount(data.collisionMaskRows[0]);
       }
       break;
     case SIDE_LEFT:
@@ -93,7 +93,7 @@ unsigned Room::CountOpenTilesAlongSide(Cube::Side side) {
       break;
     case SIDE_BOTTOM:
       if (loc.y < map.Data()->height-1 && map.GetPortalY(loc.x, loc.y)) {
-        cnt = 8-Intrinsic::POPCOUNT(~data.collisionMaskRows[7]);
+        cnt = 8-__builtin_popcount(~data.collisionMaskRows[7]);
       }
       break;
     case SIDE_RIGHT:

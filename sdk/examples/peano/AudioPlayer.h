@@ -9,8 +9,8 @@ namespace TotalsGame
 	public:
 		static void Init();
 
-		static void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
-		static void PlayMusic(_SYSAudioModule& music, bool loop=true);
+		static void PlaySfx(const AssetAudio& handle, bool preempt=true);
+		static void PlayMusic(const AssetAudio& music, bool loop=true);
 
         static void MuteMusic(bool mute);
         static void MuteSfx(bool mute);

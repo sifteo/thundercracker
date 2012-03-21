@@ -1,7 +1,7 @@
 #include "Sokoblock.h"
 
 void Sokoblock::Init(const SokoblockData& data) {
-	mPositionX = data.x;
-	mPositionY = data.y;
+	mPosition.x = data.x;
+	mPosition.y = data.y;
 	mAssetId = data.asset;
 }

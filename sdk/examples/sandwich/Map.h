@@ -58,11 +58,11 @@ public:
   void RefreshTriggers();
 
   Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
-  Room* GetRoom(Vec2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
+  Room* GetRoom(Int2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
 
   bool CanTraverse(BroadLocation loc, Cube::Side side);
   bool GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor);
-  bool IsVertexWalkable(Vec2 globalVertex);
+  bool IsVertexWalkable(Int2 globalVertex);
   bool FindBroadPath(BroadPath* outPath);
   bool FindNarrowPath(BroadLocation loc, Cube::Side direction, NarrowPath* outPath);
 
@@ -97,23 +97,22 @@ public:
     return mData->rooms + roomId;
   }
 
-  inline const RoomData* GetRoomData(Vec2 location) const {
+  inline const RoomData* GetRoomData(Int2 location) const {
     return GetRoomData(GetRoomId(location));
   }
 
-  inline uint8_t GetTileId(unsigned roomId, Vec2 tile) const {
-    ASSERT(roomId < unsigned(mData->width * mData->height));
+  inline uint8_t GetTileId(unsigned roomId, Int2 tile) const {
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
     return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
   }
 
-  inline uint8_t GetGlobalTileId(Vec2 tile) {
-    const Vec2 loc = tile >> 3;
+  inline uint8_t GetGlobalTileId(Int2 tile) {
+    const Int2 loc = tile >> 3;
     return GetTileId(loc.x + mData->width * loc.y, tile - (loc<<3));
   }
 
-  inline bool IsTileOpen(Vec2 location, Vec2 tile) const {
+  inline bool IsTileOpen(Int2 location, Int2 tile) const {
     ASSERT(0 <= location.x && location.x < mData->width);
     ASSERT(0 <= location.y && location.y < mData->height);
     ASSERT(0 <= tile.x && tile.x < 8);
@@ -127,16 +126,16 @@ public:
     return false;
   }
 
-  inline uint8_t GetRoomId(Vec2 location) const {
+  inline uint8_t GetRoomId(Int2 location) const {
     ASSERT(Contains(location));
     return location.x + location.y * mData->width;
   }
 
-  inline Vec2 GetLocation(uint8_t roomId) const {
+  inline Int2 GetLocation(uint8_t roomId) const {
     return Vec2(roomId % mData->width, roomId / mData->width);
   }
 
-  inline bool Contains(Vec2 loc) const {
+  inline bool Contains(Int2 loc) const {
     return loc.x >= 0 && loc.y >= 0 && loc.x < mData->width && loc.y < mData->height;
   }
 

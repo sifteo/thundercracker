@@ -16,7 +16,7 @@ bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
       if (side == SIDE_TOP || side == SIDE_BOTTOM) { return bloc.subdivision == 0; }
       return bloc.subdivision == 1;
     default:
-      Vec2 loc = bloc.view->Location();
+      Int2 loc = bloc.view->Location();
       switch(side) {
         case SIDE_TOP: return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
         case SIDE_LEFT: return loc.x > 0 && GetPortalX(loc.x-1, loc.y);

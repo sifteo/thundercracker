@@ -24,11 +24,11 @@ public:
   //---------------------------------------------------------------------------
 
   unsigned Id() const;
-  Vec2 Location() const;
+  Int2 Location() const;
   const RoomData* Data() const;
-  inline Vec2 Position() const { return 128 * Location(); }
-  Vec2 LocalCenter(unsigned subdiv) const;
-  inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
+  inline Int2 Position() const { return 128 * Location(); }
+  Int2 LocalCenter(unsigned subdiv) const;
+  inline Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
   inline bool HasUserdata() const { return mUserdataType; }
   void Clear();
   bool IsShowingBlock(const Sokoblock* pBlock);  

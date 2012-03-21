@@ -1,12 +1,8 @@
+APP = tiltshake
 TC_DIR = ../../..
-include $(TC_DIR)/firmware/master/Makefile.defs
+include $(TC_DIR)/sdk/Makefile.defs
 
-BIN_SIM = tiltshake.sim$(BIN_EXT)
-OBJS_SIM = $(ASSETS).gen.sim.o main.sim.o
-
-BIN_STM32 = tiltshake.stm32
-OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o
-
+OBJS = $(ASSETS).gen.o main.o
 ASSETDEPS += *.png $(ASSETS).lua
 
-include $(TC_DIR)/firmware/master/Makefile.rules
+include $(TC_DIR)/sdk/Makefile.rules

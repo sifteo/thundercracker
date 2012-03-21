@@ -38,6 +38,8 @@ void draw_bg_column(int x)
     // Draw a vertical column of tiles.
     // XXX: This should be folded into a rectangle blit syscall
 
+    LOG(("Drawing column %d\n", x));
+
     uint16_t addr = unsigned_mod(x, 18);
     const uint16_t *src = Background.tiles + unsigned_mod(x, Background.width);
     
@@ -48,7 +50,7 @@ void draw_bg_column(int x)
     }
 }
 
-void siftmain()
+void main()
 {
     load();
     
@@ -63,17 +65,18 @@ void siftmain()
     
     while (1) {
         // Scroll based on accelerometer tilt
-        _SYSAccelState state;
-        _SYS_getAccel(cube.id(), &state);
+        Int2 acc = cube.physicalAccel();
 
         // Floating point pixels
-        x += state.x * (40.0f / 128.0f);
+        x += acc.x * (40.0f / 128.0f);
         
         // Integer pixels
         int xi = x + 0.5f;
         
         // Integer tiles
         int xt = x / 8;
+        
+        LOG(("Main loop: x=%f prev_xt=%d xt=%d\n", x, prev_xt, xt));
         
         while (prev_xt < xt) {
             // Fill in new tiles, just past the right edge of the screen

@@ -7,6 +7,8 @@
  */
 
 #include "cppwriter.h"
+#include "audioencoder.h"
+#include <assert.h>
 
 namespace Stir {
 
@@ -46,17 +48,48 @@ void CPPWriter::close()
     }
 }
 
-void CPPWriter::writeArray(const std::vector<uint8_t> &array)
+void CPPWriter::writeString(const std::vector<uint8_t> &data)
+{
+    // Write a large uint8_t array, as a string literal. This is handled
+    // more efficiently by the compiler than a large array, so the resulting
+    // code compiles quickly. The downside: resulting code is very ugly!
+
+    unsigned i = 0;
+    
+    do {
+        unsigned lineLength = 2;
+        mStream << "\"";
+
+        while (i < data.size() && lineLength < 120) {
+            uint8_t byte = data[i++];
+
+            if (byte >= ' ' && byte <= '~' && byte != '"' && byte != '\\' && byte != '?') {
+                mStream << (char)byte;
+                lineLength++;
+            } else {
+                mStream << '\\'
+                    << (char)('0' + (byte >> 6))
+                    << (char)('0' + ((byte >> 3) & 7))
+                    << (char)('0' + (byte & 7));
+                lineLength += 4;
+            }
+        }
+
+        mStream << "\"\n";
+    } while (i < data.size());
+}
+
+void CPPWriter::writeArray(const std::vector<uint8_t> &data)
 {
     char buf[8];
 
     mStream << indent;
 
-    for (unsigned i = 0; i < array.size(); i++) {
+    for (unsigned i = 0; i < data.size(); i++) {
         if (i && !(i % 16))
             mStream << "\n" << indent;
 
-        sprintf(buf, "0x%02x,", array[i]);
+        sprintf(buf, "0x%02x,", data[i]);
         mStream << buf;
     }
 
@@ -65,30 +98,18 @@ void CPPWriter::writeArray(const std::vector<uint8_t> &array)
 
 
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
-    : CPPWriter(log, filename),
-      mCurrentID(0)
-    {}
+    : CPPWriter(log, filename) {}
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
-    char buf[32];
+    char signature[32];
 
-    #ifdef __MINGW32__
-    sprintf(buf, "0x%016I64x", (long long unsigned int) group.getSignature());
-    #else
-    sprintf(buf, "0x%016llx", (long long unsigned int) group.getSignature());
-    #endif
+#ifdef __MINGW32__
+    sprintf(signature, "0x%016I64x", (long long unsigned int) group.getSignature());
+#else
+    sprintf(signature, "0x%016llx", (long long unsigned int) group.getSignature());
+#endif
 
-    // TODO: increment ids correctly with each group
-    uint32_t id = mCurrentID;
-    mCurrentID++;
-    
-    mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
-    mStream <<
-        "Sifteo::AssetGroup " << group.getName() <<
-        " = {{ " << group.getName() << "ID_int, (uint32_t)0, (uint32_t)0," << group.getName() << ".cubes }};\n";
-
-#if 0
     mStream <<
         "\n"
         "static const struct {\n" <<
@@ -99,16 +120,17 @@ void CPPSourceWriter::writeGroup(const Group &group)
         indent << "/* reserved  */ 0,\n" <<
         indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
         indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-        indent << "/* signature */ " << buf << ",\n"
+        indent << "/* signature */ " << signature << ",\n"
         "}, {\n";
 
     writeArray(group.getLoadstream());
 
     mStream <<
         "}};\n\n"
-        "Sifteo::AssetGroup " << group.getName() <<
-        " = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
-#endif
+        "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
+        indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
+        indent << "/* pCubes    */ reinterpret_cast<uint32_t>(" << group.getName() << ".cubes),\n" <<
+        "}};\n\n";
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++)
@@ -117,17 +139,32 @@ void CPPSourceWriter::writeGroup(const Group &group)
 
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
-    // TODO: increment ids correctly with each group
-    uint32_t id = mCurrentID;
-    mCurrentID++;
+    std::vector<uint8_t> data;
+    AudioEncoder *enc = AudioEncoder::create(sound.getEncode(), sound.getQuality(), sound.getVBR());
+    assert(enc != 0);
+
+    float kbps;
+    enc->encodeFile(sound.getFile(), data, kbps);
+    mLog.infoLine("%20s: %7.02f kiB, %6.02f kbps %s (%s)", sound.getName().c_str(),
+        data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
+
+    if (data.empty())
+        mLog.error("Error encoding audio file '%s'", sound.getFile().c_str());
+
+    mStream << "static const char " << sound.getName() << "_data[] = \n";
+    writeString(data);
+    mStream << ";\n\n";
 
     mStream <<
-        "_SYSAudioModule " << sound.getName() << "= {\n" <<
-        indent << "/* id     */ " << id << ",\n" <<
-        indent << "/* offset */ " << 0 << ",\n" <<
-        indent << "/* size   */ " << 0 << ",\n" <<
-        indent << "/* type   */ " << sound.getEncode() << "\n" <<
-        "};\n\n";
+        "extern const Sifteo::AssetAudio " << sound.getName() << " = {{\n" <<
+        indent << "/* type      */ " << enc->getTypeSymbol() << ",\n" <<
+        indent << "/* reserved0 */ " << 0 << ",\n" <<
+        indent << "/* reserved1 */ " << 0 << ",\n" <<
+        indent << "/* dataSize  */ " << data.size() << ",\n" <<
+        indent << "/* pData     */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
+        "}};\n\n";
+
+    delete enc;
 }
 
 void CPPSourceWriter::writeImage(const Image &image)
@@ -147,10 +184,11 @@ void CPPSourceWriter::writeImage(const Image &image)
 
         mStream <<
             "\n"
-            "Sifteo::PinnedAssetImage " << image.getName() << " = {\n" <<
+            "extern const Sifteo::PinnedAssetImage " << image.getName() << " = {\n" <<
             indent << "/* width   */ " << width << ",\n" <<
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
             indent << "/* index   */ " << pool.index(grid.tile(0, 0)) <<
             ",\n};\n\n";
             
@@ -183,10 +221,11 @@ void CPPSourceWriter::writeImage(const Image &image)
         
         mStream <<
             "};\n\n"
-            "Sifteo::AssetImage " << image.getName() << " = {\n" <<
+            "extern const Sifteo::AssetImage " << image.getName() << " = {\n" <<
             indent << "/* width   */ " << width << ",\n" <<
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
             indent << "/* tiles   */ " << image.getName() << "_tiles,\n" <<
             "};\n\n";
     }
@@ -265,7 +304,7 @@ void CPPHeaderWriter::writeGroup(const Group &group)
 
 void CPPHeaderWriter::writeSound(const Sound &sound)
 {
-    mStream << "extern _SYSAudioModule " << sound.getName() << ";\n";
+    mStream << "extern const Sifteo::AssetAudio " << sound.getName() << ";\n";
 }
 
 };  // namespace Stir

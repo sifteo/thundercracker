@@ -7,20 +7,13 @@
 #ifndef _SIFTEO_VIDEO_H
 #define _SIFTEO_VIDEO_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 #include <sifteo/macros.h>
-#include <sifteo/machine.h>
 #include <sifteo/math.h>
 
-/*
- * XXX: This is a kludge to save memory for the moment, by not inlining
- *      frequently used but complex functions. The long-term solution is
- *      to refactor code into system calls as necessary to avoid unnecessary
- *      inlining. (If there's one copy of this code, it should live in the firmware
- *      instead of in each game binary)
- */
-#ifndef NEVER_INLINE
-#define NEVER_INLINE    __attribute__ ((noinline))
-#endif
 
 namespace Sifteo {
 
@@ -86,7 +79,7 @@ class VideoBuffer {
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
-        Sifteo::Atomic::SetLZ(sys.needPaint, 0);
+        sys.needPaint = (uint32_t)-1;
     }
 
     /**
@@ -118,18 +111,14 @@ class VideoBuffer {
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
-        uint16_t word;
-        _SYS_vbuf_peek(&sys, addr, &word);
-        return word;
+        return _SYS_vbuf_peek(&sys, addr);
     }
 
     /**
      * Read one byte of VRAM
      */
     uint8_t peekb(uint16_t addr) const {
-        uint8_t byte;
-        _SYS_vbuf_peekb(&sys, addr, &byte);
-        return byte;
+        return _SYS_vbuf_peekb(&sys, addr);
     }
 
     /**
@@ -139,7 +128,11 @@ class VideoBuffer {
         return ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE);
     }
 
-    _SYSVideoBuffer sys;    
+    /// Contains the raw video data for this cube
+    _SYSVideoBuffer sys;
+
+    /// Cube ID that the buffer is associated with. Required for asset address lookup.
+    _SYSCubeID cubeID;
 };
 
 
@@ -174,7 +167,7 @@ class VidMode {
         buf.poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
     }
 
-    NEVER_INLINE void setRotation(enum Rotation r) {
+    void setRotation(enum Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = buf.peekb(offsetof(_SYSVideoRAM, flags));
         flags &= ~mask;
@@ -208,18 +201,31 @@ class VidMode_BG0 : public VidMode {
         setWindow(0, LCD_height);
     }
 
-    virtual void set() {
+    void set() {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
     }
 
-    virtual void clear(uint16_t tile=0) {
+    /// Clear to a specific tile index
+    void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
+    }
+
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
+    }
+
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
     }
 
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
     static const unsigned BG0_height = _SYS_VRAM_BG0_WIDTH;
 
-    NEVER_INLINE void BG0_setPanning(Vec2 pixels) {
+    void BG0_setPanning(Int2 pixels) {
         pixels.x = pixels.x % (int)(BG0_width * TILE);
         pixels.y = pixels.y % (int)(BG0_height * TILE);
         if (pixels.x < 0) pixels.x += BG0_width * TILE;
@@ -227,25 +233,25 @@ class VidMode_BG0 : public VidMode {
         buf.poke(offsetof(_SYSVideoRAM, bg0_x) / 2, pixels.x | (pixels.y << 8));
     }
 
-    uint16_t BG0_addr(const Vec2 &point) {
+    uint16_t BG0_addr(Int2 point) {
         return point.x + (point.y * BG0_width);
     }
 
-    void BG0_putTile(const Vec2 &point, unsigned index) {
+    void BG0_putTile(Int2 point, unsigned index) {
         buf.pokei(BG0_addr(point), index);
     }
 
-    void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG0_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
                         asset.width, asset.height, asset.width, BG0_width);
     }
 
     //draw a partial asset.  Pass in the position, xy min points, and width/height
-    void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG0_drawPartialAsset(Int2 point, Int2 offset, Int2 size, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         ASSERT( offset.x >= 0 && offset.y >= 0 );
         ASSERT( size.x >= 0 && size.y >= 0 );
@@ -254,7 +260,7 @@ class VidMode_BG0 : public VidMode {
         uint16_t addr = BG0_addr(point);
         ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x <= BG0_width * BG0_height );
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
 
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
                         size.x, size.y, asset.width, BG0_width);
@@ -270,14 +276,14 @@ class VidMode_BG0 : public VidMode {
      *      here! Ugh.
      */
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    void BG0_text(Int2 point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             BG0_drawAsset(point, font, index);
     }
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
-        Vec2 p = point;
+    void BG0_text(Int2 point, const Sifteo::AssetImage &font, const char *str) {
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {
@@ -325,16 +331,16 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
     }
 
-    virtual void clear(uint16_t tile=0) {
+    void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
-    void BG0_text(const Vec2 &point, char c) {
+    void BG0_text(Int2 point, char c) {
         BG0_putTile(point, c - ' ');
     }
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const char *str) {
-        Vec2 p = point;
+    void BG0_text(Int2 point, const char *str) {
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {
@@ -349,7 +355,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         }
     }
 
-    NEVER_INLINE void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
+    void BG0_progressBar(Int2 point, int pixelWidth, int tileHeight=1) {
         /*
          * XXX: This is kind of the hugest hack.. we should have some good way
          *      of using "well-known assets" from ROM somehow. This could either
@@ -385,12 +391,21 @@ public:
     VidMode_BG0_SPR_BG1(VideoBuffer &vbuf)
         : VidMode_BG0(vbuf) {}
 
-    virtual void set()
+    void init()
+    {
+        clear();
+        set();
+        BG0_setPanning(Vec2(0,0));
+        setWindow(0, LCD_height);
+    }
+
+    void set()
     {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
     }
 
-    virtual void clear(uint16_t tile=0)
+    /// Clear to a specific tile index
+    void clear(uint16_t tile=0)
     {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
 
@@ -400,14 +415,24 @@ public:
         _SYS_vbuf_fill(&buf.sys, _SYS_VA_SPR, 0, 8*5/2);
     }
 
-    bool isInMode()
-    {
-      uint8_t byte;
-      _SYS_vbuf_peekb(&buf.sys, offsetof(_SYSVideoRAM, mode), &byte);
-      return byte == _SYS_VM_BG0_SPR_BG1;
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
     }
 
-    void BG1_setPanning(const Vec2 &pos)
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
+    }
+
+    bool isInMode()
+    {
+        return buf.peek(offsetof(_SYSVideoRAM, mode)) == _SYS_VM_BG0_SPR_BG1;
+    }
+
+    void BG1_setPanning(Int2 pos)
     {
         _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
             ((uint8_t)pos.x) | ((uint16_t)(uint8_t)pos.y << 8));
@@ -415,48 +440,32 @@ public:
 
     void setSpriteImage(int id, int tile)
     {
-      uint16_t word = VideoBuffer::indexWord(tile);
-      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                       sizeof(_SYSSpriteInfo)/2 * id );
-      _SYS_vbuf_poke(&buf.sys, addr, word);
+        uint16_t word = VideoBuffer::indexWord(tile);
+        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+                          sizeof(_SYSSpriteInfo)/2 * id );
+        _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 
-	void setSpriteImage(int id, const PinnedAssetImage &image)
-	{
-		resizeSprite(id, image.width * TILE, image.height * TILE);
-		setSpriteImage(id, image.index);
-	}
+    void setSpriteImage(int id, const PinnedAssetImage &asset)
+    {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        resizeSprite(id, asset.width * TILE, asset.height * TILE);
+        setSpriteImage(id, base + asset.index);
+    }
 
-	void setSpriteImage(int id, const PinnedAssetImage &image, int frame)
-	{
-		resizeSprite(id, image.width * TILE, image.height * TILE);
-		setSpriteImage(id, image.index + (image.width * image.height) * frame);
-	}
+    void setSpriteImage(int id, const PinnedAssetImage &asset, int frame)
+    {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        resizeSprite(id, asset.width * TILE, asset.height * TILE);
+        setSpriteImage(id, base + asset.index + (asset.width * asset.height) * frame);
+    }
 
     bool isSpriteHidden(int id)
     {
-        uint16_t word;
-        uint16_t addr;
-
-#ifdef DEBUG
-        // check all the sprite parameters, for debugging
-
-        // check image
-        addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-
-        // get position, to debug
-        addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-#endif
-
         // check size
-        addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                         sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_peek(&buf.sys, addr, &word);
-        return (word == 0);
+        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                          sizeof(_SYSSpriteInfo)/2 * id );
+        return buf.peek(addr) == 0;
     }
 
     void resizeSprite(int id, int px, int py)
@@ -468,7 +477,7 @@ public:
         _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
     }
     
-    void resizeSprite(int id, const Vec2 &size)
+    void resizeSprite(int id, Int2 size)
     {
         resizeSprite(id, size.x, size.y);
     }
@@ -483,7 +492,7 @@ public:
         _SYS_vbuf_spr_move(&buf.sys, id, px, py);
     }
 
-    void moveSprite(int id, const Vec2 &pos)
+    void moveSprite(int id, Int2 pos)
     {
         _SYS_vbuf_spr_move(&buf.sys, id, pos.x, pos.y);
     }
@@ -513,8 +522,21 @@ class VidMode_BG2 : public VidMode {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG2);
     }
 
+    /// Clear to a specific tile index
     void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, tile, BG2_width * BG2_height);
+    }
+
+    /// Clear using the top-left tile in an AssetImage
+    void clear(const Sifteo::AssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.tiles[0]);
+    }
+
+    /// Clear using the top-left tile in an PinnedAssetImage
+    void clear(const Sifteo::PinnedAssetImage &asset) {
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
+        clear(base + asset.index);
     }
 
     static const unsigned BG2_width = _SYS_VRAM_BG2_WIDTH;
@@ -537,18 +559,18 @@ class VidMode_BG2 : public VidMode {
                         (const uint16_t *)&a, 6);
     }
 
-    uint16_t BG2_addr(const Vec2 &point) {
+    uint16_t BG2_addr(Int2 point) {
         return point.x + (point.y * BG2_width);
     }
 
-    void BG2_putTile(const Vec2 &point, unsigned index) {
+    void BG2_putTile(Int2 point, unsigned index) {
         buf.pokei(BG2_addr(point), index);
     }
 
-    void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    void BG2_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         uint16_t addr = BG2_addr(point);
         unsigned offset = asset.width * asset.height * frame;
-        const unsigned base = 0;
+        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
 
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
                         asset.width, asset.height, asset.width, BG2_width);

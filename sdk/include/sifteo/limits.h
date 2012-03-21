@@ -7,6 +7,10 @@
 #ifndef _SIFTEO_LIMITS_H
 #define _SIFTEO_LIMITS_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 /*
  * Every game can individually define a compile-time limit for the
  * number of supported cubes. It must be less than or equal to the

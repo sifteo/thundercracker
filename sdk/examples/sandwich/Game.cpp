@@ -36,8 +36,7 @@ void Game::Paint(bool sync) {
 
   #if PLAYTESTING_HACKS
     Cube* pCube = mPlayer.View()->GetCube();
-    _SYSShakeState shakeState;
-    _SYS_getShake(pCube->id(), &shakeState);
+    _SYSShakeState shakeState = _SYS_getShake(pCube->id());
     if (shakeState == SHAKING) {
       if (sShakeTime < 0.0f) {
         sShakeTime = 0.f;
@@ -54,7 +53,7 @@ void Game::Paint(bool sync) {
 // HELPERS
 //------------------------------------------------------------------
 
-void Game::MoveBlock(Sokoblock* block, Vec2 u) {
+void Game::MoveBlock(Sokoblock* block, Int2 u) {
   if (block) {
     block->Move(u);
     mPlayer.TargetView()->UpdateBlock();
@@ -78,7 +77,7 @@ void Game::MoveBlock(Sokoblock* block, Vec2 u) {
 int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
   mPlayer.SetDirection(dir);
 
-  const Vec2 unit = kSideToUnit[dir];
+  const Int2 unit = kSideToUnit[dir];
   if (dot(BroadDirection(), unit) != 1) { block = 0; }
 
   // if we have any progress to use, use it here
@@ -107,11 +106,11 @@ void Game::MovePlayerAndRedraw(int dx, int dy) {
   Paint();
 }
 
-void Game::WalkTo(Vec2 position, bool dosfx) {
+void Game::WalkTo(Int2 position, bool dosfx) {
   if (dosfx) {
     PlaySfx(sfx_running);
   }
-  Vec2 delta = position - mPlayer.Position();
+  Int2 delta = position - mPlayer.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
     delta.x -= WALK_SPEED;
@@ -136,11 +135,11 @@ void Game::WalkTo(Vec2 position, bool dosfx) {
   }
 }
 
-void Game::TeleportTo(const MapData& m, Vec2 position) {
+void Game::TeleportTo(const MapData& m, Int2 position) {
   #if MUSIC_ON
     gChannelMusic.stop();
   #endif
-  Vec2 room = position/128;
+  Int2 room = position/128;
   ViewSlot* view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();
   
@@ -163,7 +162,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
 
   // walk out of the in-gate
-  Vec2 target = mMap.GetRoom(room)->Center(0);
+  Int2 target = mMap.GetRoom(room)->Center(0);
   mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room, true);
   WalkTo(target, false);
@@ -232,7 +231,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     VideoBuffer& vbuf = vslot->GetCube()->vbuf;
     uint16_t bg0_tiles[180];
     for(unsigned i=0; i<180; ++i) {
-      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(Vec2(i%18, i/18))) );
+      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(i%18, i/18)) );
     }
 
     for(unsigned line=0; line<data.lineCount; ++line) {
@@ -382,7 +381,7 @@ void Game::OnPickup(Room *pRoom) {
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
-        mPlayer.CurrentView()->SetEquipPosition(Vec2(0, -float(ITEM_OFFSET) * u) );
+        mPlayer.CurrentView()->SetEquipPosition(Vec2(0.f, -float(ITEM_OFFSET) * u) );
       } while(mSimTime-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
@@ -411,7 +410,7 @@ void Game::OnPickup(Room *pRoom) {
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
-        mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
+        mPlayer.CurrentView()->SetItemPosition(Vec2(0.f, -36.f * u) );
       } while(SystemTime::now()-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
@@ -435,7 +434,7 @@ unsigned Game::OnPassiveTrigger() {
     //-------------------------------------------------------------------------
     // PLAYER TRIGGERED TRAPDOOR
     // animate the tiles opening
-    Vec2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
+    Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
     for(unsigned i=1; i<=7; ++i) { // magic
       mPlayer.CurrentView()->DrawTrapdoorFrame(i);
       Paint(true);
@@ -462,14 +461,14 @@ unsigned Game::OnPassiveTrigger() {
     Paint(true);
 
     Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
-    Vec2 start = 128 * pRoom->Location();
-    Vec2 delta = 128 * (targetRoom->Location() - pRoom->Location());
+    Int2 start = 128 * pRoom->Location();
+    Int2 delta = 128 * (targetRoom->Location() - pRoom->Location());
     ViewMode mode = pView->Graphics();
     SystemTime t=mSimTime; 
     do {
       float u = float(mSimTime-t) / 2.333f;
       u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-      Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+      Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
       DrawOffsetMap(&mode, mMap.Data(), pos);
       Paint(true);
     } while(mSimTime-t<2.333f);
@@ -497,7 +496,7 @@ void Game::OnEnterGateway(Room*pRoom) {
   const MapData& targetMap = gMapData[pGate->targetMap];
   const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2(pGate->x, pGate->y));
+  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
   mPlayer.SetEquipment(0);
   TeleportTo(gMapData[pGate->targetMap], Vec2(
     128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
@@ -576,7 +575,7 @@ void Game::OnTriggerEvent(unsigned id) {
       const QuestData* quest = mState.Quest();
       const MapData& map = gMapData[quest->mapId];
       const RoomData& room = map.rooms[quest->roomId];
-      TeleportTo(map, Vec2 (
+      TeleportTo(map, Vec2<int> (
         128 * (quest->roomId % map.width) + 16 * room.centerX,
         128 * (quest->roomId / map.width) + 16 * room.centerY
       ));
@@ -585,9 +584,9 @@ void Game::OnTriggerEvent(unsigned id) {
 }
 
 bool Game::TryEncounterBlock(Sokoblock* block) {
-  const Vec2 dir = BroadDirection();
-  const Vec2 loc_src = mPlayer.TargetRoom()->Location();
-  const Vec2 loc_dst = loc_src + dir;
+  const Int2 dir = BroadDirection();
+  const Int2 loc_src = mPlayer.TargetRoom()->Location();
+  const Int2 loc_dst = loc_src + dir;
   // no moving blocks off the map
   if (!mMap.Contains(loc_dst)) { return false; }
   Room* pRoom = mMap.GetRoom(loc_dst);
@@ -613,20 +612,20 @@ bool Game::TryEncounterBlock(Sokoblock* block) {
 
 bool Game::TryEncounterLava(Cube::Side dir) {
   ASSERT(0 <= dir && dir < 4);
-  const Vec2 baseTile = mPlayer.Position() >> 4;
+  const Int2 baseTile = mPlayer.Position() >> 4;
   switch(dir) {
     case SIDE_TOP: {
-      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2(1,1)));
+      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2<int>(1,1)));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
     case SIDE_LEFT:
-      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2(2,0)));
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2<int>(2,0)));
     case SIDE_BOTTOM: {
-      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2(-1,1));
+      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2<int>(-1,1));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
     default: // SIDE_RIGHT
-      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2(1,0)));
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2<int>(1,0)));
   }
 }
 
@@ -638,13 +637,13 @@ bool Game::TryEncounterLava(Cube::Side dir) {
 #define VIEW_UNCHANGED 1
 #define VIEW_CHANGED 2
 
-static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
+static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
   if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
+    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view);
   }
   return result;
 }

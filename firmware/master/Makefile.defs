@@ -10,7 +10,6 @@ AR_STM32 = arm-none-eabi-ar
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
-SPEEXENC = $(TC_DIR)/speex/encoder/speexencoder$(BIN_EXT)
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -55,7 +54,8 @@ ifneq ($(QTCREATOR_TERMINAL),)
 endif
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused
+# XXX - no-strict-aliasing is needed in syscall.cpp, perhaps only apply to that file
+CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
 # generate dependency files
 CFLAGS += -MD -MP
@@ -70,28 +70,38 @@ LDFLAGS += -lm
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+# when dtors are defined for static objects, gcc wants to create special handling
+# for them - disable this since those dtors will never be called
+CCFLAGS += -fno-use-cxa-atexit
 
 include $(TC_DIR)/Makefile.platform
 
-ifeq ($(BUILD_PLATFORM), windows32)
-    # portaudio requirements
-    LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
-endif
+LDFLAGS_SIM +=  -L$(DEPS_DIR)/speex/lib \
+                -L$(DEPS_DIR)/portaudio/lib
+
 ifeq ($(BUILD_PLATFORM), Darwin)
     # these are all required by portaudio, believe it or not
     LDFLAGS_SIM += -framework CoreAudio -framework AudioToolbox \
                     -framework AudioUnit -framework CoreServices
 endif
-ifeq ($(BUILD_PLATFORM), Linux)
+
+ifeq ($(BUILD_PLATFORM), windows32)
+    # note : portaudio had to come *before* winmm on my machine
+    LDFLAGS_SIM +=  -lws2_32 -lole32 -lspeex -lportaudio -lwinmm
+else
 	LDFLAGS_SIM += -lspeex -lportaudio
 endif
 
-LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
+
+# 32-bit mingw needs this for the __sync_fetch_* family of routines
+ifeq ($(BUILD_PLATFORM), windows32)
+    CFLAGS_SIM += -march=native
+endif
+
+CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 
-LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 
 ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
@@ -99,13 +109,15 @@ ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
 CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
-# TODO - provide $(APP) or similar to specify name of map file
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
-              -Wl,-Map=MAPFILE.map,--cref,--gc-sections,-u,IVT \
+              -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 
+# We use the C++ standard library only for simulator builds
+LDFLAGS_SIM += $(LIB_STDCPP)
+
 #Determines whether the jtagkey2 or the olimex cfg files should be used for programming
-ifeq ($(OLIMEX), 1)
+ifneq ($(OLIMEX),)
 	PROG_CONFIG := olimex.cfg
 else 
 	PROG_CONFIG := jtagkey2.cfg

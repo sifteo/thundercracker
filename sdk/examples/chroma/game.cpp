@@ -739,7 +739,7 @@ bool Game::no_match_mismatch_side() const
     side, but the gems can never touch.
     */
 
-	Vec2 aBuddies[3];
+	Int2 aBuddies[3];
 	int iNumBuddies = 0;
 
 	for( int i = 0; i < NUM_CUBES; i++ )
@@ -839,7 +839,7 @@ void Game::enterScore()
 }
 
 
-void Game::playSound( _SYSAudioModule &sound )
+void Game::playSound( const AssetAudio &sound )
 {
     if( &sound == m_pSoundThisFrame )
         return;
@@ -859,7 +859,7 @@ void Game::playSound( _SYSAudioModule &sound )
     m_pSoundThisFrame = &sound;
 }
 
-_SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+const AssetAudio *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
   &slosh_multi_01,
     &slosh_multi_02,

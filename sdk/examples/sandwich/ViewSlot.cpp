@@ -166,7 +166,7 @@ void ViewSlot::Update(float dt) {
 	}
 }
   
-bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
+bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
 	Cube::Side side = SIDE_UNDEFINED;
@@ -261,7 +261,7 @@ ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
 #endif
 
 Cube::Side ViewSlot::VirtualTiltDirection() const {
-  Vec2 accel = GetCube()->virtualAccel();
+  Int2 accel = GetCube()->virtualAccel();
   if (accel.y < -TILT_THRESHOLD) {
     return 0;
   } else if (accel.x < -TILT_THRESHOLD) {

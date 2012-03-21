@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
@@ -15,8 +12,6 @@
 #include "nrf24l01.h"
 #include "debug.h"
 #include "board.h"
-#include "audiomixer.h"
-#include "tasks.h"
 
 static NRF24L01 NordicRadio(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -46,15 +41,6 @@ void Radio::open()
 
 void Radio::halt()
 {
-    /*
-      TODO - these are temporary, but we don't currently have another
-      better context in which to handle longer running tasks. Ultimately this is likely
-      to be interleaved with the runtime, or done periodically on a timer
-      interrupt (ie, separate thread in the simulator).
-    */
-    AudioMixer::instance.fetchData();
-    Tasks::work();
-
     /*
      * Wait for any interrupt
      *

@@ -1,6 +1,11 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "assetmanager.h"
 #include "flash.h"
-#include <sifteo.h>
+#include "macros.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb.h"

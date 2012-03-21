@@ -34,7 +34,7 @@ private:
 public:  
   // getters
   unsigned Id() const { return mRoomId; }
-  Vec2 Location() const;
+  Int2 Location() const;
   Room* GetRoom() const;
   bool GatewayTouched() const;
   Sokoblock* Block() const { return mBlock; }
@@ -51,8 +51,8 @@ public:
   void ShowBlock(Sokoblock* pBlock);
 
   void SetPlayerFrame(unsigned frame);
-  void SetEquipPosition(Vec2 p);
-  void SetItemPosition(Vec2 p);
+  void SetEquipPosition(Int2 p);
+  void SetItemPosition(Int2 p);
 
   void UpdatePlayer();
   void DrawPlayerFalling(int height);

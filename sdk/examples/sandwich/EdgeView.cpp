@@ -8,10 +8,10 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 	side = (side+2) % 4; // flip side
 	// todo: compute screen orient
 	ViewMode gfx = Parent()->Graphics();
-	static const Vec2 start[8] = {
+	static const Int2 start[8] = {
 		Vec2(0,0), Vec2(0,0), Vec2(0, 15), Vec2(15,0),
 	};
-	static const Vec2 delta[4] = {
+	static const Int2 delta[4] = {
 		Vec2(1,0), Vec2(0,1), Vec2(1,0), Vec2(0,1)
 	};
 	Cube::Side gateSide = SIDE_UNDEFINED;
@@ -33,7 +33,7 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 		// render a side edge view
 		mGateway = 0;
 		gfx.BG0_drawAsset(Vec2(0,0), Blank);
-		Vec2 p=start[side];
+		Int2 p=start[side];
 		for(int i=0; i<16; ++i) {
 			gfx.BG0_putTile(p, Edge.tiles[side]);
 			p += delta[side];
