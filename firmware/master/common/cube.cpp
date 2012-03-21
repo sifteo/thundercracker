@@ -161,8 +161,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         // Not waiting on a reset. See if we need to send asset data.
 
         _SYSAssetGroup *group = loadGroup;
-        if (group && !(group->doneCubes & bit())) {
-            
+        if (group && !(group->doneCubes & bit()) && FlashBlock::TERRIHACK == 0) {
+
             bool done = false;
             bool escape = codec.flashSend(tx.packet, group, assetCube(group), bit(), done);
 
@@ -176,7 +176,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                     float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
                     LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
                          id(), SvmDebug::formatAddress(group).c_str(), seconds));
-                })
+                });
             }
 
             // We can't put anything else in this packet if an escape was written
