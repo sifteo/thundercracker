@@ -368,8 +368,8 @@ template <typename T> struct Vector3 {
     
     /// Shortcuts for common explicit casts
     Vector3<int> toInt() const { return cast<int>(); }
-    Vector3<int> toFloat() const { return cast<float>(); }
-    Vector3<int> toDouble() const { return cast<double>(); }
+    Vector3<float> toFloat() const { return cast<float>(); }
+    Vector3<double> toDouble() const { return cast<double>(); }
     
     /// Implicit casts
     operator Vector3<int>            () const { return cast<int>(); }
