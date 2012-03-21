@@ -45,14 +45,6 @@ ifneq ($(DEBUG),)
     CFLAGS += -DDEBUG
 endif
 
-ifneq ($(QTCREATOR),)
-	CFLAGS += -DQTCREATOR
-endif
-
-ifneq ($(QTCREATOR_TERMINAL),)
-	CFLAGS += -DQTCREATOR_TERMINAL
-endif
-
 # Disable unwanted warnings, but be generally pretty pedantic
 # XXX - no-strict-aliasing is needed in syscall.cpp, perhaps only apply to that file
 CFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
