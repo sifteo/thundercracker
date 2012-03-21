@@ -5,7 +5,7 @@
 class Dialog {
 private:
     Cube* mCube;
-    Int2 mPosition;
+    Short2 mPosition;
 
 public:
     void Init(Cube *cube);
