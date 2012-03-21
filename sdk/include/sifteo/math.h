@@ -14,7 +14,6 @@
 #include <sifteo/abi.h>
 
 namespace Sifteo {
-namespace Math {
 
 
 /**
@@ -430,7 +429,6 @@ struct AffineMatrix {
 };
 
 
-}   // namespace Math
 }   // namespace Sifteo
 
 #endif

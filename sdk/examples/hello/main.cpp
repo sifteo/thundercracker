@@ -9,12 +9,6 @@
 
 using namespace Sifteo;
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 1
-#endif
-
-
-static Cube cubes[NUM_CUBES];
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
