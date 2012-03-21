@@ -1,6 +1,6 @@
 <quest-database>
 
-	<!--quest id="enginedev" map="sandbox" x="0" y="1" /-->
+	<quest id="enginedev" map="sandbox" x="0" y="1" />
 	<quest id="followSprout1" map="forest" x="2" y="5" />
 	<quest id="followSprout2" map="forest" x="2" y="5" />
 	<quest id="followSprout3" map="forest" x="2" y="5" />
