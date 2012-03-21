@@ -36,8 +36,10 @@ namespace Sifteo {
 #define MAXFLOAT    ((float)3.40282346638528860e+38)
 
 
-/*
- * General helper routines
+/**
+ * For any type, clamp a value to the extremes 'low' and 'high'. If the
+ * value is less than 'low' we return 'low', and if it's greater than 'high'
+ * we return 'high'. Otherwise we return the value unmodified.
  */
 
 template <typename T> inline T clamp(const T& value, const T& low, const T& high)
@@ -51,6 +53,11 @@ template <typename T> inline T clamp(const T& value, const T& low, const T& high
     return value;
 }
 
+/**
+ * For any type, return the absolute value. If the value is less than zero,
+ * we return -value. Otherwise, we return the unmodified value.
+ */
+
 template <typename T> inline T abs(const T& value)
 {
     if (value < 0) {
@@ -59,41 +66,85 @@ template <typename T> inline T abs(const T& value)
     return value;
 }
 
-float inline fmodf(float a, float b)
-{
-    uint32_t result = _SYS_fmodf(reinterpret_cast<uint32_t&>(a),
-                                 reinterpret_cast<uint32_t&>(b));
-    return reinterpret_cast<float&>(result);
-}
-
-float inline fabs(float a)
-{
-    if (a < 0)
-        return -a;
-    return a;
-}
-
-
-/*
- * Trigonometry
+/**
+ * Compute the remainder (modulo) operation for two floating point numbers.
+ * This variant operates on single-precision floats.
  */
- 
-void inline sincosf(float x, float *s, float *c)
+
+float inline fmod(float a, float b)
+{
+    uint32_t r = _SYS_fmodf(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * Compute the remainder (modulo) operation for two floating point numbers.
+ * This variant operates on double-precision floats.
+ */
+
+double inline fmod(double a, double b)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t ib = reinterpret_cast<uint64_t&>(b);
+    uint64_t r = _SYS_fmod(ia, ia >> 32, ib, ib >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
+ * Compute the square root of a floating point number.
+ * This variant operates on single-precision floats.
+ */
+
+float inline sqrt(float a)
+{
+    uint32_t r = _SYS_sqrtf(reinterpret_cast<uint32_t&>(a));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * Compute the square root of a floating point number.
+ * This variant operates on double-precision floats.
+ */
+
+double inline sqrt(double a)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t r = _SYS_sqrt(ia, ia >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
+ * Simultaneously compute the sine and cosine of a specified angle,
+ * in radians. This yields two single-precision floating point results,
+ * returned via the pointers 's' and 'c'.
+ */
+
+void inline sincos(float x, float *s, float *c)
 {
     _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
 }
 
-float inline sinf(float x)
+/**
+ * Calculate the sine of a specified angle, in radians.
+ * Returns a single-precision floating point result.
+ */
+
+float inline sin(float x)
 {
     float s;
-    sincosf(x, &s, NULL);
+    sincos(x, &s, NULL);
     return s;
 }
 
-float inline cosf(float x)
+/**
+ * Calculate the cosine of a specified angle, in radians.
+ * Returns a single-precision floating point result.
+ */
+
+float inline cos(float x)
 {
     float c;
-    sincosf(x, NULL, &c);
+    sincos(x, NULL, &c);
     return c;
 }
 
@@ -118,7 +169,7 @@ template <typename T> struct Vector2 {
      */
     void setPolar(float angle, float magnitude) {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         x = c * magnitude;
         y = s * magnitude;
     }
@@ -128,7 +179,7 @@ template <typename T> struct Vector2 {
      */
     Vector2<T> rotate(float angle) const {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         Vector2<T> result = { x*c - y*s, x*s + y*c };
         return result;
     }
@@ -139,6 +190,21 @@ template <typename T> struct Vector2 {
      */
     T len2() const {
         return ( x * x + y * y );
+    }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector.
+     */
+    T len() const {
+        return sqrt(len2());
+    }
+
+    /**
+     * Return a normalized version of this vector.
+     * The returned vector will have a magnitude of 1.0.
+     */
+    T normalize() const {
+        return *this / len();
     }
     
     /**
@@ -263,7 +329,22 @@ template <typename T> struct Vector3 {
     T len2() const {
         return ( x * x + y * y + z * z );
     }
-    
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector.
+     */
+    T len() const {
+        return sqrt(len2());
+    }
+
+    /**
+     * Return a normalized version of this vector.
+     * The returned vector will have a magnitude of 1.0.
+     */
+    T normalize() const {
+        return *this / len();
+    }
+
     /**
      * Round a floating point vector to the nearest integer.
      */
@@ -515,7 +596,7 @@ struct AffineMatrix {
 
     static AffineMatrix rotation(float angle) {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         return AffineMatrix(c, -s, 0,
                             s, c, 0);
     }

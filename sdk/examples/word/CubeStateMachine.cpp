@@ -802,7 +802,7 @@ void CubeStateMachine::update(float dt)
 void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
 {
     mBG0Panning = panning;
-    int tilePanning = fmodf(mBG0Panning, 144.f);
+    int tilePanning = fmod(mBG0Panning, 144.f);
     tilePanning /= 8;
     // TODO clean this up
     int tileWidth = 12/GameStateMachine::getCurrentMaxLettersPerCube();
@@ -973,7 +973,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         float animTime =  (getTime() - animStartTime) / TEETH_ANIM_LENGTH;
         if (loopAnim)
         {
-            animTime = fmodf(animTime, 1.0f);
+            animTime = fmod(animTime, 1.0f);
         }
         else
         {
@@ -1150,7 +1150,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 
         frame = 0;
         float animTime =
-                1.f - fmodf(GameStateMachine::getSecondsLeftFloat(), 1.f);
+                1.f - fmod(GameStateMachine::getSecondsLeftFloat(), 1.f);
         if (AnimType >= 0 && animTime < animLength[AnimType])
         {
             // normalize

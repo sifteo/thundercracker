@@ -112,3 +112,6 @@
     /*  111 */ (SvmSyscall)_SYS_fetch_and_xor_4,
     /*  112 */ (SvmSyscall)_SYS_fetch_and_nand_4,
     /*  113 */ (SvmSyscall)_SYS_fetch_and_and_4,
+    /*  114 */ (SvmSyscall)_SYS_sqrtf,
+    /*  115 */ (SvmSyscall)_SYS_fmod,
+    /*  116 */ (SvmSyscall)_SYS_sqrt,
