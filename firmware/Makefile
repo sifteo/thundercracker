@@ -9,7 +9,6 @@ all: $(TARGETS)
 
 cube.hex:
 	@make -C cube
-	@cp cube/cube.ihx cube.hex
 
 master:
 	@make -C master
@@ -17,4 +16,3 @@ master:
 clean:
 	@make -C cube clean
 	@make -C master clean
-	rm -f cube.hex
