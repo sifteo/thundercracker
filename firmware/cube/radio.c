@@ -811,7 +811,7 @@ rx_ack:
         ;
         ; Note that _ack_len may have been larger than RF_ACK_LEN_MAX, due to
         ; the (non-power-of-two) max length being ORed with smaller lengths.
-        ; This is fine, since we're already clamping to MEM_ACK_LEN, then
+        ; This is fine, since we are already clamping to MEM_ACK_LEN, then
         ; separately referencing the HWID length.
         
         add     a, #(0xFF - RF_MEM_ACK_LEN)
@@ -923,13 +923,14 @@ void radio_init(void)
         /*
          * XXX: Hardcoded cube addresses, for testing only
          */
-#ifdef CUBE_ADDR
 
 #ifdef CUBE_CHAN
         2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          CUBE_CHAN,
 #else
         2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          0x02,
 #endif
+
+#ifdef CUBE_ADDR
         6, RF_CMD_W_REGISTER | RF_REG_TX_ADDR,        CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
         6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0,     CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
 #endif
