@@ -300,13 +300,13 @@ void CubeWrapper::DrawCutsceneShuffle(const Sifteo::Vec2 &scroll)
     {
         default:
         case 0:
-            Video().setSpriteImage(0, ShuffleSpriteFrontZorg, 0);
+            Video().setSpriteImage(0, BuddySpriteFrontZorg, 0);
             break;
         case 1:
-            Video().setSpriteImage(0, ShuffleSpriteFrontRike, 0);
+            Video().setSpriteImage(0, BuddySpriteFrontRike, 0);
             break;
         case 2:
-            Video().setSpriteImage(0, ShuffleSpriteFrontGluv, 0);
+            Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
             break;
     }
     
@@ -329,8 +329,8 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    Video().setSpriteImage(0, StoryCutsceneSpriteRightGluv, 0);
-    Video().setSpriteImage(1, StoryCutsceneSpriteLeftRike, 0);
+    Video().setSpriteImage(0, BuddySpriteCutsceneGluv, 0);
+    Video().setSpriteImage(1, BuddySpriteCutsceneRike, 0);
     
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 60 : 66));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 60 : 66));

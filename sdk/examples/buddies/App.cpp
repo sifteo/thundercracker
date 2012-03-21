@@ -168,11 +168,11 @@ void DrawShuffleScore(
     // Background
     const AssetImage *backgrounds[] =
     {
-        &ShufflePanelBestTimesHighScore1,
-        &ShufflePanelBestTimesHighScore2,
-        &ShufflePanelBestTimesHighScore3,
+        &ShuffleBestTimesHighScore1,
+        &ShuffleBestTimesHighScore2,
+        &ShuffleBestTimesHighScore3,
     };
-    const AssetImage &background = place < arraysize(backgrounds) ? *backgrounds[place] : ShufflePanelBestTimes;
+    const AssetImage &background = place < arraysize(backgrounds) ? *backgrounds[place] : ShuffleBestTimes;
     
     const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
     const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;

@@ -45,6 +45,13 @@ else
     BuddyPartHidden = image{"assets/hidden.png"}
 end
 
+-- Buddy Sprites
+BuddySpriteFrontGluv = image{"assets/sprite_front_gluv.png", pinned = true}
+BuddySpriteFrontRike = image{"assets/sprite_front_rike.png", pinned = true}
+BuddySpriteFrontZorg = image{"assets/sprite_front_zorg.png", pinned = true}
+BuddySpriteCutsceneRike = image{"assets/cutscene_sprite_rike_left.png", pinned = true}
+BuddySpriteCutsceneGluv = image{"assets/cutscene_sprite_gluv_right.png", pinned = true}
+
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
 UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
@@ -70,18 +77,15 @@ MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
 ShuffleTitleScreen = image{"assets/titlescreen_shuffle.png"}
 ShuffleShakeToShuffle = image{"assets/shake_to_shuffle.png"}
 ShuffleTouchToSwap = image{"assets/touch_to_swap.png"}
-ShuffleNeighbor = image{"assets/neighbor.png"}
-ShuffleCongratulations = image{"assets/panel_congratulations.png"}
-ShuffleSpriteFrontGluv = image{"assets/sprite_front_gluv.png", pinned = true}
-ShuffleSpriteFrontRike = image{"assets/sprite_front_rike.png", pinned = true}
-ShuffleSpriteFrontZorg = image{"assets/sprite_front_zorg.png", pinned = true}
-ShufflePanelBestTimes = image{"assets/panel_best_times.png"}
-ShufflePanelBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
-ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
-ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
-ShuffleEndGameNavReplay = image{"assets/end_navigation_replay_shuffle.png"}
-ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
+ShuffleNeighbor = image{"assets/neighbor.png"}
+ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
+ShuffleCongratulations = image{"assets/panel_congratulations.png"}
+ShuffleBestTimes = image{"assets/panel_best_times.png"}
+ShuffleBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
+ShuffleBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
+ShuffleBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
+ShuffleEndGameNavReplay = image{"assets/end_navigation_replay_shuffle.png"}
 
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
@@ -89,8 +93,6 @@ StoryChapterNext = image{"assets/panel_next_chapter.png"}
 StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
-StoryCutsceneSpriteLeftRike = image{"assets/cutscene_sprite_rike_left.png", pinned = true}
-StoryCutsceneSpriteRightGluv = image{"assets/cutscene_sprite_gluv_right.png", pinned = true}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryProgress = image{"assets/panel_progression.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}
