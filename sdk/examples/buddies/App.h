@@ -97,6 +97,8 @@ private:
     bool AnyTouchHold() const;
     bool AnyTouchEnd() const;
     
+    bool HasUnlocked() const;
+    
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
     

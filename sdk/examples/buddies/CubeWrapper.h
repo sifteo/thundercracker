@@ -50,6 +50,11 @@ public:
         const Sifteo::AssetImage &asset);
     void ScrollBackground(const Sifteo::Vec2 &position);
     
+    void DrawSprite(
+        int spriteIndex,
+        Sifteo::Vec2 position,
+        const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame = 0);
+    
     void DrawUiAsset(
         const Sifteo::Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
@@ -65,6 +70,7 @@ public:
     void ScrollUi(const Sifteo::Vec2 &position);
     
     // Special-Case Buddy Sprite Stuff
+    // TODO: If we have DrawSprite(index, asset, position) could we get rid of these?
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
     void DrawCutsceneShuffle(const Sifteo::Vec2 &scroll);
     void DrawCutsceneStory(const char *text);

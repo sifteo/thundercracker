@@ -1928,9 +1928,7 @@ void App::UpdateGameState(float dt)
             {
                 if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd())
                 {
-                    // TODO: Fix copy/pasta
-                    bool newCharacterUnlocked = true; // Debug Variable
-                    if ((mStoryPuzzleIndex + 1) == GetNumPuzzles() || newCharacterUnlocked)
+                    if (HasUnlocked())
                     {
                         StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                     }
@@ -1946,9 +1944,7 @@ void App::UpdateGameState(float dt)
             }
             else if (AnyTouchBegin())
             {
-                // TODO: Fix copy/pasta
-                bool newCharacterUnlocked = true; // Debug Variable
-                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles() || newCharacterUnlocked)
+                if (HasUnlocked())
                 {
                     StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                 }
@@ -2524,7 +2520,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                DrawStoryChapterNext(cubeWrapper, mStoryPuzzleIndex);
+                if (HasUnlocked())
+                {
+                    cubeWrapper.DrawBackground(StoryBookStartNext);
+                    cubeWrapper.DrawSprite(0, Vec2(32, 14), BuddySpriteFrontGluv);
+                }
+                else
+                {
+                    DrawStoryChapterNext(cubeWrapper, mStoryPuzzleIndex);
+                }
             }
             else if (cubeWrapper.GetId() == 1)
             {
@@ -3160,6 +3164,14 @@ bool App::AnyTouchEnd() const
     }
     
     return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool App::HasUnlocked() const
+{
+    return (mStoryPuzzleIndex + 1) == GetNumPuzzles(); // || true; // <== For testing
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
