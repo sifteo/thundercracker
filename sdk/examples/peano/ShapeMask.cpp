@@ -161,11 +161,19 @@ void ShapeMask::ListInConnections(Connection *connections, int *numConnections, 
     }
 }
 
-
+#if NO_STACK_PARAMS_HACK
+ShapeMask ShapeMask::m1;
+ShapeMask ShapeMask::m2;
+bool ShapeMask::TryConcat(
+        Vector2<int> offset,
+        ShapeMask *result,Vector2<int> *d1, Vector2<int> *d2
+        )
+#else
 bool ShapeMask::TryConcat(
         const ShapeMask &m1, const ShapeMask &m2, Vector2<int> offset,
         ShapeMask *result,Vector2<int> *d1, Vector2<int> *d2
         )
+#endif
 {
     Vector2<int> min = Vec2(
                 MIN(offset.x, 0),

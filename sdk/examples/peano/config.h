@@ -14,4 +14,6 @@
 //these should probably be 0 for release
 #define SKIP_INTRO_TUTORIAL 01
 
+#define NO_STACK_PARAMS_HACK 1
+
 #endif

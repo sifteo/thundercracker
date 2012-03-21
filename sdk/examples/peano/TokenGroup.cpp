@@ -107,7 +107,13 @@ namespace TotalsGame
              src->PositionOf(srcToken, &sp);
              dst->PositionOf(dstToken, &dp);
              Vector2<int> d = kSideToUnit[srcSide];
+#if NO_STACK_PARAMS_HACK
+             ShapeMask::m1 = src->GetMask();
+             ShapeMask::m2 = dst->GetMask();
+             ShapeMask::TryConcat(sp + d - dp, &mMask, &srcPos, &dstPos);
+#else
              ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mMask, &srcPos, &dstPos);
+#endif
              mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
              mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
@@ -119,9 +125,17 @@ namespace TotalsGame
          Vector2<int> sp, dp;
          src->PositionOf(srcToken, &sp);
          dst->PositionOf(dstToken, &dp);
+#if NO_STACK_PARAMS_HACK
+         ShapeMask::m1 = src->GetMask();
+         ShapeMask::m2 = dst->GetMask();
+         if (!ShapeMask::TryConcat(sp + d - dp, &mask, &d1, &d2)) {
+             return NULL;
+         }
+#else
          if (!ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mask, &d1, &d2)) {
              return NULL;
          }
+#endif
          Cube::Side srcSide = d.x == 1 ? SIDE_RIGHT : SIDE_BOTTOM;
 
          return new TokenGroup(

@@ -16,7 +16,7 @@ namespace Game
 NeighborEventHandler *neighborEventHandler;
 
 
-TotalsCube *cubes;
+TotalsCube cubes[NUM_CUBES];
 
 Puzzle *currentPuzzle;
 Puzzle *previousPuzzle;
@@ -125,10 +125,8 @@ void SaveOptions()
     //TODO
 }
 
-void Run(TotalsCube *_cubes, int nCubes)
+void Run()
 {
-    cubes = _cubes;
-
     TotalsGame::AudioPlayer::Init();
 
     //loading assets resets video mode to bg0 only.

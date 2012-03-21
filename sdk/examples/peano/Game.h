@@ -65,7 +65,7 @@ namespace TotalsGame {
 		void DrawVaultDoorsClosed();
 		void PaintCubeViews();
 
-        extern TotalsCube *cubes;
+        extern TotalsCube cubes[NUM_CUBES];
 
         extern Puzzle *currentPuzzle;
         extern Puzzle *previousPuzzle;
@@ -78,7 +78,7 @@ namespace TotalsGame {
 
         extern float dt;
 
-		void Run(TotalsCube *cubes, int nCubes);
+        void Run();
 
         void UpdateDt();
         void Wait(float delay);

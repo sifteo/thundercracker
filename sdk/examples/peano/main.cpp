@@ -10,9 +10,9 @@ using namespace Sifteo;
 void *operator new(size_t) throw() {return NULL;}
 void operator delete(void*) throw() {}
 
-static TotalsGame::TotalsCube cubes[NUM_CUBES];
-
 void main() {
+    TotalsGame::TotalsCube *cubes = TotalsGame::Game::cubes;
+
   for (int i = 0; i < NUM_CUBES; i++) {
     cubes[i].enable(i);
 #if LOAD_ASSETS
@@ -36,7 +36,7 @@ void main() {
 
 #endif
     
-    TotalsGame::Game::Run(cubes, NUM_CUBES);
+    TotalsGame::Game::Run();
 }
 
 

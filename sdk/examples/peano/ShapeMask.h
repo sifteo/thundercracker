@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include "sifteo.h"
 #include <stddef.h>
 
@@ -46,11 +47,19 @@ namespace TotalsGame {
 
         void ListInConnections(Connection *connections, int *numConnections, int maxConnections);
 
-
+#if NO_STACK_PARAMS_HACK
+        static ShapeMask m1;
+        static ShapeMask m2;
+        static bool TryConcat(
+            Vector2<int> offset,
+            ShapeMask *result, Vector2<int> *d1, Vector2<int> *d2
+            );
+#else
 		static bool TryConcat(
             const ShapeMask &m1, const ShapeMask &m2, Vector2<int> offset,
             ShapeMask *result, Vector2<int> *d1, Vector2<int> *d2
             );
+#endif
     };
 
 }
