@@ -348,7 +348,7 @@ void Game::RestorePearlIdle() {
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasGateway()) {
-    OnEnterGateway(pRoom);
+    OnEnterGateway(pRoom->TriggerAsGate());
   } else if (pRoom->HasNPC()) {
     const NpcData* npc = pRoom->TriggerAsNPC();
     if (npc->optional) { OnNpcChatter(npc); }
@@ -510,10 +510,9 @@ void Game::OnPickup(Room *pRoom) {
   OnTriggerEvent(pItem->trigger.eventType);
 }
 
-void Game::OnEnterGateway(Room*pRoom) {
+void Game::OnEnterGateway(const GatewayData* pGate) {
   //---------------------------------------------------------------------------
   // PLAYER TRIGGERED GATEWAY
-  const GatewayData* pGate = pRoom->TriggerAsGate();
   const MapData& targetMap = gMapData[pGate->targetMap];
   const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }

@@ -61,7 +61,7 @@ void Game::MainLoop() {
 					OnActiveTrigger();
 				}
 			} else if (mPlayer.CurrentView()->GatewayTouched()) {
-				OnEnterGateway(mPlayer.CurrentView()->GetRoom());
+				OnEnterGateway(mPlayer.CurrentView()->GetRoom()->TriggerAsGate());
 			}
       		#if PLAYTESTING_HACKS
           	else if (sShakeTime > 2.0f) {

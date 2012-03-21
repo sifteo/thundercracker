@@ -83,7 +83,7 @@ private:
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
   void OnUseEquipment();
-  void OnEnterGateway(Room *pRoom);
+  void OnEnterGateway(const GatewayData* pGate);
   void OnNpcChatter(const NpcData* pNpc);
   void OnTriggerEvent(unsigned id);
 
