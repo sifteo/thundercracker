@@ -5,14 +5,12 @@
 
 #include <stdio.h>
 #include <protocol.h>
-#include <sifteo/machine.h>
-
+#include "machine.h"
 #include "cubecodec.h"
 #include "cubeslots.h"
 #include "svmmemory.h"
 
-using namespace Sifteo;
-using namespace Sifteo::Intrinsic;
+using namespace Intrinsic;
 
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)

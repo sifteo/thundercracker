@@ -6,9 +6,7 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "neighbors.h"
-#include <sifteo/machine.h>
-
-using namespace Sifteo;
+#include "machine.h"
 
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
@@ -37,31 +35,31 @@ void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 void CubeSlots::enableCubes(_SYSCubeIDVector cv)
 {
     NeighborSlot::resetSlots(cv);
-    Sifteo::Atomic::Or(CubeSlots::vecEnabled, cv);
+    Atomic::Or(CubeSlots::vecEnabled, cv);
 }
 
 void CubeSlots::disableCubes(_SYSCubeIDVector cv)
 {
-    Sifteo::Atomic::And(CubeSlots::vecEnabled, ~cv);
+    Atomic::And(CubeSlots::vecEnabled, ~cv);
 }
 
 void CubeSlots::connectCubes(_SYSCubeIDVector cv)
 {
-    Sifteo::Atomic::Or(CubeSlots::vecConnected, cv);
+    Atomic::Or(CubeSlots::vecConnected, cv);
 
     // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
-    Sifteo::Atomic::Or(CubeSlots::expectStaleACK, cv);
+    Atomic::Or(CubeSlots::expectStaleACK, cv);
 }
 
 void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
 {
-    Sifteo::Atomic::And(CubeSlots::vecConnected, ~cv);
+    Atomic::And(CubeSlots::vecConnected, ~cv);
 
-    Sifteo::Atomic::And(CubeSlots::flashResetWait, ~cv);
-    Sifteo::Atomic::And(CubeSlots::flashResetSent, ~cv);
-    Sifteo::Atomic::And(CubeSlots::flashACKValid, ~cv);
-    Sifteo::Atomic::And(CubeSlots::neighborACKValid, ~cv);
-    Sifteo::Atomic::And(CubeSlots::hwidValid, ~cv);
+    Atomic::And(CubeSlots::flashResetWait, ~cv);
+    Atomic::And(CubeSlots::flashResetSent, ~cv);
+    Atomic::And(CubeSlots::flashACKValid, ~cv);
+    Atomic::And(CubeSlots::neighborACKValid, ~cv);
+    Atomic::And(CubeSlots::hwidValid, ~cv);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 

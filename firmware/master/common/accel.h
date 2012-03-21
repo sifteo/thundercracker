@@ -7,7 +7,7 @@
 #define _ACCEL_H
 
 #include <sifteo/abi.h>
-#include <sifteo/macros.h>
+#include "macros.h"
 
 /**
  *Accelerometer state for cubes

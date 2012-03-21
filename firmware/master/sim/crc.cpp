@@ -5,7 +5,6 @@
 
 #include "crc.h"
 #include <string.h>
-#include <sifteo.h>
 
 // statics
 uint32_t Crc32::currentWord;

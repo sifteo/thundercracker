@@ -7,11 +7,9 @@
 #define _SIFTEO_CUBECODEC_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
-#include <sifteo/macros.h>
-#include <sifteo/limits.h>
-
 #include <protocol.h>
+#include "machine.h"
+#include "macros.h"
 #include "radio.h"
 #include "vram.h"
 

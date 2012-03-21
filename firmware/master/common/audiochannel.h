@@ -6,9 +6,9 @@
 #ifndef AUDIOCHANNEL_H_
 #define AUDIOCHANNEL_H_
 
-#include <sifteo/audio.h>
-#include <sifteo/machine.h>
+#include <sifteo/abi.h>
 #include <stdint.h>
+#include "machine.h"
 #include "audiobuffer.h"
 #include "speexdecoder.h"
 #include "adpcmdecoder.h"

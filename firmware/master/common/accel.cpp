@@ -7,8 +7,6 @@
 #include "event.h"
 #include <stdlib.h>
 
-//using namespace Sifteo;
-
 AccelState AccelState::instances[_SYS_NUM_CUBE_SLOTS];
 
 AccelState::AccelState() {

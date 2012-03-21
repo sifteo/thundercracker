@@ -3,11 +3,11 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <string.h>
 #include "portaudiooutdevice.h"
 #include "audiomixer.h"
 #include "tasks.h"
-#include <sifteo/macros.h>
-#include <string.h>
+#include "macros.h"
 
 //#define SINE_TEST // uncomment for testing
 

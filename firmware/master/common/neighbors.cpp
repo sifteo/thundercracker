@@ -4,7 +4,7 @@
  */
 
 #include <protocol.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 #include "neighbors.h"
 #include "vram.h"
 #include "event.h"
@@ -14,8 +14,6 @@
 #define FULL_MASK           (CUBE_ID_MASK | HAS_NEIGHBOR_MASK)
 #define NO_SIDE             (-1)
 #define NUM_UNIQUE_PAIRS    ((_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)) >> 1)
-
-using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 

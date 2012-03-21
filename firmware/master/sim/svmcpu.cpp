@@ -6,9 +6,8 @@
 #include "svmcpu.h"
 #include "svmruntime.h"
 #include "svmdebug.h"
-
-#include <sifteo/macros.h>
-#include <sifteo/machine.h>
+#include "macros.h"
+#include "machine.h"
 
 #include <string.h>
 #include <inttypes.h>
@@ -453,7 +452,7 @@ static void emulateRORReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = Sifteo::Intrinsic::ROR(regs[Rdn], regs[Rm]);
+    regs[Rdn] = Intrinsic::ROR(regs[Rdn], regs[Rm]);
 }
 
 static void emulateTSTReg(uint16_t instr)

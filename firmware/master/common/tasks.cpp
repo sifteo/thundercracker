@@ -4,14 +4,11 @@
  */
 
 #include "tasks.h"
-#include <sifteo.h>
 #include "audiomixer.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb.h"
 #endif
-
-using namespace Sifteo;
 
 uint32_t Tasks::pendingMask;
 

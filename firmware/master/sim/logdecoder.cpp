@@ -4,7 +4,7 @@
  */
 
 #include <string.h>
-#include <sifteo/macros.h>
+#include "macros.h"
 #include "logdecoder.h"
 
 

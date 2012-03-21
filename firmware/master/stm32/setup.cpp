@@ -7,7 +7,6 @@
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo.h>
 #include "radio.h"
 #include "usb.h"
 #include "flashlayer.h"
@@ -213,7 +212,7 @@ extern "C" void _start()
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
         Tasks::work();
-        Sifteo::System::yield();
+        System::yield();
     }
 #endif
 

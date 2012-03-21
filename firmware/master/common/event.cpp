@@ -3,13 +3,10 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <sifteo/abi.h>
 #include "event.h"
 #include "cube.h"
 #include "neighbors.h"
-
-#include <sifteo/abi.h>
-
-using namespace Sifteo;
 
 uint32_t Event::pending;
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];

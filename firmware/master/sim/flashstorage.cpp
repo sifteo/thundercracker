@@ -5,7 +5,7 @@
 
 #include "flash.h"
 #include "flashstorage.h"
-#include <sifteo.h>
+#include "macros.h"
 
 #include <stdlib.h>
 #include <string.h>

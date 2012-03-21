@@ -8,7 +8,6 @@
  * desktop OS rather than for the actual master cube.
  */
 
-#include <sifteo.h>
 #include "radio.h"
 #include "systime.h"
 #include "audiooutdevice.h"

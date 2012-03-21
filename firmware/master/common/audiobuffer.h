@@ -6,7 +6,8 @@
 #ifndef AUDIOBUFFER_H_
 #define AUDIOBUFFER_H_
 
-#include <sifteo/audio.h>
+#include <sifteo/abi.h>
+
 
 class AudioBuffer {
 public:

@@ -10,7 +10,6 @@
 #include <sifteo/abi.h>
 #include <sifteo/time.h>
 #include <sifteo/cube.h>
-#include <sifteo/machine.h>
 #include <sifteo/math.h>
 #include <sifteo/system.h>
 #include <sifteo/asset.h>

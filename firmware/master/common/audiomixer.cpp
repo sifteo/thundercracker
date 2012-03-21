@@ -9,11 +9,7 @@
 #include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
-#include <sifteo.h>
 
-using namespace Sifteo;
-
-//statics
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
@@ -176,7 +172,7 @@ void AudioMixer::resume(_SYSAudioHandle handle)
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
     if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
-        ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
+        ch->volume = clamp(volume, 0, (int)_SYS_AUDIO_MAX_VOLUME);
     }
 }
 

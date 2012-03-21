@@ -292,6 +292,12 @@ struct _SYSVideoBuffer {
 };
 
 
+/*
+ * Audio handles
+ */
+
+#define _SYS_AUDIO_INVALID_HANDLE   ((uint32_t)-1)
+
 typedef uint32_t _SYSAudioHandle;
 
 // NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
@@ -300,6 +306,9 @@ typedef uint32_t _SYSAudioHandle;
 // so we need to kick up to 1024 bytes. kind of a lot :/
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
 #define _SYS_AUDIO_MAX_CHANNELS         8
+
+#define _SYS_AUDIO_MAX_VOLUME       256   // Guaranteed to be a power of two
+#define _SYS_AUDIO_DEFAULT_VOLUME   128
 
 /*
  * Types of audio supported by the system
@@ -385,15 +394,15 @@ typedef enum {
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;
 
-#define _SYS_NEIGHBOR_EVENTS    ( Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_ADD) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_REMOVE) )
-#define _SYS_CUBE_EVENTS        ( Sifteo::Intrinsic::LZ(_SYS_CUBE_FOUND) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_LOST) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ASSETDONE) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ACCELCHANGE) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TOUCH) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TILT) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_SHAKE) )
+#define _SYS_NEIGHBOR_EVENTS    ( (0x80000000 >> _SYS_NEIGHBOR_ADD) |\
+                                  (0x80000000 >> _SYS_NEIGHBOR_REMOVE) )
+#define _SYS_CUBE_EVENTS        ( (0x80000000 >> _SYS_CUBE_FOUND) |\
+                                  (0x80000000 >> _SYS_CUBE_LOST) |\
+                                  (0x80000000 >> _SYS_CUBE_ASSETDONE) |\
+                                  (0x80000000 >> _SYS_CUBE_ACCELCHANGE) |\
+                                  (0x80000000 >> _SYS_CUBE_TOUCH) |\
+                                  (0x80000000 >> _SYS_CUBE_TILT) |\
+                                  (0x80000000 >> _SYS_CUBE_SHAKE) )
 
 /**
  * Internal state of the Pseudorandom Number Generator, maintained in user RAM.

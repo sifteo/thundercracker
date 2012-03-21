@@ -5,7 +5,7 @@
 
 #include "assetmanager.h"
 #include "flash.h"
-#include <sifteo.h>
+#include "macros.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb.h"

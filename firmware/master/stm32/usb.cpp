@@ -4,7 +4,6 @@
  */
 
 #include "usb.h"
-#include <sifteo.h>
 #include "hardware.h"
 #include "usart.h"
 #include "tasks.h"

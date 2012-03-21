@@ -7,7 +7,7 @@
 #define _CUBE_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 #include "radio.h"
 #include "svmmemory.h"
 #include "cubeslots.h"
@@ -53,7 +53,7 @@ class CubeSlot {
 
     _SYSCubeIDVector bit() const {
         STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
-        return Sifteo::Intrinsic::LZ(id());
+        return Intrinsic::LZ(id());
     }
 
     bool enabled() const {
@@ -65,11 +65,11 @@ class CubeSlot {
     }
 	
 	void setConnected() {
-		CubeSlots::connectCubes(Sifteo::Intrinsic::LZ(id()));
+		CubeSlots::connectCubes(Intrinsic::LZ(id()));
 	}
 	
 	void setDisconnected() {
-		CubeSlots::disconnectCubes(Sifteo::Intrinsic::LZ(id()));
+		CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
 	}
 
     void setVideoBuffer(_SYSVideoBuffer *v) {

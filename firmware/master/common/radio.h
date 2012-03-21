@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <sifteo/abi.h>
-#include <sifteo/macros.h>
+#include "macros.h"
 
 class RadioManager;
 

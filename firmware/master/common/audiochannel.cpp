@@ -3,21 +3,17 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include <sifteo/macros.h>
-#include <sifteo/math.h>
-#include <sifteo/audio.h>
+#include "macros.h"
 #include "svmmemory.h"
 #include "audiochannel.h"
 #include "speexdecoder.h"
 #include <limits.h>
 
-using namespace Sifteo;
-
 
 void AudioChannelSlot::init(_SYSAudioBuffer *b)
 {
     state = STATE_STOPPED;
-    volume = Audio::MAX_VOLUME / 2;
+    volume = _SYS_AUDIO_DEFAULT_VOLUME;
     buf.init(b);
 }
 
@@ -47,10 +43,10 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
         int16_t src = buf.dequeue() | (buf.dequeue() << 8);
 
         // Mix this sample, after volume adjustment, with the existing buffer contents
-        int32_t sample = *buffer + ((src * (int32_t)volume) / Audio::MAX_VOLUME);
+        int32_t sample = *buffer + ((src * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME);
             
         // TODO - more subtle compression instead of hard limiter
-        *buffer = Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+        *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
         buffer++;
     }
 

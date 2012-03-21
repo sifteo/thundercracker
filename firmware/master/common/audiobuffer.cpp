@@ -10,7 +10,8 @@
  */
 
 #include "audiobuffer.h"
-#include <sifteo/macros.h>
+#include "macros.h"
+
 
 void AudioBuffer::init(_SYSAudioBuffer *buf) {
     STATIC_ASSERT((sizeof(buf->buf) & (sizeof(buf->buf) - 1)) == 0); // must be power of 2

@@ -8,7 +8,6 @@
 #define _SIFTEO_VIDEO_H
 
 #include <sifteo/macros.h>
-#include <sifteo/machine.h>
 #include <sifteo/math.h>
 
 
@@ -76,7 +75,7 @@ class VideoBuffer {
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
-        Sifteo::Atomic::SetLZ(sys.needPaint, 0);
+        sys.needPaint = (uint32_t)-1;
     }
 
     /**

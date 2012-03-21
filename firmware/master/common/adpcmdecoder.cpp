@@ -1,5 +1,9 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "adpcmdecoder.h"
-#include "sifteo/math.h"
 
 const uint16_t AdPcmDecoder::stepSizeTable[89] = {
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31,

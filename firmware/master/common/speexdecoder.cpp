@@ -6,10 +6,12 @@
 #include <string.h>
 #include "speexdecoder.h"
 #include "flashlayer.h"
-#include <sifteo/macros.h>
+#include "macros.h"
+
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#   include "config.h"
 #endif
+
 
 void SpeexDecoder::init()
 {

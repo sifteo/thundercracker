@@ -6,11 +6,10 @@
 #ifndef AUDIOMIXER_H_
 #define AUDIOMIXER_H_
 
-#include <stdint.h>
 #include "speexdecoder.h"
 #include "audiobuffer.h"
 #include "audiochannel.h"
-#include <sifteo/audio.h>
+#include <stdint.h>
 #include <stdio.h>
 
 class AudioMixer

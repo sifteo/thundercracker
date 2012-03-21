@@ -7,7 +7,7 @@
 #define _SIFTEO_RUNTIME_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 #include "svm.h"
 #include "svmruntime.h"
 using namespace Svm;
@@ -31,8 +31,8 @@ class Event {
     static void setPending(_SYSVectorID vid, _SYSCubeID cid) {
         ASSERT(vid < _SYS_NUM_VECTORS);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        Sifteo::Atomic::SetLZ(pending, vid);
-        Sifteo::Atomic::SetLZ(vectors[vid].cubesPending, cid);
+        Atomic::SetLZ(pending, vid);
+        Atomic::SetLZ(vectors[vid].cubesPending, cid);
     }
     
     static void setVector(_SYSVectorID vid, void *handler, void *context) {
@@ -54,7 +54,7 @@ class Event {
     static inline bool callCubeEvent(_SYSVectorID vid, _SYSCubeID cid) {
         ASSERT(vid < _SYS_NUM_VECTORS);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        ASSERT(Sifteo::Intrinsic::LZ(vid) & _SYS_CUBE_EVENTS);
+        ASSERT(Intrinsic::LZ(vid) & _SYS_CUBE_EVENTS);
         VectorInfo &vi = vectors[vid];
 
         if (vi.handler) {
@@ -68,7 +68,7 @@ class Event {
     static inline bool callNeighborEvent(_SYSVectorID vid,
         _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
         ASSERT(vid < _SYS_NUM_VECTORS);
-        ASSERT(Sifteo::Intrinsic::LZ(vid) & _SYS_NEIGHBOR_EVENTS);
+        ASSERT(Intrinsic::LZ(vid) & _SYS_NEIGHBOR_EVENTS);
         VectorInfo &vi = vectors[vid];
 
         if (vi.handler) {

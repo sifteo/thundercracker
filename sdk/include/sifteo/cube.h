@@ -69,7 +69,7 @@ class Cube {
     typedef _SYSNeighborState Neighborhood;
     typedef _SYSTiltState  TiltState;
 
-    /*
+    /**
      * Default constructor leaves id() zero'ed, so that Cube objects
      * are allocated in the BSS segment rather than read-write data.
      */
@@ -77,6 +77,15 @@ class Cube {
     Cube() {}
     Cube(ID id) {
         vbuf.cubeID = id;
+    }
+    
+    /**
+     * Return the _SYSCubeIDVector bit for this cube, useful for making
+     * low-level system calls which require this type of ID.
+     */
+     
+    _SYSCubeIDVector bit() const {
+        return 0x80000000 >> id();
     }
 
     /**
@@ -91,11 +100,11 @@ class Cube {
         ASSERT(id() != CUBE_ID_UNDEFINED);
         vbuf.init();
         _SYS_setVideoBuffer(id(), &vbuf.sys);
-        _SYS_enableCubes(Intrinsic::LZ(id()));
+        _SYS_enableCubes(bit());
     }
 
     void disable() {
-        _SYS_disableCubes(Intrinsic::LZ(id()));
+        _SYS_disableCubes(bit());
     }
     
     void loadAssets(AssetGroup &group) {
@@ -114,7 +123,7 @@ class Cube {
     }
     
     bool assetDone(AssetGroup &group) {
-        return !!(group.sys.doneCubes & Sifteo::Intrinsic::LZ(id()));
+        return !!(group.sys.doneCubes & bit());
     }
 
     ID id() const {

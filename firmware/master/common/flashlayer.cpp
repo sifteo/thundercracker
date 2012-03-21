@@ -7,7 +7,6 @@
 #include "flash.h"
 #include "svmdebug.h"
 #include "svmmemory.h"
-#include <sifteo.h>
 #include <string.h>
 
 #ifdef FLASHLAYER_STATS

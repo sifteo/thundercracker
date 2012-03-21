@@ -8,7 +8,8 @@
 
 #include "svmvalidator.h"
 #include "systime.h"
-#include <sifteo/machine.h>
+#include "machine.h"
+#include "macros.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -70,7 +71,7 @@ public:
     }
     
     inline unsigned bit() {
-        return Sifteo::Intrinsic::LZ(id());
+        return Intrinsic::LZ(id());
     }
 
     inline uint32_t getAddress() {

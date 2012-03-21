@@ -7,7 +7,7 @@
 #define _VRAM_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 
 /**
  * Utilities for accessing VRAM buffers.
@@ -38,19 +38,19 @@ struct VRAM {
     }
 
     static uint32_t maskCM1(uint16_t addr) {
-        return Sifteo::Intrinsic::LZ(indexCM1(addr));
+        return Intrinsic::LZ(indexCM1(addr));
     }
 
     static uint32_t maskCM32(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < 32);
-        return Sifteo::Intrinsic::LZ(addr >> 5);
+        return Intrinsic::LZ(addr >> 5);
     }
 
     static uint32_t maskLock(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 4) < 32);
-        return Sifteo::Intrinsic::LZ(addr >> 4);
+        return Intrinsic::LZ(addr >> 4);
     }
 
     static void truncateByteAddr(uint16_t &addr) {
@@ -70,14 +70,14 @@ struct VRAM {
 
         vbuf.lock |= maskLock(addr);
         vbuf.cm32next |= maskCM32(addr);
-        Sifteo::Atomic::Barrier();
+        Atomic::Barrier();
     }
 
     static void unlock(_SYSVideoBuffer &vbuf) {
-        Sifteo::Atomic::Barrier();
-        Sifteo::Atomic::Or(vbuf.cm32, vbuf.cm32next);
+        Atomic::Barrier();
+        Atomic::Or(vbuf.cm32, vbuf.cm32next);
         vbuf.lock = 0;
-        Sifteo::Atomic::Or(vbuf.needPaint, vbuf.cm32next);
+        Atomic::Or(vbuf.needPaint, vbuf.cm32next);
         vbuf.cm32next = 0;
     }
 
@@ -87,7 +87,7 @@ struct VRAM {
         if (vbuf.vram.words[addr] != word) {
             lock(vbuf, addr);
             vbuf.vram.words[addr] = word;
-            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
+            Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
         }
     }
 
@@ -98,7 +98,7 @@ struct VRAM {
             uint16_t addrw = addr >> 1;
             lock(vbuf, addrw);
             vbuf.vram.bytes[addr] = byte;
-            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
+            Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
         }
     }
 

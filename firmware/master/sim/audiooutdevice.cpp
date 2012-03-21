@@ -5,7 +5,7 @@
 
 #include "audiooutdevice.h"
 #include "portaudiooutdevice.h"
-#include <sifteo/macros.h>
+#include "macros.h"
 
 /*
  * Host side implementation of AudioOutDevice - just forward calls to the

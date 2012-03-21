@@ -11,17 +11,11 @@
 
 namespace Sifteo {
 
-// XXX better place to put these?
-class Audio {
-public:
-    static const int MAX_VOLUME = 256;      // Guaranteed to be a power of two    
-    static const _SYSAudioHandle INVALID_HANDLE = -1;
-};
 
 class AudioChannel {
 public:
 
-    AudioChannel() : handle(Audio::INVALID_HANDLE)
+    AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
     void init() {

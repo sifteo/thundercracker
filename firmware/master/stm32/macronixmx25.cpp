@@ -6,7 +6,7 @@
 #include "macronixmx25.h"
 #include "flash.h"
 #include "board.h"
-#include "sifteo/macros.h"
+#include "macros.h"
 
 void MacronixMX25::init()
 {

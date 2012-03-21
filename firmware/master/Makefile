@@ -19,7 +19,7 @@ OBJS_STM32 +=   $(OBJS_USB_STM32) \
                 $(SPEEX_OBJS_STM32)
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -Icommon -I../include -DFW_BUILD
+CFLAGS := -Icommon -I../include
 CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
 # NOTE: ST defines here are temporary until we integrate our own USB code
 CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER

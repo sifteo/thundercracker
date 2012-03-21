@@ -4,8 +4,7 @@
  */
 
 #include "usbotgdevice.h"
-#include <cstring>  // for NULL...is this defined within the SDK anywhere?
-#include <sifteo/macros.h>
+#include "macros.h"
 
 // static
 UsbOtgDevice UsbOtgDevice::instance;

@@ -4,8 +4,8 @@
  */
 
 #include <protocol.h>
-#include <sifteo/machine.h>
 
+#include "machine.h"
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
@@ -13,11 +13,8 @@
 #include "flashlayer.h"
 #include "svmdebug.h"
 #include "tasks.h"
-
 #include "neighbors.h"
 
-
-using namespace Sifteo;
 
 /*
  * Frame rate control parameters
