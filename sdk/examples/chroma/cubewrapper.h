@@ -41,6 +41,8 @@ public:
     static const float TILT_SOUND_EPSILON;
     static const int PTS_PER_EMPTIED_CUBE = 100;
     static const int HIGH_SCORE_OFFSET = 4;
+    //how long we wait until we autorefill an empty cube in survival mode
+    static const float AUTOREFILL_TIME;
 
 	typedef enum
 	{

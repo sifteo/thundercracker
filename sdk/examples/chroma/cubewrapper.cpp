@@ -26,6 +26,8 @@ const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 //const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 const float CubeWrapper::TOUCH_TIME_FOR_MENU = 1.7f;
+//how long we wait until we autorefill an empty cube in survival mode
+const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
@@ -483,6 +485,10 @@ void CubeWrapper::Update(float t, float dt)
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
         }
+
+        //autorefill after a certain time
+        if( m_state == STATE_EMPTY && m_stateTime > AUTOREFILL_TIME )
+            checkRefill();
     }
     /*else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
