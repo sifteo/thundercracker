@@ -107,6 +107,7 @@ private:
     GameState mGameState;
     float mDelayTimer;
     float mOptionsTimer;
+    bool mOptionsTouchSync;
     
     // Input
     TouchState mTouching[kNumCubes];

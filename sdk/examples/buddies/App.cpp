@@ -592,6 +592,7 @@ App::App()
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
     , mOptionsTimer(0.0f)
+    , mOptionsTouchSync(false)
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
@@ -1392,16 +1393,20 @@ void App::UpdateGameState(float dt)
                 {
                     if (mCubeWrappers[i].IsEnabled())
                     {
-                        if (mTouching[i] == TOUCH_STATE_BEGIN ||
-                            mTouching[i] == TOUCH_STATE_HOLD)
+                        if (mTouching[i] == TOUCH_STATE_BEGIN || mTouching[i] == TOUCH_STATE_HOLD)
                         {
-                            mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, VidMode::TILE));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, VidMode::TILE));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0));
+                            if (!mOptionsTouchSync)
+                            {
+                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, VidMode::TILE));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, VidMode::TILE));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0));
+                            }
                         }
                         else if (mTouching[i] == TOUCH_STATE_END)
                         {
+                            mOptionsTouchSync = false;
+                            
                             mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
@@ -1424,6 +1429,14 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
+                mOptionsTouchSync = true;
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                {
+                    mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
+                    mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
+                    mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
+                    mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                }
                 StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -1566,6 +1579,14 @@ void App::UpdateGameState(float dt)
                 }
             }
             
+            if (mOptionsTouchSync)
+            {
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+                {
+                    mOptionsTouchSync = false;
+                }
+            }
+            
             // Check if clue should start being displayed
             if (mClueOnTimer > 0.0f)
             {
@@ -1606,6 +1627,8 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
+                mOptionsTouchSync = true;
+                mClueOffTimers[0] = 0.0f;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -1806,14 +1829,21 @@ void App::UpdateGameState(float dt)
                 {
                     if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
-                        if (mClueOffTimers[i] > 0.0f)
+                        if (!mOptionsTouchSync)
                         {
-                            mClueOffTimers[i] = 0.0f;
+                            if (mClueOffTimers[i] > 0.0f)
+                            {
+                                mClueOffTimers[i] = 0.0f;
+                            }
+                            else
+                            {
+                                mClueOffTimers[i] = kStateTimeDelayLong;
+                            }
                         }
-                        else
-                        {
-                            mClueOffTimers[i] = kStateTimeDelayLong;
-                        }
+                    }
+                    else if (mTouching[i] == TOUCH_STATE_END)
+                    {
+                        mOptionsTouchSync = false;
                     }
                 }
             }
@@ -1823,6 +1853,11 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
+                mOptionsTouchSync = true;
+                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                {
+                    mClueOffTimers[i] = 0.0f;
+                }
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -2016,7 +2051,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
-            if (cubeWrapper.GetId() < arraysize(mTouching) && mTouching[cubeWrapper.GetId()])
+            if (cubeWrapper.GetId() < arraysize(mTouching) &&
+                mTouching[cubeWrapper.GetId()] &&
+                !mOptionsTouchSync)
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             }
