@@ -14,10 +14,7 @@
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
 
-
 namespace Sifteo {
-
-using namespace Sifteo::Math;
 
 /**
  * A memory buffer which holds graphics data. This is a mirror of the

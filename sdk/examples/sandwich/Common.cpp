@@ -1,6 +1,6 @@
 #include "Common.h"
 
-Math::Random gRandom;
+Random gRandom;
 
 Cube::Side InferDirection(Int2 u) {
 	if (u.x > 0) {

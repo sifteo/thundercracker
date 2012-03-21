@@ -50,7 +50,7 @@ public:
                           _SYSAudioLoopType loopMode = LoopOnce,
                           AudioPriority priority = AudioPriority_Normal);
 
-    static Math::Random random;
+    static Random random;
 
 private:
     bool _playAudio(const AssetAudio &mod, AudioChannelIndex channel,

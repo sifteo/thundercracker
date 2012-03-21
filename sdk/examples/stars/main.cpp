@@ -9,7 +9,7 @@
 
 using namespace Sifteo;
 
-Math::Random gRandom;
+Random gRandom;
 
 class StarDemo {
 public:

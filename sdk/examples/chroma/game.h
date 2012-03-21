@@ -80,7 +80,7 @@ public:
     };
 
     CubeWrapper m_cubes[NUM_CUBES];
-    static Math::Random random;
+    static Random random;
 
 	void Init();
 	void Update();

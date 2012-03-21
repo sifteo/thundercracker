@@ -23,7 +23,7 @@ const float Game::COMBO_TIME_THRESHOLD = 2.5f;
 const float Game::GOODJOB_TIME = 2.0f;
 
 
-Math::Random Game::random;
+Random Game::random;
 
 
 Game &Game::Inst()
