@@ -5,12 +5,18 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _BG1HELPER_H
-#define _BG1HELPER_H
+#ifndef _SIFTEO_BG1HELPER_H
+#define _SIFTEO_BG1HELPER_H
 
-#include <sifteo.h>
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
 
-using namespace Sifteo;
+#include <sifteo/cube.h>
+#include <sifteo/math.h>
+#include <sifteo/video.h>
+
+namespace Sifteo {
 
 
 class BG1Helper
@@ -204,5 +210,7 @@ private:
 	uint16_t m_tileset[BG1_ROWS][BG1_COLS];
 	Cube &m_cube;
 };
+
+};  // namespace Sifteo
 
 #endif

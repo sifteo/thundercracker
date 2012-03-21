@@ -3,8 +3,12 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef AUDIO_H_
-#define AUDIO_H_
+#ifndef _SIFTEO_AUDIO_H_
+#define _SIFTEO_AUDIO_H_
+
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
 
 #include <sifteo/asset.h>
 #include <sifteo/abi.h>

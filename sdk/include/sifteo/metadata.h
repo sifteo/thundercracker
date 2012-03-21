@@ -7,6 +7,10 @@
 #ifndef _SIFTEO_METADATA_H
 #define _SIFTEO_METADATA_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 #include <sifteo/abi.h>
 
 namespace Sifteo {
