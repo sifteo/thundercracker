@@ -1525,6 +1525,8 @@ void App::UpdateGameState(float dt)
             
             if (AnyTouchBegin())
             {
+                mOptionsTouchSync = true;
+                mClueOffTimers[0] = 0.0f;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             break;
