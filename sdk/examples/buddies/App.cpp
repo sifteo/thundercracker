@@ -239,7 +239,7 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
     
     String<64> bufferTitle;
-    bufferTitle << GetPuzzle(puzzleIndex).GetTitle();
+    bufferTitle << "\"" << GetPuzzle(puzzleIndex).GetTitle() << "\"";
     int xTitle = (tileWidth / 2) - (bufferTitle.size() / 2);
     cubeWrapper.DrawUiText(Vec2(xTitle, 8), UiFontOrange, bufferTitle.c_str());
     
@@ -262,18 +262,13 @@ void DrawStoryClue(
     
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
-    String<16> bufferChapter;
-    bufferChapter << "Chapter " << (puzzleIndex + 1);
-    int xChapter = (tileWidth / 2) - (bufferChapter.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xChapter, 5), UiFontHeadingOrange, bufferChapter.c_str());
-    
     String<32> bufferText;
     bufferText << text;
     
     int xText = (tileWidth / 2) - (bufferText.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xText, 7), UiFontOrange, bufferText.c_str());
+    cubeWrapper.DrawUiText(Vec2(xText, 5), UiFontOrange, bufferText.c_str());
     
-    if (bufferChapter.size() % 2 != 0)
+    if (bufferText.size() % 2 != 0)
     {
         cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
     }
@@ -593,6 +588,8 @@ App::App()
     , mDelayTimer(0.0f)
     , mOptionsTimer(0.0f)
     , mOptionsTouchSync(false)
+    , mUiIndex(0)
+    , mUiIndexSync()
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
@@ -613,8 +610,6 @@ App::App()
     , mClueOffTimers()
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShufflePiecesStart()
-    , mShuffleUiIndex(0)
-    , mShuffleUiIndexSync()
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
@@ -639,9 +634,9 @@ App::App()
         mClueOffTimers[i] = 0.0f;
     }
     
-    for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
+    for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
     {
-        mShuffleUiIndexSync[i] = false;
+        mUiIndexSync[i] = false;
     }
     
     for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
@@ -1149,7 +1144,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
-            mShuffleUiIndex = 0;
+            mUiIndex = 0;
             mDelayTimer = kShuffleBannerSwapDelay;
             break;   
         }
@@ -1170,10 +1165,10 @@ void App::StartGameState(GameState gameState)
             mScoreMoves = 0;
             mScorePlace = std::numeric_limits<unsigned int>().max();
             mDelayTimer = kStateTimeDelayLong;
-            mShuffleUiIndex = 0;
-            for (unsigned int i = 0; i < arraysize(mShuffleUiIndexSync); ++i)
+            mUiIndex = 0;
+            for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
             {
-                mShuffleUiIndexSync[i] = false;
+                mUiIndexSync[i] = false;
             }
             
             // Copy in puzzle data so we can reset
@@ -1269,6 +1264,11 @@ void App::StartGameState(GameState gameState)
                 mShufflePiecesMoved[i] = false;
             }
             ShufflePieces(GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
+            break;
+        }
+        case GAME_STATE_STORY_CLUE:
+        {
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_STORY_PLAY:
@@ -1491,9 +1491,9 @@ void App::UpdateGameState(float dt)
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
                         
-                        if (mShuffleUiIndex == 0)
+                        if (mUiIndex == 0)
                         {
-                            mShuffleUiIndexSync[i] = true;
+                            mUiIndexSync[i] = true;
                         }
                     }
                 }
@@ -1501,7 +1501,7 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimerLoop(mDelayTimer, dt, kShuffleBannerSwapDelay))
             {
-                mShuffleUiIndex = (mShuffleUiIndex + 1) % 3;
+                mUiIndex = (mUiIndex + 1) % 3;
             }
             break;
         }
@@ -1520,7 +1520,7 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
             {
-                mShuffleUiIndex = (mShuffleUiIndex + 1) % 2;
+                mUiIndex = (mUiIndex + 1) % 2;
             }
             
             if (AnyTouchBegin())
@@ -1744,6 +1744,11 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CLUE:
         {
+            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
+            {
+                mUiIndex = mUiIndex == 0 ? 1 : 0;
+            }
+            
             if (AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_STORY_PLAY);
@@ -2019,18 +2024,18 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             
-            if (mShuffleUiIndex == 0 && !mShuffleUiIndexSync[cubeWrapper.GetId()])
+            if (mUiIndex == 0 && !mUiIndexSync[cubeWrapper.GetId()])
             {
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleTouchToSwap);
             }
-            else if (mShuffleUiIndex == 1)
+            else if (mUiIndex == 1)
             {
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
             }
             
-            if (mShuffleUiIndex != 0)
+            if (mUiIndex != 0)
             {
-                mShuffleUiIndexSync[cubeWrapper.GetId()] = false;
+                mUiIndexSync[cubeWrapper.GetId()] = false;
             }
             break;
         }
@@ -2041,7 +2046,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (cubeWrapper.GetId() == 0 && mShuffleUiIndex == 0)
+            if (cubeWrapper.GetId() == 0 && mUiIndex == 0)
             {
                 cubeWrapper.DrawBackground(ShuffleClueUnscramble);
             }
@@ -2184,9 +2189,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_STORY_CLUE:
         {
-            if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
+            if (cubeWrapper.GetId() == 0 && mUiIndex == 0)
             {
-                DrawStoryClue(cubeWrapper, mStoryPuzzleIndex, StoryChapterClueNeighbor, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                DrawStoryClue(
+                    cubeWrapper, 
+                    mStoryPuzzleIndex,
+                    UiClueBlank,
+                    GetPuzzle(mStoryPuzzleIndex).GetClue());
+            }
+            else if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
             }
             else
             {

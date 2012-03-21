@@ -108,6 +108,8 @@ private:
     float mDelayTimer;
     float mOptionsTimer;
     bool mOptionsTouchSync;
+    unsigned int mUiIndex;
+    bool mUiIndexSync[kNumCubes];
     
     // Input
     TouchState mTouching[kNumCubes];
@@ -154,8 +156,6 @@ private:
     
     // Shuffle Mode
     Piece mShufflePiecesStart[kMaxBuddies][NUM_SIDES];
-    unsigned int mShuffleUiIndex;
-    bool mShuffleUiIndexSync[kNumCubes];
     unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     

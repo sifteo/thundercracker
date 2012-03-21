@@ -55,6 +55,7 @@ UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
 UiPanel = image{"assets/plain_panel.png"}
+UiClueBlank = image{"assets/panel_clue_blank.png"}
 
 -- Main Menu
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
@@ -75,7 +76,6 @@ ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png
 ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
 ShuffleEndGameNavExit = image{"assets/end_navigation_exit.png"}
 ShuffleEndGameNavReplay = image{"assets/end_navigation_replay_shuffle.png"}
-ShuffleClueBlank = image{"assets/panel_clue_blank.png"}
 ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
 
