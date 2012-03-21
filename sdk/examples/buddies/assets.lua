@@ -81,9 +81,12 @@ ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
 
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
-StoryCutsceneBackgroundLeft = image{"assets/cutscene_bg_left.png"}
-StoryCutsceneBackgroundRight = image{"assets/cutscene_bg_right.png"}
-StoryCutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
+StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
+StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
+StoryCutsceneSpriteGluv = image{"assets/sprite_front_gluv.png", pinned = true}
+StoryCutsceneSpriteRike = image{"assets/sprite_front_rike.png", pinned = true}
+StoryCutsceneSpriteZorg = image{"assets/sprite_front_zorg.png", pinned = true}
+StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryChapterClueNeighbor = image{"assets/ui_chapter_clue_neighbor.png"}
 StoryChapterClueOnTouch = image{"assets/ui_chapter_clue_ontouch.png"}
 StoryChapterNext = image{"assets/ui_chapter_next.png"}

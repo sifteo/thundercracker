@@ -329,11 +329,11 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    Video().setSpriteImage(0, StoryCutsceneSprites, 0);
-    Video().setSpriteImage(1, StoryCutsceneSprites, 1);
+    Video().setSpriteImage(0, StoryCutsceneSpriteGluv, 0);
+    Video().setSpriteImage(1, StoryCutsceneSpriteRike, 0);
     
-    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
-    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
+    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 60 : 68));
+    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 60 : 68));
     
     if (text[0] == '<')
     {

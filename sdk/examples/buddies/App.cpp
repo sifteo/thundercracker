@@ -277,6 +277,27 @@ void DrawStoryClue(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
+{
+    cubeWrapper.DrawBackground(StoryFaceComplete);
+    
+    const int tileWidth = VidMode::LCD_width / VidMode::TILE;
+    
+    String<32> bufferText;
+    bufferText << "Face Solved!";
+    
+    int xText = (tileWidth / 2) - (bufferText.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xText, 7), UiFontOrange, bufferText.c_str());
+    
+    if (bufferText.size() % 2 != 0)
+    {
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawStoryChapterSummary(
     CubeWrapper &cubeWrapper,
     unsigned int puzzleIndex,
@@ -2213,14 +2234,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
                 {
-                    DrawStoryClue(cubeWrapper, mStoryPuzzleIndex, StoryChapterClueOnTouch, GetPuzzle(mStoryPuzzleIndex).GetClue());
+                    DrawStoryClue(
+                        cubeWrapper,
+                        mStoryPuzzleIndex,
+                        UiClueBlank,
+                        GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
-                    cubeWrapper.DrawBackground(UiBackground);
-                    cubeWrapper.DrawUiAsset(
-                        Vec2(0, 0),
-                        cubeWrapper.GetId() == 0 ? UiBannerFaceCompleteBlue : UiBannerFaceCompleteOrange);
+                    DrawStoryFaceComplete(cubeWrapper);
                 }
                 else
                 {
@@ -2255,10 +2277,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
-                    cubeWrapper.DrawBackground(UiBackground);
-                    cubeWrapper.DrawUiAsset(
-                        Vec2(0, 0),
-                        cubeWrapper.GetId() == 0 ? UiBannerFaceCompleteBlue : UiBannerFaceCompleteOrange);
+                    DrawStoryFaceComplete(cubeWrapper);
                 }
                 else
                 {
