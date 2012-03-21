@@ -48,8 +48,7 @@ CDEPS := \
 	stm32/*.h \
 	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
-	$(SPEEX_DEPS) \
-	$(SDK_DIR)/include/sifteo/*.h
+    $(SPEEX_DEPS)
 
 all: $(BINS)
 
