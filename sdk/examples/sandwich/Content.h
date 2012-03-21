@@ -84,7 +84,8 @@ struct SokoblockData {
 
 struct NpcData {
     TriggerData trigger;
-    uint16_t dialog;
+    uint16_t dialog : 15;
+    uint16_t optional : 1;
     uint8_t x;
     uint8_t y;
 };

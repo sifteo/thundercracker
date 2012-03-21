@@ -75,6 +75,7 @@ class Trigger:
 			did = obj.props["id"].lower()
 			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID (" + did + ") in Map: " + room.map.id
 			self.dialog = room.map.world.dialogs.dialog_dict[did]
+			self.optional = obj.props.get("optional", "true").lower() == "true"
 		
 		elif self.type == TRIGGER_TRAPDOOR:
 			m = EXP_LOCATION.match(obj.props.get("respawn"))
@@ -128,6 +129,6 @@ class Trigger:
 		src.write("{ ")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x}, " % (self.dialog.index, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (self.dialog.index, 1 if self.optional else 0, x, y))
 
 
