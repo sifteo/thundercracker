@@ -56,6 +56,7 @@ UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
 UiPanel = image{"assets/plain_panel.png"}
 UiClueBlank = image{"assets/panel_clue_blank.png"}
+UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 
 -- Main Menu
 MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
@@ -74,7 +75,6 @@ ShufflePanelBestTimes = image{"assets/panel_best_times.png"}
 ShufflePanelBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
 ShufflePanelBestTimesHighScore2 = image{"assets/panel_best_times_highscore_2.png"}
 ShufflePanelBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
-ShuffleEndGameNavExit = image{"assets/end_navigation_exit.png"}
 ShuffleEndGameNavReplay = image{"assets/end_navigation_replay_shuffle.png"}
 ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
@@ -90,9 +90,8 @@ StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryChapterClueNeighbor = image{"assets/ui_chapter_clue_neighbor.png"}
 StoryChapterClueOnTouch = image{"assets/ui_chapter_clue_ontouch.png"}
 StoryProgress = image{"assets/panel_progression.png"}
-StoryChapterNext = image{"assets/ui_chapter_next.png"}
-StoryChapterRetry = image{"assets/ui_chapter_retry.png"}
-StoryChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
+StoryChapterNext = image{"assets/panel_next_chapter.png"}
+StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
 
 -- Sounds (use encode="PCM" for PCM encoding)
 SoundGems = sound{"assets/gems1_4A9.raw"}
