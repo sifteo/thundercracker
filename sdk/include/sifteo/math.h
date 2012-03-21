@@ -191,8 +191,7 @@ typedef Vector2<double>             Double2;
  */
  
 template <typename T> inline Vector2<T> Vec2(T x, T y) {
-    Vector2<T> result;
-    result.set(x, y);
+    Vector2<T> result = { x, y };
     return result;
 }
 
@@ -228,6 +227,129 @@ template <typename T> inline Double2 operator*(Vector2<T> v, double k) { return 
 template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return Vec2<double>(v.x/k, v.y/k); }
 template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return Vec2<double>(u.x+=k, u.y+=k); }
 template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return Vec2<double>(u.x*=k, u.y*=k); }
+
+
+/**
+ * Generalized three-element cartesian coordinate vector.
+ */
+
+template <typename T> struct Vector3 {
+    T x, y, z;
+
+    /**
+     * Modify this vector's value in-place.
+     */
+    void set(T _x, T _y, T _z) {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+    
+    /**
+     * Extract a 2-vector with just the named components.
+     */
+
+    Vector2<T> xy() const { return Vec2(x, y); }
+    Vector2<T> xz() const { return Vec2(x, z); }
+    Vector2<T> yx() const { return Vec2(y, x); }
+    Vector2<T> yz() const { return Vec2(y, z); }
+    Vector2<T> zx() const { return Vec2(z, x); }
+    Vector2<T> zy() const { return Vec2(z, y); }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector, squared.
+     * This avoids the costly square root calculation.
+     */
+    T len2() const {
+        return ( x * x + y * y + z * z );
+    }
+    
+    /**
+     * Round a floating point vector to the nearest integer.
+     */
+    Vector3<int> round() const {
+        Vector3<int> result = { x + 0.5f, y + 0.5f, z + 0.5f };
+        return result;
+    }
+
+    /**
+     * Explicitly cast this vector to another vector type, using
+     * default C++ truncation or extension rules.
+     */
+    template <typename R> Vector3<R> cast() const {
+        Vector3<R> result = { x, y };
+        return result;
+    }
+    
+    /// Shortcuts for common explicit casts
+    Vector3<int> toInt() const { return cast<int>(); }
+    Vector3<int> toFloat() const { return cast<float>(); }
+    Vector3<int> toDouble() const { return cast<double>(); }
+    
+    /// Implicit casts
+    operator Vector3<int>            () const { return cast<int>(); }
+    operator Vector3<unsigned>       () const { return cast<unsigned>(); }
+    operator Vector3<short>          () const { return cast<short>(); }
+    operator Vector3<unsigned short> () const { return cast<unsigned short>(); }
+    operator Vector3<int8_t>         () const { return cast<int8_t>(); }
+    operator Vector3<uint8_t>        () const { return cast<uint8_t>(); }
+    operator Vector3<float>          () const { return cast<float>(); }
+    operator Vector3<double>         () const { return cast<double>(); }
+};
+
+typedef Vector3<int>                Int3;
+typedef Vector3<unsigned>           UInt3;
+typedef Vector3<short>              Short3;
+typedef Vector3<unsigned short>     UShort3;
+typedef Vector3<int8_t>             Byte3;
+typedef Vector3<uint8_t>            UByte3;
+typedef Vector3<float>              Float3;
+typedef Vector3<double>             Double3;
+
+/**
+ * Create a Vector3, from a set of (x, y, z) coordinates.
+ * This is a standalone function, instead of a constructor,
+ * so that Vector3 can remain a POD type, and it can be used
+ * in unions.
+ */
+ 
+template <typename T> inline Vector3<T> Vec3(T x, T y, T z) {
+    Vector3<T> result = { x, y, z };
+    return result;
+}
+
+// Vector operations
+template <typename T> inline Vector3<T> operator-(Vector3<T> u) { return Vec3<T>(-u.x, -u.y, -u.z); }
+template <typename T> inline Vector3<T> operator+=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x+=v.x, u.y+=v.y, u.z+=v.z); }
+template <typename T> inline Vector3<T> operator-=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x-=v.x, u.y-=v.y, u.z-=v.z); }
+template <typename T> inline Vector3<T> operator+(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x+v.x, u.y+v.y, u.z+v.z); }
+template <typename T> inline Vector3<T> operator-(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x-v.x, u.y-v.y, u.z-v.z); }
+template <typename T> inline Vector3<T> operator*(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x*v.x, u.y*v.y, u.z*v.z); }
+template <typename T> inline bool operator==(Vector3<T> u, Vector3<T> v) { return u.x == v.x && u.y == v.y && u.z == v.z; }
+template <typename T> inline bool operator!=(Vector3<T> u, Vector3<T> v) { return u.x != v.x || u.y != v.y || u.z != v.z; }
+
+// Scalar int promotion
+template <typename T> inline Int3 operator*(int k, Vector3<T> v) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator*(Vector3<T> v, int k) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator/(Vector3<T> v, int k) { return Vec3<int>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Int3 operator+=(Vector3<T> &u, int k) { return Vec3<int>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Int3 operator*=(Vector3<T> &u, int k) { return Vec3<int>(u.x*=k, u.y*=k, u.z*=k); }
+template <typename T> inline Int3 operator<<(Vector3<T> u, int shift) { return Vec3<int>(u.x<<shift, u.y<<shift, u.z<<shift); }
+template <typename T> inline Int3 operator>>(Vector3<T> u, int shift) { return Vec3<int>(u.x>>shift, u.y>>shift, u.z>>shift); }
+
+// Scalar float promotion
+template <typename T> inline Float3 operator*(float k, Vector3<T> v) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator*(Vector3<T> v, float k) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator/(Vector3<T> v, float k) { return Vec3<float>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Float3 operator+=(Vector3<T> &u, float k) { return Vec3<float>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Float3 operator*=(Vector3<T> &u, float k) { return Vec3<float>(u.x*=k, u.y*=k, u.z*=k); }
+
+// Scalar double promotion
+template <typename T> inline Double3 operator*(double k, Vector3<T> v) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator*(Vector3<T> v, double k) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator/(Vector3<T> v, double k) { return Vec3<double>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Double3 operator+=(Vector3<T> &u, double k) { return Vec3<double>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Double3 operator*=(Vector3<T> &u, double k) { return Vec3<double>(u.x*=k, u.y*=k, u.z*=k); }
 
 
 /**
