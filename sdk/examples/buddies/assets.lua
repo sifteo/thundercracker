@@ -1,6 +1,8 @@
 UseSprites = false
 GameAssets = group{quality = 10}
 
+-- TOOD: Put each buddy in its own asset group
+
 -- Buddy Backgrounds
 BuddyBackground0 = image{"assets/bg1.png"}
 BuddyBackground1 = image{"assets/bg2.png"}
@@ -43,15 +45,17 @@ else
     BuddyPartHidden = image{"assets/hidden.png"}
 end
 
--- UI
+-- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
 UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
 UiFontOrange = image{"assets/fontstrip_conent_orange.png", height = 16}
-UiFontBlue = image{"assets/fontstrip_conent_blue.png", height = 16}
-UiFontHeadingBlue = image{"assets/fontstrip_heading_blue.png", height = 16}
+--UiFontBlue = image{"assets/fontstrip_conent_blue.png", height = 16}
+--UiFontHeadingBlue = image{"assets/fontstrip_heading_blue.png", height = 16}
 UiFontHeadingOrange = image{"assets/fontstrip_heading_orange.png", height = 16}
-UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
-UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
+--UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
+
+-- Ui Misc
+--UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}
 UiPanel = image{"assets/plain_panel.png"}
@@ -81,16 +85,15 @@ ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
 
 -- Story Mode
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
+StoryChapterNext = image{"assets/panel_next_chapter.png"}
+StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
 StoryCutsceneSpriteLeftRike = image{"assets/cutscene_sprite_rike_left.png", pinned = true}
 StoryCutsceneSpriteRightGluv = image{"assets/cutscene_sprite_gluv_right.png", pinned = true}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
-StoryChapterClueNeighbor = image{"assets/ui_chapter_clue_neighbor.png"}
-StoryChapterClueOnTouch = image{"assets/ui_chapter_clue_ontouch.png"}
 StoryProgress = image{"assets/panel_progression.png"}
-StoryChapterNext = image{"assets/panel_next_chapter.png"}
-StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
+StoryBookStartNext = image{"assets/panel_start_next_book.png"}
 
--- Sounds (use encode="PCM" for PCM encoding)
+-- Sounds (use encode = "PCM" for PCM encoding)
 SoundGems = sound{"assets/gems1_4A9.raw"}

@@ -287,7 +287,7 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
     buffer << "Face Solved!";
     
     int x = (tileWidth / 2) - (buffer.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(x, 7), UiFontOrange, buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(x, 7), UiFontWhite, buffer.c_str());
     
     if (buffer.size() % 2 != 0)
     {
@@ -2093,9 +2093,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
-                cubeWrapper.DrawUiAsset(
-                    Vec2(0, 0),
-                    cubeWrapper.GetId() == 0 ? UiBannerFaceCompleteBlue : UiBannerFaceCompleteOrange);
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
             }
             else
             {
@@ -2124,9 +2122,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
-                cubeWrapper.DrawUiAsset(
-                    Vec2(0, 0),
-                    cubeWrapper.GetId() == 0 ? UiBannerFaceCompleteBlue : UiBannerFaceCompleteOrange);
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
             }
             else
             {
