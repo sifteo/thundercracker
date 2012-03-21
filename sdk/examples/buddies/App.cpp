@@ -2090,7 +2090,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(maxTilesX + mBackgroundScroll.x, 0),
                     Vec2(0, 0),
                     Vec2(-mBackgroundScroll.x, maxTilesY),
-                    ShuffleShakeToPlayAgain);
+                    ShuffleEndGameNavReplay);
             }
             else if (cubeWrapper.GetId() == 2)
             {
@@ -2098,7 +2098,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(maxTilesX + mBackgroundScroll.x, 0),
                     Vec2(0, 0),
                     Vec2(-mBackgroundScroll.x, maxTilesY),
-                    ShuffleTouchToExit);
+                    ShuffleEndGameNavExit);
             }
             break;
         }
