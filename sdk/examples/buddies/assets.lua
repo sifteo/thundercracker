@@ -89,6 +89,7 @@ StoryCutsceneSpriteZorg = image{"assets/sprite_front_zorg.png", pinned = true}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryChapterClueNeighbor = image{"assets/ui_chapter_clue_neighbor.png"}
 StoryChapterClueOnTouch = image{"assets/ui_chapter_clue_ontouch.png"}
+StoryProgress = image{"assets/panel_progression.png"}
 StoryChapterNext = image{"assets/ui_chapter_next.png"}
 StoryChapterRetry = image{"assets/ui_chapter_retry.png"}
 StoryChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}

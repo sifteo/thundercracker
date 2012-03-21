@@ -283,13 +283,13 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
     
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
-    String<32> bufferText;
-    bufferText << "Face Solved!";
+    String<32> buffer;
+    buffer << "Face Solved!";
     
-    int xText = (tileWidth / 2) - (bufferText.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xText, 7), UiFontOrange, bufferText.c_str());
+    int x = (tileWidth / 2) - (buffer.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(x, 7), UiFontOrange, buffer.c_str());
     
-    if (bufferText.size() % 2 != 0)
+    if (buffer.size() % 2 != 0)
     {
         cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
     }
@@ -298,35 +298,23 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterSummary(
-    CubeWrapper &cubeWrapper,
-    unsigned int puzzleIndex,
-    float scoreTime,
-    unsigned int scoreMoves)
+void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
-    cubeWrapper.DrawBackground(StoryChapterTitle);
+    cubeWrapper.DrawBackground(StoryProgress);
     
     const int tileWidth = VidMode::LCD_width / VidMode::TILE;
     
-    String<16> bufferChapter;
-    bufferChapter << "Chapter " << (puzzleIndex + 1);
-    int xChapter = (tileWidth / 2) - (bufferChapter.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
+    String<32> buffer0;
+    buffer0 << (puzzleIndex + 1) << "/" << GetNumPuzzles() << " Puzzles";
+    int x0 = (tileWidth / 2) - (buffer0.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(x0, 6), UiFontOrange, buffer0.c_str());
     
-    int minutes = int(scoreTime) / 60;
-    int seconds = int(scoreTime - (minutes * 60.0f));
+    String<32> buffer1;
+    buffer1 << "Solved!";
+    int x1 = (tileWidth / 2) - (buffer1.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(x1, 8), UiFontOrange, buffer1.c_str());
     
-    String <16> bufferTime;
-    bufferTime << "Time:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-    int xTime = (tileWidth / 2) - (bufferTime.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTime, 8), UiFontOrange, bufferTime.c_str());
-    
-    String <16> bufferMoves;
-    bufferMoves << "Moves:" << scoreMoves;
-    int xMoves = (tileWidth / 2) - (bufferMoves.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xMoves, 10), UiFontOrange, bufferMoves.c_str());
-    
-    if (bufferChapter.size() % 2 != 0)
+    if (buffer0.size() % 2 != 0)
     {
         cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
     }
@@ -1313,7 +1301,12 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
-        case GAME_STATE_STORY_CUTSCENE_END:
+        case GAME_STATE_STORY_CUTSCENE_END_1:
+        {
+            mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
+        case GAME_STATE_STORY_CUTSCENE_END_2:
         {
             if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd() == 1)
             {
@@ -1900,13 +1893,21 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_SOLVED:
         {
-            if (UpdateTimer(mDelayTimer, dt))
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                StartGameState(GAME_STATE_STORY_CUTSCENE_END);
+                StartGameState(GAME_STATE_STORY_CUTSCENE_END_1);
             }
             break;
         }
-        case GAME_STATE_STORY_CUTSCENE_END:
+        case GAME_STATE_STORY_CUTSCENE_END_1:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_STORY_CUTSCENE_END_2);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_CUTSCENE_END_2:
         {
             mCubeWrappers[0].UpdateCutscene(kStoryCutsceneJumpChanceA, kStoryCutsceneJumpChanceB);
             
@@ -2290,7 +2291,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_CUTSCENE_END:
+        case GAME_STATE_STORY_CUTSCENE_END_1:
+        {
+            DrawStoryChapterSummary(cubeWrapper, mStoryPuzzleIndex);
+            break;
+        }
+        case GAME_STATE_STORY_CUTSCENE_END_2:
         {
             if (cubeWrapper.GetId() == 0)
             {
@@ -2298,7 +2304,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else
             {
-                DrawStoryChapterSummary(cubeWrapper, mStoryPuzzleIndex, mScoreTimer, mScoreMoves);
+                DrawStoryChapterSummary(cubeWrapper, mStoryPuzzleIndex);
             }
             break;
         }
