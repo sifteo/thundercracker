@@ -156,7 +156,6 @@ private:
     int mHintFlowIndex;
     
     // Clues
-    float mClueOnTimer;
     float mClueOffTimers[kNumCubes];
     
     // Free Play Mode

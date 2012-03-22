@@ -620,7 +620,6 @@ App::App()
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
     , mHintFlowIndex(0)
-    , mClueOnTimer(0.0f)
     , mClueOffTimers()
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShufflePiecesStart()
@@ -817,14 +816,7 @@ void App::OnNeighborAdd(
             StopHint(true);
         }
         
-        // Clues
-        if (mGameState == GAME_STATE_SHUFFLE_PLAY)
-        {
-            mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
-            mHintFlowIndex = 0;
-            mClueOnTimer = kClueTimerOnDuration;
-        }
-        else if (mGameState == GAME_STATE_STORY_PLAY)
+        if (mGameState == GAME_STATE_SHUFFLE_PLAY || mGameState == GAME_STATE_STORY_PLAY)
         {
             mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
             mHintFlowIndex = 0;
@@ -893,7 +885,6 @@ void App::OnTilt(Cube::ID cubeId)
             {
                 mClueOffTimers[cubeId] = 0.0f;
             }
-            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -965,7 +956,6 @@ void App::OnShake(Cube::ID cubeId)
             {
                 mClueOffTimers[cubeId] = 0.0f;
             }
-            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -1221,9 +1211,12 @@ void App::StartGameState(GameState gameState)
             {
                 mFaceCompleteTimers[i] = 0.0f;
             }
+            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+            {
+                mClueOffTimers[i] = 0.0f;
+            }
             mHintTimer = kHintTimerOnDuration;
             mHintFlowIndex = 0;
-            mClueOnTimer = kClueTimerOnDuration;
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -1586,7 +1579,10 @@ void App::UpdateGameState(float dt)
             if (AnyTouchBegin())
             {
                 mOptionsTouchSync = true;
-                mClueOffTimers[0] = 0.0f;
+                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                {
+                    mClueOffTimers[i] = 0.0f;
+                }
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             break;
@@ -1631,13 +1627,12 @@ void App::UpdateGameState(float dt)
             }
             
             // Check to see if clues are done displaying
-            if (mClueOffTimers[0] > 0.0f)
+            bool clueDisplayed = false;
+            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
             {
-                if (UpdateTimer(mClueOffTimers[0], dt) ||
-                    (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN))
+                if (mClueOffTimers[i] > 0.0f)
                 {
-                    mClueOffTimers[0] = 0.0f;
-                    mClueOnTimer = kClueTimerOnDuration;
+                    clueDisplayed = !UpdateTimer(mClueOffTimers[i], dt);
                 }
             }
             
@@ -1649,17 +1644,8 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Check if clue should start being displayed
-            if (mClueOnTimer > 0.0f)
-            {
-                if (UpdateTimer(mClueOnTimer, dt))
-                {
-                    mClueOffTimers[0] = kStateTimeDelayLong;
-                }
-            }
-            
-            // If clues are not displayed, take care of hinting
-            if (mClueOffTimers[0] <= 0.0f)
+            // If clues are not displayed, see if a hint should be turned on or off
+            if (!clueDisplayed)
             {
                 if (IsHinting())
                 {
@@ -1677,7 +1663,42 @@ void App::UpdateGameState(float dt)
                     {
                         if (UpdateTimer(mHintTimer, dt))
                         {
-                            StartHint();
+                            if (mHintFlowIndex == 0)
+                            {
+                                ++mHintFlowIndex;
+                                mHintTimer = kHintTimerRepeatDuration;
+                            }
+                            else if (mHintFlowIndex == 1)
+                            {
+                                ++mHintFlowIndex;
+                                mHintTimer = kHintTimerRepeatDuration;
+                            }
+                            else
+                            {
+                                StartHint();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Clue Stuff
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        if (!mOptionsTouchSync)
+                        {
+                            if (mClueOffTimers[i] > 0.0f)
+                            {
+                                mClueOffTimers[i] = 0.0f;
+                            }
+                            else
+                            {
+                                mClueOffTimers[i] = kStateTimeDelayLong;
+                            }
                         }
                     }
                 }
@@ -1690,7 +1711,12 @@ void App::UpdateGameState(float dt)
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
                 mOptionsTouchSync = true;
-                mClueOffTimers[0] = 0.0f;
+                mHintTimer = kHintTimerOnDuration;
+                mHintFlowIndex = 0;
+                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                {
+                    mClueOffTimers[i] = 0.0f;
+                }
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -1864,6 +1890,14 @@ void App::UpdateGameState(float dt)
                 }
             }
             
+            if (mOptionsTouchSync)
+            {
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+                {
+                    mOptionsTouchSync = false;
+                }
+            }
+            
             // If clues are not displayed, see if a hint should be turned on or off
             if (!clueDisplayed)
             {
@@ -1902,7 +1936,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            // Check if clues should be dismissed
+            // Clue Stuff
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
@@ -1921,10 +1955,6 @@ void App::UpdateGameState(float dt)
                             }
                         }
                     }
-                    else if (mTouching[i] == TOUCH_STATE_END)
-                    {
-                        mOptionsTouchSync = false;
-                    }
                 }
             }
             break;
@@ -1934,6 +1964,8 @@ void App::UpdateGameState(float dt)
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
                 mOptionsTouchSync = true;
+                mHintTimer = kHintTimerOnDuration;
+                mHintFlowIndex = 0;
                 for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
                 {
                     mClueOffTimers[i] = 0.0f;
@@ -2235,14 +2267,14 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
-            if (cubeWrapper.GetId() < arraysize(mTouching) &&
-                mTouching[cubeWrapper.GetId()] &&
-                !mOptionsTouchSync)
+            if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
             {
+                // Clue
                 cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
             }
-            else if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
+            else if (cubeWrapper.GetId() == 0 && mHintFlowIndex == 1)
             {
+                // Hint 1
                 cubeWrapper.DrawBackground(ShuffleNeighbor);
             }
             else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
@@ -2383,6 +2415,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
                 {
+                    // Clue
                     DrawStoryClue(
                         cubeWrapper,
                         mStoryPuzzleIndex,
@@ -2391,6 +2424,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 }
                 else if (cubeWrapper.GetId() == 0 && mHintFlowIndex == 1)
                 {
+                    // Hint 1
                     cubeWrapper.DrawBackground(ShuffleNeighbor);
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
