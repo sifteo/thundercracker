@@ -7,8 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
-#include <cstdio>
-#include <limits>
+//#include <cstdio>
+#include <limits.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include "Config.h"
@@ -605,7 +605,7 @@ App::App()
     , mTouching()
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
-    , mScorePlace(std::numeric_limits<unsigned int>::max())
+    , mScorePlace(UINT_MAX)
     , mSaveDataStoryProgress(0)
     , mSaveDataBestTimes()
     , mSwapState(SWAP_STATE_NONE)
@@ -1181,7 +1181,7 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
-            mScorePlace = std::numeric_limits<unsigned int>().max();
+            mScorePlace = UINT_MAX;
             mDelayTimer = kStateTimeDelayLong;
             mUiIndex = 0;
             for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
