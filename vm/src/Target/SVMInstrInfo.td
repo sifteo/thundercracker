@@ -30,8 +30,6 @@ def MOVWi16 : T32_imm16<0b100100, (outs GPReg:$Rd), (ins i32imm:$value16),
  */
 
 def SDT_SVMCall : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
-def SDT_SPCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
-def SDT_SPCallSeqEnd : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
 
 def SVMCall : SDNode<"SVMISD::CALL", SDT_SVMCall,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
@@ -42,11 +40,6 @@ def SVMSys64Call : SDNode<"SVMISD::SYS64_CALL", SDT_SVMCall,
 
 def SVMRet : SDNode<"SVMISD::RETURN", SDTNone,
     [SDNPHasChain, SDNPOptInGlue]>;
-
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
-    [SDNPHasChain, SDNPOutGlue]>;
-def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
-    [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def callTarget : Operand<i32>,
     ComplexPattern<iPTR, 1, "SelectCallTarget",
@@ -59,12 +52,6 @@ def tailCallTarget : Operand<i32>,
     [tglobaladdr, texternalsym], []> {
     let MIOperandInfo = (ops tconstpool);
 }
-
-// Explicit stack adjustments
-def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
-    "!ADJCALLSTACKDOWN $amt", [(callseq_start timm:$amt)]>;
-def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-    "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
 // Implicit adjustment encoded into a function's address.
 // These are emitted during frame lowering, and converted to target-specific
@@ -471,7 +458,8 @@ def : Pat< (extloadi8 BP), (LDRB BP, 0)>;
 /****************************************************************
  * Stack operations
  */
-
+ 
+// Pattern to convert frameindex -> (SP, offset)
 def ADDRsp : Operand<i32>,
     ComplexPattern<iPTR, 2, "SelectAddrSP", [frameindex], []> {
     /*

@@ -29,6 +29,7 @@ namespace llvm {
     }
     
     class SVMTargetMachine;
+    class CCValAssign;
 
     class SVMTargetLowering : public TargetLowering {
     public:
@@ -61,7 +62,7 @@ namespace llvm {
                     SmallVectorImpl<SDValue> &InVals) const;
                     
         virtual SDValue
-          LowerCallResult(SDValue Chain, SDValue InFlag,
+          LowerCallResult(SDValue Chain, SDValue Glue,
                           CallingConv::ID CallConv, bool isVarArg,
                           const SmallVectorImpl<ISD::InputArg> &Ins,
                           DebugLoc dl, SelectionDAG &DAG,
@@ -82,6 +83,10 @@ namespace llvm {
 
         // Custom inserters
         MachineBasicBlock *ExpandCMOV(MachineInstr *MI, MachineBasicBlock *BB) const;
+
+        static SDValue promoteArg(DebugLoc dl, SelectionDAG &DAG, CCValAssign &VA, SDValue Arg);
+        static unsigned resolveCallOpcode(DebugLoc dl, SelectionDAG &DAG,
+            SDValue &Callee, bool isTailCall);
     };
 }
 

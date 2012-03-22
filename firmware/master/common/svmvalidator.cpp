@@ -5,6 +5,7 @@
  
 #include "svmvalidator.h"
 #include "svm.h"
+#include "macros.h"
 
 using namespace Svm;
 
