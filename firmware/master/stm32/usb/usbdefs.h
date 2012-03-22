@@ -17,7 +17,8 @@ static inline bool isInEp(uint8_t addr) {
     return (addr & 0x80) != 0;
 }
 
-typedef void (*epCallback)(uint8_t ep);
+typedef void (*EpCallback)(uint8_t ep);
+typedef void (*Callback)();
 
 enum Transaction {
     TransactionIn,
@@ -25,7 +26,18 @@ enum Transaction {
     TransactionSetup
 };
 
+// bmRequestType bit definitions
 enum RequestType {
+    ReqTypeDevice       = 0x00,
+    ReqTypeInterface    = 0x01,
+    ReqTypeEndpoint     = 0x02,
+    ReqTypeClass        = 0x20,
+    ReqTypeVendor       = 0x40,
+    ReqTypeType         = 0x60,
+    ReqTypeDirection    = 0x80
+};
+
+enum RequestVal {
     RequestGetStatus        = 0x0,
     RequestClearFeature     = 0x1,
     RequestSetFeature       = 0x3,

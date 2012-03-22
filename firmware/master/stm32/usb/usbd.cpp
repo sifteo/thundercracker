@@ -8,6 +8,12 @@ const DeviceDescriptor *Usbd::_dev;
 const ConfigDescriptor *Usbd::_conf;
 const char **Usbd::_strings;
 
+EpCallback Usbd::endpointCallbacks[3][3];
+Callback   Usbd::callbacks[4];
+
+uint8_t Usbd::ctrlBuf[128];
+uint16_t Usbd::address;
+
 void Usbd::init(const DeviceDescriptor *dev,
                 const ConfigDescriptor *conf,
                 const char **strings)
@@ -35,5 +41,11 @@ void Usbd::reset()
 
 //	if (_usbd_device.user_callback_reset)
 //		_usbd_device.user_callback_reset();
+}
+
+void Usbd::setAddress(uint16_t addr)
+{
+    address = addr;
+    UsbDriver::setAddress(addr);
 }
 

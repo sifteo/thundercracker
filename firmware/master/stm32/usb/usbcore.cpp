@@ -1,4 +1,8 @@
 #include "usbcore.h"
+#include "macros.h"
+#include <string.h>
+
+#include "usb/usbdriver.h"
 
 using namespace Usb;
 
@@ -8,24 +12,23 @@ UsbCore::UsbCore()
 
 uint16_t UsbCore::buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len)
 {
-#if 0
     uint8_t *tmpbuf = buf;
-    const ConfigDescriptor *cfg = &_usbd_device.config[index];
+    const ConfigDescriptor &cfg = Usbd::configDescriptor(index);
     uint16_t count, total = 0, totallen = 0;
 
-    memcpy(buf, cfg, count = MIN(len, cfg->bLength));
+    memcpy(buf, &cfg, count = MIN(len, cfg.bLength));
     buf += count;
     len -= count;
     total += count;
-    totallen += cfg->bLength;
+    totallen += cfg.bLength;
 
     // iterate interfaces
-    for (unsigned i = 0; i < cfg->bNumInterfaces; i++) {
-
+    for (unsigned i = 0; i < cfg.bNumInterfaces; i++) {
+#if 0
         // iterate alternate settings
-        for (unsigned j = 0; j < cfg->interface[i].num_altsetting; j++) {
+        for (unsigned j = 0; j < cfg.interface[i].num_altsetting; j++) {
 
-            const InterfaceDescriptor *iface = &cfg->interface[i].altsetting[j];
+            const InterfaceDescriptor *iface = &cfg.interface[i].altsetting[j];
 
             // Copy interface descriptor
             memcpy(buf, iface, count = MIN(len, iface->bLength));
@@ -51,65 +54,67 @@ uint16_t UsbCore::buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t le
                 totallen += ep->bLength;
             }
         }
+#endif
     }
 
     // Fill in wTotalLength
     *reinterpret_cast<uint16_t*>(tmpbuf + 2) = totallen;
 
     return total;
-#endif
-    return 0;
 }
 
 int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
 {
-#if 0
     switch (req->wValue >> 8) {
-    case USB_DT_DEVICE:
-        *buf = (uint8_t *) _usbd_device.desc;
-        *len = MIN(*len, _usbd_device.desc->bLength);
-        return 1;
-    case USB_DT_CONFIGURATION:
-        *buf = _usbd_device.ctrl_buf;
-        *len = build_config_descriptor(req->wValue & 0xff, *buf, *len);
-        return 1;
-    case USB_DT_STRING: {
-        struct usb_string_descriptor *sd;
-        sd = reinterpret_cast<StringDescriptor*>(_usbd_device.ctrl_buf);
 
-        if (!_usbd_device.strings) {
-            return 0; // no string support
-        }
+    case DescriptorDevice: {
+        const DeviceDescriptor *d = Usbd::devDescriptor();
+//        *buf = reinterpret_cast<const uint8_t*>(d);
+        *len = MIN(*len, d->bLength);
+        return 1;
+    }
 
+    case DescriptorConfiguration:
+        *buf = Usbd::ctrlBuf;
+        *len = buildConfigDescriptor(req->wValue & 0xff, *buf, *len);
+        return 1;
+
+    case DescriptorString: {
+        if (!Usbd::stringSupport())
+            return 0;
+
+        StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(Usbd::ctrlBuf);
+
+        // check for bogus string
         for (unsigned i = 0; i <= (req->wValue & 0xff); i++) {
-            if (_usbd_device.strings[i] == NULL)
+            if (Usbd::string(i) == NULL)
                 return 0;
         }
 
-        sd->bLength = strlen(_usbd_device.strings[req->wValue & 0xff]) * 2 + 2;
-        sd->bDescriptorType = USB_DT_STRING;
+        sd->bLength = strlen(Usbd::string(req->wValue & 0xff)) * 2 + 2;
+        sd->bDescriptorType = DescriptorString;
 
         *buf = (uint8_t*)sd;
         *len = MIN(*len, sd->bLength);
 
-        for (i = 0; i < (*len / 2) - 1; i++) {
-            sd->wData[i] = _usbd_device.strings[req->wValue & 0xff][i];
+        // todo: convert to mem or strcpy?
+        for (int i = 0; i < (*len / 2) - 1; i++) {
+            sd->wstring[i] = Usbd::string(req->wValue & 0xff)[i];
         }
 
-        /* Send sane Language ID descriptor... */
+        // Send sane Language ID descriptor...
         if ((req->wValue & 0xff) == 0)
-            sd->wData[0] = 0x409;
+            sd->wstring[0] = 0x409;
 
         return 1;
     }
+
     }
-#endif
     return 0;
 }
 
 int UsbCore::setAddress(SetupData *req, uint8_t **buf, uint16_t *len)
 {
-#if 0
     (void)req;
     (void)buf;
     (void)len;
@@ -118,16 +123,8 @@ int UsbCore::setAddress(SetupData *req, uint8_t **buf, uint16_t *len)
     if ((req->bmRequestType != 0) || (req->wValue >= 128))
         return 0;
 
-    _usbd_device.current_address = req->wValue;
+    Usbd::setAddress(req->wValue);
 
-    /*
-     * Special workaround for STM32F10[57] that require the address
-     * to be set here. This is undocumented!
-     */
-    if (_usbd_device.driver == &stm32f107_usb_driver)
-        _usbd_device.driver->set_address(req->wValue);
-
-#endif
     return 1;
 }
 

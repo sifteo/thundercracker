@@ -13,7 +13,7 @@ public:
 
     static void init();
     static void setAddress(uint8_t addr);
-    static void epSetup(uint8_t addr, uint8_t type, uint16_t max_size, Usb::epCallback cb);
+    static void epSetup(uint8_t addr, uint8_t type, uint16_t max_size, Usb::EpCallback cb);
     static void epReset();
     static void epStallSet(uint8_t addr, uint8_t stall);
     static void epNakSet(uint8_t addr, uint8_t nak);

@@ -61,7 +61,7 @@ void Stm32f10xOtg::setAddress(uint8_t addr)
     OTG.device.DCFG = (OTG.device.DCFG & ~0x07F0 /* DCFG_DAD */) | (addr << 4);
 }
 
-void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, epCallback cb)
+void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, EpCallback cb)
 {
     // Configure endpoint address and type. Allocate FIFO memory for
     // endpoint. Install callback funciton.
@@ -72,13 +72,13 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, epCallb
 
         // Configure IN
         if (maxsize >= 64)
-            OTG.inEps[0].DIEPCTL = 0x0; // MPSIZ_64
+            OTG.inEps[0].DIEPCTL = 0x0; // MPSIZ 64
         else if (maxsize >= 32)
-            OTG.inEps[0].DIEPCTL = 0x1; // MPSIZ_32
+            OTG.inEps[0].DIEPCTL = 0x1; // MPSIZ 32
         else if (maxsize >= 16)
-            OTG.inEps[0].DIEPCTL = 0x2; // MPSIZ_16
+            OTG.inEps[0].DIEPCTL = 0x2; // MPSIZ 16
         else
-            OTG.inEps[0].DIEPCTL = 0x3; // MPSIZ_8
+            OTG.inEps[0].DIEPCTL = 0x3; // MPSIZ 8
 
         OTG.inEps[0].DIEPTSIZ = maxsize & 0x7f;
         OTG.inEps[0].DIEPCTL |= ((1 << 31) |    // EPENA
@@ -116,9 +116,10 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, epCallb
                         (1 << 15) |     // USBEAP
                         maxsize);
 
+        // TODO: install callbacks within Usbd
         if (cb) {
 //            _usbd_device.
-//                    user_callback_ctr[addr][USB_TRANSACTION_IN] =
+//                    user_callback_ctr[addr][TransactionIn] =
 //                    (void *)callback;
         }
     }
@@ -135,6 +136,7 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, epCallb
                        (1 << 15) |     // USBEAP
                        maxsize);
 
+        // TODO: install callbacks within Usbd
         if (cb) {
 //            _usbd_device.
 //                    user_callback_ctr[addr][USB_TRANSACTION_OUT] =
@@ -266,10 +268,9 @@ void Stm32f10xOtg::isr()
         return;
     }
 
-    const uint32_t RXFLVL = 1 << 4;
+    const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
     if (status & RXFLVL) {
-        OTG.global.GINTSTS = RXFLVL;
-        // Receive FIFO non-empty
+        // RXFLVL is read-only in GINTSTS
         uint32_t rxstsp = OTG.global.GRXSTSP;
         uint32_t pktsts = rxstsp & (0xf << 17);  // PKTSTS mask
 
@@ -290,23 +291,31 @@ void Stm32f10xOtg::isr()
         // Save packet size for epReadPacket()
         rxbcnt = (rxstsp & (0x7ff << 4)) >> 4;  // BCNT mask
 
-        /*
-         * FIXME: Why is a delay needed here?
-         * This appears to fix a problem where the first 4 bytes
-         * of the DATA OUT stage of a control transaction are lost.
-         */
-        for (unsigned i = 0; i < 1000; i++)
-            asm("nop");
+        if (rxbcnt == 0) {
 
-//        if (_usbd_device.user_callback_ctr[ep][type])
-//            _usbd_device.user_callback_ctr[ep][type] (ep);
+        }
+        else {
+            // mask RXFLVL until we've read the data from the fifo
+            OTG.global.GINTMSK |= RXFLVL;
+            /*
+             * FIXME: Why is a delay needed here?
+             * This appears to fix a problem where the first 4 bytes
+             * of the DATA OUT stage of a control transaction are lost.
+             */
+            for (unsigned i = 0; i < 1000; i++)
+                asm("nop");
 
-        // Discard unread packet data
-        volatile uint32_t *buf = OTG.epFifos[ep];
-        for (unsigned i = 0; i < rxbcnt; i += 4)
-            (void)*buf;
+            // call back user handler to read the data via epReadPacket()
+    //        if (_usbd_device.user_callback_ctr[ep][type])
+    //            _usbd_device.user_callback_ctr[ep][type] (ep);
 
-        rxbcnt = 0;
+            // Discard unread packet data
+            volatile uint32_t *buf = OTG.epFifos[ep];
+            for (unsigned i = 0; i < rxbcnt; i += 4)
+                (void)*buf;
+
+            rxbcnt = 0;
+        }
     }
 
     // There is no global interrupt flag for tx complete - check the XFRC bit in each inEp

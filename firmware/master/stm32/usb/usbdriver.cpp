@@ -15,7 +15,7 @@ void UsbDriver::setAddress(uint8_t addr)
     stm32usb.setAddress(addr);
 }
 
-void UsbDriver::epSetup(uint8_t addr, uint8_t type, uint16_t max_size, epCallback cb)
+void UsbDriver::epSetup(uint8_t addr, uint8_t type, uint16_t max_size, EpCallback cb)
 {
     stm32usb.epSetup(addr, type, max_size, cb);
 }

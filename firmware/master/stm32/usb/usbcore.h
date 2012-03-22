@@ -9,7 +9,6 @@ class UsbCore
 public:
     UsbCore();
 
-    static uint16_t buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len);
     static int getDescriptor(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
 
     static int setAddress(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
@@ -19,6 +18,9 @@ public:
 
     static int setInterface(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
     static int getInterface(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
+
+private:
+    static uint16_t buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len);
 };
 
 #endif // USBCORE_H
