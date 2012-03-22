@@ -29,12 +29,14 @@ def R6 : SVMRegLow< 6, "r6" >;
 def R7 : SVMRegLow< 7, "r7" >;
 
 // Hidden registers
-def SP : SVMReg< "sp" >;
 def CPSR : SVMReg< "cpsr" >;
+def SP : SVMReg< "sp" >;
 def BP : SVMReg< "bp" >;
 
+// Minimal register classes for hidden registers
 let isAllocatable = 0 in {
     def CPSRReg : RegisterClass<"SVM", [i32], 32, (add CPSR)>;
+    def SPReg : RegisterClass<"SVM", [i32], 32, (add SP)>;
     def BPReg : RegisterClass<"SVM", [i32], 32, (add BP)>;
 }
 

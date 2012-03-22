@@ -229,11 +229,6 @@ numbers:
 Calling Convention
 ------------------
 
-XXX: Currently we support only a simple register-based calling convention.
-     This will always be the case for syscalls, but normal user function calls
-     will have an extended calling convention that can spill values to the
-     stack.
-     
  - All arguments and return values are extended or split as necessary, to
    yield a sequence of 32-bit values.
 
@@ -261,7 +256,16 @@ XXX: Currently we support only a simple register-based calling convention.
    the stack frame was, but it's especially important if the function ever
    allocates additional stack space for itself using a SVC.)
 
-Sample stack layout, assuming main() calls f1() which calls f2():
+ - If not all parameters fit in r0-r7, additional parameters are passed on
+   the stack, by placing them at the bottom of the caller's stack frame.
+   The callee reaches upward into the parent stack frame to read these
+   values. This means that the compiler must be able to calculate the
+   distance between the caller's stack frame and the callee's.
+
+The stack layout is defined by the ABI. A 'call' is required to save exactly
+8 words of data between the parent stack frame and the child stack frame.
+
+Stack layout, assuming main() calls f1() which calls f2():
 
      +-----------------+  <-- Top
      | main() locals   |  }-- Size set by main() symbol's SPAdj value

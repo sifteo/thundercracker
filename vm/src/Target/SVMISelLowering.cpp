@@ -216,6 +216,7 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
                                                 SmallVectorImpl<SDValue> &InVals) const
 {
     MachineFunction &MF = DAG.getMachineFunction();
+    MachineFrameInfo *MFI = MF.getFrameInfo();
     
     // Let the calling convention assign locations to each operand
     SmallVector<CCValAssign, 16> ArgLocs;
@@ -225,6 +226,7 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
 
     for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
         CCValAssign &VA = ArgLocs[i];
+        assert(VA.isMemLoc() || VA.isRegLoc());
 
         if (VA.isRegLoc()) {
             // Passed by register. Convert the physical register to virtual.
@@ -237,13 +239,89 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
             InVals.push_back(ArgValue);
 
         } else {
-            report_fatal_error("Non-register parameters not yet supported, in "
-                + Twine(MF.getFunction()->getName()));
+            // Passed on the stack. We need to reach up into the caller's
+            // stack frame to retrieve this value. We don't know the offset
+            // for the caller's frame at this point; that needs to be resolved
+            // by SVMRegisterInfo::eliminateFrameIndex.
+            //
+            // At this stage in compilation, we represent offsets into the
+            // caller's frame with negative fixed object offsets. -1 corresponds
+            // to offset 0 in the caller's frame, -5 corresponds to offset 4,
+            // and so on.
+
+            // Allocate a fixed stack object for this parameter
+            unsigned Size = VA.getLocVT().getSizeInBits() / 8;
+            unsigned Offset = VA.getLocMemOffset();
+            int FI = MFI->CreateFixedObject(Size, -(1 + Offset), true);
+            assert(Size == 4 && "Expected params to be converted to i32");
+
+            // Load from this stack object
+            SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
+            SDValue Load = DAG.getLoad(MVT::i32, dl, Chain, FIN,
+                MachinePointerInfo::getFixedStack(FI), false, false, 0);
+
+            InVals.push_back(Load);
         }
     }
     
     return Chain;
 }
+
+SDValue SVMTargetLowering::promoteArg(DebugLoc dl, SelectionDAG &DAG,
+    CCValAssign &VA, SDValue Arg)
+{
+    switch (VA.getLocInfo()) {
+    default: llvm_unreachable("Unsupported parameter loc");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+    case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+    case CCValAssign::AExt:
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+    case CCValAssign::BCvt:
+        Arg = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), Arg);
+        break;
+    }
+    return Arg;
+}
+
+unsigned SVMTargetLowering::resolveCallOpcode(DebugLoc dl, SelectionDAG &DAG,
+    SDValue &Callee, bool isTailCall)
+{
+    /*
+     * Resolve address of callee, and detect syscalls.
+     * This generates an opcode and argument list for our DAG node.
+     */
+
+    SVMDecorations Deco;
+
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+        const GlobalValue *GV = G->getGlobal();
+        Deco.Decode(GV->getName());
+        Callee = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);        
+    } else {
+        Deco.Init();
+    }
+
+    if (isTailCall) {
+        // Generic tail-call
+        return SVMISD::TAIL_CALL;
+    }
+    
+    if (Deco.isSys && Deco.sysNumber < 64) {
+        // Inline syscall #0-63
+        Callee = DAG.getConstant(Deco.sysNumber, MVT::i32);
+        return SVMISD::SYS64_CALL;
+    }
+    
+    // Generic call
+    return SVMISD::CALL;
+}
+
 
 SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      CallingConv::ID CallConv, bool isVarArg,
@@ -255,124 +333,106 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      SmallVectorImpl<SDValue> &InVals) const
 {
     MachineFunction &MF = DAG.getMachineFunction();
+    MachineFrameInfo *MFI = MF.getFrameInfo();
 
     // Let the calling convention assign locations to each operand
     SmallVector<CCValAssign, 16> ArgLocs;
     CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
         DAG.getTarget(), ArgLocs, *DAG.getContext());
     CCInfo.AnalyzeCallOperands(Outs, CC_SVM);
-    
-    // How much stack space do we require?
-    unsigned ArgsStackSize = CCInfo.getNextStackOffset();
-
-    // For now, assume 4-byte alignment
-    ArgsStackSize = (ArgsStackSize + 3) & ~3;
-
-    // Start calling sequence
-    Chain = DAG.getCALLSEQ_START(Chain,
-        DAG.getIntPtrConstant(ArgsStackSize, true));
 
     /*
-     * Resolve address of callee, and detect syscalls.
-     * This generates an opcode and argument list for our DAG node.
+     * Copy input parameters to the stack. Do this, in full, before copying
+     * anything to registers.
+     *
+     * We manage the Chains here such that all stores can happen in any order,
+     * but they're all guaranteed to finish before we start assigning the
+     * register inputs.
      */
 
-    SVMDecorations Deco;
-    Deco.isSys = false;
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-        const GlobalValue *GV = G->getGlobal();
-        Deco.Decode(GV->getName());
-        Callee = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);        
-    }
+    SmallVector<SDValue, 8> MemOpChains;
 
-    unsigned Opcode;
-    std::vector<SDValue> Ops;
-
-    if (isTailCall) {
-        // Generic tail-call
-        Opcode = SVMISD::TAIL_CALL;
-        Ops.push_back(Chain);
-        Ops.push_back(Callee);
-    
-    } else if (Deco.isSys && Deco.sysNumber < 64) {
-        // Inline syscall #0-63
-        Opcode = SVMISD::SYS64_CALL;
-        Ops.push_back(Chain);
-        Ops.push_back(DAG.getConstant(Deco.sysNumber, MVT::i32));
-
-    } else {
-        // Generic call
-        Opcode = SVMISD::CALL;
-        Ops.push_back(Chain);
-        Ops.push_back(Callee);
-    }
-
-    /*
-     * Copy input parameters
-     */
-
-    SDValue InFlag;
     for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
         CCValAssign &VA = ArgLocs[i];
-        SDValue Arg = OutVals[i];
+        assert(VA.isMemLoc() || VA.isRegLoc());
         
-        // Optional type promotion
-        switch (VA.getLocInfo()) {
-        default: llvm_unreachable("Unsupported parameter loc");
-        case CCValAssign::Full: break;
-        case CCValAssign::SExt:
-            Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
-            break;
-        case CCValAssign::ZExt:
-            Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
-            break;
-        case CCValAssign::AExt:
-            Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
-            break;
-        case CCValAssign::BCvt:
-            Arg = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), Arg);
-            break;
+        if (VA.isMemLoc()) {
+            SDValue Arg = promoteArg(dl, DAG, VA, OutVals[i]);
+
+            // Allocate a fixed stack object for this parameter
+            unsigned Size = VA.getLocVT().getSizeInBits() / 8;
+            unsigned Offset = VA.getLocMemOffset();
+            int FI = MFI->CreateFixedObject(Size, Offset, true);
+            assert(Size == 4 && "Expected params to be converted to i32");
+
+            // Store to this stack object
+            SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
+            MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, FIN,
+                MachinePointerInfo::getFixedStack(FI), false, false, 0));
+
+            /*
+             * Tail calls are only supported for functions with no stack arguments,
+             * since the caller's stack frame is discarded upon entry to a tail
+             * call. Look for non-regloc argument, and disable if we find any.
+             */
+            isTailCall = false;
         }
+    }
+
+    if (!MemOpChains.empty())
+        Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+            &MemOpChains[0], MemOpChains.size());
+
+    /*
+     * Now copy input parameters to physical registers.
+     *
+     * These are all individually added to the Chain, after all
+     * stores above have completed.
+     */
+
+    SDValue Glue;
+    SmallVector<SDValue, 8> RegRefs;
+
+    for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
+        CCValAssign &VA = ArgLocs[i];
+        assert(VA.isMemLoc() || VA.isRegLoc());
         
         if (VA.isRegLoc()) {
             // Passed by register
-            
-            unsigned Reg = VA.getLocReg();
-            Chain = DAG.getCopyToReg(Chain, dl, Reg, Arg, InFlag);
-            InFlag = Chain.getValue(1);
 
-            // Reference this register, so it doesn't get optimized out
-            Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
-            
-        } else {
-            report_fatal_error("Non-register parameters not yet supported, in "
-                + Twine(MF.getFunction()->getName()));
+            SDValue Arg = promoteArg(dl, DAG, VA, OutVals[i]);
+            unsigned Reg = VA.getLocReg();
+            Chain = DAG.getCopyToReg(Chain, dl, Reg, Arg, Glue);
+            Glue = Chain.getValue(1);
+
+            RegRefs.push_back(DAG.getRegister(Reg, Arg.getValueType()));
         }
     }
-    
-    if (InFlag.getNode())
-      Ops.push_back(InFlag);
 
     /*
      * Emit the call DAG node
      */
-    
-    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-    Chain = DAG.getNode(Opcode, dl, NodeTys, &Ops[0], Ops.size());
-    InFlag = Chain.getValue(1);
 
-    Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
-        DAG.getIntPtrConstant(0, true), InFlag);
-    if (!Ins.empty())
-        InFlag = Chain.getValue(1);
+    unsigned Opcode = resolveCallOpcode(dl, DAG, Callee, isTailCall);
+    SmallVector<SDValue, 16> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    Ops.insert(Ops.end(), RegRefs.begin(), RegRefs.end());
+    if (Glue.getNode())
+        Ops.push_back(Glue);
 
+    Chain = DAG.getNode(Opcode, dl, DAG.getVTList(MVT::Other, MVT::Glue),
+        &Ops[0], Ops.size());
+
+    // Result lowering isn't applicable for tail calls.
     if (isTailCall)
         return Chain;
-    else
-        return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG, InVals);
+
+    Glue = Chain.getValue(1);
+    return LowerCallResult(Chain, Glue, CallConv, isVarArg, Ins, dl, DAG, InVals);
 }
 
-SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue Glue,
     CallingConv::ID CallConv, bool isVarArg, const SmallVectorImpl<ISD::InputArg> &Ins,
     DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const
 {
@@ -387,9 +447,9 @@ SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
         assert(VA.isRegLoc() && "Only register return values are supported");
         
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-            VA.getLocVT(), InFlag);
+            VA.getLocVT(), Glue);
         Chain = Val.getValue(1);
-        InFlag = Val.getValue(2);
+        Glue = Val.getValue(2);
 
         // Value casting (type demotion)
         switch (VA.getLocInfo()) {
