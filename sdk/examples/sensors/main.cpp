@@ -15,7 +15,7 @@ using namespace Sifteo;
 static Cube cubes[NUM_CUBES];
 
 struct counts_t {
-    unsigned touch, neighborAdd, neighborRemove;
+    unsigned touch, shake, neighborAdd, neighborRemove;
 };
         
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
@@ -31,6 +31,11 @@ void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
 static void onTouch(counts_t *counts, _SYSCubeID cid)
 {    
     counts[cid].touch++;
+}
+
+static void onShake(counts_t *counts, _SYSCubeID cid)
+{    
+    counts[cid].shake++;
 }
 
 static void onNeighborAdd(counts_t *counts,
@@ -59,6 +64,7 @@ void main()
     }
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
 
@@ -69,7 +75,7 @@ void main()
             String<128> str;
 
             uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << cube.id() << "\n\n";
+            str << "I am cube #" << cube.id() << "\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
@@ -91,7 +97,11 @@ void main()
             str << "acc: "
                 << Fixed(accel.x, 3)
                 << Fixed(accel.y, 3)
-                << Fixed(accel.z, 3);
+                << Fixed(accel.z, 3) << "\n";
+
+            _SYSTiltState tilt = _SYS_getTilt(i);
+            str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
+            str << "shake: " << counts[i].shake;
                 
             vid.BG0_text(Vec2(1,2), str);
 

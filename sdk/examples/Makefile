@@ -14,7 +14,6 @@ SUBDIRS = \
 	sprites \
 	stars \
 	text \
-	tiltshake \
 
 # XXX Disabled for now due to errors: peano, word
 
