@@ -55,11 +55,12 @@ unsigned int sNumPuzzles = 0;
 
 void InitializePuzzles()
 {
+#ifdef SIFTEO_SIMULATOR
     DEBUG_LOG(("sizeof(Piece) = %lu\n", sizeof(Piece)));
     DEBUG_LOG((
         "sizeof(Puzzle) = %lu x %lu = %lu\n",
         sizeof(Puzzle), arraysize(sPuzzles), sizeof(sPuzzles)));
-    
+#endif    
     ////////////////////////////////////////////////////////////////////////////////
     // Puzzle Default (shoulnd't have to change this)
     ////////////////////////////////////////////////////////////////////////////////

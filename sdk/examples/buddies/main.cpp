@@ -8,6 +8,7 @@
 
 #include <sifteo/abi.h>
 #include <sifteo/system.h>
+#include <sifteo/time.h>
 #include "App.h"
 #include "Config.h"
 
@@ -55,7 +56,7 @@ void Init()
                 }
             }
             
-            System::paint();
+            Sifteo::System::paint();
         }
     }
     
@@ -66,8 +67,8 @@ void Init()
             sApp.GetCubeWrapper(i).DrawClear();
         }
     }
-    System::paintSync();
-    System::paint();
+    Sifteo::System::paintSync();
+    Sifteo::System::paint();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,10 +146,10 @@ void Setup()
 
 void MainLoop()
 {
-    float time = System::clock();
+    Sifteo::SystemTime time = Sifteo::SystemTime::now();
     while (true)
     {
-        float dt = System::clock() - time;
+        Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
         time += dt;
         
         sApp.Update(dt);
@@ -164,7 +165,7 @@ void MainLoop()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void siftmain()
+void main()
 {
     Init();
     Setup();

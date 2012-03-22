@@ -45,38 +45,38 @@ public:
     
     void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawBackgroundPartial(
-        const Sifteo::Vec2 &position,
-        const Sifteo::Vec2 &offset,
-        const Sifteo::Vec2 &size,
+        const Sifteo::Int2 &position,
+        const Sifteo::Int2 &offset,
+        const Sifteo::Int2 &size,
         const Sifteo::AssetImage &asset);
-    void ScrollBackground(const Sifteo::Vec2 &position);
+    void ScrollBackground(const Sifteo::Int2 &position);
     
     void DrawSprite(
         int spriteIndex,
-        Sifteo::Vec2 position,
+        Sifteo::Int2 position,
         const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame = 0);
     
     void DrawUiAsset(
-        const Sifteo::Vec2 &position,
+        const Sifteo::Int2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiAssetPartial(
-        const Sifteo::Vec2 &position,
-        const Sifteo::Vec2 &offset,
-        const Sifteo::Vec2 &size,
+        const Sifteo::Int2 &position,
+        const Sifteo::Int2 &offset,
+        const Sifteo::Int2 &size,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiText(
-        const Sifteo::Vec2 &position,
+        const Sifteo::Int2 &position,
         const Sifteo::AssetImage &assetFont,
         const char *text);
-    void ScrollUi(const Sifteo::Vec2 &position);
+    void ScrollUi(const Sifteo::Int2 &position);
     
     // Special-Case Buddy Sprite Stuff
     // TODO: If we have DrawSprite(index, asset, position) could we get rid of these?
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
-    void DrawCutsceneShuffle(const Sifteo::Vec2 &scroll);
+    void DrawCutsceneShuffle(const Sifteo::Int2 &scroll);
     void DrawCutsceneStory(const char *text);
-    void DrawUnlocked3Sprite(const Sifteo::Vec2 &scroll);
-    void DrawUnlocked4Sprite(const Sifteo::Vec2 &scroll);
+    void DrawUnlocked3Sprite(const Sifteo::Int2 &scroll);
+    void DrawUnlocked4Sprite(const Sifteo::Int2 &scroll);
     
     // Asset Loading
     bool IsLoadingAssets();
@@ -101,15 +101,15 @@ public:
     const Piece &GetPieceSolution(Sifteo::Cube::Side side) const;
     void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
     
-    const Vec2 &GetPieceOffset(Sifteo::Cube::Side side) const;
-    void SetPieceOffset(Sifteo::Cube::Side side, const Vec2 &offset);
+    const Sifteo::Int2 &GetPieceOffset(Sifteo::Cube::Side side) const;
+    void SetPieceOffset(Sifteo::Cube::Side side, const Sifteo::Int2 &offset);
     
     void StartPieceBlinking(Sifteo::Cube::Side side);
     void StopPieceBlinking();
     
     // Tilt
     Sifteo::Cube::TiltState GetTiltState() const;
-    Sifteo::Vec2 GetAccelState() const;
+    Sifteo::Int2 GetAccelState() const;
     
     // State
     bool IsSolved() const;
@@ -122,19 +122,19 @@ private:
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
 
     Sifteo::Cube mCube;
-    BG1Helper mBg1Helper;
+    Sifteo::BG1Helper mBg1Helper;
     
     bool mEnabled;
     BuddyId mBuddyId;
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
-    Sifteo::Vec2 mPieceOffsets[NUM_SIDES];
+    Sifteo::Int2 mPieceOffsets[NUM_SIDES];
     Sifteo::Cube::Side mPieceBlinking;
     float mPieceBlinkTimer;
     bool mPieceBlinkingOn;
     
     // Cutscene Jump Animation
-    Sifteo::Math::Random mCutsceneSpriteJumpRandom;
+    Sifteo::Random mCutsceneSpriteJumpRandom;
     bool mCutsceneSpriteJump0;
     bool mCutsceneSpriteJump1;
 };

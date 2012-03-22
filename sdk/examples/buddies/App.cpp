@@ -154,7 +154,7 @@ void DrawOption(CubeWrapper &cubeWrapper, const char *option, bool displayTime, 
         
         if (bufferTouchTo.size() % 2 != 0)
         {
-            cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+            cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
         }
     }
 }
@@ -167,7 +167,7 @@ void DrawShuffleScore(
     CubeWrapper &cubeWrapper,
     float scoreTimer,
     unsigned int place,
-    const Vec2 &scroll)
+    const Int2 &scroll)
 {
     // Background
     const AssetImage *backgrounds[] =
@@ -206,7 +206,7 @@ void DrawShuffleScore(
             buffer << labels[i] << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
             
             cubeWrapper.DrawUiText(
-                Vec2(4, 4 + (i * 2)),
+                Vec2(4, 4 + (int(i) * 2)),
                 place == i ? UiFontWhite : UiFontOrange,
                 buffer.c_str());
         }
@@ -244,7 +244,7 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     
     if (bufferChapter.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
 
@@ -267,7 +267,7 @@ void DrawStoryClue(
     
     if (bufferText.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
 
@@ -286,7 +286,7 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
     
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
 
@@ -309,7 +309,7 @@ void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     
     if (buffer0.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
 
@@ -330,7 +330,7 @@ void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
                     
@@ -349,7 +349,7 @@ void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0));
+        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
 }
 
@@ -509,14 +509,14 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 void TiltNudgePieces(App& app, Cube::ID cubeId)
 {
 #ifdef BUDDY_PIECES_USE_SPRITES
-    Vec2 accelState = app.GetCubeWrapper(cubeId).GetAccelState();
+    Int2 accelState = app.GetCubeWrapper(cubeId).GetAccelState();
     float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
     float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
     float d = 8.0f;
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Int2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Int2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Int2(-x * d, -y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Int2(-x * d,  y * d));
 #else
     Cube::TiltState tiltState = app.GetCubeWrapper(cubeId).GetTiltState();
     
@@ -606,7 +606,7 @@ App::App()
     , mSwapAnimationSlideTimer(0)
     , mSwapAnimationRotateTimer(0.0f)
     , mFaceCompleteTimers()
-    , mBackgroundScroll(0, 0)
+    , mBackgroundScroll(Vec2(0, 0))
     , mHintTimer(0.0f)
     , mHintPiece0(-1)
     , mHintPiece1(-1)
@@ -1451,10 +1451,10 @@ void App::UpdateGameState(float dt)
                         {
                             if (!mOptionsTouchSync)
                             {
-                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, VidMode::TILE));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, VidMode::TILE));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0U, VidMode::TILE));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0U));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0U, VidMode::TILE));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0U));
                             }
                         }
                         else if (mTouching[i] == TOUCH_STATE_END)
@@ -2562,7 +2562,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(mBackgroundScroll.x, 11),
                     Vec2(0, 0),
-                    Vec2(kMaxTilesX - mBackgroundScroll.x, UiRibbonGluv.height),
+                    Vec2(kMaxTilesX - mBackgroundScroll.x, int(UiRibbonGluv.height)),
                     UiRibbonGluv);
             }
             break;

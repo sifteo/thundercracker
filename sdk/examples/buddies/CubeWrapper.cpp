@@ -62,7 +62,7 @@ const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
     }
 }
 
-const Vec2 kPartPositions[NUM_SIDES] =
+const Int2 kPartPositions[NUM_SIDES] =
 {
     Vec2(32, -8),
     Vec2(-8, 32),
@@ -86,7 +86,7 @@ const AssetImage &GetBuddyFacePartsAsset(int buddyId)
     }
 }
 
-const Vec2 kPartPositions[NUM_SIDES] =
+const Int2 kPartPositions[NUM_SIDES] =
 {
     Vec2(40,  0),
     Vec2( 0, 40),
@@ -226,9 +226,9 @@ void CubeWrapper::DrawBackground(const AssetImage &asset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CubeWrapper::DrawBackgroundPartial(
-    const Sifteo::Vec2 &position,
-    const Sifteo::Vec2 &offset,
-    const Sifteo::Vec2 &size,
+    const Sifteo::Int2 &position,
+    const Sifteo::Int2 &offset,
+    const Sifteo::Int2 &size,
     const Sifteo::AssetImage &asset)
 {
     Video().BG0_drawPartialAsset(position, offset, size, asset);
@@ -237,7 +237,7 @@ void CubeWrapper::DrawBackgroundPartial(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::ScrollBackground(const Vec2 &position)
+void CubeWrapper::ScrollBackground(const Int2 &position)
 {
     Video().BG0_setPanning(position);
 }
@@ -247,7 +247,7 @@ void CubeWrapper::ScrollBackground(const Vec2 &position)
 
 void CubeWrapper::DrawSprite(
     int spriteIndex,
-    Vec2 position,
+    Int2 position,
     const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame)
 {
     ASSERT(spriteIndex >= 0 && spriteIndex < _SYS_VRAM_SPRITES);
@@ -259,7 +259,7 @@ void CubeWrapper::DrawSprite(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CubeWrapper::DrawUiAsset(
-    const Vec2 &position,
+    const Int2 &position,
     const AssetImage &asset, unsigned int assetFrame)
 {
     mBg1Helper.DrawAsset(position, asset, assetFrame);
@@ -269,9 +269,9 @@ void CubeWrapper::DrawUiAsset(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CubeWrapper::DrawUiAssetPartial(
-    const Sifteo::Vec2 &position,
-    const Sifteo::Vec2 &offset,
-    const Sifteo::Vec2 &size,
+    const Sifteo::Int2 &position,
+    const Sifteo::Int2 &offset,
+    const Sifteo::Int2 &size,
     const Sifteo::AssetImage &asset, unsigned int assetFrame)
 {
     mBg1Helper.DrawPartialAsset(position, offset, size, asset, assetFrame);
@@ -281,7 +281,7 @@ void CubeWrapper::DrawUiAssetPartial(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CubeWrapper::DrawUiText(
-    const Vec2 &position,
+    const Int2 &position,
     const AssetImage &assetFont,
     const char *text)
 {
@@ -292,7 +292,7 @@ void CubeWrapper::DrawUiText(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::ScrollUi(const Vec2 &position)
+void CubeWrapper::ScrollUi(const Int2 &position)
 {
     Video().BG1_setPanning(position);
 }
@@ -309,7 +309,7 @@ void CubeWrapper::UpdateCutscene(int jumpChanceA, int jumpChanceB)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawCutsceneShuffle(const Sifteo::Vec2 &scroll)
+void CubeWrapper::DrawCutsceneShuffle(const Sifteo::Int2 &scroll)
 {
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
@@ -380,7 +380,7 @@ void CubeWrapper::DrawCutsceneStory(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawUnlocked3Sprite(const Sifteo::Vec2 &scroll)
+void CubeWrapper::DrawUnlocked3Sprite(const Sifteo::Int2 &scroll)
 {
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
@@ -397,11 +397,11 @@ void CubeWrapper::DrawUnlocked3Sprite(const Sifteo::Vec2 &scroll)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawUnlocked4Sprite(const Sifteo::Vec2 &scroll)
+void CubeWrapper::DrawUnlocked4Sprite(const Sifteo::Int2 &scroll)
 {
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
-    Video().moveSprite(0, Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28));
+    Video().moveSprite(0, Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -539,7 +539,7 @@ void CubeWrapper::SetPieceSolution(Cube::Side side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Vec2 &CubeWrapper::GetPieceOffset(Cube::Side side) const
+const Int2 &CubeWrapper::GetPieceOffset(Cube::Side side) const
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -549,7 +549,7 @@ const Vec2 &CubeWrapper::GetPieceOffset(Cube::Side side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceOffset(Cube::Side side, const Vec2 &offset)
+void CubeWrapper::SetPieceOffset(Cube::Side side, const Int2 &offset)
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -587,7 +587,7 @@ Cube::TiltState CubeWrapper::GetTiltState() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Vec2 CubeWrapper::GetAccelState() const
+Int2 CubeWrapper::GetAccelState() const
 {
     return mCube.physicalAccel();
 }
@@ -651,7 +651,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     
     Video().setSpriteImage(spriteUnder, asset, frame);
     
-    Vec2 point = kPartPositions[side];
+    Int2 point = kPartPositions[side];
     switch(side)
     {
         case SIDE_TOP:
@@ -708,7 +708,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         frame = 0;
     }
     
-    Vec2 point = kPartPositions[side];
+    Int2 point = kPartPositions[side];
     
     switch(side)
     {

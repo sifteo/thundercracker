@@ -146,7 +146,7 @@ private:
     float mFaceCompleteTimers[kNumCubes];
     
     // Scrolling
-    Sifteo::Vec2 mBackgroundScroll;
+    Sifteo::Int2 mBackgroundScroll;
     
     // Hinting
     float mHintTimer;

@@ -1,17 +1,9 @@
-TC_DIR = ../../..
-include $(TC_DIR)/firmware/master/Makefile.defs
-
 APP = buddies
+TC_DIR = ../../..
+include $(TC_DIR)/sdk/Makefile.defs
 
 OBJECTS = $(filter-out $(ASSETS).gen.cpp, $(wildcard *.cpp))
-
-BIN_SIM = $(APP).sim$(BIN_EXT)
-OBJS_SIM = $(ASSETS).gen.sim.o $(patsubst %.cpp, %.sim.o, $(OBJECTS))
-
-BIN_STM32 = $(APP).stm32
-OBJS_STM32 = $(ASSETS).gen.stm32.o $(patsubst %.cpp, %.stm32.o, $(OBJECTS))
-
+OBJS = $(ASSETS).gen.o $(patsubst %.cpp, %.o, $(OBJECTS))
 ASSETDEPS += assets/*.png $(ASSETS).lua
-CDEPS += *.h
 
-include $(TC_DIR)/firmware/master/Makefile.rules
+include $(TC_DIR)/sdk/Makefile.rules
