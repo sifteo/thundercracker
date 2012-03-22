@@ -87,7 +87,7 @@ void main()
             str << "bat:   " << Hex(_SYS_getRawBatteryV(cube.id()), 4) << "\n";
             str << "touch: " << counts[cube.id()].touch << "\n\n";
 
-            Vec2 accel = cube.physicalAccel();
+            Byte2 accel = cube.physicalAccel();
             str << "acc: " << Fixed(accel.x, 3) << " "
                 << Fixed(accel.y, 3) << "\n";
 
