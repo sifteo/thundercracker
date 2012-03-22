@@ -1,5 +1,7 @@
 #include "stm32f10xotg.h"
 #include "usb/usbd.h"
+#include "usb/usbdriver.h"
+
 #include "hardware.h"
 #include "macros.h"
 #include "string.h"
@@ -61,7 +63,7 @@ void Stm32f10xOtg::setAddress(uint8_t addr)
     OTG.device.DCFG = (OTG.device.DCFG & ~0x07F0 /* DCFG_DAD */) | (addr << 4);
 }
 
-void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, EpCallback cb)
+void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
     // Configure endpoint address and type. Allocate FIFO memory for
     // endpoint. Install callback funciton.
@@ -115,13 +117,6 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, EpCallb
                         (type << 18) |
                         (1 << 15) |     // USBEAP
                         maxsize);
-
-        // TODO: install callbacks within Usbd
-        if (cb) {
-//            _usbd_device.
-//                    user_callback_ctr[addr][TransactionIn] =
-//                    (void *)callback;
-        }
     }
     else {
 
@@ -135,13 +130,6 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize, EpCallb
                        (type << 18) |
                        (1 << 15) |     // USBEAP
                        maxsize);
-
-        // TODO: install callbacks within Usbd
-        if (cb) {
-//            _usbd_device.
-//                    user_callback_ctr[addr][USB_TRANSACTION_OUT] =
-//                    (void *)callback;
-        }
     }
 }
 
@@ -261,7 +249,6 @@ void Stm32f10xOtg::isr()
 
     const uint32_t enumdne = 1 << 13;
     if (status & enumdne) {   //
-        // Handle USB RESET condition.
         OTG.global.GINTSTS = enumdne;
         fifoMemTop = RX_FIFO_SIZE;
         Usbd::reset();
@@ -274,13 +261,13 @@ void Stm32f10xOtg::isr()
         uint32_t rxstsp = OTG.global.GRXSTSP;
         uint32_t pktsts = rxstsp & (0xf << 17);  // PKTSTS mask
 
-        uint8_t type;
+        Transaction txn;
         switch (pktsts) {
         case 0x6 << 17:
-            type = TransactionSetup;
+            txn = TransactionSetup;
             break;
         case 0x2 << 17:
-            type = TransactionOut;
+            txn = TransactionOut;
             break;
         default:
             return;
@@ -306,8 +293,7 @@ void Stm32f10xOtg::isr()
                 asm("nop");
 
             // call back user handler to read the data via epReadPacket()
-    //        if (_usbd_device.user_callback_ctr[ep][type])
-    //            _usbd_device.user_callback_ctr[ep][type] (ep);
+            UsbDriver::inEndpointCallback(ep, txn);
 
             // Discard unread packet data
             volatile uint32_t *buf = OTG.epFifos[ep];
@@ -322,35 +308,27 @@ void Stm32f10xOtg::isr()
     const uint32_t xfrc = 0x1;
     for (unsigned i = 0; i < 4; i++) {
         volatile USBOTG_IN_EP_t & ep = OTG.inEps[i];
-        if (ep.DIEPINT & xfrc) {     // DIEPINTX XFRC
-//            if (_usbd_device.user_callback_ctr[i][TransactionIn]) {
-//                _usbd_device.user_callback_ctr[i][TransactionIn](i);
-//            }
+        if (ep.DIEPINT & xfrc) {
+            UsbDriver::inEndpointCallback(i, TransactionIn);
             ep.DIEPINT = xfrc;
         }
     }
 
     const uint32_t usbsusp = 1 << 11;
     if (status & usbsusp) {
-//        if (_usbd_device.user_callback_suspend) {
-//            _usbd_device.user_callback_suspend();
-//        }
+        UsbDriver::handleSuspend();
         OTG.global.GINTSTS = usbsusp;
     }
 
     const uint32_t wkupint = 1 << 31;
     if (status & wkupint) {
-//        if (_usbd_device.user_callback_resume) {
-//            _usbd_device.user_callback_resume();
-//        }
+        UsbDriver::handleResume();
         OTG.global.GINTSTS = wkupint;
     }
 
     const uint32_t sof = 1 << 3;
     if (status & sof) {
-//        if (_usbd_device.user_callback_sof) {
-//            _usbd_device.user_callback_sof();
-//        }
+        UsbDriver::handleStartOfFrame();
         OTG.global.GINTSTS = sof;
     }
 }

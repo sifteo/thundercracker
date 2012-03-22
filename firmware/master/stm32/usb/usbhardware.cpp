@@ -15,9 +15,9 @@ void UsbHardware::setAddress(uint8_t addr)
     hw.setAddress(addr);
 }
 
-void UsbHardware::epSetup(uint8_t addr, uint8_t type, uint16_t max_size, EpCallback cb)
+void UsbHardware::epSetup(uint8_t addr, uint8_t type, uint16_t max_size)
 {
-    hw.epSetup(addr, type, max_size, cb);
+    hw.epSetup(addr, type, max_size);
 }
 
 void UsbHardware::epReset()
