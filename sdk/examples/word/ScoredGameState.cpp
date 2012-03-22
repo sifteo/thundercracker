@@ -69,7 +69,7 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
             GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0)
         {
-            switch (Dictionary::getPuzzleIndex() - 1)
+            switch (Dictionary::getPuzzleIndex())
             {
             case 6:  // acre
             case 12: // part
@@ -281,7 +281,7 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    switch (Dictionary::getPuzzleIndex() - 1)
+    switch (Dictionary::getPuzzleIndex())
     {
     case 0:
     case 1:

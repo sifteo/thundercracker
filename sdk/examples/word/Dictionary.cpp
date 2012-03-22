@@ -12,7 +12,7 @@ bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
 unsigned Dictionary::sNumPossibleWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-unsigned Dictionary::sPuzzleIndex = 0;
+int Dictionary::sPuzzleIndex = -1;
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
@@ -30,6 +30,7 @@ bool Dictionary::pickWord(char* buffer,
     ASSERT(buffer);
     if (true || GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
+        sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
         _SYS_strlcpy(buffer, puzzles[sPuzzleIndex], MAX_LETTERS_PER_WORD + 1);
 
         numAnagrams = MAX(1, puzzlesNumGoalAnagrams[sPuzzleIndex]);
@@ -47,7 +48,6 @@ bool Dictionary::pickWord(char* buffer,
                 (_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) > 6) ? 3 : 2;
 
         // update for next pick
-        sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
         return true;
     }
 
@@ -59,7 +59,7 @@ bool Dictionary::pickWord(char* buffer,
     return false;
 }
 
-unsigned Dictionary::getPuzzleIndex()
+int Dictionary::getPuzzleIndex()
 {
     // TODO data-driven
     return sPuzzleIndex;
@@ -89,12 +89,15 @@ bool Dictionary::getCurrentPieces(unsigned maxPieces,
                                   unsigned maxLettersPerPiece,
                                   char puzzlePieces[][MAX_LETTERS_PER_CUBE])
 {
+    if (sPuzzleIndex < 0)
+    {
+        return false;
+    }
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
 
-    unsigned puzzleIndex = sPuzzleIndex ? sPuzzleIndex-1 : 0;
-    const char *word = puzzles[puzzleIndex];
+    const char *word = puzzles[sPuzzleIndex];
     unsigned wordLen = _SYS_strnlen(word, MAX_LETTERS_PER_WORD + 1);
     ASSERT(GameStateMachine::getCurrentMaxLettersPerWord() >= wordLen);
     unsigned numBlanks =
@@ -106,7 +109,7 @@ bool Dictionary::getCurrentPieces(unsigned maxPieces,
     }
     else
     {
-        if (puzzlesUseLeadingSpaces[puzzleIndex])
+        if (puzzlesUseLeadingSpaces[sPuzzleIndex])
         {
             leadingBlanks = numBlanks;
         }

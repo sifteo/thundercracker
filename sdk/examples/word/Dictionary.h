@@ -32,7 +32,7 @@ public:
     static bool isWord(const char* string, bool& isCommon);
     static bool isOldWord(const char* word);
     static bool trim(const char* word, char* buffer);
-    static unsigned getPuzzleIndex();
+    static int getPuzzleIndex();
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:
@@ -44,7 +44,7 @@ private:
     static unsigned sNumPossibleWords;
     static unsigned sRandSeed;
     static unsigned sRound;
-    static unsigned sPuzzleIndex;
+    static int sPuzzleIndex;
 };
 
 #endif // DICTIONARY_H
