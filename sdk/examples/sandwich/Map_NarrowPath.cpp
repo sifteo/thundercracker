@@ -19,8 +19,6 @@ struct ACell {
 
 #define A_STAR_CAP (5*13)
 
-inline int abs(int x) { return x < 0 ? -x : x; }
-
 struct AStar {
   Int2 offset;
   Int2 src;
@@ -76,22 +74,46 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   BroadLocation dbloc;
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
 
+  LOG(("dir = %d\n", dir));
+
   Int2 loc = bloc.view->Location();
+  LOG(("loc = %d,%d\n", loc.x, loc.y));
   Int2 dloc = loc + kSideToUnit[dir].toInt();
+  LOG(("dloc = %d,%d\n", dloc.x, dloc.y));
   Room* src = GetRoom(loc);
   Room* dst = GetRoom(dloc);
   
+  LOG(("srcloc = %d,%d\n", src->Location().x, src->Location().y));
+  LOG(("dstloc = %d,%d\n", dst->Location().x, dst->Location().y));
+
+  LOG(("subdivs = %d, %d\n", bloc.subdivision, dbloc.subdivision));
+
   AStar as;
   _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
+  //
+  //  <WHAT>
+  //
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
-  as.offset = dir == SIDE_TOP || dir == SIDE_LEFT ? dloc : loc;
+  //as.offset = dir<2 ? dloc : loc;
+  as.offset.x = dir<2 ? dloc.x : loc.x;
+  as.offset.y = dir<2 ? dloc.y : loc.y;
+  LOG(("TRUE?: %d\n", as.offset == dloc || as.offset == loc));
+  //
+  // </WHAT>
+  //
+
+  LOG(("LOCAL CENTER = %d,%d\n", src->LocalCenter(bloc.subdivision).x, src->LocalCenter(bloc.subdivision).y));
+  LOG(("as.offset = %d,%d\n", as.offset.x, as.offset.y));
+  Int2 diff = 8 * (loc - as.offset);
+  LOG(("diff = %d,%d\n", diff.x, diff.y));
+
   as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - Vec2(2,2);
   as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - Vec2(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 
-  /*{
+  {
     // log what we *think* the map looks like
     LOG(("-------\n"));
     for(int row=0; row<as.cellRowCount; ++row) {
@@ -109,7 +131,9 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
       }
       LOG(("\n"));
     }
-  }*/
+  }
+
+  LOG(("as.src = %d,%d\n", as.src.x, as.src.y));
 
   // add an open record for src
   as.recordCount = 1;
@@ -120,12 +144,16 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   as.cells[as.records->tileID].record = 0;
 
   ARecord* pSelected;
-  //int iters = 0;
+  int iters = 0;
   do {
-    //iters++;
+    iters++;
     // select the cheapest open node
     pSelected = 0;
     for(ARecord* p=as.records; p!=as.records+as.recordCount; ++p) {
+      LOG(("p = %p\n", p));
+      LOG(("as.recordsBegin = %p\n", as.records));
+      LOG(("as.recordsEnd = %p\n", as.records+as.recordCount));
+      LOG(("phex = %32h\n", p));
       if (p->IsOpen() && (pSelected == 0 || p->Cost() < pSelected->Cost())) {
         pSelected = p;
       }
@@ -155,6 +183,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
     }
   } while(pSelected);
   // WHAT IS THIS MADNESS?  Some bad data was exported
+  LOG(("WHAT IS THIS MADDNESS: %d\n", iters));
   return false;
 }
 

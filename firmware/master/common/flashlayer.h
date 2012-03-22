@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifdef SIFTEO_SIMULATOR
+#ifdef SIFTEO_SIMULATOR__OMG 
 #  define FLASHLAYER_STATS
 #  define FLASHLAYER_STATS_ONLY(x)  x
 #else
