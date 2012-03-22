@@ -73,7 +73,7 @@ _SYSShakeState _SYS_getShake(_SYSCubeID cid)
     return r;
 }
 
-uint8_t _SYS_isTouching(_SYSCubeID cid)
+uint64_t _SYS_isTouching(_SYSCubeID cid)
 {
     if (CubeSlots::validID(cid)) {
         return CubeSlots::instances[cid].isTouching();

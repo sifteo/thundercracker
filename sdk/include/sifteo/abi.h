@@ -692,7 +692,7 @@ _SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
 // XXX: Temporary for testing/demoing
 uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
 
-uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
+uint64_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(91);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
