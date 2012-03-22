@@ -76,7 +76,7 @@ void InitializePuzzles()
     
     for (unsigned int i = 0; i < kMaxBuddies; ++i)
     {
-        sPuzzleDefault.AddBuddy(i);
+        sPuzzleDefault.AddBuddy(BuddyId(i));
         
         sPuzzleDefault.SetPieceStart( i, SIDE_TOP,    Piece(i, 0));
         sPuzzleDefault.SetPieceStart( i, SIDE_LEFT,   Piece(i, 1));
@@ -121,8 +121,8 @@ void InitializePuzzles()
     // Currently you can do up to 256 shuffles.
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[sNumPuzzles].AddBuddy(0); // BuddyIndex 0: Add Buddy #0 as the first buddy
-    sPuzzles[sNumPuzzles].AddBuddy(1); // BuddyIndex 1: Add Buddy #1 as the second buddy
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_GLUV); // BuddyIndex 0: Add Gluv as the first buddy
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_SULI); // BuddyIndex 1: Add Suli as the second buddy
     
     // Start Pieces
     sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(0, 0)); // BuddyIndex, Side, Piece
@@ -164,8 +164,8 @@ void InitializePuzzles()
     
     sPuzzles[sNumPuzzles].SetNumShuffles(3);
     
-    sPuzzles[sNumPuzzles].AddBuddy(1);
-    sPuzzles[sNumPuzzles].AddBuddy(2);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_SULI);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_RIKE);
     
     // Start Pieces
     sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(1, 0));
@@ -207,8 +207,8 @@ void InitializePuzzles()
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[sNumPuzzles].AddBuddy(3);
-    sPuzzles[sNumPuzzles].AddBuddy(4);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_VAMPIRE_DUDE);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_MUSTACHE_GUY);
     
     // Start Pieces
     sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(3, 0));
@@ -250,8 +250,8 @@ void InitializePuzzles()
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[sNumPuzzles].AddBuddy(5);
-    sPuzzles[sNumPuzzles].AddBuddy(0);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_PINK_GIRL);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_GLUV);
     
     // Start Pieces
     sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(5, 0));

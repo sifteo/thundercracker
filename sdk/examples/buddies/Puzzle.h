@@ -13,6 +13,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <sifteo/cube.h>
+#include "BuddyId.h"
 #include "Config.h"
 #include "Piece.h"
 
@@ -35,7 +36,7 @@ public:
         const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
         const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
         const char *clue,
-        const unsigned int buddies[], unsigned int numBuddies,
+        const BuddyId buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
         const Piece piecesStart[kMaxBuddies][NUM_SIDES],
         const Piece piecesEnd[kMaxBuddies][NUM_SIDES]);
@@ -62,8 +63,8 @@ public:
     unsigned int GetNumShuffles() const;
     void SetNumShuffles(unsigned int numSuhffles);
     
-    void AddBuddy(unsigned int buddyId);
-    unsigned int GetBuddy(unsigned int buddyIndex) const;
+    void AddBuddy(BuddyId buddyId);
+    BuddyId GetBuddy(unsigned int buddyIndex) const;
     unsigned int GetNumBuddies() const;
     
     const Piece &GetPieceStart(unsigned int buddy, Sifteo::Cube::Side side) const;

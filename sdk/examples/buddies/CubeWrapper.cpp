@@ -108,7 +108,7 @@ CubeWrapper::CubeWrapper()
     : mCube()
     , mBg1Helper(mCube)
     , mEnabled(false)
-    , mBuddyId(0)
+    , mBuddyId(BUDDY_GLUV)
     , mPieces()
     , mPiecesSolution()
     , mPieceOffsets()
@@ -483,7 +483,7 @@ void CubeWrapper::Disable()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int CubeWrapper::GetBuddyId() const
+BuddyId CubeWrapper::GetBuddyId() const
 {
     return mBuddyId;
 }
@@ -491,7 +491,7 @@ unsigned int CubeWrapper::GetBuddyId() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetBuddyId(unsigned int buddyId)
+void CubeWrapper::SetBuddyId(BuddyId buddyId)
 {
     mBuddyId = buddyId;
 }

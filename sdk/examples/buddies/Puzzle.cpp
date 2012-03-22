@@ -60,7 +60,7 @@ Puzzle::Puzzle(
     const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
     const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
     const char *clue,
-    const unsigned int buddies[], unsigned int numBuddies,
+    const BuddyId buddies[], unsigned int numBuddies,
     unsigned int numShuffles,
     const Piece piecesStart[kMaxBuddies][NUM_SIDES],
     const Piece piecesEnd[kMaxBuddies][NUM_SIDES])
@@ -263,7 +263,7 @@ void Puzzle::SetNumShuffles(unsigned int numShuffles)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Puzzle::AddBuddy(unsigned int buddyId)
+void Puzzle::AddBuddy(BuddyId buddyId)
 {
     ASSERT(mNumBuddies < arraysize(mBuddies));
     mBuddies[mNumBuddies++] = buddyId;
@@ -272,10 +272,10 @@ void Puzzle::AddBuddy(unsigned int buddyId)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int Puzzle::GetBuddy(unsigned int buddyIndex) const
+BuddyId Puzzle::GetBuddy(unsigned int buddyIndex) const
 {
     ASSERT(buddyIndex < arraysize(mBuddies));
-    return mBuddies[buddyIndex];
+    return BuddyId(mBuddies[buddyIndex]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

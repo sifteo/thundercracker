@@ -14,6 +14,7 @@
 
 #include <sifteo/BG1Helper.h>
 #include <sifteo/cube.h>
+#include "BuddyId.h"
 #include "GameState.h"
 #include "Piece.h"
 
@@ -90,8 +91,8 @@ public:
     void Disable();
     
     // Buddy
-    unsigned int GetBuddyId() const;
-    void SetBuddyId(unsigned int buddyId);
+    BuddyId GetBuddyId() const;
+    void SetBuddyId(BuddyId buddyId);
     
     // Pieces
     const Piece &GetPiece(Sifteo::Cube::Side side) const;
@@ -124,7 +125,7 @@ private:
     BG1Helper mBg1Helper;
     
     bool mEnabled;
-    unsigned int mBuddyId;
+    BuddyId mBuddyId;
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
     Sifteo::Vec2 mPieceOffsets[NUM_SIDES];

@@ -421,7 +421,7 @@ bool IsHinting(Cube::ID cubeId, int hintPiece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool IsBuddyUsed(App &app, unsigned buddyId)
+bool IsBuddyUsed(App &app, BuddyId buddyId)
 {
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
@@ -486,17 +486,17 @@ const AssetImage &GetBuddyFullAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int GetRandomOtherBuddyId(App &app, unsigned int buddyId)
+BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 {
     Random random;
     int selection = random.randrange(kMaxBuddies - kNumCubes);
     
     for (int j = 0; j < selection; ++j)
     {
-        buddyId = (buddyId + 1) % kMaxBuddies;
+        buddyId = BuddyId((buddyId + 1) % kMaxBuddies);
         while (IsBuddyUsed(app, buddyId))
         {
-            buddyId = (buddyId + 1) % kMaxBuddies;
+            buddyId = BuddyId((buddyId + 1) % kMaxBuddies);
         }
     }
     
@@ -934,7 +934,8 @@ void App::OnShake(Cube::ID cubeId)
             {
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
             
-                unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
+                BuddyId newBuddyId =
+                    GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
                 mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
                 
                 ResetCubesToPuzzle(GetPuzzleDefault(), false);
@@ -1122,7 +1123,7 @@ void App::StartGameState(GameState gameState)
             // Assign IDs to the buddies
             for (unsigned int i = 0; i < kNumCubes; ++i)
             {
-                mCubeWrappers[i].SetBuddyId(buddyIds[i]);
+                mCubeWrappers[i].SetBuddyId(BuddyId(buddyIds[i]));
             }
             
             ResetCubesToPuzzle(GetPuzzleDefault(), false);
@@ -1141,7 +1142,7 @@ void App::StartGameState(GameState gameState)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
+                    mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
             ResetCubesToPuzzle(GetPuzzleDefault(), true);
@@ -1248,7 +1249,7 @@ void App::StartGameState(GameState gameState)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
+                    mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
             mStoryPuzzleIndex = 0;
@@ -1539,7 +1540,8 @@ void App::UpdateGameState(float dt)
                 {
                     if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
-                        unsigned int newBuddyId = GetRandomOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                        BuddyId newBuddyId =
+                            GetRandomOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
                         mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
