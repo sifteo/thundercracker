@@ -20,7 +20,9 @@ def strip_accents(s):
    #s = unicode(s1, 'utf-8').lstrip(unicode(codecs.BOM_UTF8, "utf8"))
    return ''.join((c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
 
-def find_anagrams(string, dictionary, letters_per_cube):
+def find_anagrams(row, dictionary):
+    string = row['Puzzle']
+    letters_per_cube
     #print "find_anagrams: " + string + " " + str(letters_per_cube)
     words = {}
     if letters_per_cube == 1:
@@ -152,7 +154,6 @@ def generate_dict():
             dictionary[word.strip().upper()] = -1
     fi.close()
 
-
     bad_words = {}
     fi = open("badwords.txt", "r")
     for line in fi:
@@ -170,11 +171,7 @@ def generate_dict():
         fi = codecs.open("frequency/" + fn, "r", encoding='latin-1')
         for line in fi:
             word = strip_accents(line.strip()).upper()
-            #if "CLAIR" in word:
-             #   print word
-                #return
             if word in dictionary:
-                #print "word list: " + line
                 d[word] = True        
         fi.close()        
         freq_dicts.append(d)
@@ -212,7 +209,6 @@ def generate_dict():
     
     output_dictionary = {}
     max_anagrams = 0
-    word_list_used = {} # puzzles actually used
     letters_per_cube = [1, 1, 2, 2, 2, 2, 3, 3, 3]
     min_anagrams = [999, 999, 2, 2, 2, 2, 2, 2, 2]    
     
@@ -221,52 +217,50 @@ def generate_dict():
     #find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
     #return
 
-    puzzles = []
     print "generate_examples flag: " + str(generate_examples)
-    if not generate_examples:
-        puzzle_file_name = "puzzles.txt"
+    puzzle_rows = []
+    if generate_examples:
+        for word in dictionary.keys():
+            puzzle_rows.append({'Puzzle':word})
+    else:
+        puzzle_file_name = "puzzles.csv"
         print "reading " + puzzle_file_name
-        fi = open(puzzle_file_name, "r")
-        for line in fi:
-            puzzles.append(line.strip().upper())
-        fi.close()
-    #print "puzzles file: " + str(puzzles)
-
-    puzzles_to_use = dictionary.keys()
-    skip_tests = False
-    sort_puzzles = True
-    if len(puzzles) > 0:
-        puzzles_to_use = puzzles
-        skip_tests = True
-        sort_puzzles = False
-        #print puzzles
+        f = open(puzzle_file_name, 'rt')
+        try:
+            for row in csv.DictReader(f):
+                puzzle_rows.append(row)
+        finally:
+            f.close()    
+    print "puzzles file: " + str(puzzle_rows)
 
     iw = 0
-    print_time = max(1, len(puzzles_to_use)/39)
-    for word in puzzles_to_use:
+    print_time = max(1, len(puzzle_rows)/39)
+    for row in puzzle_rows:
+        word = row['Puzzle']
         if (iw % print_time) == 0:
-                print ".",
+            print ".",
         iw += 1
-        if skip_tests or len(word) in seed_word_lens:
-            anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
+        if not generate_examples or len(word) in seed_word_lens:
+            anagrams = find_anagrams(row, dictionary)
             #min_anagrams = [999, 999, 4, 15, 25, 25]
             #print "checking word " + word
-            if skip_tests or len(anagrams) >= min_anagrams[len(word) - 1]:
+            if not generate_examples or len(anagrams) >= min_anagrams[len(word) - 1]:
                 #print word + " " + str(anagrams)
                 num_seed_repeats = 0
                 # skip it if a pre-existing seed word has the same anagram set 
                 bad = False
                 num_nonbonus_anagrams = 0
                 for w in anagrams:
-                    if not skip_tests and len(w) == len(word) and w.upper() in word_list_used:
+                    if generate_examples and len(w) == len(word) and w.upper() in word_list_used:
+                        # this is a repeat, an anagram of a previous word
                         num_seed_repeats += 1
                         break
-                    if not skip_tests and w in bad_words:
+                    if generate_examples and w in bad_words:
                         bad = True
                         break
                     if get_word_freq(w, dictionary) <= min_freq_bonus:
                         num_nonbonus_anagrams += 1
-                if skip_tests or (num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams):
+                if not generate_examples or (num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams):
                     #print word + ": " + str(len(anagrams))
                     word_list_used[word.upper()] = len(anagrams) - num_nonbonus_anagrams
                     num_anagrams = len(anagrams)
@@ -296,6 +290,7 @@ def generate_dict():
     fi.write("const static uint64_t protoWordList[] =\n")
     fi.write("{\n")
     
+    # SERIALIZE: sorted_output_dict to code
     for word in sorted_output_dict:
         # write out compressed version of word (uses fact that demo only has up to 5 letter words)
         bits = 0
@@ -314,12 +309,13 @@ def generate_dict():
     fi.close()
     
     # sort word list used by value numeric (keys by values in dict)
-    if sort_puzzles:
+    if generate_examples:
         sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
     else:
         sorted_word_list_used = []
         #print "******* wlu: " + str(word_list_used)
-        for w in puzzles_to_use:
+        for row in puzzle_rows:
+            w = row['Puzzle']
             #print "puzzle: " + w
             if w in word_list_used:
                 sorted_word_list_used.append((w,word_list_used[w]))
@@ -329,6 +325,7 @@ def generate_dict():
 
     #print sorted_word_list_used
     # TODO pack puzzles somehow
+    # SERIALIZE sorted_word_list_used to code and CSV
     fi = open("../DictionaryData.h", "w")
     fi.write("// This file is autogenerated from dict/generate_dict.py\n\n")
     num_puzzles = 0
@@ -544,62 +541,6 @@ def generate_dict():
         pick_length += 1
         fi.write("\n")
     fi.close()
-
-def _load_puzzles(self):
-    file_name = "puzzles.csv"
-    self._app.puzzles = []
-    self.path_levels, scriptname = os.path.split(__file__)
-    print "--loading %s ---" % (self._path_puzzles + file_name)
-    try:
-        with open(self._path_puzzles + file_name, mode='rb') as f:
-            reader = unicode_csv_reader(f)
-            append_new_round_for_next_puzzle = True
-            for i, row in enumerate(reader):
-                # TODO error checking and display 
-                if is_row_a_round_terminator(row):
-                    append_new_round_for_next_puzzle = True
-                elif not is_row_a_comment(row):
-                    if append_new_round_for_next_puzzle:
-                        self._app.puzzles.append([])
-                        #print "appending new round for row %d %s" % (i, row)
-                        append_new_round_for_next_puzzle = False
-                    round_puzzles = self._app.puzzles[len(self._app.puzzles) - 1]
-                    if len(row) == 1:
-                        # single word, split into letters
-#                        print "single word row %s" % list(row[0])
-                        round_puzzles.append(list(row[0]))
-                    else:
-                        # remove any blank pieces
-                        #print "processing row %s" % row
-                        processed_row = []
-                        for s in row:
-                            if s and len(s) > 0:
-                                processed_row.append(s)
-                        round_puzzles.append(processed_row)
-                else:
-                    print "row %s appears to be a comment" % row
-                print row
-    except IOError:
-        return False
-    # filter out puzzles that have more pieces than the
-    # user has siftables, or fewer than 2 pieces
-    num_sifts = len(self._app.siftables)
-    for r, round in enumerate(self._app.puzzles):
-        filtered_puzzles = []
-        for i, p in enumerate(round):
-            num_pieces = self._get_num_puzzle_pieces(i, r)
-            if num_pieces <= num_sifts and num_pieces >= 2:
-                filtered_puzzles.append(p)
-            else:
-                print "filtered out puzzle %s, for %d cubes" % (p, num_sifts)
-        self._app.puzzles[r] = filtered_puzzles
-    # remove empty rounds
-    self._app.puzzles = [round for round in self._app.puzzles if len(round) > 0]
-    print "+++ finished loading:"
-    print self._app.puzzles
-    if not self._verify_puzzles():
-        return False
-    return len(self._app.puzzles) > 0 and len(self._app.puzzles[0]) > 0
     
 def unicode_csv_DictReader(utf8_data, dialect=csv.excel, **kwargs):
     csv_reader = csv.DictReader(utf8_data, dialect=dialect, **kwargs)
