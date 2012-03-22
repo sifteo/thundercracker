@@ -578,17 +578,7 @@
     <property name="wall" value=""/>
    </properties>
   </tile>
-  <tile id="114">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
   <tile id="115">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="116">
    <properties>
     <property name="bridge" value=""/>
    </properties>
