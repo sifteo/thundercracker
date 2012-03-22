@@ -69,7 +69,7 @@ void main()
             String<128> str;
 
             uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << cube.id() << "\n";
+            str << "I am cube #" << cube.id() << "\n\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
@@ -85,12 +85,14 @@ void main()
                 << "\n\n";
 
             str << "bat:   " << Hex(_SYS_getRawBatteryV(cube.id()), 4) << "\n";
-            str << "touch: " << counts[cube.id()].touch << "\n\n";
+            str << "touch: " << counts[cube.id()].touch << "\n";
 
-            Vec2 accel = cube.physicalAccel();
-            str << "acc: " << Fixed(accel.x, 3) << " "
-                << Fixed(accel.y, 3) << "\n";
-
+            _SYSAccelState accel = _SYS_getAccel(i);
+            str << "acc: "
+                << Fixed(accel.x, 3)
+                << Fixed(accel.y, 3)
+                << Fixed(accel.z, 3);
+                
             vid.BG0_text(Vec2(1,2), str);
 
             drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
