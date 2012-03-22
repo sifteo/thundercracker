@@ -173,6 +173,9 @@ void Game::Update()
 		{
             TestMatches();
 
+            if( m_state == STATE_POSTGAME )
+                Reset();
+
 			m_bTestMatches = false;
 		}
 
