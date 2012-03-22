@@ -4,77 +4,92 @@
  */
 
 #include "usb.h"
+#include "usb/usbd.h"
+#include "usb/usbhardware.h"
+#include "usb/usbdefs.h"
+
 #include "hardware.h"
 #include "usart.h"
 #include "tasks.h"
 #include "assetmanager.h"
 
-#include "usb_init.h"
-#include "usb_istr.h"
-#include "otgd_fs_cal.h"
-#include "otgd_fs_pcd.h"
-#include "usb_sil.h"
+static const Usb::DeviceDescriptor dev = {
+    sizeof(Usb::DeviceDescriptor),  // bLength
+    Usb::DescriptorDevice,          // bDescriptorType
+    0x0200,                         // bcdUSB
+    0xFF,                           // bDeviceClass
+    0,                              // bDeviceSubClass
+    0,                              // bDeviceProtocol
+    64,                             // bMaxPacketSize0
+    0xCAFE,                         // idVendor
+    0xCAFE,                         // idProduct
+    0x0200,                         // bcdDevice
+    1,                              // iManufacturer
+    2,                              // iProduct
+    3,                              // iSerialNumber
+    1                               // bNumConfigurations
+};
+
+static const Usb::InterfaceDescriptor iface = {
+    sizeof(Usb::InterfaceDescriptor),   // bLength
+    Usb::DescriptorInterface,           // bDescriptorType
+    0,                                  // bInterfaceNumber
+    0,                                  // bAlternateSetting
+    0,                                  // bNumEndpoints
+    0xFF,                               // bInterfaceClass
+    0,                                  // bInterfaceSubClass
+    0,                                  // bInterfaceProtocol
+    0                                   // iInterface
+};
+
+static const Usb::ConfigDescriptor config = {
+    sizeof(Usb::ConfigDescriptor),  // bLength
+    Usb::DescriptorConfiguration,   // bDescriptorType
+    0,                              // wTotalLength
+    1,                              // bNumInterfaces
+    1,                              // bConfigurationValue
+    0,                              // iConfiguration
+    0x80,                           // bmAttributes
+    0x32                            // bMaxPower
+};
+
+static const char *descriptorStrings[] = {
+    "x",
+    "Sifteo Inc.",
+    "Thundercracker",
+    "1001",
+};
 
 /*
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
-void Usb::handleOUTData(void *p) {
-    (void)p;
+void UsbDevice::handleOUTData(void *p) {
 
-    uint8_t buf[RX_FIFO_SIZE];
-    int numBytes = USB_SIL_Read(Usb::Ep3Out, buf);
-    if (numBytes > 0) {
-        AssetManager::onData(buf, numBytes);
-    }
 }
 
 /*
     Called from within Tasks::work() to handle a usb IN event on the main thread.
     TBD whether this is actually helpful.
 */
-void Usb::handleINData(void *p) {
+void UsbDevice::handleINData(void *p) {
     (void)p;
 }
 
-void Usb::init() {
-    USB_Init();
+void UsbDevice::init() {
+    Usbd::init(&dev, &config, descriptorStrings);
 }
 
-// TODO: determine what kind of API we can provide with respect to copying data.
-//          is tx data required to live beyond this function call?
-int Usb::write(const uint8_t *buf, unsigned len)
+int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
-    USB_SIL_Write(Usb::Ep1In, (uint8_t*)buf, len);
     return 0;
 }
 
-int Usb::read(uint8_t *buf, unsigned len)
+int UsbDevice::read(uint8_t *buf, unsigned len)
 {
-    USB_OTG_EP* ep = PCD_GetOutEP(3);
-    if (len < ep->xfer_len) {
-        // SIL API doesn't provide a way to specify the number of bytes to read.
-        // must read the number that were last transferred - never more than
-        // max packet size for this endpoint
-        while (1);
-    }
-    len = ep->xfer_len;
-    USB_SIL_Read(Usb::Ep3Out, buf);
-    return len;
-}
-
-// defined in usb_istr.h, called in IRQ context
-void EP1_IN_Callback(void)
-{
-//    Tasks::setPending(Tasks::UsbIN, 0);
-}
-
-// defined in usb_istr.h, called in IRQ context
-void EP3_OUT_Callback(void)
-{
-    Tasks::setPending(Tasks::UsbOUT, 0);
+    return 0;
 }
 
 IRQ_HANDLER ISR_UsbOtg_FS() {
-    STM32_PCD_OTG_ISR_Handler();
+    UsbHardware::isr();
 }

@@ -14,15 +14,11 @@ include $(TC_DIR)/Makefile.platform
 # STM32 only dependencies
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
-include stm32/st-usb/st-usb.mk
-OBJS_STM32 +=   $(OBJS_USB_STM32) \
-                $(SPEEX_OBJS_STM32)
+OBJS_STM32 += $(SPEEX_OBJS_STM32)
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include -DNO_USERSPACE_HEADERS
-CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
-# NOTE: ST defines here are temporary until we integrate our own USB code
-CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
+CFLAGS_STM32 := -Istm32 $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
 

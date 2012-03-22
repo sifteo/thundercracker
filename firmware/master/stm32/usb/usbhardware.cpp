@@ -55,3 +55,8 @@ void UsbHardware::setDisconnected(bool disconnected)
     hw.setDisconnected(disconnected);
 }
 
+void UsbHardware::isr()
+{
+    hw.isr();
+}
+

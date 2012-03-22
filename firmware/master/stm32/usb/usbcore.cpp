@@ -1,15 +1,11 @@
-#include "usbcore.h"
-#include "macros.h"
-#include <string.h>
-
+#include "usb/usbcore.h"
 #include "usb/usbhardware.h"
 #include "usb/usbdriver.h"
 
-using namespace Usb;
+#include "macros.h"
+#include <string.h>
 
-UsbCore::UsbCore()
-{
-}
+using namespace Usb;
 
 uint16_t UsbCore::buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len)
 {
@@ -70,7 +66,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
 
     case DescriptorDevice: {
         const DeviceDescriptor *d = Usbd::devDescriptor();
-//        *buf = reinterpret_cast<const uint8_t*>(d);
+        *buf = (uint8_t*)d;
         *len = MIN(*len, d->bLength);
         return 1;
     }

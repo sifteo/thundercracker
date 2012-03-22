@@ -3,25 +3,14 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef USB_H
-#define USB_H
+#ifndef USB_DEVICE_H
+#define USB_DEVICE_H
 
 #include <stdint.h>
 
-class Usb
+class UsbDevice
 {
 public:
-    enum Endpoints {
-        Ep0Out  = 0x00,
-        Ep0In   = 0x80,
-        Ep1Out  = 0x01,
-        Ep1In   = 0x81,
-        Ep2Out  = 0x02,
-        Ep2In   = 0x82,
-        Ep3Out  = 0x03,
-        Ep3In   = 0x83
-    };
-
     static void init();
 
     static void handleINData(void *p);
@@ -34,4 +23,4 @@ private:
 
 };
 
-#endif // USB_H
+#endif // USB_DEVICE_H

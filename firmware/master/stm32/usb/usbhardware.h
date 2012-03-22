@@ -20,6 +20,7 @@ public:
     static bool epIsStalled(uint8_t addr);
     static uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
     static uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len);
+    static void isr();
     static void setDisconnected(bool disconnected);
 };
 

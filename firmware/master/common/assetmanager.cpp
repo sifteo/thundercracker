@@ -44,13 +44,13 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
         for (unsigned i = 0; i < installation.size; i += Flash::SECTOR_SIZE) {
 #ifndef SIFTEO_SIMULATOR
             status = 2;
-            Usb::write(&status, 1);
+            UsbDevice::write(&status, 1);
 #endif
             Flash::eraseSector(i);
         }
 #ifndef SIFTEO_SIMULATOR
         status = 0x0;
-        Usb::write(&status, 1);
+        UsbDevice::write(&status, 1);
 
         CRC.CR = 1; // reset CRC unit
 #endif
@@ -93,7 +93,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
         }
 #ifndef SIFTEO_SIMULATOR
         status = (crc == CRC.DR) ? 0 : 1;
-        Usb::write(&status, 1);
+        UsbDevice::write(&status, 1);
 #endif
     }
 
