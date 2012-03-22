@@ -37,7 +37,7 @@ void RoomView::Init(unsigned roomId) {
       mAmbient.bff.Randomize();
       mode.resizeSprite(BFF_SPRITE_ID, 8, 8);
       mode.setSpriteImage(BFF_SPRITE_ID, Butterfly.index + 4 * mAmbient.bff.dir);
-      mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
+      mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
 
@@ -76,7 +76,7 @@ void RoomView::Update(float dt) {
 
   if (gGame.GetMap()->Data()->ambientType && mAmbient.bff.active) {
     mAmbient.bff.Update();
-    mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
+    mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     mode.setSpriteImage(
       BFF_SPRITE_ID, 
       Butterfly.index + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3

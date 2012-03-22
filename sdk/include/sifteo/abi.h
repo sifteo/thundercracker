@@ -339,8 +339,10 @@ struct _SYSAudioBuffer {
  */
 
 struct _SYSAccelState {
-    int8_t x;       // +X towards the right
-    int8_t y;       // +Y towards the bottom
+    int8_t x;           // +X towards the right
+    int8_t y;           // +Y towards the bottom
+    int8_t z;           // +Z gravity pointing down / right side up
+    int8_t reserved;    // Padded to 32 bits
 };
 
 struct _SYSNeighborState {
@@ -358,8 +360,8 @@ typedef enum {
 } _SYS_TiltType;
 
 struct _SYSTiltState {
-    unsigned x		: 4;
-    unsigned y		: 4;
+    uint8_t x : 4;
+    uint8_t y : 4;
 };
 
 typedef enum {

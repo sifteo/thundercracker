@@ -7,10 +7,8 @@ void InventoryView::Init() {
 	CORO_RESET;
 	mSelected = 0;
 	Int2 tilt = Parent()->GetCube()->virtualAccel();
-	mTiltX = tilt.x;
-	mTiltY = tilt.y;
-	mAccumX = 0;
-	mAccumY = 0;
+	mTilt.set(tilt.x, tilt.y);
+	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	mAnim = 0;
 	Parent()->HideSprites();
@@ -19,8 +17,7 @@ void InventoryView::Init() {
 }
 
 void InventoryView::Restore() {
-	mAccumX = 0;
-	mAccumY = 0;
+	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	Parent()->HideSprites();
 	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
@@ -90,8 +87,7 @@ void InventoryView::Update(float dt) {
 		}
 		System::paintSync();
 		Parent()->Restore();
-		mAccumX = 0;
-		mAccumY = 0;
+		mAccum.set(0,0);
 		gGame.NeedsSync();
 		CORO_YIELD;
 		gGame.NeedsSync();
@@ -141,38 +137,36 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	Int2 tilt = Parent()->GetCube()->virtualAccel();
-	mTiltX = tilt.x;
-	mTiltY = tilt.y;
 	const int radix = 8;
 	const int threshold = 128;
-	int dx = mTiltX/radix;
-	int dy = mTiltY/radix;
-	if (dx) {
-		mAccumX += dx;
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
+	mTilt = tilt;
+	Int2 delta = tilt / radix;
+	if (delta.x) {
+		mAccum.x += delta.x;
 	} else {
-		mAccumX = 0;
+		mAccum.x = 0;
 	}
-	if (dy) {
-		mAccumY += dy;
+	if (delta.y) {
+		mAccum.y += delta.y;
 	} else {
-		mAccumY = 0;
+		mAccum.y = 0;
 	}
-	if (dx) {
-		if (mAccumX >= threshold) {
-			mAccumX %= threshold;
+	if (delta.x) {
+		if (mAccum.x >= threshold) {
+			mAccum.x %= threshold;
 			return SIDE_RIGHT;
-		} else if (mAccumX <= -threshold) {
-			mAccumX %= threshold;
+		} else if (mAccum.x <= -threshold) {
+			mAccum.x %= threshold;
 			return SIDE_LEFT;
 		} 
 	}
-	if (dy) {
-		if (mAccumY >= threshold) {
-			mAccumY %= threshold;
+	if (delta.y) {
+		if (mAccum.y >= threshold) {
+			mAccum.y %= threshold;
 			return SIDE_BOTTOM;
-		} else if (mAccumY <= -threshold) {
-			mAccumY %= threshold;
+		} else if (mAccum.y <= -threshold) {
+			mAccum.y %= threshold;
 			return SIDE_TOP;
 		}		
 	}

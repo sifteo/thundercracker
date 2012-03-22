@@ -14,7 +14,6 @@ private:
   static float sShakeTime;
   #endif
 
-
   ViewSlot mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
@@ -75,24 +74,21 @@ private:
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, ViewSlot *view);
-  
+  void RestorePearlIdle();
 
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
-
+  void OnTrapdoor(Room *pRoom);
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
   void OnUseEquipment();
-  void OnEnterGateway(Room *pRoom);
-  void OnNpcChatter(Room *pRoom);
+  void OnEnterGateway(const GatewayData* pGate);
+  void OnNpcChatter(const NpcData* pNpc);
   void OnTriggerEvent(unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
   bool TryEncounterLava(Cube::Side dir);
-
-
-  void RestorePearlIdle();
 
 
 };

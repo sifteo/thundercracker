@@ -41,72 +41,70 @@ void ButterflyFriend::Randomize() {
   dir = (uint8_t) gRandom.randrange(8);
   switch(dir) {
     case S:
-      x = 64 + (uint8_t) gRandom.randrange(128);
-      y = (uint8_t) gRandom.randrange(64);
+      pos.x = 64 + (uint8_t) gRandom.randrange(128);
+      pos.y = (uint8_t) gRandom.randrange(64);
       break;
     case SE:
-      x = (uint8_t) gRandom.randrange(64);
-      y = (uint8_t) gRandom.randrange(64);
+      pos.x = (uint8_t) gRandom.randrange(64);
+      pos.y = (uint8_t) gRandom.randrange(64);
       break;
     case E:
-      x = (uint8_t) gRandom.randrange(64);
-      y = 64 + (uint8_t) gRandom.randrange(128);
+      pos.x = (uint8_t) gRandom.randrange(64);
+      pos.y = 64 + (uint8_t) gRandom.randrange(128);
       break;
     case NE:
-      x = (uint8_t) gRandom.randrange(64);
-      y = 192 + (uint8_t) gRandom.randrange(64);
+      pos.x = (uint8_t) gRandom.randrange(64);
+      pos.y = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case N:
-      x = 64 + (uint8_t) gRandom.randrange(128);
-      y = 192 + (uint8_t) gRandom.randrange(64);
+      pos.x = 64 + (uint8_t) gRandom.randrange(128);
+      pos.y = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case NW:
-      x = 192 + (uint8_t) gRandom.randrange(64);
-      y = 192 + (uint8_t) gRandom.randrange(64);
+      pos.x = 192 + (uint8_t) gRandom.randrange(64);
+      pos.y = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case W:
-      x = 192 + (uint8_t) gRandom.randrange(64);
-      y = 64 + (uint8_t) gRandom.randrange(128);
+      pos.x = 192 + (uint8_t) gRandom.randrange(64);
+      pos.y = 64 + (uint8_t) gRandom.randrange(128);
       break;
     case SW:
-      x = 192 + (uint8_t) gRandom.randrange(128);
-      y = (uint8_t) gRandom.randrange(64);
+      pos.x = 192 + (uint8_t) gRandom.randrange(128);
+      pos.y = (uint8_t) gRandom.randrange(64);
       break;
   }
 }
 
 void ButterflyFriend::Update() {
     // butterfly stuff
-    Int2 delta = sBffTable[dir];
-    x += (uint8_t) delta.x;
-    y += (uint8_t) delta.y;
+    pos += UByte2(sBffTable[dir]);
     // hack - assumes butterflies and items are not rendered on same cube
     frame = (frame + 1) % (BFF_FRAME_COUNT * 3);
     using namespace BffDir;
     switch(dir) {
       case S:
-        if (y > 196) { Randomize(); }
+        if (pos.y > 196) { Randomize(); }
         break;
       case SW:
-        if (x < 60 || y > 196) { Randomize(); }
+        if (pos.x < 60 || pos.y > 196) { Randomize(); }
         break;
       case W:
-        if (x < 60) { Randomize(); }
+        if (pos.x < 60) { Randomize(); }
         break;
       case NW:
-        if (x < 60 || y < 60) { Randomize(); }
+        if (pos.x < 60 || pos.y < 60) { Randomize(); }
         break;
       case N:
-      if (y < 60) { Randomize(); }
+      if (pos.y < 60) { Randomize(); }
         break;
       case NE:
-      if (x > 196 || y < 60) { Randomize(); }
+      if (pos.x > 196 || pos.y < 60) { Randomize(); }
         break;
       case E:
-      if (x > 196) { Randomize(); }
+      if (pos.x > 196) { Randomize(); }
         break;
       case SE:
-      if (x > 196 || y > 196) { Randomize(); }
+      if (pos.x > 196 || pos.y > 196) { Randomize(); }
         break;
     }
 }

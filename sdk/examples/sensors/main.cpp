@@ -15,7 +15,7 @@ using namespace Sifteo;
 static Cube cubes[NUM_CUBES];
 
 struct counts_t {
-    unsigned touch, neighborAdd, neighborRemove;
+    unsigned touch, shake, neighborAdd, neighborRemove;
 };
         
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
@@ -31,6 +31,11 @@ void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
 static void onTouch(counts_t *counts, _SYSCubeID cid)
 {    
     counts[cid].touch++;
+}
+
+static void onShake(counts_t *counts, _SYSCubeID cid)
+{    
+    counts[cid].shake++;
 }
 
 static void onNeighborAdd(counts_t *counts,
@@ -59,38 +64,46 @@ void main()
     }
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             Cube &cube = cubes[i]; 
+            int id = cube.id();
             VidMode_BG0_ROM vid(cube.vbuf);
-            String<128> str;
+            String<192> str;
 
             uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << cube.id() << "\n";
+            str << "I am cube #" << id << "\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
-            _SYS_getNeighbors(cube.id(), &nb);
+            _SYS_getNeighbors(id, &nb);
             str << "nb "
                 << Hex(nb.sides[0], 2) << " "
                 << Hex(nb.sides[1], 2) << " "
                 << Hex(nb.sides[2], 2) << " "
                 << Hex(nb.sides[3], 2) << "\n";
             
-            str << "   +" << counts[cube.id()].neighborAdd
-                << ", -" << counts[cube.id()].neighborRemove
+            str << "   +" << counts[id].neighborAdd
+                << ", -" << counts[id].neighborRemove
                 << "\n\n";
 
-            str << "bat:   " << Hex(_SYS_getRawBatteryV(cube.id()), 4) << "\n";
-            str << "touch: " << counts[cube.id()].touch << "\n\n";
+            str << "bat:   " << Hex(_SYS_getRawBatteryV(id), 4) << "\n";
+            str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
 
-            Vec2 accel = cube.physicalAccel();
-            str << "acc: " << Fixed(accel.x, 3) << " "
-                << Fixed(accel.y, 3) << "\n";
+            _SYSAccelState accel = _SYS_getAccel(id);
+            str << "acc: "
+                << Fixed(accel.x, 3)
+                << Fixed(accel.y, 3)
+                << Fixed(accel.z, 3) << "\n";
 
+            _SYSTiltState tilt = _SYS_getTilt(id);
+            str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
+            str << "shake: " << counts[id].shake;
+                
             vid.BG0_text(Vec2(1,2), str);
 
             drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
