@@ -1,8 +1,10 @@
 #pragma once
 #include "Room.h"
+#include "Sokoblock.h"
 
-#define ROOM_CAPACITY (81)
-#define PATH_CAPACITY (32)
+#define ROOM_CAPACITY   (81)
+#define PATH_CAPACITY   (32)
+#define BLOCK_CAPACITY  (8)
 #define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
@@ -22,15 +24,16 @@ struct BroadPath {
   Cube::Side steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
   BroadPath();
   bool IsDefined() const { return *steps >= 0; }
-  bool PopStep(BroadLocation newRoot, BroadLocation* outNext);
+  bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
 };
 
 struct NarrowPath {
-  uint8_t moves[PATH_CAPACITY];
-  uint8_t *pFirstMove;
+  Cube::Side moves[PATH_CAPACITY];
+  Cube::Side *pFirstMove;
   inline int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
-  inline const uint8_t* End() const { return moves + PATH_CAPACITY; }
+  inline const Cube::Side* Begin() { return pFirstMove; }
+  inline const Cube::Side* End() { return moves + PATH_CAPACITY; }
 };
 
 //-----------------------------------------------------------------------------
@@ -41,6 +44,12 @@ class Map {
 private:
   const MapData* mData;
   Room mRooms[ROOM_CAPACITY];
+
+  // these non-room-based entities are naively allocated here.
+  // we may need to create some other data structure to act as 
+  // a lightweight generic pool allocator or something :P
+  Sokoblock mBlock[BLOCK_CAPACITY];
+  uint8_t mBlockCount;
 
 public:
   void Init();
@@ -56,6 +65,10 @@ public:
   bool IsVertexWalkable(Int2 globalVertex);
   bool FindBroadPath(BroadPath* outPath);
   bool FindNarrowPath(BroadLocation loc, Cube::Side direction, NarrowPath* outPath);
+
+  bool BlockCount() const { return mBlockCount; }
+  Sokoblock* BlockBegin() { return mBlock; }
+  Sokoblock* BlockEnd() { return mBlock + mBlockCount; }
 
 
   // Map Data Getters
@@ -80,8 +93,8 @@ public:
   }
   
   inline const RoomData* GetRoomData(int roomId) const {
-      ASSERT(roomId < mData->width * mData->height);
-      return mData->rooms + roomId;
+    ASSERT(roomId < mData->width * mData->height);
+    return mData->rooms + roomId;
   }
 
   inline const RoomData* GetRoomData(Int2 location) const {
@@ -94,12 +107,23 @@ public:
     return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
   }
 
+  inline uint8_t GetGlobalTileId(Int2 tile) {
+    const Int2 loc = tile >> 3;
+    return GetTileId(loc.x + mData->width * loc.y, tile - (loc<<3));
+  }
+
   inline bool IsTileOpen(Int2 location, Int2 tile) const {
     ASSERT(0 <= location.x && location.x < mData->width);
     ASSERT(0 <= location.y && location.y < mData->height);
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
     return ( mData->rooms[location.y * mData->width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
+  }
+
+  inline bool IsTileLava(uint8_t tid) {
+    // Effectively O(1) since the length of lavaTiles is capped
+    for(const uint8_t *p=mData->lavaTiles; p&&*p; ++p) { if (*p==tid) return true; }
+    return false;
   }
 
   inline uint8_t GetRoomId(Int2 location) const {

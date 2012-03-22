@@ -21,9 +21,21 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-
+/*
+ * We're telling LLVM that our stack grows upwards, since within any
+ * particular (SVM-allocated) stack frame, we really really want positive
+ * offsets from SP. We could do this by using setOffsetAdjustment() below,
+ * but that makes argument passing a lot hairier than it needs to be!
+ *
+ * So, until we have a good reason to do otherwise, we'll just claim to
+ * LLVM that our stack grows upwards. What it doesn't know won't hurt it?
+ *
+ * Also, we always want the stack to be 4-byte aligned, but in SVM we have
+ * no need for 8-byte alignment. SVM doesn't support any instructions that
+ * have this requirement.
+ */
 SVMFrameLowering::SVMFrameLowering()
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0, 8) {}
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 4, 0, 4) {}
 
 void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
 {
@@ -69,7 +81,6 @@ void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
      * a 0x7F in their upper address bits.
      */
 
-    MFI->setOffsetAdjustment(stackSize);
     uint32_t wordsRemaining = (stackSize + 3) / 4;
 
     if (wordsRemaining) {

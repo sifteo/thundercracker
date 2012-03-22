@@ -53,6 +53,53 @@ void Game::Paint(bool sync) {
 // HELPERS
 //------------------------------------------------------------------
 
+void Game::MoveBlock(Sokoblock* block, Int2 u) {
+  if (block) {
+    block->Move(u);
+    mPlayer.TargetView()->UpdateBlock();
+
+    // Could be optimized, perhaps
+    const Cube::Side dir = InferDirection(u);
+    ViewSlot* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
+    if (view && view->IsShowingRoom()) {
+      RoomView* pRoomView = view->GetRoomView();
+      if (pRoomView->Block()) {
+        pRoomView->UpdateBlock();
+      } else {
+        pRoomView->ShowBlock(block);
+      }
+    }
+    //
+  }
+}
+
+
+int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
+  mPlayer.SetDirection(dir);
+
+  const Int2 unit = kSideToUnit[dir];
+  if (dot(BroadDirection(), unit) != 1) { block = 0; }
+
+  // if we have any progress to use, use it here
+  if (progress != 0) {
+    mPlayer.Move(progress * unit);
+    MoveBlock(block, progress * unit);
+    Paint();
+  }
+  // while we're still moving in this direction
+  while(progress+WALK_SPEED < 16) {
+    progress += WALK_SPEED;
+    mPlayer.Move(WALK_SPEED * unit);
+    MoveBlock(block, WALK_SPEED * unit);
+    Paint();
+  }
+  // use up any remainder
+  const int leftovers = 16 - progress;
+  mPlayer.Move(leftovers * unit);
+  MoveBlock(block, leftovers * unit);
+  return WALK_SPEED - leftovers;  
+}
+
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
   mPlayer.Move(dx, dy);
@@ -127,7 +174,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 
 void Game::IrisOut(ViewSlot* view) {
   view->HideSprites();
-  view->Overlay().Flush();
+  BG1Helper(*view->GetCube()).Flush();
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -174,7 +221,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 
 
 void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
-    Dialog view(vslot->GetCube());
+    Dialog view;
     ViewMode mode = vslot->Graphics();
     PlaySfx(sfx_neighbor);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
@@ -195,7 +242,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
             mode.setWindow(0, 80);
             _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(Vec2(0,0)), bg0_tiles, 180);
           }
-          BG1Helper ovrly = vslot->Overlay();
+          BG1Helper ovrly(*vslot->GetCube());
           ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
           ovrly.Flush();
           Paint(true);
@@ -209,7 +256,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           #endif
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
-          view.Init();
+          view.Init(vslot->GetCube());
         }
         view.Erase();
         Paint(true);
@@ -259,8 +306,8 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint(true);
   #endif
   gfx.setWindow(80+16,128-80-16);
-  Dialog view(pView->GetCube());
-  view.Init();
+  Dialog view;
+  view.Init(pView->GetCube());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
@@ -410,7 +457,7 @@ unsigned Game::OnPassiveTrigger() {
       if (p != pView) { p->HideLocation(); }
     }
     pView->HideSprites();
-    pView->Overlay().Flush();
+    BG1Helper(*pView->GetCube()).Flush();
     Paint(true);
 
     Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
@@ -442,41 +489,48 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::OnEnterGateway(Room*pRoom) {
+  //---------------------------------------------------------------------------
+  // PLAYER TRIGGERED GATEWAY
+  const GatewayData* pGate = pRoom->TriggerAsGate();
+  const MapData& targetMap = gMapData[pGate->targetMap];
+  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
+  if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
+  mPlayer.SetEquipment(0);
+  TeleportTo(gMapData[pGate->targetMap], Vec2(
+    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+  ));
+  OnTriggerEvent(pGate->trigger.eventType);
+  RestorePearlIdle();
+}
+
+void Game::OnNpcChatter(Room *pRoom) {
+  //-------------------------------------------------------------------------
+  // PLAYER TRIGGERED NPC DIALOG
+  mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+  mPlayer.CurrentView()->UpdatePlayer();
+  for(int i=0; i<16; ++i) { Paint(true); }
+  const NpcData* pNpc = pRoom->TriggerAsNPC();
+  if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
+  System::paintSync();
+  mPlayer.CurrentView()->Parent()->Restore();
+  System::paintSync();
+  OnTriggerEvent(pNpc->trigger.eventType);
+  RestorePearlIdle();
+}
 void Game::OnActiveTrigger() {
-  if (mPlayer.GetRoom()->HasGateway()) {
-
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED GATEWAY
-    const GatewayData* pGate = mPlayer.GetRoom()->TriggerAsGate();
-    const MapData& targetMap = gMapData[pGate->targetMap];
-    const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-    if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
-    mPlayer.SetEquipment(0);
-    TeleportTo(gMapData[pGate->targetMap], Vec2(
-      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-    ));
-
-    OnTriggerEvent(pGate->trigger.eventType);
-
-  } else if (mPlayer.GetRoom()->HasNPC()) {
-    
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED NPC DIALOG
-    mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-    mPlayer.CurrentView()->UpdatePlayer();
-    for(int i=0; i<16; ++i) { Paint(true); }
-    const NpcData* pNpc = mPlayer.GetRoom()->TriggerAsNPC();
-    if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
-    System::paintSync();
-    mPlayer.CurrentView()->Parent()->Restore();
-    System::paintSync();
-
-    OnTriggerEvent(pNpc->trigger.eventType);
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasGateway()) {
+    OnEnterGateway(pRoom);
+  } else if (pRoom->HasNPC()) {
+    OnNpcChatter(pRoom);
   }  
+}
 
+void Game::RestorePearlIdle() {
   if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
     // Always look "south" after an action
     mPlayer.SetDirection(SIDE_BOTTOM);
@@ -529,6 +583,52 @@ void Game::OnTriggerEvent(unsigned id) {
   }
 }
 
+bool Game::TryEncounterBlock(Sokoblock* block) {
+  const Int2 dir = BroadDirection();
+  const Int2 loc_src = mPlayer.TargetRoom()->Location();
+  const Int2 loc_dst = loc_src + dir;
+  // no moving blocks off the map
+  if (!mMap.Contains(loc_dst)) { return false; }
+  Room* pRoom = mMap.GetRoom(loc_dst);
+  // no moving blocks into subdivided rooms
+  if (pRoom->IsSubdivided()) { return false; }
+  // no moving blocks through walls or small portals
+  Cube::Side dst_enter_side = SIDE_LEFT;
+  if (dir.x < 0) { dst_enter_side = SIDE_RIGHT; }
+  else if (dir.y > 0) { dst_enter_side = SIDE_TOP; }
+  else if (dir.y < 0) { dst_enter_side = SIDE_BOTTOM; }
+  if (pRoom->CountOpenTilesAlongSide(dst_enter_side) < 4) {
+    return false;
+  }
+  // no moving blocks onto other blocks
+  for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
+    if (p != block && pRoom->IsShowingBlock(p)) {
+      LOG(("BLOCK OVERLAP FAIL\n"));
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Game::TryEncounterLava(Cube::Side dir) {
+  ASSERT(0 <= dir && dir < 4);
+  const Int2 baseTile = mPlayer.Position() >> 4;
+  switch(dir) {
+    case SIDE_TOP: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2<int>(1,1)));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    case SIDE_LEFT:
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2<int>(2,0)));
+    case SIDE_BOTTOM: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2<int>(-1,1));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    default: // SIDE_RIGHT
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2<int>(1,0)));
+  }
+}
+
 //------------------------------------------------------------------
 // NEIGHBOR WALKING
 //------------------------------------------------------------------
@@ -539,11 +639,9 @@ void Game::OnTriggerEvent(unsigned id) {
 
 static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
+  if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  if (origin) {
-    view->GetCube()->orientTo(*(origin->GetCube()));
-  }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
     result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view);
   }

@@ -36,8 +36,10 @@ namespace Sifteo {
 #define MAXFLOAT    ((float)3.40282346638528860e+38)
 
 
-/*
- * General helper routines
+/**
+ * For any type, clamp a value to the extremes 'low' and 'high'. If the
+ * value is less than 'low' we return 'low', and if it's greater than 'high'
+ * we return 'high'. Otherwise we return the value unmodified.
  */
 
 template <typename T> inline T clamp(const T& value, const T& low, const T& high)
@@ -51,6 +53,11 @@ template <typename T> inline T clamp(const T& value, const T& low, const T& high
     return value;
 }
 
+/**
+ * For any type, return the absolute value. If the value is less than zero,
+ * we return -value. Otherwise, we return the unmodified value.
+ */
+
 template <typename T> inline T abs(const T& value)
 {
     if (value < 0) {
@@ -59,41 +66,85 @@ template <typename T> inline T abs(const T& value)
     return value;
 }
 
-float inline fmodf(float a, float b)
-{
-    uint32_t result = _SYS_fmodf(reinterpret_cast<uint32_t&>(a),
-                                 reinterpret_cast<uint32_t&>(b));
-    return reinterpret_cast<float&>(result);
-}
-
-float inline fabs(float a)
-{
-    if (a < 0)
-        return -a;
-    return a;
-}
-
-
-/*
- * Trigonometry
+/**
+ * Compute the remainder (modulo) operation for two floating point numbers.
+ * This variant operates on single-precision floats.
  */
- 
-void inline sincosf(float x, float *s, float *c)
+
+float inline fmod(float a, float b)
+{
+    uint32_t r = _SYS_fmodf(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * Compute the remainder (modulo) operation for two floating point numbers.
+ * This variant operates on double-precision floats.
+ */
+
+double inline fmod(double a, double b)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t ib = reinterpret_cast<uint64_t&>(b);
+    uint64_t r = _SYS_fmod(ia, ia >> 32, ib, ib >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
+ * Compute the square root of a floating point number.
+ * This variant operates on single-precision floats.
+ */
+
+float inline sqrt(float a)
+{
+    uint32_t r = _SYS_sqrtf(reinterpret_cast<uint32_t&>(a));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * Compute the square root of a floating point number.
+ * This variant operates on double-precision floats.
+ */
+
+double inline sqrt(double a)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t r = _SYS_sqrt(ia, ia >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
+ * Simultaneously compute the sine and cosine of a specified angle,
+ * in radians. This yields two single-precision floating point results,
+ * returned via the pointers 's' and 'c'.
+ */
+
+void inline sincos(float x, float *s, float *c)
 {
     _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
 }
 
-float inline sinf(float x)
+/**
+ * Calculate the sine of a specified angle, in radians.
+ * Returns a single-precision floating point result.
+ */
+
+float inline sin(float x)
 {
     float s;
-    sincosf(x, &s, NULL);
+    sincos(x, &s, NULL);
     return s;
 }
 
-float inline cosf(float x)
+/**
+ * Calculate the cosine of a specified angle, in radians.
+ * Returns a single-precision floating point result.
+ */
+
+float inline cos(float x)
 {
     float c;
-    sincosf(x, NULL, &c);
+    sincos(x, NULL, &c);
     return c;
 }
 
@@ -118,7 +169,7 @@ template <typename T> struct Vector2 {
      */
     void setPolar(float angle, float magnitude) {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         x = c * magnitude;
         y = s * magnitude;
     }
@@ -128,7 +179,7 @@ template <typename T> struct Vector2 {
      */
     Vector2<T> rotate(float angle) const {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         Vector2<T> result = { x*c - y*s, x*s + y*c };
         return result;
     }
@@ -139,6 +190,21 @@ template <typename T> struct Vector2 {
      */
     T len2() const {
         return ( x * x + y * y );
+    }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector.
+     */
+    T len() const {
+        return sqrt(len2());
+    }
+
+    /**
+     * Return a normalized version of this vector.
+     * The returned vector will have a magnitude of 1.0.
+     */
+    T normalize() const {
+        return *this / len();
     }
     
     /**
@@ -160,8 +226,8 @@ template <typename T> struct Vector2 {
     
     /// Shortcuts for common explicit casts
     Vector2<int> toInt() const { return cast<int>(); }
-    Vector2<int> toFloat() const { return cast<float>(); }
-    Vector2<int> toDouble() const { return cast<double>(); }
+    Vector2<float> toFloat() const { return cast<float>(); }
+    Vector2<double> toDouble() const { return cast<double>(); }
     
     /// Implicit casts
     operator Vector2<int>            () const { return cast<int>(); }
@@ -191,9 +257,12 @@ typedef Vector2<double>             Double2;
  */
  
 template <typename T> inline Vector2<T> Vec2(T x, T y) {
-    Vector2<T> result;
-    result.set(x, y);
+    Vector2<T> result = { x, y };
     return result;
+}
+
+template <typename T> inline T dot(Vector2<T> u, Vector2<T> v) {
+    return u.x * v.x + u.y * v.y;
 }
 
 // Vector operations
@@ -228,6 +297,144 @@ template <typename T> inline Double2 operator*(Vector2<T> v, double k) { return 
 template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return Vec2<double>(v.x/k, v.y/k); }
 template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return Vec2<double>(u.x+=k, u.y+=k); }
 template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return Vec2<double>(u.x*=k, u.y*=k); }
+
+
+/**
+ * Generalized three-element cartesian coordinate vector.
+ */
+
+template <typename T> struct Vector3 {
+    T x, y, z;
+
+    /**
+     * Modify this vector's value in-place.
+     */
+    void set(T _x, T _y, T _z) {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+    
+    /**
+     * Extract a 2-vector with just the named components.
+     */
+
+    Vector2<T> xy() const { return Vec2(x, y); }
+    Vector2<T> xz() const { return Vec2(x, z); }
+    Vector2<T> yx() const { return Vec2(y, x); }
+    Vector2<T> yz() const { return Vec2(y, z); }
+    Vector2<T> zx() const { return Vec2(z, x); }
+    Vector2<T> zy() const { return Vec2(z, y); }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector, squared.
+     * This avoids the costly square root calculation.
+     */
+    T len2() const {
+        return ( x * x + y * y + z * z );
+    }
+
+    /**
+     * Calculate the scalar length (magnitude) of this vector.
+     */
+    T len() const {
+        return sqrt(len2());
+    }
+
+    /**
+     * Return a normalized version of this vector.
+     * The returned vector will have a magnitude of 1.0.
+     */
+    T normalize() const {
+        return *this / len();
+    }
+
+    /**
+     * Round a floating point vector to the nearest integer.
+     */
+    Vector3<int> round() const {
+        Vector3<int> result = { x + 0.5f, y + 0.5f, z + 0.5f };
+        return result;
+    }
+
+    /**
+     * Explicitly cast this vector to another vector type, using
+     * default C++ truncation or extension rules.
+     */
+    template <typename R> Vector3<R> cast() const {
+        Vector3<R> result = { x, y };
+        return result;
+    }
+    
+    /// Shortcuts for common explicit casts
+    Vector3<int> toInt() const { return cast<int>(); }
+    Vector3<float> toFloat() const { return cast<float>(); }
+    Vector3<double> toDouble() const { return cast<double>(); }
+    
+    /// Implicit casts
+    operator Vector3<int>            () const { return cast<int>(); }
+    operator Vector3<unsigned>       () const { return cast<unsigned>(); }
+    operator Vector3<short>          () const { return cast<short>(); }
+    operator Vector3<unsigned short> () const { return cast<unsigned short>(); }
+    operator Vector3<int8_t>         () const { return cast<int8_t>(); }
+    operator Vector3<uint8_t>        () const { return cast<uint8_t>(); }
+    operator Vector3<float>          () const { return cast<float>(); }
+    operator Vector3<double>         () const { return cast<double>(); }
+};
+
+typedef Vector3<int>                Int3;
+typedef Vector3<unsigned>           UInt3;
+typedef Vector3<short>              Short3;
+typedef Vector3<unsigned short>     UShort3;
+typedef Vector3<int8_t>             Byte3;
+typedef Vector3<uint8_t>            UByte3;
+typedef Vector3<float>              Float3;
+typedef Vector3<double>             Double3;
+
+/**
+ * Create a Vector3, from a set of (x, y, z) coordinates.
+ * This is a standalone function, instead of a constructor,
+ * so that Vector3 can remain a POD type, and it can be used
+ * in unions.
+ */
+ 
+template <typename T> inline Vector3<T> Vec3(T x, T y, T z) {
+    Vector3<T> result = { x, y, z };
+    return result;
+}
+
+// Vector operations
+template <typename T> inline Vector3<T> operator-(Vector3<T> u) { return Vec3<T>(-u.x, -u.y, -u.z); }
+template <typename T> inline Vector3<T> operator+=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x+=v.x, u.y+=v.y, u.z+=v.z); }
+template <typename T> inline Vector3<T> operator-=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x-=v.x, u.y-=v.y, u.z-=v.z); }
+template <typename T> inline Vector3<T> operator+(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x+v.x, u.y+v.y, u.z+v.z); }
+template <typename T> inline Vector3<T> operator-(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x-v.x, u.y-v.y, u.z-v.z); }
+template <typename T> inline Vector3<T> operator*(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x*v.x, u.y*v.y, u.z*v.z); }
+template <typename T> inline bool operator==(Vector3<T> u, Vector3<T> v) { return u.x == v.x && u.y == v.y && u.z == v.z; }
+template <typename T> inline bool operator!=(Vector3<T> u, Vector3<T> v) { return u.x != v.x || u.y != v.y || u.z != v.z; }
+
+// Scalar int promotion
+template <typename T> inline Int3 operator*(int k, Vector3<T> v) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator*(Vector3<T> v, int k) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator/(Vector3<T> v, int k) { return Vec3<int>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Int3 operator+=(Vector3<T> &u, int k) { return Vec3<int>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Int3 operator*=(Vector3<T> &u, int k) { return Vec3<int>(u.x*=k, u.y*=k, u.z*=k); }
+template <typename T> inline Int3 operator<<(Vector3<T> u, int shift) { return Vec3<int>(u.x<<shift, u.y<<shift, u.z<<shift); }
+template <typename T> inline Int3 operator>>(Vector3<T> u, int shift) { return Vec3<int>(u.x>>shift, u.y>>shift, u.z>>shift); }
+
+// Scalar float promotion
+template <typename T> inline Float3 operator*(float k, Vector3<T> v) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator*(Vector3<T> v, float k) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator/(Vector3<T> v, float k) { return Vec3<float>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Float3 operator+=(Vector3<T> &u, float k) { return Vec3<float>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Float3 operator*=(Vector3<T> &u, float k) { return Vec3<float>(u.x*=k, u.y*=k, u.z*=k); }
+
+// Scalar double promotion
+template <typename T> inline Double3 operator*(double k, Vector3<T> v) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator*(Vector3<T> v, double k) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator/(Vector3<T> v, double k) { return Vec3<double>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Double3 operator+=(Vector3<T> &u, double k) { return Vec3<double>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Double3 operator*=(Vector3<T> &u, double k) { return Vec3<double>(u.x*=k, u.y*=k, u.z*=k); }
 
 
 /**
@@ -393,7 +600,7 @@ struct AffineMatrix {
 
     static AffineMatrix rotation(float angle) {
         float s, c;
-        sincosf(angle, &s, &c);
+        sincos(angle, &s, &c);
         return AffineMatrix(c, -s, 0,
                             s, c, 0);
     }

@@ -24,6 +24,8 @@ DialogBox = image{"dialog_box.png"}
 InventoryBackground = image{"inventory_background.png"}
 MinimapBasic = image{"minimap_basic.png", width=8, height=8}
 MinimapDot = image{"minimap_dot.png", width=8, height=8, pinned=true}
+Edge = image{ "edge.png" }
+IconPress = image{ "icon_press.png" }
 
 dofile "content.gen.lua"
 

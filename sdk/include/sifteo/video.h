@@ -16,7 +16,6 @@
 
 namespace Sifteo {
 
-
 /**
  * A memory buffer which holds graphics data. This is a mirror of the
  * remote graphics memory in each cube's hardware. By writing to this

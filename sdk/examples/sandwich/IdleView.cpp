@@ -10,7 +10,7 @@ void IdleView::Init() {
   //DrawInventorySprites();
   Parent()->HideSprites();
   Parent()->Graphics().BG0_drawAsset(Vec2(0,0), Blank);
-  Parent()->Overlay().Flush();
+  BG1Helper(*Parent()->GetCube()).Flush();
 }
 
 void IdleView::Restore() {
