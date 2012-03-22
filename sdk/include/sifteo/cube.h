@@ -44,9 +44,9 @@ static const Byte2 kSideToQ[4] = {
 // internal -- used by setOrientation()
 static const uint8_t kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
-  VidMode::ROT_RIGHT_90,
+  VidMode::ROT_LEFT_90,
   VidMode::ROT_180,
-  VidMode::ROT_LEFT_90
+  VidMode::ROT_RIGHT_90
 };
 
 // internal -- used by orientTo()
