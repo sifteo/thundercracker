@@ -181,7 +181,7 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="40" height="24">
-  <object name="TestBlock" type="Sokoblock" x="160" y="160" width="64" height="64">
+  <object name="TestBlock" type="Sokoblock" x="288" y="48" width="64" height="64">
    <properties>
     <property name="asset" value="companion_cube"/>
    </properties>
@@ -191,9 +191,24 @@
     <property name="respawn" value="0,0"/>
    </properties>
   </object>
-  <object name="LAVABOOTIES" type="Item" x="176" y="64" width="32" height="32">
+  <object name="Doggy Bowl" type="Depot" x="48" y="336" width="32" height="32">
+   <properties>
+    <property name="target" value="crystal_ball"/>
+   </properties>
+  </object>
+  <object name="LAVABOOTIES" type="Item" x="177" y="61" width="32" height="32">
    <properties>
     <property name="id" value="booties"/>
+   </properties>
+  </object>
+  <object name="crystal ball" type="Item" x="176" y="160" width="32" height="32">
+   <properties>
+    <property name="id" value="crystal_ball"/>
+   </properties>
+  </object>
+  <object name="clooooak" type="Item" x="304" y="160" width="32" height="32">
+   <properties>
+    <property name="id" value="cloak"/>
    </properties>
   </object>
  </objectgroup>
