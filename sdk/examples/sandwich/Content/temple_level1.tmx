@@ -685,7 +685,7 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="48" height="32">
-  <object name="temple_level2Gate" type="Gateway" x="728" y="184" width="32" height="32">
+  <object name="temple_level2Gate" type="_Gateway" x="728" y="184" width="32" height="32">
    <properties>
     <property name="target" value="temple_level2:temple_level1Gate"/>
    </properties>

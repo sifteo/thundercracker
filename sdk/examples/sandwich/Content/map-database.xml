@@ -1,4 +1,8 @@
 <map-database>
+	<map id="temple_level1">
+		<name>Sky Temple</name>
+	</map>
+
 	<map id="forest">
 		<name>The Forest</name>
 	</map>
