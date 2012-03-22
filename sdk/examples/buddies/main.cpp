@@ -7,6 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <sifteo/abi.h>
+#include <sifteo/asset.h> // TODO: This is only included to let metadata.h compile
+#include <sifteo/macros.h> // TODO: This is only included to let metadata.h compile
+#include <sifteo/metadata.h>
 #include <sifteo/system.h>
 #include <sifteo/time.h>
 #include "App.h"
@@ -27,6 +30,8 @@ Buddies::App sApp;
 
 void Init()
 {
+    Sifteo::Metadata().title("CubeBuddies");
+    
     sApp.Init();
     
     if (Buddies::kLoadAssets)
