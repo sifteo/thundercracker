@@ -24,6 +24,7 @@ public:
     static const unsigned int BLINK_ON_FRAMES = 10;
     static const unsigned int TIMER_POS = 6;
     static const unsigned int TIMER_SPRITE_POS = 48;
+    static const unsigned int TIMER_SPRITE_NUM_ID = 0;
 
 	TimeKeeper();
 

@@ -348,6 +348,8 @@ void CubeWrapper::Draw()
         case Game::STATE_GAMEMENU:
         {
             TurnOffSprites();
+            m_bg1helper.Clear();
+            m_bg1helper.Flush();
 
             switch( Game::Inst().getWrapperIndex( this ) )
             {
@@ -1890,6 +1892,7 @@ void CubeWrapper::ClearSprite( unsigned int id )
 
 void CubeWrapper::TurnOffSprites()
 {
+    ClearSprite( TimeKeeper::TIMER_SPRITE_NUM_ID );
     ClearSprite( GridSlot::MULT_SPRITE_ID );
     ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
 
