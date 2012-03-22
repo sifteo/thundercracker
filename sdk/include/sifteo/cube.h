@@ -141,6 +141,14 @@ struct CubeID {
     bool isTouching() const {
         return _SYS_isTouching(sys);
     }
+    
+    /**
+     * Is a shake event being detected on this cube?
+     */
+
+    bool isShaking() const {
+        return _SYS_SHAKING == _SYS_getShake(sys);
+    }
 
     /**
      * Return the cube's unique 64-bit hardware ID. This ID uniquely

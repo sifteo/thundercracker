@@ -26,7 +26,7 @@ public:
         _SYS_audio_enableChannel(&buf);
     }
 
-    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopOnce) {
+    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = _SYS_LOOP_ONCE) {
         return _SYS_audio_play(&mod.sys, &handle, loopMode);
     }
 
