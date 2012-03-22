@@ -51,6 +51,14 @@ enum RequestVal {
     RequestSyncFrame        = 0xc
 };
 
+enum Feature {
+    FeatureEndpointHalt = 0,
+    FeatureDeviceRemoteWakeup = 1,
+    FeatureTestMode = 2
+};
+
+
+
 #define GET_DEVICE_DESCRIPTOR           1
 #define GET_CONFIGURATION_DESCRIPTOR    4
 
