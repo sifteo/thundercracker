@@ -619,11 +619,7 @@ bool CubeWrapper::IsSolved() const
 
 bool CubeWrapper::IsTouching() const
 {
-#ifdef SIFTEO_SIMULATOR
     return mCube.touching();
-#else
-    return false;
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -677,9 +677,9 @@ void App::Init()
     
     LoadData();
     
-#ifdef SIFTEO_SIMULATOR
+//#ifdef SIFTEO_SIMULATOR
     mChannel.init();
-#endif
+//#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1085,9 +1085,9 @@ void App::UpdateCubes(float dt)
 
 void App::PlaySound()
 {
-#ifdef SIFTEO_SIMULATOR
+//#ifdef SIFTEO_SIMULATOR
     mChannel.play(SoundGems);
-#endif
+//#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1098,8 +1098,9 @@ void App::StartGameState(GameState gameState)
     mGameState = gameState;
     
     ASSERT(gameState < int(arraysize(kGameStateNames)));
+#ifdef SIFTEO_SIMULATOR    
     DEBUG_LOG(("State = %s\n", kGameStateNames[mGameState]));
-    
+#endif    
     switch (mGameState)
     {
         case GAME_STATE_FREEPLAY_START:
