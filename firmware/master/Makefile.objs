@@ -69,5 +69,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/usb/usbd.stm32.o \
     $(MASTER_DIR)/stm32/usb/stm32f10xotg.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbhardware.stm32.o \
+    $(MASTER_DIR)/stm32/usb/usbdriver.stm32.o \
+    $(MASTER_DIR)/stm32/usb/thunderdriver.stm32.o \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
     $(MASTER_DIR)/stm32/svmdebug.stm32.o

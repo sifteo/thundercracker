@@ -1,5 +1,5 @@
-#ifndef USBDRIVER_H
-#define USBDRIVER_H
+#ifndef USB_HARDWARE_H
+#define USB_HARDWARE_H
 
 #include "usb/usbdefs.h"
 
@@ -24,4 +24,4 @@ public:
     static void disconnect(bool disconnected);
 };
 
-#endif // USBDRIVER_H
+#endif // USB_HARDWARE_H

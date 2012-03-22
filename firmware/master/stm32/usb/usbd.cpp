@@ -1,15 +1,13 @@
 
 #include "usb/usbd.h"
 #include "usb/usbhardware.h"
+#include "usb/usbdriver.h"
 
 using namespace Usb;
 
 const DeviceDescriptor *Usbd::_dev;
 const ConfigDescriptor *Usbd::_conf;
 const char **Usbd::_strings;
-
-EpCallback Usbd::endpointCallbacks[3][3];
-Callback   Usbd::callbacks[4];
 
 uint8_t Usbd::ctrlBuf[128];
 uint16_t Usbd::address;
@@ -39,8 +37,7 @@ void Usbd::reset()
 //	_usbd_hw_set_address(0);
     UsbHardware::setAddress(0);
 
-//	if (_usbd_device.user_callback_reset)
-//		_usbd_device.user_callback_reset();
+    UsbDriver::handleReset();
 }
 
 void Usbd::setAddress(uint16_t addr)
