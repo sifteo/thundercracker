@@ -6,10 +6,10 @@
 /*
  * Platform specific interface to perform hardware related USB tasks.
  */
-class UsbDriver
+class UsbHardware
 {
 public:
-    UsbDriver();
+    UsbHardware();
 
     static void init();
     static void setAddress(uint8_t addr);

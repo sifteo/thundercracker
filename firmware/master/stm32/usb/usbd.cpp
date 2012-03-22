@@ -24,7 +24,7 @@ void Usbd::init(const DeviceDescriptor *dev,
 //    _usbd_device.ctrl_buf = usbd_control_buffer;
 //    _usbd_device.ctrl_buf_len = sizeof(usbd_control_buffer);
 
-    UsbDriver::init();
+    UsbHardware::init();
 
 //    _usbd_device.user_callback_ctr[0][USB_TRANSACTION_SETUP] = _usbd_control_setup;
 //    _usbd_device.user_callback_ctr[0][USB_TRANSACTION_OUT] = _usbd_control_out;
@@ -37,7 +37,7 @@ void Usbd::reset()
 //	_usbd_device.current_config = 0;
 //	usbd_ep_setup(0, USB_ENDPOINT_ATTR_CONTROL, 64, NULL);
 //	_usbd_hw_set_address(0);
-    UsbDriver::setAddress(0);
+    UsbHardware::setAddress(0);
 
 //	if (_usbd_device.user_callback_reset)
 //		_usbd_device.user_callback_reset();
@@ -46,6 +46,6 @@ void Usbd::reset()
 void Usbd::setAddress(uint16_t addr)
 {
     address = addr;
-    UsbDriver::setAddress(addr);
+    UsbHardware::setAddress(addr);
 }
 
