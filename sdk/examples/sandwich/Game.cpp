@@ -192,10 +192,12 @@ void Game::IrisOut(ViewSlot* view) {
 }
 
 void Game::Zoom(ViewSlot* view, int roomId) {
+#if DO_ZOOM
   PlaySfx(sfx_zoomIn);
+  System::paintSync();
   VidMode_BG2 vid(view->GetCube()->vbuf);
+  vid.init();
   vid.BG2_setBorder(0x0000);
-  vid.set();
   for(int x=0; x<8; ++x) {
     for(int y=0; y<8; ++y) {
       vid.BG2_drawAsset(
@@ -215,6 +217,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
     System::paint();
   }    
   System::paintSync();
+#endif
 }
 
 

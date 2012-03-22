@@ -27,6 +27,8 @@ using namespace Sifteo;
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
+#define EVENT_REMOTE_TRIGGER                3
+#define EVENT_OPEN_DOOR                     4
 
 struct QuestData {
     uint8_t mapId;
