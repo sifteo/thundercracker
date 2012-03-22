@@ -153,6 +153,7 @@ private:
     int mHintPiece0;
     int mHintPiece1;
     int mHintPieceSkip;
+    int mHintFlowIndex;
     
     // Clues
     float mClueOnTimer;

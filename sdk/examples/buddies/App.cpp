@@ -611,6 +611,7 @@ App::App()
     , mHintPiece0(-1)
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
+    , mHintFlowIndex(0)
     , mClueOnTimer(0.0f)
     , mClueOffTimers()
     , mFreePlayShakeThrottleTimer(0.0f)
@@ -814,7 +815,13 @@ void App::OnNeighborAdd(
         if (mGameState == GAME_STATE_SHUFFLE_PLAY)
         {
             mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
+            mHintFlowIndex = 0;
             mClueOnTimer = kClueTimerOnDuration;
+        }
+        else if (mGameState == GAME_STATE_STORY_PLAY)
+        {
+            mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
+            mHintFlowIndex = 0;
         }
         
         for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
@@ -1209,6 +1216,7 @@ void App::StartGameState(GameState gameState)
                 mFaceCompleteTimers[i] = 0.0f;
             }
             mHintTimer = kHintTimerOnDuration;
+            mHintFlowIndex = 0;
             mClueOnTimer = kClueTimerOnDuration;
             break;
         }
@@ -1243,7 +1251,6 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(i % kMaxBuddies);
                 }
             }
-            
             mStoryPuzzleIndex = 0;
             StartGameState(GAME_STATE_STORY_CHAPTER_START);
             break;
@@ -1302,6 +1309,7 @@ void App::StartGameState(GameState gameState)
                 mClueOffTimers[i] = 0.0f;
             }
             mHintTimer = kHintTimerOnDuration;
+            mHintFlowIndex = 0;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -1868,7 +1876,20 @@ void App::UpdateGameState(float dt)
                     {
                         if (UpdateTimer(mHintTimer, dt))
                         {
-                            StartHint();
+                            if (mHintFlowIndex == 0)
+                            {
+                                ++mHintFlowIndex;
+                                mHintTimer = kHintTimerRepeatDuration;
+                            }
+                            else if (mHintFlowIndex == 1)
+                            {
+                                ++mHintFlowIndex;
+                                mHintTimer = kHintTimerRepeatDuration;
+                            }
+                            else
+                            {
+                                StartHint();
+                            }
                         }
                     }
                 }
@@ -2360,6 +2381,10 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                         mStoryPuzzleIndex,
                         UiClueBlank,
                         GetPuzzle(mStoryPuzzleIndex).GetClue());
+                }
+                else if (cubeWrapper.GetId() == 0 && mHintFlowIndex == 1)
+                {
+                    cubeWrapper.DrawBackground(ShuffleNeighbor);
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
@@ -3165,6 +3190,7 @@ void App::StopHint(bool reset)
     if (reset)
     {
         mHintTimer = kHintTimerOnDuration;
+        mHintFlowIndex = 0;
     }
     else
     {
