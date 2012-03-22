@@ -228,3 +228,12 @@ b2Vec3 AccelerationProbe::measure(b2Body *body, float unitsToGs)
 
     return b2Vec3(accel2D.x * unitsToGs, accel2D.y * unitsToGs, -1.0f);
 }
+
+void FrontendCube::toggleRotationLock(bool isRotationFixed) {
+    b2Body* b = bodyFixture->GetBody();
+    b->SetFixedRotation(isRotationFixed);
+    if (isRotationFixed) {
+        b->SetTransform(b->GetPosition(), 0.f);
+        b->SetAngularVelocity(0.f);
+    }
+}

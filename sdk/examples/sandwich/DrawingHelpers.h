@@ -16,8 +16,7 @@ struct ButterflyFriend {
     uint8_t active : 1;
     uint8_t dir : 3;
     uint8_t frame : 4;
-    uint8_t x;
-    uint8_t y;
+    UByte2 pos;
 
     void Randomize();
     void Update();

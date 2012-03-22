@@ -35,9 +35,7 @@ void Game::Paint(bool sync) {
   mAnimFrames++;
 
   #if PLAYTESTING_HACKS
-    Cube* pCube = mPlayer.View()->GetCube();
-    _SYSShakeState shakeState = _SYS_getShake(pCube->id());
-    if (shakeState == SHAKING) {
+    if (mPlayer.View()->GetCube()->isShaking()) {
       if (sShakeTime < 0.0f) {
         sShakeTime = 0.f;
       } else {
@@ -333,16 +331,104 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
   for(SystemTime t=SystemTime::now(); SystemTime::now()-t<0.25f;) { Paint(); }
 }
 
+void Game::RestorePearlIdle() {
+  if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
+    // Always look "south" after an action
+    mPlayer.SetDirection(SIDE_BOTTOM);
+    mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+    mPlayer.CurrentView()->UpdatePlayer();
+  }
+}
+
 //------------------------------------------------------------------
 // EVENTS
 //------------------------------------------------------------------
+
+
+void Game::OnActiveTrigger() {
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasGateway()) {
+    OnEnterGateway(pRoom->TriggerAsGate());
+  } else if (pRoom->HasNPC()) {
+    const NpcData* npc = pRoom->TriggerAsNPC();
+    if (npc->optional) { OnNpcChatter(npc); }
+  }  
+}
+
+unsigned Game::OnPassiveTrigger() {
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasItem()) {
+    OnPickup(pRoom);
+  } else if (pRoom->HasTrapdoor()) {
+    OnTrapdoor(pRoom);
+    return TRIGGER_RESULT_PATH_INTERRUPTED;
+  } else if (pRoom->HasNPC()) {
+    const NpcData* npc = pRoom->TriggerAsNPC();
+    if (!npc->optional) { OnNpcChatter(npc); }
+  }
+  return TRIGGER_RESULT_NONE;
+}
+
+void Game::OnTrapdoor(Room *pRoom) {
+  //-------------------------------------------------------------------------
+  // PLAYER TRIGGERED TRAPDOOR
+  // animate the tiles opening
+  Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
+  for(unsigned i=1; i<=7; ++i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+  // animate pearl falling TODO
+  mPlayer.CurrentView()->HidePlayer();
+  for(unsigned i=0; i<16; ++i) {
+    Paint(true);
+  }
+  // animate the tiles closing
+  for(int i=6; i>=0; --i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+  // pan to respawn point
+  ViewSlot *pView = mPlayer.CurrentView()->Parent();
+  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (p != pView) { p->HideLocation(); }
+  }
+  pView->HideSprites();
+  BG1Helper(*pView->GetCube()).Flush();
+  Paint(true);
+
+  Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
+  Int2 start = 128 * pRoom->Location();
+  Int2 delta = 128 * (targetRoom->Location() - pRoom->Location());
+  ViewMode mode = pView->Graphics();
+  SystemTime t=mSimTime; 
+  do {
+    float u = float(mSimTime-t) / 2.333f;
+    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+    Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+    DrawOffsetMap(&mode, mMap.Data(), pos);
+    Paint(true);
+  } while(mSimTime-t<2.333f);
+  // fall
+  DrawRoom(&mode, mMap.Data(), targetRoom->Id());
+  int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
+  for(unsigned i=0; i<arraysize(animHeights); ++i) {
+    mPlayer.CurrentView()->DrawPlayerFalling(animHeights[i]);
+    Paint(true);
+  }
+  mPlayer.SetPosition(targetRoom->Center(0));
+  mPlayer.SetDirection(SIDE_BOTTOM);
+  pView->ShowLocation(mPlayer.Position()/128, true);
+  CheckMapNeighbors();
+  Paint(true);
+}
 
 void Game::OnInventoryChanged() {
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
-
-  
   // demo end-condition hack
   int count = 0;
   for(int i=0; i<4; ++i) {
@@ -350,7 +436,6 @@ void Game::OnInventoryChanged() {
       return;
     }
   }
-  
   mIsDone = true;
 }
 
@@ -425,74 +510,9 @@ void Game::OnPickup(Room *pRoom) {
   OnTriggerEvent(pItem->trigger.eventType);
 }
 
-unsigned Game::OnPassiveTrigger() {
-  Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasItem()) {
-    OnPickup(pRoom);
-  } else if (pRoom->HasTrapdoor()) {
-
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED TRAPDOOR
-    // animate the tiles opening
-    Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
-    for(unsigned i=1; i<=7; ++i) { // magic
-      mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-      Paint(true);
-      Paint(true);
-    }
-    // animate pearl falling TODO
-    mPlayer.CurrentView()->HidePlayer();
-    for(unsigned i=0; i<16; ++i) {
-      Paint(true);
-    }
-    // animate the tiles closing
-    for(int i=6; i>=0; --i) { // magic
-      mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-      Paint(true);
-      Paint(true);
-    }
-    // pan to respawn point
-    ViewSlot *pView = mPlayer.CurrentView()->Parent();
-    for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
-      if (p != pView) { p->HideLocation(); }
-    }
-    pView->HideSprites();
-    BG1Helper(*pView->GetCube()).Flush();
-    Paint(true);
-
-    Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
-    Int2 start = 128 * pRoom->Location();
-    Int2 delta = 128 * (targetRoom->Location() - pRoom->Location());
-    ViewMode mode = pView->Graphics();
-    SystemTime t=mSimTime; 
-    do {
-      float u = float(mSimTime-t) / 2.333f;
-      u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-      Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
-      DrawOffsetMap(&mode, mMap.Data(), pos);
-      Paint(true);
-    } while(mSimTime-t<2.333f);
-    // fall
-    DrawRoom(&mode, mMap.Data(), targetRoom->Id());
-    int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
-    for(unsigned i=0; i<arraysize(animHeights); ++i) {
-      mPlayer.CurrentView()->DrawPlayerFalling(animHeights[i]);
-      Paint(true);
-    }
-    mPlayer.SetPosition(targetRoom->Center(0));
-    mPlayer.SetDirection(SIDE_BOTTOM);
-    pView->ShowLocation(mPlayer.Position()/128, true);
-    CheckMapNeighbors();
-    Paint(true);
-    return TRIGGER_RESULT_PATH_INTERRUPTED;
-  }
-  return TRIGGER_RESULT_NONE;
-}
-
-void Game::OnEnterGateway(Room*pRoom) {
+void Game::OnEnterGateway(const GatewayData* pGate) {
   //---------------------------------------------------------------------------
   // PLAYER TRIGGERED GATEWAY
-  const GatewayData* pGate = pRoom->TriggerAsGate();
   const MapData& targetMap = gMapData[pGate->targetMap];
   const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
@@ -506,37 +526,19 @@ void Game::OnEnterGateway(Room*pRoom) {
   RestorePearlIdle();
 }
 
-void Game::OnNpcChatter(Room *pRoom) {
+void Game::OnNpcChatter(const NpcData* pNpc) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED NPC DIALOG
   mPlayer.SetStatus(PLAYER_STATUS_IDLE);
   mPlayer.CurrentView()->UpdatePlayer();
   for(int i=0; i<16; ++i) { Paint(true); }
-  const NpcData* pNpc = pRoom->TriggerAsNPC();
   if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
   System::paintSync();
-  mPlayer.CurrentView()->Parent()->Restore();
-  System::paintSync();
   OnTriggerEvent(pNpc->trigger.eventType);
+  mPlayer.CurrentView()->Parent()->Restore(false);
   RestorePearlIdle();
-}
-void Game::OnActiveTrigger() {
-  Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasGateway()) {
-    OnEnterGateway(pRoom);
-  } else if (pRoom->HasNPC()) {
-    OnNpcChatter(pRoom);
-  }  
-}
-
-void Game::RestorePearlIdle() {
-  if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
-    // Always look "south" after an action
-    mPlayer.SetDirection(SIDE_BOTTOM);
-    mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-    mPlayer.CurrentView()->UpdatePlayer();
-  }
+  System::paintSync();
 }
 
 void Game::OnDropEquipment(Room *pRoom) {
@@ -566,7 +568,7 @@ void Game::OnTriggerEvent(unsigned id) {
       mMap.RefreshTriggers();
       for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
         if (p->IsShowingRoom()) {
-          p->Restore();
+          p->Restore(false);
         }
       }
       break;
@@ -627,69 +629,4 @@ bool Game::TryEncounterLava(Cube::Side dir) {
     default: // SIDE_RIGHT
       return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2<int>(1,0)));
   }
-}
-
-//------------------------------------------------------------------
-// NEIGHBOR WALKING
-//------------------------------------------------------------------
-
-#define VIEW_UNVISITED 0
-#define VIEW_UNCHANGED 1
-#define VIEW_CHANGED 2
-
-static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0) {
-  if (!view || visited[view->GetCubeID()]) { return false; }
-  if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
-  bool result = view->ShowLocation(loc, false, false);
-  visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view);
-  }
-  return result;
-}
-
-void Game::CheckMapNeighbors() {
-  ViewSlot *root = mPlayer.View();
-  if (!root->IsShowingRoom()) { return; }
-  uint8_t visited[NUM_CUBES];
-  for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  bool chchchchanges = VisitMapView(visited, root, root->GetRoomView()->Location());
-  
-  if (chchchchanges) {
-    PlaySfx(sfx_neighbor);
-  }
-
-  bool otherChanges = false;
-  for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!visited[v->GetCubeID()] && v->HideLocation(false)) { 
-      otherChanges = true;
-      visited[v->GetCubeID()] = VIEW_CHANGED;
-    }
-  }
-
-  if (otherChanges && !chchchchanges) {
-    PlaySfx(sfx_deNeighbor);    
-  }
-  
-  sNeighborDirty = false;
-
-  if (chchchchanges || otherChanges) {
-    #if GFX_ARTIFACT_WORKAROUNDS
-      Paint(true);
-      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
-        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
-          v->GetCube()->vbuf.touch();
-        //}
-      }
-      Paint(true);
-      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
-        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
-          v->GetCube()->vbuf.touch();
-        //}
-      }
-    #endif
-    Paint(true);
-  }
-
-
 }

@@ -16,10 +16,10 @@ void Game::MainLoop() {
 	}
 
 	#if FAST_FORWARD
-	Cube* pPrimary = gCubes;
+		Cube* pPrimary = gCubes;
 	#else
-	PlayMusic(music_sting, false);
-	Cube* pPrimary = IntroCutscene();
+		PlayMusic(music_sting, false);
+		Cube* pPrimary = IntroCutscene();
 	#endif
 
 	//---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ void Game::MainLoop() {
 					OnActiveTrigger();
 				}
 			} else if (mPlayer.CurrentView()->GatewayTouched()) {
-				OnEnterGateway(mPlayer.CurrentView()->GetRoom());
+				OnEnterGateway(mPlayer.CurrentView()->GetRoom()->TriggerAsGate());
 			}
       		#if PLAYTESTING_HACKS
           	else if (sShakeTime > 2.0f) {
@@ -151,13 +151,12 @@ void Game::MainLoop() {
 	      				mPlayer.TargetView()->GetRoom()->SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
 	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == hideParity);
 	      		}
-	      		const bool foundPath = gGame.GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
-	      		ASSERT(foundPath);
+	      		gGame.GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
 	      		int progress = 0;
-	      		// iterate through the tiles in the path
 	      		Sokoblock* block = mPlayer.TargetView()->Block();
 	      		bool pushing = false;
 	      		
+	      		// iterate through the tiles in the path
 	      		// this loop could possibly suffer some optimizaton
 	      		// but first I'm goint to wait until after alpha and not
 	      		// more crap is going to get shoved in there

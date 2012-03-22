@@ -14,9 +14,10 @@ OBJS = \
 	DrawingHelpers.o \
 	EdgeView.o \
 	Game.o \
+	Game_CheckMapNeighbors.o \
 	Game_IntroCutscene.o \
-	Game_WinScreen.o \
 	Game_MainLoop.o \
+	Game_WinScreen.o \
 	GameState.o \
 	IdleView.o \
 	InventoryView.o \

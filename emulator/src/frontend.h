@@ -117,6 +117,8 @@ class Frontend {
     std::string createScreenshotName();
     void drawOverlay();
 
+    void toggleRotationLock();
+
     System *sys;
     unsigned frameCount;
     unsigned idleFrames;
@@ -125,6 +127,7 @@ class Frontend {
     bool toggleZoom;
     bool isFullscreen;
     bool isRunning;
+    bool isRotationFixed;
 
     int mouseX, mouseY;
     int mouseWheelPos;
@@ -153,7 +156,7 @@ class Frontend {
 
     GLRenderer renderer;
     FrontendOverlay overlay;
-    
+
     static Frontend *instance;
 };
 
