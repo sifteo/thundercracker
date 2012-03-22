@@ -265,6 +265,12 @@ template <typename T> inline T dot(Vector2<T> u, Vector2<T> v) {
     return u.x * v.x + u.y * v.y;
 }
 
+template <typename T> inline Vector2<T> polar(T angle, T magnitude) {
+    Vector2<T> result;
+    result.setPolar(angle, magnitude);
+    return result;
+}
+
 // Vector operations
 template <typename T> inline Vector2<T> operator-(Vector2<T> u) { return Vec2<T>(-u.x, -u.y); }
 template <typename T> inline Vector2<T> operator+=(Vector2<T> &u, Vector2<T> v) { return Vec2<T>(u.x+=v.x, u.y+=v.y); }
