@@ -851,6 +851,10 @@ std::string Frontend::createScreenshotName()
 
 void Frontend::toggleRotationLock() {
     isRotationFixed = !isRotationFixed;
+
+    overlay.postMessage(std::string("Rotation lock ")
+        + (isRotationFixed ? "on" : "off"));
+
     for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         cubes[i].toggleRotationLock(isRotationFixed);
     }
