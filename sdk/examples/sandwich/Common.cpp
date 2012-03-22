@@ -14,6 +14,21 @@ Cube::Side InferDirection(Int2 u) {
 	}
 }
 
+int AdvanceTowards(int curr, int targ, int mag) {
+  if (curr > targ) {
+    int x = curr - targ;
+    if (x > mag) {
+      return curr - mag;
+    }
+  } else if (curr < targ) {
+    int x = targ - curr;
+    if (x > mag) {
+      return curr + mag;
+    }
+  }
+  return targ;
+}
+
 //------------------------------------------------------------------------------
 // Sfx Utilities
 //------------------------------------------------------------------------------

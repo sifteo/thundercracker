@@ -226,8 +226,8 @@ template <typename T> struct Vector2 {
     
     /// Shortcuts for common explicit casts
     Vector2<int> toInt() const { return cast<int>(); }
-    Vector2<int> toFloat() const { return cast<float>(); }
-    Vector2<int> toDouble() const { return cast<double>(); }
+    Vector2<float> toFloat() const { return cast<float>(); }
+    Vector2<double> toDouble() const { return cast<double>(); }
     
     /// Implicit casts
     operator Vector2<int>            () const { return cast<int>(); }
@@ -259,6 +259,10 @@ typedef Vector2<double>             Double2;
 template <typename T> inline Vector2<T> Vec2(T x, T y) {
     Vector2<T> result = { x, y };
     return result;
+}
+
+template <typename T> inline T dot(Vector2<T> u, Vector2<T> v) {
+    return u.x * v.x + u.y * v.y;
 }
 
 // Vector operations
@@ -364,8 +368,8 @@ template <typename T> struct Vector3 {
     
     /// Shortcuts for common explicit casts
     Vector3<int> toInt() const { return cast<int>(); }
-    Vector3<int> toFloat() const { return cast<float>(); }
-    Vector3<int> toDouble() const { return cast<double>(); }
+    Vector3<float> toFloat() const { return cast<float>(); }
+    Vector3<double> toDouble() const { return cast<double>(); }
     
     /// Implicit casts
     operator Vector3<int>            () const { return cast<int>(); }

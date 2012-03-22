@@ -4,6 +4,8 @@
 #include "assets.gen.h"
 #include "config.h"
 
+using namespace Sifteo;
+
 extern Cube gCubes[NUM_CUBES];
 //extern uint8_t gTouchFlags[NUM_CUBES];
 
@@ -36,3 +38,4 @@ using namespace Sifteo;
 
 // Utils
 Cube::Side InferDirection(Int2 u);
+int AdvanceTowards(int curr, int targ, int mag);

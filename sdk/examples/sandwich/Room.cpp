@@ -63,3 +63,47 @@ void Room::Clear() {
   mDoor = 0;
   mOverlayIndex = 0xffff;
 }
+
+bool Room::IsShowingBlock(const Sokoblock* pBlock) {
+  ASSERT(pBlock);
+  const Int2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Int2 roomTopLeft = 128 * Location();
+  const Int2 delta = blockTopLeft - roomTopLeft;
+  return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
+}
+
+unsigned Room::CountOpenTilesAlongSide(Cube::Side side) {
+  ASSERT(0 <= side && side < 4);
+  const Int2 loc = Location();
+  const Map& map = *gGame.GetMap();
+  const RoomData& data = *Data();
+  unsigned cnt = 0;
+  switch(side) {
+    case SIDE_TOP:
+      if (loc.y > 0 && map.GetPortalY(loc.x, loc.y-1)) {
+        cnt = 8-__builtin_popcount(data.collisionMaskRows[0]);
+      }
+      break;
+    case SIDE_LEFT:
+      if (loc.x > 0 && map.GetPortalY(loc.x-1, loc.y)) {
+        for(unsigned row=0; row<8; ++row) {
+          cnt += (~data.collisionMaskRows[row]) & 0x01;
+        }
+      }
+      break;
+    case SIDE_BOTTOM:
+      if (loc.y < map.Data()->height-1 && map.GetPortalY(loc.x, loc.y)) {
+        cnt = 8-__builtin_popcount(~data.collisionMaskRows[7]);
+      }
+      break;
+    case SIDE_RIGHT:
+      if (loc.x < map.Data()->width-1 && map.GetPortalX(loc.x, loc.y)) {
+        for(unsigned row=0; row<8; ++row) {
+          cnt += (data.collisionMaskRows[row]) & 0x80;
+        }
+        cnt >>= 7;
+      }
+      break;
+  }
+  return cnt;
+}

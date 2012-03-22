@@ -8,7 +8,14 @@ void Map::Init() {
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
     mData = &map; 
+    // triggers
     RefreshTriggers();
+    // sokoblocks
+    mBlockCount = map.sokoblockCount;
+    ASSERT(mBlockCount <= BLOCK_CAPACITY);
+    for(unsigned i=0; i<mBlockCount; ++i) {
+      mBlock[i].Init(map.sokoblocks[i]);
+    }
   }
 }
 

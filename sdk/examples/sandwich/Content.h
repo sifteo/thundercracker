@@ -21,6 +21,8 @@ using namespace Sifteo;
 
 #define ITEM_TRIGGER_NONE   0
 #define ITEM_TRIGGER_KEY    1
+#define ITEM_TRIGGER_BOOT   2
+#define ITEM_TRIGGER_BOMB   3
 
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
@@ -74,9 +76,16 @@ struct GatewayData {
     uint8_t y;
 };
 
+struct SokoblockData {
+    uint16_t x;
+    uint16_t y;
+    uint8_t asset;
+};
+
 struct NpcData {
     TriggerData trigger;
-    uint16_t dialog;
+    uint16_t dialog : 15;
+    uint16_t optional : 1;
     uint8_t x;
     uint8_t y;
 };
@@ -112,9 +121,14 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+typedef uint8_t TileSetID;
+
 // todo - microoptimize bits
 // todo - replace pointers with <32bit offsets-from-known-locations?
+// todo - separate tilesets from maps?  (e.g. animated tiles, lava tiles)
 struct MapData {
+    const char* name;
+
     // stir pointers
     const AssetImage* tileset;
     const AssetImage* overlay;
@@ -134,8 +148,10 @@ struct MapData {
     // other placeable entities
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
+    const TileSetID* lavaTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
+    const SokoblockData* sokoblocks;
 
     // trigger counts
     uint8_t itemCount;
@@ -149,6 +165,7 @@ struct MapData {
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
     uint8_t bridgeSubdivisionCount;
+    uint8_t sokoblockCount;
     uint8_t ambientType; // 0 - None
 
     // size
@@ -163,3 +180,5 @@ extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
 extern const ItemTypeData gItemTypeData[];
+
+extern const PinnedAssetImage* gSokoblockAssets[];
