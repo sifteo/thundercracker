@@ -74,6 +74,8 @@ class FrontendCube {
 
     void computeAABB(b2AABB &aabb);
     
+    void toggleRotationLock(bool isRotationFixed);
+
     b2Body *body;
 
     /*

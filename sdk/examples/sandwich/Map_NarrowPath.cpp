@@ -1,6 +1,10 @@
 #include "Map.h"
 #include "Game.h"
 
+static int x= 8;
+
+uint8_t buf[1024];
+
 struct ARecord {
   uint8_t tileID; // most significant bit identifies if this is open "0" or closed "1"
   uint8_t parentDirection; 

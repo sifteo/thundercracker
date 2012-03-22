@@ -48,6 +48,7 @@ bool Frontend::init(System *_sys)
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
+    isRotationFixed = false;
 
     /*
      * Create cubes in a grid. Height is the square root of the number
@@ -133,6 +134,9 @@ void Frontend::numCubesChanged()
             // Create new cubes at the mouse cursor for now
             b2Vec2 v = mouseVec(normalViewExtent);
             cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
+            if (isRotationFixed) {
+                cubes[i].toggleRotationLock(isRotationFixed);
+            }
         }
 
     for (;i < sys->MAX_CUBES; i++)
@@ -388,7 +392,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case '=':
             instance->addCube();
             break;
-            
+        
+        case GLFW_KEY_BACKSPACE:
+            instance->toggleRotationLock();
+            break;
+
         default:
             return;
 
@@ -839,6 +847,13 @@ std::string Frontend::createScreenshotName()
         const struct tm *now = localtime(&t);
         strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
         return std::string(buffer);
+}
+
+void Frontend::toggleRotationLock() {
+    isRotationFixed = !isRotationFixed;
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+        cubes[i].toggleRotationLock(isRotationFixed);
+    }
 }
 
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
