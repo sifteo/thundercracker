@@ -8,13 +8,15 @@ SUBDIRS = \
 	monster \
 	nyan \
 	pairing \
-	scroller-bg0 \
+    scroller-bg0 \
 	scroller-bg1 \
+	sensors \
+	sprites \
 	stars \
 	text \
 	tiltshake \
 
-# XXX Disabled for now due to errors: peano, sandwich, selectormenu, sensors, sprites, word
+# XXX Disabled for now due to errors: peano, sandwich, word
 
 .PHONY: clean subdirs $(SUBDIRS)
 

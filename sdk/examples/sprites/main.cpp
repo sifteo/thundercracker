@@ -58,13 +58,13 @@ void main()
             
             float angle = frame * 0.075f + (i-1) * (M_PI*2 / (_SYS_VRAM_SPRITES-1));
             const float r = 32;
-            const Float2 center((128 - 16)/2, (128 - 16)/2);
+            const Float2 center = { (128 - 16)/2, (128 - 16)/2 };
 
-            vid.moveSprite(i, Vec2::round(center + Float2::polar(angle, r)));
+            vid.moveSprite(i, Int2(center + polar(angle, r)).round());
         }
 
         // Scroll BG1
-        vid.BG1_setPanning(Vec2(-frame, 0));
+        vid.BG1_setPanning(Vec2(-frame, 0u));
         
         // Flying bullet
         vid.moveSprite(0, 130-frame*3, 190-frame);
