@@ -10,7 +10,6 @@ SUBDIRS = \
 	sandwich \
 	scroller-bg0 \
 	scroller-bg1 \
-	selectormenu \
 	sensors \
 	sprites \
 	stars \
