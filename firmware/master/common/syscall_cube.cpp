@@ -45,7 +45,7 @@ void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
 
 struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
 {
-    struct _SYSAccelState r = { 0 };
+    struct _SYSAccelState r = { 0, 0, 0 };
     if (CubeSlots::validID(cid))
         CubeSlots::instances[cid].getAccelState(&r);
     return r;
