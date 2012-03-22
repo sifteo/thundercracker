@@ -326,12 +326,16 @@ void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (nextPuzzleIndex + 1);
     int x = (kMaxTilesX / 2) - (buffer.size() / 2);
     
-    cubeWrapper.DrawUiText(Vec2(x, 8), UiFontOrange, buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
     
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+        scroll.x = VidMode::TILE / 2;
     }
+    cubeWrapper.ScrollUi(scroll);
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -345,12 +349,16 @@ void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (puzzleIndex + 1);
     int x = (kMaxTilesX / 2) - (buffer.size() / 2);
     
-    cubeWrapper.DrawUiText(Vec2(x, 8), UiFontOrange, buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
     
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+        scroll.x = VidMode::TILE / 2;
     }
+    cubeWrapper.ScrollUi(scroll);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

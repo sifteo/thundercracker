@@ -55,8 +55,8 @@ BuddySpriteCutsceneGluv = image{"assets/cutscene_sprite_gluv_right.png", pinned 
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
 UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
-UiFontOrange = image{"assets/fontstrip_conent_orange.png", height = 16}
---UiFontBlue = image{"assets/fontstrip_conent_blue.png", height = 16}
+UiFontOrange = image{"assets/fontstrip_content_orange.png", height = 16}
+--UiFontBlue = image{"assets/fontstrip_content_blue.png", height = 16}
 --UiFontHeadingBlue = image{"assets/fontstrip_heading_blue.png", height = 16}
 UiFontHeadingOrange = image{"assets/fontstrip_heading_orange.png", height = 16}
 --UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
