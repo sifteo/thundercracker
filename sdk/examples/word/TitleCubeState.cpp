@@ -84,7 +84,17 @@ void TitleCubeState::paint()
             */
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-
+    /* TODO remove
+    if (c.id() & 1)
+    {
+        vid.BG0_drawAsset(Vec2(0,0), Test);
+    }
+    else
+    {
+        vid.BG0_drawAsset(Vec2(0,0), TestQ);
+    }
+    return;
+    */
     const float ANIM_START_DELAY = 2.f;
 
     switch (getStateMachine().getCube().id() - CUBE_ID_BASE)

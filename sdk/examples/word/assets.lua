@@ -1,5 +1,7 @@
 GameAssets = group{}
 
+TestQ = image{"tile_ivory_big_idle_Q.png", quality=10}
+Test = image{"tile_ivory_big_idle.png", quality=10}
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
