@@ -28,14 +28,14 @@
 			... probably still good.
 		</description>
 	</item>
-	<item id="bomb" storage="equipment">
+	<item id="bomb" storage="equipment" trigger="bomb">
 		<name>Bomb</name>
 		<description>
 			Oh dear! Someone set
 			us up a Bomb!
 		</description>
 	</item>
-	<item id="babomb" storage="equipment">
+	<item id="babomb" storage="equipment" trigger="bomb">
 		<name>Ba-Bomb</name>
 		<description>
 			Oh.  Another bomb.
@@ -54,6 +54,13 @@
 		<description>
 			A skeleton key.
 			It's slimey! Ew!
+		</description>
+	</item>
+	<item id="booties" storage="equipment" trigger="boot">
+		<name>Lava Booties</name>
+		<description>
+			Lava-Proof Boots.
+			Fashionable, too!
 		</description>
 	</item>
 

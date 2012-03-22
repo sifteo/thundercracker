@@ -1,1 +1,1 @@
-.\sandwichcraft.sim.exe
+..\..\..\firmware\master\master-sim.exe sandwichcraft.elf

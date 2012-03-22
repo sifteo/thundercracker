@@ -1,17 +1,21 @@
 #pragma once
 #include "View.h"
 
-// additions to the regular side enum
-#define SIDE_TOP_LEFT		4
-#define SIDE_BOTTOM_LEFT	5
-#define SIDE_BOTOTM_RIGHT	6
-#define SIDE_TOP_RIGHT		7
-
 class EdgeView : View {
 private:
+	CORO_PARAMS;
+	const GatewayData* mGateway;
+	Dialog mDialog;
+	uint8_t mRoomId;
+	Cube::Side mSide;
+	uint8_t t;
 
 public:
-	void Init(Vec2 location, Cube::Side side);
+	inline unsigned Id() const { return mRoomId;}
+	inline Cube::Side Side() const { return mSide; }
+	inline bool ShowingGateway() const { return mGateway!=0; }
+
+	void Init(int roomId, Cube::Side side);
 	void Restore();
-	void Update(float dt);	
+	void Update(float dt);
 };

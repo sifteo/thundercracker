@@ -28,7 +28,7 @@ void RockExplosion::Update()
 {
     if( m_pos.x >= 0 )
     {
-        m_animFrame = ( System::clock() - m_startTime ) * FRAMES_PER_SECOND;
+        m_animFrame = float(SystemTime::now() - m_startTime) * FRAMES_PER_SECOND;
 
         if( m_animFrame >= rock_explode.frames )
         {
@@ -51,7 +51,7 @@ void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
 }
 
 
-static const Vec2 OFFSET[] =
+static const Int2 OFFSET[] =
 {
     Vec2( -8, 8 ),
     Vec2( 8, 8 ),
@@ -60,9 +60,9 @@ static const Vec2 OFFSET[] =
 };
 
 
-void RockExplosion::Spawn( const Vec2 &pos, int whichpiece )
+void RockExplosion::Spawn( const Int2 &pos, int whichpiece )
 {
     m_pos.set( pos.x * 8 + OFFSET[whichpiece].x, pos.y * 8 + OFFSET[whichpiece].y );
     m_animFrame = 0;
-    m_startTime = System::clock();
+    m_startTime = SystemTime::now();
 }

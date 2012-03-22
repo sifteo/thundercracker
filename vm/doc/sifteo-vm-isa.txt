@@ -1,0 +1,305 @@
+===============================
+Sifteo TC Virtual Machine (SVM)
+===============================
+
+
+What is it?
+-----------
+
+ - Like Native Client, but for small-memory microcontrollers
+ - A paravirtualization environment
+ - A language VM that happens to be partially Thumb-compatible
+ - A safe Direct Execution environment for untrusted code
+ - A hardware-assisted sandboxing interpreter
+
+
+Memory Protection
+-----------------
+
+The register file is divided into a trusted portion (r8-r15) and an untrusted
+portion (r0-r7). Trusted registers cannot be directly modified by valid VM
+instructions, whereas untrusted registers can be modified arbitrarily.
+
+Registers r8-r9 are used as trusted base addresses. To simplify the paging
+mechanism, only one base pointer may be loaded into these trusted registers
+at any given time. Any validation operation may choose to evict pages from
+the cache.
+
+To maintain separate read and write permissions, the validation operation
+creates separate base pointers in r8 and r9 used for loads and stores,
+respectively. If an address is valid for read only, r8 will be valid but r9
+will be set to an address that produces hardware faults.
+
+Register r8 is used as a read only base (BRO) and r9 is used as a read/write
+base address (BRW). The set of valid VM instructions includes instructions:
+
+  ldr   rN, r8, #imm12
+  ldrh  rN, r8, #imm12
+  ldrb  rN, r8, #imm12
+  ldrsh rN, r8, #imm12
+  ldrsb rN, r8, #imm12
+
+  ldr   rN, r9, #imm12
+  ldrh  rN, r9, #imm12
+  ldrb  rN, r9, #imm12
+  ldrsh rN, r9, #imm12
+  ldrsb rN, r9, #imm12
+  
+  str   rN, r9, #imm12
+  strh  rN, r9, #imm12
+  strb  rN, r9, #imm12
+
+The two base registers may be updated using a SVC which copies any r0-r7
+to r8-r9 after performing address translation and validation.
+
+Virtual memory map:
+
+  00000000 - 0000FFFF     1. Invalid (guard region to catch NULL pointers)
+  00010000 - 00017FFF     2. 32 kB of user RAM for stack and data
+  00018000 - 7FFFFFFF     3. Invalid
+  80000000 - FFFFFFFF     4. External data (Flash) virtual address space
+
+Sample physical memory map:
+
+  00000000 - 1FFFFFFF     A. System code space
+  20000000 - 20003FFF     B. 16 kB system data space
+  20004000 - 20007FFF     C. 16 kB flash memory cache
+  20008000 - 2000FFFF     D. 32 kB user data space
+  20010000 - 21FFFFFF     E. Unimplemented in hardware, causes trap
+  
+Region (1) is guaranteed to fault on read or write. A NULL pointer plus any
+imm12 will land in this region. Any invalid pointers will fault on load/store,
+not on validate, so that the fault occurs only at actual time of use.
+
+Address translation for regions (1-3) can be performed using:
+
+  physical = ((virtual - 0x10000) & 0xFFFFF) + 0x20008000
+
+Region (3) is not guaranteed to fault. Some invalid user pointers will
+silently alias to other valid user RAM addresses. Example virtual to physical
+translations:
+
+  00000000 -> 200F8000    Invalid, causes trap
+  0000FFFF -> 20107FFF    Invalid, causes trap
+  00010000 -> 20008000    First byte in user RAM
+  00017FFF -> 2000FFFF    Last byte in user RAM
+  00018000 -> 20010000    Invalid, causes trap
+  0001FFFF -> 20017FFF    Invalid, causes trap
+  000FFFFF -> 200F7FFF    Invalid, causes trap
+  00110000 -> 20008000    Invalid, causes aliasing
+  FFFFFFFF -> 200F7FFF    Invalid, causes trap
+
+The validate SVCs are responsible for detecting addresses in region (4) and
+routing them through the system's flash cache. Userspace code may 'check out'
+a flash page in this manner. The pointer saved to r8-r9 will be to a temporary
+copy of the flash page, in region (C). The page is only guaranteed to stay at
+that address until the next SVC. This means that function calls, long jumps,
+and other validate SVCs will invalidate the contents of r8-r9.
+
+By placing the cache region (C) immediately prior to user data region (D), we
+can make out-of-range imm12 values harmless. The worst that a malicious or
+buggy app can do is to read user data or other cache pages, both of which it
+could already access. For the same reason, thehis also means we can allow
+literal pool loads without checking the immediate.
+
+The flash memory cache (C) is always treated as a read-only region in this
+scheme. Actual writes to flash, e.g. for saved game data, must be performed
+using special-purpose system calls. This simplifies the design, as well as
+adding a layer of protection against inadvertent writes.
+
+
+Instruction Set Architecture
+----------------------------
+
+The SVM architecture uses a reduced subset of Thumb-2, which contains only
+operations which are always safe for unprivileged code to perform.
+
+Most importantly, the architecture is designed such that any page of code can
+be quickly validated, at load time, to determine which portion of the page
+contains valid instructions. Any page can be divided into a data portion at
+the end, and a code portion at the beginning. By walking the page from
+beginning to end, at load time we determine the highest address that
+represents valid code. This final instruction must be an unconditional near or
+far branch.
+
+This address is saved in a look-aside buffer, for validating SVC-assisted
+calls and far branches. Near branches are validated at load time, in a second
+pass.
+
+In order to support the use of 32-bit Thumb-2 instructions without
+overcomplicating the validation algorithm, we require all basic blocks and all
+32-bit instructions to be aligned on a 32-bit boundary. This means that
+validation can proceed 32 bits at a time, checking whether each word contains
+either a single valid 32-bit instruction or two valid 16-bit instructions. No
+type of branch is allowed to enter an address which is not 32-bit aligned.
+
+Allowed 32-bit instruction encodings:
+
+  11111000 11001001, 0xxxxxxx xxxxxxxx      str         r0-r7, [r9, #imm12]
+  11111000 10x01001, 0xxxxxxx xxxxxxxx      str[bh]     r0-r7, [r9, #imm12]
+
+  1111100x 10x1100x, 0xxxxxxx xxxxxxxx      ldr(s)[bh]  r0-r7, [r8-9, #imm12]
+  11111000 1101100x, 0xxxxxxx xxxxxxxx      ldr         r0-r7, [r8-9, #imm12]
+
+  11110x10 x100xxxx, 0xxx0xxx xxxxxxxx      mov[wt]     r0-r7, #imm16
+
+  11111011 10x10xxx, 11110xxx 11110xxx      [su]div     r0-r7, r0-r7, r0-r7
+
+Allowed 16-bit instruction encodings:
+
+  00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp
+  010000xx xxxxxxxx     and, eor, lsl, lsr, asr, adc, sbc, ror,
+                        tst, rsb, cmp, cmn, orr, mul, bic, mvn
+  
+  10110010 xxxxxxxx     uxth, sxth, uxtb, sxtb
+  10111111 00000000     nop
+  11011111 xxxxxxxx     svc
+  01000110 00xxxxxx     mov r0-r7, r0-r7 (Without setting flags)
+
+  01001xxx xxxxxxxx     ldr r0-r7, [PC, #imm8]
+  1001xxxx xxxxxxxx     ldr/str r0-r7, [SP, #imm8]
+  10101xxx xxxxxxxx     add r0-r7, SP, #imm8
+
+Near branches are allowed, assuming the target address is within the code
+region of the same page, and the target is 32-bit aligned:
+
+  1011x0x1 xxxxxxxx     cb(n)z
+  1101xxxx xxxxxxxx     bcc
+  11100xxx xxxxxxxx     b
+
+
+Assisted operations
+-------------------
+
+Many common operations require hypercall assistance:
+
+ - Stack frame adjustments
+ - Long branches
+ - Procedure call and return
+ - Pointer validation
+ - Application-visible system calls
+
+All hypercalls are implemented using SVC. We could optionally use the
+BKPT or the permanently undefined regions as well, if we require more than
+8 bits of parameter space.
+
+SVC encodings:
+
+  11011111 00000000     (1) Return
+  11011111 0xxxxxxx     (2) Indirect operation
+  11011111 10xxxxxx     (3) Direct syscall #0-63
+  11011111 110xxxxx     (4) SP = validate(SP - imm5*4)
+  11011111 11100rrr     (5) r8-9 = validate(rN)
+  11011111 11101rrr     (6) Reserved
+  11011111 11110rrr     (7) Call validate(rN), with SP adjust
+  11011111 11111rrr     (8) Tail call validate(rN), with SP adjust
+
+Since 0 is never a valid indirect address (every code page by definition
+has a valid instruction at the beginning), code 0x00 is reserved for Return.
+
+Direct syscalls shall be used for very common operations: memcpy, memset,
+floating point, return, etc.
+
+When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
+four and added to the base of the current page, to form the address of a
+32-bit literal. This 32-bit literal encodes an indirect operation to perform:
+
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
+  0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
+  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on (a)
+  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on (F+a)
+
+  (F = 0x80000000, flash segment virtual address)
+
+Address operations are like syscalls, but they have a 24-bit immediate which
+is large enough to hold any arbitrary flash or RAM address. Defined addrop
+numbers:
+
+  0  Long branch
+  1  Asynchronous preload
+  2  Assign to r8-9
+  3  SP = validate(SP - a*4)
+  4  Long stack store: SP[a & 0x1FFFFF] = R[a >> 21]
+  5  Long stack load:  R[a >> 21] = SP[a & 0x1FFFFF]
+
+
+Calling Convention
+------------------
+
+ - All arguments and return values are extended or split as necessary, to
+   yield a sequence of 32-bit values.
+
+ - Parameters are passed in r0-r7
+ 
+ - Return values are in r0-r1. This simple calling convention supports at
+   most 64 bits of return data. (Necessary for returning double-precision
+   floats)
+   
+ - Registers r0-r1 are always clobbered by a call. This allows the syscall
+   dispatch code to treat all syscalls equally, instead of having separate
+   paths depending on how many values are returned.
+   
+ - Registers r2-r7 are automatically saved by a call and restored on a return.
+ 
+ - The call/tcall/ret SVCs internally push/pop a stack frame which contains
+   saved registers: Frame, PC, r2-r7.
+   
+ - They also maintain a frame pointer, guaranteed to be pointing to these
+   saved values. Note that SP itself is not stored, since the location of the
+   saved values will also implicitly be the value of the saved SP. Saving the
+   previous frame pointer, though, will link the stack frames together.
+
+   (The frame pointer is useful so we can return without knowing how large
+   the stack frame was, but it's especially important if the function ever
+   allocates additional stack space for itself using a SVC.)
+
+ - If not all parameters fit in r0-r7, additional parameters are passed on
+   the stack, by placing them at the bottom of the caller's stack frame.
+   The callee reaches upward into the parent stack frame to read these
+   values. This means that the compiler must be able to calculate the
+   distance between the caller's stack frame and the callee's.
+
+The stack layout is defined by the ABI. A 'call' is required to save exactly
+8 words of data between the parent stack frame and the child stack frame.
+
+Stack layout, assuming main() calls f1() which calls f2():
+
+     +-----------------+  <-- Top
+     | main() locals   |  }-- Size set by main() symbol's SPAdj value
+     +-----------------+
+     | Saved r7        |
+     | Saved r6        |
+     | Saved r5        |
+     | Saved r4        |
+     | Saved r3        |
+     | Saved r2        |
+     | Saved FP (0)    |
+ /-> | Saved PC        |
+ |   +-----------------+
+ |   | f1() locals     |
+ |   +-----------------+ 
+ |   | Saved r7        |
+ |   | Saved r6        |
+ |   | Saved r5        |
+ |   | Saved r4        |
+ |   | Saved r3        |
+ |   | Saved r2        |
+ \---| Saved FP        |
+     | Saved PC        |  <-- Current FP value
+     +-----------------+
+     | f2() locals     |
+     +-----------------+  <-- Current SP value
+
+To execute a Return:
+  - Assign SP = FP
+  - Restore saved registers
+  - Long branch to saved PC
+
+If FP was 0, this is a special case that can only occur when returning from
+main(). This will in fact be our first cue that we are returning from main(),
+so it can be taken as an instruction to invoke _SYS_exit().
+
+--

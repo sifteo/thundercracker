@@ -34,7 +34,7 @@ void power_init(void)
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
 
-#ifndef WAKE_ON_POWERUP
+#ifdef SLEEP_ON_POWERUP
     if (!powerupReason)
         power_sleep();
 #endif

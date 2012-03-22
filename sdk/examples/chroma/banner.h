@@ -29,16 +29,16 @@ public:
 	Banner();
 
     void Draw( BG1Helper &bg1helper );
-    void Update(float t);
+    void Update( SystemTime t );
 
     void SetMessage( const char *pMsg, float fTime = DEFAULT_FADE_DELAY, bool bScoreMsg = false );
 	bool IsActive() const;
 
-    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Anchor anchor, int score );
+    static void DrawScore( BG1Helper &bg1helper, const Int2 &pos, Anchor anchor, int score );
 
 private:
     String<BANNER_WIDTH + 1> m_Msg;
-    float m_fEndTime;
+    SystemTime m_endTime;
     //how many tiles of the banner to show
     unsigned int m_tiles;
     bool m_bIsScoreMsg;

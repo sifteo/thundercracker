@@ -14,7 +14,7 @@
  *
  * The ABI is defined in plain C, and all symbols are namespaced with
  * '_SYS' so that it's clear they aren't meant to be used directly by
- * game code. The one exception is siftmain(), the user entry point.
+ * game code.
  */
 
 #ifndef _SIFTEO_ABI_H
@@ -24,8 +24,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+typedef uint8_t bool;
 #endif
-
 
 /**
  * Data types which are valid across the user/system boundary.
@@ -39,6 +40,15 @@ extern "C" {
 typedef uint8_t _SYSCubeID;             /// Cube slot index
 typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
+
+/**
+ * Entry point. Our standard entry point is main(), with no arguments
+ * or return values, declared using C linkage.
+ */
+
+#ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
+void main(void);
+#endif
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing
@@ -60,17 +70,16 @@ struct _SYSAssetGroupHeader {
 };
 
 struct _SYSAssetGroupCube {
-    uint32_t baseAddr;          /// IN     Base address where this group is installed
+    uint16_t baseAddr;          /// IN     Installed base address, in tiles
+    uint16_t reserved;          /// IN     Must be zero
     uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
 struct _SYSAssetGroup {
-    uint32_t id;                                /// OUT    ID of this group in the asset segment
-    uint32_t offset;
-    uint32_t size;
-    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
+    uint32_t pHdr;                  /// OUT    Read-only data for this asset group
+    uint32_t pCubes;                /// OUT    Array of per-cube state buffers
+    _SYSCubeIDVector reqCubes;      /// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;     /// IN     Which cubes have finished installing this group?
 };
 
 /*
@@ -279,25 +288,31 @@ struct _SYSVideoBuffer {
 };
 
 
+/*
+ * Audio handles
+ */
+
+#define _SYS_AUDIO_INVALID_HANDLE   ((uint32_t)-1)
+
 typedef uint32_t _SYSAudioHandle;
 
 // NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
 // but must also accommodate a full frame's worth of speex data. If we go narrowband,
 // that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
 // so we need to kick up to 1024 bytes. kind of a lot :/
-#ifdef SIFTEO_SIMULATOR
-#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t) * 4)
-#else
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
-#endif
 #define _SYS_AUDIO_MAX_CHANNELS         8
 
+#define _SYS_AUDIO_MAX_VOLUME       256   // Guaranteed to be a power of two
+#define _SYS_AUDIO_DEFAULT_VOLUME   128
+
 /*
- * Types of audio supported by the system - TBD if these make sense...
+ * Types of audio supported by the system
  */
 enum _SYSAudioType {
-    Sample = 0, // more tbd...  // TODO: Rename this to speex
-    PCM = 1
+    _SYS_Speex = 0,
+    _SYS_PCM = 1,
+    _SYS_ADPCM = 2
 };
 
 enum _SYSAudioLoopType {
@@ -306,10 +321,11 @@ enum _SYSAudioLoopType {
 };
 
 struct _SYSAudioModule {
-    uint32_t id;
-    uint32_t offset;
-    uint32_t size;
-    enum _SYSAudioType type;
+    uint8_t type;           /// _SYSAudioType code
+    uint8_t reserved0;      /// Reserved, must be zero
+    uint16_t reserved1;     /// Reserved, must be zero
+    uint32_t dataSize;      /// Size of compressed data, in bytes
+    uint32_t pData;         /// Flash address for compressed data
 };
 
 struct _SYSAudioBuffer {
@@ -352,14 +368,6 @@ typedef enum {
 } _SYSShakeState;
 
 /**
- * Every cube has an arbitrary unique hardware ID.
- */
-
-struct _SYSCubeHWID {
-    uint8_t bytes[6];
-};
-
-/**
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary, via _SYS_setVector / _SYS_getVector.
  */
@@ -382,15 +390,15 @@ typedef enum {
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;
 
-#define _SYS_NEIGHBOR_EVENTS    ( Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_ADD) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_REMOVE) )
-#define _SYS_CUBE_EVENTS        ( Sifteo::Intrinsic::LZ(_SYS_CUBE_FOUND) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_LOST) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ASSETDONE) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ACCELCHANGE) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TOUCH) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TILT) |\
-                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_SHAKE) )
+#define _SYS_NEIGHBOR_EVENTS    ( (0x80000000 >> _SYS_NEIGHBOR_ADD) |\
+                                  (0x80000000 >> _SYS_NEIGHBOR_REMOVE) )
+#define _SYS_CUBE_EVENTS        ( (0x80000000 >> _SYS_CUBE_FOUND) |\
+                                  (0x80000000 >> _SYS_CUBE_LOST) |\
+                                  (0x80000000 >> _SYS_CUBE_ASSETDONE) |\
+                                  (0x80000000 >> _SYS_CUBE_ACCELCHANGE) |\
+                                  (0x80000000 >> _SYS_CUBE_TOUCH) |\
+                                  (0x80000000 >> _SYS_CUBE_TILT) |\
+                                  (0x80000000 >> _SYS_CUBE_SHAKE) )
 
 /**
  * Internal state of the Pseudorandom Number Generator, maintained in user RAM.
@@ -401,91 +409,317 @@ struct _SYSPseudoRandomState {
 };
 
 /**
- * Entry point to the game binary.
+ * Hardware IDs are 64-bit numbers that uniquely identify a
+ * particular cube. A valid HWIDs never contains 0xFF bytes.
  */
 
-void siftmain(void);
+#define _SYS_HWID_BYTES         8
+#define _SYS_HWID_BITS          64
+#define _SYS_INVALID_HWID       ((uint64_t)-1)
 
+/**
+ * RFC4122 compatible UUIDs.
+ *
+ * These are used in game metadata, to uniquely identify a particular
+ * binary. They are stored in network byte order, with field names compatible
+ * with RFC4122.
+ */
+
+struct _SYSUUID {
+    union {
+        struct {
+            uint32_t time_low;
+            uint16_t time_mid;
+            uint16_t time_hi_and_version;
+            uint8_t clk_seq_hi_res;
+            uint8_t clk_seq_low;
+            uint8_t node[6];
+        };
+        uint8_t  bytes[16];
+        uint16_t hwords[8];
+        uint32_t words[4];
+    };
+};
+
+/**
+ * ELF binary format.
+ *
+ * Loadable programs in this system are standard ELF binaries, however their
+ * instruction set is a special restricted subset of Thumb-2 as defined by the
+ * Sifteo Virtual Machine.
+ *
+ * In addition to standard read-only data, read-write data, and BSS segments,
+ * we support a special metadata segment. This contains a key-value dictionary
+ * of metadata records.
+ *
+ * The contents of the metadata segment is structured as first an array of
+ * key/size words, then a stream of variable-size values. The values must be
+ * aligned according to their natural ABI alignment, and they must not cross
+ * a memory page boundary. Each key occurs at most once in this table; multiple
+ * values with the same key are concatenated by the linker.
+ *
+ * The last _SYSMetadataKey has the MSB set in its 'stride' value.
+ *
+ * Strings are zero-terminated. Additional padding bytes may appear after
+ * any value.
+ */
+
+/// SVM-specific program header types
+#define _SYS_ELF_PT_METADATA        0x7000f001
+#define _SYS_ELF_PT_LOAD_RLE        0x7000f002
+
+struct _SYSMetadataKey {
+    uint16_t    stride;     // Byte offset from this value to the next
+    uint16_t    key;        // _SYS_METADATA_*
+};
+
+/// Metadata keys
+#define _SYS_METADATA_NONE          0x0000  // Ignored. (padding)
+#define _SYS_METADATA_UUID          0x0001  // Binary UUID for this specific build
+#define _SYS_METADATA_BOOT_ASSET    0x0002  // Array of _SYSMetadataBootAsset
+#define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
+#define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
+#define _STS_METADATA_VERSION_STR   0x0005  // Version string
+#define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
+#define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
+
+struct _SYSMetadataBootAsset {
+    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
+    uint8_t     agSlotID;       // Asset group slot to load this into
+    uint8_t     reserved[3];    // Must be zero;
+};
+
+// XXX: What format should the tile array be in? Right now it's a 16-bit
+//      index array, but that's awfully overkill! We can compress this.
+struct _SYSMetadataImage {
+    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader    
+    uint32_t    tiles;          // Virtual address for tile array
+};
+
+/**
+ * Link-time intrinsics.
+ *
+ * These functions are replaced during link-time optimization.
+ *
+ * Logging supports many standard printf() format specifiers:
+ *
+ *   - Literal characters, and %%
+ *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
+ *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
+ *   - Four chars packed into a 32-bit integer: %C
+ *   - Binary integers: %b
+ *   - C-style strings: %s
+ *   - Hex-dump of fixed width buffers: %<width>h
+ *
+ * To work around limitations in C variadic functions, _SYS_lti_metadata()
+ * supports a format string which specifies what data type each argument
+ * should be cast to. Data types here automatically imply ABI-compatible
+ * alignment and padding:
+ *
+ *   "b" = int8_t
+ *   "B" = uint8_t
+ *   "h" = int16_t
+ *   "H" = uint16_t
+ *   "i" = int32_t
+ *   "I" = uint32_t
+ *   "s" = String (NUL terminator is *not* automatically added)
+ *
+ * Counters:
+ *   This is a mechanism for generating monotonic unique IDs at link-time.
+ *   Every _SYS_lti_counter() call with the same 'name' will return a
+ *   different value, starting with zero. Values are assigned in order of
+ *   decreasing priority.
+ *
+ * UUIDs:
+ *   We support link-time generation of standard UUIDs. For every unique
+ *   'key', the linker will generate a different UUID. Since a full UUID
+ *   is too large to return directly, it is accessed as a group of four
+ *   little-endian 32-bit words, using values of 'index' from 0 to 3.
+ *
+ * Static initializers:
+ *   In global varaibles which aren't themselves constant but which were
+ *   initialized to a constant, _SYS_lti_initializer() can be used to retrieve
+ *   that initializer value at link-time.
+ */
+
+unsigned _SYS_lti_isDebug();
+void _SYS_lti_abort(bool enable, const char *message);
+void _SYS_lti_log(const char *fmt, ...);
+void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
+unsigned _SYS_lti_counter(const char *name, int priority);
+uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
+void *_SYS_lti_initializer(void *value);
+
+/**
+ * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
+ * Normally these don't need to be used in usermode code, they're inserted
+ * automatically by slinky when expanding _SYS_lti_log().
+ */
+
+#define _SYS_LOGTYPE_FMT        0       // param = strtab offest
+#define _SYS_LOGTYPE_STRING     1       // param = 0, v1 = ptr
+#define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
 
 /**
  * Low-level system call interface.
+ *
+ * System calls #0-63 are faster and smaller than normal function calls,
+ * whereas all other syscalls (#64-8191) are similar in cost to a normal
+ * call. System calls use a simplified calling convention that supports
+ * only at most 8 32-bit integer parameters, with at most one (32/64-bit)
+ * integer result.
  */
- 
-void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count);
-void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count);
-void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count);
-void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
-void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
-void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count);
 
-uint32_t _SYS_strnlen(const char *str, uint32_t maxLen);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
-void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
-void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
-void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
-int _SYS_strncmp(const char *a, const char *b, uint32_t count);
+#if defined(FW_BUILD) || !defined(__clang__)
+#  define _SC(n)
+#  define _NORET
+#else
+#  define _SC(n)    __asm__ ("_SYS_" #n)
+#  define _NORET    __attribute__ ((noreturn))
+#endif
 
-void _SYS_sincosf(float x, float *sinOut, float *cosOut);
-float _SYS_fmodf(float a, float b);
+void _SYS_abort(void) _SC(0) _NORET;
+void _SYS_exit(void) _SC(74) _NORET;
 
-void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed);
-uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state);
-uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit);
+void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
+void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
+void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
-void _SYS_exit(void);                           /// Equivalent to return from siftmain()
-void _SYS_yield(void);                          /// Temporarily cede control to the firmware
-void _SYS_paint(void);                          /// Enqueue a new rendering frame
-void _SYS_finish(void);                         /// Wait for enqueued frames to finish
-void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
+// Lightweight event logging support: string identifier plus 0-7 integers.
+// Tag bits: type [31:27], arity [26:24] param [23:0]
+void _SYS_log(uint32_t tag, uintptr_t v1, uintptr_t v2, uintptr_t v3, uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7) _SC(25);
 
-void _SYS_setVector(_SYSVectorID vid, void *handler, void *context);
-void *_SYS_getVectorHandler(_SYSVectorID vid);
-void *_SYS_getVectorContext(_SYSVectorID vid);
+// Compiler floating point support
+uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
+uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(62);
+uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) _SC(61);
+uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(60);
+uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) _SC(59);
+uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(58);
+uint32_t _SYS_div_f32(uint32_t a, uint32_t b) _SC(57);
+uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(56);
+uint64_t _SYS_fpext_f32_f64(uint32_t a) _SC(55);
+uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) _SC(54);
+uint32_t _SYS_fptosint_f32_i32(uint32_t a) _SC(53);
+uint64_t _SYS_fptosint_f32_i64(uint32_t a) _SC(52);
+uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) _SC(51);
+uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) _SC(50);
+uint32_t _SYS_fptouint_f32_i32(uint32_t a) _SC(49);
+uint64_t _SYS_fptouint_f32_i64(uint32_t a) _SC(48);
+uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) _SC(47);
+uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) _SC(46);
+uint32_t _SYS_sinttofp_i32_f32(uint32_t a) _SC(45);
+uint64_t _SYS_sinttofp_i32_f64(uint32_t a) _SC(44);
+uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(43);
+uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(42);
+uint32_t _SYS_uinttofp_i32_f32(uint32_t a) _SC(41);
+uint64_t _SYS_uinttofp_i32_f64(uint32_t a) _SC(40);
+uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(39);
+uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(38);
+uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) _SC(37);
+uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(36);
+uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) _SC(35);
+uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(34);
+uint32_t _SYS_le_f32(uint32_t a, uint32_t b) _SC(33);
+uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(32);
+uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) _SC(31);
+uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(30);
+uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) _SC(29);
+uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(28);
+uint32_t _SYS_un_f32(uint32_t a, uint32_t b) _SC(27);
+uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(26);
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
-void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
-void _SYS_disableCubes(_SYSCubeIDVector cv);
+// Compiler atomics support
+uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(110);
+uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(111);
+uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(112);
+uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(113);
 
-void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
+// Compiler support for 64-bit operations
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(17);
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(18);
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(19);
+uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(20);
+int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(21);
+uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(22);
+int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(23);
+uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(24);
 
-void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
-void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state);
-void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state);
+void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(8);
+uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(9);
+uint32_t _SYS_sqrtf(uint32_t a) _SC(114);
+uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(115);
+uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(116);
 
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);  // XXX: Temporary for testing/demoing
-uint8_t _SYS_isTouching(_SYSCubeID cid);
-void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
-void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(1);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(2);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(3);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(4);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
+int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
 
-void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
-void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);
-void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf);
-void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word);
-void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte);
-void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word);
-void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte);
-void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count);
-void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count);
-void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
-void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
-void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count,
-                     uint16_t lines, uint16_t src_stride, uint16_t addr_stride);
-void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height);
-void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y);
-                     
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
-void _SYS_audio_stop(_SYSAudioHandle h);
-void _SYS_audio_pause(_SYSAudioHandle h);
-void _SYS_audio_resume(_SYSAudioHandle h);
-int  _SYS_audio_volume(_SYSAudioHandle h);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h);
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(89);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(107);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(108);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(109);
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
+int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
+
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
+
+int64_t _SYS_ticks_ns(void) _SC(12);  /// Return the monotonic system timer, in 64-bit integer nanoseconds
+
+void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(104);
+void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(105);
+void *_SYS_getVectorContext(_SYSVectorID vid) _SC(106);
+
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(79);
+void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(80);  /// Which cubes will be trying to connect?
+void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(81);
+
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(82);
+void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(83);
+
+struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(84);
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(85);
+struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(86);
+_SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
+
+// XXX: Temporary for testing/demoing
+uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
+
+uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
+uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(91);
+
+void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
+void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
+void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
+void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(13);
+void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(14);
+uint16_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(15);
+uint8_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(16);
+void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
+void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count) _SC(102);
+void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count, uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
+void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(98);
+void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
+
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
+void _SYS_audio_stop(_SYSAudioHandle h) _SC(73);
+void _SYS_audio_pause(_SYSAudioHandle h) _SC(72);
+void _SYS_audio_resume(_SYSAudioHandle h) _SC(67);
+int  _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(65);
+uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(64);
+
 
 #ifdef __cplusplus
 }  // extern "C"

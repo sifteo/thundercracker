@@ -17,8 +17,8 @@ void Game::Paint(bool sync) {
   if (sNeighborDirty) { 
     CheckMapNeighbors(); 
   }
-  float now = System::clock();
-  float dt = now - mSimTime;
+  SystemTime now = SystemTime::now();
+  TimeDelta dt = now - mSimTime;
   mSimTime = now;
   mPlayer.Update(dt);
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
@@ -36,8 +36,7 @@ void Game::Paint(bool sync) {
 
   #if PLAYTESTING_HACKS
     Cube* pCube = mPlayer.View()->GetCube();
-    _SYSShakeState shakeState;
-    _SYS_getShake(pCube->id(), &shakeState);
+    _SYSShakeState shakeState = _SYS_getShake(pCube->id());
     if (shakeState == SHAKING) {
       if (sShakeTime < 0.0f) {
         sShakeTime = 0.f;
@@ -54,17 +53,64 @@ void Game::Paint(bool sync) {
 // HELPERS
 //------------------------------------------------------------------
 
+void Game::MoveBlock(Sokoblock* block, Int2 u) {
+  if (block) {
+    block->Move(u);
+    mPlayer.TargetView()->UpdateBlock();
+
+    // Could be optimized, perhaps
+    const Cube::Side dir = InferDirection(u);
+    ViewSlot* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
+    if (view && view->IsShowingRoom()) {
+      RoomView* pRoomView = view->GetRoomView();
+      if (pRoomView->Block()) {
+        pRoomView->UpdateBlock();
+      } else {
+        pRoomView->ShowBlock(block);
+      }
+    }
+    //
+  }
+}
+
+
+int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
+  mPlayer.SetDirection(dir);
+
+  const Int2 unit = kSideToUnit[dir];
+  if (dot(BroadDirection(), unit) != 1) { block = 0; }
+
+  // if we have any progress to use, use it here
+  if (progress != 0) {
+    mPlayer.Move(progress * unit);
+    MoveBlock(block, progress * unit);
+    Paint();
+  }
+  // while we're still moving in this direction
+  while(progress+WALK_SPEED < 16) {
+    progress += WALK_SPEED;
+    mPlayer.Move(WALK_SPEED * unit);
+    MoveBlock(block, WALK_SPEED * unit);
+    Paint();
+  }
+  // use up any remainder
+  const int leftovers = 16 - progress;
+  mPlayer.Move(leftovers * unit);
+  MoveBlock(block, leftovers * unit);
+  return WALK_SPEED - leftovers;  
+}
+
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
   mPlayer.Move(dx, dy);
   Paint();
 }
 
-void Game::WalkTo(Vec2 position, bool dosfx) {
+void Game::WalkTo(Int2 position, bool dosfx) {
   if (dosfx) {
     PlaySfx(sfx_running);
   }
-  Vec2 delta = position - mPlayer.Position();
+  Int2 delta = position - mPlayer.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
     delta.x -= WALK_SPEED;
@@ -89,11 +135,11 @@ void Game::WalkTo(Vec2 position, bool dosfx) {
   }
 }
 
-void Game::TeleportTo(const MapData& m, Vec2 position) {
+void Game::TeleportTo(const MapData& m, Int2 position) {
   #if MUSIC_ON
     gChannelMusic.stop();
   #endif
-  Vec2 room = position/128;
+  Int2 room = position/128;
   ViewSlot* view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();
   
@@ -116,19 +162,19 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
 
   // walk out of the in-gate
-  Vec2 target = mMap.GetRoom(room)->Center(0);
+  Int2 target = mMap.GetRoom(room)->Center(0);
   mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room, true);
   WalkTo(target, false);
   CheckMapNeighbors();
 
   // clear out any accumulated time
-  mSimTime = System::clock();
+  mSimTime = SystemTime::now();
 }
 
 void Game::IrisOut(ViewSlot* view) {
   view->HideSprites();
-  view->Overlay().Flush();
+  BG1Helper(*view->GetCube()).Flush();
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -175,7 +221,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 
 
 void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
-    Dialog view(vslot->GetCube());
+    Dialog view;
     ViewMode mode = vslot->Graphics();
     PlaySfx(sfx_neighbor);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
@@ -185,7 +231,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     VideoBuffer& vbuf = vslot->GetCube()->vbuf;
     uint16_t bg0_tiles[180];
     for(unsigned i=0; i<180; ++i) {
-      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(Vec2(i%18, i/18))) );
+      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(i%18, i/18)) );
     }
 
     for(unsigned line=0; line<data.lineCount; ++line) {
@@ -196,7 +242,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
             mode.setWindow(0, 80);
             _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(Vec2(0,0)), bg0_tiles, 180);
           }
-          BG1Helper ovrly = vslot->Overlay();
+          BG1Helper ovrly(*vslot->GetCube());
           ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
           ovrly.Flush();
           Paint(true);
@@ -210,7 +256,7 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           #endif
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
-          view.Init();
+          view.Init(vslot->GetCube());
         }
         view.Erase();
         Paint(true);
@@ -260,8 +306,8 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint(true);
   #endif
   gfx.setWindow(80+16,128-80-16);
-  Dialog view(pView->GetCube());
-  view.Init();
+  Dialog view;
+  view.Init(pView->GetCube());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
@@ -273,7 +319,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint();
   }
   view.SetAlpha(255);
-  for(float t=System::clock(); System::clock()-t<4.f && !pView->Touched();) { Paint(); }
+  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<4.f && !pView->Touched();) { Paint(); }
   pView->GetCube()->vbuf.touch();
   Paint(true);
   mPlayer.CurrentView()->Parent()->Restore();
@@ -284,7 +330,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint(true);
   #endif
   // wait a sec
-  for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
+  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<0.25f;) { Paint(); }
 }
 
 //------------------------------------------------------------------
@@ -326,16 +372,16 @@ void Game::OnPickup(Room *pRoom) {
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-      float t=System::clock();
+      SystemTime t=SystemTime::now();
       Paint();
       do {
         // this calc is kinda annoyingly complex
-        float u = (mSimTime - t) / 0.075f;
+        float u = float(mSimTime - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
-        mPlayer.CurrentView()->SetEquipPosition(Vec2(0, -float(ITEM_OFFSET) * u) );
+        mPlayer.CurrentView()->SetEquipPosition(Vec2(0.f, -float(ITEM_OFFSET) * u) );
       } while(mSimTime-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
@@ -355,17 +401,17 @@ void Game::OnPickup(Room *pRoom) {
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-      float t=System::clock();
+      SystemTime t=SystemTime::now();
       Paint();
       do {
         // this calc is kinda annoyingly complex
-        float u = (mSimTime - t) / 0.075f;
+        float u = float(mSimTime - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
-        mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-      } while(System::clock()-t<0.075f);
+        mPlayer.CurrentView()->SetItemPosition(Vec2(0.f, -36.f * u) );
+      } while(SystemTime::now()-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
@@ -388,7 +434,7 @@ unsigned Game::OnPassiveTrigger() {
     //-------------------------------------------------------------------------
     // PLAYER TRIGGERED TRAPDOOR
     // animate the tiles opening
-    Vec2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
+    Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
     for(unsigned i=1; i<=7; ++i) { // magic
       mPlayer.CurrentView()->DrawTrapdoorFrame(i);
       Paint(true);
@@ -411,18 +457,18 @@ unsigned Game::OnPassiveTrigger() {
       if (p != pView) { p->HideLocation(); }
     }
     pView->HideSprites();
-    pView->Overlay().Flush();
+    BG1Helper(*pView->GetCube()).Flush();
     Paint(true);
 
     Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
-    Vec2 start = 128 * pRoom->Location();
-    Vec2 delta = 128 * (targetRoom->Location() - pRoom->Location());
+    Int2 start = 128 * pRoom->Location();
+    Int2 delta = 128 * (targetRoom->Location() - pRoom->Location());
     ViewMode mode = pView->Graphics();
-    float t=mSimTime; 
+    SystemTime t=mSimTime; 
     do {
-      float u = (mSimTime-t) / 2.333f;
+      float u = float(mSimTime-t) / 2.333f;
       u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-      Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+      Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
       DrawOffsetMap(&mode, mMap.Data(), pos);
       Paint(true);
     } while(mSimTime-t<2.333f);
@@ -443,41 +489,48 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::OnEnterGateway(Room*pRoom) {
+  //---------------------------------------------------------------------------
+  // PLAYER TRIGGERED GATEWAY
+  const GatewayData* pGate = pRoom->TriggerAsGate();
+  const MapData& targetMap = gMapData[pGate->targetMap];
+  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
+  if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
+  mPlayer.SetEquipment(0);
+  TeleportTo(gMapData[pGate->targetMap], Vec2(
+    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+  ));
+  OnTriggerEvent(pGate->trigger.eventType);
+  RestorePearlIdle();
+}
+
+void Game::OnNpcChatter(Room *pRoom) {
+  //-------------------------------------------------------------------------
+  // PLAYER TRIGGERED NPC DIALOG
+  mPlayer.SetStatus(PLAYER_STATUS_IDLE);
+  mPlayer.CurrentView()->UpdatePlayer();
+  for(int i=0; i<16; ++i) { Paint(true); }
+  const NpcData* pNpc = pRoom->TriggerAsNPC();
+  if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+  NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
+  System::paintSync();
+  mPlayer.CurrentView()->Parent()->Restore();
+  System::paintSync();
+  OnTriggerEvent(pNpc->trigger.eventType);
+  RestorePearlIdle();
+}
 void Game::OnActiveTrigger() {
-  if (mPlayer.GetRoom()->HasGateway()) {
-
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED GATEWAY
-    const GatewayData* pGate = mPlayer.GetRoom()->TriggerAsGate();
-    const MapData& targetMap = gMapData[pGate->targetMap];
-    const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-    if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2(pGate->x, pGate->y));
-    mPlayer.SetEquipment(0);
-    TeleportTo(gMapData[pGate->targetMap], Vec2(
-      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-    ));
-
-    OnTriggerEvent(pGate->trigger.eventType);
-
-  } else if (mPlayer.GetRoom()->HasNPC()) {
-    
-    //-------------------------------------------------------------------------
-    // PLAYER TRIGGERED NPC DIALOG
-    mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-    mPlayer.CurrentView()->UpdatePlayer();
-    for(int i=0; i<16; ++i) { Paint(true); }
-    const NpcData* pNpc = mPlayer.GetRoom()->TriggerAsNPC();
-    if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
-    System::paintSync();
-    mPlayer.CurrentView()->Parent()->Restore();
-    System::paintSync();
-
-    OnTriggerEvent(pNpc->trigger.eventType);
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasGateway()) {
+    OnEnterGateway(pRoom);
+  } else if (pRoom->HasNPC()) {
+    OnNpcChatter(pRoom);
   }  
+}
 
+void Game::RestorePearlIdle() {
   if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
     // Always look "south" after an action
     mPlayer.SetDirection(SIDE_BOTTOM);
@@ -522,11 +575,57 @@ void Game::OnTriggerEvent(unsigned id) {
       const QuestData* quest = mState.Quest();
       const MapData& map = gMapData[quest->mapId];
       const RoomData& room = map.rooms[quest->roomId];
-      TeleportTo(map, Vec2 (
+      TeleportTo(map, Vec2<int> (
         128 * (quest->roomId % map.width) + 16 * room.centerX,
         128 * (quest->roomId / map.width) + 16 * room.centerY
       ));
       break;
+  }
+}
+
+bool Game::TryEncounterBlock(Sokoblock* block) {
+  const Int2 dir = BroadDirection();
+  const Int2 loc_src = mPlayer.TargetRoom()->Location();
+  const Int2 loc_dst = loc_src + dir;
+  // no moving blocks off the map
+  if (!mMap.Contains(loc_dst)) { return false; }
+  Room* pRoom = mMap.GetRoom(loc_dst);
+  // no moving blocks into subdivided rooms
+  if (pRoom->IsSubdivided()) { return false; }
+  // no moving blocks through walls or small portals
+  Cube::Side dst_enter_side = SIDE_LEFT;
+  if (dir.x < 0) { dst_enter_side = SIDE_RIGHT; }
+  else if (dir.y > 0) { dst_enter_side = SIDE_TOP; }
+  else if (dir.y < 0) { dst_enter_side = SIDE_BOTTOM; }
+  if (pRoom->CountOpenTilesAlongSide(dst_enter_side) < 4) {
+    return false;
+  }
+  // no moving blocks onto other blocks
+  for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
+    if (p != block && pRoom->IsShowingBlock(p)) {
+      LOG(("BLOCK OVERLAP FAIL\n"));
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Game::TryEncounterLava(Cube::Side dir) {
+  ASSERT(0 <= dir && dir < 4);
+  const Int2 baseTile = mPlayer.Position() >> 4;
+  switch(dir) {
+    case SIDE_TOP: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2<int>(1,1)));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    case SIDE_LEFT:
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2<int>(2,0)));
+    case SIDE_BOTTOM: {
+      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2<int>(-1,1));
+      return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
+    }
+    default: // SIDE_RIGHT
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2<int>(1,0)));
   }
 }
 
@@ -538,15 +637,13 @@ void Game::OnTriggerEvent(unsigned id) {
 #define VIEW_UNCHANGED 1
 #define VIEW_CHANGED 2
 
-static bool VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
+static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
+  if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  if (origin) {
-    view->GetCube()->orientTo(*(origin->GetCube()));
-  }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
+    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view);
   }
   return result;
 }

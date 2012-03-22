@@ -17,7 +17,7 @@ struct AnimObjData
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
     unsigned char mNumFrames;
-    const Vec2 *mPositions;
+    const Byte2 *mPositions;
 };
 
 struct AnimData
@@ -30,93 +30,93 @@ struct AnimData
 
 // FIXME write a tool to hide all this array/struct nesting ugliness
 // FIXME reuse stuff with indexing
-const static Vec2 positions[] =
+const static Byte2 positions[] =
 {
-    Vec2(2, 2),
-    Vec2(8, 2),
-    Vec2(7, 2),
-    Vec2(6, 2),
-    Vec2(5, 2),
-    Vec2(4, 2),
-    Vec2(3, 2),
-    Vec2(2, 2),
-    Vec2(2, 2),
-    Vec2(2, 2),
-    Vec2(2, 2), // [10]
-    Vec2(3, 2),
-    Vec2(4, 2),
-    Vec2(5, 2),
-    Vec2(6, 2),
-    Vec2(7, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(7, 2), // [20]
-    Vec2(6, 2),
-    Vec2(5, 2),
-    Vec2(4, 2),
-    Vec2(3, 2),
-    Vec2(2, 2),
-    Vec2(3, 3), // [26]
-    Vec2(56, 16), // [27]
-    Vec2(24, 16), // [28]
-    Vec2(88, 16), // [29]
-    Vec2(86, 16), // [30]2
-    Vec2(84, 16), // [31]2
-    Vec2(80, 16), // [32]4
-    Vec2(72, 16), // [33]8
-    Vec2(64, 16), // [34]8
-    Vec2(56, 16), // [35]8
-    Vec2(48, 16), // [36]8
-    Vec2(40, 16), // [29]8
-    Vec2(36, 16), // [30]4
-    Vec2(32, 16), // [31]4
-    Vec2(30, 16), // [32]2
-    Vec2(28, 16), // [33]2
-    Vec2(26, 16), // [34]2
-    Vec2(25, 16), // [35]1
-    Vec2(24, 16), // [36]1
-    Vec2(24, 16), // [29]
-    Vec2(26, 16), // [30]2
-    Vec2(28, 16), // [31]2
-    Vec2(32, 16), // [32]4
-    Vec2(40, 16), // [33]8
-    Vec2(48, 16), // [34]8
-    Vec2(56, 16), // [35]8
-    Vec2(64, 16), // [36]8
-    Vec2(72, 16), // [29]8
-    Vec2(76, 16), // [30]4
-    Vec2(80, 16), // [31]4
-    Vec2(82, 16), // [32]2
-    Vec2(84, 16), // [33]2
-    Vec2(86, 16), // [34]2
-    Vec2(87, 16), // [35]1
-    Vec2(88, 16), // [36]1
-    Vec2(2, 2), // [37]
-    Vec2(6, 2), // [38]
-    Vec2(8, 2), // [39]
-    Vec2(12, 2), // [40]
-    Vec2(2, 11), // [41]
-    Vec2(6, 11), // [42]
-    Vec2(8, 11), // [43]
-    Vec2(12, 11), // [44]
-    Vec2(53, 2), // [45]
-    Vec2(59, 2), // [46]
-    Vec2(52, 2), // [47]
-    Vec2(60, 2), // [48]
-    Vec2(54, 2), // [49]
-    Vec2(58, 2), // [50]
-    Vec2(54, 2), // [51]
-    Vec2(58, 2), // [52]
-    Vec2(56, 2), // [53]
-    Vec2(58, 2), // [54]2
-    Vec2(60, 2), // [55]2
-    Vec2(64, 2), // [56]4
-    Vec2(72, 2), // [57]8
-    Vec2(80, 2), // [58]8
-    Vec2(84, 2), // [59]4
-    Vec2(88, 2), // [60]4
+    { 2, 2 },
+    { 8, 2 },
+    { 7, 2 },
+    { 6, 2 },
+    { 5, 2 },
+    { 4, 2 },
+    { 3, 2 },
+    { 2, 2 },
+    { 2, 2 },
+    { 2, 2 },
+    { 2, 2 }, // [10]
+    { 3, 2 },
+    { 4, 2 },
+    { 5, 2 },
+    { 6, 2 },
+    { 7, 2 },
+    { 8, 2 },
+    { 8, 2 },
+    { 8, 2 },
+    { 8, 2 },
+    { 7, 2 }, // [20]
+    { 6, 2 },
+    { 5, 2 },
+    { 4, 2 },
+    { 3, 2 },
+    { 2, 2 },
+    { 3, 3 }, // [26]
+    { 56, 16 }, // [27]
+    { 24, 16 }, // [28]
+    { 88, 16 }, // [29]
+    { 86, 16 }, // [30]2
+    { 84, 16 }, // [31]2
+    { 80, 16 }, // [32]4
+    { 72, 16 }, // [33]8
+    { 64, 16 }, // [34]8
+    { 56, 16 }, // [35]8
+    { 48, 16 }, // [36]8
+    { 40, 16 }, // [29]8
+    { 36, 16 }, // [30]4
+    { 32, 16 }, // [31]4
+    { 30, 16 }, // [32]2
+    { 28, 16 }, // [33]2
+    { 26, 16 }, // [34]2
+    { 25, 16 }, // [35]1
+    { 24, 16 }, // [36]1
+    { 24, 16 }, // [29]
+    { 26, 16 }, // [30]2
+    { 28, 16 }, // [31]2
+    { 32, 16 }, // [32]4
+    { 40, 16 }, // [33]8
+    { 48, 16 }, // [34]8
+    { 56, 16 }, // [35]8
+    { 64, 16 }, // [36]8
+    { 72, 16 }, // [29]8
+    { 76, 16 }, // [30]4
+    { 80, 16 }, // [31]4
+    { 82, 16 }, // [32]2
+    { 84, 16 }, // [33]2
+    { 86, 16 }, // [34]2
+    { 87, 16 }, // [35]1
+    { 88, 16 }, // [36]1
+    { 2, 2 }, // [37]
+    { 6, 2 }, // [38]
+    { 8, 2 }, // [39]
+    { 12, 2 }, // [40]
+    { 2, 11 }, // [41]
+    { 6, 11 }, // [42]
+    { 8, 11 }, // [43]
+    { 12, 11 }, // [44]
+    { 53, 2 }, // [45]
+    { 59, 2 }, // [46]
+    { 52, 2 }, // [47]
+    { 60, 2 }, // [48]
+    { 54, 2 }, // [49]
+    { 58, 2 }, // [50]
+    { 54, 2 }, // [51]
+    { 58, 2 }, // [52]
+    { 56, 2 }, // [53]
+    { 58, 2 }, // [54]2
+    { 60, 2 }, // [55]2
+    { 64, 2 }, // [56]4
+    { 72, 2 }, // [57]8
+    { 80, 2 }, // [58]8
+    { 84, 2 }, // [59]4
+    { 88, 2 }, // [60]4
 };
 
 const static AnimObjData animObjData[] =
@@ -275,7 +275,7 @@ bool animPaint(AnimType animT,
 
     float animPct =
             data.mLoop ?
-                fmodf(animTime, data.mDuration)/data.mDuration :
+                fmod(animTime, data.mDuration)/data.mDuration :
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
@@ -299,9 +299,9 @@ bool animPaint(AnimType animT,
         }
 
         // clip to screen
-        Vec2 pos(objData.mPositions[frame]);
-        Vec2 clipOffset(0,0);
-        Vec2 size(0, 0);
+        Int2 pos = objData.mPositions[frame];
+        Int2 clipOffset = {0, 0};
+        Int2 size = {0, 0};
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
@@ -320,7 +320,7 @@ bool animPaint(AnimType animT,
             }
             pos.x = MAX(pos.x, 0);
             pos.y = MAX(pos.y, 0);
-            clipOffset = pos - objData.mPositions[frame];
+            clipOffset = pos - objData.mPositions[frame].toInt();
             if (clipOffset.x >= (int)objData.mAsset->width ||
                 clipOffset.y >= (int)objData.mAsset->height)
             {
@@ -366,9 +366,9 @@ bool animPaint(AnimType animT,
 
             if (drawLetterOnTile)
             {
-                Vec2 letterPos(pos);
+                Int2 letterPos = pos;
                 letterPos.y += 5; // TODO
-                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
+                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2<int>(size.x, font.height), font, fontFrame);
             }
         }
         else if (objData.mLayer == Layer_BG1)
@@ -388,7 +388,7 @@ bool animPaint(AnimType animT,
     if (params && params->mSpriteParams)
     {
         float t = 4.f * animTime/data.mDuration;
-        t = fmodf(t, 1.0f);
+        t = fmod(t, 1.0f);
         unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
         for (unsigned i=1; i<8; ++i)
         {
@@ -414,7 +414,7 @@ bool animPaint(AnimType animT,
         {
             //const float ANIM_DURATION = 0.5f;
             float t = 2.f *animTime/data.mDuration;
-            t = fmodf(t, 1.0f);
+            t = fmod(t, 1.0f);
             bottomBorderFrame =
                     (params->mBonus) ?
                         NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:
@@ -497,7 +497,7 @@ bool animPaint(AnimType animT,
                             CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
                     if (image)
                     {
-                        bg1->DrawAsset(Vec2(2 + i * 2, 14), *image);
+                        bg1->DrawAsset(Vec2<int>(2 + i * 2, 14), *image);
                     }
                 }
                 else
@@ -506,7 +506,7 @@ bool animPaint(AnimType animT,
                     {
                         if (i - TopRowStartIndex  < GameStateMachine::getInstance().getNumHints())
                         {
-                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
+                            bg1->DrawAsset(Vec2<int>(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
                         }
              /*           else
                         {

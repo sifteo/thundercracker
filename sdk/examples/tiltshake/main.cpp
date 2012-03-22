@@ -18,8 +18,7 @@ static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vb
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
+    _SYSAccelState state = _SYS_getAccel(cid);
 
     String<18> str;
     str << "Accel: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
@@ -28,8 +27,7 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
 static void onTilt(void *context, _SYSCubeID cid)
 {
-    _SYSTiltState state;
-    _SYS_getTilt(cid, &state);
+    _SYSTiltState state = _SYS_getTilt(cid);
 
     String<18> str;
     str << "Tilt: " << (state.x - 1) << " " << (state.y - 1) << "     ";
@@ -38,8 +36,7 @@ static void onTilt(void *context, _SYSCubeID cid)
 
 static void onShake(void *context, _SYSCubeID cid)
 {
-    _SYSShakeState state;
-    _SYS_getShake(cid, &state);
+    _SYSShakeState state = _SYS_getShake(cid);
 
 	if( state == SHAKING )
 		vid[cid].BG0_drawAsset(Vec2(0,0), Shake);
@@ -80,7 +77,7 @@ static void init()
     }
 }
 
-void siftmain()
+void main()
 {
     init();
 

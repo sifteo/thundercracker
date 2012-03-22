@@ -1,0 +1,16 @@
+<map-database>
+	<map id="forest">
+		<name>The Forest</name>
+	</map>
+	<map id="castle">
+		<name>Castle Hoagie</name>
+	</map>
+	<map id="dungeon">
+		<name>Lembas Caverns</name>
+	</map>
+
+	<map id="sandbox">
+		<name>Programming Sandbox</name>
+	</map>
+
+</map-database>

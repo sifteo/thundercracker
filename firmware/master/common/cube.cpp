@@ -1,23 +1,20 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include <protocol.h>
-#include <sifteo/machine.h>
 
+#include "machine.h"
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
+#include "event.h"
 #include "flashlayer.h"
-
+#include "svmdebug.h"
+#include "tasks.h"
 #include "neighbors.h"
 
-
-using namespace Sifteo;
 
 /*
  * Frame rate control parameters
@@ -72,45 +69,28 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     
     // XXX: Pick a base address too!
     ac->progress = 0;
-    
-    LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
-    
+
+    LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
+        id(), SvmDebug::formatAddress(a).c_str(), ac->baseAddr));
+
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
         assetLoadTimestamp = SysTime::ticks();
     });
 
-    FlashRegion region;
-    unsigned entryOffset = a->id * sizeof(AssetIndexEntry);
-    // XXX: this is assuming an offset of 0 for the whole asset segment.
-    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
-    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &region)) {
-        LOG(("failed to get flash block for asset index entry\n"));
-        return;
-    }
-    AssetIndexEntry entry;
-    memcpy(&entry, region.data(), sizeof(AssetIndexEntry));
-    FlashLayer::releaseRegion(region);
-
-    unsigned offset = entry.offset;
-    if (!FlashLayer::getRegion(offset, sizeof(AssetGroupHeader), &region)) {
-        LOG(("failed to get flash block for asset group header\n"));
-        return;
-    }
-    AssetGroupHeader header;
-    memcpy(&header, region.data(), sizeof(AssetGroupHeader));
-    FlashLayer::releaseRegion(region);
-
-    a->offset = offset + sizeof(AssetGroupHeader);
-    a->size = header.dataSize;
-    
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
-    Atomic::And(CubeSlots::flashResetSent, ~bit());
-    Atomic::Or(CubeSlots::flashResetWait, bit());
-    
+    requestFlashReset();
+    Atomic::Or(CubeSlots::flashAddrPending, bit());
+
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
     loadGroup = a;
+}
+
+void CubeSlot::requestFlashReset()
+{
+    Atomic::And(CubeSlots::flashResetSent, ~bit());
+    Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
@@ -177,24 +157,28 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     } else {
         // Not waiting on a reset. See if we need to send asset data.
 
-        bool done = false;
         _SYSAssetGroup *group = loadGroup;
+        if (group && !(group->doneCubes & bit()) && FlashBlock::TERRIHACK == 0) {
 
-        if (group && !(group->doneCubes & bit()) &&
-            codec.flashSend(tx.packet, group, assetCube(group), done)) {
+            bool done = false;
+            bool escape = codec.flashSend(tx.packet, group, assetCube(group), bit(), done);
 
-            if (done) {
-                /* Finished asset loading */
+            if (done ) {
+                /* Finished sending the group, and the cube finished writing it. */
                 Atomic::SetLZ(group->doneCubes, id());
                 Event::setPending(_SYS_CUBE_ASSETDONE, id());
 
                 DEBUG_ONLY({
                     // In debug builds only, we log the asset download time
                     float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                    LOG(("FLASH[%d]: Finished loading group %p in %.3f seconds\n",
-                         id(), group, seconds));
-                })
+                    LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
+                         id(), SvmDebug::formatAddress(group).c_str(), seconds));
+                });
             }
+
+            // We can't put anything else in this packet if an escape was written
+            if (escape)
+                return true;
         }
     }
 
@@ -242,9 +226,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
         LOG(("%u cubes connected\n", count));
-        if (count >= CubeSlots::minCubes) {
-            Event::resume();
-        }
     }
     
     // If we're expecting a stale packet, completely ignore its contents.
@@ -370,17 +351,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
         // Has valid hardware ID
-        
-        memcpy(hwid.bytes, ack->hwid, sizeof ack->hwid);
-    }
-}
 
-void CubeSlot::getRawNeighbors(uint8_t buf[4]) {
-    // XXX: Raw neighbor data for testing/demoing only
-    buf[0] = neighbors[0];
-    buf[1] = neighbors[1];
-    buf[2] = neighbors[2];
-    buf[3] = neighbors[3];
+        STATIC_ASSERT(sizeof hwid == sizeof ack->hwid);
+        memcpy(hwid, ack->hwid, sizeof ack->hwid);
+        Atomic::SetLZ(CubeSlots::hwidValid, id());
+    }
 }
 
 // Are we being touched right now?
@@ -400,9 +375,6 @@ void CubeSlot::radioTimeout()
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
         LOG(("%u cubes connected\n", count));
-        if (count < CubeSlots::minCubes) {
-            Event::pause();
-        }
     }
 }
 
@@ -427,6 +399,7 @@ void CubeSlot::waitForPaint()
             && pendingFrames <= fpMax)
             break;
 
+        Tasks::work();
         Radio::halt();
     }
 }
@@ -474,6 +447,7 @@ void CubeSlot::waitForFinish()
             break;
         }
 
+        Tasks::work();
         Radio::halt();
     }
 }
@@ -572,6 +546,36 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
      * 'fastPeriod' defined above.
      */
     paintTimestamp = timestamp;
+}
+
+uint64_t CubeSlot::getHWID()
+{
+    /*
+     * Return this cube's Hardware ID. If we don't know the ID yet, this
+     * blocks until the ID can be retrieved over the radio. (This happens
+     * as a side-effect of completing a Flash Reset.)
+     */
+
+    if (!(CubeSlots::hwidValid & bit())) {
+        if (!enabled() || !connected()) {
+            // Cube disappeared! Cancel.
+            return _SYS_INVALID_HWID;
+        }
+
+        // If no assets are loading / have loaded, send our own reset.
+        // (We don't want to stomp on an ongoing asset download!)
+        if (!loadGroup)
+            requestFlashReset();
+
+        do {
+            Tasks::work();
+            Radio::halt();
+        } while (!(CubeSlots::hwidValid & bit()));
+    }
+    
+    uint64_t result = 0;
+    memcpy(&result, hwid, sizeof hwid);
+    return result;
 }
 
 #endif // DISABLE_CUBE

@@ -29,8 +29,8 @@ public:
 
 	void Reset();
     void Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid );
-    void Update( float dt );
-	void Init( float t );
+    void Update( TimeDelta dt );
+	void Init( SystemTime t );
 	
     void DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid );
 	float getTime() const { return m_fTimer; }

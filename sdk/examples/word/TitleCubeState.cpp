@@ -48,14 +48,13 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         mShakeDelay = SHAKE_DELAY;
     }
 
-    _SYSAccelState accelState;
-    _SYS_getAccel(getStateMachine().getCube().id(), &accelState);
+    _SYSAccelState accelState = _SYS_getAccel(getStateMachine().getCube().id());
     if (accelState.x != 0)
     {
         mShakeDelay = 0.f;
     }
     mPanning += dt * -2.f * accelState.x;
-    if (fabs(mPanning) > 96.f)
+    if (abs(mPanning) > 96.f)
     {
         GameStateMachine::sOnEvent(EventID_Start, EventData());
         return CubeStateIndex_StartOfRoundScored;
@@ -109,7 +108,7 @@ void TitleCubeState::paint()
             {
                 const AssetImage& anim = TitleSmoke;
                 float animTime =
-                        fmodf(getStateMachine().getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
+                        fmod(getStateMachine().getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
                 animTime = MIN(animTime, 1.f);
                 unsigned frame = (unsigned) (animTime * anim.frames);
                 frame = MIN(frame, anim.frames - 1);
@@ -134,8 +133,8 @@ void TitleCubeState::paint()
                 const float SHAKE = 4.f;
                 shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
             }
-            vid.moveSprite(0, Vec2(40 - shakeOffset, 78));
-            vid.BG1_setPanning(Vec2((unsigned)mPanning + shakeOffset, 0));
+            vid.moveSprite(0, Vec2(40.f - shakeOffset, 78.f));
+            vid.BG1_setPanning(Vec2<int>((unsigned)mPanning + shakeOffset, 0));
         }
         {            
             BG1Helper bg1(getStateMachine().getCube());

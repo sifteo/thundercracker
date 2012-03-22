@@ -2,8 +2,8 @@
 
 
 void WaitForSeconds(float dt) {
-  float t = System::clock();
-  do { System::paint(); } while(System::clock() - t < dt);
+  SystemTime deadline = SystemTime::now() + dt;
+  do { System::paint(); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------
@@ -25,7 +25,7 @@ namespace BffDir {
   enum ID { E, SE, S, SW, W, NW, N, NE };
 }
 
-static const Vec2 sBffTable[] = {
+static const Int2 sBffTable[] = {
   Vec2(1, 0),
   Vec2(1, 1),
   Vec2(0, 1),
@@ -77,7 +77,7 @@ void ButterflyFriend::Randomize() {
 
 void ButterflyFriend::Update() {
     // butterfly stuff
-    Vec2 delta = sBffTable[dir];
+    Int2 delta = sBffTable[dir];
     x += (uint8_t) delta.x;
     y += (uint8_t) delta.y;
     // hack - assumes butterflies and items are not rendered on same cube
@@ -118,7 +118,7 @@ void ButterflyFriend::Update() {
 void DrawRoom(ViewMode* gfx, const MapData* pMap, int roomId) {
 	const uint8_t *pTile = pMap->rooms[roomId].tiles;
 	const AssetImage& tileset = *pMap->tileset;
-	Vec2 p;
+	Int2 p;
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?
@@ -140,23 +140,23 @@ void DrawRoomOverlay(BG1Helper* ovrly, const MapData* pMap, unsigned tid, const 
     }  
 }
 
-bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Vec2 from, Vec2 to) {
+bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Int2 from, Int2 to) {
 	// inserted as a potential optimization point, 
 	// because we only need to "replot" the delta tiles
 	DrawOffsetMap(gfx, pMap, to);
 	return true;
 }
 
-void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Vec2 pos) {
+void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 	const int xmax = 128 * (pMap->width-1);
 	const int ymax = 128 * (pMap->height-1);
 	if (pos.x < 0) { pos.x = 0; } else if (pos.x > xmax) { pos.x = xmax; }
 	if (pos.y < 0) { pos.y = 0; } else if (pos.y > ymax) { pos.y = ymax; }
-	Vec2 loc = Vec2(pos.x>>7, pos.y>>7);
-	Vec2 pan = Vec2(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
+	Int2 loc = Vec2(pos.x>>7, pos.y>>7);
+	Int2 pan = Vec2(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
 	gfx->BG0_setPanning(pan);
-	Vec2 start_tile = Vec2(pan.x>>4, pan.y>>4);
-	Vec2 t;
+	Int2 start_tile = Vec2(pan.x>>4, pan.y>>4);
+	Int2 t;
 	/*
 	for(t.x=0; t.x<18; ++t.x)
 	for(t.y=0; t.y<18; ++t.y) {

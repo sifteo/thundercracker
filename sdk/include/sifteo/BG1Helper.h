@@ -5,23 +5,19 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _BG1HELPER_H
-#define _BG1HELPER_H
+#ifndef _SIFTEO_BG1HELPER_H
+#define _SIFTEO_BG1HELPER_H
 
-#include <sifteo.h>
-
-using namespace Sifteo;
-
-/*
- * XXX: This is a kludge to save memory for the moment, by not inlining
- *      frequently used but complex functions. The long-term solution is
- *      to refactor code into system calls as necessary to avoid unnecessary
- *      inlining. (If there's one copy of this code, it should live in the firmware
- *      instead of in each game binary)
- */
-#ifndef NEVER_INLINE
-#define NEVER_INLINE    __attribute__ ((noinline))
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
 #endif
+
+#include <sifteo/cube.h>
+#include <sifteo/math.h>
+#include <sifteo/video.h>
+
+namespace Sifteo {
+
 
 class BG1Helper
 {
@@ -35,13 +31,13 @@ public:
         Clear();
     }
 
-    NEVER_INLINE void Clear()
+    void Clear()
     {
         _SYS_memset16( &m_bitset[0], 0, BG1_ROWS );
         _SYS_memset16( &m_tileset[0][0], 0xffff, BG1_ROWS * BG1_COLS);
     }
 
-    NEVER_INLINE void Flush()
+    void Flush()
     {
         unsigned int tileOffset = 0;
 
@@ -78,7 +74,7 @@ public:
         Clear();
     }
 
-    NEVER_INLINE void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    void DrawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;
@@ -96,7 +92,7 @@ public:
         ASSERT( getBitSetCount() <= MAX_TILES );
     }
 
-    NEVER_INLINE void DrawAsset( const Vec2 &point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0 )
+    void DrawAsset(Int2 point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;
@@ -118,7 +114,7 @@ public:
     }
 
 	//draw a partial asset.  Pass in the position, xy min points, and width/height
-    NEVER_INLINE void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    void DrawPartialAsset(Int2 point, Int2 offset, Int2 size, const Sifteo::AssetImage &asset, unsigned frame=0)
     {
         ASSERT( frame < asset.frames );
         ASSERT( size.x > 0 && size.y > 0 );
@@ -138,16 +134,16 @@ public:
     }
 
 
-    void DrawText(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    void DrawText(Int2 point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             DrawAsset(point, font, index);
     }
 
 
-    NEVER_INLINE void DrawText( const Vec2 &point, const Sifteo::AssetImage &font, const char *str )
+    void DrawText(Int2 point, const Sifteo::AssetImage &font, const char *str)
     {
-        Vec2 p = point;
+        Int2 p = point;
         char c;
 
         while ((c = *str)) {
@@ -162,7 +158,7 @@ public:
         }
     }
 
-    inline bool NeedFinish()
+    bool NeedFinish()
     {
         for( unsigned int i = 0; i < BG1_ROWS; i++ )
         {
@@ -177,7 +173,7 @@ public:
 
 private:
     //set a number of bits at xoffset of the current bitset
-    NEVER_INLINE void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )
+    void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )
     {
         ASSERT( bitsetIndex < 16 );
         ASSERT( xOffset < 16 );
@@ -190,9 +186,10 @@ private:
 
         m_bitset[bitsetIndex] |= setbits;
     }
+
 	//count how many bits set we have total
 	//only used for debug, so I don't care about optimizing it yet
-    NEVER_INLINE unsigned int getBitSetCount() const
+    unsigned int getBitSetCount() const
     {
         unsigned int count = 0;
         for (unsigned y = 0; y < BG1_ROWS; y++)
@@ -213,5 +210,7 @@ private:
 	uint16_t m_tileset[BG1_ROWS][BG1_COLS];
 	Cube &m_cube;
 };
+
+};  // namespace Sifteo
 
 #endif

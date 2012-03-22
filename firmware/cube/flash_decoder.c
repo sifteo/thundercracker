@@ -100,8 +100,6 @@ static __bit nibIndex;
 static void state_OPCODE(void) __naked;
 static void state_ADDR_LOW(void) __naked;
 static void state_ADDR_HIGH(void) __naked;
-static void state_ERASE_COUNT(void) __naked;
-static void state_ERASE_CHECK(void) __naked;
 static void state_LUT1_COLOR1(void) __naked;
 static void state_LUT1_COLOR2(void) __naked;
 static void state_LUT16_VEC1(void) __naked;
@@ -277,11 +275,8 @@ static void state_OPCODE(void) __naked
             state = state_ADDR_LOW;
             STATE_RETURN();
 
-        case FLS_OP_ERASE:
-            state = state_ERASE_COUNT;
-            STATE_RETURN();
-            
         default:
+            // Reserved
             STATE_RETURN();
         }
         
@@ -302,22 +297,7 @@ static void state_ADDR_LOW(void) __naked
 static void state_ADDR_HIGH(void) __naked
 {
     flash_addr_lat2 = byte & 0xFE;
-    state = state_OPCODE;
-    STATE_RETURN();
-}
-
-static void state_ERASE_COUNT(void) __naked
-{
-    counter = byte;
-    state = state_ERASE_CHECK;
-    STATE_RETURN();
-}
-
-static void state_ERASE_CHECK(void) __naked
-{
-    uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
-    if (check == byte)
-        flash_erase(counter);
+    flash_need_autoerase = 1;
     state = state_OPCODE;
     STATE_RETURN();
 }

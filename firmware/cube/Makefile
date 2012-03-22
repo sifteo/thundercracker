@@ -1,4 +1,4 @@
-BIN = cube.ihx
+BIN = cube.hex
 
 # Main segment
 OBJS = \

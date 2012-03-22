@@ -56,7 +56,7 @@ namespace TotalsGame
 #endif
     }
 
-	void AudioPlayer::PlaySfx(_SYSAudioModule& handle, bool preempt)
+	void AudioPlayer::PlaySfx(const AssetAudio& handle, bool preempt)
 	{
 #if ENABLE_AUDIO
 		//find a nonplaying channel
@@ -84,7 +84,7 @@ namespace TotalsGame
 #endif
 	}
 
-	void AudioPlayer::PlayMusic(_SYSAudioModule& music, bool loop)
+	void AudioPlayer::PlayMusic(const AssetAudio& music, bool loop)
     {
 #if ENABLE_AUDIO
 		if (channelMusic.isPlaying())
@@ -121,7 +121,7 @@ namespace TotalsGame
 	{
 #if ENABLE_AUDIO
 		static const int musicCount = 3;
-		static _SYSAudioModule *sInGameMusic[3] = 
+		static const AssetAudio *sInGameMusic[3] = 
 		{
 			&sfx_PeanosVaultCrimeWave,
 			&sfx_PeanosVaultInsideJob,

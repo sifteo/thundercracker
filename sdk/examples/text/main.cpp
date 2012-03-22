@@ -51,6 +51,9 @@ static unsigned measure_glyph(char ch)
 static void draw_text(const char *str)
 {
     char c;
+
+    LOG(("Drawing text: \"%s\" at (%d, %d)\n", str, draw_x, draw_y));
+
     while ((c = *str)) {
         str++;
         draw_glyph(c);
@@ -116,6 +119,8 @@ static void fade_in_and_out() {
     const unsigned speed = 4;
     const unsigned hold = 100;
     
+    LOG(("~ FADE ~\n"));
+    
     for (unsigned i = 0; i < 0x100; i += speed) {
         cube.vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1,
                        color_lerp(i));
@@ -132,7 +137,7 @@ static void fade_in_and_out() {
     }
 }
 
-void siftmain()
+void main()
 {
     cube.enable();
 

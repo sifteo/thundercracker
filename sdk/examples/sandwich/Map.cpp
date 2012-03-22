@@ -8,7 +8,14 @@ void Map::Init() {
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
     mData = &map; 
+    // triggers
     RefreshTriggers();
+    // sokoblocks
+    mBlockCount = map.sokoblockCount;
+    ASSERT(mBlockCount <= BLOCK_CAPACITY);
+    for(unsigned i=0; i<mBlockCount; ++i) {
+      mBlock[i].Init(map.sokoblocks[i]);
+    }
   }
 }
 
@@ -73,9 +80,9 @@ void Map::RefreshTriggers() {
   }  
 }
 
-bool Map::IsVertexWalkable(Vec2 vertex) {
+bool Map::IsVertexWalkable(Int2 vertex) {
   // convert global vertex into location / local vertex pair
-  Vec2 loc = Vec2(vertex.x>>3, vertex.y>>3);
+  Int2 loc = Vec2(vertex.x>>3, vertex.y>>3);
   if (vertex.x == 0 || loc.x < 0 || loc.x >= mData->width || loc.y < 0 || loc.y >= mData->height) {
     return false; // out of bounds
   }

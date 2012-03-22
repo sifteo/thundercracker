@@ -1,16 +1,12 @@
 #include "Game.h"
 #include "DrawingHelpers.h"
-#include "Dialog.h"
 
 #define HOVERING_ICON_ID	0
-
-// hacks for now
-static Dialog mDialog(0);
 
 void InventoryView::Init() {
 	CORO_RESET;
 	mSelected = 0;
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;
 	mAccumX = 0;
@@ -45,7 +41,7 @@ void InventoryView::Update(float dt) {
 			{
 				Cube::Side side = UpdateAccum();
 				if (side != SIDE_UNDEFINED) {
-					Vec2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side];
+                    Int2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
 					int count = gGame.GetState()->GetItems(items);
@@ -71,13 +67,12 @@ void InventoryView::Update(float dt) {
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
 		#endif
-		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
 			int count = gGame.GetState()->GetItems(items);
 			//Parent()->Graphics().setWindow(80, 48);
 			Parent()->Graphics().setWindow(80+16,128-80-16);
-			mDialog.Init();
+			mDialog.Init(Parent()->GetCube());
 			mDialog.Erase();
 			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
 		}
@@ -113,7 +108,8 @@ void InventoryView::OnInventoryChanged() {
 }
 
 void InventoryView::RenderInventory() {
-	BG1Helper overlay = Parent()->Overlay();
+	BG1Helper overlay(*Parent()->GetCube());
+
 	const int pad = 24;
 	const int innerPad = (128-pad-pad)/3;
 	uint8_t items[16];
@@ -145,7 +141,7 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
 	mTiltX = tilt.x;
 	mTiltY = tilt.y;
 	const int radix = 8;

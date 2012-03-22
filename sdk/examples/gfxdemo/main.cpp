@@ -194,8 +194,7 @@ void brickScroll()
             _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, Cat.tiles, 0, 8*9);
         }
 
-        float s;
-        _SYS_sincosf(frame * 0.06f, &s, NULL);
+        float s = sin(frame * 0.06f);
         vid.BG0_setPanning(Vec2( frame * 2.5f + 0.5f, s * 60.0f + 0.5f ));
         System::paint();
     }
@@ -204,7 +203,7 @@ void brickScroll()
 
 void randomGems()
 {
-    Math::Random random;
+    Random random;
     VidMode_BG0 vid(cube.vbuf);
 
     vid.setWindow(0, 128);
@@ -221,7 +220,7 @@ void randomGems()
 }
 
 
-void siftmain()
+void main()
 {
     load();
 
