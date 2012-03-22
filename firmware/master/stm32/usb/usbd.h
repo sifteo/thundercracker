@@ -28,6 +28,10 @@ public:
     }
 
     static void setAddress(uint16_t addr);
+    static void setConfig(uint16_t cfg);
+    static inline uint16_t config() {
+        return _config;
+    }
 
     static uint8_t ctrlBuf[128];
 
@@ -45,6 +49,7 @@ private:
     static const char **_strings;
 
     static uint16_t address;
+    static uint16_t _config;
 };
 
 #endif // USBD_H

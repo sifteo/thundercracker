@@ -23,6 +23,11 @@ void UsbDriver::handleStartOfFrame()
     driver.handleStartOfFrame();
 }
 
+void UsbDriver::setConfig(uint16_t wValue)
+{
+    driver.setConfig(wValue);
+}
+
 void UsbDriver::inEndpointCallback(uint8_t ep, Usb::Transaction txn)
 {
     driver.inEndpointCallback(ep, txn);

@@ -11,6 +11,7 @@ const char **Usbd::_strings;
 
 uint8_t Usbd::ctrlBuf[128];
 uint16_t Usbd::address;
+uint16_t Usbd::_config;
 
 void Usbd::init(const DeviceDescriptor *dev,
                 const ConfigDescriptor *conf,
@@ -46,3 +47,7 @@ void Usbd::setAddress(uint16_t addr)
     UsbHardware::setAddress(addr);
 }
 
+void Usbd::setConfig(uint16_t cfg)
+{
+    _config = cfg;
+}

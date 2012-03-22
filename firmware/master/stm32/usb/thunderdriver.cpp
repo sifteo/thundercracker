@@ -24,6 +24,11 @@ void ThunderDriver::handleStartOfFrame()
 
 }
 
+void ThunderDriver::setConfig(uint16_t wValue)
+{
+
+}
+
 void ThunderDriver::inEndpointCallback(uint8_t ep, Usb::Transaction txn)
 {
 

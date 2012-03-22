@@ -16,6 +16,8 @@ public:
     static void handleResume();
     static void handleStartOfFrame();
 
+    static void setConfig(uint16_t wValue);
+
     static void inEndpointCallback(uint8_t ep, Usb::Transaction txn);
     static void outEndpointCallback(uint8_t ep, Usb::Transaction txn);
 

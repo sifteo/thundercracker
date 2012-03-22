@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "usb/usbhardware.h"
+#include "usb/usbdriver.h"
 
 using namespace Usb;
 
@@ -130,32 +131,18 @@ int UsbCore::setAddress(SetupData *req, uint8_t **buf, uint16_t *len)
 
 int UsbCore::setConfiguration(SetupData *req, uint8_t **buf, uint16_t *len)
 {
-#if 0
     (void)req;
     (void)buf;
     (void)len;
 
     /* Is this correct, or should we reset alternate settings. */
-    if (req->wValue == _usbd_device.current_config)
+    if (req->wValue == Usbd::config())
         return 1;
 
-    _usbd_device.current_config = req->wValue;
+    Usbd::setConfig(req->wValue);
+    UsbHardware::epReset();
+    UsbDriver::setConfig(req->wValue);
 
-    /* Reset all endpoints. */
-    _usbd_hw_endpoints_reset();
-
-    if (_usbd_device.user_callback_set_config) {
-        /*
-         * Flush control callbacks. These will be reregistered
-         * by the user handler.
-         */
-        for (unsigned i = 0; i < MAX_USER_CONTROL_CALLBACK; i++)
-            _usbd_device.user_control_callback[i].cb = NULL;
-
-        _usbd_device.user_callback_set_config(req->wValue);
-    }
-
-#endif
     return 1;
 }
 
@@ -165,7 +152,7 @@ int UsbCore::getConfiguration(SetupData *req, uint8_t **buf, uint16_t *len)
 
     if (*len > 1)
         *len = 1;
-//    (*buf)[0] = _usbd_device.current_config;
+    (*buf)[0] = Usbd::config();
 
     return 1;
 }
