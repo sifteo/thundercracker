@@ -26,7 +26,29 @@ void radio_init(void);
 uint8_t radio_get_cube_id(void);
 
 extern RF_MemACKType __near ack_data;
-extern uint8_t __near ack_len;
+extern uint8_t __near ack_bits;
+
+/*
+ * We track the length of the next ACK packet using a bitmap, where each
+ * bit maps to one of the valid packet lengths as identified by the
+ * RF_ACK_LEN_* constants in protocol.h. To request a packet, set the
+ * corresponding bit in ack_bits.. When we send a packet, we'll size it
+ * according to the most significant '1' bit.
+ */
+
+#define RF_ACK_BIT_FRAME            0x01
+#define RF_ACK_BIT_ACCEL            0x02
+#define RF_ACK_BIT_NEIGHBOR         0x04
+#define RF_ACK_BIT_FLASH_FIFO       0x08
+#define RF_ACK_BIT_BATTERY_V        0x10
+#define RF_ACK_BIT_HWID             0x20
+
+#define RF_ACK_ABIT_FRAME           acc.0
+#define RF_ACK_ABIT_ACCEL           acc.1
+#define RF_ACK_ABIT_NEIGHBOR        acc.2
+#define RF_ACK_ABIT_FLASH_FIFO      acc.3
+#define RF_ACK_ABIT_BATTERY_V       acc.4
+#define RF_ACK_ABIT_HWID            acc.5
 
 /*
  * IRQ control. We have some critical sections where we'd really like
