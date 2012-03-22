@@ -188,6 +188,7 @@ int DoMenu(const char *name, TiltFlowItem *items, int nItems)
         System::paintSync();
     }
     tv.SetTransitionAmount(0);
+    System::paintSync();
 
     return menu.GetResultItem()->id;
 }
@@ -378,6 +379,8 @@ void RunSetup()
                 tv.SetTransitionAmount(1.0f-t/kDuration);
                 Game::UpdateDt();
             }
+            tv.SetTransitionAmount(0);
+            System::paintSync();
         }
 
         if (menu.GetResultItem()->id == Back)

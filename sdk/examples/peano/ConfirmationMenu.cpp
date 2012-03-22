@@ -115,8 +115,8 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
     if(msg)
     {   //no message -> dont mess with cube 0 (for tutorial)
         AnimateDoors(Game::cubes+ASK, true);        
-        dw.SetBackgroundColor(75, 0, 85);
-        dw.SetForegroundColor(255, 255, 255);
+        dw.SetForegroundColor(75, 0, 85);
+        dw.SetBackgroundColor(255, 255, 255);
         dw.DoDialog(msg, 16, 20);
     }
 
