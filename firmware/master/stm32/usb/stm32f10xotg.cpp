@@ -195,7 +195,7 @@ bool Stm32f10xOtg::epIsStalled(uint8_t addr)
         return (OTG.outEps[addr].DOEPCTL & stallbit) != 0;
 }
 
-void Stm32f10xOtg::epSetNak(uint8_t addr, uint8_t nak)
+void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
 {
     // n/a for IN endpoints
     if (isInEp(addr))

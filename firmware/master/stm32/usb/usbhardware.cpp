@@ -3,60 +3,55 @@
 
 using namespace Usb;
 
-static Stm32f10xOtg stm32usb;
+static Stm32f10xOtg hw;   // select desired hardware here
 
 void UsbHardware::init()
 {
-    stm32usb.init();
+    hw.init();
 }
 
 void UsbHardware::setAddress(uint8_t addr)
 {
-    stm32usb.setAddress(addr);
+    hw.setAddress(addr);
 }
 
 void UsbHardware::epSetup(uint8_t addr, uint8_t type, uint16_t max_size, EpCallback cb)
 {
-    stm32usb.epSetup(addr, type, max_size, cb);
+    hw.epSetup(addr, type, max_size, cb);
 }
 
 void UsbHardware::epReset()
 {
-
+    hw.epReset();
 }
 
-void UsbHardware::epStallSet(uint8_t addr, uint8_t stall)
+void UsbHardware::epSetStalled(uint8_t addr, bool stalled)
 {
-
+    hw.epSetStall(addr, stalled);
 }
 
-void UsbHardware::epNakSet(uint8_t addr, uint8_t nak)
+void UsbHardware::epSetNak(uint8_t addr, bool nak)
 {
-
+    hw.epSetNak(addr, nak);
 }
 
 bool UsbHardware::epIsStalled(uint8_t addr)
 {
-    return stm32usb.epIsStalled(addr);
+    return hw.epIsStalled(addr);
 }
 
 uint16_t UsbHardware::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
-    return stm32usb.epWritePacket(addr, buf, len);
+    return hw.epWritePacket(addr, buf, len);
 }
 
 uint16_t UsbHardware::epReadPacket(uint8_t addr, void *buf, uint16_t len)
 {
-    return stm32usb.epReadPacket(addr, buf, len);
+    return hw.epReadPacket(addr, buf, len);
 }
 
-void UsbHardware::poll()
+void UsbHardware::setDisconnected(bool disconnected)
 {
-
-}
-
-void UsbHardware::disconnect(bool disconnected)
-{
-
+    hw.setDisconnected(disconnected);
 }
 
