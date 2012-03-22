@@ -538,7 +538,7 @@ void TiltNudgePieces(App& app, Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *kGameStateNames[NUM_GAME_STATES] =
+const char kGameStateNames[NUM_GAME_STATES][64] =
 {
     "GAME_STATE_NONE",
     "GAME_STATE_MAIN_MENU",
@@ -677,9 +677,7 @@ void App::Init()
     
     LoadData();
     
-//#ifdef SIFTEO_SIMULATOR
     mChannel.init();
-//#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1085,9 +1083,7 @@ void App::UpdateCubes(float dt)
 
 void App::PlaySound()
 {
-//#ifdef SIFTEO_SIMULATOR
     mChannel.play(SoundGems);
-//#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1097,10 +1093,10 @@ void App::StartGameState(GameState gameState)
 {
     mGameState = gameState;
     
-    ASSERT(gameState < int(arraysize(kGameStateNames)));
-#ifdef SIFTEO_SIMULATOR    
-    DEBUG_LOG(("State = %s\n", kGameStateNames[mGameState]));
-#endif    
+    ASSERT(gameState < int(arraysize(kGameStateNames)));  
+    // TODO: Figure out why this causes a hang with the new runtime...
+    //LOG_STR(*kGameStateNames[mGameState]);
+    
     switch (mGameState)
     {
         case GAME_STATE_FREEPLAY_START:
@@ -2643,8 +2639,8 @@ void App::InsertScore()
 
 void App::SaveData()
 {
-#ifdef SIFTEO_SIMULATOR
-    DEBUG_LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
+#if 0
+    LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
         mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
     
     FILE *saveDataFile = std::fopen("SaveData.bin", "wb");
@@ -2668,7 +2664,7 @@ void App::SaveData()
 
 void App::LoadData()
 {
-#ifdef SIFTEO_SIMULATOR
+#if 0
     if (FILE *saveDataFile = fopen("SaveData.bin", "rb"))
     {
         int success0 = std::fseek(saveDataFile, 0L, SEEK_END);
@@ -2678,7 +2674,7 @@ void App::LoadData()
         
         if (size != (sizeof(mSaveDataStoryProgress) + sizeof(mSaveDataBestTimes)))
         {
-            DEBUG_LOG(("SaveData.bin is wrong size. Re-saving..."));
+            LOG(("SaveData.bin is wrong size. Re-saving...\n"));
             SaveData();
         }
         else
@@ -2697,7 +2693,7 @@ void App::LoadData()
             int success2 = std::fclose(saveDataFile);
             ASSERT(success2 == 0);
             
-            DEBUG_LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
+            LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
                 mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
     
         }
