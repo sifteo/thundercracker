@@ -23,34 +23,41 @@ const static unsigned char puzzlesNumPossibleAnagrams[] =
     2,	// MEMBER, all anagrams: ['MEMBER', 'MERE']
 };
 
-const static unsigned _puzzlesPossibleWordIndexes__HAPPENED[] =
+const static unsigned char _puzzlesPossibleWordIndexes__HAPPENED[] =
 {
     1,	// HAPPENED,
 };
 
-const static unsigned _puzzlesPossibleWordIndexes_HAPPENED_[] =
+const static unsigned char _puzzlesPossibleWordIndexes_HAPPENED_[] =
 {
     0,	// HAPPEN,
     1,	// HAPPENED,
 };
 
-const static unsigned _puzzlesPossibleWordIndexes_MEMBER[] =
+const static unsigned char _puzzlesPossibleWordIndexes_MEMBER[] =
 {
     2,	// MEMBER,
     3,	// MERE,
 };
 
-const static unsigned *puzzlesPossibleWordIndexes[] =
+const static unsigned char *puzzlesPossibleWordIndexes[] =
 {
     _puzzlesPossibleWordIndexes__HAPPENED,	// " HAPPENED",
     _puzzlesPossibleWordIndexes_HAPPENED_,	// "HAPPENED ",
     _puzzlesPossibleWordIndexes_MEMBER,	// "MEMBER",
 };
 
-const static bool puzzlesUseLeadingSpaces[] =
+const static unsigned char puzzlesNumLeadingSpaces[] =
 {
-    true,	//  HAPPENED
+    1,	//  HAPPENED
+    0,	// HAPPENED 
+    0,	// MEMBER
+};
+
+const static bool puzzlesScramble[] =
+{
+    false,	//  HAPPENED
     false,	// HAPPENED 
-    false,	// MEMBER
+    true,	// MEMBER
 };
 

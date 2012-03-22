@@ -40,7 +40,7 @@ bool Dictionary::pickWord(char* buffer,
             sPossibleWordFound[i] = false;
         }
         // TODO how many leading spaces?
-        leadingSpaces = puzzlesUseLeadingSpaces[sPuzzleIndex] ? 1 : 0;
+        leadingSpaces = puzzlesNumLeadingSpaces[sPuzzleIndex];
 
         // TODO data-driven
         maxLettersPerCube =
@@ -101,22 +101,13 @@ bool Dictionary::getCurrentPieces(unsigned maxPieces,
     ASSERT(GameStateMachine::getCurrentMaxLettersPerWord() >= wordLen);
     unsigned numBlanks =
             GameStateMachine::getCurrentMaxLettersPerWord() - wordLen;
-    unsigned leadingBlanks = 0;
+    unsigned leadingBlanks = puzzlesNumLeadingSpaces[sPuzzleIndex];
     if (numBlanks == 0)
     {
         _SYS_strlcpy(spacesAdded, word, sizeof spacesAdded);
     }
     else
     {
-        if (puzzlesUseLeadingSpaces[sPuzzleIndex])
-        {
-            leadingBlanks = numBlanks;
-        }
-        else
-        {
-            leadingBlanks = 0;
-        }
-
         unsigned i;
         for (i = 0;
              i < GameStateMachine::getCurrentMaxLettersPerWord();

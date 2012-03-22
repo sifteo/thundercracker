@@ -47,7 +47,7 @@ def find_anagrams(row, dictionary):
             spaces = letters_per_cube - len(row[key])
             if spaces > 0:
                 if j == 0:
-                    row['No. Leading Spaces'] = spaces
+                    row['No. Leading Spaces'] = str(spaces)
                     for k in range(0, spaces):
                         string = ' ' + string
                 elif j == num_pieces - 1:
@@ -271,6 +271,7 @@ def generate_dict():
         f = open(puzzle_file_name, 'rt')
         try:
             for row in csv.DictReader(f):
+                row['No. Leading Spaces'] = str(0)
                 puzzle_rows.append(row)
         finally:
             f.close()    
