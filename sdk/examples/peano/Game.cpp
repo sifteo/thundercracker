@@ -150,7 +150,6 @@ void Run()
 
     //TODO		saveData.Load();
 
-
     StingController::Run();
 
     GameState nextState =
@@ -200,11 +199,17 @@ void Run()
 
 void UpdateDt()
 {
-    SystemTime now = SystemTime::now();
-    TimeDelta timeDelta = now - systemTime;
-    systemTime = now;
+    SystemTime now;
+    do
+    {
+        now = SystemTime::now();
+        TimeDelta timeDelta = now - systemTime;
+        dt = timeDelta;
+        if(!dt)
+            System::yield();
+    } while(!dt);
 
-    dt = timeDelta;
+    systemTime = now;
 }
 
 void Wait(float delay)

@@ -2,9 +2,6 @@ APP = peano
 TC_DIR = ../../..
 include $(TC_DIR)/sdk/Makefile.defs
 
-# XXX: Kevin, can you fix this warning? --beth
-CCFLAGS += -Wno-overloaded-virtual
-
 OBJS = $(ASSETS).gen.o \
         puzzles.gen.o main.o Puzzle.o ShapeMask.o Token.o Fraction.o \
         TokenGroup.o Game.o \

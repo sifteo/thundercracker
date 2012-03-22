@@ -7,7 +7,7 @@ namespace TotalsGame
 namespace StingController
 {
 
-    bool gotTouchOn=false;
+bool gotTouchOn=false;
 bool skip = false;
 
 void OnCubeTouch(void*, _SYSCubeID cid)
@@ -48,6 +48,9 @@ void Run()
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+
+    gotTouchOn = false;
+    skip = false;
 
     SystemTime t = SystemTime::now() + 3.0f;
     while(!skip && t > SystemTime::now())

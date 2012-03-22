@@ -4,7 +4,7 @@
 #include "View.h"
 #include "Fraction.h"
 
-using namespace Sifteo::Math;
+using namespace Sifteo;
 
 namespace TotalsGame
 {

@@ -4,7 +4,7 @@
 #include "sifteo.h"
 #include <stddef.h>
 
-using namespace Sifteo::Math;
+using namespace Sifteo;
 
 namespace TotalsGame {
 

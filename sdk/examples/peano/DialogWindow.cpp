@@ -140,12 +140,12 @@ DialogWindow::DialogWindow(TotalsCube* pCube) : mCube(pCube) {
 
 void DialogWindow::SetBackgroundColor(unsigned r, unsigned g, unsigned b)
 {
-    fg = rgb565(r, g, b);
+    bg = rgb565(r, g, b);
 }
 
 void DialogWindow::SetForegroundColor(unsigned r, unsigned g, unsigned b)
 {
-    bg = rgb565(r, g, b);
+    fg = rgb565(r, g, b);
 }
 
 const char* DialogWindow::Show(const char* str) {
