@@ -225,7 +225,6 @@ void ScoredGameState::createNewAnagram()
     EventData data;
     Dictionary::pickWord(data.mNewAnagram.mWord,
                          data.mNewAnagram.mNumAnagrams,
-                         data.mNewAnagram.mNumBonusAnagrams,
                          data.mNewAnagram.mLeadingSpaces,
                          data.mNewAnagram.mMaxLettersPerCube);
 

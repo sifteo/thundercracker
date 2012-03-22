@@ -14,7 +14,6 @@ public:
 
     static bool pickWord(char* buffer,
                           unsigned char& numAnagrams,
-                          unsigned char& numBonusAnagrams,
                           unsigned char& leadingSpaces,
                           unsigned char& maxLettersPerCube);
 

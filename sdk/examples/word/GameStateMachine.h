@@ -47,7 +47,6 @@ public:
     static unsigned getSecondsLeft() { return (unsigned) _ceilf(getInstance().mTimeLeft); }
     static float getSecondsLeftFloat() { return getInstance().mTimeLeft; }
     static unsigned getNumAnagramsLeft() { return getInstance().mNumAnagramsLeft; }
-    static unsigned getNumBonusAnagramsLeft() { return getInstance().mNumBonusAnagramsLeft; }
     static unsigned getScore() { return (unsigned) getInstance().mScore; }
     static float getTime() { return getInstance().StateMachine::getTime(); }
     static unsigned char getNewWordLength() { return getInstance().mNewWordLength; }
@@ -79,7 +78,6 @@ private:
     unsigned mScore;
     unsigned char mNewWordLength;
     unsigned mNumAnagramsLeft;
-    unsigned mNumBonusAnagramsLeft;
     unsigned mCurrentMaxLettersPerCube;
     LevelProgressData mLevelProgressData;
     unsigned char mNumHints;

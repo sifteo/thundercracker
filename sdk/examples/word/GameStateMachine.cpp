@@ -13,8 +13,7 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsLeft(0), mNumBonusAnagramsLeft(0),
-    mCurrentMaxLettersPerCube(1), mNumHints(0)
+    mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -72,7 +71,6 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         mAnagramCooldown = ANAGRAM_COOLDOWN;
         // TODO data driven
         mNumAnagramsLeft = MAX(1, data.mNewAnagram.mNumAnagrams);
-        mNumBonusAnagramsLeft = data.mNewAnagram.mNumBonusAnagrams;
         for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
         {
             mLevelProgressData.mPuzzleProgress[i] =
@@ -87,15 +85,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             unsigned len = _SYS_strnlen(data.mWordFound.mWord, 32);
             mScore += len;
             mNewWordLength = len;
-            if (data.mWordFound.mBonus)
-            {
-                --mNumAnagramsLeft;
-                --mNumBonusAnagramsLeft;
-            }
-            else
-            {
-                --mNumAnagramsLeft;
-            }
+            --mNumAnagramsLeft;
 
             // trade time for space, no "current index"
             for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
