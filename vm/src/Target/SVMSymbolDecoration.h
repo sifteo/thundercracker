@@ -53,6 +53,7 @@ namespace llvm {
         static const char INIT[];
         static const char SEPARATOR[];
 
+        void Init();
         StringRef Decode(StringRef Name);
         static Constant *Apply(Module *M, const GlobalValue *Value, Twine Prefix);
         static Constant *ApplyOffset(Module *M, const GlobalValue *Value, int32_t offset);

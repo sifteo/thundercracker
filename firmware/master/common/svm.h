@@ -26,7 +26,8 @@ static const unsigned REG_PC = 15;
 static const unsigned REG_CPSR = 16;
 static const unsigned NUM_REGS = 17;
 
-// ABI 'call' stack frame layout
+// ABI 'call' stack frame layout. The size of this struct must remain constant.
+// The compiler relies it in order to calculate stack offsets for parameter passing.
 struct CallFrame {
     uint32_t pc;
     uint32_t fp;

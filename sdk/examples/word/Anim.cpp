@@ -275,7 +275,7 @@ bool animPaint(AnimType animT,
 
     float animPct =
             data.mLoop ?
-                fmodf(animTime, data.mDuration)/data.mDuration :
+                fmod(animTime, data.mDuration)/data.mDuration :
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
@@ -388,7 +388,7 @@ bool animPaint(AnimType animT,
     if (params && params->mSpriteParams)
     {
         float t = 4.f * animTime/data.mDuration;
-        t = fmodf(t, 1.0f);
+        t = fmod(t, 1.0f);
         unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
         for (unsigned i=1; i<8; ++i)
         {
@@ -414,7 +414,7 @@ bool animPaint(AnimType animT,
         {
             //const float ANIM_DURATION = 0.5f;
             float t = 2.f *animTime/data.mDuration;
-            t = fmodf(t, 1.0f);
+            t = fmod(t, 1.0f);
             bottomBorderFrame =
                     (params->mBonus) ?
                         NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:

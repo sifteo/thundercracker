@@ -57,8 +57,15 @@ Constant *SVMDecorations::ApplyOffset(Module *M, const GlobalValue *Value, int32
         return (Constant*) Value;
 }
 
+void SVMDecorations::Init()
+{
+    memset(this, 0, sizeof *this);
+}
+
 StringRef SVMDecorations::Decode(StringRef Name)
 {
+    Init();
+    
     // Internal prefixes are always stripped
     isLongBranch = testAndStripPrefix(Name, LB);
     isTailCall = testAndStripPrefix(Name, TCALL);

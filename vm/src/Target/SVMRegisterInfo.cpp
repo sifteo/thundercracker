@@ -56,7 +56,24 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MachineFrameInfo *MFI = MF.getFrameInfo();
 
     int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
-    Offset += MFI->getOffsetAdjustment();
+    assert(MFI->getOffsetAdjustment() == 0);
+
+    if (Offset < 0) {
+        /*
+         * Negative offsets are special; they represent offsets into the
+         * caller's stack frame. We can calculate that offset now that we
+         * know the final stack frame size of the current function.
+         *
+         * We need to reach upward, past this function's stack frame, and
+         * past the SVM CallFrame, into the bottom of the caller's frame.
+         */
+
+        const int CallFrameSize = 8 * sizeof(uint32_t);
+
+        Offset = -Offset - 1;
+        Offset += MFI->getStackSize();
+        Offset += CallFrameSize;
+    }
 
     // Extract offsets from instructions that have immediate offsets too
     switch (MI.getOpcode()) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "Common.h"
 #include "Content.h"
+#include "Sokoblock.h"
 
 #define USERDATA_NONE 0
 #define USERDATA_TRIGGER 1
@@ -30,6 +31,8 @@ public:
   inline Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
   inline bool HasUserdata() const { return mUserdataType; }
   void Clear();
+  bool IsShowingBlock(const Sokoblock* pBlock);  
+  unsigned CountOpenTilesAlongSide(Cube::Side side);
 
   //---------------------------------------------------------------------------
   // triggers

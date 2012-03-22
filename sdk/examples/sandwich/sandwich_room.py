@@ -124,9 +124,6 @@ class Room:
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y):
 					return (x,y)
 		return (0,0)
-
-	def subdiv_center(self):
-		pass
 	
 	def ispath(self, x, y):
 		return "path" in self.tileat(x,y).props
@@ -207,7 +204,7 @@ class Room:
 			src.write("0x%x," % rowMask)
 		src.write("},\n")
 		# tiles
-		src.write("        { ")
+		src.write("        {")
 		for ty in range(8):
 			#src.write("            ")
 			for tx in range(8):

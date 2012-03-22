@@ -32,6 +32,7 @@
 uint8_t flash_addr_low;
 uint8_t flash_addr_lat1;
 uint8_t flash_addr_lat2;
+__bit flash_need_autoerase;
 
 /*
  * We can poll in a much tighter loop (and therefore exit the polling
@@ -111,19 +112,22 @@ static void flash_write_unlock()
 #endif
 }
     
-void flash_autoerase(void)
+static void flash_autoerase(void)
 {
     /*
      * Erase one sector (64Kb) at the current address, if and only if
      * we're pointed to the first byte of a flash block. Guaranteed
      * to be called at tile boundaries only.
      *
-     * This is invoked prior to every decompressed tile, so that we
-     * automatically erase blocks as we reach them during decompression.
+     * This is invoked prior to a write, any time the flash_need_autoerase
+     * flag is set. This flag is set when the address is modified, or when
+     * lat1 wraps.
      *
      * Erase operations are self-contained: we do all address setup
      * (including lat2) and we wait for the erase to finish.
      */
+
+    flash_need_autoerase = 0;
 
     // Check sector alignment
     if (flash_addr_lat1)
@@ -250,6 +254,10 @@ void flash_program_word(uint16_t dat) __naked
 1$:
     __endasm ;
 
+    // Do an autoerase, if necessary
+    if (flash_need_autoerase)
+        flash_autoerase();
+
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0;
 
@@ -333,6 +341,7 @@ void flash_program_word(uint16_t dat) __naked
         mov     a, _flash_addr_lat2
         add     a, #2
         mov     _flash_addr_lat2, a
+        setb    _flash_need_autoerase
 
         ; Since we keep lat2 loaded into the latch, we need to at some point
         ; reload the latch before the next write. But we must not touch the

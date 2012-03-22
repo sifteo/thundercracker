@@ -23,17 +23,15 @@ OBJS = \
 	Map.o \
 	Map_NarrowPath.o \
 	Map_BroadPath.o \
+	MapHelpers.o \
 	MinimapView.o \
 	Player.o \
 	Room.o \
 	RoomView.o \
+	Sokoblock.o \
 	ViewSlot.o \
 
 ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
-ifdef MAX_HAX
-ASSETDEPS -= content.gen.lua
-endif
-
 CDEPS += *.h 
 
 include $(TC_DIR)/sdk/Makefile.rules
@@ -46,15 +44,5 @@ content.gen.cpp: content_crc.txt
 
 content.gen.lua: content_crc.txt
 
-CONTENT_TOOLS = \
-	sandwich.py \
-	sandwich_dialog.py \
-	sandwich_item.py \
-	sandwich_map.py \
-	sandwich_quest.py \
-	tmx.py \
-	misc.py
-
-
-content_crc.txt: $(CONTENT_TOOLS) Content/*
+content_crc.txt: *.py Content/*
 	python sandwich.py

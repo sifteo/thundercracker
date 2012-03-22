@@ -6,7 +6,7 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	pView->GetCube()->vbuf.touch();
 	System::paintSync();
 	pView->HideSprites();
-	BG1Helper overlay = pView->Overlay();
+	BG1Helper overlay(*pView->GetCube());
 	overlay.DrawAsset(Vec2(&detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), detail);
 	overlay.Flush();
 	System::paintSync();
@@ -15,8 +15,8 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	pView->GetCube()->vbuf.touch();
 	System::paintSync();
 	pView->Graphics().setWindow(80, 48);
-	Dialog diag(pView->GetCube());
-	diag.Init();
+	Dialog diag;
+	diag.Init(pView->GetCube());
 	diag.Erase();
 	diag.ShowAll(msg);
 	diag.SetAlpha(0);
@@ -53,7 +53,8 @@ void Game::WinScreen() {
 
 	System::paintSync();
 	for(int i=0; i<3; ++i) {
-		Dialog d(views[i]->GetCube());
+		Dialog d;
+		d.Init(views[i]->GetCube());
 		d.Erase();
 		d.Show("Thanks for Playing!");
 	}

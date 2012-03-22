@@ -250,4 +250,26 @@ uint32_t _SYS_fmodf(uint32_t a, uint32_t b)
     return reinterpret_cast<uint32_t&>(fR);
 }
 
+uint32_t _SYS_sqrtf(uint32_t a)
+{
+    float r = sqrtf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
+uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    double r = fmod(reinterpret_cast<double&>(a), reinterpret_cast<double&>(b));
+    return reinterpret_cast<uint64_t&>(r);
+}
+
+uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    double r = sqrt(reinterpret_cast<double&>(a));
+    return reinterpret_cast<uint64_t&>(r);
+}
+
+
 }  // extern "C"

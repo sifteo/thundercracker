@@ -54,7 +54,7 @@ unsigned TitleCubeState::update(float dt, float stateTime)
         mShakeDelay = 0.f;
     }
     mPanning += dt * -2.f * accelState.x;
-    if (fabs(mPanning) > 96.f)
+    if (abs(mPanning) > 96.f)
     {
         GameStateMachine::sOnEvent(EventID_Start, EventData());
         return CubeStateIndex_StartOfRoundScored;
@@ -108,7 +108,7 @@ void TitleCubeState::paint()
             {
                 const AssetImage& anim = TitleSmoke;
                 float animTime =
-                        fmodf(getStateMachine().getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
+                        fmod(getStateMachine().getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
                 animTime = MIN(animTime, 1.f);
                 unsigned frame = (unsigned) (animTime * anim.frames);
                 frame = MIN(frame, anim.frames - 1);

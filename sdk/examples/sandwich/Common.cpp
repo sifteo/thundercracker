@@ -1,6 +1,6 @@
 #include "Common.h"
 
-Math::Random gRandom;
+Random gRandom;
 
 Cube::Side InferDirection(Int2 u) {
 	if (u.x > 0) {
@@ -12,6 +12,21 @@ Cube::Side InferDirection(Int2 u) {
 	} else {
 		return SIDE_BOTTOM;
 	}
+}
+
+int AdvanceTowards(int curr, int targ, int mag) {
+  if (curr > targ) {
+    int x = curr - targ;
+    if (x > mag) {
+      return curr - mag;
+    }
+  } else if (curr < targ) {
+    int x = targ - curr;
+    if (x > mag) {
+      return curr + mag;
+    }
+  }
+  return targ;
 }
 
 //------------------------------------------------------------------------------

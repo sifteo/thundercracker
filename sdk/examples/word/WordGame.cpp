@@ -5,7 +5,7 @@
 using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
-Math::Random WordGame::random;
+Random WordGame::random;
 
 
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)

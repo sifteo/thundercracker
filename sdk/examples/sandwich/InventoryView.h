@@ -1,5 +1,6 @@
 #pragma once
 #include "View.h"
+#include "Dialog.h"
 
 class InventoryView : public View {
 private:
@@ -9,6 +10,8 @@ private:
 	int16_t mAccumX;
 	int16_t mAccumY;
 	
+	Dialog mDialog;
+
 	uint8_t mSelected; // really only [0,16]
 	uint8_t mTouch; // really only a bool
 	uint8_t mAnim; // really only [0,32]

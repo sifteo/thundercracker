@@ -648,15 +648,15 @@ void TiltFlowView::UpdateMenu() {
 }
 
 float TiltFlowView::Resistance() {
-    float u = 1.0f - fabs(mOffsetX / 45.0f);
+    float u = 1.0f - abs(mOffsetX / 45.0f);
     return 1.0f - 0.95f * (u * u);
 }
 
 void TiltFlowView::CoastToStop() {
-  if (fabs(mOffsetX)  > EPSILON ) {
+  if (abs(mOffsetX)  > EPSILON ) {
     mAccel = Util::Clamp(mAccel/GRAVITY, MINACCEL, MAXACCEL);
     mRestTime = TiltFlowMenu::Inst()->GetSimTime();
-    if (fabs(mOffsetX) < MINACCEL) { // magic
+    if (abs(mOffsetX) < MINACCEL) { // magic
       StopScrolling();
     } else if (mOffsetX > 0.0f) {
           mOffsetX -= DRIFTVEL * mAccel;
