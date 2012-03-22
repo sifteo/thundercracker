@@ -87,15 +87,15 @@ int8_t AccelState::calculateTiltState(uint8_t axis) {
 }
 
 void AccelState::updateShakeState() {
-	_SYSShakeState newGlobalShakeState = NOT_SHAKING;
+	_SYSShakeState newGlobalShakeState = _SYS_NOT_SHAKING;
 	uint8_t i;
  
 	for (i = 0; i < NUM_AXES; i++) {
 		_SYSShakeState ss;
 		ss = calculateShakeState(i);
 		//DEBUG_LOG(("axis %d, shaking = %d\n", i, ss));
-		if (ss == SHAKING)
-			newGlobalShakeState = SHAKING;
+		if (ss == _SYS_SHAKING)
+			newGlobalShakeState = _SYS_SHAKING;
 	}
   
 	if (shakeState != newGlobalShakeState) {
@@ -122,11 +122,11 @@ _SYSShakeState AccelState::calculateShakeState(uint8_t axis) {
 	//DEBUG_LOG(("Calculating shake.  Variance = %d\n", variance));
 
 	if (variance > SHAKE_THRESHOLD)
-		return SHAKING;
-	//includes hysteresis.  If you are SHAKING, do not leave this state unless
+		return _SYS_SHAKING;
+	//includes hysteresis.  If you are shaking, do not leave this state unless
 	//you are well past the threshold.  (prevents spiky behavior)
-	if (shakeState == SHAKING)
-		return (variance < (SHAKE_THRESHOLD - SHAKE_HYSTERESIS)) ? NOT_SHAKING : SHAKING;
+	if (shakeState == _SYS_SHAKING)
+		return (variance < (SHAKE_THRESHOLD - SHAKE_HYSTERESIS)) ? _SYS_NOT_SHAKING : _SYS_SHAKING;
 	else
-		return NOT_SHAKING;
+		return _SYS_NOT_SHAKING;
 }

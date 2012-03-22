@@ -23,7 +23,7 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType
     if (SvmMemory::initFlashStream(va, mod->dataSize, flStream)) {
 
         type = mod->type;
-        state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
+        state = (loopMode == _SYS_LOOP_ONCE) ? 0 : STATE_LOOP;
 
         if (type == _SYS_Speex)
             speexDec.init();

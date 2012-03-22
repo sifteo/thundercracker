@@ -67,7 +67,7 @@ struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid)
 
 _SYSShakeState _SYS_getShake(_SYSCubeID cid)
 {
-    _SYSShakeState r = NOT_SHAKING;
+    _SYSShakeState r = _SYS_NOT_SHAKING;
     if (CubeSlots::validID(cid))
         AccelState::instances[cid].getShakeState(&r);
     return r;

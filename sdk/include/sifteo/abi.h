@@ -317,8 +317,8 @@ enum _SYSAudioType {
 };
 
 enum _SYSAudioLoopType {
-    LoopOnce = 0,
-    LoopRepeat = 1
+    _SYS_LOOP_ONCE = 0,
+    _SYS_LOOP_REPEAT = 1
 };
 
 struct _SYSAudioModule {
@@ -364,8 +364,8 @@ struct _SYSTiltState {
 };
 
 typedef enum {
-  NOT_SHAKING,
-  SHAKING
+    _SYS_NOT_SHAKING,
+    _SYS_SHAKING
 } _SYSShakeState;
 
 /**
