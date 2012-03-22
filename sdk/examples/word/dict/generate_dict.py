@@ -47,6 +47,7 @@ def find_anagrams(row, dictionary):
             spaces = letters_per_cube - len(row[key])
             if spaces > 0:
                 if j == 0:
+                    row['No. Leading Spaces'] = spaces
                     for k in range(0, spaces):
                         string = ' ' + string
                 elif j == num_pieces - 1:
@@ -516,7 +517,7 @@ def generate_dict():
     for row in puzzle_rows:
         word = row['Puzzle']
         ltrs_p_c = row['Max Letters Per Cube']
-        fi.write("const static unsigned _puzzlesPossibleWordIndexes_" + string.replace(word, ' ', '_') + "[] =\n")
+        fi.write("const static unsigned char _puzzlesPossibleWordIndexes_" + string.replace(word, ' ', '_') + "[] =\n")
         fi.write("{\n")
         anagrams = find_anagrams(row, dictionary).keys()
         for a in anagrams:
@@ -526,23 +527,33 @@ def generate_dict():
                 print "Failed to find " + a + " in sorted output dictionary: ", sys.exc_info()[0]            
         fi.write("};\n\n")
     
-    fi.write("const static unsigned *puzzlesPossibleWordIndexes[] =\n")
+    fi.write("const static unsigned char *puzzlesPossibleWordIndexes[] =\n")
     fi.write("{\n")
     for row in puzzle_rows:
         word = row['Puzzle']
         fi.write("    _puzzlesPossibleWordIndexes_" + string.replace(word, ' ', '_') + ',\t// "' + word + '",\n');
     fi.write("};\n\n")
 
-    fi.write("const static bool puzzlesUseLeadingSpaces[] =\n")
+    fi.write("const static unsigned char puzzlesNumLeadingSpaces[] =\n")
     fi.write("{\n")
     for row in puzzle_rows:
         word = row['Puzzle']
         ltrs_p_c = row['Max Letters Per Cube']
         if ltrs_p_c > 1:
-            fi.write("    " + str(word in word_list_leading_spaces).lower() + ",\t// " + word + "\n")
+            fi.write("    " + row['No. Leading Spaces'] + ",\t// " + word + "\n")
     fi.write("};\n\n")
     
-
+    fi.write("const static bool puzzlesScramble[] =\n")
+    fi.write("{\n")
+    for row in puzzle_rows:
+        word = row['Puzzle']
+        ltrs_p_c = row['Max Letters Per Cube']
+        if ltrs_p_c > 1:
+            value = 'false'
+            if 'Y' in row['ScrambleYN'].upper():
+                value = 'true'
+            fi.write("    " + value + ",\t// " + word + "\n")
+    fi.write("};\n\n")
         
     # skip the prototype code below, it just generates the word lists for the demo, if 
     # the seeds are set for each pick at run time
