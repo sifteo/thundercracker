@@ -63,7 +63,7 @@ void TiltFlowView::Tick()
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-//        c->foregroundLayer.DrawPartialAsset(Vec2(0,0), Vec2(0, 15), Vec2(16,1), Skins::GetSkin().vault_door); // header image
+        c->foregroundLayer.DrawPartialAsset(Vec2(0,0), Vec2(0, 15), Vec2(16,1), Skins::GetSkin().vault_door); // header image
         PaintFooter(c);
         c->foregroundLayer.Flush();
     }
@@ -92,7 +92,7 @@ void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
 void TiltFlowView::PaintFooter(TotalsCube *c) {
     if(menu->IsPicked())
     {
-//        c->foregroundLayer.DrawPartialAsset(Vec2(0, 12), Vec2(0,0), Vec2(16,4), Skins::GetSkin().vault_door);
+        c->foregroundLayer.DrawPartialAsset(Vec2(0, 12), Vec2(0,0), Vec2(16,4), Skins::GetSkin().vault_door);
     }
     else
     {

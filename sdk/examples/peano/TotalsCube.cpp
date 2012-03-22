@@ -151,7 +151,7 @@ namespace TotalsGame
 
     void TotalsCube::Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size)
 	{
-       // backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
+        backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
     void TotalsCube::Image(const PinnedAssetImage *image, Int2 coord, int frame)

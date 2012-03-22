@@ -27,8 +27,7 @@ SkillLevel skillLevel = SkillLevel_Expert;
 SaveData saveData;
 
 float dt;
-SystemTime systemTime;
-
+TimeStep timeStep;
 
 void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
@@ -146,7 +145,8 @@ void Run()
     currentPuzzle = NULL;
     previousPuzzle = NULL;
 
-    systemTime = SystemTime::now();
+    timeStep.next();
+    dt = timeStep.delta();
 
     //TODO		saveData.Load();
 
@@ -199,17 +199,8 @@ void Run()
 
 void UpdateDt()
 {
-    SystemTime now;
-    do
-    {
-        now = SystemTime::now();
-        TimeDelta timeDelta = now - systemTime;
-        dt = timeDelta;
-        if(!dt)
-            System::yield();
-    } while(!dt);
-
-    systemTime = now;
+    timeStep.next();
+    dt = timeStep.delta();
 }
 
 void Wait(float delay)
