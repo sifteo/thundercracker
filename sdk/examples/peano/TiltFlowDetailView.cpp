@@ -40,7 +40,9 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
         Game::UpdateDt();
     }
 
-    GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+    int fg[] = {75, 0, 85};
+    int bg[] = {255 ,255, 255};
+    GetCube()->EnableTextOverlay(mDescription, 24, 40, fg, bg);
 
 }
 
@@ -66,7 +68,9 @@ void TiltFlowDetailView::HideDescription() {
 
         if(message[0])
         {
-            GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+            int fg[] = {75, 0, 85};
+            int bg[] = {255 ,255, 255};
+            GetCube()->EnableTextOverlay(message, 16, 20, fg, bg);
         }
     }
 }

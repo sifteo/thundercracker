@@ -49,7 +49,9 @@ void InterstitialView::TransitionSync(float duration, bool opening)
 
     if (mOffset >= 17 && message[0] && !GetCube()->IsTextOverlayEnabled())
     {
-        GetCube()->EnableTextOverlay(message, 16, 20, 75,0,85, 255,255,255);
+        int fg[] = {75, 0, 85};
+        int bg[] = {255 ,255, 255};
+        GetCube()->EnableTextOverlay(message, 16, 20, fg, bg);
     }
 }
 

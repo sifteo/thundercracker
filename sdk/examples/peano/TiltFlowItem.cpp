@@ -2,7 +2,7 @@
 namespace TotalsGame
 {
 
-Vector2<int> TiltFlowItem::GetSourcePosition() {return sourcePosition;}
+Int2 TiltFlowItem::GetSourcePosition() {return sourcePosition;}
 
 TiltFlowItem::TiltFlowItem ()
 {

@@ -16,8 +16,8 @@ namespace TotalsGame
 
 		IExpression *GetSrc() {return src;}
 		IExpression *GetDst() {return dst;}
-        Vector2<int> GetSrcPos() {return srcPos;}
-        Vector2<int> GetDstPos() {return dstPos;}
+        Int2 GetSrcPos() {return srcPos;}
+        Int2 GetDstPos() {return dstPos;}
 		Token *GetSrcToken() {return srcToken;}
 		Cube::Side GetSrcSide() {return srcSide;}
 		Token *GetDstToken() {return dstToken;}
@@ -28,8 +28,8 @@ namespace TotalsGame
 		virtual ShapeMask GetMask();
 		virtual int GetDepth();
 		virtual int GetCount();
-        virtual bool TokenAt(Vector2<int> p, Token **t);
-        virtual bool PositionOf(Token *t, Vector2<int> *p);
+        virtual bool TokenAt(Int2 p, Token **t);
+        virtual bool PositionOf(Token *t, Int2 *p);
 		virtual bool Contains(Token *t);
         virtual void SetCurrent(IExpression *exp);
 		virtual bool IsTokenGroup() {return true;}
@@ -54,10 +54,10 @@ namespace TotalsGame
         void AlertDidJoinGroup();
         void AlertDidGroupDisconnect();
 
-        static TokenGroup *Connect(Token *st, Vector2<int> d, Token *dt) { return Connect(st, st, d, dt, dt); }
-        static TokenGroup *Connect(IExpression *src, Token *st, Vector2<int> d, Token *dt) { return Connect(src, st, d, dt, dt); }
+        static TokenGroup *Connect(Token *st, Int2 d, Token *dt) { return Connect(st, st, d, dt, dt); }
+        static TokenGroup *Connect(IExpression *src, Token *st, Int2 d, Token *dt) { return Connect(src, st, d, dt, dt); }
 
-        static TokenGroup *Connect(IExpression *src, Token *srcToken, Vector2<int> d, IExpression *dst, Token *dstToken);
+        static TokenGroup *Connect(IExpression *src, Token *srcToken, Int2 d, IExpression *dst, Token *dstToken);
 
         void RecomputeValue();
 
@@ -67,8 +67,8 @@ namespace TotalsGame
             );
 
 		TokenGroup(
-            IExpression *src, Vector2<int> srcPos, Token *srcToken, Cube::Side srcSide,
-            IExpression *dst, Vector2<int> dstPos, Token *dstToken,
+            IExpression *src, Int2 srcPos, Token *srcToken, Cube::Side srcSide,
+            IExpression *dst, Int2 dstPos, Token *dstToken,
 			Fraction val,
 			ShapeMask mask
             );
@@ -78,8 +78,8 @@ namespace TotalsGame
 	private:
 		IExpression *src;
 		IExpression *dst;
-        Vector2<int> srcPos;
-        Vector2<int> dstPos;
+        Int2 srcPos;
+        Int2 dstPos;
 		Token *srcToken;
 		Cube::Side srcSide;
 		Token *dstToken;

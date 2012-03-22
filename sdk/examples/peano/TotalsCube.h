@@ -41,7 +41,7 @@ namespace TotalsGame
 
         bool DoesNeighbor(TotalsCube *other);
 
-        Vector2<int> GetTilt();
+        Int2 GetTilt();
 
         void HideSprites();
 
@@ -59,18 +59,18 @@ public:
 		void DrawVaultDoorsClosed();
 
         void Image(const Sifteo::AssetImage &image);
-        void Image(const Sifteo::AssetImage &image, Vector2<int> pos, int frame=0);
-        void Image(const Sifteo::AssetImage *image, Vector2<int> coord, Vector2<int> offset, Vector2<int> size);
-        void Image(const Sifteo::PinnedAssetImage *image, Vector2<int> coord, int frame=0);
-        void ClipImage(const Sifteo::AssetImage *image, Vector2<int> pos);
-        void ClipImage(const Sifteo::PinnedAssetImage *image, Vector2<int> pos, int frame = 0);
-        void FillArea(const Sifteo::AssetImage *image, Vector2<int> pos, Vector2<int> size);
+        void Image(const Sifteo::AssetImage &image, Int2 pos, int frame=0);
+        void Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size);
+        void Image(const Sifteo::PinnedAssetImage *image, Int2 coord, int frame=0);
+        void ClipImage(const Sifteo::AssetImage *image, Int2 pos);
+        void ClipImage(const Sifteo::PinnedAssetImage *image, Int2 pos, int frame = 0);
+        void FillArea(const Sifteo::AssetImage *image, Int2 pos, Int2 size);
 	
-        void DrawFraction(Fraction f, Vector2<int> pos);
+        void DrawFraction(Fraction f, Int2 pos);
         //void DrawDecimal(float d, Vec2 pos);
-        void DrawString(const char *string, Vector2<int> center);
+        void DrawString(const char *string, Int2 center);
 
-        void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
+        void EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3]);
         void DisableTextOverlay();
         bool IsTextOverlayEnabled();
 

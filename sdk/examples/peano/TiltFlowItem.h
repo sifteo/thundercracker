@@ -11,7 +11,7 @@ namespace TotalsGame
   class TiltFlowItem
   {
       const char *name;
-      Vector2<int> sourcePosition;
+      Int2 sourcePosition;
       int imageIndex;
       const Sifteo::AssetImage **images;
       const Sifteo::AssetImage *singleImage;
@@ -26,7 +26,7 @@ namespace TotalsGame
     const char *description;
     const Sifteo::AssetImage *GetImages();
     int GetNumImages();
-    Vector2<int> GetSourcePosition();
+    Int2 GetSourcePosition();
 
     TiltFlowItem ();
 

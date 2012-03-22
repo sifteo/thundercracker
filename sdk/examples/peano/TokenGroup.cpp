@@ -26,14 +26,14 @@ namespace TotalsGame
         return src->GetCount() + dst->GetCount();
     }
 	
-    bool TokenGroup::TokenAt(Vector2<int> p, Token **t)
+    bool TokenGroup::TokenAt(Int2 p, Token **t)
 	{
       return
 		  src->TokenAt(p - srcPos, t) ||
         dst->TokenAt(p - dstPos, t);
     }
 
-    bool TokenGroup::PositionOf(Token *t, Vector2<int> *p)
+    bool TokenGroup::PositionOf(Token *t, Int2 *p)
 	{
       if (src->PositionOf(t, p)) 
 	  {
@@ -67,8 +67,8 @@ namespace TotalsGame
     }
 
      TokenGroup::TokenGroup(
-         IExpression *src, Vector2<int> srcPos, Token *srcToken, Cube::Side srcSide,
-         IExpression *dst, Vector2<int> dstPos, Token *dstToken,
+         IExpression *src, Int2 srcPos, Token *srcToken, Cube::Side srcSide,
+         IExpression *dst, Int2 dstPos, Token *dstToken,
          Fraction val,
          ShapeMask mask
          )
@@ -103,10 +103,10 @@ namespace TotalsGame
              this->dst = dst;
              this->dstToken = dstToken;
              void *userData = NULL;
-             Vector2<int> sp, dp;
+             Int2 sp, dp;
              src->PositionOf(srcToken, &sp);
              dst->PositionOf(dstToken, &dp);
-             Vector2<int> d = kSideToUnit[srcSide];
+             Int2 d = kSideToUnit[srcSide];
 #if NO_STACK_PARAMS_HACK
              ShapeMask::m1 = src->GetMask();
              ShapeMask::m2 = dst->GetMask();
@@ -118,11 +118,11 @@ namespace TotalsGame
              mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
 
-     TokenGroup *TokenGroup::Connect(IExpression *src, Token *srcToken, Vector2<int> d, IExpression *dst, Token *dstToken) {
+     TokenGroup *TokenGroup::Connect(IExpression *src, Token *srcToken, Int2 d, IExpression *dst, Token *dstToken) {
          if (d.x < 0 || d.y < 0) { return Connect(dst, dstToken, d * -1, src, srcToken); }
          ShapeMask mask;
-         Vector2<int> d1, d2;
-         Vector2<int> sp, dp;
+         Int2 d1, d2;
+         Int2 sp, dp;
          src->PositionOf(srcToken, &sp);
          dst->PositionOf(dstToken, &dp);
 #if NO_STACK_PARAMS_HACK

@@ -9,8 +9,8 @@ using namespace Sifteo::Math;
 namespace TotalsGame {
 
 	struct Connection {
-        Vector2<int> pos;
-        Vector2<int> dir;
+        Int2 pos;
+        Int2 dir;
 
         bool Matches(const Connection &c);
 
@@ -22,24 +22,24 @@ namespace TotalsGame {
 	};
 
 	struct ShapeMask {
-        Vector2<int> size;
+        Int2 size;
 		long bits;
 
 		static const ShapeMask Zero;
 		static const ShapeMask Unity;
 
-        ShapeMask(Vector2<int> size, bool *flags, size_t numFlags);
+        ShapeMask(Int2 size, bool *flags, size_t numFlags);
 
-        ShapeMask(Vector2<int> size, long bits);
+        ShapeMask(Int2 size, long bits);
 
         ShapeMask();
 
         ShapeMask GetRotation();
         ShapeMask GetReflection();
 
-        bool BitAt(Vector2<int> p) const;
+        bool BitAt(Int2 p) const;
 
-        ShapeMask SubMask(Vector2<int> p, Vector2<int> s);
+        ShapeMask SubMask(Int2 p, Int2 s);
 
         bool Matches(const ShapeMask &mask);
 		
@@ -51,13 +51,13 @@ namespace TotalsGame {
         static ShapeMask m1;
         static ShapeMask m2;
         static bool TryConcat(
-            Vector2<int> offset,
-            ShapeMask *result, Vector2<int> *d1, Vector2<int> *d2
+            Int2 offset,
+            ShapeMask *result, Int2 *d1, Int2 *d2
             );
 #else
 		static bool TryConcat(
-            const ShapeMask &m1, const ShapeMask &m2, Vector2<int> offset,
-            ShapeMask *result, Vector2<int> *d1, Vector2<int> *d2
+            const ShapeMask &m1, const ShapeMask &m2, Int2 offset,
+            ShapeMask *result, Int2 *d1, Int2 *d2
             );
 #endif
     };

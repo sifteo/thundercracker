@@ -24,7 +24,7 @@ bool Connection::IsRight() {
     return dir.x == 1 && dir.y == 0;
 }
 
-ShapeMask::ShapeMask(Vector2<int> size, bool *flags, size_t numFlags) {
+ShapeMask::ShapeMask(Int2 size, bool *flags, size_t numFlags) {
     this->size = size;
     this->bits = 0L;
     for(int x=0; x<size.x; ++x) {
@@ -38,7 +38,7 @@ ShapeMask::ShapeMask(Vector2<int> size, bool *flags, size_t numFlags) {
     }
 }
 
-ShapeMask::ShapeMask(Vector2<int> size, long bits) {
+ShapeMask::ShapeMask(Int2 size, long bits) {
     this->size = size;
     this->bits = bits;
 }
@@ -50,7 +50,7 @@ ShapeMask::ShapeMask()
 }
 
 ShapeMask ShapeMask::GetRotation() {
-    Vector2<int> s = Vec2(size.y, size.x);
+    Int2 s = Vec2(size.y, size.x);
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
@@ -64,7 +64,7 @@ ShapeMask ShapeMask::GetRotation() {
 }
 
 ShapeMask ShapeMask::GetReflection() {
-    Vector2<int> s = Vec2(size.x, size.y);
+    Int2 s = Vec2(size.x, size.y);
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
@@ -77,14 +77,14 @@ ShapeMask ShapeMask::GetReflection() {
     return ShapeMask(s, bts);
 }
 
-bool ShapeMask::BitAt(Vector2<int> p) const
+bool ShapeMask::BitAt(Int2 p) const
 {
     if (p.x < 0 || p.x >= size.x || p.y < 0 || p.y >= size.y) { return false; }
     int shift = p.y * size.x + p.x;
     return (bits & (1L<<shift))!= 0L;
 }
 
-ShapeMask ShapeMask::SubMask(Vector2<int> p, Vector2<int> s) {
+ShapeMask ShapeMask::SubMask(Int2 p, Int2 s) {
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
@@ -105,7 +105,7 @@ void ShapeMask::ListOutConnections(Connection *connections, int *numConnections,
 {
     *numConnections = 0;
 
-    Vector2<int> p;
+    Int2 p;
     for(p.x=0; p.x<size.x; ++p.x)
     {
         for(p.y=0; p.y<size.y; ++p.y)
@@ -135,7 +135,7 @@ void ShapeMask::ListInConnections(Connection *connections, int *numConnections, 
 {
     *numConnections = 0;
 
-    Vector2<int> p;
+    Int2 p;
     for(p.x=0; p.x<size.x; ++p.x)
     {
         for(p.y=0; p.y<size.y; ++p.y)
@@ -165,27 +165,27 @@ void ShapeMask::ListInConnections(Connection *connections, int *numConnections, 
 ShapeMask ShapeMask::m1;
 ShapeMask ShapeMask::m2;
 bool ShapeMask::TryConcat(
-        Vector2<int> offset,
-        ShapeMask *result,Vector2<int> *d1, Vector2<int> *d2
+        Int2 offset,
+        ShapeMask *result,Int2 *d1, Int2 *d2
         )
 #else
 bool ShapeMask::TryConcat(
-        const ShapeMask &m1, const ShapeMask &m2, Vector2<int> offset,
-        ShapeMask *result,Vector2<int> *d1, Vector2<int> *d2
+        const ShapeMask &m1, const ShapeMask &m2, Int2 offset,
+        ShapeMask *result,Int2 *d1, Int2 *d2
         )
 #endif
 {
-    Vector2<int> min = Vec2(
+    Int2 min = Vec2(
                 MIN(offset.x, 0),
                 MIN(offset.y, 0)
                 );
-    Vector2<int> max = Vec2(
+    Int2 max = Vec2(
                 MAX(m1.size.x, offset.x + m2.size.x),
                 MAX(m1.size.y, offset.y + m2.size.y)
                 );
     long newbits = 0L;
-    Vector2<int> newsize = max - min;
-    Vector2<int> p;
+    Int2 newsize = max - min;
+    Int2 p;
     for(p.x = min.x; p.x < max.x; ++p.x)
     {
         for(p.y = min.y; p.y < max.y; ++p.y)
@@ -201,7 +201,7 @@ bool ShapeMask::TryConcat(
             }
             if (b1 || b2)
             {
-                Vector2<int> d = p - min;
+                Int2 d = p - min;
                 int shift = d.y * newsize.x + d.x;
                 newbits |= (1L<<shift);
             }

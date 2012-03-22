@@ -99,7 +99,7 @@ namespace TotalsGame
 
     }
 
-    Vector2<int> TotalsCube::GetTilt()
+    Int2 TotalsCube::GetTilt()
     {
         Cube::TiltState s = getTiltState();
         return Vec2(s.x, s.y);
@@ -144,17 +144,17 @@ namespace TotalsGame
         }
     }
 	
-    void TotalsCube::Image(const Sifteo::AssetImage &image, Vector2<int> pos, int frame)
+    void TotalsCube::Image(const Sifteo::AssetImage &image, Int2 pos, int frame)
 	{
         backgroundLayer.BG0_drawAsset(pos, image, frame);
 	}
 
-    void TotalsCube::Image(const Sifteo::AssetImage *image, Vector2<int> coord, Vector2<int> offset, Vector2<int> size)
+    void TotalsCube::Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size)
 	{
-        backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
+       // backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
-    void TotalsCube::Image(const PinnedAssetImage *image, Vector2<int> coord, int frame)
+    void TotalsCube::Image(const PinnedAssetImage *image, Int2 coord, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         for(int y = coord.y; y < coord.y + (int)image->height; y++)
@@ -166,7 +166,7 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::ClipImage(const PinnedAssetImage *image, Vector2<int> pos, int frame)
+    void TotalsCube::ClipImage(const PinnedAssetImage *image, Int2 pos, int frame)
     {
         int tile = image->index + image->width * image->height * frame;
         int y = pos.y;
@@ -206,10 +206,10 @@ namespace TotalsGame
         }
     }
 
-    void TotalsCube::FillArea(const Sifteo::AssetImage *image, Vector2<int> pos, Vector2<int> size)
+    void TotalsCube::FillArea(const Sifteo::AssetImage *image, Int2 pos, Int2 size)
     {
-        Vector2<int> p = pos;
-        Vector2<int> s = size;
+        Int2 p = pos;
+        Int2 s = size;
 
         if(p.x < 0)
         {
@@ -253,11 +253,11 @@ namespace TotalsGame
         backgroundLayer.BG0_drawAsset(Vec2(0,0), image);
     }
 
-    void TotalsCube::ClipImage(const Sifteo::AssetImage *image, Vector2<int> pos)
+    void TotalsCube::ClipImage(const Sifteo::AssetImage *image, Int2 pos)
     {
-        Vector2<int> p = pos;
-        Vector2<int> o = Vec2(0,0);
-        Vector2<int> s = Vec2(image->width, image->height);
+        Int2 p = pos;
+        Int2 o = Vec2(0,0);
+        Int2 s = Vec2(image->width, image->height);
 
         if(p.x < 0)
         {
@@ -406,14 +406,14 @@ namespace TotalsGame
 	}
 
 
-    void TotalsCube::DrawFraction(Fraction f, Vector2<int> pos)
+    void TotalsCube::DrawFraction(Fraction f, Int2 pos)
     {
         Sifteo::String<10> string;
         f.ToString(&string);
         DrawString(string, pos);
     }
 
-    void TotalsCube::DrawString(const char *string, Vector2<int> center)
+    void TotalsCube::DrawString(const char *string, Int2 center)
     {
         int hw = 0;
         const char *s = string;
@@ -437,7 +437,7 @@ namespace TotalsGame
             }
             s++;
         }
-        Vector2<int> p = center - Vec2(hw, 8);
+        Int2 p = center - Vec2(hw, 8);
 
         int curSprite = 0;
         s = string;
@@ -473,11 +473,11 @@ namespace TotalsGame
 
     }
 
-    void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
+    void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3])
     {
         DialogWindow dw(this);
-        dw.SetBackgroundColor(br, bg, bb);
-        dw.SetForegroundColor(fr, fg, fb);
+        dw.SetBackgroundColor(bg[0], bg[1], bg[2]);
+        dw.SetForegroundColor(fg[0], fg[1], fg[2]);
         dw.DoDialog(text, yTop, ySize);
         overlayShown = true;
     }

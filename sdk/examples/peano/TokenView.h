@@ -34,7 +34,7 @@ namespace TotalsGame {
 
   public:
 
-    static const Vector2<int> Mid;
+    static const Int2 Mid;
 
     static const int BIT_TOP = 1<<SIDE_TOP;
     static const int BIT_LEFT = 1<<SIDE_LEFT;

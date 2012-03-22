@@ -62,7 +62,6 @@ private:
 public:
     void PaintInner(TotalsCube *c);
 private:
-    void PixelToTileImage(const Sifteo::AssetImage *image, Vector2<int> p, Vector2<int> o, Vector2<int> s);
 
     void DoPaintItem(TiltFlowItem *item, int x);
 

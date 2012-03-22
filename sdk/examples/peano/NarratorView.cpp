@@ -49,8 +49,10 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         {
             GetCube()->DisableTextOverlay();
             Paint();
-        }
-        GetCube()->EnableTextOverlay(msg, 8, 40, 255,255,255, 0,0,0);
+        }        
+        int fg[] = {255 ,255, 255};
+        int bg[] = {0,0,0};
+        GetCube()->EnableTextOverlay(msg, 8, 40, fg, bg);
     }
     else
     {
