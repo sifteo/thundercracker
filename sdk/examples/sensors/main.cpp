@@ -71,37 +71,38 @@ void main()
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             Cube &cube = cubes[i]; 
+            int id = cube.id();
             VidMode_BG0_ROM vid(cube.vbuf);
-            String<128> str;
+            String<192> str;
 
             uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << cube.id() << "\n";
+            str << "I am cube #" << id << "\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
-            _SYS_getNeighbors(cube.id(), &nb);
+            _SYS_getNeighbors(id, &nb);
             str << "nb "
                 << Hex(nb.sides[0], 2) << " "
                 << Hex(nb.sides[1], 2) << " "
                 << Hex(nb.sides[2], 2) << " "
                 << Hex(nb.sides[3], 2) << "\n";
             
-            str << "   +" << counts[cube.id()].neighborAdd
-                << ", -" << counts[cube.id()].neighborRemove
+            str << "   +" << counts[id].neighborAdd
+                << ", -" << counts[id].neighborRemove
                 << "\n\n";
 
-            str << "bat:   " << Hex(_SYS_getRawBatteryV(cube.id()), 4) << "\n";
-            str << "touch: " << counts[cube.id()].touch << "\n";
+            str << "bat:   " << Hex(_SYS_getRawBatteryV(id), 4) << "\n";
+            str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
 
-            _SYSAccelState accel = _SYS_getAccel(i);
+            _SYSAccelState accel = _SYS_getAccel(id);
             str << "acc: "
                 << Fixed(accel.x, 3)
                 << Fixed(accel.y, 3)
                 << Fixed(accel.z, 3) << "\n";
 
-            _SYSTiltState tilt = _SYS_getTilt(i);
+            _SYSTiltState tilt = _SYS_getTilt(id);
             str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
-            str << "shake: " << counts[i].shake;
+            str << "shake: " << counts[id].shake;
                 
             vid.BG0_text(Vec2(1,2), str);
 
