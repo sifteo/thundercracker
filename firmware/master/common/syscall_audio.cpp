@@ -19,7 +19,7 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
         AudioMixer::instance.enableChannel(buffer);
 }
 
-uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     _SYSAudioModule modCopy;
     if (SvmMemory::copyROData(modCopy, mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
@@ -28,7 +28,7 @@ uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, e
     return false;
 }
 
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h)
+uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h)
 {
     return AudioMixer::instance.isPlaying(h);
 }
@@ -48,12 +48,12 @@ void _SYS_audio_resume(_SYSAudioHandle h)
     AudioMixer::instance.resume(h);
 }
 
-int _SYS_audio_volume(_SYSAudioHandle h)
+int32_t _SYS_audio_volume(_SYSAudioHandle h)
 {
     return AudioMixer::instance.volume(h);
 }
 
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume)
+void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume)
 {
     AudioMixer::instance.setVolume(h, volume);
 }

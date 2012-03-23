@@ -360,8 +360,10 @@ typedef enum {
 } _SYS_TiltType;
 
 struct _SYSTiltState {
-    uint8_t x : 4;
-    uint8_t y : 4;
+    uint8_t x;
+    uint8_t y;
+    uint8_t reserved0;
+    uint8_t reserved1;
 };
 
 typedef enum {
@@ -567,9 +569,19 @@ void *_SYS_lti_initializer(void *value);
  *
  * System calls #0-63 are faster and smaller than normal function calls,
  * whereas all other syscalls (#64-8191) are similar in cost to a normal
- * call. System calls use a simplified calling convention that supports
+ * call.
+ *
+ * System calls use a simplified calling convention that supports
  * only at most 8 32-bit integer parameters, with at most one (32/64-bit)
  * integer result.
+ *
+ * Parameters are allowed to be arbitrary-width integers, but they must
+ * not be floats. Any function that takes float parameters must explicitly
+ * bitcast them to integers.
+ *
+ * Return values must be integers, and furthermore they must be exactly
+ * 32 or 64 bits wide. Structs are allowed, if and only if they're exactly
+ * 32 bits long.
  */
 
 #if defined(FW_BUILD) || !defined(__clang__)
@@ -659,7 +671,7 @@ void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(3);
 void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(4);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
+int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(89);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(107);
@@ -667,7 +679,7 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(108);
 void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(109);
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
-int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
+int32_t _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
@@ -689,12 +701,10 @@ void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(83);
 struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(84);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(85);
 struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(86);
-_SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
+uint32_t _SYS_getShake(_SYSCubeID cid) _SC(87);
 
-// XXX: Temporary for testing/demoing
-uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
-
-uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
+uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(88);
+uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(91);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
@@ -702,8 +712,8 @@ void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
 void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(13);
 void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(14);
-uint16_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(15);
-uint8_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(16);
+uint32_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(15);
+uint32_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(16);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);
@@ -713,13 +723,13 @@ void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned wi
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
-uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
+uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
 void _SYS_audio_stop(_SYSAudioHandle h) _SC(73);
 void _SYS_audio_pause(_SYSAudioHandle h) _SC(72);
 void _SYS_audio_resume(_SYSAudioHandle h) _SC(67);
-int  _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(65);
+int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(65);
 uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(64);
 
 
