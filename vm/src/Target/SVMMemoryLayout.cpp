@@ -162,10 +162,26 @@ void SVMMemoryLayout::ApplyLateFixups(const MCAssembler &Asm,
         SVMLateFixup &F = *i;
         MCDataFragment *DF = dyn_cast<MCDataFragment>(F.Fragment);
         assert(DF);
+        MCSectionData *SD = DF->getParent();
+
+        /*
+         * Normally we use specially formatted "code addresses" for
+         * labels in the text segment. These aren't real VAs, they are
+         * packed words that include a 24-bit address and a stack adjustment.
+         *
+         * These addresses need to be formed for pointers that are stored
+         * either in the text or the data segments, since they need to take
+         * effect for function pointers.
+         *
+         * In debug sections, however, they're quite unhelpful- debuggers
+         * expect real VAs. So we'll explicitly disable this feature when
+         * performing a fixup that is located in a debug section.
+         */
+        bool useCodeAddresses = getSectionKind(SD) != SPS_DEBUG;
 
         SVMAsmBackend::ApplyStaticFixup(F.Kind,
             &DF->getContents().data()[F.Offset],
-            getSymbol(Asm, Layout, F.Target).Value);
+            getSymbol(Asm, Layout, F.Target, useCodeAddresses).Value);
     }
 }
 
@@ -218,15 +234,19 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          *   - Must be 32-bit aligned
          *   - Includes optional SP adjustment from FNSTACK pseudo-ops
          *   - Includes optional call / tail-call decoration
-         *
-         * Note that we don't enforce the alignment here, at least not
-         * on undecorated pointers. This is necessary for resolving
-         * per-instruction labels that are generated inside debug symbols.
          */
          
         assert(Deco.offset == 0);
-        uint32_t blockVA = VA & 0xfffffc;
-        uint32_t shortVA = VA & 0xffffff;
+        uint32_t shortVA = VA & 0xfffffc;
+
+        /*
+         * We can reach this error if some code wasn't aligned properly,
+         * or if someone is calling this function with useCodeAddresses==true
+         * when they shouldn't be!
+         */
+        if ((VA & 0xfffffffc) != VA)
+            report_fatal_error("Code symbol '" + Twine(Name) +
+                "' has illegal address 0x" + Twine::utohexstr(VA));
 
         FNStackMap_t::const_iterator I = FNStackMap.find(std::make_pair(SecD, Offset));
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
@@ -235,14 +255,12 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
         if (Deco.isCall) {
             // A Call, with SP adjustment and tail-call flag
-            assert(blockVA == shortVA);
-            SI.Value = blockVA | SPAdj | Deco.isTailCall;
+            SI.Value = shortVA | SPAdj | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
 
         } else if (Deco.isLongBranch) {
             // Encode the Long Branch addrop
-            assert(blockVA == shortVA);
-            SI.Value = 0xE0000000 | blockVA;
+            SI.Value = 0xE0000000 | shortVA;
             SI.Kind = SVMSymbolInfo::LB;
 
         } else {
@@ -268,7 +286,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 }
 
 SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
-    const MCAsmLayout &Layout, MCValue Value) const
+    const MCAsmLayout &Layout, MCValue Value, bool useCodeAddresses) const
 {
     /*
      * Convert an MCValue into a resolved SVMSymbolInfo,
@@ -280,8 +298,8 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
     const MCSymbolRefExpr *SB = Value.getSymB();
     SVMSymbolInfo SIA, SIB;
     
-    if (SA) SIA = getSymbol(Asm, Layout, &SA->getSymbol());
-    if (SB) SIB = getSymbol(Asm, Layout, &SB->getSymbol());
+    if (SA) SIA = getSymbol(Asm, Layout, &SA->getSymbol(), useCodeAddresses);
+    if (SB) SIB = getSymbol(Asm, Layout, &SB->getSymbol(), useCodeAddresses);
 
     if ((SIA.Kind == SVMSymbolInfo::NONE || SIA.Kind == SVMSymbolInfo::LOCAL) &&
         (SIB.Kind == SVMSymbolInfo::NONE || SIB.Kind == SVMSymbolInfo::LOCAL)) {
