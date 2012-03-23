@@ -1403,7 +1403,17 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     unsigned mli = Dictionary::getPuzzleMetaLetterIndex();
     if (mli >= letter0Index && mli < letter0Index + mlpc)
     {
-        params->mMetaLetterIndex = mli - letter0Index + mLettersStart;
+        switch (mAnimTypes[CubeAnim_Main])
+        {
+        case AnimType_SlideL:
+        case AnimType_SlideR:
+            params->mMetaLetterIndex = mli - letter0Index + mLettersStartOld;
+            break;
+
+        default:
+            params->mMetaLetterIndex = mli - letter0Index + mLettersStart;
+            break;
+        }
     }
     else
     {
