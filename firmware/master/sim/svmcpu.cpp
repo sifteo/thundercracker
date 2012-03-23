@@ -848,8 +848,8 @@ static uint16_t fetch()
     for (unsigned r = 0; r < 8; r++) {
         // Display as a fixed-width low word and a variable-width high word.
         // The high word will usually be zero, and it helps to demarcate the
-	// word boundary. On 32-bit hosts, the top word is *always* zero.
-        reg_t val = regs[r];
+        // word boundary. On 32-bit hosts, the top word is *always* zero.
+        uint64_t val = regs[r];
         LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
     }
     LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
