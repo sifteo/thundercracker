@@ -39,6 +39,7 @@ OBJS_SIM = \
     $(MASTER_DIR)/sim/svmdebug.sim.o \
 	$(MASTER_DIR)/sim/elfdebuginfo.sim.o \
 	$(MASTER_DIR)/sim/logdecoder.sim.o \
+    $(MASTER_DIR)/sim/gdbserver.sim.o \
     $(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o
 
