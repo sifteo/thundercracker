@@ -5,10 +5,8 @@
 class InventoryView : public View {
 private:
 	CORO_PARAMS;
-	int16_t mTiltX;
-	int16_t mTiltY;
-	int16_t mAccumX;
-	int16_t mAccumY;
+	Short2 mTilt;
+	Short2 mAccum;
 	
 	Dialog mDialog;
 

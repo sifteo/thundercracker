@@ -51,7 +51,7 @@ void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
     }
 }
 
-uint16_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
+uint32_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
     if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
         VRAM::truncateWordAddr(addr);
@@ -60,7 +60,7 @@ uint16_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
     return 0;
 }
 
-uint8_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
+uint32_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
     if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
         VRAM::truncateByteAddr(addr);

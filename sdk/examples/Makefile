@@ -10,12 +10,10 @@ SUBDIRS = \
 	sandwich \
 	scroller-bg0 \
 	scroller-bg1 \
-	selectormenu \
 	sensors \
 	sprites \
 	stars \
 	text \
-	tiltshake \
 
 # XXX Disabled for now due to errors: peano, word
 

@@ -198,10 +198,8 @@ void FrontendCube::animate()
      * and sensitivity.
      */
 
-    /* XXX: Real 3-axis support! This hardcoded Z is a total hack. */
-
     b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
-    hw->setAcceleration(-accelLocal.x, -accelLocal.y, -accelLocal.z);
+    hw->setAcceleration(-accelLocal.x, -accelLocal.y, accelLocal.z);
 }
 
 void FrontendCube::computeAABB(b2AABB &aabb)
@@ -227,4 +225,13 @@ b2Vec3 AccelerationProbe::measure(b2Body *body, float unitsToGs)
     b2Vec2 accel2D = currentV - prevV;
 
     return b2Vec3(accel2D.x * unitsToGs, accel2D.y * unitsToGs, -1.0f);
+}
+
+void FrontendCube::toggleRotationLock(bool isRotationFixed) {
+    b2Body* b = bodyFixture->GetBody();
+    b->SetFixedRotation(isRotationFixed);
+    if (isRotationFixed) {
+        b->SetTransform(b->GetPosition(), 0.f);
+        b->SetAngularVelocity(0.f);
+    }
 }

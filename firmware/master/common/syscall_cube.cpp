@@ -45,13 +45,14 @@ void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
 
 struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
 {
-    struct _SYSAccelState r = { 0 };
+    struct _SYSAccelState r = { 0, 0, 0 };
     if (CubeSlots::validID(cid))
         CubeSlots::instances[cid].getAccelState(&r);
     return r;
 }
 
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state)
+{
     if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid)) {
         NeighborSlot::instances[cid].getNeighborState(state);
     }
@@ -65,7 +66,7 @@ struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid)
     return r;
 }
 
-_SYSShakeState _SYS_getShake(_SYSCubeID cid)
+uint32_t _SYS_getShake(_SYSCubeID cid)
 {
     _SYSShakeState r = NOT_SHAKING;
     if (CubeSlots::validID(cid))
@@ -73,7 +74,7 @@ _SYSShakeState _SYS_getShake(_SYSCubeID cid)
     return r;
 }
 
-uint64_t _SYS_isTouching(_SYSCubeID cid)
+uint32_t _SYS_isTouching(_SYSCubeID cid)
 {
     if (CubeSlots::validID(cid)) {
         return CubeSlots::instances[cid].isTouching();
@@ -81,9 +82,10 @@ uint64_t _SYS_isTouching(_SYSCubeID cid)
     return 0;
 }
 
-uint16_t _SYS_getRawBatteryV(_SYSCubeID cid)
+uint32_t _SYS_getBatteryV(_SYSCubeID cid)
 {
-    // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
+    // XXX: Temporary for testing. Instead of raw battery voltage, we should
+    //      be returning some cooked percentage-like value.
     if (CubeSlots::validID(cid))
         return CubeSlots::instances[cid].getRawBatteryV();
     return 0;

@@ -14,7 +14,7 @@
 #include <protocol.h>
 
 RF_MemACKType __near ack_data;
-uint8_t __near ack_len;
+uint8_t __near ack_bits;
 
 
 /*
@@ -781,42 +781,50 @@ rx_complete_0:
         ; ACK packet write
         ;--------------------------------------------------------------------
 
-        ; The packet length comes from _ack_len, and the first portion of the
-        ; data from _ack_data. Normally, to send data back to the master, we
-        ; update bytes in _ack_len, then OR a mask into _ack_len which increases
-        ; the packet length to a value which is always a power-of-two minus one.
-        ;
-        ; This works for packets of length 1, 3, and 7 bytes. That corresponds
-        ; to packets with only our frame count, with frame count and accelerometer
-        ; data, and with the above plus neighbor/flag bytes.
-        ;
-        ; In addition to the above cases, we have a special case for sending back
-        ; a "full" packet. This happens any time the ack length is larger than
-        ; the size of our in-memory buffer. We send back the entire in-memory
-        ; buffer, followed by HWID data from flash.
-        
+        ; The packet length comes from _ack_bits, and the first portion of
+        ; the data from _ack_data. To send data back to the master, we
+        ; update bytes in _ack_data, then set the corresponding bit in
+        ; ack_bits. We decode those bits into a length here.
+
 rx_ack:
-        mov     a, _ack_len
+        mov     a, _ack_bits                            ; Leave ack_bits in acc
         jz      no_ack                                  ; Skip the ACK entirely if empty
-        mov     _ack_len, #RF_ACK_LEN_EMPTY
 
         clr     _RF_CSN                                 ; Begin SPI transaction
         mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD           ; Start sending ACK packet
         mov     R_TMP, #_ack_data
-        mov     R_INPUT, a                              ; Packet length
 
-        ; Are we just sending the normal ack_data from internal RAM, or is this a "full"
-        ; packet? Do this test now, and keep the result in the carry flag. If C=1, it is
-        ; a full packet. Clamp the first loop to the size of the memory packet.
-        ;
-        ; Note that _ack_len may have been larger than RF_ACK_LEN_MAX, due to
-        ; the (non-power-of-two) max length being ORed with smaller lengths.
-        ; This is fine, since we are already clamping to MEM_ACK_LEN, then
-        ; separately referencing the HWID length.
-        
-        add     a, #(0xFF - RF_MEM_ACK_LEN)
-        jnc     3$
+        ; Decode length of the memory portion of the packet, from ack_bits.
+        ; Must be in descending order. If we are also sending the HWID,
+        ; set the carry bit.
+
+        clr     c
+
+        jnb     RF_ACK_ABIT_HWID, $10
         mov     R_INPUT, #RF_MEM_ACK_LEN
+        setb    c
+        sjmp    $20
+
+$10:    jnb     RF_ACK_ABIT_BATTERY_V, $11
+        mov     R_INPUT, #RF_ACK_LEN_BATTERY_V
+        sjmp    $20
+
+$11:    jnb     RF_ACK_ABIT_FLASH_FIFO, $12
+        mov     R_INPUT, #RF_ACK_LEN_FLASH_FIFO
+        sjmp    $20
+
+$12:    jnb     RF_ACK_ABIT_NEIGHBOR, $13
+        mov     R_INPUT, #RF_ACK_LEN_NEIGHBOR
+        sjmp    $20
+
+$13:    jnb     RF_ACK_ABIT_ACCEL, $14
+        mov     R_INPUT, #RF_ACK_LEN_ACCEL
+        sjmp    $20
+
+$14:    mov     R_INPUT, #RF_ACK_LEN_FRAME
+$20:
+
+        ; Send the portion of the packet that comes from ack_data.
         
 3$:     mov     _SPIRDAT, @R_TMP
         inc     R_TMP
@@ -840,6 +848,7 @@ rx_ack:
 
         ; End of ACK
 
+        mov     _ack_bits, #0                           ; Reset pending ACK bits
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT
         setb    _RF_CSN                                 ; End SPI transaction
