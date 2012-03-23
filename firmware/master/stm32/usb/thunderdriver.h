@@ -17,6 +17,7 @@ public:
     void handleStartOfFrame();
 
     void setConfig(uint16_t wValue);
+    int controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
 
     void inEndpointCallback(uint8_t ep, Usb::Transaction txn);
     void outEndpointCallback(uint8_t ep, Usb::Transaction txn);

@@ -28,6 +28,11 @@ void UsbDriver::setConfig(uint16_t wValue)
     driver.setConfig(wValue);
 }
 
+int UsbDriver::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
+{
+    return driver.controlRequest(req, buf, len);
+}
+
 void UsbDriver::inEndpointCallback(uint8_t ep, Usb::Transaction txn)
 {
     driver.inEndpointCallback(ep, txn);

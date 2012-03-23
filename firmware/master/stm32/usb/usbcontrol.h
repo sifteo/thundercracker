@@ -8,10 +8,6 @@ class UsbControl
 public:
     UsbControl();
 
-    typedef int (*controlCallback)(Usb::SetupData *req, uint8_t **buf, uint16_t *len, void (**complete)(Usb::SetupData *req));
-
-    static int registerCallback(uint8_t type, uint8_t type_mask, controlCallback cb);
-
     static void setup(uint8_t ea);
     static void out(uint8_t ea);
     static void in(uint8_t ea);

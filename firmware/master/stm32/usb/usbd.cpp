@@ -10,6 +10,7 @@ const ConfigDescriptor *Usbd::_conf;
 const char **Usbd::_strings;
 
 uint8_t Usbd::ctrlBuf[128];
+uint16_t Usbd::ctrlBufLen;
 uint16_t Usbd::address;
 uint16_t Usbd::_config;
 

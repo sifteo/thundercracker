@@ -34,6 +34,7 @@ public:
     }
 
     static uint8_t ctrlBuf[128];
+    static uint16_t ctrlBufLen;
 
 private:
     static const unsigned MAX_USER_CONTROL_CALLBACK = 4;

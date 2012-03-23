@@ -29,6 +29,11 @@ void ThunderDriver::setConfig(uint16_t wValue)
 
 }
 
+int ThunderDriver::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
+{
+    return 0;
+}
+
 void ThunderDriver::inEndpointCallback(uint8_t ep, Usb::Transaction txn)
 {
 
