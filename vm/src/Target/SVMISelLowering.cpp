@@ -5,7 +5,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "SVMRuntime.inc"
+#include "SVMTargetObjectFile.h"
 #include "SVMISelLowering.h"
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
@@ -20,16 +20,16 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+#include "SVMRuntime.inc"
 #include "SVMGenCallingConv.inc"
 
 
 SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
-    : TargetLowering(TM, new TargetLoweringObjectFileELF())
+    : TargetLowering(TM, new SVMTargetObjectFile())
 {
     // Standard library
     setLibcallName(RTLIB::MEMCPY, SVMRT_memcpy8);

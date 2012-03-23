@@ -212,13 +212,15 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          *   - Must be 32-bit aligned
          *   - Includes optional SP adjustment from FNSTACK pseudo-ops
          *   - Includes optional call / tail-call decoration
+         *
+         * Note that we don't enforce the alignment here, at least not
+         * on undecorated pointers. This is necessary for resolving
+         * per-instruction labels that are generated inside debug symbols.
          */
          
         assert(Deco.offset == 0);
-        if ((VA & 0xfffffffc) != VA)
-            report_fatal_error("Code symbol '" + Twine(Name) +
-                "' has illegal address 0x" + Twine::utohexstr(VA));
-        uint32_t shortVA = VA & 0xfffffc;
+        uint32_t blockVA = VA & 0xfffffc;
+        uint32_t shortVA = VA & 0xffffff;
 
         FNStackMap_t::const_iterator I = FNStackMap.find(std::make_pair(SecD, Offset));
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
@@ -227,12 +229,14 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
         if (Deco.isCall) {
             // A Call, with SP adjustment and tail-call flag
-            SI.Value = shortVA | SPAdj | Deco.isTailCall;
+            assert(blockVA == shortVA);
+            SI.Value = blockVA | SPAdj | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
 
         } else if (Deco.isLongBranch) {
             // Encode the Long Branch addrop
-            SI.Value = 0xE0000000 | shortVA;
+            assert(blockVA == shortVA);
+            SI.Value = 0xE0000000 | blockVA;
             SI.Kind = SVMSymbolInfo::LB;
 
         } else {
@@ -350,10 +354,19 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(const MCSectionData *SD) const
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(const MCSectionData *SD) const
 {
-    SectionOffsetMap_t::const_iterator it = SectionOffsetMap.find(SD);
+    switch (getSectionKind(SD)) {
 
-    if (it == SectionOffsetMap.end())
-        llvm_unreachable("Section not found in offset map");
+    case SPS_META:
+    case SPS_DEBUG:
+        return 0;
+    
+    default: {
+        SectionOffsetMap_t::const_iterator it = SectionOffsetMap.find(SD);
 
-    return it->second + getSectionMemAddress(getSectionKind(SD));    
+        if (it == SectionOffsetMap.end())
+            llvm_unreachable("Section not found in offset map");
+
+        return it->second + getSectionMemAddress(getSectionKind(SD));    
+    }
+    }
 }

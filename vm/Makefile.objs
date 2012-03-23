@@ -34,7 +34,8 @@ OBJS = \
 	src/Target/SVMELFMetadataBuilder.o \
 	src/Target/SVMLateFunctionSplitPass.o \
 	src/Target/SVMBlockSizeAccumulator.o \
-	src/Target/SVMConstantPoolValue.o
+	src/Target/SVMConstantPoolValue.o \
+	src/Target/SVMTargetObjectFile.o \
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \
