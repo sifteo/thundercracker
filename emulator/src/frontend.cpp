@@ -61,7 +61,7 @@ bool Frontend::init(System *_sys)
         gridW = (sys->opt_numCubes + gridH - 1) / gridH;
         for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
             for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
-                const float spacing = FrontendCube::SIZE * 2.7;
+                const float spacing = FrontendCubeConstants::SIZE * 2.7;
                 cubes[cubeID].init(cubeID, &sys->cubes[cubeID], world,
                                    ((gridW - 1) * -0.5 + x) * spacing,
                                    ((gridH - 1) * -0.5 + y) * spacing);
@@ -86,9 +86,9 @@ bool Frontend::init(System *_sys)
      */
 
     if (sys->opt_numCubes > 1)
-        normalViewExtent = FrontendCube::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
+        normalViewExtent = FrontendCubeConstants::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
     else
-        normalViewExtent = FrontendCube::SIZE * 1.4;
+        normalViewExtent = FrontendCubeConstants::SIZE * 1.4;
 
     maxViewExtent = normalViewExtent * 10.0f;
 
@@ -502,7 +502,7 @@ void Frontend::onMouseDown(int button)
                  */
                 
                 mouseIsPulling = true;
-                mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_SLIGHT);
+                mousePicker.mCube->setHoverTarget(FrontendCubeConstants::HOVER_SLIGHT);
                 
                 /*
                  * Pick an attachment point. If we're close to the center,
@@ -514,7 +514,7 @@ void Frontend::onMouseDown(int button)
                 b2Vec2 anchor = mousePicker.mPoint;
                 b2Vec2 center = mousePicker.mCube->body->GetWorldCenter();
                 float centerDist = b2Distance(anchor, center);
-                const float centerSize = FrontendCube::SIZE * FrontendCube::CENTER_SIZE;
+                const float centerSize = FrontendCubeConstants::SIZE * FrontendCubeConstants::CENTER_SIZE;
 
                 if (centerDist < centerSize) {
                     // Center-drag to align
@@ -555,7 +555,7 @@ void Frontend::hoverOrRotate()
         }
         spinTarget += M_PI/2;
     } else {
-        mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_FULL);
+        mousePicker.mCube->setHoverTarget(FrontendCubeConstants::HOVER_FULL);
     }
 }
 
@@ -572,7 +572,7 @@ void Frontend::onMouseUp(int button)
         if (mousePicker.mCube) {
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
             mousePicker.mCube->setTouch(false);
-            mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_NONE);                
+            mousePicker.mCube->setHoverTarget(FrontendCubeConstants::HOVER_NONE);                
         }
 
         /* Mouse state reset */
@@ -647,7 +647,7 @@ void Frontend::animate()
         if (mousePicker.mCube) {
             const float maxTilt = 80.0f;
             b2Vec2 mouseDiff = mouseVec(normalViewExtent) - mouseBody->GetWorldCenter();
-            b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
+            b2Vec2 tiltTarget = (maxTilt / FrontendCubeConstants::SIZE) * mouseDiff; 
             tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
             tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
 
@@ -684,7 +684,7 @@ void Frontend::animate()
 float Frontend::pixelViewExtent()
 {
     // Calculate the viewExtent which would give a 1:1 pixel mapping
-    return renderer.getWidth() * (FrontendCube::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
+    return renderer.getWidth() * (FrontendCubeConstants::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
 }
 
 unsigned Frontend::pixelZoomMode()
@@ -718,7 +718,7 @@ unsigned Frontend::pixelZoomMode()
 void Frontend::scaleViewExtent(float ratio)
 {
     normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
-                                      FrontendCube::SIZE * 0.1, maxViewExtent);
+                                      FrontendCubeConstants::SIZE * 0.1, maxViewExtent);
 }
 
 void Frontend::draw()
@@ -812,10 +812,10 @@ float Frontend::zoomedViewExtent()
         
     if (sys->opt_numCubes > 1) {
         // Zoom in one one cube
-        return scale * FrontendCube::SIZE * 1.1;
+        return scale * FrontendCubeConstants::SIZE * 1.1;
     } else {
         // High zoom on our one and only cube
-        return scale * FrontendCube::SIZE * 0.2;
+        return scale * FrontendCubeConstants::SIZE * 0.2;
     }
 }
 

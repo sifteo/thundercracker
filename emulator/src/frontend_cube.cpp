@@ -8,8 +8,7 @@
 
 #include "frontend.h"
 
-const float FrontendCube::SIZE;
-
+using namespace FrontendCubeConstants;
 
 FrontendCube::FrontendCube()
     : body(0) {}
