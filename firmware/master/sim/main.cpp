@@ -52,6 +52,16 @@ static bool installElfFile(const char *path)
 
 int main(int argc, char **argv)
 {
+    // handle cmd line args - arg 1 is always the elf binary to run
+    for (int c = 2; c < argc; c++) {
+
+        if (!strcmp(argv[c], "--flash_stats")) {
+            LOG(("INFO: running with flash stats enabled.\n"));
+            FlashBlock::enableStats();
+        }
+
+    }
+
     SysTime::init();
 
     Flash::init();

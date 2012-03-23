@@ -40,10 +40,6 @@ ifneq ($(SVM_TRACE),)
     CFLAGS_SIM += -DSVM_TRACE
 endif
 
-ifneq ($(FLASHLAYER_STATS),)
-    CFLAGS_SIM += -DFLASHLAYER_STATS
-endif
-
 include Makefile.defs
 
 # Override default CDEPS
