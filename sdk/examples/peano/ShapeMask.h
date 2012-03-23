@@ -47,19 +47,10 @@ namespace TotalsGame {
 
         void ListInConnections(Connection *connections, int *numConnections, int maxConnections);
 
-#if NO_STACK_PARAMS_HACK
-        static ShapeMask m1;
-        static ShapeMask m2;
-        static bool TryConcat(
-            Int2 offset,
-            ShapeMask *result, Int2 *d1, Int2 *d2
-            );
-#else
 		static bool TryConcat(
             const ShapeMask &m1, const ShapeMask &m2, Int2 offset,
             ShapeMask *result, Int2 *d1, Int2 *d2
             );
-#endif
     };
 
 }
