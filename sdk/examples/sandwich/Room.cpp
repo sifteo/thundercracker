@@ -28,16 +28,16 @@ const RoomData* Room::Data() const {
 }
 
 bool Room::HasOpenDoor() const {
-  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 bool Room::HasClosedDoor() const {
-  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
-  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 const uint8_t* Room::OverlayBegin() const {
@@ -45,12 +45,14 @@ const uint8_t* Room::OverlayBegin() const {
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
+  ASSERT(!mUserdata);
   mUserdataType = USERDATA_SUBDIV;
   mInnerType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
   mUserdata = diag;
 }
 
 void Room::SetBridgeSubdivision(const BridgeSubdivisionData* bridge) {
+  ASSERT(!mUserdata);
   mUserdataType = USERDATA_SUBDIV;
   mInnerType = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
   mUserdata = bridge;
@@ -60,7 +62,7 @@ void Room::Clear() {
   mUserdataType = 0;
   mInnerType = 0;
   mUserdata = 0;
-  mDoor = 0;
+  mOtherdata = 0;
   mOverlayIndex = 0xffff;
 }
 
