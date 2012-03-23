@@ -8,7 +8,7 @@
 
 #include "frontend.h"
 
-using namespace FrontendCubeConstants;
+using namespace CubeConstants;
 
 FrontendCube::FrontendCube()
     : body(0) {}

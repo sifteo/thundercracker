@@ -12,6 +12,7 @@
 #include "gl_renderer.h"
 #include "system.h"
 #include "frontend_cube.h"
+#include "frontend_mothership.h"
 #include "frontend_overlay.h"
 
 #include <Box2D/Box2D.h>

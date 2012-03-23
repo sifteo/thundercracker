@@ -14,7 +14,7 @@
 
 class FrontendCube;
 
-namespace FrontendCubeConstants {
+namespace CubeConstants {
 
     // These were static-const, but the inline initializers did not cooperate with
     // Clang, so I moved them out here.
@@ -117,7 +117,7 @@ class FrontendCube {
     }
     
     bool isHovering() {
-        return hoverTarget > FrontendCubeConstants::HEIGHT;
+        return hoverTarget > CubeConstants::HEIGHT;
     }
     
     unsigned getId() const {
@@ -132,8 +132,12 @@ class FrontendCube {
     
     void toggleRotationLock(bool isRotationFixed);
 
+
+private:
     b2Body *body;
 
+public:
+    b2Body* getBody() { return body; }
 
  private:
     void initBody(b2World &world, float x, float y);

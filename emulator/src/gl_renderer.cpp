@@ -72,7 +72,7 @@ bool GLRenderer::init()
      * Procedural models
      */
 
-    createRoundedRect(faceVA, 1.0f, FrontendCubeConstants::HEIGHT, 0.242f);
+    createRoundedRect(faceVA, 1.0f, CubeConstants::HEIGHT, 0.242f);
     extrudePolygon(faceVA, sidesVA);
 
     /*
@@ -111,7 +111,7 @@ GLhandleARB GLRenderer::loadCubeFaceProgram(const char *prefix)
     GLhandleARB prog = linkProgram(cubeFaceFP, cubeFaceVP);
 
     glUseProgramObjectARB(prog);
-    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), FrontendCubeConstants::LCD_SIZE);
+    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), CubeConstants::LCD_SIZE);
     glUniform1iARB(glGetUniformLocationARB(prog, "face"), 0);
     glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 1);
     glUniform1iARB(glGetUniformLocationARB(prog, "mask"), 2);
@@ -193,7 +193,7 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
     float aspect = viewportHeight / (float)viewportWidth;
     float yExtent = aspect * viewExtent;
 
-    float zPlane = FrontendCubeConstants::SIZE * FrontendCubeConstants::HEIGHT;
+    float zPlane = CubeConstants::SIZE * CubeConstants::HEIGHT;
     float zCamera = 5.0f;
     float zNear = 0.1f;
     float zFar = 10.0f;
@@ -516,34 +516,34 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
     glRotatef(angle * (180.0f / M_PI), 0,0,1);
    
     const float tiltDeadzone = 5.0f;
-    const float height = FrontendCubeConstants::HEIGHT;
+    const float height = CubeConstants::HEIGHT;
 
     if (tilt.x > tiltDeadzone) {
-        glTranslatef(FrontendCubeConstants::SIZE, 0, height * FrontendCubeConstants::SIZE);
+        glTranslatef(CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
         glRotatef(tilt.x - tiltDeadzone, 0,1,0);
-        glTranslatef(-FrontendCubeConstants::SIZE, 0, -height * FrontendCubeConstants::SIZE);
+        glTranslatef(-CubeConstants::SIZE, 0, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
     if (tilt.x < -tiltDeadzone) {
-        glTranslatef(-FrontendCubeConstants::SIZE, 0, height * FrontendCubeConstants::SIZE);
+        glTranslatef(-CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
         glRotatef(tilt.x + tiltDeadzone, 0,1,0);
-        glTranslatef(FrontendCubeConstants::SIZE, 0, -height * FrontendCubeConstants::SIZE);
+        glTranslatef(CubeConstants::SIZE, 0, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
 
     if (tilt.y > tiltDeadzone) {
-        glTranslatef(0, FrontendCubeConstants::SIZE, height * FrontendCubeConstants::SIZE);
+        glTranslatef(0, CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y + tiltDeadzone, 1,0,0);
-        glTranslatef(0, -FrontendCubeConstants::SIZE, -height * FrontendCubeConstants::SIZE);
+        glTranslatef(0, -CubeConstants::SIZE, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
     if (tilt.y < -tiltDeadzone) {
-        glTranslatef(0, -FrontendCubeConstants::SIZE, height * FrontendCubeConstants::SIZE);
+        glTranslatef(0, -CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y - tiltDeadzone, 1,0,0);
-        glTranslatef(0, FrontendCubeConstants::SIZE, -height * FrontendCubeConstants::SIZE);
+        glTranslatef(0, CubeConstants::SIZE, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
@@ -562,7 +562,7 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
     tState.modelMatrix->ez.z = mat[10];
 
     /* Now scale it */
-    glScalef(FrontendCubeConstants::SIZE, FrontendCubeConstants::SIZE, FrontendCubeConstants::SIZE);
+    glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
     
     /* Hover is relative to cube size, so apply that now. */
     if (hover > 1e-3) {
