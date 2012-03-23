@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "sifteo.h"
 #include "Game.h"
 
@@ -43,7 +45,7 @@ void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side
     }
 
 }
-
+    
 void OnCubeTouch(void*, _SYSCubeID cid)
 {
     TotalsCube *c = &Game::cubes[cid];
@@ -56,6 +58,22 @@ void OnCubeShake(void*, _SYSCubeID cid)
     cube->DispatchOnCubeShake(cube);
 }
 
+    
+#if NO_TOUCH_HACK
+//tilt y to touch
+void OnCubeTilt(void*, _SYSCubeID cid)
+{
+    static int oldState = _SYS_TILT_NEUTRAL;
+    _SYSTiltState ts = cubes[cid].getTiltState();
+    if(ts.y != oldState)
+    {
+        cubes[cid].DispatchOnCubeTouch(cubes+cid, ts.y != _SYS_TILT_NEUTRAL);
+        oldState = ts.y;
+    }
+}
+#endif
+
+    
 void ClearCubeViews()
 {
     for(int i = 0; i < NUM_CUBES; i++)
@@ -139,6 +157,9 @@ void Run()
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+#if NO_TOUCH_HACK
+    _SYS_setVector(_SYS_CUBE_TILT, (void*)&OnCubeTilt, NULL);
+#endif
 
     neighborEventHandler = NULL;
 

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "ConfirmationMenu.h"
 #include "Skins.h"
 #include "DialogWindow.h"
@@ -33,6 +34,33 @@ void OnCubeTouch(void *, Cube::ID cid)
         }
     }
 }
+    
+#if NO_TOUCH_HACK
+void OnCubeTilt(void*, Cube::ID cid)
+{
+    static int oldState = _SYS_TILT_NEUTRAL;
+    _SYSTiltState ts = Game::cubes[cid].getTiltState();
+    if(ts.y != oldState)
+    {
+        oldState = ts.y;
+        //copy pasta from ontouch
+        bool pressed = ts.y != _SYS_TILT_NEUTRAL;
+        if(cid == YES || cid ==NO)
+        {
+            if(pressed)
+                gotTouchOn[cid] = true;
+            
+            if (!pressed && gotTouchOn[cid])
+            {
+                triggered[cid] = true;
+                PLAY_SFX(sfx_Menu_Tilt_Stop);
+            }
+        }
+
+        
+    }
+}
+#endif
 
 int CollapsesPauses(int off) {
   if (off > 7) {
@@ -124,6 +152,10 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
     triggered[0] = triggered[1] = triggered[2] = false;
     void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+#if NO_TOUCH_HACK
+    void *oldTilt = _SYS_getVectorHandler(_SYS_CUBE_TILT);
+    _SYS_setVector(_SYS_CUBE_TILT, (void*)&OnCubeTilt, NULL);
+#endif
 
     while(!(triggered[YES] || triggered[NO])) {
         System::yield();
@@ -132,6 +164,10 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
 
     _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
 
+#if NO_TOUCH_HACK
+    _SYS_setVector(_SYS_CUBE_TILT, oldTilt, NULL);
+#endif
+    
     AnimateDoors(Game::cubes+YES, false);
     AnimateDoors(Game::cubes+NO, false);
 
