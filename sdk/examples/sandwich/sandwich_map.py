@@ -270,7 +270,7 @@ class Map:
 			src.write("static const DepotData %s_depots[] = {" % self.id)
 			for d in self.depots:
 				src.write("{0x%x,0x%x}," % (d.room.lid, d.item.numeric_id))
-			src.write("{}};\n")
+			src.write("{0xff,0xff}};\n")
 
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
@@ -351,7 +351,7 @@ class Map:
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
-				"depot": "0",
+				"depot": self.id + "_depots" if len(self.depots) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",

@@ -7,6 +7,7 @@ void Map::Init() {
 
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
+    LOG(("MAP!\n"));
     mData = &map; 
     // triggers
     RefreshTriggers();
@@ -19,6 +20,13 @@ void Map::SetData(const MapData& map) {
       }
       ASSERT(mBlockCount <= BLOCK_CAPACITY);
     }
+
+    if (map.depots) {
+      for(const DepotData* p=map.depots; p->roomId != 0xff; ++p) {
+        mRooms[p->roomId].SetDepot(p);
+      }
+    }
+
   }
 }
 
