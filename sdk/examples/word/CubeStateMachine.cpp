@@ -1398,6 +1398,19 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mCubeID = getCube().id();
     params->mBorders = false; // FIXME roll into border rendering CubeAnim
     params->mBonus = false; // TODO
+    unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
+    unsigned letter0Index = mPuzzlePieceIndex * mlpc;
+    unsigned mli = Dictionary::getPuzzleMetaLetterIndex();
+    if (mli >= letter0Index && mli < letter0Index + mlpc)
+    {
+        params->mMetaLetterIndex = mli - letter0Index + mLettersStart;
+    }
+    else
+    {
+        params->mMetaLetterIndex = -1;
+    }
+    params->mAllMetaLetters = false;
+
     return true;
 }
 

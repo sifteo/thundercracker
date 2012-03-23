@@ -1,6 +1,7 @@
 #include "Anim.h"
 #include "GameStateMachine.h"
 #include "assets.gen.h"
+#include "Dictionary.h"
 
 enum Layer
 {
@@ -12,7 +13,8 @@ enum Layer
 struct AnimObjData
 {
     const AssetImage *mAsset;
-    const AssetImage *mAltAsset;
+    const AssetImage *mBlankLetterAsset;
+    const AssetImage *mMetaLetterAsset;
     const PinnedAssetImage *mSpriteAsset;
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
@@ -289,6 +291,7 @@ bool animPaint(AnimType animT,
         unsigned fontFrame = font.frames + 1;
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
+        bool metaLetterTile = false;
         if (params && params->mLetters && params->mLetters[0] && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
@@ -296,6 +299,9 @@ bool animPaint(AnimType animT,
                 fontFrame = params->mLetters[i] - (int)'A';
                 drawLetterOnTile = (fontFrame < font.frames);
                 blankLetterTile = !drawLetterOnTile;
+                metaLetterTile =
+                        !blankLetterTile &&
+                        params && params->mMetaLetterIndex == (int)i;
             }
         }
 
@@ -358,7 +364,11 @@ bool animPaint(AnimType animT,
         {
             if (blankLetterTile)
             {
-                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAltAsset, assetFrame);
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mBlankLetterAsset, assetFrame);
+            }
+            else if (metaLetterTile)
+            {
+                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mMetaLetterAsset, assetFrame);
             }
             else
             {

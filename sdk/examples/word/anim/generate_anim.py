@@ -45,8 +45,10 @@ def generate_anim():
             #print row
             if row['Asset'] != '0' and not '&' in row['Asset']:
                 row['Asset'] = '&' + row['Asset']
-            if row['AltAsset'] != '0' and not '&' in row['AltAsset']:
-                row['AltAsset'] = '&' + row['AltAsset']
+            if row['BlankLetterAsset'] != '0' and not '&' in row['BlankLetterAsset']:
+                row['BlankLetterAsset'] = '&' + row['BlankLetterAsset']
+            if row['MetaLetterAsset'] != '0' and not '&' in row['MetaLetterAsset']:
+                row['MetaLetterAsset'] = '&' + row['MetaLetterAsset']
             if row['SpriteAsset'] != '0' and not '&' in row['SpriteAsset']:
                 row['SpriteAsset'] = '&' + row['SpriteAsset']
             anim_obj_data.append(row)            
@@ -132,7 +134,7 @@ def generate_anim():
     i = 0
     for o in anim_obj_data:
         print o
-        f.write("    { " + o['Asset'] + ", " + o['AltAsset'] + ", " + o['SpriteAsset'] + ", " + o['Layer'] + ', ' + o['Invisible Frames'] + ", " + str(o['NumPos']) + ', &positions[' + str(o['Pos Index']) + "] },    // " + o['AnimType'] + ' ' + str(i) + "\n")
+        f.write("    { " + o['Asset'] + ", " + o['BlankLetterAsset'] + ", " + o['MetaLetterAsset'] + ", "+ o['SpriteAsset'] + ", " + o['Layer'] + ', ' + o['Invisible Frames'] + ", " + str(o['NumPos']) + ', &positions[' + str(o['Pos Index']) + "] },    // " + o['AnimType'] + ' ' + str(i) + "\n")
         i += 1
     f.write("};\n\n")
 

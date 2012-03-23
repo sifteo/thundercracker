@@ -321,6 +321,12 @@ bool Dictionary::trim(const char* word, char* buffer)
     return (firstLetter < wordLen && lastLetter >= 0 && lastLetter >= firstLetter);
 }
 
+unsigned char Dictionary::getPuzzleMetaLetterIndex()
+{
+    return sPuzzleIndex < 0 || sPuzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
+                0 : puzzlesMetaLetterIndex[sPuzzleIndex];
+}
+
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)

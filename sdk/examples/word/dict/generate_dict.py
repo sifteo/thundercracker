@@ -561,44 +561,20 @@ def generate_dict():
             if 'Y' in row['ScrambleYN'].upper():
                 value = 'true'
             fi.write("    " + value + ",\t// " + word + "\n")
+    fi.write("};\n\n")       
+
+    fi.write("const static unsigned char puzzlesMetaLetterIndex[] =\n")
+    fi.write("{\n")
+    for row in puzzle_rows:
+        word = row['Puzzle']
+        ltrs_p_c = row['Max Letters Per Cube']
+        if ltrs_p_c > 1:
+            index = string.find(word, row['Letter'])
+            if index < 0:
+                print 'ERROR: letter "' + row['Letter'] + '" not found in ' + word + '\n'
+                error_count += 1
+            fi.write("    " + str(index) + ',\t// "' + word + '"' + '[' + row['Letter'] + ']\n')
     fi.write("};\n\n")
-        
-    # skip the prototype code below, it just generates the word lists for the demo, if 
-    # the seeds are set for each pick at run time
-    return;
-    fi = open("anagram_seeds.txt", "w")
-    seed_inc = 88
-    seed = 0
-    max_picks = 34
-    pick = 0
-    pick_length = 3
-    max_rounds = 5
-    dict_len = len(output_dictionary.keys())
-    print dict_len
-    cdll.LoadLibrary("libc.dylib") # doctest: +LINUX    
-    libc = CDLL("libc.dylib")     # doctest: +LINUX
-    #libc = cdll.msvcrt # doctest: +WINDOWS
-    while pick_length <= 5:
-        round = 0
-        fi.write("======== " + str(pick_length) + " cube puzzles ========\n")
-        while round < max_rounds:
-            pick = 0
-            seed = max_picks * seed_inc * round
-            fi.write("\n-------- Round " + str(round + 1) + " --------\n")
-            while pick < max_picks:
-                seed += seed_inc
-                libc.srand(seed)
-                seed += 1
-                i = libc.rand() % dict_len
-                while len(sorted_output_dict[i]) != pick_length or sorted_output_dict[i] not in word_list_used:
-                    #print sorted_output_dict[i]
-                    i  = (i + 1) % dict_len
-                fi.write(sorted_output_dict[i] + "\n")
-                pick += 1
-            round += 1
-        pick_length += 1
-        fi.write("\n")
-    fi.close()
     
 def unicode_csv_DictReader(utf8_data, dialect=csv.excel, **kwargs):
     csv_reader = csv.DictReader(utf8_data, dialect=dialect, **kwargs)

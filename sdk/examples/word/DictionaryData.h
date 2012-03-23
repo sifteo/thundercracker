@@ -421,3 +421,37 @@ const static bool puzzlesScramble[] =
     true,	//  REMEMBER
 };
 
+const static unsigned char puzzlesMetaLetterIndex[] =
+{
+    0,	// "ACT "[A]
+    4,	// "EXACT "[T]
+    1,	// "CATS"[A]
+    0,	// "CASTS "[C]
+    1,	// " FACTS"[F]
+    5,	// "FACTOR"[R]
+    2,	// "RAT "[T]
+    3,	// "ACRE"[E]
+    2,	// "BUS "[S]
+    2,	// "BUYS"[Y]
+    4,	// " BUSES"[E]
+    4,	// "CLUBS "[S]
+    1,	// " CLUBBING"[C]
+    3,	// "BUMPS "[P]
+    2,	// "PART"[R]
+    0,	// "STRING"[S]
+    1,	// "RINGS "[I]
+    3,	// "BELONG"[O]
+    2,	// " CLOUD"[L]
+    3,	// " FAVOR"[V]
+    3,	// "CAREER"[E]
+    1,	// " PLEASANT"[P]
+    1,	// "MEMBER"[E]
+    5,	// " EIGHT"[T]
+    2,	// "DIRECTOR "[R]
+    3,	// "INCOME"[O]
+    1,	// "ALLOW "[L]
+    1,	// " ELECTION"[E]
+    4,	// " BEGUN"[U]
+    3,	// " REMEMBER"[M]
+};
+

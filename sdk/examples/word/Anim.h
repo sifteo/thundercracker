@@ -41,6 +41,8 @@ struct AnimParams
     Cube::ID mCubeID;
     bool mBorders;
     bool mBonus;
+    char mMetaLetterIndex;
+    bool mAllMetaLetters;
     SpriteParams *mSpriteParams;
 };
 
