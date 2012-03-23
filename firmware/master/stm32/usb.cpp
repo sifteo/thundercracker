@@ -30,16 +30,23 @@ static const Usb::DeviceDescriptor dev = {
     1                               // bNumConfigurations
 };
 
-static const Usb::InterfaceDescriptor iface = {
-    sizeof(Usb::InterfaceDescriptor),   // bLength
-    Usb::DescriptorInterface,           // bDescriptorType
-    0,                                  // bInterfaceNumber
-    0,                                  // bAlternateSetting
-    0,                                  // bNumEndpoints
-    0xFF,                               // bInterfaceClass
-    0,                                  // bInterfaceSubClass
-    0,                                  // bInterfaceProtocol
-    0                                   // iInterface
+static const Usb::EndpointDescriptor dataEndp[2] = {
+    {
+        sizeof(Usb::EndpointDescriptor),    // bLength
+        Usb::DescriptorEndpoint,            // bDescriptorType
+        0x01,                               // bEndpointAddress
+        Usb::EpAttrBulk,                    // bmAttributes
+        64,                                 // wMaxPacketSize
+        1,                                  // bInterval
+    },
+    {
+        sizeof(Usb::EndpointDescriptor),    // bLength
+        Usb::DescriptorEndpoint,            // bDescriptorType
+        0x82,                               // bEndpointAddress
+        Usb::EpAttrBulk,                    // bmAttributes
+        64,                                 // wMaxPacketSize
+        1,                                  // bInterval
+    }
 };
 
 static const Usb::ConfigDescriptor config = {

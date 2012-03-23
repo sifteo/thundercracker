@@ -57,24 +57,19 @@ enum Feature {
     FeatureTestMode = 2
 };
 
-
-
-#define GET_DEVICE_DESCRIPTOR           1
-#define GET_CONFIGURATION_DESCRIPTOR    4
-
-#define REQUEST_DEVICE_STATUS         0x80
-#define REQUEST_INTERFACE_STATUS      0x81
-#define REQUEST_ENDPOINT_STATUS       0x82
-#define ZERO_TYPE                     0x00
-#define INTERFACE_TYPE                0x01
-#define ENDPOINT_TYPE                 0x02
-
 enum EndpointType {
     Control     = 0,
     Isochronous = 1,
     Bulk        = 2,
     Interrupt   = 3,
     Mask        = 4
+};
+
+enum EndpointAttr {
+    EpAttrControl = 0x00,
+    EpAttrIsochronous = 0x01,
+    EpAttrBulk = 0x02,
+    EpAttrInterrupt = 0x03
 };
 
 enum DescriptorType {
@@ -95,32 +90,6 @@ enum DescriptorIndex {
     IndexConfigString       = 4,
     IndexInterfaceString    = 5
 };
-
-/*_____ S T A N D A R D    F E A T U R E S __________________________________*/
-
-#define DEVICE_REMOTE_WAKEUP_FEATURE     0x01
-#define ENDPOINT_HALT_FEATURE            0x00
-
-/*_____ D E V I C E   S T A T U S ___________________________________________*/
-
-#define SELF_POWERED       1
-
-/*_____ D E V I C E   S T A T E _____________________________________________*/
-
-#define ATTACHED                  0
-#define POWERED                   1
-#define DEFAULT                   2
-#define ADDRESSED                 3
-#define CONFIGURED                4
-#define SUSPENDED                 5
-
-#define USB_CONFIG_BUSPOWERED     0x80
-#define USB_CONFIG_SELFPOWERED    0x40
-#define USB_CONFIG_REMOTEWAKEUP   0x20
-
-/* Class specific */
-#define CS_INTERFACE	0x24
-#define CS_ENDPOINT	0x25
 
 
 struct SetupData {

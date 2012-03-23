@@ -1,6 +1,7 @@
 #include "stm32f10xotg.h"
 #include "usb/usbd.h"
 #include "usb/usbdriver.h"
+#include "usb/usbcontrol.h"
 
 #include "hardware.h"
 #include "macros.h"
@@ -293,7 +294,12 @@ void Stm32f10xOtg::isr()
                 asm("nop");
 
             // call back user handler to read the data via epReadPacket()
-            UsbDriver::inEndpointCallback(ep, txn);
+            if (ep == 0) {
+                UsbControl::controlRequest(ep, txn);
+            }
+            else {
+                UsbDriver::inEndpointCallback(ep, txn);
+            }
 
             // Discard unread packet data
             volatile uint32_t *buf = OTG.epFifos[ep];

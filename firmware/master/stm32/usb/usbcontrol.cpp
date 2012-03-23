@@ -93,6 +93,24 @@ void UsbControl::setupWrite(SetupData *req)
         controlState.status = LastDataOut;
 }
 
+bool UsbControl::controlRequest(uint8_t ep, Usb::Transaction txn)
+{
+    switch (txn) {
+    case TransactionIn:
+        in(ep);
+        break;
+    case TransactionOut:
+        out(ep);
+        break;
+    case TransactionSetup:
+        setup(ep);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
 void UsbControl::setup(uint8_t ea)
 {
     SetupData *req = &controlState.req;
@@ -164,9 +182,11 @@ void UsbControl::in(uint8_t ea)
     case DataIn:
         sendChunk();
         break;
+
     case LastDataIn:
         controlState.status = StatusOut;
         break;
+
     case StatusIn:
         if (controlState.complete)
             controlState.complete(&controlState.req);
@@ -176,6 +196,7 @@ void UsbControl::in(uint8_t ea)
             UsbHardware::setAddress(req.wValue);
         controlState.status = Idle;
         break;
+
     default:
         UsbHardware::epSetStalled(0, true);
     }

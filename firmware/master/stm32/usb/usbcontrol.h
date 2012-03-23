@@ -8,11 +8,13 @@ class UsbControl
 public:
     UsbControl();
 
+    static bool controlRequest(uint8_t ep, Usb::Transaction txn);
+
+private:
     static void setup(uint8_t ea);
     static void out(uint8_t ea);
     static void in(uint8_t ea);
 
-private:
     static void sendChunk();
     static int receiveChunk();
 
