@@ -1,5 +1,4 @@
 #include "TokenGroup.h"
-#include "Guid.h"
 #include "Game.h"
 #include "Puzzle.h"
 #include "PuzzleHelper.h"
@@ -95,7 +94,7 @@ namespace TotalsGame {
 
 	Difficulty Puzzle::GetDifficulty()
 	{
-		return Game::GetInstance().difficulty;
+        return Game::GetDifficulty();
 	}
 
 
@@ -105,12 +104,12 @@ namespace TotalsGame {
       if (p == null || Game.Inst == null) { return false; }
       return p.guid != Guid.Empty && Game.Inst.saveData.solved.Contains(p.guid);
     }*/
-
-	void Puzzle::SaveAsSolved() 
+	void Puzzle::SaveAsSolved()     
 	{
-        Database::SavePuzzleAsSolved(chapterIndex, puzzleIndex);
-        Game::GetInstance().saveData.Save();
-	}
+        Game::saveData.AddSolvedPuzzle(chapterIndex, puzzleIndex);
+        Game::saveData.Save();
+    }
+
 	/*
     public static int CountAfterThisInChapterWithCurrentCubeSet(this Puzzle p) {
       if (p == null || p.chapter == null || Game.Inst == null) { return 0; }
@@ -125,25 +124,23 @@ namespace TotalsGame {
     
     bool Puzzle::GetNext(int *chapter, int *puzzle)
     {
-        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
-        if (puzzleIndex < Database::NumPuzzlesInChapter(chapterIndex)-1) {
-            *chapter = chapterIndex;
-            *puzzle = puzzleIndex + 1;
+        if (*chapter == -1) { *chapter = *puzzle = -1; return false; }
+        if (*puzzle < Database::NumPuzzlesInChapter(*chapter)-1) {
+            *puzzle = *puzzle + 1;
             return true;
         }
-        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
-        if (chapterIndex < Database::NumChapters() - 1) {
-            *chapter = chapterIndex + 1;
+        if (*chapter < Database::NumChapters() - 1) {
+            *chapter = *chapter + 1;
             *puzzle = 0;
             return true;
-        }
+        }        
         *chapter = *puzzle = -1;
         return false;
     }
     
     bool Puzzle::GetNext(int maxCubeCount, int *chapter, int *puzzle)
     {
-        bool success;
+        bool success = false;
         do {
             success = GetNext(chapter, puzzle);
         } while(success && Database::NumTokensInPuzzle(*chapter, *puzzle) > maxCubeCount);
@@ -156,7 +153,7 @@ namespace TotalsGame {
       int result = 0;
       for(int i=puzzleIndex+1; i<Database::NumPuzzlesInChapter(chapterIndex); ++i)
       {
-        if (Database::NumTokensInPuzzle(chapterIndex, i) <= Game::NUMBER_OF_CUBES)
+        if (Database::NumTokensInPuzzle(chapterIndex, i) <= NUM_CUBES)
         {
           result++;
         }
