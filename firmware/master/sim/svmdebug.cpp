@@ -11,6 +11,7 @@
 #include "elfdefs.h"
 #include "elfdebuginfo.h"
 #include "logdecoder.h"
+#include "gdbserver.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
@@ -129,7 +130,27 @@ std::string SvmDebug::formatAddress(void *address)
     return gELFDebugInfo.formatAddress(SvmMemory::physToVirtRAM((uint8_t*)address));
 }
 
+bool SvmDebug::debuggerMsgAccept(SvmDebug::DebuggerMsg &msg)
+{
+    // XXX
+    return false;
+}
+
+void SvmDebug::debuggerMsgFinish(SvmDebug::DebuggerMsg &msg)
+{
+    // XXX
+}
+
+static uint32_t debuggerMsgCallback(const uint32_t *cmd,
+    uint32_t cmdWords, uint32_t *reply)
+{
+    // XXX
+    return 0;
+}
+
 void SvmDebug::setSymbolSourceELF(const FlashRange &elf)
 {
     gELFDebugInfo.init(elf);
+    GDBServer::setDebugInfo(&gELFDebugInfo);
+    GDBServer::setMessageCallback(debuggerMsgCallback);
 }

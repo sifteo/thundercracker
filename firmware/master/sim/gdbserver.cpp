@@ -4,6 +4,8 @@
  */
 
 #include "gdbserver.h"
+#include "macros.h"
+#include "elfdebuginfo.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -46,6 +48,16 @@ static void *GDBServerThread(void *param)
 
     GDBServer::instance.threadEntry();
     return 0;
+}
+
+void GDBServer::setDebugInfo(const ELFDebugInfo *info)
+{
+    instance.debugInfo = info;
+}
+
+void GDBServer::setMessageCallback(GDBServer::MessageCallback cb)
+{
+    instance.messageCb = cb;
 }
 
 void GDBServer::start(int port)
@@ -329,43 +341,102 @@ void GDBServer::txPacketString(const char *str)
 
 void GDBServer::handlePacket()
 {
-    switch (rxPacket[0]) {
+    switch (rxPacket[0])
+    {
+        case 'q': {
+            if (packetStartsWith("qSupported")) return txPacketString("PacketSize=512");
+            if (packetStartsWith("qOffsets"))   return txPacketString("Text=0;Data=0;Bss=0");
+            break;
+        }
 
-    case 'q':
-        if (packetStartsWith("qSupported")) return txPacketString("PacketSize=512");
-        if (packetStartsWith("qOffsets"))   return txPacketString("Text=0;Data=0;Bss=0");
-        break;
+        case '?': {
+            // Why did we last stop?
+            return txPacketString("S05");
+        }
 
-    case '?':
-        // Why did we last stop?
-        return txPacketString("S05");
+        case 'g': {
+            // Read registers
+            return txPacketString("00000000");
+        }
 
-    case 'g':
-        // Read registers
-        return txPacketString("00000000");
+        case 'G': {
+            // Write registers
+            return txPacketString("OK");
+        }
 
-    case 'G':
-        // Write registers
-        return txPacketString("OK");
+        case 'm': {
+            // Read memory
+            int addr = 0, size = 0;
+            txPacketBegin();
+            if (sscanf(rxPacket, "m%x,%x", &addr, &size) == 2)
+                while (size > 0) {
+                    uint8_t buffer[128];
+                    int chunk = MIN((int) sizeof buffer, size);
+                    if (!readMemory(addr, buffer, chunk))
+                        break;
+                    for (int i = 0; i < chunk; ++i)
+                        txHexByte(buffer[i]);
+                    size -= chunk;
+                }
+            return txPacketEnd();
+        }
 
-    case 'm':
-        // Read memory
-        return txPacketString("00000000");
+        case 'M': {
+            // Write memory
+            return txPacketString("OK");
+        }
 
-    case 'M':
-        // Write memory
-        return txPacketString("OK");
+        case 'c': {
+            // Continue
+            return;
+        }
 
-    case 'c':
-        // Continue
-        return;
-
-    case 's':
-        // Single step
-        return;
-
+        case 's': {
+            // Single step
+            return;
+        }
     }
 
     // Unsupported packet; empty reply
     txPacketString("");
+}
+
+uint32_t GDBServer::message(uint32_t words)
+{
+    /*
+     * Synchronously send a message and wait for a reply.
+     * This uses a callback provided by our transport layer.
+     */
+
+    if (messageCb)
+        return messageCb(msgCmd, words, msgReply);
+    else
+        return 0;
+}
+
+bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
+{
+    if (debugInfo && debugInfo->readROM(addr, buffer, bytes))
+        return true;
+
+    // We have to go to hardware to complete this read. Break it up into
+    // multiple reply-buffer-sized chunks.
+
+    while (bytes) {
+        uint32_t chunk = MIN(bytes, SvmDebuggerMsg::MAX_REPLY_BYTES);
+        if ((addr & SvmDebuggerMsg::M_ARG_MASK) != addr)
+            return false;
+
+        msgCmd[0] = SvmDebuggerMsg::M_READ_RAM | addr;
+        msgCmd[1] = chunk;
+        if (message(2) * sizeof(uint32_t) < chunk)
+            return false;
+
+        memcpy(buffer, msgReply, chunk);
+        addr += chunk;
+        buffer += chunk;
+        bytes -= chunk;
+    }
+
+    return true;
 }
