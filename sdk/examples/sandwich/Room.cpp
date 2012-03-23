@@ -28,16 +28,16 @@ const RoomData* Room::Data() const {
 }
 
 bool Room::HasOpenDoor() const {
-  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 bool Room::HasClosedDoor() const {
-  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
-  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, mDoor->flagId);
+  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
 }
 
 const uint8_t* Room::OverlayBegin() const {
@@ -60,7 +60,7 @@ void Room::Clear() {
   mUserdataType = 0;
   mInnerType = 0;
   mUserdata = 0;
-  mDoor = 0;
+  mOtherdata = 0;
   mOverlayIndex = 0xffff;
 }
 

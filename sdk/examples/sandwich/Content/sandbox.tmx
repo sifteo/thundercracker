@@ -191,7 +191,7 @@
     <property name="respawn" value="0,0"/>
    </properties>
   </object>
-  <object name="Doggy Bowl" type="Depot" x="48" y="336" width="32" height="32">
+  <object name="Doggy Bowl" type="Depot" x="48" y="336" width="32" height="16">
    <properties>
     <property name="target" value="crystal_ball"/>
    </properties>

@@ -173,6 +173,8 @@ class Map:
 	def list_triggers_of_type(self, type): return (t for r in self.rooms for t in r.triggers if t.type == type)
 
 	def write_source_to(self, src):
+		TS = "{0xff,0xff,0xff,0xff,0xff}" # trigger sentinel
+
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
@@ -207,43 +209,43 @@ class Map:
 			src.write("static const ItemData %s_items[] = {" % self.id)
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
 				item.write_item_to(src)
-			src.write("};\n")
+			src.write("{%s,0x0}};\n" % TS)
 		
 		if len(self.gate_dict):
 			src.write("static const GatewayData %s_gateways[] = {" % self.id)
 			for gate in self.list_triggers_of_type(TRIGGER_GATEWAY):
 				gate.write_gateway_to(src)
-			src.write("};\n")
+			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 
 		if len(self.npc_dict) > 0:
 			src.write("static const NpcData %s_npcs[] = {" % self.id)
 			for npc in self.list_triggers_of_type(TRIGGER_NPC):
 				npc.write_npc_to(src)
-			src.write("};\n")
+			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 		
 		if len(self.trapped_rooms) > 0:
 			src.write("static const TrapdoorData %s_trapdoors[] = {" % self.id)
 			for room in self.trapped_rooms:
 				src.write("{0x%x,0x%x}," % (room.lid, room.trapRespawnRoomId))
-			src.write("};\n")
+			src.write("{0x0,0x0}};\n")
 		
 		if len(self.doors) > 0:
 			src.write("static const DoorData %s_doors[] = {" % self.id)
 			for door in self.doors:
 				src.write("{0x%x,0x%x}," % (door.room.lid, door.flag.gindex))
-			src.write("};\n")
+			src.write("{0x0,0x0}};\n")
 
 		if len(self.animatedtiles) > 0:
 			src.write("static const AnimatedTileData %s_animtiles[] = {" % self.id)
 			for atile in self.animatedtiles:
 				src.write("{0x%x,0x%x}," % (atile.tile.lid, atile.numframes))
-			src.write("};\n")
+			src.write("{0x0,0x0}};\n")
 
 		if len(self.sokoblocks) > 0:
 			src.write("static const SokoblockData %s_sokoblocks[] = {" % self.id)
 			for b in self.sokoblocks:
 				src.write("{0x%x,0x%x,0x%x}," % (b.x, b.y, b.asset_id))
-			src.write("};\n")
+			src.write("{0x0,0x0,0x0}};\n")
 
 		if len(self.lava_tiles) > 0:
 			src.write("static const TileSetID %s_lavatiles[] = {" % self.id)
@@ -278,14 +280,14 @@ class Map:
 				is_pos = 0 if r.subdiv_type == SUBDIV_DIAG_NEG else 1
 				cx,cy = r.secondary_center()
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_pos, r.lid, cx, cy))
-			src.write("};\n")
+			src.write("{0x0,0x0,0x0,0x0}};\n")
 		if len(self.bridgeRooms) > 0:
 			src.write("static const BridgeSubdivisionData %s_bridges[] = {" % self.id)
 			for r in self.bridgeRooms:
 				is_hor = 0 if r.subdiv_type == SUBDIV_BRDG_VER else 1
 				cx,cy = r.secondary_center()
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_hor, r.lid, cx, cy))
-			src.write("};\n")
+			src.write("{0x0,0x0,0x0,0x0}};\n")
 
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
@@ -308,22 +310,15 @@ class Map:
 			"%(gate)s, " \
 			"%(npc)s, " \
 			"%(trapdoor)s, " \
+			"%(depot)s, " \
 			"%(door)s, " \
 			"%(animtiles)s, " \
 			"%(lavatiles)s, " \
 			"%(diagsubdivs)s, " \
 			"%(bridgesubdivs)s, " \
 			"%(sokoblocks)s, "
-			"0x%(nitems)x, " \
-			"0x%(ngates)x, " \
-			"0x%(nnpcs)x, " \
-			"0x%(ntrapdoors)x, " \
 			"0x%(doorQuestId)x, " \
-			"0x%(ndoors)x, " \
 			"0x%(nanimtiles)x, " \
-			"0x%(ndiags)x, " \
-			"0x%(nbridges)x, " \
-			"0x%(nsokoblocks)x, " \
 			"0x%(ambient)x, " \
 			"0x%(w)x, " \
 			"0x%(h)x },\n" % \
@@ -337,24 +332,17 @@ class Map:
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
+				"depot": "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
 				"bridgesubdivs": self.id + "_bridges" if len(self.bridgeRooms) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
-				"nitems": len(self.item_dict),
-				"ngates": len(self.gate_dict),
-				"nnpcs": len(self.npc_dict),
-				"ntrapdoors": len(self.trapped_rooms),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
-				"ndoors": len(self.doors),
-				"nanimtiles": len(self.animatedtiles),
-				"ndiags": len(self.diagRooms),
-				"nbridges": len(self.bridgeRooms),
 				"ambient": self.ambientType,
+				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
-				"nsokoblocks": len(self.sokoblocks),
 				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0"
 			})
 

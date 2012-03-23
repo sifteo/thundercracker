@@ -11,52 +11,78 @@ void Map::SetData(const MapData& map) {
     // triggers
     RefreshTriggers();
     // sokoblocks
-    mBlockCount = map.sokoblockCount;
-    ASSERT(mBlockCount <= BLOCK_CAPACITY);
-    for(unsigned i=0; i<mBlockCount; ++i) {
-      mBlock[i].Init(map.sokoblocks[i]);
+    mBlockCount = 0;
+    if (map.sokoblocks) {
+      for (const SokoblockData* p=map.sokoblocks; p->x; ++p) {
+        mBlock[mBlockCount].Init(*p);
+        mBlockCount++;
+      }
+      ASSERT(mBlockCount <= BLOCK_CAPACITY);
     }
   }
 }
+
+static inline bool AtEnd(const TriggerData& trig) { return trig.eventType == 0xff; }
 
 void Map::RefreshTriggers() {
   const Room* pEnd = mRooms + (mData->width*mData->height);
   for(Room* p=mRooms; p!=pEnd; ++p) { p->Clear(); }
 
   // find active triggers
-  for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
-    if (gGame.GetState()->IsActive(p->trigger)) {
-      ASSERT(!mRooms[p->trigger.room].HasUserdata());
-      mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
+  if (mData->items) {
+    for(const ItemData* p = mData->items; !AtEnd(p->trigger); ++p) {
+      if (gGame.GetState()->IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasUserdata());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
+      }
     }
   }
-  for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {
-    if (gGame.GetState()->IsActive(p->trigger)) {
-      ASSERT(!mRooms[p->trigger.room].HasUserdata());
-      mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &p->trigger);
+
+  if (mData->gates) {
+    for(const GatewayData* p = mData->gates; !AtEnd(p->trigger); ++p) {
+      if (gGame.GetState()->IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasUserdata());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &p->trigger);
+      }
     }
   }
-  for(const NpcData* p = mData->npcs; p != mData->npcs + mData->npcCount; ++p) {
-    if (gGame.GetState()->IsActive(p->trigger)) {
-      ASSERT(!mRooms[p->trigger.room].HasUserdata());
-      mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
+  
+  if (mData->npcs) {
+    for(const NpcData* p = mData->npcs; !AtEnd(p->trigger); ++p) {
+      if (gGame.GetState()->IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasUserdata());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
+      }
     }
   }
-  for(const TrapdoorData* p = mData->trapdoors; p != mData->trapdoors + mData->trapdoorCount; ++p) {
-    ASSERT(!mRooms[p->roomId].HasUserdata());
-    mRooms[p->roomId].SetTrapdoor(p);
+  
+  if (mData->trapdoors) {
+    for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
+      ASSERT(!mRooms[p->roomId].HasUserdata());
+      mRooms[p->roomId].SetTrapdoor(p);
+    }
   }
-  for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {
-    ASSERT(!mRooms[p->roomId].HasUserdata());
-    mRooms[p->roomId].SetDiagonalSubdivision(p);
+  
+  if (mData->diagonalSubdivisions) {
+    for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p->roomId; ++p) {
+      ASSERT(!mRooms[p->roomId].HasUserdata());
+      mRooms[p->roomId].SetDiagonalSubdivision(p);
+    }
   }
-  for(const BridgeSubdivisionData* p = mData->bridgeSubdivisions; p != mData->bridgeSubdivisions+mData->bridgeSubdivisionCount; ++p) {
-    ASSERT(!mRooms[p->roomId].HasUserdata());
-    mRooms[p->roomId].SetBridgeSubdivision(p);
+  
+  if (mData->bridgeSubdivisions) {
+    for(const BridgeSubdivisionData* p = mData->bridgeSubdivisions; p->roomId; ++p) {
+      ASSERT(!mRooms[p->roomId].HasUserdata());
+      mRooms[p->roomId].SetBridgeSubdivision(p);
+    }
   }
-  for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
-    mRooms[p->roomId].SetDoor(p);
+  
+  if (mData->doors) {
+    for(const DoorData* p = mData->doors; p->roomId; ++p) {
+      mRooms[p->roomId].SetDoor(p);
+    }
   }
+  
   // walk the overlay RLE to find room breaks
   if (mData->rle_overlay) {
     const unsigned tend = mData->width * mData->height * 64; // 64 tiles per room
