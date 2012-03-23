@@ -32,7 +32,6 @@ void Map::RefreshTriggers() {
   if (mData->items) {
     for(const ItemData* p = mData->items; !AtEnd(p->trigger); ++p) {
       if (gGame.GetState()->IsActive(p->trigger)) {
-        ASSERT(!mRooms[p->trigger.room].HasUserdata());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
       }
     }
@@ -41,7 +40,6 @@ void Map::RefreshTriggers() {
   if (mData->gates) {
     for(const GatewayData* p = mData->gates; !AtEnd(p->trigger); ++p) {
       if (gGame.GetState()->IsActive(p->trigger)) {
-        ASSERT(!mRooms[p->trigger.room].HasUserdata());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &p->trigger);
       }
     }
@@ -50,7 +48,6 @@ void Map::RefreshTriggers() {
   if (mData->npcs) {
     for(const NpcData* p = mData->npcs; !AtEnd(p->trigger); ++p) {
       if (gGame.GetState()->IsActive(p->trigger)) {
-        ASSERT(!mRooms[p->trigger.room].HasUserdata());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
       }
     }
@@ -58,21 +55,18 @@ void Map::RefreshTriggers() {
   
   if (mData->trapdoors) {
     for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
-      ASSERT(!mRooms[p->roomId].HasUserdata());
       mRooms[p->roomId].SetTrapdoor(p);
     }
   }
   
   if (mData->diagonalSubdivisions) {
     for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p->roomId; ++p) {
-      ASSERT(!mRooms[p->roomId].HasUserdata());
       mRooms[p->roomId].SetDiagonalSubdivision(p);
     }
   }
   
   if (mData->bridgeSubdivisions) {
     for(const BridgeSubdivisionData* p = mData->bridgeSubdivisions; p->roomId; ++p) {
-      ASSERT(!mRooms[p->roomId].HasUserdata());
       mRooms[p->roomId].SetBridgeSubdivision(p);
     }
   }
@@ -103,7 +97,8 @@ void Map::RefreshTriggers() {
         tid++;
       }
     }
-  }  
+  }
+
 }
 
 bool Map::IsVertexWalkable(Int2 vertex) {

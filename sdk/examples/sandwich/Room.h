@@ -51,11 +51,12 @@ public:
   bool HasGateway() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_GATEWAY; }
   bool HasItem() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_ITEM; }
   bool HasNPC() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; }
-  const GatewayData* TriggerAsGate() const { ASSERT(HasGateway());  return (const GatewayData*) mUserdata; }
-  const ItemData* TriggerAsItem() const { ASSERT(HasItem()); return (const ItemData*) mUserdata; }
-  const NpcData* TriggerAsNPC() const { ASSERT(HasNPC()); return (const NpcData*) mUserdata; }
+  const GatewayData* Gateway() const { ASSERT(HasGateway());  return (const GatewayData*) mUserdata; }
+  const ItemData* Item() const { ASSERT(HasItem()); return (const ItemData*) mUserdata; }
+  const NpcData* NPC() const { ASSERT(HasNPC()); return (const NpcData*) mUserdata; }
 
   void SetTrigger(int type, const TriggerData* p) { 
+    ASSERT(!mUserdata);
     mUserdataType = USERDATA_TRIGGER;
     mInnerType = type; 
     mUserdata = p; 
@@ -99,13 +100,15 @@ public:
   inline bool HasDepot() const { return mUserdataType == USERDATA_PROP && mInnerType == PROP_DEPOT; }
 
   inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
+    ASSERT(!mUserdata);
     mUserdataType = USERDATA_PROP;
     mInnerType = PROP_TRAPDOOR;
     mUserdata = trapDoorData;
   }
 
   inline void SetDepot(const DepotData* depot) {
-    ASSERT(mOtherdata == 0);
+    ASSERT(!mUserdata);
+    ASSERT(!mOtherdata);
     mUserdataType == USERDATA_PROP;
     mInnerType == PROP_TRAPDOOR;
     mUserdata = depot;
@@ -126,7 +129,7 @@ public:
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
   const DoorData* Door() const { ASSERT(HasDoor()); return (const DoorData*) mOtherdata; }
-  void SetDoor(const DoorData* p) { mOtherdata = p; }
+  void SetDoor(const DoorData* p) { ASSERT(!HasDepot()); mOtherdata = p; }
   bool OpenDoor();
 
   //---------------------------------------------------------------------------

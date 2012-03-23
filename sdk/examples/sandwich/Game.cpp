@@ -351,9 +351,9 @@ void Game::RestorePearlIdle() {
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasGateway()) {
-    OnEnterGateway(pRoom->TriggerAsGate());
+    OnEnterGateway(pRoom->Gateway());
   } else if (pRoom->HasNPC()) {
-    const NpcData* npc = pRoom->TriggerAsNPC();
+    const NpcData* npc = pRoom->NPC();
     if (npc->optional) { OnNpcChatter(npc); }
   }  
 }
@@ -366,7 +366,7 @@ unsigned Game::OnPassiveTrigger() {
     OnTrapdoor(pRoom);
     return TRIGGER_RESULT_PATH_INTERRUPTED;
   } else if (pRoom->HasNPC()) {
-    const NpcData* npc = pRoom->TriggerAsNPC();
+    const NpcData* npc = pRoom->NPC();
     if (!npc->optional) { OnNpcChatter(npc); }
   }
   return TRIGGER_RESULT_NONE;
@@ -444,7 +444,7 @@ void Game::OnInventoryChanged() {
 
 
 void Game::OnPickup(Room *pRoom) {
-  const ItemData* pItem = pRoom->TriggerAsItem();
+  const ItemData* pItem = pRoom->Item();
   const ItemTypeData &itemType = gItemTypeData[pItem->itemId];
   if (itemType.storageType == STORAGE_EQUIPMENT) {
 
