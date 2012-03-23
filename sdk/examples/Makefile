@@ -1,5 +1,6 @@
 SUBDIRS = \
 	betterflow \
+	buddies \
 	chroma \
 	gfxdemo \
 	hello \
@@ -8,7 +9,6 @@ SUBDIRS = \
 	nyan \
 	pairing \
 	peano \
-	sandwich \
 	scroller-bg0 \
 	scroller-bg1 \
 	sensors \

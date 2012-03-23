@@ -2,6 +2,7 @@
 *.a
 *.o
 master-sim
+master-sim.exe
 *.bc
 *.ll
 
