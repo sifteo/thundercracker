@@ -17,7 +17,7 @@ void UsbControl::sendChunk()
         // Data stage, normal transmission
         UsbHardware::epWritePacket(0, controlState.buf, dd->bMaxPacketSize0);
         controlState.status = DataIn;
-        controlState.buf += dd->bMaxPacketSize0;
+        controlState.pdata += dd->bMaxPacketSize0;
         controlState.len -= dd->bMaxPacketSize0;
     }
     else {
@@ -25,7 +25,7 @@ void UsbControl::sendChunk()
         UsbHardware::epWritePacket(0, controlState.buf, controlState.len);
         controlState.status = LastDataIn;
         controlState.len = 0;
-        controlState.buf = 0;
+        controlState.pdata = 0;
     }
 }
 
@@ -47,16 +47,16 @@ int UsbControl::receiveChunk()
 int UsbControl::requestDispatch(SetupData *req)
 {
 
-    int result = UsbDriver::controlRequest(req, &controlState.buf, &controlState.len);
+    int result = UsbDriver::controlRequest(req, &controlState.pdata, &controlState.len);
     if (result)
         return result;
 
-    return UsbCore::standardRequest(req, &controlState.buf, &controlState.len);
+    return UsbCore::standardRequest(req, &controlState.pdata, &controlState.len);
 }
 
 void UsbControl::setupRead(SetupData *req)
 {
-    controlState.buf = Usbd::ctrlBuf;
+    controlState.pdata = controlState.buf;
     controlState.len = req->wLength;
 
     if (requestDispatch(req)) {
@@ -77,13 +77,13 @@ void UsbControl::setupRead(SetupData *req)
 
 void UsbControl::setupWrite(SetupData *req)
 {
-    if (req->wLength > Usbd::ctrlBufLen) {
+    if (req->wLength > controlState.len) {
         UsbHardware::epSetStalled(0, true);
         return;
     }
 
     // Buffer into which to write received data
-    controlState.buf = Usbd::ctrlBuf;
+    controlState.pdata = controlState.buf;
     controlState.len = 0;
 
     // Wait for DATA OUT stage

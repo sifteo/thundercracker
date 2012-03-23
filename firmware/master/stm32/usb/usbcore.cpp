@@ -1,6 +1,7 @@
 #include "usb/usbcore.h"
 #include "usb/usbhardware.h"
 #include "usb/usbdriver.h"
+#include "usb/usbcontrol.h"
 
 #include "macros.h"
 #include <string.h>
@@ -72,7 +73,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
     }
 
     case DescriptorConfiguration:
-        *buf = Usbd::ctrlBuf;
+        *buf = UsbControl::buf();
         *len = buildConfigDescriptor(req->wValue & 0xff, *buf, *len);
         return 1;
 
@@ -80,7 +81,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
         if (!Usbd::stringSupport())
             return 0;
 
-        StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(Usbd::ctrlBuf);
+        StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(UsbControl::buf());
 
         // check for bogus string
         for (unsigned i = 0; i <= (req->wValue & 0xff); i++) {
