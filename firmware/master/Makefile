@@ -36,14 +36,6 @@ ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
 endif
 
-ifneq ($(SVM_TRACE),)
-    CFLAGS_SIM += -DSVM_TRACE
-endif
-
-ifneq ($(FLASHLAYER_STATS),)
-    CFLAGS_SIM += -DFLASHLAYER_STATS
-endif
-
 include Makefile.defs
 
 # Override default CDEPS
