@@ -1,4 +1,5 @@
 #include <sifteo.h>
+using namespace Sifteo;
 
 float _ceilf(float f)
 {

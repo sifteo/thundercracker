@@ -15,8 +15,7 @@ SUBDIRS = \
 	sprites \
 	stars \
 	text \
-
-# XXX Disabled for now due to errors: word
+	word \
 
 .PHONY: clean subdirs $(SUBDIRS)
 

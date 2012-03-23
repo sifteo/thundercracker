@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace Sifteo;
+
 const unsigned START_SCREEN_CUBE_INDEX = 1;
 const unsigned SCORE_RHS_X = 9;
 const unsigned SCORE_RHS_Y = 2;
