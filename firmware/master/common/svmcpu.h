@@ -14,9 +14,18 @@ namespace SvmCpu {
 
     void init();
 #ifdef SIFTEO_SIMULATOR
+#   define TRACING_ONLY(x)  do {    \
+        if (SvmCpu::tracing()) {    \
+            x                       \
+        }                           \
+    } while (0)
+
+    bool tracing();
+    void enableTracing();
     void run(reg_t sp, reg_t pc) __attribute__ ((noreturn));
 #else
     void run(reg_t sp, reg_t pc) __attribute__ ((naked));
+#   define TRACING_ONLY(x)
 #endif
 
     reg_t reg(uint8_t r);
