@@ -1,5 +1,6 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_room import *
+from sandwich_item import *
 from itertools import product
 
 class MapDatabase:
@@ -46,6 +47,17 @@ class Door:
 		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
 			if room.map.quest is not None \
 			else room.map.world.quests.add_flag_if_undefined(self.id)
+
+class Depot:
+	def __init__(self, map, obj):
+		assert "target" in obj.props
+		self.obj = obj
+		item_name = obj.props["target"]
+		assert item_name in map.world.items.item_dict
+		self.item = map.world.items.item_dict[item_name]
+		assert self.item.storage_type == STORAGE_TYPE_EQUIP
+		self.room = map.roomat( obj.px / 128, obj.py / 128 )
+		self.room.depot = self
 
 class AnimatedTile:
 	def __init__(self, tile):
@@ -166,6 +178,7 @@ class Map:
 		# find me some lava tiles
 		self.lava_tiles = [ t for t in self.background.gettileset().tiles if "lava" in t.props ]
 		assert len(self.lava_tiles) <= 8
+		self.depots = [ Depot(self,obj) for obj in self.raw.objects if obj.type == "depot" ]
 
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -252,6 +265,12 @@ class Map:
 			for tile in self.lava_tiles:
 				src.write("0x%x," % tile.lid)
 			src.write("0x0};\n")
+
+		if len(self.depots) > 0:
+			src.write("static const DepotData %s_depots[] = {" % self.id)
+			for d in self.depots:
+				src.write("{0x%x,0x%x}," % (d.room.lid, d.item.numeric_id))
+			src.write("{}};\n")
 
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
