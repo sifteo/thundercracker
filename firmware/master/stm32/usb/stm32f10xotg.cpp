@@ -75,26 +75,26 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 
         // Configure IN
         if (maxsize >= 64)
-            OTG.inEps[0].DIEPCTL = 0x0; // MPSIZ 64
+            OTG.device.inEps[0].DIEPCTL = 0x0; // MPSIZ 64
         else if (maxsize >= 32)
-            OTG.inEps[0].DIEPCTL = 0x1; // MPSIZ 32
+            OTG.device.inEps[0].DIEPCTL = 0x1; // MPSIZ 32
         else if (maxsize >= 16)
-            OTG.inEps[0].DIEPCTL = 0x2; // MPSIZ 16
+            OTG.device.inEps[0].DIEPCTL = 0x2; // MPSIZ 16
         else
-            OTG.inEps[0].DIEPCTL = 0x3; // MPSIZ 8
+            OTG.device.inEps[0].DIEPCTL = 0x3; // MPSIZ 8
 
-        OTG.inEps[0].DIEPTSIZ = maxsize & 0x7f;
-        OTG.inEps[0].DIEPCTL |= ((1 << 31) |    // EPENA
-                                 (1 << 27));    // SNAK
+        OTG.device.inEps[0].DIEPTSIZ = maxsize & 0x7f;
+        OTG.device.inEps[0].DIEPCTL |= ((1 << 31) |    // EPENA
+                                        (1 << 27));    // SNAK
 
         // Configure OUT
         doeptsiz[0] = (1 << 29) |   // STUPCNT_1
                       (1 << 19) |
                       (maxsize & 0x7f);
 
-        OTG.outEps[0].DOEPTSIZ = doeptsiz[0];
-        OTG.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
-                                  (1 << 27));    // SNAK
+        OTG.device.outEps[0].DOEPTSIZ = doeptsiz[0];
+        OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
+                                        (1 << 27));    // SNAK
 
         OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_SIZE;
         fifoMemTop += maxsize / 4;
@@ -109,7 +109,7 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
         fifoMemTop += maxsize / 4;
 
-        volatile USBOTG_IN_EP_t & ep = OTG.inEps[addr];
+        volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
         ep.DIEPTSIZ = maxsize & 0x7f;
         ep.DIEPCTL |=  ((1 << 31) |     // EPENA
                         (1 << 28) |     // SD0PID
@@ -123,7 +123,7 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 
         doeptsiz[addr] = (1 << 19) | (maxsize & 0x7f);
 
-        volatile USBOTG_OUT_EP_t & ep = OTG.outEps[addr];
+        volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
         ep.DOEPTSIZ = doeptsiz[addr];
         ep.DOEPCTL |= ((1 << 31) |     // EPENA
                        (1 << 28) |     // SD0PID
@@ -146,9 +146,9 @@ void Stm32f10xOtg::epSetStall(uint8_t addr, bool stall)
 
     if (addr == 0) {
         if (stall)
-            OTG.inEps[addr].DIEPCTL |= stallbit;
+            OTG.device.inEps[addr].DIEPCTL |= stallbit;
         else
-            OTG.inEps[addr].DIEPCTL &= ~stallbit;
+            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
     }
 
     if (isInEp(addr)) {
@@ -156,20 +156,20 @@ void Stm32f10xOtg::epSetStall(uint8_t addr, bool stall)
         addr &= 0x7F;
 
         if (stall) {
-            OTG.inEps[addr].DIEPCTL |= stallbit;
+            OTG.device.inEps[addr].DIEPCTL |= stallbit;
         }
         else {
-            OTG.inEps[addr].DIEPCTL &= ~stallbit;
-            OTG.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
+            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
+            OTG.device.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
         }
     }
     else {
         if (stall) {
-            OTG.outEps[addr].DOEPCTL |= stallbit;
+            OTG.device.outEps[addr].DOEPCTL |= stallbit;
         }
         else {
-            OTG.outEps[addr].DOEPCTL &= ~stallbit;
-            OTG.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
+            OTG.device.outEps[addr].DOEPCTL &= ~stallbit;
+            OTG.device.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
         }
     }
 }
@@ -179,9 +179,9 @@ bool Stm32f10xOtg::epIsStalled(uint8_t addr)
     const uint32_t stallbit = (1 << 21);
 
     if (isInEp(addr))
-        return (OTG.inEps[addr & 0x7f].DIEPCTL & stallbit) != 0;
+        return (OTG.device.inEps[addr & 0x7f].DIEPCTL & stallbit) != 0;
     else
-        return (OTG.outEps[addr].DOEPCTL & stallbit) != 0;
+        return (OTG.device.outEps[addr].DOEPCTL & stallbit) != 0;
 }
 
 void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
@@ -192,13 +192,13 @@ void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
 
     forceNak[addr] = nak;
     // set or clear nak accordingly
-    OTG.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
+    OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
 }
 
 uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
-    volatile USBOTG_IN_EP_t & ep = OTG.inEps[addr];
+    volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
 
     // endpoint already enabled? no no
     if (ep.DIEPTSIZ & (1 << 19))
@@ -236,7 +236,7 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
     }
 
     // restore state
-    volatile USBOTG_OUT_EP_t & ep = OTG.outEps[addr];
+    volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
     ep.DOEPTSIZ = doeptsiz[addr];
     ep.DOEPCTL |= (1 << 31) |   // EPENA
                   (forceNak[addr] ? (1 << 27) : (1 << 26));
@@ -284,7 +284,7 @@ void Stm32f10xOtg::isr()
         }
         else {
             // mask RXFLVL until we've read the data from the fifo
-            OTG.global.GINTMSK |= RXFLVL;
+//            OTG.global.GINTMSK |= RXFLVL;
             /*
              * FIXME: Why is a delay needed here?
              * This appears to fix a problem where the first 4 bytes
@@ -313,7 +313,7 @@ void Stm32f10xOtg::isr()
     // There is no global interrupt flag for tx complete - check the XFRC bit in each inEp
     const uint32_t xfrc = 0x1;
     for (unsigned i = 0; i < 4; i++) {
-        volatile USBOTG_IN_EP_t & ep = OTG.inEps[i];
+        volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
         if (ep.DIEPINT & xfrc) {
             UsbDriver::inEndpointCallback(i, TransactionIn);
             ep.DIEPINT = xfrc;
