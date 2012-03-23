@@ -625,6 +625,17 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
+void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle) {
+    // TEMP just draw a blank cuuuuube
+    CubeTransformState tState;
+    b2Mat33 mat;
+    tState.modelMatrix = &mat;  
+    cubeTransform(center, angle, CubeConstants::HOVER_NONE, b2Vec2(0,0), tState);
+    drawCubeBody();
+    drawCubeFace(0, NULL);
+    // END TEMP
+}
+
 void GLRenderer::drawCubeBody()
 {
     glUseProgramObjectARB(cubeSideProgram);

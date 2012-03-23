@@ -123,6 +123,10 @@ class Frontend {
     System *sys;
     unsigned frameCount;
     unsigned idleFrames;
+
+    unsigned mothershipCount; // this belongs in System methinks...
+    FrontendMothership motherships[1];
+
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;

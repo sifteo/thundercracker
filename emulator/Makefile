@@ -198,6 +198,7 @@ ifneq ($(BUILD_PLATFORM),Darwin)
 	LIBS += -Wl,--gc-sections
 endif
 
+
 # Debug / optimization
 #
 # Unsurprisingly, compiler optimization produces a very dramatic
@@ -221,6 +222,10 @@ CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 MFLAGS := $(FLAGS) $(INCLUDES)
 LDFLAGS := $(FLAGS) $(LIBS)
+
+ifeq ($(MOTHERSHIP),1)
+	CCFLAGS += -DMOTHERSHIP
+endif
 
 all: $(BIN)
 

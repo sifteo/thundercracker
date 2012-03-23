@@ -11,8 +11,9 @@
 FrontendMothership::FrontendMothership()
 	: body(0) {}
 
-void FrontendMothership::init(b2World& world, float x, float y) {
-	
+void FrontendMothership::init(unsigned aId, b2World& world, float x, float y) {
+	id = aId;
+
 	//------------------------------------------------------------------------------
 	// initialize body
 	//------------------------------------------------------------------------------
@@ -38,8 +39,6 @@ void FrontendMothership::init(b2World& world, float x, float y) {
     fixtureDef.friction = 0.8f;
     fixtureDef.userData = &bodyFixtureData;
     bodyFixture = body->CreateFixture(&fixtureDef);
-
-
 }
 
 void FrontendMothership::exit() {
@@ -56,6 +55,9 @@ void FrontendMothership::animate() {
 }
 
 void FrontendMothership::draw(GLRenderer &r) {
-
+	r.drawMothership(id, body->GetPosition(), body->GetAngle());
 }
 
+void FrontendMothership::setResetPressed(bool isDown) {
+	// TODO
+}

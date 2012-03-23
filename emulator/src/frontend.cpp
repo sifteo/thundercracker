@@ -71,6 +71,15 @@ bool Frontend::init(System *_sys)
         gridH = 0;
     }
 
+#if MOTHERSHIP
+    mothershipCount = 1;
+    b2Vec2 p = cubes[0].getBody()->GetPosition();
+    motherships[0].init(0, world, p.x, p.y);
+#else
+    mothershipCount = 0;
+#endif
+
+
     /*
      * The view area should scale with number of cubes. So, scale the
      * linear size of our view with the square root of the number of
@@ -658,10 +667,14 @@ void Frontend::animate()
             idleFrames = 0;
         }
     }
-        
+    
     /* Local per-cube animations */
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
+    for (unsigned i = 0; i < mothershipCount; ++i) {
+        motherships[i].animate();
+    }
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         cubes[i].animate();
+    }
 
     /* Animated viewport centering/zooming */
     {
@@ -731,6 +744,9 @@ void Frontend::draw()
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
+    for (unsigned i = 0; i < mothershipCount; ++i) {
+        motherships[i].draw(renderer);
+    }
     for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.

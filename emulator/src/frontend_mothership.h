@@ -13,39 +13,46 @@
 // the fixture userdata structure, which if we were really being
 // pedantic would be split out to some common header to reduce
 // coupling.
-// (>'')> GOOD THING WE'RE GAME DEVELOPERS AND NOT PEDANTS!
-#include "frontend_cube.h" 
 
-class FrontendMothership;
+// (>'')> GOOD THING WE'RE GAME DEVELOPERS AND NOT PEDANTS!
+
+#include "frontend_cube.h" 
 
 namespace MothershipConstants {
 
 	/*
 	 * Size of the mothership, int Box2D meters.
 	 */
-	const float SIZEX = 1.2;
+	const float SIZEX = 0.75;
 	const float SIZEY = 0.5; // matches CubeConstants::SIZE
 
 }
 
 class FrontendMothership {
 private:
+	unsigned id; // we'll' want multiple motherships for things like pairing tests
 	b2Body* body;
     b2Fixture *bodyFixture;
-    FixtureData bodyFixtureData; // we'll need fixture data for any 
-    							 // neighbor sensors if we decide to simulate
-    							 // pairing in the box2D world :P
+    FixtureData bodyFixtureData; 
+
+    // TODO
+    // FixtureData neighborFixtureData[2]; 
+    // MotherShip::Hardware *hw;
 
 public:
 	FrontendMothership();
 
-	void init(b2World &world, float x, float y);
+	void init(unsigned id, b2World &world, float x, float y);
 	void exit();
 
 	void animate();
 	void draw(GLRenderer &r);
 
+	unsigned getId() const { return id; }
 	b2Body* getBody() { return body; }
+    bool isInitialized() const { return body != 0; }
+
+	void setResetPressed(bool isDown);
 
 };
 
