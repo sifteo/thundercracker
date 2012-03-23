@@ -10,7 +10,6 @@
 #include <sifteo.h>
 #include "Level.h"
 #include "cubewrapper.h"
-#include "MenuController.h"
 #include "TimeKeeper.h"
 #include "config.h"
 
@@ -54,7 +53,7 @@ public:
 	
 	Game();
 
-    //static const int NUM_CUBES = 3;
+    static const unsigned int NUM_MAIN_MENU_ITEMS = 4;
     static const unsigned int NUM_HIGH_SCORES = 5;
     static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
@@ -169,6 +168,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
+    void HandleMainMenu();
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
@@ -185,7 +185,6 @@ private:
 	GameMode m_mode;
     float m_stateTime;
 	TimeKeeper m_timer;
-    MenuController m_menu;
     float m_fLastTime;
     float m_fLastSloshTime;
 
