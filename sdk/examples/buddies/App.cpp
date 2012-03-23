@@ -128,40 +128,6 @@ void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawOption(CubeWrapper &cubeWrapper, const char *option, bool displayTime, float scoreTimer = 0.0f)
-{
-    cubeWrapper.DrawBackground(UiPanel);
-    
-    String<16> bufferTouchTo;
-    bufferTouchTo << "Touch to";
-    int xTouchTo = (kMaxTilesX / 2) - (bufferTouchTo.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTouchTo, 4), UiFontHeadingOrange, bufferTouchTo.c_str());
-    
-    String<16> bufferOption;
-    bufferOption << option;
-    int xOption = (kMaxTilesX / 2) - (bufferOption.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xOption, 6), UiFontHeadingOrange, bufferOption.c_str());
-    
-    if (displayTime)
-    {
-        int minutes, seconds;
-        ScoreTimerToTime(scoreTimer, minutes, seconds);
-        
-        String<16> bufferTime;
-        bufferTime << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-        int xTime = (kMaxTilesX / 2) - (bufferTime.size() / 2);
-        cubeWrapper.DrawUiText(Vec2(xTime, 10), UiFontOrange, bufferTime.c_str());
-        
-        if (bufferTouchTo.size() % 2 != 0)
-        {
-            cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
@@ -1493,7 +1459,9 @@ void App::UpdateGameState(float dt)
             }
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_FREEPLAY_START);
+                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                mOptionsTouchSync = true;
+                StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
@@ -2191,15 +2159,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                DrawOption(cubeWrapper, "Resume", false);
+                cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawOption(cubeWrapper, "Restart", false);
+                cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                DrawOption(cubeWrapper, "Exit", false);
+                cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
         }
@@ -2292,15 +2260,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                DrawOption(cubeWrapper, "Resume", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawOption(cubeWrapper, "Restart", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                DrawOption(cubeWrapper, "Exit", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
         }
@@ -2446,15 +2414,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                DrawOption(cubeWrapper, "Resume", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawOption(cubeWrapper, "Restart", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                DrawOption(cubeWrapper, "Exit", true, mScoreTimer);
+                cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
         }

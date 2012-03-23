@@ -23,7 +23,7 @@ namespace Buddies {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const bool kLoadAssets = true;
-const GameState kStateDefault = GAME_STATE_MAIN_MENU;
+const GameState kStateDefault = GAME_STATE_FREEPLAY_START;
 const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters (eventually will be 15)
 const unsigned int kPuzzlesPerBuddy = 5;
