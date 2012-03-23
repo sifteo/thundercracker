@@ -17,12 +17,12 @@ static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
     Usb::DescriptorDevice,          // bDescriptorType
     0x0200,                         // bcdUSB
-    0xFF,                           // bDeviceClass
+    0xff,                           // bDeviceClass - 0xff == vendor specific
     0,                              // bDeviceSubClass
     0,                              // bDeviceProtocol
     64,                             // bMaxPacketSize0
-    0xCAFE,                         // idVendor
-    0xCAFE,                         // idProduct
+    UsbDevice::VendorID,            // idVendor
+    UsbDevice::ProductID,           // idProduct
     0x0200,                         // bcdDevice
     1,                              // iManufacturer
     2,                              // iProduct
@@ -30,7 +30,43 @@ static const Usb::DeviceDescriptor dev = {
     1                               // bNumConfigurations
 };
 
-static const Usb::EndpointDescriptor dataEndp[2] = {
+/*
+ * Configuration descriptor - the Usb::ConfigDescriptor must be first in the
+ * struct, such that we can cast it correctly.
+ */
+static const struct {
+
+    Usb::ConfigDescriptor       configDescriptor;
+    Usb::InterfaceDescriptor    interfaceDescriptor;
+    Usb::EndpointDescriptor     inEpDescriptor;
+    Usb::EndpointDescriptor     outEpDescriptor;
+
+} __attribute__((packed)) configurationBlock = {
+
+    // configDescriptor
+    {
+        sizeof(Usb::ConfigDescriptor),      // bLength
+        Usb::DescriptorConfiguration,       // bDescriptorType
+        sizeof(configurationBlock),         // wTotalLength
+        1,                                  // bNumInterfaces
+        1,                                  // bConfigurationValue
+        0,                                  // iConfiguration
+        0x80,                               // bmAttributes
+        0x32                                // bMaxPower
+    },
+    // interfaceDescriptor
+    {
+        sizeof(Usb::InterfaceDescriptor),   // bLength
+        Usb::DescriptorInterface,           // bDescriptorType
+        0,                                  // bInterfaceNumber
+        0,                                  // bAlternateSetting
+        2,                                  // bNumEndpoints
+        0xFF,                               // bInterfaceClass
+        0,                                  // bInterfaceSubClass
+        0,                                  // bInterfaceProtocol
+        0                                   // iInterface
+    },
+    // inEpDescriptor
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
@@ -39,6 +75,7 @@ static const Usb::EndpointDescriptor dataEndp[2] = {
         64,                                 // wMaxPacketSize
         1,                                  // bInterval
     },
+    // outEpDescriptor
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
@@ -47,17 +84,6 @@ static const Usb::EndpointDescriptor dataEndp[2] = {
         64,                                 // wMaxPacketSize
         1,                                  // bInterval
     }
-};
-
-static const Usb::ConfigDescriptor config = {
-    sizeof(Usb::ConfigDescriptor),  // bLength
-    Usb::DescriptorConfiguration,   // bDescriptorType
-    0,                              // wTotalLength
-    1,                              // bNumInterfaces
-    1,                              // bConfigurationValue
-    0,                              // iConfiguration
-    0x80,                           // bmAttributes
-    0x32                            // bMaxPower
 };
 
 static const char *descriptorStrings[] = {
@@ -84,7 +110,7 @@ void UsbDevice::handleINData(void *p) {
 }
 
 void UsbDevice::init() {
-    Usbd::init(&dev, &config, descriptorStrings);
+    Usbd::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
 }
 
 int UsbDevice::write(const uint8_t *buf, unsigned len)

@@ -11,6 +11,9 @@
 class UsbDevice
 {
 public:
+    static const uint16_t VendorID = 0x1234;
+    static const uint16_t ProductID = 0x1234;
+
     static void init();
 
     static void handleINData(void *p);
@@ -18,9 +21,6 @@ public:
 
     static int read(uint8_t *buf, unsigned len);
     static int write(const uint8_t *buf, unsigned len);
-
-private:
-
 };
 
 #endif // USB_DEVICE_H
