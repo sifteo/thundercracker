@@ -30,27 +30,27 @@ header.write("namespace TotalsGame\n{\nnamespace TheData\n{\n" )
 
 header.write("struct PuzzleDef\n")
 header.write("{\n")
-header.write("\t/* const */ uint8_t *tokens;\n")
-header.write("\t/* const */ uint16_t *groups;\n")
-header.write("\t/* const */ uint8_t nTokens;\n")
-header.write("\t/* const */ uint8_t nGroups;\n")
+header.write("\tconst uint8_t *tokens;\n")
+header.write("\tconst uint16_t *groups;\n")
+header.write("\tconst uint8_t nTokens;\n")
+header.write("\tconst uint8_t nGroups;\n")
 header.write("};\n")
 
 header.write("struct ChapterDef\n")
 header.write("{\n")
-header.write("\t/* const */ PuzzleDef *puzzles;\n")
+header.write("\tconst PuzzleDef *puzzles;\n")
 header.write("\tconst char *name;\n")
 header.write("\tconst Sifteo::AssetImage &icon;\n")
-header.write("\t/* const */ uint8_t nPuzzles;\n")
+header.write("\tconst uint8_t nPuzzles;\n")
 header.write("};\n")
 
 header.write("struct EverythingDef\n")
 header.write("{\n")
-header.write("\t/* const */ ChapterDef *chapters;\n")
-header.write("\t/* const */ uint8_t nChapters;\n")
+header.write("\tconst ChapterDef *chapters;\n")
+header.write("\tconst uint8_t nChapters;\n")
 header.write("};\n")
 
-header.write("extern /* const */ EverythingDef everything;\n")
+header.write("extern const EverythingDef everything;\n")
 
 header.write("}\n}\n")
 
@@ -86,7 +86,7 @@ for chapter in chapters:
 		tokens = puzzle.getElementsByTagName("token")
 		groups = puzzle.getElementsByTagName("group")
 
-		f.write( "/* const */ uint8_t "+ tokensName(chapterIndex, puzzleIndex) + "[] =\n{\n\t" )
+		f.write( "const uint8_t "+ tokensName(chapterIndex, puzzleIndex) + "[] =\n{\n\t" )
 		for token in tokens:
 			val = int(token.getAttribute("val"))
 			opRight = op(token.getAttribute("opRight"))
@@ -95,7 +95,7 @@ for chapter in chapters:
 			f.write( hex(packedByte) + ", ", )
 		f.write( "\n};\n" )
 
-		f.write( "/* const */ uint16_t "+ groupsName(chapterIndex, puzzleIndex) + "[] =\n{\n\t" )
+		f.write( "const uint16_t "+ groupsName(chapterIndex, puzzleIndex) + "[] =\n{\n\t" )
 		for group in groups:
 			src = int(group.getAttribute("src"))
 			srcToken = int(group.getAttribute("srcToken"))
@@ -115,7 +115,7 @@ for chapter in chapters:
 
 		puzzleIndex = puzzleIndex + 1
 
-	f.write( "/* const */ PuzzleDef " + puzzlesName(chapter) + "[] =\n{\n" + puzzleArray + "};\n" )
+	f.write( "const PuzzleDef " + puzzlesName(chapter) + "[] =\n{\n" + puzzleArray + "};\n" )
 
 	chapterArray += "\t" + "{\n" 
 	chapterArray += "\t\t" + puzzlesName(chapterIndex) + ",\n"
@@ -128,10 +128,10 @@ for chapter in chapters:
 
 
 
-f.write( "/* const */ ChapterDef chapters[] = \n{\n" + chapterArray + "\n};\n" )
+f.write( "const ChapterDef chapters[] = \n{\n" + chapterArray + "\n};\n" )
 
 
-f.write( "/* const */ EverythingDef everything" + " =" + "\n{\n" )
+f.write( "const EverythingDef everything" + " =" + "\n{\n" )
 f.write( "\tchapters"+", " )
 f.write( str(len(chapters)) + "\n};\n" )
 
