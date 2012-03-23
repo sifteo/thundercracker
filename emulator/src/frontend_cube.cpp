@@ -8,8 +8,6 @@
 
 #include "frontend.h"
 
-using namespace CubeConstants;
-
 FrontendCube::FrontendCube()
     : body(0) {}
 
@@ -30,7 +28,7 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     tiltTarget.Set(0,0);
     tiltVector.Set(0,0);
 
-    setHoverTarget(HOVER_NONE);
+    setHoverTarget(CubeConstants::HOVER_NONE);
     hover = hoverTarget;    
 }
 
@@ -62,11 +60,11 @@ void FrontendCube::initBody(b2World &world, float x, float y)
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
-    const float boxSize = SIZE * 0.96;    // Compensate for polygon 'skin'
+    const float boxSize = CubeConstants::SIZE * 0.96;    // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
     bodyFixtureData.type = FixtureData::T_CUBE;
-    bodyFixtureData.cube = this;
+    bodyFixtureData.ptr.cube = this;
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
@@ -84,11 +82,11 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
      */
 
     b2CircleShape circle;
-    circle.m_p.Set(x * NEIGHBOR_CENTER * SIZE, y * NEIGHBOR_CENTER * SIZE);
-    circle.m_radius = NEIGHBOR_RADIUS * SIZE;
+    circle.m_p.Set(x * CubeConstants::NEIGHBOR_CENTER * CubeConstants::SIZE, y * CubeConstants::NEIGHBOR_CENTER * CubeConstants::SIZE);
+    circle.m_radius = CubeConstants::NEIGHBOR_RADIUS * CubeConstants::SIZE;
 
     neighborFixtureData[side].type = FixtureData::T_NEIGHBOR;
-    neighborFixtureData[side].cube = this;
+    neighborFixtureData[side].ptr.cube = this;
     neighborFixtureData[side].side = side;
 
     b2FixtureDef fixtureDef;

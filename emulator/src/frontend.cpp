@@ -880,7 +880,7 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
     FixtureData *fdat = (FixtureData *) fixture->GetUserData();
 
     if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
-        mCube = fdat->cube;
+        mCube = fdat->ptr.cube;
         return false;
     }
 
@@ -910,11 +910,11 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
          * Update interaction between two neighbor sensors
          */
 
-        unsigned cubeA = frontend.cubeID(fdatA->cube);
-        unsigned cubeB = frontend.cubeID(fdatB->cube);
+        unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
+        unsigned cubeB = frontend.cubeID(fdatB->ptr.cube);
 
-        fdatA->cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
-        fdatB->cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+        fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
+        fdatB->ptr.cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
     }
 }
 

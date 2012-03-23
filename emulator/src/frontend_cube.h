@@ -13,6 +13,7 @@
 #include <Box2D/Box2D.h>
 
 class FrontendCube;
+class FrontendMothership;
 
 namespace CubeConstants {
 
@@ -88,10 +89,14 @@ struct FixtureData {
     enum Type {
         T_CUBE = 0,
         T_NEIGHBOR,
+        T_MOTHERSHIP
     };
 
     Type type;
-    FrontendCube *cube;
+    union {
+        FrontendCube *cube;
+        FrontendMothership *mothership;
+    } ptr;
     Cube::Neighbors::Side side;
 };
 
