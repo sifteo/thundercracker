@@ -192,10 +192,12 @@ void Game::IrisOut(ViewSlot* view) {
 }
 
 void Game::Zoom(ViewSlot* view, int roomId) {
+#if DO_ZOOM
   PlaySfx(sfx_zoomIn);
+  System::paintSync();
   VidMode_BG2 vid(view->GetCube()->vbuf);
+  vid.init();
   vid.BG2_setBorder(0x0000);
-  vid.set();
   for(int x=0; x<8; ++x) {
     for(int y=0; y<8; ++y) {
       vid.BG2_drawAsset(
@@ -215,6 +217,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
     System::paint();
   }    
   System::paintSync();
+#endif
 }
 
 
@@ -348,9 +351,9 @@ void Game::RestorePearlIdle() {
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasGateway()) {
-    OnEnterGateway(pRoom->TriggerAsGate());
+    OnEnterGateway(pRoom->Gateway());
   } else if (pRoom->HasNPC()) {
-    const NpcData* npc = pRoom->TriggerAsNPC();
+    const NpcData* npc = pRoom->NPC();
     if (npc->optional) { OnNpcChatter(npc); }
   }  
 }
@@ -363,7 +366,7 @@ unsigned Game::OnPassiveTrigger() {
     OnTrapdoor(pRoom);
     return TRIGGER_RESULT_PATH_INTERRUPTED;
   } else if (pRoom->HasNPC()) {
-    const NpcData* npc = pRoom->TriggerAsNPC();
+    const NpcData* npc = pRoom->NPC();
     if (!npc->optional) { OnNpcChatter(npc); }
   }
   return TRIGGER_RESULT_NONE;
@@ -441,7 +444,7 @@ void Game::OnInventoryChanged() {
 
 
 void Game::OnPickup(Room *pRoom) {
-  const ItemData* pItem = pRoom->TriggerAsItem();
+  const ItemData* pItem = pRoom->Item();
   const ItemTypeData &itemType = gItemTypeData[pItem->itemId];
   if (itemType.storageType == STORAGE_EQUIPMENT) {
 

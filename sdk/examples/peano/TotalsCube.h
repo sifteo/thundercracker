@@ -1,9 +1,10 @@
 #pragma once
 
 #include "sifteo.h"
-#include "coroutine.h"
 #include "View.h"
 #include "Fraction.h"
+
+using namespace Sifteo;
 
 namespace TotalsGame
 {
@@ -12,19 +13,12 @@ namespace TotalsGame
 
 	class TotalsCube: public Sifteo::Cube
 	{
-		CORO_PARAMS;
-		float t;
-
 		View *view;
-        const char *overlayText;
-        int overlayYTop, overlayYSize;
-        int overlayBg[3], overlayFg[3];
         bool overlayShown;
 
     public:
-        //TODO duplicate work in processing bg1!
-        VidMode_BG0_SPR_BG1 backgroundLayer;
-        BG1Helper foregroundLayer;
+        Sifteo::VidMode_BG0_SPR_BG1 backgroundLayer;
+        Sifteo::BG1Helper foregroundLayer;
 
 		class EventHandler
 		{            
@@ -47,7 +41,9 @@ namespace TotalsGame
 
         bool DoesNeighbor(TotalsCube *other);
 
-        Vec2 GetTilt();
+        Int2 GetTilt();
+
+        void HideSprites();
 
 private:
 		EventHandler *eventHandler;
@@ -57,25 +53,25 @@ public:
         void RemoveEventHandler(EventHandler *e);
         void ResetEventHandlers();
 
-		float OpenShutters(const AssetImage *image);
-		float CloseShutters(const AssetImage *image);
+        void OpenShuttersToReveal(const Sifteo::AssetImage &image);
+        void CloseShutters();
 				
 		void DrawVaultDoorsClosed();
 
-        void Image(const AssetImage *image, const Vec2 &pos, int frame=0);
-		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
-        void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame=0);
-        void ClipImage(const AssetImage *image, const Vec2 &pos);
-        void ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame = 0);
-        void FillScreen(const AssetImage *image);
+        void Image(const Sifteo::AssetImage &image);
+        void Image(const Sifteo::AssetImage &image, Int2 pos, int frame=0);
+        void Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size);
+        void Image(const Sifteo::PinnedAssetImage *image, Int2 coord, int frame=0);
+        void ClipImage(const Sifteo::AssetImage *image, Int2 pos);
+        void ClipImage(const Sifteo::PinnedAssetImage *image, Int2 pos, int frame = 0);
+        void FillArea(const Sifteo::AssetImage *image, Int2 pos, Int2 size);
 	
-        void DrawFraction(Fraction f, const Vec2 &pos);
-        //void DrawDecimal(float d, const Vec2 &pos);
-        void DrawString(const char *string, const Vec2 &center);
+        void DrawFraction(Fraction f, Int2 pos);
+        //void DrawDecimal(float d, Vec2 pos);
+        void DrawString(const char *string, Int2 center);
 
-        void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
+        void EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3]);
         void DisableTextOverlay();
-        void UpdateTextOverlay();
         bool IsTextOverlayEnabled();
 
         void DispatchOnCubeShake(TotalsCube *c);
@@ -84,8 +80,8 @@ public:
 //	private:
 
 		// for these methods, 0 <= offset <= 32
-		void DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage);
-		void DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage);
+        void DrawVaultDoorsOpenStep1(int offset);
+        void DrawVaultDoorsOpenStep2(int offset);
 	};
 
 }

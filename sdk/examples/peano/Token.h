@@ -26,7 +26,7 @@ namespace TotalsGame {
 
 	class Token : public IExpression {
 
-        DECLARE_POOL(Token, Game::NUMBER_OF_CUBES);
+        DECLARE_POOL(Token, NUM_CUBES);
 
 	public:
 
@@ -52,8 +52,8 @@ namespace TotalsGame {
 		virtual int GetDepth();
 		virtual int GetCount();
 		virtual ShapeMask GetMask();
-		virtual bool TokenAt(const Vec2 &p, Token **t);
-		virtual bool PositionOf(Token *t, Vec2 *p);
+        virtual bool TokenAt(Int2 p, Token **t);
+        virtual bool PositionOf(Token *t, Int2 *p);
 		virtual bool Contains(Token *t);
 		virtual void SetCurrent(IExpression *exp);
 

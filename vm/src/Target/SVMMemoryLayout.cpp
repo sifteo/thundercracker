@@ -18,6 +18,9 @@ void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layo
 {
     memset(spsSize, 0, sizeof spsSize);
     bssAlign = 1;
+    
+    // Leave one free block at the beginning of DEBUG, for a special message.
+    spsSize[SPS_DEBUG] = SVMTargetMachine::getBlockSize();
 
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
@@ -76,6 +79,9 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
     /*
      * A note on disk alignment: RO must be aligned on disk, since we're fetching
      * from it directly, the the other sections need no extra alignment.
+     *
+     * (But we align DEBUG anyway, so we can have a page of padding between
+     * non-debug and debug data)
      */
 
     switch (s) {
@@ -83,7 +89,7 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
     case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META), blockAlign);
     case SPS_RW:    return RoundUpToAlignment(getSectionDiskEnd(SPS_RO), minAlign);
     case SPS_BSS:   return 0;
-    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), minAlign);
+    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), blockAlign);
     case SPS_END:   return getSectionDiskEnd(SPS_DEBUG);
     default:        llvm_unreachable("Bad SVM Program Section");
     }
@@ -156,10 +162,26 @@ void SVMMemoryLayout::ApplyLateFixups(const MCAssembler &Asm,
         SVMLateFixup &F = *i;
         MCDataFragment *DF = dyn_cast<MCDataFragment>(F.Fragment);
         assert(DF);
+        MCSectionData *SD = DF->getParent();
+
+        /*
+         * Normally we use specially formatted "code addresses" for
+         * labels in the text segment. These aren't real VAs, they are
+         * packed words that include a 24-bit address and a stack adjustment.
+         *
+         * These addresses need to be formed for pointers that are stored
+         * either in the text or the data segments, since they need to take
+         * effect for function pointers.
+         *
+         * In debug sections, however, they're quite unhelpful- debuggers
+         * expect real VAs. So we'll explicitly disable this feature when
+         * performing a fixup that is located in a debug section.
+         */
+        bool useCodeAddresses = getSectionKind(SD) != SPS_DEBUG;
 
         SVMAsmBackend::ApplyStaticFixup(F.Kind,
             &DF->getContents().data()[F.Offset],
-            getSymbol(Asm, Layout, F.Target).Value);
+            getSymbol(Asm, Layout, F.Target, useCodeAddresses).Value);
     }
 }
 
@@ -215,10 +237,16 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          */
          
         assert(Deco.offset == 0);
+        uint32_t shortVA = VA & 0xfffffc;
+
+        /*
+         * We can reach this error if some code wasn't aligned properly,
+         * or if someone is calling this function with useCodeAddresses==true
+         * when they shouldn't be!
+         */
         if ((VA & 0xfffffffc) != VA)
             report_fatal_error("Code symbol '" + Twine(Name) +
                 "' has illegal address 0x" + Twine::utohexstr(VA));
-        uint32_t shortVA = VA & 0xfffffc;
 
         FNStackMap_t::const_iterator I = FNStackMap.find(std::make_pair(SecD, Offset));
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
@@ -258,7 +286,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 }
 
 SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
-    const MCAsmLayout &Layout, MCValue Value) const
+    const MCAsmLayout &Layout, MCValue Value, bool useCodeAddresses) const
 {
     /*
      * Convert an MCValue into a resolved SVMSymbolInfo,
@@ -270,8 +298,8 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
     const MCSymbolRefExpr *SB = Value.getSymB();
     SVMSymbolInfo SIA, SIB;
     
-    if (SA) SIA = getSymbol(Asm, Layout, &SA->getSymbol());
-    if (SB) SIB = getSymbol(Asm, Layout, &SB->getSymbol());
+    if (SA) SIA = getSymbol(Asm, Layout, &SA->getSymbol(), useCodeAddresses);
+    if (SB) SIB = getSymbol(Asm, Layout, &SB->getSymbol(), useCodeAddresses);
 
     if ((SIA.Kind == SVMSymbolInfo::NONE || SIA.Kind == SVMSymbolInfo::LOCAL) &&
         (SIB.Kind == SVMSymbolInfo::NONE || SIB.Kind == SVMSymbolInfo::LOCAL)) {
@@ -350,10 +378,19 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(const MCSectionData *SD) const
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(const MCSectionData *SD) const
 {
-    SectionOffsetMap_t::const_iterator it = SectionOffsetMap.find(SD);
+    switch (getSectionKind(SD)) {
 
-    if (it == SectionOffsetMap.end())
-        llvm_unreachable("Section not found in offset map");
+    case SPS_META:
+    case SPS_DEBUG:
+        return 0;
+    
+    default: {
+        SectionOffsetMap_t::const_iterator it = SectionOffsetMap.find(SD);
 
-    return it->second + getSectionMemAddress(getSectionKind(SD));    
+        if (it == SectionOffsetMap.end())
+            llvm_unreachable("Section not found in offset map");
+
+        return it->second + getSectionMemAddress(getSectionKind(SD));    
+    }
+    }
 }

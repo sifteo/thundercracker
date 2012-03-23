@@ -9,6 +9,8 @@
 #include "WordGame.h"
 #include "config.h"
 
+using namespace Sifteo;
+
 const float SHAKE_DELAY = 3.5f;
 
 unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)

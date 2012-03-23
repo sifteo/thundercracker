@@ -7,6 +7,7 @@ SUBDIRS = \
 	monster \
 	nyan \
 	pairing \
+	peano \
 	sandwich \
 	scroller-bg0 \
 	scroller-bg1 \
@@ -14,8 +15,7 @@ SUBDIRS = \
 	sprites \
 	stars \
 	text \
-
-# XXX Disabled for now due to errors: peano, word
+	word \
 
 .PHONY: clean subdirs $(SUBDIRS)
 

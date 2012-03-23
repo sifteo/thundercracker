@@ -15,6 +15,7 @@
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
+static bool svmTrace;
 
 /*
  * We copy all user regs to trusted memory to operate on them during exception
@@ -842,26 +843,26 @@ static uint16_t fetch()
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
-#ifdef SVM_TRACE
-    LOG(("[va=%08x pa=%p i=%04x]",
-        SvmRuntime::reconstructCodeAddr(regs[REG_PC]), pc, *pc));
-    for (unsigned r = 0; r < 8; r++) {
-        // Display as a fixed-width low word and a variable-width high word.
-        // The high word will usually be zero, and it helps to demarcate the
-	// word boundary. On 32-bit hosts, the top word is *always* zero.
-        reg_t val = regs[r];
-        LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
+    if (tracing()) {
+        LOG(("[va=%08x pa=%p i=%04x]",
+            SvmRuntime::reconstructCodeAddr(regs[REG_PC]), pc, *pc));
+        for (unsigned r = 0; r < 8; r++) {
+            // Display as a fixed-width low word and a variable-width high word.
+            // The high word will usually be zero, and it helps to demarcate the
+            // word boundary. On 32-bit hosts, the top word is *always* zero.
+            uint64_t val = regs[r];
+            LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
+        }
+        LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
+            getNeg() ? 'N' : ' ',
+            getZero() ? 'Z' : ' ',
+            getCarry() ? 'C' : ' ',
+            getOverflow() ? 'V' : ' ',
+            reinterpret_cast<void*>(regs[8]),
+            reinterpret_cast<void*>(regs[9]),
+            reinterpret_cast<void*>(regs[REG_SP]),
+            reinterpret_cast<void*>(regs[REG_FP])));
     }
-    LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
-        getNeg() ? 'N' : ' ',
-        getZero() ? 'Z' : ' ',
-        getCarry() ? 'C' : ' ',
-        getOverflow() ? 'V' : ' ',
-        reinterpret_cast<void*>(regs[8]),
-        reinterpret_cast<void*>(regs[9]),
-        reinterpret_cast<void*>(regs[REG_SP]),
-        reinterpret_cast<void*>(regs[REG_FP])));
-#endif
 
     regs[REG_PC] += sizeof(uint16_t);
     return *pc;
@@ -1109,6 +1110,14 @@ void setReg(uint8_t r, reg_t val)
     case REG_PC:    userRegs.hw.returnAddr = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
+}
+
+bool tracing() {
+    return svmTrace;
+}
+
+void enableTracing() {
+    svmTrace = true;
 }
 
 }  // namespace SvmCpu

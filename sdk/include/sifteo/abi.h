@@ -360,8 +360,10 @@ typedef enum {
 } _SYS_TiltType;
 
 struct _SYSTiltState {
-    uint8_t x : 4;
-    uint8_t y : 4;
+    uint8_t x;
+    uint8_t y;
+    uint8_t reserved0;
+    uint8_t reserved1;
 };
 
 typedef enum {
@@ -388,7 +390,7 @@ typedef enum {
     _SYS_CUBE_TOUCH,
     _SYS_CUBE_TILT,
     _SYS_CUBE_SHAKE,
-    
+
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;
 
@@ -494,7 +496,7 @@ struct _SYSMetadataBootAsset {
 // XXX: What format should the tile array be in? Right now it's a 16-bit
 //      index array, but that's awfully overkill! We can compress this.
 struct _SYSMetadataImage {
-    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader    
+    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
     uint32_t    tiles;          // Virtual address for tile array
 };
 
@@ -567,9 +569,19 @@ void *_SYS_lti_initializer(void *value);
  *
  * System calls #0-63 are faster and smaller than normal function calls,
  * whereas all other syscalls (#64-8191) are similar in cost to a normal
- * call. System calls use a simplified calling convention that supports
+ * call.
+ *
+ * System calls use a simplified calling convention that supports
  * only at most 8 32-bit integer parameters, with at most one (32/64-bit)
  * integer result.
+ *
+ * Parameters are allowed to be arbitrary-width integers, but they must
+ * not be floats. Any function that takes float parameters must explicitly
+ * bitcast them to integers.
+ *
+ * Return values must be integers, and furthermore they must be exactly
+ * 32 or 64 bits wide. Structs are allowed, if and only if they're exactly
+ * 32 bits long.
  */
 
 #if defined(FW_BUILD) || !defined(__clang__)
@@ -580,147 +592,145 @@ void *_SYS_lti_initializer(void *value);
 #  define _NORET    __attribute__ ((noreturn))
 #endif
 
-void _SYS_abort(void) _SC(0) _NORET;
-void _SYS_exit(void) _SC(74) _NORET;
+void _SYS_abort(void) _SC(1) _NORET;
+void _SYS_exit(void) _SC(64) _NORET;
 
-void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
-void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
-void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
+void _SYS_yield(void) _SC(65);   /// Temporarily cede control to the firmware
+void _SYS_paint(void) _SC(20);   /// Enqueue a new rendering frame
+void _SYS_finish(void) _SC(22);  /// Wait for enqueued frames to finish
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: type [31:27], arity [26:24] param [23:0]
-void _SYS_log(uint32_t tag, uintptr_t v1, uintptr_t v2, uintptr_t v3, uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7) _SC(25);
+void _SYS_log(uint32_t tag, uintptr_t v1, uintptr_t v2, uintptr_t v3, uintptr_t v4, uintptr_t v5, uintptr_t v6, uintptr_t v7) _SC(17);
 
 // Compiler floating point support
-uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(63);
-uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(62);
-uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) _SC(61);
-uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(60);
-uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) _SC(59);
-uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(58);
-uint32_t _SYS_div_f32(uint32_t a, uint32_t b) _SC(57);
-uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(56);
-uint64_t _SYS_fpext_f32_f64(uint32_t a) _SC(55);
-uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) _SC(54);
-uint32_t _SYS_fptosint_f32_i32(uint32_t a) _SC(53);
-uint64_t _SYS_fptosint_f32_i64(uint32_t a) _SC(52);
-uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) _SC(51);
-uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) _SC(50);
-uint32_t _SYS_fptouint_f32_i32(uint32_t a) _SC(49);
-uint64_t _SYS_fptouint_f32_i64(uint32_t a) _SC(48);
-uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) _SC(47);
-uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) _SC(46);
-uint32_t _SYS_sinttofp_i32_f32(uint32_t a) _SC(45);
-uint64_t _SYS_sinttofp_i32_f64(uint32_t a) _SC(44);
-uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(43);
-uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(42);
-uint32_t _SYS_uinttofp_i32_f32(uint32_t a) _SC(41);
-uint64_t _SYS_uinttofp_i32_f64(uint32_t a) _SC(40);
-uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(39);
-uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(38);
-uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) _SC(37);
-uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(36);
-uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) _SC(35);
-uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(34);
-uint32_t _SYS_le_f32(uint32_t a, uint32_t b) _SC(33);
-uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(32);
-uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) _SC(31);
-uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(30);
-uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) _SC(29);
-uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(28);
-uint32_t _SYS_un_f32(uint32_t a, uint32_t b) _SC(27);
-uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(26);
+uint32_t _SYS_add_f32(uint32_t a, uint32_t b) _SC(24);
+uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(66);
+uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) _SC(33);
+uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(67);
+uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) _SC(27);
+uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(41);
+uint32_t _SYS_div_f32(uint32_t a, uint32_t b) _SC(45);
+uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(68);
+uint64_t _SYS_fpext_f32_f64(uint32_t a) _SC(69);
+uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) _SC(42);
+uint32_t _SYS_fptosint_f32_i32(uint32_t a) _SC(35);
+uint64_t _SYS_fptosint_f32_i64(uint32_t a) _SC(70);
+uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) _SC(71);
+uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) _SC(72);
+uint32_t _SYS_fptouint_f32_i32(uint32_t a) _SC(73);
+uint64_t _SYS_fptouint_f32_i64(uint32_t a) _SC(74);
+uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) _SC(75);
+uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) _SC(76);
+uint32_t _SYS_sinttofp_i32_f32(uint32_t a) _SC(60);
+uint64_t _SYS_sinttofp_i32_f64(uint32_t a) _SC(47);
+uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(77);
+uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(78);
+uint32_t _SYS_uinttofp_i32_f32(uint32_t a) _SC(58);
+uint64_t _SYS_uinttofp_i32_f64(uint32_t a) _SC(79);
+uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) _SC(80);
+uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) _SC(81);
+uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) _SC(82);
+uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(83);
+uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) _SC(55);
+uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(84);
+uint32_t _SYS_le_f32(uint32_t a, uint32_t b) _SC(48);
+uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(85);
+uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) _SC(36);
+uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(86);
+uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) _SC(54);
+uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(87);
+uint32_t _SYS_un_f32(uint32_t a, uint32_t b) _SC(29);
+uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(88);
 
 // Compiler atomics support
-uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(110);
-uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(111);
-uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(112);
-uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(113);
+uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(89);
+uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(90);
+uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(91);
+uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(92);
 
 // Compiler support for 64-bit operations
-uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(17);
-uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(18);
-int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(19);
-uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(20);
-int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(21);
-uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(22);
-int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(23);
-uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(24);
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(93);
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(94);
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b) _SC(95);
+uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(56);
+int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(34);
+uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(96);
+int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(97);
+uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(98);
 
-void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(8);
-uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(9);
-uint32_t _SYS_sqrtf(uint32_t a) _SC(114);
-uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(115);
-uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(116);
+void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(63);
+uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(99);
+uint32_t _SYS_sqrtf(uint32_t a) _SC(100);
+uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(101);
+uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(102);
 
-void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(1);
-void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(2);
-void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(3);
-void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(4);
-void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
-void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(103);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(28);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(104);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(105);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(106);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(107);
+int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(108);
 
-uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(89);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(107);
-void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(108);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(109);
-void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
-void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
-int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(59);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(52);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(38);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(57);
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(109);
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(110);
+int32_t _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(111);
 
-void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
-uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
-uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(112);
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(46);
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(32);
 
-int64_t _SYS_ticks_ns(void) _SC(12);  /// Return the monotonic system timer, in 64-bit integer nanoseconds
+int64_t _SYS_ticks_ns(void) _SC(25);  /// Return the monotonic system timer, in 64-bit integer nanoseconds
 
-void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(104);
-void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(105);
-void *_SYS_getVectorContext(_SYSVectorID vid) _SC(106);
+void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(43);
+void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(113);
+void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(79);
-void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(80);  /// Which cubes will be trying to connect?
-void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(81);
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(115);
+void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(51);  /// Which cubes will be trying to connect?
+void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
-void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(82);
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(83);
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(50);
+void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(53);
 
-struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(84);
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(85);
-struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(86);
-_SYSShakeState _SYS_getShake(_SYSCubeID cid) _SC(87);
+struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(62);
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(31);
+struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(117);
+uint32_t _SYS_getShake(_SYSCubeID cid) _SC(118);
 
-// XXX: Temporary for testing/demoing
-uint16_t _SYS_getRawBatteryV(_SYSCubeID cid) _SC(88);
+uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);
+uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(44);
+uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(120);
 
-uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
-uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(91);
+void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(49);
+void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(121);
+void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(122);
+void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(19);
+void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(26);
+uint32_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(123);
+uint32_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(124);
+void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(21);
+void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(125);
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(61);
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count) _SC(39);
+void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count, uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(23);
+void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(18);
+void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(30);
 
-void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
-void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
-void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
-void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(13);
-void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(14);
-uint16_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(15);
-uint8_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(16);
-void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
-void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
-void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);
-void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count) _SC(102);
-void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count, uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
-void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(98);
-void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
-
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
-uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
-void _SYS_audio_stop(_SYSAudioHandle h) _SC(73);
-void _SYS_audio_pause(_SYSAudioHandle h) _SC(72);
-void _SYS_audio_resume(_SYSAudioHandle h) _SC(67);
-int  _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(65);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(64);
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(126);
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(37);
+uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(127);
+void _SYS_audio_stop(_SYSAudioHandle h) _SC(40);
+void _SYS_audio_pause(_SYSAudioHandle h) _SC(128);
+void _SYS_audio_resume(_SYSAudioHandle h) _SC(129);
+int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(130);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(131);
+uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
 
 
 #ifdef __cplusplus

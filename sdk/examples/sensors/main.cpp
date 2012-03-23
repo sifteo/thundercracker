@@ -91,7 +91,7 @@ void main()
                 << ", -" << counts[id].neighborRemove
                 << "\n\n";
 
-            str << "bat:   " << Hex(_SYS_getRawBatteryV(id), 4) << "\n";
+            str << "bat:   " << Hex(_SYS_getBatteryV(id), 4) << "\n";
             str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
 
             _SYSAccelState accel = _SYS_getAccel(id);

@@ -5,6 +5,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "SVMTargetObjectFile.h"
 #include "SVMISelLowering.h"
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
@@ -19,112 +20,112 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+#include "SVMRuntime.inc"
 #include "SVMGenCallingConv.inc"
 
 
 SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
-    : TargetLowering(TM, new TargetLoweringObjectFileELF())
+    : TargetLowering(TM, new SVMTargetObjectFile())
 {
     // Standard library
-    setLibcallName(RTLIB::MEMCPY, "_SYS_4");  // _SYS_memcpy8
-    setLibcallName(RTLIB::MEMSET, "_SYS_1");  // _SYS_memset8
+    setLibcallName(RTLIB::MEMCPY, SVMRT_memcpy8);
+    setLibcallName(RTLIB::MEMSET, SVMRT_memset8);
 
     // Software floating point library
-    setLibcallName(RTLIB::ADD_F32, "_SYS_63");
-    setLibcallName(RTLIB::ADD_F64, "_SYS_62");
-    setLibcallName(RTLIB::SUB_F32, "_SYS_61");
-    setLibcallName(RTLIB::SUB_F64, "_SYS_60");
-    setLibcallName(RTLIB::MUL_F32, "_SYS_59");
-    setLibcallName(RTLIB::MUL_F64, "_SYS_58");
-    setLibcallName(RTLIB::DIV_F32, "_SYS_57");
-    setLibcallName(RTLIB::DIV_F64, "_SYS_56");
+    setLibcallName(RTLIB::ADD_F32, SVMRT_add_f32);
+    setLibcallName(RTLIB::ADD_F64, SVMRT_add_f64);
+    setLibcallName(RTLIB::SUB_F32, SVMRT_sub_f32);
+    setLibcallName(RTLIB::SUB_F64, SVMRT_sub_f64);
+    setLibcallName(RTLIB::MUL_F32, SVMRT_mul_f32);
+    setLibcallName(RTLIB::MUL_F64, SVMRT_mul_f64);
+    setLibcallName(RTLIB::DIV_F32, SVMRT_div_f32);
+    setLibcallName(RTLIB::DIV_F64, SVMRT_div_f64);
 
-    setLibcallName(RTLIB::FPEXT_F32_F64, "_SYS_55");
-    setLibcallName(RTLIB::FPROUND_F64_F32, "_SYS_54");
+    setLibcallName(RTLIB::FPEXT_F32_F64, SVMRT_fpext_f32_f64);
+    setLibcallName(RTLIB::FPROUND_F64_F32, SVMRT_fpround_f64_f32);
 
-    setLibcallName(RTLIB::FPTOSINT_F32_I8, "_SYS_53");
-    setLibcallName(RTLIB::FPTOSINT_F32_I16, "_SYS_53");
-    setLibcallName(RTLIB::FPTOSINT_F32_I32, "_SYS_53");
-    setLibcallName(RTLIB::FPTOSINT_F32_I64, "_SYS_52");
+    setLibcallName(RTLIB::FPTOSINT_F32_I8, SVMRT_fptosint_f32_i32);
+    setLibcallName(RTLIB::FPTOSINT_F32_I16, SVMRT_fptosint_f32_i32);
+    setLibcallName(RTLIB::FPTOSINT_F32_I32, SVMRT_fptosint_f32_i32);
+    setLibcallName(RTLIB::FPTOSINT_F32_I64, SVMRT_fptosint_f32_i64);
 
-    setLibcallName(RTLIB::FPTOSINT_F64_I8, "_SYS_51");
-    setLibcallName(RTLIB::FPTOSINT_F64_I16, "_SYS_51");
-    setLibcallName(RTLIB::FPTOSINT_F64_I32, "_SYS_51");
-    setLibcallName(RTLIB::FPTOSINT_F64_I64, "_SYS_50");
+    setLibcallName(RTLIB::FPTOSINT_F64_I8, SVMRT_fptosint_f64_i32);
+    setLibcallName(RTLIB::FPTOSINT_F64_I16, SVMRT_fptosint_f64_i32);
+    setLibcallName(RTLIB::FPTOSINT_F64_I32, SVMRT_fptosint_f64_i32);
+    setLibcallName(RTLIB::FPTOSINT_F64_I64, SVMRT_fptosint_f64_i64);
 
-    setLibcallName(RTLIB::FPTOUINT_F32_I8, "_SYS_49");
-    setLibcallName(RTLIB::FPTOUINT_F32_I16, "_SYS_49");
-    setLibcallName(RTLIB::FPTOUINT_F32_I32, "_SYS_49");
-    setLibcallName(RTLIB::FPTOUINT_F32_I64, "_SYS_48");
+    setLibcallName(RTLIB::FPTOUINT_F32_I8, SVMRT_fptouint_f32_i32);
+    setLibcallName(RTLIB::FPTOUINT_F32_I16, SVMRT_fptouint_f32_i32);
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, SVMRT_fptouint_f32_i32);
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, SVMRT_fptouint_f32_i64);
 
-    setLibcallName(RTLIB::FPTOUINT_F64_I8, "_SYS_47");
-    setLibcallName(RTLIB::FPTOUINT_F64_I16, "_SYS_47");
-    setLibcallName(RTLIB::FPTOUINT_F64_I32, "_SYS_47");
-    setLibcallName(RTLIB::FPTOUINT_F64_I64, "_SYS_46");
+    setLibcallName(RTLIB::FPTOUINT_F64_I8, SVMRT_fptouint_f64_i32);
+    setLibcallName(RTLIB::FPTOUINT_F64_I16, SVMRT_fptouint_f64_i32);
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, SVMRT_fptouint_f64_i32);
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, SVMRT_fptouint_f64_i64);
 
-    setLibcallName(RTLIB::SINTTOFP_I32_F32, "_SYS_45");
-    setLibcallName(RTLIB::SINTTOFP_I32_F64, "_SYS_44");
-    setLibcallName(RTLIB::SINTTOFP_I64_F32, "_SYS_43");
-    setLibcallName(RTLIB::SINTTOFP_I64_F64, "_SYS_42");
-    setLibcallName(RTLIB::UINTTOFP_I32_F32, "_SYS_41");
-    setLibcallName(RTLIB::UINTTOFP_I32_F64, "_SYS_40");
-    setLibcallName(RTLIB::UINTTOFP_I64_F32, "_SYS_39");
-    setLibcallName(RTLIB::UINTTOFP_I64_F64, "_SYS_38");
+    setLibcallName(RTLIB::SINTTOFP_I32_F32, SVMRT_sinttofp_i32_f32);
+    setLibcallName(RTLIB::SINTTOFP_I32_F64, SVMRT_sinttofp_i32_f64);
+    setLibcallName(RTLIB::SINTTOFP_I64_F32, SVMRT_sinttofp_i64_f32);
+    setLibcallName(RTLIB::SINTTOFP_I64_F64, SVMRT_sinttofp_i64_f64);
+    setLibcallName(RTLIB::UINTTOFP_I32_F32, SVMRT_uinttofp_i32_f32);
+    setLibcallName(RTLIB::UINTTOFP_I32_F64, SVMRT_uinttofp_i32_f64);
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, SVMRT_uinttofp_i64_f32);
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, SVMRT_uinttofp_i64_f64);
 
-    setLibcallName(RTLIB::OEQ_F32, "_SYS_37");  // _SYS_eq_f32
+    setLibcallName(RTLIB::OEQ_F32, SVMRT_eq_f32);
     setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
-    setLibcallName(RTLIB::UNE_F32, "_SYS_37");  // _SYS_eq_f32
+    setLibcallName(RTLIB::UNE_F32, SVMRT_eq_f32);
     setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETEQ);
-    setLibcallName(RTLIB::OLT_F32, "_SYS_35");  // _SYS_lt_f32
+    setLibcallName(RTLIB::OLT_F32, SVMRT_lt_f32);
     setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
-    setLibcallName(RTLIB::OLE_F32, "_SYS_33");  // _SYS_le_f32
+    setLibcallName(RTLIB::OLE_F32, SVMRT_le_f32);
     setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
-    setLibcallName(RTLIB::OGE_F32, "_SYS_31");  // _SYS_ge_f32
+    setLibcallName(RTLIB::OGE_F32, SVMRT_ge_f32);
     setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
-    setLibcallName(RTLIB::OGT_F32, "_SYS_29");  // _SYS_gt_f32
+    setLibcallName(RTLIB::OGT_F32, SVMRT_gt_f32);
     setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
-    setLibcallName(RTLIB::UO_F32,  "_SYS_27");  // _SYS_un_f32
+    setLibcallName(RTLIB::UO_F32,  SVMRT_un_f32);
     setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
-    setLibcallName(RTLIB::O_F32,   "_SYS_27");  // _SYS_un_f32
+    setLibcallName(RTLIB::O_F32,   SVMRT_un_f32);
     setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
 
-    setLibcallName(RTLIB::OEQ_F64, "_SYS_36");  // _SYS_eq_f64
+    setLibcallName(RTLIB::OEQ_F64, SVMRT_eq_f64);
     setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
-    setLibcallName(RTLIB::UNE_F64, "_SYS_36");  // _SYS_eq_f64
+    setLibcallName(RTLIB::UNE_F64, SVMRT_eq_f64);
     setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETEQ);
-    setLibcallName(RTLIB::OLT_F64, "_SYS_34");  // _SYS_lt_f64
+    setLibcallName(RTLIB::OLT_F64, SVMRT_lt_f64);
     setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
-    setLibcallName(RTLIB::OLE_F64, "_SYS_32");  // _SYS_le_f64
+    setLibcallName(RTLIB::OLE_F64, SVMRT_le_f64);
     setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
-    setLibcallName(RTLIB::OGE_F64, "_SYS_30");  // _SYS_ge_f64
+    setLibcallName(RTLIB::OGE_F64, SVMRT_ge_f64);
     setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
-    setLibcallName(RTLIB::OGT_F64, "_SYS_28");  // _SYS_gt_f64
+    setLibcallName(RTLIB::OGT_F64, SVMRT_gt_f64);
     setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
-    setLibcallName(RTLIB::UO_F64,  "_SYS_26");  // _SYS_un_f64
+    setLibcallName(RTLIB::UO_F64,  SVMRT_un_f64);
     setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
-    setLibcallName(RTLIB::O_F64,   "_SYS_26");  // _SYS_un_f64
+    setLibcallName(RTLIB::O_F64,   SVMRT_un_f64);
     setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
 
     // Atomic operations
-    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_110");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_111");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_112");
-    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, "_SYS_113");
+    setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, SVMRT_fetch_and_or_4);
+    setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, SVMRT_fetch_and_xor_4);
+    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, SVMRT_fetch_and_nand_4);
+    setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, SVMRT_fetch_and_and_4);
 
     // 64-bit Integer operations
-    setLibcallName(RTLIB::SHL_I64, "_SYS_17");
-    setLibcallName(RTLIB::SRL_I64, "_SYS_18");
-    setLibcallName(RTLIB::SRA_I64, "_SYS_19");
-    setLibcallName(RTLIB::MUL_I64, "_SYS_20");
-    setLibcallName(RTLIB::SDIV_I64, "_SYS_21");
-    setLibcallName(RTLIB::UDIV_I64, "_SYS_22");
-    setLibcallName(RTLIB::SREM_I64, "_SYS_23");
-    setLibcallName(RTLIB::UREM_I64, "_SYS_24");
+    setLibcallName(RTLIB::SHL_I64, SVMRT_shl_i64);
+    setLibcallName(RTLIB::SRL_I64, SVMRT_srl_i64);
+    setLibcallName(RTLIB::SRA_I64, SVMRT_sra_i64);
+    setLibcallName(RTLIB::MUL_I64, SVMRT_mul_i64);
+    setLibcallName(RTLIB::SDIV_I64, SVMRT_sdiv_i64);
+    setLibcallName(RTLIB::UDIV_I64, SVMRT_udiv_i64);
+    setLibcallName(RTLIB::SREM_I64, SVMRT_srem_i64);
+    setLibcallName(RTLIB::UREM_I64, SVMRT_urem_i64);
 
     // Register classes to allocate into
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
