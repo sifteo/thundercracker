@@ -12,6 +12,7 @@ union EventData
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
         unsigned char mPuzzlePieceIndexes[NUM_CUBES];
+        unsigned char mPuzzleStartIndexes[NUM_CUBES];
         unsigned char mNumAnagrams;
         unsigned char mNumBonusAnagrams;
         unsigned char mLeadingSpaces;

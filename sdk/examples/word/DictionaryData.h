@@ -4,6 +4,7 @@ const unsigned NUM_PUZZLES = 30;
 
 const static char* puzzles[] =
 {
+    " CLUBBING",    // pieces: [' CL', 'UBB', 'ING'], solutions: ['CLUBBING', 'CLING']
     "ACT ",    // pieces: ['AC', 'T '], solutions: ['CAT', 'ACT']
     "EXACT ",    // pieces: ['EX', 'AC', 'T '], solutions: ['CAT', 'EXACT', 'ACT']
     "CATS",    // pieces: ['CA', 'TS'], solutions: ['CAST', 'CATS', 'ACTS']
@@ -16,7 +17,6 @@ const static char* puzzles[] =
     "BUYS",    // pieces: ['BU', 'YS'], solutions: ['BUSY', 'BUYS']
     " BUSES",    // pieces: [' B', 'US', 'ES'], solutions: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
     "CLUBS ",    // pieces: ['CL', 'UB', 'S '], solutions: ['CLUB', 'BUS', 'CLUBS', 'SUB']
-    " CLUBBING",    // pieces: [' CL', 'UBB', 'ING'], solutions: ['CLUBBING', 'CLING']
     "BUMPS ",    // pieces: ['BU', 'MP', 'S '], solutions: ['BUMP', 'BUS', 'BUMPS', 'SUB']
     "PART",    // pieces: ['PA', 'RT'], solutions: ['PART', 'TRAP']
     "STRING",    // pieces: ['ST', 'RI', 'NG'], solutions: ['RING', 'STIR', 'STRING']
@@ -38,6 +38,7 @@ const static char* puzzles[] =
 
 const static unsigned char puzzlesNumGoalAnagrams[] =
 {
+    2,	// " CLUBBING", all anagrams: ['CLUBBING', 'CLING']
     2,	// "ACT ", all anagrams: ['CAT', 'ACT']
     3,	// "EXACT ", all anagrams: ['CAT', 'EXACT', 'ACT']
     3,	// "CATS", all anagrams: ['CAST', 'CATS', 'ACTS']
@@ -50,7 +51,6 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     2,	// "BUYS", all anagrams: ['BUSY', 'BUYS']
     3,	// " BUSES", all anagrams: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
     3,	// "CLUBS ", all anagrams: ['CLUB', 'BUS', 'CLUBS', 'SUB']
-    2,	// " CLUBBING", all anagrams: ['CLUBBING', 'CLING']
     3,	// "BUMPS ", all anagrams: ['BUMP', 'BUS', 'BUMPS', 'SUB']
     2,	// "PART", all anagrams: ['PART', 'TRAP']
     2,	// "STRING", all anagrams: ['RING', 'STIR', 'STRING']
@@ -72,6 +72,7 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
 
 const static unsigned char puzzlesNumPossibleAnagrams[] =
 {
+    2,	//  CLUBBING, all anagrams: ['CLUBBING', 'CLING']
     2,	// ACT , all anagrams: ['CAT', 'ACT']
     3,	// EXACT , all anagrams: ['CAT', 'EXACT', 'ACT']
     3,	// CATS, all anagrams: ['CAST', 'CATS', 'ACTS']
@@ -84,7 +85,6 @@ const static unsigned char puzzlesNumPossibleAnagrams[] =
     2,	// BUYS, all anagrams: ['BUSY', 'BUYS']
     5,	//  BUSES, all anagrams: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
     4,	// CLUBS , all anagrams: ['CLUB', 'BUS', 'CLUBS', 'SUB']
-    2,	//  CLUBBING, all anagrams: ['CLUBBING', 'CLING']
     4,	// BUMPS , all anagrams: ['BUMP', 'BUS', 'BUMPS', 'SUB']
     2,	// PART, all anagrams: ['PART', 'TRAP']
     3,	// STRING, all anagrams: ['RING', 'STIR', 'STRING']
@@ -102,6 +102,12 @@ const static unsigned char puzzlesNumPossibleAnagrams[] =
     2,	//  ELECTION, all anagrams: ['ELECT', 'ELECTION']
     5,	//  BEGUN, all anagrams: ['NUB', 'GENU', 'BUN', 'BEG', 'BEGUN']
     2,	//  REMEMBER, all anagrams: ['MEMBER', 'REMEMBER']
+};
+
+const static unsigned char _puzzlesPossibleWordIndexes__CLUBBING[] =
+{
+    24,	// CLUBBING,
+    21,	// CLING,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_ACT_[] =
@@ -189,12 +195,6 @@ const static unsigned char _puzzlesPossibleWordIndexes_CLUBS_[] =
     11,	// BUS,
     25,	// CLUBS,
     71,	// SUB,
-};
-
-const static unsigned char _puzzlesPossibleWordIndexes__CLUBBING[] =
-{
-    24,	// CLUBBING,
-    21,	// CLING,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_BUMPS_[] =
@@ -321,6 +321,7 @@ const static unsigned char _puzzlesPossibleWordIndexes__REMEMBER[] =
 
 const static unsigned char *puzzlesPossibleWordIndexes[] =
 {
+    _puzzlesPossibleWordIndexes__CLUBBING,	// " CLUBBING",
     _puzzlesPossibleWordIndexes_ACT_,	// "ACT ",
     _puzzlesPossibleWordIndexes_EXACT_,	// "EXACT ",
     _puzzlesPossibleWordIndexes_CATS,	// "CATS",
@@ -333,7 +334,6 @@ const static unsigned char *puzzlesPossibleWordIndexes[] =
     _puzzlesPossibleWordIndexes_BUYS,	// "BUYS",
     _puzzlesPossibleWordIndexes__BUSES,	// " BUSES",
     _puzzlesPossibleWordIndexes_CLUBS_,	// "CLUBS ",
-    _puzzlesPossibleWordIndexes__CLUBBING,	// " CLUBBING",
     _puzzlesPossibleWordIndexes_BUMPS_,	// "BUMPS ",
     _puzzlesPossibleWordIndexes_PART,	// "PART",
     _puzzlesPossibleWordIndexes_STRING,	// "STRING",
@@ -355,6 +355,7 @@ const static unsigned char *puzzlesPossibleWordIndexes[] =
 
 const static unsigned char puzzlesNumLeadingSpaces[] =
 {
+    0,	//  CLUBBING
     0,	// ACT 
     0,	// EXACT 
     0,	// CATS
@@ -367,7 +368,6 @@ const static unsigned char puzzlesNumLeadingSpaces[] =
     0,	// BUYS
     0,	//  BUSES
     0,	// CLUBS 
-    0,	//  CLUBBING
     0,	// BUMPS 
     0,	// PART
     0,	// STRING
@@ -389,6 +389,7 @@ const static unsigned char puzzlesNumLeadingSpaces[] =
 
 const static bool puzzlesScramble[] =
 {
+    true,	//  CLUBBING
     false,	// ACT 
     false,	// EXACT 
     true,	// CATS
@@ -401,7 +402,6 @@ const static bool puzzlesScramble[] =
     false,	// BUYS
     false,	//  BUSES
     true,	// CLUBS 
-    true,	//  CLUBBING
     true,	// BUMPS 
     true,	// PART
     true,	// STRING
@@ -423,6 +423,7 @@ const static bool puzzlesScramble[] =
 
 const static unsigned char puzzlesMetaLetterIndex[] =
 {
+    1,	// " CLUBBING"[C]
     0,	// "ACT "[A]
     4,	// "EXACT "[T]
     1,	// "CATS"[A]
@@ -435,7 +436,6 @@ const static unsigned char puzzlesMetaLetterIndex[] =
     2,	// "BUYS"[Y]
     4,	// " BUSES"[E]
     4,	// "CLUBS "[S]
-    1,	// " CLUBBING"[C]
     3,	// "BUMPS "[P]
     2,	// "PART"[R]
     0,	// "STRING"[S]

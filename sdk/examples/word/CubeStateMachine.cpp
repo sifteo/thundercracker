@@ -304,7 +304,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_NewAnagram:
         {
             unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
-            setLettersStart(0);
+            mPuzzlePieceIndex = data.mNewAnagram.mPuzzlePieceIndexes[cubeIndex];
+            setLettersStart(data.mNewAnagram.mPuzzleStartIndexes[cubeIndex]);
             for (unsigned i = 0; i < arraysize(mLetters); ++i)
             {
                 mLetters[i] = '\0';
@@ -314,10 +315,9 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
             {
                 mLetters[i] =
-                        data.mNewAnagram.mWord[cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
+                        data.mNewAnagram.mWord[mPuzzlePieceIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
             }
             mNumLetters = GameStateMachine::getCurrentMaxLettersPerCube(); // FIXME this var name is misleading
-            mPuzzlePieceIndex = data.mNewAnagram.mPuzzlePieceIndexes[cubeIndex];
             // TODO substrings of length 1 to 3
             paint();
         }
@@ -1407,13 +1407,16 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         {
         case AnimType_SlideL:
         case AnimType_SlideR:
-            params->mMetaLetterIndex = mli - letter0Index + mLettersStartOld;
+            params->mMetaLetterIndex =
+                    (mli - letter0Index) + (mlpc - mLettersStartOld);
             break;
 
         default:
-            params->mMetaLetterIndex = mli - letter0Index + mLettersStart;
+            params->mMetaLetterIndex =
+                (mli - letter0Index) + (mlpc - mLettersStart);
             break;
         }
+        params->mMetaLetterIndex = (params->mMetaLetterIndex % mlpc);
     }
     else
     {
