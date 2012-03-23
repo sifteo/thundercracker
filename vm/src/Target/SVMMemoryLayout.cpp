@@ -18,6 +18,9 @@ void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layo
 {
     memset(spsSize, 0, sizeof spsSize);
     bssAlign = 1;
+    
+    // Leave one free block at the beginning of DEBUG, for a special message.
+    spsSize[SPS_DEBUG] = SVMTargetMachine::getBlockSize();
 
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
@@ -76,6 +79,9 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
     /*
      * A note on disk alignment: RO must be aligned on disk, since we're fetching
      * from it directly, the the other sections need no extra alignment.
+     *
+     * (But we align DEBUG anyway, so we can have a page of padding between
+     * non-debug and debug data)
      */
 
     switch (s) {
@@ -83,7 +89,7 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
     case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META), blockAlign);
     case SPS_RW:    return RoundUpToAlignment(getSectionDiskEnd(SPS_RO), minAlign);
     case SPS_BSS:   return 0;
-    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), minAlign);
+    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), blockAlign);
     case SPS_END:   return getSectionDiskEnd(SPS_DEBUG);
     default:        llvm_unreachable("Bad SVM Program Section");
     }
