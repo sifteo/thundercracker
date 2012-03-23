@@ -168,8 +168,8 @@ class CubeSlot {
     uint8_t hwid[_SYS_HWID_BYTES];
 
     // Other sensor data
-    uint16_t rawBatteryV;
     _SYSAccelState accelState;
+    uint16_t rawBatteryV;
     
     void requestFlashReset();
 };

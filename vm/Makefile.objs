@@ -34,7 +34,8 @@ OBJS = \
 	src/Target/SVMELFMetadataBuilder.o \
 	src/Target/SVMLateFunctionSplitPass.o \
 	src/Target/SVMBlockSizeAccumulator.o \
-	src/Target/SVMConstantPoolValue.o
+	src/Target/SVMConstantPoolValue.o \
+	src/Target/SVMTargetObjectFile.o \
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \
@@ -43,8 +44,9 @@ TABLES := \
 	src/Target/SVMGenRegisterInfo.inc \
 	src/Target/SVMGenSubtargetInfo.inc \
 	src/Target/SVMGenCallingConv.inc \
-	src/Target/SVMGenMCCodeEmitter.inc
-	
+	src/Target/SVMGenMCCodeEmitter.inc \
+	src/Target/SVMRuntime.inc \
+
 TABLEDEPS := src/Target/*.td
 TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
 
@@ -68,4 +70,8 @@ src/Target/SVMGenCallingConv.inc: src/Target/SVM.td $(TABLEDEPS)
 
 src/Target/SVMGenMCCodeEmitter.inc: src/Target/SVM.td $(TABLEDEPS)
 	$(TABLEGEN) -mc-emitter -gen-emitter
+
+src/Target/SVMRuntime.inc: $(TC_DIR)/sdk/include/sifteo/abi.h
+	python tools/svm-syscall-table.py < $< > $@
+
 

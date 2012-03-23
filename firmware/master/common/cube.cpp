@@ -307,14 +307,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // Translate from radio packet coordinates to SDK coordinates
         int8_t x = -ack->accel[0];
         int8_t y = -ack->accel[1];
+        int8_t z = -ack->accel[2];
 
-        //test for gestures
+        // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
         accel.update(x, y);
 
-        if (x != accelState.x || y != accelState.y) {
+        if (x != accelState.x || y != accelState.y || z != accelState.z) {
             accelState.x = x;
             accelState.y = y;
+            accelState.z = z;
             Event::setPending(_SYS_CUBE_ACCELCHANGE, id());
         }
     }
@@ -346,7 +348,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
         // Has valid battery voltage
         
-        rawBatteryV = ack->battery_v;
+        rawBatteryV = ack->battery_v[0] | (ack->battery_v[1] << 8);
     }
     
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {

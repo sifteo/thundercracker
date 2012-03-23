@@ -212,7 +212,6 @@ extern "C" void _start()
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
         Tasks::work();
-        System::yield();
     }
 #endif
 

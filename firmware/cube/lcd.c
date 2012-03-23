@@ -13,6 +13,7 @@
 #include "time.h"
 #include "lcd_model.h"
 #include "sensors.h"
+#include "radio.h"
 
 static __bit lcd_is_awake;
 
@@ -270,6 +271,6 @@ void lcd_end_frame()
     // Acknowledge this frame
     __asm
         inc     (_ack_data + RF_ACK_FRAME)
-        orl     _ack_len, #RF_ACK_LEN_FRAME
+        orl     _ack_bits, #RF_ACK_BIT_FRAME
     __endasm ;
 }

@@ -44,6 +44,7 @@ include Makefile.defs
 
 # Override default CDEPS
 CDEPS := \
+	common/syscall-table.def \
 	common/*.h \
 	stm32/*.h \
 	../include/*.h \
@@ -70,10 +71,8 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
-syscall-table:
-	python $(TC_DIR)/vm/tools/syscall-table.py \
-	   < $(TC_DIR)/sdk/include/sifteo/abi.h \
-	   > $(MASTER_DIR)/common/syscall-table.def
+common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi.h
+	python tools/firmware-syscall-table.py < $< > $@
 
 ocd:
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \

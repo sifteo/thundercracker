@@ -190,9 +190,12 @@ SVC encodings:
   11011111 10xxxxxx     (3) Direct syscall #0-63
   11011111 110xxxxx     (4) SP = validate(SP - imm5*4)
   11011111 11100rrr     (5) r8-9 = validate(rN)
-  11011111 11101rrr     (6) Reserved
-  11011111 11110rrr     (7) Call validate(rN), with SP adjust
-  11011111 11111rrr     (8) Tail call validate(rN), with SP adjust
+  11011111 11101000     (6) Breakpoint
+  11011111 11101001     (7) Reserved
+  11011111 1110101x     (8) Reserved
+  11011111 111011xx     (9) Reserved
+  11011111 11110rrr     (A) Call validate(rN), with SP adjust
+  11011111 11111rrr     (B) Tail call validate(rN), with SP adjust
 
 Since 0 is never a valid indirect address (every code page by definition
 has a valid instruction at the beginning), code 0x00 is reserved for Return.

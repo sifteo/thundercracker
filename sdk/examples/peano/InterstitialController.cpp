@@ -1,16 +1,17 @@
 #include "InterstitialController.h"
+#include "InterstitialView.h"
+#include "AudioPlayer.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 
-    InterstitialController::InterstitialController (Game *game) {
-        mGame = game;
-        iv = NULL;
-    }
+namespace InterstitialController
+{
 
-    void InterstitialController::OnSetup() {
-        CORO_RESET;
-        mDone = false;
-        /* TODO
+
+
+
+    /* TODO lost and found
       mGame.CubeSet.NewCubeEvent += cube => new BlankView(cube);
       mGame.CubeSet.LostCubeEvent += delegate(Cube cube) {
         if (!mDone && cube.userData is InterstitialView) {
@@ -19,76 +20,60 @@ namespace TotalsGame {
         }
       };
       */
-    }
 
-    float InterstitialController::Coroutine(float dt) {
 
-        const float kTransitionTime = 0.5f;
-        static char ivBuffer[sizeof(InterstitialView)];
-        static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
 
-        CORO_BEGIN;
+Game::GameState Run() {
 
-        iv = new(ivBuffer) InterstitialView(Game::GetCube(0));
-        if (mGame->IsPlayingRandom()) {
-            iv->message = "Random!";
-            iv->image = &Hint_6;
-        } else {
-            iv->message = Database::NameOfChapter(mGame->currentPuzzle->chapterIndex);
-            static const PinnedAssetImage *hints[] =
-            {
-                &Hint_0,&Hint_1,&Hint_2,&Hint_3,&Hint_4,&Hint_5,&Hint_6
-            };
-            iv->image = hints[mGame->currentPuzzle->chapterIndex];
-        }
+    const float kTransitionTime = 0.5f;
 
-        for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)
+    InterstitialView iv;
+
+    Game::randomPuzzleCount = 0;
+    Skins::SkinType skin = Skins::SkinType_Default;
+
+    if (Game::IsPlayingRandom()) {
+        iv.message = "Random!";
+        iv.image = &Hint_6;
+        skin = (Skins::SkinType)Game::rand.randrange(Skins::NumSkins);
+    } else {
+        iv.message = Database::NameOfChapter(Game::currentPuzzle->chapterIndex);
+        static const PinnedAssetImage *hints[] =
         {
-            new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
-        }
-
-        CORO_YIELD(0.333f);
-        AudioPlayer::PlayShutterOpen();
-        for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=mGame->dt) {
-            iv->SetTransitionAmount(remembered_t/kTransitionTime);
-            CORO_YIELD(0);
-        }
-        iv->SetTransitionAmount(1);
-        AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
-        CORO_YIELD(3);
-        AudioPlayer::PlayShutterClose();
-        for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=mGame->dt) {
-            iv->SetTransitionAmount(1.0f-remembered_t/kTransitionTime);
-            CORO_YIELD(0);
-        }
-        new(blankViewBuffer[0]) BlankView(Game::GetCube(0), NULL);
-        CORO_YIELD(0.333f);
-
-        CORO_END;
-        return -1;
+            &Hint_0,&Hint_1,&Hint_2,&Hint_3,&Hint_4,&Hint_5,&Hint_6
+        };
+        iv.image = hints[Game::currentPuzzle->chapterIndex];
+        skin = (Skins::SkinType)(Game::currentPuzzle->chapterIndex % Skins::NumSkins);
     }
 
-    void InterstitialController::OnTick (float dt) {        
-        if (mDone) { return; }
-        UPDATE_CORO(Coroutine, dt);
-        if(mTimer == -1) {  //result of update coro stored in 'secret' variable
-            mDone = true;
-            mGame->sceneMgr.QueueTransition("Next");
-        } else {
-            Game::UpdateCubeViews(dt);
-        }
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
+    System::paintSync();
 
-    void InterstitialController::OnPaint (bool canvasDirty) {
-        if (canvasDirty) { Game::PaintCubeViews(); }
-    }
+    Skins::SetSkin(skin);
 
-    void InterstitialController::OnDispose () {
-        Game::ClearCubeEventHandlers();
-        Game::ClearCubeViews();
-    }
+    Game::cubes[0].SetView(&iv);
+
+    Game::Wait(0.333f);
+    iv.TransitionSync(kTransitionTime, true);
+    PLAY_SFX(sfx_Tutorial_Correct);
+    Game::Wait(3);
+    iv.TransitionSync(kTransitionTime, false);
+    Game::Wait(0.333f);
+
+    Game::ClearCubeEventHandlers();
+    Game::ClearCubeViews();
+
+    return Game::GameState_Puzzle;
+}
 
 
+
+
+
+}
 
 }
 
