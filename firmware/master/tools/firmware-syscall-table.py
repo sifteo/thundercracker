@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 #
-# Syscall table generator.
-# Reads "abi.h" from stdin, produces a function pointer table on stdout.
+# Firmware syscall table generator.
+#
+# Reads "abi.h" from stdin, produces a function pointer table on stdout,
+# for use in the SVM runtime implementation.
 #
 # M. Elizabeth Scott <beth@sifteo.com>
 # Copyright <c> 2012 Sifteo, Inc. All rights reserved.
