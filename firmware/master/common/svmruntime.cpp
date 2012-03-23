@@ -124,12 +124,12 @@ void SvmRuntime::call(reg_t addr)
     // This is now the current frame
     SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fp));
 
-#ifdef SVM_TRACE
-    LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
-        "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
-        fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
-#endif
+    TRACING_ONLY({
+        LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
+            "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
+            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
+    });
 
     enterFunction(addr);
 }
@@ -149,11 +149,11 @@ void SvmRuntime::tailcall(reg_t addr)
         resetSP();
     }
 
-#ifdef SVM_TRACE
-    LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
-        (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
-        reinterpret_cast<void*>(fp)));
-#endif
+    TRACING_ONLY({
+        LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
+            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            reinterpret_cast<void*>(fp)));
+    });
 
     enterFunction(addr);
 }
@@ -175,11 +175,11 @@ void SvmRuntime::ret()
         // are trusted, however the saved value at fp->fp needs to be validated
         // before it can be loaded into the trusted FP register.
 
-#ifdef SVM_TRACE
-        LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
-            "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-            fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
-#endif
+        TRACING_ONLY({
+            LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
+                "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
+                fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
+        });
 
         SvmMemory::VirtAddr fpVA = fp->fp;
         SvmMemory::PhysAddr fpPA;
@@ -366,18 +366,18 @@ void SvmRuntime::syscall(unsigned num)
         return;
     }
 
-#ifdef SVM_TRACE
-    LOG(("SYSCALL: enter _SYS_%d(%p, %p, %p, %p, %p, %p, %p, %p)\n",
-        num,
-        reinterpret_cast<void*>(SvmCpu::reg(0)),
-        reinterpret_cast<void*>(SvmCpu::reg(1)),
-        reinterpret_cast<void*>(SvmCpu::reg(2)),
-        reinterpret_cast<void*>(SvmCpu::reg(3)),
-        reinterpret_cast<void*>(SvmCpu::reg(4)),
-        reinterpret_cast<void*>(SvmCpu::reg(5)),
-        reinterpret_cast<void*>(SvmCpu::reg(6)),
-        reinterpret_cast<void*>(SvmCpu::reg(7))));
-#endif
+    TRACING_ONLY({
+        LOG(("SYSCALL: enter _SYS_%d(%p, %p, %p, %p, %p, %p, %p, %p)\n",
+            num,
+            reinterpret_cast<void*>(SvmCpu::reg(0)),
+            reinterpret_cast<void*>(SvmCpu::reg(1)),
+            reinterpret_cast<void*>(SvmCpu::reg(2)),
+            reinterpret_cast<void*>(SvmCpu::reg(3)),
+            reinterpret_cast<void*>(SvmCpu::reg(4)),
+            reinterpret_cast<void*>(SvmCpu::reg(5)),
+            reinterpret_cast<void*>(SvmCpu::reg(6)),
+            reinterpret_cast<void*>(SvmCpu::reg(7))));
+    });
 
     uint64_t result = fn(SvmCpu::reg(0), SvmCpu::reg(1),
                          SvmCpu::reg(2), SvmCpu::reg(3),
@@ -387,10 +387,10 @@ void SvmRuntime::syscall(unsigned num)
     uint32_t result0 = result;
     uint32_t result1 = result >> 32;
 
-#ifdef SVM_TRACE
-    LOG(("SYSCALL: leave _SYS_%d() -> %x:%x\n",
-        num, result1, result0));
-#endif
+    TRACING_ONLY({
+        LOG(("SYSCALL: leave _SYS_%d() -> %x:%x\n",
+            num, result1, result0));
+    });
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);

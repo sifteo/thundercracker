@@ -60,6 +60,15 @@ int main(int argc, char **argv)
             FlashBlock::enableStats();
         }
 
+        else if (!strcmp(argv[c], "--trace")) {
+            LOG(("INFO: running with SVM trace enabled.\n"));
+            SvmCpu::enableTracing();
+        }
+
+        else {
+            LOG(("unrecognized option, ignoring: %s.\n", argv[c]));
+        }
+
     }
 
     SysTime::init();
