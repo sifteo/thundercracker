@@ -271,8 +271,15 @@ def generate_dict():
         f = open(puzzle_file_name, 'rt')
         try:
             for row in csv.DictReader(f):
-                row['No. Leading Spaces'] = str(0)
-                puzzle_rows.append(row)
+                pieces_in_first_3 = 0
+                for i in range(0, 3):
+                    key = 'Piece ' + str(i+1)
+                    if key in row:
+                        if len(row[key].strip()) > 0:
+                            pieces_in_first_3 += 1
+                if len(row['Puzzle'].strip()) > 1 or pieces_in_first_3 >= 2:
+                    row['No. Leading Spaces'] = str(0)
+                    puzzle_rows.append(row)
         finally:
             f.close()    
     #print "puzzles file: " + str(puzzle_rows)

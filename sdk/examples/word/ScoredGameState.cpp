@@ -280,22 +280,17 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    switch (Dictionary::getPuzzleIndex())
+    if (!Dictionary::doScrambleCurrentWord())
     {
-    case 0:
-    case 1:
-    case 4:
-    case 8:
-    case 9:
         // don't scramble
         _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
         for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
         {
             data.mNewAnagram.mPuzzlePieceIndexes[i] = i;
         }
-        break;
-
-    default:
+    }
+    else
+    {
         // scramble the string (random permutation)
         _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
 
@@ -367,7 +362,6 @@ void ScoredGameState::createNewAnagram()
             }
             break;
         }
-        break;
     }
 
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));

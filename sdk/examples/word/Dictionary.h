@@ -32,6 +32,7 @@ public:
     static bool isOldWord(const char* word);
     static bool trim(const char* word, char* buffer);
     static int getPuzzleIndex();
+    static bool doScrambleCurrentWord();
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:

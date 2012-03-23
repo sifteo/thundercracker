@@ -64,6 +64,12 @@ int Dictionary::getPuzzleIndex()
     return sPuzzleIndex;
 }
 
+bool Dictionary::doScrambleCurrentWord()
+{
+    return sPuzzleIndex < 0 || sPuzzleIndex >= (int)arraysize(puzzlesScramble) ?
+                true : puzzlesScramble[sPuzzleIndex];
+}
+
 bool Dictionary::findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,
                                             char wordPieces[][MAX_LETTERS_PER_CUBE])
