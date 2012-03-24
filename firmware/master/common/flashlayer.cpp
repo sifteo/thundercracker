@@ -9,7 +9,7 @@
 #include "svmmemory.h"
 #include <string.h>
 
-#ifdef FLASHLAYER_STATS
+#ifdef SIFTEO_SIMULATOR
 struct FlashStats gFlashStats;
 #endif
 
@@ -69,8 +69,8 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
     Atomic::Barrier();
     TERRIHACK--;
 
-#ifdef FLASHLAYER_STATS
-    if (++gFlashStats.blockTotal >= 1000) {
+#ifdef SIFTEO_SIMULATOR
+    if (gFlashStats.enabled && ++gFlashStats.blockTotal >= 1000) {
         SysTime::Ticks now = SysTime::ticks();
         SysTime::Ticks tickDiff = now - gFlashStats.timestamp;
         float dt = tickDiff / (float) SysTime::sTicks(1);

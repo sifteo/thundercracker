@@ -110,7 +110,12 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
 }
 
 bool Map::FindBroadPath(BroadPath* outPath) {
-  for(unsigned i=0; i<NUM_CUBES; ++i) { sVisitMask[i] = 0; }
+  bool anyTouches = false;
+  for(unsigned i=0; i<NUM_CUBES; ++i) { 
+    sVisitMask[i] = 0; 
+    anyTouches |= gGame.ViewAt(i)->Touched();
+  }
+  if (!anyTouches) { return false; }
   const BroadLocation* pRoot = gGame.GetPlayer()->Current();
   sVisitMask[pRoot->view->Parent()->GetCubeID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
