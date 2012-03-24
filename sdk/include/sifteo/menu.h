@@ -425,7 +425,7 @@ void Menu::stateStart() {
 	BG1Helper(*pCube).Flush();
     {
     	// Allocate tiles for the static upper label, and draw it.
-    	const AssetImage& label = *items[0].label;
+    	const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
     	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
     	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 
@@ -484,7 +484,7 @@ void Menu::transToStatic() {
 	currentEvent.item = computeSelected();
 	
 	// show the title of the game
-	const AssetImage& label = *items[currentEvent.item].label;
+	const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
     _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 }
 
