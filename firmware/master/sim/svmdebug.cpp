@@ -12,9 +12,20 @@
 #include "elfdebuginfo.h"
 #include "logdecoder.h"
 #include "gdbserver.h"
+#include "tinythread.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
+
+static struct DebuggerMailbox {
+    tthread::mutex m;
+    tthread::condition_variable cond;
+
+    uint32_t cmdWords;
+    uint32_t replyWords;
+    uint32_t cmd[SvmDebuggerMsg::MAX_CMD_WORDS];
+    uint32_t reply[SvmDebuggerMsg::MAX_REPLY_WORDS];
+} gDebuggerMailbox;
 
 
 static const char* faultStr(FaultCode code)
@@ -132,20 +143,76 @@ std::string SvmDebug::formatAddress(void *address)
 
 bool SvmDebug::debuggerMsgAccept(SvmDebug::DebuggerMsg &msg)
 {
-    // XXX
-    return false;
+    /*
+     * First half of handling a debugger message: If a message
+     * is available, this returns a pointer to the buffer memory
+     * for both the message and its reply. The caller retains ownership
+     * of this buffer until calling debuggerMsgFinish().
+     */
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    mbox.m.lock();
+    if (mbox.cmdWords == 0) {
+        mbox.m.unlock();
+        return false;
+    }
+
+    msg.cmd = mbox.cmd;
+    msg.reply = mbox.reply;
+    msg.cmdWords = mbox.cmdWords;
+
+    // Leave mbox.m locked.
+    return true;
 }
 
 void SvmDebug::debuggerMsgFinish(SvmDebug::DebuggerMsg &msg)
 {
-    // XXX
+    /*
+     * Finish handling a debugger message. Must be paired with any
+     * successful call to debuggerMsgAccept.
+     *
+     * This will signal the debuggerMsgCallback() to wake up, which
+     * will eventually free the messagebox by setting cmdWords=0.
+     */
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    mbox.replyWords = msg.replyWords;
+    mbox.cond.notify_all();
+    mbox.m.unlock();
 }
 
 static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     uint32_t cmdWords, uint32_t *reply)
 {
-    // XXX
-    return 0;
+    /*
+     * Called by the GDBServer thread to synchronously deliver a message
+     * and wait for a reply. This posts a new message to the mailbox, and
+     * waits on a condvar until the reply has appeared.
+     */
+
+    // Zero-byte replies are vaild; use a special EMPTY token.
+    const uint32_t EMPTY = (uint32_t) -1;
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    tthread::lock_guard<tthread::mutex> guard(mbox.m);
+
+    // Post the command
+    mbox.replyWords = EMPTY;
+    mbox.cmdWords = cmdWords;
+    memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
+
+    // Wait for a reply
+    do {
+        mbox.cond.wait(mbox.m);
+    } while (mbox.replyWords != EMPTY);
+
+    // Free the buffer
+    mbox.cmdWords = 0;
+
+    // Return the reply
+    uint32_t replyWords = mbox.replyWords;
+    memcpy(reply, mbox.reply, replyWords * sizeof(uint32_t));
+    return replyWords;
 }
 
 void SvmDebug::setSymbolSourceELF(const FlashRange &elf)

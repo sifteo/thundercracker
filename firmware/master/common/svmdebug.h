@@ -114,9 +114,9 @@ public:
     static void logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes);
 
     struct DebuggerMsg {
-        uint32_t *message;
+        uint32_t *cmd;
         uint32_t *reply;
-        uint32_t messageWords;
+        uint32_t cmdWords;
         uint32_t replyWords;
     };
     
