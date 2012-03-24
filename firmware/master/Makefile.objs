@@ -31,6 +31,7 @@ OBJS_COMMON = \
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
+	$(MASTER_DIR)/sim/tinythread.sim.o \
 	$(MASTER_DIR)/sim/audiooutdevice.sim.o \
 	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
     $(MASTER_DIR)/sim/flashstorage.sim.o \

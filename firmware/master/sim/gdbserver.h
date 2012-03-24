@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "svmdebug.h"
+#include "tinythread.h"
 
 class ELFDebugInfo;
 
@@ -22,12 +23,11 @@ public:
     static void setDebugInfo(const ELFDebugInfo *info);
     static void setMessageCallback(MessageCallback cb);
 
-    static GDBServer instance;
-    void threadEntry();
-
 private:
     GDBServer() {}
+    static GDBServer instance;
 
+    tthread::thread *thread;
     const ELFDebugInfo *debugInfo;
     MessageCallback messageCb;
 
@@ -46,6 +46,8 @@ private:
     uint32_t msgCmd[SvmDebuggerMsg::MAX_CMD_WORDS];
     uint32_t msgReply[SvmDebuggerMsg::MAX_REPLY_WORDS];
 
+    static void threadEntry(void *param);
+    void threadMain();
     void eventLoop();
     void handleClient();
     void resetPacketState();

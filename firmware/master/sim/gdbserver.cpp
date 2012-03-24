@@ -27,28 +27,10 @@
 #   include <fcntl.h>
 #   include <netdb.h>
 #   include <unistd.h>
-#   include <pthread.h>
 #   include <errno.h>
 #endif
 
 GDBServer GDBServer::instance;
-
-
-#ifdef _WIN32
-static DWORD WINAPI GDBServerThread(LPVOID param)
-#else
-static void *GDBServerThread(void *param)
-#endif
-{
-    /*
-     * This is a thin wrapper around threadEntry(), which lets us have
-     * the proper platform-specific calling signatures without pulling
-     * all these giant OS headers into gdbserver.h
-     */
-
-    GDBServer::instance.threadEntry();
-    return 0;
-}
 
 void GDBServer::setDebugInfo(const ELFDebugInfo *info)
 {
@@ -66,28 +48,31 @@ void GDBServer::start(int port)
      * Spawn a thread which listens for connections from GDB
      */
 
+    ASSERT(instance.running == false);
+    ASSERT(instance.thread == NULL);
+
     instance.port = port;
     instance.running = true;
-
-#ifdef _WIN32
-    CreateThread(NULL, 0, GDBServerThread, 0, 0, NULL);
-#else
-    pthread_t t;
-    pthread_create(&t, NULL, GDBServerThread, 0);
-#endif
+    instance.thread = new tthread::thread(threadEntry, (void*) &instance);
 }
 
 void GDBServer::stop()
 {
     /*
      * Ask the background thread to stop at its next convenience,
-     * asynchronously.
+     * asynchronously. Does not wait for the thread.
      */
 
     instance.running = false;
 }
 
-void GDBServer::threadEntry()
+void GDBServer::threadEntry(void *param)
+{
+    GDBServer *self = (GDBServer *) param;
+    self->threadMain();
+}
+
+void GDBServer::threadMain()
 {
     /*
      * Thread for the GDB server. We start listening for incoming TCP
@@ -131,7 +116,10 @@ void GDBServer::threadEntry()
         if (clientFD < 0)
             break;
 
+        fprintf(stderr, LOG_PREFIX "Client connected\n");
         handleClient();
+        fprintf(stderr, LOG_PREFIX "Client disconnected\n");
+
         close(clientFD);
     }
     
@@ -144,8 +132,6 @@ void GDBServer::handleClient()
      * This is the main per-client loop. Listen for bytes, which we send
      * to rxBytes() to be reassembled into GDB packets.
      */
-
-    fprintf(stderr, LOG_PREFIX "Client connected\n");
 
     unsigned long arg;
     #ifdef SO_NOSIGPIPE
@@ -161,16 +147,15 @@ void GDBServer::handleClient()
         char rxBuffer[4096];
         int ret = recv(clientFD, rxBuffer, sizeof rxBuffer, 0);
 
-        if (ret < 0) {
-            if (errno != EAGAIN) {
+        if (ret <= 0) {
+            if (errno == EAGAIN)
+                continue;
+            if (ret < 0)
                 fprintf(stderr, LOG_PREFIX "Read error (%d)\n", errno);
-                return;
-            }
+            return;
         }
         
-        if (ret > 0)
-            rxBytes(rxBuffer, ret);
-
+        rxBytes(rxBuffer, ret);
         txFlush();
     }
 }
@@ -339,6 +324,19 @@ void GDBServer::txPacketString(const char *str)
     txPacketEnd();
 }
 
+uint32_t GDBServer::message(uint32_t words)
+{
+    /*
+     * Synchronously send a message and wait for a reply.
+     * This uses a callback provided by our transport layer.
+     */
+
+    if (messageCb)
+        return messageCb(msgCmd, words, msgReply);
+    else
+        return 0;
+}
+
 void GDBServer::handlePacket()
 {
     switch (rxPacket[0])
@@ -399,19 +397,6 @@ void GDBServer::handlePacket()
 
     // Unsupported packet; empty reply
     txPacketString("");
-}
-
-uint32_t GDBServer::message(uint32_t words)
-{
-    /*
-     * Synchronously send a message and wait for a reply.
-     * This uses a callback provided by our transport layer.
-     */
-
-    if (messageCb)
-        return messageCb(msgCmd, words, msgReply);
-    else
-        return 0;
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
