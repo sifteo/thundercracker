@@ -1,35 +1,68 @@
 #include "PuzzleController.h"
-#include "BlankView.h"
 #include "assets.gen.h"
 #include "PauseHelper.h"
 #include "ConfirmationMenu.h"
+#include "NarratorView.h"
+#include "Skins.h"
 
 namespace TotalsGame {
 
-bool PuzzleController::IsPaused()
+namespace PuzzleController
 {
-    return mPaused || game->IsPaused;
-}
 
-PuzzleController::PuzzleController(Game *_game) :
-    neighborEventHandler(this)
+class EventHandler: public TotalsCube::EventHandler
 {
-    game = _game; mPaused = false;
-    pauseHelper = NULL;
-}
+public:
+    void OnCubeShake(TotalsCube *cube) {};
+    void OnCubeTouch(TotalsCube *cube, bool touching) {};
+};
+EventHandler eventHandlers[NUM_CUBES];
 
-void PuzzleController::OnSetup ()
+class NeighborEventHandler: public Game::NeighborEventHandler
 {
-    CORO_RESET;
+public:
+    void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+    void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+};
+NeighborEventHandler neighborEventHandler;
 
-    AudioPlayer::PlayInGameMusic();
-    mTransitioningOut = false;
-    String<10> stringRep;
-    int stringRepLength;
-    if (game->IsPlayingRandom())
+struct RemoveEvent
+{
+    Cube::ID c0;
+    Cube::Side s0;
+    Cube::ID c1;
+    Cube::Side s1;
+
+    void Set(Cube::ID _c0, Cube::Side _s0, Cube::ID _c1, Cube::Side _s1)
     {
-        int nCubes = 3 + ( Game::NUMBER_OF_CUBES > 3 ? Random().randrange(Game::NUMBER_OF_CUBES-3+1) : 0 );
-        puzzle = PuzzleHelper::SelectRandomTokens(game->difficulty, nCubes);
+        c0 = _c0;
+        s0 = _s0;
+        c1 = _c1;
+        s1 = _s1;
+    }
+};
+//this really should be enough.  can always disconnect all and start ignoring them.
+#define MAX_REMOVE_EVENTS (NUM_CUBES*2)
+RemoveEvent removeEvents[MAX_REMOVE_EVENTS];
+int numRemoveEvents = 0;
+
+void ProcessRemoveEventBuffer();
+
+Puzzle *puzzle;
+bool paused;
+
+
+void OnSetup ()
+{
+    numRemoveEvents = 0;
+    AudioPlayer::PlayInGameMusic();
+
+    Sifteo::String<10> stringRep;
+    int stringRepLength;
+    if (Game::IsPlayingRandom())
+    {
+        int nCubes = 3 + ( NUM_CUBES > 3 ? Random().randrange(NUM_CUBES-3+1) : 0 );
+        puzzle = PuzzleHelper::SelectRandomTokens(Game::GetDifficulty(), nCubes);
         // hacky reliability :P
         int retries = 0;
         do
@@ -38,7 +71,7 @@ void PuzzleController::OnSetup ()
             {
                 retries = 0;
                 delete puzzle;  //selectrandomtokens does a new
-                puzzle = PuzzleHelper::SelectRandomTokens(game->difficulty, nCubes);
+                puzzle = PuzzleHelper::SelectRandomTokens(Game::GetDifficulty(), nCubes);
             }
             else
             {
@@ -53,219 +86,266 @@ void PuzzleController::OnSetup ()
     }
     else
     {
-        puzzle = game->currentPuzzle;
+        puzzle = Game::currentPuzzle;
         puzzle->ClearGroups();
         puzzle->target->RecomputeValue(); // in case the difficulty changed
     }
-    mPaused = false;
+    paused = false;
     puzzle->hintsUsed = 0;
 
-    for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+    for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::GetCube(i)->AddEventHandler(&eventHandlers[i]);
+        Game::cubes[0].AddEventHandler(&eventHandlers[i]);
     }
 
-    //TODO game.CubeSet.LostCubeEvent += OnCubeLost;
+    //
 }
 
-/* TODO
-        on cube found put a blank view on it
-        void OnCubeLost(Cube c) {
-        if (!c.IsUnused()) {
-        // for now, let's just return to the main menu
-        Transition("Quit");
+/* TODO lost and found
+  game.CubeSet.LostCubeEvent += OnCubeLost;
+         on cube found put a blank view on it
+         void OnCubeLost(Cube c) {
+         if (!c.IsUnused()) {
+         // for now, let's just return to the main menu
+         Transition("Quit");
+         }
+         }
+         */
+void ShowPuzzleCount()
+{
+    int count;
+    if(Game::IsPlayingRandom())
+    {
+        count = Game::RandomPuzzlesPerChapter - Game::randomPuzzleCount;
+    }
+    else
+    {
+        count = 1 + puzzle->CountAfterThisInChapterWithCurrentCubeSet();
+    }
+        
+    { // opening remarks
+        
+        if (count > 0)
+        {
+            NarratorView nv;
+            Game::cubes[0].SetView(&nv);
+            const float kTransitionTime = 0.2f;
+            AudioPlayer::PlayShutterOpen();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+                nv.SetTransitionAmount(t/kTransitionTime);
+                Game::Wait(0);
+            }
+            nv.SetTransitionAmount(-1);
+            Game::Wait(0.5f);
+            if (count == 1) {
+                nv.SetMessage("1 code to go...", NarratorView::EmoteMix01);
+
+                //set window to bottom half of screen so we can animate peano
+                //while text window is open above
+                System::paintSync();
+                nv.GetCube()->backgroundLayer.set();
+                nv.GetCube()->backgroundLayer.clear();
+                nv.GetCube()->foregroundLayer.Clear();
+                nv.GetCube()->foregroundLayer.Flush();
+                nv.GetCube()->backgroundLayer.setWindow(72,56);
+
+                SystemTime t = SystemTime::now() + 3.0f;
+                float timeout = 0.0;
+                int i=0;
+                while(SystemTime::now() < t) {
+                    timeout -= Game::dt;
+                    while (timeout < 0) {
+                        i = 1 - i;
+                        timeout += 0.05;
+                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+                    }
+                    System::paintSync();
+                    Game::UpdateDt();
+                }
+            } else {
+                //static because nv.SetMessage doesnt strcpy, keeps pointer.
+                static Sifteo::String<20> msg;
+                msg.clear();
+                msg << count << " codes to go...";
+                nv.SetMessage(msg);
+                Game::Wait(2);
+            }
+
+            nv.SetMessage("");
+
+            AudioPlayer::PlayShutterClose();
+            for(float t=0; t<kTransitionTime; t+=Game::dt) {
+                nv.SetTransitionAmount(1-t/kTransitionTime);
+                Game::Wait(0);
+            }
+            nv.SetTransitionAmount(0);
+            Game::Wait(0);
+
+            Game::cubes[0].SetView(NULL);
+
         }
-        }
-        */
+    }
+}
+
 //-------------------------------------------------------------------------
 // MAIN CORO
 //-------------------------------------------------------------------------
 
-float PuzzleController::TheBigCoroutine(float dt)
+Game::GameState Run()
 {
-    static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
-    static char tokenViewBuffer[Game::NUMBER_OF_CUBES][sizeof(TokenView)];
-    static char pauseHelperBuffer[sizeof(PauseHelper)];
 
-    CORO_BEGIN;
+    OnSetup();
+    ShowPuzzleCount();
 
-    for(int i = puzzle->GetNumTokens(); i < Game::NUMBER_OF_CUBES; i++)
+    PauseHelper *pauseHelper;
+
+    bool transitioningOut;
+
+    for(int i = puzzle->GetNumTokens(); i < NUM_CUBES; i++)
     {
-        new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
-    Game::DrawVaultDoorsClosed();
-    CORO_YIELD(0.25);
+    Game::Wait(0.25);
 
-    for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
+    TokenView tv[NUM_CUBES];
+    for(int i = 0; i < puzzle->GetNumTokens(); i++)
     {
-        float dt;
-        while((dt = Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
-
-        new(tokenViewBuffer[static_i]) TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
-        CORO_YIELD(0.1f);
-
+        Game::cubes[i].SetView(tv+i);
+        tv[i].SetToken(puzzle->GetToken(i));
+        Game::cubes[i].OpenShuttersToReveal(Skins::GetSkin().background);
+        tv[i].PaintNow();
     }
+
+    Game::Wait(0.1f);
+
+    const Skins::Skin &skin = Skins::GetSkin();
 
     { // flourish in
-        CORO_YIELD(1.1f);
+        Game::Wait(1.1f);
         // show total
-        AudioPlayer::PlaySfx(sfx_Tutorial_Mix_Nums);
+        PLAY_SFX(sfx_Tutorial_Mix_Nums);
 
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
-            puzzle->GetToken(i)->GetTokenView()->ShowOverlay();
+            tv[i].ShowOverlay();
         }
-        CORO_YIELD(3.0f);
+        Game::Wait(3.0f);        
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
-            puzzle->GetToken(i)->GetTokenView()->HideOverlay();
+            tv[i].HideOverlay();
         }
+        System::paint();
     }
 
     { // gameplay
-        pauseHelper = new(pauseHelperBuffer) PauseHelper();
+        PauseHelper pauseHelper;
 
         // subscribe to events
-        Game::GetInstance().neighborEventHandler = &neighborEventHandler;
+        Game::neighborEventHandler = &neighborEventHandler;
         { // game loop
             while(!puzzle->IsComplete()) {
-                // most stuff is handled by events and view updaters
-                CORO_YIELD(0);
+
+                Game::Wait(0);
+                for(int i = 0; i < NUM_CUBES; i++)
+                {
+                    tv[i].Update();
+                }
 
                 // should pause?
-                pauseHelper->Update();
-                if (pauseHelper->IsTriggered())
+                pauseHelper.Update();
+                if (pauseHelper.IsTriggered())
                 {
-                    mPaused = true;
+                    paused = true;
 
                     // transition out
-                    for(static_i=0; static_i<puzzle->GetNumTokens(); ++static_i)
+                    for(int t=0; t<puzzle->GetNumTokens(); ++t)
                     {
-                        Game::GetCube(static_i)->SetView(NULL);
+                        Game::cubes[t].Image(skin.background);
+                        Game::cubes[t].HideSprites();
+                        Game::cubes[t].foregroundLayer.Clear();
+                        Game::cubes[t].foregroundLayer.Flush();
+                        Game::cubes[t].SetView(NULL);
 
-                        float dt;
-                        while((dt=Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
-                        {
-                            CORO_YIELD(dt);
-                        }
-                        new(blankViewBuffer[static_i]) BlankView(Game::GetCube(static_i), NULL);
+                        Game::cubes[t].CloseShutters();
+                        Game::cubes[t].DrawVaultDoorsClosed();
                     }
 
                     // do menu
+                    if (ConfirmationMenu::Run("Return to Menu?"))
                     {
-                        static char confirmationBuffer[sizeof(ConfirmationMenu)];
-                        menu = new(confirmationBuffer) ConfirmationMenu("Return to Menu?");
-                        while(!menu->IsDone())
-                        {
-                            CORO_YIELD(0);
-                            menu->Tick(game->dt);
-                        }
-                    }
-
-                    if (menu->GetResult()) {
-                        Game::GetInstance().neighborEventHandler = NULL;
-                        game->sceneMgr.QueueTransition("Quit");
-                        CORO_YIELD(-1);
+                        Game::neighborEventHandler = NULL;
+                        Game::ClearCubeEventHandlers();
+                        Game::ClearCubeViews();
+                        Token::ResetAllocationPool();
+                        TokenGroup::ResetAllocationPool();
+                        delete puzzle;
+                        Game::currentPuzzle = NULL;
+                        return Game::GameState_Menu;
                     }
 
 
                     // transition back
-                    for(static_i=0; static_i<puzzle->GetNumTokens(); ++static_i)
+                    for(int i=0; i<puzzle->GetNumTokens(); ++i)
                     {
-                        Game::GetCube(static_i)->SetView(NULL);
+                        Game::cubes[i].SetView(NULL);
 
-                        float dt;
-                        while((dt=Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
-                        {
-                            CORO_YIELD(dt);
-                        }
+                        Game::cubes[i].OpenShuttersToReveal(skin.background);
 
-                        Game::GetCube(static_i)->SetView(puzzle->GetToken(static_i)->GetTokenView());
-                        CORO_YIELD(0.1f);
+                        Game::cubes[i].SetView(puzzle->GetToken(i)->GetTokenView());
+                        ((TokenView*)Game::cubes[i].GetView())->PaintNow();
+                        Game::Wait(0.1f);
                     }
 
-                    pauseHelper->Reset();
-                    mPaused = false;
+                    pauseHelper.Reset();
+                    paused = false;
+                    ProcessRemoveEventBuffer();
                 }
             }
         }
 
     }
     // unsubscribe
-    Game::GetInstance().neighborEventHandler = NULL;
+    Game::neighborEventHandler = NULL;
 
 
     { // flourish out
-        CORO_YIELD(1);
-        AudioPlayer::PlaySfx(sfx_Level_Clear);
+        Game::Wait(1);
+        PLAY_SFX(sfx_Level_Clear);
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             puzzle->GetToken(i)->GetTokenView()->ShowLit();
         }
-        CORO_YIELD(3);
+        Game::Wait(3);
     }
-
-    mTransitioningOut = true;
 
     { // transition out
-        for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
-        {
-            float dt;
-            while((dt = Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
-            {
-                CORO_YIELD(dt);
-            }
-            CORO_YIELD(0.1f);
+        for(int i = 0; i < puzzle->GetNumTokens(); i++)
+        {                      
+            TotalsCube *c = puzzle->GetToken(i)->GetTokenView()->GetCube();
+            Game::cubes[i].Image(skin.background_lit);
+            c->HideSprites();
+            c->foregroundLayer.Clear();
+            c->foregroundLayer.Flush();
+            c->SetView(NULL);
+
+            c->CloseShutters();
+            c->DrawVaultDoorsClosed();
+            Game::Wait(0.1f);
         }
     }
 
-    if (!game->IsPlayingRandom())
-    { // closing remarks
-        int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
-        if (count > 0)
-        {
-#if 0 //todo
-            var nv = new NarratorView();
-            nv.Cube = game.CubeSet[0];
-            const float kTransitionTime = 0.2f;
-            Jukebox.PlayShutterOpen();
-            for(var t=0f; t<kTransitionTime; t+=game.dt) {
-                nv.SetTransitionAmount(t/kTransitionTime);
-                yield return 0;
-            }
-            nv.SetTransitionAmount(1f);
-            yield return 0.5f;
-            if (count == 1) {
-                nv.SetMessage("1 code to go...", "mix01");
-                int i=0;
-                yield return 0;
-                for(var t=0f; t<3f; t+=game.dt) {
-                    i = 1-i;
-                    nv.SetEmote("mix0"+(i+1));
-                    yield return 0;
-                }
-            } else {
-                nv.SetMessage(string.Format("{0} codes to go...", count));
-                yield return 2f;
-            }
-            Jukebox.PlayShutterClose();
-            for(var t=0f; t<kTransitionTime; t+=game.dt) {
-                nv.SetTransitionAmount(1f-t/kTransitionTime);
-                yield return 0;
-            }
-            nv.SetTransitionAmount(0f);
-#endif
-        }
+    if (Game::IsPlayingRandom())
+    {
+        //advance deletes chapter created puzzles
+        delete puzzle;
     }
 
-    Transition("Complete");
+    Game::ClearCubeEventHandlers();
+    Game::ClearCubeViews();
+    Token::ResetAllocationPool();
+    TokenGroup::ResetAllocationPool();
 
-
-    CORO_END
-            return -1;
+    return Game::GameState_Advance;
 }
 
 //-------------------------------------------------------------------------
@@ -273,11 +353,11 @@ float PuzzleController::TheBigCoroutine(float dt)
 //-------------------------------------------------------------------------
 void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
-    if (owner->IsPaused() /*TODO|| mRemoveEventBuffer.Count > 0*/) { return; }
+    if (paused || numRemoveEvents > 0) { return; }
 
     // validate args
-    TokenView *v = (TokenView*)Game::GetCube(c0)->GetView();
-    TokenView *nv = (TokenView*)Game::GetCube(c1)->GetView();
+    TokenView *v = (TokenView*)Game::cubes[c0].GetView();
+    TokenView *nv = (TokenView*)Game::cubes[c1].GetView();
     if (v == NULL || nv == NULL) { return; }
     if (s0 != ((s1+2)%NUM_SIDES)) { return; }
     if (s0 == SIDE_LEFT || s0 == SIDE_TOP)
@@ -301,16 +381,23 @@ void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Si
 
 void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
-    /*TODO          if (owner->IsPaused() TODO|| mRemoveEventBuffer.Count > 0)
-            {
-                mRemoveEventBuffer.Add(new RemoveEvent() { c = c, s = s, nc = nc, ns = ns });
-                return;
-            }
-*/
+    if (paused || numRemoveEvents > 0)
+    {
+        if(numRemoveEvents < MAX_REMOVE_EVENTS)
+        {
+            removeEvents[numRemoveEvents].Set(c0, s0, c1, s1);
+        }
+        //overflowing the array will signal to disconnect everything
+        //since we can't keep track of any more
+        numRemoveEvents++;
+        return;
+
+    }
+
 
     // validate args
-    TokenView *v = (TokenView*)Game::GetCube(c0)->GetView();
-    TokenView *nv = (TokenView*)Game::GetCube(c1)->GetView();
+    TokenView *v = (TokenView*)Game::cubes[c0].GetView();
+    TokenView *nv = (TokenView*)Game::cubes[c1].GetView();
     if (v == NULL || nv == NULL) { return; }
     Token *t = v->token;
     Token *nt = nv->token;
@@ -322,9 +409,9 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
     AudioPlayer::PlayNeighborRemove();
     TokenGroup *grp = (TokenGroup*)t->current;
     while(t->current->Contains(nt)) {
-        for(int i = 0; i < owner->puzzle->GetNumTokens(); i++)
+        for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
-            Token *token = owner->puzzle->GetToken(i);
+            Token *token = puzzle->GetToken(i);
             if (token != t && token->current == t->current) {
                 token->PopGroup();
             }
@@ -339,53 +426,37 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
     grp->AlertDidGroupDisconnect();
     delete grp;
 }
-/*TODO
-        void ProcessRemoveEventBuffer() {
-            var args = mRemoveEventBuffer;
-            mRemoveEventBuffer = new List<RemoveEvent>(args.Count);
-            foreach(var arg in args) {
-                OnNeighborRemove(arg.c, arg.s, arg.nc, arg.ns);
+
+
+void ProcessRemoveEventBuffer()
+{
+    if(numRemoveEvents <= MAX_REMOVE_EVENTS)
+    {
+        int count = numRemoveEvents;
+        numRemoveEvents = 0;    //needed for OnNeighborRemove to actually do work
+        for(int i = 0; i < count; i++)
+        {
+            neighborEventHandler.OnNeighborRemove(removeEvents[i].c0, removeEvents[i].s0, removeEvents[i].c1, removeEvents[i].s1);
+        }
+    }
+    else
+    {
+        numRemoveEvents = 0;
+        //more disconnects occured than we can record.
+        //disconnect everything
+        for(int i = 0; i < NUM_CUBES; i++)
+        {
+            for(int j = i+1; j < NUM_CUBES; j++)
+            {
+                //neighbor remove handler ignores sides
+                neighborEventHandler.OnNeighborRemove(i, 0, j, 0);
             }
-        } */
 
-//-------------------------------------------------------------------------
-// CLEANUP
-//-------------------------------------------------------------------------
-
-void PuzzleController::OnTick (float dt)
-{
-    /* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
-            ProcessRemoveEventBuffer();
-            } */
-    UPDATE_CORO(TheBigCoroutine, dt);
-    Game::UpdateCubeViews(dt);
-}
-
-void PuzzleController::OnPaint (bool canvasDirty)
-{
-    //if (canvasDirty) { game.CubeSet.PaintViews(); }
-    if(!mTransitioningOut)
-    {   //vault door drawing inside update during transitition out
-        Game::PaintCubeViews();
+        }
     }
 }
 
-void PuzzleController::Transition(const char *id)
-{
-    game->sceneMgr.QueueTransition(id);
-}
-
-void PuzzleController::OnDispose ()
-{
-    //mRemoveEventBuffer.Clear();
-    //puzzle.ClearUserdata();
-    //puzzle = null;
-    //mPaused = false;
-    Game::ClearCubeEventHandlers();
-    Game::ClearCubeViews();
-    delete puzzle;
-}
-
 }
 
 
+}

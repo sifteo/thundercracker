@@ -8,6 +8,7 @@ using namespace Sifteo;
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
 #define TRIGGER_TYPE_COUNT  4
+// MAX COUNT = 16
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
@@ -27,6 +28,8 @@ using namespace Sifteo;
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
+#define EVENT_REMOTE_TRIGGER                3
+#define EVENT_OPEN_DOOR                     4
 
 struct QuestData {
     uint8_t mapId;
@@ -95,6 +98,11 @@ struct TrapdoorData {
     uint8_t respawnRoomId;
 };
 
+struct DepotData {
+    uint8_t roomId;
+    uint8_t targetItemId;
+};
+
 struct AnimatedTileData {
     uint8_t tileId;
     uint8_t frameCount;
@@ -144,6 +152,7 @@ struct MapData {
     const GatewayData* gates;
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
+    const DepotData* depots;
 
     // other placeable entities
     const DoorData* doors;
@@ -153,19 +162,9 @@ struct MapData {
     const BridgeSubdivisionData* bridgeSubdivisions;
     const SokoblockData* sokoblocks;
 
-    // trigger counts
-    uint8_t itemCount;
-    uint8_t gateCount;
-    uint8_t npcCount;
-    uint8_t trapdoorCount;
-
     // other counts
     uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
-    uint8_t doorCount;
     uint8_t animatedTileCount;
-    uint8_t diagonalSubdivisionCount;
-    uint8_t bridgeSubdivisionCount;
-    uint8_t sokoblockCount;
     uint8_t ambientType; // 0 - None
 
     // size

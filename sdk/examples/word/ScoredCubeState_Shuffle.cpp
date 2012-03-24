@@ -10,6 +10,8 @@
 #include "SavedData.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)

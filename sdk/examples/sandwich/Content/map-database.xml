@@ -9,6 +9,7 @@
 		<name>Lembas Caverns</name>
 	</map>
 	
+	<!--
 	<map id="temple_level1">
 		<name>Temple area 1</name>
 	</map>
@@ -21,7 +22,6 @@
 		<name>Temple area 3</name>
 	</map>
 
-	<!--
 	<map id="temple_level4">
 		<name>Temple area 4</name>
 	</map>

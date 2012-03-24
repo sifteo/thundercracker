@@ -6,262 +6,272 @@
 #include "MenuController.h"
 #include "InterstitialController.h"
 #include "TutorialController.h"
-//#include "VictoryController.h"
+#include "VictoryController.h"
+#include "Skins.h"
 
 namespace TotalsGame
 {
+namespace Game
+{
+NeighborEventHandler *neighborEventHandler;
 
-	Random Game::rand;
 
-	Game &Game::GetInstance()
-	{
-		static Game instance;
-		return instance;
-	}
+TotalsCube cubes[NUM_CUBES];
 
-    void Game::OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+Puzzle *currentPuzzle;
+Puzzle *previousPuzzle;
+
+Random rand;
+int randomPuzzleCount;
+SkillLevel skillLevel = SkillLevel_Expert;
+SaveData saveData;
+
+float dt;
+TimeStep timeStep;
+
+void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+{
+    if(neighborEventHandler)
+        neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
+}
+
+void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+{
     {
-        if(GetInstance().neighborEventHandler)
-            GetInstance().neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
+        if(neighborEventHandler)
+            neighborEventHandler->OnNeighborRemove(c0, s0, c1, s1);
     }
 
-    void Game::OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+}
+
+void OnCubeTouch(void*, _SYSCubeID cid)
+{
+    TotalsCube *c = &Game::cubes[cid];
+    c->DispatchOnCubeTouch(c, c->touching());
+}
+
+void OnCubeShake(void*, _SYSCubeID cid)
+{
+    TotalsCube *cube = &Game::cubes[cid];
+    cube->DispatchOnCubeShake(cube);
+}
+
+void ClearCubeViews()
+{
+    for(int i = 0; i < NUM_CUBES; i++)
     {
+        cubes[i].SetView(NULL);
+    }
+}
+
+void ClearCubeEventHandlers()
+{
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        cubes[0].ResetEventHandlers();
+    }
+}
+
+void DrawVaultDoorsClosed()
+{
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        cubes[i].DrawVaultDoorsClosed();
+    }
+}
+
+void PaintCubeViews()
+{
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        TotalsCube *c = &cubes[i];
+        if(c && !c->IsTextOverlayEnabled())
         {
-            if(GetInstance().neighborEventHandler)
-                GetInstance().neighborEventHandler->OnNeighborRemove(c0, s0, c1, s1);
+            View *v = c->GetView();
+            if(v)
+                v->Paint();
         }
-
     }
+}
 
-    void Game::OnCubeTouch(void*, _SYSCubeID cid)
-	{
-        TotalsCube *c = GetCube(cid);
-        c->DispatchOnCubeTouch(c, c->touching());
-	}
-
-    void Game::OnCubeShake(void*, _SYSCubeID cid)
-	{
-        TotalsCube *cube = GetCube(cid);
-        cube->DispatchOnCubeShake(cube);
-	}
-
-	void Game::ClearCubeViews()
-	{
-		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
-		{
-            //GetCube(i)->SetView(NULL);
-            GetCube(i)->GetView()->SetCube(NULL);
-		}
-	}
-
-	void Game::ClearCubeEventHandlers()
-	{
-		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
-		{
-            GetCube(i)->ResetEventHandlers();
-		}
-	}
-
-	void Game::DrawVaultDoorsClosed()
-	{
-		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
-		{
-			Game::GetInstance().cubes[i].DrawVaultDoorsClosed();
-		}
-	}
-
-	void Game::PaintCubeViews()
+ExperienceLevel GetExperienceLevel()
+{
+    int count = 0;
+    for(int i = 0; i < Database::NumChapters(); i++)
     {
-		for(int i = 0; i < NUMBER_OF_CUBES; i++)
+        if(saveData.IsChapterSolved(i))
         {
-            TotalsCube *c = Game::GetCube(i);
-            if(c && !c->IsTextOverlayEnabled())
-			{
-				View *v = c->GetView();
-				if(v)
-					v->Paint();
-            }
-		}
-	}
+            count++;
+        }
+    }
+    return count > 1 ? ExperienceLevel_Master : ExperienceLevel_Neophyte;
+}
 
-    void Game::UpdateCubeViews(float dt)
+Difficulty GetDifficulty()
+{
+    if (skillLevel == SkillLevel_Novice)
     {
-        for(int i = 0; i < NUMBER_OF_CUBES; i++)
-        {
-            TotalsCube *c = Game::GetCube(i);
-            if(c)
-            {
-                View *v = c->GetView();
-                if(v)
-                    v->Update(dt);
-            }
-        }       
+        return GetExperienceLevel() == ExperienceLevel_Neophyte ? DifficultyEasy : DifficultyMedium;
+    }
+    else
+    {
+        return GetExperienceLevel() == ExperienceLevel_Neophyte ? DifficultyMedium : DifficultyHard;
+    }
+}
+
+void SaveOptions()
+{
+    //TODO
+}
+
+void Run()
+{
+    TotalsGame::AudioPlayer::Init();
+
+    //loading assets resets video mode to bg0 only.
+    //reset to bg_spr_bg1 as needed
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        cubes[i].backgroundLayer.set();
     }
 
-	void Game::Setup(TotalsCube *_cubes, int nCubes)
-	{
-        ASSERT(nCubes == Game::NUMBER_OF_CUBES);
-		cubes = _cubes;
+    _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
 
-        _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
-        _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
-        _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
-        _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+    neighborEventHandler = NULL;
 
-        neighborEventHandler = NULL;
+    currentPuzzle = NULL;
+    previousPuzzle = NULL;
 
-		currentPuzzle = NULL;
-		previousPuzzle = NULL;
+    timeStep.next();
+    dt = timeStep.delta();
 
-		mDirty = false;
-		IsPaused = false;
-        difficulty = DifficultyHard;
-		mode = NumericModeFraction;
+    //TODO		saveData.Load();
 
-/* TODO
-		var assem = System.Reflection.Assembly.GetExecutingAssembly();
-		Directory.SetCurrentDirectory(Path.GetDirectoryName(assem.Location));
-		while (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "assets")))
-		{
-			Directory.SetCurrentDirectory("../");
-		}
-		database = PuzzleDatabase.CreateFromFile("assets/data/puzzles.xml");
-		saveData = new SaveData(database);
-*/
-		dt = 1.0f / FrameRate;
-		mTime = System::clock();
+    StingController::Run();
 
-//TODO		saveData.Load();
+    GameState nextState =
+    #if SKIP_INTRO_TUTORIAL
+        GameState_Menu;
+    #else
+        saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+    #endif
 
-		static StingController stingController(this);
-		static PuzzleController puzzleController(this);
-        static MenuController menuController(this);
-        static InterstitialController interstitialController(this);
-        static TutorialController tutorialController(this);
-      //  static VictoryController victoryController(this);
 
-		sceneMgr
-			.State("sting", &stingController)                //
-			.State("init", &Game::Initialize)
-            .State("menu", &menuController)
-            .State("tutorial", &tutorialController)          //
-            .State("interstitial", &interstitialController)  //
-            .State("puzzle", &puzzleController)
-            .State("advance", &Game::Advance)
-          //  .State("victory", &victoryController)            //
-		//	.State("isover", IsGameOver)
+    while(1)
+    {
+        switch(nextState)
+        {           
+        case GameState_Puzzle:
+            nextState = PuzzleController::Run();
+            break;
 
-			.Transition("sting", "Next", "init")
-			.Transition("init", "NewPlayer", "tutorial")
-            .Transition("init", "ReturningPlayer", "menu")
-			.Transition("menu", "Tutorial", "tutorial")
-			.Transition("menu", "Play", "interstitial")
-			.Transition("tutorial", "Next", "interstitial")
-			.Transition("interstitial", "Next", "puzzle")
-			.Transition("puzzle", "Quit", "menu")
-			.Transition("puzzle", "Complete", "advance")
-			.Transition("advance", "RandComplete", "menu")
-			.Transition("advance", "GameComplete", "victory")
-			.Transition("advance", "NextPuzzle", "puzzle")
-			.Transition("advance", "NextChapter", "victory")
-			.Transition("victory", "Next", "isover")
-			.Transition("isover", "Yes", "menu")
-			.Transition("isover", "No", "interstitial")
+        case GameState_Menu:
+            Skins::SetSkin(Skins::SkinType_Default);
+            nextState = MenuController::Run();
+            break;
 
-                .SetState("sting");
+        case GameState_Interstitial:
+            nextState = InterstitialController::Run();
+            break;
+
+        case GameState_Tutorial:
+            Skins::SetSkin(Skins::SkinType_Default);
+            nextState = TutorialController::Run();
+            break;
+
+        case GameState_Victory:            
+            nextState = VictoryController::Run();
+            break;
+
+        case GameState_IsOver:
+            nextState = IsGameOver();
+            break;
+
+        case GameState_Advance:
+            nextState = Advance();
+            break;
+        }
+    }
+}
+
+void UpdateDt()
+{
+    timeStep.next();
+    dt = timeStep.delta();
+}
+
+void Wait(float delay)
+{    
+    PaintCubeViews();
+    System::paintSync();
+
+    SystemTime t = SystemTime::now();
+
+    t += delay;
+    do {
+        System::yield();
+        UpdateDt();
+    } while(SystemTime::now() < t);
+}
+
+bool IsPlayingRandom()
+{
+    return currentPuzzle == NULL;
+}
+
+GameState Advance()
+{
+    delete previousPuzzle;
+    previousPuzzle = currentPuzzle;
+    if (Game::currentPuzzle == NULL)
+    {
+        randomPuzzleCount++;
+        if(randomPuzzleCount >= RandomPuzzlesPerChapter)
+        {
+            return GameState_Victory;
+        }
+        else
+        {
+            return GameState_Puzzle;
+        }
     }
 
-	void Game::Tick()
-	{
-/*		if (!IsIdle)
-		{ 
-			return;
-		} */
+    currentPuzzle->SaveAsSolved();
+    int chapter = currentPuzzle->chapterIndex;
+    int puzzle = currentPuzzle->puzzleIndex;
+    bool success;
+    success = currentPuzzle->GetNext(NUM_CUBES, &chapter, &puzzle);
+    if (!success)
+    {
+        saveData.AddSolvedPuzzle(currentPuzzle->chapterIndex, currentPuzzle->puzzleIndex);
+        delete Game::currentPuzzle;
+        Game::currentPuzzle = NULL;
+        return GameState_Victory;
+    }
+    else if (chapter == Game::currentPuzzle->chapterIndex)
+    {
+        delete Game::currentPuzzle;
+        Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
+        return GameState_Puzzle;
+    }
+    else
+    {
+        saveData.AddSolvedChapter(Game::currentPuzzle->chapterIndex);
+        delete Game::currentPuzzle;
+        Game::currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
+        return GameState_Victory;
+    }
+}
 
-		float time = System::clock();
-		dt = time - mTime;
-		mTime = time;
+GameState IsGameOver()
+{
+    return currentPuzzle == NULL ? GameState_Menu : GameState_Interstitial;
+}
 
-        for(int i = 0; i < NUMBER_OF_CUBES; i++)
-        {
-            if(!cubes[i].IsTextOverlayEnabled())
-            {
-                cubes[i].backgroundLayer.set();
-                cubes[i].backgroundLayer.setWindow(0,128);
-                cubes[i].foregroundLayer.Clear();
-                for(int s = 0 ; s < _SYS_VRAM_SPRITES; s++)
-                    cubes[i].backgroundLayer.hideSprite(s);
-            }
-        }
 
-        sceneMgr.Tick(dt);
-        sceneMgr.Paint(true);
-
-        for(int i = 0; i < NUMBER_OF_CUBES; i++)
-        {
-             if(!cubes[i].IsTextOverlayEnabled())
-             {
-                cubes[i].foregroundLayer.Flush();
-             }
-            cubes[i].UpdateTextOverlay();
-        }
-
-		mDirty = false;
-	}
-
-	bool Game::IsPlayingRandom() 
-	{ 
-		return currentPuzzle == NULL; 
-	}
-
-	const char *Game::Initialize() 
-	{/* TODO
-		return saveData.hasDoneTutorial ?
-			"ReturningPlayer" : "NewPlayer";
-			*/
-		return "ReturningPlayer";
-	}
-
-    const char *Game::Advance()
-	{
-        Game &g = Game::GetInstance();
-        delete g.previousPuzzle;
-        g.previousPuzzle = g.currentPuzzle;
-        if (g.currentPuzzle == NULL)
-		{ 
-			return "RandComplete";
-		}
-        g.currentPuzzle->SaveAsSolved();
-        int chapter, puzzle;
-        bool success;
-        success = g.currentPuzzle->GetNext(NUMBER_OF_CUBES, &chapter, &puzzle);
-        if (success)
-		{
-            Database::SavePuzzleAsSolved(g.currentPuzzle->chapterIndex, g.currentPuzzle->puzzleIndex);
-            delete g.currentPuzzle;
-            g.currentPuzzle = NULL;
-			return "GameComplete";
-		} 
-        else if (chapter == g.currentPuzzle->chapterIndex)
-		{
-            delete g.currentPuzzle;
-            g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
-			return "NextPuzzle";
-		}
-		else 
-		{
-            Database::SaveChapterAsSolved(g.currentPuzzle->chapterIndex);
-            delete g.currentPuzzle;
-            g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
-			return "NextChapter";
-		}
-	}
-
-	const char *Game::IsGameOver(const char *transitionId)
-	{
-		return currentPuzzle == NULL ? "Yes" : "No";
-	}
-
+}
 
 }

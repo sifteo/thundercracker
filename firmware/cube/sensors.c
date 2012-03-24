@@ -39,12 +39,8 @@ volatile uint8_t sensor_tick_counter_high;
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
 uint8_t accel_state;
-uint8_t accel_x_low;
-uint8_t accel_x_high;
-uint8_t accel_y_low;
-uint8_t accel_y_high;
-uint8_t accel_z_low;
-// last byte of z high is just straight into the RF ack buffer
+uint8_t accel_x;
+uint8_t accel_y;
 
 /*
  * Parameters that affect the neighboring protocol. Some of these are
@@ -195,62 +191,66 @@ as_3:
         mov     _accel_state, #(as_4 - as_1)
         sjmp    as_ret
 
-        ; 4. Read X axis low byte.
+        ; 4. Read (and discard) X axis low byte.
 as_4:
-        mov     _accel_x_low, _W2DAT
+        mov     a, _W2DAT
         mov     _accel_state, #(as_5 - as_1)
         sjmp    as_ret
 
         ; 5. Read X axis high byte.
 as_5:
-        mov     _accel_x_high, _W2DAT
+        mov     _accel_x, _W2DAT
         mov     _accel_state, #(as_6 - as_1)
         sjmp    as_ret
 
-        ; 6. Read Y axis low byte.
+        ; 6. Read (and discard) Y axis low byte.
 as_6:
-        mov     _accel_y_low, _W2DAT
+        mov     a, _W2DAT
         mov     _accel_state, #(as_7 - as_1)
         sjmp    as_ret
 
         ; 7. Read Y axis high byte.
 as_7:
-        mov     _accel_y_high, _W2DAT
+        mov     _accel_y, _W2DAT
         mov     _accel_state, #(as_8 - as_1)
         sjmp    as_ret
 
-        ; 8. Read Z axis low byte.
+        ; 8. Read (and discard) Z axis low byte.
         ; This is the second-to-last byte, so we queue a Stop condition.
 as_8:
-        mov     _accel_z_low, _W2DAT
+        mov     a, _W2DAT
         orl     _W2CON0, #W2CON0_STOP ; stopping after last read below for now
         mov     _accel_state, #(as_9 - as_1)
         sjmp    as_ret
 
-        ; 9. Read Z axis high byte. In rapid succession, store both axes and set the change flag
-        ;    if necessary. This minimizes the chances of ever sending one old axis and
-        ;    one new axis. In fact, since this interrupt is higher priority than the
-        ;    RF interrupt, we are guaranteed to send synchronized updates of both axes.
+        ; 9. Read Z axis high byte.
+        ;
+        ; In rapid succession, store both axes and set the change flag
+        ; if necessary. This minimizes the chances of ever sending one old axis and
+        ; one new axis. In fact, since this interrupt is higher priority than the
+        ; RF interrupt, we are guaranteed to send synchronized updates of both axes.
 as_9:
 
         mov     a, _W2DAT
-        ; eh...just stuffing X and & values in for now. need to decide how to
-        ; reformat the RF ACK packet now that we have 3 axes & 16 bit values
-        mov     a, _accel_x_high
-        ; orl     _W2CON0, #W2CON0_STOP
-
-        xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 2)
         jz      1$
-        xrl     (_ack_data + RF_ACK_ACCEL + 0), a
-        orl     _ack_len, #RF_ACK_LEN_ACCEL
+        xrl     (_ack_data + RF_ACK_ACCEL + 2), a
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
 1$:
 
-        mov     a, _accel_y_high
+        mov     a, _accel_y
         xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
         jz      2$
         xrl     (_ack_data + RF_ACK_ACCEL + 1), a
-        orl     _ack_len, #RF_ACK_LEN_ACCEL
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
 2$:
+
+        mov     a, _accel_x
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
+        jz      3$
+        xrl     (_ack_data + RF_ACK_ACCEL + 0), a
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+3$:
 
         mov     _accel_state, #0
         sjmp    as_ret
@@ -394,11 +394,11 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ; Okay! We are actually making a difference here. Update the neighbor
         ; bits in the ACK packet (leaving the other bits alone) and mark
-        ; the ack_len flags.
+        ; the ack_bits.
 
         xrl     a, @r0
         mov     @r0, a
-        orl     _ack_len, #RF_ACK_LEN_NEIGHBOR
+        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
 
 5$:     ; Loop to the next side
 
@@ -411,25 +411,25 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
 4$:
 
-		;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
         ; Touch sensing
         ;--------------------------------------------------------------------
 
-		mov a, _MISC_PORT
-		anl a, #MISC_TOUCH
-		cjne a, #MISC_TOUCH, 6$
-		
-		jb _touch, 8$	
-		setb _touch
-		sjmp 7$
+        mov     a, _MISC_PORT
+        anl     a, #MISC_TOUCH
+        cjne    a, #MISC_TOUCH, 6$
+        
+        jb      _touch, 8$   
+        setb    _touch
+        sjmp    7$
 6$:
-		jnb _touch, 8$
-		clr _touch
-7$:	
+        jnb     _touch, 8$
+        clr     _touch
+7$: 
 
-		xrl (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
-		orl _ack_len, #RF_ACK_LEN_NEIGHBOR
-		
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
+        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
+        
 8$:
         ;--------------------------------------------------------------------
         ; Tick tock.. this is not latency-critical at all, it goes last.

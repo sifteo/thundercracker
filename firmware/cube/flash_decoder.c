@@ -151,9 +151,12 @@ void flash_handle_fifo(void)
         flash_fifo_head = 0;
         flash_init();
 
+        /*
+         * Flash reset must send back a full packet, including the HWID.
+         */
         __asm
-            inc (_ack_data + RF_ACK_FLASH_FIFO)
-            mov _ack_len, #RF_ACK_LEN_MAX
+            inc     (_ack_data + RF_ACK_FLASH_FIFO)
+            orl     _ack_bits, #RF_ACK_BIT_HWID
         __endasm ;
 
         return;
@@ -194,7 +197,7 @@ void flash_handle_fifo(void)
 
     __asm
         inc     (_ack_data + RF_ACK_FLASH_FIFO)
-        mov     _ack_len, #RF_ACK_LEN_MAX
+        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
     __endasm ;
 
     __asm

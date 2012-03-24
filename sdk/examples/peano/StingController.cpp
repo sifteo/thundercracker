@@ -1,113 +1,73 @@
 #include "StingController.h"
+#include "AudioPlayer.h"
+#include "assets.gen.h"
 
 namespace TotalsGame 
 {
-
-
-void StingController::EventHandler::OnCubeTouch(TotalsCube *cube, bool touching)
+namespace StingController
 {
-    if(!touching)
-        owner->Skip();
+
+bool gotTouchOn=false;
+bool skip = false;
+
+void OnCubeTouch(void*, _SYSCubeID cid)
+{
+    if(Game::cubes[cid].touching())
+        gotTouchOn = true;
+    else if(gotTouchOn) //touch off now, but got touch on before
+        skip = true;
 }
 
-void StingController::EventHandler::OnCubeShake(TotalsCube *cube)
+void OnCubeShake(void*, _SYSCubeID cid)
 {
-    owner->Skip();
+    skip = true;
 }
 
-StingController::StingController(Game *game)
+void Run()
 {
-    for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
-    {
-        eventHandlers[i].owner = this;
-    }
 
-    mGame = game;
-}
-
-//IStateController
-
-void StingController::OnSetup ()
-{
-    CORO_RESET;
-
-    //TODO
+    //TODO lost and found
     //mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
     //mGame.CubeSet.NewCubeEvent += delegate { Skip(); };
-}
 
-void StingController::Skip()
-{
-    mGame->sceneMgr.QueueTransition("Next");
-}
-
-float StingController::Coroutine(float dt)
-{
-
-    static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
-
-    CORO_BEGIN;
-
-    for( i = 0; i < Game::NUMBER_OF_CUBES; i++)
+    for(int i = 0; i < NUM_CUBES; i++)
     {
-        new(blankViewBuffer[i]) BlankView(&Game::GetInstance().cubes[i], NULL);
-        Game::GetCube(i)->AddEventHandler(&eventHandlers[i]);
+        Game::cubes[i].Image(Skin_Default_VaultDoor, Vec2(0,0));
+    }
+    System::paint();
+
+    PLAY_SFX(sfx_Stinger_02);
+
+    for(int i = 0; i < NUM_CUBES; i++)
+    {
+        Game::cubes[i].OpenShuttersToReveal(Title);
     }
 
-    CORO_YIELD(0.1f);
-    AudioPlayer::PlaySfx(sfx_Stinger_02);
+    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
+    void *oldShake = _SYS_getVectorHandler(_SYS_CUBE_SHAKE);
 
-    for(i = 0; i < Game::NUMBER_OF_CUBES; i++)
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+
+    gotTouchOn = false;
+    skip = false;
+
+    SystemTime t = SystemTime::now() + 3.0f;
+    while(!skip && t > SystemTime::now())
     {
-        float dt;
-        while((dt=Game::GetCube(i)->OpenShutters(&Title)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
-        ((BlankView*)Game::GetCube(i)->GetView())->SetImage(&Title);
-        CORO_YIELD(0);
+        System::paint();
     }
 
-    CORO_YIELD(3.0);
+    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, oldShake, NULL);
 
-    for(i = 0; i < Game::NUMBER_OF_CUBES; i++)
+    for(int i = 0; i < NUM_CUBES; i++)
     {
-        float dt;
-        while((dt=Game::GetCube(i)->CloseShutters(&Title)) >= 0)
-        {
-            CORO_YIELD(dt);
-        }
-        ((BlankView*)Game::GetCube(i)->GetView())->SetImage(NULL);
-        CORO_YIELD(0);
+        Game::cubes[i].CloseShutters();
     }
 
-    CORO_YIELD(0.5f);
-
-    mGame->sceneMgr.QueueTransition("Next");
-
-    CORO_END
-
-            return -1;
-}
-
-void StingController::OnTick (float dt)
-{
-    UPDATE_CORO(Coroutine, dt);
-    Game::UpdateCubeViews(dt);
-}
-
-void StingController::OnPaint (bool canvasDirty)
-{
-    if (canvasDirty) { View::PaintViews(Game::GetInstance().cubes, Game::NUMBER_OF_CUBES); }
-}
-
-void StingController::OnDispose ()
-{
-    //TODO purge pending events?
-    Game::ClearCubeEventHandlers();
-    Game::ClearCubeViews();
-
+    Game::Wait(0.5f);
 }
 
 }
-
+}
