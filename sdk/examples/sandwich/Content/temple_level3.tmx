@@ -527,7 +527,7 @@
   </tile>
  </tileset>
  <tileset firstgid="137" name="temple" tilewidth="16" tileheight="16">
-  <image source="temple_background.png" trans="ff00ff" width="128" height="448"/>
+  <image source="temple.png" trans="ff00ff" width="128" height="448"/>
   <tile id="0">
    <properties>
     <property name="wall" value=""/>
@@ -926,6 +926,11 @@
   <object name="temple_level2Gate" type="Gateway" x="723" y="563" width="32" height="32">
    <properties>
     <property name="target" value="temple_level2:temple_level3Gate"/>
+   </properties>
+  </object>
+  <object name="temple_level1Gate" type="Gateway" x="431" y="864" width="32" height="32">
+   <properties>
+    <property name="target" value="temple_level1:temple_level3Gate"/>
    </properties>
   </object>
  </objectgroup>
