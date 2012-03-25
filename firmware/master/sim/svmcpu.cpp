@@ -5,7 +5,6 @@
 
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "svmdebug.h"
 #include "macros.h"
 #include "machine.h"
 
@@ -272,7 +271,7 @@ static void emulateFault(FaultCode code)
     saveUserRegs();
 
     // Faults occur inside exception context too, just like SVCs.
-    SvmDebug::fault(code);
+    SvmRuntime::fault(code);
 
     restoreUserRegs();
     emulateExitException();

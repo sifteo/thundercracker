@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include "svm.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "elfdefs.h"
@@ -13,6 +13,7 @@
 #include "logdecoder.h"
 #include "gdbserver.h"
 #include "tinythread.h"
+#include "tasks.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
@@ -23,8 +24,8 @@ static struct DebuggerMailbox {
 
     uint32_t cmdWords;
     uint32_t replyWords;
-    uint32_t cmd[SvmDebuggerMsg::MAX_CMD_WORDS];
-    uint32_t reply[SvmDebuggerMsg::MAX_REPLY_WORDS];
+    uint32_t cmd[Debugger::MAX_CMD_WORDS];
+    uint32_t reply[Debugger::MAX_REPLY_WORDS];
 } gDebuggerMailbox;
 
 
@@ -54,7 +55,7 @@ static const char* faultStr(FaultCode code)
     }
 }
     
-void SvmDebug::fault(FaultCode code)
+void SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     std::string pcName = formatAddress(pcVA);
@@ -107,10 +108,9 @@ void SvmDebug::fault(FaultCode code)
     }
 
     LOG(("***\n"));
-    SvmRuntime::exit();
 }
 
-uint32_t *SvmDebug::logReserve(SvmLogTag tag)
+uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
 {
     // On real hardware, we'll be writing directly into a USB ring buffer.
     // On simulation, we can just stow the parameters in a temporary global
@@ -120,7 +120,7 @@ uint32_t *SvmDebug::logReserve(SvmLogTag tag)
     return buffer;
 }
 
-void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
+void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 {
     // On real hardware, log decoding would be deferred to the host machine.
     // In simulation, we can decode right away. Note that we use the raw Flash
@@ -131,17 +131,17 @@ void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
     ASSERT(decodedSize == bytes);
 }
 
-std::string SvmDebug::formatAddress(uint32_t address)
+std::string SvmDebugPipe::formatAddress(uint32_t address)
 {
     return gELFDebugInfo.formatAddress(address);
 }
 
-std::string SvmDebug::formatAddress(void *address)
+std::string SvmDebugPipe::formatAddress(void *address)
 {
     return gELFDebugInfo.formatAddress(SvmMemory::physToVirtRAM((uint8_t*)address));
 }
 
-bool SvmDebug::debuggerMsgAccept(SvmDebug::DebuggerMsg &msg)
+bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
 {
     /*
      * First half of handling a debugger message: If a message
@@ -165,7 +165,7 @@ bool SvmDebug::debuggerMsgAccept(SvmDebug::DebuggerMsg &msg)
     return true;
 }
 
-void SvmDebug::debuggerMsgFinish(SvmDebug::DebuggerMsg &msg)
+void SvmDebugPipe::debuggerMsgFinish(SvmDebugPipe::DebuggerMsg &msg)
 {
     /*
      * Finish handling a debugger message. Must be paired with any
@@ -196,6 +196,9 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     DebuggerMailbox &mbox = gDebuggerMailbox;
     tthread::lock_guard<tthread::mutex> guard(mbox.m);
 
+    // If the target isn't already stopped, raise an async breakpoint.
+    Tasks::setPending(Tasks::DebuggerBreakpoint);
+
     // Post the command
     mbox.replyWords = EMPTY;
     mbox.cmdWords = cmdWords;
@@ -215,7 +218,7 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     return replyWords;
 }
 
-void SvmDebug::setSymbolSourceELF(const FlashRange &elf)
+void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
 {
     gELFDebugInfo.init(elf);
     GDBServer::setDebugInfo(&gELFDebugInfo);

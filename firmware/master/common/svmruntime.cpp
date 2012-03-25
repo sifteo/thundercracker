@@ -8,7 +8,7 @@
 #include "flashlayer.h"
 #include "svm.h"
 #include "svmmemory.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 #include "event.h"
 #include "tasks.h"
 
@@ -56,7 +56,7 @@ void SvmRuntime::run(uint16_t appId)
     
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
-    SvmDebug::setSymbolSourceELF(elf);
+    SvmDebugPipe::setSymbolSourceELF(elf);
 
     // Initialize rodata segment
     SvmMemory::setFlashSegment(pInfo.rodata.data);
@@ -85,7 +85,18 @@ void SvmRuntime::run(uint16_t appId)
 
 void SvmRuntime::exit()
 {
-    ASSERT(0 && "Not yet implemented");
+    // XXX - Temporary
+
+#ifdef SIFTEO_SIMULATOR
+    ::exit(0);
+#endif
+    while (1);
+}
+
+void SvmRuntime::fault(FaultCode code)
+{
+    SvmDebugPipe::fault(code);
+    exit();
 }
 
 void SvmRuntime::call(reg_t addr)
@@ -185,7 +196,7 @@ void SvmRuntime::ret()
         SvmMemory::PhysAddr fpPA;
         if (fpVA) {
             if (!SvmMemory::mapRAM(fpVA, sizeof(CallFrame), fpPA)) {
-                SvmDebug::fault(F_RETURN_FRAME);
+                SvmRuntime::fault(F_RETURN_FRAME);
                 return;
             }
         } else {
@@ -244,7 +255,7 @@ void SvmRuntime::svc(uint8_t imm8)
             validate(SvmCpu::reg(r));
             break;
         case 0x1d:  // 0b11101
-            SvmDebug::fault(F_RESERVED_SVC);
+            SvmRuntime::fault(F_RESERVED_SVC);
             break;
         case 0x1e:  // 0b11110
             call(SvmCpu::reg(r));
@@ -253,7 +264,7 @@ void SvmRuntime::svc(uint8_t imm8)
             tailcall(SvmCpu::reg(r));
             break;
         default:
-            SvmDebug::fault(F_RESERVED_SVC);
+            SvmRuntime::fault(F_RESERVED_SVC);
             break;
         }
     }
@@ -296,7 +307,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
     }
     else {
-        SvmDebug::fault(F_RESERVED_SVC);
+        SvmRuntime::fault(F_RESERVED_SVC);
     }
 }
 
@@ -308,7 +319,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
         break;
     case 1:
         if (!SvmMemory::preload(address))
-            SvmDebug::fault(F_PRELOAD_ADDRESS);
+            SvmRuntime::fault(F_PRELOAD_ADDRESS);
         break;
     case 2:
         validate(address);
@@ -323,7 +334,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
         longLDRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
     default:
-        SvmDebug::fault(F_RESERVED_ADDROP);
+        SvmRuntime::fault(F_RESERVED_ADDROP);
         break;
     }
 }
@@ -357,12 +368,12 @@ void SvmRuntime::syscall(unsigned num)
     };
 
     if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
-        SvmDebug::fault(F_BAD_SYSCALL);
+        SvmRuntime::fault(F_BAD_SYSCALL);
         return;
     }
     SvmSyscall fn = SyscallTable[num];
     if (!fn) {
-        SvmDebug::fault(F_BAD_SYSCALL);
+        SvmRuntime::fault(F_BAD_SYSCALL);
         return;
     }
 
@@ -420,10 +431,10 @@ reg_t SvmRuntime::mapSP(reg_t addr)
     SvmMemory::PhysAddr pa;
 
     if (!SvmMemory::mapRAM(addr, 0, pa))
-        SvmDebug::fault(F_BAD_STACK);
+        SvmRuntime::fault(F_BAD_STACK);
 
     if (pa < stackLimit)
-        SvmDebug::fault(F_STACK_OVERFLOW);
+        SvmRuntime::fault(F_STACK_OVERFLOW);
 
     return reinterpret_cast<reg_t>(pa);
 }
@@ -438,7 +449,7 @@ reg_t SvmRuntime::mapBranchTarget(reg_t addr)
     SvmMemory::PhysAddr pa;
 
     if (!SvmMemory::mapROCode(codeBlock, addr, pa))
-        SvmDebug::fault(F_BAD_CODE_ADDRESS);
+        SvmRuntime::fault(F_BAD_CODE_ADDRESS);
 
     return reinterpret_cast<reg_t>(pa);
 }
@@ -454,7 +465,7 @@ void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
         SvmCpu::setReg(reg, *reinterpret_cast<uint32_t*>(pa));
     else
-        SvmDebug::fault(F_LONG_STACK_LOAD);
+        SvmRuntime::fault(F_LONG_STACK_LOAD);
 }
 
 void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
@@ -468,5 +479,5 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
         *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
     else
-        SvmDebug::fault(F_LONG_STACK_STORE);
+        SvmRuntime::fault(F_LONG_STACK_STORE);
 }

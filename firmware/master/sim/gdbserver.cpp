@@ -6,8 +6,10 @@
 #include "gdbserver.h"
 #include "macros.h"
 #include "elfdebuginfo.h"
+#include "svmdebugpipe.h"
 #include <string.h>
 #include <stdio.h>
+using namespace Svm;
 
 #define LOG_PREFIX  "GDB Server: "
 
@@ -408,11 +410,11 @@ bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
     // multiple reply-buffer-sized chunks.
 
     while (bytes) {
-        uint32_t chunk = MIN(bytes, SvmDebuggerMsg::MAX_REPLY_BYTES);
-        if ((addr & SvmDebuggerMsg::M_ARG_MASK) != addr)
+        uint32_t chunk = MIN(bytes, Debugger::MAX_REPLY_BYTES);
+        if ((addr & Debugger::M_ARG_MASK) != addr)
             return false;
 
-        msgCmd[0] = SvmDebuggerMsg::M_READ_RAM | addr;
+        msgCmd[0] = Debugger::M_READ_RAM | addr;
         msgCmd[1] = chunk;
         if (message(2) * sizeof(uint32_t) < chunk)
             return false;

@@ -7,7 +7,7 @@
 #define LOG_DECODER_H
 
 #include "elfdebuginfo.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 
 class LogDecoder {
 public:

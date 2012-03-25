@@ -193,7 +193,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
         // Print a string from the log buffer
         case _SYS_LOGTYPE_STRING: {
             uint32_t bytes = MIN(tag.getParam(), sizeof outBuffer);
-            ASSERT(bytes <= SvmDebug::LOG_BUFFER_BYTES);
+            ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
             memcpy(outBuffer, buffer, bytes);
             outBuffer[bytes] = '\0';
             LOG(("%s", outBuffer));
@@ -203,7 +203,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
         // Fixed width hex-dump
         case _SYS_LOGTYPE_HEXDUMP: {
             uint32_t bytes = tag.getParam();
-            ASSERT(bytes <= SvmDebug::LOG_BUFFER_BYTES);
+            ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
             for (unsigned i = 0; i != bytes; i++)
                 LOG(("%02x ", ((uint8_t*)buffer)[i]));
             return bytes;

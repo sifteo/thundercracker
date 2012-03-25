@@ -7,7 +7,7 @@
 #define GDB_SERVER_H
 
 #include <stdint.h>
-#include "svmdebug.h"
+#include "svm.h"
 #include "tinythread.h"
 
 class ELFDebugInfo;
@@ -43,8 +43,8 @@ private:
     char txBuffer[2048];
     char rxPacket[1024];
 
-    uint32_t msgCmd[SvmDebuggerMsg::MAX_CMD_WORDS];
-    uint32_t msgReply[SvmDebuggerMsg::MAX_REPLY_WORDS];
+    uint32_t msgCmd[Svm::Debugger::MAX_CMD_WORDS];
+    uint32_t msgReply[Svm::Debugger::MAX_REPLY_WORDS];
 
     static void threadEntry(void *param);
     void threadMain();

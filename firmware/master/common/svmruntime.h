@@ -25,6 +25,9 @@ public:
 
     // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);
+    
+    // Fault handler; Forwards the fault to our debug subsystem, then exits.
+    static void fault(FaultCode code);
 
     /**
      * Call Event::Dispatch() on our way out of the next svc(). Events can't

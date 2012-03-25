@@ -592,6 +592,7 @@ void *_SYS_lti_initializer(void *value);
 #  define _NORET    __attribute__ ((noreturn))
 #endif
 
+void _SYS_breakpoint(void) _SC(0);
 void _SYS_abort(void) _SC(1) _NORET;
 void _SYS_exit(void) _SC(64) _NORET;
 

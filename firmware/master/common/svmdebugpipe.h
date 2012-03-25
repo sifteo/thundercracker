@@ -4,14 +4,12 @@
  */
 
 /*
- * Debug support for SVM. On the simulator, these implementations can be
- * luxurious and spacious. On real hardware, we want to minimally proxy debug
- * state to and from the host machine over USB, where we offload as much work
- * as possible.
+ * Debugger bridge for SVM. This is the connection between debug-related
+ * stubs in the SVM runtime, and a host system.
  */
 
-#ifndef SVM_DEBUG_H
-#define SVM_DEBUG_H
+#ifndef SVM_DEBUGPIPE_H
+#define SVM_DEBUGPIPE_H
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -24,36 +22,6 @@
 #endif
 
 using namespace Svm;
-
-
-/**
- * Debugger messages are command/response pairs which are sent from a
- * host to the SVM runtime. All debugger messages are formatted as a
- * bounded-length packet made up of 32-bit words.
- */
-
-namespace SvmDebuggerMsg {
-    /*
-     * Symmetric maximum lengths. Long enough for all 14 registers plus a
-     * command word. Leaves room for one header word before we fill up a
-     * 64-byte USB packet.
-     */
-    const uint32_t MAX_CMD_WORDS = 15;
-    const uint32_t MAX_REPLY_WORDS = 15;
-
-    const uint32_t MAX_CMD_BYTES = MAX_CMD_WORDS * sizeof(uint32_t);
-    const uint32_t MAX_REPLY_BYTES = MAX_REPLY_WORDS * sizeof(uint32_t);
-
-    enum MessageTypes {
-        M_TYPE_MASK         = 0xff000000,
-        M_ARG_MASK          = 0x00ffffff,
-
-        M_READ_REGISTERS    = 0x01000000,  // [] -> [r0-r9, FP, SP, PC, CPSR]
-        M_WRITE_REGISTERS   = 0x02000000,  // [r0-r9, FP, SP, PC, CPSR] -> []
-        M_READ_RAM          = 0x03000000,  // arg=address, [byteCount] -> [bytes]
-        M_WRITE_RAM         = 0x04000000,  // arg=address, [bytes] -> []
-    };
-};
 
 
 /**
@@ -93,9 +61,9 @@ private:
  * Debugging interfaces between the SVM runtime and the outside world
  */
 
-class SvmDebug {
+class SvmDebugPipe {
 public:
-    SvmDebug();    // Do not implement
+    SvmDebugPipe();    // Do not implement
 
     static const unsigned LOG_BUFFER_WORDS = 7;
     static const unsigned LOG_BUFFER_BYTES = LOG_BUFFER_WORDS * sizeof(uint32_t);
@@ -145,4 +113,4 @@ public:
 };
 
 
-#endif // SVM_DEBUG_H
+#endif // SVM_DEBUGPIPE_H

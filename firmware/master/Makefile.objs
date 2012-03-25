@@ -26,6 +26,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/svmmemory.o \
+    $(MASTER_DIR)/common/svmdebugger.o \
     $(MASTER_DIR)/common/assetmanager.o \
     $(MASTER_DIR)/common/elfutil.o
 
@@ -37,7 +38,7 @@ OBJS_SIM = \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
     $(MASTER_DIR)/sim/svmcpu.sim.o \
-    $(MASTER_DIR)/sim/svmdebug.sim.o \
+    $(MASTER_DIR)/sim/svmdebugpipe.sim.o \
 	$(MASTER_DIR)/sim/elfdebuginfo.sim.o \
 	$(MASTER_DIR)/sim/logdecoder.sim.o \
     $(MASTER_DIR)/sim/gdbserver.sim.o \
@@ -67,4 +68,4 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/rctimer.stm32.o \
     $(MASTER_DIR)/stm32/usb.stm32.o \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
-    $(MASTER_DIR)/stm32/svmdebug.stm32.o
+    $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o
