@@ -3,16 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "gdbserver.h"
-#include "macros.h"
-#include "elfdebuginfo.h"
-#include "svmdebugpipe.h"
-#include <string.h>
-#include <stdio.h>
-using namespace Svm;
-
-#define LOG_PREFIX  "GDB Server: "
-
+// Must be before other headers
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   define WINVER WindowsXP
@@ -30,7 +21,18 @@ using namespace Svm;
 #   include <netdb.h>
 #   include <unistd.h>
 #   include <errno.h>
+#   define closesocket(_s) close(_s)
 #endif
+
+#include "gdbserver.h"
+#include "macros.h"
+#include "elfdebuginfo.h"
+#include "svmdebugpipe.h"
+#include <string.h>
+#include <stdio.h>
+using namespace Svm;
+
+#define LOG_PREFIX  "GDB Server: "
 
 GDBServer GDBServer::instance;
 
@@ -122,10 +124,10 @@ void GDBServer::threadMain()
         handleClient();
         fprintf(stderr, LOG_PREFIX "Client disconnected\n");
 
-        close(clientFD);
+        closesocket(clientFD);
     }
     
-    close(listenFD);
+    closesocket(listenFD);
 }
 
 void GDBServer::handleClient()
