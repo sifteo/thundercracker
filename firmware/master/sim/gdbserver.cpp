@@ -310,6 +310,14 @@ void GDBServer::txHexByte(uint8_t byte)
     txByte(digitToHex(byte));
 }
 
+void GDBServer::txHexWord(uint32_t word)
+{
+    txHexByte(word >> 24);
+    txHexByte(word >> 16);
+    txHexByte(word >> 8);
+    txHexByte(word >> 0);
+}
+
 void GDBServer::txString(const char *str)
 {
     char c;
@@ -344,7 +352,7 @@ void GDBServer::handlePacket()
     switch (rxPacket[0])
     {
         case 'q': {
-            if (packetStartsWith("qSupported")) return txPacketString("PacketSize=512");
+            if (packetStartsWith("qSupported")) return txPacketString("PacketSize=200");
             if (packetStartsWith("qOffsets"))   return txPacketString("Text=0;Data=0;Bss=0");
             break;
         }
@@ -356,12 +364,19 @@ void GDBServer::handlePacket()
 
         case 'g': {
             // Read registers
-            return txPacketString("00000000");
+            txPacketBegin();
+            msgCmd[0] = Debugger::M_READ_REGISTERS;
+            if (message(1) >= 14) {
+                // General purpose
+                for (unsigned i = 0; i < 1; i++)
+                    txHexWord(i);
+            }
+            return txPacketEnd();
         }
 
         case 'G': {
             // Write registers
-            return txPacketString("OK");
+            return txPacketEnd();
         }
 
         case 'm': {

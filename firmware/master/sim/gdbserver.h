@@ -64,6 +64,7 @@ private:
     void txPacketEnd();
     void txPacketString(const char *str);
     void txHexByte(uint8_t byte);
+    void txHexWord(uint32_t word);
 
     static char digitToHex(int i);
     static int digitFromHex(char c);

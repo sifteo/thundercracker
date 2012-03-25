@@ -13,13 +13,25 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "svm.h"
-using namespace Svm;
+#include "svmdebugpipe.h"
+
 
 class SvmDebugger {
 public:
-    SvmDebugger();  // Do not implement
-    
     static void handleBreakpoint(void *param=0);
+
+private:
+    SvmDebugger() {}
+    static SvmDebugger instance;
+
+    bool stopped;
+
+    void handleMessage(SvmDebugPipe::DebuggerMsg &msg);
+
+    void readRegisters(SvmDebugPipe::DebuggerMsg &msg);
+    void writeRegisters(SvmDebugPipe::DebuggerMsg &msg);
+    void readRAM(SvmDebugPipe::DebuggerMsg &msg);
+    void writeRAM(SvmDebugPipe::DebuggerMsg &msg);
 };
 
 #endif // SVM_DEBUGGER_H

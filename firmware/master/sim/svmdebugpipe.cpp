@@ -79,8 +79,7 @@ void SvmDebugPipe::fault(FaultCode code)
          SvmMemory::isAddrValid(SvmCpu::reg(REG_PC)) ? "" : " (INVALID)",
          pcName.c_str(),
 
-         (unsigned)SvmMemory::physToVirtRAM(
-             reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
+         (unsigned)SvmMemory::physToVirtRAM(SvmCpu::reg(REG_SP)),
          reinterpret_cast<void*>(SvmCpu::reg(REG_SP)),
          SvmMemory::isAddrValid(SvmCpu::reg(REG_SP)) ? "" : " (INVALID)",
 
@@ -160,6 +159,7 @@ bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
     msg.cmd = mbox.cmd;
     msg.reply = mbox.reply;
     msg.cmdWords = mbox.cmdWords;
+    msg.replyWords = 0;
 
     // Leave mbox.m locked.
     return true;
@@ -207,7 +207,7 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     // Wait for a reply
     do {
         mbox.cond.wait(mbox.m);
-    } while (mbox.replyWords != EMPTY);
+    } while (mbox.replyWords == EMPTY);
 
     // Free the buffer
     mbox.cmdWords = 0;
