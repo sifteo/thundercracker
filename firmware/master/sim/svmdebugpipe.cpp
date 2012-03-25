@@ -196,13 +196,13 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     DebuggerMailbox &mbox = gDebuggerMailbox;
     tthread::lock_guard<tthread::mutex> guard(mbox.m);
 
-    // If the target isn't already stopped, raise an async breakpoint.
-    Tasks::setPending(Tasks::DebuggerBreakpoint);
-
     // Post the command
     mbox.replyWords = EMPTY;
     mbox.cmdWords = cmdWords;
     memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
+
+    // If the target isn't already stopped, raise an async breakpoint.
+    Tasks::setPending(Tasks::DebuggerBreakpoint);
 
     // Wait for a reply
     do {

@@ -22,20 +22,21 @@ SvmDebugger SvmDebugger::instance;
 
 void SvmDebugger::handleBreakpoint(void *param)
 {
-    LOG((LOG_PREFIX "Hit breakpoint\n"));
-
     do {
         SvmDebugPipe::DebuggerMsg msg;
         
-        while (!SvmDebugPipe::debuggerMsgAccept(msg))
+        while (!SvmDebugPipe::debuggerMsgAccept(msg)) {
+            // No command is waiting. If we're halted, block
+            // until we get a command. If not, return immediately.            
+            if (!instance.stopped)
+                return;
             Radio::halt();
+        }
 
         instance.handleMessage(msg);
         SvmDebugPipe::debuggerMsgFinish(msg);
 
     } while (instance.stopped);
-
-    LOG((LOG_PREFIX "Resuming\n"));
 }
 
 void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
@@ -56,8 +57,11 @@ void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
     switch (msg.cmd[0] & M_TYPE_MASK) {
         case M_READ_REGISTERS:      return readRegisters(msg);
         case M_WRITE_REGISTERS:     return writeRegisters(msg);
+        case M_WRITE_SINGLE_REG:    return writeSingleReg(msg);
         case M_READ_RAM:            return readRAM(msg);
         case M_WRITE_RAM:           return writeRAM(msg);
+        case M_CONTINUE:            stopped = false; return;
+        case M_STOP:                stopped = true; return;
     }
 
     LOG((LOG_PREFIX "Unhandled command 0x%08x\n", msg.cmd[0]));
@@ -80,8 +84,25 @@ void SvmDebugger::writeRegisters(SvmDebugPipe::DebuggerMsg &msg)
 {
 }
 
+void SvmDebugger::writeSingleReg(SvmDebugPipe::DebuggerMsg &msg)
+{
+}
+
 void SvmDebugger::readRAM(SvmDebugPipe::DebuggerMsg &msg)
 {
+    SvmMemory::VirtAddr va = msg.cmd[0] & M_ARG_MASK;
+    SvmMemory::PhysAddr pa;
+    uint32_t length = msg.cmd[1];
+
+    if (msg.cmdWords < 2 || length > MAX_REPLY_WORDS * sizeof(uint32_t)) {
+        LOG((LOG_PREFIX "Malformed READ_RAM command\n"));
+        return;
+    }
+
+    if (SvmMemory::mapRAM(va, length, pa)) {
+        memcpy(msg.reply, pa, length);
+        msg.replyWords = (length + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+    }
 }
 
 void SvmDebugger::writeRAM(SvmDebugPipe::DebuggerMsg &msg)

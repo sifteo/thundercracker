@@ -73,8 +73,11 @@ namespace Debugger {
 
         M_READ_REGISTERS    = 0x01000000,  // [] -> [r0-r9, FP, SP, PC, CPSR]
         M_WRITE_REGISTERS   = 0x02000000,  // [r0-r9, FP, SP, PC, CPSR] -> []
-        M_READ_RAM          = 0x03000000,  // arg=address, [byteCount] -> [bytes]
-        M_WRITE_RAM         = 0x04000000,  // arg=address, [bytes] -> []
+        M_WRITE_SINGLE_REG  = 0x03000000,  // arg=reg, [value] -> []
+        M_READ_RAM          = 0x04000000,  // arg=address, [byteCount] -> [bytes]
+        M_WRITE_RAM         = 0x05000000,  // arg=address, [bytes] -> []
+        M_CONTINUE          = 0x06000000,
+        M_STOP              = 0x07000000,
     };
 };
 

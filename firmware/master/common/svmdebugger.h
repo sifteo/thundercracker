@@ -30,6 +30,7 @@ private:
 
     void readRegisters(SvmDebugPipe::DebuggerMsg &msg);
     void writeRegisters(SvmDebugPipe::DebuggerMsg &msg);
+    void writeSingleReg(SvmDebugPipe::DebuggerMsg &msg);
     void readRAM(SvmDebugPipe::DebuggerMsg &msg);
     void writeRAM(SvmDebugPipe::DebuggerMsg &msg);
 };

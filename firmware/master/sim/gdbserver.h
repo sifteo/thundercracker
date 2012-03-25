@@ -69,6 +69,8 @@ private:
     static char digitToHex(int i);
     static int digitFromHex(char c);
     
+    void debugBreak();
+    void replyToRegisterRead();
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
 };
 

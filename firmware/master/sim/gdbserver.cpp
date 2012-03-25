@@ -145,6 +145,9 @@ void GDBServer::handleClient()
 
     resetPacketState();
 
+    // On connect, GDB assumes we're already stopped
+    debugBreak();
+
     while (1) {
         char rxBuffer[4096];
         int ret = recv(clientFD, rxBuffer, sizeof rxBuffer, 0);
@@ -222,6 +225,10 @@ void GDBServer::rxBytes(char *bytes, int len)
             if (byte == '$') {
                 resetPacketState();
                 packetState = S_PAYLOAD;
+            } else if (byte == 0x03) {
+                debugBreak();
+                txByte('+');
+                txPacketString("S02");  // SIGINT
             }
             break;
 
@@ -312,10 +319,10 @@ void GDBServer::txHexByte(uint8_t byte)
 
 void GDBServer::txHexWord(uint32_t word)
 {
-    txHexByte(word >> 24);
-    txHexByte(word >> 16);
-    txHexByte(word >> 8);
     txHexByte(word >> 0);
+    txHexByte(word >> 8);
+    txHexByte(word >> 16);
+    txHexByte(word >> 24);
 }
 
 void GDBServer::txString(const char *str)
@@ -352,7 +359,7 @@ void GDBServer::handlePacket()
     switch (rxPacket[0])
     {
         case 'q': {
-            if (packetStartsWith("qSupported")) return txPacketString("PacketSize=200");
+            if (packetStartsWith("qSupported")) return txPacketString("PacketSize=100");
             if (packetStartsWith("qOffsets"))   return txPacketString("Text=0;Data=0;Bss=0");
             break;
         }
@@ -366,11 +373,8 @@ void GDBServer::handlePacket()
             // Read registers
             txPacketBegin();
             msgCmd[0] = Debugger::M_READ_REGISTERS;
-            if (message(1) >= 14) {
-                // General purpose
-                for (unsigned i = 0; i < 1; i++)
-                    txHexWord(i);
-            }
+            if (message(1) >= 14)
+                replyToRegisterRead();
             return txPacketEnd();
         }
 
@@ -403,6 +407,8 @@ void GDBServer::handlePacket()
 
         case 'c': {
             // Continue
+            msgCmd[0] = Debugger::M_CONTINUE;
+            message(1);
             return;
         }
 
@@ -414,6 +420,13 @@ void GDBServer::handlePacket()
 
     // Unsupported packet; empty reply
     txPacketString("");
+}
+
+void GDBServer::debugBreak()
+{
+    // Handle a ^C, stop the target
+    msgCmd[0] = Debugger::M_STOP;
+    message(1);
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
@@ -442,3 +455,25 @@ bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
 
     return true;
 }
+
+void GDBServer::replyToRegisterRead()
+{
+    // The ARM register packet for GDB has 26 words! Yikes.
+
+    for (unsigned reg = 0; reg < 26; reg++) {
+        if (reg < 10) {
+            // General purpose
+            txHexWord(msgReply[reg]);
+            continue;
+        }
+        
+        switch (reg) {
+            case REG_FP: txHexWord(msgReply[10]); break;
+            case REG_SP: txHexWord(msgReply[11]); break;
+            case REG_PC: txHexWord(msgReply[12]); break;
+            case 25:     txHexWord(msgReply[13]); break;  // CPSR
+            default:     txHexWord(0); break;
+        }
+    }
+}
+
