@@ -22,9 +22,9 @@ enum BuddyId
     BUDDY_GLUV = 0U,
     BUDDY_SULI,
     BUDDY_RIKE,
-    BUDDY_VAMPIRE_DUDE,
-    BUDDY_MUSTACHE_GUY,
-    BUDDY_PINK_GIRL,
+    BUDDY_BOFF,
+    BUDDY_ZORG,
+    BUDDY_MARO,
     
     NUM_BUDDIES,
 };

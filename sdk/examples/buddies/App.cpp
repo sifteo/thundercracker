@@ -32,6 +32,46 @@ namespace Buddies { namespace {
 const int kMaxTilesX = VidMode::LCD_width / VidMode::TILE;
 const int kMaxTilesY = VidMode::LCD_width / VidMode::TILE;
 
+const PinnedAssetImage *kBuddySpritesFront[] =
+{
+    &BuddySpriteFront0,
+    &BuddySpriteFront1,
+    &BuddySpriteFront2,
+    &BuddySpriteFront3,
+    &BuddySpriteFront4,
+    &BuddySpriteFront5,
+};
+
+const PinnedAssetImage *kBuddySpritesLeft[] =
+{
+    &BuddySpriteLeft0,
+    &BuddySpriteLeft1,
+    &BuddySpriteLeft2,
+    &BuddySpriteLeft3,
+    &BuddySpriteLeft4,
+    &BuddySpriteLeft5,
+};
+
+const PinnedAssetImage *kBuddySpritesRight[] =
+{
+    &BuddySpriteRight0,
+    &BuddySpriteRight1,
+    &BuddySpriteRight2,
+    &BuddySpriteRight3,
+    &BuddySpriteRight4,
+    &BuddySpriteRight5,
+};
+
+const AssetImage *kBuddyRibbons[] =
+{
+    &BuddyRibbon0,
+    &BuddyRibbon1,
+    &BuddyRibbon2,
+    &BuddyRibbon3,
+    &BuddyRibbon4,
+    &BuddyRibbon5,
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -271,13 +311,6 @@ void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, bool spriteJump)
         Vec2(maxTilesX + scroll.x, maxTilesY),
         UiCongratulations);
     
-    const PinnedAssetImage *sprites[] =
-    {
-        &BuddySpriteFrontZorg,
-        &BuddySpriteFrontRike,
-        &BuddySpriteFrontGluv,
-    };
-    
     int jump_offset = 8;
     
     cubeWrapper.DrawSprite(
@@ -287,7 +320,7 @@ void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, bool spriteJump)
             spriteJump ?
                 VidMode::LCD_height / 2 - 32 :
                 VidMode::LCD_height / 2 - 32 + jump_offset),
-        *sprites[cubeWrapper.GetId()]);
+        *kBuddySpritesFront[cubeWrapper.GetBuddyId()]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -298,8 +331,8 @@ void DrawCutsceneStory(CubeWrapper &cubeWrapper, const char *text, bool jump0, b
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), BuddySpriteCutsceneGluv);
-    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), BuddySpriteCutsceneRike);
+    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[cubeWrapper.GetBuddyId()]);
+    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesRight[cubeWrapper.GetBuddyId()]);
     
     if (text[0] == '<')
     {
@@ -331,7 +364,8 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, Int2 scroll, bool jump)
     int y = jump ? 28 - jump_offset : 28;
     y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
     
-    cubeWrapper.DrawSprite(0, Vec2(x, y), BuddySpriteFrontGluv);
+    // TODO: Use actual unlocked sprite
+    cubeWrapper.DrawSprite(0, Vec2(x, y), *kBuddySpritesFront[0]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -339,11 +373,13 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, Int2 scroll, bool jump)
 
 void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, Int2 scroll)
 {
+    // TODO: Use actual unlocked sprite
+    
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     cubeWrapper.DrawSprite(
         0,
         Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U),
-        BuddySpriteFrontGluv);
+        *kBuddySpritesFront[0]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2573,31 +2609,34 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
             {
-                int y = mBackgroundScroll.y - UiRibbonGluv.height;
-                int assetOffset = 0;
-                int assetHeight = UiRibbonGluv.height;
+                // TODO: Use unlocked buddy for ribbon
+                const AssetImage &ribbon = *kBuddyRibbons[0];
                 
-                if (mBackgroundScroll.y < int(UiRibbonGluv.height))
+                int y = mBackgroundScroll.y - ribbon.height;
+                int assetOffset = 0;
+                int assetHeight = ribbon.height;
+                
+                if (mBackgroundScroll.y < int(ribbon.height))
                 {
                     y = 0;
-                    assetOffset = UiRibbonGluv.height - mBackgroundScroll.y;
+                    assetOffset = ribbon.height - mBackgroundScroll.y;
                     assetHeight = mBackgroundScroll.y;
                 }
                 else if (mBackgroundScroll.y > kMaxTilesY)
                 {
                     assetOffset = 0;
-                    assetHeight = UiRibbonGluv.height - (mBackgroundScroll.y - kMaxTilesY);
+                    assetHeight = ribbon.height - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
                 DrawUnlocked3Sprite(cubeWrapper, mBackgroundScroll, mCutsceneSpriteJump0);
                 
-                ASSERT(assetOffset >= 0 && assetOffset <  int(UiRibbonGluv.height));
-                ASSERT(assetHeight >  0 && assetHeight <= int(UiRibbonGluv.height));
+                ASSERT(assetOffset >= 0 && assetOffset <  int(ribbon.height));
+                ASSERT(assetHeight >  0 && assetHeight <= int(ribbon.height));
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(0, y),
                     Vec2(0, assetOffset),
                     Vec2(kMaxTilesX, assetHeight),
-                    UiRibbonGluv);
+                    ribbon);
             }
             break;
         }
@@ -2614,11 +2653,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 
                 DrawUnlocked4Sprite(cubeWrapper, mBackgroundScroll);
                 
+                // TODO: Use unlocked buddy for ribbon
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(0, 11),
                     Vec2(-mBackgroundScroll.x, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(UiRibbonGluv.height)),
-                    UiRibbonGluv);
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(kBuddyRibbons[0]->height)),
+                    *kBuddyRibbons[0]);
             }
             
             // Moving on...
@@ -2633,7 +2673,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                         StoryBookStartNext);
                     
                     int x = 32 + (kMaxTilesX + mBackgroundScroll.x) * 8;
-                    cubeWrapper.DrawSprite(1, Vec2(x, 14), BuddySpriteFrontGluv);
+                    
+                    // TODO: Use actual unlocked sprite
+                    cubeWrapper.DrawSprite(1, Vec2(x, 14), *kBuddySpritesFront[0]);
                 }
                 else
                 {
@@ -2661,7 +2703,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 if (HasUnlocked())
                 {
                     cubeWrapper.DrawBackground(StoryBookStartNext);
-                    cubeWrapper.DrawSprite(0, Vec2(32, 14), BuddySpriteFrontGluv);
+                    
+                    // TODO: Use actual unlocked sprite
+                    cubeWrapper.DrawSprite(0, Vec2(32, 14), *kBuddySpritesFront[0]);
                 }
                 else
                 {

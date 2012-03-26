@@ -125,26 +125,26 @@ void InitializePuzzles()
     sPuzzles[sNumPuzzles].AddBuddy(BUDDY_SULI); // BuddyIndex 1: Add Suli as the second buddy
     
     // Start Pieces
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(0, 0)); // BuddyIndex, Side, Piece
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(BUDDY_GLUV, 0)); // BuddyIndex, Side, Piece
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(BUDDY_GLUV, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(BUDDY_GLUV, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(BUDDY_GLUV, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(1, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(1, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(BUDDY_SULI, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(BUDDY_SULI, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(BUDDY_SULI, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(BUDDY_SULI, 3));
     
     // End Pieces
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(BUDDY_GLUV, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(BUDDY_GLUV, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(BUDDY_SULI, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(BUDDY_GLUV, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(1, 3));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(BUDDY_SULI, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(BUDDY_SULI, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(BUDDY_GLUV, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(BUDDY_SULI, 3));   
     
     ++sNumPuzzles;
     
@@ -168,26 +168,26 @@ void InitializePuzzles()
     sPuzzles[sNumPuzzles].AddBuddy(BUDDY_RIKE);
     
     // Start Pieces
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(1, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(1, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(1, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(1, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(BUDDY_SULI, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(BUDDY_SULI, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(BUDDY_SULI, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(BUDDY_SULI, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(2, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(2, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(2, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(2, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(BUDDY_RIKE, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(BUDDY_RIKE, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(BUDDY_RIKE, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(BUDDY_RIKE, 3));
     
     // End Pieces
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(1, 0, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(1, 1, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(1, 2, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(1, 3, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(BUDDY_SULI, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(BUDDY_SULI, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(BUDDY_SULI, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(BUDDY_SULI, 3, true));
     
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(2, 0, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(2, 1, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(2, 2, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(2, 3, true));  
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(BUDDY_RIKE, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(BUDDY_RIKE, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(BUDDY_RIKE, 2, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(BUDDY_RIKE, 3, true));  
     
     ++sNumPuzzles;
     
@@ -207,30 +207,30 @@ void InitializePuzzles()
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_VAMPIRE_DUDE);
-    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_MUSTACHE_GUY);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_BOFF);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_ZORG);
     
     // Start Pieces
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(3, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(3, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(3, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(3, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(BUDDY_BOFF, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(BUDDY_BOFF, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(BUDDY_BOFF, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(BUDDY_BOFF, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(4, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(4, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(4, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(4, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(BUDDY_ZORG, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(BUDDY_ZORG, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(BUDDY_ZORG, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(BUDDY_ZORG, 3));
     
     // End Pieces
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(4, 0, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(3, 1));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(3, 2));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(3, 3));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(BUDDY_ZORG, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(BUDDY_BOFF, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(BUDDY_BOFF, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(BUDDY_BOFF, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(3, 0, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(4, 1));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(4, 2));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(4, 3));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(BUDDY_BOFF, 0, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(BUDDY_ZORG, 1));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(BUDDY_ZORG, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(BUDDY_ZORG, 3));   
     
     ++sNumPuzzles;
     
@@ -250,30 +250,30 @@ void InitializePuzzles()
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
-    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_PINK_GIRL);
+    sPuzzles[sNumPuzzles].AddBuddy(BUDDY_MARO);
     sPuzzles[sNumPuzzles].AddBuddy(BUDDY_GLUV);
     
     // Start Pieces
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(5, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(5, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(5, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(5, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_TOP,    Piece(BUDDY_MARO, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_LEFT,   Piece(BUDDY_MARO, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_BOTTOM, Piece(BUDDY_MARO, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 0, SIDE_RIGHT,  Piece(BUDDY_MARO, 3));
     
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(0, 1));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(0, 3));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_TOP,    Piece(BUDDY_GLUV, 0));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_LEFT,   Piece(BUDDY_GLUV, 1));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_BOTTOM, Piece(BUDDY_GLUV, 2));
+    sPuzzles[sNumPuzzles].SetPieceStart( 1, SIDE_RIGHT,  Piece(BUDDY_GLUV, 3));
     
     // End Pieces
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(5, 0));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(0, 1, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(5, 2));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(0, 3, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_TOP,    Piece(BUDDY_MARO, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_LEFT,   Piece(BUDDY_GLUV, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_BOTTOM, Piece(BUDDY_MARO, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   0, SIDE_RIGHT,  Piece(BUDDY_GLUV, 3, true));
     
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(0, 0));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(5, 1, true));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(0, 2));
-    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(5, 3, true));   
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_TOP,    Piece(BUDDY_GLUV, 0));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_LEFT,   Piece(BUDDY_MARO, 1, true));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_BOTTOM, Piece(BUDDY_GLUV, 2));
+    sPuzzles[sNumPuzzles].SetPieceEnd(   1, SIDE_RIGHT,  Piece(BUDDY_MARO, 3, true));   
     
     ++sNumPuzzles;
     

@@ -1,40 +1,28 @@
 UseSprites = false
 GameAssets = group{quality = 10}
 
--- TOOD: Put each buddy in its own asset group
-
--- Buddy Backgrounds
-BuddyBackground0 = image{"assets/bg1.png"}
-BuddyBackground1 = image{"assets/bg2.png"}
-BuddyBackground2 = image{"assets/bg3.png"}
-BuddyBackground3 = image{"assets/bg4.png"}
-BuddyBackground4 = image{"assets/bg5.png"}
-BuddyBackground5 = image{"assets/bg6.png"}
-
--- Buddy Parts
-if UseSprites then
-    BuddyParts0 = image{"assets/parts1_sprite.png", height = 64, pinned = true}
-    BuddyParts1 = image{"assets/parts2_sprite.png", height = 64, pinned = true}
-    BuddyParts2 = image{"assets/parts3_sprite.png", height = 64, pinned = true}
-    BuddyParts3 = image{"assets/parts4_sprite.png", height = 64, pinned = true}
-    BuddyParts4 = image{"assets/parts5_sprite.png", height = 64, pinned = true}
-    BuddyParts5 = image{"assets/parts6_sprite.png", height = 64, pinned = true}
-else
-    BuddyParts0 = image{"assets/parts1.png", height = 48}
-    BuddyParts1 = image{"assets/parts2.png", height = 48}
-    BuddyParts2 = image{"assets/parts3.png", height = 48}
-    BuddyParts3 = image{"assets/parts4.png", height = 48}
-    BuddyParts4 = image{"assets/parts5.png", height = 48}
-    BuddyParts5 = image{"assets/parts6.png", height = 48}
+function AddBuddy (i, full, bg, parts, partsSprites, front, right, left, ribbon)
+    _G['BuddyFull' .. i] = image{"assets/" .. full .. ".png"}
+    _G['BuddyBackground' .. i] = image{"assets/" .. bg .. ".png"}
+    if UseSprites then
+       _G['BuddyParts' .. i] = image{"assets/" .. partsSprites .. ".png", height = 64, pinned = true}
+    else
+       _G['BuddyParts' .. i] = image{"assets/" .. parts .. ".png", height = 48}
+    end
+    _G['BuddySpriteFront' .. i] = image{"assets/" .. front .. ".png", pinned = true}
+    _G['BuddySpriteRight' .. i] = image{"assets/" .. right .. ".png", pinned = true}
+    _G['BuddySpriteLeft' .. i] = image{"assets/" .. left .. ".png", pinned = true}
+    _G['BuddyRibbon' .. i] = image{"assets/" .. ribbon .. ".png"}
 end
 
--- Buddy Full Faces
-BuddyFull0 = image{"assets/buddy_full_1.png"}
-BuddyFull1 = image{"assets/buddy_full_2.png"}
-BuddyFull2 = image{"assets/buddy_full_3.png"}
-BuddyFull3 = image{"assets/buddy_full_4.png"}
-BuddyFull4 = image{"assets/buddy_full_5.png"}
-BuddyFull5 = image{"assets/buddy_full_6.png"}
+-- TOOD: Put each buddy in its own asset group
+
+AddBuddy(0, "buddy_full_1", "bg1", "parts1", "parts1_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_gluv")
+AddBuddy(1, "buddy_full_2", "bg2", "parts2", "parts2_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_suli")
+AddBuddy(2, "buddy_full_3", "bg3", "parts3", "parts3_sprite", "sprite_rike_front", "sprite_rike_right", "sprite_rike_left", "ribbon_rike")
+AddBuddy(3, "buddy_full_4", "bg4", "parts4", "parts4_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_boff")
+AddBuddy(4, "buddy_full_5", "bg5", "parts5", "parts5_sprite", "sprite_zorg_front", "sprite_zorg_right", "sprite_zorg_left", "ribbon_zorg")
+AddBuddy(5, "buddy_full_6", "bg6", "parts6", "parts6_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_maro")
 
 -- Buddy Overlays
 if UseSprites then
@@ -44,13 +32,6 @@ else
     BuddyPartFixed = image{"assets/fixed.png"}
     BuddyPartHidden = image{"assets/hidden.png"}
 end
-
--- Buddy Sprites
-BuddySpriteFrontGluv = image{"assets/sprite_front_gluv.png", pinned = true}
-BuddySpriteFrontRike = image{"assets/sprite_front_rike.png", pinned = true}
-BuddySpriteFrontZorg = image{"assets/sprite_front_zorg.png", pinned = true}
-BuddySpriteCutsceneRike = image{"assets/cutscene_sprite_rike_left.png", pinned = true}
-BuddySpriteCutsceneGluv = image{"assets/cutscene_sprite_gluv_right.png", pinned = true}
 
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
@@ -71,7 +52,6 @@ UiResume = image {"assets/pausemenu_resume.png"}
 UiRestart = image {"assets/pausemenu_restart_puzzle.png"}
 UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 UiCongratulations = image{"assets/panel_congratulations.png"}
-UiRibbonGluv = image{"assets/ribbon_gluv.png"}
 UiGoBlue = image{"assets/go_blue.png", pinned = true}
 UiGoOrange = image{"assets/go_orange.png", pinned = true}
 
