@@ -666,6 +666,7 @@ void App::Reset()
 
 void App::Update(float dt)
 {
+    UpdateTouch();
     UpdateGameState(dt);
     UpdateSwap(dt);
     UpdateCubes(dt);
@@ -712,60 +713,7 @@ void App::OnNeighborAdd(
     Cube::ID cubeId0, Cube::Side cubeSide0,
     Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mGameState == GAME_STATE_MAIN_MENU)
-    {
-        if (cubeId0 == 0 && cubeId1 == 1 && cubeSide1 == SIDE_TOP)
-        {
-            switch (cubeSide0)
-            {
-                case SIDE_TOP:
-                {
-                    StartGameState(GAME_STATE_FREEPLAY_START);
-                    break;
-                }
-                case SIDE_LEFT:
-                {
-                    StartGameState(GAME_STATE_SHUFFLE_START);
-                    break;
-                }
-                case SIDE_BOTTOM:
-                {
-                    StartGameState(GAME_STATE_STORY_START);
-                    break;
-                }
-                case SIDE_RIGHT:
-                {
-                    break;
-                }
-            }
-        }
-        else if (cubeId1 == 0 && cubeId0 == 1 && cubeSide0 == SIDE_TOP)
-        {
-            switch (cubeSide1)
-            {
-                case SIDE_TOP:
-                {
-                    StartGameState(GAME_STATE_FREEPLAY_START);
-                    break;
-                }
-                case SIDE_LEFT:
-                {
-                    StartGameState(GAME_STATE_SHUFFLE_START);
-                    break;
-                }
-                case SIDE_BOTTOM:
-                {
-                    StartGameState(GAME_STATE_STORY_START);
-                    break;
-                }
-                case SIDE_RIGHT:
-                {
-                    break;
-                }
-            }
-        }
-    }
-    else if (mGameState == GAME_STATE_STORY_CLUE)
+    if (mGameState == GAME_STATE_STORY_CLUE)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
@@ -1339,51 +1287,25 @@ void App::StartGameState(GameState gameState)
 
 void App::UpdateGameState(float dt)
 {
-    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-    {
-        if (mCubeWrappers[i].IsEnabled())
-        {
-            if (mTouching[i] == TOUCH_STATE_NONE)
-            {
-                if (mCubeWrappers[i].IsTouching())
-                {
-                    mTouching[i] = TOUCH_STATE_BEGIN;
-                }
-            }
-            else if (mTouching[i] == TOUCH_STATE_BEGIN)
-            {
-                if (mCubeWrappers[i].IsTouching())
-                {
-                    mTouching[i] = TOUCH_STATE_HOLD;
-                }
-                else
-                {
-                    mTouching[i] = TOUCH_STATE_END;
-                }
-            }
-            else if (mTouching[i] == TOUCH_STATE_HOLD)
-            {
-                if (!mCubeWrappers[i].IsTouching())
-                {
-                    mTouching[i] = TOUCH_STATE_END;
-                }
-            }
-            else if (mTouching[i] == TOUCH_STATE_END)
-            {
-                if (mCubeWrappers[i].IsTouching())
-                {
-                    mTouching[i] = TOUCH_STATE_BEGIN;
-                }
-                else
-                {
-                    mTouching[i] = TOUCH_STATE_NONE;
-                }
-            }
-        }
-    }
-    
     switch (mGameState)
     {
+        case GAME_STATE_MAIN_MENU:
+        {
+            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            {
+                mOptionsTouchSync = true;
+                StartGameState(GAME_STATE_FREEPLAY_START);
+            }
+            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_SHUFFLE_START);
+            }
+            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_STORY_START);
+            }
+            break;
+        }
         case GAME_STATE_FREEPLAY_PLAY:
         {
             if (mSwapState == SWAP_STATE_NONE)
@@ -1687,7 +1609,7 @@ void App::UpdateGameState(float dt)
                 }
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 ResetCubesToShuffleStart();
                 StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
@@ -1940,7 +1862,7 @@ void App::UpdateGameState(float dt)
                 }
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
-            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_STORY_CHAPTER_START);
             }
@@ -2137,17 +2059,23 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawBackground(MainMenuChoices);
+                cubeWrapper.DrawBackground(UiBackground);
+                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Free Play Mode");
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.DrawBackground(MainMenuSelector);
+                cubeWrapper.DrawBackground(UiBackground);
+                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Shuffle Mode");
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                cubeWrapper.DrawBackground(UiBackground);
+                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Story Mode");
             }
             else
             {
                 cubeWrapper.DrawBackground(UiBackground);
             }
-        
             break;
         }
         case GAME_STATE_FREEPLAY_PLAY:
@@ -3204,6 +3132,55 @@ void App::StopHint(bool reset)
     else
     {
         mHintTimer = kHintTimerRepeatDuration;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::UpdateTouch()
+{
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+    {
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            if (mTouching[i] == TOUCH_STATE_NONE)
+            {
+                if (mCubeWrappers[i].IsTouching())
+                {
+                    mTouching[i] = TOUCH_STATE_BEGIN;
+                }
+            }
+            else if (mTouching[i] == TOUCH_STATE_BEGIN)
+            {
+                if (mCubeWrappers[i].IsTouching())
+                {
+                    mTouching[i] = TOUCH_STATE_HOLD;
+                }
+                else
+                {
+                    mTouching[i] = TOUCH_STATE_END;
+                }
+            }
+            else if (mTouching[i] == TOUCH_STATE_HOLD)
+            {
+                if (!mCubeWrappers[i].IsTouching())
+                {
+                    mTouching[i] = TOUCH_STATE_END;
+                }
+            }
+            else if (mTouching[i] == TOUCH_STATE_END)
+            {
+                if (mCubeWrappers[i].IsTouching())
+                {
+                    mTouching[i] = TOUCH_STATE_BEGIN;
+                }
+                else
+                {
+                    mTouching[i] = TOUCH_STATE_NONE;
+                }
+            }
+        }
     }
 }
 

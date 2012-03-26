@@ -95,6 +95,7 @@ private:
         NUM_TOUCH_STATES
     };
     
+    void UpdateTouch();
     bool AnyTouchBegin() const;
     bool AnyTouchHold() const;
     bool AnyTouchEnd() const;

@@ -73,10 +73,6 @@ UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 UiCongratulations = image{"assets/panel_congratulations.png"}
 UiRibbonGluv = image{"assets/ribbon_gluv.png"}
 
--- Main Menu
-MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
-MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
-
 -- Shuffle Mode
 ShuffleTitleScreen = image{"assets/titlescreen_shuffle.png"}
 ShuffleShakeToShuffle = image{"assets/shake_to_shuffle.png"}
