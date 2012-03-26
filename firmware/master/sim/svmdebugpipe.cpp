@@ -163,6 +163,9 @@ bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
     msg.cmdWords = mbox.cmdWords;
     msg.replyWords = 0;
 
+    // Remove the message from our mbox
+    mbox.cmdWords = 0;
+
     // Leave mbox.m locked.
     return true;
 }

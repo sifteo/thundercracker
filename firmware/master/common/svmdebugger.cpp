@@ -72,7 +72,7 @@ void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
         return;
     }
 
-    // Any command except detatch will attach the debugger.
+    // Any command except detach will attach the debugger.
     attached = true;
 
     switch (msg.cmd[0] & M_TYPE_MASK) {
