@@ -16,6 +16,7 @@
 #include "flashlayer.h"
 #include "assetmanager.h"
 #include "svmruntime.h"
+#include "gdbserver.h"
 
 
 // XXX: Hack, for testing SVM only
@@ -85,6 +86,7 @@ int main(int argc, char **argv)
     AudioOutDevice::start();
 
     Radio::open();
+    GDBServer::start(2345);
 
     SvmRuntime::run(111);
 

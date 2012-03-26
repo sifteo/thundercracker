@@ -12,6 +12,7 @@
 #include "gl_renderer.h"
 #include "system.h"
 #include "frontend_cube.h"
+#include "frontend_mothership.h"
 #include "frontend_overlay.h"
 
 #include <Box2D/Box2D.h>
@@ -122,6 +123,10 @@ class Frontend {
     System *sys;
     unsigned frameCount;
     unsigned idleFrames;
+
+    unsigned mothershipCount; // this belongs in System methinks...
+    FrontendMothership motherships[1];
+
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;

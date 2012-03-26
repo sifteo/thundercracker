@@ -5,6 +5,7 @@ INCLUDES += -Isrc
 LOCAL_OBJS = \
 	src/frontend.o \
 	src/frontend_cube.o \
+	src/frontend_mothership.o \
 	src/frontend_overlay.o \
 	src/lua_script.o \
 	src/gl_renderer.o \
@@ -197,6 +198,7 @@ ifneq ($(BUILD_PLATFORM),Darwin)
 	LIBS += -Wl,--gc-sections
 endif
 
+
 # Debug / optimization
 #
 # Unsurprisingly, compiler optimization produces a very dramatic
@@ -220,6 +222,10 @@ CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 MFLAGS := $(FLAGS) $(INCLUDES)
 LDFLAGS := $(FLAGS) $(LIBS)
+
+ifeq ($(MOTHERSHIP),1)
+	CCFLAGS += -DMOTHERSHIP
+endif
 
 all: $(BIN)
 
