@@ -25,7 +25,7 @@ void Stm32f10xOtg::init()
                         (1 << 16);      // PWRDWN
 
     // Wait for AHB idle
-    while (!(OTG.global.GRSTCTL & (1 << 13)))   // AHBIDL
+    while (!(OTG.global.GRSTCTL & (1 << 31)))   // AHBIDL
         ;
 
     // Do core soft reset
