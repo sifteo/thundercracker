@@ -5,15 +5,28 @@
 
 #include <string.h>
 #include "svm.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "elfdefs.h"
 #include "elfdebuginfo.h"
 #include "logdecoder.h"
+#include "gdbserver.h"
+#include "tinythread.h"
+#include "tasks.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
+
+static struct DebuggerMailbox {
+    tthread::mutex m;
+    tthread::condition_variable cond;
+
+    uint32_t cmdWords;
+    uint32_t replyWords;
+    uint32_t cmd[Debugger::MAX_CMD_WORDS];
+    uint32_t reply[Debugger::MAX_REPLY_WORDS];
+} gDebuggerMailbox;
 
 
 static const char* faultStr(FaultCode code)
@@ -42,7 +55,7 @@ static const char* faultStr(FaultCode code)
     }
 }
     
-void SvmDebug::fault(FaultCode code)
+void SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     std::string pcName = formatAddress(pcVA);
@@ -66,8 +79,7 @@ void SvmDebug::fault(FaultCode code)
          SvmMemory::isAddrValid(SvmCpu::reg(REG_PC)) ? "" : " (INVALID)",
          pcName.c_str(),
 
-         (unsigned)SvmMemory::physToVirtRAM(
-             reinterpret_cast<SvmMemory::PhysAddr>(SvmCpu::reg(REG_SP))),
+         (unsigned)SvmMemory::physToVirtRAM(SvmCpu::reg(REG_SP)),
          reinterpret_cast<void*>(SvmCpu::reg(REG_SP)),
          SvmMemory::isAddrValid(SvmCpu::reg(REG_SP)) ? "" : " (INVALID)",
 
@@ -95,10 +107,9 @@ void SvmDebug::fault(FaultCode code)
     }
 
     LOG(("***\n"));
-    SvmRuntime::exit();
 }
 
-uint32_t *SvmDebug::logReserve(SvmLogTag tag)
+uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
 {
     // On real hardware, we'll be writing directly into a USB ring buffer.
     // On simulation, we can just stow the parameters in a temporary global
@@ -108,7 +119,7 @@ uint32_t *SvmDebug::logReserve(SvmLogTag tag)
     return buffer;
 }
 
-void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
+void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 {
     // On real hardware, log decoding would be deferred to the host machine.
     // In simulation, we can decode right away. Note that we use the raw Flash
@@ -119,17 +130,97 @@ void SvmDebug::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
     ASSERT(decodedSize == bytes);
 }
 
-std::string SvmDebug::formatAddress(uint32_t address)
+std::string SvmDebugPipe::formatAddress(uint32_t address)
 {
     return gELFDebugInfo.formatAddress(address);
 }
 
-std::string SvmDebug::formatAddress(void *address)
+std::string SvmDebugPipe::formatAddress(void *address)
 {
     return gELFDebugInfo.formatAddress(SvmMemory::physToVirtRAM((uint8_t*)address));
 }
 
-void SvmDebug::setSymbolSourceELF(const FlashRange &elf)
+bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
+{
+    /*
+     * First half of handling a debugger message: If a message
+     * is available, this returns a pointer to the buffer memory
+     * for both the message and its reply. The caller retains ownership
+     * of this buffer until calling debuggerMsgFinish().
+     */
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    mbox.m.lock();
+    if (mbox.cmdWords == 0) {
+        mbox.m.unlock();
+        return false;
+    }
+
+    msg.cmd = mbox.cmd;
+    msg.reply = mbox.reply;
+    msg.cmdWords = mbox.cmdWords;
+    msg.replyWords = 0;
+
+    // Leave mbox.m locked.
+    return true;
+}
+
+void SvmDebugPipe::debuggerMsgFinish(SvmDebugPipe::DebuggerMsg &msg)
+{
+    /*
+     * Finish handling a debugger message. Must be paired with any
+     * successful call to debuggerMsgAccept.
+     *
+     * This will signal the debuggerMsgCallback() to wake up, which
+     * will eventually free the messagebox by setting cmdWords=0.
+     */
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    mbox.replyWords = msg.replyWords;
+    mbox.cond.notify_all();
+    mbox.m.unlock();
+}
+
+static uint32_t debuggerMsgCallback(const uint32_t *cmd,
+    uint32_t cmdWords, uint32_t *reply)
+{
+    /*
+     * Called by the GDBServer thread to synchronously deliver a message
+     * and wait for a reply. This posts a new message to the mailbox, and
+     * waits on a condvar until the reply has appeared.
+     */
+
+    // Zero-byte replies are vaild; use a special EMPTY token.
+    const uint32_t EMPTY = (uint32_t) -1;
+
+    DebuggerMailbox &mbox = gDebuggerMailbox;
+    tthread::lock_guard<tthread::mutex> guard(mbox.m);
+
+    // Post the command
+    mbox.replyWords = EMPTY;
+    mbox.cmdWords = cmdWords;
+    memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
+
+    // If the target isn't already stopped, raise an async breakpoint.
+    Tasks::setPending(Tasks::DebuggerBreakpoint);
+
+    // Wait for a reply
+    do {
+        mbox.cond.wait(mbox.m);
+    } while (mbox.replyWords == EMPTY);
+
+    // Free the buffer
+    mbox.cmdWords = 0;
+
+    // Return the reply
+    uint32_t replyWords = mbox.replyWords;
+    memcpy(reply, mbox.reply, replyWords * sizeof(uint32_t));
+    return replyWords;
+}
+
+void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
 {
     gELFDebugInfo.init(elf);
+    GDBServer::setDebugInfo(&gELFDebugInfo);
+    GDBServer::setMessageCallback(debuggerMsgCallback);
 }

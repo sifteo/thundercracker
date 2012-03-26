@@ -11,7 +11,7 @@
 #include "accel.h"
 #include "event.h"
 #include "flashlayer.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 #include "tasks.h"
 #include "neighbors.h"
 
@@ -71,7 +71,7 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     ac->progress = 0;
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebug::formatAddress(a).c_str(), ac->baseAddr));
+        id(), SvmDebugPipe::formatAddress(a).c_str(), ac->baseAddr));
 
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
@@ -172,7 +172,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                     // In debug builds only, we log the asset download time
                     float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
                     LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                         id(), SvmDebug::formatAddress(group).c_str(), seconds));
+                         id(), SvmDebugPipe::formatAddress(group).c_str(), seconds));
                 });
             }
 

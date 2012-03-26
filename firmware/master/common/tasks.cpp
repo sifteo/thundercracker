@@ -5,6 +5,7 @@
 
 #include "tasks.h"
 #include "audiomixer.h"
+#include "svmdebugger.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb.h"
@@ -20,7 +21,8 @@ Tasks::Task Tasks::TaskList[] = {
     { UsbDevice::handleINData, 0 },
     { UsbDevice::handleOUTData, 0 },
     #endif
-    { AudioMixer::handleAudioOutEmpty, 0 }
+    { AudioMixer::handleAudioOutEmpty, 0 },
+    { SvmDebugger::handleBreakpoint, 0 },
 };
 
 void Tasks::init()
@@ -33,7 +35,7 @@ void Tasks::init()
 */
 void Tasks::setPending(TaskID id, void* p)
 {
-    ASSERT((unsigned)id < arraysize(TaskList));
+    ASSERT((unsigned)id < (unsigned)arraysize(TaskList));
     ASSERT(TaskList[id].callback != NULL);
     TaskList[id].param = p;
     Atomic::SetLZ(pendingMask, id);
