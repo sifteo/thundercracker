@@ -103,7 +103,7 @@ private:
 
   // for PositionOf and FindGroups
   //bool mVisited;
-  //Vec2 mGridPosition;
+  //Int2 mGridPosition;
 
   void PaintNone();
   void PaintInfo();
@@ -117,7 +117,7 @@ private:
 
   void OnButton(bool pressed);
 
-  Vec2 LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent );
+  Int2 LerpPosition( const Int2 &start, const Int2 &end, float timePercent );
 
   //TODO FLIP
   //void OnFlip(Cube c, bool newOrientationIsUp);
@@ -133,8 +133,8 @@ private:
 
   //used for neighboring, but not now
   /*
-  bool PositionOf(Cube c, out Vec2 pos);
-  bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result);
+  bool PositionOf(Cube c, out Int2 pos);
+  bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Int2 result);
 */
 };
 
@@ -181,7 +181,7 @@ public:
 	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
 
-    void playSound( _SYSAudioModule &sound );
+    void playSound( const AssetAudio &sound );
 
 	void showLogo();
     void checkNeighbors();

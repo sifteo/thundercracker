@@ -15,7 +15,7 @@ using namespace Sifteo;
 static Cube cubes[NUM_CUBES];
 
 struct counts_t {
-    unsigned touch, neighborAdd, neighborRemove;
+    unsigned touch, shake, neighborAdd, neighborRemove;
 };
         
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
@@ -33,9 +33,15 @@ static void onTouch(counts_t *counts, _SYSCubeID cid)
     counts[cid].touch++;
 }
 
+static void onShake(counts_t *counts, _SYSCubeID cid)
+{    
+    counts[cid].shake++;
+}
+
 static void onNeighborAdd(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Add: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborAdd++;
     counts[c1].neighborAdd++;
 }
@@ -43,57 +49,38 @@ static void onNeighborAdd(counts_t *counts,
 static void onNeighborRemove(counts_t *counts,
     Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
+    LOG(("Neighbor Remove: %d:%d - %d:%d\n", c0, s0, c1, s1));
     counts[c0].neighborRemove++;
     counts[c1].neighborRemove++;
 }
 
-void siftmain()
+void main()
 {
     static counts_t counts[NUM_CUBES];
     
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         cubes[i].enable(i);
-
-        VidMode_BG0_ROM vid(cubes[i].vbuf);
-        vid.init();
+        VidMode_BG0_ROM(cubes[i].vbuf).init();
     }
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            _SYSCubeID id = cubes[i].id();
-            VidMode_BG0_ROM vid(cubes[i].vbuf);
+            Cube &cube = cubes[i]; 
+            int id = cube.id();
+            VidMode_BG0_ROM vid(cube.vbuf);
+            String<192> str;
+
+            uint64_t hwid = cube.hardwareID();
+            str << "I am cube #" << id << "\n";
+            str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
             _SYSNeighborState nb;
-            _SYSCubeHWID hwid;
-            _SYSAccelState accel;
-            uint16_t battery;
-
-            /*
-             * Ugly in all sorts of ways...
-             */
-
-            _SYS_getAccel(id, &accel);
             _SYS_getNeighbors(id, &nb);
-            _SYS_getRawBatteryV(id, &battery);
-            _SYS_getCubeHWID(id, &hwid);
-
-            static String<128> str;
-            str.clear();
-
-            str << "I am cube #" << id << "\n";
-            
-            str << Hex(hwid.bytes[0], 2)
-                << Hex(hwid.bytes[1], 2)
-                << Hex(hwid.bytes[2], 2)
-                << Hex(hwid.bytes[3], 2)
-                << Hex(hwid.bytes[4], 2)
-                << Hex(hwid.bytes[5], 2)
-                << "\n\n";
-                
             str << "nb "
                 << Hex(nb.sides[0], 2) << " "
                 << Hex(nb.sides[1], 2) << " "
@@ -103,13 +90,20 @@ void siftmain()
             str << "   +" << counts[id].neighborAdd
                 << ", -" << counts[id].neighborRemove
                 << "\n\n";
-            
-            str << "bat:   " << Hex(battery, 4) << "\n";
-            str << "touch: " << counts[id].touch << "\n\n";
-            
-            str << "acc: " << Fixed(accel.x, 3) << " "
-                << Fixed(accel.y, 3) << "\n";
 
+            str << "bat:   " << Hex(_SYS_getBatteryV(id), 4) << "\n";
+            str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
+
+            _SYSAccelState accel = _SYS_getAccel(id);
+            str << "acc: "
+                << Fixed(accel.x, 3)
+                << Fixed(accel.y, 3)
+                << Fixed(accel.z, 3) << "\n";
+
+            _SYSTiltState tilt = _SYS_getTilt(id);
+            str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
+            str << "shake: " << counts[id].shake;
+                
             vid.BG0_text(Vec2(1,2), str);
 
             drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top

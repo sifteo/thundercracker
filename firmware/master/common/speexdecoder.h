@@ -1,20 +1,22 @@
 /*
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef SPEEXDECODER_H_
 #define SPEEXDECODER_H_
 
-#include <stdint.h>
+#include "audiobuffer.h"
+#include "flashlayer.h"
 #include "speex/speex.h"
-#include <../speex/STM32/config.h>
+#include "../speex/STM32/config.h"
+
+#include <stdint.h>
 
 #ifndef SIFT_SPEEX_MODE
 #error "SIFT_SPEEX_MODE not defined"
 #endif
+
 
 class SpeexDecoder
 {
@@ -29,57 +31,12 @@ public:
 #error "Unknown SIFT_SPEEX_MODE defined"
 #endif
 
-    enum DecodeStatus {
-        Ok = 0,
-        EndOfStream = -1,
-        CorruptStream = -2
-    };
-
-    SpeexDecoder();
     void init();
-    void deinit();
-
-    void setData(const uint8_t *srcaddr, int size);
-    void setOffset(const uint32_t offset, int size);
-    int decodeFrame(uint8_t *buf, int size);
-    bool endOfStream() const {
-        return (status == Ok) ? srcBytesRemaining <= 0 : true;
-    }
+    bool decodeFrame(FlashStream &in, AudioBuffer &out);
 
 private:
     void* decodeState;
-    SpeexBits bits;
-    uintptr_t srcaddr;
-    //uint32_t srcaddr;
-    int srcBytesRemaining;
-    DecodeStatus status;
 };
 
-class PCMDecoder
-{
-public:
-    static const unsigned FRAME_SIZE = 128;
-    
-    enum DecodeStatus {
-        Ok = 0,
-        EndOfStream = -1,
-        CorruptStream = -2
-    };
-    
-    PCMDecoder();
-    
-    void setOffset(const uint32_t offset, int size);
-    int decodeFrame(uint8_t *buf, int size);
-    
-    bool endOfStream() const {
-        return (status == Ok) ? srcBytesRemaining <= 0 : true;
-    }
-    
-private:
-    uintptr_t srcaddr;
-    //uint32_t srcaddr;
-    int srcBytesRemaining;
-    DecodeStatus status;
-};
 
 #endif /* SPEEXDECODER_H_ */

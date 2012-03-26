@@ -13,82 +13,102 @@ using namespace Sifteo;
 #  define NUM_CUBES 1
 #endif
 
-static Cube cubes[] = { Cube(0), Cube(1) };
-static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
+
+static Cube cubes[NUM_CUBES];
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
+    Byte2 accel = cubes[cid].physicalAccel();
 
     String<64> str;
-    str << "Tilt: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
+    str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
+    LOG_STR(str);
 
-    vid[cid].BG0_text(Vec2(2,4), Font, str);
-    vid[cid].BG0_setPanning(Vec2(-state.x/2, -state.y/2));
+    VidMode_BG0 vid(cubes[cid].vbuf);
+    vid.BG0_text(Vec2(2,3), Font, str);
+    vid.BG0_setPanning(accel / -2);
 }
 
 static void init()
 {
+    Metadata()
+        .title("Hello World SDK Example")
+        .icon(GameIcon);
+    
+    // Synchronously load the BootAssets. This should be quick.
     for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].enable();
-        cubes[i].loadAssets(GameAssets);
 
-        VidMode_BG0_ROM rom(cubes[i].vbuf);
-        rom.init();
-        rom.BG0_text(Vec2(1,1), "Loading...");
+        // XXX: Manually assigning base address for now
+        BootAssets.cubes[i].baseAddr = 512 * 4;
+        MainAssets.cubes[i].baseAddr = 512 * 6;
+
+        cubes[i].enable(i);
+        cubes[i].loadAssets(BootAssets);
+    }
+    BootAssets.wait();
+
+    // Start asynchronously loading the MainAssets
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        cubes[i].loadAssets(MainAssets);
     }
 
-    for (;;) {
-        bool done = true;
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        VidMode_BG0 vid(cubes[i].vbuf);
+        vid.init();
+        vid.clear(WhiteTile);
+    }
 
+    int frame = 0;
+    while (MainAssets.isLoading()) {
+
+        // Animate Kirby running across the screen as MainAssets loads.
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-            if (!cubes[i].assetDone(GameAssets))
-                done = false;
+            VidMode_BG0 vid(cubes[i].vbuf);
+
+            Int2 pan = Vec2(-cubes[i].assetProgress(MainAssets,
+                                vid.LCD_width - Kirby.pixelWidth()),
+                            -(int)(vid.LCD_height - Kirby.pixelHeight()) / 2);
+
+            LOG_VEC2(pan);
+            vid.BG0_drawAsset(Vec2(0,0), Kirby, frame);
+            vid.BG0_setPanning(pan);
         }
 
-        System::paint();
+        if (++frame == Kirby.frames)
+            frame = 0;
 
-        if (done)
-            break;
-    }
-
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        vid[i].init();
-        vid[i].clear(Font.tiles[0]);
+        /*
+         * Frame rate limit: Drawing has higher priority than asset loading,
+         * so in order to load assets quickly we need to explicitly leave some
+         * time for the system to send asset data over the radio.
+         */
+        for (unsigned i = 0; i < 4; i++)
+            System::paint();
     }
 }
 
-void siftmain()
+void main()
 {
     init();
 
     _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
 
     for (unsigned i = 0; i < NUM_CUBES; i++) {
-        vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
-        vid[i].BG0_drawAsset(Vec2(1,10), Logo);
+        VidMode_BG0 vid(cubes[i].vbuf);
+        vid.clear(WhiteTile);
+        vid.BG0_text(Vec2(2,1), Font, "Hello World!");
+        vid.BG0_drawAsset(Vec2(1,10), Logo);
         onAccelChange(NULL, cubes[i].id());
     } 
 
-    unsigned frame = 0;
-    const unsigned rate = 2;
-
+    int frame = 0;
     while (1) {
-        float t = System::clock();
-        String<64> timeStr;
-        timeStr << "Time: " << Fixed((int)t, 4) << "." << ((int)(t * 10) % 10);
-
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            vid[i].BG0_text(Vec2(2,6), Font, timeStr);
-            vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
+            VidMode_BG0 vid(cubes[i].vbuf);
+            vid.BG0_drawAsset(Vec2(7,6), Ball, frame);
         }
-
-        if (++frame == Kirby.frames << rate)
+        if (++frame == Ball.frames)
             frame = 0;
-            
         System::paint();
     }
 }

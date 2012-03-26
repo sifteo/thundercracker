@@ -1,10 +1,12 @@
 #ifndef SCOREDGAMESTATE_H
 #define SCOREDGAMESTATE_H
 
+#include <sifteo.h>
 #include "State.h"
 #include "config.h"
 #include "Constants.h"
 
+using namespace Sifteo;
 
 class ScoredGameState : public State
 {

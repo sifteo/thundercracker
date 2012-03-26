@@ -1,17 +1,24 @@
-#include "macronixmx25.h"
-#include "board.h"
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
-MacronixMX25 MacronixMX25::instance(SPIMaster(&FLASH_SPI,
-                                              FLASH_CS_GPIO,
-                                              FLASH_SCK_GPIO,
-                                              FLASH_MISO_GPIO,
-                                              FLASH_MOSI_GPIO));
+#include "macronixmx25.h"
+#include "flash.h"
+#include "board.h"
+#include "macros.h"
 
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
-    writeProtect.setControl(GPIOPin::OUT_10MHZ);
+    writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
+
+#if (BOARD == BOARD_TC_MASTER_REV2)
+    GPIOPin regEnable = FLASH_REG_EN_GPIO;
+    regEnable.setControl(GPIOPin::OUT_2MHZ);
+    regEnable.setHigh();
+#endif
 
     spi.init();
 
@@ -79,15 +86,17 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 
 /*
     Simple synchronous writing.
-    TODO - DMA!
 */
-MacronixMX25::Status MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
+void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
     while (len) {
         // align writes to PAGE_SIZE chunks
-        uint32_t pagelen = PAGE_SIZE - (address & (PAGE_SIZE - 1));
+        uint32_t pagelen = Flash::PAGE_SIZE - (address & (Flash::PAGE_SIZE - 1));
         if (pagelen > len) pagelen = len;
 
+        // wait for any previous write/erase to complete
+        while (writeInProgress())
+            ;
         ensureWriteEnabled();
 
         const uint8_t cmd[] = { PageProgram,
@@ -110,26 +119,17 @@ MacronixMX25::Status MacronixMX25::write(uint32_t address, const uint8_t *buf, u
             ;
         }
         spi.end();
-
-        // wait for the write to complete
-        while (readReg(ReadStatusReg) & WriteInProgress) {
-            ; // yuck - anything better to do here?
-        }
-
-        // security register provides failure bits for read & erase
-        Status s = (Status)readReg(ReadSecurityReg);
-        if (s != Ok) {
-            return s;
-        }
     }
-    return Ok;
 }
 
 /*
  * Any address within a sector is valid to erase that sector.
  */
-MacronixMX25::Status MacronixMX25::eraseSector(uint32_t address)
+void MacronixMX25::eraseSector(uint32_t address)
 {
+    // wait for any previous write/erase to complete
+    while (writeInProgress())
+        ;
     ensureWriteEnabled();
 
     spi.begin();
@@ -138,20 +138,16 @@ MacronixMX25::Status MacronixMX25::eraseSector(uint32_t address)
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
     spi.end();
-
-    // wait for erase complete
-    while (readReg(ReadStatusReg) & WriteInProgress) {
-        ; // do something better here :/
-    }
-
-    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
 }
 
 /*
  * Any address within a block is valid to erase that block.
  */
-MacronixMX25::Status MacronixMX25::eraseBlock(uint32_t address)
+void MacronixMX25::eraseBlock(uint32_t address)
 {
+    // wait for any previous write/erase to complete
+    while (writeInProgress())
+        ;
     ensureWriteEnabled();
 
     spi.begin();
@@ -160,29 +156,18 @@ MacronixMX25::Status MacronixMX25::eraseBlock(uint32_t address)
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
     spi.end();
-
-    // wait for erase complete
-    while (readReg(ReadStatusReg) & WriteInProgress) {
-        ; // do something better here :/
-    }
-
-    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
 }
 
-MacronixMX25::Status MacronixMX25::chipErase()
+void MacronixMX25::chipErase()
 {
+    // wait for any previous write/erase to complete
+    while (writeInProgress())
+        ;
     ensureWriteEnabled();
 
     spi.begin();
     spi.transfer(ChipErase);
     spi.end();
-
-    // wait for erase complete
-    while (readReg(ReadStatusReg) & WriteInProgress) {
-        ; // do something better here :/
-    }
-
-    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
 }
 
 void MacronixMX25::ensureWriteEnabled()

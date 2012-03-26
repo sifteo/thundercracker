@@ -7,6 +7,10 @@
 #ifndef _SIFTEO_CUBE_H
 #define _SIFTEO_CUBE_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 #include <sifteo/asset.h>
 #include <sifteo/video.h>
 
@@ -21,53 +25,32 @@
 
 namespace Sifteo {
 
-/**
- * These lookup tables should be relocated to an external translation unit;
- * their inclusion here is tomporary.
- * 
- * Also todo: replace raw neighbors with coalesced neighbors onces that's up and
- * working.
- */
-
 // unit vectors for directions
-static const Vec2 kSideToUnit[4] = {
-  Vec2(0, -1),
-  Vec2(-1, 0),
-  Vec2(0, 1),
-  Vec2(1, 0)
+static const Byte2 kSideToUnit[4] = {
+  {  0, -1 },
+  { -1,  0 },
+  {  0,  1 },
+  {  1,  0 }
 };
 
 // complex rotation vectors for directions
-static const Vec2 kSideToQ[4] = { 
-  Vec2(1,0),
-  Vec2(0,1),
-  Vec2(-1,0),
-  Vec2(0,-1)
+static const Byte2 kSideToQ[4] = { 
+  {  1,  0 },
+  {  0,  1 },
+  { -1,  0 },
+  {  0, -1 }
 };
 
-#ifdef SIFTEO_SIMULATOR
-
 // internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
+static const uint8_t kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
   VidMode::ROT_LEFT_90,
   VidMode::ROT_180,
   VidMode::ROT_RIGHT_90
 };
 
-#else
-// internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
-  VidMode::ROT_NORMAL,
-  VidMode::ROT_RIGHT_90,
-  VidMode::ROT_180,
-  VidMode::ROT_LEFT_90
-};
-
-#endif
-
 // internal -- used by orientTo()
-static const int kOrientationTable[4][4] = {
+static const uint8_t kOrientationTable[4][4] = {
   {2,1,0,3},
   {3,2,1,0},
   {0,3,2,1},
@@ -88,35 +71,48 @@ class Cube {
     typedef _SYSCubeID ID;
     typedef _SYSSideID Side;
     typedef _SYSNeighborState Neighborhood;
-	typedef _SYSTiltState  TiltState;
-	
-	Cube()
-		: mID(CUBE_ID_UNDEFINED) {}
-	
-    Cube(ID id)
-        : mID(id) {}
+    typedef _SYSTiltState  TiltState;
+
+    /**
+     * Default constructor leaves id() zero'ed, so that Cube objects
+     * are allocated in the BSS segment rather than read-write data.
+     */
+
+    Cube() {}
+    Cube(ID id) {
+        vbuf.cubeID = id;
+    }
+    
+    /**
+     * Return the _SYSCubeIDVector bit for this cube, useful for making
+     * low-level system calls which require this type of ID.
+     */
+     
+    _SYSCubeIDVector bit() const {
+        return 0x80000000 >> id();
+    }
 
     /**
      * Prepare this cube for use. Tell the system to start trying to
      * connect to a cube, and initialize the VideoBUffer.
      */
 
-    void enable(ID id=CUBE_ID_UNDEFINED) {
-		if (id != CUBE_ID_UNDEFINED) {
-			mID = id;
-		}
-        ASSERT(mID != CUBE_ID_UNDEFINED);
+    void enable(ID newID=CUBE_ID_UNDEFINED) {
+        if (newID != CUBE_ID_UNDEFINED) {
+            vbuf.cubeID = newID;
+        }
+        ASSERT(id() != CUBE_ID_UNDEFINED);
         vbuf.init();
-        _SYS_setVideoBuffer(mID, &vbuf.sys);
-        _SYS_enableCubes(Intrinsic::LZ(mID));
+        _SYS_setVideoBuffer(id(), &vbuf.sys);
+        _SYS_enableCubes(bit());
     }
 
     void disable() {
-        _SYS_disableCubes(Intrinsic::LZ(mID));
+        _SYS_disableCubes(bit());
     }
     
     void loadAssets(AssetGroup &group) {
-        _SYS_loadAssets(mID, &group.sys);
+        _SYS_loadAssets(id(), &group.sys);
     }
 
     /**
@@ -125,16 +121,18 @@ class Cube {
      */
     
     int assetProgress(AssetGroup &group, int max=100) {
+        _SYSAssetGroupHeader *hdr = reinterpret_cast<_SYSAssetGroupHeader*>(group.sys.pHdr);
         ASSERT(id() < arraysize(group.cubes));
-        return group.cubes[id()].progress * max / group.sys.size;
+        return group.cubes[id()].progress * max / hdr->dataSize;
     }
     
     bool assetDone(AssetGroup &group) {
-        return !!(group.sys.doneCubes & Sifteo::Intrinsic::LZ(id()));
+        return !!(group.sys.doneCubes & bit());
     }
 
     ID id() const {
-        return mID;
+        // Our vbuf already stores a cube ID.
+        return vbuf.cubeID;
     }
     
     /**
@@ -145,7 +143,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
+        _SYS_getNeighbors(id(), &state);
         return state.sides[side];
     }
     
@@ -161,25 +159,25 @@ class Cube {
     Side physicalSideOf(ID cube) const {
         ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
         _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
+            _SYS_getNeighbors(id(), &state);
         for(Side side=0; side<NUM_SIDES; ++side) {
             if (state.sides[side] == cube) { return side; }
         }
         return SIDE_UNDEFINED;
     }
     
-	Vec2 physicalAccel() const {
-	  _SYSAccelState state;
-	  _SYS_getAccel(mID, &state);
-	  return Vec2(state.x, state.y);
-	}
+    Byte2 physicalAccel() const {
+        _SYSAccelState state = _SYS_getAccel(id());
+        return Vec2(state.x, state.y);
+    }
 
-	TiltState getTiltState() const {
-		TiltState state;
-		_SYS_getTilt(mID, &state);
+    TiltState getTiltState() const {
+        return _SYS_getTilt(id());
+    }
 
-		return state;
-	}
+    bool isShaking() const {
+      return _SYS_getShake(id()) == SHAKING;
+    }
 
     /**
      * Retrieve the current LCD rotation from the video buffer.
@@ -197,7 +195,6 @@ class Cube {
      */
     
     Side orientation() const {
-      #ifdef SIFTEO_SIMULATOR
         switch(rotation()) {
             case VidMode::ROT_NORMAL: return SIDE_TOP;
             case VidMode::ROT_LEFT_90: return SIDE_LEFT;
@@ -205,35 +202,26 @@ class Cube {
             case VidMode::ROT_RIGHT_90: return SIDE_RIGHT;
             default: return SIDE_UNDEFINED;
         }
-      #else
-        switch(rotation()) {
-            case VidMode::ROT_NORMAL: return SIDE_TOP;
-            case VidMode::ROT_RIGHT_90: return SIDE_LEFT;
-            case VidMode::ROT_180: return SIDE_BOTTOM;
-            case VidMode::ROT_LEFT_90: return SIDE_RIGHT;
-            default: return SIDE_UNDEFINED;
-        }
-      #endif
     }
     
-	void setOrientation(Side topSide) {
-		ASSERT(topSide >= 0);
+    void setOrientation(Side topSide) {
+        ASSERT(topSide >= 0);
         ASSERT(topSide < 4);
-	  	VidMode mode(vbuf);
-	  	mode.setRotation(kSideToRotation[topSide]);
-	}
-	
-	void orientTo(const Cube& src) {
-		Side srcSide = src.physicalSideOf(mID);
-		Side dstSide = physicalSideOf(src.mID);
-		ASSERT(srcSide != SIDE_UNDEFINED);
-		ASSERT(dstSide != SIDE_UNDEFINED);
-		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
-		if (srcSide < 0) { srcSide += NUM_SIDES; }
-		setOrientation(kOrientationTable[dstSide][srcSide]);
-	}
-	
-	Side physicalToVirtual(Side side) const {
+        VidMode mode(vbuf);
+        mode.setRotation(VidMode::Rotation(kSideToRotation[topSide]));
+    }
+    
+    void orientTo(const Cube& src) {
+        Side srcSide = src.physicalSideOf(id());
+        Side dstSide = physicalSideOf(src.id());
+        ASSERT(srcSide != SIDE_UNDEFINED);
+        ASSERT(dstSide != SIDE_UNDEFINED);
+        srcSide = (srcSide - src.orientation()) % NUM_SIDES;
+        if (srcSide < 0) { srcSide += NUM_SIDES; }
+        setOrientation(kOrientationTable[dstSide][srcSide]);
+    }
+    
+    Side physicalToVirtual(Side side) const {
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         ASSERT(side >= 0);
         ASSERT(side < 4);
@@ -241,18 +229,17 @@ class Cube {
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side - rot) % NUM_SIDES;
         return side < 0 ? side + NUM_SIDES : side;
-        
-	}
-	
-	Side virtualToPhysical(Side side) const {
+    }
+    
+    Side virtualToPhysical(Side side) const {
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         ASSERT(side >= 0);
         ASSERT(side < 4);
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         return (side + rot) % NUM_SIDES;
-	}
-	
+    }
+    
     /**
      * Like physicalNeighborAt, but relative to the current LCD rotation.
      */
@@ -273,23 +260,30 @@ class Cube {
         return physicalToVirtual(physicalSideOf(cube));
     }
     
-	Vec2 virtualAccel() const {
-		Side rot = orientation();
-		ASSERT(rot != SIDE_UNDEFINED);
-	  	return physicalAccel() * kSideToQ[rot];
-	}
+    Byte2 virtualAccel() const {
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        return physicalAccel() * kSideToQ[rot];
+    }
 
-  bool touching() const {
-    return _SYS_isTouching(mID);
-    //uint8_t nbuf[4];
-    //_SYS_getRawNeighbors(mID, nbuf);
-    //return nbuf[0] & 0x40;
-  }
+    bool touching() const {
+        return _SYS_isTouching(id());
+    }
+    
+    /**
+     * Return the cube's unique 48-bit hardware ID. This ID uniquely
+     * identifies the cube that this slot is paired with.
+     *
+     * The system caches these IDs, so usually this function will return
+     * nearly instantly. However, if the HWID is not yet known, this may block
+     * while we wait on a radio round-trip to discover the HWID.
+     */
+
+    uint64_t hardwareID() const {
+        return _SYS_getCubeHWID(id());
+    }
 
     VideoBuffer vbuf;
-
- private:
-    ID mID;
 };
 
 

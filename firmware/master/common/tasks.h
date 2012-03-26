@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef TASKS_H
 #define TASKS_H
 
@@ -11,12 +16,13 @@ public:
     enum TaskID {
         UsbIN,
         UsbOUT,
-        AudioOutEmpty
+        AudioOutEmpty,
+        DebuggerBreakpoint,
     };
 
     static void init();
     static void work();
-    static void setPending(TaskID id, void* p);
+    static void setPending(TaskID id, void *p = 0);
 
 private:
     typedef void (*TaskCallback)(void *);
@@ -27,7 +33,7 @@ private:
         void *param;
     };
 
-    static Task TaskList[MAX_TASKS];
+    static Task TaskList[];
 };
 
 #endif // TASKS_H

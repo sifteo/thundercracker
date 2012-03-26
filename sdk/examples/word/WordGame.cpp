@@ -5,7 +5,7 @@
 using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
-Math::Random WordGame::random;
+Random WordGame::random;
 
 
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
@@ -38,7 +38,7 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
     mGameStateMachine.onEvent(eventID, data);
 }
 
-bool WordGame::playAudio(_SYSAudioModule &mod,
+bool WordGame::playAudio(const AssetAudio &mod,
                          AudioChannelIndex channel ,
                          _SYSAudioLoopType loopMode,
                          AudioPriority priority)
@@ -65,7 +65,7 @@ bool WordGame::playAudio(_SYSAudioModule &mod,
     return sInstance->_playAudio(mod, channel, loopMode, priority);
 }
 
-bool WordGame::_playAudio(_SYSAudioModule &mod,
+bool WordGame::_playAudio(const AssetAudio &mod,
                           AudioChannelIndex channel,
                           _SYSAudioLoopType loopMode,
                           AudioPriority priority)

@@ -3,16 +3,8 @@
 #include "TotalsCube.h"
 
 namespace TotalsGame {
-/*
-static int strcmp(const char *a, const char *b)
-{
-    int dif = 0;
-    while(!dif && *a && *b)
-        dif = *a++ - *b++;
-    return dif;
-}*/
 
-const AssetImage *NarratorView::emotes[] =
+const Sifteo::AssetImage *NarratorView::emotes[] =
 {
     &Narrator_Coin,
     &Narrator_Diamond,
@@ -27,58 +19,61 @@ const AssetImage *NarratorView::emotes[] =
     &Narrator_Base,
 };
 
-NarratorView::NarratorView(TotalsCube *c):View(c)
+NarratorView::NarratorView()
+{
+    Reset();
+}
+
+void NarratorView::Reset()
 {
     mOffset = 0;
     mString="";
     mEmote=EmoteNone;
 }
 
-int strcmp(const char *a, const char *b);
-
 void NarratorView::SetMessage(const char *msg, Emote emote) {
-    if (!strcmp(mString,msg) && mEmote == emote) { return; }
+    bool hadMessage = mString[0] != 0;
+    bool emoteChanged = emote != mEmote;
+
     mString = msg;
     mEmote = emote;
 
     if(mString[0])
-        GetCube()->EnableTextOverlay(msg, 8, 40, 255,255,255, 0,0,0);
-    else
-        GetCube()->DisableTextOverlay();
-
-    /* TODO
-  is it really necessary to draw the images here?
-  theyll get drawnagain in Paint()
-  */
-
-    if (OkayToPaint()) {
-        if (mEmote != EmoteNone) {
-            //            GetCube().Image(emotes[mEmote], Vec2(16, 65, 0, 0, 94, 43);
-        } else {
-            //          Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
+    {
+        if(!hadMessage)
+        {
+            Paint();
+            GetCube()->foregroundLayer.Flush();
         }
-        if (mString[0]) {
-            AudioPlayer::PlaySfx(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
-//            PaintText();
-        } else {
-            //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);
-        }
-        //        Cube.Paint();
+        else if(emoteChanged)
+        {
+            GetCube()->DisableTextOverlay();
+            Paint();
+        }        
+        int fg[] = {255 ,255, 255};
+        int bg[] = {0,0,0};
+        GetCube()->EnableTextOverlay(msg, 8, 40, fg, bg);
     }
+    else
+    {
+        GetCube()->DisableTextOverlay();
+        Paint();
+    }
+
+    if (mString[0])
+        PLAY_SFX(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
 }
 
 void NarratorView::SetEmote(Emote emote) {
-    /* TODO see note in SetMessage */
     if (mEmote != emote) {
         mEmote = emote;
-        if (OkayToPaint()) {
-            if (mEmote!=EmoteNone) {
-                //            Cube.Image("narrator_" + mEmote, 16, 65, 0, 0, 94, 43);
-            } else {
-                //            Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
-            }
-            //          Cube.Paint();
+
+        if (mEmote!=EmoteNone) {
+            //            Cube.Image("narrator_" + mEmote, 16, 65, 0, 0, 94, 43);
+        } else {
+            //            Cube.Image("narrator_base", 16, 65, 16, 65, 94, 43);
         }
+        //          Cube.Paint();
     }
 }
 
@@ -88,10 +83,9 @@ void NarratorView::SetTransitionAmount(float u) {
         //        Paint();
     } else {
         mOffset = (16-7)* u;
-        if (OkayToPaint()) {
-                      GetCube()->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
-            //          Cube.Paint();
-        }
+        GetCube()->Image(Narrator_Base);
+        GetCube()->DrawVaultDoorsOpenStep1(mOffset);
+        //          Cube.Paint();
     }
 
 }
@@ -104,26 +98,20 @@ void NarratorView::Paint() {
         return;
     }
 
-    c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
+    c->Image(Narrator_Base);
+    if(mEmote != EmoteNone)
+    {
+        c->Image(*emotes[mEmote], Vec2<int>(0,16-emotes[mEmote]->height));
+    }
 
     if (mOffset > 0) {
-        c->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
+        c->DrawVaultDoorsOpenStep1(mOffset);
     }
 
 
     if(mString[0]) {
-        PaintText();
+        GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
     }
-}
-
-void NarratorView::PaintText()
-{
-      const int pad = 8;
-      //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
-      GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
-  //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
-
-      //text wil actually be drawn after this frame completes
 }
 
 

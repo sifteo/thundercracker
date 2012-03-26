@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include "spi.h"
@@ -13,10 +10,6 @@
 void SPIMaster::init()
 {
     if (hw == &SPI1) {
-        #if BOARD == BOARD_TC_MASTER_REV1
-        AFIO.MAPR |= (0x4 << 24) |  // disable JTAG so we can talk to flash
-                     (1 << 0);      // remap SPI1 to PB3-5
-        #endif
         RCC.APB2ENR |= (1 << 12);
 
         dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
@@ -35,9 +28,6 @@ void SPIMaster::init()
         Dma::registerHandler(&DMA1, 4, dmaCallback, this);
     }
     else if (hw == &SPI3) {
-        #if BOARD == BOARD_TC_MASTER_REV1
-        AFIO.MAPR |= (1 << 28);     // remap SPI3 to PC10-12
-        #endif
         RCC.APB1ENR |= (1 << 15);
 
         dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
@@ -52,6 +42,18 @@ void SPIMaster::init()
     sck.setControl(GPIOPin::OUT_ALT_50MHZ);
     miso.setControl(GPIOPin::IN_FLOAT);
     mosi.setControl(GPIOPin::OUT_ALT_50MHZ);
+
+    // NOTE: remaps *must* be applied after GPIOs have been configured as
+    // alternate function, which in turn must be done after the peripheral is activated
+#if (BOARD >= BOARD_TC_MASTER_REV1)
+    if (hw == &SPI1) {
+        AFIO.MAPR |= (0x4 << 24) |  // disable JTAG so we can talk to flash
+                     (1 << 0);      // remap SPI1 to PB3-5
+    }
+    else if (hw == &SPI3) {
+        AFIO.MAPR |= (1 << 28);     // remap SPI3 to PC10-12
+    }
+#endif
 
     // point DMA channels at data register
     dmaRxChan->CPAR = (uint32_t)&hw->DR;

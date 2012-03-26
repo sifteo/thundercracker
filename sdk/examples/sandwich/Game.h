@@ -14,12 +14,11 @@ private:
   static float sShakeTime;
   #endif
 
-
   ViewSlot mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
   Player mPlayer;
-  float mSimTime;
+  SystemTime mSimTime;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;
@@ -36,13 +35,13 @@ public:
   inline ViewSlot* ViewBegin() { return mViews; }
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
+  inline Int2 BroadDirection() {
+    ASSERT(mPlayer.Target()->view);
+    return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
+  }
 
   bool ShowingMinimap() const { 
-    #if PLAYTESTING_HACKS
       return false; 
-    #else
-      return true;
-    #endif
   }
 
   // methods  
@@ -66,25 +65,31 @@ private:
   // helpers
   void CheckMapNeighbors();
 
-  void WalkTo(Vec2 position, bool dosfx=true);
+  void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
-  void TeleportTo(const MapData& m, Vec2 position);
+  int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
+  void MoveBlock(Sokoblock* block, Int2 u);
+  void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, ViewSlot *view);
-  
+  void RestorePearlIdle();
 
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
-
+  void OnTrapdoor(Room *pRoom);
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
-
   void OnUseEquipment();
-
+  void OnEnterGateway(const GatewayData* pGate);
+  void OnNpcChatter(const NpcData* pNpc);
   void OnTriggerEvent(unsigned id);
+
+  bool TryEncounterBlock(Sokoblock* block);
+  bool TryEncounterLava(Cube::Side dir);
+
 
 };
 

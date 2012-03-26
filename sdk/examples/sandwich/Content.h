@@ -8,6 +8,7 @@ using namespace Sifteo;
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
 #define TRIGGER_TYPE_COUNT  4
+// MAX COUNT = 16
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
@@ -21,10 +22,14 @@ using namespace Sifteo;
 
 #define ITEM_TRIGGER_NONE   0
 #define ITEM_TRIGGER_KEY    1
+#define ITEM_TRIGGER_BOOT   2
+#define ITEM_TRIGGER_BOMB   3
 
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
+#define EVENT_REMOTE_TRIGGER                3
+#define EVENT_OPEN_DOOR                     4
 
 struct QuestData {
     uint8_t mapId;
@@ -74,9 +79,16 @@ struct GatewayData {
     uint8_t y;
 };
 
+struct SokoblockData {
+    uint16_t x;
+    uint16_t y;
+    uint8_t asset;
+};
+
 struct NpcData {
     TriggerData trigger;
-    uint16_t dialog;
+    uint16_t dialog : 15;
+    uint16_t optional : 1;
     uint8_t x;
     uint8_t y;
 };
@@ -84,6 +96,11 @@ struct NpcData {
 struct TrapdoorData {
     uint8_t roomId;
     uint8_t respawnRoomId;
+};
+
+struct DepotData {
+    uint8_t roomId;
+    uint8_t targetItemId;
 };
 
 struct AnimatedTileData {
@@ -112,9 +129,14 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+typedef uint8_t TileSetID;
+
 // todo - microoptimize bits
 // todo - replace pointers with <32bit offsets-from-known-locations?
+// todo - separate tilesets from maps?  (e.g. animated tiles, lava tiles)
 struct MapData {
+    const char* name;
+
     // stir pointers
     const AssetImage* tileset;
     const AssetImage* overlay;
@@ -130,25 +152,19 @@ struct MapData {
     const GatewayData* gates;
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
+    const DepotData* depots;
 
     // other placeable entities
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
+    const TileSetID* lavaTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
-
-    // trigger counts
-    uint8_t itemCount;
-    uint8_t gateCount;
-    uint8_t npcCount;
-    uint8_t trapdoorCount;
+    const SokoblockData* sokoblocks;
 
     // other counts
     uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
-    uint8_t doorCount;
     uint8_t animatedTileCount;
-    uint8_t diagonalSubdivisionCount;
-    uint8_t bridgeSubdivisionCount;
     uint8_t ambientType; // 0 - None
 
     // size
@@ -163,3 +179,5 @@ extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
 extern const ItemTypeData gItemTypeData[];
+
+extern const PinnedAssetImage* gSokoblockAssets[];

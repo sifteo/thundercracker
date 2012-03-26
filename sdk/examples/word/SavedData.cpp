@@ -6,6 +6,8 @@
 #include "assets.gen.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 /*
  * XXX: Only used for qsort() currently. We should think about what kind of low-level VM
  *      primitives the sort should be based on (with regard to ABI, as well as cache
@@ -64,7 +66,7 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
                 NumEndingTypes
             };
 
-            _SYSAudioModule* EndingJingles[NumEndingTypes] =
+            const AssetAudio* EndingJingles[NumEndingTypes] =
             {
                 &timeup_01, &timeup_02, &timeup_03
             };

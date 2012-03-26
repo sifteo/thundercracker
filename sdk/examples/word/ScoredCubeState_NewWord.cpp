@@ -7,6 +7,8 @@
 #include "ScoredCubeState_NewWord.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 ScoredCubeState_NewWord::ScoredCubeState_NewWord()
 {
 }

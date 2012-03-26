@@ -75,7 +75,8 @@ class Trigger:
 			did = obj.props["id"].lower()
 			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID (" + did + ") in Map: " + room.map.id
 			self.dialog = room.map.world.dialogs.dialog_dict[did]
-		
+			self.optional = obj.props.get("required", "false").lower() == "true"
+
 		elif self.type == TRIGGER_TRAPDOOR:
 			m = EXP_LOCATION.match(obj.props.get("respawn"))
 			assert m is not None, "Malformed Respawn Location in Map: " + room.map.id
@@ -119,8 +120,8 @@ class Trigger:
 	def write_gateway_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		mapid = self.room.map.world.map_dict[self.target_map].index
-		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
+		mapid = self.room.map.world.maps.map_dict[self.target_map].index
+		gateid = self.room.map.world.maps.map_dict[self.target_map].gate_dict[self.target_gate].index
 		x,y = self.local_position()
 		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (mapid, gateid, x, y))
 	
@@ -128,6 +129,6 @@ class Trigger:
 		src.write("{ ")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x}, " % (self.dialog.index, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (self.dialog.index, 1 if self.optional else 0, x, y))
 
 

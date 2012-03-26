@@ -1,3 +1,7 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "button.h"
 #include "board.h"
@@ -52,7 +56,16 @@ void Button::isr()
     vcc20.setLow();
 }
 
+#if (BOARD == BOARD_TC_MASTER_REV1)
 IRQ_HANDLER ISR_EXTI0()
 {
     Button::isr();
 }
+#elif (BOARD == BOARD_TC_MASTER_REV2)
+IRQ_HANDLER ISR_EXTI2()
+{
+    Button::isr();
+}
+#else
+#error "no button isr declared";
+#endif

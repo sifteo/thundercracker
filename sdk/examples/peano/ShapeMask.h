@@ -1,13 +1,16 @@
 #pragma once
 
+#include "config.h"
 #include "sifteo.h"
 #include <stddef.h>
+
+using namespace Sifteo;
 
 namespace TotalsGame {
 
 	struct Connection {
-		Vec2 pos;
-		Vec2 dir;
+        Int2 pos;
+        Int2 dir;
 
         bool Matches(const Connection &c);
 
@@ -19,24 +22,24 @@ namespace TotalsGame {
 	};
 
 	struct ShapeMask {
-		Vec2 size;
+        Int2 size;
 		long bits;
 
 		static const ShapeMask Zero;
 		static const ShapeMask Unity;
 
-        ShapeMask(Vec2 size, bool *flags, size_t numFlags);
+        ShapeMask(Int2 size, bool *flags, size_t numFlags);
 
-        ShapeMask(Vec2 size, long bits);
+        ShapeMask(Int2 size, long bits);
 
         ShapeMask();
 
         ShapeMask GetRotation();
         ShapeMask GetReflection();
 
-        bool BitAt(Vec2 p);
+        bool BitAt(Int2 p) const;
 
-        ShapeMask SubMask(Vec2 p, Vec2 s);
+        ShapeMask SubMask(Int2 p, Int2 s);
 
         bool Matches(const ShapeMask &mask);
 		
@@ -44,11 +47,19 @@ namespace TotalsGame {
 
         void ListInConnections(Connection *connections, int *numConnections, int maxConnections);
 
-
-		static bool TryConcat(
-			ShapeMask m1, ShapeMask m2, Vec2 offset, 
-			ShapeMask *result,Vec2 *d1, Vec2 *d2
+#if NO_STACK_PARAMS_HACK
+        static ShapeMask m1;
+        static ShapeMask m2;
+        static bool TryConcat(
+            Int2 offset,
+            ShapeMask *result, Int2 *d1, Int2 *d2
             );
+#else
+		static bool TryConcat(
+            const ShapeMask &m1, const ShapeMask &m2, Int2 offset,
+            ShapeMask *result, Int2 *d1, Int2 *d2
+            );
+#endif
     };
 
 }

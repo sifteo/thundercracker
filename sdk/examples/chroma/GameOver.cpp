@@ -44,11 +44,11 @@ const Sifteo::PinnedAssetImage *DIE_SPRITES[ GameOver::NUM_ARROWS ] =
     &DieRight,
 };
 
-Vec2 SPRITEPOS[ Intro::NUM_ARROWS ] = {
-    Vec2( 64 - DieUp.width * 8 / 2, 0 ),
-    Vec2( 0, 64 - DieLeft.height * 8 / 2 ),
-    Vec2( 64 - DieDown.width * 8 / 2, 128 - DieDown.height * 8 ),
-    Vec2( 128 - DieRight.width * 8, 64 - DieLeft.height * 8 / 2 ),
+Int2 SPRITEPOS[ Intro::NUM_ARROWS ] = {
+    { 64 - DieUp.width * 8 / 2, 0 },
+    { 0, 64 - DieLeft.height * 8 / 2 },
+    { 64 - DieDown.width * 8 / 2, 128 - DieDown.height * 8 },
+    { 128 - DieRight.width * 8, 64 - DieLeft.height * 8 / 2 },
 };
 
 void GameOver::Draw( VidMode_BG0_SPR_BG1 &vid )

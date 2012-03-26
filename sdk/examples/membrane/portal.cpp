@@ -49,12 +49,12 @@ void Portal::draw(Cube &cube)
 {
     static const struct {
         const AssetImage *asset;
-        Vec2 pos;
+        Byte2 pos;
     } info[NUM_SIDES] = {
-        { &PlayfieldE, Vec2(2,  0)  },
-        { &PlayfieldW, Vec2(0,  2)  },
-        { &PlayfieldF, Vec2(2,  13) },
-        { &PlayfieldA, Vec2(13, 2)  },
+        { &PlayfieldE, { 2,  0  }  },
+        { &PlayfieldW, { 0,  2  }  },
+        { &PlayfieldF, { 2,  13 } },
+        { &PlayfieldA, { 13, 2  }  },
     };
     
     VidMode_BG0 vid(cube.vbuf);
@@ -63,15 +63,14 @@ void Portal::draw(Cube &cube)
 
 Float2 Portal::getTarget() const
 {
-    static const float center[] = {
-         64,    -20,
-        -20,     64,
-         64,     128+20,
-         128+20, 64,
+    static const Float2 center[] = {
+        {  64,    -20     },
+        { -20,     64     },
+        {  64,     128+20 },
+        {  128+20, 64     },
     };
     
-	unsigned index = side << 1;
-    return Float2(center[index], center[index+1]);
+    return center[side];
 }
 
 Float2 Portal::rotateTo(const Portal &dest, const Float2 &coord)

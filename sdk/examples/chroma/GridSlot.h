@@ -90,7 +90,7 @@ public:
 	//draw self on given vid at given vec
     void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
-    void Update(float t);
+    void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
     bool isEmpty() const { return m_state == STATE_GONE || m_state == STATE_SHOWINGSCORE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
@@ -129,7 +129,7 @@ private:
 	void markNeighbor( int row, int col );
     void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
-    unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
+    unsigned int GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
@@ -145,13 +145,13 @@ private:
 	SLOT_STATE m_state;
     MOVE_STATE m_Movestate;
 	unsigned int m_color;
-	float m_eventTime;
+	SystemTime m_eventTime;
 	CubeWrapper *m_pWrapper;
 	unsigned int m_row;
 	unsigned int m_col;
 
 	//current position in 16x16 grid for use when moving
-	Vec2 m_curMovePos;
+	Int2 m_curMovePos;
 
 	unsigned int m_score;
 	//fixed dot
@@ -167,7 +167,7 @@ private:
 	unsigned int m_animFrame;
     unsigned int m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
-    Vec2 m_lastFrameDir;
+    Int2 m_lastFrameDir;
 };
 
 

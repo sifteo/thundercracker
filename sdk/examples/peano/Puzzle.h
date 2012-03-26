@@ -15,11 +15,6 @@ namespace TotalsGame
 		DifficultyEasy = 0, DifficultyMedium = 1, DifficultyHard = 2
 	};
 
-	enum NumericMode
-	{
-		NumericModeFraction, NumericModeDecimal
-	};
-
 	class Puzzle {
 
         DECLARE_POOL(Puzzle, 2)

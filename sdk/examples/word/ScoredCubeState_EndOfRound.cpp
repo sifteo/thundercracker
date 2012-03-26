@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace Sifteo;
+
 const unsigned START_SCREEN_CUBE_INDEX = 1;
 const unsigned SCORE_RHS_X = 9;
 const unsigned SCORE_RHS_Y = 2;
@@ -105,7 +107,7 @@ void ScoredCubeState_EndOfRound::paint()
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
             float animTime =
-                    fmodf(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
+                    fmod(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
             animTime = MIN(animTime, 1.f);
             unsigned frame = (unsigned) (animTime * anim.frames);
             frame = MIN(frame, anim.frames - 1);

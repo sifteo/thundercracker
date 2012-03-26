@@ -1,16 +1,19 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "tasks.h"
-#include <sifteo.h>
 #include "audiomixer.h"
+#include "svmdebugger.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb.h"
 #endif
 
-using namespace Sifteo;
-
 uint32_t Tasks::pendingMask;
 
-Tasks::Task Tasks::TaskList[MAX_TASKS] = {
+Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     { 0 },
@@ -18,7 +21,8 @@ Tasks::Task Tasks::TaskList[MAX_TASKS] = {
     { Usb::handleINData, 0 },
     { Usb::handleOUTData, 0 },
     #endif
-    { AudioMixer::handleAudioOutEmpty, 0 }
+    { AudioMixer::handleAudioOutEmpty, 0 },
+    { SvmDebugger::handleBreakpoint, 0 },
 };
 
 void Tasks::init()
@@ -31,6 +35,7 @@ void Tasks::init()
 */
 void Tasks::setPending(TaskID id, void* p)
 {
+    ASSERT((unsigned)id < (unsigned)arraysize(TaskList));
     ASSERT(TaskList[id].callback != NULL);
     TaskList[id].param = p;
     Atomic::SetLZ(pendingMask, id);
@@ -43,6 +48,9 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
+    // Always try to fetch audio data
+    AudioMixer::instance.fetchData();
+    
     while (pendingMask) {
         unsigned idx = Intrinsic::CLZ(pendingMask);
         // clear before calling back since callback might take a while and

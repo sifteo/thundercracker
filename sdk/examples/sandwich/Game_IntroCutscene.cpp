@@ -15,11 +15,11 @@ Cube* Game::IntroCutscene() {
 		gCubes[i].vbuf.touch();
 	}
 	float dt;
-	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
+	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0, 72 - 128*u));
+			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0.f, 72 - 128*u));
 		}
 		System::paintSync();
 	}
@@ -47,10 +47,10 @@ Cube* Game::IntroCutscene() {
 	}
 	ViewMode mode(pCube->vbuf);
 	// hide banner
-	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
+	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.BG1_setPanning(Vec2(0, -56 + 128*u));
+		mode.BG1_setPanning(Vec2(0.f, -56 + 128*u));
 		System::paintSync();
 	}
 	WaitForSeconds(0.1f);
