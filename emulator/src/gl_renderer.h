@@ -51,6 +51,7 @@ class GLRenderer {
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);
+    void drawMothership(unsigned id, b2Vec2 center, float angle);
 
     void beginOverlay();
     void overlayText(int x, int y, const float color[4], const char *str);

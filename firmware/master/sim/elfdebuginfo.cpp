@@ -45,16 +45,16 @@ void ELFDebugInfo::init(const FlashRange &elf)
     }
 }
 
-const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const std::string &name)
+const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const std::string &name) const
 {
-    sectionMap_t::iterator I = sectionMap.find(name);
+    sectionMap_t::const_iterator I = sectionMap.find(name);
     if (I == sectionMap.end())
         return 0;
     else
         return I->second;
 }
 
-std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset)
+std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset) const
 {
     char buf[1024];
     FlashRange r = SI->data.split(offset, sizeof buf - 1);
@@ -63,7 +63,7 @@ std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset)
     return buf;
 }
 
-std::string ELFDebugInfo::readString(const std::string &section, uint32_t offset)
+std::string ELFDebugInfo::readString(const std::string &section, uint32_t offset) const
 {
     const SectionInfo *SI = findSection(section);
     if (SI)
@@ -73,7 +73,7 @@ std::string ELFDebugInfo::readString(const std::string &section, uint32_t offset
 }
 
 bool ELFDebugInfo::findNearestSymbol(uint32_t address,
-    Elf::Symbol &symbol, std::string &name)
+    Elf::Symbol &symbol, std::string &name) const
 {
     // Look for the nearest ELF symbol which contains 'address'.
     // If we find anything, returns 'true' and leaves the symbol information
@@ -114,7 +114,7 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
     return true;
 }
 
-std::string ELFDebugInfo::formatAddress(uint32_t address)
+std::string ELFDebugInfo::formatAddress(uint32_t address) const
 {
     Elf::Symbol symbol;
     std::string name;
@@ -143,4 +143,38 @@ void ELFDebugInfo::demangle(std::string &name)
         name = result;
         free(result);
     }
+}
+
+bool ELFDebugInfo::readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) const
+{
+    /*
+     * Try to read from read-only data in the ELF file. If the read can be
+     * satisfied locally, from the ELF data, returns true and fills in 'buffer'.
+     * If not, returns false.
+     */
+
+    for (sections_t::const_iterator I = sections.begin(), E = sections.end(); I != E; ++I) {
+
+        // Section must be allocated program data
+        if (I->header.sh_type != Elf::SHT_PROGBITS)
+            continue;
+        if (!(I->header.sh_flags & Elf::SHF_ALLOC))
+            continue;
+
+        // Section must not be writeable
+        if (I->header.sh_flags & Elf::SHF_WRITE)
+            continue;
+
+        // Address range must be fully contained within the section
+        uint32_t offset = address - I->header.sh_addr;
+        FlashRange r = I->data.split(offset, bytes);
+        if (r.getSize() != bytes)
+            continue;
+
+        // Success, we can read from the ELF
+        Flash::read(r.getAddress(), buffer, bytes);
+        return true;
+    }
+
+    return false;
 }
