@@ -285,8 +285,8 @@ void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
 {
     cubeWrapper.DrawBackgroundPartial(
-        Vec2(0, 0),
         Vec2(kMaxTilesX + bgScroll.x, 0),
+        Vec2(0, 0),
         Vec2(-bgScroll.x, kMaxTilesY),
         StoryChapterNext);
     
@@ -317,8 +317,8 @@ void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, In
 void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
 {
     cubeWrapper.DrawBackgroundPartial(
-        Vec2(0, 0),
         Vec2(kMaxTilesX + bgScroll.x, 0),
+        Vec2(0, 0),
         Vec2(-bgScroll.x, kMaxTilesY),
         StoryChapterRetry);
     
@@ -2507,17 +2507,36 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_STORY_UNLOCKED_4:
         {
+            // Moving off...
+            if (mBackgroundScroll.x > -kMaxTilesX)
+            {
+                cubeWrapper.DrawBackgroundPartial(
+                    Vec2(0, 0),
+                    Vec2(-mBackgroundScroll.x, 0),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
+                    UiCongratulations);
+                
+                cubeWrapper.DrawUnlocked4Sprite(mBackgroundScroll);
+                
+                cubeWrapper.DrawUiAssetPartial(
+                    Vec2(0, 11),
+                    Vec2(-mBackgroundScroll.x, 0),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(UiRibbonGluv.height)),
+                    UiRibbonGluv);
+            }
+            
+            // Moving on...
             if (cubeWrapper.GetId() == 0)
             {
                 if (HasUnlocked())
                 {
                     cubeWrapper.DrawBackgroundPartial(
-                        Vec2(0, 0),
                         Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
+                        Vec2(0, 0),
                         Vec2(-mBackgroundScroll.x, kMaxTilesY),
                         StoryBookStartNext);
                     
-                    int x = 32 - (kMaxTilesX + mBackgroundScroll.x) * 8;
+                    int x = 32 + (kMaxTilesX + mBackgroundScroll.x) * 8;
                     cubeWrapper.DrawSprite(1, Vec2(x, 14), BuddySpriteFrontGluv);
                 }
                 else
@@ -2532,27 +2551,10 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else if (cubeWrapper.GetId() == 2)
             {
                 cubeWrapper.DrawBackgroundPartial(
-                    Vec2(0, 0),
                     Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
+                    Vec2(0, 0),
                     Vec2(-mBackgroundScroll.x, kMaxTilesY),
                     UiEndGameNavExit);
-            }
-            
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                cubeWrapper.DrawBackgroundPartial(
-                    Vec2(-mBackgroundScroll.x, 0),
-                    Vec2(0, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
-                    UiCongratulations);
-                
-                cubeWrapper.DrawUnlocked4Sprite(-mBackgroundScroll);
-                
-                cubeWrapper.DrawUiAssetPartial(
-                    Vec2(-mBackgroundScroll.x, 11),
-                    Vec2(0, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(UiRibbonGluv.height)),
-                    UiRibbonGluv);
             }
             break;
         }
