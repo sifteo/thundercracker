@@ -136,7 +136,11 @@ void CubeWrapper::Draw()
                         }
 
                         if( isEmpty() )
+                        {
                             m_vid.BG0_drawAsset(Vec2(0,0), Lumes_Neutral, 0);
+                            TurnOffSprites();
+                            break;
+                        }
                     }
 
                     DrawGrid();
