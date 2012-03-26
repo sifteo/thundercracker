@@ -191,6 +191,9 @@ public:
         uintptr_t offset = pa - userRAM; 
         return (VirtAddr)offset + VIRTUAL_RAM_BASE;
     }
+    static VirtAddr physToVirtRAM(Svm::reg_t pa) {
+        return physToVirtRAM(reinterpret_cast<PhysAddr>(pa));
+    }
     
     /**
      * Convert a flash block address to a VA in the current segment.

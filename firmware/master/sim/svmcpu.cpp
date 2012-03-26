@@ -5,7 +5,6 @@
 
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "svmdebug.h"
 #include "macros.h"
 #include "machine.h"
 
@@ -272,7 +271,7 @@ static void emulateFault(FaultCode code)
     saveUserRegs();
 
     // Faults occur inside exception context too, just like SVCs.
-    SvmDebug::fault(code);
+    SvmRuntime::fault(code);
 
     restoreUserRegs();
     emulateExitException();
@@ -1086,6 +1085,7 @@ reg_t reg(uint8_t r)
     case 12:        return userRegs.hw.r12;
     case REG_SP:    return regs[REG_SP] + sizeof(HwContext);
     case REG_PC:    return userRegs.hw.returnAddr;
+    case REG_CPSR:  return userRegs.hw.xpsr;
     default:        ASSERT(0 && "invalid register"); break;
     }
 }
@@ -1108,6 +1108,7 @@ void setReg(uint8_t r, reg_t val)
     case 12:        userRegs.hw.r12 = val; break;
     case REG_SP:    regs[REG_SP] = val - sizeof(HwContext); break;
     case REG_PC:    userRegs.hw.returnAddr = val; break;
+    case REG_CPSR:  userRegs.hw.xpsr = val; break;
     default:        ASSERT(0 && "invalid register"); break;
     }
 }

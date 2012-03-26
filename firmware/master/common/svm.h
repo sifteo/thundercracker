@@ -44,6 +44,44 @@ enum InstructionSize {
     InstrBits32
 };
 
+
+/***************************************************************************
+ * Debugger Support
+ ***************************************************************************/
+
+/**
+ * Debugger messages are command/response pairs which are sent from a
+ * host to the SVM runtime. All debugger messages are formatted as a
+ * bounded-length packet made up of 32-bit words.
+ */
+
+namespace Debugger {
+    /*
+     * Symmetric maximum lengths. Long enough for all 14 registers plus a
+     * command word. Leaves room for one header word before we fill up a
+     * 64-byte USB packet.
+     */
+    const uint32_t MAX_CMD_WORDS = 15;
+    const uint32_t MAX_REPLY_WORDS = 15;
+
+    const uint32_t MAX_CMD_BYTES = MAX_CMD_WORDS * sizeof(uint32_t);
+    const uint32_t MAX_REPLY_BYTES = MAX_REPLY_WORDS * sizeof(uint32_t);
+
+    enum MessageTypes {
+        M_TYPE_MASK         = 0xff000000,
+        M_ARG_MASK          = 0x00ffffff,
+
+        M_READ_REGISTERS    = 0x01000000,  // [] -> [r0-r9, FP, SP, PC, CPSR]
+        M_WRITE_REGISTERS   = 0x02000000,  // [r0-r9, FP, SP, PC, CPSR] -> []
+        M_WRITE_SINGLE_REG  = 0x03000000,  // arg=reg, [value] -> []
+        M_READ_RAM          = 0x04000000,  // arg=address, [byteCount] -> [bytes]
+        M_WRITE_RAM         = 0x05000000,  // arg=address, [bytes] -> []
+        M_CONTINUE          = 0x06000000,
+        M_STOP              = 0x07000000,
+    };
+};
+
+
 /***************************************************************************
  * Utilities
  ***************************************************************************/
