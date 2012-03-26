@@ -259,6 +259,96 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, bool spriteJump)
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
+    const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
+            
+    cubeWrapper.DrawBackgroundPartial(
+        Vec2(0, 0),
+        Vec2(-scroll.x, 0),
+        Vec2(maxTilesX + scroll.x, maxTilesY),
+        UiCongratulations);
+    
+    const PinnedAssetImage *sprites[] =
+    {
+        &BuddySpriteFrontZorg,
+        &BuddySpriteFrontRike,
+        &BuddySpriteFrontGluv,
+    };
+    
+    int jump_offset = 8;
+    
+    cubeWrapper.DrawSprite(
+        0,
+        Vec2(
+            (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE),
+            spriteJump ?
+                VidMode::LCD_height / 2 - 32 :
+                VidMode::LCD_height / 2 - 32 + jump_offset),
+        *sprites[cubeWrapper.GetId()]);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawCutsceneStory(CubeWrapper &cubeWrapper, const char *text, bool jump0, bool jump1)
+{
+    ASSERT(text != NULL);
+    ASSERT(2 <= _SYS_VRAM_SPRITES);
+    
+    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), BuddySpriteCutsceneGluv);
+    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), BuddySpriteCutsceneRike);
+    
+    if (text[0] == '<')
+    {
+        cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, text + 1);
+    }
+    else if (text[0] == '>')
+    {
+        cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, text + 1);
+    }
+    else
+    {
+        cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, text);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, Int2 scroll, bool jump)
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    
+    int jump_offset = 4;
+    
+    int x = (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE);
+    int y = jump ? 28 - jump_offset : 28;
+    y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
+    
+    cubeWrapper.DrawSprite(0, Vec2(x, y), BuddySpriteFrontGluv);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, Int2 scroll)
+{
+    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    cubeWrapper.DrawSprite(
+        0,
+        Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U),
+        BuddySpriteFrontGluv);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     cubeWrapper.DrawBackground(StoryProgress);
@@ -608,6 +698,9 @@ App::App()
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
     , mStoryCutsceneIndex(0)
+    , mCutsceneSpriteJumpRandom()
+    , mCutsceneSpriteJump0(false)
+    , mCutsceneSpriteJump1(false)
 {
     for (unsigned int i = 0; i < arraysize(mTouching); ++i)
     {
@@ -987,7 +1080,7 @@ void App::ResetCubesToShuffleStart()
             {
                 mCubeWrappers[i].SetPiece(j, mShufflePiecesStart[i][j]);
                 mCubeWrappers[i].SetPieceSolution(
-                        j, GetPuzzleDefault().GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
+                    j, GetPuzzleDefault().GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
             }
         }
     }
@@ -1021,7 +1114,7 @@ void App::PlaySound()
 void App::StartGameState(GameState gameState)
 {
     mGameState = gameState;
-       
+    
     ASSERT(gameState < int(arraysize(kGameStateNames)));  
     LOG(("Game State = %s\n", kGameStateNames[mGameState]));
     
@@ -1163,6 +1256,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
             mDelayTimer = kStateTimeDelayLong;
+            mCutsceneSpriteJump0 = false;
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
@@ -1201,6 +1295,8 @@ void App::StartGameState(GameState gameState)
                 mDelayTimer = kStoryCutsceneTextDelay;
             }
             mStoryCutsceneIndex = 0;
+            mCutsceneSpriteJump0 = false;
+            mCutsceneSpriteJump1 = false;
             break;
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
@@ -1267,6 +1363,8 @@ void App::StartGameState(GameState gameState)
                 mDelayTimer = kStoryCutsceneTextDelay;
             }
             mStoryCutsceneIndex = 0;
+            mCutsceneSpriteJump0 = false;
+            mCutsceneSpriteJump1 = false;
             break;
         }
         case GAME_STATE_STORY_UNLOCKED_1:
@@ -1284,6 +1382,7 @@ void App::StartGameState(GameState gameState)
         {
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
+            mCutsceneSpriteJump0 = false;
             break;
         }
         case GAME_STATE_STORY_UNLOCKED_4:
@@ -1654,14 +1753,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].UpdateCutscene(
-                        kShuffleCutsceneJumpChance, kShuffleCutsceneJumpChance);
-                }
-            }
+            UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, kShuffleCutsceneJumpChance, 1);
             
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
@@ -1697,7 +1789,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
-            mCubeWrappers[0].UpdateCutscene(kStoryCutsceneJumpChanceA, kStoryCutsceneJumpChanceB);
+            UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, kStoryCutsceneJumpChanceA, 1);
+            UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, kStoryCutsceneJumpChanceB, 1);
             
             if (UpdateTimer(mDelayTimer, dt))
             {
@@ -1915,7 +2008,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_END_2:
         {
-            mCubeWrappers[0].UpdateCutscene(kStoryCutsceneJumpChanceA, kStoryCutsceneJumpChanceB);
+            UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, kStoryCutsceneJumpChanceA, 1);
+            UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, kStoryCutsceneJumpChanceB, 1);
             
             if (UpdateTimer(mDelayTimer, dt))
             {
@@ -2002,14 +2096,7 @@ void App::UpdateGameState(float dt)
                     }
                     else
                     {
-                        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                        {
-                            if (mCubeWrappers[i].IsEnabled())
-                            {
-                                // TODO: Make variable
-                                mCubeWrappers[i].UpdateCutscene(4, 4);
-                            }
-                        }
+                        UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, kStoryUnlockJumpChance, 1);
                     }
                 }
             }
@@ -2240,12 +2327,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
-            cubeWrapper.DrawCutsceneShuffle(Vec2(0, 0));
+            DrawCutsceneShuffle(cubeWrapper, Vec2(0, 0), mCutsceneSpriteJump0);
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            cubeWrapper.DrawCutsceneShuffle(mBackgroundScroll);
+            DrawCutsceneShuffle(cubeWrapper, mBackgroundScroll, mCutsceneSpriteJump0);
             
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
@@ -2278,7 +2365,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutsceneStory(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex));
+                DrawCutsceneStory(
+                    cubeWrapper,
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex),
+                    mCutsceneSpriteJump0,
+                    mCutsceneSpriteJump1);
             }
             else
             {
@@ -2412,7 +2503,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                cubeWrapper.DrawCutsceneStory(GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex));
+                DrawCutsceneStory(
+                    cubeWrapper,
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex),
+                    mCutsceneSpriteJump0,
+                    mCutsceneSpriteJump1);
             }
             else
             {
@@ -2494,7 +2589,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     assetHeight = UiRibbonGluv.height - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
-                cubeWrapper.DrawUnlocked3Sprite(mBackgroundScroll);
+                DrawUnlocked3Sprite(cubeWrapper, mBackgroundScroll, mCutsceneSpriteJump0);
                 
                 ASSERT(assetOffset >= 0 && assetOffset <  int(UiRibbonGluv.height));
                 ASSERT(assetHeight >  0 && assetHeight <= int(UiRibbonGluv.height));
@@ -2517,7 +2612,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
                     UiCongratulations);
                 
-                cubeWrapper.DrawUnlocked4Sprite(mBackgroundScroll);
+                DrawUnlocked4Sprite(cubeWrapper, mBackgroundScroll);
                 
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(0, 11),
@@ -3298,6 +3393,27 @@ bool App::HasUnlocked() const
         (mStoryPuzzleIndex + 1) < GetNumPuzzles() &&
         (mStoryPuzzleIndex + 1) == mSaveDataStoryProgress &&
         GetPuzzle(mSaveDataStoryProgress).GetBook() > GetPuzzle(mStoryPuzzleIndex).GetBook();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance)
+{
+    if (!cutsceneSpriteJump)
+    {
+        if (mCutsceneSpriteJumpRandom.randrange(upChance) == 0)
+        {
+            cutsceneSpriteJump = true;
+        }
+    }
+    else
+    {
+        if (mCutsceneSpriteJumpRandom.randrange(downChance) == 0)
+        {
+            cutsceneSpriteJump = false;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

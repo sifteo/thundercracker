@@ -70,14 +70,6 @@ public:
         const char *text);
     void ScrollUi(Sifteo::Int2 position);
     
-    // Special-Case Buddy Sprite Stuff
-    // TODO: If we have DrawSprite(index, asset, position) could we get rid of these?
-    void UpdateCutscene(int jumpChanceA, int jumpChanceB);
-    void DrawCutsceneShuffle(Sifteo::Int2 scroll);
-    void DrawCutsceneStory(const char *text);
-    void DrawUnlocked3Sprite(Sifteo::Int2 scroll);
-    void DrawUnlocked4Sprite(Sifteo::Int2 scroll);
-    
     // Asset Loading
     bool IsLoadingAssets();
     void LoadAssets();
@@ -119,8 +111,7 @@ private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     
     void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
-    void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
-
+    
     Sifteo::Cube mCube;
     Sifteo::BG1Helper mBg1Helper;
     
@@ -132,11 +123,6 @@ private:
     Sifteo::Cube::Side mPieceBlinking;
     float mPieceBlinkTimer;
     bool mPieceBlinkingOn;
-    
-    // Cutscene Jump Animation
-    Sifteo::Random mCutsceneSpriteJumpRandom;
-    bool mCutsceneSpriteJump0;
-    bool mCutsceneSpriteJump1;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

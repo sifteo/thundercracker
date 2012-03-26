@@ -115,9 +115,6 @@ CubeWrapper::CubeWrapper()
     , mPieceBlinking(SIDE_UNDEFINED)
     , mPieceBlinkTimer(0.0f)
     , mPieceBlinkingOn(false)
-    , mCutsceneSpriteJumpRandom()
-    , mCutsceneSpriteJump0(false)
-    , mCutsceneSpriteJump1(false)
 {
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
@@ -139,8 +136,6 @@ void CubeWrapper::Reset()
     mPieceBlinking = SIDE_UNDEFINED;
     mPieceBlinkTimer = 0.0f;
     mPieceBlinkingOn = false;
-    mCutsceneSpriteJump0 = false;
-    mCutsceneSpriteJump1 = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -295,113 +290,6 @@ void CubeWrapper::DrawUiText(
 void CubeWrapper::ScrollUi(Int2 position)
 {
     Video().BG1_setPanning(position);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::UpdateCutscene(int jumpChanceA, int jumpChanceB)
-{
-    UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, jumpChanceA, 1);
-    UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, jumpChanceB, 1);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawCutsceneShuffle(Sifteo::Int2 scroll)
-{
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
-    const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
-    const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
-            
-    Video().BG0_drawPartialAsset(
-        Vec2(0, 0),
-        Vec2(-scroll.x, 0),
-        Vec2(maxTilesX + scroll.x, maxTilesY),
-        UiCongratulations);
-    
-    switch (GetId())
-    {
-        default:
-        case 0:
-            Video().setSpriteImage(0, BuddySpriteFrontZorg, 0);
-            break;
-        case 1:
-            Video().setSpriteImage(0, BuddySpriteFrontRike, 0);
-            break;
-        case 2:
-            Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
-            break;
-    }
-    
-    int jump_offset = 8;
-    
-    Video().moveSprite(
-        0,
-        Vec2(
-            (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE),
-            mCutsceneSpriteJump0 ?
-                VidMode::LCD_height / 2 - 32 :
-                VidMode::LCD_height / 2 - 32 + jump_offset));
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawCutsceneStory(const char *text)
-{
-    ASSERT(text != NULL);
-    ASSERT(2 <= _SYS_VRAM_SPRITES);
-    
-    Video().setSpriteImage(0, BuddySpriteCutsceneGluv, 0);
-    Video().setSpriteImage(1, BuddySpriteCutsceneRike, 0);
-    
-    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 60 : 66));
-    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 60 : 66));
-    
-    if (text[0] == '<')
-    {
-        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text + 1);
-    }
-    else if (text[0] == '>')
-    {
-        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundRight);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text + 1);
-    }
-    else
-    {
-        Video().BG0_drawAsset(Vec2(0, 0), StoryCutsceneBackgroundLeft);
-        mBg1Helper.DrawText(Vec2(1, 1), UiFontBlack, text);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawUnlocked3Sprite(Sifteo::Int2 scroll)
-{
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
-    Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
-    
-    int jump_offset = 4;
-    
-    int x = (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE);
-    int y = mCutsceneSpriteJump0 ? 28 - jump_offset : 28;
-    y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
-    
-    Video().moveSprite(0, Vec2(x, y));
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawUnlocked4Sprite(Sifteo::Int2 scroll)
-{
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
-    Video().setSpriteImage(0, BuddySpriteFrontGluv, 0);
-    Video().moveSprite(0, Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -810,27 +698,6 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 }
 
 #endif
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance)
-{
-    if (!cutsceneSpriteJump)
-    {
-        if (mCutsceneSpriteJumpRandom.randrange(upChance) == 0)
-        {
-            cutsceneSpriteJump = true;
-        }
-    }
-    else
-    {
-        if (mCutsceneSpriteJumpRandom.randrange(downChance) == 0)
-        {
-            cutsceneSpriteJump = false;
-        }
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

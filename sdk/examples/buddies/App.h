@@ -102,6 +102,8 @@ private:
     
     bool HasUnlocked() const;
     
+    void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
+    
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
     
@@ -170,6 +172,9 @@ private:
     // Story Mode
     unsigned int mStoryPuzzleIndex;
     unsigned int mStoryCutsceneIndex;
+    Sifteo::Random mCutsceneSpriteJumpRandom;
+    bool mCutsceneSpriteJump0;
+    bool mCutsceneSpriteJump1;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
