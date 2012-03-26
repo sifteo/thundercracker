@@ -102,6 +102,8 @@ public:
 	inline GameState getState() const { return m_state; }
     inline float getStateTime() const { return m_stateTime; }
     void setState( GameState state );
+    //go to state through bubble transition
+    void TransitionToState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
     unsigned int getScore() const;

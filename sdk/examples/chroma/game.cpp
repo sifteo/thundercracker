@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "assets.gen.h"
 #include "Puzzle.h"
+#include "BubbleTransition.h"
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -120,7 +121,7 @@ void Game::Update()
 
         if( !m_menu.Update( choice ) )
         {
-            setState( STATE_INTRO );
+            TransitionToState( STATE_INTRO );
             if( choice < MODE_CNT )
             {
                 m_mode = (GameMode)choice;
@@ -332,6 +333,14 @@ void Game::setState( GameState state )
             m_cubes[i].resetIntro();
         }
     }
+}
+
+
+//go to state through bubble transition
+void Game::TransitionToState( GameState state )
+{
+    DoBubbleTransition();
+    setState( state );
 }
 
 

@@ -135,6 +135,7 @@ public:
     void SpawnRockExplosion( const Vec2 &pos, unsigned int health );
     //each cube can have one floating score at a time
     void SpawnScore( unsigned int score, const Vec2 &slotpos );
+    VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
