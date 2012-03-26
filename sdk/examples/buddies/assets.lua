@@ -72,13 +72,15 @@ UiRestart = image {"assets/pausemenu_restart_puzzle.png"}
 UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 UiCongratulations = image{"assets/panel_congratulations.png"}
 UiRibbonGluv = image{"assets/ribbon_gluv.png"}
+UiGoBlue = image{"assets/go_blue.png", pinned = true}
+UiGoOrange = image{"assets/go_orange.png", pinned = true}
 
 -- Shuffle Mode
 ShuffleTitleScreen = image{"assets/titlescreen_shuffle.png"}
 ShuffleShakeToShuffle = image{"assets/shake_to_shuffle.png"}
 ShuffleTouchToSwap = image{"assets/touch_to_swap.png"}
 ShuffleMemorizeFaces = image{"assets/panel_memorize_faces.png"}
-ShuffleNeighbor = image{"assets/neighbor.png"}
+ShuffleNeighbor = image{"assets/neighbor_shufflegoal.png"}
 ShuffleClueUnscramble = image{"assets/panel_clue_shufflemode.png"}
 ShuffleBestTimes = image{"assets/panel_best_times.png"}
 ShuffleBestTimesHighScore1 = image{"assets/panel_best_times_highscore_1.png"}
@@ -93,6 +95,7 @@ StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
 StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
+StoryNeighbor = image{"assets/neighbor.png"}
 StoryProgress = image{"assets/panel_progression.png"}
 StoryRibbonNewCharacter = image{"assets/ribbon_new_character.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}

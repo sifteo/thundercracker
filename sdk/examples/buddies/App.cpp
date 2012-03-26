@@ -1077,6 +1077,10 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
             mUiIndex = 0;
+            for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
+            {
+                mUiIndexSync[i] = false;
+            }
             mDelayTimer = kShuffleBannerSwapDelay;
             break;   
         }
@@ -1093,16 +1097,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            mScoreTimer = 0.0f;
-            mScoreMoves = 0;
-            mScorePlace = UINT_MAX;
             mDelayTimer = kStateTimeDelayLong;
-            mUiIndex = 0;
-            for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
-            {
-                mUiIndexSync[i] = false;
-            }
-            
             // Copy in puzzle data so we can reset
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
@@ -1120,7 +1115,11 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
+            mDelayTimer = kStateTimeDelayShort;
             mOptionsTimer = kOptionsTimerDuration;
+            mScoreTimer = 0.0f;
+            mScoreMoves = 0;
+            mScorePlace = UINT_MAX;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 mFaceCompleteTimers[i] = 0.0f;
@@ -1434,10 +1433,7 @@ void App::UpdateGameState(float dt)
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
                         
-                        if (mUiIndex == 0)
-                        {
-                            mUiIndexSync[i] = true;
-                        }
+                        mUiIndexSync[i] = true;
                     }
                 }
             }
@@ -1445,6 +1441,11 @@ void App::UpdateGameState(float dt)
             if (UpdateTimerLoop(mDelayTimer, dt, kShuffleBannerSwapDelay))
             {
                 mUiIndex = (mUiIndex + 1) % 3;
+                
+                for (unsigned int i = 0; i < arraysize(mUiIndexSync); ++i)
+                {
+                    mUiIndexSync[i] = false;
+                }
             }
             break;
         }
@@ -1461,18 +1462,13 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mUiIndex = (mUiIndex + 1) % 2;
+                StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            
-            if (AnyTouchBegin())
+            else if (AnyTouchBegin())
             {
                 mOptionsTouchSync = true;
-                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
-                {
-                    mClueOffTimers[i] = 0.0f;
-                }
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             break;
@@ -1481,6 +1477,12 @@ void App::UpdateGameState(float dt)
         {
             // We're in active play, so track our time for scoring purposes
             mScoreTimer += dt;
+            
+            // Delay timer handles the GO! message.
+            if (mDelayTimer > 0.0f)
+            {
+                UpdateTimer(mDelayTimer, dt);
+            }
             
             // Check for holding, which enables the options menu.
             if (AnyTouchHold())
@@ -2133,14 +2135,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleTouchToSwap);
             }
-            else if (mUiIndex == 1)
+            else if (mUiIndex == 1 && !mUiIndexSync[cubeWrapper.GetId()])
             {
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
-            }
-            
-            if (mUiIndex != 0)
-            {
-                mUiIndexSync[cubeWrapper.GetId()] = false;
             }
             break;
         }
@@ -2151,7 +2148,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
         {
-            if (cubeWrapper.GetId() == 0 && mUiIndex == 0)
+            if (cubeWrapper.GetId() == 0)
             {
                 cubeWrapper.DrawBackground(ShuffleClueUnscramble);
             }
@@ -2181,6 +2178,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else
             {
                 cubeWrapper.DrawBuddy();
+                
+                if (mDelayTimer > 0.0f)
+                {
+                    cubeWrapper.DrawSprite(0, Vec2(48, 48), UiGoOrange);
+                }
             }
             break;
         }
@@ -2321,7 +2323,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 else if (cubeWrapper.GetId() == 0 && mHintFlowIndex == 1)
                 {
                     // Hint 1
-                    cubeWrapper.DrawBackground(ShuffleNeighbor);
+                    cubeWrapper.DrawBackground(StoryNeighbor);
                 }
                 else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
