@@ -12,7 +12,7 @@ using namespace Sifteo;
 
 // Static Globals
 static Cube gCubes[NUM_CUBES];
-static struct MenuItem gItems[NUM_ITEMS + 1] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy} };
+static struct MenuItem gItems[NUM_ITEMS + 1] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {NULL, NULL} };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
 static void begin() {
