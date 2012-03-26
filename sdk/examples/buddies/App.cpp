@@ -1261,13 +1261,13 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_UNLOCKED_2:
         {
-            mDelayTimer = kStateTimeDelayShort;
+            mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
             break;
         }
         case GAME_STATE_STORY_UNLOCKED_3:
         {
-            mDelayTimer = kStateTimeDelayShort;
+            mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
             break;
         }
@@ -1997,9 +1997,9 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_UNLOCKED_4:
         {
-            if (mBackgroundScroll.x < kMaxTilesX)
+            if (mBackgroundScroll.x > -kMaxTilesX)
             {
-                ++mBackgroundScroll.x;
+                --mBackgroundScroll.x;
             }
             else
             {
@@ -2490,24 +2490,24 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackgroundPartial(
                 Vec2(0, 0),
-                Vec2(kMaxTilesX - mBackgroundScroll.x, 0),
-                Vec2(mBackgroundScroll.x, kMaxTilesY),
+                Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
+                Vec2(-mBackgroundScroll.x, kMaxTilesY),
                 UiBackground);
             
-            if (mBackgroundScroll.x < kMaxTilesX)
+            if (mBackgroundScroll.x > -kMaxTilesX)
             {
                 cubeWrapper.DrawBackgroundPartial(
-                    Vec2(mBackgroundScroll.x, 0),
+                    Vec2(-mBackgroundScroll.x, 0),
                     Vec2(0, 0),
-                    Vec2(kMaxTilesX - mBackgroundScroll.x, kMaxTilesY),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
                     UiCongratulations);
                 
-                cubeWrapper.DrawUnlocked4Sprite(mBackgroundScroll);
-                        
+                cubeWrapper.DrawUnlocked4Sprite(-mBackgroundScroll);
+                
                 cubeWrapper.DrawUiAssetPartial(
-                    Vec2(mBackgroundScroll.x, 11),
+                    Vec2(-mBackgroundScroll.x, 11),
                     Vec2(0, 0),
-                    Vec2(kMaxTilesX - mBackgroundScroll.x, int(UiRibbonGluv.height)),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(UiRibbonGluv.height)),
                     UiRibbonGluv);
             }
             break;
