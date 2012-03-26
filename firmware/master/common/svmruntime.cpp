@@ -9,6 +9,7 @@
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
+#include "svmdebugger.h"
 #include "event.h"
 #include "tasks.h"
 
@@ -96,7 +97,18 @@ void SvmRuntime::exit()
 
 void SvmRuntime::fault(FaultCode code)
 {
-    SvmDebugPipe::fault(code);
+    // Try to find a handler for this fault. If nobody steps up,
+    // force the system to exit.
+
+    // First priority: an attached debugger
+    if (SvmDebugger::fault(code))
+        return;
+    
+    // Next priority: Log the fault in a platform-specific way
+    if (SvmDebugPipe::fault(code))
+        return;
+
+    // Unhandled fault; exit
     exit();
 }
 

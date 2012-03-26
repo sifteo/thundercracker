@@ -20,7 +20,12 @@ class SvmDebugger {
 public:
     static void messageLoop(void *param=0);
 
-    static void signal(Svm::Debugger::Signals sig);
+    /// Returns true if we stopped the target with the indicated signal,
+    /// false if the debugger is not attached.
+    static bool signal(Svm::Debugger::Signals sig);
+
+    /// Handle an SVM fault. Returns 'true' if the fault can be handled.
+    static bool fault(Svm::FaultCode code);
 
 private:
     SvmDebugger() {}

@@ -55,7 +55,7 @@ static const char* faultStr(FaultCode code)
     }
 }
     
-void SvmDebugPipe::fault(FaultCode code)
+bool SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     std::string pcName = formatAddress(pcVA);
@@ -107,6 +107,8 @@ void SvmDebugPipe::fault(FaultCode code)
     }
 
     LOG(("***\n"));
+
+    return false;
 }
 
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)

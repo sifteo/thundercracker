@@ -102,7 +102,11 @@ public:
     static bool debuggerMsgAccept(DebuggerMsg &msg);
     static void debuggerMsgFinish(DebuggerMsg &msg);
 
-    static void fault(FaultCode code);
+    /**
+     * Returns true if the debugger has handled the fault, false if it
+     * remains unhandled and the runtime should take action on it.
+     */
+    static bool fault(FaultCode code);
 
     static void setSymbolSourceELF(const FlashRange &elf);
 

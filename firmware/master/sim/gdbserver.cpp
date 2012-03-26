@@ -327,6 +327,39 @@ void GDBServer::txHexWord(uint32_t word)
     txHexByte(word >> 24);
 }
 
+uint8_t GDBServer::rxByte(uint32_t &offset)
+{
+    if (offset < rxPacketLen)
+        return rxPacket[offset++];
+    else
+        return 0;
+}
+
+uint8_t GDBServer::rxHexByte(uint32_t &offset)
+{
+    int high = digitFromHex(rxByte(offset));
+    if (high < 0)
+        return 0;
+
+    int low = digitFromHex(rxByte(offset));
+    if (low < 0)
+        return 0;
+
+    return (high << 4) | low;
+}
+
+uint32_t GDBServer::rxHexWord(uint32_t &offset)
+{
+    uint8_t byte0 = rxHexByte(offset);
+    uint8_t byte1 = rxHexByte(offset);
+    uint8_t byte2 = rxHexByte(offset);
+    uint8_t byte3 = rxHexByte(offset);
+    return (byte0 << 0 )|
+           (byte1 << 8 )|
+           (byte2 << 16)|
+           (byte3 << 24);
+}
+
 void GDBServer::txString(const char *str)
 {
     char c;
@@ -374,18 +407,35 @@ void GDBServer::handlePacket()
         case 'g': {
             // Read all registers
             txPacketBegin();
-            msgCmd[0] = Debugger::M_READ_REGISTERS | Debugger::ALL_REGISTER_BITS;
-            replyToRegisterRead(Debugger::ALL_REGISTER_BITS, message(1));
+            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
+            uint32_t replyLen = message(1);
+            for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
+                uint32_t word = findRegisterInPacket(bitmap, regGDBtoSVM(r));
+                txHexWord((word < replyLen) ? msgReply[word] : -1);
+            }
             return txPacketEnd();
         }
 
         case 'G': {
             // Write all registers
-            return txPacketEnd();
+            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            uint32_t svmRegCount = Intrinsic::POPCOUNT(bitmap);
+            uint32_t offset = 1;
+            for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
+                uint32_t svmReg = regGDBtoSVM(r);
+                uint32_t value = rxHexWord(offset);
+                uint32_t word = findRegisterInPacket(bitmap, svmReg);
+                if (word < svmRegCount)
+                    msgCmd[1 + word] = value;
+            }
+            msgCmd[0] = Debugger::M_WRITE_REGISTERS | bitmap;
+            message(1 + svmRegCount);
+            return txPacketString("OK");
         }
 
         case 'm': {
-            // Read memory
+            // Read memory (RAM or Flash)
             int addr = 0, size = 0;
             txPacketBegin();
             if (sscanf(rxPacket, "m%x,%x", &addr, &size) == 2)
@@ -402,14 +452,31 @@ void GDBServer::handlePacket()
         }
 
         case 'M': {
-            // Write memory
-            return txPacketString("OK");
+            // Write memory (RAM only)
+            // Maddr,length:XX...
+            txPacketBegin();
+            char *delim = strchr(rxPacket, ':');
+            int addr = 0, size = 0;
+            if (delim && sscanf(rxPacket, "M%x,%x", &addr, &size) == 2) {
+                uint32_t offset = (delim - rxPacket) + 1;
+                if (writeMemory(addr, size, offset))
+                    txString("OK");
+            }
+            return txPacketEnd();
         }
 
         case 'c': {
+            // Continue executing; clear stop signal.
             msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
             message(1);
             return;
+        }
+
+        case 'D': {
+            // Detach debugger
+            msgCmd[0] = Debugger::M_DETACH;
+            message(1);
+            return txPacketString("OK");
         }
 
         case 's': {
@@ -466,12 +533,28 @@ bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
     return true;
 }
 
-void GDBServer::replyToRegisterRead(uint32_t bitmap, uint32_t replyLen)
+bool GDBServer::writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset)
 {
-    for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
-        uint32_t word = findRegisterInPacket(bitmap, regGDBtoSVM(r));
-        txHexWord((word < replyLen) ? msgReply[word] : -1);
+    while (bytes) {
+        uint32_t chunk = MIN(bytes, Debugger::MAX_CMD_BYTES - sizeof(uint32_t));
+
+        if ((addr & Debugger::M_ARG_MASK) != addr)
+            return false;
+
+        msgCmd[0] = Debugger::M_WRITE_RAM | addr;
+        msgCmd[1] = chunk;
+        uint8_t *cmdBytes = reinterpret_cast<uint8_t*>(&msgCmd[2]);
+
+        for (uint32_t i = 0; i < chunk; i++)
+            cmdBytes[i] = rxHexByte(packetOffset);
+
+        message((chunk + 3) / 4 + 2);
+
+        addr += chunk;
+        bytes -= chunk;
     }
+
+    return true;
 }
 
 uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
@@ -495,7 +578,7 @@ uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
     return (uint32_t) -1;
 }
 
-uint32_t GDBServer::regGDBtoSVM(uint32_t r)
+int GDBServer::regGDBtoSVM(uint32_t r)
 {
     /*
      * Convert GDB's ARM register numbers to SVM register numbers.
@@ -520,6 +603,6 @@ uint32_t GDBServer::regGDBtoSVM(uint32_t r)
             return REG_CPSR;
 
         default:
-            return (uint32_t) -1;
+            return -1;
     }
 }

@@ -39,11 +39,22 @@ void SvmDebugger::messageLoop(void *param)
     } while (instance.stopped);
 }
 
-void SvmDebugger::signal(Svm::Debugger::Signals sig)
+bool SvmDebugger::signal(Svm::Debugger::Signals sig)
 {
     // Signals are ignored when no debugger is attached.
-    if (instance.attached)
+    if (instance.attached) {
         instance.stopped = sig;
+        return true;
+    }
+    return false;
+}
+
+bool SvmDebugger::fault(Svm::FaultCode code)
+{
+    switch (code) {
+        case F_ABORT:   return signal(S_ABORT);
+        default:        return signal(S_SEGV);
+    }
 }
 
 void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)

@@ -48,7 +48,7 @@ private:
 
     // Register format
     static const unsigned NUM_GDB_REGISTERS = 26;
-    uint32_t regGDBtoSVM(uint32_t r);
+    int regGDBtoSVM(uint32_t r);
     static uint32_t findRegisterInPacket(uint32_t bitmap, uint32_t svmReg);
 
     static void threadEntry(void *param);
@@ -70,14 +70,19 @@ private:
     void txPacketString(const char *str);
     void txHexByte(uint8_t byte);
     void txHexWord(uint32_t word);
+    
+    uint8_t rxByte(uint32_t &offset);
+    uint8_t rxHexByte(uint32_t &offset);
+    uint32_t rxHexWord(uint32_t &offset);
 
     static char digitToHex(int i);
     static int digitFromHex(char c);
     
     void debugBreak();
-    void replyToRegisterRead(uint32_t bitmap, uint32_t replyLen);
-    bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
     void sendStopReasonReply();
+
+    bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
+    bool writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset);
 };
 
 #endif  // GDB_SERVER_H

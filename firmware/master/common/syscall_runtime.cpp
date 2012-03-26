@@ -25,7 +25,6 @@ void _SYS_breakpoint() {
 }
 
 void _SYS_abort() {
-    SvmDebugger::signal(Svm::Debugger::S_ABORT);
     SvmRuntime::fault(Svm::F_ABORT);
 }
 
