@@ -405,9 +405,9 @@ uint32_t GDBServer::message(uint32_t words)
      * This uses a callback provided by our transport layer.
      */
 
-    LOG((LOG_PREFIX "Sending message, len=%d [%08x]\n", words, msgCmd[0]));
+    DEBUG_LOG((LOG_PREFIX "Sending message, len=%d [%08x]\n", words, msgCmd[0]));
     uint32_t replyLen = messageCb ? messageCb(msgCmd, words, msgReply) : 0;
-    LOG((LOG_PREFIX "Received reply, len=%d [%08x]\n", replyLen, msgReply[0]));
+    DEBUG_LOG((LOG_PREFIX "Received reply, len=%d [%08x]\n", replyLen, msgReply[0]));
     return replyLen;
 }
 
