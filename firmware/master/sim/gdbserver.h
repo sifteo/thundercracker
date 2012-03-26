@@ -35,6 +35,7 @@ private:
     int clientFD;
     int packetState;
     bool running;
+    bool waitingForStop;
 
     unsigned txBufferLen;
     unsigned rxPacketLen;
@@ -56,6 +57,7 @@ private:
     void eventLoop();
     void handleClient();
     void resetPacketState();
+    static void setNonBlock(int fd);
     void rxBytes(char *bytes, int len);
     
     bool packetStartsWith(const char *str);
@@ -79,7 +81,7 @@ private:
     static int digitFromHex(char c);
     
     void debugBreak();
-    void sendStopReasonReply();
+    void pollForStop();
 
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
     bool writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset);

@@ -68,6 +68,7 @@ namespace Debugger {
         M_SIGNAL            = 0x05000000,  // arg=signal, [] -> []
         M_IS_STOPPED        = 0x06000000,  // [] -> [signal]
         M_DETACH            = 0x07000000,  // [] -> []
+        M_STEP              = 0x08000000,  // [] -> []
     };
 
     /*

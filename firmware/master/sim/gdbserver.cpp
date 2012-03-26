@@ -70,6 +70,16 @@ void GDBServer::stop()
     instance.running = false;
 }
 
+void GDBServer::setNonBlock(int fd)
+{
+#ifdef _WIN32
+    unsigned long arg = 1;
+    ioctlsocket(fd, FIONBIO, &arg);
+#else
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+#endif
+}
+
 void GDBServer::threadEntry(void *param)
 {
     GDBServer *self = (GDBServer *) param;
@@ -144,6 +154,7 @@ void GDBServer::handleClient()
     #endif
     arg = 1;
     setsockopt(clientFD, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+    setNonBlock(clientFD);
 
     resetPacketState();
 
@@ -151,7 +162,18 @@ void GDBServer::handleClient()
     debugBreak();
 
     while (1) {
+        fd_set efds, rfds;
         char rxBuffer[4096];
+        struct timeval pollInterval = { 0, 100000 };  // 100ms
+
+        FD_ZERO(&efds);
+        FD_ZERO(&rfds);
+        FD_SET(clientFD, &rfds);
+        FD_SET(clientFD, &efds);
+
+        select(clientFD + 1, &rfds, NULL, &efds, &pollInterval);
+        pollForStop();
+
         int ret = recv(clientFD, rxBuffer, sizeof rxBuffer, 0);
 
         if (ret <= 0) {
@@ -230,7 +252,7 @@ void GDBServer::rxBytes(char *bytes, int len)
             } else if (byte == 0x03) {
                 debugBreak();
                 txByte('+');
-                sendStopReasonReply();
+                waitingForStop = true;
             }
             break;
 
@@ -383,10 +405,10 @@ uint32_t GDBServer::message(uint32_t words)
      * This uses a callback provided by our transport layer.
      */
 
-    if (messageCb)
-        return messageCb(msgCmd, words, msgReply);
-    else
-        return 0;
+    LOG((LOG_PREFIX "Sending message, len=%d [%08x]\n", words, msgCmd[0]));
+    uint32_t replyLen = messageCb ? messageCb(msgCmd, words, msgReply) : 0;
+    LOG((LOG_PREFIX "Received reply, len=%d [%08x]\n", replyLen, msgReply[0]));
+    return replyLen;
 }
 
 void GDBServer::handlePacket()
@@ -401,7 +423,8 @@ void GDBServer::handlePacket()
 
         case '?': {
             // Why did we last stop?
-            return sendStopReasonReply();
+            waitingForStop = true;
+            return;
         }
 
         case 'g': {
@@ -465,13 +488,6 @@ void GDBServer::handlePacket()
             return txPacketEnd();
         }
 
-        case 'c': {
-            // Continue executing; clear stop signal.
-            msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
-            message(1);
-            return;
-        }
-
         case 'D': {
             // Detach debugger
             msgCmd[0] = Debugger::M_DETACH;
@@ -479,8 +495,19 @@ void GDBServer::handlePacket()
             return txPacketString("OK");
         }
 
+        case 'c': {
+            // Continue executing; clear stop signal.
+            msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
+            message(1);
+            waitingForStop = true;
+            return;
+        }
+
         case 's': {
             // Single step
+            msgCmd[0] = Debugger::M_STEP;
+            message(1);
+            waitingForStop = true;
             return;
         }
     }
@@ -496,14 +523,28 @@ void GDBServer::debugBreak()
     message(1);
 }
 
-void GDBServer::sendStopReasonReply()
+void GDBServer::pollForStop()
 {
-    txPacketBegin();
-    txByte('S');
+    // If the target is stopped, see if we can clear waitingForStop and
+    // send a stop-reason reply.
+
+    if (!waitingForStop)
+        return;
+
     msgCmd[0] = Debugger::M_IS_STOPPED;
-    if (message(1) >= 1)
-        txHexByte(msgReply[0]);
-    txPacketEnd();
+    if (message(1) >= 1) {
+        int signal = msgReply[0];
+        if (signal != Debugger::S_RUNNING) {
+
+            txPacketBegin();
+            txByte('S');
+            txHexByte(signal);
+            txPacketEnd();
+            txFlush();
+
+            waitingForStop = false;
+        }
+    }
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
