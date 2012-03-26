@@ -15,8 +15,9 @@ public:
         return _dev;
     }
 
-    static inline const Usb::ConfigDescriptor & configDescriptor(uint8_t idx) {
-        return _conf[idx];
+    static inline const Usb::ConfigDescriptor* configDescriptor(uint8_t idx) {
+        // TODO: calculate offset of subsequent configurations
+        return _conf;
     }
 
     static inline bool stringSupport() {

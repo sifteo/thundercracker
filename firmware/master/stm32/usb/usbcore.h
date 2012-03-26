@@ -25,8 +25,6 @@ public:
     static int standardRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
 
 private:
-    static uint16_t buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len);
-
     static int getDeviceStatus(uint8_t **buf, uint16_t *len);
     static int getInterfaceStatus(uint8_t **buf, uint16_t *len);
     static int getEndpointStatus(Usb::SetupData *req, uint8_t **buf, uint16_t *len);

@@ -8,74 +8,21 @@
 
 using namespace Usb;
 
-uint16_t UsbCore::buildConfigDescriptor(uint8_t index, uint8_t *buf, uint16_t len)
-{
-    uint8_t *tmpbuf = buf;
-    const ConfigDescriptor &cfg = Usbd::configDescriptor(index);
-    uint16_t count, total = 0, totallen = 0;
-
-    memcpy(buf, &cfg, count = MIN(len, cfg.bLength));
-    buf += count;
-    len -= count;
-    total += count;
-    totallen += cfg.bLength;
-
-    // iterate interfaces
-    for (unsigned i = 0; i < cfg.bNumInterfaces; i++) {
-#if 0
-        // iterate alternate settings
-        for (unsigned j = 0; j < cfg.interface[i].num_altsetting; j++) {
-
-            const InterfaceDescriptor *iface = &cfg.interface[i].altsetting[j];
-
-            // Copy interface descriptor
-            memcpy(buf, iface, count = MIN(len, iface->bLength));
-            buf += count;
-            len -= count;
-            total += count;
-            totallen += iface->bLength;
-
-            // Copy extra bytes (function descriptors)
-            memcpy(buf, iface->extra, count = MIN(len, iface->extralen));
-            buf += count;
-            len -= count;
-            total += count;
-            totallen += iface->extralen;
-
-            // iterate endpoints
-            for (unsigned k = 0; k < iface->bNumEndpoints; k++) {
-                const EndpointDescriptor *ep = &iface->endpoint[k];
-                memcpy(buf, ep, count = MIN(len, ep->bLength));
-                buf += count;
-                len -= count;
-                total += count;
-                totallen += ep->bLength;
-            }
-        }
-#endif
-    }
-
-    // Fill in wTotalLength
-    *reinterpret_cast<uint16_t*>(tmpbuf + 2) = totallen;
-
-    return total;
-}
-
 int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     switch (req->wValue >> 8) {
 
-    case DescriptorDevice: {
-        const DeviceDescriptor *d = Usbd::devDescriptor();
-        *buf = (uint8_t*)d;
-        *len = MIN(*len, d->bLength);
+    case DescriptorDevice:
+        *buf = (uint8_t*)Usbd::devDescriptor();
+        *len = MIN(*len, Usbd::devDescriptor()->bLength);
+        return 1;
+
+    case DescriptorConfiguration: {
+        uint8_t configIdx = req->wValue & 0xff;
+        *buf = (uint8_t*)Usbd::configDescriptor(configIdx);
+        *len = Usbd::configDescriptor(configIdx)->wTotalLength;
         return 1;
     }
-
-    case DescriptorConfiguration:
-        *buf = UsbControl::buf();
-        *len = buildConfigDescriptor(req->wValue & 0xff, *buf, *len);
-        return 1;
 
     case DescriptorString: {
         if (!Usbd::stringSupport())

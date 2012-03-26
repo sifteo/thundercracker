@@ -15,14 +15,14 @@ void UsbControl::sendChunk()
     const DeviceDescriptor *dd = Usbd::devDescriptor();
     if (dd->bMaxPacketSize0 < controlState.len) {
         // Data stage, normal transmission
-        UsbHardware::epWritePacket(0, controlState.buf, dd->bMaxPacketSize0);
+        UsbHardware::epWritePacket(0, controlState.pdata, dd->bMaxPacketSize0);
         controlState.status = DataIn;
         controlState.pdata += dd->bMaxPacketSize0;
         controlState.len -= dd->bMaxPacketSize0;
     }
     else {
         // Data stage, end of transmission
-        UsbHardware::epWritePacket(0, controlState.buf, controlState.len);
+        UsbHardware::epWritePacket(0, controlState.pdata, controlState.len);
         controlState.status = LastDataIn;
         controlState.len = 0;
         controlState.pdata = 0;
@@ -103,7 +103,7 @@ bool UsbControl::controlRequest(uint8_t ep, Usb::Transaction txn)
         out(ep);
         break;
     case TransactionSetup:
-        setup(ep);
+        setup();
         break;
     default:
         return false;
@@ -111,21 +111,16 @@ bool UsbControl::controlRequest(uint8_t ep, Usb::Transaction txn)
     return true;
 }
 
-void UsbControl::setup(uint8_t ea)
+void UsbControl::setup()
 {
     SetupData *req = &controlState.req;
-    (void)ea;
-
-    controlState.complete = NULL;
 
     if (UsbHardware::epReadPacket(0, req, 8) != 8) {
         UsbHardware::epSetStalled(0, true);
         return;
     }
 
-    if (req->wLength == 0)
-        setupRead(req);
-    else if (req->bmRequestType & 0x80)
+    if (req->wLength == 0 || (req->bmRequestType & 0x80))
         setupRead(req);
     else
         setupWrite(req);
@@ -162,10 +157,6 @@ void UsbControl::out(uint8_t ea)
     case StatusOut:
         UsbHardware::epReadPacket(0, NULL, 0);
         controlState.status = Idle;
-        if (controlState.complete) {
-            controlState.complete(&controlState.req);
-        }
-        controlState.complete = NULL;
         break;
 
     default:
@@ -188,9 +179,6 @@ void UsbControl::in(uint8_t ea)
         break;
 
     case StatusIn:
-        if (controlState.complete)
-            controlState.complete(&controlState.req);
-
         // Exception: Handle SET ADDRESS function here...
         if ((req.bmRequestType == 0) && (req.bRequest == RequestSetAddress))
             UsbHardware::setAddress(req.wValue);

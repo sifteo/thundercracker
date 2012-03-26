@@ -14,7 +14,7 @@ public:
     }
 
 private:
-    static void setup(uint8_t ea);
+    static void setup();
     static void out(uint8_t ea);
     static void in(uint8_t ea);
 
@@ -43,7 +43,6 @@ private:
         uint8_t buf[128];
         uint8_t *pdata;
         uint16_t len;
-        void (*complete)(Usb::SetupData *req);
     };
     static ControlState controlState;
 };
