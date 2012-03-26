@@ -282,49 +282,63 @@ void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
 {
-    cubeWrapper.DrawBackground(StoryChapterNext);
+    cubeWrapper.DrawBackgroundPartial(
+        Vec2(0, 0),
+        Vec2(kMaxTilesX + bgScroll.x, 0),
+        Vec2(-bgScroll.x, kMaxTilesY),
+        StoryChapterNext);
     
-    unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
-    
-    String<16> buffer;
-    buffer << "Chapter " << (nextPuzzleIndex + 1);
-    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-    
-    Int2 scroll;
-    scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
-    if (buffer.size() % 2 != 0)
+    if (bgScroll.x == -kMaxTilesX)
     {
-        scroll.x = VidMode::TILE / 2;
+        unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
+    
+        String<16> buffer;
+        buffer << "Chapter " << (nextPuzzleIndex + 1);
+        int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+        
+        cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+        
+        Int2 scroll;
+        scroll.x = 0;
+        scroll.y = VidMode::TILE / 2;
+        if (buffer.size() % 2 != 0)
+        {
+            scroll.x = VidMode::TILE / 2;
+        }
+        cubeWrapper.ScrollUi(scroll);
     }
-    cubeWrapper.ScrollUi(scroll);
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
 {
-    cubeWrapper.DrawBackground(StoryChapterRetry);
+    cubeWrapper.DrawBackgroundPartial(
+        Vec2(0, 0),
+        Vec2(kMaxTilesX + bgScroll.x, 0),
+        Vec2(-bgScroll.x, kMaxTilesY),
+        StoryChapterRetry);
     
-    String<16> buffer;
-    buffer << "Chapter " << (puzzleIndex + 1);
-    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-    
-    Int2 scroll;
-    scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
-    if (buffer.size() % 2 != 0)
+    if (bgScroll.x == -kMaxTilesX)
     {
-        scroll.x = VidMode::TILE / 2;
+        String<16> buffer;
+        buffer << "Chapter " << (puzzleIndex + 1);
+        int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+        
+        cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+        
+        Int2 scroll;
+        scroll.x = 0;
+        scroll.y = VidMode::TILE / 2;
+        if (buffer.size() % 2 != 0)
+        {
+            scroll.x = VidMode::TILE / 2;
+        }
+        cubeWrapper.ScrollUi(scroll);
     }
-    cubeWrapper.ScrollUi(scroll);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1274,6 +1288,11 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_UNLOCKED_4:
         {
             mBackgroundScroll = Vec2(0, 0);
+            break;
+        }
+        case GAME_STATE_STORY_CHAPTER_END:
+        {
+            mBackgroundScroll = Vec2(-kMaxTilesX, 0);
             break;
         }
         default:
@@ -2488,11 +2507,36 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_STORY_UNLOCKED_4:
         {
-            cubeWrapper.DrawBackgroundPartial(
-                Vec2(0, 0),
-                Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                UiBackground);
+            if (cubeWrapper.GetId() == 0)
+            {
+                if (HasUnlocked())
+                {
+                    cubeWrapper.DrawBackgroundPartial(
+                        Vec2(0, 0),
+                        Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
+                        Vec2(-mBackgroundScroll.x, kMaxTilesY),
+                        StoryBookStartNext);
+                    
+                    int x = 32 - (kMaxTilesX + mBackgroundScroll.x) * 8;
+                    cubeWrapper.DrawSprite(1, Vec2(x, 14), BuddySpriteFrontGluv);
+                }
+                else
+                {
+                    DrawStoryChapterNext(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
+                }
+            }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                cubeWrapper.DrawBackgroundPartial(
+                    Vec2(0, 0),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
+                    Vec2(-mBackgroundScroll.x, kMaxTilesY),
+                    UiEndGameNavExit);
+            }
             
             if (mBackgroundScroll.x > -kMaxTilesX)
             {
@@ -2523,12 +2567,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 }
                 else
                 {
-                    DrawStoryChapterNext(cubeWrapper, mStoryPuzzleIndex);
+                    DrawStoryChapterNext(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
                 }
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex);
+                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
             }
             else if (cubeWrapper.GetId() == 2)
             {
