@@ -309,7 +309,7 @@ void CubeWrapper::Draw()
                     }
                     case 2:
                     {
-                        m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Continue, 0);
+                        m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Restart, 0);
                         break;
                     }
                     default:
@@ -357,6 +357,11 @@ void CubeWrapper::Draw()
 
             switch( Game::Inst().getWrapperIndex( this ) )
             {
+                case 0:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), UI_Game_Menu_Restart, 0);
+                    break;
+                }
                 case 1:
                 {
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_ExitGame, 0);
@@ -798,7 +803,14 @@ void CubeWrapper::Touch()
         }
         case Game::STATE_GAMEMENU:
         {
-            if( Game::Inst().getWrapperIndex( this ) == 1 )
+            if( Game::Inst().getWrapperIndex( this ) == 0 )
+            {
+                if( Game::Inst().getMode() == Game::MODE_PUZZLE )
+                    Game::Inst().gotoNextPuzzle( false );
+                else
+                    Game::Inst().setTestMatchFlag();
+            }
+            else if( Game::Inst().getWrapperIndex( this ) == 1 )
                 Game::Inst().ReturnToMainMenu();
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
                 Game::Inst().setState( Game::STATE_PLAYING );
