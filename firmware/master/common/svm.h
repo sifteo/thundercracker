@@ -9,11 +9,12 @@
 #include <stdint.h>
 
 /*
-    Functionality shared by multiple svm components.
-    For now, at least the validator and the simulator runtime.
-*/
-namespace Svm
-{
+ * This header file defines functionality shared by multiple SVM components,
+ * and which is defined by or closely related to the virtual machine
+ * architecture itself, rather than our particular implementation.
+ */
+
+namespace Svm {
 
 // Registers are wide enough to hold a native pointer
 typedef uintptr_t reg_t;
@@ -56,6 +57,19 @@ enum InstructionSize {
  */
 
 namespace Debugger {
+    enum MessageTypes {
+        M_TYPE_MASK         = 0xff000000,
+        M_ARG_MASK          = 0x00ffffff,
+
+        M_READ_REGISTERS    = 0x01000000,  // arg=bitmap, [] -> [regs]
+        M_WRITE_REGISTERS   = 0x02000000,  // arg=bitmap, [regs] -> []
+        M_READ_RAM          = 0x03000000,  // arg=address, [byteCount] -> [bytes]
+        M_WRITE_RAM         = 0x04000000,  // arg=address, [byteCount, bytes] -> []
+        M_SIGNAL            = 0x05000000,  // arg=signal, [] -> []
+        M_IS_STOPPED        = 0x06000000,  // [] -> [signal]
+        M_DETACH            = 0x07000000,  // [] -> []
+    };
+
     /*
      * Symmetric maximum lengths. Long enough for all 14 registers plus a
      * command word. Leaves room for one header word before we fill up a
@@ -67,17 +81,51 @@ namespace Debugger {
     const uint32_t MAX_CMD_BYTES = MAX_CMD_WORDS * sizeof(uint32_t);
     const uint32_t MAX_REPLY_BYTES = MAX_REPLY_WORDS * sizeof(uint32_t);
 
-    enum MessageTypes {
-        M_TYPE_MASK         = 0xff000000,
-        M_ARG_MASK          = 0x00ffffff,
+    /*
+     * A note on register bitmaps: They are CLZ-style bitmaps, shifted right
+     * by BITMAP_SHIFT bits. Registers are numbered in the standard SVM/ARM way.
+     */
+    const uint32_t BITMAP_SHIFT = 8;
 
-        M_READ_REGISTERS    = 0x01000000,  // [] -> [r0-r9, FP, SP, PC, CPSR]
-        M_WRITE_REGISTERS   = 0x02000000,  // [r0-r9, FP, SP, PC, CPSR] -> []
-        M_WRITE_SINGLE_REG  = 0x03000000,  // arg=reg, [value] -> []
-        M_READ_RAM          = 0x04000000,  // arg=address, [byteCount] -> [bytes]
-        M_WRITE_RAM         = 0x05000000,  // arg=address, [bytes] -> []
-        M_CONTINUE          = 0x06000000,
-        M_STOP              = 0x07000000,
+    static inline uint32_t regBit(unsigned r) {
+        return (0x80000000 >> BITMAP_SHIFT) >> r;
+    }
+    
+    static const uint32_t ALL_REGISTER_BITS =
+        Debugger::regBit(0) | Debugger::regBit(1) |
+        Debugger::regBit(2) | Debugger::regBit(3) |
+        Debugger::regBit(4) | Debugger::regBit(5) |
+        Debugger::regBit(6) | Debugger::regBit(7) |
+        Debugger::regBit(8) | Debugger::regBit(9) |
+        Debugger::regBit(REG_FP) | Debugger::regBit(REG_SP) |
+        Debugger::regBit(REG_PC) | Debugger::regBit(REG_CPSR);
+
+    /*
+     * UNIX-style signal names, used to keep track of the reason why the
+     * debugger has stopped the process.
+     */
+    enum Signals {
+        S_RUNNING   = 0,
+        S_HUP       = 1,
+        S_INT       = 2,
+        S_QUIT      = 3,
+        S_ILL       = 4,
+        S_TRAP      = 5,
+        S_ABORT     = 6,
+        S_EMULATE   = 7,
+        S_FPE       = 8,
+        S_KILL      = 9,
+        S_BUS       = 10,
+        S_SEGV      = 11,
+        S_SYS       = 12,
+        S_PIPE      = 13,
+        S_ALARM     = 14,
+        S_TERM      = 15,
+        S_STOP      = 17,
+        S_TSTOP     = 18,
+        S_CONT      = 19,
+        S_USR1      = 30,
+        S_USR2      = 31,
     };
 };
 

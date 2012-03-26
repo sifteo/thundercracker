@@ -22,7 +22,7 @@ Tasks::Task Tasks::TaskList[] = {
     { Usb::handleOUTData, 0 },
     #endif
     { AudioMixer::handleAudioOutEmpty, 0 },
-    { SvmDebugger::handleBreakpoint, 0 },
+    { SvmDebugger::messageLoop, 0 },
 };
 
 void Tasks::init()

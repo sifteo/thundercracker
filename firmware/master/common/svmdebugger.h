@@ -18,21 +18,29 @@
 
 class SvmDebugger {
 public:
-    static void handleBreakpoint(void *param=0);
+    static void messageLoop(void *param=0);
+
+    static void signal(Svm::Debugger::Signals sig);
 
 private:
     SvmDebugger() {}
     static SvmDebugger instance;
 
-    bool stopped;
+    Svm::Debugger::Signals stopped;
+    bool attached;
 
     void handleMessage(SvmDebugPipe::DebuggerMsg &msg);
 
-    void readRegisters(SvmDebugPipe::DebuggerMsg &msg);
-    void writeRegisters(SvmDebugPipe::DebuggerMsg &msg);
-    void writeSingleReg(SvmDebugPipe::DebuggerMsg &msg);
-    void readRAM(SvmDebugPipe::DebuggerMsg &msg);
-    void writeRAM(SvmDebugPipe::DebuggerMsg &msg);
+    void msgReadRegisters(SvmDebugPipe::DebuggerMsg &msg);
+    void msgWriteRegisters(SvmDebugPipe::DebuggerMsg &msg);
+    void msgReadRAM(SvmDebugPipe::DebuggerMsg &msg);
+    void msgWriteRAM(SvmDebugPipe::DebuggerMsg &msg);
+    void msgSignal(SvmDebugPipe::DebuggerMsg &msg);
+    void msgIsStopped(SvmDebugPipe::DebuggerMsg &msg);
+    void msgDetach(SvmDebugPipe::DebuggerMsg &msg);
+    
+    void setUserReg(uint32_t r, uint32_t value);
+    uint32_t getUserReg(uint32_t r);
 };
 
 #endif // SVM_DEBUGGER_H

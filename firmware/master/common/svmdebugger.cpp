@@ -20,7 +20,7 @@ using namespace Svm::Debugger;
 SvmDebugger SvmDebugger::instance;
 
 
-void SvmDebugger::handleBreakpoint(void *param)
+void SvmDebugger::messageLoop(void *param)
 {
     do {
         SvmDebugPipe::DebuggerMsg msg;
@@ -39,6 +39,13 @@ void SvmDebugger::handleBreakpoint(void *param)
     } while (instance.stopped);
 }
 
+void SvmDebugger::signal(Svm::Debugger::Signals sig)
+{
+    // Signals are ignored when no debugger is attached.
+    if (instance.attached)
+        instance.stopped = sig;
+}
+
 void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
 {
     /*
@@ -54,41 +61,127 @@ void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
         return;
     }
 
+    // Any command except detatch will attach the debugger.
+    attached = true;
+
     switch (msg.cmd[0] & M_TYPE_MASK) {
-        case M_READ_REGISTERS:      return readRegisters(msg);
-        case M_WRITE_REGISTERS:     return writeRegisters(msg);
-        case M_WRITE_SINGLE_REG:    return writeSingleReg(msg);
-        case M_READ_RAM:            return readRAM(msg);
-        case M_WRITE_RAM:           return writeRAM(msg);
-        case M_CONTINUE:            stopped = false; return;
-        case M_STOP:                stopped = true; return;
+        case M_READ_REGISTERS:      return msgReadRegisters(msg);
+        case M_WRITE_REGISTERS:     return msgWriteRegisters(msg);
+        case M_READ_RAM:            return msgReadRAM(msg);
+        case M_WRITE_RAM:           return msgWriteRAM(msg);
+        case M_SIGNAL:              return msgSignal(msg);
+        case M_IS_STOPPED:          return msgIsStopped(msg);
+        case M_DETACH:              return msgDetach(msg);
     }
 
     LOG((LOG_PREFIX "Unhandled command 0x%08x\n", msg.cmd[0]));
 }
 
-void SvmDebugger::readRegisters(SvmDebugPipe::DebuggerMsg &msg)
+void SvmDebugger::setUserReg(uint32_t r, uint32_t value)
 {
-    msg.replyWords = 14;
+    switch (r) {
 
-    for (unsigned i = 0; i < 10; i++)
-        msg.reply[i] = SvmCpu::reg(i);
+        // Usermode general-purpose registers
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            SvmCpu::setReg(r, value);
+            break;
 
-    msg.reply[10] = SvmMemory::physToVirtRAM(SvmCpu::reg(REG_FP));
-    msg.reply[11] = SvmMemory::physToVirtRAM(SvmCpu::reg(REG_SP));
-    msg.reply[12] = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));;
-    msg.reply[13] = SvmCpu::reg(REG_CPSR);
+        // Trusted base pointers. Must point to a valid byte,
+        // set to 0 on invalid address.
+        case 8:
+        case 9: {
+            SvmMemory::VirtAddr va = value;
+            SvmMemory::PhysAddr pa;
+            if (!SvmMemory::mapRAM(va, 1, pa))
+                pa = 0;
+            SvmCpu::setReg(r, reinterpret_cast<reg_t>(pa));
+            break;
+        }
+
+        // Trusted stack pointers. Must be aligned, no-op on invalid address.
+        case REG_FP:
+        case REG_SP: {
+            SvmMemory::VirtAddr va = value;
+            SvmMemory::PhysAddr pa;
+            if ((va & 3) == 0 && SvmMemory::mapRAM(va, 4, pa))
+                SvmCpu::setReg(r, reinterpret_cast<reg_t>(pa));
+            break;
+        }
+
+        // Program counter. Causes a branch when set. Faults on invalid address.
+        case REG_PC:
+            SvmRuntime::branch(value);
+            break;
+    }
 }
 
-void SvmDebugger::writeRegisters(SvmDebugPipe::DebuggerMsg &msg)
+uint32_t SvmDebugger::getUserReg(uint32_t r)
 {
+    switch (r) {
+
+        // Usermode general-purpose registers, plus read-only CPSR
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case REG_CPSR:
+            return SvmCpu::reg(r);
+
+        // Pointer registers: do an address translation, with NULL-passthrough
+        case 8:
+        case 9:
+        case REG_FP:
+        case REG_SP: {
+            reg_t ptr = SvmCpu::reg(r);
+            return ptr ? SvmMemory::physToVirtRAM(ptr) : 0;
+        }
+
+        // Reconstruct code address from cache
+        case REG_PC:
+            return SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+
+        // Indicate that this register is not mapped to anything physical
+        default:
+            return (uint32_t) -1;
+    }
 }
 
-void SvmDebugger::writeSingleReg(SvmDebugPipe::DebuggerMsg &msg)
+void SvmDebugger::msgReadRegisters(SvmDebugPipe::DebuggerMsg &msg)
 {
+    uint32_t bitmap = (msg.cmd[0] & M_ARG_MASK) << BITMAP_SHIFT;
+
+    ASSERT(msg.replyWords == 0);
+    while (bitmap && msg.replyWords < MAX_REPLY_WORDS) {
+        unsigned r = Intrinsic::CLZ(bitmap);
+        bitmap &= ~Intrinsic::LZ(r);
+        msg.reply[msg.replyWords++] = getUserReg(r);
+    }
 }
 
-void SvmDebugger::readRAM(SvmDebugPipe::DebuggerMsg &msg)
+void SvmDebugger::msgWriteRegisters(SvmDebugPipe::DebuggerMsg &msg)
+{
+    uint32_t bitmap = (msg.cmd[0] & M_ARG_MASK) << BITMAP_SHIFT;
+    uint32_t word = 1;
+
+    while (bitmap && word < msg.cmdWords) {
+        unsigned r = Intrinsic::CLZ(bitmap);
+        bitmap &= ~Intrinsic::LZ(r);
+        setUserReg(r, msg.cmd[word++]);
+    }
+}
+
+void SvmDebugger::msgReadRAM(SvmDebugPipe::DebuggerMsg &msg)
 {
     SvmMemory::VirtAddr va = msg.cmd[0] & M_ARG_MASK;
     SvmMemory::PhysAddr pa;
@@ -105,6 +198,34 @@ void SvmDebugger::readRAM(SvmDebugPipe::DebuggerMsg &msg)
     }
 }
 
-void SvmDebugger::writeRAM(SvmDebugPipe::DebuggerMsg &msg)
+void SvmDebugger::msgWriteRAM(SvmDebugPipe::DebuggerMsg &msg)
 {
+    SvmMemory::VirtAddr va = msg.cmd[0] & M_ARG_MASK;
+    SvmMemory::PhysAddr pa;
+    uint32_t length = msg.cmd[1];
+
+    if (msg.cmdWords < 3 || length > (msg.cmdWords - 2) * sizeof(uint32_t)) {
+        LOG((LOG_PREFIX "Malformed WRITE_RAM command\n"));
+        return;
+    }
+
+    if (SvmMemory::mapRAM(va, length, pa))
+        memcpy(pa, &msg.cmd[2], length);
+}
+
+void SvmDebugger::msgSignal(SvmDebugPipe::DebuggerMsg &msg)
+{
+    signal(Svm::Debugger::Signals(msg.cmd[0] & M_ARG_MASK));
+}
+
+void SvmDebugger::msgIsStopped(SvmDebugPipe::DebuggerMsg &msg)
+{
+    msg.replyWords = 1;
+    msg.reply[0] = stopped;
+}
+
+void SvmDebugger::msgDetach(SvmDebugPipe::DebuggerMsg &msg)
+{
+    attached = false;
+    stopped = S_RUNNING;
 }

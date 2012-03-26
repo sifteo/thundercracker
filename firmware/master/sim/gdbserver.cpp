@@ -230,7 +230,7 @@ void GDBServer::rxBytes(char *bytes, int len)
             } else if (byte == 0x03) {
                 debugBreak();
                 txByte('+');
-                txPacketString("S02");  // SIGINT
+                sendStopReasonReply();
             }
             break;
 
@@ -368,20 +368,19 @@ void GDBServer::handlePacket()
 
         case '?': {
             // Why did we last stop?
-            return txPacketString("S05");
+            return sendStopReasonReply();
         }
 
         case 'g': {
-            // Read registers
+            // Read all registers
             txPacketBegin();
-            msgCmd[0] = Debugger::M_READ_REGISTERS;
-            if (message(1) >= 14)
-                replyToRegisterRead();
+            msgCmd[0] = Debugger::M_READ_REGISTERS | Debugger::ALL_REGISTER_BITS;
+            replyToRegisterRead(Debugger::ALL_REGISTER_BITS, message(1));
             return txPacketEnd();
         }
 
         case 'G': {
-            // Write registers
+            // Write all registers
             return txPacketEnd();
         }
 
@@ -408,8 +407,7 @@ void GDBServer::handlePacket()
         }
 
         case 'c': {
-            // Continue
-            msgCmd[0] = Debugger::M_CONTINUE;
+            msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
             message(1);
             return;
         }
@@ -427,8 +425,18 @@ void GDBServer::handlePacket()
 void GDBServer::debugBreak()
 {
     // Handle a ^C, stop the target
-    msgCmd[0] = Debugger::M_STOP;
+    msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_INT;
     message(1);
+}
+
+void GDBServer::sendStopReasonReply()
+{
+    txPacketBegin();
+    txByte('S');
+    msgCmd[0] = Debugger::M_IS_STOPPED;
+    if (message(1) >= 1)
+        txHexByte(msgReply[0]);
+    txPacketEnd();
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
@@ -458,24 +466,60 @@ bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
     return true;
 }
 
-void GDBServer::replyToRegisterRead()
+void GDBServer::replyToRegisterRead(uint32_t bitmap, uint32_t replyLen)
 {
-    // The ARM register packet for GDB has 26 words! Yikes.
-
-    for (unsigned reg = 0; reg < 26; reg++) {
-        if (reg < 10) {
-            // General purpose
-            txHexWord(msgReply[reg]);
-            continue;
-        }
-        
-        switch (reg) {
-            case REG_FP: txHexWord(msgReply[10]); break;
-            case REG_SP: txHexWord(msgReply[11]); break;
-            case REG_PC: txHexWord(msgReply[12]); break;
-            case 25:     txHexWord(msgReply[13]); break;  // CPSR
-            default:     txHexWord(0); break;
-        }
+    for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
+        uint32_t word = findRegisterInPacket(bitmap, regGDBtoSVM(r));
+        txHexWord((word < replyLen) ? msgReply[word] : -1);
     }
 }
 
+uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
+{
+    /*
+     * In a register packet with the specified bitmap, where does the
+     * register 'svmReg' occur? Returns -1 if the register is nowhere.
+     */
+
+    uint32_t word = 0;
+    
+    if (svmReg < 32)
+        for (unsigned i = 0; i <= svmReg; i++)
+            if (bitmap & Svm::Debugger::regBit(i)) {
+                if (i == svmReg)
+                    return word;
+                else
+                    word++;
+            }
+
+    return (uint32_t) -1;
+}
+
+uint32_t GDBServer::regGDBtoSVM(uint32_t r)
+{
+    /*
+     * Convert GDB's ARM register numbers to SVM register numbers.
+     */
+    switch (r) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case REG_FP:
+        case REG_SP:
+        case REG_PC:
+            return r;
+
+        case 25:
+            return REG_CPSR;
+
+        default:
+            return (uint32_t) -1;
+    }
+}

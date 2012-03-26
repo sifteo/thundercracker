@@ -201,8 +201,8 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     mbox.cmdWords = cmdWords;
     memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
 
-    // If the target isn't already stopped, raise an async breakpoint.
-    Tasks::setPending(Tasks::DebuggerBreakpoint);
+    // Wake up the debugger's event loop
+    Tasks::setPending(Tasks::Debugger);
 
     // Wait for a reply
     do {

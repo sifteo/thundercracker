@@ -29,6 +29,9 @@ public:
     // Fault handler; Forwards the fault to our debug subsystem, then exits.
     static void fault(FaultCode code);
 
+    // Modify the program counter
+    static void branch(reg_t addr);
+
     /**
      * Call Event::Dispatch() on our way out of the next svc(). Events can't
      * be dispatched while we're in syscalls, since the internal call() we
@@ -125,7 +128,6 @@ private:
     static void longSTRSP(unsigned reg, unsigned offset);
 
     static void enterFunction(reg_t addr);
-    static void branch(reg_t addr);
     static reg_t mapBranchTarget(reg_t addr);
     static void validate(reg_t addr);
     static void syscall(unsigned num);

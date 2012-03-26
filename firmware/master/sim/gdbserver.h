@@ -46,6 +46,11 @@ private:
     uint32_t msgCmd[Svm::Debugger::MAX_CMD_WORDS];
     uint32_t msgReply[Svm::Debugger::MAX_REPLY_WORDS];
 
+    // Register format
+    static const unsigned NUM_GDB_REGISTERS = 26;
+    uint32_t regGDBtoSVM(uint32_t r);
+    static uint32_t findRegisterInPacket(uint32_t bitmap, uint32_t svmReg);
+
     static void threadEntry(void *param);
     void threadMain();
     void eventLoop();
@@ -70,8 +75,9 @@ private:
     static int digitFromHex(char c);
     
     void debugBreak();
-    void replyToRegisterRead();
+    void replyToRegisterRead(uint32_t bitmap, uint32_t replyLen);
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
+    void sendStopReasonReply();
 };
 
 #endif  // GDB_SERVER_H
