@@ -59,6 +59,7 @@ struct TriggerData {
     uint8_t flagId; // could be 1-32 is local, 33-64 is global
     uint8_t room;
     uint8_t eventType;
+    uint8_t eventPayload;
 };
 
 struct DoorData {
