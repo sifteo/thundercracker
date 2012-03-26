@@ -29,26 +29,26 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             return 0;
 
         StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(UsbControl::buf());
+        uint8_t strIdx = req->wValue & 0xff;
 
         // check for bogus string
-        for (unsigned i = 0; i <= (req->wValue & 0xff); i++) {
+        for (unsigned i = 0; i <= strIdx; i++) {
             if (Usbd::string(i) == NULL)
                 return 0;
         }
 
-        sd->bLength = strlen(Usbd::string(req->wValue & 0xff)) * 2 + 2;
+        sd->bLength = strlen(Usbd::string(strIdx)) * 2 + 2;
         sd->bDescriptorType = DescriptorString;
 
         *buf = (uint8_t*)sd;
         *len = MIN(*len, sd->bLength);
 
-        // todo: convert to mem or strcpy?
         for (int i = 0; i < (*len / 2) - 1; i++) {
-            sd->wstring[i] = Usbd::string(req->wValue & 0xff)[i];
+            sd->wstring[i] = Usbd::string(strIdx)[i];
         }
 
         // Send sane Language ID descriptor...
-        if ((req->wValue & 0xff) == 0)
+        if (strIdx == 0)
             sd->wstring[0] = 0x409;
 
         return 1;
