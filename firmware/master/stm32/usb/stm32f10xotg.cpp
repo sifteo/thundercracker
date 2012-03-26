@@ -310,13 +310,23 @@ void Stm32f10xOtg::isr()
         }
     }
 
-    // There is no global interrupt flag for tx complete - check the XFRC bit in each inEp
-    const uint32_t xfrc = 0x1;
-    for (unsigned i = 0; i < 4; i++) {
-        volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
-        if (ep.DIEPINT & xfrc) {
-            UsbDriver::inEndpointCallback(i, TransactionIn);
-            ep.DIEPINT = xfrc;
+    /*
+     * In ep activity - IEPINT indicates global out endpoint activity, must
+     * read DAINT to see which endpoints activity actually occurred on.
+     */
+    const uint32_t IEPINT = 1 << 18;    // this bit is read-only
+    if (status & IEPINT) {
+        uint16_t inEpInts = OTG.device.DAINT & 0xffff;
+        // TODO: could micro optimize here with CLZ and friends
+        for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
+            if (inEpInts & 1) {
+                volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
+                // only really interested in XFRC to indicate TX complete
+                if (ep.DIEPINT & 0x1) {
+                    UsbDriver::inEndpointCallback(i, TransactionIn);
+                    ep.DIEPINT = 0x1;
+                }
+            }
         }
     }
 
