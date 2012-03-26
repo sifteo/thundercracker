@@ -732,6 +732,7 @@ void App::OnNeighborAdd(
         
         if (mGameState == GAME_STATE_SHUFFLE_PLAY || mGameState == GAME_STATE_STORY_PLAY)
         {
+            mDelayTimer = 0.0f; // Turn off "GO!" sprite
             mHintTimer = kHintTimerOnDuration; // In case neighbor happens between hinting cycles
             mHintFlowIndex = 0;
         }
@@ -1211,6 +1212,7 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
+            mDelayTimer = kStateTimeDelayShort;
             mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
@@ -1722,12 +1724,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CLUE:
         {
-            if (UpdateTimerLoop(mDelayTimer, dt, kStateTimeDelayLong))
-            {
-                mUiIndex = mUiIndex == 0 ? 1 : 0;
-            }
-            
-            if (AnyTouchBegin())
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
@@ -1737,6 +1734,12 @@ void App::UpdateGameState(float dt)
         {
             // We're in active play, so track our time for scoring purposes
             mScoreTimer += dt;
+            
+            // Delay timer handles the GO! message.
+            if (mDelayTimer > 0.0f)
+            {
+                UpdateTimer(mDelayTimer, dt);
+            }
             
             // Check for holding, which enables the options menu.
             if (AnyTouchHold())
@@ -2332,6 +2335,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 else
                 {
                     cubeWrapper.DrawBuddy();
+                    
+                    if (mDelayTimer > 0.0f)
+                    {
+                        cubeWrapper.DrawSprite(0, Vec2(48, 48), UiGoOrange);
+                    }
                 }
             }
             else
