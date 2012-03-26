@@ -32,7 +32,7 @@ void UsbControl::sendChunk()
 int UsbControl::receiveChunk()
 {
     uint16_t packetsize = MIN(Usbd::devDescriptor()->bMaxPacketSize0, controlState.req.wLength - controlState.len);
-    uint16_t size = UsbHardware::epReadPacket(0, controlState.buf + controlState.len, packetsize);
+    uint16_t size = UsbHardware::epReadPacket(0, controlState.pdata + controlState.len, packetsize);
 
     if (size != packetsize) {
         UsbHardware::epSetStalled(0, true);

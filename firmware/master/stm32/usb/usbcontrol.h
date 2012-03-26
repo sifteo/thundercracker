@@ -9,9 +9,6 @@ public:
     UsbControl();
 
     static bool controlRequest(uint8_t ep, Usb::Transaction txn);
-    static inline uint8_t *buf() {
-        return controlState.buf;
-    }
 
 private:
     static void setup();
@@ -40,9 +37,11 @@ private:
     struct ControlState {
         ControlStatus status;
         Usb::SetupData req;
-        uint8_t buf[128];
         uint8_t *pdata;
         uint16_t len;
+        // this buffer is mostly used for setup data, but also buffers string
+        // descriptors, so its size currently serves as the upper limit on those
+        uint8_t buf[32];
     };
     static ControlState controlState;
 };

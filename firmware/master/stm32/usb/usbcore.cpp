@@ -28,7 +28,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
         if (!Usbd::stringSupport())
             return 0;
 
-        StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(UsbControl::buf());
+        StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(*buf);
         uint8_t strIdx = req->wValue & 0xff;
 
         // check for bogus string
