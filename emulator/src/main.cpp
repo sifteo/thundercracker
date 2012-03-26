@@ -154,6 +154,11 @@ int main(int argc, char **argv)
             sys.opt_turbo = true;
             continue;
         }
+
+        if (!strcmp(arg, "-LR")) {
+            sys.opt_lockRotationByDefault = true;
+            continue;
+        }
          
         if (!strcmp(arg, "-f") && argv[c+1]) {
             sys.opt_cubeFirmware = argv[c+1];
