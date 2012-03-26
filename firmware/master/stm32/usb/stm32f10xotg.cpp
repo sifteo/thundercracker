@@ -46,6 +46,9 @@ void Stm32f10xOtg::init()
     OTG.global.GRXFSIZ = RX_FIFO_SIZE;
     fifoMemTop = RX_FIFO_SIZE;
 
+    for (unsigned i = 0; i < 4; ++i)
+        OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
+
     // Unmask interrupts for TX and RX
     OTG.global.GAHBCFG |= 0x1;  // GINT
     OTG.global.GINTMSK =
@@ -57,6 +60,8 @@ void Stm32f10xOtg::init()
                         (1 << 3);      // SOFM
     OTG.device.DAINTMSK = 0xf;
     OTG.device.DIEPMSK = 0x1;
+    // don't bother with DOEPMSK - we handle all OUT endpoint activity via the
+    // RXFLVL interrupt
 }
 
 void Stm32f10xOtg::setAddress(uint8_t addr)
@@ -66,8 +71,7 @@ void Stm32f10xOtg::setAddress(uint8_t addr)
 
 void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // Configure endpoint address and type. Allocate FIFO memory for
-    // endpoint. Install callback funciton.
+    // Configure endpoint address and type & allocate FIFO memory for endpoint
     addr &= 0x7f;
 
     // handle control endpoint specially
@@ -88,7 +92,7 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
                                         (1 << 27));    // SNAK
 
         // Configure OUT
-        doeptsiz[0] = (1 << 29) |   // STUPCNT_1
+        doeptsiz[0] = (3 << 29) |   // STUPCNT_3
                       (1 << 19) |
                       (maxsize & 0x7f);
 
@@ -231,7 +235,7 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
         *buf32++ = *fifo++;
 
     if (i) {
-        uint32_t extra = *fifo++;
+        uint32_t extra = *fifo;
         memcpy(buf32, &extra, i);
     }
 
@@ -240,7 +244,7 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
     ep.DOEPTSIZ = doeptsiz[addr];
     ep.DOEPCTL |= (1 << 31) |   // EPENA
                   (forceNak[addr] ? (1 << 27) : (1 << 26));
-
+    OTG.global.GINTMSK &= ~(1 << 4); // re-enable Receive FIFO non-empty
     return len;
 }
 
@@ -249,11 +253,18 @@ void Stm32f10xOtg::isr()
     uint32_t status = OTG.global.GINTSTS;
 
     const uint32_t enumdne = 1 << 13;
-    if (status & enumdne) {   //
+    if (status & enumdne) {
         OTG.global.GINTSTS = enumdne;
         fifoMemTop = RX_FIFO_SIZE;
+#if 0
+        uint8_t enumeratedSpeed = (OTG.device.DSTS >> 1) & 0x3;
+        // ensure we enumerated at full speed
+        if (enumeratedSpeed != 0x3) {
+            for (;;)
+                ;
+        }
+#endif
         Usbd::reset();
-        return;
     }
 
     const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
@@ -284,14 +295,7 @@ void Stm32f10xOtg::isr()
         }
         else {
             // mask RXFLVL until we've read the data from the fifo
-//            OTG.global.GINTMSK |= RXFLVL;
-            /*
-             * FIXME: Why is a delay needed here?
-             * This appears to fix a problem where the first 4 bytes
-             * of the DATA OUT stage of a control transaction are lost.
-             */
-            for (unsigned i = 0; i < 1000; i++)
-                asm("nop");
+            OTG.global.GINTMSK |= RXFLVL;
 
             // call back user handler to read the data via epReadPacket()
             if (ep == 0) {
@@ -300,13 +304,6 @@ void Stm32f10xOtg::isr()
             else {
                 UsbDriver::inEndpointCallback(ep, txn);
             }
-
-            // Discard unread packet data
-            volatile uint32_t *buf = OTG.epFifos[ep];
-            for (unsigned i = 0; i < rxbcnt; i += 4)
-                (void)*buf;
-
-            rxbcnt = 0;
         }
     }
 
