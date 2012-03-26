@@ -9,3 +9,4 @@
 #define PLAYTESTING_HACKS			0
 #define FAST_FORWARD				1
 #define NEW_FEATURE_PROTOYPES		1
+#define DO_ZOOM						1

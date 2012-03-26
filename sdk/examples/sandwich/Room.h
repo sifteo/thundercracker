@@ -3,15 +3,23 @@
 #include "Content.h"
 #include "Sokoblock.h"
 
-#define USERDATA_NONE 0
-#define USERDATA_TRIGGER 1
-#define USERDATA_SUBDIV 2
-#define USERDATA_TRAPDOOR 3 // generalize to EVENT(?)/TRAPDOOR
+#define USERDATA_NONE     0
+#define USERDATA_TRIGGER  1
+#define USERDATA_SUBDIV   2
+#define USERDATA_PROP     3
+// MAX COUNT = 16
+
+#define PROP_UNDEFINED    0
+#define PROP_TRAPDOOR     1
+#define PROP_DEPOT        2
 
 class Room {
 private:
   const void* mUserdata; // pointer to a trigger or subdivision or trapdoor
-  const DoorData* mDoor;
+  
+  const void* mOtherdata; // this pointer is overloaded to show either the door (default)
+                          // or the depot contents (if USERDATA_PROP|PROP_DEPOT is set)
+  
   uint16_t mOverlayIndex;
   uint8_t mOverlayTile;
   uint8_t mUserdataType : 4;
@@ -38,51 +46,23 @@ public:
   // triggers
   //---------------------------------------------------------------------------
 
-  inline int TriggerType() const { 
-    return mUserdataType == USERDATA_TRIGGER ? mInnerType : 0; 
-  }
+  int TriggerType() const { return mUserdataType == USERDATA_TRIGGER ? mInnerType : 0; }
+  bool HasTrigger() const { return mUserdataType == USERDATA_TRIGGER && mInnerType; }
+  bool HasGateway() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_GATEWAY; }
+  bool HasItem() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_ITEM; }
+  bool HasNPC() const { return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; }
+  const GatewayData* Gateway() const { ASSERT(HasGateway());  return (const GatewayData*) mUserdata; }
+  const ItemData* Item() const { ASSERT(HasItem()); return (const ItemData*) mUserdata; }
+  const NpcData* NPC() const { ASSERT(HasNPC()); return (const NpcData*) mUserdata; }
 
-  inline bool HasTrigger() const {
-    return mUserdataType == USERDATA_TRIGGER && mInnerType; 
-  }
-
-  inline bool HasGateway() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_GATEWAY; 
-  }
-
-  inline bool HasItem() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_ITEM; 
-  }
-
-  inline bool HasNPC() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; 
-  }
-  
-  inline const GatewayData* TriggerAsGate() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_GATEWAY); 
-    return (const GatewayData*) mUserdata; 
-  }
-
-  inline const ItemData* TriggerAsItem() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_ITEM); 
-    return (const ItemData*) mUserdata; 
-  }
-
-  inline const NpcData* TriggerAsNPC() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_NPC); 
-    return (const NpcData*) mUserdata; 
-  }
-
-  inline void SetTrigger(int type, const TriggerData* p) { 
+  void SetTrigger(int type, const TriggerData* p) { 
+    ASSERT(!mUserdata);
     mUserdataType = USERDATA_TRIGGER;
     mInnerType = type; 
     mUserdata = p; 
   }
   
-  inline void ClearTrigger() { 
+  void ClearTrigger() { 
     ASSERT(mUserdataType == USERDATA_TRIGGER);
     mInnerType = TRIGGER_UNDEFINED; 
   }
@@ -92,61 +72,64 @@ public:
   // subdivs
   //---------------------------------------------------------------------------
 
-  bool IsSubdivided() const { 
-    return mUserdataType == USERDATA_SUBDIV && mInnerType; 
-  }
+  bool IsSubdivided() const { return mUserdataType == USERDATA_SUBDIV && mInnerType; }
+  int SubdivType() const { return mUserdataType == USERDATA_SUBDIV ? mInnerType : 0; }
 
   bool IsBridge() const { 
     return mUserdataType == USERDATA_SUBDIV && (
       mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR
     ); 
   }
-
-  int SubdivType() const { 
-    return mUserdataType == USERDATA_SUBDIV ? mInnerType : 0; 
+  bool IsDiag() const {
+    return mUserdataType == USERDATA_SUBDIV && (
+      mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG
+    ); 
   }
 
-  const DiagonalSubdivisionData* SubdivAsDiagonal() const { 
-    ASSERT(mUserdataType == USERDATA_SUBDIV);
-    ASSERT(mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG);  
-    return (const DiagonalSubdivisionData*)mUserdata; 
-  }
-
-  const BridgeSubdivisionData* SubdivAsBridge() const { 
-    ASSERT(mUserdataType == USERDATA_SUBDIV);
-    ASSERT(mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR); 
-    return (const BridgeSubdivisionData*)mUserdata; 
-  }
+  const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(IsDiag()); return (const DiagonalSubdivisionData*)mUserdata; }
+  const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(IsBridge()); return (const BridgeSubdivisionData*)mUserdata;}
 
   void SetDiagonalSubdivision(const DiagonalSubdivisionData* diag);
   void SetBridgeSubdivision(const BridgeSubdivisionData* bridge);
 
   //---------------------------------------------------------------------------
-  // trapdoors
+  // props
   //---------------------------------------------------------------------------
 
-  inline bool HasTrapdoor() const {
-    return mUserdataType == USERDATA_TRAPDOOR;
-  }
+  inline bool HasTrapdoor() const { return mUserdataType == USERDATA_PROP && mInnerType == PROP_TRAPDOOR; }
+  inline bool HasDepot() const { return mUserdataType == USERDATA_PROP && mInnerType == PROP_DEPOT; }
 
   inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
-    mUserdataType = USERDATA_TRAPDOOR;
+    ASSERT(!mUserdata);
+    mUserdataType = USERDATA_PROP;
+    mInnerType = PROP_TRAPDOOR;
     mUserdata = trapDoorData;
   }
 
-  const TrapdoorData* Trapdoor() const {
-    ASSERT(mUserdataType == USERDATA_TRAPDOOR);
-    return (const TrapdoorData*) mUserdata;
+  inline void SetDepot(const DepotData* depot) {
+    ASSERT(!mUserdata);
+    ASSERT(!mOtherdata);
+    mUserdataType == USERDATA_PROP;
+    mInnerType == PROP_TRAPDOOR;
+    mUserdata = depot;
   }
+
+  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mUserdata; }
+  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mUserdata; }
+
+  bool HasDepotContents() const { ASSERT(HasDepot()); return mOtherdata != 0; }
+  void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mOtherdata = item; }
+  const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mOtherdata; }
 
   //---------------------------------------------------------------------------
   // doors
   //---------------------------------------------------------------------------
 
-  bool HasDoor() const { return mDoor != 0; }
+  bool HasDoor() const { return !HasDepot() && mOtherdata != 0; }
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
-  void SetDoor(const DoorData* p) { mDoor = p; }
+  const DoorData* Door() const { ASSERT(HasDoor()); return (const DoorData*) mOtherdata; }
+  void SetDoor(const DoorData* p) { ASSERT(!HasDepot()); mOtherdata = p; }
   bool OpenDoor();
 
   //---------------------------------------------------------------------------
