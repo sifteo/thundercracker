@@ -45,11 +45,11 @@ public:
     
     void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawBackgroundPartial(
-        const Sifteo::Int2 &position,
-        const Sifteo::Int2 &offset,
-        const Sifteo::Int2 &size,
+        Sifteo::Int2 position,
+        Sifteo::Int2 offset,
+        Sifteo::Int2 size,
         const Sifteo::AssetImage &asset);
-    void ScrollBackground(const Sifteo::Int2 &position);
+    void ScrollBackground(Sifteo::Int2 position);
     
     void DrawSprite(
         int spriteIndex,
@@ -57,26 +57,26 @@ public:
         const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame = 0);
     
     void DrawUiAsset(
-        const Sifteo::Int2 &position,
+        Sifteo::Int2 position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiAssetPartial(
-        const Sifteo::Int2 &position,
-        const Sifteo::Int2 &offset,
-        const Sifteo::Int2 &size,
+        Sifteo::Int2 position,
+        Sifteo::Int2 offset,
+        Sifteo::Int2 size,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiText(
-        const Sifteo::Int2 &position,
+        Sifteo::Int2 position,
         const Sifteo::AssetImage &assetFont,
         const char *text);
-    void ScrollUi(const Sifteo::Int2 &position);
+    void ScrollUi(Sifteo::Int2 position);
     
     // Special-Case Buddy Sprite Stuff
     // TODO: If we have DrawSprite(index, asset, position) could we get rid of these?
     void UpdateCutscene(int jumpChanceA, int jumpChanceB);
-    void DrawCutsceneShuffle(const Sifteo::Int2 &scroll);
+    void DrawCutsceneShuffle(Sifteo::Int2 scroll);
     void DrawCutsceneStory(const char *text);
-    void DrawUnlocked3Sprite(const Sifteo::Int2 &scroll);
-    void DrawUnlocked4Sprite(const Sifteo::Int2 &scroll);
+    void DrawUnlocked3Sprite(Sifteo::Int2 scroll);
+    void DrawUnlocked4Sprite(Sifteo::Int2 scroll);
     
     // Asset Loading
     bool IsLoadingAssets();
@@ -101,8 +101,8 @@ public:
     const Piece &GetPieceSolution(Sifteo::Cube::Side side) const;
     void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
     
-    const Sifteo::Int2 &GetPieceOffset(Sifteo::Cube::Side side) const;
-    void SetPieceOffset(Sifteo::Cube::Side side, const Sifteo::Int2 &offset);
+    Sifteo::Int2 GetPieceOffset(Sifteo::Cube::Side side) const;
+    void SetPieceOffset(Sifteo::Cube::Side side, Sifteo::Int2 offset);
     
     void StartPieceBlinking(Sifteo::Cube::Side side);
     void StopPieceBlinking();

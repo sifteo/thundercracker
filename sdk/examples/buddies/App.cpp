@@ -133,7 +133,7 @@ void DrawShuffleScore(
     CubeWrapper &cubeWrapper,
     float scoreTimer,
     unsigned int place,
-    const Int2 &scroll)
+    Int2 scroll)
 {
     // Background
     const AssetImage *backgrounds[] =
