@@ -241,7 +241,7 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
     volatile uint32_t *fifo = OTG.epFifos[addr];
     int i;
     for (i = len; i >= 4; i -= 4)
-        *buf32++ = *fifo++;
+        *buf32++ = *fifo;
 
     if (i) {
         uint32_t extra = *fifo;
@@ -253,7 +253,7 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
     ep.DOEPTSIZ = doeptsiz[addr];
     ep.DOEPCTL |= (1 << 31) |   // EPENA
                   (forceNak[addr] ? (1 << 27) : (1 << 26));
-    OTG.global.GINTMSK &= ~(1 << 4); // re-enable Receive FIFO non-empty
+    OTG.global.GINTMSK |= (1 << 4); // unmask RXFLVL
     return len;
 }
 
@@ -304,7 +304,7 @@ void Stm32f10xOtg::isr()
         }
         else {
             // mask RXFLVL until we've read the data from the fifo
-            OTG.global.GINTMSK |= RXFLVL;
+            OTG.global.GINTMSK &= ~RXFLVL;
 
             // call back user handler to read the data via epReadPacket()
             if (ep == 0) {
