@@ -468,6 +468,10 @@ void Menu::transToStart() {
 void Menu::stateStart() {
 	// initialize video state
 	canvas.clear();
+	for(unsigned r=0; r<18; ++r)
+		for(unsigned c=0; c<18; ++c)
+			canvas.BG0_drawAsset(Vec2(c,r), *assets->background);
+
 	canvas.BG1_setPanning(Vec2(0, 0));
 	BG1Helper(*pCube).Flush();
     {
