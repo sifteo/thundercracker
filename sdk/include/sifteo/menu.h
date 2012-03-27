@@ -208,7 +208,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	while(items[i].icon != NULL) {
 		ASSERT(items[i].icon->width == (int)kIconWidth / 8);
 		i++;
-		if(items[i].label != NULL) {
+		if (items[i].label != NULL) {
 			ASSERT(items[i].label->width == kNumVisibleTilesX);
 			ASSERT(items[i].label->height == kHeaderHeight);
 		}
@@ -247,14 +247,14 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 
 bool Menu::pollEvent(struct MenuEvent *ev) {
 	// handle/clear pending events
-	if(currentEvent.type != MENU_UNEVENTFUL) {
+	if (currentEvent.type != MENU_UNEVENTFUL) {
 		performDefault();
 	}
 	/* state changes can happen in the default event handler which may dispatch
 	 * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
 	 * MENU_PREPAINT).
 	 */
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
 	
@@ -262,10 +262,10 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	frameclock.next();
 	
 	// neighbor changes?
-	if(currentState != MENU_STATE_START) {
+	if (currentState != MENU_STATE_START) {
 		detectNeighbors();
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
 	
@@ -293,7 +293,7 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 			transFromFinish();
 			break;
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
 	
@@ -315,7 +315,7 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 			stateFinish();
 			break;
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
 
@@ -531,12 +531,12 @@ void Menu::stateTilting() {
 	velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
 	
 	// clamp maximum velocity based on cube angle
-	if(abs(velocity) > maxVelocity()) {
+	if (abs(velocity) > maxVelocity()) {
 		velocity = (velocity < 0 ? 0 - maxVelocity() : maxVelocity());
 	}
 	
 	// don't go past the backstop unless we have inertia
-	if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > kInertiaThreshold) {
+	if ((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > kInertiaThreshold) {
 	    position += velocity * frameclock.delta() * kTimeDilator;
 	} else {
 	    velocity = 0;
@@ -563,7 +563,7 @@ void Menu::transFromTilting() {
  */
 void Menu::transToInertia() {
 	stopping_position = stoppingPositionFor(computeSelected());
-	if(abs(xaccel) > kAccelThresholdOff) {
+	if (abs(xaccel) > kAccelThresholdOff) {
 		tiltDirection = (kAccelScalingFactor * xaccel < 0) ? 1 : -1;
 	} else {
 		tiltDirection = 0;
@@ -574,11 +574,11 @@ void Menu::stateInertia() {
 	const float stiffness = 0.333f;
 	
 	// do not pull to item unless tilting has stopped.
-	if(abs(xaccel) < kAccelThresholdOff) {
+	if (abs(xaccel) < kAccelThresholdOff) {
 		tiltDirection = 0;
 	}
 	// if still tilting, do not bounce back to the stopping position.
-	if((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
+	if ((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
 			return;
 	}
 
@@ -588,7 +588,7 @@ void Menu::stateInertia() {
 	position = lerp(position, stopping_position, 0.15f);
 
 	stateFinished = abs(velocity) < 1.0f && abs(stopping_position - position) < 0.5f;
-	if(stateFinished) {
+	if (stateFinished) {
 		// prevent being off by one pixel when we stop
 		position = stopping_position;
 	}
@@ -653,7 +653,7 @@ void Menu::stateFinish() {
 	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
 	currentEvent.type = MENU_PREPAINT;
 	
-	if(offset <= -128) {
+	if (offset <= -128) {
 		currentEvent.type = MENU_EXIT;
 		currentEvent.item = computeSelected();
 		stateFinished = true;
@@ -737,7 +737,7 @@ void Menu::handleExit() {
 }
 
 void Menu::handlePrepaint() {
-	if(shouldPaintSync) {
+	if (shouldPaintSync) {
 		System::paintSync();
 	} else {
 		System::paint();
@@ -780,7 +780,7 @@ void Menu::clearEvent() {
 }
 
 bool Menu::dispatchEvent(struct MenuEvent *ev) {
-	if(currentEvent.type != MENU_UNEVENTFUL) {
+	if (currentEvent.type != MENU_UNEVENTFUL) {
 		*ev = currentEvent;
 		return true;
 	}
@@ -799,7 +799,7 @@ bool Menu::dispatchEvent(struct MenuEvent *ev) {
 void Menu::detectNeighbors() {
 	for(_SYSSideID i = 0; i < NUM_SIDES; i++) {
 		MenuNeighbor n;
-		if(pCube->hasPhysicalNeighborAt(i)) {
+		if (pCube->hasPhysicalNeighborAt(i)) {
 			Cube c(pCube->physicalNeighborAt(i));
 			n.neighborSide = c.physicalSideOf(pCube->id());
 			n.neighbor = c.id();
@@ -812,7 +812,7 @@ void Menu::detectNeighbors() {
 
 		if (n != neighbors[i]) {
 			// Neighbor was set but is now different/gone
-			if(neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
+			if (neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
 				// Generate a lost neighbor event, with the ghost of the lost cube.
 				currentEvent.type = MENU_NEIGHBOR_REMOVE;
 				currentEvent.neighbor = neighbors[i];

@@ -70,7 +70,7 @@ void main() {
 			switch(e.type) {
 				case MENU_ITEM_PRESS:
 					// Game Buddy is not clickable, so don't do anything on press
-					if(e.item == 3) {
+					if (e.item >= 3) {
 						m.preventDefault();
 					}
 					break;
