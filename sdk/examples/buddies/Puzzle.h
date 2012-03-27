@@ -60,6 +60,9 @@ public:
     const char *GetCutsceneTextEnd(unsigned int cutsceneIndex) const;
     unsigned int GetNumCutsceneTextEnd() const;
     
+    unsigned int GetCutsceneEnvironment() const;
+    void SetCutsceneEnvironment(unsigned int cutsceneEnvionment);
+    
     unsigned int GetNumShuffles() const;
     void SetNumShuffles(unsigned int numSuhffles);
     
@@ -82,6 +85,7 @@ private:
     unsigned char mBuddies[kMaxBuddies];
     unsigned char mNumCutsceneTextStart : 3;
     unsigned char mNumCutsceneTextEnd : 3;
+    unsigned char mCutsceneEnvironemnt : 3;
     unsigned char mNumShuffles : 8;
     unsigned char mNumBuddies : 5;
     Piece mPiecesStart[kMaxBuddies][NUM_SIDES];

@@ -30,6 +30,7 @@ Puzzle::Puzzle()
     , mBuddies()
     , mNumCutsceneTextStart(0)
     , mNumCutsceneTextEnd(0)
+    , mCutsceneEnvironemnt(0)
     , mNumShuffles(0)
     , mNumBuddies(0)
     , mPiecesStart()
@@ -54,60 +55,6 @@ Puzzle::Puzzle()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Puzzle::Puzzle(
-    unsigned int book,
-    const char *title,
-    const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
-    const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
-    const char *clue,
-    const BuddyId buddies[], unsigned int numBuddies,
-    unsigned int numShuffles,
-    const Piece piecesStart[kMaxBuddies][NUM_SIDES],
-    const Piece piecesEnd[kMaxBuddies][NUM_SIDES])
-    : mBook(book)
-    , mTitle(title)
-    , mClue(clue)
-    , mCutsceneTextStart()
-    , mCutsceneTextEnd()
-    , mBuddies()
-    , mNumCutsceneTextStart(numCutsceneTextStart)
-    , mNumCutsceneTextEnd(numCutsceneTextEnd)
-    , mNumShuffles(numShuffles)
-    , mNumBuddies(numBuddies)
-    , mPiecesStart()
-    , mPiecesEnd()
-{
-    ASSERT(mNumCutsceneTextStart < arraysize(mCutsceneTextStart));
-    for (unsigned int i = 0; i < mNumCutsceneTextStart; ++i)
-    {
-        mCutsceneTextStart[i] = cutsceneTextStart[i];
-    }
-    
-    ASSERT(mNumCutsceneTextEnd < arraysize(mCutsceneTextEnd));
-    for (unsigned int i = 0; i < mNumCutsceneTextEnd; ++i)
-    {
-        mCutsceneTextEnd[i] = cutsceneTextEnd[i];
-    }
-    
-    ASSERT(mNumBuddies < arraysize(mBuddies));
-    for (unsigned int i = 0; i < mNumBuddies; ++i)
-    {
-        mBuddies[i] = buddies[i];
-    }
-    
-    for (unsigned int i = 0; i < kMaxBuddies; ++i)
-    {
-        for (unsigned int j = 0; j < NUM_SIDES; ++j)
-        {
-            mPiecesStart[i][j] = piecesStart[i][j];
-            mPiecesEnd[i][j] = piecesEnd[i][j];
-        }
-    }
-}   
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void Puzzle::Reset()
 {
     mBook = 0;
@@ -124,6 +71,8 @@ void Puzzle::Reset()
         mCutsceneTextEnd[i] = NULL;
     }
     mNumCutsceneTextEnd = 0;
+    
+    mCutsceneEnvironemnt = 0;
     
     mClue = NULL;
     mNumShuffles = 0;
@@ -242,6 +191,22 @@ const char *Puzzle::GetCutsceneTextEnd(unsigned int cutsceneIndex) const
 unsigned int Puzzle::GetNumCutsceneTextEnd() const
 {
     return mNumCutsceneTextEnd;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Puzzle::GetCutsceneEnvironment() const
+{
+    return mCutsceneEnvironemnt;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Puzzle::SetCutsceneEnvironment(unsigned int cutsceneEnvionment)
+{
+    mCutsceneEnvironemnt = cutsceneEnvionment;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
