@@ -1,5 +1,7 @@
 <quest-database>
 	
+	<quest id="getBread" map="dungeon" x="3" y="8" />
+
 	<quest id="enginedev" map="sandbox" x="0" y="1" />
 
 	<quest id="temple_level1" map="temple_level1" x="0" y="2" />
@@ -12,7 +14,6 @@
 	<quest id="followSprout1" map="forest" x="2" y="5" />
 	<quest id="followSprout2" map="forest" x="2" y="5" />
 	<quest id="followSprout3" map="forest" x="2" y="5" />
-	<quest id="getBread" map="forest" x="2" y="5" />
 	
 	<!--quest id="linearcriticalpath" map="linearcriticalpath" x="0" y="6" />
 	<quest id="longerdeadends" map="longerdeadends" x="0" y="6" />	

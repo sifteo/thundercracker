@@ -22,9 +22,8 @@ using namespace Sifteo;
 #define STORAGE_TYPE_COUNT  2
 
 #define ITEM_TRIGGER_NONE   0
-#define ITEM_TRIGGER_KEY    1
-#define ITEM_TRIGGER_BOOT   2
-#define ITEM_TRIGGER_BOMB   3
+#define ITEM_TRIGGER_BOOT   1
+#define ITEM_TRIGGER_BOMB   2
 
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1

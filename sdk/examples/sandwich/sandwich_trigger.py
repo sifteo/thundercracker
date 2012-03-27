@@ -76,6 +76,7 @@ class Trigger:
 				itemid = obj.props["key"].lower()
 				assert itemid in room.map.world.items.item_dict, "Item is undefined (" + itemid + " ) in map: " + room.map.id
 				self.key_item = room.map.world.items.item_dict[itemid]
+				assert self.key_item.can_be_a_key(), "Only equipment can be used as keys"
 			else:
 				self.key_item = None
 			self.alloc_flag()
