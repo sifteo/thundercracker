@@ -7,12 +7,12 @@ using namespace Sifteo;
 #define NUM_CUBES 			3
 #define LOAD_ASSETS			1
 
-#define NUM_ITEMS 			4
+#define NUM_ITEMS 			arraysize(gItems);
 #define NUM_TIPS			3
 
 // Static Globals
 static Cube gCubes[NUM_CUBES];
-static struct MenuItem gItems[NUM_ITEMS + 1] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {NULL, NULL} };
+static struct MenuItem gItems[] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {NULL, NULL} };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
 static void begin() {
