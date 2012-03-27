@@ -55,8 +55,23 @@ bool SvmDebugger::signal(Svm::Debugger::Signals sig)
 bool SvmDebugger::fault(Svm::FaultCode code)
 {
     switch (code) {
-        case F_ABORT:   return signal(S_ABORT);
-        default:        return signal(S_SEGV);
+        case F_ABORT:
+            return signal(S_ABORT);
+
+        case F_BAD_CODE_ADDRESS:
+        case F_CODE_FETCH:
+        case F_CODE_ALIGNMENT:
+        case F_CPU_SIM:
+        case F_RESERVED_SVC:
+        case F_RESERVED_ADDROP:
+            return signal(S_ILL);
+
+        case F_LOAD_ALIGNMENT:
+        case F_STORE_ALIGNMENT:
+            return signal(S_BUS);
+
+        default:
+            return signal(S_SEGV);
     }
 }
 

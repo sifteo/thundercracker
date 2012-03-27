@@ -120,20 +120,14 @@ namespace Debugger {
         S_ILL       = 4,
         S_TRAP      = 5,
         S_ABORT     = 6,
-        S_EMULATE   = 7,
         S_FPE       = 8,
         S_KILL      = 9,
         S_BUS       = 10,
         S_SEGV      = 11,
         S_SYS       = 12,
         S_PIPE      = 13,
-        S_ALARM     = 14,
         S_TERM      = 15,
         S_STOP      = 17,
-        S_TSTOP     = 18,
-        S_CONT      = 19,
-        S_USR1      = 30,
-        S_USR2      = 31,
     };
 };
 
