@@ -929,7 +929,7 @@ float Menu::lerp(float min, float max, float u) {
 
 void Menu::updateBG0() {
 	int ui = position;
-	int ut = (position < 0 ? position - 8 : position) / 8; // special case because int rounds up when < 0
+	int ut = (position < 0 ? position - 8.f : position) / 8; // special case because int rounds up when < 0
 
 	while(prev_ut < ut) {
 		drawColumn(++prev_ut + kNumVisibleTilesX);
