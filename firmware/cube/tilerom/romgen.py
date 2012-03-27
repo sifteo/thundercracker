@@ -55,6 +55,9 @@ class Tiler:
         for x, y, tile in self.carveImage(Image.open(filename)):
             self.loadTile(tile)
 
+        print "Collected %d tiles, out of %d maximum (%.02f%%)" % (
+            len(self.tiles), MAX_TILES, len(self.tiles) * 100.0 / MAX_TILES)
+
         if len(self.tiles) > MAX_TILES:
             raise ValueError("Out of room in the tile map (%d tiles found, max is %d)"
                              % (len(self.tiles), MAX_TILES))
