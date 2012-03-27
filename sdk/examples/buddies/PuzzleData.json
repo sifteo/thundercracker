@@ -13,8 +13,8 @@
         { "view" : "right", "position" : "left",  "text" : "OK!" }
       ],
       "cutscene_end": [
-        { "view" : "right", "position" : "left",  "text": "Muuuahhh!" },
-        { "view" : "left",  "position" : "right", "text": "Hot n' heavy!" }
+        { "view" : "right", "position" : "left",  "text" : "Muuuahhh!" },
+        { "view" : "left",  "position" : "right", "text" : "Hot n' heavy!" }
       ],
       "shuffles": 0,
       "buddies": {
@@ -44,6 +44,135 @@
             "left":   { "buddy": "suli", "part": "eye_left", "solve": false },
             "bottom": { "buddy": "gluv", "part": "mouth", "solve": true },
             "right":  { "buddy": "suli", "part": "eye_right", "solve": false }
+          }
+        }
+      }
+    },
+    {
+      "book": 0,
+      "title": "All Mixed Up",
+      "clue": "Unscramble",
+      "cutscene_environment": 0,
+      "cutscene_start": [
+        { "view" : "right", "position" : "left",  "text" : "Let's get\nCRAZY!" }
+      ],
+      "cutscene_end": [
+        { "view" : "left",  "position" : "right", "text" : "My head hurts." }
+      ],
+      "shuffles": 3,
+      "buddies": {
+        "suli": {
+          "pieces_start": {
+            "top":    { "buddy": "suli", "part": "hair" },
+            "left":   { "buddy": "suli", "part": "eye_left" },
+            "bottom": { "buddy": "suli", "part": "mouth" },
+            "right":  { "buddy": "suli", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "suli", "part": "hair", "solve": true },
+            "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+            "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+            "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
+          }
+        },
+        "rike": {
+          "pieces_start": {
+            "top":    { "buddy": "rike", "part": "hair" },
+            "left":   { "buddy": "rike", "part": "eye_left" },
+            "bottom": { "buddy": "rike", "part": "mouth" },
+            "right":  { "buddy": "rike", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "rike", "part": "hair", "solve": true },
+            "left":   { "buddy": "rike", "part": "eye_left", "solve": true },
+            "bottom": { "buddy": "rike", "part": "mouth", "solve": true },
+            "right":  { "buddy": "rike", "part": "eye_right", "solve": true }
+          }
+        }
+      }
+    },
+    {
+      "book": 1,
+      "title": "Bad Hair Day",
+      "clue": "Swap Hair",
+      "cutscene_environment": 0,
+      "cutscene_start": [
+        { "view" : "right", "position" : "left", "text" : "How do I get\ncool hair\nlike you?" }
+      ],
+      "cutscene_end": [
+        { "view" : "right", "position" : "left", "text" : "Now I look\nlike Kelly!" }
+      ],
+      "shuffles": 0,
+      "buddies": {
+        "boff": {
+          "pieces_start": {
+            "top":    { "buddy": "boff", "part": "hair" },
+            "left":   { "buddy": "boff", "part": "eye_left" },
+            "bottom": { "buddy": "boff", "part": "mouth" },
+            "right":  { "buddy": "boff", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "zorg", "part": "hair", "solve": true },
+            "left":   { "buddy": "boff", "part": "eye_left", "solve": false },
+            "bottom": { "buddy": "boff", "part": "mouth", "solve": false },
+            "right":  { "buddy": "boff", "part": "eye_right", "solve": false }
+          }
+        },
+        "zorg": {
+          "pieces_start": {
+            "top":    { "buddy": "zorg", "part": "hair" },
+            "left":   { "buddy": "zorg", "part": "eye_left" },
+            "bottom": { "buddy": "zorg", "part": "mouth" },
+            "right":  { "buddy": "zorg", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "boff", "part": "hair", "solve": true },
+            "left":   { "buddy": "zorg", "part": "eye_left", "solve": false },
+            "bottom": { "buddy": "zorg", "part": "mouth", "solve": false },
+            "right":  { "buddy": "zorg", "part": "eye_right", "solve": false }
+          }
+        }
+      }
+    },
+    {
+      "book": 2,
+      "title": "Private Eyes",
+      "clue": "Swap Eyes",
+      "cutscene_environment": 0,
+      "cutscene_start": [
+        { "view" : "right", "position" : "left", "text" : "See the world\nfrom my eyes!" }
+      ],
+      "cutscene_end": [
+        { "view" : "right", "position" : "left", "text" : "That's much\nbetter." }
+      ],
+      "shuffles": 0,
+      "buddies": {
+        "maro": {
+          "pieces_start": {
+            "top":    { "buddy": "maro", "part": "hair" },
+            "left":   { "buddy": "maro", "part": "eye_left" },
+            "bottom": { "buddy": "maro", "part": "mouth" },
+            "right":  { "buddy": "maro", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "maro", "part": "hair", "solve": false },
+            "left":   { "buddy": "gluv", "part": "eye_left", "solve": true },
+            "bottom": { "buddy": "maro", "part": "mouth", "solve": false },
+            "right":  { "buddy": "gluv", "part": "eye_right", "solve": true }
+          }
+        },
+        "gluv": {
+          "pieces_start": {
+            "top":    { "buddy": "gluv", "part": "hair" },
+            "left":   { "buddy": "gluv", "part": "eye_left" },
+            "bottom": { "buddy": "gluv", "part": "mouth" },
+            "right":  { "buddy": "gluv", "part": "eye_right" }
+          },
+          "pieces_end": {
+            "top":    { "buddy": "gluv", "part": "hair", "solve": false },
+            "left":   { "buddy": "maro", "part": "eye_left", "solve": true },
+            "bottom": { "buddy": "gluv", "part": "mouth", "solve": false },
+            "right":  { "buddy": "maro", "part": "eye_right", "solve": true }
           }
         }
       }
