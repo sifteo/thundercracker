@@ -96,6 +96,7 @@ class Menu {
 	static const float kIconWidth = 80.f;
 	static const float kIconPadding = 16.f;
 	static const float kPixelsPerIcon;
+	static const float kTimeDilator = 13.1f;
 	static const float kMaxSpeedMultiplier = 3.f;
 	static const float kAccelScalingFactor = -0.25f;
 	static const float kOneG;
@@ -134,7 +135,6 @@ class Menu {
 	int tiltDirection;
 	// scrolling states (Inertia and Tilt)
 	float position;
-	float dt;
 	int prev_ut;
 	float velocity;
 	TimeStep frameclock;
@@ -259,8 +259,6 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	
 	// keep track of time so if our framerate changes, apparent speed persists
 	frameclock.next();
-	const float kTimeDilator = 13.1f;
-	dt = frameclock.delta() * kTimeDilator;
 	
 	// neighbor changes?
 	if(currentState != MENU_STATE_START) {
@@ -529,7 +527,7 @@ void Menu::stateTilting() {
 	const float max_x = stoppingPositionFor(numItems - 1);
 	const float kInertiaThreshold = 10.f;
 	
-	velocity += (xaccel * dt) * velocityMultiplier();
+	velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
 	
 	// clamp maximum velocity based on cube angle
 	if(abs(velocity) > maxVelocity()) {
@@ -538,7 +536,7 @@ void Menu::stateTilting() {
 	
 	// don't go past the backstop unless we have inertia
 	if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > kInertiaThreshold) {
-	    position += velocity * dt;
+	    position += velocity * frameclock.delta() * kTimeDilator;
 	} else {
 	    velocity = 0;
 	}
@@ -585,7 +583,7 @@ void Menu::stateInertia() {
 
 	velocity += stopping_position - position;
 	velocity *= stiffness;
-	position += velocity * dt;
+	position += velocity * frameclock.delta() * kTimeDilator;
 	position = lerp(position, stopping_position, 0.15f);
 
 	stateFinished = abs(velocity) < 1.0f && abs(stopping_position - position) < 0.5f;
