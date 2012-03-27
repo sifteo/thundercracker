@@ -24,7 +24,7 @@ void ThunderDriver::handleStartOfFrame()
 
 }
 
-void ThunderDriver::setConfig(uint16_t wValue)
+void ThunderDriver::onConfigComplete(uint16_t wValue)
 {
 
 }

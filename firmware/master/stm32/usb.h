@@ -11,8 +11,8 @@
 class UsbDevice
 {
 public:
-    static const uint16_t VendorID = 0x1234;
-    static const uint16_t ProductID = 0x1234;
+    static const uint16_t VendorID = 0x22FA;
+    static const uint16_t ProductID = 0x0105;
 
     static void init();
 

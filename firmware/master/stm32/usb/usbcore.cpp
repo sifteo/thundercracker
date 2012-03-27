@@ -47,9 +47,9 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             sd->wstring[i] = Usbd::string(strIdx)[i];
         }
 
-        // Send sane Language ID descriptor...
+        // string index 0 returns a list of languages
         if (strIdx == 0)
-            sd->wstring[0] = 0x409;
+            sd->wstring[0] = 0x409; // US / English
 
         return 1;
     }
@@ -77,15 +77,13 @@ int UsbCore::setConfiguration(SetupData *req)
 
     Usbd::setConfig(req->wValue);
     UsbHardware::epReset();
-    UsbDriver::setConfig(req->wValue);
+    UsbDriver::onConfigComplete(req->wValue);
 
     return 1;
 }
 
-int UsbCore::getConfiguration(SetupData *req, uint8_t **buf, uint16_t *len)
+int UsbCore::getConfiguration(uint8_t **buf, uint16_t *len)
 {
-    (void)req;
-
     if (*len > 1)
         *len = 1;
     (*buf)[0] = Usbd::config();
@@ -159,7 +157,7 @@ int UsbCore::standardDeviceRequest(SetupData *req, uint8_t **buf, uint16_t *len)
         return setConfiguration(req);
 
     case RequestGetConfiguration:
-        return getConfiguration(req, buf, len);
+        return getConfiguration(buf, len);
 
     case RequestGetDescriptor:
         return getDescriptor(req, buf, len);

@@ -23,9 +23,9 @@ void UsbDriver::handleStartOfFrame()
     driver.handleStartOfFrame();
 }
 
-void UsbDriver::setConfig(uint16_t wValue)
+void UsbDriver::onConfigComplete(uint16_t wValue)
 {
-    driver.setConfig(wValue);
+    driver.onConfigComplete(wValue);
 }
 
 int UsbDriver::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)

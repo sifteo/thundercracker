@@ -14,7 +14,7 @@ public:
     static int setAddress(Usb::SetupData *req);
 
     static int setConfiguration(Usb::SetupData *req);
-    static int getConfiguration(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
+    static int getConfiguration(uint8_t **buf, uint16_t *len);
 
     static int setInterface(Usb::SetupData *req, uint16_t *len);
     static int getInterface(uint8_t **buf, uint16_t *len);
