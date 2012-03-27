@@ -763,6 +763,9 @@ void Menu::handleExit() {
 
 void Menu::handlePrepaint() {
 	if (shouldPaintSync) {
+		// GFX Workaround
+		System::paintSync();
+		pCube->vbuf.touch();
 		System::paintSync();
 	} else {
 		System::paint();
@@ -952,6 +955,11 @@ float Menu::lerp(float min, float max, float u) {
 void Menu::updateBG0() {
 	int ui = position;
 	int ut = (position < 0 ? position - 8.f : position) / 8; // special case because int rounds up when < 0
+
+	/* XXX: we should always paintSync if we've loaded two columns, to avoid a race
+	 * condition in the painting loop
+	 */
+	if (abs(prev_ut - ut) > 1) shouldPaintSync = true;
 
 	while(prev_ut < ut) {
 		drawColumn(++prev_ut + kNumVisibleTilesX);
