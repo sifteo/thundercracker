@@ -80,7 +80,7 @@ void main()
         
         while (prev_xt < xt) {
             // Fill in new tiles, just past the right edge of the screen
-            draw_bg_column(++prev_xt + 16);
+            draw_bg_column(prev_xt++ + 18);
         }
         
         while (prev_xt > xt) {
