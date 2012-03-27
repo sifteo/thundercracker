@@ -20,7 +20,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
     case DescriptorConfiguration: {
         uint8_t configIdx = req->wValue & 0xff;
         *buf = (uint8_t*)Usbd::configDescriptor(configIdx);
-        *len = Usbd::configDescriptor(configIdx)->wTotalLength;
+        *len = MIN(Usbd::configDescriptor(configIdx)->wTotalLength, *len);
         return 1;
     }
 
