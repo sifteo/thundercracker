@@ -1,28 +1,27 @@
 UseSprites = false
 GameAssets = group{quality = 10}
 
-function AddBuddy (i, full, bg, parts, partsSprites, front, right, left, ribbon)
-    _G['BuddyFull' .. i] = image{"assets/" .. full .. ".png"}
-    _G['BuddyBackground' .. i] = image{"assets/" .. bg .. ".png"}
+-- TOOD: Put each buddy in its own asset group
+function AddBuddy (i, name)
+    _G["BuddyFull"        .. i] = image{"assets/buddy_full_" .. (i + 1) .. ".png"}
+    _G["BuddyBackground"  .. i] = image{"assets/bg"          .. (i + 1) .. ".png"}
+    _G["BuddySpriteFront" .. i] = image{"assets/sprite_"     .. name    .. "_front.png", pinned = true}
+    _G["BuddySpriteRight" .. i] = image{"assets/sprite_"     .. name    .. "_right.png", pinned = true}
+    _G["BuddySpriteLeft"  .. i] = image{"assets/sprite_"     .. name    .. "_left.png", pinned = true}
+    _G["BuddyRibbon"      .. i] = image{"assets/ribbon_"     .. name    .. ".png"}
     if UseSprites then
-       _G['BuddyParts' .. i] = image{"assets/" .. partsSprites .. ".png", height = 64, pinned = true}
+       _G["BuddyParts"    .. i] = image{"assets/parts"       .. (i + 1) .. "_sprite.png", height = 64, pinned = true}
     else
-       _G['BuddyParts' .. i] = image{"assets/" .. parts .. ".png", height = 48}
+       _G["BuddyParts"    .. i] = image{"assets/parts"       .. (i + 1) .. ".png", height = 48}
     end
-    _G['BuddySpriteFront' .. i] = image{"assets/" .. front .. ".png", pinned = true}
-    _G['BuddySpriteRight' .. i] = image{"assets/" .. right .. ".png", pinned = true}
-    _G['BuddySpriteLeft' .. i] = image{"assets/" .. left .. ".png", pinned = true}
-    _G['BuddyRibbon' .. i] = image{"assets/" .. ribbon .. ".png"}
 end
 
--- TOOD: Put each buddy in its own asset group
-
-AddBuddy(0, "buddy_full_1", "bg1", "parts1", "parts1_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_gluv")
-AddBuddy(1, "buddy_full_2", "bg2", "parts2", "parts2_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_suli")
-AddBuddy(2, "buddy_full_3", "bg3", "parts3", "parts3_sprite", "sprite_rike_front", "sprite_rike_right", "sprite_rike_left", "ribbon_rike")
-AddBuddy(3, "buddy_full_4", "bg4", "parts4", "parts4_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_boff")
-AddBuddy(4, "buddy_full_5", "bg5", "parts5", "parts5_sprite", "sprite_zorg_front", "sprite_zorg_right", "sprite_zorg_left", "ribbon_zorg")
-AddBuddy(5, "buddy_full_6", "bg6", "parts6", "parts6_sprite", "sprite_gluv_front", "sprite_gluv_right", "sprite_gluv_left", "ribbon_maro")
+AddBuddy(0, "gluv")
+AddBuddy(1, "suli")
+AddBuddy(2, "rike")
+AddBuddy(3, "boff")
+AddBuddy(4, "zorg")
+AddBuddy(5, "maro")
 
 -- Buddy Overlays
 if UseSprites then
