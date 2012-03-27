@@ -15,9 +15,10 @@ void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
 }
 
 
-void SvmDebugPipe::fault(FaultCode code)
+bool SvmDebugPipe::fault(FaultCode code)
 {
     // XXX: Stub
+    return false;
 }
 
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)

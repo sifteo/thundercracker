@@ -31,9 +31,15 @@ RESERVED_SLOTS = 16
 
 # Hardcoded syscall numbers
 FIXED_NUMBERS = {
-    'abort': 1,
+    'abort': 0,
     }
 
+# Syscalls that must *not* be in the lower 64, due to event dispatch.
+HIGH_SYSCALLS = [
+    'yield',
+    'paint',
+    'finish',
+    ]
 
 FN_REGEX = re.compile(r"^.*_SYS_(\w+)\s*\(.*\)\s+_SC\((\d+)\)");
 NUMBER_REGEX = re.compile(r"_SC\((\d+)\)");
@@ -107,7 +113,7 @@ def main(abiFilename, freqFilename):
     # Fill the rest of the fast-access slots with the most frequent calls
     while nextAvailable(newNumbers) < 64 and numFreq:
         name = nameMap[numFreq.pop()]
-        if name not in newNumbers:
+        if name not in newNumbers and name not in HIGH_SYSCALLS:
             newNumbers[name] = nextAvailable(newNumbers)
 
     # Now fill the rest in, in order
