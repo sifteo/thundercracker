@@ -158,8 +158,9 @@ void GDBServer::handleClient()
 
     resetPacketState();
 
-    // On connect, GDB assumes we're already stopped
+    // On connect, GDB assumes we're already stopped.
     debugBreak();
+    clearBreakpoints();
 
     while (1) {
         fd_set efds, rfds;
@@ -457,6 +458,24 @@ void GDBServer::handlePacket()
             return txPacketString("OK");
         }
 
+        case 'p': {
+            // Read single register
+            txPacketBegin();
+            int reg = 0;
+            if (sscanf(rxPacket, "p%x", &reg) == 1) {
+                uint32_t bitmap = Debugger::ALL_REGISTER_BITS & Debugger::argBit(regGDBtoSVM(reg));
+                if (bitmap) {
+                    msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
+                    if (message(1) == 1)
+                        txHexWord(msgReply[0]);
+                } else {
+                    // Unavailable register
+                    txHexWord(-1);
+                }
+            }
+            return txPacketEnd();
+        }
+
         case 'm': {
             // Read memory (RAM or Flash)
             int addr = 0, size = 0;
@@ -505,11 +524,38 @@ void GDBServer::handlePacket()
 
         case 's': {
             // Single step
-            msgCmd[0] = Debugger::M_STEP;
-            message(1);
-            waitingForStop = true;
+            step();
             return;
         }
+
+        case 'Z': {
+            // Insert breakpoint or watchpoint
+            txPacketBegin();
+            int t = 0, addr = 0, length = 0;
+            if (sscanf(rxPacket, "Z%x,%x,%x", &t, &addr, &length) == 3) {
+                if ((t == 0 || t == 1) && insertBreakpoint(addr))
+                    txString("OK");
+                else
+                    txString("E01");
+            }
+            return txPacketEnd();
+        }
+
+        case 'z': {
+            // Remove breakpoint or watchpoint
+            txPacketBegin();
+            int t = 0, addr = 0, length = 0;
+            if (sscanf(rxPacket, "z%x,%x,%x", &t, &addr, &length) == 3) {
+                if (t == 0 || t == 1) {
+                    removeBreakpoint(addr);
+                    txString("OK");
+                } else {
+                    txString("E01");
+                }
+            }
+            return txPacketEnd();
+        }
+
     }
 
     // Unsupported packet; empty reply
@@ -609,7 +655,7 @@ uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
     
     if (svmReg < 32)
         for (unsigned i = 0; i <= svmReg; i++)
-            if (bitmap & Svm::Debugger::regBit(i)) {
+            if (bitmap & Svm::Debugger::argBit(i)) {
                 if (i == svmReg)
                     return word;
                 else
@@ -646,4 +692,63 @@ int GDBServer::regGDBtoSVM(uint32_t r)
         default:
             return -1;
     }
+}
+
+void GDBServer::step()
+{
+    // XXX: implement me
+}
+
+void GDBServer::sendBreakpoints(uint32_t bitmap)
+{
+    /*
+     * Resend one or more breakpoints to the target,
+     * from our local breakpoint cache.
+     */
+
+    if (bitmap) {
+        unsigned words = 1;
+        msgCmd[0] = Svm::Debugger::M_SET_BREAKPOINTS | bitmap;
+        bitmap <<= Svm::Debugger::BITMAP_SHIFT;
+
+        while (bitmap) {
+            unsigned i = Intrinsic::CLZ(bitmap);
+            bitmap &= ~Intrinsic::LZ(i);
+            ASSERT(i < Svm::Debugger::NUM_BREAKPOINTS);
+            ASSERT(words < Svm::Debugger::MAX_CMD_WORDS);
+            msgCmd[words++] = breakpoints[i];
+        }
+
+        message(words);
+    }
+}
+
+void GDBServer::clearBreakpoints()
+{
+    memset(breakpoints, 0, sizeof breakpoints);
+    sendBreakpoints(Svm::Debugger::ALL_BREAKPOINT_BITS);
+}
+
+bool GDBServer::insertBreakpoint(uint32_t addr)
+{
+    // Find an unused breakpoint slot
+    for (unsigned i = 0; i < Svm::Debugger::NUM_BREAKPOINTS; ++i)
+        if (breakpoints[i] == 0) {
+            breakpoints[i] = addr;
+            sendBreakpoints(Svm::Debugger::argBit(i));
+            return true;
+        }
+    return false;
+}
+
+void GDBServer::removeBreakpoint(uint32_t addr)
+{
+    // Remove an existing breakpoint.
+    uint32_t bitmap = 0;
+    for (unsigned i = 0; i < Svm::Debugger::NUM_BREAKPOINTS; ++i)
+        if (breakpoints[i] == addr) {
+            breakpoints[i] = 0;
+            bitmap |= Svm::Debugger::argBit(i);
+        }
+    sendBreakpoints(bitmap);
 }

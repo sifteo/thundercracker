@@ -68,7 +68,7 @@ namespace Debugger {
         M_SIGNAL            = 0x05000000,  // arg=signal, [] -> []
         M_IS_STOPPED        = 0x06000000,  // [] -> [signal]
         M_DETACH            = 0x07000000,  // [] -> []
-        M_STEP              = 0x08000000,  // [] -> []
+        M_SET_BREAKPOINTS   = 0x08000000,  // arg=bitmap, [addresses] -> []
     };
 
     /*
@@ -88,18 +88,25 @@ namespace Debugger {
      */
     const uint32_t BITMAP_SHIFT = 8;
 
-    static inline uint32_t regBit(unsigned r) {
+    static inline uint32_t argBit(unsigned r) {
         return (0x80000000 >> BITMAP_SHIFT) >> r;
     }
     
     static const uint32_t ALL_REGISTER_BITS =
-        Debugger::regBit(0) | Debugger::regBit(1) |
-        Debugger::regBit(2) | Debugger::regBit(3) |
-        Debugger::regBit(4) | Debugger::regBit(5) |
-        Debugger::regBit(6) | Debugger::regBit(7) |
-        Debugger::regBit(8) | Debugger::regBit(9) |
-        Debugger::regBit(REG_FP) | Debugger::regBit(REG_SP) |
-        Debugger::regBit(REG_PC) | Debugger::regBit(REG_CPSR);
+        Debugger::argBit(0) | Debugger::argBit(1) |
+        Debugger::argBit(2) | Debugger::argBit(3) |
+        Debugger::argBit(4) | Debugger::argBit(5) |
+        Debugger::argBit(6) | Debugger::argBit(7) |
+        Debugger::argBit(8) | Debugger::argBit(9) |
+        Debugger::argBit(REG_FP) | Debugger::argBit(REG_SP) |
+        Debugger::argBit(REG_PC) | Debugger::argBit(REG_CPSR);
+
+    /*
+     * The runtime has storage for up to four hardware breakpoints.
+     * Breakpoints are disabled by writing an address of zero.
+     */
+    const uint32_t NUM_BREAKPOINTS = 4;
+    const uint32_t ALL_BREAKPOINT_BITS = 0x00f00000;
 
     /*
      * UNIX-style signal names, used to keep track of the reason why the
@@ -173,6 +180,12 @@ enum FaultCode {
     F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
 };
 
+
+///////////////////////////////////////
+// Specific instructions
+///////////////////////////////////////
+
+static const uint16_t BreakpointInstr   = 0xdf80;       // _SYS_breakpoint()
 
 ///////////////////////////////////////
 // 16-bit thumb instruction validators

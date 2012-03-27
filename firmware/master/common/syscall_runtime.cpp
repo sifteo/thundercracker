@@ -21,6 +21,17 @@
 extern "C" {
 
 void _SYS_breakpoint() {
+    /*
+     * We hit a breakpoint. Point the PC back to the breakpoint
+     * instruction itself, not the next instruction, and
+     * signal a debugger trap.
+     *
+     * It's important that we go directly to SvmCpu here, and not
+     * use our userReg interface. We really don't want to cause a branch,
+     * which can't handle non-bundle-aligned addresses.
+     */
+
+    SvmCpu::setReg(REG_PC, SvmCpu::reg(REG_PC) - 2);
     SvmDebugger::signal(Svm::Debugger::S_TRAP);
 }
 

@@ -46,6 +46,7 @@ private:
 
     uint32_t msgCmd[Svm::Debugger::MAX_CMD_WORDS];
     uint32_t msgReply[Svm::Debugger::MAX_REPLY_WORDS];
+    uint32_t breakpoints[Svm::Debugger::NUM_BREAKPOINTS];
 
     // Register format
     static const unsigned NUM_GDB_REGISTERS = 26;
@@ -82,6 +83,12 @@ private:
     
     void debugBreak();
     void pollForStop();
+    void step();
+
+    void sendBreakpoints(uint32_t bitmap);
+    void clearBreakpoints();
+    bool insertBreakpoint(uint32_t addr);
+    void removeBreakpoint(uint32_t addr);
 
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
     bool writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset);

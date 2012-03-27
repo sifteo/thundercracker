@@ -27,12 +27,19 @@ public:
     /// Handle an SVM fault. Returns 'true' if the fault can be handled.
     static bool fault(Svm::FaultCode code);
 
+    /// When paging in a flash block, we may need to patch it to apply breakpoints.
+    static void patchFlashBlock(uint32_t blockAddr, uint8_t *data);
+
 private:
     SvmDebugger() {}
     static SvmDebugger instance;
 
     Svm::Debugger::Signals stopped;
     bool attached;
+    
+    // Map of *flash addresses* to set breakpoints on.
+    uint32_t breakpointMap;
+    uint32_t breakpoints[Svm::Debugger::NUM_BREAKPOINTS];
 
     void handleMessage(SvmDebugPipe::DebuggerMsg &msg);
 
@@ -43,9 +50,12 @@ private:
     void msgSignal(SvmDebugPipe::DebuggerMsg &msg);
     void msgIsStopped(SvmDebugPipe::DebuggerMsg &msg);
     void msgDetach(SvmDebugPipe::DebuggerMsg &msg);
-    
+    void msgSetBreakpoints(SvmDebugPipe::DebuggerMsg &msg);
+
     void setUserReg(uint32_t r, uint32_t value);
     uint32_t getUserReg(uint32_t r);
+
+    static void breakpointPatch(uint8_t *data, uint32_t offset);
 };
 
 #endif // SVM_DEBUGGER_H
