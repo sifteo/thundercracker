@@ -70,6 +70,16 @@ void GDBServer::stop()
     instance.running = false;
 }
 
+void GDBServer::setNonBlock(int fd)
+{
+#ifdef _WIN32
+    unsigned long arg = 1;
+    ioctlsocket(fd, FIONBIO, &arg);
+#else
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+#endif
+}
+
 void GDBServer::threadEntry(void *param)
 {
     GDBServer *self = (GDBServer *) param;
@@ -144,14 +154,27 @@ void GDBServer::handleClient()
     #endif
     arg = 1;
     setsockopt(clientFD, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+    setNonBlock(clientFD);
 
     resetPacketState();
 
-    // On connect, GDB assumes we're already stopped
+    // On connect, GDB assumes we're already stopped.
     debugBreak();
+    clearBreakpoints();
 
     while (1) {
+        fd_set efds, rfds;
         char rxBuffer[4096];
+        struct timeval pollInterval = { 0, 20000 };  // 20ms
+
+        FD_ZERO(&efds);
+        FD_ZERO(&rfds);
+        FD_SET(clientFD, &rfds);
+        FD_SET(clientFD, &efds);
+
+        select(clientFD + 1, &rfds, NULL, &efds, &pollInterval);
+        pollForStop();
+
         int ret = recv(clientFD, rxBuffer, sizeof rxBuffer, 0);
 
         if (ret <= 0) {
@@ -230,7 +253,7 @@ void GDBServer::rxBytes(char *bytes, int len)
             } else if (byte == 0x03) {
                 debugBreak();
                 txByte('+');
-                txPacketString("S02");  // SIGINT
+                waitingForStop = true;
             }
             break;
 
@@ -327,6 +350,39 @@ void GDBServer::txHexWord(uint32_t word)
     txHexByte(word >> 24);
 }
 
+uint8_t GDBServer::rxByte(uint32_t &offset)
+{
+    if (offset < rxPacketLen)
+        return rxPacket[offset++];
+    else
+        return 0;
+}
+
+uint8_t GDBServer::rxHexByte(uint32_t &offset)
+{
+    int high = digitFromHex(rxByte(offset));
+    if (high < 0)
+        return 0;
+
+    int low = digitFromHex(rxByte(offset));
+    if (low < 0)
+        return 0;
+
+    return (high << 4) | low;
+}
+
+uint32_t GDBServer::rxHexWord(uint32_t &offset)
+{
+    uint8_t byte0 = rxHexByte(offset);
+    uint8_t byte1 = rxHexByte(offset);
+    uint8_t byte2 = rxHexByte(offset);
+    uint8_t byte3 = rxHexByte(offset);
+    return (byte0 << 0 )|
+           (byte1 << 8 )|
+           (byte2 << 16)|
+           (byte3 << 24);
+}
+
 void GDBServer::txString(const char *str)
 {
     char c;
@@ -350,10 +406,10 @@ uint32_t GDBServer::message(uint32_t words)
      * This uses a callback provided by our transport layer.
      */
 
-    if (messageCb)
-        return messageCb(msgCmd, words, msgReply);
-    else
-        return 0;
+    DEBUG_LOG((LOG_PREFIX "Sending message, len=%d [%08x]\n", words, msgCmd[0]));
+    uint32_t replyLen = messageCb ? messageCb(msgCmd, words, msgReply) : 0;
+    DEBUG_LOG((LOG_PREFIX "Received reply, len=%d [%08x]\n", replyLen, msgReply[0]));
+    return replyLen;
 }
 
 void GDBServer::handlePacket()
@@ -368,25 +424,60 @@ void GDBServer::handlePacket()
 
         case '?': {
             // Why did we last stop?
-            return txPacketString("S05");
+            waitingForStop = true;
+            return;
         }
 
         case 'g': {
-            // Read registers
+            // Read all registers
             txPacketBegin();
-            msgCmd[0] = Debugger::M_READ_REGISTERS;
-            if (message(1) >= 14)
-                replyToRegisterRead();
+            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
+            uint32_t replyLen = message(1);
+            for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
+                uint32_t word = findRegisterInPacket(bitmap, regGDBtoSVM(r));
+                txHexWord((word < replyLen) ? msgReply[word] : -1);
+            }
             return txPacketEnd();
         }
 
         case 'G': {
-            // Write registers
+            // Write all registers
+            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            uint32_t svmRegCount = Intrinsic::POPCOUNT(bitmap);
+            uint32_t offset = 1;
+            for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
+                uint32_t svmReg = regGDBtoSVM(r);
+                uint32_t value = rxHexWord(offset);
+                uint32_t word = findRegisterInPacket(bitmap, svmReg);
+                if (word < svmRegCount)
+                    msgCmd[1 + word] = value;
+            }
+            msgCmd[0] = Debugger::M_WRITE_REGISTERS | bitmap;
+            message(1 + svmRegCount);
+            return txPacketString("OK");
+        }
+
+        case 'p': {
+            // Read single register
+            txPacketBegin();
+            int reg = 0;
+            if (sscanf(rxPacket, "p%x", &reg) == 1) {
+                uint32_t bitmap = Debugger::ALL_REGISTER_BITS & Debugger::argBit(regGDBtoSVM(reg));
+                if (bitmap) {
+                    msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
+                    if (message(1) == 1)
+                        txHexWord(msgReply[0]);
+                } else {
+                    // Unavailable register
+                    txHexWord(-1);
+                }
+            }
             return txPacketEnd();
         }
 
         case 'm': {
-            // Read memory
+            // Read memory (RAM or Flash)
             int addr = 0, size = 0;
             txPacketBegin();
             if (sscanf(rxPacket, "m%x,%x", &addr, &size) == 2)
@@ -403,21 +494,70 @@ void GDBServer::handlePacket()
         }
 
         case 'M': {
-            // Write memory
+            // Write memory (RAM only)
+            // Maddr,length:XX...
+            txPacketBegin();
+            char *delim = strchr(rxPacket, ':');
+            int addr = 0, size = 0;
+            if (delim && sscanf(rxPacket, "M%x,%x", &addr, &size) == 2) {
+                uint32_t offset = (delim - rxPacket) + 1;
+                if (writeMemory(addr, size, offset))
+                    txString("OK");
+            }
+            return txPacketEnd();
+        }
+
+        case 'D': {
+            // Detach debugger
+            msgCmd[0] = Debugger::M_DETACH;
+            message(1);
             return txPacketString("OK");
         }
 
         case 'c': {
-            // Continue
-            msgCmd[0] = Debugger::M_CONTINUE;
+            // Continue executing; clear stop signal.
+            msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
             message(1);
+            waitingForStop = true;
             return;
         }
 
         case 's': {
             // Single step
+            msgCmd[0] = Debugger::M_STEP;
+            message(1);
+            waitingForStop = true;
             return;
         }
+
+        case 'Z': {
+            // Insert breakpoint or watchpoint
+            txPacketBegin();
+            int t = 0, addr = 0, length = 0;
+            if (sscanf(rxPacket, "Z%x,%x,%x", &t, &addr, &length) == 3) {
+                if ((t == 0 || t == 1) && insertBreakpoint(addr))
+                    txString("OK");
+                else
+                    txString("E01");
+            }
+            return txPacketEnd();
+        }
+
+        case 'z': {
+            // Remove breakpoint or watchpoint
+            txPacketBegin();
+            int t = 0, addr = 0, length = 0;
+            if (sscanf(rxPacket, "z%x,%x,%x", &t, &addr, &length) == 3) {
+                if (t == 0 || t == 1) {
+                    removeBreakpoint(addr);
+                    txString("OK");
+                } else {
+                    txString("E01");
+                }
+            }
+            return txPacketEnd();
+        }
+
     }
 
     // Unsupported packet; empty reply
@@ -427,8 +567,32 @@ void GDBServer::handlePacket()
 void GDBServer::debugBreak()
 {
     // Handle a ^C, stop the target
-    msgCmd[0] = Debugger::M_STOP;
+    msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_INT;
     message(1);
+}
+
+void GDBServer::pollForStop()
+{
+    // If the target is stopped, see if we can clear waitingForStop and
+    // send a stop-reason reply.
+
+    if (!waitingForStop)
+        return;
+
+    msgCmd[0] = Debugger::M_IS_STOPPED;
+    if (message(1) >= 1) {
+        int signal = msgReply[0];
+        if (signal != Debugger::S_RUNNING) {
+
+            txPacketBegin();
+            txByte('S');
+            txHexByte(signal);
+            txPacketEnd();
+            txFlush();
+
+            waitingForStop = false;
+        }
+    }
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
@@ -458,24 +622,130 @@ bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
     return true;
 }
 
-void GDBServer::replyToRegisterRead()
+bool GDBServer::writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset)
 {
-    // The ARM register packet for GDB has 26 words! Yikes.
+    while (bytes) {
+        uint32_t chunk = MIN(bytes, Debugger::MAX_CMD_BYTES - sizeof(uint32_t));
 
-    for (unsigned reg = 0; reg < 26; reg++) {
-        if (reg < 10) {
-            // General purpose
-            txHexWord(msgReply[reg]);
-            continue;
-        }
-        
-        switch (reg) {
-            case REG_FP: txHexWord(msgReply[10]); break;
-            case REG_SP: txHexWord(msgReply[11]); break;
-            case REG_PC: txHexWord(msgReply[12]); break;
-            case 25:     txHexWord(msgReply[13]); break;  // CPSR
-            default:     txHexWord(0); break;
-        }
+        if ((addr & Debugger::M_ARG_MASK) != addr)
+            return false;
+
+        msgCmd[0] = Debugger::M_WRITE_RAM | addr;
+        msgCmd[1] = chunk;
+        uint8_t *cmdBytes = reinterpret_cast<uint8_t*>(&msgCmd[2]);
+
+        for (uint32_t i = 0; i < chunk; i++)
+            cmdBytes[i] = rxHexByte(packetOffset);
+
+        message((chunk + 3) / 4 + 2);
+
+        addr += chunk;
+        bytes -= chunk;
+    }
+
+    return true;
+}
+
+uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
+{
+    /*
+     * In a register packet with the specified bitmap, where does the
+     * register 'svmReg' occur? Returns -1 if the register is nowhere.
+     */
+
+    uint32_t word = 0;
+    
+    if (svmReg < 32)
+        for (unsigned i = 0; i <= svmReg; i++)
+            if (bitmap & Debugger::argBit(i)) {
+                if (i == svmReg)
+                    return word;
+                else
+                    word++;
+            }
+
+    return (uint32_t) -1;
+}
+
+int GDBServer::regGDBtoSVM(uint32_t r)
+{
+    /*
+     * Convert GDB's ARM register numbers to SVM register numbers.
+     */
+    switch (r) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case REG_FP:
+        case REG_SP:
+        case REG_PC:
+            return r;
+
+        case 25:
+            return REG_CPSR;
+
+        default:
+            return -1;
     }
 }
 
+void GDBServer::sendBreakpoints(uint32_t bitmap)
+{
+    /*
+     * Resend one or more breakpoints to the target,
+     * from our local breakpoint cache.
+     */
+
+    if (bitmap) {
+        unsigned words = 1;
+        msgCmd[0] = Debugger::M_SET_BREAKPOINTS | bitmap;
+        bitmap <<= Debugger::BITMAP_SHIFT;
+
+        while (bitmap) {
+            unsigned i = Intrinsic::CLZ(bitmap);
+            bitmap &= ~Intrinsic::LZ(i);
+            ASSERT(i < Debugger::NUM_BREAKPOINTS);
+            ASSERT(words < Debugger::MAX_CMD_WORDS);
+            msgCmd[words++] = breakpoints[i];
+        }
+
+        message(words);
+    }
+}
+
+void GDBServer::clearBreakpoints()
+{
+    memset(breakpoints, 0, sizeof breakpoints);
+    sendBreakpoints(Debugger::ALL_BREAKPOINT_BITS);
+}
+
+bool GDBServer::insertBreakpoint(uint32_t addr)
+{
+    // Find an unused breakpoint slot
+    for (unsigned i = 0; i < GDB_BREAKPOINTS; ++i)
+        if (breakpoints[i] == 0) {
+            breakpoints[i] = addr;
+            sendBreakpoints(Debugger::argBit(i));
+            return true;
+        }
+    return false;
+}
+
+void GDBServer::removeBreakpoint(uint32_t addr)
+{
+    // Remove an existing breakpoint.
+    uint32_t bitmap = 0;
+    for (unsigned i = 0; i < GDB_BREAKPOINTS; ++i)
+        if (breakpoints[i] == addr) {
+            breakpoints[i] = 0;
+            bitmap |= Debugger::argBit(i);
+        }
+    sendBreakpoints(bitmap);
+}

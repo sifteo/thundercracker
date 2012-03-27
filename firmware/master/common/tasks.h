@@ -17,7 +17,7 @@ public:
         UsbIN,
         UsbOUT,
         AudioOutEmpty,
-        DebuggerBreakpoint,
+        Debugger,
     };
 
     static void init();
