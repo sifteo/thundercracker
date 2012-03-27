@@ -360,7 +360,7 @@ struct USBOTG_t {
     uint32_t res5[64];
     uint32_t PCGCCTL;                           // offset 0xE00
     uint32_t res6[127];
-    uint32_t epFifos[4][0x1000];                // offset 0x1000
+    uint32_t epFifos[4][0x400];                 // offset 0x1000
 };
 
 extern volatile USBOTG_t OTG;
