@@ -69,8 +69,8 @@ void InitializePuzzles()
     sPuzzleDefault.SetTitle("Default");
     sPuzzleDefault.SetClue("Default");
     
-    sPuzzleDefault.AddCutsceneTextStart("[A]Default");
-    sPuzzleDefault.AddCutsceneTextEnd("[B]Default");
+    sPuzzleDefault.AddCutsceneTextStart(0, "Default");
+    sPuzzleDefault.AddCutsceneTextEnd(0, "Default");
     
     sPuzzleDefault.SetNumShuffles(0);
     
@@ -111,12 +111,12 @@ void InitializePuzzles()
     // - Use \n to split lines
     // - Start text with "<" to denote the line is for the left speaker.
     // - Start text with ">" to denote the line is for the right speaker.
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<Gimme a kiss!");
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart(">Can I use your\nmouth?");
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<...");
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<OK!");
-    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(">Muuuahhh!");
-    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<Hot n' heavy!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "Gimme a kiss!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(1, "Can I use your\nmouth?");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "...");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "OK!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(1, "Muuuahhh!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(0, "Hot n' heavy!");
     
     // Currently you can do up to 256 shuffles.
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
@@ -159,8 +159,8 @@ void InitializePuzzles()
     sPuzzles[sNumPuzzles].SetTitle("All Mixed Up");
     sPuzzles[sNumPuzzles].SetClue("Unscramble");
     
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<Let's get\nCRAZY!");
-    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(">My head hurts.");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "Let's get\nCRAZY!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(1, "My head hurts.");
     
     sPuzzles[sNumPuzzles].SetNumShuffles(3);
     
@@ -202,8 +202,8 @@ void InitializePuzzles()
     sPuzzles[sNumPuzzles].SetTitle("Bad Hair Day");
     sPuzzles[sNumPuzzles].SetClue("Swap Hair");
     
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<How do I get\ncool hair\nlike you?");
-    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<Now I look\nlike Kelly!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "How do I get\ncool hair\nlike you?");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(0, "Now I look\nlike Kelly!");
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
@@ -245,8 +245,8 @@ void InitializePuzzles()
     sPuzzles[sNumPuzzles].SetTitle("Private Eyes");
     sPuzzles[sNumPuzzles].SetClue("Swap Eyes");
     
-    sPuzzles[sNumPuzzles].AddCutsceneTextStart("<See the world\nfrom my eyes!");
-    sPuzzles[sNumPuzzles].AddCutsceneTextEnd("<That's much\nbetter.");
+    sPuzzles[sNumPuzzles].AddCutsceneTextStart(0, "See the world\nfrom my eyes!");
+    sPuzzles[sNumPuzzles].AddCutsceneTextEnd(0, "That's much\nbetter.");
     
     sPuzzles[sNumPuzzles].SetNumShuffles(0);
     
