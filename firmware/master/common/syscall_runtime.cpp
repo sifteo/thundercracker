@@ -132,6 +132,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 SvmDebugPipe::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
                 if (bytes < chunkSize)
                     return;
+                v1 += bytes;
             }
         }
 
@@ -152,6 +153,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 }
                 SvmDebugPipe::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
                 remaining -= chunkSize;
+                v1 += chunkSize;
             }
             return;
         }
