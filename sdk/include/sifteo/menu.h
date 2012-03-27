@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <sifteo.h>
 
+// C++ does not allow flexible array members in structs like C. 8 should be enough.
 #define MENU_MAX_TIPS 8
 
 namespace Sifteo {
@@ -109,12 +110,11 @@ class Menu {
 	static const float kAccelThresholdOff = 0.85f;
 
 	// external parameters and metadata
-	Cube *pCube;
-	struct MenuAssets *assets;
-	uint8_t numTips;
-	struct MenuItem *items;
-	uint8_t numItems;
-	struct MenuNeighbor neighbors[NUM_SIDES];
+	Cube *pCube;				// cube on which the menu is being drawn
+	struct MenuAssets *assets;	// theme assets of the menu
+	uint8_t numTips;			// number of tips in the theme
+	struct MenuItem *items;		// items in the strip
+	uint8_t numItems;			// number of items in the strip
 	// event breadcrumb
 	struct MenuEvent currentEvent;
 	// state tracking
@@ -133,15 +133,16 @@ class Menu {
 	// inertial state: where to stop
 	float stopping_position;
 	int tiltDirection;
-	// scrolling states (Inertia and Tilt)
-	float position;
-	int prev_ut;
-	float velocity;
-	TimeStep frameclock;
-	// finish state
+	// scrolling states (Inertia and Tilt): physics
+	float position;			// current x position
+	int prev_ut;			// tile validity tracker
+	float velocity;			// current velocity
+	TimeStep frameclock;	// framerate timer
+	// finish state: animation iterations
 	int finishIteration;
 	// internal
 	VidMode_BG0_SPR_BG1 canvas;
+	struct MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
 	
 	// state handling
 	void changeState(MenuState);
@@ -326,12 +327,12 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 }
 
 void Menu::preventDefault() {
-	/* paint shouldn't be prevented
+	/* paints shouldn't be prevented because:
 	 * the caller doesn't know whether to paintSync or paint and shouldn't be
 	 * painting while the menu owns the context.
 	 */
 	ASSERT(currentEvent.type != MENU_PREPAINT);
-	/* exit shouldn't be prevented
+	/* exit shouldn't be prevented because:
 	 * the default handler is responsible for resetting the menu if the event
 	 * pump is restarted.
 	 */
