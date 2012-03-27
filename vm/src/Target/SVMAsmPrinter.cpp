@@ -92,7 +92,6 @@ void SVMAsmPrinter::EmitFunctionEntryLabel()
     // XXX: For now, all functions start in new blocks
     emitBlockBegin();
 
-    CurrentFnSplitOrdinal = 0;
     emitFunctionLabelImpl(CurrentFnSym);
 }
 
@@ -144,13 +143,6 @@ void SVMAsmPrinter::emitBlockSplit(const MachineInstr *MI)
 {
     emitBlockEnd();
     emitBlockBegin();
-
-    // Create a global label for the split-off portion of this function.
-    // These labels are never used by us, they're just for debugging.
-    assert(CurrentFnSym);
-    Twine Name(CurrentFnSym->getName() + Twine(".")
-        + Twine(++CurrentFnSplitOrdinal));
-    emitFunctionLabelImpl(OutContext.GetOrCreateSymbol(Name));
 }
 
 void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
@@ -219,8 +211,7 @@ void SVMAsmPrinter::emitBlockOffsetComment()
     unsigned byteCount = BSA.getByteCount();
     if (byteCount > SVMTargetMachine::getBlockSize())
         report_fatal_error("Block overflow (" + Twine(byteCount) + " bytes) "
-            "in function " + Twine(CurrentFnSym->getName()) + "." +
-            Twine(CurrentFnSplitOrdinal));
+            "in function " + Twine(CurrentFnSym->getName()));
 
     OS << "BSA: ";
     BSA.describe(OS);

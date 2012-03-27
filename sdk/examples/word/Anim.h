@@ -5,6 +5,8 @@
 #include "LevelProgressData.h"
 #include "Constants.h"
 
+using namespace Sifteo;
+
 enum AnimType
 {
     AnimType_None = -1,

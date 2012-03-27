@@ -52,7 +52,7 @@ void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count)
         SvmMemory::arraySize(sizeof *dest, count));
 }
 
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
+int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
 {
     FlashBlockRef refA, refB;
     SvmMemory::VirtAddr vaA = reinterpret_cast<SvmMemory::VirtAddr>(a);
@@ -225,7 +225,7 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
     *last = '\0';
 }
 
-int _SYS_strncmp(const char *a, const char *b, uint32_t count)
+int32_t _SYS_strncmp(const char *a, const char *b, uint32_t count)
 {
     FlashBlockRef refA, refB;
     SvmMemory::VirtAddr vaA = reinterpret_cast<SvmMemory::VirtAddr>(a);

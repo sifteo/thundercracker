@@ -1,6 +1,10 @@
 #include "Map.h"
 #include "Game.h"
 
+static int x= 8;
+
+uint8_t buf[1024];
+
 struct ARecord {
   uint8_t tileID; // most significant bit identifies if this is open "0" or closed "1"
   uint8_t parentDirection; 
@@ -18,8 +22,6 @@ struct ACell {
 };
 
 #define A_STAR_CAP (5*13)
-
-inline int abs(int x) { return x < 0 ? -x : x; }
 
 struct AStar {
   Int2 offset;
@@ -75,7 +77,6 @@ void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
 bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath) {
   BroadLocation dbloc;
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
-
   Int2 loc = bloc.view->Location();
   Int2 dloc = loc + kSideToUnit[dir].toInt();
   Room* src = GetRoom(loc);
@@ -84,8 +85,17 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   AStar as;
   _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
+  //
+  //  <WHAT>
+  //
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
-  as.offset = dir == SIDE_TOP || dir == SIDE_LEFT ? dloc : loc;
+  //as.offset = dir<2 ? dloc : loc;
+  as.offset.x = dir<2 ? dloc.x : loc.x;
+  as.offset.y = dir<2 ? dloc.y : loc.y;
+  //
+  // </WHAT>
+  //
+
   as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - Vec2(2,2);
   as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - Vec2(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
@@ -120,9 +130,9 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   as.cells[as.records->tileID].record = 0;
 
   ARecord* pSelected;
-  //int iters = 0;
+  int iters = 0;
   do {
-    //iters++;
+    iters++;
     // select the cheapest open node
     pSelected = 0;
     for(ARecord* p=as.records; p!=as.records+as.recordCount; ++p) {
@@ -155,6 +165,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
     }
   } while(pSelected);
   // WHAT IS THIS MADNESS?  Some bad data was exported
+  ASSERT(false);
   return false;
 }
 

@@ -1,3 +1,0 @@
-deallocate tokens and tokengroups, anything new'd
-no more onPause, onUnpause, onStop ?
-no more IsIdle? used in Game::Tick

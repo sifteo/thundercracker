@@ -6,6 +6,8 @@
 #include "assets.gen.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 /*
  * XXX: Only used for qsort() currently. We should think about what kind of low-level VM
  *      primitives the sort should be based on (with regard to ABI, as well as cache

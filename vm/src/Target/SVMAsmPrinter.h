@@ -43,7 +43,6 @@ namespace llvm {
         typedef DenseMap<const MCSymbol*, CPEInfo> BlockConstPoolTy;
         BlockConstPoolTy BlockConstPool;
 
-        unsigned CurrentFnSplitOrdinal;
         SVMBlockSizeAccumulator BSA;
         const MachineBasicBlock *CurrentMBB;
 

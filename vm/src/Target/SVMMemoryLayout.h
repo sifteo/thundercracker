@@ -91,7 +91,8 @@ namespace llvm {
         uint32_t getEntryAddress(const MCAssembler &Asm,
             const MCAsmLayout &Layout) const;
         SVMSymbolInfo getSymbol(const MCAssembler &Asm,
-            const MCAsmLayout &Layout, MCValue Value) const;
+            const MCAsmLayout &Layout, MCValue Value,
+            bool useCodeAddresses = true) const;
 
         uint32_t getSectionDiskSize(enum SVMProgramSection s) const;
         uint32_t getSectionDiskOffset(enum SVMProgramSection s) const;

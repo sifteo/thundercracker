@@ -150,6 +150,10 @@ struct CubeID {
         return _SYS_SHAKING == _SYS_getShake(sys);
     }
 
+    bool isShaking() const {
+      return _SYS_getShake(id()) == SHAKING;
+    }
+
     /**
      * Return the cube's unique 64-bit hardware ID. This ID uniquely
      * identifies the cube that this slot is paired with.

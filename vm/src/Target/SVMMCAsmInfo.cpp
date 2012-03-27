@@ -18,4 +18,5 @@ SVMMCAsmInfo::SVMMCAsmInfo(const Target &T, StringRef TT) {
     CommentString = "#";
     UsesELFSectionDirectiveForBSS = true;
     PrivateGlobalPrefix = ".L";
+    SupportsDebugInformation = true;
 }

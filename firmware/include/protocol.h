@@ -221,25 +221,25 @@
  *
  * The full ACK packet may be requested at any time by sending a flash
  * decoder state machine reset code. (See above).
- *
- * Right now it's helpful for our specific packet lengths to be
- * strings of all '1' bits, since we cna more efficiently track the
- * ACK length in the cube firmware. Right now, we can send packets of
- * length 0, 1, 3, 7, and 8.
  */
 
+// Lengths of each type of ACK packet, in bytes
 #define RF_ACK_LEN_EMPTY        0
 #define RF_ACK_LEN_FRAME        1
-#define RF_ACK_LEN_ACCEL        3
-#define RF_ACK_LEN_NEIGHBOR     7
-#define RF_ACK_LEN_MAX          16
+#define RF_ACK_LEN_ACCEL        4
+#define RF_ACK_LEN_NEIGHBOR     8
+#define RF_ACK_LEN_FLASH_FIFO   9
+#define RF_ACK_LEN_BATTERY_V    11
+#define RF_ACK_LEN_HWID         19
+#define RF_ACK_LEN_MAX          RF_ACK_LEN_HWID
 
+// Struct offsets. Matches the C code before, but intended for inline assembly use
 #define RF_ACK_FRAME            0
 #define RF_ACK_ACCEL            1
-#define RF_ACK_NEIGHBOR         3
-#define RF_ACK_FLASH_FIFO       7
-#define RF_ACK_BATTERY_V        8
-#define RF_ACK_HWID             10
+#define RF_ACK_NEIGHBOR         4
+#define RF_ACK_FLASH_FIFO       8
+#define RF_ACK_BATTERY_V        9
+#define RF_ACK_HWID             11
 
 #define HWID_LEN                8
 
@@ -255,13 +255,13 @@ typedef union {
          * of how many repaints the cube has performed. Ideally these
          * repaints would be in turn sync'ed with the LCDC's hardware
          * refresh timer. If we're tight on space, we don't need a
-         * full byte for this. Even a one-bit toggle woudl work,
+         * full byte for this. Even a one-bit toggle would work,
          * though we might want two bits to allow deeper queues.
          */
         uint8_t frame_count;
 
-        // Signed 8-bit analog accelerometer data
-        int8_t accel[2];
+        // Signed 8-bit analog accelerometer data (x, y, z)
+        int8_t accel[3];
 
         // Neighbor cube IDs in low bits, flags in upper bits
         uint8_t neighbors[4];
@@ -270,15 +270,12 @@ typedef union {
          * Number of bytes processed by the flash decoder so
          * far. Increments and wraps around, never decrements or
          * resets. Also increments once on a flash reset completion.
-         *
-         * We should probably keep this always as the last item in the
-         * ACK packet format.
          */
         uint8_t flash_fifo_bytes;
-        
-        // Current raw battery voltage level
-        uint16_t battery_v;
-        
+
+        // Current raw battery voltage level (16-bit little endian)
+        uint8_t battery_v[2];
+
         // Unique hardware ID
         uint8_t hwid[HWID_LEN];
     };
@@ -288,14 +285,15 @@ typedef union {
  * Subset of the ACK packet that we keep in memory on the cubes
  */
 
-#define RF_MEM_ACK_LEN  10
+#define RF_MEM_ACK_LEN      RF_ACK_LEN_BATTERY_V
 
 typedef struct {
+    // In sync with RF_ACKType
     uint8_t frame_count;
-    int8_t accel[2];
+    int8_t accel[3];
     uint8_t neighbors[4];
     uint8_t flash_fifo_bytes;
-    uint16_t battery_v;
+    uint16_t battery_v[2];
 } RF_MemACKType;
 
 

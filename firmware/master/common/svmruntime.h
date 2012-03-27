@@ -25,6 +25,12 @@ public:
 
     // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);
+    
+    // Fault handler; Forwards the fault to our debug subsystem, then exits.
+    static void fault(FaultCode code);
+
+    // Modify the program counter
+    static void branch(reg_t addr);
 
     /**
      * Call Event::Dispatch() on our way out of the next svc(). Events can't
@@ -103,6 +109,14 @@ public:
     }
 
 private:
+    enum ReturnActions {
+        RET_BRANCH          = 1 << 0,
+        RET_RESTORE_REGS    = 1 << 1,
+        RET_POP_FRAME       = 1 << 2,
+        RET_EXIT            = 1 << 3,
+        RET_ALL             = -1,
+    };
+
     static FlashBlockRef codeBlock;
     static FlashBlockRef dataBlock;
     static SvmMemory::PhysAddr stackLimit;
@@ -111,7 +125,7 @@ private:
 
     static void call(reg_t addr);
     static void tailcall(reg_t addr);    
-    static void ret();
+    static void ret(unsigned actions = RET_ALL);
 
     static void resetSP();
     static void adjustSP(int words);
@@ -122,12 +136,13 @@ private:
     static void longSTRSP(unsigned reg, unsigned offset);
 
     static void enterFunction(reg_t addr);
-    static void branch(reg_t addr);
     static reg_t mapBranchTarget(reg_t addr);
     static void validate(reg_t addr);
     static void syscall(unsigned num);
+    static void tailsyscall(unsigned num);
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
+    static void breakpoint();
 };
 
 #endif // SVM_RUNTIME_H

@@ -11,7 +11,7 @@
 #include "accel.h"
 #include "event.h"
 #include "flashlayer.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
 #include "tasks.h"
 #include "neighbors.h"
 
@@ -71,7 +71,7 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     ac->progress = 0;
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebug::formatAddress(a).c_str(), ac->baseAddr));
+        id(), SvmDebugPipe::formatAddress(a).c_str(), ac->baseAddr));
 
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
@@ -172,7 +172,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                     // In debug builds only, we log the asset download time
                     float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
                     LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                         id(), SvmDebug::formatAddress(group).c_str(), seconds));
+                         id(), SvmDebugPipe::formatAddress(group).c_str(), seconds));
                 });
             }
 
@@ -307,14 +307,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // Translate from radio packet coordinates to SDK coordinates
         int8_t x = -ack->accel[0];
         int8_t y = -ack->accel[1];
+        int8_t z = -ack->accel[2];
 
-        //test for gestures
+        // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
         accel.update(x, y);
 
-        if (x != accelState.x || y != accelState.y) {
+        if (x != accelState.x || y != accelState.y || z != accelState.z) {
             accelState.x = x;
             accelState.y = y;
+            accelState.z = z;
             Event::setPending(_SYS_CUBE_ACCELCHANGE, id());
         }
     }
@@ -346,7 +348,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
         // Has valid battery voltage
         
-        rawBatteryV = ack->battery_v;
+        rawBatteryV = ack->battery_v[0] | (ack->battery_v[1] << 8);
     }
     
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {

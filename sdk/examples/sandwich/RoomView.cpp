@@ -37,7 +37,7 @@ void RoomView::Init(unsigned roomId) {
       mAmbient.bff.Randomize();
       mode.resizeSprite(BFF_SPRITE_ID, 8, 8);
       mode.setSpriteImage(BFF_SPRITE_ID, Butterfly.index + 4 * mAmbient.bff.dir);
-      mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
+      mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
 
@@ -76,7 +76,7 @@ void RoomView::Update(float dt) {
 
   if (gGame.GetMap()->Data()->ambientType && mAmbient.bff.active) {
     mAmbient.bff.Update();
-    mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
+    mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     mode.setSpriteImage(
       BFF_SPRITE_ID, 
       Butterfly.index + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3
@@ -106,7 +106,7 @@ Int2 RoomView::Location() const {
 bool RoomView::GatewayTouched() const {
   const Room* pRoom = GetRoom();
   if (pRoom->HasGateway()) {
-    const Cube::Side side = ComputeGateSide(pRoom->TriggerAsGate());
+    const Cube::Side side = ComputeGateSide(pRoom->Gateway());
     if (side != SIDE_UNDEFINED) {
       const ViewSlot *view = Parent()->VirtualNeighborAt(side);
       return view && view->Touched() && view->IsShowingGatewayEdge();
@@ -141,7 +141,7 @@ void RoomView::ShowItem() {
   Room* pRoom = GetRoom();
   ASSERT(pRoom->HasItem());
   ViewMode mode = Parent()->Graphics();
-  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->TriggerAsItem()->itemId);
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->Item()->itemId);
   Int2 p = 16 * pRoom->LocalCenter(0);
   mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
@@ -251,8 +251,8 @@ void RoomView::DrawBackground() {
   if (!flags.hideOverlay && pRoom->HasOverlay()) {
     DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
   }
-  if (pRoom->TriggerType() == TRIGGER_NPC) {
-      const NpcData* npc = pRoom->TriggerAsNPC();
+  if (pRoom->HasNPC()) {
+      const NpcData* npc = pRoom->NPC();
       const DialogData& dialog = gDialogData[npc->dialog];
       ovrly.DrawAsset(Vec2((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
   }

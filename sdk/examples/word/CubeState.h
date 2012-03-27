@@ -5,6 +5,8 @@
 #include "State.h"
 #include "TileTransparencyLookup.h"
 
+using namespace Sifteo;
+
 enum CubeStateIndex
 {
     CubeStateIndex_Title,

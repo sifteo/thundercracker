@@ -88,6 +88,10 @@ StringRef SVMDecorations::Decode(StringRef Name)
     // Numeric syscalls can be written in any base, using C-style numbers
     isSys = testAndStripPrefix(Name, SYS) && !Name.getAsInteger(0, sysNumber);
 
+    #ifdef DUMP_SYSCALLS
+    if (isSys) printf("SYSCALL %d\n", sysNumber);
+    #endif
+
     // Numeric metadata keys
     isMeta = testAndStripNumberedPrefix(Name, META, metaKey);
 

@@ -14,7 +14,6 @@
 #include <string.h>
 
 #ifdef SIFTEO_SIMULATOR
-#  define FLASHLAYER_STATS
 #  define FLASHLAYER_STATS_ONLY(x)  x
 #else
 #  define FLASHLAYER_STATS_ONLY(x)
@@ -30,6 +29,7 @@ struct FlashStats {
     unsigned streamBytes;
     unsigned globalRefcount;
     SysTime::Ticks timestamp;
+    bool enabled;
 };
 
 extern FlashStats gFlashStats;
@@ -102,10 +102,15 @@ public:
         uintptr_t offset = reinterpret_cast<uint8_t*>(pa) - &mem[0][0];
         return offset < sizeof mem;
     }
+
+    static void enableStats() {
+        gFlashStats.enabled = true;
+    }
 #endif
 
     static void init();
     static void preload(uint32_t blockAddr);
+    static void invalidate();
     static void get(FlashBlockRef &ref, uint32_t blockAddr);
     static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
     static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);
@@ -151,6 +156,7 @@ private:
     
     static FlashBlock *lookupBlock(uint32_t blockAddr);
     static FlashBlock *recycleBlock();
+    void load(uint32_t blockAddr);
 };
 
 
