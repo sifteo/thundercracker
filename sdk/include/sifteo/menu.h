@@ -481,7 +481,7 @@ void Menu::transToStatic() {
 	currentEvent.type = MENU_ITEM_ARRIVE;
 	currentEvent.item = computeSelected();
 	
-	// show the title of the game
+	// show the title of the item
 	const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
     _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 }
