@@ -14,7 +14,7 @@
 static void DoBubbleTransition()
 {
     const unsigned int NUM_BUBBLES = 8;
-    const float ANIM_LENGTH = 1.0f;
+    const float ANIM_LENGTH = 0.7f;
     const float BUBBLE_Y_VEL = 128.0f / ANIM_LENGTH * 2.0f;
     const float VEL_ADJUSTMENT_MIN = 0.8f;
     const float VEL_ADJUSTMENT_MAX = 1.2f;
@@ -39,7 +39,7 @@ static void DoBubbleTransition()
     while( System::clock() - startTime < ANIM_LENGTH )
     {
         float delta = System::clock() - lastTime;
-        unsigned int frame = ( System::clock() - startTime ) * ANIM_LENGTH * bubbles.frames;
+        unsigned int frame = ( System::clock() - startTime ) / ANIM_LENGTH * bubbles.frames;
 
         if( frame >= bubbles.frames )
             frame = bubbles.frames - 1;
@@ -56,6 +56,12 @@ static void DoBubbleTransition()
 
                 BubblePos[i][j].y += Game::random.uniform( -2.5f, 2.5f );
                 BubblePos[i][j].y -= BUBBLE_Y_VEL * delta * Game::random.uniform( VEL_ADJUSTMENT_MIN, VEL_ADJUSTMENT_MAX );
+
+                //fill in universal bg
+                Vec2 offset( j*2, (int)( BubblePos[i][j].y / 8 ) + 1 );
+
+                if( offset.y >= 0 && offset.y < 16 )
+                    vid.BG0_drawPartialAsset( offset, offset, Vec2( 2, 16 - offset.y ), UI_BG );
             }
         }
 
@@ -63,16 +69,19 @@ static void DoBubbleTransition()
         lastTime += delta;
     }
 
-
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         VidMode_BG0_SPR_BG1 &vid = Game::Inst().m_cubes[i].GetVid();
+
+        vid.BG0_drawAsset( Vec2( 0, 0 ), UI_BG );
 
         for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
         {
             vid.resizeSprite(j, 0, 0);
         }
     }
+
+    System::paint();
 }
 
 

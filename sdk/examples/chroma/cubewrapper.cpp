@@ -798,7 +798,7 @@ void CubeWrapper::Touch()
         }
         case Game::STATE_NEXTPUZZLE:
         {
-            Game::Inst().setState( Game::STATE_INTRO );
+            Game::Inst().TransitionToState( Game::STATE_INTRO );
             break;
         }
         case Game::STATE_GAMEMENU:
@@ -813,7 +813,7 @@ void CubeWrapper::Touch()
             else if( Game::Inst().getWrapperIndex( this ) == 1 )
                 Game::Inst().ReturnToMainMenu();
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
-                Game::Inst().setState( Game::STATE_PLAYING );
+                Game::Inst().TransitionToState( Game::STATE_PLAYING );
             break;
         }
         case Game::STATE_FAILPUZZLE:

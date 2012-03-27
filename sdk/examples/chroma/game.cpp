@@ -259,7 +259,7 @@ void Game::Reset(  bool bInGame )
     //m_bHyperDotMatched = false;
 
     if( bInGame )
-        setState( STATE_INTRO );
+        TransitionToState( STATE_INTRO );
     else
         setState( STARTING_STATE );
     m_ShakesRemaining = STARTING_SHAKES;
@@ -1013,14 +1013,14 @@ void Game::check_puzzle()
         {
             //did we lose?
             if( NoMatches() )
-                setState( STATE_FAILPUZZLE );
+                TransitionToState( STATE_FAILPUZZLE );
                 //gotoNextPuzzle( false );
             return;
         }
     }
 
     //win!
-    setState( STATE_GOODJOB );
+    TransitionToState( STATE_GOODJOB );
 }
 
 
@@ -1055,9 +1055,9 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     //intro puzzles (<3 cubes) will jump straight into the next puzzle
     if( pPuzzle->m_numCubes < 3 )
-        setState( STATE_INTRO );
+        TransitionToState( STATE_INTRO );
     else
-        setState( STATE_NEXTPUZZLE );
+        TransitionToState( STATE_NEXTPUZZLE );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Refill();
