@@ -65,6 +65,7 @@ public:
   void ClearTrigger() { 
     ASSERT(mUserdataType == USERDATA_TRIGGER);
     mInnerType = TRIGGER_UNDEFINED; 
+    mUserdata = 0;
   }
   
 
