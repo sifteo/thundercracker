@@ -35,13 +35,13 @@ typedef enum {
 struct MenuAssets {
 	const AssetImage *background; // 1x1tl background image, repeating
 	const AssetImage *footer; // ptr to 16x4tl blank footer
-	const AssetImage *header; // ptr to 16x2tl blank header
+	const AssetImage *header; // ptr to 16x2tl blank header, optional if all items have no labels.
 	const AssetImage *tips[MENU_MAX_TIPS]; // NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
 };
 
 struct MenuItem {
 	const AssetImage *icon; // ptr to 10x10tl icon, must be set to be a valid option.
-	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank header).
+	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank theme header).
 };
 
 struct MenuNeighbor {
@@ -111,9 +111,11 @@ class Menu {
 	static const uint8_t kNumVisibleTilesX = 16;
 	static const uint8_t kNumVisibleTilesY = 16;
 	static const uint8_t kFooterHeight = 4;
-	static const uint8_t kHeaderHeight = 2;
 	static const float kAccelThresholdOn = 1.15f;
 	static const float kAccelThresholdOff = 0.85f;
+	// semi-constants
+	uint8_t kHeaderHeight;
+	uint8_t kFooterBG1Offset;
 
 	// external parameters and metadata
 	Cube *pCube;				// cube on which the menu is being drawn
@@ -221,7 +223,19 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 		i++;
 		if (items[i].label != NULL) {
 			ASSERT(items[i].label->width == kNumVisibleTilesX);
-			ASSERT(items[i].label->height == kHeaderHeight);
+			if (kHeaderHeight == 0) {
+				kHeaderHeight = items[i].label->height;
+			} else {
+				ASSERT(items[i].label->height == kHeaderHeight);
+			}
+			/* XXX: if there are any labels, a header is required for now.
+			 * supporting labels and no header would require toggling bg0
+			 * tiles fairly often and that's state I don't want to deal with
+			 * for the time being.
+			 * workaround: header can be an appropriately-sized, entirely
+			 * transparent PNG.
+			 */
+			ASSERT(assets->header != NULL);
 		}
 	}
 	numItems = i;
@@ -242,9 +256,18 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 		ASSERT(assets->footer->width == kNumVisibleTilesX);
 		ASSERT(assets->footer->height == kFooterHeight);
 	}
-	ASSERT(assets->header);
-	ASSERT(assets->header->width == kNumVisibleTilesX);
-	ASSERT(assets->header->height == kHeaderHeight);
+
+	if (assets->header) {
+		ASSERT(assets->header->width == kNumVisibleTilesX);
+		if (kHeaderHeight == 0) {
+			kHeaderHeight = assets->header->height;
+		} else {
+			ASSERT(assets->header->height == kHeaderHeight);
+		}
+	}
+	kFooterBG1Offset = assets->header == NULL ? 0 : assets->header->width * assets->header->height;
+	// XXX: pending fix to #8:
+	ASSERT(kHeaderHeight == 2);
 }
 
 /*
@@ -449,9 +472,11 @@ void Menu::stateStart() {
 	BG1Helper(*pCube).Flush();
     {
     	// Allocate tiles for the static upper label, and draw it.
-    	const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
-    	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
-    	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+    	if (kHeaderHeight) {
+    		const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
+    		_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
+    		_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+    	}
 
 		// Allocate tiles for the footer, and draw it.
 		if (assets->footer) {
@@ -459,7 +484,7 @@ void Menu::stateStart() {
     		_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
     		_SYS_vbuf_writei(
     			&pCube->vbuf.sys, 
-    			offsetof(_SYSVideoRAM, bg1_tiles) / 2 + label.width * label.height,
+    			offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
     		    footer.tiles, 
     		    0, 
     		    footer.width * footer.height
@@ -514,8 +539,10 @@ void Menu::transToStatic() {
 	currentEvent.item = computeSelected();
 
 	// show the title of the item
-	const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
-    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+	if (kHeaderHeight) {
+		const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
+		_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+	}
 }
 
 void Menu::stateStatic() {
@@ -536,8 +563,10 @@ void Menu::transFromStatic() {
 		currentEvent.item = computeSelected();
 		
 		// hide header
-		const AssetImage& label = *assets->header;
-	    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+		if (kHeaderHeight) {
+			const AssetImage& label = *assets->header;
+	    	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+		}
 	}
 }
 
@@ -928,7 +957,7 @@ void Menu::drawFooter(bool force) {
 		
         _SYS_vbuf_writei(
         	&pCube->vbuf.sys, 
-        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + assets->header->width * assets->header->height,
+        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
             footer.tiles, 
             0, 
             footer.width * footer.height
