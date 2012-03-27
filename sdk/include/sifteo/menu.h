@@ -185,7 +185,7 @@ class Menu {
 	uint8_t computeSelected();
 	static unsigned unsignedMod(int, unsigned);
 	void drawColumn(int);
-	void drawFooter();
+	void drawFooter(bool force = false);
 	static float stoppingPositionFor(int);
 	float velocityMultiplier();
 	float maxVelocity();
@@ -440,14 +440,12 @@ void Menu::changeState(MenuState newstate) {
  * none.
  */
 void Menu::transToStart() {
-	currentTip = 0;
-	prevTipTime = SystemTime::now();
 }
 
 void Menu::stateStart() {
 	// initialize video state
 	canvas.clear();
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+	canvas.BG1_setPanning(Vec2(0, 0));
 	BG1Helper(*pCube).Flush();
     {
     	// Allocate tiles for the static upper label, and draw it.
@@ -469,9 +467,14 @@ void Menu::stateStart() {
     	}
 	}
     for (int x = -1; x < kNumTilesX - 1; x++) { drawColumn(x); }
-    drawFooter();
+
+	currentTip = 0;
+	prevTipTime = SystemTime::now();
+	drawFooter(true);
 
 	canvas.set();
+
+	shouldPaintSync = true;
 
 	// if/when we start animating the menu into existence, set this once the work is complete
 	stateFinished = true;
@@ -910,11 +913,13 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 	return z < 0 ? z+y : z;
 }
 
-void Menu::drawFooter() {
+void Menu::drawFooter(bool force) {
 	const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
 	const float kSecondsPerTip = 4.f;
 
-	if (SystemTime::now() - prevTipTime > kSecondsPerTip) {
+	if (numTips == 0) return;
+
+	if (SystemTime::now() - prevTipTime > kSecondsPerTip || force) {
 		prevTipTime = SystemTime::now();
 
 		if (numTips > 0) {
