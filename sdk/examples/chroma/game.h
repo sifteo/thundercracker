@@ -34,7 +34,6 @@ public:
 #endif
         STATE_INTRO,
 		STATE_PLAYING,		
-        STATE_DYING,
 		STATE_POSTGAME,
         STATE_GOODJOB,
         STATE_FAILPUZZLE,

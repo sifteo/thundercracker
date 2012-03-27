@@ -68,11 +68,6 @@ ExplodeGem4 = image{"GemExplode4.png", height=32}
 ExplodeGem5 = image{"GemExplode5.png", height=32}
 ExplodeGem6 = image{"GemExplode6.png", height=32}
 ExplodeGem7 = image{"GemExplode7.png", height=32}
---death animations
-DieUp = image{"DieUp.png", height=64, pinned=true}
-DieLeft = image{"DieLeft.png", height=16, pinned=true}
-DieDown = image{"DieDown.png", height=64, pinned=true}
-DieRight = image{"DieRight.png", height=16, pinned=true}
 --idle glimmer
 GlimmerImg = image{"Glimmer.png", height=32}
 

@@ -11,7 +11,6 @@
 #include "banner.h"
 #include "Bubbles.h"
 #include "FloatingScore.h"
-#include "GameOver.h"
 #include "Glimmer.h"
 #include "GridSlot.h"
 #include "Intro.h"
@@ -180,7 +179,6 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
-    GameOver m_gameover;
     Glimmer m_glimmer;
 
     float m_timeTillGlimmer;

@@ -83,7 +83,6 @@ void CubeWrapper::Reset()
     m_bg1helper.Clear();
     m_queuedFlush = true;
     m_intro.Reset();
-    m_gameover.Reset();
     m_glimmer.Reset();
     m_bubbles.Reset( m_vid );
     m_numQueuedClears = 0;
@@ -198,15 +197,6 @@ void CubeWrapper::Draw()
 			}			
 			break;
 		}
-        case Game::STATE_DYING:
-        {
-            if( m_banner.IsActive() )
-                m_banner.Draw( m_bg1helper );
-            else
-                m_gameover.Draw( m_vid );
-            m_queuedFlush = true;
-            break;
-        }
 		case Game::STATE_POSTGAME:
 		{
             if( !m_dirty )
@@ -264,9 +254,6 @@ void CubeWrapper::Draw()
                 m_vid.BG0_drawAsset(Vec2(0,0), UI_Touch_Replay, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
-
-            for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
-                m_vid.resizeSprite(i, 0, 0);
 
             m_queuedFlush = true;
             m_dirty = false;
@@ -434,15 +421,6 @@ void CubeWrapper::Update(float t, float dt)
         }
         return;
     }
-    else if( Game::Inst().getState() == Game::STATE_DYING )
-    {
-        if( m_banner.IsActive() )
-            m_banner.Update(t);
-        else
-            m_gameover.Update( dt );
-        return;
-    }
-
     /*else if( m_state == STATE_CUBEBONUS )
     {
         if( m_stateTime > SHOW_BONUS_TIME )

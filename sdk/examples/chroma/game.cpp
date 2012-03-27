@@ -910,7 +910,7 @@ void Game::EndGame()
     }
 
     enterScore();
-    setState( STATE_DYING );
+    TransitionToState( STATE_POSTGAME );
 
     if( m_mode == MODE_SURVIVAL )
     {
