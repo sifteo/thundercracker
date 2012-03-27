@@ -93,7 +93,7 @@ class Menu {
 	void replaceIcon(uint8_t item, const AssetImage *);
 	void paintSync();
 	bool itemVisible(uint8_t item);
-	
+
  private:
 	static const float kIconWidth = 80.f;
 	static const int kIconTiles;
@@ -147,7 +147,7 @@ class Menu {
 	// internal
 	VidMode_BG0_SPR_BG1 canvas;
 	struct MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
-	
+
 	// state handling
 	void changeState(MenuState);
 	void transToStart();
@@ -165,7 +165,7 @@ class Menu {
 	void transToFinish();
 	void stateFinish();
 	void transFromFinish();
-	
+
 	// event handling
 	bool dispatchEvent(struct MenuEvent *ev);
 	void clearEvent();
@@ -177,7 +177,7 @@ class Menu {
 	void handleItemPress();
 	void handleExit();
 	void handlePrepaint();
-	
+
 	// library
 	void detectNeighbors();
 	uint8_t computeSelected();
@@ -203,14 +203,14 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
  	: canvas(mainCube->vbuf) {
 	ASSERT((int)kIconWidth % 8 == 0);
 	ASSERT((int)kIconPadding % 8 == 0);
-	
+
 	currentEvent.type = MENU_UNEVENTFUL;
 	pCube = mainCube;
 	changeState(MENU_STATE_START);
 	currentEvent.type = MENU_UNEVENTFUL;
 	items = aItems;
 	assets = aAssets;
-	
+
 	// calculate the number of items
 	uint8_t i = 0;
 	while(items[i].icon != NULL) {
@@ -222,7 +222,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 		}
 	}
 	numItems = i;
-	
+
 	// calculate the number of tips
 	i = 0;
 	while(assets->tips[i] != NULL) {
@@ -231,7 +231,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 		i++;
 	}
 	numTips = i;
-	
+
 	// sanity check the rest of the assets
 	ASSERT(assets->bg);
 	ASSERT(assets->bg->width == 1 && assets->bg->height == 1);
@@ -265,10 +265,10 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
+
 	// keep track of time so if our framerate changes, apparent speed persists
 	frameclock.next();
-	
+
 	// neighbor changes?
 	if (currentState != MENU_STATE_START) {
 		detectNeighbors();
@@ -276,13 +276,13 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
+
 	// update commonly-used data
 	shouldPaintSync = false;
 	const float kAccelScalingFactor = -0.25f;
 	xaccel = kAccelScalingFactor * pCube->virtualAccel().x;
 	yaccel = kAccelScalingFactor * pCube->virtualAccel().y;
-	
+
 	// state changes
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -304,7 +304,7 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
+
 	// run loop
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -356,7 +356,7 @@ void Menu::reset() {
 void Menu::replaceIcon(uint8_t item, const AssetImage *icon) {
 	ASSERT(item < numItems);
 	items[item].icon = icon;
-	
+
 	if (itemVisible(item)) {
 		for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
 			if (itemVisibleAtCol(item, i))
@@ -401,7 +401,7 @@ bool Menu::itemVisible(uint8_t item) {
 void Menu::changeState(MenuState newstate) {
 	stateFinished = false;
 	currentState = newstate;
-	
+
 	LOG(("STATE: -> "));
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -487,7 +487,6 @@ void Menu::transFromStart() {
 	}
 }
 
-
 /* Static state: MENU_STATE_STATIC
  * The resting state of the menu, the MENU_ITEM_PRESS event is fired from this
  * state on a new touch event.
@@ -504,7 +503,7 @@ void Menu::transToStatic() {
 
 	currentEvent.type = MENU_ITEM_ARRIVE;
 	currentEvent.item = computeSelected();
-	
+
 	// show the title of the item
 	const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
     _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
@@ -533,7 +532,6 @@ void Menu::transFromStatic() {
 	}
 }
 
-
 /* Tilting state: MENU_STATE_TILTING
  * This state is active when the menu is being scrolled due to tilt and has not
  * yet hit a backstop.
@@ -550,14 +548,14 @@ void Menu::stateTilting() {
 	// normal scrolling
 	const float max_x = stoppingPositionFor(numItems - 1);
 	const float kInertiaThreshold = 10.f;
-	
+
 	velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
-	
+
 	// clamp maximum velocity based on cube angle
 	if (abs(velocity) > maxVelocity()) {
 		velocity = (velocity < 0 ? 0 - maxVelocity() : maxVelocity());
 	}
-	
+
 	// don't go past the backstop unless we have inertia
 	if ((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > kInertiaThreshold) {
 	    position += velocity * frameclock.delta() * kTimeDilator;
@@ -573,7 +571,6 @@ void Menu::transFromTilting() {
 		changeState(MENU_STATE_INERTIA);
 	}
 }
-
 
 /* Inertia state: MENU_STATE_INERTIA
  * This state is active when the menu is scrolling but either by inertia or by
@@ -595,7 +592,7 @@ void Menu::transToInertia() {
 
 void Menu::stateInertia() {
 	const float stiffness = 0.333f;
-	
+
 	// do not pull to item unless tilting has stopped.
 	if (abs(xaccel) < kAccelThresholdOff) {
 		tiltDirection = 0;
@@ -628,7 +625,6 @@ void Menu::transFromInertia() {
 		changeState(MENU_STATE_STATIC);
 	}
 }
-
 
 /* Finish state: MENU_STATE_FINISH
  * This state is responsible for animating the menu out.
@@ -675,7 +671,7 @@ void Menu::stateFinish() {
 	offset = int(12*(1.f-u*u));
 	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
 	currentEvent.type = MENU_PREPAINT;
-	
+
 	if (offset <= -128) {
 		currentEvent.type = MENU_EXIT;
 		currentEvent.item = computeSelected();
@@ -908,7 +904,7 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 void Menu::drawFooter() {
 	const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
 	const float kSecondsPerTip = 4.f;
-	
+
 	if (SystemTime::now() - prevTipTime > kSecondsPerTip) {
 		prevTipTime = SystemTime::now();
 
