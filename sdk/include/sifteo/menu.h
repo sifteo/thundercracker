@@ -33,7 +33,7 @@ typedef enum {
 } MenuEventType;
 
 struct MenuAssets {
-	const AssetImage *bg; // 1x1tl background image, repeating
+	const AssetImage *background; // 1x1tl background image, repeating
 	const AssetImage *footer; // ptr to 16x4tl blank footer
 	const AssetImage *header; // ptr to 16x2tl blank header
 	const AssetImage *tips[MENU_MAX_TIPS]; // NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
@@ -95,8 +95,10 @@ class Menu {
 	bool itemVisible(uint8_t item);
 
  private:
-	static const float kIconWidth = 80.f;
-	static const int kIconTiles;
+	static const float kIconPixelWidth = 80.f;
+	static const float kIconPixelHeight = 80.f;
+	static const int kIconTileWidth;
+	static const int kIconTileHeight;
 	static const int kColumnsPerIcon;
 	static const float kIconPadding = 16.f;
 	static const float kPixelsPerIcon;
@@ -193,15 +195,16 @@ class Menu {
 };
 
 // constant folding
-const float Menu::kPixelsPerIcon = kIconWidth + kIconPadding;
+const float Menu::kPixelsPerIcon = kIconPixelWidth + kIconPadding;
 const float Menu::kOneG = abs(64 * kAccelScalingFactor);
-const int Menu::kIconTiles = (int)(kIconWidth / 8);
+const int Menu::kIconTileWidth = (int)(kIconPixelWidth / 8);
+const int Menu::kIconTileHeight = (int)(kIconPixelHeight / 8);
 const int Menu::kColumnsPerIcon = (int)(kPixelsPerIcon / 8);
-const int Menu::kEndCapPadding = (kNumVisibleTilesX / 2) - (kIconTiles / 2);
+const int Menu::kEndCapPadding = (kNumVisibleTilesX / 2) - (kIconTileWidth / 2);
 
 Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
  	: canvas(mainCube->vbuf) {
-	ASSERT((int)kIconWidth % 8 == 0);
+	ASSERT((int)kIconPixelWidth % 8 == 0);
 	ASSERT((int)kIconPadding % 8 == 0);
 
 	currentEvent.type = MENU_UNEVENTFUL;
@@ -214,7 +217,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	// calculate the number of items
 	uint8_t i = 0;
 	while(items[i].icon != NULL) {
-		ASSERT(items[i].icon->width == (int)kIconWidth / 8);
+		ASSERT(items[i].icon->width == (int)kIconPixelWidth / 8);
 		i++;
 		if (items[i].label != NULL) {
 			ASSERT(items[i].label->width == kNumVisibleTilesX);
@@ -233,11 +236,12 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	numTips = i;
 
 	// sanity check the rest of the assets
-	ASSERT(assets->bg);
-	ASSERT(assets->bg->width == 1 && assets->bg->height == 1);
-	ASSERT(assets->footer);
-	ASSERT(assets->footer->width == kNumVisibleTilesX);
-	ASSERT(assets->footer->height == kFooterHeight);
+	ASSERT(assets->background);
+	ASSERT(assets->background->width == 1 && assets->background->height == 1);
+	if (assets->footer) {
+		ASSERT(assets->footer->width == kNumVisibleTilesX);
+		ASSERT(assets->footer->height == kFooterHeight);
+	}
 	ASSERT(assets->header);
 	ASSERT(assets->header->width == kNumVisibleTilesX);
 	ASSERT(assets->header->height == kHeaderHeight);
@@ -452,15 +456,17 @@ void Menu::stateStart() {
     	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
 
 		// Allocate tiles for the footer, and draw it.
-		const AssetImage& footer = *assets->footer;
-    	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
-    	_SYS_vbuf_writei(
-    		&pCube->vbuf.sys, 
-    		offsetof(_SYSVideoRAM, bg1_tiles) / 2 + label.width * label.height,
-    	    footer.tiles, 
-    	    0, 
-    	    footer.width * footer.height
-    	);
+		if (assets->footer) {
+			const AssetImage& footer = *assets->footer;
+    		_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
+    		_SYS_vbuf_writei(
+    			&pCube->vbuf.sys, 
+    			offsetof(_SYSVideoRAM, bg1_tiles) / 2 + label.width * label.height,
+    		    footer.tiles, 
+    		    0, 
+    		    footer.width * footer.height
+    		);
+    	}
 	}
     for (int x = -1; x < kNumTilesX - 1; x++) { drawColumn(x); }
     drawFooter();
@@ -641,11 +647,11 @@ void Menu::transToFinish() {
 	canvas.BG0_setPanning(Vec2(0,0));
 
 	// blank out the background layer
-	for(int row=0; row<12; ++row)
-	for(int col=0; col<16; ++col) {
-		canvas.BG0_drawAsset(Vec2(col, row), *assets->bg);
+	for(int row=2; row<kIconTileHeight + 2; ++row)
+	for(int col=0; col<kNumVisibleTilesX; ++col) {
+		canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
 	}
-	{
+	if (assets->footer) {
 		Int2 vec = { 0, kNumVisibleTilesY - assets->footer->height };
 		canvas.BG0_drawAsset(vec, *assets->footer);
 	}
@@ -875,12 +881,12 @@ void Menu::drawColumn(int x) {
 	const int iconId = x < 0 ? -1 : x / kColumnsPerIcon;
 
 	// icon or blank column?
-	if (local_x < kIconTiles && iconId >= 0 && iconId < numItems) {
+	if (local_x < kIconTileWidth && iconId >= 0 && iconId < numItems) {
 		// drawing an icon column
 		const AssetImage* pImg = items[x / kColumnsPerIcon].icon;
 		const uint16_t *src = pImg->tiles + unsignedMod(local_x, pImg->width);
 		addr += 2*kNumTilesX;
-		for(int row=0; row<kIconTiles; ++row) {
+		for(int row=0; row<kIconTileHeight; ++row) {
 	        _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
     	    addr += kNumTilesX;
         	src += pImg->width;
@@ -889,9 +895,9 @@ void Menu::drawColumn(int x) {
 	} else {
 		// drawing a blank column
 		VidMode_BG0 g(pCube->vbuf);
-		for(int row=0; row<kIconTiles; ++row) {
+		for(int row=0; row<kIconTileHeight; ++row) {
 			Int2 vec = { addr, row+2 };
-			g.BG0_drawAsset(vec, *assets->bg);
+			g.BG0_drawAsset(vec, *assets->background);
 		}
 	}
 }
@@ -962,7 +968,7 @@ bool Menu::itemVisibleAtCol(uint8_t item, int column) {
 	if (column < 0) return false;
 
 	int offset_column = column - kEndCapPadding;
-	if (Menu::unsignedMod(offset_column, kColumnsPerIcon) < kIconTiles && offset_column / kColumnsPerIcon == item) {
+	if (Menu::unsignedMod(offset_column, kColumnsPerIcon) < kIconTileWidth && offset_column / kColumnsPerIcon == item) {
 		return true;
 	}
 	return false;
