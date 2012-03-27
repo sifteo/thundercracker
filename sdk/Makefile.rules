@@ -5,18 +5,19 @@
 
 all: $(BIN)
 
+# On Win32, it's necessary to munge the paths in our dependency file.
+# This makefile, being unixy in nature, likes forward slashes. But
+# the Win32 build of clang, quite understandably, likes backslashes.
+# We use a quick perl script to normalize the slashes on windows.
+# (We could use sed for this, but perl comes with MSYS too, and its
+# in-place editing is more reliable.)
+#
+# Note that this needs to avoid backslashes that are escaping things
+# like newlines or spaces. The (\w) below tries to do this.
+
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
-	@
-	@# On Win32, it's necessary to munge the paths in our dependency file.
-	@# This makefile, being unixy in nature, likes forward slashes. But
-	@# the Win32 build of clang, quite understandably, likes backslashes.
-	@# We use a quick sed script to normalize the slashes on windows.
-	@# We use tee to edit in-place, since the -i option to sed isn't
-	@# cross-platform and we need this to execute harmlessly on platforms
-	@# that don't need the munging.
-	@
-	@sed 's/\\\(.\)/\/\1/g' $(subst .o,.d,$@) | tee $(subst .o,.d,$@) > /dev/null
+	@perl -pi -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 
 $(BIN): $(OBJS) $(LD)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)

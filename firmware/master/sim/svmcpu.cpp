@@ -35,26 +35,8 @@ static struct  {
  * Flags and Condition Codes
  ***************************************************************************/
 
-enum Conditions {
-    EQ = 0,    // Equal
-    NE = 1,    // Not Equal
-    CS = 2,    // Carry Set
-    CC = 3,    // Carry Clear
-    MI = 4,    // Minus, Negative
-    PL = 5,    // Plus, positive, or zero
-    VS = 6,    // Overflow
-    VC = 7,    // No overflow
-    HI = 8,    // Unsigned higher
-    LS = 9,    // Unsigned lower or same
-    GE = 10,    // Signed greater than or equal
-    LT = 11,    // Signed less than
-    GT = 12,    // Signed greater than
-    LE = 13,    // Signed less than or equal
-    NoneAL = 14 // None, always, unconditional
-};
-
 static inline bool getNeg() {
-    return (regs[REG_CPSR] >> 31) & 1;
+    return Svm::getNeg(regs[REG_CPSR]);
 }
 static inline void setNeg(bool f) {
     if (f)
@@ -64,7 +46,7 @@ static inline void setNeg(bool f) {
 }
 
 static inline bool getZero() {
-    return (regs[REG_CPSR] >> 30) & 1;
+    return Svm::getZero(regs[REG_CPSR]);
 }
 static inline void setZero(bool f) {
     if (f)
@@ -74,7 +56,7 @@ static inline void setZero(bool f) {
 }
 
 static inline bool getCarry() {
-    return (regs[REG_CPSR] >> 29) & 1;
+    return Svm::getCarry(regs[REG_CPSR]);
 }
 static inline void setCarry(bool f) {
     if (f)
@@ -84,7 +66,7 @@ static inline void setCarry(bool f) {
 }
 
 static inline int getOverflow() {
-    return (regs[REG_CPSR] >> 28) & 1;
+    return Svm::getOverflow(regs[REG_CPSR]);
 }
 static inline void setOverflow(bool f) {
     if (f)
@@ -96,10 +78,6 @@ static inline void setOverflow(bool f) {
 static inline void setNZ(int32_t result) {
     setNeg(result < 0);
     setZero(result == 0);
-}
-
-static inline void branchOffsetPC(int offset) {
-    regs[REG_PC] = (regs[REG_PC] + offset + 2) & ~(reg_t)1;
 }
 
 static inline reg_t opLSL(reg_t a, reg_t b) {
@@ -145,30 +123,6 @@ static inline reg_t opEOR(reg_t a, reg_t b) {
     reg_t result = a ^ b;
     setNZ(result);
     return result;
-}
-
-static bool conditionPassed(uint8_t cond)
-{
-    switch (cond) {
-    case EQ: return  getZero();
-    case NE: return !getZero();
-    case CS: return  getCarry();
-    case CC: return !getCarry();
-    case MI: return  getNeg();
-    case PL: return !getNeg();
-    case VS: return  getOverflow();
-    case VC: return !getOverflow();
-    case HI: return  getCarry() && !getZero();
-    case LS: return !getCarry() || getZero();
-    case GE: return  getNeg() == getOverflow();
-    case LT: return  getNeg() != getOverflow();
-    case GT: return (getZero() == 0) && (getNeg() == getOverflow());
-    case LE: return (getZero() == 1) || (getNeg() != getOverflow());
-    case NoneAL: return true;
-    default:
-        ASSERT(0 && "invalid condition code");
-        return false;
-    }
 }
 
 
@@ -580,31 +534,19 @@ static void emulateMOV(uint16_t instr)
 
 static void emulateB(uint16_t instr)
 {
-    // encoding T2 only
-    unsigned imm11 = instr & 0x7FF;
-    branchOffsetPC(signExtend(imm11 << 1, 12));
+    regs[REG_PC] = branchTargetB(instr, regs[REG_PC]);
 }
+
 
 static void emulateCondB(uint16_t instr)
 {
-    unsigned cond = (instr >> 8) & 0xf;
-    unsigned imm8 = instr & 0xff;
-
-    if (conditionPassed(cond))
-        branchOffsetPC(signExtend(imm8 << 1, 9));
+    regs[REG_PC] = branchTargetCondB(instr, regs[REG_PC], regs[REG_CPSR]);
 }
 
 static void emulateCBZ_CBNZ(uint16_t instr)
 {
-    bool nonzero = instr & (1 << 11);
-    unsigned i = instr & (1 << 9);
-    unsigned imm5 = (instr >> 3) & 0x1f;
     unsigned Rn = instr & 0x7;
-
-    if (nonzero ^ (regs[Rn] == 0)) {
-        // ZeroExtend(i:imm5:'0')
-        branchOffsetPC((i << 6) | (imm5 << 1));
-    }
+    regs[REG_PC] = branchTargetCBZ_CBNZ(instr, regs[REG_PC], regs[REG_CPSR], regs[Rn]);
 }
 
 

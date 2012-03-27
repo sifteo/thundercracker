@@ -55,7 +55,7 @@ static const char* faultStr(FaultCode code)
     }
 }
     
-void SvmDebugPipe::fault(FaultCode code)
+bool SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     std::string pcName = formatAddress(pcVA);
@@ -107,6 +107,8 @@ void SvmDebugPipe::fault(FaultCode code)
     }
 
     LOG(("***\n"));
+
+    return false;
 }
 
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
@@ -147,6 +149,8 @@ bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
      * is available, this returns a pointer to the buffer memory
      * for both the message and its reply. The caller retains ownership
      * of this buffer until calling debuggerMsgFinish().
+     *
+     * This call must be non-blocking.
      */
 
     DebuggerMailbox &mbox = gDebuggerMailbox;
@@ -160,6 +164,9 @@ bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
     msg.reply = mbox.reply;
     msg.cmdWords = mbox.cmdWords;
     msg.replyWords = 0;
+
+    // Remove the message from our mbox
+    mbox.cmdWords = 0;
 
     // Leave mbox.m locked.
     return true;
@@ -201,8 +208,8 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     mbox.cmdWords = cmdWords;
     memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
 
-    // If the target isn't already stopped, raise an async breakpoint.
-    Tasks::setPending(Tasks::DebuggerBreakpoint);
+    // Wake up the debugger's event loop
+    Tasks::setPending(Tasks::Debugger);
 
     // Wait for a reply
     do {

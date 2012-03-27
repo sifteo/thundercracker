@@ -22,7 +22,7 @@ Tasks::Task Tasks::TaskList[] = {
     { Usb::handleOUTData, 0 },
     #endif
     { AudioMixer::handleAudioOutEmpty, 0 },
-    { SvmDebugger::handleBreakpoint, 0 },
+    { SvmDebugger::messageLoop, 0 },
 };
 
 void Tasks::init()
@@ -53,10 +53,12 @@ void Tasks::work()
     
     while (pendingMask) {
         unsigned idx = Intrinsic::CLZ(pendingMask);
+        Task &task = TaskList[idx];
+
         // clear before calling back since callback might take a while and
         // the flag might get set again in the meantime
         Atomic::ClearLZ(pendingMask, idx);
-        Task &task = TaskList[idx];
+
         task.callback(task.param);
     }
 }
