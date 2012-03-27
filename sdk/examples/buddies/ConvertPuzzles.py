@@ -77,20 +77,18 @@ def main():
                 for line in puzzle['cutscene_end']:
                     fout.write('\tsPuzzles[%d].AddCutsceneTextEnd("%s");\n' % (i, line.replace('\n', '\\n')))
                 fout.write('\tsPuzzles[%d].SetNumShuffles(%d);\n' % (i, puzzle['shuffles']))
-                for buddy in puzzle['buddies']:
+                for j, buddy in enumerate(puzzle['buddies']):
                     fout.write('\tsPuzzles[%d].AddBuddy(%s);\n' % (i, BuddyNameToId(buddy)))
-                for j, buddy in enumerate(puzzle['pieces_start']):
-                    for side in buddy:
-                        piece = buddy[side]
-                        if not piece.has_key('must_solve'):
-                            piece['must_solve'] = 0
+                    for side in puzzle['buddies'][buddy]['pieces_start']:
+                        piece = puzzle['buddies'][buddy]['pieces_start'][side]
+                        if not piece.has_key('solve'):
+                            piece['solve'] = 0
                         fout.write('\tsPuzzles[%d].SetPieceStart(%d, %s, Piece(%s, Piece::%s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part'])))
-                for j, buddy in enumerate(puzzle['pieces_end']):
-                    for side in buddy:
-                        piece = buddy[side]
-                        if not piece.has_key('must_solve'):
-                            piece['must_solve'] = False
-                        fout.write('\tsPuzzles[%d].SetPieceEnd(%d, %s, Piece(%s, Piece::%s, %s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part']), BoolToString(piece['must_solve'])))
+                    for side in puzzle['buddies'][buddy]['pieces_end']:
+                        piece = puzzle['buddies'][buddy]['pieces_end'][side]
+                        if not piece.has_key('solve'):
+                            piece['solve'] = False
+                        fout.write('\tsPuzzles[%d].SetPieceEnd(%d, %s, Piece(%s, Piece::%s, %s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part']), BoolToString(piece['solve'])))
                 fout.write('\n')
             
             fout.write('\tsNumPuzzles = %d;\n' % len(data))

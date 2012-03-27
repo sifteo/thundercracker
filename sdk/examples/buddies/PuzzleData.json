@@ -1,42 +1,49 @@
 [
-    {
-        "book"  : 0,
-        "title" : "Big Mouth",
-        "clue"  : "Swap Mouths",
-        "cutscene_environment" : 0,
-        "cutscene_start" : ["<Gimme a kiss!", ">Can I use your\nmouth?", "<...", "<OK!"],
-        "cutscene_end" : [">Muuuahhh!", "<Hot n' heavy!"],
-        "shuffles" : 0,
-        "buddies" : ["gluv", "suli"],
-        "pieces_start" :
-            [
-                {
-                    "top"    : {"buddy" : "gluv", "part" : "hair"},
-                    "left"   : {"buddy" : "gluv", "part" : "eye_left"},
-                    "bottom" : {"buddy" : "gluv", "part" : "mouth"},
-                    "right"  : {"buddy" : "gluv", "part" : "eye_right"}
-                },
-                {
-                    "top"    : {"buddy" : "suli", "part" : "hair"},
-                    "left"   : {"buddy" : "suli", "part" : "eye_left"},
-                    "bottom" : {"buddy" : "suli", "part" : "mouth"},
-                    "right"  : {"buddy" : "suli", "part" : "eye_right"}
-                }
-            ],
-        "pieces_end" :
-            [
-                {
-                    "top"    : {"buddy" : "gluv", "part" : "hair"},
-                    "left"   : {"buddy" : "gluv", "part" : "eye_left"},
-                    "bottom" : {"buddy" : "suli", "part" : "mouth", "must_solve" : true},
-                    "right"  : {"buddy" : "gluv", "part" : "eye_right"}
-                },
-                {
-                    "top"    : {"buddy" : "suli", "part" : "hair"},
-                    "left"   : {"buddy" : "suli", "part" : "eye_left"},
-                    "bottom" : {"buddy" : "gluv", "part" : "mouth", "must_solve" : true},
-                    "right"  : {"buddy" : "suli", "part" : "eye_right"}
-                }
-            ]
+  {
+    "book": 0,
+    "title": "Big Mouth",
+    "clue": "Swap Mouths",
+    "cutscene_environment": 0,
+    "cutscene_start": [
+      "<Gimme a kiss!",
+      ">Can I use your\nmouth?",
+      "<...",
+      "<OK!"
+    ],
+    "cutscene_end": [
+      ">Muuuahhh!",
+      "<Hot n' heavy!"
+    ],
+    "shuffles": 0,
+    "buddies": {
+      "gluv": {
+        "pieces_start": {
+          "top"    : { "buddy": "gluv", "part": "hair" },
+          "left"   : { "buddy": "gluv", "part": "eye_left" },
+          "bottom" : { "buddy": "gluv", "part": "mouth" },
+          "right"  : { "buddy": "gluv", "part": "eye_right" }
+        },
+        "pieces_end": {
+          "top"    : { "buddy": "gluv", "part": "hair" },
+          "left"   : { "buddy": "gluv", "part": "eye_left" },
+          "bottom" : { "buddy": "suli", "part": "mouth", "solve": true },
+          "right"  : { "buddy": "gluv", "part": "eye_right" }
+        }
+      },
+      "suli": {
+        "pieces_start": {
+          "top"    : { "buddy": "suli", "part": "hair" },
+          "left"   : { "buddy": "suli", "part": "eye_left" },
+          "bottom" : { "buddy": "suli", "part": "mouth" },
+          "right"  : { "buddy": "suli", "part": "eye_right" }
+        },
+        "pieces_end": {
+          "top"    : { "buddy": "suli", "part": "hair" },
+          "left"   : { "buddy": "suli", "part": "eye_left" },
+          "bottom" : { "buddy": "gluv", "part": "mouth", "solve": true },
+          "right"  : { "buddy": "suli", "part": "eye_right" }
+        }
+      }
     }
+  }
 ]
