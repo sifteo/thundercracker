@@ -11,7 +11,7 @@ using namespace Usb;
 
 Stm32f10xOtg::Stm32f10xOtg() :
     rxbcnt(0),
-    fifoMemTop(0),
+    fifoMemTop(RX_FIFO_SIZE),
     fifoMemTopEp0(0)
 {}
 
@@ -72,6 +72,7 @@ void Stm32f10xOtg::setAddress(uint8_t addr)
 void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
     // Configure endpoint address and type & allocate FIFO memory for endpoint
+    bool inEp = isInEp(addr);
     addr &= 0x7f;
 
     // handle control endpoint specially
@@ -107,21 +108,20 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         return;
     }
 
-
-    if (isInEp(addr)) {
+    if (inEp) {
 
         OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
         fifoMemTop += maxsize / 4;
 
         volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
         ep.DIEPTSIZ = maxsize & 0x7f;
-        ep.DIEPCTL |=  ((1 << 31) |     // EPENA
-                        (1 << 28) |     // SD0PID
-                        (1 << 27) |     // SNAK
-                        (addr << 22) |
-                        (type << 18) |
-                        (1 << 15) |     // USBEAP
-                        maxsize);
+        ep.DIEPCTL  = ((1 << 31) |     // EPENA
+                       (1 << 28) |     // SD0PID
+                       (1 << 27) |     // SNAK
+                       (addr << 22) |
+                       (type << 18) |
+                       (1 << 15) |     // USBEAP
+                       maxsize);
     }
     else {
 
@@ -199,7 +199,7 @@ void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
     OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
 }
 
-uint16_t epTxWordsAvailable(uint8_t addr)
+uint16_t Stm32f10xOtg::epTxWordsAvailable(uint8_t addr)
 {
     // n/a for OUT endpoints
     if (!isInEp(addr))
@@ -213,14 +213,13 @@ uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len
     addr &= 0x7F;
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
 
-    // endpoint already enabled? no no
+    // endpoint still in progress? no no
     if (ep.DIEPTSIZ & (1 << 19))
         return 0;
 
     // Enable endpoint for transmission
     ep.DIEPTSIZ = (1 << 19) | len;
-    ep.DIEPCTL = (1 << 31) |    // EPENA
-                 (1 << 26);     // CNAK
+    ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
 
     // Copy buffer to endpoint FIFO
     const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
@@ -325,13 +324,11 @@ void Stm32f10xOtg::isr()
         uint16_t inEpInts = OTG.device.DAINT & 0xffff;
         // TODO: could micro optimize here with CLZ and friends
         for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
-            if (inEpInts & 1) {
-                volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
-                // only really interested in XFRC to indicate TX complete
-                if (ep.DIEPINT & 0x1) {
-                    UsbDriver::inEndpointCallback(i);
-                    ep.DIEPINT = 0x1;
-                }
+            volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
+            // only really interested in XFRC to indicate TX complete
+            if (ep.DIEPINT & 0x1) {
+                UsbDriver::inEndpointCallback(i);
+                ep.DIEPINT = 0x1;
             }
         }
     }
