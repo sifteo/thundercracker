@@ -36,9 +36,68 @@ Puzzle::Puzzle()
     , mPiecesStart()
     , mPiecesEnd()
 {
-    for (unsigned int i = 0; i < arraysize(mBuddies); ++i)
+    Reset();
+}   
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Puzzle::Puzzle(
+    unsigned int book,
+    const char *title,
+    const char *clue,
+    const CutsceneLine cutsceneLineStart[], unsigned int numCutsceneLineStart,
+    const CutsceneLine cutsceneLineEnd[], unsigned int numCutsceneLineEnd,
+    unsigned int cutsceneEnvironment,
+    const BuddyId buddies[], unsigned int numBuddies,
+    unsigned int numShuffles,
+    const Piece piecesStart[][NUM_SIDES],
+    const Piece piecesEnd[][NUM_SIDES])
+    : mBook(book)
+    , mTitle(title)
+    , mClue(clue)
+    , mCutsceneLineStart()
+    , mCutsceneLineEnd()
+    , mBuddies()
+    , mNumCutsceneLineStart(numCutsceneLineStart)
+    , mNumCutsceneLineEnd(numCutsceneLineEnd)
+    , mCutsceneEnvironemnt(cutsceneEnvironment)
+    , mNumShuffles(numShuffles)
+    , mNumBuddies(numBuddies)
+    , mPiecesStart()
+    , mPiecesEnd()
+{
+    ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
+    for (unsigned int i = 0; i < mNumCutsceneLineStart; ++i)
     {
-        mBuddies[i] = 0;
+        mCutsceneLineStart[i] = cutsceneLineStart[i];
+    }
+    
+    ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
+    for (unsigned int i = 0; i < mNumCutsceneLineStart; ++i)
+    {
+        mCutsceneLineStart[i] = cutsceneLineStart[i];
+    }
+    
+    ASSERT(mNumCutsceneLineEnd < arraysize(mCutsceneLineEnd));
+    for (unsigned int i = 0; i < mNumCutsceneLineEnd; ++i)
+    {
+        mCutsceneLineEnd[i] = cutsceneLineEnd[i];
+    }
+    
+    ASSERT(mNumBuddies < arraysize(mBuddies));
+    for (unsigned int i = 0; i < mNumBuddies; ++i)
+    {
+        mBuddies[i] = buddies[i];
+    }
+    
+    for (unsigned int i = 0; i < mNumBuddies; ++i)
+    {
+        for (unsigned int j = 0; j < NUM_SIDES; ++j)
+        {
+            mPiecesStart[i][j] = piecesStart[i][j];
+            mPiecesEnd[i][j] = piecesEnd[i][j];
+        }
     }
 }   
 

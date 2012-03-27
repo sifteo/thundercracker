@@ -810,8 +810,6 @@ void App::Init()
         mCubeWrappers[i].Enable(i);
     }
     
-    InitializePuzzles();
-    
     // Check all books are sequential
     if (GetNumPuzzles() > 1)
     {

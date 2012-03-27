@@ -30,17 +30,18 @@ class Puzzle
 {
 public:
     Puzzle();
-
+    
     Puzzle(
         unsigned int book,
         const char *title,
-        const char cutsceneTextStart[][32], unsigned int numCutsceneTextStart,
-        const char cutsceneTextEnd[][32], unsigned int numCutsceneTextEnd,
         const char *clue,
+        const CutsceneLine cutsceneLineStart[], unsigned int numCutsceneLineStart,
+        const CutsceneLine cutsceneLineEnd[], unsigned int numCutsceneLineEnd,
+        unsigned int cutsceneEnvironment,
         const BuddyId buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
-        const Piece piecesStart[kMaxBuddies][NUM_SIDES],
-        const Piece piecesEnd[kMaxBuddies][NUM_SIDES]);
+        const Piece piecesStart[][NUM_SIDES],
+        const Piece piecesEnd[][NUM_SIDES]);
     
     void Reset();
     
