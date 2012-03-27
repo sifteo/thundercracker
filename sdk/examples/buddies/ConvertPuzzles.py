@@ -6,14 +6,20 @@ script to convert json puzzles in CubeBuddies format to a .h file that will be b
 import sys
 import json
 
-def BuddyNameToId(name):
+def BuddyToId(name):
     return 'BUDDY_' + name.upper()
 
-def SideNameToId(name):
+def SideToId(name):
     return 'SIDE_' + name.upper()
 
-def PartNameToId(name):
+def PartToId(name):
     return 'PART_' + name.upper()
+
+def ViewToId(name):
+    return 'VIEW_' + name.upper()
+
+def PositionToId(name):
+    return 'POSITION_' + name.upper()
 
 def BoolToString(value):
     if value:
@@ -48,8 +54,8 @@ def main():
             fout.write('\tsPuzzleDefault.SetTitle("%s");\n' % "Default")
             fout.write('\tsPuzzleDefault.SetClue("%s");\n' % "Default")
             fout.write('\tsPuzzleDefault.SetCutsceneEnvironment(%d);\n' % 0)
-            fout.write('\tsPuzzleDefault.AddCutsceneTextStart(%d, "%s");\n' % (0, "Default"))
-            fout.write('\tsPuzzleDefault.AddCutsceneTextEnd(%d, "%s");\n' % (0, "Default"))
+            fout.write('\tsPuzzleDefault.AddCutsceneLineStart(CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"));\n' % ("VIEW_RIGHT", "POSITION_LEFT", "Default"))
+            fout.write('\tsPuzzleDefault.AddCutsceneLineEnd(CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"));\n' % ("VIEW_RIGHT", "POSITION_LEFT", "Default"))
             fout.write('\tsPuzzleDefault.SetNumShuffles(%d);\n' % 0)
             fout.write('\tfor (unsigned int i = 0; i < %d; ++i)\n' % 6)
             fout.write('\t{\n')
@@ -75,18 +81,18 @@ def main():
                 fout.write('\tsPuzzles[%d].SetClue("%s");\n' % (i, puzzle['clue']))
                 fout.write('\tsPuzzles[%d].SetCutsceneEnvironment(%d);\n' % (i, puzzle['cutscene_environment']))
                 for line in puzzle['cutscene_start']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextStart(%d, "%s");\n' % (i, line['speaker'], line['text'].replace('\n', '\\n')))
+                    fout.write('\tsPuzzles[%d].AddCutsceneLineStart(CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"));\n' % (i, ViewToId(line['view']), PositionToId(line['position']), line['text'].replace('\n', '\\n')))
                 for line in puzzle['cutscene_end']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextEnd(%d, "%s");\n' % (i, line['speaker'], line['text'].replace('\n', '\\n')))
+                    fout.write('\tsPuzzles[%d].AddCutsceneLineEnd(CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"));\n' % (i, ViewToId(line['view']), PositionToId(line['position']), line['text'].replace('\n', '\\n')))
                 fout.write('\tsPuzzles[%d].SetNumShuffles(%d);\n' % (i, puzzle['shuffles']))
                 for j, buddy in enumerate(puzzle['buddies']):
-                    fout.write('\tsPuzzles[%d].AddBuddy(%s);\n' % (i, BuddyNameToId(buddy)))
+                    fout.write('\tsPuzzles[%d].AddBuddy(%s);\n' % (i, BuddyToId(buddy)))
                     for side in puzzle['buddies'][buddy]['pieces_start']:
                         piece = puzzle['buddies'][buddy]['pieces_start'][side]
-                        fout.write('\tsPuzzles[%d].SetPieceStart(%d, %s, Piece(%s, Piece::%s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part'])))
+                        fout.write('\tsPuzzles[%d].SetPieceStart(%d, %s, Piece(%s, Piece::%s));\n' % (i, j, SideToId(side), BuddyToId(piece['buddy']), PartToId(piece['part'])))
                     for side in puzzle['buddies'][buddy]['pieces_end']:
                         piece = puzzle['buddies'][buddy]['pieces_end'][side]
-                        fout.write('\tsPuzzles[%d].SetPieceEnd(%d, %s, Piece(%s, Piece::%s, %s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part']), BoolToString(piece['solve'])))
+                        fout.write('\tsPuzzles[%d].SetPieceEnd(%d, %s, Piece(%s, Piece::%s, %s));\n' % (i, j, SideToId(side), BuddyToId(piece['buddy']), PartToId(piece['part']), BoolToString(piece['solve'])))
                 fout.write('\n')
             
             fout.write('\tsNumPuzzles = %d;\n' % len(data))

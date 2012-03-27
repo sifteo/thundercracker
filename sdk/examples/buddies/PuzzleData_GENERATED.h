@@ -6,8 +6,8 @@ void InitializePuzzles()
 	sPuzzleDefault.SetTitle("Default");
 	sPuzzleDefault.SetClue("Default");
 	sPuzzleDefault.SetCutsceneEnvironment(0);
-	sPuzzleDefault.AddCutsceneTextStart(0, "Default");
-	sPuzzleDefault.AddCutsceneTextEnd(0, "Default");
+	sPuzzleDefault.AddCutsceneLineStart(CutsceneLine(CutsceneLine::VIEW_RIGHT, CutsceneLine::POSITION_LEFT, "Default"));
+	sPuzzleDefault.AddCutsceneLineEnd(CutsceneLine(CutsceneLine::VIEW_RIGHT, CutsceneLine::POSITION_LEFT, "Default"));
 	sPuzzleDefault.SetNumShuffles(0);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
@@ -29,12 +29,12 @@ void InitializePuzzles()
 	sPuzzles[0].SetTitle("Big Mouth");
 	sPuzzles[0].SetClue("Swap Mouths");
 	sPuzzles[0].SetCutsceneEnvironment(0);
-	sPuzzles[0].AddCutsceneTextStart(0, "Gimme a kiss!");
-	sPuzzles[0].AddCutsceneTextStart(1, "Can I use your\nmouth?");
-	sPuzzles[0].AddCutsceneTextStart(0, "...");
-	sPuzzles[0].AddCutsceneTextStart(0, "OK!");
-	sPuzzles[0].AddCutsceneTextEnd(1, "Muuuahhh!");
-	sPuzzles[0].AddCutsceneTextEnd(0, "Hot n' heavy!");
+	sPuzzles[0].AddCutsceneLineStart(CutsceneLine(CutsceneLine::VIEW_RIGHT, CutsceneLine::POSITION_LEFT, "Gimme a kiss!"));
+	sPuzzles[0].AddCutsceneLineStart(CutsceneLine(CutsceneLine::VIEW_LEFT, CutsceneLine::POSITION_RIGHT, "Can I use your\nmouth?"));
+	sPuzzles[0].AddCutsceneLineStart(CutsceneLine(CutsceneLine::VIEW_FRONT, CutsceneLine::POSITION_LEFT, "..."));
+	sPuzzles[0].AddCutsceneLineStart(CutsceneLine(CutsceneLine::VIEW_RIGHT, CutsceneLine::POSITION_LEFT, "OK!"));
+	sPuzzles[0].AddCutsceneLineEnd(CutsceneLine(CutsceneLine::VIEW_RIGHT, CutsceneLine::POSITION_LEFT, "Muuuahhh!"));
+	sPuzzles[0].AddCutsceneLineEnd(CutsceneLine(CutsceneLine::VIEW_LEFT, CutsceneLine::POSITION_RIGHT, "Hot n' heavy!"));
 	sPuzzles[0].SetNumShuffles(0);
 	sPuzzles[0].AddBuddy(BUDDY_GLUV);
 	sPuzzles[0].SetPieceStart(0, SIDE_TOP, Piece(BUDDY_GLUV, Piece::PART_HAIR));

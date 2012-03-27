@@ -7,117 +7,43 @@
       "clue": "Swap Mouths",
       "cutscene_environment": 0,
       "cutscene_start": [
-        {
-          "speaker": 0,
-          "text": "Gimme a kiss!"
-        },
-        {
-          "speaker": 1,
-          "text": "Can I use your\nmouth?"
-        },
-        {
-          "speaker": 0,
-          "text": "..."
-        },
-        {
-          "speaker": 0,
-          "text": "OK!"
-        }
+        { "view" : "right", "position" : "left",  "text" : "Gimme a kiss!" },
+        { "view" : "left",  "position" : "right", "text" : "Can I use your\nmouth?" },
+        { "view" : "front", "position" : "left",  "text" : "..." },
+        { "view" : "right", "position" : "left",  "text" : "OK!" }
       ],
       "cutscene_end": [
-        {
-          "speaker": 1,
-          "text": "Muuuahhh!"
-        },
-        {
-          "speaker": 0,
-          "text": "Hot n' heavy!"
-        }
+        { "view" : "right", "position" : "left",  "text": "Muuuahhh!" },
+        { "view" : "left",  "position" : "right", "text": "Hot n' heavy!" }
       ],
       "shuffles": 0,
       "buddies": {
         "gluv": {
           "pieces_start": {
-            "top": {
-              "buddy": "gluv",
-              "part": "hair"
-            },
-            "left": {
-              "buddy": "gluv",
-              "part": "eye_left"
-            },
-            "bottom": {
-              "buddy": "gluv",
-              "part": "mouth"
-            },
-            "right": {
-              "buddy": "gluv",
-              "part": "eye_right"
-            }
+            "top":    { "buddy": "gluv", "part": "hair" },
+            "left":   { "buddy": "gluv", "part": "eye_left" },
+            "bottom": { "buddy": "gluv", "part": "mouth" },
+            "right":  { "buddy": "gluv", "part": "eye_right" }
           },
           "pieces_end": {
-            "top": {
-              "buddy": "gluv",
-              "part": "hair",
-              "solve": false
-            },
-            "left": {
-              "buddy": "gluv",
-              "part": "eye_left",
-              "solve": false
-            },
-            "bottom": {
-              "buddy": "suli",
-              "part": "mouth",
-              "solve": true
-            },
-            "right": {
-              "buddy": "gluv",
-              "part": "eye_right",
-              "solve": false
-            }
+            "top":    { "buddy": "gluv", "part": "hair", "solve": false },
+            "left":   { "buddy": "gluv", "part": "eye_left", "solve": false },
+            "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+            "right":  { "buddy": "gluv", "part": "eye_right", "solve": false }
           }
         },
         "suli": {
           "pieces_start": {
-            "top": {
-              "buddy": "suli",
-              "part": "hair"
-            },
-            "left": {
-              "buddy": "suli",
-              "part": "eye_left"
-            },
-            "bottom": {
-              "buddy": "suli",
-              "part": "mouth"
-            },
-            "right": {
-              "buddy": "suli",
-              "part": "eye_right"
-            }
+            "top":    { "buddy": "suli", "part": "hair" },
+            "left":   { "buddy": "suli", "part": "eye_left" },
+            "bottom": { "buddy": "suli", "part": "mouth" },
+            "right":  { "buddy": "suli", "part": "eye_right" }
           },
           "pieces_end": {
-            "top": {
-              "buddy": "suli",
-              "part": "hair",
-              "solve": false
-            },
-            "left": {
-              "buddy": "suli",
-              "part": "eye_left",
-              "solve": false
-            },
-            "bottom": {
-              "buddy": "gluv",
-              "part": "mouth",
-              "solve": true
-            },
-            "right": {
-              "buddy": "suli",
-              "part": "eye_right",
-              "solve": false
-            }
+            "top":    { "buddy": "suli", "part": "hair", "solve": false },
+            "left":   { "buddy": "suli", "part": "eye_left", "solve": false },
+            "bottom": { "buddy": "gluv", "part": "mouth", "solve": true },
+            "right":  { "buddy": "suli", "part": "eye_right", "solve": false }
           }
         }
       }
