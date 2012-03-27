@@ -40,6 +40,11 @@ bool UsbHardware::epIsStalled(uint8_t addr)
     return hw.epIsStalled(addr);
 }
 
+uint16_t UsbHardware::epTxWordsAvailable(uint8_t addr)
+{
+    return hw.epTxWordsAvailable(addr);
+}
+
 uint16_t UsbHardware::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     return hw.epWritePacket(addr, buf, len);

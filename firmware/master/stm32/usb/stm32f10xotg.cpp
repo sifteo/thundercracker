@@ -199,6 +199,15 @@ void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
     OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
 }
 
+uint16_t epTxWordsAvailable(uint8_t addr)
+{
+    // n/a for OUT endpoints
+    if (!isInEp(addr))
+        return 0;
+
+    return OTG.device.inEps[addr & 0x7f].DTXFSTS & 0xffff;
+}
+
 uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
