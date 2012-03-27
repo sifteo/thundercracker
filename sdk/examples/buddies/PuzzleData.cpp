@@ -17,7 +17,15 @@ const CutsceneLine kCutsceneLineDefault[] =
 {
     CutsceneLine(),
 };
-const BuddyId kBuddiesDefault[] = { BUDDY_GLUV, BUDDY_GLUV, };
+const BuddyId kBuddiesDefault[] =
+{
+    BUDDY_GLUV,
+    BUDDY_SULI,
+    BUDDY_RIKE,
+    BUDDY_BOFF,
+    BUDDY_ZORG,
+    BUDDY_MARO
+};
 const Piece kPiecesDefaultStart[][NUM_SIDES] =
 {
     {
