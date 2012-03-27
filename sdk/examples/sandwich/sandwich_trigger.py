@@ -110,7 +110,7 @@ class Trigger:
 
 	
 	def write_trigger_to(self, src):
-		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x}" % (self.qbegin, self.qend, self.flagid, self.room.lid, self.event))
+		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x,0x0}" % (self.qbegin, self.qend, self.flagid, self.room.lid, self.event))
 
 	def write_item_to(self, src):
 		src.write("{ ")
