@@ -299,7 +299,7 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, bool spriteJump)
+void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, BuddyId buddyId, bool spriteJump)
 {
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
@@ -320,19 +320,23 @@ void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, bool spriteJump)
             spriteJump ?
                 VidMode::LCD_height / 2 - 32 :
                 VidMode::LCD_height / 2 - 32 + jump_offset),
-        *kBuddySpritesFront[cubeWrapper.GetBuddyId()]);
+        *kBuddySpritesFront[buddyId]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawCutsceneStory(CubeWrapper &cubeWrapper, const char *text, bool jump0, bool jump1)
+void DrawCutsceneStory(
+    CubeWrapper &cubeWrapper,
+    const char *text,
+    BuddyId buddyId0, BuddyId buddyId1,
+    bool jump0, bool jump1)
 {
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[cubeWrapper.GetBuddyId()]);
-    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesRight[cubeWrapper.GetBuddyId()]);
+    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
     
     if (text[0] == '<')
     {
@@ -2363,12 +2367,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
-            DrawCutsceneShuffle(cubeWrapper, Vec2(0, 0), mCutsceneSpriteJump0);
+            DrawCutsceneShuffle(cubeWrapper, Vec2(0, 0), cubeWrapper.GetBuddyId(), mCutsceneSpriteJump0);
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            DrawCutsceneShuffle(cubeWrapper, mBackgroundScroll, mCutsceneSpriteJump0);
+            DrawCutsceneShuffle(cubeWrapper, mBackgroundScroll, cubeWrapper.GetBuddyId(), mCutsceneSpriteJump0);
             
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
@@ -2404,6 +2408,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 DrawCutsceneStory(
                     cubeWrapper,
                     GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex),
+                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
+                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }
@@ -2542,6 +2548,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 DrawCutsceneStory(
                     cubeWrapper,
                     GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextEnd(mStoryCutsceneIndex),
+                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
+                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }
