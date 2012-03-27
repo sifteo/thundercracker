@@ -7,6 +7,7 @@
 #define SVM_H
 
 #include <stdint.h>
+#include "macros.h"
 
 /*
  * This header file defines functionality shared by multiple SVM components,
@@ -49,6 +50,29 @@ enum InstructionSize {
 /***************************************************************************
  * Debugger Support
  ***************************************************************************/
+
+enum FaultCode {
+    F_UNKNOWN = 0,
+    F_STACK_OVERFLOW,       // Stack allocation failure
+    F_BAD_STACK,            // Validation-time stack address error
+    F_BAD_CODE_ADDRESS,     // Branch-time code address error
+    F_BAD_SYSCALL,          // Unsupported syscall number
+    F_LOAD_ADDRESS,         // Runtime load address error
+    F_STORE_ADDRESS,        // Runtime store address error
+    F_LOAD_ALIGNMENT,       // Runtime load alignment error
+    F_STORE_ALIGNMENT,      // Runtime store alignment error
+    F_CODE_FETCH,           // Runtime code fetch error
+    F_CODE_ALIGNMENT,       // Runtime code alignment error
+    F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
+    F_RESERVED_SVC,         // Reserved SVC encoding
+    F_RESERVED_ADDROP,      // Reserved ADDROP encoding
+    F_ABORT,                // User call to _SYS_abort()
+    F_LONG_STACK_LOAD,      // Bad address in long stack LDR addrop
+    F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
+    F_PRELOAD_ADDRESS,      // Bad address for async preload
+    F_RETURN_FRAME,         // Bad saved FP value detected during ret()
+    F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
+};
 
 /**
  * Debugger messages are command/response pairs which are sent from a
@@ -152,28 +176,107 @@ static inline InstructionSize instructionSize(uint16_t instr) {
     return (instr & 0xf800) >= 0xe800 ? InstrBits32 : InstrBits16;
 }
 
-enum FaultCode {
-    F_UNKNOWN = 0,
-    F_STACK_OVERFLOW,       // Stack allocation failure
-    F_BAD_STACK,            // Validation-time stack address error
-    F_BAD_CODE_ADDRESS,     // Branch-time code address error
-    F_BAD_SYSCALL,          // Unsupported syscall number
-    F_LOAD_ADDRESS,         // Runtime load address error
-    F_STORE_ADDRESS,        // Runtime store address error
-    F_LOAD_ALIGNMENT,       // Runtime load alignment error
-    F_STORE_ALIGNMENT,      // Runtime store alignment error
-    F_CODE_FETCH,           // Runtime code fetch error
-    F_CODE_ALIGNMENT,       // Runtime code alignment error
-    F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
-    F_RESERVED_SVC,         // Reserved SVC encoding
-    F_RESERVED_ADDROP,      // Reserved ADDROP encoding
-    F_ABORT,                // User call to _SYS_abort()
-    F_LONG_STACK_LOAD,      // Bad address in long stack LDR addrop
-    F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
-    F_PRELOAD_ADDRESS,      // Bad address for async preload
-    F_RETURN_FRAME,         // Bad saved FP value detected during ret()
-    F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
+static inline reg_t calculateBranchOffset(reg_t pc, int32_t offset) {
+    return (pc + offset + 2) & ~(reg_t)1;
+}
+
+
+/***************************************************************************
+ * Flags and Condition Codes
+ ***************************************************************************/
+
+enum Conditions {
+    EQ = 0,    // Equal
+    NE = 1,    // Not Equal
+    CS = 2,    // Carry Set
+    CC = 3,    // Carry Clear
+    MI = 4,    // Minus, Negative
+    PL = 5,    // Plus, positive, or zero
+    VS = 6,    // Overflow
+    VC = 7,    // No overflow
+    HI = 8,    // Unsigned higher
+    LS = 9,    // Unsigned lower or same
+    GE = 10,    // Signed greater than or equal
+    LT = 11,    // Signed less than
+    GT = 12,    // Signed greater than
+    LE = 13,    // Signed less than or equal
+    NoneAL = 14 // None, always, unconditional
 };
+
+static inline bool getNeg(reg_t cpsr) {
+    return (cpsr >> 31) & 1;
+}
+
+static inline bool getZero(reg_t cpsr) {
+    return (cpsr >> 30) & 1;
+}
+
+static inline bool getCarry(reg_t cpsr) {
+    return (cpsr >> 29) & 1;
+}
+
+static inline int getOverflow(reg_t cpsr) {
+    return (cpsr >> 28) & 1;
+}
+
+static inline bool conditionPassed(uint8_t cond, reg_t cpsr)
+{
+    switch (cond) {
+    case EQ: return  getZero(cpsr);
+    case NE: return !getZero(cpsr);
+    case CS: return  getCarry(cpsr);
+    case CC: return !getCarry(cpsr);
+    case MI: return  getNeg(cpsr);
+    case PL: return !getNeg(cpsr);
+    case VS: return  getOverflow(cpsr);
+    case VC: return !getOverflow(cpsr);
+    case HI: return  getCarry(cpsr) && !getZero(cpsr);
+    case LS: return !getCarry(cpsr) || getZero(cpsr);
+    case GE: return  getNeg(cpsr) == getOverflow(cpsr);
+    case LT: return  getNeg(cpsr) != getOverflow(cpsr);
+    case GT: return (getZero(cpsr) == 0) && (getNeg(cpsr) == getOverflow(cpsr));
+    case LE: return (getZero(cpsr) == 1) || (getNeg(cpsr) != getOverflow(cpsr));
+    case NoneAL: return true;
+    default:
+        ASSERT(0 && "invalid condition code");
+        return false;
+    }
+}
+
+/***************************************************************************
+ * Branch Emulation utilities
+ ***************************************************************************/
+
+static inline reg_t branchTargetB(uint16_t instr, reg_t pc)
+{
+    // encoding T2 only
+    unsigned imm11 = instr & 0x7FF;
+    return calculateBranchOffset(pc, signExtend(imm11 << 1, 12));
+}
+
+static inline reg_t branchTargetCondB(uint16_t instr, reg_t pc, reg_t cpsr)
+{
+    unsigned cond = (instr >> 8) & 0xf;
+    unsigned imm8 = instr & 0xff;
+
+    if (conditionPassed(cond, cpsr))
+        return calculateBranchOffset(pc, signExtend(imm8 << 1, 9));
+    else
+        return pc;
+}
+
+static inline reg_t branchTargetCBZ_CBNZ(uint16_t instr, reg_t pc, reg_t cpsr, reg_t Rn)
+{
+    bool nonzero = instr & (1 << 11);
+    unsigned i = instr & (1 << 9);
+    unsigned imm5 = (instr >> 3) & 0x1f;
+
+    if (nonzero ^ (Rn == 0)) {
+        // ZeroExtend(i:imm5:'0')
+        return calculateBranchOffset(pc, (i << 6) | (imm5 << 1));
+    }
+    return pc;
+}
 
 
 ///////////////////////////////////////

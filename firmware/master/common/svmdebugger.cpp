@@ -434,10 +434,21 @@ void SvmDebugger::msgStep(SvmDebugPipe::DebuggerMsg &msg)
     }
 
     if ((instr & UncondBranchMask) == UncondBranchTest) {
-        // Unconditional branch. Calculate the target address.
+        // Emulated unconditional branch
+        return setStepBreakpoint(branchTargetB(instr, pc + 2));
+    }
+
+    if ((instr & CondBranchMask) == CondBranchTest) {
+        // Emulated conditional branch
+        return setStepBreakpoint(branchTargetCondB(instr, pc + 2, SvmCpu::reg(REG_CPSR)));
+    }
+
+    if ((instr & CompareBranchMask) == CompareBranchTest) {
+        // Emulated compare-and-branch
+        return setStepBreakpoint(branchTargetCBZ_CBNZ(instr, pc + 2,
+            SvmCpu::reg(REG_CPSR), SvmCpu::reg(instr & 7)));
     }
     
     // All other 16-bit native instructions don't modify control flow.
     return setStepBreakpoint(pc + 2);
 }
-

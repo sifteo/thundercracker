@@ -149,6 +149,8 @@ bool SvmDebugPipe::debuggerMsgAccept(SvmDebugPipe::DebuggerMsg &msg)
      * is available, this returns a pointer to the buffer memory
      * for both the message and its reply. The caller retains ownership
      * of this buffer until calling debuggerMsgFinish().
+     *
+     * This call must be non-blocking.
      */
 
     DebuggerMailbox &mbox = gDebuggerMailbox;
