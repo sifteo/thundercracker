@@ -267,7 +267,7 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	}
 	kFooterBG1Offset = assets->header == NULL ? 0 : assets->header->width * assets->header->height;
 	// XXX: pending fix to #8:
-	ASSERT(kHeaderHeight == 2);
+	ASSERT(kHeaderHeight == 0 || kHeaderHeight == 2);
 }
 
 /*
