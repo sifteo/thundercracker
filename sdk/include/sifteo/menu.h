@@ -639,7 +639,7 @@ void Menu::transToFinish() {
 		overlay.Flush();
 	}
 	finishIteration = 0;
-	shouldPaintSync = true;
+	paintSync();
 	currentEvent.type = MENU_PREPAINT;
 }
 
@@ -929,18 +929,13 @@ float Menu::lerp(float min, float max, float u) {
 
 void Menu::updateBG0() {
 	int ui = position;
-	int ut = position / 8;
-	if(abs(prev_ut - ut) > 0) {
-		shouldPaintSync = true;
-	}
-	
+	int ut = (position < 0 ? position - 8 : position) / 8; // special case because int rounds up when < 0
+
 	while(prev_ut < ut) {
-		drawColumn(prev_ut + 17);
-		prev_ut++;
+		drawColumn(++prev_ut + kNumVisibleTilesX);
 	}
 	while(prev_ut > ut) {
-		drawColumn(prev_ut - 2);
-		prev_ut--;
+		drawColumn(--prev_ut);
 	}
 	
 	canvas.BG0_setPanning(Vec2(ui, 0));
