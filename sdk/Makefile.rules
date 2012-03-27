@@ -11,10 +11,13 @@ all: $(BIN)
 # We use a quick perl script to normalize the slashes on windows.
 # (We could use sed for this, but perl comes with MSYS too, and its
 # in-place editing is more reliable.)
+#
+# Note that this needs to avoid backslashes that are escaping things
+# like newlines or spaces. The (\w) below tries to do this.
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
-	@perl -pi -e 's/\\(.)/\/\1/g' $(subst .o,.d,$@)
+	@perl -pi -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 
 $(BIN): $(OBJS) $(LD)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)
