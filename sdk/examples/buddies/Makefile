@@ -10,3 +10,8 @@ ASSETDEPS += assets/*.png $(ASSETS).lua
 CDEPS += *.h
 
 include $(TC_DIR)/sdk/Makefile.rules
+
+GENERATED_FILES += PuzzleData_GENERATED.h
+PuzzleData.o: PuzzleData_GENERATED.h
+PuzzleData_GENERATED.h: ConvertPuzzles.py PuzzleData.json
+	python ConvertPuzzles.py PuzzleData.json PuzzleData_GENERATED.h
