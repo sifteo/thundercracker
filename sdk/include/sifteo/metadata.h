@@ -15,6 +15,7 @@
 
 namespace Sifteo {
 
+
 class Metadata {
 public:
     /**
@@ -61,6 +62,7 @@ public:
         return *this;
     }
 };
+
 
 }   // namespace Sifteo
 

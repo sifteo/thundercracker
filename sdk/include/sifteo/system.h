@@ -15,6 +15,7 @@
 
 namespace Sifteo {
 
+
 /**
  * Global operations that apply to the system as a whole.
  */

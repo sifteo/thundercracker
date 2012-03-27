@@ -59,13 +59,10 @@ public:
     }
 
 private:
-    // TODO - would be nice to have a _SYSAudioChannel type with these two
-    // members, that serves as the object passed to the firmware.
-    // Then, we wouldn't have to search for a channel. given a handle - we could
-    // just calculate its offset within its array to look it up
     _SYSAudioHandle handle;
     _SYSAudioBuffer buf;
 };
+
 
 } // namespace Sifteo
 

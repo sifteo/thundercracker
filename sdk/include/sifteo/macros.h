@@ -49,7 +49,8 @@
 #define LOG_HEX(_x)     LOG((#_x " = 0x%08x\n", (_x)));
 #define LOG_FLOAT(_x)   LOG((#_x " = %f\n", (_x)));
 #define LOG_STR(_x)     LOG((#_x " = \"%s\"\n", &(_x)));
-#define LOG_VEC2(_x)    LOG((#_x " = (%d, %d)\n", (_x).x, (_x).y));
+#define LOG_INT2(_x)    LOG((#_x " = (%d, %d)\n", (_x).x, (_x).y));
+#define LOG_FLOAT2(_x)  LOG((#_x " = (%f, %f)\n", (_x).x, (_x).y));
 
 /// Produces a 'size of array is negative' compile error when the assert fails
 #define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))

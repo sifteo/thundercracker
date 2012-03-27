@@ -11,6 +11,7 @@
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
+#include <sifteo/abi.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
 
