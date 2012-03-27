@@ -38,12 +38,14 @@ Puzzle::Puzzle()
 {
     for (unsigned int i = 0; i < arraysize(mCutsceneTextStart); ++i)
     {
-        mCutsceneTextStart[i] = NULL;
+        mCutsceneTextStart[i].mSpeaker = 0;
+        mCutsceneTextStart[i].mText = NULL;
     }
     
     for (unsigned int i = 0; i < arraysize(mCutsceneTextEnd); ++i)
     {
-        mCutsceneTextEnd[i] = NULL;
+        mCutsceneTextEnd[i].mSpeaker = 0;
+        mCutsceneTextEnd[i].mText = NULL;
     }
     
     for (unsigned int i = 0; i < arraysize(mBuddies); ++i)
@@ -62,13 +64,15 @@ void Puzzle::Reset()
     
     for (unsigned int i = 0; i < arraysize(mCutsceneTextStart); ++i)
     {
-        mCutsceneTextStart[i] = NULL;
+        mCutsceneTextStart[i].mSpeaker = 0;
+        mCutsceneTextStart[i].mText = NULL;
     }
     mNumCutsceneTextStart = 0;
     
     for (unsigned int i = 0; i < arraysize(mCutsceneTextEnd); ++i)
     {
-        mCutsceneTextEnd[i] = NULL;
+        mCutsceneTextEnd[i].mSpeaker = 0;
+        mCutsceneTextEnd[i].mText = NULL;
     }
     mNumCutsceneTextEnd = 0;
     
@@ -144,19 +148,26 @@ void Puzzle::SetClue(const char *clue)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Puzzle::AddCutsceneTextStart(const char *cutsceneTextStart)
+void Puzzle::AddCutsceneTextStart(unsigned int speakerIndex, const char *cutsceneTextStart)
 {
     ASSERT(mNumCutsceneTextStart < arraysize(mCutsceneTextStart));
-    mCutsceneTextStart[mNumCutsceneTextStart++] = cutsceneTextStart;
+    ASSERT(speakerIndex < 2);
+    mCutsceneTextStart[mNumCutsceneTextStart].mSpeaker = speakerIndex;
+    mCutsceneTextStart[mNumCutsceneTextStart].mText = cutsceneTextStart;
+    ++mNumCutsceneTextStart;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *Puzzle::GetCutsceneTextStart(unsigned int cutsceneIndex) const
+void Puzzle::GetCutsceneTextStart(
+    unsigned int cutsceneIndex,
+    unsigned int &speakerIndex,
+    const char *&cutsceneTextStart) const
 {
     ASSERT(cutsceneIndex < arraysize(mCutsceneTextStart));
-    return mCutsceneTextStart[cutsceneIndex];
+    speakerIndex = mCutsceneTextStart[cutsceneIndex].mSpeaker;
+    cutsceneTextStart = mCutsceneTextStart[cutsceneIndex].mText;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,19 +181,26 @@ unsigned int Puzzle::GetNumCutsceneTextStart() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Puzzle::AddCutsceneTextEnd(const char *cutsceneTextEnd)
+void Puzzle::AddCutsceneTextEnd(unsigned int speakerIndex, const char *cutsceneTextEnd)
 {
     ASSERT(mNumCutsceneTextEnd < arraysize(mCutsceneTextEnd));
-    mCutsceneTextEnd[mNumCutsceneTextEnd++] = cutsceneTextEnd;
+    ASSERT(speakerIndex < 2);
+    mCutsceneTextEnd[mNumCutsceneTextEnd].mSpeaker = speakerIndex;
+    mCutsceneTextEnd[mNumCutsceneTextEnd].mText = cutsceneTextEnd;
+    ++mNumCutsceneTextEnd;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *Puzzle::GetCutsceneTextEnd(unsigned int cutsceneIndex) const
+void Puzzle::GetCutsceneTextEnd(
+    unsigned int cutsceneIndex,
+    unsigned int &speakerIndex,
+    const char *&cutsceneTextEnd) const
 {
     ASSERT(cutsceneIndex < arraysize(mCutsceneTextEnd));
-    return mCutsceneTextEnd[cutsceneIndex];
+    speakerIndex = mCutsceneTextEnd[cutsceneIndex].mSpeaker;
+    cutsceneTextEnd = mCutsceneTextEnd[cutsceneIndex].mText;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

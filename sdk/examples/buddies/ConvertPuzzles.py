@@ -6,12 +6,6 @@ script to convert json puzzles in CubeBuddies format to a .h file that will be b
 import sys
 import json
 
-def LineToString(line):
-    if line['speaker'] == 0:
-        return '<' + line['text'].replace('\n', '\\n')
-    else:
-        return '>' + line['text'].replace('\n', '\\n')
-
 def BuddyNameToId(name):
     return 'BUDDY_' + name.upper()
 
@@ -48,13 +42,14 @@ def main():
             fout.write('{\n')
             
             # Write out the default Puzzle
+            fout.write('\t// Puzzle Default\n')
             fout.write('\tsPuzzleDefault.Reset();\n')
             fout.write('\tsPuzzleDefault.SetBook(%d);\n' % 0)
             fout.write('\tsPuzzleDefault.SetTitle("%s");\n' % "Default")
             fout.write('\tsPuzzleDefault.SetClue("%s");\n' % "Default")
             fout.write('\tsPuzzleDefault.SetCutsceneEnvironment(%d);\n' % 0)
-            fout.write('\tsPuzzleDefault.AddCutsceneTextStart("%s");\n' % "<Default")
-            fout.write('\tsPuzzleDefault.AddCutsceneTextStart("%s");\n' % ">Default")
+            fout.write('\tsPuzzleDefault.AddCutsceneTextStart(%d, "%s");\n' % (0, "Default"))
+            fout.write('\tsPuzzleDefault.AddCutsceneTextEnd(%d, "%s");\n' % (0, "Default"))
             fout.write('\tsPuzzleDefault.SetNumShuffles(%d);\n' % 0)
             fout.write('\tfor (unsigned int i = 0; i < %d; ++i)\n' % 6)
             fout.write('\t{\n')
@@ -80,9 +75,9 @@ def main():
                 fout.write('\tsPuzzles[%d].SetClue("%s");\n' % (i, puzzle['clue']))
                 fout.write('\tsPuzzles[%d].SetCutsceneEnvironment(%d);\n' % (i, puzzle['cutscene_environment']))
                 for line in puzzle['cutscene_start']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextStart("%s");\n' % (i, LineToString(line)))
+                    fout.write('\tsPuzzles[%d].AddCutsceneTextStart(%d, "%s");\n' % (i, line['speaker'], line['text'].replace('\n', '\\n')))
                 for line in puzzle['cutscene_end']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextEnd("%s");\n' % (i, LineToString(line)))
+                    fout.write('\tsPuzzles[%d].AddCutsceneTextEnd(%d, "%s");\n' % (i, line['speaker'], line['text'].replace('\n', '\\n')))
                 fout.write('\tsPuzzles[%d].SetNumShuffles(%d);\n' % (i, puzzle['shuffles']))
                 for j, buddy in enumerate(puzzle['buddies']):
                     fout.write('\tsPuzzles[%d].AddBuddy(%s);\n' % (i, BuddyNameToId(buddy)))

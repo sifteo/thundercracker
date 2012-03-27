@@ -52,12 +52,12 @@ public:
     const char *GetClue() const;
     void SetClue(const char *clue);
     
-    void AddCutsceneTextStart(const char *cutsceneTextStart);
-    const char *GetCutsceneTextStart(unsigned int cutsceneIndex) const;
+    void AddCutsceneTextStart(unsigned int speakerIndex, const char *cutsceneTextStart);
+    void GetCutsceneTextStart(unsigned int cutsceneIndex, unsigned int &speakerIndex, const char *&cutsceneTextStart) const;
     unsigned int GetNumCutsceneTextStart() const;
     
-    void AddCutsceneTextEnd(const char *cutsceneTextEnd);
-    const char *GetCutsceneTextEnd(unsigned int cutsceneIndex) const;
+    void AddCutsceneTextEnd(unsigned int speakerIndex, const char *cutsceneTextEnd);
+    void GetCutsceneTextEnd(unsigned int cutsceneIndex, unsigned int &speakerIndex, const char *&cutsceneTextEnd) const;
     unsigned int GetNumCutsceneTextEnd() const;
     
     unsigned int GetCutsceneEnvironment() const;
@@ -77,11 +77,17 @@ public:
     void SetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
     
 private:
+    struct Line
+    {
+        unsigned int mSpeaker : 1;
+        const char *mText;
+    };
+    
     unsigned char mBook : 4;
     const char *mTitle;
     const char *mClue;
-    const char *mCutsceneTextStart[8];
-    const char *mCutsceneTextEnd[8];
+    Line mCutsceneTextStart[8];
+    Line mCutsceneTextEnd[8];
     unsigned char mBuddies[kMaxBuddies];
     unsigned char mNumCutsceneTextStart : 3;
     unsigned char mNumCutsceneTextEnd : 3;
