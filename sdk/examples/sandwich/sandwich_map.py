@@ -18,15 +18,16 @@ class MapDatabase:
 		assert len(self.maps) > 0
 		# validate map links
 		for map in self.maps:
-			for gate in map.list_triggers_of_type(TRIGGER_GATEWAY):
+			for gate in map.list_triggers_of_type("gateway"):
 				assert gate.target_map in self.map_dict, "gateway to unknown map: " + gate.target_map
 				tmap = self.map_dict[gate.target_map]
-				found = False
-				for othergate in tmap.list_triggers_of_type(TRIGGER_GATEWAY):
-					if othergate.id == gate.target_gate:
-						found = True
-						break
-				assert found, "link to unknown map-gate: " + gate.target_gate
+				assert gate.target_gate in tmap.trig_dict["gateway"], "link to unknown map-gate: " + gate.target_gate
+				# found = False
+				# for othergate in tmap.list_triggers_of_type("gateway"):
+				# 	if othergate.id == gate.target_gate:
+				# 		found = True
+				# 		break
+				# assert found, "link to unknown map-gate: " + gate.target_gate
 		# assign IDs to unique sokoblock assets
 		self.sokoblock_assets = []
 		for m in self.maps: 
@@ -38,15 +39,6 @@ class MapDatabase:
 				block.asset_id = asset_to_id[block.asset]
 
 
-
-class Door:
-	def __init__(self, room):
-		self.id = "_door_%s_%d" % (room.map.id, room.lid)
-		self.room = room
-		room.door = self
-		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
-			if room.map.quest is not None \
-			else room.map.world.quests.add_flag_if_undefined(self.id)
 
 class Depot:
 	def __init__(self, map, obj):
@@ -139,10 +131,6 @@ class Map:
 				assert r.its_a_trap == False, "traps cannot be placed in subdivisions"
 		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
 		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
-		# no vertical bridges, for now
-		#for bridge in self.bridgeRooms:
-		#	assert bridge.subdiv_type == SUBDIV_BRDG_HOR, "no vertical bridges for now, dudes: " + self.id
-
 		# validate animated tile capacity (max 4 per room)
 		for r in self.rooms:
 			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
@@ -155,21 +143,12 @@ class Map:
 				room.triggers.append(trig)
 				room.trigger_dict[trig.id] = trig
 		# assign trigger indices, build map-dicts
-		self.item_dict = {}
-		self.gate_dict = {}
-		self.npc_dict = {}
-		for i,item in enumerate(self.list_triggers_of_type(TRIGGER_ITEM)):
-			item.index = i
-			self.item_dict[item.id] = item
-		for i,gate in enumerate(self.list_triggers_of_type(TRIGGER_GATEWAY)):
-			gate.index = i
-			self.gate_dict[gate.id] = gate
-		for i,npc in enumerate(self.list_triggers_of_type(TRIGGER_NPC)):
-			npc.index = i
-			self.npc_dict[npc.id] = npc
-		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
-		for i,d in enumerate(self.doors):
-			d.index = i
+		self.trig_dict = {}
+		for trig_type in TRIGGER_KEYWORDS:
+			self.trig_dict[trig_type] = {}
+			for i,trig in enumerate(self.list_triggers_of_type(trig_type)):
+				trig.index = i
+				self.trig_dict[trig_type][trig.id] = trig
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
 		# find sokoblocks
@@ -183,7 +162,7 @@ class Map:
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
 	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
-	def list_triggers_of_type(self, type): return (t for r in self.rooms for t in r.triggers if t.type == type)
+	def list_triggers_of_type(self, keyword): return (t for r in self.rooms for t in r.triggers if t.type == KEYWORD_TO_TRIGGER_TYPE[keyword])
 
 	def write_source_to(self, src):
 		TS = "{0xff,0xff,0xff,0xff,0xff}" # trigger sentinel
@@ -218,36 +197,36 @@ class Map:
 				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
-		if len(self.item_dict) > 0:
+		if len(self.trig_dict["item"]) > 0:
 			src.write("static const ItemData %s_items[] = {" % self.id)
-			for item in self.list_triggers_of_type(TRIGGER_ITEM):
+			for item in self.list_triggers_of_type("item"):
 				item.write_item_to(src)
 			src.write("{%s,0x0}};\n" % TS)
 		
-		if len(self.gate_dict):
+		if len(self.trig_dict["gateway"]):
 			src.write("static const GatewayData %s_gateways[] = {" % self.id)
-			for gate in self.list_triggers_of_type(TRIGGER_GATEWAY):
+			for gate in self.list_triggers_of_type("gateway"):
 				gate.write_gateway_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 
-		if len(self.npc_dict) > 0:
+		if len(self.trig_dict["npc"]) > 0:
 			src.write("static const NpcData %s_npcs[] = {" % self.id)
-			for npc in self.list_triggers_of_type(TRIGGER_NPC):
+			for npc in self.list_triggers_of_type("npc"):
 				npc.write_npc_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 		
+		if len(self.trig_dict["door"]) > 0:
+			src.write("static const DoorData %s_doors[] = {" % self.id)
+			for door in self.list_triggers_of_type("door"):
+				door.write_door_to(src)
+			src.write("{%s,0xff}};\n" % TS)
+
 		if len(self.trapped_rooms) > 0:
 			src.write("static const TrapdoorData %s_trapdoors[] = {" % self.id)
 			for room in self.trapped_rooms:
 				src.write("{0x%x,0x%x}," % (room.lid, room.trapRespawnRoomId))
 			src.write("{0x0,0x0}};\n")
 		
-		if len(self.doors) > 0:
-			src.write("static const DoorData %s_doors[] = {" % self.id)
-			for door in self.doors:
-				src.write("{0x%x,0x%x}," % (door.room.lid, door.flag.gindex))
-			src.write("{0x0,0x0}};\n")
-
 		if len(self.animatedtiles) > 0:
 			src.write("static const AnimatedTileData %s_animtiles[] = {" % self.id)
 			for atile in self.animatedtiles:
@@ -274,6 +253,7 @@ class Map:
 
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
+			# perform RLE Compression on write
 			emptycount = 0
 			for t in (r.overlaytileat(tid%8,tid/8) for r in self.rooms for tid in range(64)):
 				if t is not None:
@@ -293,6 +273,7 @@ class Map:
 				src.write("0xff,0x%x," % emptycount)
 				emptycount = 0
 			src.write("};\n")
+
 		if len(self.diagRooms) > 0:
 			src.write("static const DiagonalSubdivisionData %s_diag[] = {" % self.id)
 			for r in self.diagRooms:
@@ -300,6 +281,7 @@ class Map:
 				cx,cy = r.secondary_center()
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_pos, r.lid, cx, cy))
 			src.write("{0x0,0x0,0x0,0x0}};\n")
+		
 		if len(self.bridgeRooms) > 0:
 			src.write("static const BridgeSubdivisionData %s_bridges[] = {" % self.id)
 			for r in self.bridgeRooms:
@@ -309,10 +291,13 @@ class Map:
 			src.write("{0x0,0x0,0x0,0x0}};\n")
 
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
-		for y in range(self.height):
-			for x in range(self.width):
-				room = self.roomat(x,y)
-				room.write_source_to(src)
+		for y,x in product(range(self.height), range(self.width)):
+			self.roomat(x,y).write_telem_source_to(src)
+		src.write("};\n")
+
+		src.write("static const RoomTileData %s_tiles[] = {\n" % self.id)
+		for y,x in product(range(self.height), range(self.width)):
+			self.roomat(x,y).write_tiles_to(src)
 		src.write("};\n")
 
 	
@@ -322,6 +307,7 @@ class Map:
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \
+			"%(name)s_tiles, " \
 			"%(overlay_rle)s, " \
 			"%(name)s_xportals, " \
 			"%(name)s_yportals, " \
@@ -336,7 +322,6 @@ class Map:
 			"%(diagsubdivs)s, " \
 			"%(bridgesubdivs)s, " \
 			"%(sokoblocks)s, "
-			"0x%(doorQuestId)x, " \
 			"0x%(nanimtiles)x, " \
 			"0x%(ambient)x, " \
 			"0x%(w)x, " \
@@ -347,18 +332,17 @@ class Map:
 				"bg": posixpath.splitext(self.background_id)[0],
 				"overlay": "&Overlay_" + posixpath.splitext(self.overlay_id)[0] if self.overlay is not None else "0",
 				"overlay_rle": self.id + "_overlay_rle" if self.overlay is not None else "0",
-				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
-				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
-				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"item": self.id + "_items" if len(self.trig_dict["item"]) > 0 else "0",
+				"gate": self.id + "_gateways" if len(self.trig_dict["gateway"]) > 0 else "0",
+				"npc": self.id + "_npcs" if len(self.trig_dict["npc"]) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"depot": self.id + "_depots" if len(self.depots) > 0 else "0",
-				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
+				"door": self.id + "_doors" if len(self.trig_dict["door"]) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
 				"bridgesubdivs": self.id + "_bridges" if len(self.bridgeRooms) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
-				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ambient": self.ambientType,
 				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",

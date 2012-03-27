@@ -7,7 +7,8 @@ using namespace Sifteo;
 #define TRIGGER_GATEWAY     1
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
-#define TRIGGER_TYPE_COUNT  4
+#define TRIGGER_DOOR        4
+#define TRIGGER_TYPE_COUNT  5
 // MAX COUNT = 16
 
 #define SUBDIV_NONE         0
@@ -63,8 +64,8 @@ struct TriggerData {
 };
 
 struct DoorData {
-    uint8_t roomId;
-    uint8_t flagId; // doors are associated with the default quest for the map
+    TriggerData trigger;
+    uint8_t keyItemId;
 };
 
 struct ItemData {
@@ -110,12 +111,14 @@ struct AnimatedTileData {
 };
 
 struct RoomData { // expect to support about 1,000 rooms max (10 maps * 81 rooms rounded up)
-    uint8_t collisionMaskRows[8];
-    uint8_t tiles[64];
     uint8_t centerX : 4;
     uint8_t centerY : 4;
+    uint8_t collisionMaskRows[8];
 };
 
+struct RoomTileData {
+    uint8_t tiles[64];
+};
 struct DiagonalSubdivisionData {
     uint8_t positiveSlope : 1;
     uint8_t roomId : 7;
@@ -144,6 +147,7 @@ struct MapData {
 
     // tile buffers
     const RoomData* rooms;
+    const RoomTileData* roomTiles;
     const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
     const uint8_t* yportals; // bit array of portals between rooms (x,y) and (x,y+1)
@@ -164,8 +168,7 @@ struct MapData {
     const SokoblockData* sokoblocks;
 
     // other counts
-    uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
-    uint8_t animatedTileCount;
+    uint8_t animatedTileCount; // do we really need this? can we null-terminate?
     uint8_t ambientType; // 0 - None
 
     // size

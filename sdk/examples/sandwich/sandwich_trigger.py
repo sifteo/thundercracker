@@ -2,23 +2,21 @@ import lxml.etree, os, posixpath, re, tmx, misc, math
 
 EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
 EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")
-TRIGGER_GATEWAY = 0
-TRIGGER_ITEM = 1
-TRIGGER_NPC = 2
-#TRIGGER_TRAPDOOR = 3
-KEYWORD_TO_TRIGGER_TYPE = {
-	"gateway": TRIGGER_GATEWAY,
-	"item": TRIGGER_ITEM,
-	"npc": TRIGGER_NPC
-#	"trapdoor": TRIGGER_TRAPDOOR
-}
+
+TRIGGER_KEYWORDS = [ "gateway", "item", "npc", "door" ]
+KEYWORD_TO_TRIGGER_TYPE = dict((name,i) for i,name in enumerate(TRIGGER_KEYWORDS))
 
 EVENT_NONE = 0
 EVENT_ADVANCE_QUEST_AND_REFRESH = 1
 EVENT_ADVANCE_QUEST_AND_TELEPORT = 2
+EVENT_REMOTE_TRIGGER = 3
+EVENT_OPEN_DOOR = 4
+
 KEYWORD_TO_TRIGGER_EVENT = {
 	"advancequestandrefresh": EVENT_ADVANCE_QUEST_AND_REFRESH,
-	"advancequestandteleport": EVENT_ADVANCE_QUEST_AND_TELEPORT
+	"advancequestandteleport": EVENT_ADVANCE_QUEST_AND_TELEPORT,
+	"remotetrigger": EVENT_REMOTE_TRIGGER,
+	"opendoor": EVENT_OPEN_DOOR
 }
 
 
@@ -55,34 +53,33 @@ class Trigger:
 			self.unlockflag = room.map.world.quests.add_flag_if_undefined(obj.props["unlockflag"])
 		# type-specific initialization
 		
-		if self.type == TRIGGER_ITEM:
+		if obj.type == "item":
 			itemid = obj.props["id"]
 			assert itemid in room.map.world.items.item_dict, "Item is undefined (" + itemid + " ) in map: " + room.map.id
 			self.item = room.map.world.items.item_dict[itemid]
-			if self.quest is not None:
-				if self.qflag is None:
-					self.qflag = self.quest.add_flag_if_undefined(self.id)
-			elif self.unlockflag is None:
-				self.unlockflag = room.map.world.quests.add_flag_if_undefined(self.id)
+			self.alloc_flag()
 		
-		elif self.type == TRIGGER_GATEWAY:
+		elif obj.type == "gateway":
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
 			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
 			self.target_map = m.group(1).lower()
 			self.target_gate = m.group(2).lower()
 		
-		elif self.type == TRIGGER_NPC:
+		elif obj.type == "npc":
 			did = obj.props["id"].lower()
 			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID (" + did + ") in Map: " + room.map.id
 			self.dialog = room.map.world.dialogs.dialog_dict[did]
 			self.optional = obj.props.get("required", "false").lower() == "true"
 
-		elif self.type == TRIGGER_TRAPDOOR:
-			m = EXP_LOCATION.match(obj.props.get("respawn"))
-			assert m is not None, "Malformed Respawn Location in Map: " + room.map.id
-			x = int(m.group(1))
-			y = int(m.group(2))
-			self.respawnRoomId = x + room.map.width * y
+		elif obj.type == "door":
+			if "key" in obj.props:
+				itemid = obj.props["key"].lower()
+				assert itemid in room.map.world.items.item_dict, "Item is undefined (" + itemid + " ) in map: " + room.map.id
+				self.key_item = room.map.world.items.item_dict[itemid]
+			else:
+				self.key_item = None
+			self.alloc_flag()
+
 				
 		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
 		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
@@ -99,6 +96,14 @@ class Trigger:
 			self.event = EVENT_NONE
 
 
+	def alloc_flag(self):
+		if self.quest is not None:
+			if self.qflag is None:
+				self.qflag = self.quest.add_flag_if_undefined(self.id)
+		elif self.unlockflag is None:
+			self.unlockflag = self.room.map.world.quests.add_flag_if_undefined(self.id)
+
+
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
 		if self.qend != 0xff and self.qend > quest.index: return False
@@ -113,22 +118,26 @@ class Trigger:
 		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x,0x0}" % (self.qbegin, self.qend, self.flagid, self.room.lid, self.event))
 
 	def write_item_to(self, src):
-		src.write("{ ")
+		src.write("{")
 		self.write_trigger_to(src)
-		src.write(",0x%x}, " % self.item.numeric_id)
+		src.write(",0x%x}," % self.item.numeric_id)
 	
 	def write_gateway_to(self, src):
-		src.write("{ ")
+		src.write("{")
 		self.write_trigger_to(src)
 		mapid = self.room.map.world.maps.map_dict[self.target_map].index
-		gateid = self.room.map.world.maps.map_dict[self.target_map].gate_dict[self.target_gate].index
+		gateid = self.room.map.world.maps.map_dict[self.target_map].trig_dict["gateway"][self.target_gate].index
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (mapid, gateid, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x}," % (mapid, gateid, x, y))
 	
 	def write_npc_to(self, src):
-		src.write("{ ")
+		src.write("{")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x,0x%x}, " % (self.dialog.index, 1 if self.optional else 0, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x}," % (self.dialog.index, 1 if self.optional else 0, x, y))
 
+	def write_door_to(self, src):
+		src.write("{")
+		self.write_trigger_to(src)
+		src.write(",0x%x}," % (0xff if self.key_item is None else self.key_item.numeric_id))
 

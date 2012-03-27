@@ -69,7 +69,7 @@ void RoomView::Update(float dt) {
         mode.BG0_drawAsset(
           Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap()->Data()->tileset),
-          gGame.GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
+          gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
         );
     }
   }
@@ -266,7 +266,7 @@ void RoomView::ComputeAnimatedTiles() {
   if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
   const AnimatedTileData* pAnims = gGame.GetMap()->Data()->animatedTiles;
   for(unsigned lid=0; lid<64; ++lid) {
-    uint8_t tid = gGame.GetMap()->Data()->rooms[mRoomId].tiles[lid];
+    uint8_t tid = gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[lid];
     bool is_animated = false;
     for(unsigned i=0; i<tc; ++i) {
       if (pAnims[i].tileId == tid) {
