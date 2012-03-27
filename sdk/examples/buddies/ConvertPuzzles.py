@@ -6,6 +6,12 @@ script to convert json puzzles in CubeBuddies format to a .h file that will be b
 import sys
 import json
 
+def LineToString(line):
+    if line['speaker'] == 0:
+        return '<' + line['text'].replace('\n', '\\n')
+    else:
+        return '>' + line['text'].replace('\n', '\\n')
+
 def BuddyNameToId(name):
     return 'BUDDY_' + name.upper()
 
@@ -22,8 +28,6 @@ def BoolToString(value):
         return 'false'
 
 def main():  
-    print sys.argv[1:]
-    
     try:
         src = sys.argv[1]
         dest = sys.argv[2]
@@ -34,7 +38,10 @@ def main():
     
     with open(src, 'r') as f:
         j = json.load(f)
-        data = j
+        
+        # TODO: version upgrades
+        version = j['version']
+        data = j['puzzles']
         
         with open(dest, 'w') as fout:
             fout.write('void InitializePuzzles()\n')
@@ -73,21 +80,17 @@ def main():
                 fout.write('\tsPuzzles[%d].SetClue("%s");\n' % (i, puzzle['clue']))
                 fout.write('\tsPuzzles[%d].SetCutsceneEnvironment(%d);\n' % (i, puzzle['cutscene_environment']))
                 for line in puzzle['cutscene_start']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextStart("%s");\n' % (i, line.replace('\n', '\\n')))
+                    fout.write('\tsPuzzles[%d].AddCutsceneTextStart("%s");\n' % (i, LineToString(line)))
                 for line in puzzle['cutscene_end']:
-                    fout.write('\tsPuzzles[%d].AddCutsceneTextEnd("%s");\n' % (i, line.replace('\n', '\\n')))
+                    fout.write('\tsPuzzles[%d].AddCutsceneTextEnd("%s");\n' % (i, LineToString(line)))
                 fout.write('\tsPuzzles[%d].SetNumShuffles(%d);\n' % (i, puzzle['shuffles']))
                 for j, buddy in enumerate(puzzle['buddies']):
                     fout.write('\tsPuzzles[%d].AddBuddy(%s);\n' % (i, BuddyNameToId(buddy)))
                     for side in puzzle['buddies'][buddy]['pieces_start']:
                         piece = puzzle['buddies'][buddy]['pieces_start'][side]
-                        if not piece.has_key('solve'):
-                            piece['solve'] = 0
                         fout.write('\tsPuzzles[%d].SetPieceStart(%d, %s, Piece(%s, Piece::%s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part'])))
                     for side in puzzle['buddies'][buddy]['pieces_end']:
                         piece = puzzle['buddies'][buddy]['pieces_end'][side]
-                        if not piece.has_key('solve'):
-                            piece['solve'] = False
                         fout.write('\tsPuzzles[%d].SetPieceEnd(%d, %s, Piece(%s, Piece::%s, %s));\n' % (i, j, SideNameToId(side), BuddyNameToId(piece['buddy']), PartNameToId(piece['part']), BoolToString(piece['solve'])))
                 fout.write('\n')
             
