@@ -268,12 +268,15 @@ void SvmRuntime::svc(uint8_t imm8)
             validate(SvmCpu::reg(r));
             break;
         case 0x1d:  // 0b11101
-            SvmRuntime::fault(F_RESERVED_SVC);
+            if (r)
+                SvmRuntime::fault(F_RESERVED_SVC);
+            else
+                SvmRuntime::breakpoint();
             break;
         case 0x1e:  // 0b11110
             call(SvmCpu::reg(r));
             break;
-        case 0x1f:  // 0b11110
+        case 0x1f:  // 0b11111
             tailcall(SvmCpu::reg(r));
             break;
         default:
@@ -493,4 +496,23 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
         *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
     else
         SvmRuntime::fault(F_LONG_STACK_STORE);
+}
+
+void SvmRuntime::breakpoint()
+{
+    /*
+     * We hit a breakpoint. Point the PC back to the breakpoint
+     * instruction itself, not the next instruction, and
+     * signal a debugger trap.
+     *
+     * It's important that we go directly to SvmCpu here, and not
+     * use our userReg interface. We really don't want to cause a branch,
+     * which can't handle non-bundle-aligned addresses.
+     *
+     * We need to explicitly enter the debugger's message loop here.
+     */
+
+    SvmCpu::setReg(REG_PC, SvmCpu::reg(REG_PC) - 2);
+    SvmDebugger::signal(Svm::Debugger::S_TRAP);
+    SvmDebugger::messageLoop();
 }

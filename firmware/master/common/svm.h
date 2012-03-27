@@ -105,8 +105,8 @@ namespace Debugger {
      * The runtime has storage for up to four hardware breakpoints.
      * Breakpoints are disabled by writing an address of zero.
      */
-    const uint32_t NUM_BREAKPOINTS = 4;
-    const uint32_t ALL_BREAKPOINT_BITS = 0x00f00000;
+    const uint32_t NUM_BREAKPOINTS = 8;
+    const uint32_t ALL_BREAKPOINT_BITS = 0x00ff0000;
 
     /*
      * UNIX-style signal names, used to keep track of the reason why the
@@ -185,7 +185,7 @@ enum FaultCode {
 // Specific instructions
 ///////////////////////////////////////
 
-static const uint16_t BreakpointInstr   = 0xdf80;       // _SYS_breakpoint()
+static const uint16_t BreakpointInstr   = 0xdfe8;
 
 ///////////////////////////////////////
 // 16-bit thumb instruction validators

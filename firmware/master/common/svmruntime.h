@@ -133,6 +133,7 @@ private:
     static void syscall(unsigned num);
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
+    static void breakpoint();
 };
 
 #endif // SVM_RUNTIME_H

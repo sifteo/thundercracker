@@ -165,7 +165,7 @@ void GDBServer::handleClient()
     while (1) {
         fd_set efds, rfds;
         char rxBuffer[4096];
-        struct timeval pollInterval = { 0, 100000 };  // 100ms
+        struct timeval pollInterval = { 0, 20000 };  // 20ms
 
         FD_ZERO(&efds);
         FD_ZERO(&rfds);
@@ -523,9 +523,17 @@ void GDBServer::handlePacket()
         }
 
         case 's': {
-            // Single step
-            step();
-            return;
+            // Single step; run to nextStepAddress().
+            if ((breakpoints[STEP_BREAKPOINT] = nextStepAddress())) {
+                LOG((LOG_PREFIX "Stepping to 0x%08x\n", breakpoints[STEP_BREAKPOINT]));
+                sendBreakpoints(Debugger::argBit(STEP_BREAKPOINT));
+                msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
+                message(1);
+                waitingForStop = true;
+                return;
+            }
+            LOG((LOG_PREFIX "Failed to single-step"));
+            return txPacketString("E01");
         }
 
         case 'Z': {
@@ -591,6 +599,12 @@ void GDBServer::pollForStop()
             waitingForStop = false;
         }
     }
+    
+    // Clear the temporary single-step breakpoint, if necessary
+    if (breakpoints[STEP_BREAKPOINT]) {
+        breakpoints[STEP_BREAKPOINT] = 0;
+        sendBreakpoints(Debugger::argBit(STEP_BREAKPOINT));
+    }
 }
 
 bool GDBServer::readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes)
@@ -655,7 +669,7 @@ uint32_t GDBServer::findRegisterInPacket(uint32_t bitmap, uint32_t svmReg)
     
     if (svmReg < 32)
         for (unsigned i = 0; i <= svmReg; i++)
-            if (bitmap & Svm::Debugger::argBit(i)) {
+            if (bitmap & Debugger::argBit(i)) {
                 if (i == svmReg)
                     return word;
                 else
@@ -694,11 +708,6 @@ int GDBServer::regGDBtoSVM(uint32_t r)
     }
 }
 
-void GDBServer::step()
-{
-    // XXX: implement me
-}
-
 void GDBServer::sendBreakpoints(uint32_t bitmap)
 {
     /*
@@ -708,14 +717,14 @@ void GDBServer::sendBreakpoints(uint32_t bitmap)
 
     if (bitmap) {
         unsigned words = 1;
-        msgCmd[0] = Svm::Debugger::M_SET_BREAKPOINTS | bitmap;
-        bitmap <<= Svm::Debugger::BITMAP_SHIFT;
+        msgCmd[0] = Debugger::M_SET_BREAKPOINTS | bitmap;
+        bitmap <<= Debugger::BITMAP_SHIFT;
 
         while (bitmap) {
             unsigned i = Intrinsic::CLZ(bitmap);
             bitmap &= ~Intrinsic::LZ(i);
-            ASSERT(i < Svm::Debugger::NUM_BREAKPOINTS);
-            ASSERT(words < Svm::Debugger::MAX_CMD_WORDS);
+            ASSERT(i < Debugger::NUM_BREAKPOINTS);
+            ASSERT(words < Debugger::MAX_CMD_WORDS);
             msgCmd[words++] = breakpoints[i];
         }
 
@@ -726,16 +735,16 @@ void GDBServer::sendBreakpoints(uint32_t bitmap)
 void GDBServer::clearBreakpoints()
 {
     memset(breakpoints, 0, sizeof breakpoints);
-    sendBreakpoints(Svm::Debugger::ALL_BREAKPOINT_BITS);
+    sendBreakpoints(Debugger::ALL_BREAKPOINT_BITS);
 }
 
 bool GDBServer::insertBreakpoint(uint32_t addr)
 {
     // Find an unused breakpoint slot
-    for (unsigned i = 0; i < Svm::Debugger::NUM_BREAKPOINTS; ++i)
+    for (unsigned i = 0; i < GDB_BREAKPOINTS; ++i)
         if (breakpoints[i] == 0) {
             breakpoints[i] = addr;
-            sendBreakpoints(Svm::Debugger::argBit(i));
+            sendBreakpoints(Debugger::argBit(i));
             return true;
         }
     return false;
@@ -745,10 +754,44 @@ void GDBServer::removeBreakpoint(uint32_t addr)
 {
     // Remove an existing breakpoint.
     uint32_t bitmap = 0;
-    for (unsigned i = 0; i < Svm::Debugger::NUM_BREAKPOINTS; ++i)
+    for (unsigned i = 0; i < GDB_BREAKPOINTS; ++i)
         if (breakpoints[i] == addr) {
             breakpoints[i] = 0;
-            bitmap |= Svm::Debugger::argBit(i);
+            bitmap |= Debugger::argBit(i);
         }
     sendBreakpoints(bitmap);
+}
+
+uint32_t GDBServer::nextStepAddress()
+{
+    /*
+     * Determine the VA we're running until, in order to single-step.
+     * The instruction currently pointed to by PC is the one we want to skip,
+     * so this function needs to figure out where flow control is going next.
+     *
+     * If we really totally fail, returns zero.
+     */
+
+    // Read the current PC
+    msgCmd[0] = Debugger::M_READ_REGISTERS | Debugger::argBit(REG_PC);
+    if (message(1) < 1)
+        return 0;
+    uint32_t pc = msgReply[0];
+
+    // Read the next instruction
+    uint16_t instr;
+    if (!readMemory(pc, (uint8_t*) &instr, sizeof instr))
+        return 0;
+
+    if (instructionSize(instr) == InstrBits32) {
+        // A 32-bit instruction. No valid 32-bit instructions modify control flow.
+        return pc + 4;
+    }
+
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
+        // Unconditional branch. Calculate the target address.
+    }
+    
+    // All other valid 16-bit instructions do not modify control flow.
+    return pc + 2;
 }
