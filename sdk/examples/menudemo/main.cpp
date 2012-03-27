@@ -12,7 +12,7 @@ using namespace Sifteo;
 
 // Static Globals
 static Cube gCubes[NUM_CUBES];
-static struct MenuItem gItems[] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {NULL, NULL} };
+static struct MenuItem gItems[] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {&IconChroma, NULL}, {NULL, NULL} };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
 static void begin() {
@@ -72,6 +72,11 @@ void main() {
 					// Game Buddy is not clickable, so don't do anything on press
 					if (e.item >= 3) {
 						m.preventDefault();
+					}
+					if (e.item == 4) {
+						static unsigned randomIcon = 0;
+						randomIcon = (randomIcon + 1) % 4;
+						m.replaceIcon(e.item, gItems[randomIcon].icon);
 					}
 					break;
 				case MENU_EXIT:
