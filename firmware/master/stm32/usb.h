@@ -14,6 +14,9 @@ public:
     static const uint16_t VendorID = 0x22FA;
     static const uint16_t ProductID = 0x0105;
 
+    static const uint8_t InEpAddr = 0x81;
+    static const uint8_t OutEpAddr = 0x01;
+
     static void init();
 
     static void handleINData(void *p);

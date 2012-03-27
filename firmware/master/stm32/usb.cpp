@@ -70,7 +70,7 @@ static const struct {
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
-        0x81,                               // bEndpointAddress
+        UsbDevice::InEpAddr,                // bEndpointAddress
         Usb::EpAttrBulk,                    // bmAttributes
         64,                                 // wMaxPacketSize
         1,                                  // bInterval
@@ -79,7 +79,7 @@ static const struct {
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
-        0x01,                               // bEndpointAddress
+        UsbDevice::OutEpAddr,               // bEndpointAddress
         Usb::EpAttrBulk,                    // bmAttributes
         64,                                 // wMaxPacketSize
         1,                                  // bInterval

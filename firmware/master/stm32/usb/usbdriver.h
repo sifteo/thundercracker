@@ -19,8 +19,8 @@ public:
     static void onConfigComplete(uint16_t wValue);
     static int controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
 
-    static void inEndpointCallback(uint8_t ep, Usb::Transaction txn);
-    static void outEndpointCallback(uint8_t ep, Usb::Transaction txn);
+    static void inEndpointCallback(uint8_t ep);
+    static void outEndpointCallback(uint8_t ep);
 
 };
 

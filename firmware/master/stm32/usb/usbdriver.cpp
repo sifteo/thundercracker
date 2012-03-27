@@ -1,44 +1,47 @@
 #include "usb/usbdriver.h"
-#include "usb/thunderdriver.h"
+#include "usb/usbhardware.h"
+#include "usb.h"
 
-static ThunderDriver driver;    // specify desired driver here
+using namespace Usb;
 
 void UsbDriver::handleReset()
 {
-    driver.handleReset();
 }
 
 void UsbDriver::handleSuspend()
 {
-    driver.handleSuspend();
 }
 
 void UsbDriver::handleResume()
 {
-    driver.handleResume();
 }
 
 void UsbDriver::handleStartOfFrame()
 {
-    driver.handleStartOfFrame();
 }
 
+/*
+ * Our configuration has been set, we're now ready to enable the endpoints
+ * for the selected configuration - we only ever have one for this device.
+ */
 void UsbDriver::onConfigComplete(uint16_t wValue)
 {
-    driver.onConfigComplete(wValue);
+    UsbHardware::epSetup(UsbDevice::InEpAddr, EpAttrBulk, 64);
+    UsbHardware::epSetup(UsbDevice::OutEpAddr, EpAttrBulk, 64);
 }
 
+/*
+ * We have no specific control requests that we need to handle for this device.
+ */
 int UsbDriver::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 {
-    return driver.controlRequest(req, buf, len);
+    return 0;
 }
 
-void UsbDriver::inEndpointCallback(uint8_t ep, Usb::Transaction txn)
+void UsbDriver::inEndpointCallback(uint8_t ep)
 {
-    driver.inEndpointCallback(ep, txn);
 }
 
-void UsbDriver::outEndpointCallback(uint8_t ep, Usb::Transaction txn)
+void UsbDriver::outEndpointCallback(uint8_t ep)
 {
-    driver.outEndpointCallback(ep, txn);
 }

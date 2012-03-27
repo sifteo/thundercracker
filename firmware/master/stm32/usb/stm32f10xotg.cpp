@@ -302,7 +302,7 @@ void Stm32f10xOtg::isr()
                 UsbControl::controlRequest(ep, txn);
             }
             else {
-                UsbDriver::inEndpointCallback(ep, txn);
+                UsbDriver::outEndpointCallback(ep);
             }
         }
     }
@@ -320,7 +320,7 @@ void Stm32f10xOtg::isr()
                 volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
                 // only really interested in XFRC to indicate TX complete
                 if (ep.DIEPINT & 0x1) {
-                    UsbDriver::inEndpointCallback(i, TransactionIn);
+                    UsbDriver::inEndpointCallback(i);
                     ep.DIEPINT = 0x1;
                 }
             }
