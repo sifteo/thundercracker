@@ -46,7 +46,9 @@ Puzzle::Puzzle(
     unsigned int book,
     const char *title,
     const char *clue,
+    const BuddyId cutsceneBuddiesStart[], unsigned int numCutsceneBuddiesStart,
     const CutsceneLine cutsceneLineStart[], unsigned int numCutsceneLineStart,
+    const BuddyId cutsceneBuddiesEnd[], unsigned int numCutsceneBuddiesEnd,
     const CutsceneLine cutsceneLineEnd[], unsigned int numCutsceneLineEnd,
     unsigned int cutsceneEnvironment,
     const BuddyId buddies[], unsigned int numBuddies,
@@ -56,9 +58,13 @@ Puzzle::Puzzle(
     : mBook(book)
     , mTitle(title)
     , mClue(clue)
+    , mCutsceneBuddiesStart()
+    , mCutsceneBuddiesEnd()
     , mCutsceneLineStart()
     , mCutsceneLineEnd()
     , mBuddies()
+    , mNumCutsceneBuddiesStart(numCutsceneBuddiesStart)
+    , mNumCutsceneBuddiesEnd(numCutsceneBuddiesEnd)
     , mNumCutsceneLineStart(numCutsceneLineStart)
     , mNumCutsceneLineEnd(numCutsceneLineEnd)
     , mCutsceneEnvironemnt(cutsceneEnvironment)
@@ -67,25 +73,31 @@ Puzzle::Puzzle(
     , mPiecesStart()
     , mPiecesEnd()
 {
-    ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
+    ASSERT(mNumCutsceneBuddiesStart <= arraysize(mCutsceneBuddiesStart));
+    for (unsigned int i = 0; i < mNumCutsceneBuddiesStart; ++i)
+    {
+        mCutsceneBuddiesStart[i] = cutsceneBuddiesStart[i];
+    }
+    
+    ASSERT(mNumCutsceneBuddiesEnd <= arraysize(mCutsceneBuddiesEnd));
+    for (unsigned int i = 0; i < mNumCutsceneBuddiesEnd; ++i)
+    {
+        mCutsceneBuddiesEnd[i] = cutsceneBuddiesEnd[i];
+    }
+    
+    ASSERT(mNumCutsceneLineStart <= arraysize(mCutsceneLineStart));
     for (unsigned int i = 0; i < mNumCutsceneLineStart; ++i)
     {
         mCutsceneLineStart[i] = cutsceneLineStart[i];
     }
     
-    ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
-    for (unsigned int i = 0; i < mNumCutsceneLineStart; ++i)
-    {
-        mCutsceneLineStart[i] = cutsceneLineStart[i];
-    }
-    
-    ASSERT(mNumCutsceneLineEnd < arraysize(mCutsceneLineEnd));
+    ASSERT(mNumCutsceneLineEnd <= arraysize(mCutsceneLineEnd));
     for (unsigned int i = 0; i < mNumCutsceneLineEnd; ++i)
     {
         mCutsceneLineEnd[i] = cutsceneLineEnd[i];
     }
     
-    ASSERT(mNumBuddies < arraysize(mBuddies));
+    ASSERT(mNumBuddies <= arraysize(mBuddies));
     for (unsigned int i = 0; i < mNumBuddies; ++i)
     {
         mBuddies[i] = buddies[i];
@@ -193,9 +205,36 @@ void Puzzle::SetClue(const char *clue)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Puzzle::AddCutsceneBuddyStart(BuddyId buddyId)
+{
+    ASSERT(mNumCutsceneBuddiesStart < arraysize(mCutsceneBuddiesStart));
+    mCutsceneBuddiesStart[mNumCutsceneBuddiesStart++] = buddyId;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BuddyId Puzzle::GetCutsceneBuddyStart(unsigned int buddyIndex) const
+{
+    ASSERT(buddyIndex < mNumCutsceneBuddiesStart);
+    return BuddyId(mCutsceneBuddiesStart[buddyIndex]);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Puzzle::GetNumCutsceneBuddiesStart() const
+{
+    return mNumCutsceneBuddiesStart;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Puzzle::AddCutsceneLineStart(const CutsceneLine &line)
 {
     ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
+    ASSERT(line.mSpeaker < 2);
     ASSERT(line.mText != NULL);
     mCutsceneLineStart[mNumCutsceneLineStart++] = line;
 }
@@ -215,6 +254,32 @@ const CutsceneLine &Puzzle::GetCutsceneLineStart(unsigned int cutsceneIndex) con
 unsigned int Puzzle::GetNumCutsceneLineStart() const
 {
     return mNumCutsceneLineStart;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Puzzle::AddCutsceneBuddyEnd(BuddyId buddyId)
+{
+    ASSERT(mNumCutsceneBuddiesEnd < arraysize(mCutsceneBuddiesEnd));
+    mCutsceneBuddiesEnd[mNumCutsceneBuddiesEnd++] = buddyId;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BuddyId Puzzle::GetCutsceneBuddyEnd(unsigned int buddyIndex) const
+{
+    ASSERT(buddyIndex < mNumCutsceneBuddiesEnd);
+    return BuddyId(mCutsceneBuddiesEnd[buddyIndex]);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Puzzle::GetNumCutsceneBuddiesEnd() const
+{
+    return mNumCutsceneBuddiesEnd;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

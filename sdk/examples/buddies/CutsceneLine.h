@@ -29,26 +29,18 @@ struct CutsceneLine
         NUM_VIEWS
     };
     
-    enum Position
-    {
-        POSITION_LEFT,
-        POSITION_RIGHT,
-        
-        NUM_POSITIONS,
-    };
-    
     CutsceneLine(
+        unsigned int speaker = 0,
         View view = VIEW_RIGHT,
-        Position position = POSITION_LEFT,
         const char *text = NULL)
-        : mView(view)
-        , mPosition(position)
+        : mSpeaker(speaker)
+        , mView(view)
         , mText(text)
     {
     }
     
+    unsigned int mSpeaker;
     View mView;
-    Position mPosition;
     const char *mText;
 };
 

@@ -65,22 +65,30 @@ def ConvertPuzzles(src, dest):
                 fout.write(sep)
                 fout.write('\n')
                 
+                # Cutscene Buddies (Start)
+                buddyIds = [BuddyToId(b) for b in puzzle['cutscene_start']['buddies']]
+                fout.write('const BuddyId kCutsceneBuddiesStart%d[] = { %s };\n' % (i, ', '.join(buddyIds)))
+                
                 # Cutscene Lines (Start)
                 fout.write('const CutsceneLine kCutsceneLinesStart%d[] =\n' % i)
                 fout.write('{\n')
-                for line in puzzle['cutscene_start']:
+                for line in puzzle['cutscene_start']['lines']:
                     text = line['text'].replace('\n', '\\n')
-                    vars = (Id(line, 'view'), Id(line, 'position'), text)
-                    fout.write('    CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"),\n' % vars)
+                    vars = (line['speaker'], Id(line, 'view'), text)
+                    fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
                 fout.write('};\n')
+                
+                # Cutscene Buddies (End)
+                buddyIds = [BuddyToId(b) for b in puzzle['cutscene_end']['buddies']]
+                fout.write('const BuddyId kCutsceneBuddiesEnd%d[] = { %s };\n' % (i, ', '.join(buddyIds)))
                 
                 # Cutscene Lines (End)
                 fout.write('const CutsceneLine kCutsceneLinesEnd%d[] =\n' % i)
                 fout.write('{\n')
-                for line in puzzle['cutscene_end']:
+                for line in puzzle['cutscene_end']['lines']:
                     text = line['text'].replace('\n', '\\n')
-                    vars = (Id(line, 'view'), Id(line, 'position'), text)
-                    fout.write('    CutsceneLine(CutsceneLine::%s, CutsceneLine::%s, "%s"),\n' % vars)
+                    vars = (line['speaker'], Id(line, 'view'), text)
+                    fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
                 fout.write('};\n')
                 
                 # Buddy IDs
@@ -94,7 +102,6 @@ def ConvertPuzzles(src, dest):
                 for j, buddy in enumerate(buddies):
                     fout.write('    {\n')
                     for side in ['top', 'left', 'bottom', 'right']:
-                        print side
                         piece = puzzle['buddies'][buddy]['pieces_start'][side]
                         vars = (BuddyToId(piece['buddy']), Id(piece, 'part'))
                         fout.write('        Piece(%s, Piece::%s),\n' % vars)
@@ -128,7 +135,9 @@ def ConvertPuzzles(src, dest):
                 fout.write('        %d,\n' % puzzle['book'])
                 fout.write('        "%s",\n' % puzzle['title'])
                 fout.write('        "%s",\n' % puzzle['clue'])
+                fout.write('        kCutsceneBuddiesStart%d, arraysize(kCutsceneBuddiesStart%d),\n' % (i, i))
                 fout.write('        kCutsceneLinesStart%d, arraysize(kCutsceneLinesStart%d),\n' % (i, i))
+                fout.write('        kCutsceneBuddiesEnd%d, arraysize(kCutsceneBuddiesEnd%d),\n' % (i, i))
                 fout.write('        kCutsceneLinesEnd%d, arraysize(kCutsceneLinesEnd%d),\n' % (i, i))
                 fout.write('        %d,\n' % puzzle['cutscene_environment'])
                 fout.write('        kBuddies%d, arraysize(kBuddies%d),\n' % (i, i))
@@ -143,8 +152,9 @@ if __name__ == "__main__":
     try:
         src = sys.argv[1]
         dest = sys.argv[2]
-        ConvertPuzzles(src, dest)
     except:
         print("Usage: python %s <json filename> <dest filename>" % __file__)
-        print args
         exit(1)
+    
+    ConvertPuzzles(sys.argv[1], sys.argv[2])
+    

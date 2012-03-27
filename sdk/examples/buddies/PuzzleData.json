@@ -6,16 +6,22 @@
       "title": "Big Mouth",
       "clue": "Swap Mouths",
       "cutscene_environment": 0,
-      "cutscene_start": [
-        { "view" : "right", "position" : "left",  "text" : "Gimme a kiss!" },
-        { "view" : "left",  "position" : "right", "text" : "Can I use your\nmouth?" },
-        { "view" : "front", "position" : "left",  "text" : "..." },
-        { "view" : "right", "position" : "left",  "text" : "OK!" }
-      ],
-      "cutscene_end": [
-        { "view" : "right", "position" : "left",  "text" : "Muuuahhh!" },
-        { "view" : "left",  "position" : "right", "text" : "Hot n' heavy!" }
-      ],
+      "cutscene_start": {
+        "buddies" : ["gluv", "suli"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "Gimme a kiss!" },
+          { "speaker" : 1, "view" : "left",  "text" : "Can I use your\nmouth?" },
+          { "speaker" : 0, "view" : "front", "text" : "..." },
+          { "speaker" : 0, "view" : "right", "text" : "OK!" }
+        ]
+      },
+      "cutscene_end": {
+        "buddies" : ["gluv", "suli"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "Muuuahhh!" },
+          { "speaker" : 1, "view" : "left",  "text" : "Hot n' heavy!" }
+        ]
+      },
       "shuffles": 0,
       "buddies": {
         "gluv": {
@@ -53,12 +59,18 @@
       "title": "All Mixed Up",
       "clue": "Unscramble",
       "cutscene_environment": 0,
-      "cutscene_start": [
-        { "view" : "right", "position" : "left",  "text" : "Let's get\nCRAZY!" }
-      ],
-      "cutscene_end": [
-        { "view" : "left",  "position" : "right", "text" : "My head hurts." }
-      ],
+      "cutscene_start": {
+        "buddies" : ["suli", "rike"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "Let's get\nCRAZY!" }
+        ]
+      },
+      "cutscene_end": {
+        "buddies" : ["rike", "suli"],
+        "lines" : [
+          { "speaker" : 1, "view" : "left",  "text" : "My head hurts." }
+        ]
+      },
       "shuffles": 3,
       "buddies": {
         "suli": {
@@ -96,12 +108,18 @@
       "title": "Bad Hair Day",
       "clue": "Swap Hair",
       "cutscene_environment": 0,
-      "cutscene_start": [
-        { "view" : "right", "position" : "left", "text" : "How do I get\ncool hair\nlike you?" }
-      ],
-      "cutscene_end": [
-        { "view" : "right", "position" : "left", "text" : "Now I look\nlike Kelly!" }
-      ],
+      "cutscene_start": {
+        "buddies" : ["boff", "zorg"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "How do I get\ncool hair\nlike you?" }
+        ]
+      },
+      "cutscene_end": {
+        "buddies" : ["boff", "zorg"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "Now I look\nlike Kelly!" }
+        ]
+      },
       "shuffles": 0,
       "buddies": {
         "boff": {
@@ -139,12 +157,18 @@
       "title": "Private Eyes",
       "clue": "Swap Eyes",
       "cutscene_environment": 0,
-      "cutscene_start": [
-        { "view" : "right", "position" : "left", "text" : "See the world\nfrom my eyes!" }
-      ],
-      "cutscene_end": [
-        { "view" : "right", "position" : "left", "text" : "That's much\nbetter." }
-      ],
+      "cutscene_start": {
+        "buddies" : ["maro", "gluv"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "See the world\nfrom my eyes!" }
+        ]
+      },
+      "cutscene_end": {
+        "buddies" : ["maro", "gluv"],
+        "lines" : [
+          { "speaker" : 0, "view" : "right", "text" : "That's much\nbetter." }
+        ]
+      },
       "shuffles": 0,
       "buddies": {
         "maro": {

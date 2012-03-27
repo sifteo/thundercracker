@@ -335,7 +335,7 @@ void DrawCutsceneStory(
     ASSERT(line.mText != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    if (line.mPosition == CutsceneLine::POSITION_LEFT)
+    if (line.mSpeaker == 0)
     {
         // Background
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
@@ -355,7 +355,7 @@ void DrawCutsceneStory(
         }
         cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
     }
-    else if (line.mPosition == CutsceneLine::POSITION_RIGHT)
+    else if (line.mSpeaker == 1)
     {
         // Background
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
@@ -2434,8 +2434,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 DrawCutsceneStory(
                     cubeWrapper,
                     GetPuzzle(mStoryPuzzleIndex).GetCutsceneLineStart(mStoryCutsceneIndex),
-                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
-                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneBuddyStart(0),
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneBuddyStart(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }
@@ -2574,8 +2574,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 DrawCutsceneStory(
                     cubeWrapper,
                     GetPuzzle(mStoryPuzzleIndex).GetCutsceneLineEnd(mStoryCutsceneIndex),
-                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
-                    GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneBuddyEnd(0),
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneBuddyEnd(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }
