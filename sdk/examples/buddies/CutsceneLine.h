@@ -8,6 +8,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "BuddyId.h"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 namespace Buddies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15,13 +20,35 @@ namespace Buddies {
 
 struct CutsceneLine
 {
-    CutsceneLine(unsigned int speaker = 0, const char *text = NULL)
-        : mSpeaker(speaker)
+    enum View
+    {
+        VIEW_RIGHT = 0U,
+        VIEW_LEFT,
+        VIEW_FRONT,
+        
+        NUM_VIEWS
+    };
+    
+    enum Position
+    {
+        POSITION_LEFT,
+        POSITION_RIGHT,
+        
+        NUM_POSITIONS,
+    };
+    
+    CutsceneLine(
+        View view = VIEW_RIGHT,
+        Position position = POSITION_LEFT,
+        const char *text = NULL)
+        : mView(view)
+        , mPosition(position)
         , mText(text)
     {
     }
     
-    unsigned int mSpeaker : 1;
+    View mView;
+    Position mPosition;
     const char *mText;
 };
 

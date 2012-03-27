@@ -36,18 +36,6 @@ Puzzle::Puzzle()
     , mPiecesStart()
     , mPiecesEnd()
 {
-    for (unsigned int i = 0; i < arraysize(mCutsceneLineStart); ++i)
-    {
-        mCutsceneLineStart[i].mSpeaker = 0;
-        mCutsceneLineStart[i].mText = NULL;
-    }
-    
-    for (unsigned int i = 0; i < arraysize(mCutsceneLineEnd); ++i)
-    {
-        mCutsceneLineEnd[i].mSpeaker = 0;
-        mCutsceneLineEnd[i].mText = NULL;
-    }
-    
     for (unsigned int i = 0; i < arraysize(mBuddies); ++i)
     {
         mBuddies[i] = 0;
@@ -64,15 +52,13 @@ void Puzzle::Reset()
     
     for (unsigned int i = 0; i < arraysize(mCutsceneLineStart); ++i)
     {
-        mCutsceneLineStart[i].mSpeaker = 0;
-        mCutsceneLineStart[i].mText = NULL;
+        mCutsceneLineStart[i] = CutsceneLine();
     }
     mNumCutsceneLineStart = 0;
     
     for (unsigned int i = 0; i < arraysize(mCutsceneLineEnd); ++i)
     {
-        mCutsceneLineEnd[i].mSpeaker = 0;
-        mCutsceneLineEnd[i].mText = NULL;
+        mCutsceneLineEnd[i] = CutsceneLine();
     }
     mNumCutsceneLineEnd = 0;
     
@@ -151,7 +137,6 @@ void Puzzle::SetClue(const char *clue)
 void Puzzle::AddCutsceneLineStart(const CutsceneLine &line)
 {
     ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
-    ASSERT(line.mSpeaker < 2);
     ASSERT(line.mText != NULL);
     mCutsceneLineStart[mNumCutsceneLineStart++] = line;
 }
@@ -179,7 +164,6 @@ unsigned int Puzzle::GetNumCutsceneLineStart() const
 void Puzzle::AddCutsceneLineEnd(const CutsceneLine &line)
 {
     ASSERT(mNumCutsceneLineEnd < arraysize(mCutsceneLineEnd));
-    ASSERT(line.mSpeaker < 2);
     ASSERT(line.mText != NULL);
     mCutsceneLineEnd[mNumCutsceneLineEnd++] = line;
 }

@@ -335,19 +335,49 @@ void DrawCutsceneStory(
     ASSERT(line.mText != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
-    cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
-    
-    if (line.mSpeaker == 0)
+    if (line.mPosition == CutsceneLine::POSITION_LEFT)
     {
+        // Background
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
+        
+        // Sprites
+        if (line.mView == CutsceneLine::VIEW_RIGHT)
+        {
+            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+        }
+        else if (line.mView == CutsceneLine::VIEW_LEFT)
+        {
+            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId0]);
+        }
+        else if (line.mView == CutsceneLine::VIEW_FRONT)
+        {
+            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId0]);
+        }
+        cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
     }
-    else
+    else if (line.mPosition == CutsceneLine::POSITION_RIGHT)
     {
+        // Background
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
+        
+        // Sprites
+        cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+        if (line.mView == CutsceneLine::VIEW_RIGHT)
+        {
+            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+        }
+        else if (line.mView == CutsceneLine::VIEW_LEFT)
+        {
+            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+        }
+        else if (line.mView == CutsceneLine::VIEW_FRONT)
+        {
+            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+        }
     }
+    
+    // Text
+    cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
