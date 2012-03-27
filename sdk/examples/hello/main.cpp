@@ -9,6 +9,18 @@
 
 using namespace Sifteo;
 
+void main()
+{
+    const CubeID myCube(0);
+    static VideoBuffer vid;
+    
+    myCube.enable();
+    vid.attach(myCube);
+    vid.setMode(vid.BG0_ROM);
+}
+
+
+#if 0
 
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
@@ -106,3 +118,5 @@ void main()
         System::paint();
     }
 }
+
+#endif

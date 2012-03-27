@@ -288,6 +288,26 @@ struct _SYSVideoBuffer {
     uint32_t needPaint;         /// INOUT  Repaint trigger
 };
 
+/**
+ * In general, the system likes working with raw _SYSVideoBuffers: but in
+ * userspace, it's very common to want to know both the _SYSVideoBuffer and
+ * the ID of the cube it's currently attached with. For these cases, we
+ * provide a standardized memory layout.
+ */
+
+struct _SYSAttachedVideoBuffer {
+    _SYSVideoBuffer vbuf;
+    _SYSCubeID cube;
+};
+
+/**
+ * Tiles in the _SYSVideoBuffer are typically encoded in 7:7 format, in
+ * which a 14-bit tile ID is packed into the upper 7 bits of each byte
+ * in a 16-bit word.
+ */
+
+#define _SYS_TILE77(_idx)   ((((_idx) << 2) & 0xFE00) | \
+                             (((_idx) << 1) & 0x00FE))
 
 /*
  * Audio handles

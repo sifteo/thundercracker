@@ -99,7 +99,6 @@ struct CubeID {
      * When a slot is enabled, the system will be trying to communicate with
      * this cube over the radio.
      */
-
     void enable() const {
         _SYS_enableCubes(bit());
     }
@@ -108,7 +107,6 @@ struct CubeID {
      * Take the cube slot represented by this CubeID out of the "enabled" state.
      * The system will no longer be in radio contact with this cube.
      */
-
     void disable() {
         _SYS_disableCubes(bit());
     }
@@ -116,9 +114,8 @@ struct CubeID {
     /**
      * Return the physical accelerometer state, as a signed byte-vector.
      */
-
     Byte2 getAccel() const {
-        _SYSAccelState state = _SYS_getAccel(sys);
+        _SYSAccelState state = _SYS_getAccel(*this);
         return Vec2(state.x, state.y);
     }
 
@@ -127,9 +124,8 @@ struct CubeID {
      * by a built-in filter. Tilt is a vector, where each component is
      * in the set (-1, 0, +1).
      */
-
     Byte2 getTilt() const {
-        _SYSTiltState tilt = _SYS_getTilt(sys);
+        _SYSTiltState tilt = _SYS_getTilt(*this);
         return Vec2(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
     }
 
@@ -137,21 +133,15 @@ struct CubeID {
      * Is this cube being touched right now? Return the current state
      * of the touch sensor.
      */
-
     bool isTouching() const {
-        return _SYS_isTouching(sys);
+        return _SYS_isTouching(*this);
     }
     
     /**
      * Is a shake event being detected on this cube?
      */
-
     bool isShaking() const {
-        return _SYS_SHAKING == _SYS_getShake(sys);
-    }
-
-    bool isShaking() const {
-      return _SYS_getShake(id()) == SHAKING;
+        return _SYS_SHAKING == _SYS_getShake(*this);
     }
 
     /**
@@ -162,9 +152,17 @@ struct CubeID {
      * nearly instantly. However, if the HWID is not yet known, this may block
      * while we wait on a radio round-trip to discover the HWID.
      */
-
     uint64_t getHWID() const {
-        return _SYS_getCubeHWID(sys);
+        return _SYS_getCubeHWID(*this);
+    }
+
+    /**
+     * Detach any video buffer which was previously attached to this
+     * cube. After this point, we'll refrain from sending any video updates
+     * to this cube. The cube will retain its existing screen contents.
+     */
+    void detachVideoBuffer() const {
+        _SYS_setVideoBuffer(*this, 0);
     }
 };
 
@@ -181,14 +179,20 @@ struct Neighborhood {
     /**
      * Default constructor. Leaves the Neighborhood uninitialized.
      */
-
     Neighborhood() {}
     
     /**
      * Initialize a Neighborhood from a low-level _SYSNeighborState object.
      */
-
     Neighborhood(_SYSNeighborState sys) : sys(sys) {}
+
+    /**
+     * Implicit conversion to _SYSNeighborState,
+     * for use in low-level system calls.
+     */
+    operator _SYSNeighborState& () {
+        return sys;
+    }
 
     /**
      * Get a Neighborhood representing the physical neighbors for a cube.
@@ -197,7 +201,6 @@ struct Neighborhood {
      * hardware, not to the current screen orientation. (A CubeID object has
      * no way of knowing what the current screen orientation is.)
      */
-
     Neighborhood(CubeID cube) {
         _SYS_getNeighbors(cube, &sys);
     }
@@ -206,7 +209,6 @@ struct Neighborhood {
      * Return the neighbor at a particular side.
      * If no neighbor exists at that side, we return an undefined CubeID.
      */
-
     CubeID neighborAt(Side side) const {
         ASSERT(side >= 0 && side < NUM_SIDES);
         return sys.sides[side];
@@ -216,17 +218,15 @@ struct Neighborhood {
      * Is there a neighbor at this side? This is equivalent to calling
      * isDefined() on the result of neighborAt().
      */
-
     bool hasNeighborAt(Side side) const {
         return neighborAt(side).isDefined();
     }
-    
+
     /**
      * If the specified cube is part of this neighborhood (i.e. it was
      * neighbored to the cube that this Neighborhood was created for),
      * return the Side where that cube is found. Otherwise, returns NO_SIDE.
      */
-
     Side sideOf(CubeID cube) const {
         for (Side side = (Side)0; side < NUM_SIDES; ++side)
             if (sys.sides[side] == cube)
