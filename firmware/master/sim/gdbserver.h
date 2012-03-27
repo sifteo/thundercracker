@@ -35,6 +35,7 @@ private:
     int clientFD;
     int packetState;
     bool running;
+    bool waitingForStop;
 
     unsigned txBufferLen;
     unsigned rxPacketLen;
@@ -46,11 +47,20 @@ private:
     uint32_t msgCmd[Svm::Debugger::MAX_CMD_WORDS];
     uint32_t msgReply[Svm::Debugger::MAX_REPLY_WORDS];
 
+    static const unsigned GDB_BREAKPOINTS = Svm::Debugger::NUM_BREAKPOINTS;
+    uint32_t breakpoints[GDB_BREAKPOINTS];
+
+    // Register format
+    static const unsigned NUM_GDB_REGISTERS = 26;
+    int regGDBtoSVM(uint32_t r);
+    static uint32_t findRegisterInPacket(uint32_t bitmap, uint32_t svmReg);
+
     static void threadEntry(void *param);
     void threadMain();
     void eventLoop();
     void handleClient();
     void resetPacketState();
+    static void setNonBlock(int fd);
     void rxBytes(char *bytes, int len);
     
     bool packetStartsWith(const char *str);
@@ -65,13 +75,24 @@ private:
     void txPacketString(const char *str);
     void txHexByte(uint8_t byte);
     void txHexWord(uint32_t word);
+    
+    uint8_t rxByte(uint32_t &offset);
+    uint8_t rxHexByte(uint32_t &offset);
+    uint32_t rxHexWord(uint32_t &offset);
 
     static char digitToHex(int i);
     static int digitFromHex(char c);
     
     void debugBreak();
-    void replyToRegisterRead();
+    void pollForStop();
+
+    void sendBreakpoints(uint32_t bitmap);
+    void clearBreakpoints();
+    bool insertBreakpoint(uint32_t addr);
+    void removeBreakpoint(uint32_t addr);
+
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
+    bool writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset);
 };
 
 #endif  // GDB_SERVER_H

@@ -7,6 +7,7 @@
 #include "flash.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
+#include "svmdebugger.h"
 #include <string.h>
 
 #ifdef SIFTEO_SIMULATOR
@@ -52,14 +53,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
         ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_BLOCKS]);
         FLASHLAYER_STATS_ONLY(gFlashStats.blockMiss++);
 
-        recycled->validCodeBytes = 0;
-        recycled->address = blockAddr;
-
-        uint8_t *data = recycled->getData();
-        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
-        ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
-
-        Flash::read(blockAddr, data, BLOCK_SIZE);
+        recycled->load(blockAddr);
         ref.set(recycled);
     }
     
@@ -179,6 +173,46 @@ FlashBlock *FlashBlock::recycleBlock()
     } while (availableBlocks);
 
     return bestBlock;
+}
+
+void FlashBlock::load(uint32_t blockAddr)
+{
+    /*
+     * Handle a cache miss or invalidation. Load this block with new data
+     * from bockAddr.
+     */
+
+    ASSERT((blockAddr & (BLOCK_SIZE - 1)) == 0);
+    validCodeBytes = 0;
+    address = blockAddr;
+
+    uint8_t *data = getData();
+    ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
+    ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
+
+    Flash::read(blockAddr, data, BLOCK_SIZE);
+    SvmDebugger::patchFlashBlock(blockAddr, data);
+}
+
+void FlashBlock::invalidate()
+{
+    /*
+     * Invalidate the whole cache. This is a pretty heavyweight operation
+     * clearly, and we plan to only do this for debugging, or when writing
+     * to flash.
+     *
+     * Any blocks with no reference are simply evicted from the cache without
+     * replacement. Blocks with a reference are reloaded in-place.
+     */
+
+    for (unsigned idx = 0; idx < NUM_BLOCKS; idx++) {
+        FlashBlock *block = &instances[idx];
+
+        if (block->refCount)
+            block->load(block->address);
+        else
+            block->address = INVALID_ADDRESS;
+    }
 }
 
 void FlashBlock::preload(uint32_t blockAddr)

@@ -11,6 +11,7 @@
 #include <sifteo/abi.h>
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
+#include "svmdebugger.h"
 #include "svmruntime.h"
 #include "radio.h"
 #include "cubeslots.h"
@@ -19,17 +20,13 @@
 
 extern "C" {
 
-void _SYS_breakpoint() {
-    // This task executes on our way up from the syscall.
-    Tasks::setPending(Tasks::DebuggerBreakpoint);
-}
-
 void _SYS_abort() {
     SvmRuntime::fault(Svm::F_ABORT);
 }
 
 void _SYS_exit(void)
 {
+    SvmDebugger::signal(Svm::Debugger::S_TERM);
     SvmRuntime::exit();
 }
 
@@ -135,6 +132,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 SvmDebugPipe::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
                 if (bytes < chunkSize)
                     return;
+                v1 += bytes;
             }
         }
 
@@ -155,6 +153,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 }
                 SvmDebugPipe::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
                 remaining -= chunkSize;
+                v1 += chunkSize;
             }
             return;
         }
