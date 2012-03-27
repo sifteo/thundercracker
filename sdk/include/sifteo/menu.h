@@ -638,7 +638,7 @@ void Menu::transToFinish() {
 		overlay.Flush();
 	}
 	finishIteration = 0;
-	paintSync();
+	shouldPaintSync = true;
 	currentEvent.type = MENU_PREPAINT;
 }
 
