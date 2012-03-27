@@ -34,6 +34,7 @@ public:
     static int getPuzzleIndex();
     static bool doScrambleCurrentWord();
     static unsigned char getPuzzleMetaLetterIndex();
+    static bool currentIsMetaPuzzle();
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:

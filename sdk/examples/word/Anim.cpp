@@ -291,7 +291,7 @@ bool animPaint(AnimType animT,
         unsigned fontFrame = font.frames + 1;
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
-        bool metaLetterTile = false;
+        bool metaLetterTile = params;
         if (params && params->mLetters && params->mLetters[0] && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
@@ -301,7 +301,7 @@ bool animPaint(AnimType animT,
                 blankLetterTile = !drawLetterOnTile;
                 metaLetterTile =
                         !blankLetterTile &&
-                        params && params->mMetaLetterIndex == (int)i;
+                        (params->mAllMetaLetters || params->mMetaLetterIndex == (int)i);
             }
         }
 

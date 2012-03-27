@@ -12,7 +12,7 @@ bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
 unsigned Dictionary::sNumPossibleWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-int Dictionary::sPuzzleIndex = -1;
+int Dictionary::sPuzzleIndex = 7;
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
@@ -325,6 +325,11 @@ unsigned char Dictionary::getPuzzleMetaLetterIndex()
 {
     return sPuzzleIndex < 0 || sPuzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
                 0 : puzzlesMetaLetterIndex[sPuzzleIndex];
+}
+
+bool Dictionary::currentIsMetaPuzzle()
+{
+    return getPuzzleMetaLetterIndex() == 255;
 }
 
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)

@@ -24,7 +24,8 @@ def strip_accents(s):
 def find_anagrams(row, dictionary):
     string = row['Puzzle']
     letters_per_cube = 0
-    if 'Piece 1' in row:
+    if 'Piece 1' in row and len(row['Piece 1'].strip()) > 0:
+        #print row['Puzzle'] + ' "' + row['Piece 1'] + '"'
         # find the max length of the pieces
         num_pieces = 0
         for j in range(0, 32):
@@ -60,10 +61,18 @@ def find_anagrams(row, dictionary):
         #print 'String with spaces "' + string + '"'
         row['Puzzle'] = string
     else:
+        # now make sure each piece is the same length
+        #print 'String was "' + string + '"'
+        letters_per_cube = max(2, min(3, math.ceil(len(string)/3.0)))
+        spaces = letters_per_cube*3 - len(string)
+        for k in range(0, spaces):
+            string = string + ' '
+        if spaces < 0:
+            print "ERROR: negative spaces for word: " + row['Puzzle'] + ". How is that possible?\n"    
         # guess a good length for pieces
-        letters_per_cube = min(2, max(3, math.ceil(len(string)/3)))
+        #print row['Puzzle'] + ' "' + '" ' + str(letters_per_cube)
     row['Max Letters Per Cube'] = letters_per_cube
-    #print "find_anagrams: " + string + " " + str(letters_per_cube)
+    #print "find_anagrams: " + string + " " + str(letters_per_cube) + " " + str(string.strip() in dictionary)
     words = {}
     if letters_per_cube == 1:
         for k in range(len(string) + 1):
@@ -192,7 +201,7 @@ def generate_dict():
     dictionary = {}
     fi = open("dictionary.txt", "r")
     for word in fi:
-        if len(word) <= max_length_word and word.find("'") == -1 and word.find(".") == -1:
+        if len(word.strip()) <= max_length_word and word.find("'") == -1 and word.find(".") == -1:
             dictionary[word.strip().upper()] = -1
     fi.close()
 
@@ -270,6 +279,7 @@ def generate_dict():
         print "reading " + puzzle_file_name
         f = open(puzzle_file_name, 'rt')
         try:
+            prev_row = {}
             for row in csv.DictReader(f):
                 pieces_in_first_3 = 0
                 for i in range(0, 3):
@@ -278,8 +288,16 @@ def generate_dict():
                         if len(row[key].strip()) > 0:
                             pieces_in_first_3 += 1
                 if len(row['Puzzle'].strip()) > 1 or pieces_in_first_3 >= 2:
-                    row['No. Leading Spaces'] = str(0)
+                    if not 'Meta' in prev_row:
+                        prev_row = row                
+                    row['No. Leading Spaces'] = '0'
+                    row['Is Meta'] = False
+                    if prev_row['Meta'] != row['Meta']:                        
+                        puzzle_rows.append({'Puzzle':prev_row['Meta'].strip().upper(), 'No. Required':'1', 'World':prev_row['World'], 'Level':prev_row['Level'], 'ScrambleYN':'Y', 'No. Leading Spaces':'0', 'Letter':'', 'Is Meta':True })
+                        prev_row = row
                     puzzle_rows.append(row)
+            puzzle_rows.append({'Puzzle':prev_row['Meta'].strip().upper(), 'No. Required':'1', 'World':prev_row['World'], 'Level':prev_row['Level'], 'ScrambleYN':'Y', 'No. Leading Spaces':'0', 'Letter':'', 'Is Meta':True })
+                    
         finally:
             f.close()    
     #print "puzzles file: " + str(puzzle_rows)
@@ -506,7 +524,7 @@ def generate_dict():
         ltrs_p_c = row['Max Letters Per Cube']
         anagrams = find_anagrams(row, dictionary).keys()
         if not generate_examples and len(anagrams) < int(row['No. Required']):
-            print "ERROR: No. Required (" + row['No. Required'] + ") is greater than number of possible words for " + word + ". Possible words: " + str(anagrams)
+            print "ERROR: No. Required (" + row['No. Required'] + ") is greater than number of possible words for " + word + ". Possible words: " + str(anagrams) + " . row:" + str(row)
             error_count += 1
         if ltrs_p_c > 1:            
             fi.write("    " + row['No. Required'] + ',\t// "' + word + '", all anagrams: ' + str(anagrams) + "\n")
@@ -573,8 +591,13 @@ def generate_dict():
             if index < 0:
                 print 'ERROR: letter "' + row['Letter'] + '" not found in ' + word + '\n'
                 error_count += 1
-            fi.write("    " + str(index) + ',\t// "' + word + '"' + '[' + row['Letter'] + ']\n')
+            if row['Is Meta']:
+                # if it's a meta puzzle, use a special code for letter index, to signify metapuzzle
+                fi.write("    " + '255' + ',\t// "' + word + '"' + '[' + '255 (metapuzzle)' + ']\n')
+            else:
+                fi.write("    " + str(index) + ',\t// "' + word + '"' + '[' + row['Letter'] + ']\n')            
     fi.write("};\n\n")
+    
     
 def unicode_csv_DictReader(utf8_data, dialect=csv.excel, **kwargs):
     csv_reader = csv.DictReader(utf8_data, dialect=dialect, **kwargs)

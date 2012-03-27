@@ -86,7 +86,7 @@ void TitleCubeState::paint()
     vid.init();
     /* TODO remove
     {
-        vid.BG0_drawAsset(Vec2(0,0), TestGlow);
+        vid.BG0_drawAsset(Vec2(0,0), Test);
     }
 
     return;

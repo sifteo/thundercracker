@@ -1422,7 +1422,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     {
         params->mMetaLetterIndex = -1;
     }
-    params->mAllMetaLetters = false;
+    params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
 
     return true;
 }
