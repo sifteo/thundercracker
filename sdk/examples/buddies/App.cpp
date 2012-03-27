@@ -328,26 +328,25 @@ void DrawCutsceneShuffle(CubeWrapper &cubeWrapper, Int2 scroll, BuddyId buddyId,
 
 void DrawCutsceneStory(
     CubeWrapper &cubeWrapper,
-    unsigned int speaker,
-    const char *text,
+    const CutsceneLine &line,
     BuddyId buddyId0, BuddyId buddyId1,
     bool jump0, bool jump1)
 {
-    ASSERT(text != NULL);
+    ASSERT(line.mText != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
     cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
     cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
     
-    if (speaker == 0)
+    if (line.mSpeaker == 0)
     {
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, text);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
     }
     else
     {
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, text);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
     }
 }
 
@@ -1321,7 +1320,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
-            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextStart() == 1)
+            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneLineStart() == 1)
             {
                 mDelayTimer = kStateTimeDelayLong;
             }
@@ -1389,7 +1388,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CUTSCENE_END_2:
         {
-            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd() == 1)
+            if (GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneLineEnd() == 1)
             {
                 mDelayTimer = kStateTimeDelayLong;
             }
@@ -1829,7 +1828,7 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
-                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextStart())
+                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneLineStart())
                 {
                     StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
                 }
@@ -2048,7 +2047,7 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
-                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneTextEnd())
+                if (++mStoryCutsceneIndex == GetPuzzle(mStoryPuzzleIndex).GetNumCutsceneLineEnd())
                 {
                     if (HasUnlocked())
                     {
@@ -2404,14 +2403,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                unsigned int speakerIndex;
-                const char *cutsceneText;
-                GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex, speakerIndex, cutsceneText);
-                
                 DrawCutsceneStory(
                     cubeWrapper,
-                    speakerIndex,
-                    cutsceneText,
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneLineStart(mStoryCutsceneIndex),
                     GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
                     GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
                     mCutsceneSpriteJump0,
@@ -2549,14 +2543,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                unsigned int speakerIndex;
-                const char *cutsceneText;
-                GetPuzzle(mStoryPuzzleIndex).GetCutsceneTextStart(mStoryCutsceneIndex, speakerIndex, cutsceneText);
-                
                 DrawCutsceneStory(
                     cubeWrapper,
-                    speakerIndex,
-                    cutsceneText,
+                    GetPuzzle(mStoryPuzzleIndex).GetCutsceneLineEnd(mStoryCutsceneIndex),
                     GetPuzzle(mStoryPuzzleIndex).GetBuddy(0),
                     GetPuzzle(mStoryPuzzleIndex).GetBuddy(1),
                     mCutsceneSpriteJump0,

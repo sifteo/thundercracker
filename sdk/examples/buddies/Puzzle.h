@@ -15,6 +15,7 @@
 #include <sifteo/cube.h>
 #include "BuddyId.h"
 #include "Config.h"
+#include "CutsceneLine.h"
 #include "Piece.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,13 +53,13 @@ public:
     const char *GetClue() const;
     void SetClue(const char *clue);
     
-    void AddCutsceneTextStart(unsigned int speakerIndex, const char *cutsceneTextStart);
-    void GetCutsceneTextStart(unsigned int cutsceneIndex, unsigned int &speakerIndex, const char *&cutsceneTextStart) const;
-    unsigned int GetNumCutsceneTextStart() const;
+    void AddCutsceneLineStart(const CutsceneLine &line);
+    const CutsceneLine &GetCutsceneLineStart(unsigned int cutsceneIndex) const;
+    unsigned int GetNumCutsceneLineStart() const;
     
-    void AddCutsceneTextEnd(unsigned int speakerIndex, const char *cutsceneTextEnd);
-    void GetCutsceneTextEnd(unsigned int cutsceneIndex, unsigned int &speakerIndex, const char *&cutsceneTextEnd) const;
-    unsigned int GetNumCutsceneTextEnd() const;
+    void AddCutsceneLineEnd(const CutsceneLine &line);
+    const CutsceneLine &GetCutsceneLineEnd(unsigned int cutsceneIndex) const;
+    unsigned int GetNumCutsceneLineEnd() const;
     
     unsigned int GetCutsceneEnvironment() const;
     void SetCutsceneEnvironment(unsigned int cutsceneEnvionment);
@@ -77,20 +78,14 @@ public:
     void SetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
     
 private:
-    struct Line
-    {
-        unsigned int mSpeaker : 1;
-        const char *mText;
-    };
-    
     unsigned char mBook : 4;
     const char *mTitle;
     const char *mClue;
-    Line mCutsceneTextStart[8];
-    Line mCutsceneTextEnd[8];
+    CutsceneLine mCutsceneLineStart[8];
+    CutsceneLine mCutsceneLineEnd[8];
     unsigned char mBuddies[kMaxBuddies];
-    unsigned char mNumCutsceneTextStart : 3;
-    unsigned char mNumCutsceneTextEnd : 3;
+    unsigned char mNumCutsceneLineStart : 3;
+    unsigned char mNumCutsceneLineEnd : 3;
     unsigned char mCutsceneEnvironemnt : 3;
     unsigned char mNumShuffles : 8;
     unsigned char mNumBuddies : 5;
