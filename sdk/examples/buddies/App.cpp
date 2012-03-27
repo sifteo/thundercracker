@@ -2105,6 +2105,10 @@ void App::UpdateGameState(float dt)
                 else
                 {
                     UpdateTimer(mDelayTimer, dt);
+                    if (AnyTouchBegin())
+                    {
+                        mDelayTimer = 0.0f;
+                    }
                 }
             }
             else
@@ -2130,7 +2134,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    if (UpdateTimer(mDelayTimer, dt))
+                    if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
                     {
                         StartGameState(GAME_STATE_STORY_UNLOCKED_4);
                     }
