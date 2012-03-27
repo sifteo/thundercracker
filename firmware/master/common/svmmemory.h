@@ -207,6 +207,17 @@ public:
     }
 
     /**
+     * Convert a VA to a flash block address, using the current segment.
+     * If the VA is not a valid flash address, returns zero.
+     */
+    static uint32_t virtToFlashAddr(VirtAddr va) {
+        uint32_t offset = va - VIRTUAL_FLASH_BASE;
+        if (offset < flashSeg.getSize())
+            return flashSeg.getAddress() + offset;
+        return 0;
+    }     
+
+    /**
      * Quick predicates to check a physical address. Used only in simulation.
      */
 #ifdef SIFTEO_SIMULATOR

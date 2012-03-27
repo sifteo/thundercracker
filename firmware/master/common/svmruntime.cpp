@@ -9,6 +9,7 @@
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
+#include "svmdebugger.h"
 #include "event.h"
 #include "tasks.h"
 
@@ -96,7 +97,18 @@ void SvmRuntime::exit()
 
 void SvmRuntime::fault(FaultCode code)
 {
-    SvmDebugPipe::fault(code);
+    // Try to find a handler for this fault. If nobody steps up,
+    // force the system to exit.
+
+    // First priority: an attached debugger
+    if (SvmDebugger::fault(code))
+        return;
+    
+    // Next priority: Log the fault in a platform-specific way
+    if (SvmDebugPipe::fault(code))
+        return;
+
+    // Unhandled fault; exit
     exit();
 }
 
@@ -177,57 +189,65 @@ void SvmRuntime::enterFunction(reg_t addr)
     branch(addr);
 }
 
-void SvmRuntime::ret()
+void SvmRuntime::ret(unsigned actions)
 {
     reg_t regFP = SvmCpu::reg(REG_FP);
     CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
-    if (fp) {
-        // Restore the saved frame. Note that REG_FP, and therefore 'fp',
-        // are trusted, however the saved value at fp->fp needs to be validated
-        // before it can be loaded into the trusted FP register.
+    if (!fp) {
+        // No more functions on the stack. Return from main() is exit().
+        if (actions & RET_EXIT)
+            exit();
+        return;
+    }
 
-        TRACING_ONLY({
-            LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
-                "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-                fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
-        });
+    /*
+     * Restore the saved frame. Note that REG_FP, and therefore 'fp',
+     * are trusted, however the saved value at fp->fp needs to be validated
+     * before it can be loaded into the trusted FP register.
+     */
 
-        SvmMemory::VirtAddr fpVA = fp->fp;
-        SvmMemory::PhysAddr fpPA;
-        if (fpVA) {
-            if (!SvmMemory::mapRAM(fpVA, sizeof(CallFrame), fpPA)) {
-                SvmRuntime::fault(F_RETURN_FRAME);
-                return;
-            }
-        } else {
-            // Zero is a legal FP value, used as a sentinel.
-            fpPA = 0;
+    TRACING_ONLY({
+        LOG(("RET: Restoring frame %p: pc=%08x fp=%08x r2=%08x "
+            "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
+            fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
+    });
+
+    SvmMemory::VirtAddr fpVA = fp->fp;
+    SvmMemory::PhysAddr fpPA;
+    if (fpVA) {
+        if (!SvmMemory::mapRAM(fpVA, sizeof(CallFrame), fpPA)) {
+            SvmRuntime::fault(F_RETURN_FRAME);
+            return;
         }
+    } else {
+        // Zero is a legal FP value, used as a sentinel.
+        fpPA = 0;
+    }
 
-        SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
+    if (actions & RET_BRANCH) {
+        branch(fp->pc);
+    }
 
+    if (actions & RET_RESTORE_REGS) {
         SvmCpu::setReg(2, fp->r2);
         SvmCpu::setReg(3, fp->r3);
         SvmCpu::setReg(4, fp->r4);
         SvmCpu::setReg(5, fp->r5);
         SvmCpu::setReg(6, fp->r6);
         SvmCpu::setReg(7, fp->r7);
-
-        reg_t target = fp->pc;
-        setSP(reinterpret_cast<reg_t>(fp + 1));
-        branch(target);
-
-    } else {
-        // No more functions on the stack. Return from main() is exit().
-        exit();
     }
-    
-    // If we're returning from an event handler, see if we still need
-    // to dispatch any other pending events.
-    if (eventFrame == regFP) {
-        eventFrame = 0;
-        dispatchEventsOnReturn();
+
+    if (actions & RET_POP_FRAME) {
+        SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
+        setSP(reinterpret_cast<reg_t>(fp + 1));
+
+        // If we're returning from an event handler, see if we still need
+        // to dispatch any other pending events.
+        if (eventFrame == regFP) {
+            eventFrame = 0;
+            dispatchEventsOnReturn();
+        }
     }
 }
 
@@ -256,16 +276,19 @@ void SvmRuntime::svc(uint8_t imm8)
             validate(SvmCpu::reg(r));
             break;
         case 0x1d:  // 0b11101
-            SvmRuntime::fault(F_RESERVED_SVC);
+            if (r)
+                fault(F_RESERVED_SVC);
+            else
+                breakpoint();
             break;
         case 0x1e:  // 0b11110
             call(SvmCpu::reg(r));
             break;
-        case 0x1f:  // 0b11110
+        case 0x1f:  // 0b11111
             tailcall(SvmCpu::reg(r));
             break;
         default:
-            SvmRuntime::fault(F_RESERVED_SVC);
+            fault(F_RESERVED_SVC);
             break;
         }
     }
@@ -296,8 +319,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        syscall(imm15);
-        ret();
+        tailsyscall(imm15);
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
@@ -412,6 +434,33 @@ void SvmRuntime::syscall(unsigned num)
     Tasks::work();
 }
 
+void SvmRuntime::tailsyscall(unsigned num)
+{
+    /*
+     * Tail syscalls incorporate a normal system call plus a return.
+     * Userspace doesn't care what order these two things come in, but
+     * we have a couple of conflicting constraints:
+     *
+     *   1. During syscall execution, we must already have a proper
+     *      PC value set. The instruction immediately after a tail syscall
+     *      may not be valid, and definitely won't be the next instruction
+     *      to execute. So, we need to branch to the return address first.
+     *
+     *      (This requirement stems from single-stepping support, where
+     *      a blocking syscall like Paint may enter the debugger event loop)
+     *
+     *   2. The syscall needs parameters from the original GPRs, so we can't
+     *      have restored the caller's registers already.
+     *
+     * Therefore, we split the ret() into two pieces. Branch before syscall,
+     * everything else after.
+     */
+
+    ret(RET_BRANCH);
+    syscall(num);
+    ret(RET_ALL ^ RET_BRANCH);
+}
+
 void SvmRuntime::resetSP()
 {
     setSP(SvmMemory::VIRTUAL_RAM_TOP);
@@ -481,4 +530,23 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
         *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
     else
         SvmRuntime::fault(F_LONG_STACK_STORE);
+}
+
+void SvmRuntime::breakpoint()
+{
+    /*
+     * We hit a breakpoint. Point the PC back to the breakpoint
+     * instruction itself, not the next instruction, and
+     * signal a debugger trap.
+     *
+     * It's important that we go directly to SvmCpu here, and not
+     * use our userReg interface. We really don't want to cause a branch,
+     * which can't handle non-bundle-aligned addresses.
+     *
+     * We need to explicitly enter the debugger's message loop here.
+     */
+
+    SvmCpu::setReg(REG_PC, SvmCpu::reg(REG_PC) - 2);
+    SvmDebugger::signal(Svm::Debugger::S_TRAP);
+    SvmDebugger::messageLoop();
 }
