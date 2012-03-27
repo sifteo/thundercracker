@@ -26,7 +26,7 @@ static const Usb::DeviceDescriptor dev = {
     0x0200,                         // bcdDevice
     1,                              // iManufacturer
     2,                              // iProduct
-    3,                              // iSerialNumber
+    0,                              // iSerialNumber
     1                               // bNumConfigurations
 };
 
@@ -70,7 +70,7 @@ static const struct {
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
-        0x01,                               // bEndpointAddress
+        0x81,                               // bEndpointAddress
         Usb::EpAttrBulk,                    // bmAttributes
         64,                                 // wMaxPacketSize
         1,                                  // bInterval
@@ -79,7 +79,7 @@ static const struct {
     {
         sizeof(Usb::EndpointDescriptor),    // bLength
         Usb::DescriptorEndpoint,            // bDescriptorType
-        0x82,                               // bEndpointAddress
+        0x01,                               // bEndpointAddress
         Usb::EpAttrBulk,                    // bmAttributes
         64,                                 // wMaxPacketSize
         1,                                  // bInterval
@@ -90,7 +90,6 @@ static const char *descriptorStrings[] = {
     "x",
     "Sifteo Inc.",
     "Thundercracker",
-    "1001",
 };
 
 /*
