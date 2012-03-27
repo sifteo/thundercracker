@@ -23,21 +23,40 @@ SvmDebugger SvmDebugger::instance;
 
 void SvmDebugger::messageLoop(void *param)
 {
+    /*
+     * Re-entrancy guard. Normally this isn't something we have to worry
+     * about, but an emulated syscall during single-step can call Tasks::work()
+     * while we're already in the event loop. This would deadlock us in
+     * debuggerMsgAccept, or worse.
+     *
+     * It isn't sufficient or necessary to put a reentrancy guard on Tasks:work()
+     * itself. If we are single-stepping from inside SvmRuntime::breakpoint(),
+     * there may not already be a Tasks::work() on the stack above us.
+     */
+    if (instance.inMessageLoop)
+        return;
+    instance.inMessageLoop = true;
+    instance.messageLoopWork();
+    instance.inMessageLoop = false;
+}
+
+void SvmDebugger::messageLoopWork()
+{
     do {
         SvmDebugPipe::DebuggerMsg msg;
         
         while (!SvmDebugPipe::debuggerMsgAccept(msg)) {
             // No command is waiting. If we're halted, block
             // until we get a command. If not, return immediately.            
-            if (!instance.stopped)
+            if (!stopped)
                 return;
             Radio::halt();
         }
 
-        instance.handleMessage(msg);
+        handleMessage(msg);
         SvmDebugPipe::debuggerMsgFinish(msg);
 
-    } while (instance.stopped);
+    } while (stopped);
 }
 
 bool SvmDebugger::signal(Svm::Debugger::Signals sig)
@@ -45,6 +64,9 @@ bool SvmDebugger::signal(Svm::Debugger::Signals sig)
     // Signals are ignored when no debugger is attached.
     if (!instance.attached)
         return false;
+
+    // Any signal (including breakpoints) will clear our single-step breakpoint
+    instance.setStepBreakpoint(0);
 
     // Make sure the debugger event loop will run, and tell it to stop/run.
     instance.stopped = sig;
@@ -102,6 +124,7 @@ void SvmDebugger::handleMessage(SvmDebugPipe::DebuggerMsg &msg)
         case M_IS_STOPPED:          return msgIsStopped(msg);
         case M_DETACH:              return msgDetach(msg);
         case M_SET_BREAKPOINTS:     return msgSetBreakpoints(msg);
+        case M_STEP:                return msgStep(msg);
     }
 
     LOG((LOG_PREFIX "Unhandled command 0x%08x\n", msg.cmd[0]));
@@ -260,6 +283,11 @@ void SvmDebugger::msgIsStopped(SvmDebugPipe::DebuggerMsg &msg)
 
 void SvmDebugger::msgDetach(SvmDebugPipe::DebuggerMsg &msg)
 {
+    // Clear all breakpoints
+    memset(breakpoints, 0, sizeof breakpoints);
+    breakpointsChanged();
+
+    // Run!
     attached = false;
     stopped = S_RUNNING;
 }
@@ -280,15 +308,21 @@ void SvmDebugger::msgSetBreakpoints(SvmDebugPipe::DebuggerMsg &msg)
         unsigned i = Intrinsic::CLZ(bitmap);
         bitmap &= ~Intrinsic::LZ(i);
 
-        if (i < Svm::Debugger::NUM_BREAKPOINTS) {
+        if (i < NUM_USER_BREAKPOINTS) {
             SvmMemory::VirtAddr va = msg.cmd[word++];
             breakpoints[i] = SvmMemory::virtToFlashAddr(va);
         }
     }
-
+    
+    breakpointsChanged();
+}
+    
+void SvmDebugger::breakpointsChanged()
+{
     // Recalculate breakpointMap. It contains only the live breakpoints.
-    bitmap = 0;
-    for (unsigned i = 0; i < Svm::Debugger::NUM_BREAKPOINTS; i++)
+    uint32_t bitmap = 0;
+
+    for (unsigned i = 0; i < NUM_TOTAL_BREAKPOINTS; i++)
         if (breakpoints[i] != 0)
             bitmap |= Intrinsic::LZ(i);
     breakpointMap = bitmap;
@@ -309,8 +343,10 @@ void SvmDebugger::patchFlashBlock(uint32_t blockAddr, uint8_t *data)
         uint32_t addr = instance.breakpoints[i];
         uint32_t mask = FlashBlock::BLOCK_SIZE - 1;
 
-        if ((addr & ~mask) == blockAddr)
-            breakpointPatch(data, addr & mask);
+        if ((addr & ~mask) == blockAddr) {
+            uint32_t offset = addr & mask;
+            breakpointPatch(data, offset);
+        }
     }
 }
 
@@ -356,3 +392,52 @@ void SvmDebugger::breakpointPatch(uint8_t *data, uint32_t offset)
             pBundle[0] = BreakpointInstr;
     }
 }
+
+void SvmDebugger::setStepBreakpoint(SvmMemory::VirtAddr va)
+{
+    uint32_t addr = va ? SvmMemory::virtToFlashAddr(va) : 0;
+    if (addr != breakpoints[STEP_BREAKPOINT]) {
+        breakpoints[STEP_BREAKPOINT] = addr;
+        breakpointsChanged();
+    }
+}
+
+void SvmDebugger::msgStep(SvmDebugPipe::DebuggerMsg &msg)
+{
+    /*
+     * Single-step. PC points to the instruction we'll be executing.
+     */
+
+    // Single-stepping starts out by going back into S_RUNNING mode.
+    stopped = S_RUNNING;
+
+    // Read the current PC
+    SvmMemory::VirtAddr pc = getUserReg(REG_PC);
+
+    // Fetch the next instruction. If this fails, it's a fault.
+    FlashBlockRef ref;
+    uint16_t instr;
+    if (!SvmMemory::copyROData(ref, SvmMemory::PhysAddr(&instr), pc, sizeof instr))
+        return SvmRuntime::fault(F_CODE_FETCH);
+
+    if (instructionSize(instr) == InstrBits32) {
+        // A 32-bit instruction. No valid 32-bit instructions modify control
+        // flow, so place a breakpoint immediately afterwards.
+        return setStepBreakpoint(pc + 4);
+    }
+
+    if ((instr & SvcMask) == SvcTest) {
+        // SVCs are emulated during single-step.
+        SvmCpu::setReg(REG_PC, SvmCpu::reg(REG_PC) + 2);
+        SvmDebugger::signal(Svm::Debugger::S_TRAP);
+        return SvmRuntime::svc(uint8_t(instr));
+    }
+
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
+        // Unconditional branch. Calculate the target address.
+    }
+    
+    // All other 16-bit native instructions don't modify control flow.
+    return setStepBreakpoint(pc + 2);
+}
+

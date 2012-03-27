@@ -523,17 +523,11 @@ void GDBServer::handlePacket()
         }
 
         case 's': {
-            // Single step; run to nextStepAddress().
-            if ((breakpoints[STEP_BREAKPOINT] = nextStepAddress())) {
-                LOG((LOG_PREFIX "Stepping to 0x%08x\n", breakpoints[STEP_BREAKPOINT]));
-                sendBreakpoints(Debugger::argBit(STEP_BREAKPOINT));
-                msgCmd[0] = Debugger::M_SIGNAL | Debugger::S_RUNNING;
-                message(1);
-                waitingForStop = true;
-                return;
-            }
-            LOG((LOG_PREFIX "Failed to single-step"));
-            return txPacketString("E01");
+            // Single step
+            msgCmd[0] = Debugger::M_STEP;
+            message(1);
+            waitingForStop = true;
+            return;
         }
 
         case 'Z': {
@@ -598,12 +592,6 @@ void GDBServer::pollForStop()
 
             waitingForStop = false;
         }
-    }
-    
-    // Clear the temporary single-step breakpoint, if necessary
-    if (breakpoints[STEP_BREAKPOINT]) {
-        breakpoints[STEP_BREAKPOINT] = 0;
-        sendBreakpoints(Debugger::argBit(STEP_BREAKPOINT));
     }
 }
 
@@ -760,38 +748,4 @@ void GDBServer::removeBreakpoint(uint32_t addr)
             bitmap |= Debugger::argBit(i);
         }
     sendBreakpoints(bitmap);
-}
-
-uint32_t GDBServer::nextStepAddress()
-{
-    /*
-     * Determine the VA we're running until, in order to single-step.
-     * The instruction currently pointed to by PC is the one we want to skip,
-     * so this function needs to figure out where flow control is going next.
-     *
-     * If we really totally fail, returns zero.
-     */
-
-    // Read the current PC
-    msgCmd[0] = Debugger::M_READ_REGISTERS | Debugger::argBit(REG_PC);
-    if (message(1) < 1)
-        return 0;
-    uint32_t pc = msgReply[0];
-
-    // Read the next instruction
-    uint16_t instr;
-    if (!readMemory(pc, (uint8_t*) &instr, sizeof instr))
-        return 0;
-
-    if (instructionSize(instr) == InstrBits32) {
-        // A 32-bit instruction. No valid 32-bit instructions modify control flow.
-        return pc + 4;
-    }
-
-    if ((instr & UncondBranchMask) == UncondBranchTest) {
-        // Unconditional branch. Calculate the target address.
-    }
-    
-    // All other valid 16-bit instructions do not modify control flow.
-    return pc + 2;
 }

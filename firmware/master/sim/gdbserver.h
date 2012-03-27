@@ -44,15 +44,11 @@ private:
     char txBuffer[2048];
     char rxPacket[1024];
 
-    // Reserve one breakpoint for single-stepping.
-    // All others are available to GDB.
-    static const unsigned TOTAL_BREAKPOINTS = Svm::Debugger::NUM_BREAKPOINTS;
-    static const unsigned GDB_BREAKPOINTS = TOTAL_BREAKPOINTS - 1;
-    static const unsigned STEP_BREAKPOINT = GDB_BREAKPOINTS;
-
     uint32_t msgCmd[Svm::Debugger::MAX_CMD_WORDS];
     uint32_t msgReply[Svm::Debugger::MAX_REPLY_WORDS];
-    uint32_t breakpoints[TOTAL_BREAKPOINTS];
+
+    static const unsigned GDB_BREAKPOINTS = Svm::Debugger::NUM_BREAKPOINTS;
+    uint32_t breakpoints[GDB_BREAKPOINTS];
 
     // Register format
     static const unsigned NUM_GDB_REGISTERS = 26;
@@ -97,8 +93,6 @@ private:
 
     bool readMemory(uint32_t addr, uint8_t *buffer, uint32_t bytes);
     bool writeMemory(uint32_t addr, uint32_t bytes, uint32_t packetOffset);
-
-    uint32_t nextStepAddress();
 };
 
 #endif  // GDB_SERVER_H

@@ -69,6 +69,7 @@ namespace Debugger {
         M_IS_STOPPED        = 0x06000000,  // [] -> [signal]
         M_DETACH            = 0x07000000,  // [] -> []
         M_SET_BREAKPOINTS   = 0x08000000,  // arg=bitmap, [addresses] -> []
+        M_STEP              = 0x09000000,  // [] -> []
     };
 
     /*

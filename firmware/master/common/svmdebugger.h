@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include "svm.h"
 #include "svmdebugpipe.h"
+#include "svmmemory.h"
 
 
 class SvmDebugger {
@@ -36,11 +37,19 @@ private:
 
     Svm::Debugger::Signals stopped;
     bool attached;
+    bool inMessageLoop;
     
     // Map of *flash addresses* to set breakpoints on.
+    // We have one non-client-visible breakpoint, for implementing
+    // single-step through normal native instructions.
+    
+    static const uint32_t NUM_USER_BREAKPOINTS = Svm::Debugger::NUM_BREAKPOINTS;
+    static const uint32_t NUM_TOTAL_BREAKPOINTS = NUM_USER_BREAKPOINTS + 1;
+    static const uint32_t STEP_BREAKPOINT = NUM_USER_BREAKPOINTS;
     uint32_t breakpointMap;
-    uint32_t breakpoints[Svm::Debugger::NUM_BREAKPOINTS];
+    uint32_t breakpoints[NUM_TOTAL_BREAKPOINTS];
 
+    void messageLoopWork();
     void handleMessage(SvmDebugPipe::DebuggerMsg &msg);
 
     void msgReadRegisters(SvmDebugPipe::DebuggerMsg &msg);
@@ -51,11 +60,14 @@ private:
     void msgIsStopped(SvmDebugPipe::DebuggerMsg &msg);
     void msgDetach(SvmDebugPipe::DebuggerMsg &msg);
     void msgSetBreakpoints(SvmDebugPipe::DebuggerMsg &msg);
+    void msgStep(SvmDebugPipe::DebuggerMsg &msg);
 
     void setUserReg(uint32_t r, uint32_t value);
     uint32_t getUserReg(uint32_t r);
 
+    void breakpointsChanged();
     static void breakpointPatch(uint8_t *data, uint32_t offset);
+    void setStepBreakpoint(SvmMemory::VirtAddr va);
 };
 
 #endif // SVM_DEBUGGER_H

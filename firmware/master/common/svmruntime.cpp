@@ -269,9 +269,9 @@ void SvmRuntime::svc(uint8_t imm8)
             break;
         case 0x1d:  // 0b11101
             if (r)
-                SvmRuntime::fault(F_RESERVED_SVC);
+                fault(F_RESERVED_SVC);
             else
-                SvmRuntime::breakpoint();
+                breakpoint();
             break;
         case 0x1e:  // 0b11110
             call(SvmCpu::reg(r));
@@ -280,7 +280,7 @@ void SvmRuntime::svc(uint8_t imm8)
             tailcall(SvmCpu::reg(r));
             break;
         default:
-            SvmRuntime::fault(F_RESERVED_SVC);
+            fault(F_RESERVED_SVC);
             break;
         }
     }
