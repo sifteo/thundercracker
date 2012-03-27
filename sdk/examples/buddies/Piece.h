@@ -12,6 +12,11 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "BuddyId.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 namespace Buddies {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +25,16 @@ namespace Buddies {
 class Piece
 {
 public:
+    enum Part
+    {
+        PART_HAIR = 0U,
+        PART_EYE_LEFT,
+        PART_MOUTH,
+        PART_EYE_RIGHT,
+        
+        NUM_PARTS
+    };
+    
     enum Attribute
     {
         ATTR_NONE = 0U,
@@ -31,16 +46,16 @@ public:
     
     Piece();
     Piece(
-        int buddy,
-        int part,
+        BuddyId buddy,
+        Part part,
         bool must_solve = false,
         Attribute attribute = ATTR_NONE);
     
-    int GetBuddy() const;
-    void SetBuddy(int buddy);
+    BuddyId GetBuddy() const;
+    void SetBuddy(BuddyId buddy);
     
-    int GetPart() const;
-    void SetPart(int part);
+    Part GetPart() const;
+    void SetPart(Part part);
     
     int GetRotation() const;
     void SetRotation(int rotation);
@@ -54,8 +69,8 @@ public:
     bool Compare(const Piece &rhs) const;
     
 private:
-    unsigned int mBuddy  : 5;
-    int mPart            : 3;
+    BuddyId mBuddy       : 5;
+    Part mPart           : 3;
     int mRotation        : 3;
     bool mMustSolve      : 1;
     Attribute mAttribute : 3;
