@@ -114,7 +114,7 @@ private:
     GameState mGameState;
     float mDelayTimer;
     float mOptionsTimer;
-    bool mOptionsTouchSync;
+    bool mOptionsTouchSync; // TODO: rename to mTouchSync
     unsigned int mUiIndex;
     bool mUiIndexSync[kNumCubes];
     

@@ -1561,7 +1561,7 @@ void App::UpdateGameState(float dt)
                 }
                 StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
-            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 ResetCubesToPuzzle(GetPuzzleDefault(), false);
                 mOptionsTouchSync = true;
@@ -1651,6 +1651,7 @@ void App::UpdateGameState(float dt)
             }
             else if (AnyTouchBegin())
             {
+                LOG(("Unshuffle sync\n"));
                 mOptionsTouchSync = true;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
@@ -1678,6 +1679,14 @@ void App::UpdateGameState(float dt)
             else
             {
                 mOptionsTimer = kOptionsTimerDuration;
+            }
+            
+            if (mOptionsTouchSync)
+            {
+                if (AnyTouchBegin())
+                {
+                    mOptionsTouchSync = false;
+                }
             }
             
             // If we're in sprite mode, we can do gradations of nudge, so
@@ -1711,11 +1720,28 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (mOptionsTouchSync)
+            // Clue Stuff
+            if (mHintFlowIndex == 0)
             {
-                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
                 {
-                    mOptionsTouchSync = false;
+                    if (mCubeWrappers[i].IsEnabled())
+                    {
+                        if (mTouching[i] == TOUCH_STATE_BEGIN)
+                        {
+                            if (!mOptionsTouchSync)
+                            {
+                                if (mClueOffTimers[i] > 0.0f)
+                                {
+                                    mClueOffTimers[i] = 0.0f;
+                                }
+                                else
+                                {
+                                    mClueOffTimers[i] = kStateTimeDelayLong;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
@@ -1726,9 +1752,13 @@ void App::UpdateGameState(float dt)
                 {
                     if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
                     {
-                        if (UpdateTimer(mHintTimer, dt) || AnyTouchBegin())
+                        if (UpdateTimer(mHintTimer, dt))
                         {
                             StopHint(false);
+                        }
+                        else if (AnyTouchBegin())
+                        {
+                            StopHint(true);
                         }
                     }
                 }
@@ -1736,19 +1766,30 @@ void App::UpdateGameState(float dt)
                 {
                     if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
                     {
-                        if (UpdateTimer(mHintTimer, dt))
+                        if (mHintFlowIndex == 0)
                         {
-                            if (mHintFlowIndex == 0)
+                            if (UpdateTimer(mHintTimer, dt))
                             {
                                 ++mHintFlowIndex;
                                 mHintTimer = kHintTimerRepeatDuration;
                             }
-                            else if (mHintFlowIndex == 1)
+                        }
+                        else if (mHintFlowIndex == 1)
+                        {
+                            if (UpdateTimer(mHintTimer, dt))
                             {
                                 ++mHintFlowIndex;
                                 mHintTimer = kHintTimerRepeatDuration;
                             }
-                            else
+                            else if (AnyTouchBegin())
+                            {
+                                mHintTimer = kHintTimerOnDuration;
+                                mHintFlowIndex = 0;
+                            }
+                        }
+                        else
+                        {
+                            if (UpdateTimer(mHintTimer, dt))
                             {
                                 StartHint();
                             }
@@ -1756,29 +1797,6 @@ void App::UpdateGameState(float dt)
                     }
                 }
             }
-            
-            // Clue Stuff
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (mTouching[i] == TOUCH_STATE_BEGIN)
-                    {
-                        if (!mOptionsTouchSync)
-                        {
-                            if (mClueOffTimers[i] > 0.0f)
-                            {
-                                mClueOffTimers[i] = 0.0f;
-                            }
-                            else
-                            {
-                                mClueOffTimers[i] = kStateTimeDelayLong;
-                            }
-                        }
-                    }
-                }
-            }
-            
             break;
         }
         case GAME_STATE_SHUFFLE_OPTIONS:
