@@ -179,7 +179,7 @@ def ValidateData(data):
 ####################################################################################################
 ####################################################################################################
 
-def ConvertPuzzles(src, dest):  
+def ValidatePuzzles(src):  
     with open(src, 'r') as f:
         j = json.load(f)
         
@@ -191,10 +191,15 @@ def ConvertPuzzles(src, dest):
             exit(1)
         
         data = j['puzzles']
+        # TODO: validate top level
         
         ValidateData(data)
         if not validated:
             exit(1)
+        
+def ConvertPuzzles(src, dest):  
+    with open(src, 'r') as f:
+        data = json.load(f)['puzzles']
         
         with open(dest, 'w') as fout:
             # Comment Separator
@@ -297,12 +302,11 @@ def ConvertPuzzles(src, dest):
 ####################################################################################################
 
 if __name__ == "__main__":
-    try:
-        src = sys.argv[1]
-        dest = sys.argv[2]
-    except:
-        print "Usage: python %s <json filename> <dest filename>" % __file__
+    if len(sys.argv) == 1 or len(sys.argv) > 3:
+        print "Usage: python %s <json filename> [<dest filename>]" % __file__
         exit(1)
-    
-    ConvertPuzzles(sys.argv[1], sys.argv[2])
+    if len(sys.argv) > 1:
+        ValidatePuzzles(sys.argv[1])
+    if len(sys.argv) > 2:
+        ConvertPuzzles(sys.argv[1], sys.argv[2])
     
