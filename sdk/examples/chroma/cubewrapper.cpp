@@ -31,7 +31,7 @@ const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
-        m_fShakeTime( -1.0f ), m_fTouchTime( 0.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
+        m_fTouchTime( 0.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
         m_bubbles( m_vid )
 {
@@ -65,7 +65,7 @@ void CubeWrapper::Init( AssetGroup &assets )
 
 void CubeWrapper::Reset()
 {
-	m_fShakeTime = -1.0f;
+    m_ShakeTime = SystemTime();
     setState( STATE_PLAYING );
     m_idleTimer = 0.0f;
 
@@ -383,7 +383,7 @@ void CubeWrapper::Draw()
 }
 
 
-void CubeWrapper::Update(float t, float dt)
+void CubeWrapper::Update(SystemTime t, TimeDelta dt)
 {
     m_stateTime += dt;
 
@@ -420,7 +420,7 @@ void CubeWrapper::Update(float t, float dt)
             }
         }
 
-        if( !m_intro.Update( dt, m_banner ) )
+        if( !m_intro.Update( t, dt, m_banner ) )
         {
             if( m_state == STATE_REFILL )
                 m_state = STATE_PLAYING;
@@ -445,9 +445,9 @@ void CubeWrapper::Update(float t, float dt)
         m_glimmer.Update( dt );
 
         //check for shaking
-        if( Game::Inst().getMode() == Game::MODE_BLITZ && ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
+        if( Game::Inst().getMode() == Game::MODE_BLITZ && ( m_ShakeTime.isValid() && t - m_ShakeTime > SHAKE_FILL_DELAY ) )
         {
-            m_fShakeTime = -1.0f;
+            m_ShakeTime = SystemTime();
             checkRefill();
         }
 
@@ -537,22 +537,22 @@ void CubeWrapper::Update(float t, float dt)
     }
     /*else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
-        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
+        if( _SYS_isTouching( m_cube.id() ) || ( m_ShakeTime.isValid() && t - m_ShakeTime > SHAKE_FILL_DELAY ) )
         {
             if( Game::Inst().getWrapperIndex( this ) == 1 )
                 Game::Inst().ReturnToMainMenu();
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
                 Game::Inst().setTestMatchFlag();
 
-            m_fShakeTime = -1.0f;
+            m_ShakeTime = SystemTime();
         }
     }
     else if( Game::Inst().getState() == Game::STATE_NEXTPUZZLE )
     {
-        if( _SYS_isTouching( m_cube.id() ) || ( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY ) )
+        if( _SYS_isTouching( m_cube.id() ) || ( m_ShakeTime.isValid() && t - m_ShakeTime > SHAKE_FILL_DELAY ) )
         {
             Game::Inst().setState( Game::STATE_INTRO );
-            m_fShakeTime = -1.0f;
+            m_ShakeTime = SystemTime();
         }
     }*/
 }
@@ -568,7 +568,7 @@ void CubeWrapper::Tilt( int dir )
 {
 	bool bChanged = false;
 
-    if( Game::Inst().getState() != Game::STATE_PLAYING || m_fShakeTime > 0.0f )
+    if( Game::Inst().getState() != Game::STATE_PLAYING || m_ShakeTime.isValid() )
 		return;
 
     if( !Game::Inst().AreMovesLegal() )
@@ -760,9 +760,9 @@ bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
 void CubeWrapper::Shake( bool bShaking )
 {
 	if( bShaking )
-		m_fShakeTime = System::clock();
+        m_ShakeTime = SystemTime::now();
 	else
-		m_fShakeTime = -1.0f;
+		m_ShakeTime = SystemTime();
 }
 
 

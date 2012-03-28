@@ -19,8 +19,8 @@ static void DoBubbleTransition()
     const float VEL_ADJUSTMENT_MIN = 0.8f;
     const float VEL_ADJUSTMENT_MAX = 1.2f;
 
-    float startTime = System::clock();
-    float lastTime = startTime;
+    SystemTime startTime = SystemTime::now();
+    SystemTime lastTime = startTime;
 
     Float2 BubblePos[NUM_CUBES][NUM_BUBBLES];
 
@@ -36,10 +36,10 @@ static void DoBubbleTransition()
         }
     }
 
-    while( System::clock() - startTime < ANIM_LENGTH )
+    while( SystemTime::now() - startTime < ANIM_LENGTH )
     {
-        float delta = System::clock() - lastTime;
-        unsigned int frame = ( System::clock() - startTime ) / ANIM_LENGTH * bubbles1.frames;
+        float delta = SystemTime::now() - lastTime;
+        unsigned int frame = float( SystemTime::now() - startTime ) / ANIM_LENGTH * bubbles1.frames;
 
         if( frame >= bubbles1.frames )
             frame = bubbles1.frames - 1;

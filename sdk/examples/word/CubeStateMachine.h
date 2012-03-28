@@ -17,19 +17,19 @@
 
 using namespace Sifteo;
 
+enum CubeAnim
+{
+    CubeAnim_Main,
+    CubeAnim_Hint,
+    CubeAnim_Border,
+
+    NumCubeAnims
+};
 
 class CubeStateMachine : public StateMachine
 {
 public:
-    CubeStateMachine() :
-        StateMachine(0), mNumLetters(0), mIdleTime(0.f), mAnimTime(0.f),
-        mAnimType(AnimType_NotWord), mPainting(false), mBG0Panning(0.f),
-        mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartTarget(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
-    {
-        mLetters[0] = '\0';
-    }
-
+    CubeStateMachine();
     void setCube(Cube& cube);
     Cube& getCube();
 
@@ -43,19 +43,19 @@ public:
     void resetStateTime() { mStateTime = 0.0f; }
 
     unsigned getLetters(char *buffer, bool forPaint=false);
-    void queueAnim(AnimType anim);/*
+    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
                    VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
                     const AnimParams *params = 0);*/
-    void queueDefaultAnimForState();
+    void queueNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
             /*VidMode_BG0_SPR_BG1 &vid,
                                   BG1Helper *bg1 = 0,
                                   const AnimParams *params = 0);*/
 
     void updateAnim(VidMode_BG0_SPR_BG1 &vid,
                      BG1Helper *bg1 = 0,
-                     const AnimParams *params = 0);
-    AnimType getAnim() const { return mAnimType; }
+                     AnimParams *params = 0);
+    AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
@@ -66,9 +66,16 @@ public:
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
 
+    static unsigned findNumLetters(char *string);
+    bool canStartHint() const;
+    bool canUseHint() const;
+
+    void startHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
+    void stopHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
+
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
-    AnimType getNextAnim() const;
+    AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main) const;
     void paint();
 
     void paintScore(VidMode_BG0_SPR_BG1& vid,
@@ -81,23 +88,35 @@ private:
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
+    void setLettersStart(unsigned s);
+
     bool getAnimParams(AnimParams *params);
+    void calcSpriteParams(unsigned i);
+    void updateSpriteParams(float dt);
+    bool calcHintTiltDirection(unsigned &newLettersStart,
+                               unsigned &tiltDirection) const;
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
+    char mHintSolution[MAX_LETTERS_PER_CUBE + 1];
     Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
     unsigned mNumLetters;
+    unsigned mPuzzlePieceIndex;
     float mIdleTime;
-    float mAnimTime;
-    AnimType mAnimType;
+    bool mNewHint;
+    AnimType mAnimTypes[NumCubeAnims];
+    float mAnimTimes[NumCubeAnims];
+
     bool mPainting;
 
     float mBG0Panning;
     float mBG0TargetPanning;
     bool mBG0PanningLocked;
     unsigned mLettersStart;
-    unsigned mLettersStartTarget;
+    unsigned mLettersStartOld;
+
     ImageIndex mImageIndex;
+    SpriteParams mSpriteParams;
 
     Cube* mCube;
     TitleCubeState mTitleState;

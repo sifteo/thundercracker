@@ -42,7 +42,7 @@ void Intro::Reset( bool ingamereset)
 }
 
 
-bool Intro::Update( float dt, Banner &banner )
+bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
 {
     m_fTimer += dt;
 
@@ -89,7 +89,7 @@ bool Intro::Update( float dt, Banner &banner )
         }
     }
 
-    banner.Update( dt );
+    banner.Update( t );
 
     return true;
 }

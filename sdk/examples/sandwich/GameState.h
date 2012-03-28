@@ -11,6 +11,8 @@ private:
 public:
 	void Init();
 	bool AdvanceQuest();
+
+	inline const QuestData* Quest() const { return gQuestData+mQuest; }
 	
 	bool FlagTrigger(const TriggerData& trigger);
 	bool Flag(uint8_t questId, uint8_t flagId);

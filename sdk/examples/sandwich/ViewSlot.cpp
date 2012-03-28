@@ -4,11 +4,11 @@ ViewSlot* pInventory = 0;
 ViewSlot* pMinimap = 0;
 
 Cube* ViewSlot::GetCube() const {
-	return gCubes + (this - pGame->ViewBegin());
+	return gCubes + (this - gGame.ViewBegin());
 }
 
 Cube::ID ViewSlot::GetCubeID() const {
-	return this - pGame->ViewBegin();
+	return this - gGame.ViewBegin();
 }
 
 bool ViewSlot::Touched() const {
@@ -20,7 +20,7 @@ void ViewSlot::Init() {
 	mode.set();
 	mode.clear();
   	mode.setWindow(0, 128);
-	if (pMinimap) {
+	if (!gGame.ShowingMinimap() || pMinimap) {
 		mFlags.view = VIEW_IDLE;
 		mView.idle.Init();
 	} else {
@@ -28,7 +28,7 @@ void ViewSlot::Init() {
 		mFlags.view = VIEW_MINIMAP;
 		mView.minimap.Init();
 	}
-	pGame->NeedsSync();
+	gGame.NeedsSync();
 
 }
 
@@ -39,8 +39,7 @@ void ViewSlot::HideSprites() {
 	}
 }
 
-void ViewSlot::SetView(unsigned viewId, bool doFlush, unsigned rid) {
-	mFlags.view = viewId;
+void ViewSlot::SanityCheckVram() {
 	ViewMode gfx = Graphics();
 	if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
 		gfx.setWindow(0,128);
@@ -48,27 +47,57 @@ void ViewSlot::SetView(unsigned viewId, bool doFlush, unsigned rid) {
 	} else {
 		gfx.BG0_setPanning(Vec2(0,0));
 	}
+}
+
+void ViewSlot::EvictSecondaryView(unsigned viewId) {
 	if (pInventory == this && viewId != VIEW_INVENTORY) { 
 		pInventory = FindIdleView();
-		if (pInventory) { pInventory->SetView(VIEW_INVENTORY, doFlush); }
+		if (pInventory) { pInventory->SetSecondaryView(VIEW_INVENTORY, doFlush); }
 	}
 	if (pMinimap == this && viewId != VIEW_MINIMAP) { 
 		pMinimap = FindIdleView();
 		if (pMinimap) { 
-			pMinimap->SetView(VIEW_MINIMAP, doFlush); 
+			pMinimap->SetSecondaryView(VIEW_MINIMAP, doFlush); 
 		} else if (pInventory) {
-			pInventory->SetView(VIEW_MINIMAP, doFlush);
+			pInventory->SetSecondaryView(VIEW_MINIMAP, doFlush);
 			pInventory = 0;
 		} else {
 			pMinimap = 0; 
 		}
 	}
+}
+
+bool ViewSlot::SetLocationView(Vec2 location, Cube::Side side, bool force, bool doFlush) {
+	unsigned view = side == SIDE_NONE ? VIEW_ROOM : VIEW_EDGE;
+	if (!force && mFlags.view == view) {
+		if (view == VIEW_ROOM && mView.room.Location() == location) { return false; }
+		if (view == VIEW_EDGE && mEdge.Location() == location && mEdge.Side() == side) { return false; }
+	}
+	SanityCheckVram();
+	mFlags.view = view;
+	EvictSecondaryView(view);
+	if (view == VIEW_ROOM) {
+		mView.room.Init(gMap->GetRoomId(location));
+	} else {
+		mView.edge.Init(location, side);
+	}
+	if (doFlush) {
+		#if GFX_ARTIFACT_WORKAROUNDS
+			gGame.Paint(true);
+			GetCube()->vbuf.touch();
+		#endif
+			gGame.Paint(true);
+	}
+	return true;
+}
+
+void ViewSlot::SetSecondaryView(unsigned viewId, bool doFlush) {
+	mFlags.view = viewId;
+	SanityCheckVram();
+	EvictSecondaryView(viewId);
 	switch(viewId) {
 		case VIEW_IDLE:
 			mView.idle.Init();
-			break;
-		case VIEW_ROOM:
-			mView.room.Init(rid);
 			break;
 		case VIEW_INVENTORY:
 			pInventory = this;
@@ -81,10 +110,10 @@ void ViewSlot::SetView(unsigned viewId, bool doFlush, unsigned rid) {
 	}
 	if (doFlush) {
 		#if GFX_ARTIFACT_WORKAROUNDS
-			pGame->Paint(true);
+			gGame.Paint(true);
 			GetCube()->vbuf.touch();
 		#endif
-			pGame->Paint(true);
+			gGame.Paint(true);
 	}
 }
 
@@ -109,10 +138,10 @@ void ViewSlot::Restore(bool doFlush) {
 	}
 	if (doFlush) {
 		#if GFX_ARTIFACT_WORKAROUNDS
-			pGame->Paint(true);
+			gGame.Paint(true);
 			GetCube()->vbuf.touch();
 		#endif
-			pGame->Paint(true);
+			gGame.Paint(true);
 	}
 }
 
@@ -134,36 +163,79 @@ void ViewSlot::Update(float dt) {
 	}
 }
   
-bool ViewSlot::ShowLocation(Vec2 loc, bool doFlush) {
-	if (!pGame->GetMap()->Contains(loc)) {
-		if (IsShowingRoom()) {
-			HideLocation(doFlush);
+bool ViewSlot::ShowLocation(Vec2 loc, bool force, bool doFlush) {
+	// possibilities: show room, show edge, show corner
+	const MapData& map = *gMap->Data();
+	Cube::Side side = SIDE_NONE;
+	if (loc.x == -1) {
+		loc.x = 0;
+		if (loc.y == -1) {
+			loc.y = 0;
+			side = SIDE_TOP_LEFT;
+		} else if (loc.y < map.height) {
+			loc.y = 0;
+			side = SIDE_LEFT;
+			// left
+		} else if (loc.y == map.height) {
+			// bottom-left
+		} else {
+			goto OutOfBounds;
 		}
+	} else if (loc.x < map.width) {
+		if (loc.y == -1) {
+			// top
+		} else if (loc.y < map.height) {
+
+			// room
+		} else if (loc.y == map.height) {
+			// bottom
+		} else {
+			goto OutOfBounds;
+		}
+	} else if (loc.x == map.width) {
+		if (loc.y == -1) {
+			// top-right
+		} else if (loc.y < map.height) {
+			// right
+		} else if (loc.y == map.height) {
+			// bottom-right
+		} else {
+			goto OutOfBounds;
+		}
+	}
+	return SetLocationView(loc, side, doFlush);
+	OutOfBounds:
+	HideLocation(doFlush);
+	return false;
+	/*
+	if (!gGame.GetMap()->Contains(loc)) {
+		HideLocation(doFlush);
 	} else {
-		unsigned rid = pGame->GetMap()->GetRoomId(loc);
-		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
-			SetView(VIEW_ROOM, doFlush, rid);
+		unsigned rid = gGame.GetMap()->GetRoomId(loc);
+		if (force || !IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
+			SetSecondaryView(VIEW_ROOM, doFlush, rid);
 			return true;
 		}
 	}
 	return false;
+	*/
 }
 
 ViewSlot* ViewSlot::FindIdleView() {
-	for (ViewSlot *p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+	for (ViewSlot *p=gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) {
 		if (p->ViewType() == VIEW_IDLE) { return p; }
 	}
 	return 0;
 }
 
 bool ViewSlot::HideLocation(bool doFlush) {
-	if (IsShowingRoom()) {
-		if (pGame->ShowingMinimap() && !pMinimap) {
-			SetView(VIEW_MINIMAP, doFlush);
-		} else if (pGame->GetState()->HasAnyItems() && !pInventory) {
-			SetView(VIEW_INVENTORY, doFlush);
+	if (IsShowingLocation()) {
+		if (gGame.ShowingMinimap() && !pMinimap) {
+			SetSecondaryView(VIEW_MINIMAP, doFlush);
+		} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
+			SetSecondaryView(VIEW_INVENTORY, doFlush);
 		} else {
-			SetView(VIEW_IDLE, doFlush);
+			SetSecondaryView(VIEW_IDLE, doFlush);
 		}
 		return true;
 	}
@@ -172,19 +244,19 @@ bool ViewSlot::HideLocation(bool doFlush) {
 
 void ViewSlot::RefreshInventory(bool doFlush) {
   if (mFlags.view == VIEW_INVENTORY) {
-  	if (!pGame->GetState()->HasAnyItems()) {
-  		SetView(VIEW_IDLE, doFlush);
+  	if (!gGame.GetState()->HasAnyItems()) {
+  		SetSecondaryView(VIEW_IDLE, doFlush);
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
-  } else if (mFlags.view == VIEW_IDLE && pGame->GetState()->HasAnyItems() && !pInventory) { 
-	SetView(VIEW_INVENTORY, doFlush);
+  } else if (mFlags.view == VIEW_IDLE && gGame.GetState()->HasAnyItems() && !pInventory) { 
+	SetSecondaryView(VIEW_INVENTORY, doFlush);
   }
 }
 
 ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->ViewAt(neighbor-CUBE_ID_BASE);
+  return neighbor == CUBE_ID_UNDEFINED ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
 }
 
 //----------------------------------------------------------------------

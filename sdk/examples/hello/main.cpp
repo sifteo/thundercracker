@@ -77,14 +77,8 @@ void siftmain()
     const unsigned rate = 2;
 
     while (1) {
-        float t = System::clock();
-        String<64> timeStr;
-        timeStr << "Time: " << Fixed((int)t, 4) << "." << ((int)(t * 10) % 10);
-
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            vid[i].BG0_text(Vec2(2,6), Font, timeStr);
+        for (unsigned i = 0; i < NUM_CUBES; i++)
             vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
-        }
 
         if (++frame == Kirby.frames << rate)
             frame = 0;

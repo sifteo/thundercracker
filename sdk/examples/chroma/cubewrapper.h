@@ -57,7 +57,7 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
-    void Update(float t, float dt);
+    void Update(SystemTime t, TimeDelta dt);
 	void vidInit();
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
@@ -167,7 +167,7 @@ private:
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
-	float m_fShakeTime;
+    SystemTime m_ShakeTime;
     //how long have we been touching the cube?
     float m_fTouchTime;
 

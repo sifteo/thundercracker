@@ -37,7 +37,7 @@ Game &Game::Inst()
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SURVIVAL ), m_stateTime( 0.0f ),
-                m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
+                m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
                 m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
@@ -79,8 +79,6 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].vidInit();
 
-    m_fLastTime = System::clock();
-
 #if SFX_ON
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
@@ -107,9 +105,9 @@ void Game::Init()
 
 void Game::Update()
 {
-    float t = System::clock();
-    float dt = t - m_fLastTime;
-    m_fLastTime = t;
+    m_timeStep.next();
+    SystemTime t = m_timeStep.end();
+    TimeDelta dt = m_timeStep.delta();
     m_stateTime += dt;
 
     bool needsync = false;
@@ -160,7 +158,7 @@ void Game::Update()
                 m_musicChannel.stop();
                 m_musicChannel.play( astrokraut, LoopRepeat );
     #endif
-                m_timer.Init( System::clock() );
+                m_timer.Init( SystemTime::now() );
             }
             break;
         }
@@ -224,7 +222,7 @@ void Game::Update()
     }
 
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Update( System::clock(), dt );
+        m_cubes[i].Update( t, dt );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
@@ -877,12 +875,12 @@ _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 //play a random slosh sound
 void Game::playSlosh()
 {
-    if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
+    if( m_lastSloshTime.isValid() && SystemTime::now() - m_lastSloshTime > SLOSH_THRESHOLD )
     {
         int index = random.randrange( NUM_SLOSH_SOUNDS );
         playSound(*SLOSH_SOUNDS[index]);
 
-        m_fLastSloshTime = System::clock();
+        m_lastSloshTime = SystemTime::now();
     }
 }
 

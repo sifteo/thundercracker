@@ -36,14 +36,14 @@ void TimeKeeper::Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
 }
 
 
-void TimeKeeper::Update(float dt)
+void TimeKeeper::Update( TimeDelta dt )
 {
 	m_fTimer -= dt;
     //m_blinkCounter++;
 }
 
 
-void TimeKeeper::Init( float t )
+void TimeKeeper::Init( SystemTime t )
 {
 	Reset();
 }

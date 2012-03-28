@@ -60,6 +60,13 @@ volatile uint8_t flash_fifo_head;
  * Loadstream codec state
  */
 
+union word16 {
+    uint16_t word;
+    struct {
+        uint8_t low, high;
+    };
+};
+
 // Color lookup table
 static __idata struct {
     union word16 colors[FLS_LUT_SIZE];

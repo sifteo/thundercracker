@@ -188,8 +188,8 @@ private:
     float m_stateTime;
 	TimeKeeper m_timer;
     MenuController m_menu;
-    float m_fLastTime;
-    float m_fLastSloshTime;
+    TimeStep m_timeStep;
+    SystemTime m_lastSloshTime;
 
 #if SFX_ON
     AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];

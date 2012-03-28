@@ -1,4 +1,4 @@
-import lxml.etree, os, os.path, re, tmx, misc, Image
+import lxml.etree, os, posixpath, re, tmx, misc, Image
 
 class DialogDatabase:
 	def __init__(self, world, path):
@@ -12,7 +12,7 @@ class DialogDatabase:
 					assert d.id != otherd.id, "duplicate dialog id"
 		# todo: validate dialog images
 		self.dialog_dict = dict((d.id, d) for d in self.dialogs)
-		self.detail_images = dict((name, DialogDetailImage(os.path.join(world.dir, name+".png"))) for name in self.list_detail_image_names())
+		self.detail_images = dict((name, DialogDetailImage(posixpath.join(world.dir, name+".png"))) for name in self.list_detail_image_names())
 
 	def list_npc_image_names(self):
 		hash = {}
@@ -50,7 +50,7 @@ class DialogDetailImage:
 	def __init__(self, path):
 		self.image = Image.open(path)
 		w,h = self.image.size
-		assert w==112 and h==80, "NPC Details currently restricted to 112x80 crappy dimensions"
+		assert w<=112 and h<=80, "NPC Details currently restricted to 112x80 crappy dimensions"
 		# assert h<=80, "detail image is taller than 80px"
 		# assert w%8 == 0 and h%8 == 0, "detail image dimensions not multiples of 8"
 		# w = w>>3

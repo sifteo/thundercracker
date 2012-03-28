@@ -6,12 +6,6 @@
 class MacronixMX25
 {
 public:
-    static const unsigned PAGE_SIZE = 256;          // programming granularity
-    static const unsigned SECTOR_SIZE = 1024 * 4;   // smallest erase granularity
-    static const unsigned BLOCK_SIZE = 1024 * 64;   // largest erase granularity
-
-    static MacronixMX25 instance;
-
     enum Status {
         Ok                  = 0,
         // from status register
@@ -30,10 +24,14 @@ public:
     void init();
 
     void read(uint32_t address, uint8_t *buf, unsigned len);
-    Status write(uint32_t address, const uint8_t *buf, unsigned len);
-    Status eraseSector(uint32_t address);
-    Status eraseBlock(uint32_t address);
-    Status chipErase();
+    void write(uint32_t address, const uint8_t *buf, unsigned len);
+    void eraseSector(uint32_t address);
+    void eraseBlock(uint32_t address);
+    void chipErase();
+
+    inline bool writeInProgress() {
+        return readReg(ReadStatusReg) & WriteInProgress;
+    }
 
     void deepSleep();
     void wakeFromDeepSleep();
