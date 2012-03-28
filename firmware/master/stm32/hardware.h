@@ -252,31 +252,6 @@ struct FLASH_t {
 extern volatile FLASH_t FLASH;
 
 /*
- * Universal Seral Bus - High/medium density devices
- */
-
-struct USB_t {
-    uint32_t endpoints[8];
-    uint32_t reserved[8];
-    uint32_t CNTR;
-    uint32_t ISTR;
-    uint32_t FNR;
-    uint32_t DADDR;
-    uint32_t BTABLE;
-};
-
-struct USBDescriptor_t {
-    uint32_t     TXADDR0;
-    uint16_t     TXCOUNT0;
-    uint16_t     TXCOUNT1;
-    uint32_t     RXADDR0;
-    uint16_t     RXCOUNT0;
-    uint16_t     RXCOUNT1;
-};
-
-extern volatile USB_t USB;
-
-/*
  * USB on-the-go - connectivity line devices
  */
 
@@ -301,6 +276,18 @@ struct USBOTG_GLOBAL_t {
     uint32_t reserved0x40[48];
     uint32_t HPTXFSIZ;
     uint32_t DIEPTXF[3];
+
+    uint32_t res0[188];
+};
+
+// host channel
+struct USBOTG_HC_t {
+    uint32_t HCCHAR;
+    uint32_t res0;
+    uint32_t HCINT;
+    uint32_t HCGINTMSK;
+    uint32_t HCTSIZ;
+    uint32_t res[3];
 };
 
 // host component
@@ -312,42 +299,33 @@ struct USBOTG_HOST_t {
     uint32_t HPTXSTS;
     uint32_t HAINT;
     uint32_t HAINTMSK;
-    uint32_t reserved0x422[9];
+    uint32_t reserved0x41C[9];
     uint32_t HPRT;
+    uint32_t reserved[47];
+
+    struct USBOTG_HC_t channels[8]; // offset 0x500
+    uint32_t res2[128];
 };
 
 // IN endpoints
 struct USBOTG_IN_EP_t {
-  uint32_t DIEPCTL;
-  uint32_t reserved0x04;
-  uint32_t DIEPINT;
-  uint32_t reserved0xC;
-  uint32_t DIEPTSIZ;
-  uint32_t DIEPDMA;
-  uint32_t DTXFSTS;
-  uint32_t reserved0x18;
+    uint32_t DIEPCTL;
+    uint32_t reserved0x04;
+    uint32_t DIEPINT;
+    uint32_t reserved0xC;
+    uint32_t DIEPTSIZ;
+    uint32_t DTXFSTS;
+    uint32_t reserved0x18[2];
 };
 
 // OUT endpoints
 struct USBOTG_OUT_EP_t {
-  uint32_t DOEPCTL;
-  uint32_t DOUTEPFRM;
-  uint32_t DOEPINT;
-  uint32_t reserved0xC;
-  uint32_t DOEPTSIZ;
-  uint32_t DOEPDMA;
-  uint32_t reserved0x1C[2];
-};
-
-// host channel
-struct USBOTG_HC_t {
-  uint32_t HCCHAR;
-  uint32_t HCSPLT;
-  uint32_t HCINT;
-  uint32_t HCGINTMSK;
-  uint32_t HCTSIZ;
-  uint32_t HCDMA;
-  uint32_t reserved[2];
+    uint32_t DOEPCTL;
+    uint32_t reserved0x04;
+    uint32_t DOEPINT;
+    uint32_t reserved0xC;
+    uint32_t DOEPTSIZ;
+    uint32_t reserved0x1C[3];
 };
 
 // device component
@@ -364,30 +342,28 @@ struct USBOTG_DEVICE_t {
     uint32_t reserved0x824;
     uint32_t DVBUSDIS;
     uint32_t DVBUSPULSE;
-    uint32_t DTHRCTL;
+    uint32_t reserved0x830;
     uint32_t DIEPEMPMSK;
-    uint32_t DEACHINT;
-    uint32_t DEACHMSK;
-    uint32_t reserved0x840;
-    uint32_t DINEP1MSK;
-    uint32_t reserved0x844[15];
-    uint32_t DOUTEP1MSK;
+    uint32_t res[50];
+
+    struct USBOTG_IN_EP_t   inEps[8];           // offset 0x900
+    uint32_t res4[64];
+
+    struct USBOTG_OUT_EP_t  outEps[8];          // offset 0xB00
+    uint32_t res5[64];
 };
 
-// TODO - make sure each segment is really at the appropriate offset
 struct USBOTG_t {
     struct USBOTG_GLOBAL_t  global;             // offset 0x0
     struct USBOTG_HOST_t    host;               // offset 0x400
-    struct USBOTG_HC_t      hostChannels[8];    // offset 0x500
     struct USBOTG_DEVICE_t  device;             // offset 0x800
-    struct USBOTG_IN_EP_t   inEps[4];           // offset 0x900
-    struct USBOTG_OUT_EP_t  outEps[4];          // offset 0xB00
+    uint32_t res5[64];
     uint32_t PCGCCTL;                           // offset 0xE00
-    // TODO - pad this out
-    uint32_t DFIFO[4][0x1000];                 // offset 0x1000
+    uint32_t res6[127];
+    uint32_t epFifos[4][0x400];                 // offset 0x1000
 };
 
-extern volatile USBOTG_t USBOTG;
+extern volatile USBOTG_t OTG;
 
 /*
  * Cortex-M3 Nested Vectored Interrupt Controller
