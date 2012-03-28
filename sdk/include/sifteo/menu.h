@@ -40,7 +40,7 @@ struct MenuAssets {
 };
 
 struct MenuItem {
-	const AssetImage *icon; // ptr to 10x10tl icon, must be set to be a valid option.
+	const AssetImage *icon; // ptr to icon, must be set to be a valid option.
 	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank theme header).
 };
 
@@ -84,6 +84,14 @@ typedef enum {
 	MENU_STATE_FINISH
 } MenuState;
 
+// computed constants
+#define kPixelsPerTile 8
+#define kPeekTiles 1
+#define kIconPixelWidth (kIconTileWidth * kPixelsPerTile)
+#define kIconPixelHeight (kIconTileHeight * kPixelsPerTile)
+#define kItemTileWidth (int)(((kEndCapPadding + kPixelsPerTile - 1) / kPixelsPerTile) + kIconTileWidth - kPeekTiles)
+#define kItemPixelWidth (kItemTileWidth * kPixelsPerTile)
+
 class Menu {
  public:
     Menu(Cube *, struct MenuAssets*, struct MenuItem*);
@@ -93,16 +101,9 @@ class Menu {
 	void replaceIcon(uint8_t item, const AssetImage *);
 	void paintSync();
 	bool itemVisible(uint8_t item);
+	void setIconYOffset(uint8_t px);
 
  private:
-	static const float kIconPixelWidth = 80.f;
-	static const float kIconPixelHeight = 80.f;
-	static const int kIconTileWidth;
-	static const int kIconTileHeight;
-	static const int kColumnsPerIcon;
-	static const float kIconPadding = 16.f;
-	static const float kPixelsPerIcon;
-	static const int kEndCapPadding;
 	static const float kTimeDilator = 13.1f;
 	static const float kMaxSpeedMultiplier = 3.f;
 	static const float kAccelScalingFactor = -0.25f;
@@ -113,9 +114,13 @@ class Menu {
 	static const uint8_t kFooterHeight = 4;
 	static const float kAccelThresholdOn = 1.15f;
 	static const float kAccelThresholdOff = 0.85f;
-	// semi-constants
+	// instance-constants
 	uint8_t kHeaderHeight;
 	uint8_t kFooterBG1Offset;
+	int8_t kIconYOffset;
+	uint8_t kIconTileWidth;
+	uint8_t kIconTileHeight;
+	int8_t kEndCapPadding;
 
 	// external parameters and metadata
 	Cube *pCube;				// cube on which the menu is being drawn
@@ -139,7 +144,7 @@ class Menu {
 	// static state: event at beginning of touch only
 	bool prevTouch;
 	// inertial state: where to stop
-	float stopping_position;
+	int stopping_position;
 	int tiltDirection;
 	// scrolling states (Inertia and Tilt): physics
 	float position;			// current x position
@@ -188,26 +193,21 @@ class Menu {
 	static unsigned unsignedMod(int, unsigned);
 	void drawColumn(int);
 	void drawFooter(bool force = false);
-	static float stoppingPositionFor(int);
+	int stoppingPositionFor(int);
 	float velocityMultiplier();
 	float maxVelocity();
 	static float lerp(float min, float max, float u);
 	void updateBG0();
 	bool itemVisibleAtCol(uint8_t item, int column);
+	uint8_t itemAtCol(int column);
+	int computeCurrentTile();
 };
 
 // constant folding
-const float Menu::kPixelsPerIcon = kIconPixelWidth + kIconPadding;
 const float Menu::kOneG = abs(64 * kAccelScalingFactor);
-const int Menu::kIconTileWidth = (int)(kIconPixelWidth / 8);
-const int Menu::kIconTileHeight = (int)(kIconPixelHeight / 8);
-const int Menu::kColumnsPerIcon = (int)(kPixelsPerIcon / 8);
-const int Menu::kEndCapPadding = (kNumVisibleTilesX / 2) - (kIconTileWidth / 2);
 
 Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
  	: canvas(mainCube->vbuf) {
-	ASSERT((int)kIconPixelWidth % 8 == 0);
-	ASSERT((int)kIconPadding % 8 == 0);
 
 	currentEvent.type = MENU_UNEVENTFUL;
 	pCube = mainCube;
@@ -219,7 +219,18 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	// calculate the number of items
 	uint8_t i = 0;
 	while(items[i].icon != NULL) {
-		ASSERT(items[i].icon->width == (int)kIconPixelWidth / 8);
+		if (kIconTileWidth == 0) {
+			kIconTileWidth = items[i].icon->width;
+			kIconTileHeight = items[i].icon->height;
+			kEndCapPadding = (kNumVisibleTilesX - kIconTileWidth) * (kPixelsPerTile / 2.f);
+			ASSERT((kItemPixelWidth - kIconPixelWidth) % kPixelsPerTile == 0);
+			// icons should leave at least one tile on both sides for the next/prev items
+			ASSERT(kIconTileWidth <= kNumVisibleTilesX - (kPeekTiles * 2));
+		} else {
+			ASSERT(items[i].icon->width == kIconTileWidth);
+			ASSERT(items[i].icon->height == kIconTileHeight);
+		}
+		
 		i++;
 		if (items[i].label != NULL) {
 			ASSERT(items[i].label->width == kNumVisibleTilesX);
@@ -268,6 +279,8 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	kFooterBG1Offset = assets->header == NULL ? 0 : assets->header->width * assets->header->height;
 	// XXX: pending fix to #8:
 	ASSERT(kHeaderHeight == 0 || kHeaderHeight == 2);
+	setIconYOffset(kHeaderHeight > 0 ? kHeaderHeight * 8 : 16);
+	ASSERT(kIconYOffset == -16);
 }
 
 /*
@@ -384,12 +397,9 @@ void Menu::replaceIcon(uint8_t item, const AssetImage *icon) {
 	ASSERT(item < numItems);
 	items[item].icon = icon;
 
-	if (itemVisible(item)) {
-		for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
-			if (itemVisibleAtCol(item, i))
-				drawColumn(i);
-	}
-
+	for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
+		if (itemVisibleAtCol(item, i))
+			drawColumn(i);
 }
 
 void Menu::paintSync() {
@@ -401,10 +411,16 @@ void Menu::paintSync() {
 bool Menu::itemVisible(uint8_t item) {
 	ASSERT(item >= 0 && item < numItems);
 
-	for(int i = MAX(0, prev_ut - kEndCapPadding); i < prev_ut - kEndCapPadding + kNumTilesX; i++) {
+	for(int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
 		if (itemVisibleAtCol(item, i)) return true;
 	}
 	return false;
+}
+
+void Menu::setIconYOffset(uint8_t px) {
+	ASSERT(px >= 0 || px < kNumTilesX * 8);
+	kIconYOffset = -px;
+	updateBG0();
 }
 
 /*
@@ -463,6 +479,8 @@ void Menu::changeState(MenuState newstate) {
  * none.
  */
 void Menu::transToStart() {
+	shouldPaintSync = true;
+	handlePrepaint();
 }
 
 void Menu::stateStart() {
@@ -495,7 +513,6 @@ void Menu::stateStart() {
     		);
     	}
 	}
-    for (int x = -1; x < kNumTilesX - 1; x++) { drawColumn(x); }
 
 	currentTip = 0;
 	prevTipTime = SystemTime::now();
@@ -512,7 +529,8 @@ void Menu::stateStart() {
 void Menu::transFromStart() {
 	if (stateFinished) {
 		position = 0.f;
-		prev_ut = 0;
+		prev_ut = computeCurrentTile() + kNumTilesX;
+		updateBG0();
 
 		for(int i = 0; i < NUM_SIDES; i++) {
 			neighbors[i].neighborSide = SIDE_UNDEFINED;
@@ -588,7 +606,7 @@ void Menu::transToTilting() {
 
 void Menu::stateTilting() {
 	// normal scrolling
-	const float max_x = stoppingPositionFor(numItems - 1);
+	const int max_x = stoppingPositionFor(numItems - 1);
 	const float kInertiaThreshold = 10.f;
 
 	velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
@@ -608,7 +626,7 @@ void Menu::stateTilting() {
 }
 
 void Menu::transFromTilting() {
-	const bool outOfBounds = (position < 0.f - 0.05f) || (position > kPixelsPerIcon*(numItems-1) + 0.05f);
+	const bool outOfBounds = (position < -0.05f) || (position > kItemPixelWidth*(numItems-1) + kEndCapPadding + 0.05f);
 	if (abs(xaccel) < kAccelThresholdOff || outOfBounds) {
 		changeState(MENU_STATE_INERTIA);
 	}
@@ -680,11 +698,14 @@ void Menu::transFromInertia() {
 void Menu::transToFinish() {
 	// prepare screen for item animation
 	// isolate the selected icon
-	canvas.BG0_setPanning(Vec2(0,0));
+	{
+		Int2 vec = {-kEndCapPadding, kIconYOffset};
+		canvas.BG0_setPanning(vec);
+	}
 
 	// blank out the background layer
-	for(int row=2; row<kIconTileHeight + 2; ++row)
-	for(int col=0; col<kNumVisibleTilesX; ++col) {
+	for(int row=0; row<kIconTileHeight; ++row)
+	for(int col=0; col<kNumTilesX; ++col) {
 		canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
 	}
 	if (assets->footer) {
@@ -694,7 +715,7 @@ void Menu::transToFinish() {
 	{
 		const AssetImage* icon = items[computeSelected()].icon;
 		BG1Helper overlay(*pCube);
-		Int2 vec = {(kNumVisibleTilesX - icon->width) / 2, 2};
+		Int2 vec = {0, 0};
 		overlay.DrawAsset(vec, *icon);
 		overlay.Flush();
 	}
@@ -711,7 +732,7 @@ void Menu::stateFinish() {
 	float u = finishIteration/33.f;
 	u = (1.f-k*u);
 	offset = int(12*(1.f-u*u));
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
+	canvas.BG1_setPanning(Vec2(-kEndCapPadding, offset + kIconYOffset));
 	currentEvent.type = MENU_PREPAINT;
 
 	if (offset <= -128) {
@@ -905,7 +926,7 @@ void Menu::detectNeighbors() {
 }
 
 uint8_t Menu::computeSelected() {
-	int s = (position + (kPixelsPerIcon / 2.f))/kPixelsPerIcon;
+	int s = (position + (kItemPixelWidth / 2)) / kItemPixelWidth;
 	return clamp(s, 0, numItems - 1);
 }
 
@@ -915,16 +936,13 @@ uint8_t Menu::computeSelected() {
 void Menu::drawColumn(int x) {
 	// x is the column in "global" space
     uint16_t addr = unsignedMod(x, kNumTilesX);
-    x -= kEndCapPadding; // first icon is 24px inset
-	const uint16_t local_x = Menu::unsignedMod(x, kColumnsPerIcon);
-	const int iconId = x < 0 ? -1 : x / kColumnsPerIcon;
 
 	// icon or blank column?
-	if (local_x < kIconTileWidth && iconId >= 0 && iconId < numItems) {
+	if (itemAtCol(x) < numItems) {
 		// drawing an icon column
-		const AssetImage* pImg = items[x / kColumnsPerIcon].icon;
-		const uint16_t *src = pImg->tiles + unsignedMod(local_x, pImg->width);
-		addr += 2*kNumTilesX;
+		const AssetImage* pImg = items[itemAtCol(x)].icon;
+		const uint16_t *src = pImg->tiles + ((x % kItemTileWidth) % pImg->width);
+
 		for(int row=0; row<kIconTileHeight; ++row) {
 	        _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
     	    addr += kNumTilesX;
@@ -933,10 +951,9 @@ void Menu::drawColumn(int x) {
 		}
 	} else {
 		// drawing a blank column
-		VidMode_BG0 g(pCube->vbuf);
 		for(int row=0; row<kIconTileHeight; ++row) {
-			Int2 vec = { addr, row+2 };
-			g.BG0_drawAsset(vec, *assets->background);
+			Int2 vec = { addr, row };
+			canvas.BG0_drawAsset(vec, *assets->background);
 		}
 	}
 }
@@ -969,8 +986,8 @@ void Menu::drawFooter(bool force) {
 	}
 }
 
-float Menu::stoppingPositionFor(int selected) {
-	return kPixelsPerIcon * selected;
+int Menu::stoppingPositionFor(int selected) {
+	return kItemPixelWidth * selected;
 }
 
 float Menu::velocityMultiplier() {
@@ -991,8 +1008,7 @@ float Menu::lerp(float min, float max, float u) {
 }
 
 void Menu::updateBG0() {
-	int ui = position;
-	int ut = (position < 0 ? position - 8.f : position) / 8; // special case because int rounds up when < 0
+	int ut = computeCurrentTile();
 
 	/* XXX: we should always paintSync if we've loaded two columns, to avoid a race
 	 * condition in the painting loop
@@ -1006,19 +1022,49 @@ void Menu::updateBG0() {
 		drawColumn(--prev_ut);
 	}
 
-	canvas.BG0_setPanning(Vec2(ui, 0));
+	{
+		Int2 vec = {(position - kEndCapPadding), kIconYOffset};
+		canvas.BG0_setPanning(vec);
+	}
 }
 
 bool Menu::itemVisibleAtCol(uint8_t item, int column) {
 	ASSERT(item >= 0 && item < numItems);
 	if (column < 0) return false;
 
-	int offset_column = column - kEndCapPadding;
-	if (Menu::unsignedMod(offset_column, kColumnsPerIcon) < kIconTileWidth && offset_column / kColumnsPerIcon == item) {
-		return true;
-	}
-	return false;
+	return itemAtCol(column) == item;
 }
+
+uint8_t Menu::itemAtCol(int column) {
+	if (column < 0) return numItems;
+
+	if (column % kItemTileWidth < kIconTileWidth) {
+		return column < 0 ? numItems : column / kItemTileWidth;
+	}
+	return numItems;
+}
+
+int Menu::computeCurrentTile() {
+	/* these are necessary if the icon widths are an odd number of tiles,
+	 * because the position is no longer aligned with the tile domain.
+	 */
+	const int kPositionAlignment = kEndCapPadding % kPixelsPerTile == 0 ? 0 : kPixelsPerTile - kEndCapPadding % kPixelsPerTile;
+	const int kTilePadding = kEndCapPadding / kPixelsPerTile;
+
+	int ui = position - kPositionAlignment;
+	int ut = (ui < 0 ? ui - kPixelsPerTile : ui) / kPixelsPerTile; // special case because int rounds up when < 0
+	ut -= kTilePadding;
+
+	return ut;
+}
+
+// computed constants
+#undef kPixelsPerTile
+#undef kPeekTiles
+#undef kIconPixelWidth
+#undef kIconPixelHeight
+#undef kItemTileWidth
+#undef kItemPixelWidth
 
 };  // namespace Sifteo
 
