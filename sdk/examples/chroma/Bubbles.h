@@ -37,6 +37,7 @@ private:
 
     Float2 m_pos;
     float m_fTimeAlive;
+    const Sifteo::PinnedAssetImage *m_pTex;
 };
 
 class BubbleSpawner

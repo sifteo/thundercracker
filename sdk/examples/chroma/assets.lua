@@ -87,7 +87,8 @@ UI_Game_Menu_Restart = image{"UI_screen_touch_restart.png"}
 --for clearing
 White = image{"White.png"}
 
-bubbles = image{"bubbles.png", height=16, pinned=true}
+bubbles1 = image{"bubbles1.png", height=16, pinned=true}
+bubbles2 = image{"bubbles2.png", height=16, pinned=true}
 
 --lumes
 Lumes_Happy = image{"lumes_happy.png"}

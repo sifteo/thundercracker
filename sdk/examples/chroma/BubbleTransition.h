@@ -39,10 +39,10 @@ static void DoBubbleTransition()
     while( System::clock() - startTime < ANIM_LENGTH )
     {
         float delta = System::clock() - lastTime;
-        unsigned int frame = ( System::clock() - startTime ) / ANIM_LENGTH * bubbles.frames;
+        unsigned int frame = ( System::clock() - startTime ) / ANIM_LENGTH * bubbles1.frames;
 
-        if( frame >= bubbles.frames )
-            frame = bubbles.frames - 1;
+        if( frame >= bubbles1.frames )
+            frame = bubbles1.frames - 1;
 
         for( int i = 0; i < NUM_CUBES; i++ )
         {
@@ -50,8 +50,8 @@ static void DoBubbleTransition()
 
             for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
             {
-                vid.resizeSprite(j, bubbles.width*8, bubbles.height*8);
-                vid.setSpriteImage(j, bubbles, frame);
+                vid.resizeSprite(j, bubbles1.width*8, bubbles1.height*8);
+                vid.setSpriteImage(j, bubbles1, frame);
                 vid.moveSprite(j, BubblePos[i][j].x, BubblePos[i][j].y);
 
                 BubblePos[i][j].y += Game::random.uniform( -2.5f, 2.5f );
