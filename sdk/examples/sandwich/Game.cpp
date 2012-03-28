@@ -520,7 +520,7 @@ void Game::OnPickup(Room *pRoom) {
     mPlayer.CurrentView()->HideItem();        
   }
 
-  OnTriggerEvent(pItem->trigger.eventType);
+  OnTriggerEvent(pItem->trigger);
 }
 
 void Game::OnEnterGateway(const GatewayData* pGate) {
@@ -535,7 +535,7 @@ void Game::OnEnterGateway(const GatewayData* pGate) {
     128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
     128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
   ));
-  OnTriggerEvent(pGate->trigger.eventType);
+  OnTriggerEvent(pGate->trigger);
   RestorePearlIdle();
 }
 
@@ -548,7 +548,7 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
   if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
   System::paintSync();
-  OnTriggerEvent(pNpc->trigger.eventType);
+  OnTriggerEvent(pNpc->trigger);
   mPlayer.CurrentView()->Parent()->Restore(false);
   RestorePearlIdle();
   System::paintSync();
@@ -574,8 +574,8 @@ void Game::OnUseEquipment() {
   
 }
 
-void Game::OnTriggerEvent(unsigned id) {
-  switch(id) {
+void Game::OnTriggerEvent(unsigned type, unsigned id) {
+  switch(type) {
     case EVENT_ADVANCE_QUEST_AND_REFRESH:
       mState.AdvanceQuest();
       mMap.RefreshTriggers();
@@ -598,12 +598,22 @@ void Game::OnTriggerEvent(unsigned id) {
     }
     case EVENT_OPEN_DOOR: {
       const bool needsPan = true;
-      // pan to door
+      const DoorData& door = mMap.Data()->doors[id];
+      if (mState.IsActive(door.trigger)) {
+        mState.FlagTrigger(door.trigger);
+        Room* targetRoom = mMap.GetRoom(door.trigger.room);
+        if (targetRoom == mPlayer.GetRoom()) {
+          // refresh the current room
 
-      // open door
+        } else {
+          // pan to door
 
-      // pan back to player
-      break;
+          // open door
+
+          // pan back to player
+        }
+        break;
+      }
     }
   }
 }

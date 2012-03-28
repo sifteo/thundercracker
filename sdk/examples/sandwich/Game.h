@@ -86,7 +86,8 @@ private:
   void OnUseEquipment();
   void OnEnterGateway(const GatewayData* pGate);
   void OnNpcChatter(const NpcData* pNpc);
-  void OnTriggerEvent(unsigned id);
+  void OnTriggerEvent(const TriggerData& trig) { OnTriggerEvent(trig.eventType, trig.eventId); }
+  void OnTriggerEvent(unsigned type, unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
   bool TryEncounterLava(Cube::Side dir);
