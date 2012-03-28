@@ -51,17 +51,6 @@ typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-firs
 void main(void);
 #endif
 
-/*
- * XXX: It would be nice to further compress the loadstream when storing
- *      it in the master's flash. There's a serious memory tradeoff here,
- *      though, and right now I'm assuming RAM is more important than
- *      flash to conserve. I've been using LZ77 successfully for this
- *      compressor, but that requires a large output window buffer. This
- *      is clearly an area for improvement, and we might be able to tweak
- *      an existing compression algorithm to work well. Or perhaps we put
- *      that effort into improving the loadstream codec.
- */
-
 struct _SYSAssetGroupHeader {
     uint8_t hdrSize;            /// OUT    Size of header / offset to compressed data
     uint8_t reserved;           /// OUT    Reserved, must be zero
@@ -72,8 +61,6 @@ struct _SYSAssetGroupHeader {
 
 struct _SYSAssetGroupCube {
     uint16_t baseAddr;          /// IN     Installed base address, in tiles
-    uint16_t reserved;          /// IN     Must be zero
-    uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
 struct _SYSAssetGroup {
@@ -81,6 +68,21 @@ struct _SYSAssetGroup {
     uint32_t pCubes;                /// OUT    Array of per-cube state buffers
     _SYSCubeIDVector reqCubes;      /// IN     Which cubes have requested to load this group?
     _SYSCubeIDVector doneCubes;     /// IN     Which cubes have finished installing this group?
+};
+
+enum _SYSAssetImageFormat {
+    _SYS_AIF_PINNED = 0,        /// All tiles are linear. "data" is index of the first tile
+    _SYS_AIF_FLAT,              /// "data" points to a flat array of 16-bit tile indices
+    _SYS_AIF_WUB,               /// Compressed tile data, Windowed Uniform Block codec.
+};
+
+struct _SYSAssetImage {
+    uint16_t width;             /// Width of the asset image, in tiles
+    uint16_t height;            /// Height of the asset image, in tiles
+    uint16_t frames;            /// Number of "frames" in this image
+    uint16_t format;            /// _SYSAssetImageFormat
+    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
+    uint32_t data;              /// Format-specific data or data pointer
 };
 
 /*
@@ -514,11 +516,13 @@ struct _SYSMetadataBootAsset {
     uint8_t     reserved[3];    // Must be zero;
 };
 
-// XXX: What format should the tile array be in? Right now it's a 16-bit
-//      index array, but that's awfully overkill! We can compress this.
 struct _SYSMetadataImage {
-    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
-    uint32_t    tiles;          // Virtual address for tile array
+    uint8_t   width;            /// Width of the image, in tiles
+    uint8_t   height;           /// Height of the image, in tiles
+    uint8_t   frames;           /// Number of "frames" in this image
+    uint8_t   format;           /// _SYSAssetImageFormat
+    uint32_t  groupHdr;         /// Virtual address for _SYSAssetGroupHeader
+    uint32_t  data;             /// Format-specific data or data pointer
 };
 
 /**
