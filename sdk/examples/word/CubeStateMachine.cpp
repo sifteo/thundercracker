@@ -1443,8 +1443,15 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     Cube &c = getCube();
     params->mLetters[0] = '\0';
     params->mSpriteParams = 0;
+    params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
     switch (mAnimTypes[CubeAnim_Main])
     {
+    case AnimType_MetaTilesEnter:
+    case AnimType_MetaTilesShow:
+    case AnimType_MetaTilesExit:
+        params->mAllMetaLetters = true;
+        break;
+
     case AnimType_EndofRound:
     case AnimType_Shuffle:
     case AnimType_CityProgression:
@@ -1494,7 +1501,6 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     {
         params->mMetaLetterIndex = -1;
     }
-    params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
 
     return retval;
 }

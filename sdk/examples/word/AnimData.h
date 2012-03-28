@@ -481,11 +481,11 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideR
-    { 2.f, false, 1, &animObjData[0]},    // AnimType_NormalTilesEnter
-    { 2.f, false, 1, &animObjData[0]},    // AnimType_NormalTilesExit
-    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesEnter
-    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesShow
-    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesExit
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_MetaTilesEnter
+    { 0.63f, false, 1, &animObjData[0]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 1, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -500,11 +500,11 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
-    { 2.f, false, 2, &animObjData[44]},    // AnimType_NormalTilesEnter
-    { 2.f, false, 2, &animObjData[46]},    // AnimType_NormalTilesExit
-    { 2.f, false, 2, &animObjData[48]},    // AnimType_MetaTilesEnter
-    { 2.f, false, 2, &animObjData[50]},    // AnimType_MetaTilesShow
-    { 2.f, false, 2, &animObjData[52]},    // AnimType_MetaTilesExit
+    { 0.5f, false, 2, &animObjData[44]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 2, &animObjData[46]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 2, &animObjData[48]},    // AnimType_MetaTilesEnter
+    { 0.63f, false, 2, &animObjData[50]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 2, &animObjData[52]},    // AnimType_MetaTilesExit
     { 1.f, true, 3, &animObjData[21]},    // AnimType_NotWord
     { 0.5f, false, 3, &animObjData[24]},    // AnimType_SlideL
     { 0.5f, false, 3, &animObjData[27]},    // AnimType_SlideR
@@ -519,10 +519,10 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[42]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[43]},    // AnimType_HintSlideR
-    { 2.f, false, 3, &animObjData[54]},    // AnimType_NormalTilesEnter
-    { 2.f, false, 3, &animObjData[57]},    // AnimType_NormalTilesExit
-    { 2.f, false, 3, &animObjData[60]},    // AnimType_MetaTilesEnter
-    { 2.f, false, 3, &animObjData[63]},    // AnimType_MetaTilesShow
-    { 2.f, false, 3, &animObjData[66]},    // AnimType_MetaTilesExit
+    { 0.5f, false, 3, &animObjData[54]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 3, &animObjData[57]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 3, &animObjData[60]},    // AnimType_MetaTilesEnter
+    { 0.63f, false, 3, &animObjData[63]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 3, &animObjData[66]},    // AnimType_MetaTilesExit
 };
 
