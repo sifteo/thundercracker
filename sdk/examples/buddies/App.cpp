@@ -3290,6 +3290,46 @@ void App::ChooseHint()
         }
     }
     
+    // Check all sides of all cubes against each other, looking for a double swap for pieces that
+    // are both out of place.
+    for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
+    {
+        if (mCubeWrappers[iCube0].IsEnabled())
+        {
+            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            {
+                for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
+                {
+                    if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
+                    {
+                        for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                        {
+                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
+                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
+                            
+                            if (piece0.GetAttribute() != Piece::ATTR_FIXED &&
+                                piece1.GetAttribute() != Piece::ATTR_FIXED)
+                            {
+                                const Piece &pieceSolution0 =
+                                    mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                                const Piece &pieceSolution1 =
+                                    mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                
+                                if (!piece0.Compare(pieceSolution0) &&
+                                    !piece1.Compare(pieceSolution1))
+                                {
+                                    mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
+                                    mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     // Clear our skip piece, see note below...
     mHintPieceSkip = -1;
     
