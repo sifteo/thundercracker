@@ -84,8 +84,8 @@ const float Bubble::BUBBLE_LIFETIME = 2.5f;
 const float Bubble::TILT_VEL = 128.0f;
 const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
 //at this depth, bubbles will move away from chromits
-const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.8888888f;
-const float Bubble::CHROMIT_OBSCURE_DIST = 12.25f;
+const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.66666f;
+const float Bubble::CHROMIT_OBSCURE_DIST = 15.0f;
 const float Bubble::CHROMIT_OBSCURE_DIST_2 = CHROMIT_OBSCURE_DIST * CHROMIT_OBSCURE_DIST;
 
 Bubble::Bubble() : m_fTimeAlive( -1.0f )
@@ -144,11 +144,14 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
                 //move away from chromit
                 if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
                 {
+                    visible = true;
                     NormalizeVec( diff );
-                    m_pos += ( diff * CHROMIT_OBSCURE_DIST );
+                    //m_pos += ( diff * CHROMIT_OBSCURE_DIST );
+                    m_pos += diff;
+                    //DEBUG_LOG(( "moving bubble to %0.2f, %0.2f\n", m_pos.x, m_pos.y ));
 
                     //bump the chromit
-                    pSlot->Bump( -diff );
+                    pSlot->Bump( diff );
                 }
             }
         }

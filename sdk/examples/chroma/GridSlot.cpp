@@ -315,6 +315,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         break;
                     }
                     case MOVESTATE_FINISHINGMOVE:
+                    case MOVESTATE_BUMPED:
                     {
                         if( IsSpecial() )
                             vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
@@ -513,6 +514,11 @@ void GridSlot::Update(float t)
                     if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
                         m_Movestate = MOVESTATE_STATIONARY;
 
+                    break;
+                }
+                case MOVESTATE_BUMPED:
+                {
+                    m_Movestate = MOVESTATE_FINISHINGMOVE;
                     break;
                 }
                 default:
@@ -834,9 +840,9 @@ void GridSlot::RainballMorph( unsigned int color )
 //bubble is bumping this chromit, tilt it in the given direction
 void GridSlot::Bump( const Float2 &dir )
 {
-    if( isAlive() && !IsFixed() && !IsSpecial() && m_Movestate == MOVESTATE_STATIONARY )
+    if( isAlive() && !IsFixed() && !IsSpecial() && ( m_Movestate == MOVESTATE_STATIONARY || m_Movestate == MOVESTATE_BUMPED || m_Movestate == MOVESTATE_FINISHINGMOVE ) )
     {
-        m_Movestate = MOVESTATE_FINISHINGMOVE;
+        m_Movestate = MOVESTATE_BUMPED;
 
         Vec2 newDir = m_lastFrameDir;
 
@@ -846,26 +852,26 @@ void GridSlot::Bump( const Float2 &dir )
         //push one frame over in dir direction
         if( dir.x < DIR_THRESH )
         {
-            newDir.x-=2;
+            newDir.x-=4;
             if( newDir.x < 0 )
                 newDir.x = 0;
         }
         else if( dir.x > DIR_THRESH )
         {
-            newDir.x+=2;
+            newDir.x+=4;
             if( newDir.x >= (int)NUM_QUANTIZED_TILT_VALUES )
                 newDir.x = NUM_QUANTIZED_TILT_VALUES - 1;
         }
 
         if( dir.y < DIR_THRESH )
         {
-            newDir.y-=2;
+            newDir.y-=4;
             if( newDir.y < 0 )
                 newDir.y = 0;
         }
         else if( dir.y > DIR_THRESH )
         {
-            newDir.y+=2;
+            newDir.y+=4;
             if( newDir.y >= (int)NUM_QUANTIZED_TILT_VALUES )
                 newDir.y = NUM_QUANTIZED_TILT_VALUES - 1;
         }
