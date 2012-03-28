@@ -14,6 +14,17 @@
 uint8_t power_sleep_timer;
 
 
+void power_delay()
+{
+    // Arbitrary delay, currently about 12 ms.
+    uint8_t delay_i = 0, delay_j;
+    do {
+        delay_j = 0;
+        while (--delay_j);
+    } while (--delay_i);
+}
+
+
 void power_init(void)
 {
     /*
@@ -30,9 +41,6 @@ void power_init(void)
      * and we need to re-open the I/O latch.
      */
     uint8_t powerupReason = PWRDWN;
-#if HWREV >= 2
-    uint8_t delay_i, delay_j;
-#endif
     OPMCON = 0;
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
@@ -56,35 +64,24 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 2
-    // Sequence 3.3v boost, followed by 2.0v downstream
-
-    //Turn on 3.3V boost
+#if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
+    // Turn on 3.3V boost
     CTRL_PORT = CTRL_3V3_EN;
-    //give 3.3V boost >1ms to turn-on
-    delay_i=255;
-    while(delay_i--) {
-    	delay_j=255;
-    	while(delay_j--);
-    }
 
-    //Turn on 2V ds load switch
+    // Give 3.3V boost >1ms to turn-on
+    power_delay();
+
+    // Turn on 2V ds load switch
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-    //give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-    delay_i=255;
-    while(delay_i--) {
-    	delay_j=255;
-    	while(delay_j--);
-    }
 
-    //Now turn-on other control lines.
-    CTRL_PORT = CTRL_IDLE;
-    MISC_PORT = MISC_IDLE;
-#else
-    // Turn everything on at once.
-    CTRL_PORT = CTRL_IDLE;
-    MISC_PORT = MISC_IDLE;
+    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+    power_delay();
 #endif
+
+    // Now turn-on other control lines.
+    // (On Rev 1, we just turn everything on at once.)
+    CTRL_PORT = CTRL_IDLE;
+    MISC_PORT = MISC_IDLE;
 
     /*
      * Neighbor TX pins
@@ -111,9 +108,6 @@ void power_sleep(void)
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
      * Order matters, don't cause bus contention!
      */
-#if HWREV >= 2
-	uint8_t delay_i, delay_j;
-#endif
 
 #if HWREV >= 1   // Rev 1 was the first with sleep support
 
@@ -135,20 +129,16 @@ void power_sleep(void)
     MISC_PORT = 0;      		// Neighbor/I2C set to idle-mode as well
 
 #if HWREV >= 2
-    //Sequencing is important
-    // Bring flash control lines low
+    // Sequencing is important. First, bring flash control lines low
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
     // Turn off the 2V DS rail
     CTRL_PORT = CTRL_3V3_EN;
-    //Give the 2V DS rail some time to discharge
-    delay_i=255;
-    while(delay_i--) {
-    	delay_j=255;
-       	while(delay_j--);
-    }
 
-    //Turn off the 3.3V rail
+    // Give the 2V DS rail some time to discharge
+    power_delay();
+
+    // Turn off the 3.3V rail
     CTRL_PORT = 0;
 #else
     // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).

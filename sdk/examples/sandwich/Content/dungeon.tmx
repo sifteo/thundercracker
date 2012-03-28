@@ -764,9 +764,9 @@
     <property name="target" value="forest:DungeonGate"/>
    </properties>
   </object>
-  <object name="Key1_dungeon" type="Item" x="176" y="576" width="32" height="32">
+  <object name="Door1" type="Door" x="432" y="656" width="32" height="32">
    <properties>
-    <property name="id" value="basic_key"/>
+    <property name="key" value="basic_key"/>
    </properties>
   </object>
   <object name="Key2_dungeon" type="Item" x="176" y="288" width="32" height="32">
@@ -777,6 +777,16 @@
   <object name="Bread" type="Item" x="688" y="176" width="32" height="32">
    <properties>
     <property name="id" value="bread"/>
+   </properties>
+  </object>
+  <object name="Key1_dungeon" type="Item" x="176" y="576" width="32" height="32">
+   <properties>
+    <property name="id" value="basic_key"/>
+   </properties>
+  </object>
+  <object name="Door2" type="Door" x="688" y="272" width="32" height="32">
+   <properties>
+    <property name="key" value="basic_key"/>
    </properties>
   </object>
  </objectgroup>

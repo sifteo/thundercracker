@@ -18,8 +18,8 @@ Tasks::Task Tasks::TaskList[] = {
     { 0 },
     { 0 },
     #else
-    { Usb::handleINData, 0 },
-    { Usb::handleOUTData, 0 },
+    { UsbDevice::handleINData, 0 },
+    { UsbDevice::handleOUTData, 0 },
     #endif
     { AudioMixer::handleAudioOutEmpty, 0 },
     { SvmDebugger::messageLoop, 0 },

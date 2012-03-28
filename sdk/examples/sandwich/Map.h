@@ -104,7 +104,7 @@ public:
   inline uint8_t GetTileId(unsigned roomId, Int2 tile) const {
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
-    return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
+    return mData->roomTiles[roomId].tiles[(tile.y<<3) + tile.x];
   }
 
   inline uint8_t GetGlobalTileId(Int2 tile) {
@@ -132,6 +132,7 @@ public:
   }
 
   inline Int2 GetLocation(uint8_t roomId) const {
+    ASSERT(roomId < mData->width * mData->height);
     return Vec2(roomId % mData->width, roomId / mData->width);
   }
 

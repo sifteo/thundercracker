@@ -75,6 +75,7 @@ private:
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, ViewSlot *view);
   void RestorePearlIdle();
+  void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
 
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
@@ -85,7 +86,8 @@ private:
   void OnUseEquipment();
   void OnEnterGateway(const GatewayData* pGate);
   void OnNpcChatter(const NpcData* pNpc);
-  void OnTriggerEvent(unsigned id);
+  void OnTriggerEvent(const TriggerData& trig) { OnTriggerEvent(trig.eventType, trig.eventId); }
+  void OnTriggerEvent(unsigned type, unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
   bool TryEncounterLava(Cube::Side dir);
