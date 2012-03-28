@@ -80,8 +80,9 @@ void Map::RefreshTriggers() {
   }
   
   if (mData->doors) {
-    for(const DoorData* p = mData->doors; p->roomId; ++p) {
-      mRooms[p->roomId].SetDoor(p);
+    for(const DoorData* p = mData->doors; !AtEnd(p->trigger); ++p) {
+      // even deactivated doors are still set - they're just "open"
+      mRooms[p->trigger.room].SetDoor(p);
     }
   }
   

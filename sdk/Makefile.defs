@@ -32,5 +32,10 @@ ifneq ($(DISABLE_INLINING),)
     LDFLAGS += -disable-inlining
 endif
 
+ifneq ($(DISABLE_OPT),)
+    CFLAGS += -O0
+    LDFLAGS += -O0
+endif
+
 # C++ inherits CFLAGS too
 CCFLAGS += $(CFLAGS)

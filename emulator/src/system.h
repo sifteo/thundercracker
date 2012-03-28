@@ -39,6 +39,7 @@ class System {
     // Global debug options
     bool opt_continueOnException;
     bool opt_turbo;
+    bool opt_lockRotationByDefault;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
