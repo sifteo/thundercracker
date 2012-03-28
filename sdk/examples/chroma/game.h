@@ -158,7 +158,7 @@ public:
     void UpMultiplier();
     const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
-    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel + 1; }
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
