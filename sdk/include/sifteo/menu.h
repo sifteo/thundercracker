@@ -111,11 +111,12 @@ class Menu {
 	static const uint8_t kNumTilesX = 18;
 	static const uint8_t kNumVisibleTilesX = 16;
 	static const uint8_t kNumVisibleTilesY = 16;
-	static const uint8_t kFooterHeight = 4;
 	static const float kAccelThresholdOn = 1.15f;
 	static const float kAccelThresholdOff = 0.85f;
+	static const uint8_t kDefaultIconYOffset = 16;
 	// instance-constants
 	uint8_t kHeaderHeight;
+	uint8_t kFooterHeight;
 	uint8_t kFooterBG1Offset;
 	int8_t kIconYOffset;
 	uint8_t kIconTileWidth;
@@ -255,7 +256,11 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	i = 0;
 	while(assets->tips[i] != NULL) {
 		ASSERT(assets->tips[i]->width == kNumVisibleTilesX);
-		ASSERT(assets->tips[i]->height == kFooterHeight);
+		if (kFooterHeight == 0) {
+			kFooterHeight = assets->tips[i]->height;
+		} else {
+			ASSERT(assets->tips[i]->height == kFooterHeight);
+		}
 		i++;
 	}
 	numTips = i;
@@ -265,7 +270,11 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 	ASSERT(assets->background->width == 1 && assets->background->height == 1);
 	if (assets->footer) {
 		ASSERT(assets->footer->width == kNumVisibleTilesX);
-		ASSERT(assets->footer->height == kFooterHeight);
+		if (kFooterHeight == 0) {
+			kFooterHeight = assets->footer->height;
+		} else {
+			ASSERT(assets->footer->height == kFooterHeight);
+		}
 	}
 
 	if (assets->header) {
@@ -276,11 +285,9 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
 			ASSERT(assets->header->height == kHeaderHeight);
 		}
 	}
-	kFooterBG1Offset = assets->header == NULL ? 0 : assets->header->width * assets->header->height;
-	// XXX: pending fix to #8:
-	ASSERT(kHeaderHeight == 0 || kHeaderHeight == 2);
-	setIconYOffset(kHeaderHeight > 0 ? kHeaderHeight * 8 : 16);
-	ASSERT(kIconYOffset == -16);
+	kFooterBG1Offset = assets->header == NULL ? 0 : kNumVisibleTilesX * kHeaderHeight;
+
+	setIconYOffset(kDefaultIconYOffset);
 }
 
 /*
