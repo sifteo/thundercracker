@@ -2,9 +2,7 @@
 *.o
 *.gen.h
 *.gen.cpp
-*.sim
-*.sim.exe
-*.stm32
+*.pyc
 assets.html
 
 # Qt Creator
