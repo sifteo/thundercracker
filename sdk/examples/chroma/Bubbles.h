@@ -22,6 +22,7 @@ public:
     static const float BEHIND_CHROMITS_THRESHOLD;
     //at this depth, bubbles will move away from chromits
     static const float CHROMITS_COLLISION_DEPTH;
+    static const float CHROMIT_OBSCURE_DIST;
     static const float CHROMIT_OBSCURE_DIST_2;
 
     Bubble();
@@ -32,6 +33,8 @@ public:
     inline bool isAlive() const { return m_fTimeAlive >= 0.0f; }
 
 private:
+    void NormalizeVec( Float2 &vec );
+
     Float2 m_pos;
     float m_fTimeAlive;
 };

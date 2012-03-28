@@ -119,6 +119,8 @@ public:
     //morph from rainball to given color
     void RainballMorph( unsigned int color );
     void Infect() { m_bWasInfected = true; }
+    //bubble is bumping this chromit, tilt it in the given direction
+    void Bump( const Float2 &dir );
 
 private:
 	void markNeighbor( int row, int col );

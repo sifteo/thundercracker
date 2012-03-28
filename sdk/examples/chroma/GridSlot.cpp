@@ -828,3 +828,49 @@ void GridSlot::RainballMorph( unsigned int color )
     FillColor( color );
     m_bWasRainball = true;
 }
+
+
+
+//bubble is bumping this chromit, tilt it in the given direction
+void GridSlot::Bump( const Float2 &dir )
+{
+    if( isAlive() && !IsFixed() && !IsSpecial() && m_Movestate == MOVESTATE_STATIONARY )
+    {
+        m_Movestate = MOVESTATE_FINISHINGMOVE;
+
+        Vec2 newDir = m_lastFrameDir;
+
+        //(2/sqrtf(5))
+        const float DIR_THRESH = -.4472136f;
+
+        //push one frame over in dir direction
+        if( dir.x < DIR_THRESH )
+        {
+            newDir.x-=2;
+            if( newDir.x < 0 )
+                newDir.x = 0;
+        }
+        else if( dir.x > DIR_THRESH )
+        {
+            newDir.x+=2;
+            if( newDir.x >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.x = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        if( dir.y < DIR_THRESH )
+        {
+            newDir.y-=2;
+            if( newDir.y < 0 )
+                newDir.y = 0;
+        }
+        else if( dir.y > DIR_THRESH )
+        {
+            newDir.y+=2;
+            if( newDir.y >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.y = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        m_animFrame = TILTTOFRAMES[ newDir.y ][ newDir.x ];
+        m_lastFrameDir = newDir;
+    }
+}

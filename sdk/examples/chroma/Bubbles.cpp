@@ -85,7 +85,8 @@ const float Bubble::TILT_VEL = 128.0f;
 const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
 //at this depth, bubbles will move away from chromits
 const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.8888888f;
-const float Bubble::CHROMIT_OBSCURE_DIST_2 = 150.0f;
+const float Bubble::CHROMIT_OBSCURE_DIST = 12.25f;
+const float Bubble::CHROMIT_OBSCURE_DIST_2 = CHROMIT_OBSCURE_DIST * CHROMIT_OBSCURE_DIST;
 
 Bubble::Bubble() : m_fTimeAlive( -1.0f )
 {
@@ -143,7 +144,11 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
                 //move away from chromit
                 if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
                 {
-                    m_pos += diff;
+                    NormalizeVec( diff );
+                    m_pos += ( diff * CHROMIT_OBSCURE_DIST );
+
+                    //bump the chromit
+                    pSlot->Bump( -diff );
                 }
             }
         }
@@ -157,4 +162,23 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
     }
     else
         vid.resizeSprite(index, 0, 0);
+}
+
+//TODO, new sdk has normalize
+//voodoo black magic, from sources long lost:
+//http://www.beyond3d.com/content/articles/8/
+float InvSqrt (float x)
+{
+    float xhalf = 0.5f*x;
+    int i = *(int*)&x;
+    i = 0x5f3759df - (i>>1);
+    x = *(float*)&i;
+    x = x*(1.5f - xhalf*x*x);
+    return x;
+}
+
+//normalize the given vector
+void Bubble::NormalizeVec( Float2 &vec )
+{
+    vec *= InvSqrt( vec.len2() );
 }
