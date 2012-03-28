@@ -735,10 +735,10 @@ App::App()
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
     , mOptionsTimer(0.0f)
-    , mOptionsTouchSync(false)
     , mUiIndex(0)
     , mUiIndexSync()
     , mTouching()
+    , mTouchSync(false)
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
     , mScorePlace(UINT_MAX)
@@ -1475,7 +1475,7 @@ void App::UpdateGameState(float dt)
         {
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 StartGameState(GAME_STATE_FREEPLAY_START);
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -1517,7 +1517,7 @@ void App::UpdateGameState(float dt)
                     {
                         if (mTouching[i] == TOUCH_STATE_BEGIN || mTouching[i] == TOUCH_STATE_HOLD)
                         {
-                            if (!mOptionsTouchSync)
+                            if (!mTouchSync)
                             {
                                 mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0U, VidMode::TILE));
                                 mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0U));
@@ -1527,7 +1527,7 @@ void App::UpdateGameState(float dt)
                         }
                         else if (mTouching[i] == TOUCH_STATE_END)
                         {
-                            mOptionsTouchSync = false;
+                            mTouchSync = false;
                             
                             mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
@@ -1551,7 +1551,7 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
                 {
                     mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
@@ -1564,7 +1564,7 @@ void App::UpdateGameState(float dt)
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 ResetCubesToPuzzle(GetPuzzleDefault(), false);
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
@@ -1652,7 +1652,7 @@ void App::UpdateGameState(float dt)
             else if (AnyTouchBegin())
             {
                 LOG(("Unshuffle sync\n"));
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             break;
@@ -1681,11 +1681,11 @@ void App::UpdateGameState(float dt)
                 mOptionsTimer = kOptionsTimerDuration;
             }
             
-            if (mOptionsTouchSync)
+            if (mTouchSync)
             {
                 if (AnyTouchBegin())
                 {
-                    mOptionsTouchSync = false;
+                    mTouchSync = false;
                 }
             }
             
@@ -1729,7 +1729,7 @@ void App::UpdateGameState(float dt)
                     {
                         if (mTouching[i] == TOUCH_STATE_BEGIN)
                         {
-                            if (!mOptionsTouchSync)
+                            if (!mTouchSync)
                             {
                                 if (mClueOffTimers[i] > 0.0f)
                                 {
@@ -1803,7 +1803,7 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 mHintTimer = kHintTimerOnDuration;
                 mHintFlowIndex = 0;
                 for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
@@ -1947,11 +1947,11 @@ void App::UpdateGameState(float dt)
                 mOptionsTimer = kOptionsTimerDuration;
             }
             
-            if (mOptionsTouchSync)
+            if (mTouchSync)
             {
                 if (AnyTouchBegin())
                 {
-                    mOptionsTouchSync = false;
+                    mTouchSync = false;
                 }
             }
             
@@ -1995,7 +1995,7 @@ void App::UpdateGameState(float dt)
                     {
                         if (mTouching[i] == TOUCH_STATE_BEGIN)
                         {
-                            if (!mOptionsTouchSync)
+                            if (!mTouchSync)
                             {
                                 if (mClueOffTimers[i] > 0.0f)
                                 {
@@ -2069,7 +2069,7 @@ void App::UpdateGameState(float dt)
         {   
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                mOptionsTouchSync = true;
+                mTouchSync = true;
                 mHintTimer = kHintTimerOnDuration;
                 mHintFlowIndex = 0;
                 for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)

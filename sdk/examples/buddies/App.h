@@ -114,12 +114,12 @@ private:
     GameState mGameState;
     float mDelayTimer;
     float mOptionsTimer;
-    bool mOptionsTouchSync; // TODO: rename to mTouchSync
     unsigned int mUiIndex;
     bool mUiIndexSync[kNumCubes];
     
     // Input
     TouchState mTouching[kNumCubes];
+    bool mTouchSync;
     
     // Scoring
     float mScoreTimer;
