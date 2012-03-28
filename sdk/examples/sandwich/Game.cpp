@@ -220,6 +220,33 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 #endif
 }
 
+void Game::Slide(ViewSlot* view) {
+  ViewMode g = view->Graphics();
+  const int dt = 16;
+  ASSERT(128%dt == 0);
+  g.setWindow(128-dt,dt);
+  Paint(true);
+  for(unsigned i=dt; i<=128; i+=dt) {
+    g.setWindow(128-i, i);
+    Paint(false);
+  }
+}
+
+bool Game::AnyViewsTouched() {
+  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (p->Touched()) { return true; }
+  }
+  return false;
+}
+
+void Game::Wait(float seconds, bool touchToSkip) {
+  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<seconds;) { 
+    Paint(); 
+    if (touchToSkip && AnyViewsTouched()) {
+      return;
+    }
+  }
+}
 
 void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     Dialog view;
@@ -271,21 +298,13 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
             PlaySfx(sfx_neighbor);
         }
         // fade in and out
-        const unsigned hold = 250;
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(i<<4);
             gGame.Paint();
         }
         view.SetAlpha(255);
         gGame.Paint();
-        bool prev = vslot->GetCube()->touching();
-        for (unsigned i = 0; i < hold; i++) {
-            gGame.Paint();
-            bool next = vslot->GetCube()->touching();
-            if (next && !prev) { break; }
-            prev = next;
-
-        }
+        Wait(5.f, true);
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(0xff - (i<<4));
             gGame.Paint();
@@ -320,7 +339,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     Paint();
   }
   view.SetAlpha(255);
-  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<4.f && !pView->Touched();) { Paint(); }
+  Wait(4, true);
   pView->GetCube()->vbuf.touch();
   Paint(true);
   mPlayer.CurrentView()->Parent()->Restore();
@@ -330,8 +349,6 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
     pView->GetCube()->vbuf.touch();
     Paint(true);
   #endif
-  // wait a sec
-  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<0.25f;) { Paint(); }
 }
 
 void Game::RestorePearlIdle() {
@@ -376,7 +393,7 @@ void Game::ScrollTo(unsigned roomId) {
   // blank other cubes
   ViewSlot *pView = mPlayer.CurrentView()->Parent();
   for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
-    if (p != pView) { p->HideLocation(); }
+    if (p != pView) { p->HideLocation(false); }
   }
   // hide sprites and overlay
   pView->HideSprites();
@@ -385,18 +402,21 @@ void Game::ScrollTo(unsigned roomId) {
 
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
-  Int2 start = 128 * currentLoc;
-  Int2 delta = 128 * (targetLoc - currentLoc);
+  const Int2 start = 128 * currentLoc;
+  const Int2 delta = 128 * (targetLoc - currentLoc);
+  const Int2 target = start + delta;
+  Int2 pos;
   ViewMode mode = pView->Graphics();
   SystemTime t=mSimTime; 
   do {
     float u = float(mSimTime-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-    Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+    pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
     DrawOffsetMap(&mode, mMap.Data(), pos);
     Paint(true);
-  } while(mSimTime-t<2.333f);
+  } while(mSimTime-t<2.333f && (pos-target).len2() > 4);
   DrawRoom(&mode, mMap.Data(), roomId);
+  Paint(true);
 }
 
 void Game::OnTrapdoor(Room *pRoom) {
@@ -574,7 +594,7 @@ void Game::OnUseEquipment() {
   
 }
 
-void Game::OnTriggerEvent(unsigned type, unsigned id) {
+bool Game::OnTriggerEvent(unsigned type, unsigned id) {
   switch(type) {
     case EVENT_ADVANCE_QUEST_AND_REFRESH:
       mState.AdvanceQuest();
@@ -601,21 +621,27 @@ void Game::OnTriggerEvent(unsigned type, unsigned id) {
       const DoorData& door = mMap.Data()->doors[id];
       if (mState.IsActive(door.trigger)) {
         mState.FlagTrigger(door.trigger);
-        Room* targetRoom = mMap.GetRoom(door.trigger.room);
-        if (targetRoom == mPlayer.GetRoom()) {
+        //Room* targetRoom = mMap.GetRoom(door.trigger.room);
+        if (door.trigger.room == mPlayer.GetRoom()->Id()) {
           // refresh the current room
-
+          mPlayer.CurrentView()->Restore();
         } else {
-          // pan to door
-
-          // open door
-
-          // pan back to player
+          ScrollTo(door.trigger.room);
+          Wait(0.5f);
+          mPlayer.CurrentView()->Parent()->ShowLocation(mMap.GetLocation(door.trigger.room), true, true);
+          Wait(0.5f);
+          IrisOut(mPlayer.CurrentView()->Parent());
+          mPlayer.CurrentView()->Parent()->ShowLocation(mPlayer.Position()/128, true, false);
+          Slide(mPlayer.CurrentView()->Parent());
+          CheckMapNeighbors();
+          Paint(true);
         }
         break;
       }
     }
+    default: return false;
   }
+  return true;
 }
 
 bool Game::TryEncounterBlock(Sokoblock* block) {

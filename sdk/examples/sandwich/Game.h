@@ -72,10 +72,13 @@ private:
   void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
+  void Slide(ViewSlot* view);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, ViewSlot *view);
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
+  void Wait(float seconds, bool touchToSkip=false);
+  bool AnyViewsTouched();
 
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
@@ -86,8 +89,8 @@ private:
   void OnUseEquipment();
   void OnEnterGateway(const GatewayData* pGate);
   void OnNpcChatter(const NpcData* pNpc);
-  void OnTriggerEvent(const TriggerData& trig) { OnTriggerEvent(trig.eventType, trig.eventId); }
-  void OnTriggerEvent(unsigned type, unsigned id);
+  bool OnTriggerEvent(const TriggerData& trig) { return OnTriggerEvent(trig.eventType, trig.eventId); }
+  bool OnTriggerEvent(unsigned type, unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
   bool TryEncounterLava(Cube::Side dir);
