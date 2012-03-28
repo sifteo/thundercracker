@@ -28,7 +28,7 @@ parts = ['hair', 'eye_left', 'mouth', 'eye_right']
 ####################################################################################################
 
 def StackString(stack):
-    return stack[0] + ''.join(['[' + s + ']' for s in stack[1:]])
+    return ''.join(['[' + s + ']' for s in stack])
 
 ####################################################################################################
 # Validators
@@ -36,7 +36,7 @@ def StackString(stack):
 
 def CheckHasProperty(data, prop):
     if not data.has_key(prop):
-        print '%s is missing.' % StackString(prop_stack + [prop])
+        print 'ERROR: %s is missing.' % StackString(prop_stack + [prop])
         global validated
         validated = False
         return False
@@ -45,7 +45,7 @@ def CheckHasProperty(data, prop):
 
 def CheckIsUnsigned(data, prop):
     if data[prop] < 0:
-        print '%s must be >= 0 (it is %d).' % (StackString(prop_stack), data[prop])
+        print 'ERROR: %s must be >= 0 (it is %d).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -54,7 +54,7 @@ def CheckIsUnsigned(data, prop):
 
 def CheckIsNotNull(data, prop):
     if data[prop] == None:
-        print '%s cannot be null (it is %s).' % (StackString(prop_stack), data[prop])
+        print 'ERROR: %s cannot be null (it is %s).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -63,7 +63,7 @@ def CheckIsNotNull(data, prop):
 
 def CheckHasLength(data, prop):
     if len(data[prop]) == 0:
-        print '%s cannot have a length of 0.' % StackString(prop_stack)
+        print 'ERROR: %s cannot have a length of 0.' % StackString(prop_stack)
         global validated
         validated = False
         return False
@@ -72,7 +72,7 @@ def CheckHasLength(data, prop):
 
 def CheckHasLengthOf(data, prop, length):
     if len(data[prop]) != length:
-        print '%s must have a length of %d (it is %d).' % (StackString(prop_stack), length, len(data[prop]))
+        print 'ERROR: %s must have a length of %d (it is %d).' % (StackString(prop_stack), length, len(data[prop]))
         global validated
         validated = False
         return False
@@ -81,7 +81,7 @@ def CheckHasLengthOf(data, prop, length):
 
 def CheckIsMember(prop, values):
     if prop not in values:
-        print '%s must be one of the following %s.' % (StackString(prop_stack), values)
+        print 'ERROR: %s must be one of the following %s.' % (StackString(prop_stack), values)
         global validated
         validated = False
         return False
@@ -90,7 +90,7 @@ def CheckIsMember(prop, values):
 
 def CheckIsBinary(data, prop):
     if data[prop] != 0 and data[prop] != 1:
-        print '%s must be 0 or 1 (it is %d).' % (StackString(prop_stack), data[prop])
+        print 'ERROR: %s must be 0 or 1 (it is %d).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -99,7 +99,7 @@ def CheckIsBinary(data, prop):
 
 def CheckIsBoolean(data, prop):
     if data[prop] is not True and data[prop] is not False:
-        print StackString(prop_stack) + ' must be either true or false (it is ' + data[prop] + ')'
+        print 'ERROR:' + StackString(prop_stack) + ' must be either true or false (it is ' + data[prop] + ')'
         validated = False
         return False
     else:
