@@ -35,6 +35,175 @@ def BoolToString(value):
 ####################################################################################################
 ####################################################################################################
 
+buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro']
+views = ['right', 'left', 'front']
+sides = ['top', 'left', 'bottom', 'right']
+parts = ['hair', 'eye_left', 'mouth', 'eye_right']
+
+####################################################################################################
+####################################################################################################
+
+def HasProperty(data, prop):
+    if not data.has_key(prop):
+        print 'Property Missing: "%s"' % prop
+        return False
+    else:
+        return True
+
+def IsUnsigned(data, prop):
+    if data[prop] < 0:
+        print 'Property Error: "%s" must be >= 0 (it is %d)' % (prop, data[prop])
+        return False
+    else:
+        return True
+
+def IsNotNull(data, prop):
+    if data[prop] == None:
+        print 'Propery Error: "%s" cannot be null (it is %s)' % (prop, data[prop])
+        return False
+    else:
+        return True
+
+def HasLength(data, prop):
+    if len(data[prop]) == 0:
+        print 'Property Error: "%s" cannot have a length of 0' % prop
+        return False
+    else:
+        return True
+
+def IsMember(l, v):
+    if v not in l:
+        print 'Propery Error: "%s" must be one of the following %s' % (v, l)
+    else:
+        return True
+
+def ValidateCutscene(puzzle, cutscene):
+    if not HasProperty(puzzle, cutscene):
+        return False
+    if not HasProperty(puzzle[cutscene], 'buddies'):
+        return False
+    if not HasLength(puzzle[cutscene], 'buddies'):
+        return False
+    for buddy in puzzle[cutscene]['buddies']:
+        if not IsMember(buddies, buddy):
+            return False
+    if not HasProperty(puzzle[cutscene], 'lines'):
+        return False
+    if not HasLength(puzzle[cutscene], 'lines'):
+        return False
+    for line in puzzle[cutscene]['lines']:
+        if not HasProperty(line, 'speaker'):
+            return False
+        if line['speaker'] != 0 and line['speaker'] != 1:
+            print 'Property Error: "speaker" must be 0 or 1 (it is %d)' % line['speaker']
+            return False
+        if not HasProperty(line, 'view'):
+            return False
+        if not IsMember(views, line['view']):
+            return False
+        if not HasProperty(line, 'text'):
+            return False
+        if not IsNotNull(line, 'text'):
+            return False
+    return True
+
+####################################################################################################
+####################################################################################################
+
+def ValidatePieces(pieces, check_solve):
+    if len(pieces) != 4:
+        print 'Property Error: pieces must have 4 keys: %s' % sides
+        return False
+    for side in pieces:
+        if not IsMember(sides, side):
+            return False
+        if not HasProperty(pieces[side], 'buddy'):
+            return False
+        if not IsMember(buddies, pieces[side]['buddy']):
+            return False
+        if not HasProperty(pieces[side], 'part'):
+            return False
+        if not IsMember(parts, pieces[side]['part']):
+            return False
+        if check_solve:
+            if not HasProperty(pieces[side], 'solve'):
+                return False
+            if pieces[side]['solve'] is not True and pieces[side]['solve'] is not False:
+                print 'Property Error: "solve" must be either true or false (it is ' + pieces[side]['solve'] + ')'
+                return False
+    return True
+
+####################################################################################################
+####################################################################################################
+
+def ValidateBuddy(puzzle, buddy):
+    if not HasProperty(puzzle, buddy):
+        return False
+    if not HasProperty(puzzle[buddy], 'pieces_start'):
+        return False
+    if not ValidatePieces(puzzle[buddy]['pieces_start'], False):
+        return False
+    if not HasProperty(puzzle[buddy], 'pieces_end'):
+        return False
+    if not ValidatePieces(puzzle[buddy]['pieces_end'], True):
+        return False
+    return True
+
+####################################################################################################
+####################################################################################################
+
+def ValidateData(data):
+    for puzzle in data:
+        # book
+        if not HasProperty(puzzle, 'book'):
+            return False
+        if not IsUnsigned(puzzle, 'book'):
+            return False
+        
+        # title
+        if not HasProperty(puzzle, 'title'):
+            return False
+        if not IsNotNull(puzzle, 'title'):
+            return False
+        
+        # clue
+        if not HasProperty(puzzle, 'clue'):
+            return False
+        if not IsNotNull(puzzle, 'clue'):
+            return False
+        
+        # cutscene_environment
+        if not HasProperty(puzzle, 'cutscene_environment'):
+            return False
+        if not IsUnsigned(puzzle, 'cutscene_environment'):
+            return False
+        
+        # cutscene_start
+        if not ValidateCutscene(puzzle, 'cutscene_start'):
+            return False
+        
+        # cutscene_end
+        if not ValidateCutscene(puzzle, 'cutscene_end'):
+            return False
+        
+        # shuffles
+        if not HasProperty(puzzle, 'shuffles'):
+            return False
+        if not IsUnsigned(puzzle, 'shuffles'):
+            return False
+        
+        # buddies
+        if not HasProperty(puzzle, 'buddies'):
+            return False
+        for buddy in puzzle['buddies']:
+            if not ValidateBuddy(puzzle['buddies'], buddy):
+                return False
+        
+    return True
+
+####################################################################################################
+####################################################################################################
+
 def ConvertPuzzles(src, dest):  
     with open(src, 'r') as f:
         j = json.load(f)
@@ -43,10 +212,13 @@ def ConvertPuzzles(src, dest):
         # TODO: Version upgrades.
         version = j['version']
         if version != 1:
-            print("%s is a not supported version." % src)
+            print "%s is a not supported version." % src
             exit(1)
         
         data = j['puzzles']
+        
+        if not ValidateData(data):
+            exit(1)
         
         with open(dest, 'w') as fout:
             # Comment Separator
@@ -153,7 +325,7 @@ if __name__ == "__main__":
         src = sys.argv[1]
         dest = sys.argv[2]
     except:
-        print("Usage: python %s <json filename> <dest filename>" % __file__)
+        print "Usage: python %s <json filename> <dest filename>" % __file__
         exit(1)
     
     ConvertPuzzles(sys.argv[1], sys.argv[2])
