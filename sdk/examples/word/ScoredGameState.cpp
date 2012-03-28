@@ -67,7 +67,8 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     else
     {
         if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
-            GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0)
+            GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0 &&
+            GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesExit) <= 0)
         {
             switch (Dictionary::getPuzzleIndex())
             {
@@ -80,6 +81,7 @@ unsigned ScoredGameState::update(float dt, float stateTime)
             default:
                 // wait for all the cube states to exit the new word state
                 // then shuffle
+                ScoredGameState::createNewAnagram();
                 WordGame::playAudio(shake, AudioChannelIndex_Shake);
                 // TODO new audio
                 return GameStateIndex_PlayScored;

@@ -471,7 +471,7 @@ const static AnimData animData[] =
     { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideL
     { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideR
     { 1.f, true, 1, &animObjData[0]},    // AnimType_OldWord
-    { 1.5f, true, 1, &animObjData[0]},    // AnimType_NewWord
+    { 1.5f, false, 1, &animObjData[0]},    // AnimType_NewWord
     { 1.f, true, 1, &animObjData[0]},    // AnimType_EndofRound
     { 0.5f, true, 1, &animObjData[0]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
@@ -490,7 +490,7 @@ const static AnimData animData[] =
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
     { 1.f, true, 2, &animObjData[6]},    // AnimType_OldWord
-    { 1.5f, true, 2, &animObjData[8]},    // AnimType_NewWord
+    { 1.5f, false, 2, &animObjData[8]},    // AnimType_NewWord
     { 1.f, true, 2, &animObjData[10]},    // AnimType_EndofRound
     { 0.5f, true, 2, &animObjData[12]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
@@ -509,7 +509,7 @@ const static AnimData animData[] =
     { 0.5f, false, 3, &animObjData[24]},    // AnimType_SlideL
     { 0.5f, false, 3, &animObjData[27]},    // AnimType_SlideR
     { 1.f, true, 3, &animObjData[30]},    // AnimType_OldWord
-    { 1.5f, true, 3, &animObjData[33]},    // AnimType_NewWord
+    { 1.5f, false, 3, &animObjData[33]},    // AnimType_NewWord
     { 1.f, true, 3, &animObjData[36]},    // AnimType_EndofRound
     { 0.5f, true, 3, &animObjData[39]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression

@@ -30,7 +30,7 @@ class CubeStateMachine : public StateMachine
 public:
     CubeStateMachine();
     void setCube(Cube& cube);
-    Cube& getCube();
+    Cube& getCube() const;
 
     virtual unsigned getNumStates() const;
     virtual State& getState(unsigned index);
@@ -41,7 +41,7 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    unsigned getLetters(char *buffer, bool forPaint=false);
+    unsigned getLetters(char *buffer, bool forPaint=false) const;
     void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
                    VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
@@ -56,8 +56,8 @@ public:
                      AnimParams *params = 0);
     AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
-    bool canBeginWord();
-    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
+    bool canBeginWord() const;
+    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) const;
     unsigned findRowLength();
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;

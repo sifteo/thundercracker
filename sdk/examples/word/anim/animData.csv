@@ -3,7 +3,7 @@
 "AnimType_SlideL","x",0.5,"FALSE"
 "AnimType_SlideR","x",0.5,"FALSE"
 "AnimType_OldWord","x",1,"TRUE"
-"AnimType_NewWord","x",1.5,"TRUE"
+"AnimType_NewWord","x",1.5,"FALSE"
 "AnimType_EndofRound","x",1,"TRUE"
 "AnimType_Shuffle","x",0.5,"TRUE"
 "AnimType_CityProgression","x",1,"TRUE"
