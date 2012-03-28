@@ -30,6 +30,9 @@ void power_init(void)
      * and we need to re-open the I/O latch.
      */
     uint8_t powerupReason = PWRDWN;
+#if HWREV >= 2
+    uint8_t delay_i, delay_j;
+#endif
     OPMCON = 0;
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
@@ -44,7 +47,8 @@ void power_init(void)
      */
 
     // Safe defaults, everything off.
-    MISC_PORT = MISC_IDLE;
+    // all control lines must be low before supply rails are turned on.
+    MISC_PORT = 0;
     CTRL_PORT = 0;
     ADDR_PORT = 0;
     BUS_DIR = 0xFF;
@@ -54,12 +58,32 @@ void power_init(void)
 
 #if HWREV >= 2
     // Sequence 3.3v boost, followed by 2.0v downstream
+
+    //Turn on 3.3V boost
     CTRL_PORT = CTRL_3V3_EN;
+    //give 3.3V boost >1ms to turn-on
+    delay_i=255;
+    while(delay_i--) {
+    	delay_j=255;
+    	while(delay_j--);
+    }
+
+    //Turn on 2V ds load switch
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+    //give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+    delay_i=255;
+    while(delay_i--) {
+    	delay_j=255;
+    	while(delay_j--);
+    }
+
+    //Now turn-on other control lines.
     CTRL_PORT = CTRL_IDLE;
+    MISC_PORT = MISC_IDLE;
 #else
     // Turn everything on at once.
     CTRL_PORT = CTRL_IDLE;
+    MISC_PORT = MISC_IDLE;
 #endif
 
     /*
@@ -87,6 +111,9 @@ void power_sleep(void)
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
      * Order matters, don't cause bus contention!
      */
+#if HWREV >= 2
+	uint8_t delay_i, delay_j;
+#endif
 
 #if HWREV >= 1   // Rev 1 was the first with sleep support
 
@@ -105,12 +132,23 @@ void power_sleep(void)
     BUS_DIR = 0xFF;             // Float the bus before we've set CTRL_PORT
 
     ADDR_PORT = 0;              // Address bus must be all zero
-    MISC_PORT = MISC_IDLE;      // Neighbor hardware idle
+    MISC_PORT = 0;      		// Neighbor/I2C set to idle-mode as well
 
 #if HWREV >= 2
-    // Bring flash control lines low, turn off 2.0v, then 3.3v
+    //Sequencing is important
+    // Bring flash control lines low
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+
+    // Turn off the 2V DS rail
     CTRL_PORT = CTRL_3V3_EN;
+    //Give the 2V DS rail some time to discharge
+    delay_i=255;
+    while(delay_i--) {
+    	delay_j=255;
+       	while(delay_j--);
+    }
+
+    //Turn off the 3.3V rail
     CTRL_PORT = 0;
 #else
     // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).
