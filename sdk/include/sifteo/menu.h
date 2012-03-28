@@ -698,10 +698,7 @@ void Menu::transFromInertia() {
 void Menu::transToFinish() {
 	// prepare screen for item animation
 	// isolate the selected icon
-	{
-		Int2 vec = {-kEndCapPadding, kIconYOffset};
-		canvas.BG0_setPanning(vec);
-	}
+	canvas.BG0_setPanning(Vec2(0, 0));
 
 	// blank out the background layer
 	for(int row=0; row<kIconTileHeight; ++row)
