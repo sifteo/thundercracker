@@ -36,7 +36,7 @@ namespace TotalsGame
 #if SFX_ON
         for(int i = 0; i < NumSfxChannels; i++)
         {
-            channelSfx[i].setVolume(mute?0:255);
+            channelSfx[i].setVolume(mute?0:128);
         }
 #endif
     }

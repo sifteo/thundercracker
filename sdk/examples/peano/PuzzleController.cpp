@@ -214,6 +214,7 @@ Game::GameState Run()
         tv[i].SetToken(puzzle->GetToken(i));
         Game::cubes[i].OpenShuttersToReveal(Skins::GetSkin().background);
         tv[i].PaintNow();
+        PLAY_SFX(sfx_Tutorial_Correct); //a noise to help indicate how many cubes in use
     }
 
     Game::Wait(0.1f);

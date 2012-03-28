@@ -42,7 +42,7 @@ namespace TotalsGame
         static void PlayNeighborRemove();
 
 	private:
-        static const int NumSfxChannels = 3;
+        static const int NumSfxChannels = 8;
 #if SFX_ON
 		static AudioChannel channelSfx[NumSfxChannels];
         static const AssetAudio *whatsPlaying[NumSfxChannels];
