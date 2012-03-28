@@ -16,9 +16,59 @@
 
 namespace Sifteo {
 
+
 static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
 static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
 static const unsigned TILE = 8;          /// Size of one tile, in pixels
+
+
+/**
+ * Supported video modes. Each "video mode" is a separate way of
+ * interpreting the VideoBuffer memory in order to compose a frame
+ * of graphics.
+ *
+ * Most of the video modes map directly to a collection of one or more
+ * drawables, which may be accessed via this VideoBuffer class.
+ * Some video modes are special-purpose, like POWERDOWN.
+ *
+ * A cube can only be in one video mode at a time, though it's possible
+ * to use setWindow() to render portions of the screen in different
+ * modes. If you do this, take notice of how different modes reuse the
+ * same memory for different purposes.
+ */
+enum VideoMode {
+    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   // Power saving mode, LCD is off
+    BG0_ROM        = _SYS_VM_BG0_ROM,     // BG0, with tile data from internal ROM
+    SOLID_MODE     = _SYS_VM_SOLID,       // Solid color, from colormap[0]
+    FB32           = _SYS_VM_FB32,        // 32x32 pixel 16-color framebuffer
+    FB64           = _SYS_VM_FB64,        // 64x64 pixel 2-color framebuffer
+    FB128          = _SYS_VM_FB128,       // 128x48 pixel 2-color framebuffer
+    BG0            = _SYS_VM_BG0,         // BG0 background layer
+    BG0_BG1        = _SYS_VM_BG0_BG1,     // BG0 background plus BG1 overlay
+    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, // BG0 background, 8 sprites, BG1 overlay
+    BG2            = _SYS_VM_BG2,         // 16x16 tiled mode with affine transform
+};
+
+
+/**
+ * Rotation and mirroring modes, for setRotation().
+ *
+ * In every video mode, the hardware can perform orthogonal rotation and
+ * mirroring cheaply. This happens at render-time, not continuously. For
+ * example, if you're doing partial screen drawing with setWindow() and
+ * you change the current rotation, the new rotation mode will affect 
+ * future drawing but not past drawing.
+ */
+enum Rotation {
+    ROT_NORMAL              = 0,
+    ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
+    ROT_MIRROR              = _SYS_VF_X_FLIP,
+    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+    ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+    ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
+};
 
 
 /**
@@ -50,57 +100,9 @@ static const unsigned TILE = 8;          /// Size of one tile, in pixels
  * used in this buffer, to keep it consistent between the system software
  * and your application.  See abi.h for details on this protocol.
  */
-
 struct VideoBuffer {
     union {
         _SYSAttachedVideoBuffer sys;
-    };
-
-    /**
-     * Supported video modes. Each "video mode" is a separate way of
-     * interpreting the VideoBuffer memory in order to compose a frame
-     * of graphics.
-     *
-     * Most of the video modes map directly to a collection of one or more
-     * drawables, which may be accessed via this VideoBuffer class.
-     * Some video modes are special-purpose, like POWERDOWN.
-     *
-     * A cube can only be in one video mode at a time, though it's possible
-     * to use setWindow() to render portions of the screen in different
-     * modes. If you do this, take notice of how different modes reuse the
-     * same memory for different purposes.
-     */
-    enum Mode {
-        Powerdown       = _SYS_VM_POWERDOWN,   // Power saving mode, LCD is off
-        BG0_ROM         = _SYS_VM_BG0_ROM,     // BG0, with tile data from internal ROM
-        Solid           = _SYS_VM_SOLID,       // Solid color, from colormap[0]
-        FB32            = _SYS_VM_FB32,        // 32x32 pixel 16-color framebuffer
-        FB64            = _SYS_VM_FB64,        // 64x64 pixel 2-color framebuffer
-        FB128           = _SYS_VM_FB128,       // 128x48 pixel 2-color framebuffer
-        BG0             = _SYS_VM_BG0,         // BG0 background layer
-        BG0_BG1         = _SYS_VM_BG0_BG1,     // BG0 background plus BG1 overlay
-        BG0_SPR_BG1     = _SYS_VM_BG0_SPR_BG1, // BG0 background, 8 sprites, BG1 overlay
-        BG2             = _SYS_VM_BG2,         // 16x16 tiled mode with affine transform
-    };
-    
-    /**
-     * Rotation and mirroring modes, for setRotation().
-     *
-     * In every video mode, the hardware can perform orthogonal rotation and
-     * mirroring cheaply. This happens at render-time, not continuously. For
-     * example, if you're doing partial screen drawing with setWindow() and
-     * you change the current rotation, the new rotation mode will affect 
-     * future drawing but not past drawing.
-     */
-    enum Rotation {
-        ROT_NORMAL              = 0,
-        ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
-        ROT_MIRROR              = _SYS_VF_X_FLIP,
-        ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
-        ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
-        ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
-        ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
-        ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
     };
 
     /**
@@ -205,15 +207,15 @@ struct VideoBuffer {
      * such that you know the hardware has finished rendering with the old
      * mode before you start rendering with the new mode.
      */
-    void setMode(Mode m) {
+    void setMode(VideoMode m) {
         pokeb(offsetof(_SYSVideoRAM, mode), m);
     }
 
     /**
      * Retrieve the last video mode set by setMode()
      */
-    Mode getMode() const {
-        return Mode(peekb(offsetof(_SYSVideoRAM, mode)));
+    VideoMode getMode() const {
+        return VideoMode(peekb(offsetof(_SYSVideoRAM, mode)));
     }
 
     /**

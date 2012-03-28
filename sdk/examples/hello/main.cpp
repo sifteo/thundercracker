@@ -16,7 +16,11 @@ void main()
     
     myCube.enable();
     vid.attach(myCube);
-    vid.setMode(vid.BG0_ROM);
+    vid.setMode(FB64);
+    
+    while (1) {
+        System::paint();
+    }
 }
 
 
