@@ -90,3 +90,4 @@ Bubbles.cpp
 FloatingScore.h
 FloatingScore.cpp
 BubbleTransition.h
+puzzles.json
