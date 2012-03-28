@@ -964,7 +964,7 @@ void Menu::drawFooter(bool force) {
 	const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
 	const float kSecondsPerTip = 4.f;
 
-	if (numTips == 0) return;
+	if (numTips == 0 || assets->footer == NULL) return;
 
 	if (SystemTime::now() - prevTipTime > kSecondsPerTip || force) {
 		prevTipTime = SystemTime::now();
