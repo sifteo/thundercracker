@@ -56,7 +56,7 @@ void main() {
     const Float2 rest = Vec2(8.f, 8.f);
 
     // shake params
-    const int iters = 8;
+    const int iters = 12;
     const float bias = -0.05f;
     const float dt = 0.1f;
     const float k = 0.15f;
