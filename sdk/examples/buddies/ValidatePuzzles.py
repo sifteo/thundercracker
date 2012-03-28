@@ -4,8 +4,8 @@ script to validate JSON puzzles in CubeBuddies format.
 """
 
 ####################################################################################################
-# TODO: show stack on error
 # TODO: double-click error report
+# TODO: version upgrades
 ####################################################################################################
 
 import sys
@@ -16,10 +16,19 @@ import json
 ####################################################################################################
 
 validated = True
+prop_stack = []
+
 buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
 parts = ['hair', 'eye_left', 'mouth', 'eye_right']
+
+####################################################################################################
+# Utility
+####################################################################################################
+
+def StackString(stack):
+    return stack[0] + ''.join(['[' + s + ']' for s in stack[1:]])
 
 ####################################################################################################
 # Validators
@@ -27,7 +36,7 @@ parts = ['hair', 'eye_left', 'mouth', 'eye_right']
 
 def CheckHasProperty(data, prop):
     if not data.has_key(prop):
-        print 'Property Missing: "%s"' % prop
+        print '%s is missing.' % StackString(prop_stack + [prop])
         global validated
         validated = False
         return False
@@ -36,7 +45,7 @@ def CheckHasProperty(data, prop):
 
 def CheckIsUnsigned(data, prop):
     if data[prop] < 0:
-        print 'Property Error: "%s" must be >= 0 (it is %d)' % (prop, data[prop])
+        print '%s must be >= 0 (it is %d).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -45,7 +54,7 @@ def CheckIsUnsigned(data, prop):
 
 def CheckIsNotNull(data, prop):
     if data[prop] == None:
-        print 'Propery Error: "%s" cannot be null (it is %s)' % (prop, data[prop])
+        print '%s cannot be null (it is %s).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -54,25 +63,25 @@ def CheckIsNotNull(data, prop):
 
 def CheckHasLength(data, prop):
     if len(data[prop]) == 0:
-        print 'Property Error: "%s" cannot have a length of 0' % prop
+        print '%s cannot have a length of 0.' % StackString(prop_stack)
         global validated
         validated = False
         return False
     else:
         return True
 
-def CheckHasLengthOf(data, name, length):
-    if len(data) != length:
-        print 'Property Error: "%s" must have a length of %d (it is %d)' % (name, length, len(data))
+def CheckHasLengthOf(data, prop, length):
+    if len(data[prop]) != length:
+        print '%s must have a length of %d (it is %d).' % (StackString(prop_stack), length, len(data[prop]))
         global validated
         validated = False
         return False
     else:
         return True
 
-def CheckIsMember(l, v):
-    if v not in l:
-        print 'Property Error: "%s" must be one of the following %s' % (v, l)
+def CheckIsMember(prop, values):
+    if prop not in values:
+        print '%s must be one of the following %s.' % (StackString(prop_stack), values)
         global validated
         validated = False
         return False
@@ -81,7 +90,7 @@ def CheckIsMember(l, v):
 
 def CheckIsBinary(data, prop):
     if data[prop] != 0 and data[prop] != 1:
-        print 'Property Error: "%s" must be 0 or 1 (it is %d)' % (prop, data[prop])
+        print '%s must be 0 or 1 (it is %d).' % (StackString(prop_stack), data[prop])
         global validated
         validated = False
         return False
@@ -90,7 +99,7 @@ def CheckIsBinary(data, prop):
 
 def CheckIsBoolean(data, prop):
     if data[prop] is not True and data[prop] is not False:
-        print 'Property Error: "' + prop + '" must be either true or false (it is ' + data[prop] + ')'
+        print StackString(prop_stack) + ' must be either true or false (it is ' + data[prop] + ')'
         validated = False
         return False
     else:
@@ -101,65 +110,104 @@ def CheckIsBoolean(data, prop):
 
 def CheckCutscene(puzzle, cutscene):
     if CheckHasProperty(puzzle, cutscene):
+        prop_stack.append(cutscene)
         if CheckHasProperty(puzzle[cutscene], 'buddies'):
+            prop_stack.append('buddies')
             if CheckHasLength(puzzle[cutscene], 'buddies'):
-                for buddy in puzzle[cutscene]['buddies']:
-                    CheckIsMember(buddies, buddy)
+                for i, buddy in enumerate(puzzle[cutscene]['buddies']):
+                    prop_stack.append('%d' % i)
+                    CheckIsMember(buddy, buddies)
+                    prop_stack.pop()
+            prop_stack.pop()
         if CheckHasProperty(puzzle[cutscene], 'lines'):
+            prop_stack.append('lines')
             if CheckHasLength(puzzle[cutscene], 'lines'):
-                for line in puzzle[cutscene]['lines']:
+                for i, line in enumerate(puzzle[cutscene]['lines']):
+                    prop_stack.append('%d' % i)
                     if CheckHasProperty(line, 'speaker'):
+                        prop_stack.append('speaker')
                         CheckIsBinary(line, 'speaker')
+                        prop_stack.pop()
                     if CheckHasProperty(line, 'view'):
-                        CheckIsMember(views, line['view'])
+                        prop_stack.append('view')
+                        CheckIsMember(line['view'], views)
+                        prop_stack.pop()
                     if CheckHasProperty(line, 'text'):
+                        prop_stack.append('text')
                         CheckIsNotNull(line, 'text')
+                        prop_stack.pop()
+                    prop_stack.pop()
+            prop_stack.pop()
+        prop_stack.pop()
 
 ####################################################################################################
 ####################################################################################################
 
-def CheckPieces(pieces, check_solve):
-    if CheckHasLengthOf(pieces, 'pieces', 4):
-        for side in pieces:
-            if CheckIsMember(sides, side):
-                if CheckHasProperty(pieces[side], 'buddy'):
-                    CheckIsMember(buddies, pieces[side]['buddy'])
-                if CheckHasProperty(pieces[side], 'part'):
-                    CheckIsMember(parts, pieces[side]['part'])
+def CheckPieces(data, prop, check_solve):
+    prop_stack.append(prop)
+    if CheckHasLengthOf(data, prop, 4):
+        for side in sides:
+            if CheckHasProperty(data[prop], side):
+                prop_stack.append(side)
+                if CheckHasProperty(data[prop][side], 'buddy'):
+                    prop_stack.append('buddy')
+                    CheckIsMember(data[prop][side]['buddy'], buddies)
+                    prop_stack.pop()
+                if CheckHasProperty(data[prop][side], 'part'):
+                    prop_stack.append('part')
+                    CheckIsMember(data[prop][side]['part'], parts)
+                    prop_stack.pop()
                 if check_solve:
-                    if CheckHasProperty(pieces[side], 'solve'):
-                        CheckIsBoolean(pieces[side], 'solve')
+                    if CheckHasProperty(data[prop][side], 'solve'):
+                        prop_stack.append('solve')
+                        CheckIsBoolean(data[prop][side], 'solve')
+                        prop_stack.pop()
+                prop_stack.pop()
+    prop_stack.pop()
 
 ####################################################################################################
 ####################################################################################################
 
 def CheckBuddy(puzzle, buddy):
     if CheckHasProperty(puzzle, buddy):
+        prop_stack.append(buddy)
         if CheckHasProperty(puzzle[buddy], 'pieces_start'):
-            CheckPieces(puzzle[buddy]['pieces_start'], False)
+            CheckPieces(puzzle[buddy], 'pieces_start', False)
         if CheckHasProperty(puzzle[buddy], 'pieces_end'):
-            CheckPieces(puzzle[buddy]['pieces_end'], True)
+            CheckPieces(puzzle[buddy], 'pieces_end', True)
+        prop_stack.pop()
 
 ####################################################################################################
 ####################################################################################################
 
 def ValidateData(data):
-    for puzzle in data:
+    for i, puzzle in enumerate(data):
+        global prop_stack
+        prop_stack.append('%d' % i)
+    
         # book
         if CheckHasProperty(puzzle, 'book'):
+            prop_stack.append('book')
             CheckIsUnsigned(puzzle, 'book')
+            prop_stack.pop()
         
         # title
         if CheckHasProperty(puzzle, 'title'):
+            prop_stack.append('title')
             CheckIsNotNull(puzzle, 'title')
+            prop_stack.pop()
         
         # clue
         if CheckHasProperty(puzzle, 'clue'):
+            prop_stack.append('clue')
             CheckIsNotNull(puzzle, 'clue')
+            prop_stack.pop()
         
         # cutscene_environment
         if CheckHasProperty(puzzle, 'cutscene_environment'):
+            prop_stack.append('cutscene_environment')
             CheckIsUnsigned(puzzle, 'cutscene_environment')
+            prop_stack.pop()
         
         # cutscene_start
         CheckCutscene(puzzle, 'cutscene_start')
@@ -167,12 +215,18 @@ def ValidateData(data):
         
         # shuffles
         if CheckHasProperty(puzzle, 'shuffles'):
+            prop_stack.append('shuffles')
             CheckIsUnsigned(puzzle, 'shuffles')
+            prop_stack.pop()
         
         # buddies
         if CheckHasProperty(puzzle, 'buddies'):
+            prop_stack.append('buddies')
             for buddy in puzzle['buddies']:
                 CheckBuddy(puzzle['buddies'], buddy)
+            prop_stack.pop()
+        
+        prop_stack.pop()
 
 ####################################################################################################
 ####################################################################################################
@@ -180,8 +234,6 @@ def ValidateData(data):
 def ValidatePuzzles(src):  
     with open(src, 'r') as f:
         j = json.load(f)
-        
-        # TODO: Version upgrades.
         
         # Bail if our version doesn't jive with the parser.
         if not j.has_key('version') or j['version'] != 1:
@@ -191,6 +243,9 @@ def ValidatePuzzles(src):
         if not j.has_key('puzzles') or len(j['puzzles']) == 0:
             print "Data Error: Ain't got none."
             exit(1)
+        
+        global prop_stack
+        prop_stack.append('puzzles')
         
         ValidateData(j['puzzles'])
         if not validated:
