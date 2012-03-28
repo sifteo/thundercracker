@@ -6,6 +6,7 @@
 #include "svmvalidator.h"
 #include "svm.h"
 #include "macros.h"
+#include "svmcpu.h"
 
 using namespace Svm;
 
@@ -53,9 +54,9 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
      *      of data, at a small space penalty per-block.
      */
 
-#ifdef SVM_TRACE
-    LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
-#endif
+    TRACING_ONLY({
+        LOG(("VALIDATOR: complete, 0x%03x bytes valid\n", numValidBytes));
+    });
 
     return numValidBytes;
 }
@@ -103,9 +104,9 @@ bool SvmValidator::isValid16(uint16_t instr)
         return true;
     }
 
-#ifdef SVM_TRACE
-    LOG(("VALIDATOR: invalid 16bit instruction: 0x%x\n", instr));
-#endif
+    TRACING_ONLY({
+        LOG(("VALIDATOR: invalid 16bit instruction: 0x%x\n", instr));
+    });
 
     return false;
 }
@@ -131,9 +132,9 @@ bool SvmValidator::isValid32(uint32_t instr)
         return true;
     }
 
-#ifdef SVM_TRACE
-    LOG(("VALIDATOR: invalid 32-bit instruction: 0x%x\n", instr));
-#endif
+    TRACING_ONLY({
+        LOG(("VALIDATOR: invalid 32-bit instruction: 0x%x\n", instr));
+    });
 
     return false;
 }

@@ -14,6 +14,17 @@
 uint8_t power_sleep_timer;
 
 
+void power_delay()
+{
+    // Arbitrary delay, currently about 12 ms.
+    uint8_t delay_i = 0, delay_j;
+    do {
+        delay_j = 0;
+        while (--delay_j);
+    } while (--delay_i);
+}
+
+
 void power_init(void)
 {
     /*
@@ -44,7 +55,8 @@ void power_init(void)
      */
 
     // Safe defaults, everything off.
-    MISC_PORT = MISC_IDLE;
+    // all control lines must be low before supply rails are turned on.
+    MISC_PORT = 0;
     CTRL_PORT = 0;
     ADDR_PORT = 0;
     BUS_DIR = 0xFF;
@@ -52,15 +64,24 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 2
-    // Sequence 3.3v boost, followed by 2.0v downstream
+#if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
+    // Turn on 3.3V boost
     CTRL_PORT = CTRL_3V3_EN;
+
+    // Give 3.3V boost >1ms to turn-on
+    power_delay();
+
+    // Turn on 2V ds load switch
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-    CTRL_PORT = CTRL_IDLE;
-#else
-    // Turn everything on at once.
-    CTRL_PORT = CTRL_IDLE;
+
+    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+    power_delay();
 #endif
+
+    // Now turn-on other control lines.
+    // (On Rev 1, we just turn everything on at once.)
+    CTRL_PORT = CTRL_IDLE;
+    MISC_PORT = MISC_IDLE;
 
     /*
      * Neighbor TX pins
@@ -105,12 +126,19 @@ void power_sleep(void)
     BUS_DIR = 0xFF;             // Float the bus before we've set CTRL_PORT
 
     ADDR_PORT = 0;              // Address bus must be all zero
-    MISC_PORT = MISC_IDLE;      // Neighbor hardware idle
+    MISC_PORT = 0;      		// Neighbor/I2C set to idle-mode as well
 
 #if HWREV >= 2
-    // Bring flash control lines low, turn off 2.0v, then 3.3v
+    // Sequencing is important. First, bring flash control lines low
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+
+    // Turn off the 2V DS rail
     CTRL_PORT = CTRL_3V3_EN;
+
+    // Give the 2V DS rail some time to discharge
+    power_delay();
+
+    // Turn off the 3.3V rail
     CTRL_PORT = 0;
 #else
     // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).

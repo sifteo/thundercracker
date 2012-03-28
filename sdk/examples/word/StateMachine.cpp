@@ -4,6 +4,8 @@
 #include "EventID.h"
 #include "EventData.h"
 
+using namespace Sifteo;
+
 StateMachine::StateMachine(unsigned startStateIndex) :
     mStateTime(.0f), mStateIndex(startStateIndex), mUnhandledOnEnter(true)
 {

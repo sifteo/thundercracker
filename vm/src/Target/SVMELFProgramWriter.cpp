@@ -40,6 +40,10 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
     // Write program data, sorted by SPS section
     int endS = ELFDebug ? SPS_NUM_SECTIONS : SPS_DEBUG;
     for (int S = 0; S < endS; ++S) {
+        
+        if (S == SPS_DEBUG)
+            writeDebugMessage();
+        
         for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
             it != ie; ++it) {
             const MCSectionData *SD = &*it;
@@ -200,6 +204,41 @@ void SVMELFProgramWriter::padToOffset(uint32_t O)
     if (size > 0)
         writePadding(size);
     assert(O == OS.tell());
+}
+
+void SVMELFProgramWriter::writeDebugMessage()
+{
+    /*
+     * When we're linking a debug build, we leave a big obvious warning
+     * in the resulting ELF file, to (1) notify folks that this is indeed
+     * a debug build, and (2) illustrate the split between non-debug
+     * data above, and debug data below.
+     *
+     * SVMMemoryLayout leaves one block free for this message.
+     *
+     * We format it in 16-byte-wide lines, so that it shows up clearly
+     * in most hex editors.
+     */
+
+    padToOffset(ML.getSectionDiskOffset(SPS_DEBUG));
+    assert(SVMTargetMachine::getBlockSize() >= 256);
+
+    OS << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          "+-----8<------+\n"
+          "|             |\n"
+          "|  This is a  |\n"
+          "| DEBUG BUILD |\n"
+          "|             |\n"
+          "| All data    |\n"
+          "| below this  |\n"
+          "| point is    |\n"
+          "| only needed |\n"
+          "| for debug.  |\n"
+          "|             |\n"
+          "| /\\/\\/\\/\\/\\/ |\n"
+          "|   sproing!  |\n"
+          "+-------------+\n"
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)

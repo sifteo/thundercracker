@@ -10,20 +10,23 @@
 
 #include <sifteo/abi.h>
 #include "svmmemory.h"
-#include "svmdebug.h"
+#include "svmdebugpipe.h"
+#include "svmdebugger.h"
 #include "svmruntime.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
+#include "tasks.h"
 
 extern "C" {
 
 void _SYS_abort() {
-    SvmDebug::fault(Svm::F_ABORT);
+    SvmRuntime::fault(Svm::F_ABORT);
 }
 
 void _SYS_exit(void)
 {
+    SvmDebugger::signal(Svm::Debugger::S_TERM);
     SvmRuntime::exit();
 }
 
@@ -92,7 +95,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
         // Stow all arguments, plus the log tag. The post-processor
         // will do some printf()-like formatting on the stored arguments.
         case _SYS_LOGTYPE_FMT: {
-            uint32_t *buffer = SvmDebug::logReserve(tag);        
+            uint32_t *buffer = SvmDebugPipe::logReserve(tag);        
             switch (arity) {
                 case 7: buffer[6] = v7;
                 case 6: buffer[5] = v6;
@@ -104,20 +107,20 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 case 0:
                 default: break;
             }
-            SvmDebug::logCommit(tag, buffer, arity * sizeof(uint32_t));
+            SvmDebugPipe::logCommit(tag, buffer, arity * sizeof(uint32_t));
             return;
         }
 
         // String messages: Only v1 is used (as a pointer), and we emit
         // zero or more log records until we hit the NUL terminator.
         case _SYS_LOGTYPE_STRING: {
-            const unsigned chunkSize = SvmDebug::LOG_BUFFER_BYTES;
+            const unsigned chunkSize = SvmDebugPipe::LOG_BUFFER_BYTES;
             FlashBlockRef ref;
             for (;;) {
-                uint32_t *buffer = SvmDebug::logReserve(tag);
+                uint32_t *buffer = SvmDebugPipe::logReserve(tag);
                 if (!SvmMemory::copyROData(ref, (SvmMemory::PhysAddr)buffer,
                                     (SvmMemory::VirtAddr)v1, chunkSize)) {
-                    SvmDebug::fault(F_LOG_FETCH);
+                    SvmRuntime::fault(F_LOG_FETCH);
                     return;
                 }
 
@@ -126,9 +129,10 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 const char *end = static_cast<const char*>(memchr(str, '\0', chunkSize));
                 uint32_t bytes = end ? (size_t) (end - str) : chunkSize;
 
-                SvmDebug::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
+                SvmDebugPipe::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
                 if (bytes < chunkSize)
                     return;
+                v1 += bytes;
             }
         }
 
@@ -140,15 +144,16 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
             FlashBlockRef ref;
             uint32_t remaining = tag.getParam();
             while (remaining) {
-                uint32_t chunkSize = MIN(SvmDebug::LOG_BUFFER_BYTES, remaining);
-                uint32_t *buffer = SvmDebug::logReserve(tag);
+                uint32_t chunkSize = MIN(SvmDebugPipe::LOG_BUFFER_BYTES, remaining);
+                uint32_t *buffer = SvmDebugPipe::logReserve(tag);
                 if (!SvmMemory::copyROData(ref, (SvmMemory::PhysAddr)buffer,
                                     (SvmMemory::VirtAddr)v1, chunkSize)) {
-                    SvmDebug::fault(F_LOG_FETCH);
+                    SvmRuntime::fault(F_LOG_FETCH);
                     return;
                 }
-                SvmDebug::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
+                SvmDebugPipe::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
                 remaining -= chunkSize;
+                v1 += chunkSize;
             }
             return;
         }

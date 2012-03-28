@@ -15,6 +15,7 @@
  * is packed along with a string table offset into a single 32-bit parameter.
  */
 
+#include "Target/SVMRuntime.inc"
 #include "Support/ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -42,7 +43,7 @@ namespace {
             // Create a reference to _SYS_log()
             std::vector<Type*> ArgTys;
             ArgTys.push_back(i32);
-            sysLogFn = M->getOrInsertFunction("_SYS_25",
+            sysLogFn = M->getOrInsertFunction(SVMRT_log,
                 FunctionType::get(Type::getVoidTy(Ctx), ArgTys, true),
                 AttrListPtr::get((AttributeWithIndex *)0, 0));
         }

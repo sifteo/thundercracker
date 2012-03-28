@@ -18,7 +18,7 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 	Room* pRoom = gGame.GetMap()->GetRoom(roomId);
 	if (pRoom->HasGateway()) {
 		// compute which "side" of the room the gateway is on
-		mGateway = pRoom->TriggerAsGate();
+		mGateway = pRoom->Gateway();
 		gateSide = ComputeGateSide(mGateway);
 		if (gateSide == mSide) {
 			// render gateway special

@@ -191,6 +191,9 @@ public:
         uintptr_t offset = pa - userRAM; 
         return (VirtAddr)offset + VIRTUAL_RAM_BASE;
     }
+    static VirtAddr physToVirtRAM(Svm::reg_t pa) {
+        return physToVirtRAM(reinterpret_cast<PhysAddr>(pa));
+    }
     
     /**
      * Convert a flash block address to a VA in the current segment.
@@ -202,6 +205,17 @@ public:
             return offset + VIRTUAL_FLASH_BASE;
         return 0;
     }
+
+    /**
+     * Convert a VA to a flash block address, using the current segment.
+     * If the VA is not a valid flash address, returns zero.
+     */
+    static uint32_t virtToFlashAddr(VirtAddr va) {
+        uint32_t offset = va - VIRTUAL_FLASH_BASE;
+        if (offset < flashSeg.getSize())
+            return flashSeg.getAddress() + offset;
+        return 0;
+    }     
 
     /**
      * Quick predicates to check a physical address. Used only in simulation.

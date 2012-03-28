@@ -4,6 +4,8 @@
 #include <sifteo.h>
 #include "Dictionary.h"
 
+using namespace Sifteo;
+
 class PrototypeWordList
 {
 public:

@@ -21,6 +21,7 @@
 #include "usart.h"
 #include "button.h"
 #include "svmruntime.h"
+#include "usb.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -203,24 +204,20 @@ extern "C" void _start()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-#ifdef USB_LOAD
-    // ALERT! ST's usb library appears to overwrite registers related to
-    // SysTick and as such, cannot be used while you want to talk to cubes
-    // over the radio. It's fine for loading data over USB, though.
-    Usb::init();
-    // super hack: just wait around for data to be loaded. revel in the crappiness
-    // as you disable this block and reflash your board to re-enable SysTick.
-    for (;;) {
-        Tasks::work();
-        System::yield();
-    }
-#endif
+    UsbDevice::init();
 
     /*
      * Launch our game runtime!
      */
 
     SvmRuntime::run(111);
+
+    // for now, in the event that we don't have a valid game installed at address 0,
+    // SvmRuntime::run() should return (assuming it fails to parse the non-existent
+    // ELF binary, and we'll just sit here so we can at least install things over USB, etc
+    for (;;) {
+        Tasks::work();
+    }
 }
 
 extern "C" void *_sbrk(intptr_t increment)
