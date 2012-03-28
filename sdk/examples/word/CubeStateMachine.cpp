@@ -1443,7 +1443,6 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     Cube &c = getCube();
     params->mLetters[0] = '\0';
     params->mSpriteParams = 0;
-    params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_MetaTilesEnter:
@@ -1451,6 +1450,12 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     case AnimType_MetaTilesExit:
         params->mAllMetaLetters = true;
         break;
+    default:
+        params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
+        break;
+    }
+    switch (mAnimTypes[CubeAnim_Main])
+    {
 
     case AnimType_EndofRound:
     case AnimType_Shuffle:
@@ -1461,7 +1466,19 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         params->mSpriteParams = &mSpriteParams;
         // fall through
     default:
-        if (!getLetters(params->mLetters, true))
+        if (params->mAllMetaLetters)
+        {
+            char meta[MAX_LETTERS_PER_WORD + 1];
+            if (true)//Dictionary::getMetaPuzzle(meta))
+            {
+
+            }
+            else
+            {
+                retval = false;
+            }
+        }
+        else if (!getLetters(params->mLetters, true))
         {
             for (unsigned i=0; i<arraysize(params->mLetters); ++i)
             {
@@ -1479,7 +1496,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mBonus = false; // TODO
     unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
     unsigned letter0Index = mPuzzlePieceIndex * mlpc;
-    unsigned mli = Dictionary::getPuzzleMetaLetterIndex();
+    unsigned mli = Dictionary::getCurrentPuzzleMetaLetterIndex();
     if (mli >= letter0Index && mli < letter0Index + mlpc)
     {
         switch (mAnimTypes[CubeAnim_Main])

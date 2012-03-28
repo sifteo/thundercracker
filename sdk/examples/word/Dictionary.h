@@ -33,11 +33,13 @@ public:
     static bool trim(const char* word, char* buffer);
     static int getPuzzleIndex();
     static bool doScrambleCurrentWord();
-    static unsigned char getPuzzleMetaLetterIndex();
+    static unsigned char getCurrentPuzzleMetaLetterIndex();
     static bool currentIsMetaPuzzle();
+    static bool getMetaPuzzle(char *buffer);
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:
+    static unsigned char getPuzzleMetaLetterIndex(int puzzleIndex);
     static WordID findWordID(const char* word);
     static bool getWordFromID(WordID wid, char *buffer);
 

@@ -321,15 +321,33 @@ bool Dictionary::trim(const char* word, char* buffer)
     return (firstLetter < wordLen && lastLetter >= 0 && lastLetter >= firstLetter);
 }
 
-unsigned char Dictionary::getPuzzleMetaLetterIndex()
+unsigned char Dictionary::getPuzzleMetaLetterIndex(int puzzleIndex)
 {
-    return sPuzzleIndex < 0 || sPuzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
-                0 : puzzlesMetaLetterIndex[sPuzzleIndex];
+    return puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
+                0 : puzzlesMetaLetterIndex[puzzleIndex];
+}
+
+unsigned char Dictionary::getCurrentPuzzleMetaLetterIndex()
+{
+    return getPuzzleMetaLetterIndex(sPuzzleIndex);
 }
 
 bool Dictionary::currentIsMetaPuzzle()
 {
-    return getPuzzleMetaLetterIndex() == 255;
+    return getCurrentPuzzleMetaLetterIndex() == 255;
+}
+
+bool Dictionary::getMetaPuzzle(char *buffer)
+{
+    for (int m = sPuzzleIndex; m < (int)NUM_PUZZLES; ++m)
+    {
+        if (getPuzzleMetaLetterIndex(m) == 255)
+        {
+            _SYS_strlcpy(buffer, puzzles[m], MAX_LETTERS_PER_WORD + 1);
+            return true;
+        }
+    }
+    return false;
 }
 
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
