@@ -238,18 +238,19 @@ def ValidatePuzzles(src):
         # Bail if our version doesn't jive with the parser.
         if not j.has_key('version') or j['version'] != 1:
             print "Version Error: %s is a not supported version." % src
-            exit(1)
+            return False
         
         if not j.has_key('puzzles') or len(j['puzzles']) == 0:
             print "Data Error: Ain't got none."
-            exit(1)
+            return False
         
         global prop_stack
         prop_stack.append('puzzles')
         
         ValidateData(j['puzzles'])
         if not validated:
-            exit(1)
+            return False
+    return True
 
 ####################################################################################################
 ####################################################################################################
@@ -259,5 +260,8 @@ if __name__ == "__main__":
         print "Usage: python %s <json filename>" % __file__
         exit(1)
     else:
-        ValidatePuzzles(sys.argv[1])
+        if ValidatePuzzles(sys.argv[1]):
+            exit(0)
+        else:
+            exit(1)
     

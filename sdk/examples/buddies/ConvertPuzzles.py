@@ -8,6 +8,7 @@ script to convert JSON puzzles in CubeBuddies format to a .h file that will be b
 
 import sys
 import json
+import ValidatePuzzles
 
 ####################################################################################################
 # Utility
@@ -35,7 +36,7 @@ def BoolToString(value):
 ####################################################################################################
 ####################################################################################################
 
-def ConvertPuzzles(src, dest):  
+def ConvertPuzzles(src, dest):
     with open(src, 'r') as f:
         data = json.load(f)['puzzles']
         
@@ -144,5 +145,9 @@ if __name__ == "__main__":
         print "Usage: python %s <json filename> <dest filename>" % __file__
         exit(1)
     else:
-        ConvertPuzzles(sys.argv[1], sys.argv[2])
+        if ValidatePuzzles.ValidatePuzzles(sys.argv[1]):
+            ConvertPuzzles(sys.argv[1], sys.argv[2])
+            exit(0)
+        else:
+            exit(1)
     
