@@ -18,6 +18,7 @@ using namespace Sifteo;
 
 enum GameStateIndex
 {
+    // TODO rename, remove old, states
     GameStateIndex_Title,
     GameStateIndex_PlayScored,
     GameStateIndex_StartOfRoundScored,

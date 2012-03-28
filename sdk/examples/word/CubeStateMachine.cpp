@@ -156,11 +156,15 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case GameStateIndex_StoryCityProgression:
             queueAnim(AnimType_CityProgression);
             break;
+
+        case GameStateIndex_PlayScored:
+            queueAnim(AnimType_MetaTilesShow);
+            break;
         }
         break;
 
     case EventID_EnterState:
-        queueNextAnim();//vid, bg1, params);
+        //queueNextAnim();//vid, bg1, params);
         mIdleTime = 0.f;
         paint();
         WordGame::instance()->setNeedsPaintSync();
@@ -584,6 +588,21 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
             }
         }
         return AnimType_None;
+
+    case AnimType_NormalTilesEnter:
+        return AnimType_NotWord;
+
+    case AnimType_NormalTilesExit:
+        return AnimType_MetaTilesEnter;
+
+    case AnimType_MetaTilesEnter:
+        return AnimType_MetaTilesShow;
+
+    case AnimType_MetaTilesShow:
+        return AnimType_MetaTilesExit;
+
+    case AnimType_MetaTilesExit:
+        return AnimType_NormalTilesEnter;        // TODO other transition at end of city
     }
 }
 
@@ -1371,6 +1390,7 @@ void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RH
 
 bool CubeStateMachine::getAnimParams(AnimParams *params)
 {
+    bool retval = true;
     ASSERT(params);
     Cube &c = getCube();
     params->mLetters[0] = '\0';
@@ -1388,7 +1408,11 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     default:
         if (!getLetters(params->mLetters, true))
         {
-            return false;
+            for (unsigned i=0; i<arraysize(params->mLetters); ++i)
+            {
+                params->mLetters[i] = '\0';
+            }
+            retval = false;
         }
         break;
     }
@@ -1424,7 +1448,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     }
     params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
 
-    return true;
+    return retval;
 }
 
 void CubeStateMachine::setLettersStart(unsigned s)

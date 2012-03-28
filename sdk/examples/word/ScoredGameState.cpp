@@ -75,12 +75,14 @@ unsigned ScoredGameState::update(float dt, float stateTime)
             case 12: // part
             case 18: // career
             case 24: // begun
+                // TODO detect end of level through data
                 return GameStateIndex_StoryCityProgression;
             default:
                 // wait for all the cube states to exit the new word state
                 // then shuffle
                 WordGame::playAudio(shake, AudioChannelIndex_Shake);
-                return GameStateIndex_ShuffleScored;
+                // TODO new audio
+                return GameStateIndex_PlayScored;
             }
         }
 
@@ -95,9 +97,11 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     // TODO put in the pause menu on touch
-    case EventID_NewAnagram:
     case EventID_EnterState:
-        // reset hints,
+        ScoredGameState::createNewAnagram();
+        // fall through
+    case EventID_NewAnagram:
+        // TODO reset hints,
 
         break;
 

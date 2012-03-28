@@ -185,6 +185,211 @@ const static Vec2 positions[] =
     Vec2(3, 2),    // 180
     Vec2(2, 2),    // 181
     Vec2(2, 2),    // 182
+    Vec2(2, 2),    // 183
+    Vec2(8, 2),    // 184
+    Vec2(2, -11),    // 185
+    Vec2(2, -9),    // 186
+    Vec2(2, -7),    // 187
+    Vec2(2, -5),    // 188
+    Vec2(2, -3),    // 189
+    Vec2(2, -1),    // 190
+    Vec2(2, 0),    // 191
+    Vec2(2, 1),    // 192
+    Vec2(2, 1),    // 193
+    Vec2(2, 2),    // 194
+    Vec2(8, -11),    // 195
+    Vec2(8, -9),    // 196
+    Vec2(8, -7),    // 197
+    Vec2(8, -5),    // 198
+    Vec2(8, -3),    // 199
+    Vec2(8, -1),    // 200
+    Vec2(8, 0),    // 201
+    Vec2(8, 1),    // 202
+    Vec2(8, 1),    // 203
+    Vec2(8, 2),    // 204
+    Vec2(2, 3),    // 205
+    Vec2(2, 4),    // 206
+    Vec2(2, 5),    // 207
+    Vec2(2, 6),    // 208
+    Vec2(2, 7),    // 209
+    Vec2(2, 8),    // 210
+    Vec2(2, 9),    // 211
+    Vec2(2, 10),    // 212
+    Vec2(2, 12),    // 213
+    Vec2(2, 16),    // 214
+    Vec2(8, 3),    // 215
+    Vec2(8, 4),    // 216
+    Vec2(8, 5),    // 217
+    Vec2(8, 6),    // 218
+    Vec2(8, 7),    // 219
+    Vec2(8, 8),    // 220
+    Vec2(8, 9),    // 221
+    Vec2(8, 10),    // 222
+    Vec2(8, 12),    // 223
+    Vec2(8, 16),    // 224
+    Vec2(2, -11),    // 225
+    Vec2(2, -9),    // 226
+    Vec2(2, -7),    // 227
+    Vec2(2, -5),    // 228
+    Vec2(2, -3),    // 229
+    Vec2(2, -1),    // 230
+    Vec2(2, 0),    // 231
+    Vec2(2, 1),    // 232
+    Vec2(2, 1),    // 233
+    Vec2(2, 2),    // 234
+    Vec2(8, -11),    // 235
+    Vec2(8, -9),    // 236
+    Vec2(8, -7),    // 237
+    Vec2(8, -5),    // 238
+    Vec2(8, -3),    // 239
+    Vec2(8, -1),    // 240
+    Vec2(8, 0),    // 241
+    Vec2(8, 1),    // 242
+    Vec2(8, 1),    // 243
+    Vec2(8, 2),    // 244
+    Vec2(2, 3),    // 245
+    Vec2(2, 4),    // 246
+    Vec2(2, 5),    // 247
+    Vec2(2, 6),    // 248
+    Vec2(2, 7),    // 249
+    Vec2(2, 8),    // 250
+    Vec2(2, 9),    // 251
+    Vec2(2, 10),    // 252
+    Vec2(2, 12),    // 253
+    Vec2(2, 16),    // 254
+    Vec2(8, 3),    // 255
+    Vec2(8, 4),    // 256
+    Vec2(8, 5),    // 257
+    Vec2(8, 6),    // 258
+    Vec2(8, 7),    // 259
+    Vec2(8, 8),    // 260
+    Vec2(8, 9),    // 261
+    Vec2(8, 10),    // 262
+    Vec2(8, 12),    // 263
+    Vec2(8, 16),    // 264
+    Vec2(2, 2),    // 265
+    Vec2(6, 2),    // 266
+    Vec2(10, 2),    // 267
+    Vec2(2, -11),    // 268
+    Vec2(2, -9),    // 269
+    Vec2(2, -7),    // 270
+    Vec2(2, -5),    // 271
+    Vec2(2, -3),    // 272
+    Vec2(2, -1),    // 273
+    Vec2(2, 0),    // 274
+    Vec2(2, 1),    // 275
+    Vec2(2, 1),    // 276
+    Vec2(2, 2),    // 277
+    Vec2(2, -11),    // 278
+    Vec2(2, -9),    // 279
+    Vec2(2, -7),    // 280
+    Vec2(2, -5),    // 281
+    Vec2(2, -3),    // 282
+    Vec2(2, -1),    // 283
+    Vec2(2, 0),    // 284
+    Vec2(2, 1),    // 285
+    Vec2(2, 1),    // 286
+    Vec2(2, 2),    // 287
+    Vec2(2, -11),    // 288
+    Vec2(2, -9),    // 289
+    Vec2(2, -7),    // 290
+    Vec2(2, -5),    // 291
+    Vec2(2, -3),    // 292
+    Vec2(2, -1),    // 293
+    Vec2(2, 0),    // 294
+    Vec2(2, 1),    // 295
+    Vec2(2, 1),    // 296
+    Vec2(2, 2),    // 297
+    Vec2(2, -11),    // 298
+    Vec2(2, -9),    // 299
+    Vec2(2, -7),    // 300
+    Vec2(2, -5),    // 301
+    Vec2(2, -3),    // 302
+    Vec2(2, -1),    // 303
+    Vec2(2, 0),    // 304
+    Vec2(2, 1),    // 305
+    Vec2(2, 1),    // 306
+    Vec2(2, 2),    // 307
+    Vec2(2, -11),    // 308
+    Vec2(2, -9),    // 309
+    Vec2(2, -7),    // 310
+    Vec2(2, -5),    // 311
+    Vec2(2, -3),    // 312
+    Vec2(2, -1),    // 313
+    Vec2(2, 0),    // 314
+    Vec2(2, 1),    // 315
+    Vec2(2, 1),    // 316
+    Vec2(2, 2),    // 317
+    Vec2(2, -11),    // 318
+    Vec2(2, -9),    // 319
+    Vec2(2, -7),    // 320
+    Vec2(2, -5),    // 321
+    Vec2(2, -3),    // 322
+    Vec2(2, -1),    // 323
+    Vec2(2, 0),    // 324
+    Vec2(2, 1),    // 325
+    Vec2(2, 1),    // 326
+    Vec2(2, 2),    // 327
+    Vec2(2, -11),    // 328
+    Vec2(2, -9),    // 329
+    Vec2(2, -7),    // 330
+    Vec2(2, -5),    // 331
+    Vec2(2, -3),    // 332
+    Vec2(2, -1),    // 333
+    Vec2(2, 0),    // 334
+    Vec2(2, 1),    // 335
+    Vec2(2, 1),    // 336
+    Vec2(2, 2),    // 337
+    Vec2(2, -11),    // 338
+    Vec2(2, -9),    // 339
+    Vec2(2, -7),    // 340
+    Vec2(2, -5),    // 341
+    Vec2(2, -3),    // 342
+    Vec2(2, -1),    // 343
+    Vec2(2, 0),    // 344
+    Vec2(2, 1),    // 345
+    Vec2(2, 1),    // 346
+    Vec2(2, 2),    // 347
+    Vec2(2, -11),    // 348
+    Vec2(2, -9),    // 349
+    Vec2(2, -7),    // 350
+    Vec2(2, -5),    // 351
+    Vec2(2, -3),    // 352
+    Vec2(2, -1),    // 353
+    Vec2(2, 0),    // 354
+    Vec2(2, 1),    // 355
+    Vec2(2, 1),    // 356
+    Vec2(2, 2),    // 357
+    Vec2(2, -11),    // 358
+    Vec2(2, -9),    // 359
+    Vec2(2, -7),    // 360
+    Vec2(2, -5),    // 361
+    Vec2(2, -3),    // 362
+    Vec2(2, -1),    // 363
+    Vec2(2, 0),    // 364
+    Vec2(2, 1),    // 365
+    Vec2(2, 1),    // 366
+    Vec2(2, 2),    // 367
+    Vec2(2, -11),    // 368
+    Vec2(2, -9),    // 369
+    Vec2(2, -7),    // 370
+    Vec2(2, -5),    // 371
+    Vec2(2, -3),    // 372
+    Vec2(2, -1),    // 373
+    Vec2(2, 0),    // 374
+    Vec2(2, 1),    // 375
+    Vec2(2, 1),    // 376
+    Vec2(2, 2),    // 377
+    Vec2(2, -11),    // 378
+    Vec2(2, -9),    // 379
+    Vec2(2, -7),    // 380
+    Vec2(2, -5),    // 381
+    Vec2(2, -3),    // 382
+    Vec2(2, -1),    // 383
+    Vec2(2, 0),    // 384
+    Vec2(2, 1),    // 385
+    Vec2(2, 1),    // 386
+    Vec2(2, 2),    // 387
 };
 
 const static AnimObjData animObjData[] =
@@ -233,6 +438,31 @@ const static AnimObjData animObjData[] =
     { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[102] },    // AnimType_Shuffle 41
     { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[103] },    // AnimType_HintSlideL 42
     { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[119] },    // AnimType_HintSlideR 43
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[185] },    // AnimType_NormalTilesEnter 44
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[195] },    // AnimType_NormalTilesEnter 45
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[205] },    // AnimType_NormalTilesExit 46
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[215] },    // AnimType_NormalTilesExit 47
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[225] },    // AnimType_MetaTilesEnter 48
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[235] },    // AnimType_MetaTilesEnter 49
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[183] },    // AnimType_MetaTilesShow 50
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[184] },    // AnimType_MetaTilesShow 51
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[245] },    // AnimType_MetaTilesExit 52
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[255] },    // AnimType_MetaTilesExit 53
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[268] },    // AnimType_NormalTilesEnter 54
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[278] },    // AnimType_NormalTilesEnter 55
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[288] },    // AnimType_NormalTilesEnter 56
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[298] },    // AnimType_NormalTilesExit 57
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[308] },    // AnimType_NormalTilesExit 58
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[318] },    // AnimType_NormalTilesExit 59
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[328] },    // AnimType_MetaTilesEnter 60
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[338] },    // AnimType_MetaTilesEnter 61
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[348] },    // AnimType_MetaTilesEnter 62
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[265] },    // AnimType_MetaTilesShow 63
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[266] },    // AnimType_MetaTilesShow 64
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[267] },    // AnimType_MetaTilesShow 65
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[358] },    // AnimType_MetaTilesExit 66
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[368] },    // AnimType_MetaTilesExit 67
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[378] },    // AnimType_MetaTilesExit 68
 };
 
 const static AnimData animData[] =
@@ -251,6 +481,11 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideR
+    { 2.f, false, 1, &animObjData[0]},    // AnimType_NormalTilesEnter
+    { 2.f, false, 1, &animObjData[0]},    // AnimType_NormalTilesExit
+    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesEnter
+    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesShow
+    { 2.f, false, 1, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -265,6 +500,11 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
+    { 2.f, false, 2, &animObjData[44]},    // AnimType_NormalTilesEnter
+    { 2.f, false, 2, &animObjData[46]},    // AnimType_NormalTilesExit
+    { 2.f, false, 2, &animObjData[48]},    // AnimType_MetaTilesEnter
+    { 2.f, false, 2, &animObjData[50]},    // AnimType_MetaTilesShow
+    { 2.f, false, 2, &animObjData[52]},    // AnimType_MetaTilesExit
     { 1.f, true, 3, &animObjData[21]},    // AnimType_NotWord
     { 0.5f, false, 3, &animObjData[24]},    // AnimType_SlideL
     { 0.5f, false, 3, &animObjData[27]},    // AnimType_SlideR
@@ -279,5 +519,10 @@ const static AnimData animData[] =
     { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[42]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[43]},    // AnimType_HintSlideR
+    { 2.f, false, 3, &animObjData[54]},    // AnimType_NormalTilesEnter
+    { 2.f, false, 3, &animObjData[57]},    // AnimType_NormalTilesExit
+    { 2.f, false, 3, &animObjData[60]},    // AnimType_MetaTilesEnter
+    { 2.f, false, 3, &animObjData[63]},    // AnimType_MetaTilesShow
+    { 2.f, false, 3, &animObjData[66]},    // AnimType_MetaTilesExit
 };
 

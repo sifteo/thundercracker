@@ -57,10 +57,14 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored &&
             data.mGameStateChanged.mPreviousStateIndex != GameStateIndex_ShuffleScored)
         {
+            // TODO different state for race mode or not
+            mTimeLeft = 999999.0f;
+#if (0)
 #ifdef DEBUG
             mTimeLeft = (GameStateMachine::getCurrentMaxLettersPerCube() > 1) ? 999999.0f : 38.f;
 #else
             mTimeLeft = (GameStateMachine::getCurrentMaxLettersPerCube() > 1) ? 999999.0f : 120.f;
+#endif
 #endif
             mAnagramCooldown = .0f;
             mScore = 0;
@@ -189,6 +193,7 @@ void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
 {
     EventData data;
     data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
+    DEBUG_LOG(("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex));
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldState);
     onEvent(EventID_GameStateChanged, data);

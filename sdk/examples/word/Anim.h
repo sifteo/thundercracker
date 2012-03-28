@@ -23,6 +23,11 @@ enum AnimType
     AnimType_HintWindUpSlide,
     AnimType_HintSlideL,
     AnimType_HintSlideR,
+    AnimType_NormalTilesEnter,
+    AnimType_NormalTilesExit,
+    AnimType_MetaTilesEnter,
+    AnimType_MetaTilesShow,
+    AnimType_MetaTilesExit,
 
     NumAnimTypes
 };

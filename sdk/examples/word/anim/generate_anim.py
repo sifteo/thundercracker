@@ -133,7 +133,7 @@ def generate_anim():
     f.write("{\n")                
     i = 0
     for o in anim_obj_data:
-        print o
+        #print o
         f.write("    { " + o['Asset'] + ", " + o['BlankLetterAsset'] + ", " + o['MetaLetterAsset'] + ", "+ o['SpriteAsset'] + ", " + o['Layer'] + ', ' + o['Invisible Frames'] + ", " + str(o['NumPos']) + ', &positions[' + str(o['Pos Index']) + "] },    // " + o['AnimType'] + ' ' + str(i) + "\n")
         i += 1
     f.write("};\n\n")

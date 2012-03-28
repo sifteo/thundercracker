@@ -21,7 +21,6 @@ enum CubeAnim
 {
     CubeAnim_Main,
     CubeAnim_Hint,
-    CubeAnim_Border,
 
     NumCubeAnims
 };

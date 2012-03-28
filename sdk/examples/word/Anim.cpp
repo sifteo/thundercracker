@@ -254,6 +254,7 @@ bool animPaint(AnimType animT,
                float animTime,
                const AnimParams *params)
 {
+    const int LETTER_Y_OFFSET = 5;
     const static AssetImage* fonts[] =
     {
         &Font1Letter, &Font2Letter, &Font3Letter,
@@ -291,7 +292,7 @@ bool animPaint(AnimType animT,
         unsigned fontFrame = font.frames + 1;
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
-        bool metaLetterTile = params;
+        bool metaLetterTile = false;
         if (params && params->mLetters && params->mLetters[0] && bg1)
         {
             if (i < GameStateMachine::getCurrentMaxLettersPerCube())
@@ -375,11 +376,11 @@ bool animPaint(AnimType animT,
                 vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
             }
 
-            if (drawLetterOnTile)
+            if (drawLetterOnTile && size.y > LETTER_Y_OFFSET)
             {
                 Vec2 letterPos(pos);
-                letterPos.y += 5; // TODO
-                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, fontFrame);
+                letterPos.y += LETTER_Y_OFFSET; // TODO
+                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
             }
         }
         else if (objData.mLayer == Layer_BG1)

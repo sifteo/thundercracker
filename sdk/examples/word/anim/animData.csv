@@ -13,3 +13,8 @@
 "AnimType_HintWindUpSlide","x",2,"FALSE"
 "AnimType_HintSlideL","x",1,"TRUE"
 "AnimType_HintSlideR","x",1,"TRUE"
+"AnimType_NormalTilesEnter","x",2,"FALSE"
+"AnimType_NormalTilesExit","x",2,"FALSE"
+"AnimType_MetaTilesEnter","x",2,"FALSE"
+"AnimType_MetaTilesShow","x",2,"FALSE"
+"AnimType_MetaTilesExit","x",2,"FALSE"
