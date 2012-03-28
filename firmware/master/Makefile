@@ -22,12 +22,6 @@ CFLAGS_STM32 := -Istm32 $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_EN
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
 
-#Determines whether USB blocks the execution of the master firmware
-#in order to load assets. 
-ifeq ($(USB_LOAD), 1)
-	CFLAGS_STM32 += -DUSB_LOAD
-endif
-
 ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
 endif

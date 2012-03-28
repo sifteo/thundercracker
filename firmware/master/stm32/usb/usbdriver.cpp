@@ -2,6 +2,8 @@
 #include "usb/usbhardware.h"
 #include "usb.h"
 
+#include "tasks.h"
+
 using namespace Usb;
 
 void UsbDriver::handleReset()
@@ -44,4 +46,5 @@ void UsbDriver::inEndpointCallback(uint8_t ep)
 
 void UsbDriver::outEndpointCallback(uint8_t ep)
 {
+    Tasks::setPending(Tasks::UsbOUT, 0);
 }

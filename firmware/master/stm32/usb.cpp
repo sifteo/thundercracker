@@ -96,8 +96,13 @@ static const char *descriptorStrings[] = {
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
-void UsbDevice::handleOUTData(void *p) {
-
+void UsbDevice::handleOUTData(void *p)
+{
+    uint8_t buf[OutEpMaxPacket];
+    int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
+    if (numBytes > 0) {
+        AssetManager::onData(buf, numBytes);
+    }
 }
 
 /*
@@ -114,12 +119,12 @@ void UsbDevice::init() {
 
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
-    return 0;
+    return UsbHardware::epWritePacket(InEpAddr, buf, len);
 }
 
 int UsbDevice::read(uint8_t *buf, unsigned len)
 {
-    return 0;
+    return UsbHardware::epReadPacket(OutEpAddr, buf, len);
 }
 
 IRQ_HANDLER ISR_UsbOtg_FS() {
