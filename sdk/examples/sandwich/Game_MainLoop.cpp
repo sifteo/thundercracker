@@ -84,7 +84,7 @@ void Game::MainLoop() {
 	        }
 	      	#endif
     	} while (!gGame.GetMap()->FindBroadPath(&mPath));
-
+    	
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET
 	    mPlayer.SetStatus(PLAYER_STATUS_WALKING);

@@ -63,8 +63,8 @@ private:
 
 
   // helpers
+  bool AnyViewsTouched();
   void CheckMapNeighbors();
-
   void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
   int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
@@ -78,8 +78,10 @@ private:
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
   void Wait(float seconds, bool touchToSkip=false);
-  bool AnyViewsTouched();
+  void RoomNod(ViewSlot* view);
+  void RoomShake(ViewSlot* view);
 
+  // events
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
