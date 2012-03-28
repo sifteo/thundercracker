@@ -39,6 +39,7 @@ public:
         STATE_FAILPUZZLE,
         STATE_NEXTPUZZLE,
         STATE_GAMEMENU,
+        STATE_GAMEOVERBANNER,
 	} GameState;
 
 	typedef enum

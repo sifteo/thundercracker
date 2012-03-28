@@ -149,66 +149,79 @@ void Game::Update()
         m_bForcePaintSync = false;
     }
 
-	if( m_state == STATE_SPLASH )
-	{
-        if( m_stateTime > 7.0f )
-		{
-            setState( STATE_INTRO );
-#if MUSIC_ON
-            m_musicChannel.stop();
-            m_musicChannel.play( astrokraut, LoopRepeat );
-#endif
-			m_timer.Init( System::clock() );
-		}
-	}
-    else if( m_state == STATE_GOODJOB )
+    switch( m_state )
     {
-        if( m_stateTime > FULLGOODJOB_TIME )
+        case STATE_SPLASH:
         {
-            gotoNextPuzzle( true );
-        }
-    }
-	else 
-	{
-		if( m_bTestMatches )
-		{
-            TestMatches();
-
-            if( m_state == STATE_POSTGAME || m_state == STATE_GAMEMENU )
-                Reset();
-
-			m_bTestMatches = false;
-		}
-
-        if( m_state == STATE_PLAYING )
-        {
-            if( m_mode == MODE_BLITZ )
+            if( m_stateTime > 7.0f )
             {
-                m_timer.Update( dt );
-                checkGameOver();
-
-                m_fTimeSinceCombo += dt;
-
-                if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
-                    m_comboCount = 0;
-
-                if( !m_bIsChainHappening )
-                {
-                    m_fTimeTillRespawn -= dt;
-
-                    if( m_fTimeTillRespawn <= 0.0f )
-                        RespawnOnePiece();
-                }
+                setState( STATE_INTRO );
+    #if MUSIC_ON
+                m_musicChannel.stop();
+                m_musicChannel.play( astrokraut, LoopRepeat );
+    #endif
+                m_timer.Init( System::clock() );
             }
-            else if( m_mode == MODE_SURVIVAL )
+            break;
+        }
+        case STATE_GOODJOB:
+        {
+            if( m_stateTime > FULLGOODJOB_TIME )
             {
-                if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
+                gotoNextPuzzle( true );
+            }
+            break;
+        }
+        case STATE_GAMEOVERBANNER:
+        {
+            if( !m_cubes[0].getBanner().IsActive() )
+                TransitionToState( STATE_POSTGAME );
+            break;
+        }
+        default:
+        {
+            if( m_bTestMatches )
+            {
+                TestMatches();
+
+                if( m_state == STATE_POSTGAME || m_state == STATE_GAMEMENU )
+                    Reset();
+
+                m_bTestMatches = false;
+            }
+
+            if( m_state == STATE_PLAYING )
+            {
+                if( m_mode == MODE_BLITZ )
+                {
+                    m_timer.Update( dt );
                     checkGameOver();
 
-                m_bStabilized = false;
+                    m_fTimeSinceCombo += dt;
+
+                    if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                        m_comboCount = 0;
+
+                    if( !m_bIsChainHappening )
+                    {
+                        m_fTimeTillRespawn -= dt;
+
+                        if( m_fTimeTillRespawn <= 0.0f )
+                            RespawnOnePiece();
+                    }
+                }
+                else if( m_mode == MODE_SURVIVAL )
+                {
+                    if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
+                        checkGameOver();
+
+                    m_bStabilized = false;
+                }
             }
+            break;
         }
-	}
+
+    }
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Update( System::clock(), dt );
@@ -910,7 +923,6 @@ void Game::EndGame()
     }
 
     enterScore();
-    TransitionToState( STATE_POSTGAME );
 
     if( m_mode == MODE_SURVIVAL )
     {
@@ -918,8 +930,10 @@ void Game::EndGame()
         {
             m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
         }
-
     }
+
+    setState( STATE_GAMEOVERBANNER );
+    //TransitionToState( STATE_POSTGAME );
 
     playSound(timer_explode);
 }

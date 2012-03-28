@@ -366,6 +366,12 @@ void CubeWrapper::Draw()
 
             break;
         }
+        case Game::STATE_GAMEOVERBANNER:
+        {
+            m_banner.Draw( m_bg1helper );
+            m_queuedFlush = true;
+            break;
+        }
 		default:
 			break;
 	}
@@ -524,6 +530,10 @@ void CubeWrapper::Update(float t, float dt)
         //autorefill after a certain time
         if( m_state == STATE_EMPTY && m_stateTime > AUTOREFILL_TIME )
             checkRefill();
+    }
+    else if( Game::Inst().getState() == Game::STATE_GAMEOVERBANNER )
+    {
+        m_banner.Update( t );
     }
     /*else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
