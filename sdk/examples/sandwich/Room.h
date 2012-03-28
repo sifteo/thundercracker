@@ -20,6 +20,7 @@ private:
   
   uint16_t mOverlayIndex;
   uint8_t mOverlayTile;
+  
   uint8_t mPrimarySlotType : 4;
   uint8_t mPrimarySlotId : 4;
 

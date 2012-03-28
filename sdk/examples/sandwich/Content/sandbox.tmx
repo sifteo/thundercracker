@@ -253,7 +253,7 @@
     <property name="respawn" value="0,0"/>
    </properties>
   </object>
-  <object name="Doggy Bowl" type="Depot" x="48" y="464" width="32" height="16">
+  <object name="Doggy Bowl" type="_Depot" x="48" y="464" width="32" height="16">
    <properties>
     <property name="target" value="crystal_ball"/>
    </properties>
@@ -271,8 +271,9 @@
   <object name="clooooak" type="Item" x="304" y="432" width="32" height="32">
    <properties>
     <property name="id" value="cloak"/>
+    <property name="onTrigger" value="opendoor:TestDoor"/>
    </properties>
   </object>
-  <object name="door" type="Door" x="176" y="400" width="32" height="32"/>
+  <object name="testdoor" type="Door" x="176" y="400" width="32" height="32"/>
  </objectgroup>
 </map>

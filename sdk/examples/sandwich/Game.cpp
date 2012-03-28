@@ -372,6 +372,33 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::ScrollTo(unsigned roomId) {
+  // blank other cubes
+  ViewSlot *pView = mPlayer.CurrentView()->Parent();
+  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (p != pView) { p->HideLocation(); }
+  }
+  // hide sprites and overlay
+  pView->HideSprites();
+  BG1Helper(*pView->GetCube()).Flush();
+  Paint(true);
+
+  const Int2 targetLoc = mMap.GetLocation(roomId);
+  const Int2 currentLoc = mPlayer.GetRoom()->Location();
+  Int2 start = 128 * currentLoc;
+  Int2 delta = 128 * (targetLoc - currentLoc);
+  ViewMode mode = pView->Graphics();
+  SystemTime t=mSimTime; 
+  do {
+    float u = float(mSimTime-t) / 2.333f;
+    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+    Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+    DrawOffsetMap(&mode, mMap.Data(), pos);
+    Paint(true);
+  } while(mSimTime-t<2.333f);
+  DrawRoom(&mode, mMap.Data(), roomId);
+}
+
 void Game::OnTrapdoor(Room *pRoom) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED TRAPDOOR
@@ -394,33 +421,16 @@ void Game::OnTrapdoor(Room *pRoom) {
     Paint(true);
   }
   // pan to respawn point
-  ViewSlot *pView = mPlayer.CurrentView()->Parent();
-  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
-    if (p != pView) { p->HideLocation(); }
-  }
-  pView->HideSprites();
-  BG1Helper(*pView->GetCube()).Flush();
-  Paint(true);
+  ScrollTo(pRoom->Trapdoor()->respawnRoomId);
 
-  Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
-  Int2 start = 128 * pRoom->Location();
-  Int2 delta = 128 * (targetRoom->Location() - pRoom->Location());
-  ViewMode mode = pView->Graphics();
-  SystemTime t=mSimTime; 
-  do {
-    float u = float(mSimTime-t) / 2.333f;
-    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-    Int2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(&mode, mMap.Data(), pos);
-    Paint(true);
-  } while(mSimTime-t<2.333f);
   // fall
-  DrawRoom(&mode, mMap.Data(), targetRoom->Id());
+  ViewSlot *pView = mPlayer.CurrentView()->Parent();
   int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
   for(unsigned i=0; i<arraysize(animHeights); ++i) {
-    mPlayer.CurrentView()->DrawPlayerFalling(animHeights[i]);
+    pView->GetRoomView()->DrawPlayerFalling(animHeights[i]);
     Paint(true);
   }
+  const Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
   mPlayer.SetPosition(targetRoom->Center(0));
   mPlayer.SetDirection(SIDE_BOTTOM);
   pView->ShowLocation(mPlayer.Position()/128, true);
@@ -575,7 +585,7 @@ void Game::OnTriggerEvent(unsigned id) {
         }
       }
       break;
-    case EVENT_ADVANCE_QUEST_AND_TELEPORT:
+    case EVENT_ADVANCE_QUEST_AND_TELEPORT: {
       mState.AdvanceQuest();
       const QuestData* quest = mState.Quest();
       const MapData& map = gMapData[quest->mapId];
@@ -585,6 +595,16 @@ void Game::OnTriggerEvent(unsigned id) {
         128 * (quest->roomId / map.width) + 16 * room.centerY
       ));
       break;
+    }
+    case EVENT_OPEN_DOOR: {
+      const bool needsPan = true;
+      // pan to door
+
+      // open door
+
+      // pan back to player
+      break;
+    }
   }
 }
 

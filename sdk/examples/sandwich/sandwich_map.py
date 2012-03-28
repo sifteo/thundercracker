@@ -151,6 +151,10 @@ class Map:
 				self.trig_dict[trig_type][trig.id] = trig
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
+		# resolve trigger event idS
+		for d in self.trig_dict.itervalues():
+			for trig in d.itervalues():
+				trig.resolve_trigger_event_id()
 		# find sokoblocks
 		self.sokoblocks = [ Sokoblock(self, obj) for obj in self.raw.objects if obj.type == "sokoblock" ]
 		assert len(self.sokoblocks) <= 8

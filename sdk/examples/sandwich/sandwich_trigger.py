@@ -1,6 +1,6 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 
-EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
+EXP_ACTION_TARGET = re.compile(r"^(\w+):(\w+)$")
 EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")
 
 TRIGGER_KEYWORDS = [ "gateway", "item", "npc", "door" ]
@@ -60,7 +60,7 @@ class Trigger:
 			self.alloc_flag()
 		
 		elif obj.type == "gateway":
-			m = EXP_GATEWAY.match(obj.props.get("target", ""))
+			m = EXP_ACTION_TARGET.match(obj.props.get("target", ""))
 			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
 			self.target_map = m.group(1).lower()
 			self.target_gate = m.group(2).lower()
@@ -90,11 +90,19 @@ class Trigger:
 
 		# check for special onTrigger flags
 		if "ontrigger" in obj.props:
-			triggerEventName = obj.props["ontrigger"].lower()
+			triggerEventName = obj.props["ontrigger"]
+			m = EXP_ACTION_TARGET.match(triggerEventName)
+			if m is not None:
+				triggerEventName = m.group(1).lower()
+				self.event_id_str = m.group(2).lower()
+			else:
+				triggerEventName = triggerEventName.lower()
+				self.event_id_str = ""
 			assert triggerEventName in KEYWORD_TO_TRIGGER_EVENT
 			self.event = KEYWORD_TO_TRIGGER_EVENT[triggerEventName]
 		else:
 			self.event = EVENT_NONE
+			self.event_id_str = ""
 
 
 	def alloc_flag(self):
@@ -104,6 +112,13 @@ class Trigger:
 		elif self.unlockflag is None:
 			self.unlockflag = self.room.map.world.quests.add_flag_if_undefined(self.id)
 
+	def resolve_trigger_event_id(self):
+		if self.event == EVENT_OPEN_DOOR:
+			door_dict = self.room.map.trig_dict["door"]
+			assert self.event_id_str in door_dict, "undefined door: " + self.event_id_str
+			self.event_id = door_dict[self.event_id_str].index
+		else:
+			self.event_id = 0
 
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
@@ -116,7 +131,14 @@ class Trigger:
 
 	
 	def write_trigger_to(self, src):
-		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x,0x0}" % (self.qbegin, self.qend, self.flagid, self.room.lid, self.event))
+		src.write("{0x%x,0x%x,0x%x,0x%x,0x%x,0x%x}" % (
+			self.qbegin, 
+			self.qend, 
+			self.flagid, 
+			self.room.lid, 
+			self.event, 
+			self.event_id
+		))
 
 	def write_item_to(self, src):
 		src.write("{")
