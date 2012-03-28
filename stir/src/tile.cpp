@@ -789,4 +789,5 @@ void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
     }
 }
 
+
 };  // namespace Stir

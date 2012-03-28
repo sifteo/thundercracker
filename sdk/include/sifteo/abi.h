@@ -73,15 +73,15 @@ struct _SYSAssetGroup {
 enum _SYSAssetImageFormat {
     _SYS_AIF_PINNED = 0,        /// All tiles are linear. "data" is index of the first tile
     _SYS_AIF_FLAT,              /// "data" points to a flat array of 16-bit tile indices
-    _SYS_AIF_WUB,               /// Compressed tile data, Windowed Uniform Block codec.
+    _SYS_AIF_DUB,               /// Compressed tile data, Dictionary Uniform Block codec.
 };
 
 struct _SYSAssetImage {
+    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
     uint16_t width;             /// Width of the asset image, in tiles
     uint16_t height;            /// Height of the asset image, in tiles
     uint16_t frames;            /// Number of "frames" in this image
     uint16_t format;            /// _SYSAssetImageFormat
-    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
     uint32_t data;              /// Format-specific data or data pointer
 };
 

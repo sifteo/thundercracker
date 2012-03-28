@@ -175,6 +175,16 @@ public:
     bool isPinned() const {
         return mTileOpt.pinned;
     }
+    
+    bool isFlat() const {
+        return mIsFlat;
+    }
+
+    const char *getClassName() const;
+
+    uint16_t encodePinned() const;
+    void encodeFlat(std::vector<uint16_t> &data) const;
+    void encodeDUB(std::vector<uint16_t> &data, Logger &log) const;
 
  private:
     Group *mGroup;
@@ -182,6 +192,7 @@ public:
     TileOptions mTileOpt;
     std::vector<TileGrid> mGrids;
     std::string mName;
+    bool mIsFlat;
 
     void createGrids();
 

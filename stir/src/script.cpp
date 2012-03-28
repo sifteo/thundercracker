@@ -14,6 +14,7 @@
 #include "proof.h"
 #include "cppwriter.h"
 #include "audioencoder.h"
+#include "dubencoder.h"
 
 namespace Stir {
 
@@ -388,6 +389,13 @@ Image::Image(lua_State *L)
         mImages.setHeight(lua_tointeger(L, -1));
     if (Script::argMatch(L, "pinned"))
         mTileOpt.pinned = lua_toboolean(L, -1);
+    if (Script::argMatch(L, "flat"))
+        mIsFlat = lua_toboolean(L, -1);
+
+    if (isFlat() && isPinned()) {
+        luaL_error(L, "Image formats 'flat' and 'pinned' are mutually exclusive");
+        return;
+    }
 
     if (Script::argMatch(L, 1)) {
         /*
@@ -481,6 +489,59 @@ void Image::createGrids()
     }
 }
 
+const char *Image::getClassName() const
+{
+    if (isPinned())
+        return "PinnedAssetImage";
+    else if (isFlat())
+        return "FlatAssetImage";
+    else
+        return "AssetImage";
+}
+
+uint16_t Image::encodePinned() const
+{
+    // Pinned assets are just represented by a single index
+
+    const TileGrid &firstGrid = mGrids[0];
+    const TilePool &pool = firstGrid.getPool();  
+    return pool.index(firstGrid.tile(0, 0));
+}
+
+void Image::encodeFlat(std::vector<uint16_t> &data) const
+{
+    // Flat assets are an uncompressed array of indices
+
+    for (unsigned f = 0; f < mGrids.size(); f++) {
+        const TileGrid &grid = mGrids[f];
+        const TilePool &pool = grid.getPool();
+
+        for (unsigned y = 0; y < grid.height(); y++)
+            for (unsigned x = 0; x < grid.width(); x++)
+                data.push_back(pool.index(grid.tile(x, y)));
+    }
+}
+
+void Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
+{
+    // Compressed image, encoded using the DUB codec.
+    
+    DUBEncoder encoder( mImages.getWidth() / Tile::SIZE,
+                        mImages.getHeight() / Tile::SIZE,
+                        mImages.getFrames() );
+
+    for (unsigned f = 0; f < mGrids.size(); f++) {
+        const TileGrid &grid = mGrids[f];
+        const TilePool &pool = grid.getPool();
+
+        for (unsigned y = 0; y < grid.height(); y++)
+            for (unsigned x = 0; x < grid.width(); x++)
+                encoder.encodeTile(pool.index(grid.tile(x, y)));
+    }
+
+    encoder.logStats(log);
+    encoder.writeResult(data);
+}
 
 Sound::Sound(lua_State *L)
 {

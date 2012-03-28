@@ -23,6 +23,7 @@ OBJS = \
 	src/lodepng.o \
 	src/sha1.o \
 	src/audioencoder.o \
+	src/dubencoder.o \
 	$(OBJS_lua) \
 
 TC_DIR := ..
