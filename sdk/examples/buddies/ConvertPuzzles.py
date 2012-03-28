@@ -125,8 +125,8 @@ def ConvertPuzzles(src, dest):
             for i, puzzle in enumerate(data):
                 fout.write('    Puzzle(\n')
                 fout.write('        %d,\n' % puzzle['book'])
-                fout.write('        "%s",\n' % puzzle['title'])
-                fout.write('        "%s",\n' % puzzle['clue'])
+                fout.write('        "%s",\n' % puzzle['title'].replace('\n', '\\n'))
+                fout.write('        "%s",\n' % puzzle['clue'].replace('\n', '\\n'))
                 fout.write('        kCutsceneBuddiesStart%d, arraysize(kCutsceneBuddiesStart%d),\n' % (i, i))
                 fout.write('        kCutsceneLinesStart%d, arraysize(kCutsceneLinesStart%d),\n' % (i, i))
                 fout.write('        kCutsceneBuddiesEnd%d, arraysize(kCutsceneBuddiesEnd%d),\n' % (i, i))
