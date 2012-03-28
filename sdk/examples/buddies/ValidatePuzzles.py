@@ -105,6 +105,21 @@ def CheckIsBoolean(data, prop):
     else:
         return True
 
+def CheckTextSize(data, prop, num_char, num_lines):
+    s = data[prop]
+    lines = s.count('\n') + 1
+    max_char = 0
+    for line in s.split('\n'):
+        if len(line) > max_char:
+            max_char = len(line)
+    if lines > num_lines or max_char > num_char:
+        print 'ERROR: %s must cannot have more than %d lines of %d characters (it has %d lines and max %d characters each).' % (StackString(prop_stack), num_lines, num_char, lines, max_char)
+        global validated
+        validated = False
+        return False
+    else:
+        return True
+
 ####################################################################################################
 ####################################################################################################
 
@@ -135,6 +150,7 @@ def CheckCutscene(puzzle, cutscene):
                     if CheckHasProperty(line, 'text'):
                         prop_stack.append('text')
                         CheckIsNotNull(line, 'text')
+                        CheckTextSize(line, 'text', 14, 3)
                         prop_stack.pop()
                     prop_stack.pop()
             prop_stack.pop()
@@ -195,12 +211,14 @@ def ValidateData(data):
         if CheckHasProperty(puzzle, 'title'):
             prop_stack.append('title')
             CheckIsNotNull(puzzle, 'title')
+            CheckTextSize(puzzle, 'title', 14, 2)
             prop_stack.pop()
         
         # clue
         if CheckHasProperty(puzzle, 'clue'):
             prop_stack.append('clue')
             CheckIsNotNull(puzzle, 'clue')
+            CheckTextSize(puzzle, 'clue', 14, 4)
             prop_stack.pop()
         
         # cutscene_environment
