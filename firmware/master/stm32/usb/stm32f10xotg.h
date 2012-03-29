@@ -23,6 +23,7 @@ public:
 
 private:
     static const unsigned RX_FIFO_SIZE = 128;
+    static const unsigned MAX_PACKET = 64;
 
     // Received packet size for each endpoint.
     // Gets assigned in the ISR from GRXSTSP and used in epReadPacket()

@@ -17,9 +17,6 @@ Stm32f10xOtg::Stm32f10xOtg() :
 
 void Stm32f10xOtg::init()
 {
-    OTG.global.GINTSTS = (1 << 1); // MMIS - mode mismatch
-    OTG.global.GUSBCFG |= (1 << 7); // PHYSEL
-
     // Enable VBUS sensing in device mode and power down the PHY
     OTG.global.GCCFG |= (1 << 19) |     // VBUSBSEN
                         (1 << 16);      // PWRDWN
@@ -35,7 +32,8 @@ void Stm32f10xOtg::init()
 
     // Force peripheral only mode
     OTG.global.GUSBCFG |= (1 << 30) |   // FDMOD
-                          (0xf << 10);  // TRDT max - TODO: optimize?
+                          (0xf << 10) | // TRDT max - TODO: optimize?
+                          (1 << 7);     // PHYSEL
 
     // Full speed device
     OTG.device.DCFG |= 0x3; // DSPD
@@ -50,7 +48,6 @@ void Stm32f10xOtg::init()
         OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
 
     // Unmask interrupts for TX and RX
-    OTG.global.GAHBCFG |= 0x1;  // GINT
     OTG.global.GINTMSK =
                         (1 << 31) |    // WUIM
                         (1 << 18) |    // IEPINT
@@ -60,6 +57,9 @@ void Stm32f10xOtg::init()
                         (1 << 3);      // SOFM
     OTG.device.DAINTMSK = 0xf;
     OTG.device.DIEPMSK = 0x1;
+
+    OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
+    OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
     // don't bother with DOEPMSK - we handle all OUT endpoint activity via the
     // RXFLVL interrupt
 }
@@ -213,19 +213,27 @@ uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len
     addr &= 0x7F;
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
 
-    // endpoint still in progress? no no
-    if (ep.DIEPTSIZ & (1 << 19))
-        return 0;
-
-    // Enable endpoint for transmission
-    ep.DIEPTSIZ = (1 << 19) | len;
+    /*
+     * As long as the data is in a contiguous buffer and there's room in the fifo,
+     * multiple packet's worth of data can be sent automatically, arranged as
+     * a series of max length packets, followed by the remainder in a short packet.
+     *
+     * For zero-length packets, size is left at 0 but packet count is set to 1.
+     */
+    if (len == 0) {
+        ep.DIEPTSIZ = (1 << 19);
+    }
+    else {
+        uint8_t pktcnt = (len - 1 + MAX_PACKET) / MAX_PACKET;
+        ep.DIEPTSIZ = (pktcnt << 19) | len;
+    }
     ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
 
     // Copy buffer to endpoint FIFO
     const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
     volatile uint32_t* fifo = OTG.epFifos[addr];
     for (int i = len; i > 0; i -= 4)
-        *fifo++ = *buf32++;
+        *fifo = *buf32++;
 
     return len;
 }
