@@ -6,22 +6,68 @@
 // Puzzle 0_0
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const BuddyId kCutsceneBuddiesStart_0_0[] = { BUDDY_GLUV, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesStart_0_0[] = { BUDDY_GLUV, BUDDY_INVISIBLE };
 const CutsceneLine kCutsceneLinesStart_0_0[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Hello?"),
+};
+const BuddyId kCutsceneBuddiesEnd_0_0[] = { BUDDY_GLUV, BUDDY_INVISIBLE };
+const CutsceneLine kCutsceneLinesEnd_0_0[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_LEFT, "So loney :("),
+};
+const BuddyId kBuddies_0_0[] = { BUDDY_GLUV, BUDDY_INVISIBLE };
+const Piece kPiecesStart_0_0[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_GLUV, Piece::PART_MOUTH),
+        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_GLUV, Piece::PART_HAIR),
+        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT),
+    },
+};
+const Piece kPiecesEnd_0_0[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_GLUV, Piece::PART_HAIR, true),
+        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_GLUV, Piece::PART_MOUTH, true),
+        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT, false),
+    },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Puzzle 0_1
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const BuddyId kCutsceneBuddiesStart_0_1[] = { BUDDY_GLUV, BUDDY_SULI };
+const CutsceneLine kCutsceneLinesStart_0_1[] =
 {
     CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Gimme a kiss!"),
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Can I use your\nmouth?"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "..."),
     CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "OK!"),
 };
-const BuddyId kCutsceneBuddiesEnd_0_0[] = { BUDDY_GLUV, BUDDY_SULI };
-const CutsceneLine kCutsceneLinesEnd_0_0[] =
+const BuddyId kCutsceneBuddiesEnd_0_1[] = { BUDDY_GLUV, BUDDY_SULI };
+const CutsceneLine kCutsceneLinesEnd_0_1[] =
 {
     CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Muuuahhh!"),
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Hot n' heavy!"),
 };
-const BuddyId kBuddies_0_0[] = { BUDDY_GLUV, BUDDY_SULI };
-const Piece kPiecesStart_0_0[][NUM_SIDES] =
+const BuddyId kBuddies_0_1[] = { BUDDY_GLUV, BUDDY_SULI };
+const Piece kPiecesStart_0_1[][NUM_SIDES] =
 {
     {
         Piece(BUDDY_GLUV, Piece::PART_HAIR),
@@ -36,7 +82,7 @@ const Piece kPiecesStart_0_0[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
 };
-const Piece kPiecesEnd_0_0[][NUM_SIDES] =
+const Piece kPiecesEnd_0_1[][NUM_SIDES] =
 {
     {
         Piece(BUDDY_GLUV, Piece::PART_HAIR, false),
@@ -53,21 +99,21 @@ const Piece kPiecesEnd_0_0[][NUM_SIDES] =
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Puzzle 0_1
+// Puzzle 0_2
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const BuddyId kCutsceneBuddiesStart_0_1[] = { BUDDY_SULI, BUDDY_RIKE };
-const CutsceneLine kCutsceneLinesStart_0_1[] =
+const BuddyId kCutsceneBuddiesStart_0_2[] = { BUDDY_SULI, BUDDY_RIKE };
+const CutsceneLine kCutsceneLinesStart_0_2[] =
 {
     CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Let's get\nCRAZY!"),
 };
-const BuddyId kCutsceneBuddiesEnd_0_1[] = { BUDDY_RIKE, BUDDY_SULI };
-const CutsceneLine kCutsceneLinesEnd_0_1[] =
+const BuddyId kCutsceneBuddiesEnd_0_2[] = { BUDDY_RIKE, BUDDY_SULI };
+const CutsceneLine kCutsceneLinesEnd_0_2[] =
 {
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "My head hurts."),
 };
-const BuddyId kBuddies_0_1[] = { BUDDY_RIKE, BUDDY_SULI };
-const Piece kPiecesStart_0_1[][NUM_SIDES] =
+const BuddyId kBuddies_0_2[] = { BUDDY_RIKE, BUDDY_SULI };
+const Piece kPiecesStart_0_2[][NUM_SIDES] =
 {
     {
         Piece(BUDDY_RIKE, Piece::PART_HAIR),
@@ -82,7 +128,7 @@ const Piece kPiecesStart_0_1[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
 };
-const Piece kPiecesEnd_0_1[][NUM_SIDES] =
+const Piece kPiecesEnd_0_2[][NUM_SIDES] =
 {
     {
         Piece(BUDDY_RIKE, Piece::PART_HAIR, true),
@@ -196,22 +242,22 @@ const Piece kPiecesEnd_2_0[][NUM_SIDES] =
 
 const Book kBooks[3] =
 {
-    Book("Title 1", 2),
+    Book("Title 1", 3),
     Book("Title 2", 1),
     Book("Title 3", 1),
 };
 
-const unsigned int kBookOffsets[3] = { 0, 2, 3 };
+const unsigned int kBookOffsets[3] = { 0, 3, 4 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Puzzles Array
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Puzzle kPuzzles[4] =
+const Puzzle kPuzzles[5] =
 {
     Puzzle(
-        "Big Mouth",
-        "Swap Mouths",
+        "Intro",
+        "Fix Face",
         kCutsceneBuddiesStart_0_0, arraysize(kCutsceneBuddiesStart_0_0),
         kCutsceneLinesStart_0_0, arraysize(kCutsceneLinesStart_0_0),
         kCutsceneBuddiesEnd_0_0, arraysize(kCutsceneBuddiesEnd_0_0),
@@ -221,16 +267,27 @@ const Puzzle kPuzzles[4] =
         0,
         kPiecesStart_0_0, kPiecesEnd_0_0),
     Puzzle(
-        "All Mixed Up",
-        "Unscramble",
+        "Big Mouth",
+        "Swap Mouths",
         kCutsceneBuddiesStart_0_1, arraysize(kCutsceneBuddiesStart_0_1),
         kCutsceneLinesStart_0_1, arraysize(kCutsceneLinesStart_0_1),
         kCutsceneBuddiesEnd_0_1, arraysize(kCutsceneBuddiesEnd_0_1),
         kCutsceneLinesEnd_0_1, arraysize(kCutsceneLinesEnd_0_1),
         0,
         kBuddies_0_1, arraysize(kBuddies_0_1),
-        3,
+        0,
         kPiecesStart_0_1, kPiecesEnd_0_1),
+    Puzzle(
+        "All Mixed Up",
+        "Unscramble",
+        kCutsceneBuddiesStart_0_2, arraysize(kCutsceneBuddiesStart_0_2),
+        kCutsceneLinesStart_0_2, arraysize(kCutsceneLinesStart_0_2),
+        kCutsceneBuddiesEnd_0_2, arraysize(kCutsceneBuddiesEnd_0_2),
+        kCutsceneLinesEnd_0_2, arraysize(kCutsceneLinesEnd_0_2),
+        0,
+        kBuddies_0_2, arraysize(kBuddies_0_2),
+        3,
+        kPiecesStart_0_2, kPiecesEnd_0_2),
     Puzzle(
         "Bad Hair Day",
         "Swap Hair",

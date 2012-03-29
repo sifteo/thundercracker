@@ -8,6 +8,126 @@
               "name": "gluv",
               "pieces_end": {
                 "bottom": {
+                  "buddy": "gluv",
+                  "part": "mouth",
+                  "solve": true
+                },
+                "left": {
+                  "buddy": "gluv",
+                  "part": "eye_left",
+                  "solve": true
+                },
+                "right": {
+                  "buddy": "gluv",
+                  "part": "eye_right",
+                  "solve": true
+                },
+                "top": {
+                  "buddy": "gluv",
+                  "part": "hair",
+                  "solve": true
+                }
+              },
+              "pieces_start": {
+                "bottom": {
+                  "buddy": "gluv",
+                  "part": "hair"
+                },
+                "left": {
+                  "buddy": "gluv",
+                  "part": "eye_left"
+                },
+                "right": {
+                  "buddy": "gluv",
+                  "part": "eye_right"
+                },
+                "top": {
+                  "buddy": "gluv",
+                  "part": "mouth"
+                }
+              }
+            },
+            {
+              "name": "invisible",
+              "pieces_end": {
+                "bottom": {
+                  "buddy": "invisible",
+                  "part": "mouth",
+                  "solve": false
+                },
+                "left": {
+                  "buddy": "invisible",
+                  "part": "eye_left",
+                  "solve": false
+                },
+                "right": {
+                  "buddy": "invisible",
+                  "part": "eye_right",
+                  "solve": false
+                },
+                "top": {
+                  "buddy": "invisible",
+                  "part": "hair",
+                  "solve": false
+                }
+              },
+              "pieces_start": {
+                "bottom": {
+                  "buddy": "invisible",
+                  "part": "mouth"
+                },
+                "left": {
+                  "buddy": "invisible",
+                  "part": "eye_left"
+                },
+                "right": {
+                  "buddy": "invisible",
+                  "part": "eye_right"
+                },
+                "top": {
+                  "buddy": "invisible",
+                  "part": "hair"
+                }
+              }
+            }
+          ],
+          "clue": "Fix Face",
+          "cutscene_end": {
+            "buddies": [
+              "gluv",
+              "invisible"
+            ],
+            "lines": [
+              {
+                "speaker": 0,
+                "text": "So loney :(",
+                "view": "left"
+              }
+            ]
+          },
+          "cutscene_environment": 0,
+          "cutscene_start": {
+            "buddies": [
+              "gluv",
+              "invisible"
+            ],
+            "lines": [
+              {
+                "speaker": 0,
+                "text": "Hello?",
+                "view": "right"
+              }
+            ]
+          },
+          "shuffles": 0,
+          "title": "Intro"
+        },
+        {
+          "buddies": [
+            {
+              "name": "gluv",
+              "pieces_end": {
+                "bottom": {
                   "buddy": "suli",
                   "part": "mouth",
                   "solve": true

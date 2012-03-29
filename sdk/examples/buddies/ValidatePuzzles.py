@@ -20,7 +20,7 @@ validated = True
 prop_stack = []
 
 version_current = 2
-buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro']
+buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro', 'invisible']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
 parts = ['hair', 'eye_left', 'mouth', 'eye_right']

@@ -29,17 +29,18 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
+const AssetImage *GetBuddyFaceBackgroundAsset(int buddyId)
 {
     switch (buddyId)
     {
         default:
-        case 0: return BuddyBackground0;
-        case 1: return BuddyBackground1;
-        case 2: return BuddyBackground2;
-        case 3: return BuddyBackground3;
-        case 4: return BuddyBackground4;
-        case 5: return BuddyBackground5;
+        case BUDDY_GLUV: return &BuddyBackground0;
+        case BUDDY_SULI: return &BuddyBackground1;
+        case BUDDY_RIKE: return &BuddyBackground2;
+        case BUDDY_BOFF: return &BuddyBackground3;
+        case BUDDY_ZORG: return &BuddyBackground4;
+        case BUDDY_MARO: return &BuddyBackground5;
+        case BUDDY_INVISIBLE: return &UiFaceHolder;
     }
 }
 
@@ -48,17 +49,18 @@ const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 
 #ifdef BUDDY_PIECES_USE_SPRITES
 
-const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
+const PinnedAssetImage *GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
     {
         default:
-        case 0: return BuddyParts0;
-        case 1: return BuddyParts1;
-        case 2: return BuddyParts2;
-        case 3: return BuddyParts3;
-        case 4: return BuddyParts4;
-        case 5: return BuddyParts5;
+        case BUDDY_GLUV: return &BuddyParts0;
+        case BUDDY_SULI: return &BuddyParts1;
+        case BUDDY_RIKE: return &BuddyParts2;
+        case BUDDY_BOFF: return &BuddyParts3;
+        case BUDDY_ZORG: return &BuddyParts4;
+        case BUDDY_MARO: return &BuddyParts5;
+        case BUDDY_INVISIBLE: return NULL;
     }
 }
 
@@ -72,17 +74,18 @@ const Int2 kPartPositions[NUM_SIDES] =
 
 #else
 
-const AssetImage &GetBuddyFacePartsAsset(int buddyId)
+const AssetImage *GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
     {
         default:
-        case 0: return BuddyParts0;
-        case 1: return BuddyParts1;
-        case 2: return BuddyParts2;
-        case 3: return BuddyParts3;
-        case 4: return BuddyParts4;
-        case 5: return BuddyParts5;
+        case BUDDY_GLUV: return &BuddyParts0;
+        case BUDDY_SULI: return &BuddyParts1;
+        case BUDDY_RIKE: return &BuddyParts2;
+        case BUDDY_BOFF: return &BuddyParts3;
+        case BUDDY_ZORG: return &BuddyParts4;
+        case BUDDY_MARO: return &BuddyParts5;
+        case BUDDY_INVISIBLE: return NULL;
     }
 }
 
@@ -198,7 +201,10 @@ void CubeWrapper::DrawBuddy()
 {
     ASSERT(IsEnabled());
     
-    DrawBackground(GetBuddyFaceBackgroundAsset(mBuddyId));
+    if (const AssetImage *asset = GetBuddyFaceBackgroundAsset(mBuddyId))
+    {
+        DrawBackground(*asset);
+    }
     
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
@@ -525,6 +531,8 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
+    // TODO: Update this to handle pointer returns
+
     const PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
     
     unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
@@ -582,118 +590,121 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    AssetImage asset = GetBuddyFacePartsAsset(piece.GetBuddy());
-    unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
-    ASSERT(frame < asset.frames);
-    
-    if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
+    if (const AssetImage *assetImage = GetBuddyFacePartsAsset(piece.GetBuddy()))
     {
-        asset = BuddyPartHidden;
-        frame = 0;
-    }
-    
-    Int2 point = kPartPositions[side];
-    
-    switch(side)
-    {
-        case SIDE_TOP:
-        {
-            point.x += mPieceOffsets[side].x;
-            point.y += mPieceOffsets[side].y;
-            break;
-        }
-        case SIDE_LEFT:
-        {
-            point.x += mPieceOffsets[side].x;
-            point.y += mPieceOffsets[side].y;
-            break;
-        }
-        case SIDE_BOTTOM:
-        {
-            point.x -= mPieceOffsets[side].x;
-            point.y -= mPieceOffsets[side].y;
-            break;
-        }
-        case SIDE_RIGHT:
-        {
-            point.x -= mPieceOffsets[side].x;
-            point.y += mPieceOffsets[side].y;
-            break;
-        }
-    }
-    
-    point.x /= float(VidMode::TILE);
-    point.y /= float(VidMode::TILE);
-    
-    const int width = asset.width;
-    const int height = asset.height;
-    const int max_tiles_x = VidMode::LCD_width / VidMode::TILE;
-    const int max_tiles_y = VidMode::LCD_height / VidMode::TILE;
-    
-    // Clamp X
-    if (point.x < -width)
-    {
-        point.x = -width;
-    }
-    else if (point.x > (max_tiles_x + width))
-    {
-        point.x = max_tiles_x + asset.width;
-    }
-    
-    // Clamp Y
-    if (point.y < -height)
-    {
-        point.y = -height;
-    }
-    else if (point.y > (max_tiles_y + height))
-    {
-        point.y = max_tiles_y + height;
-    }
-    
-    // Draw partial or full asset
-    if (point.x > -width && point.x < 0)
-    {
-        int tiles_off = -point.x;
+        AssetImage asset = *assetImage;
+        unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
+        ASSERT(frame < asset.frames);
         
-        mBg1Helper.DrawPartialAsset(
-            Vec2(0, point.y),
-            Vec2(tiles_off, 0),
-            Vec2(width - tiles_off, height),
-            asset, frame);
-    }
-    else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
-    {
-        int tiles_off = (point.x + width) - max_tiles_x;
+        if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
+        {
+            asset = BuddyPartHidden;
+            frame = 0;
+        }
         
-        mBg1Helper.DrawPartialAsset(
-            Vec2(point.x, point.y),
-            Vec2(0, 0),
-            Vec2(width - tiles_off, height),
-            asset, frame);
-    }
-    else if (point.y > -height && point.y < 0)
-    {
-        int tiles_off = -point.y;
+        Int2 point = kPartPositions[side];
         
-        mBg1Helper.DrawPartialAsset(
-            Vec2(point.x, 0),
-            Vec2(0, tiles_off),
-            Vec2(width, height - tiles_off),
-            asset, frame);
-    }
-    else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
-    {
-        int tiles_off = (point.y + height) - max_tiles_y;
+        switch(side)
+        {
+            case SIDE_TOP:
+            {
+                point.x += mPieceOffsets[side].x;
+                point.y += mPieceOffsets[side].y;
+                break;
+            }
+            case SIDE_LEFT:
+            {
+                point.x += mPieceOffsets[side].x;
+                point.y += mPieceOffsets[side].y;
+                break;
+            }
+            case SIDE_BOTTOM:
+            {
+                point.x -= mPieceOffsets[side].x;
+                point.y -= mPieceOffsets[side].y;
+                break;
+            }
+            case SIDE_RIGHT:
+            {
+                point.x -= mPieceOffsets[side].x;
+                point.y += mPieceOffsets[side].y;
+                break;
+            }
+        }
         
-        mBg1Helper.DrawPartialAsset(
-            Vec2(point.x, point.y),
-            Vec2(0, 0),
-            Vec2(width, height - tiles_off),
-            asset, frame);
-    }    
-    else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
-    {
-        mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
+        point.x /= float(VidMode::TILE);
+        point.y /= float(VidMode::TILE);
+        
+        const int width = asset.width;
+        const int height = asset.height;
+        const int max_tiles_x = VidMode::LCD_width / VidMode::TILE;
+        const int max_tiles_y = VidMode::LCD_height / VidMode::TILE;
+        
+        // Clamp X
+        if (point.x < -width)
+        {
+            point.x = -width;
+        }
+        else if (point.x > (max_tiles_x + width))
+        {
+            point.x = max_tiles_x + asset.width;
+        }
+        
+        // Clamp Y
+        if (point.y < -height)
+        {
+            point.y = -height;
+        }
+        else if (point.y > (max_tiles_y + height))
+        {
+            point.y = max_tiles_y + height;
+        }
+        
+        // Draw partial or full asset
+        if (point.x > -width && point.x < 0)
+        {
+            int tiles_off = -point.x;
+            
+            mBg1Helper.DrawPartialAsset(
+                Vec2(0, point.y),
+                Vec2(tiles_off, 0),
+                Vec2(width - tiles_off, height),
+                asset, frame);
+        }
+        else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
+        {
+            int tiles_off = (point.x + width) - max_tiles_x;
+            
+            mBg1Helper.DrawPartialAsset(
+                Vec2(point.x, point.y),
+                Vec2(0, 0),
+                Vec2(width - tiles_off, height),
+                asset, frame);
+        }
+        else if (point.y > -height && point.y < 0)
+        {
+            int tiles_off = -point.y;
+            
+            mBg1Helper.DrawPartialAsset(
+                Vec2(point.x, 0),
+                Vec2(0, tiles_off),
+                Vec2(width, height - tiles_off),
+                asset, frame);
+        }
+        else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
+        {
+            int tiles_off = (point.y + height) - max_tiles_y;
+            
+            mBg1Helper.DrawPartialAsset(
+                Vec2(point.x, point.y),
+                Vec2(0, 0),
+                Vec2(width, height - tiles_off),
+                asset, frame);
+        }    
+        else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
+        {
+            mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
+        }
     }
 }
 

@@ -41,6 +41,7 @@ const PinnedAssetImage *kBuddySpritesFront[] =
     &BuddySpriteFront3,
     &BuddySpriteFront4,
     &BuddySpriteFront5,
+    NULL,
 };
 
 const PinnedAssetImage *kBuddySpritesLeft[] =
@@ -51,6 +52,7 @@ const PinnedAssetImage *kBuddySpritesLeft[] =
     &BuddySpriteLeft3,
     &BuddySpriteLeft4,
     &BuddySpriteLeft5,
+    NULL,
 };
 
 const PinnedAssetImage *kBuddySpritesRight[] =
@@ -61,6 +63,7 @@ const PinnedAssetImage *kBuddySpritesRight[] =
     &BuddySpriteRight3,
     &BuddySpriteRight4,
     &BuddySpriteRight5,
+    NULL,
 };
 
 const AssetImage *kBuddyRibbons[] =
@@ -71,6 +74,7 @@ const AssetImage *kBuddyRibbons[] =
     &BuddyRibbon3,
     &BuddyRibbon4,
     &BuddyRibbon5,
+    NULL,
 };
 
 const AssetImage *kStoryBookTitles[] =
@@ -443,17 +447,30 @@ void DrawCutsceneStory(
         // Sprites
         if (line.mView == CutsceneLine::VIEW_RIGHT)
         {
-            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+            if (kBuddySpritesRight[buddyId0] != NULL)
+            {
+                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+            }
         }
         else if (line.mView == CutsceneLine::VIEW_LEFT)
         {
-            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId0]);
+            if (kBuddySpritesLeft[buddyId0] != NULL)
+            {
+                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId0]);
+            }
         }
         else if (line.mView == CutsceneLine::VIEW_FRONT)
         {
-            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId0]);
+            if (kBuddySpritesFront[buddyId0] != NULL)
+            {
+                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId0]);
+            }
         }
-        cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+        
+        if (kBuddySpritesLeft[buddyId1] != NULL)
+        {
+            cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+        }
     }
     else if (line.mSpeaker == 1)
     {
@@ -461,18 +478,31 @@ void DrawCutsceneStory(
         cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
         
         // Sprites
-        cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+        if (kBuddySpritesRight[buddyId0] != NULL)
+        {
+            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+        }
+        
         if (line.mView == CutsceneLine::VIEW_RIGHT)
         {
-            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+            if (kBuddySpritesRight[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+            }
         }
         else if (line.mView == CutsceneLine::VIEW_LEFT)
         {
-            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+            if (kBuddySpritesLeft[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+            }
         }
         else if (line.mView == CutsceneLine::VIEW_FRONT)
         {
-            cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+            if (kBuddySpritesFront[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+            }
         }
     }
     
