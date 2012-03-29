@@ -274,6 +274,31 @@ void DrawShuffleScore(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DrawStoryBookTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    cubeWrapper.DrawBackground(StoryBookTitle);
+    
+    // TODO: Use actual unlocked sprite
+    cubeWrapper.DrawSprite(
+        0,
+        Vec2((VidMode::LCD_width / 2) - 32, 20U),
+        *kBuddySpritesFront[0]);
+    
+    String<8> bufferBook;
+    bufferBook << "Book " << (GetPuzzle(puzzleIndex).GetBook() + 1);
+    int xBook = (kMaxTilesX / 2) - (bufferBook.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xBook, 10), UiFontHeadingOrange, bufferBook.c_str());
+    
+    String<16> bufferTitle;
+    //bufferTitle << GetPuzzle(puzzleIndex).GetBookTitle(); // TODO: get book title
+    bufferTitle << "Gluv Adventure";
+    int xTitle = (kMaxTilesX / 2) - (bufferTitle.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(xTitle, 12), UiFontWhite, bufferTitle.c_str());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     cubeWrapper.DrawBackground(StoryChapterTitle);
@@ -464,7 +489,6 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, Int2 scroll, bool jump)
 void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, Int2 scroll)
 {
     // TODO: Use actual unlocked sprite
-    
     ASSERT(1 <= _SYS_VRAM_SPRITES);
     cubeWrapper.DrawSprite(
         0,
@@ -763,6 +787,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_SHUFFLE_CONGRATULATIONS",
     "GAME_STATE_SHUFFLE_END_GAME_NAV",
     "GAME_STATE_STORY_START",
+    "GAME_STATE_STORY_BOOK_START",
     "GAME_STATE_STORY_CHAPTER_START",
     "GAME_STATE_STORY_CUTSCENE_START",
     "GAME_STATE_STORY_DISPLAY_START_STATE",
@@ -1397,7 +1422,13 @@ void App::StartGameState(GameState gameState)
                 }
             }
             mStoryPuzzleIndex = 0;
+            // TODO: Handle first run unlocked
             StartGameState(GAME_STATE_STORY_CHAPTER_START);
+            break;
+        }
+        case GAME_STATE_STORY_BOOK_START:
+        {
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
@@ -1920,6 +1951,14 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
+        case GAME_STATE_STORY_BOOK_START:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_STORY_CHAPTER_START);
+            }
+            break;
+        }
         case GAME_STATE_STORY_CHAPTER_START:
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
@@ -2281,13 +2320,18 @@ void App::UpdateGameState(float dt)
         {
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
+                bool hasUnlocked = HasUnlocked();
+            
                 if (++mStoryPuzzleIndex == GetNumPuzzles())
                 {
                     StartGameState(GAME_STATE_MAIN_MENU);
                 }
                 else
                 {
-                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                    StartGameState(
+                        hasUnlocked ? 
+                            GAME_STATE_STORY_BOOK_START :
+                            GAME_STATE_STORY_CHAPTER_START);
                 }
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -2517,6 +2561,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(-mBackgroundScroll.x, kMaxTilesY),
                     UiEndGameNavExit);
             }
+            break;
+        }
+        case GAME_STATE_STORY_BOOK_START:
+        {
+            DrawStoryBookTitle(cubeWrapper, mStoryPuzzleIndex);
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
