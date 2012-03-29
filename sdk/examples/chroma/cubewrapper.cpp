@@ -1148,6 +1148,8 @@ void CubeWrapper::Refill()
         return;
     }
 
+    DEBUG_LOG(( "filling\n" ));
+
     const Level &level = Game::Inst().getLevel();
 
     //Game::Inst().playSound(glom_delay);
@@ -1192,7 +1194,21 @@ void CubeWrapper::Refill()
 					iNumFixed++;
 			}
 			else
-				aEmptyLocs[numEmpties++] = Vec2( i, j );
+            {
+                DEBUG_LOG(( "filling location %d with (%d, %d)\n", numEmpties, i, j ));
+                Int2 loc = Vec2( i, j );
+
+                DEBUG_LOG(( "temp loc is (%d, %d)\n", loc.x, loc.y ));
+
+                //aEmptyLocs[numEmpties++] = Vec2( i, j );
+                //aEmptyLocs[numEmpties].y = loc.y;
+                //aEmptyLocs[numEmpties].x = loc.x;
+                aEmptyLocs[numEmpties].set( loc.x, loc.y );
+
+                DEBUG_LOG(( "location was filled with (%d, %d)\n", aEmptyLocs[numEmpties].x, aEmptyLocs[numEmpties].y ));
+
+                numEmpties++;
+            }
 		}
 	}
 
@@ -1240,6 +1256,8 @@ void CubeWrapper::Refill()
 		int curY = aEmptyLocs[aLocIndices[i]].y;
 		GridSlot &slot = m_grid[curX][curY];
 
+        DEBUG_LOG(( "i is %d. location (%d, %d)\n", i, curX, curY ));
+
         //ASSERT( !slot.isAlive() );
 		if( slot.isAlive() )
         {
@@ -1252,6 +1270,7 @@ void CubeWrapper::Refill()
 		if( iCurColor >= GridSlot::NUM_COLORS )
 			break;
 
+        DEBUG_LOG(( "i is %d. filling location (%d, %d) with color %d\n", i, curX, curY, iCurColor ));
 		slot.FillColor(iCurColor);
 		aNumNeeded[iCurColor]--;
 
