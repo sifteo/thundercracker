@@ -19,7 +19,7 @@ import json
 validated = True
 prop_stack = []
 
-version_current = 1
+version_current = 2
 buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
@@ -228,68 +228,82 @@ def CheckPieces(data, prop, check_solve):
 ####################################################################################################
 ####################################################################################################
 
-def CheckBuddy(puzzle, buddy):
-    if CheckHasProperty(puzzle, buddy):
-        prop_stack.append(buddy)
-        if CheckHasProperty(puzzle[buddy], 'pieces_start'):
-            CheckPieces(puzzle[buddy], 'pieces_start', False)
-        if CheckHasProperty(puzzle[buddy], 'pieces_end'):
-            CheckPieces(puzzle[buddy], 'pieces_end', True)
+def CheckBuddy(buddy):
+    if CheckHasProperty(buddy, 'name'):
+        prop_stack.append('name')
+        CheckIsNotNull(buddy, 'name')
+        CheckIsMember(buddy['name'], buddies)
         prop_stack.pop()
+    if CheckHasProperty(buddy, 'pieces_start'):
+        CheckPieces(buddy, 'pieces_start', False)
+    if CheckHasProperty(buddy, 'pieces_end'):
+        CheckPieces(buddy, 'pieces_end', True)
 
 ####################################################################################################
 ####################################################################################################
 
 def ValidateData(data):
-    for i, puzzle in enumerate(data):
+    if CheckHasProperty(data, 'books'):
         global prop_stack
-        prop_stack.append('%d' % i)
-        
-        # book
-        if CheckHasProperty(puzzle, 'book'):
-            prop_stack.append('book')
-            CheckIsUnsigned(puzzle, 'book')
+        prop_stack.append('books')
+        for i_book, book in enumerate(data['books']):
+            prop_stack.append('%d' % i_book)
+            
+            # title
+            if CheckHasProperty(book, 'title'):
+                prop_stack.append('title')
+                CheckIsNotNull(book, 'title')
+                CheckTextSize(book, 'title', 14, 1)
+                prop_stack.pop()
+            
+            # puzzles
+            if CheckHasProperty(book, 'puzzles'):
+                prop_stack.append('puzzles')
+                for i_puzzle, puzzle in enumerate(book['puzzles']):
+                    prop_stack.append('%d' % i_puzzle)
+                    
+                    # title
+                    if CheckHasProperty(puzzle, 'title'):
+                        prop_stack.append('title')
+                        CheckIsNotNull(puzzle, 'title')
+                        CheckTextSize(puzzle, 'title', 14, 2)
+                        prop_stack.pop()
+                    
+                    # clue
+                    if CheckHasProperty(puzzle, 'clue'):
+                        prop_stack.append('clue')
+                        CheckIsNotNull(puzzle, 'clue')
+                        CheckTextSize(puzzle, 'clue', 14, 5)
+                        prop_stack.pop()
+                    
+                    # cutscene_environment
+                    if CheckHasProperty(puzzle, 'cutscene_environment'):
+                        prop_stack.append('cutscene_environment')
+                        CheckIsUnsigned(puzzle, 'cutscene_environment')
+                        prop_stack.pop()
+                    
+                    # cutscene_start
+                    CheckCutscene(puzzle, 'cutscene_start')
+                    CheckCutscene(puzzle, 'cutscene_end')
+                    
+                    # shuffles
+                    if CheckHasProperty(puzzle, 'shuffles'):
+                        prop_stack.append('shuffles')
+                        CheckIsUnsigned(puzzle, 'shuffles')
+                        prop_stack.pop()
+                    
+                    # buddies
+                    if CheckHasProperty(puzzle, 'buddies'):
+                        prop_stack.append('buddies')
+                        for i_buddy, buddy in enumerate(puzzle['buddies']):
+                            prop_stack.append('%d' % i_buddy)
+                            CheckBuddy(buddy)
+                            prop_stack.pop()
+                        prop_stack.pop()
+                    prop_stack.pop()
+                prop_stack.pop()
             prop_stack.pop()
-        
-        # title
-        if CheckHasProperty(puzzle, 'title'):
-            prop_stack.append('title')
-            CheckIsNotNull(puzzle, 'title')
-            CheckTextSize(puzzle, 'title', 14, 2)
-            prop_stack.pop()
-        
-        # clue
-        if CheckHasProperty(puzzle, 'clue'):
-            prop_stack.append('clue')
-            CheckIsNotNull(puzzle, 'clue')
-            CheckTextSize(puzzle, 'clue', 14, 5)
-            prop_stack.pop()
-        
-        # cutscene_environment
-        if CheckHasProperty(puzzle, 'cutscene_environment'):
-            prop_stack.append('cutscene_environment')
-            CheckIsUnsigned(puzzle, 'cutscene_environment')
-            prop_stack.pop()
-        
-        # cutscene_start
-        CheckCutscene(puzzle, 'cutscene_start')
-        CheckCutscene(puzzle, 'cutscene_end')
-        
-        # shuffles
-        if CheckHasProperty(puzzle, 'shuffles'):
-            prop_stack.append('shuffles')
-            CheckIsUnsigned(puzzle, 'shuffles')
-            prop_stack.pop()
-        
-        # buddies
-        if CheckHasProperty(puzzle, 'buddies'):
-            prop_stack.append('buddies')
-            for buddy in puzzle['buddies']:
-                CheckBuddy(puzzle['buddies'], buddy)
-            prop_stack.pop()
-        
         prop_stack.pop()
-
 ####################################################################################################
 ####################################################################################################
 
@@ -315,10 +329,7 @@ def ValidatePuzzles(src):
             json.dump(j, f, sort_keys = True, indent = 2)
             f.close()
         
-        global prop_stack
-        prop_stack.append('puzzles')
-        ValidateData(j['puzzles'])
-        prop_stack.pop()
+        ValidateData(j)
         
         if not validated:
             return False
