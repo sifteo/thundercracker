@@ -13,12 +13,15 @@ class RoomView : public View {
 private:
   Sokoblock *mBlock;
 
+  float mWobbles;
+
   uint8_t mRoomId;
 
   uint8_t mStartFrame;
   uint8_t mAnimTileCount;
   struct {
     uint8_t hideOverlay : 1;
+    uint8_t isNodding;
   } flags;
 
   struct AnimTile {
@@ -38,6 +41,7 @@ public:
   Room* GetRoom() const;
   bool GatewayTouched() const;
   Sokoblock* Block() const { return mBlock; }
+  bool IsWobbly() const { return mWobbles > 0.0001f; }
 
   // methods
   void Init(unsigned rid);
@@ -62,6 +66,9 @@ public:
   void HideItem();
   void HideEquip();
   void HideBlock();
+
+  void StartNod();
+  void StartShake();
 
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();

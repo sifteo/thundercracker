@@ -63,7 +63,7 @@ public:
   bool CanTraverse(BroadLocation loc, Cube::Side side);
   bool GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor);
   bool IsVertexWalkable(Int2 globalVertex);
-  bool FindBroadPath(BroadPath* outPath);
+  bool FindBroadPath(BroadPath* outPath, unsigned* outViewId);
   bool FindNarrowPath(BroadLocation loc, Cube::Side direction, NarrowPath* outPath);
 
   bool BlockCount() const { return mBlockCount; }

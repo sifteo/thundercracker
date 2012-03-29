@@ -50,7 +50,8 @@ void Game::MainLoop() {
 		mPlayer.SetStatus(PLAYER_STATUS_IDLE);
 		mPlayer.CurrentView()->UpdatePlayer();
 		mPath.Cancel();
-		do {
+		unsigned targetViewId = 0xff;
+		while(targetViewId == 0xff) {
 			Paint();
 			if (mPlayer.CurrentView()->Parent()->Touched()) {
 				if (mPlayer.Equipment()) {
@@ -83,7 +84,15 @@ void Game::MainLoop() {
 
 	        }
 	      	#endif
-    	} while (!gGame.GetMap()->FindBroadPath(&mPath));
+	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
+	      		for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+	      			if ( p->Touched() && p->IsShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView()->StartShake();
+	      			}
+	      		}
+	      	}
+    	}
+    	mViews[targetViewId].GetRoomView()->StartNod();
 
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET

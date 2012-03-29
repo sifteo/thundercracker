@@ -63,8 +63,8 @@ private:
 
 
   // helpers
+  bool AnyViewsTouched();
   void CheckMapNeighbors();
-
   void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
   int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
@@ -72,11 +72,16 @@ private:
   void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
+  void Slide(ViewSlot* view);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
   void NpcDialog(const DialogData& data, ViewSlot *view);
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
+  void Wait(float seconds, bool touchToSkip=false);
+  void RoomNod(ViewSlot* view);
+  void RoomShake(ViewSlot* view);
 
+  // events
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
@@ -86,8 +91,8 @@ private:
   void OnUseEquipment();
   void OnEnterGateway(const GatewayData* pGate);
   void OnNpcChatter(const NpcData* pNpc);
-  void OnTriggerEvent(const TriggerData& trig) { OnTriggerEvent(trig.eventType, trig.eventId); }
-  void OnTriggerEvent(unsigned type, unsigned id);
+  bool OnTriggerEvent(const TriggerData& trig) { return OnTriggerEvent(trig.eventType, trig.eventId); }
+  bool OnTriggerEvent(unsigned type, unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
   bool TryEncounterLava(Cube::Side dir);

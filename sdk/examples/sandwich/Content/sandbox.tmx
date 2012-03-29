@@ -268,7 +268,7 @@
     <property name="id" value="crystal_ball"/>
    </properties>
   </object>
-  <object name="clooooak" type="Item" x="304" y="432" width="32" height="32">
+  <object name="clooooak" type="Item" x="304" y="448" width="32" height="32">
    <properties>
     <property name="id" value="cloak"/>
     <property name="onTrigger" value="opendoor:TestDoor"/>
