@@ -198,7 +198,8 @@ void CPPSourceWriter::writeImage(const Image &image)
         indent << "/* height  */ " << height << ",\n" <<
         indent << "/* frames  */ " << grids.size() << ",\n";
 
-    if (image.isPinned()) {
+    bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
+    if (image.isPinned() || isSingleTile) {
         mStream <<
             indent << "/* format  */ _SYS_AIF_PINNED,\n" <<
             indent << "/* data    */ " << image.encodePinned() << "\n}};\n\n";

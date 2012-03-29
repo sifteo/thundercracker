@@ -159,13 +159,14 @@ DUBEncoder::Code DUBEncoder::findBestCode(const std::vector<uint16_t> &dict, uin
     }
 
     // Now see if we can do better by scanning for an identical tile
-    // in our history, and emitting a REF code.
+    // in our history, and emitting a REF code. In the event of a tie,
+    // always prefer a REF code.
 
     for (unsigned i = 0; i < dict.size(); i++)
         if (tile == dict[dict.size() - 1 - i]) {
             Code candidate = { Code::REF, i };
             unsigned len = codeLen(candidate);
-            if (len < bestLength) {
+            if (len <= bestLength) {
                 code = candidate;
                 bestLength = len;
                 
