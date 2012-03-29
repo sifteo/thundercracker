@@ -30,223 +30,9 @@ struct AnimData
     const AnimObjData *mObjs;
 };
 
+// include Python generated static arrays of the above types
 #include "AnimData.h"
 
-#if (0)
-// FIXME write a tool to hide all this array/struct nesting ugliness
-// FIXME reuse stuff with indexing
-const static Vec2 positions[] =
-{
-    Vec2(2, 2),
-    Vec2(8, 2),
-    Vec2(7, 2),
-    Vec2(6, 2),
-    Vec2(5, 2),
-    Vec2(4, 2),
-    Vec2(3, 2),
-    Vec2(2, 2),
-    Vec2(2, 2),
-    Vec2(2, 2),
-    Vec2(2, 2), // [10]
-    Vec2(3, 2),
-    Vec2(4, 2),
-    Vec2(5, 2),
-    Vec2(6, 2),
-    Vec2(7, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(8, 2),
-    Vec2(7, 2), // [20]
-    Vec2(6, 2),
-    Vec2(5, 2),
-    Vec2(4, 2),
-    Vec2(3, 2),
-    Vec2(2, 2),
-    Vec2(3, 3), // [26]
-    Vec2(56, 16), // [27]
-    Vec2(24, 16), // [28]
-    Vec2(88, 16), // [29]
-    Vec2(86, 16), // [30]2
-    Vec2(84, 16), // [31]2
-    Vec2(80, 16), // [32]4
-    Vec2(72, 16), // [33]8
-    Vec2(64, 16), // [34]8
-    Vec2(56, 16), // [35]8
-    Vec2(48, 16), // [36]8
-    Vec2(40, 16), // [29]8
-    Vec2(36, 16), // [30]4
-    Vec2(32, 16), // [31]4
-    Vec2(30, 16), // [32]2
-    Vec2(28, 16), // [33]2
-    Vec2(26, 16), // [34]2
-    Vec2(25, 16), // [35]1
-    Vec2(24, 16), // [36]1
-    Vec2(24, 16), // [29]
-    Vec2(26, 16), // [30]2
-    Vec2(28, 16), // [31]2
-    Vec2(32, 16), // [32]4
-    Vec2(40, 16), // [33]8
-    Vec2(48, 16), // [34]8
-    Vec2(56, 16), // [35]8
-    Vec2(64, 16), // [36]8
-    Vec2(72, 16), // [29]8
-    Vec2(76, 16), // [30]4
-    Vec2(80, 16), // [31]4
-    Vec2(82, 16), // [32]2
-    Vec2(84, 16), // [33]2
-    Vec2(86, 16), // [34]2
-    Vec2(87, 16), // [35]1
-    Vec2(88, 16), // [36]1
-    Vec2(2, 2), // [37]
-    Vec2(6, 2), // [38]
-    Vec2(8, 2), // [39]
-    Vec2(12, 2), // [40]
-    Vec2(2, 11), // [41]
-    Vec2(6, 11), // [42]
-    Vec2(8, 11), // [43]
-    Vec2(12, 11), // [44]
-    Vec2(53, 2), // [45]
-    Vec2(59, 2), // [46]
-    Vec2(52, 2), // [47]
-    Vec2(60, 2), // [48]
-    Vec2(54, 2), // [49]
-    Vec2(58, 2), // [50]
-    Vec2(54, 2), // [51]
-    Vec2(58, 2), // [52]
-    Vec2(56, 2), // [53]
-    Vec2(58, 2), // [54]2
-    Vec2(60, 2), // [55]2
-    Vec2(64, 2), // [56]4
-    Vec2(72, 2), // [57]8
-    Vec2(80, 2), // [58]8
-    Vec2(84, 2), // [59]4
-    Vec2(88, 2), // [60]4
-};
-
-const static AnimObjData animObjData[] =
-{    
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// AnimType_NotWord
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideL
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideR
-    {&Tile2, &Tile2Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
-    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimType_OldWord
-    {&Tile2Glow, &Tile2Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]}, // CityProgression
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]}, // HintIdle
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[29]}, // AnimType_HintSlideL
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[45]}, // AnimType_HintSlideR
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[69]}, // HintShake    
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[0]},// 3 PER CUBE --- AnimType_NotWord
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 10, &positions[7]}, // AnimType_SlideL
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 7, &positions[2]},
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 7, &positions[10]}, // AnimType_SlideR
-    {&Tile3, &Tile3Blank, 0, Layer_BG0, 0x0, 10, &positions[16]},
-    {&Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[0]}, // AnimType_OldWord
-    {&Tile3Glow, &Tile3Blank, 0, Layer_BG0, 0x0, 1, &positions[1]},
-    {&LevelComplete , &LevelComplete, 0, Layer_BG1, 0x0, 1, &positions[26]}, // CityProgression
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[27]}, // HintIdle
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 1, &positions[28]}, // HintLocked
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[29]}, // AnimType_HintSlideL
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 16, &positions[45]}, // AnimType_HintSlideR
-    { 0, 0, &HintSprite, Layer_Sprite, 0x0, 8, &positions[69]}, // HintShake
-
-};
-
-const static AnimData animData[] =
-{
-    //AnimIndex_Tile1Idle,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1SlideL,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex`_Tile1SlideR,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1OldWord,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1NewWord,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1EndofRoundScored,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1ShuffleScored,
-    { 0.5f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile1CityProgression
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintAppear,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintIdle,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintShake,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisappear,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_SlideLHint,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_SlideRHint,
-    { 1.f, true, 1, &animObjData[0]},
-
-    // AnimType_NotWord
-    { 1.f, true, 2, &animObjData[0]},
-    // AnimType_SlideL
-    { 0.5f, false, 2, &animObjData[2]},
-    // AnimType_SlideR
-    { 0.5f, false, 2, &animObjData[4]},
-    // AnimType_OldWord
-    { 1.f, true, 2, &animObjData[6]},
-    //AnimType_NewWord,
-    { 1.5f, true, 2, &animObjData[6]},
-    //AnimType_EndOfRound,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimType_Shuffle,
-    { 0.5f, true, 2, &animObjData[0]},
-    //AnimType_CityProgression
-    { 1.f, true, 1, &animObjData[8]},
-    //AnimType_HintBarAppear,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintBarIdle,
-    { 3.f, false, 1, &animObjData[9]},
-    //AnimType_HintBarDisappear,
-    { 0.3f, false, 1, &animObjData[13]},
-    //AnimType_HintWindUpSlide,
-    { 2.0f, false, 1, &animObjData[13]},
-    // AnimIndex_HintSlideL
-    { 1.0f, true, 1, &animObjData[11]},
-    // AnimIndex_HintSlideR
-    { 1.0f, true, 1, &animObjData[12]},
-
-    //AnimIndex_Tile3Idle,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3SlideL,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3SlideR,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3OldWord,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3NewWord,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3EndofRoundScored,
-    { 1.f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3ShuffleScored,
-    { 0.5f, true, 2, &animObjData[0]},
-    //AnimIndex_Tile3CityProgression
-    { 1.f, true, 1, &animObjData[8]},
-    //AnimType_HintAppear,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintIdle,
-    { 1.f, true, 1, &animObjData[9]},
-    //AnimType_HintShake,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_HintDisappear,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_SlideLHint,
-    { 1.f, true, 1, &animObjData[0]},
-    //AnimType_SlideRHint,
-    { 1.f, true, 1, &animObjData[0]},
-};
-#endif
 
 bool animPaint(AnimType animT,
                VidMode_BG0_SPR_BG1 &vid,
@@ -497,9 +283,15 @@ bool animPaint(AnimType animT,
         };
 
         const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-        // this makes the icon bar not obvious enough
-        //if (params && params->mCubeID == CUBE_ID_BASE)
+        switch (animT)
         {
+        default:
+            break;
+
+        case AnimType_HintBarAppear:
+        case AnimType_HintBarIdle:
+        case AnimType_HintBarDisappear:
+        case AnimType_HintWindUpSlide:
             for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
             {
                 if (i < TopRowStartIndex)
@@ -514,11 +306,19 @@ bool animPaint(AnimType animT,
                 }
                 else
                 {
-                    if (i - TopRowStartIndex < MAX_HINTS)
+                    unsigned hintIndex = i - TopRowStartIndex;
+                    if (hintIndex < MAX_HINTS)
                     {
-                        if (i - TopRowStartIndex  < GameStateMachine::getInstance().getNumHints())
+                        unsigned numHints = GameStateMachine::getInstance().getNumHints();
+                        if (hintIndex  < numHints)
                         {
-                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
+                            unsigned char assetFrames = (*CheckMarkImagesTop[2]).frames;
+                            unsigned char assetFrame =
+                                    (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1) ?
+                                        MIN(assetFrames-1, (unsigned char) ((float)assetFrames * animPct)) :
+                                        0;
+
+                            bg1->DrawAsset(Vec2(1 + hintIndex * 2, 0), *CheckMarkImagesTop[2], assetFrame);
                         }
              /*           else
                         {
@@ -528,6 +328,7 @@ bool animPaint(AnimType animT,
                     }
                 }
             }
+            break;
         }
     }
 

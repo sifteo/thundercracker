@@ -95,8 +95,6 @@ def generate_anim():
             if not ('Obj Index' in anim):
                 anim['Obj Index'] = 0
                 #print 'BAR'
-            if anim['NumObjs'] == 0:
-                anim['NumObjs'] = 1
             #anim_data[i] = anim
 
     previous_anim_type = ''

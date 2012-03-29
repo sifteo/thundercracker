@@ -410,82 +410,80 @@ const static AnimObjData animObjData[] =
     { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[43] },    // AnimType_Shuffle 13
     { &LevelComplete, &LevelComplete, &LevelComplete, 0, Layer_BG0, 0, 1, &positions[44] },    // AnimType_CityProgression 14
     { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 1, &positions[45] },    // AnimType_HintBarAppear 15
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 1, &positions[46] },    // AnimType_HintBarIdle 16
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 1, &positions[47] },    // AnimType_HintBarDisappear 17
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 8, &positions[48] },    // AnimType_HintWindUpSlide 18
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[56] },    // AnimType_HintSlideL 19
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[72] },    // AnimType_HintSlideR 20
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[88] },    // AnimType_NotWord 21
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[89] },    // AnimType_NotWord 22
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[90] },    // AnimType_NotWord 23
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[135] },    // AnimType_SlideL 24
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[145] },    // AnimType_SlideL 25
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[152] },    // AnimType_SlideL 26
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[159] },    // AnimType_SlideR 27
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[166] },    // AnimType_SlideR 28
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[173] },    // AnimType_SlideR 29
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[91] },    // AnimType_OldWord 30
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[92] },    // AnimType_OldWord 31
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[93] },    // AnimType_OldWord 32
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[94] },    // AnimType_NewWord 33
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[95] },    // AnimType_NewWord 34
-    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[96] },    // AnimType_NewWord 35
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[97] },    // AnimType_EndofRound 36
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[98] },    // AnimType_EndofRound 37
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[99] },    // AnimType_EndofRound 38
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[100] },    // AnimType_Shuffle 39
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[101] },    // AnimType_Shuffle 40
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[102] },    // AnimType_Shuffle 41
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[103] },    // AnimType_HintSlideL 42
-    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[119] },    // AnimType_HintSlideR 43
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[185] },    // AnimType_NormalTilesEnter 44
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[195] },    // AnimType_NormalTilesEnter 45
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[205] },    // AnimType_NormalTilesExit 46
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[215] },    // AnimType_NormalTilesExit 47
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[225] },    // AnimType_MetaTilesEnter 48
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[235] },    // AnimType_MetaTilesEnter 49
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[183] },    // AnimType_MetaTilesShow 50
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[184] },    // AnimType_MetaTilesShow 51
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[245] },    // AnimType_MetaTilesExit 52
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[255] },    // AnimType_MetaTilesExit 53
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[268] },    // AnimType_NormalTilesEnter 54
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[278] },    // AnimType_NormalTilesEnter 55
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[288] },    // AnimType_NormalTilesEnter 56
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[298] },    // AnimType_NormalTilesExit 57
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[308] },    // AnimType_NormalTilesExit 58
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[318] },    // AnimType_NormalTilesExit 59
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[328] },    // AnimType_MetaTilesEnter 60
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[338] },    // AnimType_MetaTilesEnter 61
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[348] },    // AnimType_MetaTilesEnter 62
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[265] },    // AnimType_MetaTilesShow 63
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[266] },    // AnimType_MetaTilesShow 64
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[267] },    // AnimType_MetaTilesShow 65
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[358] },    // AnimType_MetaTilesExit 66
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[368] },    // AnimType_MetaTilesExit 67
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[378] },    // AnimType_MetaTilesExit 68
+    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 1, &positions[47] },    // AnimType_HintBarDisappear 16
+    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[56] },    // AnimType_HintSlideL 17
+    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[72] },    // AnimType_HintSlideR 18
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[88] },    // AnimType_NotWord 19
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[89] },    // AnimType_NotWord 20
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[90] },    // AnimType_NotWord 21
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[135] },    // AnimType_SlideL 22
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[145] },    // AnimType_SlideL 23
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[152] },    // AnimType_SlideL 24
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[159] },    // AnimType_SlideR 25
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 7, &positions[166] },    // AnimType_SlideR 26
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[173] },    // AnimType_SlideR 27
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[91] },    // AnimType_OldWord 28
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[92] },    // AnimType_OldWord 29
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[93] },    // AnimType_OldWord 30
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[94] },    // AnimType_NewWord 31
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[95] },    // AnimType_NewWord 32
+    { &Tile3Glow, &Tile3Blank, &Tile3MetaGlow, 0, Layer_BG0, 0, 1, &positions[96] },    // AnimType_NewWord 33
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[97] },    // AnimType_EndofRound 34
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[98] },    // AnimType_EndofRound 35
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[99] },    // AnimType_EndofRound 36
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[100] },    // AnimType_Shuffle 37
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[101] },    // AnimType_Shuffle 38
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[102] },    // AnimType_Shuffle 39
+    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[103] },    // AnimType_HintSlideL 40
+    { 0, 0, 0, &HintSprite, Layer_Sprite, 0, 16, &positions[119] },    // AnimType_HintSlideR 41
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[185] },    // AnimType_NormalTilesEnter 42
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[195] },    // AnimType_NormalTilesEnter 43
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[205] },    // AnimType_NormalTilesExit 44
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[215] },    // AnimType_NormalTilesExit 45
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[225] },    // AnimType_MetaTilesEnter 46
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[235] },    // AnimType_MetaTilesEnter 47
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[183] },    // AnimType_MetaTilesShow 48
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[184] },    // AnimType_MetaTilesShow 49
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[245] },    // AnimType_MetaTilesExit 50
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[255] },    // AnimType_MetaTilesExit 51
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[268] },    // AnimType_NormalTilesEnter 52
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[278] },    // AnimType_NormalTilesEnter 53
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[288] },    // AnimType_NormalTilesEnter 54
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[298] },    // AnimType_NormalTilesExit 55
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[308] },    // AnimType_NormalTilesExit 56
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[318] },    // AnimType_NormalTilesExit 57
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[328] },    // AnimType_MetaTilesEnter 58
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[338] },    // AnimType_MetaTilesEnter 59
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[348] },    // AnimType_MetaTilesEnter 60
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[265] },    // AnimType_MetaTilesShow 61
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[266] },    // AnimType_MetaTilesShow 62
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[267] },    // AnimType_MetaTilesShow 63
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[358] },    // AnimType_MetaTilesExit 64
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[368] },    // AnimType_MetaTilesExit 65
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[378] },    // AnimType_MetaTilesExit 66
 };
 
 const static AnimData animData[] =
 {
-    { 1.f, true, 1, &animObjData[0]},    // AnimType_NotWord
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideL
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_SlideR
-    { 1.f, true, 1, &animObjData[0]},    // AnimType_OldWord
-    { 1.5f, false, 1, &animObjData[0]},    // AnimType_NewWord
-    { 1.f, true, 1, &animObjData[0]},    // AnimType_EndofRound
-    { 0.5f, true, 1, &animObjData[0]},    // AnimType_Shuffle
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_NotWord
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_SlideL
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_SlideR
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_OldWord
+    { 1.5f, false, 0, &animObjData[0]},    // AnimType_NewWord
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_EndofRound
+    { 0.5f, true, 0, &animObjData[0]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
-    { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
-    { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
-    { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
-    { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
-    { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideL
-    { 1.f, true, 1, &animObjData[0]},    // AnimType_HintSlideR
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_NormalTilesEnter
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_MetaTilesEnter
-    { 0.63f, false, 1, &animObjData[0]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 1, &animObjData[0]},    // AnimType_MetaTilesExit
+    { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
+    { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
+    { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
+    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_HintSlideL
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_HintSlideR
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesEnter
+    { 0.7f, false, 0, &animObjData[0]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -494,35 +492,35 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[10]},    // AnimType_EndofRound
     { 0.5f, true, 2, &animObjData[12]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
-    { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
-    { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
-    { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
-    { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
-    { 1.f, true, 1, &animObjData[19]},    // AnimType_HintSlideL
-    { 1.f, true, 1, &animObjData[20]},    // AnimType_HintSlideR
-    { 0.5f, false, 2, &animObjData[44]},    // AnimType_NormalTilesEnter
-    { 0.5f, false, 2, &animObjData[46]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 2, &animObjData[48]},    // AnimType_MetaTilesEnter
-    { 0.63f, false, 2, &animObjData[50]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 2, &animObjData[52]},    // AnimType_MetaTilesExit
-    { 1.f, true, 3, &animObjData[21]},    // AnimType_NotWord
-    { 0.5f, false, 3, &animObjData[24]},    // AnimType_SlideL
-    { 0.5f, false, 3, &animObjData[27]},    // AnimType_SlideR
-    { 1.f, true, 3, &animObjData[30]},    // AnimType_OldWord
-    { 1.5f, false, 3, &animObjData[33]},    // AnimType_NewWord
-    { 1.f, true, 3, &animObjData[36]},    // AnimType_EndofRound
-    { 0.5f, true, 3, &animObjData[39]},    // AnimType_Shuffle
+    { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
+    { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
+    { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
+    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 1.f, true, 1, &animObjData[17]},    // AnimType_HintSlideL
+    { 1.f, true, 1, &animObjData[18]},    // AnimType_HintSlideR
+    { 0.5f, false, 2, &animObjData[42]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 2, &animObjData[44]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 2, &animObjData[46]},    // AnimType_MetaTilesEnter
+    { 0.7f, false, 2, &animObjData[48]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
+    { 1.f, true, 3, &animObjData[19]},    // AnimType_NotWord
+    { 0.5f, false, 3, &animObjData[22]},    // AnimType_SlideL
+    { 0.5f, false, 3, &animObjData[25]},    // AnimType_SlideR
+    { 1.f, true, 3, &animObjData[28]},    // AnimType_OldWord
+    { 1.5f, false, 3, &animObjData[31]},    // AnimType_NewWord
+    { 1.f, true, 3, &animObjData[34]},    // AnimType_EndofRound
+    { 0.5f, true, 3, &animObjData[37]},    // AnimType_Shuffle
     { 1.f, true, 1, &animObjData[14]},    // AnimType_CityProgression
-    { 1.f, true, 1, &animObjData[15]},    // AnimType_HintBarAppear
-    { 3.f, false, 1, &animObjData[16]},    // AnimType_HintBarIdle
-    { 0.3f, false, 1, &animObjData[17]},    // AnimType_HintBarDisappear
-    { 2.f, false, 1, &animObjData[18]},    // AnimType_HintWindUpSlide
-    { 1.f, true, 1, &animObjData[42]},    // AnimType_HintSlideL
-    { 1.f, true, 1, &animObjData[43]},    // AnimType_HintSlideR
-    { 0.5f, false, 3, &animObjData[54]},    // AnimType_NormalTilesEnter
-    { 0.5f, false, 3, &animObjData[57]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 3, &animObjData[60]},    // AnimType_MetaTilesEnter
-    { 0.63f, false, 3, &animObjData[63]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 3, &animObjData[66]},    // AnimType_MetaTilesExit
+    { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
+    { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
+    { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
+    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 1.f, true, 1, &animObjData[40]},    // AnimType_HintSlideL
+    { 1.f, true, 1, &animObjData[41]},    // AnimType_HintSlideR
+    { 0.5f, false, 3, &animObjData[52]},    // AnimType_NormalTilesEnter
+    { 0.5f, false, 3, &animObjData[55]},    // AnimType_NormalTilesExit
+    { 0.5f, false, 3, &animObjData[58]},    // AnimType_MetaTilesEnter
+    { 0.7f, false, 3, &animObjData[61]},    // AnimType_MetaTilesShow
+    { 0.5f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
 };
 

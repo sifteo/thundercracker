@@ -1,7 +1,7 @@
 GameAssets = group{}
 
-Test = image{"font_bigger_2.png", quality=10}
-TestGlow = image{"font_bigger_2_glow.png", quality=10}
+--Test = image{"font_bigger_2.png", quality=10}
+--TestGlow = image{"font_bigger_2_glow.png", quality=10}
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
@@ -14,7 +14,7 @@ BorderLeftNoNeighbor = image{"wp2_border_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available.png", quality=10}
 BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
 BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
-BorderSlotHint = image{"border_hint.png", quality=10, width=16}
+BorderSlotHint = image{"hint_bubble.png", quality=10, width=24}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Blank = image{"tile_ivory_blank.png", quality=10}

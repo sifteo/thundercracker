@@ -15,9 +15,7 @@
 ,2,"Tile2","Tile2Blank","Tile2Meta",0,"Layer_BG0",0
 "AnimType_CityProgression","x","LevelComplete","LevelComplete","LevelComplete",0,"Layer_BG0",0
 "AnimType_HintBarAppear","x",0,0,0,"HintSprite","Layer_Sprite",0
-"AnimType_HintBarIdle","x",0,0,0,"HintSprite","Layer_Sprite",0
 "AnimType_HintBarDisappear","x",0,0,0,"HintSprite","Layer_Sprite",0
-"AnimType_HintWindUpSlide","x",0,0,0,"HintSprite","Layer_Sprite",0
 "AnimType_HintSlideL",2,0,0,0,"HintSprite","Layer_Sprite",0
 "AnimType_HintSlideR",2,0,0,0,"HintSprite","Layer_Sprite",0
 "AnimType_NotWord",3,"Tile3","Tile3Blank","Tile3Meta",0,"Layer_BG0",0

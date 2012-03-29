@@ -179,7 +179,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case AnimType_HintWindUpSlide:
-            queueAnim(AnimType_None, CubeAnim_Hint);
+            queueAnim(AnimType_HintBarIdle, CubeAnim_Hint);
             break;
 
         case AnimType_HintSlideL:
@@ -189,7 +189,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 unsigned tiltDir = 0;
                 if (!calcHintTiltDirection(newStart, tiltDir))
                 {
-                    queueAnim(AnimType_None, CubeAnim_Hint);
+                    queueAnim(AnimType_HintBarIdle, CubeAnim_Hint);
                 }
             }
             break;
@@ -277,6 +277,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             }
             break;
         }
+        queueAnim(AnimType_HintBarIdle, CubeAnim_Hint);
         paint();
         break;
 
@@ -352,7 +353,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (mAnimTypes[CubeAnim_Hint])
         {
         case AnimType_HintWindUpSlide:
-            queueAnim(AnimType_None, CubeAnim_Hint);
+            queueAnim(AnimType_HintBarIdle, CubeAnim_Hint);
             break;
 
         default:
@@ -598,7 +599,9 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
     {
         if (params)
         {
-            params->mBorders = (i == CubeAnim_Main); // FIXME fold border code into anim
+            params->mBorders =
+                    ((i == CubeAnim_Hint && mAnimTypes[CubeAnim_Hint] != AnimType_None) ||
+                     (i != CubeAnim_Hint && mAnimTypes[CubeAnim_Hint] == AnimType_None)); // FIXME fold border code into anim
         }
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
