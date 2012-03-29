@@ -102,7 +102,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     case EventID_EnterState:
         ScoredGameState::createNewAnagram();
         // fall through
-    case EventID_NewAnagram:
+    case EventID_NewPuzzle:
         // TODO reset hints,
 
         break;
@@ -229,18 +229,18 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    Dictionary::pickWord(data.mNewAnagram.mWord,
-                         data.mNewAnagram.mNumAnagrams,
-                         data.mNewAnagram.mLeadingSpaces,
-                         data.mNewAnagram.mMaxLettersPerCube);
+    Dictionary::getNextPuzzle(data.mNewPuzzle.mWord,
+                         data.mNewPuzzle.mNumAnagrams,
+                         data.mNewPuzzle.mLeadingSpaces,
+                         data.mNewPuzzle.mMaxLettersPerCube);
 
-            //(unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
+            //(unsigned)_ceilf(_SYS_strnlen(data.mNewPuzzle.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
 
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
 
-    unsigned wordLen = _SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1);
+    unsigned wordLen = _SYS_strnlen(data.mNewPuzzle.mWord, MAX_LETTERS_PER_WORD + 1);
 
     // TODO data-driven
     GameStateMachine::setCurrentMaxLettersPerCube(wordLen > 6 ? 3 : 2);
@@ -251,11 +251,11 @@ void ScoredGameState::createNewAnagram()
     unsigned leadingBlanks = 0;
     if (numBlanks == 0)
     {
-        _SYS_strlcpy(spacesAdded, data.mNewAnagram.mWord, sizeof spacesAdded);
+        _SYS_strlcpy(spacesAdded, data.mNewPuzzle.mWord, sizeof spacesAdded);
     }
     else
     {
-        if (data.mNewAnagram.mLeadingSpaces)
+        if (data.mNewPuzzle.mLeadingSpaces)
         {
             leadingBlanks = numBlanks;
         }
@@ -278,7 +278,7 @@ void ScoredGameState::createNewAnagram()
             }
             else
             {
-                spacesAdded[i] = data.mNewAnagram.mWord[i - leadingBlanks];
+                spacesAdded[i] = data.mNewPuzzle.mWord[i - leadingBlanks];
             }
         }
         spacesAdded[i] = '\0';
@@ -286,14 +286,14 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    if (!Dictionary::doScrambleCurrentWord())
+    if (!Dictionary::shouldScrambleCurrentWord())
     {
         // don't scramble
         _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
-        for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
+        for (int i = 0; i < (int)arraysize(data.mNewPuzzle.mCubeOrderingIndexes); ++i)
         {
-            data.mNewAnagram.mPuzzlePieceIndexes[i] = i;
-            data.mNewAnagram.mPuzzleStartIndexes[i] = 0;
+            data.mNewPuzzle.mCubeOrderingIndexes[i] = i;
+            data.mNewPuzzle.mLetterStartIndexes[i] = 0;
         }
     }
     else
@@ -331,36 +331,12 @@ void ScoredGameState::createNewAnagram()
             // wraps around)
 
             _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
+            getRandomCubePermutation(data.mNewPuzzle.mCubeOrderingIndexes);
+            // for each cube, choose a random letter shift
+            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
             {
-                // first scramble the cube to word fragments mapping
-                int cubeIndexes[NUM_CUBES];
-                for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
-                {
-                    cubeIndexes[i] = i;
-                }
-
-                // assign cube indexes to the puzzle piece indexes array, randomly
-                for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
-                {
-                    for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
-                         true;
-                         j = ((j + 1) % NUM_CUBES))
-                    {
-                        if (cubeIndexes[j] >= 0)
-                        {
-                            data.mNewAnagram.mPuzzlePieceIndexes[i] = cubeIndexes[j];
-                            cubeIndexes[j] = -1;
-                            break;
-                        }
-                    }
-                }
-
-                for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
-                {
-                    // for each cube, choose a random letter shift
-                    data.mNewAnagram.mPuzzleStartIndexes[ci] =
-                            WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube());
-                }
+                data.mNewPuzzle.mLetterStartIndexes[ci] =
+                        WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube());
             }
             break;
         }
@@ -369,7 +345,60 @@ void ScoredGameState::createNewAnagram()
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
     ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
            _SYS_strnlen(spacesAdded, GameStateMachine::getCurrentMaxLettersPerWord() + 1));
-    _SYS_strlcpy(data.mNewAnagram.mWord, scrambled, sizeof data.mNewAnagram.mWord);
-    wordLen = _SYS_strnlen(data.mNewAnagram.mWord, sizeof data.mNewAnagram.mWord);
-    GameStateMachine::sOnEvent(EventID_NewAnagram, data);
+    _SYS_strlcpy(data.mNewPuzzle.mWord, scrambled, sizeof data.mNewPuzzle.mWord);
+    wordLen = _SYS_strnlen(data.mNewPuzzle.mWord, sizeof data.mNewPuzzle.mWord);
+    GameStateMachine::sOnEvent(EventID_NewPuzzle, data);
+
+   if (Dictionary::currentStartsNewMetaPuzzle())
+    {
+        EventData newMeta;
+        /*char mWord[MAX_LETTERS_PER_WORD + 1];
+        unsigned char mCubeOrderingIndexes[NUM_CUBES];
+        unsigned char mLetterStartIndexes[NUM_CUBES];
+        unsigned char mLeadingSpaces;
+        unsigned char mMaxLettersPerCube;
+        */
+        if (Dictionary::getMetaPuzzle(newMeta.mNewMeta.mWord,
+                                      newMeta.mNewMeta.mLeadingSpaces,
+                                      newMeta.mNewMeta.mMaxLettersPerCube))
+        {
+
+            // FIXME indexes
+            getRandomCubePermutation(newMeta.mNewMeta.mCubeOrderingIndexes);
+            // for each cube, choose a random letter shift
+            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+            {
+                newMeta.mNewMeta.mLetterStartIndexes[ci] =
+                        WordGame::random.randrange(newMeta.mNewMeta.mMaxLettersPerCube);
+            }
+            GameStateMachine::sOnEvent(EventID_NewMeta, newMeta);
+        }
+    }
+}
+
+void ScoredGameState::getRandomCubePermutation(unsigned char *indexArray)
+{
+    // first scramble the cube to word fragments mapping
+    int cubeIndexes[NUM_CUBES];
+    for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
+    {
+        cubeIndexes[i] = i;
+    }
+
+    // assign cube indexes to the puzzle piece indexes array, randomly
+    for (int i = 0; i < (int)NUM_CUBES; ++i)
+    {
+        for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
+             true;
+             j = ((j + 1) % NUM_CUBES))
+        {
+            if (cubeIndexes[j] >= 0)
+            {
+                indexArray[i] = cubeIndexes[j];
+                cubeIndexes[j] = -1;
+                break;
+            }
+        }
+    }
+
 }

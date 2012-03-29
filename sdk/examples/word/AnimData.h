@@ -280,56 +280,56 @@ const static Vec2 positions[] =
     Vec2(2, 1),    // 275
     Vec2(2, 1),    // 276
     Vec2(2, 2),    // 277
-    Vec2(2, -11),    // 278
-    Vec2(2, -9),    // 279
-    Vec2(2, -7),    // 280
-    Vec2(2, -5),    // 281
-    Vec2(2, -3),    // 282
-    Vec2(2, -1),    // 283
-    Vec2(2, 0),    // 284
-    Vec2(2, 1),    // 285
-    Vec2(2, 1),    // 286
-    Vec2(2, 2),    // 287
-    Vec2(2, -11),    // 288
-    Vec2(2, -9),    // 289
-    Vec2(2, -7),    // 290
-    Vec2(2, -5),    // 291
-    Vec2(2, -3),    // 292
-    Vec2(2, -1),    // 293
-    Vec2(2, 0),    // 294
-    Vec2(2, 1),    // 295
-    Vec2(2, 1),    // 296
-    Vec2(2, 2),    // 297
-    Vec2(2, -11),    // 298
-    Vec2(2, -9),    // 299
-    Vec2(2, -7),    // 300
-    Vec2(2, -5),    // 301
-    Vec2(2, -3),    // 302
-    Vec2(2, -1),    // 303
-    Vec2(2, 0),    // 304
-    Vec2(2, 1),    // 305
-    Vec2(2, 1),    // 306
-    Vec2(2, 2),    // 307
-    Vec2(2, -11),    // 308
-    Vec2(2, -9),    // 309
-    Vec2(2, -7),    // 310
-    Vec2(2, -5),    // 311
-    Vec2(2, -3),    // 312
-    Vec2(2, -1),    // 313
-    Vec2(2, 0),    // 314
-    Vec2(2, 1),    // 315
-    Vec2(2, 1),    // 316
-    Vec2(2, 2),    // 317
-    Vec2(2, -11),    // 318
-    Vec2(2, -9),    // 319
-    Vec2(2, -7),    // 320
-    Vec2(2, -5),    // 321
-    Vec2(2, -3),    // 322
-    Vec2(2, -1),    // 323
-    Vec2(2, 0),    // 324
-    Vec2(2, 1),    // 325
-    Vec2(2, 1),    // 326
-    Vec2(2, 2),    // 327
+    Vec2(6, -11),    // 278
+    Vec2(6, -9),    // 279
+    Vec2(6, -7),    // 280
+    Vec2(6, -5),    // 281
+    Vec2(6, -3),    // 282
+    Vec2(6, -1),    // 283
+    Vec2(6, 0),    // 284
+    Vec2(6, 1),    // 285
+    Vec2(6, 1),    // 286
+    Vec2(6, 2),    // 287
+    Vec2(10, -11),    // 288
+    Vec2(10, -9),    // 289
+    Vec2(10, -7),    // 290
+    Vec2(10, -5),    // 291
+    Vec2(10, -3),    // 292
+    Vec2(10, -1),    // 293
+    Vec2(10, 0),    // 294
+    Vec2(10, 1),    // 295
+    Vec2(10, 1),    // 296
+    Vec2(10, 2),    // 297
+    Vec2(2, 3),    // 298
+    Vec2(2, 4),    // 299
+    Vec2(2, 5),    // 300
+    Vec2(2, 6),    // 301
+    Vec2(2, 7),    // 302
+    Vec2(2, 8),    // 303
+    Vec2(2, 9),    // 304
+    Vec2(2, 10),    // 305
+    Vec2(2, 12),    // 306
+    Vec2(2, 16),    // 307
+    Vec2(6, 3),    // 308
+    Vec2(6, 4),    // 309
+    Vec2(6, 5),    // 310
+    Vec2(6, 6),    // 311
+    Vec2(6, 7),    // 312
+    Vec2(6, 8),    // 313
+    Vec2(6, 9),    // 314
+    Vec2(6, 10),    // 315
+    Vec2(6, 12),    // 316
+    Vec2(6, 16),    // 317
+    Vec2(10, 3),    // 318
+    Vec2(10, 4),    // 319
+    Vec2(10, 5),    // 320
+    Vec2(10, 6),    // 321
+    Vec2(10, 7),    // 322
+    Vec2(10, 8),    // 323
+    Vec2(10, 9),    // 324
+    Vec2(10, 10),    // 325
+    Vec2(10, 12),    // 326
+    Vec2(10, 16),    // 327
     Vec2(2, -11),    // 328
     Vec2(2, -9),    // 329
     Vec2(2, -7),    // 330
@@ -340,56 +340,56 @@ const static Vec2 positions[] =
     Vec2(2, 1),    // 335
     Vec2(2, 1),    // 336
     Vec2(2, 2),    // 337
-    Vec2(2, -11),    // 338
-    Vec2(2, -9),    // 339
-    Vec2(2, -7),    // 340
-    Vec2(2, -5),    // 341
-    Vec2(2, -3),    // 342
-    Vec2(2, -1),    // 343
-    Vec2(2, 0),    // 344
-    Vec2(2, 1),    // 345
-    Vec2(2, 1),    // 346
-    Vec2(2, 2),    // 347
-    Vec2(2, -11),    // 348
-    Vec2(2, -9),    // 349
-    Vec2(2, -7),    // 350
-    Vec2(2, -5),    // 351
-    Vec2(2, -3),    // 352
-    Vec2(2, -1),    // 353
-    Vec2(2, 0),    // 354
-    Vec2(2, 1),    // 355
-    Vec2(2, 1),    // 356
-    Vec2(2, 2),    // 357
-    Vec2(2, -11),    // 358
-    Vec2(2, -9),    // 359
-    Vec2(2, -7),    // 360
-    Vec2(2, -5),    // 361
-    Vec2(2, -3),    // 362
-    Vec2(2, -1),    // 363
-    Vec2(2, 0),    // 364
-    Vec2(2, 1),    // 365
-    Vec2(2, 1),    // 366
-    Vec2(2, 2),    // 367
-    Vec2(2, -11),    // 368
-    Vec2(2, -9),    // 369
-    Vec2(2, -7),    // 370
-    Vec2(2, -5),    // 371
-    Vec2(2, -3),    // 372
-    Vec2(2, -1),    // 373
-    Vec2(2, 0),    // 374
-    Vec2(2, 1),    // 375
-    Vec2(2, 1),    // 376
-    Vec2(2, 2),    // 377
-    Vec2(2, -11),    // 378
-    Vec2(2, -9),    // 379
-    Vec2(2, -7),    // 380
-    Vec2(2, -5),    // 381
-    Vec2(2, -3),    // 382
-    Vec2(2, -1),    // 383
-    Vec2(2, 0),    // 384
-    Vec2(2, 1),    // 385
-    Vec2(2, 1),    // 386
-    Vec2(2, 2),    // 387
+    Vec2(6, -11),    // 338
+    Vec2(6, -9),    // 339
+    Vec2(6, -7),    // 340
+    Vec2(6, -5),    // 341
+    Vec2(6, -3),    // 342
+    Vec2(6, -1),    // 343
+    Vec2(6, 0),    // 344
+    Vec2(6, 1),    // 345
+    Vec2(6, 1),    // 346
+    Vec2(6, 2),    // 347
+    Vec2(10, -11),    // 348
+    Vec2(10, -9),    // 349
+    Vec2(10, -7),    // 350
+    Vec2(10, -5),    // 351
+    Vec2(10, -3),    // 352
+    Vec2(10, -1),    // 353
+    Vec2(10, 0),    // 354
+    Vec2(10, 1),    // 355
+    Vec2(10, 1),    // 356
+    Vec2(10, 2),    // 357
+    Vec2(2, 3),    // 358
+    Vec2(2, 4),    // 359
+    Vec2(2, 5),    // 360
+    Vec2(2, 6),    // 361
+    Vec2(2, 7),    // 362
+    Vec2(2, 8),    // 363
+    Vec2(2, 9),    // 364
+    Vec2(2, 10),    // 365
+    Vec2(2, 12),    // 366
+    Vec2(2, 16),    // 367
+    Vec2(6, 3),    // 368
+    Vec2(6, 4),    // 369
+    Vec2(6, 5),    // 370
+    Vec2(6, 6),    // 371
+    Vec2(6, 7),    // 372
+    Vec2(6, 8),    // 373
+    Vec2(6, 9),    // 374
+    Vec2(6, 10),    // 375
+    Vec2(6, 12),    // 376
+    Vec2(6, 16),    // 377
+    Vec2(10, 3),    // 378
+    Vec2(10, 4),    // 379
+    Vec2(10, 5),    // 380
+    Vec2(10, 6),    // 381
+    Vec2(10, 7),    // 382
+    Vec2(10, 8),    // 383
+    Vec2(10, 9),    // 384
+    Vec2(10, 10),    // 385
+    Vec2(10, 12),    // 386
+    Vec2(10, 16),    // 387
 };
 
 const static AnimObjData animObjData[] =
@@ -482,7 +482,7 @@ const static AnimData animData[] =
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesExit
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesEnter
-    { 0.7f, false, 0, &animObjData[0]},    // AnimType_MetaTilesShow
+    { 0.66f, false, 0, &animObjData[0]},    // AnimType_MetaTilesShow
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
@@ -501,7 +501,7 @@ const static AnimData animData[] =
     { 0.5f, false, 2, &animObjData[42]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 2, &animObjData[44]},    // AnimType_NormalTilesExit
     { 0.5f, false, 2, &animObjData[46]},    // AnimType_MetaTilesEnter
-    { 0.7f, false, 2, &animObjData[48]},    // AnimType_MetaTilesShow
+    { 0.66f, false, 2, &animObjData[48]},    // AnimType_MetaTilesShow
     { 0.5f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
     { 1.f, true, 3, &animObjData[19]},    // AnimType_NotWord
     { 0.5f, false, 3, &animObjData[22]},    // AnimType_SlideL
@@ -520,7 +520,7 @@ const static AnimData animData[] =
     { 0.5f, false, 3, &animObjData[52]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 3, &animObjData[55]},    // AnimType_NormalTilesExit
     { 0.5f, false, 3, &animObjData[58]},    // AnimType_MetaTilesEnter
-    { 0.7f, false, 3, &animObjData[61]},    // AnimType_MetaTilesShow
+    { 0.66f, false, 3, &animObjData[61]},    // AnimType_MetaTilesShow
     { 0.5f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
 };
 

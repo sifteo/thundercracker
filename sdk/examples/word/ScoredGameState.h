@@ -18,6 +18,7 @@ public:
     static void onAudioEvent(unsigned eventID, const EventData& data);
 
 private:
+    static void getRandomCubePermutation(unsigned char *indexArray);
 
     Cube::ID mHintCubeIDOnUpdate;
 };

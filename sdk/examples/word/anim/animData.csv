@@ -16,5 +16,5 @@
 "AnimType_NormalTilesEnter","x",0.5,"FALSE"
 "AnimType_NormalTilesExit","x",0.5,"FALSE"
 "AnimType_MetaTilesEnter","x",0.5,"FALSE"
-"AnimType_MetaTilesShow","x",0.7,"FALSE"
+"AnimType_MetaTilesShow","x",0.66,"FALSE"
 "AnimType_MetaTilesExit","x",0.5,"FALSE"

@@ -39,7 +39,7 @@ PrototypeWordList::PrototypeWordList()
 }
 
 
-bool PrototypeWordList::pickWord(char* buffer)
+bool PrototypeWordList::getNextPuzzle(char* buffer)
 {
     unsigned startIndex = WordGame::random.randrange(PROTO_WORD_LIST_LENGTH);
     unsigned i = startIndex;

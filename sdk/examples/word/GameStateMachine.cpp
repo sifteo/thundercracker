@@ -71,10 +71,10 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case EventID_NewAnagram:
+    case EventID_NewPuzzle:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
         // TODO data driven
-        mNumAnagramsLeft = MAX(1, data.mNewAnagram.mNumAnagrams);
+        mNumAnagramsLeft = MAX(1, data.mNewPuzzle.mNumAnagrams);
         for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
         {
             mLevelProgressData.mPuzzleProgress[i] =

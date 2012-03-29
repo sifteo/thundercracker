@@ -8,12 +8,15 @@
 #include "assets.gen.h"
 
 CubeStateMachine::CubeStateMachine() :
-        StateMachine(0), mNumLetters(0), mPuzzlePieceIndex(0), mIdleTime(0.f),
+        StateMachine(0), mPuzzleLettersPerCube(0), mPuzzlePieceIndex(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
         mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
 {
     mLetters[0] = '\0';
+    mHintSolution[0] = '\0';
+    mMetaLetters[0] = '\0';
+
     for (unsigned i = 0; i < arraysize(mAnimTypes); ++i)
     {
         mAnimTypes[i] = AnimType_None;
@@ -306,23 +309,44 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case EventID_NewAnagram:
+    case EventID_NewPuzzle:
         {
             unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
-            mPuzzlePieceIndex = data.mNewAnagram.mPuzzlePieceIndexes[cubeIndex];
-            setLettersStart(data.mNewAnagram.mPuzzleStartIndexes[cubeIndex]);
+            mPuzzlePieceIndex = data.mNewPuzzle.mCubeOrderingIndexes[cubeIndex];
+            setLettersStart(data.mNewPuzzle.mLetterStartIndexes[cubeIndex]);
             for (unsigned i = 0; i < arraysize(mLetters); ++i)
             {
                 mLetters[i] = '\0';
             }
 
             // TODO multiple letters: variable
-            for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
+            for (unsigned i = 0; i < data.mNewPuzzle.mMaxLettersPerCube; ++i)
             {
                 mLetters[i] =
-                        data.mNewAnagram.mWord[mPuzzlePieceIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
+                        data.mNewPuzzle.mWord[mPuzzlePieceIndex * data.mNewPuzzle.mMaxLettersPerCube + i];
             }
-            mNumLetters = GameStateMachine::getCurrentMaxLettersPerCube(); // FIXME this var name is misleading
+            mPuzzleLettersPerCube = data.mNewPuzzle.mMaxLettersPerCube; // FIXME this var name is misleading
+            // TODO substrings of length 1 to 3
+            paint();
+        }
+        break;
+
+    case EventID_NewMeta:
+        {
+            unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+            mMetaLettersStart = data.mNewMeta.mLetterStartIndexes[cubeIndex];
+            for (unsigned i = 0; i < arraysize(mMetaLetters); ++i)
+            {
+                mMetaLetters[i] = '\0';
+            }
+            mMetaLettersPerCube = data.mNewMeta.mMaxLettersPerCube;
+
+            // TODO multiple letters: variable
+            for (unsigned i = 0; i < mMetaLettersPerCube; ++i)
+            {
+                mMetaLetters[i] =
+                        data.mNewMeta.mWord[mPuzzlePieceIndex * mMetaLettersPerCube + i];
+            }
             // TODO substrings of length 1 to 3
             paint();
         }
@@ -383,14 +407,16 @@ unsigned CubeStateMachine::findNumLetters(char *string)
     return count;
 }
 
-unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint) const
+unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint, bool meta) const
 {
-    if (mNumLetters <= 0)
+    if ((meta && mMetaLettersPerCube <= 0) || (!meta && mPuzzleLettersPerCube <= 0))
     {
         return 0;
     }
 
-    unsigned start = mLettersStart;
+    unsigned start = meta ? mMetaLettersStart : mLettersStart;
+    const char *letters = meta ? mMetaLetters : mLetters;
+    unsigned lettersPerCube = meta ? mMetaLettersPerCube : mPuzzleLettersPerCube;
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_SlideL:
@@ -404,31 +430,25 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint) const
     default:
         if (start == 0)
         {
-            _SYS_strlcpy(buffer,
-                         mLetters,
-                         GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+            _SYS_strlcpy(buffer, letters, lettersPerCube + 1);
         }
         else
         {
             //DEBUG_LOG(("letters start: %d\n", mLettersStart));
             // copy from the (offset) start to the end of the letters
-            _SYS_strlcpy(buffer,
-                         &mLetters[start],
-                         GameStateMachine::getCurrentMaxLettersPerCube() + 1 - start);
+            _SYS_strlcpy(buffer, &letters[start], lettersPerCube + 1 - start);
             // fill in the rest of the buffer with the substring of the letters
             // that came after the end of the mLetters buffer, and zero terminate
-            _SYS_strlcat(buffer,
-                         mLetters,
-                         GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+            _SYS_strlcat(buffer, letters, lettersPerCube + 1);
         }
         break;
 
     //default:
-      //  _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+      //  _SYS_strlcpy(buffer, mLetters, lettersPerCube + 1);
         //break;
     }
 
-    return _SYS_strnlen(buffer, GameStateMachine::getCurrentMaxLettersPerCube());
+    return _SYS_strnlen(buffer, lettersPerCube);
 }
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
@@ -613,7 +633,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
 
 bool CubeStateMachine::canBeginWord() const
 {
-    return (mNumLetters > 0 &&
+    return (mPuzzleLettersPerCube > 0 &&
             mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
 }
@@ -722,7 +742,7 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) 
              neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT),
              csm = GameStateMachine::findCSMFromID(neighborID))
         {
-            if (csm->mNumLetters <= 0)
+            if (csm->mPuzzleLettersPerCube <= 0)
             {
                 break;
             }
@@ -1445,48 +1465,26 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     ASSERT(params);
     Cube &c = getCube();
     params->mLetters[0] = '\0';
-    params->mSpriteParams = 0;
+    params->mSpriteParams =
+            (mAnimTypes[CubeAnim_Main] == AnimType_NewWord) ? &mSpriteParams : 0;
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_MetaTilesEnter:
     case AnimType_MetaTilesShow:
     case AnimType_MetaTilesExit:
         params->mAllMetaLetters = true;
+        params->mLettersPerCube = mMetaLettersPerCube;
+        if (!getLetters(params->mLetters, true, true))
+        {
+            retval = false;
+        }
         break;
+
     default:
         params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
-        break;
-    }
-    switch (mAnimTypes[CubeAnim_Main])
-    {
-
-    case AnimType_EndofRound:
-    case AnimType_Shuffle:
-    case AnimType_CityProgression:
-        break;
-
-    case AnimType_NewWord:
-        params->mSpriteParams = &mSpriteParams;
-        // fall through
-    default:
-        if (params->mAllMetaLetters)
+        params->mLettersPerCube = mPuzzleLettersPerCube;
+        if (!getLetters(params->mLetters, true, false))
         {
-            char meta[MAX_LETTERS_PER_WORD + 1];
-            if (true)//Dictionary::getMetaPuzzle(meta))
-            {
-
-            }
-            else
-            {
-                retval = false;
-            }
-        }
-        else if (!getLetters(params->mLetters, true))
-        {
-            for (unsigned i=0; i<arraysize(params->mLetters); ++i)
-            {
-                params->mLetters[i] = '\0';
-            }
             retval = false;
         }
         break;

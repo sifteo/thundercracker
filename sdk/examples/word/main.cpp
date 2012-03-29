@@ -67,7 +67,7 @@ void accel(_SYSCubeID c)
 
 void siftmain()
 {
-    DEBUG_LOG(("Hello, Word Play 2\n"));
+    DEBUG_LOG(("Hello, Word Caravan\n"));
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onCubeEventTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onCubeEventShake, NULL);

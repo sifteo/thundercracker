@@ -8,7 +8,7 @@ class PrototypeWordList
 {
 public:
     PrototypeWordList();
-    static bool pickWord(char* buffer);
+    static bool getNextPuzzle(char* buffer);
     static bool isWord(const char* string, bool& isCommon, WordID& wordID);
     static bool getWordFromID(WordID wid, char *buffer);
 

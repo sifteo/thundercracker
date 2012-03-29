@@ -16,7 +16,7 @@ unsigned ScoredCubeState_StartOfRound::onEvent(unsigned eventID, const EventData
     switch (eventID)
     {
     case EventID_EnterState:
-    case EventID_NewAnagram:
+    case EventID_NewPuzzle:
     case EventID_Paint:
     case EventID_ClockTick:
         paint();

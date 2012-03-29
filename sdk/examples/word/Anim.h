@@ -47,6 +47,7 @@ struct AnimParams
     bool mBorders;
     bool mBonus;
     char mMetaLetterIndex;
+    char mLettersPerCube;
     bool mAllMetaLetters;
     SpriteParams *mSpriteParams;
 };

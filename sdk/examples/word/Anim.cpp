@@ -1,7 +1,7 @@
 #include "Anim.h"
-#include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "Dictionary.h"
+#include "GameStateMachine.h"
 
 enum Layer
 {
@@ -41,6 +41,8 @@ bool animPaint(AnimType animT,
                const AnimParams *params)
 {
     const int LETTER_Y_OFFSET = 5;
+    unsigned char lettersPerCube = params ? params->mLettersPerCube : 1;
+    lettersPerCube = clamp<unsigned>(lettersPerCube, 1, MAX_LETTERS_PER_CUBE);
     const static AssetImage* fonts[] =
     {
         &Font1Letter, &Font2Letter, &Font3Letter,
@@ -51,14 +53,14 @@ bool animPaint(AnimType animT,
     };
     const AssetImage& font =
             (animT == AnimType_NewWord || animT == AnimType_OldWord) ?
-                *fontsGlow[GameStateMachine::getCurrentMaxLettersPerCube() - 1] :
-                *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+                *fontsGlow[lettersPerCube - 1] :
+                *fonts[lettersPerCube - 1];
 
     if (animT == AnimType_None)
     {
         return false;
     }
-    unsigned anim = (animT + NumAnimTypes * (GameStateMachine::getCurrentMaxLettersPerCube() - 1));
+    unsigned anim = (animT + NumAnimTypes * (lettersPerCube - 1));
     STATIC_ASSERT(NumAnimTypes * MAX_LETTERS_PER_CUBE == arraysize(animData));
     //STATIC_ASSERT(arraysize(animData) == NumAnimIndexes);
     const AnimData &data = animData[anim];
@@ -81,7 +83,7 @@ bool animPaint(AnimType animT,
         bool metaLetterTile = false;
         if (params && params->mLetters && params->mLetters[0] && bg1)
         {
-            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
+            if (i < lettersPerCube)
             {
                 fontFrame = params->mLetters[i] - (int)'A';
                 drawLetterOnTile = (fontFrame < font.frames);
@@ -130,15 +132,9 @@ bool animPaint(AnimType animT,
         // FIXME asset frame rate
         unsigned char assetFrame =
             MIN(assetFrames-1, (unsigned char) ((float)assetFrames * animPct));
-#ifdef DEBUGzz
+#ifdef DEBUGz
         switch (animT)
         {
-        case AnimType_HintAppear:
-        case AnimType_HintIdle:
-        case AnimType_HintShake:
-        case AnimType_HintDisappear:
-        case AnimType_LockHint:
-        case AnimType_LockedHint:
         case AnimType_NotWord:
             break;
         default:

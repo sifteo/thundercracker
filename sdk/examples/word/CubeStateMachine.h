@@ -41,7 +41,7 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    unsigned getLetters(char *buffer, bool forPaint=false) const;
+    unsigned getLetters(char *buffer, bool forPaint, bool meta=false) const;
     void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
                    VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
@@ -98,9 +98,12 @@ private:
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     char mHintSolution[MAX_LETTERS_PER_CUBE + 1];
+    char mMetaLetters[MAX_LETTERS_PER_CUBE + 1];
     Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
-    unsigned mNumLetters;
-    unsigned mPuzzlePieceIndex;
+    unsigned char mPuzzleLettersPerCube;
+    unsigned char mPuzzlePieceIndex;
+    unsigned char mMetaLettersStart;
+    unsigned char mMetaLettersPerCube;
     float mIdleTime;
     bool mNewHint;
     AnimType mAnimTypes[NumCubeAnims];

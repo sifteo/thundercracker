@@ -11,14 +11,21 @@ union EventData
     struct
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
-        unsigned char mPuzzlePieceIndexes[NUM_CUBES];
-        unsigned char mPuzzleStartIndexes[NUM_CUBES];
+        unsigned char mCubeOrderingIndexes[NUM_CUBES];
+        unsigned char mLetterStartIndexes[NUM_CUBES];
         unsigned char mNumAnagrams;
-        unsigned char mNumBonusAnagrams;
         unsigned char mLeadingSpaces;
         unsigned char mMaxLettersPerCube;
-    } mNewAnagram;
+    } mNewPuzzle;
 
+    struct
+    {
+        char mWord[MAX_LETTERS_PER_WORD + 1];
+        unsigned char mCubeOrderingIndexes[NUM_CUBES];
+        unsigned char mLetterStartIndexes[NUM_CUBES];
+        unsigned char mLeadingSpaces;
+        unsigned char mMaxLettersPerCube;
+    } mNewMeta;
     struct
     {
         const char* mWord;
