@@ -119,6 +119,8 @@ void UsbDevice::init() {
 
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
+    while (UsbHardware::epTxInProgress(InEpAddr))
+        ;
     return UsbHardware::epWritePacket(InEpAddr, buf, len);
 }
 
