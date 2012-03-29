@@ -66,7 +66,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/rctimer.stm32.o \
-    $(MASTER_DIR)/stm32/usb.stm32.o \
+    $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o \
     $(MASTER_DIR)/stm32/usb/stm32f10xotg.stm32.o \

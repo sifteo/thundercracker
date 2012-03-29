@@ -8,7 +8,7 @@
  */
 
 #include "radio.h"
-#include "usb.h"
+#include "usb/usbdevice.h"
 #include "flashlayer.h"
 #include "board.h"
 #include "vectors.h"
@@ -21,7 +21,6 @@
 #include "usart.h"
 #include "button.h"
 #include "svmruntime.h"
-#include "usb.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);

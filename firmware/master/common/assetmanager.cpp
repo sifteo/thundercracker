@@ -8,7 +8,7 @@
 #include "macros.h"
 
 #ifndef SIFTEO_SIMULATOR
-#include "usb.h"
+#include "usb/usbdevice.h"
 #include "hardware.h"
 #endif
 

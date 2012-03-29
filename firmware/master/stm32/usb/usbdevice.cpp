@@ -3,7 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "usb.h"
+#include "usb/usbdevice.h"
 #include "usb/usbcore.h"
 #include "usb/usbhardware.h"
 #include "usb/usbdefs.h"

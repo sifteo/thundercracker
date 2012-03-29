@@ -2,7 +2,7 @@
 #include "usb/usbhardware.h"
 #include "usb/usbcontrol.h"
 #include "usb/usbcore.h"
-#include "usb.h"
+#include "usb/usbdevice.h"
 
 #include "hardware.h"
 #include "macros.h"

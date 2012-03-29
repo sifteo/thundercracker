@@ -8,7 +8,7 @@
 #include "svmdebugger.h"
 
 #ifndef SIFTEO_SIMULATOR
-#include "usb.h"
+#include "usb/usbdevice.h"
 #endif
 
 uint32_t Tasks::pendingMask;
