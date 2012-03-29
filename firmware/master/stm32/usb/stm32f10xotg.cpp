@@ -1,6 +1,6 @@
 #include "stm32f10xotg.h"
-#include "usb/usbd.h"
 #include "usb/usbcontrol.h"
+#include "usb/usbcore.h"
 #include "usb.h"
 
 #include "hardware.h"
@@ -287,7 +287,7 @@ void Stm32f10xOtg::isr()
                 ;
         }
 #endif
-        Usbd::reset();
+        UsbCore::reset();
     }
 
     const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
