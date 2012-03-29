@@ -542,12 +542,20 @@ bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
     encoder.encodeTiles(tiles);
     
     // Too large to encode correctly?
-    if (encoder.isTooLarge())
+    if (encoder.isTooLarge()) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (too large for compression codec)",
+            encoder.getTileCount());
         return false;
+    }
 
     // Not compressible enough to bother?
-    if (encoder.getRatio() < 10.0f)
+    if (encoder.getRatio() < 10.0f) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (not compressible)",
+            encoder.getTileCount());
         return false;
+    }
     
     encoder.logStats(getName(), log);
     data = encoder.getResult();
