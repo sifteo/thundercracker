@@ -184,7 +184,7 @@ public:
 
     uint16_t encodePinned() const;
     void encodeFlat(std::vector<uint16_t> &data) const;
-    void encodeDUB(std::vector<uint16_t> &data, Logger &log) const;
+    bool encodeDUB(std::vector<uint16_t> &data, Logger &log) const;
 
  private:
     Group *mGroup;

@@ -274,6 +274,9 @@ void Script::collect()
         Sound *sound = Lunar<Sound>::cast(L, -2);
 
         if (name && name[0] != '_') {
+            if (group || image || sound)
+                log.setMinLabelWidth(strlen(name));
+
             if (group) {
                 group->setName(name);
                 groups.insert(group);
@@ -389,8 +392,11 @@ Image::Image(lua_State *L)
         mImages.setHeight(lua_tointeger(L, -1));
     if (Script::argMatch(L, "pinned"))
         mTileOpt.pinned = lua_toboolean(L, -1);
+
     if (Script::argMatch(L, "flat"))
         mIsFlat = lua_toboolean(L, -1);
+    else
+        mIsFlat = false;
 
     if (isFlat() && isPinned()) {
         luaL_error(L, "Image formats 'flat' and 'pinned' are mutually exclusive");
@@ -522,7 +528,7 @@ void Image::encodeFlat(std::vector<uint16_t> &data) const
     }
 }
 
-void Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
+bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
 {
     // Compressed image, encoded using the DUB codec.
     
@@ -530,17 +536,23 @@ void Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
                         mImages.getHeight() / Tile::SIZE,
                         mImages.getFrames() );
 
-    for (unsigned f = 0; f < mGrids.size(); f++) {
-        const TileGrid &grid = mGrids[f];
-        const TilePool &pool = grid.getPool();
+    std::vector<uint16_t> tiles;
+    encodeFlat(tiles);
 
-        for (unsigned y = 0; y < grid.height(); y++)
-            for (unsigned x = 0; x < grid.width(); x++)
-                encoder.encodeTile(pool.index(grid.tile(x, y)));
-    }
+    encoder.encodeTiles(tiles);
+    
+    // Too large to encode correctly?
+    if (encoder.isTooLarge())
+        return false;
 
-    encoder.logStats(log);
-    encoder.writeResult(data);
+    // Not compressible enough to bother?
+    if (encoder.getRatio() < 10.0f)
+        return false;
+    
+    encoder.logStats(getName(), log);
+    data = encoder.getResult();
+
+    return true;
 }
 
 Sound::Sound(lua_State *L)

@@ -155,7 +155,8 @@ void CPPSourceWriter::writeSound(const Sound &sound)
 
     float kbps;
     enc->encodeFile(sound.getFile(), data, kbps);
-    mLog.infoLine("%20s: %7.02f kiB, %6.02f kbps %s (%s)", sound.getName().c_str(),
+    mLog.infoLineWithLabel(sound.getName().c_str(),
+        "%7.02f kiB, %6.02f kbps %s (%s)",
         data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
 
     if (data.empty())
@@ -201,31 +202,37 @@ void CPPSourceWriter::writeImage(const Image &image)
         mStream <<
             indent << "/* format  */ _SYS_AIF_PINNED,\n" <<
             indent << "/* data    */ " << image.encodePinned() << "\n}};\n\n";
-
-    } else if (image.isFlat()) {
-        mStream <<
-            indent << "/* format  */ _SYS_AIF_FLAT,\n" <<
-            indent << "/* data    */ reinterpret_cast<uint32_t>(&" << image.getName() << "_data)\n}};\n\n" <<
-            "const uint16_t " << image.getName() << "_data[] = {\n";
-
-        std::vector<uint16_t> data;
-        image.encodeFlat(data);
-        writeArray(data);
-        mStream << "};\n\n";
-
-    } else {
-        // Default codec is DUB, if the image wasn't marked explicitly flat or pinned.
-
-        mStream <<
-            indent << "/* format  */ _SYS_AIF_DUB,\n" <<
-            indent << "/* data    */ reinterpret_cast<uint32_t>(&" << image.getName() << "_data)\n}};\n\n" <<
-            "const uint16_t " << image.getName() << "_data[] = {\n";
-
-        std::vector<uint16_t> data;
-        image.encodeDUB(data, mLog);
-        writeArray(data);
-        mStream << "};\n\n";
+        return;
     }
+    
+    // If we aren't explicitly writing a Flat asset, try to compress it
+    if (!image.isFlat()) {
+        std::vector<uint16_t> data;
+        if (image.encodeDUB(data, mLog)) {
+            mStream <<
+                indent << "/* format  */ _SYS_AIF_DUB,\n" <<
+                indent << "/* data    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+                "const uint16_t " << image.getName() << "_data[] = {\n";
+            writeArray(data);
+            mStream << "};\n\n";
+            return;
+        }
+    }
+
+    // Fall back on a Flat (uncompressed tile array) asset. Note that we only
+    // wrap this in a FlatAssetImage class if the script explicitly requested
+    // a flat asset. If we decided not to compress an asset with default params,
+    // it will still be in an AssetImage class, but the compression format will
+    // be _SYS_AIF_FLAT.
+
+    mStream <<
+        indent << "/* format  */ _SYS_AIF_FLAT,\n" <<
+        indent << "/* data    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+        "const uint16_t " << image.getName() << "_data[] = {\n";
+    std::vector<uint16_t> data;
+    image.encodeFlat(data);
+    writeArray(data);
+    mStream << "};\n\n";
 }
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)

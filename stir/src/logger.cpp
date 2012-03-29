@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <algorithm>
 
 #include "logger.h"
 
@@ -18,7 +19,7 @@ Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
 ConsoleLogger::ConsoleLogger()
-    : mVerbose(false), mNeedNewline(false)
+    : mVerbose(false), mNeedNewline(false), mLabelWidth(10)
     {}
 
 void ConsoleLogger::setVerbose(bool verbose)
@@ -83,6 +84,21 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
     va_end(ap);
 }
 
+void ConsoleLogger::infoLineWithLabel(const char *label, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+
+    if (mVerbose) {
+        fprintf(stderr, " %*s: ", mLabelWidth, label);
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n");
+    }
+
+    va_end(ap);
+}
+
 void ConsoleLogger::infoEnd()
 {}
 
@@ -100,6 +116,11 @@ void ConsoleLogger::error(const char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     va_end(ap);
+}
+
+void ConsoleLogger::setMinLabelWidth(unsigned width)
+{
+    mLabelWidth = std::max(mLabelWidth, width);
 }
 
 };  // namespace Stir

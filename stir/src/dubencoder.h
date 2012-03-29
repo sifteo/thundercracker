@@ -9,7 +9,9 @@
 #ifndef _DUBENCODER_H
 #define _DUBENCODER_H
 
+#include "bits.h"
 #include <vector>
+#include <string>
 
 namespace Stir {
 
@@ -32,11 +34,41 @@ class Logger;
 
 class DUBEncoder {
 public:
-    DUBEncoder(unsigned width, unsigned height, unsigned frames);
+    DUBEncoder(unsigned width, unsigned height, unsigned frames)
+        : mWidth(width), mHeight(height), mFrames(frames) {}
 
-    void encodeTile(uint16_t index);
-    void logStats(Logger &log);
-    void writeResult(std::vector<uint16_t> &data);
+    void encodeTiles(std::vector<uint16_t> &tiles);
+    void logStats(const std::string &name, Logger &log);
+
+    unsigned getTileCount() const;
+    unsigned getCompressedWords() const;
+    float getRatio() const;
+    unsigned getNumBlocks() const;
+    bool isTooLarge() const;
+
+    const std::vector<uint16_t> &getResult() {
+        return result;
+    }
+
+private:
+    static const unsigned BLOCK_SIZE;
+
+    struct Code {
+        enum { DELTA, REF, REPEAT, INVALID } type;
+        int value;
+    };
+
+    unsigned mWidth, mHeight, mFrames;
+
+    std::vector<uint16_t> result;
+
+    void encodeBlock(uint16_t *pTopLeft, unsigned width, unsigned height,
+        std::vector<uint16_t> &blockData);
+    Code findBestCode(const std::vector<uint16_t> &dict, uint16_t tile);
+
+    void debugCode(Code code);
+    void packCode(Code code, BitBuffer &bits);
+    unsigned codeLen(Code code);
 };
 
 
