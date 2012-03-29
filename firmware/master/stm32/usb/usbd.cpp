@@ -1,7 +1,7 @@
 
 #include "usb/usbd.h"
 #include "usb/usbhardware.h"
-#include "usb/usbdriver.h"
+#include "usb.h"
 
 using namespace Usb;
 
@@ -30,7 +30,7 @@ void Usbd::reset()
     UsbHardware::epSetup(0, EpAttrControl, 64);
     UsbHardware::setAddress(0);
 
-    UsbDriver::handleReset();
+    UsbDevice::handleReset();
 }
 
 void Usbd::setAddress(uint16_t addr)

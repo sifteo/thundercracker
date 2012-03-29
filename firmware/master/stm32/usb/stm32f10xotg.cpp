@@ -1,7 +1,7 @@
 #include "stm32f10xotg.h"
 #include "usb/usbd.h"
-#include "usb/usbdriver.h"
 #include "usb/usbcontrol.h"
+#include "usb.h"
 
 #include "hardware.h"
 #include "macros.h"
@@ -325,7 +325,7 @@ void Stm32f10xOtg::isr()
                 UsbControl::controlRequest(ep, txn);
             }
             else {
-                UsbDriver::outEndpointCallback(ep);
+                UsbDevice::outEndpointCallback(ep);
             }
         }
     }
@@ -343,7 +343,7 @@ void Stm32f10xOtg::isr()
             // only really interested in XFRC to indicate TX complete
             if (ep.DIEPINT & 0x1) {
                 if (i != 0)
-                    UsbDriver::inEndpointCallback(i);
+                    UsbDevice::inEndpointCallback(i);
                 ep.DIEPINT = 0x1;
             }
         }
@@ -351,19 +351,19 @@ void Stm32f10xOtg::isr()
 
     const uint32_t usbsusp = 1 << 11;
     if (status & usbsusp) {
-        UsbDriver::handleSuspend();
+        UsbDevice::handleSuspend();
         OTG.global.GINTSTS = usbsusp;
     }
 
     const uint32_t wkupint = 1 << 31;
     if (status & wkupint) {
-        UsbDriver::handleResume();
+        UsbDevice::handleResume();
         OTG.global.GINTSTS = wkupint;
     }
 
     const uint32_t sof = 1 << 3;
     if (status & sof) {
-        UsbDriver::handleStartOfFrame();
+        UsbDevice::handleStartOfFrame();
         OTG.global.GINTSTS = sof;
     }
 }

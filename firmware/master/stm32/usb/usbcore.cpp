@@ -1,7 +1,7 @@
 #include "usb/usbcore.h"
 #include "usb/usbhardware.h"
-#include "usb/usbdriver.h"
 #include "usb/usbcontrol.h"
+#include "usb.h"
 
 #include "macros.h"
 #include <string.h>
@@ -77,7 +77,7 @@ int UsbCore::setConfiguration(SetupData *req)
 
     Usbd::setConfig(req->wValue);
     UsbHardware::epReset();
-    UsbDriver::onConfigComplete(req->wValue);
+    UsbDevice::onConfigComplete(req->wValue);
 
     return 1;
 }

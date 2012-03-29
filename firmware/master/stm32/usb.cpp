@@ -117,6 +117,55 @@ void UsbDevice::init() {
     Usbd::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
 }
 
+/*
+ * Our configuration has been set, we're now ready to enable the endpoints
+ * for the selected configuration - we only ever have one for this device.
+ */
+void UsbDevice::onConfigComplete(uint16_t wValue)
+{
+    UsbHardware::epSetup(InEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+}
+
+void UsbDevice::handleReset()
+{
+
+}
+
+void UsbDevice::handleSuspend()
+{
+
+}
+
+void UsbDevice::handleResume()
+{
+
+}
+
+void UsbDevice::handleStartOfFrame()
+{
+
+}
+
+void UsbDevice::inEndpointCallback(uint8_t ep)
+{
+
+}
+
+void UsbDevice::outEndpointCallback(uint8_t ep)
+{
+    Tasks::setPending(Tasks::UsbOUT, 0);
+}
+
+
+/*
+ * Handle any specific control requests - right now we don't handle any.
+ */
+int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
+{
+    return 0;
+}
+
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
     while (UsbHardware::epTxInProgress(InEpAddr))

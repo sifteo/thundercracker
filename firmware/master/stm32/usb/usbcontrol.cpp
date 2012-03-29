@@ -1,8 +1,8 @@
 #include "usbcontrol.h"
 #include "usb/usbd.h"
 #include "usb/usbhardware.h"
-#include "usb/usbdriver.h"
 #include "usb/usbcore.h"
+#include "usb.h"
 
 #include "macros.h"
 
@@ -47,7 +47,7 @@ int UsbControl::receiveChunk()
 int UsbControl::requestDispatch(SetupData *req)
 {
 
-    int result = UsbDriver::controlRequest(req, &controlState.pdata, &controlState.len);
+    int result = UsbDevice::controlRequest(req, &controlState.pdata, &controlState.len);
     if (result)
         return result;
 
