@@ -28,33 +28,67 @@
 			... probably still good.
 		</description>
 	</item>
-	<item id="bomb" storage="equipment">
+	<item id="bomb" storage="equipment" trigger="bomb">
 		<name>Bomb</name>
 		<description>
 			Oh dear! Someone set
 			us up a Bomb!
 		</description>
 	</item>
-	<item id="babomb" storage="equipment">
+	<item id="crystal_ball" storage="equipment">
 		<name>Ba-Bomb</name>
 		<description>
-			Oh.  Another bomb.
-			Ho-hum.
+			A Crystal Ball!
+			NOT FROM SUPER MARIO
 		</description>
 	</item>
-	<item id="basic_key" storage="equipment" trigger="key">
+	<item id="basic_key" storage="equipment">
 		<name>Basic Key</name>
 		<description>
 			Just a plain-old Key
 			Nothing fancy
 		</description>
 	</item>
-	<item id="skeleton_key" storage="equipment" trigger="key">
+	<item id="skeleton_key" storage="equipment">
 		<name>Skeleton Key</name>
 		<description>
 			A skeleton key.
 			It's slimey! Ew!
 		</description>
 	</item>
-
+	<item id="booties" storage="equipment" trigger="boot">
+		<name>Lava Booties</name>
+		<description>
+			Lava-Proof Boots.
+			Fashionable, too!
+		</description>
+	</item>
+	<item id="lantern" storage="equipment">
+		<name>Lantern</name>
+		<description>
+			Child-Safe(tm) Lantern
+			Illuminates dark rooms.
+		</description>
+	</item>
+	<item id="bow" storage="equipment">
+		<name>Bow</name>
+		<description>
+			A bow-and-arrow.
+			Just here for flavor.
+		</description>
+	</item>
+	<item id="star" storage="equipment">
+		<name>Gold Star</name>
+		<description>
+			You get a Gold Star!
+			Good job!
+		</description>
+	</item>
+	<item id="cloak" storage="equipment">
+		<name>Magic Cloak</name>
+		<description>
+			A Magical Cloak!  Today
+			we call them Snuggies.
+		</description>
+	</item>
 </item-database>

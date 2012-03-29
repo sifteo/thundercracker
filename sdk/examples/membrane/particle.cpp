@@ -40,7 +40,7 @@ void Particle::doPhysics(float dt)
     if (state == S_DESTROY_PENDING && stateDeadline.inPast())
         return;
 
-    const Float2 center( VidMode::LCD_width / 2, VidMode::LCD_height / 2 );
+    const Float2 center = { VidMode::LCD_width / 2, VidMode::LCD_height / 2 };
     Float2 cv = center - pos;
     const float radius = 35.0f;
     
@@ -122,7 +122,7 @@ void Particle::draw(GameCube *gc, int spriteId)
 
     // Destruction    
     if (state == S_DESTROY_PENDING && stateDeadline.inPast() &&
-        gc->hilighter.doHilight(Vec2::round(pos))) {
+        gc->hilighter.doHilight(pos.round())) {
         
         stateDeadline = SystemTime::now() + Game::random.uniform(0.5, 3.0);
         state = S_RESPAWN_PENDING;
@@ -170,9 +170,9 @@ void Particle::draw(GameCube *gc, int spriteId)
     
     // Drawing
     
-    Float2 center( asset->width * 4, asset->height * 4 );
+    Float2 center = { asset->width * 4, asset->height * 4 };
     vid.setSpriteImage(spriteId, *asset, frame);
-    vid.moveSprite(spriteId, Vec2::round(pos - center));
+    vid.moveSprite(spriteId, (pos - center).round());
 }
 
 void Particle::instantiate(GameCube *gc)

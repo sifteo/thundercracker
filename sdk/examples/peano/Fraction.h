@@ -26,7 +26,7 @@ namespace TotalsGame
 		void Reduce();
 
         template <unsigned int capacity>
-        void ToString(String<capacity> *output)
+        void ToString(Sifteo::String<capacity> *output)
         {
             *output << nu;
 

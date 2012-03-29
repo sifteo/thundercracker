@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "CubeStateMachine.h"
+
 using namespace Sifteo;
 
 union EventData

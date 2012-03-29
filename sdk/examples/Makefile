@@ -1,7 +1,21 @@
 SUBDIRS = \
-	hello text gfxdemo chroma nyan sensors \
-	scroller-bg0 scroller-bg1 sprites stars tiltShake \
-	pairing word membrane
+	betterflow \
+	chroma \
+	gfxdemo \
+	hello \
+	membrane \
+	monster \
+	nyan \
+	pairing \
+	peano \
+	sandwich \
+	scroller-bg0 \
+	scroller-bg1 \
+	sensors \
+	sprites \
+	stars \
+	text \
+	word \
 
 .PHONY: clean subdirs $(SUBDIRS)
 

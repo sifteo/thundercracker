@@ -50,7 +50,7 @@ static void DrawColumn(Cube* pCube, int x) {
 		// drawing a blank column
 		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row+2), BgTile);
+			g.BG0_drawAsset(Vec2<int>(addr, row+2), BgTile);
 		}
 
 	}
@@ -86,7 +86,7 @@ static float GetAccel(Cube *pCube) {
 }
 
 // entry point
-void siftmain() {
+void main() {
 	// enable cube slots
 	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) { p->enable(p-gCubes); }
   	// load assets
@@ -157,7 +157,7 @@ void siftmain() {
 	for(;;) {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();
-		while(fabs(GetAccel(pCube)) < kAccelThresholdOn) {
+		while(abs(GetAccel(pCube)) < kAccelThresholdOn) {
 			Paint(pCube);
 			bool touch = pCube->touching();
 			// when touching any icon but the last one
@@ -183,7 +183,7 @@ void siftmain() {
 			// update physics
 			const float accel = GetAccel(pCube);
 			const float dt = 0.225f;
-			const bool isTilting = fabs(accel) > kAccelThresholdOff;
+			const bool isTilting = abs(accel) > kAccelThresholdOff;
 			const bool isLefty = position < 0.f - 0.05f;
 			const bool isRighty = position > 96.f*(NUM_ICONS-1) + 0.05f;
 			if (isTilting && !isLefty && !isRighty) {
@@ -198,7 +198,7 @@ void siftmain() {
 				velocity *= 0.875f;
 				position += velocity * dt;
 				position = Lerp(position, stopping_position, 0.15f);
-				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
+				doneTilting = abs(velocity) < 1.0f && abs(stopping_position - position) < 0.5f;
 			}
 			const float pad = 24.f;
 			// update view

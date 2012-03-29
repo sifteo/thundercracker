@@ -9,6 +9,9 @@
 #include "hardware.h"
 #include "params.h"
 
+// Combined hardware and firmware revision
+#define REVISION_CODE       (0x10 + HWREV)
+
 
 void params_init()
 {
@@ -21,14 +24,23 @@ void params_init()
      *
      * MUST be called before interrupts are enabled. We don't want
      * to enter ISRs while FSR_WEN is set!
+     *
+     * Inside the HWID, we embed the FIRMWARE_REV_CODE and HARDWARE_REV_CODE,
+     * as the first and second bytes respectively.
      */
      
     uint8_t i;
-     
+
+    if (params.hwid[0] == 0xFF) {
+        FSR_WEN = 1;
+        params.hwid[0] = REVISION_CODE;
+        FSR_WEN = 0;
+    }
+
     // Power on RNG, with bias corrector
     RNGCTL = 0xC0;
-    
-    for (i = 0; i < HWID_LEN; i++)
+
+    for (i = 1; i < HWID_LEN; i++)
         if (params.hwid[i] == 0xFF) {
             uint8_t b;
 

@@ -64,7 +64,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
 
     if( numStems <= 2 )
     {
-        float spritePerc = 1.0f - Math::fmodf( m_fTimer, TIMER_LOW_SPRITE_PERIOD ) / TIMER_LOW_SPRITE_PERIOD;
+        float spritePerc = 1.0f - fmod( m_fTimer, TIMER_LOW_SPRITE_PERIOD ) / TIMER_LOW_SPRITE_PERIOD;
         unsigned int spriteframe = spritePerc * ( timerLow.frames + 1 );
 
         if( spriteframe >= timerLow.frames )
@@ -77,7 +77,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
     else
     {
         //figure out what frame we're on
-        float spritePerc = 1.0f - Math::fmodf( m_fTimer, TIMER_SPRITE_PERIOD ) / TIMER_SPRITE_PERIOD;
+        float spritePerc = 1.0f - fmod( m_fTimer, TIMER_SPRITE_PERIOD ) / TIMER_SPRITE_PERIOD;
         unsigned int spriteframe = spritePerc * ( timerSprite.frames + 1 );
 
         if( spriteframe >= timerSprite.frames )

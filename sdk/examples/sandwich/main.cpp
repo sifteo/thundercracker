@@ -9,7 +9,7 @@ AudioChannel gChannelSfx;
 AudioChannel gChannelMusic;
 #endif
 
-void siftmain() {
+void main() {
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     	gCubes[i].enable(i + CUBE_ID_BASE);
   	}

@@ -1,0 +1,33 @@
+<map-database>
+	<map id="forest">
+		<name>The Forest</name>
+	</map>
+	<map id="castle">
+		<name>Castle Hoagie</name>
+	</map>
+	<map id="dungeon">
+		<name>Lembas Caverns</name>
+	</map>
+	
+	
+	<map id="temple_level1">
+		<name>Temple area 1</name>
+	</map>
+	
+	<map id="temple_level2">
+		<name>Temple area 2</name>
+	</map>
+
+	<map id="temple_level3">
+		<name>Temple area 3</name>
+	</map>
+<!--
+	<map id="temple_level4">
+		<name>Temple area 4</name>
+	</map>
+-->
+	<map id="sandbox">
+		<name>Programming Sandbox</name>
+	</map>
+
+</map-database>

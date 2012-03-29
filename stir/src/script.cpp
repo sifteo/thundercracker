@@ -13,7 +13,7 @@
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
-#include "asegwriter.h"
+#include "audioencoder.h"
 
 namespace Stir {
 
@@ -77,8 +77,7 @@ bool Script::run(const char *filename)
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
     CPPSourceWriter source(log, outputSource);
-    ASegWriter aseg(log, "asegment.bin");
-    
+
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
         Group *group = *i;
         TilePool &pool = group->getPool();
@@ -91,14 +90,19 @@ bool Script::run(const char *filename)
         proof.writeGroup(*group);
         header.writeGroup(*group);
         source.writeGroup(*group);
-        aseg.writeGroup(*group);
     }
-    
-    for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
-        Sound *sound = *i;
-        header.writeSound(*sound);
-        source.writeSound(*sound);
-        aseg.writeSound(*sound);
+
+    if (!sounds.empty()) {
+        log.heading("Audio");
+        log.infoBegin("Sound compression");
+
+        for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
+            Sound *sound = *i;
+            header.writeSound(*sound);
+            source.writeSound(*sound);
+        }
+
+        log.infoEnd();
     }
 
     proof.close();
@@ -491,17 +495,32 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "encode")) {
         setEncode(lua_tostring(L, -1));
     } else {
-        setEncode("Sample");    // TODO: this will eventually change to "SpeexSample" in the master FW
+        setEncode("");  // Default
     }
     
     if (Script::argMatch(L, "quality")) {
         setQuality(lua_tonumber(L, -1));
     } else {
-        setQuality(10);
+        lua_getglobal(L, GLOBAL_QUALITY);
+        setQuality(lua_tonumber(L, -1));
+    }
+
+    if (Script::argMatch(L, "vbr")) {
+        setVBR(lua_toboolean(L, -1));
+    } else {
+        setVBR(false);
     }
 
     if (!Script::argEnd(L))
         return;
+
+    // Validate the encoder parameters immediately, so we can raise an error
+    // during script execution rather than during actual audio compression.
+    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality(), getVBR());
+    if (enc)
+        delete enc;
+    else
+        luaL_error(L, "Invalid audio encoding parameters");
 }
 
 

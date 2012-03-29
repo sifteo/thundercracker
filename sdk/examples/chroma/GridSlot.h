@@ -127,7 +127,7 @@ private:
 	void markNeighbor( int row, int col );
     void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
-    unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
+    unsigned int GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
@@ -149,7 +149,7 @@ private:
 	unsigned int m_col;
 
 	//current position in 16x16 grid for use when moving
-	Vec2 m_curMovePos;
+	Int2 m_curMovePos;
 
 	unsigned int m_score;
 	//fixed dot
@@ -165,7 +165,7 @@ private:
 	unsigned int m_animFrame;
     unsigned int m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
-    Vec2 m_lastFrameDir;
+    Int2 m_lastFrameDir;
 };
 
 

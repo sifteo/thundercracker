@@ -7,7 +7,6 @@
 #include "assets.gen.h"
 
 using namespace Sifteo;
-using namespace Sifteo::Math;
 
 #define NUM_CUBES     3
 #define NUM_PARTICLES 6
@@ -47,13 +46,13 @@ public:
     void animate(float timeStep);
     void draw();
 
-    bool doHilight(Vec2 requestedPos);
+    bool doHilight(Int2 requestedPos);
     
 private:
     Cube &cube;
     TimeTicker ticker;
     int counter;
-    Vec2 pos;
+    Int2 pos;
 };
     
     

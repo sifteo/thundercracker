@@ -33,7 +33,7 @@ bool FlashStorage::init(const char *filename)
         fprintf(stderr, "FLASH: Using file '%s'\n", filename);
 
         result = fread(&data, 1, sizeof data, file);
-        if (result < 0)
+        if (result != 0)
             return false;
 
     }

@@ -1,5 +1,6 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_trigger import *
+from itertools import product
 
 # constants
 PORTAL_OPEN = 0
@@ -124,9 +125,6 @@ class Room:
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y):
 					return (x,y)
 		return (0,0)
-
-	def subdiv_center(self):
-		pass
 	
 	def ispath(self, x, y):
 		return "path" in self.tileat(x,y).props
@@ -195,27 +193,19 @@ class Room:
 			self._subdiv_visit(slots, mask, x, y+1)
 			self._subdiv_visit(slots, mask, x, y-1)
 
-	def write_source_to(self, src):
-		src.write("    {\n")
-		# collision mask rows
-		src.write("        {")
+	def write_tiles_to(self, src):
+		src.write("    {{")
+		for ty,tx in product(range(8),range(8)):
+			src.write("0x%x," % self.tileat(tx,ty).lid)
+		src.write("}},\n")
+
+	def write_telem_source_to(self, src):
+		src.write("    {0x%x,0x%x,{" % self.primary_center())
 		for row in range(8):
 			rowMask = 0
 			for col in range(8):
 				if not iswalkable(self.tileat(col, row)):
 					rowMask |= (1<<col)
 			src.write("0x%x," % rowMask)
-		src.write("},\n")
-		# tiles
-		src.write("        { ")
-		for ty in range(8):
-			#src.write("            ")
-			for tx in range(8):
-				src.write("0x%x," % self.tileat(tx,ty).lid)
-			#src.write("\n")
-		src.write("},\n")
-		# centerx, centery
-		cx,cy = self.primary_center()
-		src.write("        0x%x,0x%x,\n" % (cx, cy))
-		src.write("    },\n")		
+		src.write("}},\n")
 

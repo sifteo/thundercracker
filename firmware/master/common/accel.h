@@ -1,16 +1,13 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _ACCEL_H
 #define _ACCEL_H
 
 #include <sifteo/abi.h>
-#include <sifteo/macros.h>
+#include "macros.h"
 
 /**
  *Accelerometer state for cubes

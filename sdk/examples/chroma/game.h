@@ -84,7 +84,7 @@ public:
     };
 
     CubeWrapper m_cubes[NUM_CUBES];
-    static Math::Random random;
+    static Random random;
 
 	void Init();
 	void Update();
@@ -130,7 +130,7 @@ public:
     bool DoCubesOnlyHaveStrandedDots() const;
     bool OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const;
 
-    void playSound( _SYSAudioModule &sound );
+    void playSound( const AssetAudio &sound );
     //play random slosh sound
     void playSlosh();
 
@@ -200,7 +200,7 @@ private:
     AudioChannel m_musicChannel;
 #endif
     //use to avoid playing the same sound multiple times in one frame
-    const _SYSAudioModule *m_pSoundThisFrame;
+    const AssetAudio *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
     static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];

@@ -1,169 +1,154 @@
 #include "ConfirmationMenu.h"
+#include "Skins.h"
+#include "DialogWindow.h"
 
 namespace TotalsGame {
 
-
-ConfirmationChoiceView::EventHandler::EventHandler(ConfirmationChoiceView *_owner)
+namespace ConfirmationMenu
 {
-    owner = _owner;
-}
 
-void ConfirmationChoiceView::EventHandler::OnCubeTouch(TotalsCube *c, bool pressed)
+const int YES = 1;
+const int NO = 2;
+const int ASK = 0;
+
+bool gotTouchOn[3];
+bool triggered[3];
+
+static const float kTransitionTime = 0.333f;
+
+const int kPad = 1;
+
+void OnCubeTouch(void *, Cube::ID cid)
 {
-    owner->OnButton(c, pressed);
-}
-
-
-bool ConfirmationChoiceView::Triggered()
-{
-    return mTriggered;
-}
-
-ConfirmationChoiceView::ConfirmationChoiceView(TotalsCube *c, const PinnedAssetImage *_image):
-    MenuController::TransitionView(c), eventHandler(this)
-{
-    image = _image;
-    mTriggered = false;
-
-    DidAttachToCube(c);
-}
-
-void ConfirmationChoiceView::DidAttachToCube (TotalsCube *c)
-{
-    c->AddEventHandler(&eventHandler);
-}
-
-void ConfirmationChoiceView::WillDetachFromCube (TotalsCube *c)
-{
-    c->RemoveEventHandler(&eventHandler);
-}
-
-void ConfirmationChoiceView::OnButton(TotalsCube *c, bool pressed)
-{
-    if (!pressed)
+    bool pressed = Game::cubes[cid].touching();
+    if(cid == YES || cid ==NO)
     {
-        mTriggered = true;
-        AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
+        if(pressed)
+            gotTouchOn[cid] = true;
+
+        if (!pressed && gotTouchOn[cid])
+        {
+            triggered[cid] = true;
+            PLAY_SFX(sfx_Menu_Tilt_Stop);
+        }
     }
 }
 
-void ConfirmationChoiceView::Paint ()
+int CollapsesPauses(int off) {
+  if (off > 7) {
+    if (off < 7 + kPad) {
+      return 7;
+    }
+    off -= kPad;
+  }
+  return off;
+}
+
+void PaintTheDoors(TotalsCube *c, int offset, bool opening)
 {
-    TransitionView::Paint();
-    if (GetIsLastFrame())
+    offset = CollapsesPauses(offset);
+
+    const Skins::Skin &skin = Skins::GetSkin();
+    if (offset < 7) {
+        // moving to the left
+        c->ClipImage(&skin.vault_door, Vec2(7-offset, 7));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-offset, 7));
+        c->ClipImage(&skin.vault_door, Vec2(7-offset, 7-16));
+        c->ClipImage(&skin.vault_door, Vec2(7-16-offset,7-16));
+    } else {
+        // opening
+        int off = offset - 7;
+        int top = 7 - off;
+        int bottom = 7 + MIN(5, off);
+
+        if (opening && bottom-top > 0)
+        {
+            c->FillArea(&Dark_Purple, Vec2(0, top), Vec2(16, bottom-top));
+        }
+
+        c->ClipImage(&skin.vault_door, Vec2(0, top-16));
+        c->ClipImage(&skin.vault_door, Vec2(0, bottom));
+    }
+}
+
+void AnimateDoors(TotalsCube *c, bool opening)
+{
+    if(opening)
+        AudioPlayer::PlayShutterOpen();
+    else
+        AudioPlayer::PlayShutterClose();
+    for(float t=0; t<kTransitionTime; t+=Game::dt) {
+        float amount = opening ? t/kTransitionTime : 1-t/kTransitionTime;
+
+        PaintTheDoors(c, (7+6+kPad) * amount, opening);
+        System::paintSync();
+        Game::UpdateDt();
+    }
+    PaintTheDoors(c, opening? (7+6+kPad): 0, opening);
+    System::paintSync();
+}
+
+//true means selected first choice (yes)
+bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::AssetImage *choice2)
+{    
+    bool result = false;
+
+    if(!choice1)
     {
-        GetCube()->Image(image, Vec2(3, 1)); //TODO 1 is a bad approximationg for 12/8
+        choice1 = &Icon_Yes;
     }
-}
 
-
-
-ConfirmationMenu::ConfirmationMenu (const char *msg)
-{
-    static char buffers[2][sizeof(ConfirmationChoiceView)];
-    mYes = new(buffers[0]) ConfirmationChoiceView(Game::GetCube(0), &Icon_Yes);
-    mNo = new(buffers[1]) ConfirmationChoiceView(Game::GetCube(1), &Icon_No);
-    mResult = false;
-    mManagingLabel = false;
-
-    static char ivBuffer[sizeof(InterstitialView)];
-    mLabel = new(ivBuffer) InterstitialView(Game::GetCube(2));
-    mManagingLabel= true;
-
-    mLabel->image = NULL;
-    mLabel->message = msg;
-
-    done = false;
-
-    CORO_RESET;
-}
-
-void ConfirmationMenu::Tick(float dt)
-{
-    Coroutine(dt);
-    if(!done)
+    if(!choice2)
     {
-        mYes->Update(dt);
-        mNo->Update(dt);
-        mLabel->Update(dt);
+        choice2 = &Icon_No;
     }
-}
 
-float ConfirmationMenu::Coroutine(float dt)
-{
+    AnimateDoors(Game::cubes+YES, true);
+    Game::cubes[YES].Image(*choice1, Vec2(3, 1));
 
-    CORO_BEGIN;
+    AnimateDoors(Game::cubes+NO, true);
+    Game::cubes[NO].Image(*choice2, Vec2(3, 1));
+    System::paint();
 
-    AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        mLabel->SetTransitionAmount(remembered_t/kTransitionTime);
-        CORO_YIELD(0);
+    DialogWindow dw(Game::cubes+ASK);
+
+    if(msg)
+    {   //no message -> dont mess with cube 0 (for tutorial)
+        AnimateDoors(Game::cubes+ASK, true);        
+        dw.SetForegroundColor(75, 0, 85);
+        dw.SetBackgroundColor(255, 255, 255);
+        dw.DoDialog(msg, 16, 20);
     }
-    mLabel->SetTransitionAmount(1);
-    CORO_YIELD(0);
-    AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        mYes->SetTransitionAmount(remembered_t/kTransitionTime);
-        CORO_YIELD(0);
+
+    gotTouchOn[0] = gotTouchOn[1] = gotTouchOn[2] = false;
+    triggered[0] = triggered[1] = triggered[2] = false;
+    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+
+    while(!(triggered[YES] || triggered[NO])) {
+        System::yield();
+        Game::UpdateDt();
     }
-    mYes->SetTransitionAmount(1);
-    CORO_YIELD(0);
-    AudioPlayer::PlayShutterOpen();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        mNo->SetTransitionAmount(remembered_t/kTransitionTime);
-        CORO_YIELD(0);
+
+    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
+
+    AnimateDoors(Game::cubes+YES, false);
+    AnimateDoors(Game::cubes+NO, false);
+
+    if(msg)
+    {
+        dw.EndIt();
+        Game::cubes[ASK].FillArea(&Dark_Purple, Vec2(0, 0), Vec2(16, 16));
+        AnimateDoors(Game::cubes+ASK, false);
     }
-    mNo->SetTransitionAmount(1);
-    CORO_YIELD(0);
-    while(!(mYes->Triggered() || mNo->Triggered())) {
-        CORO_YIELD(0);
-    }
-    mResult = mYes->Triggered();
 
-    first = mResult ? mNo : mYes;
-    second = mResult ? mYes : mNo;
+    return triggered[YES];
 
-    AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        first->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        CORO_YIELD(0);
-    }
-    first->SetTransitionAmount(0);
-    CORO_YIELD(0);
-
-    AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        second->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        CORO_YIELD(0);
-    }
-    second->SetTransitionAmount(0);
-    CORO_YIELD(0);
-
-    AudioPlayer::PlayShutterClose();
-    for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
-        mLabel->SetTransitionAmount(1-remembered_t/kTransitionTime);
-        CORO_YIELD(0);
-    }
-    mLabel->SetTransitionAmount(0);
-
-    CORO_END;
-
-    done = true;
-    return -1;
-}
-
-bool ConfirmationMenu::IsDone()
-{
-    return done;
-}
-
-bool ConfirmationMenu::GetResult()
-{
-    return mResult;
 }
 
 
 
+}
 
 }
 

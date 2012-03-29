@@ -180,6 +180,7 @@ void FrontendOverlay::drawHelp()
         "Mouse wheel resizes the play surface.",
         "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
         "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
+        "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",
         "",
         APP_COPYRIGHT,

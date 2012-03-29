@@ -1,0 +1,60 @@
+Huge optimizations:
+
+- Intelligent function splitting and/or un-inlining!
+- Flash block packing!
+
+Medium-sized optimizations:
+
+- Generate offset loads, when we can guarantee it's safe to do so.
+- Optimize out redundant base pointer validations
+- Compressed rwdata segment (At least some basic RLE to eliminate zeroes)
+
+Smaller optimizations:
+
+- More thorough (bidirectional) align-slot filling in SVMAlignPass
+- More work on identifying opportunities to use imm12 addressing
+- Equal optimization weight for all 16-bit instructions? LDRpc alone is
+  better than LDRpc plus MOVs, for example.
+- More efficient comparison generation? (See ARMTargetLowering::getARMCmp)
+- (Easy) Deduplicate log strings. Probably can be done trivially by changing
+  flags on these GlobalValues.
+
+Correctness:
+
+- SVM Test suite!
+
+- Register stacking, security
+    - Trusted registers must not be stored in untrusted RAM while we may
+      write to it on userspace's behalf.
+
+- Rigorous memory validation
+    - Include exception frame size in stackLimit
+    - Finish unfinished parts of SvmValidator (Branch targets especially)
+    - Test SvmValidator and SvmRuntime with a code fuzzer!
+
+- Extended calling convention
+    - more than 8 args
+    - by-value, structs...
+    - varargs
+
+Nice to have:
+
+- Bogosort code blocks, constpool entries, etc. Spacial ordering beyond a
+  one-block granularity matters not at all at runtime, so this may be a cheap
+  method to obfuscate binaries with no real performance penalty.
+
+SDK optimization:
+
+- Optimize out double-precision math in System::clock() in most cases, by
+  having that function return a class with binop overloads. It can do integer
+  math in most cases, and return a float only when explicitly requested.
+
+Debugging support:
+
+- What's left to implement in order to get working Dwarf symbols?
+- gdb stub! (Would this work with stock ARM gdb, or would we need a
+  special build?)
+
+- Better error and warning messages for slinky!
+
+- Debug symbols and backtraces in simulator SvmDebug! (High priority!)

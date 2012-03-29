@@ -28,7 +28,7 @@ void Banner::Draw( BG1Helper &bg1helper )
         return;
 
     //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
-    bg1helper.DrawPartialAsset( Vec2( CENTER_PT - m_tiles, 6 ), Vec2( CENTER_PT - m_tiles, 0 ), Vec2( m_tiles * 2, BANNER_ROWS ), BannerImg );
+    bg1helper.DrawPartialAsset( Vec2<int>( CENTER_PT - m_tiles, 6 ), Vec2<int>( CENTER_PT - m_tiles, 0 ), Vec2<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -74,7 +74,7 @@ bool Banner::IsActive() const
 }
 
 
-void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor anchor, int score/*, int frame*/ )
+void Banner::DrawScore( BG1Helper &bg1helper, const Int2 &pos, Banner::Anchor anchor, int score )
 {
     String<16> buf;
     buf << score;

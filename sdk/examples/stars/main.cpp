@@ -9,7 +9,7 @@
 
 using namespace Sifteo;
 
-Math::Random gRandom;
+Random gRandom;
 
 class StarDemo {
 public:
@@ -127,11 +127,9 @@ public:
         /*
          * We respond to the accelerometer
          */
-         
-        _SYSAccelState accel;
-        _SYS_getAccel(cube.id(), &accel);
-        Float2 tilt(accel.x, accel.y);
-        tilt *= starTiltSpeed;
+
+        Int2 accel = cube.physicalAccel();
+        Float2 tilt = accel * starTiltSpeed;
         
         /*
          * Update starfield animation
@@ -139,12 +137,12 @@ public:
         
         VidMode_BG0_SPR_BG1 vid(cube.vbuf);
         for (unsigned i = 0; i < numStars; i++) {
-            const Float2 center(64 - 3.5f, 64 - 3.5f);
+            const Float2 center = { 64 - 3.5f, 64 - 3.5f };
             vid.resizeSprite(i, 8, 8);
-            vid.setSpriteImage(i, Star.index + (frame % Star.frames) * Star.width * Star.height);
+            vid.setSpriteImage(i, Star, frame % Star.frames);
             vid.moveSprite(i, stars[i].pos + center);
             
-            stars[i].pos += timeStep * (stars[i].velocity + tilt);
+            stars[i].pos += float(timeStep) * (stars[i].velocity + tilt);
             
             if (stars[i].pos.x > 80 || stars[i].pos.x < -80 ||
                 stars[i].pos.y > 80 || stars[i].pos.y < -80)
@@ -158,12 +156,12 @@ public:
         frame++;
         fpsTimespan += timeStep;
 
-        Float2 bgVelocity(accel.x * bgTiltSpeed, accel.y * bgTiltSpeed - bgScrollSpeed);
-        bg += timeStep * bgVelocity;
-        vid.BG0_setPanning(Vec2::round(bg));
-        
+        Float2 bgVelocity = accel * bgTiltSpeed + Vec2(0.0f, -1.0f) * bgScrollSpeed;
+        bg += float(timeStep) * bgVelocity;
+        vid.BG0_setPanning(bg.round());
+
         text += (textTarget - text) * textSpeed;
-        vid.BG1_setPanning(Vec2::round(text));
+        vid.BG1_setPanning(text.round());
     }
 
 private:   
@@ -184,6 +182,7 @@ private:
         
         while ((c = *(str++))) {
             uint16_t index = (c - ' ') * 2 + Font.index;
+            index += Font.group->cubes[cube.id()].baseAddr;
             cube.vbuf.pokei(addr, index);
             cube.vbuf.pokei(addr + 16, index + 1);
             addr++;
@@ -200,8 +199,12 @@ private:
 };
 
 
-void siftmain()
+void main()
 {
+    // XXX: Test for relocatable asset groups
+    GameAssets.cubes[0].baseAddr = 512 * 8;
+    GameAssets.cubes[1].baseAddr = 512 * 6;
+    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     

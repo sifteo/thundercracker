@@ -1,8 +1,8 @@
 #include "Common.h"
 
-Math::Random gRandom;
+Random gRandom;
 
-Cube::Side InferDirection(Vec2 u) {
+Cube::Side InferDirection(Int2 u) {
 	if (u.x > 0) {
 		return SIDE_RIGHT;
 	} else if (u.x < 0) {
@@ -14,12 +14,27 @@ Cube::Side InferDirection(Vec2 u) {
 	}
 }
 
+int AdvanceTowards(int curr, int targ, int mag) {
+  if (curr > targ) {
+    int x = curr - targ;
+    if (x > mag) {
+      return curr - mag;
+    }
+  } else if (curr < targ) {
+    int x = targ - curr;
+    if (x > mag) {
+      return curr + mag;
+    }
+  }
+  return targ;
+}
+
 //------------------------------------------------------------------------------
 // Sfx Utilities
 //------------------------------------------------------------------------------
 
 #if SFX_ON
-void PlaySfx(_SYSAudioModule& handle, bool preempt) {
+void PlaySfx(const AssetAudio& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
       gChannelSfx.stop();
@@ -32,7 +47,7 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt) {
 #endif
 
 #if MUSIC_ON
-void PlayMusic(_SYSAudioModule& music, bool loop) {
+void PlayMusic(const AssetAudio& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }

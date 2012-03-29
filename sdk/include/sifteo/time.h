@@ -7,6 +7,10 @@
 #ifndef _SIFTEO_TIME_H
 #define _SIFTEO_TIME_H
 
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
 #include <sifteo/macros.h>
 
 namespace Sifteo {
@@ -220,9 +224,7 @@ public:
      * Returns a new SystemTime representing the current system clock value.
      */
     static SystemTime now() {
-        int64_t ticks;
-        _SYS_ticks_ns(&ticks);
-        return SystemTime(ticks);
+        return SystemTime(_SYS_ticks_ns());
     }
     
     /**

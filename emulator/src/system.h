@@ -26,7 +26,7 @@ class System {
  public:
     VirtualTime time;
 
-    static const unsigned DEFAULT_CUBES = 2;
+    static const unsigned DEFAULT_CUBES = 3;
     static const unsigned MAX_CUBES = 32;
 
     Cube::Hardware cubes[MAX_CUBES];
@@ -39,6 +39,7 @@ class System {
     // Global debug options
     bool opt_continueOnException;
     bool opt_turbo;
+    bool opt_lockRotationByDefault;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;

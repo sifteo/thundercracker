@@ -4,75 +4,23 @@
 namespace TotalsGame
 {
 
-View::View(TotalsCube *_cube)
+View::View()
 {
     mCube = NULL;
-    mLockCount = 0;
-    SetCube(_cube);
-    mCube->SetView(this);
 }
 
-void View::PaintViews(TotalsCube *cubes, int numCubes)
+View::~View()
 {
-    for(int i = 0; i < numCubes; i++)
+    if(mCube && mCube->GetView() == this)
     {
-        View *v = cubes[i].GetView();
-        if(v) v->Paint();
+        mCube->SetView(NULL);
     }
 }
 
-void View::SetCube(TotalsCube *c)
-{
-    if (mCube != c)
-    {
-        if (mCube != NULL)
-        {            
-            //if (willDetachFromCube != null) { willDetachFromCube(this); }
-            mCube->SetView(NULL);
-        }
-        mCube = c;
-        if (mCube != NULL)
-        {
-            View *view = mCube->GetView();
-            if (view != NULL && view != this)
-            {
-                view->SetCube(NULL);
-            }
-            c->SetView(this);
-            //if (didAttachToCube != null) { didAttachToCube(this); }
-            Paint();
-        }
-    }
-
-}
 
 TotalsCube *View::GetCube()
 {
     return mCube;
 }
-
-void View::Lock() {
-    mLockCount++;
-}
-
-void View::Unlock() {
-    if (IsLocked()) {
-        mLockCount--;
-        if (mLockCount == 0 /*&& mDirty*/) {
-            //TODO Paint();
-        }
-    }
-}
-
-bool View::IsLocked()
-{
-    return mLockCount > 0;
-}
-
-bool View::OkayToPaint()
-{
-    return mCube != NULL && mLockCount == 0 /*&& mPaintOverride == null*/;
-}
-
 
 }

@@ -1,0 +1,81 @@
+===============================================
+Implementation notes for flash block allocation
+===============================================
+
+Our VM must format code into blocks which match the flash cache size used by
+the runtime. The intention is that blocks are as self-contained as practical,
+containing code, constant pool entries, and other "inlined" data. Branches
+and reads within the block may proceed at fully native speeds, whereas calls,
+long branches, and arbitrary flash reads are indirected via system calls.
+
+At a very minimum, the compiler must ensure that long functions are split
+into multiple blocks, each block has its own constant pool, and that branches
+between blocks are converted into long branches.
+
+For the best efficiency, more complex analysis can be done to find the best
+ways to pack related code and data into individual flash blocks, and the best
+ways to split large functions. Instead of naively splitting at flash block
+boundaries, for example, it may make sense to perform higher-level operations
+first, such as splitting a loop from the preceeding code, or extracting the
+code inside a cold if() condition.
+
+In trying to implement the above as an LLVM pass, there are several
+complications we hit:
+
+ 1. It's more convenient to run high-level transformations earlier
+    in compilation.
+
+ 2. But, at that early stage, there's no way to know how large a function
+    will be at the end of compilation.
+
+ 3. LLVM doesn't natively understand flash blocks at all. The most analogous
+    concept is a Section, but it seems unnecessarily heavyweight to create
+    a separate section for every single block.
+
+ 4. We can't split MachineFunctions in a normal Pass, since they are not
+    stored persistently. A MachineFunction is actually a per-function analysis
+    result that is not stored permanently.
+
+Plan of attack
+--------------
+
+High-level operations can be done in separate passes, using heuristics rather
+than fully correct function sizes. For example, we can look for functions that
+are "large enough", and perform whatever high-level extraction and
+optimization we'd like. Or we can identify cold functions and mark them as
+never inlined. These operations may cause complex side-effects, such as
+changing the layout of a function's stack frame.
+
+We may also, at this stage, want to provide some way to 'bind' data items
+to a function so that, later on, we know to include those data items in the
+function's size calculation, and to stuff them into the same flash block.
+Perhaps we can include them in the constant pool? Or if it's not possible to
+include larger-than-word-sized blobs in there, we can implement an Analysis
+pass which produces a data structure mapping out these inlined data blobs.
+
+This leaves us with code which is amenable to being broken up into flash
+blocks, but which still doesn't necessarily fit into blocks without additional
+work.
+
+Very late in compilation, after the alignment pass, a MachineFunctionPass can
+perform a detailed sizing of each function, including its associated constant
+pool entries and other inlined data. If it reaches the point where an
+additional instruction would overfill the flash block, it can insert a
+"split" pseudo-instruction, and morph the surrounding branches into long
+branches. This requires also keeping track of how large the additional branch
+code would be, so that we leave enough space for that in the block.
+
+During assembly/linking, possibly in SVMAsmPrinter, we would use these 'split'
+pseudo-instructions to enforce block alignment. This code will also be
+responsible for packing multiple code/data items into one block. An earlier
+Analysis pass may produce a mapping from symbol to block-list, which the
+AsmPrinter can use to output code and data in the correct order.
+
+Unresolved questions
+--------------------
+
+Data alignment: For data items that are larger than one flash block and/or
+straddle flash block boundaries, are we expecting the compiler to do any
+special alignment? If the answer is no, that means the generated code has to
+be careful not to use immediate offsets that could cross page boundaries.
+ 

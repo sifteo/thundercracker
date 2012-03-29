@@ -1,21 +1,23 @@
-#ifndef USB_H
-#define USB_H
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
+#ifndef USB_DEVICE_H
+#define USB_DEVICE_H
 
 #include <stdint.h>
 
-class Usb
+class UsbDevice
 {
 public:
-    enum Endpoints {
-        Ep0Out  = 0x00,
-        Ep0In   = 0x80,
-        Ep1Out  = 0x01,
-        Ep1In   = 0x81,
-        Ep2Out  = 0x02,
-        Ep2In   = 0x82,
-        Ep3Out  = 0x03,
-        Ep3In   = 0x83
-    };
+    static const uint16_t VendorID = 0x22FA;
+    static const uint16_t ProductID = 0x0105;
+
+    static const uint8_t InEpAddr = 0x81;
+    static const uint8_t OutEpAddr = 0x01;
+
+    static const uint8_t OutEpMaxPacket = 64;
 
     static void init();
 
@@ -24,9 +26,6 @@ public:
 
     static int read(uint8_t *buf, unsigned len);
     static int write(const uint8_t *buf, unsigned len);
-
-private:
-
 };
 
-#endif // USB_H
+#endif // USB_DEVICE_H

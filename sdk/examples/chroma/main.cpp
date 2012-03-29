@@ -51,8 +51,7 @@ static void onTilt(void *context, _SYSCubeID cid)
 
 static void onShake(void *context, _SYSCubeID cid)
 {
-    _SYSShakeState state;
-    _SYS_getShake(cid, &state);
+    _SYSShakeState state = (_SYSShakeState) _SYS_getShake(cid);
     game.m_cubes[cid - CUBE_ID_BASE].Shake(state);
 }
 
@@ -67,7 +66,7 @@ static void init()
 	game.Init();
 }
 
-void siftmain()
+void main()
 {
     init();
 

@@ -244,7 +244,7 @@ unsigned int GridSlot::GetSpecialFrame()
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
 {
-	Vec2 vec( m_col * 4, m_row * 4 );
+	Int2 vec = { m_col * 4, m_row * 4 };
 
     switch( m_state )
 	{
@@ -304,7 +304,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                     }
                     case MOVESTATE_MOVING:
                     {
-                        Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+                        Int2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
                         //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
                         if( IsSpecial() )
@@ -451,7 +451,7 @@ void GridSlot::Update(SystemTime t)
             {
                 case MOVESTATE_MOVING:
                 {
-                    Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+                    Int2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
                     if( vDiff.x != 0 )
                     {
@@ -487,7 +487,7 @@ void GridSlot::Update(SystemTime t)
                 {
                     //interpolate frames back to normal state
                     Float2 cubeDir = m_pWrapper->getTiltDir();
-                    Vec2 curDir;
+                    Int2 curDir;
 
                     GetTiltFrame( cubeDir, curDir );
 
@@ -556,7 +556,7 @@ void GridSlot::Update(SystemTime t)
         //clear this out in update, so it doesn't bash moving balls
         case STATE_GONE:
         {
-            Vec2 vec( m_col * 4, m_row * 4 );
+            Int2 vec = { m_col * 4, m_row * 4 };
             m_pWrapper->QueueClear( vec );
             //vid.BG0_drawAsset(vec, GemEmpty, 0);
             break;
@@ -651,7 +651,7 @@ void GridSlot::DamageRock()
 {
     if( m_RockHealth > 0 )
     {
-        Vec2 vec( m_col * 4, m_row * 4 );
+        Int2 vec = { m_col * 4, m_row * 4 };
 
         m_RockHealth--;
 
@@ -690,7 +690,7 @@ void GridSlot::startPendingMove()
 
 
 //given tilt state, return our desired frame
-unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const
+unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const
 {
     //quantize and convert to the appropriate range
     //non-linear quantization.
@@ -776,7 +776,7 @@ unsigned int GridSlot::GetIdleFrame()
 
 void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 {
-    Vec2 vec( m_col * 4, m_row * 4 );
+    Int2 vec = { m_col * 4, m_row * 4 };
 
     if( !isAlive() )
         vid.BG0_drawAsset(vec, GemEmpty, 0);

@@ -1,7 +1,10 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "crc.h"
 #include <string.h>
-#include <sifteo.h>
 
 // statics
 uint32_t Crc32::currentWord;

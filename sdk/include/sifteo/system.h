@@ -7,7 +7,11 @@
 #ifndef _SIFTEO_SYSTEM_H
 #define _SIFTEO_SYSTEM_H
 
-#include "abi.h"
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
+#include <sifteo/abi.h>
 
 namespace Sifteo {
 
@@ -25,6 +29,15 @@ class System {
 
     static void exit() {
         _SYS_exit();
+    }
+
+    /**
+     * Exit with a fault, for fatal error handling. This is the same
+     * kind of fatal error that occurs when an ASSERT() fails.
+     */
+
+    static void abort() {
+        _SYS_abort();
     }
 
     /**

@@ -2,7 +2,7 @@
 
 #include "game.h"
 
-void siftmain()
+void main()
 {
     static Game game;
 
