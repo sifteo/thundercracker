@@ -21,7 +21,7 @@ SVMTargetMachine::SVMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
                                    Reloc::Model RM, CodeModel::Model CM)
     : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
-      DataLayout("e-S32-p:32:32:32-i:32:32:32-f32:32:32-n32"),
+      DataLayout("e-S32-p32:32:32-i64:32:32-f64:32:32-v64:32:32-a0:1:1-s0:32:32-n32"),
       TLInfo(*this), TSInfo(*this), Subtarget(TT, CPU, FS)
 {}
 
