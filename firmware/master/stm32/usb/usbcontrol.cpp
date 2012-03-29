@@ -1,8 +1,7 @@
 #include "usbcontrol.h"
-#include "usb/usbd.h"
 #include "usb/usbhardware.h"
-#include "usb/usbdriver.h"
 #include "usb/usbcore.h"
+#include "usb/usbdevice.h"
 
 #include "macros.h"
 
@@ -12,7 +11,7 @@ UsbControl::ControlState UsbControl::controlState;
 
 void UsbControl::sendChunk()
 {
-    const DeviceDescriptor *dd = Usbd::devDescriptor();
+    const DeviceDescriptor *dd = UsbCore::devDescriptor();
     if (dd->bMaxPacketSize0 < controlState.len) {
         // Data stage, normal transmission
         UsbHardware::epWritePacket(0, controlState.pdata, dd->bMaxPacketSize0);
@@ -31,7 +30,7 @@ void UsbControl::sendChunk()
 
 int UsbControl::receiveChunk()
 {
-    uint16_t packetsize = MIN(Usbd::devDescriptor()->bMaxPacketSize0, controlState.req.wLength - controlState.len);
+    uint16_t packetsize = MIN(UsbCore::devDescriptor()->bMaxPacketSize0, controlState.req.wLength - controlState.len);
     uint16_t size = UsbHardware::epReadPacket(0, controlState.pdata + controlState.len, packetsize);
 
     if (size != packetsize) {
@@ -47,7 +46,7 @@ int UsbControl::receiveChunk()
 int UsbControl::requestDispatch(SetupData *req)
 {
 
-    int result = UsbDriver::controlRequest(req, &controlState.pdata, &controlState.len);
+    int result = UsbDevice::controlRequest(req, &controlState.pdata, &controlState.len);
     if (result)
         return result;
 
@@ -87,7 +86,7 @@ void UsbControl::setupWrite(SetupData *req)
     controlState.len = 0;
 
     // Wait for DATA OUT stage
-    if (req->wLength > Usbd::devDescriptor()->bMaxPacketSize0)
+    if (req->wLength > UsbCore::devDescriptor()->bMaxPacketSize0)
         controlState.status = DataOut;
     else
         controlState.status = LastDataOut;
@@ -134,7 +133,7 @@ void UsbControl::out(uint8_t ea)
     case DataOut:
         if (receiveChunk() < 0)
             break;
-        if ((controlState.req.wLength - controlState.len) <= Usbd::devDescriptor()->bMaxPacketSize0)
+        if ((controlState.req.wLength - controlState.len) <= UsbCore::devDescriptor()->bMaxPacketSize0)
             controlState.status = LastDataOut;
         break;
 

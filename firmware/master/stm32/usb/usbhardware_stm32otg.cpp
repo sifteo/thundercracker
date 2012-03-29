@@ -1,25 +1,23 @@
-#include "stm32f10xotg.h"
-#include "usb/usbd.h"
-#include "usb/usbdriver.h"
+#include "usb/usbhardware_stm32otg.h"
+#include "usb/usbhardware.h"
 #include "usb/usbcontrol.h"
+#include "usb/usbcore.h"
+#include "usb/usbdevice.h"
 
 #include "hardware.h"
 #include "macros.h"
 #include "string.h"
 
 using namespace Usb;
+using namespace UsbHardwareStm32Otg;
 
-Stm32f10xOtg::Stm32f10xOtg() :
-    rxbcnt(0),
-    fifoMemTop(RX_FIFO_SIZE),
-    fifoMemTopEp0(0)
-{}
+/*
+ * STM32 OTG implementation of UsbHardware.
+ */
+namespace UsbHardware {
 
-void Stm32f10xOtg::init()
+void init()
 {
-    OTG.global.GINTSTS = (1 << 1); // MMIS - mode mismatch
-    OTG.global.GUSBCFG |= (1 << 7); // PHYSEL
-
     // Enable VBUS sensing in device mode and power down the PHY
     OTG.global.GCCFG |= (1 << 19) |     // VBUSBSEN
                         (1 << 16);      // PWRDWN
@@ -35,7 +33,8 @@ void Stm32f10xOtg::init()
 
     // Force peripheral only mode
     OTG.global.GUSBCFG |= (1 << 30) |   // FDMOD
-                          (0xf << 10);  // TRDT max - TODO: optimize?
+                          (0xf << 10) | // TRDT max - TODO: optimize?
+                          (1 << 7);     // PHYSEL
 
     // Full speed device
     OTG.device.DCFG |= 0x3; // DSPD
@@ -43,14 +42,13 @@ void Stm32f10xOtg::init()
     // Restart the PHY clock
     OTG.PCGCCTL = 0;
 
-    OTG.global.GRXFSIZ = RX_FIFO_SIZE;
-    fifoMemTop = RX_FIFO_SIZE;
+    OTG.global.GRXFSIZ = RX_FIFO_WORDS;
+    fifoMemTop = RX_FIFO_WORDS;
 
     for (unsigned i = 0; i < 4; ++i)
         OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
 
     // Unmask interrupts for TX and RX
-    OTG.global.GAHBCFG |= 0x1;  // GINT
     OTG.global.GINTMSK =
                         (1 << 31) |    // WUIM
                         (1 << 18) |    // IEPINT
@@ -60,23 +58,23 @@ void Stm32f10xOtg::init()
                         (1 << 3);      // SOFM
     OTG.device.DAINTMSK = 0xf;
     OTG.device.DIEPMSK = 0x1;
+
+    OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
+    OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
     // don't bother with DOEPMSK - we handle all OUT endpoint activity via the
     // RXFLVL interrupt
 }
 
-void Stm32f10xOtg::setAddress(uint8_t addr)
+void setAddress(uint8_t addr)
 {
     OTG.device.DCFG = (OTG.device.DCFG & ~0x07F0 /* DCFG_DAD */) | (addr << 4);
 }
 
-void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
+// Configure endpoint address and type & allocate FIFO memory for endpoint
+void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // Configure endpoint address and type & allocate FIFO memory for endpoint
-    bool inEp = isInEp(addr);
-    addr &= 0x7f;
-
     // handle control endpoint specially
-    if (addr == 0) {
+    if ((addr & 0x7f) == 0) {
 
         // Configure IN
         if (maxsize >= 64)
@@ -101,15 +99,16 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
                                         (1 << 27));    // SNAK
 
-        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_SIZE;
+        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_WORDS;
         fifoMemTop += maxsize / 4;
         fifoMemTopEp0 = fifoMemTop;
 
         return;
     }
 
-    if (inEp) {
+    if (isInEp(addr)) {
 
+        addr &= 0x7f;
         OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
         fifoMemTop += maxsize / 4;
 
@@ -138,13 +137,13 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     }
 }
 
-void Stm32f10xOtg::epReset()
+void epReset()
 {
     // The core resets the endpoints automatically on reset.
     fifoMemTop = fifoMemTopEp0;
 }
 
-void Stm32f10xOtg::epSetStall(uint8_t addr, bool stall)
+void epSetStalled(uint8_t addr, bool stall)
 {
     const uint32_t stallbit = (1 << 21);
 
@@ -178,7 +177,7 @@ void Stm32f10xOtg::epSetStall(uint8_t addr, bool stall)
     }
 }
 
-bool Stm32f10xOtg::epIsStalled(uint8_t addr)
+bool epIsStalled(uint8_t addr)
 {
     const uint32_t stallbit = (1 << 21);
 
@@ -188,7 +187,7 @@ bool Stm32f10xOtg::epIsStalled(uint8_t addr)
         return (OTG.device.outEps[addr].DOEPCTL & stallbit) != 0;
 }
 
-void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
+void epSetNak(uint8_t addr, bool nak)
 {
     // n/a for IN endpoints
     if (isInEp(addr))
@@ -199,7 +198,7 @@ void Stm32f10xOtg::epSetNak(uint8_t addr, bool nak)
     OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
 }
 
-uint16_t Stm32f10xOtg::epTxWordsAvailable(uint8_t addr)
+uint16_t epTxWordsAvailable(uint8_t addr)
 {
     // n/a for OUT endpoints
     if (!isInEp(addr))
@@ -208,29 +207,44 @@ uint16_t Stm32f10xOtg::epTxWordsAvailable(uint8_t addr)
     return OTG.device.inEps[addr & 0x7f].DTXFSTS & 0xffff;
 }
 
-uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
+bool epTxInProgress(uint8_t addr)
+{
+    // check the packet count in the IN endpoint
+    uint16_t pktcnt = (OTG.device.inEps[addr & 0x7f].DIEPTSIZ >> 19) & 0x3ff;
+    return pktcnt > 0;
+}
+
+uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
 
-    // endpoint still in progress? no no
-    if (ep.DIEPTSIZ & (1 << 19))
-        return 0;
-
-    // Enable endpoint for transmission
-    ep.DIEPTSIZ = (1 << 19) | len;
+    /*
+     * As long as the data is in a contiguous buffer and there's room in the fifo,
+     * multiple packet's worth of data can be sent automatically, arranged as
+     * a series of max length packets, followed by the remainder in a short packet.
+     *
+     * For zero-length packets, size is left at 0 but packet count is set to 1.
+     */
+    if (len == 0) {
+        ep.DIEPTSIZ = (1 << 19);
+    }
+    else {
+        uint8_t pktcnt = (len - 1 + MAX_PACKET) / MAX_PACKET;
+        ep.DIEPTSIZ = (pktcnt << 19) | len;
+    }
     ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
 
     // Copy buffer to endpoint FIFO
     const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
     volatile uint32_t* fifo = OTG.epFifos[addr];
     for (int i = len; i > 0; i -= 4)
-        *fifo++ = *buf32++;
+        *fifo = *buf32++;
 
     return len;
 }
 
-uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
+uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
 {
     uint32_t *buf32 = static_cast<uint32_t*>(buf);
 
@@ -256,14 +270,26 @@ uint16_t Stm32f10xOtg::epReadPacket(uint8_t addr, void *buf, uint16_t len)
     return len;
 }
 
-void Stm32f10xOtg::isr()
+void setDisconnected(bool disconnected)
+{
+    const uint32_t sdis = (1 << 1);
+
+    if (disconnected)
+        OTG.device.DCTL |= sdis;
+    else
+        OTG.device.DCTL &= ~sdis;
+}
+
+} // namespace UsbHardware
+
+IRQ_HANDLER ISR_UsbOtg_FS()
 {
     uint32_t status = OTG.global.GINTSTS;
 
     const uint32_t enumdne = 1 << 13;
     if (status & enumdne) {
         OTG.global.GINTSTS = enumdne;
-        fifoMemTop = RX_FIFO_SIZE;
+        fifoMemTop = RX_FIFO_WORDS;
 #if 0
         uint8_t enumeratedSpeed = (OTG.device.DSTS >> 1) & 0x3;
         // ensure we enumerated at full speed
@@ -272,7 +298,7 @@ void Stm32f10xOtg::isr()
                 ;
         }
 #endif
-        Usbd::reset();
+        UsbCore::reset();
     }
 
     const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
@@ -310,7 +336,7 @@ void Stm32f10xOtg::isr()
                 UsbControl::controlRequest(ep, txn);
             }
             else {
-                UsbDriver::outEndpointCallback(ep);
+                UsbDevice::outEndpointCallback(ep);
             }
         }
     }
@@ -327,7 +353,8 @@ void Stm32f10xOtg::isr()
             volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
             // only really interested in XFRC to indicate TX complete
             if (ep.DIEPINT & 0x1) {
-                UsbDriver::inEndpointCallback(i);
+                if (i != 0)
+                    UsbDevice::inEndpointCallback(i);
                 ep.DIEPINT = 0x1;
             }
         }
@@ -335,29 +362,19 @@ void Stm32f10xOtg::isr()
 
     const uint32_t usbsusp = 1 << 11;
     if (status & usbsusp) {
-        UsbDriver::handleSuspend();
+        UsbDevice::handleSuspend();
         OTG.global.GINTSTS = usbsusp;
     }
 
     const uint32_t wkupint = 1 << 31;
     if (status & wkupint) {
-        UsbDriver::handleResume();
+        UsbDevice::handleResume();
         OTG.global.GINTSTS = wkupint;
     }
 
     const uint32_t sof = 1 << 3;
     if (status & sof) {
-        UsbDriver::handleStartOfFrame();
+        UsbDevice::handleStartOfFrame();
         OTG.global.GINTSTS = sof;
     }
-}
-
-void Stm32f10xOtg::setDisconnected(bool disconnected)
-{
-    const uint32_t sdis = (1 << 1);
-
-    if (disconnected)
-        OTG.device.DCTL |= sdis;
-    else
-        OTG.device.DCTL &= ~sdis;
 }
