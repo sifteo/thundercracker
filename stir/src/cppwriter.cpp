@@ -193,26 +193,29 @@ void CPPSourceWriter::writeImage(const Image &image)
     mStream <<
         "\n"
         "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n" <<
-        indent << "/* group   */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
-        indent << "/* width   */ " << width << ",\n" <<
-        indent << "/* height  */ " << height << ",\n" <<
-        indent << "/* frames  */ " << grids.size() << ",\n";
+        indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
+        indent << "/* width    */ " << width << ",\n" <<
+        indent << "/* height   */ " << height << ",\n" <<
+        indent << "/* frames   */ " << grids.size() << ",\n";
 
     bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
     if (image.isPinned() || isSingleTile) {
         mStream <<
-            indent << "/* format  */ _SYS_AIF_PINNED,\n" <<
-            indent << "/* data    */ " << image.encodePinned() << "\n}};\n\n";
+            indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
+            indent << "/* reserved */ 0,\n" <<
+            indent << "/* data     */ " << image.encodePinned() << "\n}};\n\n";
         return;
     }
     
     // If we aren't explicitly writing a Flat asset, try to compress it
     if (!image.isFlat()) {
         std::vector<uint16_t> data;
-        if (image.encodeDUB(data, mLog)) {
+        std::string format;
+        if (image.encodeDUB(data, mLog, format)) {
             mStream <<
-                indent << "/* format  */ _SYS_AIF_DUB,\n" <<
-                indent << "/* data    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+                indent << "/* format   */ " << format << ",\n" <<
+                indent << "/* reserved */ 0,\n" <<
+                indent << "/* data     */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
                 "const uint16_t " << image.getName() << "_data[] = {\n";
             writeArray(data);
             mStream << "};\n\n";
@@ -227,8 +230,9 @@ void CPPSourceWriter::writeImage(const Image &image)
     // be _SYS_AIF_FLAT.
 
     mStream <<
-        indent << "/* format  */ _SYS_AIF_FLAT,\n" <<
-        indent << "/* data    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+        indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
+        indent << "/* reserved */ 0,\n" <<
+        indent << "/* data     */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
         "const uint16_t " << image.getName() << "_data[] = {\n";
     std::vector<uint16_t> data;
     image.encodeFlat(data);

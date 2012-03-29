@@ -528,7 +528,7 @@ void Image::encodeFlat(std::vector<uint16_t> &data) const
     }
 }
 
-bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
+bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const
 {
     // Compressed image, encoded using the DUB codec.
     
@@ -558,7 +558,8 @@ bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log) const
     }
     
     encoder.logStats(getName(), log);
-    data = encoder.getResult();
+    encoder.getResult(data);
+    format = encoder.isIndex16() ? "_SYS_AIF_DUB_I16" : "_SYS_AIF_DUB_I8";
 
     return true;
 }

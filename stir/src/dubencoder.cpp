@@ -20,19 +20,14 @@ void DUBEncoder::encodeTiles(std::vector<uint16_t> &tiles)
 {
     BitBuffer bits;
 
-    unsigned numBlocks = ((mWidth + BLOCK_SIZE - 1) / BLOCK_SIZE) *
-                         ((mHeight + BLOCK_SIZE - 1) / BLOCK_SIZE) *
-                         mFrames;
-
-    // Reserve space for our index
-    result.resize(numBlocks);
-
     // Deduplicate blocks. If we ever get two of the same, give them the
     // same address in the index.
     typedef std::map<std::vector<uint16_t>, uint16_t> dedupeMemo_t;
     dedupeMemo_t dedupeMemo;
 
-    unsigned blockIndex = 0;
+    // Encode blocks, and store an index with 16-bit addresses since the
+    // beginning of the block data.
+
     for (unsigned f = 0; f < mFrames; f++)
         for (unsigned y = 0; y < mHeight; y += BLOCK_SIZE)
             for (unsigned x = 0; x < mWidth; x += BLOCK_SIZE) {
@@ -45,16 +40,29 @@ void DUBEncoder::encodeTiles(std::vector<uint16_t> &tiles)
                 dedupeMemo_t::iterator I = dedupeMemo.find(blockData);
                 if (I == dedupeMemo.end()) {
                     // Unique block
-                    uint16_t addr = result.size();
-                    result[blockIndex++] = addr;
+                    uint16_t addr = blockResult.size();
+                    indexResult.push_back(addr);
                     dedupeMemo[blockData] = addr;
-                    result.insert(result.end(), blockData.begin(), blockData.end());
+                    blockResult.insert(blockResult.end(),
+                        blockData.begin(), blockData.end());
 
                 } else {
                     // Duplicated block
-                    result[blockIndex++] = I->second;
+                    indexResult.push_back(I->second);
                 }
             }
+
+    // Now scan the index and see if it would fit in 8 bits. If not,
+    // we'll use a 16-bit index.
+
+    mIndex16 = false;
+    unsigned indexSize8 = getIndexSize();
+    for (unsigned I = 0, E = indexResult.size(); I != E; ++I) {
+        if (indexResult[I] + indexSize8 >= 0x100) {
+            mIndex16 = true;
+            break;
+        }
+    }
 }
 
 unsigned DUBEncoder::getNumBlocks() const
@@ -64,9 +72,51 @@ unsigned DUBEncoder::getNumBlocks() const
            mFrames;
 }
 
+unsigned DUBEncoder::getIndexSize() const
+{
+    // Size of the index, in words
+    unsigned s = indexResult.size();
+    if (!mIndex16)
+        s = (s + 1) / 2;
+    return s;
+}
+
 bool DUBEncoder::isTooLarge() const
 {
-    return result.size() >= 0x10000;
+    return (getIndexSize() + blockResult.size()) >= 0x10000;
+}
+
+bool DUBEncoder::isIndex16() const
+{
+    return mIndex16;
+}
+
+void DUBEncoder::getResult(std::vector<uint16_t> &result) const
+{
+    // Relocate and pack the index
+
+    unsigned base = getIndexSize();
+
+    if (mIndex16) {
+        for (unsigned I = 0, E = indexResult.size(); I != E; ++I)
+            result.push_back(indexResult[I] + base);
+
+    } else {
+        std::vector<uint8_t> index8;
+        for (unsigned I = 0, E = indexResult.size(); I != E; ++I)
+            index8.push_back(indexResult[I] + base);
+        if (index8.size() & 1)
+            index8.push_back(0);
+
+        // Pack into little-endian 16-bit words
+        for (unsigned I = 0, E = index8.size(); I != E; I += 2)
+            result.push_back(index8[I] | (index8[I+1] << 8));
+    }
+
+    assert(result.size() == getIndexSize());
+
+    // Insert block data as-is
+    result.insert(result.end(), blockResult.begin(), blockResult.end());
 }
 
 unsigned DUBEncoder::getTileCount() const
@@ -76,7 +126,7 @@ unsigned DUBEncoder::getTileCount() const
 
 unsigned DUBEncoder::getCompressedWords() const
 {
-    return result.size();
+    return getIndexSize() + blockResult.size();
 }
 
 float DUBEncoder::getRatio() const

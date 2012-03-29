@@ -45,10 +45,8 @@ public:
     float getRatio() const;
     unsigned getNumBlocks() const;
     bool isTooLarge() const;
-
-    const std::vector<uint16_t> &getResult() {
-        return result;
-    }
+    bool isIndex16() const;
+    void getResult(std::vector<uint16_t> &result) const;
 
 private:
     static const unsigned BLOCK_SIZE;
@@ -59,13 +57,16 @@ private:
     };
 
     unsigned mWidth, mHeight, mFrames;
+    bool mIndex16;
 
-    std::vector<uint16_t> result;
+    std::vector<uint16_t> blockResult;
+    std::vector<uint16_t> indexResult;
 
     void encodeBlock(uint16_t *pTopLeft, unsigned width, unsigned height,
         std::vector<uint16_t> &blockData);
     Code findBestCode(const std::vector<uint16_t> &dict, uint16_t tile);
 
+    unsigned getIndexSize() const;
     void debugCode(Code code);
     void packCode(Code code, BitBuffer &bits);
     unsigned codeLen(Code code);
