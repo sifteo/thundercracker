@@ -1415,8 +1415,7 @@ void App::StartGameState(GameState gameState)
                 }
             }
             mStoryPuzzleIndex = 0;
-            // TODO: Handle first run unlocked
-            StartGameState(GAME_STATE_STORY_CHAPTER_START);
+            StartGameState(GAME_STATE_STORY_BOOK_START);
             break;
         }
         case GAME_STATE_STORY_BOOK_START:
