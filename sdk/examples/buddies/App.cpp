@@ -785,10 +785,10 @@ void TiltNudgePieces(App& app, Cube::ID cubeId)
     float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
     float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
     float d = 8.0f;
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Int2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Int2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Int2(-x * d, -y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Int2(-x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
+    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
 #else
     Cube::TiltState tiltState = app.GetCubeWrapper(cubeId).GetTiltState();
     

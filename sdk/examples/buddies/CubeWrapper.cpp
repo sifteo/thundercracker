@@ -531,17 +531,8 @@ VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    // TODO: Update this to handle pointer returns
-
-    const PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.GetBuddy());
-    
-    unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
-    ASSERT(frame < asset.frames);
-    
     unsigned int spriteOver = side + 0;
     unsigned int spriteUnder = side + NUM_SIDES;
-    
-    Video().setSpriteImage(spriteUnder, asset, frame);
     
     Int2 point = kPartPositions[side];
     switch(side)
@@ -571,7 +562,14 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
             break;
         }
     }
-    Video().moveSprite(spriteUnder, point);
+    
+    if (const PinnedAssetImage *asset = GetBuddyFacePartsAsset(piece.GetBuddy()))
+    {
+        unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
+        ASSERT(frame < asset->frames);
+        Video().setSpriteImage(spriteUnder, *asset, frame);
+        Video().moveSprite(spriteUnder, point);
+    }
     
     if (piece.GetAttribute() == Piece::ATTR_FIXED)
     {
