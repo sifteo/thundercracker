@@ -38,8 +38,7 @@ def BoolToString(value):
 
 def ConvertPuzzles(src, dest):
     with open(src, 'r') as f:
-        data = json.load(f)['puzzles']
-        
+        j = json.load(f)
         with open(dest, 'w') as fout:
             # Comment Separator
             sep = MakeSep()
@@ -50,69 +49,93 @@ def ConvertPuzzles(src, dest):
             fout.write(sep)
             fout.write('\n')
             
-            for i, puzzle in enumerate(data):
-                # Puzzle Header
-                fout.write(sep)
-                fout.write('// Puzzle %d\n' % i)
-                fout.write(sep)
-                fout.write('\n')
+            for i_book, book in enumerate(j['books']):
+                for i_puzzle, puzzle in enumerate(book['puzzles']):
+                    id = '%d_%d' % (i_book, i_puzzle)
                 
-                # Cutscene Buddies (Start)
-                buddyIds = [BuddyToId(b) for b in puzzle['cutscene_start']['buddies']]
-                fout.write('const BuddyId kCutsceneBuddiesStart%d[] = { %s };\n' % (i, ', '.join(buddyIds)))
-                
-                # Cutscene Lines (Start)
-                fout.write('const CutsceneLine kCutsceneLinesStart%d[] =\n' % i)
-                fout.write('{\n')
-                for line in puzzle['cutscene_start']['lines']:
-                    text = line['text'].replace('\n', '\\n')
-                    vars = (line['speaker'], Id(line, 'view'), text)
-                    fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
-                fout.write('};\n')
-                
-                # Cutscene Buddies (End)
-                buddyIds = [BuddyToId(b) for b in puzzle['cutscene_end']['buddies']]
-                fout.write('const BuddyId kCutsceneBuddiesEnd%d[] = { %s };\n' % (i, ', '.join(buddyIds)))
-                
-                # Cutscene Lines (End)
-                fout.write('const CutsceneLine kCutsceneLinesEnd%d[] =\n' % i)
-                fout.write('{\n')
-                for line in puzzle['cutscene_end']['lines']:
-                    text = line['text'].replace('\n', '\\n')
-                    vars = (line['speaker'], Id(line, 'view'), text)
-                    fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
-                fout.write('};\n')
-                
-                # Buddy IDs
-                buddies = puzzle['buddies']
-                buddyIds = [BuddyToId(b) for b in buddies]
-                fout.write('const BuddyId kBuddies%d[] = { %s };\n' % (i, ', '.join(buddyIds)))
-                
-                # Pieces (Start)
-                fout.write('const Piece kPiecesStart%d[][NUM_SIDES] =\n' % i)
-                fout.write('{\n')
-                for j, buddy in enumerate(buddies):
-                    fout.write('    {\n')
-                    for side in ['top', 'left', 'bottom', 'right']:
-                        piece = puzzle['buddies'][buddy]['pieces_start'][side]
-                        vars = (BuddyToId(piece['buddy']), Id(piece, 'part'))
-                        fout.write('        Piece(%s, Piece::%s),\n' % vars)
-                    fout.write('    },\n')
-                fout.write('};\n')
-                
-                # Pieces (End)
-                fout.write('const Piece kPiecesEnd%d[][NUM_SIDES] =\n' % i)
-                fout.write('{\n')
-                for j, buddy in enumerate(buddies):
-                    fout.write('    {\n')
-                    for side in ['top', 'left', 'bottom', 'right']:
-                        piece = puzzle['buddies'][buddy]['pieces_end'][side]
-                        vars = (BuddyToId(piece['buddy']), Id(piece, 'part'), BoolToString(piece['solve']))
-                        fout.write('        Piece(%s, Piece::%s, %s),\n' % vars)
-                    fout.write('    },\n')
-                fout.write('};\n')
-                fout.write('\n')
-                
+                    # Puzzle Header
+                    fout.write(sep)
+                    fout.write('// Puzzle %s\n' % id)
+                    fout.write(sep)
+                    fout.write('\n')
+                    
+                    # Cutscene Buddies (Start)
+                    buddyIds = [BuddyToId(b) for b in puzzle['cutscene_start']['buddies']]
+                    fout.write('const BuddyId kCutsceneBuddiesStart_%s[] = { %s };\n' % (id, ', '.join(buddyIds)))
+                    
+                    # Cutscene Lines (Start)
+                    fout.write('const CutsceneLine kCutsceneLinesStart_%s[] =\n' % id)
+                    fout.write('{\n')
+                    for line in puzzle['cutscene_start']['lines']:
+                        text = line['text'].replace('\n', '\\n')
+                        vars = (line['speaker'], Id(line, 'view'), text)
+                        fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
+                    fout.write('};\n')
+                    
+                    # Cutscene Buddies (End)
+                    buddyIds = [BuddyToId(b) for b in puzzle['cutscene_end']['buddies']]
+                    fout.write('const BuddyId kCutsceneBuddiesEnd_%s[] = { %s };\n' % (id, ', '.join(buddyIds)))
+                    
+                    # Cutscene Lines (End)
+                    fout.write('const CutsceneLine kCutsceneLinesEnd_%s[] =\n' % id)
+                    fout.write('{\n')
+                    for line in puzzle['cutscene_end']['lines']:
+                        text = line['text'].replace('\n', '\\n')
+                        vars = (line['speaker'], Id(line, 'view'), text)
+                        fout.write('    CutsceneLine(%d, CutsceneLine::%s, "%s"),\n' % vars)
+                    fout.write('};\n')
+                    
+                    # Buddy IDs
+                    buddies = puzzle['buddies']
+                    buddyIds = [BuddyToId(b['name']) for b in buddies]
+                    fout.write('const BuddyId kBuddies_%s[] = { %s };\n' % (id, ', '.join(buddyIds)))
+                    
+                    # Pieces (Start)
+                    fout.write('const Piece kPiecesStart_%s[][NUM_SIDES] =\n' % id)
+                    fout.write('{\n')
+                    for i_buddy, buddy in enumerate(buddies):
+                        fout.write('    {\n')
+                        for side in ['top', 'left', 'bottom', 'right']:
+                            piece = buddy['pieces_start'][side]
+                            vars = (BuddyToId(piece['buddy']), Id(piece, 'part'))
+                            fout.write('        Piece(%s, Piece::%s),\n' % vars)
+                        fout.write('    },\n')
+                    fout.write('};\n')
+                    
+                    # Pieces (End)
+                    fout.write('const Piece kPiecesEnd_%s[][NUM_SIDES] =\n' % id)
+                    fout.write('{\n')
+                    for i_buddy, buddy in enumerate(buddies):
+                        fout.write('    {\n')
+                        for side in ['top', 'left', 'bottom', 'right']:
+                            piece = buddy['pieces_end'][side]
+                            vars = (BuddyToId(piece['buddy']), Id(piece, 'part'), BoolToString(piece['solve']))
+                            fout.write('        Piece(%s, Piece::%s, %s),\n' % vars)
+                        fout.write('    },\n')
+                    fout.write('};\n')
+                    fout.write('\n')
+            
+            num_books = len(j['books'])
+            max_num_puzzles = 0
+            for book in j['books']:
+                num_puzzles = len(book['puzzles'])
+                if num_puzzles > max_num_puzzles:
+                    max_num_puzzles = num_puzzles
+            
+            # Books Array Header
+            fout.write(sep)
+            fout.write('// Books Array\n')
+            fout.write(sep)
+            fout.write('\n')
+            
+            # Books Array
+            fout.write('const Book kBooks[%d] =\n' % num_books)
+            fout.write('{\n')
+            for i_book, book in enumerate(j['books']):
+                fout.write('    Book("%s", %d),\n' % (book['title'], len(book['puzzles'])))
+            fout.write('};\n')
+            fout.write('\n')
+            
             # Puzzle Array Header
             fout.write(sep)
             fout.write('// Puzzles Array\n')
@@ -120,21 +143,24 @@ def ConvertPuzzles(src, dest):
             fout.write('\n')
             
             # Puzzles Array
-            fout.write('const Puzzle kPuzzles[] =\n')
+            fout.write('const Puzzle kPuzzles[%d][%d] =\n' % (num_books, max_num_puzzles))
             fout.write('{\n')
-            for i, puzzle in enumerate(data):
-                fout.write('    Puzzle(\n')
-                fout.write('        %d,\n' % puzzle['book'])
-                fout.write('        "%s",\n' % puzzle['title'].replace('\n', '\\n'))
-                fout.write('        "%s",\n' % puzzle['clue'].replace('\n', '\\n'))
-                fout.write('        kCutsceneBuddiesStart%d, arraysize(kCutsceneBuddiesStart%d),\n' % (i, i))
-                fout.write('        kCutsceneLinesStart%d, arraysize(kCutsceneLinesStart%d),\n' % (i, i))
-                fout.write('        kCutsceneBuddiesEnd%d, arraysize(kCutsceneBuddiesEnd%d),\n' % (i, i))
-                fout.write('        kCutsceneLinesEnd%d, arraysize(kCutsceneLinesEnd%d),\n' % (i, i))
-                fout.write('        %d,\n' % puzzle['cutscene_environment'])
-                fout.write('        kBuddies%d, arraysize(kBuddies%d),\n' % (i, i))
-                fout.write('        %d,\n' % puzzle['shuffles'])
-                fout.write('        kPiecesStart%d, kPiecesEnd%d),\n' % (i, i))
+            for i_book, book in enumerate(j['books']):
+                fout.write('    {\n')
+                for i_puzzle, puzzle in enumerate(book['puzzles']):
+                    id = '%d_%d' % (i_book, i_puzzle)
+                    fout.write('        Puzzle(\n')
+                    fout.write('            "%s",\n' % puzzle['title'].replace('\n', '\\n'))
+                    fout.write('            "%s",\n' % puzzle['clue'].replace('\n', '\\n'))
+                    fout.write('            kCutsceneBuddiesStart_%s, arraysize(kCutsceneBuddiesStart_%s),\n' % (id, id))
+                    fout.write('            kCutsceneLinesStart_%s, arraysize(kCutsceneLinesStart_%s),\n' % (id, id))
+                    fout.write('            kCutsceneBuddiesEnd_%s, arraysize(kCutsceneBuddiesEnd_%s),\n' % (id, id))
+                    fout.write('            kCutsceneLinesEnd_%s, arraysize(kCutsceneLinesEnd_%s),\n' % (id, id))
+                    fout.write('            %d,\n' % puzzle['cutscene_environment'])
+                    fout.write('            kBuddies_%s, arraysize(kBuddies_%s),\n' % (id, id))
+                    fout.write('            %d,\n' % puzzle['shuffles'])
+                    fout.write('            kPiecesStart_%s, kPiecesEnd_%s),\n' % (id, id))
+                fout.write('    },\n')
             fout.write('};\n')
 
 ####################################################################################################

@@ -127,7 +127,8 @@ private:
     unsigned int mScorePlace;
     
     // Save Data
-    unsigned char mSaveDataStoryProgress;
+    unsigned char mSaveDataStoryBookProgress;
+    unsigned char mSaveDataStoryPuzzleProgress;
     float mSaveDataBestTimes[3];
     
     // Swapping
@@ -170,6 +171,7 @@ private:
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     
     // Story Mode
+    unsigned int mStoryBookIndex;
     unsigned int mStoryPuzzleIndex;
     unsigned int mStoryCutsceneIndex;
     Sifteo::Random mCutsceneSpriteJumpRandom;

@@ -316,10 +316,6 @@ def ValidatePuzzles(src):
             print "Version Error: %s is a not supported version." % src
             return False
         
-        if not j.has_key('puzzles') or len(j['puzzles']) == 0:
-            print "Data Error: Ain't got none."
-            return False
-        
         version = j['version']
         if version < version_current:
             for i in range(version_current - version):

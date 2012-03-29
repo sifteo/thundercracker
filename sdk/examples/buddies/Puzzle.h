@@ -32,7 +32,6 @@ public:
     Puzzle();
     
     Puzzle(
-        unsigned int book,
         const char *title,
         const char *clue,
         const BuddyId cutsceneBuddiesStart[], unsigned int numCutsceneBuddiesStart,
@@ -46,9 +45,6 @@ public:
         const Piece piecesEnd[][NUM_SIDES]);
     
     void Reset();
-    
-    unsigned int GetBook() const;
-    void SetBook(unsigned int book);
     
     const char *GetTitle() const;
     void SetTitle(const char *title);
@@ -90,7 +86,6 @@ public:
     
 private:
     // TODO: Optimzie for size better
-    unsigned char mBook : 4;
     const char *mTitle;
     const char *mClue;
     unsigned char mCutsceneBuddiesStart[2];
