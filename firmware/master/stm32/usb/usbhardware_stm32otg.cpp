@@ -1,4 +1,4 @@
-#include "stm32f10xotg.h"
+#include "usb/usbhardware_stm32otg.h"
 #include "usb/usbhardware.h"
 #include "usb/usbcontrol.h"
 #include "usb/usbcore.h"
