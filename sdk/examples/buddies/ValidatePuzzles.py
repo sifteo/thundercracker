@@ -218,7 +218,7 @@ def ValidateData(data):
         if CheckHasProperty(puzzle, 'clue'):
             prop_stack.append('clue')
             CheckIsNotNull(puzzle, 'clue')
-            CheckTextSize(puzzle, 'clue', 14, 4)
+            CheckTextSize(puzzle, 'clue', 14, 5)
             prop_stack.pop()
         
         # cutscene_environment

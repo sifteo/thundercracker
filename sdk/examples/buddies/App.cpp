@@ -168,6 +168,46 @@ void ScoreTimerToTime(float scoreTimer, int &minutes, int &seconds)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
+{
+    String<128> buffer;
+    buffer << text;
+    
+    int iLine = 0;
+    int iChar = 0;
+    
+    for (int i = 0; i < buffer.size(); ++i)
+    {
+        if (buffer[i] == '\n')
+        {
+            ASSERT(iLine < numLines);
+            ASSERT(iChar < numChar);
+            lines[iLine][iChar] = '\0';
+            
+            ++iLine;
+            iChar = 0;
+        }
+        else
+        {
+            ASSERT(iLine < numLines);
+            ASSERT(iChar < numChar);
+            lines[iLine][iChar++] = buffer[i];
+            
+            if (i == (buffer.size() - 1))
+            {
+                ASSERT(iLine < numLines);
+                ASSERT(iChar < numChar);
+                lines[iLine][iChar] = '\0';
+            }
+        }
+    }
+    
+    return iLine + 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
@@ -243,7 +283,7 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     int xChapter = (kMaxTilesX / 2) - (bufferChapter.size() / 2);
     cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
     
-    String<64> bufferTitle;
+    String<32> bufferTitle;
     bufferTitle << "\"" << GetPuzzle(puzzleIndex).GetTitle() << "\"";
     int xTitle = (kMaxTilesX / 2) - (bufferTitle.size() / 2);
     cubeWrapper.DrawUiText(Vec2(xTitle, 8), UiFontOrange, bufferTitle.c_str());
@@ -265,13 +305,23 @@ void DrawStoryClue(
 {
     cubeWrapper.DrawBackground(background);
     
-    String<32> bufferText;
-    bufferText << text;
+    char lines[5][16];
+    int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), text);
     
-    int xText = (kMaxTilesX / 2) - (bufferText.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xText, 5), UiFontOrange, bufferText.c_str());
+    for (int i = 0; i <= numLines; ++i)
+    {
+        String<16> s;
+        s << lines[i];
+        
+        int x = (kMaxTilesX / 2) - (s.size() / 2);
+        int y = 9 - numLines + (i * 2);
+        cubeWrapper.DrawUiText(Vec2(x, y), UiFontOrange, s.c_str());
+    }
     
-    if (bufferText.size() % 2 != 0)
+    // Scroll over if first line is not even length
+    String<16> s;
+    s << lines[0];
+    if (s.size() % 2 != 0)
     {
         cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
     }
