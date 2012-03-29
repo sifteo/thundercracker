@@ -73,6 +73,25 @@ const AssetImage *kBuddyRibbons[] =
     &BuddyRibbon5,
 };
 
+const AssetImage *kStoryBookTitles[] =
+{
+    &StoryBookTitle0,
+    &StoryBookTitle1,
+    &StoryBookTitle2,
+    &StoryBookTitle3,
+    &StoryBookTitle4,
+    &StoryBookTitle5,
+    &StoryBookTitle6,
+    &StoryBookTitle7,
+    &StoryBookTitle8,
+    &StoryBookTitle9,
+    &StoryBookTitle10,
+    &StoryBookTitle11,
+    &StoryBookTitle12,
+    &StoryBookTitle13,
+    &StoryBookTitle14,
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -277,18 +296,13 @@ void DrawShuffleScore(
 
 void DrawStoryBookTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex)
 {
-    cubeWrapper.DrawBackground(StoryBookTitle);
+    cubeWrapper.DrawBackground(*kStoryBookTitles[bookIndex]);
     
     // TODO: Use actual unlocked sprite
     cubeWrapper.DrawSprite(
         0,
         Vec2((VidMode::LCD_width / 2) - 32, 20U),
         *kBuddySpritesFront[0]);
-    
-    String<8> bufferBook;
-    bufferBook << "Book " << (bookIndex + 1);
-    int xBook = (kMaxTilesX / 2) - (bufferBook.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xBook, 10), UiFontHeadingOrange, bufferBook.c_str());
     
     String<16> bufferTitle;
     bufferTitle << GetBook(bookIndex).mTitle;

@@ -68,7 +68,9 @@ ShuffleBestTimesHighScore3 = image{"assets/panel_best_times_highscore_3.png"}
 ShuffleEndGameNavReplay = image{"assets/end_navigation_replay_shuffle.png"}
 
 -- Story Mode
-StoryBookTitle = image{"assets/panel_book.png"}
+for i = 0, 14, 1 do
+    _G["StoryBookTitle" .. i] = image{"assets/book" .. (i + 1) .. ".png"}
+end
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryChapterNext = image{"assets/panel_next_chapter.png"}
 StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
