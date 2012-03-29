@@ -35,6 +35,13 @@ def Upgrade1_2(j):
     # Upgrade Version
     j['version'] = 2
     
+    # Change buddies{} to buddies[] and have dicts with a name in there
+    for p in j['puzzles']:
+        buddies = []
+        for b in p['buddies']:
+            buddies.append({'name' : b, 'pieces_start' : p['buddies'][b]['pieces_start'], 'pieces_end' : p['buddies'][b]['pieces_end']})
+        p['buddies'] = buddies
+    
     # Create a books array
     j['books'] = []
     
