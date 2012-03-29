@@ -128,7 +128,7 @@ private:
     
     // Save Data
     unsigned char mSaveDataStoryBookProgress;
-    unsigned char mSaveDataStoryPuzzleProgress; // TODO: Do we need to store the puzzle too?
+    unsigned char mSaveDataStoryPuzzleProgress;
     float mSaveDataBestTimes[3];
     
     // Swapping

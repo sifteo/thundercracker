@@ -20,7 +20,7 @@ struct Book
         , mNumPuzzles(numPuzzles)
     {
     }
-
+    
     const char *mTitle;
     unsigned int mNumPuzzles;
 };
