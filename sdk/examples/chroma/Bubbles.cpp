@@ -131,15 +131,15 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
     if( m_fTimeAlive / BUBBLE_LIFETIME < BEHIND_CHROMITS_THRESHOLD )
     {
         //find our center
-        Float2 center( m_pos.x + m_pTex->width*4, m_pos.y + m_pTex->height*4 );
-        Vec2 gridslot( center.x / 32, center.y / 32 );
+        Float2 center = { m_pos.x + m_pTex->width*4, m_pos.y + m_pTex->height*4 };
+        Int2 gridslot = { center.x / 32, center.y / 32 };
 
         GridSlot *pSlot = pWrapper->GetSlot( gridslot.y, gridslot.x );
 
         if( pSlot && !pSlot->isEmpty() )
         {
             //if our center is inside a certain radius, we are hidden
-            Float2 slotcenter( gridslot.x * 32 + 16, gridslot.y * 32 + 16 );
+            Float2 slotcenter = { gridslot.x * 32 + 16, gridslot.y * 32 + 16 };
             Float2 diff = center - slotcenter;
 
             if( diff.len2() < CHROMIT_OBSCURE_DIST_2 )

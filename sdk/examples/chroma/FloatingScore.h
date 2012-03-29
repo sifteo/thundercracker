@@ -24,12 +24,12 @@ public:
     void Draw( BG1Helper &bg1helper );
     void Update(float dt);
 
-    void Spawn( unsigned int score, const Vec2 &pos );
+    void Spawn( unsigned int score, const Int2 &pos );
     inline bool IsActive() const { return m_fLifetime >= 0.0f; }
 private:
     float m_fLifetime;
     unsigned int m_score;
-    Vec2 m_pos;
+    Int2 m_pos;
 };
 
 #endif

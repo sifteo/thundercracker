@@ -376,7 +376,7 @@ void Game::TestMatches()
 	}
 }
 
-void Game::CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos )
+void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
 {
 	int total_marked = 0;
 

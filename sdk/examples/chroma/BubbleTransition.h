@@ -32,7 +32,7 @@ static void DoBubbleTransition()
         for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
         {
             float yPos = Game::random.uniform( 128.0f, 160.0f );
-            BubblePos[i][j] = Float2( Game::random.uniform( 0.0f, 16.0f ) + ( j * 16.0f ), yPos );
+            BubblePos[i][j] = Vec2<float>( Game::random.uniform( 0.0f, 16.0f ) + ( j * 16.0f ), yPos );
         }
     }
 
@@ -58,7 +58,7 @@ static void DoBubbleTransition()
                 BubblePos[i][j].y -= BUBBLE_Y_VEL * delta * Game::random.uniform( VEL_ADJUSTMENT_MIN, VEL_ADJUSTMENT_MAX );
 
                 //fill in universal bg
-                Vec2 offset( j*2, (int)( BubblePos[i][j].y / 8 ) + 1 );
+                Int2 offset = { j*2, (int)( BubblePos[i][j].y / 8 ) + 1 };
 
                 if( offset.y >= 0 && offset.y < 16 )
                     vid.BG0_drawPartialAsset( offset, offset, Vec2( 2, 16 - offset.y ), UI_BG );

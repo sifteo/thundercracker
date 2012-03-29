@@ -2076,10 +2076,10 @@ void CubeWrapper::SpawnRockExplosion( const Int2 &pos, unsigned int health )
 
 
 //each cube can have one floating score at a time
-void CubeWrapper::SpawnScore( unsigned int score, const Vec2 &slotpos )
+void CubeWrapper::SpawnScore( unsigned int score, const Int2 &slotpos )
 {
     //find position where we should display score
-    Vec2 pos( slotpos.y * 4 + 1, slotpos.x * 4 + 1 );
+    Int2 pos = { slotpos.y * 4 + 1, slotpos.x * 4 + 1 };
 
     m_floatscore.Spawn( score, pos );
 }

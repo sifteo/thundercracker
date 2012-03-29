@@ -133,7 +133,7 @@ public:
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
     //each cube can have one floating score at a time
-    void SpawnScore( unsigned int score, const Vec2 &slotpos );
+    void SpawnScore( unsigned int score, const Int2 &slotpos );
     VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
 
 private:

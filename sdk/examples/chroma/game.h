@@ -116,7 +116,7 @@ public:
     unsigned int getHighScore( unsigned int index ) const;
     void enterScore();
 
-    void CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos );
+    void CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos );
 	void checkGameOver();
 	bool NoMatches();
 	unsigned int numColors() const;

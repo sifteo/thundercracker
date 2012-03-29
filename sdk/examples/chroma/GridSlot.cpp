@@ -846,7 +846,7 @@ void GridSlot::Bump( const Float2 &dir )
     {
         m_Movestate = MOVESTATE_BUMPED;
 
-        Vec2 newDir = m_lastFrameDir;
+        Int2 newDir = m_lastFrameDir;
 
         //(2/sqrtf(5))
         const float DIR_THRESH = -.4472136f;
