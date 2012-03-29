@@ -174,12 +174,12 @@ Game::GameState Run() {
     // initialize two token views
     firstToken.SetToken(puzzle->GetToken(0));
     Game::cubes[1].SetView(&firstToken);
-    firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
+    firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP | TokenView::BIT_MESSAGE);
     Game::Wait(0.25f);
     Game::cubes[2].OpenShuttersToReveal(skin.background);
     secondToken.SetToken(puzzle->GetToken(1));
     Game::cubes[2].SetView(&secondToken);
-    secondToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
+    secondToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP | TokenView::BIT_MESSAGE);
     Game::Wait(0.5f);
 
     // wait for neighbor
@@ -214,8 +214,8 @@ Game::GameState Run() {
         secondToken.token->PopGroup();
         firstToken.DidGroupDisconnect();
         secondToken.DidGroupDisconnect();
-        firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
-        secondToken.SetHideMode(TokenView::BIT_TOP | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
+        firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_RIGHT | TokenView::BIT_MESSAGE);
+        secondToken.SetHideMode(TokenView::BIT_TOP | TokenView::BIT_LEFT | TokenView::BIT_RIGHT | TokenView::BIT_MESSAGE);
     }
 
     Game::neighborEventHandler = &connectTwoCubesVerticalEventHandler;
@@ -243,8 +243,8 @@ Game::GameState Run() {
         secondToken.token->PopGroup();
         firstToken.DidGroupDisconnect();
         secondToken.DidGroupDisconnect();
-        firstToken.SetHideMode(0);
-        secondToken.SetHideMode(0);
+        firstToken.SetHideMode(TokenView::BIT_MESSAGE);
+        secondToken.SetHideMode(TokenView::BIT_MESSAGE);
         firstToken.HideOps();
         secondToken.HideOps();
     }

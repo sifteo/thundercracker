@@ -40,6 +40,7 @@ namespace TotalsGame {
     static const int BIT_LEFT = 1<<SIDE_LEFT;
     static const int BIT_BOTTOM = 1<<SIDE_BOTTOM;
     static const int BIT_RIGHT = 1<<SIDE_RIGHT;
+    static const int BIT_MESSAGE = 1<<7;
     static const char *kOpNames[4];
     
 	enum Status 

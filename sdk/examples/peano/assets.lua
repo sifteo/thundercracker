@@ -46,6 +46,7 @@ skin("turquoise")
 
 Accent_Current = image{ "accent_current.png" }
 Accent_Target = image{ "accent_target.png" }
+Press_And_Hold = image{ "press_and_hold.png", pinned=true }
 
 Hint_0 = image { "hint_0.png", pinned=true }
 Hint_1 = image { "hint_1.png", pinned=true }

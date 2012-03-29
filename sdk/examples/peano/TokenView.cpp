@@ -37,11 +37,11 @@ void TokenView::Reset()
 
 void TokenView::SetToken(Token *t)
 {
+    mDigitId = -1;
     token = t;
     token->view = this;
-    renderedDigit = token->val;
-    mCurrentExpression = token;
-    mDigitId = -1;
+    renderedDigit = t->val;
+    mCurrentExpression = t;
 }
 
 void TokenView::HideOps()
@@ -346,6 +346,11 @@ void TokenView::PaintNow()
     else
     {
         PaintDigit();
+        if(!(mHideMask&BIT_MESSAGE))
+        {
+            GetCube()->backgroundLayer.setSpriteImage(5, Press_And_Hold, 0);
+            GetCube()->backgroundLayer.moveSprite(5, Vec2<int>(128-Press_And_Hold.width*8, 128-Press_And_Hold.height*8));
+        }
     }
 
     c->foregroundLayer.Flush();
