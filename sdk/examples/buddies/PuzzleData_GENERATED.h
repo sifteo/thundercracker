@@ -196,9 +196,9 @@ const Piece kPiecesEnd_2_0[][NUM_SIDES] =
 
 const Book kBooks[3] =
 {
-    Book("Book Desc 0", 2),
-    Book("Book Desc 1", 1),
-    Book("Book Desc 2", 1),
+    Book("Title 1", 2),
+    Book("Title 2", 1),
+    Book("Title 3", 1),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
