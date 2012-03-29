@@ -56,7 +56,7 @@ struct _SYSAssetGroupHeader {
     uint8_t reserved;           /// OUT    Reserved, must be zero
     uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
     uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
-    uint64_t signature;         /// OUT    Unique identity for this group
+    uint64_t hash;              /// OUT    Hash of this asset group's data
 };
 
 struct _SYSAssetGroupCube {

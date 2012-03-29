@@ -132,7 +132,7 @@ void inline sincos(float x, float *s, float *c)
 float inline sin(float x)
 {
     float s;
-    sincos(x, &s, NULL);
+    sincos(x, &s, 0);
     return s;
 }
 
@@ -144,7 +144,7 @@ float inline sin(float x)
 float inline cos(float x)
 {
     float c;
-    sincos(x, NULL, &c);
+    sincos(x, 0, &c);
     return c;
 }
 

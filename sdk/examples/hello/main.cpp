@@ -11,6 +11,10 @@ using namespace Sifteo;
 
 void main()
 {
+    Metadata()
+        .title("Hello World SDK Example")
+        .icon(GameIcon);
+
     const CubeID myCube(0);
     static VideoBuffer vid;
     

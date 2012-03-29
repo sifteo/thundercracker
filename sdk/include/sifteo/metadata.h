@@ -22,7 +22,6 @@ public:
      * Initialize all required system metadata. Other optional metadata can be
      * added using individual methods on the Metadata class.
      */
-
     Metadata()
     {
         // Metadata that's automatically inserted only once
@@ -38,7 +37,10 @@ public:
                 _SYS_lti_uuid(0, 2), _SYS_lti_uuid(0, 3));
         }
     }
-    
+
+    /**
+     * Add a human-readable title string to this game's metadata.
+     */
     Metadata &title(const char *str)
     {
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Title", 0) != 0,
@@ -48,16 +50,32 @@ public:
 
         return *this;
     }
-    
-    Metadata &icon(const AssetImage &image)
+
+    /**
+     * Add an icon image to this game's metadata. The image needs to be
+     * 80x80 pixels, and it should reside in a separate AssetGroup.
+     */
+    Metadata &icon(const _SYSAssetImage &i)
     {
-        STATIC_ASSERT(image.width == 10);
-        STATIC_ASSERT(image.height == 10);
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Icon", 0) != 0,
             "Duplicate Metadata::icon() instance.");
-        
-        AssetGroup *G = (AssetGroup*) _SYS_lti_initializer(image.group);
-        _SYS_lti_metadata(_SYS_METADATA_ICON_80x80, "II", G->sys.pHdr, image.tiles);
+
+        return image(_SYS_METADATA_ICON_80x80, i);
+    }
+
+    /**
+     * Add an arbitrary image, as a _SYSMetadataImage item, with a
+     * user-specified key.
+     */
+    Metadata &image(uint16_t key, const _SYSAssetImage &i)
+    {
+        // AssetGroup is in RAM, but we want the static initializer data
+        _SYSAssetGroup *G = (_SYSAssetGroup*) _SYS_lti_initializer(
+            reinterpret_cast<void*>(i.pAssetGroup));
+
+        // Build a _SYSMetadataImage struct
+        _SYS_lti_metadata(key, "BBBBII",
+            i.width, i.height, i.frames, i.format, G->pHdr, i.data);
 
         return *this;
     }
