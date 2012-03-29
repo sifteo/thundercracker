@@ -57,6 +57,8 @@ static void DoBubbleTransition()
                 BubblePos[i][j].y += Game::random.uniform( -2.5f, 2.5f );
                 BubblePos[i][j].y -= BUBBLE_Y_VEL * delta * Game::random.uniform( VEL_ADJUSTMENT_MIN, VEL_ADJUSTMENT_MAX );
 
+                DEBUG_LOG(( "bubble pos %0.2f, %0.2f\n", BubblePos[i][j].x, BubblePos[i][j].y ));
+
                 //fill in universal bg
                 Int2 offset = { j*2, (int)( BubblePos[i][j].y / 8 ) + 1 };
 
