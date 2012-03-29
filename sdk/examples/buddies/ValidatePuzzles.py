@@ -6,6 +6,7 @@ script to validate JSON puzzles in CubeBuddies format.
 ####################################################################################################
 # TODO: double-click error report
 # TODO: version upgrades
+# TODO: find a better alternative to the global prop_stack
 ####################################################################################################
 
 import sys
@@ -18,6 +19,7 @@ import json
 validated = True
 prop_stack = []
 
+version_current = 1
 buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
@@ -200,7 +202,7 @@ def ValidateData(data):
     for i, puzzle in enumerate(data):
         global prop_stack
         prop_stack.append('%d' % i)
-    
+        
         # book
         if CheckHasProperty(puzzle, 'book'):
             prop_stack.append('book')
@@ -254,7 +256,7 @@ def ValidatePuzzles(src):
         j = json.load(f)
         
         # Bail if our version doesn't jive with the parser.
-        if not j.has_key('version') or j['version'] != 1:
+        if not j.has_key('version') or j['version'] != version_current:
             print "Version Error: %s is a not supported version." % src
             return False
         
@@ -268,6 +270,7 @@ def ValidatePuzzles(src):
         ValidateData(j['puzzles'])
         if not validated:
             return False
+    
     return True
 
 ####################################################################################################
@@ -282,4 +285,3 @@ if __name__ == "__main__":
             exit(0)
         else:
             exit(1)
-    
