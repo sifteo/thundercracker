@@ -116,11 +116,9 @@ def ConvertPuzzles(src, dest):
                     fout.write('\n')
             
             num_books = len(j['books'])
-            max_num_puzzles = 0
+            num_puzzles = 0
             for book in j['books']:
-                num_puzzles = len(book['puzzles'])
-                if num_puzzles > max_num_puzzles:
-                    max_num_puzzles = num_puzzles
+                num_puzzles += len(book['puzzles'])
             
             # Books Array Header
             fout.write(sep)
@@ -136,6 +134,16 @@ def ConvertPuzzles(src, dest):
             fout.write('};\n')
             fout.write('\n')
             
+            # Book Offsets Array
+            book_offsets = []
+            book_offset = 0
+            for book in j['books']:
+                book_offsets.append(book_offset)
+                book_offset += len(book['puzzles'])
+            offsets_str = ', '.join([str(o) for o in book_offsets])
+            fout.write('const unsigned int kBookOffsets[%d] = { %s };\n' % (num_books, offsets_str))
+            fout.write('\n')
+            
             # Puzzle Array Header
             fout.write(sep)
             fout.write('// Puzzles Array\n')
@@ -143,24 +151,22 @@ def ConvertPuzzles(src, dest):
             fout.write('\n')
             
             # Puzzles Array
-            fout.write('const Puzzle kPuzzles[%d][%d] =\n' % (num_books, max_num_puzzles))
+            fout.write('const Puzzle kPuzzles[%d] =\n' % num_puzzles)
             fout.write('{\n')
             for i_book, book in enumerate(j['books']):
-                fout.write('    {\n')
                 for i_puzzle, puzzle in enumerate(book['puzzles']):
                     id = '%d_%d' % (i_book, i_puzzle)
-                    fout.write('        Puzzle(\n')
-                    fout.write('            "%s",\n' % puzzle['title'].replace('\n', '\\n'))
-                    fout.write('            "%s",\n' % puzzle['clue'].replace('\n', '\\n'))
-                    fout.write('            kCutsceneBuddiesStart_%s, arraysize(kCutsceneBuddiesStart_%s),\n' % (id, id))
-                    fout.write('            kCutsceneLinesStart_%s, arraysize(kCutsceneLinesStart_%s),\n' % (id, id))
-                    fout.write('            kCutsceneBuddiesEnd_%s, arraysize(kCutsceneBuddiesEnd_%s),\n' % (id, id))
-                    fout.write('            kCutsceneLinesEnd_%s, arraysize(kCutsceneLinesEnd_%s),\n' % (id, id))
-                    fout.write('            %d,\n' % puzzle['cutscene_environment'])
-                    fout.write('            kBuddies_%s, arraysize(kBuddies_%s),\n' % (id, id))
-                    fout.write('            %d,\n' % puzzle['shuffles'])
-                    fout.write('            kPiecesStart_%s, kPiecesEnd_%s),\n' % (id, id))
-                fout.write('    },\n')
+                    fout.write('    Puzzle(\n')
+                    fout.write('        "%s",\n' % puzzle['title'].replace('\n', '\\n'))
+                    fout.write('        "%s",\n' % puzzle['clue'].replace('\n', '\\n'))
+                    fout.write('        kCutsceneBuddiesStart_%s, arraysize(kCutsceneBuddiesStart_%s),\n' % (id, id))
+                    fout.write('        kCutsceneLinesStart_%s, arraysize(kCutsceneLinesStart_%s),\n' % (id, id))
+                    fout.write('        kCutsceneBuddiesEnd_%s, arraysize(kCutsceneBuddiesEnd_%s),\n' % (id, id))
+                    fout.write('        kCutsceneLinesEnd_%s, arraysize(kCutsceneLinesEnd_%s),\n' % (id, id))
+                    fout.write('        %d,\n' % puzzle['cutscene_environment'])
+                    fout.write('        kBuddies_%s, arraysize(kBuddies_%s),\n' % (id, id))
+                    fout.write('        %d,\n' % puzzle['shuffles'])
+                    fout.write('        kPiecesStart_%s, kPiecesEnd_%s),\n' % (id, id))
             fout.write('};\n')
 
 ####################################################################################################

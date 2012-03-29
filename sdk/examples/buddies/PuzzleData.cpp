@@ -168,9 +168,11 @@ unsigned int GetNumPuzzles(unsigned int bookIndex)
 
 const Puzzle &GetPuzzle(unsigned int bookIndex, unsigned int puzzleIndex)
 {
-    ASSERT(bookIndex < arraysize(kPuzzles));
-    ASSERT(puzzleIndex < arraysize(kPuzzles[bookIndex]));
-    return kPuzzles[bookIndex][puzzleIndex];
+    ASSERT(bookIndex < arraysize(kBookOffsets));
+    unsigned int iPuzzle = kBookOffsets[bookIndex] + puzzleIndex;
+    
+    ASSERT(iPuzzle < arraysize(kPuzzles));
+    return kPuzzles[iPuzzle];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -201,60 +201,56 @@ const Book kBooks[3] =
     Book("Title 3", 1),
 };
 
+const unsigned int kBookOffsets[3] = { 0, 2, 3 };
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Puzzles Array
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Puzzle kPuzzles[3][2] =
+const Puzzle kPuzzles[4] =
 {
-    {
-        Puzzle(
-            "Big Mouth",
-            "Swap Mouths",
-            kCutsceneBuddiesStart_0_0, arraysize(kCutsceneBuddiesStart_0_0),
-            kCutsceneLinesStart_0_0, arraysize(kCutsceneLinesStart_0_0),
-            kCutsceneBuddiesEnd_0_0, arraysize(kCutsceneBuddiesEnd_0_0),
-            kCutsceneLinesEnd_0_0, arraysize(kCutsceneLinesEnd_0_0),
-            0,
-            kBuddies_0_0, arraysize(kBuddies_0_0),
-            0,
-            kPiecesStart_0_0, kPiecesEnd_0_0),
-        Puzzle(
-            "All Mixed Up",
-            "Unscramble",
-            kCutsceneBuddiesStart_0_1, arraysize(kCutsceneBuddiesStart_0_1),
-            kCutsceneLinesStart_0_1, arraysize(kCutsceneLinesStart_0_1),
-            kCutsceneBuddiesEnd_0_1, arraysize(kCutsceneBuddiesEnd_0_1),
-            kCutsceneLinesEnd_0_1, arraysize(kCutsceneLinesEnd_0_1),
-            0,
-            kBuddies_0_1, arraysize(kBuddies_0_1),
-            3,
-            kPiecesStart_0_1, kPiecesEnd_0_1),
-    },
-    {
-        Puzzle(
-            "Bad Hair Day",
-            "Swap Hair",
-            kCutsceneBuddiesStart_1_0, arraysize(kCutsceneBuddiesStart_1_0),
-            kCutsceneLinesStart_1_0, arraysize(kCutsceneLinesStart_1_0),
-            kCutsceneBuddiesEnd_1_0, arraysize(kCutsceneBuddiesEnd_1_0),
-            kCutsceneLinesEnd_1_0, arraysize(kCutsceneLinesEnd_1_0),
-            0,
-            kBuddies_1_0, arraysize(kBuddies_1_0),
-            0,
-            kPiecesStart_1_0, kPiecesEnd_1_0),
-    },
-    {
-        Puzzle(
-            "Private Eyes",
-            "Swap Eyes",
-            kCutsceneBuddiesStart_2_0, arraysize(kCutsceneBuddiesStart_2_0),
-            kCutsceneLinesStart_2_0, arraysize(kCutsceneLinesStart_2_0),
-            kCutsceneBuddiesEnd_2_0, arraysize(kCutsceneBuddiesEnd_2_0),
-            kCutsceneLinesEnd_2_0, arraysize(kCutsceneLinesEnd_2_0),
-            0,
-            kBuddies_2_0, arraysize(kBuddies_2_0),
-            0,
-            kPiecesStart_2_0, kPiecesEnd_2_0),
-    },
+    Puzzle(
+        "Big Mouth",
+        "Swap Mouths",
+        kCutsceneBuddiesStart_0_0, arraysize(kCutsceneBuddiesStart_0_0),
+        kCutsceneLinesStart_0_0, arraysize(kCutsceneLinesStart_0_0),
+        kCutsceneBuddiesEnd_0_0, arraysize(kCutsceneBuddiesEnd_0_0),
+        kCutsceneLinesEnd_0_0, arraysize(kCutsceneLinesEnd_0_0),
+        0,
+        kBuddies_0_0, arraysize(kBuddies_0_0),
+        0,
+        kPiecesStart_0_0, kPiecesEnd_0_0),
+    Puzzle(
+        "All Mixed Up",
+        "Unscramble",
+        kCutsceneBuddiesStart_0_1, arraysize(kCutsceneBuddiesStart_0_1),
+        kCutsceneLinesStart_0_1, arraysize(kCutsceneLinesStart_0_1),
+        kCutsceneBuddiesEnd_0_1, arraysize(kCutsceneBuddiesEnd_0_1),
+        kCutsceneLinesEnd_0_1, arraysize(kCutsceneLinesEnd_0_1),
+        0,
+        kBuddies_0_1, arraysize(kBuddies_0_1),
+        3,
+        kPiecesStart_0_1, kPiecesEnd_0_1),
+    Puzzle(
+        "Bad Hair Day",
+        "Swap Hair",
+        kCutsceneBuddiesStart_1_0, arraysize(kCutsceneBuddiesStart_1_0),
+        kCutsceneLinesStart_1_0, arraysize(kCutsceneLinesStart_1_0),
+        kCutsceneBuddiesEnd_1_0, arraysize(kCutsceneBuddiesEnd_1_0),
+        kCutsceneLinesEnd_1_0, arraysize(kCutsceneLinesEnd_1_0),
+        0,
+        kBuddies_1_0, arraysize(kBuddies_1_0),
+        0,
+        kPiecesStart_1_0, kPiecesEnd_1_0),
+    Puzzle(
+        "Private Eyes",
+        "Swap Eyes",
+        kCutsceneBuddiesStart_2_0, arraysize(kCutsceneBuddiesStart_2_0),
+        kCutsceneLinesStart_2_0, arraysize(kCutsceneLinesStart_2_0),
+        kCutsceneBuddiesEnd_2_0, arraysize(kCutsceneBuddiesEnd_2_0),
+        kCutsceneLinesEnd_2_0, arraysize(kCutsceneLinesEnd_2_0),
+        0,
+        kBuddies_2_0, arraysize(kBuddies_2_0),
+        0,
+        kPiecesStart_2_0, kPiecesEnd_2_0),
 };
