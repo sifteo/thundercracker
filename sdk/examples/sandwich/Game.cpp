@@ -351,32 +351,15 @@ void Game::RestorePearlIdle() {
 }
 
 void Game::RoomNod(ViewSlot* view) {
-  ViewMode g = view->Graphics();
-  const float duration = 0.5f;
-  const float durationInv = 1.f / duration;
-  float dt = 0.f;
-  for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<duration;) {
-    if (!view->IsShowingRoom()) { return; }
-    float u = durationInv * dt;
-    u = 8.f * 1.3f * (1.f-u) * sin(M_TAU * u);
-    g.BG0_setPanning(Vec2(0.f, u));
-    g.BG1_setPanning(Vec2(0.f, u));
+  view->GetRoomView()->StartNod();
+  while(view->IsShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();
   }
 }
 
 void Game::RoomShake(ViewSlot* view) {
-  ViewMode g = view->Graphics();
-  const float duration = 0.5f;
-  const float durationInv = 1.f / duration;
-  const float shakeCount = 5.f;
-  float dt = 0.f;
-  for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<duration;) {
-    if (!view->IsShowingRoom()) { return; }
-    float u = durationInv * dt;
-    u = 8.f * 1.1f * (1.f-u) * sin(shakeCount * M_PI * u);
-    g.BG0_setPanning(Vec2(u, 0.f));
-    g.BG1_setPanning(Vec2(u, 0.f));
+  view->GetRoomView()->StartShake();
+  while(view->IsShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();
   }
 }
