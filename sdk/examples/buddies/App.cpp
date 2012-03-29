@@ -285,8 +285,19 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     
     String<32> bufferTitle;
     bufferTitle << "\"" << GetPuzzle(puzzleIndex).GetTitle() << "\"";
-    int xTitle = (kMaxTilesX / 2) - (bufferTitle.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTitle, 8), UiFontOrange, bufferTitle.c_str());
+    
+    char lines[2][16];
+    int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), bufferTitle.c_str());
+    
+    for (int i = 0; i <= numLines; ++i)
+    {
+        String<16> s;
+        s << lines[i];
+        
+        int x = (kMaxTilesX / 2) - (s.size() / 2);
+        int y = 8 + i * 2;
+        cubeWrapper.DrawUiText(Vec2(x, y), UiFontOrange, s.c_str());
+    }
     
     if (bufferChapter.size() % 2 != 0)
     {
