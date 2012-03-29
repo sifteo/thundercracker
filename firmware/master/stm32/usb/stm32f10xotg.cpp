@@ -11,7 +11,7 @@ using namespace Usb;
 
 Stm32f10xOtg::Stm32f10xOtg() :
     rxbcnt(0),
-    fifoMemTop(RX_FIFO_SIZE),
+    fifoMemTop(RX_FIFO_WORDS),
     fifoMemTopEp0(0)
 {}
 
@@ -41,8 +41,8 @@ void Stm32f10xOtg::init()
     // Restart the PHY clock
     OTG.PCGCCTL = 0;
 
-    OTG.global.GRXFSIZ = RX_FIFO_SIZE;
-    fifoMemTop = RX_FIFO_SIZE;
+    OTG.global.GRXFSIZ = RX_FIFO_WORDS;
+    fifoMemTop = RX_FIFO_WORDS;
 
     for (unsigned i = 0; i < 4; ++i)
         OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
@@ -69,14 +69,11 @@ void Stm32f10xOtg::setAddress(uint8_t addr)
     OTG.device.DCFG = (OTG.device.DCFG & ~0x07F0 /* DCFG_DAD */) | (addr << 4);
 }
 
+// Configure endpoint address and type & allocate FIFO memory for endpoint
 void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // Configure endpoint address and type & allocate FIFO memory for endpoint
-    bool inEp = isInEp(addr);
-    addr &= 0x7f;
-
     // handle control endpoint specially
-    if (addr == 0) {
+    if ((addr & 0x7f) == 0) {
 
         // Configure IN
         if (maxsize >= 64)
@@ -101,15 +98,16 @@ void Stm32f10xOtg::epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
                                         (1 << 27));    // SNAK
 
-        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_SIZE;
+        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_WORDS;
         fifoMemTop += maxsize / 4;
         fifoMemTopEp0 = fifoMemTop;
 
         return;
     }
 
-    if (inEp) {
+    if (isInEp(addr)) {
 
+        addr &= 0x7f;
         OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
         fifoMemTop += maxsize / 4;
 
@@ -278,7 +276,7 @@ void Stm32f10xOtg::isr()
     const uint32_t enumdne = 1 << 13;
     if (status & enumdne) {
         OTG.global.GINTSTS = enumdne;
-        fifoMemTop = RX_FIFO_SIZE;
+        fifoMemTop = RX_FIFO_WORDS;
 #if 0
         uint8_t enumeratedSpeed = (OTG.device.DSTS >> 1) & 0x3;
         // ensure we enumerated at full speed
