@@ -1,640 +1,386 @@
 {
   "books": [
+
     {
+      "title": "Meet Suli!",
+
       "puzzles": [
+
         {
+          "title": "Welcome to\nCube Buddies",
           "buddies": [
             {
-              "name": "gluv",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "mouth",
-                  "solve": true
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left",
-                  "solve": true
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right",
-                  "solve": true
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "hair",
-                  "solve": true
-                }
-              },
+              "name": "suli",
               "pieces_start": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "hair"
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "mouth"
-                }
+                "top":    { "buddy": "suli", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "eye_left" },
+                "bottom": { "buddy": "suli", "part": "mouth" },
+                "right":  { "buddy": "invisible", "part": "eye_left" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "suli", "part": "hair", "solve": false },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": false },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": false },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
               }
             },
             {
               "name": "invisible",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "invisible",
-                  "part": "mouth",
-                  "solve": false
-                },
-                "left": {
-                  "buddy": "invisible",
-                  "part": "eye_left",
-                  "solve": false
-                },
-                "right": {
-                  "buddy": "invisible",
-                  "part": "eye_right",
-                  "solve": false
-                },
-                "top": {
-                  "buddy": "invisible",
-                  "part": "hair",
-                  "solve": false
-                }
-              },
               "pieces_start": {
-                "bottom": {
-                  "buddy": "invisible",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "invisible",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "invisible",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "invisible",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "invisible", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "eye_right" },
+                "bottom": { "buddy": "invisible", "part": "mouth" },
+                "right":  { "buddy": "invisible", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "invisible", "part": "hair", "solve": false },
+                "left":   { "buddy": "invisible", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "invisible", "part": "mouth", "solve": false },
+                "right":  { "buddy": "invisible", "part": "eye_right", "solve": false }
               }
             }
           ],
-          "clue": "Fix Face",
-          "cutscene_end": {
-            "buddies": [
-              "gluv",
-              "invisible"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "So loney :(",
-                "view": "left"
-              }
-            ]
-          },
+          "clue": "Neighbor to\nmove Suli's\neye.",
           "cutscene_environment": 0,
           "cutscene_start": {
-            "buddies": [
-              "gluv",
-              "invisible"
-            ],
+            "buddies": [ "suli", "invisible" ],
             "lines": [
-              {
-                "speaker": 0,
-                "text": "Hello?",
-                "view": "right"
-              }
+              { "speaker": 0, "view": "front", "text": "Welcome to\nCube Buddies!" },
+              { "speaker": 0, "view": "right", "text": "Sometimes I\nget a little\nmixed up." },
+              { "speaker": 0, "view": "right", "text": "Can you help\nme set myself\nstraight?" }
             ]
           },
-          "shuffles": 0,
-          "title": "Intro"
+          "cutscene_end": {
+            "buddies": [ "suli", "invisible" ],
+            "lines": [
+              { "speaker": 0, "view": "front",  "text": "Way to go!" },
+              { "speaker": 0, "view": "front", "text": "Let's do some\nmore." }
+            ]
+          },
+          "shuffles": 0
         },
+
         {
+          "title": "Puzzle 2",
+          "buddies": [
+            {
+              "name": "suli",
+              "pieces_start": {
+                "top":    { "buddy": "invisible", "part": "mouth" },
+                "left":   { "buddy": "suli", "part": "eye_left" },
+                "bottom": { "buddy": "invisible", "part": "hair" },
+                "right":  { "buddy": "suli", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "suli", "part": "hair", "solve": true },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
+              }
+            },
+            {
+              "name": "invisible",
+              "pieces_start": {
+                "top":    { "buddy": "suli", "part": "mouth" },
+                "left":   { "buddy": "invisible", "part": "eye_left" },
+                "bottom": { "buddy": "suli", "part": "hair" },
+                "right":  { "buddy": "invisible", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "invisible", "part": "hair", "solve": true },
+                "left":   { "buddy": "invisible", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "invisible", "part": "mouth", "solve": true },
+                "right":  { "buddy": "invisible", "part": "eye_right", "solve": true }
+              }
+            }
+          ],
+          "clue": "Neighbor on\nany side to\nmove pieces.",
+          "cutscene_environment": 0,
+          "cutscene_start": {
+            "buddies": [ "suli", "invisible" ],
+            "lines": [
+              { "speaker": 0, "view": "right", "text": "Blah blah blah" },
+              { "speaker": 0, "view": "front", "text": "Neighbor on\nany side to\nmove pieces." }
+            ]
+          },
+          "cutscene_end": {
+            "buddies": [ "suli", "invisible" ],
+            "lines": [
+              { "speaker": 0, "view": "front",  "text": "Way to go!" },
+              { "speaker": 0, "view": "right", "text": "Let's do some\nmore!" }
+            ]
+          },
+          "shuffles": 0
+        },
+
+        {
+          "title": "Puzzle 3",
+          "buddies": [
+            {
+              "name": "suli",
+              "pieces_start": {
+                "top":    { "buddy": "invisible", "part": "mouth" },
+                "left":   { "buddy": "invisible", "part": "eye_right" },
+                "bottom": { "buddy": "invisible", "part": "hair" },
+                "right":  { "buddy": "invisible", "part": "eye_left" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "suli", "part": "hair", "solve": true },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
+              }
+            },
+            {
+              "name": "invisible",
+              "pieces_start": {
+                "top":    { "buddy": "suli", "part": "mouth" },
+                "left":   { "buddy": "suli", "part": "eye_right" },
+                "bottom": { "buddy": "suli", "part": "hair" },
+                "right":  { "buddy": "suli", "part": "eye_left" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "invisible", "part": "hair", "solve": true },
+                "left":   { "buddy": "invisible", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "invisible", "part": "mouth", "solve": true },
+                "right":  { "buddy": "invisible", "part": "eye_right", "solve": true }
+              }
+            }
+          ],
+          "clue": "Put all pieces\nin the right\nplace.",
+          "cutscene_environment": 0,
+          "cutscene_start": {
+            "buddies": [ "suli", "invisible" ],
+            "lines": [
+              { "speaker": 0, "view": "right", "text": "Oh no, where\nis my face?" },
+              { "speaker": 0, "view": "front", "text": "Put all pieces\nin the right\nplace." }
+            ]
+          },
+          "cutscene_end": {
+            "buddies": [ "suli", "invisible" ],
+            "lines": [
+              { "speaker": 0, "view": "front",  "text": "Way to go!" },
+              { "speaker": 0, "view": "right", "text": "Let's do some\nmore!" }
+            ]
+          },
+          "shuffles": 0
+        }
+
+      ]
+
+    },
+
+    {
+      "title": "Meet Boff!",
+
+      "puzzles": [
+
+        {
+          "title": "Get Buff\nWith Boff",
+          "buddies": [
+            {
+              "name": "boff",
+              "pieces_start": {
+                "top":    { "buddy": "boff", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "mouth" },
+                "bottom": { "buddy": "suli", "part": "eye_right" },
+                "right":  { "buddy": "boff", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "boff", "part": "hair", "solve": false },
+                "left":   { "buddy": "boff", "part": "eye_left", "solve": false },
+                "bottom": { "buddy": "boff", "part": "mouth", "solve": false },
+                "right":  { "buddy": "boff", "part": "eye_right", "solve": true }
+              }
+            },
+            {
+              "name": "suli",
+              "pieces_start": {
+                "top":    { "buddy": "suli", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "eye_left" },
+                "bottom": { "buddy": "boff", "part": "eye_left" },
+                "right":  { "buddy": "boff", "part": "mouth" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "suli", "part": "hair", "solve": false },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": false },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": false }
+              }
+            }
+          ],
+          "clue": "Swap between\nfaces to\nunscramble\nthem.",
+          "cutscene_environment": 0,
+          "cutscene_start": {
+            "buddies": [ "boff", "suli" ],
+            "lines": [
+              { "speaker": 0, "view": "front", "text": "Hey there.\nI'm Boff." },
+              { "speaker": 1, "view": "left",  "text": "Wow Boff,\nyou're buff." },
+              { "speaker": 0, "view": "right", "text": "Yes. Yes I am.\nYou can be\nbuff like me!" },
+              { "speaker": 0, "view": "front",  "text": "Let's get\nPUMPED UP!" }
+            ]
+          },
+          "cutscene_end": {
+            "buddies": [ "boff", "suli" ],
+            "lines": [
+              { "speaker": 1, "view": "left",  "text": "Way to go!" },
+              { "speaker": 0, "view": "front", "text": "Let's do some\nmore!" }
+            ]
+          },
+          "shuffles": 0
+        }
+
+      ]
+
+    },
+
+    {
+      "title": "Meet Gluv!",
+
+      "puzzles": [
+
+        {
+          "title": "Eldritch\nHorror",
           "buddies": [
             {
               "name": "gluv",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "suli",
-                  "part": "mouth",
-                  "solve": true
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left",
-                  "solve": false
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right",
-                  "solve": false
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "hair",
-                  "solve": false
-                }
-              },
               "pieces_start": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "gluv", "part": "eye_right" },
+                "left":   { "buddy": "gluv", "part": "eye_left" },
+                "bottom": { "buddy": "gluv", "part": "mouth" },
+                "right":  { "buddy": "gluv", "part": "hair" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "gluv", "part": "hair", "solve": true },
+                "left":   { "buddy": "gluv", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "gluv", "part": "mouth", "solve": true },
+                "right":  { "buddy": "gluv", "part": "eye_right", "solve": true }
               }
             },
             {
               "name": "suli",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "mouth",
-                  "solve": true
-                },
-                "left": {
-                  "buddy": "suli",
-                  "part": "eye_left",
-                  "solve": false
-                },
-                "right": {
-                  "buddy": "suli",
-                  "part": "eye_right",
-                  "solve": false
-                },
-                "top": {
-                  "buddy": "suli",
-                  "part": "hair",
-                  "solve": false
-                }
-              },
               "pieces_start": {
-                "bottom": {
-                  "buddy": "suli",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "suli",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "suli",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "suli",
-                  "part": "hair"
-                }
-              }
-            }
-          ],
-          "clue": "Swap Mouths",
-          "cutscene_end": {
-            "buddies": [
-              "gluv",
-              "suli"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "Muuuahhh!",
-                "view": "right"
+                "top":    { "buddy": "suli", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "mouth" },
+                "bottom": { "buddy": "suli", "part": "eye_left" },
+                "right":  { "buddy": "suli", "part": "eye_right" }
               },
-              {
-                "speaker": 1,
-                "text": "Hot n' heavy!",
-                "view": "left"
-              }
-            ]
-          },
-          "cutscene_environment": 0,
-          "cutscene_start": {
-            "buddies": [
-              "gluv",
-              "suli"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "Gimme a kiss!",
-                "view": "right"
-              },
-              {
-                "speaker": 1,
-                "text": "Can I use your\nmouth?",
-                "view": "left"
-              },
-              {
-                "speaker": 0,
-                "text": "...",
-                "view": "front"
-              },
-              {
-                "speaker": 0,
-                "text": "OK!",
-                "view": "right"
-              }
-            ]
-          },
-          "shuffles": 0,
-          "title": "Big Mouth"
-        },
-        {
-          "buddies": [
-            {
-              "name": "rike",
               "pieces_end": {
-                "bottom": {
-                  "buddy": "rike",
-                  "part": "mouth",
-                  "solve": true
-                },
-                "left": {
-                  "buddy": "rike",
-                  "part": "eye_left",
-                  "solve": true
-                },
-                "right": {
-                  "buddy": "rike",
-                  "part": "eye_right",
-                  "solve": true
-                },
-                "top": {
-                  "buddy": "rike",
-                  "part": "hair",
-                  "solve": true
-                }
-              },
-              "pieces_start": {
-                "bottom": {
-                  "buddy": "rike",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "rike",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "rike",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "rike",
-                  "part": "hair"
-                }
-              }
-            },
-            {
-              "name": "suli",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "suli",
-                  "part": "mouth",
-                  "solve": true
-                },
-                "left": {
-                  "buddy": "suli",
-                  "part": "eye_left",
-                  "solve": true
-                },
-                "right": {
-                  "buddy": "suli",
-                  "part": "eye_right",
-                  "solve": true
-                },
-                "top": {
-                  "buddy": "suli",
-                  "part": "hair",
-                  "solve": true
-                }
-              },
-              "pieces_start": {
-                "bottom": {
-                  "buddy": "suli",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "suli",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "suli",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "suli",
-                  "part": "hair"
-                }
-              }
-            }
-          ],
-          "clue": "Unscramble",
-          "cutscene_end": {
-            "buddies": [
-              "rike",
-              "suli"
-            ],
-            "lines": [
-              {
-                "speaker": 1,
-                "text": "My head hurts.",
-                "view": "left"
-              }
-            ]
-          },
-          "cutscene_environment": 0,
-          "cutscene_start": {
-            "buddies": [
-              "suli",
-              "rike"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "Let's get\nCRAZY!",
-                "view": "right"
-              }
-            ]
-          },
-          "shuffles": 3,
-          "title": "All Mixed Up"
-        }
-      ],
-      "title": "Title 1"
-    },
-    {
-      "puzzles": [
-        {
-          "buddies": [
-            {
-              "name": "zorg",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "zorg",
-                  "part": "mouth",
-                  "solve": false
-                },
-                "left": {
-                  "buddy": "zorg",
-                  "part": "eye_left",
-                  "solve": false
-                },
-                "right": {
-                  "buddy": "zorg",
-                  "part": "eye_right",
-                  "solve": false
-                },
-                "top": {
-                  "buddy": "boff",
-                  "part": "hair",
-                  "solve": true
-                }
-              },
-              "pieces_start": {
-                "bottom": {
-                  "buddy": "zorg",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "zorg",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "zorg",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "zorg",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "suli", "part": "hair", "solve": true },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
               }
             },
             {
               "name": "boff",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "boff",
-                  "part": "mouth",
-                  "solve": false
-                },
-                "left": {
-                  "buddy": "boff",
-                  "part": "eye_left",
-                  "solve": false
-                },
-                "right": {
-                  "buddy": "boff",
-                  "part": "eye_right",
-                  "solve": false
-                },
-                "top": {
-                  "buddy": "zorg",
-                  "part": "hair",
-                  "solve": true
-                }
-              },
               "pieces_start": {
-                "bottom": {
-                  "buddy": "boff",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "boff",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "boff",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "boff",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "boff", "part": "mouth" },
+                "left":   { "buddy": "boff", "part": "eye_left" },
+                "bottom": { "buddy": "boff", "part": "hair" },
+                "right":  { "buddy": "boff", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "boff", "part": "hair", "solve": true },
+                "left":   { "buddy": "boff", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "boff", "part": "mouth", "solve": true },
+                "right":  { "buddy": "boff", "part": "eye_right", "solve": true }
               }
             }
           ],
-          "clue": "Swap Hair",
-          "cutscene_end": {
-            "buddies": [
-              "boff",
-              "zorg"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "Now I look\nlike Kelly!",
-                "view": "right"
-              }
-            ]
-          },
+          "clue": "You have to\nbreak up a\nface to fix\na face.",
           "cutscene_environment": 0,
           "cutscene_start": {
-            "buddies": [
-              "boff",
-              "zorg"
-            ],
+            "buddies": [ "gluv", "suli" ],
             "lines": [
-              {
-                "speaker": 0,
-                "text": "How do I get\ncool hair\nlike you?",
-                "view": "right"
-              }
+              { "speaker": 0, "view": "front", "text": "Hi I'm Gluv!" },
+              { "speaker": 1, "view": "left",  "text": "Gluv, you are\nhorrifying!" },
+              { "speaker": 0, "view": "right", "text": "I just want\nto get along." },
+              { "speaker": 0, "view": "front",  "text": "Let's party!" }
             ]
           },
-          "shuffles": 0,
-          "title": "Bad Hair Day"
-        }
-      ],
-      "title": "Title 2"
-    },
-    {
-      "puzzles": [
+          "cutscene_end": {
+            "buddies": [ "gluv", "suli" ],
+            "lines": [
+              { "speaker": 1, "view": "left",  "text": "Way to go!" },
+              { "speaker": 0, "view": "front", "text": "Let's do some\nmore!" }
+            ]
+          },
+          "shuffles": 0
+        },
+
         {
+          "title": "Random\nShuffle",
           "buddies": [
             {
               "name": "gluv",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "mouth",
-                  "solve": false
-                },
-                "left": {
-                  "buddy": "maro",
-                  "part": "eye_left",
-                  "solve": true
-                },
-                "right": {
-                  "buddy": "maro",
-                  "part": "eye_right",
-                  "solve": true
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "hair",
-                  "solve": false
-                }
-              },
               "pieces_start": {
-                "bottom": {
-                  "buddy": "gluv",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "gluv",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "gluv", "part": "hair" },
+                "left":   { "buddy": "gluv", "part": "eye_left" },
+                "bottom": { "buddy": "gluv", "part": "mouth" },
+                "right":  { "buddy": "gluv", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "gluv", "part": "hair", "solve": true },
+                "left":   { "buddy": "gluv", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "gluv", "part": "mouth", "solve": true },
+                "right":  { "buddy": "gluv", "part": "eye_right", "solve": true }
               }
             },
             {
-              "name": "maro",
-              "pieces_end": {
-                "bottom": {
-                  "buddy": "maro",
-                  "part": "mouth",
-                  "solve": false
-                },
-                "left": {
-                  "buddy": "gluv",
-                  "part": "eye_left",
-                  "solve": true
-                },
-                "right": {
-                  "buddy": "gluv",
-                  "part": "eye_right",
-                  "solve": true
-                },
-                "top": {
-                  "buddy": "maro",
-                  "part": "hair",
-                  "solve": false
-                }
-              },
+              "name": "suli",
               "pieces_start": {
-                "bottom": {
-                  "buddy": "maro",
-                  "part": "mouth"
-                },
-                "left": {
-                  "buddy": "maro",
-                  "part": "eye_left"
-                },
-                "right": {
-                  "buddy": "maro",
-                  "part": "eye_right"
-                },
-                "top": {
-                  "buddy": "maro",
-                  "part": "hair"
-                }
+                "top":    { "buddy": "suli", "part": "hair" },
+                "left":   { "buddy": "suli", "part": "eye_left" },
+                "bottom": { "buddy": "suli", "part": "mouth" },
+                "right":  { "buddy": "suli", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "suli", "part": "hair", "solve": true },
+                "left":   { "buddy": "suli", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "suli", "part": "mouth", "solve": true },
+                "right":  { "buddy": "suli", "part": "eye_right", "solve": true }
+              }
+            },
+            {
+              "name": "boff",
+              "pieces_start": {
+                "top":    { "buddy": "boff", "part": "hair" },
+                "left":   { "buddy": "boff", "part": "eye_left" },
+                "bottom": { "buddy": "boff", "part": "mouth" },
+                "right":  { "buddy": "boff", "part": "eye_right" }
+              },
+              "pieces_end": {
+                "top":    { "buddy": "boff", "part": "hair", "solve": true },
+                "left":   { "buddy": "boff", "part": "eye_left", "solve": true },
+                "bottom": { "buddy": "boff", "part": "mouth", "solve": true },
+                "right":  { "buddy": "boff", "part": "eye_right", "solve": true }
               }
             }
           ],
-          "clue": "Swap Eyes",
-          "cutscene_end": {
-            "buddies": [
-              "maro",
-              "gluv"
-            ],
-            "lines": [
-              {
-                "speaker": 0,
-                "text": "That's much\nbetter.",
-                "view": "right"
-              }
-            ]
-          },
+          "clue": "The faces are\nrandomly\nshuffled!",
           "cutscene_environment": 0,
           "cutscene_start": {
-            "buddies": [
-              "maro",
-              "gluv"
-            ],
+            "buddies": [ "gluv", "suli" ],
             "lines": [
-              {
-                "speaker": 0,
-                "text": "See the world\nfrom my eyes!",
-                "view": "right"
-              }
+              { "speaker": 1, "view": "left",  "text": "Gluv, what the\nname of Sifteo\nare you doing?" },
+              { "speaker": 0, "view": "right", "text": "This place is\nsoooo lame." },
+              { "speaker": 0, "view": "front",  "text": "It's time to\nmix things up!" }
             ]
           },
-          "shuffles": 0,
-          "title": "Private Eyes"
+          "cutscene_end": {
+            "buddies": [ "gluv", "suli" ],
+            "lines": [
+              { "speaker": 1, "view": "left",  "text": "Way to go!" },
+              { "speaker": 0, "view": "front", "text": "Let's do some\nmore!" }
+            ]
+          },
+          "shuffles": 9
         }
-      ],
-      "title": "Title 3"
+      ]
+
     }
+
   ],
   "version": 2
 }
