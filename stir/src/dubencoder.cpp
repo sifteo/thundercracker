@@ -6,11 +6,13 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <map>
 #include <assert.h>
 #include "dubencoder.h"
 #include "logger.h"
 using namespace Stir;
 
+// Seems to be the sweet spot, as far as powers-of-two go.
 const unsigned DUBEncoder::BLOCK_SIZE = 8;
 
 
@@ -25,6 +27,11 @@ void DUBEncoder::encodeTiles(std::vector<uint16_t> &tiles)
     // Reserve space for our index
     result.resize(numBlocks);
 
+    // Deduplicate blocks. If we ever get two of the same, give them the
+    // same address in the index.
+    typedef std::map<std::vector<uint16_t>, uint16_t> dedupeMemo_t;
+    dedupeMemo_t dedupeMemo;
+
     unsigned blockIndex = 0;
     for (unsigned f = 0; f < mFrames; f++)
         for (unsigned y = 0; y < mHeight; y += BLOCK_SIZE)
@@ -32,8 +39,21 @@ void DUBEncoder::encodeTiles(std::vector<uint16_t> &tiles)
                 unsigned w = std::min(BLOCK_SIZE, mWidth - x);
                 unsigned h = std::min(BLOCK_SIZE, mHeight - y);
 
-                result[blockIndex++] = result.size();
-                encodeBlock(&tiles[x + y*mWidth + f*mWidth*mHeight], w, h, result);
+                std::vector<uint16_t> blockData;
+                encodeBlock(&tiles[x + y*mWidth + f*mWidth*mHeight], w, h, blockData);
+
+                dedupeMemo_t::iterator I = dedupeMemo.find(blockData);
+                if (I == dedupeMemo.end()) {
+                    // Unique block
+                    uint16_t addr = result.size();
+                    result[blockIndex++] = addr;
+                    dedupeMemo[blockData] = addr;
+                    result.insert(result.end(), blockData.begin(), blockData.end());
+
+                } else {
+                    // Duplicated block
+                    result[blockIndex++] = I->second;
+                }
             }
 }
 
