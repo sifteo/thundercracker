@@ -7,6 +7,7 @@
 #define USB_DEVICE_H
 
 #include <stdint.h>
+#include "usb/usbdefs.h"
 
 class UsbDevice
 {
@@ -20,6 +21,17 @@ public:
     static const uint8_t OutEpMaxPacket = 64;
 
     static void init();
+
+    static void handleReset();
+    static void handleSuspend();
+    static void handleResume();
+    static void handleStartOfFrame();
+
+    static void onConfigComplete(uint16_t wValue);
+    static int controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
+
+    static void inEndpointCallback(uint8_t ep);
+    static void outEndpointCallback(uint8_t ep);
 
     static void handleINData(void *p);
     static void handleOUTData(void *p);

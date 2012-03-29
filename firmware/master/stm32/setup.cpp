@@ -8,7 +8,7 @@
  */
 
 #include "radio.h"
-#include "usb.h"
+#include "usb/usbdevice.h"
 #include "flashlayer.h"
 #include "board.h"
 #include "vectors.h"
@@ -21,7 +21,6 @@
 #include "usart.h"
 #include "button.h"
 #include "svmruntime.h"
-#include "usb.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -205,6 +204,23 @@ extern "C" void _start()
     AudioOutDevice::start();
 
     UsbDevice::init();
+
+    /*
+     * Temporary until we have a proper context to install new games in.
+     * If button is held on startup, wait for asset installation.
+     *
+     * Kind of crappy, but just power cycle to start again and run the game.
+     */
+    if (Button::isPressed()) {
+
+        // indicate we're waiting
+        GPIOPin green = LED_GREEN_GPIO;
+        green.setControl(GPIOPin::OUT_10MHZ);
+        green.setLow();
+
+        for (;;)
+            Tasks::work();
+    }
 
     /*
      * Launch our game runtime!
