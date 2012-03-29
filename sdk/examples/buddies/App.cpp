@@ -7,7 +7,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
-//#include <cstdio>
 #include <limits.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
@@ -709,7 +708,7 @@ bool IsBuddyUsed(App &app, BuddyId buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
+int GetRotationTarget(const Piece &piece, Cube::Side side)
 {
     int rotation = side - piece.GetPart();
     if (rotation < 0)
@@ -717,7 +716,16 @@ bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
         rotation += NUM_SIDES;
     }
     
-    return piece.GetRotation() == rotation;
+    return rotation;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: kill this in favor of just using the above
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
+{
+    return piece.GetRotation() == GetRotationTarget(piece, side);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1227,10 +1235,13 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(
-                        j, puzzle.GetPieceStart(i, j));
-                    mCubeWrappers[i].SetPieceSolution(
-                        j, puzzle.GetPieceEnd(i, j));
+                    Piece pieceStart = puzzle.GetPieceStart(i, j);
+                    pieceStart.SetRotation(GetRotationTarget(pieceStart, j));
+                    mCubeWrappers[i].SetPiece(j, pieceStart);
+                    
+                    Piece pieceEnd = puzzle.GetPieceEnd(i, j);
+                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, j));
+                    mCubeWrappers[i].SetPieceSolution(j, pieceEnd);
                 }
             }
             else
@@ -1240,10 +1251,15 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 // need to keep an editable copy of Puzzle around...
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    mCubeWrappers[i].SetPiece(
-                        j, puzzle.GetPieceStart(mCubeWrappers[i].GetBuddyId(), j));
-                    mCubeWrappers[i].SetPieceSolution(
-                        j, puzzle.GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
+                    BuddyId buddyId = mCubeWrappers[i].GetBuddyId();
+                    
+                    Piece pieceStart = puzzle.GetPieceStart(buddyId, j);
+                    pieceStart.SetRotation(GetRotationTarget(pieceStart, j));
+                    mCubeWrappers[i].SetPiece(j, pieceStart);
+                    
+                    Piece pieceEnd = puzzle.GetPieceEnd(buddyId, j);
+                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, j));
+                    mCubeWrappers[i].SetPieceSolution(j, pieceEnd);
                 }
             }
         }
