@@ -15,6 +15,7 @@ public:
     void epSetStall(uint8_t addr, bool stall);
     void epSetNak(uint8_t addr, bool nak);
     bool epIsStalled(uint8_t addr);
+    bool epTxInProgress(uint8_t addr);
     uint16_t epTxWordsAvailable(uint8_t addr);
     uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
     uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len);

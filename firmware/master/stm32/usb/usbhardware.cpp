@@ -30,6 +30,11 @@ void UsbHardware::epSetStalled(uint8_t addr, bool stalled)
     hw.epSetStall(addr, stalled);
 }
 
+bool UsbHardware::epTxInProgress(uint8_t addr)
+{
+    return hw.epTxInProgress(addr);
+}
+
 void UsbHardware::epSetNak(uint8_t addr, bool nak)
 {
     hw.epSetNak(addr, nak);

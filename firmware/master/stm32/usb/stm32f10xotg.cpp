@@ -208,6 +208,13 @@ uint16_t Stm32f10xOtg::epTxWordsAvailable(uint8_t addr)
     return OTG.device.inEps[addr & 0x7f].DTXFSTS & 0xffff;
 }
 
+bool Stm32f10xOtg::epTxInProgress(uint8_t addr)
+{
+    // check the packet count in the IN endpoint
+    uint16_t pktcnt = (OTG.device.inEps[addr & 0x7f].DIEPTSIZ >> 19) & 0x3ff;
+    return pktcnt > 0;
+}
+
 uint16_t Stm32f10xOtg::epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
@@ -335,7 +342,8 @@ void Stm32f10xOtg::isr()
             volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
             // only really interested in XFRC to indicate TX complete
             if (ep.DIEPINT & 0x1) {
-                UsbDriver::inEndpointCallback(i);
+                if (i != 0)
+                    UsbDriver::inEndpointCallback(i);
                 ep.DIEPINT = 0x1;
             }
         }
