@@ -172,15 +172,17 @@ void GDBServer::handleClient()
         FD_SET(clientFD, &rfds);
         FD_SET(clientFD, &efds);
 
-        select(clientFD + 1, &rfds, NULL, &efds, &pollInterval);
+        int sel = select(clientFD + 1, &rfds, NULL, &efds, &pollInterval);
         pollForStop();
+        if (sel < 1)
+            continue;
 
         int ret = recv(clientFD, rxBuffer, sizeof rxBuffer, 0);
 
         if (ret <= 0) {
             if (errno == EAGAIN)
                 continue;
-            if (ret < 0)
+            if (ret < 0 && errno != 0)
                 fprintf(stderr, LOG_PREFIX "Read error (%d)\n", errno);
             return;
         }
