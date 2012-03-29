@@ -82,6 +82,7 @@ class Map:
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
 		# validate tiles
 		for tile in (self.raw.gettile(tid) for tid in self.background.tiles):
+			assert tile is not None, path + " has an undefined tile in the background"
 			if "bridge" in tile.props: 
 				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
