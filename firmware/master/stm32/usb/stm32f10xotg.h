@@ -1,28 +1,13 @@
 #ifndef STM32F10XOTG_H
 #define STM32F10XOTG_H
 
-#include "usb/usbdefs.h"
+#include <stdint.h>
 
-class Stm32f10xOtg
+/*
+ * Members specific to the STM32 OTG implementation of UsbHardware.
+ */
+namespace UsbHardwareStm32Otg
 {
-public:
-    Stm32f10xOtg();
-
-    void init();
-    void setAddress(uint8_t addr);
-    void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize);
-    void epReset();
-    void epSetStall(uint8_t addr, bool stall);
-    void epSetNak(uint8_t addr, bool nak);
-    bool epIsStalled(uint8_t addr);
-    bool epTxInProgress(uint8_t addr);
-    uint16_t epTxWordsAvailable(uint8_t addr);
-    uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
-    uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len);
-    void isr();
-    void setDisconnected(bool disconnected);
-
-private:
     static const unsigned RX_FIFO_WORDS = 128;
     static const unsigned MAX_PACKET = 64;
 
@@ -37,6 +22,6 @@ private:
     // We keep a backup copy of the out endpoint size registers to restore them
     // after a transaction.
     uint32_t doeptsiz[4];
-};
+}
 
 #endif // STM32F10XOTG_H

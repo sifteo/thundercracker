@@ -189,7 +189,3 @@ int UsbDevice::read(uint8_t *buf, unsigned len)
 {
     return UsbHardware::epReadPacket(OutEpAddr, buf, len);
 }
-
-IRQ_HANDLER ISR_UsbOtg_FS() {
-    UsbHardware::isr();
-}
