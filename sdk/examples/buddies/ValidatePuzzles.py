@@ -26,6 +26,41 @@ sides = ['top', 'left', 'bottom', 'right']
 parts = ['hair', 'eye_left', 'mouth', 'eye_right']
 
 ####################################################################################################
+# Upgrades
+####################################################################################################
+
+def Upgrade1_2(j):
+    print 'UPGRADE: Version 1 => 2'
+    
+    # Upgrade Version
+    j['version'] = 2
+    
+    # Create a books array
+    j['books'] = []
+    
+    # Find number of books currently in use
+    max_book = 0
+    for p in j['puzzles']:
+        if p['book'] > max_book:
+            max_book = p['book']
+    
+    # Create placeholder books for them
+    for i in range(max_book + 1):
+        j['books'].append({'title' : "Book Desc %d" % i, 'puzzles' : []})
+    
+    # Insert the puzzles into the books they belong too (and kill the old book attribute)
+    for p in j['puzzles']:
+        book = p['book']
+        del p['book']
+        j['books'][book]['puzzles'].append(p)
+    
+    # Delete the original puzzles
+    del j['puzzles']
+    return j
+
+upgrades = [None, Upgrade1_2]
+
+####################################################################################################
 # Utility
 ####################################################################################################
 
@@ -256,7 +291,7 @@ def ValidatePuzzles(src):
         j = json.load(f)
         
         # Bail if our version doesn't jive with the parser.
-        if not j.has_key('version') or j['version'] != version_current:
+        if not j.has_key('version') or j['version'] > version_current:
             print "Version Error: %s is a not supported version." % src
             return False
         
@@ -264,13 +299,23 @@ def ValidatePuzzles(src):
             print "Data Error: Ain't got none."
             return False
         
+        version = j['version']
+        if version < version_current:
+            for i in range(version_current - version):
+                j = upgrades[version + i](j)
+            f.close()
+            f = open(src, 'w')
+            json.dump(j, f, sort_keys = True, indent = 2)
+            f.close()
+        
         global prop_stack
         prop_stack.append('puzzles')
-        
         ValidateData(j['puzzles'])
+        prop_stack.pop()
+        
         if not validated:
             return False
-    
+        
     return True
 
 ####################################################################################################
