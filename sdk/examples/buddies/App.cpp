@@ -1414,6 +1414,7 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
+            mStoryBookIndex = 0;
             mStoryPuzzleIndex = 0;
             StartGameState(GAME_STATE_STORY_BOOK_START);
             break;
@@ -1487,12 +1488,29 @@ void App::StartGameState(GameState gameState)
         {
             mDelayTimer = kStateTimeDelayLong;
             
-            // TODO: Rewrite this for books
-            //if ((mStoryPuzzleIndex + 1) > mSaveDataStoryPuzzleProgress)
-            //{
-            //    mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex + 1;
-            //    SaveData();
-            //}
+            // TODO: Ideally we'd do the actual save the moment the player solves
+            // the puzzle. But this is causing bugs with the unlocked logic,
+            // so I'm moving it to happen alongside mStoryBookIndex/mStoryPuzzleIndex
+            // for now.
+            /*
+            if ((mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex))
+            {
+                if ((mStoryBookIndex + 1) > mSaveDataStoryBookProgress)
+                {
+                    mSaveDataStoryBookProgress = mStoryBookIndex + 1;
+                    mSaveDataStoryPuzzleProgress = 0;
+                    SaveData();
+                }
+            } 
+            else
+            {
+                if ((mStoryPuzzleIndex + 1) > mSaveDataStoryPuzzleProgress)
+                {
+                    mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex + 1;
+                    SaveData();
+                }
+            }
+            */
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_END_1:
@@ -1737,7 +1755,6 @@ void App::UpdateGameState(float dt)
             }
             else if (AnyTouchBegin())
             {
-                LOG(("Unshuffle sync\n"));
                 mTouchSync = true;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
@@ -2316,18 +2333,32 @@ void App::UpdateGameState(float dt)
             {
                 if (++mStoryPuzzleIndex == GetNumPuzzles(mStoryBookIndex))
                 {
-                    if (++mStoryBookIndex == GetNumBooks())
+                    ++mStoryBookIndex;
+                    mStoryPuzzleIndex = 0;
+                    
+                    if (mStoryBookIndex > mSaveDataStoryBookProgress)
+                    {
+                        mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                        mSaveDataStoryBookProgress = mStoryBookIndex;
+                        SaveData();
+                    }
+                    
+                    if (mStoryBookIndex == GetNumBooks())
                     {
                         StartGameState(GAME_STATE_MAIN_MENU);
                     }
                     else
                     {
-                        mStoryPuzzleIndex = 0;
                         StartGameState(GAME_STATE_STORY_BOOK_START);
                     }
                 }
                 else
                 {
+                    if (mStoryPuzzleIndex > mSaveDataStoryPuzzleProgress)
+                    {
+                        mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                        SaveData();
+                    }
                     StartGameState(GAME_STATE_STORY_CHAPTER_START);
                 }
             }
@@ -2841,7 +2872,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             // Moving on...
             if (cubeWrapper.GetId() == 0)
             {
-                if (HasUnlocked())
+                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex))
                 {
                     cubeWrapper.DrawBackgroundPartial(
                         Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
@@ -2877,7 +2908,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                if (HasUnlocked())
+                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex))
                 {
                     cubeWrapper.DrawBackground(StoryBookStartNext);
                     
@@ -2951,19 +2982,23 @@ void App::InsertScore()
 void App::SaveData()
 {
 #if 0
-    LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
-        mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+    LOG(("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
+        mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
     
     FILE *saveDataFile = std::fopen("SaveData.bin", "wb");
     ASSERT(saveDataFile != NULL);
     
     int numWritten0 =
-        std::fwrite(&mSaveDataStoryProgress, sizeof(mSaveDataStoryProgress), 1, saveDataFile);
+        std::fwrite(&mSaveDataStoryBookProgress, sizeof(mSaveDataStoryBookProgress), 1, saveDataFile);
     ASSERT(numWritten0 == 1);
     
     int numWritten1 =
+        std::fwrite(&mSaveDataStoryPuzzleProgress, sizeof(mSaveDataStoryPuzzleProgress), 1, saveDataFile);
+    ASSERT(numWritten1 == 1);
+    
+    int numWritten2 =
         std::fwrite(mSaveDataBestTimes, sizeof(mSaveDataBestTimes[0]), arraysize(mSaveDataBestTimes), saveDataFile);
-    ASSERT(numWritten1 == arraysize(mSaveDataBestTimes));
+    ASSERT(numWritten2 == arraysize(mSaveDataBestTimes));
     
     int success = std::fclose(saveDataFile);
     ASSERT(success == 0);
@@ -2981,9 +3016,10 @@ void App::LoadData()
         int success0 = std::fseek(saveDataFile, 0L, SEEK_END);
         ASSERT(success0 == 0);
         
-        std::size_t size = std::ftell(saveDataFile);
+        std::size_t sizeFile = std::ftell(saveDataFile);
+        std::sizt_t sizeData = sizeof(mSaveDataStoryBookProgress) + sizeof(mSaveDataStoryPuzzleProgress) + sizeof(mSaveDataBestTimes);
         
-        if (size != (sizeof(mSaveDataStoryProgress) + sizeof(mSaveDataBestTimes)))
+        if (sizeFile != sizeData)
         {
             LOG(("SaveData.bin is wrong size. Re-saving...\n"));
             SaveData();
@@ -3004,11 +3040,17 @@ void App::LoadData()
             int success2 = std::fclose(saveDataFile);
             ASSERT(success2 == 0);
             
-            LOG(("SaveData = (%u, %.2ff, %.2ff, %.2ff)\n",
-                mSaveDataStoryProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+            LOG(("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
+                mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
     
         }
     }
+#else
+    mSaveDataStoryBookProgress = 0;
+    mSaveDataStoryPuzzleProgress = 0;
+    mSaveDataBestTimes[0] = 0.0f;
+    mSaveDataBestTimes[1] = 0.0f;
+    mSaveDataBestTimes[2] = 0.0f;
 #endif
 }
 
@@ -3650,8 +3692,9 @@ bool App::AnyTouchEnd() const
 
 bool App::HasUnlocked() const
 {
-    // TODO: Deal with mSaveDataStoryBookProgress
-    return (mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex);
+    return
+        (mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex) &&
+        (mStoryBookIndex   + 1) > mSaveDataStoryBookProgress;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
