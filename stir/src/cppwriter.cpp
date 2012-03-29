@@ -110,12 +110,12 @@ CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
-    char signature[32];
+    char hash[32];
 
 #ifdef __MINGW32__
-    sprintf(signature, "0x%016I64x", (long long unsigned int) group.getSignature());
+    sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
 #else
-    sprintf(signature, "0x%016llx", (long long unsigned int) group.getSignature());
+    sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
 #endif
 
     mStream <<
@@ -128,7 +128,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
         indent << "/* reserved  */ 0,\n" <<
         indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
         indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-        indent << "/* signature */ " << signature << ",\n"
+        indent << "/* hash      */ " << hash << ",\n"
         "}, {\n";
 
     writeArray(group.getLoadstream());

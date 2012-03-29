@@ -335,11 +335,11 @@ Group *Group::getDefault(lua_State *L)
     return obj;
 }
 
-uint64_t Group::getSignature() const
+uint64_t Group::getHash() const
 {
     /*
-     * Signatures are calculated automatically, as a portion of the
-     * SHA1 hash of the loadstream.
+     * Hashes are calculated automatically, as a
+     * truncated SHA1 of the loadstream.
      */
 
     SHA_CTX ctx;
