@@ -122,9 +122,9 @@ class Map:
 			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 		for x,y in product( range(self.width-1), range(self.height) ):
-			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y) + " to room: " + str(x+1) + "," + str(y)
 		for x,y in product( range(self.width), range(self.height-1) ):
-			assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+			assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y) + " to room: " + str(x) + "," + str(y+1)
 		# find subdivisions
 		for r in self.rooms: 
 			r.find_subdivisions()

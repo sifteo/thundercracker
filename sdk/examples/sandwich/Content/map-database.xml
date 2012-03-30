@@ -11,15 +11,15 @@
 	
 	
 	<map id="temple_level1">
-		<name>Temple area 1</name>
+		<name>South Temple</name>
 	</map>
 	
 	<map id="temple_level2">
-		<name>Temple area 2</name>
+		<name>East Temple</name>
 	</map>
 
 	<map id="temple_level3">
-		<name>Temple area 3</name>
+		<name>North Temple</name>
 	</map>
 <!--
 	<map id="temple_level4">
