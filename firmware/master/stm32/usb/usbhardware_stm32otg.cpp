@@ -99,9 +99,11 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
                                         (1 << 27));    // SNAK
 
-        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_WORDS;
-        fifoMemTop += maxsize / 4;
-        fifoMemTopEp0 = fifoMemTop;
+        // in the global FIFO map, after the global RX size is the
+        // EP0 TX config
+        uint16_t fifoDepthInWords = maxsize / 4;
+        OTG.global.DIEPTXF0_HNPTXFSIZ = (fifoDepthInWords << 16) | fifoMemTop;
+        fifoMemTop += fifoDepthInWords;
 
         return;
     }
@@ -109,8 +111,10 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     if (isInEp(addr)) {
 
         addr &= 0x7f;
-        OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
-        fifoMemTop += maxsize / 4;
+
+        uint16_t fifoDepthInWords = maxsize / 4;
+        OTG.global.DIEPTXF[addr] = (fifoDepthInWords << 16) | fifoMemTop;
+        fifoMemTop += fifoDepthInWords;
 
         volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
         ep.DIEPTSIZ = maxsize & 0x7f;
