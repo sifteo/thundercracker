@@ -217,6 +217,9 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
     items = aItems;
     assets = aAssets;
 
+    // initialize instance constants
+    kHeaderHeight = kFooterHeight = kIconTileWidth = 0;
+
     // calculate the number of items
     uint8_t i = 0;
     while(items[i].icon != NULL) {
