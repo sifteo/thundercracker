@@ -150,7 +150,7 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
                 if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
                 {
                     visible = true;
-                    NormalizeVec( diff );
+                    diff = diff.normalize();
                     //m_pos += ( diff * CHROMIT_OBSCURE_DIST );
                     m_pos += diff;
                     //DEBUG_LOG(( "moving bubble to %0.2f, %0.2f\n", m_pos.x, m_pos.y ));
@@ -170,23 +170,4 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
     }
     else
         vid.resizeSprite(index, 0, 0);
-}
-
-//TODO, new sdk has normalize
-//voodoo black magic, from sources long lost:
-//http://www.beyond3d.com/content/articles/8/
-float InvSqrt (float x)
-{
-    float xhalf = 0.5f*x;
-    int i = *(int*)&x;
-    i = 0x5f3759df - (i>>1);
-    x = *(float*)&i;
-    x = x*(1.5f - xhalf*x*x);
-    return x;
-}
-
-//normalize the given vector
-void Bubble::NormalizeVec( Float2 &vec )
-{
-    vec *= InvSqrt( vec.len2() );
 }

@@ -33,8 +33,6 @@ public:
     inline bool isAlive() const { return m_fTimeAlive >= 0.0f; }
 
 private:
-    void NormalizeVec( Float2 &vec );
-
     Float2 m_pos;
     float m_fTimeAlive;
     const Sifteo::PinnedAssetImage *m_pTex;
