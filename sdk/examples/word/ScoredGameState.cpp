@@ -68,6 +68,7 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     {
         if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
             GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0 &&
+            GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesReveal) <= 0 &&
             GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesExit) <= 0)
         {
             switch (Dictionary::getPuzzleIndex())

@@ -387,3 +387,13 @@
 ,3,2,10,10
 ,3,2,10,12
 ,3,2,10,16
+"AnimType_MetaTilesReveal",2,0,2,2
+,2,1,8,2
+"AnimType_NormalTilesReveal",2,0,2,2
+,2,1,8,2
+"AnimType_MetaTilesReveal",3,0,2,2
+,3,1,6,2
+,3,2,10,2
+"AnimType_NormalTilesReveal",3,0,2,2
+,3,1,6,2
+,3,2,10,2

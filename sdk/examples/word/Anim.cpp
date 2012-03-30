@@ -132,7 +132,7 @@ bool animPaint(AnimType animT,
         // FIXME asset frame rate
         unsigned char assetFrame =
             MIN(assetFrames-1, (unsigned char) ((float)assetFrames * animPct));
-#ifdef DEBUG
+#ifdef DEBUGz
         switch (animT)
         {
         case AnimType_NotWord:
@@ -163,7 +163,72 @@ bool animPaint(AnimType animT,
             {
                 Vec2 letterPos(pos);
                 letterPos.y += LETTER_Y_OFFSET; // TODO
-                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+
+                switch (animT)
+                {
+                case AnimType_NormalTilesReveal:
+                    {
+                        unsigned char sparkleRow = animPct * 12 + 2;
+                        unsigned char sparkleOffset = sparkleRow - pos.y;
+                        if (metaLetterTile)
+                        {
+                            if (sparkleOffset < size.y)
+                            {
+                                bg1->DrawPartialAsset(Vec2(pos.x, sparkleRow),
+                                                      Vec2(0,0),
+                                                      Vec2(size.x, 1),
+                                                      SparkleWipe,
+                                                      MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct)));
+                                if (sparkleRow < letterPos.y + font.height - 1)
+                                {
+                                    bg1->DrawPartialAsset(Vec2(letterPos.x, sparkleRow + 1),
+                                                          Vec2(0, sparkleRow + 1 - letterPos.y),
+                                                          Vec2(size.x, letterPos.y + font.height - 1 - sparkleRow),
+                                                          font,
+                                                          fontFrame);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+                        }
+                    }
+                    break;
+
+                case AnimType_MetaTilesReveal:
+                    {
+                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+                        unsigned char sparkleRow = (1.f - animPct) * 12 + 2;
+                        unsigned char sparkleOffset = sparkleRow - pos.y;
+                        if (i == params->mMetaLetterIndex && sparkleOffset < size.y)
+                        {
+                            bg1->DrawPartialAsset(Vec2(pos.x, sparkleRow),
+                                                  Vec2(0,0),
+                                                  Vec2(size.x, 1),
+                                                  SparkleWipe,
+                                                  MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct)));
+                            if (sparkleRow > letterPos.y)
+                            {
+                                bg1->DrawPartialAsset(letterPos,
+                                                      Vec2(0, 0),
+                                                      Vec2(size.x, sparkleRow - letterPos.y),
+                                                      font,
+                                                      ('Z' + 1) - 'A');
+                            }
+                        }
+                    }
+                break;
+
+                default:
+                    if (!metaLetterTile || animT != AnimType_NormalTilesExit)
+                    {
+                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+                    }
+                    break;
+                }
+
+
             }
         }
         else if (objData.mLayer == Layer_BG1)
@@ -182,15 +247,28 @@ bool animPaint(AnimType animT,
     // driven approach
     if (params && params->mSpriteParams)
     {
-        float t = 4.f * animTime/data.mDuration;
+        float t = animTime/data.mDuration;
+        unsigned start = 0;
+        if (animT == AnimType_NewWord)
+        {
+            t *= 4.f;
+            start = 1;
+        }
         t = fmodf(t, 1.0f);
         unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
-        for (unsigned i=1; i<8; ++i)
+        for (unsigned i=start; i<8; ++i)
         {
-            //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
-            vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
-            vid.resizeSprite(i, Sparkle.width * 8, Sparkle.height * 8);
-            vid.setSpriteImage(i, Sparkle, assetFrame);
+            if (params->mSpriteParams->mStartDelay[i] > 0.f)
+            {
+                vid.hideSprite(i);
+            }
+            else
+            {
+                //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
+                vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
+                vid.resizeSprite(i, Sparkle.width * 8, Sparkle.height * 8);
+                vid.setSpriteImage(i, Sparkle, assetFrame);
+            }
         }
     }
 

@@ -354,15 +354,15 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case EventID_NormalTilesExit:
+    case EventID_NormalTilesReveal:
         switch (getAnim())
         {
-        case AnimType_NormalTilesExit:
+        case AnimType_NormalTilesReveal:
         case AnimType_NewWord:
             break;
 
         default:
-            queueAnim(AnimType_NormalTilesExit);
+            queueAnim(AnimType_NormalTilesReveal);
             break;
         }
         break;
@@ -508,6 +508,16 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
     default:
         break;
 
+    case AnimType_NormalTilesReveal:
+    case AnimType_MetaTilesReveal:
+        // setup sprite params
+        /* TODO remove for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
+        {
+            calcSpriteParams(i);
+        }
+        */
+        break;
+
     case AnimType_NewWord:
         {
             Cube& c = getCube();
@@ -528,6 +538,7 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
             {
                 calcSpriteParams(i);
             }
+
         }
         //WordGame::instance()->setNeedsPaintSync();
         break;
@@ -541,13 +552,13 @@ void CubeStateMachine::updateSpriteParams(float dt)
         // eased approach
         const Float2 &v =
                 (mSpriteParams.mEndPositions[i] - mSpriteParams.mPositions[i]);
-        if (v.len2() < 2.f)
+        if (mSpriteParams.mLoop[i] && v.len2() < 2.f)
         {
             calcSpriteParams(i);
         }
         else if (mSpriteParams.mStartDelay[i] <= 0.f)
         {
-            mSpriteParams.mPositions[i] += 6.f * dt * v;
+            mSpriteParams.mPositions[i] += mSpriteParams.mSpeeds[i] * dt * v;
         }
         else
         {
@@ -571,6 +582,59 @@ void CubeStateMachine::calcSpriteParams(unsigned i)
                                                     WordGame::random.uniform(32.f, 52.f));
             mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
             mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
+            mSpriteParams.mSpeeds[i] = 5.5f + WordGame::random.random() * 1.f;
+            mSpriteParams.mLoop[i] = true;
+        }
+        break;
+
+    case AnimType_NormalTilesReveal:
+    case AnimType_MetaTilesReveal:
+        {
+            unsigned char lpc;
+            unsigned char tileIndex;
+            unsigned char firstTileIndex;
+            unsigned char startOffset;
+            if (getAnim() == AnimType_NormalTilesReveal)
+            {
+                lpc = mPuzzleLettersPerCube;
+                tileIndex = Dictionary::getCurrentPuzzleMetaLetterIndex();
+                firstTileIndex = mPuzzlePieceIndex * lpc;
+                startOffset = mLettersStart;
+            }
+            else
+            {
+                lpc = mMetaLettersPerCube;
+                tileIndex = 0; // TODO
+                firstTileIndex = mMetaPieceIndex * lpc;
+                startOffset = mMetaLettersStart;
+            }
+
+            if (tileIndex >= firstTileIndex && tileIndex < firstTileIndex + lpc)
+            {
+                mSpriteParams.mPositions[i].x =
+                        Sparkle.width * 8.f * i +
+                        ((tileIndex - firstTileIndex + startOffset) % lpc) * 96/lpc + 16.f;
+                mSpriteParams.mEndPositions[i].x = mSpriteParams.mPositions[i].x;
+                if (getAnim() == AnimType_NormalTilesReveal)
+                {
+                    mSpriteParams.mPositions[i].y = 16.f;
+                    mSpriteParams.mEndPositions[i].y =
+                            VidMode::LCD_height - (Sparkle.height * 8.f + 16.f);
+                }
+                else
+                {
+                    mSpriteParams.mEndPositions[i].y = 16.f;
+                    mSpriteParams.mPositions[i].y =
+                            VidMode::LCD_height - (Sparkle.height * 8.f + 16.f);
+                }
+                mSpriteParams.mSpeeds[i] = 1.0f;
+                mSpriteParams.mStartDelay[i] = 0.f;
+            }
+            else
+            {
+                mSpriteParams.mStartDelay[i] = 99999999.f;
+            }
+            mSpriteParams.mLoop[i] = false;
         }
         break;
     }
@@ -597,8 +661,8 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
             default:
                 break;
 
-            case AnimType_NormalTilesExit:                
-                WordGame::instance()->onEvent(EventID_NormalTilesExit, EventData());
+            case AnimType_NormalTilesReveal:
+                WordGame::instance()->onEvent(EventID_NormalTilesReveal, EventData());
                 break;
 
             case AnimType_OldWord:
@@ -718,19 +782,23 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
         return AnimType_MetaTilesEnter;
 
     case AnimType_MetaTilesEnter:
-        return Dictionary::currentIsMetaPuzzle() ? AnimType_NotWord : AnimType_MetaTilesShow;
+        return Dictionary::currentIsMetaPuzzle() ? AnimType_NotWord : AnimType_MetaTilesReveal;
 
     case AnimType_MetaTilesShow:
+    case AnimType_MetaTilesReveal:
         return AnimType_MetaTilesExit;
 
     case AnimType_MetaTilesExit:
         return AnimType_NormalTilesEnter;        // TODO other transition at end of city
 
 
+    case AnimType_NormalTilesReveal:
+        return AnimType_NormalTilesExit;
+
     case AnimType_NewWord:
         if (GameStateMachine::getNumAnagramsLeft() <= 0)
         {
-            return AnimType_NormalTilesExit;
+            return AnimType_NormalTilesReveal;
         }
         else
         {
@@ -916,6 +984,7 @@ void CubeStateMachine::update(float dt)
             mAnimTimes[i] += dt;
         }
     }
+    updateSpriteParams(dt);
 
     StateMachine::update(dt);
     if ((int)mBG0Panning != (int)mBG0TargetPanning)
@@ -1378,6 +1447,9 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_NewWord:
+    /* TODO remove case AnimType_NormalTilesReveal:
+    case AnimType_MetaTilesReveal:
+    */
         break;
 
     default:
@@ -1504,13 +1576,26 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     ASSERT(params);
     Cube &c = getCube();
     params->mLetters[0] = '\0';
-    params->mSpriteParams =
-                (mAnimTypes[CubeAnim_Main] == AnimType_NewWord) ? &mSpriteParams : 0;
+    switch (mAnimTypes[CubeAnim_Main])
+    {
+    case AnimType_NewWord:
+    /* TODO remove case AnimType_MetaTilesReveal:
+    case AnimType_NormalTilesReveal:
+    */
+        params->mSpriteParams = &mSpriteParams;
+        break;
+
+    default:
+        params->mSpriteParams = 0;
+        break;
+    }
+
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_MetaTilesEnter:
     case AnimType_MetaTilesShow:
     case AnimType_MetaTilesExit:
+    case AnimType_MetaTilesReveal:
         params->mAllMetaLetters = true;
         params->mLettersPerCube = mMetaLettersPerCube;
         if (!getMetaLetters(params->mLetters, true))
@@ -1537,28 +1622,44 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
     unsigned letter0Index = mPuzzlePieceIndex * mlpc;
     unsigned mli = Dictionary::getCurrentPuzzleMetaLetterIndex();
-    if (mli >= letter0Index && mli < letter0Index + mlpc)
+    params->mMetaLetterIndex = -1;
+
+    switch (mAnimTypes[CubeAnim_Main])
     {
-        switch (mAnimTypes[CubeAnim_Main])
+    case AnimType_SlideL:
+    case AnimType_SlideR:
+        if (mli >= letter0Index && mli < letter0Index + mlpc)
         {
-        case AnimType_SlideL:
-        case AnimType_SlideR:
             params->mMetaLetterIndex =
                     (mli - letter0Index) + (mlpc - mLettersStartOld);
-            break;
+            params->mMetaLetterIndex = (params->mMetaLetterIndex % mlpc);
+        }
+        break;
 
-        default:
+    case AnimType_MetaTilesReveal:
+        {
+            unsigned char m = mMetaPieceIndex * mMetaLettersPerCube;
+            for (unsigned char i = m; i < m + mMetaLettersPerCube; ++i)
+            {
+                if (GameStateMachine::getInstance().isMetaLetterIndexUnlockedLast(i))
+                {
+                    params->mMetaLetterIndex = i - m + mMetaLettersStart;
+                    params->mMetaLetterIndex = (params->mMetaLetterIndex % mMetaLettersPerCube);
+                    break;
+                }
+            }
+        }
+        break;
+
+    default:
+        if (mli >= letter0Index && mli < letter0Index + mlpc)
+        {
             params->mMetaLetterIndex =
                 (mli - letter0Index) + (mlpc - mLettersStart);
-            break;
+            params->mMetaLetterIndex = (params->mMetaLetterIndex % mlpc);
         }
-        params->mMetaLetterIndex = (params->mMetaLetterIndex % mlpc);
+        break;
     }
-    else
-    {
-        params->mMetaLetterIndex = -1;
-    }
-
     return retval;
 }
 

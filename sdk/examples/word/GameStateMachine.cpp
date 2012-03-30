@@ -97,9 +97,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                 break;
             }
         }
-        break;
-
-    case EventID_NormalTilesExit:
+        mMetaLetterUnlockedMaskOld = mMetaLetterUnlockedMask;
         break;
 
     case EventID_NewWordFound:
@@ -128,6 +126,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             {
                 char metaLetter = Dictionary::getMetaLetter();
                 char meta[MAX_LETTERS_PER_WORD + 1];
+                mMetaLetterUnlockedMaskOld = mMetaLetterUnlockedMask;
                 unsigned char a, b;
                 if (Dictionary::getMetaPuzzle(meta, a, b))
                 {

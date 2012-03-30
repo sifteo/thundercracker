@@ -28,6 +28,8 @@ enum AnimType
     AnimType_MetaTilesEnter,
     AnimType_MetaTilesShow,
     AnimType_MetaTilesExit,
+    AnimType_MetaTilesReveal,
+    AnimType_NormalTilesReveal,
 
     NumAnimTypes
 };
@@ -37,6 +39,8 @@ struct SpriteParams
     Float2 mPositions[_SYS_VRAM_SPRITES];
     Float2 mEndPositions[_SYS_VRAM_SPRITES];
     float mStartDelay[_SYS_VRAM_SPRITES];
+    float mSpeeds[_SYS_VRAM_SPRITES];
+    bool mLoop[_SYS_VRAM_SPRITES];
 };
 
 struct AnimParams
@@ -46,8 +50,8 @@ struct AnimParams
     Cube::ID mCubeID;
     bool mBorders;
     bool mBonus;
-    char mMetaLetterIndex;
-    char mLettersPerCube;
+    unsigned char mMetaLetterIndex;
+    unsigned char mLettersPerCube;
     bool mAllMetaLetters;
     SpriteParams *mSpriteParams;
 };

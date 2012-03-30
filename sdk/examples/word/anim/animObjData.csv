@@ -66,3 +66,13 @@
 "AnimType_MetaTilesExit",3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
 ,3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
 ,3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+"AnimType_MetaTilesReveal",2,"Tile2Meta","Tile2Blank","Tile2Meta",0,"Layer_BG0",0
+,2,"Tile2Meta","Tile2Blank","Tile2Meta",0,"Layer_BG0",0
+"AnimType_NormalTilesReveal",2,"Tile2","Tile2Blank","Tile2Meta",0,"Layer_BG0",0
+,2,"Tile2","Tile2Blank","Tile2Meta",0,"Layer_BG0",0
+"AnimType_MetaTilesReveal",3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+,3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+,3,"Tile3Meta","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+"AnimType_NormalTilesReveal",3,"Tile3","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+,3,"Tile3","Tile3Blank","Tile3Meta",0,"Layer_BG0",0
+,3,"Tile3","Tile3Blank","Tile3Meta",0,"Layer_BG0",0

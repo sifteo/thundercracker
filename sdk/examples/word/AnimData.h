@@ -390,6 +390,16 @@ const static Vec2 positions[] =
     Vec2(10, 10),    // 385
     Vec2(10, 12),    // 386
     Vec2(10, 16),    // 387
+    Vec2(2, 2),    // 388
+    Vec2(8, 2),    // 389
+    Vec2(2, 2),    // 390
+    Vec2(8, 2),    // 391
+    Vec2(2, 2),    // 392
+    Vec2(6, 2),    // 393
+    Vec2(10, 2),    // 394
+    Vec2(2, 2),    // 395
+    Vec2(6, 2),    // 396
+    Vec2(10, 2),    // 397
 };
 
 const static AnimObjData animObjData[] =
@@ -461,6 +471,16 @@ const static AnimObjData animObjData[] =
     { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[358] },    // AnimType_MetaTilesExit 64
     { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[368] },    // AnimType_MetaTilesExit 65
     { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[378] },    // AnimType_MetaTilesExit 66
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[388] },    // AnimType_MetaTilesReveal 67
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[389] },    // AnimType_MetaTilesReveal 68
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[390] },    // AnimType_NormalTilesReveal 69
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[391] },    // AnimType_NormalTilesReveal 70
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[392] },    // AnimType_MetaTilesReveal 71
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[393] },    // AnimType_MetaTilesReveal 72
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[394] },    // AnimType_MetaTilesReveal 73
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[395] },    // AnimType_NormalTilesReveal 74
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[396] },    // AnimType_NormalTilesReveal 75
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[397] },    // AnimType_NormalTilesReveal 76
 };
 
 const static AnimData animData[] =
@@ -484,6 +504,8 @@ const static AnimData animData[] =
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 0, &animObjData[0]},    // AnimType_MetaTilesShow
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
+    { 1.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesReveal
+    { 1.2f, false, 0, &animObjData[0]},    // AnimType_NormalTilesReveal
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -503,6 +525,8 @@ const static AnimData animData[] =
     { 0.5f, false, 2, &animObjData[46]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 2, &animObjData[48]},    // AnimType_MetaTilesShow
     { 0.5f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
+    { 1.5f, false, 2, &animObjData[67]},    // AnimType_MetaTilesReveal
+    { 1.2f, false, 2, &animObjData[69]},    // AnimType_NormalTilesReveal
     { 1.f, true, 3, &animObjData[19]},    // AnimType_NotWord
     { 0.5f, false, 3, &animObjData[22]},    // AnimType_SlideL
     { 0.5f, false, 3, &animObjData[25]},    // AnimType_SlideR
@@ -522,5 +546,7 @@ const static AnimData animData[] =
     { 0.5f, false, 3, &animObjData[58]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 3, &animObjData[61]},    // AnimType_MetaTilesShow
     { 0.5f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
+    { 1.5f, false, 3, &animObjData[71]},    // AnimType_MetaTilesReveal
+    { 1.2f, false, 3, &animObjData[74]},    // AnimType_NormalTilesReveal
 };
 

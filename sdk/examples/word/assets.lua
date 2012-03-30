@@ -6,6 +6,7 @@ Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
+SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=10}
 BorderBottom = image{"wp2_border_bottom.png", height=16, quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
