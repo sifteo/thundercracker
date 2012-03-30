@@ -204,7 +204,7 @@ template <typename T> struct Vector2 {
      * Return a normalized version of this vector.
      * The returned vector will have a magnitude of 1.0.
      */
-    T normalize() const {
+    Vector2<T> normalize() const {
         return *this / len();
     }
     

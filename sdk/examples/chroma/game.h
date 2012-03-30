@@ -34,10 +34,12 @@ public:
 #endif
         STATE_INTRO,
 		STATE_PLAYING,		
-        STATE_DYING,
 		STATE_POSTGAME,
         STATE_GOODJOB,
+        STATE_FAILPUZZLE,
         STATE_NEXTPUZZLE,
+        STATE_GAMEMENU,
+        STATE_GAMEOVERBANNER,
 	} GameState;
 
 	typedef enum
@@ -64,7 +66,9 @@ public:
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
     static const int MAX_MULTIPLIER = 7;
-    static const float GOODJOB_TIME;
+    static const float LUMES_FACE_TIME;
+    //show lumes + "Good job"
+    static const float FULLGOODJOB_TIME;
 
 
     //number of dots needed for certain thresholds
@@ -96,10 +100,13 @@ public:
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	inline GameState getState() const { return m_state; }
+    inline float getStateTime() const { return m_stateTime; }
     void setState( GameState state );
+    //go to state through bubble transition
+    void TransitionToState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
-	inline unsigned int getScore() const { return m_iScore; }
+    unsigned int getScore() const;
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
     inline void addLevel() { m_iLevel++; }
@@ -109,7 +116,7 @@ public:
     unsigned int getHighScore( unsigned int index ) const;
     void enterScore();
 
-	void CheckChain( CubeWrapper *pWrapper );
+    void CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos );
 	void checkGameOver();
 	bool NoMatches();
 	unsigned int numColors() const;
@@ -151,11 +158,12 @@ public:
     void UpMultiplier();
     const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
-    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel + 1; }
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
     void ReturnToMainMenu();
+    void gotoNextPuzzle( bool bAdvance );
 
 private:
 	void TestMatches();
@@ -163,7 +171,6 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void gotoNextPuzzle( bool bAdvance );
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
