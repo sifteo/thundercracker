@@ -15,6 +15,7 @@ enum EventID
     EventID_NewMeta,
     EventID_NewWordFound,
     EventID_OldWordFound,
+    EventID_PuzzleSolved,
     EventID_WordBroken,
     EventID_GameStateChanged,
     EventID_LetterOrderChange,

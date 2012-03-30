@@ -102,3 +102,28 @@ void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
 }
 
 
+void WordGame::getRandomCubePermutation(unsigned char *indexArray)
+{
+    // first scramble the cube to word fragments mapping
+    int cubeIndexes[NUM_CUBES];
+    for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
+    {
+        cubeIndexes[i] = i;
+    }
+
+    // assign cube indexes to the puzzle piece indexes array, randomly
+    for (int i = 0; i < (int)NUM_CUBES; ++i)
+    {
+        for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
+             true;
+             j = ((j + 1) % NUM_CUBES))
+        {
+            if (cubeIndexes[j] >= 0)
+            {
+                indexArray[i] = cubeIndexes[j];
+                cubeIndexes[j] = -1;
+                break;
+            }
+        }
+    }
+}

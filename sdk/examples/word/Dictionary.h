@@ -19,6 +19,7 @@ public:
     static bool getMetaPuzzle(char *buffer,
                               unsigned char& leadingSpaces,
                               unsigned char& maxLettersPerCube);
+    static char getMetaLetter();
 
     static bool findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,

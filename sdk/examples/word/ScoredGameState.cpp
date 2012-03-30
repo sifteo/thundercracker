@@ -72,12 +72,6 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         {
             switch (Dictionary::getPuzzleIndex())
             {
-            case 6:  // acre
-            case 12: // part
-            case 18: // career
-            case 24: // begun
-                // TODO detect end of level through data
-                return GameStateIndex_StoryCityProgression;
             default:
                 // wait for all the cube states to exit the new word state
                 // then shuffle
@@ -97,7 +91,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
     onAudioEvent(eventID, data);
     switch (eventID)
-    {
+    {   
     // TODO put in the pause menu on touch
     case EventID_EnterState:
         ScoredGameState::createNewAnagram();
@@ -331,7 +325,7 @@ void ScoredGameState::createNewAnagram()
             // wraps around)
 
             _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
-            getRandomCubePermutation(data.mNewPuzzle.mCubeOrderingIndexes);
+            WordGame::getRandomCubePermutation(data.mNewPuzzle.mCubeOrderingIndexes);
             // for each cube, choose a random letter shift
             for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
             {
@@ -351,54 +345,7 @@ void ScoredGameState::createNewAnagram()
 
    if (Dictionary::currentStartsNewMetaPuzzle())
     {
-        EventData newMeta;
-        /*char mWord[MAX_LETTERS_PER_WORD + 1];
-        unsigned char mCubeOrderingIndexes[NUM_CUBES];
-        unsigned char mLetterStartIndexes[NUM_CUBES];
-        unsigned char mLeadingSpaces;
-        unsigned char mMaxLettersPerCube;
-        */
-        if (Dictionary::getMetaPuzzle(newMeta.mNewMeta.mWord,
-                                      newMeta.mNewMeta.mLeadingSpaces,
-                                      newMeta.mNewMeta.mMaxLettersPerCube))
-        {
-
-            // FIXME indexes
-            getRandomCubePermutation(newMeta.mNewMeta.mCubeOrderingIndexes);
-            // for each cube, choose a random letter shift
-            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
-            {
-                newMeta.mNewMeta.mLetterStartIndexes[ci] =
-                        WordGame::random.randrange(newMeta.mNewMeta.mMaxLettersPerCube);
-            }
-            GameStateMachine::sOnEvent(EventID_NewMeta, newMeta);
-        }
+       GameStateMachine::getInstance().initNewMeta();
     }
 }
 
-void ScoredGameState::getRandomCubePermutation(unsigned char *indexArray)
-{
-    // first scramble the cube to word fragments mapping
-    int cubeIndexes[NUM_CUBES];
-    for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
-    {
-        cubeIndexes[i] = i;
-    }
-
-    // assign cube indexes to the puzzle piece indexes array, randomly
-    for (int i = 0; i < (int)NUM_CUBES; ++i)
-    {
-        for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
-             true;
-             j = ((j + 1) % NUM_CUBES))
-        {
-            if (cubeIndexes[j] >= 0)
-            {
-                indexArray[i] = cubeIndexes[j];
-                cubeIndexes[j] = -1;
-                break;
-            }
-        }
-    }
-
-}

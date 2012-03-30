@@ -50,6 +50,8 @@ public:
                           _SYSAudioLoopType loopMode = LoopOnce,
                           AudioPriority priority = AudioPriority_Normal);
 
+    static void getRandomCubePermutation(unsigned char *indexArray);
+
     static Math::Random random;
 
 private:

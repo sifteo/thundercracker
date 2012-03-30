@@ -352,6 +352,7 @@ unsigned char Dictionary::getCurrentPuzzleMetaLetterIndex()
     return getPuzzleMetaLetterIndex(sPuzzleIndex);
 }
 
+
 bool Dictionary::isMetaPuzzle(int index)
 {
     return getPuzzleMetaLetterIndex(index) == 255;
@@ -381,6 +382,19 @@ bool Dictionary::getMetaPuzzle(char *buffer,
         }
     }
     return false;
+}
+
+char Dictionary::getMetaLetter()
+{
+    unsigned char i = getCurrentPuzzleMetaLetterIndex();
+    char word[MAX_LETTERS_PER_WORD + 1];
+    unsigned char a, b, c;
+    if (getPuzzle(sPuzzleIndex, word, a, b, c))
+    {
+        return word[i];
+    }
+    ASSERT(0);
+    return ' ';
 }
 
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)

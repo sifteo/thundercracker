@@ -26,6 +26,7 @@ union EventData
         unsigned char mLeadingSpaces;
         unsigned char mMaxLettersPerCube;
     } mNewMeta;
+
     struct
     {
         const char* mWord;

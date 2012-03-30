@@ -51,6 +51,7 @@ void GameStateMachine::update(float dt)
 
 unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
+    STATIC_ASSERT(MAX_LETTERS_PER_WORD < 8 * sizeof(unsigned));
     switch (eventID)
     {
     case EventID_GameStateChanged:
@@ -68,6 +69,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 #endif
             mAnagramCooldown = .0f;
             mScore = 0;
+            initNewMeta();
         }
         break;
 
@@ -82,6 +84,22 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         CheckMarkState_Unchecked :
                         CheckMarkState_Hidden;
         }
+        break;
+
+    case EventID_NewMeta:
+        mMetaLetterUnlockedMask = 0;
+        for (unsigned char i = 0; i < data.mNewMeta.mMaxLettersPerCube * NUM_CUBES; ++i)
+        {
+            // FIXME leading spaces for metas
+            if (data.mNewMeta.mWord[i] == ' ' || data.mNewMeta.mWord[i] == '\0')
+            {
+                mMetaLetterUnlockedMask |= (1 << i);
+                break;
+            }
+        }
+        break;
+
+    case EventID_NormalTilesExit:
         break;
 
     case EventID_NewWordFound:
@@ -105,15 +123,26 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                 ASSERT(mLevelProgressData.mPuzzleProgress[i] != CheckMarkState_Hidden); // out of range, unexpected
             }
 
-            // TODO multiple letters per cube
-            // TODO count active cubes
-            /* TODO extra time sound
-            if (len >= 4)
+            // just solved a puzzle, unlock meta letter
+            if (mNumAnagramsLeft <= 0)
             {
-                mTimeLeft += len - 2;
-                WordGame::playAudio(extratime, AudioChannelIndex_Bonus);
+                char metaLetter = Dictionary::getMetaLetter();
+                char meta[MAX_LETTERS_PER_WORD + 1];
+                unsigned char a, b;
+                if (Dictionary::getMetaPuzzle(meta, a, b))
+                {
+                    unsigned char len = _SYS_strnlen(meta, sizeof meta);
+                    for (unsigned char i = 0; i < len; ++i)
+                    {
+                        if (meta[i] == metaLetter &&
+                            !(mMetaLetterUnlockedMask & (1 << i)))
+                        {
+                            mMetaLetterUnlockedMask |= (1 << i);
+                            break;
+                        }
+                    }
+                }
             }
-            */
         }
         break;
 
@@ -234,4 +263,23 @@ unsigned GameStateMachine::getCurrentMaxLettersPerWord()
     ASSERT(sInstance);
     // TODO switch modes
     return sInstance->getCurrentMaxLettersPerCube() * NUM_CUBES;
+}
+
+void GameStateMachine::initNewMeta()
+{
+    EventData newMeta;
+    if (Dictionary::getMetaPuzzle(newMeta.mNewMeta.mWord,
+                                  newMeta.mNewMeta.mLeadingSpaces,
+                                  newMeta.mNewMeta.mMaxLettersPerCube))
+    {
+        WordGame::getRandomCubePermutation(newMeta.mNewMeta.mCubeOrderingIndexes);
+        // for each cube, choose a random letter shift
+        for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+        {
+            newMeta.mNewMeta.mLetterStartIndexes[ci] =
+                    WordGame::random.randrange(newMeta.mNewMeta.mMaxLettersPerCube);
+        }
+        onEvent(EventID_NewMeta, newMeta);
+    }
+
 }

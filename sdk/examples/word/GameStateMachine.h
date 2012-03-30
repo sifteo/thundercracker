@@ -58,7 +58,9 @@ public:
     static unsigned sOnEvent(unsigned eventID, const EventData& data);
     static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
     unsigned char getNumHints() const { return mNumHints; }
+    bool isMetaLetterIndexUnlocked(unsigned char i) const { return (mMetaLetterUnlockedMask & (1 << i)) != 0; }
     void setNumHints(unsigned char i) { mNumHints = i; }
+    void initNewMeta();
 
 protected:
     virtual State& getState(unsigned index);
@@ -82,6 +84,8 @@ private:
     unsigned mCurrentMaxLettersPerCube;
     LevelProgressData mLevelProgressData;
     unsigned char mNumHints;
+    unsigned mMetaLetterUnlockedMask;
+
 
     static GameStateMachine* sInstance;
 };

@@ -8,7 +8,8 @@
 #include "assets.gen.h"
 
 CubeStateMachine::CubeStateMachine() :
-        StateMachine(0), mPuzzleLettersPerCube(0), mPuzzlePieceIndex(0), mIdleTime(0.f),
+        StateMachine(0), mPuzzleLettersPerCube(0),
+        mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
         mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0)
@@ -334,6 +335,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_NewMeta:
         {
             unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+            mMetaPieceIndex = data.mNewMeta.mCubeOrderingIndexes[cubeIndex];
             mMetaLettersStart = data.mNewMeta.mLetterStartIndexes[cubeIndex];
             for (unsigned i = 0; i < arraysize(mMetaLetters); ++i)
             {
@@ -345,7 +347,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             for (unsigned i = 0; i < mMetaLettersPerCube; ++i)
             {
                 mMetaLetters[i] =
-                        data.mNewMeta.mWord[mPuzzlePieceIndex * mMetaLettersPerCube + i];
+                        data.mNewMeta.mWord[mMetaPieceIndex * mMetaLettersPerCube + i];
             }
             // TODO substrings of length 1 to 3
             paint();
@@ -407,16 +409,17 @@ unsigned CubeStateMachine::findNumLetters(char *string)
     return count;
 }
 
-unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint, bool meta) const
+unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint) const
 {
-    if ((meta && mMetaLettersPerCube <= 0) || (!meta && mPuzzleLettersPerCube <= 0))
+    if (mPuzzleLettersPerCube <= 0)
     {
         return 0;
     }
 
-    unsigned start = meta ? mMetaLettersStart : mLettersStart;
-    const char *letters = meta ? mMetaLetters : mLetters;
-    unsigned lettersPerCube = meta ? mMetaLettersPerCube : mPuzzleLettersPerCube;
+    unsigned start = mLettersStart;
+    const char *letters = mLetters;
+    unsigned lettersPerCube = mPuzzleLettersPerCube;
+    ASSERT(lettersPerCube <= MAX_LETTERS_PER_CUBE);
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_SlideL:
@@ -442,13 +445,51 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint, bool meta) co
             _SYS_strlcat(buffer, letters, lettersPerCube + 1);
         }
         break;
-
-    //default:
-      //  _SYS_strlcpy(buffer, mLetters, lettersPerCube + 1);
-        //break;
     }
 
     return _SYS_strnlen(buffer, lettersPerCube);
+}
+
+unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
+{
+    if (mMetaLettersPerCube <= 0)
+    {
+        return 0;
+    }
+
+    unsigned start = mMetaLettersStart;
+    const char *letters = mMetaLetters;
+    unsigned lettersPerCube = mMetaLettersPerCube;
+    ASSERT(lettersPerCube <= MAX_LETTERS_PER_CUBE);
+    switch (mAnimTypes[CubeAnim_Main])
+    {
+    case AnimType_SlideL:
+    case AnimType_SlideR:
+        if (!forPaint)
+        {
+            return 0;
+        }
+        start = mLettersStartOld;
+        // fall through
+    default:
+        for (unsigned dest = start, src = 0;
+             src < lettersPerCube;
+             dest = (dest + 1) % lettersPerCube, ++src)
+        {
+            if (GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex))
+            {
+                buffer[dest] = letters[src];
+            }
+            else
+            {
+                buffer[dest] = 'Z' + 1; // '?' in the strip
+            }
+        }
+        break;
+    }
+
+    buffer[lettersPerCube] = '\0';
+    return lettersPerCube;
 }
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
@@ -556,7 +597,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
             default:
                 break;
 
-            case AnimType_NormalTilesExit:
+            case AnimType_NormalTilesExit:                
                 WordGame::instance()->onEvent(EventID_NormalTilesExit, EventData());
                 break;
 
@@ -677,7 +718,7 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
         return AnimType_MetaTilesEnter;
 
     case AnimType_MetaTilesEnter:
-        return AnimType_MetaTilesShow;
+        return Dictionary::currentIsMetaPuzzle() ? AnimType_NotWord : AnimType_MetaTilesShow;
 
     case AnimType_MetaTilesShow:
         return AnimType_MetaTilesExit;
@@ -697,11 +738,9 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
             if (canBeginWord())
             {
                 char wordBuffer[MAX_LETTERS_PER_WORD + 1];
-                EventData wordFoundData;
-                if (beginsWord(isOldWord, wordBuffer, wordFoundData.mWordFound.mBonus))
+                bool isBonus;
+                if (beginsWord(isOldWord, wordBuffer, isBonus))
                 {
-                    wordFoundData.mWordFound.mCubeIDStart = getCube().id();
-                    wordFoundData.mWordFound.mWord = wordBuffer;
 
                     if (isOldWord)
                     {
@@ -1466,7 +1505,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     Cube &c = getCube();
     params->mLetters[0] = '\0';
     params->mSpriteParams =
-            (mAnimTypes[CubeAnim_Main] == AnimType_NewWord) ? &mSpriteParams : 0;
+                (mAnimTypes[CubeAnim_Main] == AnimType_NewWord) ? &mSpriteParams : 0;
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_MetaTilesEnter:
@@ -1474,7 +1513,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     case AnimType_MetaTilesExit:
         params->mAllMetaLetters = true;
         params->mLettersPerCube = mMetaLettersPerCube;
-        if (!getLetters(params->mLetters, true, true))
+        if (!getMetaLetters(params->mLetters, true))
         {
             retval = false;
         }
@@ -1483,7 +1522,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     default:
         params->mAllMetaLetters = Dictionary::currentIsMetaPuzzle();
         params->mLettersPerCube = mPuzzleLettersPerCube;
-        if (!getLetters(params->mLetters, true, false))
+        if (!getLetters(params->mLetters, true))
         {
             retval = false;
         }

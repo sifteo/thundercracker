@@ -132,10 +132,11 @@ bool animPaint(AnimType animT,
         // FIXME asset frame rate
         unsigned char assetFrame =
             MIN(assetFrames-1, (unsigned char) ((float)assetFrames * animPct));
-#ifdef DEBUGz
+#ifdef DEBUG
         switch (animT)
         {
         case AnimType_NotWord:
+        case AnimType_NewWord:
             break;
         default:
             DEBUG_LOG(("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame));
