@@ -736,9 +736,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
     {
         if (params)
         {
-            params->mBorders =
-                    ((i == CubeAnim_Hint && mAnimTypes[CubeAnim_Hint] != AnimType_None) ||
-                     (i != CubeAnim_Hint && mAnimTypes[CubeAnim_Hint] == AnimType_None)); // FIXME fold border code into anim
+            params->mCubeAnim = i;
         }
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
@@ -1641,7 +1639,6 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     params->mCubeID = getCube().id();
-    params->mBorders = false; // FIXME roll into border rendering CubeAnim
     params->mBonus = false; // TODO
     unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
     unsigned letter0Index = mPuzzlePieceIndex * mlpc;

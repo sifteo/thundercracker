@@ -277,7 +277,7 @@ bool animPaint(AnimType animT,
         }
     }
 
-    if (params && params->mBorders)
+    if (params)
     {
         const static unsigned char NewWordBorderFrames[] =
         {
@@ -303,44 +303,44 @@ bool animPaint(AnimType animT,
         const bool rightNeighbor = params ? params->mRightNeighbor : false;
         const bool formsWord =
                 (animT == AnimType_NewWord || animT == AnimType_OldWord);
-        if (false && (leftNeighbor || (rightNeighbor && !formsWord)))
+        switch (params->mCubeAnim)
         {
-            // don't draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom, bottomBorderFrame);
-        }
-        else if (bg1)
-        {
-            // draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 2),
-                                     Vec2(0, 1),
-                                     Vec2(2, 14),
-                                     (leftNeighbor || formsWord) ?
-                                         BorderLeft :
-                                         BorderLeftNoNeighbor);
-            bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
-            bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
-        }
+        case CubeAnim_Main:
 
-        if (false && (rightNeighbor || (leftNeighbor && !formsWord)))
-        {
-            // don't draw right border
-            vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
-        }
-        else if (bg1)
-        {
-            // draw right border
-            vid.BG0_drawPartialAsset(Vec2(14, 0),
-                                     Vec2(0, 1),
-                                     Vec2(2, 14),
-                                     (rightNeighbor || formsWord) ?
-                                         BorderRight :
-                                         BorderRightNoNeighbor);
-            bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
-            bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-            vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
-        }
 
+            if (bg1)
+            {
+                // draw left border
+                vid.BG0_drawPartialAsset(Vec2(0, 2),
+                                         Vec2(0, 1),
+                                         Vec2(2, 14),
+                                         (leftNeighbor || formsWord) ?
+                                             BorderLeft :
+                                             BorderLeftNoNeighbor);
+                bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
+                bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
+                vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
+            }
+
+
+            if (bg1)
+            {
+                // draw right border
+                vid.BG0_drawPartialAsset(Vec2(14, 0),
+                                         Vec2(0, 1),
+                                         Vec2(2, 14),
+                                         (rightNeighbor || formsWord) ?
+                                             BorderRight :
+                                             BorderRightNoNeighbor);
+                bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
+                bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
+                vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
+            }
+            break;
+
+        default:
+                break;
+        }
         const LevelProgressData &progressData =
                 GameStateMachine::getInstance().getLevelProgressData();
 
@@ -363,18 +363,12 @@ bool animPaint(AnimType animT,
         };
 
         const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-        switch (animT)
-        {
-        default:
-            break;
 
-        case AnimType_HintBarAppear:
-        case AnimType_HintBarIdle:
-        case AnimType_HintBarDisappear:
-        case AnimType_HintWindUpSlide:
-            for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
+        for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
+        {
+            if (i < TopRowStartIndex)
             {
-                if (i < TopRowStartIndex)
+                if (params->mCubeAnim == CubeAnim_Main)
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -384,7 +378,10 @@ bool animPaint(AnimType animT,
                         bg1->DrawAsset(Vec2(2 + i * 2, 14), *image);
                     }
                 }
-                else
+            }
+            else
+            {
+                if (params->mCubeAnim == CubeAnim_Hint)
                 {
                     unsigned hintIndex = i - TopRowStartIndex;
                     if (hintIndex < MAX_HINTS)
@@ -408,8 +405,8 @@ bool animPaint(AnimType animT,
                     }
                 }
             }
-            break;
         }
+
     }
 
     // finished?

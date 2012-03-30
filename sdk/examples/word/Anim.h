@@ -48,7 +48,7 @@ struct AnimParams
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
-    bool mBorders;
+    int mCubeAnim;
     bool mBonus;
     unsigned char mMetaLetterIndex;
     unsigned char mLettersPerCube;
