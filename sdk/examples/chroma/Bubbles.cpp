@@ -80,7 +80,7 @@ void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 }
 
 
-const float Bubble::BUBBLE_LIFETIME = 2.5f;
+const float Bubble::BUBBLE_LIFETIME = 1.5f;
 const float Bubble::TILT_VEL = 128.0f;
 const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
 //at this depth, bubbles will move away from chromits
