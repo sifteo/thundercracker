@@ -28,8 +28,14 @@ def bit_count(mask):
 		mask >>= 1
 	return result
 
-def iswalkable(tile): 
-	return "wall" not in tile.props and "obstacle" not in tile.props
+def iswalkable(tile, x, y): 
+	if "wall" in tile.props or "obstacle" in tile.props:
+		return False
+	for obj in tile.tileset.map.objects:
+		if obj.type == "obstacle" and obj.is_overlapping(x, y):
+			return False
+	return True
+	
 
 class Room:
 	def __init__(self, map, lid):
@@ -92,7 +98,7 @@ class Room:
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
-	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y))
+	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y), 8*self.x + x, 8*self.y + y)
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
 	def primary_center(self):
@@ -204,7 +210,7 @@ class Room:
 		for row in range(8):
 			rowMask = 0
 			for col in range(8):
-				if not iswalkable(self.tileat(col, row)):
+				if not self.iswalkable(col, row):
 					rowMask |= (1<<col)
 			src.write("0x%x," % rowMask)
 		src.write("}},\n")

@@ -77,14 +77,21 @@ class Map:
 		self.id = posixpath.basename(path)[:-4].lower()
 		self.readable_name = xml.findtext("name")
 		self.raw = tmx.Map(path)
+		self.width = self.raw.pw / 128
+		self.height = self.raw.ph / 128
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
+		
 		# validate tiles
-		for tile in (self.raw.gettile(tid) for tid in self.background.tiles):
+		for lid,tid in enumerate(self.background.tiles):
+			tile = self.raw.gettile(tid)
+			x = lid % self.width
+			y = lid / self.width
 			assert tile is not None, path + " has an undefined tile in the background"
 			if "bridge" in tile.props: 
-				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
+				assert iswalkable(tile, x, y), "unwalkable bridge tile detected in map: " + self.id
+
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
 
@@ -92,8 +99,6 @@ class Map:
 		if self.overlay is not None:
 			self.overlay_id = posixpath.basename(self.overlay.gettileset().imgpath)
 
-		self.width = self.raw.pw / 128
-		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
 		assert self.count > 0, "map is empty: " + self.id
 		assert self.count <= 81, "too many rooms in map (max 72): " + self.id
@@ -308,7 +313,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { \"%(readable_name)s\", " \
+			'    { "%(readable_name)s", ' \
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \

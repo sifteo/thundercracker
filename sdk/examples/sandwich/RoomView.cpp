@@ -97,7 +97,7 @@ void RoomView::Update(float dt) {
     switch(flags.wobbleType) {
       
       case WOBBLE_NOD: {
-        const float u = 8.f * 1.3f * mWobbles * sin(M_TAU * mWobbles);
+        const float u = 8.f * -1.2f * mWobbles * sin(M_PI * mWobbles * mWobbles * mWobbles);
         mode.BG0_setPanning(Vec2(0.f, u));
         mode.BG1_setPanning(Vec2(0.f, u));
         break;
