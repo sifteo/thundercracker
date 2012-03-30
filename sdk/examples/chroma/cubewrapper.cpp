@@ -675,6 +675,17 @@ bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
 {
     bool bChanged = false;
 
+    DEBUG_LOG(( "in fake tilt\n" ));
+
+    for( int j = 0; j < NUM_ROWS; j++ )
+    {
+        for( int k = 0; k < NUM_COLS; k++ )
+        {
+            DEBUG_LOG(( "color=%d\n", grid[j][k].getColor()));
+        }
+    }
+
+
     //hastily ported from the python
     switch( dir )
     {
@@ -853,6 +864,10 @@ bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot 
     //start shifting it over
     GridSlot &slot = grid[row1][col1];
     GridSlot &dest = grid[row2][col2];
+
+    DEBUG_LOG(( "faketrymove src (%d, %d), dest (%d, %d)\n", row1, col1, row2, col2 ));
+
+    DEBUG_LOG(( "slot color = %d, dest color = %d\n", slot.getColor(), dest.getColor() ));
 
     if( !dest.isEmpty() )
         return false;
@@ -1857,7 +1872,7 @@ void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color
         //copy the grid
         GridSlot childgrid[NUM_ROWS][NUM_COLS];
 
-        DEBUG_LOG(( "child grid\n"));
+        DEBUG_LOG(( "side %d child grid\n", i ));
 
         _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
 
