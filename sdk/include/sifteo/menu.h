@@ -825,9 +825,9 @@ void Menu::handleExit() {
 void Menu::handlePrepaint() {
 	if (shouldPaintSync) {
 		// GFX Workaround
-		System::paintSync();
+        //System::paintSync();
 		pCube->vbuf.touch();
-		System::paintSync();
+        //System::paintSync();
 	} else {
 		System::paint();
 	}
