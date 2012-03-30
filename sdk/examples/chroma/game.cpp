@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "assets.gen.h"
 #include "Puzzle.h"
+#include <sifteo/menu.h>
 #include "BubbleTransition.h"
 
 //TODO, load this from save file
@@ -99,7 +100,6 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
-    m_menu.Init();
 }
 
 
@@ -115,28 +115,7 @@ void Game::Update()
     //painting is handled by menu manager
     if( m_state == STATE_MAINMENU )
     {
-        int choice;
-
-        if( !m_menu.Update( choice ) )
-        {
-            TransitionToState( STATE_INTRO );
-            if( choice < MODE_CNT )
-            {
-                m_mode = (GameMode)choice;
-
-                if( m_mode == MODE_BLITZ )
-                    m_iLevel = 3;
-                else
-                    m_iLevel = 0;
-
-                for( int i = 0; i < NUM_CUBES; i++ )
-                {
-                    m_cubes[i].Reset();
-                }
-            }
-            else
-                ASSERT( 0 );  //TODO settings!
-        }
+        HandleMainMenu();
         return;
     }
 
@@ -1095,6 +1074,69 @@ bool Game::AreMovesLegal() const
 void Game::ReturnToMainMenu()
 {
     Reset( false );
-    //setState( STATE_MAINMENU );
-    m_menu.Reset();
+}
+
+
+
+void Game::HandleMainMenu()
+{
+    struct MenuItem items[NUM_MAIN_MENU_ITEMS + 1] = { {&UI_Main_Menu_Survival, &UI_Main_Menu_Topbar}, {&UI_Main_Menu_Blitz, &UI_Main_Menu_Topbar}, {&UI_Main_Menu_Puzzle, &UI_Main_Menu_Topbar}, {&UI_Main_Menu_Settings, &UI_Main_Menu_Topbar}, {NULL, NULL} };
+    struct MenuAssets assets = {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}};
+
+    Menu menu(&m_cubes[0].GetCube(), &assets, items);
+
+    struct MenuEvent e;
+
+    while(menu.pollEvent(&e))
+    {
+        switch(e.type)
+        {
+            case MENU_ITEM_PRESS:
+                // settings not usable
+                if(e.item == 3) {
+                    menu.preventDefault();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    TransitionToState( STATE_INTRO );
+    m_mode = (GameMode)e.item;
+
+    if( m_mode == MODE_BLITZ )
+        m_iLevel = 3;
+    else
+        m_iLevel = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].Reset();
+    }
+
+    /*int choice;
+
+    if( !m_menu.Update( choice ) )
+    {
+        setState( STATE_INTRO );
+        if( choice < MODE_CNT )
+        {
+            m_mode = (GameMode)choice;
+
+            if( m_mode == MODE_BLITZ )
+                m_iLevel = 3;
+            else
+                m_iLevel = 0;
+
+            for( int i = 0; i < NUM_CUBES; i++ )
+            {
+                m_cubes[i].Reset();
+            }
+        }
+        else
+            ASSERT( 0 );  //TODO settings!
+    }
+
+    */
 }
