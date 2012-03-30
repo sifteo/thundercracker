@@ -323,7 +323,7 @@
     <property name="id" value="booties"/>
    </properties>
   </object>
-  <object name="crystal ball" type="Item" x="304" y="160" width="32" height="32">
+  <object name="crystal ball" type="_Item" x="304" y="160" width="32" height="32">
    <properties>
     <property name="id" value="crystal_ball"/>
    </properties>
