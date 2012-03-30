@@ -782,11 +782,11 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
         return AnimType_MetaTilesEnter;
 
     case AnimType_MetaTilesEnter:
-        return Dictionary::currentIsMetaPuzzle() ? AnimType_NotWord : AnimType_MetaTilesReveal;
+        return AnimType_MetaTilesReveal;
 
     case AnimType_MetaTilesShow:
     case AnimType_MetaTilesReveal:
-        return AnimType_MetaTilesExit;
+        return Dictionary::currentIsMetaPuzzle() ? AnimType_NotWord : AnimType_MetaTilesExit;
 
     case AnimType_MetaTilesExit:
         return AnimType_NormalTilesEnter;        // TODO other transition at end of city
