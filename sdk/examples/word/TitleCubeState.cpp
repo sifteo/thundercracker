@@ -56,8 +56,10 @@ unsigned TitleCubeState::update(float dt, float stateTime)
     _SYS_getAccel(getStateMachine().getCube().id(), &accelState);
     _SYSShakeState shakeState;
     _SYS_getShake(getStateMachine().getCube().id(), &shakeState);
-
-    if (shakeState == NOT_SHAKING && accelState.x != 0)
+    /* TODO remove _SYSTiltState tiltState;
+    _SYS_getTilt(getStateMachine().getCube().id(), &tiltState);
+*/
+    if (shakeState == NOT_SHAKING && abs<int>(accelState.x) > 10)
     {
         mShakeDelay = 0.f;
         mPanning += dt * -5.f * accelState.x; // FIXME treat as accel, not velocity set
