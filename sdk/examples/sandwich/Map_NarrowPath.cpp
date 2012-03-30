@@ -85,17 +85,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   AStar as;
   _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
-  //
-  //  <WHAT>
-  //
-  // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
-  //as.offset = dir<2 ? dloc : loc;
-  as.offset.x = dir<2 ? dloc.x : loc.x;
-  as.offset.y = dir<2 ? dloc.y : loc.y;
-  //
-  // </WHAT>
-  //
-
+  as.offset = dir<2 ? dloc : loc;
   as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - Vec2(2,2);
   as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - Vec2(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
