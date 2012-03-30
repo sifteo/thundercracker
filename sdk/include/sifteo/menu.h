@@ -14,8 +14,9 @@
 #define _SIFTEO_MENU_H
 
 #include <stdint.h>
-#include <sifteo/macros.h>
+#include <sifteo.h>
 
+// C++ does not allow flexible array members in structs like C. 8 should be enough.
 #define MENU_MAX_TIPS 8
 
 namespace Sifteo {
@@ -32,15 +33,15 @@ typedef enum {
 } MenuEventType;
 
 struct MenuAssets {
-	const AssetImage *bg; // 1x1tl background image, repeating
+	const AssetImage *background; // 1x1tl background image, repeating
 	const AssetImage *footer; // ptr to 16x4tl blank footer
-	const AssetImage *header; // ptr to 16x2tl blank header
+	const AssetImage *header; // ptr to 16x2tl blank header, optional if all items have no labels.
 	const AssetImage *tips[MENU_MAX_TIPS]; // NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
 };
 
 struct MenuItem {
-	const AssetImage *icon; // ptr to 10x10tl icon, must be set to be a valid option.
-	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank header).
+	const AssetImage *icon; // ptr to icon, must be set to be a valid option.
+	const AssetImage *label; // ptr to 16x2tl (header) label, can be NULL (defaults to blank theme header).
 };
 
 struct MenuNeighbor {
@@ -83,37 +84,51 @@ typedef enum {
 	MENU_STATE_FINISH
 } MenuState;
 
+// computed constants
+#define kPixelsPerTile 8
+#define kPeekTiles 1
+#define kIconPixelWidth (kIconTileWidth * kPixelsPerTile)
+#define kIconPixelHeight (kIconTileHeight * kPixelsPerTile)
+#define kItemTileWidth (int)(((kEndCapPadding + kPixelsPerTile - 1) / kPixelsPerTile) + kIconTileWidth - kPeekTiles)
+#define kItemPixelWidth (kItemTileWidth * kPixelsPerTile)
+
 class Menu {
  public:
     Menu(Cube *, struct MenuAssets*, struct MenuItem*);
 	bool pollEvent(struct MenuEvent *);
 	void preventDefault();
 	void reset();
-	void replaceIcon(uint8_t, AssetImage *);
+	void replaceIcon(uint8_t item, const AssetImage *);
 	void paintSync();
-	
+	bool itemVisible(uint8_t item);
+	void setIconYOffset(uint8_t px);
+
  private:
-	static const float kIconWidth = 80.f;
-	static const float kIconPadding = 16.f;
-	static const float kPixelsPerIcon;
+	static const float kTimeDilator = 13.1f;
 	static const float kMaxSpeedMultiplier = 3.f;
 	static const float kAccelScalingFactor = -0.25f;
 	static const float kOneG;
 	static const uint8_t kNumTilesX = 18;
 	static const uint8_t kNumVisibleTilesX = 16;
 	static const uint8_t kNumVisibleTilesY = 16;
-	static const uint8_t kFooterHeight = 4;
-	static const uint8_t kHeaderHeight = 2;
 	static const float kAccelThresholdOn = 1.15f;
 	static const float kAccelThresholdOff = 0.85f;
+	static const uint8_t kDefaultIconYOffset = 16;
+	// instance-constants
+	uint8_t kHeaderHeight;
+	uint8_t kFooterHeight;
+	uint8_t kFooterBG1Offset;
+	int8_t kIconYOffset;
+	uint8_t kIconTileWidth;
+	uint8_t kIconTileHeight;
+	int8_t kEndCapPadding;
 
 	// external parameters and metadata
-	Cube *pCube;
-	struct MenuAssets *assets;
-	uint8_t numTips;
-	struct MenuItem *items;
-	uint8_t numItems;
-	struct MenuNeighbor neighbors[NUM_SIDES];
+	Cube *pCube;				// cube on which the menu is being drawn
+	struct MenuAssets *assets;	// theme assets of the menu
+	uint8_t numTips;			// number of tips in the theme
+	struct MenuItem *items;		// items in the strip
+	uint8_t numItems;			// number of items in the strip
 	// event breadcrumb
 	struct MenuEvent currentEvent;
 	// state tracking
@@ -126,21 +141,22 @@ class Menu {
 	float yaccel;
 	// footer drawing
 	int currentTip;
-	float prevTipTime;
+	SystemTime prevTipTime;
 	// static state: event at beginning of touch only
 	bool prevTouch;
 	// inertial state: where to stop
-	float stopping_position;
+	int stopping_position;
 	int tiltDirection;
-	// scrolling states (Inertia and Tilt)
-	float position;
-	float dt;
-	float lastPaint;
-	int prev_ut;
-	float velocity;
-	// finish state
+	// scrolling states (Inertia and Tilt): physics
+	float position;			// current x position
+	int prev_ut;			// tile validity tracker
+	float velocity;			// current velocity
+	TimeStep frameclock;	// framerate timer
+	// finish state: animation iterations
 	int finishIteration;
-	
+	// internal
+	VidMode_BG0_SPR_BG1 canvas;
+	struct MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
 	// state handling
 	void changeState(MenuState);
 	void transToStart();
@@ -158,7 +174,7 @@ class Menu {
 	void transToFinish();
 	void stateFinish();
 	void transFromFinish();
-	
+
 	// event handling
 	bool dispatchEvent(struct MenuEvent *ev);
 	void clearEvent();
@@ -170,65 +186,106 @@ class Menu {
 	void handleItemPress();
 	void handleExit();
 	void handlePrepaint();
-	
+
 	// library
 	void detectNeighbors();
 	uint8_t computeSelected();
 	static unsigned unsignedMod(int, unsigned);
 	void drawColumn(int);
-	void drawFooter();
-	static float stoppingPositionFor(int);
+	void drawFooter(bool force = false);
+	int stoppingPositionFor(int);
 	float velocityMultiplier();
 	float maxVelocity();
 	static float lerp(float min, float max, float u);
 	void updateBG0();
+	bool itemVisibleAtCol(uint8_t item, int column);
+	uint8_t itemAtCol(int column);
+	int computeCurrentTile();
 };
 
 // constant folding
-const float Menu::kPixelsPerIcon = kIconWidth + kIconPadding;
-const float Menu::kOneG = fabs(64 * kAccelScalingFactor);
+const float Menu::kOneG = abs(64 * kAccelScalingFactor);
 
-Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) {
-	ASSERT((int)kIconWidth % 8 == 0);
-	ASSERT((int)kIconPadding % 8 == 0);
-	
+Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
+ 	: canvas(mainCube->vbuf) {
 	currentEvent.type = MENU_UNEVENTFUL;
 	pCube = mainCube;
 	changeState(MENU_STATE_START);
 	currentEvent.type = MENU_UNEVENTFUL;
 	items = aItems;
 	assets = aAssets;
-	
+
 	// calculate the number of items
 	uint8_t i = 0;
 	while(items[i].icon != NULL) {
-		ASSERT(items[i].icon->width == (int)kIconWidth / 8);
+		if (kIconTileWidth == 0) {
+			kIconTileWidth = items[i].icon->width;
+			kIconTileHeight = items[i].icon->height;
+			kEndCapPadding = (kNumVisibleTilesX - kIconTileWidth) * (kPixelsPerTile / 2.f);
+			ASSERT((kItemPixelWidth - kIconPixelWidth) % kPixelsPerTile == 0);
+			// icons should leave at least one tile on both sides for the next/prev items
+			ASSERT(kIconTileWidth <= kNumVisibleTilesX - (kPeekTiles * 2));
+		} else {
+			ASSERT(items[i].icon->width == kIconTileWidth);
+			ASSERT(items[i].icon->height == kIconTileHeight);
+		}
+		
 		i++;
-		if(items[i].label != NULL) {
+		if (items[i].label != NULL) {
 			ASSERT(items[i].label->width == kNumVisibleTilesX);
-			ASSERT(items[i].label->height == kHeaderHeight);
+			if (kHeaderHeight == 0) {
+				kHeaderHeight = items[i].label->height;
+			} else {
+				ASSERT(items[i].label->height == kHeaderHeight);
+			}
+			/* XXX: if there are any labels, a header is required for now.
+			 * supporting labels and no header would require toggling bg0
+			 * tiles fairly often and that's state I don't want to deal with
+			 * for the time being.
+			 * workaround: header can be an appropriately-sized, entirely
+			 * transparent PNG.
+			 */
+			ASSERT(assets->header != NULL);
 		}
 	}
 	numItems = i;
-	
+
 	// calculate the number of tips
 	i = 0;
 	while(assets->tips[i] != NULL) {
 		ASSERT(assets->tips[i]->width == kNumVisibleTilesX);
-		ASSERT(assets->tips[i]->height == kFooterHeight);
+		if (kFooterHeight == 0) {
+			kFooterHeight = assets->tips[i]->height;
+		} else {
+			ASSERT(assets->tips[i]->height == kFooterHeight);
+		}
 		i++;
 	}
 	numTips = i;
-	
+
 	// sanity check the rest of the assets
-	ASSERT(assets->bg);
-	ASSERT(assets->bg->width == 1 && assets->bg->height == 1);
-	ASSERT(assets->footer);
-	ASSERT(assets->footer->width == kNumVisibleTilesX);
-	ASSERT(assets->footer->height == kFooterHeight);
-	ASSERT(assets->header);
-	ASSERT(assets->header->width == kNumVisibleTilesX);
-	ASSERT(assets->header->height == kHeaderHeight);
+	ASSERT(assets->background);
+	ASSERT(assets->background->width == 1 && assets->background->height == 1);
+	if (assets->footer) {
+		ASSERT(assets->footer->width == kNumVisibleTilesX);
+		if (kFooterHeight == 0) {
+			kFooterHeight = assets->footer->height;
+		} else {
+			ASSERT(assets->footer->height == kFooterHeight);
+		}
+	}
+
+	if (assets->header) {
+		ASSERT(assets->header->width == kNumVisibleTilesX);
+		if (kHeaderHeight == 0) {
+			kHeaderHeight = assets->header->height;
+		} else {
+			ASSERT(assets->header->height == kHeaderHeight);
+		}
+	}
+	kFooterBG1Offset = assets->header == NULL ? 0 : kNumVisibleTilesX * kHeaderHeight;
+
+	setIconYOffset(kDefaultIconYOffset);
 }
 
 /*
@@ -243,36 +300,33 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems) 
 
 bool Menu::pollEvent(struct MenuEvent *ev) {
 	// handle/clear pending events
-	if(currentEvent.type != MENU_UNEVENTFUL) {
+	if (currentEvent.type != MENU_UNEVENTFUL) {
 		performDefault();
 	}
 	/* state changes can happen in the default event handler which may dispatch
 	 * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
 	 * MENU_PREPAINT).
 	 */
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
+
 	// keep track of time so if our framerate changes, apparent speed persists
-	float now = System::clock();
-	const float kTimeDilator = 13.1f;
-	dt = (now - lastPaint) * kTimeDilator;
-	
+	frameclock.next();
+
 	// neighbor changes?
-	if(currentState != MENU_STATE_START) {
+	if (currentState != MENU_STATE_START) {
 		detectNeighbors();
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
 	// update commonly-used data
 	shouldPaintSync = false;
 	const float kAccelScalingFactor = -0.25f;
 	xaccel = kAccelScalingFactor * pCube->virtualAccel().x;
 	yaccel = kAccelScalingFactor * pCube->virtualAccel().y;
-	
+
 	// state changes
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -291,10 +345,10 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 			transFromFinish();
 			break;
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
-	
+
 	// run loop
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -313,7 +367,7 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 			stateFinish();
 			break;
 	}
-	if(dispatchEvent(ev)) {
+	if (dispatchEvent(ev)) {
 		return (ev->type != MENU_EXIT);
 	}
 
@@ -321,17 +375,16 @@ bool Menu::pollEvent(struct MenuEvent *ev) {
 	drawFooter();
 	currentEvent.type = MENU_PREPAINT;
 	dispatchEvent(ev);
-	lastPaint = now;
 	return true;
 }
 
 void Menu::preventDefault() {
-	/* paint shouldn't be prevented
+	/* paints shouldn't be prevented because:
 	 * the caller doesn't know whether to paintSync or paint and shouldn't be
 	 * painting while the menu owns the context.
 	 */
 	ASSERT(currentEvent.type != MENU_PREPAINT);
-	/* exit shouldn't be prevented
+	/* exit shouldn't be prevented because:
 	 * the default handler is responsible for resetting the menu if the event
 	 * pump is restarted.
 	 */
@@ -344,16 +397,34 @@ void Menu::reset() {
 	changeState(MENU_STATE_START);
 }
 
-void Menu::replaceIcon(uint8_t item, AssetImage *icon) {
+void Menu::replaceIcon(uint8_t item, const AssetImage *icon) {
 	ASSERT(item < numItems);
 	items[item].icon = icon;
-	// TODO: force-redraw affected area
+
+	for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
+		if (itemVisibleAtCol(item, i))
+			drawColumn(i);
 }
 
 void Menu::paintSync() {
 	// this is only relevant when caller is handling a PREPAINT event.
 	ASSERT(currentEvent.type == MENU_PREPAINT);
 	shouldPaintSync = true;
+}
+
+bool Menu::itemVisible(uint8_t item) {
+	ASSERT(item >= 0 && item < numItems);
+
+	for(int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
+		if (itemVisibleAtCol(item, i)) return true;
+	}
+	return false;
+}
+
+void Menu::setIconYOffset(uint8_t px) {
+	ASSERT(px >= 0 || px < kNumTilesX * 8);
+	kIconYOffset = -px;
+	updateBG0();
 }
 
 /*
@@ -377,7 +448,7 @@ void Menu::paintSync() {
 void Menu::changeState(MenuState newstate) {
 	stateFinished = false;
 	currentState = newstate;
-	
+
 	LOG(("STATE: -> "));
 	switch(currentState) {
 		case MENU_STATE_START:
@@ -412,36 +483,48 @@ void Menu::changeState(MenuState newstate) {
  * none.
  */
 void Menu::transToStart() {
-	currentTip = 0;
-	prevTipTime = System::clock();
+	shouldPaintSync = true;
+	handlePrepaint();
 }
 
 void Menu::stateStart() {
 	// initialize video state
-	_SYS_vbuf_pokeb(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_BG1);
-	VidMode_BG0 canvas(pCube->vbuf);
 	canvas.clear();
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+	for(unsigned r=0; r<18; ++r)
+		for(unsigned c=0; c<18; ++c)
+			canvas.BG0_drawAsset(Vec2(c,r), *assets->background);
+
+	canvas.BG1_setPanning(Vec2(0, 0));
 	BG1Helper(*pCube).Flush();
     {
     	// Allocate tiles for the static upper label, and draw it.
-    	const AssetImage& label = *items[0].label;
-    	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
-    	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+    	if (kHeaderHeight) {
+    		const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
+    		_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
+    		_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+    	}
 
 		// Allocate tiles for the footer, and draw it.
-		const AssetImage& footer = *assets->footer;
-    	_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
-    	_SYS_vbuf_writei(
-    		&pCube->vbuf.sys, 
-    		offsetof(_SYSVideoRAM, bg1_tiles) / 2 + label.width * label.height,
-    	    footer.tiles, 
-    	    0, 
-    	    footer.width * footer.height
-    	);
+		if (assets->footer) {
+			const AssetImage& footer = *assets->footer;
+    		_SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
+    		_SYS_vbuf_writei(
+    			&pCube->vbuf.sys, 
+    			offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
+    		    footer.tiles, 
+    		    0, 
+    		    footer.width * footer.height
+    		);
+    	}
 	}
-    for (int x = -1; x < kNumTilesX - 1; x++) { drawColumn(x); }
-    drawFooter();
+
+	currentTip = 0;
+	prevTipTime = SystemTime::now();
+	drawFooter(true);
+
+	canvas.set();
+
+	shouldPaintSync = true;
 
 	// if/when we start animating the menu into existence, set this once the work is complete
 	stateFinished = true;
@@ -450,7 +533,8 @@ void Menu::stateStart() {
 void Menu::transFromStart() {
 	if (stateFinished) {
 		position = 0.f;
-		prev_ut = 0;
+		prev_ut = computeCurrentTile() + kNumTilesX;
+		updateBG0();
 
 		for(int i = 0; i < NUM_SIDES; i++) {
 			neighbors[i].neighborSide = SIDE_UNDEFINED;
@@ -462,7 +546,6 @@ void Menu::transFromStart() {
 		changeState(MENU_STATE_STATIC);
 	}
 }
-
 
 /* Static state: MENU_STATE_STATIC
  * The resting state of the menu, the MENU_ITEM_PRESS event is fired from this
@@ -480,10 +563,12 @@ void Menu::transToStatic() {
 
 	currentEvent.type = MENU_ITEM_ARRIVE;
 	currentEvent.item = computeSelected();
-	
-	// show the title of the game
-	const AssetImage& label = *items[currentEvent.item].label;
-    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+
+	// show the title of the item
+	if (kHeaderHeight) {
+		const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
+		_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+	}
 }
 
 void Menu::stateStatic() {
@@ -497,18 +582,19 @@ void Menu::stateStatic() {
 }
 
 void Menu::transFromStatic() {
-	if (fabs(xaccel) > kAccelThresholdOn) {
+	if (abs(xaccel) > kAccelThresholdOn) {
 		changeState(MENU_STATE_TILTING);
 
 		currentEvent.type = MENU_ITEM_DEPART;
 		currentEvent.item = computeSelected();
 		
 		// hide header
-		const AssetImage& label = *assets->header;
-	    _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+		if (kHeaderHeight) {
+			const AssetImage& label = *assets->header;
+	    	_SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+		}
 	}
 }
-
 
 /* Tilting state: MENU_STATE_TILTING
  * This state is active when the menu is being scrolled due to tilt and has not
@@ -519,24 +605,24 @@ void Menu::transFromStatic() {
  * none.
  */
 void Menu::transToTilting() {
-	ASSERT(fabs(xaccel) > kAccelThresholdOn);
+	ASSERT(abs(xaccel) > kAccelThresholdOn);
 }
 
 void Menu::stateTilting() {
 	// normal scrolling
-	const float max_x = stoppingPositionFor(numItems - 1);
+	const int max_x = stoppingPositionFor(numItems - 1);
 	const float kInertiaThreshold = 10.f;
-	
-	velocity += (xaccel * dt) * velocityMultiplier();
-	
+
+	velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
+
 	// clamp maximum velocity based on cube angle
-	if(fabs(velocity) > maxVelocity()) {
+	if (abs(velocity) > maxVelocity()) {
 		velocity = (velocity < 0 ? 0 - maxVelocity() : maxVelocity());
 	}
-	
+
 	// don't go past the backstop unless we have inertia
-	if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || fabs(velocity) > kInertiaThreshold) {
-	    position += velocity * dt;
+	if ((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > kInertiaThreshold) {
+	    position += velocity * frameclock.delta() * kTimeDilator;
 	} else {
 	    velocity = 0;
 	}
@@ -544,12 +630,11 @@ void Menu::stateTilting() {
 }
 
 void Menu::transFromTilting() {
-	const bool outOfBounds = (position < 0.f - 0.05f) || (position > kPixelsPerIcon*(numItems-1) + 0.05f);
-	if (fabs(xaccel) < kAccelThresholdOff || outOfBounds) {
+	const bool outOfBounds = (position < -0.05f) || (position > kItemPixelWidth*(numItems-1) + kEndCapPadding + 0.05f);
+	if (abs(xaccel) < kAccelThresholdOff || outOfBounds) {
 		changeState(MENU_STATE_INERTIA);
 	}
 }
-
 
 /* Inertia state: MENU_STATE_INERTIA
  * This state is active when the menu is scrolling but either by inertia or by
@@ -562,7 +647,7 @@ void Menu::transFromTilting() {
  */
 void Menu::transToInertia() {
 	stopping_position = stoppingPositionFor(computeSelected());
-	if(fabs(xaccel) > kAccelThresholdOff) {
+	if (abs(xaccel) > kAccelThresholdOff) {
 		tiltDirection = (kAccelScalingFactor * xaccel < 0) ? 1 : -1;
 	} else {
 		tiltDirection = 0;
@@ -571,23 +656,23 @@ void Menu::transToInertia() {
 
 void Menu::stateInertia() {
 	const float stiffness = 0.333f;
-	
+
 	// do not pull to item unless tilting has stopped.
-	if(fabs(xaccel) < kAccelThresholdOff) {
+	if (abs(xaccel) < kAccelThresholdOff) {
 		tiltDirection = 0;
 	}
 	// if still tilting, do not bounce back to the stopping position.
-	if((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
+	if ((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
 			return;
 	}
 
 	velocity += stopping_position - position;
 	velocity *= stiffness;
-	position += velocity * dt;
+	position += velocity * frameclock.delta() * kTimeDilator;
 	position = lerp(position, stopping_position, 0.15f);
 
-	stateFinished = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
-	if(stateFinished) {
+	stateFinished = abs(velocity) < 1.0f && abs(stopping_position - position) < 0.5f;
+	if (stateFinished) {
 		// prevent being off by one pixel when we stop
 		position = stopping_position;
 	}
@@ -596,7 +681,7 @@ void Menu::stateInertia() {
 }
 
 void Menu::transFromInertia() {
-	if (fabs(xaccel) > kAccelThresholdOn &&
+	if (abs(xaccel) > kAccelThresholdOn &&
 		!((tiltDirection < 0 && xaccel < 0.f) || (tiltDirection > 0 && xaccel > 0.f))) {
 		changeState(MENU_STATE_TILTING);
 	}
@@ -604,7 +689,6 @@ void Menu::transFromInertia() {
 		changeState(MENU_STATE_STATIC);
 	}
 }
-
 
 /* Finish state: MENU_STATE_FINISH
  * This state is responsible for animating the menu out.
@@ -617,20 +701,23 @@ void Menu::transFromInertia() {
  */
 void Menu::transToFinish() {
 	// prepare screen for item animation
-	VidMode_BG0 canvas(pCube->vbuf);
 	// isolate the selected icon
-	canvas.BG0_setPanning(Vec2(0,0));
+	canvas.BG0_setPanning(Vec2(0, 0));
 
 	// blank out the background layer
-	for(int row=0; row<12; ++row)
-	for(int col=0; col<16; ++col) {
-		canvas.BG0_drawAsset(Vec2(col, row), *assets->bg);
+	for(int row=0; row<kIconTileHeight; ++row)
+	for(int col=0; col<kNumTilesX; ++col) {
+		canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
 	}
-	canvas.BG0_drawAsset(Vec2(0, kNumVisibleTilesY - assets->footer->height), *assets->footer);
+	if (assets->footer) {
+		Int2 vec = { 0, kNumVisibleTilesY - assets->footer->height };
+		canvas.BG0_drawAsset(vec, *assets->footer);
+	}
 	{
 		const AssetImage* icon = items[computeSelected()].icon;
 		BG1Helper overlay(*pCube);
-		overlay.DrawAsset(Vec2((kNumVisibleTilesX - icon->width) / 2, 2), *icon);
+		Int2 vec = {0, 0};
+		overlay.DrawAsset(vec, *icon);
 		overlay.Flush();
 	}
 	finishIteration = 0;
@@ -646,10 +733,10 @@ void Menu::stateFinish() {
 	float u = finishIteration/33.f;
 	u = (1.f-k*u);
 	offset = int(12*(1.f-u*u));
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
+	canvas.BG1_setPanning(Vec2(-kEndCapPadding, offset + kIconYOffset));
 	currentEvent.type = MENU_PREPAINT;
-	
-	if(offset <= -128) {
+
+	if (offset <= -128) {
 		currentEvent.type = MENU_EXIT;
 		currentEvent.item = computeSelected();
 		stateFinished = true;
@@ -733,7 +820,10 @@ void Menu::handleExit() {
 }
 
 void Menu::handlePrepaint() {
-	if(shouldPaintSync) {
+	if (shouldPaintSync) {
+		// GFX Workaround
+		System::paintSync();
+		pCube->vbuf.touch();
 		System::paintSync();
 	} else {
 		System::paint();
@@ -776,7 +866,7 @@ void Menu::clearEvent() {
 }
 
 bool Menu::dispatchEvent(struct MenuEvent *ev) {
-	if(currentEvent.type != MENU_UNEVENTFUL) {
+	if (currentEvent.type != MENU_UNEVENTFUL) {
 		*ev = currentEvent;
 		return true;
 	}
@@ -795,7 +885,7 @@ bool Menu::dispatchEvent(struct MenuEvent *ev) {
 void Menu::detectNeighbors() {
 	for(_SYSSideID i = 0; i < NUM_SIDES; i++) {
 		MenuNeighbor n;
-		if(pCube->hasPhysicalNeighborAt(i)) {
+		if (pCube->hasPhysicalNeighborAt(i)) {
 			Cube c(pCube->physicalNeighborAt(i));
 			n.neighborSide = c.physicalSideOf(pCube->id());
 			n.neighbor = c.id();
@@ -808,7 +898,7 @@ void Menu::detectNeighbors() {
 
 		if (n != neighbors[i]) {
 			// Neighbor was set but is now different/gone
-			if(neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
+			if (neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
 				// Generate a lost neighbor event, with the ghost of the lost cube.
 				currentEvent.type = MENU_NEIGHBOR_REMOVE;
 				currentEvent.neighbor = neighbors[i];
@@ -837,7 +927,7 @@ void Menu::detectNeighbors() {
 }
 
 uint8_t Menu::computeSelected() {
-	int s = (position + (kPixelsPerIcon / 2.f))/kPixelsPerIcon;
+	int s = (position + (kItemPixelWidth / 2)) / kItemPixelWidth;
 	return clamp(s, 0, numItems - 1);
 }
 
@@ -845,21 +935,16 @@ uint8_t Menu::computeSelected() {
 // columns are in tile-units
 // each icon is 80px/10tl wide with a 16px/2tl spacing
 void Menu::drawColumn(int x) {
-	const int kColumnsPerIcon = (int)(kPixelsPerIcon / 8); // columns taken up by the icon plus padding
-	
 	// x is the column in "global" space
     uint16_t addr = unsignedMod(x, kNumTilesX);
-    x -= 3; // first icon is 24px inset
-	const uint16_t local_x = Menu::unsignedMod(x, kColumnsPerIcon);
-	const int iconId = x < 0 ? -1 : x / kColumnsPerIcon;
 
 	// icon or blank column?
-	if (local_x < 10 && iconId >= 0 && iconId < numItems) {
+	if (itemAtCol(x) < numItems) {
 		// drawing an icon column
-		const AssetImage* pImg = items[x / kColumnsPerIcon].icon;
-		const uint16_t *src = pImg->tiles + unsignedMod(local_x, pImg->width);
-		addr += 2*kNumTilesX;
-		for(int row=0; row<10; ++row) {
+		const AssetImage* pImg = items[itemAtCol(x)].icon;
+		const uint16_t *src = pImg->tiles + ((x % kItemTileWidth) % pImg->width);
+
+		for(int row=0; row<kIconTileHeight; ++row) {
 	        _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
     	    addr += kNumTilesX;
         	src += pImg->width;
@@ -867,9 +952,9 @@ void Menu::drawColumn(int x) {
 		}
 	} else {
 		// drawing a blank column
-		VidMode_BG0 g(pCube->vbuf);
-		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row+2), *assets->bg);
+		for(int row=0; row<kIconTileHeight; ++row) {
+			Int2 vec = { addr, row };
+			canvas.BG0_drawAsset(vec, *assets->background);
 		}
 	}
 }
@@ -879,12 +964,14 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 	return z < 0 ? z+y : z;
 }
 
-void Menu::drawFooter() {
+void Menu::drawFooter(bool force) {
 	const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
 	const float kSecondsPerTip = 4.f;
-	float time = System::clock();
-	if (time - prevTipTime > kSecondsPerTip) {
-		prevTipTime = time - fmodf(time - prevTipTime, kSecondsPerTip);
+
+	if (numTips == 0 || assets->footer == NULL) return;
+
+	if (SystemTime::now() - prevTipTime > kSecondsPerTip || force) {
+		prevTipTime = SystemTime::now();
 
 		if (numTips > 0) {
 			currentTip = (currentTip+1) % numTips;
@@ -892,7 +979,7 @@ void Menu::drawFooter() {
 		
         _SYS_vbuf_writei(
         	&pCube->vbuf.sys, 
-        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + assets->header->width * assets->header->height,
+        	offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
             footer.tiles, 
             0, 
             footer.width * footer.height
@@ -900,8 +987,8 @@ void Menu::drawFooter() {
 	}
 }
 
-float Menu::stoppingPositionFor(int selected) {
-	return kPixelsPerIcon * selected;
+int Menu::stoppingPositionFor(int selected) {
+	return kItemPixelWidth * selected;
 }
 
 float Menu::velocityMultiplier() {
@@ -912,7 +999,7 @@ float Menu::maxVelocity() {
 	const float kMaxNormalSpeed = 40.f;
 	return kMaxNormalSpeed *
 	       // x-axis linear limit
-	       (fabs(xaccel) / kOneG) *
+	       (abs(xaccel) / kOneG) *
 	       // y-axis multiplier
 	       velocityMultiplier();
 }
@@ -922,25 +1009,63 @@ float Menu::lerp(float min, float max, float u) {
 }
 
 void Menu::updateBG0() {
-	VidMode_BG0 canvas(pCube->vbuf);
-	
-	int ui = position;
-	int ut = position / 8;
-	if(abs(prev_ut - ut) > 0) {
-		shouldPaintSync = true;
-	}
-	
+	int ut = computeCurrentTile();
+
+	/* XXX: we should always paintSync if we've loaded two columns, to avoid a race
+	 * condition in the painting loop
+	 */
+	if (abs(prev_ut - ut) > 1) shouldPaintSync = true;
+
 	while(prev_ut < ut) {
-		drawColumn(prev_ut + 17);
-		prev_ut++;
+		drawColumn(++prev_ut + kNumVisibleTilesX);
 	}
 	while(prev_ut > ut) {
-		drawColumn(prev_ut - 2);
-		prev_ut--;
+		drawColumn(--prev_ut);
 	}
-	
-	canvas.BG0_setPanning(Vec2(ui, 0));
+
+	{
+		Int2 vec = {(position - kEndCapPadding), kIconYOffset};
+		canvas.BG0_setPanning(vec);
+	}
 }
+
+bool Menu::itemVisibleAtCol(uint8_t item, int column) {
+	ASSERT(item >= 0 && item < numItems);
+	if (column < 0) return false;
+
+	return itemAtCol(column) == item;
+}
+
+uint8_t Menu::itemAtCol(int column) {
+	if (column < 0) return numItems;
+
+	if (column % kItemTileWidth < kIconTileWidth) {
+		return column < 0 ? numItems : column / kItemTileWidth;
+	}
+	return numItems;
+}
+
+int Menu::computeCurrentTile() {
+	/* these are necessary if the icon widths are an odd number of tiles,
+	 * because the position is no longer aligned with the tile domain.
+	 */
+	const int kPositionAlignment = kEndCapPadding % kPixelsPerTile == 0 ? 0 : kPixelsPerTile - kEndCapPadding % kPixelsPerTile;
+	const int kTilePadding = kEndCapPadding / kPixelsPerTile;
+
+	int ui = position - kPositionAlignment;
+	int ut = (ui < 0 ? ui - kPixelsPerTile : ui) / kPixelsPerTile; // special case because int rounds up when < 0
+	ut -= kTilePadding;
+
+	return ut;
+}
+
+// computed constants
+#undef kPixelsPerTile
+#undef kPeekTiles
+#undef kIconPixelWidth
+#undef kIconPixelHeight
+#undef kItemTileWidth
+#undef kItemPixelWidth
 
 };  // namespace Sifteo
 

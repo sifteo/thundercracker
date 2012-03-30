@@ -19,7 +19,7 @@ using namespace Sifteo;
 #define NUM_VISIBLE_TILES_Y (NUM_TILES_Y - 2)
 #define PIXELS_PER_ICON		(ELEMENT_PADDING + ICON_WIDTH)
 #define COLUMNS_PER_ICON	((int)(PIXELS_PER_ICON / 8)) // columns taken up by the icon plus padding
-#define ONE_G				fabs(64 * ACCEL_SCALING_FACTOR)
+#define ONE_G				abs(64 * ACCEL_SCALING_FACTOR)
 
 //typedef VidMode_BG0 Canvas;
 typedef VidMode_BG0 Canvas;
@@ -105,7 +105,7 @@ static float MaxVelocity(float xaccel, float yaccel) {
 	const float max_normal_speed = 40.f;
 	return max_normal_speed *
 	       // x-axis linear limit
-	       (fabs(xaccel) / ONE_G) *
+           (abs(xaccel) / ONE_G) *
 	       // y-axis multiplier
 	       VelocityMultiplier(yaccel);
 }
@@ -120,14 +120,14 @@ void main() {
 			p->loadAssets(BetterflowAssets);
 			VidMode_BG0_ROM rom(p->vbuf);
 			rom.init();
-			rom.BG0_text(Vec2(1,1), "Loading...");
+            rom.BG0_text(Vec2<int>(1,1), "Loading...");
 		}
 		bool done = false;
 		while(!done) {
 			done = true;
 			for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
 				VidMode_BG0_ROM rom(p->vbuf);
-				rom.BG0_progressBar(Vec2(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
+                rom.BG0_progressBar(Vec2<int>(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
 				done &= p->assetDone(BetterflowAssets);
 			}
 			System::paint();
@@ -140,7 +140,7 @@ void main() {
 		g.clear();
 		for(unsigned r=0; r<18; ++r)
 		for(unsigned c=0; c<18; ++c) {
-			g.BG0_drawAsset(Vec2(c,r), BgTile);
+            g.BG0_drawAsset(Vec2<int>(c,r), BgTile);
 		}
 
 	}
@@ -157,7 +157,7 @@ void main() {
 	for(;;) {
 	// HACK ALERT: Relies on the fact that vram is the same for both modes
 	canvas.clear();
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+    VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2<int>(0, 0));
 	BG1Helper(*pCube).Flush();
     // Allocate tiles for the static upper label, and draw it.
     {
@@ -185,7 +185,7 @@ void main() {
 	for(;;) {
 		// wait for a tilt or touch
 		bool prevTouch = pCube->touching();
-		while(fabs(GetXAccel(pCube)) < kAccelThresholdOn) {
+        while(abs(GetXAccel(pCube)) < kAccelThresholdOn) {
 			DrawFooter(pCube);
 			System::paint();
 			bool touch = pCube->touching();
@@ -212,7 +212,7 @@ void main() {
 			float now = System::clock();
 			// update physics
 			const float accel = GetXAccel(pCube);
-			const bool isTilting = fabs(accel) > kAccelThresholdOff;
+            const bool isTilting = abs(accel) > kAccelThresholdOff;
 			float dt = (now - lastPaint) * 13.1f;
 			
 			// have we scrolled past the end of the menu?
@@ -228,12 +228,12 @@ void main() {
 				velocity += (accel * dt) * VelocityMultiplier(vaccel);
 				
 				// clamp maximum velocity based on cube angle
-				if(fabs(velocity) > MaxVelocity(accel, vaccel)) {
+                if(abs(velocity) > MaxVelocity(accel, vaccel)) {
 					velocity = (velocity < 0 ? 0 - MaxVelocity(accel, vaccel) : MaxVelocity(accel, vaccel));
 				}
 				
 				// don't go past the backstop unless we have inertia
-				if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || fabs(velocity) > inertia_threshold) {
+                if((position > 0.f && velocity < 0) || (position < max_x && velocity > 0) || abs(velocity) > inertia_threshold) {
     			    position += velocity * dt;
 				} else {
                     velocity = 0;
@@ -248,7 +248,7 @@ void main() {
 				velocity *= stiffness;
 				position += velocity * dt;
 				position = Lerp(position, stopping_position, 0.15f);
-				doneTilting = fabs(velocity) < 1.0f && fabs(stopping_position - position) < 0.5f;
+                doneTilting = abs(velocity) < 1.0f && abs(stopping_position - position) < 0.5f;
 				if(doneTilting) {
 					// prevent being off by one pixel when we stop
 					position = stopping_position;
@@ -290,15 +290,15 @@ void main() {
 	// kinda sub-optimal :P
 	for(int row=0; row<12; ++row)
 	for(int col=0; col<16; ++col) {
-		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
+        canvas.BG0_drawAsset(Vec2<int>(col, row), BgTile);
 	}
-	canvas.BG0_drawAsset(Vec2(0, NUM_VISIBLE_TILES_Y - Footer.height), Footer);
+    canvas.BG0_drawAsset(Vec2<int>(0, NUM_VISIBLE_TILES_Y - Footer.height), Footer);
 	// TODO: Phase-Out BG1Helper code with optimized code
 	// numist: it's not slow enough to warrant optimization right now.
 	{
 		const AssetImage* icon = gIcons[ComputeSelected(position)];
 		BG1Helper overlay(*pCube);
-		overlay.DrawAsset(Vec2((NUM_VISIBLE_TILES_X - icon->width) / 2, 2), *icon);
+        overlay.DrawAsset(Vec2<int>((NUM_VISIBLE_TILES_X - icon->width) / 2, 2), *icon);
 		overlay.Flush();
 	}
 	System::paintSync();
@@ -317,7 +317,7 @@ void main() {
 		u = (1.f-k*u);
 		offset = int(12*(1.f-u*u));
 		// HACK ALERT: Relies on the fact that vram is the same for both modes
-		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
+        VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2<int>(0, offset));
 		System::paint();
 	}
 	// TODO: actually choose game

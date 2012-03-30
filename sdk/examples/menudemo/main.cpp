@@ -7,13 +7,12 @@ using namespace Sifteo;
 #define NUM_CUBES 			3
 #define LOAD_ASSETS			1
 
-#define NUM_ITEMS 			4
+#define NUM_ITEMS 			arraysize(gItems);
 #define NUM_TIPS			3
-
 
 // Static Globals
 static Cube gCubes[NUM_CUBES];
-static struct MenuItem gItems[NUM_ITEMS + 1] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy} };
+static struct MenuItem gItems[] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {&IconChroma, NULL}, {NULL, NULL} };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
 static void begin() {
@@ -58,9 +57,10 @@ static void begin() {
 }
 
 // entry point
-void siftmain() {
+void main() {
+
 	begin();
-	
+
 	Menu m(&gCubes[0], &gAssets, gItems);
 	
 	struct MenuEvent e;
@@ -69,8 +69,13 @@ void siftmain() {
 			switch(e.type) {
 				case MENU_ITEM_PRESS:
 					// Game Buddy is not clickable, so don't do anything on press
-					if(e.item == 3) {
+					if (e.item >= 3) {
 						m.preventDefault();
+					}
+					if (e.item == 4) {
+						static unsigned randomIcon = 0;
+						randomIcon = (randomIcon + 1) % 4;
+						m.replaceIcon(e.item, gItems[randomIcon].icon);
 					}
 					break;
 				case MENU_EXIT:
@@ -94,12 +99,15 @@ void siftmain() {
 				case MENU_ITEM_DEPART:
 					LOG(("departing from menu item %d\n", e.item));
 					break;
-
 				case MENU_PREPAINT:
 					// if you are drawing/animating the other cubes, do your work here
 					// NOTE: this event should never have its default handler skipped.
 					break;
-					
+				case MENU_PREPAINT: {
+					// do your implementation-specific drawing here
+					// NOTE: this event should never have its default handler skipped.
+					break;
+				}
 				case MENU_UNEVENTFUL:
 					// this should never happen. if it does, it can/should be ignored.
 					ASSERT(false);
