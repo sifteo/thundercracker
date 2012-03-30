@@ -313,7 +313,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { \"%(readable_name)s\", " \
+			'    { "%(readable_name)s", ' \
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \

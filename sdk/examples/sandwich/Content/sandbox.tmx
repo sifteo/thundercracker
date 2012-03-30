@@ -95,26 +95,6 @@
     <property name="wall" value=""/>
    </properties>
   </tile>
-  <tile id="72">
-   <properties>
-    <property name="wall" value=""/>
-   </properties>
-  </tile>
-  <tile id="73">
-   <properties>
-    <property name="wall" value=""/>
-   </properties>
-  </tile>
-  <tile id="80">
-   <properties>
-    <property name="obstacle" value=""/>
-   </properties>
-  </tile>
-  <tile id="81">
-   <properties>
-    <property name="obstacle" value=""/>
-   </properties>
-  </tile>
   <tile id="82">
    <properties>
     <property name="door" value=""/>
@@ -130,6 +110,26 @@
     <property name="door" value=""/>
    </properties>
   </tile>
+  <tile id="92">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="93">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="94">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="95">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
   <tile id="96">
    <properties>
     <property name="door" value=""/>
@@ -140,6 +140,26 @@
     <property name="door" value=""/>
    </properties>
   </tile>
+  <tile id="100">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="101">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="102">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="103">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
   <tile id="104">
    <properties>
     <property name="door" value=""/>
@@ -148,6 +168,26 @@
   <tile id="105">
    <properties>
     <property name="door" value=""/>
+   </properties>
+  </tile>
+  <tile id="108">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="109">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="110">
+   <properties>
+    <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="111">
+   <properties>
+    <property name="wall" value=""/>
    </properties>
   </tile>
  </tileset>
@@ -173,9 +213,9 @@
 3,1,2,1,2,1,2,3,3,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,49,50,51,52,53,54,55,56,3,1,2,1,2,1,2,3,
 3,3,3,3,3,3,3,3,3,3,3,2,1,3,3,3,3,3,3,2,1,3,3,3,3,2,1,2,1,2,1,3,3,3,3,2,1,3,3,3,
 3,3,3,3,3,3,3,3,3,3,3,1,2,3,3,3,3,3,3,1,2,3,3,3,3,1,2,1,2,1,2,3,3,3,3,1,2,3,3,3,
-3,4,4,4,4,4,4,3,3,4,4,2,1,4,4,4,4,4,4,2,1,4,4,3,3,2,1,2,1,2,1,4,4,4,4,2,1,4,4,3,
-3,4,4,73,74,4,4,3,3,4,4,1,2,4,4,4,4,4,4,1,2,4,4,3,3,1,2,1,2,1,2,4,4,4,4,1,2,4,4,3,
-3,2,1,81,82,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,
+3,4,4,93,94,4,4,3,3,4,4,2,1,4,4,4,4,4,4,2,1,4,4,3,3,2,1,2,1,2,1,4,4,4,4,2,1,4,4,3,
+3,4,4,101,102,4,4,3,3,4,4,1,2,4,4,4,4,4,4,1,2,4,4,3,3,1,2,1,2,1,2,4,4,4,4,1,2,4,4,3,
+3,2,1,109,110,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,
 3,1,2,1,2,1,2,3,3,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,3,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,
 3,2,1,2,1,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,3,2,1,2,1,2,1,2,1,2,1,2,1,2,1,3,
 3,1,2,1,2,1,2,3,3,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,3,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,
@@ -273,7 +313,7 @@
     <property name="respawn" value="0,0"/>
    </properties>
   </object>
-  <object name="Doggy Bowl" type="_Depot" x="48" y="288" width="32" height="32">
+  <object name="Doggy Bowl" type="_Depot" x="48" y="272" width="32" height="48">
    <properties>
     <property name="target" value="crystal_ball"/>
    </properties>
