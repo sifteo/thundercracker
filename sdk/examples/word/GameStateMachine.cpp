@@ -95,7 +95,6 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             if (data.mNewMeta.mWord[i] == ' ' || data.mNewMeta.mWord[i] == '\0')
             {
                 mMetaLetterUnlockedMask |= (1 << i);
-                break;
             }
         }
         mMetaLetterUnlockedMaskOld = mMetaLetterUnlockedMask;
@@ -119,7 +118,12 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 CheckMarkState_Checked;
                     break;
                 }
-                ASSERT(mLevelProgressData.mPuzzleProgress[i] != CheckMarkState_Hidden); // out of range, unexpected
+                if (mLevelProgressData.mPuzzleProgress[i] == CheckMarkState_Hidden)
+                {
+                    // TODO out of range, unexpected
+                    DEBUG_LOG(("Warning: attempted to create another word after finding them all\n"));
+                    break;
+                }
             }
 
             // just solved a puzzle, unlock meta letter

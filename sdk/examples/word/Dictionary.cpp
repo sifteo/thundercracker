@@ -12,7 +12,7 @@ bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
 unsigned Dictionary::sNumPossibleWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-int Dictionary::sPuzzleIndex = -1; // start at -1, or invalid
+int Dictionary::sPuzzleIndex = 12; // start at -1, or invalid
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 

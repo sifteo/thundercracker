@@ -119,7 +119,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 lpc = mPuzzleLettersPerCube;
 
                             }
-                            unsigned newStart = (state.x) ? start + 1 : start + (lpc - 1);
+                            unsigned newStart = (state.x == 0) ? start + 1 : start + (lpc - 1);
                             newStart = (newStart % lpc);
                             setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but
