@@ -13,7 +13,8 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0)
+    mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0),
+    mMetaLetterUnlockedMask(0xffff)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -267,16 +268,27 @@ unsigned GameStateMachine::getCurrentMaxLettersPerWord()
 void GameStateMachine::initNewMeta()
 {
     EventData newMeta;
-    if (Dictionary::getMetaPuzzle(newMeta.mNewMeta.mWord,
+    char metaNoSpaces[MAX_LETTERS_PER_WORD + 1];
+    if (Dictionary::getMetaPuzzle(metaNoSpaces,
                                   newMeta.mNewMeta.mLeadingSpaces,
                                   newMeta.mNewMeta.mMaxLettersPerCube))
     {
+        // add spaces
+        _SYS_memset8((uint8_t*)newMeta.mNewMeta.mWord, ' ', sizeof(newMeta.mNewMeta.mWord));
+        unsigned len = _SYS_strnlen(metaNoSpaces, sizeof metaNoSpaces);
+        for (unsigned char i = 0; i < len; ++i)
+        {
+            newMeta.mNewMeta.mWord[i + newMeta.mNewMeta.mLeadingSpaces] =
+                    metaNoSpaces[i];
+        }
+        newMeta.mNewMeta.mWord[newMeta.mNewMeta.mMaxLettersPerCube * NUM_CUBES] = '\0';
+
         WordGame::getRandomCubePermutation(newMeta.mNewMeta.mCubeOrderingIndexes);
         // for each cube, choose a random letter shift
         for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
         {
             newMeta.mNewMeta.mLetterStartIndexes[ci] =
-                    WordGame::random.randrange(newMeta.mNewMeta.mMaxLettersPerCube);
+                    2;//WordGame::random.randrange(newMeta.mNewMeta.mMaxLettersPerCube);
         }
         onEvent(EventID_NewMeta, newMeta);
     }

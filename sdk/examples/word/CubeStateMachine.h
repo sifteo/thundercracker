@@ -105,6 +105,7 @@ private:
     unsigned char mPuzzlePieceIndex;
     unsigned char mMetaPieceIndex;
     unsigned char mMetaLettersStart;
+    unsigned char mMetaLettersStartOld;
     unsigned char mMetaLettersPerCube;
     float mIdleTime;
     bool mNewHint;
