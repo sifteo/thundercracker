@@ -93,5 +93,19 @@ class Obj:
 		self.py = int(xml.get("y"))
 		self.pw = int(xml.get("width"))
 		self.ph = int(xml.get("height"))
-		self.tile = map.gettile(int(xml.get("gid", "0")))
+
+		self.tx = self.px / TILE_SIZE
+		self.ty = self.py / TILE_SIZE
+		self.tw = self.pw / TILE_SIZE
+		self.th = self.ph / TILE_SIZE
+
+		if self.tw < 1: self.tw = 1
+		if self.th < 1: self.th = 1
+
+		#self.tile = map.gettile(int(xml.get("gid", "0")))
 		self.props = dict((prop.get("name").lower(), prop.get("value")) for prop in xml.findall("properties/property"))
+
+	def is_overlapping(self, tx, ty):
+		return tx >= self.tx and ty >= self.ty and tx < self.tx + self.tw and ty < self.ty + self.th
+
+
