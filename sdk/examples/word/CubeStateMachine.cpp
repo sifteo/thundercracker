@@ -487,17 +487,16 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
         start = mMetaLettersStartOld;
         // fall through
     default:
-        for (unsigned dest = start, src = 0;
-             src < lettersPerCube;
-             dest = (dest + 1) % lettersPerCube, ++src)
+        for (unsigned i = 0; i < lettersPerCube; ++i)
         {
+            unsigned src = (i + start) % lettersPerCube;
             if (GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex))
             {
-                buffer[dest] = letters[src];
+                buffer[i] = letters[src];
             }
             else
             {
-                buffer[dest] = 'Z' + 1; // '?' in the strip
+                buffer[i] = 'Z' + 1; // '?' in the strip
             }
         }
         break;
