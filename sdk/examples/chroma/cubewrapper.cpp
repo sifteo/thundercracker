@@ -1141,14 +1141,12 @@ void CubeWrapper::checkRefill()
 
 //massively ugly, but wanted to stick to the python functionality 
 void CubeWrapper::Refill()
-{
+{ 
     if( Game::Inst().getMode() == Game::MODE_PUZZLE )
     {
         fillPuzzleCube();
         return;
     }
-
-    DEBUG_LOG(( "filling\n" ));
 
     const Level &level = Game::Inst().getLevel();
 
@@ -1178,8 +1176,9 @@ void CubeWrapper::Refill()
 			aNumNeeded[i]++;
 	}
 
+    Int2 aEmptyLocs[NUM_ROWS * NUM_COLS] __attribute__ ((aligned(64)));
+
 	unsigned int numEmpties = 0;
-	Int2 aEmptyLocs[NUM_ROWS * NUM_COLS];
 
     //strip out existing gem values.
 	for( int i = 0; i < NUM_ROWS; i++ )
@@ -1195,19 +1194,7 @@ void CubeWrapper::Refill()
 			}
 			else
             {
-                DEBUG_LOG(( "filling location %d with (%d, %d)\n", numEmpties, i, j ));
-                Int2 loc = Vec2( i, j );
-
-                DEBUG_LOG(( "temp loc is (%d, %d)\n", loc.x, loc.y ));
-
-                //aEmptyLocs[numEmpties++] = Vec2( i, j );
-                //aEmptyLocs[numEmpties].y = loc.y;
-                //aEmptyLocs[numEmpties].x = loc.x;
-                aEmptyLocs[numEmpties].set( loc.x, loc.y );
-
-                DEBUG_LOG(( "location was filled with (%d, %d)\n", aEmptyLocs[numEmpties].x, aEmptyLocs[numEmpties].y ));
-
-                numEmpties++;
+                aEmptyLocs[numEmpties++] = Vec2( i, j );
             }
 		}
 	}
@@ -1256,8 +1243,6 @@ void CubeWrapper::Refill()
 		int curY = aEmptyLocs[aLocIndices[i]].y;
 		GridSlot &slot = m_grid[curX][curY];
 
-        DEBUG_LOG(( "i is %d. location (%d, %d)\n", i, curX, curY ));
-
         //ASSERT( !slot.isAlive() );
 		if( slot.isAlive() )
         {
@@ -1270,7 +1255,6 @@ void CubeWrapper::Refill()
 		if( iCurColor >= GridSlot::NUM_COLORS )
 			break;
 
-        DEBUG_LOG(( "i is %d. filling location (%d, %d) with color %d\n", i, curX, curY, iCurColor ));
 		slot.FillColor(iCurColor);
 		aNumNeeded[iCurColor]--;
 
@@ -1765,9 +1749,23 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
 //check different parts of the given grid for the given color
 void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
 {
+    DEBUG_LOG(( "testing grid for color\n"));
+
+    DEBUG_LOG(( "grid:\n"));
+
+    for( int j = 0; j < NUM_ROWS; j++ )
+    {
+        for( int k = 0; k < NUM_COLS; k++ )
+        {
+            DEBUG_LOG(( "color=%d\n", grid[j][k].getColor()));
+        }
+    }
+
+
     //only check for spots that haven't been found already
     if( !bCorners )
     {
+        DEBUG_LOG(( "corners\n"));
         const Int2 cornerLocs[] = {
             Vec2( 0, 0 ),
             Vec2( 0, NUM_COLS - 1 ),
@@ -1797,6 +1795,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
       */
     if( !side1 )
     {
+        DEBUG_LOG(( "side1\n"));
         STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
         const Int2 locs[] = {
             Vec2( 0, 1 ),
@@ -1827,6 +1826,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
       */
     if( !side2 )
     {
+        DEBUG_LOG(( "side2\n"));
         const Int2 locs[] = {
             Vec2( 0, 2 ),
             Vec2( 1, 0 ),
@@ -1850,17 +1850,32 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
 //recursive function to tilt and test grid
 void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
 {
+    DEBUG_LOG(( "testing grid, iterations=%d\n", iterations));
+
     for( int i = 0; i < NUM_SIDES; i++ )
     {
         //copy the grid
         GridSlot childgrid[NUM_ROWS][NUM_COLS];
 
+        DEBUG_LOG(( "child grid\n"));
+
         _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
+
+        for( int j = 0; j < NUM_ROWS; j++ )
+        {
+            for( int k = 0; k < NUM_COLS; k++ )
+            {
+                DEBUG_LOG(( "color=%d\n", childgrid[j][k].getColor()));
+            }
+        }
 
         //tilt it
         if( FakeTilt( i, childgrid ) )
         {
+            DEBUG_LOG(( "did a fake tilt\n"));
             TestGridForColor( childgrid, color, bCorners, side1, side2 );
+
+            DEBUG_LOG(( "tested for color\n"));
 
             //we've already satisfied everything
             if( bCorners && side1 && side2 )
