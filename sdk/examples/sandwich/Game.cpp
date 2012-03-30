@@ -27,6 +27,7 @@ void Game::Paint(bool sync) {
   } else {
     System::paint();
   }
+  //
   mAnimFrames++;
   #if PLAYTESTING_HACKS
     if (mPlayer.View()->GetCube()->isShaking()) {
