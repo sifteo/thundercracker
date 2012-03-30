@@ -60,7 +60,7 @@ unsigned TitleCubeState::update(float dt, float stateTime)
     if (shakeState == NOT_SHAKING && accelState.x != 0)
     {
         mShakeDelay = 0.f;
-        mPanning += dt * -20.f * accelState.x; // FIXME treat as accel, not velocity set
+        mPanning += dt * -5.f * accelState.x; // FIXME treat as accel, not velocity set
     }
     /*if (mPanning != 0.f)
     {
