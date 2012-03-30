@@ -319,15 +319,13 @@ IRQ_HANDLER ISR_UsbOtg_FS()
             return;
         }
 
-        uint8_t ep = rxstsp & 0xf; // EPNUM mask
-
         // Save packet size for epReadPacket()
-        rxbcnt = (rxstsp & (0x7ff << 4)) >> 4;  // BCNT mask
+        rxbcnt = (rxstsp >> 4) & 0x3ff;  // BCNT mask
 
-        if (rxbcnt == 0) {
+        if (rxbcnt > 0) {
 
-        }
-        else {
+            uint8_t ep = rxstsp & 0xf; // EPNUM mask
+
             // mask RXFLVL until we've read the data from the fifo
             OTG.global.GINTMSK &= ~RXFLVL;
 
