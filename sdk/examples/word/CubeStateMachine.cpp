@@ -1637,6 +1637,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         break;
 
     case AnimType_MetaTilesReveal:
+    case AnimType_MetaTilesEnter:
         {
             unsigned char m = mMetaPieceIndex * mMetaLettersPerCube;
             for (unsigned char i = m; i < m + mMetaLettersPerCube; ++i)

@@ -221,7 +221,12 @@ bool animPaint(AnimType animT,
                 break;
 
                 default:
-                    if (!metaLetterTile || animT != AnimType_NormalTilesExit)
+                    if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
+                    {
+                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, 'Z' + 1 - 'A');
+
+                    }
+                    else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
                         bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
                     }
