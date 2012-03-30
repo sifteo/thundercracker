@@ -11,8 +11,8 @@ const static char* puzzles[] =
     " FACTS",    // pieces: [' F', 'AC', 'TS'], solutions: ['FACTS', 'CAST', 'ACTS', 'CATS']
     "FACTOR",    // pieces: ['FA', 'CT', 'OR'], solutions: ['FARO', 'FACT', 'FACTOR']
     "RAT ",    // pieces: ['RA', 'T '], solutions: ['RAT', 'ART', 'TAR']
-    "ACRE",    // pieces: ['AC', 'RE'], solutions: ['CARE', 'ACRE']
-    "ARTEFACT",    // pieces: ['ART', 'EFA', 'CT '], solutions: ['ARTEFACT']
+    "FLINT ",    // pieces: ['FL', 'IN', 'T '], solutions: ['TIN', 'FLINT', 'NIT']
+    "ARTIFACT",    // pieces: ['ART', 'IFA', 'CT '], solutions: ['ARTIFACT']
     "BUS ",    // pieces: ['BU', 'S '], solutions: ['BUS', 'SUB']
     "BUYS",    // pieces: ['BU', 'YS'], solutions: ['BUSY', 'BUYS']
     " BUSES",    // pieces: [' B', 'US', 'ES'], solutions: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
@@ -49,8 +49,8 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     4,	// " FACTS", all anagrams: ['FACTS', 'CAST', 'ACTS', 'CATS']
     2,	// "FACTOR", all anagrams: ['FARO', 'FACT', 'FACTOR']
     2,	// "RAT ", all anagrams: ['RAT', 'ART', 'TAR']
-    2,	// "ACRE", all anagrams: ['CARE', 'ACRE']
-    1,	// "ARTEFACT", all anagrams: ['ARTEFACT']
+    2,	// "FLINT ", all anagrams: ['TIN', 'FLINT', 'NIT']
+    1,	// "ARTIFACT", all anagrams: ['ARTIFACT']
     2,	// "BUS ", all anagrams: ['BUS', 'SUB']
     2,	// "BUYS", all anagrams: ['BUSY', 'BUYS']
     3,	// " BUSES", all anagrams: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
@@ -64,7 +64,7 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     3,	// "BELONG", all anagrams: ['LOBE', 'BELONG', 'LONG']
     3,	// " CLOUD", all anagrams: ['CUD', 'LOUD', 'COL', 'CLOUD']
     3,	// " FAVOR", all anagrams: ['FAVOR', 'FRO', 'FOR']
-    3,	// "CAREER", all anagrams: ['CAREER', 'ACRE', 'CARE']
+    2,	// "CAREER", all anagrams: ['CAREER', 'ACRE', 'CARE']
     1,	// "OLIVES", all anagrams: ['VIOL', 'OLES', 'LOSE', 'OLIVES', 'VISE', 'VIES']
     2,	// " PLEASANT", all anagrams: ['PLEAS', 'PLEASANT', 'PLANT']
     2,	// "MEMBER", all anagrams: ['MEMBER', 'MERE']
@@ -73,7 +73,7 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
     3,	// "INCOME", all anagrams: ['CONI', 'COIN', 'COME', 'INCOME']
     3,	// "ALLOW ", all anagrams: ['OLLA', 'LAW', 'LOW', 'ALLOW']
     2,	// " ELECTION", all anagrams: ['ELECT', 'ELECTION']
-    3,	// " BEGUN", all anagrams: ['NUB', 'GENU', 'BUN', 'BEG', 'BEGUN']
+    4,	// " BEGUN", all anagrams: ['NUB', 'GENU', 'BUN', 'BEG', 'BEGUN']
     2,	// " REMEMBER", all anagrams: ['MEMBER', 'REMEMBER']
     1,	// "PETROLEUM", all anagrams: ['PETROL', 'PETROLEUM']
 };
@@ -87,8 +87,8 @@ const static unsigned char puzzlesNumPossibleAnagrams[] =
     4,	//  FACTS, all anagrams: ['FACTS', 'CAST', 'ACTS', 'CATS']
     3,	// FACTOR, all anagrams: ['FARO', 'FACT', 'FACTOR']
     3,	// RAT , all anagrams: ['RAT', 'ART', 'TAR']
-    2,	// ACRE, all anagrams: ['CARE', 'ACRE']
-    1,	// ARTEFACT, all anagrams: ['ARTEFACT']
+    3,	// FLINT , all anagrams: ['TIN', 'FLINT', 'NIT']
+    1,	// ARTIFACT, all anagrams: ['ARTIFACT']
     2,	// BUS , all anagrams: ['BUS', 'SUB']
     2,	// BUYS, all anagrams: ['BUSY', 'BUYS']
     5,	//  BUSES, all anagrams: ['BUS', 'USES', 'SUB', 'SUES', 'BUSES']
@@ -138,12 +138,12 @@ const static unsigned char _puzzlesPossibleWordIndexes_CATS[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes_CASTS_[] =
 {
-    73,	// SAC,
+    75,	// SAC,
     19,	// CASTS,
     2,	// ACTS,
     18,	// CAST,
     21,	// CATS,
-    74,	// SCATS,
+    76,	// SCATS,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes__FACTS[] =
@@ -163,26 +163,27 @@ const static unsigned char _puzzlesPossibleWordIndexes_FACTOR[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes_RAT_[] =
 {
-    69,	// RAT,
+    71,	// RAT,
     4,	// ART,
-    81,	// TAR,
+    83,	// TAR,
 };
 
-const static unsigned char _puzzlesPossibleWordIndexes_ACRE[] =
+const static unsigned char _puzzlesPossibleWordIndexes_FLINT_[] =
 {
-    16,	// CARE,
-    0,	// ACRE,
+    85,	// TIN,
+    46,	// FLINT,
+    60,	// NIT,
 };
 
-const static unsigned char _puzzlesPossibleWordIndexes_ARTEFACT[] =
+const static unsigned char _puzzlesPossibleWordIndexes_ARTIFACT[] =
 {
-    5,	// ARTEFACT,
+    5,	// ARTIFACT,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_BUS_[] =
 {
     12,	// BUS,
-    79,	// SUB,
+    81,	// SUB,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_BUYS[] =
@@ -194,9 +195,9 @@ const static unsigned char _puzzlesPossibleWordIndexes_BUYS[] =
 const static unsigned char _puzzlesPossibleWordIndexes__BUSES[] =
 {
     12,	// BUS,
-    84,	// USES,
-    79,	// SUB,
-    80,	// SUES,
+    87,	// USES,
+    81,	// SUB,
+    82,	// SUES,
     13,	// BUSES,
 };
 
@@ -205,7 +206,7 @@ const static unsigned char _puzzlesPossibleWordIndexes_CLUBS_[] =
     24,	// CLUB,
     12,	// BUS,
     26,	// CLUBS,
-    79,	// SUB,
+    81,	// SUB,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes__CLUBBING[] =
@@ -219,13 +220,13 @@ const static unsigned char _puzzlesPossibleWordIndexes_BUMPS_[] =
     9,	// BUMP,
     12,	// BUS,
     10,	// BUMPS,
-    79,	// SUB,
+    81,	// SUB,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_PART[] =
 {
-    63,	// PART,
-    83,	// TRAP,
+    65,	// PART,
+    86,	// TRAP,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_CYPRESS[] =
@@ -236,30 +237,30 @@ const static unsigned char _puzzlesPossibleWordIndexes_CYPRESS[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes_STRING[] =
 {
-    71,	// RING,
-    77,	// STIR,
-    78,	// STRING,
+    73,	// RING,
+    79,	// STIR,
+    80,	// STRING,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_RINGS_[] =
 {
-    75,	// SIR,
-    71,	// RING,
-    76,	// SRI,
-    72,	// RINGS,
+    77,	// SIR,
+    73,	// RING,
+    78,	// SRI,
+    74,	// RINGS,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_BELONG[] =
 {
-    52,	// LOBE,
+    53,	// LOBE,
     8,	// BELONG,
-    53,	// LONG,
+    54,	// LONG,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes__CLOUD[] =
 {
     31,	// CUD,
-    55,	// LOUD,
+    56,	// LOUD,
     28,	// COL,
     23,	// CLOUD,
 };
@@ -267,8 +268,8 @@ const static unsigned char _puzzlesPossibleWordIndexes__CLOUD[] =
 const static unsigned char _puzzlesPossibleWordIndexes__FAVOR[] =
 {
     45,	// FAVOR,
-    47,	// FRO,
-    46,	// FOR,
+    48,	// FRO,
+    47,	// FOR,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_CAREER[] =
@@ -280,32 +281,32 @@ const static unsigned char _puzzlesPossibleWordIndexes_CAREER[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes_OLIVES[] =
 {
-    86,	// VIOL,
-    60,	// OLES,
-    54,	// LOSE,
-    61,	// OLIVES,
-    87,	// VISE,
-    85,	// VIES,
+    89,	// VIOL,
+    62,	// OLES,
+    55,	// LOSE,
+    63,	// OLIVES,
+    90,	// VISE,
+    88,	// VIES,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes__PLEASANT[] =
 {
-    67,	// PLEAS,
-    68,	// PLEASANT,
-    66,	// PLANT,
+    69,	// PLEAS,
+    70,	// PLEASANT,
+    68,	// PLANT,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_MEMBER[] =
 {
-    57,	// MEMBER,
-    58,	// MERE,
+    58,	// MEMBER,
+    59,	// MERE,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes__EIGHT[] =
 {
     36,	// EIGHT,
-    49,	// GIE,
-    82,	// THE,
+    50,	// GIE,
+    84,	// THE,
     39,	// ETH,
 };
 
@@ -320,14 +321,14 @@ const static unsigned char _puzzlesPossibleWordIndexes_INCOME[] =
     30,	// CONI,
     27,	// COIN,
     29,	// COME,
-    50,	// INCOME,
+    51,	// INCOME,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_ALLOW_[] =
 {
-    62,	// OLLA,
-    51,	// LAW,
-    56,	// LOW,
+    64,	// OLLA,
+    52,	// LAW,
+    57,	// LOW,
     3,	// ALLOW,
 };
 
@@ -339,8 +340,8 @@ const static unsigned char _puzzlesPossibleWordIndexes__ELECTION[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes__BEGUN[] =
 {
-    59,	// NUB,
-    48,	// GENU,
+    61,	// NUB,
+    49,	// GENU,
     11,	// BUN,
     6,	// BEG,
     7,	// BEGUN,
@@ -348,14 +349,14 @@ const static unsigned char _puzzlesPossibleWordIndexes__BEGUN[] =
 
 const static unsigned char _puzzlesPossibleWordIndexes__REMEMBER[] =
 {
-    57,	// MEMBER,
-    70,	// REMEMBER,
+    58,	// MEMBER,
+    72,	// REMEMBER,
 };
 
 const static unsigned char _puzzlesPossibleWordIndexes_PETROLEUM[] =
 {
-    64,	// PETROL,
-    65,	// PETROLEUM,
+    66,	// PETROL,
+    67,	// PETROLEUM,
 };
 
 const static unsigned char *puzzlesPossibleWordIndexes[] =
@@ -367,8 +368,8 @@ const static unsigned char *puzzlesPossibleWordIndexes[] =
     _puzzlesPossibleWordIndexes__FACTS,	// " FACTS",
     _puzzlesPossibleWordIndexes_FACTOR,	// "FACTOR",
     _puzzlesPossibleWordIndexes_RAT_,	// "RAT ",
-    _puzzlesPossibleWordIndexes_ACRE,	// "ACRE",
-    _puzzlesPossibleWordIndexes_ARTEFACT,	// "ARTEFACT",
+    _puzzlesPossibleWordIndexes_FLINT_,	// "FLINT ",
+    _puzzlesPossibleWordIndexes_ARTIFACT,	// "ARTIFACT",
     _puzzlesPossibleWordIndexes_BUS_,	// "BUS ",
     _puzzlesPossibleWordIndexes_BUYS,	// "BUYS",
     _puzzlesPossibleWordIndexes__BUSES,	// " BUSES",
@@ -405,8 +406,8 @@ const static unsigned char puzzlesNumLeadingSpaces[] =
     0,	//  FACTS
     0,	// FACTOR
     0,	// RAT 
-    0,	// ACRE
-    0,	// ARTEFACT
+    0,	// FLINT 
+    0,	// ARTIFACT
     0,	// BUS 
     0,	// BUYS
     0,	//  BUSES
@@ -443,8 +444,8 @@ const static bool puzzlesScramble[] =
     true,	//  FACTS
     false,	// FACTOR
     true,	// RAT 
-    true,	// ACRE
-    true,	// ARTEFACT
+    true,	// FLINT 
+    true,	// ARTIFACT
     true,	// BUS 
     false,	// BUYS
     false,	//  BUSES
@@ -481,8 +482,8 @@ const static unsigned char puzzlesMetaLetterIndex[] =
     1,	// " FACTS"[F]
     5,	// "FACTOR"[R]
     2,	// "RAT "[T]
-    3,	// "ACRE"[E]
-    255,	// "ARTEFACT"[255 (metapuzzle)]
+    2,	// "FLINT "[I]
+    255,	// "ARTIFACT"[255 (metapuzzle)]
     2,	// "BUS "[S]
     2,	// "BUYS"[Y]
     4,	// " BUSES"[E]
