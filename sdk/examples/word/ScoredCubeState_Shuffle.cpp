@@ -10,6 +10,8 @@
 #include "SavedData.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
@@ -26,7 +28,7 @@ unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& dat
 
 unsigned ScoredCubeState_Shuffle::update(float dt, float stateTime)
 {
-    return stateTime <= TEETH_ANIM_LENGTH * 2.f ?
+    return stateTime <= 0.5f ? //TEETH_ANIM_LENGTH * 2.f ?
                 CubeStateIndex_ShuffleScored: CubeStateIndex_NotWordScored;
 }
 

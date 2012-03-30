@@ -4,11 +4,29 @@
 #include "assets.gen.h"
 #include "config.h"
 
+using namespace Sifteo;
+
 extern Cube gCubes[NUM_CUBES];
-extern uint8_t gTouchFlags[NUM_CUBES];
+//extern uint8_t gTouchFlags[NUM_CUBES];
+
+
+// Audio Smutz
+#if SFX_ON
 extern AudioChannel gChannelSfx;
+void PlaySfx(const AssetAudio& handle, bool preempt=true);
+#else
+#define PlaySfx(...)
+#endif
+
+
+#if MUSIC_ON
 extern AudioChannel gChannelMusic;
-extern Math::Random gRandom;
+void PlayMusic(const AssetAudio& music, bool loop=true);
+#else
+#define PlayMusic(...)
+#endif
+
+extern Random gRandom;
 
 using namespace Sifteo;
 
@@ -19,8 +37,5 @@ using namespace Sifteo;
 #define CORO_END mState=-1;case -1:;}
 
 // Utils
-Cube::Side InferDirection(Vec2 u);
-
-// Audio Smutz
-void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
-void PlayMusic(_SYSAudioModule& music, bool loop=true);
+Cube::Side InferDirection(Int2 u);
+int AdvanceTowards(int curr, int targ, int mag);

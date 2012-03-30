@@ -22,6 +22,7 @@ public:
     static const float BEHIND_CHROMITS_THRESHOLD;
     //at this depth, bubbles will move away from chromits
     static const float CHROMITS_COLLISION_DEPTH;
+    static const float CHROMIT_OBSCURE_DIST;
     static const float CHROMIT_OBSCURE_DIST_2;
 
     Bubble();
@@ -34,6 +35,7 @@ public:
 private:
     Float2 m_pos;
     float m_fTimeAlive;
+    const Sifteo::PinnedAssetImage *m_pTex;
 };
 
 class BubbleSpawner

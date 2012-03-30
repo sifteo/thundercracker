@@ -51,16 +51,19 @@ class GLRenderer {
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);
+    void drawMothership(unsigned id, b2Vec2 center, float angle);
 
     void beginOverlay();
-    void overlayText(unsigned x, unsigned y, const float color[4], const char *str);
-    unsigned measureText(const char *str);
-    void overlayRect(unsigned x, unsigned y, unsigned w, unsigned h, const float color[4]);
+    void overlayText(int x, int y, const float color[4], const char *str);
+    int measureText(const char *str);
+    void overlayRect(int x, int y, int w, int h, const float color[4]);
+    void overlayCubeFlash(unsigned id, int x, int y, int w, int h,
+        const uint8_t *data, bool dataChanged);
 
-  	void takeScreenshot(std::string name) {
-		// Screenshots are asynchronous
-		pendingScreenshotName = name;
-	}
+    void takeScreenshot(std::string name) {
+        // Screenshots are asynchronous
+        pendingScreenshotName = name;
+    }
     
     unsigned getWidth() const {
         return viewportWidth;
@@ -104,7 +107,7 @@ class GLRenderer {
     
     const Glyph *findGlyph(uint32_t id);
     
-    void initCube(unsigned id);
+    void initCubeFB(unsigned id);
     void initCubeTexture(GLuint name, bool pixelAccurate);
     void cubeTransform(b2Vec2 center, float angle, float hover,
                        b2Vec2 tilt, CubeTransformState &tState);
@@ -152,12 +155,14 @@ class GLRenderer {
     static const unsigned NUM_LCD_TEXTURES = 4;
     
     struct GLCube {
-        bool initialized;
+        bool fbInitialized;
+        bool flashInitialized;
         bool pixelAccurate;
         bool isTilted;
         uint8_t currentLcdTexture;
         GLuint texFiltered[NUM_LCD_TEXTURES];
         GLuint texAccurate[NUM_LCD_TEXTURES];
+        GLuint flashTex;
     } cubes[System::MAX_CUBES];
 	
 	std::string pendingScreenshotName;

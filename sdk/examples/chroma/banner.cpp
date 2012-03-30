@@ -14,7 +14,6 @@ const float Banner::SCORE_TIME = 1.0f;
 
 Banner::Banner()
 {
-	m_fEndTime = -1.0f;
     m_tiles = 0;
 }
 
@@ -29,7 +28,7 @@ void Banner::Draw( BG1Helper &bg1helper )
         return;
 
     //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
-    bg1helper.DrawPartialAsset( Vec2( CENTER_PT - m_tiles, 6 ), Vec2( CENTER_PT - m_tiles, 0 ), Vec2( m_tiles * 2, BANNER_ROWS ), BannerImg );
+    bg1helper.DrawPartialAsset( Vec2<int>( CENTER_PT - m_tiles, 6 ), Vec2<int>( CENTER_PT - m_tiles, 0 ), Vec2<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -42,15 +41,15 @@ void Banner::Draw( BG1Helper &bg1helper )
 }
 
 
-void Banner::Update(float t)
+void Banner::Update(SystemTime t)
 {
     int iLen = m_Msg.size();
     if( iLen > 0 )
 	{
-		if( t > m_fEndTime )
+		if( t > m_endTime )
 		{
             m_Msg.clear();
-            m_fEndTime = -1.0f;
+            m_endTime = SystemTime();
 		}
         m_tiles++;
 
@@ -64,7 +63,7 @@ void Banner::SetMessage( const char *pMsg, float fTime )
 {
     m_Msg = pMsg;
     float msgTime = fTime;
-    m_fEndTime = System::clock() + msgTime;
+    m_endTime = SystemTime::now() + msgTime;
     m_tiles = 0;
 }
 
@@ -75,7 +74,7 @@ bool Banner::IsActive() const
 }
 
 
-void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor anchor, int score/*, int frame*/ )
+void Banner::DrawScore( BG1Helper &bg1helper, const Int2 &pos, Banner::Anchor anchor, int score )
 {
     String<16> buf;
     buf << score;

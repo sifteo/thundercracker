@@ -137,7 +137,7 @@ unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUA
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
     m_Movestate( MOVESTATE_STATIONARY ),
-	m_eventTime( 0.0f ),
+	m_eventTime(),
 	m_score( 0 ),
 	m_bFixed( false ),
     m_multiplier( 1 ),
@@ -176,7 +176,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     m_bWasRainball = false;
     m_bWasInfected = false;
     m_multiplier = 1;
-    m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -244,7 +244,7 @@ unsigned int GridSlot::GetSpecialFrame()
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
 {
-	Vec2 vec( m_col * 4, m_row * 4 );
+	Int2 vec = { m_col * 4, m_row * 4 };
 
     switch( m_state )
 	{
@@ -269,13 +269,15 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 
                     if( m_multiplier > 1 )
                     {
-                        unsigned int frame = Math::fmodf( (float)System::clock(), MULTIPLIER_LIGHTNING_PERIOD ) / MULTIPLIER_LIGHTNING_PERIOD * mult_lightning.frames;
+                        SystemTime t = SystemTime::now();
+                        
+                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.frames);
                         vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
                         vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
                         vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
 
                         //number on bg1
-                        if( Math::fmodf( (float)System::clock(), MULTIPLIER_NUMBER_PERIOD ) / MULTIPLIER_NUMBER_PERIOD < MULTIPLIER_NUMBER_PERCENTON )
+                        if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
                         {
                             vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
                             vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
@@ -302,7 +304,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                     }
                     case MOVESTATE_MOVING:
                     {
-                        Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+                        Int2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
                         //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
                         if( IsSpecial() )
@@ -315,6 +317,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         break;
                     }
                     case MOVESTATE_FINISHINGMOVE:
+                    case MOVESTATE_BUMPED:
                     {
                         if( IsSpecial() )
                             vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
@@ -370,7 +373,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         vec.y += 1;
                     }
 
-                    float timeDiff = System::clock() - (float)m_eventTime;
+                    float timeDiff = SystemTime::now() - m_eventTime;
                     float perc = timeDiff / MARK_BREAK_DELAY;
 
                     //for some reason I'm seeing extremely small negative values at times.
@@ -404,7 +407,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
             unsigned int fadeFrame = 0;
 
-            float fadeTime = System::clock() - START_FADING_TIME - m_eventTime;
+            float fadeTime = float(SystemTime::now() - m_eventTime) - START_FADING_TIME;
 
             if( fadeTime > 0.0f )
                 fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
@@ -428,7 +431,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 }
 
 
-void GridSlot::Update(float t)
+void GridSlot::Update(SystemTime t)
 {
 	switch( m_state )
 	{
@@ -448,7 +451,7 @@ void GridSlot::Update(float t)
             {
                 case MOVESTATE_MOVING:
                 {
-                    Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+                    Int2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
                     if( vDiff.x != 0 )
                     {
@@ -484,7 +487,7 @@ void GridSlot::Update(float t)
                 {
                     //interpolate frames back to normal state
                     Float2 cubeDir = m_pWrapper->getTiltDir();
-                    Vec2 curDir;
+                    Int2 curDir;
 
                     GetTiltFrame( cubeDir, curDir );
 
@@ -515,6 +518,11 @@ void GridSlot::Update(float t)
 
                     break;
                 }
+                case MOVESTATE_BUMPED:
+                {
+                    m_Movestate = MOVESTATE_FINISHINGMOVE;
+                    break;
+                }
                 default:
                     break;
             }
@@ -525,7 +533,7 @@ void GridSlot::Update(float t)
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
             {
-                m_animFrame = ( ( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
+                m_animFrame = ( float( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
                 spread_mark();
             }
             else
@@ -548,7 +556,7 @@ void GridSlot::Update(float t)
         //clear this out in update, so it doesn't bash moving balls
         case STATE_GONE:
         {
-            Vec2 vec( m_col * 4, m_row * 4 );
+            Int2 vec = { m_col * 4, m_row * 4 };
             m_pWrapper->QueueClear( vec );
             //vid.BG0_drawAsset(vec, GemEmpty, 0);
             break;
@@ -565,7 +573,7 @@ void GridSlot::mark()
         return;
     m_animFrame = 0;
 	m_state = STATE_MARKED;
-	m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
     Game::Inst().playSound(match2);
     Game::Inst().SetChain( true );
 
@@ -601,7 +609,7 @@ void GridSlot::explode()
         DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
-	m_eventTime = System::clock();
+	m_eventTime = SystemTime::now();
 }
 
 void GridSlot::die()
@@ -611,7 +619,7 @@ void GridSlot::die()
 	m_score = Game::Inst().getIncrementScore();
     Game::Inst().CheckChain( m_pWrapper, Vec2( m_row, m_col ) );
     m_pWrapper->checkEmpty();
-	m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
 }
 
 
@@ -643,7 +651,7 @@ void GridSlot::DamageRock()
 {
     if( m_RockHealth > 0 )
     {
-        Vec2 vec( m_col * 4, m_row * 4 );
+        Int2 vec = { m_col * 4, m_row * 4 };
 
         m_RockHealth--;
 
@@ -682,7 +690,7 @@ void GridSlot::startPendingMove()
 
 
 //given tilt state, return our desired frame
-unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const
+unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const
 {
     //quantize and convert to the appropriate range
     //non-linear quantization.
@@ -768,7 +776,7 @@ unsigned int GridSlot::GetIdleFrame()
 
 void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 {
-    Vec2 vec( m_col * 4, m_row * 4 );
+    Int2 vec = { m_col * 4, m_row * 4 };
 
     if( !isAlive() )
         vid.BG0_drawAsset(vec, GemEmpty, 0);
@@ -827,4 +835,50 @@ void GridSlot::RainballMorph( unsigned int color )
 {
     FillColor( color );
     m_bWasRainball = true;
+}
+
+
+
+//bubble is bumping this chromit, tilt it in the given direction
+void GridSlot::Bump( const Float2 &dir )
+{
+    if( isAlive() && !IsFixed() && !IsSpecial() && ( m_Movestate == MOVESTATE_STATIONARY || m_Movestate == MOVESTATE_BUMPED || m_Movestate == MOVESTATE_FINISHINGMOVE ) )
+    {
+        m_Movestate = MOVESTATE_BUMPED;
+
+        Int2 newDir = m_lastFrameDir;
+
+        //(2/sqrtf(5))
+        const float DIR_THRESH = -.4472136f;
+
+        //push one frame over in dir direction
+        if( dir.x < DIR_THRESH )
+        {
+            newDir.x-=4;
+            if( newDir.x < 0 )
+                newDir.x = 0;
+        }
+        else if( dir.x > DIR_THRESH )
+        {
+            newDir.x+=4;
+            if( newDir.x >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.x = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        if( dir.y < DIR_THRESH )
+        {
+            newDir.y-=4;
+            if( newDir.y < 0 )
+                newDir.y = 0;
+        }
+        else if( dir.y > DIR_THRESH )
+        {
+            newDir.y+=4;
+            if( newDir.y >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.y = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        m_animFrame = TILTTOFRAMES[ newDir.y ][ newDir.x ];
+        m_lastFrameDir = newDir;
+    }
 }

@@ -85,13 +85,13 @@ uint32_t CIELab::rgb() const
     
 double CIELab::decodeGamma(uint8_t v)
 {
-    return pow(v / 255.0, gamma) * 255.0; 
+    return pow(v / 255.0, CLIELabConstants::gamma) * 255.0; 
 }
 
 uint8_t CIELab::encodeGamma(double v)
 {
     // Round, not truncate
-    double i = pow(v / 255.0, 1.0 / gamma) * 255.0 + 0.5;
+    double i = pow(v / 255.0, 1.0 / CLIELabConstants::gamma) * 255.0 + 0.5;
     return (uint8_t) std::max(0.0, std::min(255.0, i));
 }
 

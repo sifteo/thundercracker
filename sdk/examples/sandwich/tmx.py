@@ -1,16 +1,19 @@
 # reads the tmx file format
 
 import lxml.etree
-import os.path
+import posixpath
+
+TILE_SIZE = 16
 
 class Map:
 	def __init__(self, path):
 		doc = lxml.etree.parse(path)
 		self.path = path
+		self.dir = posixpath.dirname(path)
 		self.width = int(doc.getroot().get("width"))
 		self.height = int(doc.getroot().get("height"))
-		self.pw = 16 * self.width
-		self.ph = 16 * self.height
+		self.pw = TILE_SIZE * self.width
+		self.ph = TILE_SIZE * self.height
 		self.tilesets = [TileSet(self, elem) for elem in doc.findall("tileset")]
 		self.layers = [Layer(self, elem) for elem in doc.findall("layer")]
 		self.layer_dict = dict((layer.name,layer) for layer in self.layers)
@@ -32,12 +35,11 @@ class TileSet:
 		self.gid = int(xml.get("firstgid"))
 		img = xml.find("image")
 		self.imgpath = img.get("source")
-		if not os.path.exists(self.imgpath):
-			raise Exception("TileSet image missing:  %s" % self.imgpath)
+		assert posixpath.exists(posixpath.join(map.dir, self.imgpath)), "TileSet image missing:  %s" % self.imgpath
 		self.pw = int(img.get("width"))
 		self.ph = int(img.get("height"))
-		self.width = self.pw/16
-		self.height = self.ph/16
+		self.width = self.pw/TILE_SIZE
+		self.height = self.ph/TILE_SIZE
 		self.count = self.width * self.height
 		self.tiles = [Tile(self, lid) for lid in range(self.count)]
 		for node in xml.findall("tile/properties"):

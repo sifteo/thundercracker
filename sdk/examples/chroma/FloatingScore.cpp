@@ -55,7 +55,7 @@ void FloatingScore::Update(float dt)
 }
 
 
-void FloatingScore::Spawn( unsigned int score, const Vec2 &pos )
+void FloatingScore::Spawn( unsigned int score, const Int2 &pos )
 {
     m_score = score;
     m_pos = pos;

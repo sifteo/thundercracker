@@ -8,6 +8,11 @@
 
 #include "frontend.h"
 #include <time.h>
+// for MAX HAX
+#if __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 
 Frontend *Frontend::instance = NULL;
 
@@ -25,12 +30,25 @@ Frontend::Frontend()
 
 bool Frontend::init(System *_sys)
 {
+    // MAX HAX - chdir out of a bundle
+    #if __APPLE__
+    CFBundleRef mainbundle = CFBundleGetMainBundle();
+    CFURLRef bundleUrl = CFBundleCopyBundleURL(mainbundle);
+    CFStringRef path = CFURLCopyFileSystemPath(bundleUrl, kCFURLPOSIXPathStyle);
+    std::string dir = CFStringGetCStringPtr(path, 0);
+    CFRelease(path);
+    CFRelease(bundleUrl);
+    const size_t baseLength = dir.find_last_of('/');
+    chdir(dir.substr(0, baseLength).c_str());
+    #endif
+
     instance = this;
     sys = _sys;
     frameCount = 0;
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
+    isRotationFixed = sys->opt_lockRotationByDefault;
 
     /*
      * Create cubes in a grid. Height is the square root of the number
@@ -43,15 +61,28 @@ bool Frontend::init(System *_sys)
         gridW = (sys->opt_numCubes + gridH - 1) / gridH;
         for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
             for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
-                const float spacing = FrontendCube::SIZE * 2.7;
+                const float spacing = CubeConstants::SIZE * 2.7;
                 cubes[cubeID].init(cubeID, &sys->cubes[cubeID], world,
                                    ((gridW - 1) * -0.5 + x) * spacing,
                                    ((gridH - 1) * -0.5 + y) * spacing);
+                if (isRotationFixed) {
+                    cubes[cubeID].toggleRotationLock(isRotationFixed);
+                }
+
             }
     } else {
         gridW = 0;
         gridH = 0;
     }
+
+#if MOTHERSHIP
+    mothershipCount = 1;
+    b2Vec2 p = cubes[0].getBody()->GetPosition();
+    motherships[0].init(0, world, p.x, p.y);
+#else
+    mothershipCount = 0;
+#endif
+
 
     /*
      * The view area should scale with number of cubes. So, scale the
@@ -68,9 +99,9 @@ bool Frontend::init(System *_sys)
      */
 
     if (sys->opt_numCubes > 1)
-        normalViewExtent = FrontendCube::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
+        normalViewExtent = CubeConstants::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
     else
-        normalViewExtent = FrontendCube::SIZE * 1.4;
+        normalViewExtent = CubeConstants::SIZE * 1.4;
 
     maxViewExtent = normalViewExtent * 10.0f;
 
@@ -116,6 +147,9 @@ void Frontend::numCubesChanged()
             // Create new cubes at the mouse cursor for now
             b2Vec2 v = mouseVec(normalViewExtent);
             cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
+            if (isRotationFixed) {
+                cubes[i].toggleRotationLock(isRotationFixed);
+            }
         }
 
     for (;i < sys->MAX_CUBES; i++)
@@ -345,6 +379,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->sys->opt_turbo ^= true;
             break;
 
+        case 'I':
+            instance->overlay.toggleInspector();
+            break;
+
         case 'R':
             /*
              * Intentionally undocumented: Toggle trace mode.
@@ -359,7 +397,6 @@ void GLFWCALL Frontend::onKey(int key, int state)
                 instance->hoverOrRotate();
             break;
 
-
         case '-':
             instance->removeCube();
             break;
@@ -368,7 +405,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case '=':
             instance->addCube();
             break;
-            
+        
+        case GLFW_KEY_BACKSPACE:
+            instance->toggleRotationLock();
+            break;
+
         default:
             return;
 
@@ -474,7 +515,7 @@ void Frontend::onMouseDown(int button)
                  */
                 
                 mouseIsPulling = true;
-                mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_SLIGHT);
+                mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_SLIGHT);
                 
                 /*
                  * Pick an attachment point. If we're close to the center,
@@ -484,9 +525,9 @@ void Frontend::onMouseDown(int button)
                  */
                 
                 b2Vec2 anchor = mousePicker.mPoint;
-                b2Vec2 center = mousePicker.mCube->body->GetWorldCenter();
+                b2Vec2 center = mousePicker.mCube->getBody()->GetWorldCenter();
                 float centerDist = b2Distance(anchor, center);
-                const float centerSize = FrontendCube::SIZE * FrontendCube::CENTER_SIZE;
+                const float centerSize = CubeConstants::SIZE * CubeConstants::CENTER_SIZE;
 
                 if (centerDist < centerSize) {
                     // Center-drag to align
@@ -497,7 +538,7 @@ void Frontend::onMouseDown(int button)
                 // Glue it to the point we picked, with a revolute joint
 
                 b2RevoluteJointDef jointDef;
-                jointDef.Initialize(mousePicker.mCube->body, mouseBody, anchor);
+                jointDef.Initialize(mousePicker.mCube->getBody(), mouseBody, anchor);
                 jointDef.motorSpeed = 0.0f;
                 jointDef.maxMotorTorque = 100.0f;
                 jointDef.enableMotor = false;
@@ -522,12 +563,12 @@ void Frontend::hoverOrRotate()
 
     if (mousePicker.mCube->isHovering()) {
         if (!mouseIsSpinning) {
-            spinTarget = mousePicker.mCube->body->GetAngle();
+            spinTarget = mousePicker.mCube->getBody()->GetAngle();
             mouseIsSpinning = true;
         }
         spinTarget += M_PI/2;
     } else {
-        mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_FULL);
+        mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_FULL);
     }
 }
 
@@ -544,7 +585,7 @@ void Frontend::onMouseUp(int button)
         if (mousePicker.mCube) {
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
             mousePicker.mCube->setTouch(false);
-            mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_NONE);                
+            mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_NONE);                
         }
 
         /* Mouse state reset */
@@ -619,21 +660,25 @@ void Frontend::animate()
         if (mousePicker.mCube) {
             const float maxTilt = 80.0f;
             b2Vec2 mouseDiff = mouseVec(normalViewExtent) - mouseBody->GetWorldCenter();
-            b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
+            b2Vec2 tiltTarget = (maxTilt / CubeConstants::SIZE) * mouseDiff; 
             tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
             tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
 
             // Rotate it into the cube's coordinates
-            b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->body->GetAngle()), tiltTarget);
+            b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->getBody()->GetAngle()), tiltTarget);
 
             mousePicker.mCube->setTiltTarget(local);
             idleFrames = 0;
         }
     }
-        
+    
     /* Local per-cube animations */
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
+    for (unsigned i = 0; i < mothershipCount; ++i) {
+        motherships[i].animate();
+    }
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         cubes[i].animate();
+    }
 
     /* Animated viewport centering/zooming */
     {
@@ -656,7 +701,7 @@ void Frontend::animate()
 float Frontend::pixelViewExtent()
 {
     // Calculate the viewExtent which would give a 1:1 pixel mapping
-    return renderer.getWidth() * (FrontendCube::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
+    return renderer.getWidth() * (CubeConstants::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
 }
 
 unsigned Frontend::pixelZoomMode()
@@ -690,7 +735,7 @@ unsigned Frontend::pixelZoomMode()
 void Frontend::scaleViewExtent(float ratio)
 {
     normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
-                                      FrontendCube::SIZE * 0.1, maxViewExtent);
+                                      CubeConstants::SIZE * 0.1, maxViewExtent);
 }
 
 void Frontend::draw()
@@ -703,27 +748,44 @@ void Frontend::draw()
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
+    for (unsigned i = 0; i < mothershipCount; ++i) {
+        motherships[i].draw(renderer);
+    }
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
             idleFrames = 0;
         }
+    }
 
     renderer.beginOverlay();
-        
-    // Per-cube overlays (Only when sufficiently zoomed-in)
-    if (viewExtent < pixelViewExtent() * 1.5f)
-        for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
-            FrontendCube &c = cubes[i]; 
-            b2AABB aabb;    
-        
-            // The overlay sits just below the cube's extents
-            c.computeAABB(aabb);
-            b2Vec2 pos = worldToScreen(c.body->GetPosition() +
-                                       b2Vec2(0, 1.1f * aabb.GetExtents().y));
-                                   
-            overlay.drawCube(&c, pos.x, pos.y);
-        }
+
+    // Per-cube status overlays
+    for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
+        FrontendCube &c = cubes[i]; 
+
+        // Overlays are positioned relative to the cube's AABB.
+        b2AABB aabb;    
+        c.computeAABB(aabb);
+        const float distance = 1.1f;
+        b2Vec2 extents = aabb.GetExtents();
+
+        b2Vec2 bottomCenter = worldToScreen(c.getBody()->GetPosition() +
+            b2Vec2(0, distance * extents.y));
+
+        b2Vec2 topRight = worldToScreen(c.getBody()->GetPosition() +
+            b2Vec2(distance * extents.x, -distance * extents.y));
+
+        overlay.drawCubeStatus(&c,
+            0.5f + bottomCenter.x,
+            0.5f + bottomCenter.y);
+
+        overlay.drawCubeInspector(&c,
+            0.5f + topRight.x,
+            0.5f + topRight.y,
+            0.5f + worldToScreen(1.5f),
+            0.5f + worldToScreen(3.0f));
+    }
 
     // Fixed portion of the overlay, should be topmost.
     overlay.draw();
@@ -751,6 +813,13 @@ b2Vec2 Frontend::worldToScreen(b2Vec2 world)
                   + renderer.getWidth() * ((0.5f / viewExtent) * world);
 }
 
+float Frontend::worldToScreen(float world)
+{
+    // Convert a scalar distance from world to screen coordinates
+    
+    return renderer.getWidth() * ((0.5f / viewExtent) * world);
+}
+
 float Frontend::zoomedViewExtent()
 {
     /*
@@ -764,10 +833,10 @@ float Frontend::zoomedViewExtent()
         
     if (sys->opt_numCubes > 1) {
         // Zoom in one one cube
-        return scale * FrontendCube::SIZE * 1.1;
+        return scale * CubeConstants::SIZE * 1.1;
     } else {
         // High zoom on our one and only cube
-        return scale * FrontendCube::SIZE * 0.2;
+        return scale * CubeConstants::SIZE * 0.2;
     }
 }
 
@@ -801,6 +870,17 @@ std::string Frontend::createScreenshotName()
         return std::string(buffer);
 }
 
+void Frontend::toggleRotationLock() {
+    isRotationFixed = !isRotationFixed;
+
+    overlay.postMessage(std::string("Rotation lock ")
+        + (isRotationFixed ? "on" : "off"));
+
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+        cubes[i].toggleRotationLock(isRotationFixed);
+    }
+}
+
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
 {
     // Test overlap of a very small AABB
@@ -820,7 +900,7 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
     FixtureData *fdat = (FixtureData *) fixture->GetUserData();
 
     if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
-        mCube = fdat->cube;
+        mCube = fdat->ptr.cube;
         return false;
     }
 
@@ -850,11 +930,11 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
          * Update interaction between two neighbor sensors
          */
 
-        unsigned cubeA = frontend.cubeID(fdatA->cube);
-        unsigned cubeB = frontend.cubeID(fdatB->cube);
+        unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
+        unsigned cubeB = frontend.cubeID(fdatB->ptr.cube);
 
-        fdatA->cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
-        fdatB->cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+        fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
+        fdatB->ptr.cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
     }
 }
 

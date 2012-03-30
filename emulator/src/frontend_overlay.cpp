@@ -14,10 +14,12 @@ static const Color helpBgColor(0, 0, 0, 0.5);
 static const Color helpHintColor(1, 1, 1, 0.5);
 static const Color ghostColor(1,1,1,0.3);
 static const Color debugColor(1,0.5,0.5,1);
+static const Color inspectorBgColor(0, 0, 0, 0.5);
+static const Color inspectorTextColor(1, 1, 1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : helpVisible(false) {}
+    : helpVisible(false), inspectorVisible(false) {}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -93,7 +95,7 @@ void FrontendOverlay::draw()
     fastTimer.start();
 }       
 
-void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
+void FrontendOverlay::drawCubeStatus(FrontendCube *fe, int x, int y)
 {
     unsigned id = fe->getId();
 
@@ -104,6 +106,45 @@ void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
         text(debugColor, "Debugging", 0.5);
 
     text(ghostColor, cubes[id].fps, 0.5);
+}
+
+void FrontendOverlay::drawCubeInspector(FrontendCube *fe,
+    int left, int top, int width, int height)
+{
+    if (!inspectorVisible)
+        return;
+
+    unsigned id = fe->getId();
+    const int margin = 2;
+    static const char *headings[] = {
+        "Asset flash:",
+        0,
+    };
+
+    // Force the box to be wide enough for all our text
+    for (unsigned i = 0; headings[i]; i++)
+        width = std::max(width, renderer->measureText(headings[i]) + margin*2);
+
+    // Background rectangle
+    renderer->overlayRect(left, top, width, height, inspectorBgColor.v);
+    moveTo(left + margin, top + margin);
+
+    // Flash memory state
+    {
+        text(inspectorTextColor, headings[0]);
+
+        // Eliminate unnecessary texture uploads; see if the flash has changed
+        uint32_t flashModifyCount = sys->cubes[id].flash.getModifyCount();
+        bool hasChanged = flashModifyCount != cubes[id].flashModifyCount;
+        cubes[id].flashModifyCount = flashModifyCount;
+
+        // Use all remaining space
+        int flashWidth = width - margin * 2;
+        int flashHeight = height - margin - (y - top);
+
+        renderer->overlayCubeFlash(id, x, y, flashWidth, flashHeight,
+            sys->cubes[id].flashStorage.data.ext, hasChanged);
+    }
 }
 
 void FrontendOverlay::postMessage(std::string _message)
@@ -123,6 +164,11 @@ void FrontendOverlay::toggleHelp()
     helpVisible ^= true;
 }
 
+void FrontendOverlay::toggleInspector()
+{
+    inspectorVisible ^= true;
+}
+
 void FrontendOverlay::drawHelp()
 {
     static const char *lines[] = {
@@ -132,7 +178,9 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
+        "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
+        "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",
         "",
         APP_COPYRIGHT,
@@ -141,7 +189,7 @@ void FrontendOverlay::drawHelp()
     const unsigned numLines = sizeof lines / sizeof lines[0];
     const unsigned w = renderer->getWidth();
     const unsigned h = renderer->getHeight();
-    const unsigned top = h - margin * 2 - numLines * lineSpacing;
+    const int top = h - margin * 2 - numLines * lineSpacing;
 
     renderer->overlayRect(0, top, w, h, helpBgColor.v);
     moveTo(margin, top + margin);
@@ -170,7 +218,7 @@ void FrontendOverlay::drawRealTimeInfo()
         x -= width;
 
         // Include a tiny bargraph, to show the rate visually
-        unsigned barW = width * std::min(1.0f, filteredTimeRatio);
+        int barW = width * std::min(1.0f, filteredTimeRatio);
         renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
         y += barH + margin;
     }

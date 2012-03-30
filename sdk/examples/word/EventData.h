@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "CubeStateMachine.h"
+
 using namespace Sifteo;
 
 union EventData
@@ -11,6 +12,7 @@ union EventData
     struct
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
+        unsigned char mPuzzlePieceIndexes[NUM_CUBES];
         int mOffLengthIndex;
         unsigned mNumAnagrams;
         unsigned mNumBonusAnagrams;
@@ -45,6 +47,11 @@ union EventData
     {
         Cube::ID mCubeID;
     } mInput; // also tilt
+
+    struct
+    {
+        char mHintSolution[NUM_CUBES][MAX_LETTERS_PER_CUBE];
+    } mHintSolutionUpdate;
 };
 
 #endif // EVENTDATA_H

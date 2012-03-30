@@ -1,20 +1,14 @@
 #include "Game.h"
 #include "DrawingHelpers.h"
-#include "Dialog.h"
 
 #define HOVERING_ICON_ID	0
-
-// hacks for now
-static Dialog mDialog(0);
 
 void InventoryView::Init() {
 	CORO_RESET;
 	mSelected = 0;
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
-	mTiltX = tilt.x;
-	mTiltY = tilt.y;
-	mAccumX = 0;
-	mAccumY = 0;
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
+	mTilt.set(tilt.x, tilt.y);
+	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	mAnim = 0;
 	Parent()->HideSprites();
@@ -23,8 +17,7 @@ void InventoryView::Init() {
 }
 
 void InventoryView::Restore() {
-	mAccumX = 0;
-	mAccumY = 0;
+	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	Parent()->HideSprites();
 	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
@@ -39,16 +32,16 @@ void InventoryView::Update(float dt) {
 	CORO_BEGIN;
 	while(1) {
 		do {
-			if (pGame->AnimFrame()%2==0) {
+			if (gGame.AnimFrame()%2==0) {
 				ComputeHoveringIconPosition();
 			}
 			{
 				Cube::Side side = UpdateAccum();
 				if (side != SIDE_UNDEFINED) {
-					Vec2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side];
+                    Int2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
-					int count = pGame->GetState()->GetItems(items);
+					int count = gGame.GetState()->GetItems(items);
 					if (idx >= 0 && idx < count) {
 						mSelected = idx;
 						mAnim = 0;
@@ -59,30 +52,28 @@ void InventoryView::Update(float dt) {
 			CORO_YIELD;
 		} while(!touch);
 
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		CORO_YIELD;
 		#if GFX_ARTIFACT_WORKAROUNDS		
-			pGame->NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
-			pGame->NeedsSync();
+			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
-			pGame->NeedsSync();
+			gGame.NeedsSync();
 			Parent()->GetCube()->vbuf.touch();
 			CORO_YIELD;
 		#endif
-		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
-			int count = pGame->GetState()->GetItems(items);
+			int count = gGame.GetState()->GetItems(items);
 			//Parent()->Graphics().setWindow(80, 48);
 			Parent()->Graphics().setWindow(80+16,128-80-16);
-			mDialog.Init();
+			mDialog.Init(Parent()->GetCube());
 			mDialog.Erase();
 			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
 		}
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 		for(t=0; t<16; t++) {
@@ -96,11 +87,10 @@ void InventoryView::Update(float dt) {
 		}
 		System::paintSync();
 		Parent()->Restore();
-		mAccumX = 0;
-		mAccumY = 0;
-		pGame->NeedsSync();
+		mAccum.set(0,0);
+		gGame.NeedsSync();
 		CORO_YIELD;
-		pGame->NeedsSync();
+		gGame.NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 	}
@@ -114,11 +104,12 @@ void InventoryView::OnInventoryChanged() {
 }
 
 void InventoryView::RenderInventory() {
-	BG1Helper overlay = Parent()->Overlay();
+	BG1Helper overlay(*Parent()->GetCube());
+
 	const int pad = 24;
 	const int innerPad = (128-pad-pad)/3;
 	uint8_t items[16];
-	unsigned count = pGame->GetState()->GetItems(items);
+	unsigned count = gGame.GetState()->GetItems(items);
 	for(unsigned i=0; i<count; ++i) {
 		const int x = i % 4;
 		const int y = i >> 2;
@@ -133,7 +124,7 @@ void InventoryView::RenderInventory() {
 	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
 	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]);
 	ComputeHoveringIconPosition();
-	pGame->NeedsSync();
+	gGame.NeedsSync();
 }
 
 void InventoryView::ComputeHoveringIconPosition() {
@@ -146,38 +137,36 @@ void InventoryView::ComputeHoveringIconPosition() {
 }
 
 Cube::Side InventoryView::UpdateAccum() {
-	Vec2 tilt = Parent()->GetCube()->virtualAccel();
-	mTiltX = tilt.x;
-	mTiltY = tilt.y;
 	const int radix = 8;
 	const int threshold = 128;
-	int dx = mTiltX/radix;
-	int dy = mTiltY/radix;
-	if (dx) {
-		mAccumX += dx;
+	Int2 tilt = Parent()->GetCube()->virtualAccel();
+	mTilt = tilt;
+	Int2 delta = tilt / radix;
+	if (delta.x) {
+		mAccum.x += delta.x;
 	} else {
-		mAccumX = 0;
+		mAccum.x = 0;
 	}
-	if (dy) {
-		mAccumY += dy;
+	if (delta.y) {
+		mAccum.y += delta.y;
 	} else {
-		mAccumY = 0;
+		mAccum.y = 0;
 	}
-	if (dx) {
-		if (mAccumX >= threshold) {
-			mAccumX %= threshold;
+	if (delta.x) {
+		if (mAccum.x >= threshold) {
+			mAccum.x %= threshold;
 			return SIDE_RIGHT;
-		} else if (mAccumX <= -threshold) {
-			mAccumX %= threshold;
+		} else if (mAccum.x <= -threshold) {
+			mAccum.x %= threshold;
 			return SIDE_LEFT;
 		} 
 	}
-	if (dy) {
-		if (mAccumY >= threshold) {
-			mAccumY %= threshold;
+	if (delta.y) {
+		if (mAccum.y >= threshold) {
+			mAccum.y %= threshold;
 			return SIDE_BOTTOM;
-		} else if (mAccumY <= -threshold) {
-			mAccumY %= threshold;
+		} else if (mAccum.y <= -threshold) {
+			mAccum.y %= threshold;
 			return SIDE_TOP;
 		}		
 	}

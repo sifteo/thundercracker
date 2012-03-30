@@ -1,42 +1,38 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo.h>
 #include "radio.h"
-#include "usb.h"
+#include "usb/usbdevice.h"
 #include "flashlayer.h"
-#include "runtime.h"
 #include "board.h"
 #include "vectors.h"
 #include "systime.h"
 #include "gpio.h"
-#include "macronixmx25.h"
+#include "flash.h"
 #include "tasks.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
 #include "usart.h"
 #include "button.h"
+#include "svmruntime.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" unsigned __bss_start;
-extern "C" unsigned __bss_end;
-extern "C" unsigned __data_start;
-extern "C" unsigned __data_end;
-extern "C" unsigned __data_src;
-extern "C" initFunc_t __init_array_start;
-extern "C" initFunc_t __init_array_end;
+extern unsigned     __bss_start;
+extern unsigned     __bss_end;
+extern unsigned     __data_start;
+extern unsigned     __data_end;
+extern unsigned     __data_src;
+extern initFunc_t   __init_array_start;
+extern initFunc_t   __init_array_end;
 
 extern "C" void _start()
 {
@@ -77,21 +73,21 @@ extern "C" void _start()
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
     // fire up the PLL
-    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
-                (0 << 17) |         // PLL XTPRE - no divider
-                (1 << 16);          // PLLSRC - HSE
-    RCC.CR   |= (1 << 24);          // turn PLL on
-    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+    RCC.CFGR |= (7 << 18) |                 // PLLMUL (x9)
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16);                  // PLLSRC - HSE
+    RCC.CR   |= (1 << 24);                  // turn PLL on
+    while (!(RCC.CR & (1 << 25)));          // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
-                (0 << 22)       |   // USBPRE - divide by 3
-                (7 << 18)       |   // PLLMUL - x9
-                (0 << 17)       |   // PLLXTPRE - no divider
-                (1 << 16)       |   // PLLSRC - HSE
-                (4 << 11)       |   // PPRE2 - APB2 prescaler, divide by 2
-                (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
-                (0 << 4);           // HPRE - AHB prescaler, no divisor
+    RCC.CFGR =  (0 << 24)                 | // MCO - mcu clock output
+                (0 << 22)                 | // USBPRE - divide by 3
+                (7 << 18)                 | // PLLMUL - x9
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16)                 | // PLLSRC - HSE
+                (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
+                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable
                 (1 << 1);   // two wait states since we're @ 72MHz
@@ -122,11 +118,13 @@ extern "C" void _start()
         vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
 
-        /*
+#if (BOARD == BOARD_TC_MASTER_REV2)
+        // XXX: this only wants to be enabled when USB is connected.
+        // just leaving enabled for now during dev, and until we put power sequencing in.
         GPIOPin vcc33 = VCC33_ENABLE_GPIO;
         vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
-        */
+#endif
     }
 
     /*
@@ -154,8 +152,7 @@ extern "C" void _start()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
 #ifndef DEBUG
-    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
-    MacronixMX25::instance.init();
+    Flash::init();
 #else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
@@ -186,11 +183,12 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.EXTI0);                  //  home button
+    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
 
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
+    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
     /*
      * High-level hardware initialization
      */
@@ -198,31 +196,44 @@ extern "C" void _start()
     SysTime::init();
     Radio::open();
     Tasks::init();
-    FlashLayer::init();
+    FlashBlock::init();
     Button::init();
 
     AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-#ifdef USB_LOAD
-    // ALERT! ST's usb library appears to overwrite registers related to
-    // SysTick and as such, cannot be used while you want to talk to cubes
-    // over the radio. It's fine for loading data over USB, though.
-    Usb::init();
-    // super hack: just wait around for data to be loaded. revel in the crappiness
-    // as you disable this block and reflash your board to re-enable SysTick.
-    for (;;) {
-        Tasks::work();
-        Sifteo::System::yield();
+    UsbDevice::init();
+
+    /*
+     * Temporary until we have a proper context to install new games in.
+     * If button is held on startup, wait for asset installation.
+     *
+     * Kind of crappy, but just power cycle to start again and run the game.
+     */
+    if (Button::isPressed()) {
+
+        // indicate we're waiting
+        GPIOPin green = LED_GREEN_GPIO;
+        green.setControl(GPIOPin::OUT_10MHZ);
+        green.setLow();
+
+        for (;;)
+            Tasks::work();
     }
-#endif
 
     /*
      * Launch our game runtime!
      */
 
-    Runtime::run();
+    SvmRuntime::run(111);
+
+    // for now, in the event that we don't have a valid game installed at address 0,
+    // SvmRuntime::run() should return (assuming it fails to parse the non-existent
+    // ELF binary, and we'll just sit here so we can at least install things over USB, etc
+    for (;;) {
+        Tasks::work();
+    }
 }
 
 extern "C" void *_sbrk(intptr_t increment)

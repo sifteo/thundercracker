@@ -7,7 +7,11 @@
 #ifndef _SIFTEO_SYSTEM_H
 #define _SIFTEO_SYSTEM_H
 
-#include "abi.h"
+#ifdef NO_USERSPACE_HEADERS
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
+
+#include <sifteo/abi.h>
 
 namespace Sifteo {
 
@@ -25,6 +29,15 @@ class System {
 
     static void exit() {
         _SYS_exit();
+    }
+
+    /**
+     * Exit with a fault, for fatal error handling. This is the same
+     * kind of fatal error that occurs when an ASSERT() fails.
+     */
+
+    static void abort() {
+        _SYS_abort();
     }
 
     /**
@@ -98,28 +111,6 @@ class System {
         _SYS_finish();
         _SYS_paint();
         _SYS_finish();
-    }
-
-    /**
-     * Return the elapsed system time, in seconds. Guaranteed to be
-     * monotonically increasing.
-     */
-
-    static float clock() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        return nanosec * 1e-9;
-    }
-
-    /**
-     * Return the elapsed system time, in nanoseconds. Guaranteed to be
-     * monotonically increasing.
-     */
-
-    static int64_t clockNS() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        return nanosec;
     }
 	
 	static void solicitCubes(_SYSCubeID min, _SYSCubeID max) {

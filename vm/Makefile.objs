@@ -1,0 +1,77 @@
+OBJS = \
+	src/slinky.o \
+	src/Transforms/InlineGlobalCtors.o \
+	src/Transforms/EarlyLTI.o \
+	src/Transforms/LateLTI.o \
+	src/Transforms/LogTransform.o \
+	src/Transforms/MetadataTransform.o \
+	src/Transforms/MetadataCollector.o \
+	src/Analysis/CounterAnalysis.o \
+	src/Analysis/UUIDGenerator.o \
+	src/Support/ErrorReporter.o \
+	src/Target/SVMAsmPrinter.o \
+	src/Target/SVMInstPrinter.o \
+	src/Target/SVMFrameLowering.o \
+	src/Target/SVMISelDAGToDAG.o \
+	src/Target/SVMISelLowering.o \
+	src/Target/SVMISelLoweringCMOV.o \
+	src/Target/SVMInstrInfo.o \
+	src/Target/SVMMCAsmInfo.o \
+	src/Target/SVMMCTargetDesc.o \
+	src/Target/SVMMCCodeEmitter.o \
+	src/Target/SVMMCInstLower.o \
+	src/Target/SVMMCAsmBackend.o \
+	src/Target/SVMMachineFunctionInfo.o \
+	src/Target/SVMRegisterInfo.o \
+	src/Target/SVMSelectionDAGInfo.o \
+	src/Target/SVMTargetInfo.o \
+	src/Target/SVMTargetMachine.o \
+	src/Target/SVMSubtarget.o \
+	src/Target/SVMAlignPass.o \
+	src/Target/SVMELFProgramWriter.o \
+	src/Target/SVMSymbolDecoration.o \
+	src/Target/SVMMemoryLayout.o \
+	src/Target/SVMELFMetadataBuilder.o \
+	src/Target/SVMLateFunctionSplitPass.o \
+	src/Target/SVMBlockSizeAccumulator.o \
+	src/Target/SVMConstantPoolValue.o \
+	src/Target/SVMTargetObjectFile.o \
+
+TABLES := \
+	src/Target/SVMGenAsmWriter.inc \
+	src/Target/SVMGenDAGISel.inc \
+	src/Target/SVMGenInstrInfo.inc \
+	src/Target/SVMGenRegisterInfo.inc \
+	src/Target/SVMGenSubtargetInfo.inc \
+	src/Target/SVMGenCallingConv.inc \
+	src/Target/SVMGenMCCodeEmitter.inc \
+	src/Target/SVMRuntime.inc \
+
+TABLEDEPS := src/Target/*.td
+TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
+
+src/Target/SVMGenRegisterInfo.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-register-info
+
+src/Target/SVMGenInstrInfo.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-instr-info
+
+src/Target/SVMGenAsmWriter.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-asm-writer
+
+src/Target/SVMGenDAGISel.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-dag-isel
+
+src/Target/SVMGenSubtargetInfo.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-subtarget
+
+src/Target/SVMGenCallingConv.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-callingconv
+
+src/Target/SVMGenMCCodeEmitter.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -mc-emitter -gen-emitter
+
+src/Target/SVMRuntime.inc: $(TC_DIR)/sdk/include/sifteo/abi.h
+	python tools/svm-syscall-table.py < $< > $@
+
+

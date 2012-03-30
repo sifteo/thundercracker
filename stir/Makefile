@@ -13,7 +13,6 @@ OBJS = \
 	src/script.o \
 	src/proof.o \
 	src/proof_html.o \
-	src/asegwriter.o \
 	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \
@@ -23,7 +22,7 @@ OBJS = \
 	src/logger.o \
 	src/lodepng.o \
 	src/sha1.o \
-	src/speexencoder.o \
+	src/audioencoder.o \
 	$(OBJS_lua) \
 
 TC_DIR := ..

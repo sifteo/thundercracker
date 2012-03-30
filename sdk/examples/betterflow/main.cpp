@@ -62,7 +62,7 @@ static void DrawColumn(Cube* pCube, int x) {
 		// drawing a blank column
 		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2(addr, row+2), BgTile);
+			g.BG0_drawAsset(Vec2<int>(addr, row+2), BgTile);
 		}
 
 	}
@@ -91,6 +91,7 @@ static void DrawFooter(Cube *pCube) {
 // retrieve the acceleration of the cube due to tilting
 const float kAccelThresholdOn = 1.15f;
 const float kAccelThresholdOff = 0.85f;
+
 static float GetXAccel(Cube *pCube) {
 	return ACCEL_SCALING_FACTOR * pCube->virtualAccel().x;
 }
@@ -110,7 +111,7 @@ static float MaxVelocity(float xaccel, float yaccel) {
 }
 
 // entry point
-void siftmain() {
+void main() {
 	// enable cube slots
 	for (Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) { p->enable(p-gCubes); }
   	// load assets
@@ -195,7 +196,6 @@ void siftmain() {
 				prevTouch = touch;
 			}
 		}
-		
 		// hide label
 	    _SYS_vbuf_writei(
 	    	&pCube->vbuf.sys, 
@@ -259,7 +259,7 @@ void siftmain() {
 			int ui = position;
 			int ut = position / 8;
 			int paintSync = abs(prev_ut - ut) > 0;
-			
+
 			while(prev_ut < ut) {
 				DrawColumn(pCube, prev_ut + 17);
 				prev_ut++;

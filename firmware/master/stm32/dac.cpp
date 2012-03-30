@@ -1,7 +1,10 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "dac.h"
 
-//static
 Dac Dac::instance;
 
 void Dac::init()

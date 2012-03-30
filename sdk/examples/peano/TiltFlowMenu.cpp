@@ -6,98 +6,94 @@
 namespace TotalsGame
 {
 
-    TiltFlowItem *TiltFlowMenu::GetItem(int i)
-    {
-        return items[i];
-    }
+TiltFlowItem *TiltFlowMenu::GetItem(int i)
+{
+    return items+i;
+}
 
-    int TiltFlowMenu::GetNumItems()
-    {
-        return numItems;
-    }
+int TiltFlowMenu::GetNumItems()
+{
+    return numItems;
+}
 
-    TiltFlowView *TiltFlowMenu::GetView()
-    {
-        return view;
-    }
+TiltFlowView *TiltFlowMenu::GetView()
+{
+    return view;
+}
 
-    TiltFlowDetailView *TiltFlowMenu::GetDetails()
-    {
-        return details;
-    }
+TiltFlowDetailView *TiltFlowMenu::GetDetails()
+{
+    return details;
+}
 
-    TiltFlowMenu::TiltFlowMenu(TiltFlowItem **_items, int _numItems, TiltFlowDetailView *_details)
-    {
+TiltFlowMenu::TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowView * tfv, TiltFlowDetailView *_details)
+{
 
 
-        mSimTime = 0;
-        mPickTime = 0;
-      items = _items;
-      numItems = _numItems;
-      static char tiltFlowViewBuffer[sizeof(TiltFlowView)];
-      view = new(tiltFlowViewBuffer) TiltFlowView(Game::GetCube(0), this);
+    mSimTime = 0;
+    mPickTime = 0;
+    items = _items;
+    numItems = _numItems;
+
+    view = tfv;
+    view->menu = this;
     details = _details;
     toggledItem = NULL;
-    }
-/* TODO
-    public void TiltFlowMenu::Dispose() {
-      view.Cube = null;
-    }
-*/
-    float TiltFlowMenu::GetSimTime()
-    {
-        return mSimTime;
-    }
-    TiltFlowItem *TiltFlowMenu::GetResultItem()
-    {
-        return IsDone() ? view->GetItem() : NULL;
-    }
-    TiltFlowItem *TiltFlowMenu::GetToggledItem()
-    {
-        return toggledItem;
-    }
+}
 
-    int TiltFlowMenu::GetToggledItemIndex()
-    {
-        for(int i = 0; i < numItems; i++)
-        {
-            if(toggledItem == items[i])
-                return i;
-        }
-        return -1;
-    }
+float TiltFlowMenu::GetSimTime()
+{
+    return mSimTime;
+}
+TiltFlowItem *TiltFlowMenu::GetResultItem()
+{
+    return IsDone() ? view->GetItem() : NULL;
+}
+TiltFlowItem *TiltFlowMenu::GetToggledItem()
+{
+    return toggledItem;
+}
 
-    void TiltFlowMenu::SetToggledItem(TiltFlowItem *item)
+int TiltFlowMenu::GetToggledItemIndex()
+{
+    for(int i = 0; i < numItems; i++)
     {
-        toggledItem = item;
+        if(toggledItem == items+i)
+            return i;
     }
+    return -1;
+}
 
-    void TiltFlowMenu::ClearToggledItem()
-    {
-        SetToggledItem(NULL);
-    }
-    bool TiltFlowMenu::IsPicked()
-    {
-        return mPickTime > 0;
-    }
-    bool TiltFlowMenu::IsDone()
-    {
-        return IsPicked() && mSimTime - mPickTime > kPickDelay;
-    }
+void TiltFlowMenu::SetToggledItem(TiltFlowItem *item)
+{
+    toggledItem = item;
+}
 
-    void TiltFlowMenu::Tick(float dt)
-    {
-      mSimTime += dt;
-      view->Tick();
-    }
+void TiltFlowMenu::ClearToggledItem()
+{
+    SetToggledItem(NULL);
+}
+bool TiltFlowMenu::IsPicked()
+{
+    return mPickTime > 0;
+}
+bool TiltFlowMenu::IsDone()
+{
+    return IsPicked() && mSimTime - mPickTime > kPickDelay;
+}
 
-    void TiltFlowMenu::Pick()
-    {
-        if (!IsPicked()) {
-        // todo Log.Debug("Selected {0}", view.Item.name);
+void TiltFlowMenu::Tick()
+{
+    mSimTime += Game::dt;
+    view->Tick();
+}
+
+void TiltFlowMenu::Pick()
+{
+    if (!IsPicked()) {
         mPickTime = mSimTime;
-      }
     }
+}
 
 }
 

@@ -63,7 +63,6 @@ TimeKeeper.h
 Intro.h
 GridSlot.h
 Glimmer.h
-GameOver.h
 game.h
 cubewrapper.h
 banner.h
@@ -73,7 +72,6 @@ main.cpp
 Intro.cpp
 GridSlot.cpp
 Glimmer.cpp
-GameOver.cpp
 game.cpp
 cubewrapper.cpp
 banner.cpp
@@ -91,3 +89,5 @@ Bubbles.h
 Bubbles.cpp
 FloatingScore.h
 FloatingScore.cpp
+BubbleTransition.h
+puzzles.json

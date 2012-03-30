@@ -9,6 +9,7 @@
 #include "assets.gen.h"
 #include "Puzzle.h"
 #include <sifteo/menu.h>
+#include "BubbleTransition.h"
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -25,7 +26,7 @@ const float Game::LUMES_FACE_TIME = 2.0f;
 const float Game::FULLGOODJOB_TIME = 4.0f;
 
 
-Math::Random Game::random;
+Random Game::random;
 
 
 Game &Game::Inst()
@@ -37,7 +38,7 @@ Game &Game::Inst()
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SURVIVAL ), m_stateTime( 0.0f ),
-                m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
+                m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
                 m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
@@ -79,8 +80,6 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].vidInit();
 
-    m_fLastTime = System::clock();
-
 #if SFX_ON
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
@@ -106,9 +105,9 @@ void Game::Init()
 
 void Game::Update()
 {
-    float t = System::clock();
-    float dt = t - m_fLastTime;
-    m_fLastTime = t;
+    m_timeStep.next();
+    SystemTime t = m_timeStep.end();
+    TimeDelta dt = m_timeStep.delta();
     m_stateTime += dt;
 
     bool needsync = false;
@@ -127,69 +126,82 @@ void Game::Update()
         m_bForcePaintSync = false;
     }
 
-	if( m_state == STATE_SPLASH )
-	{
-        if( m_stateTime > 7.0f )
-		{
-            setState( STATE_INTRO );
-#if MUSIC_ON
-            m_musicChannel.stop();
-            m_musicChannel.play( astrokraut, LoopRepeat );
-#endif
-			m_timer.Init( System::clock() );
-		}
-	}
-    else if( m_state == STATE_GOODJOB )
+    switch( m_state )
     {
-        if( m_stateTime > FULLGOODJOB_TIME )
+        case STATE_SPLASH:
         {
-            gotoNextPuzzle( true );
-        }
-    }
-	else 
-	{
-		if( m_bTestMatches )
-		{
-            TestMatches();
-
-            if( m_state == STATE_POSTGAME )
-                Reset();
-
-			m_bTestMatches = false;
-		}
-
-        if( m_state == STATE_PLAYING )
-        {
-            if( m_mode == MODE_BLITZ )
+            if( m_stateTime > 7.0f )
             {
-                m_timer.Update( dt );
-                checkGameOver();
-
-                m_fTimeSinceCombo += dt;
-
-                if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
-                    m_comboCount = 0;
-
-                if( !m_bIsChainHappening )
-                {
-                    m_fTimeTillRespawn -= dt;
-
-                    if( m_fTimeTillRespawn <= 0.0f )
-                        RespawnOnePiece();
-                }
+                setState( STATE_INTRO );
+    #if MUSIC_ON
+                m_musicChannel.stop();
+                m_musicChannel.play( astrokraut, LoopRepeat );
+    #endif
+                m_timer.Init( SystemTime::now() );
             }
-            else if( m_mode == MODE_SURVIVAL )
+            break;
+        }
+        case STATE_GOODJOB:
+        {
+            if( m_stateTime > FULLGOODJOB_TIME )
             {
-                if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
+                gotoNextPuzzle( true );
+            }
+            break;
+        }
+        case STATE_GAMEOVERBANNER:
+        {
+            if( !m_cubes[0].getBanner().IsActive() )
+                TransitionToState( STATE_POSTGAME );
+            break;
+        }
+        default:
+        {
+            if( m_bTestMatches )
+            {
+                TestMatches();
+
+                if( m_state == STATE_POSTGAME || m_state == STATE_GAMEMENU )
+                    Reset();
+
+                m_bTestMatches = false;
+            }
+
+            if( m_state == STATE_PLAYING )
+            {
+                if( m_mode == MODE_BLITZ )
+                {
+                    m_timer.Update( dt );
                     checkGameOver();
 
-                m_bStabilized = false;
+                    m_fTimeSinceCombo += dt;
+
+                    if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                        m_comboCount = 0;
+
+                    if( !m_bIsChainHappening )
+                    {
+                        m_fTimeTillRespawn -= dt;
+
+                        if( m_fTimeTillRespawn <= 0.0f )
+                            RespawnOnePiece();
+                    }
+                }
+                else if( m_mode == MODE_SURVIVAL )
+                {
+                    if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
+                        checkGameOver();
+
+                    m_bStabilized = false;
+                }
             }
+            break;
         }
-	}
+
+    }
 
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Update( System::clock(), dt );
+        m_cubes[i].Update( t, dt );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
@@ -237,7 +249,7 @@ void Game::Reset(  bool bInGame )
     //m_bHyperDotMatched = false;
 
     if( bInGame )
-        setState( STATE_INTRO );
+        TransitionToState( STATE_INTRO );
     else
         setState( STARTING_STATE );
     m_ShakesRemaining = STARTING_SHAKES;
@@ -314,6 +326,14 @@ void Game::setState( GameState state )
 }
 
 
+//go to state through bubble transition
+void Game::TransitionToState( GameState state )
+{
+    DoBubbleTransition();
+    setState( state );
+}
+
+
 unsigned int Game::getScore() const
 {
     if( m_mode == MODE_BLITZ )
@@ -335,7 +355,7 @@ void Game::TestMatches()
 	}
 }
 
-void Game::CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos )
+void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
 {
 	int total_marked = 0;
 
@@ -704,7 +724,7 @@ bool Game::no_match_mismatch_side() const
     side, but the gems can never touch.
     */
 
-	Vec2 aBuddies[3];
+	Int2 aBuddies[3];
 	int iNumBuddies = 0;
 
 	for( int i = 0; i < NUM_CUBES; i++ )
@@ -804,7 +824,7 @@ void Game::enterScore()
 }
 
 
-void Game::playSound( _SYSAudioModule &sound )
+void Game::playSound( const AssetAudio &sound )
 {
     if( &sound == m_pSoundThisFrame )
         return;
@@ -824,7 +844,7 @@ void Game::playSound( _SYSAudioModule &sound )
     m_pSoundThisFrame = &sound;
 }
 
-_SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+const AssetAudio *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
   &slosh_multi_01,
     &slosh_multi_02,
@@ -834,12 +854,12 @@ _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 //play a random slosh sound
 void Game::playSlosh()
 {
-    if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
+    if( m_lastSloshTime.isValid() && SystemTime::now() - m_lastSloshTime > SLOSH_THRESHOLD )
     {
         int index = random.randrange( NUM_SLOSH_SOUNDS );
         playSound(*SLOSH_SOUNDS[index]);
 
-        m_fLastSloshTime = System::clock();
+        m_lastSloshTime = SystemTime::now();
     }
 }
 
@@ -880,7 +900,6 @@ void Game::EndGame()
     }
 
     enterScore();
-    setState( STATE_DYING );
 
     if( m_mode == MODE_SURVIVAL )
     {
@@ -888,8 +907,10 @@ void Game::EndGame()
         {
             m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
         }
-
     }
+
+    setState( STATE_GAMEOVERBANNER );
+    //TransitionToState( STATE_POSTGAME );
 
     playSound(timer_explode);
 }
@@ -983,14 +1004,14 @@ void Game::check_puzzle()
         {
             //did we lose?
             if( NoMatches() )
-                setState( STATE_FAILPUZZLE );
+                TransitionToState( STATE_FAILPUZZLE );
                 //gotoNextPuzzle( false );
             return;
         }
     }
 
     //win!
-    setState( STATE_GOODJOB );
+    TransitionToState( STATE_GOODJOB );
 }
 
 
@@ -1025,9 +1046,9 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     //intro puzzles (<3 cubes) will jump straight into the next puzzle
     if( pPuzzle->m_numCubes < 3 )
-        setState( STATE_INTRO );
+        TransitionToState( STATE_INTRO );
     else
-        setState( STATE_NEXTPUZZLE );
+        TransitionToState( STATE_NEXTPUZZLE );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Refill();
@@ -1081,7 +1102,7 @@ void Game::HandleMainMenu()
         }
     }
 
-    setState( STATE_INTRO );
+    TransitionToState( STATE_INTRO );
     m_mode = (GameMode)e.item;
 
     if( m_mode == MODE_BLITZ )

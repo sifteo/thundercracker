@@ -36,7 +36,7 @@ void draw_bg_column(unsigned x)
     }
 }
 
-void siftmain()
+void main()
 {
     load();
     
@@ -61,7 +61,7 @@ void siftmain()
                    
     unsigned frame = 0;
     while (1) {
-        unsigned pan_x = frame*3;
+        int pan_x = frame*3;
         
         // Fill in new tiles, just past the right edge of the screen
         draw_bg_column(pan_x/8 + 17);

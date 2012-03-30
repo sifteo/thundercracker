@@ -6,16 +6,14 @@
 class TitleCubeState : public CubeState
 {
 public:
-    TitleCubeState() : mAnimDelay(0.f), mAnimStartTime(0.f), mAnimStart(false), mFirstAnimDelay(true) {}
+    TitleCubeState() : mShakeDelay(0.f), mPanning(0.f) {}
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
     virtual unsigned update(float dt, float stateTime);
 
 private:
     void paint();
-    float mAnimDelay;
-    float mAnimStartTime;
-    bool mAnimStart;
-    bool mFirstAnimDelay;
+    float mShakeDelay;
+    float mPanning;
 };
 
 #endif // TITLECUBESTATE_H

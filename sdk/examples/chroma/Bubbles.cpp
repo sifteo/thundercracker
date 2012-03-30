@@ -80,14 +80,15 @@ void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 }
 
 
-const float Bubble::BUBBLE_LIFETIME = 2.5f;
+const float Bubble::BUBBLE_LIFETIME = 1.5f;
 const float Bubble::TILT_VEL = 128.0f;
 const float Bubble::BEHIND_CHROMITS_THRESHOLD = 0.9f;
 //at this depth, bubbles will move away from chromits
-const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.8888888f;
-const float Bubble::CHROMIT_OBSCURE_DIST_2 = 150.0f;
+const float Bubble::CHROMITS_COLLISION_DEPTH = BEHIND_CHROMITS_THRESHOLD * 0.66666f;
+const float Bubble::CHROMIT_OBSCURE_DIST = 15.0f;
+const float Bubble::CHROMIT_OBSCURE_DIST_2 = CHROMIT_OBSCURE_DIST * CHROMIT_OBSCURE_DIST;
 
-Bubble::Bubble() : m_fTimeAlive( -1.0f )
+Bubble::Bubble() : m_fTimeAlive( -1.0f ), m_pTex( &bubbles1 )
 {
 }
 
@@ -95,6 +96,11 @@ void Bubble::Spawn()
 {
     m_pos.set( 64.0f + Game::random.uniform( -SPAWN_EXTENT, SPAWN_EXTENT ), 64.0f + Game::random.uniform( -SPAWN_EXTENT, SPAWN_EXTENT ) );
     m_fTimeAlive = 0.0f;
+
+    if( Game::random.random() < 0.5f )
+        m_pTex = &bubbles1;
+    else
+        m_pTex = &bubbles2;
 }
 
 void Bubble::Disable()
@@ -115,25 +121,25 @@ void Bubble::Update( float dt, const Float2 &tilt )
 
 void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
 {
-    unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * bubbles.frames;
+    unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * m_pTex->frames;
     bool visible = true;
 
-    if( frame >= bubbles.frames )
-        frame = bubbles.frames - 1;
+    if( frame >= m_pTex->frames )
+        frame = m_pTex->frames - 1;
 
     //sometimes bubbles are obscured by chromits
     if( m_fTimeAlive / BUBBLE_LIFETIME < BEHIND_CHROMITS_THRESHOLD )
     {
         //find our center
-        Float2 center( m_pos.x + bubbles.width*4, m_pos.y + bubbles.height*4 );
-        Vec2 gridslot( center.x / 32, center.y / 32 );
+        Float2 center = { m_pos.x + m_pTex->width*4, m_pos.y + m_pTex->height*4 };
+        Int2 gridslot = { center.x / 32, center.y / 32 };
 
         GridSlot *pSlot = pWrapper->GetSlot( gridslot.y, gridslot.x );
 
         if( pSlot && !pSlot->isEmpty() )
         {
             //if our center is inside a certain radius, we are hidden
-            Float2 slotcenter( gridslot.x * 32 + 16, gridslot.y * 32 + 16 );
+            Float2 slotcenter = { gridslot.x * 32 + 16, gridslot.y * 32 + 16 };
             Float2 diff = center - slotcenter;
 
             if( diff.len2() < CHROMIT_OBSCURE_DIST_2 )
@@ -143,7 +149,14 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
                 //move away from chromit
                 if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
                 {
+                    visible = true;
+                    diff = diff.normalize();
+                    //m_pos += ( diff * CHROMIT_OBSCURE_DIST );
                     m_pos += diff;
+                    //DEBUG_LOG(( "moving bubble to %0.2f, %0.2f\n", m_pos.x, m_pos.y ));
+
+                    //bump the chromit
+                    pSlot->Bump( diff );
                 }
             }
         }
@@ -151,8 +164,8 @@ void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
 
     if( visible )
     {
-        vid.resizeSprite(index, bubbles.width*8, bubbles.height*8);
-        vid.setSpriteImage(index, bubbles, frame);
+        vid.resizeSprite(index, m_pTex->width*8, m_pTex->height*8);
+        vid.setSpriteImage(index, *m_pTex, frame);
         vid.moveSprite(index, m_pos.x, m_pos.y);
     }
     else

@@ -125,10 +125,8 @@ static uint16_t color_lerp(uint8_t alpha) {
                    (bg_b * invalpha + fg_b * alpha) / 0xff );
 }
 
-Dialog::Dialog(Cube* pCube) : mCube(pCube) {
-}
-
-void Dialog::Init() {
+void Dialog::Init(Cube *cube) {
+    mCube = cube;
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
     mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);

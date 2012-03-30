@@ -33,12 +33,12 @@ public:
 #endif
         STATE_INTRO,
 		STATE_PLAYING,		
-        STATE_DYING,
 		STATE_POSTGAME,
         STATE_GOODJOB,
         STATE_FAILPUZZLE,
         STATE_NEXTPUZZLE,
         STATE_GAMEMENU,
+        STATE_GAMEOVERBANNER,
 	} GameState;
 
 	typedef enum
@@ -83,7 +83,7 @@ public:
     };
 
     CubeWrapper m_cubes[NUM_CUBES];
-    static Math::Random random;
+    static Random random;
 
 	void Init();
 	void Update();
@@ -101,6 +101,8 @@ public:
 	inline GameState getState() const { return m_state; }
     inline float getStateTime() const { return m_stateTime; }
     void setState( GameState state );
+    //go to state through bubble transition
+    void TransitionToState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
     unsigned int getScore() const;
@@ -113,7 +115,7 @@ public:
     unsigned int getHighScore( unsigned int index ) const;
     void enterScore();
 
-    void CheckChain( CubeWrapper *pWrapper, const Vec2 &slotPos );
+    void CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos );
 	void checkGameOver();
 	bool NoMatches();
 	unsigned int numColors() const;
@@ -127,7 +129,7 @@ public:
     bool DoCubesOnlyHaveStrandedDots() const;
     bool OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const;
 
-    void playSound( _SYSAudioModule &sound );
+    void playSound( const AssetAudio &sound );
     //play random slosh sound
     void playSlosh();
 
@@ -155,7 +157,7 @@ public:
     void UpMultiplier();
     const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
-    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel + 1; }
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
@@ -185,8 +187,8 @@ private:
 	GameMode m_mode;
     float m_stateTime;
 	TimeKeeper m_timer;
-    float m_fLastTime;
-    float m_fLastSloshTime;
+    TimeStep m_timeStep;
+    SystemTime m_lastSloshTime;
 
 #if SFX_ON
     AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];
@@ -197,7 +199,7 @@ private:
     AudioChannel m_musicChannel;
 #endif
     //use to avoid playing the same sound multiple times in one frame
-    const _SYSAudioModule *m_pSoundThisFrame;
+    const AssetAudio *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
     static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];

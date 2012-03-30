@@ -26,12 +26,8 @@ namespace TotalsGame {
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;
-    static const PinnedAssetImage *kMarquee[2];
+    static const Sifteo::AssetImage *kMarquee[2];
 
-private:
-    TiltFlowMenu *menu;
-public:
-    TiltFlowMenu *GetTiltFlowMenu();
 private:
     int mItem ;
     float mOffsetX ;
@@ -41,8 +37,9 @@ private:
     bool mDirty;
     int mMarquee;
     float mLastUpdate;
+    int mLastTileX;
 public:
-    TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu);
+    TiltFlowView();
     virtual ~TiltFlowView() {}
 
     int GetItemIndex();
@@ -50,9 +47,7 @@ public:
 
     void Tick();
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
+    TiltFlowMenu *menu;
 
     //-------------------------------------------------------------------------
     // VIEW METHODS
@@ -62,15 +57,13 @@ public:
 
     void WillDetachFromCube(TotalsCube *c);
 
-    void Paint();
 private:
     void PaintFooter(TotalsCube *c);
 public:
     void PaintInner(TotalsCube *c);
 private:
-    void PixelToTileImage(const PinnedAssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s);
 
-    void DoPaintItem(TiltFlowItem *item, int x, int w);
+    void DoPaintItem(TiltFlowItem *item, int x);
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -88,8 +81,6 @@ private:
     void CoastToStop();
 
     void StopScrolling();
-
-    void ClipIt(int ox, int *x, int *w);
   };
 }
 

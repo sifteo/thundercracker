@@ -7,6 +7,8 @@
 #include "Dictionary.h"
 #include "ScoredCubeState_StartOfRound.h"
 
+using namespace Sifteo;
+
 ScoredCubeState_StartOfRound::ScoredCubeState_StartOfRound()
 {
 }

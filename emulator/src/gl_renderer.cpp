@@ -72,15 +72,17 @@ bool GLRenderer::init()
      * Procedural models
      */
 
-    createRoundedRect(faceVA, 1.0f, FrontendCube::HEIGHT, 0.242f);
+    createRoundedRect(faceVA, 1.0f, CubeConstants::HEIGHT, 0.242f);
     extrudePolygon(faceVA, sidesVA);
 
     /*
      * Per-cube initialization is lazy
      */
 
-    for (unsigned i = 0; i < System::MAX_CUBES; i++)
-        cubes[i].initialized = false;
+    for (unsigned i = 0; i < System::MAX_CUBES; i++) {
+        cubes[i].fbInitialized = false;
+        cubes[i].flashInitialized = false;
+    }
 
     return true;
 }
@@ -109,7 +111,7 @@ GLhandleARB GLRenderer::loadCubeFaceProgram(const char *prefix)
     GLhandleARB prog = linkProgram(cubeFaceFP, cubeFaceVP);
 
     glUseProgramObjectARB(prog);
-    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), FrontendCube::LCD_SIZE);
+    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), CubeConstants::LCD_SIZE);
     glUniform1iARB(glGetUniformLocationARB(prog, "face"), 0);
     glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 1);
     glUniform1iARB(glGetUniformLocationARB(prog, "mask"), 2);
@@ -191,7 +193,7 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
     float aspect = viewportHeight / (float)viewportWidth;
     float yExtent = aspect * viewExtent;
 
-    float zPlane = FrontendCube::SIZE * FrontendCube::HEIGHT;
+    float zPlane = CubeConstants::SIZE * CubeConstants::HEIGHT;
     float zCamera = 5.0f;
     float zNear = 0.1f;
     float zFar = 10.0f;
@@ -268,9 +270,9 @@ void GLRenderer::beginOverlay()
     glShadeModel(GL_FLAT);    
 }
 
-unsigned GLRenderer::measureText(const char *str)
+int GLRenderer::measureText(const char *str)
 {
-    unsigned x = 0, w = 0;
+    int x = 0, w = 0;
     uint32_t id;
     
     while ((id = *(str++))) {
@@ -284,7 +286,7 @@ unsigned GLRenderer::measureText(const char *str)
     return w;
 }
 
-void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const char *str)
+void GLRenderer::overlayText(int x, int y, const float color[4], const char *str)
 {
     const float TEXTURE_WIDTH = 128.0f;
     const float TEXTURE_HEIGHT = 256.0f;
@@ -337,8 +339,8 @@ void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const
     glDisable(GL_TEXTURE_2D);
 }         
 
-void GLRenderer::overlayRect(unsigned x, unsigned y,
-                             unsigned w, unsigned h, const float color[4])
+void GLRenderer::overlayRect(int x, int y,
+                             int w, int h, const float color[4])
 {
     overlayVA.clear();
     VertexT a, b, c, d;
@@ -351,12 +353,15 @@ void GLRenderer::overlayRect(unsigned x, unsigned y,
             
     b = a;
     b.vx += w;
+    b.tx = 1;
     
     d = a;
     d.vy += h;
+    d.ty = 1;
     
     c = b;
     c.vy = d.vy;
+    c.ty = 1;
             
     overlayVA.push_back(a);
     overlayVA.push_back(b);
@@ -410,11 +415,11 @@ void GLRenderer::drawBackground(float extent, float scale)
     glEnable(GL_DEPTH_TEST);
 }    
 
-void GLRenderer::initCube(unsigned id)
+void GLRenderer::initCubeFB(unsigned id)
 {
     GLCube &cube = cubes[id];
     
-    cube.initialized = true;
+    cube.fbInitialized = true;
 
     glGenTextures(NUM_LCD_TEXTURES, &cube.texFiltered[0]);
     glGenTextures(NUM_LCD_TEXTURES, &cube.texAccurate[0]);
@@ -511,34 +516,34 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
     glRotatef(angle * (180.0f / M_PI), 0,0,1);
    
     const float tiltDeadzone = 5.0f;
-    const float height = FrontendCube::HEIGHT;
+    const float height = CubeConstants::HEIGHT;
 
     if (tilt.x > tiltDeadzone) {
-        glTranslatef(FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
+        glTranslatef(CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
         glRotatef(tilt.x - tiltDeadzone, 0,1,0);
-        glTranslatef(-FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        glTranslatef(-CubeConstants::SIZE, 0, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
     if (tilt.x < -tiltDeadzone) {
-        glTranslatef(-FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
+        glTranslatef(-CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
         glRotatef(tilt.x + tiltDeadzone, 0,1,0);
-        glTranslatef(FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        glTranslatef(CubeConstants::SIZE, 0, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
 
     if (tilt.y > tiltDeadzone) {
-        glTranslatef(0, FrontendCube::SIZE, height * FrontendCube::SIZE);
+        glTranslatef(0, CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y + tiltDeadzone, 1,0,0);
-        glTranslatef(0, -FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        glTranslatef(0, -CubeConstants::SIZE, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
     if (tilt.y < -tiltDeadzone) {
-        glTranslatef(0, -FrontendCube::SIZE, height * FrontendCube::SIZE);
+        glTranslatef(0, -CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y - tiltDeadzone, 1,0,0);
-        glTranslatef(0, FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        glTranslatef(0, CubeConstants::SIZE, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
@@ -557,7 +562,7 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
     tState.modelMatrix->ez.z = mat[10];
 
     /* Now scale it */
-    glScalef(FrontendCube::SIZE, FrontendCube::SIZE, FrontendCube::SIZE);
+    glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
     
     /* Hover is relative to cube size, so apply that now. */
     if (hover > 1e-3) {
@@ -576,8 +581,8 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-    if (!cubes[id].initialized) {
-        initCube(id);
+    if (!cubes[id].fbInitialized) {
+        initCubeFB(id);
         
         // Re-upload framebuffer, even if the LCD hasn't changed
         framebufferChanged = true;
@@ -618,6 +623,17 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
 
     drawCubeBody();
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
+}
+
+void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle) {
+    // TEMP just draw a blank cuuuuube
+    CubeTransformState tState;
+    b2Mat33 mat;
+    tState.modelMatrix = &mat;  
+    cubeTransform(center, angle, CubeConstants::HOVER_NONE, b2Vec2(0,0), tState);
+    drawCubeBody();
+    drawCubeFace(0, NULL);
+    // END TEMP
 }
 
 void GLRenderer::drawCubeBody()
@@ -807,6 +823,11 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolyg
     }
 }
 
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+
+
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
     std::vector<uint8_t> pixels(width * height * 4, 0);
@@ -879,4 +900,56 @@ const GLRenderer::Glyph *GLRenderer::findGlyph(uint32_t id)
     }
 
     return NULL;
+}
+
+void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
+    const uint8_t *data, bool dataChanged)
+{
+    GLCube &cube = cubes[id];
+    
+    if (!cube.flashInitialized)
+        glGenTextures(1, &cube.flashTex);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cube.flashTex);
+
+    if (!cube.flashInitialized || dataChanged) {
+        /*
+         * Convert linear flash memory into a grid of tile images.
+         */
+
+        const unsigned tilesWide = 64;
+        const unsigned tilesHigh = 128;
+        const unsigned tileSize = 8;
+        const unsigned pixelsWide = tilesWide * tileSize;
+        const unsigned pixelsHigh = tilesHigh * tileSize;
+
+        const uint16_t *src = reinterpret_cast<const uint16_t*>(data);
+        static uint16_t dest[pixelsWide * pixelsHigh];
+
+        for (unsigned tileY = 0; tileY != tilesHigh; ++tileY)
+            for (unsigned tileX = 0; tileX != tilesWide; ++tileX)
+                for (unsigned pixelY = 0; pixelY != tileSize; ++pixelY)
+                    for (unsigned pixelX = 0; pixelX != tileSize; ++pixelX) {
+                        uint16_t color = *(src++);
+                        color = (color >> 8) | (color << 8);
+                        dest[ (tileX * tileSize) + pixelX  +
+                             ((tileY * tileSize) + pixelY) * pixelsWide ] = color;
+                    }
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, pixelsWide, pixelsHigh,
+                     0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dest);
+
+        cube.flashInitialized = true;
+    }
+    
+    static const float color[4] = { 1, 1, 1, 1 };
+    overlayRect(x, y, w, h, color);
+    glDisable(GL_TEXTURE_2D);
 }

@@ -1,4 +1,5 @@
 #include "GameState.h"
+#include "config.h"
 
 void GameState::Init() {
 	mQuest = 0;
@@ -8,12 +9,19 @@ void GameState::Init() {
 }
 
 bool GameState::AdvanceQuest() {
+	#if PLAYTESTING_HACKS
+	mQuest = (mQuest + 1) % (gQuestCount-1);
+	mQuestMask = 0;
+	return true;
+	#else
 	if (mQuest < gQuestCount) {
 		mQuest++;
+		mQuestMask = 0;
 		Save();
 		return true;
 	}
 	return false;
+	#endif
 }
 
 bool GameState::IsActive(const TriggerData& trigger) const {

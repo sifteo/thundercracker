@@ -21,7 +21,7 @@ static void showMonster(const MonsterData *m)
         cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
 }
 
-void siftmain()
+void main()
 {
     int fpMonster = 0;
     const int shift = 7;
@@ -33,8 +33,7 @@ void siftmain()
     cube.enable();
 
     while (1) {
-        _SYSAccelState state;
-        _SYS_getAccel(cube.id(), &state);
+        _SYSAccelState state = _SYS_getAccel(cube.id());
 
         fpMonster += state.x;
 

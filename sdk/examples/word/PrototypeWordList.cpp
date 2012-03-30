@@ -3,6 +3,8 @@
 #include <sifteo.h>
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 
 /*
  * XXX: Only used for bsearch() currently. We should think about what kind of low-level VM
@@ -90,7 +92,7 @@ static int bsearch_strcmp(const void*a, const void*b)
     return 0;
 }
 
-bool PrototypeWordList::isWord(const char* string, bool& isBonus)
+bool PrototypeWordList::isWord(const char* string, bool& isBonus, WordID& wordID)
 {
 #ifndef DAWG_TEST
     //STATIC_ASSERT(arraysize(protoWordList) == 28839);
@@ -109,6 +111,21 @@ bool PrototypeWordList::isWord(const char* string, bool& isBonus)
     if (pItem != NULL)
     {
         isBonus = !((*pItem) & (1ULL << 63));
+        // calc index from pointer offset from start
+        wordID = (pItem - array);
+        ASSERT(wordID >= 0);
+        ASSERT(wordID < (int)arraysize(protoWordList));
+        return true;
+    }
+    return false;
+}
+
+bool PrototypeWordList::getWordFromID(WordID wid, char *buffer)
+{
+    if (wid >= 0 &&
+        wid < (int)arraysize(protoWordList) &&
+        bitsToString(protoWordList[(unsigned) wid], buffer))
+    {
         return true;
     }
     return false;

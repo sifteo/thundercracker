@@ -11,7 +11,6 @@
 #include "banner.h"
 #include "Bubbles.h"
 #include "FloatingScore.h"
-#include "GameOver.h"
 #include "Glimmer.h"
 #include "GridSlot.h"
 #include "Intro.h"
@@ -58,7 +57,7 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
-    void Update(float t, float dt);
+    void Update(SystemTime t, TimeDelta dt);
 	void vidInit();
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
@@ -97,7 +96,7 @@ public:
 	unsigned int getNumCornerDots() const;
 	//returns if we have one and only one fixed dot (and zero floating dots)
 	//fills in the position of that dot
-	bool getFixedDot( Vec2 &pos ) const;
+	bool getFixedDot( Int2 &pos ) const;
     bool hasNonStrandedDot() const;
 
 	CubeState getState() const { return m_state; }
@@ -112,7 +111,7 @@ public:
 
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
-    void QueueClear( Vec2 &pos );
+    void QueueClear( Int2 &pos );
     void SpawnSpecial( unsigned int color );
     bool SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
@@ -132,9 +131,10 @@ public:
     inline void setDirty() { m_dirty = true; }
 
     void StopGlimmer();
-    void SpawnRockExplosion( const Vec2 &pos, unsigned int health );
+    void SpawnRockExplosion( const Int2 &pos, unsigned int health );
     //each cube can have one floating score at a time
-    void SpawnScore( unsigned int score, const Vec2 &slotpos );
+    void SpawnScore( unsigned int score, const Int2 &slotpos );
+    VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -167,7 +167,7 @@ private:
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
-	float m_fShakeTime;
+    SystemTime m_ShakeTime;
     //how long have we been touching the cube?
     float m_fTouchTime;
 
@@ -179,7 +179,6 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
-    GameOver m_gameover;
     Glimmer m_glimmer;
 
     float m_timeTillGlimmer;
@@ -189,7 +188,7 @@ private:
 
     //array of queued clears.
     //clears get queued up in update, then they get drawn before any draws and cleared out
-    Vec2 m_queuedClears[NUM_ROWS * NUM_COLS];
+    Int2 m_queuedClears[NUM_ROWS * NUM_COLS];
     int m_numQueuedClears;
 
     //do we need to do a bg1 flush?

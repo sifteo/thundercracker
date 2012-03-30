@@ -4,13 +4,21 @@
 #include "Map.h"
 #include "GameState.h"
 
+#define TRIGGER_RESULT_NONE             0
+#define TRIGGER_RESULT_PATH_INTERRUPTED 1
+
 class Game {
 private:
+  static bool sNeighborDirty;
+  #if PLAYTESTING_HACKS
+  static float sShakeTime;
+  #endif
+
   ViewSlot mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
   Player mPlayer;
-  float mSimTime;
+  SystemTime mSimTime;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;
@@ -27,11 +35,17 @@ public:
   inline ViewSlot* ViewBegin() { return mViews; }
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
+  inline Int2 BroadDirection() {
+    ASSERT(mPlayer.Target()->view);
+    return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
+  }
 
-  bool ShowingMinimap() const { return true; }
+  bool ShowingMinimap() const { 
+      return false; 
+  }
 
   // methods  
-  void MainLoop(Cube* pPrimary);
+  void MainLoop();
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
 
@@ -41,28 +55,50 @@ public:
 
 private:
 
-  // helpers
-  void CheckMapNeighbors();
+  static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 
-  void WalkTo(Vec2 position, bool dosfx=true);
+  // cutscenes
+  Cube* IntroCutscene();
+  void WinScreen();
+
+
+  // helpers
+  bool AnyViewsTouched();
+  void CheckMapNeighbors();
+  void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
-  void TeleportTo(const MapData& m, Vec2 position);
+  int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
+  void MoveBlock(Sokoblock* block, Int2 u);
+  void TeleportTo(const MapData& m, Int2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
+  void Slide(ViewSlot* view);
   void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
-  void NpcDialog(const DialogData& data, Cube* cube);
-  
+  void NpcDialog(const DialogData& data, ViewSlot *view);
+  void RestorePearlIdle();
+  void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
+  void Wait(float seconds, bool touchToSkip=false);
+  void RoomNod(ViewSlot* view);
+  void RoomShake(ViewSlot* view);
 
+  // events
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
-
+  void OnTrapdoor(Room *pRoom);
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
-
   void OnUseEquipment();
+  void OnEnterGateway(const GatewayData* pGate);
+  void OnNpcChatter(const NpcData* pNpc);
+  bool OnTriggerEvent(const TriggerData& trig) { return OnTriggerEvent(trig.eventType, trig.eventId); }
+  bool OnTriggerEvent(unsigned type, unsigned id);
+
+  bool TryEncounterBlock(Sokoblock* block);
+  bool TryEncounterLava(Cube::Side dir);
+
 
 };
 
-extern Game* pGame;
+extern Game gGame;
 

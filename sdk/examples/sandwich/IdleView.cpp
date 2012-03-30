@@ -6,11 +6,11 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 #define HOP_PHASE 9
 
 void IdleView::Init() {
-  mStartFrame = pGame->AnimFrame();
+  mStartFrame = gGame.AnimFrame();
   //DrawInventorySprites();
   Parent()->HideSprites();
   Parent()->Graphics().BG0_drawAsset(Vec2(0,0), Blank);
-  Parent()->Overlay().Flush();
+  BG1Helper(*Parent()->GetCube()).Flush();
 }
 
 void IdleView::Restore() {

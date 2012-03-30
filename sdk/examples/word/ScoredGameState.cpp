@@ -7,8 +7,59 @@
 #include "WordGame.h"
 #include "Utility.h"
 
+ScoredGameState::ScoredGameState() : mHintCubeIDOnUpdate(CUBE_ID_UNDEFINED) {}
+
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
+    if (mHintCubeIDOnUpdate != CUBE_ID_UNDEFINED)
+    {
+        if (GameStateMachine::getInstance().getNumHints() > 0)
+        {
+            EventData data;
+            Dictionary::findNextSolutionWordPieces(NUM_CUBES,
+                                                   GameStateMachine::getCurrentMaxLettersPerCube(),
+                                                   data.mHintSolutionUpdate.mHintSolution);
+            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
+
+            // first make sure a hint isn't already active
+            bool canStartHint = true;
+            bool canUseHint = false;
+            for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+            {
+                Cube::ID cubeID = ci + CUBE_ID_BASE;
+                CubeStateMachine *csm =
+                    GameStateMachine::findCSMFromID(cubeID);
+                ASSERT(csm);
+                if (!csm->canStartHint())
+                {
+                    canStartHint = false;
+                    break;
+                }
+
+                if (csm->canUseHint())
+                {
+                    canUseHint = true;
+                }
+            }
+
+            if (canStartHint && canUseHint)
+            {
+                // then start the hint wind-up on all cubes
+                // when the wind-up finishes, the first cube that can show a hint
+                // will do so and message the rest to stop
+                for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
+                {
+                    Cube::ID cubeID = ci + CUBE_ID_BASE;
+                    CubeStateMachine *csm =
+                        GameStateMachine::findCSMFromID(cubeID);
+                    ASSERT(csm);
+                    csm->startHint();
+                }
+            }
+        }
+        mHintCubeIDOnUpdate = CUBE_ID_UNDEFINED;
+    }
+
     if (GameStateMachine::getSecondsLeft() <= 0)
     {
         return GameStateIndex_EndOfRoundScored;
@@ -20,11 +71,10 @@ unsigned ScoredGameState::update(float dt, float stateTime)
         {
             switch (Dictionary::getPuzzleIndex() - 1)
             {
-            case 8:  // quiet
-            case 17: // terms
-            case 24: // cause
-            case 30: // before... mosaic
-            case 31: // mosaic
+            case 6:  // acre
+            case 12: // part
+            case 18: // career
+            case 24: // begun
                 return GameStateIndex_StoryCityProgression;
             default:
                 // wait for all the cube states to exit the new word state
@@ -38,13 +88,25 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     }
 }
 
+
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
     onAudioEvent(eventID, data);
     switch (eventID)
     {
-    case EventID_Input:
-#if (0) // TODO put in the pause menu
+    // TODO put in the pause menu on touch
+    case EventID_NewAnagram:
+    case EventID_EnterState:
+        // reset hints,
+
+        break;
+
+    case EventID_NewWordFound:
+        {
+            // count total hints and add one
+            GameStateMachine::getInstance().setNumHints(MIN(GameStateMachine::getInstance().getNumHints() + 1, MAX_HINTS));
+        }
+#if (0)
 #ifndef SIFTEO_SIMULATOR
         // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
@@ -55,6 +117,24 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
         }
 #endif
 #endif
+        break;
+
+    case EventID_UpdateHintSolution:
+        {
+            EventData data;
+            Dictionary::findNextSolutionWordPieces(NUM_CUBES,
+                                                   GameStateMachine::getCurrentMaxLettersPerCube(),
+                                                   data.mHintSolutionUpdate.mHintSolution);
+            GameStateMachine::sOnEvent(EventID_HintSolutionUpdated, data);
+        }
+        break;
+
+    case EventID_WordBroken:
+        mHintCubeIDOnUpdate = data.mWordBroken.mCubeIDStart; // wait until next update, so all events can resolve first
+        break;
+
+    case EventID_SpendHint:
+        GameStateMachine::getInstance().setNumHints(MAX(GameStateMachine::getInstance().getNumHints() - 1, 0));
         break;
 
     default:
@@ -198,12 +278,22 @@ void ScoredGameState::createNewAnagram()
 
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     // TODO data-driven, scramble or not
-    if (Dictionary::getPuzzleIndex() - 1 <= 12)
+    switch (Dictionary::getPuzzleIndex() - 1)
     {
+    case 0:
+    case 1:
+    case 4:
+    case 8:
+    case 9:
+        // don't scramble
         _SYS_strlcpy(scrambled, spacesAdded, sizeof scrambled);
-    }
-    else
-    {
+        for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
+        {
+            data.mNewAnagram.mPuzzlePieceIndexes[i] = i;
+        }
+        break;
+
+    default:
         // scramble the string (random permutation)
         _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
 
@@ -218,7 +308,7 @@ void ScoredGameState::createNewAnagram()
                 }
 
                 // for each letter, place it randomly in the scrambled array
-            for (unsigned j = WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerWord());
+                for (unsigned j = WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerWord());
                      true;
                      j = (j + 1) % GameStateMachine::getCurrentMaxLettersPerWord())
                 {
@@ -240,16 +330,16 @@ void ScoredGameState::createNewAnagram()
                     cubeIndexes[i] = i;
                 }
 
-                int scrambledCubes[NUM_CUBES];
-                for (int i = 0; i < (int)arraysize(scrambledCubes); ++i)
+                // assign cube indexes to the puzzle piece indexes array, randomly
+                for (int i = 0; i < (int)arraysize(data.mNewAnagram.mPuzzlePieceIndexes); ++i)
                 {
-                    for (unsigned j = WordGame::random.randrange(NUM_CUBES);
+                    for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
                          true;
                          j = ((j + 1) % NUM_CUBES))
                     {
                         if (cubeIndexes[j] >= 0)
                         {
-                            scrambledCubes[i] = cubeIndexes[j];
+                            data.mNewAnagram.mPuzzlePieceIndexes[i] = cubeIndexes[j];
                             cubeIndexes[j] = -1;
                             break;
                         }
@@ -259,7 +349,7 @@ void ScoredGameState::createNewAnagram()
                 for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
                 {
                     // for each letter, place it randomly in the scrambled array
-                    unsigned cubeIndex = (unsigned)scrambledCubes[ci];
+                    unsigned cubeIndex = (unsigned)data.mNewAnagram.mPuzzlePieceIndexes[ci];
                     unsigned ltrStartSrc = cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube();
                     unsigned ltrStartDest = ci * GameStateMachine::getCurrentMaxLettersPerCube();
                     unsigned shift =
@@ -275,6 +365,7 @@ void ScoredGameState::createNewAnagram()
             }
             break;
         }
+        break;
     }
 
     LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
@@ -299,5 +390,3 @@ void ScoredGameState::createNewAnagram()
     }
     GameStateMachine::sOnEvent(EventID_NewAnagram, data);
 }
-
-
