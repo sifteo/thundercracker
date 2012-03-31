@@ -16,11 +16,32 @@
 namespace Sifteo {
 
 
+/**
+ * Metadata objects are special compile-time mechanisms for annotating your
+ * game's ELF binary with additional data. Metadata can be added inside
+ * a function, as follows:
+ *
+ *   Metadata().title("My game");
+ *
+ * You can chain multiple kinds of metadata into one statement:
+ *
+ *   Metadata()
+ *      .title("My game")
+ *      .icon(MyIconAsset);
+ *
+ * You can also declare metadata as a global variable:
+ *
+ *   static Metadata M = Metadata()
+ *      .title("My game")
+ *      .icon(MyIconAsset);
+ *
+ * All metadata parameters must be known at compile-time to be constant.
+ */
 class Metadata {
 public:
     /**
      * Initialize all required system metadata. Other optional metadata can be
-     * added using individual methods on the Metadata class.
+     * added using individual methods on the Metadata class.     
      */
     Metadata()
     {
@@ -29,7 +50,7 @@ public:
 
             // Count the total number of AssetGroupSlots in use
             unsigned numAGSlots = _SYS_lti_counter("Sifteo.AssetGroupSlot", -1);
-            _SYS_lti_metadata(_SYS_METADATA_NUM_AGSLOTS, "b", numAGSlots);
+            _SYS_lti_metadata(_SYS_METADATA_NUM_ASLOTS, "b", numAGSlots);
 
             // UUID for this particular build. Used by the system for asset caching.
             _SYS_lti_metadata(_SYS_METADATA_UUID, "IIII",
@@ -71,7 +92,7 @@ public:
     {
         // AssetGroup is in RAM, but we want the static initializer data
         _SYSAssetGroup *G = (_SYSAssetGroup*) _SYS_lti_initializer(
-            reinterpret_cast<void*>(i.pAssetGroup));
+            reinterpret_cast<const void*>(i.pAssetGroup));
 
         // Build a _SYSMetadataImage struct
         _SYS_lti_metadata(key, "BBBBII",

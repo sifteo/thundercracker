@@ -137,7 +137,6 @@ void CPPSourceWriter::writeGroup(const Group &group)
         "}};\n\n"
         "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
         indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
-        indent << "/* pCubes    */ reinterpret_cast<uint32_t>(" << group.getName() << ".cubes),\n" <<
         "}};\n\n";
 
     mLog.infoBegin("Encoding images");

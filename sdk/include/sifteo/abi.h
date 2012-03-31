@@ -41,6 +41,7 @@ typedef uint8_t bool;
 typedef uint8_t _SYSCubeID;             /// Cube slot index
 typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
+typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset slots
 
 /**
  * Entry point. Our standard entry point is main(), with no arguments
@@ -50,6 +51,8 @@ typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-firs
 #ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
 void main(void);
 #endif
+
+#define _SYS_ASSETLOAD_BUF_SIZE  52   // Makes _SYSAssetLoaderCube come to 64 bytes
 
 struct _SYSAssetGroupHeader {
     uint8_t hdrSize;            /// OUT    Size of header / offset to compressed data
@@ -64,10 +67,23 @@ struct _SYSAssetGroupCube {
 };
 
 struct _SYSAssetGroup {
-    uint32_t pHdr;                  /// OUT    Read-only data for this asset group
-    uint32_t pCubes;                /// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;      /// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;     /// IN     Which cubes have finished installing this group?
+    uint32_t pHdr;              /// OUT    Read-only data for this asset group
+    // Followed by a _SYSAssetGroupCube array
+};
+
+struct _SYSAssetLoaderCube {
+    uint32_t pAssetGroup;   /// OUT   Address for _SYSAssetGroup in RAM
+    uint32_t progress;      /// IN    Number of compressed bytes sent
+    uint16_t state;         /// -     Internal state of loader
+    uint8_t head;           /// -     Index of the next sample to read
+    uint8_t tail;           /// -     Index of the next empty slot to write into
+    uint8_t buf[_SYS_ASSETLOAD_BUF_SIZE];
+};
+
+struct _SYSAssetLoader {
+    _SYSCubeIDVector cubeVec;   /// OUT   Which _SYSAssetLoaderCube structs are valid?
+    _SYSCubeIDVector complete;  /// OUT   Which cubes have fully completed their loading?
+    // Followed by a _SYSAssetLoaderCube array
 };
 
 enum _SYSAssetImageFormat {
@@ -354,8 +370,8 @@ struct _SYSAudioModule {
 };
 
 struct _SYSAudioBuffer {
-    uint16_t head;
-    uint16_t tail;
+    uint16_t head;          /// Index of the next sample to read
+    uint16_t tail;          /// Index of the next empty slot to write into
     uint8_t buf[_SYS_AUDIO_BUF_SIZE];
 };
 
@@ -510,12 +526,12 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
-#define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
+#define _SYS_METADATA_NUM_ASLOTS    0x0007  // uint8_t, count of required AssetSlots
 
 struct _SYSMetadataBootAsset {
-    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
-    uint8_t     agSlotID;       // Asset group slot to load this into
-    uint8_t     reserved[3];    // Must be zero;
+    uint32_t        pHdr;           // Virtual address for _SYSAssetGroupHeader
+    _SYSAssetSlot   slot;           // Asset group slot to load this into
+    uint8_t         reserved[3];    // Must be zero;
 };
 
 struct _SYSMetadataImage {
@@ -579,7 +595,7 @@ void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
-void *_SYS_lti_initializer(void *value);
+const void *_SYS_lti_initializer(const void *value);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
@@ -723,7 +739,6 @@ void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);  /// Which cubes will be try
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(63);
 
 struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(117);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(33);
@@ -758,6 +773,12 @@ void _SYS_audio_resume(_SYSAudioHandle h) _SC(129);
 int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(130);
 void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(131);
 uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
+
+uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
+void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
+uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
+void _SYS_asset_loadFinish(_SYSAssetLoader *loader) _SC(135);
+uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group) _SC(136);
 
 
 #ifdef __cplusplus
