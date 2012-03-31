@@ -82,8 +82,8 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
-#ifndef DEBUG
-    if (0 && LOAD_ASSETS)
+#ifndef DEBUGz
+    if (1 && LOAD_ASSETS)
     {
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)
