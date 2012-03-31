@@ -1,6 +1,7 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_room import *
 from sandwich_item import *
+from sandwich_trigger import *
 from itertools import product
 
 class MapDatabase:
@@ -38,18 +39,29 @@ class MapDatabase:
 			for block in m.sokoblocks:
 				block.asset_id = asset_to_id[block.asset]
 
-
-
 class Depot:
 	def __init__(self, map, obj):
-		assert "target" in obj.props
+		self.map = map
+		assert "target" in obj.props and ( "parent" in obj.props or "ontrigger" in obj.props )
 		self.obj = obj
-		item_name = obj.props["target"]
-		assert item_name in map.world.items.item_dict
-		self.item = map.world.items.item_dict[item_name]
+		inst = obj.map.object_dict[obj.props["target"]]
+		assert inst.type == "item" and "id" in inst.props
+		self.item = map.world.items.item_dict[inst.props["id"]]
 		assert self.item.storage_type == STORAGE_TYPE_EQUIP
-		self.room = map.roomat( obj.px / 128, obj.py / 128 )
+		rx = obj.px / 128
+		ry = obj.py / 128
+		self.ltx = obj.tx - 8 * rx
+		self.lty = obj.ty - 8 * ry
+		self.room = map.roomat(rx,ry)
 		self.room.depot = self
+
+	def compute_parent(self):
+		if "parent" in self.obj.props:
+			self.parent = self.map.depot_dict[ self.obj.props["parent"] ]
+		else:
+			self.parent = self
+			compute_trigger_event_id(self, self.obj)
+			resolve_trigger_event_id(self, self.map)
 
 class AnimatedTile:
 	def __init__(self, tile):
@@ -167,7 +179,14 @@ class Map:
 		# find me some lava tiles
 		self.lava_tiles = [ t for t in self.background.gettileset().tiles if "lava" in t.props ]
 		assert len(self.lava_tiles) <= 8
+
 		self.depots = [ Depot(self,obj) for obj in self.raw.objects if obj.type == "depot" ]
+		self.depot_dict = dict((d.obj.name, d) for d in self.depots)
+
+		# hack - should be last to resolve events (for now?)
+		for d in self.depots: d.compute_parent()
+		for index,depot in enumerate( (d for d in self.depots if d.parent == d) ):
+			depot.index = index
 
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -258,8 +277,14 @@ class Map:
 		if len(self.depots) > 0:
 			src.write("static const DepotData %s_depots[] = {" % self.id)
 			for d in self.depots:
-				src.write("{0x%x,0x%x}," % (d.room.lid, d.item.numeric_id))
-			src.write("{0xff,0xff}};\n")
+				src.write("{0x%x,0x%x,0x%x,0x%x,0x%x}," % (d.room.lid, d.ltx, d.lty, d.parent.index, d.item.numeric_id))
+			src.write("{0xff,0x0,0x0,0x0, 0x0}};\n")
+			src.write("static const DepotGroupData %s_depotgroups[] = {" % self.id)
+			for d in self.depots:
+				if d.parent == d:
+					count = len([dep for dep in self.depots if dep.parent == d])
+					src.write("{0x%x,0x%x,0x%x}," % (count, d.event, d.event_id))
+			src.write("{0x0,0x0,0x0}};\n")
 
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
@@ -326,6 +351,7 @@ class Map:
 			"%(npc)s, " \
 			"%(trapdoor)s, " \
 			"%(depot)s, " \
+			"%(depotgroup)s, " \
 			"%(door)s, " \
 			"%(animtiles)s, " \
 			"%(lavatiles)s, " \
@@ -347,6 +373,7 @@ class Map:
 				"npc": self.id + "_npcs" if len(self.trig_dict["npc"]) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"depot": self.id + "_depots" if len(self.depots) > 0 else "0",
+				"depotgroup": self.id+"_depotgroups" if len(self.depots) > 0 else "0",
 				"door": self.id + "_doors" if len(self.trig_dict["door"]) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",

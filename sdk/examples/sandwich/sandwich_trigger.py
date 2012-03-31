@@ -9,15 +9,37 @@ KEYWORD_TO_TRIGGER_TYPE = dict((name,i) for i,name in enumerate(TRIGGER_KEYWORDS
 EVENT_NONE = 0
 EVENT_ADVANCE_QUEST_AND_REFRESH = 1
 EVENT_ADVANCE_QUEST_AND_TELEPORT = 2
-EVENT_REMOTE_TRIGGER = 3
-EVENT_OPEN_DOOR = 4
+EVENT_OPEN_DOOR = 3
 
 KEYWORD_TO_TRIGGER_EVENT = {
 	"advancequestandrefresh": EVENT_ADVANCE_QUEST_AND_REFRESH,
 	"advancequestandteleport": EVENT_ADVANCE_QUEST_AND_TELEPORT,
-	"remotetrigger": EVENT_REMOTE_TRIGGER,
 	"opendoor": EVENT_OPEN_DOOR
 }
+
+def compute_trigger_event_id(target, obj):
+	if "ontrigger" in obj.props:
+		triggerEventName = obj.props["ontrigger"]
+		m = EXP_ACTION_TARGET.match(triggerEventName)
+		if m is not None:
+			triggerEventName = m.group(1).lower()
+			target.event_id_str = m.group(2).lower()
+		else:
+			triggerEventName = triggerEventName.lower()
+			target.event_id_str = ""
+		assert triggerEventName in KEYWORD_TO_TRIGGER_EVENT
+		target.event = KEYWORD_TO_TRIGGER_EVENT[triggerEventName]
+	else:
+		target.event = EVENT_NONE
+		target.event_id_str = ""
+
+def resolve_trigger_event_id(target, map):
+	if target.event == EVENT_OPEN_DOOR:
+		door_dict = map.trig_dict["door"]
+		assert target.event_id_str in door_dict, "undefined door: " + target.event_id_str
+		target.event_id = door_dict[target.event_id_str].index
+	else:
+		target.event_id = 0
 
 
 class Trigger:
@@ -88,21 +110,7 @@ class Trigger:
 		elif self.unlockflag is not None: self.flagid = self.unlockflag.gindex
 		else: self.flagid = 0
 
-		# check for special onTrigger flags
-		if "ontrigger" in obj.props:
-			triggerEventName = obj.props["ontrigger"]
-			m = EXP_ACTION_TARGET.match(triggerEventName)
-			if m is not None:
-				triggerEventName = m.group(1).lower()
-				self.event_id_str = m.group(2).lower()
-			else:
-				triggerEventName = triggerEventName.lower()
-				self.event_id_str = ""
-			assert triggerEventName in KEYWORD_TO_TRIGGER_EVENT
-			self.event = KEYWORD_TO_TRIGGER_EVENT[triggerEventName]
-		else:
-			self.event = EVENT_NONE
-			self.event_id_str = ""
+		compute_trigger_event_id(self, obj)
 
 
 	def alloc_flag(self):
@@ -113,12 +121,7 @@ class Trigger:
 			self.unlockflag = self.room.map.world.quests.add_flag_if_undefined(self.id)
 
 	def resolve_trigger_event_id(self):
-		if self.event == EVENT_OPEN_DOOR:
-			door_dict = self.room.map.trig_dict["door"]
-			assert self.event_id_str in door_dict, "undefined door: " + self.event_id_str
-			self.event_id = door_dict[self.event_id_str].index
-		else:
-			self.event_id = 0
+		resolve_trigger_event_id(self, self.room.map)
 
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False

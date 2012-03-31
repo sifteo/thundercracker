@@ -22,8 +22,8 @@ void Map::SetData(const MapData& map) {
     }
 
     if (map.depots) {
-      for(const DepotData* p=map.depots; p->roomId != 0xff; ++p) {
-        mRooms[p->roomId].SetDepot(p);
+      for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
+        mRooms[p->room].SetDepot(p);
       }
     }
 

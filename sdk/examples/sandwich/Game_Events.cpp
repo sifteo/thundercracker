@@ -214,11 +214,22 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
 
 void Game::OnDropEquipment(Room *pRoom) {
   const ItemData *pItem = mPlayer.Equipment();
-  // TODO: Putting-Down Animation (pickup backwards?)
-  mPlayer.SetEquipment(0);
-  pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
-  mPlayer.CurrentView()->HideEquip();
-  mPlayer.CurrentView()->ShowItem();
+  if (pRoom->HasDepot()) {
+    LOG(("ROOM HAS DEPOT\n"));
+    // TODO
+  } else {
+    LOG(("NO DEPOT\n"));
+    for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+      SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);
+    }
+    mPlayer.SetEquipment(0);
+    pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
+    mPlayer.CurrentView()->HideEquip();
+    mPlayer.CurrentView()->ShowItem();
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
+    SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);    
+  }
 }
 
 void Game::OnUseEquipment() {

@@ -8,8 +8,6 @@ using namespace Sifteo;
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
 #define TRIGGER_DOOR        4
-#define TRIGGER_TYPE_COUNT  5
-// MAX COUNT = 16
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
@@ -28,8 +26,7 @@ using namespace Sifteo;
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
-#define EVENT_REMOTE_TRIGGER                3
-#define EVENT_OPEN_DOOR                     4
+#define EVENT_OPEN_DOOR                     3
 
 struct QuestData {
     uint8_t mapId;
@@ -100,8 +97,17 @@ struct TrapdoorData {
 };
 
 struct DepotData {
-    uint8_t roomId;
-    uint8_t targetItemId;
+    uint8_t room;
+    uint8_t tx : 4;
+    uint8_t ty : 4;
+    uint8_t group : 4;
+    uint8_t itemId;
+};
+
+struct DepotGroupData {
+    uint8_t count;
+    uint8_t eventType;
+    uint8_t eventId;
 };
 
 struct AnimatedTileData {
@@ -157,6 +163,7 @@ struct MapData {
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
     const DepotData* depots;
+    const DepotGroupData* groups;
 
     // other placeable entities
     const DoorData* doors;

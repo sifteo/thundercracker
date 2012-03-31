@@ -109,9 +109,10 @@ public:
   inline void SetDepot(const DepotData* depot) {
     ASSERT(!mPrimarySlot);
     ASSERT(!mSecondarySlot);
-    mPrimarySlotType == PRIMARY_PROP;
-    mPrimarySlotId == SECONDARY_TRAPDOOR;
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_DEPOT;
     mPrimarySlot = depot;
+    LOG(("SET DEPOT: %d\n", HasDepot()));
   }
 
   const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
