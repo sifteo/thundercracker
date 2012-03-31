@@ -215,10 +215,24 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
 void Game::OnDropEquipment(Room *pRoom) {
   const ItemData *pItem = mPlayer.Equipment();
   if (pRoom->HasDepot()) {
-    LOG(("ROOM HAS DEPOT\n"));
-    // TODO
+    if (pRoom->HasDepotContents()) {
+      mPlayer.CurrentView()->StartShake();
+    } else {
+      for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
+        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+        SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);
+      }
+      mPlayer.CurrentView()->StartNod();
+      mPlayer.SetEquipment(0);
+      mPlayer.CurrentView()->HideEquip();
+      pRoom->SetDepotContents(pItem);
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
+      SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);    
+    }
+
+
+
   } else {
-    LOG(("NO DEPOT\n"));
     for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
       SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);
