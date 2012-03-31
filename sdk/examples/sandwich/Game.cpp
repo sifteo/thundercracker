@@ -211,6 +211,37 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 #endif
 }
 
+void Game::ScrollTo(unsigned roomId) {
+  // blank other cubes
+  ViewSlot *pView = mPlayer.CurrentView()->Parent();
+  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (p != pView) { p->HideLocation(false); }
+  }
+  // hide sprites and overlay
+  pView->HideSprites();
+  BG1Helper(*pView->GetCube()).Flush();
+  Paint(true);
+
+  const Int2 targetLoc = mMap.GetLocation(roomId);
+  const Int2 currentLoc = mPlayer.GetRoom()->Location();
+  const Int2 start = 128 * currentLoc;
+  const Int2 delta = 128 * (targetLoc - currentLoc);
+  const Int2 target = start + delta;
+  Int2 pos;
+  ViewMode mode = pView->Graphics();
+  SystemTime t=mSimTime; 
+  do {
+    float u = float(mSimTime-t) / 2.333f;
+    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+    pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+    DrawOffsetMap(&mode, mMap.Data(), pos);
+    Paint(true);
+  } while(mSimTime-t<2.333f && (pos-target).len2() > 4);
+  mode.BG0_setPanning(Vec2(0,0));
+  DrawRoom(&mode, mMap.Data(), roomId);
+  Paint(true);
+}
+
 void Game::Slide(ViewSlot* view) {
   ViewMode g = view->Graphics();
   const int dt = 16;

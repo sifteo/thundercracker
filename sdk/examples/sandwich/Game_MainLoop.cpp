@@ -120,7 +120,7 @@ void Game::MainLoop() {
 	      			// use the key and open the door
 	      			mPlayer.ConsumeEquipment();
 	      			mPlayer.CurrentRoom()->OpenDoor();
-	      			mPlayer.CurrentView()->DrawBackground();
+	      			mPlayer.CurrentView()->RefreshDoor();
 	      			mPlayer.CurrentView()->HideEquip();
 	      			SystemTime timeout = SystemTime::now();
 	          		#if GFX_ARTIFACT_WORKAROUNDS

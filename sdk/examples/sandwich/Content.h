@@ -163,7 +163,7 @@ struct MapData {
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
     const DepotData* depots;
-    const DepotGroupData* groups;
+    const DepotGroupData* depotGroups;
 
     // other placeable entities
     const DoorData* doors;

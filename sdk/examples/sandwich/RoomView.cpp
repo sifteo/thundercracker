@@ -22,7 +22,7 @@ void RoomView::Init(unsigned roomId) {
   ComputeAnimatedTiles();
   Room* r = GetRoom();
   if (r->HasItem()) {
-    ShowItem();
+    ShowItem(r->Item());
   }
   if (this->Parent() == gGame.GetPlayer()->View()) { 
     ShowPlayer(); 
@@ -209,12 +209,13 @@ void RoomView::ShowPlayer() {
   UpdatePlayer();
 }
 
-void RoomView::ShowItem() {
+void RoomView::ShowItem(const ItemData* item) {
   Room* pRoom = GetRoom();
-  ASSERT(pRoom->HasItem());
   ViewMode mode = Parent()->Graphics();
-  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, pRoom->Item()->itemId);
-  Int2 p = 16 * pRoom->LocalCenter(0);
+  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, item->itemId);
+  Int2 p = pRoom->HasDepot() ? 
+    16 * Vec2(pRoom->Depot()->tx+1, pRoom->Depot()->ty+1) : 
+    16 * pRoom->LocalCenter(0);
   mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
@@ -301,24 +302,47 @@ void RoomView::DrawTrapdoorFrame(int frame) {
 // HELPERS
 //----------------------------------------------------------------------
 
+void RoomView::RefreshDoor() {
+  ViewMode g = Parent()->Graphics();
+  const Room *pRoom = GetRoom();
+  if (pRoom->HasOpenDoor()) {
+    for(int y=0; y<3; ++y)
+    for(int x=3; x<5; ++x) {
+      g.BG0_drawAsset(
+        Vec2(x,y) << 1,
+        *(gGame.GetMap()->Data()->tileset),
+        gGame.GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
+      );
+    }
+  }
+}
+
+void RoomView::RefreshDepot() {
+  ViewMode g = Parent()->Graphics();
+  const Room *pRoom = GetRoom();
+  if (pRoom->HasDepotContents()) {
+    const DepotData& depot = *pRoom->Depot();
+    // assuming depots are door sizes (2x3)
+    for(int y=depot.ty; y<depot.ty+3; ++y)
+    for(int x=depot.tx; x<depot.tx+2; ++x) {
+      g.BG0_drawAsset(
+        Vec2(x,y) << 1,
+        *(gGame.GetMap()->Data()->tileset),
+        gGame.GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
+      );
+    }
+    ShowItem(pRoom->DepotContents());
+  }
+
+}
+
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
   mode.BG0_setPanning(Vec2(0,0));
   DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
-
-  // hack alert!
+  RefreshDoor();
+  RefreshDepot();
   const Room *pRoom = GetRoom();
-  if (pRoom->HasOpenDoor()) {
-    for(int y=0; y<3; ++y) {
-      for(int x=3; x<=4; ++x) {
-        mode.BG0_drawAsset(
-          Vec2(x,y) << 1,
-          *(gGame.GetMap()->Data()->tileset),
-          gGame.GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
-        );
-      }
-    }
-  }
   BG1Helper ovrly(*(Parent()->GetCube()));
   if (!flags.hideOverlay && pRoom->HasOverlay()) {
     DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());

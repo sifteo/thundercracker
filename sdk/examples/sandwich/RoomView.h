@@ -57,8 +57,10 @@ public:
   void HideOverlay(bool flag);
   
   void ShowPlayer();
-  void ShowItem();
+  void ShowItem(const ItemData* item);
   void ShowBlock(Sokoblock* pBlock);
+  void RefreshDoor();
+  void RefreshDepot();
 
   void SetPlayerFrame(unsigned frame);
   void SetEquipPosition(Int2 p);

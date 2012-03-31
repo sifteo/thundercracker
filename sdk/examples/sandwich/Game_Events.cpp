@@ -27,36 +27,6 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
-void Game::ScrollTo(unsigned roomId) {
-  // blank other cubes
-  ViewSlot *pView = mPlayer.CurrentView()->Parent();
-  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
-    if (p != pView) { p->HideLocation(false); }
-  }
-  // hide sprites and overlay
-  pView->HideSprites();
-  BG1Helper(*pView->GetCube()).Flush();
-  Paint(true);
-
-  const Int2 targetLoc = mMap.GetLocation(roomId);
-  const Int2 currentLoc = mPlayer.GetRoom()->Location();
-  const Int2 start = 128 * currentLoc;
-  const Int2 delta = 128 * (targetLoc - currentLoc);
-  const Int2 target = start + delta;
-  Int2 pos;
-  ViewMode mode = pView->Graphics();
-  SystemTime t=mSimTime; 
-  do {
-    float u = float(mSimTime-t) / 2.333f;
-    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-    pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(&mode, mMap.Data(), pos);
-    Paint(true);
-  } while(mSimTime-t<2.333f && (pos-target).len2() > 4);
-  DrawRoom(&mode, mMap.Data(), roomId);
-  Paint(true);
-}
-
 void Game::OnTrapdoor(Room *pRoom) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED TRAPDOOR
@@ -216,33 +186,46 @@ void Game::OnDropEquipment(Room *pRoom) {
   const ItemData *pItem = mPlayer.Equipment();
   if (pRoom->HasDepot()) {
     if (pRoom->HasDepotContents()) {
+      // no!
       mPlayer.CurrentView()->StartShake();
     } else {
+      // place the item in the depot
       for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
         mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-        SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);
+        Wait(0.075f, false);
       }
-      mPlayer.CurrentView()->StartNod();
       mPlayer.SetEquipment(0);
-      mPlayer.CurrentView()->HideEquip();
       pRoom->SetDepotContents(pItem);
+      mPlayer.CurrentView()->StartNod();
+      mPlayer.CurrentView()->HideEquip();
+      mPlayer.CurrentView()->RefreshDepot();
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
-      SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);    
+      Wait(0.075f, false);
+      // check if event should fire
+      const MapData& map = *mMap.Data();
+      const DepotGroupData& group = map.depotGroups[pRoom->Depot()->group];
+      unsigned count = 0;
+      for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
+        count += (p->group == pRoom->Depot()->group && mMap.GetRoom(p->room)->HasDepotContents());
+      }
+      if (count == group.count) {
+        while(mPlayer.CurrentView()->IsWobbly()) { Paint(); }
+        Wait(0.5f, false);
+        OnTriggerEvent(group.eventType, group.eventId);
+      }
     }
-
-
-
   } else {
+    // show the dropped item as a normal trigger
     for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
-      SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);
+      Wait(0.075f, false);
     }
     mPlayer.SetEquipment(0);
     pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
     mPlayer.CurrentView()->HideEquip();
-    mPlayer.CurrentView()->ShowItem();
+    mPlayer.CurrentView()->ShowItem(pItem);
     mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
-    SystemTime t=SystemTime::now(); do { Paint(); } while(SystemTime::now()-t < 0.075f);    
+    Wait(0.075f, false);
   }
 }
 
@@ -333,7 +316,6 @@ bool Game::TryEncounterBlock(Sokoblock* block) {
   // no moving blocks onto other blocks
   for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
     if (p != block && pRoom->IsShowingBlock(p)) {
-      LOG(("BLOCK OVERLAP FAIL\n"));
       return false;
     }
   }

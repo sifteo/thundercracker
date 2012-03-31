@@ -112,13 +112,12 @@ public:
     mPrimarySlotType = PRIMARY_PROP;
     mPrimarySlotId = SECONDARY_DEPOT;
     mPrimarySlot = depot;
-    LOG(("SET DEPOT: %d\n", HasDepot()));
   }
 
   const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
   const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
 
-  bool HasDepotContents() const { ASSERT(HasDepot()); return mSecondarySlot != 0; }
+  bool HasDepotContents() const { return HasDepot() && mSecondarySlot != 0; }
   void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mSecondarySlot = item; }
   const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mSecondarySlot; }
 
