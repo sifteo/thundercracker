@@ -14,12 +14,9 @@
 const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
 const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
 const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
-const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = ( GridSlot::MARK_BREAK_DELAY - GridSlot::MARK_SPREAD_DELAY ) / (float) GridSlot::NUM_EXPLODE_FRAMES;
 const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
-const float GridSlot::START_FADING_TIME = 1.75f;
-const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
 const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 0.75f;
 const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
 //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
@@ -320,6 +317,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         break;
                     }
                     case MOVESTATE_FINISHINGMOVE:
+                    case MOVESTATE_BUMPED:
                     {
                         if( IsSpecial() )
                             vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
@@ -402,7 +400,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
             }
 			break;
 		}
-		case STATE_SHOWINGSCORE:
+        /*case STATE_SHOWINGSCORE:
 		{
             if( m_score > 99 )
                 m_score = 99;
@@ -422,7 +420,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
             vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
-        /*case STATE_GONE:
+        case STATE_GONE:
 		{
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
 			break;
@@ -520,6 +518,11 @@ void GridSlot::Update(SystemTime t)
 
                     break;
                 }
+                case MOVESTATE_BUMPED:
+                {
+                    m_Movestate = MOVESTATE_FINISHINGMOVE;
+                    break;
+                }
                 default:
                     break;
             }
@@ -548,15 +551,6 @@ void GridSlot::Update(SystemTime t)
 			spread_mark();
             if( t - m_eventTime > MARK_EXPLODE_DELAY )
                 die();
-			break;
-		}
-		case STATE_SHOWINGSCORE:
-		{
-			if( t - m_eventTime > SCORE_FADE_DELAY )
-			{
-                m_state = STATE_GONE;
-				m_pWrapper->checkEmpty();
-			}
 			break;
 		}
         //clear this out in update, so it doesn't bash moving balls
@@ -620,11 +614,12 @@ void GridSlot::explode()
 
 void GridSlot::die()
 {
-	m_state = STATE_SHOWINGSCORE;
+    m_state = STATE_GONE;
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
-	Game::Inst().CheckChain( m_pWrapper );
-	m_eventTime = SystemTime::now();
+    Game::Inst().CheckChain( m_pWrapper, Vec2( m_row, m_col ) );
+    m_pWrapper->checkEmpty();
+    m_eventTime = SystemTime::now();
 }
 
 
@@ -840,4 +835,50 @@ void GridSlot::RainballMorph( unsigned int color )
 {
     FillColor( color );
     m_bWasRainball = true;
+}
+
+
+
+//bubble is bumping this chromit, tilt it in the given direction
+void GridSlot::Bump( const Float2 &dir )
+{
+    if( isAlive() && !IsFixed() && !IsSpecial() && ( m_Movestate == MOVESTATE_STATIONARY || m_Movestate == MOVESTATE_BUMPED || m_Movestate == MOVESTATE_FINISHINGMOVE ) )
+    {
+        m_Movestate = MOVESTATE_BUMPED;
+
+        Int2 newDir = m_lastFrameDir;
+
+        //(2/sqrtf(5))
+        const float DIR_THRESH = -.4472136f;
+
+        //push one frame over in dir direction
+        if( dir.x < DIR_THRESH )
+        {
+            newDir.x-=4;
+            if( newDir.x < 0 )
+                newDir.x = 0;
+        }
+        else if( dir.x > DIR_THRESH )
+        {
+            newDir.x+=4;
+            if( newDir.x >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.x = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        if( dir.y < DIR_THRESH )
+        {
+            newDir.y-=4;
+            if( newDir.y < 0 )
+                newDir.y = 0;
+        }
+        else if( dir.y > DIR_THRESH )
+        {
+            newDir.y+=4;
+            if( newDir.y >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.y = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        m_animFrame = TILTTOFRAMES[ newDir.y ][ newDir.x ];
+        m_lastFrameDir = newDir;
+    }
 }

@@ -15,9 +15,18 @@ namespace UsbHardwareStm32Otg
     // Gets assigned in the ISR from GRXSTSP and used in epReadPacket()
     uint16_t rxbcnt;
 
+    /*
+     * this is a bit of a hack for now - if we don't copy packets from the
+     * rx fifo immediately in the ISR, I've observed strange things happening
+     * when there's some delay between the time we receive the packet & the time
+     * we read it out.
+     *
+     * revisit this and kill it.
+     */
+    uint8_t packetBuf[MAX_PACKET];
+
+    // keep track of our usb ram allocation
     uint16_t fifoMemTop;
-    uint16_t fifoMemTopEp0;
-    uint8_t forceNak[4];
 
     // We keep a backup copy of the out endpoint size registers to restore them
     // after a transaction.

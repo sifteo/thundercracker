@@ -99,9 +99,11 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
         OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
                                         (1 << 27));    // SNAK
 
-        OTG.global.DIEPTXF0_HNPTXFSIZ = ((maxsize / 4) << 16) | RX_FIFO_WORDS;
-        fifoMemTop += maxsize / 4;
-        fifoMemTopEp0 = fifoMemTop;
+        // in the global FIFO map, after the global RX size is the
+        // EP0 TX config
+        uint16_t fifoDepthInWords = maxsize / 4;
+        OTG.global.DIEPTXF0_HNPTXFSIZ = (fifoDepthInWords << 16) | fifoMemTop;
+        fifoMemTop += fifoDepthInWords;
 
         return;
     }
@@ -109,8 +111,10 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     if (isInEp(addr)) {
 
         addr &= 0x7f;
-        OTG.global.DIEPTXF[addr] = ((maxsize / 4) << 16) | fifoMemTop;
-        fifoMemTop += maxsize / 4;
+
+        uint16_t fifoDepthInWords = maxsize / 4;
+        OTG.global.DIEPTXF[addr] = (fifoDepthInWords << 16) | fifoMemTop;
+        fifoMemTop += fifoDepthInWords;
 
         volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
         ep.DIEPTSIZ = maxsize & 0x7f;
@@ -140,7 +144,7 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 void epReset()
 {
     // The core resets the endpoints automatically on reset.
-    fifoMemTop = fifoMemTopEp0;
+    // TODO - anything else we need to do here?
 }
 
 void epSetStalled(uint8_t addr, bool stall)
@@ -193,7 +197,6 @@ void epSetNak(uint8_t addr, bool nak)
     if (isInEp(addr))
         return;
 
-    forceNak[addr] = nak;
     // set or clear nak accordingly
     OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
 }
@@ -244,12 +247,15 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
     return len;
 }
 
-uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
+/*
+ * Read directly from the fifo the RX data that most recently arrived.
+ * Don't update counts or re-enable RXFLVL yet - this happens once the
+ * packet is read by the actual client, at which point we're ready to
+ * receive another packet.
+ */
+static void epReadFifo(uint8_t addr, void *buf, uint16_t len)
 {
     uint32_t *buf32 = static_cast<uint32_t*>(buf);
-
-    len = MIN(len, rxbcnt);
-    rxbcnt -= len;
 
     volatile uint32_t *fifo = OTG.epFifos[addr];
     int i;
@@ -260,12 +266,27 @@ uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
         uint32_t extra = *fifo;
         memcpy(buf32, &extra, i);
     }
+}
+
+/*
+ * Get the RX packet that most recently arrived.
+ * If it's on EP0, we read directly from the fifo.
+ * For any other endpoint, it should have already been buffered - read it from there.
+ */
+uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
+{
+    len = MIN(len, rxbcnt);
+    rxbcnt -= len;
+
+    if (addr == 0)
+        epReadFifo(addr, buf, len);
+    else
+        memcpy(buf, packetBuf, len);
 
     // restore state
     volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
     ep.DOEPTSIZ = doeptsiz[addr];
-    ep.DOEPCTL |= (1 << 31) |   // EPENA
-                  (forceNak[addr] ? (1 << 27) : (1 << 26));
+    ep.DOEPCTL |= (1 << 31) | (1 << 26);  // EPENA & CNAK
     OTG.global.GINTMSK |= (1 << 4); // unmask RXFLVL
     return len;
 }
@@ -286,18 +307,10 @@ IRQ_HANDLER ISR_UsbOtg_FS()
 {
     uint32_t status = OTG.global.GINTSTS;
 
-    const uint32_t enumdne = 1 << 13;
-    if (status & enumdne) {
-        OTG.global.GINTSTS = enumdne;
+    const uint32_t ENUMDNE = 1 << 13;
+    if (status & ENUMDNE) {
+        OTG.global.GINTSTS = ENUMDNE;
         fifoMemTop = RX_FIFO_WORDS;
-#if 0
-        uint8_t enumeratedSpeed = (OTG.device.DSTS >> 1) & 0x3;
-        // ensure we enumerated at full speed
-        if (enumeratedSpeed != 0x3) {
-            for (;;)
-                ;
-        }
-#endif
         UsbCore::reset();
     }
 
@@ -305,10 +318,9 @@ IRQ_HANDLER ISR_UsbOtg_FS()
     if (status & RXFLVL) {
         // RXFLVL is read-only in GINTSTS
         uint32_t rxstsp = OTG.global.GRXSTSP;
-        uint32_t pktsts = rxstsp & (0xf << 17);  // PKTSTS mask
 
         Transaction txn;
-        switch (pktsts) {
+        switch (rxstsp & (0xf << 17)) {  // PKTSTS mask
         case 0x6 << 17:
             txn = TransactionSetup;
             break;
@@ -319,23 +331,30 @@ IRQ_HANDLER ISR_UsbOtg_FS()
             return;
         }
 
-        uint8_t ep = rxstsp & 0xf; // EPNUM mask
-
         // Save packet size for epReadPacket()
-        rxbcnt = (rxstsp & (0x7ff << 4)) >> 4;  // BCNT mask
+        // don't assign to our persistent member until we know it's good
+        uint16_t tmpcnt = (rxstsp >> 4) & 0x3ff;  // BCNT mask
 
-        if (rxbcnt == 0) {
+        if (tmpcnt > 0) {
 
-        }
-        else {
+            uint8_t ep = rxstsp & 0xf; // EPNUM mask
+
             // mask RXFLVL until we've read the data from the fifo
             OTG.global.GINTMSK &= ~RXFLVL;
+            rxbcnt = tmpcnt;
 
-            // call back user handler to read the data via epReadPacket()
+            /*
+             * Control requests get handled directly within this ISR, so we don't
+             * need to buffer data.
+             *
+             * Data endpoints may be read at some later date, so we get the data
+             * out of the fifo and buffer it for later.
+             */
             if (ep == 0) {
                 UsbControl::controlRequest(ep, txn);
             }
             else {
+                UsbHardware::epReadFifo(ep, UsbHardwareStm32Otg::packetBuf, sizeof UsbHardwareStm32Otg::packetBuf);
                 UsbDevice::outEndpointCallback(ep);
             }
         }

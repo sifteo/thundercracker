@@ -408,6 +408,8 @@ void TiltFlowView::PaintMenu() {
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
+  //TODO, fix hack!
+  mpCube->vbuf.touch();
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
