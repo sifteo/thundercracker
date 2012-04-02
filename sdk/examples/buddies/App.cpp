@@ -235,7 +235,6 @@ BuddyId GetUnlockedBuddy(unsigned int bookIndex)
 {
     ASSERT(bookIndex < GetNumBooks());
     const Book &book = GetBook(bookIndex);
-    LOG(("book unlocked = %d\n", book.mUnlockBuddyId));
     return book.mUnlockBuddyId == -1 ? BUDDY_GLUV : BuddyId(book.mUnlockBuddyId);
 }
 
@@ -962,11 +961,6 @@ void App::Init()
     }
     
     LoadData();
-    
-    for (int i = 0; i < GetNumBooks(); ++i)
-    {
-        LOG(("unlocked = %d\n", GetBook(i).mUnlockBuddyId));
-    }
     
     mChannel.init();
 }
@@ -2896,8 +2890,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
                 ASSERT(buddyId < arraysize(kBuddyRibbons));
                 const AssetImage &ribbon = *kBuddyRibbons[buddyId];
-                
-                LOG(("Unlocked %u\n", buddyId));
                 
                 int y = mBackgroundScroll.y - ribbon.height;
                 int assetOffset = 0;
