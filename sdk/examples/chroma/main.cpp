@@ -55,6 +55,12 @@ static void onShake(void *context, _SYSCubeID cid)
     game.m_cubes[cid - CUBE_ID_BASE].Shake(state);
 }
 
+static void onTouch(void *context, _SYSCubeID cid)
+{
+    if( _SYS_isTouching( cid ) )
+        game.m_cubes[cid - CUBE_ID_BASE].Touch();
+}
+
 static void init()
 {
 	game.Init();
@@ -67,6 +73,7 @@ void main()
     //_SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*) onAccelChange, NULL);
     _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, NULL);
 
     while (1) {
         game.Update();        

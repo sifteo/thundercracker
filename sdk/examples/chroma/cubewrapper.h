@@ -8,11 +8,12 @@
 #define _CUBEWRAPPER_H
 
 #include <sifteo.h>
-#include "GridSlot.h"
 #include "banner.h"
-#include "Intro.h"
-#include "GameOver.h"
+#include "Bubbles.h"
+#include "FloatingScore.h"
 #include "Glimmer.h"
+#include "GridSlot.h"
+#include "Intro.h"
 #include "RockExplosion.h"
 
 using namespace Sifteo;
@@ -32,19 +33,21 @@ public:
     static const float IDLE_FINISH_THRESHOLD;
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
+    static const float TOUCH_TIME_FOR_MENU;
 
     static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
     static const int PTS_PER_EMPTIED_CUBE = 100;
-    //static const float SHOW_BONUS_TIME;
+    static const int HIGH_SCORE_OFFSET = 4;
+    //how long we wait until we autorefill an empty cube in survival mode
+    static const float AUTOREFILL_TIME;
 
 	typedef enum
 	{
 		STATE_PLAYING,
 		STATE_EMPTY,
         STATE_REFILL,
-        //STATE_CUBEBONUS,
 	} CubeState;
 
 	CubeWrapper();
@@ -59,6 +62,7 @@ public:
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
+    void Touch();
 
     Banner &getBanner() { return m_banner; }
 
@@ -122,11 +126,15 @@ public:
     //search for a multiplier dot and increase it
     void UpMultiplier();
     void ClearSprite( unsigned int id );
+    void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
+    //each cube can have one floating score at a time
+    void SpawnScore( unsigned int score, const Int2 &slotpos );
+    VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -159,7 +167,9 @@ private:
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
-	SystemTime m_ShakeTime;
+    SystemTime m_ShakeTime;
+    //how long have we been touching the cube?
+    float m_fTouchTime;
 
     //render based on current fluid level
     //use (-128, 128) range since that matches accelerometer
@@ -169,7 +179,6 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
-    GameOver m_gameover;
     Glimmer m_glimmer;
 
     float m_timeTillGlimmer;
@@ -189,6 +198,8 @@ private:
 
     //allow up to 4 rock explosions simultaneously
     RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
+    BubbleSpawner m_bubbles;
+    FloatingScore m_floatscore;
 };
 
 #endif
