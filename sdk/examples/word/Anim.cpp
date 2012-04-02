@@ -390,10 +390,13 @@ bool animPaint(AnimType animT,
                         if (hintIndex  < numHints)
                         {
                             unsigned char assetFrames = (*CheckMarkImagesTop[2]).frames;
-                            unsigned char assetFrame =
-                                    (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1) ?
-                                        MIN(assetFrames-1, (unsigned char) ((float)assetFrames * animPct)) :
-                                        0;
+                            unsigned char assetFrame = 0;
+                            if (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1)
+                            {
+                                // loop X times
+                                float f = fmodf(animPct * 3.f, 1.f);
+                                assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
+                            }
 
                             bg1->DrawAsset(Vec2(1 + hintIndex * 2, 0), *CheckMarkImagesTop[2], assetFrame);
                         }

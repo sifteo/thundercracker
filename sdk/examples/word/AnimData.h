@@ -228,178 +228,223 @@ const static Vec2 positions[] =
     Vec2(8, 12),    // 223
     Vec2(8, 16),    // 224
     Vec2(2, -11),    // 225
-    Vec2(2, -9),    // 226
-    Vec2(2, -7),    // 227
-    Vec2(2, -5),    // 228
-    Vec2(2, -3),    // 229
-    Vec2(2, -1),    // 230
-    Vec2(2, 0),    // 231
-    Vec2(2, 1),    // 232
-    Vec2(2, 1),    // 233
-    Vec2(2, 2),    // 234
-    Vec2(8, -11),    // 235
-    Vec2(8, -9),    // 236
-    Vec2(8, -7),    // 237
-    Vec2(8, -5),    // 238
-    Vec2(8, -3),    // 239
-    Vec2(8, -1),    // 240
-    Vec2(8, 0),    // 241
-    Vec2(8, 1),    // 242
-    Vec2(8, 1),    // 243
-    Vec2(8, 2),    // 244
-    Vec2(2, 3),    // 245
-    Vec2(2, 4),    // 246
-    Vec2(2, 5),    // 247
-    Vec2(2, 6),    // 248
-    Vec2(2, 7),    // 249
-    Vec2(2, 8),    // 250
-    Vec2(2, 9),    // 251
-    Vec2(2, 10),    // 252
-    Vec2(2, 12),    // 253
-    Vec2(2, 16),    // 254
-    Vec2(8, 3),    // 255
-    Vec2(8, 4),    // 256
-    Vec2(8, 5),    // 257
-    Vec2(8, 6),    // 258
-    Vec2(8, 7),    // 259
-    Vec2(8, 8),    // 260
-    Vec2(8, 9),    // 261
-    Vec2(8, 10),    // 262
-    Vec2(8, 12),    // 263
-    Vec2(8, 16),    // 264
-    Vec2(2, 2),    // 265
-    Vec2(6, 2),    // 266
-    Vec2(10, 2),    // 267
-    Vec2(2, -11),    // 268
-    Vec2(2, -9),    // 269
-    Vec2(2, -7),    // 270
-    Vec2(2, -5),    // 271
-    Vec2(2, -3),    // 272
-    Vec2(2, -1),    // 273
-    Vec2(2, 0),    // 274
-    Vec2(2, 1),    // 275
-    Vec2(2, 1),    // 276
-    Vec2(2, 2),    // 277
-    Vec2(6, -11),    // 278
-    Vec2(6, -9),    // 279
-    Vec2(6, -7),    // 280
-    Vec2(6, -5),    // 281
-    Vec2(6, -3),    // 282
-    Vec2(6, -1),    // 283
-    Vec2(6, 0),    // 284
-    Vec2(6, 1),    // 285
-    Vec2(6, 1),    // 286
-    Vec2(6, 2),    // 287
-    Vec2(10, -11),    // 288
-    Vec2(10, -9),    // 289
-    Vec2(10, -7),    // 290
-    Vec2(10, -5),    // 291
-    Vec2(10, -3),    // 292
-    Vec2(10, -1),    // 293
-    Vec2(10, 0),    // 294
-    Vec2(10, 1),    // 295
-    Vec2(10, 1),    // 296
-    Vec2(10, 2),    // 297
-    Vec2(2, 3),    // 298
-    Vec2(2, 4),    // 299
-    Vec2(2, 5),    // 300
-    Vec2(2, 6),    // 301
-    Vec2(2, 7),    // 302
-    Vec2(2, 8),    // 303
-    Vec2(2, 9),    // 304
-    Vec2(2, 10),    // 305
-    Vec2(2, 12),    // 306
-    Vec2(2, 16),    // 307
-    Vec2(6, 3),    // 308
-    Vec2(6, 4),    // 309
-    Vec2(6, 5),    // 310
-    Vec2(6, 6),    // 311
-    Vec2(6, 7),    // 312
-    Vec2(6, 8),    // 313
-    Vec2(6, 9),    // 314
-    Vec2(6, 10),    // 315
-    Vec2(6, 12),    // 316
-    Vec2(6, 16),    // 317
-    Vec2(10, 3),    // 318
-    Vec2(10, 4),    // 319
-    Vec2(10, 5),    // 320
-    Vec2(10, 6),    // 321
-    Vec2(10, 7),    // 322
-    Vec2(10, 8),    // 323
-    Vec2(10, 9),    // 324
-    Vec2(10, 10),    // 325
-    Vec2(10, 12),    // 326
-    Vec2(10, 16),    // 327
-    Vec2(2, -11),    // 328
-    Vec2(2, -9),    // 329
-    Vec2(2, -7),    // 330
-    Vec2(2, -5),    // 331
-    Vec2(2, -3),    // 332
-    Vec2(2, -1),    // 333
-    Vec2(2, 0),    // 334
-    Vec2(2, 1),    // 335
-    Vec2(2, 1),    // 336
-    Vec2(2, 2),    // 337
-    Vec2(6, -11),    // 338
-    Vec2(6, -9),    // 339
-    Vec2(6, -7),    // 340
-    Vec2(6, -5),    // 341
-    Vec2(6, -3),    // 342
-    Vec2(6, -1),    // 343
-    Vec2(6, 0),    // 344
-    Vec2(6, 1),    // 345
-    Vec2(6, 1),    // 346
-    Vec2(6, 2),    // 347
-    Vec2(10, -11),    // 348
-    Vec2(10, -9),    // 349
-    Vec2(10, -7),    // 350
-    Vec2(10, -5),    // 351
-    Vec2(10, -3),    // 352
-    Vec2(10, -1),    // 353
-    Vec2(10, 0),    // 354
-    Vec2(10, 1),    // 355
-    Vec2(10, 1),    // 356
-    Vec2(10, 2),    // 357
-    Vec2(2, 3),    // 358
-    Vec2(2, 4),    // 359
-    Vec2(2, 5),    // 360
-    Vec2(2, 6),    // 361
-    Vec2(2, 7),    // 362
-    Vec2(2, 8),    // 363
-    Vec2(2, 9),    // 364
-    Vec2(2, 10),    // 365
-    Vec2(2, 12),    // 366
-    Vec2(2, 16),    // 367
-    Vec2(6, 3),    // 368
-    Vec2(6, 4),    // 369
-    Vec2(6, 5),    // 370
-    Vec2(6, 6),    // 371
-    Vec2(6, 7),    // 372
-    Vec2(6, 8),    // 373
-    Vec2(6, 9),    // 374
-    Vec2(6, 10),    // 375
-    Vec2(6, 12),    // 376
-    Vec2(6, 16),    // 377
-    Vec2(10, 3),    // 378
-    Vec2(10, 4),    // 379
-    Vec2(10, 5),    // 380
-    Vec2(10, 6),    // 381
-    Vec2(10, 7),    // 382
-    Vec2(10, 8),    // 383
-    Vec2(10, 9),    // 384
-    Vec2(10, 10),    // 385
-    Vec2(10, 12),    // 386
-    Vec2(10, 16),    // 387
-    Vec2(2, 2),    // 388
-    Vec2(8, 2),    // 389
-    Vec2(2, 2),    // 390
-    Vec2(8, 2),    // 391
-    Vec2(2, 2),    // 392
-    Vec2(6, 2),    // 393
-    Vec2(10, 2),    // 394
-    Vec2(2, 2),    // 395
-    Vec2(6, 2),    // 396
-    Vec2(10, 2),    // 397
+    Vec2(2, -10),    // 226
+    Vec2(2, -9),    // 227
+    Vec2(2, -8),    // 228
+    Vec2(2, -7),    // 229
+    Vec2(2, -6),    // 230
+    Vec2(2, -5),    // 231
+    Vec2(2, -4),    // 232
+    Vec2(2, -3),    // 233
+    Vec2(2, -2),    // 234
+    Vec2(2, -1),    // 235
+    Vec2(2, 0),    // 236
+    Vec2(2, 1),    // 237
+    Vec2(2, 1),    // 238
+    Vec2(2, 2),    // 239
+    Vec2(8, -11),    // 240
+    Vec2(8, -10),    // 241
+    Vec2(8, -9),    // 242
+    Vec2(8, -8),    // 243
+    Vec2(8, -7),    // 244
+    Vec2(8, -6),    // 245
+    Vec2(8, -5),    // 246
+    Vec2(8, -4),    // 247
+    Vec2(8, -3),    // 248
+    Vec2(8, -2),    // 249
+    Vec2(8, -1),    // 250
+    Vec2(8, 0),    // 251
+    Vec2(8, 1),    // 252
+    Vec2(8, 1),    // 253
+    Vec2(8, 2),    // 254
+    Vec2(2, 3),    // 255
+    Vec2(2, 4),    // 256
+    Vec2(2, 5),    // 257
+    Vec2(2, 6),    // 258
+    Vec2(2, 7),    // 259
+    Vec2(2, 8),    // 260
+    Vec2(2, 9),    // 261
+    Vec2(2, 10),    // 262
+    Vec2(2, 11),    // 263
+    Vec2(2, 12),    // 264
+    Vec2(2, 13),    // 265
+    Vec2(2, 14),    // 266
+    Vec2(2, 15),    // 267
+    Vec2(2, 15),    // 268
+    Vec2(8, 3),    // 269
+    Vec2(8, 4),    // 270
+    Vec2(8, 5),    // 271
+    Vec2(8, 6),    // 272
+    Vec2(8, 7),    // 273
+    Vec2(8, 8),    // 274
+    Vec2(8, 9),    // 275
+    Vec2(8, 10),    // 276
+    Vec2(8, 11),    // 277
+    Vec2(8, 12),    // 278
+    Vec2(8, 13),    // 279
+    Vec2(8, 14),    // 280
+    Vec2(8, 15),    // 281
+    Vec2(8, 15),    // 282
+    Vec2(2, 2),    // 283
+    Vec2(6, 2),    // 284
+    Vec2(10, 2),    // 285
+    Vec2(2, -11),    // 286
+    Vec2(2, -9),    // 287
+    Vec2(2, -7),    // 288
+    Vec2(2, -5),    // 289
+    Vec2(2, -3),    // 290
+    Vec2(2, -1),    // 291
+    Vec2(2, 0),    // 292
+    Vec2(2, 1),    // 293
+    Vec2(2, 1),    // 294
+    Vec2(2, 2),    // 295
+    Vec2(6, -11),    // 296
+    Vec2(6, -9),    // 297
+    Vec2(6, -7),    // 298
+    Vec2(6, -5),    // 299
+    Vec2(6, -3),    // 300
+    Vec2(6, -1),    // 301
+    Vec2(6, 0),    // 302
+    Vec2(6, 1),    // 303
+    Vec2(6, 1),    // 304
+    Vec2(6, 2),    // 305
+    Vec2(10, -11),    // 306
+    Vec2(10, -9),    // 307
+    Vec2(10, -7),    // 308
+    Vec2(10, -5),    // 309
+    Vec2(10, -3),    // 310
+    Vec2(10, -1),    // 311
+    Vec2(10, 0),    // 312
+    Vec2(10, 1),    // 313
+    Vec2(10, 1),    // 314
+    Vec2(10, 2),    // 315
+    Vec2(2, 3),    // 316
+    Vec2(2, 4),    // 317
+    Vec2(2, 5),    // 318
+    Vec2(2, 6),    // 319
+    Vec2(2, 7),    // 320
+    Vec2(2, 8),    // 321
+    Vec2(2, 9),    // 322
+    Vec2(2, 10),    // 323
+    Vec2(2, 12),    // 324
+    Vec2(2, 16),    // 325
+    Vec2(6, 3),    // 326
+    Vec2(6, 4),    // 327
+    Vec2(6, 5),    // 328
+    Vec2(6, 6),    // 329
+    Vec2(6, 7),    // 330
+    Vec2(6, 8),    // 331
+    Vec2(6, 9),    // 332
+    Vec2(6, 10),    // 333
+    Vec2(6, 12),    // 334
+    Vec2(6, 16),    // 335
+    Vec2(10, 3),    // 336
+    Vec2(10, 4),    // 337
+    Vec2(10, 5),    // 338
+    Vec2(10, 6),    // 339
+    Vec2(10, 7),    // 340
+    Vec2(10, 8),    // 341
+    Vec2(10, 9),    // 342
+    Vec2(10, 10),    // 343
+    Vec2(10, 12),    // 344
+    Vec2(10, 16),    // 345
+    Vec2(2, -11),    // 346
+    Vec2(2, -10),    // 347
+    Vec2(2, -9),    // 348
+    Vec2(2, -8),    // 349
+    Vec2(2, -7),    // 350
+    Vec2(2, -6),    // 351
+    Vec2(2, -5),    // 352
+    Vec2(2, -4),    // 353
+    Vec2(2, -3),    // 354
+    Vec2(2, -2),    // 355
+    Vec2(2, -1),    // 356
+    Vec2(2, 0),    // 357
+    Vec2(2, 1),    // 358
+    Vec2(2, 1),    // 359
+    Vec2(2, 2),    // 360
+    Vec2(6, -11),    // 361
+    Vec2(6, -10),    // 362
+    Vec2(6, -9),    // 363
+    Vec2(6, -8),    // 364
+    Vec2(6, -7),    // 365
+    Vec2(6, -6),    // 366
+    Vec2(6, -5),    // 367
+    Vec2(6, -4),    // 368
+    Vec2(6, -3),    // 369
+    Vec2(6, -2),    // 370
+    Vec2(6, -1),    // 371
+    Vec2(6, 0),    // 372
+    Vec2(6, 1),    // 373
+    Vec2(6, 1),    // 374
+    Vec2(6, 2),    // 375
+    Vec2(10, -11),    // 376
+    Vec2(10, -10),    // 377
+    Vec2(10, -9),    // 378
+    Vec2(10, -8),    // 379
+    Vec2(10, -7),    // 380
+    Vec2(10, -6),    // 381
+    Vec2(10, -5),    // 382
+    Vec2(10, -4),    // 383
+    Vec2(10, -3),    // 384
+    Vec2(10, -2),    // 385
+    Vec2(10, -1),    // 386
+    Vec2(10, 0),    // 387
+    Vec2(10, 1),    // 388
+    Vec2(10, 1),    // 389
+    Vec2(10, 2),    // 390
+    Vec2(2, 3),    // 391
+    Vec2(2, 4),    // 392
+    Vec2(2, 5),    // 393
+    Vec2(2, 6),    // 394
+    Vec2(2, 7),    // 395
+    Vec2(2, 8),    // 396
+    Vec2(2, 9),    // 397
+    Vec2(2, 10),    // 398
+    Vec2(2, 11),    // 399
+    Vec2(2, 12),    // 400
+    Vec2(2, 13),    // 401
+    Vec2(2, 14),    // 402
+    Vec2(2, 15),    // 403
+    Vec2(2, 15),    // 404
+    Vec2(6, 3),    // 405
+    Vec2(6, 4),    // 406
+    Vec2(6, 5),    // 407
+    Vec2(6, 6),    // 408
+    Vec2(6, 7),    // 409
+    Vec2(6, 8),    // 410
+    Vec2(6, 9),    // 411
+    Vec2(6, 10),    // 412
+    Vec2(6, 11),    // 413
+    Vec2(6, 12),    // 414
+    Vec2(6, 13),    // 415
+    Vec2(6, 14),    // 416
+    Vec2(6, 15),    // 417
+    Vec2(6, 15),    // 418
+    Vec2(10, 3),    // 419
+    Vec2(10, 4),    // 420
+    Vec2(10, 5),    // 421
+    Vec2(10, 6),    // 422
+    Vec2(10, 7),    // 423
+    Vec2(10, 8),    // 424
+    Vec2(10, 9),    // 425
+    Vec2(10, 10),    // 426
+    Vec2(10, 11),    // 427
+    Vec2(10, 12),    // 428
+    Vec2(10, 13),    // 429
+    Vec2(10, 14),    // 430
+    Vec2(10, 15),    // 431
+    Vec2(10, 15),    // 432
+    Vec2(2, 2),    // 433
+    Vec2(8, 2),    // 434
+    Vec2(2, 2),    // 435
+    Vec2(8, 2),    // 436
+    Vec2(2, 2),    // 437
+    Vec2(6, 2),    // 438
+    Vec2(10, 2),    // 439
+    Vec2(2, 2),    // 440
+    Vec2(6, 2),    // 441
+    Vec2(10, 2),    // 442
 };
 
 const static AnimObjData animObjData[] =
@@ -450,37 +495,37 @@ const static AnimObjData animObjData[] =
     { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[195] },    // AnimType_NormalTilesEnter 43
     { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[205] },    // AnimType_NormalTilesExit 44
     { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[215] },    // AnimType_NormalTilesExit 45
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[225] },    // AnimType_MetaTilesEnter 46
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[235] },    // AnimType_MetaTilesEnter 47
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 15, &positions[225] },    // AnimType_MetaTilesEnter 46
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 15, &positions[240] },    // AnimType_MetaTilesEnter 47
     { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[183] },    // AnimType_MetaTilesShow 48
     { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[184] },    // AnimType_MetaTilesShow 49
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[245] },    // AnimType_MetaTilesExit 50
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 10, &positions[255] },    // AnimType_MetaTilesExit 51
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[268] },    // AnimType_NormalTilesEnter 52
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[278] },    // AnimType_NormalTilesEnter 53
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[288] },    // AnimType_NormalTilesEnter 54
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[298] },    // AnimType_NormalTilesExit 55
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[308] },    // AnimType_NormalTilesExit 56
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[318] },    // AnimType_NormalTilesExit 57
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[328] },    // AnimType_MetaTilesEnter 58
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[338] },    // AnimType_MetaTilesEnter 59
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[348] },    // AnimType_MetaTilesEnter 60
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[265] },    // AnimType_MetaTilesShow 61
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[266] },    // AnimType_MetaTilesShow 62
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[267] },    // AnimType_MetaTilesShow 63
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[358] },    // AnimType_MetaTilesExit 64
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[368] },    // AnimType_MetaTilesExit 65
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[378] },    // AnimType_MetaTilesExit 66
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[388] },    // AnimType_MetaTilesReveal 67
-    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[389] },    // AnimType_MetaTilesReveal 68
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[390] },    // AnimType_NormalTilesReveal 69
-    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[391] },    // AnimType_NormalTilesReveal 70
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[392] },    // AnimType_MetaTilesReveal 71
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[393] },    // AnimType_MetaTilesReveal 72
-    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[394] },    // AnimType_MetaTilesReveal 73
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[395] },    // AnimType_NormalTilesReveal 74
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[396] },    // AnimType_NormalTilesReveal 75
-    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[397] },    // AnimType_NormalTilesReveal 76
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 14, &positions[255] },    // AnimType_MetaTilesExit 50
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 14, &positions[269] },    // AnimType_MetaTilesExit 51
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[286] },    // AnimType_NormalTilesEnter 52
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[296] },    // AnimType_NormalTilesEnter 53
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[306] },    // AnimType_NormalTilesEnter 54
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[316] },    // AnimType_NormalTilesExit 55
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[326] },    // AnimType_NormalTilesExit 56
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 10, &positions[336] },    // AnimType_NormalTilesExit 57
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 15, &positions[346] },    // AnimType_MetaTilesEnter 58
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 15, &positions[361] },    // AnimType_MetaTilesEnter 59
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 15, &positions[376] },    // AnimType_MetaTilesEnter 60
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[283] },    // AnimType_MetaTilesShow 61
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[284] },    // AnimType_MetaTilesShow 62
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[285] },    // AnimType_MetaTilesShow 63
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 14, &positions[391] },    // AnimType_MetaTilesExit 64
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 14, &positions[405] },    // AnimType_MetaTilesExit 65
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 14, &positions[419] },    // AnimType_MetaTilesExit 66
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[433] },    // AnimType_MetaTilesReveal 67
+    { &Tile2Meta, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[434] },    // AnimType_MetaTilesReveal 68
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[435] },    // AnimType_NormalTilesReveal 69
+    { &Tile2, &Tile2Blank, &Tile2Meta, 0, Layer_BG0, 0, 1, &positions[436] },    // AnimType_NormalTilesReveal 70
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[437] },    // AnimType_MetaTilesReveal 71
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[438] },    // AnimType_MetaTilesReveal 72
+    { &Tile3Meta, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[439] },    // AnimType_MetaTilesReveal 73
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[440] },    // AnimType_NormalTilesReveal 74
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[441] },    // AnimType_NormalTilesReveal 75
+    { &Tile3, &Tile3Blank, &Tile3Meta, 0, Layer_BG0, 0, 1, &positions[442] },    // AnimType_NormalTilesReveal 76
 };
 
 const static AnimData animData[] =
@@ -496,14 +541,14 @@ const static AnimData animData[] =
     { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
     { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
     { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
-    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 3.f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
     { 1.f, true, 0, &animObjData[0]},    // AnimType_HintSlideL
     { 1.f, true, 0, &animObjData[0]},    // AnimType_HintSlideR
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 0, &animObjData[0]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesEnter
+    { 1.1f, false, 0, &animObjData[0]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 0, &animObjData[0]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
+    { 1.1f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.1f, false, 0, &animObjData[0]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 0, &animObjData[0]},    // AnimType_NormalTilesReveal
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
@@ -517,14 +562,14 @@ const static AnimData animData[] =
     { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
     { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
     { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
-    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 3.f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[17]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[18]},    // AnimType_HintSlideR
     { 0.5f, false, 2, &animObjData[42]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 2, &animObjData[44]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 2, &animObjData[46]},    // AnimType_MetaTilesEnter
+    { 1.1f, false, 2, &animObjData[46]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 2, &animObjData[48]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
+    { 1.1f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
     { 1.1f, false, 2, &animObjData[67]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 2, &animObjData[69]},    // AnimType_NormalTilesReveal
     { 1.f, true, 3, &animObjData[19]},    // AnimType_NotWord
@@ -538,14 +583,14 @@ const static AnimData animData[] =
     { 1.f, false, 1, &animObjData[15]},    // AnimType_HintBarAppear
     { 3.f, true, 0, &animObjData[0]},    // AnimType_HintBarIdle
     { 0.3f, false, 1, &animObjData[16]},    // AnimType_HintBarDisappear
-    { 0.75f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
+    { 3.f, false, 0, &animObjData[0]},    // AnimType_HintWindUpSlide
     { 1.f, true, 1, &animObjData[40]},    // AnimType_HintSlideL
     { 1.f, true, 1, &animObjData[41]},    // AnimType_HintSlideR
     { 0.5f, false, 3, &animObjData[52]},    // AnimType_NormalTilesEnter
     { 0.5f, false, 3, &animObjData[55]},    // AnimType_NormalTilesExit
-    { 0.5f, false, 3, &animObjData[58]},    // AnimType_MetaTilesEnter
+    { 1.1f, false, 3, &animObjData[58]},    // AnimType_MetaTilesEnter
     { 0.66f, false, 3, &animObjData[61]},    // AnimType_MetaTilesShow
-    { 0.5f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
+    { 1.1f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
     { 1.1f, false, 3, &animObjData[71]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 3, &animObjData[74]},    // AnimType_NormalTilesReveal
 };
