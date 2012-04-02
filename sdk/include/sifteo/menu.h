@@ -716,6 +716,10 @@ void Menu::transToFinish() {
     for(int col=0; col<kNumTilesX; ++col) {
         canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
     }
+    if (assets->header) {
+        Int2 vec = {0, 0};
+        canvas.BG0_drawAsset(vec, *assets->header);
+    }
     if (assets->footer) {
         Int2 vec = { 0, kNumVisibleTilesY - assets->footer->height };
         canvas.BG0_drawAsset(vec, *assets->footer);
