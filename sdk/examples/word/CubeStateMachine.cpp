@@ -1738,12 +1738,27 @@ bool CubeStateMachine::canUseHint() const
 bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
                                              unsigned &tiltDirection) const
 {
-    unsigned maxLetters = GameStateMachine::getCurrentMaxLettersPerCube();
+    unsigned maxLetters;
+    const char *letters;
+    unsigned start;
+    if (Dictionary::currentIsMetaPuzzle())
+    {
+        maxLetters = mMetaLettersPerCube;
+        letters = mMetaLetters;
+        start = mMetaLettersStart;
+    }
+    else
+    {
+        maxLetters = mPuzzleLettersPerCube;
+        letters = mLetters;
+        start = mLettersStart;
+    }
     bool allLettersSame = true;
-    char letter = mLetters[0];
+
+    const char letter = letters[0];
     for (unsigned j=0; j < maxLetters; ++j)
     {
-        if (mLetters[j] != letter)
+        if (letters[j] != letter)
         {
             allLettersSame = false;
             break;
@@ -1765,7 +1780,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
         // compare all the letters, using the offset
         for (unsigned j=0; j < maxLetters; ++j)
         {
-            if (mLetters[(j + newLettersStart) % arraysize(mLetters)] !=
+            if (letters[(j + newLettersStart) % maxLetters] !=
                     mHintSolution[j])
             {
                 allMatch = false;
@@ -1782,6 +1797,6 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
         }
     }
 
-    tiltDirection = (mLettersStart + maxLetters - newLettersStart) % maxLetters;
+    tiltDirection = (start + maxLetters - newLettersStart) % maxLetters;
     return allMatch && tiltDirection != 0;
 }
