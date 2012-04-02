@@ -18,6 +18,7 @@ struct Book
     Book(const char *title = 0, unsigned int numPuzzles = 0, int unlockBuddyId = -1)
         : mTitle(title)
         , mNumPuzzles(numPuzzles)
+        , mUnlockBuddyId(unlockBuddyId)
     {
     }
     

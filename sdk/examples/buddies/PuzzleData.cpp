@@ -141,7 +141,7 @@ const Puzzle &GetPuzzleDefault()
 
 unsigned int GetNumBooks()
 {
-    return arraysize(kPuzzles);
+    return arraysize(kBooks);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

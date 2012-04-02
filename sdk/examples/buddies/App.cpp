@@ -231,6 +231,17 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+BuddyId GetUnlockedBuddy(unsigned int bookIndex)
+{
+    ASSERT(bookIndex < GetNumBooks());
+    const Book &book = GetBook(bookIndex);
+    LOG(("book unlocked = %d\n", book.mUnlockBuddyId));
+    return book.mUnlockBuddyId == -1 ? BUDDY_GLUV : BuddyId(book.mUnlockBuddyId);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
@@ -301,11 +312,12 @@ void DrawStoryBookTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsign
 {
     cubeWrapper.DrawBackground(*kStoryBookTitles[bookIndex]);
     
-    // TODO: Use actual unlocked sprite
+    BuddyId buddyId = GetUnlockedBuddy(bookIndex);
+    ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
         Vec2((VidMode::LCD_width / 2) - 32, 20U),
-        *kBuddySpritesFront[0]);
+        *kBuddySpritesFront[buddyId]);
     
     String<16> bufferTitle;
     bufferTitle << GetBook(bookIndex).mTitle;
@@ -512,31 +524,30 @@ void DrawCutsceneStory(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, Int2 scroll, bool jump)
+void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 scroll, bool jump)
 {
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
-    
     int jump_offset = 4;
     
     int x = (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE);
     int y = jump ? 28 - jump_offset : 28;
     y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
     
-    // TODO: Use actual unlocked sprite
-    cubeWrapper.DrawSprite(0, Vec2(x, y), *kBuddySpritesFront[0]);
+    BuddyId buddyId = GetUnlockedBuddy(bookIndex + 1);
+    ASSERT(buddyId < arraysize(kBuddySpritesFront));
+    cubeWrapper.DrawSprite(0, Vec2(x, y), *kBuddySpritesFront[buddyId]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, Int2 scroll)
+void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 scroll)
 {
-    // TODO: Use actual unlocked sprite
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
+    BuddyId buddyId = GetUnlockedBuddy(bookIndex + 1);
+    ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
         Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U),
-        *kBuddySpritesFront[0]);
+        *kBuddySpritesFront[buddyId]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -951,6 +962,11 @@ void App::Init()
     }
     
     LoadData();
+    
+    for (int i = 0; i < GetNumBooks(); ++i)
+    {
+        LOG(("unlocked = %d\n", GetBook(i).mUnlockBuddyId));
+    }
     
     mChannel.init();
 }
@@ -2877,8 +2893,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
             {
-                // TODO: Use unlocked buddy for ribbon
-                const AssetImage &ribbon = *kBuddyRibbons[0];
+                BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                ASSERT(buddyId < arraysize(kBuddyRibbons));
+                const AssetImage &ribbon = *kBuddyRibbons[buddyId];
+                
+                LOG(("Unlocked %u\n", buddyId));
                 
                 int y = mBackgroundScroll.y - ribbon.height;
                 int assetOffset = 0;
@@ -2896,7 +2915,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     assetHeight = ribbon.height - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
-                DrawUnlocked3Sprite(cubeWrapper, mBackgroundScroll, mCutsceneSpriteJump0);
+                DrawUnlocked3Sprite(cubeWrapper, mStoryBookIndex, mBackgroundScroll, mCutsceneSpriteJump0);
                 
                 ASSERT(assetOffset >= 0 && assetOffset <  int(ribbon.height));
                 ASSERT(assetHeight >  0 && assetHeight <= int(ribbon.height));
@@ -2919,14 +2938,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
                     UiCongratulations);
                 
-                DrawUnlocked4Sprite(cubeWrapper, mBackgroundScroll);
+                DrawUnlocked4Sprite(cubeWrapper, mStoryBookIndex, mBackgroundScroll);
                 
-                // TODO: Use unlocked buddy for ribbon
+                BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                ASSERT(buddyId < arraysize(kBuddyRibbons));
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(0, 11),
                     Vec2(-mBackgroundScroll.x, 0),
                     Vec2(kMaxTilesX + mBackgroundScroll.x, int(kBuddyRibbons[0]->height)),
-                    *kBuddyRibbons[0]);
+                    *kBuddyRibbons[buddyId]);
             }
             
             // Moving on...
@@ -2942,8 +2962,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     
                     int x = 32 + (kMaxTilesX + mBackgroundScroll.x) * 8;
                     
-                    // TODO: Use actual unlocked sprite
-                    cubeWrapper.DrawSprite(1, Vec2(x, 14), *kBuddySpritesFront[0]);
+                    BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                    ASSERT(buddyId < arraysize(kBuddySpritesFront));
+                    cubeWrapper.DrawSprite(1, Vec2(x, 14), *kBuddySpritesFront[buddyId]);
                 }
                 else
                 {
@@ -2972,8 +2993,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 {
                     cubeWrapper.DrawBackground(StoryBookStartNext);
                     
-                    // TODO: Use actual unlocked sprite
-                    cubeWrapper.DrawSprite(0, Vec2(32, 14), *kBuddySpritesFront[0]);
+                    BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                    ASSERT(buddyId < arraysize(kBuddySpritesFront));
+                    cubeWrapper.DrawSprite(0, Vec2(32, 14), *kBuddySpritesFront[buddyId]);
                 }
                 else
                 {
