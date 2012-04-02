@@ -2992,7 +2992,7 @@ void App::LoadData()
     mSaveDataStoryPuzzleProgress = 0;
     ASSERT(GetNumBooks() > 0);
     ASSERT(GetBook(0).mUnlockBuddyId >= 0 && GetBook(0).mUnlockBuddyId < NUM_BUDDIES);
-    mSaveDataBuddyUnlockMask = 1 << GetBook(0).mUnlockBuddyId;
+    mSaveDataBuddyUnlockMask = 1 << GetBook(0).mUnlockBuddyId | 1 << GetBook(2).mUnlockBuddyId;
     mSaveDataBestTimes[0] = 0.0f;
     mSaveDataBestTimes[1] = 0.0f;
     mSaveDataBestTimes[2] = 0.0f;
@@ -3637,16 +3637,16 @@ bool App::AnyTouchEnd() const
 
 int App::NextUnlockedBuddy() const
 {
-    for (int i = 0; i < BUDDY_INVISIBLE; ++i)
+    for (int i = 0; i < GetNumBooks(); ++i)
     {
-        unsigned int buddyMask = 1 << i;
+        unsigned int buddyMask = 1 << GetBook(i).mUnlockBuddyId;
         
         bool inSaveData = (mSaveDataBuddyUnlockMask & buddyMask) != 0;
         bool inRuntimeData = (mStoryBuddyUnlockMask & buddyMask) != 0;
         
         if (inSaveData && !inRuntimeData)
         {
-            return i;
+            return GetBook(i).mUnlockBuddyId;
         }
     }
     
