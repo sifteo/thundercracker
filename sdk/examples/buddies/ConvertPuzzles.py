@@ -130,7 +130,12 @@ def ConvertPuzzles(src, dest):
             fout.write('const Book kBooks[%d] =\n' % num_books)
             fout.write('{\n')
             for i_book, book in enumerate(j['books']):
-                fout.write('    Book("%s", %d),\n' % (book['title'], len(book['puzzles'])))
+                unlock = book['unlock']
+                if unlock == None:
+                    unlock = '-1'
+                else:
+                    unlock = BuddyToId(unlock)
+                fout.write('    Book("%s", %d, %s),\n' % (book['title'], len(book['puzzles']), unlock))
             fout.write('};\n')
             fout.write('\n')
             

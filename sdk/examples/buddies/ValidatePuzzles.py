@@ -5,7 +5,6 @@ script to validate JSON puzzles in CubeBuddies format.
 
 ####################################################################################################
 # TODO: double-click error report
-# TODO: version upgrades
 # TODO: find a better alternative to the global prop_stack
 ####################################################################################################
 
@@ -19,7 +18,9 @@ import json
 validated = True
 prop_stack = []
 
-version_current = 2
+version_current = 3
+
+# TODO: pull all these from the C++ headers?
 buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro', 'invisible']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
@@ -65,7 +66,19 @@ def Upgrade1_2(j):
     del j['puzzles']
     return j
 
-upgrades = [None, Upgrade1_2]
+def Upgrade2_3(j):
+    print 'UPGRADE: Version 2 => 3'
+    
+    # Upgrade Version
+    j['version'] = 3
+    
+    # Add unlock buddy
+    for book in j['books']:
+        book['unlock'] = ""
+    
+    return j
+
+upgrades = [None, Upgrade1_2, Upgrade2_3]
 
 ####################################################################################################
 # Utility

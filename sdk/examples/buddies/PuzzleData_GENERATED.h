@@ -326,9 +326,9 @@ const Piece kPiecesEnd_2_1[][NUM_SIDES] =
 
 const Book kBooks[3] =
 {
-    Book("Meet Suli!", 3),
-    Book("Meet Boff!", 1),
-    Book("Meet Gluv!", 2),
+    Book("Meet Suli!", 3, BUDDY_SULI),
+    Book("Meet Boff!", 1, BUDDY_BOFF),
+    Book("Meet Gluv!", 2, BUDDY_GLUV),
 };
 
 const unsigned int kBookOffsets[3] = { 0, 3, 4 };
