@@ -512,8 +512,8 @@ void Menu::stateStart() {
         }
 
         // Allocate tiles for the footer, and draw it.
-        if (assets->footer) {
-            const AssetImage& footer = *assets->footer;
+        if (kFooterHeight) {
+            const AssetImage& footer = assets->tips[0] ? *assets->tips[0] : *assets->footer;
             _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
             _SYS_vbuf_writei(
                 &pCube->vbuf.sys, 
@@ -976,10 +976,10 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 }
 
 void Menu::drawFooter(bool force) {
-    const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
-    const float kSecondsPerTip = 4.f;
+    if (numTips == 0) return;
 
-    if (numTips == 0 || assets->footer == NULL) return;
+    const AssetImage& footer = *assets->tips[currentTip];
+    const float kSecondsPerTip = 4.f;
 
     if (SystemTime::now() - prevTipTime > kSecondsPerTip || force) {
         prevTipTime = SystemTime::now();
