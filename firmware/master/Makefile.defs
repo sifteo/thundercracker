@@ -32,6 +32,10 @@ endif
 # Always build with debug symbols (It can't hurt)
 CFLAGS += -g3
 
+# NOTE: putting DEPFLAGS here separately, since $(@F) didn't want to expand
+# properly when included as part of CFLAGS/CCFLAGS
+DEPFLAGS = -MD -MP -MF .dep/$(@F).d
+
 # Heavy debug options, only enabled by an explicit environment variable.
 # This can prevent the firmware from operating normally, so only enable it
 # if you know what you're doing! The main effect it has right now is to make

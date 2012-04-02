@@ -28,10 +28,6 @@ endif
 
 include Makefile.defs
 
-# NOTE: putting DEPFLAGS here separately, since $(@F) didn't want to expand
-# properly when included as part of CFLAGS/CCFLAGS
-DEPFLAGS = -MD -MP -MF .dep/$(@F).d
-
 # Override default CDEPS
 CDEPS := common/syscall-table.def
 
