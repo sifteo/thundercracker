@@ -1664,8 +1664,11 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
             {
                 if (GameStateMachine::getInstance().isMetaLetterIndexUnlockedLast(i))
                 {
-                    params->mMetaLetterIndex = i - m + mMetaLettersStart;
-                    params->mMetaLetterIndex = (params->mMetaLetterIndex % mMetaLettersPerCube);
+                    // dest = (src - start) % lpc = (src + (lpc - start)) % lpc
+                    params->mMetaLetterIndex =
+                            (i - m) + mMetaLettersPerCube - mMetaLettersStart;
+                    params->mMetaLetterIndex =
+                            (params->mMetaLetterIndex % mMetaLettersPerCube);
                     break;
                 }
             }
