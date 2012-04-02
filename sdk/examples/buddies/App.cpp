@@ -235,8 +235,7 @@ void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
     float scoreTimer,
-    unsigned int place,
-    Int2 scroll)
+    unsigned int place)
 {
     // Background
     const AssetImage *backgrounds[] =
@@ -247,50 +246,40 @@ void DrawShuffleScore(
     };
     const AssetImage &background = place < arraysize(backgrounds) ? *backgrounds[place] : ShuffleBestTimes;
     
-    int xOffset = kMaxTilesX + scroll.x;
+    cubeWrapper.DrawBackground(background);
     
-    cubeWrapper.DrawBackgroundPartial(
-        Vec2(xOffset, 0),
-        Vec2(0, 0),
-        Vec2(-scroll.x, kMaxTilesY),
-        background);
-    
-    // Doing text scroll on BG1 is a lotta work, so just pop it on when we hit target.
-    if (xOffset == 0)
+    // Best Times Text
+    const char *labels[] =
     {
-        // Best Times Text
-        const char *labels[] =
-        {
-            "1st ",
-            "2nd ",
-            "3rd ",
-        };
+        "1st ",
+        "2nd ",
+        "3rd ",
+    };
+    
+    for (unsigned int i = 0; i < app.GetNumBestTimes(); ++i)
+    {
+        int minutes, seconds;
+        ScoreTimerToTime(app.GetBestTime(i), minutes, seconds);
         
-        for (unsigned int i = 0; i < app.GetNumBestTimes(); ++i)
-        {
-            int minutes, seconds;
-            ScoreTimerToTime(app.GetBestTime(i), minutes, seconds);
-            
-            String<16> buffer;
-            buffer << labels[i] << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
-            
-            cubeWrapper.DrawUiText(
-                Vec2(4, 4 + (int(i) * 2)),
-                place == i ? UiFontWhite : UiFontOrange,
-                buffer.c_str());
-        }
+        String<16> buffer;
+        buffer << labels[i] << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
         
-        // Optional "Your Score" for non-high scores
-        if (place >= app.GetNumBestTimes())
-        {
-            int minutes, seconds;
-            ScoreTimerToTime(scoreTimer, minutes, seconds);
-            
-            String<16> buffer;
-            buffer << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+        cubeWrapper.DrawUiText(
+            Vec2(4, 4 + (int(i) * 2)),
+            place == i ? UiFontWhite : UiFontOrange,
+            buffer.c_str());
+    }
+    
+    // Optional "Your Score" for non-high scores
+    if (place >= app.GetNumBestTimes())
+    {
+        int minutes, seconds;
+        ScoreTimerToTime(scoreTimer, minutes, seconds);
         
-            cubeWrapper.DrawUiText(Vec2(3 + (kMaxTilesX + scroll.x), 11), UiFontWhite, buffer.c_str());
-        }
+        String<16> buffer;
+        buffer << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
+    
+        cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, buffer.c_str());
     }
 }
 
@@ -850,10 +839,8 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_SOLVED",
     "GAME_STATE_STORY_CUTSCENE_END_1",
     "GAME_STATE_STORY_CUTSCENE_END_2",
-    "GAME_STATE_STORY_UNLOCKED_1",
     "GAME_STATE_STORY_UNLOCKED_2",
     "GAME_STATE_STORY_UNLOCKED_3",
-    "GAME_STATE_STORY_UNLOCKED_4",
     "GAME_STATE_STORY_CHAPTER_END",
 };
 
@@ -1378,7 +1365,6 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
         {
             mDelayTimer = kStateTimeDelayLong;
-            mBackgroundScroll = Vec2(0, 0);
             break;
         }
         case GAME_STATE_SHUFFLE_CHARACTER_SPLASH:
@@ -1462,11 +1448,6 @@ void App::StartGameState(GameState gameState)
             mCutsceneSpriteJump0 = false;
             break;
         }
-        case GAME_STATE_SHUFFLE_END_GAME_NAV:
-        {
-            mBackgroundScroll = Vec2(0, 0);
-            break;
-        }
         case GAME_STATE_STORY_START:
         {
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -1483,7 +1464,7 @@ void App::StartGameState(GameState gameState)
             if (NextUnlockedBuddy() != -1)
             {
                 mStoryPreGame = true;
-                StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                StartGameState(GAME_STATE_STORY_UNLOCKED_2);
             }
             else
             {
@@ -1615,11 +1596,6 @@ void App::StartGameState(GameState gameState)
             mCutsceneSpriteJump1 = false;
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_1:
-        {
-            mBackgroundScroll = Vec2(0, 0);
-            break;
-        }
         case GAME_STATE_STORY_UNLOCKED_2:
         {
             mDelayTimer = kStateTimeDelayLong;
@@ -1631,16 +1607,6 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
             mCutsceneSpriteJump0 = false;
-            break;
-        }
-        case GAME_STATE_STORY_UNLOCKED_4:
-        {
-            mBackgroundScroll = Vec2(0, 0);
-            break;
-        }
-        case GAME_STATE_STORY_CHAPTER_END:
-        {
-            mBackgroundScroll = Vec2(-kMaxTilesX, 0);
             break;
         }
         default:
@@ -1769,11 +1735,6 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
         {
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                --mBackgroundScroll.x;
-            }
-            
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
@@ -2029,11 +1990,6 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                --mBackgroundScroll.x;
-            }
-            
             if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
@@ -2308,7 +2264,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (NextUnlockedBuddy() != -1)
                     {
-                        StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                        StartGameState(GAME_STATE_STORY_UNLOCKED_2);
                     }
                     else
                     {
@@ -2324,24 +2280,12 @@ void App::UpdateGameState(float dt)
             {
                 if (NextUnlockedBuddy() != -1)
                 {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                    StartGameState(GAME_STATE_STORY_UNLOCKED_2);
                 }
                 else
                 {
                     StartGameState(GAME_STATE_STORY_CHAPTER_END);
                 }
-            }
-            break;
-        }
-        case GAME_STATE_STORY_UNLOCKED_1:
-        {
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                --mBackgroundScroll.x;
-            }
-            else
-            {
-                StartGameState(GAME_STATE_STORY_UNLOCKED_2);
             }
             break;
         }
@@ -2387,43 +2331,31 @@ void App::UpdateGameState(float dt)
                 {
                     if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
                     {
-                        StartGameState(GAME_STATE_STORY_UNLOCKED_4);
+                        int buddyId = NextUnlockedBuddy();
+                        ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
+                        
+                        mStoryBuddyUnlockMask |= 1 << buddyId;
+                        
+                        if (NextUnlockedBuddy() != -1)
+                        {
+                            StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                        }
+                        else
+                        {
+                            if (mStoryPreGame)
+                            {
+                                mStoryPreGame = false;
+                                StartGameState(GAME_STATE_STORY_BOOK_START);
+                            }
+                            else
+                            {
+                                StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                            }
+                        }
                     }
                     else
                     {
                         UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, kStoryUnlockJumpChance, 1);
-                    }
-                }
-            }
-            break;
-        }
-        case GAME_STATE_STORY_UNLOCKED_4:
-        {
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                --mBackgroundScroll.x;
-            }
-            else
-            {
-                int buddyId = NextUnlockedBuddy();
-                ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
-                
-                mStoryBuddyUnlockMask |= 1 << buddyId;
-                
-                if (NextUnlockedBuddy() != -1)
-                {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
-                }
-                else
-                {
-                    if (mStoryPreGame)
-                    {
-                        mStoryPreGame = false;
-                        StartGameState(GAME_STATE_STORY_BOOK_START);
-                    }
-                    else
-                    {
-                        StartGameState(GAME_STATE_STORY_CHAPTER_END);
                     }
                 }
             }
@@ -2555,18 +2487,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
         {
-            cubeWrapper.DrawBackgroundPartial(
-                Vec2(0, 0),
-                Vec2(-mBackgroundScroll.x, 0),
-                Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
-                ShuffleTitleScreen);
-            
-            cubeWrapper.DrawBackgroundPartial(
-                Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                Vec2(0, 0),
-                Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                ShuffleMemorizeFaces);
-            
+            cubeWrapper.DrawBackground(ShuffleMemorizeFaces);
             break;
         }
         case GAME_STATE_SHUFFLE_CHARACTER_SPLASH:
@@ -2669,27 +2590,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            DrawCutsceneShuffle(cubeWrapper, mBackgroundScroll, cubeWrapper.GetBuddyId(), mCutsceneSpriteJump0);
-            
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
-                DrawShuffleScore(*this, cubeWrapper, mScoreTimer, mScorePlace, mBackgroundScroll);
+                DrawShuffleScore(*this, cubeWrapper, mScoreTimer, mScorePlace);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.DrawBackgroundPartial(
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                    Vec2(0, 0),
-                    Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                    ShuffleEndGameNavReplay);
+                cubeWrapper.DrawBackground(ShuffleEndGameNavReplay);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.DrawBackgroundPartial(
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                    Vec2(0, 0),
-                    Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                    UiEndGameNavExit);
+                cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
         }
@@ -2861,28 +2772,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_1:
-        {
-            // TODO: Put into a function
-        
-            cubeWrapper.DrawBackgroundPartial(
-                Vec2(0, 0),
-                Vec2(-mBackgroundScroll.x, 0),
-                Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
-                UiBackground);
-            
-            cubeWrapper.DrawBackgroundPartial(
-                Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                Vec2(0, 0),
-                Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                UiCongratulations);
-            
-            break;
-        }
         case GAME_STATE_STORY_UNLOCKED_2:
         {
-            // TODO: cleanup and put in a function for sliding
-        
             cubeWrapper.DrawBackground(UiCongratulations);
             
             if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
@@ -2950,68 +2841,6 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(0, assetOffset),
                     Vec2(kMaxTilesX, assetHeight),
                     ribbon);
-            }
-            break;
-        }
-        case GAME_STATE_STORY_UNLOCKED_4:
-        {
-            // Moving off...
-            if (mBackgroundScroll.x > -kMaxTilesX)
-            {
-                cubeWrapper.DrawBackgroundPartial(
-                    Vec2(0, 0),
-                    Vec2(-mBackgroundScroll.x, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
-                    UiCongratulations);
-                
-                int buddyId = NextUnlockedBuddy();
-                ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
-                
-                DrawUnlocked4Sprite(cubeWrapper, BuddyId(buddyId), mBackgroundScroll);
-                
-                ASSERT(buddyId < arraysize(kBuddyRibbons));
-                cubeWrapper.DrawUiAssetPartial(
-                    Vec2(0, 11),
-                    Vec2(-mBackgroundScroll.x, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(kBuddyRibbons[buddyId]->height)),
-                    *kBuddyRibbons[buddyId]);
-            }
-            
-            // Moving on...
-            if (cubeWrapper.GetId() == 0)
-            {
-                if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
-                {
-                    cubeWrapper.DrawBackgroundPartial(
-                        Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                        Vec2(0, 0),
-                        Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                        StoryBookStartNext);
-                    
-                    int x = 32 + (kMaxTilesX + mBackgroundScroll.x) * 8;
-                    
-                    int buddyId = NextUnlockedBuddy();
-                    ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
-                
-                    ASSERT(buddyId < arraysize(kBuddySpritesFront));
-                    cubeWrapper.DrawSprite(1, Vec2(x, 14), *kBuddySpritesFront[buddyId]);
-                }
-                else
-                {
-                    DrawStoryChapterNext(cubeWrapper, mStoryBookIndex, mStoryPuzzleIndex, mBackgroundScroll);
-                }
-            }
-            else if (cubeWrapper.GetId() == 1)
-            {
-                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
-            }
-            else if (cubeWrapper.GetId() == 2)
-            {
-                cubeWrapper.DrawBackgroundPartial(
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
-                    Vec2(0, 0),
-                    Vec2(-mBackgroundScroll.x, kMaxTilesY),
-                    UiEndGameNavExit);
             }
             break;
         }
