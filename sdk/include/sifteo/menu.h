@@ -13,6 +13,14 @@
 #ifndef _SIFTEO_MENU_H
 #define _SIFTEO_MENU_H
 
+//#define MENU_LOGS_ENABLED 1
+
+#ifdef MENU_LOGS_ENABLED
+#define MENU_LOG(...) LOG((__VA_ARGS__))
+#else
+#define MENU_LOG
+#endif
+
 #include <stdint.h>
 #include <sifteo.h>
 
@@ -456,26 +464,26 @@ void Menu::changeState(MenuState newstate) {
     stateFinished = false;
     currentState = newstate;
 
-    LOG(("STATE: -> "));
+    MENU_LOG("STATE: -> ");
     switch(currentState) {
         case MENU_STATE_START:
-            LOG(("start\n"));
+            MENU_LOG("start\n");
             transToStart();
             break;
         case MENU_STATE_STATIC:
-            LOG(("static\n"));
+            MENU_LOG("static\n");
             transToStatic();
             break;
         case MENU_STATE_TILTING:
-            LOG(("tilting\n"));
+            MENU_LOG("tilting\n");
             transToTilting();
             break;
         case MENU_STATE_INERTIA:
-            LOG(("inertia\n"));
+            MENU_LOG("inertia\n");
             transToInertia();
             break;
         case MENU_STATE_FINISH:
-            LOG(("finish\n"));
+            MENU_LOG("finish\n");
             transToFinish();
             break;
     }
@@ -799,33 +807,33 @@ void Menu::transFromFinish() {
  */
 
 void Menu::handleNeighborAdd() {
-    LOG(("Default handler: neighborAdd\n"));
+    MENU_LOG("Default handler: neighborAdd\n");
     // TODO: play a sound
 }
 
 void Menu::handleNeighborRemove() {
-    LOG(("Default handler: neighborRemove\n"));
+    MENU_LOG("Default handler: neighborRemove\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemArrive() {
-    LOG(("Default handler: itemArrive\n"));
+    MENU_LOG("Default handler: itemArrive\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemDepart() {
-    LOG(("Default handler: itemDepart\n"));
+    MENU_LOG("Default handler: itemDepart\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemPress() {
-    LOG(("Default handler: itemPress\n"));
+    MENU_LOG("Default handler: itemPress\n");
     // animate out icon
     changeState(MENU_STATE_FINISH);
 }
 
 void Menu::handleExit() {
-    LOG(("Default handler: exit\n"));
+    MENU_LOG("Default handler: exit\n");
     // nothing
 }
 
