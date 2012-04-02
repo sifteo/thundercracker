@@ -839,7 +839,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_SOLVED",
     "GAME_STATE_STORY_CUTSCENE_END_1",
     "GAME_STATE_STORY_CUTSCENE_END_2",
-    "GAME_STATE_STORY_UNLOCKED_2",
+    "GAME_STATE_STORY_UNLOCKED_1",
     "GAME_STATE_STORY_UNLOCKED_3",
     "GAME_STATE_STORY_CHAPTER_END",
 };
@@ -1464,7 +1464,7 @@ void App::StartGameState(GameState gameState)
             if (NextUnlockedBuddy() != -1)
             {
                 mStoryPreGame = true;
-                StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                StartGameState(GAME_STATE_STORY_UNLOCKED_1);
             }
             else
             {
@@ -1596,7 +1596,7 @@ void App::StartGameState(GameState gameState)
             mCutsceneSpriteJump1 = false;
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_STORY_UNLOCKED_1:
         {
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
@@ -2264,7 +2264,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (NextUnlockedBuddy() != -1)
                     {
-                        StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                        StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                     }
                     else
                     {
@@ -2280,7 +2280,7 @@ void App::UpdateGameState(float dt)
             {
                 if (NextUnlockedBuddy() != -1)
                 {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                 }
                 else
                 {
@@ -2289,7 +2289,7 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_STORY_UNLOCKED_1:
         {
             if (mDelayTimer > 0.0f)
             {
@@ -2338,7 +2338,7 @@ void App::UpdateGameState(float dt)
                         
                         if (NextUnlockedBuddy() != -1)
                         {
-                            StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                            StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                         }
                         else
                         {
@@ -2772,7 +2772,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_STORY_UNLOCKED_1:
         {
             cubeWrapper.DrawBackground(UiCongratulations);
             
