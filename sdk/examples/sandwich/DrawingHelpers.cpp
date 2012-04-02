@@ -114,7 +114,7 @@ void ButterflyFriend::Update() {
 //-----------------------------------------------------------------------------
 
 void DrawRoom(ViewMode* gfx, const MapData* pMap, int roomId) {
-	const uint8_t *pTile = pMap->rooms[roomId].tiles;
+	const uint8_t *pTile = pMap->roomTiles[roomId].tiles;
 	const AssetImage& tileset = *pMap->tileset;
 	Int2 p;
 	for(p.y=0; p.y<16; p.y+=2)
@@ -167,7 +167,7 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 		gfx->BG0_drawAsset(
 			Vec2(t.x<<1, t.y<<1),
 			*pMap->tileset,
-			pMap->rooms[loc.x + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
+			pMap->roomTiles[loc.x + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
 		);
 	}
 	
@@ -178,7 +178,7 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 			gfx->BG0_drawAsset(
 				Vec2((8 + t.x)%9<<1, t.y<<1),
 				*pMap->tileset,
-				pMap->rooms[(loc.x+1) + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
+				pMap->roomTiles[(loc.x+1) + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
 			);
 		}
 
@@ -189,7 +189,7 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 				gfx->BG0_drawAsset(
 					Vec2((8 + t.x)%9<<1, (8 + t.y)%9<<1),
 					*pMap->tileset,
-					pMap->rooms[(loc.x+1) + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
+					pMap->roomTiles[(loc.x+1) + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
 				);
 			}
 		}
@@ -203,7 +203,7 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 			gfx->BG0_drawAsset(
 				Vec2(t.x<<1, (8 + t.y)%9<<1),
 				*pMap->tileset,
-				pMap->rooms[loc.x + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
+				pMap->roomTiles[loc.x + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
 			);
 		}
 	}

@@ -11,6 +11,7 @@
 #define BLOCK_SPRITE_ID     4
 
 void RoomView::Init(unsigned roomId) {
+  mWobbles = -1.f;
   Parent()->HideSprites();
   ViewMode mode = Parent()->Graphics();
   Map& map = *gGame.GetMap();
@@ -20,10 +21,8 @@ void RoomView::Init(unsigned roomId) {
   mStartFrame = gGame.AnimFrame();
   ComputeAnimatedTiles();
   Room* r = GetRoom();
-  switch(r->TriggerType()) {
-    case TRIGGER_ITEM: 
-      ShowItem();
-      break;
+  if (r->HasItem()) {
+    ShowItem();
   }
   if (this->Parent() == gGame.GetPlayer()->View()) { 
     ShowPlayer(); 
@@ -69,7 +68,7 @@ void RoomView::Update(float dt) {
         mode.BG0_drawAsset(
           Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap()->Data()->tileset),
-          gGame.GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
+          gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
         );
     }
   }
@@ -88,6 +87,20 @@ void RoomView::Update(float dt) {
     const unsigned hoverTime = (gGame.AnimFrame() - mStartFrame) % HOVER_COUNT;
     Int2 p = 16 * GetRoom()->LocalCenter(0);
     mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + kHoverTable[hoverTime]);
+  }
+
+  // nod or shake
+  if (IsWobbly()) {
+    mWobbles = clamp(mWobbles- 2.f*dt, 0.f, 1.f); // duration = 0.5
+    if (flags.isNodding) {
+      float u = 8.f * 1.3f * mWobbles * sin(M_TAU * mWobbles);
+      mode.BG0_setPanning(Vec2(0.f, u));
+      mode.BG1_setPanning(Vec2(0.f, u));
+    } else {
+      float u = 8.f * 1.1f * mWobbles * sin(5 * M_PI * mWobbles);
+      mode.BG0_setPanning(Vec2(u, 0.f));
+      mode.BG1_setPanning(Vec2(u, 0.f));
+    }
   }
 }
 
@@ -123,6 +136,29 @@ void RoomView::HideOverlay(bool flag) {
     gGame.NeedsSync();
   }
 }
+
+void RoomView::StartNod() {
+  // fill in extra rows (with real data?)
+  ViewMode mode = Parent()->Graphics();
+  for(int i=0; i<16; ++i) {
+    mode.BG0_drawAsset(Vec2(i, 16), BlackTile);
+    mode.BG0_drawAsset(Vec2(i, 17), BlackTile);
+  }
+  mWobbles = 1.f;
+  flags.isNodding = true;
+}
+
+void RoomView::StartShake() {
+  // fill in extra columns (with real data?)
+  ViewMode mode = Parent()->Graphics();
+  for(int i=0; i<16; ++i) {
+    mode.BG0_drawAsset(Vec2(16, i), BlackTile);
+    mode.BG0_drawAsset(Vec2(17, i), BlackTile);
+  }
+  mWobbles = 1.f;
+  flags.isNodding = false;
+}
+
 
 //---------------------------------------------------------------
 // SPRITE METHODS
@@ -232,7 +268,7 @@ void RoomView::DrawTrapdoorFrame(int frame) {
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
   mode.BG0_setPanning(Vec2(0,0));
-  DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId)  ;
+  DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
 
   // hack alert!
   const Room *pRoom = GetRoom();
@@ -266,7 +302,7 @@ void RoomView::ComputeAnimatedTiles() {
   if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
   const AnimatedTileData* pAnims = gGame.GetMap()->Data()->animatedTiles;
   for(unsigned lid=0; lid<64; ++lid) {
-    uint8_t tid = gGame.GetMap()->Data()->rooms[mRoomId].tiles[lid];
+    uint8_t tid = gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[lid];
     bool is_animated = false;
     for(unsigned i=0; i<tc; ++i) {
       if (pAnims[i].tileId == tid) {

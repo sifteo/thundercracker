@@ -1,0 +1,2 @@
+../../../emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator -n 4 &
+../../../firmware/master/master-sim pantera.elf

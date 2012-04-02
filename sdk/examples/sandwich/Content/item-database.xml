@@ -42,14 +42,14 @@
 			NOT FROM SUPER MARIO
 		</description>
 	</item>
-	<item id="basic_key" storage="equipment" trigger="key">
+	<item id="basic_key" storage="equipment">
 		<name>Basic Key</name>
 		<description>
 			Just a plain-old Key
 			Nothing fancy
 		</description>
 	</item>
-	<item id="skeleton_key" storage="equipment" trigger="key">
+	<item id="skeleton_key" storage="equipment">
 		<name>Skeleton Key</name>
 		<description>
 			A skeleton key.

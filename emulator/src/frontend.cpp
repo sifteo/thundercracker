@@ -48,7 +48,7 @@ bool Frontend::init(System *_sys)
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
-    isRotationFixed = false;
+    isRotationFixed = sys->opt_lockRotationByDefault;
 
     /*
      * Create cubes in a grid. Height is the square root of the number
@@ -65,6 +65,10 @@ bool Frontend::init(System *_sys)
                 cubes[cubeID].init(cubeID, &sys->cubes[cubeID], world,
                                    ((gridW - 1) * -0.5 + x) * spacing,
                                    ((gridH - 1) * -0.5 + y) * spacing);
+                if (isRotationFixed) {
+                    cubes[cubeID].toggleRotationLock(isRotationFixed);
+                }
+
             }
     } else {
         gridW = 0;
