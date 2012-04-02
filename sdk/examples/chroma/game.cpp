@@ -1081,11 +1081,12 @@ void Game::ReturnToMainMenu()
 void Game::HandleMainMenu()
 {
     struct MenuItem items[NUM_MAIN_MENU_ITEMS + 1] = { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Settings, NULL}, {NULL, NULL} };
-    struct MenuAssets assets = {&White, NULL, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}};
-
-    Menu menu(&m_cubes[0].GetCube(), &assets, items);
+    struct MenuAssets assets = {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}};
 
     struct MenuEvent e;
+    Menu menu(&m_cubes[0].GetCube(), &assets, items);
+
+    menu.setIconYOffset( 25 );
 
     while(menu.pollEvent(&e))
     {
