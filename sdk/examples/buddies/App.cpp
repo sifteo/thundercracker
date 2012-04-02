@@ -557,7 +557,7 @@ void DrawStoryChapterSummary(CubeWrapper &cubeWrapper, unsigned int bookIndex, u
     cubeWrapper.DrawBackground(StoryProgress);
     
     String<32> buffer0;
-    buffer0 << (puzzleIndex + 1) << "/" << GetNumPuzzles(bookIndex) << " Puzzles";
+    buffer0 << (puzzleIndex + 1) << "/" << GetBook(bookIndex).mNumPuzzles << " Puzzles";
     int x0 = (kMaxTilesX / 2) - (buffer0.size() / 2);
     cubeWrapper.DrawUiText(Vec2(x0, 6), UiFontOrange, buffer0.c_str());
     
@@ -585,7 +585,7 @@ void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsi
     
     if (bgScroll.x == -kMaxTilesX)
     {
-        unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles(bookIndex);
+        unsigned int nextPuzzleIndex = ++puzzleIndex % GetBook(bookIndex).mNumPuzzles;
     
         String<16> buffer;
         buffer << "Chapter " << (nextPuzzleIndex + 1);
@@ -1496,7 +1496,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CHAPTER_START:
         {
-            ASSERT(mStoryPuzzleIndex < GetNumPuzzles(mStoryBookIndex));
+            ASSERT(mStoryPuzzleIndex < GetBook(mStoryBookIndex).mNumPuzzles);
             ResetCubesToPuzzle(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex), true);
             mDelayTimer = kStateTimeDelayLong;
             break;
@@ -2401,7 +2401,7 @@ void App::UpdateGameState(float dt)
         {
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
-                if (++mStoryPuzzleIndex == GetNumPuzzles(mStoryBookIndex))
+                if (++mStoryPuzzleIndex == GetBook(mStoryBookIndex).mNumPuzzles)
                 {
                     ++mStoryBookIndex;
                     mStoryPuzzleIndex = 0;
@@ -2944,7 +2944,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             // Moving on...
             if (cubeWrapper.GetId() == 0)
             {
-                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex))
+                if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
                 {
                     cubeWrapper.DrawBackgroundPartial(
                         Vec2(kMaxTilesX + mBackgroundScroll.x, 0),
@@ -2981,7 +2981,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
-                if ((mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex))
+                if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
                 {
                     cubeWrapper.DrawBackground(StoryBookStartNext);
                     
@@ -3767,7 +3767,7 @@ bool App::AnyTouchEnd() const
 bool App::HasUnlocked() const
 {
     return
-        (mStoryPuzzleIndex + 1) == GetNumPuzzles(mStoryBookIndex) &&
+        (mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles &&
         (mStoryBookIndex   + 1) > mSaveDataStoryBookProgress;
 }
 
