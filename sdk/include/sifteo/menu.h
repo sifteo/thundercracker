@@ -549,7 +549,6 @@ void Menu::transFromStart() {
             neighbors[i].masterSide = SIDE_UNDEFINED;
         }
 
-        updateBG0();
         changeState(MENU_STATE_STATIC);
     }
 }
