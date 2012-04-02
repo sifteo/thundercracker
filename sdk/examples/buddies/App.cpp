@@ -840,7 +840,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_CUTSCENE_END_1",
     "GAME_STATE_STORY_CUTSCENE_END_2",
     "GAME_STATE_STORY_UNLOCKED_1",
-    "GAME_STATE_STORY_UNLOCKED_3",
+    "GAME_STATE_STORY_UNLOCKED_2",
     "GAME_STATE_STORY_CHAPTER_END",
 };
 
@@ -1602,7 +1602,7 @@ void App::StartGameState(GameState gameState)
             mBackgroundScroll = Vec2(0, 0);
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_3:
+        case GAME_STATE_STORY_UNLOCKED_2:
         {
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
@@ -2314,12 +2314,12 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_3);
+                    StartGameState(GAME_STATE_STORY_UNLOCKED_2);
                 }
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_3:
+        case GAME_STATE_STORY_UNLOCKED_2:
         {
             if (mDelayTimer > 0.0f)
             {
@@ -2804,7 +2804,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_3:
+        case GAME_STATE_STORY_UNLOCKED_2:
         {
             cubeWrapper.DrawBackground(UiCongratulations);
             
