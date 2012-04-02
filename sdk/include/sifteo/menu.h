@@ -110,6 +110,7 @@ class Menu {
     static const float kOneG;
     static const uint8_t kNumTilesX = 18;
     static const uint8_t kNumVisibleTilesX = 16;
+    static const uint8_t kNumTilesY = 18;
     static const uint8_t kNumVisibleTilesY = 16;
     static const float kAccelThresholdOn = 1.15f;
     static const float kAccelThresholdOff = 0.85f;
@@ -496,8 +497,8 @@ void Menu::transToStart() {
 void Menu::stateStart() {
     // initialize video state
     canvas.clear();
-    for(unsigned r=0; r<18; ++r)
-        for(unsigned c=0; c<18; ++c)
+    for(unsigned r = 0; r < kNumTilesX; ++r)
+        for(unsigned c = 0; c < kNumTilesY; ++c)
             canvas.BG0_drawAsset(Vec2(c,r), *assets->background);
 
     canvas.BG1_setPanning(Vec2(0, 0));
