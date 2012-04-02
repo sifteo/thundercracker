@@ -25,8 +25,8 @@ enum BuddyId
     BUDDY_BOFF,
     BUDDY_ZORG,
     BUDDY_MARO,
-    BUDDY_INVISIBLE,
     
+    BUDDY_INVISIBLE, // Keep Last
     NUM_BUDDIES,
 };
 

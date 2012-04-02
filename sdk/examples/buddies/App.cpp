@@ -231,16 +231,6 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-BuddyId GetUnlockedBuddy(unsigned int bookIndex)
-{
-    ASSERT(bookIndex < GetNumBooks());
-    const Book &book = GetBook(bookIndex);
-    return book.mUnlockBuddyId == -1 ? BUDDY_GLUV : BuddyId(book.mUnlockBuddyId);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void DrawShuffleScore(
     const App &app,
     CubeWrapper &cubeWrapper,
@@ -311,7 +301,9 @@ void DrawStoryBookTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsign
 {
     cubeWrapper.DrawBackground(*kStoryBookTitles[bookIndex]);
     
-    BuddyId buddyId = GetUnlockedBuddy(bookIndex);
+    ASSERT(bookIndex < GetNumBooks());
+    BuddyId buddyId = GetBook(bookIndex).mUnlockBuddyId;
+    
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
@@ -523,7 +515,7 @@ void DrawCutsceneStory(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 scroll, bool jump)
+void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, BuddyId buddyId, Int2 scroll, bool jump)
 {
     int jump_offset = 4;
     
@@ -531,7 +523,6 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 
     int y = jump ? 28 - jump_offset : 28;
     y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
     
-    BuddyId buddyId = GetUnlockedBuddy(bookIndex + 1);
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(0, Vec2(x, y), *kBuddySpritesFront[buddyId]);
 }
@@ -539,9 +530,8 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, unsigned int bookIndex, Int2 scroll)
+void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, BuddyId buddyId, Int2 scroll)
 {
-    BuddyId buddyId = GetUnlockedBuddy(bookIndex + 1);
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
@@ -864,7 +854,7 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_UNLOCKED_2",
     "GAME_STATE_STORY_UNLOCKED_3",
     "GAME_STATE_STORY_UNLOCKED_4",
-    "GAME_STATE_STORY_CHAP_END",
+    "GAME_STATE_STORY_CHAPTER_END",
 };
 
 const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels by design
@@ -892,6 +882,7 @@ App::App()
     , mScorePlace(UINT_MAX)
     , mSaveDataStoryBookProgress(0)
     , mSaveDataStoryPuzzleProgress(0)
+    , mSaveDataBuddyUnlockMask(0)
     , mSaveDataBestTimes()
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
@@ -909,8 +900,10 @@ App::App()
     , mFreePlayShakeThrottleTimer(0.0f)
     , mShufflePiecesStart()
     , mShuffleMoveCounter(0)
+    , mStoryPreGame(false)
     , mStoryBookIndex(0)
     , mStoryPuzzleIndex(0)
+    , mStoryBuddyUnlockMask(0)
     , mStoryCutsceneIndex(0)
     , mCutsceneSpriteJumpRandom()
     , mCutsceneSpriteJump0(false)
@@ -921,10 +914,9 @@ App::App()
         mTouching[i] = TOUCH_STATE_NONE;
     }
     
-    // Default high scores (will overwritten if save file is found)
-    mSaveDataBestTimes[0] =  5.0f * 60.0f;
-    mSaveDataBestTimes[1] = 10.0f * 60.0f;
-    mSaveDataBestTimes[2] = 20.0f * 60.0f;
+    mSaveDataBestTimes[0] = 0.0f;
+    mSaveDataBestTimes[1] = 0.0f;
+    mSaveDataBestTimes[2] = 0.0f;
     
     for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
     {
@@ -1484,9 +1476,19 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
-            mStoryBookIndex = 0;
-            mStoryPuzzleIndex = 0;
-            StartGameState(GAME_STATE_STORY_BOOK_START);
+            
+            mStoryBookIndex = 0; // TODO: eventually chosen by menu
+            mStoryPuzzleIndex = 0; // TODO: eventually chosen by menu
+            
+            if (NextUnlockedBuddy() != -1)
+            {
+                mStoryPreGame = true;
+                StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+            }
+            else
+            {
+                StartGameState(GAME_STATE_STORY_BOOK_START);
+            }
             break;
         }
         case GAME_STATE_STORY_BOOK_START:
@@ -1581,6 +1583,16 @@ void App::StartGameState(GameState gameState)
                 }
             }
             */
+            
+            // Are there are any new buddies to unlock?
+            if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
+            {
+                if ((mStoryBookIndex + 1) < GetNumBooks())
+                {
+                    mSaveDataBuddyUnlockMask |= 1 << GetBook(mStoryBookIndex + 1).mUnlockBuddyId;
+                }
+            }
+            
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_END_1:
@@ -2294,7 +2306,7 @@ void App::UpdateGameState(float dt)
             {
                 if (++mStoryCutsceneIndex == GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetNumCutsceneLineEnd())
                 {
-                    if (HasUnlocked())
+                    if (NextUnlockedBuddy() != -1)
                     {
                         StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                     }
@@ -2310,7 +2322,7 @@ void App::UpdateGameState(float dt)
             }
             else if (AnyTouchBegin())
             {
-                if (HasUnlocked())
+                if (NextUnlockedBuddy() != -1)
                 {
                     StartGameState(GAME_STATE_STORY_UNLOCKED_1);
                 }
@@ -2393,7 +2405,27 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                int buddyId = NextUnlockedBuddy();
+                ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
+                
+                mStoryBuddyUnlockMask |= 1 << buddyId;
+                
+                if (NextUnlockedBuddy() != -1)
+                {
+                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                }
+                else
+                {
+                    if (mStoryPreGame)
+                    {
+                        mStoryPreGame = false;
+                        StartGameState(GAME_STATE_STORY_BOOK_START);
+                    }
+                    else
+                    {
+                        StartGameState(GAME_STATE_STORY_CHAPTER_END);
+                    }
+                }
             }
             break;
         }
@@ -2887,7 +2919,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
             {
-                BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                int buddyId = NextUnlockedBuddy();
+                ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
+                
                 ASSERT(buddyId < arraysize(kBuddyRibbons));
                 const AssetImage &ribbon = *kBuddyRibbons[buddyId];
                 
@@ -2907,7 +2941,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     assetHeight = ribbon.height - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
-                DrawUnlocked3Sprite(cubeWrapper, mStoryBookIndex, mBackgroundScroll, mCutsceneSpriteJump0);
+                DrawUnlocked3Sprite(cubeWrapper, BuddyId(buddyId), mBackgroundScroll, mCutsceneSpriteJump0);
                 
                 ASSERT(assetOffset >= 0 && assetOffset <  int(ribbon.height));
                 ASSERT(assetHeight >  0 && assetHeight <= int(ribbon.height));
@@ -2930,14 +2964,16 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     Vec2(kMaxTilesX + mBackgroundScroll.x, kMaxTilesY),
                     UiCongratulations);
                 
-                DrawUnlocked4Sprite(cubeWrapper, mStoryBookIndex, mBackgroundScroll);
+                int buddyId = NextUnlockedBuddy();
+                ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
                 
-                BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                DrawUnlocked4Sprite(cubeWrapper, BuddyId(buddyId), mBackgroundScroll);
+                
                 ASSERT(buddyId < arraysize(kBuddyRibbons));
                 cubeWrapper.DrawUiAssetPartial(
                     Vec2(0, 11),
                     Vec2(-mBackgroundScroll.x, 0),
-                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(kBuddyRibbons[0]->height)),
+                    Vec2(kMaxTilesX + mBackgroundScroll.x, int(kBuddyRibbons[buddyId]->height)),
                     *kBuddyRibbons[buddyId]);
             }
             
@@ -2954,7 +2990,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     
                     int x = 32 + (kMaxTilesX + mBackgroundScroll.x) * 8;
                     
-                    BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                    int buddyId = NextUnlockedBuddy();
+                    ASSERT(buddyId >= 0 && buddyId < NUM_BUDDIES);
+                
                     ASSERT(buddyId < arraysize(kBuddySpritesFront));
                     cubeWrapper.DrawSprite(1, Vec2(x, 14), *kBuddySpritesFront[buddyId]);
                 }
@@ -2985,7 +3023,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 {
                     cubeWrapper.DrawBackground(StoryBookStartNext);
                     
-                    BuddyId buddyId = GetUnlockedBuddy(mStoryBookIndex + 1);
+                    ASSERT((mStoryBookIndex + 1) < GetNumBooks());
+                    BuddyId buddyId = GetBook(mStoryBookIndex + 1).mUnlockBuddyId;
+                    
                     ASSERT(buddyId < arraysize(kBuddySpritesFront));
                     cubeWrapper.DrawSprite(0, Vec2(32, 14), *kBuddySpritesFront[buddyId]);
                 }
@@ -3116,12 +3156,14 @@ void App::LoadData()
             
             LOG(("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
                 mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
-    
         }
     }
 #else
     mSaveDataStoryBookProgress = 0;
     mSaveDataStoryPuzzleProgress = 0;
+    ASSERT(GetNumBooks() > 0);
+    ASSERT(GetBook(0).mUnlockBuddyId >= 0 && GetBook(0).mUnlockBuddyId < NUM_BUDDIES);
+    mSaveDataBuddyUnlockMask = 1 << GetBook(0).mUnlockBuddyId;
     mSaveDataBestTimes[0] = 0.0f;
     mSaveDataBestTimes[1] = 0.0f;
     mSaveDataBestTimes[2] = 0.0f;
@@ -3764,11 +3806,22 @@ bool App::AnyTouchEnd() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool App::HasUnlocked() const
+int App::NextUnlockedBuddy() const
 {
-    return
-        (mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles &&
-        (mStoryBookIndex   + 1) > mSaveDataStoryBookProgress;
+    for (int i = 0; i < BUDDY_INVISIBLE; ++i)
+    {
+        unsigned int buddyMask = 1 << i;
+        
+        bool inSaveData = (mSaveDataBuddyUnlockMask & buddyMask) != 0;
+        bool inRuntimeData = (mStoryBuddyUnlockMask & buddyMask) != 0;
+        
+        if (inSaveData && !inRuntimeData)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

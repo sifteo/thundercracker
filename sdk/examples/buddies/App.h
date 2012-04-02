@@ -100,7 +100,7 @@ private:
     bool AnyTouchHold() const;
     bool AnyTouchEnd() const;
     
-    bool HasUnlocked() const;
+    int NextUnlockedBuddy() const;
     
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
     
@@ -129,6 +129,7 @@ private:
     // Save Data
     unsigned char mSaveDataStoryBookProgress;
     unsigned char mSaveDataStoryPuzzleProgress;
+    unsigned int mSaveDataBuddyUnlockMask;
     float mSaveDataBestTimes[3];
     
     // Swapping
@@ -171,8 +172,10 @@ private:
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     
     // Story Mode
+    bool mStoryPreGame;
     unsigned int mStoryBookIndex;
     unsigned int mStoryPuzzleIndex;
+    unsigned int mStoryBuddyUnlockMask;
     unsigned int mStoryCutsceneIndex;
     Sifteo::Random mCutsceneSpriteJumpRandom;
     bool mCutsceneSpriteJump0;
