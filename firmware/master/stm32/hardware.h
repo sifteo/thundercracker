@@ -91,6 +91,26 @@ extern volatile SPI_t SPI2;
 extern volatile SPI_t SPI3;
 
 /*
+ * I2C
+ */
+
+struct I2C_t {
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t OAR1;
+    uint32_t OAR2;
+    uint32_t DR;
+    uint32_t SR1;
+    uint32_t SR2;
+    uint32_t CCR;
+    uint32_t TRISE;
+
+};
+
+extern volatile I2C_t I2C1;
+extern volatile I2C_t I2C2;
+
+/*
  * USART / UART
  */
 
