@@ -6,6 +6,7 @@ OBJS = \
 	src/Transforms/LogTransform.o \
 	src/Transforms/MetadataTransform.o \
 	src/Transforms/MetadataCollector.o \
+	src/Transforms/MisalignStack.o \
 	src/Analysis/CounterAnalysis.o \
 	src/Analysis/UUIDGenerator.o \
 	src/Support/ErrorReporter.o \

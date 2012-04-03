@@ -1,7 +1,6 @@
 SUBDIRS = \
 	betterflow \
 	chroma \
-	gfxdemo \
 	hello \
 	membrane \
 	monster \
