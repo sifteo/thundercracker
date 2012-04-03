@@ -32,6 +32,8 @@ namespace Buddies { namespace {
 const int kMaxTilesX = VidMode::LCD_width / VidMode::TILE;
 const int kMaxTilesY = VidMode::LCD_width / VidMode::TILE;
 
+// TODO: Is there a way to automate this using clever Lua scripting?
+
 const PinnedAssetImage *kBuddySpritesFront[] =
 {
     &BuddySpriteFront0,
@@ -848,6 +850,8 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_UNLOCKED_1",
     "GAME_STATE_STORY_UNLOCKED_2",
     "GAME_STATE_STORY_CHAPTER_END",
+    "GAME_STATE_STORY_GAME_END_CONGRATS",
+    "GAME_STATE_STORY_GAME_END_MORE",
 };
 
 const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels by design
@@ -1623,6 +1627,16 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
             mCutsceneSpriteJump0 = false;
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_CONGRATS:
+        {
+            mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_MORE:
+        {
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         default:
@@ -2412,7 +2426,7 @@ void App::UpdateGameState(float dt)
                     
                     if (mStoryBookIndex == GetNumBooks())
                     {
-                        StartGameState(GAME_STATE_MAIN_MENU);
+                        StartGameState(GAME_STATE_STORY_GAME_END_CONGRATS);
                     }
                     else
                     {
@@ -2434,6 +2448,30 @@ void App::UpdateGameState(float dt)
                 StartGameState(GAME_STATE_STORY_CHAPTER_START);
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            {
+                StartGameState(GAME_STATE_MAIN_MENU);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_CONGRATS:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                int numUnlockLeft = 4; // TODO: calc this number
+                if (numUnlockLeft > 0)
+                {
+                    StartGameState(GAME_STATE_STORY_GAME_END_MORE);
+                }
+                else
+                {
+                    StartGameState(GAME_STATE_MAIN_MENU);
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_MORE:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 StartGameState(GAME_STATE_MAIN_MENU);
             }
@@ -2914,6 +2952,33 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_CONGRATS:
+        {
+            cubeWrapper.DrawBackground(UiCongratulations);
+            cubeWrapper.DrawUiAsset(Vec2(0, 7), StoryRibbonComplete);
+            break;
+        }
+        case GAME_STATE_STORY_GAME_END_MORE:
+        {
+            cubeWrapper.DrawBackground(StoryCongratulationsUnlock);
+            
+            int numUnlockLeft = 4; // TODO: calc this number
+            int xSpan = numUnlockLeft * 2 + (numUnlockLeft - 1) * 1;
+            int xBase = (VidMode::LCD_width / VidMode::TILE / 2) - (xSpan / 2);
+            for (int i = 0; i < numUnlockLeft; ++i)
+            {
+                // TODO: Draw actual 4 (or less) faces
+                int x = xBase + i * 3;
+                cubeWrapper.DrawUiAsset(Vec2(x, 5), *kBuddiesSmall[0]);
+            }
+            
+            if (numUnlockLeft % 2 == 0)
+            {
+                cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+            }
+            
             break;
         }
         default:

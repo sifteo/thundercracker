@@ -87,7 +87,9 @@ StoryNeighbor = image{"assets/neighbor.png"}
 StoryProgress = image{"assets/panel_storymode_puzzle_progression.png"}
 StoryProgressNumbers = image{"assets/progress_numbers.png", height = 16}
 StoryRibbonNewCharacter = image{"assets/ribbon_new_character.png"}
+StoryRibbonComplete = image{"assets/ribbon_story_complete.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}
+StoryCongratulationsUnlock = image{"assets/panel_congratulations_unlock.png"}
 
 -- Sounds (use encode = "PCM" for PCM encoding)
 SoundGems = sound{"assets/gems1_4A9.raw"}
