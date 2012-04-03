@@ -99,6 +99,7 @@ typedef enum {
 #define kIconPixelHeight (kIconTileHeight * kPixelsPerTile)
 #define kItemTileWidth (int)(((kEndCapPadding + kPixelsPerTile - 1) / kPixelsPerTile) + kIconTileWidth - kPeekTiles)
 #define kItemPixelWidth (kItemTileWidth * kPixelsPerTile)
+#define kOneG (abs(64 * kAccelScalingFactor))
 
 class Menu {
  public:
@@ -115,7 +116,6 @@ class Menu {
     static const float kTimeDilator = 13.1f;
     static const float kMaxSpeedMultiplier = 3.f;
     static const float kAccelScalingFactor = -0.25f;
-    static const float kOneG;
     static const uint8_t kNumTilesX = 18;
     static const uint8_t kNumVisibleTilesX = 16;
     static const uint8_t kNumTilesY = 18;
@@ -212,9 +212,6 @@ class Menu {
     uint8_t itemAtCol(int column);
     int computeCurrentTile();
 };
-
-// constant folding
-const float Menu::kOneG = abs(64 * kAccelScalingFactor);
 
 Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
      : canvas(mainCube->vbuf) {
@@ -1079,6 +1076,7 @@ int Menu::computeCurrentTile() {
 #undef kIconPixelHeight
 #undef kItemTileWidth
 #undef kItemPixelWidth
+#undef kOneG
 
 };  // namespace Sifteo
 
