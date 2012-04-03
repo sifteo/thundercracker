@@ -28,15 +28,8 @@ Room* Player::GetRoom() const {
   return gGame.GetMap()->GetRoom(Location());
 }
 
-bool Player::HasBasicKey() const {
-  if (mEquipment) {
-    return gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_KEY;
-  }
-  return false;
-}
-
-void Player::UseBasicKey() {
-  ASSERT(HasBasicKey());
+void Player::ConsumeEquipment() {
+  ASSERT(mEquipment);
   gGame.GetState()->FlagTrigger(mEquipment->trigger);
   mEquipment = 0;
 }

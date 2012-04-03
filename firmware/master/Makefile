@@ -14,23 +14,13 @@ include $(TC_DIR)/Makefile.platform
 # STM32 only dependencies
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
-include stm32/st-usb/st-usb.mk
-OBJS_STM32 +=   $(OBJS_USB_STM32) \
-                $(SPEEX_OBJS_STM32)
+OBJS_STM32 += $(SPEEX_OBJS_STM32)
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include -DNO_USERSPACE_HEADERS
-CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
-# NOTE: ST defines here are temporary until we integrate our own USB code
-CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
+CFLAGS_STM32 := -Istm32 $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
-
-#Determines whether USB blocks the execution of the master firmware
-#in order to load assets. 
-ifeq ($(USB_LOAD), 1)
-	CFLAGS_STM32 += -DUSB_LOAD
-endif
 
 ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
@@ -39,33 +29,29 @@ endif
 include Makefile.defs
 
 # Override default CDEPS
-CDEPS := \
-	common/syscall-table.def \
-	common/*.h \
-	stm32/*.h \
-	../include/*.h \
-	$(SDK_DIR)/include/sifteo/*.h \
-    $(SPEEX_DEPS)
+CDEPS := common/syscall-table.def
 
 all: $(BINS)
 
 $(BIN_SIM): $(OBJS_SIM)
+	@echo
 	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
 $(BIN_STM32): $(OBJS_STM32)
+	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
 %.sim.o: %.cpp $(CDEPS)
-	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
+	@echo
+	$(CC_SIM) -c $(CCFLAGS_SIM) $(DEPFLAGS) $< -o $@
 
 %.stm32.o: %.cpp $(CDEPS)
-	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+	@echo
+	$(CC_STM32) -c $(CCFLAGS_STM32) $(DEPFLAGS) $< -o $@
 
 %.stm32.o: %.c $(CDEPS)
-	$(CC_STM32) -c -o $@ $< $(CFLAGS_STM32)
-
-%.stm32.o: %.s $(CDEPS)
-	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
+	@echo
+	$(CC_STM32) -c $(CFLAGS_STM32) $(DEPFLAGS) $< -o $@
 
 common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi.h
 	python tools/firmware-syscall-table.py < $< > $@
@@ -99,3 +85,7 @@ clean:
 	rm -f $(BINS)
 	rm -f $(OBJS_SIM)
 	rm -f $(OBJS_STM32) 
+	rm -rf .dep
+
+# include the dep files, and make a folder for them if necessary
+include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)

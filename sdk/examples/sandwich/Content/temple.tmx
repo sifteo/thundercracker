@@ -2,8 +2,8 @@
 <map version="1.0" orientation="orthogonal" width="32" height="64" tilewidth="16" tileheight="16">
 	<properties>
 	</properties>
-	<tileset firstgid="1" name="temple_background" tilewidth="16" tileheight="16">
-		<image source="temple_background.png" width="128" height="224"/>
+	<tileset firstgid="1" name="temple" tilewidth="16" tileheight="16">
+		<image source="temple.png" width="128" height="224"/>
 	</tileset>
 	<tileset firstgid="113" name="temple_overlay" tilewidth="16" tileheight="16">
 		<image source="temple_overlay.png" width="128" height="64"/>

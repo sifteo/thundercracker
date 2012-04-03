@@ -220,6 +220,16 @@ static void emulateSVC(uint16_t instr)
 
 static void emulateFault(FaultCode code)
 {
+    /*
+     * Emulate a fault exception. Faults are exceptions, just like SVCs,
+     * so we need to simulate them in the same way before passing on the
+     * fault code to SvmRuntime.
+     *
+     * Note that all instruction emulations need to explicitly abort the
+     * current instruction after raising a fault. This function does not
+     * alter the caller's control flow.
+     */
+
     reg_t nextInstruction = regs[REG_PC];    // already incremented in fetch()
     emulateEnterException(nextInstruction);
     saveUserRegs();
@@ -562,9 +572,9 @@ static void emulateSTRSPImm(uint16_t instr)
     reg_t addr = regs[REG_SP] + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_STORE_ADDRESS);
+        return emulateFault(F_STORE_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        emulateFault(F_STORE_ALIGNMENT);
+        return emulateFault(F_STORE_ALIGNMENT);
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
@@ -578,9 +588,9 @@ static void emulateLDRSPImm(uint16_t instr)
     reg_t addr = regs[REG_SP] + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_LOAD_ADDRESS);
+        return emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        emulateFault(F_LOAD_ALIGNMENT);
+        return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -628,9 +638,9 @@ static void emulateLDRLitPool(uint16_t instr)
     reg_t addr = ((regs[REG_PC] + 3) & ~3) + (imm8 << 2);
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_LOAD_ADDRESS);
+        return emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        emulateFault(F_LOAD_ALIGNMENT);
+        return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -648,9 +658,9 @@ static void emulateSTR(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_STORE_ADDRESS);
+        return emulateFault(F_STORE_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        emulateFault(F_STORE_ALIGNMENT);
+        return emulateFault(F_STORE_ALIGNMENT);
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
@@ -664,9 +674,9 @@ static void emulateLDR(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_LOAD_ADDRESS);
+        return emulateFault(F_LOAD_ADDRESS);
     if (!SvmMemory::isAddrAligned(addr, 4))
-        emulateFault(F_LOAD_ALIGNMENT);
+        return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
@@ -681,11 +691,11 @@ static void emulateSTRBH(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_STORE_ADDRESS);
+        return emulateFault(F_STORE_ADDRESS);
 
     if (instr & HalfwordBit) {
         if (!SvmMemory::isAddrAligned(addr, 2))
-            emulateFault(F_STORE_ALIGNMENT);
+            return emulateFault(F_STORE_ALIGNMENT);
         *reinterpret_cast<uint16_t*>(addr) = regs[Rt];
     } else {
         *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
@@ -703,7 +713,7 @@ static void emulateLDRBH(uint32_t instr)
     reg_t addr = regs[Rn] + imm12;
 
     if (!SvmMemory::isAddrValid(addr))
-        emulateFault(F_LOAD_ADDRESS);
+        return emulateFault(F_LOAD_ADDRESS);
 
     switch (instr & (HalfwordBit | SignExtBit)) {
     case 0:
@@ -711,7 +721,7 @@ static void emulateLDRBH(uint32_t instr)
         break;
     case HalfwordBit:
         if (!SvmMemory::isAddrAligned(addr, 2))
-            emulateFault(F_LOAD_ALIGNMENT);
+            return emulateFault(F_LOAD_ALIGNMENT);
         regs[Rt] = *reinterpret_cast<uint16_t*>(addr);
         break;
     case SignExtBit:
@@ -719,7 +729,7 @@ static void emulateLDRBH(uint32_t instr)
         break;
     case HalfwordBit | SignExtBit:
         if (!SvmMemory::isAddrAligned(addr, 2))
-            emulateFault(F_LOAD_ALIGNMENT);
+            return emulateFault(F_LOAD_ALIGNMENT);
         regs[Rt] = (uint32_t)signExtend(*reinterpret_cast<uint16_t*>(addr), 16);
         break;
     }
@@ -777,10 +787,14 @@ static uint16_t fetch()
      * in order to determine its bitness.
      */
 
-    if (!SvmMemory::isAddrValid(regs[REG_PC]))
+    if (!SvmMemory::isAddrValid(regs[REG_PC])) {
         emulateFault(F_CODE_FETCH);
-    if (!SvmMemory::isAddrAligned(regs[REG_PC], 2))
+        return Nop;
+    }
+    if (!SvmMemory::isAddrAligned(regs[REG_PC], 2)) {
         emulateFault(F_LOAD_ALIGNMENT);
+        return Nop;
+    }
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
@@ -932,7 +946,7 @@ static void execute16(uint16_t instr)
 
     // should never get here since we should only be executing validated instructions
     LOG(("SVMCPU: invalid 16bit instruction: 0x%x\n", instr));
-    emulateFault(F_CPU_SIM);
+    return emulateFault(F_CPU_SIM);
 }
 
 static void execute32(uint32_t instr)
@@ -964,7 +978,7 @@ static void execute32(uint32_t instr)
 
     // should never get here since we should only be executing validated instructions
     LOG(("SVMCPU: invalid 32bit instruction: 0x%x\n", instr));
-    emulateFault(F_CPU_SIM);
+    return emulateFault(F_CPU_SIM);
 }
 
 

@@ -8,12 +8,10 @@ NAME_TO_STORAGE_TYPE = {
 }
 
 ITEM_TRIGGER_NONE = 0
-ITEM_TRIGGER_KEY = 1
-ITEM_TRIGGER_BOOT = 2
-ITEM_TRIGGER_BOMB = 3
+ITEM_TRIGGER_BOOT = 1
+ITEM_TRIGGER_BOMB = 2
 
 NAME_TO_ITEM_TRIGGER = {
-	"key": ITEM_TRIGGER_KEY,
 	"boot": ITEM_TRIGGER_BOOT,
 	"bomb": ITEM_TRIGGER_BOMB,
 	"": ITEM_TRIGGER_NONE
@@ -42,5 +40,8 @@ class Item:
 		self.description = "\\n".join((line.strip() for line in xml.find("description").text.strip().splitlines()))
 		self.storage_type = NAME_TO_STORAGE_TYPE[xml.get("storage").lower()]
 		self.trigger_type = NAME_TO_ITEM_TRIGGER[xml.get("trigger", "").lower()]
+
+	def can_be_a_key(self):
+		return self.storage_type == STORAGE_TYPE_EQUIP
 		
 		

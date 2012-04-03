@@ -50,7 +50,8 @@ void Game::MainLoop() {
 		mPlayer.SetStatus(PLAYER_STATUS_IDLE);
 		mPlayer.CurrentView()->UpdatePlayer();
 		mPath.Cancel();
-		do {
+		unsigned targetViewId = 0xff;
+		while(targetViewId == 0xff) {
 			Paint();
 			if (mPlayer.CurrentView()->Parent()->Touched()) {
 				if (mPlayer.Equipment()) {
@@ -83,7 +84,15 @@ void Game::MainLoop() {
 
 	        }
 	      	#endif
-    	} while (!gGame.GetMap()->FindBroadPath(&mPath));
+	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
+	      		for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+	      			if ( p->Touched() && p->IsShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView()->StartShake();
+	      			}
+	      		}
+	      	}
+    	}
+    	mViews[targetViewId].GetRoomView()->StartNod();
 
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET
@@ -100,15 +109,16 @@ void Game::MainLoop() {
 	        	//---------------------------------------------------------------------
 	        	// WALKING NORTH THROUGH DOOR
 	        	// walk up to the door
+	        	const DoorData& door = *mPlayer.CurrentRoom()->Door();
 	      		int progress;
 	      		STATIC_ASSERT(24 % WALK_SPEED == 0);
 	      		for(progress=0; progress<24; progress+=WALK_SPEED) {
 	      			mPlayer.Move(0, -WALK_SPEED);
 	      			Paint();
 	      		}
-	      		if (mPlayer.HasBasicKey()) {
+	      		if (door.keyItemId != 0xff && mPlayer.Equipment() && mPlayer.Equipment()->itemId == door.keyItemId) {
 	      			// use the key and open the door
-	      			mPlayer.UseBasicKey();
+	      			mPlayer.ConsumeEquipment();
 	      			mPlayer.CurrentRoom()->OpenDoor();
 	      			mPlayer.CurrentView()->DrawBackground();
 	      			mPlayer.CurrentView()->HideEquip();

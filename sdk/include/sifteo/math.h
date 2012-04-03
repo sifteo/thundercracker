@@ -26,6 +26,7 @@ namespace Sifteo {
 #define M_LN2       0.693147180559945309417232121458176568  // log e2
 #define M_LN10      2.30258509299404568401799145468436421   // log e10
 #define M_PI        3.14159265358979323846264338327950288   // pi
+#define M_TAU       6.2831853071795862                      // 2 * pi
 #define M_PI_2      1.57079632679489661923132169163975144   // pi/2
 #define M_PI_4      0.785398163397448309615660845819875721  // pi/4
 #define M_1_PI      0.318309886183790671537767526745028724  // 1/pi
@@ -203,7 +204,7 @@ template <typename T> struct Vector2 {
      * Return a normalized version of this vector.
      * The returned vector will have a magnitude of 1.0.
      */
-    T normalize() const {
+    Vector2<T> normalize() const {
         return *this / len();
     }
     

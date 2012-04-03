@@ -15,6 +15,7 @@ OBJS = \
 	EdgeView.o \
 	Game.o \
 	Game_CheckMapNeighbors.o \
+	Game_Events.o \
 	Game_IntroCutscene.o \
 	Game_MainLoop.o \
 	Game_WinScreen.o \
