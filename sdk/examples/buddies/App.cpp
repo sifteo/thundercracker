@@ -813,6 +813,8 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_NONE",
     "GAME_STATE_MAIN_MENU",
     "GAME_STATE_FREEPLAY_START",
+    "GAME_STATE_FREEPLAY_TITLE",
+    "GAME_STATE_FREEPLAY_DESCRIPTION",
     "GAME_STATE_FREEPLAY_PLAY",
     "GAME_STATE_FREEPLAY_OPTIONS",
     "GAME_STATE_SHUFFLE_START",
@@ -1335,7 +1337,17 @@ void App::StartGameState(GameState gameState)
             }
             
             ResetCubesToPuzzle(GetPuzzleDefault(), false);
-            StartGameState(GAME_STATE_FREEPLAY_PLAY);
+            StartGameState(GAME_STATE_FREEPLAY_TITLE);
+            break;
+        }
+        case GAME_STATE_FREEPLAY_TITLE:
+        {
+            mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
+        case GAME_STATE_FREEPLAY_DESCRIPTION:
+        {
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_FREEPLAY_PLAY:
@@ -1637,6 +1649,23 @@ void App::UpdateGameState(float dt)
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
                 StartGameState(GAME_STATE_STORY_START);
+            }
+            break;
+        }
+        case GAME_STATE_FREEPLAY_TITLE:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_FREEPLAY_DESCRIPTION);
+            }
+            break;
+        }
+        case GAME_STATE_FREEPLAY_DESCRIPTION:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                mTouchSync = true;
+                StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
             break;
         }
@@ -2457,6 +2486,16 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 cubeWrapper.DrawBackground(UiBackground);
             }
+            break;
+        }
+        case GAME_STATE_FREEPLAY_TITLE:
+        {
+            cubeWrapper.DrawBackground(FreePlayTitle);
+            break;
+        }
+        case GAME_STATE_FREEPLAY_DESCRIPTION:
+        {
+            cubeWrapper.DrawBackground(FreePlayDescription);
             break;
         }
         case GAME_STATE_FREEPLAY_PLAY:

@@ -55,6 +55,10 @@ UiGoBlue = image{"assets/go_blue.png", pinned = true}
 UiGoOrange = image{"assets/go_orange.png", pinned = true}
 UiFaceHolder = image{"assets/faceholder.png"};
 
+-- Free Play Mode
+FreePlayTitle = image{"assets/titlescreen_free.png"}
+FreePlayDescription = image{"assets/panel_free_play_description.png"}
+
 -- Shuffle Mode
 ShuffleTitleScreen = image{"assets/titlescreen_shuffle.png"}
 ShuffleShakeToShuffle = image{"assets/shake_to_shuffle.png"}
