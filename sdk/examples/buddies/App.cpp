@@ -2457,8 +2457,7 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                int numUnlockLeft = 4; // TODO: calc this number
-                if (numUnlockLeft > 0)
+                if (GetNumBuddiesLeftToUnlock() > 0)
                 {
                     StartGameState(GAME_STATE_STORY_GAME_END_MORE);
                 }
@@ -2964,19 +2963,27 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBackground(StoryCongratulationsUnlock);
             
-            int numUnlockLeft = 4; // TODO: calc this number
+            int numUnlockLeft = GetNumBuddiesLeftToUnlock();
             int xSpan = numUnlockLeft * 2 + (numUnlockLeft - 1) * 1;
             int xBase = (VidMode::LCD_width / VidMode::TILE / 2) - (xSpan / 2);
-            for (int i = 0; i < numUnlockLeft; ++i)
+            
+            int iFace = 0;
+            for (int iBuddy = 0; iBuddy < BUDDY_INVISIBLE; ++iBuddy)
             {
-                // TODO: Draw actual 4 (or less) faces
-                int x = xBase + i * 3;
-                cubeWrapper.DrawUiAsset(Vec2(x, 5), *kBuddiesSmall[0]);
+                if ((mSaveDataBuddyUnlockMask & (1 << iBuddy)) == 0)
+                {
+                    int x = xBase + iFace * 3;
+                    
+                    ASSERT(iBuddy < arraysize(kBuddiesSmall));
+                    cubeWrapper.DrawUiAsset(Vec2(x, 5), *kBuddiesSmall[iBuddy]);
+                    
+                    ++iFace;
+                }
             }
             
             if (numUnlockLeft % 2 == 0)
             {
-                cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+                cubeWrapper.ScrollUi(Vec2(-VidMode::TILE / 2, 0U));
             }
             
             break;
@@ -3759,6 +3766,22 @@ int App::NextUnlockedBuddy() const
     }
     
     return -1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+int App::GetNumBuddiesLeftToUnlock() const
+{
+    int numLeftToUnlock = 0;
+    for (int i = 0; i < BUDDY_INVISIBLE; ++i)
+    {
+        if ((mSaveDataBuddyUnlockMask & (1 << i)) == 0)
+        {
+            ++numLeftToUnlock;
+        }
+    }
+    return numLeftToUnlock;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -101,6 +101,7 @@ private:
     bool AnyTouchEnd() const;
     
     int NextUnlockedBuddy() const;
+    int GetNumBuddiesLeftToUnlock() const;
     
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
     
