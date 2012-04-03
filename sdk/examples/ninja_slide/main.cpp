@@ -6,32 +6,16 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+#include "thing.h"
 
 using namespace Sifteo;
 
 static Cube cube(0);
 
-class Thing {
-public:
-    int id;
-    Int2 pos;
-    Thing(int id, int x, int y);
-    void update(VidMode_BG0_SPR_BG1 vid);
-};
-
-Thing::Thing(int id0, int x, int y){
-    id = id0;
-    pos.x = x;
-    pos.y = y;
-}
-
-void Thing::update(VidMode_BG0_SPR_BG1 vid){
-    vid.moveSprite(id, pos);
-}
 
 
-static Thing platform(0, 64, 64);
-static Thing michelangelo(1, 32, 0);
+static Thing platform(0, Vec2(64, 64));
+static Thing michelangelo(1, Vec2(32, 0));
 
 void init()
 {
@@ -51,8 +35,6 @@ void main()
 {
     init();
 
-
-
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), MyBackground);
@@ -60,14 +42,14 @@ void main()
     vid.setSpriteImage(michelangelo.id, Michelangelo);
     vid.setSpriteImage(platform.id, Platform);
 
-//     _SYSTiltState tilt = _SYS_getTilt(0);
-    
-
     const Int2 center = { (128 - 16)/2, (128 - 16)/2 };
 
     while (1) {
-        michelangelo.pos.x = (michelangelo.pos.x + 1) % 128;
+        _SYSTiltState tilt = _SYS_getTilt(cube.id());
+
         platform.pos.y = (platform.pos.y + 1) % 128;
+        michelangelo.pos.x = (michelangelo.pos.x + tilt.x-1) % 128;
+        michelangelo.pos.y = (michelangelo.pos.y + tilt.y-1) % 128;
 
         michelangelo.update(vid);
         platform.update(vid);
