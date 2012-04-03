@@ -8,6 +8,7 @@
 
 #include "App.h"
 #include <limits.h>
+#include <sifteo/menu.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include "Book.h"
@@ -817,7 +818,9 @@ void TiltNudgePieces(App& app, Cube::ID cubeId)
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "GAME_STATE_NONE",
-    "GAME_STATE_MAIN_MENU",
+    "GAME_STATE_TITLE",
+    "GAME_STATE_MENU_MAIN",
+    "GAME_STATE_MENU_STORY",
     "GAME_STATE_FREEPLAY_START",
     "GAME_STATE_FREEPLAY_TITLE",
     "GAME_STATE_FREEPLAY_DESCRIPTION",
@@ -847,11 +850,11 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_SOLVED",
     "GAME_STATE_STORY_CUTSCENE_END_1",
     "GAME_STATE_STORY_CUTSCENE_END_2",
-    "GAME_STATE_STORY_UNLOCKED_1",
-    "GAME_STATE_STORY_UNLOCKED_2",
     "GAME_STATE_STORY_CHAPTER_END",
     "GAME_STATE_STORY_GAME_END_CONGRATS",
     "GAME_STATE_STORY_GAME_END_MORE",
+    "GAME_STATE_UNLOCKED_1",
+    "GAME_STATE_UNLOCKED_2",
 };
 
 const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels by design
@@ -967,10 +970,17 @@ void App::Reset()
 
 void App::Update(float dt)
 {
-    UpdateTouch();
-    UpdateGameState(dt);
-    UpdateSwap(dt);
-    UpdateCubes(dt);
+    if (mGameState == GAME_STATE_MENU_MAIN || mGameState == GAME_STATE_MENU_STORY)
+    {
+        UpdateMenu();
+    }
+    else
+    {
+        UpdateTouch();
+        UpdateGameState(dt);
+        UpdateSwap(dt);
+        UpdateCubes(dt);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -978,13 +988,16 @@ void App::Update(float dt)
 
 void App::Draw()
 {
-    DrawGameState();
-    
-    if (NeedPaintSync(*this))
-    {
-        System::paintSync();
+    if (mGameState != GAME_STATE_MENU_MAIN && mGameState != GAME_STATE_MENU_STORY)
+    {   
+        DrawGameState();
+        
+        if (NeedPaintSync(*this))
+        {
+            System::paintSync();
+        }
+        System::paint();
     }
-    System::paint();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1311,6 +1324,60 @@ void App::PlaySound()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void App::UpdateMenu()
+{
+    /*
+    MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
+    MenuItem menuItems[] =
+    {
+        { &IconChroma, &LabelChroma },
+        { &IconSandwich, &LabelSandwich },
+        { &IconPeano, &LabelPeano },
+        { &IconBuddy, &LabelBuddy },
+    };
+    
+    Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    
+    MenuEvent menuEvent;
+    while (menu.pollEvent(&menuEvent))
+    {
+        switch (menuEvent.type)
+        {
+            case MENU_ITEM_PRESS:
+            {
+                if (menuEvent.item == 0)
+                {
+                    StartGameState(GAME_STATE_FREEPLAY_START);
+                }
+                else if (menuEvent.item == 1)
+                {
+                    //StartGameState(GAME_STATE_STORY_START);
+                }
+                else if (menuEvent.item == 2)
+                {
+                    StartGameState(GAME_STATE_SHUFFLE_START);
+                }
+                else if (menuEvent.item == 3)
+                {
+                    // TODO: options config
+                    menu.preventDefault();
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+    */
+    
+    StartGameState(GAME_STATE_STORY_START);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::StartGameState(GameState gameState)
 {
     mGameState = gameState;
@@ -1320,6 +1387,11 @@ void App::StartGameState(GameState gameState)
     
     switch (mGameState)
     {
+        case GAME_STATE_TITLE:
+        {
+            mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
         case GAME_STATE_FREEPLAY_START:
         {
             unsigned int buddyIds[kMaxBuddies];
@@ -1484,7 +1556,7 @@ void App::StartGameState(GameState gameState)
             if (NextUnlockedBuddy() != -1)
             {
                 mStoryPreGame = true;
-                StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                StartGameState(GAME_STATE_UNLOCKED_1);
             }
             else
             {
@@ -1616,13 +1688,13 @@ void App::StartGameState(GameState gameState)
             mCutsceneSpriteJump1 = false;
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_1:
+        case GAME_STATE_UNLOCKED_1:
         {
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_UNLOCKED_2:
         {
             mDelayTimer = kStateTimeDelayLong;
             mBackgroundScroll = Vec2(0, 0);
@@ -1653,7 +1725,16 @@ void App::UpdateGameState(float dt)
 {
     switch (mGameState)
     {
-        case GAME_STATE_MAIN_MENU:
+        case GAME_STATE_TITLE:
+        {
+            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            {
+                StartGameState(GAME_STATE_MENU_MAIN);
+            }
+            break;
+        }
+        /*
+        case GAME_STATE_MENU_MAIN:
         {
             if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
             {
@@ -1670,6 +1751,7 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
+        */
         case GAME_STATE_FREEPLAY_TITLE:
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
@@ -1768,7 +1850,7 @@ void App::UpdateGameState(float dt)
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2012,7 +2094,7 @@ void App::UpdateGameState(float dt)
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2043,7 +2125,7 @@ void App::UpdateGameState(float dt)
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2280,7 +2362,7 @@ void App::UpdateGameState(float dt)
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2311,7 +2393,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (NextUnlockedBuddy() != -1)
                     {
-                        StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                        StartGameState(GAME_STATE_UNLOCKED_1);
                     }
                     else
                     {
@@ -2327,7 +2409,7 @@ void App::UpdateGameState(float dt)
             {
                 if (NextUnlockedBuddy() != -1)
                 {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                    StartGameState(GAME_STATE_UNLOCKED_1);
                 }
                 else
                 {
@@ -2336,7 +2418,7 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_1:
+        case GAME_STATE_UNLOCKED_1:
         {
             if (mDelayTimer > 0.0f)
             {
@@ -2361,12 +2443,12 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    StartGameState(GAME_STATE_STORY_UNLOCKED_2);
+                    StartGameState(GAME_STATE_UNLOCKED_2);
                 }
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_UNLOCKED_2:
         {
             if (mDelayTimer > 0.0f)
             {
@@ -2385,7 +2467,7 @@ void App::UpdateGameState(float dt)
                         
                         if (NextUnlockedBuddy() != -1)
                         {
-                            StartGameState(GAME_STATE_STORY_UNLOCKED_1);
+                            StartGameState(GAME_STATE_UNLOCKED_1);
                         }
                         else
                         {
@@ -2449,7 +2531,7 @@ void App::UpdateGameState(float dt)
             }
             else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2463,7 +2545,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    StartGameState(GAME_STATE_MAIN_MENU);
+                    StartGameState(GAME_STATE_MENU_MAIN);
                 }
             }
             break;
@@ -2472,7 +2554,7 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                StartGameState(GAME_STATE_MAIN_MENU);
+                StartGameState(GAME_STATE_MENU_MAIN);
             }
             break;
         }
@@ -2506,27 +2588,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
 {
     switch (mGameState)
     {
-        case GAME_STATE_MAIN_MENU:
+        case GAME_STATE_TITLE:
         {
-            if (cubeWrapper.GetId() == 0)
-            {
-                cubeWrapper.DrawBackground(UiBackground);
-                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Free Play Mode");
-            }
-            else if (cubeWrapper.GetId() == 1)
-            {
-                cubeWrapper.DrawBackground(UiBackground);
-                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Shuffle Mode");
-            }
-            else if (cubeWrapper.GetId() == 2)
-            {
-                cubeWrapper.DrawBackground(UiBackground);
-                cubeWrapper.DrawUiText(Vec2(1, 1), UiFontWhite, "Story Mode");
-            }
-            else
-            {
-                cubeWrapper.DrawBackground(UiBackground);
-            }
+            cubeWrapper.DrawBackground(UiTitleScreen);
             break;
         }
         case GAME_STATE_FREEPLAY_TITLE:
@@ -2852,7 +2916,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_1:
+        case GAME_STATE_UNLOCKED_1:
         {
             cubeWrapper.DrawBackground(UiCongratulations);
             
@@ -2884,7 +2948,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_UNLOCKED_2:
+        case GAME_STATE_UNLOCKED_2:
         {
             cubeWrapper.DrawBackground(UiCongratulations);
             

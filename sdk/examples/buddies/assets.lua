@@ -33,6 +33,22 @@ else
     BuddyPartHidden = image{"assets/hidden.png"}
 end
 
+-- Menu
+BgTile = image{ "assets/menu/bg.png" }
+IconSandwich = image{ "assets/menu/IconSandwich.png" }
+IconChroma = image{ "assets/menu/IconChroma.png" }
+IconPeano = image{ "assets/menu/IconPeano.png" }
+IconBuddy = image{ "assets/menu/IconBuddy.png"}
+Tip0 = image{ "assets/menu/Tip0.png" }
+Tip1 = image{ "assets/menu/Tip1.png" }
+Tip2 = image{ "assets/menu/Tip2.png" }
+Footer = image{ "assets/menu/Footer.png" }
+LabelEmpty = image{ "assets/menu/LabelEmpty.png" }
+LabelSandwich = image{ "assets/menu/LabelSandwich.png" }
+LabelChroma = image{ "assets/menu/LabelChroma.png" }
+LabelPeano = image{ "assets/menu/LabelPeano.png" }
+LabelBuddy = image{ "assets/menu/LabelBuddy.png"}
+
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
 UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
@@ -43,6 +59,7 @@ UiFontHeadingOrange = image{"assets/fontstrip_heading_orange.png", height = 16}
 UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
 
 -- Ui Misc
+UiTitleScreen = image{"assets/titlescreen.png"}
 --UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}

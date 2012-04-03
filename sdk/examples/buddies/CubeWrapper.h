@@ -36,6 +36,9 @@ public:
     void Reset();
     void Update(float dt);
     
+    // For Menu Access
+    Sifteo::Cube &GetCube() { return mCube; }
+    
     // Drawing
     void DrawClear();
     void DrawFlush();
