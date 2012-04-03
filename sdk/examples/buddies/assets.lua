@@ -39,6 +39,8 @@ IconFreePlay = image{"assets/menu/IconFreePlay.png"}
 IconStory = image{"assets/menu/IconStory.png"}
 IconShuffle = image{"assets/menu/IconShuffle.png"}
 IconOptions = image{"assets/menu/IconOptions.png"}
+IconContinue = image{"assets/menu/IconContinue.png"}
+IconMainMenu = image{"assets/menu/IconMainMenu.png"}
 Tip0 = image{"assets/menu/Tip0.png"}
 Tip1 = image{"assets/menu/Tip1.png"}
 Tip2 = image{"assets/menu/Tip2.png"}
@@ -48,6 +50,12 @@ LabelFreePlay = image{"assets/menu/LabelFreePlay.png"}
 LabelStory = image{"assets/menu/LabelStory.png"}
 LabelShuffle = image{"assets/menu/LabelShuffle.png"}
 LabelOptions = image{"assets/menu/LabelOptions.png"}
+LabelContinue = image{"assets/menu/LabelContinue.png"}
+LabelMainMenu = image{"assets/menu/LabelMainMenu.png"}
+for i = 0, 2, 1 do
+    _G["IconBook" .. i] = image{"assets/menu/IconBook" .. (i + 1) .. ".png"}
+    _G["LabelBook" .. i] = image{"assets/menu/LabelBook" .. (i + 1) .. ".png"}
+end
 
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}

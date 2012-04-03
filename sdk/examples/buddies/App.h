@@ -63,7 +63,8 @@ private:
     
     void PlaySound();
     
-    void UpdateMenu();
+    void UpdateMenuMain();
+    void UpdateMenuStory();
     
     void StartGameState(GameState gameState);
     void UpdateGameState(float dt);

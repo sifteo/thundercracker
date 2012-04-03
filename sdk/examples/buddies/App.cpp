@@ -970,9 +970,13 @@ void App::Reset()
 
 void App::Update(float dt)
 {
-    if (mGameState == GAME_STATE_MENU_MAIN || mGameState == GAME_STATE_MENU_STORY)
+    if (mGameState == GAME_STATE_MENU_MAIN)
     {
-        UpdateMenu();
+        UpdateMenuMain();
+    }
+    else if (mGameState == GAME_STATE_MENU_STORY)
+    {
+        UpdateMenuStory();
     }
     else
     {
@@ -1324,7 +1328,7 @@ void App::PlaySound()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::UpdateMenu()
+void App::UpdateMenuMain()
 {
     /*
     MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
@@ -1351,7 +1355,7 @@ void App::UpdateMenu()
                 }
                 else if (menuEvent.item == 1)
                 {
-                    StartGameState(GAME_STATE_STORY_START);
+                    StartGameState(GAME_STATE_MENU_STORY);
                 }
                 else if (menuEvent.item == 2)
                 {
@@ -1372,6 +1376,64 @@ void App::UpdateMenu()
     }
     */
     
+    // TEMP CODE UNTIL ABOVE WORKS
+    StartGameState(GAME_STATE_MENU_STORY);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::UpdateMenuStory()
+{
+    /*
+    MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
+    MenuItem menuItems[] =
+    {
+        { &IconContinue, &LabelContinue },
+        { &IconBook0,    &LabelBook0 },
+        { &IconBook1,    &LabelBook1 },
+        { &IconBook2,    &LabelBook2 },
+        { &IconMainMenu, &LabelMainMenu },
+    };
+    
+    Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    
+    MenuEvent menuEvent;
+    while (menu.pollEvent(&menuEvent))
+    {
+        switch (menuEvent.type)
+        {
+            case MENU_ITEM_PRESS:
+            {
+                if (menuEvent.item == 0)
+                {
+                    mStoryBookIndex = mSaveDataStoryBookProgress;
+                    mStoryPuzzleIndex = mSaveDataStoryPuzzleProgress;
+                    StartGameState(GAME_STATE_STORY_START);
+                }
+                else if (menuEvent.item >= 1 && menuEvent.item <= 3)
+                {
+                    mStoryBookIndex = menuEvent.item - 1;
+                    mStoryPuzzleIndex = 0;
+                    StartGameState(GAME_STATE_STORY_START);
+                }
+                else if (menuEvent.item == 2)
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+    */
+    
+    // TEMP CODE UNTIL ABOVE WORKS
+    mStoryBookIndex = 0;
+    mStoryPuzzleIndex = 0;
     StartGameState(GAME_STATE_STORY_START);
 }
 
@@ -1390,6 +1452,11 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_TITLE:
         {
             mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
+        case GAME_STATE_MENU_STORY:
+        {
+            // TODO: Jump to book menu item based on unlock flow
             break;
         }
         case GAME_STATE_FREEPLAY_START:
@@ -1549,9 +1616,6 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
-            
-            mStoryBookIndex = 0; // TODO: eventually chosen by menu
-            mStoryPuzzleIndex = 0; // TODO: eventually chosen by menu
             
             if (NextUnlockedBuddy() != -1)
             {
@@ -1729,7 +1793,15 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                if (NextUnlockedBuddy() != -1)
+                {
+                    mStoryPreGame = true;
+                    StartGameState(GAME_STATE_UNLOCKED_1);
+                }
+                else
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
@@ -2474,7 +2546,7 @@ void App::UpdateGameState(float dt)
                             if (mStoryPreGame)
                             {
                                 mStoryPreGame = false;
-                                StartGameState(GAME_STATE_STORY_BOOK_START);
+                                StartGameState(GAME_STATE_MENU_STORY);
                             }
                             else
                             {
