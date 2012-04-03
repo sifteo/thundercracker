@@ -3171,7 +3171,7 @@ void App::LoadData()
     mSaveDataStoryPuzzleProgress = 0;
     ASSERT(GetNumBooks() > 0);
     ASSERT(GetBook(0).mUnlockBuddyId >= 0 && GetBook(0).mUnlockBuddyId < NUM_BUDDIES);
-    mSaveDataBuddyUnlockMask = 1 << GetBook(0).mUnlockBuddyId | 1 << GetBook(2).mUnlockBuddyId;
+    mSaveDataBuddyUnlockMask = 1 << GetBook(0).mUnlockBuddyId;
     mSaveDataBestTimes[0] = 0.0f;
     mSaveDataBestTimes[1] = 0.0f;
     mSaveDataBestTimes[2] = 0.0f;
