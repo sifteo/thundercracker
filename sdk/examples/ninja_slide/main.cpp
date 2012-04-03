@@ -10,12 +10,17 @@
 using namespace Sifteo;
 
 static Cube cube(0);
+
 enum SpriteIndices {
-    turtle
+    turtle,
+    platform
 };
+
+static Int2 platform_pos;
 
 void init()
 {
+
     cube.enable();
     cube.loadAssets(GameAssets);
 
@@ -30,28 +35,16 @@ void init()
 void main()
 {
     init();
-    
+
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
-    vid.clear(MyBackground);
+    vid.BG0_drawAsset(Vec2(0,0), MyBackground);
      
     vid.setSpriteImage(turtle, Michelangelo);
-    // 1UPs
-//     for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
-//         vid.resizeSprite(i, Sprite.width*8, Sprite.height*8);
-//         vid.setSpriteImage(i, Sprite.index);
-//     }
-
-//     // Bullet
-//     vid.resizeSprite(0, Bullet.width*8, Bullet.height*8);
-//     vid.setSpriteImage(0, Bullet.index);
-
-//     // BG1 Overlay
-//     _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
-//                    + 16 - Overlay.height,
-//                    ((1 << Overlay.width) - 1), Overlay.height);
-//     _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
-//                      Overlay.tiles, 0, Overlay.width * Overlay.height);
+    vid.setSpriteImage(platform, Platform);
+    platform_pos.x = 64;
+    platform_pos.y = 64;
+    
 
     int x = 0;
     const Int2 center = { (128 - 16)/2, (128 - 16)/2 };
@@ -59,24 +52,9 @@ void main()
     while (1) {
         x = (x+1) % 128;
         int y = 60;
+        platform_pos.y = (platform_pos.y + 1) % 128;
         vid.moveSprite(turtle, Vec2(x,y));
-
-
-        // Circle of 1UPs
-//         for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
-            
-//             float angle = frame * 0.075f + (i-1) * (M_PI*2 / (_SYS_VRAM_SPRITES-1));
-//             const float r = 32;
-//             const Float2 center = { (128 - 16)/2, (128 - 16)/2 };
-
-//             vid.moveSprite(i, Int2(center + polar(angle, r)).round());
-//         }
-
-//         // Scroll BG1
-//         vid.BG1_setPanning(Vec2(-frame, 0u));
-        
-//         // Flying bullet
-//         vid.moveSprite(0, 130-frame*3, 190-frame);
+        vid.moveSprite(platform, platform_pos);
 
         System::paint();
     }
