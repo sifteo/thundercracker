@@ -34,20 +34,19 @@ else
 end
 
 -- Menu
-BgTile = image{ "assets/menu/bg.png" }
-IconSandwich = image{ "assets/menu/IconSandwich.png" }
-IconChroma = image{ "assets/menu/IconChroma.png" }
-IconPeano = image{ "assets/menu/IconPeano.png" }
-IconBuddy = image{ "assets/menu/IconBuddy.png"}
-Tip0 = image{ "assets/menu/Tip0.png" }
-Tip1 = image{ "assets/menu/Tip1.png" }
-Tip2 = image{ "assets/menu/Tip2.png" }
-Footer = image{ "assets/menu/Footer.png" }
-LabelEmpty = image{ "assets/menu/LabelEmpty.png" }
-LabelSandwich = image{ "assets/menu/LabelSandwich.png" }
-LabelChroma = image{ "assets/menu/LabelChroma.png" }
-LabelPeano = image{ "assets/menu/LabelPeano.png" }
-LabelBuddy = image{ "assets/menu/LabelBuddy.png"}
+IconFreePlay = image{"assets/menu/IconFreePlay.png"}
+IconStory = image{"assets/menu/IconStory.png"}
+IconShuffle = image{"assets/menu/IconShuffle.png"}
+IconOptions = image{"assets/menu/IconOptions.png"}
+Tip0 = image{"assets/menu/Tip0.png"}
+Tip1 = image{"assets/menu/Tip1.png"}
+Tip2 = image{"assets/menu/Tip2.png"}
+Footer = image{"assets/menu/Footer.png"}
+LabelEmpty = image{"assets/menu/LabelEmpty.png"}
+LabelFreePlay = image{"assets/menu/LabelFreePlay.png"}
+LabelStory = image{"assets/menu/LabelStory.png"}
+LabelShuffle = image{"assets/menu/LabelShuffle.png"}
+LabelOptions = image{"assets/menu/LabelOptions.png"}
 
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
