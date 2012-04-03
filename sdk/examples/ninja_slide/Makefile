@@ -4,7 +4,6 @@ include $(TC_DIR)/sdk/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o
 ASSETDEPS += images/*.png $(ASSETS).lua
-CFLAGS += -working-directory "src"
 
 include $(TC_DIR)/sdk/Makefile.rules
 
