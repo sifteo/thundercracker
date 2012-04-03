@@ -11,12 +11,27 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-enum SpriteIndices {
-    turtle,
-    platform
+class Thing {
+public:
+    int id;
+    Int2 pos;
+    Thing(int id, int x, int y);
+    void update(VidMode_BG0_SPR_BG1 vid);
 };
 
-static Int2 platform_pos;
+Thing::Thing(int id0, int x, int y){
+    id = id0;
+    pos.x = x;
+    pos.y = y;
+}
+
+void Thing::update(VidMode_BG0_SPR_BG1 vid){
+    vid.moveSprite(id, pos);
+}
+
+
+static Thing platform(0, 64, 64);
+static Thing michelangelo(1, 32, 0);
 
 void init()
 {
@@ -36,25 +51,26 @@ void main()
 {
     init();
 
+
+
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), MyBackground);
-     
-    vid.setSpriteImage(turtle, Michelangelo);
-    vid.setSpriteImage(platform, Platform);
-    platform_pos.x = 64;
-    platform_pos.y = 64;
+    
+    vid.setSpriteImage(michelangelo.id, Michelangelo);
+    vid.setSpriteImage(platform.id, Platform);
+
+//     _SYSTiltState tilt = _SYS_getTilt(0);
     
 
-    int x = 0;
     const Int2 center = { (128 - 16)/2, (128 - 16)/2 };
 
     while (1) {
-        x = (x+1) % 128;
-        int y = 60;
-        platform_pos.y = (platform_pos.y + 1) % 128;
-        vid.moveSprite(turtle, Vec2(x,y));
-        vid.moveSprite(platform, platform_pos);
+        michelangelo.pos.x = (michelangelo.pos.x + 1) % 128;
+        platform.pos.y = (platform.pos.y + 1) % 128;
+
+        michelangelo.update(vid);
+        platform.update(vid);
 
         System::paint();
     }
