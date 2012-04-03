@@ -3269,7 +3269,9 @@ void App::OnSwapExchange()
 {
     mSwapState = SWAP_STATE_IN;
     mSwapAnimationSlideTimer = kSwapAnimationSlide;
+    
     mSwapAnimationRotateTimer = kSwapAnimationSlide / NUM_SIDES;
+    mSwapAnimationRotateTimer *= 2.0f; // Double the delay for first rotation, so we can see it
     
     int side0 = mSwapPiece0 % NUM_SIDES;
     int side1 = mSwapPiece1 % NUM_SIDES;
