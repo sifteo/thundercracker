@@ -266,7 +266,7 @@ static void AddPasses(PassManagerBase &PM,
     FunctionPassManager &FPM, unsigned OLvl)
 {
     // First thing, strip unneeded stack allocation alignments
-    //PM.add(createMisalignStackPass());
+    PM.add(createMisalignStackPass());
 
     // Basic link-time optimization and inlining
     AddStandardLinkPasses(PM, OLvl);
