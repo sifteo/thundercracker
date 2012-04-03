@@ -3,12 +3,13 @@ GameAssets = group{quality = 10}
 
 -- TOOD: Put each buddy in its own asset group
 function AddBuddy (i, name)
-    _G["BuddyFull"        .. i] = image{"assets/buddy_full_" .. (i + 1) .. ".png"}
-    _G["BuddyBackground"  .. i] = image{"assets/bg"          .. (i + 1) .. ".png"}
-    _G["BuddySpriteFront" .. i] = image{"assets/sprite_"     .. name    .. "_front.png", pinned = true}
-    _G["BuddySpriteRight" .. i] = image{"assets/sprite_"     .. name    .. "_right.png", pinned = true}
-    _G["BuddySpriteLeft"  .. i] = image{"assets/sprite_"     .. name    .. "_left.png", pinned = true}
-    _G["BuddyRibbon"      .. i] = image{"assets/ribbon_"     .. name    .. ".png"}
+    _G["BuddyFull"        .. i] = image{"assets/buddy_full_"  .. (i + 1) .. ".png"}
+    _G["BuddyBackground"  .. i] = image{"assets/bg"           .. (i + 1) .. ".png"}
+    _G["BuddySpriteFront" .. i] = image{"assets/sprite_"      .. name    .. "_front.png", pinned = true}
+    _G["BuddySpriteRight" .. i] = image{"assets/sprite_"      .. name    .. "_right.png", pinned = true}
+    _G["BuddySpriteLeft"  .. i] = image{"assets/sprite_"      .. name    .. "_left.png", pinned = true}
+    _G["BuddyRibbon"      .. i] = image{"assets/ribbon_"      .. name    .. ".png"}
+    _G["BuddySmall"       .. i] = image{"assets/buddy_small_" .. name    .. ".png"}
     if UseSprites then
        _G["BuddyParts"    .. i] = image{"assets/parts"       .. (i + 1) .. "_sprite.png", height = 64, pinned = true}
     else
@@ -39,7 +40,7 @@ UiFontOrange = image{"assets/fontstrip_content_orange.png", height = 16}
 --UiFontBlue = image{"assets/fontstrip_content_blue.png", height = 16}
 --UiFontHeadingBlue = image{"assets/fontstrip_heading_blue.png", height = 16}
 UiFontHeadingOrange = image{"assets/fontstrip_heading_orange.png", height = 16}
---UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
+UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.png", height = 16}
 
 -- Ui Misc
 --UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
@@ -83,7 +84,8 @@ StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
 StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryNeighbor = image{"assets/neighbor.png"}
-StoryProgress = image{"assets/panel_progression.png"}
+StoryProgress = image{"assets/panel_storymode_puzzle_progression.png"}
+StoryProgressNumbers = image{"assets/progress_numbers.png", height = 16}
 StoryRibbonNewCharacter = image{"assets/ribbon_new_character.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}
 
