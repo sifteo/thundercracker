@@ -25,6 +25,11 @@ enum GameStateIndex
     GameStateIndex_EndOfRoundScored,
     GameStateIndex_ShuffleScored,
     GameStateIndex_StoryCityProgression,
+    GameStateIndex_Loading,
+    GameStateIndex_MainMenu,
+    GameStateIndex_PauseMenu,
+    GameStateIndex_CutScene,
+    GameStateIndex_CubeBuddyUnlock,
 
     GameStateIndex_NumStates
 };

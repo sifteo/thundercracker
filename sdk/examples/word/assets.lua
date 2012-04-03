@@ -1,6 +1,6 @@
 GameAssets = group{}
 
---Test = image{"font_bigger_2.png", quality=10}
+-- Test = image{"font_bigger_2.png", quality=10}
 --TestGlow = image{"font_bigger_2_glow.png", quality=10}
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
