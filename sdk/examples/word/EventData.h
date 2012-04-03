@@ -60,6 +60,11 @@ union EventData
     {
         char mHintSolution[NUM_CUBES][MAX_LETTERS_PER_CUBE];
     } mHintSolutionUpdate;
+
+    struct
+    {
+        float mDT;
+    } mUpdate;
 };
 
 #endif // EVENTDATA_H

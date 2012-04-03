@@ -3,17 +3,10 @@
 
 #include <sifteo.h>
 #include "StateMachine.h"
-#include "TitleCubeState.h"
-#include "TitleExitCubeState.h"
-#include "ScoredCubeState_NotWord.h"
-#include "ScoredCubeState_NewWord.h"
-#include "ScoredCubeState_OldWord.h"
-#include "ScoredCubeState_StartOfRound.h"
-#include "ScoredCubeState_EndOfRound.h"
-#include "ScoredCubeState_Shuffle.h"
 #include "config.h"
 #include "Anim.h"
 #include "Constants.h"
+#include "TileTransparencyLookup.h"
 
 using namespace Sifteo;
 
@@ -33,7 +26,6 @@ public:
     Cube& getCube() const;
 
     virtual unsigned getNumStates() const;
-    virtual State& getState(unsigned index);
 
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
     virtual void update(float dt);
@@ -124,14 +116,8 @@ private:
     SpriteParams mSpriteParams;
 
     Cube* mCube;
-    TitleCubeState mTitleState;
-    TitleExitCubeState mTitleExitState;
-    ScoredCubeState_NotWord mNotWordScoredState;
-    ScoredCubeState_NewWord mNewWordScoredState;
-    ScoredCubeState_OldWord mOldWordScoredState;
-    ScoredCubeState_StartOfRound mStartOfRoundScoredState;
-    ScoredCubeState_EndOfRound mEndOfRoundScoredState;
-    ScoredCubeState_Shuffle mShuffleScoredState;
+    float mShakeDelay;
+    float mPanning;
 };
 
 #endif // CUBESTATEMACHINE_H

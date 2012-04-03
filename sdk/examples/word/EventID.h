@@ -24,6 +24,7 @@ enum EventID
     EventID_SpendHint,
     EventID_Start,
     EventID_NormalTilesReveal,
+    EventID_Update,
 
     NumEventIds
 };

@@ -10,7 +10,6 @@ public:
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
 private:
-    bool mNeedsNewAnagram;
 };
 
 #endif // SCOREDGAMESTATE_SHUFFLE_H

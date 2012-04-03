@@ -11,19 +11,20 @@ StateMachine::StateMachine(unsigned startStateIndex) :
 
 void StateMachine::update(float dt)
 {
-    State& state = getState(mStateIndex);
     if (mUnhandledOnEnter)
     {
         EventData data;
         data.mEnterState.mFirst = true;
         data.mEnterState.mPreviousStateIndex = -1;
-        state.onEvent(EventID_EnterState, data);
+        onEvent(EventID_EnterState, data);
         mUnhandledOnEnter = false;
     }
-    unsigned newStateIndex = state.update(dt, mStateTime);
+    EventData data;
+    data.mUpdate.mDT = dt;
+    unsigned newStateIndex = onEvent(EventID_Update, data);
     if (newStateIndex != mStateIndex)
     {
-        setState(newStateIndex, state);
+        setState(newStateIndex, mStateIndex);
     }
     else
     {
@@ -31,29 +32,7 @@ void StateMachine::update(float dt)
     }
 }
 
-unsigned StateMachine::onEvent(unsigned eventID, const EventData& data)
-{
-    State& state = getState(mStateIndex);
-    unsigned newStateIndex = state.onEvent(eventID, data);
-    switch (eventID)
-    {
-    case EventID_EnterState:
-    case EventID_ExitState:
-        ASSERT(newStateIndex == mStateIndex);// can't change states when already changing states
-        break;
-
-    default:
-        if (newStateIndex != mStateIndex)
-        {
-            setState(newStateIndex, state);
-        }
-        break;
-    }
-
-    return mStateIndex;
-}
-
-void StateMachine::setState(unsigned newStateIndex, State& oldState)
+void StateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
     ASSERT(newStateIndex < getNumStates());
     onEvent(EventID_ExitState, EventData());
@@ -62,6 +41,5 @@ void StateMachine::setState(unsigned newStateIndex, State& oldState)
     data.mEnterState.mPreviousStateIndex = mStateIndex;
     mStateIndex = newStateIndex;
     mStateTime = .0f;
-    State& newState = getState(mStateIndex);    
     onEvent(EventID_EnterState, data);
 }

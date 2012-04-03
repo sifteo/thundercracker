@@ -28,11 +28,6 @@ CubeStateMachine& CubeState::getStateMachine()
 
 unsigned CubeState::update(float dt, float stateTime)
 {
-    mEyeDirChangeDelay -= dt;
-    mEyeDirChangeDelay = MAX(0.f, mEyeDirChangeDelay);
-    mEyeBlinkDelay -= dt;
-    mEyeBlinkDelay = MAX(0.f, mEyeBlinkDelay);
-
     return getStateMachine().getCurrentStateIndex();
 }
 

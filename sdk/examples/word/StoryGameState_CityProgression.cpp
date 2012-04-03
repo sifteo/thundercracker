@@ -15,11 +15,6 @@ unsigned StoryGameState_CityProgression::update(float dt, float stateTime)
 
 unsigned StoryGameState_CityProgression::onEvent(unsigned eventID, const EventData& data)
 {
-    switch (eventID)
-    {
-    case EventID_Shake:
-        WordGame::playAudio(shake, AudioChannelIndex_Shake);
-        return GameStateIndex_ShuffleScored;
-    }
+
     return GameStateIndex_StoryCityProgression;
 }

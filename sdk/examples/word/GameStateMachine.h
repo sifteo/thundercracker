@@ -3,12 +3,6 @@
 
 #include <sifteo.h>
 #include "StateMachine.h"
-#include "TitleGameState.h"
-#include "ScoredGameState.h"
-#include "ScoredGameState_StartOfRound.h"
-#include "ScoredGameState_EndOfRound.h"
-#include "ScoredGameState_Shuffle.h"
-#include "StoryGameState_CityProgression.h"
 #include "CubeStateMachine.h"
 #include "Utility.h"
 #include "LevelProgressData.h"
@@ -69,17 +63,12 @@ public:
     void initNewMeta();
 
 protected:
-    virtual State& getState(unsigned index);
-    virtual void setState(unsigned newStateIndex, State& oldState);
+    virtual void setState(unsigned newStateIndex, unsigned oldStateIndex);
     virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }
 
 private:
-    TitleGameState mTitleState;
-    ScoredGameState mScoredState;
-    ScoredGameState_StartOfRound mScoredStartOfRoundState;
-    ScoredGameState_EndOfRound mScoredEndOfRoundState;
-    ScoredGameState_Shuffle mScoredShuffleState;
-    StoryGameState_CityProgression mStoryCityProgressionState;
+    static void createNewAnagram();
+    static void onAudioEvent(unsigned eventID, const EventData& data);
     CubeStateMachine mCubeStateMachines[NUM_CUBES];
     float mAnagramCooldown;
     float mTimeLeft;
@@ -91,6 +80,8 @@ private:
     unsigned char mNumHints;
     unsigned mMetaLetterUnlockedMask;
     unsigned mMetaLetterUnlockedMaskOld;
+    Cube::ID mHintCubeIDOnUpdate;
+    bool mNeedsNewAnagram;
 
 
     static GameStateMachine* sInstance;

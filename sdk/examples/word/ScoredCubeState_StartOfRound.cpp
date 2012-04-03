@@ -13,23 +13,6 @@ ScoredCubeState_StartOfRound::ScoredCubeState_StartOfRound()
 
 unsigned ScoredCubeState_StartOfRound::onEvent(unsigned eventID, const EventData& data)
 {
-    switch (eventID)
-    {
-    case EventID_EnterState:
-    case EventID_NewPuzzle:
-    case EventID_Paint:
-    case EventID_ClockTick:
-        paint();
-        break;
-
-    case EventID_GameStateChanged:
-        switch (data.mGameStateChanged.mNewStateIndex)
-        {
-        case GameStateIndex_PlayScored:
-            return CubeStateIndex_NotWordScored;
-        }
-        break;
-    }
     return getStateMachine().getCurrentStateIndex();
 }
 
@@ -40,12 +23,5 @@ unsigned ScoredCubeState_StartOfRound::update(float dt, float stateTime)
 
 void ScoredCubeState_StartOfRound::paint()
 {
-#if (0)
-    Cube& c = getStateMachine().getCube();
-    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    vid.init();
-    // intro anim
-    vid.BG0_drawAsset(Vec2(0, 0), TileBG);
-    paintBorder(vid, ImageIndex_Teeth, true, false);
-#endif
+
 }
