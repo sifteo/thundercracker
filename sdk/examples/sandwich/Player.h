@@ -41,8 +41,7 @@ public:
   inline const ItemData* Equipment() const { return mEquipment; }
   inline bool CanCrossLava() const { return mEquipment && gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_BOOT; }
 
-  bool HasBasicKey() const;
-  void UseBasicKey();
+  void ConsumeEquipment();
 
   void SetStatus(int status);
   inline void SetDirection(Cube::Side dir) { mDir = dir; }

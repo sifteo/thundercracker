@@ -283,7 +283,8 @@ static inline reg_t branchTargetCBZ_CBNZ(uint16_t instr, reg_t pc, reg_t cpsr, r
 // Specific instructions
 ///////////////////////////////////////
 
-static const uint16_t BreakpointInstr   = 0xdfe8;
+static const uint16_t BreakpointInstr   = 0xdfe8;       // 0b11011111 11101000
+static const uint16_t Nop               = 0xbf00;       // 0b10111111 00000000
 
 ///////////////////////////////////////
 // 16-bit thumb instruction validators
@@ -320,8 +321,6 @@ static const uint16_t CompareBranchTest = 0xb1 << 8;    // 0b1011x0x1 xxxxxxxx
 
 static const uint16_t MovMask           = 0xffc0;       // 0b11111111 11xxxxxx  
 static const uint16_t MovTest           = 0x4600;       // 0b01000110 00xxxxxx  
-
-static const uint16_t Nop               = 0xbf00;       // 0b10111111 00000000
 
 ///////////////////////////////////////
 // 32-bit thumb instruction validators

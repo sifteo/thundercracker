@@ -11,17 +11,10 @@ private:
 public:
 	void Init();
 	bool AdvanceQuest();
-
 	inline const QuestData* Quest() const { return gQuestData+mQuest; }
-	
 	bool FlagTrigger(const TriggerData& trigger);
-	bool Flag(uint8_t questId, uint8_t flagId);
-	
 	bool AllQuestsComplete() { return mQuest == gQuestCount; }
-	
 	bool IsActive(const TriggerData& trigger) const;
-	bool IsActive(uint8_t questId, uint8_t flagId) const;
-
 	bool HasAnyItems() const { return mItemSet != 0; }
   	bool PickupItem(int itemId);
   	bool HasItem(int itemId) const { return (mItemSet & (1<<itemId)) != 0; }
@@ -29,6 +22,10 @@ public:
 
 
 private:
+	bool Flag(uint8_t questId, uint8_t flagId);
+	bool IsActive(uint8_t questId, uint8_t flagId) const;
+
+
 	void Save();
 	void Load();
 };

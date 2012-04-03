@@ -15,6 +15,7 @@ System::System()
         : opt_numCubes(DEFAULT_CUBES),
         opt_continueOnException(false),
         opt_turbo(false),
+        opt_lockRotationByDefault(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
         mIsInitialized(false),

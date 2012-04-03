@@ -70,9 +70,9 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
         if( spriteframe >= timerLow.frames )
             spriteframe = timerLow.frames - 1;
 
-        vid.resizeSprite(0, timerLow.width*8, timerLow.height*8);
-        vid.setSpriteImage(0, timerLow, spriteframe);
-        vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
+        vid.resizeSprite(TIMER_SPRITE_NUM_ID, timerLow.width*8, timerLow.height*8);
+        vid.setSpriteImage(TIMER_SPRITE_NUM_ID, timerLow, spriteframe);
+        vid.moveSprite(TIMER_SPRITE_NUM_ID, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
     }
     else
     {
@@ -83,9 +83,9 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
         if( spriteframe >= timerSprite.frames )
             spriteframe = timerSprite.frames - 1;
 
-        vid.resizeSprite(0, timerSprite.width*8, timerSprite.height*8);
-        vid.setSpriteImage(0, timerSprite, spriteframe);
-        vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
+        vid.resizeSprite(TIMER_SPRITE_NUM_ID, timerSprite.width*8, timerSprite.height*8);
+        vid.setSpriteImage(TIMER_SPRITE_NUM_ID, timerSprite, spriteframe);
+        vid.moveSprite(TIMER_SPRITE_NUM_ID, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
     }
 
 

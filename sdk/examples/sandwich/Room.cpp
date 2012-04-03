@@ -7,11 +7,11 @@ unsigned Room::Id() const {
 
 Int2 Room::LocalCenter(unsigned subdiv) const { 
   if (subdiv) {
-    ASSERT(mUserdataType == USERDATA_SUBDIV);
-    if (mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG) {
+    ASSERT(mPrimarySlotType == PRIMARY_SUBDIV);
+    if (mPrimarySlotId == SUBDIV_DIAG_POS || mPrimarySlotId == SUBDIV_DIAG_NEG) {
       const DiagonalSubdivisionData* p = SubdivAsDiagonal();
       return Vec2(p->altCenterX, p->altCenterY); 
-    } else if (mInnerType == SUBDIV_BRDG_HOR || mInnerType == SUBDIV_BRDG_VER) {
+    } else if (mPrimarySlotId == SUBDIV_BRDG_HOR || mPrimarySlotId == SUBDIV_BRDG_VER) {
       const BridgeSubdivisionData* p = SubdivAsBridge();
       return Vec2(p->altCenterX, p->altCenterY);
     }
@@ -28,16 +28,16 @@ const RoomData* Room::Data() const {
 }
 
 bool Room::HasOpenDoor() const {
-  return HasDoor() && !gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
+  return HasDoor() && !gGame.GetState()->IsActive(Door()->trigger);
 }
 
 bool Room::HasClosedDoor() const {
-  return HasDoor() && gGame.GetState()->IsActive(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
+  return HasDoor() && gGame.GetState()->IsActive(Door()->trigger);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
-  return gGame.GetState()->Flag(gGame.GetMap()->Data()->doorQuestId, Door()->flagId);
+  return gGame.GetState()->FlagTrigger(Door()->trigger);
 }
 
 const uint8_t* Room::OverlayBegin() const {
@@ -45,24 +45,24 @@ const uint8_t* Room::OverlayBegin() const {
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
-  ASSERT(!mUserdata);
-  mUserdataType = USERDATA_SUBDIV;
-  mInnerType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
-  mUserdata = diag;
+  ASSERT(!mPrimarySlot);
+  mPrimarySlotType = PRIMARY_SUBDIV;
+  mPrimarySlotId = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
+  mPrimarySlot = diag;
 }
 
 void Room::SetBridgeSubdivision(const BridgeSubdivisionData* bridge) {
-  ASSERT(!mUserdata);
-  mUserdataType = USERDATA_SUBDIV;
-  mInnerType = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
-  mUserdata = bridge;
+  ASSERT(!mPrimarySlot);
+  mPrimarySlotType = PRIMARY_SUBDIV;
+  mPrimarySlotId = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
+  mPrimarySlot = bridge;
 }
 
 void Room::Clear() { 
-  mUserdataType = 0;
-  mInnerType = 0;
-  mUserdata = 0;
-  mOtherdata = 0;
+  mPrimarySlotType = 0;
+  mPrimarySlotId = 0;
+  mPrimarySlot = 0;
+  mSecondarySlot = 0;
   mOverlayIndex = 0xffff;
 }
 

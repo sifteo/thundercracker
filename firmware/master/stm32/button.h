@@ -14,6 +14,10 @@ public:
     static void init();
     static void isr();
 
+    static inline bool isPressed() {
+        return homeButton.isHigh();
+    }
+
 private:
     static GPIOPin homeButton;
 };
