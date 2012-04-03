@@ -34,6 +34,7 @@ else
 end
 
 -- Menu
+BgTile = image{"assets/menu/bg.png"}
 IconFreePlay = image{"assets/menu/IconFreePlay.png"}
 IconStory = image{"assets/menu/IconStory.png"}
 IconShuffle = image{"assets/menu/IconShuffle.png"}

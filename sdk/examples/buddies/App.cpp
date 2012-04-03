@@ -1330,10 +1330,10 @@ void App::UpdateMenu()
     MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
     MenuItem menuItems[] =
     {
-        { &IconChroma, &LabelChroma },
-        { &IconSandwich, &LabelSandwich },
-        { &IconPeano, &LabelPeano },
-        { &IconBuddy, &LabelBuddy },
+        { &IconFreePlay, &LabelFreePlay },
+        { &IconStory,    &LabelStory },
+        { &IconShuffle,  &LabelShuffle },
+        { &IconOptions,  &LabelOptions },
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
@@ -1351,7 +1351,7 @@ void App::UpdateMenu()
                 }
                 else if (menuEvent.item == 1)
                 {
-                    //StartGameState(GAME_STATE_STORY_START);
+                    StartGameState(GAME_STATE_STORY_START);
                 }
                 else if (menuEvent.item == 2)
                 {
