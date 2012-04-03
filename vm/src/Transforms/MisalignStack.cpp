@@ -11,26 +11,14 @@
  * so that they don't affect optimization passes.
  */
 
-#include "Support/ErrorReporter.h"
-#include "Analysis/CounterAnalysis.h"
-#include "Analysis/UUIDGenerator.h"
-#include "Target/SVMSymbolDecoration.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/Constants.h"
-#include "llvm/Type.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Instructions.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 namespace llvm {
     BasicBlockPass *createMisalignStackPass();
 }
-
-extern cl::opt<bool> ELFDebug;
 
 namespace {
     class MisalignStackPass : public BasicBlockPass {
