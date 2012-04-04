@@ -80,6 +80,7 @@ namespace llvm {
         static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
         static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
         static SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+        static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
 
         // Custom inserters
         MachineBasicBlock *ExpandCMOV(MachineInstr *MI, MachineBasicBlock *BB) const;
