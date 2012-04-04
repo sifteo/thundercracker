@@ -1360,14 +1360,21 @@ void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 
 void App::UpdateMenuMain()
 {
-    /*
-    MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
+    MenuAssets menuAssets =
+    {
+        &BgTile,
+        &Footer,
+        &LabelEmpty,
+        { &TipChooseMode, &TipTiltToScroll, &TipPressToSelect, NULL }
+    };
+    
     MenuItem menuItems[] =
     {
         { &IconFreePlay, &LabelFreePlay },
         { &IconStory,    &LabelStory },
         { &IconShuffle,  &LabelShuffle },
         { &IconOptions,  &LabelOptions },
+        { NULL, NULL },
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
@@ -1405,10 +1412,6 @@ void App::UpdateMenuMain()
             }
         }
     }
-    */
-    
-    // TEMP CODE UNTIL ABOVE WORKS
-    StartGameState(GAME_STATE_MENU_STORY);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1416,8 +1419,13 @@ void App::UpdateMenuMain()
 
 void App::UpdateMenuStory()
 {
-    /*
-    MenuAssets menuAssets = { &BgTile, &Footer, &LabelEmpty, { &Tip0, &Tip1, &Tip2, NULL } };
+    MenuAssets menuAssets =
+    {
+        &BgTile,
+        &Footer,
+        &LabelEmpty,
+        { &TipChooseMode, &TipTiltToScroll, &TipPressToSelect, NULL }
+    };
     MenuItem menuItems[] =
     {
         { &IconContinue, &LabelContinue },
@@ -1425,6 +1433,7 @@ void App::UpdateMenuStory()
         { &IconBook1,    &LabelBook1 },
         { &IconBook2,    &LabelBook2 },
         { &IconMainMenu, &LabelMainMenu },
+        { NULL, NULL },
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
@@ -1461,12 +1470,6 @@ void App::UpdateMenuStory()
             }
         }
     }
-    */
-    
-    // TEMP CODE UNTIL ABOVE WORKS
-    mStoryBookIndex = 0;
-    mStoryPuzzleIndex = 0;
-    StartGameState(GAME_STATE_STORY_START);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

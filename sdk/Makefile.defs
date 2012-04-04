@@ -32,6 +32,11 @@ ifneq ($(DISABLE_INLINING),)
     LDFLAGS += -disable-inlining
 endif
 
+ifneq ($(ENABLE_OPT_01),)
+    CFLAGS += -O1
+    LDFLAGS += -O1
+endif
+
 ifneq ($(DISABLE_OPT),)
     CFLAGS += -O0
     LDFLAGS += -O0
