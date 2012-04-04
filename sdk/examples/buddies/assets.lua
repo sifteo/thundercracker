@@ -117,5 +117,5 @@ StoryBookStartNext = image{"assets/panel_start_next_book.png"}
 StoryCongratulationsUnlock = image{"assets/panel_congratulations_unlock.png"}
 
 -- Sounds (use encode = "PCM" for PCM encoding)
-SoundGems = sound{"assets/gems1_4A9.raw"}
-SoundTick = sound{"assets/Tick.raw"}
+SoundGems = sound{"assets/sound/gems1_4A9.raw"}
+SoundTick = sound{"assets/sound/Tick.raw"}
