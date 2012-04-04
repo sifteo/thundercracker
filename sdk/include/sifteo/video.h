@@ -104,11 +104,11 @@ enum Rotation {
 struct VideoBuffer {
     union {
         _SYSAttachedVideoBuffer sys;
-        SpriteLayer sprites;
-        Colormap colormap;
-        FBDrawable<32,32,4> fb32;
-        FBDrawable<64,64,2> fb64;
-        FBDrawable<128,48,2> fb128;
+        SpriteLayer             sprites;
+        Colormap                colormap;
+        FB32Drawable            fb32;
+        FB64Drawable            fb64;
+        FB128Drawable           fb128;
     };
 
     /**
@@ -154,6 +154,13 @@ struct VideoBuffer {
      */
     void setWindow(uint8_t firstLine, uint8_t numLines) {
         poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
+    }
+
+    /**
+     * Restore the default full-screen drawing window.
+     */
+    void setDefaultWindow() {
+        setWindow(0, LCD_height);
     }
 
     /**
@@ -222,6 +229,39 @@ struct VideoBuffer {
      */
     VideoMode getMode() const {
         return VideoMode(peekb(offsetof(_SYSVideoRAM, mode)));
+    }
+    
+    /**
+     * Zero all mode-specific video memory. This is typically part of
+     * initMode(), but it may be necessary to do this at other times. For
+     * example, when doing a multi-mode scene, you may need to ensure that
+     * unused portions of VRAM are in a known blank state.
+     */
+    void erase() {
+        _SYS_vbuf_fill(*this, 0, 0, _SYS_VA_FIRST_LINE / 2);
+    }
+
+    /**
+     * Initialize the video buffer and change modes. This is a shorthand
+     * for setting the mode, restoring the default window and rotation,
+     * and zero'ing all mode-specific video memory.
+     *
+     * Most programs should use initMode() to set up the initial mode for
+     * a VideoBuffer, prior to attaching it to a cube. This is because
+     * the process of attaching a video buffer causes the system to assume
+     * all video memory is 'dirty', and re-send it to the cube. It is important
+     * to have video memory in the state you want it to be in before this
+     * happens.
+     *
+     * You can optionally specify a non-default window size. This
+     * is helpful, since often when doing multi-mode rendering you
+     * need to change modes and change windows at the same time.
+     */
+    void initMode(VideoMode m, unsigned firstLine = 0, unsigned numLines = LCD_height) {
+        erase();
+        setWindow(firstLine, numLines);
+        setRotation(ROT_NORMAL);
+        setMode(m);
     }
 
     /**

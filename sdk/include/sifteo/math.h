@@ -68,6 +68,47 @@ template <typename T> inline T abs(const T& value)
 }
 
 /**
+ * Logical shift left with clamping. If the shift amount is negative,
+ * it is treated as zero. Shift amounts greater than or equal to the word
+ * width will always return zero.
+ */
+
+template <typename T> inline T lslc(const T& value, int bits)
+{
+    if (bits < 0)
+        return value;
+    if (bits >= sizeof(T) * 8)
+        return 0;
+    return value << (unsigned)bits;
+}
+
+/**
+ * Logical shift right with clamping. If the shift amount is negative,
+ * it is treated as zero. Shift amounts greater than or equal to the word
+ * width will always return zero.
+ */
+
+template <typename T> inline T lsrc(const T& value, int bits)
+{
+    if (bits < 0)
+        return value;
+    if (bits >= sizeof(T) * 8)
+        return 0;
+    return value >> (unsigned)bits;
+}
+
+/**
+ * Return a value of type T which has bits set in the half-open
+ * interval [begin, end). The range may include negative values
+ * and/or values greater than the width of the type.
+ */
+
+template <typename T> inline T bitRange(int begin, int end)
+{
+    return lslc((T)-1, begin) & ~lslc((T)-1, end);
+}
+
+/**
  * Compute the remainder (modulo) operation for two floating point numbers.
  * This variant operates on single-precision floats.
  */

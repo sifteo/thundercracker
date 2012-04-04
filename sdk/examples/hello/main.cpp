@@ -24,15 +24,16 @@ void main()
     static VideoBuffer vid;
     
     myCube.enable();
+    vid.initMode(FB32);
     vid.attach(myCube);
-    vid.setMode(FB32);
+    vid.colormap.setEGA();
+    auto &fb = vid.fb32;
 
-    vid.colormap[0].set(0x000000);
-    vid.colormap[1].set(0x808080);
-    
-    while (1) {
+    fb.fill(14, Vec2(0,0), Vec2(32,32));
+    fb.fill(1, Vec2(1,1), Vec2(30,30));
+
+    while (1)
         System::paint();
-    }
 }
 
 

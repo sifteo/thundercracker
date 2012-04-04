@@ -13,6 +13,8 @@
 
 #include <sifteo/abi.h>
 
+#define NOINLINE        __attribute__ ((noinline))
+
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
