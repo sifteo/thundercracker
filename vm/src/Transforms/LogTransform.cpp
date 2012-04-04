@@ -28,6 +28,8 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include <string.h>
+#include <stdio.h>
 
 using namespace llvm;
 
