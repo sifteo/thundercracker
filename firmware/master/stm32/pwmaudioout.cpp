@@ -23,6 +23,13 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
 #endif
     this->mixer = mixer;
     buf.init(&this->sys);
+
+    // must default to non-differential state to avoid direct shorting
+    outA.setControl(GPIOPin::OUT_2MHZ);
+    outB.setControl(GPIOPin::OUT_2MHZ);
+    outA.setHigh();
+    outB.setHigh();
+
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
     outB.setControl(GPIOPin::OUT_ALT_50MHZ);
 
