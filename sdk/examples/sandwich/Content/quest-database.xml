@@ -1,6 +1,6 @@
 <quest-database>
 
-	
+	<quest id="enginedev" map="sandbox" loc="SpawnPoint" />
 
 	<quest id="temple_level4" map="temple_level4" x="0" y="3" />
 	<quest id="temple_level1" map="temple_level1" x="0" y="2" />	
@@ -9,8 +9,6 @@
 	
 	<quest id="tutorial" map="forest" x="3" y="5" />
 
-	<quest id="enginedev" map="sandbox" x="1" y="3" />
-	
 	
 	<!--<quest id="tutorial" map="sandbox" x="0" y="1" /> -->
 

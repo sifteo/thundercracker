@@ -310,7 +310,7 @@
   </object>
   <object name="TestTrap" type="Trapdoor" x="416" y="48" width="64" height="64">
    <properties>
-    <property name="respawn" value="0,0"/>
+    <property name="respawn" value="RespawnTest"/>
    </properties>
   </object>
   <object name="Doggy Bowl" type="Depot" x="48" y="272" width="32" height="48">
@@ -336,5 +336,7 @@
     <property name="onTrigger" value="opendoor:TestDoor"/>
    </properties>
   </object>
+  <object name="RespawnTest" type="Location" x="48" y="64" width="32" height="32"/>
+  <object name="SpawnPoint" type="Location" x="176" y="448" width="32" height="32"/>
  </objectgroup>
 </map>

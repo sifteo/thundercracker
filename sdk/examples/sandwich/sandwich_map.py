@@ -80,6 +80,20 @@ class Sokoblock:
 		if self.asset.lower().endswith(".png"): self.asset = self.asset[0:-4]
 		assert posixpath.exists(posixpath.join(map.world.dir, self.asset+".png"))
 
+class Location:
+	def __init__(self, mp, obj):
+		self.map = mp
+		self.obj = obj
+		self.name = obj.name
+		self.rx = obj.px / 128
+		self.ry = obj.py / 128
+		self.rid = self.ry * mp.width + self.rx
+		self.local_tx = obj.tx - self.rx * 16
+		self.local_ty = obj.ty - self.ry * 16
+
+	def room(self):
+		self.map.rooms[self.rid]
+
 class Map:
 	def __init__(self, db, xml):
 		world = db.world
@@ -117,6 +131,10 @@ class Map:
 		self.background_id = posixpath.basename(self.background.gettileset().imgpath)
 		if self.overlay is not None:
 			self.overlay_id = posixpath.basename(self.overlay.gettileset().imgpath)
+
+		# find locators
+		self.locations = [ Location(self, obj) for obj in self.raw.objects if obj.type == "location" ]
+		self.location_dict = dict((loc.name,loc) for loc in self.locations)
 
 		self.count = self.width * self.height
 		assert self.count > 0, "map is empty: " + self.id

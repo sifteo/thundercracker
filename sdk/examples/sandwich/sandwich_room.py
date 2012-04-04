@@ -41,6 +41,7 @@ class Room:
 	def __init__(self, map, lid):
 		self.map = map
 		self.lid = lid
+		self.locations = [ loc for loc in map.locations if loc.rid == lid ]
 		self.x = lid % map.width
 		self.y = lid / map.width
 		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
@@ -81,12 +82,16 @@ class Room:
 			obj = trapdoors[0]
 			#print "pix position = %d, %d" % (obj.px, obj.py)
 			assert obj.pw/16 == 4 and obj.ph/16 == 4, "Trapdoor must be 4x4 tiles: " + self.map.id
-			m = EXP_LOCATION.match(obj.props.get("respawn", ""))
-			assert m is not None, "Malformed Respawn Location in Map: " + self.map.id
-			self.trapRespawnRoomId = int(m.group(1)) + int(m.group(2)) * map.width
+			respawn = obj.props.get("respawn", "")
+			m = EXP_LOCATION.match(respawn)
+			if m is None:
+				# assuming we have a location
+				assert respawn in self.map.location_dict
+				self.trapRespawnRoomId = self.map.location_dict[respawn].rid
+			else:
+				self.trapRespawnRoomId = int(m.group(1)) + int(m.group(2)) * map.width
 			self.trapx = (obj.px / 16) - self.x * 8 + 2
 			self.trapy = (obj.py / 16) - self.y * 8 + 2
-			#print "trap position: %d, %d" % (self.trapx, self.trapy)
 			self.its_a_switch = False
 		else:
 			# switches?
