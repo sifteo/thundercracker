@@ -5,7 +5,6 @@
 #include "SavedData.h"
 #include "WordGame.h"
 #include "assets.gen.h"
-#include "CubeState.h"
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 
@@ -324,19 +323,18 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_Update:
             {
                 float dt = data.mUpdate.mDT;
-                const float BLIP_TIME = 4.f/7.f * TEETH_ANIM_LENGTH;
+                const float BLIP_TIME = 4.f/7.f * 1.5f;
                 if (mStateTime > BLIP_TIME && mStateTime - dt <= BLIP_TIME)
                 {
                     WordGame::playAudio(blip, AudioChannelIndex_Time);
                 }
 
-                if (mStateTime > TEETH_ANIM_LENGTH)
+                if (mStateTime > TRANSITION_ANIM_LENGTH)
                 {
                     WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
                     createNewAnagram();
                     newStateIndex = GameStateIndex_PlayScored;
                 }
-
             }
             break;
 
@@ -355,7 +353,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Shake:
-            if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+            if (GameStateMachine::getTime() > TRANSITION_ANIM_LENGTH)
             {
                 WordGame::playAudio(shake, AudioChannelIndex_Shake);
                 newStateIndex = GameStateIndex_StartOfRoundScored;
@@ -379,8 +377,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_Update:
             {
                 float dt = data.mUpdate.mDT;
-                const float BLIP_TIME = 4.f/7.f * TEETH_ANIM_LENGTH + TEETH_ANIM_LENGTH;
-                if (mStateTime > TEETH_ANIM_LENGTH && mNeedsNewAnagram)
+                const float BLIP_TIME = 4.f/7.f * TRANSITION_ANIM_LENGTH + TRANSITION_ANIM_LENGTH;
+                if (mStateTime > TRANSITION_ANIM_LENGTH && mNeedsNewAnagram)
                 {
                     createNewAnagram();
                     WordGame::playAudio(teeth_open, AudioChannelIndex_Teeth);
@@ -392,7 +390,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                 }
 
                 newStateIndex =
-                        (mStateTime > TEETH_ANIM_LENGTH * 2.f) ? GameStateIndex_PlayScored : GameStateIndex_ShuffleScored;
+                        (mStateTime > TRANSITION_ANIM_LENGTH * 2.f) ? GameStateIndex_PlayScored : GameStateIndex_ShuffleScored;
             }
             break;
 

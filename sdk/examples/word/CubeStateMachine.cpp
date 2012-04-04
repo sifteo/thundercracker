@@ -475,7 +475,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Update:
-            newStateIndex = mStateTime > TEETH_ANIM_LENGTH ? CubeStateIndex_NotWordScored : CubeStateIndex_TitleExit;
+            newStateIndex = mStateTime > TRANSITION_ANIM_LENGTH ? CubeStateIndex_NotWordScored : CubeStateIndex_TitleExit;
             break;
         }
         break;
@@ -532,7 +532,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             paint();
             break;
         case EventID_Update:
-            newStateIndex = mStateTime <= 0.5f ? //TEETH_ANIM_LENGTH * 2.f ?
+            newStateIndex = mStateTime <= 0.5f ?
                            CubeStateIndex_ShuffleScored: CubeStateIndex_NotWordScored;
             break;
         }
@@ -1415,7 +1415,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 
     if (animate)
     {
-        float animTime =  (getTime() - animStartTime) / TEETH_ANIM_LENGTH;
+        float animTime =  (getTime() - animStartTime)
         if (loopAnim)
         {
             animTime = fmodf(animTime, 1.0f);

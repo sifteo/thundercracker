@@ -1,5 +1,4 @@
 #include "StateMachine.h"
-#include "State.h"
 #include <sifteo.h>
 #include "EventID.h"
 #include "EventData.h"

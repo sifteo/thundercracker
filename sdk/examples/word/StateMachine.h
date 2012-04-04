@@ -1,7 +1,6 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
-class State;
 union EventData;
 
 class StateMachine
