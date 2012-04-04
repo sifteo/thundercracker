@@ -1392,7 +1392,11 @@ void App::UpdateMenuMain()
                 }
                 else if (menuEvent.item == 1)
                 {
-                    StartGameState(GAME_STATE_MENU_STORY);
+                    // TODO: Disabled until story menu works
+                    //StartGameState(GAME_STATE_MENU_STORY);
+                    mStoryBookIndex = 0;
+                    mStoryPuzzleIndex = 0;
+                    StartGameState(GAME_STATE_STORY_BOOK_START);
                 }
                 else if (menuEvent.item == 2)
                 {
@@ -1848,12 +1852,13 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                if (NextUnlockedBuddy() != -1)
-                {
-                    mStoryPreGame = true;
-                    StartGameState(GAME_STATE_UNLOCKED_1);
-                }
-                else
+                // TODO: Disabled until story menu works
+                //if (NextUnlockedBuddy() != -1)
+                //{
+                //    mStoryPreGame = true;
+                //    StartGameState(GAME_STATE_UNLOCKED_1);
+                //}
+                //else
                 {
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
