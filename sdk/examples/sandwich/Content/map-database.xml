@@ -21,11 +21,11 @@
 	<map id="temple_level3">
 		<name>North Temple</name>
 	</map>
-<!--
+	
 	<map id="temple_level4">
 		<name>Temple area 4</name>
 	</map>
--->
+
 	<map id="sandbox">
 		<name>Programming Sandbox</name>
 	</map>
