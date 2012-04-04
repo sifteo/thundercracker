@@ -5,19 +5,17 @@
 using namespace Sifteo;
 
 const int PIXELS_PER_GRID = 32;
-const int SCREEN_WIDTH = 128;
-const int SCREEN_HEIGHT = 128;
 
 class Thing {
-public:
+  public:
     int id;
     Float2 pos;
     Float2 vel;
     const PinnedAssetImage *pImage;
 
-    Thing(int id0, Int2 pos0){
-        id = id0;
-        pos = pos0.toFloat();
+    Thing(int id, Int2 pos){
+        this->id = id;
+        this->pos = pos.toFloat();
         pImage = NULL;
     }
 
@@ -37,34 +35,24 @@ public:
 
         pos = pos + (vel * dt);
 
-        if (   pos.x < 0.0 || (pos.x + pixelWidth()) > SCREEN_WIDTH
-            || pos.y < 0.0 || (pos.y + pixelHeight()) > SCREEN_HEIGHT){
+        if (   pos.x < 0.0 || (pos.x + pixelWidth()) > VidMode::LCD_width
+            || pos.y < 0.0 || (pos.y + pixelHeight()) > VidMode::LCD_height){
             collided(NULL);
         }
     }
 
     void draw(VidMode_BG0_SPR_BG1 vid){
-//         LOG(("Drawing thing(%d) at %.2f %.2f\n", id, pos.x, pos.y));
         vid.moveSprite(id, pos.toInt());
     }
 
-    int pixelWidth(){
-        return pImage->pixelWidth();
-    }
-
-    int pixelHeight(){
-        return pImage->pixelHeight();
-    }
+    int pixelWidth(){ return pImage->pixelWidth(); }
+    int pixelHeight(){ return pImage->pixelHeight(); }
+    int right(){ return pos.x + pixelWidth() - 1; }
+    int bottom(){ return pos.y + pixelHeight() - 1; }
 
     bool isTouching(Thing *otherThing){
-        int myRight = pos.x + pixelWidth() - 1;
-        int myBottom = pos.y + pixelHeight() - 1;
-        int otherRight = otherThing->pos.x + otherThing->pixelWidth() - 1;
-        int otherBottom = otherThing->pos.y + otherThing->pixelHeight() - 1;
-
-        bool overlappingX = pos.x <= otherRight && myRight >= otherThing->pos.x;
-        bool overlappingY = pos.y <= otherBottom && myBottom >= otherThing->pos.y;
-        return overlappingX && overlappingY;
+        return pos.x <= otherThing->right() && right() >= otherThing->pos.x
+            && pos.y <= otherThing->bottom() && bottom() >= otherThing->pos.y;
     }
 
     void collided(Thing *otherThing){
@@ -77,10 +65,10 @@ public:
 
 
 class Platform : public Thing {
-public:
 
-    Platform(int id0, Int2 pos0) : Thing(id0, pos0) {
-    }
+  public:
+
+    Platform(int id, Int2 pos) : Thing(id, pos) {} 
 
     virtual void think(_SYSCubeID cubeId){
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
