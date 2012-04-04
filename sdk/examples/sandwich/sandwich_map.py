@@ -44,9 +44,11 @@ class Depot:
 		self.map = map
 		assert "target" in obj.props and ( "parent" in obj.props or "ontrigger" in obj.props )
 		self.obj = obj
-		inst = obj.map.object_dict[obj.props["target"]]
+		target = obj.props["target"].lower()
+		inst = obj.map.object_dict[target]
 		assert inst.type == "item" and "id" in inst.props
-		self.item = map.world.items.item_dict[inst.props["id"]]
+		instid = inst.props["id"].lower()
+		self.item = map.world.items.item_dict[instid]
 		assert self.item.storage_type == STORAGE_TYPE_EQUIP
 		rx = obj.px / 128
 		ry = obj.py / 128
