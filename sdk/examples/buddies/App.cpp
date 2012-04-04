@@ -246,7 +246,6 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
 
 void DrawShuffleCutscene(CubeWrapper &cubeWrapper, Int2 scroll, BuddyId buddyId, bool spriteJump)
 {
-    ASSERT(1 <= _SYS_VRAM_SPRITES);
     const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
     const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
             
@@ -441,7 +440,6 @@ void DrawStoryCutscene(
     bool jump0, bool jump1)
 {
     ASSERT(line.mText != NULL);
-    ASSERT(2 <= _SYS_VRAM_SPRITES);
     
     if (line.mSpeaker == 0)
     {
