@@ -123,6 +123,50 @@ namespace {
             assert(args.empty());
         }
 
+        void appendEscaped(const std::string &str)
+        {
+            // Append a string to the current format string, escaping all '%' chars.
+            for (std::string::const_iterator I = str.begin(), E = str.end(); I != E; ++I) {
+                char c = *I;
+                if (c == '%')
+                    fmt += '%';
+                fmt += c;
+            }
+        }
+
+        template <typename T>
+        void appendScalar(std::string fmt, T value)
+        {
+            // Append a simple formatted integer or floating point scalar value.
+            char buf[256];
+            snprintf(buf, sizeof buf - 1, fmt.c_str(), value);
+            buf[sizeof buf - 1] = '\0';
+            appendEscaped(buf);
+        }
+
+        ConstantFP *sloppyConstFloat(Value *V)
+        {
+            // Try to convert 'V' to a constant float value, ignoring fptrunc/fpext casts.
+            for (;;) {
+                CastInst *CI = dyn_cast<CastInst>(V);
+                if (!CI)
+                    break;
+
+                switch (CI->getOpcode()) {
+
+                    case Instruction::FPExt:
+                    case Instruction::FPTrunc:
+                        V = CI->getOperand(0);
+                        break;
+
+                    default:
+                        return 0;
+                }
+            }
+
+            return dyn_cast<ConstantFP>(V);
+        }
+
         void handleSpecifier(std::string::iterator &fmtBegin, std::string::iterator fmtEnd,
             CallSite::arg_iterator &argBegin, CallSite::arg_iterator argEnd)
         {
@@ -182,8 +226,6 @@ namespace {
                 case 'C': {
                     if (argBegin == argEnd)
                         reportError("Too few arguments");
-                    if (args.size() >= MAX_ARGS)
-                        flush();
 
                     Value *v = argBegin->get();
                     if (!v->getType()->isIntegerTy() && !v->getType()->isPointerTy())
@@ -191,8 +233,19 @@ namespace {
                     if (v->getType() != i32)
                         v = CastInst::CreatePointerCast(v, i32, "", I);
 
-                    args.push_back(v);
-                    fmt.append(fmtBegin, S);
+                    // Is the value known at compile-time?
+                    ConstantInt *CV = dyn_cast<ConstantInt>(v);
+                    if (CV) {
+                        // Format this value now.
+                        appendScalar(std::string(fmtBegin, S), (int)CV->getSExtValue());                
+                    } else {
+                        // Add to the format string
+                        if (args.size() >= MAX_ARGS)
+                            flush();
+                        args.push_back(v);
+                        fmt.append(fmtBegin, S);
+                    }
+
                     fmtBegin = S;
                     ++argBegin;
                     return;
@@ -207,8 +260,6 @@ namespace {
                 case 'G': {
                     if (argBegin == argEnd)
                         reportError("Too few arguments");
-                    if (args.size() >= MAX_ARGS)
-                        flush();
 
                     Value *v = argBegin->get();
                     if (!v->getType()->isFloatingPointTy())
@@ -216,8 +267,19 @@ namespace {
                     if (v->getType() != i32)
                         v = CastInst::CreateFPCast(v, Type::getFloatTy(Ctx), "", I);
 
-                    args.push_back(v);
-                    fmt.append(fmtBegin, S);
+                    // Is the value known at compile-time?
+                    ConstantFP *CV = sloppyConstFloat(v);
+                    if (CV) {
+                        // Format this value now.
+                        appendScalar(std::string(fmtBegin, S), CV->getValueAPF().convertToDouble());                
+                    } else {
+                        // Add to the format string
+                        if (args.size() >= MAX_ARGS)
+                            flush();
+                        args.push_back(v);
+                        fmt.append(fmtBegin, S);
+                    }
+
                     fmtBegin = S;
                     ++argBegin;
                     return;
@@ -232,11 +294,20 @@ namespace {
                     if (!v->getType()->isPointerTy())
                         reportError("Expected pointer argument for %" + Twine(c));
 
-                    flush();
-                    args.push_back(createFlagsWord(1, 1));
-                    args.push_back(CastInst::CreatePointerCast(v, i32, "", I));
-                    CallInst::Create(sysLogFn, args, "", I);
-                    args.clear();
+                    // Is this string constant at compile-time?
+                    std::string vStr;
+                    if (GetConstantStringInfo(v, vStr)) {
+                        // Yes, fold it into the format string after escaping it.
+                        appendEscaped(vStr);
+
+                    } else {
+                        // No, output a dynamic string logging call
+                        flush();
+                        args.push_back(createFlagsWord(1, 1));
+                        args.push_back(CastInst::CreatePointerCast(v, i32, "", I));
+                        CallInst::Create(sysLogFn, args, "", I);
+                        args.clear();
+                    }
 
                     fmtBegin = S;
                     ++argBegin;
