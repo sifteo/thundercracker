@@ -968,13 +968,22 @@ void App::Reset()
 
 void App::Update(float dt)
 {
+    static bool skipDt = false;
+    if (skipDt)
+    {
+        dt = 0.0f;
+        skipDt = false;
+    }
+    
     if (mGameState == GAME_STATE_MENU_MAIN)
     {
         UpdateMenuMain();
+        skipDt = true;
     }
     else if (mGameState == GAME_STATE_MENU_STORY)
     {
         UpdateMenuStory();
+        skipDt = true;
     }
     else
     {
@@ -1370,9 +1379,9 @@ void App::UpdateMenuMain()
     
     MenuItem menuItems[] =
     {
-        { &IconFreePlay, &LabelFreePlay },
         { &IconStory,    &LabelStory },
         { &IconShuffle,  &LabelShuffle },
+        { &IconFreePlay, &LabelFreePlay },
         { &IconOptions,  &LabelOptions },
         { NULL, NULL },
     };
@@ -1388,23 +1397,19 @@ void App::UpdateMenuMain()
             {
                 if (menuEvent.item == 0)
                 {
-                    StartGameState(GAME_STATE_FREEPLAY_START);
+                    StartGameState(GAME_STATE_MENU_STORY);
                 }
                 else if (menuEvent.item == 1)
                 {
-                    // TODO: Disabled until story menu works
-                    //StartGameState(GAME_STATE_MENU_STORY);
-                    mStoryBookIndex = 0;
-                    mStoryPuzzleIndex = 0;
-                    StartGameState(GAME_STATE_STORY_BOOK_START);
+                    StartGameState(GAME_STATE_SHUFFLE_START);
                 }
                 else if (menuEvent.item == 2)
                 {
-                    StartGameState(GAME_STATE_SHUFFLE_START);
+                    StartGameState(GAME_STATE_FREEPLAY_START);
                 }
                 else if (menuEvent.item == 3)
                 {
-                    // TODO: options config
+                    // TODO: options config menu
                     menu.preventDefault();
                 }
                 break;
@@ -1461,7 +1466,7 @@ void App::UpdateMenuStory()
                     mStoryPuzzleIndex = 0;
                     StartGameState(GAME_STATE_STORY_START);
                 }
-                else if (menuEvent.item == 2)
+                else if (menuEvent.item == 4)
                 {
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
@@ -1493,9 +1498,38 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
+        case GAME_STATE_MENU_MAIN:
+        {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].DrawClear();
+                    
+                    if (i > 0)
+                    {
+                        mCubeWrappers[i].DrawBackground(UiTitleScreen);
+                    }
+                }
+            }
+            break;
+        }
         case GAME_STATE_MENU_STORY:
         {
             // TODO: Jump to book menu item based on unlock flow
+            
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].DrawClear();
+                    
+                    if (i > 0)
+                    {
+                        mCubeWrappers[i].DrawBackground(UiTitleScreen);
+                    }
+                }
+            }
             break;
         }
         case GAME_STATE_FREEPLAY_START:
@@ -1666,21 +1700,13 @@ void App::StartGameState(GameState gameState)
                     mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
                 }
             }
-            
-            if (NextUnlockedBuddy() != -1)
-            {
-                mStoryPreGame = true;
-                StartGameState(GAME_STATE_UNLOCKED_1);
-            }
-            else
-            {
-                StartGameState(GAME_STATE_STORY_BOOK_START);
-            }
+            StartGameState(GAME_STATE_STORY_BOOK_START);
             break;
         }
         case GAME_STATE_STORY_BOOK_START:
         {
             mDelayTimer = kStateTimeDelayLong;
+            LOG(("start timer = %f\n", mDelayTimer));
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
@@ -1853,12 +1879,12 @@ void App::UpdateGameState(float dt)
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
                 // TODO: Disabled until story menu works
-                //if (NextUnlockedBuddy() != -1)
-                //{
-                //    mStoryPreGame = true;
-                //    StartGameState(GAME_STATE_UNLOCKED_1);
-                //}
-                //else
+                if (NextUnlockedBuddy() != -1)
+                {
+                    mStoryPreGame = true;
+                    StartGameState(GAME_STATE_UNLOCKED_1);
+                }
+                else
                 {
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
