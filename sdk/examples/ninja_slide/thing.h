@@ -31,15 +31,14 @@ public:
     }
 
     void act(float dt){
-        const int MAX_VEL = 200.0;
-        if (vel.len() > MAX_VEL) vel = vel.normalize() * MAX_VEL;
-        vel = vel * 0.95;       // friction
+//         const int MAX_VEL = 200.0;
+//         if (vel.len() > MAX_VEL) vel = vel.normalize() * MAX_VEL;
+//         vel = vel * 0.95;       // friction
 
         pos = pos + (vel * dt);
 
-        Int2 size = sizePixels();
-        if (   pos.x < 0.0 || (pos.x + size.x) > SCREEN_WIDTH
-            || pos.y < 0.0 || (pos.y + size.y) > SCREEN_HEIGHT){
+        if (   pos.x < 0.0 || (pos.x + pixelWidth()) > SCREEN_WIDTH
+            || pos.y < 0.0 || (pos.y + pixelHeight()) > SCREEN_HEIGHT){
             collided(NULL);
         }
     }
@@ -49,16 +48,22 @@ public:
         vid.moveSprite(id, pos.toInt());
     }
 
-    Int2 sizePixels(){
-        return Vec2(pImage->pixelWidth(), pImage->pixelHeight());
+    int pixelWidth(){
+        return pImage->pixelWidth();
+    }
+
+    int pixelHeight(){
+        return pImage->pixelHeight();
     }
 
     bool isTouching(Thing *otherThing){
-        Int2 myBottomRight = pos.toInt() + sizePixels() - Vec2(1,1);
-        Int2 otherBottomRight = otherThing->pos.toInt() + otherThing->sizePixels() - Vec2(1,1);
+        int myRight = pos.x + pixelWidth() - 1;
+        int myBottom = pos.y + pixelHeight() - 1;
+        int otherRight = otherThing->pos.x + otherThing->pixelWidth() - 1;
+        int otherBottom = otherThing->pos.y + otherThing->pixelHeight() - 1;
 
-        bool overlappingX = pos.x <= otherBottomRight.x && myBottomRight.x >= otherThing->pos.x;
-        bool overlappingY = pos.y <= otherBottomRight.y && myBottomRight.y >= otherThing->pos.y;
+        bool overlappingX = pos.x <= otherRight && myRight >= otherThing->pos.x;
+        bool overlappingY = pos.y <= otherBottom && myBottom >= otherThing->pos.y;
         return overlappingX && overlappingY;
     }
 

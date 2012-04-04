@@ -59,13 +59,9 @@ void main()
     vid.clear(tile_bckgrnd01);
     
     michelangelo.setSpriteImage(vid, Michelangelo);
-//     vid.setSpriteImage(michelangelo.id, Michelangelo);
-    michelangelo.vel = Vec2(5, 10);
 
     platform1.setSpriteImage(vid, tile_platform01);
     platform2.setSpriteImage(vid, tile_platform02);
-//     vid.setSpriteImage(platform1.id, tile_platform01);
-//     vid.setSpriteImage(platform2.id, tile_platform02);
 
     while (1) {
 
