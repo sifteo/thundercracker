@@ -7,55 +7,67 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
-static const unsigned gNumCubes = 3;
 
-struct counts_t {
-    unsigned touch, shake, neighborAdd, neighborRemove;
+class EventCounters {
+public:
+    struct {
+        unsigned touch;
+        unsigned shake;
+        unsigned neighborAdd;
+        unsigned neighborRemove;
+    } cubes[CUBE_ALLOCATION];
+    
+    void install() {
+        Events::cubeTouch.set(&EventCounters::onTouch, this);
+        Events::cubeShake.set(&EventCounters::onShake, this);
+        Events::neighborAdd.set(&EventCounters::onNeighborAdd, this);
+        Events::neighborRemove.set(&EventCounters::onNeighborRemove, this);
+    }
+
+private:
+    void onTouch(CubeEvent c) {
+//        cubes[c].touch++;
+        LOG(("Touched cube #%d\n", int(c)));
+    }
+
+    void onShake(CubeEvent c) {
+        cubes[c].shake++;
+        LOG(("Shaking cube #%d\n", int(c)));
+    }
+
+    void onNeighborRemove(NeighborEvent nb) {
+//        cubes[nb.firstCube()].neighborRemove++;
+//        cubes[nb.secondCube()].neighborRemove++;
+        LOG(("Neighbor Remove: %d:%d - %d:%d\n",
+            int(nb.firstCube()), nb.firstSide(),
+            int(nb.secondCube()), nb.secondSide()));
+    }
+
+    void onNeighborAdd(NeighborEvent nb) {
+        cubes[nb.firstCube()].neighborAdd++;
+        cubes[nb.secondCube()].neighborAdd++;
+        LOG(("Neighbor Add: %d:%d - %d:%d\n",
+            int(nb.firstCube()), nb.firstSide(),
+            int(nb.secondCube()), nb.secondSide()));
+    }
 };
-
-#if 0
-
-static void onTouch(counts_t *counts, _SYSCubeID cid)
-{    
-    counts[cid].touch++;
-}
-
-static void onShake(counts_t *counts, _SYSCubeID cid)
-{    
-    counts[cid].shake++;
-}
-
-static void onNeighborAdd(counts_t *counts,
-    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
-{
-    LOG(("Neighbor Add: %d:%d - %d:%d\n", c0, s0, c1, s1));
-    counts[c0].neighborAdd++;
-    counts[c1].neighborAdd++;
-}
-
-static void onNeighborRemove(counts_t *counts,
-    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
-{
-    LOG(("Neighbor Remove: %d:%d - %d:%d\n", c0, s0, c1, s1));
-    counts[c0].neighborRemove++;
-    counts[c1].neighborRemove++;
-}
-#endif
 
 
 void main()
 {
-    static counts_t counts[CUBE_ALLOCATION];
+    static const unsigned numCubes = 3;
     static VideoBuffer vid[CUBE_ALLOCATION];
+    static EventCounters counters;
+    counters.install();
 
-    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+    for (CubeID cube = 0; cube < numCubes; ++cube) {
         cube.enable();
         vid[cube].initMode(BG0_ROM);
         vid[cube].attach(cube);
     }
 
     while (1) {
-        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        for (CubeID cube = 0; cube < numCubes; ++cube) {
             auto &draw = vid[cube].bg0rom;
             String<192> str;
 
@@ -74,13 +86,13 @@ void main()
                 << Hex(nb.neighborAt(BOTTOM), 2) << " "
                 << Hex(nb.neighborAt(RIGHT), 2) << "\n";
 
-            str << "   +" << counts[cube].neighborAdd
-                << ", -" << counts[cube].neighborRemove
+            str << "   +" << counters.cubes[cube].neighborAdd
+                << ", -" << counters.cubes[cube].neighborRemove
                 << "\n\n";
 
             str << "bat:   " << Hex(cube.getBattery(), 4) << "\n";
             str << "touch: " << cube.isTouching() <<
-                " (" << counts[cube].touch << ")\n";
+                " (" << counters.cubes[cube].touch << ")\n";
 
             auto accel = cube.getAccel();
             str << "acc: "
@@ -93,7 +105,7 @@ void main()
                 << Fixed(tilt.x, 3)
                 << Fixed(tilt.y, 3) << "\n";
 
-            str << "shake: " << counts[cube].shake;
+            str << "shake: " << counters.cubes[cube].shake;
 
             draw.text(Vec2(1,2), str);
 
@@ -118,11 +130,4 @@ void main()
 
         System::paint();
     }
-
-#if 0
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
-    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
-#endif
 }
