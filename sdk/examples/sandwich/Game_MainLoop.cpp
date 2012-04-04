@@ -92,7 +92,9 @@ void Game::MainLoop() {
 	      		}
 	      	}
     	}
-    	mViews[targetViewId].GetRoomView()->StartNod();
+    	if (mViews[targetViewId].IsShowingRoom()) {
+    		mViews[targetViewId].GetRoomView()->StartNod();
+    	}
 
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET
