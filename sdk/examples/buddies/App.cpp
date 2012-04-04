@@ -1585,7 +1585,6 @@ void App::StartGameState(GameState gameState)
                     }
                 }
             }
-            PlaySound(SoundShuffleEnd);
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -3508,6 +3507,7 @@ void App::OnSwapFinish()
         
         if (done)
         {
+            PlaySound(SoundShuffleEnd);
             StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
         }
         else
@@ -3571,6 +3571,7 @@ void App::OnSwapFinish()
         
         if (done)
         {
+            PlaySound(SoundShuffleEnd);
             StartGameState(GAME_STATE_STORY_CLUE);
         }
         else
