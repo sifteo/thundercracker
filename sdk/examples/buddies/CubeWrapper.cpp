@@ -144,8 +144,10 @@ void CubeWrapper::Reset()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::Update(float dt)
+bool CubeWrapper::Update(float dt)
 {
+    bool blinked = false;
+    
     if (mPieceBlinking >= 0 && mPieceBlinking < NUM_SIDES)
     {
         ASSERT(mPieceBlinkTimer > 0.0f);
@@ -153,12 +155,14 @@ void CubeWrapper::Update(float dt)
         mPieceBlinkTimer -= dt;
         if (mPieceBlinkTimer <= 0.0f)
         {
-            //PlaySound(SoundGems); // TODO Sound: Hint Blink
-            
             mPieceBlinkingOn = !mPieceBlinkingOn;
             mPieceBlinkTimer += kHintBlinkTimerDuration;
+            
+            blinked = !mPieceBlinkingOn;
         }
     }
+    
+    return blinked;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

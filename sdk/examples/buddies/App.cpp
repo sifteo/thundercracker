@@ -1332,12 +1332,20 @@ void App::ResetCubesToShuffleStart()
 
 void App::UpdateCubes(float dt)
 {
+    bool blinked = false;
+    
     for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            mCubeWrappers[i].Update(dt);
+            bool blinkedCube = mCubeWrappers[i].Update(dt);
+            blinked = blinked || blinkedCube;
         }
+    }
+    
+    if (blinked)
+    {
+        PlaySound(SoundHintBlink);
     }
 }
 

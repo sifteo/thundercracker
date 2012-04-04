@@ -34,7 +34,7 @@ public:
     CubeWrapper();
     
     void Reset();
-    void Update(float dt);
+    bool Update(float dt); // TODO: Hacky hook for blink event
     
     // TODO: This is only here for menu access... breaks encapsulation :(
     Sifteo::Cube &GetCube() { return mCube; }
