@@ -1374,7 +1374,7 @@ void App::UpdateMenuMain()
         &BgTile,
         &Footer,
         &LabelEmpty,
-        { &TipChooseMode, &TipTiltToScroll, &TipPressToSelect, NULL }
+        { &TipSelectMode, &TipTiltToScroll, &TipPressToSelect, NULL }
     };
     
     MenuItem menuItems[] =
@@ -1433,7 +1433,7 @@ void App::UpdateMenuStory()
         &BgTile,
         &Footer,
         &LabelEmpty,
-        { &TipChooseMode, &TipTiltToScroll, &TipPressToSelect, NULL }
+        { &TipSelectBook, &TipTiltToScroll, &TipPressToSelect, NULL }
     };
     MenuItem menuItems[] =
     {
