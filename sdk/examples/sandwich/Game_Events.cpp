@@ -10,7 +10,9 @@ void Game::OnActiveTrigger() {
   } else if (pRoom->HasNPC()) {
     const NpcData* npc = pRoom->NPC();
     if (npc->optional) { OnNpcChatter(npc); }
-  }  
+  }  else if (pRoom->HasSwitch()) {
+    OnToggleSwitch(pRoom->Switch());
+  }
 }
 
 unsigned Game::OnPassiveTrigger() {
@@ -27,11 +29,25 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::OnToggleSwitch(const SwitchData* pSwitch) {
+  RestorePearlIdle();
+  for(unsigned i=1; i<=7; ++i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+  OnTriggerEvent(pSwitch->eventType, pSwitch->eventId);
+  for(int i=6; i>=0; --i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+}
+
 void Game::OnTrapdoor(Room *pRoom) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED TRAPDOOR
   // animate the tiles opening
-  Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
   for(unsigned i=1; i<=7; ++i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
     Paint(true);

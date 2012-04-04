@@ -100,6 +100,9 @@ public:
   inline bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
   inline bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
   inline bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
+  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
+  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
+  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
 
   inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
     ASSERT(!mPrimarySlot);
@@ -123,15 +126,9 @@ public:
     mPrimarySlot = toggle;
   }
 
-  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
-  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
-  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
-
   bool HasDepotContents() const { return HasDepot() && mSecondarySlot != 0; }
   void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mSecondarySlot = item; }
   const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mSecondarySlot; }
-
-
 
   //---------------------------------------------------------------------------
   // doors
