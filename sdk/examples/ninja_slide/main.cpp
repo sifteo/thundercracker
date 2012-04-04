@@ -19,7 +19,6 @@ static Thing michelangelo(2, Vec2(32, 0));
 const int NUM_THINGS = 3;
 static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
 
-static TimeStep timeStep;
 
 void init()
 {
@@ -38,31 +37,46 @@ void init()
     } while (!cube.assetDone(GameAssets));
 }
 
+void collisions(Thing **things, int num_things){
+    for (int i = 0; i < num_things; i++){
+        for (int j = i+1; j < num_things; j++){
+            if (things[i]->isTouching(things[j])){
+                things[i]->collided(things[j]);
+                things[j]->collided(things[i]);
+            }
+        }
+    }
+}
+
 void main()
 {
+    static TimeStep timeStep;
+
     init();
 
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), MyBackground);
+    vid.clear(tile_bckgrnd01);
     
-    vid.setSpriteImage(michelangelo.id, Michelangelo);
+    michelangelo.setSpriteImage(vid, Michelangelo);
+//     vid.setSpriteImage(michelangelo.id, Michelangelo);
     michelangelo.vel = Vec2(5, 10);
 
-    vid.setSpriteImage(platform1.id, tile_platform01);
-    vid.setSpriteImage(platform2.id, tile_platform02);
-
-    timeStep.next();
-    timeStep.next();
+    platform1.setSpriteImage(vid, tile_platform01);
+    platform2.setSpriteImage(vid, tile_platform02);
+//     vid.setSpriteImage(platform1.id, tile_platform01);
+//     vid.setSpriteImage(platform2.id, tile_platform02);
 
     while (1) {
 
         for(int i=0; i < NUM_THINGS; i++) things[i]->think(cube.id());
         float dt = timeStep.delta().seconds();
         for(int i=0; i < NUM_THINGS; i++) things[i]->act(dt);
+        collisions(things, NUM_THINGS);
         for(int i=0; i < NUM_THINGS; i++) things[i]->draw(vid);
 
         System::paint();
         timeStep.next();
     }
 }
+

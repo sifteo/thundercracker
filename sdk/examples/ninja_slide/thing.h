@@ -4,16 +4,28 @@
 
 using namespace Sifteo;
 
+const int PIXELS_PER_GRID = 32;
+const int SCREEN_WIDTH = 128;
+const int SCREEN_HEIGHT = 128;
+
 class Thing {
 public:
     int id;
     Float2 pos;
     Float2 vel;
+    const PinnedAssetImage *pImage;
 
     Thing(int id0, Int2 pos0){
         id = id0;
         pos = pos0.toFloat();
+        pImage = NULL;
     }
+
+    void setSpriteImage(VidMode_BG0_SPR_BG1 &vid, const PinnedAssetImage &asset){
+        vid.setSpriteImage(id, asset);
+        pImage = &asset;
+    }
+
 
     virtual void think(_SYSCubeID cubeId){
     }
@@ -25,17 +37,37 @@ public:
 
         pos = pos + (vel * dt);
 
-        while (pos.x < 0.0)   pos.x += 128.0;
-        while (pos.x > 128.0) pos.x -= 128.0;
-
-        while (pos.y < 0.0)   pos.y += 128.0;
-        while (pos.y > 128.0) pos.y -= 128.0;
+        Int2 size = sizePixels();
+        if (   pos.x < 0.0 || (pos.x + size.x) > SCREEN_WIDTH
+            || pos.y < 0.0 || (pos.y + size.y) > SCREEN_HEIGHT){
+            collided(NULL);
+        }
     }
 
     void draw(VidMode_BG0_SPR_BG1 vid){
 //         LOG(("Drawing thing(%d) at %.2f %.2f\n", id, pos.x, pos.y));
         vid.moveSprite(id, pos.toInt());
     }
+
+    Int2 sizePixels(){
+        return Vec2(pImage->pixelWidth(), pImage->pixelHeight());
+    }
+
+    bool isTouching(Thing *otherThing){
+        Int2 myBottomRight = pos.toInt() + sizePixels() - Vec2(1,1);
+        Int2 otherBottomRight = otherThing->pos.toInt() + otherThing->sizePixels() - Vec2(1,1);
+
+        bool overlappingX = pos.x <= otherBottomRight.x && myBottomRight.x >= otherThing->pos.x;
+        bool overlappingY = pos.y <= otherBottomRight.y && myBottomRight.y >= otherThing->pos.y;
+        return overlappingX && overlappingY;
+    }
+
+    void collided(Thing *otherThing){
+        vel = Vec2(0.0f, 0.0f);
+        pos.x = int(pos.x / PIXELS_PER_GRID + 0.5f) * PIXELS_PER_GRID;
+        pos.y = int(pos.y / PIXELS_PER_GRID + 0.5f) * PIXELS_PER_GRID;
+    }
+
 };
 
 

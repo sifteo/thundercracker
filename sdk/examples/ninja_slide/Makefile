@@ -11,7 +11,9 @@ ctags:
 	/usr/local/bin/ctags -Rf tags ../../include .
 
 run: ctags all 
+	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
 	../../../firmware/master/master-sim ninja_slide.elf
 
 run_flash_stats: ctags all 
+	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
 	../../../firmware/master/master-sim ninja_slide.elf --flash_stats
