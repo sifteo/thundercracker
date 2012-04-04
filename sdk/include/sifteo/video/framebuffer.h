@@ -91,6 +91,8 @@ struct FBDrawable {
      */
     void plot(unsigned colorIndex, UInt2 pos)
     {
+        ASSERT(pos.x <= tWidth && pos.y <= tHeight);
+
         const unsigned pixelsPerByte = 8 / tBitsPerPixel;
         const unsigned bytesPerLine = tWidth / pixelsPerByte;
         const unsigned xByte = pos.x / pixelsPerByte;
