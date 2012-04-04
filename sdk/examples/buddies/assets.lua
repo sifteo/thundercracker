@@ -118,3 +118,4 @@ StoryCongratulationsUnlock = image{"assets/panel_congratulations_unlock.png"}
 
 -- Sounds (use encode = "PCM" for PCM encoding)
 SoundGems = sound{"assets/gems1_4A9.raw"}
+SoundTick = sound{"assets/Tick.raw"}

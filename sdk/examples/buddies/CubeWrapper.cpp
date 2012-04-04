@@ -153,6 +153,8 @@ void CubeWrapper::Update(float dt)
         mPieceBlinkTimer -= dt;
         if (mPieceBlinkTimer <= 0.0f)
         {
+            //PlaySound(SoundGems); // TODO Sound: Hint Blink
+            
             mPieceBlinkingOn = !mPieceBlinkingOn;
             mPieceBlinkTimer += kHintBlinkTimerDuration;
         }

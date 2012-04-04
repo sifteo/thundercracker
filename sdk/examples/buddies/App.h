@@ -61,7 +61,7 @@ private:
     void ResetCubesToShuffleStart();
     void UpdateCubes(float dt);
     
-    void PlaySound();
+    void PlaySound(const Sifteo::AssetAudio &audioAsset);
     
     void UpdateMenuMain();
     void UpdateMenuStory();
