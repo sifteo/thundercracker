@@ -23,21 +23,12 @@ void main()
     const CubeID myCube(0);
     static VideoBuffer vid;
     
-/*
     myCube.enable();
     vid.attach(myCube);
-    vid.setMode(BG0_SPR_BG1);
-*/
-    
-    vid.sprites[2].setImage(WhiteTile);
-    vid.sprites[2].move(50, 60);
-    
-    LOG_INT(vid.sprites[2].width());
-    LOG_INT(vid.sprites[2].height());
-    LOG_INT(vid.sprites[2].x());
-    LOG_INT(vid.sprites[2].y());
-    LOG_INT2(vid.sprites[2].size());
-    LOG_INT2(vid.sprites[2].position());
+    vid.setMode(FB32);
+
+    vid.colormap[0].set(0x000000);
+    vid.colormap[1].set(0x808080);
     
     while (1) {
         System::paint();

@@ -13,6 +13,7 @@
 
 #include <sifteo/abi.h>
 #include <sifteo/video/sprite.h>
+#include <sifteo/video/framebuffer.h>
 
 namespace Sifteo {
 
@@ -104,6 +105,10 @@ struct VideoBuffer {
     union {
         _SYSAttachedVideoBuffer sys;
         SpriteLayer sprites;
+        Colormap colormap;
+        FBDrawable<32,32,4> fb32;
+        FBDrawable<64,64,2> fb64;
+        FBDrawable<128,48,2> fb128;
     };
 
     /**
