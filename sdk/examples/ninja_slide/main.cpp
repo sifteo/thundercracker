@@ -12,11 +12,20 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-static class Platform platform(0, Vec2(64, 64));
-static Thing michelangelo(1, Vec2(32, 0));
+static Platform platform1(0, Vec2(64, 64));
+static Platform platform2(1, Vec2(32, 96));
+static Thing michelangelo(2, Vec2(32, 0));
+
+const int NUM_THINGS = 3;
+static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
+
+static TimeStep timeStep;
 
 void init()
 {
+    Metadata()
+        .title("TMNT: Ninja Slide");
+//         .icon(GameIcon);
 
     cube.enable();
     cube.loadAssets(GameAssets);
@@ -40,21 +49,20 @@ void main()
     vid.setSpriteImage(michelangelo.id, Michelangelo);
     michelangelo.vel = Vec2(5, 10);
 
-    vid.setSpriteImage(platform.id, Platform);
+    vid.setSpriteImage(platform1.id, tile_platform01);
+    vid.setSpriteImage(platform2.id, tile_platform02);
 
-//     const Int2 center = { (128 - 16)/2, (128 - 16)/2 };
+    timeStep.next();
+    timeStep.next();
 
     while (1) {
 
-        michelangelo.think();
-        platform.think(cube.id());
-
-        michelangelo.act(0.05);
-        platform.act(0.05);
-
-        michelangelo.draw(vid);
-        platform.draw(vid);
+        for(int i=0; i < NUM_THINGS; i++) things[i]->think(cube.id());
+        float dt = timeStep.delta().seconds();
+        for(int i=0; i < NUM_THINGS; i++) things[i]->act(dt);
+        for(int i=0; i < NUM_THINGS; i++) things[i]->draw(vid);
 
         System::paint();
+        timeStep.next();
     }
 }

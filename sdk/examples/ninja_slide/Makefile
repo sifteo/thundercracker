@@ -12,3 +12,6 @@ ctags:
 
 run: ctags all 
 	../../../firmware/master/master-sim ninja_slide.elf
+
+run_flash_stats: ctags all 
+	../../../firmware/master/master-sim ninja_slide.elf --flash_stats
