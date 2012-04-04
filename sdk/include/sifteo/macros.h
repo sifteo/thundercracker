@@ -41,7 +41,7 @@
 
 #define ASSERT(_x) do { \
     if (_SYS_lti_isDebug() && !(_x)) { \
-        _SYS_lti_log("ASSERT failure at " SRCLINE ", (" #_x ")\n"); \
+        _SYS_lti_log("ASSERT failure at %s:%d, (%s)\n", __FILE__, __LINE__, #_x); \
         _SYS_abort(); \
     } \
 } while (0)
