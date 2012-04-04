@@ -169,6 +169,7 @@ class Map:
 				self.trig_dict[trig_type][trig.id] = trig
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
+		self.switched_rooms = [ room for room in self.rooms if room.its_a_switch ]
 		# resolve trigger event idS
 		for d in self.trig_dict.itervalues():
 			for trig in d.itervalues():
@@ -187,6 +188,7 @@ class Map:
 		for d in self.depots: d.compute_parent()
 		for index,depot in enumerate( (d for d in self.depots if d.parent == d) ):
 			depot.index = index
+		for room in self.rooms: room.resolve_trigger_event_id()
 
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -199,6 +201,8 @@ class Map:
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
+
+		### EXPORT X PORTALS ###
 		src.write("static const uint8_t %s_xportals[] = {" % self.id)
 
 		byte = 0
@@ -213,6 +217,8 @@ class Map:
 				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
+
+		### EXPORT Y PORTALS ###
 		src.write("static const uint8_t %s_yportals[] = {" % self.id)
 		byte = 0
 		cnt = 0
@@ -226,54 +232,71 @@ class Map:
 				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
+
+		### EXPORT ITEMS ###
 		if len(self.trig_dict["item"]) > 0:
 			src.write("static const ItemData %s_items[] = {" % self.id)
 			for item in self.list_triggers_of_type("item"):
 				item.write_item_to(src)
 			src.write("{%s,0x0}};\n" % TS)
 		
+		### EXPORT GATES ###
 		if len(self.trig_dict["gateway"]):
 			src.write("static const GatewayData %s_gateways[] = {" % self.id)
 			for gate in self.list_triggers_of_type("gateway"):
 				gate.write_gateway_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 
+		### EXPORT NPCS ###
 		if len(self.trig_dict["npc"]) > 0:
 			src.write("static const NpcData %s_npcs[] = {" % self.id)
 			for npc in self.list_triggers_of_type("npc"):
 				npc.write_npc_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 		
+		### EXPORT DOORS ###
 		if len(self.trig_dict["door"]) > 0:
 			src.write("static const DoorData %s_doors[] = {" % self.id)
 			for door in self.list_triggers_of_type("door"):
 				door.write_door_to(src)
 			src.write("{%s,0xff}};\n" % TS)
 
+		### EXPORT TRAPDOORS ###
 		if len(self.trapped_rooms) > 0:
 			src.write("static const TrapdoorData %s_trapdoors[] = {" % self.id)
 			for room in self.trapped_rooms:
 				src.write("{0x%x,0x%x}," % (room.lid, room.trapRespawnRoomId))
 			src.write("{0x0,0x0}};\n")
 		
+		### EXPORT SWITCHES ###
+		if len(self.switched_rooms) > 0:
+			src.write("static const SwitchData %s_switches[] = {" % self.id)
+			for room in self.switched_rooms:
+				src.write("{0x%x,0x%x,0x%x}," % (room.lid, room.event, room.event_id))
+			src.write("{0xff,0xff,0xff}};\n")
+
+		### EXPORT ANIMATED TILES ###
 		if len(self.animatedtiles) > 0:
 			src.write("static const AnimatedTileData %s_animtiles[] = {" % self.id)
 			for atile in self.animatedtiles:
 				src.write("{0x%x,0x%x}," % (atile.tile.lid, atile.numframes))
 			src.write("{0x0,0x0}};\n")
 
+		### EXPORT SOKOBLOCKS ###
 		if len(self.sokoblocks) > 0:
 			src.write("static const SokoblockData %s_sokoblocks[] = {" % self.id)
 			for b in self.sokoblocks:
 				src.write("{0x%x,0x%x,0x%x}," % (b.x, b.y, b.asset_id))
 			src.write("{0x0,0x0,0x0}};\n")
 
+		### EXPORT LAVA ###
 		if len(self.lava_tiles) > 0:
 			src.write("static const TileSetID %s_lavatiles[] = {" % self.id)
 			for tile in self.lava_tiles:
 				src.write("0x%x," % tile.lid)
 			src.write("0x0};\n")
 
+		### EXPORT DEPOTS ###
 		if len(self.depots) > 0:
 			src.write("static const DepotData %s_depots[] = {" % self.id)
 			for d in self.depots:
@@ -286,6 +309,7 @@ class Map:
 					src.write("{0x%x,0x%x,0x%x}," % (count, d.event, d.event_id))
 			src.write("{0x0,0x0,0x0}};\n")
 
+		### EXPORT OVERLAY ###
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
 			# perform RLE Compression on write
@@ -309,6 +333,7 @@ class Map:
 				emptycount = 0
 			src.write("};\n")
 
+		### EXPORT DIAGONAL ROOMS ###
 		if len(self.diagRooms) > 0:
 			src.write("static const DiagonalSubdivisionData %s_diag[] = {" % self.id)
 			for r in self.diagRooms:
@@ -317,6 +342,7 @@ class Map:
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_pos, r.lid, cx, cy))
 			src.write("{0x0,0x0,0x0,0x0}};\n")
 		
+		### EXPORT BRIDGES ###
 		if len(self.bridgeRooms) > 0:
 			src.write("static const BridgeSubdivisionData %s_bridges[] = {" % self.id)
 			for r in self.bridgeRooms:
@@ -325,11 +351,13 @@ class Map:
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_hor, r.lid, cx, cy))
 			src.write("{0x0,0x0,0x0,0x0}};\n")
 
+		### EXPORT ROOM TELEM ###
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_telem_source_to(src)
 		src.write("};\n")
 
+		### EXPORT ROOM TILES ###
 		src.write("static const RoomTileData %s_tiles[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_tiles_to(src)
@@ -350,6 +378,7 @@ class Map:
 			"%(gate)s, " \
 			"%(npc)s, " \
 			"%(trapdoor)s, " \
+			"%(switch)s, " \
 			"%(depot)s, " \
 			"%(depotgroup)s, " \
 			"%(door)s, " \
@@ -372,6 +401,7 @@ class Map:
 				"gate": self.id + "_gateways" if len(self.trig_dict["gateway"]) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.trig_dict["npc"]) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
+				"switch": self.id+"_switches" if len(self.switched_rooms) > 0 else "0",
 				"depot": self.id + "_depots" if len(self.depots) > 0 else "0",
 				"depotgroup": self.id+"_depotgroups" if len(self.depots) > 0 else "0",
 				"door": self.id + "_doors" if len(self.trig_dict["door"]) > 0 else "0",

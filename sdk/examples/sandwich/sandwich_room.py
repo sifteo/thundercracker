@@ -87,7 +87,17 @@ class Room:
 			self.trapx = (obj.px / 16) - self.x * 8 + 2
 			self.trapy = (obj.py / 16) - self.y * 8 + 2
 			#print "trap position: %d, %d" % (self.trapx, self.trapy)
-
+			self.its_a_switch = False
+		else:
+			# switches?
+			switches = [ obj for obj in map.raw.objects if obj.type == "switch" and self.contains_obj(obj) ]
+			self.its_a_switch = len(switches) > 0
+			if self.its_a_switch:
+				obj = switches[0]
+				self.switchx = (obj.px / 16) - self.x * 8 + 2
+				self.switchy = (obj.py / 16) - self.y * 8 + 2
+				assert obj.pw/16 == 4 and obj.ph/16 == 4, "Switch must be 4x4 tiles: " + self.map.id
+				compute_trigger_event_id(self, obj)
 
 	def contains_obj(self, obj):
 		cx = obj.px + obj.pw/2
@@ -101,8 +111,13 @@ class Room:
 	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y), 8*self.x + x, 8*self.y + y)
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
+	def resolve_trigger_event_id(self):
+		if self.its_a_switch:
+			resolve_trigger_event_id(self, self.map)
+
 	def primary_center(self):
 		if self.its_a_trap: return (self.trapx, self.trapy)
+		if self.its_a_switch: return (self.switchx, self.switchy)
 		if self.subdiv_type == SUBDIV_BRDG_VER:
 			return (self.first_bridge_col+1, 4)
 		elif self.subdiv_type == SUBDIV_NONE or self.subdiv_type == SUBDIV_BRDG_HOR:

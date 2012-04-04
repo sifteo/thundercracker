@@ -110,6 +110,12 @@ struct DepotGroupData {
     uint8_t eventId;
 };
 
+struct SwitchData {
+    uint8_t room;
+    uint8_t eventType;
+    uint8_t eventId;
+};
+
 struct AnimatedTileData {
     uint8_t tileId;
     uint8_t frameCount;
@@ -140,9 +146,8 @@ struct BridgeSubdivisionData {
 
 typedef uint8_t TileSetID;
 
-// todo - microoptimize bits
-// todo - replace pointers with <32bit offsets-from-known-locations?
-// todo - separate tilesets from maps?  (e.g. animated tiles, lava tiles)
+// replace pointers with <32bit offsets-from-known-locations?
+// separate tilesets from maps?  (e.g. animated tiles, lava tiles)
 struct MapData {
     const char* name;
 
@@ -162,10 +167,9 @@ struct MapData {
     const GatewayData* gates;
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
+    const SwitchData* switches;
     const DepotData* depots;
     const DepotGroupData* depotGroups;
-
-    // other placeable entities
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
     const TileSetID* lavaTiles;

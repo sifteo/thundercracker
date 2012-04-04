@@ -12,6 +12,7 @@
 #define SECONDARY_UNDEFINED    0
 #define SECONDARY_TRAPDOOR     1
 #define SECONDARY_DEPOT        2
+#define SECONDARY_SWITCH       3
 
 class Room {
 private:
@@ -98,6 +99,7 @@ public:
 
   inline bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
   inline bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
+  inline bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
 
   inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
     ASSERT(!mPrimarySlot);
@@ -114,12 +116,22 @@ public:
     mPrimarySlot = depot;
   }
 
+  inline void SetSwitch(const SwitchData* toggle) {
+    ASSERT(!mPrimarySlot);
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_SWITCH;
+    mPrimarySlot = toggle;
+  }
+
   const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
   const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
+  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
 
   bool HasDepotContents() const { return HasDepot() && mSecondarySlot != 0; }
   void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mSecondarySlot = item; }
   const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mSecondarySlot; }
+
+
 
   //---------------------------------------------------------------------------
   // doors
