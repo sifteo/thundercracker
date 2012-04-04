@@ -25,6 +25,10 @@
 	<map id="temple_level4">
 		<name>Temple area 4</name>
 	</map>
+	
+	<map id="temple_level5">
+		<name>Temple area 5</name>
+	</map>
 
 	<map id="sandbox">
 		<name>Programming Sandbox</name>
