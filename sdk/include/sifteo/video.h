@@ -12,6 +12,7 @@
 #endif
 
 #include <sifteo/abi.h>
+#include <sifteo/video/color.h>
 #include <sifteo/video/sprite.h>
 #include <sifteo/video/framebuffer.h>
 
