@@ -1441,7 +1441,7 @@ void App::UpdateMenuStory()
         { &IconBook0,    &LabelBook0 },
         { &IconBook1,    &LabelBook1 },
         { &IconBook2,    &LabelBook2 },
-        { &IconMainMenu, &LabelMainMenu },
+        { &IconExit,     &LabelExit },
         { NULL, NULL },
     };
     
