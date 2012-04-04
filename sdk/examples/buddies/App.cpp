@@ -1101,6 +1101,11 @@ void App::OnTilt(Cube::ID cubeId)
         case GAME_STATE_FREEPLAY_PLAY:
         {
             TiltNudgePieces(*this, cubeId);
+            Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
+            if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+            {
+                PlaySound(SoundPieceNudge);
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
@@ -1113,6 +1118,11 @@ void App::OnTilt(Cube::ID cubeId)
             if (mSwapState == SWAP_STATE_NONE)
             {
                 TiltNudgePieces(*this, cubeId);
+                Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
+                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                {
+                    PlaySound(SoundPieceNudge);
+                }
             }
             
             if (IsHinting())
@@ -1137,6 +1147,11 @@ void App::OnTilt(Cube::ID cubeId)
             if (mSwapState == SWAP_STATE_NONE)
             {
                 TiltNudgePieces(*this, cubeId);
+                Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
+                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                {
+                    PlaySound(SoundPieceNudge);
+                }
             }
             
             if (IsHinting())

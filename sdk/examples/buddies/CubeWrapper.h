@@ -36,7 +36,7 @@ public:
     void Reset();
     void Update(float dt);
     
-    // For Menu Access
+    // TODO: This is only here for menu access... breaks encapsulation :(
     Sifteo::Cube &GetCube() { return mCube; }
     
     // Drawing
