@@ -106,6 +106,13 @@ class Map:
 
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
+		# check that the overlay actually has tiles
+		if self.overlay is not None:
+			try:
+				(t for t in self.overlay.tiles if t != 0).next()
+			except:
+				self.overlay = None
+
 
 		self.background_id = posixpath.basename(self.background.gettileset().imgpath)
 		if self.overlay is not None:
