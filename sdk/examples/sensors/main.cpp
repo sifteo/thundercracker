@@ -5,19 +5,15 @@
  */
 
 #include <sifteo.h>
-
 using namespace Sifteo;
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 3
-#endif
-
-static Cube cubes[NUM_CUBES];
+static const unsigned gNumCubes = 3;
 
 struct counts_t {
     unsigned touch, shake, neighborAdd, neighborRemove;
 };
-        
+
+#if 0
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
 {
     for (unsigned i = 0; i < 14; i++) {
@@ -53,16 +49,32 @@ static void onNeighborRemove(counts_t *counts,
     counts[c0].neighborRemove++;
     counts[c1].neighborRemove++;
 }
+#endif
 
 void main()
 {
-    static counts_t counts[NUM_CUBES];
-    
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].enable(i);
-        VidMode_BG0_ROM(cubes[i].vbuf).init();
+    static counts_t counts[CUBE_ALLOCATION];
+    static VideoBuffer vid[CUBE_ALLOCATION];
+
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        cube.enable();
+        vid[cube].initMode(BG0_ROM);
+        vid[cube].attach(cube);
     }
 
+    while (1) {
+        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+            auto &draw = vid[cube].bg0rom;
+    
+            draw.text(Vec2(1,1), "Hello", draw.INV);
+            for (int i = 0; i < 16; i++)
+                draw.hBargraph(Vec2(0,i), i, draw.ORANGE);
+        }
+
+        System::paint();
+    }
+
+#if 0
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
@@ -114,4 +126,5 @@ void main()
 
         System::paint();
     }
+#endif
 }

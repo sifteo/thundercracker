@@ -164,6 +164,9 @@ struct CubeID {
     void detachVideoBuffer() const {
         _SYS_setVideoBuffer(*this, 0);
     }
+
+    CubeID operator ++() { return ++sys; }
+    CubeID operator ++(int) { return sys++; }
 };
 
 
