@@ -151,10 +151,16 @@ class Trigger:
 	def write_gateway_to(self, src):
 		src.write("{")
 		self.write_trigger_to(src)
-		mapid = self.room.map.world.maps.map_dict[self.target_map].index
-		gateid = self.room.map.world.maps.map_dict[self.target_map].trig_dict["gateway"][self.target_gate].index
+		target_map = self.room.map.world.maps.map_dict[self.target_map]
+		mapid = target_map.index
+		if self.target_gate in target_map.trig_dict["gateway"]:
+			targettype = 0
+			targetid = target_map.trig_dict["gateway"][self.target_gate].index
+		else:
+			targettype = 1
+			targetid = target_map.location_dict[self.target_gate].rid
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x,0x%x}," % (mapid, gateid, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x,0x%x}," % (mapid, targettype, targetid, x, y))
 	
 	def write_npc_to(self, src):
 		src.write("{")

@@ -313,7 +313,7 @@
     <property name="respawn" value="RespawnTest"/>
    </properties>
   </object>
-  <object name="Doggy Bowl" type="Depot" x="48" y="272" width="32" height="48">
+  <object name="Doggy Bowl" type="_Depot" x="48" y="272" width="32" height="48">
    <properties>
     <property name="onTrigger" value="opendoor:TestDoor"/>
     <property name="target" value="BALL"/>
@@ -324,9 +324,10 @@
     <property name="id" value="booties"/>
    </properties>
   </object>
-  <object name="BALL" type="Item" x="304" y="448" width="32" height="32">
+  <object name="BALL" type="Gateway" x="304" y="448" width="32" height="32">
    <properties>
     <property name="id" value="crystal_ball"/>
+    <property name="target" value="sandbox:RespawnTest"/>
    </properties>
   </object>
   <object name="testdoor" type="Door" x="176" y="400" width="32" height="32"/>

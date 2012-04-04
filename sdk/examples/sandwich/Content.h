@@ -23,6 +23,9 @@ using namespace Sifteo;
 #define ITEM_TRIGGER_BOOT   1
 #define ITEM_TRIGGER_BOMB   2
 
+#define TARGET_TYPE_GATEWAY 0
+#define TARGET_TYPE_ROOM    1
+
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
@@ -72,7 +75,8 @@ struct ItemData {
 struct GatewayData {
     TriggerData trigger;
     uint8_t targetMap;
-    uint8_t targetGate;
+    uint8_t targetType : 1;
+    uint8_t targetId : 7;
     uint8_t x;
     uint8_t y;
 };

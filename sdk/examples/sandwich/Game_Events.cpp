@@ -171,14 +171,23 @@ void Game::OnEnterGateway(const GatewayData* pGate) {
   //---------------------------------------------------------------------------
   // PLAYER TRIGGERED GATEWAY
   const MapData& targetMap = gMapData[pGate->targetMap];
-  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
   mPlayer.SetEquipment(0);
-  TeleportTo(gMapData[pGate->targetMap], Vec2(
-    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-  ));
+  if (pGate->targetType == TARGET_TYPE_GATEWAY) {
+    const GatewayData& pTargetGate = targetMap.gates[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+    ));
+  } else {
+    const RoomData& targetRoom = targetMap.rooms[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pGate->targetId % targetMap.width) + (targetRoom.centerX<<4),
+      128 * (pGate->targetId / targetMap.width) + (targetRoom.centerX<<4)
+    ));
+  }
+
   OnTriggerEvent(pGate->trigger);
   RestorePearlIdle();
 }

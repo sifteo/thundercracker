@@ -82,7 +82,7 @@ class Room:
 			obj = trapdoors[0]
 			#print "pix position = %d, %d" % (obj.px, obj.py)
 			assert obj.pw/16 == 4 and obj.ph/16 == 4, "Trapdoor must be 4x4 tiles: " + self.map.id
-			respawn = obj.props.get("respawn", "")
+			respawn = obj.props.get("respawn", "").lower()
 			m = EXP_LOCATION.match(respawn)
 			if m is None:
 				# assuming we have a location

@@ -52,7 +52,7 @@ class Quest:
 		print "Quest:", self.id
 		self.map = xml.get("map").lower()
 		if "loc" in xml.attrib:
-			self.loc = xml.get("loc")
+			self.loc = xml.get("loc", "DefaultSpawn").lower()
 			self.x = 0
 			self.y = 0
 		else:
