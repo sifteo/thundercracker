@@ -1085,7 +1085,7 @@ void App::OnNeighborAdd(
             }
             else
             {
-                PlaySound(SoundTick); // TODO Sound: Swap Fail
+                PlaySound(SoundSwapFail);
             }
         }
     }
@@ -1169,7 +1169,7 @@ void App::OnShake(Cube::ID cubeId)
         {
             if (mSwapState == SWAP_STATE_NONE && mFreePlayShakeThrottleTimer == 0.0f)
             {
-                PlaySound(SoundTick); // TODO Sound: Face Switch / Reset
+                PlaySound(SoundFreePlayReset);
                 
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
             
@@ -1516,7 +1516,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_FREEPLAY_OPTIONS:
         {
-            PlaySound(SoundTick); // TODO Sound: Pause/Options
+            PlaySound(SoundPause);
             break;
         }
         case GAME_STATE_SHUFFLE_START:
@@ -1566,7 +1566,7 @@ void App::StartGameState(GameState gameState)
                 mShufflePiecesMoved[i] = false;
             }
             ShufflePieces(kNumCubes);
-            PlaySound(SoundTick); // TODO Sound: Start Shuffle (maybe will conflict with swap begin?)
+            PlaySound(SoundShuffleBegin);
             break;
         }
         case GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES:
@@ -1585,7 +1585,7 @@ void App::StartGameState(GameState gameState)
                     }
                 }
             }
-            PlaySound(SoundTick); // TODO Sound: End Shuffle (maybe will conflict with swap land?)
+            PlaySound(SoundShuffleEnd);
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -1609,7 +1609,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_OPTIONS:
         {
-            PlaySound(SoundTick); // TODO Sound: Pause/Options
+            PlaySound(SoundPause);
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -1661,7 +1661,7 @@ void App::StartGameState(GameState gameState)
             ASSERT(mStoryPuzzleIndex < GetBook(mStoryBookIndex).mNumPuzzles);
             ResetCubesToPuzzle(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex), true);
             mDelayTimer = kStateTimeDelayLong;
-            PlaySound(SoundTick); // TODO Sound: Chapter Start
+            PlaySound(SoundStoryChapterTitle);
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_START:
@@ -1677,7 +1677,7 @@ void App::StartGameState(GameState gameState)
             mStoryCutsceneIndex = 0;
             mCutsceneSpriteJump0 = false;
             mCutsceneSpriteJump1 = false;
-            PlaySound(SoundTick); // TODO Sound: Cutscene Chatter
+            PlaySound(SoundCutsceneChatter);
             break;
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
@@ -1693,6 +1693,7 @@ void App::StartGameState(GameState gameState)
                 mShufflePiecesMoved[i] = false;
             }
             ShufflePieces(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetNumBuddies());
+            PlaySound(SoundShuffleBegin);
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -1716,12 +1717,12 @@ void App::StartGameState(GameState gameState)
             }
             mHintTimer = kHintTimerOnDuration;
             mHintFlowIndex = 0;
-            PlaySound(SoundTick); // TODO Sound: Game Start
+            PlaySound(SoundGameStart);
             break;
         }
         case GAME_STATE_STORY_OPTIONS:
         {
-            PlaySound(SoundTick); // TODO Sound: Pause/Options
+            PlaySound(SoundPause);
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -1886,7 +1887,7 @@ void App::UpdateGameState(float dt)
                             {
                                 if (mTouching[i] == TOUCH_STATE_BEGIN)
                                 {
-                                    PlaySound(SoundTick); // TODO Sound: Pinch
+                                    PlaySound(SoundPiecePinch);
                                 }
                                 mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0U, VidMode::TILE));
                                 mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0U));
@@ -1928,7 +1929,7 @@ void App::UpdateGameState(float dt)
                     mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
                     mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
                 }
-                PlaySound(SoundTick); // TODO Sound: Unpause
+                PlaySound(SoundUnpause);
                 StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -2174,7 +2175,7 @@ void App::UpdateGameState(float dt)
                 {
                     mClueOffTimers[i] = 0.0f;
                 }
-                PlaySound(SoundTick); // TODO Sound: Unpause
+                PlaySound(SoundUnpause);
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -2248,7 +2249,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    PlaySound(SoundTick); // TODO Sound: Cutscene Chatter
+                    PlaySound(SoundCutsceneChatter);
                     mDelayTimer += kStoryCutsceneTextDelay;
                 }
             }
@@ -2445,7 +2446,7 @@ void App::UpdateGameState(float dt)
                 {
                     mClueOffTimers[i] = 0.0f;
                 }
-                PlaySound(SoundTick); // TODO Sound: Unpause
+                PlaySound(SoundUnpause);
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
@@ -3417,7 +3418,7 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
     mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = 0.0f;
     mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = 0.0f;
     
-    PlaySound(SoundTick); // TODO Sound: Piece Slide
+    PlaySound(SoundPieceSlide);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3486,11 +3487,11 @@ void App::OnSwapFinish()
         if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
         {
-            PlaySound(SoundGems); // TODO Sound: Face Complete
+            PlaySound(SoundFaceComplete);
         }
         else
         {
-            PlaySound(SoundTick); // TODO Sound: Piece Land
+            PlaySound(SoundPieceLand);
         }
     }
     else if (mGameState == GAME_STATE_SHUFFLE_SHUFFLING)
@@ -3503,7 +3504,7 @@ void App::OnSwapFinish()
             done = done || mShuffleMoveCounter == (unsigned int)kShuffleMaxMoves;
         }
         
-        PlaySound(SoundTick); // TODO Sound: Piece Land
+        PlaySound(SoundPieceLand);
         
         if (done)
         {
@@ -3530,15 +3531,15 @@ void App::OnSwapFinish()
         
         if (AllSolved(*this))
         {
-            PlaySound(SoundGems); // TODO Sound: All Faces Complete
+            PlaySound(SoundFaceCompleteAll);
         }
         else if (swap0Solved || swap1Solved)
         {
-            PlaySound(SoundGems); // TODO Sound: Face Complete
+            PlaySound(SoundFaceComplete);
         }
         else
         {
-            PlaySound(SoundTick); // TODO Sound: Piece Land
+            PlaySound(SoundPieceLand);
         }
         
         if (swap0Solved)
@@ -3566,7 +3567,7 @@ void App::OnSwapFinish()
             done = done || mShuffleMoveCounter == GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetNumShuffles();
         }
         
-        PlaySound(SoundTick); // TODO Sound: Piece Land
+        PlaySound(SoundPieceLand);
         
         if (done)
         {
@@ -3593,15 +3594,15 @@ void App::OnSwapFinish()
         
         if (AllSolved(*this))
         {
-            PlaySound(SoundGems); // TODO Sound: All Faces Complete
+            PlaySound(SoundFaceComplete);
         }
         else if (swap0Solved || swap1Solved)
         {
-            PlaySound(SoundGems); // TODO Sound: Face Complete
+            PlaySound(SoundFaceCompleteAll);
         }
         else
         {
-            PlaySound(SoundTick); // TODO Sound: Piece Land
+            PlaySound(SoundPieceLand);
         }
         
         if (swap0Solved)
