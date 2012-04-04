@@ -222,6 +222,20 @@ struct SpriteLayer {
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_SPR / 2, 0,
             sizeof(_SYSSpriteInfo) / 2 * NUM_SPRITES);
     }
+    
+    /**
+     * Return the VideoBuffer associated with this drawable.
+     */
+    _SYSVideoBuffer &videoBuffer() {
+        return sys.vbuf;
+    }
+
+    /**
+     * Return the CubeID associated with this drawable.
+     */
+    CubeID cube() const {
+        return sys.cube;
+    }
 };
 
 

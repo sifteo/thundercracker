@@ -14,15 +14,6 @@ struct counts_t {
 };
 
 #if 0
-void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
-{
-    for (unsigned i = 0; i < 14; i++) {
-        VidMode_BG0_ROM vid(cubes[cube].vbuf);
-        vid.BG0_putTile(Vec2(x,y), filled ? 0x9ff : 0);
-        x += dx;
-        y += dy;
-    }
-}
 
 static void onTouch(counts_t *counts, _SYSCubeID cid)
 {    
@@ -51,6 +42,7 @@ static void onNeighborRemove(counts_t *counts,
 }
 #endif
 
+
 void main()
 {
     static counts_t counts[CUBE_ALLOCATION];
@@ -65,10 +57,63 @@ void main()
     while (1) {
         for (CubeID cube = 0; cube < gNumCubes; ++cube) {
             auto &draw = vid[cube].bg0rom;
-    
-            draw.text(Vec2(1,1), "Hello", draw.INV);
-            for (int i = 0; i < 16; i++)
-                draw.hBargraph(Vec2(0,i), i, draw.ORANGE);
+            String<192> str;
+
+            /*
+             * Textual dump of current sensor state
+             */
+
+            uint64_t hwid = cube.getHWID();
+            str << "I am cube #" << cube << "\n";
+            str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
+
+            Neighborhood nb(cube);
+            str << "nb "
+                << Hex(nb.neighborAt(TOP), 2) << " "
+                << Hex(nb.neighborAt(LEFT), 2) << " "
+                << Hex(nb.neighborAt(BOTTOM), 2) << " "
+                << Hex(nb.neighborAt(RIGHT), 2) << "\n";
+
+            str << "   +" << counts[cube].neighborAdd
+                << ", -" << counts[cube].neighborRemove
+                << "\n\n";
+
+            str << "bat:   " << Hex(cube.getBattery(), 4) << "\n";
+            str << "touch: " << cube.isTouching() <<
+                " (" << counts[cube].touch << ")\n";
+
+            auto accel = cube.getAccel();
+            str << "acc: "
+                << Fixed(accel.x, 3)
+                << Fixed(accel.y, 3)
+                << Fixed(accel.z, 3) << "\n";
+
+            auto tilt = cube.getTilt();
+            str << "tilt:"
+                << Fixed(tilt.x, 3)
+                << Fixed(tilt.y, 3) << "\n";
+
+            str << "shake: " << counts[cube].shake;
+
+            draw.text(Vec2(1,2), str);
+
+            /*
+             * Neighboring indicator bars
+             */
+
+            unsigned nbColor = draw.ORANGE;
+
+            draw.fill(nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG),
+                Vec2(1, 0), Vec2(14, 1));
+
+            draw.fill(nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG),
+                Vec2(0, 1), Vec2(1, 14));
+
+            draw.fill(nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG),
+                Vec2(1, 15), Vec2(14, 1));
+
+            draw.fill(nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG),
+                Vec2(15, 1), Vec2(1, 14));
         }
 
         System::paint();
@@ -79,52 +124,5 @@ void main()
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
-
-    for (;;) {
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            Cube &cube = cubes[i]; 
-            int id = cube.id();
-            VidMode_BG0_ROM vid(cube.vbuf);
-            String<192> str;
-
-            uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << id << "\n";
-            str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
-
-            _SYSNeighborState nb;
-            _SYS_getNeighbors(id, &nb);
-            str << "nb "
-                << Hex(nb.sides[0], 2) << " "
-                << Hex(nb.sides[1], 2) << " "
-                << Hex(nb.sides[2], 2) << " "
-                << Hex(nb.sides[3], 2) << "\n";
-            
-            str << "   +" << counts[id].neighborAdd
-                << ", -" << counts[id].neighborRemove
-                << "\n\n";
-
-            str << "bat:   " << Hex(_SYS_getBatteryV(id), 4) << "\n";
-            str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
-
-            _SYSAccelState accel = _SYS_getAccel(id);
-            str << "acc: "
-                << Fixed(accel.x, 3)
-                << Fixed(accel.y, 3)
-                << Fixed(accel.z, 3) << "\n";
-
-            _SYSTiltState tilt = _SYS_getTilt(id);
-            str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
-            str << "shake: " << counts[id].shake;
-                
-            vid.BG0_text(Vec2(1,2), str);
-
-            drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
-            drawSide(i, nb.sides[1] != CUBE_ID_UNDEFINED, 0,  1,  0, 1);  // Left
-            drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
-            drawSide(i, nb.sides[3] != CUBE_ID_UNDEFINED, 15, 1,  0, 1);  // Right
-        }
-
-        System::paint();
-    }
 #endif
 }

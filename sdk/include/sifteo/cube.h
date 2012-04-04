@@ -65,9 +65,7 @@ struct CubeID {
      * Initialize a CubeID with a concrete slot value. Slots are numbered
      * from 0 to NUM_SLOTS - 1.
      */
-    CubeID(_SYSCubeID sys) : sys(sys) {
-        ASSERT(sys < NUM_SLOTS);
-    }
+    CubeID(_SYSCubeID sys) : sys(sys) {}
 
     /**
      * Implicit conversion to _SYSCubeID, for use in low-level system calls.
@@ -100,6 +98,7 @@ struct CubeID {
      * this cube over the radio.
      */
     void enable() const {
+        ASSERT(sys < NUM_SLOTS);
         _SYS_enableCubes(bit());
     }
 
@@ -108,15 +107,17 @@ struct CubeID {
      * The system will no longer be in radio contact with this cube.
      */
     void disable() {
+        ASSERT(sys < NUM_SLOTS);
         _SYS_disableCubes(bit());
     }
 
     /**
      * Return the physical accelerometer state, as a signed byte-vector.
      */
-    Byte2 getAccel() const {
+    Byte3 getAccel() const {
+        ASSERT(sys < NUM_SLOTS);
         _SYSAccelState state = _SYS_getAccel(*this);
-        return Vec2(state.x, state.y);
+        return Vec3(state.x, state.y, state.z);
     }
 
     /**
@@ -125,6 +126,7 @@ struct CubeID {
      * in the set (-1, 0, +1).
      */
     Byte2 getTilt() const {
+        ASSERT(sys < NUM_SLOTS);
         _SYSTiltState tilt = _SYS_getTilt(*this);
         return Vec2(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
     }
@@ -134,6 +136,7 @@ struct CubeID {
      * of the touch sensor.
      */
     bool isTouching() const {
+        ASSERT(sys < NUM_SLOTS);
         return _SYS_isTouching(*this);
     }
     
@@ -141,6 +144,7 @@ struct CubeID {
      * Is a shake event being detected on this cube?
      */
     bool isShaking() const {
+        ASSERT(sys < NUM_SLOTS);
         return _SYS_SHAKING == _SYS_getShake(*this);
     }
 
@@ -153,6 +157,7 @@ struct CubeID {
      * while we wait on a radio round-trip to discover the HWID.
      */
     uint64_t getHWID() const {
+        ASSERT(sys < NUM_SLOTS);
         return _SYS_getCubeHWID(*this);
     }
 
@@ -162,7 +167,18 @@ struct CubeID {
      * to this cube. The cube will retain its existing screen contents.
      */
     void detachVideoBuffer() const {
+        ASSERT(sys < NUM_SLOTS);
         _SYS_setVideoBuffer(*this, 0);
+    }
+
+    /**
+     * Get this cube's battery level.
+     *
+     * XXX: Units are currently TBD.
+     */
+    unsigned getBattery() const {
+        ASSERT(sys < NUM_SLOTS);
+        return _SYS_getBatteryV(*this);
     }
 
     CubeID operator ++() { return ++sys; }
@@ -205,6 +221,7 @@ struct Neighborhood {
      * no way of knowing what the current screen orientation is.)
      */
     Neighborhood(CubeID cube) {
+        ASSERT(cube < cube.NUM_SLOTS);
         _SYS_getNeighbors(cube, &sys);
     }
 

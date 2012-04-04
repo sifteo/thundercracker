@@ -276,6 +276,20 @@ struct FBDrawable {
     void set(const uint16_t *data) {
         _SYS_vbuf_write(&sys.vbuf, 0, data, sizeInWords());
     }
+
+    /**
+     * Return the VideoBuffer associated with this drawable.
+     */
+    _SYSVideoBuffer &videoBuffer() {
+        return sys.vbuf;
+    }
+
+    /**
+     * Return the CubeID associated with this drawable.
+     */
+    CubeID cube() const {
+        return sys.cube;
+    }
 };
 
 

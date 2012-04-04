@@ -319,6 +319,20 @@ struct Colormap {
         (*this)[0].set(color0);
         (*this)[1].set(color1);
     }
+
+    /**
+     * Return the VideoBuffer associated with this drawable.
+     */
+    _SYSVideoBuffer &videoBuffer() {
+        return sys.vbuf;
+    }
+
+    /**
+     * Return the CubeID associated with this drawable.
+     */
+    CubeID cube() const {
+        return sys.cube;
+    }
 };
 
 
