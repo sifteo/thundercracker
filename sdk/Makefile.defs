@@ -16,7 +16,7 @@ CFLAGS += -I$(SDK_DIR)/include
 CFLAGS += -ffreestanding -emit-llvm -m32 -fno-stack-protector
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
+CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
