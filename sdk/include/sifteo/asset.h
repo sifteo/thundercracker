@@ -144,6 +144,10 @@ struct AssetSlot {
     operator const _SYSAssetSlot* () const { return &sys; }
     operator _SYSAssetSlot* () { return &sys; }
 
+    /**
+     * Create a new AssetSlot. This function returns
+     * a unique ID which is constant at link-time.
+     */
     static AssetSlot allocate() {
         return AssetSlot(_SYS_lti_counter("Sifteo.AssetGroupSlot", 0));
     }
@@ -454,7 +458,7 @@ struct PinnedAssetImage {
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
      */
-    uint16_t tile(unsigned i) {
+    uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return sys.data + i;
     };
@@ -466,7 +470,7 @@ struct PinnedAssetImage {
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
      */
-    uint16_t tile(Int2 pos, unsigned frame = 0) {
+    uint16_t tile(Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return sys.data + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
     }
@@ -477,7 +481,7 @@ struct PinnedAssetImage {
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
      */
-    uint16_t tile(_SYSCubeID cube, unsigned i) {
+    uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + sys.data + i;
     };
@@ -489,7 +493,7 @@ struct PinnedAssetImage {
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
      */
-    uint16_t tile(_SYSCubeID cube, Int2 pos, unsigned frame = 0) {
+    uint16_t tile(_SYSCubeID cube, Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return assetGroup().baseAddress(cube) + sys.data
             + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
@@ -540,7 +544,7 @@ struct FlatAssetImage {
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
      */
-    uint16_t tile(unsigned i) {
+    uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return tileArray()[i];
     };
@@ -552,7 +556,7 @@ struct FlatAssetImage {
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
      */
-    uint16_t tile(Int2 pos, unsigned frame = 0) {
+    uint16_t tile(Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return tileArray()[pos.x + pos.y * tileHeight() + frame * numTilesPerFrame()];
     }
@@ -563,7 +567,7 @@ struct FlatAssetImage {
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
      */
-    uint16_t tile(_SYSCubeID cube, unsigned i) {
+    uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + tileArray()[i];
     };
@@ -575,7 +579,7 @@ struct FlatAssetImage {
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
      */
-    uint16_t tile(_SYSCubeID cube, Int2 pos, unsigned frame = 0) {
+    uint16_t tile(_SYSCubeID cube, Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return assetGroup().baseAddress(cube) + tileArray()[
             pos.x + pos.y * tileHeight() + frame * numTilesPerFrame()];

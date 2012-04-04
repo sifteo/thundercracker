@@ -12,7 +12,7 @@
 #endif
 
 #include <sifteo/abi.h>
-#include <sifteo/drawable.h>
+#include <sifteo/video/sprite.h>
 
 namespace Sifteo {
 
@@ -103,6 +103,7 @@ enum Rotation {
 struct VideoBuffer {
     union {
         _SYSAttachedVideoBuffer sys;
+        SpriteLayer sprites;
     };
 
     /**

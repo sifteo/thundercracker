@@ -9,21 +9,35 @@
 
 using namespace Sifteo;
 
-AssetSlot MainSlot = AssetSlot::allocate().bootstrap(MainAssets);
-AssetSlot OtherSlot = AssetSlot::allocate().bootstrap(MainAssets);
+/*
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(MainAssets);
 
 static Metadata M = Metadata()
     .title("Hello World SDK Example")
     .icon(GameIcon);
+*/
 
 void main()
 {
     const CubeID myCube(0);
     static VideoBuffer vid;
     
+/*
     myCube.enable();
     vid.attach(myCube);
-    vid.setMode(FB64);
+    vid.setMode(BG0_SPR_BG1);
+*/
+    
+    vid.sprites[2].setImage(WhiteTile);
+    vid.sprites[2].move(50, 60);
+    
+    LOG_INT(vid.sprites[2].width());
+    LOG_INT(vid.sprites[2].height());
+    LOG_INT(vid.sprites[2].x());
+    LOG_INT(vid.sprites[2].y());
+    LOG_INT2(vid.sprites[2].size());
+    LOG_INT2(vid.sprites[2].position());
     
     while (1) {
         System::paint();
