@@ -17,6 +17,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
 
@@ -58,6 +60,32 @@ void report_fatal_error(const Instruction *I, const char *msg)
 {
     Twine T(msg);
     report_fatal_error(I, T);
+}
+
+void report_fatal_error(const SDNode *N, SelectionDAG &DAG, const Twine &msg)
+{
+    LLVMContext &Ctx = *DAG.getContext();
+    DebugLoc dl = N->getDebugLoc();
+    const Function *Func = DAG.getMachineFunction().getFunction();
+    DISubprogram SP = getDISubprogram(dl.getScope(Ctx));
+    std::string FuncName = Func->getName().str();
+    Twine lineInfo;
+    
+    demangle(FuncName);
+
+    if (dl.isUnknown())
+        lineInfo = "(unknown line)";
+    else
+        lineInfo = Twine(SP.getFilename()) + ":" +
+            Twine(dl.getLine()) + "," + Twine(dl.getCol());
+
+    report_fatal_error("In " + Twine(FuncName) + " at " + lineInfo + ": " + msg);
+}
+
+void report_fatal_error(const SDNode *N, SelectionDAG &DAG, const char *msg)
+{
+    Twine T(msg);
+    report_fatal_error(N, DAG, T);
 }
 
 
