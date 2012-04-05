@@ -23,6 +23,7 @@ AddBuddy(2, "rike")
 AddBuddy(3, "boff")
 AddBuddy(4, "zorg")
 AddBuddy(5, "maro")
+AddBuddy(6, "amor")
 
 -- Buddy Overlays
 if UseSprites then

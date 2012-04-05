@@ -33,7 +33,10 @@ namespace Buddies { namespace {
 const int kMaxTilesX = VidMode::LCD_width / VidMode::TILE;
 const int kMaxTilesY = VidMode::LCD_width / VidMode::TILE;
 
-// TODO: Is there a way to automate this using clever Lua scripting?
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Buddy Assets
+// - TODO: Is there a way to automate this using clever Lua scripting?
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const PinnedAssetImage *kBuddySpritesFront[] =
 {
@@ -43,6 +46,7 @@ const PinnedAssetImage *kBuddySpritesFront[] =
     &BuddySpriteFront3,
     &BuddySpriteFront4,
     &BuddySpriteFront5,
+    &BuddySpriteFront6,
     NULL,
 };
 
@@ -54,6 +58,7 @@ const PinnedAssetImage *kBuddySpritesLeft[] =
     &BuddySpriteLeft3,
     &BuddySpriteLeft4,
     &BuddySpriteLeft5,
+    &BuddySpriteLeft6,
     NULL,
 };
 
@@ -65,6 +70,7 @@ const PinnedAssetImage *kBuddySpritesRight[] =
     &BuddySpriteRight3,
     &BuddySpriteRight4,
     &BuddySpriteRight5,
+    &BuddySpriteRight6,
     NULL,
 };
 
@@ -76,7 +82,19 @@ const AssetImage *kBuddyRibbons[] =
     &BuddyRibbon3,
     &BuddyRibbon4,
     &BuddyRibbon5,
+    &BuddyRibbon6,
     NULL,
+};
+
+const AssetImage *kBuddiesSmall[] =
+{
+    &BuddySmall0,
+    &BuddySmall1,
+    &BuddySmall2,
+    &BuddySmall3,
+    &BuddySmall4,
+    &BuddySmall5,
+    &BuddySmall6,
 };
 
 const AssetImage *kStoryBookTitles[] =
@@ -96,16 +114,6 @@ const AssetImage *kStoryBookTitles[] =
     &StoryBookTitle12,
     &StoryBookTitle13,
     &StoryBookTitle14,
-};
-
-const AssetImage *kBuddiesSmall[] =
-{
-    &BuddySmall0,
-    &BuddySmall1,
-    &BuddySmall2,
-    &BuddySmall3,
-    &BuddySmall4,
-    &BuddySmall5,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

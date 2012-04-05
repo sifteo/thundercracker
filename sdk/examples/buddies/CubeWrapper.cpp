@@ -19,50 +19,43 @@ using namespace Sifteo;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace Buddies {
+namespace Buddies { namespace {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-namespace {
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-const AssetImage *GetBuddyFaceBackgroundAsset(int buddyId)
-{
-    switch (buddyId)
-    {
-        default:
-        case BUDDY_GLUV: return &BuddyBackground0;
-        case BUDDY_SULI: return &BuddyBackground1;
-        case BUDDY_RIKE: return &BuddyBackground2;
-        case BUDDY_BOFF: return &BuddyBackground3;
-        case BUDDY_ZORG: return &BuddyBackground4;
-        case BUDDY_MARO: return &BuddyBackground5;
-        case BUDDY_INVISIBLE: return &UiFaceHolder;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
+// Buddy Assets
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef BUDDY_PIECES_USE_SPRITES
+typedef PinnedAssetImage BuddyPartAssetImage;
+#else
+typedef AssetImage BuddyPartAssetImage;
+#endif
 
-const PinnedAssetImage *GetBuddyFacePartsAsset(int buddyId)
+const AssetImage *kBuddyBackgrounds[] =
 {
-    switch (buddyId)
-    {
-        default:
-        case BUDDY_GLUV: return &BuddyParts0;
-        case BUDDY_SULI: return &BuddyParts1;
-        case BUDDY_RIKE: return &BuddyParts2;
-        case BUDDY_BOFF: return &BuddyParts3;
-        case BUDDY_ZORG: return &BuddyParts4;
-        case BUDDY_MARO: return &BuddyParts5;
-        case BUDDY_INVISIBLE: return NULL;
-    }
-}
+    &BuddyBackground0,
+    &BuddyBackground1,
+    &BuddyBackground2,
+    &BuddyBackground3,
+    &BuddyBackground4,
+    &BuddyBackground5,
+    &BuddyBackground6,
+    &UiFaceHolder,
+};
+
+const BuddyPartAssetImage *kBuddyParts[] =
+{
+    &BuddyParts0,
+    &BuddyParts1,
+    &BuddyParts2,
+    &BuddyParts3,
+    &BuddyParts4,
+    &BuddyParts5,
+    &BuddyParts6,
+    NULL,
+};
+
+#ifdef BUDDY_PIECES_USE_SPRITES
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
@@ -73,21 +66,6 @@ const Int2 kPartPositions[NUM_SIDES] =
 };
 
 #else
-
-const AssetImage *GetBuddyFacePartsAsset(int buddyId)
-{
-    switch (buddyId)
-    {
-        default:
-        case BUDDY_GLUV: return &BuddyParts0;
-        case BUDDY_SULI: return &BuddyParts1;
-        case BUDDY_RIKE: return &BuddyParts2;
-        case BUDDY_BOFF: return &BuddyParts3;
-        case BUDDY_ZORG: return &BuddyParts4;
-        case BUDDY_MARO: return &BuddyParts5;
-        case BUDDY_INVISIBLE: return NULL;
-    }
-}
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
@@ -207,7 +185,8 @@ void CubeWrapper::DrawBuddy()
 {
     ASSERT(IsEnabled());
     
-    if (const AssetImage *asset = GetBuddyFaceBackgroundAsset(mBuddyId))
+    ASSERT(mBuddyId < arraysize(kBuddyBackgrounds));
+    if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
         DrawBackground(*asset);
     }
@@ -594,7 +573,8 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 
 void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
-    if (const AssetImage *assetImage = GetBuddyFacePartsAsset(piece.GetBuddy()))
+    ASSERT(piece.GetBuddy() < arraysize(kBuddyParts));
+    if (const AssetImage *assetImage = kBuddyParts[piece.GetBuddy()])
     {
         AssetImage asset = *assetImage;
         unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
