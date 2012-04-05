@@ -141,12 +141,9 @@ struct BG0ROMDrawable {
      * BG0 is an 18x18 buffer that wraps around in both directions.
      */ 
     void setPanning(Int2 pixels) {
-        pixels.x = pixels.x % (int)pixelWidth();
-        pixels.y = pixels.y % (int)pixelHeight();
-        if (pixels.x < 0) pixels.x += pixelWidth();
-        if (pixels.y < 0) pixels.y += pixelHeight();
         _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2,
-            pixels.x | (pixels.y << 8));
+            umod(pixels.x, pixelWidth()) |
+            (umod(pixels.y, pixelHeight()) << 8));
     }
 
     /**

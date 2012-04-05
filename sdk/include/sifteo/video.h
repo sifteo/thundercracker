@@ -242,6 +242,76 @@ struct VideoBuffer {
     }
 
     /**
+     * Set the LCD rotation such that the top of the framebuffer is at
+     * the physical side 'topSide'. This is the counterpart to the
+     * orientation() getter.
+     */
+    void setOrientation(Side topSide) {
+        // Tiny lookup table in a uint32
+        const uint32_t sideToRotation =
+            (ROT_NORMAL     << 0)  |
+            (ROT_LEFT_90    << 8)  |
+            (ROT_180        << 16) |
+            (ROT_RIGHT_90   << 24) ;
+
+        ASSERT(topSide >= 0 && topSide < 4);
+        uint8_t r = sideToRotation >> (topSide * 8);
+        setRotation(Rotation(r));
+    }
+
+    /**
+     * Set this VideoBuffer's cube orientation to be consistent with the
+     * orientation of another "source" VideoBuffer whose cube is
+     * neighbored to this one.
+     *
+     * This version requires the caller to supply Neighborhood instances
+     * corresponding to both our own cube and the 'src' cube. This does
+     * not require that the cubes are currently neighbored, just that they
+     * were when the Neighborhood objects were created.
+     */
+    void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
+        int srcSide = srcN.sideOf(cube());
+        int dstSide = thisN.sideOf(src.cube());
+        ASSERT(srcSide != NO_SIDE && dstSide != NO_SIDE);
+        setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+    }
+
+    /**
+     * Set this VideoBuffer's cube orientation to be consistent with the
+     * orientation of another "source" VideoBuffer whose cube is
+     * neighbored to this one.
+     *
+     * Note that the caller is responsible for ensuring that this cube and
+     * the source cube are actually neighbored. The set of neighbored cubes
+     * may change at any event dispatch point, such as System::paint().
+     */
+    void orientTo(const VideoBuffer &src) {
+        orientTo(Neighborhood(cube()), src, Neighborhood(src.cube()));
+    }
+
+    /**
+     * Convert a physical side (relative to the hardware itself) to a virtual
+     * side (relative to the current screen orientation).
+     */
+    Side physicalToVirtual(Side side) const {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        Side rot = orientation();
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side - rot, NUM_SIDES));
+    }
+
+    /**
+     * Convert a virtual side (relative to the current screen orientation)
+     * to a physical side (relative to the hardware itself).
+     */
+    Side virtualToPhysical(Side side) const {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        Side rot = orientation();
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side + rot, NUM_SIDES));
+    }
+
+    /**
      * Change the video mode. This affects subsequent rendering only.
      * Note that this may change the way hardware interprets the contents
      * of video memory, so it's important to synchronize any mode changes

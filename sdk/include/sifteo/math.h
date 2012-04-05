@@ -133,6 +133,18 @@ double inline fmod(double a, double b)
 }
 
 /**
+ * Compute the unsigned remainder from dividing two signed integers.
+ */
+
+unsigned inline umod(int a, int b)
+{
+    int r = a % b;
+    if (r < 0)
+        r += b;
+    return r;
+}
+
+/**
  * Compute the square root of a floating point number.
  * This variant operates on single-precision floats.
  */
