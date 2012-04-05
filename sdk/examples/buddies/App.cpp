@@ -86,6 +86,17 @@ const AssetImage *kBuddyRibbons[] =
     NULL,
 };
 
+const AssetImage *kBuddiesFull[] =
+{
+    &BuddyFull0,
+    &BuddyFull1,
+    &BuddyFull2,
+    &BuddyFull3,
+    &BuddyFull4,
+    &BuddyFull5,
+    &BuddyFull6,
+};
+
 const AssetImage *kBuddiesSmall[] =
 {
     &BuddySmall0,
@@ -751,34 +762,22 @@ int ClampMod(int value, int modulus)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const AssetImage &GetBuddyFullAsset(int buddyId)
-{
-    switch (buddyId)
-    {
-        default:
-        case 0: return BuddyFull0;
-        case 1: return BuddyFull1;
-        case 2: return BuddyFull2;
-        case 3: return BuddyFull3;
-        case 4: return BuddyFull4;
-        case 5: return BuddyFull5;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 {
+    int numBuddies = NUM_BUDDIES - 1; // Don't allow invisible buddy!
+    
     Random random;
-    int selection = random.randrange(NUM_BUDDIES - kNumCubes);
+    int selection = random.randrange(numBuddies - kNumCubes);
+    
+    // TODO: This can end up selecting the same buddy twice in a row. FIX!
     
     for (int j = 0; j < selection; ++j)
     {
-        buddyId = BuddyId((buddyId + 1) % NUM_BUDDIES);
+        buddyId = BuddyId((buddyId + 1) % numBuddies);
+        
         while (IsBuddyUsed(app, buddyId))
         {
-            buddyId = BuddyId((buddyId + 1) % NUM_BUDDIES);
+            buddyId = BuddyId((buddyId + 1) % numBuddies);
         }
     }
     
@@ -1542,7 +1541,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_FREEPLAY_START:
         {
-            unsigned int buddyIds[NUM_BUDDIES];
+            unsigned int buddyIds[NUM_BUDDIES - 1];  // Don't allow invisible buddy!
             for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
                 buddyIds[i] = i;
@@ -1714,7 +1713,6 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_BOOK_START:
         {
             mDelayTimer = kStateTimeDelayLong;
-            LOG(("start timer = %f\n", mDelayTimer));
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
@@ -2796,7 +2794,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_SHAKE_TO_SHUFFLE:
         {
-            cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+            ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
+            cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
             
             if (mUiIndex == 0 && !mUiIndexSync[cubeWrapper.GetId()])
             {
@@ -2830,7 +2829,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (mClueOffTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 // Clue
-                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+                ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
+                cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
             }
             else if (cubeWrapper.GetId() == 0 && mHintFlowIndex == 1)
             {
@@ -2839,7 +2839,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
-                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+                ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
+                cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
             }
             else
@@ -2873,7 +2874,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
-                cubeWrapper.DrawBackground(GetBuddyFullAsset(cubeWrapper.GetBuddyId()));
+                ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
+                cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
                 cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
             }
             else
@@ -3186,8 +3188,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             int xSpan = numUnlockLeft * 2 + (numUnlockLeft - 1) * 1;
             int xBase = (VidMode::LCD_width / VidMode::TILE / 2) - (xSpan / 2);
             
+            // No invisible buddies!
             int iFace = 0;
-            for (int iBuddy = 0; iBuddy < BUDDY_INVISIBLE; ++iBuddy)
+            for (int iBuddy = 0; iBuddy < (NUM_BUDDIES - 1); ++iBuddy)
             {
                 if ((mSaveDataBuddyUnlockMask & (1 << iBuddy)) == 0)
                 {
@@ -4022,8 +4025,10 @@ int App::NextUnlockedBuddy() const
 
 int App::GetNumBuddiesLeftToUnlock() const
 {
+    // No invisible buddies!
+    
     int numLeftToUnlock = 0;
-    for (int i = 0; i < BUDDY_INVISIBLE; ++i)
+    for (int i = 0; i < (NUM_BUDDIES - 1); ++i)
     {
         if ((mSaveDataBuddyUnlockMask & (1 << i)) == 0)
         {

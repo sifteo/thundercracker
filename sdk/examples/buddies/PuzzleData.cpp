@@ -18,6 +18,11 @@ const CutsceneLine kCutsceneLineDefault[] =
 {
     CutsceneLine(),
 };
+const BuddyId kCutsceneBuddiesDefault[] =
+{
+    BUDDY_GLUV,
+    BUDDY_SULI,
+};
 const BuddyId kBuddiesDefault[] =
 {
     BUDDY_GLUV,
@@ -25,7 +30,8 @@ const BuddyId kBuddiesDefault[] =
     BUDDY_RIKE,
     BUDDY_BOFF,
     BUDDY_ZORG,
-    BUDDY_MARO
+    BUDDY_MARO,
+    BUDDY_AMOR,
 };
 const Piece kPiecesDefaultStart[][NUM_SIDES] =
 {
@@ -64,6 +70,12 @@ const Piece kPiecesDefaultStart[][NUM_SIDES] =
         Piece(BUDDY_MARO, Piece::PART_EYE_LEFT),
         Piece(BUDDY_MARO, Piece::PART_MOUTH),
         Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
 };
 const Piece kPiecesDefaultEnd[][NUM_SIDES] =
@@ -104,13 +116,19 @@ const Piece kPiecesDefaultEnd[][NUM_SIDES] =
         Piece(BUDDY_MARO, Piece::PART_MOUTH, true),
         Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT, true),
     },
+    {
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
+    },
 };
 Puzzle sPuzzleDefault(
     "Default",
     "Default",
-    kBuddiesDefault, arraysize(kBuddiesDefault),
+    kCutsceneBuddiesDefault, arraysize(kCutsceneBuddiesDefault),
     kCutsceneLineDefault, arraysize(kCutsceneLineDefault),
-    kBuddiesDefault, arraysize(kBuddiesDefault),
+    kCutsceneBuddiesDefault, arraysize(kCutsceneBuddiesDefault),
     kCutsceneLineDefault, arraysize(kCutsceneLineDefault),
     0,
     kBuddiesDefault, arraysize(kBuddiesDefault),
