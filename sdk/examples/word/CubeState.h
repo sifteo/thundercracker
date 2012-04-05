@@ -3,6 +3,7 @@
 
 enum CubeStateIndex
 {
+    CubeStateIndex_Menu,
     CubeStateIndex_Title,
     CubeStateIndex_TitleExit,
     CubeStateIndex_NotWordScored,

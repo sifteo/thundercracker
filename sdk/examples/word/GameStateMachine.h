@@ -24,6 +24,7 @@ enum GameStateIndex
     GameStateIndex_PauseMenu,
     GameStateIndex_CutScene,
     GameStateIndex_CubeBuddyUnlock,
+    GameStateIndex_LoadingFinished,
 
     GameStateIndex_NumStates
 };

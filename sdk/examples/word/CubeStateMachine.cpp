@@ -11,7 +11,7 @@
 const float SHAKE_DELAY = 3.5f;
 
 CubeStateMachine::CubeStateMachine() :
-        StateMachine(0), mPuzzleLettersPerCube(0),
+        StateMachine(CubeStateIndex_Menu), mPuzzleLettersPerCube(0),
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
@@ -56,6 +56,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     {
     case EventID_Paint:
     case EventID_ClockTick:
+        // FIXME only paint if required? does it matter, since the engine
+        // checks if anything really needs to update?
         paint();
         break;
 
@@ -400,6 +402,26 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     unsigned newStateIndex = getCurrentStateIndex();
     switch (newStateIndex)
     {
+    case CubeStateIndex_Menu:
+        switch (eventID)
+        {
+        case EventID_GameStateChanged:
+            // TODO drive machine by anim state only
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_PlayScored:
+                newStateIndex = CubeStateIndex_NotWordScored;
+                break;
+            default:
+                break;
+            }
+            break;
+
+        default:
+            break;
+        }
+        break;
+
     case CubeStateIndex_Title:
         switch (eventID)
         {
@@ -1156,6 +1178,9 @@ void CubeStateMachine::paint()
 
     switch (getCurrentStateIndex())
     {
+    case CubeStateIndex_Menu:
+        break;
+
     case CubeStateIndex_Title:
         {
             // FIXME vertical words

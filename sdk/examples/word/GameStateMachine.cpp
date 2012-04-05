@@ -11,7 +11,7 @@ const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
-    StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
+    StateMachine(GameStateIndex_LoadingFinished), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
     mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0),
     mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CUBE_ID_UNDEFINED)
 {
@@ -409,9 +409,82 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case GameStateIndex_Loading:
+        // TODO remove or use
+        break;
+
+    case GameStateIndex_LoadingFinished:
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            // TODO check first run
+            newStateIndex = GameStateIndex_MainMenu;
+            break;
+
+        default:
+            break;
+        }
         break;
 
     case GameStateIndex_MainMenu:
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            {
+                struct MenuEvent e;
+                Menu &m = *WordGame::getMenu();
+                m.reset();
+                bool exitMenu = false;
+                while (m.pollEvent(&e) && !exitMenu)
+                {
+                    switch(e.type)
+                    {
+                    case MENU_ITEM_PRESS:
+                        // TODO update game state before continuing, depending on selection
+                        newStateIndex = GameStateIndex_PlayScored;
+                        exitMenu = true;
+                        break;
+
+                    case MENU_EXIT:
+                        // this is not possible when pollEvent is used as the condition to the while loop.
+                        // NOTE: this event should never have its default handler skipped.
+                        ASSERT(false);
+                        break;
+
+                    case MENU_NEIGHBOR_ADD:
+                        DEBUG_LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        break;
+                    case MENU_NEIGHBOR_REMOVE:
+                        DEBUG_LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        break;
+
+                    case MENU_ITEM_ARRIVE:
+                        DEBUG_LOG(("arriving at menu item %d\n", e.item));
+                        break;
+
+                    case MENU_ITEM_DEPART:
+                        DEBUG_LOG(("departing from menu item %d\n", e.item));
+                        break;
+
+                    case MENU_PREPAINT:
+                        // if you are drawing/animating the other cubes, do your work here
+                    // do your implementation-specific drawing here
+                        // NOTE: this event should never have its default handler skipped.
+                        break;
+
+                    case MENU_UNEVENTFUL:
+                        // this should never happen. if it does, it can/should be ignored.
+                        ASSERT(false);
+                        break;
+                    }
+                }
+                //ASSERT(e.type == MENU_EXIT);
+                //DEBUG_LOG(("Selected Game: %d\n", e.item));
+
+            }
+            break;
+        }
         break;
 
     case GameStateIndex_PauseMenu:

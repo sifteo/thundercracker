@@ -3,10 +3,13 @@
 
 #include <sifteo.h>
 #include "GameStateMachine.h"
+#include "menu.h"
 
 using namespace Sifteo;
 
 union EventData;
+
+//class Menu;
 
 enum AudioChannelIndex
 {
@@ -34,15 +37,15 @@ enum AudioPriority
 class WordGame
 {
 public:
-    WordGame(Cube cubes[]);
+    WordGame(Cube cubes[], Menu &m);
     void update(float dt);
 
     bool needsPaintSync() const { return mNeedsPaintSync; }
     void setNeedsPaintSync() { mNeedsPaintSync = true; }
     void paintSync() { System::paintSync(); mNeedsPaintSync = false; }
 
-    static WordGame* instance() { return sInstance; }
-
+    static WordGame* instance() { ASSERT(sInstance); return sInstance; }
+    static Menu* getMenu() {ASSERT(sMenu); return sMenu; }
     static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(_SYSAudioModule &mod,
@@ -65,6 +68,7 @@ private:
     bool mNeedsPaintSync;
     AudioPriority mLastAudioPriority[NumAudioChannelIndexes];
     static WordGame* sInstance;
+    static Menu* sMenu;
 };
 
 #endif // WORDGAME_H

@@ -18,6 +18,7 @@ enum CubeAnim
     NumCubeAnims
 };
 
+// TODO drive machine by anim state only
 class CubeStateMachine : public StateMachine
 {
 public:
