@@ -767,9 +767,19 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
     int numBuddies = NUM_BUDDIES - 1; // Don't allow invisible buddy!
     
     Random random;
-    int selection = random.randrange(numBuddies - kNumCubes);
+    int selection = random.randrange(numBuddies - kNumCubes - 1) + 1;
     
-    // TODO: This can end up selecting the same buddy twice in a row. FIX!
+    const char *buddies[NUM_BUDDIES] =
+    {
+        "BUDDY_GLUV",
+        "BUDDY_SULI",
+        "BUDDY_RIKE",
+        "BUDDY_BOFF",
+        "BUDDY_ZORG",
+        "BUDDY_MARO",
+        "BUDDY_AMOR",
+        "BUDDY_INVISIBLE",
+    };
     
     for (int j = 0; j < selection; ++j)
     {
