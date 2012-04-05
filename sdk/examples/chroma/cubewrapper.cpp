@@ -68,6 +68,7 @@ void CubeWrapper::Reset()
     m_ShakeTime = SystemTime();
     setState( STATE_PLAYING );
     m_idleTimer = 0.0f;
+    m_vid.BG1_setPanning( Vec2( 0, 0 ) );
 
     //clear out dots
     for( int i = 0; i < NUM_ROWS; i++ )
