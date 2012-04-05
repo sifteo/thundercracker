@@ -32,9 +32,9 @@ else
     BuddyPartFixed = image{"assets/fixed.png"}
     BuddyPartHidden = image{"assets/hidden.png"}
 end
-
+    
 -- Menu
-BgTile = image{"assets/menu/bg.png"}
+BgTile = image{"assets/menu/bg_blue_8x8.png"}
 IconFreePlay = image{"assets/menu/IconFreePlay.png"}
 IconStory = image{"assets/menu/IconStory.png"}
 IconShuffle = image{"assets/menu/IconShuffle.png"}
