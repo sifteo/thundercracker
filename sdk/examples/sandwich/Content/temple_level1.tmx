@@ -1132,22 +1132,14 @@
  <objectgroup name="triggers" width="48" height="80">
   <object name="temple_level2Gate" type="Gateway" x="728" y="184" width="32" height="32">
    <properties>
-    <property name="target" value="temple_level2:temple_level1Gate"/>
+    <property name="target" value="temple_level2:SpawnPoint"/>
    </properties>
   </object>
-  <object name="temple_level3Gate" type="Gateway" x="431" y="3" width="32" height="32">
-   <properties>
-    <property name="target" value="temple_level3:temple_level1Gate"/>
-   </properties>
-  </object>
-  <object name="Bread" type="Item" x="433" y="943" width="32" height="32">
+  <object name="SpawnPoint" type="Location" x="8" y="308" width="32" height="32"/>
+  <object name="SpawnPoint2" type="Location" x="429" y="9" width="32" height="32"/>
+  <object name="Bread" type="Item" x="431" y="936" width="32" height="32">
    <properties>
     <property name="id" value="bread"/>
-   </properties>
-  </object>
-  <object name="TempleGate" type="Gateway" x="13" y="294" width="64" height="64">
-   <properties>
-    <property name="target" value="forest:TempleGate"/>
    </properties>
   </object>
  </objectgroup>

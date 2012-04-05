@@ -689,7 +689,7 @@
   <object name="door would go here" type="Comment" x="801" y="371" width="64" height="64"/>
   <object name="TempleGate" type="Gateway" x="546" y="52" width="64" height="64">
    <properties>
-    <property name="target" value="temple_level1:TempleGate"/>
+    <property name="target" value="temple_level1:SpawnPoint"/>
    </properties>
   </object>
  </objectgroup>

@@ -209,7 +209,7 @@ class Room:
 			for side,(x,y) in enumerate(cardinals): 
 				self._subdiv_visit(slots, 1<<side, x, y)
 			for cnt in (bit_count(slots[x+(y<<3)]) for (x,y) in cardinals): 
-				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id
+				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id + " at: " + str(self.x) + "," + str(self.y)
 			tx,ty = cardinals[SIDE_TOP]
 			maskTop = slots[tx+(ty<<3)]
 			if bit_count(maskTop) == 2:

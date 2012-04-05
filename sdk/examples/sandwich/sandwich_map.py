@@ -22,7 +22,7 @@ class MapDatabase:
 			for gate in map.list_triggers_of_type("gateway"):
 				assert gate.target_map in self.map_dict, "gateway to unknown map: " + gate.target_map
 				tmap = self.map_dict[gate.target_map]
-				assert gate.target_gate in tmap.trig_dict["gateway"] or gate.target_gate in tmap.location_dict, "link to unknown map-gate: " + gate.target_gate
+				assert gate.target_gate in tmap.trig_dict["gateway"] or gate.target_gate in tmap.location_dict, "link to unknown map-gate: " + gate.target_gate + " in map: " + map.id
 				# found = False
 				# for othergate in tmap.list_triggers_of_type("gateway"):
 				# 	if othergate.id == gate.target_gate:
