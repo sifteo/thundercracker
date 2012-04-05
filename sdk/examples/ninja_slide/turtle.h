@@ -7,7 +7,7 @@ class Turtle : public Thing {
 
   public:
 
-    Turtle(int id, Int2 pos) : Thing(id, pos){}
+    Turtle(World &world, int id, Int2 pos) : Thing(world, id, pos){}
 
     virtual void think(_SYSCubeID cubeId){
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
@@ -15,7 +15,6 @@ class Turtle : public Thing {
         vel.x += (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
         vel.y += (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
     }
-
 
 };
 

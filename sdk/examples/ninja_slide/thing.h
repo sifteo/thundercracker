@@ -8,29 +8,36 @@ using namespace Sifteo;
 const int PIXELS_PER_GRID = 32;
 
 const int NUM_BOUNDS_RECTS = 2;
-// class ThingBounds{
-//   public:
-//     static const int NUM_RECTS = 2;
-//     Rect rect[NUM_RECTS];
 
-//     ThingBounds(Rect rect0, Rect rect1){
-//         rect[0] = rect0;
-//         rect[1] = rect1;
-//     }
-// };
+// World is information that all Things have access to.
+class World {
+  public:
+
+    bool isTurtleMoving;
+
+    World(){
+        mainLoopReset();
+    }
+
+    void mainLoopReset(){
+        isTurtleMoving = false;
+    }
+};
 
 class Thing {
   public:
 
+    World *pWorld;
     int id;
     Float2 pos;
     Float2 vel;
     const PinnedAssetImage *pImage;
 
-    Thing(int id, Int2 pos){
+    Thing(World &world, int id, Int2 pos){
+        this->pWorld = &world;
         this->id = id;
         this->pos = pos.toFloat();
-        pImage = NULL;
+        this->pImage = NULL;
     }
 
     void setSpriteImage(VidMode_BG0_SPR_BG1 &vid, const PinnedAssetImage &asset){
@@ -42,14 +49,12 @@ class Thing {
     virtual void think(_SYSCubeID cubeId){
     }
 
-    void act(float dt){
-//         const int MAX_VEL = 200.0;
-//         if (vel.len() > MAX_VEL) vel = vel.normalize() * MAX_VEL;
+    virtual void act(float dt){
 //         vel = vel * 0.95;       // friction
 
         pos = pos + (vel * dt);
 
-        if (   pos.x < 0.0 || (pos.x + pixelWidth()) > VidMode::LCD_width
+        if (   pos.x < 0.0 || (pos.x + pixelWidth())  > VidMode::LCD_width
             || pos.y < 0.0 || (pos.y + pixelHeight()) > VidMode::LCD_height){
             collided(NULL);
         }

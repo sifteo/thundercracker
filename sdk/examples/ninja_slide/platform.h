@@ -4,16 +4,23 @@
 #include "thing.h"
 
 class Platform : public Thing {
+  private :
+    typedef Platform super; // Private prevents erroneous use by other classes.
 
   public:
 
-    Platform(int id, Int2 pos) : Thing(id, pos) {} 
+    Platform(World &world, int id, Int2 pos) : Thing(world, id, pos) {} 
 
     virtual void think(_SYSCubeID cubeId){
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
         const float TILT_ACCELERATION = 2.0;
         vel.x += (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
         vel.y += (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
+    }
+
+    virtual void act(float dt){
+        if (pWorld->isTurtleMoving) return;
+        super::act(dt);
     }
 };
 
@@ -31,7 +38,7 @@ class LPlatform : public Platform {
     static const int ORIENTATION_BOTTOM_LEFT = 3;
     char orientation;       // where the hole is in the L
 
-    LPlatform(int id, Int2 pos) : Platform(id, pos) {
+    LPlatform(World &world, int id, Int2 pos) : Platform(world, id, pos) {
         orientation = ORIENTATION_TOP_LEFT;
     }
 

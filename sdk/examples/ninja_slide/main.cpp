@@ -15,13 +15,6 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-static LPlatform platform1(0, Vec2(64, 64));
-static Platform platform2(1, Vec2(32, 96));
-static Turtle michelangelo(2, Vec2(32, 32));
-
-const int NUM_THINGS = 3;
-static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
-
 void loadAssets()
 {
     Metadata()
@@ -53,6 +46,16 @@ void collisions(Thing **things, int num_things){
 void main()
 {
     static TimeStep timeStep;
+    static World world;
+    
+    static LPlatform platform1(world, 0, Vec2(64, 64));
+    static Platform platform2(world, 1, Vec2(32, 96));
+    static Turtle michelangelo(world, 2, Vec2(32, 32));
+
+    const int NUM_THINGS = 3;
+    // Make sure to put Turtles first so they can set world.isTurtleMoving
+    static Thing *things[NUM_THINGS] = {&michelangelo, &platform1, &platform2};
+
 
     loadAssets();
 
@@ -72,6 +75,7 @@ void main()
     platform2.setSpriteImage(vid, tile_platform02);
 
     while (1) {
+        world.mainLoopReset();
 
         for(int i=0; i < NUM_THINGS; i++) things[i]->think(cube.id());
         float dt = timeStep.delta().seconds();
