@@ -21,7 +21,7 @@ const int NUM_THINGS = 3;
 static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
 
 
-void init()
+void loadAssets()
 {
     Metadata()
         .title("TMNT: Ninja Slide");
@@ -53,11 +53,18 @@ void main()
 {
     static TimeStep timeStep;
 
-    init();
+    loadAssets();
 
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
-    vid.clear(tile_bckgrnd01);
+
+    // fill background
+    for(UInt2 pos = Vec2(0, 0); pos.x < VidMode::LCD_width / VidMode::TILE; pos.x += tile_bckgrnd01.width){
+        for(pos.y = 0; pos.y < VidMode::LCD_height / VidMode::TILE; pos.y += tile_bckgrnd01.height){
+            LOG(("Drawing asset at pos %d %d\n", pos.x, pos.y));
+            vid.BG0_drawAsset(pos, tile_bckgrnd01);
+        }
+    }
     
     michelangelo.setSpriteImage(vid, Michelangelo);
 
