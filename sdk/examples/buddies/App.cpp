@@ -769,18 +769,6 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
     Random random;
     int selection = random.randrange(numBuddies - kNumCubes - 1) + 1;
     
-    const char *buddies[NUM_BUDDIES] =
-    {
-        "BUDDY_GLUV",
-        "BUDDY_SULI",
-        "BUDDY_RIKE",
-        "BUDDY_BOFF",
-        "BUDDY_ZORG",
-        "BUDDY_MARO",
-        "BUDDY_AMOR",
-        "BUDDY_INVISIBLE",
-    };
-    
     for (int j = 0; j < selection; ++j)
     {
         buddyId = BuddyId((buddyId + 1) % numBuddies);
