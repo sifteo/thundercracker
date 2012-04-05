@@ -4,12 +4,13 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <sifteo/menu.h>
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
 #include "Puzzle.h"
-#include <sifteo/menu.h>
 #include "BubbleTransition.h"
+#include "Banner.h"
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -102,7 +103,7 @@ void Game::Init()
     m_stateTime = 0.0f;
 
     //TODO READ THIS FROM SAVE FILE
-    m_iFurthestProgress = 10;
+    m_iFurthestProgress = 3;
 }
 
 
@@ -1167,7 +1168,42 @@ void Game::HandleMenu()
     {
         switch(e.type)
         {
+            case MENU_ITEM_ARRIVE:
+            {
+                switch( m_state )
+                {
+                    case STATE_PUZZLEMENU:
+                    {
 
+                        if( e.item == 0 )
+                        {
+                            int progress = m_iFurthestProgress + 1;
+
+                            //show current puzzle
+                            if( progress >= 10 )
+                            {
+                                m_cubes[0].GetVid().resizeSprite( 1, 8, 16 );
+                                m_cubes[0].GetVid().setSpriteImage(1, BannerPointsWhite, progress / 10);
+                                m_cubes[0].GetVid().moveSprite(1, 64, 64);
+                            }
+
+                            m_cubes[0].GetVid().resizeSprite( 0, 8, 16 );
+                            m_cubes[0].GetVid().setSpriteImage(0, BannerPointsWhite, progress % 10);
+                            m_cubes[0].GetVid().moveSprite(0, 72, 64);
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case MENU_ITEM_DEPART:
+            {
+                m_cubes[0].GetVid().resizeSprite( 0, 0, 0 );
+                m_cubes[0].GetVid().resizeSprite( 1, 0, 0 );
+                break;
+            }
             default:
                 break;
         }
@@ -1192,6 +1228,36 @@ void Game::HandleMenu()
         }
         case STATE_PUZZLEMENU:
         {
+            switch( e.item )
+            {
+                //continue
+                case 0:
+                {
+                    m_iLevel = m_iFurthestProgress;
+                    gotoNextPuzzle( false );
+                    break;
+                }
+                //new game
+                case 1:
+                {
+                    m_iLevel = 0;
+                    TransitionToState( STATE_INTRO );
+                    break;
+                }
+                //chapter select
+                case 2:
+                {
+                    TransitionToState( STATE_CHAPTERSELECTMENU );
+                    break;
+                }
+                //back
+                case 3:
+                {
+                    TransitionToState( STATE_MAINMENU );
+                    break;
+                }
+            }
+
             break;
         }
         case STATE_CHAPTERSELECTMENU:
