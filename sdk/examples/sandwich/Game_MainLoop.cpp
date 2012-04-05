@@ -77,8 +77,8 @@ void Game::MainLoop() {
 	          		Vec2(
 	          			128 * (quest->roomId % map.width) + 16 * room.centerX,
 	          			128 * (quest->roomId / map.width) + 16 * room.centerY
-	          			)
-	          		);
+	          		)
+	          	);
 	          	mPlayer.SetStatus(PLAYER_STATUS_IDLE);
 	          	mPlayer.CurrentView()->UpdatePlayer();
 

@@ -104,6 +104,17 @@ class Room:
 				assert obj.pw/16 == 4 and obj.ph/16 == 4, "Switch must be 4x4 tiles: " + self.map.id
 				compute_trigger_event_id(self, obj)
 
+		# bombs
+		self.can_bomb = [ False, False, False, False ]
+		for x,y in product(range(0,8), range(0,8)):
+			if "crack" in self.tileat(x,y).props:
+				# determine side
+				if x == 0 and (y > 2 and y < 7): self.can_bomb[SIDE_LEFT] = True
+				if x == 7 and (y > 2 and y < 7): self.can_bomb[SIDE_RIGHT] = True
+				if (x > 0 and x < 7) and y <  3: self.can_bomb[SIDE_TOP] = True
+				if (x > 0 and x < 7) and y == 7: self.can_bomb[SIDE_BOTTOM] = True
+
+
 	def contains_obj(self, obj):
 		cx = obj.px + obj.pw/2
 		cy = obj.py + obj.ph/2;
