@@ -76,8 +76,5 @@ void EdgeView::Update(float dt) {
 		CORO_YIELD;
 	}
 	mDialog.SetAlpha(255);
-
-
-
 	CORO_END;
 }

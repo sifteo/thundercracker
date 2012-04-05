@@ -1,1 +1,1 @@
-..\..\..\emulator\tc-siftulator.exe -n 3 -T &
+..\..\..\emulator\tc-siftulator.exe -LR -n 3 -T &

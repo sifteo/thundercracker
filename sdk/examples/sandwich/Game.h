@@ -86,6 +86,7 @@ private:
   void OnActiveTrigger();
   void OnInventoryChanged();
   void OnTrapdoor(Room *pRoom);
+  void OnToggleSwitch(const SwitchData* pSwitch);
   void OnPickup(Room *pRoom);
   void OnDropEquipment(Room *pRoom);
   void OnUseEquipment();

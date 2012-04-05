@@ -48,6 +48,7 @@ class World:
 		if len(self.quests.unlockables) > 32:
 			raise Exception("More than 32 unlockable flags (implicit and explicit) in game script")
 		for quest in self.quests.quests:
+			quest.resolve_location()
 			assert quest.map in self.maps.map_dict, "unknown map in gamte sript: " + quest.map
 			assert 0 <= quest.x and 0 <= quest.y and quest.x < self.maps.map_dict[quest.map].width and quest.y < self.maps.map_dict[quest.map].height, "invalid map starting position"
 			assert len(quest.flags) <= 32, "More than 32 flags (implicit and explicit) in quest: " + quest.id

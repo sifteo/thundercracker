@@ -64,6 +64,8 @@ void Room::Clear() {
   mPrimarySlot = 0;
   mSecondarySlot = 0;
   mOverlayIndex = 0xffff;
+  mBomb.canMask = 0;
+  mBomb.didMask = 0;
 }
 
 bool Room::IsShowingBlock(const Sokoblock* pBlock) {

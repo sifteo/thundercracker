@@ -262,8 +262,6 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
     }
     numItems = i;
 
-    DEBUG_LOG(( "kfooterheight is %d\n ", kFooterHeight ));
-
     // calculate the number of tips
     i = 0;
     while(assets->tips[i] != NULL) {
