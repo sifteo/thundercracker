@@ -193,6 +193,10 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
             break;
 
+        case EventID_TouchAndHold:
+            newStateIndex = GameStateIndex_PauseMenu;
+            break;
+
         case EventID_Update:
             {
                 float dt = data.mUpdate.mDT;
@@ -426,12 +430,17 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case GameStateIndex_MainMenu:
+    case GameStateIndex_PauseMenu:
         switch (eventID)
         {
+        case EventID_EnterState:
+            WordGame::instance()->setNeedsPaintSync();
+            break;
+
         case EventID_Update:
             {
                 struct MenuEvent e;
-                Menu &m = *WordGame::getMenu();
+                Menu &m = *WordGame::instance()->getMenu(); // TODO get pause menu
                 m.reset();
                 bool exitMenu = false;
                 while (m.pollEvent(&e) && !exitMenu)
@@ -442,6 +451,11 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         // TODO update game state before continuing, depending on selection
                         newStateIndex = GameStateIndex_PlayScored;
                         exitMenu = true;
+                        {
+                            EventData data;
+                            data.mTouchAndHoldWaitForUntouch.mCubeID = WordGame::instance()->getMenuCube()->id();
+                            WordGame::onEvent(EventID_TouchAndHoldWaitForUntouch, data);
+                        }
                         break;
 
                     case MENU_EXIT:
@@ -451,20 +465,20 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         break;
 
                     case MENU_NEIGHBOR_ADD:
-                        DEBUG_LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
-                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        //DEBUG_LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                          //   e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
                         break;
                     case MENU_NEIGHBOR_REMOVE:
-                        DEBUG_LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
-                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        //DEBUG_LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                          //   e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
                         break;
 
                     case MENU_ITEM_ARRIVE:
-                        DEBUG_LOG(("arriving at menu item %d\n", e.item));
+                        //DEBUG_LOG(("arriving at menu item %d\n", e.item));
                         break;
 
                     case MENU_ITEM_DEPART:
-                        DEBUG_LOG(("departing from menu item %d\n", e.item));
+                        //DEBUG_LOG(("departing from menu item %d\n", e.item));
                         break;
 
                     case MENU_PREPAINT:
@@ -485,9 +499,6 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             }
             break;
         }
-        break;
-
-    case GameStateIndex_PauseMenu:
         break;
 
     case GameStateIndex_CutScene:

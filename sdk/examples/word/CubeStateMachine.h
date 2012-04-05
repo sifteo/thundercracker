@@ -119,6 +119,8 @@ private:
     Cube* mCube;
     float mShakeDelay;
     float mPanning;
+    float mTouchHoldTime;
+    bool mTouchHoldWaitForUntouch;
 };
 
 #endif // CUBESTATEMACHINE_H

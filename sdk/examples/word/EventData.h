@@ -54,7 +54,12 @@ union EventData
     struct
     {
         Cube::ID mCubeID;
-    } mInput; // also tilt
+    } mInput; // also tilt, touch
+
+    struct
+    {
+        Cube::ID mCubeID;
+    } mTouchAndHoldWaitForUntouch;
 
     struct
     {

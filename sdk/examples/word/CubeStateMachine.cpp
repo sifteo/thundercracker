@@ -16,7 +16,9 @@ CubeStateMachine::CubeStateMachine() :
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
         mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0),
-        mShakeDelay(0.f), mPanning(0.f)
+        mShakeDelay(0.f), mPanning(0.f), mTouchHoldTime(0.f),
+        mTouchHoldWaitForUntouch(false)
+
 {
     mLetters[0] = '\0';
     mHintSolution[0] = '\0';
@@ -59,6 +61,20 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         // FIXME only paint if required? does it matter, since the engine
         // checks if anything really needs to update?
         paint();
+        break;
+
+    case EventID_Touch:
+        if (data.mInput.mCubeID == getCube().id() && !mTouchHoldWaitForUntouch)
+        {
+            mTouchHoldTime = 0.f;
+        }
+        break;
+
+    case EventID_TouchAndHoldWaitForUntouch:
+        if (data.mTouchAndHoldWaitForUntouch.mCubeID == getCube().id())
+        {
+            mTouchHoldWaitForUntouch = true;
+        }
         break;
 
     case EventID_Tilt:
@@ -1134,6 +1150,26 @@ void CubeStateMachine::update(float dt)
         }
     }
     updateSpriteParams(dt);
+    bool touching = getCube().touching();
+    if (mTouchHoldWaitForUntouch)
+    {
+        if (!touching)
+        {
+            mTouchHoldWaitForUntouch = false;
+            mTouchHoldTime = -1.f;
+        }
+    }
+    else if (mTouchHoldTime >= 0.f && touching)
+    {
+        mTouchHoldTime += dt;
+        if (mTouchHoldTime >= 0.5f)
+        {
+            EventData data;
+            data.mInput.mCubeID = getCube().id();
+            WordGame::onEvent(EventID_TouchAndHold, data);
+            mTouchHoldWaitForUntouch = true;
+        }
+    }
 
     StateMachine::update(dt);
     if ((int)mBG0Panning != (int)mBG0TargetPanning)

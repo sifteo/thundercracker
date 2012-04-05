@@ -5,15 +5,16 @@
 using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
-Menu* WordGame::sMenu = 0;
 Math::Random WordGame::random;
 
 
-WordGame::WordGame(Cube cubes[], Menu& menu) : mGameStateMachine(cubes), mNeedsPaintSync(false)
+WordGame::WordGame(Cube cubes[], Cube* pMenuCube, Menu& menu) :
+    mGameStateMachine(cubes), mNeedsPaintSync(false)
 {
     STATIC_ASSERT(NumAudioChannelIndexes == 2);// HACK work around API bug
     sInstance = this;
-    sMenu = &menu;
+    mMenu = &menu;
+    mMenuCube = pMenuCube;
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {

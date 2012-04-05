@@ -37,7 +37,7 @@ enum AudioPriority
 class WordGame
 {
 public:
-    WordGame(Cube cubes[], Menu &m);
+    WordGame(Cube cubes[], Cube *pMenuCube, Menu &m);
     void update(float dt);
 
     bool needsPaintSync() const { return mNeedsPaintSync; }
@@ -45,7 +45,8 @@ public:
     void paintSync() { System::paintSync(); mNeedsPaintSync = false; }
 
     static WordGame* instance() { ASSERT(sInstance); return sInstance; }
-    static Menu* getMenu() {ASSERT(sMenu); return sMenu; }
+    Menu* getMenu() { return mMenu; }
+    const Cube* getMenuCube() { return mMenuCube; }
     static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(_SYSAudioModule &mod,
@@ -67,8 +68,9 @@ private:
     AudioChannel mAudioChannels[NumAudioChannelIndexes];
     bool mNeedsPaintSync;
     AudioPriority mLastAudioPriority[NumAudioChannelIndexes];
+    Menu* mMenu;
+    Cube* mMenuCube;
     static WordGame* sInstance;
-    static Menu* sMenu;
 };
 
 #endif // WORDGAME_H

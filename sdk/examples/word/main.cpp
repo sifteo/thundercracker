@@ -22,12 +22,12 @@ static struct MenuAssets gAssets =
 void onCubeEventTouch(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
-/* TODO Touch    EventData data;
+    // TODO TouchAndHold timer
+    EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Touch, data);
-    */
 
-#ifdef DEBUG
+#ifdef DEBUGzz
     DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
     EventData data;
     data.mInput.mCubeID = cid;
@@ -140,10 +140,12 @@ void siftmain()
     System::paintSync();
     for(Cube* p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
     System::paintSync();
-    Menu m(&cubes[0], &gAssets, gItems);      
+
+    Cube *pMenuCube = &cubes[0];
+    Menu m(pMenuCube, &gAssets, gItems);
 
     // main loop
-    WordGame game(cubes, m); // must not be static!
+    WordGame game(cubes, pMenuCube, m); // must not be static!
     // TODO use clockNS, to avoid precision bugs with long play sessions
     float lastTime = System::clock();
     float lastPaint = System::clock();
@@ -484,26 +486,26 @@ void Menu::changeState(MenuState newstate) {
     stateFinished = false;
     currentState = newstate;
 
-    LOG(("STATE: -> "));
+    //DEBUG_LOG(("STATE: -> "));
     switch(currentState) {
         case MENU_STATE_START:
-            LOG(("start\n"));
+            //DEBUG_LOG(("start\n"));
             transToStart();
             break;
         case MENU_STATE_STATIC:
-            LOG(("static\n"));
+            //DEBUG_LOG(("static\n"));
             transToStatic();
             break;
         case MENU_STATE_TILTING:
-            LOG(("tilting\n"));
+            //DEBUG_LOG(("tilting\n"));
             transToTilting();
             break;
         case MENU_STATE_INERTIA:
-            LOG(("inertia\n"));
+            //DEBUG_LOG(("inertia\n"));
             transToInertia();
             break;
         case MENU_STATE_FINISH:
-            LOG(("finish\n"));
+            //DEBUG_LOG(("finish\n"));
             transToFinish();
             break;
     }
@@ -824,33 +826,33 @@ void Menu::transFromFinish() {
  */
 
 void Menu::handleNeighborAdd() {
-    LOG(("Default handler: neighborAdd\n"));
+    //DEBUG_LOG(("Default handler: neighborAdd\n"));
     // TODO: play a sound
 }
 
 void Menu::handleNeighborRemove() {
-    LOG(("Default handler: neighborRemove\n"));
+    //DEBUG_LOG(("Default handler: neighborRemove\n"));
     // TODO: play a sound
 }
 
 void Menu::handleItemArrive() {
-    LOG(("Default handler: itemArrive\n"));
+    //DEBUG_LOG(("Default handler: itemArrive\n"));
     // TODO: play a sound
 }
 
 void Menu::handleItemDepart() {
-    LOG(("Default handler: itemDepart\n"));
+    //DEBUG_LOG(("Default handler: itemDepart\n"));
     // TODO: play a sound
 }
 
 void Menu::handleItemPress() {
-    LOG(("Default handler: itemPress\n"));
+    //DEBUG_LOG(("Default handler: itemPress\n"));
     // animate out icon
     changeState(MENU_STATE_FINISH);
 }
 
 void Menu::handleExit() {
-    LOG(("Default handler: exit\n"));
+    //DEBUG_LOG(("Default handler: exit\n"));
     // nothing
 }
 
