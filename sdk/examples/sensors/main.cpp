@@ -80,7 +80,7 @@ void main()
              * Textual dump of current sensor state
              */
 
-            uint64_t hwid = cube.getHWID();
+            uint64_t hwid = cube.hwID();
             str << "I am cube #" << cube << "\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
@@ -95,17 +95,17 @@ void main()
                 << ", -" << counters.cubes[cube].neighborRemove
                 << "\n\n";
 
-            str << "bat:   " << Hex(cube.getBattery(), 4) << "\n";
+            str << "bat:   " << Hex(cube.batteryLevel(), 4) << "\n";
             str << "touch: " << cube.isTouching() <<
                 " (" << counters.cubes[cube].touch << ")\n";
 
-            auto accel = cube.getAccel();
+            auto accel = cube.accel();
             str << "acc: "
                 << Fixed(accel.x, 3)
                 << Fixed(accel.y, 3)
                 << Fixed(accel.z, 3) << "\n";
 
-            auto tilt = cube.getTilt();
+            auto tilt = cube.tilt();
             str << "tilt:"
                 << Fixed(tilt.x, 3)
                 << Fixed(tilt.y, 3) << "\n";

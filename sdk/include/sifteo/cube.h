@@ -114,7 +114,7 @@ struct CubeID {
     /**
      * Return the physical accelerometer state, as a signed byte-vector.
      */
-    Byte3 getAccel() const {
+    Byte3 accel() const {
         ASSERT(sys < NUM_SLOTS);
         _SYSAccelState state = _SYS_getAccel(*this);
         return Vec3(state.x, state.y, state.z);
@@ -125,7 +125,7 @@ struct CubeID {
      * by a built-in filter. Tilt is a vector, where each component is
      * in the set (-1, 0, +1).
      */
-    Byte2 getTilt() const {
+    Byte2 tilt() const {
         ASSERT(sys < NUM_SLOTS);
         _SYSTiltState tilt = _SYS_getTilt(*this);
         return Vec2(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
@@ -156,7 +156,7 @@ struct CubeID {
      * nearly instantly. However, if the HWID is not yet known, this may block
      * while we wait on a radio round-trip to discover the HWID.
      */
-    uint64_t getHWID() const {
+    uint64_t hwID() const {
         ASSERT(sys < NUM_SLOTS);
         return _SYS_getCubeHWID(*this);
     }
@@ -176,13 +176,15 @@ struct CubeID {
      *
      * XXX: Units are currently TBD.
      */
-    unsigned getBattery() const {
+    unsigned batteryLevel() const {
         ASSERT(sys < NUM_SLOTS);
         return _SYS_getBatteryV(*this);
     }
 
     CubeID operator ++() { return ++sys; }
     CubeID operator ++(int) { return sys++; }
+    CubeID operator --() { return --sys; }
+    CubeID operator --(int) { return sys--; }
 };
 
 

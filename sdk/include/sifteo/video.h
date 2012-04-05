@@ -12,6 +12,7 @@
 #endif
 
 #include <sifteo/abi.h>
+#include <sifteo/cube.h>
 #include <sifteo/video/color.h>
 #include <sifteo/video/sprite.h>
 #include <sifteo/video/framebuffer.h>
@@ -137,8 +138,15 @@ struct VideoBuffer {
      * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer
      * to the CubeID constructor, to easily get a CubeID instance for the
      * current cube that this buffer is attached to.
-     */
+     */
     operator _SYSCubeID () const {
+        return sys.cube;
+    }
+
+    /**
+     * Get the CubeID that this buffer is currently attached to.
+     */
+    CubeID cube() const {
         return sys.cube;
     }
 
@@ -187,7 +195,7 @@ struct VideoBuffer {
      * Retrieve the most recent 'firstLine' value, set with setWindow()
      * or setWindowFirstLine()
      */
-    uint8_t getWindowFirstLine() const {
+    uint8_t windowFirstLine() const {
         return peekb(offsetof(_SYSVideoRAM, first_line));
     }
 
@@ -195,7 +203,7 @@ struct VideoBuffer {
      * Retrieve the most recent 'numLines' value, set with setWindow()
      * or setWindowNumLines()
      */
-    uint8_t getWindowNumLines() const {
+    uint8_t windowNumLines() const {
         return peekb(offsetof(_SYSVideoRAM, num_lines));
     }
 
@@ -213,10 +221,24 @@ struct VideoBuffer {
     /**
      * Look up the last display rotation set by setRotation().
      */
-    Rotation getRotation() const {
+    Rotation rotation() const {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
         return Rotation(mask & flags);
+    }
+
+    /**
+     * Map the LCD rotation mask to screen orientation.  This is the side
+     * which maps to the physical "top" of the screen.
+     */    
+    Side orientation() const {
+        switch (rotation()) {
+            case ROT_NORMAL:    return TOP;
+            case ROT_LEFT_90:   return LEFT;
+            case ROT_180:       return BOTTOM;
+            case ROT_RIGHT_90:  return RIGHT;
+            default:            return NO_SIDE;
+        }
     }
 
     /**
@@ -233,7 +255,7 @@ struct VideoBuffer {
     /**
      * Retrieve the last video mode set by setMode()
      */
-    VideoMode getMode() const {
+    VideoMode mode() const {
         return VideoMode(peekb(offsetof(_SYSVideoRAM, mode)));
     }
     
