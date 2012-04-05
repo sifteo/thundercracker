@@ -49,14 +49,6 @@ struct BG0ROMDrawable {
     };
 
     /**
-     * Color modes, XOR'ed with the tile IDs below.
-     */
-    enum ColorMode {
-        TWO_COLOR   = 0 << 9,
-        FOUR_COLOR  = 1 << 9,
-    };
-
-    /**
      * Well-known tile numbers.
      *
      * XXX: The ROM artwork is not currently finalized. These tiles may change.
@@ -66,6 +58,14 @@ struct BG0ROMDrawable {
         SOLID_BG    = 0,        // Solid background-colored tile (space)
         SOLID_FG    = 0x1fe,    // Solid foreground-colored tile
         BARGRAPH    = 0x060,    // First tile in the horizontal bargraph series
+    };
+
+    /**
+     * Color modes, XOR'ed with the tile IDs below.
+     */
+    enum ColorMode {
+        TWO_COLOR   = 0 << 9,
+        FOUR_COLOR  = 1 << 9,
     };
 
     /**
