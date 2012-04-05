@@ -25,6 +25,8 @@ _SYSCubeIDVector CubeSlots::hwidValid = 0;
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
+_SYSAssetLoader *CubeSlots::assetLoader = 0;
+
 
 void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {

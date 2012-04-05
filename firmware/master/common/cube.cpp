@@ -55,36 +55,57 @@ static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
 
 
-#ifndef DISABLE_CUBE
-
-
-void CubeSlot::loadAssets(_SYSAssetGroup *a)
+void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 {
-    _SYSAssetGroupCube *ac = assetCube(a);
+    /*
+     * Trigger the beginning of an asset group installation for this cube.
+     * There must be a SYSAssetLoader currently set.
+     */
 
-    if (!ac)
+    // Translate and verify addresses
+    SvmMemory::PhysAddr groupPA;
+    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
         return;
-    if (isAssetGroupLoaded(a))
+    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+    _SYSAssetLoader *L = CubeSlots::assetLoader;
+    if (!L) return;
+    _SYSAssetLoaderCube *LC = assetLoaderCube(L);
+    if (!LC) return;
+    _SYSAssetGroupCube *GC = assetGroupCube(G);
+    if (!GC) return;
+
+    // Read (cached) asset group header. Must be valid.
+    const _SYSAssetGroupHeader *headerVA =
+        reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
+    _SYSAssetGroupHeader header;
+    if (!SvmMemory::copyROData(header, headerVA))
         return;
-    
-    // XXX: Pick a base address too!
-    ac->progress = 0;
+
+    // Initialize state
+    Atomic::ClearLZ(L->complete, id());
+    GC->baseAddr = baseAddr;
+    LC->pAssetGroup = groupVA;
+    LC->progress = 0;
+    LC->dataSize = header.dataSize;
+    LC->reserved = 0;
+    LC->head = 0;
+    LC->tail = 0;
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebugPipe::formatAddress(a).c_str(), ac->baseAddr));
+        id(), SvmDebugPipe::formatAddress(G).c_str(), baseAddr));
 
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
         assetLoadTimestamp = SysTime::ticks();
     });
 
-    // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
+    // Start by resetting the flash decoder.
     requestFlashReset();
-    Atomic::Or(CubeSlots::flashAddrPending, bit());
+    Atomic::SetLZ(CubeSlots::flashAddrPending, id());
 
-    // Then start streaming asset data for this group
-    a->reqCubes |= bit();
-    loadGroup = a;
+    // Only _after_ triggering the reset, start the actual download
+    // by marking cubeVec as valid.
+    Atomic::SetLZ(L->cubeVec, id());
 }
 
 void CubeSlot::requestFlashReset()
@@ -156,29 +177,34 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     } else {
         // Not waiting on a reset. See if we need to send asset data.
+        // Since we can't read external flash pages in our ISR, we're
+        // restricted to accessing user RAM only. So, we send data from
+        // a small user-ram buffer, and use a Task to refill that buffer.
 
-        _SYSAssetGroup *group = loadGroup;
-        if (group && !(group->doneCubes & bit()) && FlashBlock::TERRIHACK == 0) {
+        _SYSAssetLoader *L = CubeSlots::assetLoader;
+        if (isAssetLoading(L)) {
+            _SYSAssetLoaderCube *LC = assetLoaderCube(L);
+            if (LC) {
+                bool done = false;
+                bool escape = codec.flashSend(tx.packet, LC, id(), done);
 
-            bool done = false;
-            bool escape = codec.flashSend(tx.packet, group, assetCube(group), bit(), done);
+                if (done) {
+                    /* Finished sending the group, and the cube finished writing it. */
+                    Atomic::SetLZ(L->complete, id());
+                    Event::setPending(_SYS_CUBE_ASSETDONE, id());
 
-            if (done ) {
-                /* Finished sending the group, and the cube finished writing it. */
-                Atomic::SetLZ(group->doneCubes, id());
-                Event::setPending(_SYS_CUBE_ASSETDONE, id());
+                    DEBUG_ONLY({
+                        // In debug builds only, we log the asset download time
+                        float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                        LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
+                             id(), SvmDebugPipe::formatAddress(LC->pAssetGroup).c_str(), seconds));
+                    });
+                }
 
-                DEBUG_ONLY({
-                    // In debug builds only, we log the asset download time
-                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                    LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                         id(), SvmDebugPipe::formatAddress(group).c_str(), seconds));
-                });
+                // We can't put anything else in this packet if an escape was written
+                if (escape)
+                    return true;
             }
-
-            // We can't put anything else in this packet if an escape was written
-            if (escape)
-                return true;
         }
     }
 
@@ -456,8 +482,6 @@ void CubeSlot::waitForFinish()
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
-    _SYSAssetGroup *group = loadGroup;
-        
     if (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
         int32_t pending = Atomic::Load(pendingFrames);
@@ -501,7 +525,7 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
          * graphics as fast as possible.
          */
 
-        if (group && !(group->doneCubes & bit())) {
+        if (isAssetLoading()) {
             flags &= ~_SYS_VF_CONTINUOUS;
         } else {
             if (newPending >= fpContinuous)
@@ -566,7 +590,7 @@ uint64_t CubeSlot::getHWID()
 
         // If no assets are loading / have loaded, send our own reset.
         // (We don't want to stomp on an ongoing asset download!)
-        if (!loadGroup)
+        if (!isAssetLoading())
             requestFlashReset();
 
         do {
@@ -579,5 +603,3 @@ uint64_t CubeSlot::getHWID()
     memcpy(&result, hwid, sizeof hwid);
     return result;
 }
-
-#endif // DISABLE_CUBE

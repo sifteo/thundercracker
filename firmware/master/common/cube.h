@@ -12,13 +12,7 @@
 #include "svmmemory.h"
 #include "cubeslots.h"
 #include "systime.h"
-
-#ifndef USE_MOCK_CUBE_CODEC
-  #include "cubecodec.h"
-#else
-  #include "mockcubecodec.h"
-  #define CubeCodec MockCubeCodec
-#endif
+#include "cubecodec.h"
 
 
 /**
@@ -75,14 +69,6 @@ class CubeSlot {
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
-    
-    bool isAssetGroupLoaded(_SYSAssetGroup *a) {
-        return !!(bit() & a->doneCubes);
-    }
-
-    _SYSAssetGroup *getLastAssetGroup(void) const {
-        return loadGroup;
-    }
 
     void getAccelState(struct _SYSAccelState *state) {
         *state = accelState;
@@ -93,22 +79,35 @@ class CubeSlot {
     }
 
     bool isTouching() const;
-    
-    _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
-        /*
-         * Safely return this cube's per-cube data on a particular
-         * asset group.  If the user-pointer check fails, returns
-         * NULL.
-         */
-        _SYSCubeID i = id();
-        _SYSAssetGroupCube *cubes = reinterpret_cast<_SYSAssetGroupCube*>(group->pCubes);
 
-        if (SvmMemory::mapRAM(cubes, (sizeof cubes[0]) * (i + 1)))
-            return &cubes[i];
-        return 0;
+    _SYSAssetGroupCube *assetGroupCube(struct _SYSAssetGroup *group) {
+        _SYSAssetGroupCube *cube = reinterpret_cast<_SYSAssetGroupCube*>(group + 1) + id();
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            return cube;
+        else
+            return 0;
     }
 
-    void loadAssets(_SYSAssetGroup *a);
+    _SYSAssetLoaderCube *assetLoaderCube(struct _SYSAssetLoader *loader) {
+        _SYSAssetLoaderCube *cube = reinterpret_cast<_SYSAssetLoaderCube*>(loader + 1) + id();
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            return cube;
+        else
+            return 0;
+    }
+
+    bool isAssetLoading(_SYSAssetLoader *L) const {
+        // Caller-provided SYSAssetLoader, to support cases when we
+        // must read "assetLoader" exactly once.
+        return L && (L->cubeVec & ~L->complete & bit());
+    }
+
+    bool isAssetLoading() const {
+        return isAssetLoading(CubeSlots::assetLoader);
+    }
+
+    void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
+
     void waitForPaint();
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
@@ -139,15 +138,8 @@ class CubeSlot {
      * pointer is guaranteed to remain valid until it's set to NULL or
      * to a different pointer, which can happen only outside of IRQ
      * context.
-     *
-     * The loadGroup pointer can be set only in non-IRQ context, and
-     * only by application code. It represents the current group we're
-     * downloading, or the last group that was sent. The 'loadGroup'
-     * pointer is not automatically NULL'ed after we finish loading the
-     * group, since it's used for event dispatch purposes as well.
      */
 
-    _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
     RadioAddress address;
     

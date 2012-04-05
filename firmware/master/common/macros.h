@@ -88,4 +88,16 @@ template <typename T> inline T abs(const T& value)
     return value;
 }
 
+/**
+ * Compute the unsigned remainder from dividing two signed integers.
+ */
+unsigned inline umod(int a, int b)
+{
+    int r = a % b;
+    if (r < 0)
+        r += b;
+    return r;
+}
+
+
 #endif

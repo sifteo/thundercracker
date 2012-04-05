@@ -357,26 +357,34 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     return true;
 }
 
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-    _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit, bool &done)
+bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done)
 {
     /*
-     * Since we're dealing with asset group pointers as well as
-     * per-cube state that reside in untrusted memory, this code
-     * has to be carefully written to read each user value exactly
+     * Since we're dealing with asset loader state in untrusted memory,
+     * this code has to be carefully written to read each user value exactly
      * once, and check it before use.
      *
-     * We only do this if we have asset data, obviously, but also
+     * We only send if we have asset data buffered, obviously, but also
      * if the cube has enough buffer space to accept it, and if
      * there's enough room in the packet for both the escape code
      * and at least one byte of flash data.
      *
-     * After this initial check, any further checks exist only as
-     * protection against buggy or malicious user code.
+     * This function MUST NOT access flash memory or the cache, since it's
+     * running in interrupt context. All of our state must come from the
+     * _SYSAssetLoaderCube object in RAM.
      *
      * Returns 'true' if and only if we sent a flashEscape.
      * Sets 'done' to 'true' if and only if the assset group is fully written.
      */
+
+    ASSERT(lc);
+
+    // Sample the FIFO state exactly once, and validate it.
+    int head = lc->head;
+    int tail = lc->tail;
+    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
+        return false;
+    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
 
     /*
      * We have a state bit in CubeSlots to keep track of whether we
@@ -385,7 +393,24 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      * part of the loadstream that we send over the radio, but they're
      * created dynamically rather than coming straight from flash.
      */
-     bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+    _SYSCubeIDVector cubeBit = Intrinsic::LZ(cube);
+    bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+
+    /*
+     * If and only if we may need to send an address, prepare that address.
+     * It's in user RAM, so this mapping may fail.
+     */
+    uint16_t baseAddr = 0;
+    if (flashAddrPending) {
+        SvmMemory::PhysAddr groupCubePA;
+        SvmMemory::VirtAddr groupCubeVA =
+            lc->pAssetGroup + sizeof(_SYSAssetGroup) + sizeof(_SYSAssetGroupCube) * cube;
+        
+        if (!SvmMemory::mapRAM(groupCubeVA, sizeof(_SYSAssetGroupCube), groupCubePA))
+            return false;
+
+        baseAddr = reinterpret_cast<_SYSAssetGroupCube*>(groupCubePA)->baseAddr;
+    }
 
     /*
      * How much space do we need? The minimum unit of asset data is
@@ -403,24 +428,23 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     if (loadBufferAvail < dataSizeInBytes)
         return false;
 
-    // Per-cube asset state pointer is invalid?
-    if (!ac)
-        return false;
-
-    // Read (cached) asset group header. Must be valid.
-    const _SYSAssetGroupHeader *headerVA =
-        reinterpret_cast<const _SYSAssetGroupHeader*>(group->pHdr);
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, headerVA))
-        return false;
-
-    // Read 'progress' from untrusted memory only once, and validate it.
-    uint32_t progress = ac->progress;
-    if (progress >= header.dataSize) {
+    // Read 'progress' from untrusted memory only once. See if we're done.
+    uint32_t progress = lc->progress;
+    uint32_t dataSize = lc->dataSize;
+    if (progress >= dataSize) {
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
         return false;
     }
+
+    /*
+     * If we don't need to send the address, make sure we at least have one
+     * byte of data in the FIFO to send. Must happen after the done-ness
+     * check above.
+     */
+
+    if (!flashAddrPending && fifoCount == 0)
+        return false;
 
     /*
      * The escape command indicates that the entire remainder of 'buf' is
@@ -440,13 +464,12 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      */
 
     if (flashAddrPending) {
-        uint16_t addr = ac->baseAddr;
         ASSERT(buf.bytesFree() >= 3);
 
         // Opcode, lat1, lat2
         buf.append(0xe1);
-        buf.append(addr << 1);
-        buf.append((addr >> 6) & 0xfe);
+        buf.append(baseAddr << 1);
+        buf.append((baseAddr >> 6) & 0xfe);
 
         Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
         ASSERT(count >= 3);
@@ -458,43 +481,26 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     }
 
     /*
-     * We access flash data through the cache, instead of FlashStream, for
-     * important reasons. Even though it may seem like asset loading is
-     * a purely streaming operation, it actually isn't:
-     *
-     *   - When loading to multiple cubes concurrently, the same data is often
-     *     reused, and the cache can in fact cut down bus traffic quite a bit.
-     *
-     *   - We consume loadstream data in potentially very tiny chunks, which
-     *     would come with significant overhead if we made separate SPI
-     *     bus transactions out of each. By utilizing the block cache, we can
-     *     amortize this cost over many packets.
+     * Stream flash data, as it becomes available from the FIFO
      */
 
-    FlashBlockRef ref;
-    SvmMemory::VirtAddr dataVA = reinterpret_cast<SvmMemory::VirtAddr>(headerVA);
-    dataVA += header.hdrSize;
-    dataVA += progress;
-
-    count = MIN(count, header.dataSize - progress);
-    progress += count;
+    count = MIN(count, fifoCount);
+    ASSERT(count > 0);
     ASSERT(loadBufferAvail >= count);
+    progress += count;
     loadBufferAvail -= count;
 
-    while (count) {
-        SvmMemory::PhysAddr dataPA;
-        uint32_t chunk = count;
-        if (!SvmMemory::mapROData(ref, dataVA, chunk, dataPA))
-            return false;
-
-        buf.append(dataPA, chunk);
-        count -= chunk;
-        dataVA += chunk;
+    while (count--) {
+        buf.append(lc->buf[head++]);
+        if (head == _SYS_ASSETLOAD_BUF_SIZE)
+            head = 0;
     }
 
-    ac->progress = progress;
-    ASSERT(progress <= header.dataSize);
-    if (progress >= header.dataSize && loadBufferAvail == FLS_FIFO_USABLE)
+    // Update progress, and maybe complete loading.
+    lc->head = head;
+    lc->progress = progress;
+    ASSERT(progress <= dataSize);
+    if (progress >= dataSize && loadBufferAvail == FLS_FIFO_USABLE)
         done = true;
 
     return true;

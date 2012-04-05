@@ -52,7 +52,7 @@ typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset 
 void main(void);
 #endif
 
-#define _SYS_ASSETLOAD_BUF_SIZE  52   // Makes _SYSAssetLoaderCube come to 64 bytes
+#define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
 struct _SYSAssetGroupHeader {
     uint8_t hdrSize;            /// OUT    Size of header / offset to compressed data
@@ -72,9 +72,10 @@ struct _SYSAssetGroup {
 };
 
 struct _SYSAssetLoaderCube {
-    uint32_t pAssetGroup;   /// OUT   Address for _SYSAssetGroup in RAM
+    uint32_t pAssetGroup;   /// IN    Address for _SYSAssetGroup in RAM
     uint32_t progress;      /// IN    Number of compressed bytes sent
-    uint16_t state;         /// -     Internal state of loader
+    uint32_t dataSize;      /// IN    Local copy of asset group's dataSize
+    uint16_t reserved;      /// -
     uint8_t head;           /// -     Index of the next sample to read
     uint8_t tail;           /// -     Index of the next empty slot to write into
     uint8_t buf[_SYS_ASSETLOAD_BUF_SIZE];

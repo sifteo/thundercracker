@@ -37,12 +37,6 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
         CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
-void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
-{
-    if (SvmMemory::mapRAM(group, sizeof *group) && CubeSlots::validID(cid))
-        CubeSlots::instances[cid].loadAssets(group);
-}
-
 struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
 {
     struct _SYSAccelState r = { 0, 0, 0 };

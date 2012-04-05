@@ -18,7 +18,7 @@ uint8_t FlashBlock::mem[NUM_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
 FlashBlock FlashBlock::instances[NUM_BLOCKS];
 uint32_t FlashBlock::referencedBlocksMap;
 uint32_t FlashBlock::latestStamp;
-unsigned FlashBlock::TERRIHACK;
+
 
 void FlashBlock::init()
 {
@@ -31,9 +31,6 @@ void FlashBlock::init()
 void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 {
     ASSERT((blockAddr & BLOCK_MASK) == 0);
-
-    TERRIHACK++;
-    Atomic::Barrier();
 
     if (ref.isHeld() && ref->address == blockAddr) {
         // Cache layer 1: Repeated access to the same block. Keep existing ref.
@@ -59,9 +56,6 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
     
     // Update this block's access stamp (See recycleBlock)
     ref->stamp = ++latestStamp;
-
-    Atomic::Barrier();
-    TERRIHACK--;
 
 #ifdef SIFTEO_SIMULATOR
     if (gFlashStats.enabled && ++gFlashStats.blockTotal >= 1000) {
