@@ -36,19 +36,6 @@ void UsbCore::reset()
     UsbDevice::handleReset();
 }
 
-void UsbCore::setAddress(uint16_t addr)
-{
-    address = addr;
-    UsbHardware::setAddress(addr);
-}
-
-void UsbCore::setConfig(uint16_t cfg)
-{
-    _config = cfg;
-}
-
-
-
 int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     switch (req->wValue >> 8) {
@@ -120,156 +107,101 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
     return 0;
 }
 
-int UsbCore::setAddress(SetupData *req)
-{
-    // The actual address is only latched at the STATUS IN stage
-    if ((req->bmRequestType != 0) || (req->wValue >= 128))
-        return 0;
-
-    UsbCore::setAddress(req->wValue);
-
-    return 1;
-}
-
-int UsbCore::setConfiguration(SetupData *req)
-{
-    /* Is this correct, or should we reset alternate settings. */
-    if (req->wValue == _config)
-        return 1;
-
-    UsbCore::setConfig(req->wValue);
-    UsbHardware::epReset();
-    UsbDevice::onConfigComplete(req->wValue);
-
-    return 1;
-}
-
-int UsbCore::getConfiguration(uint8_t **buf, uint16_t *len)
-{
-    if (*len > 1)
-        *len = 1;
-    (*buf)[0] = _config;
-
-    return 1;
-}
-
-int UsbCore::setInterface(SetupData *req, uint16_t *len)
-{
-    /* FIXME: Adapt if we have more than one interface. */
-    if (req->wValue != 0)
-        return 0;
-    *len = 0;
-
-    return 1;
-}
-
-int UsbCore::getInterface(uint8_t **buf, uint16_t *len)
-{
-    /* FIXME: Adapt if we have more than one interface. */
-    *len = 1;
-    (*buf)[0] = 0;
-
-    return 1;
-}
-
-int UsbCore::getDeviceStatus(uint8_t **buf, uint16_t *len)
-{
-    // bit 0: self powered
-    // bit 1: remote wakeup
-    if (*len > 2)
-        *len = 2;
-    (*buf)[0] = 0;
-    (*buf)[1] = 0;
-
-    return 1;
-}
-
-int UsbCore::getInterfaceStatus(uint8_t **buf, uint16_t *len)
-{
-    // not defined
-    if (*len > 2)
-        *len = 2;
-    (*buf)[0] = 0;
-    (*buf)[1] = 0;
-
-    return 1;
-}
-
-int UsbCore::getEndpointStatus(SetupData *req, uint8_t **buf, uint16_t *len)
-{
-    if (*len > 2)
-        *len = 2;
-    (*buf)[0] = UsbHardware::epIsStalled(req->wIndex) ? 1 : 0;
-    (*buf)[1] = 0;
-
-    return 1;
-}
-
 int UsbCore::standardDeviceRequest(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     switch (req->bRequest) {
     case RequestSetAddress:
-        /*
-         * SET ADDRESS is an exception.
-         * It is only processed at STATUS stage.
-         */
-        return setAddress(req);
+        // The actual address is only latched at the STATUS IN stage
+        if ((req->bmRequestType != 0) || (req->wValue >= 128))
+            return 0;
+
+        address = req->wValue;
+        UsbHardware::setAddress(address);
+        return 1;
 
     case RequestSetConfiguration:
-        return setConfiguration(req);
+        if (req->wValue == _config)
+            return 1;
+
+        _config = req->wValue;
+        UsbHardware::reset();
+        UsbDevice::onConfigComplete(_config);
+        return 1;
 
     case RequestGetConfiguration:
-        return getConfiguration(buf, len);
+        *len = 1;
+        (*buf)[0] = _config;
+        return 1;
 
     case RequestGetDescriptor:
         return getDescriptor(req, buf, len);
 
     case RequestGetStatus:
-        /*
-         * GET_STATUS always responds with zero reply.
-         * The application may override this behaviour.
-         */
-        return getDeviceStatus(buf, len);
+        *len = 2;
+        (*buf)[0] = 0;  // bit 0: self powered
+        (*buf)[1] = 0;  // bit 1: remote wakeup
+        return 1;
     }
 
     return 0;
 }
 
+/*
+ * Standard requests destined for an interface.
+ * We only support a single interface at the moment, assuming interface 0.
+ */
 int UsbCore::standardInterfaceRequest(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     switch (req->bRequest) {
     case RequestGetInterface:
-        return getInterface(buf, len);
+        *len = 1;
+        (*buf)[0] = 0;          // TODO: support additional interfaces if needed
+        return 1;
 
     case RequestSetInterface:
-        return setInterface(req, len);
+        if (req->wValue != 0)   // TODO: additional interfaces here as well
+            return 0;
+        *len = 0;
+        return 1;
 
     case RequestGetStatus:
-        return getInterfaceStatus(buf, len);
+        *len = 2;
+        (*buf)[0] = 0;
+        (*buf)[1] = 0;
+        return 1;
     }
 
-    return 0;
+    return 0;   // unhandled
 }
 
+/*
+ * Standard requests targeted at a specific endpoint.
+ * For now, we're mainly handling stall status.
+ */
 int UsbCore::standardEndpointRequest(SetupData *req, uint8_t **buf, uint16_t *len)
 {
+    uint8_t ep = req->wIndex;
     switch (req->bRequest) {
     case RequestClearFeature:
         if (req->wValue == FeatureEndpointHalt) {
-            UsbHardware::epSetStalled(req->wIndex, false);
+            UsbHardware::epSetStalled(ep, false);
             return 1;
         }
         break;
 
     case RequestSetFeature:
         if (req->wValue == FeatureEndpointHalt) {
-            UsbHardware::epSetStalled(req->wIndex, true);
+            UsbHardware::epSetStalled(ep, true);
             return 1;
         }
         break;
 
     case RequestGetStatus:
-        return getEndpointStatus(req, buf, len);
+        *len = 2;
+        (*buf)[0] = UsbHardware::epIsStalled(ep) ? 1 : 0;
+        (*buf)[1] = 0;
+
+        return 1;
     }
 
     return 0;
