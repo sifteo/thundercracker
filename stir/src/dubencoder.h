@@ -59,17 +59,18 @@ private:
     unsigned mWidth, mHeight, mFrames;
     bool mIndex16;
 
-    std::vector<uint16_t> blockResult;
-    std::vector<uint16_t> indexResult;
+    std::vector<uint16_t> blockResult;  // Compressed block data
+    std::vector<uint16_t> indexResult;  // Word number, starting at blockResult[0]
 
     void encodeBlock(uint16_t *pTopLeft, unsigned width, unsigned height,
         std::vector<uint16_t> &blockData);
     Code findBestCode(const std::vector<uint16_t> &dict, uint16_t tile);
 
     unsigned getIndexSize() const;
-    void debugCode(Code code);
-    void packCode(Code code, BitBuffer &bits);
-    unsigned codeLen(Code code);
+    void debugCode(Code code) const;
+    void packCode(Code code, BitBuffer &bits) const ;
+    unsigned codeLen(Code code) const;
+    unsigned packIndex(unsigned i) const;
 };
 
 

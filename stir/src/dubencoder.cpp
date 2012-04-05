@@ -56,9 +56,8 @@ void DUBEncoder::encodeTiles(std::vector<uint16_t> &tiles)
     // we'll use a 16-bit index.
 
     mIndex16 = false;
-    unsigned indexSize8 = getIndexSize();
     for (unsigned I = 0, E = indexResult.size(); I != E; ++I) {
-        if (indexResult[I] + indexSize8 >= 0x100) {
+        if (packIndex(I) >= 0x100) {
             mIndex16 = true;
             break;
         }
@@ -70,6 +69,15 @@ unsigned DUBEncoder::getNumBlocks() const
     return ((mWidth + BLOCK_SIZE - 1) / BLOCK_SIZE) *
            ((mHeight + BLOCK_SIZE - 1) / BLOCK_SIZE) *
            mFrames;
+}
+
+unsigned DUBEncoder::packIndex(unsigned i) const
+{
+    // Index stores a word offset from the _next_ word after the
+    // current one in the index.
+
+    unsigned nextWord = mIndex16 ? (i + 1) : (i + 2)/2;
+    return getIndexSize() + indexResult[i] - nextWord;
 }
 
 unsigned DUBEncoder::getIndexSize() const
@@ -95,16 +103,14 @@ void DUBEncoder::getResult(std::vector<uint16_t> &result) const
 {
     // Relocate and pack the index
 
-    unsigned base = getIndexSize();
-
     if (mIndex16) {
         for (unsigned I = 0, E = indexResult.size(); I != E; ++I)
-            result.push_back(indexResult[I] + base);
+            result.push_back(packIndex(I));
 
     } else {
         std::vector<uint8_t> index8;
         for (unsigned I = 0, E = indexResult.size(); I != E; ++I)
-            index8.push_back(indexResult[I] + base);
+            index8.push_back(packIndex(I));
         if (index8.size() & 1)
             index8.push_back(0);
 
@@ -198,7 +204,7 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
     bits.flush(data, true);
 }
 
-void DUBEncoder::debugCode(DUBEncoder::Code c)
+void DUBEncoder::debugCode(DUBEncoder::Code c) const
 {
 #if 0
     printf("{%d,%d}\n", c.type, c.value);
@@ -248,7 +254,7 @@ DUBEncoder::Code DUBEncoder::findBestCode(const std::vector<uint16_t> &dict, uin
     return code;
 }
 
-void DUBEncoder::packCode(Code code, BitBuffer &bits)
+void DUBEncoder::packCode(Code code, BitBuffer &bits) const
 {
     // Experimentally determined sweet-spot
     const unsigned chunk = 3;
@@ -285,7 +291,7 @@ void DUBEncoder::packCode(Code code, BitBuffer &bits)
     }
 }
 
-unsigned DUBEncoder::codeLen(Code code)
+unsigned DUBEncoder::codeLen(Code code) const
 {
     BitBuffer bits;
     packCode(code, bits);
