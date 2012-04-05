@@ -1,10 +1,12 @@
 MASTER_DIR = $(TC_DIR)/firmware/master
 
 OBJS_COMMON = \
+	$(MASTER_DIR)/common/syscall_asset.o \
 	$(MASTER_DIR)/common/syscall_audio.o \
 	$(MASTER_DIR)/common/syscall_cube.o \
 	$(MASTER_DIR)/common/syscall_float.o \
 	$(MASTER_DIR)/common/syscall_integer.o \
+	$(MASTER_DIR)/common/syscall_image.o \
 	$(MASTER_DIR)/common/syscall_runtime.o \
 	$(MASTER_DIR)/common/syscall_string.o \
 	$(MASTER_DIR)/common/syscall_video.o \

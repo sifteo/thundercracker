@@ -44,6 +44,70 @@ static void logTitleInfo(Elf::ProgramInfo &pInfo)
 #endif
 }
 
+static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
+{
+    /*
+     * XXX: BIG HACK.
+     *
+     * Temporary code to load the bootstrap assets specified
+     * in a game's metadata. Normally this would be handled by
+     * the system menu.
+     */
+
+    // XXX: Also a hack.. installing on cube 0 only.
+    _SYSCubeIDVector cubes = Intrinsic::LZ(0);
+
+    FlashBlockRef ref;
+    uint32_t actualSize;
+    _SYSMetadataBootAsset *vec = (_SYSMetadataBootAsset*)
+        pInfo.meta.get(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
+    if (!vec) return;
+    unsigned count = actualSize / sizeof *vec;
+
+    for (unsigned i = 0; i < count; i++) {
+        _SYSMetadataBootAsset &BA = vec[i];
+
+        // Allocate some things in user RAM.
+        const SvmMemory::VirtAddr loaderVA = 0x10000;
+        const SvmMemory::VirtAddr groupVA = 0x11000;
+
+        SvmMemory::PhysAddr loaderPA;
+        SvmMemory::PhysAddr groupPA;
+        SvmMemory::mapRAM(loaderVA, 1, loaderPA);
+        SvmMemory::mapRAM(groupVA, 1, groupPA);
+
+        _SYSAssetLoader *loader = reinterpret_cast<_SYSAssetLoader*>(loaderPA);
+        _SYSAssetGroup *group = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+
+        loader->cubeVec = 0;
+        group->pHdr = BA.pHdr;
+
+        if (_SYS_asset_findInCache(group)) {
+            LOG(("SVM: Bootstrap asset group %s already installed\n",
+                SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
+            continue;
+        }
+
+        LOG(("SVM: Installing bootstrap asset group %s in slot %d\n",
+            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot));
+
+        if (!_SYS_asset_loadStart(loader, group, BA.slot, cubes)) {
+            // Out of space. Erase the slot first.
+            LOG(("SVM: Erasing asset slot\n"));
+            _SYS_asset_slotErase(BA.slot);
+            _SYS_asset_loadStart(loader, group, BA.slot, cubes);
+        }
+
+        while ((loader->complete & cubes) != cubes)
+            _SYS_yield();
+
+        _SYS_asset_loadFinish(loader);
+
+        LOG(("SVM: Finished instaling bootstrap asset group %s\n",
+            SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
+    }
+}
+
 void SvmRuntime::run(uint16_t appId)
 {
     // TODO: look this up via appId
@@ -55,10 +119,13 @@ void SvmRuntime::run(uint16_t appId)
 
     // On simulator builds, log some info about the program we're running
     logTitleInfo(pInfo);
-    
+
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
     SvmDebugPipe::setSymbolSourceELF(elf);
+
+    // Asset setup
+    xxxBootstrapAssets(pInfo);
 
     // Initialize rodata segment
     SvmMemory::setFlashSegment(pInfo.rodata.data);

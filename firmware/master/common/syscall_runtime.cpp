@@ -20,7 +20,14 @@
 
 extern "C" {
 
-void _SYS_abort() {
+uint32_t _SYS_getFeatures()
+{
+    // Reserved for future use. There are no feature bits yet.
+    return 0;
+}
+
+void _SYS_abort()
+{
     SvmRuntime::fault(Svm::F_ABORT);
 }
 
