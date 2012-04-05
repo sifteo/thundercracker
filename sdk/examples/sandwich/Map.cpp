@@ -7,11 +7,11 @@ void Map::Init() {
 
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
-    LOG(("MAP!\n"));
+    
     mData = &map; 
-    // triggers
+
     RefreshTriggers();
-    // sokoblocks
+    
     mBlockCount = 0;
     if (map.sokoblocks) {
       for (const SokoblockData* p=map.sokoblocks; p->x; ++p) {
@@ -21,9 +21,21 @@ void Map::SetData(const MapData& map) {
       ASSERT(mBlockCount <= BLOCK_CAPACITY);
     }
 
+    if (mData->trapdoors) {
+      for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
+        mRooms[p->roomId].SetTrapdoor(p);
+      }
+    }
+
     if (map.depots) {
-      for(const DepotData* p=map.depots; p->roomId != 0xff; ++p) {
-        mRooms[p->roomId].SetDepot(p);
+      for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
+        mRooms[p->room].SetDepot(p);
+      }
+    }
+
+    if (map.switches) {
+      for(const SwitchData* p=map.switches; p->room != 0xff; ++p) {
+        mRooms[p->room].SetSwitch(p);
       }
     }
 
@@ -58,12 +70,6 @@ void Map::RefreshTriggers() {
       if (gGame.GetState()->IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
       }
-    }
-  }
-  
-  if (mData->trapdoors) {
-    for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
-      mRooms[p->roomId].SetTrapdoor(p);
     }
   }
   

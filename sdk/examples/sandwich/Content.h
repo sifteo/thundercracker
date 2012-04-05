@@ -8,8 +8,6 @@ using namespace Sifteo;
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
 #define TRIGGER_DOOR        4
-#define TRIGGER_TYPE_COUNT  5
-// MAX COUNT = 16
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
@@ -25,11 +23,16 @@ using namespace Sifteo;
 #define ITEM_TRIGGER_BOOT   1
 #define ITEM_TRIGGER_BOMB   2
 
+#define TARGET_TYPE_GATEWAY 0
+#define TARGET_TYPE_ROOM    1
+
 #define EVENT_NONE                          0
 #define EVENT_ADVANCE_QUEST_AND_REFRESH     1
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
-#define EVENT_REMOTE_TRIGGER                3
-#define EVENT_OPEN_DOOR                     4
+#define EVENT_OPEN_DOOR                     3
+
+#define BOMBABLE_ORIENTATION_HORIZONTAL 0
+#define BOMBABLE_ORIENTATION_VERTICAL   1
 
 struct QuestData {
     uint8_t mapId;
@@ -75,7 +78,8 @@ struct ItemData {
 struct GatewayData {
     TriggerData trigger;
     uint8_t targetMap;
-    uint8_t targetGate;
+    uint8_t targetType : 1;
+    uint8_t targetId : 7;
     uint8_t x;
     uint8_t y;
 };
@@ -100,8 +104,23 @@ struct TrapdoorData {
 };
 
 struct DepotData {
-    uint8_t roomId;
-    uint8_t targetItemId;
+    uint8_t room;
+    uint8_t tx : 4;
+    uint8_t ty : 4;
+    uint8_t group : 4;
+    uint8_t itemId;
+};
+
+struct DepotGroupData {
+    uint8_t count;
+    uint8_t eventType;
+    uint8_t eventId;
+};
+
+struct SwitchData {
+    uint8_t room;
+    uint8_t eventType;
+    uint8_t eventId;
 };
 
 struct AnimatedTileData {
@@ -132,11 +151,16 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+struct BombableData {
+    uint8_t rid : 7;
+    uint8_t orientation : 1;
+
+};
+
 typedef uint8_t TileSetID;
 
-// todo - microoptimize bits
-// todo - replace pointers with <32bit offsets-from-known-locations?
-// todo - separate tilesets from maps?  (e.g. animated tiles, lava tiles)
+// replace pointers with <32bit offsets-from-known-locations?
+// separate tilesets from maps?  (e.g. animated tiles, lava tiles)
 struct MapData {
     const char* name;
 
@@ -156,15 +180,16 @@ struct MapData {
     const GatewayData* gates;
     const NpcData* npcs;
     const TrapdoorData* trapdoors;
+    const SwitchData* switches;
     const DepotData* depots;
-
-    // other placeable entities
+    const DepotGroupData* depotGroups;
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
     const TileSetID* lavaTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
     const SokoblockData* sokoblocks;
+    const BombableData* bombables;
 
     // other counts
     uint8_t animatedTileCount; // do we really need this? can we null-terminate?

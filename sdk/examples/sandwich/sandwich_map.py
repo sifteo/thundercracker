@@ -1,6 +1,7 @@
 import lxml.etree, os, posixpath, re, tmx, misc, math
 from sandwich_room import *
 from sandwich_item import *
+from sandwich_trigger import *
 from itertools import product
 
 class MapDatabase:
@@ -21,7 +22,7 @@ class MapDatabase:
 			for gate in map.list_triggers_of_type("gateway"):
 				assert gate.target_map in self.map_dict, "gateway to unknown map: " + gate.target_map
 				tmap = self.map_dict[gate.target_map]
-				assert gate.target_gate in tmap.trig_dict["gateway"], "link to unknown map-gate: " + gate.target_gate
+				assert gate.target_gate in tmap.trig_dict["gateway"] or gate.target_gate in tmap.location_dict, "link to unknown map-gate: " + gate.target_gate
 				# found = False
 				# for othergate in tmap.list_triggers_of_type("gateway"):
 				# 	if othergate.id == gate.target_gate:
@@ -38,18 +39,31 @@ class MapDatabase:
 			for block in m.sokoblocks:
 				block.asset_id = asset_to_id[block.asset]
 
-
-
 class Depot:
 	def __init__(self, map, obj):
-		assert "target" in obj.props
+		self.map = map
+		assert "target" in obj.props and ( "parent" in obj.props or "ontrigger" in obj.props )
 		self.obj = obj
-		item_name = obj.props["target"]
-		assert item_name in map.world.items.item_dict
-		self.item = map.world.items.item_dict[item_name]
+		target = obj.props["target"].lower()
+		inst = obj.map.object_dict[target]
+		assert inst.type == "item" and "id" in inst.props
+		instid = inst.props["id"].lower()
+		self.item = map.world.items.item_dict[instid]
 		assert self.item.storage_type == STORAGE_TYPE_EQUIP
-		self.room = map.roomat( obj.px / 128, obj.py / 128 )
+		rx = obj.px / 128
+		ry = obj.py / 128
+		self.ltx = obj.tx - 8 * rx
+		self.lty = obj.ty - 8 * ry
+		self.room = map.roomat(rx,ry)
 		self.room.depot = self
+
+	def compute_parent(self):
+		if "parent" in self.obj.props:
+			self.parent = self.map.depot_dict[ self.obj.props["parent"] ]
+		else:
+			self.parent = self
+			compute_trigger_event_id(self, self.obj)
+			resolve_trigger_event_id(self, self.map)
 
 class AnimatedTile:
 	def __init__(self, tile):
@@ -68,6 +82,20 @@ class Sokoblock:
 		if self.asset.lower().endswith(".png"): self.asset = self.asset[0:-4]
 		assert posixpath.exists(posixpath.join(map.world.dir, self.asset+".png"))
 
+class Location:
+	def __init__(self, mp, obj):
+		self.map = mp
+		self.obj = obj
+		self.name = obj.name.lower()
+		self.rx = obj.px / 128
+		self.ry = obj.py / 128
+		self.rid = self.ry * mp.width + self.rx
+		self.local_tx = obj.tx - self.rx * 16
+		self.local_ty = obj.ty - self.ry * 16
+
+	def room(self):
+		self.map.rooms[self.rid]
+
 class Map:
 	def __init__(self, db, xml):
 		world = db.world
@@ -77,22 +105,38 @@ class Map:
 		self.id = posixpath.basename(path)[:-4].lower()
 		self.readable_name = xml.findtext("name")
 		self.raw = tmx.Map(path)
+		self.width = self.raw.pw / 128
+		self.height = self.raw.ph / 128
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
+		
 		# validate tiles
-		for tile in (self.raw.gettile(tid) for tid in self.background.tiles):
+		for lid,tid in enumerate(self.background.tiles):
+			tile = self.raw.gettile(tid)
+			x = lid % self.width
+			y = lid / self.width
+			assert tile is not None, path + " has an undefined tile in the background"
 			if "bridge" in tile.props: 
-				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
+				assert iswalkable(tile, x, y), "unwalkable bridge tile detected in map: " + self.id
+
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
+		# check that the overlay actually has tiles
+		if self.overlay is not None:
+			try:
+				(t for t in self.overlay.tiles if t != 0).next()
+			except:
+				self.overlay = None
 
 		self.background_id = posixpath.basename(self.background.gettileset().imgpath)
 		if self.overlay is not None:
 			self.overlay_id = posixpath.basename(self.overlay.gettileset().imgpath)
 
-		self.width = self.raw.pw / 128
-		self.height = self.raw.ph / 128
+		# find locators
+		self.locations = [ Location(self, obj) for obj in self.raw.objects if obj.type == "location" ]
+		self.location_dict = dict((loc.name,loc) for loc in self.locations)
+
 		self.count = self.width * self.height
 		assert self.count > 0, "map is empty: " + self.id
 		assert self.count <= 81, "too many rooms in map (max 72): " + self.id
@@ -116,14 +160,31 @@ class Map:
 			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
 				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(1,7) ]
 				r.portals[SIDE_RIGHT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+
+		# validate boooombs
+		for room in self.rooms:
+			if room.x == 0: 
+				assert not room.can_bomb[SIDE_LEFT]
+			elif room.x == self.width-1:
+				assert not room.can_bomb[SIDE_RIGHT]
+			else:
+				assert room.can_bomb[SIDE_RIGHT] == self.roomat(room.x+1, room.y).can_bomb[SIDE_LEFT]
+			if room.y == 0:
+				assert not room.can_bomb[SIDE_TOP]
+			elif room.y == self.height-1:
+				assert not room.can_bomb[SIDE_BOTTOM]
+			else:
+				assert room.can_bomb[SIDE_BOTTOM] == self.roomat(room.x, room.y+1).can_bomb[SIDE_TOP]
+		self.bombables = [(room.lid,0) for room in self.rooms if room.can_bomb[SIDE_RIGHT]]+[(room.lid,1) for room in self.rooms if room.can_bomb[SIDE_BOTTOM]]
+
 		# validate portals
 		for r in self.rooms:
 			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 		for x,y in product( range(self.width-1), range(self.height) ):
-			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y) + " to room: " + str(x+1) + "," + str(y)
 		for x,y in product( range(self.width), range(self.height-1) ):
-			assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y)
+			assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y) + " to room: " + str(x) + "," + str(y+1)
 		# find subdivisions
 		for r in self.rooms: 
 			r.find_subdivisions()
@@ -151,6 +212,7 @@ class Map:
 				self.trig_dict[trig_type][trig.id] = trig
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
 		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
+		self.switched_rooms = [ room for room in self.rooms if room.its_a_switch ]
 		# resolve trigger event idS
 		for d in self.trig_dict.itervalues():
 			for trig in d.itervalues():
@@ -161,7 +223,15 @@ class Map:
 		# find me some lava tiles
 		self.lava_tiles = [ t for t in self.background.gettileset().tiles if "lava" in t.props ]
 		assert len(self.lava_tiles) <= 8
+
 		self.depots = [ Depot(self,obj) for obj in self.raw.objects if obj.type == "depot" ]
+		self.depot_dict = dict((d.obj.name, d) for d in self.depots)
+
+		# hack - should be last to resolve events (for now?)
+		for d in self.depots: d.compute_parent()
+		for index,depot in enumerate( (d for d in self.depots if d.parent == d) ):
+			depot.index = index
+		for room in self.rooms: room.resolve_trigger_event_id()
 
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -174,6 +244,8 @@ class Map:
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
+
+		### EXPORT X PORTALS ###
 		src.write("static const uint8_t %s_xportals[] = {" % self.id)
 
 		byte = 0
@@ -188,6 +260,8 @@ class Map:
 				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
+
+		### EXPORT Y PORTALS ###
 		src.write("static const uint8_t %s_yportals[] = {" % self.id)
 		byte = 0
 		cnt = 0
@@ -201,60 +275,91 @@ class Map:
 				byte = 0
 		if cnt > 0: src.write("0x%x," % byte)
 		src.write("};\n")
+
+		### EXPORT ITEMS ###
 		if len(self.trig_dict["item"]) > 0:
 			src.write("static const ItemData %s_items[] = {" % self.id)
 			for item in self.list_triggers_of_type("item"):
 				item.write_item_to(src)
 			src.write("{%s,0x0}};\n" % TS)
 		
+		### EXPORT GATES ###
 		if len(self.trig_dict["gateway"]):
 			src.write("static const GatewayData %s_gateways[] = {" % self.id)
 			for gate in self.list_triggers_of_type("gateway"):
 				gate.write_gateway_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 
+		### EXPORT NPCS ###
 		if len(self.trig_dict["npc"]) > 0:
 			src.write("static const NpcData %s_npcs[] = {" % self.id)
 			for npc in self.list_triggers_of_type("npc"):
 				npc.write_npc_to(src)
 			src.write("{%s,0x0,0x0,0x0,0x0}};\n" % TS)
 		
+		### EXPORT DOORS ###
 		if len(self.trig_dict["door"]) > 0:
 			src.write("static const DoorData %s_doors[] = {" % self.id)
 			for door in self.list_triggers_of_type("door"):
 				door.write_door_to(src)
 			src.write("{%s,0xff}};\n" % TS)
 
+		### EXPORT TRAPDOORS ###
 		if len(self.trapped_rooms) > 0:
 			src.write("static const TrapdoorData %s_trapdoors[] = {" % self.id)
 			for room in self.trapped_rooms:
 				src.write("{0x%x,0x%x}," % (room.lid, room.trapRespawnRoomId))
 			src.write("{0x0,0x0}};\n")
 		
+		### EXPORT SWITCHES ###
+		if len(self.switched_rooms) > 0:
+			src.write("static const SwitchData %s_switches[] = {" % self.id)
+			for room in self.switched_rooms:
+				src.write("{0x%x,0x%x,0x%x}," % (room.lid, room.event, room.event_id))
+			src.write("{0xff,0xff,0xff}};\n")
+
+		### EXPORT ANIMATED TILES ###
 		if len(self.animatedtiles) > 0:
 			src.write("static const AnimatedTileData %s_animtiles[] = {" % self.id)
 			for atile in self.animatedtiles:
 				src.write("{0x%x,0x%x}," % (atile.tile.lid, atile.numframes))
 			src.write("{0x0,0x0}};\n")
 
+		### EXPORT SOKOBLOCKS ###
 		if len(self.sokoblocks) > 0:
 			src.write("static const SokoblockData %s_sokoblocks[] = {" % self.id)
 			for b in self.sokoblocks:
 				src.write("{0x%x,0x%x,0x%x}," % (b.x, b.y, b.asset_id))
 			src.write("{0x0,0x0,0x0}};\n")
 
+		### EXPORT LAVA ###
 		if len(self.lava_tiles) > 0:
 			src.write("static const TileSetID %s_lavatiles[] = {" % self.id)
 			for tile in self.lava_tiles:
 				src.write("0x%x," % tile.lid)
 			src.write("0x0};\n")
 
+		### EXPORT DEPOTS ###
 		if len(self.depots) > 0:
 			src.write("static const DepotData %s_depots[] = {" % self.id)
 			for d in self.depots:
-				src.write("{0x%x,0x%x}," % (d.room.lid, d.item.numeric_id))
-			src.write("{0xff,0xff}};\n")
+				src.write("{0x%x,0x%x,0x%x,0x%x,0x%x}," % (d.room.lid, d.ltx, d.lty, d.parent.index, d.item.numeric_id))
+			src.write("{0xff,0x0,0x0,0x0, 0x0}};\n")
+			src.write("static const DepotGroupData %s_depotgroups[] = {" % self.id)
+			for d in self.depots:
+				if d.parent == d:
+					count = len([dep for dep in self.depots if dep.parent == d])
+					src.write("{0x%x,0x%x,0x%x}," % (count, d.event, d.event_id))
+			src.write("{0x0,0x0,0x0}};\n")
 
+		### EXPORT BOMBABLES ###
+		if len(self.bombables) > 0:
+			src.write("static const BombableData %s_bombables[] = {" % self.id)
+			for rid,sid in self.bombables:
+				src.write("{0x%x,0x%x}," % (rid,sid))
+			src.write("{0x7f,0x0}};\n")
+
+		### EXPORT OVERLAY ###
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
 			# perform RLE Compression on write
@@ -278,6 +383,7 @@ class Map:
 				emptycount = 0
 			src.write("};\n")
 
+		### EXPORT DIAGONAL ROOMS ###
 		if len(self.diagRooms) > 0:
 			src.write("static const DiagonalSubdivisionData %s_diag[] = {" % self.id)
 			for r in self.diagRooms:
@@ -286,6 +392,7 @@ class Map:
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_pos, r.lid, cx, cy))
 			src.write("{0x0,0x0,0x0,0x0}};\n")
 		
+		### EXPORT BRIDGES ###
 		if len(self.bridgeRooms) > 0:
 			src.write("static const BridgeSubdivisionData %s_bridges[] = {" % self.id)
 			for r in self.bridgeRooms:
@@ -294,11 +401,13 @@ class Map:
 				src.write("{0x%x,0x%x,0x%x,0x%x}," % (is_hor, r.lid, cx, cy))
 			src.write("{0x0,0x0,0x0,0x0}};\n")
 
+		### EXPORT ROOM TELEM ###
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_telem_source_to(src)
 		src.write("};\n")
 
+		### EXPORT ROOM TILES ###
 		src.write("static const RoomTileData %s_tiles[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_tiles_to(src)
@@ -307,7 +416,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { \"%(readable_name)s\", " \
+			'    { "%(readable_name)s", ' \
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \
@@ -319,13 +428,16 @@ class Map:
 			"%(gate)s, " \
 			"%(npc)s, " \
 			"%(trapdoor)s, " \
+			"%(switch)s, " \
 			"%(depot)s, " \
+			"%(depotgroup)s, " \
 			"%(door)s, " \
 			"%(animtiles)s, " \
 			"%(lavatiles)s, " \
 			"%(diagsubdivs)s, " \
 			"%(bridgesubdivs)s, " \
-			"%(sokoblocks)s, "
+			"%(sokoblocks)s, " \
+			"%(bombables)s," \
 			"0x%(nanimtiles)x, " \
 			"0x%(ambient)x, " \
 			"0x%(w)x, " \
@@ -340,7 +452,9 @@ class Map:
 				"gate": self.id + "_gateways" if len(self.trig_dict["gateway"]) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.trig_dict["npc"]) > 0 else "0",
 				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
+				"switch": self.id+"_switches" if len(self.switched_rooms) > 0 else "0",
 				"depot": self.id + "_depots" if len(self.depots) > 0 else "0",
+				"depotgroup": self.id+"_depotgroups" if len(self.depots) > 0 else "0",
 				"door": self.id + "_doors" if len(self.trig_dict["door"]) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
@@ -350,7 +464,8 @@ class Map:
 				"ambient": self.ambientType,
 				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
-				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0"
+				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0",
+				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0"
 			})
 
 
