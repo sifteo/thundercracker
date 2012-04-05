@@ -8,6 +8,8 @@
 #include "assets.gen.h"
 #include "rect.h"
 #include "thing.h"
+#include "platform.h"
+#include "turtle.h"
 
 using namespace Sifteo;
 
@@ -15,11 +17,10 @@ static Cube cube(0);
 
 static LPlatform platform1(0, Vec2(64, 64));
 static Platform platform2(1, Vec2(32, 96));
-static Thing michelangelo(2, Vec2(32, 32));
+static Turtle michelangelo(2, Vec2(32, 32));
 
 const int NUM_THINGS = 3;
 static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
-
 
 void loadAssets()
 {
@@ -61,7 +62,6 @@ void main()
     // fill background
     for(UInt2 pos = Vec2(0, 0); pos.x < VidMode::LCD_width / VidMode::TILE; pos.x += tile_bckgrnd01.width){
         for(pos.y = 0; pos.y < VidMode::LCD_height / VidMode::TILE; pos.y += tile_bckgrnd01.height){
-            LOG(("Drawing asset at pos %d %d\n", pos.x, pos.y));
             vid.BG0_drawAsset(pos, tile_bckgrnd01);
         }
     }
