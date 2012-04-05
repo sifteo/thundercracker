@@ -2,6 +2,18 @@ GameAssets = group{}
 
 -- Test = image{"font_bigger_2.png", quality=10}
 --TestGlow = image{"font_bigger_2_glow.png", quality=10}
+-- Menu
+BgTile = image{ "bg.png" }
+Tip0 = image{ "Tip0.png" }
+Tip1 = image{ "Tip1.png" }
+Tip2 = image{ "Tip2.png" }
+Footer = image{ "Footer.png" }
+LabelEmpty = image{ "LabelEmpty.png" }
+LabelContinue = image{ "LabelContinue.png" }
+LabelCity0 = image{ "LabelCity0.png" }
+IconContinue = image{ "IconContinue.png" }
+IconCity0 = image{ "IconCity0.png" }
+
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
@@ -16,6 +28,8 @@ BorderSlotBlank = image{"border_available.png", quality=10}
 BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
 BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
 BorderSlotHint = image{"hint_bubble.png", quality=10, width=24}
+Tile1 = image{"tile_ivory_big_idle.png", quality=10}
+Tile1Glow = image{"tile_ivory_big_glow.png", width=96, quality=10}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Blank = image{"tile_ivory_blank.png", quality=10}

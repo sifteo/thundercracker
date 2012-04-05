@@ -4,6 +4,7 @@
 #include "WordGame.h"
 #include "EventID.h"
 #include "EventData.h"
+#include "menu.h"
 
 using namespace Sifteo;
 
@@ -11,6 +12,12 @@ static const char* sideNames[] =
 {
   "top", "left", "bottom", "right"  
 };
+
+static struct MenuItem gItems[] =
+{ {&IconContinue, &LabelContinue}, {&IconCity0, &LabelCity0}, {NULL, NULL} };
+
+static struct MenuAssets gAssets =
+{&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
 void onCubeEventTouch(void *context, _SYSCubeID cid)
 {
@@ -122,8 +129,69 @@ void siftmain()
                 break;
             }
         }
+
+
     }
 #endif // ifndef DEBUG
+
+    // sync up
+    System::paintSync();
+    for(Cube* p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
+    System::paintSync();
+    for(Cube* p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
+    System::paintSync();
+    Menu m(&cubes[0], &gAssets, gItems);
+
+        struct MenuEvent e;
+        while(1) {
+            while(m.pollEvent(&e)) {
+                switch(e.type) {
+                    case MENU_ITEM_PRESS:
+                        // Game Buddy is not clickable, so don't do anything on press
+                        if (e.item >= 3) {
+                            m.preventDefault();
+                        }
+                        if (e.item == 4) {
+                            static unsigned randomIcon = 0;
+                            randomIcon = (randomIcon + 1) % 4;
+                            m.replaceIcon(e.item, gItems[randomIcon].icon);
+                        }
+                        break;
+                    case MENU_EXIT:
+                        // this is not possible when pollEvent is used as the condition to the while loop.
+                        // NOTE: this event should never have its default handler skipped.
+                        ASSERT(false);
+                        break;
+
+                    case MENU_NEIGHBOR_ADD:
+                        LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        break;
+                    case MENU_NEIGHBOR_REMOVE:
+                        LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                             e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
+                        break;
+
+                    case MENU_ITEM_ARRIVE:
+                        LOG(("arriving at menu item %d\n", e.item));
+                        break;
+                    case MENU_ITEM_DEPART:
+                        LOG(("departing from menu item %d\n", e.item));
+                        break;
+                    case MENU_PREPAINT:
+                        // if you are drawing/animating the other cubes, do your work here
+                    // do your implementation-specific drawing here
+                        // NOTE: this event should never have its default handler skipped.
+                        break;
+                    case MENU_UNEVENTFUL:
+                        // this should never happen. if it does, it can/should be ignored.
+                        ASSERT(false);
+                        break;
+                }
+            }
+            ASSERT(e.type == MENU_EXIT);
+            LOG(("Selected Game: %d\n", e.item));
+        }
 
     // main loop
     WordGame game(cubes); // must not be static!
