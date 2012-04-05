@@ -140,7 +140,7 @@ void Puzzle::Reset()
     }
     mNumBuddies = 0;
     
-    for (unsigned int i = 0; i < kMaxBuddies; ++i)
+    for (unsigned int i = 0; i < NUM_BUDDIES; ++i)
     {
         for (unsigned int j = 0; j < NUM_SIDES; ++j)
         {

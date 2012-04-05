@@ -171,7 +171,7 @@ private:
     float mFreePlayShakeThrottleTimer;
     
     // Shuffle Mode
-    Piece mShufflePiecesStart[kMaxBuddies][NUM_SIDES];
+    Piece mShufflePiecesStart[NUM_BUDDIES][NUM_SIDES];
     unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
     

@@ -771,14 +771,14 @@ const AssetImage &GetBuddyFullAsset(int buddyId)
 BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 {
     Random random;
-    int selection = random.randrange(kMaxBuddies - kNumCubes);
+    int selection = random.randrange(NUM_BUDDIES - kNumCubes);
     
     for (int j = 0; j < selection; ++j)
     {
-        buddyId = BuddyId((buddyId + 1) % kMaxBuddies);
+        buddyId = BuddyId((buddyId + 1) % NUM_BUDDIES);
         while (IsBuddyUsed(app, buddyId))
         {
-            buddyId = BuddyId((buddyId + 1) % kMaxBuddies);
+            buddyId = BuddyId((buddyId + 1) % NUM_BUDDIES);
         }
     }
     
@@ -1542,7 +1542,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_FREEPLAY_START:
         {
-            unsigned int buddyIds[kMaxBuddies];
+            unsigned int buddyIds[NUM_BUDDIES];
             for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
                 buddyIds[i] = i;
@@ -1595,7 +1595,7 @@ void App::StartGameState(GameState gameState)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
+                    mCubeWrappers[i].SetBuddyId(BuddyId(i % NUM_BUDDIES));
                 }
             }
             ResetCubesToPuzzle(GetPuzzleDefault(), true);
@@ -1705,7 +1705,7 @@ void App::StartGameState(GameState gameState)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].SetBuddyId(BuddyId(i % kMaxBuddies));
+                    mCubeWrappers[i].SetBuddyId(BuddyId(i % NUM_BUDDIES));
                 }
             }
             StartGameState(GAME_STATE_STORY_BOOK_START);

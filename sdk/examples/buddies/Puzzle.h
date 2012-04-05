@@ -92,7 +92,7 @@ private:
     unsigned char mCutsceneBuddiesEnd[2];
     CutsceneLine mCutsceneLineStart[8];
     CutsceneLine mCutsceneLineEnd[8];
-    unsigned char mBuddies[kMaxBuddies];
+    unsigned char mBuddies[NUM_BUDDIES];
     unsigned char mNumCutsceneBuddiesStart : 2;
     unsigned char mNumCutsceneBuddiesEnd : 2;
     unsigned char mNumCutsceneLineStart : 3;
@@ -100,8 +100,8 @@ private:
     unsigned char mCutsceneEnvironemnt : 3;
     unsigned char mNumShuffles : 8;
     unsigned char mNumBuddies : 5;
-    Piece mPiecesStart[kMaxBuddies][NUM_SIDES];
-    Piece mPiecesEnd[kMaxBuddies][NUM_SIDES];    
+    Piece mPiecesStart[NUM_BUDDIES][NUM_SIDES];
+    Piece mPiecesEnd[NUM_BUDDIES][NUM_SIDES];    
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
