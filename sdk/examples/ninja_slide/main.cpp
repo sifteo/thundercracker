@@ -6,6 +6,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+#include "rect.h"
 #include "thing.h"
 
 using namespace Sifteo;
@@ -14,7 +15,7 @@ static Cube cube(0);
 
 static Platform platform1(0, Vec2(64, 64));
 static Platform platform2(1, Vec2(32, 96));
-static Thing michelangelo(2, Vec2(32, 0));
+static Thing michelangelo(2, Vec2(32, 32));
 
 const int NUM_THINGS = 3;
 static Thing *things[NUM_THINGS] = {&platform1, &platform2, &michelangelo};
@@ -40,7 +41,8 @@ void init()
 void collisions(Thing **things, int num_things){
     for (int i = 0; i < num_things; i++){
         for (int j = i+1; j < num_things; j++){
-            if (things[i]->isTouching(things[j])){
+            if (things[i]->isTouching(*things[j])){
+                LOG(("Things %d and %d collided\n", i, j));
                 things[i]->collided(things[j]);
                 things[j]->collided(things[i]);
             }
