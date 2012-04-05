@@ -188,6 +188,13 @@ void CubeWrapper::DrawBuddy()
     ASSERT(mBuddyId < arraysize(kBuddyBackgrounds));
     if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
+        // Parallax Shift
+        Int2 offset = GetPieceOffset(SIDE_TOP);
+        offset.x /= VidMode::TILE;
+        offset.y /= VidMode::TILE;
+        ScrollBackground(Vec2(VidMode::TILE, VidMode::TILE) + offset);
+        
+        // Draw the actual asset
         DrawBackground(*asset);
     }
     

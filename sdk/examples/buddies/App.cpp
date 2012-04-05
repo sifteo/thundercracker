@@ -788,29 +788,28 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 void TiltNudgePieces(App& app, Cube::ID cubeId)
 {
 #ifdef BUDDY_PIECES_USE_SPRITES
-    Int2 accelState = app.GetCubeWrapper(cubeId).GetAccelState();
+    CubeWrapper &cube = app.GetCubeWrapper(cubeId);
+    
+    Int2 accelState = cube.GetAccelState();
     float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
     float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
     float d = 8.0f;
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
-#else
-    Cube::TiltState tiltState = app.GetCubeWrapper(cubeId).GetTiltState();
     
-    app.GetCubeWrapper(cubeId).SetPieceOffset(
-        SIDE_TOP,
-        Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(
-        SIDE_LEFT,
-        Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(
-        SIDE_BOTTOM,
-        Vec2(-(tiltState.x - 1) * VidMode::TILE, -(tiltState.y - 1) * VidMode::TILE));
-    app.GetCubeWrapper(cubeId).SetPieceOffset(
-        SIDE_RIGHT,
-        Vec2(-(tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE));
+    cube.SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
+    cube.SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
+    cube.SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
+    cube.SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
+#else
+    CubeWrapper &cube = app.GetCubeWrapper(cubeId);
+    
+    Cube::TiltState tiltState = cube.GetTiltState();
+    int x = (tiltState.x - 1) * VidMode::TILE;
+    int y = (tiltState.y - 1) * VidMode::TILE;
+    
+    cube.SetPieceOffset(SIDE_TOP, Vec2(x, y));
+    cube.SetPieceOffset(SIDE_LEFT, Vec2(x, y));
+    cube.SetPieceOffset(SIDE_BOTTOM, Vec2(-x, -y));
+    cube.SetPieceOffset(SIDE_RIGHT, Vec2(-x, y));
 #endif        
 }
 
