@@ -57,6 +57,7 @@ namespace llvm {
     BasicBlockPass *createEarlyLTIPass();
     BasicBlockPass *createLateLTIPass();
     BasicBlockPass *createMisalignStackPass();
+    FunctionPass *createStaticAllocaPass();
 }
 
 static const char HelpText[] =
@@ -294,6 +295,9 @@ static void AddPasses(PassManagerBase &PM,
 
     // Final optimization pass
     AddOptimizationPasses(PM, FPM, OLvl);
+
+    // Just before code generation, make all stack allocations static.
+    PM.add(createStaticAllocaPass());
 }
 
 int main(int argc, char **argv)
