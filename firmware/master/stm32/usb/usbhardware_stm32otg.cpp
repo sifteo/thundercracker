@@ -45,14 +45,15 @@ void init()
     OTG.global.GRXFSIZ = RX_FIFO_WORDS;
     fifoMemTop = RX_FIFO_WORDS;
 
-    for (unsigned i = 0; i < 4; ++i)
-        OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
-
     // Unmask interrupts for TX and RX
+    OTG.device.DIEPMSK = 0;
+    OTG.device.DOEPMSK = 0;
+    OTG.device.DAINTMSK = 0;
     OTG.global.GINTMSK =
                         (1 << 31) |    // WUIM
                         (1 << 18) |    // IEPINT
                         (1 << 13) |    // ENUMDNEM
+                        (1 << 12) |    // USBRST
                         (1 << 11) |    // USBSUSPM
                         (1 << 4)  |    // RXFLVLM
                         (1 << 3);      // SOFM
@@ -61,8 +62,19 @@ void init()
 
     OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
-    // don't bother with DOEPMSK - we handle all OUT endpoint activity via the
-    // RXFLVL interrupt
+}
+
+void reset()
+{
+    for (unsigned i = 0; i < 4; ++i)
+        OTG.device.outEps[i].DOEPCTL |= (1 << 27);  // set nak
+
+    OTG.device.DAINTMSK = 0xf;
+    OTG.device.DIEPMSK = 0x1;
+    OTG.device.DOEPMSK = 0x1;
+
+    OTG.global.GRXFSIZ = RX_FIFO_WORDS;
+    fifoMemTop = RX_FIFO_WORDS;
 }
 
 void setAddress(uint8_t addr)
@@ -307,11 +319,16 @@ IRQ_HANDLER ISR_UsbOtg_FS()
 {
     uint32_t status = OTG.global.GINTSTS;
 
+    const uint32_t USBRST = 1 << 12;
+    if (status & USBRST) {
+        UsbHardware::reset();
+        UsbCore::reset();
+        OTG.global.GINTSTS = USBRST;
+    }
+
     const uint32_t ENUMDNE = 1 << 13;
     if (status & ENUMDNE) {
         OTG.global.GINTSTS = ENUMDNE;
-        fifoMemTop = RX_FIFO_WORDS;
-        UsbCore::reset();
     }
 
     const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
