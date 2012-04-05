@@ -567,6 +567,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
    if (newStateIndex != getCurrentStateIndex())
    {
+       ASSERT(eventID != EventID_EnterState && eventID != EventID_ExitState); // don't change states while changing states
        setState(newStateIndex, getCurrentStateIndex());
    }
 

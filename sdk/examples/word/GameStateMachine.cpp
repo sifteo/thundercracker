@@ -415,7 +415,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     case GameStateIndex_LoadingFinished:
         switch (eventID)
         {
-        case EventID_EnterState:
+        case EventID_Update:
             // TODO check first run
             newStateIndex = GameStateIndex_MainMenu;
             break;
@@ -428,7 +428,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     case GameStateIndex_MainMenu:
         switch (eventID)
         {
-        case EventID_EnterState:
+        case EventID_Update:
             {
                 struct MenuEvent e;
                 Menu &m = *WordGame::getMenu();
@@ -503,6 +503,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     if (newStateIndex != getCurrentStateIndex())
     {
+        ASSERT(eventID != EventID_EnterState && eventID != EventID_ExitState); // don't change states while changing states
         setState(newStateIndex, getCurrentStateIndex());
     }
 
