@@ -585,6 +585,7 @@ void CubeWrapper::Tilt( int dir )
 					//start shifting it over
 					for( int k = j - 1; k >= 0; k-- )
 					{
+                        //DEBUG_LOG(("src at (%d, %d), dest at (%d, %d)\n", k+1, i, k, i));
 						if( TryMove( k+1, i, k, i ) )
 							bChanged = true;
 						else
@@ -603,6 +604,7 @@ void CubeWrapper::Tilt( int dir )
 					//start shifting it over
 					for( int k = j - 1; k >= 0; k-- )
 					{
+                        //DEBUG_LOG(("src at (%d, %d), dest at (%d, %d)\n", i, k+1, i, k));
 						if( TryMove( i, k+1, i, k ) )
 							bChanged = true;
 						else
@@ -621,6 +623,7 @@ void CubeWrapper::Tilt( int dir )
 					//start shifting it over
 					for( int k = j + 1; k < NUM_ROWS; k++ )
 					{
+                        //DEBUG_LOG(("src at (%d, %d), dest at (%d, %d)\n", k-1, i, k, i));
 						if( TryMove( k-1, i, k, i ) )
 							bChanged = true;
 						else
@@ -639,6 +642,7 @@ void CubeWrapper::Tilt( int dir )
 					//start shifting it over
 					for( int k = j + 1; k < NUM_COLS; k++ )
 					{
+                        //DEBUG_LOG(("src at (%d, %d), dest at (%d, %d)\n", i, k-1, i, k));
 						if( TryMove( i, k-1, i, k ) )
 							bChanged = true;
 						else
@@ -674,17 +678,6 @@ void CubeWrapper::Tilt( int dir )
 bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
 {
     bool bChanged = false;
-
-    DEBUG_LOG(( "in fake tilt\n" ));
-
-    for( int j = 0; j < NUM_ROWS; j++ )
-    {
-        for( int k = 0; k < NUM_COLS; k++ )
-        {
-            DEBUG_LOG(( "color=%d\n", grid[j][k].getColor()));
-        }
-    }
-
 
     //hastily ported from the python
     switch( dir )
@@ -864,10 +857,6 @@ bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot 
     //start shifting it over
     GridSlot &slot = grid[row1][col1];
     GridSlot &dest = grid[row2][col2];
-
-    DEBUG_LOG(( "faketrymove src (%d, %d), dest (%d, %d)\n", row1, col1, row2, col2 ));
-
-    DEBUG_LOG(( "slot color = %d, dest color = %d\n", slot.getColor(), dest.getColor() ));
 
     if( !dest.isEmpty() )
         return false;
@@ -1749,7 +1738,15 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
     {
         GridSlot grid[NUM_ROWS][NUM_COLS];
 
-        _SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
+        //suddenly having problems with this memcpy
+        //_SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
+        for( int j = 0; j < NUM_ROWS; j++ )
+        {
+            for( int k = 0; k < NUM_COLS; k++ )
+            {
+                grid[j][k] = m_grid[j][k];
+            }
+        }
 
         //recursive function to tilt and test grid
         TiltAndTestGrid( grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
@@ -1764,23 +1761,9 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
 //check different parts of the given grid for the given color
 void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
 {
-    DEBUG_LOG(( "testing grid for color\n"));
-
-    DEBUG_LOG(( "grid:\n"));
-
-    for( int j = 0; j < NUM_ROWS; j++ )
-    {
-        for( int k = 0; k < NUM_COLS; k++ )
-        {
-            DEBUG_LOG(( "color=%d\n", grid[j][k].getColor()));
-        }
-    }
-
-
     //only check for spots that haven't been found already
     if( !bCorners )
     {
-        DEBUG_LOG(( "corners\n"));
         const Int2 cornerLocs[] = {
             Vec2( 0, 0 ),
             Vec2( 0, NUM_COLS - 1 ),
@@ -1810,7 +1793,6 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
       */
     if( !side1 )
     {
-        DEBUG_LOG(( "side1\n"));
         STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
         const Int2 locs[] = {
             Vec2( 0, 1 ),
@@ -1841,7 +1823,6 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
       */
     if( !side2 )
     {
-        DEBUG_LOG(( "side2\n"));
         const Int2 locs[] = {
             Vec2( 0, 2 ),
             Vec2( 1, 0 ),
@@ -1865,32 +1846,25 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
 //recursive function to tilt and test grid
 void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
 {
-    DEBUG_LOG(( "testing grid, iterations=%d\n", iterations));
-
     for( int i = 0; i < NUM_SIDES; i++ )
     {
         //copy the grid
         GridSlot childgrid[NUM_ROWS][NUM_COLS];
 
-        DEBUG_LOG(( "side %d child grid\n", i ));
-
-        _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
-
+        //suddenly having problems with this memcpy
+        //_SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
         for( int j = 0; j < NUM_ROWS; j++ )
         {
             for( int k = 0; k < NUM_COLS; k++ )
             {
-                DEBUG_LOG(( "color=%d\n", childgrid[j][k].getColor()));
+                childgrid[j][k] = grid[j][k];
             }
         }
 
         //tilt it
         if( FakeTilt( i, childgrid ) )
         {
-            DEBUG_LOG(( "did a fake tilt\n"));
             TestGridForColor( childgrid, color, bCorners, side1, side2 );
-
-            DEBUG_LOG(( "tested for color\n"));
 
             //we've already satisfied everything
             if( bCorners && side1 && side2 )

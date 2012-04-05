@@ -13,6 +13,14 @@
 #ifndef _SIFTEO_MENU_H
 #define _SIFTEO_MENU_H
 
+//#define MENU_LOGS_ENABLED 1
+
+#ifdef MENU_LOGS_ENABLED
+#define MENU_LOG(...) LOG((__VA_ARGS__))
+#else
+#define MENU_LOG
+#endif
+
 #include <stdint.h>
 #include <sifteo.h>
 
@@ -91,6 +99,7 @@ typedef enum {
 #define kIconPixelHeight (kIconTileHeight * kPixelsPerTile)
 #define kItemTileWidth (int)(((kEndCapPadding + kPixelsPerTile - 1) / kPixelsPerTile) + kIconTileWidth - kPeekTiles)
 #define kItemPixelWidth (kItemTileWidth * kPixelsPerTile)
+#define kOneG (abs(64 * kAccelScalingFactor))
 
 class Menu {
  public:
@@ -107,9 +116,9 @@ class Menu {
     static const float kTimeDilator = 13.1f;
     static const float kMaxSpeedMultiplier = 3.f;
     static const float kAccelScalingFactor = -0.25f;
-    static const float kOneG;
     static const uint8_t kNumTilesX = 18;
     static const uint8_t kNumVisibleTilesX = 16;
+    static const uint8_t kNumTilesY = 18;
     static const uint8_t kNumVisibleTilesY = 16;
     static const float kAccelThresholdOn = 1.15f;
     static const float kAccelThresholdOff = 0.85f;
@@ -204,9 +213,6 @@ class Menu {
     int computeCurrentTile();
 };
 
-// constant folding
-const float Menu::kOneG = abs(64 * kAccelScalingFactor);
-
 Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
      : canvas(mainCube->vbuf) {
 
@@ -255,8 +261,6 @@ Menu::Menu(Cube *mainCube, struct MenuAssets *aAssets, struct MenuItem *aItems)
         }
     }
     numItems = i;
-
-    DEBUG_LOG(( "kfooterheight is %d\n ", kFooterHeight ));
 
     // calculate the number of tips
     i = 0;
@@ -458,26 +462,26 @@ void Menu::changeState(MenuState newstate) {
     stateFinished = false;
     currentState = newstate;
 
-    LOG(("STATE: -> "));
+    MENU_LOG("STATE: -> ");
     switch(currentState) {
         case MENU_STATE_START:
-            LOG(("start\n"));
+            MENU_LOG("start\n");
             transToStart();
             break;
         case MENU_STATE_STATIC:
-            LOG(("static\n"));
+            MENU_LOG("static\n");
             transToStatic();
             break;
         case MENU_STATE_TILTING:
-            LOG(("tilting\n"));
+            MENU_LOG("tilting\n");
             transToTilting();
             break;
         case MENU_STATE_INERTIA:
-            LOG(("inertia\n"));
+            MENU_LOG("inertia\n");
             transToInertia();
             break;
         case MENU_STATE_FINISH:
-            LOG(("finish\n"));
+            MENU_LOG("finish\n");
             transToFinish();
             break;
     }
@@ -499,8 +503,8 @@ void Menu::transToStart() {
 void Menu::stateStart() {
     // initialize video state
     canvas.clear();
-    for(unsigned r=0; r<18; ++r)
-        for(unsigned c=0; c<18; ++c)
+    for(unsigned r = 0; r < kNumTilesX; ++r)
+        for(unsigned c = 0; c < kNumTilesY; ++c)
             canvas.BG0_drawAsset(Vec2(c,r), *assets->background);
 
     canvas.BG1_setPanning(Vec2(0, 0));
@@ -514,8 +518,8 @@ void Menu::stateStart() {
         }
 
         // Allocate tiles for the footer, and draw it.
-        if (assets->footer) {
-            const AssetImage& footer = *assets->footer;
+        if (kFooterHeight) {
+            const AssetImage& footer = assets->tips[0] ? *assets->tips[0] : *assets->footer;
             _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
             _SYS_vbuf_writei(
                 &pCube->vbuf.sys, 
@@ -551,7 +555,6 @@ void Menu::transFromStart() {
             neighbors[i].masterSide = SIDE_UNDEFINED;
         }
 
-        updateBG0();
         changeState(MENU_STATE_STATIC);
     }
 }
@@ -718,6 +721,10 @@ void Menu::transToFinish() {
     for(int col=0; col<kNumTilesX; ++col) {
         canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
     }
+    if (assets->header) {
+        Int2 vec = {0, 0};
+        canvas.BG0_drawAsset(vec, *assets->header);
+    }
     if (assets->footer) {
         Int2 vec = { 0, kNumVisibleTilesY - assets->footer->height };
         canvas.BG0_drawAsset(vec, *assets->footer);
@@ -798,33 +805,33 @@ void Menu::transFromFinish() {
  */
 
 void Menu::handleNeighborAdd() {
-    LOG(("Default handler: neighborAdd\n"));
+    MENU_LOG("Default handler: neighborAdd\n");
     // TODO: play a sound
 }
 
 void Menu::handleNeighborRemove() {
-    LOG(("Default handler: neighborRemove\n"));
+    MENU_LOG("Default handler: neighborRemove\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemArrive() {
-    LOG(("Default handler: itemArrive\n"));
+    MENU_LOG("Default handler: itemArrive\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemDepart() {
-    LOG(("Default handler: itemDepart\n"));
+    MENU_LOG("Default handler: itemDepart\n");
     // TODO: play a sound
 }
 
 void Menu::handleItemPress() {
-    LOG(("Default handler: itemPress\n"));
+    MENU_LOG("Default handler: itemPress\n");
     // animate out icon
     changeState(MENU_STATE_FINISH);
 }
 
 void Menu::handleExit() {
-    LOG(("Default handler: exit\n"));
+    MENU_LOG("Default handler: exit\n");
     // nothing
 }
 
@@ -974,10 +981,10 @@ unsigned Menu::unsignedMod(int x, unsigned y) {
 }
 
 void Menu::drawFooter(bool force) {
-    const AssetImage& footer = numTips > 0 ? *assets->tips[currentTip] : *assets->footer;
-    const float kSecondsPerTip = 4.f;
+    if (numTips == 0) return;
 
-    if (numTips == 0 || assets->footer == NULL) return;
+    const AssetImage& footer = *assets->tips[currentTip];
+    const float kSecondsPerTip = 4.f;
 
     if (SystemTime::now() - prevTipTime > kSecondsPerTip || force) {
         prevTipTime = SystemTime::now();
@@ -1070,6 +1077,7 @@ int Menu::computeCurrentTile() {
 #undef kIconPixelHeight
 #undef kItemTileWidth
 #undef kItemPixelWidth
+#undef kOneG
 
 };  // namespace Sifteo
 
