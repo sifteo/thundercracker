@@ -21,6 +21,8 @@ static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* o
 }
 
 void Game::CheckMapNeighbors() {
+  mNeighborDirty = false;
+
   ViewSlot *root = mPlayer.View();
   if (!root->IsShowingRoom()) { return; }
   uint8_t visited[NUM_CUBES];
@@ -43,8 +45,6 @@ void Game::CheckMapNeighbors() {
     PlaySfx(sfx_deNeighbor);    
   }
   
-  sNeighborDirty = false;
-
   if (chchchchanges || otherChanges) {
     #if GFX_ARTIFACT_WORKAROUNDS
       Paint(true);

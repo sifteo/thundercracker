@@ -84,14 +84,11 @@ void Player::SetStatus(int status) {
   mAnimTime = 0.f;
 }
 
-void Player::Update(float dt) {
+void Player::Update() {
   if (mStatus == PLAYER_STATUS_WALKING) {
     mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
   } else { // PLAYER_STATUS_IDLE
-    mAnimTime += dt;
-    if (mAnimTime >= 10.f) {
-      mAnimTime -= 10.f;
-    }
+    mAnimTime = fmod(mAnimTime+gGame.Dt().seconds(), 10.f);
     int before = mAnimFrame;
     if (mAnimTime > 0.5f && mAnimTime < 1.f) {
       mAnimFrame = 1;

@@ -1,9 +1,18 @@
-#include "Map.h"
 #include "Game.h"
 
 void Map::Init() {
   SetData(gMapData[gQuestData->mapId]);
 }
+
+Bomb* Map::BombFor(const ItemData* bomb) {
+  for(Bomb* p=BombBegin(); p!=BombEnd(); ++p) {
+    if (p->Item() == bomb) {
+      return p;
+    }
+  }
+  return 0;
+}
+
 
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
@@ -39,6 +48,18 @@ void Map::SetData(const MapData& map) {
       }
     }
 
+    if (map.bombables) {
+      // the sentinel for bombables is 127, not 255, because he only gets 7 bits :P
+      for(const BombableData* p=map.bombables; p->rid != 0x7f; ++p) {
+        if (p->orientation == BOMBABLE_ORIENTATION_HORIZONTAL) {
+          mRooms[p->rid].SetCanBomb(SIDE_RIGHT);
+          mRooms[p->rid + 1].SetCanBomb(SIDE_LEFT);
+        } else {
+          mRooms[p->rid].SetCanBomb(SIDE_BOTTOM);
+          mRooms[p->rid + mData->width].SetCanBomb(SIDE_TOP);
+        }
+      }
+    }
   }
 }
 
@@ -49,10 +70,16 @@ void Map::RefreshTriggers() {
   for(Room* p=mRooms; p!=pEnd; ++p) { p->Clear(); }
 
   // find active triggers
+  mBombCount = 0;
   if (mData->items) {
     for(const ItemData* p = mData->items; !AtEnd(p->trigger); ++p) {
       if (gGame.GetState()->IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
+        if (gItemTypeData[p->itemId].triggerType == ITEM_TRIGGER_BOMB) {
+          ASSERT(mBombCount < BOMB_CAPACITY);
+          mBomb[mBombCount].Initialize(p);
+          mBombCount++;
+        }
       }
     }
   }

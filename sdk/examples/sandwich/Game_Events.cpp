@@ -3,6 +3,15 @@
 #include "DrawingHelpers.h"
 
 
+void Game::OnTick() {
+  for(Bomb* p=mMap.BombBegin(); p!=mMap.BombEnd(); ++p) {
+    if (p->FuseLit()) {
+      p->UpdateFuse();
+      if (!p->FuseLit()) { OnYesOhMyGodExplosion(p); }
+    }
+  }
+}
+
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasGateway()) {
@@ -27,6 +36,14 @@ unsigned Game::OnPassiveTrigger() {
     if (!npc->optional) { OnNpcChatter(npc); }
   }
   return TRIGGER_RESULT_NONE;
+}
+
+void Game::OnYesOhMyGodExplosion(Bomb* p) {
+  
+
+
+  LOG(("YES OH MY GOD!\n"));
+  for(;;) DoPaint(false);
 }
 
 void Game::OnToggleSwitch(const SwitchData* pSwitch) {
@@ -116,15 +133,17 @@ void Game::OnPickup(Room *pRoom) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
       SystemTime t=SystemTime::now();
       Paint();
+      SystemTime now;
       do {
+        now = SystemTime::now();
         // this calc is kinda annoyingly complex
-        float u = float(mSimTime - t) / 0.075f;
+        float u = float(now - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
         mPlayer.CurrentView()->SetEquipPosition(Vec2(0.f, -float(ITEM_OFFSET) * u) );
-      } while(mSimTime-t<0.075f);
+      } while(now-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
@@ -132,6 +151,11 @@ void Game::OnPickup(Room *pRoom) {
       itemType.description, 
       mPlayer.CurrentView()->Parent()
     );
+    if (gItemTypeData[pItem->itemId].triggerType == ITEM_TRIGGER_BOMB) {
+      Bomb* p = mMap.BombFor(pItem);
+      ASSERT(p);
+      p->OnPickup();
+    }
   } else {
     //-----------------------------------------------------------------------
     // PLAYER TRIGGERED ITEM OR KEY PICKUP
@@ -145,15 +169,17 @@ void Game::OnPickup(Room *pRoom) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
       SystemTime t=SystemTime::now();
       Paint();
+      SystemTime now;
       do {
         // this calc is kinda annoyingly complex
-        float u = float(mSimTime - t) / 0.075f;
+        now = SystemTime::now();
+        float u = float(now - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
         mPlayer.CurrentView()->SetItemPosition(Vec2(0.f, -36.f * u) );
-      } while(SystemTime::now()-t<0.075f);
+      } while(now-t<0.075f);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
@@ -240,17 +266,31 @@ void Game::OnDropEquipment(Room *pRoom) {
       }
     }
   } else {
-    // show the dropped item as a normal trigger
-    for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+    // ensure this isn't a bomb site
+    bool isRespawnRoom = false;
+    for(Bomb* b=mMap.BombBegin(); b!=mMap.BombEnd(); ++b) {
+      if (b->RespawnRoom() == pRoom) {
+        isRespawnRoom = true;
+        break;
+      }
+    }
+    if (isRespawnRoom) {
+      mPlayer.CurrentView()->StartShake();
+    } else {
+      // show the dropped item as a normal trigger
+      for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
+        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+        Wait(0.075f, false);
+      }
+      mPlayer.SetEquipment(0);
+      pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
+      mPlayer.CurrentView()->HideEquip();
+      mPlayer.CurrentView()->ShowItem(pItem);
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
+      mPlayer.CurrentView()->StartNod();
       Wait(0.075f, false);
     }
-    mPlayer.SetEquipment(0);
-    pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
-    mPlayer.CurrentView()->HideEquip();
-    mPlayer.CurrentView()->ShowItem(pItem);
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
-    Wait(0.075f, false);
+
   }
 }
 

@@ -34,19 +34,19 @@ public:
 	ViewMode Graphics() const { ASSERT(mFlags.view); return ViewMode(GetCube()->vbuf); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
-	inline unsigned ViewType() const { return mFlags.view ; }
-	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
-	inline bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
-	inline bool IsShowingGatewayEdge() const { return IsShowingEdge() && mView.edge.ShowingGateway(); }
-	inline bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
-	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
-	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
-	inline InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
-	inline MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
+	unsigned ViewType() const { return mFlags.view ; }
+	bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
+	bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
+	bool IsShowingGatewayEdge() const { return IsShowingEdge() && mView.edge.ShowingGateway(); }
+	bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
+	IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
+	RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
+	InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
+	MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
 
 	void Init();
 	void Restore(bool doFlush=true);
-	void Update(float dt);
+	void Update();
   
   	void HideSprites();
 

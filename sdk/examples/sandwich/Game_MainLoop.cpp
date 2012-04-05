@@ -4,10 +4,12 @@ void Game::onNeighbor(
 	void *context,
     Cube::ID c0, Cube::Side s0, 
     Cube::ID c1, Cube::Side s1) {
-	sNeighborDirty = true;
+	gGame.mNeighborDirty = true;
 }
 
 void Game::MainLoop() {
+	ASSERT(this == &gGame);
+	
   	//---------------------------------------------------------------------------
   	// INTRO
 
@@ -24,11 +26,12 @@ void Game::MainLoop() {
 
 	//---------------------------------------------------------------------------
   	// RESET EVERYTHING
+	mNeighborDirty = false;
+	mPrevTime = SystemTime::now();
 	pInventory = 0;
 	pMinimap = 0;
 	mAnimFrames = 0;
 	mNeedsSync = 0;
-	mSimTime = SystemTime::now();
 	mState.Init();
 	mMap.Init();
 	mPlayer.Init(pPrimary);
@@ -53,6 +56,7 @@ void Game::MainLoop() {
 		unsigned targetViewId = 0xff;
 		while(targetViewId == 0xff) {
 			Paint();
+			OnTick();
 			if (mPlayer.CurrentView()->Parent()->Touched()) {
 				if (mPlayer.Equipment()) {
 					OnUseEquipment();
@@ -124,20 +128,17 @@ void Game::MainLoop() {
 	      			mPlayer.CurrentRoom()->OpenDoor();
 	      			mPlayer.CurrentView()->RefreshDoor();
 	      			mPlayer.CurrentView()->HideEquip();
-	      			SystemTime timeout = SystemTime::now();
 	          		#if GFX_ARTIFACT_WORKAROUNDS
 	      			Paint(true);
 	      			mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
 	          		#endif
 	      			Paint(true);
-	      			do {
-	      				Paint();
-	      			} while(SystemTime::now() - timeout <  0.5f);
+	      			Wait(0.5f);
 	      			PlaySfx(sfx_doorOpen);
 	          		// finish up
 	      			for(; progress+WALK_SPEED<=128; progress+=WALK_SPEED) {
-	      				mPlayer.Move(0,-WALK_SPEED);
 	      				Paint();
+	      				mPlayer.Move(0,-WALK_SPEED);
 	      			}
 	          		// fill in the remainder
 	      			mPlayer.SetPosition(
@@ -229,7 +230,7 @@ void Game::MainLoop() {
 	_SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);
 	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, NULL, NULL);
 	for(unsigned i=0; i<64; ++i) { 
-		System::paint(); 
+		DoPaint(false);
 	}
 	PlayMusic(music_winscreen, false);
 	WinScreen();

@@ -27,7 +27,7 @@ void InventoryView::Restore() {
 static const char* kLabels[4] = { "top", "left", "bottom", "right" };
 int t;
 
-void InventoryView::Update(float dt) {
+void InventoryView::Update() {
 	bool touch = UpdateTouch();
 	CORO_BEGIN;
 	while(1) {

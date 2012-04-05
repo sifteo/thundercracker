@@ -9,7 +9,12 @@
 
 class Game {
 private:
-  static bool sNeighborDirty;
+  // hack because these aren't POD
+  static SystemTime mPrevTime;
+  static TimeDelta mDt;
+
+
+  bool mNeighborDirty;
   #if PLAYTESTING_HACKS
   static float sShakeTime;
   #endif
@@ -18,7 +23,6 @@ private:
   GameState mState;
   Map mMap;
   Player mPlayer;
-  SystemTime mSimTime;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;
@@ -28,17 +32,19 @@ private:
 public:
 
   // getters
-  inline GameState* GetState() { return &mState; }
-  inline Map* GetMap() { return &mMap; }
-  inline Player* GetPlayer() { return &mPlayer; }
-  inline ViewSlot* ViewAt(int i) { return mViews+i; }
-  inline ViewSlot* ViewBegin() { return mViews; }
-  inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
-  inline unsigned AnimFrame() const { return mAnimFrames; }
-  inline Int2 BroadDirection() {
+  GameState* GetState() { return &mState; }
+  Map* GetMap() { return &mMap; }
+  Player* GetPlayer() { return &mPlayer; }
+  ViewSlot* ViewAt(int i) { return mViews+i; }
+  ViewSlot* ViewBegin() { return mViews; }
+  ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
+  unsigned AnimFrame() const { return mAnimFrames; }
+  Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);
     return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
   }
+  SystemTime LastPaintTime() const { return mPrevTime; }
+  TimeDelta Dt() const { return mDt; }
 
   bool ShowingMinimap() const { 
       return false; 
@@ -47,6 +53,7 @@ public:
   // methods  
   void MainLoop();
   void Paint(bool sync=false);
+  void DoPaint(bool sync);
   void NeedsSync() { mNeedsSync = 1; }
 
   // events
@@ -82,8 +89,10 @@ private:
   void RoomShake(ViewSlot* view);
 
   // events
+  void OnTick();
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
+  void OnYesOhMyGodExplosion(Bomb* p);
   void OnInventoryChanged();
   void OnTrapdoor(Room *pRoom);
   void OnToggleSwitch(const SwitchData* pSwitch);

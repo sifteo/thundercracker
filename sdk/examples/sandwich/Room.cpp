@@ -40,6 +40,10 @@ bool Room::OpenDoor() {
   return gGame.GetState()->FlagTrigger(Door()->trigger);
 }
 
+void Room::BombThisFucker() {
+  
+}
+
 const uint8_t* Room::OverlayBegin() const {
   return gGame.GetMap()->Data()->rle_overlay + mOverlayIndex;
 }

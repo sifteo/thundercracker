@@ -2,33 +2,26 @@
 #include "Dialog.h"
 #include "DrawingHelpers.h"
 
-bool Game::sNeighborDirty = false;
 Game gGame;
+SystemTime Game::mPrevTime;
+TimeDelta Game::mDt(0.f);
 #if PLAYTESTING_HACKS
 float Game::sShakeTime = -1.f;
 #endif
 
+
 void Game::Paint(bool sync) {
-  if (sNeighborDirty) { 
+  if (mNeighborDirty) { 
     CheckMapNeighbors(); 
   }
   SystemTime now = SystemTime::now();
-  TimeDelta dt = now - mSimTime;
-  mSimTime = now;
-  mPlayer.Update(dt);
+  mPlayer.Update();
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
-    p->Update(dt);
+    p->Update();
   }
-  if (sync || mNeedsSync) {
-    System::paintSync();
-    if (mNeedsSync > 0) {
-      mNeedsSync--;
-    }
-  } else {
-    System::paint();
-  }
-  //
+  DoPaint(sync);
   mAnimFrames++;
+
   #if PLAYTESTING_HACKS
     if (mPlayer.View()->GetCube()->isShaking()) {
       if (sShakeTime < 0.0f) {
@@ -40,6 +33,21 @@ void Game::Paint(bool sync) {
       sShakeTime = -1.f;
     }
   #endif
+}
+
+void Game::DoPaint(bool sync) {
+  if (sync || mNeedsSync) {
+    System::paintSync();
+    if (mNeedsSync > 0) {
+      mNeedsSync--;
+    }
+  } else {
+    System::paint();
+  }
+  SystemTime newTime = SystemTime::now();
+  mDt = newTime - mPrevTime;
+  mPrevTime = newTime;
+  // New/Lost Cube Hook?
 }
 
 void Game::MoveBlock(Sokoblock* block, Int2 u) {
@@ -156,9 +164,6 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   view->ShowLocation(room, true);
   WalkTo(target, false);
   CheckMapNeighbors();
-
-  // clear out any accumulated time
-  mSimTime = SystemTime::now();
 }
 
 void Game::IrisOut(ViewSlot* view) {
@@ -178,14 +183,14 @@ void Game::IrisOut(ViewSlot* view) {
   }
   for(unsigned i=0; i<8; ++i) {
     view->GetCube()->vbuf.touch();
-    System::paintSync();
+    DoPaint(true);
   }
 }
 
 void Game::Zoom(ViewSlot* view, int roomId) {
 #if DO_ZOOM
   PlaySfx(sfx_zoomIn);
-  System::paintSync();
+  DoPaint(true);
   VidMode_BG2 vid(view->GetCube()->vbuf);
   vid.init();
   vid.BG2_setBorder(0x0000);
@@ -205,9 +210,9 @@ void Game::Zoom(ViewSlot* view, int roomId) {
     m.rotate(t * 1.1f);
     m.translate(-64, -64);
     vid.BG2_setMatrix(m);
-    System::paint();
+    DoPaint(false);
   }    
-  System::paintSync();
+  DoPaint(true);
 #endif
 }
 
@@ -229,14 +234,14 @@ void Game::ScrollTo(unsigned roomId) {
   const Int2 target = start + delta;
   Int2 pos;
   ViewMode mode = pView->Graphics();
-  SystemTime t=mSimTime; 
+  SystemTime t=SystemTime::now(); 
   do {
-    float u = float(mSimTime-t) / 2.333f;
+    float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
     DrawOffsetMap(&mode, mMap.Data(), pos);
     Paint(true);
-  } while(mSimTime-t<2.333f && (pos-target).len2() > 4);
+  } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
   mode.BG0_setPanning(Vec2(0,0));
   DrawRoom(&mode, mMap.Data(), roomId);
   Paint(true);

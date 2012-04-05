@@ -52,7 +52,7 @@ public:
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update(float dt);
+  void Update();
 
   void HideOverlay(bool flag);
   

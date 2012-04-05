@@ -57,7 +57,7 @@ void RoomView::Restore() {
   Init(mRoomId);
 }
 
-void RoomView::Update(float dt) {
+void RoomView::Update() {
   ViewMode mode = Parent()->Graphics();
   // update animated tiles (could suffer some optimization)
   const unsigned t = gGame.AnimFrame() - mStartFrame;
@@ -91,7 +91,7 @@ void RoomView::Update(float dt) {
 
   // nod or shake
   if (IsWobbly()) {
-    mWobbles = clamp(mWobbles- 2.f*dt, 0.f, 1.f); // duration = 0.5
+    mWobbles = clamp(mWobbles- 2.f*gGame.Dt().seconds(), 0.f, 1.f); // duration = 0.5
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_0);
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_1);
     switch(flags.wobbleType) {

@@ -26,7 +26,7 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	PlaySfx(sfx_neighbor);
 	for(int i=0; i<16; ++i) {
 		diag.SetAlpha(i<<4);
-		System::paint();
+		gGame.DoPaint(false);
 	}
 	diag.SetAlpha(255);
 }
@@ -59,11 +59,11 @@ void Game::WinScreen() {
 		d.Show("Thanks for Playing!");
 	}
 	PlaySfx(sfx_neighbor);
-	System::paintSync();
+	DoPaint(true);
 	for(int i=0; i<3; ++i) {
 		views[i]->GetCube()->vbuf.touch();
 	}
-	System::paintSync();
+	DoPaint(true);
 
 	t = SystemTime::now();
 	do { System::paint(); } while(SystemTime::now() - t < 5.f);

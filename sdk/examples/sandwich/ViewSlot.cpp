@@ -148,20 +148,20 @@ void ViewSlot::Restore(bool doFlush) {
 	}
 }
 
-void ViewSlot::Update(float dt) {
+void ViewSlot::Update() {
 	mFlags.prevTouch = GetCube()->touching();
 	switch(mFlags.view) {
 	case VIEW_ROOM:
-		mView.room.Update(dt);
+		mView.room.Update();
 		break;
 	case VIEW_INVENTORY:
-		mView.inventory.Update(dt);
+		mView.inventory.Update();
 		break;
 	case VIEW_MINIMAP:
-		mView.minimap.Update(dt);
+		mView.minimap.Update();
 		break;
 	case VIEW_EDGE:
-		mView.edge.Update(dt);
+		mView.edge.Update();
 		break;
 	}
 }
