@@ -421,7 +421,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case EventID_Update:
             // TODO check first run
-            newStateIndex = GameStateIndex_MainMenu;
+            //newStateIndex = GameStateIndex_MainMenu;
+            newStateIndex = GameStateIndex_Title;
             break;
 
         default:

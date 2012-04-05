@@ -428,6 +428,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case GameStateIndex_PlayScored:
                 newStateIndex = CubeStateIndex_NotWordScored;
                 break;
+            case GameStateIndex_Title:
+                newStateIndex = CubeStateIndex_Title;
+                break;
+
             default:
                 break;
             }
@@ -1935,7 +1939,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
     params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
     params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     params->mCubeID = getCube().id();
-    params->mBonus = false; // TODO
+    //params->mBonus = GameStateMachine::getCurrentWordIsBonus();
     unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
     unsigned letter0Index = mPuzzlePieceIndex * mlpc;
     unsigned mli = Dictionary::getCurrentPuzzleMetaLetterIndex();

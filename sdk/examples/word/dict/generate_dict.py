@@ -13,7 +13,7 @@ import string
 
 allowed_word_lens = [3, 4, 5, 6, 8, 9] # FIXME 7 letter words. why not?
 min_nonbonus_anagrams = 2
-min_freq_bonus = 4
+min_freq_bonus = 3
 word_list_leading_spaces = {}
 generate_examples = False
 
@@ -211,36 +211,35 @@ def generate_dict():
         bad_words[line.strip().upper()] = True
     fi.close()
     
-    if generate_examples:
-        # uncomment to regenerate: 
-        #generate_word_list_file()
-        freq_files = os.listdir("frequency")
-        freq_files = sorted(freq_files, key=lambda name: name.split('.')[1])
-        #print freq_files
-        freq_dicts = []
-        for fn in freq_files:
-            d = {}
-            fi = codecs.open("frequency/" + fn, "r", encoding='latin-1')
-            for line in fi:
-                word = strip_accents(line.strip()).upper()
-                if word in dictionary:
-                    d[word] = True        
-            fi.close()        
-            freq_dicts.append(d)
+    # uncomment to regenerate: 
+    #generate_word_list_file()
+    freq_files = os.listdir("frequency")
+    freq_files = sorted(freq_files, key=lambda name: name.split('.')[1])
+    #print freq_files
+    freq_dicts = []
+    for fn in freq_files:
+        d = {}
+        fi = codecs.open("frequency/" + fn, "r", encoding='latin-1')
+        for line in fi:
+            word = strip_accents(line.strip()).upper()
+            if word in dictionary:
+                d[word] = True        
+        fi.close()        
+        freq_dicts.append(d)
 
-        i = 0
-        for fd in freq_dicts:
-            print "using " + str(len(fd.keys())) + " words from " + freq_files[i]
-            i += 1
-        print_time = len(dictionary.keys())/39
-        i = 0
-        for word in dictionary.keys():    
-            if (i % print_time) == 0:
-                print ".",
-            i += 1
-            dictionary[word] = get_word_freq_slow(word, freq_dicts)
-            if dictionary[word] >= len(freq_dicts):
-                del dictionary[word]
+    i = 0
+    for fd in freq_dicts:
+        print "using " + str(len(fd.keys())) + " words from " + freq_files[i]
+        i += 1
+    print_time = len(dictionary.keys())/39
+    i = 0
+    for word in dictionary.keys():    
+        if (i % print_time) == 0:
+            print ".",
+        i += 1
+        dictionary[word] = get_word_freq_slow(word, freq_dicts)
+        if dictionary[word] >= len(freq_dicts):
+            del dictionary[word]
     print ""
     print "words in dict: " + str(len(dictionary))
 
@@ -373,12 +372,14 @@ def generate_dict():
         for letter in word:
             bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
             letter_index += 1
-        if get_word_freq(word, dictionary) <= min_freq_bonus:
+        freq = get_word_freq(word, dictionary)
+        #print "game dictionary entry: " + word + ", frequency category: " + str(freq) + "\n"
+        if freq <= min_freq_bonus:
             bits |= (1 << 63)
             #print "533D: " + word
-            fi.write("    " + hex(bits) + ",\t\t// " + word + ", length: " + str(len(word)) + ")\n")
+            fi.write("    " + hex(bits) + ",\t\t// " + word + ", length: " + str(len(word)) + ", freq. cat.: " + str(freq) + "\n")
         else:
-            fi.write("    " + hex(bits) + ",\t\t// " + word + ", (bonus), length: " + str(len(word)) + ")\n")
+            fi.write("    " + hex(bits) + ",\t\t// " + word + ", (bonus), length: " + str(len(word))  + ", freq. cat.: " + str(freq) +  "\n")
     fi.write("};\n")
     fi.close()
     

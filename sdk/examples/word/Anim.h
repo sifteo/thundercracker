@@ -49,7 +49,6 @@ struct AnimParams
     bool mLeftNeighbor, mRightNeighbor;
     Cube::ID mCubeID;
     int mCubeAnim;
-    bool mBonus;
     unsigned char mMetaLetterIndex;
     unsigned char mLettersPerCube;
     bool mAllMetaLetters;

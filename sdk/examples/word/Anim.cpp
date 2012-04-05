@@ -287,6 +287,76 @@ bool animPaint(AnimType animT,
         {
             4, 5, 6, 5, 4
         };
+        const LevelProgressData &progressData =
+                GameStateMachine::getInstance().getLevelProgressData();
+
+        const static AssetImage *CheckMarkImagesBottom[] =
+        {
+            0,
+            &BorderSlotBlank,
+            &BorderSlotNormal,
+            &BorderSlotBonus,
+
+        };
+
+        const static AssetImage *CheckMarkImagesTop[] =
+        {
+            0,
+            0,
+            &BorderSlotHint,
+            0,
+
+        };
+
+        const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
+        bool isBonus = false;
+        for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
+        {
+            if (i < TopRowStartIndex)
+            {
+                if (params->mCubeAnim == CubeAnim_Main)
+                {
+                    // row 1, bottom
+                    const AssetImage *image =
+                            CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
+                    if (image)
+                    {
+                        isBonus = (progressData.mPuzzleProgress[i] == CheckMarkState_CheckedBonus);
+                        bg1->DrawAsset(Vec2(2 + i * 2, 14), *image, MIN(image->frames-1, 2));
+                    }
+                }
+            }
+            else
+            {
+                if (params->mCubeAnim == CubeAnim_Hint)
+                {
+                    unsigned hintIndex = i - TopRowStartIndex;
+                    if (hintIndex < MAX_HINTS)
+                    {
+                        unsigned numHints = GameStateMachine::getInstance().getNumHints();
+                        if (hintIndex  < numHints)
+                        {
+                            unsigned char assetFrames = (*CheckMarkImagesTop[2]).frames;
+                            unsigned char assetFrame = 0;
+                            if (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1)
+                            {
+                                // loop X times
+                                float f = fmodf(animPct * 3.f, 1.f);
+                                assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
+                            }
+
+                            bg1->DrawAsset(Vec2(1 + hintIndex * 2, 0), *CheckMarkImagesTop[2], assetFrame);
+                        }
+             /*           else
+                        {
+                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
+                        }
+                        */
+                    }
+                }
+            }
+        }
+
         unsigned char bottomBorderFrame = 0;
         if (animT == AnimType_NewWord)
         {
@@ -294,7 +364,7 @@ bool animPaint(AnimType animT,
             float t = 2.f *animTime/data.mDuration;
             t = fmodf(t, 1.0f);
             bottomBorderFrame =
-                    (params->mBonus) ?
+                    (isBonus) ?
                         NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:
                         NewWordBorderFrames[MIN(arraysize(NewWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewWordBorderFrames))))];
         }
@@ -340,74 +410,6 @@ bool animPaint(AnimType animT,
 
         default:
                 break;
-        }
-        const LevelProgressData &progressData =
-                GameStateMachine::getInstance().getLevelProgressData();
-
-        const static AssetImage *CheckMarkImagesBottom[] =
-        {
-            0,
-            &BorderSlotBlank,
-            &BorderSlotNormal,
-            &BorderSlotBonus,
-
-        };
-
-        const static AssetImage *CheckMarkImagesTop[] =
-        {
-            0,
-            0,
-            &BorderSlotHint,
-            0,
-
-        };
-
-        const unsigned TopRowStartIndex = arraysize(progressData.mPuzzleProgress)/2;
-
-        for (unsigned i = 0; i < arraysize(progressData.mPuzzleProgress); ++i)
-        {
-            if (i < TopRowStartIndex)
-            {
-                if (params->mCubeAnim == CubeAnim_Main)
-                {
-                    // row 1, bottom
-                    const AssetImage *image =
-                            CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
-                    if (image)
-                    {
-                        bg1->DrawAsset(Vec2(2 + i * 2, 14), *image);
-                    }
-                }
-            }
-            else
-            {
-                if (params->mCubeAnim == CubeAnim_Hint)
-                {
-                    unsigned hintIndex = i - TopRowStartIndex;
-                    if (hintIndex < MAX_HINTS)
-                    {
-                        unsigned numHints = GameStateMachine::getInstance().getNumHints();
-                        if (hintIndex  < numHints)
-                        {
-                            unsigned char assetFrames = (*CheckMarkImagesTop[2]).frames;
-                            unsigned char assetFrame = 0;
-                            if (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1)
-                            {
-                                // loop X times
-                                float f = fmodf(animPct * 3.f, 1.f);
-                                assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
-                            }
-
-                            bg1->DrawAsset(Vec2(1 + hintIndex * 2, 0), *CheckMarkImagesTop[2], assetFrame);
-                        }
-             /*           else
-                        {
-                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
-                        }
-                        */
-                    }
-                }
-            }
         }
 
     }
