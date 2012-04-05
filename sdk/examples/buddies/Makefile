@@ -1,7 +1,5 @@
 APP = buddies
 
-ENABLE_OPT_01 = 1
-
 TC_DIR = ../../..
 include $(TC_DIR)/sdk/Makefile.defs
 
