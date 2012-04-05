@@ -13,7 +13,7 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-static Platform platform1(0, Vec2(64, 64));
+static LPlatform platform1(0, Vec2(64, 64));
 static Platform platform2(1, Vec2(32, 96));
 static Thing michelangelo(2, Vec2(32, 32));
 
@@ -42,7 +42,6 @@ void collisions(Thing **things, int num_things){
     for (int i = 0; i < num_things; i++){
         for (int j = i+1; j < num_things; j++){
             if (things[i]->isTouching(*things[j])){
-                LOG(("Things %d and %d collided\n", i, j));
                 things[i]->collided(things[j]);
                 things[j]->collided(things[i]);
             }

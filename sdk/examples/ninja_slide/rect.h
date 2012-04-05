@@ -61,16 +61,9 @@ class Rect {
 //     }
 
     bool isTouching(Rect &other){
-        bool result = 
-            !isEmpty() && !other.isEmpty()
+        return !isEmpty() && !other.isEmpty()
             && origin.x <= (other.origin.x + other.size.x - 1) && (origin.x + size.x - 1) >= other.origin.x
             && origin.y <= (other.origin.y + other.size.y - 1) && (origin.y + size.y - 1) >= other.origin.y;
-        if (result){
-            LOG(("isTouching: me: %d %d %d %d\n", origin.x, origin.y, size.x, size.y));
-            LOG(("isTouching: other: %d %d %d %d\n", other.origin.x, other.origin.y, other.size.x, other.size.y));
-            LOG(("isTouching: result=%d\n", result));
-        }
-        return result;
     }
 
 

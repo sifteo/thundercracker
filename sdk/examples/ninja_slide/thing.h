@@ -122,7 +122,6 @@ class LPlatform : public Platform {
     }
 
     virtual void draw(VidMode_BG0_SPR_BG1 vid){
-        LOG(("LPlatform.draw: frames=%d\n", pImage->frames));
         ASSERT(pImage->frames == 4);
 
         int frameNum = orientation;
