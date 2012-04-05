@@ -17,7 +17,8 @@ public:
         unsigned neighborRemove;
     } cubes[CUBE_ALLOCATION];
     
-    void install() {
+    void install()
+    {
         Events::cubeTouch.set(&EventCounters::onTouch, this);
         Events::cubeShake.set(&EventCounters::onShake, this);
         Events::neighborAdd.set(&EventCounters::onNeighborAdd, this);
@@ -25,30 +26,34 @@ public:
     }
 
 private:
-    void onTouch(CubeEvent c) {
-//        cubes[c].touch++;
-        LOG(("Touched cube #%d\n", int(c)));
+    void onTouch(unsigned cube)
+    {
+        cubes[cube].touch++;
+        LOG(("Touched cube #%d\n", cube));
     }
 
-    void onShake(CubeEvent c) {
-        cubes[c].shake++;
-        LOG(("Shaking cube #%d\n", int(c)));
+    void onShake(unsigned cube)
+    {
+        cubes[cube].shake++;
+        LOG(("Shaking cube #%d\n", cube));
     }
 
-    void onNeighborRemove(NeighborEvent nb) {
-//        cubes[nb.firstCube()].neighborRemove++;
-//        cubes[nb.secondCube()].neighborRemove++;
+    void onNeighborRemove(unsigned firstCube, unsigned firstSide,
+        unsigned secondCube, unsigned secondSide)
+    {
+        cubes[firstCube].neighborRemove++;
+        cubes[secondCube].neighborRemove++;
         LOG(("Neighbor Remove: %d:%d - %d:%d\n",
-            int(nb.firstCube()), nb.firstSide(),
-            int(nb.secondCube()), nb.secondSide()));
+            firstCube, firstSide, secondCube, secondSide));
     }
 
-    void onNeighborAdd(NeighborEvent nb) {
-        cubes[nb.firstCube()].neighborAdd++;
-        cubes[nb.secondCube()].neighborAdd++;
+    void onNeighborAdd(unsigned firstCube, unsigned firstSide,
+        unsigned secondCube, unsigned secondSide)
+    {
+        cubes[firstCube].neighborAdd++;
+        cubes[secondCube].neighborAdd++;
         LOG(("Neighbor Add: %d:%d - %d:%d\n",
-            int(nb.firstCube()), nb.firstSide(),
-            int(nb.secondCube()), nb.secondSide()));
+            firstCube, firstSide, secondCube, secondSide));
     }
 };
 
