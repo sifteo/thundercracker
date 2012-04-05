@@ -767,7 +767,7 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
     int numBuddies = NUM_BUDDIES - 1; // Don't allow invisible buddy!
     
     Random random;
-    int selection = random.randrange(numBuddies - kNumCubes - 1) + 1;
+    int selection = random.randrange(1U, numBuddies - kNumCubes);
     
     for (int j = 0; j < selection; ++j)
     {
