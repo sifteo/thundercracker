@@ -1133,15 +1133,11 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="48" height="56">
-  <object name="temple_level1Gate" type="Gateway" x="5" y="571" width="32" height="32">
-   <properties>
-    <property name="target" value="temple_level1:temple_level2Gate"/>
-   </properties>
-  </object>
   <object name="temple_level3Gate" type="Gateway" x="10" y="181" width="32" height="32">
    <properties>
-    <property name="target" value="temple_level3:temple_level2Gate"/>
+    <property name="target" value="temple_level3:SpawnPoint"/>
    </properties>
   </object>
+  <object name="SpawnPoint" type="Location" x="14" y="562" width="32" height="32"/>
  </objectgroup>
 </map>
