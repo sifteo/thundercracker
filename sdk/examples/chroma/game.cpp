@@ -1088,6 +1088,12 @@ void Game::HandleMainMenu()
 
     menu.setIconYOffset( 25 );
 
+    //clear out the other cubes
+    for( int i = 1; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].GetVid().clear( GemEmpty.tiles[0] );
+    }
+
     while(menu.pollEvent(&e))
     {
         switch(e.type)
@@ -1115,29 +1121,4 @@ void Game::HandleMainMenu()
     {
         m_cubes[i].Reset();
     }
-
-    /*int choice;
-
-    if( !m_menu.Update( choice ) )
-    {
-        setState( STATE_INTRO );
-        if( choice < MODE_CNT )
-        {
-            m_mode = (GameMode)choice;
-
-            if( m_mode == MODE_BLITZ )
-                m_iLevel = 3;
-            else
-                m_iLevel = 0;
-
-            for( int i = 0; i < NUM_CUBES; i++ )
-            {
-                m_cubes[i].Reset();
-            }
-        }
-        else
-            ASSERT( 0 );  //TODO settings!
-    }
-
-    */
 }
