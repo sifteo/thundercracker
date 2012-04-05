@@ -129,7 +129,6 @@ class Map:
 			except:
 				self.overlay = None
 
-
 		self.background_id = posixpath.basename(self.background.gettileset().imgpath)
 		if self.overlay is not None:
 			self.overlay_id = posixpath.basename(self.overlay.gettileset().imgpath)
@@ -161,6 +160,23 @@ class Map:
 			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
 				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(1,7) ]
 				r.portals[SIDE_RIGHT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+
+		# validate boooombs
+		for room in self.rooms:
+			if room.x == 0: 
+				assert not room.can_bomb[SIDE_LEFT]
+			elif room.x == self.width-1:
+				assert not room.can_bomb[SIDE_RIGHT]
+			else:
+				assert room.can_bomb[SIDE_RIGHT] == self.roomat(room.x+1, room.y).can_bomb[SIDE_LEFT]
+			if room.y == 0:
+				assert not room.can_bomb[SIDE_TOP]
+			elif room.y == self.height-1:
+				assert not room.can_bomb[SIDE_BOTTOM]
+			else:
+				assert room.can_bomb[SIDE_BOTTOM] == self.roomat(room.x, room.y+1).can_bomb[SIDE_TOP]
+		self.bombables = [(room.lid,0) for room in self.rooms if room.can_bomb[SIDE_RIGHT]]+[(room.lid,1) for room in self.rooms if room.can_bomb[SIDE_BOTTOM]]
+
 		# validate portals
 		for r in self.rooms:
 			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
@@ -336,6 +352,13 @@ class Map:
 					src.write("{0x%x,0x%x,0x%x}," % (count, d.event, d.event_id))
 			src.write("{0x0,0x0,0x0}};\n")
 
+		### EXPORT BOMBABLES ###
+		if len(self.bombables) > 0:
+			src.write("static const BombableData %s_bombables[] = {" % self.id)
+			for rid,sid in self.bombables:
+				src.write("{0x%x,0x%x}," % (rid,sid))
+			src.write("{0x7f,0x0}};\n")
+
 		### EXPORT OVERLAY ###
 		if self.overlay is not None:
 			src.write("static const uint8_t %s_overlay_rle[] = {" % self.id)
@@ -413,7 +436,8 @@ class Map:
 			"%(lavatiles)s, " \
 			"%(diagsubdivs)s, " \
 			"%(bridgesubdivs)s, " \
-			"%(sokoblocks)s, "
+			"%(sokoblocks)s, " \
+			"%(bombables)s," \
 			"0x%(nanimtiles)x, " \
 			"0x%(ambient)x, " \
 			"0x%(w)x, " \
@@ -440,7 +464,8 @@ class Map:
 				"ambient": self.ambientType,
 				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
-				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0"
+				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0",
+				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0"
 			})
 
 

@@ -31,6 +31,9 @@ using namespace Sifteo;
 #define EVENT_ADVANCE_QUEST_AND_TELEPORT    2
 #define EVENT_OPEN_DOOR                     3
 
+#define BOMBABLE_ORIENTATION_HORIZONTAL 0
+#define BOMBABLE_ORIENTATION_VERTICAL   1
+
 struct QuestData {
     uint8_t mapId;
     uint8_t roomId;
@@ -148,6 +151,12 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+struct BombableData {
+    uint8_t rid : 7;
+    uint8_t orientation : 1;
+
+};
+
 typedef uint8_t TileSetID;
 
 // replace pointers with <32bit offsets-from-known-locations?
@@ -180,6 +189,7 @@ struct MapData {
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
     const SokoblockData* sokoblocks;
+    const BombableData* bombables;
 
     // other counts
     uint8_t animatedTileCount; // do we really need this? can we null-terminate?

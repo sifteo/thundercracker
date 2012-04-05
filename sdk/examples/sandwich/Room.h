@@ -25,6 +25,11 @@ private:
   uint8_t mPrimarySlotType : 4;
   uint8_t mPrimarySlotId : 4;
 
+  struct {
+    uint8_t canMask : 4;
+    uint8_t didMask : 4;
+  } mBomb;
+
 public:
 
   //---------------------------------------------------------------------------
