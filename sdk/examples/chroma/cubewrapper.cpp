@@ -1970,6 +1970,8 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
     if( bDrawBox )
         m_vid.BG0_drawAsset(Vec2(0,0), UI_BG, 0);
 
+    //LOG(( "Drawing message box with text %s\n", pTxt ));
+
     //count how many lines of text we have
     int charCnt = 0;
     int index = 0;
@@ -2005,8 +2007,10 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
         charCnt++;
         index++;
 
+        //LOG(( "%c at %d\n", pTxt[index], charCnt));
+
         //break at last space seen
-        if( charCnt >= MAX_LINE_LENGTH - 2 )
+        if( charCnt > MAX_LINE_LENGTH - 1 )
         {
             ASSERT( lastspaceseen >= 0 );
             if( lastspaceseen < 0 )
@@ -2014,9 +2018,11 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
                 return;
             }
 
+            //LOG(("breaking line %d at %d, %s\n", numLines, lastspaceseen, pTxt + lastspaceseen));
+
             lineBreakIndices[ numLines ] = lastspaceseen;
-            lastspaceseen = -1;
-            charCnt = 0;
+            charCnt = index - lastspaceseen - 1;
+            lastspaceseen = -1;            
             numLines++;
 
             if( numLines > MAX_LINES )
@@ -2036,6 +2042,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
         int endlineindex = i < numLines -1 ? lineBreakIndices[i + 1] : index;
         int length = endlineindex - lineBreakIndices[i];
 
+        //LOG(( "line %d of %d, length %d, %s\n", i, numLines, length, pTxt + lineBreakIndices[i] + 1 ));
         ASSERT( length >= 0 && length <= MAX_LINE_LENGTH );
 
         if( length < 0 || length > MAX_LINE_LENGTH )
