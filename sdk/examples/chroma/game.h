@@ -39,6 +39,11 @@ public:
         STATE_NEXTPUZZLE,
         STATE_GAMEMENU,
         STATE_GAMEOVERBANNER,
+
+        //more menus
+        STATE_PUZZLEMENU,
+        STATE_CHAPTERSELECTMENU,
+        STATE_PUZZLESELECTMENU,
 	} GameState;
 
 	typedef enum
@@ -53,7 +58,6 @@ public:
 	
 	Game();
 
-    static const unsigned int NUM_MAIN_MENU_ITEMS = 4;
     static const unsigned int NUM_HIGH_SCORES = 5;
     static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
@@ -170,7 +174,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void HandleMainMenu();
+    void HandleMenu();
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
@@ -182,7 +186,8 @@ private:
     //how many colors were involved in this
     bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
-	unsigned int m_iLevel;
+    uint8_t m_iLevel;
+    uint8_t m_iFurthestProgress;
 	GameState m_state;
 	GameMode m_mode;
     float m_stateTime;

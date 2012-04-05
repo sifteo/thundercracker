@@ -77,13 +77,22 @@ GlimmerImg = image{"Glimmer.png", height=32}
 UI_Main_Menu_Blitz = image{"ui_main_menu_rush.png"}
 UI_Main_Menu_Puzzle = image{"ui_main_menu_puzzle.png"}
 UI_Main_Menu_Survival = image{"ui_main_menu_survival.png"}
-UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
 UI_Main_Menu_TipsTouch = image{"ui_main_menu_tips_touch.png"}
 UI_Main_Menu_TipsTilt = image{"ui_main_menu_tips_tilt.png"}
 UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
 UI_Game_Menu_Continue = image{"ui_game_menu_continue.png"}
 UI_Game_Menu_Restart = image{"UI_screen_touch_restart.png"}
---UI_Main_Menu_Continue = image{"ui_main_menu_continue.png"}
+UI_Main_Menu_Continue = image{"ui_main_menu_continue.png"}
+UI_Main_Menu_NewGame = image{"ui_main_menu_new_game.png"}
+UI_Main_Menu_Back = image{"ui_main_menu_back.png"}
+UI_Main_Menu_ChapterSelect = image{"ui_chapter_menu_select.png"}
+UI_Main_Menu_Chapter = image{"ui_main_menu_chapter.png"}
+UI_Main_Menu_ChapterLock = image{"ui_chapter_menu_lock.png"}
+UI_Main_Menu_PuzzleLock = image{"ui_puzzle_menu_lock.png"}
+UI_Main_Menu_PuzzleBack = image{"ui_puzzle_menu_back.png"}
+UI_Puzzle_Menu_Topbar = image{"ui_puzzle_mode_topbar.png"}
+UI_ChapterSelect_Topbar = image{"ui_chapter_select_topbar.png"}
+UI_PuzzleSelect_Menu_Topbar = image{"ui_puzzle_select_topbar.png"}
 --for clearing
 White = image{"White.png"}
 

@@ -100,6 +100,9 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
+
+    //TODO READ THIS FROM SAVE FILE
+    m_iFurthestProgress = 10;
 }
 
 
@@ -113,10 +116,18 @@ void Game::Update()
     bool needsync = false;
 
     //painting is handled by menu manager
-    if( m_state == STATE_MAINMENU )
+    switch( m_state )
     {
-        HandleMainMenu();
-        return;
+        case STATE_MAINMENU:
+        case STATE_PUZZLEMENU:
+        case STATE_CHAPTERSELECTMENU:
+        case STATE_PUZZLESELECTMENU:
+        {
+            HandleMenu();
+            return;
+        }
+        default:
+            break;
     }
 
     if( m_bForcePaintSync )
@@ -1078,13 +1089,71 @@ void Game::ReturnToMainMenu()
 
 
 
-void Game::HandleMainMenu()
+void Game::HandleMenu()
 {
-    struct MenuItem items[NUM_MAIN_MENU_ITEMS + 1] = { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Settings, NULL}, {NULL, NULL} };
-    struct MenuAssets assets = {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}};
+    const unsigned int MAX_MENU_ITEMS = 8;
+
+    MenuItem allmenuitems[][ MAX_MENU_ITEMS ] =
+    {
+        //main menu
+        { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
+        //puzzle menu
+        { {&UI_Main_Menu_Continue, NULL}, {&UI_Main_Menu_NewGame, NULL}, {&UI_Main_Menu_ChapterSelect, NULL}, {&UI_Main_Menu_Back, NULL}, {NULL, NULL} },
+        //chapter select menu
+        { {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {NULL, NULL} },
+        //puzzle select menu
+        { {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
+    };
+
+    MenuAssets allmenuassets[] =
+    {
+        //main menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //puzzle menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Puzzle_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //chapter select menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_ChapterSelect_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //puzzle select menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_PuzzleSelect_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+    };
+
+    MenuItem *pItems = allmenuitems[0];
+    MenuAssets *pAssets = &allmenuassets[0];
+
+    switch( m_state )
+    {
+        case STATE_MAINMENU:
+        {
+            pItems = allmenuitems[0];
+            pAssets = &allmenuassets[0];
+            break;
+        }
+        case STATE_PUZZLEMENU:
+        {
+            pItems = allmenuitems[1];
+            pAssets = &allmenuassets[1];
+            break;
+        }
+        case STATE_CHAPTERSELECTMENU:
+        {
+            pItems = allmenuitems[2];
+            pAssets = &allmenuassets[2];
+            //certain menu types will have to reinit the menu items list
+            break;
+        }
+        case STATE_PUZZLESELECTMENU:
+        {
+            pItems = allmenuitems[3];
+            pAssets = &allmenuassets[3];
+            //certain menu types will have to reinit the menu items list
+            break;
+        }
+        default:
+        ASSERT(0);
+    }
 
     struct MenuEvent e;
-    Menu menu(&m_cubes[0].GetCube(), &assets, items);
+    Menu menu(&m_cubes[0].GetCube(), pAssets, pItems);
 
     menu.setIconYOffset( 25 );
 
@@ -1098,24 +1167,44 @@ void Game::HandleMainMenu()
     {
         switch(e.type)
         {
-            case MENU_ITEM_PRESS:
-                // settings not usable
-                if(e.item == 3) {
-                    menu.preventDefault();
-                }
-                break;
+
             default:
                 break;
         }
     }
 
-    TransitionToState( STATE_INTRO );
-    m_mode = (GameMode)e.item;
 
-    if( m_mode == MODE_BLITZ )
-        m_iLevel = 3;
-    else
-        m_iLevel = 0;
+    switch( m_state )
+    {
+        case STATE_MAINMENU:
+        {
+            GameState targetState = STATE_INTRO;
+            m_mode = (GameMode)e.item;
+            m_iLevel = 0;
+
+            if( m_mode == MODE_BLITZ )
+                m_iLevel = 3;
+            else if( m_mode == MODE_PUZZLE && m_iFurthestProgress > 0 )
+                targetState = STATE_PUZZLEMENU;
+
+            TransitionToState( targetState );
+            break;
+        }
+        case STATE_PUZZLEMENU:
+        {
+            break;
+        }
+        case STATE_CHAPTERSELECTMENU:
+        {
+            break;
+        }
+        case STATE_PUZZLESELECTMENU:
+        {
+            break;
+        }
+        default:
+            ASSERT(0);
+    }
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
