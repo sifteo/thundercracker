@@ -316,7 +316,7 @@ void CubeWrapper::Draw()
                 if( pPuzzle )
                 {
                     String<64> buf;
-                    buf << "Puzzle: " << pPuzzle->m_pName << " (" << Game::Inst().GetPuzzleIndex() << "/" << Puzzle::GetNumPuzzles() << ")";
+                    buf << "Puzzle " << Game::Inst().GetPuzzleIndex() << "\n" << pPuzzle->m_pName;
                     DrawMessageBoxWithText( buf );
                 }
             }
@@ -1981,10 +1981,26 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
 
     lineBreakIndices[0] = -1;
 
-    while( pTxt[index] && pTxt[index] != '\n' )
+    while( pTxt[index] )
     {
         if( pTxt[index] == ' ' )
             lastspaceseen = index;
+        else if( pTxt[index] == '\n' )
+        {
+            lineBreakIndices[ numLines ] = index;
+            lastspaceseen = -1;
+            charCnt = 0;
+            numLines++;
+
+            if( numLines > MAX_LINES )
+            {
+                ASSERT( 0 );
+                return;
+            }
+
+            index++;
+            continue;
+        }
 
         charCnt++;
         index++;
