@@ -4,8 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG0ROM_H
-#define _SIFTEO_VIDEO_BG0ROM_H
+#ifndef _SIFTEO_VIDEO_BG0_H
+#define _SIFTEO_VIDEO_BG0_H
 
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
@@ -14,59 +14,17 @@
 #include <sifteo/abi.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
+#include <sifteo/asset.h>
 
 namespace Sifteo {
 
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG0_ROM mode.
- * We have an 18x18 tile grid, just like the normal BG0 mode, but
- * the tile data in our case comes from a built-in image ROM in
- * the cube firmware.
- *
- * This mode can be used to draw specific built-in graphics, or it
- * can be used to draw debug text using the cube's built-in ROM font.
+ * This is a VRAM accessor for drawing graphics in the BG0 mode.
+ * We have an 18x18 tile grid, which wraps around in both axes.
  */
-struct BG0ROMDrawable {
+struct BG0Drawable {
     _SYSAttachedVideoBuffer sys;
-
-    /**
-     * Palette IDs, XOR'ed with the tile IDs below.
-     *
-     * XXX: The ROM artwork is not currently finalized. These color palettes may change.
-     */
-    enum Palette {
-        BLACK       = 0 << 10,
-        BLUE        = 1 << 10,
-        ORANGE      = 2 << 10,
-        INVORANGE   = 3 << 10,
-        RED         = 4 << 10,
-        GRAY        = 5 << 10,
-        INV         = 6 << 10,
-        INVGRAY     = 7 << 10,
-        LTBLUE      = 8 << 10,
-        LTORANGE    = 9 << 10,
-    };
-
-    /**
-     * Well-known tile numbers.
-     *
-     * XXX: The ROM artwork is not currently finalized. These tiles may change.
-     */
-    enum Tiles {
-        FONT_SPACE  = 0,        // First character in the font, ASCII space
-        SOLID_BG    = 0,        // Solid background-colored tile (space)
-        SOLID_FG    = 0x1fe,    // Solid foreground-colored tile
-        BARGRAPH    = 0x060,    // First tile in the horizontal bargraph series
-    };
-
-    /**
-     * Color modes, XOR'ed with the tile IDs below.
-     */
-    enum ColorMode {
-        TWO_COLOR   = 0 << 9,
-        FOUR_COLOR  = 1 << 9,
-    };
 
     /**
      * Return the width, in tiles, of this mode
@@ -126,11 +84,19 @@ struct BG0ROMDrawable {
 
     /**
      * Erase mode-specific VRAM, filling the BG0 buffer with the specified
-     * value and resetting the panning registers.
+     * absolute tile index value and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
         _SYS_vbuf_fill(&sys.vbuf, 0, _SYS_TILE77(index), sizeInWords());
         setPanning(Vec2(0,0));
+    }
+
+    /**
+     * Erase mode-specific VRAM, filling the BG0 buffer with the first tile
+     * from the specified PinnedAssetImage and resetting the panning registers.
+     */
+    void erase(const PinnedAssetImage &image) {
+        erase(image.tile(sys.cube, 0));
     }
 
     /**
@@ -147,14 +113,8 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Calculate the tile index of one character in the ROM font.
-     */
-    static uint16_t charTile(char c, enum Palette palette = BLACK) {
-        return palette ^ (c - ' ' + FONT_SPACE);
-    }
-
-    /**
-     * Plot a single tile, at location 'pos', in tile units.
+     * Plot a single tile, by absolute tile index,
+     * at location 'pos' in tile units.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
@@ -165,8 +125,8 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, given the position of the
-     * leftmost tile, and the number of tiles to plot.
+     * Plot a horizontal span of tiles, by absolue tile index,
+     * given the position of the leftmost tile and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
@@ -194,46 +154,48 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Draw a horizontal bargraph, with its top-left corner position
-     * specified in tiles, and its width in pixels.
+     * Draw a full AssetImage frame, with its top-left corner at the
+     * specified location. Locations are specified in tile units, relative
+     * to the top-left of the 18x18 grid.
      *
-     * The progress bar is drawn using tiles from the ROM. Fully empty tiles
-     * are not drawn. Completely full tiles are drawn using a SOLID_FG tile,
-     * and partially full tiles use the BARGRAPH series of tile images.
+     * All coordinates must be in range. This function performs no clipping.
      */
-    void hBargraph(Int2 topLeft, unsigned pixelWidth,
-        enum Palette palette = BLACK, unsigned tileHeight = 1)
+    void image(UInt2 pos, const AssetImage &image, unsigned frame = 0)
     {
-        unsigned addr = topLeft.x + topLeft.y * tileWidth();
-        int wTiles = pixelWidth / 8;
-        int wRemainder = pixelWidth % 8;
-
-        while (tileHeight--) {
-            _SYS_vbuf_fill(&sys.vbuf, addr,
-                _SYS_TILE77(palette ^ SOLID_FG), wTiles);
-            if (wRemainder)
-                _SYS_vbuf_poke(&sys.vbuf, addr + wTiles,
-                    _SYS_TILE77(palette ^ (BARGRAPH + wRemainder - 1)));
-            addr += tileWidth();
-        }
+        _SYS_image_BG0Draw(&sys, image, pos.x + pos.y * tileWidth(), frame);
     }
 
     /**
-     * Draw text, using the builtin ROM font, starting at location 'topLeft'
-     * in tiles. Drawing characters not present in the ROM font will have
-     * undefined results.
+     * Draw part of an AssetImage frame, with its top-left corner at the
+     * specified location. Locations are specified in tile units, relative
+     * to the top-left of the 18x18 grid.
+     *
+     * All coordinates must be in range. This function performs no clipping.
      */
-    void text(Int2 topLeft, const char *str, enum Palette palette = BLACK)
+    void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY, unsigned frame = 0)
+    {
+        _SYS_image_BG0DrawRect(&sys, image, destXY.x + destXY.y * tileWidth(),
+            frame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
+    }
+
+    /**
+     * Draw text, using an AssetImage as a fixed width font. Each character
+     * is represented by a consecutive 'frame' in the image. Characters not
+     * present in the font will be skipped.
+     */
+    void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
     {
         unsigned addr = topLeft.x + topLeft.y * tileWidth();
         unsigned lineAddr = addr;
         char c;
 
         while ((c = *str)) {
-            if (c == '\n')
+            if (c == '\n') {
                 addr = (lineAddr += tileWidth());
-            else
-                _SYS_vbuf_poke(&sys.vbuf, addr++, _SYS_TILE77(charTile(c, palette)));
+            } else {
+                _SYS_image_BG0Draw(&sys, font, addr, c - firstChar);
+                addr += font.tileWidth();
+            }
             str++;
         }
     }

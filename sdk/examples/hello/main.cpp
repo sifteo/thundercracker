@@ -6,134 +6,49 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-
 using namespace Sifteo;
 
-/*
 static AssetSlot MainSlot = AssetSlot::allocate()
     .bootstrap(MainAssets);
 
 static Metadata M = Metadata()
     .title("Hello World SDK Example")
     .icon(GameIcon);
-*/
 
-void main()
+static const unsigned gNumCubes = 1;
+static VideoBuffer vid[CUBE_ALLOCATION];
+
+
+static void onAccelChange(void *, unsigned cid)
 {
-    const CubeID myCube(0);
-    static VideoBuffer vid;
-    
-    myCube.enable();
-    vid.initMode(FB32);
-    vid.attach(myCube);
-    vid.colormap.setEGA();
-    auto &fb = vid.fb32;
-
-    fb.fill(14, Vec2(0,0), Vec2(32,32));
-    fb.fill(1, Vec2(1,1), Vec2(30,30));
-
-    while (1)
-        System::paint();
-}
-
-
-#if 0
-
-static void onAccelChange(void *context, _SYSCubeID cid)
-{
-    Byte2 accel = cubes[cid].physicalAccel();
+    auto accel = CubeID(cid).accel();
+    auto &draw = vid[cid].bg0;
 
     String<64> str;
     str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
     LOG_STR(str);
 
-    VidMode_BG0 vid(cubes[cid].vbuf);
-    vid.BG0_text(Vec2(2,3), Font, str);
-    vid.BG0_setPanning(accel / -2);
-}
-
-static void init()
-{
-    Metadata()
-        .title("Hello World SDK Example")
-        .icon(GameIcon);
-    
-    // Synchronously load the BootAssets. This should be quick.
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-
-        // XXX: Manually assigning base address for now
-        BootAssets.cubes[i].baseAddr = 512 * 4;
-        MainAssets.cubes[i].baseAddr = 512 * 6;
-
-        cubes[i].enable(i);
-        cubes[i].loadAssets(BootAssets);
-    }
-    BootAssets.wait();
-
-    // Start asynchronously loading the MainAssets
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].loadAssets(MainAssets);
-    }
-
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        VidMode_BG0 vid(cubes[i].vbuf);
-        vid.init();
-        vid.clear(WhiteTile);
-    }
-
-    int frame = 0;
-    while (MainAssets.isLoading()) {
-
-        // Animate Kirby running across the screen as MainAssets loads.
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            VidMode_BG0 vid(cubes[i].vbuf);
-
-            Int2 pan = Vec2(-cubes[i].assetProgress(MainAssets,
-                                vid.LCD_width - Kirby.pixelWidth()),
-                            -(int)(vid.LCD_height - Kirby.pixelHeight()) / 2);
-
-            LOG_VEC2(pan);
-            vid.BG0_drawAsset(Vec2(0,0), Kirby, frame);
-            vid.BG0_setPanning(pan);
-        }
-
-        if (++frame == Kirby.frames)
-            frame = 0;
-
-        /*
-         * Frame rate limit: Drawing has higher priority than asset loading,
-         * so in order to load assets quickly we need to explicitly leave some
-         * time for the system to send asset data over the radio.
-         */
-        for (unsigned i = 0; i < 4; i++)
-            System::paint();
-    }
+    draw.text(Vec2(2,3), Font, str);
+    draw.setPanning(accel.xy() / -2);
 }
 
 void main()
 {
-    init();
+    Events::cubeAccelChange.set(onAccelChange);
 
-    _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        cube.enable();
+        vid[cube].initMode(BG0);
+        vid[cube].attach(cube);
+        auto &draw = vid[cube].bg0;
 
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        VidMode_BG0 vid(cubes[i].vbuf);
-        vid.clear(WhiteTile);
-        vid.BG0_text(Vec2(2,1), Font, "Hello World!");
-        vid.BG0_drawAsset(Vec2(1,10), Logo);
-        onAccelChange(NULL, cubes[i].id());
+        draw.erase(WhiteTile);
+        draw.text(Vec2(2,1), Font, "Hello World!");
+        draw.image(Vec2(1,10), Logo);
+
+        onAccelChange(0, cube);
     } 
 
-    int frame = 0;
-    while (1) {
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            VidMode_BG0 vid(cubes[i].vbuf);
-            vid.BG0_drawAsset(Vec2(7,6), Ball, frame);
-        }
-        if (++frame == Ball.frames)
-            frame = 0;
+    while (1)
         System::paint();
-    }
 }
-
-#endif

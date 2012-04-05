@@ -120,17 +120,14 @@ void main()
 
             unsigned nbColor = draw.ORANGE;
 
-            draw.fill(nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG),
-                Vec2(1, 0), Vec2(14, 1));
-
-            draw.fill(nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG),
-                Vec2(0, 1), Vec2(1, 14));
-
-            draw.fill(nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG),
-                Vec2(1, 15), Vec2(14, 1));
-
-            draw.fill(nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG),
-                Vec2(15, 1), Vec2(1, 14));
+            draw.fill(Vec2(1, 0), Vec2(14, 1),
+                nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(Vec2(0, 1), Vec2(1, 14),
+                nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(Vec2(1, 15), Vec2(14, 1),
+                nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(Vec2(15, 1), Vec2(1, 14),
+                nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG));
         }
 
         System::paint();

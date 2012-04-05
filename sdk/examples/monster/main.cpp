@@ -27,13 +27,9 @@ void main()
     vid.attach(cube);
 
     float monster = 0.5f;
-
     while (1) {
-        monster += cube.getAccel().x * 0.01f;
-        monster = fmod(monster, arraysize(monsters));
-        if (monster < 0) monster += arraysize(monsters);
-
-        showMonster(monsters[(int)monster]);
+        monster += cube.accel().x * 0.01f;
+        showMonster(monsters[umod(monster, arraysize(monsters))]);
         System::paint();
     }
 }

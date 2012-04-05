@@ -390,6 +390,10 @@ struct _SYSNeighborState {
     _SYSCubeID sides[4];
 };
 
+struct _SYSInt2 {
+    int32_t x, y;
+};
+
 /**
  * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
  */
@@ -779,6 +783,15 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader) _SC(135);
 uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group) _SC(136);
+
+void _SYS_image_memDraw(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
+void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
+void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
+void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
+void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
+void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
+void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
+void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
 
 
 #ifdef __cplusplus

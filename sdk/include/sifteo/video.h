@@ -17,6 +17,7 @@
 #include <sifteo/video/sprite.h>
 #include <sifteo/video/framebuffer.h>
 #include <sifteo/video/bg0rom.h>
+#include <sifteo/video/bg0.h>
 
 namespace Sifteo {
 
@@ -113,7 +114,7 @@ struct VideoBuffer {
         FB64Drawable            fb64;
         FB128Drawable           fb128;
         BG0ROMDrawable          bg0rom;
-        //BG0Drawable             bg0;
+        BG0Drawable             bg0;
         //BG1Drawable             bg1;
         //BG2Drawable             bg2;
     };

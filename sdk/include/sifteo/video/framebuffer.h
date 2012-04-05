@@ -89,7 +89,7 @@ struct FBDrawable {
      * The pixel coordinates must be in range. This call does not perform
      * any clipping.
      */
-    void plot(unsigned colorIndex, UInt2 pos)
+    void plot(UInt2 pos, unsigned colorIndex)
     {
         ASSERT(pos.x <= tWidth && pos.y <= tHeight);
 
@@ -130,7 +130,7 @@ struct FBDrawable {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void span(unsigned colorIndex, UInt2 pos, unsigned width)
+    void span(UInt2 pos, unsigned width, unsigned colorIndex)
     {
         ASSERT(pos.x <= tWidth && width <= tWidth &&
             (pos.x + width) <= tWidth && pos.y < tHeight);
@@ -177,10 +177,10 @@ struct FBDrawable {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void fill(unsigned colorIndex, UInt2 topLeft, UInt2 size)
+    void fill(UInt2 topLeft, UInt2 size, unsigned colorIndex)
     {
         while (size.y) {
-            span(colorIndex, topLeft, size.x);
+            span(topLeft, size.x, colorIndex);
             size.y--;
             topLeft.y++;
         }
@@ -200,7 +200,7 @@ struct FBDrawable {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void bitmapSpan(const uint8_t *data, UInt2 pos, unsigned width)
+    void bitmapSpan(UInt2 pos, unsigned width, const uint8_t *data)
     {
         ASSERT(pos.x <= tWidth && width <= tWidth &&
             (pos.x + width) <= tWidth && pos.y < tHeight);
@@ -259,10 +259,10 @@ struct FBDrawable {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void bitmap(const uint8_t *data, unsigned stride, UInt2 topLeft, UInt2 size)
+    void bitmap(UInt2 topLeft, UInt2 size, const uint8_t *data, unsigned stride)
     {
         while (size.y) {
-            bitmapSpan(data, topLeft, size.x);
+            bitmapSpan(topLeft, size.x, data);
             size.y--;
             topLeft.y++;
             data += stride;
