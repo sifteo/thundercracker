@@ -268,6 +268,9 @@ struct VideoBuffer {
      * corresponding to both our own cube and the 'src' cube. This does
      * not require that the cubes are currently neighbored, just that they
      * were when the Neighborhood objects were created.
+     *
+     * Note that these Neighborhoods must be in physical orientation, not
+     * transformed to virtual.
      */
     void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
         int srcSide = srcN.sideOf(cube());
@@ -291,13 +294,30 @@ struct VideoBuffer {
 
     /**
      * Convert a physical side (relative to the hardware itself) to a virtual
+     * side (relative to the specified screen orientation).
+     */
+    static Side physicalToVirtual(Side side, Side rot) {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side - rot, NUM_SIDES));
+    }
+
+    /**
+     * Convert a virtual side (relative to the specified screen orientation)
+     * to a physical side (relative to the hardware itself).
+     */
+    static Side virtualToPhysical(Side side, Side rot) {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side + rot, NUM_SIDES));
+    }
+
+    /**
+     * Convert a physical side (relative to the hardware itself) to a virtual
      * side (relative to the current screen orientation).
      */
     Side physicalToVirtual(Side side) const {
-        if (side == NO_SIDE) { return NO_SIDE; }
-        Side rot = orientation();
-        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
-        return Side(umod(side - rot, NUM_SIDES));
+        return physicalToVirtual(side, orientation());
     }
 
     /**
@@ -305,10 +325,88 @@ struct VideoBuffer {
      * to a physical side (relative to the hardware itself).
      */
     Side virtualToPhysical(Side side) const {
-        if (side == NO_SIDE) { return NO_SIDE; }
-        Side rot = orientation();
-        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
-        return Side(umod(side + rot, NUM_SIDES));
+        return virtualToPhysical(side, orientation());
+    }
+
+    /**
+     * Convert a Neighborhood from physical to virtual orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.physicalToVirtual(N).neighborAt(S)
+     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *
+     * This version uses the specified cube orientation.
+     */
+    static Neighborhood physicalToVirtual(Neighborhood nb, Side rot) {
+        Neighborhood result;
+        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
+        return result;
+    }
+
+    /**
+     * Convert a Neighborhood from virtual to physical orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.virtualToPhysical(N).neighborAt(S)
+     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *
+     * This version uses the specified cube orientation.
+     */
+    static Neighborhood virtualToPhysical(Neighborhood nb, Side rot) {
+        Neighborhood result;
+        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
+        return result;
+    }
+
+    /**
+     * Convert a Neighborhood from physical to virtual orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.physicalToVirtual(N).neighborAt(S)
+     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *
+     * Uses the current orientation of this VideoBuffer.
+     */
+    Neighborhood physicalToVirtual(Neighborhood nb) const {
+        return physicalToVirtual(nb, orientation());
+    }
+
+    /**
+     * Convert a Neighborhood from virtual to physical orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.virtualToPhysical(N).neighborAt(S)
+     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *
+     * Uses the current orientation of this VideoBuffer.
+     */
+    Neighborhood virtualToPhysical(Neighborhood nb) const {
+        return virtualToPhysical(nb, orientation());
+    }
+
+    /**
+     * Return the current physical neighbors for the cube attached to
+     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * instance from cube(), but it's provided by analogy with
+     * virtualNeighbors().
+     */
+    Neighborhood physicalNeighbors() const {
+        return Neighborhood(cube());
+    }
+
+    /**
+     * Return the current virtual neighbors for the cube attached to
+     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * instance from cube(), and transforming it with physicalToVirtual().
+     */
+    Neighborhood virtualNeighbors() const {
+        return physicalToVirtual(Neighborhood(cube()));
     }
 
     /**

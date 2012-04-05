@@ -12,6 +12,7 @@
 #endif
 
 #include <sifteo/abi.h>
+#include <sifteo/macros.h>
 
 namespace Sifteo {
 
@@ -239,6 +240,25 @@ template <typename T> struct Vector2 {
     }
 
     /**
+     * Rotate this vector about the origin counterclockwise by an integer
+     * multiple of 90 degrees. The angle must be 0, 1, 2, or 3. If you
+     * must pass larger angles, you can use umod(a, 4) to fold them into
+     * this range.
+     */
+    Vector2<T> rotateI(int angle) const {
+        Vector2<T> a1 = { -y,  x };
+        Vector2<T> a2 = { -x, -y };
+        Vector2<T> a3 = {  y, -x };
+        switch (angle) {
+            default: ASSERT(0);
+            case 0: return *this;
+            case 1: return a1;
+            case 2: return a2;
+            case 3: return a3;
+        }
+    }
+
+    /**
      * Calculate the scalar length (magnitude) of this vector, squared.
      * This avoids the costly square root calculation.
      */
@@ -415,6 +435,35 @@ template <typename T> struct Vector3 {
     Vector3<int> round() const {
         Vector3<int> result = { x + 0.5f, y + 0.5f, z + 0.5f };
         return result;
+    }
+
+    /**
+     * Rotate the vector about the Z axis counterclockwise by 'angle' radians.
+     */
+    Vector3<T> zRotate(float angle) const {
+        float s, c;
+        sincos(angle, &s, &c);
+        Vector3<T> result = { x*c - y*s, x*s + y*c, z };
+        return result;
+    }
+
+    /**
+     * Rotate this vector about the Z axis counterclockwise by an integer
+     * multiple of 90 degrees. The angle must be 0, 1, 2, or 3. If you
+     * must pass larger angles, you can use umod(a, 4) to fold them into
+     * this range.
+     */
+    Vector3<T> zRotateI(int angle) const {
+        Vector3<T> a1 = { -y,  x, z };
+        Vector3<T> a2 = { -x, -y, z };
+        Vector3<T> a3 = {  y, -x, z };
+        switch (angle) {
+            default: ASSERT(0);
+            case 0: return *this;
+            case 1: return a1;
+            case 2: return a2;
+            case 3: return a3;
+        }
     }
 
     /**
