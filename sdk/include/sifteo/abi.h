@@ -600,6 +600,7 @@ void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
 const void *_SYS_lti_initializer(const void *value);
+bool _SYS_lti_isConstant(unsigned value);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
@@ -641,6 +642,8 @@ const void *_SYS_lti_initializer(const void *value);
 
 void _SYS_abort(void) _SC(0) _NORET;
 void _SYS_exit(void) _SC(64) _NORET;
+
+uint32_t _SYS_getFeatures() _SC(145);   /// ABI compatibility feature bits
 
 void _SYS_yield(void) _SC(65);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(66);   /// Enqueue a new rendering frame
@@ -792,7 +795,6 @@ void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetIma
 void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
 void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
 void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
-
 
 #ifdef __cplusplus
 }  // extern "C"

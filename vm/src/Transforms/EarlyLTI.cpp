@@ -49,6 +49,7 @@ namespace {
         void replaceWithConstant(CallSite &CS, Constant *value);
         void replaceWithConstant(CallSite &CS, uint32_t value);
         void handleGetInitializer(CallSite &CS);
+        void handleIsConstant(CallSite &CS);
     };
 }
 
@@ -88,7 +89,8 @@ void EarlyLTIPass::replaceWithConstant(CallSite &CS, uint32_t value)
 {
     Instruction *I = CS.getInstruction();
     LLVMContext &Ctx = I->getContext();
-    replaceWithConstant(CS, ConstantInt::get(Type::getInt32Ty(Ctx), value));
+    Constant *C = ConstantInt::get(Type::getInt32Ty(Ctx), value);
+    replaceWithConstant(CS, ConstantExpr::getIntegerCast(C, I->getType(), false));
 }
 
 void EarlyLTIPass::handleGetInitializer(CallSite &CS)
@@ -107,6 +109,8 @@ void EarlyLTIPass::handleGetInitializer(CallSite &CS)
     GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg);
     if (!GV)
         report_fatal_error(I, "Argument to _SYS_lti_initializer must be a GlobalVariable");
+    if (!GV->hasInitializer())
+        report_fatal_error(I, "Argument to _SYS_lti_initializer has no initializer");
     Constant *Init = GV->getInitializer();
 
     // The initializer is a raw Constant, and its address can't be taken.
@@ -120,6 +124,15 @@ void EarlyLTIPass::handleGetInitializer(CallSite &CS)
 
     // Bitcast the result back to the expected type (usually void*)
     replaceWithConstant(CS, ConstantExpr::getPointerCast(InitGV, I->getType()));
+}
+
+void EarlyLTIPass::handleIsConstant(CallSite &CS)
+{
+    if (CS.arg_size() != 1)
+        report_fatal_error(CS.getInstruction(), "_SYS_lti_isConstant requires exactly one arg");
+
+    Constant *C = dyn_cast<Constant>(CS.getArgument(0));
+    replaceWithConstant(CS, uint32_t(C != 0));
 }
 
 bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
@@ -141,6 +154,11 @@ bool EarlyLTIPass::runOnCall(CallSite &CS, StringRef Name)
 
     if (Name == "_SYS_lti_initializer") {
         handleGetInitializer(CS);
+        return true;
+    }
+
+    if (Name == "_SYS_lti_isConstant") {
+        handleIsConstant(CS);
         return true;
     }
 
