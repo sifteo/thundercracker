@@ -335,13 +335,23 @@ void RoomView::RefreshDepot() {
 
 }
 
+void RoomView::DrawFrame() {
+  ViewMode g = Parent()->Graphics();
+  g.BG0_drawAsset(Vec2(0,0), FrameTop);
+  g.BG0_drawAsset(Vec2(0, 1), FrameLeft);
+  g.BG0_drawAsset(Vec2(15, 1), FrameRight);
+  g.BG0_drawAsset(Vec2(0, 15), FrameBottom);
+}
+
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
   mode.BG0_setPanning(Vec2(0,0));
   DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
   RefreshDoor();
   RefreshDepot();
+
   const Room *pRoom = GetRoom();
+
   BG1Helper ovrly(*(Parent()->GetCube()));
   if (!flags.hideOverlay && pRoom->HasOverlay()) {
     DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());

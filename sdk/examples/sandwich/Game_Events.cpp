@@ -39,11 +39,8 @@ unsigned Game::OnPassiveTrigger() {
 }
 
 void Game::OnYesOhMyGodExplosion(Bomb* p) {
-  
-
-
-  LOG(("YES OH MY GOD!\n"));
-  for(;;) DoPaint(false);
+  //LOG(("YES OH MY GOD!\n"));
+  //for(;;) DoPaint(false);
 }
 
 void Game::OnToggleSwitch(const SwitchData* pSwitch) {

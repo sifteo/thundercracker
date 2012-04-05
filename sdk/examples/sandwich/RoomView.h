@@ -79,6 +79,8 @@ public:
   void StartShake();
   void StartSlide(Cube::Side side);
 
+  void DrawFrame();
+
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();
 

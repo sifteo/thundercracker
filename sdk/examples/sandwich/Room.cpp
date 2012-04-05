@@ -41,7 +41,22 @@ bool Room::OpenDoor() {
 }
 
 void Room::BombThisFucker() {
-  
+  for(Cube::Side s=0; s<4; ++s) {
+    SetDidBomb(s);
+  }
+  Int2 loc = Location();
+  if (loc.x > 0) { 
+    gGame.GetMap()->GetRoom(loc+Vec2(-1,0))->SetDidBomb(SIDE_RIGHT); 
+  }
+  if (loc.x < gGame.GetMap()->Data()->width-1) { 
+    gGame.GetMap()->GetRoom(loc+Vec2(1,0))->SetDidBomb(SIDE_LEFT); 
+  }
+  if (loc.y > 0) { 
+    gGame.GetMap()->GetRoom(loc+Vec2(0,-1))->SetDidBomb(SIDE_BOTTOM); 
+  }
+  if (loc.y < gGame.GetMap()->Data()->height-1) { 
+    gGame.GetMap()->GetRoom(loc+Vec2(0,1))->SetDidBomb(SIDE_TOP); 
+  }
 }
 
 const uint8_t* Room::OverlayBegin() const {
