@@ -30,7 +30,6 @@ void UsbCore::reset()
 {
     address = 0;
     _config = 0;
-    UsbHardware::epSetup(0, EpAttrControl, 64);
     UsbHardware::setAddress(0);
 
     UsbDevice::handleReset();

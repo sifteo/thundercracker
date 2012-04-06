@@ -42,18 +42,6 @@ void init()
     // Restart the PHY clock
     OTG.PCGCCTL = 0;
 
-    OTG.global.GRXFSIZ = RX_FIFO_WORDS;
-    fifoMemTop = RX_FIFO_WORDS;
-
-    uint16_t fifoDepthInWords = MAX_PACKET / 4;
-    OTG.global.DIEPTXF0_HNPTXFSIZ = (fifoDepthInWords << 16) | fifoMemTop;
-    fifoMemTop += fifoDepthInWords;
-
-    for (unsigned i = 0; i < 2; ++i) {
-        OTG.global.DIEPTXF[i] = (fifoDepthInWords << 16) | fifoMemTop;
-        fifoMemTop += fifoDepthInWords;
-    }
-
     // Unmask interrupts for TX and RX
     OTG.device.DIEPMSK = 0;
     OTG.device.DOEPMSK = 0;
@@ -72,6 +60,12 @@ void init()
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
 }
 
+/*
+ * Handle a USBRST signal from the usb hardware.
+ * Flush TX/RX buffers, disable all OUT endpoints, and do preliminary setup on
+ * EP0 - note the configuration of EP0's IN portion must happen after we
+ * receive the ENUMDNE signal.
+ */
 void reset()
 {
     // flush all TX FIFOs
@@ -95,12 +89,27 @@ void reset()
         ep.DOEPINT = 0xff;  // clear any pending interrupts
     }
 
-    OTG.device.DAINTMSK = (1 << 16) | (1 << 0); //
-    OTG.device.DIEPMSK = 0x1;
+    OTG.device.DAINTMSK = (1 << 16) | (1 << 0); // ep0 IN & OUT
+    OTG.device.DIEPMSK = 0x1;                   // xfer complete
     OTG.device.DOEPMSK = (1 << 3) | (1 << 0);   // setup complete, and xfer complete
 
     OTG.global.GRXFSIZ = RX_FIFO_WORDS;
     fifoMemTop = RX_FIFO_WORDS;
+
+    // Configure EP0 OUT
+    doeptsiz[0] = (3 << 29) |   // STUPCNT_3
+                  (1 << 19) |
+                  (MAX_PACKET);
+
+    OTG.device.outEps[0].DOEPTSIZ = doeptsiz[0];
+    OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
+                                    (1 << 27));    // SNAK
+
+    // in the global FIFO map, after the global RX size is the
+    // EP0 TX config
+    uint16_t fifoDepthInWords = MAX_PACKET / 4;
+    OTG.global.DIEPTXF0_HNPTXFSIZ = (fifoDepthInWords << 16) | fifoMemTop;
+    fifoMemTop += fifoDepthInWords;
 }
 
 void setAddress(uint8_t addr)
@@ -111,25 +120,9 @@ void setAddress(uint8_t addr)
 // Configure endpoint address and type & allocate FIFO memory for endpoint
 void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // handle control endpoint specially
-    if ((addr & 0x7f) == 0) {
-        // Configure OUT
-        doeptsiz[0] = (3 << 29) |   // STUPCNT_3
-                      (1 << 19) |
-                      (maxsize & 0x7f);
-
-        OTG.device.outEps[0].DOEPTSIZ = doeptsiz[0];
-        OTG.device.outEps[0].DOEPCTL |= ((1 << 31) |    // EPENA
-                                        (1 << 27));    // SNAK
-
-        // in the global FIFO map, after the global RX size is the
-        // EP0 TX config
-        uint16_t fifoDepthInWords = maxsize / 4;
-        OTG.global.DIEPTXF0_HNPTXFSIZ = (fifoDepthInWords << 16) | fifoMemTop;
-        fifoMemTop += fifoDepthInWords;
-
+    // EP0 gets handled during reset
+    if ((addr & 0x7f) == 0)
         return;
-    }
 
     if (isInEp(addr)) {
 
@@ -148,6 +141,10 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
                        (type << 18) |
                        (1 << 15) |     // USBEAP
                        maxsize);
+
+        // clear pending interrupts & enable ISRs for this ep
+        ep.DIEPINT = 0xff;
+        OTG.device.DAINTMSK |= (1 << addr);
     }
     else {
 
@@ -161,13 +158,11 @@ void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
                        (type << 18) |
                        (1 << 15) |     // USBEAP
                        maxsize);
-    }
-}
 
-void epReset()
-{
-    // The core resets the endpoints automatically on reset.
-    // TODO - anything else we need to do here?
+        // clear pending interrupts & enable ISRs for this ep
+        ep.DOEPINT = 0xff;
+        OTG.device.DAINTMSK |= (1 << (addr + 16));
+    }
 }
 
 void epSetStalled(uint8_t addr, bool stall)
