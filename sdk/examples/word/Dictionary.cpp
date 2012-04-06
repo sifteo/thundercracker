@@ -94,20 +94,33 @@ bool Dictionary::findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,
                                             char wordPieces[][MAX_LETTERS_PER_CUBE])
 {
+    unsigned maxLengthSolution = 0;
+    char maxLengthWord[MAX_LETTERS_PER_WORD + 1];
     for (unsigned i = 0; i < sNumPossibleWords; ++i)
     {
         if (!sPossibleWordFound[i])
         {
-            char word[MAX_LETTERS_PER_WORD + 1];
             WordID wid = sPossibleWordIDs[i];
             ASSERT(wid >=0);
+            char word[MAX_LETTERS_PER_WORD + 1];
             if (getWordFromID(wid, word))
             {
-                return getSolutionPieces(word, maxPieces, maxLettersPerPiece, wordPieces);
+                unsigned len = _SYS_strnlen(word, sizeof word);
+                if (len > maxLengthSolution)
+                {
+                    maxLengthSolution = len;
+                    _SYS_strlcpy(maxLengthWord, word, sizeof maxLengthWord);
+                }
+            }
+            else
+            {
+                ASSERT(0); // bad word ID
             }
         }
     }
-    return false;
+
+    ASSERT(maxLengthSolution > 0);
+    return getSolutionPieces(maxLengthWord, maxPieces, maxLettersPerPiece, wordPieces);
 }
 
 bool Dictionary::getCurrentPieces(unsigned maxPieces,
@@ -183,7 +196,7 @@ bool Dictionary::getSolutionPieces(const char *word,
         {
             for (unsigned j=0; j < maxLettersPerPiece; ++j)
             {
-                wordPieces[i][j] = ' ';
+                wordPieces[i][j] = '\0';
             }
         }
     }

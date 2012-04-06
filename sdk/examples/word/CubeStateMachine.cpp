@@ -397,7 +397,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_HintSolutionUpdated:
         {
             _SYS_strlcpy(mHintSolution,
-                         data.mHintSolutionUpdate.mHintSolution[mPuzzlePieceIndex],
+                         data.mHintSolutionUpdate.mHintSolution[Dictionary::currentIsMetaPuzzle() ? mMetaPieceIndex : mPuzzlePieceIndex],
                          sizeof(mHintSolution));
         }
         break;
@@ -969,10 +969,10 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
                     return AnimType_None;
 
                 case 1:
-                    return AnimType_HintSlideL;
+                    return AnimType_HintSlideR;
 
                 case 2:
-                    return AnimType_HintSlideR;
+                    return AnimType_HintSlideL;
                 }
             }
         }
@@ -2042,6 +2042,12 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
     unsigned maxLetters;
     const char *letters;
     unsigned start;
+    if (mHintSolution[0] == '\0')
+    {
+        // this piece doesn't matter
+        return false;
+    }
+
     if (Dictionary::currentIsMetaPuzzle())
     {
         maxLetters = mMetaLettersPerCube;
@@ -2087,17 +2093,13 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
                 allMatch = false;
                 break;
             }
-            if (allMatch)
-            {
-                break;
-            }
         }
         if (allMatch)
         {
             break;
         }
     }
-
+    ASSERT(allMatch);// there must be a way to get to the hint solution
     tiltDirection = (start + maxLetters - newLettersStart) % maxLetters;
-    return allMatch && tiltDirection != 0;
+    return allMatch && tiltDirection != 0; // 1: right, 2: left
 }
