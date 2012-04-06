@@ -11,12 +11,31 @@
 #define BLOCK_SPRITE_ID     4
 
 void RoomView::Init(unsigned roomId) {
+  flags.locked = false;
+  mRoomId = roomId;
+  Restore();
+}
+
+void RoomView::Lock() {
+  LOG(("LOCK SLOT OMG\n"));
+  flags.locked = true;
+}
+
+void RoomView::Unlock() {
+  flags.locked = false;
+}
+
+void RoomView::HideOverlay() {
+  BG1Helper(*Parent()->GetCube()).Flush();
+}
+
+
+void RoomView::Restore() {
   mWobbles = -1.f;
   Parent()->HideSprites();
   ViewMode mode = Parent()->Graphics();
   Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
-  mRoomId = roomId;
   // are we showing an items?
   mStartFrame = gGame.AnimFrame();
   ComputeAnimatedTiles();
@@ -51,10 +70,6 @@ void RoomView::Init(unsigned roomId) {
       }
     }
   }
-}
-
-void RoomView::Restore() {
-  Init(mRoomId);
 }
 
 void RoomView::Update() {
@@ -139,7 +154,7 @@ bool RoomView::GatewayTouched() const {
   if (pRoom->HasGateway()) {
     for(Cube::Side s=0; s<4; ++s) {
       const ViewSlot *view = Parent()->VirtualNeighborAt(s);
-      return view && view->Touched() && view->IsShowingGatewayEdge();
+      return view && view->Touched() && view->ShowingGatewayEdge();
     }
   }
   return false;
@@ -335,12 +350,13 @@ void RoomView::RefreshDepot() {
 
 }
 
-void RoomView::DrawFrame() {
+void RoomView::ShowFrame() {
   ViewMode g = Parent()->Graphics();
   g.BG0_drawAsset(Vec2(0,0), FrameTop);
   g.BG0_drawAsset(Vec2(0, 1), FrameLeft);
   g.BG0_drawAsset(Vec2(15, 1), FrameRight);
   g.BG0_drawAsset(Vec2(0, 15), FrameBottom);
+  HideOverlay();
 }
 
 void RoomView::DrawBackground() {

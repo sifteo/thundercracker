@@ -26,9 +26,9 @@ private:
   uint8_t mStartFrame;
   struct {
     uint8_t hideOverlay : 1;
+    uint8_t locked : 1;
     uint8_t wobbleType : 3;
     uint8_t animTileCount : 3;
-    uint8_t unused : 1;
   } flags;
   struct AnimTile {
     uint8_t lid;
@@ -53,6 +53,10 @@ public:
   void Init(unsigned rid);
   void Restore();
   void Update();
+
+  bool Locked() const { return flags.locked; }
+  void Lock();
+  void Unlock();
 
   void HideOverlay(bool flag);
   
@@ -79,12 +83,12 @@ public:
   void StartShake();
   void StartSlide(Cube::Side side);
 
-  void DrawFrame();
+  void ShowFrame();
 
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
-
+  void HideOverlay();
 };

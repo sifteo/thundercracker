@@ -35,10 +35,11 @@ public:
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
 	unsigned ViewType() const { return mFlags.view ; }
-	bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
-	bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
-	bool IsShowingGatewayEdge() const { return IsShowingEdge() && mView.edge.ShowingGateway(); }
-	bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
+	bool ShowingRoom() const { return mFlags.view == VIEW_ROOM; }
+	bool ShowingLockedRoom() const { return ShowingRoom() && mView.room.Locked(); }
+	bool ShowingEdge() const { return mFlags.view == VIEW_EDGE; }
+	bool ShowingGatewayEdge() const { return ShowingEdge() && mView.edge.ShowingGateway(); }
+	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
 	IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
 	RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
 	InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }

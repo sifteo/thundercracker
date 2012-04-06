@@ -10,12 +10,14 @@ static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* o
   if (!view || visited[view->GetCubeID()]) { return false; }
   if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
-  if (result && view->IsShowingRoom()) {
+  if (result && view->ShowingRoom() && !view->ShowingLockedRoom()) {
     view->GetRoomView()->StartSlide((dir+2)%4);
   }
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view, i);
+  if (result || !view->ShowingLockedRoom()) {
+    for(Cube::Side i=0; i<NUM_SIDES; ++i) {
+      result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view, i);
+    }
   }
   return result;
 }
@@ -24,7 +26,7 @@ void Game::CheckMapNeighbors() {
   mNeighborDirty = false;
 
   ViewSlot *root = mPlayer.View();
-  if (!root->IsShowingRoom()) { return; }
+  if (!root->ShowingRoom()) { return; }
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
   bool chchchchanges = VisitMapView(visited, root, root->GetRoomView()->Location());

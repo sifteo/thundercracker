@@ -29,7 +29,6 @@ void ViewSlot::Init() {
 		mView.minimap.Init();
 	}
 	gGame.NeedsSync();
-
 }
 
 void ViewSlot::HideSprites() {
@@ -167,6 +166,16 @@ void ViewSlot::Update() {
 }
   
 bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
+	if (ShowingLockedRoom()) {
+		if (loc == mView.room.Location()) {
+			mView.room.Restore();
+			return true;
+		} else {
+			mView.room.ShowFrame();
+			return false;
+		}
+	}
+
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
 	Cube::Side side = SIDE_UNDEFINED;
@@ -220,7 +229,11 @@ ViewSlot* ViewSlot::FindIdleView() {
 }
 
 bool ViewSlot::HideLocation(bool doFlush) {
-	if (IsShowingLocation()) {
+	if (ShowingLockedRoom()) {
+		mView.room.ShowFrame();
+		return false;
+	}
+	if (ShowingLocation()) {
 		if (gGame.ShowingMinimap() && !pMinimap) {
 			SetSecondaryView(VIEW_MINIMAP, doFlush);
 		} else if (gGame.GetState()->HasAnyItems() && !pInventory) {

@@ -308,7 +308,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
       mState.AdvanceQuest();
       mMap.RefreshTriggers();
       for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
-        if (p->IsShowingRoom()) {
+        if (p->ShowingRoom()) {
           p->Restore(false);
         }
       }
@@ -332,7 +332,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         //Room* targetRoom = mMap.GetRoom(door.trigger.room);
         bool didRestore = false;
         for(ViewSlot *p = ViewBegin(); p!=ViewEnd(); ++p) {
-          if (p->IsShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
+          if (p->ShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
             p->GetRoomView()->Restore();
             RoomNod(p);
             didRestore = true;

@@ -58,7 +58,7 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
     // Could be optimized, perhaps
     const Cube::Side dir = InferDirection(u);
     ViewSlot* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
-    if (view && view->IsShowingRoom()) {
+    if (view && view->ShowingRoom()) {
       RoomView* pRoomView = view->GetRoomView();
       if (pRoomView->Block()) {
         pRoomView->UpdateBlock();
@@ -389,14 +389,14 @@ void Game::RestorePearlIdle() {
 
 void Game::RoomNod(ViewSlot* view) {
   view->GetRoomView()->StartNod();
-  while(view->IsShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();
   }
 }
 
 void Game::RoomShake(ViewSlot* view) {
   view->GetRoomView()->StartShake();
-  while(view->IsShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();
   }
 }

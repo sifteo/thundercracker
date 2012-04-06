@@ -90,13 +90,14 @@ void Game::MainLoop() {
 	      	#endif
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
 	      		for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
-	      			if ( p->Touched() && p->IsShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
+	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
 	      				p->GetRoomView()->StartShake();
+	      				p->GetRoomView()->Lock();
 	      			}
 	      		}
 	      	}
     	}
-    	if (mViews[targetViewId].IsShowingRoom()) {
+    	if (mViews[targetViewId].ShowingRoom()) {
     		mViews[targetViewId].GetRoomView()->StartNod();
     	}
 
