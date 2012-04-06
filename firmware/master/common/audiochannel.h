@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include "machine.h"
 #include "audiobuffer.h"
-#include "speexdecoder.h"
 #include "adpcmdecoder.h"
 #include "flashlayer.h"
 
@@ -70,7 +69,6 @@ private:
 
     AudioBuffer buf;            // User-owned buffer for decompressed data
     FlashStream flStream;       // Location of compressed source data
-    SpeexDecoder speexDec;      // Speex decoder state
     AdPcmDecoder adpcmDec;      // ADPCM decoder state
 };
 

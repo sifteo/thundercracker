@@ -6,7 +6,6 @@
 #include "macros.h"
 #include "svmmemory.h"
 #include "audiochannel.h"
-#include "speexdecoder.h"
 #include <limits.h>
 
 
@@ -24,9 +23,6 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType
 
         type = mod->type;
         state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-
-        if (type == _SYS_Speex)
-            speexDec.init();
     }
 }
 
@@ -70,13 +66,6 @@ void AudioChannelSlot::fetchData()
 
     case _SYS_PCM:
         fetchRaw(flStream, buf);
-        break;
-
-    case _SYS_Speex:
-        if (!speexDec.decodeFrame(flStream, buf)) {
-            onPlaybackComplete();
-            return;
-        }
         break;
 
     case _SYS_ADPCM:

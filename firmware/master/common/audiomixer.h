@@ -6,7 +6,6 @@
 #ifndef AUDIOMIXER_H_
 #define AUDIOMIXER_H_
 
-#include "speexdecoder.h"
 #include "audiobuffer.h"
 #include "audiochannel.h"
 #include <stdint.h>

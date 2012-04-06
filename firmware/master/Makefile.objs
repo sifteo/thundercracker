@@ -14,7 +14,6 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/cube.o \
 	$(MASTER_DIR)/common/cubecodec.o \
 	$(MASTER_DIR)/common/audiomixer.o \
-	$(MASTER_DIR)/common/speexdecoder.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
 	$(MASTER_DIR)/common/audiobuffer.o \
 	$(MASTER_DIR)/common/audiochannel.o \
