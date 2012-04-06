@@ -60,7 +60,6 @@ private:
     uint32_t newestSample; // index of newest sample in samples[]
     uint8_t ringPos;       // points to the beginning of the ring
     uintptr_t bufPos;      // byte offset into sample data
-    int debug;
 
     // Magic number for when the samples ringbuffer contains no valid values
     static const uint32_t kNoSamples = (uint32_t)-1;
