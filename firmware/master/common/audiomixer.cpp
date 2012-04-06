@@ -72,7 +72,7 @@ void AudioMixer::pullAudio(void *p) {
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
     if (buf->writeAvailable() < sizeof(int16_t)) return;
 
-    uint32_t bytesToWrite;
+    unsigned bytesToWrite;
     int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
     unsigned mixed = AudioMixer::instance.mixAudio(audiobuf, bytesToWrite / sizeof(int16_t));
 
