@@ -24,8 +24,9 @@ def ProcessImage(image_path, image_dir_output):
     
     final = Image.new('RGBA', (sprite_size[0], sprite_size[1] * num_parts * num_rotations))
     PasteRotations(final, sprites)
-    final.putdata(FilterPixels(final.getdata()))
-    final.save(image_dir_output + os.path.basename(image_path))
+    final.putdata(final.getdata())
+    #final.putdata(FilterPixels(final.getdata()))
+    final.save(image_dir_output + '/' + os.path.basename(image_path))
 
 def PasteRotations(image_final, sprites):
     sprite_index = 0
