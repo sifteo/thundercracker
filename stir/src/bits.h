@@ -75,8 +75,9 @@ class BitBuffer {
         for (unsigned chunk = 0, numChunks = countChunks(value, chunkSize);
             chunk != numChunks; chunk++) {
 
+            unsigned shift = (numChunks - 1 - chunk) * chunkSize;
             append(1, 1);
-            append(value >> (chunk * chunkSize), chunkSize);
+            append(value >> shift, chunkSize);
         }
         append(0, 1);
 
