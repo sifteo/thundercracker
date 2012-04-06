@@ -12,22 +12,24 @@
 #endif
 
 uint32_t Tasks::pendingMask;
+uint32_t Tasks::alwaysMask;
 
 Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     { 0 },
     #else
-    { UsbDevice::handleINData, 0, false},
-    { UsbDevice::handleOUTData, 0, false},
+    { UsbDevice::handleINData, 0},
+    { UsbDevice::handleOUTData, 0},
     #endif
-    { AudioMixer::pullAudio, 0, false},
-    { SvmDebugger::messageLoop, 0, false},
+    { AudioMixer::pullAudio, 0},
+    { SvmDebugger::messageLoop, 0},
 };
 
 void Tasks::init()
 {
     pendingMask = 0;
+    alwaysMask = 0;
 }
 
 /*
@@ -39,9 +41,12 @@ void Tasks::setPending(TaskID id, void* p, bool runAlways)
     Task &task = TaskList[id];
     ASSERT(task.callback != NULL);
     task.param = p;
-    task.runAlways = runAlways;
-
-    Atomic::SetLZ(pendingMask, id);
+    
+    if (runAlways) {
+        Atomic::SetLZ(alwaysMask, id);
+    } else {
+        Atomic::SetLZ(pendingMask, id);
+    }
 }
 
 /*
@@ -51,22 +56,19 @@ void Tasks::setPending(TaskID id, void* p, bool runAlways)
 */
 void Tasks::work()
 {
-    for (unsigned i = 0; i < arraysize(TaskList); i++) {
-        Task &task = TaskList[i];
-        if (task.runAlways == true && task.callback) {
-            task.callback(task.param);
-        }
-    }
-    
-    while (pendingMask) {
-        unsigned idx = Intrinsic::CLZ(pendingMask);
+    uint32_t always = alwaysMask;
+    doJobs(always);
+    doJobs(pendingMask);
+}
+
+void Tasks::doJobs(uint32_t &mask) {
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
         // clear before calling back since callback might take a while and
         // the flag might get set again in the meantime
-        Atomic::ClearLZ(pendingMask, idx);
+        Atomic::ClearLZ(mask, idx);
 
         Task &task = TaskList[idx];
-        if (task.runAlways == false) {
-            task.callback(task.param);
-        }
+        task.callback(task.param);
     }
 }
