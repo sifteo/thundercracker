@@ -117,6 +117,10 @@ class CubeSlot {
         return rawBatteryV;
     }
 
+    uint8_t getLastFrameACK() const {
+        return framePrevACK;
+    }
+
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;

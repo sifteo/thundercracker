@@ -13,6 +13,7 @@
 #include "event.h"
 #include "tasks.h"
 #include "radio.h"
+#include "panic.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -92,10 +93,12 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
 
     for (unsigned i = 0; i < count; i++) {
         _SYSMetadataBootAsset &BA = vec[i];
+        PanicMessenger msg;
 
         // Allocate some things in user RAM.
         const SvmMemory::VirtAddr loaderVA = 0x10000;
         const SvmMemory::VirtAddr groupVA = 0x11000;
+        msg.init(0x12000);
 
         SvmMemory::PhysAddr loaderPA;
         SvmMemory::PhysAddr groupPA;
@@ -104,6 +107,7 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
 
         _SYSAssetLoader *loader = reinterpret_cast<_SYSAssetLoader*>(loaderPA);
         _SYSAssetGroup *group = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+        _SYSAssetLoaderCube *lc = reinterpret_cast<_SYSAssetLoaderCube*>(loader + 1);
 
         loader->cubeVec = 0;
         group->pHdr = BA.pHdr;
@@ -125,9 +129,37 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
             _SYS_asset_loadStart(loader, group, BA.slot, cubes);
         }
 
-        while ((loader->complete & cubes) != cubes) {
-            Tasks::work();
-            Radio::halt();
+        for (;;) {
+
+            // Draw status to each cube
+            _SYSCubeIDVector statusCV = cubes;
+            while (statusCV) {
+                _SYSCubeID c = Intrinsic::CLZ(statusCV);
+                statusCV ^= Intrinsic::LZ(c);
+
+                msg.at(1,1) << "Bootstrapping";
+                msg.at(1,2) << "game assets...";
+                msg.at(4,5) << lc[c].progress;
+                msg.at(7,7) << "of";
+                msg.at(4,9) << lc[c].dataSize;
+
+                msg.paint(c);
+            }
+            
+            // Are we done? Leave with the final status on-screen
+            if ((loader->complete & cubes) == cubes)
+                break;
+
+            // Load for a while, with the display idle. The PanicMessenger
+            // is really wasteful with the cube's CPU time, so we need to
+            // paint pretty infrequently in order to load assets full-speed.
+
+            uint32_t milestone = lc[0].progress + 2000;
+            while (lc[0].progress < milestone 
+                   && (loader->complete & cubes) != cubes) {
+                Tasks::work();
+                Radio::halt();
+            }
         }
 
         _SYS_asset_loadFinish(loader);
@@ -206,7 +238,25 @@ void SvmRuntime::fault(FaultCode code)
     if (SvmDebugPipe::fault(code))
         return;
 
-    // Unhandled fault; exit
+    /* 
+     * Unhandled fault; panic!
+     * Draw a message to cube #0 and exit.
+     */
+
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+    PanicMessenger msg;
+    msg.init(0x10000);
+
+    msg.at(1,1) << "Oh noes!";
+    msg.at(1,3) << "Fault code " << uint8_t(code);
+    msg.at(1,5) << "PC: " << pcVA;
+    for (unsigned r = 0; r < 8; r++) {
+        reg_t value = SvmCpu::reg(r);
+        SvmMemory::squashPhysicalAddr(value);
+        msg.at(1,6+r) << 'r' << char('0' + r) << ": " << uint32_t(value);
+    }
+
+    msg.paint(0);
     exit();
 }
 

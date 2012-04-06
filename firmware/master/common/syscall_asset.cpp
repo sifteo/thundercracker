@@ -5,6 +5,8 @@
 
 /*
  * Syscalls for asset group and slot operations.
+ *
+ * XXX: Stub implementation! No persistent cache, only one slot allowed.
  */
 
 #include <sifteo/abi.h>
@@ -13,6 +15,10 @@
 #include "cubeslots.h"
 
 extern "C" {
+
+static struct {
+    uint16_t nextAddr;
+} xxxAssetSlotManager;
 
 
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot)
