@@ -47,6 +47,11 @@ const PinnedAssetImage *kBuddySpritesFront[] =
     &BuddySpriteFront4,
     &BuddySpriteFront5,
     &BuddySpriteFront6,
+    &BuddySpriteFront7,
+    &BuddySpriteFront8,
+    &BuddySpriteFront9,
+    &BuddySpriteFront10,
+    &BuddySpriteFront11,
     NULL,
 };
 
@@ -59,6 +64,11 @@ const PinnedAssetImage *kBuddySpritesLeft[] =
     &BuddySpriteLeft4,
     &BuddySpriteLeft5,
     &BuddySpriteLeft6,
+    &BuddySpriteLeft7,
+    &BuddySpriteLeft8,
+    &BuddySpriteLeft9,
+    &BuddySpriteLeft10,
+    &BuddySpriteLeft11,
     NULL,
 };
 
@@ -71,6 +81,11 @@ const PinnedAssetImage *kBuddySpritesRight[] =
     &BuddySpriteRight4,
     &BuddySpriteRight5,
     &BuddySpriteRight6,
+    &BuddySpriteRight7,
+    &BuddySpriteRight8,
+    &BuddySpriteRight9,
+    &BuddySpriteRight10,
+    &BuddySpriteRight11,
     NULL,
 };
 
@@ -83,6 +98,11 @@ const AssetImage *kBuddyRibbons[] =
     &BuddyRibbon4,
     &BuddyRibbon5,
     &BuddyRibbon6,
+    &BuddyRibbon7,
+    &BuddyRibbon8,
+    &BuddyRibbon9,
+    &BuddyRibbon10,
+    &BuddyRibbon11,
     NULL,
 };
 
@@ -95,6 +115,11 @@ const AssetImage *kBuddiesFull[] =
     &BuddyFull4,
     &BuddyFull5,
     &BuddyFull6,
+    &BuddyFull7,
+    &BuddyFull8,
+    &BuddyFull9,
+    &BuddyFull10,
+    &BuddyFull11,
 };
 
 const AssetImage *kBuddiesSmall[] =
@@ -106,6 +131,11 @@ const AssetImage *kBuddiesSmall[] =
     &BuddySmall4,
     &BuddySmall5,
     &BuddySmall6,
+    &BuddySmall7,
+    &BuddySmall8,
+    &BuddySmall9,
+    &BuddySmall10,
+    &BuddySmall11,
 };
 
 const AssetImage *kStoryBookTitles[] =

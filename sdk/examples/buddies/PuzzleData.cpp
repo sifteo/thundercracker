@@ -32,6 +32,11 @@ const BuddyId kBuddiesDefault[] =
     BUDDY_ZORG,
     BUDDY_MARO,
     BUDDY_AMOR,
+    BUDDY_DROO,
+    BUDDY_EROL,
+    BUDDY_FLUR,
+    BUDDY_VEAX,
+    BUDDY_YAWP,
 };
 const Piece kPiecesDefaultStart[][NUM_SIDES] =
 {
@@ -77,6 +82,36 @@ const Piece kPiecesDefaultStart[][NUM_SIDES] =
         Piece(BUDDY_AMOR, Piece::PART_MOUTH),
         Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
+    {
+        Piece(BUDDY_DROO, Piece::PART_HAIR),
+        Piece(BUDDY_DROO, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_DROO, Piece::PART_MOUTH),
+        Piece(BUDDY_DROO, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_EROL, Piece::PART_HAIR),
+        Piece(BUDDY_EROL, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_EROL, Piece::PART_MOUTH),
+        Piece(BUDDY_EROL, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_FLUR, Piece::PART_HAIR),
+        Piece(BUDDY_FLUR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_FLUR, Piece::PART_MOUTH),
+        Piece(BUDDY_FLUR, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_VEAX, Piece::PART_HAIR),
+        Piece(BUDDY_VEAX, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_VEAX, Piece::PART_MOUTH),
+        Piece(BUDDY_VEAX, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_YAWP, Piece::PART_HAIR),
+        Piece(BUDDY_YAWP, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_YAWP, Piece::PART_MOUTH),
+        Piece(BUDDY_YAWP, Piece::PART_EYE_RIGHT),
+    },
 };
 const Piece kPiecesDefaultEnd[][NUM_SIDES] =
 {
@@ -121,6 +156,36 @@ const Piece kPiecesDefaultEnd[][NUM_SIDES] =
         Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
         Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
         Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_DROO, Piece::PART_HAIR, true),
+        Piece(BUDDY_DROO, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_DROO, Piece::PART_MOUTH, true),
+        Piece(BUDDY_DROO, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_EROL, Piece::PART_HAIR, true),
+        Piece(BUDDY_EROL, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_EROL, Piece::PART_MOUTH, true),
+        Piece(BUDDY_EROL, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_FLUR, Piece::PART_HAIR, true),
+        Piece(BUDDY_FLUR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_FLUR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_FLUR, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_VEAX, Piece::PART_HAIR, true),
+        Piece(BUDDY_VEAX, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_VEAX, Piece::PART_MOUTH, true),
+        Piece(BUDDY_VEAX, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_YAWP, Piece::PART_HAIR, true),
+        Piece(BUDDY_YAWP, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_YAWP, Piece::PART_MOUTH, true),
+        Piece(BUDDY_YAWP, Piece::PART_EYE_RIGHT, true),
     },
 };
 Puzzle sPuzzleDefault(

@@ -21,7 +21,7 @@ prop_stack = []
 version_current = 3
 
 # TODO: pull all these from the C++ headers?
-buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro', 'amor', 'invisible']
+buddies = ['gluv', 'suli', 'rike', 'boff', 'zorg', 'maro', 'amor', 'droo', 'erol', 'flur', 'veax', 'yawp', 'invisible']
 views = ['right', 'left', 'front']
 sides = ['top', 'left', 'bottom', 'right']
 parts = ['hair', 'eye_left', 'mouth', 'eye_right']

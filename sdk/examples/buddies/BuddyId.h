@@ -26,6 +26,11 @@ enum BuddyId
     BUDDY_ZORG,
     BUDDY_MARO,
     BUDDY_AMOR,
+    BUDDY_DROO,
+    BUDDY_EROL,
+    BUDDY_FLUR,
+    BUDDY_VEAX,
+    BUDDY_YAWP,
     
     BUDDY_INVISIBLE, // Keep Last
     NUM_BUDDIES,

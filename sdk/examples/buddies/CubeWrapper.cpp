@@ -40,6 +40,11 @@ const AssetImage *kBuddyBackgrounds[] =
     &BuddyBackground4,
     &BuddyBackground5,
     &BuddyBackground6,
+    &BuddyBackground7,
+    &BuddyBackground8,
+    &BuddyBackground9,
+    &BuddyBackground10,
+    &BuddyBackground11,
     &UiFaceHolder,
 };
 
@@ -52,6 +57,11 @@ const BuddyPartAssetImage *kBuddyParts[] =
     &BuddyParts4,
     &BuddyParts5,
     &BuddyParts6,
+    &BuddyParts7,
+    &BuddyParts8,
+    &BuddyParts9,
+    &BuddyParts10,
+    &BuddyParts11,
     NULL,
 };
 
