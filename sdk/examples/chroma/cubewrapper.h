@@ -87,7 +87,8 @@ public:
 	//fill in which colors we're using
 	void fillColorMap( bool *pMap ) const;
 	//do we have the given color anywhere?
-	bool hasColor( unsigned int color ) const;
+    //bAllowWilds will count rain/hyper chromits as a color
+    bool hasColor( unsigned int color, bool bAllowWilds ) const;
 
 	//do we have stranded fixed dots?
 	bool hasStrandedFixedDots() const;

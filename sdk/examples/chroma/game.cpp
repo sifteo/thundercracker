@@ -575,7 +575,16 @@ bool Game::no_match_color_imbalance() const
             return true;
 	}
 
-	return false;
+    //check if we have wilds on one cube and no chromits on any other
+    unsigned int numCubesWithChromits = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].getNumDots() > 0 )
+            numCubesWithChromits++;
+    }
+
+    return ( numCubesWithChromits == 1 );
 }
 
 
@@ -599,7 +608,7 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].hasColor(color) )
+        if( m_cubes[i].hasColor(color, true) )
         {
             total++;
             aHasColor[i] = true;
@@ -660,16 +669,25 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
 unsigned int Game::NumCubesWithColor( unsigned int color ) const
 {
     int total = 0;
+    int totalWithWilds = 0;
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].hasColor(color) )
+        if( m_cubes[i].hasColor(color, false) )
         {
             total++;
+            totalWithWilds++;
+        }
+        else if( m_cubes[i].hasColor(color, true) )
+        {
+            totalWithWilds++;
         }
     }
 
-    return total;
+    if( total == 0 )
+        return 0;
+    else
+        return totalWithWilds;
 }
 
 

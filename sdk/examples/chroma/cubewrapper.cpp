@@ -1411,13 +1411,18 @@ void CubeWrapper::fillColorMap( bool *pMap ) const
 
 
 //do we have the given color anywhere?
-bool CubeWrapper::hasColor( unsigned int color ) const
+//bAllowWilds will count rain/hyper chromits as a color
+bool CubeWrapper::hasColor( unsigned int color, bool bAllowWilds ) const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
 			const GridSlot &slot = m_grid[i][j];
+
+            if( !bAllowWilds && (slot.getColor() == GridSlot::RAINBALLCOLOR || slot.getColor() == GridSlot::HYPERCOLOR))
+                continue;
+
             if( slot.matchesColor( color ) )
 				return true;
 		}
