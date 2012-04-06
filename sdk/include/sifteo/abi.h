@@ -55,7 +55,8 @@ void main(void);
 #define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
 struct _SYSAssetGroupHeader {
-    uint16_t reserved;          /// OUT    Reserved, must be zero
+    uint8_t reserved;           /// OUT    Reserved, must be zero
+    uint8_t ordinal;            /// OUT    Small integer, unique within an ELF
     uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
     uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
     uint64_t hash;              /// OUT    Hash of this asset group's data

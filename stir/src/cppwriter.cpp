@@ -106,7 +106,7 @@ void CPPWriter::writeArray(const std::vector<uint16_t> &data)
 }
 
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
-    : CPPWriter(log, filename) {}
+    : CPPWriter(log, filename), nextGroupOrdinal(0) {}
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
@@ -118,6 +118,13 @@ void CPPSourceWriter::writeGroup(const Group &group)
     sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
 #endif
 
+    /*
+     * XXX: This method of generating the group Ordinal only works within
+     *      a single Stir run. Ideally we'd be able to use _SYS_lti_counter
+     *      or equivalent, but there's no efficient way to stick that in
+     *      read-only data yet.
+     */
+
     mStream <<
         "\n"
         "static const struct {\n" <<
@@ -125,6 +132,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
         indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
         "} " << group.getName() << "_data = {{\n" <<
         indent << "/* reserved  */ 0,\n" <<
+        indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
         indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
         indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
         indent << "/* hash      */ " << hash << ",\n"
