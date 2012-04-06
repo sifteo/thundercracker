@@ -9,6 +9,8 @@
 
 #include <sifteo/abi.h>
 #include "svmmemory.h"
+#include "imagedecoder.h"
+#include "vram.h"
 
 extern "C" {
 
@@ -29,13 +31,23 @@ void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im,
 void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf,
     const _SYSAssetImage *im, uint16_t addr, unsigned frame)
 {
-    _SYSAssetImage header;
-    if (!SvmMemory::copyROData(header, im))
+    ImageDecoder decoder;
+
+    if (!SvmMemory::mapRAM(vbuf))
+        return;
+    if (!decoder.init(im, vbuf->cube))
         return;
 
-    _SYS_vbuf_wrect(&vbuf->vbuf, addr,
-        (const uint16_t*)(im+1) + (header.width * header.height * frame),
-        0, header.width, header.height, header.width, 18);
+    uint16_t lineAddr = addr;
+    for (unsigned y = 0; y < decoder.getHeight(); y++) {
+        for (unsigned x = 0; x < decoder.getWidth(); x++) {
+            uint16_t tile = decoder.tile(x, y, frame);
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(vbuf->vbuf, addr, _SYS_TILE77(tile));
+            addr++;
+        };
+        addr = lineAddr += 18;
+    }
 }
 
 void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf,

@@ -92,7 +92,7 @@ public:
     {
         // AssetGroup is in RAM, but we want the static initializer data
         _SYSAssetGroup *G = (_SYSAssetGroup*) _SYS_lti_initializer(
-            reinterpret_cast<const void*>(i.pAssetGroup));
+            reinterpret_cast<const void*>(i.pAssetGroup), true);
 
         // Build a _SYSMetadataImage struct
         _SYS_lti_metadata(key, "BBBBII",

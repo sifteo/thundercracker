@@ -47,7 +47,7 @@ struct AssetGroup {
         // AssetGroups are typically in RAM, but we want the static
         // initializer data so that our return value is known at compile time.
         _SYSAssetGroup *G = (_SYSAssetGroup*)
-            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys));
+            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys), false);
         return reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
     }
 
@@ -346,7 +346,7 @@ struct AssetLoader {
      * AssetGroup::isInstalled() or AssetLoader::isComplete() to determine
      * this.
      */
-    unsigned progress(_SYSCubeID cubeID, unsigned max = 100) const {
+    int progress(_SYSCubeID cubeID, int max = 100) const {
         return progressBytes(cubeID) * max / group(cubeID).compressedSize();
     }
 

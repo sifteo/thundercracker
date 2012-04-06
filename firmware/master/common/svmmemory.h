@@ -52,6 +52,16 @@ public:
         ptr = reinterpret_cast<T>(pa);
         return true;
     }
+
+    /**
+     * Convenience wrapper for RAM-only validation of fixed-size objects.
+     * Always fails for NULL pointers.
+     */
+    template <typename T>
+    static inline bool mapRAM(T &ptr)
+    {
+        return mapRAM(ptr, sizeof *ptr, false);
+    }
     
     /**
      * Overflow-safe array size calculation. Saturates instead of overflowing.

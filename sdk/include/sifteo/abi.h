@@ -598,7 +598,10 @@ struct _SYSMetadataImage {
  * Static initializers:
  *   In global varaibles which aren't themselves constant but which were
  *   initialized to a constant, _SYS_lti_initializer() can be used to retrieve
- *   that initializer value at link-time.
+ *   that initializer value at link-time. If 'require' is 'true', the value
+ *   must be resolveable to a constant static initializer of a link error
+ *   will result. If 'require' is false, we return the static initializer if
+ *   possible, or pass through 'value' without modification if not.
  */
 
 unsigned _SYS_lti_isDebug();
@@ -607,7 +610,7 @@ void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
-const void *_SYS_lti_initializer(const void *value);
+const void *_SYS_lti_initializer(const void *value, bool require);
 bool _SYS_lti_isConstant(unsigned value);
 
 /**

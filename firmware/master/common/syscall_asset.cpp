@@ -64,7 +64,9 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot)
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
     _SYSAssetSlot slot, _SYSCubeIDVector cv)
 {
-    if (!SvmMemory::mapRAM(loader, sizeof *loader))
+    if (!SvmMemory::mapRAM(loader))
+        return false;
+    if (!SvmMemory::mapRAM(group))
         return false;
 
     _SYSAssetGroupHeader header;

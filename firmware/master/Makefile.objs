@@ -31,7 +31,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/svmdebugger.o \
     $(MASTER_DIR)/common/assetmanager.o \
     $(MASTER_DIR)/common/elfutil.o \
-    $(MASTER_DIR)/common/panic.o
+    $(MASTER_DIR)/common/panic.o \
+    $(MASTER_DIR)/common/imagedecoder.o
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
