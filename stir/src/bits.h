@@ -58,17 +58,28 @@ class BitBuffer {
         assert(count <= sizeof(bits)*8);
     }
 
+    unsigned countChunks(uint32_t value, unsigned chunkSize) {
+        unsigned result = 0;
+        while (value) {
+            value >>= chunkSize;
+            result++;
+        }
+        return result;
+    }
+
     void appendVar(uint32_t value, unsigned chunkSize) {
         // Append a variable-width integer. We output 'chunkSize'
-        // bits at a time, LSB first. Each chunk is preceeded by a '1' bit,
+        // bits at a time, MSB first. Each chunk is preceeded by a '1' bit,
         // and the whole sequence is zero-terminated.
 
-        while (value) {
+        for (unsigned chunk = 0, numChunks = countChunks(value, chunkSize);
+            chunk != numChunks; chunk++) {
+
             append(1, 1);
-            append(value, chunkSize);
-            value >>= chunkSize;
+            append(value >> (chunk * chunkSize), chunkSize);
         }
         append(0, 1);
+
     }
 
     unsigned getCount() const {
