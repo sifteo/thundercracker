@@ -30,28 +30,32 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
     if (state & STATE_STOPPED)
         return 0;
 
-    uint32_t mixable = MIN(len, samples.numSamples() - sampleNum);
+    uint32_t mixed = 0;
+    FlashBlockRef ref;
+    samples.useRef(&ref);
 
-    for (uint32_t i = 0; i < mixable; i++) {
-        // Mix a sample, after volume adjustment, with the existing buffer contents
-        int32_t sample = *buffer + ((samples[sampleNum++] * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME);
-            
-        // TODO - more subtle compression instead of hard limiter
-        *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
-        buffer++;
+    while(mixed < len) {
+        uint32_t mixable = MIN(len, samples.numSamples() - sampleNum);
+    
+        for (uint32_t i = 0; i < mixable; i++) {
+            // Mix a sample, after volume adjustment, with the existing buffer contents
+            int32_t sample = *buffer + ((samples[sampleNum++] * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME);
+                
+            // TODO - more subtle compression instead of hard limiter
+            *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+            buffer++;
+        }
+
+        mixed += mixable;
+
+        // EOF? loop?!
+        if (sampleNum == samples.numSamples() && state & STATE_LOOP)
+            sampleNum = 0;
+        else
+            break;
     }
 
-    if (sampleNum == samples.numSamples())
-        onPlaybackComplete();
+    samples.loseRef();
 
-    return mixable;
-}
-
-void AudioChannelSlot::onPlaybackComplete()
-{
-    LOG(("loopin!"));
-    if (state & STATE_LOOP)
-        sampleNum = 0;
-    else
-        stop();
+    return mixed;
 }

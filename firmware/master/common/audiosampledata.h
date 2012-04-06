@@ -17,10 +17,12 @@ public:
     void init(const struct _SYSAudioModule *module) {
         mod = module;
         ringPos = 0;
+        ref = NULL;
         reset();
     }
 
     void reset() {
+        ASSERT(mod);
         newestSample = (uint32_t)-1;
         bufPos = 0;
     }
@@ -34,6 +36,7 @@ public:
     }
 
     int16_t operator[](uint32_t sampleNum) {
+        ASSERT(mod);
         ASSERT(sampleNum < numSamples());
         if (sampleNum < oldestSample() && newestSample != kNoSamples) reset();
         if (sampleNum > newestSample || newestSample == kNoSamples) decodeToSample(sampleNum);
@@ -41,8 +44,17 @@ public:
         return samples[((sampleNum - oldestSample()) + ringPos) % arraysize(samples)];
     }
 
+    void useRef(FlashBlockRef *newRef) {
+        ref = newRef;
+    }
+
+    void loseRef() {
+        ref = NULL;
+    }
+
 private:
     const struct _SYSAudioModule *mod;
+    FlashBlockRef *ref;
     uint16_t samples[2];   // mini-ringbuffer of samples
     uint32_t newestSample; // index of newest sample in samples[]
     uint8_t ringPos;       // points to the beginning of the ring

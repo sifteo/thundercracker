@@ -53,8 +53,6 @@ private:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    void onPlaybackComplete();
-
     uint8_t state;
     int16_t volume;
     _SYSAudioHandle handle;
