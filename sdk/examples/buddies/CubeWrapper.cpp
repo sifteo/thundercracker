@@ -200,27 +200,30 @@ void CubeWrapper::DrawBuddy()
     if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
         // Parallax Shift
-        //Int2 offset = GetPieceOffset(SIDE_TOP);
-        //offset.x /= int(VidMode::TILE);
-        //offset.y /= int(VidMode::TILE);
+        Cube::TiltState tiltState = GetTiltState();
+        Int2 offset = Vec2(tiltState.x - 1, tiltState.y - 1);
+        offset.x *= -kParallaxDistance;
+        offset.y *= -kParallaxDistance;
         
-        Int2 offset = Vec2(0, 0);
-        
+        // Bump
         if (mBumpTimer > 0.0f)
         {
+            float t = mBumpTimer / kBumpTimerDuration;
+            int d = float(kBumpDistance) * t;
+            
             switch (mBumpSide)
             {
                 case SIDE_TOP:
-                    offset.y += 4;
+                    offset.y += d;
                     break;
                 case SIDE_LEFT:
-                    offset.x += 4;
+                    offset.x += d;
                     break;
                 case SIDE_BOTTOM:
-                    offset.y -= 4;
+                    offset.y -= d;
                     break;
                 case SIDE_RIGHT:
-                    offset.x -= 4;
+                    offset.x -= d;
                     break;
             }
         }
@@ -516,7 +519,7 @@ Int2 CubeWrapper::GetAccelState() const
 
 void CubeWrapper::StartBump(Sifteo::Cube::Side side)
 {
-    mBumpTimer = 0.2f;
+    mBumpTimer = kBumpTimerDuration;
     mBumpSide = side;
 }
 
