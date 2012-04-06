@@ -112,7 +112,7 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
         loader->cubeVec = 0;
         group->pHdr = BA.pHdr;
 
-        if (_SYS_asset_findInCache(group)) {
+        if (_SYS_asset_findInCache(group, cubes) == cubes) {
             LOG(("SVM: Bootstrap asset group %s already installed\n",
                 SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
             continue;

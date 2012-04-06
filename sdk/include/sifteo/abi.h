@@ -793,7 +793,7 @@ uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
 void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader) _SC(135);
-uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group) _SC(136);
+uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
 
 void _SYS_image_memDraw(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
 void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);

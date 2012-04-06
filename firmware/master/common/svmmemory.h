@@ -141,6 +141,18 @@ public:
     }
 
     /**
+     * Convenient type-safe wrapper around copyROData, where the source
+     * is an untyped VirtAddr.
+     */
+    template <typename T>
+    static inline bool copyROData(T &dest, VirtAddr src)
+    {
+        FlashBlockRef ref;
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          src, sizeof(T));
+    }
+
+    /**
      * Convenience functions to read a single value from RAM or Flash.
      * On error, returns a default value.
      */

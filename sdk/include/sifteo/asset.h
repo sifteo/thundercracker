@@ -94,7 +94,7 @@ struct AssetGroup {
      * cached base address on success.
      */
     bool isInstalled(_SYSCubeIDVector vec) {
-        return _SYS_asset_findInCache(*this);
+        return _SYS_asset_findInCache(*this, vec) == vec;
     }
 
     /**
@@ -199,8 +199,8 @@ struct AssetSlot {
             group.sysHeader(), sys, 0, 0, 0);
 
         // Update base address from the cache. Make sure it was successful.
-        bool success = _SYS_asset_findInCache(group);
-        ASSERT(success);
+        _SYSCubeIDVector vec = _SYS_asset_findInCache(group, -1);
+        ASSERT(vec != 0);
 
         return *this;
     }
@@ -237,6 +237,7 @@ struct AssetLoader {
      */
     void init() {
         sys.cubeVec = 0;
+        sys.complete = 0;
     }
 
     /**
@@ -360,7 +361,6 @@ struct AssetLoader {
      * session has completed.
      */
     bool isComplete(_SYSCubeIDVector vec) const {
-        ASSERT((sys.cubeVec & vec) == vec);
         return (sys.complete & vec) == vec;
     }
     
