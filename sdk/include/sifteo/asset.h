@@ -458,6 +458,12 @@ struct PinnedAssetImage {
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
     operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
 
+    /// Implicit conversion to system object
+    operator const _SYSAssetImage& () const { return sys; }
+    operator _SYSAssetImage& () { return sys; }
+    operator const _SYSAssetImage* () const { return &sys; }
+    operator _SYSAssetImage* () { return &sys; }
+
     /**
      * Returns the index of the tile at linear position 'i' in the image.
      *
@@ -535,6 +541,12 @@ struct FlatAssetImage {
     /// Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
     operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
+
+    /// Implicit conversion to system object
+    operator const _SYSAssetImage& () const { return sys; }
+    operator _SYSAssetImage& () { return sys; }
+    operator const _SYSAssetImage* () const { return &sys; }
+    operator _SYSAssetImage* () { return &sys; }
 
     /**
      * Flat asset images represent their tile data as an array of uint16_t
