@@ -14,14 +14,20 @@ class AdPcmDecoder
 public:
     AdPcmDecoder() :
         index(0),
-        predictedSample(0)
+        predictedSample(0),
+        hasExtraSample(false)
     {}
 
-    void decode(FlashStream &in, AudioBuffer &out);
+    int16_t decodeSample(uint8_t **pa);
 
 private:
     int16_t index;
     int32_t predictedSample;
+    uint8_t *lastAddr;
+
+    // since we decode two samples per byte, save the extra
+    bool hasExtraSample;
+    int16_t extraSample;
 
     static const uint16_t stepSizeTable[];
     static const int8_t indexTable[];

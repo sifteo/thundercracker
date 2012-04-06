@@ -126,8 +126,6 @@ void SaveOptions()
 
 void Run()
 {
-    TotalsGame::AudioPlayer::Init();
-
     //loading assets resets video mode to bg0 only.
     //reset to bg_spr_bg1 as needed
     for(int i = 0; i < NUM_CUBES; i++)

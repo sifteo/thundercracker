@@ -18,11 +18,11 @@ Tasks::Task Tasks::TaskList[] = {
     { 0 },
     { 0 },
     #else
-    { UsbDevice::handleINData, 0 },
-    { UsbDevice::handleOUTData, 0 },
+    { UsbDevice::handleINData, 0, false},
+    { UsbDevice::handleOUTData, 0, false},
     #endif
-    { AudioMixer::handleAudioOutEmpty, 0 },
-    { SvmDebugger::messageLoop, 0 },
+    { AudioMixer::pullAudio, 0, false},
+    { SvmDebugger::messageLoop, 0, false},
 };
 
 void Tasks::init()
@@ -33,11 +33,14 @@ void Tasks::init()
 /*
     Pend a given task handler to be run the next time we have time.
 */
-void Tasks::setPending(TaskID id, void* p)
+void Tasks::setPending(TaskID id, void* p, bool runAlways)
 {
     ASSERT((unsigned)id < (unsigned)arraysize(TaskList));
-    ASSERT(TaskList[id].callback != NULL);
-    TaskList[id].param = p;
+    Task &task = TaskList[id];
+    ASSERT(task.callback != NULL);
+    task.param = p;
+    task.runAlways = runAlways;
+
     Atomic::SetLZ(pendingMask, id);
 }
 
@@ -48,17 +51,22 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
-    // Always try to fetch audio data
-    AudioMixer::instance.fetchData();
+    for (unsigned i = 0; i < arraysize(TaskList); i++) {
+        Task &task = TaskList[i];
+        if (task.runAlways == true && task.callback) {
+            task.callback(task.param);
+        }
+    }
     
     while (pendingMask) {
         unsigned idx = Intrinsic::CLZ(pendingMask);
-        Task &task = TaskList[idx];
-
         // clear before calling back since callback might take a while and
         // the flag might get set again in the meantime
         Atomic::ClearLZ(pendingMask, idx);
 
-        task.callback(task.param);
+        Task &task = TaskList[idx];
+        if (task.runAlways == false) {
+            task.callback(task.param);
+        }
     }
 }
