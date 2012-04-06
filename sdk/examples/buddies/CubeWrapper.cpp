@@ -96,6 +96,8 @@ CubeWrapper::CubeWrapper()
     , mPieceBlinking(SIDE_UNDEFINED)
     , mPieceBlinkTimer(0.0f)
     , mPieceBlinkingOn(false)
+    , mBumpTimer(0.0f)
+    , mBumpSide(SIDE_TOP)
 {
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
@@ -137,6 +139,15 @@ bool CubeWrapper::Update(float dt)
             mPieceBlinkTimer += kHintBlinkTimerDuration;
             
             blinked = !mPieceBlinkingOn;
+        }
+    }
+    
+    if (mBumpTimer > 0.0f)
+    {
+        mBumpTimer -= dt;
+        if (mBumpTimer <= 0.0f)
+        {
+            mBumpTimer = 0.0f;
         }
     }
     
@@ -189,10 +200,32 @@ void CubeWrapper::DrawBuddy()
     if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
         // Parallax Shift
-        Int2 offset = GetPieceOffset(SIDE_TOP);
-        offset.x /= VidMode::TILE;
-        offset.y /= VidMode::TILE;
-        ScrollBackground(Vec2(VidMode::TILE, VidMode::TILE) + offset);
+        //Int2 offset = GetPieceOffset(SIDE_TOP);
+        //offset.x /= int(VidMode::TILE);
+        //offset.y /= int(VidMode::TILE);
+        
+        Int2 offset = Vec2(0, 0);
+        
+        if (mBumpTimer > 0.0f)
+        {
+            switch (mBumpSide)
+            {
+                case SIDE_TOP:
+                    offset.y += 4;
+                    break;
+                case SIDE_LEFT:
+                    offset.x += 4;
+                    break;
+                case SIDE_BOTTOM:
+                    offset.y -= 4;
+                    break;
+                case SIDE_RIGHT:
+                    offset.x -= 4;
+                    break;
+            }
+        }
+        
+        ScrollBackground(Vec2(int(VidMode::TILE), int(VidMode::TILE)) + offset);
         
         // Draw the actual asset
         DrawBackground(*asset);
@@ -477,7 +510,16 @@ Int2 CubeWrapper::GetAccelState() const
 {
     return mCube.physicalAccel();
 }
- 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::StartBump(Sifteo::Cube::Side side)
+{
+    mBumpTimer = 0.2f;
+    mBumpSide = side;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

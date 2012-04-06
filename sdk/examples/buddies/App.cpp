@@ -1071,6 +1071,9 @@ void App::OnNeighborAdd(
             mClueOffTimers[i] = 0.0f;
         }
         
+        GetCubeWrapper(cubeId0).StartBump(cubeSide0);
+        GetCubeWrapper(cubeId1).StartBump(cubeSide1);
+        
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isFixed =

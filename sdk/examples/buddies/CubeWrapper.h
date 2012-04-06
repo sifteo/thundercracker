@@ -106,6 +106,9 @@ public:
     Sifteo::Cube::TiltState GetTiltState() const;
     Sifteo::Int2 GetAccelState() const;
     
+    // Bump
+    void StartBump(Sifteo::Cube::Side side);
+    
     // State
     bool IsSolved() const;
     bool IsTouching() const;
@@ -120,12 +123,18 @@ private:
     
     bool mEnabled;
     BuddyId mBuddyId;
+    
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
+    
     Sifteo::Int2 mPieceOffsets[NUM_SIDES];
+    
     Sifteo::Cube::Side mPieceBlinking;
     float mPieceBlinkTimer;
     bool mPieceBlinkingOn;
+    
+    float mBumpTimer;
+    Sifteo::Cube::Side mBumpSide;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
