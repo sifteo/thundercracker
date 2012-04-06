@@ -9,7 +9,6 @@
 #include <sifteo/abi.h>
 #include <stdint.h>
 #include "machine.h"
-#include "audiobuffer.h"
 #include "audiosampledata.h"
 
 class AudioChannelSlot {

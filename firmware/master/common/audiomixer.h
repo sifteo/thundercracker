@@ -40,7 +40,6 @@ public:
     static void pullAudio(void *p);
 
 private:
-    uint32_t enabledChannelMask;    // channels userspace has provided buffers for
     uint32_t playingChannelMask;    // channels that are actively playing
 
     _SYSAudioHandle nextHandle;
