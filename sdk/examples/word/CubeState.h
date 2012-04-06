@@ -10,6 +10,7 @@ enum CubeStateIndex
     CubeStateIndex_NewWordScored,
     CubeStateIndex_OldWordScored,
     CubeStateIndex_StartOfRoundScored,
+    CubeStateIndex_StoryStartOfRound,
     CubeStateIndex_EndOfRoundScored,
     CubeStateIndex_ShuffleScored,
 

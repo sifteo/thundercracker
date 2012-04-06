@@ -188,8 +188,11 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             queueAnim(AnimType_CityProgression);
             break;
 
-        case GameStateIndex_PlayScored:
+        case GameStateIndex_StoryStartOfRound:
             queueAnim(AnimType_MetaTilesShow);
+            break;
+
+        case GameStateIndex_PlayScored:
             break;
         }
         break;
@@ -432,6 +435,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 newStateIndex = CubeStateIndex_Title;
                 break;
 
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
             default:
                 break;
             }
@@ -574,15 +581,16 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             paint();
             break;
         case EventID_Update:
-            newStateIndex = mStateTime <= 0.5f ?
-                           CubeStateIndex_ShuffleScored: CubeStateIndex_NotWordScored;
+            newStateIndex =
+                    mStateTime <= 0.5f ?
+                        CubeStateIndex_ShuffleScored :
+                        CubeStateIndex_NotWordScored;
             break;
         }
         break;
 
     default:
         break;
-
     }
 
    if (newStateIndex != getCurrentStateIndex())

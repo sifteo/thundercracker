@@ -172,7 +172,28 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Start:
-            newStateIndex = GameStateIndex_PlayScored;
+            newStateIndex = GameStateIndex_StoryStartOfRound;
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case GameStateIndex_StoryStartOfRound:
+        onAudioEvent(eventID, data);
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            createNewAnagram();
+            break;
+
+        case EventID_Update:
+            if (getNumCubesInAnim(AnimType_NotWord) >= NUM_CUBES)
+            {
+
+                newStateIndex = GameStateIndex_PlayScored;
+            }
             break;
 
         default:
@@ -184,13 +205,9 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         onAudioEvent(eventID, data);
         switch (eventID)
         {
-        // TODO put in the pause menu on touch
         case EventID_EnterState:
-            createNewAnagram();
             // fall through
         case EventID_NewPuzzle:
-            // TODO reset hints,
-
             break;
 
         case EventID_TouchAndHold:
@@ -421,8 +438,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case EventID_Update:
             // TODO check first run
-            //newStateIndex = GameStateIndex_MainMenu;
-            newStateIndex = GameStateIndex_Title;
+            newStateIndex = GameStateIndex_MainMenu;
+            //newStateIndex = GameStateIndex_Title;
             break;
 
         default:
@@ -450,7 +467,10 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                     {
                     case MENU_ITEM_PRESS:
                         // TODO update game state before continuing, depending on selection
-                        newStateIndex = GameStateIndex_PlayScored;
+                        newStateIndex =
+                                (getCurrentStateIndex() == GameStateIndex_MainMenu) ?
+                                    GameStateIndex_StoryStartOfRound :
+                                    GameStateIndex_PlayScored;
                         exitMenu = true;
                         {
                             EventData data;

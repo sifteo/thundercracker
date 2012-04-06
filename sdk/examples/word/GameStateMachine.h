@@ -15,6 +15,7 @@ enum GameStateIndex
     // TODO rename, remove old, states
     GameStateIndex_Title,
     GameStateIndex_PlayScored,
+    GameStateIndex_StoryStartOfRound,
     GameStateIndex_StartOfRoundScored,
     GameStateIndex_EndOfRoundScored,
     GameStateIndex_ShuffleScored,
