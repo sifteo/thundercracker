@@ -29,11 +29,15 @@ def main():
 
             cubeDataIndex = 0
             cubeDataStrs = []
+	    chapterIndices = []
             
             #dump all puzzles
             for i,p in enumerate(data):
                 fout.write( '\tPuzzle( \"' + p["title"] + '\", \"' + p["instructions"] + '\", ' );
                 
+		if "pre_title" in p:
+		    chapterIndices.append(i)
+		
                 numcubes = 0
                 #each puzzle has n cubes worth of data
                 for j,cubedata in enumerate(p["data"]):
@@ -62,6 +66,13 @@ def main():
 		fout.write( i + '\n' )
 	    
 	    fout.write( '};\n' )
+	    
+	    fout.write( '\nstatic const uint8_t s_puzzleChapterIndices[] =\n{\n' )
+	    
+	    for i in chapterIndices:
+		fout.write( str(i) + "," )
+		
+	    fout.write( "\n};\n" )
         
 
 if __name__ == "__main__":

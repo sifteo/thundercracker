@@ -76,3 +76,51 @@ const PuzzleCubeData *Puzzle::getCubeData( unsigned int cubeIndex ) const
 
     return &s_puzzledata[ m_dataIndex + cubeIndex ];
 }
+
+//given puzzle, return chapter index
+unsigned int Puzzle::GetChapter( unsigned int puzzle )
+{
+    for( int i = 0; i < GetNumChapters(); i++ )
+    {
+        if( s_puzzleChapterIndices[i] > puzzle )
+            return i - 1;
+    }
+
+    ASSERT( 0 );
+
+    return 0;
+}
+
+unsigned int Puzzle::GetNumChapters()
+{
+    return sizeof( s_puzzleChapterIndices );
+}
+
+unsigned int Puzzle::GetNumPuzzlesInChapter( unsigned int chapter )
+{
+    ASSERT( chapter < GetNumChapters() );
+
+    if( chapter < GetNumChapters() )
+    {
+        //last chapter special cased
+        if( chapter == GetNumChapters() - 1 )
+            return GetNumPuzzles() - s_puzzleChapterIndices[chapter];
+        else
+            return s_puzzleChapterIndices[chapter+1] - s_puzzleChapterIndices[chapter];
+    }
+    else
+        return 0;
+}
+
+//index of first puzzle in the given chapter
+unsigned int Puzzle::GetPuzzleOffset( unsigned int chapter )
+{
+    ASSERT( chapter < GetNumChapters() );
+
+    if( chapter < GetNumChapters() )
+    {
+        return s_puzzleChapterIndices[chapter];
+    }
+    else
+        return 0;
+}

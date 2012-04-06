@@ -11,6 +11,7 @@
 #include "Puzzle.h"
 #include "BubbleTransition.h"
 #include "Banner.h"
+#include "SpriteNumber.h"
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -103,7 +104,8 @@ void Game::Init()
     m_stateTime = 0.0f;
 
     //TODO READ THIS FROM SAVE FILE
-    m_iFurthestProgress = 3;
+    m_iFurthestProgress = 30;
+    m_iChapterViewed = 0;
 }
 
 
@@ -1092,7 +1094,7 @@ void Game::ReturnToMainMenu()
 
 void Game::HandleMenu()
 {
-    const unsigned int MAX_MENU_ITEMS = 8;
+    const unsigned int MAX_MENU_ITEMS = 10;
 
     MenuItem allmenuitems[][ MAX_MENU_ITEMS ] =
     {
@@ -1101,9 +1103,9 @@ void Game::HandleMenu()
         //puzzle menu
         { {&UI_Main_Menu_Continue, NULL}, {&UI_Main_Menu_NewGame, NULL}, {&UI_Main_Menu_ChapterSelect, NULL}, {&UI_Main_Menu_Back, NULL}, {NULL, NULL} },
         //chapter select menu
-        { {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
         //puzzle select menu
-        { {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
     };
 
     MenuAssets allmenuassets[] =
@@ -1120,6 +1122,9 @@ void Game::HandleMenu()
 
     MenuItem *pItems = allmenuitems[0];
     MenuAssets *pAssets = &allmenuassets[0];
+
+    unsigned int numSelectables = 0;
+    unsigned int numTotal = 0;
 
     switch( m_state )
     {
@@ -1139,7 +1144,31 @@ void Game::HandleMenu()
         {
             pItems = allmenuitems[2];
             pAssets = &allmenuassets[2];
+
+            numSelectables = Puzzle::GetChapter( m_iFurthestProgress );
+
+            //LOG(( "Num selectables = %d\n", numSelectables));
+
+            MenuItem unlocked = {&UI_Main_Menu_Chapter, NULL};
+            MenuItem locked = {&UI_Main_Menu_ChapterLock, NULL};
+
+            numTotal = Puzzle::GetNumChapters();
+
+            ASSERT( numTotal <= MAX_MENU_ITEMS - 2 );
+
             //certain menu types will have to reinit the menu items list
+            for( int i = 0; i < numTotal; i++ )
+            {
+                if( i < numSelectables )
+                    allmenuitems[2][i] = unlocked;
+                else
+                    allmenuitems[2][i] = locked;
+            }
+
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem nullItem = {NULL, NULL};
+            allmenuitems[2][ numTotal ] = back;
+            allmenuitems[2][ numTotal + 1 ] = nullItem;
             break;
         }
         case STATE_PUZZLESELECTMENU:
@@ -1147,6 +1176,29 @@ void Game::HandleMenu()
             pItems = allmenuitems[3];
             pAssets = &allmenuassets[3];
             //certain menu types will have to reinit the menu items list
+
+            MenuItem unlocked = {&UI_Main_Menu_Puzzle, NULL};
+            MenuItem locked = {&UI_Main_Menu_PuzzleLock, NULL};
+
+            numTotal = Puzzle::GetNumPuzzlesInChapter( m_iChapterViewed );
+            int puzzleOffset = Puzzle::GetPuzzleOffset( m_iChapterViewed );
+
+            //certain menu types will have to reinit the menu items list
+            for( int i = 0; i < numTotal; i++ )
+            {
+                if( i + puzzleOffset <= m_iFurthestProgress )
+                {
+                    allmenuitems[3][i] = unlocked;
+                    numSelectables++;
+                }
+                else
+                    allmenuitems[3][i] = locked;
+            }
+
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem nullItem = {NULL, NULL};
+            allmenuitems[3][ numTotal ] = back;
+            allmenuitems[3][ numTotal + 1 ] = nullItem;
             break;
         }
         default:
@@ -1168,28 +1220,50 @@ void Game::HandleMenu()
     {
         switch(e.type)
         {
+            case MENU_ITEM_PRESS:
+            {
+                switch( m_state )
+                {
+                    case STATE_CHAPTERSELECTMENU:
+                    case STATE_PUZZLESELECTMENU:
+                    {
+                        //LOG(( "item %d, num selectables = %d, num Total = %d\n", e.item, numSelectables, numTotal ));
+                        if( e.item < numTotal && e.item >= numSelectables )
+                            menu.preventDefault();
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
             case MENU_ITEM_ARRIVE:
             {
                 switch( m_state )
                 {
                     case STATE_PUZZLEMENU:
                     {
-
                         if( e.item == 0 )
                         {
                             int progress = m_iFurthestProgress + 1;
-
-                            //show current puzzle
-                            if( progress >= 10 )
-                            {
-                                m_cubes[0].GetVid().resizeSprite( 1, 8, 16 );
-                                m_cubes[0].GetVid().setSpriteImage(1, BannerPointsWhite, progress / 10);
-                                m_cubes[0].GetVid().moveSprite(1, 64, 64);
-                            }
-
-                            m_cubes[0].GetVid().resizeSprite( 0, 8, 16 );
-                            m_cubes[0].GetVid().setSpriteImage(0, BannerPointsWhite, progress % 10);
-                            m_cubes[0].GetVid().moveSprite(0, 72, 64);
+                            DrawSpriteNum( m_cubes[0].GetVid(), progress, Vec2( 64, 64 ) );
+                        }
+                        break;
+                    }
+                    case STATE_CHAPTERSELECTMENU:
+                    {
+                        if( e.item < numTotal )
+                        {
+                            DrawSpriteNum( m_cubes[0].GetVid(), e.item + 1, Vec2( 42, 50 ) );
+                        }
+                        break;
+                    }
+                    case STATE_PUZZLESELECTMENU:
+                    {
+                        if( e.item < numTotal )
+                        {
+                            int puzzleNum = e.item + Puzzle::GetPuzzleOffset( m_iChapterViewed ) + 1;
+                            DrawSpriteNum( m_cubes[0].GetVid(), puzzleNum, Vec2( 52, 49 ) );
                         }
                         break;
                     }
@@ -1262,10 +1336,24 @@ void Game::HandleMenu()
         }
         case STATE_CHAPTERSELECTMENU:
         {
+            if( e.item < numSelectables )
+            {
+                m_iChapterViewed = e.item;
+                TransitionToState( STATE_PUZZLESELECTMENU );
+            }
+            else if( e.item == numTotal )
+                TransitionToState( STATE_PUZZLEMENU );
             break;
         }
         case STATE_PUZZLESELECTMENU:
         {
+            if( e.item < numSelectables )
+            {
+                m_iLevel = e.item + Puzzle::GetPuzzleOffset( m_iChapterViewed );
+                gotoNextPuzzle( false );
+            }
+            else if( e.item == numTotal )
+                TransitionToState( STATE_CHAPTERSELECTMENU );
             break;
         }
         default:

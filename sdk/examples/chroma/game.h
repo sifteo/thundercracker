@@ -188,6 +188,8 @@ private:
 	//for progression in shakes mode
     uint8_t m_iLevel;
     uint8_t m_iFurthestProgress;
+    //used to track which chapter we're looking at in puzzle menus
+    uint8_t m_iChapterViewed;
 	GameState m_state;
 	GameMode m_mode;
     float m_stateTime;
