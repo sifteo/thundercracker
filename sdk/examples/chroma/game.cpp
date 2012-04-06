@@ -1145,7 +1145,7 @@ void Game::HandleMenu()
             pItems = allmenuitems[2];
             pAssets = &allmenuassets[2];
 
-            numSelectables = Puzzle::GetChapter( m_iFurthestProgress );
+            numSelectables = Puzzle::GetChapter( m_iFurthestProgress ) + 1;
 
             //LOG(( "Num selectables = %d\n", numSelectables));
 
