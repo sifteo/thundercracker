@@ -785,37 +785,6 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TiltNudgePieces(App& app, Cube::ID cubeId)
-{
-#ifdef BUDDY_PIECES_USE_SPRITES
-    CubeWrapper &cube = app.GetCubeWrapper(cubeId);
-    
-    Int2 accelState = cube.GetAccelState();
-    float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
-    float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
-    float d = 8.0f;
-    
-    cube.SetPieceOffset(SIDE_TOP,    Vec2( x * d,  y * d));
-    cube.SetPieceOffset(SIDE_LEFT,   Vec2( x * d,  y * d));
-    cube.SetPieceOffset(SIDE_BOTTOM, Vec2(-x * d, -y * d));
-    cube.SetPieceOffset(SIDE_RIGHT,  Vec2(-x * d,  y * d));
-#else
-    CubeWrapper &cube = app.GetCubeWrapper(cubeId);
-    
-    Cube::TiltState tiltState = cube.GetTiltState();
-    int x = (tiltState.x - 1) * VidMode::TILE;
-    int y = (tiltState.y - 1) * VidMode::TILE;
-    
-    cube.SetPieceOffset(SIDE_TOP, Vec2(x, y));
-    cube.SetPieceOffset(SIDE_LEFT, Vec2(x, y));
-    cube.SetPieceOffset(SIDE_BOTTOM, Vec2(-x, -y));
-    cube.SetPieceOffset(SIDE_RIGHT, Vec2(-x, y));
-#endif        
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 // TODO: Get this wrapped only in a DEBUG build
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
@@ -1114,7 +1083,6 @@ void App::OnTilt(Cube::ID cubeId)
     {
         case GAME_STATE_FREEPLAY_PLAY:
         {
-            TiltNudgePieces(*this, cubeId);
             Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
             if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
             {
@@ -1131,7 +1099,6 @@ void App::OnTilt(Cube::ID cubeId)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
-                TiltNudgePieces(*this, cubeId);
                 Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
                 if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
                 {
@@ -1160,7 +1127,6 @@ void App::OnTilt(Cube::ID cubeId)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
-                TiltNudgePieces(*this, cubeId);
                 Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
                 if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
                 {
@@ -1964,14 +1930,6 @@ void App::UpdateGameState(float dt)
                             mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
                             mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
                         }
-                        else
-                        {
-                            // If we're in sprite mode, we can do gradations of nudge, so
-                            // poll the value and set the offset here.
-#ifdef BUDDY_PIECES_USE_SPRITES                        
-                            TiltNudgePieces(*this, i);
-#endif
-                        }
                     }
                 }
             }
@@ -2113,18 +2071,6 @@ void App::UpdateGameState(float dt)
                     mTouchSync = false;
                 }
             }
-            
-            // If we're in sprite mode, we can do gradations of nudge, so
-            // poll the value and set the offset here.
-#ifdef BUDDY_PIECES_USE_SPRITES
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    TiltNudgePieces(*this, i);
-                }
-            }
-#endif
             
             // Check to see if "Face Complete" banners are done displaying
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
@@ -2384,18 +2330,6 @@ void App::UpdateGameState(float dt)
                     mTouchSync = false;
                 }
             }
-            
-            // If we're in sprite mode, we can do gradations of nudge, so
-            // poll the value and set the offset here.
-#ifdef BUDDY_PIECES_USE_SPRITES
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    TiltNudgePieces(*this, i);
-                }
-            }
-#endif
             
             // Check to see if "Face Complete" banners are done displaying
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)

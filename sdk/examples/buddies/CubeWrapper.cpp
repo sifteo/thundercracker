@@ -205,6 +205,8 @@ void CubeWrapper::DrawBuddy()
         offset.x *= -kParallaxDistance;
         offset.y *= -kParallaxDistance;
         
+        // Nudge
+        
         // Bump
         if (mBumpTimer > 0.0f)
         {
@@ -571,7 +573,14 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     unsigned int spriteOver = side + 0;
     unsigned int spriteUnder = side + NUM_SIDES;
     
-    Int2 point = kPartPositions[side];
+    // TODO: nudge support
+    Int2 accelState = GetAccelState();
+    float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
+    float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
+    float d = 8.0f;
+    Int2 nudge = Vec2(x * d, y * d);
+    
+    Int2 point = kPartPositions[side] + nudge;
     switch(side)
     {
         case SIDE_TOP:
@@ -600,7 +609,8 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         }
     }
     
-    if (const PinnedAssetImage *asset = GetBuddyFacePartsAsset(piece.GetBuddy()))
+    ASSERT(piece.GetBuddy() < arraysize(kBuddyParts));
+    if (const PinnedAssetImage *asset = kBuddyParts[piece.GetBuddy()])
     {
         unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
         ASSERT(frame < asset->frames);
@@ -638,7 +648,10 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
             frame = 0;
         }
         
-        Int2 point = kPartPositions[side];
+        Cube::TiltState tiltState = GetTiltState();
+        Int2 nudge = Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE);
+        
+        Int2 point = kPartPositions[side] + nudge;
         
         switch(side)
         {

@@ -38,6 +38,11 @@ const float kHintTimerRepeatDuration = 5.0f; // Seconds before hint reappears
 const float kHintBlinkTimerDuration = 0.5f; // Blink rate for hints (tune this with kHintTimerOffDuration so the piece doesn't do a half-blink when turning off)
 const float kClueTimerOnDuration = 30.0f;
 
+// Gestures
+const int kParallaxDistance = 2;
+const float kBumpTimerDuration = 0.2f;
+const int kBumpDistance = 4;
+
 // Free Play
 const float kFreePlayShakeThrottleDuration = 1.5f;
 
