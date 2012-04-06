@@ -10,7 +10,9 @@ void Game::OnActiveTrigger() {
   } else if (pRoom->HasNPC()) {
     const NpcData* npc = pRoom->NPC();
     if (npc->optional) { OnNpcChatter(npc); }
-  }  
+  }  else if (pRoom->HasSwitch()) {
+    OnToggleSwitch(pRoom->Switch());
+  }
 }
 
 unsigned Game::OnPassiveTrigger() {
@@ -27,11 +29,25 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
+void Game::OnToggleSwitch(const SwitchData* pSwitch) {
+  RestorePearlIdle();
+  for(unsigned i=1; i<=7; ++i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+  OnTriggerEvent(pSwitch->eventType, pSwitch->eventId);
+  for(int i=6; i>=0; --i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
+}
+
 void Game::OnTrapdoor(Room *pRoom) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED TRAPDOOR
   // animate the tiles opening
-  Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
   for(unsigned i=1; i<=7; ++i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
     Paint(true);
@@ -155,14 +171,23 @@ void Game::OnEnterGateway(const GatewayData* pGate) {
   //---------------------------------------------------------------------------
   // PLAYER TRIGGERED GATEWAY
   const MapData& targetMap = gMapData[pGate->targetMap];
-  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
   mPlayer.SetEquipment(0);
-  TeleportTo(gMapData[pGate->targetMap], Vec2(
-    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-  ));
+  if (pGate->targetType == TARGET_TYPE_GATEWAY) {
+    const GatewayData& pTargetGate = targetMap.gates[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+    ));
+  } else {
+    const RoomData& targetRoom = targetMap.rooms[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pGate->targetId % targetMap.width) + (targetRoom.centerX<<4),
+      128 * (pGate->targetId / targetMap.width) + (targetRoom.centerX<<4)
+    ));
+  }
+
   OnTriggerEvent(pGate->trigger);
   RestorePearlIdle();
 }

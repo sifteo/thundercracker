@@ -77,8 +77,8 @@ void Game::MainLoop() {
 	          		Vec2(
 	          			128 * (quest->roomId % map.width) + 16 * room.centerX,
 	          			128 * (quest->roomId / map.width) + 16 * room.centerY
-	          			)
-	          		);
+	          		)
+	          	);
 	          	mPlayer.SetStatus(PLAYER_STATUS_IDLE);
 	          	mPlayer.CurrentView()->UpdatePlayer();
 
@@ -92,7 +92,9 @@ void Game::MainLoop() {
 	      		}
 	      	}
     	}
-    	mViews[targetViewId].GetRoomView()->StartNod();
+    	if (mViews[targetViewId].IsShowingRoom()) {
+    		mViews[targetViewId].GetRoomView()->StartNod();
+    	}
 
 	    //-------------------------------------------------------------------------
 	    // PROCEED TO TARGET

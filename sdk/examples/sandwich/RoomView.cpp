@@ -137,9 +137,8 @@ Int2 RoomView::Location() const {
 bool RoomView::GatewayTouched() const {
   const Room* pRoom = GetRoom();
   if (pRoom->HasGateway()) {
-    const Cube::Side side = ComputeGateSide(pRoom->Gateway());
-    if (side != SIDE_UNDEFINED) {
-      const ViewSlot *view = Parent()->VirtualNeighborAt(side);
+    for(Cube::Side s=0; s<4; ++s) {
+      const ViewSlot *view = Parent()->VirtualNeighborAt(s);
       return view && view->Touched() && view->IsShowingGatewayEdge();
     }
   }

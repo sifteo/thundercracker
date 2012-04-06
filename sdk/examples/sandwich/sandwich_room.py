@@ -41,6 +41,7 @@ class Room:
 	def __init__(self, map, lid):
 		self.map = map
 		self.lid = lid
+		self.locations = [ loc for loc in map.locations if loc.rid == lid ]
 		self.x = lid % map.width
 		self.y = lid / map.width
 		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
@@ -81,12 +82,37 @@ class Room:
 			obj = trapdoors[0]
 			#print "pix position = %d, %d" % (obj.px, obj.py)
 			assert obj.pw/16 == 4 and obj.ph/16 == 4, "Trapdoor must be 4x4 tiles: " + self.map.id
-			m = EXP_LOCATION.match(obj.props.get("respawn", ""))
-			assert m is not None, "Malformed Respawn Location in Map: " + self.map.id
-			self.trapRespawnRoomId = int(m.group(1)) + int(m.group(2)) * map.width
+			respawn = obj.props.get("respawn", "").lower()
+			m = EXP_LOCATION.match(respawn)
+			if m is None:
+				# assuming we have a location
+				assert respawn in self.map.location_dict
+				self.trapRespawnRoomId = self.map.location_dict[respawn].rid
+			else:
+				self.trapRespawnRoomId = int(m.group(1)) + int(m.group(2)) * map.width
 			self.trapx = (obj.px / 16) - self.x * 8 + 2
 			self.trapy = (obj.py / 16) - self.y * 8 + 2
-			#print "trap position: %d, %d" % (self.trapx, self.trapy)
+			self.its_a_switch = False
+		else:
+			# switches?
+			switches = [ obj for obj in map.raw.objects if obj.type == "switch" and self.contains_obj(obj) ]
+			self.its_a_switch = len(switches) > 0
+			if self.its_a_switch:
+				obj = switches[0]
+				self.switchx = (obj.px / 16) - self.x * 8 + 2
+				self.switchy = (obj.py / 16) - self.y * 8 + 2
+				assert obj.pw/16 == 4 and obj.ph/16 == 4, "Switch must be 4x4 tiles: " + self.map.id
+				compute_trigger_event_id(self, obj)
+
+		# bombs
+		self.can_bomb = [ False, False, False, False ]
+		for x,y in product(range(0,8), range(0,8)):
+			if "crack" in self.tileat(x,y).props:
+				# determine side
+				if x == 0 and (y > 2 and y < 7): self.can_bomb[SIDE_LEFT] = True
+				if x == 7 and (y > 2 and y < 7): self.can_bomb[SIDE_RIGHT] = True
+				if (x > 0 and x < 7) and y <  3: self.can_bomb[SIDE_TOP] = True
+				if (x > 0 and x < 7) and y == 7: self.can_bomb[SIDE_BOTTOM] = True
 
 
 	def contains_obj(self, obj):
@@ -101,8 +127,13 @@ class Room:
 	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y), 8*self.x + x, 8*self.y + y)
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
+	def resolve_trigger_event_id(self):
+		if self.its_a_switch:
+			resolve_trigger_event_id(self, self.map)
+
 	def primary_center(self):
 		if self.its_a_trap: return (self.trapx, self.trapy)
+		if self.its_a_switch: return (self.switchx, self.switchy)
 		if self.subdiv_type == SUBDIV_BRDG_VER:
 			return (self.first_bridge_col+1, 4)
 		elif self.subdiv_type == SUBDIV_NONE or self.subdiv_type == SUBDIV_BRDG_HOR:
@@ -178,7 +209,7 @@ class Room:
 			for side,(x,y) in enumerate(cardinals): 
 				self._subdiv_visit(slots, 1<<side, x, y)
 			for cnt in (bit_count(slots[x+(y<<3)]) for (x,y) in cardinals): 
-				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id
+				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id + " at: " + str(self.x) + "," + str(self.y)
 			tx,ty = cardinals[SIDE_TOP]
 			maskTop = slots[tx+(ty<<3)]
 			if bit_count(maskTop) == 2:

@@ -87,7 +87,7 @@ class Layer:
 class Obj:
 	def __init__(self, map, xml):
 		self.map = map
-		self.name = xml.get("name")
+		self.name = xml.get("name", "").lower()
 		self.type = xml.get("type").lower()
 		self.px = int(xml.get("x"))
 		self.py = int(xml.get("y"))

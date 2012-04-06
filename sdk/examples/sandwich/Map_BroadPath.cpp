@@ -86,6 +86,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
       ViewSlot *nextView = loc.view->Parent()->VirtualNeighborAt(side);
       if (nextView && nextView->IsShowingGatewayEdge() && nextView->Touched()) {
         outPath->steps[depth-1] = -1;
+        *outViewId = nextView->GetCubeID();
         return true;
       }
     }
