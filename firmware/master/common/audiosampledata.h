@@ -25,6 +25,7 @@ public:
         ASSERT(mod);
         newestSample = (uint32_t)-1;
         bufPos = 0;
+        if (mod->type == _SYS_ADPCM) adpcmDec.reset();
     }
 
     inline uint32_t numSamples() const {

@@ -20,10 +20,15 @@ public:
 
     int16_t decodeSample(uint8_t **pa);
 
+    void reset() {
+        index = 0;
+        predictedSample = 0;
+        hasExtraSample = false;
+    }
+
 private:
     int16_t index;
     int32_t predictedSample;
-    uint8_t *lastAddr;
 
     // since we decode two samples per byte, save the extra
     bool hasExtraSample;

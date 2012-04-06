@@ -27,7 +27,7 @@ int16_t AdPcmDecoder::decodeSample(uint8_t **paPtr)
     uint8_t *pa = *paPtr;
     ASSERT(pa);
 
-    if (hasExtraSample && lastAddr == pa) {
+    if (hasExtraSample) {
         hasExtraSample = false;
         (*paPtr) += 1;
         return extraSample;
@@ -36,9 +36,7 @@ int16_t AdPcmDecoder::decodeSample(uint8_t **paPtr)
     const uint8_t code = *pa;
     int16_t sample = decode4to16bits(code & 0xf);
     extraSample = decode4to16bits(code >> 4);
-
     hasExtraSample = true;
-    lastAddr = pa;
 
     return sample;
 }
