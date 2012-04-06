@@ -13,7 +13,7 @@ Utility.sim.o Anim.sim.o
 
 BIN_STM32 = word.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o StateMachine.stm32.o \
-GameStateMachine.stm32.o State.stm32.o \
+GameStateMachine.stm32.o \
 WordGame.stm32.o CubeStateMachine.stm32.o \
 Dictionary.stm32.o \
 PrototypeWordList.stm32.o \
