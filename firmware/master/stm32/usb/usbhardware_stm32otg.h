@@ -19,17 +19,17 @@ namespace UsbHardwareStm32Otg
         PktStsSetupData     = 6
     };
 
-    // Received packet size for each endpoint.
-    // Gets assigned in the ISR from GRXSTSP and used in epReadPacket()
-    uint16_t rxbcnt;
+    // The number of received bytes for the most recently received packet
+    uint16_t numBufferedBytes;
 
     /*
-     * this is a bit of a hack for now - if we don't copy packets from the
-     * rx fifo immediately in the ISR, I've observed strange things happening
-     * when there's some delay between the time we receive the packet & the time
-     * we read it out.
+     * In order to tick along the hardware's state machine, we must read packets
+     * out of usb ram as soon as they arrive. Stash them here until the application
+     * reads them out.
      *
-     * revisit this and kill it.
+     * TODO: the application should provide this buffer, and we should provide a
+     * mechanism for it to tell us once it has consumed it such that we can
+     * start receiving the next one.
      */
     uint8_t packetBuf[MAX_PACKET];
 

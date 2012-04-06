@@ -273,7 +273,7 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 static void epReadFifo(void *buf, uint16_t len)
 {
     uint32_t *buf32 = static_cast<uint32_t*>(buf);
-    len = MIN(len, rxbcnt);
+    len = MIN(len, numBufferedBytes);
 
     volatile uint32_t *fifo = OTG.epFifos[0];
     uint32_t wordCount = (len + 3) / 4;
@@ -288,17 +288,20 @@ static void epReadFifo(void *buf, uint16_t len)
  */
 uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
 {
-    len = MIN(len, rxbcnt);
-    rxbcnt -= len;
+    len = MIN(len, numBufferedBytes);
+    numBufferedBytes -= len;
 
     // copy the data out of our buffer
     // TODO: UsbDevice should provide its own endpoint buffers
     memcpy(buf, packetBuf, len);
 
-    // restore state
+    // unmask RXFLVL & re-enable this endpoint for more RXing
+    OTG.global.GINTMSK |= (1 << 4);
+
     volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
     ep.DOEPTSIZ = doeptsiz[addr];
-    ep.DOEPCTL |= (1 << 31) | (1 << 26);  // EPENA & CNAK
+    ep.DOEPCTL |= (1 << 31) | (1 << 26);    // EPENA & CNAK
+
     return len;
 }
 
@@ -349,8 +352,15 @@ IRQ_HANDLER ISR_UsbOtg_FS()
         if (pktsts == PktStsSetupData || pktsts == PktStsOutData) {
             uint16_t bcnt = (rxstsp >> 4) & 0x3ff;  // BCNT mask
             if (bcnt > 0) {
-                rxbcnt = bcnt;
-                UsbHardware::epReadFifo(UsbHardwareStm32Otg::packetBuf, sizeof UsbHardwareStm32Otg::packetBuf);
+                /*
+                 * mask RXFLVL until this packet gets consumed by the application.
+                 * this allows the hw to fill the remaining usb ram with OUT packets,
+                 * but we won't process them until the application is ready.
+                 * it will NAK in the case the usb ram fills up.
+                 */
+                OTG.global.GINTMSK &= ~RXFLVL;
+                numBufferedBytes = bcnt;
+                UsbHardware::epReadFifo(packetBuf, sizeof packetBuf);
             }
         }
     }
