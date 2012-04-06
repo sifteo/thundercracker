@@ -61,7 +61,7 @@ int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
             return NO_TILE;
         }
 
-        // Compressed tile array, with 8x8x1 block size
+        // Compressed tile array, with 8x8x1 maximum block size
         case _SYS_AIF_DUB_I8:
         case _SYS_AIF_DUB_I16: {
             // Size of image, in blocks
@@ -75,10 +75,20 @@ int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
             // How wide is the selected block?
             unsigned blockW = MIN(8, header.width - (bx & ~7));
 
-            if (blockCache.index != blockNum)
-                decompressDUB(blockNum);
+            if (blockCache.index != blockNum) {
+                // This block isn't in the cache. Calculate the rest of its
+                // size, and decompress it into the cache.
 
-            return blockCache.data[(bx & 7) + (by & 7) * blockW];
+                unsigned blockH = MIN(8, header.height - (by & ~7));
+                blockCache.index = blockNum;
+                if (!decompressDUB(blockNum, blockW * blockH)) {
+                    // Failure. Cache the failure, so we can fail fast!
+                    for (unsigned i = 0; i < arraysize(blockCache.data); i++)
+                        blockCache.data[i] = NO_TILE;
+                }
+            }
+
+            return blockCache.data[(x & 7) + (y & 7) * blockW];
         }
 
         default: {
@@ -87,7 +97,167 @@ int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
     }
 }
 
-void ImageDecoder::decompressDUB(unsigned index)
+SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
 {
-    blockCache.index = index;
+    /*
+     * Read a value from the format-specific index table.
+     * Returns 0 on error.
+     */
+
+    switch (header.format) {
+
+        // 8-bit index, relative to the next word address
+        case _SYS_AIF_DUB_I8: {
+            uint8_t value = 0;
+            SvmMemory::VirtAddr va = header.data + i * sizeof(value);
+            SvmMemory::VirtAddr wordVA = va & ~(SvmMemory::VirtAddr)1;
+            if (SvmMemory::copyROData(ref, value, va))
+                return wordVA + (value + 1) * sizeof(uint16_t);
+            else
+                return 0;
+        }
+
+        // 16-bit index, relative to the next word address
+        case _SYS_AIF_DUB_I16: {
+            uint16_t value = 0;
+            SvmMemory::VirtAddr va = header.data + i * sizeof(value);
+            if (SvmMemory::copyROData(ref, value, va))
+                return va + (value + 1) * sizeof(uint16_t);
+            else
+                return 0;
+        }
+
+        default:
+            return 0;
+    }
+}
+
+bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
+{
+    struct Code {
+        int type;
+        int arg;
+    };
+    
+    SvmMemory::VirtAddr va = readIndex(index);
+    printf("-------------- Decoding block %d, VA=%llx, tiles=%d\n", index, (long long)va, numTiles);
+
+    if (!va)
+        return false;
+    
+    BitReader bits(ref, va);
+    Code lastCode = { -1, 0 };
+    uint16_t *tiles = blockCache.data;
+
+    unsigned tileIndex = 0;
+    for (;;) {
+        /*
+         * Read the next code
+         */
+        
+        Code thisCode;
+        thisCode.type = bits.read(1);
+
+        if (thisCode.type) {
+            // Backreference code
+            thisCode.arg = bits.readVar();
+            if ((unsigned)thisCode.arg >= tileIndex) {
+                // Illegal backref
+                return false;
+            }
+        } else {
+            // Delta code
+            bool sign = bits.read(1);
+            int magnitude = bits.readVar();
+            thisCode.arg = sign ? -magnitude : magnitude;
+        }
+        
+        /*
+         * Detect repeat codes. Any two consecutive identical codes
+         * are followed by a repeat count.
+         */
+
+        unsigned repeats;
+        if (thisCode.arg == lastCode.arg && thisCode.type == lastCode.type)
+            repeats = bits.readVar();
+        else
+            repeats = 0;
+        lastCode = thisCode;
+
+        printf("At %d: Code %d:%d, rep %d\n", tileIndex, thisCode.type, thisCode.arg, repeats);
+
+        /*
+         * Act on this code, possibly multiple times.
+         */
+
+        do {
+            if (thisCode.type) {
+                // Backreference, guaranteed to be valid
+                tiles[tileIndex] = tiles[tileIndex - 1 - thisCode.arg];
+            } else if (tileIndex) {
+                // Delta from the prevous code
+                tiles[tileIndex] = tiles[tileIndex - 1] + thisCode.arg;
+            } else {
+                // First tile, delta from baseAddr.
+                tiles[tileIndex] = baseAddr + thisCode.arg;
+            }
+
+            tileIndex++;
+            if (tileIndex == numTiles)
+                return repeats == 0;
+        
+        } while (repeats--);
+    }
+}
+
+unsigned BitReader::read(unsigned bits)
+{
+    /*
+     * Read a fixed-width sequence of bits from the buffer, refilling it
+     * from flash memory as necessary.
+     */
+
+    ASSERT(bits < 32);
+    const unsigned mask = (1 << bits) - 1;
+
+    for (;;) {
+        printf("Bits: c=%d buf=%016llx\n", bitCount, buffer);
+        
+        // Have enough data?
+        if (bits <= bitCount) {
+            unsigned result = buffer & mask;
+            buffer >>= bits;
+            bitCount -= bits;
+            return result;
+        }
+
+        // Buffer another 32 bits
+        ASSERT(bitCount <= 32);
+        uint32_t newBits;
+        if (!SvmMemory::copyROData(ref, newBits, va))
+            return 0;
+        va += sizeof(newBits);
+        buffer |= (buffer_t)newBits << bitCount;
+        bitCount += 32;
+    }
+}
+
+unsigned BitReader::readVar()
+{
+    /*
+     * Read a variable-length integer.
+     *
+     * These integers consist of 3-bit chunks, each preceeded by a '1' bit.
+     * The entire sequence is zero-terminated. Chunks are stored MSB-first.
+     */
+
+    const unsigned chunkSize = 3;
+    unsigned result = 0;
+
+    while (read(1)) {
+        result <<= chunkSize;
+        result |= read(chunkSize);
+    }
+
+    return result;
 }

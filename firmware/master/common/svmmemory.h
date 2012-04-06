@@ -151,6 +151,17 @@ public:
     }
 
     /**
+     * Convenient type-safe wrapper around copyROData,
+     * with a caller-supplied FlashBlockRef.
+     */
+    template <typename T>
+    static inline bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
+    {
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          reinterpret_cast<VirtAddr>(src), sizeof(T));
+    }
+
+    /**
      * Convenient type-safe wrapper around copyROData, where the source
      * is an untyped VirtAddr.
      */
@@ -158,6 +169,17 @@ public:
     static inline bool copyROData(T &dest, VirtAddr src)
     {
         FlashBlockRef ref;
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          src, sizeof(T));
+    }
+
+    /**
+     * Convenient type-safe wrapper around copyROData, where the source
+     * is an untyped VirtAddr and with a caller-supplied FlashBlockRef.
+     */
+    template <typename T>
+    static inline bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
+    {
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           src, sizeof(T));
     }

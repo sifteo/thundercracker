@@ -46,14 +46,15 @@ static void loadAssets()
         // Animate Kirby running across the screen as MainAssets loads.
         for (CubeID cube = 0; cube < gNumCubes; ++cube) {
             auto &draw = vid[cube].bg0;
-            const int xMax = LCD_width - Kirby.pixelWidth();
-            const int yMax = LCD_height - Kirby.pixelHeight();
+            const int xMin = -16;
+            const int xMax = 16 + LCD_width - Kirby.pixelWidth();
+            const int yMiddle = (LCD_height - Kirby.pixelHeight()) / 2;
             
-            Int2 pan = Vec2(-loader.progress(cube, xMax), -yMax/2);
+            Int2 pan = Vec2(loader.progress(cube, xMin, xMax), yMiddle);
             LOG_INT2(pan);
 
             draw.image(Vec2(0,0), Kirby, frame);
-            draw.setPanning(pan);
+            draw.setPanning(-pan);
         }
 
         if (++frame == Kirby.numFrames())

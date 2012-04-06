@@ -351,6 +351,14 @@ struct AssetLoader {
     }
 
     /**
+     * How much progress has been made? This is a version of progress()
+     * that returns a value scaled between 'min' and 'max'.
+     */
+    int progress(_SYSCubeID cubeID, int min, int max) const {
+        return min + progress(cubeID, max - min);
+    }
+
+    /**
      * Is the asset install finished for all cubes in the specified vector?
      * This only returns 'true' when the install is completely done on all
      * of these cubes, and the AssetGroup is fully available for use in drawing.

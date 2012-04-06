@@ -45,7 +45,31 @@ private:
     uint16_t baseAddr;
     FlashBlockRef ref;
 
-    void decompressDUB(unsigned blockIndex);
+    bool decompressDUB(unsigned blockIndex, unsigned numTiles);
+    SvmMemory::VirtAddr readIndex(unsigned i);
+};
+
+
+/**
+ * This is a utility for reading streams of bits from flash.
+ * We maintain a 64-bit shift register, and refill the upper
+ * 32 bits when it runs empty.
+ */
+
+class BitReader {
+public:
+    BitReader(FlashBlockRef &ref, SvmMemory::VirtAddr va)
+        : buffer(0), bitCount(0), ref(ref), va(va) {}
+
+    unsigned read(unsigned bits);
+    unsigned readVar();
+
+private:
+    typedef uint64_t buffer_t;
+    buffer_t buffer;
+    unsigned bitCount;
+    FlashBlockRef &ref;
+    SvmMemory::VirtAddr va;
 };
 
 
