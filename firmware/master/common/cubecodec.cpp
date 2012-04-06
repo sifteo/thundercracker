@@ -9,6 +9,7 @@
 #include "cubecodec.h"
 #include "cubeslots.h"
 #include "svmmemory.h"
+#include "tasks.h"
 
 using namespace Intrinsic;
 
@@ -428,10 +429,18 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (loadBufferAvail < dataSizeInBytes)
         return false;
 
-    // Read 'progress' from untrusted memory only once. See if we're done.
+    /*
+     * Read 'progress' from untrusted memory only once. See if we're done.
+     * Note that this tracks how many bytes have been enqueued into the FIFO,
+     * not how many bytes were sent over the radio.
+     *
+     * We require that 'progress' is only updated after enqueueing data into
+     * the FIFO and updating the FIFO!
+     */
+
     uint32_t progress = lc->progress;
     uint32_t dataSize = lc->dataSize;
-    if (progress >= dataSize) {
+    if (progress >= dataSize && fifoCount == 0) {
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
         return false;
@@ -443,8 +452,10 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
      * check above.
      */
 
-    if (!flashAddrPending && fifoCount == 0)
+    if (!flashAddrPending && fifoCount == 0) {
+        Tasks::setPending(Tasks::AssetLoader);
         return false;
+    }
 
     /*
      * The escape command indicates that the entire remainder of 'buf' is
@@ -487,7 +498,6 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     count = MIN(count, fifoCount);
     ASSERT(count > 0);
     ASSERT(loadBufferAvail >= count);
-    progress += count;
     loadBufferAvail -= count;
 
     while (count--) {
@@ -496,12 +506,16 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
             head = 0;
     }
 
-    // Update progress, and maybe complete loading.
+    // Update FIFO state
     lc->head = head;
-    lc->progress = progress;
-    ASSERT(progress <= dataSize);
-    if (progress >= dataSize && loadBufferAvail == FLS_FIFO_USABLE)
-        done = true;
+
+    // If we're done, remember that. If not, make sure we fetch more data.
+    if (progress >= dataSize && head == tail) {
+        if (loadBufferAvail == FLS_FIFO_USABLE)
+            done = true;
+    } else {
+        Tasks::setPending(Tasks::AssetLoader);
+    }
 
     return true;
 }

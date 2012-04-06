@@ -12,6 +12,7 @@
 #include "svmdebugger.h"
 #include "event.h"
 #include "tasks.h"
+#include "radio.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -64,6 +65,9 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
     if (!vec) return;
     unsigned count = actualSize / sizeof *vec;
 
+    // Temporarily enable the cubes we'll be using.
+    _SYS_enableCubes(cubes);
+
     for (unsigned i = 0; i < count; i++) {
         _SYSMetadataBootAsset &BA = vec[i];
 
@@ -98,14 +102,18 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
             _SYS_asset_loadStart(loader, group, BA.slot, cubes);
         }
 
-        while ((loader->complete & cubes) != cubes)
-            _SYS_yield();
+        while ((loader->complete & cubes) != cubes) {
+            Tasks::work();
+            Radio::halt();
+        }
 
         _SYS_asset_loadFinish(loader);
 
         LOG(("SVM: Finished instaling bootstrap asset group %s\n",
             SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
     }
+
+    _SYS_disableCubes(cubes);
 }
 
 void SvmRuntime::run(uint16_t appId)
@@ -124,11 +132,11 @@ void SvmRuntime::run(uint16_t appId)
     // the proper ELF binary to load debug symbols from.
     SvmDebugPipe::setSymbolSourceELF(elf);
 
-    // Asset setup
-    xxxBootstrapAssets(pInfo);
-
     // Initialize rodata segment
     SvmMemory::setFlashSegment(pInfo.rodata.data);
+
+    // Asset setup
+    xxxBootstrapAssets(pInfo);
 
     // Clear RAM (including implied BSS)
     SvmMemory::erase();

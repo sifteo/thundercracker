@@ -81,6 +81,9 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     if (!SvmMemory::copyROData(header, headerVA))
         return;
 
+    // Because we're storing this in a 32-bit struct field, squash groupVA
+    SvmMemory::squashPhysicalAddr(groupVA);
+
     // Initialize state
     Atomic::ClearLZ(L->complete, id());
     GC->baseAddr = baseAddr;
@@ -92,7 +95,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->tail = 0;
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebugPipe::formatAddress(G).c_str(), baseAddr));
+        id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
 
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
@@ -106,6 +109,9 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     // Only _after_ triggering the reset, start the actual download
     // by marking cubeVec as valid.
     Atomic::SetLZ(L->cubeVec, id());
+
+    // Start filling our asset data FIFOs.
+    Tasks::setPending(Tasks::AssetLoader);
 }
 
 void CubeSlot::requestFlashReset()
@@ -196,8 +202,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                     DEBUG_ONLY({
                         // In debug builds only, we log the asset download time
                         float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                        LOG(("FLASH[%d]: Finished loading group %s in %.3f seconds\n",
-                             id(), SvmDebugPipe::formatAddress(LC->pAssetGroup).c_str(), seconds));
+                        LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
                     });
                 }
 

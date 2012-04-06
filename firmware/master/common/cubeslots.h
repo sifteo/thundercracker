@@ -35,8 +35,13 @@ namespace CubeSlots {
     extern _SYSCubeID minCubes;
     extern _SYSCubeID maxCubes;
     
-    extern _SYSAssetLoader *assetLoader;        /// Shared asset loader, for all cubes
-
+    /*
+     * Shared asset loader, for all cubes. This pointer itself must be
+     * validated when it's set, but there is no guarantee of valididty for
+     * individual _SYSAssetLoaderCubes.
+     */
+    extern _SYSAssetLoader *assetLoader;
+    
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
@@ -55,6 +60,9 @@ namespace CubeSlots {
     
     void paintCubes(_SYSCubeIDVector cv);
     void finishCubes(_SYSCubeIDVector cv);
+
+    void assetLoaderTask(void *);
+    void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
 }
 
 #endif

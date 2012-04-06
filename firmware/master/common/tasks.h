@@ -18,6 +18,7 @@ public:
         UsbOUT,
         AudioOutEmpty,
         Debugger,
+        AssetLoader,
     };
 
     static void init();

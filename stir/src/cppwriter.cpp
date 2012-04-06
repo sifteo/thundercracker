@@ -124,7 +124,6 @@ void CPPSourceWriter::writeGroup(const Group &group)
         indent << "struct _SYSAssetGroupHeader hdr;\n" <<
         indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
         "} " << group.getName() << "_data = {{\n" <<
-        indent << "/* hdrSize   */ sizeof(struct _SYSAssetGroupHeader),\n" <<
         indent << "/* reserved  */ 0,\n" <<
         indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
         indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
