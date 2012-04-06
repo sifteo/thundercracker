@@ -11,6 +11,14 @@ namespace UsbHardwareStm32Otg
     static const unsigned RX_FIFO_WORDS = 128;
     static const unsigned MAX_PACKET = 64;
 
+    enum PacketStatus {
+        PktStsGlobalNak     = 1,
+        PktStsOutData       = 2,
+        PktStsOutComplete   = 3,
+        PktStsSetupComplete = 4,
+        PktStsSetupData     = 6
+    };
+
     // Received packet size for each endpoint.
     // Gets assigned in the ISR from GRXSTSP and used in epReadPacket()
     uint16_t rxbcnt;
