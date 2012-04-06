@@ -53,17 +53,39 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
      * Temporary code to load the bootstrap assets specified
      * in a game's metadata. Normally this would be handled by
      * the system menu.
+     *
+     * In a real loader scenario, bootstrap assets would be loaded
+     * onto a set of cubes determined by the loader: likely calculated
+     * by looking at the game's supported cube range and the number of
+     * connected cubes.
+     *
+     * In this hack, we just load the bootstrap assets onto the
+     * first N cubes, where N is the minimum number required by the game.
+     * If no cube range was specified, we don't load assets at all.
      */
 
-    // XXX: Also a hack.. installing on cube 0 only.
-    _SYSCubeIDVector cubes = Intrinsic::LZ(0);
-
+    // Look up CubeRange
     FlashBlockRef ref;
+    const _SYSMetadataCubeRange *range =
+        pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
+    unsigned minCubes = range ? range->minCubes : 0;
+    // XXX: Also a hack.. installing on cube 0 only.
+
+    // Look up BootAsset array
     uint32_t actualSize;
     _SYSMetadataBootAsset *vec = (_SYSMetadataBootAsset*)
         pInfo.meta.get(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
-    if (!vec) return;
+    if (!vec) {
+        LOG(("SVM: No bootstrap assets found\n"));
+        return;
+    }
     unsigned count = actualSize / sizeof *vec;
+
+    if (!minCubes) {
+        LOG(("SVM: Not loading bootstrap assets, no CubeRange found\n"));
+        return;
+    }
+    _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
 
     // Temporarily enable the cubes we'll be using.
     _SYS_enableCubes(cubes);
@@ -92,8 +114,9 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
             continue;
         }
 
-        LOG(("SVM: Installing bootstrap asset group %s in slot %d\n",
-            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot));
+        LOG(("SVM: Installing bootstrap asset group %s in slot %d on %d cube%s\n",
+            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot,
+            minCubes, minCubes == 1 ? "" : "s"));
 
         if (!_SYS_asset_loadStart(loader, group, BA.slot, cubes)) {
             // Out of space. Erase the slot first.

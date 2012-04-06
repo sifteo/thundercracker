@@ -8,15 +8,16 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
+static const unsigned gNumCubes = 1;
+static VideoBuffer vid[CUBE_ALLOCATION];
+
 static AssetSlot MainSlot = AssetSlot::allocate()
     .bootstrap(MainAssets);
 
 static Metadata M = Metadata()
     .title("Hello World SDK Example")
-    .icon(GameIcon);
-
-static const unsigned gNumCubes = 1;
-static VideoBuffer vid[CUBE_ALLOCATION];
+    .icon(GameIcon)
+    .cubeRange(gNumCubes);
 
 
 static void onAccelChange(void *, unsigned cid)

@@ -100,6 +100,34 @@ public:
 
         return *this;
     }
+
+    /**
+     * Set the minimum and maximum number of supported cubes for this game.
+     */
+    Metadata &cubeRange(unsigned minCubes, unsigned maxCubes)
+    {
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.CubeRange", 0) != 0,
+            "Duplicate Metadata::cubeRange() instance.");
+        _SYS_lti_abort(minCubes > _SYS_NUM_CUBE_SLOTS,
+            "Minimum number of cubes is too high.");
+        _SYS_lti_abort(maxCubes > _SYS_NUM_CUBE_SLOTS,
+            "Maximum number of cubes is too high.");
+        _SYS_lti_abort(minCubes > maxCubes,
+            "Minimum number of cubes must be <= maximum number");
+
+        _SYS_lti_metadata(_SYS_METADATA_CUBE_RANGE, "BB", minCubes, maxCubes);
+
+        return *this;
+    }
+
+    /**
+     * The one-argument version of cubeRange sets up identical minimum and
+     * maximum cube counts. The game requires exactly this many cubes.
+     */
+    Metadata &cubeRange(unsigned count)
+    {
+        return cubeRange(count, count);
+    }
 };
 
 

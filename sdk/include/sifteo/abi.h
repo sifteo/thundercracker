@@ -532,11 +532,17 @@ struct _SYSMetadataKey {
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
 #define _SYS_METADATA_NUM_ASLOTS    0x0007  // uint8_t, count of required AssetSlots
+#define _SYS_METADATA_CUBE_RANGE    0x0008  // _SYSMetadataCubeRange
 
 struct _SYSMetadataBootAsset {
     uint32_t        pHdr;           // Virtual address for _SYSAssetGroupHeader
     _SYSAssetSlot   slot;           // Asset group slot to load this into
     uint8_t         reserved[3];    // Must be zero;
+};
+
+struct _SYSMetadataCubeRange {
+    uint8_t     minCubes;
+    uint8_t     maxCubes;
 };
 
 struct _SYSMetadataImage {
