@@ -40,17 +40,19 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
         }
         uint8_t *bufPtr = pa;
 
-        while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
-            switch(mod->type) {
-                case _SYS_PCM:
+        switch(mod->type) {
+            case _SYS_PCM:
+                while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
                     ASSERT(pa + bufLen - bufPtr >= (uint8_t)sizeof(int16_t));
                     writeNextSample(*((int16_t *)bufPtr));
                     bufPtr += sizeof(int16_t);
-                    break;
-                case _SYS_ADPCM:
+                }
+                break;
+            case _SYS_ADPCM:
+                while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
                     writeNextSample(adpcmDec.decodeSample(&bufPtr));
-                    break;
-            }
+                }
+                break;
         }
 
         bufPos += bufPtr - pa;
