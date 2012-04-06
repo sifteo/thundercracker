@@ -24,6 +24,11 @@ AddBuddy(3, "boff")
 AddBuddy(4, "zorg")
 AddBuddy(5, "maro")
 AddBuddy(6, "amor")
+AddBuddy(7, "droo")
+AddBuddy(8, "erol")
+AddBuddy(9, "flur")
+AddBuddy(10, "veax")
+AddBuddy(11, "yawp")
 
 -- Buddy Overlays
 if UseSprites then
