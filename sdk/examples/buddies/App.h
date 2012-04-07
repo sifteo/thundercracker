@@ -103,6 +103,10 @@ private:
     bool AnyTouchHold() const;
     bool AnyTouchEnd() const;
     
+    void DrawBackgroundWithTouchBump(CubeWrapper &cubeWrapper, const Sifteo::AssetImage &background);
+    void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex);
+    void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex);
+    
     int NextUnlockedBuddy() const;
     int GetNumBuddiesLeftToUnlock() const;
     

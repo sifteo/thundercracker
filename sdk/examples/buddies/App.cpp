@@ -582,55 +582,6 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex)
-{
-    cubeWrapper.ScrollBackground(Vec2(8, 8));
-    cubeWrapper.DrawBackground(StoryChapterNext);
-    
-    unsigned int nextPuzzleIndex = ++puzzleIndex % GetBook(bookIndex).mNumPuzzles;
-
-    String<16> buffer;
-    buffer << "Chapter " << (nextPuzzleIndex + 1);
-    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-    
-    Int2 scroll;
-    scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
-    if (buffer.size() % 2 != 0)
-    {
-        scroll.x = VidMode::TILE / 2;
-    }
-    cubeWrapper.ScrollUi(scroll);
-}
-                    
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
-{
-    cubeWrapper.ScrollBackground(Vec2(8, 8));
-    cubeWrapper.DrawBackground(StoryChapterRetry);
-    
-    String<16> buffer;
-    buffer << "Chapter " << (puzzleIndex + 1);
-    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-    
-    Int2 scroll;
-    scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
-    if (buffer.size() % 2 != 0)
-    {
-        scroll.x = VidMode::TILE / 2;
-    }
-    cubeWrapper.ScrollUi(scroll);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, BuddyId buddyId, Int2 scroll, bool jump)
 {
     int jump_offset = 4;
@@ -1913,6 +1864,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (UpdateTimer(mOptionsTimer, dt))
                     {
+                        mTouchSync = true;
                         StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
                     }
                 }
@@ -1955,28 +1907,43 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_FREEPLAY_OPTIONS:
         {   
-            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            if (mTouchSync)
             {
-                mTouchSync = true;
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                for (int i = 0; i < arraysize(mTouching); ++i)
                 {
-                    mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
-                    mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
-                    mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
-                    mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        mTouchSync = false;
+                    }
                 }
-                PlaySound(SoundUnpause);
-                StartGameState(GAME_STATE_FREEPLAY_PLAY);
             }
-            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else
             {
-                ResetCubesToPuzzle(GetPuzzleDefault(), false);
-                mTouchSync = true;
-                StartGameState(GAME_STATE_FREEPLAY_PLAY);
-            }
-            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
-            {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                {
+                    mTouchSync = true;
+                    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                    {
+                        mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
+                        mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
+                        mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
+                        mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                    }
+                    PlaySound(SoundUnpause);
+                    StartGameState(GAME_STATE_FREEPLAY_PLAY);
+                }
+                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                {
+                    LOG(("touch 1 end\n"));
+                    ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                    mTouchSync = true;
+                    StartGameState(GAME_STATE_FREEPLAY_PLAY);
+                }
+                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                {
+                    LOG(("touch 2 end\n"));
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
@@ -2715,20 +2682,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_FREEPLAY_OPTIONS:
         {
-            if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
+            if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() > 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiResume);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiRestart);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiEndGameNavExit);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiEndGameNavExit);
             }
             break;
         }
@@ -2813,18 +2777,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiResume);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiRestart);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiEndGameNavExit);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiEndGameNavExit);
             }
             break;
         }
@@ -2855,13 +2816,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(ShuffleEndGameNavReplay);
+                DrawBackgroundWithTouchBump(cubeWrapper, ShuffleEndGameNavReplay);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiEndGameNavExit);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiEndGameNavExit);
             }
             break;
         }
@@ -2979,18 +2938,15 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiResume);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiRestart);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiEndGameNavExit);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiEndGameNavExit);
             }
             break;
         }
@@ -3114,8 +3070,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
                 {
-                    cubeWrapper.ScrollBackground(Vec2(8, 8));
-                    cubeWrapper.DrawBackground(StoryBookStartNext);
+                    DrawBackgroundWithTouchBump(cubeWrapper, StoryBookStartNext);
                     
                     ASSERT((mStoryBookIndex + 1) < GetNumBooks());
                     BuddyId buddyId = GetBook(mStoryBookIndex + 1).mUnlockBuddyId;
@@ -3134,8 +3089,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.ScrollBackground(Vec2(8, 8));
-                cubeWrapper.DrawBackground(UiEndGameNavExit);
+                DrawBackgroundWithTouchBump(cubeWrapper, UiEndGameNavExit);
             }
             break;
         }
@@ -3962,6 +3916,69 @@ bool App::AnyTouchEnd() const
     }
     
     return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawBackgroundWithTouchBump(CubeWrapper &cubeWrapper, const AssetImage &background)
+{
+    bool holding = !mTouchSync &&
+        arraysize(mTouching) > cubeWrapper.GetId() &&
+        mTouching[cubeWrapper.GetId()] == TOUCH_STATE_HOLD;
+    
+    cubeWrapper.DrawBackgroundPartial(
+        Vec2(0, 0),
+        Vec2(1, holding ? 2 : 1),
+        Vec2(16, 16),                      
+        background);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex)
+{
+    DrawBackgroundWithTouchBump(cubeWrapper, StoryChapterNext);
+    
+    unsigned int nextPuzzleIndex = ++puzzleIndex % GetBook(bookIndex).mNumPuzzles;
+
+    String<16> buffer;
+    buffer << "Chapter " << (nextPuzzleIndex + 1);
+    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
+    if (buffer.size() % 2 != 0)
+    {
+        scroll.x = VidMode::TILE / 2;
+    }
+    cubeWrapper.ScrollUi(scroll);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    DrawBackgroundWithTouchBump(cubeWrapper, StoryChapterRetry);
+    
+    String<16> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1);
+    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+    
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
+    if (buffer.size() % 2 != 0)
+    {
+        scroll.x = VidMode::TILE / 2;
+    }
+    cubeWrapper.ScrollUi(scroll);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
