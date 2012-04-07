@@ -124,7 +124,7 @@ StoryRibbonComplete = image{"assets/ribbon_story_complete.png"}
 StoryBookStartNext = image{"assets/panel_start_next_book.png"}
 StoryCongratulationsUnlock = image{"assets/panel_congratulations_unlock.png"}
 
--- Sounds (use encode = "PCM" for PCM encoding)
+-- Sounds
 SoundCutsceneChatter = sound{"assets/sound/CutsceneChatter.raw"}
 SoundFaceComplete = sound{"assets/sound/FaceComplete.raw"}
 SoundFaceCompleteAll = sound{"assets/sound/FaceCompleteAll.raw"}
