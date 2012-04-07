@@ -2041,6 +2041,7 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mOptionsTimer, dt))
                 {
+                    mTouchSync = true;
                     StartGameState(GAME_STATE_SHUFFLE_OPTIONS);
                 }
             }
@@ -2157,26 +2158,39 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_OPTIONS:
         {   
-            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            if (mTouchSync)
             {
-                mTouchSync = true;
-                mHintTimer = kHintTimerOnDuration;
-                mHintFlowIndex = 0;
-                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                for (int i = 0; i < arraysize(mTouching); ++i)
                 {
-                    mClueOffTimers[i] = 0.0f;
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        mTouchSync = false;
+                    }
                 }
-                PlaySound(SoundUnpause);
-                StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else
             {
-                ResetCubesToShuffleStart();
-                StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
-            }
-            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
-            {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                {
+                    mTouchSync = true;
+                    mHintTimer = kHintTimerOnDuration;
+                    mHintFlowIndex = 0;
+                    for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                    {
+                        mClueOffTimers[i] = 0.0f;
+                    }
+                    PlaySound(SoundUnpause);
+                    StartGameState(GAME_STATE_SHUFFLE_PLAY);
+                }
+                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                {
+                    ResetCubesToShuffleStart();
+                    StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
+                }
+                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
@@ -2300,6 +2314,7 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mOptionsTimer, dt))
                 {
+                    mTouchSync = true;
                     StartGameState(GAME_STATE_STORY_OPTIONS);
                 }
             }
@@ -2416,25 +2431,38 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_OPTIONS:
         {   
-            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            if (mTouchSync)
             {
-                mTouchSync = true;
-                mHintTimer = kHintTimerOnDuration;
-                mHintFlowIndex = 0;
-                for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                for (int i = 0; i < arraysize(mTouching); ++i)
                 {
-                    mClueOffTimers[i] = 0.0f;
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        mTouchSync = false;
+                    }
                 }
-                PlaySound(SoundUnpause);
-                StartGameState(GAME_STATE_STORY_PLAY);
             }
-            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            else
             {
-                StartGameState(GAME_STATE_STORY_CHAPTER_START);
-            }
-            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
-            {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                {
+                    mTouchSync = true;
+                    mHintTimer = kHintTimerOnDuration;
+                    mHintFlowIndex = 0;
+                    for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                    {
+                        mClueOffTimers[i] = 0.0f;
+                    }
+                    PlaySound(SoundUnpause);
+                    StartGameState(GAME_STATE_STORY_PLAY);
+                }
+                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                }
+                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
