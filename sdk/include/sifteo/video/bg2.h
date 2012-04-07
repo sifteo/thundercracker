@@ -133,6 +133,23 @@ struct BG2Drawable {
     }
 
     /**
+     * Set the current affine transform matrix.
+     */
+    void setMatrix(const AffineMatrix &m) {
+        _SYSAffine a = {
+            // Round to fixed-point
+            256.0f * m.cx + 0.5f,
+            256.0f * m.cy + 0.5f,
+            256.0f * m.xx + 0.5f,
+            256.0f * m.xy + 0.5f,
+            256.0f * m.yx + 0.5f,
+            256.0f * m.yy + 0.5f,
+        };
+        _SYS_vbuf_write(&sys.vbuf, offsetof(_SYSVideoRAM, bg2_affine)/2,
+                        (const uint16_t *)&a, 6);
+    }
+
+    /**
      * Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units.
      *
