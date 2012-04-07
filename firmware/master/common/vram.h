@@ -9,6 +9,7 @@
 #include <sifteo/abi.h>
 #include "machine.h"
 
+
 /**
  * Utilities for accessing VRAM buffers.
  *
@@ -128,5 +129,102 @@ struct VRAM {
             vbuf.cm1[i] = 0xFFFFFFFF;
     }
 };
+
+
+/**
+ * An iterator for walking the BG1 mask bitmap.
+ *
+ * This iterator can seek to any (x,y) location on BG1, and
+ * determine what address, if any, the corresponding tile is at.
+ * It supports random access, but it's optimized for sequential access.
+ */
+
+class BG1MaskIter {
+public:
+    BG1MaskIter(const _SYSVideoBuffer &vbuf)
+        : vbuf(vbuf) {
+        reset();
+    }
+
+    void reset() {
+        // Reset iteration to the beginning of the bitmap
+        tileAddr = firstTileAddr;
+        bmpAddr = firstBmpAddr;
+        bmpValue = VRAM::peek(vbuf, bmpAddr);
+        bmpShift = 0;
+    }
+
+    bool next() {
+        // Move forward by one bit
+        if (bmpShift != 15) {
+            if (hasTile())
+                tileAddr++;
+            bmpShift++;
+            return true;
+        }
+
+        // Next word
+        if (bmpAddr != lastBmpAddr) {
+            if (hasTile())
+                tileAddr++;
+            bmpShift = 0;
+            bmpAddr++;
+            bmpValue = VRAM::peek(vbuf, bmpAddr);
+            return true;
+        }
+
+        // End of iteration
+        return false;
+    }
+
+    bool seek(unsigned x, unsigned y) {
+        // Move the iterator to a particular (x,y) location on BG1.
+        // Returns false if out of range.
+
+        if (x > 15 || y > 15)
+            return false;
+
+        unsigned destBmpAddr = y + firstBmpAddr;
+        if (destBmpAddr < bmpAddr)
+            reset();
+        else if (destBmpAddr == bmpAddr && x < bmpShift)
+            reset();
+
+        while (destBmpAddr != bmpAddr)
+            next();
+        while (bmpShift != x)
+            next();
+
+        return true;
+    }
+
+    uint16_t getTileAddr() const {
+        ASSERT(hasTile());
+        return tileAddr;
+    }
+
+    bool hasTile() const {
+        // Is the current location allocated?
+        return (bmpValue >> bmpShift) & 1;
+    }
+
+private:
+    static const unsigned firstTileAddr = _SYS_VA_BG1_TILES / 2;
+    static const unsigned firstBmpAddr = _SYS_VA_BG1_BITMAP / 2;
+    static const unsigned lastBmpAddr = firstBmpAddr + 15;
+    
+    const _SYSVideoBuffer &vbuf;
+    uint16_t tileAddr;
+    uint16_t bmpAddr;
+    uint16_t bmpValue;
+    uint8_t bmpShift;
+
+    
+    #define _SYS_VA_BG1_TILES       0x288
+#define _SYS_VA_COLORMAP        0x300
+#define _SYS_VA_BG1_BITMAP      0x3a8
+
+};
+
 
 #endif

@@ -39,13 +39,9 @@ void main()
     sBullet.setImage(Bullet);
 
     // BG1 Overlay
-#if 0
-    _SYS_vbuf_fill(vid, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
-                   + 16 - Overlay.height,
-                   ((1 << Overlay.width) - 1), Overlay.height);
-    _SYS_vbuf_writei(vid, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
-                     Overlay.tiles, 0, Overlay.width * Overlay.height);
-#endif
+    _SYS_vbuf_fill(vid, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x070F, 7);
+    _SYSInt2 destXY = {0,0};
+    _SYS_image_BG1Draw(vid, Overlay, &destXY, 0);
 
     SystemTime epoch = SystemTime::now();
     while (1) {

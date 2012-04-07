@@ -88,14 +88,42 @@ void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf,
 void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf,
     const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame)
 {
-    LOG(("Unimplemented! %s\n", __FUNCTION__));
+    if (!SvmMemory::mapRAM(vbuf))
+        return;
+
+    struct _SYSInt2 lDestXY;
+    if (!SvmMemory::copyROData(lDestXY, destXY))
+        return;
+
+    ImageDecoder decoder;
+    if (!decoder.init(im, vbuf->cube))
+        return;
+
+    ImageIter iter(decoder, frame);
+    iter.copyToBG1(vbuf->vbuf, lDestXY.x, lDestXY.y);
 }
 
 void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf,
     const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame,
         struct _SYSInt2 *srcXY, struct _SYSInt2 *size)
 {
-    LOG(("Unimplemented! %s\n", __FUNCTION__));
+    if (!SvmMemory::mapRAM(vbuf))
+        return;
+
+    struct _SYSInt2 lDestXY, lSrcXY, lSize;
+    if (!SvmMemory::copyROData(lDestXY, destXY))
+        return;
+    if (!SvmMemory::copyROData(lSrcXY, srcXY))
+        return;
+    if (!SvmMemory::copyROData(lSize, size))
+        return;
+
+    ImageDecoder decoder;
+    if (!decoder.init(im, vbuf->cube))
+        return;
+
+    ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
+    iter.copyToBG1(vbuf->vbuf, lDestXY.x, lDestXY.y);
 }
 
 void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf,

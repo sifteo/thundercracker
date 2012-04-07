@@ -123,21 +123,11 @@ struct VideoBuffer {
         //BG2Drawable             bg2;
     };
 
-    /**
-     * Implicit conversion to _SYSVideoBuffer*,
-     * for use in low-level system calls.
-     */
-    operator _SYSVideoBuffer* () {
-        return &sys.vbuf;
-    }
-
-    /**
-     * Constant implicit conversion to _SYSVideoBuffer*,
-     * for use in low-level system calls.
-     */
-    operator const _SYSVideoBuffer* () const {
-        return &sys.vbuf;
-    }
+    // Implicit conversions
+    operator _SYSVideoBuffer* () { return &sys.vbuf; }
+    operator const _SYSVideoBuffer* () const { return &sys.vbuf; }
+    operator _SYSAttachedVideoBuffer* () { return &sys; };
+    operator const _SYSAttachedVideoBuffer* () const { return &sys; };
 
     /**
      * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer

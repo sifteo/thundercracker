@@ -360,3 +360,13 @@ void ImageIter::copyToMem(uint16_t *dest, unsigned stride)
         dest[getAddr(stride)] = tile();
     } while (next());
 }
+
+void ImageIter::copyToBG1(_SYSVideoBuffer &vbuf, unsigned destX, unsigned destY)
+{
+    BG1MaskIter mi(vbuf);
+
+    do {
+        if (mi.seek(destX + getRectX(), destY + getRectY()) && mi.hasTile())
+            VRAM::poke(vbuf, mi.getTileAddr(), tile77());
+    } while (next());
+}

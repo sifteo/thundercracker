@@ -129,6 +129,7 @@ public:
     uint32_t getDestBytes(uint32_t stride) const;
 
     void copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr, unsigned stride);
+    void copyToBG1(_SYSVideoBuffer &vbuf, unsigned destX, unsigned destY);
     void copyToMem(uint16_t *dest, unsigned stride);
 
 private:
