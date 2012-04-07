@@ -39,7 +39,6 @@ public:
         cube.enable();
         vid.initMode(BG0_SPR_BG1);
         vid.attach(cube);
-        vid.setOrientation(LEFT);
         
         for (unsigned i = 0; i < numStars; i++)
             initStar(i);
