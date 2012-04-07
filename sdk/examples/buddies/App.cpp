@@ -582,64 +582,50 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex, Int2 bgScroll)
+void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex)
 {
     cubeWrapper.ScrollBackground(Vec2(8, 8));
-    cubeWrapper.DrawBackgroundPartial(
-        Vec2(kMaxTilesX + bgScroll.x, 0),
-        Vec2(0, 0),
-        Vec2(-bgScroll.x, kMaxTilesY),
-        StoryChapterNext);
+    cubeWrapper.DrawBackground(StoryChapterNext);
     
-    if (bgScroll.x == -kMaxTilesX)
+    unsigned int nextPuzzleIndex = ++puzzleIndex % GetBook(bookIndex).mNumPuzzles;
+
+    String<16> buffer;
+    buffer << "Chapter " << (nextPuzzleIndex + 1);
+    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
+    if (buffer.size() % 2 != 0)
     {
-        unsigned int nextPuzzleIndex = ++puzzleIndex % GetBook(bookIndex).mNumPuzzles;
-    
-        String<16> buffer;
-        buffer << "Chapter " << (nextPuzzleIndex + 1);
-        int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-        cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-        
-        Int2 scroll;
-        scroll.x = 0;
-        scroll.y = VidMode::TILE / 2;
-        if (buffer.size() % 2 != 0)
-        {
-            scroll.x = VidMode::TILE / 2;
-        }
-        cubeWrapper.ScrollUi(scroll);
+        scroll.x = VidMode::TILE / 2;
     }
+    cubeWrapper.ScrollUi(scroll);
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
+void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     cubeWrapper.ScrollBackground(Vec2(8, 8));
-    cubeWrapper.DrawBackgroundPartial(
-        Vec2(kMaxTilesX + bgScroll.x, 0),
-        Vec2(0, 0),
-        Vec2(-bgScroll.x, kMaxTilesY),
-        StoryChapterRetry);
+    cubeWrapper.DrawBackground(StoryChapterRetry);
     
-    if (bgScroll.x == -kMaxTilesX)
+    String<16> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1);
+    int x = (kMaxTilesX / 2) - (buffer.size() / 2);
+    
+    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    
+    Int2 scroll;
+    scroll.x = 0;
+    scroll.y = VidMode::TILE / 2;
+    if (buffer.size() % 2 != 0)
     {
-        String<16> buffer;
-        buffer << "Chapter " << (puzzleIndex + 1);
-        int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-        
-        cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
-        
-        Int2 scroll;
-        scroll.x = 0;
-        scroll.y = VidMode::TILE / 2;
-        if (buffer.size() % 2 != 0)
-        {
-            scroll.x = VidMode::TILE / 2;
-        }
-        cubeWrapper.ScrollUi(scroll);
+        scroll.x = VidMode::TILE / 2;
     }
+    cubeWrapper.ScrollUi(scroll);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3139,12 +3125,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 }
                 else
                 {
-                    DrawStoryChapterNext(cubeWrapper, mStoryBookIndex, mStoryPuzzleIndex, mBackgroundScroll);
+                    DrawStoryChapterNext(cubeWrapper, mStoryBookIndex, mStoryPuzzleIndex);
                 }
             }
             else if (cubeWrapper.GetId() == 1)
             {
-                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex, mBackgroundScroll);
+                DrawStoryChapterRetry(cubeWrapper, mStoryPuzzleIndex);
             }
             else if (cubeWrapper.GetId() == 2)
             {
