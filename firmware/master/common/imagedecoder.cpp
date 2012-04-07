@@ -309,6 +309,7 @@ bool ImageIter::nextWork()
         y = top;
     {
         unsigned nextX = x + blockMask + 1;             // Next block over
+        nextX &= ~blockMask;                            // Realign; may need to adjust for X clamping above
         if (nextX < right) {                            // Still inside the image?
             x = nextX;                                  //   Yes, keep iterating horizontally.
             return true;
@@ -317,6 +318,7 @@ bool ImageIter::nextWork()
     x = left;                                           // Back to left edge of iteration rectangle
     {
         unsigned nextY = y + blockMask + 1;             // Next row of blocks
+        nextY &= ~blockMask;                            // Realign; may need to adjust for Y clamping above
         if (nextY < bottom) {                           // Still inside the image?
             y = nextY;                                  //   Yes, keep iterating vertically
             return true;

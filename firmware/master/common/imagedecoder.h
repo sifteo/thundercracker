@@ -65,8 +65,8 @@ private:
 
 class ImageIter {
 public:
-    ImageIter(ImageDecoder &decoder, unsigned imageX, unsigned imageY,
-        unsigned width, unsigned height, unsigned frame)
+    ImageIter(ImageDecoder &decoder, unsigned frame, unsigned imageX, unsigned imageY,
+        unsigned width, unsigned height)
         : decoder(decoder), x(imageX), y(imageY), left(imageX), top(imageY),
           right(imageX + width), bottom(imageY + height), frame(frame),
           blockMask(decoder.getBlockMask()) {}
@@ -89,10 +89,6 @@ public:
         return nextWork();
     }
 
-    unsigned getAddr(unsigned stride) const {
-        return (x - left) + (y - top) * stride;
-    }
-
     int tile() const {
         return decoder.tile(x, y, frame);
     }
@@ -108,6 +104,26 @@ public:
 
     uint16_t getHeight() const {
         return bottom - top;
+    }
+    
+    uint16_t getImageX() const {
+        return x;
+    }
+
+    uint16_t getImageY() const {
+        return y;
+    }
+
+    uint16_t getRectX() const {
+        return x - left;
+    }
+
+    uint16_t getRectY() const {
+        return y - top;
+    }
+
+    unsigned getAddr(unsigned stride) const {
+        return getRectX() + getRectY() * stride;
     }
 
     uint32_t getDestBytes(uint32_t stride) const;
