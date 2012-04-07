@@ -34,7 +34,7 @@ struct AStar {
   ACell cells[A_STAR_CAP];
 
   inline uint8_t TileToID(Int2 tile) const { return tile.x + cellPitch * tile.y; }
-  inline Int2 IDToTile(uint8_t tid) const { tid &= (~0x80); return Vec2(tid % cellPitch, tid / cellPitch);}
+  inline Int2 IDToTile(uint8_t tid) const { tid &= (~0x80); return vec(tid % cellPitch, tid / cellPitch);}
   inline uint8_t Heuristic(Int2 tile) const { return abs(tile.x - dst.x) + abs(tile.y - dst.y); }
   void VisitNeighbor(ARecord* parent, Cube::Side dir);
 };
@@ -62,7 +62,7 @@ void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
     p->tileID = nid;
     recordCount++;
     // is it walkable? (remember to convert normalized tile position to global tile position)
-    if (gGame.GetMap()->IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
+    if (gGame.GetMap()->IsVertexWalkable(ntile + vec(2,2) + (8 * offset))) {
       // open the record
       p->parentDirection = (dir+2)%4;
       p->costToThis = parent->costToThis + 1;
@@ -86,8 +86,8 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
   _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
   as.offset = dir<2 ? dloc : loc;
-  as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - Vec2(2,2);
-  as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - Vec2(2,2);
+  as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - vec(2,2);
+  as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - vec(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 
@@ -96,12 +96,12 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
     LOG(("-------\n"));
     for(int row=0; row<as.cellRowCount; ++row) {
       for(int col=0; col<as.cellPitch; ++col) {
-        Int2 tile = Vec2(col, row);
+        Int2 tile = vec(col, row);
         if (tile == as.src) {
           LOG(("s"));
         } else if (tile == as.dst) {
           LOG(("d"));
-        } else if (IsVertexWalkable(tile + Vec2(2,2) + (8 * as.offset))) {
+        } else if (IsVertexWalkable(tile + vec(2,2) + (8 * as.offset))) {
           LOG(("."));
         } else {
           LOG(("W"));

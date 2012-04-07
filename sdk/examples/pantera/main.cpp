@@ -23,14 +23,14 @@ void main() {
         cubes[i].loadAssets(GameAssets);
         VidMode_BG0_ROM rom(cubes[i].vbuf);
         rom.init();
-        rom.BG0_text(Vec2(1,1), "Loading...");
+        rom.BG0_text(vec(1,1), "Loading...");
     }
     bool done = false;
     while (!done) {
         done = true;
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            rom.BG0_progressBar(vec(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
             if (!cubes[i].assetDone(GameAssets)) {
                 done = false;
             }
@@ -43,9 +43,9 @@ void main() {
     for (unsigned i=0; i<NUM_CUBES; i++) {
         VidMode_BG0 g(cubes[i].vbuf);
         g.init();
-        g.BG0_drawAsset(Vec2(0,0), Background);
-        g.BG0_drawAsset(Vec2(mid,mid), *icons[i]);
-        g.BG0_setPanning(Vec2(8,8));
+        g.BG0_drawAsset(vec(0,0), Background);
+        g.BG0_drawAsset(vec(mid,mid), *icons[i]);
+        g.BG0_setPanning(vec(8,8));
     }
     System::paintSync();
     for (unsigned i=0; i<NUM_CUBES; ++i) { cubes[i].vbuf.touch(); }
@@ -53,7 +53,7 @@ void main() {
     for (unsigned i=0; i<NUM_CUBES; ++i) { cubes[i].vbuf.touch(); }
     System::paintSync();
     
-    const Float2 rest = Vec2(8.f, 8.f);
+    const Float2 rest = vec(8.f, 8.f);
 
     // shake params
     const int iters = 12;
@@ -61,7 +61,7 @@ void main() {
     const float dt = 0.1f;
     const float k = 0.15f;
     const float damp = 0.975f;
-    static Float2 shakeVelocity = Vec2(0.f,0.f);
+    static Float2 shakeVelocity = vec(0.f,0.f);
     static Float2 shakePosition = rest;
 
     // press params

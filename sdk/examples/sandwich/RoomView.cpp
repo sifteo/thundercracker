@@ -66,7 +66,7 @@ void RoomView::Update(float dt) {
     const unsigned localt = t % (view.frameCount << 2);
     if (localt % 4 == 0) {
         mode.BG0_drawAsset(
-          Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
+          vec((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap()->Data()->tileset),
           gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
         );
@@ -98,15 +98,15 @@ void RoomView::Update(float dt) {
       
       case WOBBLE_NOD: {
         const float u = 8.f * -1.2f * mWobbles * sin(M_PI * mWobbles * mWobbles * mWobbles);
-        mode.BG0_setPanning(Vec2(0.f, u));
-        mode.BG1_setPanning(Vec2(0.f, u));
+        mode.BG0_setPanning(vec(0.f, u));
+        mode.BG1_setPanning(vec(0.f, u));
         break;
       }
 
       case WOBBLE_SHAKE: {
         const float u = 8.f * 1.1f * mWobbles * sin(5 * M_PI * mWobbles);
-        mode.BG0_setPanning(Vec2(u, 0.f));
-        mode.BG1_setPanning(Vec2(u, 0.f));
+        mode.BG0_setPanning(vec(u, 0.f));
+        mode.BG1_setPanning(vec(u, 0.f));
         break;
       }
 
@@ -158,8 +158,8 @@ void RoomView::StartNod() {
   // fill in extra rows (with real data?)
   ViewMode mode = Parent()->Graphics();
   for(int i=0; i<16; ++i) {
-    mode.BG0_drawAsset(Vec2(i, 16), BlackTile);
-    mode.BG0_drawAsset(Vec2(i, 17), BlackTile);
+    mode.BG0_drawAsset(vec(i, 16), BlackTile);
+    mode.BG0_drawAsset(vec(i, 17), BlackTile);
   }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_NOD;
@@ -169,8 +169,8 @@ void RoomView::StartShake() {
   // fill in extra columns (with real data?)
   ViewMode mode = Parent()->Graphics();
   for(int i=0; i<16; ++i) {
-    mode.BG0_drawAsset(Vec2(16, i), BlackTile);
-    mode.BG0_drawAsset(Vec2(17, i), BlackTile);
+    mode.BG0_drawAsset(vec(16, i), BlackTile);
+    mode.BG0_drawAsset(vec(17, i), BlackTile);
   }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_SHAKE;
@@ -181,13 +181,13 @@ void RoomView::StartSlide(Cube::Side side) {
   ViewMode mode = Parent()->Graphics();
   if (side % 2 == 0) {
     for(int i=0; i<16; ++i) {
-      mode.BG0_drawAsset(Vec2(i, 16), BlackTile);
-      mode.BG0_drawAsset(Vec2(i, 17), BlackTile);
+      mode.BG0_drawAsset(vec(i, 16), BlackTile);
+      mode.BG0_drawAsset(vec(i, 17), BlackTile);
     }
   } else {
     for(int i=0; i<16; ++i) {
-      mode.BG0_drawAsset(Vec2(16, i), BlackTile);
-      mode.BG0_drawAsset(Vec2(17, i), BlackTile);
+      mode.BG0_drawAsset(vec(16, i), BlackTile);
+      mode.BG0_drawAsset(vec(17, i), BlackTile);
     }
   }
   mWobbles = 1.f;
@@ -213,7 +213,7 @@ void RoomView::ShowItem(const ItemData* item) {
   ViewMode mode = Parent()->Graphics();
   mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, item->itemId);
   Int2 p = pRoom->HasDepot() ? 
-    16 * Vec2(pRoom->Depot()->tx+1, pRoom->Depot()->ty+1) : 
+    16 * vec(pRoom->Depot()->tx+1, pRoom->Depot()->ty+1) : 
     16 * pRoom->LocalCenter(0);
   mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
@@ -263,7 +263,7 @@ void RoomView::DrawPlayerFalling(int height) {
 
 void RoomView::UpdateBlock() {
   ASSERT(mBlock);
-  const Int2 localPosition = mBlock->Position() - Vec2(32, 32) - 128 * Location();
+  const Int2 localPosition = mBlock->Position() - vec(32, 32) - 128 * Location();
   Parent()->Graphics().moveSprite(BLOCK_SPRITE_ID, localPosition);
 }
 
@@ -286,13 +286,13 @@ void RoomView::HideBlock() {
 
 void RoomView::DrawTrapdoorFrame(int frame) {
   ViewMode mode = Parent()->Graphics();
-  Int2 firstTile = GetRoom()->LocalCenter(0) - Vec2(2,2);
+  Int2 firstTile = GetRoom()->LocalCenter(0) - vec(2,2);
   for(unsigned y=0; y<4; ++y)
   for(unsigned x=0; x<4; ++x) {
     mode.BG0_drawAsset(
-      Vec2(firstTile.x + x, firstTile.y + y) << 1,
+      vec(firstTile.x + x, firstTile.y + y) << 1,
       *(gGame.GetMap()->Data()->tileset),
-      gGame.GetMap()->GetTileId(mRoomId, Vec2(firstTile.x + x, firstTile.y + y))+frame
+      gGame.GetMap()->GetTileId(mRoomId, vec(firstTile.x + x, firstTile.y + y))+frame
     );    
   }
 }
@@ -308,9 +308,9 @@ void RoomView::RefreshDoor() {
     for(int y=0; y<3; ++y)
     for(int x=3; x<5; ++x) {
       g.BG0_drawAsset(
-        Vec2(x,y) << 1,
+        vec(x,y) << 1,
         *(gGame.GetMap()->Data()->tileset),
-        gGame.GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
+        gGame.GetMap()->GetTileId(mRoomId, vec(x, y))+2
       );
     }
   }
@@ -325,9 +325,9 @@ void RoomView::RefreshDepot() {
     for(int y=depot.ty; y<depot.ty+3; ++y)
     for(int x=depot.tx; x<depot.tx+2; ++x) {
       g.BG0_drawAsset(
-        Vec2(x,y) << 1,
+        vec(x,y) << 1,
         *(gGame.GetMap()->Data()->tileset),
-        gGame.GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
+        gGame.GetMap()->GetTileId(mRoomId, vec(x, y))+2
       );
     }
     ShowItem(pRoom->DepotContents());
@@ -337,7 +337,7 @@ void RoomView::RefreshDepot() {
 
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
-  mode.BG0_setPanning(Vec2(0,0));
+  mode.BG0_setPanning(vec(0,0));
   DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
   RefreshDoor();
   RefreshDepot();
@@ -349,7 +349,7 @@ void RoomView::DrawBackground() {
   if (pRoom->HasNPC()) {
       const NpcData* npc = pRoom->NPC();
       const DialogData& dialog = gDialogData[npc->dialog];
-      ovrly.DrawAsset(Vec2((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
+      ovrly.DrawAsset(vec((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
   }
 
   ovrly.Flush();

@@ -48,7 +48,7 @@ struct FBDrawable {
      * Return the size of this mode as a vector, in pixels.
      */
     static UInt2 size() {
-        return Vec2(tWidth, tHeight);
+        return vec(tWidth, tHeight);
     }
 
     /**

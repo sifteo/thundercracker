@@ -50,7 +50,7 @@ static void DrawColumn(Cube* pCube, int x) {
 		// drawing a blank column
 		Canvas g(pCube->vbuf);
 		for(int row=0; row<10; ++row) {
-			g.BG0_drawAsset(Vec2<int>(addr, row+2), BgTile);
+			g.BG0_drawAsset(vec<int>(addr, row+2), BgTile);
 		}
 
 	}
@@ -95,14 +95,14 @@ void main() {
 			p->loadAssets(BetterflowAssets);
 			VidMode_BG0_ROM rom(p->vbuf);
 			rom.init();
-			rom.BG0_text(Vec2(1,1), "Loading...");
+			rom.BG0_text(vec(1,1), "Loading...");
 		}
 		bool done = false;
 		while(!done) {
 			done = true;
 			for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
 				VidMode_BG0_ROM rom(p->vbuf);
-				rom.BG0_progressBar(Vec2(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
+				rom.BG0_progressBar(vec(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
 				done &= p->assetDone(BetterflowAssets);
 			}
 			System::paint();
@@ -115,7 +115,7 @@ void main() {
 		g.clear();
 		for(unsigned r=0; r<18; ++r)
 		for(unsigned c=0; c<18; ++c) {
-			g.BG0_drawAsset(Vec2(c,r), BgTile);
+			g.BG0_drawAsset(vec(c,r), BgTile);
 		}
 
 	}
@@ -132,7 +132,7 @@ void main() {
 	for(;;) {
 	// HACK ALERT: Relies on the fact that vram is the same for both modes
 	canvas.clear();
-	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, 0));
+	VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(vec(0, 0));
 	BG1Helper(*pCube).Flush();
     // Allocate tiles for the static upper label, and draw it.
     {
@@ -215,7 +215,7 @@ void main() {
 				DrawColumn(pCube, prev_ut - 2);
 				prev_ut--;
 			}
-			canvas.BG0_setPanning(Vec2(ui, 0));
+			canvas.BG0_setPanning(vec(ui, 0));
 			Paint(pCube);
 		}
 		{
@@ -226,17 +226,17 @@ void main() {
 	}
 	Selected:
 	// isolate the selected icon
-	canvas.BG0_setPanning(Vec2(0,0));
+	canvas.BG0_setPanning(vec(0,0));
 	// kinda sub-optimal :P
 	for(int row=0; row<12; ++row)
 	for(int col=0; col<16; ++col) {
-		canvas.BG0_drawAsset(Vec2(col, row), BgTile);
+		canvas.BG0_drawAsset(vec(col, row), BgTile);
 	}
-	canvas.BG0_drawAsset(Vec2(0, 12), Footer);
+	canvas.BG0_drawAsset(vec(0, 12), Footer);
 	// TODO: Phase-Out BG1Helper code with optimized code
 	{
 		BG1Helper overlay(*pCube);
-		overlay.DrawAsset(Vec2(3, 2), *gIcons[ComputeSelected(position)]);
+		overlay.DrawAsset(vec(3, 2), *gIcons[ComputeSelected(position)]);
 		overlay.Flush();
 	}
 	System::paintSync();
@@ -255,7 +255,7 @@ void main() {
 		u = (1.f-k*u);
 		offset = int(12*(1.f-u*u));
 		// HACK ALERT: Relies on the fact that vram is the same for both modes
-		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(Vec2(0, offset));
+		VidMode_BG0_SPR_BG1(pCube->vbuf).BG1_setPanning(vec(0, offset));
 		System::paint();
 	}
 	// TODO: actually choose game

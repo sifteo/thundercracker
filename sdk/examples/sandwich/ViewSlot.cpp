@@ -46,7 +46,7 @@ void ViewSlot::SanityCheckVram() {
 		gfx.setWindow(0,128);
 		gfx.init();
 	}
-	gfx.BG0_setPanning(Vec2(0,0));
+	gfx.BG0_setPanning(vec(0,0));
 }
 
 void ViewSlot::EvictSecondaryView(unsigned viewId, bool doFlush) {

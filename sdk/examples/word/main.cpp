@@ -93,7 +93,7 @@ void main()
             VidMode_BG0_ROM rom(cubes[i].vbuf);
             rom.init();
 
-            rom.BG0_text(Vec2(1,1), "Loading...");
+            rom.BG0_text(vec(1,1), "Loading...");
         }
 
         // wait for assets to finish loading
@@ -104,7 +104,7 @@ void main()
             for (unsigned i = 0; i < arraysize(cubes); i++)
             {
                 VidMode_BG0_ROM rom(cubes[i].vbuf);
-                rom.BG0_progressBar(Vec2(0,7),
+                rom.BG0_progressBar(vec(0,7),
                                     cubes[i].assetProgress(GameAssets,
                                                            VidMode_BG0_SPR_BG1::LCD_width),
                                     2);

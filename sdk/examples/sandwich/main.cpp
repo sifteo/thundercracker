@@ -18,14 +18,14 @@ void main() {
       	gCubes[i].loadAssets(SandwichAssets);
 	    VidMode_BG0_ROM rom(gCubes[i].vbuf);
 	    rom.init();
-	    rom.BG0_text(Vec2(1,1), "Loading...");
+	    rom.BG0_text(vec(1,1), "Loading...");
 	  }
 	  bool done = false;
 	  while(!done) {
 	  	done = true;
 	    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
 	      VidMode_BG0_ROM rom(gCubes[i].vbuf);
-	      rom.BG0_progressBar(Vec2(0,7), gCubes[i].assetProgress(SandwichAssets, VidMode_BG0::LCD_width), 2);
+	      rom.BG0_progressBar(vec(0,7), gCubes[i].assetProgress(SandwichAssets, VidMode_BG0::LCD_width), 2);
 	      done &= gCubes[i].assetDone(SandwichAssets);
 	    }
 	    System::paint();

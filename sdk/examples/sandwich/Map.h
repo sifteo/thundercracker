@@ -133,7 +133,7 @@ public:
 
   inline Int2 GetLocation(uint8_t roomId) const {
     ASSERT(roomId < mData->width * mData->height);
-    return Vec2(roomId % mData->width, roomId / mData->width);
+    return vec(roomId % mData->width, roomId / mData->width);
   }
 
   inline bool Contains(Int2 loc) const {

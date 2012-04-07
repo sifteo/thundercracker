@@ -44,7 +44,7 @@ struct BG0Drawable {
      * Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
-        return Vec2(tileWidth(), tileHeight());
+        return vec(tileWidth(), tileHeight());
     }
 
     /**
@@ -65,7 +65,7 @@ struct BG0Drawable {
      * Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
-        return Vec2(pixelWidth(), pixelHeight());
+        return vec(pixelWidth(), pixelHeight());
     }
 
     /**
@@ -88,7 +88,7 @@ struct BG0Drawable {
      */
     void erase(uint16_t index = 0) {
         _SYS_vbuf_fill(&sys.vbuf, 0, _SYS_TILE77(index), sizeInWords());
-        setPanning(Vec2(0,0));
+        setPanning(vec(0,0));
     }
 
     /**

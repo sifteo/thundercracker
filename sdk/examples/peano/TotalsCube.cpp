@@ -102,7 +102,7 @@ namespace TotalsGame
     Int2 TotalsCube::GetTilt()
     {
         Cube::TiltState s = getTiltState();
-        return Vec2(s.x, s.y);
+        return vec(s.x, s.y);
     }
 
     bool TotalsCube::DoesNeighbor(TotalsCube *other)
@@ -161,7 +161,7 @@ namespace TotalsGame
         {
             for(int x = coord.x; x < coord.x + (int)image->width; x++)
             {
-                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
+                backgroundLayer.BG0_putTile(vec(x,y), tile++);
             }
         }
     }
@@ -198,7 +198,7 @@ namespace TotalsGame
 
             for(;x < maxx; x++)
             {
-                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
+                backgroundLayer.BG0_putTile(vec(x,y), tile++);
             }
 
             tile = tileSkip;
@@ -243,21 +243,21 @@ namespace TotalsGame
         {
             for(int x = p.x; x < p.x + s.x; x++)
             {
-                backgroundLayer.BG0_putTile(Vec2(x,y), image->tiles[0]);
+                backgroundLayer.BG0_putTile(vec(x,y), image->tiles[0]);
             }
         }
     }
 
     void TotalsCube::Image(const Sifteo::AssetImage &image)
     {
-        backgroundLayer.BG0_drawAsset(Vec2(0,0), image);
+        backgroundLayer.BG0_drawAsset(vec(0,0), image);
     }
 
     void TotalsCube::ClipImage(const Sifteo::AssetImage *image, Int2 pos)
     {
         Int2 p = pos;
-        Int2 o = Vec2(0,0);
-        Int2 s = Vec2(image->width, image->height);
+        Int2 o = vec(0,0);
+        Int2 s = vec(image->width, image->height);
 
         if(p.x < 0)
         {
@@ -301,10 +301,10 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0),Vec2(9,9),Vec2(x,y), skin.vault_door, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,0),Vec2(0,9),Vec2(16-x,y), skin.vault_door, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,y),Vec2(9,0),Vec2(x,16-y), skin.vault_door, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), skin.vault_door, 0);
+        backgroundLayer.BG0_drawPartialAsset(vec(0,0),vec(9,9),vec(x,y), skin.vault_door, 0);
+        backgroundLayer.BG0_drawPartialAsset(vec(x,0),vec(0,9),vec(16-x,y), skin.vault_door, 0);
+        backgroundLayer.BG0_drawPartialAsset(vec(0,y),vec(9,0),vec(x,16-y), skin.vault_door, 0);
+        backgroundLayer.BG0_drawPartialAsset(vec(x,y),vec(0,0),vec(16-x,16-y), skin.vault_door, 0);
 	}
 
     void TotalsCube::OpenShuttersToReveal(const Sifteo::AssetImage &image)
@@ -332,7 +332,7 @@ namespace TotalsGame
             Game::UpdateDt();
 		}
         
-        Image(image, Vec2(0,0));
+        Image(image, vec(0,0));
     }
 
     void TotalsCube::CloseShutters()
@@ -370,15 +370,15 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-x,16-yTop), Vec2(x,yTop), skin.vault_door);			//Top left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,0), Vec2(0,16-yTop), Vec2(16-x,yTop), skin.vault_door);			//top right
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,yBottom), Vec2(16-x,0), Vec2(x,16-yBottom), skin.vault_door);	//bottom left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,yBottom), Vec2(0,0), Vec2(16-x,16-yBottom), skin.vault_door);	//bottom right
+        backgroundLayer.BG0_drawPartialAsset(vec(0,0), vec(16-x,16-yTop), vec(x,yTop), skin.vault_door);			//Top left
+        backgroundLayer.BG0_drawPartialAsset(vec(x,0), vec(0,16-yTop), vec(16-x,yTop), skin.vault_door);			//top right
+        backgroundLayer.BG0_drawPartialAsset(vec(0,yBottom), vec(16-x,0), vec(x,16-yBottom), skin.vault_door);	//bottom left
+        backgroundLayer.BG0_drawPartialAsset(vec(x,yBottom), vec(0,0), vec(16-x,16-yBottom), skin.vault_door);	//bottom right
 
 		/*
 		if (innerImage && yTop != yBottom) 
 		{
-			mode.BG0_drawPartialAsset(Vec2(0,yTop), Vec2(0,yTop), Vec2(16,yBottom-yTop), *innerImage); // "inner" row
+			mode.BG0_drawPartialAsset(vec(0,yTop), vec(0,yTop), vec(16,yBottom-yTop), *innerImage); // "inner" row
 		} 
 		*/
 	}
@@ -393,14 +393,14 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(y-4)), Vec2(xLeft,y-4), skin.vault_door);			//Top left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(y-4)), Vec2(16-xRight,y-4), skin.vault_door);		//Top right
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,y+4), Vec2(16-xLeft,0), Vec2(xLeft,16-(y+4)), skin.vault_door);			//bottom left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(xRight,y+4), Vec2(0,0), Vec2(16-xRight,16-(y+4)), skin.vault_door);			//bottom right
+        backgroundLayer.BG0_drawPartialAsset(vec(0,0), vec(16-xLeft,16-(y-4)), vec(xLeft,y-4), skin.vault_door);			//Top left
+        backgroundLayer.BG0_drawPartialAsset(vec(xRight,0), vec(0,16-(y-4)), vec(16-xRight,y-4), skin.vault_door);		//Top right
+        backgroundLayer.BG0_drawPartialAsset(vec(0,y+4), vec(16-xLeft,0), vec(xLeft,16-(y+4)), skin.vault_door);			//bottom left
+        backgroundLayer.BG0_drawPartialAsset(vec(xRight,y+4), vec(0,0), vec(16-xRight,16-(y+4)), skin.vault_door);			//bottom right
 		
 		/*
 		if (innerImage && xLeft != xRight) {
-			mode.BG0_drawPartialAsset(Vec2(xLeft,0), Vec2(xLeft,0), Vec2(xRight-xLeft,16), *innerImage); // "inner" column
+			mode.BG0_drawPartialAsset(vec(xLeft,0), vec(xLeft,0), vec(xRight-xLeft,16), *innerImage); // "inner" column
 		}
 		*/
 	}
@@ -437,7 +437,7 @@ namespace TotalsGame
             }
             s++;
         }
-        Int2 p = center - Vec2(hw, 8);
+        Int2 p = center - vec(hw, 8);
 
         int curSprite = 0;
         s = string;
@@ -447,7 +447,7 @@ namespace TotalsGame
             {
             case '-':
                 backgroundLayer.setSpriteImage(curSprite, Digits, 10);
-                backgroundLayer.moveSprite(curSprite, p + Vec2(0,3));
+                backgroundLayer.moveSprite(curSprite, p + vec(0,3));
                 p.x += 10-1;
                 break;
             case '/':
@@ -457,7 +457,7 @@ namespace TotalsGame
                 break;
             case '.':
                 backgroundLayer.setSpriteImage(curSprite, Digits, 11);
-                backgroundLayer.moveSprite(curSprite, p + Vec2(0,12-7));
+                backgroundLayer.moveSprite(curSprite, p + vec(0,12-7));
                 p.x += 8-1;
                 break;
             default:

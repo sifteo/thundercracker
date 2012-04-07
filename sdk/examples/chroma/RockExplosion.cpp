@@ -53,10 +53,10 @@ void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
 
 static const Int2 OFFSET[] =
 {
-    Vec2( -8, 8 ),
-    Vec2( 8, 8 ),
-    Vec2( 8, -8 ),
-    Vec2( -8, -8 ),
+    vec( -8, 8 ),
+    vec( 8, 8 ),
+    vec( 8, -8 ),
+    vec( -8, -8 ),
 };
 
 

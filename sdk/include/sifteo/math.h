@@ -330,7 +330,7 @@ typedef Vector2<double>             Double2;
  * in unions.
  */
  
-template <typename T> inline Vector2<T> Vec2(T x, T y) {
+template <typename T> inline Vector2<T> vec(T x, T y) {
     Vector2<T> result = { x, y };
     return result;
 }
@@ -346,37 +346,37 @@ template <typename T> inline Vector2<T> polar(T angle, T magnitude) {
 }
 
 // Vector operations
-template <typename T> inline Vector2<T> operator-(Vector2<T> u) { return Vec2<T>(-u.x, -u.y); }
-template <typename T> inline Vector2<T> operator+=(Vector2<T> &u, Vector2<T> v) { return Vec2<T>(u.x+=v.x, u.y+=v.y); }
-template <typename T> inline Vector2<T> operator-=(Vector2<T> &u, Vector2<T> v) { return Vec2<T>(u.x-=v.x, u.y-=v.y); }
-template <typename T> inline Vector2<T> operator+(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x+v.x, u.y+v.y); }
-template <typename T> inline Vector2<T> operator-(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x-v.x, u.y-v.y); }
-template <typename T> inline Vector2<T> operator*(Vector2<T> u, Vector2<T> v) { return Vec2<T>(u.x*v.x, u.y*v.y); }
+template <typename T> inline Vector2<T> operator-(Vector2<T> u) { return vec<T>(-u.x, -u.y); }
+template <typename T> inline Vector2<T> operator+=(Vector2<T> &u, Vector2<T> v) { return vec<T>(u.x+=v.x, u.y+=v.y); }
+template <typename T> inline Vector2<T> operator-=(Vector2<T> &u, Vector2<T> v) { return vec<T>(u.x-=v.x, u.y-=v.y); }
+template <typename T> inline Vector2<T> operator+(Vector2<T> u, Vector2<T> v) { return vec<T>(u.x+v.x, u.y+v.y); }
+template <typename T> inline Vector2<T> operator-(Vector2<T> u, Vector2<T> v) { return vec<T>(u.x-v.x, u.y-v.y); }
+template <typename T> inline Vector2<T> operator*(Vector2<T> u, Vector2<T> v) { return vec<T>(u.x*v.x, u.y*v.y); }
 template <typename T> inline bool operator==(Vector2<T> u, Vector2<T> v) { return u.x == v.x && u.y == v.y; }
 template <typename T> inline bool operator!=(Vector2<T> u, Vector2<T> v) { return u.x != v.x || u.y != v.y; }
 
 // Scalar int promotion
-template <typename T> inline Int2 operator*(int k, Vector2<T> v) { return Vec2<int>(k*v.x, k*v.y); }
-template <typename T> inline Int2 operator*(Vector2<T> v, int k) { return Vec2<int>(k*v.x, k*v.y); }
-template <typename T> inline Int2 operator/(Vector2<T> v, int k) { return Vec2<int>(v.x/k, v.y/k); }
-template <typename T> inline Int2 operator+=(Vector2<T> &u, int k) { return Vec2<int>(u.x+=k, u.y+=k); }
-template <typename T> inline Int2 operator*=(Vector2<T> &u, int k) { return Vec2<int>(u.x*=k, u.y*=k); }
-template <typename T> inline Int2 operator<<(Vector2<T> u, int shift) { return Vec2<int>(u.x<<shift, u.y<<shift); }
-template <typename T> inline Int2 operator>>(Vector2<T> u, int shift) { return Vec2<int>(u.x>>shift, u.y>>shift); }
+template <typename T> inline Int2 operator*(int k, Vector2<T> v) { return vec<int>(k*v.x, k*v.y); }
+template <typename T> inline Int2 operator*(Vector2<T> v, int k) { return vec<int>(k*v.x, k*v.y); }
+template <typename T> inline Int2 operator/(Vector2<T> v, int k) { return vec<int>(v.x/k, v.y/k); }
+template <typename T> inline Int2 operator+=(Vector2<T> &u, int k) { return vec<int>(u.x+=k, u.y+=k); }
+template <typename T> inline Int2 operator*=(Vector2<T> &u, int k) { return vec<int>(u.x*=k, u.y*=k); }
+template <typename T> inline Int2 operator<<(Vector2<T> u, int shift) { return vec<int>(u.x<<shift, u.y<<shift); }
+template <typename T> inline Int2 operator>>(Vector2<T> u, int shift) { return vec<int>(u.x>>shift, u.y>>shift); }
 
 // Scalar float promotion
-template <typename T> inline Float2 operator*(float k, Vector2<T> v) { return Vec2<float>(k*v.x, k*v.y); }
-template <typename T> inline Float2 operator*(Vector2<T> v, float k) { return Vec2<float>(k*v.x, k*v.y); }
-template <typename T> inline Float2 operator/(Vector2<T> v, float k) { return Vec2<float>(v.x/k, v.y/k); }
-template <typename T> inline Float2 operator+=(Vector2<T> &u, float k) { return Vec2<float>(u.x+=k, u.y+=k); }
-template <typename T> inline Float2 operator*=(Vector2<T> &u, float k) { return Vec2<float>(u.x*=k, u.y*=k); }
+template <typename T> inline Float2 operator*(float k, Vector2<T> v) { return vec<float>(k*v.x, k*v.y); }
+template <typename T> inline Float2 operator*(Vector2<T> v, float k) { return vec<float>(k*v.x, k*v.y); }
+template <typename T> inline Float2 operator/(Vector2<T> v, float k) { return vec<float>(v.x/k, v.y/k); }
+template <typename T> inline Float2 operator+=(Vector2<T> &u, float k) { return vec<float>(u.x+=k, u.y+=k); }
+template <typename T> inline Float2 operator*=(Vector2<T> &u, float k) { return vec<float>(u.x*=k, u.y*=k); }
 
 // Scalar double promotion
-template <typename T> inline Double2 operator*(double k, Vector2<T> v) { return Vec2<double>(k*v.x, k*v.y); }
-template <typename T> inline Double2 operator*(Vector2<T> v, double k) { return Vec2<double>(k*v.x, k*v.y); }
-template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return Vec2<double>(v.x/k, v.y/k); }
-template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return Vec2<double>(u.x+=k, u.y+=k); }
-template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return Vec2<double>(u.x*=k, u.y*=k); }
+template <typename T> inline Double2 operator*(double k, Vector2<T> v) { return vec<double>(k*v.x, k*v.y); }
+template <typename T> inline Double2 operator*(Vector2<T> v, double k) { return vec<double>(k*v.x, k*v.y); }
+template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return vec<double>(v.x/k, v.y/k); }
+template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return vec<double>(u.x+=k, u.y+=k); }
+template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return vec<double>(u.x*=k, u.y*=k); }
 
 
 /**
@@ -399,12 +399,12 @@ template <typename T> struct Vector3 {
      * Extract a 2-vector with just the named components.
      */
 
-    Vector2<T> xy() const { return Vec2(x, y); }
-    Vector2<T> xz() const { return Vec2(x, z); }
-    Vector2<T> yx() const { return Vec2(y, x); }
-    Vector2<T> yz() const { return Vec2(y, z); }
-    Vector2<T> zx() const { return Vec2(z, x); }
-    Vector2<T> zy() const { return Vec2(z, y); }
+    Vector2<T> xy() const { return vec(x, y); }
+    Vector2<T> xz() const { return vec(x, z); }
+    Vector2<T> yx() const { return vec(y, x); }
+    Vector2<T> yz() const { return vec(y, z); }
+    Vector2<T> zx() const { return vec(z, x); }
+    Vector2<T> zy() const { return vec(z, y); }
 
     /**
      * Calculate the scalar length (magnitude) of this vector, squared.
@@ -507,43 +507,43 @@ typedef Vector3<double>             Double3;
  * in unions.
  */
  
-template <typename T> inline Vector3<T> Vec3(T x, T y, T z) {
+template <typename T> inline Vector3<T> vec(T x, T y, T z) {
     Vector3<T> result = { x, y, z };
     return result;
 }
 
 // Vector operations
-template <typename T> inline Vector3<T> operator-(Vector3<T> u) { return Vec3<T>(-u.x, -u.y, -u.z); }
-template <typename T> inline Vector3<T> operator+=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x+=v.x, u.y+=v.y, u.z+=v.z); }
-template <typename T> inline Vector3<T> operator-=(Vector3<T> &u, Vector3<T> v) { return Vec3<T>(u.x-=v.x, u.y-=v.y, u.z-=v.z); }
-template <typename T> inline Vector3<T> operator+(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x+v.x, u.y+v.y, u.z+v.z); }
-template <typename T> inline Vector3<T> operator-(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x-v.x, u.y-v.y, u.z-v.z); }
-template <typename T> inline Vector3<T> operator*(Vector3<T> u, Vector3<T> v) { return Vec3<T>(u.x*v.x, u.y*v.y, u.z*v.z); }
+template <typename T> inline Vector3<T> operator-(Vector3<T> u) { return vec<T>(-u.x, -u.y, -u.z); }
+template <typename T> inline Vector3<T> operator+=(Vector3<T> &u, Vector3<T> v) { return vec<T>(u.x+=v.x, u.y+=v.y, u.z+=v.z); }
+template <typename T> inline Vector3<T> operator-=(Vector3<T> &u, Vector3<T> v) { return vec<T>(u.x-=v.x, u.y-=v.y, u.z-=v.z); }
+template <typename T> inline Vector3<T> operator+(Vector3<T> u, Vector3<T> v) { return vec<T>(u.x+v.x, u.y+v.y, u.z+v.z); }
+template <typename T> inline Vector3<T> operator-(Vector3<T> u, Vector3<T> v) { return vec<T>(u.x-v.x, u.y-v.y, u.z-v.z); }
+template <typename T> inline Vector3<T> operator*(Vector3<T> u, Vector3<T> v) { return vec<T>(u.x*v.x, u.y*v.y, u.z*v.z); }
 template <typename T> inline bool operator==(Vector3<T> u, Vector3<T> v) { return u.x == v.x && u.y == v.y && u.z == v.z; }
 template <typename T> inline bool operator!=(Vector3<T> u, Vector3<T> v) { return u.x != v.x || u.y != v.y || u.z != v.z; }
 
 // Scalar int promotion
-template <typename T> inline Int3 operator*(int k, Vector3<T> v) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Int3 operator*(Vector3<T> v, int k) { return Vec3<int>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Int3 operator/(Vector3<T> v, int k) { return Vec3<int>(v.x/k, v.y/k, v.z/k); }
-template <typename T> inline Int3 operator+=(Vector3<T> &u, int k) { return Vec3<int>(u.x+=k, u.y+=k, u.z+=k); }
-template <typename T> inline Int3 operator*=(Vector3<T> &u, int k) { return Vec3<int>(u.x*=k, u.y*=k, u.z*=k); }
-template <typename T> inline Int3 operator<<(Vector3<T> u, int shift) { return Vec3<int>(u.x<<shift, u.y<<shift, u.z<<shift); }
-template <typename T> inline Int3 operator>>(Vector3<T> u, int shift) { return Vec3<int>(u.x>>shift, u.y>>shift, u.z>>shift); }
+template <typename T> inline Int3 operator*(int k, Vector3<T> v) { return vec<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator*(Vector3<T> v, int k) { return vec<int>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Int3 operator/(Vector3<T> v, int k) { return vec<int>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Int3 operator+=(Vector3<T> &u, int k) { return vec<int>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Int3 operator*=(Vector3<T> &u, int k) { return vec<int>(u.x*=k, u.y*=k, u.z*=k); }
+template <typename T> inline Int3 operator<<(Vector3<T> u, int shift) { return vec<int>(u.x<<shift, u.y<<shift, u.z<<shift); }
+template <typename T> inline Int3 operator>>(Vector3<T> u, int shift) { return vec<int>(u.x>>shift, u.y>>shift, u.z>>shift); }
 
 // Scalar float promotion
-template <typename T> inline Float3 operator*(float k, Vector3<T> v) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Float3 operator*(Vector3<T> v, float k) { return Vec3<float>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Float3 operator/(Vector3<T> v, float k) { return Vec3<float>(v.x/k, v.y/k, v.z/k); }
-template <typename T> inline Float3 operator+=(Vector3<T> &u, float k) { return Vec3<float>(u.x+=k, u.y+=k, u.z+=k); }
-template <typename T> inline Float3 operator*=(Vector3<T> &u, float k) { return Vec3<float>(u.x*=k, u.y*=k, u.z*=k); }
+template <typename T> inline Float3 operator*(float k, Vector3<T> v) { return vec<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator*(Vector3<T> v, float k) { return vec<float>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Float3 operator/(Vector3<T> v, float k) { return vec<float>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Float3 operator+=(Vector3<T> &u, float k) { return vec<float>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Float3 operator*=(Vector3<T> &u, float k) { return vec<float>(u.x*=k, u.y*=k, u.z*=k); }
 
 // Scalar double promotion
-template <typename T> inline Double3 operator*(double k, Vector3<T> v) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Double3 operator*(Vector3<T> v, double k) { return Vec3<double>(k*v.x, k*v.y, k*v.z); }
-template <typename T> inline Double3 operator/(Vector3<T> v, double k) { return Vec3<double>(v.x/k, v.y/k, v.z/k); }
-template <typename T> inline Double3 operator+=(Vector3<T> &u, double k) { return Vec3<double>(u.x+=k, u.y+=k, u.z+=k); }
-template <typename T> inline Double3 operator*=(Vector3<T> &u, double k) { return Vec3<double>(u.x*=k, u.y*=k, u.z*=k); }
+template <typename T> inline Double3 operator*(double k, Vector3<T> v) { return vec<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator*(Vector3<T> v, double k) { return vec<double>(k*v.x, k*v.y, k*v.z); }
+template <typename T> inline Double3 operator/(Vector3<T> v, double k) { return vec<double>(v.x/k, v.y/k, v.z/k); }
+template <typename T> inline Double3 operator+=(Vector3<T> &u, double k) { return vec<double>(u.x+=k, u.y+=k, u.z+=k); }
+template <typename T> inline Double3 operator*=(Vector3<T> &u, double k) { return vec<double>(u.x*=k, u.y*=k, u.z*=k); }
 
 
 /**

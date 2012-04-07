@@ -50,10 +50,10 @@ static void loadAssets()
             const int xMax = 16 + LCD_width - Kirby.pixelWidth();
             const int yMiddle = (LCD_height - Kirby.pixelHeight()) / 2;
             
-            Int2 pan = Vec2(loader.progress(cube, xMin, xMax), yMiddle);
+            Int2 pan = vec(loader.progress(cube, xMin, xMax), yMiddle);
             LOG_INT2(pan);
 
-            draw.image(Vec2(0,0), Kirby, frame);
+            draw.image(vec(0,0), Kirby, frame);
             draw.setPanning(-pan);
         }
 
@@ -85,7 +85,7 @@ static void onAccelChange(void *, unsigned cid)
     str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
     LOG_STR(str);
 
-    draw.text(Vec2(2,3), Font, str);
+    draw.text(vec(2,3), Font, str);
     draw.setPanning(accel.xy() / -2);
 }
 
@@ -101,8 +101,8 @@ static void helloWorld()
         auto &draw = vid[cube].bg0;
 
         draw.erase(WhiteTile);
-        draw.text(Vec2(2,1), Font, "Hello World!");
-        draw.image(Vec2(1,10), Logo);
+        draw.text(vec(2,1), Font, "Hello World!");
+        draw.image(vec(1,10), Logo);
 
         onAccelChange(0, cube);
     } 
@@ -111,7 +111,7 @@ static void helloWorld()
     while (1) {
         for (CubeID cube = 0; cube < gNumCubes; ++cube) {
             auto &draw = vid[cube].bg0;
-            draw.image(Vec2(7,6), Ball, frame);
+            draw.image(vec(7,6), Ball, frame);
         }
         if (++frame == Ball.numFrames())
             frame = 0;

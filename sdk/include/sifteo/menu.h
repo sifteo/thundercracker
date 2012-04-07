@@ -505,9 +505,9 @@ void Menu::stateStart() {
     canvas.clear();
     for(unsigned r = 0; r < kNumTilesX; ++r)
         for(unsigned c = 0; c < kNumTilesY; ++c)
-            canvas.BG0_drawAsset(Vec2(c,r), *assets->background);
+            canvas.BG0_drawAsset(vec(c,r), *assets->background);
 
-    canvas.BG1_setPanning(Vec2(0, 0));
+    canvas.BG1_setPanning(vec(0, 0));
     BG1Helper(*pCube).Flush();
     {
         // Allocate tiles for the static upper label, and draw it.
@@ -714,12 +714,12 @@ void Menu::transFromInertia() {
 void Menu::transToFinish() {
     // prepare screen for item animation
     // isolate the selected icon
-    canvas.BG0_setPanning(Vec2(0, 0));
+    canvas.BG0_setPanning(vec(0, 0));
 
     // blank out the background layer
     for(int row=0; row<kIconTileHeight; ++row)
     for(int col=0; col<kNumTilesX; ++col) {
-        canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
+        canvas.BG0_drawAsset(vec(col, row), *assets->background);
     }
     if (assets->header) {
         Int2 vec = {0, 0};
@@ -749,7 +749,7 @@ void Menu::stateFinish() {
     float u = finishIteration/33.f;
     u = (1.f-k*u);
     offset = int(12*(1.f-u*u));
-    canvas.BG1_setPanning(Vec2(-kEndCapPadding, offset + kIconYOffset));
+    canvas.BG1_setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
     currentEvent.type = MENU_PREPAINT;
 
     if (offset <= -128) {

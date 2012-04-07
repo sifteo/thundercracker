@@ -24,7 +24,7 @@ void main()
     vid.initMode(BG0_SPR_BG1);
     vid.attach(cube);
 
-    vid.bg0.image(Vec2(0,0), Background);
+    vid.bg0.image(vec(0,0), Background);
 
     // Allocate sprite IDs
     SpriteRef sBullet = vid.sprites[0];
@@ -63,7 +63,7 @@ void main()
         }
 
         // Scroll BG1
-        //vid.BG1_setPanning(Vec2(-frame, 0u));
+        //vid.BG1_setPanning(vec(-frame, 0u));
         
         // Flying bullet
         const Int2 bulletOrigin = { 130, 190 };

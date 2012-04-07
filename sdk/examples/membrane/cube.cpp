@@ -22,7 +22,7 @@ void GameCube::init()
 
     vid.init();
     hilighter.init();
-    vid.BG0_drawAsset(Vec2(0,0), Playfield);
+    vid.BG0_drawAsset(vec(0,0), Playfield);
 }
 
 void GameCube::animate(float timeStep)
@@ -57,7 +57,7 @@ void GameCube::placeMarker(int id)
     unsigned y = numMarkers / size;
     
     VidMode_BG0 vid(cube.vbuf);
-    vid.BG0_drawAsset(Vec2(3 + x*2, 3 + y*2), Markers, id);
+    vid.BG0_drawAsset(vec(3 + x*2, 3 + y*2), Markers, id);
     
     numMarkers++;
 }
@@ -80,7 +80,7 @@ bool GameCube::reportMatches(unsigned bits)
 }
 
 CubeHilighter::CubeHilighter(Cube &cube)
-    : cube(cube), ticker(6), counter(0), pos(Vec2(-1,-1))
+    : cube(cube), ticker(6), counter(0), pos(vec(-1,-1))
 {}
 
 void CubeHilighter::init()

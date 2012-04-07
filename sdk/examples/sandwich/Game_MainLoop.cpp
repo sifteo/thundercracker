@@ -74,7 +74,7 @@ void Game::MainLoop() {
 	          	mPlayer.SetEquipment(0);
 	          	TeleportTo(
 	          		map, 
-	          		Vec2(
+	          		vec(
 	          			128 * (quest->roomId % map.width) + 16 * room.centerX,
 	          			128 * (quest->roomId / map.width) + 16 * room.centerY
 	          		)

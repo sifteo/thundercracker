@@ -54,7 +54,7 @@ struct SpriteRef {
      * PinnedAssetImage and optionally a frame number.
      */
     void setImage(const PinnedAssetImage &asset, int frame = 0) const {
-        setImage(asset.tile(Vec2(0,0), frame));
+        setImage(asset.tile(vec(0,0), frame));
         resize(asset.pixelSize());
     }
 
@@ -83,7 +83,7 @@ struct SpriteRef {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
                           sizeof(_SYSSpriteInfo)/2 * id );
         uint16_t word = _SYS_vbuf_peek(&sys->vbuf, addr);
-        return Vec2<uint8_t>(-(int8_t)(word >> 8), -(int8_t)word);
+        return vec<uint8_t>(-(int8_t)(word >> 8), -(int8_t)word);
     }
 
     /**
@@ -197,7 +197,7 @@ struct SpriteRef {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
                           sizeof(_SYSSpriteInfo)/2 * id );
         uint16_t word = _SYS_vbuf_peek(&sys->vbuf, addr);
-        return Vec2<int8_t>(-(int8_t)(word >> 8), -(int8_t)word);
+        return vec<int8_t>(-(int8_t)(word >> 8), -(int8_t)word);
     }
 
     SpriteRef operator++ () {

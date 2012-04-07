@@ -24,14 +24,14 @@ static void begin() {
 			p->loadAssets(BetterflowAssets);
 			VidMode_BG0_ROM rom(p->vbuf);
 			rom.init();
-			rom.BG0_text(Vec2(1,1), "Loading...");
+			rom.BG0_text(vec(1,1), "Loading...");
 		}
 		bool done = false;
 		while(!done) {
 			done = true;
 			for(Cube *p = gCubes; p!=gCubes+NUM_CUBES; ++p) {
 				VidMode_BG0_ROM rom(p->vbuf);
-				rom.BG0_progressBar(Vec2(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
+				rom.BG0_progressBar(vec(0,7), p->assetProgress(BetterflowAssets, VidMode_BG0::LCD_width), 2);
 				done &= p->assetDone(BetterflowAssets);
 			}
 			System::paint();
@@ -44,7 +44,7 @@ static void begin() {
 		g.clear();
 		for(unsigned r=0; r<18; ++r)
 		for(unsigned c=0; c<18; ++c) {
-			g.BG0_drawAsset(Vec2(c,r), BgTile);
+			g.BG0_drawAsset(vec(c,r), BgTile);
 		}
 
 	}

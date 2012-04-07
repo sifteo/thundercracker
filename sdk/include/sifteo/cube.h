@@ -117,7 +117,7 @@ struct CubeID {
     Byte3 accel() const {
         ASSERT(sys < NUM_SLOTS);
         _SYSAccelState state = _SYS_getAccel(*this);
-        return Vec3(state.x, state.y, state.z);
+        return vec(state.x, state.y, state.z);
     }
 
     /**
@@ -128,7 +128,7 @@ struct CubeID {
     Byte2 tilt() const {
         ASSERT(sys < NUM_SLOTS);
         _SYSTiltState tilt = _SYS_getTilt(*this);
-        return Vec2(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
+        return vec(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
     }
 
     /**

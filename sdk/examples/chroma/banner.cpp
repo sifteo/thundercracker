@@ -27,8 +27,8 @@ void Banner::Draw( BG1Helper &bg1helper )
     if( m_tiles == 0 )
         return;
 
-    //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
-    bg1helper.DrawPartialAsset( Vec2<int>( CENTER_PT - m_tiles, 6 ), Vec2<int>( CENTER_PT - m_tiles, 0 ), Vec2<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
+    //bg1helper.DrawAsset( vec( 0, 6 ), BannerImg );
+    bg1helper.DrawPartialAsset( vec<int>( CENTER_PT - m_tiles, 6 ), vec<int>( CENTER_PT - m_tiles, 0 ), vec<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -36,7 +36,7 @@ void Banner::Draw( BG1Helper &bg1helper )
     {
         int iOffset = iStartXTile + i;
 
-        bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        bg1helper.DrawAsset( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
     }
 }
 
@@ -115,8 +115,8 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Int2 &pos, Banner::Anchor an
     for( int i = 0; i < iLen; i++ )
     {
         /*if( frame >= 0 )
-            bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), PointFont, ( buf[i] - '0' ) * FloatingScore::NUM_POINTS_FRAMES + frame );
+            bg1helper.DrawAsset( vec( pos.x + i + offset, pos.y ), PointFont, ( buf[i] - '0' ) * FloatingScore::NUM_POINTS_FRAMES + frame );
         else*/
-            bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
+            bg1helper.DrawAsset( vec( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
     }
 }

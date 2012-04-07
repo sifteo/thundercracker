@@ -25,7 +25,7 @@ void Game::title()
     while (SystemTime::now() < titleDeadline) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0 vid(getGameCube(i).cube.vbuf);
-            vid.BG0_drawAsset(Vec2(0,0), Title, frame % Title.frames);
+            vid.BG0_drawAsset(vec(0,0), Title, frame % Title.frames);
         }
         System::paint();
         frame++;

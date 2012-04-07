@@ -33,7 +33,7 @@ static void init()
         
         VidMode_BG0_ROM rom(cubes[i].vbuf);
         rom.init();
-        rom.BG0_text(Vec2(1,1), "Loading...");
+        rom.BG0_text(vec(1,1), "Loading...");
     }
     
     for (unsigned i = 0; i < NUM_CUBES; i++) {
