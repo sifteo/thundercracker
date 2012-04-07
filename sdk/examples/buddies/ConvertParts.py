@@ -32,10 +32,14 @@ def ProcessImage(image_path):
             frame = frame.rotate(90)
     
     name, ext = os.path.splitext(image_path)
-    name = name.replace('_source', '')
+    dir = os.path.join(os.path.dirname(name), 'output')
+    base = os.path.basename(name)
     
-    final_bg1.save(name + ext)
-    final_sprite.save(name + '_sprite' + ext)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    
+    final_bg1.save(os.path.join(dir, base + ext))
+    final_sprite.save(os.path.join(dir, base + '_sprite' + ext))
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
