@@ -17,7 +17,6 @@ public:
     void init(const struct _SYSAudioModule *module) {
         mod = module;
         ringPos = 0;
-        ref = NULL;
         reset();
     }
 
@@ -45,17 +44,13 @@ public:
         return samples[((sampleNum - oldestSample()) + ringPos) % arraysize(samples)];
     }
 
-    void useRef(FlashBlockRef *newRef) {
-        ref = newRef;
-    }
-
-    void loseRef() {
-        ref = NULL;
+    void releaseRef() {
+        ref.release();
     }
 
 private:
     const struct _SYSAudioModule *mod;
-    FlashBlockRef *ref;
+    FlashBlockRef ref;
     uint16_t samples[2];   // mini-ringbuffer of samples
     uint32_t newestSample; // index of newest sample in samples[]
     uint8_t ringPos;       // points to the beginning of the ring

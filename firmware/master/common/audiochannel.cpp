@@ -31,8 +31,6 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
         return 0;
 
     uint32_t framesLeft = len;
-    FlashBlockRef ref;
-    samples.useRef(&ref);
 
     while(framesLeft > 0) {
         // Mix a sample, after volume adjustment, with the existing buffer contents
@@ -53,7 +51,7 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
         }
     }
 
-    samples.loseRef();
+    samples.releaseRef();
 
     return len - framesLeft;
 }
