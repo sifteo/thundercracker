@@ -1699,7 +1699,7 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
-            mDelayTimer = kStateTimeDelayShort;
+            mDelayTimer = kStateTimeDelayShort; // Turn on GO! sprite
             mOptionsTimer = kOptionsTimerDuration;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
@@ -1934,14 +1934,12 @@ void App::UpdateGameState(float dt)
                 }
                 else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
                 {
-                    LOG(("touch 1 end\n"));
                     ResetCubesToPuzzle(GetPuzzleDefault(), false);
                     mTouchSync = true;
                     StartGameState(GAME_STATE_FREEPLAY_PLAY);
                 }
                 else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
                 {
-                    LOG(("touch 2 end\n"));
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
             }
@@ -2181,6 +2179,7 @@ void App::UpdateGameState(float dt)
                     }
                     PlaySound(SoundUnpause);
                     StartGameState(GAME_STATE_SHUFFLE_PLAY);
+                    mDelayTimer = 0.0f; // Turn off GO! sprite
                 }
                 else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
                 {
@@ -2471,6 +2470,7 @@ void App::UpdateGameState(float dt)
                     }
                     PlaySound(SoundUnpause);
                     StartGameState(GAME_STATE_STORY_PLAY);
+                    mDelayTimer = 0.0f; // Turn off GO! sprite
                 }
                 else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
                 {

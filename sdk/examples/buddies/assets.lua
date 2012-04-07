@@ -85,7 +85,7 @@ UiResume = image {"assets/pausemenu_resume.png"}
 UiRestart = image {"assets/pausemenu_restart_puzzle.png"}
 UiEndGameNavExit = image{"assets/end_navigation_exit.png"}
 UiCongratulations = image{"assets/panel_congratulations.png"}
-UiGoBlue = image{"assets/go_blue.png", pinned = true}
+--UiGoBlue = image{"assets/go_blue.png", pinned = true}
 UiGoOrange = image{"assets/go_orange.png", pinned = true}
 UiFaceHolder = image{"assets/faceholder.png"};
 
