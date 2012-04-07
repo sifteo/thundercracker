@@ -67,7 +67,7 @@ private:
     Code findBestCode(const std::vector<uint16_t> &dict, uint16_t tile);
 
     unsigned getIndexSize() const;
-    void debugCode(Code code) const;
+    void debugCode(int x, int y, Code code, int tile) const;
     void packCode(Code code, BitBuffer &bits) const ;
     unsigned codeLen(Code code) const;
     unsigned packIndex(unsigned i) const;

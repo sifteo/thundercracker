@@ -61,6 +61,10 @@ struct VRAM {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
+    static void truncateWordAddr(unsigned &addr) {
+        addr &= _SYS_VRAM_WORD_MASK;
+    }
+
     static uint16_t index14(uint16_t i) {
         return ((i << 2) & 0xFE00) | ((i << 1) & 0x00FE);
     }

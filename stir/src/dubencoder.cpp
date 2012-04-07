@@ -177,7 +177,7 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
                 } else {
                     // Break an existing run
                     Code rep = { Code::REPEAT, repeatCount };
-                    debugCode(rep);
+                    debugCode(x, y, rep, tile);
                     packCode(rep, bits);
                     bits.flush(data);
                     repeating = false;
@@ -188,7 +188,7 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
                 repeatCount = 0;
             }
 
-            debugCode(code);
+            debugCode(x, y, code, tile);
             packCode(code, bits);
             bits.flush(data);
         }
@@ -196,7 +196,7 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
     if (repeating) {
         // Flush any final REPEAT code we have stowed away.
         Code rep = { Code::REPEAT, repeatCount };
-        debugCode(rep);
+        debugCode(-1, -1, rep, -1);
         packCode(rep, bits);
     }
 
@@ -204,10 +204,10 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
     bits.flush(data, true);
 }
 
-void DUBEncoder::debugCode(DUBEncoder::Code c) const
+void DUBEncoder::debugCode(int x, int y, DUBEncoder::Code c, int tile) const
 {
 #if 0
-    printf("{%d,%d}\n", c.type, c.value);
+    printf("(%d, %d) - {%d,%d} = %04x\n", x, y, c.type, c.value, tile);
 #endif
 }
 

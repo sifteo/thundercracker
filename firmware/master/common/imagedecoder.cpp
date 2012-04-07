@@ -39,6 +39,20 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
     return true;
 }
 
+unsigned ImageDecoder::getBlockSize() const
+{
+    switch (header.format) {
+    
+        case _SYS_AIF_DUB_I8:
+        case _SYS_AIF_DUB_I16:
+            return 8;
+
+        default:
+            // Unlimited
+            return 0x7FFFFFFF;
+    }
+}
+
 int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
 {
     if (x >= header.width || y >= header.height || frame >= header.frames)
@@ -73,13 +87,13 @@ int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
             unsigned blockNum = bx + (by + frame * yBlocks) * xBlocks;
 
             // How wide is the selected block?
-            unsigned blockW = MIN(8, header.width - (bx & ~7));
+            unsigned blockW = MIN(8, header.width - (x & ~7));
 
             if (blockCache.index != blockNum) {
                 // This block isn't in the cache. Calculate the rest of its
                 // size, and decompress it into the cache.
 
-                unsigned blockH = MIN(8, header.height - (by & ~7));
+                unsigned blockH = MIN(8, header.height - (y & ~7));
                 blockCache.index = blockNum;
                 if (!decompressDUB(blockNum, blockW * blockH)) {
                     // Failure. Cache the failure, so we can fail fast!
@@ -134,13 +148,15 @@ SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
 
 bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
 {
+    DEBUG_LOG(("DUB[%08x]: Decompressing block %d, %d tiles\n",
+        header.data, index, numTiles));
+
     struct Code {
         int type;
         int arg;
     };
     
     SvmMemory::VirtAddr va = readIndex(index);
-    printf("-------------- Decoding block %d, VA=%llx, tiles=%d\n", index, (long long)va, numTiles);
 
     if (!va)
         return false;
@@ -184,8 +200,6 @@ bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
             repeats = 0;
         lastCode = thisCode;
 
-        printf("At %d: Code %d:%d, rep %d\n", tileIndex, thisCode.type, thisCode.arg, repeats);
-
         /*
          * Act on this code, possibly multiple times.
          */
@@ -221,7 +235,6 @@ unsigned BitReader::read(unsigned bits)
     const unsigned mask = (1 << bits) - 1;
 
     for (;;) {
-        printf("Bits: c=%d buf=%016llx\n", bitCount, buffer);
         
         // Have enough data?
         if (bits <= bitCount) {

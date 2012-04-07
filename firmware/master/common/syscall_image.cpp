@@ -38,16 +38,20 @@ void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf,
     if (!decoder.init(im, vbuf->cube))
         return;
 
-    uint16_t lineAddr = addr;
-    for (unsigned y = 0; y < decoder.getHeight(); y++) {
-        for (unsigned x = 0; x < decoder.getWidth(); x++) {
-            uint16_t tile = decoder.tile(x, y, frame);
-            VRAM::truncateWordAddr(addr);
-            VRAM::poke(vbuf->vbuf, addr, _SYS_TILE77(tile));
-            addr++;
-        };
-        addr = lineAddr += 18;
-    }
+    unsigned S = 18;                            // Destination stride
+    unsigned blockX = decoder.getBlockSize();   // Natural block size for codec
+    unsigned blockS = blockX * S;               // Dest stride per-block
+    unsigned W = decoder.getWidth();            // Total width
+    unsigned H = decoder.getHeight();           // Total height
+
+    for (unsigned by = 0, byA = addr; by < H; by += blockX, byA += blockS)
+        for (unsigned bx = 0, bxA = byA; bx < W; bx += blockX, bxA += blockX)
+            for (unsigned y = by, yE = by + blockX, yA = bxA; y != H && y != yE; ++y, yA += S)
+                for (unsigned x = bx, xE = bx + blockX, xA = yA; x != W && x != xE; ++x, ++xA) {
+                    uint16_t tile = decoder.tile(x, y, frame);
+                    VRAM::truncateWordAddr(xA);
+                    VRAM::poke(vbuf->vbuf, xA, _SYS_TILE77(tile));
+                }
 }
 
 void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf,

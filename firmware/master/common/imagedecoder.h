@@ -35,6 +35,9 @@ public:
         return header.height;
     }
 
+    // Get the natural block size, used to generate a preferred access order
+    unsigned getBlockSize() const;
+
 private:
     struct {
         uint16_t data[64];
