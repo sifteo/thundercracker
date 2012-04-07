@@ -104,7 +104,7 @@ public:
 
             //_SYS_memcpy16( m_tileset[yOff] + point.x, asset.tiles + offset, asset.width );
             //offset += asset.width;
-            for(unsigned x=0; x<asset.height; ++x) {
+            for(unsigned x=0; x<asset.width; ++x) {
                 m_tileset[yOff][point.x+x] = asset.index + offset;
                 offset++;
             }
