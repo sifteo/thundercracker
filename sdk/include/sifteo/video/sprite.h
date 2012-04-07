@@ -155,8 +155,21 @@ struct SpriteRef {
      * measured relative to the top-left corner of the screen.
      * Sprite locations may be negative.
      */
-    void moveSprite(Int2 pos) const {
+    void move(Int2 pos) const {
         move(pos.x, pos.y);
+    }
+
+    /**
+     * Move this sprite to a new location, in pixels, passed as a Float2.
+     *
+     * This specifies the location of the sprite's top-left corner,
+     * measured relative to the top-left corner of the screen.
+     * Sprite locations may be negative.
+     * Coordinates are rounded to the nearest integer pixel.
+     */
+    void move(Float2 pos) const {
+        Int2 i = pos.round();
+        move(i.x, i.y);
     }
 
     /**
@@ -185,6 +198,34 @@ struct SpriteRef {
                           sizeof(_SYSSpriteInfo)/2 * id );
         uint16_t word = _SYS_vbuf_peek(&sys->vbuf, addr);
         return Vec2<int8_t>(-(int8_t)(word >> 8), -(int8_t)word);
+    }
+
+    SpriteRef operator++ () {
+        ++id;
+        return *this;
+    }
+
+    SpriteRef operator++ (int) {
+        SpriteRef result = *this;
+        ++id;
+        return result;
+    }
+
+    SpriteRef operator-- () {
+        --id;
+        return *this;
+    }
+
+    SpriteRef operator-- (int) {
+        SpriteRef result = *this;
+        --id;
+        return result;
+    }
+
+    SpriteRef operator[] (int index) {
+        SpriteRef result = *this;
+        result.id += index;
+        return result;
     }
 };
 

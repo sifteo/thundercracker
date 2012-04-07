@@ -7,6 +7,9 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
+static Metadata M = Metadata()
+    .title("Sensors SDK Example");
+
 
 class EventCounters {
 public:

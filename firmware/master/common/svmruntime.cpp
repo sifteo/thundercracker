@@ -70,7 +70,6 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
     const _SYSMetadataCubeRange *range =
         pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
     unsigned minCubes = range ? range->minCubes : 0;
-    // XXX: Also a hack.. installing on cube 0 only.
 
     // Look up BootAsset array
     uint32_t actualSize;
