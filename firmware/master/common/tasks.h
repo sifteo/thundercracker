@@ -11,8 +11,6 @@
 class Tasks
 {
 public:
-    static const uint8_t MAX_TASKS = 32;
-
     enum TaskID {
         UsbIN,
         UsbOUT,
