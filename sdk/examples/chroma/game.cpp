@@ -513,20 +513,17 @@ void Game::checkGameOver()
 
 bool Game::NoMatches()
 {
+    ASSERT( m_mode == MODE_SURVIVAL || m_mode == MODE_PUZZLE );
     //shakes mode checks for no possible moves, whereas puzzle mode checks if the puzzle is lost
-    if( m_mode == MODE_SURVIVAL )
-    {
-        if( AreAllColorsUnmatchable() )
-            return true;
-        if( DoCubesOnlyHaveStrandedDots() )
-            return true;
-    }
-    else if( m_mode == MODE_PUZZLE )
+    if( m_mode == MODE_PUZZLE )
     {
         //""" Return True if no matches are possible with the current gems. """
         if( no_match_color_imbalance() )
+        {
+            //LOG(("Imbalance!\n"));
             return true;
-        if( numColors() == 1 )
+        }
+        /*if( numColors() == 1 )
         {
             if( no_match_stranded_interior() )
                 return true;
@@ -534,7 +531,19 @@ bool Game::NoMatches()
                 return true;
             else if( no_match_mismatch_side() )
                 return true;
-        }
+        }*/
+
+    }
+
+    if( AreAllColorsUnmatchable() )
+    {
+        //LOG(("All colors unmatchable!\n"));
+        return true;
+    }
+    if( DoCubesOnlyHaveStrandedDots() )
+    {
+        //LOG(("stranded dots!\n"));
+        return true;
     }
 
     return false;
@@ -612,13 +621,17 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
         {
             total++;
             aHasColor[i] = true;
+            //LOG(("cube %d has color %d\n", i, color));
         }
         else
             aHasColor[i] = false;
     }
 
     if( total <= 1 )
+    {
+        //LOG(("%d cubes have color %d\n", total, color));
         return true;
+    }
 
     int numCorners = 0;
     bool side1 = false;
@@ -627,15 +640,18 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
     //also, make sure these colors on these cubes can possibly match
     for( int i = 0; i < NUM_CUBES; i++ )
     {
+        //LOG(("cube %d do we have color? %d\n", i, aHasColor[i]));
         if( aHasColor[i] )
         {
-            bool localCorners = false;
-            bool localside1 = false;
-            bool localside2 = false;
+            CubeWrapper::GridTestInfo testInfo = { color, false, false, false };
 
-            m_cubes[i].UpdateColorPositions( color, localCorners, localside1, localside2 );
+            LOG(("local testInfo at %x\n", &testInfo));
 
-            if( localCorners )
+            m_cubes[i].UpdateColorPositions( testInfo );
+
+            LOG(("cube %d has corners = %d, side1 = %d, side2 = %d", i, testInfo.bCorners, testInfo.bSide1, testInfo.bSide2));
+
+            if( testInfo.bCorners )
             {
                 numCorners++;
                 //this color has corners on multiple cubes, there's a match!
@@ -644,24 +660,25 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
             }
 
             //side1 on one cube can match side2 on another
-            if( localside1 )
+            if( testInfo.bSide1 )
             {
                 if( side2 )
                     return false;
             }
-            if( localside2 )
+            if( testInfo.bSide2 )
             {
                 if( side1 )
                     return false;
             }
 
-            if( localside1 )
+            if( testInfo.bSide1 )
                 side1 = true;
-            if( localside2 )
+            if( testInfo.bSide2 )
                 side2 = true;
         }
     }
 
+    LOG(("Failed to find a match!  color %d\n", color));
     return true;
 }
 
