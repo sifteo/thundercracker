@@ -628,6 +628,22 @@ struct Random {
     }
 
     /**
+     * Take a chance. Returns a boolean that has a 'probability'
+     * chance of being 'true'.
+     *
+     * If the argument is constant, all floating point math folds
+     * away at compile-time. For values of 0 and 1, we are guaranteed
+     * to always return false or true, respectively.
+     */
+
+    bool chance(float probability) {
+        // Use 31 bits, to give us range to represent probability=1.
+        const uint32_t mask = 0x7FFFFFFF;
+        uint32_t threshold = probability * (mask + 1);
+        return (raw() & mask) < threshold;
+    }
+
+    /**
      * Returns a uniformly distributed floating point number in the range [a, b) or
      * [a, b], depending on rounding.
      */
