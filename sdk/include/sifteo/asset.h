@@ -391,6 +391,22 @@ struct AssetLoader {
 
 
 /**
+ * This is an AssetLoader subclass which automatically calls init() and
+ * finish() in the constructor and destructor, respectively.
+ *
+ * The base AssetLoader class does not do this, so that it can be a POD
+ * type compatible with unions. But if you're creating an AssetLoader on the
+ * stack or in another object without using unions, this class may be
+ * easier to use.
+ */
+class ScopedAssetLoader : public AssetLoader {
+public:
+    ScopedAssetLoader() { init(); }
+    ~ScopedAssetLoader() { finish(); }
+};
+
+
+/**
  * Any kind of asset image, as defined in your STIR script.
  *
  * AssetImage acts as the base class for all tiled assets. It does not
