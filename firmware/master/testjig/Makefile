@@ -7,7 +7,8 @@ include $(TC_DIR)/firmware/master/Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
 # Test Jig specific sources
-OBJS_STM32 +=   $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o
+OBJS_STM32 +=   $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o    \
+                $(TC_DIR)/firmware/master/stm32/i2c.stm32.o
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -I../common -I../../include -DNO_USERSPACE_HEADERS
