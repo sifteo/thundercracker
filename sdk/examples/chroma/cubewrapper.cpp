@@ -1732,17 +1732,22 @@ bool CubeWrapper::HasHyperDot() const
 
 
 //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
-void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const
+void CubeWrapper::UpdateColorPositions( GridTestInfo &testInfo ) const
 {
-    TestGridForColor( m_grid, color, bCorners, side1, side2 );
+    //LOG(("UpdateColorPositions testInfo at %x\n", &testInfo));
+    TestGridForColor( testInfo, m_grid );
 
     //we've already satisfied everything
-    if( bCorners && side1 && side2 )
+    if( testInfo.TotallySatisfied() )
         return;
 
     if( !isFull() && HasFloatingDots() )
     {
         GridSlot grid[NUM_ROWS][NUM_COLS];
+
+        //LOG(("gridslot size is %d\n", sizeof(GridSlot)));
+        //LOG(("creating grid on the stack at %x, size is %d\n", grid, sizeof(grid)));
+        //LOG(("amount of room we've left = %d", (uint8_t *)&testInfo - (uint8_t *)grid));
 
         //suddenly having problems with this memcpy
         //_SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
@@ -1750,25 +1755,32 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
         {
             for( int k = 0; k < NUM_COLS; k++ )
             {
+                //LOG(("writing to location %x\n", &(grid[j][k])));
+                ASSERT( &testInfo );
                 grid[j][k] = m_grid[j][k];
             }
         }
 
+        ASSERT( &testInfo );
+
+        //LOG(("Right before TiltAndTestGrid testInfo at %x\n", &testInfo));
         //recursive function to tilt and test grid
-        TiltAndTestGrid( grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
+        TiltAndTestGrid( testInfo, TEST_TILT_ITERATIONS, grid );
 
         //we've already satisfied everything
-        if( bCorners && side1 && side2 )
+        if( testInfo.TotallySatisfied() )
             return;
     }
 }
 
 
 //check different parts of the given grid for the given color
-void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
+void CubeWrapper::TestGridForColor( GridTestInfo &testInfo, const GridSlot grid[][NUM_COLS] )
 {
+    //LOG(("TestGridForColor testInfo at %x\n", &testInfo));
+
     //only check for spots that haven't been found already
-    if( !bCorners )
+    if( !testInfo.bCorners )
     {
         const Int2 cornerLocs[] = {
             Vec2( 0, 0 ),
@@ -1780,9 +1792,9 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ cornerLocs[i].x ][ cornerLocs[i].y ];
-            if( slot.matchesColor( color ) )
+            if( slot.matchesColor( testInfo.color ) )
             {
-                bCorners = true;
+                testInfo.bCorners = true;
                 break;
             }
         }
@@ -1797,7 +1809,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
 
       only works with 4x4!
       */
-    if( !side1 )
+    if( !testInfo.bSide1 )
     {
         STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
         const Int2 locs[] = {
@@ -1810,9 +1822,9 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.matchesColor( color ) )
+            if( slot.matchesColor( testInfo.color ) )
             {
-                side1 = true;
+                testInfo.bSide1 = true;
                 break;
             }
         }
@@ -1827,7 +1839,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
 
       only works with 4x4!
       */
-    if( !side2 )
+    if( !testInfo.bSide2 )
     {
         const Int2 locs[] = {
             Vec2( 0, 2 ),
@@ -1839,9 +1851,9 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.matchesColor( color ) )
+            if( slot.matchesColor( testInfo.color ) )
             {
-                side2 = true;
+                testInfo.bSide2 = true;
                 break;
             }
         }
@@ -1850,8 +1862,9 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
 
 
 //recursive function to tilt and test grid
-void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
+void CubeWrapper::TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] )
 {
+    //LOG(("TiltAndTestGrid testInfo at %x\n", &testInfo));
     for( int i = 0; i < NUM_SIDES; i++ )
     {
         //copy the grid
@@ -1867,18 +1880,20 @@ void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color
             }
         }
 
+        LOG(("TiltAndTestGrid after copying grid testInfo at %x\n", &testInfo));
+
         //tilt it
         if( FakeTilt( i, childgrid ) )
-        {
-            TestGridForColor( childgrid, color, bCorners, side1, side2 );
+        {            
+            TestGridForColor( testInfo, childgrid );
 
             //we've already satisfied everything
-            if( bCorners && side1 && side2 )
+            if( testInfo.TotallySatisfied() )
                 return;
 
             //recurse
             if( iterations > 0 )
-                TiltAndTestGrid( childgrid, color, bCorners, side1, side2, iterations - 1 );
+                TiltAndTestGrid( testInfo, iterations - 1, childgrid );
         }
     }
 }

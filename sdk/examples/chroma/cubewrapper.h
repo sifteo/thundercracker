@@ -50,6 +50,16 @@ public:
         STATE_REFILL,
 	} CubeState;
 
+    typedef struct
+    {
+        unsigned int color;
+        bool bCorners;
+        bool bSide1;
+        bool bSide2;
+
+        bool TotallySatisfied() const { return bCorners && bSide1 && bSide2; }
+    } GridTestInfo;
+
 	CubeWrapper();
 
 	void Init( AssetGroup &assets );
@@ -120,7 +130,7 @@ public:
     bool HasHyperDot() const;
 
     //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
-    void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
+    void UpdateColorPositions( GridTestInfo &testInfo ) const __attribute__ ((noinline));
 
     //add one piece
     void RespawnOnePiece();
@@ -145,9 +155,9 @@ private:
     static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     //check different parts of the given grid for the given color
-    static void TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 );
+    static void TestGridForColor( GridTestInfo &testInfo, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
     //recursive function to tilt and test grid
-    static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
+    static void TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     bool HasFloatingDots() const;
     void fillPuzzleCube();
