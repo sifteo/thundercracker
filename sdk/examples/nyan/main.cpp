@@ -37,7 +37,6 @@ static void init() {
 
 void main() {
     init();
-	channel.init();
 	channel.play(Nyan, LoopRepeat);
 
     for (unsigned i=0; i<NUM_CUBES; i++)

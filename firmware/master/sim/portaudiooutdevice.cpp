@@ -83,11 +83,6 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     else {
         memset(outputBuffer, 0, framesPerBuffer * sizeof(int16_t));
     }
-    // TODO: limit how often we try to refill?
-    //          on my Win7 machine, waiting until the buffer is 1/2 empty before
-    //          refill results in gaps in playback, so just fetching all the time
-    //          for now. -- Liam
-    Tasks::setPending(Tasks::AudioOutEmpty, &audiobuf);
 
     return paContinue;
 }
@@ -164,6 +159,8 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
         return;
     }
 #endif
+
+    Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
 
 void PortAudioOutDevice::start()

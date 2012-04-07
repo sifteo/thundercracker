@@ -140,7 +140,8 @@ private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
 	bool TryMove( int row1, int col1, int row2, int col2 );
-    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] );
+    //force this function to be not inline to avoid a bug.  Not sure what the bug is!  But somehow row1/2, col1/2 get garbled otherwise
+    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     //check different parts of the given grid for the given color
     static void TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 );

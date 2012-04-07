@@ -13,34 +13,42 @@
 #endif
 
 uint32_t Tasks::pendingMask;
+uint32_t Tasks::alwaysMask;
 
 Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     { 0 },
     #else
-    { UsbDevice::handleINData, 0 },
-    { UsbDevice::handleOUTData, 0 },
+    { UsbDevice::handleINData, 0},
+    { UsbDevice::handleOUTData, 0},
     #endif
-    { AudioMixer::handleAudioOutEmpty, 0 },
-    { SvmDebugger::messageLoop, 0 },
+    { AudioMixer::pullAudio, 0},
+    { SvmDebugger::messageLoop, 0},
     { CubeSlots::assetLoaderTask, 0 },
 };
 
 void Tasks::init()
 {
     pendingMask = 0;
+    alwaysMask = 0;
 }
 
 /*
     Pend a given task handler to be run the next time we have time.
 */
-void Tasks::setPending(TaskID id, void* p)
+void Tasks::setPending(TaskID id, void* p, bool runAlways)
 {
     ASSERT((unsigned)id < (unsigned)arraysize(TaskList));
-    ASSERT(TaskList[id].callback != NULL);
-    TaskList[id].param = p;
-    Atomic::SetLZ(pendingMask, id);
+    Task &task = TaskList[id];
+    ASSERT(task.callback != NULL);
+    task.param = p;
+    
+    if (runAlways) {
+        Atomic::SetLZ(alwaysMask, id);
+    } else {
+        Atomic::SetLZ(pendingMask, id);
+    }
 }
 
 /*
@@ -50,17 +58,19 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
-    // Always try to fetch audio data
-    AudioMixer::instance.fetchData();
-    
-    while (pendingMask) {
-        unsigned idx = Intrinsic::CLZ(pendingMask);
-        Task &task = TaskList[idx];
+    uint32_t always = alwaysMask;
+    doJobs(always);
+    doJobs(pendingMask);
+}
 
+void Tasks::doJobs(uint32_t &mask) {
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
         // clear before calling back since callback might take a while and
         // the flag might get set again in the meantime
-        Atomic::ClearLZ(pendingMask, idx);
+        Atomic::ClearLZ(mask, idx);
 
+        Task &task = TaskList[idx];
         task.callback(task.param);
     }
 }

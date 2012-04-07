@@ -80,16 +80,7 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].vidInit();
 
-#if SFX_ON
-    for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
-    {
-        m_SFXChannels[i].init();
-        //m_SFXChannels[i].setVolume( 256 );
-    }
-#endif
 #if MUSIC_ON
-    m_musicChannel.init();
-
     //doesn't seem to work
     m_musicChannel.setVolume( 1 );
 #if SPLASH_ON

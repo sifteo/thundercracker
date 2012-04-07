@@ -6,13 +6,16 @@
 #define VIEW_UNCHANGED 1
 #define VIEW_CHANGED 2
 
-static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0) {
+static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0, Cube::Side dir=0) {
   if (!view || visited[view->GetCubeID()]) { return false; }
   if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
   bool result = view->ShowLocation(loc, false, false);
+  if (result && view->IsShowingRoom()) {
+    view->GetRoomView()->StartSlide((dir+2)%4);
+  }
   visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view);
+    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view, i);
   }
   return result;
 }

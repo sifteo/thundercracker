@@ -31,12 +31,6 @@ include $(TC_DIR)/Makefile.platform
 
 LDFLAGS += $(LIB_STDCPP)
 
-# speex
-SPEEX_DIR := $(DEPS_DIR)/speex
-INCLUDES += -I$(SPEEX_DIR)/include
-LDFLAGS += -L$(SPEEX_DIR)/lib
-LDFLAGS += -lspeex
-
 ifeq ($(BUILD_PLATFORM), windows32)
 	OBJS += src/winres.o
 else

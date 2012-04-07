@@ -10,7 +10,9 @@ void Game::OnActiveTrigger() {
   } else if (pRoom->HasNPC()) {
     const NpcData* npc = pRoom->NPC();
     if (npc->optional) { OnNpcChatter(npc); }
-  }  
+  }  else if (pRoom->HasSwitch()) {
+    OnToggleSwitch(pRoom->Switch());
+  }
 }
 
 unsigned Game::OnPassiveTrigger() {
@@ -27,41 +29,25 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
-void Game::ScrollTo(unsigned roomId) {
-  // blank other cubes
-  ViewSlot *pView = mPlayer.CurrentView()->Parent();
-  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
-    if (p != pView) { p->HideLocation(false); }
-  }
-  // hide sprites and overlay
-  pView->HideSprites();
-  BG1Helper(*pView->GetCube()).Flush();
-  Paint(true);
-
-  const Int2 targetLoc = mMap.GetLocation(roomId);
-  const Int2 currentLoc = mPlayer.GetRoom()->Location();
-  const Int2 start = 128 * currentLoc;
-  const Int2 delta = 128 * (targetLoc - currentLoc);
-  const Int2 target = start + delta;
-  Int2 pos;
-  ViewMode mode = pView->Graphics();
-  SystemTime t=mSimTime; 
-  do {
-    float u = float(mSimTime-t) / 2.333f;
-    u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-    pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(&mode, mMap.Data(), pos);
+void Game::OnToggleSwitch(const SwitchData* pSwitch) {
+  RestorePearlIdle();
+  for(unsigned i=1; i<=7; ++i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
     Paint(true);
-  } while(mSimTime-t<2.333f && (pos-target).len2() > 4);
-  DrawRoom(&mode, mMap.Data(), roomId);
-  Paint(true);
+    Paint(true);
+  }
+  OnTriggerEvent(pSwitch->eventType, pSwitch->eventId);
+  for(int i=6; i>=0; --i) { // magic
+    mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+    Paint(true);
+    Paint(true);
+  }
 }
 
 void Game::OnTrapdoor(Room *pRoom) {
   //-------------------------------------------------------------------------
   // PLAYER TRIGGERED TRAPDOOR
   // animate the tiles opening
-  Int2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
   for(unsigned i=1; i<=7; ++i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
     Paint(true);
@@ -185,14 +171,23 @@ void Game::OnEnterGateway(const GatewayData* pGate) {
   //---------------------------------------------------------------------------
   // PLAYER TRIGGERED GATEWAY
   const MapData& targetMap = gMapData[pGate->targetMap];
-  const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
   mPlayer.SetEquipment(0);
-  TeleportTo(gMapData[pGate->targetMap], Vec2(
-    128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-    128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-  ));
+  if (pGate->targetType == TARGET_TYPE_GATEWAY) {
+    const GatewayData& pTargetGate = targetMap.gates[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+    ));
+  } else {
+    const RoomData& targetRoom = targetMap.rooms[pGate->targetId];
+    TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pGate->targetId % targetMap.width) + (targetRoom.centerX<<4),
+      128 * (pGate->targetId / targetMap.width) + (targetRoom.centerX<<4)
+    ));
+  }
+
   OnTriggerEvent(pGate->trigger);
   RestorePearlIdle();
 }
@@ -214,11 +209,49 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
 
 void Game::OnDropEquipment(Room *pRoom) {
   const ItemData *pItem = mPlayer.Equipment();
-  // TODO: Putting-Down Animation (pickup backwards?)
-  mPlayer.SetEquipment(0);
-  pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
-  mPlayer.CurrentView()->HideEquip();
-  mPlayer.CurrentView()->ShowItem();
+  if (pRoom->HasDepot()) {
+    if (pRoom->HasDepotContents()) {
+      // no!
+      mPlayer.CurrentView()->StartShake();
+    } else {
+      // place the item in the depot
+      for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
+        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+        Wait(0.075f, false);
+      }
+      mPlayer.SetEquipment(0);
+      pRoom->SetDepotContents(pItem);
+      mPlayer.CurrentView()->StartNod();
+      mPlayer.CurrentView()->HideEquip();
+      mPlayer.CurrentView()->RefreshDepot();
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
+      Wait(0.075f, false);
+      // check if event should fire
+      const MapData& map = *mMap.Data();
+      const DepotGroupData& group = map.depotGroups[pRoom->Depot()->group];
+      unsigned count = 0;
+      for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
+        count += (p->group == pRoom->Depot()->group && mMap.GetRoom(p->room)->HasDepotContents());
+      }
+      if (count == group.count) {
+        while(mPlayer.CurrentView()->IsWobbly()) { Paint(); }
+        Wait(0.5f, false);
+        OnTriggerEvent(group.eventType, group.eventId);
+      }
+    }
+  } else {
+    // show the dropped item as a normal trigger
+    for(int frame=PlayerPickup.frames-1; frame>0; --frame) {
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
+      Wait(0.075f, false);
+    }
+    mPlayer.SetEquipment(0);
+    pRoom->SetTrigger(TRIGGER_ITEM, &pItem->trigger);
+    mPlayer.CurrentView()->HideEquip();
+    mPlayer.CurrentView()->ShowItem(pItem);
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
+    Wait(0.075f, false);
+  }
 }
 
 void Game::OnUseEquipment() {
@@ -308,7 +341,6 @@ bool Game::TryEncounterBlock(Sokoblock* block) {
   // no moving blocks onto other blocks
   for (Sokoblock* p=mMap.BlockBegin(); p!=mMap.BlockEnd(); ++p) {
     if (p != block && pRoom->IsShowingBlock(p)) {
-      LOG(("BLOCK OVERLAP FAIL\n"));
       return false;
     }
   }

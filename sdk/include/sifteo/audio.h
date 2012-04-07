@@ -22,10 +22,6 @@ public:
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
-    void init() {
-        _SYS_audio_enableChannel(&buf);
-    }
-
     bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = _SYS_LOOP_ONCE) {
         return _SYS_audio_play(&mod.sys, &handle, loopMode);
     }
@@ -60,7 +56,6 @@ public:
 
 private:
     _SYSAudioHandle handle;
-    _SYSAudioBuffer buf;
 };
 
 

@@ -9,26 +9,18 @@
 #include <sifteo/abi.h>
 #include <stdint.h>
 #include "machine.h"
-#include "audiobuffer.h"
-#include "speexdecoder.h"
-#include "adpcmdecoder.h"
-#include "flashlayer.h"
-
+#include "audiosampledata.h"
 
 class AudioChannelSlot {
 public:
+    AudioChannelSlot() { init(); }
 
-    void init(_SYSAudioBuffer *b);
+    void init();
 
-    bool isEnabled() const {
-        return buf.isValid();
-    }
-
-    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode);
-    int mixAudio(int16_t *buffer, unsigned len);
+    void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
     _SYSAudioType channelType() const {
-        return (_SYSAudioType) type;
+        return (_SYSAudioType)mod.type;
     }
 
     void pause() {
@@ -52,26 +44,21 @@ public:
     }
 
 protected:
-    void fetchData();
-    friend class AudioMixer;    // mixer can tell us to fetchData()
+    uint32_t mixAudio(int16_t *buffer, uint32_t len);
+    friend class AudioMixer;    // mixer can tell us to mixAudio()
 
 private:
     static const int STATE_PAUSED   = (1 << 0);
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    void onPlaybackComplete();
-    static void fetchRaw(FlashStream &in, AudioBuffer &out);
-
     uint8_t state;
-    uint8_t type;
     int16_t volume;
     _SYSAudioHandle handle;
 
-    AudioBuffer buf;            // User-owned buffer for decompressed data
-    FlashStream flStream;       // Location of compressed source data
-    SpeexDecoder speexDec;      // Speex decoder state
-    AdPcmDecoder adpcmDec;      // ADPCM decoder state
+    struct _SYSAudioModule mod;
+    AudioSampleData samples;
+    uint32_t sampleNum;
 };
 
 #endif /* AUDIOCHANNEL_H_ */
