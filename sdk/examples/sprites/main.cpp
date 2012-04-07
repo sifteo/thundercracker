@@ -39,9 +39,9 @@ void main()
     sBullet.setImage(Bullet);
 
     // BG1 Overlay
-    _SYS_vbuf_fill(vid, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x070F, 7);
-    _SYSInt2 destXY = {0,0};
-    _SYS_image_BG1Draw(vid, Overlay, &destXY, 0);
+    const Int2 ovlPos = vid.bg1.tileSize() - Overlay.tileSize();
+    vid.bg1.setMask(BG1Mask::filled(ovlPos, Overlay.tileSize()));
+    vid.bg1.image(ovlPos, Overlay);
 
     SystemTime epoch = SystemTime::now();
     while (1) {
@@ -54,7 +54,7 @@ void main()
         }
 
         // Scroll BG1
-        //vid.BG1_setPanning(vec(-frame, 0u));
+        vid.bg1.setPanning(t * vec(-10.f, 0.f));
         
         // Flying bullet
         sBullet.move(vec(130.f, 190.f) + t * polar(0.5f, -50.f));

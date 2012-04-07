@@ -20,6 +20,117 @@ namespace Sifteo {
 
 
 /**
+ * A BG1 tile mask. In other words, this is a 16x16-bit two-dimensional
+ * vector.
+ *
+ * It is optimized for compile-time arithmetic, so that it's easy and
+ * efficient to build up static masks which correspond to a particular
+ * screen layout or asset layout. But these vectors can also be used to
+ * easily implement some fairly complex logic at runtime. They support
+ * boolean operations, which can be used for geometric union, intersection,
+ * and subtraction operations.
+ */
+
+struct BG1Mask {
+    // Matches the memory layout of BG1, but uses faster 32-bit arithmetic.
+    uint32_t row10;
+    uint32_t row32;
+    uint32_t row54;
+    uint32_t row76;
+    uint32_t row98;
+    uint32_t rowBA;
+    uint32_t rowDC;
+    uint32_t rowFE;
+
+    /**
+     * Create an empty mask. All bits are zero.
+     */
+    static BG1Mask empty() {
+        BG1Mask result = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        return result;
+    }
+
+    /**
+     * Create a mask with a filled rectangle allocated on it.
+     */
+    static BG1Mask filled(Int2 topLeft, Int2 size) {
+        BG1Mask result = {
+            (rectRow(topLeft, size, 1)  << 16) | rectRow(topLeft, size, 0),
+            (rectRow(topLeft, size, 3)  << 16) | rectRow(topLeft, size, 2),
+            (rectRow(topLeft, size, 5)  << 16) | rectRow(topLeft, size, 4),
+            (rectRow(topLeft, size, 7)  << 16) | rectRow(topLeft, size, 6),
+            (rectRow(topLeft, size, 9)  << 16) | rectRow(topLeft, size, 8),
+            (rectRow(topLeft, size, 11) << 16) | rectRow(topLeft, size, 10),
+            (rectRow(topLeft, size, 13) << 16) | rectRow(topLeft, size, 12),
+            (rectRow(topLeft, size, 15) << 16) | rectRow(topLeft, size, 14),
+        };
+        return result;
+    }
+
+    /**
+     * Erase a TileMask, setting all bits to zero.
+     */
+    void clear() {
+        _SYS_memset32(&row10, 0, 8);
+    }
+
+    /**
+     * Get a pointer to the rows in this mask, as 16-bit integers.
+     */
+    uint16_t *rows() {
+        return (uint16_t*) this;
+    }
+    const uint16_t *rows() const {
+        return (const uint16_t*) this;
+    }
+
+    /**
+     * Mark one tile in the bitmap, given as (x,y) coordinates.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void plot(unsigned x, unsigned y) {
+        ASSERT(x < 16 && y < 16);
+        rows()[y] |= 1 << x;
+    }
+
+    /**
+     * Mark one tile in the bitmap, given as a vector.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void plot(UInt2 pos) {
+        plot(pos.x, pos.y);
+    }
+
+    /**
+     * Mark a rectangular region of the bitmap.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void fill(UInt2 topLeft, UInt2 size) {
+        for (unsigned y = 0; y < size.y; y++)
+            for (unsigned x = 0; x < size.x; x++)
+                plot(topLeft.x + x, topLeft.y + y);
+    }
+
+private:
+    static uint32_t rectRow(Int2 topLeft, Int2 size, unsigned y) {
+        // A simple predicate to generate masks in a way the compiler
+        // can easily optimize when the arguments are constant.
+
+        uint32_t bits = (1 << size.x) - 1;
+        if (y < topLeft.y || y >= topLeft.y + size.y)
+            return 0;
+        if (topLeft.x <= -16)
+            return 0;
+        if (topLeft.x < 0)
+            return 0xFFFF & (bits >> -topLeft.x);
+        if (topLeft.x < 16)
+            return 0xFFFF & (bits << topLeft.x);
+        return 0;
+    }
+};
+
+
+/**
  * This is a VRAM accessor for drawing graphics in the BG1 mode.
  *
  * BG1 is an overlay layer, existing above BG0 and all Sprites.
@@ -121,15 +232,29 @@ struct BG1Drawable {
     }
 
     /**
+     * Change the tile allocation bitmap.
+     *
+     * Changes to the bitmap will affect the way the tile array is
+     * interpreted, causing already-drawn tiles to appear to shift.
+     * Normally you should only change the allocation map when the
+     * BG1 mode isn't currently active, or when you've ensured
+     * that the cube isn't currently rendering asynchronously.
+     */
+    void setMask(const BG1Mask &mask) {
+        _SYS_vbuf_write(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_bitmap)/2,
+            mask.rows(), 16);
+    }
+
+    /**
      * Change the hardware pixel-panning origin for this mode. The supplied
      * vector is interpreted as the location on the tile buffer, in pixels,
      * where the origin of the LCD will begin.
      *
      * BG1 is an 16x16 buffer that does not wrap. The panning value can
-     * be negative, but only panning of up to +/- 128 is supported.
+     * be negative, but only panning of up to +/- 128 is supported. Larger
+     * values will cause wraparound.
      */ 
     void setPanning(Int2 pixels) {
-        ASSERT(pixels.x < 128 && pixels.x > -128 && pixels.y < 128 && pixels.y > -128);
         _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_x) / 2,
             (int8_t)pixels.x | ((uint16_t)(int8_t)pixels.y << 8));
     }

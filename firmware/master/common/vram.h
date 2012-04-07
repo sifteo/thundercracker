@@ -155,6 +155,10 @@ public:
     }
 
     bool next() {
+        // Nowhere to go?
+        if (tileAddr == lastTileAddr)
+            return false;
+
         // Move forward by one bit
         if (bmpShift != 15) {
             if (hasTile())
@@ -191,9 +195,11 @@ public:
             reset();
 
         while (destBmpAddr != bmpAddr)
-            next();
+            if (!next())
+                return false;
         while (bmpShift != x)
-            next();
+            if (!next())
+                return false;
 
         return true;
     }
@@ -210,6 +216,7 @@ public:
 
 private:
     static const unsigned firstTileAddr = _SYS_VA_BG1_TILES / 2;
+    static const unsigned lastTileAddr = firstTileAddr + _SYS_VRAM_BG1_TILES - 1;
     static const unsigned firstBmpAddr = _SYS_VA_BG1_BITMAP / 2;
     static const unsigned lastBmpAddr = firstBmpAddr + 15;
     
