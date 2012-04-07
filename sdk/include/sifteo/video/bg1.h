@@ -356,8 +356,9 @@ struct BG1Drawable {
      * values will cause wraparound.
      */ 
     void setPanning(Int2 pixels) {
-        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_x) / 2,
-            (int8_t)pixels.x | ((uint16_t)(int8_t)pixels.y << 8));
+        unsigned x = pixels.x & 0xFF;
+        unsigned y = pixels.y & 0xFF;
+        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_x) / 2, x | (y << 8));
     }
 
     /**
