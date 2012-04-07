@@ -39,6 +39,7 @@ void WordGame::onEvent(unsigned eventID, const EventData& data)
 void WordGame::_onEvent(unsigned eventID, const EventData& data)
 {
     mGameStateMachine.onEvent(eventID, data);
+    mSavedData.OnEvent(eventID, data);
 }
 
 bool WordGame::playAudio(_SYSAudioModule &mod,

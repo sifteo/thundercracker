@@ -6,6 +6,7 @@
 #include "EventData.h"
 #include "WordGame.h"
 #include "DictionaryData.h"
+#include "SavedData.h"
 
 WordID Dictionary::sPossibleWordIDs[MAX_WORDS_PER_PUZZLE];
 bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
@@ -19,6 +20,7 @@ const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 Dictionary::Dictionary()
 {
+    STATIC_ASSERT(NUM_PUZZLE_BYTES * 8 >= NUM_PUZZLES);
 }
 
 bool Dictionary::getNextPuzzle(char* buffer,

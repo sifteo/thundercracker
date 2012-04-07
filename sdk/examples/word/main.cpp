@@ -14,7 +14,15 @@ static const char* sideNames[] =
 };
 
 static struct MenuItem gItems[] =
-{ {&IconContinue, &LabelContinue}, {&IconCity0, &LabelCity0}, {&IconContinue, NULL}, {NULL, NULL} };
+{ {&IconContinue, &LabelContinue},
+  {&IconLocked1, &LabelLocked},
+  {&IconLocked2, &LabelLocked},
+  {&IconLocked3, &LabelLocked},
+  {&IconLocked0, &LabelLocked},
+  {&IconLocked1, &LabelLocked},
+  {&IconLocked2, &LabelLocked},
+  {&IconLocked3, &LabelLocked},
+  {NULL, NULL} };
 
 static struct MenuAssets gAssets =
 {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
@@ -90,7 +98,7 @@ void siftmain()
     }
 
 #ifndef DEBUGz
-    if (1 && LOAD_ASSETS)
+    if (0 && LOAD_ASSETS)
     {
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)

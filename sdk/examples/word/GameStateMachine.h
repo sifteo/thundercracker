@@ -85,7 +85,6 @@ private:
     Cube::ID mHintCubeIDOnUpdate;
     bool mNeedsNewAnagram;
 
-
     static GameStateMachine* sInstance;
 };
 

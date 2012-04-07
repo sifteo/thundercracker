@@ -470,11 +470,17 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_GameStateChanged:
             switch (data.mGameStateChanged.mNewStateIndex)
             {
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
             case GameStateIndex_StartOfRoundScored:
                 newStateIndex = CubeStateIndex_StartOfRoundScored;
+                break;
 
             case GameStateIndex_PlayScored:
                 newStateIndex = CubeStateIndex_NotWordScored;
+                break;
             }
             break;
 

@@ -7,12 +7,15 @@ BgTile = image{ "bg.png" }
 Tip0 = image{ "Tip0.png" }
 Tip1 = image{ "Tip1.png" }
 Tip2 = image{ "Tip2.png" }
-Footer = image{ "Footer.png" }
-LabelEmpty = image{ "LabelEmpty.png" }
+Footer = image{"Footer.png", quality=10}
+LabelEmpty = image{"LabelEmpty.png", quality=10}
 LabelContinue = image{ "LabelContinue.png" }
-LabelCity0 = image{ "LabelCity0.png" }
+LabelLocked = image{ "LabelLocked.png" }
 IconContinue = image{ "IconContinue.png" }
-IconCity0 = image{ "IconCity0.png" }
+IconLocked0 = image{ "IconLocked0.png" }
+IconLocked1 = image{ "IconLocked1.png" }
+IconLocked2 = image{ "IconLocked2.png" }
+IconLocked3 = image{ "IconLocked3.png" }
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}

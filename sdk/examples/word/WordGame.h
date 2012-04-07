@@ -4,6 +4,7 @@
 #include <sifteo.h>
 #include "GameStateMachine.h"
 #include "menu.h"
+#include "SavedData.h"
 
 using namespace Sifteo;
 
@@ -47,6 +48,7 @@ public:
     static WordGame* instance() { ASSERT(sInstance); return sInstance; }
     Menu* getMenu() { return mMenu; }
     const Cube* getMenuCube() { return mMenuCube; }
+    const SavedData& getSavedData() const { return mSavedData; }
     static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(_SYSAudioModule &mod,
@@ -70,6 +72,8 @@ private:
     AudioPriority mLastAudioPriority[NumAudioChannelIndexes];
     Menu* mMenu;
     Cube* mMenuCube;
+    SavedData mSavedData;
+
     static WordGame* sInstance;
 };
 

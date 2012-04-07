@@ -153,7 +153,6 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
     }
     Dictionary::sOnEvent(eventID, data);
-    SavedData::sOnEvent(eventID, data);
 
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
@@ -437,9 +436,14 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (eventID)
         {
         case EventID_Update:
-            // TODO check first run
-            newStateIndex = GameStateIndex_MainMenu;
-            //newStateIndex = GameStateIndex_Title;
+            if (WordGame::instance()->getSavedData().isFirstRun())
+            {
+                newStateIndex = GameStateIndex_Title;
+            }
+            else
+            {
+                newStateIndex = GameStateIndex_MainMenu;
+            }
             break;
 
         default:
@@ -467,15 +471,22 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                     {
                     case MENU_ITEM_PRESS:
                         // TODO update game state before continuing, depending on selection
-                        newStateIndex =
-                                (getCurrentStateIndex() == GameStateIndex_MainMenu) ?
-                                    GameStateIndex_StoryStartOfRound :
-                                    GameStateIndex_PlayScored;
-                        exitMenu = true;
+                        if (e.item == 0)
                         {
-                            EventData data;
-                            data.mTouchAndHoldWaitForUntouch.mCubeID = WordGame::instance()->getMenuCube()->id();
-                            WordGame::onEvent(EventID_TouchAndHoldWaitForUntouch, data);
+                            newStateIndex =
+                                    (getCurrentStateIndex() == GameStateIndex_MainMenu) ?
+                                        GameStateIndex_StoryStartOfRound :
+                                        GameStateIndex_PlayScored;
+                            exitMenu = true;
+                            {
+                                EventData data;
+                                data.mTouchAndHoldWaitForUntouch.mCubeID = WordGame::instance()->getMenuCube()->id();
+                                WordGame::onEvent(EventID_TouchAndHoldWaitForUntouch, data);
+                            }
+                        }
+                        else
+                        {
+                            m.preventDefault();
                         }
                         break;
 

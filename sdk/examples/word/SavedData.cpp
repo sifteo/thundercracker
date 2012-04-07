@@ -14,13 +14,14 @@
  */
 #include <stdlib.h>
 
-unsigned SavedData::sHighScores[3];
-
 SavedData::SavedData()
 {
-    for (unsigned i = 0; i < arraysize(sHighScores); ++i)
+    for (unsigned i = 0; i < arraysize(mHighScores); ++i)
     {
-        sHighScores[i] = 0;
+        for (unsigned j = 0; j < arraysize(mHighScores[0]); ++j)
+        {
+            mHighScores[i][j] = 0;
+        }
     }
 }
 
@@ -33,7 +34,7 @@ static int compare_ints(const void* a, const void* b)   // comparison function
     else return 1;
 }
 
-void SavedData::sOnEvent(unsigned eventID, const EventData& data)
+void SavedData::OnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -41,14 +42,14 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
         if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_EndOfRoundScored)
         {
             unsigned score = GameStateMachine::getScore();
-            for (unsigned i = 0; i < arraysize(sHighScores); ++i)
+            for (unsigned i = 0; i < arraysize(mHighScores[0]); ++i)
             {
-                if (score > sHighScores[i])
+                if (score > mHighScores[NUM_CUBES][i])
                 {
-                    sHighScores[i] = score;
-                    qsort(sHighScores,
-                          arraysize(sHighScores),
-                          sizeof(sHighScores[0]),
+                    mHighScores[NUM_CUBES][i] = score;
+                    qsort(mHighScores[NUM_CUBES],
+                          arraysize(mHighScores[0]),
+                          sizeof(mHighScores[0][0]),
                           compare_ints);
                     break;
 
@@ -70,11 +71,11 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
             };
 
             EndingType endType = EndingType_NoHighScore;
-            if (score == sHighScores[arraysize(sHighScores) - 1])
+            if (score == mHighScores[NUM_CUBES][arraysize(mHighScores[0]) - 1])
             {
                 endType = EndingType_TopHighScore;
             }
-            else if (score > 0 && score >= sHighScores[0])
+            else if (score > 0 && score >= mHighScores[0][0])
             {
                 endType = EndingType_HighScore;
             }
