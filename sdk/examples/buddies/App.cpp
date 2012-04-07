@@ -1525,14 +1525,29 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_START:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            unsigned int buddyIds[NUM_BUDDIES - 1];  // Don't allow invisible buddy!
+            for (unsigned int i = 0; i < arraysize(buddyIds); ++i)
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].SetBuddyId(BuddyId(i % NUM_BUDDIES));
-                }
+                buddyIds[i] = i;
             }
-            ResetCubesToPuzzle(GetPuzzleDefault(), true);
+            
+            // Fisher-Yates Shuffle
+            Random random;
+            for (unsigned int i = arraysize(buddyIds) - 1; i > 0; --i)
+            {
+                int j = random.randrange(i + 1);
+                int temp = buddyIds[j];
+                buddyIds[j] = buddyIds[i];
+                buddyIds[i] = temp;
+            }
+            
+            // Assign IDs to the buddies
+            for (unsigned int i = 0; i < kNumCubes; ++i)
+            {
+                mCubeWrappers[i].SetBuddyId(BuddyId(buddyIds[i]));
+            }
+            
+            ResetCubesToPuzzle(GetPuzzleDefault(), false);
             StartGameState(GAME_STATE_SHUFFLE_TITLE);
             break;
         }
