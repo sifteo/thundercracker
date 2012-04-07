@@ -51,18 +51,44 @@ struct BG1Mask {
     }
 
     /**
-     * Create a mask with a filled rectangle allocated on it.
+     * Create a mask with a filled rectangle it.
+     *
+     * This should be used only with values that are constant
+     * at compile-time. For dynamic masks, it is significantly
+     * better to plot the rectangle dynamically using fill().
+     * 
+     * All coordinates must be in range. This function performs no clipping.
      */
-    static BG1Mask filled(Int2 topLeft, Int2 size) {
+    static BG1Mask filled(UInt2 topLeft, UInt2 size) {
+        unsigned xBits = ((1 << size.x) - 1) << topLeft.x;
+        unsigned yBits = ((1 << size.y) - 1) << topLeft.y;
+
+        unsigned row0 = yBits & 0x0001 ? xBits : 0;
+        unsigned row1 = yBits & 0x0002 ? xBits : 0;
+        unsigned row2 = yBits & 0x0004 ? xBits : 0;
+        unsigned row3 = yBits & 0x0008 ? xBits : 0;
+        unsigned row4 = yBits & 0x0010 ? xBits : 0;
+        unsigned row5 = yBits & 0x0020 ? xBits : 0;
+        unsigned row6 = yBits & 0x0040 ? xBits : 0;
+        unsigned row7 = yBits & 0x0080 ? xBits : 0;
+        unsigned row8 = yBits & 0x0100 ? xBits : 0;
+        unsigned row9 = yBits & 0x0200 ? xBits : 0;
+        unsigned rowA = yBits & 0x0400 ? xBits : 0;
+        unsigned rowB = yBits & 0x0800 ? xBits : 0;
+        unsigned rowC = yBits & 0x1000 ? xBits : 0;
+        unsigned rowD = yBits & 0x2000 ? xBits : 0;
+        unsigned rowE = yBits & 0x4000 ? xBits : 0;
+        unsigned rowF = yBits & 0x8000 ? xBits : 0;
+
         BG1Mask result = {
-            (rectRow(topLeft, size, 1)  << 16) | rectRow(topLeft, size, 0),
-            (rectRow(topLeft, size, 3)  << 16) | rectRow(topLeft, size, 2),
-            (rectRow(topLeft, size, 5)  << 16) | rectRow(topLeft, size, 4),
-            (rectRow(topLeft, size, 7)  << 16) | rectRow(topLeft, size, 6),
-            (rectRow(topLeft, size, 9)  << 16) | rectRow(topLeft, size, 8),
-            (rectRow(topLeft, size, 11) << 16) | rectRow(topLeft, size, 10),
-            (rectRow(topLeft, size, 13) << 16) | rectRow(topLeft, size, 12),
-            (rectRow(topLeft, size, 15) << 16) | rectRow(topLeft, size, 14),
+            (row1 << 16) | row0,
+            (row3 << 16) | row2,
+            (row5 << 16) | row4,
+            (row7 << 16) | row6,
+            (row9 << 16) | row8,
+            (rowB << 16) | rowA,
+            (rowD << 16) | rowC,
+            (rowF << 16) | rowE,
         };
         return result;
     }
@@ -111,21 +137,96 @@ struct BG1Mask {
                 plot(topLeft.x + x, topLeft.y + y);
     }
 
-private:
-    static uint32_t rectRow(Int2 topLeft, Int2 size, unsigned y) {
-        // A simple predicate to generate masks in a way the compiler
-        // can easily optimize when the arguments are constant.
+    BG1Mask & operator|= (BG1Mask other) {
+        row10 |= other.row10;
+        row32 |= other.row32;
+        row54 |= other.row54;
+        row76 |= other.row76;
+        row98 |= other.row98;
+        rowBA |= other.rowBA;
+        rowDC |= other.rowDC;
+        rowFE |= other.rowFE;
+        return *this;
+    }
 
-        uint32_t bits = (1 << size.x) - 1;
-        if (y < topLeft.y || y >= topLeft.y + size.y)
-            return 0;
-        if (topLeft.x <= -16)
-            return 0;
-        if (topLeft.x < 0)
-            return 0xFFFF & (bits >> -topLeft.x);
-        if (topLeft.x < 16)
-            return 0xFFFF & (bits << topLeft.x);
-        return 0;
+    BG1Mask & operator&= (BG1Mask other) {
+        row10 &= other.row10;
+        row32 &= other.row32;
+        row54 &= other.row54;
+        row76 &= other.row76;
+        row98 &= other.row98;
+        rowBA &= other.rowBA;
+        rowDC &= other.rowDC;
+        rowFE &= other.rowFE;
+        return *this;
+    }
+
+    BG1Mask & operator^= (BG1Mask other) {
+        row10 ^= other.row10;
+        row32 ^= other.row32;
+        row54 ^= other.row54;
+        row76 ^= other.row76;
+        row98 ^= other.row98;
+        rowBA ^= other.rowBA;
+        rowDC ^= other.rowDC;
+        rowFE ^= other.rowFE;
+        return *this;
+    }
+
+    BG1Mask operator| (BG1Mask other) const {
+         BG1Mask result = {
+             row10 | other.row10,
+             row32 | other.row32,
+             row54 | other.row54,
+             row76 | other.row76,
+             row98 | other.row98,
+             rowBA | other.rowBA,
+             rowDC | other.rowDC,
+             rowFE | other.rowFE,
+        };
+        return result;
+    }
+
+    BG1Mask operator& (BG1Mask other) const {
+         BG1Mask result = {
+             row10 & other.row10,
+             row32 & other.row32,
+             row54 & other.row54,
+             row76 & other.row76,
+             row98 & other.row98,
+             rowBA & other.rowBA,
+             rowDC & other.rowDC,
+             rowFE & other.rowFE,
+        };
+        return result;
+    }
+
+    BG1Mask operator^ (BG1Mask other) const {
+         BG1Mask result = {
+             row10 ^ other.row10,
+             row32 ^ other.row32,
+             row54 ^ other.row54,
+             row76 ^ other.row76,
+             row98 ^ other.row98,
+             rowBA ^ other.rowBA,
+             rowDC ^ other.rowDC,
+             rowFE ^ other.rowFE,
+        };
+        return result;
+    }
+
+    BG1Mask operator~ () const {
+         BG1Mask result = {
+             ~row10,
+             ~row32,
+             ~row54,
+             ~row76,
+             ~row98,
+             ~rowBA,
+             ~rowDC,
+             ~rowFE,
+        };
+        return result;       
     }
 };
 
