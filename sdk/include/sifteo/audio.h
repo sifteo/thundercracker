@@ -18,12 +18,16 @@ namespace Sifteo {
 
 class AudioChannel {
 public:
+    enum LoopMode {
+        ONCE = _SYS_LOOP_ONCE,
+        REPEAT = _SYS_LOOP_REPEAT,
+    };
 
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
-    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = _SYS_LOOP_ONCE) {
-        return _SYS_audio_play(&mod.sys, &handle, loopMode);
+    bool play(const AssetAudio &mod, LoopMode loopMode = ONCE) {
+        return _SYS_audio_play(&mod.sys, &handle, (_SYSAudioLoopType) loopMode);
     }
 
     bool isPlaying() const {

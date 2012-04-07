@@ -1,6 +1,7 @@
 SUBDIRS = \
 	hello \
 	monster \
+	nyan \
 	sensors \
 	sprites \
 	stars \
