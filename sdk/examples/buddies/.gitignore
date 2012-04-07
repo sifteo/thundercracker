@@ -4,6 +4,7 @@
 *.gen.cpp
 *.pyc
 assets.html
+parts_source/output/
 
 # Qt Creator
 *.config
