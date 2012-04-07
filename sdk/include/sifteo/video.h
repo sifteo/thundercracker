@@ -407,6 +407,44 @@ struct VideoBuffer {
     }
 
     /**
+     * Return the physical accelerometer reading for this cube.
+     * The resulting vector is oriented with respect to the cube hardware.
+     *
+     * This is equivalent to calling accel() on the cube() object.
+     */
+    Byte3 physicalAccel() const {
+        return cube().accel();
+    }
+
+    /**
+     * Return the virtual accelerometer reading for this cube.
+     * The resulting vector is oriented with respect to the current
+     * LCD rotation.
+     */
+    Byte3 virtualAccel() const {
+        return cube().accel().zRotateI(orientation());
+    }
+
+    /**
+     * Return the physical tilt reading for this cube.
+     * The resulting vector is oriented with respect to the cube hardware.
+     *
+     * This is equivalent to calling tilt() on the cube() object.
+     */
+    Byte2 physicalTilt() const {
+        return cube().tilt();
+    }
+
+    /**
+     * Return the virtual tilt reading for this cube.
+     * The resulting vector is oriented with respect to the current
+     * LCD rotation.
+     */
+    Byte2 virtualTilt() const {
+        return cube().tilt().rotateI(orientation());
+    }
+
+    /**
      * Change the video mode. This affects subsequent rendering only.
      * Note that this may change the way hardware interprets the contents
      * of video memory, so it's important to synchronize any mode changes
