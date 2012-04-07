@@ -54,7 +54,7 @@ struct SpriteRef {
      * PinnedAssetImage and optionally a frame number.
      */
     void setImage(const PinnedAssetImage &asset, int frame = 0) const {
-        setImage(asset.tile(vec(0,0), frame));
+        setImage(asset.tile(sys->cube, vec(0,0), frame));
         resize(asset.pixelSize());
     }
 
