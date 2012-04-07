@@ -495,6 +495,10 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
      * Stream flash data, as it becomes available from the FIFO
      */
 
+    // May have reached this point after sending an addr, but without any FIFO data
+    if (!fifoCount)
+        return true;
+
     count = MIN(count, fifoCount);
     ASSERT(count > 0);
     ASSERT(loadBufferAvail >= count);
