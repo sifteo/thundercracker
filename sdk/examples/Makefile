@@ -3,6 +3,7 @@ SUBDIRS = \
 	membrane \
 	monster \
 	nyan \
+	pantera \
 	sensors \
 	sprites \
 	stars \

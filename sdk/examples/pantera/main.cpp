@@ -1,58 +1,43 @@
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Sifteo SDK Example.
+ * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ */
+
 #include <sifteo.h>
 #include "assets.gen.h"
-
 using namespace Sifteo;
 
-#define NUM_CUBES 4
+static const unsigned gNumCubes = 4;
+static VideoBuffer vid[CUBE_ALLOCATION];
 
-static Cube cubes[NUM_CUBES];
-Cube& ctilt = cubes[0];
-Cube& cshake = cubes[1];
-Cube& cpress = cubes[2];
-Cube& cno = cubes[3];
-VidMode_BG0 gtilt = VidMode_BG0(cubes[0].vbuf);
-VidMode_BG0 gshake = VidMode_BG0(cubes[1].vbuf);
-VidMode_BG0 gpress = VidMode_BG0(cubes[2].vbuf);
-VidMode_BG0 gno = VidMode_BG0(cubes[3].vbuf);
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
+
+static Metadata M = Metadata()
+    .title("Pantera")
+    .cubeRange(gNumCubes);
+
+CubeID ctilt = 0;
+CubeID cshake = 1;
+CubeID cpress = 2;
+CubeID cno = 3;
+
 const AssetImage* icons[] = { &IconTilt, &IconShake, &IconPress, &IconNo };
 
-void main() {
-    for (unsigned i=0; i<NUM_CUBES; i++) {
-        LOG(("ENABLE %d\n", i));
-        cubes[i].enable(i);
-        cubes[i].loadAssets(GameAssets);
-        VidMode_BG0_ROM rom(cubes[i].vbuf);
-        rom.init();
-        rom.BG0_text(vec(1,1), "Loading...");
-    }
-    bool done = false;
-    while (!done) {
-        done = true;
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(vec(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-            if (!cubes[i].assetDone(GameAssets)) {
-                done = false;
-            }
-        }
-        System::paint();
+void main()
+{
+    for (CubeID cube=0; cube < gNumCubes; ++cube) {
+        const int mid = 48/8;
+        vid[cube].initMode(BG0);
+        vid[cube].bg0.image(vec(0,0), Background);
+        vid[cube].bg0.image(vec(mid,mid), *icons[cube]);
+        vid[cube].bg0.setPanning(vec(8,8));
+
+        cube.enable();
+        vid[cube].attach(cube);
     }
 
-    System::paintSync();
-    int mid = 48/8;
-    for (unsigned i=0; i<NUM_CUBES; i++) {
-        VidMode_BG0 g(cubes[i].vbuf);
-        g.init();
-        g.BG0_drawAsset(vec(0,0), Background);
-        g.BG0_drawAsset(vec(mid,mid), *icons[i]);
-        g.BG0_setPanning(vec(8,8));
-    }
-    System::paintSync();
-    for (unsigned i=0; i<NUM_CUBES; ++i) { cubes[i].vbuf.touch(); }
-    System::paintSync();
-    for (unsigned i=0; i<NUM_CUBES; ++i) { cubes[i].vbuf.touch(); }
-    System::paintSync();
-    
     const Float2 rest = vec(8.f, 8.f);
 
     // shake params
@@ -82,19 +67,19 @@ void main() {
     while (1) {
 
         // update tilt
-        gtilt.BG0_setPanning(rest - ctilt.physicalAccel()/2.f);
+        vid[ctilt].bg0.setPanning(rest - ctilt.accel().xy()/2.f);
 
         // update shake
         for(int i=0; i<iters; ++i) {
-            shakeVelocity += dt * bias * cshake.physicalAccel();
+            shakeVelocity += dt * bias * cshake.accel().xy();
             shakeVelocity += dt * k * (rest - shakePosition);
             shakePosition += dt * shakeVelocity;
             shakeVelocity *= damp;
         }
-        gshake.BG0_setPanning(shakePosition);
+        vid[cshake].bg0.setPanning(shakePosition);
         
         // update press
-        if (cpress.touching()) {
+        if (cpress.isTouching()) {
             pressPosition.x = (1-downRate) * pressPosition.x  + downRate * rest.x;
             pressPosition.y = (1-downRate) * pressPosition.y + downRate * downTarget;
             //pressu = (pressPosition.y - rest.y) / (downTarget - rest.y);
@@ -104,11 +89,10 @@ void main() {
             if (pressu < 0) { pressu = 0; }
             pressPosition.y = 8.f + 16.f * pressu * sin(1.5f * 3.14159f * pressu);
         }
-        gpress.BG0_setPanning(pressPosition);
-
+        vid[cpress].bg0.setPanning(pressPosition);
 
         // update no
-        if (cno.touching()) {
+        if (cno.isTouching()) {
             u = 1.f;
             noPosition.x = (1-downRate) * noPosition.x  + downRate * rest.x;
             noPosition.y  = (1-downRate) * noPosition.y  + downRate * downTarget;
@@ -119,8 +103,8 @@ void main() {
             noPosition.y = (1-upRate) * noPosition.y + upRate * rest.y;
 
         }
-        gno.BG0_setPanning(noPosition);
-    
+        vid[cno].bg0.setPanning(noPosition);
+
    	    System::paint();
     }
 }
