@@ -22,10 +22,6 @@ public:
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
-    void init() {
-        _SYS_audio_enableChannel(&buf);
-    }
-
     bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopOnce) {
         return _SYS_audio_play(&mod.sys, &handle, loopMode);
     }
@@ -64,7 +60,6 @@ private:
     // Then, we wouldn't have to search for a channel. given a handle - we could
     // just calculate its offset within its array to look it up
     _SYSAudioHandle handle;
-    _SYSAudioBuffer buf;
 };
 
 } // namespace Sifteo

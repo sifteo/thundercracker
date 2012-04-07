@@ -310,7 +310,6 @@ typedef uint32_t _SYSAudioHandle;
  * Types of audio supported by the system
  */
 enum _SYSAudioType {
-    _SYS_Speex = 0,
     _SYS_PCM = 1,
     _SYS_ADPCM = 2
 };
@@ -722,7 +721,6 @@ void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(19);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(35);
 
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(126);
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(50);
 uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(127);
 void _SYS_audio_stop(_SYSAudioHandle h) _SC(52);
