@@ -325,6 +325,23 @@ bool ImageIter::nextWork()
     return false;                                       // Out of things to iterate!
 }
 
+uint32_t ImageIter::getDestBytes(uint32_t stride) const
+{
+    /*
+     * Return the destination rectangle size, in bytes, using the
+     * specified stride, specified in 16-bit words. Stride must be
+     * greater than or equal to width.
+     *
+     * All arithmetic is overflow-safe. On error, we return 0xFFFFFFFF.
+     */
+    
+    uint32_t w = getWidth();
+    uint32_t h = getHeight();
+    if (stride < w) return 0xFFFFFFFF;
+    uint32_t words = mulsat16x16(stride, h);
+    return mulsat16x16(words, 2);
+}
+
 void ImageIter::copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr,
     unsigned stride)
 {
