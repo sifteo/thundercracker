@@ -13,6 +13,7 @@
 
 #include <sifteo/abi.h>
 #include <sifteo/cube.h>
+#include <sifteo/math.h>
 #include <sifteo/video/color.h>
 #include <sifteo/video/sprite.h>
 #include <sifteo/video/framebuffer.h>
@@ -25,6 +26,9 @@ namespace Sifteo {
 static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
 static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
 static const unsigned TILE = 8;          /// Size of one tile, in pixels
+
+static const Int2 LCD_size = { LCD_width, LCD_height };
+static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
 
 
 /**

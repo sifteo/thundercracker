@@ -378,6 +378,16 @@ template <typename T> inline Double2 operator/(Vector2<T> v, double k) { return 
 template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { return vec<double>(u.x+=k, u.y+=k); }
 template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return vec<double>(u.x*=k, u.y*=k); }
 
+// Vector int -> float promotion
+inline Float2 operator+=(Float2 &u, Int2 v) { return vec(u.x+=v.x, u.y+=v.y); }
+inline Float2 operator-=(Float2 &u, Int2 v) { return vec(u.x-=v.x, u.y-=v.y); }
+inline Float2 operator+(Float2 u, Int2 v) { return vec(u.x+v.x, u.y+v.y); }
+inline Float2 operator-(Float2 u, Int2 v) { return vec(u.x-v.x, u.y-v.y); }
+inline Float2 operator*(Float2 u, Int2 v) { return vec(u.x*v.x, u.y*v.y); }
+inline Float2 operator+(Int2 u, Float2 v) { return vec(u.x+v.x, u.y+v.y); }
+inline Float2 operator-(Int2 u, Float2 v) { return vec(u.x-v.x, u.y-v.y); }
+inline Float2 operator*(Int2 u, Float2 v) { return vec(u.x*v.x, u.y*v.y); }
+
 
 /**
  * Generalized three-element cartesian coordinate vector.
@@ -544,6 +554,16 @@ template <typename T> inline Double3 operator*(Vector3<T> v, double k) { return 
 template <typename T> inline Double3 operator/(Vector3<T> v, double k) { return vec<double>(v.x/k, v.y/k, v.z/k); }
 template <typename T> inline Double3 operator+=(Vector3<T> &u, double k) { return vec<double>(u.x+=k, u.y+=k, u.z+=k); }
 template <typename T> inline Double3 operator*=(Vector3<T> &u, double k) { return vec<double>(u.x*=k, u.y*=k, u.z*=k); }
+
+// Vector int -> float promotion
+inline Float3 operator+=(Float3 &u, Int3 v) { return vec(u.x+=v.x, u.y+=v.y, u.z+=v.z); }
+inline Float3 operator-=(Float3 &u, Int3 v) { return vec(u.x-=v.x, u.y-=v.y, u.z-=v.z); }
+inline Float3 operator+(Float3 u, Int3 v) { return vec(u.x+v.x, u.y+v.y, u.z+v.z); }
+inline Float3 operator-(Float3 u, Int3 v) { return vec(u.x-v.x, u.y-v.y, u.z-v.z); }
+inline Float3 operator*(Float3 u, Int3 v) { return vec(u.x*v.x, u.y*v.y, u.z*v.z); }
+inline Float3 operator+(Int3 u, Float3 v) { return vec(u.x+v.x, u.y+v.y, u.z+v.z); }
+inline Float3 operator-(Int3 u, Float3 v) { return vec(u.x-v.x, u.y-v.y, u.z-v.z); }
+inline Float3 operator*(Int3 u, Float3 v) { return vec(u.x*v.x, u.y*v.y, u.z*v.z); }
 
 
 /**

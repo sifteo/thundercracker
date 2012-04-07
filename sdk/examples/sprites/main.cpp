@@ -38,37 +38,30 @@ void main()
     // Bullet
     sBullet.setImage(Bullet);
 
-#if 0
     // BG1 Overlay
-    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
+#if 0
+    _SYS_vbuf_fill(vid, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
                    + 16 - Overlay.height,
                    ((1 << Overlay.width) - 1), Overlay.height);
-    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
+    _SYS_vbuf_writei(vid, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
                      Overlay.tiles, 0, Overlay.width * Overlay.height);
 #endif
 
-    int frame = 0;
+    SystemTime epoch = SystemTime::now();
     while (1) {
-        frame++;
+        float t = SystemTime::now() - epoch;
 
         // Circle of 1UPs
         for (unsigned i = 0; i < num1UPs; i++) {
-
-            float angle = frame * 0.075f + i * (M_PI*2 / num1UPs);
-            const float r = 32;
-            const Float2 center = { (LCD_width - Sprite.pixelWidth()) / 2,
-                                    (LCD_height - Sprite.pixelHeight()) / 2 };
-
-            s1UP[i].move(center + polar(angle, r));
+            float angle = t * 2.f + i * (M_PI*2 / num1UPs);
+            s1UP[i].move(LCD_center - Sprite.pixelExtent() + polar(angle, 32.f));
         }
 
         // Scroll BG1
         //vid.BG1_setPanning(vec(-frame, 0u));
         
         // Flying bullet
-        const Int2 bulletOrigin = { 130, 190 };
-        const Int2 bulletDelta = { -3, -1 };
-        sBullet.move(bulletOrigin + frame * bulletDelta);
+        sBullet.move(vec(130.f, 190.f) + t * polar(0.5f, -50.f));
 
         System::paint();
     }

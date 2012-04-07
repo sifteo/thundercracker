@@ -417,9 +417,11 @@ struct AssetImage {
     int tileWidth() const { return sys.width; }
     int tileHeight() const { return sys.height; }
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+    Int2 tileExtent() const { return tileSize() / 2; }
     int pixelWidth() const { return sys.width << 3; }
     int pixelHeight() const { return sys.height << 3; }
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+    Int2 pixelExtent() const { return pixelSize() / 2; }
     int numFrames() const { return sys.frames; }
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
@@ -455,9 +457,11 @@ struct PinnedAssetImage {
     int tileWidth() const { return sys.width; }
     int tileHeight() const { return sys.height; }
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+    Int2 tileExtent() const { return tileSize() / 2; }
     int pixelWidth() const { return sys.width << 3; }
     int pixelHeight() const { return sys.height << 3; }
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+    Int2 pixelExtent() const { return pixelSize() / 2; }
     int numFrames() const { return sys.frames; }
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
@@ -539,9 +543,11 @@ struct FlatAssetImage {
     int tileWidth() const { return sys.width; }
     int tileHeight() const { return sys.height; }
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+    Int2 tileExtent() const { return tileSize() / 2; }
     int pixelWidth() const { return sys.width << 3; }
     int pixelHeight() const { return sys.height << 3; }
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+    Int2 pixelExtent() const { return pixelSize() / 2; }
     int numFrames() const { return sys.frames; }
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
