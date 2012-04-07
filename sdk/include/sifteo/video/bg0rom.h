@@ -72,14 +72,14 @@ struct BG0ROMDrawable {
      * Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
-        return 18;
+        return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**
      * Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
-        return 18;
+        return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**

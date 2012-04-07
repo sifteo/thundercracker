@@ -19,6 +19,8 @@
 #include <sifteo/video/framebuffer.h>
 #include <sifteo/video/bg0rom.h>
 #include <sifteo/video/bg0.h>
+#include <sifteo/video/bg1.h>
+#include <sifteo/video/bg2.h>
 
 namespace Sifteo {
 
@@ -119,8 +121,8 @@ struct VideoBuffer {
         FB128Drawable           fb128;
         BG0ROMDrawable          bg0rom;
         BG0Drawable             bg0;
-        //BG1Drawable             bg1;
-        //BG2Drawable             bg2;
+        BG1Drawable             bg1;
+        BG2Drawable             bg2;
     };
 
     // Implicit conversions

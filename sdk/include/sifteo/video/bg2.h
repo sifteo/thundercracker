@@ -4,8 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG0_H
-#define _SIFTEO_VIDEO_BG0_H
+#ifndef _SIFTEO_VIDEO_BG2_H
+#define _SIFTEO_VIDEO_BG2_H
 
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
@@ -15,29 +15,43 @@
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
 #include <sifteo/asset.h>
+#include <sifteo/video/color.h>
 
 namespace Sifteo {
 
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG0 mode.
- * We have an 18x18 tile grid, which wraps around in both axes.
+ * This is a VRAM accessor for drawing graphics in the BG2 mode.
+ *
+ * This is a special-purpose mode for doing scaling, rotation, and
+ * other effects using an affine transform matrix.
+ *
+ * Conceptually, this mode is a 256x256-pixel canvas, repeating forever
+ * in both axes, in which the top-left quadrant is a 16x16-tile drawable,
+ * and the other three quadrants are painted with a solid "border" color.
+ *
+ * This arrangement allows you to treat the 16x16 area as "centered" on the
+ * screen, with the border color poking through when that image is scaled
+ * down or rotated.
+ *
+ * Note that the border color is not part of the Colormap, it is a separate
+ * piece of state that can be set through the BG2Drawable.
  */
-struct BG0Drawable {
+struct BG2Drawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
      * Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
-        return _SYS_VRAM_BG0_WIDTH;
+        return _SYS_VRAM_BG2_WIDTH;
     }
 
     /**
      * Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
-        return _SYS_VRAM_BG0_WIDTH;
+        return _SYS_VRAM_BG2_WIDTH;
     }
 
     /**
@@ -83,33 +97,39 @@ struct BG0Drawable {
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG0 buffer with the specified
-     * absolute tile index value and resetting the panning registers.
+     * Erase mode-specific VRAM, filling the BG2 buffer with the specified
+     * absolute tile index value. Does not modify the affine transform
+     * or the border color.
      */
     void erase(uint16_t index = 0) {
         _SYS_vbuf_fill(&sys.vbuf, 0, _SYS_TILE77(index), sizeInWords());
-        setPanning(vec(0,0));
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG0 buffer with the first tile
-     * from the specified PinnedAssetImage and resetting the panning registers.
+     * Erase mode-specific VRAM, filling the BG2 buffer with the first tile
+     * from the specified PinnedAssetImage.
      */
     void erase(const PinnedAssetImage &image) {
         erase(image.tile(sys.cube, 0));
     }
+    
+    /**
+     * Set the border color, given an arbitrary 16-bit RGB565 color.
+     *
+     * This color is displayed 'outside' the 16x16-tile drawable region,
+     * in the other three quadrants of the virtual 256x256-pixel plane.
+     */
+    void setBorder(RGB565 color) {
+        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg2_border) / 2,
+            color.value);
+    }
 
     /**
-     * Change the hardware pixel-panning origin for this mode. The supplied
-     * vector is interpreted as the location on the tile buffer, in pixels,
-     * where the origin of the LCD will begin.
-     *
-     * BG0 is an 18x18 buffer that wraps around in both directions.
-     */ 
-    void setPanning(Int2 pixels) {
-        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2,
-            umod(pixels.x, pixelWidth()) |
-            (umod(pixels.y, pixelHeight()) << 8));
+     * Get the last border color set by setBorder().
+     */
+    RGB565 getBorder() const {
+        RGB565 result = { _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg2_border)) };
+        return result;
     }
 
     /**
@@ -162,7 +182,7 @@ struct BG0Drawable {
      */
     void image(UInt2 pos, const AssetImage &image, unsigned frame = 0)
     {
-        _SYS_image_BG0Draw(&sys, image, pos.x + pos.y * tileWidth(), frame);
+        _SYS_image_BG2Draw(&sys, image, pos.x + pos.y * tileWidth(), frame);
     }
 
     /**
@@ -174,7 +194,7 @@ struct BG0Drawable {
      */
     void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY, unsigned frame = 0)
     {
-        _SYS_image_BG0DrawRect(&sys, image, destXY.x + destXY.y * tileWidth(),
+        _SYS_image_BG2DrawRect(&sys, image, destXY.x + destXY.y * tileWidth(),
             frame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
@@ -193,7 +213,7 @@ struct BG0Drawable {
             if (c == '\n') {
                 addr = (lineAddr += tileWidth());
             } else {
-                _SYS_image_BG0Draw(&sys, font, addr, c - firstChar);
+                _SYS_image_BG2Draw(&sys, font, addr, c - firstChar);
                 addr += font.tileWidth();
             }
             str++;
