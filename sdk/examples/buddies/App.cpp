@@ -2210,18 +2210,35 @@ void App::UpdateGameState(float dt)
             {
                 StartGameState(GAME_STATE_SHUFFLE_END_GAME_NAV);
             }
-            
+            else if (AnyTouchBegin())
+            {
+                mTouchSync = true;
+                StartGameState(GAME_STATE_SHUFFLE_END_GAME_NAV);
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
         {
-            if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
+            if (mTouchSync)
             {
-                StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+                for (int i = 0; i < arraysize(mTouching); ++i)
+                {
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    {
+                        mTouchSync = false;
+                    }
+                }
             }
-            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
+            else
             {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+                }
+                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
@@ -2513,6 +2530,7 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
+                    mTouchSync = true;
                     StartGameState(GAME_STATE_STORY_CHAPTER_END);
                 }
             }
@@ -2578,6 +2596,10 @@ void App::UpdateGameState(float dt)
                             }
                             else
                             {
+                                if (AnyTouchBegin())
+                                {
+                                    mTouchSync = true;
+                                }
                                 StartGameState(GAME_STATE_STORY_CHAPTER_END);
                             }
                         }
@@ -2592,46 +2614,59 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CHAPTER_END:
         {
-            if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_BEGIN)
+            if (mTouchSync)
             {
-                if (++mStoryPuzzleIndex == GetBook(mStoryBookIndex).mNumPuzzles)
+                for (int i = 0; i < arraysize(mTouching); ++i)
                 {
-                    ++mStoryBookIndex;
-                    mStoryPuzzleIndex = 0;
-                    
-                    if (mStoryBookIndex > mSaveDataStoryBookProgress)
+                    if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
-                        mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
-                        mSaveDataStoryBookProgress = mStoryBookIndex;
-                        SaveData();
+                        mTouchSync = false;
                     }
-                    
-                    if (mStoryBookIndex == GetNumBooks())
+                }
+            }
+            else
+            {
+                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                {
+                    if (++mStoryPuzzleIndex == GetBook(mStoryBookIndex).mNumPuzzles)
                     {
-                        StartGameState(GAME_STATE_STORY_GAME_END_CONGRATS);
+                        ++mStoryBookIndex;
+                        mStoryPuzzleIndex = 0;
+                        
+                        if (mStoryBookIndex > mSaveDataStoryBookProgress)
+                        {
+                            mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                            mSaveDataStoryBookProgress = mStoryBookIndex;
+                            SaveData();
+                        }
+                        
+                        if (mStoryBookIndex == GetNumBooks())
+                        {
+                            StartGameState(GAME_STATE_STORY_GAME_END_CONGRATS);
+                        }
+                        else
+                        {
+                            StartGameState(GAME_STATE_STORY_BOOK_START);
+                        }
                     }
                     else
                     {
-                        StartGameState(GAME_STATE_STORY_BOOK_START);
+                        if (mStoryPuzzleIndex > mSaveDataStoryPuzzleProgress)
+                        {
+                            mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                            SaveData();
+                        }
+                        StartGameState(GAME_STATE_STORY_CHAPTER_START);
                     }
                 }
-                else
+                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
                 {
-                    if (mStoryPuzzleIndex > mSaveDataStoryPuzzleProgress)
-                    {
-                        mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
-                        SaveData();
-                    }
                     StartGameState(GAME_STATE_STORY_CHAPTER_START);
                 }
-            }
-            else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_BEGIN)
-            {
-                StartGameState(GAME_STATE_STORY_CHAPTER_START);
-            }
-            else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_BEGIN)
-            {
-                StartGameState(GAME_STATE_MENU_MAIN);
+                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                {
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
             }
             break;
         }
