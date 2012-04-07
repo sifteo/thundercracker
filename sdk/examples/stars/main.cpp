@@ -6,10 +6,18 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-
 using namespace Sifteo;
 
+static const unsigned gNumCubes = 2;
 Random gRandom;
+
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
+
+static Metadata M = Metadata()
+    .title("Stars SDK Example")
+    .cubeRange(gNumCubes);
+
 
 class StarDemo {
 public:
@@ -22,27 +30,25 @@ public:
     static const float starEmitSpeed = 60.0f;
     static const float starTiltSpeed = 3.0f;
 
-    StarDemo(Cube &cube)
-        : cube(cube)
-    {}
-
-    void init()
+    void init(CubeID cube)
     {
         frame = 0;
         bg.x = 0;
         bg.y = 0;
+
+        cube.enable();
+        vid.initMode(BG0_SPR_BG1);
+        vid.attach(cube);
+        vid.setOrientation(LEFT);
         
         for (unsigned i = 0; i < numStars; i++)
             initStar(i);
 
-        VidMode_BG0_SPR_BG1 vid(cube.vbuf);
-        vid.clear();
-        vid.BG0_drawAsset(vec(0,0), Background);
-        
-        // Allocate 16x2 tiles on BG1 for text at the bottom of the screen
-        _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2 + 14, 0xFFFF, 2);
+        // Our background is 18x18 to match BG0, and it seamlessly tiles
+        vid.bg0.image(vec(0,0), Background);
 
-        vid.set();
+        // Allocate 16x2 tiles on BG1 for text at the bottom of the screen
+        vid.bg1.setMask(BG1Mask::filled(vec(0,14), vec(16,2)));
     }
     
     void update(TimeDelta timeStep)
@@ -128,19 +134,17 @@ public:
          * We respond to the accelerometer
          */
 
-        Int2 accel = cube.physicalAccel();
+        Int2 accel = vid.physicalAccel().xy();
         Float2 tilt = accel * starTiltSpeed;
         
         /*
          * Update starfield animation
          */
         
-        VidMode_BG0_SPR_BG1 vid(cube.vbuf);
         for (unsigned i = 0; i < numStars; i++) {
             const Float2 center = { 64 - 3.5f, 64 - 3.5f };
-            vid.resizeSprite(i, 8, 8);
-            vid.setSpriteImage(i, Star, frame % Star.frames);
-            vid.moveSprite(i, stars[i].pos + center);
+            vid.sprites[i].setImage(Star, frame % Star.numFrames());
+            vid.sprites[i].move(stars[i].pos + center);
             
             stars[i].pos += float(timeStep) * (stars[i].velocity + tilt);
             
@@ -158,10 +162,10 @@ public:
 
         Float2 bgVelocity = accel * bgTiltSpeed + vec(0.0f, -1.0f) * bgScrollSpeed;
         bg += float(timeStep) * bgVelocity;
-        vid.BG0_setPanning(bg.round());
+        vid.bg0.setPanning(bg.round());
 
         text += (textTarget - text) * textSpeed;
-        vid.BG1_setPanning(text.round());
+        vid.bg1.setPanning(text.round());
     }
 
 private:   
@@ -169,7 +173,7 @@ private:
         Float2 pos, velocity;
     } stars[numStars];
     
-    Cube &cube;
+    VideoBuffer vid;
     unsigned frame;
     Float2 bg, text, textTarget;
     float fpsTimespan;
@@ -177,16 +181,7 @@ private:
     void writeText(const char *str)
     {
         // Text on BG1, in the 16x2 area we allocated
-        uint16_t addr = offsetof(_SYSVideoRAM, bg1_tiles) / 2;
-        char c;
-        
-        while ((c = *(str++))) {
-            uint16_t index = (c - ' ') * 2 + Font.index;
-            index += Font.group->cubes[cube.id()].baseAddr;
-            cube.vbuf.pokei(addr, index);
-            cube.vbuf.pokei(addr + 16, index + 1);
-            addr++;
-        }
+        vid.bg1.text(vec(0,14), Font, str);
     }
 
     void initStar(int id)
@@ -201,47 +196,16 @@ private:
 
 void main()
 {
-    // XXX: Test for relocatable asset groups
-    GameAssets.cubes[0].baseAddr = 512 * 8;
-    GameAssets.cubes[1].baseAddr = 512 * 6;
-    
-    static Cube cubes[] = { Cube(0), Cube(1) };
-    static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
-    
-    for (unsigned i = 0; i < arraysize(cubes); i++) {
-        cubes[i].enable();
-        cubes[i].loadAssets(GameAssets);
+    static StarDemo instances[gNumCubes];
 
-        VidMode_BG0_ROM rom(cubes[i].vbuf);
-        rom.init();
-        rom.BG0_text(vec(1,1), "Loading...");
-        rom.BG0_text(vec(1,13), "zomg it's full\nof stars!!!");
-    }
-
-    for (;;) {
-        bool done = true;
-
-        for (unsigned i = 0; i < arraysize(cubes); i++) {
-            VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(vec(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-            if (!cubes[i].assetDone(GameAssets))
-                done = false;
-        }
-
-        System::paint();
-
-        if (done)
-            break;
-    }
-
-    for (unsigned i = 0; i < arraysize(demos); i++)
-        demos[i].init();
+    for (unsigned i = 0; i < arraysize(instances); i++)
+        instances[i].init(i);
     
     TimeStep ts;
     while (1) {
-        for (unsigned i = 0; i < arraysize(demos); i++)
-            demos[i].update(ts.delta());
-        
+        for (unsigned i = 0; i < arraysize(instances); i++)
+            instances[i].update(ts.delta());
+
         System::paint();
         ts.next();
     }

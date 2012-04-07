@@ -3,6 +3,7 @@ SUBDIRS = \
 	monster \
 	sensors \
 	sprites \
+	stars \
 	text
 
 .PHONY: clean subdirs $(SUBDIRS)
