@@ -20,6 +20,8 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #ifdef _NEWLIB_STDIO_H
 #define printf      iprintf
@@ -97,6 +99,19 @@ unsigned inline umod(int a, int b)
     if (r < 0)
         r += b;
     return r;
+}
+
+/**
+ * Saturating 16x16=32 multiply.
+ *
+ * If the operands are greater than 0xFFFF, the result will automatically
+ * saturate to 0xFFFFFFFF. Guaranteed not to overflow a uint32_t.
+ */
+uint32_t inline mulsat16x16(uint32_t a, uint32_t b)
+{
+    if (a > 0xFFFF) return 0xFFFFFFFF;
+    if (b > 0xFFFF) return 0xFFFFFFFF;
+    return a * b;
 }
 
 

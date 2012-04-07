@@ -6,7 +6,26 @@
 #include "imagedecoder.h"
 #include "cube.h"
 #include "cubeslots.h"
+#include "vram.h"
 
+
+bool ImageDecoder::init(const _SYSAssetImage *userPtr)
+{
+    /*
+     * Validate user pointers, and load the header.
+     * Returns 'true' on success, 'false' on failure due to bad
+     * userspace-provided data.
+     */
+
+    if (!SvmMemory::copyROData(header, userPtr))
+        return false;
+
+    // Other member initialization
+    baseAddr = 0;
+    blockCache.index = -1;
+
+    return true;
+}
 
 bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
 {
@@ -18,9 +37,9 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
      * userspace-provided data.
      */
 
-    if (!SvmMemory::copyROData(header, userPtr))
+    if (!init(userPtr))
         return false;
-
+    
     if (cid >= _SYS_NUM_CUBE_SLOTS)
         return false;
     CubeSlot &cube = CubeSlots::instances[cid];
@@ -33,23 +52,19 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
         return false;
     baseAddr = gc->baseAddr;
 
-    // Other member initialization
-    blockCache.index = -1;
-
     return true;
 }
 
-unsigned ImageDecoder::getBlockSize() const
+uint16_t ImageDecoder::getBlockMask() const
 {
     switch (header.format) {
     
         case _SYS_AIF_DUB_I8:
         case _SYS_AIF_DUB_I16:
-            return 8;
+            return 7;
 
         default:
-            // Unlimited
-            return 0x7FFFFFFF;
+            return 0xFFFF;
     }
 }
 
@@ -273,4 +288,56 @@ unsigned BitReader::readVar()
     }
 
     return result;
+}
+
+bool ImageIter::nextWork()
+{
+    // Continued from next()...
+
+    x &= ~blockMask;                                    // Back to left edge of the block
+    if (x < left)                                       // Clamp to left edge of iteration rectangle
+        x = left;
+    {
+        unsigned nextY = y + 1;                         // Next line within this block
+        if ((nextY & blockMask) && nextY < bottom) {    // Still inside the block and image?
+            y = nextY;                                  //   Yes, keep iterating vertically
+            return true;
+        }
+    }
+    y &= ~blockMask;                                    // Back to top of block
+    if (y < top)                                        // Clamp to left edge of iteration rectangle
+        y = top;
+    {
+        unsigned nextX = x + blockMask + 1;             // Next block over
+        if (nextX < right) {                            // Still inside the image?
+            x = nextX;                                  //   Yes, keep iterating horizontally.
+            return true;
+        }
+    }
+    x = left;                                           // Back to left edge of iteration rectangle
+    {
+        unsigned nextY = y + blockMask + 1;             // Next row of blocks
+        if (nextY < bottom) {                           // Still inside the image?
+            y = nextY;                                  //   Yes, keep iterating vertically
+            return true;
+        }
+    }
+    return false;                                       // Out of things to iterate!
+}
+
+void ImageIter::copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr,
+    unsigned stride)
+{
+    do {
+        uint16_t addr = originAddr + getAddr(stride);
+        VRAM::truncateWordAddr(addr);
+        VRAM::poke(vbuf, addr, tile77());
+    } while (next());
+}
+
+void ImageIter::copyToMem(uint16_t *dest, unsigned stride)
+{
+    do {
+        dest[getAddr(stride)] = tile();
+    } while (next());
 }

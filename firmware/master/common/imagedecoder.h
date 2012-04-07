@@ -25,6 +25,8 @@ public:
     static const int NO_TILE = -1;
 
     bool init(const _SYSAssetImage *userPtr, _SYSCubeID cid);
+    bool init(const _SYSAssetImage *userPtr);
+
     int tile(unsigned x, unsigned y, unsigned frame);
 
     unsigned getWidth() const {
@@ -35,8 +37,9 @@ public:
         return header.height;
     }
 
-    // Get the natural block size, used to generate a preferred access order
-    unsigned getBlockSize() const;
+    // Get a mask for bits in the address which refer to tiles within a block.
+    // Other bits refer to the blocks themselves.
+    uint16_t getBlockMask() const;
 
 private:
     struct {
@@ -50,6 +53,95 @@ private:
 
     bool decompressDUB(unsigned blockIndex, unsigned numTiles);
     SvmMemory::VirtAddr readIndex(unsigned i);
+};
+
+
+/**
+ * An iterator for accessing tiles in an ImageDecoder in their natural order.
+ * This iterates first over compression blocks, left-right top-bottom, then
+ * over the individual tiles in a block. We can iterate on any subrectangle
+ * of the image.
+ */
+
+class ImageIter {
+public:
+    ImageIter(ImageDecoder &decoder, unsigned imageX, unsigned imageY,
+        unsigned width, unsigned height, unsigned frame)
+        : decoder(decoder), x(imageX), y(imageY), left(imageX), top(imageY),
+          right(imageX + width), bottom(imageY + height), frame(frame),
+          blockMask(decoder.getBlockMask()) {}
+
+    ImageIter(ImageDecoder &decoder, unsigned frame = 0)
+        : decoder(decoder), x(0), y(0), left(0), top(0),
+          right(decoder.getWidth()), bottom(decoder.getHeight()),
+          frame(frame), blockMask(decoder.getBlockMask()) {}
+
+    bool next() {
+        {
+            unsigned nextX = x + 1;                         // Next tile over within the block
+            if ((nextX & blockMask) && nextX < right) {     // Still inside the block and image?
+                x = nextX;                                  //   Yes, keep iterating horizontally.
+                return true;
+            }
+        }
+
+        // The rest of the work is handled by a non-inlined function...
+        return nextWork();
+    }
+
+    unsigned getAddr(unsigned stride) const {
+        return (x - left) + (y - top) * stride;
+    }
+
+    int tile() const {
+        return decoder.tile(x, y, frame);
+    }
+
+    uint16_t tile77() const {
+        uint16_t t = decoder.tile(x, y, frame);
+        return _SYS_TILE77(t);
+    }
+
+    uint16_t getWidth() const {
+        return right - left;
+    }
+
+    uint16_t getHeight() const {
+        return bottom - top;
+    }
+
+    uint32_t getDestBytes(uint32_t stride) const {
+        /*
+         * Return the destination rectangle size, in bytes, using the
+         * specified stride, specified in 16-bit words. Stride must be
+         * greater than or equal to width.
+         *
+         * All arithmetic is overflow-safe. On error, we return 0xFFFFFFFF.
+         */
+        
+        uint32_t w = getWidth();
+        uint32_t h = getHeight();
+        if (stride < w) return 0xFFFFFFFF;
+        uint32_t words = mulsat16x16(stride, h);
+        return mulsat16x16(words, 2);
+    }
+
+    void copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr, unsigned stride);
+    void copyToMem(uint16_t *dest, unsigned stride);
+
+private:
+    ImageDecoder &decoder;
+
+    uint16_t x;         // Current address within the image
+    uint16_t y;
+    uint16_t left;      // Iteration rectangle, in image coordinates
+    uint16_t top;
+    uint16_t right;
+    uint16_t bottom;
+    uint16_t frame;     // Frame to draw (constant)
+    uint16_t blockMask; // Cached block mask for this image
+
+    bool nextWork();
 };
 
 
