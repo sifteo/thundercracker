@@ -1,5 +1,6 @@
 SUBDIRS = \
 	hello \
+	membrane \
 	monster \
 	nyan \
 	sensors \
