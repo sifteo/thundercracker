@@ -645,11 +645,11 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
         {
             CubeWrapper::GridTestInfo testInfo = { color, false, false, false };
 
-            LOG(("local testInfo at %x\n", &testInfo));
+            //LOG(("local testInfo at %x\n", &testInfo));
 
             m_cubes[i].UpdateColorPositions( testInfo );
 
-            LOG(("cube %d has corners = %d, side1 = %d, side2 = %d", i, testInfo.bCorners, testInfo.bSide1, testInfo.bSide2));
+            //LOG(("cube %d has corners = %d, side1 = %d, side2 = %d", i, testInfo.bCorners, testInfo.bSide1, testInfo.bSide2));
 
             if( testInfo.bCorners )
             {
@@ -678,7 +678,7 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
         }
     }
 
-    LOG(("Failed to find a match!  color %d\n", color));
+    //LOG(("Failed to find a match!  color %d\n", color));
     return true;
 }
 

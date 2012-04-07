@@ -1880,7 +1880,7 @@ void CubeWrapper::TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const
             }
         }
 
-        LOG(("TiltAndTestGrid after copying grid testInfo at %x\n", &testInfo));
+        //LOG(("TiltAndTestGrid after copying grid testInfo at %x\n", &testInfo));
 
         //tilt it
         if( FakeTilt( i, childgrid ) )
