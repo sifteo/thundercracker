@@ -9,14 +9,9 @@ include $(TC_DIR)/Makefile.platform
 # Test Jig specific sources
 OBJS_STM32 +=   $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o
 
-# STM32 only dependencies
-SPEEX_DIR = ../speex
-include $(SPEEX_DIR)/speex.mk
-OBJS_STM32 += $(SPEEX_OBJS_STM32)
-
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -I../common -I../../include -DNO_USERSPACE_HEADERS
-CFLAGS_STM32 := -I../stm32 $(SPEEX_INC) -I../testjig -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
+CFLAGS_STM32 := -I../stm32 -I../testjig
 
 include ../Makefile.defs
 
