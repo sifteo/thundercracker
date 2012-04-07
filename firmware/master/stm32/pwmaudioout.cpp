@@ -44,6 +44,8 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
                                         HwTimer::ActiveHigh,
                                         HwTimer::Pwm1,
                                         HwTimer::ComplementaryOutput);
+
+    Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
 
 void PwmAudioOut::start()
@@ -87,12 +89,9 @@ void PwmAudioOut::tmrIsr()
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.toggle();
 #endif
-    // TODO - tune the refill threshold if needed
-    if (buf.readAvailable() < buf.capacity() / 2) {
-        Tasks::setPending(Tasks::AudioOutEmpty, &buf);
-        if (buf.readAvailable() < 2)
-            return;
-    }
+    // DANGER DANGER DANGER!
+    if (buf.readAvailable() < 2)
+        return;
 
     uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period

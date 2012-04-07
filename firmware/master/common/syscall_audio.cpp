@@ -13,12 +13,6 @@
 
 extern "C" {
 
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
-{
-    if (SvmMemory::mapRAM(buffer, sizeof(*buffer)))
-        AudioMixer::instance.enableChannel(buffer);
-}
-
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     _SYSAudioModule modCopy;

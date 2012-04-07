@@ -238,18 +238,6 @@ extern "C" void _start()
 
 extern "C" void *_sbrk(intptr_t increment)
 {
-#if 1
-    // speex needs to alloc some memory on init...this allows it to but
-    // doesn't allow alloc'd mem to be reclaimed. just a hack until we decide what to do.
-    // NOTE - this also requires passing -fno-threasafe-statics in your CPPFLAGS
-    // since GCC will normally create guards around static data
-    static uintptr_t __heap = (uintptr_t)&__bss_end + 4;
-
-    void *p = (void*)__heap;
-    __heap += increment;
-    return p;
-
-#else
     /*
      * We intentionally don't want to support dynamic allocation yet.
      * If anyone tries a malloc(), we'll just trap here infinitely.
@@ -261,5 +249,4 @@ extern "C" void *_sbrk(intptr_t increment)
 
     while (1);
     return NULL;
-#endif
 }

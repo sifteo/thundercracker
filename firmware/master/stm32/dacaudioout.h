@@ -13,7 +13,6 @@
 
 #include "audiobuffer.h"
 #include "audiooutdevice.h"
-#include "speexdecoder.h"
 class AudioMixer;
 
 class DacAudioOut
