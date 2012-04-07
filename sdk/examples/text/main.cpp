@@ -25,7 +25,7 @@ struct TextRenderer {
         uint8_t escapement = *(data++);
         const Int2 size = {8, 8};
 
-        fb.bitmap(data, 1, position, size);
+        fb.bitmap(position, size, data, 1);
         position.x += escapement;
     }
 
