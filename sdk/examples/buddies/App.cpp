@@ -584,6 +584,7 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
 
 void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigned int puzzleIndex, Int2 bgScroll)
 {
+    cubeWrapper.ScrollBackground(Vec2(8, 8));
     cubeWrapper.DrawBackgroundPartial(
         Vec2(kMaxTilesX + bgScroll.x, 0),
         Vec2(0, 0),
@@ -615,6 +616,7 @@ void DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsi
 
 void DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex, Int2 bgScroll)
 {
+    cubeWrapper.ScrollBackground(Vec2(8, 8));
     cubeWrapper.DrawBackgroundPartial(
         Vec2(kMaxTilesX + bgScroll.x, 0),
         Vec2(0, 0),
@@ -2729,14 +2731,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
@@ -2822,14 +2827,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
@@ -2861,10 +2869,12 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.GetId() == 1)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(ShuffleEndGameNavReplay);
             }
             else if (cubeWrapper.GetId() == 2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
@@ -2983,14 +2993,17 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0 || cubeWrapper.GetId() >  2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiResume);
             }
             else if (cubeWrapper.GetId() == 1)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiRestart);
             }
             else if (cubeWrapper.GetId() == 2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
@@ -3115,6 +3128,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 if ((mStoryPuzzleIndex + 1) == GetBook(mStoryBookIndex).mNumPuzzles)
                 {
+                    cubeWrapper.ScrollBackground(Vec2(8, 8));
                     cubeWrapper.DrawBackground(StoryBookStartNext);
                     
                     ASSERT((mStoryBookIndex + 1) < GetNumBooks());
@@ -3134,6 +3148,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.GetId() == 2)
             {
+                cubeWrapper.ScrollBackground(Vec2(8, 8));
                 cubeWrapper.DrawBackground(UiEndGameNavExit);
             }
             break;
