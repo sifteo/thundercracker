@@ -164,7 +164,7 @@ SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
 bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
 {
     DEBUG_LOG(("DUB[%08x]: Decompressing block %d, %d tiles\n",
-        header.data, index, numTiles));
+        header.pData, index, numTiles));
 
     struct Code {
         int type;
