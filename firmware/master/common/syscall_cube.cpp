@@ -16,11 +16,6 @@
 
 extern "C" {
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
-{
-    CubeSlots::solicitCubes(min, max);
-}
-
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
     CubeSlots::enableCubes(CubeSlots::truncateVector(cv));
