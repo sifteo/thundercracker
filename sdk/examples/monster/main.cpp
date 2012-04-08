@@ -9,7 +9,8 @@
 using namespace Sifteo;
 
 static Metadata M = Metadata()
-    .title("Monsters SDK Example");
+    .title("Monsters SDK Example")
+    .cubeRange(1);
 
 static const CubeID cube(0);
 static VideoBuffer vid;
