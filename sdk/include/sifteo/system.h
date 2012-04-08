@@ -87,6 +87,9 @@ class System {
      * making a sharp transition from one video mode to a totally
      * different one.
      *
+     * Typically you should call finish() *before* an event that changes
+     * the video mode or the BG1 mask.
+     *
      * Don't overuse finish(), especially not if you're concerned with
      * frame rate. Normally it's desirable to be working on building
      * the next frame while the cubes are still busy rendering the
@@ -96,27 +99,6 @@ class System {
     static void finish() {
         _SYS_finish();
     }
-
-    /**
-     * Fully synchronous repaint. This is just a shorthand for a
-     * finish() (to stop continuous rendering, and flush everything
-     * to the radio), then a paint() to synchronize any outstanding
-     * rendering with the cube, followed by a final finish() to let
-     * the paint fully complete.
-     *
-     * All of the performance caveats that come with finish()
-     * are applicable here too.
-     */
-
-    static void paintSync() {
-        _SYS_finish();
-        _SYS_paint();
-        _SYS_finish();
-    }
-	
-	static void solicitCubes(_SYSCubeID min, _SYSCubeID max) {
-		_SYS_solicitCubes(min, max);
-	}
 };
 
 
