@@ -340,8 +340,15 @@ struct BG1Drawable {
      * Normally you should only change the allocation map when the
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
+     *
+     * Because of this, we automatically do a System::finish() by default,
+     * so we can ensure nobody is still using the old mask. This can be
+     * suppressed if you really know what you're doing, by setting
+     * finish=false.
      */
-    void setMask(const BG1Mask &mask) {
+    void setMask(const BG1Mask &mask, bool finish=true) {
+        if (finish)
+            _SYS_finish();
         _SYS_vbuf_write(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_bitmap)/2,
             mask.rows(), 16);
     }

@@ -209,7 +209,7 @@ void CPPSourceWriter::writeImage(const Image &image)
         mStream <<
             indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
             indent << "/* reserved */ 0,\n" <<
-            indent << "/* data     */ " << image.encodePinned() << "\n}};\n\n";
+            indent << "/* pData    */ " << image.encodePinned() << "\n}};\n\n";
         return;
     }
     
@@ -221,7 +221,7 @@ void CPPSourceWriter::writeImage(const Image &image)
             mStream <<
                 indent << "/* format   */ " << format << ",\n" <<
                 indent << "/* reserved */ 0,\n" <<
-                indent << "/* data     */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+                indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
                 "const uint16_t " << image.getName() << "_data[] = {\n";
             writeArray(data);
             mStream << "};\n\n";
@@ -238,7 +238,7 @@ void CPPSourceWriter::writeImage(const Image &image)
     mStream <<
         indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
         indent << "/* reserved */ 0,\n" <<
-        indent << "/* data     */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+        indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
         "const uint16_t " << image.getName() << "_data[] = {\n";
     std::vector<uint16_t> data;
     image.encodeFlat(data);

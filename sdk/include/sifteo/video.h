@@ -550,7 +550,7 @@ struct VideoBuffer {
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
-        sys.vbuf.needPaint = (uint32_t)-1;
+        lock(_SYS_VA_FLAGS);
     }
 
     /**

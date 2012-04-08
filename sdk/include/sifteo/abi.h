@@ -102,7 +102,7 @@ struct _SYSAssetImage {
     uint16_t frames;            /// Number of "frames" in this image
     uint8_t  format;            /// _SYSAssetImageFormat
     uint8_t  reserved;          /// Reserved, must be zero
-    uint32_t data;              /// Format-specific data or data pointer
+    uint32_t pData;             /// Format-specific data or data pointer
 };
 
 /*
@@ -260,14 +260,14 @@ union _SYSVideoRAM {
  *  3. Set change bits in cm1, using an atomic OR such as
  *     __builtin_or_and_fetch().
  *
- *  4. Set change bits in cm32, using an atomic OR. After this point the
+ *  4. Set change bits in cm16, using an atomic OR. After this point the
  *     system may start sending data over the radio at any time.
  *
  *  5. Soon after step (4), clear the lock bits you set in (1). Since
  *     the system treats lock bits as read-only, you can do this using
  *     a plain atomic store.
  *
- * Note that cm32 is the primary trigger that the system uses in order
+ * Note that cm16 is the primary trigger that the system uses in order
  * to determine if hardware VRAM needs to be updated. The lock bits do
  * not prevent the system from reading VRAM, but rather they're used as
  * part of the following invariant:
@@ -280,9 +280,9 @@ union _SYSVideoRAM {
  * maintain, since the system would have no idea when userspace code
  * has modified the buffer, if it hasn't yet set the cm1 bits.
  *
- * Streaming over the radio can begin any time after cm32 has been
+ * Streaming over the radio can begin any time after cm16 has been
  * updated. For bandwidth efficiency, it's best to wait until after a
- * large update, then OR a single value with cm32 in order to trigger
+ * large update, then OR a single value with cm16 in order to trigger
  * the update.
  *
  * The system may still start streaming updates while the 'lock' bit
@@ -290,26 +290,17 @@ union _SYSVideoRAM {
  * optimization techniques, since some of these rely on knowing for
  * certain the values of words that have already been transmitted. So
  * it is recommended that userspace clear the 'lock' bits as soon as
- * possible after cm32 is set.
- *
- * The 'cm32next' member is special: It is not used at all by the
- * system when updating cubes, but it's used as bidirectional storage
- * for some of the system calls that manipulate video buffers. These
- * system calls will update cm32next instead of cm32, leaving it up to
- * the user to choose when to make those changes visible to the system
- * by OR'ing cm32next into cm32.
- *
- * This operation is performed by the provided 'unlock' primitive.
+ * possible after cm16 is set.
  *
  * Asynchronous Pipeline
- *----------------------
+ * ---------------------
  *
  * When working with the graphics subsystem, it's helpful to keep in mind
  * the pipeline of asynchronous rendering stages:
  * 
- *   1. Changes are written to a locked vbuf (cm32next)
- *   2. The vbuf is unlocked, changes can start to stream over the air (cm32 <- cm32next)
- *   3. Streaming is finished (cm32 <- 0)
+ *   1. Changes are written to a locked vbuf (lock)
+ *   2. The vbuf is unlocked, changes can start to stream over the air (cm16 <- lock)
+ *   3. Streaming is finished (cm16 <- 0)
  *   4. The cube hardware begins rendering a frame
  *   5. The cube acknowledges rendering completion
  *
@@ -319,23 +310,38 @@ union _SYSVideoRAM {
  * only considered to be 'finished' if we make it through steps 3-5 without
  * any modifications to the video buffer.
  *
- * The system tracks this by taking advantage of the fact that cm32next is
- * set immediately when a vbuf is locked. Therefore, we're only truly 'finished'
- * with rendering if we reach step (5) and both cm32 and cm32next are zero.
+ * This is tracked by setting the _SYS_VBF_DIRTY_VRAM bit when VRAM is locked.
+ * The system manages propagating this dirty flag through the above pipeline
+ * stages before it's finally cleared:
  *
- * 'needPaint' OR'ed with cm32 at every unlock, and cleared only after
- * we schedule a hardware repaint operation on the cubes. Userspace
- * code doesn't need to worry about this value at all, assuming you
- * use the system-provided unlock primitive.
+ *   1      -> VRAM    VideoBuffer lock() operation
+ *   VRAM   -> RENDER  Finished streaming (cm16==0) and render triggered.
+ *   RENDER -> done    Render acknowledged.
+ *
+ * Paint Control
+ * -------------
+ *
+ * The _SYS_paint() call is a no-op for cubes who have had no drawing occur.
+ * This state is tracked, separately from the dirty bits, using a NEED_PAINT
+ * flag. This flag is cleared by _SYS_paint() itself, whereas the actual DIRTY
+ * bits are propagated through the firmware's model of the render pipeline.
+ * Userspace code can force a cube to redraw by setting NEED_PAINT, even
+ * without making any VRAM changes.
+ *
+ * This flag is set automatically by _SYS_vbuf_lock().
  */
 
+#define _SYS_VBF_DIRTY_VRAM     (1 << 0)        // VRAM has changed
+#define _SYS_VBF_DIRTY_RENDER   (1 << 1)        // Still rendering changed VRAM
+#define _SYS_VBF_DIRTY_ALL      0x000000FF      // Area reserved for dirty bits
+#define _SYS_VBF_NEED_PAINT     (1 << 8)        // Request a paint operation
+
 struct _SYSVideoBuffer {
-    union _SYSVideoRAM vram;
-    uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
-    uint32_t cm32;              /// INOUT  Change map, at a resolution of 1 bit per 32 words
+    uint32_t flags;             /// INOUT  _SYS_VBF_* bits
     uint32_t lock;              /// OUT    Lock map, at a resolution of 1 bit per 16 words
-    uint32_t cm32next;          /// INOUT  Next CM32 change map.
-    uint32_t needPaint;         /// INOUT  Repaint trigger
+    uint32_t cm16;              /// INOUT  Change map, at a resolution of 1 bit per 16 words
+    uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
+    union _SYSVideoRAM vram;
 };
 
 /**
@@ -346,8 +352,9 @@ struct _SYSVideoBuffer {
  */
 
 struct _SYSAttachedVideoBuffer {
-    _SYSVideoBuffer vbuf;
     _SYSCubeID cube;
+    uint8_t reserved[3];
+    struct _SYSVideoBuffer vbuf;
 };
 
 /**
@@ -579,7 +586,7 @@ struct _SYSMetadataImage {
     uint8_t   frames;           /// Number of "frames" in this image
     uint8_t   format;           /// _SYSAssetImageFormat
     uint32_t  groupHdr;         /// Virtual address for _SYSAssetGroupHeader
-    uint32_t  data;             /// Format-specific data or data pointer
+    uint32_t  pData;            /// Format-specific data or data pointer
 };
 
 /**
@@ -820,18 +827,18 @@ uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
 
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
 void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
-uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
-void _SYS_asset_loadFinish(_SYSAssetLoader *loader) _SC(135);
-uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
+uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
+void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
+uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
 
-void _SYS_image_memDraw(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
-void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
-void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
-void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
-void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
-void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
-void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
-void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
+void _SYS_image_memDraw(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
+void _SYS_image_memDrawRect(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
+void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
+void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
+void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
+void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
+void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
+void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -500,7 +500,7 @@ struct PinnedAssetImage {
      */
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
-        return sys.data + i;
+        return sys.pData + i;
     };
 
     /**
@@ -512,7 +512,7 @@ struct PinnedAssetImage {
      */
     uint16_t tile(Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
-        return sys.data + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
+        return sys.pData + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
     }
 
     /**
@@ -523,7 +523,7 @@ struct PinnedAssetImage {
      */
     uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
-        return assetGroup().baseAddress(cube) + sys.data + i;
+        return assetGroup().baseAddress(cube) + sys.pData + i;
     };
 
     /**
@@ -535,7 +535,7 @@ struct PinnedAssetImage {
      */
     uint16_t tile(_SYSCubeID cube, Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
-        return assetGroup().baseAddress(cube) + sys.data
+        return assetGroup().baseAddress(cube) + sys.pData
             + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
     }
 };
@@ -583,7 +583,7 @@ struct FlatAssetImage {
      * un-relocated tile indices. This returns a pointer to that array.
      */
     const uint16_t *tileArray() const {
-        return reinterpret_cast<const uint16_t *>(sys.data);
+        return reinterpret_cast<const uint16_t *>(sys.pData);
     }
 
     /**

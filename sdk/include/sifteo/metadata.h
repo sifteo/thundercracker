@@ -96,7 +96,7 @@ public:
 
         // Build a _SYSMetadataImage struct
         _SYS_lti_metadata(key, "BBBBII",
-            i.width, i.height, i.frames, i.format, G->pHdr, i.data);
+            i.width, i.height, i.frames, i.format, G->pHdr, i.pData);
 
         return *this;
     }
