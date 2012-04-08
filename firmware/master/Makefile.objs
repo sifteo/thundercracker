@@ -1,30 +1,31 @@
 MASTER_DIR = $(TC_DIR)/firmware/master
 
 OBJS_COMMON = \
-	$(MASTER_DIR)/common/syscall_asset.o \
-	$(MASTER_DIR)/common/syscall_audio.o \
-	$(MASTER_DIR)/common/syscall_cube.o \
-	$(MASTER_DIR)/common/syscall_float.o \
-	$(MASTER_DIR)/common/syscall_integer.o \
-	$(MASTER_DIR)/common/syscall_image.o \
-	$(MASTER_DIR)/common/syscall_runtime.o \
-	$(MASTER_DIR)/common/syscall_string.o \
-	$(MASTER_DIR)/common/syscall_video.o \
-	$(MASTER_DIR)/common/event.o \
-	$(MASTER_DIR)/common/radio.o \
-	$(MASTER_DIR)/common/cubeslots.o \
-	$(MASTER_DIR)/common/cube.o \
-	$(MASTER_DIR)/common/cubecodec.o \
-	$(MASTER_DIR)/common/audiomixer.o \
+    $(MASTER_DIR)/common/syscall_asset.o \
+    $(MASTER_DIR)/common/syscall_audio.o \
+    $(MASTER_DIR)/common/syscall_cube.o \
+    $(MASTER_DIR)/common/syscall_float.o \
+    $(MASTER_DIR)/common/syscall_integer.o \
+    $(MASTER_DIR)/common/syscall_image.o \
+    $(MASTER_DIR)/common/syscall_runtime.o \
+    $(MASTER_DIR)/common/syscall_string.o \
+    $(MASTER_DIR)/common/syscall_video.o \
+    $(MASTER_DIR)/common/event.o \
+    $(MASTER_DIR)/common/radio.o \
+    $(MASTER_DIR)/common/cubeslots.o \
+    $(MASTER_DIR)/common/cube.o \
+    $(MASTER_DIR)/common/cubecodec.o \
+    $(MASTER_DIR)/common/audiomixer.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
     $(MASTER_DIR)/common/audiosampledata.o \
-	$(MASTER_DIR)/common/audiobuffer.o \
-	$(MASTER_DIR)/common/audiochannel.o \
-	$(MASTER_DIR)/common/accel.o \
-	$(MASTER_DIR)/common/neighbors.o \
-	$(MASTER_DIR)/common/tasks.o \
-	$(MASTER_DIR)/common/prng.o \
+    $(MASTER_DIR)/common/audiobuffer.o \
+    $(MASTER_DIR)/common/audiochannel.o \
+    $(MASTER_DIR)/common/accel.o \
+    $(MASTER_DIR)/common/neighbors.o \
+    $(MASTER_DIR)/common/tasks.o \
+    $(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flashlayer.o \
+    $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/svmmemory.o \
@@ -35,32 +36,32 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/imagedecoder.o
 
 OBJS_SIM = \
-	$(OBJS_COMMON:.o=.sim.o) \
-	$(MASTER_DIR)/sim/tinythread.sim.o \
-	$(MASTER_DIR)/sim/audiooutdevice.sim.o \
-	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
+    $(OBJS_COMMON:.o=.sim.o) \
+    $(MASTER_DIR)/sim/tinythread.sim.o \
+    $(MASTER_DIR)/sim/audiooutdevice.sim.o \
+    $(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
     $(MASTER_DIR)/sim/svmcpu.sim.o \
     $(MASTER_DIR)/sim/svmdebugpipe.sim.o \
-	$(MASTER_DIR)/sim/elfdebuginfo.sim.o \
-	$(MASTER_DIR)/sim/logdecoder.sim.o \
+    $(MASTER_DIR)/sim/elfdebuginfo.sim.o \
+    $(MASTER_DIR)/sim/logdecoder.sim.o \
     $(MASTER_DIR)/sim/gdbserver.sim.o \
     $(MASTER_DIR)/sim/siftulator.sim.o \
-	$(MASTER_DIR)/sim/main.sim.o
+    $(MASTER_DIR)/sim/main.sim.o
 
 OBJS_STM32 = \
-	$(OBJS_COMMON:.o=.stm32.o) \
-	$(MASTER_DIR)/stm32/systime.stm32.o \
-	$(MASTER_DIR)/stm32/vectors.stm32.o \
-	$(MASTER_DIR)/stm32/setup.stm32.o \
-	$(MASTER_DIR)/stm32/radio.stm32.o \
-	$(MASTER_DIR)/stm32/gpio.stm32.o \
+    $(OBJS_COMMON:.o=.stm32.o) \
+    $(MASTER_DIR)/stm32/systime.stm32.o \
+    $(MASTER_DIR)/stm32/vectors.stm32.o \
+    $(MASTER_DIR)/stm32/setup.stm32.o \
+    $(MASTER_DIR)/stm32/radio.stm32.o \
+    $(MASTER_DIR)/stm32/gpio.stm32.o \
     $(MASTER_DIR)/stm32/button.stm32.o \
-	$(MASTER_DIR)/stm32/spi.stm32.o \
+    $(MASTER_DIR)/stm32/spi.stm32.o \
     $(MASTER_DIR)/stm32/flash.stm32.o \
-	$(MASTER_DIR)/stm32/nrf24l01.stm32.o \
-	$(MASTER_DIR)/stm32/debug.stm32.o \
+    $(MASTER_DIR)/stm32/nrf24l01.stm32.o \
+    $(MASTER_DIR)/stm32/debug.stm32.o \
     $(MASTER_DIR)/stm32/usart.stm32.o \
     $(MASTER_DIR)/stm32/dma.stm32.o \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o \

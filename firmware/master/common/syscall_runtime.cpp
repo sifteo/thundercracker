@@ -13,6 +13,7 @@
 #include "svmdebugpipe.h"
 #include "svmdebugger.h"
 #include "svmruntime.h"
+#include "svmloader.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
@@ -34,7 +35,7 @@ void _SYS_abort()
 void _SYS_exit(void)
 {
     SvmDebugger::signal(Svm::Debugger::S_TERM);
-    SvmRuntime::exit();
+    SvmLoader::exit();
 }
 
 void _SYS_yield(void)

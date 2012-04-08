@@ -15,6 +15,12 @@
 #include "tasks.h"
 #include "neighbors.h"
 
+#ifdef DEBUG_PAINT
+#   define PAINT_LOG(_x)    LOG(_x)
+#else
+#   define PAINT_LOG(_x)
+#endif
+
 
 /*
  * Frame rate control parameters
@@ -450,10 +456,16 @@ void CubeSlot::waitForFinish()
      * Continuous rendering is turned off, if it was on.
      */
 
+    PAINT_LOG(("PAINT[%d]: waitForFinish, vbuf=%p \n", id(), vbuf));
+
     if (!vbuf)
         return;
 
     uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
+
+    PAINT_LOG(("PAINT[%d]: waitForFinish, flags=%02x pending=%d\n",
+        id(), flags, pendingFrames));
+
     if (flags & _SYS_VF_CONTINUOUS) {
         /*
          * If we were in continuous rendering mode, pendingFrames isn't
@@ -488,6 +500,9 @@ void CubeSlot::waitForFinish()
         Tasks::work();
         Radio::halt();
     }
+
+    PAINT_LOG(("PAINT[%d]: waitForFinish done, flags=%02x pending=%d\n",
+        id(), flags, pendingFrames));
 }
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
@@ -496,6 +511,11 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
         int32_t pending = Atomic::Load(pendingFrames);
         int32_t newPending = pending;
+
+        PAINT_LOG(("PAINT[%d]: triggerPaint, flags=%02x pending=%d newPend=%d"
+            " needPaint=%x cm32next=%x cm32=%x\n",
+            id(), flags, pending, newPending, vbuf->needPaint, vbuf->cm32next,
+            vbuf->cm32));
 
         /*
          * Keep pendingFrames above the lower limit. We make this
@@ -573,6 +593,9 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
         VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
         VRAM::unlock(*vbuf);
         vbuf->needPaint = 0;
+
+        PAINT_LOG(("PAINT[%d]: triggerPaint, pendingFrames=%d (%d), flags=%x\n",
+            id(), pendingFrames, newPending - pending, flags));
     }
 
     /*
