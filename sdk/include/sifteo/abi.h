@@ -751,8 +751,8 @@ void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(46);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(113);
 void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(115);
-void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);  /// Which cubes will be trying to connect?
+// Typically only needed by system menu code
+void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);

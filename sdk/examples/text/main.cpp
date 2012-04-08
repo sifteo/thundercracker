@@ -102,20 +102,20 @@ void main()
     const CubeID cube(0);
     static VideoBuffer vid;
 
-    cube.enable();
-
     /*
-     * Init framebuffer, paint a solid background, and wait for it to draw.
+     * Init framebuffer, paint a solid background.
      */
 
     vid.initMode(SOLID_MODE);
     vid.colormap[0] = makeColor(0);
     vid.attach(cube);
-    System::paintSync();
+    System::paint();
 
     /*
      * Now set up a letterboxed 128x48 mode. This uses windowing to
      * start drawing on scanline 40, and draw a total of 48 scanlines.
+     *
+     * initMode() will automatically wait for the above rendering to finish.    
      */
 
     vid.initMode(FB128, 40, 48);

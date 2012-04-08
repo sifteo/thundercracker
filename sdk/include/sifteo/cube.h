@@ -93,25 +93,6 @@ struct CubeID {
     }
 
     /**
-     * Put the cube slot represented by this CubeID into the "enabled" state.
-     * When a slot is enabled, the system will be trying to communicate with
-     * this cube over the radio.
-     */
-    void enable() const {
-        ASSERT(sys < NUM_SLOTS);
-        _SYS_enableCubes(bit());
-    }
-
-    /**
-     * Take the cube slot represented by this CubeID out of the "enabled" state.
-     * The system will no longer be in radio contact with this cube.
-     */
-    void disable() {
-        ASSERT(sys < NUM_SLOTS);
-        _SYS_disableCubes(bit());
-    }
-
-    /**
      * Return the physical accelerometer state, as a signed byte-vector.
      */
     Byte3 accel() const {

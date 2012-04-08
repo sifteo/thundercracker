@@ -20,7 +20,6 @@ static VideoBuffer vid;
 
 void main()
 {
-    cube.enable();
     vid.initMode(BG0_SPR_BG1);
     vid.attach(cube);
 

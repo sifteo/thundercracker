@@ -13,7 +13,6 @@ GameCube::GameCube(CubeID cube)
       portalTicker(50),
       numMarkers(0)
 {
-    cube.enable();
     vid.attach(cube);
 }
       

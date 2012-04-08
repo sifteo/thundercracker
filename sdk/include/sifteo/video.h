@@ -473,9 +473,12 @@ struct VideoBuffer {
     }
 
     /**
-     * Initialize the video buffer and change modes. This is a shorthand
-     * for setting the mode, restoring the default window and rotation,
-     * and zero'ing all mode-specific video memory.
+     * Initialize the video buffer and change modes.
+     *
+     * This is a shorthand for calling System::finish() to finish existing
+     * rendering before changing the mode, actually changing the mode,
+     * restoring the default window and rotation, and finally zero'ing
+     * all mode-specific video memory.
      *
      * Most programs should use initMode() to set up the initial mode for
      * a VideoBuffer, prior to attaching it to a cube. This is because
@@ -489,6 +492,7 @@ struct VideoBuffer {
      * need to change modes and change windows at the same time.
      */
     void initMode(VideoMode m, unsigned firstLine = 0, unsigned numLines = LCD_height) {
+        _SYS_finish();
         erase();
         setWindow(firstLine, numLines);
         setRotation(ROT_NORMAL);

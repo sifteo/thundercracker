@@ -22,7 +22,6 @@ static void showMonster(const MonsterData *m)
 
 void main()
 {
-    cube.enable();
     vid.initMode(FB32);
     vid.attach(cube);
 

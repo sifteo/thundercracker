@@ -33,8 +33,6 @@ void main()
         vid[cube].bg0.image(vec(0,0), Background);
         vid[cube].bg0.image(vec(mid,mid), *icons[cube]);
         vid[cube].bg0.setPanning(vec(8,8));
-
-        cube.enable();
         vid[cube].attach(cube);
     }
 

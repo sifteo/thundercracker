@@ -7,8 +7,10 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
+static const unsigned gNumCubes = 3;
 static Metadata M = Metadata()
-    .title("Sensors SDK Example");
+    .title("Sensors SDK Example")
+    .cubeRange(gNumCubes);
 
 
 class EventCounters {
@@ -63,19 +65,17 @@ private:
 
 void main()
 {
-    static const unsigned numCubes = 3;
     static VideoBuffer vid[CUBE_ALLOCATION];
     static EventCounters counters;
     counters.install();
 
-    for (CubeID cube = 0; cube < numCubes; ++cube) {
-        cube.enable();
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
         vid[cube].initMode(BG0_ROM);
         vid[cube].attach(cube);
     }
 
     while (1) {
-        for (CubeID cube = 0; cube < numCubes; ++cube) {
+        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
             auto &draw = vid[cube].bg0rom;
             String<192> str;
 

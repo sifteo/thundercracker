@@ -31,7 +31,6 @@ static void loadAssets()
 
     for (CubeID cube = 0; cube < gNumCubes; ++cube) {
         // Set up a blank white screen on this cube
-        cube.enable();
         vid[cube].initMode(BG0);
         vid[cube].attach(cube);
         vid[cube].bg0.erase(WhiteTile);

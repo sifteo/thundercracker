@@ -23,7 +23,6 @@ void main()
 
     channel.play(Nyan, channel.REPEAT);
 
-    cube.enable();
     vid.initMode(BG0);
     vid.attach(cube);
 

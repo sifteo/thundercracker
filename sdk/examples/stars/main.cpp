@@ -36,7 +36,6 @@ public:
         bg.x = 0;
         bg.y = 0;
 
-        cube.enable();
         vid.initMode(BG0_SPR_BG1);
         vid.attach(cube);
         
