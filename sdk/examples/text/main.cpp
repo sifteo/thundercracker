@@ -9,7 +9,8 @@
 using namespace Sifteo;
 
 static Metadata M = Metadata()
-    .title("Text SDK Example");
+    .title("Text SDK Example")
+    .cubeRange(1);
 
 
 struct TextRenderer {
@@ -109,6 +110,7 @@ void main()
     vid.initMode(SOLID_MODE);
     vid.colormap[0] = makeColor(0);
     vid.attach(cube);
+
     System::paint();
 
     /*
