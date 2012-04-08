@@ -516,8 +516,11 @@ struct VideoBuffer {
      * any tile rendering. This is because the relocated tile addresses of
      * your assets may be different for each cube, so we need to know the
      * attached cube's ID at draw time.
+     *
+     * Waits for all cubes to finish rendering before (re)attaching this buffer.
      */
     void attach(_SYSCubeID id) {
+        _SYS_finish();
         sys.cube = id;
         _SYS_vbuf_init(*this);
         _SYS_setVideoBuffer(*this, *this);

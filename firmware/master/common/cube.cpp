@@ -417,6 +417,8 @@ void CubeSlot::waitForPaint()
      * Wait until we're allowed to do another paint. Since our
      * rendering is usually not fully synchronous, this is not nearly
      * as strict as waitForFinish()!
+     *
+     * Does not require an attached vbuf.
      */
 
     for (;;) {
@@ -447,6 +449,9 @@ void CubeSlot::waitForFinish()
      *
      * Continuous rendering is turned off, if it was on.
      */
+
+    if (!vbuf)
+        return;
 
     uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
     if (flags & _SYS_VF_CONTINUOUS) {

@@ -46,7 +46,35 @@ static void logTitleInfo(Elf::ProgramInfo &pInfo)
 #endif
 }
 
-static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
+
+
+static _SYSCubeIDVector xxxInitCubes(Elf::ProgramInfo &pInfo)
+{
+    /*
+     * XXX: BIG HACK.
+     *
+     * Temporary code to initialize cubes, using the CubeRange from
+     * a game's metadata.
+     */
+
+    // Look up CubeRange
+    FlashBlockRef ref;
+    const _SYSMetadataCubeRange *range =
+        pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
+    unsigned minCubes = range ? range->minCubes : 0;
+
+    if (!minCubes) {
+        LOG(("SVM: No CubeRange found, not initializing any cubes.\n"));
+        return 0;
+    }
+
+    _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
+    _SYS_enableCubes(cubes);
+
+    return cubes;
+}
+
+static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
 {
     /*
      * XXX: BIG HACK.
@@ -65,14 +93,9 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
      * If no cube range was specified, we don't load assets at all.
      */
 
-    // Look up CubeRange
-    FlashBlockRef ref;
-    const _SYSMetadataCubeRange *range =
-        pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
-    unsigned minCubes = range ? range->minCubes : 0;
-
     // Look up BootAsset array
     uint32_t actualSize;
+    FlashBlockRef ref;
     _SYSMetadataBootAsset *vec = (_SYSMetadataBootAsset*)
         pInfo.meta.get(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
     if (!vec) {
@@ -81,14 +104,10 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
     }
     unsigned count = actualSize / sizeof *vec;
 
-    if (!minCubes) {
+    if (!cubes) {
         LOG(("SVM: Not loading bootstrap assets, no CubeRange found\n"));
         return;
     }
-    _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
-
-    // Temporarily enable the cubes we'll be using.
-    _SYS_enableCubes(cubes);
 
     for (unsigned i = 0; i < count; i++) {
         _SYSMetadataBootAsset &BA = vec[i];
@@ -117,9 +136,8 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
             continue;
         }
 
-        LOG(("SVM: Installing bootstrap asset group %s in slot %d on %d cube%s\n",
-            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot,
-            minCubes, minCubes == 1 ? "" : "s"));
+        LOG(("SVM: Installing bootstrap asset group %s in slot %d\n",
+            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot));
 
         if (!_SYS_asset_loadStart(loader, group, BA.slot, cubes)) {
             // Out of space. Erase the slot first.
@@ -166,9 +184,8 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo)
         LOG(("SVM: Finished instaling bootstrap asset group %s\n",
             SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
     }
-
-    _SYS_disableCubes(cubes);
 }
+
 
 void SvmRuntime::run(uint16_t appId)
 {
@@ -189,8 +206,8 @@ void SvmRuntime::run(uint16_t appId)
     // Initialize rodata segment
     SvmMemory::setFlashSegment(pInfo.rodata.data);
 
-    // Asset setup
-    xxxBootstrapAssets(pInfo);
+    // Setup that the loader will eventually be responsible for...
+    xxxBootstrapAssets(pInfo, xxxInitCubes(pInfo));
 
     // Clear RAM (including implied BSS)
     SvmMemory::erase();

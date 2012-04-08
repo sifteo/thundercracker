@@ -146,9 +146,12 @@ struct CubeID {
      * Detach any video buffer which was previously attached to this
      * cube. After this point, we'll refrain from sending any video updates
      * to this cube. The cube will retain its existing screen contents.
+     *
+     * Waits for all cubes to finish rendering before detaching.
      */
     void detachVideoBuffer() const {
         ASSERT(sys < NUM_SLOTS);
+        _SYS_finish();
         _SYS_setVideoBuffer(*this, 0);
     }
 
