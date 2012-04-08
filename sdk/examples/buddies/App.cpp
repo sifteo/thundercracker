@@ -1301,8 +1301,7 @@ void App::UpdateCubes(float dt)
 
 void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 {
-    // TODO: Get audio back in when I find out why it's asserting
-    //mChannel.play(audioAsset);
+    mChannel.play(audioAsset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
