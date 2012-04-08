@@ -39,7 +39,7 @@ static void logTitleInfo(Elf::ProgramInfo &pInfo)
 #endif
 }
 
-static _SYSCubeIDVector xxxInitCubes(Elf::ProgramInfo &pInfo)
+static _SYSCubeIDVector getCubeVector(Elf::ProgramInfo &pInfo)
 {
     /*
      * XXX: BIG HACK.
@@ -60,7 +60,6 @@ static _SYSCubeIDVector xxxInitCubes(Elf::ProgramInfo &pInfo)
     }
 
     _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
-    _SYS_enableCubes(cubes);
 
     return cubes;
 }
@@ -198,7 +197,19 @@ void SvmLoader::run(uint16_t appId)
     SvmMemory::setFlashSegment(pInfo.rodata.data);
 
     // Setup that the loader will eventually be responsible for...
-    xxxBootstrapAssets(pInfo, xxxInitCubes(pInfo));
+    {
+        // Enable the game's minimum set of cubes
+        _SYSCubeIDVector cv = getCubeVector(pInfo);
+        _SYS_enableCubes(cv);
+
+        // Temporary asset bootstrapper
+        xxxBootstrapAssets(pInfo, cv);
+
+        // PanicMessenger leaves CubeSlot out of sync with the cube's paint state.
+        // Reset all CubeSlot state before running the game.
+        _SYS_disableCubes(cv);
+        _SYS_enableCubes(cv);
+    }
 
     // Clear RAM (including implied BSS)
     SvmMemory::erase();

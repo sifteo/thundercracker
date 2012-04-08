@@ -38,24 +38,14 @@ void CubeSlots::enableCubes(_SYSCubeIDVector cv)
 {
     NeighborSlot::resetSlots(cv);
     Atomic::Or(CubeSlots::vecEnabled, cv);
-}
-
-void CubeSlots::disableCubes(_SYSCubeIDVector cv)
-{
-    Atomic::And(CubeSlots::vecEnabled, ~cv);
-}
-
-void CubeSlots::connectCubes(_SYSCubeIDVector cv)
-{
-    Atomic::Or(CubeSlots::vecConnected, cv);
 
     // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
     Atomic::Or(CubeSlots::expectStaleACK, cv);
 }
 
-void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+void CubeSlots::disableCubes(_SYSCubeIDVector cv)
 {
-    Atomic::And(CubeSlots::vecConnected, ~cv);
+    Atomic::And(CubeSlots::vecEnabled, ~cv);
 
     Atomic::And(CubeSlots::flashResetWait, ~cv);
     Atomic::And(CubeSlots::flashResetSent, ~cv);
@@ -66,9 +56,34 @@ void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 
+    resetCubeState(cv);
+
     // TODO: if any of the cubes in cv are currently part of a
     // neighbor-pair with any cubes that are still active, those
     // active cubes neeed to remove their now-defunct neighbors
+}
+
+void CubeSlots::connectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::Or(CubeSlots::vecConnected, cv);
+}
+
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::And(CubeSlots::vecConnected, ~cv);
+}
+
+void CubeSlots::resetCubeState(_SYSCubeIDVector cv)
+{
+    /*
+     * Calls resetState() on all cubes in 'cv'
+     */
+
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        instances[id].resetState();
+    }
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv)

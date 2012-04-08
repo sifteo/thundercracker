@@ -52,6 +52,7 @@ namespace CubeSlots {
     void solicitCubes(_SYSCubeID min, _SYSCubeID max);
     void connectCubes(_SYSCubeIDVector cv);
     void disconnectCubes(_SYSCubeIDVector cv);
+    void resetCubeState(_SYSCubeIDVector cv);
     
     static _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
         // For security/reliability, all cube vectors from game code must be checked

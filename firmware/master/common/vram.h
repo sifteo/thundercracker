@@ -111,6 +111,7 @@ struct VRAM {
         vbuf.lock = 0xFFFFFFFF;
         for (unsigned i = 0; i < arraysize(vbuf.cm1); i++)
             vbuf.cm1[i] = 0xFFFFFFFF;
+        vbuf.flags = _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT;
     }
 };
 

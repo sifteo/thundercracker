@@ -54,18 +54,22 @@ class CubeSlot {
     bool enabled() const {
         return !!(bit() & CubeSlots::vecEnabled);
     }
-	
-	bool connected() const {
+    
+    bool connected() const {
         return !!(bit() & CubeSlots::vecConnected);
     }
-	
-	void setConnected() {
-		CubeSlots::connectCubes(Intrinsic::LZ(id()));
-	}
-	
-	void setDisconnected() {
-		CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
-	}
+    
+    void setConnected() {
+        CubeSlots::connectCubes(Intrinsic::LZ(id()));
+    }
+    
+    void setDisconnected() {
+        CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
+    }
+
+    void resetState() {
+        paintControl.reset(this);
+    }
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;

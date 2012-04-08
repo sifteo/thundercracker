@@ -25,6 +25,7 @@ class PaintControl {
     void waitForPaint();
     void waitForFinish(CubeSlot *cube);
     void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp, bool allowContinuous);
+    void reset(CubeSlot *cube);
 
     // Called in ISR context
     void ackFrames(CubeSlot *cube, int32_t count);
