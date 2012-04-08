@@ -13,6 +13,7 @@
 #include "cubeslots.h"
 #include "systime.h"
 #include "cubecodec.h"
+#include "paintcontrol.h"
 
 
 /**
@@ -108,9 +109,18 @@ class CubeSlot {
 
     void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
 
-    void waitForPaint();
-    void waitForFinish();
-    void triggerPaint(SysTime::Ticks timestamp);
+    void waitForPaint() {
+        paintControl.waitForPaint();
+    }
+
+    void waitForFinish() {
+        paintControl.waitForFinish(vbuf);
+    }
+        
+    void triggerPaint(SysTime::Ticks timestamp) {
+        paintControl.triggerPaint(this, timestamp);
+    }
+
     uint64_t getHWID();
 
     uint16_t getRawBatteryV() const {
@@ -119,6 +129,14 @@ class CubeSlot {
 
     uint8_t getLastFrameACK() const {
         return framePrevACK;
+    }
+
+    bool hasValidFrameACK() const {
+        return CubeSlots::frameACKValid & bit();
+    }
+
+    _SYSVideoBuffer *getVBuf() const {
+        return vbuf;
     }
 
  private:
@@ -149,12 +167,10 @@ class CubeSlot {
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
     
-    SysTime::Ticks paintTimestamp;      // Used only by thread
     SysTime::Ticks flashDeadline;       // Used only by ISR
-    int32_t pendingFrames;
     uint32_t timeSyncState;             // XXX: For the current time-sync hack
 
-    // Packet encoder state
+    PaintControl paintControl;
     CubeCodec codec;
 
     // Byte variables
