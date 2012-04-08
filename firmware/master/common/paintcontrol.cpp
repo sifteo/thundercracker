@@ -15,9 +15,14 @@
 #   define PAINT_LOG(_x)
 #endif
 
+/*
+ * This object manages the somewhat complex asynchronous rendering pipeline.
+ * We try to balance fast asynchronous rendering with slower but more deliberate
+ * synchronous rendering.
+ */
 
 /*
- * Frame rate control parameters
+ * Frame rate control parameters:
  *
  * fpsLow --
  *    "Minimum" frame rate. If we're waiting more than this long

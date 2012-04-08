@@ -136,7 +136,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
             uint16_t index = offset + *reinterpret_cast<uint16_t*>(srcPA);
 
             VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, VRAM::index14(index));
+            VRAM::poke(*vbuf, addr, _SYS_TILE77(index));
             addr++;
 
             chunk -= sizeof(uint16_t);
@@ -150,7 +150,7 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
     if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
         while (count) {
             VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, VRAM::index14(index));
+            VRAM::poke(*vbuf, addr, _SYS_TILE77(index));
             count--;
             addr++;
             index++;

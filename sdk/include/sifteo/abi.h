@@ -232,7 +232,7 @@ union _SYSVideoRAM {
     };
 };
 
-/*
+/**
  * The _SYSVideoBuffer is a low-level data structure that serves to
  * collect graphics state updates so that the system can send them
  * over the radio to cubes.
@@ -245,23 +245,27 @@ union _SYSVideoRAM {
  * bitmaps at different resolutions, for the synchronization protocol
  * below.  These bitmaps are ordered MSB-first.
  *
+ * Synchronization Protocol
+ * ------------------------
+ *
  * To support the system's asynchronous access requirements, these
  * buffers have a very strict synchronization protocol that user code
  * must observe:
  *
  *  1. Set the 'lock' bit(s) for any words you plan to update,
- *     using Atomic::Store().
+ *     using an atomic store.
  *
  *  2. Update the VRAM buffer, using any method and in any order you like.
  *
- *  3. Set change bits in cm1, using Atomic::Or()
+ *  3. Set change bits in cm1, using an atomic OR such as
+ *     __builtin_or_and_fetch().
  *
- *  4. Set change bits in cm32, using Atomic::Or(). After this point the
+ *  4. Set change bits in cm32, using an atomic OR. After this point the
  *     system may start sending data over the radio at any time.
  *
- *  5. As soon after step (4), clear the lock bits you set in (1). Since
+ *  5. Soon after step (4), clear the lock bits you set in (1). Since
  *     the system treats lock bits as read-only, you can do this using
- *     Atomic::Store() again.
+ *     a plain atomic store.
  *
  * Note that cm32 is the primary trigger that the system uses in order
  * to determine if hardware VRAM needs to be updated. The lock bits do
@@ -294,6 +298,30 @@ union _SYSVideoRAM {
  * system calls will update cm32next instead of cm32, leaving it up to
  * the user to choose when to make those changes visible to the system
  * by OR'ing cm32next into cm32.
+ *
+ * This operation is performed by the provided 'unlock' primitive.
+ *
+ * Asynchronous Pipeline
+ *----------------------
+ *
+ * When working with the graphics subsystem, it's helpful to keep in mind
+ * the pipeline of asynchronous rendering stages:
+ * 
+ *   1. Changes are written to a locked vbuf (cm32next)
+ *   2. The vbuf is unlocked, changes can start to stream over the air (cm32 <- cm32next)
+ *   3. Streaming is finished (cm32 <- 0)
+ *   4. The cube hardware begins rendering a frame
+ *   5. The cube acknowledges rendering completion
+ *
+ * At any of these stages, a video buffer change can 'invalidate' the
+ * ongoing rendering, meaning we may need to render an additional frame before
+ * the final intended output is actually present on the display. Rendering is
+ * only considered to be 'finished' if we make it through steps 3-5 without
+ * any modifications to the video buffer.
+ *
+ * The system tracks this by taking advantage of the fact that cm32next is
+ * set immediately when a vbuf is locked. Therefore, we're only truly 'finished'
+ * with rendering if we reach step (5) and both cm32 and cm32next are zero.
  *
  * 'needPaint' OR'ed with cm32 at every unlock, and cleared only after
  * we schedule a hardware repaint operation on the cubes. Userspace

@@ -62,6 +62,7 @@ void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
     Atomic::And(CubeSlots::flashACKValid, ~cv);
     Atomic::And(CubeSlots::neighborACKValid, ~cv);
     Atomic::And(CubeSlots::hwidValid, ~cv);
+
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 

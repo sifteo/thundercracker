@@ -66,10 +66,6 @@ struct VRAM {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
-    static uint16_t index14(uint16_t i) {
-        return ((i << 2) & 0xFE00) | ((i << 1) & 0x00FE);
-    }
-
     static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
 
