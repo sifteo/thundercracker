@@ -114,11 +114,14 @@ class CubeSlot {
     }
 
     void waitForFinish() {
-        paintControl.waitForFinish(vbuf);
+        // Finish is only meaningful when we still have a vbuf attached.
+        if (vbuf)
+            paintControl.waitForFinish(this);
     }
         
     void triggerPaint(SysTime::Ticks timestamp) {
-        paintControl.triggerPaint(this, timestamp);
+        // Allow continuous rendering only when not loading assets
+        paintControl.triggerPaint(this, timestamp, !isAssetLoading());
     }
 
     uint64_t getHWID();

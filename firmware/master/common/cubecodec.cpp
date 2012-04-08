@@ -14,7 +14,7 @@
 using namespace Intrinsic;
 
 
-void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
+bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
     /*
      * Note that we have to sweep that change map as we go. Since
@@ -42,26 +42,24 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * This loop terminates when all of VRAM has been flushed, or when
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
+     *
+     * Returns true iff all VRAM has been flushed.
      */
+
+    bool flushed = false;
 
     // Emit buffered bits from the previous packet
     txBits.flush(buf);
 
     if (vb) {
         do {
-            /*
-             * This AND is important, it prevents out-of-bounds indexing
-             * or infinite looping if userspace gives us a bogus cm32
-             * value! This is equivalent to bounds-checking idx32 and addr
-             * below, as well as checking for infinite looping. Much more
-             * efficient to do it here though :)
-             */
-            uint32_t cm32 = vb->cm32 & 0xFFFF0000;
-
-            if (!cm32)
+            uint32_t cm16 = vb->cm16;
+            if (!cm16) {
+                flushed = true;
                 break;
+            }
 
-            uint32_t idx32 = CLZ(cm32);
+            uint32_t idx32 = CLZ(cm16) >> 1;
             ASSERT(idx32 < arraysize(vb->cm1));
             uint32_t cm1 = vb->cm1[idx32];
 
@@ -90,8 +88,10 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
             }
 
             if (!cm1) {
-                cm32 &= ROR(0x7FFFFFFF, idx32);
-                vb->cm32 = cm32;
+                // We operate at a 1:32 resolution, half that of the cm16.
+                // So, clear two bits at a time.
+                cm16 &= ROR(0x3FFFFFFF, idx32 << 1);
+                vb->cm16 = cm16;
             }
         } while (!buf.isFull());
     }
@@ -110,6 +110,8 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
         flushDSRuns(true);
         txBits.flush(buf);
     }
+
+    return flushed;
 }
 
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)

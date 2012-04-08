@@ -78,14 +78,14 @@ int ImageDecoder::tile(unsigned x, unsigned y, unsigned frame)
         // Sequential tiles
         case _SYS_AIF_PINNED: {
             unsigned location = x + (y + frame * header.height) * header.width;
-            return header.data + baseAddr + location;
+            return header.pData + baseAddr + location;
         }
 
         // Uncompressed tile array
         case _SYS_AIF_FLAT: {
             unsigned location = x + (y + frame * header.height) * header.width;
             uint16_t tile;
-            if (SvmMemory::copyROData(tile, header.data + (location << 1)))
+            if (SvmMemory::copyROData(tile, header.pData + (location << 1)))
                 return tile + baseAddr;
             return NO_TILE;
         }
@@ -138,7 +138,7 @@ SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
         // 8-bit index, relative to the next word address
         case _SYS_AIF_DUB_I8: {
             uint8_t value = 0;
-            SvmMemory::VirtAddr va = header.data + i * sizeof(value);
+            SvmMemory::VirtAddr va = header.pData + i * sizeof(value);
             SvmMemory::VirtAddr wordVA = va & ~(SvmMemory::VirtAddr)1;
             if (SvmMemory::copyROData(ref, value, va))
                 return wordVA + (value + 1) * sizeof(uint16_t);
@@ -149,7 +149,7 @@ SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
         // 16-bit index, relative to the next word address
         case _SYS_AIF_DUB_I16: {
             uint16_t value = 0;
-            SvmMemory::VirtAddr va = header.data + i * sizeof(value);
+            SvmMemory::VirtAddr va = header.pData + i * sizeof(value);
             if (SvmMemory::copyROData(ref, value, va))
                 return va + (value + 1) * sizeof(uint16_t);
             else

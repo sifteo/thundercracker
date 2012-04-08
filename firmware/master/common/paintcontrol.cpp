@@ -9,11 +9,6 @@
 #include "vram.h"
 #include "cube.h"
 
-#ifdef DEBUG_PAINT
-#   define PAINT_LOG(_x)    LOG(_x)
-#else
-#   define PAINT_LOG(_x)
-#endif
 
 /*
  * This object manages the somewhat complex asynchronous rendering pipeline.
@@ -88,7 +83,7 @@ void PaintControl::waitForPaint()
     }
 }
 
-void PaintControl::waitForFinish(_SYSVideoBuffer *vbuf)
+void PaintControl::waitForFinish(CubeSlot *cube)
 {
     /*
      * Wait until all previous rendering has finished, and all of VRAM
@@ -96,43 +91,46 @@ void PaintControl::waitForFinish(_SYSVideoBuffer *vbuf)
      * minimum frame rate. If no rendering is pending, we return
      * immediately.
      *
+     * Requires a valid attached video buffer.
+     *
      * To be 'finished', the following criteria must hold:
      *
      *   - Continuous rendering mode is disabled
-     *   - At least one full frame has been rendered since the last
-     *     unlock() which committed a nonzero set of changes to VRAM.
+     *   - At least one full frame has been rendered since the last VRAM::lock()
+     *
+     * We track this using the VRAM dirty bits, as documented in abi.h.
+     * These bits are polled on a watchdog timer that limits us to waiting
+     * at most for our longest frame period.
      */
 
-    PAINT_LOG(("PAINT[%d]: waitForFinish, vbuf=%p \n", id(), vbuf));
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+    ASSERT(vbuf);
 
-    if (!vbuf)
-        return;
-
-    uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
-
-    PAINT_LOG(("PAINT[%d]: waitForFinish, flags=%02x pending=%d\n",
-        id(), flags, pendingFrames));
+    // Disable continuous rendering now, if it was on. This may set _SYS_VBF_VRAM.
+    setFlags(vbuf, getFlags(vbuf) & ~_SYS_VF_CONTINUOUS);
 
     /*
-     * Disable continuous rendering now, if it was on.
+     * Flush out all dirty bits, one by one.
+     *
+     *   VRAM:     Flushed by radio ISR
+     *   RENDER:   Flushed by frame ACK
+     *
+     * We don't have to do any specific work here other than waiting, but
+     * if there's a problem with the frame ACK we may get stalled- so there
+     * is also a watchdog timer that waits for our longest frame period.
      */
-    if (flags & _SYS_VF_CONTINUOUS) {
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags & ~_SYS_VF_CONTINUOUS);
-        VRAM::unlock(*vbuf);
-    }
 
-    for (;;) {
+    SysTime::Ticks deadline = SysTime::ticks() + fpsLow;
+    while (vbuf->flags & _SYS_VBF_DIRTY_ALL) {
         Atomic::Barrier();
-        SysTime::Ticks now = SysTime::ticks();
 
-        if (now > (paintTimestamp + fpsLow)) {
+        // Just in case vramFlushed() has no way of triggering a one-shot
+        // render, it may need to enable continuous rendering briefly.
+        // Turn it back off here.
+        setFlags(vbuf, getFlags(vbuf) & ~_SYS_VF_CONTINUOUS);
+
+        if (SysTime::ticks() > deadline) {
             // Watchdog expired. Give up waiting, and forcibly reset pendingFrames.
-            pendingFrames = 0;
-            break;
-        }
-
-        if (pendingFrames <= 0 && (vbuf == 0 || vbuf->cm32 == 0)) {
-            // No pending renders or VRAM updates
             break;
         }
 
@@ -140,23 +138,23 @@ void PaintControl::waitForFinish(_SYSVideoBuffer *vbuf)
         Radio::halt();
     }
 
-    PAINT_LOG(("PAINT[%d]: waitForFinish done, flags=%02x pending=%d\n",
-        id(), flags, pendingFrames));
+    // We know rendering is quiet. Take this opportunity to reset.
+    pendingFrames = 0;
+    Atomic::And(vbuf->flags, ~_SYS_VBF_DIRTY_ALL);
 }
 
-void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
+void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp,
+    bool allowContinuous)
 {
     _SYSVideoBuffer *vbuf = cube->getVBuf();
 
     if (vbuf) {
-        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+
         int32_t pending = Atomic::Load(pendingFrames);
         int32_t newPending = pending;
 
-        PAINT_LOG(("PAINT[%d]: triggerPaint, flags=%02x pending=%d newPend=%d"
-            " needPaint=%x cm32next=%x cm32=%x\n",
-            id(), flags, pending, newPending, vbuf->needPaint, vbuf->cm32next,
-            vbuf->cm32));
+        bool needPaint = (vbuf->flags & _SYS_VBF_NEED_PAINT) != 0;
+        Atomic::And(vbuf->flags, ~_SYS_VBF_NEED_PAINT);
 
         /*
          * Keep pendingFrames above the lower limit. We make this
@@ -167,19 +165,23 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
             newPending = fpMin;
 
         /*
-         * Count all requested paint operations, so that we can
-         * loosely match them with acknowledged frames. This isn't a
-         * strict 1:1 mapping, but it's used to close the loop on
-         * repaint speed.
+         * If we're in continuous rendering, count every single
+         * Paint invocation for the purposes of Count all requested
+         * paint operations, so that we can loosely match them with
+         * acknowledged frames. This isn't a strict 1:1 mapping, but
+         * it's used to close the loop on repaint speed.
          *
          * We don't want to unlock() until we're actually ready to
          * start transmitting data over the radio, so we'll detect new
          * frames by either checking for bits that are already
          * unlocked (in needPaint) or bits that are pending unlock.
          */
-        uint32_t needPaint = vbuf->needPaint | vbuf->cm32next;
+
         if (needPaint)
             newPending++;
+
+        // Atomically apply our changes to pendingFrames.
+        Atomic::Add(pendingFrames, newPending - pending);
 
         /*
          * We turn on continuous rendering only when we're doing a
@@ -189,54 +191,20 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
          * cube is clearly pulling ahead of our ability to provide it
          * with frames.
          *
-         * We only allow continuous rendering when we aren't downloading
-         * assets to this cube. Continuous rendering makes flash downloading
-         * extremely slow- flash is strictly lower priority than graphics
-         * on the cube, but continuous rendering asks the cube to render
-         * graphics as fast as possible.
+         * If we're using one-shot rendering mode instead of continuous,
+         * rendering is triggered by vramFlushed().
          */
 
-        if (cube->isAssetLoading()) {
-            flags &= ~_SYS_VF_CONTINUOUS;
-        } else {
+        uint8_t flags = getFlags(vbuf);
+        if (allowContinuous) {
             if (newPending >= fpContinuous)
                 flags |= _SYS_VF_CONTINUOUS;
             if (newPending <= fpSingle)
                 flags &= ~_SYS_VF_CONTINUOUS;
+        } else {
+            flags &= ~_SYS_VF_CONTINUOUS;
         }
-                
-        /*
-         * If we're not using continuous mode, each frame is triggered
-         * explicitly by toggling a bit in the flags register.
-         *
-         * We can always trigger a render by setting the TOGGLE bit to
-         * the inverse of framePrevACK's LSB. If we don't know the ACK data
-         * yet, we have to punt and set continuous mode for now.
-         */
-        if (!(flags & _SYS_VF_CONTINUOUS) && needPaint) {
-            if (cube->hasValidFrameACK()) {
-                flags &= ~_SYS_VF_TOGGLE;
-                if (!(cube->getLastFrameACK() & 1))
-                    flags |= _SYS_VF_TOGGLE;
-            } else {
-                flags |= _SYS_VF_CONTINUOUS;
-            }
-        }
-
-        /*
-         * Atomically apply our changes to pendingFrames.
-         */
-        Atomic::Add(pendingFrames, newPending - pending);
-
-        /*
-         * Now we're ready to set the ISR loose on transmitting this frame over the radio.
-         */
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
-        VRAM::unlock(*vbuf);
-        vbuf->needPaint = 0;
-
-        PAINT_LOG(("PAINT[%d]: triggerPaint, pendingFrames=%d (%d), flags=%x\n",
-            id(), pendingFrames, newPending - pending, flags));
+        setFlags(vbuf, flags);
     }
 
     /*
@@ -247,3 +215,69 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
      */
     paintTimestamp = timestamp;
 }
+
+void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
+{
+    /*
+     * One or more frames finished rendering on the cube.
+     * Use this to update our pendingFrames accumulator.
+     *
+     * If we are _not_ in continuous rendering mode, we can use this
+     * to clear the 'render' dirty bit, indicating that anything
+     * which was dirty when this frame started has now been cleaned.
+     */
+
+    Atomic::Add(pendingFrames, -(int32_t)count);
+
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+    if (vbuf && (getFlags(vbuf) & _SYS_VF_CONTINUOUS) == 0)
+        Atomic::And(vbuf->flags, ~_SYS_VBF_DIRTY_RENDER);
+}
+
+void PaintControl::vramFlushed(CubeSlot *cube)
+{
+    /*
+     * Finished flushing VRAM out to the cubes. This is only called when
+     * we've fully emptied our queue of pending radio transmissions, and
+     * the cube's VRAM should match our local copy exactly.
+     *
+     * If we are in continuous rendering mode, this isn't really an
+     * important event. But if we're in synchronous mode, this indicates
+     * that everything in the VRAM dirty bit can now be tracked
+     * by the RENDER dirty bit; in other words, all dirty VRAM has been
+     * flushed, and we can start a clean frame rendering.
+     */
+
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+    if (!vbuf)
+        return;
+    
+    uint32_t vf = getFlags(vbuf);
+    if (vf & _SYS_VF_CONTINUOUS)
+        return;
+    
+    if ((vbuf->flags & _SYS_VBF_DIRTY_VRAM) == 0)
+        return;
+    
+    Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
+
+    /*
+     * We can always trigger a render by setting the TOGGLE bit to
+     * the inverse of framePrevACK's LSB. If we don't know the ACK data
+     * yet, we have to punt and set continuous mode for now!
+     */
+
+    if (cube->hasValidFrameACK()) {
+        vf &= ~_SYS_VF_TOGGLE;
+        if (!(cube->getLastFrameACK() & 1))
+            vf |= _SYS_VF_TOGGLE;
+    } else {
+        vf |= _SYS_VF_CONTINUOUS;
+    }
+
+    // setFlags will set the DIRTY flag, but we can clear it.
+    setFlags(vbuf, vf);
+    Atomic::And(vbuf->flags, ~_SYS_VBF_DIRTY_VRAM);
+}
+
+

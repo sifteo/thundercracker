@@ -56,7 +56,7 @@ void PanicMessenger::paint(_SYSCubeID cube)
     slot.setVideoBuffer(&avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm32 != 0) {
+    while (avb->vbuf.cm16 != 0) {
         Atomic::Barrier();
         Radio::halt();
     }
@@ -76,7 +76,7 @@ void PanicMessenger::paint(_SYSCubeID cube)
     VRAM::unlock(avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm32 != 0) {
+    while (avb->vbuf.cm16 != 0) {
         Atomic::Barrier();
         Radio::halt();
     }

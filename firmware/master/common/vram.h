@@ -42,13 +42,7 @@ struct VRAM {
         return Intrinsic::LZ(indexCM1(addr));
     }
 
-    static uint32_t maskCM32(uint16_t addr) {
-        ASSERT(addr < _SYS_VRAM_WORDS);
-        STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < 32);
-        return Intrinsic::LZ(addr >> 5);
-    }
-
-    static uint32_t maskLock(uint16_t addr) {
+    static uint32_t maskCM16(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 4) < 32);
         return Intrinsic::LZ(addr >> 4);
@@ -67,19 +61,14 @@ struct VRAM {
     }
 
     static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
+        Atomic::Or(vbuf.flags, _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT);
         ASSERT(addr < _SYS_VRAM_WORDS);
-
-        vbuf.lock |= maskLock(addr);
-        vbuf.cm32next |= maskCM32(addr);
-        Atomic::Barrier();
+        vbuf.lock |= maskCM16(addr);
     }
 
     static void unlock(_SYSVideoBuffer &vbuf) {
-        Atomic::Barrier();
-        Atomic::Or(vbuf.cm32, vbuf.cm32next);
+        Atomic::Or(vbuf.cm16, vbuf.lock);
         vbuf.lock = 0;
-        Atomic::Or(vbuf.needPaint, vbuf.cm32next);
-        vbuf.cm32next = 0;
     }
 
     static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word) {
@@ -120,7 +109,6 @@ struct VRAM {
 
     static void init(_SYSVideoBuffer &vbuf) {
         vbuf.lock = 0xFFFFFFFF;
-        vbuf.cm32next = 0xFFFFFFFF;
         for (unsigned i = 0; i < arraysize(vbuf.cm1); i++)
             vbuf.cm1[i] = 0xFFFFFFFF;
     }

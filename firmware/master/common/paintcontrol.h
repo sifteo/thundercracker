@@ -9,6 +9,7 @@
 #include <sifteo/abi.h>
 #include "systime.h"
 #include "machine.h"
+#include "vram.h"
 
 class CubeSlot;
 
@@ -22,16 +23,26 @@ class PaintControl {
  public:
 
     void waitForPaint();
-    void waitForFinish(_SYSVideoBuffer *vbuf);
-    void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp);
+    void waitForFinish(CubeSlot *cube);
+    void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp, bool allowContinuous);
 
-    void ackFrames(uint8_t count) {
-         Atomic::Add(pendingFrames, -(int32_t)count);
-    }
+    // Called in ISR context
+    void ackFrames(CubeSlot *cube, int32_t count);
+    void vramFlushed(CubeSlot *cube);
 
  private:
     SysTime::Ticks paintTimestamp;
     int32_t pendingFrames;
+    bool finished;
+
+    uint8_t getFlags(_SYSVideoBuffer *vbuf) {
+        return VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+    }
+
+    void setFlags(_SYSVideoBuffer *vbuf, uint8_t flags) {
+        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
+        VRAM::unlock(*vbuf);
+    }
 };
 
 

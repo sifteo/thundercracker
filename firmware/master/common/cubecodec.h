@@ -91,7 +91,9 @@ class CubeCodec {
         codeS = -1;
     }
 
-    void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
+    // Returns 'true' if finished.
+    bool encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
+
     bool encodeVRAMAddr(PacketBuffer &buf, uint16_t addr);
     bool encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data);
 
@@ -166,7 +168,7 @@ class CubeCodec {
         uint16_t ptr = codePtr - offset;
         ptr &= _SYS_VRAM_WORD_MASK;
 
-        if ((vb->lock & VRAM::maskLock(ptr)) ||
+        if ((vb->lock & VRAM::maskCM16(ptr)) ||
             (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
 
             // Can't match a locked or modified word

@@ -108,7 +108,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     // First priority: Send video buffer updates
 
-    codec.encodeVRAM(tx.packet, vbuf);
+    if (codec.encodeVRAM(tx.packet, vbuf))
+        paintControl.vramFlushed(this);
 
     // Second priority: Download assets to flash
 
@@ -232,15 +233,15 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
         // This ACK includes a valid frame_count counter
 
+        uint8_t delta = ack->frame_count - framePrevACK;
+        framePrevACK = ack->frame_count;
+
         if (CubeSlots::frameACKValid & bit()) {
             // Some frame(s) finished rendering.
-            paintControl.ackFrames(ack->frame_count - framePrevACK);
-
+            paintControl.ackFrames(this, delta);
         } else {
             Atomic::SetLZ(CubeSlots::frameACKValid, id());
         }
-
-        framePrevACK = ack->frame_count;
     }
 
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
