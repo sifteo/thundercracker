@@ -6,10 +6,6 @@ TC_DIR = ../../..
 include $(TC_DIR)/firmware/master/Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
-# Test Jig specific sources
-OBJS_STM32 +=   $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o    \
-                $(TC_DIR)/firmware/master/stm32/i2c.stm32.o
-
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -I../common -I../../include -DNO_USERSPACE_HEADERS
 CFLAGS_STM32 := -I../stm32 -I../testjig
@@ -21,7 +17,7 @@ CDEPS := ../common/syscall-table.def
 
 all: $(BIN)
 
-$(BIN): $(OBJS_STM32)
+$(BIN): $(OBJS_STM32_TESTJIG)
 	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
