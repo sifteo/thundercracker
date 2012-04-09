@@ -3,7 +3,7 @@ GameAssets = group{}
 -- Test = image{"font_bigger_2.png", quality=10}
 --TestGlow = image{"font_bigger_2_glow.png", quality=10}
 -- Menu
-BgTile = image{ "bg.png" }
+BgTile = image{ "fabric_basic.png" }
 Tip0 = image{ "Tip0.png" }
 Tip1 = image{ "Tip1.png" }
 Tip2 = image{ "Tip2.png" }
