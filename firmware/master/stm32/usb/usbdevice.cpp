@@ -9,6 +9,7 @@
 #include "usb/usbdefs.h"
 
 #include "hardware.h"
+#include "board.h"
 #include "tasks.h"
 #include "assetmanager.h"
 
@@ -21,7 +22,11 @@ static const Usb::DeviceDescriptor dev = {
     0,                              // bDeviceProtocol
     64,                             // bMaxPacketSize0
     UsbDevice::VendorID,            // idVendor
+#if (BOARD == BOARD_TEST_JIG)
+    UsbDevice::TestJigProductID,    // idProduct
+#else
     UsbDevice::ProductID,           // idProduct
+#endif
     0x0200,                         // bcdDevice
     1,                              // iManufacturer
     2,                              // iProduct
@@ -88,7 +93,11 @@ static const struct {
 static const char *descriptorStrings[] = {
     "x",
     "Sifteo Inc.",
+#if (BOARD == BOARD_TEST_JIG)
+    "Sifteo TestJig",
+#else
     "Thundercracker",
+#endif
 };
 
 /*
