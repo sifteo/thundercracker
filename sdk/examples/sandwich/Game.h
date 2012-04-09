@@ -38,6 +38,7 @@ public:
   ViewSlot* ViewAt(int i) { return mViews+i; }
   ViewSlot* ViewBegin() { return mViews; }
   ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
+  ViewSlot::Iterator Views() { return ViewSlot::Iterator(0xffffffff); }
   unsigned AnimFrame() const { return mAnimFrames; }
   Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);

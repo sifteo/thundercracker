@@ -31,6 +31,7 @@ public:
 
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
+	unsigned GetCubeMask() const { return 1 << (31-GetCubeID()); }
 	ViewMode Graphics() const { ASSERT(mFlags.view); return ViewMode(GetCube()->vbuf); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
@@ -65,6 +66,26 @@ private:
 	void SanityCheckVram();
 	void EvictSecondaryView(unsigned viewId, bool doFlush);
 	ViewSlot* FindIdleView();
+
+public:
+	struct Iterator {
+		unsigned mask;
+		unsigned currentId;
+
+		Iterator(unsigned setMask) : mask(setMask & CUBE_MASK), currentId(0) {
+		}
+
+		bool MoveNext() {
+			//unsigned oldMask = mask;
+			//currentId = __builtin_clz(mask);
+			currentId = fastclz(mask);
+			mask ^= (0x80000000 >> currentId);
+			return currentId != 32;
+		}
+
+		ViewSlot& operator*();
+		ViewSlot* operator->();
+	};
 };
 
 extern ViewSlot *pInventory;

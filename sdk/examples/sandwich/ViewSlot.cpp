@@ -3,6 +3,14 @@
 ViewSlot* pInventory = 0;
 ViewSlot* pMinimap = 0;
 
+ViewSlot& ViewSlot::Iterator::operator*() {
+	return *gGame.ViewAt(currentId);
+}
+
+ViewSlot* ViewSlot::Iterator::operator->() {
+	return gGame.ViewAt(currentId);
+}
+
 Cube* ViewSlot::GetCube() const {
 	return gCubes + (this - gGame.ViewBegin());
 }

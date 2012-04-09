@@ -14,3 +14,4 @@ public:
 		return (ViewSlot*)this; 
 	}
 };
+
