@@ -43,18 +43,20 @@ void collisions(Thing **things, int num_things){
     }
 }
 
+
 void main()
 {
     static TimeStep timeStep;
     static World world;
-    
-    static LPlatform platform1(world, 0, Vec2(64, 64));
-    static Platform platform2(world, 1, Vec2(32, 96));
-    static Turtle michelangelo(world, 2, Vec2(32, 32));
+   
+    int id=0;
+    static Turtle michelangelo(world, id++, Vec2(32, 32));
+    static LPlatform platform1(world, id++, Vec2(64, 64));
+    static Platform platform2(world, id++, Vec2(32, 96));
+    static Thing static_platform(world, id++, Vec2(32, 64));
 
-    const int NUM_THINGS = 3;
-    // Make sure to put Turtles first so they can set world.isTurtleMoving
-    static Thing *things[NUM_THINGS] = {&michelangelo, &platform1, &platform2};
+    static Thing *things[] = {&michelangelo, &static_platform, &platform1, &platform2};
+    static Thing *platforms[] = {&static_platform, &platform1, &platform2};
 
 
     loadAssets();
@@ -69,19 +71,25 @@ void main()
         }
     }
     
-    michelangelo.setSpriteImage(vid, Michelangelo);
-
+    static_platform.setSpriteImage(vid, tile_platform_static01);
     platform1.setSpriteImage(vid, tile_platform01);
     platform2.setSpriteImage(vid, tile_platform02);
+    michelangelo.setSpriteImage(vid, Michelangelo);
 
     while (1) {
         world.mainLoopReset();
-
-        for(int i=0; i < NUM_THINGS; i++) things[i]->think(cube.id());
         float dt = timeStep.delta().seconds();
-        for(int i=0; i < NUM_THINGS; i++) things[i]->act(dt);
-        collisions(things, NUM_THINGS);
-        for(int i=0; i < NUM_THINGS; i++) things[i]->draw(vid);
+
+        if ( 1 || world.platformsMustStop){
+            michelangelo.think(cube.id());
+            michelangelo.act(dt);
+        } else {
+            for(int i=0; i < arraysize(platforms); i++) platforms[i]->think(cube.id());
+            for(int i=0; i < arraysize(platforms); i++) platforms[i]->act(dt);
+            collisions(platforms, arraysize(platforms));
+        }
+
+        for(int i=0; i < arraysize(things); i++) things[i]->draw(vid);
 
         System::paint();
         timeStep.next();

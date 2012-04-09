@@ -5,25 +5,25 @@
 
 class Platform : public Thing {
   private :
-    typedef Platform super; // Private prevents erroneous use by other classes.
+    typedef Thing super; // Private prevents erroneous use by other classes.
 
   public:
 
     Platform(World &world, int id, Int2 pos) : Thing(world, id, pos) {} 
 
     virtual void think(_SYSCubeID cubeId){
+        if (pWorld->platformsMustStop){
+            vel = Vec2(0.0f, 0.0f);
+            pos = nearestCellCoordinate(pos);
+            return;
+        }
+
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
         const float TILT_ACCELERATION = 2.0;
         vel.x += (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
         vel.y += (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
     }
-
-    virtual void act(float dt){
-        if (pWorld->isTurtleMoving) return;
-        super::act(dt);
-    }
 };
-
 
 class LPlatform : public Platform {
   private :
@@ -58,30 +58,32 @@ class LPlatform : public Platform {
         switch(orientation){
             case ORIENTATION_TOP_LEFT:
                 // top right
-                result[0] =Rect(pos.x + PIXELS_PER_GRID, pos.y,     PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[0] =Rect(pos.x + World::PIXELS_PER_CELL, pos.y,     World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 // bottom
-                result[1] = Rect(pos.x, pos.y + PIXELS_PER_GRID, 2 * PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[1] = Rect(pos.x, pos.y + World::PIXELS_PER_CELL, 2 * World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 break;
             case ORIENTATION_TOP_RIGHT:
                 // top left
-                result[0] = Rect(pos.x, pos.y, PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[0] = Rect(pos.x, pos.y, World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 // bottom
-                result[1] = Rect(pos.x, pos.y + PIXELS_PER_GRID, 2 * PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[1] = Rect(pos.x, pos.y + World::PIXELS_PER_CELL, 2 * World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 break;
             case ORIENTATION_BOTTOM_LEFT:
                 // top
-                result[0] = Rect(pos.x, pos.y, 2 * PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[0] = Rect(pos.x, pos.y, 2 * World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 // bottom right
-                result[1] = Rect(pos.x, pos.y + PIXELS_PER_GRID, PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[1] = Rect(pos.x, pos.y + World::PIXELS_PER_CELL, World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 break;
             case ORIENTATION_BOTTOM_RIGHT:
             default:
                 // top
-                result[0] = Rect(pos.x, pos.y, 2 * PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[0] = Rect(pos.x, pos.y, 2 * World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
                 // bottom left
-                result[1] = Rect(pos.x, pos.y, PIXELS_PER_GRID, PIXELS_PER_GRID);
+                result[1] = Rect(pos.x, pos.y, World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
         }
     }
+
+
 
 };
 
