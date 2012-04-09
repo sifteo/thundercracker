@@ -194,6 +194,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
         case GameStateIndex_PlayScored:
             break;
+
         }
         break;
 
@@ -513,7 +514,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 if (fabs(mPanning) > 86.f)
                 {
                     GameStateMachine::sOnEvent(EventID_Start, EventData());
-                    newStateIndex = CubeStateIndex_StartOfRoundScored;
+                    // refresh after event handling
+                    newStateIndex = getCurrentStateIndex();
                 }
             }
             break;
@@ -540,6 +542,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case CubeStateIndex_StartOfRoundScored:
+    case CubeStateIndex_StoryStartOfRound:
         switch (eventID)
         {
         case EventID_EnterState:
@@ -592,6 +595,28 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         CubeStateIndex_ShuffleScored :
                         CubeStateIndex_NotWordScored;
             break;
+        }
+        break;
+
+    case CubeStateIndex_NotWordScored:
+        switch (eventID)
+        {
+        case EventID_GameStateChanged:
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_PauseMenu:
+            case GameStateIndex_MainMenu:
+                {
+                    Cube& c = getCube();
+                    VidMode_BG0_SPR_BG1 vid(c.vbuf);
+                    WordGame::hideSprites(vid);
+                    newStateIndex = CubeStateIndex_Menu;
+                }
+                break;
+
+            default:
+                break;
+            }
         }
         break;
 
@@ -1225,18 +1250,16 @@ void CubeStateMachine::paint()
     {
         return;
     }
+
     mPainting = true;
     Cube& c = getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    vid.init();
     BG1Helper bg1(c);
 
     switch (getCurrentStateIndex())
     {
-    case CubeStateIndex_Menu:
-        break;
-
     case CubeStateIndex_Title:
+        vid.init();
         {
             // FIXME vertical words
         /*    const Sifteo::AssetImage& bg =
@@ -1346,7 +1369,21 @@ void CubeStateMachine::paint()
         }
         break;
 
+    case CubeStateIndex_Menu:
+        if (&getCube() == WordGame::instance()->getMenuCube())
+        {
+            mPainting = false;
+            return;
+        }
+        else
+        {
+            vid.init();
+            vid.BG0_drawAsset(Vec2(0,0), MenuBlank);
+        }
+        break;
+
     default:
+        vid.init();
         vid.BG0_drawAsset(Vec2(0,0), TileBG);
         paintLetters(vid, bg1, Font1Letter, true);
         vid.BG0_setPanning(Vec2(0.f, 0.f));
@@ -2117,3 +2154,11 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
     tiltDirection = (start + maxLetters - newLettersStart) % maxLetters;
     return allMatch && tiltDirection != 0; // 1: right, 2: left
 }
+
+
+void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
+{
+    DEBUG_LOG(("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, getCube().id()));
+    StateMachine::setState(newStateIndex, oldStateIndex);
+}
+

@@ -30,6 +30,7 @@ enum AnimType
     AnimType_MetaTilesExit,
     AnimType_MetaTilesReveal,
     AnimType_NormalTilesReveal,
+    AnimType_MenuSpareCube,
 
     NumAnimTypes
 };

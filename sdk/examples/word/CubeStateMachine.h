@@ -66,6 +66,9 @@ public:
     void startHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
     void stopHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
 
+protected:
+    void setState(unsigned newStateIndex, unsigned oldStateIndex);
+
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
     AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main) const;

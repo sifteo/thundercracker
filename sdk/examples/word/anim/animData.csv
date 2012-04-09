@@ -20,3 +20,4 @@
 "AnimType_MetaTilesExit","x",1.1,"FALSE"
 "AnimType_MetaTilesReveal","x",1.1,"FALSE"
 "AnimType_NormalTilesReveal","x",1.1,"FALSE"
+"AnimType_MenuSpareCube","x",1,"TRUE"

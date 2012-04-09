@@ -517,6 +517,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         // if you are drawing/animating the other cubes, do your work here
                     // do your implementation-specific drawing here
                         // NOTE: this event should never have its default handler skipped.
+                        WordGame::onEvent(EventID_Paint, EventData());
                         break;
 
                     case MENU_UNEVENTFUL:

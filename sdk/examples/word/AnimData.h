@@ -551,6 +551,7 @@ const static AnimData animData[] =
     { 1.1f, false, 0, &animObjData[0]},    // AnimType_MetaTilesExit
     { 1.1f, false, 0, &animObjData[0]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 0, &animObjData[0]},    // AnimType_NormalTilesReveal
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_MenuSpareCube
     { 1.f, true, 2, &animObjData[0]},    // AnimType_NotWord
     { 0.5f, false, 2, &animObjData[2]},    // AnimType_SlideL
     { 0.5f, false, 2, &animObjData[4]},    // AnimType_SlideR
@@ -572,6 +573,7 @@ const static AnimData animData[] =
     { 1.1f, false, 2, &animObjData[50]},    // AnimType_MetaTilesExit
     { 1.1f, false, 2, &animObjData[67]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 2, &animObjData[69]},    // AnimType_NormalTilesReveal
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_MenuSpareCube
     { 1.f, true, 3, &animObjData[19]},    // AnimType_NotWord
     { 0.5f, false, 3, &animObjData[22]},    // AnimType_SlideL
     { 0.5f, false, 3, &animObjData[25]},    // AnimType_SlideR
@@ -593,5 +595,6 @@ const static AnimData animData[] =
     { 1.1f, false, 3, &animObjData[64]},    // AnimType_MetaTilesExit
     { 1.1f, false, 3, &animObjData[71]},    // AnimType_MetaTilesReveal
     { 1.1f, false, 3, &animObjData[74]},    // AnimType_NormalTilesReveal
+    { 1.f, true, 0, &animObjData[0]},    // AnimType_MenuSpareCube
 };
 

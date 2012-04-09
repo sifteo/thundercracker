@@ -16,6 +16,7 @@ IconLocked0 = image{ "IconLocked0.png" }
 IconLocked1 = image{ "IconLocked1.png" }
 IconLocked2 = image{ "IconLocked2.png" }
 IconLocked3 = image{ "IconLocked3.png" }
+MenuBlank = image{"menu_blank.png"}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_tilt.png", pinned=true, width=16, height=16, quality=10}
