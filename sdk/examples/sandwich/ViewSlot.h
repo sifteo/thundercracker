@@ -68,13 +68,16 @@ private:
 	ViewSlot* FindIdleView();
 
 public:
-	struct Iterator {
+	class Iterator {
+	private:
+		friend class Game;
 		unsigned mask;
 		unsigned currentId;
 
-		Iterator(unsigned setMask) : mask(setMask & CUBE_MASK), currentId(0) {
+		Iterator(unsigned setMask) : mask(setMask), currentId(0) {
 		}
 
+	public:
 		bool MoveNext() {
 			//unsigned oldMask = mask;
 			//currentId = __builtin_clz(mask);
@@ -83,8 +86,15 @@ public:
 			return currentId < 32;
 		}
 
+		bool operator==(const Iterator& i) { return currentId == i.currentId; }
+		bool operator!=(const Iterator& i) { return currentId != i.currentId; }
+
+		bool operator==(const ViewSlot* p) { return p->GetCubeID() == currentId; }
+		bool operator!=(const ViewSlot* p) { return p->GetCubeID() != currentId; }
+
 		ViewSlot& operator*();
 		ViewSlot* operator->();
+		ViewSlot* ptr();
 	};
 };
 

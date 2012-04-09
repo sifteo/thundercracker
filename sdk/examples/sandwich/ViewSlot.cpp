@@ -11,12 +11,16 @@ ViewSlot* ViewSlot::Iterator::operator->() {
 	return gGame.ViewAt(currentId);
 }
 
+ViewSlot* ViewSlot::Iterator::ptr() {
+	return gGame.ViewAt(currentId);
+}
+
 Cube* ViewSlot::GetCube() const {
-	return gCubes + (this - gGame.ViewBegin());
+	return gCubes + (this - gGame.ViewAt(0));
 }
 
 Cube::ID ViewSlot::GetCubeID() const {
-	return this - gGame.ViewBegin();
+	return this - gGame.ViewAt(0);
 }
 
 bool ViewSlot::Touched() const {
@@ -230,8 +234,9 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 }
 
 ViewSlot* ViewSlot::FindIdleView() {
-	for (ViewSlot *p=gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) {
-		if (p->ViewType() == VIEW_IDLE) { return p; }
+	ViewSlot::Iterator p = gGame.ListViews();
+	while(p.MoveNext()) {
+		if (p->ViewType() == VIEW_IDLE) { return p.ptr(); }
 	}
 	return 0;
 }

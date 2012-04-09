@@ -32,7 +32,8 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 }
 
 void Game::WinScreen() {
-	ViewSlot* views[3] = { mPlayer.View(), ViewBegin(), ViewBegin() };
+	ViewSlot::Iterator p = ListViews();
+	ViewSlot* views[3] = { mPlayer.View(), p.ptr(), p.ptr() };
 
 	ShowDialog(views[0], NPC_Detail_pearl_detail, "At last!\nThe Sandwich Eternis\nis complete!");
 	

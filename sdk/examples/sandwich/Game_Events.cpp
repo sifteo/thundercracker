@@ -97,7 +97,8 @@ void Game::OnTrapdoor(Room *pRoom) {
 }
 
 void Game::OnInventoryChanged() {
-  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+  ViewSlot::Iterator p = ListViews();
+  while(p.MoveNext()) {
     p->RefreshInventory();
   }
   // demo end-condition hack
@@ -304,15 +305,17 @@ void Game::OnUseEquipment() {
 
 bool Game::OnTriggerEvent(unsigned type, unsigned id) {
   switch(type) {
-    case EVENT_ADVANCE_QUEST_AND_REFRESH:
+    case EVENT_ADVANCE_QUEST_AND_REFRESH: {
       mState.AdvanceQuest();
       mMap.RefreshTriggers();
-      for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+      ViewSlot::Iterator p = ListViews();
+      while(p.MoveNext()) {
         if (p->ShowingRoom()) {
           p->Restore(false);
         }
       }
       break;
+    }
     case EVENT_ADVANCE_QUEST_AND_TELEPORT: {
       mState.AdvanceQuest();
       const QuestData* quest = mState.Quest();
@@ -331,10 +334,11 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         mState.FlagTrigger(door.trigger);
         //Room* targetRoom = mMap.GetRoom(door.trigger.room);
         bool didRestore = false;
-        for(ViewSlot *p = ViewBegin(); p!=ViewEnd(); ++p) {
+        ViewSlot::Iterator p = ListViews();
+        while(p.MoveNext()) {
           if (p->ShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
             p->GetRoomView()->Restore();
-            RoomNod(p);
+            RoomNod(p.ptr());
             didRestore = true;
             break;
           }
@@ -353,7 +357,9 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         break;
       }
     }
-    default: return false;
+    default: {
+      return false;
+    }
   }
   return true;
 }

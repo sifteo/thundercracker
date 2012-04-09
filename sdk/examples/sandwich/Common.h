@@ -7,7 +7,7 @@
 using namespace Sifteo;
 
 // Cube Shmutz
-#define CUBE_MASK (((1<<NUM_CUBES)-1)<<(32-NUM_CUBES))
+#define CUBE_ALLOC_MASK (((1<<NUM_CUBES)-1)<<(32-NUM_CUBES))
 
 extern Cube gCubes[NUM_CUBES];
 

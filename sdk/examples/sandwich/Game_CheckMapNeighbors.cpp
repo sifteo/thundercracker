@@ -40,7 +40,9 @@ void Game::CheckMapNeighbors() {
   mNeighborDirty = false;
 
   ViewSlot *root = mPlayer.View();
-  if (!root->ShowingRoom()) { return; }
+  if (!root->ShowingRoom()) { 
+    return; 
+  }
   
   VisitorStatus status;
   status.visitMask = 0x00000000;
@@ -51,20 +53,17 @@ void Game::CheckMapNeighbors() {
     result = VisitMapView(&status, root, root->GetRoomView()->Location());
   } while(result != RESULT_OKAY);
   
-  if (status.changeMask) {
-    PlaySfx(sfx_neighbor);
-  }
-
   unsigned newChangeMask = 0;
-  ViewSlot::Iterator i(~status.visitMask);
+  ViewSlot::Iterator i = ListViews(~status.visitMask);
   while(i.MoveNext()) {
-    LOG(("HIDING %d\n", i->GetCubeID()));
     if (i->HideLocation(false)) {
       newChangeMask |= i->GetCubeMask();
     }
   }
 
-  if (newChangeMask && !status.changeMask) {
+  if (status.changeMask) {
+    PlaySfx(sfx_neighbor);
+  } else if (newChangeMask) {
     PlaySfx(sfx_deNeighbor);
   }
 

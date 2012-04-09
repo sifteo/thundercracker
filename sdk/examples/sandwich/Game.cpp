@@ -16,7 +16,8 @@ void Game::Paint(bool sync) {
   }
   SystemTime now = SystemTime::now();
   mPlayer.Update();
-  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+  ViewSlot::Iterator p = ListViews();
+  while(p.MoveNext()) {
     p->Update();
   }
   DoPaint(sync);
@@ -141,7 +142,8 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   unsigned roomId = mPlayer.GetRoom()->Id();
   
   // blank other cubes
-  for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
+  ViewSlot::Iterator p = ListViews();
+  while(p.MoveNext()) {
     if (p != view) { p->HideLocation(); }
   }
 
@@ -219,7 +221,8 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 void Game::ScrollTo(unsigned roomId) {
   // blank other cubes
   ViewSlot *pView = mPlayer.CurrentView()->Parent();
-  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+  ViewSlot::Iterator p = ListViews();
+  while(p.MoveNext()) {
     if (p != pView) { p->HideLocation(false); }
   }
   // hide sprites and overlay
@@ -260,7 +263,8 @@ void Game::Slide(ViewSlot* view) {
 }
 
 bool Game::AnyViewsTouched() {
-  for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+  ViewSlot::Iterator p = ListViews();
+  while(p.MoveNext()) {
     if (p->Touched()) { return true; }
   }
   return false;

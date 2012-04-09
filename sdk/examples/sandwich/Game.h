@@ -29,6 +29,9 @@ private:
   uint8_t mNeedsSync;
   uint8_t mIsDone;
 
+  uint32_t mActiveViewMask;
+  uint32_t mLockedViewMask;
+
 public:
 
   // getters
@@ -36,9 +39,7 @@ public:
   Map* GetMap() { return &mMap; }
   Player* GetPlayer() { return &mPlayer; }
   ViewSlot* ViewAt(int i) { return mViews+i; }
-  ViewSlot* ViewBegin() { return mViews; }
-  ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
-  ViewSlot::Iterator Views() { return ViewSlot::Iterator(0xffffffff); }
+  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { return ViewSlot::Iterator(mask & mActiveViewMask); }
   unsigned AnimFrame() const { return mAnimFrames; }
   Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);

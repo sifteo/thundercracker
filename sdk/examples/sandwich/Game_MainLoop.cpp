@@ -10,6 +10,9 @@ void Game::onNeighbor(
 void Game::MainLoop() {
 	ASSERT(this == &gGame);
 	
+	mActiveViewMask = CUBE_ALLOC_MASK;
+	mLockedViewMask = 0x00000000;
+
   	//---------------------------------------------------------------------------
   	// INTRO
 
@@ -35,8 +38,9 @@ void Game::MainLoop() {
 	mState.Init();
 	mMap.Init();
 	mPlayer.Init(pPrimary);
-	for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
-		if (v->GetCube() != pPrimary) { v->Init(); }
+	ViewSlot::Iterator p = ListViews();
+	while(p.MoveNext()) {
+		if (p->GetCube() != pPrimary) { p->Init(); }
 	}
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
@@ -89,7 +93,8 @@ void Game::MainLoop() {
 	        }
 	      	#endif
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
-	      		for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+	      		ViewSlot::Iterator p = ListViews();
+				while(p.MoveNext()) {
 	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
 	      				p->GetRoomView()->StartShake();
 	      				p->GetRoomView()->Lock();
