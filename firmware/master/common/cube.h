@@ -67,10 +67,6 @@ class CubeSlot {
         CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
     }
 
-    void resetState() {
-        paintControl.reset(this);
-    }
-
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
@@ -125,7 +121,7 @@ class CubeSlot {
         
     void triggerPaint(SysTime::Ticks timestamp) {
         // Allow continuous rendering only when not loading assets
-        paintControl.triggerPaint(this, timestamp, !isAssetLoading());
+        paintControl.triggerPaint(this, timestamp);
     }
 
     uint64_t getHWID();

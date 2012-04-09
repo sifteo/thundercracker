@@ -310,14 +310,6 @@ union _SYSVideoRAM {
  * only considered to be 'finished' if we make it through steps 3-5 without
  * any modifications to the video buffer.
  *
- * This is tracked by setting the _SYS_VBF_DIRTY_VRAM bit when VRAM is locked.
- * The system manages propagating this dirty flag through the above pipeline
- * stages before it's finally cleared:
- *
- *   1      -> VRAM    VideoBuffer lock() operation
- *   VRAM   -> RENDER  Finished streaming (cm16==0) and render triggered.
- *   RENDER -> done    Render acknowledged.
- *
  * Paint Control
  * -------------
  *
@@ -332,17 +324,8 @@ union _SYSVideoRAM {
  */
 
 #define _SYS_VBF_DIRTY_VRAM     (1 << 0)        // VRAM has changed
-#define _SYS_VBF_DIRTY_TOGGLE   (1 << 1)        // Want to trigger a frame, but TOGGLE bit unknown
-#define _SYS_VBF_DIRTY_RENDER   (1 << 2)        // Still rendering changed VRAM
-#define _SYS_VBF_DIRTY_ALL      0x000000FF      // Area reserved for dirty bits
-
-/* XXX: This is still broken... we should probably be explicitly tracking what
- * parts of the pipeline are synchronous/asynchronous at any given moment. */
-#define _SYS_VBF_NEED_PAINT     (1 << 8)        // Request a paint operation
-#define _SYS_VBF_SYNC_PAINT     (1 << 9)        // Synchronized Paint with end of radio upload
-
-// Flags that _SYS_finish() waits on
-#define _SYS_VBF_FINISH         (_SYS_VBF_SYNC_PAINT | _SYS_VBF_DIRTY_RENDER)
+#define _SYS_VBF_NEED_PAINT     (1 << 1)        // Request a paint operation
+// All other bits are reserved for system use.
 
 struct _SYSVideoBuffer {
     uint32_t flags;             /// INOUT  _SYS_VBF_* bits

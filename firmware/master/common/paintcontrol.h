@@ -24,8 +24,7 @@ class PaintControl {
 
     void waitForPaint();
     void waitForFinish(CubeSlot *cube);
-    void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp, bool allowContinuous);
-    void reset(CubeSlot *cube);
+    void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp);
 
     // Called in ISR context
     void ackFrames(CubeSlot *cube, int32_t count);
@@ -34,7 +33,6 @@ class PaintControl {
  private:
     SysTime::Ticks paintTimestamp;
     int32_t pendingFrames;
-    bool finished;
 
     uint8_t getFlags(_SYSVideoBuffer *vbuf) {
         return VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
