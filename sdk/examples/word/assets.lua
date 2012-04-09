@@ -18,7 +18,7 @@ IconLocked2 = image{ "IconLocked2.png" }
 IconLocked3 = image{ "IconLocked3.png" }
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
-HintSprite = image{"hint_exclaim.png", pinned=true, width=16, height=16, quality=10}
+HintSprite = image{"hint_tilt.png", pinned=true, width=16, height=16, quality=10}
 LevelComplete = image{"level_complete.png", quality=10}
 BorderTop = image{"wp2_border_top.png", quality=10}
 SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=10}
@@ -30,7 +30,7 @@ BorderLeftNoNeighbor = image{"border_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available.png", quality=10}
 BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
 BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
-BorderSlotHint = image{"hint_bubble.png", quality=10, width=24}
+BorderSlotHint = image{"hint_pulse_morph.png", quality=10, width=16}
 --Tile1 = image{"tile_ivory_big_idle.png", quality=10}
 --Tile1Glow = image{"tile_ivory_big_glow.png", width=96, quality=10}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}

@@ -102,7 +102,10 @@ bool animPaint(AnimType animT,
         if (objData.mLayer == Layer_Sprite)
         {
             size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
-            assetFrames = objData.mSpriteAsset->frames;
+            assetFrames =
+                    (animT == AnimType_HintSlideL || animT == AnimType_HintSlideR) ?
+                        MIN(4, objData.mSpriteAsset->frames) : // TODO use the right indexes for left/right, with ping/pong
+                        objData.mSpriteAsset->frames;
         }
         else
         {
