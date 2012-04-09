@@ -84,7 +84,7 @@ void Neighbor::transmitNextBit()
 
     // set the duty for this bit period
     if (txData & 1)
-        setDuty(25);
+        setDuty(TX_ACTIVE_PULSE_DUTY);
     else
         setDuty(0);
 
@@ -102,7 +102,7 @@ void Neighbor::beginReceiving()
 /*
  * Called from within the EXTI ISR for one of our neighbor RX inputs.
  */
-void Neighbor::got_pulse(uint8_t side)
+void Neighbor::onRxPulse(uint8_t side)
 {
     if (side == 0) {
         nbr_in1.irqAcknowledge();
@@ -150,16 +150,18 @@ void Neighbor::rxPeriodIsr()
     case Squelch:
         rxState = WaitingForNextBit;
         break;
+
     case WaitingForNextBit:
         // input bit must be a zero
         input_bit_counter++;
         rxState = Squelch;
-        if (input_bit_counter > 15) {
+        if (input_bit_counter >= NUM_RX_BITS) {
             lastRxData = received_data_buffer;
             rxState = WaitingForStart;
             received_data_buffer = 0;
         }
         break;
+
     default:
         break;
     }

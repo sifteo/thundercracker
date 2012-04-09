@@ -43,11 +43,15 @@ public:
     }
 
     void transmitNextBit();
-    void got_pulse(uint8_t side);
+    void onRxPulse(uint8_t side);
     void rxPeriodIsr();
     uint16_t getLastRxData();
 
 private:
+    // pwm duty specifying the duration of a tx pulse
+    static const unsigned TX_ACTIVE_PULSE_DUTY = 25;
+    // number of bits to wait for during an rx sequence
+    static const unsigned NUM_RX_BITS = 16;
 
     void setDuty(uint16_t duty);
     void enablePwm();
