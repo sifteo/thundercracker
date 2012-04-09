@@ -85,5 +85,6 @@ OBJS_STM32_MASTER = \
 OBJS_STM32_TESTJIG = \
     $(OBJS_STM32)                                       \
     $(MASTER_DIR)/testjig/main.stm32.o                  \
+    $(MASTER_DIR)/testjig/testjig.stm32.o               \
     $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o    \
     $(TC_DIR)/firmware/master/stm32/i2c.stm32.o
