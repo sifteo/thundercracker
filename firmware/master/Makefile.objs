@@ -1,5 +1,6 @@
 MASTER_DIR = $(TC_DIR)/firmware/master
 
+# Sources common to both host and stm32 builds
 OBJS_COMMON = \
 	$(MASTER_DIR)/common/syscall_audio.o \
 	$(MASTER_DIR)/common/syscall_cube.o \
@@ -30,6 +31,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/assetmanager.o \
     $(MASTER_DIR)/common/elfutil.o
 
+# Sources for the host build only
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
 	$(MASTER_DIR)/sim/tinythread.sim.o \
@@ -45,12 +47,12 @@ OBJS_SIM = \
     $(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o
 
+# Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
 	$(OBJS_COMMON:.o=.stm32.o) \
 	$(MASTER_DIR)/stm32/systime.stm32.o \
 	$(MASTER_DIR)/stm32/vectors.stm32.o \
 	$(MASTER_DIR)/stm32/setup.stm32.o \
-    $(MASTER_DIR)/stm32/main.stm32.o \
 	$(MASTER_DIR)/stm32/radio.stm32.o \
 	$(MASTER_DIR)/stm32/gpio.stm32.o \
     $(MASTER_DIR)/stm32/button.stm32.o \
@@ -73,3 +75,15 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/usb/usbhardware_stm32otg.stm32.o \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
     $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o
+
+# Sources for normal master firmware
+OBJS_STM32_MASTER = \
+    $(OBJS_STM32) \
+    $(MASTER_DIR)/stm32/main.stm32.o
+
+# Sources for stm32-based test jig firmware
+OBJS_STM32_TESTJIG = \
+    $(OBJS_STM32)                                       \
+    $(MASTER_DIR)/testjig/main.stm32.o                  \
+    $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o    \
+    $(TC_DIR)/firmware/master/stm32/i2c.stm32.o
