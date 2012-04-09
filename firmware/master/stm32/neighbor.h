@@ -31,18 +31,18 @@ public:
                 nbr_out3(_nbr_out3),
                 nbr_out4(_nbr_out4),
                 txPeriodTimer(_output_timer),
-                input_timer(_input_timer)
+                rxPeriodTimer(_input_timer)
     {}
 
     void init();
 
     void beginReceiving();
-    void beginTransmit(uint16_t byte_to_snd);
+    void beginTransmit(uint16_t data);
     bool isTransmitting() {
         return txData > 0;
     }
 
-    void txPeriodIsr();
+    void transmitNextBit();
     void got_pulse(uint8_t side);
     void rxPeriodIsr();
     uint16_t getLastRxData();
@@ -54,7 +54,6 @@ private:
     void disablePwm();
 
     uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
-    uint8_t output_bit_counter;
     uint8_t input_bit_counter;
 
     GPIOPin nbr_in1;
@@ -68,7 +67,7 @@ private:
     GPIOPin nbr_out4;
 
     HwTimer txPeriodTimer;
-    HwTimer input_timer;
+    HwTimer rxPeriodTimer;
 
     int8_t receiving_side;
     uint16_t received_data_buffer;

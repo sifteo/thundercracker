@@ -18,7 +18,7 @@ void Neighbor::init()
 
     txPeriodTimer.init(625, 4);
 
-    input_timer.init(900, 0);
+    rxPeriodTimer.init(900, 0);
 
     txPeriodTimer.configureChannelAsOutput(1, HwTimer::ActiveHigh, HwTimer::Pwm1);
     txPeriodTimer.configureChannelAsOutput(2, HwTimer::ActiveHigh, HwTimer::Pwm1);
@@ -60,36 +60,35 @@ void Neighbor::disablePwm()
     nbr_out4.setControl(GPIOPin::IN_FLOAT);
 }
 
-void Neighbor::beginTransmit(uint16_t byte_to_snd)
+/*
+ * Begin the transmission of 'data'.
+ */
+void Neighbor::beginTransmit(uint16_t data)
 {
-    txData = byte_to_snd;
-    output_bit_counter = 0;
-
+    txData = data;
     enablePwm();
-
-    if (txData & (1 << output_bit_counter))
-        setDuty(25);
-    else
-        setDuty(0);
-    output_bit_counter++;
+    transmitNextBit();
 }
 
 /*
  * Called when the PWM timer has reached the end of its counter, ie the end of a
  * bit period.
  */
-void Neighbor::txPeriodIsr(void)
+void Neighbor::transmitNextBit()
 {
-    if (output_bit_counter > 16)  { //stop the pwm output when the byte has been sent.
+    // if there are no more bits to send, we're done
+    if (!txData)  {
         disablePwm();
+        return;
     }
-    else {
-        if (txData & (1 << output_bit_counter))
-            setDuty(25);
-        else
-            setDuty(0);
-        output_bit_counter++;
-    }
+
+    // set the duty for this bit period
+    if (txData & 1)
+        setDuty(25);
+    else
+        setDuty(0);
+
+    txData >>= 1;
 }
 
 
