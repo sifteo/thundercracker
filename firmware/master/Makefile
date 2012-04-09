@@ -31,7 +31,7 @@ $(BIN_SIM): $(OBJS_SIM)
 	@echo
 	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
-$(BIN_STM32): $(OBJS_STM32)
+$(BIN_STM32): $(OBJS_STM32_MASTER)
 	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
