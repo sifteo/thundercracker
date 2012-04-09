@@ -31,7 +31,6 @@ public:
 
     bool isBusy() const;
 
-    int sampleRate() const;
     void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();
