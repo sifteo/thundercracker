@@ -29,18 +29,13 @@ public:
 private:
 
     enum Command {
-        Read_STM_register,
-        Write_STM_register,
-        Read_STM_Int_flash,
-        Write_STM_int_flash,
-        Read_STM_ext_flash,
-        Write_STM_ext_flash,
-        Read_L01_register,
-        Write_L01_register,
-        Set_fixture_PS_voltage,
-        Read_fixture_PS_voltage,
-        Read_STM_VSYS_voltage,
-        Read_fixture_current,
+        StmExternalFlashComms,
+        StmExternalFlashReadWrite,
+        NrfComms,
+        SetFixtureVoltage,
+        ReadFixtureVoltage,
+        ReadStmVsysVoltage,
+        ReadFixtureCurrent,
         Read_STM_batt_voltage,
         Store_STM_batt_voltage,
         Set_Speaker_on,
@@ -66,6 +61,11 @@ private:
     static uint8_t command_buffer[SIZE_OF_COMMAND_BUFFER];
 
     void start_test(uint8_t test_num);
+
+    typedef void(*TestHandler)(uint8_t *args);
+    static const TestHandler handlers[];
+
+    static void stmExternalFlashCommsHandler(uint8_t *args);
 };
 
 #endif // _TEST_JIG_H

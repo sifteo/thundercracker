@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "neighbor.h"
 #include "gpio.h"
+#include "macros.h"
 
 static I2CSlave i2c(&I2C1);
 static Neighbor neighbor(JIG_NBR_IN1_GPIO,
@@ -25,6 +26,10 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
                          JIG_NBR_OUT4_GPIO,
                          HwTimer(&TIM3),
                          HwTimer(&TIM5));
+
+TestJig::TestHandler const TestJig::handlers[] = {
+    stmExternalFlashCommsHandler
+};
 
 void TestJig::init()
 {
@@ -51,7 +56,7 @@ void TestJig::parseCommand()
             commands[command_counter] = (commands[command_counter] * 10) + command_buffer[char_counter] - 48;
         }
         // is it a comma?
-        if (command_buffer[char_counter]==44) {
+        if (command_buffer[char_counter] == 44) {
             if (command_counter<MAX_NUMBER_OF_COMMANDS)
                 command_counter++;
             else
@@ -60,67 +65,10 @@ void TestJig::parseCommand()
         char_counter++;
     }
 
-    switch (commands[0]) {
-    case Read_STM_register:
-        i2c.setNextTest(commands[0]);  //load
-        got_result=1;
-        break;
-    case Write_STM_register:
-        break;
-    case Read_STM_Int_flash:
-        break;
-    case Write_STM_int_flash:
-        break;
-    case Read_STM_ext_flash:
-        break;
-    case Write_STM_ext_flash:
-        break;
-    case Read_L01_register:
-        break;
-    case Write_L01_register:
-        break;
-    case Set_fixture_PS_voltage:
-        break;
-    case Read_fixture_PS_voltage:
-        break;
-    case Read_STM_VSYS_voltage:
-        break;
-    case Read_fixture_current:
-        break;
-    case Read_STM_batt_voltage:
-        break;
-    case Store_STM_batt_voltage:
-        break;
-    case Set_Speaker_on:
-        break;
-    case Set_Speaker_off:
-        break;
-    case Set_Fixture_USB_pwr_on:
-        break;
-    case Set_USB_Fixture_pwr_off:
-        break;
-    case read_STM_USB_voltage:
-        break;
-    case Set_HomeButton_LED_test:
-        break;
-    case Read_volume_slider_voltage:
-        break;
-    case Write_volume_slider_voltage:
-        break;
-    case Set_Master_state_standby:
-        break;
-    case Set_Master_start_active:
-        break;
-    case Enable_STM_neighbor_transmit:
-        break;
-    case Enable_Fixture_neighbor_receive:
-        break;
-    case Enable_Fixture_neighbor_transmit:
-        break;
-    case Set_STM_neighbor_ID:
-        break;
-    case Set_fixture_neighbor_ID:
-        break;
+    uint8_t testId = commands[0];
+    if (testId < arraysize(handlers)) {
+        TestHandler hndlr = handlers[commands[0]];
+        hndlr(command_buffer);
     }
 }
 
@@ -158,14 +106,14 @@ void TestJig::start_test(uint8_t test_num)
 void TestJig::disableUsbPower()
 {
     GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_10MHZ);
+    usbpwr.setControl(GPIOPin::OUT_2MHZ);
     usbpwr.setLow();
 }
 
 void TestJig::enableUsbPower()
 {
     GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_10MHZ);
+    usbpwr.setControl(GPIOPin::OUT_2MHZ);
     usbpwr.setHigh();
 }
 
@@ -176,6 +124,15 @@ void TestJig::send_test_result() {
     uint8_t result=55;
     str_len = sprintf((char *)b, "Result=%03d\n\r", result);
     UsbDevice::write(b, str_len);
+}
+
+/*******************************************
+ * T E S T  H A N D L E R S
+ ******************************************/
+
+void TestJig::stmExternalFlashCommsHandler(uint8_t *args)
+{
+
 }
 
 /*******************************************
