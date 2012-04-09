@@ -26,6 +26,15 @@ int16_t AudioSampleData::operator[](uint32_t sampleNum) {
         }
     }
 
+#if defined DEBUG && defined SIFTEO_SIMULATOR
+    uint32_t availableSample = (newestSample == kNoSamples ? 0 : newestSample);
+    if (sampleNum > availableSample &&
+        bytesForSamples(sampleNum - availableSample) > FlashBlock::BLOCK_SIZE )
+    {
+        LOG((LGPFX"Seeking %d samples (more than one cache block!)\n", sampleNum - newestSample));
+    }
+#endif
+
     if (sampleNum > newestSample || newestSample == kNoSamples)
         decodeToSample(sampleNum);
 
