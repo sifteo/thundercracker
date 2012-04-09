@@ -6,6 +6,7 @@
 #ifndef AUDIOSAMPLEDATA_H_
 #define AUDIOSAMPLEDATA_H_
 
+#include <stddef.h>
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "adpcmdecoder.h"
@@ -71,7 +72,7 @@ private:
     uint16_t samples[kSampleBufSize];   // Mini-ringbuffer of samples
     uint32_t newestSample;              // Index of newest sample in samples[]
     uint8_t ringPos;                    // Points to the beginning of the ring
-    uintptr_t bufPos;                   // Byte offset into sample data
+    ptrdiff_t bufPos;                   // Byte offset into sample data
     uint32_t loopStart;                 // Auto-snapshot sample index
 
     // ADPCM decoder state
@@ -107,7 +108,7 @@ private:
         uint16_t samples[kSampleBufSize];
         uint32_t newestSample;
         uint8_t ringPos;
-        uintptr_t bufPos;
+        ptrdiff_t bufPos;
         AdPcmDecoder adpcmDec;
     } snapshotData;
 
