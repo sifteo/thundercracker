@@ -25,14 +25,14 @@ SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=10}
 BorderBottom = image{"wp2_border_bottom.png", height=16, quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
-BorderRightNoNeighbor = image{"wp2_border_right_noneighbor.png", quality=10}
-BorderLeftNoNeighbor = image{"wp2_border_left_noneighbor.png", quality=10}
+BorderRightNoNeighbor = image{"border_right_noneighbor.png", quality=10}
+BorderLeftNoNeighbor = image{"border_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available.png", quality=10}
 BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
 BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
 BorderSlotHint = image{"hint_bubble.png", quality=10, width=24}
-Tile1 = image{"tile_ivory_big_idle.png", quality=10}
-Tile1Glow = image{"tile_ivory_big_glow.png", width=96, quality=10}
+--Tile1 = image{"tile_ivory_big_idle.png", quality=10}
+--Tile1Glow = image{"tile_ivory_big_glow.png", width=96, quality=10}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Blank = image{"tile_ivory_blank.png", quality=10}
