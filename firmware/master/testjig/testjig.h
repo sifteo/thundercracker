@@ -15,16 +15,12 @@ class TestJig
 {
 public:
     static void init();
-    static void send(uint8_t addr, uint8_t data);
-    static void send_test_result();
-    static void new_command(uint8_t data);
     static void enable_neighbor_receive();
     static uint8_t got_i2c;
     static uint8_t got_result;
     static uint16_t get_received_data();
 
-    static void enableUsbPower();
-    static void disableUsbPower();
+    static void onTestDataReceived(uint8_t *buf, unsigned len);
 
 private:
 
@@ -55,17 +51,13 @@ private:
         Set_fixture_neighbor_ID
     };
 
-    static uint8_t current_test;
-    static void parseCommand();
-    static uint8_t command_buffer_pointer;
-    static uint8_t command_buffer[SIZE_OF_COMMAND_BUFFER];
+    static void enableUsbPower();
+    static void disableUsbPower();
 
-    void start_test(uint8_t test_num);
-
-    typedef void(*TestHandler)(uint8_t *args);
+    typedef void(*TestHandler)(uint8_t *args, uint8_t len);
     static const TestHandler handlers[];
 
-    static void stmExternalFlashCommsHandler(uint8_t *args);
+    static void stmExternalFlashCommsHandler(uint8_t *args, uint8_t len);
 };
 
 #endif // _TEST_JIG_H

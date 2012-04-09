@@ -27,6 +27,10 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
                          HwTimer(&TIM3),
                          HwTimer(&TIM5));
 
+/*
+ * Table of test handlers.
+ * Order must match the Command enum.
+ */
 TestJig::TestHandler const TestJig::handlers[] = {
     stmExternalFlashCommsHandler
 };
@@ -36,71 +40,27 @@ void TestJig::init()
     i2c.init(MASTER_SCL_GPIO, MASTER_SDA_GPIO);
 }
 
+/*
+ * Test data has arrived from the host via USB.
+ * Dispatch the command to the appropriate handler.
+ */
+void TestJig::onTestDataReceived(uint8_t *buf, unsigned len)
+{
+    uint8_t testId = buf[0];
+    if (testId < arraysize(handlers)) {
+        TestHandler handler = handlers[testId];
+        handler(buf, len);
+    }
+}
+
 void TestJig::enable_neighbor_receive()
 {
     neighbor.beginReceiving();
 }
 
-void TestJig::parseCommand()
-{
-    uint16_t commands[MAX_NUMBER_OF_COMMANDS];
-
-    memset(commands, 0, sizeof commands);
-
-    uint8_t command_counter = 0;
-    uint8_t char_counter = 0;
-    while (char_counter < command_buffer_pointer) {
-
-        uint8_t cmd = command_buffer[char_counter];
-        if (cmd > 47 && cmd < 58) {
-            commands[command_counter] = (commands[command_counter] * 10) + command_buffer[char_counter] - 48;
-        }
-        // is it a comma?
-        if (command_buffer[char_counter] == 44) {
-            if (command_counter<MAX_NUMBER_OF_COMMANDS)
-                command_counter++;
-            else
-                break;
-        }
-        char_counter++;
-    }
-
-    uint8_t testId = commands[0];
-    if (testId < arraysize(handlers)) {
-        TestHandler hndlr = handlers[commands[0]];
-        hndlr(command_buffer);
-    }
-}
-
-void TestJig::new_command(uint8_t data)
-{
-    if (data==13) { //hit enter
-        parseCommand();
-        command_buffer_pointer=0;
-    }
-    else if (data == 8) { //backspace
-        if (command_buffer_pointer > 0)
-            command_buffer_pointer--;
-    }
-    else if (command_buffer_pointer < SIZE_OF_COMMAND_BUFFER) {
-        command_buffer[command_buffer_pointer] = data;
-        command_buffer_pointer++;
-    }
-}
-
-void TestJig::send(uint8_t addr,uint8_t data)
-{
-
-}
-
 uint16_t TestJig::get_received_data()
 {
     return neighbor.getLastRxData();
-}
-
-void TestJig::start_test(uint8_t test_num)
-{
-
 }
 
 void TestJig::disableUsbPower()
@@ -117,20 +77,11 @@ void TestJig::enableUsbPower()
     usbpwr.setHigh();
 }
 
-void TestJig::send_test_result() {
-    uint8_t str_len;
-    static uint8_t buffer[30];
-    uint8_t *b=buffer;
-    uint8_t result=55;
-    str_len = sprintf((char *)b, "Result=%03d\n\r", result);
-    UsbDevice::write(b, str_len);
-}
-
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
 
-void TestJig::stmExternalFlashCommsHandler(uint8_t *args)
+void TestJig::stmExternalFlashCommsHandler(uint8_t *args, uint8_t len)
 {
 
 }

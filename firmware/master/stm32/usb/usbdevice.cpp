@@ -13,6 +13,10 @@
 #include "tasks.h"
 #include "assetmanager.h"
 
+#if (BOARD == BOARD_TEST_JIG)
+#include "testjig.h"
+#endif
+
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
     Usb::DescriptorDevice,          // bDescriptorType
@@ -109,7 +113,19 @@ void UsbDevice::handleOUTData(void *p)
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {
-        AssetManager::onData(buf, numBytes);
+        switch (buf[0]) {
+
+        case 0:
+            AssetManager::onData(buf, numBytes);
+            break;
+
+#if (BOARD == BOARD_TEST_JIG)
+        case 1:
+            TestJig::onTestDataReceived(buf + 1, numBytes - 1);
+            break;
+#endif
+
+        }
     }
 }
 
