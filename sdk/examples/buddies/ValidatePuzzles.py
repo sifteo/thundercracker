@@ -154,6 +154,15 @@ def CheckIsBinary(data, prop):
     else:
         return True
 
+def CheckInRange(data, prop, min_value, max_value):
+    if data[prop] < min_value or data[prop] > max_value:
+        print 'ERROR: %s must be within [%d, %d] (it is %d).' % (StackString(prop_stack), min_value, max_value, data[prop])
+        global validated
+        validated = False
+        return False
+    else:
+        return True
+
 def CheckIsBoolean(data, prop):
     if data[prop] is not True and data[prop] is not False:
         print 'ERROR:' + StackString(prop_stack) + ' must be either true or false (it is ' + data[prop] + ')'
@@ -198,7 +207,7 @@ def CheckCutscene(puzzle, cutscene):
                     prop_stack.append('%d' % i)
                     if CheckHasProperty(line, 'speaker'):
                         prop_stack.append('speaker')
-                        CheckIsBinary(line, 'speaker')
+                        CheckInRange(line, 'speaker', 0, 2)
                         prop_stack.pop()
                     if CheckHasProperty(line, 'view'):
                         prop_stack.append('view')

@@ -38,7 +38,12 @@ else
     BuddyPartFixed = image{"assets/fixed.png"}
     BuddyPartHidden = image{"assets/hidden.png"}
 end
-    
+
+-- Environments
+Environment_0 = image{"assets/bg_kitchen.png"}
+Environment_0_Left = image{"assets/bg_kitchen_left.png"}
+Environment_0_Right = image{"assets/bg_kitchen_right.png"}
+
 -- Menu
 BgTile = image{"assets/menu/bg_blue_8x8.png"}
 IconFreePlay = image{"assets/menu/IconFreePlay.png"}
@@ -113,8 +118,6 @@ end
 StoryChapterTitle = image{"assets/ui_chapter_title.png"}
 StoryChapterNext = image{"assets/panel_next_chapter.png"}
 StoryChapterRetry = image{"assets/panel_retry_chapter.png"}
-StoryCutsceneBackgroundLeft = image{"assets/cutscenebg_left.png"}
-StoryCutsceneBackgroundRight = image{"assets/cutscenebg_right.png"}
 StoryFaceComplete = image{"assets/panel_facecomplete_ribbon.png"}
 StoryNeighbor = image{"assets/neighbor.png"}
 StoryProgress = image{"assets/panel_storymode_puzzle_progression.png"}

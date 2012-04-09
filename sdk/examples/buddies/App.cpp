@@ -157,6 +157,21 @@ const AssetImage *kStoryBookTitles[] =
     &StoryBookTitle14,
 };
 
+const AssetImage *kStoryCutsceneEnvironments[] =
+{
+    &Environment_0,
+};
+
+const AssetImage *kStoryCutsceneEnvironmentsLeft[] =
+{
+    &Environment_0_Left,
+};
+
+const AssetImage *kStoryCutsceneEnvironmentsRight[] =
+{
+    &Environment_0_Right,
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -484,6 +499,7 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
 
 void DrawStoryCutscene(
     CubeWrapper &cubeWrapper,
+    unsigned int cutsceneEnvironment,
     const CutsceneLine &line,
     BuddyId buddyId0, BuddyId buddyId1,
     bool jump0, bool jump1)
@@ -493,7 +509,8 @@ void DrawStoryCutscene(
     if (line.mSpeaker == 0)
     {
         // Background
-        cubeWrapper.DrawBackground(StoryCutsceneBackgroundLeft);
+        ASSERT(cutsceneEnvironment < arraysize(kStoryCutsceneEnvironmentsLeft));
+        cubeWrapper.DrawBackground(*kStoryCutsceneEnvironmentsLeft[cutsceneEnvironment]);
         
         // Sprites
         if (line.mView == CutsceneLine::VIEW_RIGHT)
@@ -522,11 +539,52 @@ void DrawStoryCutscene(
         {
             cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
         }
+        
+        // Text
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
     }
     else if (line.mSpeaker == 1)
     {
         // Background
-        cubeWrapper.DrawBackground(StoryCutsceneBackgroundRight);
+        ASSERT(cutsceneEnvironment < arraysize(kStoryCutsceneEnvironmentsRight));
+        cubeWrapper.DrawBackground(*kStoryCutsceneEnvironmentsRight[cutsceneEnvironment]);
+        
+        // Sprites
+        if (kBuddySpritesRight[buddyId0] != NULL)
+        {
+            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+        }
+        
+        if (line.mView == CutsceneLine::VIEW_RIGHT)
+        {
+            if (kBuddySpritesRight[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+            }
+        }
+        else if (line.mView == CutsceneLine::VIEW_LEFT)
+        {
+            if (kBuddySpritesLeft[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+            }
+        }
+        else if (line.mView == CutsceneLine::VIEW_FRONT)
+        {
+            if (kBuddySpritesFront[buddyId1] != NULL)
+            {
+                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+            }
+        }
+        
+        // Text
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
+    }
+    else if (line.mSpeaker == 2)
+    {
+        // Background
+        ASSERT(cutsceneEnvironment < arraysize(kStoryCutsceneEnvironments));
+        cubeWrapper.DrawBackground(*kStoryCutsceneEnvironments[cutsceneEnvironment]);
         
         // Sprites
         if (kBuddySpritesRight[buddyId0] != NULL)
@@ -556,9 +614,6 @@ void DrawStoryCutscene(
             }
         }
     }
-    
-    // Text
-    cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2916,6 +2971,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 DrawStoryCutscene(
                     cubeWrapper,
+                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneEnvironment(),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneLineStart(mStoryCutsceneIndex),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(0),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(1),
@@ -3056,6 +3112,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 DrawStoryCutscene(
                     cubeWrapper,
+                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneEnvironment(),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneLineEnd(mStoryCutsceneIndex),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyEnd(0),
                     GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyEnd(1),
