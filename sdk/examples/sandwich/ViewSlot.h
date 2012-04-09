@@ -80,7 +80,7 @@ public:
 			//currentId = __builtin_clz(mask);
 			currentId = fastclz(mask);
 			mask ^= (0x80000000 >> currentId);
-			return currentId != 32;
+			return currentId < 32;
 		}
 
 		ViewSlot& operator*();

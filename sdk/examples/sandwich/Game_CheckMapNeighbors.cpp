@@ -11,8 +11,8 @@ struct VisitorStatus {
 #define RESULT_INTERRUPTED  1
 
 static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, ViewSlot* origin=0, Cube::Side dir=0) {
-  if (!view || status->visitMask & view->GetCubeMask()) { 
-    return false; 
+  if (!view || (status->visitMask & view->GetCubeMask())) { 
+    return RESULT_OKAY; 
   }
   if (origin) { 
     view->GetCube()->orientTo(*(origin->GetCube())); 
@@ -58,6 +58,7 @@ void Game::CheckMapNeighbors() {
   unsigned newChangeMask = 0;
   ViewSlot::Iterator i(~status.visitMask);
   while(i.MoveNext()) {
+    LOG(("HIDING %d\n", i->GetCubeID()));
     if (i->HideLocation(false)) {
       newChangeMask |= i->GetCubeMask();
     }
@@ -68,20 +69,6 @@ void Game::CheckMapNeighbors() {
   }
 
   if (newChangeMask || status.changeMask) {
-    /*
-    #if GFX_ARTIFACT_WORKAROUNDS
-      Paint(true);
-      i = gGame.Views();
-      while(i.MoveNext()) {
-        i->GetCube()->vbuf.touch();
-      }
-      Paint(true);
-      i = gGame.Views();
-      while(i.MoveNext()) {
-        i->GetCube()->vbuf.touch();
-      }
-    #endif
-    */
     Paint(true);
   }
 
