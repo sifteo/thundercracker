@@ -44,10 +44,12 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
         // EOF?
         if (sampleNum >= samples.numSamples()) {
             // loop!?
-            if (state & STATE_LOOP)
+            if (state & STATE_LOOP) {
                 sampleNum = 0;
-            else
+            } else {
+                stop();
                 break;
+            }
         }
     }
 
