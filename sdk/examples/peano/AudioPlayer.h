@@ -24,8 +24,6 @@ namespace TotalsGame
 	class AudioPlayer
 	{
 	public:
-		static void Init();
-
 		static void PlaySfx(const AssetAudio& handle, bool preempt=true);
 		static void PlayMusic(const AssetAudio& music, bool loop=true);
 

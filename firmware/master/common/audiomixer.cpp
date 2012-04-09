@@ -4,7 +4,6 @@
  */
 
 #include "audiomixer.h"
-#include "audiooutdevice.h"
 #include "flashlayer.h"
 #include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
@@ -13,7 +12,6 @@
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
-    enabledChannelMask(0),
     playingChannelMask(0),
     nextHandle(0)
 {
@@ -21,38 +19,17 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
-    memset(channelSlots, 0, sizeof(channelSlots));
-    enabledChannelMask = 0;
     playingChannelMask = 0;
 }
 
 /*
- * Userspace must supply a buffer for each channel they want to enable.
- * Once they do, the channel can be used in subsequent calls to play().
+ * Mix audio from flash into the audio device's buffer via each of the channels.
+ *
+ * This currently assumes that it's being run on the main thread, such that it
+ * can operate synchronously with data arriving from flash.
  */
-void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
+int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 {
-    // find the first disabled channel, init it and mark it as enabled
-    for (unsigned idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if (!(enabledChannelMask & Intrinsic::LZ(idx))) {
-            channelSlots[idx].init(buffer);
-            Atomic::SetLZ(enabledChannelMask, idx);
-            return;
-        }
-    }
-}
-
-/*
- * Slurp the data from all active channels into the out device's
- * buffer.
- * Called from the AudioOutDevice when it needs more data, from within the
- * sample rate timer ISR.
- */
-int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
-{
-    // NOTE - *must* bail ASAP if we don't have anything to do. we really
-    // want to minimize the work done in this ISR since it's happening so
-    // frequently
     if (!active())
         return 0;
 
@@ -65,6 +42,11 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
         ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
         AudioChannelSlot &ch = channelSlots[idx];
         mask &= ~Intrinsic::LZ(idx);
+
+        if (ch.isStopped()) {
+            Atomic::ClearLZ(playingChannelMask, idx);
+            continue;
+        }
 
         if (ch.isPaused()) {
             continue;
@@ -82,40 +64,23 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 }
 
 /*
- * Time to grab more audio data from flash.
- * Check whether each channel needs more data and grab if necessary.
- *
- * This currently assumes that it's being run on the main thread, such that it
- * can operate synchronously with data arriving from flash.
- */
-void AudioMixer::fetchData()
-{
-    uint32_t mask = playingChannelMask;
-    while (mask) {
-        unsigned idx = Intrinsic::CLZ(mask);
-        AudioChannelSlot &ch = channelSlots[idx];
-        mask &= ~Intrinsic::LZ(idx);
-
-        if (ch.isStopped())
-            Atomic::ClearLZ(playingChannelMask, idx);
-        else
-            ch.fetchData();
-    }
-}
-
-/*
     Called from within Tasks::work to mix audio on the main thread, to be
     consumed by the audio out device.
 */
-void AudioMixer::handleAudioOutEmpty(void *p) {
+void AudioMixer::pullAudio(void *p) {
+    if (p == NULL) return;
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
+    if (buf->writeAvailable() < sizeof(int16_t)) return;
 
     unsigned bytesToWrite;
     int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
-    unsigned mixed = AudioMixer::instance.pullAudio(audiobuf, bytesToWrite / sizeof(int16_t));
-    ASSERT(mixed < bytesToWrite * sizeof(int16_t));
+    unsigned mixed = AudioMixer::instance.mixAudio(audiobuf, bytesToWrite / sizeof(int16_t));
+
+    // mixed as returned by mixAudio measure samples, but we care about bytes
+    mixed *= sizeof(int16_t);
+    ASSERT(mixed <= bytesToWrite);
     if (mixed > 0) {
-        buf->commit(mixed * sizeof(int16_t));
+        buf->commit(mixed);
     }
 }
 
@@ -125,13 +90,12 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
     // NB: "mod" is a temporary contiguous copy of SYSAudioModule in RAM.
     
     // find channels that are enabled but not playing
-    uint32_t selector = enabledChannelMask & ~playingChannelMask;
-    if (selector == 0) {
-        return false;
-    }
+    uint32_t selector = ~playingChannelMask;
 
     unsigned idx = Intrinsic::CLZ(selector);
-    ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+    if (idx >= _SYS_AUDIO_MAX_CHANNELS) {
+        return false;
+    }
     AudioChannelSlot &ch = channelSlots[idx];
     ch.handle = nextHandle++;
     *handle = ch.handle;
@@ -169,16 +133,16 @@ void AudioMixer::resume(_SYSAudioHandle handle)
     }
 }
 
-void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
+void AudioMixer::setVolume(_SYSAudioHandle handle, uint16_t volume)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
-        ch->volume = clamp(volume, 0, (int)_SYS_AUDIO_MAX_VOLUME);
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+        ch->volume = clamp((int)volume, 0, (int)_SYS_AUDIO_MAX_VOLUME);
     }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         return ch->volume;
     }
     return 0;
@@ -195,13 +159,21 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 
 AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t mask)
 {
-    while (mask) {
-        unsigned idx = Intrinsic::CLZ(mask);
-        AudioChannelSlot &ch = channelSlots[idx];
-        mask &= ~Intrinsic::LZ(idx);
-
-        if (ch.handle == handle)
-            return &ch;
+    if (mask == 0) {
+        for (unsigned idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
+            AudioChannelSlot &ch = channelSlots[idx];
+            if (ch.handle == handle)
+                return &ch;
+        }
+    } else {
+        while (mask) {
+            unsigned idx = Intrinsic::CLZ(mask);
+            AudioChannelSlot &ch = channelSlots[idx];
+            mask &= ~Intrinsic::LZ(idx);
+            
+            if (ch.handle == handle)
+                return &ch;
+        }
     }
     return 0;
 }

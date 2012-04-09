@@ -20,25 +20,25 @@ const int8_t AdPcmDecoder::indexTable[16] = {
     0xff, 0xff, 0xff, 0xff, 2, 4, 6, 8
 };
 
-void AdPcmDecoder::decode(FlashStream &in, AudioBuffer &out)
+int16_t AdPcmDecoder::decodeSample(uint8_t **paPtr)
 {
-    FlashStreamBuffer<256> inStream;
-    inStream.reset();
+    ASSERT(paPtr);
 
-    while (out.writeAvailable() >= 4) {
+    uint8_t *pa = *paPtr;
+    ASSERT(pa);
 
-        const uint8_t *pcode = inStream.read(in, 1);
-        if (!pcode)
-            return;
-
-        const uint8_t code = *pcode;
-
-        int16_t sample = decode4to16bits(code & 0xf);
-        out.write(reinterpret_cast<uint8_t*>(&sample), 2);
-
-        sample = decode4to16bits(code >> 4);
-        out.write(reinterpret_cast<uint8_t*>(&sample), 2);
+    if (hasExtraSample) {
+        hasExtraSample = false;
+        (*paPtr) += 1;
+        return extraSample;
     }
+
+    const uint8_t code = *pa;
+    int16_t sample = decode4to16bits(code & 0xf);
+    extraSample = decode4to16bits(code >> 4);
+    hasExtraSample = true;
+
+    return sample;
 }
 
 int16_t AdPcmDecoder::decode4to16bits(uint8_t code)

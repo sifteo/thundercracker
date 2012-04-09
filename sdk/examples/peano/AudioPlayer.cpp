@@ -13,17 +13,6 @@ namespace TotalsGame
     AudioChannel AudioPlayer::channelMusic;
 #endif
 
-	void AudioPlayer::Init()
-	{
-#if SFX_ON
-		for(int i = 0; i < NumSfxChannels; i++)
-			channelSfx[i].init();
-#endif
-#if MUSIC_ON
-		channelMusic.init();
-#endif
-	}
-
     void AudioPlayer::MuteMusic(bool mute)
     {
 #if MUSIC_ON
