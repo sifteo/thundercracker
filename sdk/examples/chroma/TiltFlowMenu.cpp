@@ -51,9 +51,6 @@ void TiltFlowMenu::AssignViews()
 	{
         mViews[i].SetCube( &MenuController::Inst().GetWrapper(i)->GetCube() );
 	}
-
-	//for some reason this doesn't work if it's called in the constructor, so put it here for now.
-	m_SFXChannel.init();
 }
 
 

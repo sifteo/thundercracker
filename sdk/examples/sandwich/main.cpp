@@ -31,12 +31,6 @@ void main() {
 	    System::paint();
 	  }
 	#endif
-	#if SFX_ON
-		gChannelSfx.init();
-	#endif
-	#if MUSIC_ON
-		gChannelMusic.init();
-	#endif
 	while(1) {
 		gGame.MainLoop();
 	}

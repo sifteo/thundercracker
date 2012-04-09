@@ -6,101 +6,54 @@
 #include "macros.h"
 #include "svmmemory.h"
 #include "audiochannel.h"
-#include "speexdecoder.h"
 #include <limits.h>
 
 
-void AudioChannelSlot::init(_SYSAudioBuffer *b)
+void AudioChannelSlot::init()
 {
     state = STATE_STOPPED;
     volume = _SYS_AUDIO_DEFAULT_VOLUME;
-    buf.init(b);
+    sampleNum = 0;
 }
 
-void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode)
+void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)
 {
-    SvmMemory::VirtAddr va = mod->pData;
-    if (SvmMemory::initFlashStream(va, mod->dataSize, flStream)) {
-
-        type = mod->type;
-        state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-
-        if (type == _SYS_Speex)
-            speexDec.init();
-    }
+    mod = *module;
+    samples.init(&mod);
+    state = (loopMode == LoopOnce ? 0 : STATE_LOOP);
+    sampleNum = 0;
 }
 
-int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
+uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
     if (state & STATE_STOPPED)
         return 0;
 
-    int mixable = MIN(buf.readAvailable() / sizeof *buffer, len);
+    uint32_t framesLeft = len;
 
-    for (int i = 0; i < mixable; i++) {
-        ASSERT(buf.readAvailable() >= 2);
-        int16_t src = buf.dequeue() | (buf.dequeue() << 8);
-
-        // Mix this sample, after volume adjustment, with the existing buffer contents
-        int32_t sample = *buffer + ((src * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME);
-            
+    while(framesLeft > 0) {
+        // Mix a sample, after volume adjustment, with the existing buffer contents
+        int32_t sample = *buffer + ((samples[sampleNum++] * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME);
+                
         // TODO - more subtle compression instead of hard limiter
         *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
         buffer++;
-    }
+        framesLeft--;
 
-    return mixable;
-}
-
-void AudioChannelSlot::fetchData()
-{
-    ASSERT(!(state & STATE_STOPPED));
-
-    if (flStream.eof())
-        onPlaybackComplete();
-
-    // onPlaybackComplete() may loop or not; test eof again.
-    // This also handles edge cases like looping zero-length modules.
-    if (flStream.eof())
-        return;
-
-    // Read and decompress audio data
-    switch (type) {
-
-    case _SYS_PCM:
-        fetchRaw(flStream, buf);
-        break;
-
-    case _SYS_Speex:
-        if (!speexDec.decodeFrame(flStream, buf)) {
-            onPlaybackComplete();
-            return;
+        // EOF?
+        if (sampleNum >= samples.numSamples()) {
+            // loop!?
+            if (state & STATE_LOOP) {
+                sampleNum = 0;
+            } else {
+                stop();
+                break;
+            }
         }
-        break;
-
-    case _SYS_ADPCM:
-        adpcmDec.decode(flStream, buf);
-        break;
-
-    default:
-        break;
     }
-}
 
-void AudioChannelSlot::fetchRaw(FlashStream &in, AudioBuffer &out)
-{
-    unsigned len = out.writeAvailable();
-    uint8_t *buf = out.reserve(len, &len);
-    len = in.read(buf, len);
-    in.advance(len);
-    out.commit(len);
-}
+    samples.releaseRef();
 
-void AudioChannelSlot::onPlaybackComplete()
-{
-    if (state & STATE_LOOP)
-        flStream.seek(0);
-    else
-        stop();
+    return len - framesLeft;
 }
