@@ -40,8 +40,8 @@ class PaintControl {
         return VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
     }
 
-    void setFlags(_SYSVideoBuffer *vbuf, uint8_t flags) {
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
+    void setFlags(_SYSVideoBuffer *vbuf, uint8_t flags, uint32_t lockFlags) {
+        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags, lockFlags);
         VRAM::unlock(*vbuf);
     }
 };

@@ -27,6 +27,8 @@
 
 struct VRAM {
 
+    static const uint32_t DEFAULT_LOCK_FLAGS = _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT;
+
     static uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < arraysize(vbuf.cm1));
@@ -60,8 +62,10 @@ struct VRAM {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
-    static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
-        Atomic::Or(vbuf.flags, _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT);
+    static void lock(_SYSVideoBuffer &vbuf, uint16_t addr,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
+        Atomic::Or(vbuf.flags, lockFlags);
         ASSERT(addr < _SYS_VRAM_WORDS);
         vbuf.lock |= maskCM16(addr);
     }
@@ -71,22 +75,26 @@ struct VRAM {
         vbuf.lock = 0;
     }
 
-    static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word) {
+    static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
         ASSERT(addr < _SYS_VRAM_WORDS);
 
         if (vbuf.vram.words[addr] != word) {
-            lock(vbuf, addr);
+            lock(vbuf, addr, lockFlags);
             vbuf.vram.words[addr] = word;
             Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
         }
     }
 
-    static void pokeb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte) {
+    static void pokeb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
         ASSERT(addr < _SYS_VRAM_BYTES);
 
         if (vbuf.vram.bytes[addr] != byte) {
             uint16_t addrw = addr >> 1;
-            lock(vbuf, addrw);
+            lock(vbuf, addrw, lockFlags);
             vbuf.vram.bytes[addr] = byte;
             Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
         }
