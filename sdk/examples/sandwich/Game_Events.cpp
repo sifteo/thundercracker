@@ -97,7 +97,7 @@ void Game::OnTrapdoor(Room *pRoom) {
 }
 
 void Game::OnInventoryChanged() {
-  ViewSlot::Iterator p = ListViews();
+  auto p = ListViews();
   while(p.MoveNext()) {
     p->RefreshInventory();
   }
