@@ -130,7 +130,7 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
-    uint64_t getSignature() const;
+    uint64_t getHash() const;
 
 private:
     lua_Number quality;
@@ -176,6 +176,16 @@ public:
     bool isPinned() const {
         return mTileOpt.pinned;
     }
+    
+    bool isFlat() const {
+        return mIsFlat;
+    }
+
+    const char *getClassName() const;
+
+    uint16_t encodePinned() const;
+    void encodeFlat(std::vector<uint16_t> &data) const;
+    bool encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const;
 
  private:
     Group *mGroup;
@@ -183,6 +193,7 @@ public:
     TileOptions mTileOpt;
     std::vector<TileGrid> mGrids;
     std::string mName;
+    bool mIsFlat;
 
     void createGrids();
 

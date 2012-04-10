@@ -25,6 +25,8 @@ _SYSCubeIDVector CubeSlots::hwidValid = 0;
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
+_SYSAssetLoader *CubeSlots::assetLoader = 0;
+
 
 void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {
@@ -36,36 +38,37 @@ void CubeSlots::enableCubes(_SYSCubeIDVector cv)
 {
     NeighborSlot::resetSlots(cv);
     Atomic::Or(CubeSlots::vecEnabled, cv);
-}
-
-void CubeSlots::disableCubes(_SYSCubeIDVector cv)
-{
-    Atomic::And(CubeSlots::vecEnabled, ~cv);
-}
-
-void CubeSlots::connectCubes(_SYSCubeIDVector cv)
-{
-    Atomic::Or(CubeSlots::vecConnected, cv);
 
     // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
     Atomic::Or(CubeSlots::expectStaleACK, cv);
 }
 
-void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+void CubeSlots::disableCubes(_SYSCubeIDVector cv)
 {
-    Atomic::And(CubeSlots::vecConnected, ~cv);
+    Atomic::And(CubeSlots::vecEnabled, ~cv);
 
     Atomic::And(CubeSlots::flashResetWait, ~cv);
     Atomic::And(CubeSlots::flashResetSent, ~cv);
     Atomic::And(CubeSlots::flashACKValid, ~cv);
     Atomic::And(CubeSlots::neighborACKValid, ~cv);
     Atomic::And(CubeSlots::hwidValid, ~cv);
+
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 
     // TODO: if any of the cubes in cv are currently part of a
     // neighbor-pair with any cubes that are still active, those
     // active cubes neeed to remove their now-defunct neighbors
+}
+
+void CubeSlots::connectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::Or(CubeSlots::vecConnected, cv);
+}
+
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::And(CubeSlots::vecConnected, ~cv);
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv)
@@ -109,4 +112,94 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
         CubeSlots::instances[id].waitForFinish();
         cv ^= Intrinsic::LZ(id);
     }
+}
+
+void CubeSlots::assetLoaderTask(void *)
+{
+    /*
+     * Pump data from flash memory into the current _SYSAssetLoader as needed.
+     * This lets us install assets from ISR context without accessing flash
+     * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
+     */
+
+    _SYSAssetLoader *L = assetLoader;
+    _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);
+    if (!L) return;
+
+    _SYSCubeIDVector cubeVec = L->cubeVec & ~L->complete;
+    while (cubeVec) {
+        _SYSCubeID id = Intrinsic::CLZ(cubeVec);
+        cubeVec ^= Intrinsic::LZ(id);
+        _SYSAssetLoaderCube *cube = cubeArray + id;
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            fetchAssetLoaderData(cube);
+    }
+}
+
+void CubeSlots::fetchAssetLoaderData(_SYSAssetLoaderCube *lc)
+{
+    /*
+     * Given a guaranteed-valid pointer to a _SYSAssetLoaderCube,
+     * try to top off the FIFO buffer with data from flash memory.
+     */
+
+    // Sample the FIFO state exactly once, and validate it.
+    int head = lc->head;
+    int tail = lc->tail;
+    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
+        return;
+    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
+    unsigned fifoAvail = _SYS_ASSETLOAD_BUF_SIZE - 1 - fifoCount;
+
+    /*
+     * Sample the progress state exactly once, and figure out how much
+     * data can be copied into the FIFO right now.
+     */
+    uint32_t progress = lc->progress;
+    uint32_t dataSize = lc->dataSize;
+    if (progress > dataSize)
+        return;
+    unsigned count = MIN(fifoAvail, dataSize - progress);
+
+    // Nothing to do?
+    if (count == 0)
+        return;
+
+    // Follow the pAssetGroup pointer
+    SvmMemory::VirtAddr groupVA = lc->pAssetGroup;
+    SvmMemory::PhysAddr groupPA;
+    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
+        return;
+    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+
+    /*
+     * Calculate the VA we're reading from in flash. We can do this without
+     * mapping the _SYSAssetGroupHeader at all, which avoids a bit of
+     * cache pollution.
+     */
+
+    SvmMemory::VirtAddr srcVA = G->pHdr + sizeof(_SYSAssetGroupHeader) + progress;
+
+    // Write to the FIFO.
+
+    FlashBlockRef ref;
+    progress += count;
+    while (count--) {
+        SvmMemory::copyROData(ref, &lc->buf[tail], srcVA, 1);
+        if (++tail == _SYS_ASSETLOAD_BUF_SIZE)
+            tail = 0;
+        srcVA++;
+    }
+
+    /*
+     * Order matters when writing back state: The CubeCodec detects
+     * completion by noticing that progress==dataSize and the FIFO is empty.
+     * To avoid it detecting a false positive, we must update 'progress'
+     * after writing 'tail'.
+     */
+    
+    lc->tail = tail;
+    Atomic::Barrier();
+    lc->progress = progress;
+    ASSERT(progress <= dataSize);
 }

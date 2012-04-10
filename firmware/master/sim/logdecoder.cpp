@@ -8,8 +8,8 @@
 #include "logdecoder.h"
 
 
-void LogDecoder::formatLog(char *out, size_t outSize,
-    char *fmt, uint32_t *args, size_t argCount)
+void LogDecoder::formatLog(ELFDebugInfo &DI,
+    char *out, size_t outSize, char *fmt, uint32_t *args, size_t argCount)
 {
     // This is a simple printf()-like formatter, used to format log entries.
     // It differs from printf() in two important ways:
@@ -86,6 +86,15 @@ void LogDecoder::formatLog(char *out, size_t outSize,
                     done = true;
                     ASSERT(argCount && "Too few arguments in format string");
                     out += snprintf(out, outEnd - out, "0x%08x", *args);
+                    argCount--;
+                    args++;
+                    break;
+
+                // Pointer, formatted as a resolved symbol
+                case 'P':
+                    done = true;
+                    ASSERT(argCount && "Too few arguments in format string");
+                    out += snprintf(out, outEnd - out, "%s", DI.formatAddress(*args).c_str());
                     argCount--;
                     args++;
                     break;
@@ -183,7 +192,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
                      tag.getValue(), buffer[0], buffer[1], buffer[2],
                      buffer[3], buffer[4], buffer[5], buffer[6]));
             } else {
-                formatLog(outBuffer, sizeof outBuffer, (char*) fmt.c_str(),
+                formatLog(DI, outBuffer, sizeof outBuffer, (char*) fmt.c_str(),
                     buffer, tag.getArity());
                 LOG(("%s", outBuffer));
             }

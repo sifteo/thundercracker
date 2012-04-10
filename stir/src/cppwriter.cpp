@@ -83,33 +83,48 @@ void CPPWriter::writeString(const std::vector<uint8_t> &data)
 void CPPWriter::writeArray(const std::vector<uint8_t> &data)
 {
     char buf[8];
-
     mStream << indent;
-
     for (unsigned i = 0; i < data.size(); i++) {
         if (i && !(i % 16))
             mStream << "\n" << indent;
-
         sprintf(buf, "0x%02x,", data[i]);
         mStream << buf;
     }
-
     mStream << "\n";
 }
 
+void CPPWriter::writeArray(const std::vector<uint16_t> &data)
+{
+    char buf[8];
+    mStream << indent;
+    for (unsigned i = 0; i < data.size(); i++) {
+        if (i && !(i % 8))
+            mStream << "\n" << indent;
+        sprintf(buf, "0x%04x,", data[i]);
+        mStream << buf;
+    }
+    mStream << "\n";
+}
 
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
-    : CPPWriter(log, filename) {}
+    : CPPWriter(log, filename), nextGroupOrdinal(0) {}
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
-    char signature[32];
+    char hash[32];
 
 #ifdef __MINGW32__
-    sprintf(signature, "0x%016I64x", (long long unsigned int) group.getSignature());
+    sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
 #else
-    sprintf(signature, "0x%016llx", (long long unsigned int) group.getSignature());
+    sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
 #endif
+
+    /*
+     * XXX: This method of generating the group Ordinal only works within
+     *      a single Stir run. Ideally we'd be able to use _SYS_lti_counter
+     *      or equivalent, but there's no efficient way to stick that in
+     *      read-only data yet.
+     */
 
     mStream <<
         "\n"
@@ -117,11 +132,11 @@ void CPPSourceWriter::writeGroup(const Group &group)
         indent << "struct _SYSAssetGroupHeader hdr;\n" <<
         indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
         "} " << group.getName() << "_data = {{\n" <<
-        indent << "/* hdrSize   */ sizeof(struct _SYSAssetGroupHeader),\n" <<
         indent << "/* reserved  */ 0,\n" <<
+        indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
         indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
         indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-        indent << "/* signature */ " << signature << ",\n"
+        indent << "/* hash      */ " << hash << ",\n"
         "}, {\n";
 
     writeArray(group.getLoadstream());
@@ -130,12 +145,13 @@ void CPPSourceWriter::writeGroup(const Group &group)
         "}};\n\n"
         "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
         indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
-        indent << "/* pCubes    */ reinterpret_cast<uint32_t>(" << group.getName() << ".cubes),\n" <<
         "}};\n\n";
 
+    mLog.infoBegin("Encoding images");
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++)
         writeImage(**i);
+    mLog.infoEnd();
 }
 
 void CPPSourceWriter::writeSound(const Sound &sound)
@@ -146,7 +162,8 @@ void CPPSourceWriter::writeSound(const Sound &sound)
 
     float kbps;
     enc->encodeFile(sound.getFile(), data, kbps, sound.getSampleRate());
-    mLog.infoLine("%20s: %7.02f kiB, %6.02f kbps %s (%s)", sound.getName().c_str(),
+    mLog.infoLineWithLabel(sound.getName().c_str(),
+        "%7.02f kiB, %6.02f kbps %s (%s)",
         data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
 
     if (data.empty()) {
@@ -161,7 +178,8 @@ void CPPSourceWriter::writeSound(const Sound &sound)
 
     // If the loop length is 0, there is no looping by default.
     _SYSAudioLoopType loopType = sound.getLoopType();
-    if (sound.getLoopLength() == 0) loopType = LoopOnce;
+    if (sound.getLoopLength() == 0)
+        loopType = _SYS_LOOP_ONCE;
 
     // Precompute the number of samples in the clip
     uint32_t numSamples = data.size();
@@ -197,7 +215,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* sampleRate */ " << sound.getSampleRate() << ",\n" <<
         indent << "/* loopStart  */ " << sound.getLoopStart() << ",\n" <<
         indent << "/* loopEnd    */ " << loopEnd << ",\n" <<
-        indent << "/* loopType   */ " << (loopType == LoopOnce ? "LoopOnce" : "LoopRepeat") << ",\n" <<
+        indent << "/* loopType   */ " << (loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
         indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
         indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
         indent << "/* dataSize   */ " << data.size() << ",\n" <<
@@ -209,66 +227,64 @@ void CPPSourceWriter::writeSound(const Sound &sound)
 
 void CPPSourceWriter::writeImage(const Image &image)
 {
-    char buf[16];
     const std::vector<TileGrid> &grids = image.getGrids();
     unsigned width = grids.empty() ? 0 : grids[0].width();
     unsigned height = grids.empty() ? 0 : grids[0].height();
 
-    if (image.isPinned()) {
-        /*
-         * Sifteo::PinnedAssetImage
-         */
-        
-        const TileGrid &grid = grids[0];
-        const TilePool &pool = grid.getPool();
+    // Declare the data so we can do a forward reference,
+    // to keep the header ordered first in memory when we can.
+    mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
 
+    // This header can often be optimized out by slinky, unless its address is taken.
+    // Here we output just the common non-format-specific header.
+    mStream <<
+        "\n"
+        "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n" <<
+        indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
+        indent << "/* width    */ " << width << ",\n" <<
+        indent << "/* height   */ " << height << ",\n" <<
+        indent << "/* frames   */ " << grids.size() << ",\n";
+
+    bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
+    if (image.isPinned() || isSingleTile) {
         mStream <<
-            "\n"
-            "extern const Sifteo::PinnedAssetImage " << image.getName() << " = {\n" <<
-            indent << "/* width   */ " << width << ",\n" <<
-            indent << "/* height  */ " << height << ",\n" <<
-            indent << "/* frames  */ " << grids.size() << ",\n" <<
-            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
-            indent << "/* index   */ " << pool.index(grid.tile(0, 0)) <<
-            ",\n};\n\n";
-            
-    } else {
-        /*
-         * Sifteo::AssetImage
-         *
-         * Write out an uncompressed tile grid.
-         *
-         * XXX: Compression!
-         */
-
-        mStream << "\nstatic const uint16_t " << image.getName() << "_tiles[] = {\n";
-
-        for (unsigned f = 0; f < grids.size(); f++) {
-            const TileGrid &grid = grids[f];
-            const TilePool &pool = grid.getPool();
-
-            mStream << indent << "// Frame " << f << "\n";
-        
-            for (unsigned y = 0; y < height; y++) {
-                mStream << indent;
-                for (unsigned x = 0; x < width; x++) {
-                    sprintf(buf, "0x%04x,", pool.index(grid.tile(x, y)));
-                    mStream << buf;
-                }
-                mStream << "\n";
-            }
-        }
-        
-        mStream <<
-            "};\n\n"
-            "extern const Sifteo::AssetImage " << image.getName() << " = {\n" <<
-            indent << "/* width   */ " << width << ",\n" <<
-            indent << "/* height  */ " << height << ",\n" <<
-            indent << "/* frames  */ " << grids.size() << ",\n" <<
-            indent << "/* group   */ &" << image.getGroup()->getName() << ",\n" <<
-            indent << "/* tiles   */ " << image.getName() << "_tiles,\n" <<
-            "};\n\n";
+            indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
+            indent << "/* reserved */ 0,\n" <<
+            indent << "/* pData    */ " << image.encodePinned() << "\n}};\n\n";
+        return;
     }
+    
+    // If we aren't explicitly writing a Flat asset, try to compress it
+    if (!image.isFlat()) {
+        std::vector<uint16_t> data;
+        std::string format;
+        if (image.encodeDUB(data, mLog, format)) {
+            mStream <<
+                indent << "/* format   */ " << format << ",\n" <<
+                indent << "/* reserved */ 0,\n" <<
+                indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+                "const uint16_t " << image.getName() << "_data[] = {\n";
+            writeArray(data);
+            mStream << "};\n\n";
+            return;
+        }
+    }
+
+    // Fall back on a Flat (uncompressed tile array) asset. Note that we only
+    // wrap this in a FlatAssetImage class if the script explicitly requested
+    // a flat asset. If we decided not to compress an asset with default params,
+    // it will still be in an AssetImage class, but the compression format will
+    // be _SYS_AIF_FLAT.
+
+    mStream <<
+        indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
+        indent << "/* reserved */ 0,\n" <<
+        indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
+        "const uint16_t " << image.getName() << "_data[] = {\n";
+    std::vector<uint16_t> data;
+    image.encodeFlat(data);
+    writeArray(data);
+    mStream << "};\n\n";
 }
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
@@ -331,14 +347,7 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {
         Image *image = *i;
-        const char *cls;
-        
-        if (image->isPinned())
-            cls = "PinnedAssetImage";
-        else
-            cls = "AssetImage";
-            
-        mStream << "extern const Sifteo::" << cls << " " << image->getName() << ";\n";
+        mStream << "extern const Sifteo::" << image->getClassName() << " " << image->getName() << ";\n";
     }
 }
 

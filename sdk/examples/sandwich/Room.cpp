@@ -10,13 +10,13 @@ Int2 Room::LocalCenter(unsigned subdiv) const {
     ASSERT(mPrimarySlotType == PRIMARY_SUBDIV);
     if (mPrimarySlotId == SUBDIV_DIAG_POS || mPrimarySlotId == SUBDIV_DIAG_NEG) {
       const DiagonalSubdivisionData* p = SubdivAsDiagonal();
-      return Vec2(p->altCenterX, p->altCenterY); 
+      return vec(p->altCenterX, p->altCenterY); 
     } else if (mPrimarySlotId == SUBDIV_BRDG_HOR || mPrimarySlotId == SUBDIV_BRDG_VER) {
       const BridgeSubdivisionData* p = SubdivAsBridge();
-      return Vec2(p->altCenterX, p->altCenterY);
+      return vec(p->altCenterX, p->altCenterY);
     }
   }
-  return Vec2(Data()->centerX, Data()->centerY); 
+  return vec(Data()->centerX, Data()->centerY); 
 }
 
 Int2 Room::Location() const {
@@ -89,7 +89,7 @@ void Room::Clear() {
 
 bool Room::IsShowingBlock(const Sokoblock* pBlock) {
   ASSERT(pBlock);
-  const Int2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Int2 blockTopLeft = pBlock->Position() - vec(32, 32);
   const Int2 roomTopLeft = 128 * Location();
   const Int2 delta = blockTopLeft - roomTopLeft;
   return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;

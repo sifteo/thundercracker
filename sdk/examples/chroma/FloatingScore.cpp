@@ -44,7 +44,7 @@ void FloatingScore::Draw( BG1Helper &bg1helper )
 
     for( int i = 0; i < iLen; i++ )
     {
-        bg1helper.DrawAsset( Vec2( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
+        bg1helper.DrawAsset( vec( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
     }
 }
 

@@ -12,6 +12,7 @@
 #endif
 
 #include <sifteo/macros.h>
+#include <sifteo/abi.h>
 
 namespace Sifteo {
 

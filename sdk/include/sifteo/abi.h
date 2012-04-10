@@ -35,11 +35,13 @@ typedef uint8_t bool;
  * firmware -> game, OUT is game -> firmware.
  */
 
-#define _SYS_NUM_CUBE_SLOTS   32
+#define _SYS_NUM_CUBE_SLOTS     32
+#define _SYS_CUBE_ID_INVALID    0xFF    /// Reserved _SYSCubeID value
 
 typedef uint8_t _SYSCubeID;             /// Cube slot index
 typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
+typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset slots
 
 /**
  * Entry point. Our standard entry point is main(), with no arguments
@@ -50,36 +52,57 @@ typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-firs
 void main(void);
 #endif
 
-/*
- * XXX: It would be nice to further compress the loadstream when storing
- *      it in the master's flash. There's a serious memory tradeoff here,
- *      though, and right now I'm assuming RAM is more important than
- *      flash to conserve. I've been using LZ77 successfully for this
- *      compressor, but that requires a large output window buffer. This
- *      is clearly an area for improvement, and we might be able to tweak
- *      an existing compression algorithm to work well. Or perhaps we put
- *      that effort into improving the loadstream codec.
- */
+#define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
 struct _SYSAssetGroupHeader {
-    uint8_t hdrSize;            /// OUT    Size of header / offset to compressed data
     uint8_t reserved;           /// OUT    Reserved, must be zero
+    uint8_t ordinal;            /// OUT    Small integer, unique within an ELF
     uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
     uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
-    uint64_t signature;         /// OUT    Unique identity for this group
+    uint64_t hash;              /// OUT    Hash of this asset group's data
+    // Followed by compressed data
 };
 
 struct _SYSAssetGroupCube {
     uint16_t baseAddr;          /// IN     Installed base address, in tiles
-    uint16_t reserved;          /// IN     Must be zero
-    uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
 struct _SYSAssetGroup {
-    uint32_t pHdr;                  /// OUT    Read-only data for this asset group
-    uint32_t pCubes;                /// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;      /// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;     /// IN     Which cubes have finished installing this group?
+    uint32_t pHdr;              /// OUT    Read-only data for this asset group
+    // Followed by a _SYSAssetGroupCube array
+};
+
+struct _SYSAssetLoaderCube {
+    uint32_t pAssetGroup;   /// IN    Address for _SYSAssetGroup in RAM
+    uint32_t progress;      /// IN    Number of compressed bytes read from flash
+    uint32_t dataSize;      /// IN    Local copy of asset group's dataSize
+    uint16_t reserved;      /// -
+    uint8_t head;           /// -     Index of the next sample to read
+    uint8_t tail;           /// -     Index of the next empty slot to write into
+    uint8_t buf[_SYS_ASSETLOAD_BUF_SIZE];
+};
+
+struct _SYSAssetLoader {
+    _SYSCubeIDVector cubeVec;   /// OUT   Which _SYSAssetLoaderCube structs are valid?
+    _SYSCubeIDVector complete;  /// OUT   Which cubes have fully completed their loading?
+    // Followed by a _SYSAssetLoaderCube array
+};
+
+enum _SYSAssetImageFormat {
+    _SYS_AIF_PINNED = 0,        /// All tiles are linear. "data" is index of the first tile
+    _SYS_AIF_FLAT,              /// "data" points to a flat array of 16-bit tile indices
+    _SYS_AIF_DUB_I8,            /// Dictionary Uniform Block codec, 8-bit index
+    _SYS_AIF_DUB_I16,           /// Dictionary Uniform Block codec, 16-bit index
+};
+
+struct _SYSAssetImage {
+    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
+    uint16_t width;             /// Width of the asset image, in tiles
+    uint16_t height;            /// Height of the asset image, in tiles
+    uint16_t frames;            /// Number of "frames" in this image
+    uint8_t  format;            /// _SYSAssetImageFormat
+    uint8_t  reserved;          /// Reserved, must be zero
+    uint32_t pData;             /// Format-specific data or data pointer
 };
 
 /*
@@ -209,7 +232,7 @@ union _SYSVideoRAM {
     };
 };
 
-/*
+/**
  * The _SYSVideoBuffer is a low-level data structure that serves to
  * collect graphics state updates so that the system can send them
  * over the radio to cubes.
@@ -222,25 +245,29 @@ union _SYSVideoRAM {
  * bitmaps at different resolutions, for the synchronization protocol
  * below.  These bitmaps are ordered MSB-first.
  *
+ * Synchronization Protocol
+ * ------------------------
+ *
  * To support the system's asynchronous access requirements, these
  * buffers have a very strict synchronization protocol that user code
  * must observe:
  *
  *  1. Set the 'lock' bit(s) for any words you plan to update,
- *     using Atomic::Store().
+ *     using an atomic store.
  *
  *  2. Update the VRAM buffer, using any method and in any order you like.
  *
- *  3. Set change bits in cm1, using Atomic::Or()
+ *  3. Set change bits in cm1, using an atomic OR such as
+ *     __builtin_or_and_fetch().
  *
- *  4. Set change bits in cm32, using Atomic::Or(). After this point the
+ *  4. Set change bits in cm16, using an atomic OR. After this point the
  *     system may start sending data over the radio at any time.
  *
- *  5. As soon after step (4), clear the lock bits you set in (1). Since
+ *  5. Soon after step (4), clear the lock bits you set in (1). Since
  *     the system treats lock bits as read-only, you can do this using
- *     Atomic::Store() again.
+ *     a plain atomic store.
  *
- * Note that cm32 is the primary trigger that the system uses in order
+ * Note that cm16 is the primary trigger that the system uses in order
  * to determine if hardware VRAM needs to be updated. The lock bits do
  * not prevent the system from reading VRAM, but rather they're used as
  * part of the following invariant:
@@ -253,9 +280,9 @@ union _SYSVideoRAM {
  * maintain, since the system would have no idea when userspace code
  * has modified the buffer, if it hasn't yet set the cm1 bits.
  *
- * Streaming over the radio can begin any time after cm32 has been
+ * Streaming over the radio can begin any time after cm16 has been
  * updated. For bandwidth efficiency, it's best to wait until after a
- * large update, then OR a single value with cm32 in order to trigger
+ * large update, then OR a single value with cm16 in order to trigger
  * the update.
  *
  * The system may still start streaming updates while the 'lock' bit
@@ -263,30 +290,71 @@ union _SYSVideoRAM {
  * optimization techniques, since some of these rely on knowing for
  * certain the values of words that have already been transmitted. So
  * it is recommended that userspace clear the 'lock' bits as soon as
- * possible after cm32 is set.
+ * possible after cm16 is set.
  *
- * The 'cm32next' member is special: It is not used at all by the
- * system when updating cubes, but it's used as bidirectional storage
- * for some of the system calls that manipulate video buffers. These
- * system calls will update cm32next instead of cm32, leaving it up to
- * the user to choose when to make those changes visible to the system
- * by OR'ing cm32next into cm32.
+ * Asynchronous Pipeline
+ * ---------------------
  *
- * 'needPaint' OR'ed with cm32 at every unlock, and cleared only after
- * we schedule a hardware repaint operation on the cubes. Userspace
- * code doesn't need to worry about this value at all, assuming you
- * use the system-provided unlock primitive.
+ * When working with the graphics subsystem, it's helpful to keep in mind
+ * the pipeline of asynchronous rendering stages:
+ * 
+ *   1. Changes are written to a locked vbuf (lock)
+ *   2. The vbuf is unlocked, changes can start to stream over the air (cm16 <- lock)
+ *   3. Streaming is finished (cm16 <- 0)
+ *   4. The cube hardware begins rendering a frame
+ *   5. The cube acknowledges rendering completion
+ *
+ * At any of these stages, a video buffer change can 'invalidate' the
+ * ongoing rendering, meaning we may need to render an additional frame before
+ * the final intended output is actually present on the display. Rendering is
+ * only considered to be 'finished' if we make it through steps 3-5 without
+ * any modifications to the video buffer.
+ *
+ * Paint Control
+ * -------------
+ *
+ * The _SYS_paint() call is a no-op for cubes who have had no drawing occur.
+ * This state is tracked, separately from the dirty bits, using a NEED_PAINT
+ * flag. This flag is cleared by _SYS_paint() itself, whereas the actual dirty
+ * bits are propagated through the firmware's model of the render pipeline.
+ * Userspace code can force a cube to redraw by setting NEED_PAINT, even
+ * without making any VRAM changes.
+ *
+ * This flag is set automatically by _SYS_vbuf_lock().
  */
 
+#define _SYS_VBF_NEED_PAINT     (1 << 0)        // Request a paint operation
+// All other bits are reserved for system use.
+
 struct _SYSVideoBuffer {
-    union _SYSVideoRAM vram;
-    uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
-    uint32_t cm32;              /// INOUT  Change map, at a resolution of 1 bit per 32 words
+    uint32_t flags;             /// INOUT  _SYS_VBF_* bits
     uint32_t lock;              /// OUT    Lock map, at a resolution of 1 bit per 16 words
-    uint32_t cm32next;          /// INOUT  Next CM32 change map.
-    uint32_t needPaint;         /// INOUT  Repaint trigger
+    uint32_t cm16;              /// INOUT  Change map, at a resolution of 1 bit per 16 words
+    uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
+    union _SYSVideoRAM vram;
 };
 
+/**
+ * In general, the system likes working with raw _SYSVideoBuffers: but in
+ * userspace, it's very common to want to know both the _SYSVideoBuffer and
+ * the ID of the cube it's currently attached with. For these cases, we
+ * provide a standardized memory layout.
+ */
+
+struct _SYSAttachedVideoBuffer {
+    _SYSCubeID cube;
+    uint8_t reserved[3];
+    struct _SYSVideoBuffer vbuf;
+};
+
+/**
+ * Tiles in the _SYSVideoBuffer are typically encoded in 7:7 format, in
+ * which a 14-bit tile ID is packed into the upper 7 bits of each byte
+ * in a 16-bit word.
+ */
+
+#define _SYS_TILE77(_idx)   ((((_idx) << 2) & 0xFE00) | \
+                             (((_idx) << 1) & 0x00FE))
 
 /*
  * Audio handles
@@ -315,17 +383,17 @@ enum _SYSAudioType {
 };
 
 enum _SYSAudioLoopType {
-    LoopUndef = -1,
-    LoopOnce = 0,
-    LoopRepeat = 1,
-    LoopPingPong = 2
+    _SYS_LOOP_UNDEF     = -1,
+    _SYS_LOOP_ONCE      = 0,
+    _SYS_LOOP_REPEAT    = 1,
+    _SYS_LOOP_PING_PONG = 2
 };
 
 struct _SYSAudioModule {
-    uint32_t sampleRate;    /// native sampling rate of data
-    uint32_t loopStart;     /// loop starting point, in samples
-    uint32_t loopEnd;       /// loop ending point, in samples
-    uint8_t loopType;       /// loop type, 0 (no looping) or 1 (forward loop)
+    uint32_t sampleRate;    /// Native sampling rate of data
+    uint32_t loopStart;     /// Loop starting point, in samples
+    uint32_t loopEnd;       /// Loop ending point, in samples
+    uint8_t loopType;       /// Loop type, 0 (no looping) or 1 (forward loop)
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
@@ -333,47 +401,32 @@ struct _SYSAudioModule {
 };
 
 struct _SYSAudioBuffer {
-    uint16_t head;
-    uint16_t tail;
+    uint16_t head;          /// Index of the next sample to read
+    uint16_t tail;          /// Index of the next empty slot to write into
     uint8_t buf[_SYS_AUDIO_BUF_SIZE];
 };
 
+
 /**
- * Accelerometer state.
+ * Small vector types
  */
 
-struct _SYSAccelState {
-    int8_t x;           // +X towards the right
-    int8_t y;           // +Y towards the bottom
-    int8_t z;           // +Z gravity pointing down / right side up
-    int8_t reserved;    // Padded to 32 bits
+struct _SYSInt2 {
+    int32_t x, y;
 };
 
-struct _SYSNeighborState {
+union _SYSByte4 {
+    uint32_t value;
+    struct {
+        int8_t x, y, z, w;
+    };
+};
+
+union _SYSNeighborState {
+    uint32_t value;
     _SYSCubeID sides[4];
 };
 
-/**
- * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
- */
-
-typedef enum {
-	_SYS_TILT_NEGATIVE,
-	_SYS_TILT_NEUTRAL,
-	_SYS_TILT_POSITIVE
-} _SYS_TiltType;
-
-struct _SYSTiltState {
-    uint8_t x;
-    uint8_t y;
-    uint8_t reserved0;
-    uint8_t reserved1;
-};
-
-typedef enum {
-  NOT_SHAKING,
-  SHAKING
-} _SYSShakeState;
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
@@ -489,19 +542,27 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
 #define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
-#define _SYS_METADATA_NUM_AGSLOTS   0x0007  // uint8_t, count of required asset group slots
+#define _SYS_METADATA_NUM_ASLOTS    0x0007  // uint8_t, count of required AssetSlots
+#define _SYS_METADATA_CUBE_RANGE    0x0008  // _SYSMetadataCubeRange
 
 struct _SYSMetadataBootAsset {
-    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
-    uint8_t     agSlotID;       // Asset group slot to load this into
-    uint8_t     reserved[3];    // Must be zero;
+    uint32_t        pHdr;           // Virtual address for _SYSAssetGroupHeader
+    _SYSAssetSlot   slot;           // Asset group slot to load this into
+    uint8_t         reserved[3];    // Must be zero;
 };
 
-// XXX: What format should the tile array be in? Right now it's a 16-bit
-//      index array, but that's awfully overkill! We can compress this.
+struct _SYSMetadataCubeRange {
+    uint8_t     minCubes;
+    uint8_t     maxCubes;
+};
+
 struct _SYSMetadataImage {
-    uint32_t    groupHdr;       // Virtual address for _SYSAssetGroupHeader
-    uint32_t    tiles;          // Virtual address for tile array
+    uint8_t   width;            /// Width of the image, in tiles
+    uint8_t   height;           /// Height of the image, in tiles
+    uint8_t   frames;           /// Number of "frames" in this image
+    uint8_t   format;           /// _SYSAssetImageFormat
+    uint32_t  groupHdr;         /// Virtual address for _SYSAssetGroupHeader
+    uint32_t  pData;            /// Format-specific data or data pointer
 };
 
 /**
@@ -518,6 +579,7 @@ struct _SYSMetadataImage {
  *   - Binary integers: %b
  *   - C-style strings: %s
  *   - Hex-dump of fixed width buffers: %<width>h
+ *   - Pointer, printed as a resolved symbol when possible: %P
  *
  * To work around limitations in C variadic functions, _SYS_lti_metadata()
  * supports a format string which specifies what data type each argument
@@ -547,7 +609,10 @@ struct _SYSMetadataImage {
  * Static initializers:
  *   In global varaibles which aren't themselves constant but which were
  *   initialized to a constant, _SYS_lti_initializer() can be used to retrieve
- *   that initializer value at link-time.
+ *   that initializer value at link-time. If 'require' is 'true', the value
+ *   must be resolveable to a constant static initializer of a link error
+ *   will result. If 'require' is false, we return the static initializer if
+ *   possible, or pass through 'value' without modification if not.
  */
 
 unsigned _SYS_lti_isDebug();
@@ -556,7 +621,8 @@ void _SYS_lti_log(const char *fmt, ...);
 void _SYS_lti_metadata(uint16_t key, const char *fmt, ...);
 unsigned _SYS_lti_counter(const char *name, int priority);
 uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
-void *_SYS_lti_initializer(void *value);
+const void *_SYS_lti_initializer(const void *value, bool require);
+bool _SYS_lti_isConstant(unsigned value);
 
 /**
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
@@ -584,8 +650,7 @@ void *_SYS_lti_initializer(void *value);
  * bitcast them to integers.
  *
  * Return values must be integers, and furthermore they must be exactly
- * 32 or 64 bits wide. Structs are allowed, if and only if they're exactly
- * 32 bits long.
+ * 32 or 64 bits wide.
  */
 
 #if defined(FW_BUILD) || !defined(__clang__)
@@ -598,6 +663,8 @@ void *_SYS_lti_initializer(void *value);
 
 void _SYS_abort(void) _SC(0) _NORET;
 void _SYS_exit(void) _SC(64) _NORET;
+
+uint32_t _SYS_getFeatures() _SC(145);   /// ABI compatibility feature bits
 
 void _SYS_yield(void) _SC(65);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(66);   /// Enqueue a new rendering frame
@@ -695,16 +762,15 @@ void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(46);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(113);
 void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(115);
-void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);  /// Which cubes will be trying to connect?
+// Typically only needed by system menu code
+void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(63);
 
-struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(117);
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(33);
-struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(61);
+uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(117);
+uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(33);
+uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(61);
 uint32_t _SYS_getShake(_SYSCubeID cid) _SC(118);
 
 uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);
@@ -735,6 +801,20 @@ int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(130);
 void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(131);
 uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
 
+uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
+void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
+uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
+void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
+uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
+
+void _SYS_image_memDraw(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
+void _SYS_image_memDrawRect(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
+void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
+void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
+void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
+void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
+void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
+void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -4,25 +4,23 @@
 #include "game.h"
 
 
-GameCube::GameCube(int id)
-    : cube(id),
-      hilighter(cube),
-      portal_e(SIDE_TOP),
-      portal_w(SIDE_LEFT),
-      portal_f(SIDE_BOTTOM),
-      portal_a(SIDE_RIGHT),
+GameCube::GameCube(CubeID cube)
+    : hilighter(vid),
+      portal_e(TOP),
+      portal_w(LEFT),
+      portal_f(BOTTOM),
+      portal_a(RIGHT),
       portalTicker(50),
       numMarkers(0)
-{}
+{
+    vid.attach(cube);
+}
       
-
 void GameCube::init()
 {
-    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
-
-    vid.init();
+    vid.initMode(BG0_SPR_BG1);
     hilighter.init();
-    vid.BG0_drawAsset(Vec2(0,0), Playfield);
+    vid.bg0.image(vec(0,0), Playfield);
 }
 
 void GameCube::animate(float timeStep)
@@ -40,7 +38,7 @@ void GameCube::draw()
 {
     for (int i = 0; i < NUM_SIDES; i++) {
         Portal &p = getPortal(i);
-        p.draw(cube);
+        p.draw(vid);
     }
     
     hilighter.draw();
@@ -49,46 +47,43 @@ void GameCube::draw()
 void GameCube::placeMarker(int id)
 {
     const unsigned size = 5;
-    
+
     if (numMarkers >= size * size)
         return;
-    
+
     unsigned x = numMarkers % size;
     unsigned y = numMarkers / size;
-    
-    VidMode_BG0 vid(cube.vbuf);
-    vid.BG0_drawAsset(Vec2(3 + x*2, 3 + y*2), Markers, id);
-    
+
+    vid.bg0.image(vec(3 + x*2, 3 + y*2), Markers, id);
+
     numMarkers++;
 }
 
 Float2 GameCube::velocityFromTilt()
 {
-    return cube.physicalAccel() * 0.1f;
+    return vid.physicalAccel().xy() * 0.1f;
 }
 
 bool GameCube::reportMatches(unsigned bits)
 {
     switch (bits) {
-    case 0xF:                        placeMarker(1); return true;
-    case 0xF ^ (1 << SIDE_LEFT):     placeMarker(2); return true;
-    case 0xF ^ (1 << SIDE_TOP):      placeMarker(3); return true;
-    case 0xF ^ (1 << SIDE_BOTTOM):   placeMarker(4); return true;
-    case 0xF ^ (1 << SIDE_RIGHT):    placeMarker(5); return true;
+    case 0xF:                   placeMarker(1); return true;
+    case 0xF ^ (1 << LEFT):     placeMarker(2); return true;
+    case 0xF ^ (1 << TOP):      placeMarker(3); return true;
+    case 0xF ^ (1 << BOTTOM):   placeMarker(4); return true;
+    case 0xF ^ (1 << RIGHT):    placeMarker(5); return true;
     }
     return false;
 }
 
-CubeHilighter::CubeHilighter(Cube &cube)
-    : cube(cube), ticker(6), counter(0), pos(Vec2(-1,-1))
+CubeHilighter::CubeHilighter(VideoBuffer &vid)
+    : vid(vid), ticker(6), counter(0), pos(vec(-1,-1))
 {}
 
 void CubeHilighter::init()
 {
-    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
-                   ((1 << Brackets.width) - 1), Brackets.height);
-    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
-                     Brackets.tiles, 0, Brackets.width * Brackets.height);
+    vid.bg1.setMask(BG1Mask::filled(vec(0,0), Brackets.tileSize()));
+    vid.bg1.image(vec(0,0), Brackets);
 }
 
 void CubeHilighter::animate(float timeStep)
@@ -99,31 +94,24 @@ void CubeHilighter::animate(float timeStep)
 
 void CubeHilighter::draw()
 {
-    int8_t x, y;
+    Int2 v;
     
     if (counter <= 0 || (counter & 1) == 0) {
         // Hidden / flashing
-        x = -Brackets.width * 8;
-        y = -Brackets.height * 8;
+        v = Brackets.pixelSize();
     
     } else {
         // Active
-        x = pos.x;
-        y = pos.y;
+        v = -pos;
     }
     
-    x -= Brackets.width * 4;
-    y -= Brackets.height * 4;
-    
-    x = -x;
-    y = -y;
-    _SYS_vbuf_poke(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
-                   ((uint8_t)x) | ((uint16_t)(uint8_t)y << 8));
+    v += Brackets.pixelExtent();
+    vid.bg1.setPanning(v);
 }
 
 bool CubeHilighter::doHilight(Int2 requestedPos)
 {
-    bool posMatch = pos.x == requestedPos.x && pos.y == requestedPos.y;
+    bool posMatch = pos == requestedPos;
 
     if (counter <= 0) {
         if (posMatch) {

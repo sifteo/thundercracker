@@ -15,6 +15,7 @@
 #include "proof.h"
 #include "cppwriter.h"
 #include "audioencoder.h"
+#include "dubencoder.h"
 
 namespace Stir {
 
@@ -275,6 +276,9 @@ void Script::collect()
         Sound *sound = Lunar<Sound>::cast(L, -2);
 
         if (name && name[0] != '_') {
+            if (group || image || sound)
+                log.setMinLabelWidth(strlen(name));
+
             if (group) {
                 group->setName(name);
                 groups.insert(group);
@@ -333,11 +337,11 @@ Group *Group::getDefault(lua_State *L)
     return obj;
 }
 
-uint64_t Group::getSignature() const
+uint64_t Group::getHash() const
 {
     /*
-     * Signatures are calculated automatically, as a portion of the
-     * SHA1 hash of the loadstream.
+     * Hashes are calculated automatically, as a
+     * truncated SHA1 of the loadstream.
      */
 
     SHA_CTX ctx;
@@ -390,6 +394,16 @@ Image::Image(lua_State *L)
         mImages.setHeight(lua_tointeger(L, -1));
     if (Script::argMatch(L, "pinned"))
         mTileOpt.pinned = lua_toboolean(L, -1);
+
+    if (Script::argMatch(L, "flat"))
+        mIsFlat = lua_toboolean(L, -1);
+    else
+        mIsFlat = false;
+
+    if (isFlat() && isPinned()) {
+        luaL_error(L, "Image formats 'flat' and 'pinned' are mutually exclusive");
+        return;
+    }
 
     if (Script::argMatch(L, 1)) {
         /*
@@ -483,6 +497,74 @@ void Image::createGrids()
     }
 }
 
+const char *Image::getClassName() const
+{
+    if (isPinned())
+        return "PinnedAssetImage";
+    else if (isFlat())
+        return "FlatAssetImage";
+    else
+        return "AssetImage";
+}
+
+uint16_t Image::encodePinned() const
+{
+    // Pinned assets are just represented by a single index
+
+    const TileGrid &firstGrid = mGrids[0];
+    const TilePool &pool = firstGrid.getPool();  
+    return pool.index(firstGrid.tile(0, 0));
+}
+
+void Image::encodeFlat(std::vector<uint16_t> &data) const
+{
+    // Flat assets are an uncompressed array of indices
+
+    for (unsigned f = 0; f < mGrids.size(); f++) {
+        const TileGrid &grid = mGrids[f];
+        const TilePool &pool = grid.getPool();
+
+        for (unsigned y = 0; y < grid.height(); y++)
+            for (unsigned x = 0; x < grid.width(); x++)
+                data.push_back(pool.index(grid.tile(x, y)));
+    }
+}
+
+bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const
+{
+    // Compressed image, encoded using the DUB codec.
+    
+    DUBEncoder encoder( mImages.getWidth() / Tile::SIZE,
+                        mImages.getHeight() / Tile::SIZE,
+                        mImages.getFrames() );
+
+    std::vector<uint16_t> tiles;
+    encodeFlat(tiles);
+
+    encoder.encodeTiles(tiles);
+    
+    // Too large to encode correctly?
+    if (encoder.isTooLarge()) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (too large for compression codec)",
+            encoder.getTileCount());
+        return false;
+    }
+
+    // Not compressible enough to bother?
+    if (encoder.getRatio() < 10.0f) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (not compressible)",
+            encoder.getTileCount());
+        return false;
+    }
+    
+    encoder.logStats(getName(), log);
+    encoder.getResult(data);
+    format = encoder.isIndex16() ? "_SYS_AIF_DUB_I16" : "_SYS_AIF_DUB_I8";
+
+    return true;
+}
 
 Sound::Sound(lua_State *L)
 {
@@ -533,13 +615,13 @@ Sound::Sound(lua_State *L)
 
     if (Script::argMatch(L, "loop")) {
         int16_t loopType = lua_tonumber(L, -1);
-        if (loopType > LoopRepeat || loopType < LoopOnce) {
+        if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE) {
             luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
             return;
         }
         setLoopType((_SYSAudioLoopType)loopType);
     } else {
-        setLoopType(LoopOnce);
+        setLoopType(_SYS_LOOP_ONCE);
     }
 
     if (Script::argMatch(L, "volume")) {

@@ -195,8 +195,13 @@ void Game::OnPickup(Room *pRoom) {
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
+<<<<<<< HEAD
         mPlayer.CurrentView()->SetItemPosition(Vec2(0.f, -36.f * u) );
       } while(now-t<0.075f);
+=======
+        mPlayer.CurrentView()->SetItemPosition(vec(0.f, -36.f * u) );
+      } while(SystemTime::now()-t<0.075f);
+>>>>>>> dd11450dde0d4a58ceaa0ca1600ad57df25d12d8
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     DescriptionDialog(
@@ -215,17 +220,17 @@ void Game::OnEnterGateway(const GatewayData* pGate) {
   // PLAYER TRIGGERED GATEWAY
   const MapData& targetMap = gMapData[pGate->targetMap];
   if (mState.FlagTrigger(pGate->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-  WalkTo(128 * mPlayer.GetRoom()->Location() + Vec2<int>(pGate->x, pGate->y));
+  WalkTo(128 * mPlayer.GetRoom()->Location() + vec<int>(pGate->x, pGate->y));
   mPlayer.SetEquipment(0);
   if (pGate->targetType == TARGET_TYPE_GATEWAY) {
     const GatewayData& pTargetGate = targetMap.gates[pGate->targetId];
-    TeleportTo(gMapData[pGate->targetMap], Vec2(
+    TeleportTo(gMapData[pGate->targetMap], vec(
       128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
       128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
     ));
   } else {
     const RoomData& targetRoom = targetMap.rooms[pGate->targetId];
-    TeleportTo(gMapData[pGate->targetMap], Vec2(
+    TeleportTo(gMapData[pGate->targetMap], vec(
       128 * (pGate->targetId % targetMap.width) + (targetRoom.centerX<<4),
       128 * (pGate->targetId / targetMap.width) + (targetRoom.centerX<<4)
     ));
@@ -345,7 +350,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
       const QuestData* quest = mState.Quest();
       const MapData& map = gMapData[quest->mapId];
       const RoomData& room = map.rooms[quest->roomId];
-      TeleportTo(map, Vec2<int> (
+      TeleportTo(map, vec<int> (
         128 * (quest->roomId % map.width) + 16 * room.centerX,
         128 * (quest->roomId / map.width) + 16 * room.centerY
       ));
@@ -419,17 +424,17 @@ bool Game::TryEncounterLava(Cube::Side dir) {
   const Int2 baseTile = mPlayer.Position() >> 4;
   switch(dir) {
     case SIDE_TOP: {
-      const unsigned tid = mMap.GetGlobalTileId(baseTile - (Vec2<int>(1,1)));
+      const unsigned tid = mMap.GetGlobalTileId(baseTile - (vec<int>(1,1)));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
     case SIDE_LEFT:
-      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - Vec2<int>(2,0)));
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - vec<int>(2,0)));
     case SIDE_BOTTOM: {
-      const unsigned tid = mMap.GetGlobalTileId(baseTile + Vec2<int>(-1,1));
+      const unsigned tid = mMap.GetGlobalTileId(baseTile + vec<int>(-1,1));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
     default: // SIDE_RIGHT
-      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + Vec2<int>(1,0)));
+      return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + vec<int>(1,0)));
   }
 }
 

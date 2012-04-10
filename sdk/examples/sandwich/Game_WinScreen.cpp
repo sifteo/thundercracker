@@ -7,7 +7,7 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	System::paintSync();
 	pView->HideSprites();
 	BG1Helper overlay(*pView->GetCube());
-	overlay.DrawAsset(Vec2(&detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), detail);
+	overlay.DrawAsset(vec(&detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), detail);
 	overlay.Flush();
 	System::paintSync();
 	pView->GetCube()->vbuf.touch();

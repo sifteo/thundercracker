@@ -9,10 +9,10 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 	// todo: compute screen orient
 	ViewMode gfx = Parent()->Graphics();
 	static const Int2 start[8] = {
-		Vec2(0,0), Vec2(0,0), Vec2(0, 15), Vec2(15,0),
+		vec(0,0), vec(0,0), vec(0, 15), vec(15,0),
 	};
 	static const Int2 delta[4] = {
-		Vec2(1,0), Vec2(0,1), Vec2(1,0), Vec2(0,1)
+		vec(1,0), vec(0,1), vec(1,0), vec(0,1)
 	};
 	Cube::Side gateSide = SIDE_UNDEFINED;
 	Room* pRoom = gGame.GetMap()->GetRoom(roomId);
@@ -24,15 +24,15 @@ void EdgeView::Init(int roomId, Cube::Side side) {
 			// render gateway special
 			for(int row=0; row<16; ++row)
 			for(int col=0; col<16; ++col) {
-				gfx.BG0_putTile(Vec2(col, row), BlackTile.tiles[0]);
+				gfx.BG0_putTile(vec(col, row), BlackTile.tiles[0]);
 			}
-			gfx.BG0_drawAsset(Vec2(6, 5), IconPress);
+			gfx.BG0_drawAsset(vec(6, 5), IconPress);
 		}
 	}
 	if (gateSide != mSide) {
 		// render a side edge view
 		mGateway = 0;
-		gfx.BG0_drawAsset(Vec2(0,0), Blank);
+		gfx.BG0_drawAsset(vec(0,0), Blank);
 		Int2 p=start[side];
 		for(int i=0; i<16; ++i) {
 			gfx.BG0_putTile(p, Edge.tiles[side]);

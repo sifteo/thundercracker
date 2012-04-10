@@ -32,7 +32,7 @@ void Run()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].Image(Skin_Default_VaultDoor, Vec2(0,0));
+        Game::cubes[i].Image(Skin_Default_VaultDoor, vec(0,0));
     }
     System::paint();
 

@@ -9,6 +9,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+void ELFDebugInfo::clear()
+{
+    sections.clear();
+    sectionMap.clear();
+}
+
 void ELFDebugInfo::init(const FlashRange &elf)
 {
     /*
@@ -17,8 +24,7 @@ void ELFDebugInfo::init(const FlashRange &elf)
      * so that we can read debug symbols at runtime.
      */
 
-    sections.clear();
-    sectionMap.clear();
+    clear();
 
     FlashBlockRef ref;
     FlashBlock::get(ref, elf.getAddress());
@@ -83,35 +89,37 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
     // with "(unknown)" and zeroes, but 'false' is returned.
 
     const SectionInfo *SI = findSection(".symtab");
-    Elf::Symbol currentSym;
-    const uint32_t worstOffset = (uint32_t) -1;
-    uint32_t bestOffset = worstOffset;
+    if (SI) {
+        Elf::Symbol currentSym;
+        const uint32_t worstOffset = (uint32_t) -1;
+        uint32_t bestOffset = worstOffset;
 
-    for (unsigned index = 0;; index++) {
-        FlashRange r = SI->data.split(index * sizeof currentSym, sizeof currentSym);
-        if (r.getSize() != sizeof currentSym)
-            break;
-        Flash::read(r.getAddress(), (uint8_t*) &currentSym, r.getSize());
+        for (unsigned index = 0;; index++) {
+            FlashRange r = SI->data.split(index * sizeof currentSym, sizeof currentSym);
+            if (r.getSize() != sizeof currentSym)
+                break;
+            Flash::read(r.getAddress(), (uint8_t*) &currentSym, r.getSize());
 
-        uint32_t offset = address - currentSym.st_value;
-        if (offset < currentSym.st_size && offset < bestOffset) {
-            symbol = currentSym;
-            bestOffset = offset;
+            uint32_t offset = address - currentSym.st_value;
+            if (offset < currentSym.st_size && offset < bestOffset) {
+                symbol = currentSym;
+                bestOffset = offset;
+            }
+        }
+
+        // Strip the Thumb bit from function symbols.
+        if ((symbol.st_info & 0xF) == Elf::STT_FUNC)
+            symbol.st_value &= ~1;
+
+        if (bestOffset != worstOffset) {
+            name = readString(".strtab", symbol.st_name);
+            return true;
         }
     }
 
-    // Strip the Thumb bit from function symbols.
-    if ((symbol.st_info & 0xF) == Elf::STT_FUNC)
-        symbol.st_value &= ~1;
-
-    if (bestOffset == worstOffset) {
-        memset(&symbol, 0, sizeof symbol);
-        name = "(unknown)";
-        return false;
-    }
-
-    name = readString(".strtab", symbol.st_name);
-    return true;
+    memset(&symbol, 0, sizeof symbol);
+    name = "(unknown)";
+    return false;
 }
 
 std::string ELFDebugInfo::formatAddress(uint32_t address) const

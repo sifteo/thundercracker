@@ -47,7 +47,7 @@ void ScoredCubeState_StartOfRound::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     // intro anim
-    vid.BG0_drawAsset(Vec2(0, 0), TileBG);
+    vid.BG0_drawAsset(vec(0, 0), TileBG);
     paintBorder(vid, ImageIndex_Teeth, true, false);
 #endif
 }

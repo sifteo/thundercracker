@@ -20,8 +20,9 @@ class SvmRuntime {
 public:
     SvmRuntime();  // Do not implement
 
-    static void run(uint16_t appId);
-    static void exit();
+    // Begin execution, with a particular stack region and entry function
+    static void run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
+        SvmMemory::VirtAddr stackTopVA);
 
     // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);

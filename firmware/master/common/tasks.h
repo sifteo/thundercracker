@@ -11,13 +11,12 @@
 class Tasks
 {
 public:
-    static const uint8_t MAX_TASKS = 32;
-
     enum TaskID {
         UsbIN,
         UsbOUT,
         AudioPull,
         Debugger,
+        AssetLoader,
     };
 
     static void init();

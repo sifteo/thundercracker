@@ -40,8 +40,7 @@ void Particle::doPhysics(float dt)
     if (state == S_DESTROY_PENDING && stateDeadline.inPast())
         return;
 
-    const Float2 center = { VidMode::LCD_width / 2, VidMode::LCD_height / 2 };
-    Float2 cv = center - pos;
+    Float2 cv = LCD_center - pos;
     const float radius = 35.0f;
     
     if (state == S_MOVE_PENDING) {
@@ -76,7 +75,7 @@ void Particle::doPhysics(float dt)
     }
     
     // Integrate velocity
-	pos += velocity * dt;
+    pos += velocity * dt;
 }
 
 void Particle::doPairPhysics(Particle &other, float dt)
@@ -85,9 +84,9 @@ void Particle::doPairPhysics(Particle &other, float dt)
         Float2 v = other.pos - pos;
         
         if (v.x == 0 && v.y == 0) {
-			// Random nudge if two particles have the exact same location
+            // Random nudge if two particles have the exact same location
             v.x += Game::random.randint(-1, 1);
-			v.y += Game::random.randint(-1, 1);
+            v.y += Game::random.randint(-1, 1);
         }
             
         Float2 force;
@@ -111,12 +110,12 @@ void Particle::doPairPhysics(Particle &other, float dt)
 
 void Particle::draw(GameCube *gc, int spriteId)
 {
-    VidMode_BG0_SPR_BG1 vid(gc->cube.vbuf);
+    const auto &sprite = gc->vid.sprites[spriteId];
     const PinnedAssetImage *asset;
     unsigned frame;
 
     if (gc != onCube) {
-        vid.hideSprite(spriteId);
+        sprite.hide();
         return;
     }
 
@@ -128,7 +127,7 @@ void Particle::draw(GameCube *gc, int spriteId)
         state = S_RESPAWN_PENDING;
     }
     if (state == S_RESPAWN_PENDING) {
-        vid.hideSprite(spriteId);
+        sprite.hide();
         if (stateDeadline.inPast())
             instantiate(gc);
         return;
@@ -154,7 +153,7 @@ void Particle::draw(GameCube *gc, int spriteId)
         int f = 6 - dist * (6.0f / 35.0f);
 
         if (f > 5) {
-            vid.hideSprite(spriteId);
+            sprite.hide();
             return;
         }
         
@@ -169,10 +168,8 @@ void Particle::draw(GameCube *gc, int spriteId)
     }
     
     // Drawing
-    
-    Float2 center = { asset->width * 4, asset->height * 4 };
-    vid.setSpriteImage(spriteId, *asset, frame);
-    vid.moveSprite(spriteId, (pos - center).round());
+    sprite.setImage(*asset, frame);
+    sprite.move(pos - asset->pixelExtent());
 }
 
 void Particle::instantiate(GameCube *gc)
@@ -188,15 +185,15 @@ void Particle::instantiate(GameCube *gc)
     
     // Put it nearish the center of the screen
     int radius = 20;    
-    pos.x = Game::random.randint(VidMode::LCD_width/2 - radius,
-								 VidMode::LCD_width/2 + radius);
-    pos.y = Game::random.randint(VidMode::LCD_height/2 - radius,
-								 VidMode::LCD_height/2 + radius);
-                       
+    pos.x = Game::random.randint(LCD_center.x - radius,
+                                 LCD_center.x + radius);
+    pos.y = Game::random.randint(LCD_center.y - radius,
+                                 LCD_center.y + radius);
+                
     // Random velocity
     float angle = Game::random.uniform(0, 2 * M_PI);
-	float speed = Game::random.uniform(10, 50);
-	velocity.setPolar(angle, speed);
+    float speed = Game::random.uniform(10, 50);
+    velocity.setPolar(angle, speed);
 }
 
 void Particle::portalNotify(const PortalPair &pair)

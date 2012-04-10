@@ -110,7 +110,7 @@ int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
 }
 
 void Game::MovePlayerAndRedraw(int dx, int dy) {
-  mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
+  mPlayer.SetDirection(InferDirection(vec(dx, dy)));
   mPlayer.Move(dx, dy);
   Paint();
 }
@@ -186,12 +186,12 @@ void Game::IrisOut(ViewSlot* view) {
   ViewMode mode = view->Graphics();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
-      mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
-      mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
+      mode.BG0_putTile(vec(x, i), *BlackTile.tiles);
+      mode.BG0_putTile(vec(x, 16-i-1), *BlackTile.tiles);
     }
     for(unsigned y=i+1; y<16-i-1; ++y) {
-      mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
-      mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
+      mode.BG0_putTile(vec(i, y), *BlackTile.tiles);
+      mode.BG0_putTile(vec(16-i-1, y), *BlackTile.tiles);
     }
     System::paintSync();
   }
@@ -211,9 +211,9 @@ void Game::Zoom(ViewSlot* view, int roomId) {
   for(int x=0; x<8; ++x) {
     for(int y=0; y<8; ++y) {
       vid.BG2_drawAsset(
-        Vec2(x<<1,y<<1),
+        vec(x<<1,y<<1),
         *(mMap.Data()->tileset),
-        mMap.GetTileId(roomId, Vec2(x, y))
+        mMap.GetTileId(roomId, vec(x, y))
       );
     }
   }
@@ -253,7 +253,7 @@ void Game::ScrollTo(unsigned roomId) {
   do {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-    pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+    pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
     DrawOffsetMap(&mode, mMap.Data(), pos);
     Paint(true);
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
@@ -296,13 +296,13 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     ViewMode mode = vslot->Graphics();
     PlaySfx(sfx_neighbor);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
-    mode.BG0_drawAsset(Vec2(0,10), DialogBox);
+    mode.BG0_drawAsset(vec(0,10), DialogBox);
 
     // save BG0 (above dialog line)
     VideoBuffer& vbuf = vslot->GetCube()->vbuf;
     uint16_t bg0_tiles[180];
     for(unsigned i=0; i<180; ++i) {
-      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(Vec2(i%18, i/18)) );
+      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
     }
 
     for(unsigned line=0; line<data.lineCount; ++line) {
@@ -311,10 +311,10 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
           if (line > 0) {
             Paint(true);
             mode.setWindow(0, 80);
-            _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(Vec2(0,0)), bg0_tiles, 180);
+            _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(vec(0,0)), bg0_tiles, 180);
           }
           BG1Helper ovrly(*vslot->GetCube());
-          ovrly.DrawAsset(Vec2(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
+          ovrly.DrawAsset(vec(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
           ovrly.Flush();
           Paint(true);
           #if GFX_ARTIFACT_WORKAROUNDS
