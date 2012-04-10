@@ -1887,7 +1887,8 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                // TODO: Disabled until story menu works
+                // TODO: Disabled for Alpha build
+#if 0
                 if (NextUnlockedBuddy() != -1)
                 {
                     mStoryPreGame = true;
@@ -1895,8 +1896,16 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
+                    
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
+#else
+                mStoryBuddyUnlockMask |= mSaveDataBuddyUnlockMask;
+                {
+                    
+                    StartGameState(GAME_STATE_MENU_MAIN);
+                }
+#endif
             }
             break;
         }
