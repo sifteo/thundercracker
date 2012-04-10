@@ -327,8 +327,21 @@ struct BG1Drawable {
     /**
      * Erase just the allocation mask. All tiles will now be unallocated,
      * and BG1 will be fully transparent.
+     *
+     * Changes to the bitmap will affect the way the tile array is
+     * interpreted, causing already-drawn tiles to appear to shift.
+     * Normally you should only change the allocation map when the
+     * BG1 mode isn't currently active, or when you've ensured
+     * that the cube isn't currently rendering asynchronously.
+     *
+     * Because of this, we automatically do a System::finish() by default,
+     * so we can ensure nobody is still using the old mask. This can be
+     * suppressed if you really know what you're doing, by setting
+     * finish=false.
      */
-    void eraseMask() {
+    void eraseMask(bool finish=true) {
+        if (finish)
+            _SYS_finish();
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
     }
 
@@ -364,8 +377,21 @@ struct BG1Drawable {
      * If this doesn't sound like your BG1 use-case, the more general
      * BG1Mask utility can help you construct a mask either at
      * compile-time or runtime.
+     *
+     * Changes to the bitmap will affect the way the tile array is
+     * interpreted, causing already-drawn tiles to appear to shift.
+     * Normally you should only change the allocation map when the
+     * BG1 mode isn't currently active, or when you've ensured
+     * that the cube isn't currently rendering asynchronously.
+     *
+     * Because of this, we automatically do a System::finish() by default,
+     * so we can ensure nobody is still using the old mask. This can be
+     * suppressed if you really know what you're doing, by setting
+     * finish=false.
      */
-    void fillMask(UInt2 topLeft, UInt2 size) {
+    void fillMask(UInt2 topLeft, UInt2 size, bool finish=true) {
+        if (finish)
+            _SYS_finish();
         _SYS_vbuf_fill(&sys.vbuf,
             offsetof(_SYSVideoRAM, bg1_bitmap)/2 + topLeft.y,
             ((1 << size.x) - 1) << topLeft.x, size.y);

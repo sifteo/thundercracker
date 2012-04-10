@@ -18,22 +18,25 @@ namespace Sifteo {
 
 inline void Menu::detectNeighbors()
 {
-    for(_SYSSideID i = 0; i < NUM_SIDES; i++) {
+    Neighborhood nbr(vid.cube());
+
+    for (Side i = Side(0); i < NUM_SIDES; i++) {
         MenuNeighbor n;
-        if (pCube->hasPhysicalNeighborAt(i)) {
-            Cube c(pCube->physicalNeighborAt(i));
-            n.neighborSide = c.physicalSideOf(pCube->id());
-            n.neighbor = c.id();
+
+        if (nbr.hasNeighborAt(i)) {
+            CubeID c(nbr.neighborAt(i));
+            n.neighborSide = Neighborhood(c).sideOf(vid.cube());
+            n.neighbor = c;
             n.masterSide = i;
         } else {
-            n.neighborSide = SIDE_UNDEFINED;
-            n.neighbor = CUBE_ID_UNDEFINED;
-            n.masterSide = SIDE_UNDEFINED;
+            n.neighborSide = NO_SIDE;
+            n.neighbor = CubeID::UNDEFINED;
+            n.masterSide = NO_SIDE;
         }
 
         if (n != neighbors[i]) {
             // Neighbor was set but is now different/gone
-            if (neighbors[i].neighbor != CUBE_ID_UNDEFINED) {
+            if (neighbors[i].neighbor != CubeID::UNDEFINED) {
                 // Generate a lost neighbor event, with the ghost of the lost cube.
                 currentEvent.type = MENU_NEIGHBOR_REMOVE;
                 currentEvent.neighbor = neighbors[i];
@@ -43,9 +46,9 @@ inline void Menu::detectNeighbors()
                  * if the neighbor was replaced by another cube in less than
                  * one polling cycle.
                  */
-                neighbors[i].neighborSide = SIDE_UNDEFINED;
-                neighbors[i].neighbor = CUBE_ID_UNDEFINED;
-                neighbors[i].masterSide = SIDE_UNDEFINED;
+                neighbors[i].neighborSide = NO_SIDE;
+                neighbors[i].neighbor = CubeID::UNDEFINED;
+                neighbors[i].masterSide = NO_SIDE;
             } else {
                 neighbors[i] = n;
                 currentEvent.type = MENU_NEIGHBOR_ADD;
@@ -64,7 +67,7 @@ inline void Menu::detectNeighbors()
 
 inline uint8_t Menu::computeSelected()
 {
-    int s = (position + (kItemPixelWidth / 2)) / kItemPixelWidth;
+    int s = (position + (kItemPixelWidth() / 2)) / kItemPixelWidth();
     return clamp(s, 0, numItems - 1);
 }
 
@@ -75,33 +78,19 @@ inline uint8_t Menu::computeSelected()
 inline void Menu::drawColumn(int x)
 {
     // x is the column in "global" space
-    uint16_t addr = unsignedMod(x, kNumTilesX);
+    Int2 topLeft = { umod(x, kNumTilesX), 0 };
+    Int2 size = { 1, kIconTileHeight };
 
     // icon or blank column?
     if (itemAtCol(x) < numItems) {
         // drawing an icon column
-        const AssetImage* pImg = items[itemAtCol(x)].icon;
-        const uint16_t *src = pImg->tiles + ((x % kItemTileWidth) % pImg->width);
-
-        for(int row=0; row<kIconTileHeight; ++row) {
-            _SYS_vbuf_writei(&pCube->vbuf.sys, addr, src, 0, 1);
-            addr += kNumTilesX;
-            src += pImg->width;
-
-        }
+        const AssetImage &img = *items[itemAtCol(x)].icon;
+        Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
+        vid.bg0.image(topLeft, size, img, srcXY);
     } else {
         // drawing a blank column
-        for(int row=0; row<kIconTileHeight; ++row) {
-            Int2 vec = { addr, row };
-            canvas.BG0_drawAsset(vec, *assets->background);
-        }
+        vid.bg0.fill(topLeft, size, *assets->background);
     }
-}
-
-inline unsigned Menu::unsignedMod(int x, unsigned y)
-{
-    const int z = x % (int)y;
-    return z < 0 ? z+y : z;
 }
 
 inline void Menu::drawFooter(bool force)
@@ -117,25 +106,20 @@ inline void Menu::drawFooter(bool force)
         if (numTips > 0) {
             currentTip = (currentTip+1) % numTips;
         }
-        
-        _SYS_vbuf_writei(
-            &pCube->vbuf.sys, 
-            offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
-            footer.tiles, 
-            0, 
-            footer.width * footer.height
-        );
+
+        Int2 topLeft = { 0, kNumVisibleTilesY - footer.tileHeight() };
+        vid.bg1.image(topLeft, footer);
     }
 }
 
 inline int Menu::stoppingPositionFor(int selected)
 {
-    return kItemPixelWidth * selected;
+    return kItemPixelWidth() * selected;
 }
 
 inline float Menu::velocityMultiplier()
 {
-    return yaccel > kAccelThresholdOff ? (1.f + (yaccel * kMaxSpeedMultiplier / kOneG)) : 1.f;
+    return accel.y > kAccelThresholdOff ? (1.f + (accel.y * kMaxSpeedMultiplier / kOneG())) : 1.f;
 }
 
 inline float Menu::maxVelocity()
@@ -143,7 +127,7 @@ inline float Menu::maxVelocity()
     const float kMaxNormalSpeed = 40.f;
     return kMaxNormalSpeed *
            // x-axis linear limit
-           (abs(xaccel) / kOneG) *
+           (abs(accel.x) / kOneG()) *
            // y-axis multiplier
            velocityMultiplier();
 }
@@ -166,7 +150,7 @@ inline void Menu::updateBG0()
 
     {
         Int2 vec = {(position - kEndCapPadding), kIconYOffset};
-        canvas.BG0_setPanning(vec);
+        vid.bg0.setPanning(vec);
     }
 }
 
@@ -182,8 +166,8 @@ inline uint8_t Menu::itemAtCol(int column)
 {
     if (column < 0) return numItems;
 
-    if (column % kItemTileWidth < kIconTileWidth) {
-        return column < 0 ? numItems : column / kItemTileWidth;
+    if (column % kItemTileWidth() < kIconTileWidth) {
+        return column < 0 ? numItems : column / kItemTileWidth();
     }
     return numItems;
 }

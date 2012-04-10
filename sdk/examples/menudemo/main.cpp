@@ -42,7 +42,7 @@ static void begin() {
 void main() {
     begin();
 
-    Menu m(&gVideo[0], &gAssets, gItems);
+    Menu m(gVideo[0], &gAssets, gItems);
 
     struct MenuEvent e;
     while(1) {
@@ -94,6 +94,6 @@ void main() {
         }
 
         ASSERT(e.type == MENU_EXIT);
-        LOG(("Selected Game: %d\n", e.item));
+        LOG("Selected Game: %d\n", e.item);
     }
 }

@@ -485,6 +485,8 @@ struct PinnedAssetImage {
     /// Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
     operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
+    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(this); }
+    operator AssetImage* () { return reinterpret_cast<AssetImage*>(this); }
 
     /// Implicit conversion to system object
     operator const _SYSAssetImage& () const { return sys; }
@@ -571,6 +573,8 @@ struct FlatAssetImage {
     /// Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
     operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
+    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(this); }
+    operator AssetImage* () { return reinterpret_cast<AssetImage*>(this); }
 
     /// Implicit conversion to system object
     operator const _SYSAssetImage& () const { return sys; }

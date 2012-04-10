@@ -125,7 +125,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, by absolue tile index,
+     * Plot a horizontal span of tiles, by absolute tile index,
      * given the position of the leftmost tile and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -136,6 +136,15 @@ struct BG0Drawable {
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
         _SYS_vbuf_fill(&sys.vbuf, pos.x + pos.y * tileWidth(),
             _SYS_TILE77(tileIndex), width);
+    }
+
+    /**
+     * Plot a horizontal span of tiles, using the first tile of a pinned asset.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void span(UInt2 pos, unsigned width, const PinnedAssetImage &image)
+    {
+        span(pos, width, image.tile(sys.cube));
     }
 
     /**
@@ -151,6 +160,17 @@ struct BG0Drawable {
             size.y--;
             topLeft.y++;
         }
+    }
+
+    /**
+     * Fill a rectangle of identical tiles, using the first tile of a
+     * pinned asset.
+     *
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void fill(UInt2 topLeft, UInt2 size, const PinnedAssetImage &image)
+    {
+        fill(topLeft, size, image.tile(sys.cube));
     }
 
     /**

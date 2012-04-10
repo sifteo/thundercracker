@@ -69,49 +69,34 @@ inline void Menu::changeState(MenuState newstate)
  */
 inline void Menu::transToStart()
 {
-    shouldPaintSync = true;
     handlePrepaint();
 }
 
 inline void Menu::stateStart()
 {
     // initialize video state
-    canvas.clear();
-    for(unsigned r = 0; r < kNumTilesX; ++r)
-        for(unsigned c = 0; c < kNumTilesY; ++c)
-            canvas.BG0_drawAsset(vec(c,r), *assets->background);
 
-    canvas.BG1_setPanning(vec(0, 0));
-    BG1Helper(*pCube).Flush();
-    {
-        // Allocate tiles for the static upper label, and draw it.
-        if (kHeaderHeight) {
-            const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
-            _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, ((1 << label.width) - 1), label.height);
-            _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
-        }
+    vid.initMode(BG0_SPR_BG1);
+    vid.bg0.erase(*assets->background);
 
-        // Allocate tiles for the footer, and draw it.
-        if (kFooterHeight) {
-            const AssetImage& footer = assets->tips[0] ? *assets->tips[0] : *assets->footer;
-            _SYS_vbuf_fill(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + (kNumVisibleTilesY - footer.height), ((1 << footer.width) - 1), footer.height);
-            _SYS_vbuf_writei(
-                &pCube->vbuf.sys, 
-                offsetof(_SYSVideoRAM, bg1_tiles) / 2 + kFooterBG1Offset,
-                footer.tiles, 
-                0, 
-                footer.width * footer.height
-            );
-        }
+    // Allocate tiles for the static upper label, and draw it.
+    if (kHeaderHeight) {
+        const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
+        vid.bg1.fillMask(vec(0,0), label.tileSize());
+        vid.bg1.image(vec(0,0), label);
+    }
+
+    // Allocate tiles for the footer, and draw it.
+    if (kFooterHeight) {
+        const AssetImage& footer = assets->tips[0] ? *assets->tips[0] : *assets->footer;
+        Int2 topLeft = { 0, kNumVisibleTilesY - footer.tileHeight() };
+        vid.bg1.fillMask(topLeft, footer.tileSize());
+        vid.bg1.image(topLeft, footer);
     }
 
     currentTip = 0;
     prevTipTime = SystemTime::now();
     drawFooter(true);
-
-    canvas.set();
-
-    shouldPaintSync = true;
 
     // if/when we start animating the menu into existence, set this once the work is complete
     stateFinished = true;
@@ -125,9 +110,9 @@ inline void Menu::transFromStart()
         updateBG0();
 
         for(int i = 0; i < NUM_SIDES; i++) {
-            neighbors[i].neighborSide = SIDE_UNDEFINED;
-            neighbors[i].neighbor = CUBE_ID_UNDEFINED;
-            neighbors[i].masterSide = SIDE_UNDEFINED;
+            neighbors[i].neighborSide = NO_SIDE;
+            neighbors[i].neighbor = CubeID::UNDEFINED;
+            neighbors[i].masterSide = NO_SIDE;
         }
 
         changeState(MENU_STATE_STATIC);
@@ -149,7 +134,7 @@ inline void Menu::transFromStart()
 inline void Menu::transToStatic()
 {
     velocity = 0;
-    prevTouch = pCube->touching();
+    prevTouch = vid.cube().isTouching();
 
     currentEvent.type = MENU_ITEM_ARRIVE;
     currentEvent.item = computeSelected();
@@ -157,13 +142,13 @@ inline void Menu::transToStatic()
     // show the title of the item
     if (kHeaderHeight) {
         const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
-        _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+        vid.bg1.image(vec(0,0), label);
     }
 }
 
 inline void Menu::stateStatic()
 {
-    bool touch = pCube->touching();
+    bool touch = vid.cube().isTouching();
 
     if (touch && !prevTouch) {
         currentEvent.type = MENU_ITEM_PRESS;
@@ -174,7 +159,7 @@ inline void Menu::stateStatic()
 
 inline void Menu::transFromStatic()
 {
-    if (abs(xaccel) > kAccelThresholdOn) {
+    if (abs(accel.x) > kAccelThresholdOn) {
         changeState(MENU_STATE_TILTING);
 
         currentEvent.type = MENU_ITEM_DEPART;
@@ -183,7 +168,7 @@ inline void Menu::transFromStatic()
         // hide header
         if (kHeaderHeight) {
             const AssetImage& label = *assets->header;
-            _SYS_vbuf_writei(&pCube->vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, label.tiles, 0, label.width * label.height);
+            vid.bg1.image(vec(0,0), label);
         }
     }
 }
@@ -200,7 +185,7 @@ inline void Menu::transFromStatic()
  */
 inline void Menu::transToTilting()
 {
-    ASSERT(abs(xaccel) > kAccelThresholdOn);
+    ASSERT(abs(accel.x) > kAccelThresholdOn);
 }
 
 inline void Menu::stateTilting()
@@ -209,7 +194,7 @@ inline void Menu::stateTilting()
     const int max_x = stoppingPositionFor(numItems - 1);
     const float kInertiaThreshold = 10.f;
 
-    velocity += (xaccel * frameclock.delta() * kTimeDilator) * velocityMultiplier();
+    velocity += (accel.x * frameclock.delta() * kTimeDilator) * velocityMultiplier();
 
     // clamp maximum velocity based on cube angle
     if (abs(velocity) > maxVelocity()) {
@@ -227,8 +212,8 @@ inline void Menu::stateTilting()
 
 inline void Menu::transFromTilting()
 {
-    const bool outOfBounds = (position < -0.05f) || (position > kItemPixelWidth*(numItems-1) + kEndCapPadding + 0.05f);
-    if (abs(xaccel) < kAccelThresholdOff || outOfBounds) {
+    const bool outOfBounds = (position < -0.05f) || (position > kItemPixelWidth()*(numItems-1) + kEndCapPadding + 0.05f);
+    if (abs(accel.x) < kAccelThresholdOff || outOfBounds) {
         changeState(MENU_STATE_INERTIA);
     }
 }
@@ -247,8 +232,8 @@ inline void Menu::transFromTilting()
 inline void Menu::transToInertia()
 {
     stopping_position = stoppingPositionFor(computeSelected());
-    if (abs(xaccel) > kAccelThresholdOff) {
-        tiltDirection = (kAccelScalingFactor * xaccel < 0) ? 1 : -1;
+    if (abs(accel.x) > kAccelThresholdOff) {
+        tiltDirection = (kAccelScalingFactor * accel.x < 0) ? 1 : -1;
     } else {
         tiltDirection = 0;
     }
@@ -259,7 +244,7 @@ inline void Menu::stateInertia()
     const float stiffness = 0.333f;
 
     // do not pull to item unless tilting has stopped.
-    if (abs(xaccel) < kAccelThresholdOff) {
+    if (abs(accel.x) < kAccelThresholdOff) {
         tiltDirection = 0;
     }
     // if still tilting, do not bounce back to the stopping position.
@@ -283,8 +268,8 @@ inline void Menu::stateInertia()
 
 inline void Menu::transFromInertia()
 {
-    if (abs(xaccel) > kAccelThresholdOn &&
-        !((tiltDirection < 0 && xaccel < 0.f) || (tiltDirection > 0 && xaccel > 0.f))) {
+    if (abs(accel.x) > kAccelThresholdOn &&
+        !((tiltDirection < 0 && accel.x < 0.f) || (tiltDirection > 0 && accel.x > 0.f))) {
         changeState(MENU_STATE_TILTING);
     }
     if (stateFinished) { // stateFinished formerly doneTilting
@@ -307,30 +292,28 @@ inline void Menu::transToFinish()
 {
     // prepare screen for item animation
     // isolate the selected icon
-    canvas.BG0_setPanning(vec(0, 0));
+    vid.bg0.setPanning(vec(0, 0));
 
     // blank out the background layer
     for(int row=0; row<kIconTileHeight; ++row)
     for(int col=0; col<kNumTilesX; ++col) {
-        canvas.BG0_drawAsset(vec(col, row), *assets->background);
+        vid.bg0.image(vec(col, row), *assets->background);
     }
     if (assets->header) {
         Int2 vec = {0, 0};
-        canvas.BG0_drawAsset(vec, *assets->header);
+        vid.bg0.image(vec, *assets->header);
     }
     if (assets->footer) {
-        Int2 vec = { 0, kNumVisibleTilesY - assets->footer->height };
-        canvas.BG0_drawAsset(vec, *assets->footer);
+        Int2 vec = { 0, kNumVisibleTilesY - assets->footer->tileHeight() };
+        vid.bg0.image(vec, *assets->footer);
     }
     {
         const AssetImage* icon = items[computeSelected()].icon;
-        BG1Helper overlay(*pCube);
-        Int2 vec = {0, 0};
-        overlay.DrawAsset(vec, *icon);
-        overlay.Flush();
+        vid.bg1.eraseMask();
+        vid.bg1.fillMask(vec(0,0), icon->tileSize());
+        vid.bg1.image(vec(0,0), *icon);
     }
     finishIteration = 0;
-    shouldPaintSync = true;
     currentEvent.type = MENU_PREPAINT;
 }
 
@@ -343,7 +326,7 @@ inline void Menu::stateFinish()
     float u = finishIteration/33.f;
     u = (1.f-k*u);
     offset = int(12*(1.f-u*u));
-    canvas.BG1_setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
+    vid.bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
     currentEvent.type = MENU_PREPAINT;
 
     if (offset <= -128) {

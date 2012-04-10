@@ -33,6 +33,12 @@ enum Side {
     NO_SIDE = -1
 };
 
+/**
+ * CubeID is the main Cube data type that games should be using, but it
+ * is not a POD type. PCubeID is a POD type that can be used to store
+ * cube IDs, and to construct a CubeID when necessary.
+ */
+typedef _SYSCubeID PCubeID;
 
 /**
  * CubeID is a lightweight identifier for one Sifteo cube. It is a small

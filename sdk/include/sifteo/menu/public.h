@@ -16,6 +16,92 @@
 namespace Sifteo {
 
 
+inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
+    struct MenuItem *aItems)
+    : vid(vid)
+{
+    currentEvent.type = MENU_UNEVENTFUL;
+    changeState(MENU_STATE_START);
+    items = aItems;
+    assets = aAssets;
+
+    // initialize instance constants
+    kHeaderHeight = 0;
+    kFooterHeight = 0;
+    kIconTileWidth = 0;
+
+    // calculate the number of items
+    uint8_t i = 0;
+    while(items[i].icon != NULL) {
+        if (kIconTileWidth == 0) {
+            kIconTileWidth = items[i].icon->tileWidth();
+            kIconTileHeight = items[i].icon->tileHeight();
+            kEndCapPadding = (kNumVisibleTilesX - kIconTileWidth) * (TILE / 2.f);
+            ASSERT((kItemPixelWidth() - kIconPixelWidth()) % TILE == 0);
+            // icons should leave at least one tile on both sides for the next/prev items
+            ASSERT(kIconTileWidth <= kNumVisibleTilesX - (kPeekTiles * 2));
+        } else {
+            ASSERT(items[i].icon->tileWidth() == kIconTileWidth);
+            ASSERT(items[i].icon->tileHeight() == kIconTileHeight);
+        }
+
+        i++;
+        if (items[i].label != NULL) {
+            ASSERT(items[i].label->tileWidth() == kNumVisibleTilesX);
+            if (kHeaderHeight == 0) {
+                kHeaderHeight = items[i].label->tileHeight();
+            } else {
+                ASSERT(items[i].label->tileHeight() == kHeaderHeight);
+            }
+            /* XXX: if there are any labels, a header is required for now.
+             * supporting labels and no header would require toggling bg0
+             * tiles fairly often and that's state I don't want to deal with
+             * for the time being.
+             * workaround: header can be an appropriately-sized, entirely
+             * transparent PNG.
+             */
+            ASSERT(assets->header != NULL);
+        }
+    }
+    numItems = i;
+
+    // calculate the number of tips
+    i = 0;
+    while(assets->tips[i] != NULL) {
+        ASSERT(assets->tips[i]->tileWidth() == kNumVisibleTilesX);
+        if (kFooterHeight == 0) {
+            kFooterHeight = assets->tips[i]->tileHeight();
+        } else {
+            ASSERT(assets->tips[i]->tileHeight() == kFooterHeight);
+        }
+        i++;
+    }
+    numTips = i;
+
+    // sanity check the rest of the assets
+    ASSERT(assets->background);
+    ASSERT(assets->background->tileWidth() == 1 && assets->background->tileHeight() == 1);
+    if (assets->footer) {
+        ASSERT(assets->footer->tileWidth() == kNumVisibleTilesX);
+        if (kFooterHeight == 0) {
+            kFooterHeight = assets->footer->tileHeight();
+        } else {
+            ASSERT(assets->footer->tileHeight() == kFooterHeight);
+        }
+    }
+
+    if (assets->header) {
+        ASSERT(assets->header->tileWidth() == kNumVisibleTilesX);
+        if (kHeaderHeight == 0) {
+            kHeaderHeight = assets->header->tileHeight();
+        } else {
+            ASSERT(assets->header->tileHeight() == kHeaderHeight);
+        }
+    }
+
+    setIconYOffset(kDefaultIconYOffset);
+}
+
 inline bool Menu::pollEvent(struct MenuEvent *ev)
 {
     // handle/clear pending events
@@ -42,10 +128,8 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     }
 
     // update commonly-used data
-    shouldPaintSync = false;
     const float kAccelScalingFactor = -0.25f;
-    xaccel = kAccelScalingFactor * pCube->virtualAccel().x;
-    yaccel = kAccelScalingFactor * pCube->virtualAccel().y;
+    accel = kAccelScalingFactor * vid.virtualAccel().xy();
 
     // state changes
     switch(currentState) {
@@ -101,8 +185,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
 inline void Menu::preventDefault()
 {
     /* paints shouldn't be prevented because:
-     * the caller doesn't know whether to paintSync or paint and shouldn't be
-     * painting while the menu owns the context.
+     * the caller shouldn't be painting while the menu owns the context.
      */
     ASSERT(currentEvent.type != MENU_PREPAINT);
     /* exit shouldn't be prevented because:
@@ -127,13 +210,6 @@ inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon)
     for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
         if (itemVisibleAtCol(item, i))
             drawColumn(i);
-}
-
-inline void Menu::paintSync()
-{
-    // this is only relevant when caller is handling a PREPAINT event.
-    ASSERT(currentEvent.type == MENU_PREPAINT);
-    shouldPaintSync = true;
 }
 
 inline bool Menu::itemVisible(uint8_t item)

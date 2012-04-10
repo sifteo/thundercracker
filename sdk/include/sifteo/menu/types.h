@@ -19,6 +19,7 @@
 
 #include <sifteo/cube.h>
 #include <sifteo/asset.h>
+#include <sifteo/video.h>
 
 namespace Sifteo {
 
@@ -35,10 +36,10 @@ typedef enum {
 } MenuEventType;
 
 struct MenuAssets {
-    const AssetImage *background;   /// 1x1tl background image, repeating
-    const AssetImage *footer;       /// ptr to 16x4tl blank footer
-    const AssetImage *header;       /// ptr to 16x2tl blank header, optional if all items have no labels.
-    const AssetImage *tips[8];      /// NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
+    const PinnedAssetImage *background; /// 1x1tl background image, repeating
+    const AssetImage *footer;           /// ptr to 16x4tl blank footer
+    const AssetImage *header;           /// ptr to 16x2tl blank header, optional if all items have no labels.
+    const AssetImage *tips[8];          /// NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
 };
 
 struct MenuItem {
@@ -59,9 +60,9 @@ struct MenuNeighbor {
         return !operator==(rhs);
     }
 
+    PCubeID neighbor;
     Side masterSide;
-    CubeID neighbor;
-    SideID neighborSide;
+    Side neighborSide;
 };
 
 struct MenuEvent {
@@ -91,7 +92,7 @@ typedef enum {
 
 class Menu {
  public:
-    Menu(VideoBuffer*, MenuAssets*, MenuItem*);
+    Menu(VideoBuffer&, MenuAssets*, MenuItem*);
     bool pollEvent(struct MenuEvent *);
     void preventDefault();
     void reset();
@@ -110,18 +111,25 @@ class Menu {
     static const float kAccelThresholdOn = 1.15f;
     static const float kAccelThresholdOff = 0.85f;
     static const uint8_t kDefaultIconYOffset = 16;
+    static const unsigned kPeekTiles = 1;
 
     // instance-constants
     uint8_t kHeaderHeight;
     uint8_t kFooterHeight;
-    uint8_t kFooterBG1Offset;
     int8_t kIconYOffset;
     uint8_t kIconTileWidth;
     uint8_t kIconTileHeight;
     int8_t kEndCapPadding;
+    
+    // runtime computed constants
+    unsigned kIconPixelWidth() const { return kIconTileWidth * TILE; }
+    unsigned kIconPixelHeight() const { return kIconTileHeight * TILE; }
+    unsigned kItemTileWidth() const { return ((kEndCapPadding + TILE - 1) / TILE) + kIconTileWidth - kPeekTiles; }
+    unsigned kItemPixelWidth() const { return kItemTileWidth() * TILE; }
+    float kOneG() const { return abs(64 * kAccelScalingFactor); }
 
     // external parameters and metadata
-    Cube *pCube;                    // cube on which the menu is being drawn
+    VideoBuffer &vid;               // videobuffer and its attached cube
     struct MenuAssets *assets;      // theme assets of the menu
     uint8_t numTips;                // number of tips in the theme
     struct MenuItem *items;         // items in the strip
@@ -131,8 +139,7 @@ class Menu {
     // state tracking
     MenuState currentState;
     bool stateFinished;
-    float xaccel;                   // accelerometer caching
-    float yaccel;
+    Float2 accel;                   // accelerometer caching
     // footer drawing
     int currentTip;
     SystemTime prevTipTime;
@@ -149,8 +156,7 @@ class Menu {
     // finish state: animation iterations
     int finishIteration;
     // internal
-    VidMode_BG0_SPR_BG1 canvas;
-    struct MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
+    MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
 
     // states.h
     void changeState(MenuState);
@@ -185,7 +191,6 @@ class Menu {
     // util.h
     void detectNeighbors();
     uint8_t computeSelected();
-    static unsigned unsignedMod(int, unsigned);
     void drawColumn(int);
     void drawFooter(bool force = false);
     int stoppingPositionFor(int);
