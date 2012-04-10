@@ -96,7 +96,7 @@ enum _SYSAssetImageFormat {
 };
 
 struct _SYSAssetImage {
-    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
+    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM, 0 for pre-relocated
     uint16_t width;             /// Width of the asset image, in tiles
     uint16_t height;            /// Height of the asset image, in tiles
     uint16_t frames;            /// Number of "frames" in this image

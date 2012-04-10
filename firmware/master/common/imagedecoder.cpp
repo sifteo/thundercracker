@@ -33,6 +33,9 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
      * Validate user pointers, and load the header and base address for
      * this AssetImage on this cube.
      *
+     * If the pAssetGroup is 0, we treat this as an image that does not
+     * require relocation before drawing.
+     *
      * Returns 'true' on success, 'false' on failure due to bad
      * userspace-provided data.
      */
@@ -44,13 +47,17 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
         return false;
     CubeSlot &cube = CubeSlots::instances[cid];
 
-    // Map and validate per-cube data.
-    // We don't need to map the _SYSAssetGroup itself- this is still a raw user pointer
-    _SYSAssetGroup *userGroupPtr = reinterpret_cast<_SYSAssetGroup*>(header.pAssetGroup);
-    _SYSAssetGroupCube *gc = cube.assetGroupCube(userGroupPtr);
-    if (!gc)
-        return false;
-    baseAddr = gc->baseAddr;
+    if (header.pAssetGroup) {
+        // Map and validate per-cube data.
+        // We don't need to map the _SYSAssetGroup itself- this is still a raw user pointer
+        _SYSAssetGroup *userGroupPtr = reinterpret_cast<_SYSAssetGroup*>(header.pAssetGroup);
+        _SYSAssetGroupCube *gc = cube.assetGroupCube(userGroupPtr);
+        if (!gc)
+            return false;
+        baseAddr = gc->baseAddr;
+    } else {
+        baseAddr = 0;
+    }
 
     return true;
 }
