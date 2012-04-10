@@ -97,7 +97,7 @@ void Game::MainLoop() {
 				while(p.MoveNext()) {
 	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
 	      				p->GetRoomView()->StartShake();
-	      				p->GetRoomView()->Lock();
+	      				//p->GetRoomView()->Lock();
 	      			}
 	      		}
 	      	}
