@@ -1687,6 +1687,8 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_SHUFFLE_OPTIONS:
         {
             PlaySound(SoundPause);
+            mTouchEndChoiceTimer = 0.0f;
+            mTouchEndChoice = -1;
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -1705,6 +1707,12 @@ void App::StartGameState(GameState gameState)
         {
             mDelayTimer = kStateTimeDelayLong;
             mCutsceneSpriteJump0 = false;
+            break;
+        }
+        case GAME_STATE_SHUFFLE_END_GAME_NAV:
+        {
+            mTouchEndChoiceTimer = 0.0f;
+            mTouchEndChoice = -1;
             break;
         }
         case GAME_STATE_STORY_START:
@@ -1791,6 +1799,8 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_OPTIONS:
         {
             PlaySound(SoundPause);
+            mTouchEndChoiceTimer = 0.0f;
+            mTouchEndChoice = -1;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -1851,6 +1861,12 @@ void App::StartGameState(GameState gameState)
             mStoryCutsceneIndex = 0;
             mCutsceneSpriteJump0 = false;
             mCutsceneSpriteJump1 = false;
+            break;
+        }
+        case GAME_STATE_STORY_CHAPTER_END:
+        {
+            mTouchEndChoiceTimer = 0.0f;
+            mTouchEndChoice = -1;
             break;
         }
         case GAME_STATE_UNLOCKED_1:
@@ -2007,7 +2023,7 @@ void App::UpdateGameState(float dt)
                 {
                     if (UpdateTimer(mTouchEndChoiceTimer, dt))
                     {
-                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < kNumCubes);
+                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < 3);
                         if (mTouchEndChoice == 0)
                         {
                             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -2033,12 +2049,12 @@ void App::UpdateGameState(float dt)
                 }
                 else
                 {
-                    for (int i = 0; i < arraysize(mTouching); ++i)
+                    for (int i = 0; i < 3; ++i)
                     {
                         if (mTouching[i] == TOUCH_STATE_END)
                         {
                             mTouchEndChoiceTimer = kPushButtonDelay;
-                            mTouchEndChoice = 0;
+                            mTouchEndChoice = i;
                             break;
                         }
                     }
@@ -2269,27 +2285,45 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                if (mTouchEndChoiceTimer > 0.0f)
                 {
-                    mTouchSync = true;
-                    mHintTimer = kHintTimerOnDuration;
-                    mHintFlowIndex = 0;
-                    for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                    if (UpdateTimer(mTouchEndChoiceTimer, dt))
                     {
-                        mClueOffTimers[i] = 0.0f;
+                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < 3);
+                        if (mTouchEndChoice == 0)
+                        {
+                            mHintTimer = kHintTimerOnDuration;
+                            mHintFlowIndex = 0;
+                            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                            {
+                                mClueOffTimers[i] = 0.0f;
+                            }
+                            PlaySound(SoundUnpause);
+                            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+                            mDelayTimer = 0.0f; // Turn off GO! sprite
+                        }
+                        else if (mTouchEndChoice == 1)
+                        {
+                            ResetCubesToShuffleStart();
+                            StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
+                        }
+                        else if (mTouchEndChoice == 2)
+                        {
+                            StartGameState(GAME_STATE_MENU_MAIN);
+                        }
                     }
-                    PlaySound(SoundUnpause);
-                    StartGameState(GAME_STATE_SHUFFLE_PLAY);
-                    mDelayTimer = 0.0f; // Turn off GO! sprite
                 }
-                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                else
                 {
-                    ResetCubesToShuffleStart();
-                    StartGameState(GAME_STATE_SHUFFLE_UNSHUFFLE_THE_FACES);
-                }
-                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
-                {
-                    StartGameState(GAME_STATE_MENU_MAIN);
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        if (mTouching[i] == TOUCH_STATE_END)
+                        {
+                            mTouchEndChoiceTimer = kPushButtonDelay;
+                            mTouchEndChoice = i;
+                            break;
+                        }
+                    }
                 }
             }
             break;
@@ -2331,13 +2365,32 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                if (mTouchEndChoiceTimer > 0.0f)
                 {
-                    StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+                    if (UpdateTimer(mTouchEndChoiceTimer, dt))
+                    {
+                        ASSERT(mTouchEndChoice >= 1 && mTouchEndChoice < 3);
+                        if (mTouchEndChoice == 1)
+                        {
+                            StartGameState(GAME_STATE_SHUFFLE_CHARACTER_SPLASH);
+                        }
+                        else if (mTouchEndChoice == 2)
+                        {
+                            StartGameState(GAME_STATE_MENU_MAIN);
+                        }
+                    }
                 }
-                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
+                else
                 {
-                    StartGameState(GAME_STATE_MENU_MAIN);
+                    for (int i = 1; i < 3; ++i)
+                    {
+                        if (mTouching[i] == TOUCH_STATE_END)
+                        {
+                            mTouchEndChoiceTimer = kPushButtonDelay;
+                            mTouchEndChoice = i;
+                            break;
+                        }
+                    }
                 }
             }
             break;
@@ -2560,26 +2613,44 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                if (mTouchEndChoiceTimer > 0.0f)
                 {
-                    mTouchSync = true;
-                    mHintTimer = kHintTimerOnDuration;
-                    mHintFlowIndex = 0;
-                    for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                    if (UpdateTimer(mTouchEndChoiceTimer, dt))
                     {
-                        mClueOffTimers[i] = 0.0f;
+                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < 3);
+                        if (mTouchEndChoice == 0)
+                        {
+                            mHintTimer = kHintTimerOnDuration;
+                            mHintFlowIndex = 0;
+                            for (unsigned int i = 0; i < arraysize(mClueOffTimers); ++i)
+                            {
+                                mClueOffTimers[i] = 0.0f;
+                            }
+                            PlaySound(SoundUnpause);
+                            StartGameState(GAME_STATE_STORY_PLAY);
+                            mDelayTimer = 0.0f; // Turn off GO! sprite
+                        }
+                        else if (mTouchEndChoice == 1)
+                        {
+                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                        }
+                        else if (mTouchEndChoice == 2)
+                        {
+                            StartGameState(GAME_STATE_MENU_MAIN);
+                        }
                     }
-                    PlaySound(SoundUnpause);
-                    StartGameState(GAME_STATE_STORY_PLAY);
-                    mDelayTimer = 0.0f; // Turn off GO! sprite
                 }
-                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                else
                 {
-                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
-                }
-                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
-                {
-                    StartGameState(GAME_STATE_MENU_MAIN);
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        if (mTouching[i] == TOUCH_STATE_END)
+                        {
+                            mTouchEndChoiceTimer = kPushButtonDelay;
+                            mTouchEndChoice = i;
+                            break;
+                        }
+                    }
                 }
             }
             break;
@@ -2738,46 +2809,65 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                if (mTouchEndChoiceTimer > 0.0f)
                 {
-                    if (++mStoryPuzzleIndex == GetBook(mStoryBookIndex).mNumPuzzles)
+                    if (UpdateTimer(mTouchEndChoiceTimer, dt))
                     {
-                        ++mStoryBookIndex;
-                        mStoryPuzzleIndex = 0;
-                        
-                        if (mStoryBookIndex > mSaveDataStoryBookProgress)
+                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < 3);
+                        if (mTouchEndChoice == 0)
                         {
-                            mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
-                            mSaveDataStoryBookProgress = mStoryBookIndex;
-                            SaveData();
+                            if (++mStoryPuzzleIndex == GetBook(mStoryBookIndex).mNumPuzzles)
+                            {
+                                ++mStoryBookIndex;
+                                mStoryPuzzleIndex = 0;
+                                
+                                if (mStoryBookIndex > mSaveDataStoryBookProgress)
+                                {
+                                    mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                                    mSaveDataStoryBookProgress = mStoryBookIndex;
+                                    SaveData();
+                                }
+                                
+                                if (mStoryBookIndex == GetNumBooks())
+                                {
+                                    StartGameState(GAME_STATE_STORY_GAME_END_CONGRATS);
+                                }
+                                else
+                                {
+                                    StartGameState(GAME_STATE_STORY_BOOK_START);
+                                }
+                            }
+                            else
+                            {
+                                if (mStoryPuzzleIndex > mSaveDataStoryPuzzleProgress)
+                                {
+                                    mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
+                                    SaveData();
+                                }
+                                StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                            }
                         }
-                        
-                        if (mStoryBookIndex == GetNumBooks())
+                        else if (mTouchEndChoice == 1)
                         {
-                            StartGameState(GAME_STATE_STORY_GAME_END_CONGRATS);
+                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
                         }
-                        else
+                        else if (mTouchEndChoice == 2)
                         {
-                            StartGameState(GAME_STATE_STORY_BOOK_START);
+                            StartGameState(GAME_STATE_MENU_MAIN);
                         }
                     }
-                    else
+                }
+                else
+                {
+                    for (int i = 0; i < 3; ++i)
                     {
-                        if (mStoryPuzzleIndex > mSaveDataStoryPuzzleProgress)
+                        if (mTouching[i] == TOUCH_STATE_END)
                         {
-                            mSaveDataStoryPuzzleProgress = mStoryPuzzleIndex;
-                            SaveData();
+                            mTouchEndChoiceTimer = kPushButtonDelay;
+                            mTouchEndChoice = i;
+                            break;
                         }
-                        StartGameState(GAME_STATE_STORY_CHAPTER_START);
                     }
-                }
-                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
-                {
-                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
-                }
-                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
-                {
-                    StartGameState(GAME_STATE_MENU_MAIN);
                 }
             }
             break;
