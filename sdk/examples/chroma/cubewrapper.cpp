@@ -103,7 +103,7 @@ void CubeWrapper::Draw()
 {   
 	switch( Game::Inst().getState() )
 	{
-		case Game::STATE_SPLASH:
+        case Game::STATE_SPLASH:
 		{
             //m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
 			break;
@@ -146,26 +146,30 @@ void CubeWrapper::Draw()
                     DrawGrid();
 
                     //draw glimmer before timer
-                    m_glimmer.Draw( m_bg1helper, this );
+                    if( m_glimmer.IsActive() )
+                        m_glimmer.Draw( m_bg1helper, this );
 
                     if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
                         Game::Inst().getTimer().Draw( m_bg1helper, m_vid );
+                        m_floatscore.Draw( m_bg1helper );
+                        m_queuedFlush = true;
                     }
-                    if( m_banner.IsActive() )
-                        m_banner.Draw( m_bg1helper );
-
-                    //rocks
-                    if( Game::Inst().getMode() != Game::MODE_BLITZ )
+                    else
                     {
+                        //rocks
                         for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
                             m_aExplosions[i].Draw( m_vid, i );
                     }
+                    if( m_banner.IsActive() )
+                    {
+                        m_banner.Draw( m_bg1helper );
+                        m_queuedFlush = true;
+                    }
 
                     m_bubbles.Draw( m_vid, this );
-                    m_floatscore.Draw( m_bg1helper );
 
-                    m_queuedFlush = true;
+                    //m_queuedFlush = true;
 
                     //super debug code!
                     //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
@@ -176,7 +180,7 @@ void CubeWrapper::Draw()
 
 					break;
 				}
-				case STATE_EMPTY:
+                case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), UI_NCubesCleared, 0);
                     int level = Game::Inst().getDisplayedLevel();
@@ -195,10 +199,12 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
                     break;
                 }
+                default:
+                    break;
 			}			
 			break;
 		}
-		case Game::STATE_POSTGAME:
+        case Game::STATE_POSTGAME:
 		{
             if( !m_dirty )
             {

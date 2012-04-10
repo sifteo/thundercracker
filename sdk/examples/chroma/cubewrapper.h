@@ -66,8 +66,8 @@ public:
 	void Reset();
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
-	void Draw();
-    void Update(SystemTime t, TimeDelta dt);
+    void Draw() __attribute__ ((noinline));
+    void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
 	void vidInit();
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
@@ -140,6 +140,7 @@ public:
     void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
+    inline void setNeedFlush() { m_queuedFlush = true; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
@@ -164,8 +165,8 @@ private:
     //draw a message box with centered text
     //bDrawBox - draw the box or not
     //in_yOffset - optional y offset for text
-    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 );
-    void DrawGrid();
+    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 ) __attribute__ ((noinline));
+    void DrawGrid() __attribute__ ((noinline));
 
 	Cube m_cube;
     VidMode_BG0_SPR_BG1 m_vid;

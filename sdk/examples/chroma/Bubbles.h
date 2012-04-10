@@ -29,7 +29,7 @@ public:
     void Spawn();
     void Disable();
     void Update( float dt, const Float2 &tilt );
-    void Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper ) __attribute__ ((noinline));
     inline bool isAlive() const { return m_fTimeAlive >= 0.0f; }
 
 private:

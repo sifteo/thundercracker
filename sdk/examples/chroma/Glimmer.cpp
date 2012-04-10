@@ -103,11 +103,6 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
     }*/
 
     //bg1 version
-    if( m_group >= NUM_GLIMMER_GROUPS )
-    {
-        return;
-    }
-
     for( int i = 0; i < MAX_GLIMMERS; i++ )
     {
         if( i < NUM_PER_GROUP[ m_group ] )
@@ -127,6 +122,8 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
             }
         }
     }
+
+    pWrapper->setNeedFlush();
 }
 
 
