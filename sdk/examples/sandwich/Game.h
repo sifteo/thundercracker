@@ -38,8 +38,7 @@ public:
   GameState* GetState() { return &mState; }
   Map* GetMap() { return &mMap; }
   Player* GetPlayer() { return &mPlayer; }
-  ViewSlot* ViewAt(int i) { return mViews+i; }
-  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { return ViewSlot::Iterator(mask & mActiveViewMask); }
+  
   unsigned AnimFrame() const { return mAnimFrames; }
   Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);
@@ -61,6 +60,16 @@ public:
   // events
   void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
+  
+  // listing views
+  ViewSlot* ViewAt(int i) { return mViews+i; }
+  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { return ViewSlot::Iterator(mask & mActiveViewMask); }
+  ViewSlot::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
+  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetCubeMask(); }
+  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetCubeMask(); }
+
+  ViewSlot::Iterator begin() { return ++ListViews(); }
+  ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
 
 private:
 

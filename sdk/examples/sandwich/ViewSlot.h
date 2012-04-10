@@ -74,12 +74,11 @@ public:
 		unsigned mask;
 		unsigned currentId;
 
-		Iterator(unsigned setMask) : mask(setMask), currentId(0) {
-		}
+		Iterator(unsigned setMask) : mask(setMask) {}
+		Iterator() : mask(0x0), currentId(32) {}
 
 	public:
 		bool MoveNext() {
-			//unsigned oldMask = mask;
 			//currentId = __builtin_clz(mask);
 			currentId = fastclz(mask);
 			mask ^= (0x80000000 >> currentId);
@@ -89,12 +88,14 @@ public:
 		bool operator==(const Iterator& i) { return currentId == i.currentId; }
 		bool operator!=(const Iterator& i) { return currentId != i.currentId; }
 
-		bool operator==(const ViewSlot* p) { return p->GetCubeID() == currentId; }
-		bool operator!=(const ViewSlot* p) { return p->GetCubeID() != currentId; }
-
 		ViewSlot& operator*();
 		ViewSlot* operator->();
-		ViewSlot* ptr();
+		Iterator operator++() { 
+			MoveNext();
+			return *this;
+ 		}
+
+		operator ViewSlot*();
 	};
 };
 

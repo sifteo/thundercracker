@@ -338,7 +338,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         while(p.MoveNext()) {
           if (p->ShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
             p->GetRoomView()->Restore();
-            RoomNod(p.ptr());
+            RoomNod(p);
             didRestore = true;
             break;
           }

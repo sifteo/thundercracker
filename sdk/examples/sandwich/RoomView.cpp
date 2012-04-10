@@ -17,12 +17,13 @@ void RoomView::Init(unsigned roomId) {
 }
 
 void RoomView::Lock() {
-  LOG(("LOCK SLOT OMG\n"));
   flags.locked = true;
+  gGame.OnViewLocked(this);
 }
 
 void RoomView::Unlock() {
   flags.locked = false;
+  gGame.OnViewUnlocked(this);
 }
 
 void RoomView::HideOverlay() {

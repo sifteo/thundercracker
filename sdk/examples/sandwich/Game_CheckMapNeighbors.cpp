@@ -17,17 +17,23 @@ static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, Vi
   if (origin) { 
     view->GetCube()->orientTo(*(origin->GetCube())); 
   }
-  bool result = view->ShowLocation(loc, false, false);
-  if (result && view->ShowingRoom() && !view->ShowingLockedRoom()) {
+  const bool didDisplayLocation = view->ShowLocation(loc, false, false);
+  if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
     view->GetRoomView()->StartSlide((dir+2)%4);
   }
   status->visitMask |= view->GetCubeMask();
-  if (result) {
+  if (didDisplayLocation) {
     status->changeMask |= view->GetCubeMask();
   }
-  if (result || !view->ShowingLockedRoom()) {
+  if (didDisplayLocation || !view->ShowingLockedRoom()) {
     for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-      result = VisitMapView(status, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view, i);
+      const unsigned result = VisitMapView(
+        status, 
+        view->VirtualNeighborAt(i), 
+        loc+kSideToUnit[i].toInt(), 
+        view, 
+        i
+      );
       if (result != RESULT_OKAY) {
         return result;
       }
@@ -45,11 +51,11 @@ void Game::CheckMapNeighbors() {
   }
   
   VisitorStatus status;
-  status.visitMask = 0x00000000;
   status.changeMask = 0x00000000;
 
   unsigned result;
   do {
+    status.visitMask = 0x00000000;
     result = VisitMapView(&status, root, root->GetRoomView()->Location());
   } while(result != RESULT_OKAY);
   

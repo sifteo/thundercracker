@@ -11,7 +11,8 @@ ViewSlot* ViewSlot::Iterator::operator->() {
 	return gGame.ViewAt(currentId);
 }
 
-ViewSlot* ViewSlot::Iterator::ptr() {
+//ViewSlot* ViewSlot::Iterator::ptr() {
+ViewSlot::Iterator::operator ViewSlot*() {
 	return gGame.ViewAt(currentId);
 }
 
@@ -236,7 +237,7 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 ViewSlot* ViewSlot::FindIdleView() {
 	ViewSlot::Iterator p = gGame.ListViews();
 	while(p.MoveNext()) {
-		if (p->ViewType() == VIEW_IDLE) { return p.ptr(); }
+		if (p->ViewType() == VIEW_IDLE) { return p; }
 	}
 	return 0;
 }
