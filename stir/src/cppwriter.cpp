@@ -178,7 +178,8 @@ void CPPSourceWriter::writeSound(const Sound &sound)
 
     // If the loop length is 0, there is no looping by default.
     _SYSAudioLoopType loopType = sound.getLoopType();
-    if (sound.getLoopLength() == 0) loopType = LoopOnce;
+    if (sound.getLoopLength() == 0)
+        loopType = _SYS_LOOP_ONCE;
 
     // Precompute the number of samples in the clip
     uint32_t numSamples = data.size();
@@ -214,7 +215,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* sampleRate */ " << sound.getSampleRate() << ",\n" <<
         indent << "/* loopStart  */ " << sound.getLoopStart() << ",\n" <<
         indent << "/* loopEnd    */ " << loopEnd << ",\n" <<
-        indent << "/* loopType   */ " << (loopType == LoopOnce ? "LoopOnce" : "LoopRepeat") << ",\n" <<
+        indent << "/* loopType   */ " << (loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
         indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
         indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
         indent << "/* dataSize   */ " << data.size() << ",\n" <<

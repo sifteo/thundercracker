@@ -615,13 +615,13 @@ Sound::Sound(lua_State *L)
 
     if (Script::argMatch(L, "loop")) {
         int16_t loopType = lua_tonumber(L, -1);
-        if (loopType > LoopRepeat || loopType < LoopOnce) {
+        if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE) {
             luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
             return;
         }
         setLoopType((_SYSAudioLoopType)loopType);
     } else {
-        setLoopType(LoopOnce);
+        setLoopType(_SYS_LOOP_ONCE);
     }
 
     if (Script::argMatch(L, "volume")) {

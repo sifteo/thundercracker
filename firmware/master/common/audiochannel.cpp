@@ -25,7 +25,10 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     samples.init(&mod, mod.loopStart);
     offset = 0;
 
-    loopMode = loopMode == LoopUndef ? (_SYSAudioLoopType)mod.loopType : loopMode;
+    // Let the module decide
+    if (loopMode == _SYS_LOOP_UNDEF)
+        loopMode = _SYSAudioLoopType(mod.loopType);
+
     if (loopMode == _SYS_LOOP_ONCE) {
         state &= ~STATE_LOOP;
     } else {
