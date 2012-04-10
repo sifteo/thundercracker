@@ -1383,6 +1383,21 @@ void App::UpdateMenuMain()
         { NULL,          NULL },
     };
     
+    const AssetImage *kMenuNeighborAssets[] =
+    {
+        &MenuNeighborStory,
+        &MenuNeighborShuffle,
+        &MenuNeighborFreePlay,
+        &MenuNeighborMesssage,
+    };
+    
+    int item = -1;
+    int menuNeighborIndices[kNumCubes];
+    for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+    {
+        menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+    }
+    
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
     
@@ -1416,28 +1431,25 @@ void App::UpdateMenuMain()
             }
             case MENU_NEIGHBOR_ADD:
             {
-                LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
-                    menuEvent.neighbor.neighbor,
-                    menuEvent.neighbor.masterSide,
-                    menuEvent.neighbor.neighborSide));
+                ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
                 break;
             }
             case MENU_NEIGHBOR_REMOVE:
             {
-                LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
-                    menuEvent.neighbor.neighbor,
-                    menuEvent.neighbor.masterSide,
-                    menuEvent.neighbor.neighborSide));
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                menuNeighborIndices[menuEvent.neighbor.neighbor] = arraysize(kMenuNeighborAssets) - 1;
                 break;
             }
             case MENU_ITEM_ARRIVE:
             {
-                LOG(("arriving at menu item %d\n", menuEvent.item));
+                item = menuEvent.item;
                 break;
             }
             case MENU_ITEM_DEPART:
             {
-                LOG(("departing from menu item %d\n", menuEvent.item));
+                item = -1;
                 break;
             }
             case MENU_PREPAINT:
@@ -1446,9 +1458,10 @@ void App::UpdateMenuMain()
                 {
                     if (mCubeWrappers[i].IsEnabled())
                     {
-                        mCubeWrappers[i].DrawBackground(MenuNeighborMesssage);
+                        mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
                         mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
                         mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
+                        mCubeWrappers[i].DrawFlush();
                     }
                 }
                 break;
@@ -1483,6 +1496,23 @@ void App::UpdateMenuStory()
         { NULL,          NULL },
     };
     
+    const AssetImage *kMenuNeighborAssets[] =
+    {
+        &MenuNeighborMesssage,
+        &MenuNeighborBook1,
+        &MenuNeighborBook2,
+        &MenuNeighborBook3,
+        &MenuNeighborMesssage,
+        &MenuNeighborMesssage,
+    };
+    
+    unsigned int item = -1;
+    int menuNeighborIndices[kNumCubes];
+    for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+    {
+        menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+    }
+    
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
     
@@ -1515,28 +1545,25 @@ void App::UpdateMenuStory()
             }
             case MENU_NEIGHBOR_ADD:
             {
-                LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
-                    menuEvent.neighbor.neighbor,
-                    menuEvent.neighbor.masterSide,
-                    menuEvent.neighbor.neighborSide));
+                ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
                 break;
             }
             case MENU_NEIGHBOR_REMOVE:
             {
-                LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
-                    menuEvent.neighbor.neighbor,
-                    menuEvent.neighbor.masterSide,
-                    menuEvent.neighbor.neighborSide));
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                menuNeighborIndices[menuEvent.neighbor.neighbor] = arraysize(kMenuNeighborAssets) - 1;
                 break;
             }
             case MENU_ITEM_ARRIVE:
             {
-                LOG(("arriving at menu item %d\n", menuEvent.item));
+                item = menuEvent.item;
                 break;
             }
             case MENU_ITEM_DEPART:
             {
-                LOG(("departing from menu item %d\n", menuEvent.item));
+                item = -1;
                 break;
             }
             case MENU_PREPAINT:
@@ -1545,9 +1572,10 @@ void App::UpdateMenuStory()
                 {
                     if (mCubeWrappers[i].IsEnabled())
                     {
-                        mCubeWrappers[i].DrawBackground(MenuNeighborMesssage);
+                        mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
                         mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
                         mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
+                        mCubeWrappers[i].DrawFlush();
                     }
                 }
                 break;
