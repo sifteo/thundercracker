@@ -83,6 +83,11 @@ class LPlatform : public Platform {
         }
     }
 
+    virtual Thing *canWalk(CellNum from, CellNum to){
+        // TODO - implement me
+        return NULL;
+    }
+
 
 
 };

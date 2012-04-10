@@ -24,8 +24,9 @@ class Turtle : public Thing {
         //         snap to it.
         // if force:
         if (nextCellOffset){
+
             //     is space open in our walk direction? :
-            if (canWalk(cellNum(), nextCell)){
+            if (isLocatedAt(cellNum()) && canWalk(cellNum(), nextCell)){
                 const float TILT_ACCELERATION = 70.0;
                 vel.x = (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
                 vel.y = (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;

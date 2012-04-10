@@ -46,6 +46,15 @@ class World {
 
 };
 
+bool isValidCellNum(CellNum cellNum){
+    int cellX = cellNum % World::CELLS_PER_ROW;
+    int cellY = int(cellNum / World::CELL_NUM_PITCH);
+    return (cellX >= 0
+        || cellX < World::CELLS_PER_ROW
+        || cellY >= 0
+        || cellY < World::CELLS_PER_ROW);
+}
+
 class Thing {
   public:
     static const int NUM_BOUNDS_RECTS = 2;
@@ -135,15 +144,6 @@ class Thing {
         }
         
         return NULL;
-    }
-
-    bool isValidCellNum(CellNum cellNum){
-        int cellX = cellNum % World::CELLS_PER_ROW;
-        int cellY = int(cellNum / World::CELL_NUM_PITCH);
-        return (cellX >= 0
-            || cellX < World::CELLS_PER_ROW
-            || cellY >= 0
-            || cellY < World::CELLS_PER_ROW);
     }
 
     // returns the screen space x,y coordinate of the nearest cell
