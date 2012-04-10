@@ -315,7 +315,7 @@ union _SYSVideoRAM {
  *
  * The _SYS_paint() call is a no-op for cubes who have had no drawing occur.
  * This state is tracked, separately from the dirty bits, using a NEED_PAINT
- * flag. This flag is cleared by _SYS_paint() itself, whereas the actual DIRTY
+ * flag. This flag is cleared by _SYS_paint() itself, whereas the actual dirty
  * bits are propagated through the firmware's model of the render pipeline.
  * Userspace code can force a cube to redraw by setting NEED_PAINT, even
  * without making any VRAM changes.
@@ -323,8 +323,7 @@ union _SYSVideoRAM {
  * This flag is set automatically by _SYS_vbuf_lock().
  */
 
-#define _SYS_VBF_DIRTY_VRAM     (1 << 0)        // VRAM has changed
-#define _SYS_VBF_NEED_PAINT     (1 << 1)        // Request a paint operation
+#define _SYS_VBF_NEED_PAINT     (1 << 0)        // Request a paint operation
 // All other bits are reserved for system use.
 
 struct _SYSVideoBuffer {
