@@ -27,9 +27,7 @@
  * re-entering the state machine.
  */
 
-#ifndef _SIFTEO_MENU_EVENTS_H
-#define _SIFTEO_MENU_EVENTS_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -129,5 +127,3 @@ inline bool Menu::dispatchEvent(struct MenuEvent *ev)
 
 
 };  // namespace Sifteo
-
-#endif

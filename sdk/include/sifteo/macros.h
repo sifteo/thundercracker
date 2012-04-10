@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MACROS_H
-#define _SIFTEO_MACROS_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -72,4 +70,3 @@
 #define offsetof(t,m)  ((uintptr_t)(uint8_t*)&(((t*)0)->m))
 #endif
 
-#endif

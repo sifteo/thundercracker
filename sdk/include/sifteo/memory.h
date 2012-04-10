@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MEMORY_H
-#define _SIFTEO_MEMORY_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -98,5 +96,3 @@ inline void bzero(T &s) {
 
 
 };  // namespace Sifteo
-
-#endif

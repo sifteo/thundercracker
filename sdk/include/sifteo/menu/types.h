@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MENU_TYPES_H
-#define _SIFTEO_MENU_TYPES_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -205,5 +203,3 @@ class Menu {
 
 
 };  // namespace Sifteo
-
-#endif

@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_ASSET_H
-#define _SIFTEO_ASSET_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -649,5 +647,3 @@ struct AssetAudio {
 
 
 };  // namespace Sifteo
-
-#endif

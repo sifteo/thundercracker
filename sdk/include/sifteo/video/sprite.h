@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_SPRITE_H
-#define _SIFTEO_VIDEO_SPRITE_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -281,5 +279,3 @@ struct SpriteLayer {
 
 
 };  // namespace Sifteo
-
-#endif

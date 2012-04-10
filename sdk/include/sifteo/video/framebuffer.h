@@ -4,9 +4,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_FRAMEBUFFER_H
-#define _SIFTEO_VIDEO_FRAMEBUFFER_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -300,5 +298,3 @@ typedef FBDrawable<128,48,1> FB128Drawable;
 
 
 };  // namespace Sifteo
-
-#endif
