@@ -1371,7 +1371,7 @@ void App::UpdateMenuMain()
         &BgTile,
         &Footer,
         &LabelEmpty,
-        { &TipSelectMode, &TipTiltToScroll, &TipPressToSelect, NULL }
+        { &TipSelectMode, &TipTiltToScroll, &TipPressToSelect, NULL },
     };
     
     MenuItem menuItems[] =
@@ -1385,6 +1385,8 @@ void App::UpdateMenuMain()
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
+    
+    // TODO: Sound
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
@@ -1412,7 +1414,45 @@ void App::UpdateMenuMain()
                 }
                 break;
             }
-            // TODO: Sound
+            case MENU_NEIGHBOR_ADD:
+            {
+                LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                    menuEvent.neighbor.neighbor,
+                    menuEvent.neighbor.masterSide,
+                    menuEvent.neighbor.neighborSide));
+                break;
+            }
+            case MENU_NEIGHBOR_REMOVE:
+            {
+                LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                    menuEvent.neighbor.neighbor,
+                    menuEvent.neighbor.masterSide,
+                    menuEvent.neighbor.neighborSide));
+                break;
+            }
+            case MENU_ITEM_ARRIVE:
+            {
+                LOG(("arriving at menu item %d\n", menuEvent.item));
+                break;
+            }
+            case MENU_ITEM_DEPART:
+            {
+                LOG(("departing from menu item %d\n", menuEvent.item));
+                break;
+            }
+            case MENU_PREPAINT:
+            {
+                for (int i = 1; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled())
+                    {
+                        mCubeWrappers[i].DrawBackground(MenuNeighborMesssage);
+                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
+                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
+                    }
+                }
+                break;
+            }
             default:
             {
                 break;
@@ -1431,7 +1471,7 @@ void App::UpdateMenuStory()
         &BgTile,
         &Footer,
         &LabelEmpty,
-        { &TipSelectBook, &TipTiltToScroll, &TipPressToSelect, NULL }
+        { &TipSelectBook, &TipTiltToScroll, &TipPressToSelect, NULL },
     };
     MenuItem menuItems[] =
     {
@@ -1445,6 +1485,8 @@ void App::UpdateMenuStory()
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
+    
+    // TODO: Sound
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
@@ -1471,7 +1513,45 @@ void App::UpdateMenuStory()
                 }
                 break;
             }
-            // TODO: Sound
+            case MENU_NEIGHBOR_ADD:
+            {
+                LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                    menuEvent.neighbor.neighbor,
+                    menuEvent.neighbor.masterSide,
+                    menuEvent.neighbor.neighborSide));
+                break;
+            }
+            case MENU_NEIGHBOR_REMOVE:
+            {
+                LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                    menuEvent.neighbor.neighbor,
+                    menuEvent.neighbor.masterSide,
+                    menuEvent.neighbor.neighborSide));
+                break;
+            }
+            case MENU_ITEM_ARRIVE:
+            {
+                LOG(("arriving at menu item %d\n", menuEvent.item));
+                break;
+            }
+            case MENU_ITEM_DEPART:
+            {
+                LOG(("departing from menu item %d\n", menuEvent.item));
+                break;
+            }
+            case MENU_PREPAINT:
+            {
+                for (int i = 1; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled())
+                    {
+                        mCubeWrappers[i].DrawBackground(MenuNeighborMesssage);
+                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
+                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
+                    }
+                }
+                break;
+            }
             default:
             {
                 break;
