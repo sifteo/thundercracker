@@ -1382,6 +1382,7 @@ void App::UpdateMenuMain()
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    menu.setIconYOffset(27);
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
@@ -1441,6 +1442,7 @@ void App::UpdateMenuStory()
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    menu.setIconYOffset(27);
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
