@@ -40,9 +40,9 @@ else
 end
 
 -- Environments
-Environment_0 = image{"assets/bg_kitchen.png"}
-Environment_0_Left = image{"assets/bg_kitchen_left.png"}
-Environment_0_Right = image{"assets/bg_kitchen_right.png"}
+Environment_0 = image{"assets/cutscene_background1.png"}
+Environment_0_Left = image{"assets/cutscene_background1_left.png"}
+Environment_0_Right = image{"assets/cutscene_background1_right.png"}
 
 -- Menu
 BgTile = image{"assets/menu/bg_blue_8x8.png"}
@@ -72,7 +72,6 @@ end
 
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
-UiFontBlack = image{"assets/fontstrip_content_black_nooutline.png", height = 16}
 UiFontOrange = image{"assets/fontstrip_content_orange.png", height = 16}
 --UiFontBlue = image{"assets/fontstrip_content_blue.png", height = 16}
 --UiFontHeadingBlue = image{"assets/fontstrip_heading_blue.png", height = 16}

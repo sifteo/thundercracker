@@ -541,7 +541,7 @@ void DrawStoryCutscene(
         }
         
         // Text
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontOrange, line.mText);
     }
     else if (line.mSpeaker == 1)
     {
@@ -578,7 +578,7 @@ void DrawStoryCutscene(
         }
         
         // Text
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontBlack, line.mText);
+        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontOrange, line.mText);
     }
     else if (line.mSpeaker == 2)
     {
