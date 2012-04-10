@@ -1,5 +1,5 @@
 
-BIN = testjig.elf
+BIN_STM32 = testjig.elf
 
 TC_DIR = ../../..
 
@@ -15,9 +15,9 @@ include ../Makefile.defs
 # Override default CDEPS
 CDEPS := ../common/syscall-table.def
 
-all: $(BIN)
+all: $(BIN_STM32)
 
-$(BIN): $(OBJS_STM32_TESTJIG)
+$(BIN_STM32): $(OBJS_STM32_TESTJIG)
 	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
@@ -29,7 +29,7 @@ $(BIN): $(OBJS_STM32_TESTJIG)
 	@echo
 	$(CC_STM32) -c $(CFLAGS_STM32) $(DEPFLAGS) $< -o $@
 
-common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi.h
+../common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi.h
 	python ../tools/firmware-syscall-table.py < $< > $@
 
 ocd:
@@ -58,9 +58,8 @@ program: $(BIN_STM32)
 
 # Several steps, to work around Win32 command line length limits
 clean:
-	rm -f $(BINS)
-	rm -f $(OBJS_SIM)
-	rm -f $(OBJS_STM32) 
+	rm -f $(BIN_STM32)
+	rm -f $(OBJS_STM32_TESTJIG)
 	rm -rf .dep
 
 # include the dep files, and make a folder for them if necessary
