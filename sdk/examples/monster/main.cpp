@@ -28,7 +28,7 @@ void main()
         vid.colormap.set((RGB565*) &data->fb[512]);
         vid.fb32.set((uint16_t*) &data->fb[0]);
 
-        LOG(("Monster state %f, showing %P\n", monster, data));
+        LOG("Monster state %f, showing %P\n", monster, data);
 
         System::paint();
     }

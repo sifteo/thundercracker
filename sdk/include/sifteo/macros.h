@@ -26,12 +26,10 @@
  * normal data section.
  */
 
-#define LOG(_x) do { \
+#define LOG(...) do { \
     if (_SYS_lti_isDebug()) \
-        _SYS_lti_log _x ; \
+        _SYS_lti_log(__VA_ARGS__); \
 } while (0)
-
-#define DEBUG_LOG(_x)   LOG(_x)
 
 #define DEBUG_ONLY(_x) do { \
     if (_SYS_lti_isDebug()) { \
@@ -47,12 +45,12 @@
 } while (0)
 
 /// Convenient trace macros for printing the values of variables
-#define LOG_INT(_x)     LOG(("%s = %d\n", #_x, (_x)));
-#define LOG_HEX(_x)     LOG(("%s = 0x%08x\n", #_x, (_x)));
-#define LOG_FLOAT(_x)   LOG(("%s = %f\n", #_x, (_x)));
-#define LOG_STR(_x)     LOG(("%s = \"%s\"\n", #_x, (const char*)(_x)));
-#define LOG_INT2(_x)    LOG(("%s = (%d, %d)\n", #_x, (_x).x, (_x).y));
-#define LOG_FLOAT2(_x)  LOG(("%s = (%f, %f)\n", #_x, (_x).x, (_x).y));
+#define LOG_INT(_x)     LOG("%s = %d\n", #_x, (_x));
+#define LOG_HEX(_x)     LOG("%s = 0x%08x\n", #_x, (_x));
+#define LOG_FLOAT(_x)   LOG("%s = %f\n", #_x, (_x));
+#define LOG_STR(_x)     LOG("%s = \"%s\"\n", #_x, (const char*)(_x));
+#define LOG_INT2(_x)    LOG("%s = (%d, %d)\n", #_x, (_x).x, (_x).y);
+#define LOG_FLOAT2(_x)  LOG("%s = (%f, %f)\n", #_x, (_x).x, (_x).y);
 
 /// Produces a 'size of array is negative' compile error when the assert fails
 #define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))

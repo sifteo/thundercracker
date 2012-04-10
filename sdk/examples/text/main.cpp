@@ -37,8 +37,8 @@ struct TextRenderer {
     }
 
     void drawText(const char *str) {
-        LOG(("Drawing text: \"%s\" at (%d, %d)\n",
-            str, position.x, position.y));
+        LOG("Drawing text: \"%s\" at (%d, %d)\n",
+            str, position.x, position.y);
 
         char c;
         while ((c = *str)) {

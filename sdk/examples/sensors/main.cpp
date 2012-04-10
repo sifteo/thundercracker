@@ -34,13 +34,13 @@ private:
     void onTouch(unsigned cube)
     {
         cubes[cube].touch++;
-        LOG(("Touched cube #%d\n", cube));
+        LOG("Touched cube #%d\n", cube);
     }
 
     void onShake(unsigned cube)
     {
         cubes[cube].shake++;
-        LOG(("Shaking cube #%d\n", cube));
+        LOG("Shaking cube #%d\n", cube);
     }
 
     void onNeighborRemove(unsigned firstCube, unsigned firstSide,
@@ -48,8 +48,8 @@ private:
     {
         cubes[firstCube].neighborRemove++;
         cubes[secondCube].neighborRemove++;
-        LOG(("Neighbor Remove: %d:%d - %d:%d\n",
-            firstCube, firstSide, secondCube, secondSide));
+        LOG("Neighbor Remove: %d:%d - %d:%d\n",
+            firstCube, firstSide, secondCube, secondSide);
     }
 
     void onNeighborAdd(unsigned firstCube, unsigned firstSide,
@@ -57,8 +57,8 @@ private:
     {
         cubes[firstCube].neighborAdd++;
         cubes[secondCube].neighborAdd++;
-        LOG(("Neighbor Add: %d:%d - %d:%d\n",
-            firstCube, firstSide, secondCube, secondSide));
+        LOG("Neighbor Add: %d:%d - %d:%d\n",
+            firstCube, firstSide, secondCube, secondSide);
     }
 };
 
