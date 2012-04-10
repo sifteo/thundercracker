@@ -38,8 +38,8 @@ void collisions(Thing **things, int num_things){
     for (int i = 0; i < num_things; i++){
         for (int j = i+1; j < num_things; j++){
             if (things[i]->isTouching(*things[j])){
-                things[i]->collided(things[j]);
-                things[j]->collided(things[i]);
+                things[i]->onCollision(things[j]);
+                things[j]->onCollision(things[i]);
             }
         }
     }
@@ -79,17 +79,20 @@ void main()
     michelangelo.setSpriteImage(vid, Michelangelo);
 
     while (1) {
-        world.mainLoopReset();
         float dt = timeStep.delta().seconds();
 
-        michelangelo.think(cube.id());
-        if (michelangelo.isMoving){
-            michelangelo.act(dt);
-        } else {
-            for(int i=0; i < arraysize(platforms); i++) platforms[i]->think(cube.id());
-            for(int i=0; i < arraysize(platforms); i++) platforms[i]->act(dt);
-            collisions(platforms, arraysize(platforms));
+
+        // Think
+        if (world.numMovingPlatforms == 0){
+            michelangelo.think(cube.id());
         }
+        if (world.numMovingTurtles == 0){
+            for(int i=0; i < arraysize(platforms); i++) platforms[i]->think(cube.id());
+        }
+
+        // act
+        for(int i=0; i < arraysize(things); i++) things[i]->act(dt);
+        collisions(platforms, arraysize(platforms));
 
         for(int i=0; i < arraysize(things); i++) things[i]->draw(vid);
 

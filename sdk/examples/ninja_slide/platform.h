@@ -4,26 +4,35 @@
 #include "thing.h"
 
 class Platform : public Thing {
+  private:
+    typedef Thing super;
+    
   public:
 
     Platform(World &world, int id, Int2 pos) : Thing(world, id, pos) {} 
 
     virtual void think(_SYSCubeID cubeId){
-        if (pWorld->platformsMustStop){
-            vel = Vec2(0.0f, 0.0f);
-            pos = nearestCellCoordinate(pos);
-            return;
-        }
-
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
         const float TILT_ACCELERATION = 2.0;
         vel.x += (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
         vel.y += (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
+        if (!isMoving && vel.len2() > 0.1){
+            isMoving = true;
+            pWorld->numMovingPlatforms++;
+        }
+    }
+
+    virtual void onCollision(Thing *other){
+        if (isMoving){
+            isMoving = false;
+            pWorld->numMovingPlatforms--;
+        }
+        super::onCollision(other);
     }
 };
 
 class LPlatform : public Platform {
-  private :
+  private:
     typedef Platform super; // Private prevents erroneous use by other classes.
     
 
@@ -38,9 +47,7 @@ class LPlatform : public Platform {
     virtual bool occupiesCell(CellNum dest){
         Float2 destPoint = cellNumToPoint(dest);
         Rect theBounds[NUM_BOUNDS_RECTS];
-        bounds(theBounds);
-        bool result = theBounds[0].contains(destPoint)
-            || theBounds[1].contains(destPoint);
+        bool result = this->contains(destPoint);
         return result;
     }
 
@@ -88,13 +95,6 @@ class LPlatform : public Platform {
                 result[1] = Rect(pos.x, pos.y, World::PIXELS_PER_CELL, World::PIXELS_PER_CELL);
         }
     }
-
-    virtual Thing *canWalk(CellNum from, CellNum to){
-        // TODO - implement me
-        return NULL;
-    }
-
-
 
 };
 

@@ -8,7 +8,6 @@ using namespace Sifteo;
 
 class Thing;
 
-
 // World is information that all Things have access to.
 class World {
   public:
@@ -24,16 +23,15 @@ class World {
      */
     int numThings;
     Thing *things[MAX_THING];
-    int platformsMustStop;
+    int numMovingTurtles;
+    int numMovingPlatforms;
+    
 
     World(){
         numThings = 0;
-        _SYS_memset32(reinterpret_cast<uint32_t*>(things), 0x33445566, arraysize(things));
-        platformsMustStop = PLATFORM_MOVE_DELAY;
-    }
-
-    void mainLoopReset(){
-        platformsMustStop = MAX(0, platformsMustStop-1);
+        numMovingTurtles = 0;
+        numMovingPlatforms = 0;
+        _SYS_memset32(reinterpret_cast<uint32_t*>(things), 0, arraysize(things));
     }
 
     void addThing(Thing *thing){
@@ -41,7 +39,6 @@ class World {
         things[numThings] = thing;
         numThings++;
     }
-
 };
 
 /*
@@ -78,8 +75,10 @@ class Thing {
     Float2 pos;
     Float2 vel;
     const PinnedAssetImage *pImage;
+    bool isMoving;
 
     Thing(World &world, int id, Int2 pos){
+        this->isMoving = false;
         this->pWorld = &world;
         this->id = id;
         this->pos = pos.toFloat();
@@ -99,13 +98,25 @@ class Thing {
     virtual void act(float dt){
 //         vel = vel * 0.95;       // friction
 
-        pos = pos + (vel * dt);
+        Float2 movement = (vel * dt);
+        pos = pos + movement;
+
+        if (movement.len2() > 0.1){
+            CellNum myCell = cellNum();
+            for(int i=0; i < pWorld->numThings; i++){
+                if (pWorld->things[i] == this) continue;
+                pWorld->things[i]->onPlatformMoved(*this, myCell, movement);
+            }
+        }
 
         // collision with edges
         if (   pos.x < 0.0 || (pos.x + pixelWidth())  > VidMode::LCD_width
             || pos.y < 0.0 || (pos.y + pixelHeight()) > VidMode::LCD_height){
-            collided(NULL);
+            onCollision(NULL);
         }
+    }
+
+    virtual void onPlatformMoved(Thing &sender, CellNum cell, Float2 movement){
     }
 
     virtual void draw(VidMode_BG0_SPR_BG1 vid){
@@ -133,7 +144,14 @@ class Thing {
             || myBounds[1].isTouching(otherBounds[1]);
     }
 
-    void collided(Thing *otherThing){
+    bool contains(Float2 point){
+        Rect myBounds[NUM_BOUNDS_RECTS];
+        bounds(myBounds);
+        return myBounds[0].contains(point)
+            || myBounds[1].contains(point);
+    }
+
+    virtual void onCollision(Thing *otherThing){
         vel = Vec2(0.0f, 0.0f);
         pos = nearestCellCoordinate(pos);
     }
@@ -151,8 +169,8 @@ class Thing {
 
     // returns the screen space x,y coordinate of the nearest cell
     Int2 nearestCellCoordinate(Float2 point){
-        return Vec2( int(pos.x / World::PIXELS_PER_CELL + 0.5f) * World::PIXELS_PER_CELL,
-                     int(pos.y / World::PIXELS_PER_CELL + 0.5f) * World::PIXELS_PER_CELL);
+        return Vec2( int((pos.x / World::PIXELS_PER_CELL) + 0.5f) * World::PIXELS_PER_CELL,
+                     int((pos.y / World::PIXELS_PER_CELL) + 0.5f) * World::PIXELS_PER_CELL);
     }
 
 };
