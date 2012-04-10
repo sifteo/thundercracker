@@ -26,7 +26,7 @@ private:
   uint8_t mStartFrame;
   struct {
     uint8_t hideOverlay : 1;
-    uint8_t locked : 1;
+    uint8_t locked : 1; // technically we don't need this flag -- gGame has a mask now
     uint8_t wobbleType : 3;
     uint8_t animTileCount : 3;
   } flags;

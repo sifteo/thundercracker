@@ -346,15 +346,15 @@
     <property name="id" value="booties"/>
    </properties>
   </object>
-  <object name="Bomb" type="_Item" x="304" y="448" width="32" height="32">
+  <object name="Bomb" type="Item" x="304" y="448" width="32" height="32">
    <properties>
     <property name="id" value="bomb"/>
     <property name="target" value="sandbox:RespawnTest"/>
    </properties>
   </object>
-  <object name="testdoor" type="Door" x="304" y="400" width="32" height="32"/>
+  <object name="testdoor" type="_Door" x="304" y="400" width="32" height="32"/>
   <object type="Obstacle" x="48" y="320" width="32" height="16"/>
-  <object name="TestSwitch" type="Switch" x="32" y="416" width="64" height="64">
+  <object name="TestSwitch" type="_Switch" x="32" y="416" width="64" height="64">
    <properties>
     <property name="onTrigger" value="opendoor:TestDoor"/>
    </properties>

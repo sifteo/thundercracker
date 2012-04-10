@@ -38,8 +38,26 @@ unsigned Game::OnPassiveTrigger() {
   return TRIGGER_RESULT_NONE;
 }
 
-void Game::OnYesOhMyGodExplosion(Bomb* p) {
-  //LOG(("YES OH MY GOD!\n"));
+void Game::OnYesOhMyGodExplosion(Bomb* bomb) {
+  if (bomb->Item() == mPlayer.Equipment()) {
+    mPlayer.CurrentView()->GetRoom()->BombThisFucker();
+    mPlayer.SetEquipment(0);
+    mPlayer.CurrentView()->HideEquip();
+  } else {
+    auto p = ListLockedViews();
+    while(p.MoveNext()) {
+      const auto pRoom = p->GetRoomView()->GetRoom();
+      if (pRoom->HasItem() && pRoom->Item() == bomb->Item()) {
+        pRoom->ClearTrigger();
+        pRoom->BombThisFucker();
+        p->GetRoomView()->Unlock();
+        p->GetRoomView()->HideItem();
+        break;
+      }
+    }
+  }
+
+  LOG(("YES OH MY GOD!\n"));
   //for(;;) DoPaint(false);
 }
 
@@ -153,6 +171,7 @@ void Game::OnPickup(Room *pRoom) {
       Bomb* p = mMap.BombFor(pItem);
       ASSERT(p);
       p->OnPickup();
+      mPlayer.CurrentView()->Unlock();
     }
   } else {
     //-----------------------------------------------------------------------
@@ -266,7 +285,7 @@ void Game::OnDropEquipment(Room *pRoom) {
   } else {
     // ensure this isn't a bomb site
     bool isRespawnRoom = false;
-    for(Bomb* b=mMap.BombBegin(); b!=mMap.BombEnd(); ++b) {
+    for(auto b=mMap.BombBegin(); b!=mMap.BombEnd(); ++b) {
       if (b->RespawnRoom() == pRoom) {
         isRespawnRoom = true;
         break;
@@ -286,6 +305,11 @@ void Game::OnDropEquipment(Room *pRoom) {
       mPlayer.CurrentView()->ShowItem(pItem);
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index);
       mPlayer.CurrentView()->StartNod();
+
+      if (gItemTypeData[pItem->itemId].triggerType == ITEM_TRIGGER_BOMB) {
+        mPlayer.CurrentView()->Lock();
+      }
+
       Wait(0.075f, false);
     }
 
