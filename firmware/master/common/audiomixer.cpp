@@ -7,12 +7,15 @@
 #include "flashlayer.h"
 #include <stdio.h>
 #include <string.h>
+#include "xmtrackerplayer.h"
 
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     playingChannelMask(0),
-    nextHandle(0)
+    nextHandle(0),
+    trackerCallbackInterval(0),
+    trackerCallbackCountdown(0)
 {
 }
 
@@ -66,15 +69,45 @@ void AudioMixer::pullAudio(void *p) {
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
     if (buf->writeAvailable() < sizeof(int16_t)) return;
 
-    unsigned bytesToWrite;
-    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
-    unsigned mixed = AudioMixer::instance.mixAudio(audiobuf, bytesToWrite / sizeof(int16_t));
+    unsigned bytesToMix;
+    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToMix);
+    bytesToMix -= bytesToMix % sizeof(int16_t);
+    unsigned totalBytesMixed = 0;
+
+    unsigned mixed;
+    uint32_t numSamples;
+
+    uint32_t &trackerInterval = AudioMixer::instance.trackerCallbackInterval;
+    uint32_t &trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+
+    do {
+        numSamples = (bytesToMix - totalBytesMixed) / sizeof(int16_t);
+        numSamples = trackerInterval > 0 && trackerCountdown < numSamples
+                   ? trackerCountdown : numSamples;
+        ASSERT(numSamples > 0);
+
+        mixed = AudioMixer::instance.mixAudio(audiobuf, numSamples);
+        audiobuf += mixed;
+        totalBytesMixed += mixed * sizeof(int16_t);
+
+        if (trackerInterval) {
+            ASSERT(trackerCountdown != 0);
+            ASSERT(mixed <= trackerCountdown);
+            // Update the callback countdown
+            trackerCountdown -= mixed;
+
+            // Fire the callback
+            if (trackerCountdown == 0) {
+                XmTrackerPlayer::mixerCallback();
+                trackerCountdown = trackerInterval;
+            }
+        }
+    } while(mixed == numSamples && bytesToMix > totalBytesMixed);
 
     // mixed as returned by mixAudio measure samples, but we care about bytes
-    mixed *= sizeof(int16_t);
-    ASSERT(mixed <= bytesToWrite);
-    if (mixed > 0) {
-        buf->commit(mixed);
+    ASSERT(totalBytesMixed <= bytesToMix);
+    if (totalBytesMixed > 0) {
+        buf->commit(totalBytesMixed);
     }
 }
 
@@ -150,6 +183,13 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
         // TODO - implement
     }
     return 0;
+}
+
+void AudioMixer::setTrackerCallbackInterval(uint32_t usec)
+{
+    // Convert to frames
+    trackerCallbackInterval = ((uint64_t)usec * (uint64_t)curSampleRate) / 1000000;
+    trackerCallbackCountdown = trackerCallbackInterval;
 }
 
 AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t mask)
