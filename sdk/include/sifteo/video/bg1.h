@@ -354,6 +354,24 @@ struct BG1Drawable {
     }
 
     /**
+     * This is a specialized alternative to setMask(), for cases where
+     * each row of BG1 has a single contiguous span of tiles in it.
+     *
+     * This effectively draws a rectangle on the BG1 mask, leaving
+     * rows above and below the rectangle untouched, but clearing all
+     * tiles to either side of the rectangle.
+     *
+     * If this doesn't sound like your BG1 use-case, the more general
+     * BG1Mask utility can help you construct a mask either at
+     * compile-time or runtime.
+     */
+    void fillMask(UInt2 topLeft, UInt2 size) {
+        _SYS_vbuf_fill(&sys.vbuf,
+            offsetof(_SYSVideoRAM, bg1_bitmap)/2 + topLeft.y,
+            ((1 << size.x) - 1) << topLeft.x, size.y);
+    }
+
+    /**
      * Change the hardware pixel-panning origin for this mode. The supplied
      * vector is interpreted as the location on the tile buffer, in pixels,
      * where the origin of the LCD will begin.
