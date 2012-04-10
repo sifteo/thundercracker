@@ -110,7 +110,7 @@ class CubeSlot {
     void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
 
     void waitForPaint() {
-        paintControl.waitForPaint();
+        paintControl.waitForPaint(this);
     }
 
     void waitForFinish() {

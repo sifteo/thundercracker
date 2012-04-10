@@ -27,7 +27,7 @@
 
 struct VRAM {
 
-    static const uint32_t DEFAULT_LOCK_FLAGS = _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT;
+    static const uint32_t DEFAULT_LOCK_FLAGS = _SYS_VBF_NEED_PAINT;
 
     static uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
@@ -65,6 +65,7 @@ struct VRAM {
     static void lock(_SYSVideoBuffer &vbuf, uint16_t addr,
         uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
     {
+        DEBUG_LOG(("VBUF[%p]: lock at %04x, flags %08x\n", &vbuf, addr, lockFlags));
         Atomic::Or(vbuf.flags, lockFlags);
         ASSERT(addr < _SYS_VRAM_WORDS);
         vbuf.lock |= maskCM16(addr);
@@ -119,7 +120,7 @@ struct VRAM {
         vbuf.lock = 0xFFFFFFFF;
         for (unsigned i = 0; i < arraysize(vbuf.cm1); i++)
             vbuf.cm1[i] = 0xFFFFFFFF;
-        vbuf.flags = _SYS_VBF_DIRTY_VRAM | _SYS_VBF_NEED_PAINT;
+        vbuf.flags = DEFAULT_LOCK_FLAGS;
     }
 };
 

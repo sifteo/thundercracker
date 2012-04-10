@@ -236,11 +236,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         uint8_t delta = ack->frame_count - framePrevACK;
         framePrevACK = ack->frame_count;
 
-        if (CubeSlots::frameACKValid & bit()) {
+        if ((CubeSlots::frameACKValid & bit()) == 0) {
+            Atomic::SetLZ(CubeSlots::frameACKValid, id());
+        } else if (delta) {
             // Some frame(s) finished rendering.
             paintControl.ackFrames(this, delta);
-        } else {
-            Atomic::SetLZ(CubeSlots::frameACKValid, id());
         }
     }
 
