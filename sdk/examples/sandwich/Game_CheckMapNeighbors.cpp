@@ -20,19 +20,28 @@ static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, Vi
   const bool didDisplayLocation = view->ShowLocation(loc, false, false);
   if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
     view->GetRoomView()->StartSlide((dir+2)%4);
+    // check this against locked views
+    auto i = gGame.ListLockedViews();
+    while(i.MoveNext()) {
+      if (i->GetRoomView()->Id() == view->GetRoomView()->Id()) {
+        view->GetRoomView()->Lock();
+        i->GetRoomView()->Unlock();
+        return RESULT_INTERRUPTED;
+      }
+    }
   }
   status->visitMask |= view->GetCubeMask();
   if (didDisplayLocation) {
     status->changeMask |= view->GetCubeMask();
   }
   if (didDisplayLocation || !view->ShowingLockedRoom()) {
-    for(Cube::Side i=0; i<NUM_SIDES; ++i) {
+    for(Cube::Side side=0; side<NUM_SIDES; ++side) {
       const unsigned result = VisitMapView(
         status, 
-        view->VirtualNeighborAt(i), 
-        loc+kSideToUnit[i].toInt(), 
+        view->VirtualNeighborAt(side), 
+        loc+kSideToUnit[side].toInt(), 
         view, 
-        i
+        side
       );
       if (result != RESULT_OKAY) {
         return result;
@@ -60,7 +69,7 @@ void Game::CheckMapNeighbors() {
   } while(result != RESULT_OKAY);
   
   unsigned newChangeMask = 0;
-  ViewSlot::Iterator i = ListViews(~status.visitMask);
+  auto i = ListViews(~status.visitMask);
   while(i.MoveNext()) {
     if (i->HideLocation(false)) {
       newChangeMask |= i->GetCubeMask();

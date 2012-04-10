@@ -34,6 +34,8 @@ private:
 
 public:
 
+  static Game* Inst();
+
   // getters
   GameState* GetState() { return &mState; }
   Map* GetMap() { return &mMap; }
@@ -68,9 +70,11 @@ public:
   void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetCubeMask(); }
   void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetCubeMask(); }
 
-  ViewSlot::Iterator begin() { return ++ListViews(); }
-  ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
-
+  struct {
+    ViewSlot::Iterator begin() { return ++Game::Inst()->ListViews(); }
+    ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
+  } views;
+  
 private:
 
   static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);

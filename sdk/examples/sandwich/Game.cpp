@@ -9,6 +9,9 @@ TimeDelta Game::mDt(0.f);
 float Game::sShakeTime = -1.f;
 #endif
 
+Game* Game::Inst() {
+  return &gGame;
+}
 
 void Game::Paint(bool sync) {
   if (mNeighborDirty) { 
@@ -16,10 +19,10 @@ void Game::Paint(bool sync) {
   }
   SystemTime now = SystemTime::now();
   mPlayer.Update();
-  ViewSlot::Iterator p = ListViews();
-  while(p.MoveNext()) {
-    p->Update();
+  for(ViewSlot& view : views) {
+    view.Update();
   }
+
   DoPaint(sync);
   mAnimFrames++;
 
