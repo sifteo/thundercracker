@@ -7,7 +7,6 @@
 #define AUDIOOUTDEVICE_H_
 
 #include <stdint.h>
-#include <assert.h>
 
 class AudioMixer;
 
@@ -35,7 +34,7 @@ public:
             case kHz32000:
                 return 32000;
             default:
-                assert(0);
+                return 0;
         }
     }
     static void setSampleRate(SampleRate samplerate);
