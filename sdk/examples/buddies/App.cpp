@@ -1379,12 +1379,12 @@ void App::UpdateMenuMain()
         { &IconStory,    &LabelStory },
         { &IconShuffle,  &LabelShuffle },
         { &IconFreePlay, &LabelFreePlay },
-        //{ &IconOptions,  &LabelOptions }, // TODO: Disabled until we actually implement it
-        { NULL, NULL },
+      //{ &IconOptions,  &LabelOptions }, // TODO: Disabled until we actually implement it
+        { NULL,          NULL },
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
-    menu.setIconYOffset(27);
+    menu.setIconYOffset(32);
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
@@ -1439,12 +1439,12 @@ void App::UpdateMenuStory()
         { &IconBook0,    &LabelBook0 },
         { &IconBook1,    &LabelBook1 },
         { &IconBook2,    &LabelBook2 },
-        { &IconExit,     &LabelExit },
-        { NULL, NULL },
+        { &IconBack,     &LabelBack },
+        { NULL,          NULL },
     };
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
-    menu.setIconYOffset(27);
+    menu.setIconYOffset(32);
     
     MenuEvent menuEvent;
     while (menu.pollEvent(&menuEvent))
