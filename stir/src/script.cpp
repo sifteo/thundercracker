@@ -8,6 +8,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "sha.h"
 #include "script.h"
@@ -20,6 +21,7 @@ namespace Stir {
 // Important global variables
 #define GLOBAL_DEFGROUP         "_defaultGroup"
 #define GLOBAL_QUALITY          "quality"
+#define SAMPLE_RATE 16000
 
 const char Group::className[] = "group";
 const char Image::className[] = "image";
@@ -509,6 +511,41 @@ Sound::Sound(lua_State *L)
         setVBR(lua_toboolean(L, -1));
     } else {
         setVBR(false);
+    }
+
+    if (Script::argMatch(L, "sample_rate")) {
+        setSampleRate(lua_tonumber(L, -1));
+    } else {
+        setSampleRate(SAMPLE_RATE);
+    }
+
+    if (Script::argMatch(L, "loop_start")) {
+        setLoopStart(lua_tonumber(L, -1));
+    } else {
+        setLoopStart(0);
+    }
+
+    if (Script::argMatch(L, "loop_length")) {
+        setLoopLength(lua_tonumber(L, -1));
+    } else {
+        setLoopLength(0);
+    }
+
+    if (Script::argMatch(L, "loop")) {
+        int16_t loopType = lua_tonumber(L, -1);
+        if (loopType > LoopRepeat || loopType < LoopOnce) {
+            luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
+            return;
+        }
+        setLoopType((_SYSAudioLoopType)loopType);
+    } else {
+        setLoopType(LoopOnce);
+    }
+
+    if (Script::argMatch(L, "volume")) {
+        setVolume(lua_tonumber(L, -1));
+    } else {
+        setVolume(_SYS_AUDIO_DEFAULT_VOLUME);
     }
 
     if (!Script::argEnd(L))

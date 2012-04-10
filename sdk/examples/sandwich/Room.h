@@ -39,13 +39,24 @@ public:
   unsigned Id() const;
   Int2 Location() const;
   const RoomData* Data() const;
-  inline Int2 Position() const { return 128 * Location(); }
+  Int2 Position() const { return 128 * Location(); }
   Int2 LocalCenter(unsigned subdiv) const;
-  inline Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
-  inline bool HasUserdata() const { return mPrimarySlotType; }
+  Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
+  bool HasUserdata() const { return mPrimarySlotType; }
   void Clear();
   bool IsShowingBlock(const Sokoblock* pBlock);  
   unsigned CountOpenTilesAlongSide(Cube::Side side);
+
+  //---------------------------------------------------------------------------
+  // bombypoos
+  //---------------------------------------------------------------------------
+
+  bool CanBomb(Cube::Side s) const { ASSERT(0<=s && s<4); return (mBomb.canMask & (1<<s)) != 0; }
+  bool DidBomb(Cube::Side s) const { ASSERT(0<=s && s<4); return (mBomb.didMask & (1<<s)) != 0; }
+  bool HasBombedSides() const { return mBomb.didMask != 0; }
+  void SetCanBomb(Cube::Side s) { ASSERT(0<=s && s<4); mBomb.canMask |= (1<<s); }
+  void SetDidBomb(Cube::Side s) { mBomb.didMask |= ((1<<s) & mBomb.canMask); }
+  void BombThisFucker();
 
   //---------------------------------------------------------------------------
   // triggers
@@ -72,7 +83,6 @@ public:
     mPrimarySlotId = TRIGGER_UNDEFINED; 
     mPrimarySlot = 0;
   }
-  
 
   //---------------------------------------------------------------------------
   // subdivs
@@ -102,21 +112,21 @@ public:
   // props
   //---------------------------------------------------------------------------
 
-  inline bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
-  inline bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
-  inline bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
+  bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
+  bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
+  bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
   const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
   const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
   const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
 
-  inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
+  void SetTrapdoor(const TrapdoorData* trapDoorData) {
     ASSERT(!mPrimarySlot);
     mPrimarySlotType = PRIMARY_PROP;
     mPrimarySlotId = SECONDARY_TRAPDOOR;
     mPrimarySlot = trapDoorData;
   }
 
-  inline void SetDepot(const DepotData* depot) {
+  void SetDepot(const DepotData* depot) {
     ASSERT(!mPrimarySlot);
     ASSERT(!mSecondarySlot);
     mPrimarySlotType = PRIMARY_PROP;
@@ -124,7 +134,7 @@ public:
     mPrimarySlot = depot;
   }
 
-  inline void SetSwitch(const SwitchData* toggle) {
+  void SetSwitch(const SwitchData* toggle) {
     ASSERT(!mPrimarySlot);
     mPrimarySlotType = PRIMARY_PROP;
     mPrimarySlotId = SECONDARY_SWITCH;

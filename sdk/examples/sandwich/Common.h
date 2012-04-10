@@ -6,9 +6,10 @@
 
 using namespace Sifteo;
 
-extern Cube gCubes[NUM_CUBES];
-//extern uint8_t gTouchFlags[NUM_CUBES];
+// Cube Shmutz
+#define CUBE_ALLOC_MASK (((1<<NUM_CUBES)-1)<<(32-NUM_CUBES))
 
+extern Cube gCubes[NUM_CUBES];
 
 // Audio Smutz
 #if SFX_ON
@@ -39,3 +40,14 @@ using namespace Sifteo;
 // Utils
 Cube::Side InferDirection(Int2 u);
 int AdvanceTowards(int curr, int targ, int mag);
+
+// temporary until __builtin_clz stops making slinky cranky
+inline unsigned fastclz(unsigned v) { 
+    int x = (0 != (v >> 16)) * 16; 
+    x += (0 != (v >> (x + 8))) * 8; 
+    x += (0 != (v >> (x + 4))) * 4; 
+    x += (0 != (v >> (x + 2))) * 2; 
+    x += (0 != (v >> (x + 1))); 
+    x += (0 != (v >> x)); 
+    return 32 - x; 
+} 

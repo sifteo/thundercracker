@@ -64,7 +64,7 @@ void MinimapView::Restore() {
 	Init();
 }
 
-void MinimapView::Update(float dt) {
+void MinimapView::Update() {
 	Parent()->Graphics().moveSprite(
 		SPRITE_DOT_ID, 
 		(gGame.GetPlayer()->Position()<<3) / 128 + mCanvasOffset.toInt()

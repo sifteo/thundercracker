@@ -11,7 +11,7 @@ private:
 public:
 	void Init();
 	bool AdvanceQuest();
-	inline const QuestData* Quest() const { return gQuestData+mQuest; }
+	const QuestData* Quest() const { return gQuestData+mQuest; }
 	bool FlagTrigger(const TriggerData& trigger);
 	bool AllQuestsComplete() { return mQuest == gQuestCount; }
 	bool IsActive(const TriggerData& trigger) const;

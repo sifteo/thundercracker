@@ -30,7 +30,7 @@ bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
 bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor) {
   if (!CanTraverse(loc, side)) { return false; }
   ViewSlot* gv = loc.view->Parent()->VirtualNeighborAt(side);
-  if (!gv || !gv->IsShowingRoom()) { return false; }
+  if (!gv || !gv->ShowingRoom()) { return false; }
   outNeighbor->view = gv->GetRoomView();
   const Room* room = outNeighbor->view->GetRoom();
   switch(room->SubdivType()) {
@@ -84,7 +84,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
   if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
     if (depth > 1) {
       ViewSlot *nextView = loc.view->Parent()->VirtualNeighborAt(side);
-      if (nextView && nextView->IsShowingGatewayEdge() && nextView->Touched()) {
+      if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
         outPath->steps[depth-1] = -1;
         *outViewId = nextView->GetCubeID();
         return true;

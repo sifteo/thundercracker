@@ -9,6 +9,7 @@ OBJS = \
 	$(ASSETS).gen.o \
 	content.gen.o \
 	main.o \
+	Bomb.o \
 	Common.o \
 	Dialog.o \
 	DrawingHelpers.o \

@@ -21,7 +21,7 @@ Cube* Game::IntroCutscene() {
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
 			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0.f, 72 - 128*u));
 		}
-		System::paintSync();
+		DoPaint(true);
 	}
 	
 	// wait for a touch
@@ -51,7 +51,7 @@ Cube* Game::IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		mode.BG1_setPanning(Vec2(0.f, -56 + 128*u));
-		System::paintSync();
+		DoPaint(true);
 	}
 	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
@@ -62,7 +62,7 @@ Cube* Game::IntroCutscene() {
 	for(unsigned i=0; i<48/2; ++i) {
 		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
 		mode.moveSprite(0, 64-16, 128-i-i);
-		System::paintSync();
+		DoPaint(true);
 	}
 	// face front
 	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
@@ -97,21 +97,21 @@ Cube* Game::IntroCutscene() {
 		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
 			mode.moveSprite(i+1, x, 42 - j);
-			System::paint();
+			DoPaint(false);
 		}
 		for(int j=6; j>0; --j) {
 			mode.moveSprite(i+1, x, 42 - j);
-			System::paint();
+			DoPaint(false);
 		}
 		mode.moveSprite(i+1, x, 42);
-		System::paintSync();
+		DoPaint(true);
 	}
 	WaitForSeconds(1.f);
 
 	// do the pickup animation
 	for(unsigned i=0; i<PlayerPickup.frames; ++i) {
 		mode.setSpriteImage(0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
-		System::paintSync();
+		DoPaint(true);
 		WaitForSeconds(0.05f);
 	}
 	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
@@ -123,7 +123,7 @@ Cube* Game::IntroCutscene() {
 	mode.hideSprite(3);
 	mode.hideSprite(4);
 	mode.BG0_drawAsset(Vec2(0,0), Sting);
-	System::paintSync();
+	DoPaint(true);
 
 	// walk off
 	PlaySfx(sfx_running);
@@ -131,7 +131,7 @@ Cube* Game::IntroCutscene() {
 	for(unsigned i=0; i<76/2; ++i) {
 		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
 		mode.moveSprite(0, 64-16, 80-i-i);
-		System::paintSync();
+		DoPaint(true);
 	}
 	mode.hideSprite(0);
 
@@ -145,7 +145,7 @@ Cube* Game::IntroCutscene() {
 			mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
 			mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
 		}
-		System::paintSync();
+		DoPaint(true);
 	}
 	BG1Helper(*pCube).Flush();
 	ViewMode(pCube->vbuf).BG1_setPanning(Vec2(0,0));

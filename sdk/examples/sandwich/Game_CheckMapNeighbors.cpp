@@ -2,66 +2,109 @@
 #include "Dialog.h"
 #include "DrawingHelpers.h"
 
-#define VIEW_UNVISITED 0
-#define VIEW_UNCHANGED 1
-#define VIEW_CHANGED 2
+struct VisitorStatus {
+  uint32_t visitMask;
+  uint32_t changeMask;
+};
 
-static bool VisitMapView(uint8_t* visited, ViewSlot* view, Int2 loc, ViewSlot* origin=0, Cube::Side dir=0) {
-  if (!view || visited[view->GetCubeID()]) { return false; }
-  if (origin) { view->GetCube()->orientTo(*(origin->GetCube())); }
-  bool result = view->ShowLocation(loc, false, false);
-  if (result && view->IsShowingRoom()) {
-    view->GetRoomView()->StartSlide((dir+2)%4);
-  }
-  visited[view->GetCubeID()] = result ? VIEW_CHANGED:VIEW_UNCHANGED;
-  for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    result |= VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i].toInt(), view, i);
-  }
-  return result;
-}
+#define RESULT_OKAY         0
+#define RESULT_INTERRUPTED  1
 
-void Game::CheckMapNeighbors() {
-  ViewSlot *root = mPlayer.View();
-  if (!root->IsShowingRoom()) { return; }
-  uint8_t visited[NUM_CUBES];
-  for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  bool chchchchanges = VisitMapView(visited, root, root->GetRoomView()->Location());
+static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, ViewSlot* origin=0, Cube::Side dir=0) {
+
+  // Is it okay to visit this cube?
+  if (!view || (status->visitMask & view->GetCubeMask())) { 
+    return RESULT_OKAY; 
+  }
+  status->visitMask |= view->GetCubeMask();
   
-  if (chchchchanges) {
-    PlaySfx(sfx_neighbor);
+  // Orient LCD to parent
+  if (origin) { 
+    view->GetCube()->orientTo(*(origin->GetCube())); 
   }
 
-  bool otherChanges = false;
-  for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!visited[v->GetCubeID()] && v->HideLocation(false)) { 
-      otherChanges = true;
-      visited[v->GetCubeID()] = VIEW_CHANGED;
+  // Attempt to show location (returns true on change)
+  const bool didDisplayLocation = view->ShowLocation(loc, false, false);
+  if (didDisplayLocation) {
+    status->changeMask |= view->GetCubeMask();
+  }
+
+  // Start slide-out and possibly take over another view's lock
+  if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
+    view->GetRoomView()->StartSlide((dir+2)%4);
+    // check this against locked views
+    auto i = gGame.ListLockedViews();
+    while(i.MoveNext()) {
+      if (i->GetRoomView()->Id() == view->GetRoomView()->Id()) {
+        view->GetRoomView()->Lock();
+        i->GetRoomView()->Unlock();
+        return RESULT_INTERRUPTED;
+      }
     }
   }
 
-  if (otherChanges && !chchchchanges) {
-    PlaySfx(sfx_deNeighbor);    
+  // Possibly make recursive calls
+  if (didDisplayLocation || !view->ShowingLockedRoom()) {
+    for(Cube::Side side=0; side<NUM_SIDES; ++side) {
+      const unsigned result = VisitMapView(
+        status, 
+        view->VirtualNeighborAt(side), 
+        loc+kSideToUnit[side].toInt(), 
+        view, 
+        side
+      );
+      if (result != RESULT_OKAY) {
+        return result;
+      }
+    }
+  }
+
+  return RESULT_OKAY;
+}
+
+void Game::CheckMapNeighbors() {
+  mNeighborDirty = false;
+  ViewSlot *root = mPlayer.View();
+  if (!root->ShowingRoom()) { 
+    return; 
   }
   
-  sNeighborDirty = false;
+  // will be used to track the status of the visitor as he
+  // walks the "neighborhood tree"
+  VisitorStatus status;
+  status.changeMask = 0x00000000;
 
-  if (chchchchanges || otherChanges) {
-    #if GFX_ARTIFACT_WORKAROUNDS
-      Paint(true);
-      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
-        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
-          v->GetCube()->vbuf.touch();
-        //}
-      }
-      Paint(true);
-      for(ViewSlot *v=ViewBegin(); v!=ViewEnd(); ++v) {
-        //if (visited[v->GetCubeID()] == VIEW_CHANGED) {
-          v->GetCube()->vbuf.touch();
-        //}
-      }
-    #endif
-    Paint(true);
+  // Keep walking the three until everything has been correctly visited
+  // (some actions may cause us to have to start over becaues the tree is
+  // modified as a side-effect)
+  unsigned result;
+  do {
+    status.visitMask = 0x00000000;
+    result = VisitMapView(&status, root, root->GetRoomView()->Location());
+  } while(result != RESULT_OKAY);
+  
+  // Make sure all views outside the neighborhood are not showing rooms
+  unsigned newChangeMask = 0;
+  auto i = ListViews(~status.visitMask);
+  while(i.MoveNext()) {
+    if (i->HideLocation(false)) {
+      newChangeMask |= i->GetCubeMask();
+    }
   }
 
+  // Play SFX if the neighborhood changed
+  if (status.changeMask) {
+    PlaySfx(sfx_neighbor);
+  } else if (newChangeMask) {
+    PlaySfx(sfx_deNeighbor);
+  }
 
+  if (newChangeMask || status.changeMask) {
+    DoPaint(true);
+    i = ListViews();
+    while(i.MoveNext()) {
+      i->GetCube()->vbuf.touch();
+    }
+    DoPaint(true);
+  }
 }

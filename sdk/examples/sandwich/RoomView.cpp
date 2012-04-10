@@ -11,12 +11,32 @@
 #define BLOCK_SPRITE_ID     4
 
 void RoomView::Init(unsigned roomId) {
+  flags.locked = false;
+  mRoomId = roomId;
+  Restore();
+}
+
+void RoomView::Lock() {
+  flags.locked = true;
+  gGame.OnViewLocked(this);
+}
+
+void RoomView::Unlock() {
+  flags.locked = false;
+  gGame.OnViewUnlocked(this);
+}
+
+void RoomView::HideOverlay() {
+  BG1Helper(*Parent()->GetCube()).Flush();
+}
+
+
+void RoomView::Restore() {
   mWobbles = -1.f;
   Parent()->HideSprites();
   ViewMode mode = Parent()->Graphics();
   Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
-  mRoomId = roomId;
   // are we showing an items?
   mStartFrame = gGame.AnimFrame();
   ComputeAnimatedTiles();
@@ -53,11 +73,7 @@ void RoomView::Init(unsigned roomId) {
   }
 }
 
-void RoomView::Restore() {
-  Init(mRoomId);
-}
-
-void RoomView::Update(float dt) {
+void RoomView::Update() {
   ViewMode mode = Parent()->Graphics();
   // update animated tiles (could suffer some optimization)
   const unsigned t = gGame.AnimFrame() - mStartFrame;
@@ -91,7 +107,7 @@ void RoomView::Update(float dt) {
 
   // nod or shake
   if (IsWobbly()) {
-    mWobbles = clamp(mWobbles- 2.f*dt, 0.f, 1.f); // duration = 0.5
+    mWobbles = clamp(mWobbles- 2.f*gGame.Dt().seconds(), 0.f, 1.f); // duration = 0.5
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_0);
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_1);
     switch(flags.wobbleType) {
@@ -139,7 +155,7 @@ bool RoomView::GatewayTouched() const {
   if (pRoom->HasGateway()) {
     for(Cube::Side s=0; s<4; ++s) {
       const ViewSlot *view = Parent()->VirtualNeighborAt(s);
-      return view && view->Touched() && view->IsShowingGatewayEdge();
+      return view && view->Touched() && view->ShowingGatewayEdge();
     }
   }
   return false;
@@ -335,13 +351,24 @@ void RoomView::RefreshDepot() {
 
 }
 
+void RoomView::ShowFrame() {
+  ViewMode g = Parent()->Graphics();
+  g.BG0_drawAsset(Vec2(0,0), FrameTop);
+  g.BG0_drawAsset(Vec2(0, 1), FrameLeft);
+  g.BG0_drawAsset(Vec2(15, 1), FrameRight);
+  g.BG0_drawAsset(Vec2(0, 15), FrameBottom);
+  HideOverlay();
+}
+
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
   mode.BG0_setPanning(Vec2(0,0));
   DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
   RefreshDoor();
   RefreshDepot();
+
   const Room *pRoom = GetRoom();
+
   BG1Helper ovrly(*(Parent()->GetCube()));
   if (!flags.hideOverlay && pRoom->HasOverlay()) {
     DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());

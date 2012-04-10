@@ -39,6 +39,8 @@ public:
     int mixAudio(int16_t *buffer, uint32_t numsamples);
     static void pullAudio(void *p);
 
+    void setSampleRate(uint32_t samplerate) { curSampleRate = samplerate; };
+    uint32_t sampleRate() { return curSampleRate; }
 private:
     uint32_t playingChannelMask;    // channels that are actively playing
 
@@ -47,6 +49,8 @@ private:
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask = 0);
+
+    uint32_t curSampleRate;
 };
 
 #endif /* AUDIOMIXER_H_ */

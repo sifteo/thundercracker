@@ -1,9 +1,9 @@
 #include "DrawingHelpers.h"
-
+#include "Game.h"
 
 void WaitForSeconds(float dt) {
   SystemTime deadline = SystemTime::now() + dt;
-  do { System::paint(); } while(deadline.inFuture());
+  do { gGame.DoPaint(false); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------

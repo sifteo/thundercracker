@@ -10,8 +10,4 @@ private:
 public:
 	void Init();
 	void Restore();
-	//void OnInventoryChanged();
-
-private:
-	//void DrawInventorySprites();
 };

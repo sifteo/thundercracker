@@ -31,22 +31,24 @@ public:
 
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
+	unsigned GetCubeMask() const { return 1 << (31-GetCubeID()); }
 	ViewMode Graphics() const { ASSERT(mFlags.view); return ViewMode(GetCube()->vbuf); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
-	inline unsigned ViewType() const { return mFlags.view ; }
-	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
-	inline bool IsShowingEdge() const { return mFlags.view == VIEW_EDGE; }
-	inline bool IsShowingGatewayEdge() const { return IsShowingEdge() && mView.edge.ShowingGateway(); }
-	inline bool IsShowingLocation() const { return IsShowingRoom() || IsShowingEdge(); }
-	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
-	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
-	inline InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
-	inline MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
+	unsigned ViewType() const { return mFlags.view ; }
+	bool ShowingRoom() const { return mFlags.view == VIEW_ROOM; }
+	bool ShowingLockedRoom() const { return ShowingRoom() && mView.room.Locked(); }
+	bool ShowingEdge() const { return mFlags.view == VIEW_EDGE; }
+	bool ShowingGatewayEdge() const { return ShowingEdge() && mView.edge.ShowingGateway(); }
+	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
+	IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
+	RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
+	InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
+	MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
 
 	void Init();
 	void Restore(bool doFlush=true);
-	void Update(float dt);
+	void Update();
   
   	void HideSprites();
 
@@ -64,6 +66,37 @@ private:
 	void SanityCheckVram();
 	void EvictSecondaryView(unsigned viewId, bool doFlush);
 	ViewSlot* FindIdleView();
+
+public:
+	class Iterator {
+	private:
+		friend class Game;
+		unsigned mask;
+		unsigned currentId;
+
+		Iterator(unsigned setMask) : mask(setMask) {}
+		Iterator() : mask(0x0), currentId(32) {}
+
+	public:
+		bool MoveNext() {
+			//currentId = __builtin_clz(mask);
+			currentId = fastclz(mask);
+			mask ^= (0x80000000 >> currentId);
+			return currentId < 32;
+		}
+
+		bool operator==(const Iterator& i) { return currentId == i.currentId; }
+		bool operator!=(const Iterator& i) { return currentId != i.currentId; }
+
+		ViewSlot& operator*();
+		ViewSlot* operator->();
+		Iterator operator++() { 
+			MoveNext();
+			return *this;
+ 		}
+
+		operator ViewSlot*();
+	};
 };
 
 extern ViewSlot *pInventory;

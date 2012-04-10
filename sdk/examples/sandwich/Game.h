@@ -9,7 +9,12 @@
 
 class Game {
 private:
-  static bool sNeighborDirty;
+  // hack because these aren't POD
+  static SystemTime mPrevTime;
+  static TimeDelta mDt;
+
+
+  bool mNeighborDirty;
   #if PLAYTESTING_HACKS
   static float sShakeTime;
   #endif
@@ -18,27 +23,31 @@ private:
   GameState mState;
   Map mMap;
   Player mPlayer;
-  SystemTime mSimTime;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;
   uint8_t mNeedsSync;
   uint8_t mIsDone;
 
+  uint32_t mActiveViewMask;
+  uint32_t mLockedViewMask;
+
 public:
 
+  static Game* Inst();
+
   // getters
-  inline GameState* GetState() { return &mState; }
-  inline Map* GetMap() { return &mMap; }
-  inline Player* GetPlayer() { return &mPlayer; }
-  inline ViewSlot* ViewAt(int i) { return mViews+i; }
-  inline ViewSlot* ViewBegin() { return mViews; }
-  inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
-  inline unsigned AnimFrame() const { return mAnimFrames; }
-  inline Int2 BroadDirection() {
+  GameState* GetState() { return &mState; }
+  Map* GetMap() { return &mMap; }
+  Player* GetPlayer() { return &mPlayer; }
+  
+  unsigned AnimFrame() const { return mAnimFrames; }
+  Int2 BroadDirection() {
     ASSERT(mPlayer.Target()->view);
     return mPlayer.TargetRoom()->Location() - mPlayer.CurrentRoom()->Location();
   }
+  SystemTime LastPaintTime() const { return mPrevTime; }
+  TimeDelta Dt() const { return mDt; }
 
   bool ShowingMinimap() const { 
       return false; 
@@ -47,11 +56,29 @@ public:
   // methods  
   void MainLoop();
   void Paint(bool sync=false);
+  void DoPaint(bool sync);
   void NeedsSync() { mNeedsSync = 1; }
 
   // events
   void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
+  
+  // listing views
+  ViewSlot* ViewAt(int i) { return mViews+i; }
+
+  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { 
+    return ViewSlot::Iterator(mask & mActiveViewMask); 
+  }
+
+  ViewSlot::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
+  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetCubeMask(); }
+  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetCubeMask(); }
+  void UnlockAllViews();
+
+  struct {
+    ViewSlot::Iterator begin() { return ++Game::Inst()->ListViews(); }
+    ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
+  } views;
 
 private:
 
@@ -82,8 +109,10 @@ private:
   void RoomShake(ViewSlot* view);
 
   // events
+  void OnTick();
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
+  void OnYesOhMyGodExplosion(Bomb* p);
   void OnInventoryChanged();
   void OnTrapdoor(Room *pRoom);
   void OnToggleSwitch(const SwitchData* pSwitch);

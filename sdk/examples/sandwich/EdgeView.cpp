@@ -45,7 +45,7 @@ void EdgeView::Restore() {
 	Init(mRoomId, mSide);
 }
 
-void EdgeView::Update(float dt) {
+void EdgeView::Update() {
 	if (!mGateway) { return; }
 
 	CORO_BEGIN;

@@ -3,12 +3,25 @@
 ViewSlot* pInventory = 0;
 ViewSlot* pMinimap = 0;
 
+ViewSlot& ViewSlot::Iterator::operator*() {
+	return *gGame.ViewAt(currentId);
+}
+
+ViewSlot* ViewSlot::Iterator::operator->() {
+	return gGame.ViewAt(currentId);
+}
+
+//ViewSlot* ViewSlot::Iterator::ptr() {
+ViewSlot::Iterator::operator ViewSlot*() {
+	return gGame.ViewAt(currentId);
+}
+
 Cube* ViewSlot::GetCube() const {
-	return gCubes + (this - gGame.ViewBegin());
+	return gCubes + (this - gGame.ViewAt(0));
 }
 
 Cube::ID ViewSlot::GetCubeID() const {
-	return this - gGame.ViewBegin();
+	return this - gGame.ViewAt(0);
 }
 
 bool ViewSlot::Touched() const {
@@ -29,7 +42,6 @@ void ViewSlot::Init() {
 		mView.minimap.Init();
 	}
 	gGame.NeedsSync();
-
 }
 
 void ViewSlot::HideSprites() {
@@ -148,25 +160,35 @@ void ViewSlot::Restore(bool doFlush) {
 	}
 }
 
-void ViewSlot::Update(float dt) {
+void ViewSlot::Update() {
 	mFlags.prevTouch = GetCube()->touching();
 	switch(mFlags.view) {
 	case VIEW_ROOM:
-		mView.room.Update(dt);
+		mView.room.Update();
 		break;
 	case VIEW_INVENTORY:
-		mView.inventory.Update(dt);
+		mView.inventory.Update();
 		break;
 	case VIEW_MINIMAP:
-		mView.minimap.Update(dt);
+		mView.minimap.Update();
 		break;
 	case VIEW_EDGE:
-		mView.edge.Update(dt);
+		mView.edge.Update();
 		break;
 	}
 }
   
 bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
+	if (ShowingLockedRoom()) {
+		if (loc == mView.room.Location()) {
+			mView.room.Restore();
+			return true;
+		} else {
+			mView.room.ShowFrame();
+			return false;
+		}
+	}
+
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
 	Cube::Side side = SIDE_UNDEFINED;
@@ -213,14 +235,19 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 }
 
 ViewSlot* ViewSlot::FindIdleView() {
-	for (ViewSlot *p=gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) {
+	ViewSlot::Iterator p = gGame.ListViews();
+	while(p.MoveNext()) {
 		if (p->ViewType() == VIEW_IDLE) { return p; }
 	}
 	return 0;
 }
 
 bool ViewSlot::HideLocation(bool doFlush) {
-	if (IsShowingLocation()) {
+	if (ShowingLockedRoom()) {
+		mView.room.ShowFrame();
+		return false;
+	}
+	if (ShowingLocation()) {
 		if (gGame.ShowingMinimap() && !pMinimap) {
 			SetSecondaryView(VIEW_MINIMAP, doFlush);
 		} else if (gGame.GetState()->HasAnyItems() && !pInventory) {

@@ -18,8 +18,6 @@
 
 using namespace std;
 
-#define SAMPLE_RATE 16000
-
 AudioEncoder *AudioEncoder::create(std::string name, float quality, bool vbr)
 {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -35,7 +33,7 @@ AudioEncoder *AudioEncoder::create(std::string name, float quality, bool vbr)
 
 
 void PCMEncoder::encodeFile(const std::string &path,
-    std::vector<uint8_t> &out, float &kbps)
+    std::vector<uint8_t> &out, float &kbps, uint32_t sample_rate)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -52,7 +50,7 @@ void PCMEncoder::encodeFile(const std::string &path,
     }
 
     // Constant bit rate (uncompressed)
-    kbps = SAMPLE_RATE * (16.0f / 1000.0f);
+    kbps = sample_rate * (16.0f / 1000.0f);
 }
 
 const uint16_t ADPCMEncoder::stepSizeTable[89] = {
@@ -70,7 +68,7 @@ const int8_t ADPCMEncoder::indexTable[16] = {
     0xff, 0xff, 0xff, 0xff, 2, 4, 6, 8
 };
 
-void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps)
+void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps, uint32_t sample_rate)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -89,7 +87,7 @@ void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out
     }
 
     // Constant bit rate (compressed @ 1/4)
-    kbps = SAMPLE_RATE * (4.0f / 1000.0f);
+    kbps = sample_rate * (4.0f / 1000.0f);
 
     fclose(fin);
 }
