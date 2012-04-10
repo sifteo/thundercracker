@@ -93,3 +93,5 @@ BubbleTransition.h
 puzzles.json
 SaveLoad.h
 SaveLoad.cpp
+CubeBuddy.h
+CubeBuddy.cpp

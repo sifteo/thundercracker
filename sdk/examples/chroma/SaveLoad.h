@@ -14,12 +14,16 @@ using namespace Sifteo;
 struct SaveData
 {
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const unsigned int NUM_UNLOCKS = 3;
 
     uint8_t furthestProgress;
     uint8_t lastPlayedPuzzle;
 
     unsigned int aHighScores[ NUM_HIGH_SCORES ];
     unsigned int aHighCubes[ NUM_HIGH_SCORES ];
+
+    //which thresholds have we surpassed?
+    bool bUnlocks[NUM_UNLOCKS];
 
     void InitDefaultValues();
     void Load();

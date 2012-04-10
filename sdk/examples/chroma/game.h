@@ -167,6 +167,7 @@ public:
 
     void ReturnToMainMenu();
     void gotoNextPuzzle( bool bAdvance );
+    inline SaveData &getSaveData() { return m_savedata; }
 
 private:
 	void TestMatches();

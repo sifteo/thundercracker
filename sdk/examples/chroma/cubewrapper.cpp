@@ -8,7 +8,6 @@
 #include "game.h"
 #include "assets.gen.h"
 #include "utils.h"
-#include "string.h"
 #include "config.h"
 #include "puzzle.h"
 #include "SaveLoad.h"

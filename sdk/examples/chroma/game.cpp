@@ -12,6 +12,7 @@
 #include "BubbleTransition.h"
 #include "Banner.h"
 #include "SpriteNumber.h"
+#include "CubeBuddy.h"
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
@@ -841,6 +842,8 @@ void Game::enterScore()
         score = getDisplayedLevel();
     }
 
+    bool bTopScore = false;
+
     //walk backwards through the high score list and see which ones we can pick off
     for( int i = (int)SaveData::NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
@@ -851,7 +854,10 @@ void Game::enterScore()
                 pScores[i+1] = pScores[i];
 
                 if( i == 0 )
+                {
                     pScores[0] = score;
+                    bTopScore = true;
+                }
             }
         }
         else
@@ -866,6 +872,9 @@ void Game::enterScore()
     }
 
     m_savedata.Save();
+
+    if( bTopScore )
+        ProcessUnlock( m_mode );
 }
 
 
@@ -1087,7 +1096,10 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     //TODO, end game celebration!
     if( !pPuzzle )
+    {
+        ProcessUnlock( MODE_PUZZLE );
         return;
+    }
 
     //intro puzzles (<3 cubes) will jump straight into the next puzzle
     if( pPuzzle->m_numCubes < 3 )

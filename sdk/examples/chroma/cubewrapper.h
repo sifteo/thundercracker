@@ -147,6 +147,10 @@ public:
     //each cube can have one floating score at a time
     void SpawnScore( unsigned int score, const Int2 &slotpos );
     VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
+    //draw a message box with centered text
+    //bDrawBox - draw the box or not
+    //in_yOffset - optional y offset for text
+    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 ) __attribute__ ((noinline));
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -161,11 +165,7 @@ private:
     static void TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     bool HasFloatingDots() const;
-    void fillPuzzleCube();
-    //draw a message box with centered text
-    //bDrawBox - draw the box or not
-    //in_yOffset - optional y offset for text
-    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 ) __attribute__ ((noinline));
+    void fillPuzzleCube();    
     void DrawGrid() __attribute__ ((noinline));
 
 	Cube m_cube;

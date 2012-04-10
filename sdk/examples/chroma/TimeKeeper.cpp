@@ -5,7 +5,6 @@
  */
 
 #include "TimeKeeper.h"
-#include "string.h"
 #include "Game.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"

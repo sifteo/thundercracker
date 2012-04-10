@@ -3,7 +3,7 @@ TC_DIR = ../../..
 
 include $(TC_DIR)/sdk/Makefile.defs
 
-OBJS = $(ASSETS).gen.o main.o banner.o Bubbles.o cubewrapper.o FloatingScore.o Glimmer.o GridSlot.o game.o Intro.o Level.o Puzzle.o RockExplosion.o SaveLoad.o TimeKeeper.o
+OBJS = $(ASSETS).gen.o main.o banner.o Bubbles.o CubeBuddy.o cubewrapper.o FloatingScore.o Glimmer.o GridSlot.o game.o Intro.o Level.o Puzzle.o RockExplosion.o SaveLoad.o TimeKeeper.o
 ASSETDEPS += *.png $(ASSETS).lua
 
 include $(TC_DIR)/sdk/Makefile.rules
