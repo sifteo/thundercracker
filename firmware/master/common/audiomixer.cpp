@@ -187,8 +187,18 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 
 void AudioMixer::setTrackerCallbackInterval(uint32_t usec)
 {
+    static const uint64_t kMicroSecondsPerSecond = 1000000;
+
     // Convert to frames
-    trackerCallbackInterval = ((uint64_t)usec * (uint64_t)curSampleRate) / 1000000;
+    trackerCallbackInterval = ((uint64_t)usec * (uint64_t)curSampleRate) / kMicroSecondsPerSecond;
+
+    // Catch underflow. No one should ever need callbacks this often. Ever.
+    ASSERT(usec == 0 || trackerCallbackInterval > 0);
+    // But if we're not DEBUG, we may as well let it happen every sample.
+    if (usec > 0 && trackerCallbackInterval == 0) {
+        trackerCallbackInterval = 1;
+    }
+
     trackerCallbackCountdown = trackerCallbackInterval;
 }
 
