@@ -48,16 +48,22 @@ struct TileBuffer {
     uint16_t tiles[tTileWidth * tTileHeight];
 
     /// Implicit conversion to AssetImage base class
-    operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
-    operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
-    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(this); }
-    operator AssetImage* () { return reinterpret_cast<AssetImage*>(this); }
+    operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(&sys.image); }
+    operator AssetImage& () { return *reinterpret_cast<AssetImage*>(&sys.image); }
+    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(&sys.image); }
+    operator AssetImage* () { return reinterpret_cast<AssetImage*>(&sys.image); }
+
+    /// Implicit conversion to FlatAssetImage
+    operator const FlatAssetImage& () const { return *reinterpret_cast<const FlatAssetImage*>(&sys.image); }
+    operator FlatAssetImage& () { return *reinterpret_cast<FlatAssetImage*>(&sys.image); }
+    operator const FlatAssetImage* () const { return reinterpret_cast<const FlatAssetImage*>(&sys.image); }
+    operator FlatAssetImage* () { return reinterpret_cast<FlatAssetImage*>(&sys.image); }
 
     /// Implicit conversion to system object
-    operator const _SYSAssetImage& () const { return sys; }
-    operator _SYSAssetImage& () { return sys; }
-    operator const _SYSAssetImage* () const { return &sys; }
-    operator _SYSAssetImage* () { return &sys; }
+    operator const _SYSAssetImage& () const { return sys.image; }
+    operator _SYSAssetImage& () { return sys.image; }
+    operator const _SYSAssetImage* () const { return sys.image; }
+    operator _SYSAssetImage* () { return sys.image; }
 
     /**
      * Return the CubeID associated with this drawable.
