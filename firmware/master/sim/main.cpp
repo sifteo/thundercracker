@@ -82,7 +82,6 @@ int main(int argc, char **argv)
     if (!installElfFile(argv[1]))
         return 1;
 
-    AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 

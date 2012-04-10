@@ -11,8 +11,6 @@
 #include "macros.h"
 #include "adpcmdecoder.h"
 
- #define LGPFX "AudioSampleData: "
-
 class AudioSampleData {
 public:
     AudioSampleData() : mod(0) {}

@@ -10,6 +10,7 @@
 #include "audiochannel.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <sifteo/abi.h>
 
 class AudioMixer
 {
@@ -17,8 +18,6 @@ public:
     AudioMixer();
 
     static AudioMixer instance;
-
-    void init();
 
     static void test();
 
@@ -37,21 +36,27 @@ public:
 
     bool active() const { return playingChannelMask != 0; }
 
-    int mixAudio(int16_t *buffer, uint32_t numsamples);
     static void pullAudio(void *p);
 
     void setSampleRate(uint32_t samplerate) { curSampleRate = samplerate; };
     uint32_t sampleRate() { return curSampleRate; }
+
+protected:
+    friend class XmTrackerPlayer; // can call setTrackerCallbackInterval()
+    void setTrackerCallbackInterval(uint32_t usec);
+
 private:
     uint32_t playingChannelMask;    // channels that are actively playing
-
     _SYSAudioHandle nextHandle;
-
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-
-    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask = 0);
-
     uint32_t curSampleRate;
+
+    // Tracker callback timer
+    uint32_t trackerCallbackInterval;
+    uint32_t trackerCallbackCountdown;
+
+    int mixAudio(int16_t *buffer, uint32_t numsamples);
+    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask = 0);
 };
 
 #endif /* AUDIOMIXER_H_ */
