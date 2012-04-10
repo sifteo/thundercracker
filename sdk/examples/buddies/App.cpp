@@ -1377,7 +1377,7 @@ void App::UpdateMenuMain()
         { &IconStory,    &LabelStory },
         { &IconShuffle,  &LabelShuffle },
         { &IconFreePlay, &LabelFreePlay },
-        { &IconOptions,  &LabelOptions },
+        //{ &IconOptions,  &LabelOptions }, // TODO: Disabled until we actually implement it
         { NULL, NULL },
     };
     
@@ -1557,7 +1557,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_FREEPLAY_TITLE:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kModeTitleDelay;
             break;
         }
         case GAME_STATE_FREEPLAY_DESCRIPTION:
@@ -1606,7 +1606,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_TITLE:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kModeTitleDelay;
             break;
         }
         case GAME_STATE_SHUFFLE_MEMORIZE_FACES:
@@ -1715,14 +1715,14 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_BOOK_START:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kModeTitleDelay;
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
         {
             ASSERT(mStoryPuzzleIndex < GetBook(mStoryBookIndex).mNumPuzzles);
             ResetCubesToPuzzle(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex), true);
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kModeTitleDelay;
             PlaySound(SoundStoryChapterTitle);
             break;
         }
