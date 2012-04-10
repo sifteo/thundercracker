@@ -6,32 +6,7 @@
 
 #include "Puzzle.h"
 #include "config.h"
-
-#if ONE_PUZZLE_MODE
-
-static const Puzzle s_puzzles[] =
-{
-    Puzzle( "Dots", "Neighbor cubes to clear dots.", 0, 2 )
-};
-
-static const PuzzleCubeData s_puzzledata[] =
-{
-    PuzzleCubeData(
-        (uint8_t [] ){
-            0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0,
-            }
-        ),
-
-    PuzzleCubeData(
-        (uint8_t [] ){
-            0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
-            }
-        )
-};
-
-#else
 #include "PuzzleData.h"
-#endif
 
 PuzzleCubeData::PuzzleCubeData( uint8_t *pValues )
 {
