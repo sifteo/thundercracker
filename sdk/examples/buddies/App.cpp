@@ -1392,10 +1392,17 @@ void App::UpdateMenuMain()
     };
     
     int item = -1;
+    
     int menuNeighborIndices[kNumCubes];
     for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
     {
         menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+    }
+    
+    bool neighbored[kNumCubes];
+    for (int i = 0; i < arraysize(neighbored); ++i)
+    {
+        neighbored[i] = false;
     }
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
@@ -1434,22 +1441,44 @@ void App::UpdateMenuMain()
                 ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
                 menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
+                neighbored[menuEvent.neighbor.neighbor] = true;
                 break;
             }
             case MENU_NEIGHBOR_REMOVE:
             {
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
                 menuNeighborIndices[menuEvent.neighbor.neighbor] = arraysize(kMenuNeighborAssets) - 1;
+                
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
+                neighbored[menuEvent.neighbor.neighbor] = false;
                 break;
             }
             case MENU_ITEM_ARRIVE:
             {
                 item = menuEvent.item;
+                
+                for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+                {
+                    if (neighbored[i])
+                    {
+                        menuNeighborIndices[i] = item;
+                    }
+                }
                 break;
             }
             case MENU_ITEM_DEPART:
             {
                 item = -1;
+                
+                for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+                {
+                    if (neighbored[i])
+                    {
+                        menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+                    }
+                }
                 break;
             }
             case MENU_PREPAINT:
@@ -1506,11 +1535,17 @@ void App::UpdateMenuStory()
         &MenuNeighborMesssage,
     };
     
-    unsigned int item = -1;
+    int item = -1;
     int menuNeighborIndices[kNumCubes];
     for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
     {
         menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+    }
+    
+    bool neighbored[kNumCubes];
+    for (int i = 0; i < arraysize(neighbored); ++i)
+    {
+        neighbored[i] = false;
     }
     
     Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
@@ -1548,22 +1583,44 @@ void App::UpdateMenuStory()
                 ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
                 menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
+                neighbored[menuEvent.neighbor.neighbor] = true;
                 break;
             }
             case MENU_NEIGHBOR_REMOVE:
             {
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
                 menuNeighborIndices[menuEvent.neighbor.neighbor] = arraysize(kMenuNeighborAssets) - 1;
+                
+                ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
+                neighbored[menuEvent.neighbor.neighbor] = false;
                 break;
             }
             case MENU_ITEM_ARRIVE:
             {
                 item = menuEvent.item;
+                
+                for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+                {
+                    if (neighbored[i])
+                    {
+                        menuNeighborIndices[i] = item;
+                    }
+                }
                 break;
             }
             case MENU_ITEM_DEPART:
             {
                 item = -1;
+                
+                for (int i = 0; i < arraysize(menuNeighborIndices); ++i)
+                {
+                    if (neighbored[i])
+                    {
+                        menuNeighborIndices[i] = arraysize(kMenuNeighborAssets) - 1;
+                    }
+                }
                 break;
             }
             case MENU_PREPAINT:
