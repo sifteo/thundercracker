@@ -1789,7 +1789,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_SOLVED:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mUiIndex = 0;
+            mDelayTimer = kStateTimeDelayShort;
             
             // TODO: Ideally we'd do the actual save the moment the player solves
             // the puzzle. But this is causing bugs with the unlocked logic,
@@ -2562,9 +2563,20 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_SOLVED:
         {
-            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            if (mUiIndex == 0)
             {
-                StartGameState(GAME_STATE_STORY_CUTSCENE_END_1);
+                if (UpdateTimer(mDelayTimer, dt))
+                {
+                    ++mUiIndex;
+                    mDelayTimer = kStateTimeDelayLong;
+                }
+            }
+            else
+            {
+                if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+                {
+                    StartGameState(GAME_STATE_STORY_CUTSCENE_END_1);
+                }
             }
             break;
         }
@@ -3095,7 +3107,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetNumBuddies())
             {
-                if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+                if (mUiIndex > 0 && mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
                 {
                     DrawStoryFaceComplete(cubeWrapper);
                 }
