@@ -12,6 +12,7 @@
 #include "cubewrapper.h"
 #include "TimeKeeper.h"
 #include "config.h"
+#include "SaveLoad.h"
 
 using namespace Sifteo;
 struct PuzzleCubeData;
@@ -58,7 +59,6 @@ public:
 	
 	Game();
 
-    static const unsigned int NUM_HIGH_SCORES = 5;
     static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
@@ -187,9 +187,9 @@ private:
     bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
     uint8_t m_iLevel;
-    uint8_t m_iFurthestProgress;
     //used to track which chapter we're looking at in puzzle menus
     uint8_t m_iChapterViewed;
+    SaveData m_savedata;
 	GameState m_state;
 	GameMode m_mode;
     float m_stateTime;
@@ -208,8 +208,6 @@ private:
     //use to avoid playing the same sound multiple times in one frame
     const AssetAudio *m_pSoundThisFrame;
 
-    static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
-    static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
     //how long until we respawn one piece in timer mode
     float m_fTimeTillRespawn;

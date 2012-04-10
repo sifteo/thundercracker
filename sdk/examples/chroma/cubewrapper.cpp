@@ -11,6 +11,7 @@
 #include "string.h"
 #include "config.h"
 #include "puzzle.h"
+#include "SaveLoad.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
 
@@ -222,7 +223,7 @@ void CubeWrapper::Draw()
                 int highScoreIndex = -1;
                 unsigned int myScore = Game::Inst().getScore();
 
-                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                for( unsigned int i = 0; i < SaveData::NUM_HIGH_SCORES; i++ )
                 {
                     if( myScore == Game::Inst().getHighScore(i) )
                     {
@@ -242,13 +243,13 @@ void CubeWrapper::Draw()
                     Banner::DrawScore( m_bg1helper, Vec2( 11, 14 ), Banner::CENTER, myScore );
                 }
 
-                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                for( unsigned int i = 0; i < SaveData::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
 
                     Banner::DrawScore( m_bg1helper, Vec2<int>( 7, HIGH_SCORE_OFFSET+2*i ), Banner::RIGHT, score );
 
-                    if( i == Game::NUM_HIGH_SCORES - 2 && highScoreIndex < 0 )
+                    if( i == SaveData::NUM_HIGH_SCORES - 2 && highScoreIndex < 0 )
                         break;
                 }
             }

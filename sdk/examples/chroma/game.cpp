@@ -13,14 +13,6 @@
 #include "Banner.h"
 #include "SpriteNumber.h"
 
-//TODO, load this from save file
-unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
-        { 1000, 800, 600, 400, 200 };
-
-unsigned int Game::s_HighCubes[ Game::NUM_HIGH_SCORES ] =
-        { 20, 10, 8, 6, 4 };
-
-
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
 const float Game::COMBO_TIME_THRESHOLD = 2.5f;
@@ -104,7 +96,9 @@ void Game::Init()
     m_stateTime = 0.0f;
 
     //TODO READ THIS FROM SAVE FILE
-    m_iFurthestProgress = 30;
+    //if save file doesn't exist, create and initialize it
+    m_savedata.Load();
+    m_savedata.furthestProgress = 30;
     m_iChapterViewed = 0;
 }
 
@@ -816,14 +810,14 @@ bool Game::DoCubesOnlyHaveStrandedDots() const
 
 unsigned int Game::getHighScore( unsigned int index ) const
 {
-    ASSERT( index < NUM_HIGH_SCORES );
+    ASSERT( index < SaveData::NUM_HIGH_SCORES );
 
-    if( index < NUM_HIGH_SCORES )
+    if( index < SaveData::NUM_HIGH_SCORES )
     {
         if( m_mode == MODE_BLITZ )
-            return s_HighScores[ index ];
+            return m_savedata.aHighScores[ index ];
         else
-            return s_HighCubes[ index ];
+            return m_savedata.aHighCubes[ index ];
     }
     else
         return 0;
@@ -838,21 +832,21 @@ void Game::enterScore()
 
     if( m_mode == MODE_BLITZ )
     {
-        pScores = s_HighScores;
+        pScores = m_savedata.aHighScores;
         score = m_iScore;
     }
     else
     {
-        pScores = s_HighCubes;
+        pScores = m_savedata.aHighCubes;
         score = getDisplayedLevel();
     }
 
     //walk backwards through the high score list and see which ones we can pick off
-    for( int i = (int)NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    for( int i = (int)SaveData::NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
         if( pScores[i] < score )
         {
-            if( i < (int)NUM_HIGH_SCORES - 1 )
+            if( i < (int)SaveData::NUM_HIGH_SCORES - 1 )
             {
                 pScores[i+1] = pScores[i];
 
@@ -862,7 +856,7 @@ void Game::enterScore()
         }
         else
         {
-            if( i < (int)NUM_HIGH_SCORES - 1 )
+            if( i < (int)SaveData::NUM_HIGH_SCORES - 1 )
             {
                 pScores[i+1] = score;
             }
@@ -870,6 +864,8 @@ void Game::enterScore()
             break;
         }
     }
+
+    m_savedata.Save();
 }
 
 
@@ -1101,6 +1097,12 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Refill();
+
+    //adjust save data
+    if( m_iLevel > m_savedata.furthestProgress )
+        m_savedata.furthestProgress = m_iLevel;
+    m_savedata.lastPlayedPuzzle = m_iLevel;
+    m_savedata.Save();
 }
 
 
@@ -1180,7 +1182,7 @@ void Game::HandleMenu()
             pItems = allmenuitems[2];
             pAssets = &allmenuassets[2];
 
-            numSelectables = Puzzle::GetChapter( m_iFurthestProgress ) + 1;
+            numSelectables = Puzzle::GetChapter( m_savedata.furthestProgress ) + 1;
 
             //LOG(( "Num selectables = %d\n", numSelectables));
 
@@ -1221,7 +1223,7 @@ void Game::HandleMenu()
             //certain menu types will have to reinit the menu items list
             for( int i = 0; i < numTotal; i++ )
             {
-                if( i + puzzleOffset <= m_iFurthestProgress )
+                if( i + puzzleOffset <= m_savedata.furthestProgress )
                 {
                     allmenuitems[3][i] = unlocked;
                     numSelectables++;
@@ -1280,7 +1282,7 @@ void Game::HandleMenu()
                     {
                         if( e.item == 0 )
                         {
-                            int progress = m_iFurthestProgress + 1;
+                            int progress = m_savedata.lastPlayedPuzzle + 1;
                             DrawSpriteNum( m_cubes[0].GetVid(), progress, Vec2( 64, 64 ) );
                         }
                         break;
@@ -1329,7 +1331,7 @@ void Game::HandleMenu()
 
             if( m_mode == MODE_BLITZ )
                 m_iLevel = 3;
-            else if( m_mode == MODE_PUZZLE && m_iFurthestProgress > 0 )
+            else if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
                 targetState = STATE_PUZZLEMENU;
 
             TransitionToState( targetState );
@@ -1342,7 +1344,7 @@ void Game::HandleMenu()
                 //continue
                 case 0:
                 {
-                    m_iLevel = m_iFurthestProgress;
+                    m_iLevel = m_savedata.lastPlayedPuzzle;
                     gotoNextPuzzle( false );
                     break;
                 }
