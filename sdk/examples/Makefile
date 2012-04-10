@@ -1,6 +1,7 @@
 SUBDIRS = \
 	hello \
 	membrane \
+	menudemo \
 	monster \
 	nyan \
 	pantera \
