@@ -71,8 +71,8 @@ class CubeSlot {
         vbuf = v;
     }
 
-    void getAccelState(struct _SYSAccelState *state) {
-        *state = accelState;
+    const _SYSByte4 &getAccelState() {
+        return accelState;
     }
 
     inline const uint8_t *getRawNeighbors() const {
@@ -183,7 +183,7 @@ class CubeSlot {
     uint8_t hwid[_SYS_HWID_BYTES];
 
     // Other sensor data
-    _SYSAccelState accelState;
+    _SYSByte4 accelState;
     uint16_t rawBatteryV;
     
     void requestFlashReset();

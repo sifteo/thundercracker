@@ -17,12 +17,12 @@ struct PacketBuffer;
 
 namespace CubeSlots {
     extern CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
-    
+
     /*
      * One-bit flags for each cube are packed into global vectors
      */
     extern _SYSCubeIDVector vecEnabled;         /// Cube enabled
-	extern _SYSCubeIDVector vecConnected;       /// Cube connected
+    extern _SYSCubeIDVector vecConnected;       /// Cube connected
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     extern _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid

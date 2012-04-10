@@ -97,8 +97,9 @@ struct CubeID {
      */
     Byte3 accel() const {
         ASSERT(sys < NUM_SLOTS);
-        _SYSAccelState state = _SYS_getAccel(*this);
-        return vec(state.x, state.y, state.z);
+        _SYSByte4 v;
+        v.value = _SYS_getAccel(*this);
+        return vec(v.x, v.y, v.z);
     }
 
     /**
@@ -108,8 +109,9 @@ struct CubeID {
      */
     Byte2 tilt() const {
         ASSERT(sys < NUM_SLOTS);
-        _SYSTiltState tilt = _SYS_getTilt(*this);
-        return vec(tilt.x - _SYS_TILT_NEUTRAL, tilt.y - _SYS_TILT_NEUTRAL);
+        _SYSByte4 v;
+        v.value = _SYS_getTilt(*this);
+        return vec(v.x, v.y);
     }
 
     /**
@@ -126,7 +128,7 @@ struct CubeID {
      */
     bool isShaking() const {
         ASSERT(sys < NUM_SLOTS);
-        return _SYS_SHAKING == _SYS_getShake(*this);
+        return _SYS_getShake(*this);
     }
 
     /**
@@ -208,7 +210,7 @@ struct Neighborhood {
      */
     Neighborhood(CubeID cube) {
         ASSERT(cube < cube.NUM_SLOTS);
-        _SYS_getNeighbors(cube, &sys);
+        sys.value = _SYS_getNeighbors(cube);
     }
 
     /**

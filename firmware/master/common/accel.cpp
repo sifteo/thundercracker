@@ -9,124 +9,127 @@
 
 AccelState AccelState::instances[_SYS_NUM_CUBE_SLOTS];
 
-AccelState::AccelState() {
-  uint8_t i;
+AccelState::AccelState()
+{
+    uint8_t i;
 
-  for (i = 0; i < NUM_AXES; i++) {
-    dataSum[i] = 0;
-  }
+    for (i = 0; i < NUM_AXES; i++) {
+        dataSum[i] = 0;
+    }
 
-  currentDataIdx = 0;
+    currentDataIdx = 0;
 }
 
 /**
-This will record samples and then look for tilts/shakes
-*/
-void AccelState::update(int8_t x, int8_t y) {
-	for (int i = 0; i < NUM_AXES; i++) {
-		dataSum[i] -= data[i][currentDataIdx]; // remove old data from sum...
-		data[i][currentDataIdx] = i == 0 ? x : y; // update data...
-		dataSum[i] += data[i][currentDataIdx]; // add in new val to sum
-		currentDataIdx++;
-		currentDataIdx %= NUM_SAMPLES;
-	}
+ * This will record samples and then look for tilts/shakes
+ */
+void AccelState::update(int8_t x, int8_t y)
+{
+    for (int i = 0; i < NUM_AXES; i++) {
+        dataSum[i] -= data[i][currentDataIdx]; // remove old data from sum...
+        data[i][currentDataIdx] = i == 0 ? x : y; // update data...
+        dataSum[i] += data[i][currentDataIdx]; // add in new val to sum
+        currentDataIdx++;
+        currentDataIdx %= NUM_SAMPLES;
+    }
 
-	updateTiltState();
-	updateShakeState();
+    updateTiltState();
+    updateShakeState();
 }
 
 
-bool AccelState::updateTiltState() {
-	int8_t curTiltState;
-	bool tiltChanged = false;
+bool AccelState::updateTiltState()
+{
+    int8_t curTiltState;
+    bool tiltChanged = false;
 
-	curTiltState = calculateTiltState(0);
-	if (tiltState.x != curTiltState) {
-		tiltState.x = curTiltState;
-		tiltChanged = true;
-	}
+    curTiltState = calculateTiltState(0);
+    if (tiltX != curTiltState) {
+        tiltX = curTiltState;
+        tiltChanged = true;
+    }
 
-	curTiltState = calculateTiltState(1);
-	if (tiltState.y != curTiltState) {
-		tiltState.y = curTiltState;
-		tiltChanged = true;
-	}
+    curTiltState = calculateTiltState(1);
+    if (tiltY != curTiltState) {
+        tiltY = curTiltState;
+        tiltChanged = true;
+    }
 
+    if (tiltChanged) {
+        Event::setPending(_SYS_CUBE_TILT, id());
+        return true;
+    }
 
-	//DEBUG_LOG(("Updating tilt: x = %d, y = %d\n", tiltState.x, tiltState.y));
-  
-	if (tiltChanged) {
-		Event::setPending(_SYS_CUBE_TILT, id());
-		return true;
-	}
-
-	return false;
+    return false;
 }
 
-int8_t AccelState::calculateTiltState(uint8_t axis) {
-	int8_t tiltVal = GetMean(dataSum[axis]);
+int AccelState::calculateTiltState(uint8_t axis)
+{
+    int8_t tiltVal = GetMean(dataSum[axis]);
 
-	if (tiltVal > (DEFAULT_RESTVAL + TILT_THRESHOLD))
-		return _SYS_TILT_POSITIVE;
-		
-	if (tiltVal < (DEFAULT_RESTVAL - TILT_THRESHOLD))
-		return _SYS_TILT_NEGATIVE;
+    if (tiltVal > (DEFAULT_RESTVAL + TILT_THRESHOLD))
+        return 1;
+        
+    if (tiltVal < (DEFAULT_RESTVAL - TILT_THRESHOLD))
+        return -1;
 
-	//includes hysteresis.  If you are in a non-neutral state, do not leave it unless
-	//you are well past the threshold.  (prevents spiky behavior)
-	int8_t curTiltState = axis == 0 ? tiltState.x : tiltState.y;
+    // Includes hysteresis.  If you are in a non-neutral state, do not leave it unless
+    // you are well past the threshold.  (prevents spiky behavior)
+    int8_t curTiltState = axis == 0 ? tiltX : tiltY;
 
-	switch (curTiltState) {
-		case _SYS_TILT_POSITIVE:
-			return (tiltVal < (DEFAULT_RESTVAL + TILT_THRESHOLD - TILT_HYSTERESIS)) ? _SYS_TILT_NEUTRAL : _SYS_TILT_POSITIVE;
-		case _SYS_TILT_NEGATIVE:
-			return (tiltVal > (DEFAULT_RESTVAL - TILT_THRESHOLD + TILT_HYSTERESIS)) ? _SYS_TILT_NEUTRAL : _SYS_TILT_NEGATIVE;
-		default:
-			return _SYS_TILT_NEUTRAL;
-	}
+    switch (curTiltState) {
+        case 1:
+            return (tiltVal < (DEFAULT_RESTVAL + TILT_THRESHOLD - TILT_HYSTERESIS)) ? 0 : 1;
+        case -1:
+            return (tiltVal > (DEFAULT_RESTVAL - TILT_THRESHOLD + TILT_HYSTERESIS)) ? 0 : -1;
+        default:
+            return 0;
+    }
 }
 
-void AccelState::updateShakeState() {
-	_SYSShakeState newGlobalShakeState = _SYS_NOT_SHAKING;
-	uint8_t i;
+void AccelState::updateShakeState()
+{
+    bool newGlobalShakeState = false;
+    uint8_t i;
  
-	for (i = 0; i < NUM_AXES; i++) {
-		_SYSShakeState ss;
-		ss = calculateShakeState(i);
-		//DEBUG_LOG(("axis %d, shaking = %d\n", i, ss));
-		if (ss == _SYS_SHAKING)
-			newGlobalShakeState = _SYS_SHAKING;
-	}
+    for (i = 0; i < NUM_AXES; i++) {
+        if (calculateShakeState(i))
+            newGlobalShakeState = true;
+    }
   
-	if (shakeState != newGlobalShakeState) {
-		shakeState = newGlobalShakeState;
-		//DEBUG_LOG(("shake state changing to %d\n", shakeState));
-		Event::setPending(_SYS_CUBE_SHAKE, id());
-	}
+    if (shakeState != newGlobalShakeState) {
+        shakeState = newGlobalShakeState;
+        Event::setPending(_SYS_CUBE_SHAKE, id());
+    }
 }
 
-_SYSShakeState AccelState::calculateShakeState(uint8_t axis) {
-	uint8_t i;
-	uint16_t variance = 0; //this sum will never exceed 16 bits over 32 samples
-	const int16_t mean = GetMean(dataSum[axis]);
-	/*
-	THIS ALGO IS SIMPLE -- USING ABS() INSTEAD OF SQUARES IS NOT TOTALLY CORRECT 
-	FOR VARIANCE, BUT IT IS PRETTY MUCH RIGHT, AND DEFINITELY TIME AND SPACE EFFICIENT...
-   
-	WHAT WE ARE CALCULATING IS ACTUALLY THE 'MEAN DEVIATION' OR 'ABSOLUTE MEAN DEVIATION', 
-	WHICH, LIKE VARIANCE, IS A GOOD MEASURE OF DEVIATION.
-	*/
-	for (i = 0; i < NUM_SAMPLES; i++)
-		variance += abs(data[axis][i] - mean); // add the difference between each data item and the mean
-    
-	//DEBUG_LOG(("Calculating shake.  Variance = %d\n", variance));
+bool AccelState::calculateShakeState(uint8_t axis)
+{
+    uint8_t i;
+    uint16_t variance = 0; //this sum will never exceed 16 bits over 32 samples
+    const int16_t mean = GetMean(dataSum[axis]);
+ 
+    /*
+     * This algo is simple -- using abs() instead of squares is not
+     * totally correct for variance, but it is pretty much right, and
+     * definitely time and space efficient...
+     *
+     * what we are calculating is actually the 'mean deviation' or
+     * 'absolute mean deviation', which, like variance, is a good
+     * measure of deviation.
+     */
+    for (i = 0; i < NUM_SAMPLES; i++) {
+        // Add the difference between each data item and the mean
+        variance += abs(data[axis][i] - mean);
+    }
+        
+    if (variance > SHAKE_THRESHOLD)
+        return true;
 
-	if (variance > SHAKE_THRESHOLD)
-		return _SYS_SHAKING;
-	//includes hysteresis.  If you are shaking, do not leave this state unless
-	//you are well past the threshold.  (prevents spiky behavior)
-	if (shakeState == _SYS_SHAKING)
-		return (variance < (SHAKE_THRESHOLD - SHAKE_HYSTERESIS)) ? _SYS_NOT_SHAKING : _SYS_SHAKING;
-	else
-		return _SYS_NOT_SHAKING;
+    // Includes hysteresis.  If you are SHAKING, do not leave this state unless
+    // you are well past the threshold.  (prevents spiky behavior)
+
+    if (shakeState == true)
+        return variance >= (SHAKE_THRESHOLD - SHAKE_HYSTERESIS);
+    return false;
 }

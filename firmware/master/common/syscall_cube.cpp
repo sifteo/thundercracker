@@ -32,42 +32,38 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
         CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
-struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
+uint32_t _SYS_getAccel(_SYSCubeID cid)
 {
-    struct _SYSAccelState r = { 0, 0, 0 };
     if (CubeSlots::validID(cid))
-        CubeSlots::instances[cid].getAccelState(&r);
-    return r;
+        return CubeSlots::instances[cid].getAccelState().value;
+    return 0;
 }
 
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state)
+uint32_t _SYS_getNeighbors(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid)) {
-        NeighborSlot::instances[cid].getNeighborState(state);
-    }
+    if (CubeSlots::validID(cid))
+        return NeighborSlot::instances[cid].getNeighborState().value;
+    return 0xFFFFFFFF;
 }
 
-struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid)
+uint32_t _SYS_getTilt(_SYSCubeID cid)
 {
-    struct _SYSTiltState r = { 0 };
     if (CubeSlots::validID(cid))
-        AccelState::instances[cid].getTiltState(&r);
-    return r;
+        return AccelState::instances[cid].getTiltState().value;
+    return 0;
 }
 
 uint32_t _SYS_getShake(_SYSCubeID cid)
 {
-    _SYSShakeState r = _SYS_NOT_SHAKING;
     if (CubeSlots::validID(cid))
-        AccelState::instances[cid].getShakeState(&r);
-    return r;
+        return AccelState::instances[cid].getShakeState();
+    return 0;
 }
 
 uint32_t _SYS_isTouching(_SYSCubeID cid)
 {
-    if (CubeSlots::validID(cid)) {
+    if (CubeSlots::validID(cid))
         return CubeSlots::instances[cid].isTouching();
-    }
     return 0;
 }
 
