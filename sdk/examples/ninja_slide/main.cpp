@@ -82,8 +82,8 @@ void main()
         world.mainLoopReset();
         float dt = timeStep.delta().seconds();
 
-        if ( 1 || world.platformsMustStop){
-            michelangelo.think(cube.id());
+        michelangelo.think(cube.id());
+        if (michelangelo.isMoving){
             michelangelo.act(dt);
         } else {
             for(int i=0; i < arraysize(platforms); i++) platforms[i]->think(cube.id());

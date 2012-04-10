@@ -9,8 +9,11 @@ class Turtle : public Thing {
 
   public:
     Int2 direction;
+    bool isMoving;
 
-    Turtle(World &world, int id, Int2 pos) : Thing(world, id, pos){}
+    Turtle(World &world, int id, Int2 pos) : Thing(world, id, pos){
+        isMoving = false;
+    }
 
     bool canWalkTo(CellNum dest){
         ASSERT(isValidCellNum(dest));
@@ -37,11 +40,13 @@ class Turtle : public Thing {
             const float TILT_ACCELERATION = 70.0;
             vel.x = (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
             vel.y = (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
+            isMoving = true;
         } else {
             // stop moving
             vel.x = 0;
             vel.y = 0;
             pos = nearestCellCoordinate(pos);
+            isMoving = false;
         }
     }
 
