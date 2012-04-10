@@ -3,7 +3,7 @@ include $(TC_DIR)/Makefile.platform
 SDK_DIR := $(TC_DIR)/sdk
 STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
 LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
-CC := $(LLVM_BIN)/clang
+CC := $(LLVM_BIN)/arm-clang
 
 BIN := $(APP).elf
 ASSETS = assets
@@ -13,13 +13,13 @@ CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files
-CFLAGS += -ffreestanding -emit-llvm -m32 -fno-stack-protector
+CFLAGS += -emit-llvm -ffreestanding -msoft-float
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
+CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions
 
-# Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+# Disable unwanted features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protector
 
 # generate dependency files
 CFLAGS += -MD -MP
