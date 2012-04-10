@@ -21,6 +21,7 @@
 #include <sifteo/video/bg0.h>
 #include <sifteo/video/bg1.h>
 #include <sifteo/video/bg2.h>
+#include <sifteo/video/tilebuffer.h>
 
 namespace Sifteo {
 
