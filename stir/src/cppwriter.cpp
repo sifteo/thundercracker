@@ -9,6 +9,7 @@
 #include "cppwriter.h"
 #include "audioencoder.h"
 #include <assert.h>
+#include "sifteo/abi.h"
 
 namespace Stir {
 
@@ -160,25 +161,64 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     assert(enc != 0);
 
     float kbps;
-    enc->encodeFile(sound.getFile(), data, kbps);
+    enc->encodeFile(sound.getFile(), data, kbps, sound.getSampleRate());
     mLog.infoLineWithLabel(sound.getName().c_str(),
         "%7.02f kiB, %6.02f kbps %s (%s)",
         data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
 
-    if (data.empty())
+    if (data.empty()) {
         mLog.error("Error encoding audio file '%s'", sound.getFile().c_str());
+        delete enc;
+        return;
+    }
 
     mStream << "static const char " << sound.getName() << "_data[] = \n";
     writeString(data);
     mStream << ";\n\n";
 
+    // If the loop length is 0, there is no looping by default.
+    _SYSAudioLoopType loopType = sound.getLoopType();
+    if (sound.getLoopLength() == 0) loopType = LoopOnce;
+
+    // Precompute the number of samples in the clip
+    uint32_t numSamples = data.size();
+    switch (enc->getType()) {
+        case _SYS_PCM:
+            if (numSamples & 1) {
+                mLog.error("File '%s' does not contain an integral number of samples.",
+                           sound.getFile().c_str());
+            }
+            numSamples /= sizeof(int16_t);
+            break;
+        case _SYS_ADPCM:
+            numSamples *= 2;
+            break;
+    }
+
+    // Compute loop length and check sanity
+    uint32_t loopEnd;
+    if (sound.getLoopLength() == 0) {
+        loopEnd = numSamples;
+    } else {
+        loopEnd = sound.getLoopLength() + sound.getLoopStart();
+    }
+    // loopEnd is zero-indexed
+    loopEnd -= 1;
+
+    // Loop end bounds checking
+    assert(loopEnd < numSamples);
+    assert(sound.getLoopStart() < loopEnd);
+
     mStream <<
         "extern const Sifteo::AssetAudio " << sound.getName() << " = {{\n" <<
-        indent << "/* type      */ " << enc->getTypeSymbol() << ",\n" <<
-        indent << "/* reserved0 */ " << 0 << ",\n" <<
-        indent << "/* reserved1 */ " << 0 << ",\n" <<
-        indent << "/* dataSize  */ " << data.size() << ",\n" <<
-        indent << "/* pData     */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
+        indent << "/* sampleRate */ " << sound.getSampleRate() << ",\n" <<
+        indent << "/* loopStart  */ " << sound.getLoopStart() << ",\n" <<
+        indent << "/* loopEnd    */ " << loopEnd << ",\n" <<
+        indent << "/* loopType   */ " << (loopType == LoopOnce ? "LoopOnce" : "LoopRepeat") << ",\n" <<
+        indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
+        indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
+        indent << "/* dataSize   */ " << data.size() << ",\n" <<
+        indent << "/* pData      */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
         "}};\n\n";
 
     delete enc;

@@ -384,14 +384,19 @@ enum _SYSAudioType {
 };
 
 enum _SYSAudioLoopType {
-    _SYS_LOOP_ONCE = 0,
-    _SYS_LOOP_REPEAT = 1
+    _SYS_LOOP_UNDEF     = -1,
+    _SYS_LOOP_ONCE      = 0,
+    _SYS_LOOP_REPEAT    = 1,
+    _SYS_LOOP_PING_PONG = 2
 };
 
 struct _SYSAudioModule {
+    uint32_t sampleRate;    /// native sampling rate of data
+    uint32_t loopStart;     /// loop starting point, in samples
+    uint32_t loopEnd;       /// loop ending point, in samples
+    uint8_t loopType;       /// loop type, 0 (no looping) or 1 (forward loop)
     uint8_t type;           /// _SYSAudioType code
-    uint8_t reserved0;      /// Reserved, must be zero
-    uint16_t reserved1;     /// Reserved, must be zero
+    uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
     uint32_t pData;         /// Flash address for compressed data
 };
@@ -426,9 +431,9 @@ struct _SYSInt2 {
  */
 
 typedef enum {
-	_SYS_TILT_NEGATIVE,
-	_SYS_TILT_NEUTRAL,
-	_SYS_TILT_POSITIVE
+    _SYS_TILT_NEGATIVE,
+    _SYS_TILT_NEUTRAL,
+    _SYS_TILT_POSITIVE
 } _SYS_TiltType;
 
 struct _SYSTiltState {

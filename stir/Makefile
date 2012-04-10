@@ -39,7 +39,8 @@ endif
 
 DEPFILES := $(OBJS:.o=.d)
 FIRMWARE_INC = $(TC_DIR)/firmware/include
-CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
+SYS_INC = $(TC_DIR)/sdk/include
+CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 

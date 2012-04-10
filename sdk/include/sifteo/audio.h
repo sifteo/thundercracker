@@ -26,8 +26,13 @@ public:
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
+<<<<<<< HEAD
     bool play(const AssetAudio &mod, LoopMode loopMode = ONCE) {
         return _SYS_audio_play(&mod.sys, &handle, (_SYSAudioLoopType) loopMode);
+=======
+    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopUndef) {
+        return _SYS_audio_play(&mod.sys, &handle, loopMode);
+>>>>>>> master
     }
 
     bool isPlaying() const {

@@ -11,6 +11,10 @@
 #include "machine.h"
 #include "audiosampledata.h"
 
+// Fixed-point math offsets
+#define SAMPLE_FRAC_SIZE 12
+#define SAMPLE_FRAC_MASK ((1 << SAMPLE_FRAC_SIZE) - 1)
+
 class AudioChannelSlot {
 public:
     AudioChannelSlot() { init(); }
@@ -43,6 +47,13 @@ public:
         state |= STATE_STOPPED;
     }
 
+    void setSpeed(uint32_t sampleRate);
+
+    void setVolume(uint16_t newVolume) {
+        ASSERT(newVolume <= _SYS_AUDIO_MAX_VOLUME);
+        volume = newVolume;
+    }
+
 protected:
     uint32_t mixAudio(int16_t *buffer, uint32_t len);
     friend class AudioMixer;    // mixer can tell us to mixAudio()
@@ -58,7 +69,8 @@ private:
 
     struct _SYSAudioModule mod;
     AudioSampleData samples;
-    uint32_t sampleNum;
+    uint64_t offset;
+    int32_t increment;
 };
 
 #endif /* AUDIOCHANNEL_H_ */
