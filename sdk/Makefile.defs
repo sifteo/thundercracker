@@ -13,13 +13,13 @@ CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files
-CFLAGS += -arch arm -emit-llvm -ffreestanding
+CFLAGS += -ffreestanding -emit-llvm -m32 -fno-stack-protector
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
 
-# Disable unwanted features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protector
+# Disable unwanted C++ features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
 # generate dependency files
 CFLAGS += -MD -MP
