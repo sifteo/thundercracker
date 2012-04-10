@@ -19,6 +19,7 @@
 #include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
+#include <sifteo/memory.h>
 #include <sifteo/metadata.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
