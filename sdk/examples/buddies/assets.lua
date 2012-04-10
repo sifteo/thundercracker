@@ -70,6 +70,15 @@ for i = 0, 2, 1 do
     _G["LabelBook" .. i] = image{"assets/menu/LabelBook" .. (i + 1) .. ".png"}
 end
 
+-- Menu Neighboring
+MenuNeighborBook1 = image{"assets/menu_neighbor/book1.png"}
+MenuNeighborBook2 = image{"assets/menu_neighbor/book2.png"}
+MenuNeighborBook3 = image{"assets/menu_neighbor/book3.png"}
+MenuNeighborFreePlay = image{"assets/menu_neighbor/free_play_mode.png"}
+MenuNeighborMesssage = image{"assets/menu_neighbor/neighbor_msg.png"}
+MenuNeighborShuffle = image{"assets/menu_neighbor/shuffle_mode.png"}
+MenuNeighborStory = image{"assets/menu_neighbor/story_mode.png"}
+
 -- UI Fonts
 UiFontWhite = image{"assets/fontstrip_content_white_nooutline.png", height = 16}
 UiFontOrange = image{"assets/fontstrip_content_orange.png", height = 16}
