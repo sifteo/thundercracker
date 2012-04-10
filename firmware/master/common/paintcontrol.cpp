@@ -215,8 +215,10 @@ void PaintControl::waitForFinish(CubeSlot *cube)
     exitContinuous(vbuf, vf, now);
     setFlags(vbuf, vf);
 
-    while (_SYS_VBF_DIRTY_RENDER & Atomic::Load(vbuf->flags)) {
+    // Things to wait for...
+    const uint32_t mask = _SYS_VBF_TRIGGER_ON_FLUSH | _SYS_VBF_DIRTY_RENDER;
 
+    while (mask & Atomic::Load(vbuf->flags)) {
         if (SysTime::ticks() > deadline) {
             DEBUG_LOG((LOG_PREFIX "waitForFinish() -- TIMED OUT\n", LOG_PARAMS));
             break;
