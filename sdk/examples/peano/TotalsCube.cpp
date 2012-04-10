@@ -3,7 +3,6 @@
 #include "Game.h"
 #include "AudioPlayer.h"
 #include "TokenView.h"
-#include "string.h"
 #include "DialogWindow.h"
 #include "Skins.h"
 

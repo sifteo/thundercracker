@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #define DECLARE_POOL(classname, maxpool) \
 	private: \
 	enum { MAX_POOL = maxpool }; \
