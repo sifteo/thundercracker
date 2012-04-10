@@ -12,25 +12,24 @@ static Metadata M = Metadata()
     .title("Monsters SDK Example")
     .cubeRange(1);
 
-static const CubeID cube(0);
-static VideoBuffer vid;
-
-static void showMonster(const MonsterData *m)
-{
-    LOG(("Showing monster %P\n", m));
-    vid.colormap.set((RGB565*) &m->fb[512]);
-    vid.fb32.set((uint16_t*) &m->fb[0]);
-}
-
 void main()
 {
+    const CubeID cube(0);
+    static VideoBuffer vid;
+
     vid.initMode(FB32);
     vid.attach(cube);
 
     float monster = 0.5f;
     while (1) {
         monster += cube.accel().x * 0.01f;
-        showMonster(monsters[umod(monster, arraysize(monsters))]);
+        const MonsterData *data = monsters[umod(monster, arraysize(monsters))];
+
+        vid.colormap.set((RGB565*) &data->fb[512]);
+        vid.fb32.set((uint16_t*) &data->fb[0]);
+
+        LOG(("Monster state %f, showing %P\n", monster, data));
+
         System::paint();
     }
 }
