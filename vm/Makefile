@@ -4,12 +4,17 @@ include $(TC_DIR)/Makefile.platform
 BIN = slinky
 all: $(BIN)$(BIN_EXT)
 
-include Makefile.objs
-DEPFILES := $(OBJS:.o=.d)
-
 INCLUDES += -Isrc
 FLAGS += -g
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
+
+# ABI header
+SDK_INCLUDE := $(TC_DIR)/sdk/include
+INCLUDES += -I$(SDK_INCLUDE)
+FLAGS += -DNO_USERSPACE_HEADERS
+
+include Makefile.objs
+DEPFILES := $(OBJS:.o=.d)
 
 # LLVM
 FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti

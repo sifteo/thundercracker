@@ -9,6 +9,7 @@
 #include "SVMInstrInfo.h"
 #include "SVMTargetMachine.h"
 #include "SVMMachineFunctionInfo.h"
+#include "Support/ErrorReporter.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -88,6 +89,9 @@ void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
         BuildMI(MBB, MBBI, dl, TII.get(SVM::FNSTACK)).addImm(chunk << 2);
         wordsRemaining -= chunk;
     }
+
+    if (wordsRemaining)
+        report_warning(MF.getFunction(), "Large stack frame, " + Twine(stackSize) + " bytes.");
 
     if (wordsRemaining > 0x1F) {
         assert(wordsRemaining <= 0xFFFFFF);
