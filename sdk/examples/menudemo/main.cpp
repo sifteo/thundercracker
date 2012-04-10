@@ -34,7 +34,7 @@ static void begin() {
     for(CubeID cube = 0; cube != NUM_CUBES; ++cube) {
         auto &vid = gVideo[cube];
         vid.initMode(BG0);
-        vid.bg0.erase(BgTile);
+        vid.bg0.erase(StripeTile);
         vid.attach(cube);
     }
 }
