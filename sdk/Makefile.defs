@@ -3,7 +3,7 @@ include $(TC_DIR)/Makefile.platform
 SDK_DIR := $(TC_DIR)/sdk
 STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
 LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
-CC := $(LLVM_BIN)/arm-clang
+CC := $(LLVM_BIN)/clang
 
 BIN := $(APP).elf
 ASSETS = assets
@@ -13,7 +13,7 @@ CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files
-CFLAGS += -emit-llvm -ffreestanding -msoft-float
+CFLAGS += -arch arm -emit-llvm -ffreestanding
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
