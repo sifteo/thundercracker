@@ -65,6 +65,7 @@ int main()
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
+
     /*
      * High-level hardware initialization
      */

@@ -7,7 +7,7 @@
 #define _BOARD_TESTJIG_H
 
 // C L O C K
-#define RCC_CFGR_PLLXTPRE   1
+#define RCC_CFGR_PLLXTPRE   0
 
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)
@@ -26,7 +26,7 @@
 // F L A S H
 #define FLASH_SPI           SPI1
 #define FLASH_CS_GPIO       GPIOPin(&GPIOA, 15)
-#define FLASH_WP_GPIO       GPIOPin(&GPIOB, 6)
+#define FLASH_WP_GPIO       GPIOPin(&GPIOB, 2)
 #define FLASH_SCK_GPIO      GPIOPin(&GPIOB, 3)
 #define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 4)
 #define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 5)
@@ -43,22 +43,13 @@
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 11)
 #define UART_TX_GPIO        GPIOPin(&GPIOB, 10)
 
-// I 2 C
-#define MASTER_I2C          I2C2
-#define MASTER_SCL_GPIO     GPIOPin(&GPIOB, 10)
-#define MASTER_SDA_GPIO     GPIOPin(&GPIOB, 11)
-
-#define JIG_I2C             I2C1
-#define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
-#define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
-
 // L E D
 #define LED_GREEN_GPIO      GPIOPin(&GPIOB, 0)
 #define LED_RED_GPIO        GPIOPin(&GPIOB, 1)
 
 // P O W E R
-#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
-#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
+#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
+#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 14)
 
 // A U D I O
 #define AUDIO_DAC_GPIO      GPIOPin(&GPIOA, 4)
@@ -69,10 +60,21 @@
 #define AUDIO_PWM_CHAN      1
 
 // M I S C
-#define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
+#define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
+
 // T E S T  J I G
+
+#define LED_GREEN1_GPIO     GPIOPin(&GPIOC,2)
+#define LED_GREEN2_GPIO     GPIOPin(&GPIOC,3)
+#define LED_RED1_GPIO       GPIOPin(&GPIOC,0)
+#define LED_RED2_GPIO       GPIOPin(&GPIOC,1)
+
+#define JIG_I2C             I2C1
+#define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
+#define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
+
 #define JIG_NBR_IN1_GPIO    GPIOPin(&GPIOA, 0)
 #define JIG_NBR_IN2_GPIO    GPIOPin(&GPIOA, 1)
 #define JIG_NBR_IN3_GPIO    GPIOPin(&GPIOA, 2)

@@ -36,8 +36,7 @@ private:
         Store_STM_batt_voltage,
         Set_Speaker_on,
         Set_Speaker_off,
-        Set_Fixture_USB_pwr_on,
-        Set_USB_Fixture_pwr_off,
+        SetFixtureUsbPower,
         read_STM_USB_voltage,
         Set_HomeButton_LED_test,
         Read_volume_slider_voltage,
@@ -58,6 +57,10 @@ private:
     static const TestHandler handlers[];
 
     static void stmExternalFlashCommsHandler(uint8_t *args, uint8_t len);
+    static void stmExternalFlashReadWriteHandler(uint8_t *args, uint8_t len);
+    static void nrfCommsHandler(uint8_t *args, uint8_t len);
+    static void setFixtureVoltageHandler(uint8_t *args, uint8_t len);
+    static void getFixtureVoltageHandler(uint8_t *args, uint8_t len);
 };
 
 #endif // _TEST_JIG_H

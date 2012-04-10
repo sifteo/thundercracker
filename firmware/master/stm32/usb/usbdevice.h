@@ -8,13 +8,17 @@
 
 #include <stdint.h>
 #include "usb/usbdefs.h"
+#include "board.h"
 
 class UsbDevice
 {
 public:
     static const uint16_t VendorID = 0x22FA;
+#if (BOARD == BOARD_TEST_JIG)
+    static const uint16_t ProductID = 0x0110;
+#else
     static const uint16_t ProductID = 0x0105;
-    static const uint16_t TestJigProductID = 0x0110;
+#endif
 
     static const uint8_t InEpAddr = 0x81;
     static const uint8_t OutEpAddr = 0x01;

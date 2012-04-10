@@ -26,11 +26,7 @@ static const Usb::DeviceDescriptor dev = {
     0,                              // bDeviceProtocol
     64,                             // bMaxPacketSize0
     UsbDevice::VendorID,            // idVendor
-#if (BOARD == BOARD_TEST_JIG)
-    UsbDevice::TestJigProductID,    // idProduct
-#else
     UsbDevice::ProductID,           // idProduct
-#endif
     0x0200,                         // bcdDevice
     1,                              // iManufacturer
     2,                              // iProduct

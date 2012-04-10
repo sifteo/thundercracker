@@ -32,12 +32,16 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
  * Order must match the Command enum.
  */
 TestJig::TestHandler const TestJig::handlers[] = {
-    stmExternalFlashCommsHandler
+    stmExternalFlashCommsHandler,
+    stmExternalFlashReadWriteHandler,
+    nrfCommsHandler,
+    setFixtureVoltageHandler,
+    getFixtureVoltageHandler
 };
 
 void TestJig::init()
 {
-    i2c.init(MASTER_SCL_GPIO, MASTER_SDA_GPIO);
+    i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
 }
 
 /*
@@ -82,6 +86,26 @@ void TestJig::enableUsbPower()
  ******************************************/
 
 void TestJig::stmExternalFlashCommsHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::stmExternalFlashReadWriteHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::nrfCommsHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::setFixtureVoltageHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::getFixtureVoltageHandler(uint8_t *args, uint8_t len)
 {
 
 }
