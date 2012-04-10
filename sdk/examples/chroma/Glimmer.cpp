@@ -47,7 +47,7 @@ void Glimmer::Reset()
 }
 
 
-void Glimmer::Update( float dt )
+void Glimmer::Update( float dt, CubeWrapper *pWrapper )
 {
     if( m_group == 0 && m_frame == 0 )
         Game::Inst().playSound(glimmer_fx_03);
@@ -60,6 +60,9 @@ void Glimmer::Update( float dt )
         {
             m_frame = 0;
             m_group++;
+
+            if( m_group >= NUM_GLIMMER_GROUPS )
+                pWrapper->setNeedFlush();
             //Game::Inst().playSound(glimmer_fx_03);
         }
     }
