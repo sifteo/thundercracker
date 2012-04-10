@@ -217,9 +217,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (!connected()) {
         Event::setPending(_SYS_CUBE_FOUND, id());
         setConnected();
-		
-        uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
-        LOG(("%u cubes connected\n", count));
+
+        LOG(("%u cubes connected\n",
+            Intrinsic::POPCOUNT(CubeSlots::vecConnected)));
     }
     
     // If we're expecting a stale packet, completely ignore its contents.
@@ -227,7 +227,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
         return;
     }
-    
+
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
