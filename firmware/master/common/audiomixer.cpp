@@ -97,6 +97,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
         return false;
     }
     AudioChannelSlot &ch = channelSlots[idx];
+    ASSERT(nextHandle < UINT32_MAX);
     ch.handle = nextHandle++;
     *handle = ch.handle;
 
