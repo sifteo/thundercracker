@@ -17,6 +17,7 @@ static VideoBuffer vid;
 
 static void showMonster(const MonsterData *m)
 {
+    LOG(("Showing monster %P\n", m));
     vid.colormap.set((RGB565*) &m->fb[512]);
     vid.fb32.set((uint16_t*) &m->fb[0]);
 }

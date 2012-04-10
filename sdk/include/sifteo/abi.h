@@ -598,6 +598,7 @@ struct _SYSMetadataImage {
  *   - Binary integers: %b
  *   - C-style strings: %s
  *   - Hex-dump of fixed width buffers: %<width>h
+ *   - Pointer, printed as a resolved symbol when possible: %P
  *
  * To work around limitations in C variadic functions, _SYS_lti_metadata()
  * supports a format string which specifies what data type each argument
