@@ -18,6 +18,8 @@
  * This object manages the somewhat complex asynchronous rendering pipeline.
  * We try to balance fast asynchronous rendering with slower but more deliberate
  * synchronous rendering.
+ *
+ * Here be dragons...?
  */
 
 /*
@@ -101,11 +103,12 @@ void PaintControl::waitForPaint(CubeSlot *cube)
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (vbuf && canMakeSynchronous(vbuf, now)) {
         makeSynchronous(vbuf);
-        paintTimestamp = 0;
+        pendingFrames = 0;
     }
 
-    DEBUG_LOG((LOG_PREFIX "-waitForPaint(), expired=%d\n",
-        LOG_PARAMS, now > paintTimestamp + fpsLow));
+    DEBUG_LOG((LOG_PREFIX "-waitForPaint(), pending=%d, %d ms since last paint\n",
+        LOG_PARAMS, pendingFrames,
+        int((now - paintTimestamp) / SysTime::msTicks(1))));
 }
 
 void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
@@ -126,8 +129,8 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     int32_t pending = Atomic::Load(pendingFrames);
     int32_t newPending = pending;
 
-    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x\n",
-        LOG_PARAMS, pending, vbuf->flags));
+    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x vf=%02x\n",
+        LOG_PARAMS, pending, vbuf->flags, getFlags(vbuf)));
 
     bool needPaint = (vbuf->flags & _SYS_VBF_NEED_PAINT) != 0;
     Atomic::And(vbuf->flags, ~_SYS_VBF_NEED_PAINT);
@@ -173,15 +176,19 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
             newPending = fpMax;
         }
 
+        // When the codec calls us back in vramFlushed(), trigger a render
         if (!isContinuous(vbuf))
             Atomic::Or(vbuf->flags, _SYS_VBF_TRIGGER_ON_FLUSH);
+
+        // Unleash the radio codec!
+        VRAM::unlock(*vbuf);
     }
 
     // Atomically apply our changes to pendingFrames.
     Atomic::Add(pendingFrames, newPending - pending);
 
-    DEBUG_LOG((LOG_PREFIX "-triggerPaint, pend=%d flags=%08x\n",
-        LOG_PARAMS, newPending, vbuf->flags));
+    DEBUG_LOG((LOG_PREFIX "-triggerPaint, pend=%d flags=%08x vf=%02x\n",
+        LOG_PARAMS, newPending, vbuf->flags, getFlags(vbuf)));
 }
 
 void PaintControl::waitForFinish(CubeSlot *cube)
@@ -257,8 +264,9 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
             setFlags(vbuf, vf);
         }
 
-        DEBUG_LOG((LOG_PREFIX "ackFrames(%d), ack=%02x pend=%d flags=%08x\n",
-            LOG_PARAMS, count, cube->getLastFrameACK(), pendingFrames, vbuf->flags));
+        DEBUG_LOG((LOG_PREFIX "ackFrames(%d), ack=%02x pend=%d flags=%08x vf=%02x\n",
+            LOG_PARAMS, count, cube->getLastFrameACK(), pendingFrames,
+            vbuf->flags, getFlags(vbuf)));
     }
 }
 
@@ -309,6 +317,10 @@ void PaintControl::vramFlushed(CubeSlot *cube)
         }
 
         setFlags(vbuf, vf);
+
+        // Propagate the bits...
+        Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
+        Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
     }
 }
 
@@ -349,10 +361,6 @@ void PaintControl::setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf,
         flags &= ~_SYS_VF_TOGGLE;
     else
         flags |= _SYS_VF_TOGGLE;
-
-    // Propagate the bits...
-    Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
-    Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
 }
 
 void PaintControl::makeSynchronous(_SYSVideoBuffer *vbuf)

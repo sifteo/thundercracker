@@ -61,6 +61,8 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
             ASSERT(idx32 < arraysize(vb->cm1));
             uint32_t cm1 = vb->cm1[idx32];
 
+            DEBUG_LOG(("CODEC[%p] cm16=%08x cm1[%d]=%08x\n", vb, cm16, idx32, cm1));
+
             if (cm1) {
                 uint32_t idx1 = CLZ(cm1);
                 uint16_t addr = (idx32 << 5) | idx1;
@@ -90,6 +92,7 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
                 // So, clear two bits at a time.
                 cm16 &= ROR(0x3FFFFFFF, idx32 << 1);
                 vb->cm16 = cm16;
+                DEBUG_LOG(("CODEC[%p] cm16=%08x, cm1 cleared\n", vb, cm16));
                 if (!cm16)
                     flushed = true;
             }
