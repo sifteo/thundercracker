@@ -20,12 +20,35 @@
 #ifndef _SIFTEO_ABI_H
 #define _SIFTEO_ABI_H
 
-#include <stdint.h>
+#ifdef NO_USERSPACE_HEADERS
+#   include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #else
 typedef uint8_t bool;
+#endif
+
+/*
+ * Standard integer types. This is a subset of what's in stdint.h,
+ * but we define them ourselves since system headers are not available.
+ *
+ * If we're doing a non-userspace build, however, these are pulled in
+ * from stdint.h above.
+ */
+
+#ifndef NO_USERSPACE_HEADERS
+    typedef signed char int8_t;
+    typedef unsigned char uint8_t;
+    typedef signed short int16_t;
+    typedef unsigned short uint16_t;
+    typedef signed int int32_t;
+    typedef unsigned int uint32_t;
+    typedef signed long long int64_t;
+    typedef unsigned long long uint64_t;
+    typedef signed long intptr_t;
+    typedef unsigned long uintptr_t;
 #endif
 
 /**

@@ -13,7 +13,7 @@ CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files
-CFLAGS += -emit-llvm -ffreestanding -msoft-float
+CFLAGS += -emit-llvm -ffreestanding -nostdinc -msoft-float
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions
