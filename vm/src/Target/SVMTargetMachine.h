@@ -39,6 +39,7 @@ public:
     static uint32_t getRAMBase();
     static uint8_t getPaddingByte();
     static const char *getDataLayoutString();
+    static bool isTargetCompatible(LLVMContext& Context, const TargetData &TD);
 
     virtual const SVMInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering  *getFrameLowering() const { return &FrameLowering; }
