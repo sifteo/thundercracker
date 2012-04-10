@@ -84,11 +84,11 @@ void TiltFlowDetailView::Paint() {
 #define INTERPOLATE(a,b,t)  ((a)*(1-(t))+(b)*(t))
         int bottom = (INTERPOLATE(4, 16-4, clamp(1.1f * mAmount,0.0f,1.0f)));
 #undef INTERPOLATE
-        c->FillArea(&Dark_Purple, Vec2(0,1), Vec2(16,bottom-1));
+        c->FillArea(&Dark_Purple, vec(0,1), vec(16,bottom-1));
 
         const Skins::Skin &skin = Skins::GetSkin();
-        c->ClipImage(&skin.vault_door, Vec2(0,1-16));
-        c->ClipImage(&skin.vault_door, Vec2(0, bottom));
+        c->ClipImage(&skin.vault_door, vec(0,1-16));
+        c->ClipImage(&skin.vault_door, vec(0, bottom));
 
         if(!GetCube()->backgroundLayer.isSpriteHidden(0))
         {

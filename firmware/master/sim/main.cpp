@@ -15,7 +15,8 @@
 #include "flash.h"
 #include "flashlayer.h"
 #include "assetmanager.h"
-#include "svmruntime.h"
+#include "svmloader.h"
+#include "svmcpu.h"
 #include "gdbserver.h"
 
 
@@ -88,7 +89,7 @@ int main(int argc, char **argv)
     Radio::open();
     GDBServer::start(2345);
 
-    SvmRuntime::run(111);
+    SvmLoader::run(111);
 
     return 0;
 }

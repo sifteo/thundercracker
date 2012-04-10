@@ -6,41 +6,30 @@
 
 #include <sifteo.h>
 #include "monsters.h"
-
 using namespace Sifteo;
 
-static Cube cube(0);
-
-static void showMonster(const MonsterData *m)
-{
-    // XXX: Waiting for a real compare-and-copy syscall
-    for (unsigned i = 0; i < 256; i++)
-        cube.vbuf.poke(i, ((uint16_t *)m->fb)[i]);
-
-    for (unsigned i = 0; i < 16; i++)
-        cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
-}
+static Metadata M = Metadata()
+    .title("Monsters SDK Example")
+    .cubeRange(1);
 
 void main()
 {
-    int fpMonster = 0;
-    const int shift = 7;
-    const int fpMax = arraysize(monsters) << shift;
+    const CubeID cube(0);
+    static VideoBuffer vid;
 
-    cube.vbuf.init();
-    cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
-    cube.vbuf.sys.vram.num_lines = 128;
-    cube.enable();
+    vid.initMode(FB32);
+    vid.attach(cube);
 
+    float monster = 0.5f;
     while (1) {
-        _SYSAccelState state = _SYS_getAccel(cube.id());
+        monster += cube.accel().x * 0.01f;
+        const MonsterData *data = monsters[umod(monster, arraysize(monsters))];
 
-        fpMonster += state.x;
+        vid.colormap.set((RGB565*) &data->fb[512]);
+        vid.fb32.set((uint16_t*) &data->fb[0]);
 
-        while (fpMonster < 0) fpMonster += fpMax;
-        while (fpMonster > fpMax) fpMonster -= fpMax;
+        LOG("Monster state %f, showing %P\n", monster, data);
 
-        showMonster(monsters[fpMonster >> shift]);
         System::paint();
     }
 }

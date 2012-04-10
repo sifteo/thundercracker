@@ -118,15 +118,15 @@ void Map::RefreshTriggers() {
 
 bool Map::IsVertexWalkable(Int2 vertex) {
   // convert global vertex into location / local vertex pair
-  Int2 loc = Vec2(vertex.x>>3, vertex.y>>3);
+  Int2 loc = vec(vertex.x>>3, vertex.y>>3);
   if (vertex.x == 0 || loc.x < 0 || loc.x >= mData->width || loc.y < 0 || loc.y >= mData->height) {
     return false; // out of bounds
   }
   vertex -= 8 * loc;
   return IsTileOpen(loc, vertex) && (
     vertex.x == 0 ? // are we between rooms?
-      IsTileOpen(Vec2(loc.x-1, loc.y), Vec2(7, vertex.y)) : 
-      IsTileOpen(loc, Vec2(vertex.x-1, vertex.y))
+      IsTileOpen(vec(loc.x-1, loc.y), vec(7, vertex.y)) : 
+      IsTileOpen(loc, vec(vertex.x-1, vertex.y))
   );
 
 }

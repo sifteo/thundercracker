@@ -18,12 +18,18 @@ namespace Sifteo {
 
 class AudioChannel {
 public:
+    enum LoopMode {
+        UNDEF_LOOP = _SYS_LOOP_UNDEF,
+        ONCE = _SYS_LOOP_ONCE,
+        REPEAT = _SYS_LOOP_REPEAT,
+        PING_PONG = _SYS_LOOP_PING_PONG,
+    };
 
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
-    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopUndef) {
-        return _SYS_audio_play(&mod.sys, &handle, loopMode);
+    bool play(const AssetAudio &mod, LoopMode loopMode = UNDEF_LOOP) {
+        return _SYS_audio_play(&mod.sys, &handle, (_SYSAudioLoopType) loopMode);
     }
 
     bool isPlaying() const {
@@ -55,12 +61,9 @@ public:
     }
 
 private:
-    // TODO - would be nice to have a _SYSAudioChannel type with these two
-    // members, that serves as the object passed to the firmware.
-    // Then, we wouldn't have to search for a channel. given a handle - we could
-    // just calculate its offset within its array to look it up
     _SYSAudioHandle handle;
 };
+
 
 } // namespace Sifteo
 

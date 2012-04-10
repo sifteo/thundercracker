@@ -16,7 +16,7 @@ void MinimapView::Init() {
 	// fill in the top
 	for(unsigned row=0; row<padTop; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), BlackTile);
+			g.BG0_drawAsset(vec(col, row), BlackTile);
 		}
 	}
 
@@ -25,28 +25,28 @@ void MinimapView::Init() {
 		unsigned y = row + padTop;
 		// fill in the left
 		for(unsigned col=0; col<padLeft; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), BlackTile);
+			g.BG0_drawAsset(vec(col, y), BlackTile);
 		}
 		// fill in the map data
 		for(unsigned col=0; col<pData->width; ++col) {
 			unsigned x = col + padLeft;
-			g.BG0_drawAsset(Vec2(x,y), MinimapBasic, ComputeTileId(col, row));
+			g.BG0_drawAsset(vec(x,y), MinimapBasic, ComputeTileId(col, row));
 		}
 
 		// fill in the right
 		for (unsigned col=padLeft+pData->width; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, y), BlackTile);
+			g.BG0_drawAsset(vec(col, y), BlackTile);
 		}
 	}
 
 	// fill in the bottom
 	for(unsigned row=padTop+pData->height; row<18; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(Vec2(col, row), BlackTile);
+			g.BG0_drawAsset(vec(col, row), BlackTile);
 		}
 	}
 
-	Int2 pan = Vec2(-((pData->width%2)<<2), -((pData->height%2)<<2));
+	Int2 pan = vec(-((pData->width%2)<<2), -((pData->height%2)<<2));
 	g.BG0_setPanning(pan);
 
 	mCanvasOffset.x = 8 * padLeft - pan.x - 4;

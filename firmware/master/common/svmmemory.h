@@ -52,6 +52,16 @@ public:
         ptr = reinterpret_cast<T>(pa);
         return true;
     }
+
+    /**
+     * Convenience wrapper for RAM-only validation of fixed-size objects.
+     * Always fails for NULL pointers.
+     */
+    template <typename T>
+    static inline bool mapRAM(T &ptr)
+    {
+        return mapRAM(ptr, sizeof *ptr, false);
+    }
     
     /**
      * Overflow-safe array size calculation. Saturates instead of overflowing.
@@ -138,6 +148,40 @@ public:
         FlashBlockRef ref;
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           reinterpret_cast<VirtAddr>(src), sizeof(T));
+    }
+
+    /**
+     * Convenient type-safe wrapper around copyROData,
+     * with a caller-supplied FlashBlockRef.
+     */
+    template <typename T>
+    static inline bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
+    {
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          reinterpret_cast<VirtAddr>(src), sizeof(T));
+    }
+
+    /**
+     * Convenient type-safe wrapper around copyROData, where the source
+     * is an untyped VirtAddr.
+     */
+    template <typename T>
+    static inline bool copyROData(T &dest, VirtAddr src)
+    {
+        FlashBlockRef ref;
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          src, sizeof(T));
+    }
+
+    /**
+     * Convenient type-safe wrapper around copyROData, where the source
+     * is an untyped VirtAddr and with a caller-supplied FlashBlockRef.
+     */
+    template <typename T>
+    static inline bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
+    {
+        return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
+                          src, sizeof(T));
     }
 
     /**

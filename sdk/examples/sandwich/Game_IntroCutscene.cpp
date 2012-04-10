@@ -4,14 +4,14 @@ Cube* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		ViewMode gfx(gCubes[i].vbuf);
 		gfx.set();
-		gfx.BG0_drawAsset(Vec2(0,0), Sting);
+		gfx.BG0_drawAsset(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
 			gfx.hideSprite(s);
 		}
 		BG1Helper overlay(gCubes[i]);
-		overlay.DrawAsset(Vec2(0,0), SandwichTitle);
+		overlay.DrawAsset(vec(0,0), SandwichTitle);
 		overlay.Flush();
-		gfx.BG1_setPanning(Vec2(0,64));
+		gfx.BG1_setPanning(vec(0,64));
 		gCubes[i].vbuf.touch();
 	}
 	float dt;
@@ -19,7 +19,7 @@ Cube* Game::IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0.f, 72 - 128*u));
+			ViewMode(gCubes[i].vbuf).BG1_setPanning(vec(0.f, 72 - 128*u));
 		}
 		System::paintSync();
 	}
@@ -41,8 +41,8 @@ Cube* Game::IntroCutscene() {
 		if (gCubes+i != pCube) {
 			BG1Helper(gCubes[i]).Flush();
 			ViewMode gfx(gCubes[i].vbuf);
-			gfx.BG1_setPanning(Vec2(0,0));
-			gfx.BG0_drawAsset(Vec2(0,0), Blank);
+			gfx.BG1_setPanning(vec(0,0));
+			gfx.BG0_drawAsset(vec(0,0), Blank);
 		}
 	}
 	ViewMode mode(pCube->vbuf);
@@ -50,7 +50,7 @@ Cube* Game::IntroCutscene() {
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.BG1_setPanning(Vec2(0.f, -56 + 128*u));
+		mode.BG1_setPanning(vec(0.f, -56 + 128*u));
 		System::paintSync();
 	}
 	WaitForSeconds(0.1f);
@@ -81,9 +81,9 @@ Cube* Game::IntroCutscene() {
 	WaitForSeconds(0.5f);
 
 	// thought bubble appears
-	mode.BG0_drawAsset(Vec2(10,8), TitleThoughts);
+	mode.BG0_drawAsset(vec(10,8), TitleThoughts);
 	WaitForSeconds(0.5f);
-	mode.BG0_drawAsset(Vec2(3,4), TitleBalloon);
+	mode.BG0_drawAsset(vec(3,4), TitleBalloon);
 	WaitForSeconds(0.5f);
 
 	// items appear
@@ -122,7 +122,7 @@ Cube* Game::IntroCutscene() {
 	mode.hideSprite(2);
 	mode.hideSprite(3);
 	mode.hideSprite(4);
-	mode.BG0_drawAsset(Vec2(0,0), Sting);
+	mode.BG0_drawAsset(vec(0,0), Sting);
 	System::paintSync();
 
 	// walk off
@@ -138,17 +138,17 @@ Cube* Game::IntroCutscene() {
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
 		for(unsigned x=i; x<16-i; ++x) {
-			mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
-			mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
+			mode.BG0_putTile(vec(x, i), *BlackTile.tiles);
+			mode.BG0_putTile(vec(x, 16-i-1), *BlackTile.tiles);
 		}
 		for(unsigned y=i+1; y<16-i-1; ++y) {
-			mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
-			mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
+			mode.BG0_putTile(vec(i, y), *BlackTile.tiles);
+			mode.BG0_putTile(vec(16-i-1, y), *BlackTile.tiles);
 		}
 		System::paintSync();
 	}
 	BG1Helper(*pCube).Flush();
-	ViewMode(pCube->vbuf).BG1_setPanning(Vec2(0,0));
+	ViewMode(pCube->vbuf).BG1_setPanning(vec(0,0));
 	WaitForSeconds(0.5f);
 	return pCube;
 }

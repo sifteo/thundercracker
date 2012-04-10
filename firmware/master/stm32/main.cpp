@@ -16,7 +16,7 @@
 #include "audiooutdevice.h"
 #include "usb/usbdevice.h"
 #include "button.h"
-#include "svmruntime.h"
+#include "svmloader.h"
 
 /*
  * Application specific entry point.
@@ -103,10 +103,10 @@ int main()
      * Launch our game runtime!
      */
 
-    SvmRuntime::run(111);
+    SvmLoader::run(111);
 
     // for now, in the event that we don't have a valid game installed at address 0,
-    // SvmRuntime::run() should return (assuming it fails to parse the non-existent
+    // SvmLoader::run() should return (assuming it fails to parse the non-existent
     // ELF binary, and we'll just sit here so we can at least install things over USB, etc
     for (;;) {
         Tasks::work();

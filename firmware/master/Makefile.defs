@@ -23,11 +23,7 @@ endif
 #
 # Without optimization, a lot of our code ends up too large and/or slow
 # to run on real hardware!
-#allow games to turn off -O2 via environment variable
-ifneq ($(GAMEDEBUG),)
-else
-	CFLAGS += -O2
-endif
+CFLAGS += -O3
 
 # Always build with debug symbols (It can't hurt)
 CFLAGS += -g3

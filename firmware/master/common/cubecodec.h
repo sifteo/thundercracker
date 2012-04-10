@@ -91,13 +91,14 @@ class CubeCodec {
         codeS = -1;
     }
 
-    void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
+    // Returns 'true' if finished.
+    bool encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
+
     bool encodeVRAMAddr(PacketBuffer &buf, uint16_t addr);
     bool encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data);
 
     bool flashReset(PacketBuffer &buf);
-    bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-        _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit, bool &done);
+    bool flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done);
 
     void flashAckBytes(uint8_t count) {
         loadBufferAvail += count;
@@ -167,7 +168,7 @@ class CubeCodec {
         uint16_t ptr = codePtr - offset;
         ptr &= _SYS_VRAM_WORD_MASK;
 
-        if ((vb->lock & VRAM::maskLock(ptr)) ||
+        if ((vb->lock & VRAM::maskCM16(ptr)) ||
             (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
 
             // Can't match a locked or modified word

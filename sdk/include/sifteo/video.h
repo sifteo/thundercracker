@@ -11,10 +11,76 @@
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
-#include <sifteo/macros.h>
+#include <sifteo/abi.h>
+#include <sifteo/cube.h>
 #include <sifteo/math.h>
+#include <sifteo/video/color.h>
+#include <sifteo/video/sprite.h>
+#include <sifteo/video/framebuffer.h>
+#include <sifteo/video/bg0rom.h>
+#include <sifteo/video/bg0.h>
+#include <sifteo/video/bg1.h>
+#include <sifteo/video/bg2.h>
 
 namespace Sifteo {
+
+
+static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
+static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
+static const unsigned TILE = 8;          /// Size of one tile, in pixels
+
+static const Int2 LCD_size = { LCD_width, LCD_height };
+static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
+
+
+/**
+ * Supported video modes. Each "video mode" is a separate way of
+ * interpreting the VideoBuffer memory in order to compose a frame
+ * of graphics.
+ *
+ * Most of the video modes map directly to a collection of one or more
+ * drawables, which may be accessed via this VideoBuffer class.
+ * Some video modes are special-purpose, like POWERDOWN.
+ *
+ * A cube can only be in one video mode at a time, though it's possible
+ * to use setWindow() to render portions of the screen in different
+ * modes. If you do this, take notice of how different modes reuse the
+ * same memory for different purposes.
+ */
+enum VideoMode {
+    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   // Power saving mode, LCD is off
+    BG0_ROM        = _SYS_VM_BG0_ROM,     // BG0, with tile data from internal ROM
+    SOLID_MODE     = _SYS_VM_SOLID,       // Solid color, from colormap[0]
+    FB32           = _SYS_VM_FB32,        // 32x32 pixel 16-color framebuffer
+    FB64           = _SYS_VM_FB64,        // 64x64 pixel 2-color framebuffer
+    FB128          = _SYS_VM_FB128,       // 128x48 pixel 2-color framebuffer
+    BG0            = _SYS_VM_BG0,         // BG0 background layer
+    BG0_BG1        = _SYS_VM_BG0_BG1,     // BG0 background plus BG1 overlay
+    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, // BG0 background, 8 sprites, BG1 overlay
+    BG2            = _SYS_VM_BG2,         // 16x16 tiled mode with affine transform
+};
+
+
+/**
+ * Rotation and mirroring modes, for setRotation().
+ *
+ * In every video mode, the hardware can perform orthogonal rotation and
+ * mirroring cheaply. This happens at render-time, not continuously. For
+ * example, if you're doing partial screen drawing with setWindow() and
+ * you change the current rotation, the new rotation mode will affect 
+ * future drawing but not past drawing.
+ */
+enum Rotation {
+    ROT_NORMAL              = 0,
+    ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
+    ROT_MIRROR              = _SYS_VF_X_FLIP,
+    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+    ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+    ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
+};
+
 
 /**
  * A memory buffer which holds graphics data. This is a mirror of the
@@ -22,34 +88,442 @@ namespace Sifteo {
  * buffer, changes are enqueued for later transmission to the physical
  * video buffer.
  *
- * This class only handles low-level memory management. The layout of
- * this memory is specific to the video mode you're using.
+ * Cubes have a few basic video features that are always available:
+ * rotation, windowing, and selecting a video mode. This class provides
+ * access to those features, as well as low-level primitives for accessing
+ * the underlying video buffer memory.
  *
- * If you're accessing the VideoBuffer directly, it is strongly
- * recommended that you're aware of the synchronization protocol used
- * in this buffer, to keep it consistent between the system software
+ * The layout and meaning of video memory changes depending on what mode
+ * you're in. This class provides a union of mode-specific accessors you
+ * can use.
+ *
+ * VideoBuffers can be used with at most one CubeID at a time, though
+ * this association between cubes and video buffers can change at runtime.
+ * Most games will want to have one VideoBuffer per cube, but if you plan to
+ * support very large numbers of cubes, it may be necessary to have fewer
+ * VideoBuffers that are shared among a larger number of cubes.
+ *
+ * VideoBuffers must be explicitly attached to a cube.
+ * See VideoBuffer::attach() and CubeID::detachVideoBuffer().
+ *
+ * If you're accessing the low-level VideoBuffer memory directly, it is
+ * strongly recommended that you're aware of the synchronization protocol
+ * used in this buffer, to keep it consistent between the system software
  * and your application.  See abi.h for details on this protocol.
  */
+struct VideoBuffer {
+    union {
+        _SYSAttachedVideoBuffer sys;
+        SpriteLayer             sprites;
+        Colormap                colormap;
+        FB32Drawable            fb32;
+        FB64Drawable            fb64;
+        FB128Drawable           fb128;
+        BG0ROMDrawable          bg0rom;
+        BG0Drawable             bg0;
+        BG1Drawable             bg1;
+        BG2Drawable             bg2;
+    };
 
-class VideoBuffer {
- public:
+    // Implicit conversions
+    operator _SYSVideoBuffer* () { return &sys.vbuf; }
+    operator const _SYSVideoBuffer* () const { return &sys.vbuf; }
+    operator _SYSAttachedVideoBuffer* () { return &sys; };
+    operator const _SYSAttachedVideoBuffer* () const { return &sys; };
 
     /**
-     * Initialize the buffer. Note that this doesn't initialize the
-     * *contents* of VRAM, as that's format specific. This just
-     * initializes the change maps, so that on the next unlock() we'll
-     * send the entire buffer.
-     *
-     * Keep in mind that this should not be invoked just because
-     * you're changing video modes. It's only necessary when first
-     * initializing this VideoBuffer for use, or if you're migrating
-     * one VideoBuffer to a different cube.
-     *
-     * If you aren't doing anything fancy, don't call
-     * this. Cube::enable() has already done this for you.
+     * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer
+     * to the CubeID constructor, to easily get a CubeID instance for the
+     * current cube that this buffer is attached to.
+     */
+    operator _SYSCubeID () const {
+        return sys.cube;
+    }
+
+    /**
+     * Get the CubeID that this buffer is currently attached to.
      */
-    void init() {
-        _SYS_vbuf_init(&sys);
+    CubeID cube() const {
+        return sys.cube;
+    }
+
+    /**
+     * Change the current drawing window.
+     *
+     * The graphics processor generates one scanline at a time.
+     * Windowed drawing allows the graphics processor to emit fewer scanlines
+     * than a full screen, and to modify where on the LCD these scanlines
+     * begin. In this way, you can do partial-screen rendering in the Y axis.
+     *
+     * This can be used for many kinds of animation effects as well as
+     * effects that involve mixing different video modes.
+     *
+     * Windowing takes place prior to Rotation. So, if your screen is rotated
+     * 90 degrees left, for example, setWindow would be operating on screen
+     * columns rather than rows, and the "line" numbers would start at the
+     * left edge.
+     */
+    void setWindow(uint8_t firstLine, uint8_t numLines) {
+        poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
+    }
+
+    /**
+     * Restore the default full-screen drawing window.
+     */
+    void setDefaultWindow() {
+        setWindow(0, LCD_height);
+    }
+
+    /**
+     * Like setWindow(), but change only the first line.
+     */
+    void setWindowFirstLine(uint8_t firstLine) {
+        pokeb(offsetof(_SYSVideoRAM, first_line), firstLine);
+    }
+
+    /**
+     * Like setWindow(), but change only the number of lines.
+     */
+    void setWindowNumLines(uint8_t numLines) {
+        pokeb(offsetof(_SYSVideoRAM, num_lines), numLines);
+    }
+    
+    /**
+     * Retrieve the most recent 'firstLine' value, set with setWindow()
+     * or setWindowFirstLine()
+     */
+    uint8_t windowFirstLine() const {
+        return peekb(offsetof(_SYSVideoRAM, first_line));
+    }
+
+    /**
+     * Retrieve the most recent 'numLines' value, set with setWindow()
+     * or setWindowNumLines()
+     */
+    uint8_t windowNumLines() const {
+        return peekb(offsetof(_SYSVideoRAM, num_lines));
+    }
+
+    /**
+     * Set the display rotation to use in subsequent rendering.
+     */
+    void setRotation(Rotation r) {
+        const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
+        uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
+        flags &= ~mask;
+        flags |= r & mask;
+        pokeb(offsetof(_SYSVideoRAM, flags), flags);
+    }
+
+    /**
+     * Look up the last display rotation set by setRotation().
+     */
+    Rotation rotation() const {
+        const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
+        uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
+        return Rotation(mask & flags);
+    }
+
+    /**
+     * Map the LCD rotation mask to screen orientation.  This is the side
+     * which maps to the physical "top" of the screen.
+     */    
+    Side orientation() const {
+        switch (rotation()) {
+            case ROT_NORMAL:    return TOP;
+            case ROT_LEFT_90:   return LEFT;
+            case ROT_180:       return BOTTOM;
+            case ROT_RIGHT_90:  return RIGHT;
+            default:            return NO_SIDE;
+        }
+    }
+
+    /**
+     * Set the LCD rotation such that the top of the framebuffer is at
+     * the physical side 'topSide'. This is the counterpart to the
+     * orientation() getter.
+     */
+    void setOrientation(Side topSide) {
+        // Tiny lookup table in a uint32
+        const uint32_t sideToRotation =
+            (ROT_NORMAL     << 0)  |
+            (ROT_LEFT_90    << 8)  |
+            (ROT_180        << 16) |
+            (ROT_RIGHT_90   << 24) ;
+
+        ASSERT(topSide >= 0 && topSide < 4);
+        uint8_t r = sideToRotation >> (topSide * 8);
+        setRotation(Rotation(r));
+    }
+
+    /**
+     * Set this VideoBuffer's cube orientation to be consistent with the
+     * orientation of another "source" VideoBuffer whose cube is
+     * neighbored to this one.
+     *
+     * This version requires the caller to supply Neighborhood instances
+     * corresponding to both our own cube and the 'src' cube. This does
+     * not require that the cubes are currently neighbored, just that they
+     * were when the Neighborhood objects were created.
+     *
+     * Note that these Neighborhoods must be in physical orientation, not
+     * transformed to virtual.
+     */
+    void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
+        int srcSide = srcN.sideOf(cube());
+        int dstSide = thisN.sideOf(src.cube());
+        ASSERT(srcSide != NO_SIDE && dstSide != NO_SIDE);
+        setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+    }
+
+    /**
+     * Set this VideoBuffer's cube orientation to be consistent with the
+     * orientation of another "source" VideoBuffer whose cube is
+     * neighbored to this one.
+     *
+     * Note that the caller is responsible for ensuring that this cube and
+     * the source cube are actually neighbored. The set of neighbored cubes
+     * may change at any event dispatch point, such as System::paint().
+     */
+    void orientTo(const VideoBuffer &src) {
+        orientTo(Neighborhood(cube()), src, Neighborhood(src.cube()));
+    }
+
+    /**
+     * Convert a physical side (relative to the hardware itself) to a virtual
+     * side (relative to the specified screen orientation).
+     */
+    static Side physicalToVirtual(Side side, Side rot) {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side - rot, NUM_SIDES));
+    }
+
+    /**
+     * Convert a virtual side (relative to the specified screen orientation)
+     * to a physical side (relative to the hardware itself).
+     */
+    static Side virtualToPhysical(Side side, Side rot) {
+        if (side == NO_SIDE) { return NO_SIDE; }
+        ASSERT(side >= 0 && side < 4 && rot != NO_SIDE);
+        return Side(umod(side + rot, NUM_SIDES));
+    }
+
+    /**
+     * Convert a physical side (relative to the hardware itself) to a virtual
+     * side (relative to the current screen orientation).
+     */
+    Side physicalToVirtual(Side side) const {
+        return physicalToVirtual(side, orientation());
+    }
+
+    /**
+     * Convert a virtual side (relative to the current screen orientation)
+     * to a physical side (relative to the hardware itself).
+     */
+    Side virtualToPhysical(Side side) const {
+        return virtualToPhysical(side, orientation());
+    }
+
+    /**
+     * Convert a Neighborhood from physical to virtual orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.physicalToVirtual(N).neighborAt(S)
+     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *
+     * This version uses the specified cube orientation.
+     */
+    static Neighborhood physicalToVirtual(Neighborhood nb, Side rot) {
+        Neighborhood result;
+        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
+        return result;
+    }
+
+    /**
+     * Convert a Neighborhood from virtual to physical orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.virtualToPhysical(N).neighborAt(S)
+     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *
+     * This version uses the specified cube orientation.
+     */
+    static Neighborhood virtualToPhysical(Neighborhood nb, Side rot) {
+        Neighborhood result;
+        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
+        return result;
+    }
+
+    /**
+     * Convert a Neighborhood from physical to virtual orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.physicalToVirtual(N).neighborAt(S)
+     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *
+     * Uses the current orientation of this VideoBuffer.
+     */
+    Neighborhood physicalToVirtual(Neighborhood nb) const {
+        return physicalToVirtual(nb, orientation());
+    }
+
+    /**
+     * Convert a Neighborhood from virtual to physical orientation.
+     * These two expressions produce the same result:
+     *
+     *   vbuf.virtualToPhysical(N).neighborAt(S)
+     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *
+     * Uses the current orientation of this VideoBuffer.
+     */
+    Neighborhood virtualToPhysical(Neighborhood nb) const {
+        return virtualToPhysical(nb, orientation());
+    }
+
+    /**
+     * Return the current physical neighbors for the cube attached to
+     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * instance from cube(), but it's provided by analogy with
+     * virtualNeighbors().
+     */
+    Neighborhood physicalNeighbors() const {
+        return Neighborhood(cube());
+    }
+
+    /**
+     * Return the current virtual neighbors for the cube attached to
+     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * instance from cube(), and transforming it with physicalToVirtual().
+     */
+    Neighborhood virtualNeighbors() const {
+        return physicalToVirtual(Neighborhood(cube()));
+    }
+
+    /**
+     * Return the physical accelerometer reading for this cube.
+     * The resulting vector is oriented with respect to the cube hardware.
+     *
+     * This is equivalent to calling accel() on the cube() object.
+     */
+    Byte3 physicalAccel() const {
+        return cube().accel();
+    }
+
+    /**
+     * Return the virtual accelerometer reading for this cube.
+     * The resulting vector is oriented with respect to the current
+     * LCD rotation.
+     */
+    Byte3 virtualAccel() const {
+        return cube().accel().zRotateI(orientation());
+    }
+
+    /**
+     * Return the physical tilt reading for this cube.
+     * The resulting vector is oriented with respect to the cube hardware.
+     *
+     * This is equivalent to calling tilt() on the cube() object.
+     */
+    Byte2 physicalTilt() const {
+        return cube().tilt();
+    }
+
+    /**
+     * Return the virtual tilt reading for this cube.
+     * The resulting vector is oriented with respect to the current
+     * LCD rotation.
+     */
+    Byte2 virtualTilt() const {
+        return cube().tilt().rotateI(orientation());
+    }
+
+    /**
+     * Change the video mode. This affects subsequent rendering only.
+     * Note that this may change the way hardware interprets the contents
+     * of video memory, so it's important to synchronize any mode changes
+     * such that you know the hardware has finished rendering with the old
+     * mode before you start rendering with the new mode.
+     */
+    void setMode(VideoMode m) {
+        pokeb(offsetof(_SYSVideoRAM, mode), m);
+    }
+
+    /**
+     * Retrieve the last video mode set by setMode()
+     */
+    VideoMode mode() const {
+        return VideoMode(peekb(offsetof(_SYSVideoRAM, mode)));
+    }
+    
+    /**
+     * Zero all mode-specific video memory. This is typically part of
+     * initMode(), but it may be necessary to do this at other times. For
+     * example, when doing a multi-mode scene, you may need to ensure that
+     * unused portions of VRAM are in a known blank state.
+     */
+    void erase() {
+        _SYS_vbuf_fill(*this, 0, 0, _SYS_VA_FIRST_LINE / 2);
+    }
+
+    /**
+     * Initialize the video buffer and change modes.
+     *
+     * This is a shorthand for calling System::finish() to finish existing
+     * rendering before changing the mode, actually changing the mode,
+     * restoring the default window and rotation, and finally zero'ing
+     * all mode-specific video memory.
+     *
+     * Most programs should use initMode() to set up the initial mode for
+     * a VideoBuffer, prior to attaching it to a cube. This is because
+     * the process of attaching a video buffer causes the system to assume
+     * all video memory is 'dirty', and re-send it to the cube. It is important
+     * to have video memory in the state you want it to be in before this
+     * happens.
+     *
+     * You can optionally specify a non-default window size. This
+     * is helpful, since often when doing multi-mode rendering you
+     * need to change modes and change windows at the same time.
+     */
+    void initMode(VideoMode m, unsigned firstLine = 0, unsigned numLines = LCD_height) {
+        _SYS_finish();
+        erase();
+        setWindow(firstLine, numLines);
+        setRotation(ROT_NORMAL);
+        setMode(m);
+    }
+
+    /**
+     * Attach this VideoBuffer to a cube. When this cube
+     * is enabled and connected, the system will asynchronously
+     * stream video data from this VideoBuffer to that cube.
+     *
+     * This call automatically reinitializes the change bitmap in this
+     * buffer, so that we'll resend its contents to the ube on next paint.
+     *
+     * If this VideoBuffer was previously attached to a different cube,
+     * you must manually attach() a different video buffer to the old
+     * cube first, or call CubeID::detachVideoBuffer() on the old cube.
+     * A VideoBuffer must never be attached to multiple cubes at once.
+     *
+     * In general, a VideoBuffer should be attach()'ed prior to performing
+     * any tile rendering. This is because the relocated tile addresses of
+     * your assets may be different for each cube, so we need to know the
+     * attached cube's ID at draw time.
+     *
+     * Waits for all cubes to finish rendering before (re)attaching this buffer.
+     */
+    void attach(_SYSCubeID id) {
+        _SYS_finish();
+        sys.cube = id;
+        _SYS_vbuf_init(*this);
+        _SYS_setVideoBuffer(*this, *this);
     }
 
     /**
@@ -59,7 +533,7 @@ class VideoBuffer {
      * unlock().
      */
     void lock(uint16_t addr) {
-        _SYS_vbuf_lock(&sys, addr);
+        _SYS_vbuf_lock(*this, addr);
     }
 
     /**
@@ -67,7 +541,7 @@ class VideoBuffer {
      * already busy flushing updates to the cube, this allows it to begin.
      */
     void unlock() {
-        _SYS_vbuf_unlock(&sys);
+        _SYS_vbuf_unlock(*this);
     }
 
     /**
@@ -76,7 +550,7 @@ class VideoBuffer {
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
-        sys.needPaint = (uint32_t)-1;
+        lock(_SYS_VA_FLAGS);
     }
 
     /**
@@ -86,7 +560,7 @@ class VideoBuffer {
      * one unlock().
      */
     void poke(uint16_t addr, uint16_t word) {
-        _SYS_vbuf_poke(&sys, addr, word);
+        _SYS_vbuf_poke(*this, addr, word);
     }
 
     /**
@@ -94,508 +568,30 @@ class VideoBuffer {
      * sometimes you really do just want to modify one byte.
      */
     void pokeb(uint16_t addr, uint8_t byte) {
-        _SYS_vbuf_pokeb(&sys, addr, byte);
+        _SYS_vbuf_pokeb(*this, addr, byte);
     }
 
     /**
      * Poke a 14-bit tile index into a particular VRAM word.
      */
     void pokei(uint16_t addr, uint16_t index) {
-        _SYS_vbuf_poke(&sys, addr, indexWord(index));
+        _SYS_vbuf_poke(*this, addr, _SYS_TILE77(index));
     }
 
     /**
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
-        return _SYS_vbuf_peek(&sys, addr);
+        return _SYS_vbuf_peek(*this, addr);
     }
 
     /**
      * Read one byte of VRAM
      */
     uint8_t peekb(uint16_t addr) const {
-        return _SYS_vbuf_peekb(&sys, addr);
-    }
-
-    /**
-     * Convert a 14-bit tile index to a 16-bit word
-     */
-    static uint16_t indexWord(uint16_t index) {
-        return ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE);
-    }
-
-    /// Contains the raw video data for this cube
-    _SYSVideoBuffer sys;
-
-    /// Cube ID that the buffer is associated with. Required for asset address lookup.
-    _SYSCubeID cubeID;
-};
-
-
-/**
- * Abstract base class for any video mode.  There isn't much that all the
- * video modes have in common, but this class implements that. Most notably,
- * all video modes have the capacity to do split-screen (by restricting
- * the output to a range of scanlines) or to do whole-screen rotation.
- */
-
-class VidMode {
- public:
-    VidMode(VideoBuffer &vbuf)
-        : buf(vbuf) {}
-    
-    enum Rotation {
-        ROT_NORMAL              = 0,
-        ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
-        ROT_MIRROR              = _SYS_VF_X_FLIP,
-        ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
-        ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
-        ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
-        ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
-        ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
-    };
-
-    static const unsigned LCD_width = 128;
-    static const unsigned LCD_height = 128;
-    static const unsigned TILE = 8;
-
-    void setWindow(uint8_t firstLine, uint8_t numLines) {
-        buf.poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
-    }
-
-    void setRotation(enum Rotation r) {
-        const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
-        uint8_t flags = buf.peekb(offsetof(_SYSVideoRAM, flags));
-        flags &= ~mask;
-        flags |= r & mask;
-        buf.pokeb(offsetof(_SYSVideoRAM, flags), flags);
-    }
-    
- protected:
-    VideoBuffer &buf;
-};
-
-
-/**
- * A video mode that supports one scrolling layer of 8x8-pixel tiles.
- *
- * The native format of this mode is an 18x18 grid of tiles, with
- * horizontal and vertical wrap-around. Other classes build on this
- * basic primitive to do infinite scrolling, or to add additional
- * layers on top of this background.
- */
-
-class VidMode_BG0 : public VidMode {
- public:
-    VidMode_BG0(VideoBuffer &vbuf)
-        : VidMode(vbuf) {}
-    
-    void init() {
-        clear();
-        set();
-        BG0_setPanning(Vec2(0,0));
-        setWindow(0, LCD_height);
-    }
-
-    void set() {
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
-    }
-
-    /// Clear to a specific tile index
-    void clear(uint16_t tile=0) {
-        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
-    }
-
-    /// Clear using the top-left tile in an AssetImage
-    void clear(const Sifteo::AssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.tiles[0]);
-    }
-
-    /// Clear using the top-left tile in an PinnedAssetImage
-    void clear(const Sifteo::PinnedAssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.index);
-    }
-
-    static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
-    static const unsigned BG0_height = _SYS_VRAM_BG0_WIDTH;
-
-    void BG0_setPanning(Int2 pixels) {
-        pixels.x = pixels.x % (int)(BG0_width * TILE);
-        pixels.y = pixels.y % (int)(BG0_height * TILE);
-        if (pixels.x < 0) pixels.x += BG0_width * TILE;
-        if (pixels.y < 0) pixels.y += BG0_height * TILE;
-        buf.poke(offsetof(_SYSVideoRAM, bg0_x) / 2, pixels.x | (pixels.y << 8));
-    }
-
-    uint16_t BG0_addr(Int2 point) {
-        return point.x + (point.y * BG0_width);
-    }
-
-    void BG0_putTile(Int2 point, unsigned index) {
-        buf.pokei(BG0_addr(point), index);
-    }
-
-    void BG0_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
-        ASSERT( frame < asset.frames );
-        uint16_t addr = BG0_addr(point);
-        unsigned offset = asset.width * asset.height * frame;
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
-                        asset.width, asset.height, asset.width, BG0_width);
-    }
-
-    //draw a partial asset.  Pass in the position, xy min points, and width/height
-    void BG0_drawPartialAsset(Int2 point, Int2 offset, Int2 size, const Sifteo::AssetImage &asset, unsigned frame=0) {
-        ASSERT( frame < asset.frames );
-        ASSERT( offset.x >= 0 && offset.y >= 0 );
-        ASSERT( size.x >= 0 && size.y >= 0 );
-        ASSERT( offset.x + size.x <= (int)asset.width );
-        ASSERT( offset.y + size.y <= (int)asset.height );
-        uint16_t addr = BG0_addr(point);
-        ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x <= BG0_width * BG0_height );
-        unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
-                        size.x, size.y, asset.width, BG0_width);
-    }
-
-
-    /**
-     * Draw text using a fixed-width font, with a linear mapping from characters to frames.
-     *
-     * XXX: There will be other font formats, and STIR will probably
-     *      generate different kinds of assets for them. Lots of room
-     *      for cleanup here...  Especially in the assumed mapping
-     *      here! Ugh.
-     */
-
-    void BG0_text(Int2 point, const Sifteo::AssetImage &font, char c) {
-        unsigned index = c - (int)' ';
-        if (index < font.frames)
-            BG0_drawAsset(point, font, index);
-    }
-
-    void BG0_text(Int2 point, const Sifteo::AssetImage &font, const char *str) {
-        Int2 p = point;
-        char c;
-
-        while ((c = *str)) {
-            if (c == '\n') {
-                p.x = point.x;
-                p.y += font.height;
-            } else {
-                BG0_text(p, font, c);
-                p.x += font.width;
-            }
-            str++;
-        }
-    }
-};    
-  
-
-/**
- * A video mode that uses only data resident in the cube's ROM. It's
- * equivalent to BG0, except that the tile indices no longer refer to
- * asset data loaded into flash memory. Instead, it's all stored in
- * the cube's ROM.
- *
- * XXX: We should explicitly define which ROM data is part of our stable
- *      ABI, and which should be considered implementation details.
- *
- * XXX: We should add support to STIR for generating graphics using
- *      the ROM atlas as source data for an Asset Group. That would make
- *      it practical for games to ship their own ROM-friendly graphics
- *      if necessary.
- */
-
-class VidMode_BG0_ROM : public VidMode_BG0 {
- public:
-    VidMode_BG0_ROM(VideoBuffer &vbuf)
-        : VidMode_BG0(vbuf) {}
-    
-    void init() {
-        clear();
-        set();
-        BG0_setPanning(Vec2(0,0));
-        setWindow(0, LCD_height);
-    }
-
-    void set() {
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
-    }
-
-    void clear(uint16_t tile=0) {
-        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
-    }
-
-    void BG0_text(Int2 point, char c) {
-        BG0_putTile(point, c - ' ');
-    }
-
-    void BG0_text(Int2 point, const char *str) {
-        Int2 p = point;
-        char c;
-
-        while ((c = *str)) {
-            if (c == '\n') {
-                p.x = point.x;
-                p.y++;
-            } else {
-                BG0_text(p, c);
-                p.x++;
-            }
-            str++;
-        }
-    }
-
-    void BG0_progressBar(Int2 point, int pixelWidth, int tileHeight=1) {
-        /*
-         * XXX: This is kind of the hugest hack.. we should have some good way
-         *      of using "well-known assets" from ROM somehow. This could either
-         *      be via syscalls, or via data that gets published by the firmware's
-         *      tilerom generator, or maybe it happens via STIR.
-         */
-
-        uint16_t addr = BG0_addr(point);
-        int tileWidth = pixelWidth / TILE;
-        int remainder = pixelWidth % TILE;
-
-        for (int y = 0; y < tileHeight; y++) {
-            _SYS_vbuf_fill(&buf.sys, addr, 0x26fe, tileWidth);
-            if (remainder)
-                buf.pokei(addr + tileWidth, 0x085f + remainder);
-            addr += BG0_width;
-        }
+        return _SYS_vbuf_peekb(*this, addr);
     }
 };
-
-/**
- * A video mode that supports two scrolling layers of 8x8-pixel tiles,
- * and a layer of up to 8 sprites in between.
- *
- * The native format of the scrolling layers of this mode is an 18x18 grid of
- * tiles, with horizontal and vertical wrap-around. Other classes build on this
- * basic primitive to do infinite scrolling, or to add additional
- * layers on top of this background.
- */
-class VidMode_BG0_SPR_BG1 : public VidMode_BG0
-{
-public:
-    VidMode_BG0_SPR_BG1(VideoBuffer &vbuf)
-        : VidMode_BG0(vbuf) {}
-
-    void init()
-    {
-        clear();
-        set();
-        BG0_setPanning(Vec2(0,0));
-        setWindow(0, LCD_height);
-    }
-
-    void set()
-    {
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-    }
-
-    /// Clear to a specific tile index
-    void clear(uint16_t tile=0)
-    {
-        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
-
-        // FIXME clear BG1 tiles starting from "tile"
-        _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-        _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
-        _SYS_vbuf_fill(&buf.sys, _SYS_VA_SPR, 0, 8*5/2);
-    }
-
-    /// Clear using the top-left tile in an AssetImage
-    void clear(const Sifteo::AssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.tiles[0]);
-    }
-
-    /// Clear using the top-left tile in an PinnedAssetImage
-    void clear(const Sifteo::PinnedAssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.index);
-    }
-
-    bool isInMode()
-    {
-        return buf.peek(offsetof(_SYSVideoRAM, mode)) == _SYS_VM_BG0_SPR_BG1;
-    }
-
-    void BG1_setPanning(Int2 pos)
-    {
-        _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
-            ((uint8_t)pos.x) | ((uint16_t)(uint8_t)pos.y << 8));
-    }
-
-    void setSpriteImage(int id, int tile)
-    {
-        uint16_t word = VideoBuffer::indexWord(tile);
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                          sizeof(_SYSSpriteInfo)/2 * id );
-        _SYS_vbuf_poke(&buf.sys, addr, word);
-    }
-
-    void setSpriteImage(int id, const PinnedAssetImage &asset)
-    {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        resizeSprite(id, asset.width * TILE, asset.height * TILE);
-        setSpriteImage(id, base + asset.index);
-    }
-
-    void setSpriteImage(int id, const PinnedAssetImage &asset, int frame)
-    {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        resizeSprite(id, asset.width * TILE, asset.height * TILE);
-        setSpriteImage(id, base + asset.index + (asset.width * asset.height) * frame);
-    }
-
-    bool isSpriteHidden(int id)
-    {
-        // check size
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                          sizeof(_SYSSpriteInfo)/2 * id );
-        return buf.peek(addr) == 0;
-    }
-
-    void resizeSprite(int id, int px, int py)
-    {
-        // Size must be a power of two in current firmwares.
-        ASSERT((px & (px - 1)) == 0);
-        ASSERT((py & (py - 1)) == 0);
-
-        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
-    }
-    
-    void resizeSprite(int id, Int2 size)
-    {
-        resizeSprite(id, size.x, size.y);
-    }
-
-    void hideSprite(int id)
-    {
-        resizeSprite(id, 0, 0);
-    }
-
-    void moveSprite(int id, int px, int py)
-    {
-        _SYS_vbuf_spr_move(&buf.sys, id, px, py);
-    }
-
-    void moveSprite(int id, Int2 pos)
-    {
-        _SYS_vbuf_spr_move(&buf.sys, id, pos.x, pos.y);
-    }
-};
-
-/**
- * A special-purpose video mode for affine transform effects.
- *
- * This mode uses a 16x16 grid of tiles, which form a 128x128
- * pixel active area within a repeating 256x256 image. The three
- * inactive quadrants of the 256x256 image are filled with a
- * solid border color.
- */
-
-class VidMode_BG2 : public VidMode {
- public:
-    VidMode_BG2(VideoBuffer &vbuf)
-        : VidMode(vbuf) {}
-    
-    void init() {
-        clear();
-        set();
-        setWindow(0, LCD_height);
-    }
-
-    void set() {
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG2);
-    }
-
-    /// Clear to a specific tile index
-    void clear(uint16_t tile=0) {
-        _SYS_vbuf_fill(&buf.sys, 0, tile, BG2_width * BG2_height);
-    }
-
-    /// Clear using the top-left tile in an AssetImage
-    void clear(const Sifteo::AssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.tiles[0]);
-    }
-
-    /// Clear using the top-left tile in an PinnedAssetImage
-    void clear(const Sifteo::PinnedAssetImage &asset) {
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-        clear(base + asset.index);
-    }
-
-    static const unsigned BG2_width = _SYS_VRAM_BG2_WIDTH;
-    static const unsigned BG2_height = _SYS_VRAM_BG2_WIDTH;
-
-    void BG2_setBorder(uint16_t color) {
-        buf.poke(offsetof(_SYSVideoRAM, bg2_border) / 2, color);
-    }
- 
-    void BG2_setMatrix(const AffineMatrix &m) {
-        _SYSAffine a = {
-            256.0f * m.cx + 0.5f,
-            256.0f * m.cy + 0.5f,
-            256.0f * m.xx + 0.5f,
-            256.0f * m.xy + 0.5f,
-            256.0f * m.yx + 0.5f,
-            256.0f * m.yy + 0.5f,
-        };
-        _SYS_vbuf_write(&buf.sys, offsetof(_SYSVideoRAM, bg2_affine)/2,
-                        (const uint16_t *)&a, 6);
-    }
-
-    uint16_t BG2_addr(Int2 point) {
-        return point.x + (point.y * BG2_width);
-    }
-
-    void BG2_putTile(Int2 point, unsigned index) {
-        buf.pokei(BG2_addr(point), index);
-    }
-
-    void BG2_drawAsset(Int2 point, const Sifteo::AssetImage &asset, unsigned frame=0) {
-        uint16_t addr = BG2_addr(point);
-        unsigned offset = asset.width * asset.height * frame;
-        unsigned base = asset.group->cubes[buf.cubeID].baseAddr;
-
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
-                        asset.width, asset.height, asset.width, BG2_width);
-    }
-};    
-
-
-/**
- * A special-purpose video mode that just draws a solid color.
- */
-
-class VidMode_Solid : public VidMode {
- public:
-    VidMode_Solid(VideoBuffer &vbuf)
-        : VidMode(vbuf) {}
-    
-    void init() {
-        set();
-    }
-
-    void set() {
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_SOLID);
-    }
-
-    void setColor(uint16_t color) {
-        _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, colormap[0]) / 2, color);
-    }
-};    
 
 
 };  // namespace Sifteo

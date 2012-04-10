@@ -36,8 +36,8 @@ public:
     static void resetSlots(_SYSCubeIDVector cv);
     static void resetPairs(_SYSCubeIDVector cv);
     
-    void getNeighborState(_SYSNeighborState *state) {
-        *state = neighbors;
+    const _SYSNeighborState &getNeighborState() {
+        return neighbors;
     }
     
 private:

@@ -12,7 +12,7 @@ void InventoryView::Init() {
 	mTouch = Parent()->GetCube()->touching();
 	mAnim = 0;
 	Parent()->HideSprites();
-	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
+	Parent()->Graphics().BG0_drawAsset(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
@@ -20,7 +20,7 @@ void InventoryView::Restore() {
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	Parent()->HideSprites();
-	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
+	Parent()->Graphics().BG0_drawAsset(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
@@ -38,7 +38,7 @@ void InventoryView::Update(float dt) {
 			{
 				Cube::Side side = UpdateAccum();
 				if (side != SIDE_UNDEFINED) {
-                    Int2 pos = Vec2(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
+                    Int2 pos = vec(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
 					int count = gGame.GetState()->GetItems(items);
@@ -114,14 +114,14 @@ void InventoryView::RenderInventory() {
 		const int x = i % 4;
 		const int y = i >> 2;
 		if (i == mSelected) {
-			overlay.DrawAsset(Vec2(x<<2,y<<2), InventoryReticle);
+			overlay.DrawAsset(vec(x<<2,y<<2), InventoryReticle);
 		} else {
-			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, items[i]);
+			overlay.DrawAsset(vec(1 + (x<<2),1 + (y<<2)), Items, items[i]);
 		}
 	}
 	overlay.Flush();	
 	ViewMode gfx = Parent()->Graphics();
-	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
+	gfx.resizeSprite(HOVERING_ICON_ID, vec(16, 16));
 	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]);
 	ComputeHoveringIconPosition();
 	gGame.NeedsSync();

@@ -23,9 +23,12 @@ class Logger {
 
     virtual void infoBegin(const char *name) = 0;
     virtual void infoLine(const char *fmt, ...) = 0;
+    virtual void infoLineWithLabel(const char *label, const char *fmt, ...) = 0;
     virtual void infoEnd() = 0;
 
     virtual void error(const char *fmt, ...) = 0;
+
+    virtual void setMinLabelWidth(unsigned width) = 0;
 };
 
 class ConsoleLogger : public Logger {
@@ -43,13 +46,17 @@ class ConsoleLogger : public Logger {
 
     virtual void infoBegin(const char *name);
     virtual void infoLine(const char *fmt, ...);
+    virtual void infoLineWithLabel(const char *label, const char *fmt, ...);
     virtual void infoEnd();
 
     virtual void error(const char *fmt, ...);
 
+    virtual void setMinLabelWidth(unsigned width);
+
  private:
     bool mVerbose;
     bool mNeedNewline;
+    unsigned mLabelWidth;
 };
 
 };  // namespace Stir

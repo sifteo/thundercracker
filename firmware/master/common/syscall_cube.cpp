@@ -16,11 +16,6 @@
 
 extern "C" {
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
-{
-    CubeSlots::solicitCubes(min, max);
-}
-
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
     CubeSlots::enableCubes(CubeSlots::truncateVector(cv));
@@ -37,48 +32,38 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
         CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
-void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
+uint32_t _SYS_getAccel(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(group, sizeof *group) && CubeSlots::validID(cid))
-        CubeSlots::instances[cid].loadAssets(group);
-}
-
-struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid)
-{
-    struct _SYSAccelState r = { 0, 0, 0 };
     if (CubeSlots::validID(cid))
-        CubeSlots::instances[cid].getAccelState(&r);
-    return r;
+        return CubeSlots::instances[cid].getAccelState().value;
+    return 0;
 }
 
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state)
+uint32_t _SYS_getNeighbors(_SYSCubeID cid)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state) && CubeSlots::validID(cid)) {
-        NeighborSlot::instances[cid].getNeighborState(state);
-    }
-}
-
-struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid)
-{
-    struct _SYSTiltState r = { 0 };
     if (CubeSlots::validID(cid))
-        AccelState::instances[cid].getTiltState(&r);
-    return r;
+        return NeighborSlot::instances[cid].getNeighborState().value;
+    return 0xFFFFFFFF;
+}
+
+uint32_t _SYS_getTilt(_SYSCubeID cid)
+{
+    if (CubeSlots::validID(cid))
+        return AccelState::instances[cid].getTiltState().value;
+    return 0;
 }
 
 uint32_t _SYS_getShake(_SYSCubeID cid)
 {
-    _SYSShakeState r = NOT_SHAKING;
     if (CubeSlots::validID(cid))
-        AccelState::instances[cid].getShakeState(&r);
-    return r;
+        return AccelState::instances[cid].getShakeState();
+    return 0;
 }
 
 uint32_t _SYS_isTouching(_SYSCubeID cid)
 {
-    if (CubeSlots::validID(cid)) {
+    if (CubeSlots::validID(cid))
         return CubeSlots::instances[cid].isTouching();
-    }
     return 0;
 }
 

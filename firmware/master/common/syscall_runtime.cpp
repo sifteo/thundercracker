@@ -13,6 +13,7 @@
 #include "svmdebugpipe.h"
 #include "svmdebugger.h"
 #include "svmruntime.h"
+#include "svmloader.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
@@ -20,14 +21,21 @@
 
 extern "C" {
 
-void _SYS_abort() {
+uint32_t _SYS_getFeatures()
+{
+    // Reserved for future use. There are no feature bits yet.
+    return 0;
+}
+
+void _SYS_abort()
+{
     SvmRuntime::fault(Svm::F_ABORT);
 }
 
 void _SYS_exit(void)
 {
     SvmDebugger::signal(Svm::Debugger::S_TERM);
-    SvmRuntime::exit();
+    SvmLoader::exit();
 }
 
 void _SYS_yield(void)
