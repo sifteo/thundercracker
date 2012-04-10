@@ -872,6 +872,8 @@ App::App()
     , mUiIndexSync()
     , mTouching()
     , mTouchSync(false)
+    , mTouchEndChoiceTimer(0.0f)
+    , mTouchEndChoice(-1)
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
     , mScorePlace(UINT_MAX)
@@ -1576,6 +1578,8 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_FREEPLAY_OPTIONS:
         {
             PlaySound(SoundPause);
+            mTouchEndChoiceTimer = 0.0f;
+            mTouchEndChoice = -1;
             break;
         }
         case GAME_STATE_SHUFFLE_START:
@@ -1999,28 +2003,45 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (arraysize(mTouching) > 0 && mTouching[0] == TOUCH_STATE_END)
+                if (mTouchEndChoiceTimer > 0.0f)
                 {
-                    mTouchSync = true;
-                    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                    if (UpdateTimer(mTouchEndChoiceTimer, dt))
                     {
-                        mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
-                        mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
-                        mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
-                        mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                        ASSERT(mTouchEndChoice >= 0 && mTouchEndChoice < kNumCubes);
+                        if (mTouchEndChoice == 0)
+                        {
+                            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                            {
+                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                            }
+                            PlaySound(SoundUnpause);
+                            StartGameState(GAME_STATE_FREEPLAY_PLAY);
+                        }
+                        else if (mTouchEndChoice == 1)
+                        {
+                            ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                            StartGameState(GAME_STATE_FREEPLAY_PLAY);
+                        }
+                        else if (mTouchEndChoice == 2)
+                        {
+                            StartGameState(GAME_STATE_MENU_MAIN);
+                        }
                     }
-                    PlaySound(SoundUnpause);
-                    StartGameState(GAME_STATE_FREEPLAY_PLAY);
                 }
-                else if (arraysize(mTouching) > 1 && mTouching[1] == TOUCH_STATE_END)
+                else
                 {
-                    ResetCubesToPuzzle(GetPuzzleDefault(), false);
-                    mTouchSync = true;
-                    StartGameState(GAME_STATE_FREEPLAY_PLAY);
-                }
-                else if (arraysize(mTouching) > 2 && mTouching[2] == TOUCH_STATE_END)
-                {
-                    StartGameState(GAME_STATE_MENU_MAIN);
+                    for (int i = 0; i < arraysize(mTouching); ++i)
+                    {
+                        if (mTouching[i] == TOUCH_STATE_END)
+                        {
+                            mTouchEndChoiceTimer = kPushButtonDelay;
+                            mTouchEndChoice = 0;
+                            break;
+                        }
+                    }
                 }
             }
             break;
@@ -4079,7 +4100,9 @@ bool App::AnyTouchEnd() const
 
 void App::DrawBackgroundWithTouchBump(CubeWrapper &cubeWrapper, const AssetImage &background)
 {
-    bool holding = !mTouchSync &&
+    bool holding =
+        !mTouchSync &&
+        mTouchEndChoiceTimer == 0.0f &&
         arraysize(mTouching) > cubeWrapper.GetId() &&
         mTouching[cubeWrapper.GetId()] == TOUCH_STATE_HOLD;
     

@@ -129,6 +129,10 @@ private:
     TouchState mTouching[kNumCubes];
     bool mTouchSync;
     
+    // State to implement delay input of bump touch buttons
+    float mTouchEndChoiceTimer;
+    int mTouchEndChoice;
+    
     // Scoring
     float mScoreTimer;
     unsigned int mScoreMoves;

@@ -43,6 +43,7 @@ const float kClueTimerOnDuration = 30.0f;
 const int kParallaxDistance = 2;
 const float kBumpTimerDuration = 0.2f;
 const int kBumpDistance = 4;
+const float kPushButtonDelay = 0.2f;
 
 // Free Play
 const float kFreePlayShakeThrottleDuration = 1.5f;
