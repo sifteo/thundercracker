@@ -9,6 +9,8 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
+#include <string>
+
 namespace Stir {
 
 class Logger {
@@ -56,7 +58,9 @@ class ConsoleLogger : public Logger {
  private:
     bool mVerbose;
     bool mNeedNewline;
+    bool mIsTTY;
     unsigned mLabelWidth;
+    std::string mLastProgressLine;
 };
 
 };  // namespace Stir

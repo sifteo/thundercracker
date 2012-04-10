@@ -6,6 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#ifndef WIN32
+#   include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <algorithm>
@@ -19,8 +23,12 @@ Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
 ConsoleLogger::ConsoleLogger()
-    : mVerbose(false), mNeedNewline(false), mLabelWidth(10)
-    {}
+    : mVerbose(false), mNeedNewline(false), mIsTTY(true), mLabelWidth(10)
+{
+#ifndef WIN32
+    mIsTTY = isatty(2);
+#endif
+}
 
 void ConsoleLogger::setVerbose(bool verbose)
 {
@@ -46,10 +54,19 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
     va_start(ap, fmt);
 
     if (mVerbose) {
-        fprintf(stderr, "\r\t");
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "    ");
-        mNeedNewline = true;
+        char line[1024];
+        line[0] = '\t';
+        vsnprintf(line + 1, sizeof line - 2, fmt, ap);
+        line[sizeof line - 1] = 0;
+
+        if (mIsTTY) {
+            // Show progress incrementally, erasing the line with \r.
+            fprintf(stderr, "\r%s    ", line);
+            mNeedNewline = true;
+        } else {
+            // Save only the last progress line
+            mLastProgressLine = line;
+        }
     }
 
     va_end(ap);
@@ -57,6 +74,11 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
 
 void ConsoleLogger::taskEnd()
 {
+    if (!mLastProgressLine.empty()) {
+        fprintf(stderr, "%s\n", mLastProgressLine.c_str());
+        mLastProgressLine = "";
+    }
+
     if (mNeedNewline) {
         fprintf(stderr, "\n");
         mNeedNewline = false;
