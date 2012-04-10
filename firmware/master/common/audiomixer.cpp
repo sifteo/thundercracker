@@ -5,7 +5,6 @@
 
 #include "audiomixer.h"
 #include "flashlayer.h"
-#include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
 

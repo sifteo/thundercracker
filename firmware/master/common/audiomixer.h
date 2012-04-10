@@ -10,6 +10,7 @@
 #include "audiochannel.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <sifteo/abi.h>
 
 class AudioMixer
 {
