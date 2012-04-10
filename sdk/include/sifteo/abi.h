@@ -322,10 +322,10 @@ enum _SYSAudioLoopType {
 };
 
 struct _SYSAudioModule {
-    uint32_t sampleRate;    /// native sampling rate of data
-    uint32_t loopStart;     /// loop starting point, in samples
-    uint32_t loopEnd;       /// loop ending point, in samples
-    uint8_t loopType;       /// loop type, 0 (no looping) or 1 (forward loop)
+    uint32_t sampleRate;    /// Native sampling rate of data
+    uint32_t loopStart;     /// Loop starting point, in samples
+    uint32_t loopEnd;       /// Loop ending point, in samples
+    uint8_t loopType;       /// Loop type, 0 (no looping) or 1 (forward loop)
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
@@ -339,41 +339,20 @@ struct _SYSAudioBuffer {
 };
 
 /**
- * Accelerometer state.
+ * Small vector types
  */
 
-struct _SYSAccelState {
-    int8_t x;           // +X towards the right
-    int8_t y;           // +Y towards the bottom
-    int8_t z;           // +Z gravity pointing down / right side up
-    int8_t reserved;    // Padded to 32 bits
+union _SYSByte4 {
+    uint32_t value;
+    struct {
+        int8_t x, y, z, w;
+    };
 };
 
-struct _SYSNeighborState {
+union _SYSNeighborState {
+    uint32_t value;
     _SYSCubeID sides[4];
 };
-
-/**
- * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
- */
-
-typedef enum {
-	_SYS_TILT_NEGATIVE,
-	_SYS_TILT_NEUTRAL,
-	_SYS_TILT_POSITIVE
-} _SYS_TiltType;
-
-struct _SYSTiltState {
-    uint8_t x;
-    uint8_t y;
-    uint8_t reserved0;
-    uint8_t reserved1;
-};
-
-typedef enum {
-  NOT_SHAKING,
-  SHAKING
-} _SYSShakeState;
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
@@ -584,8 +563,7 @@ void *_SYS_lti_initializer(void *value);
  * bitcast them to integers.
  *
  * Return values must be integers, and furthermore they must be exactly
- * 32 or 64 bits wide. Structs are allowed, if and only if they're exactly
- * 32 bits long.
+ * 32 or 64 bits wide.
  */
 
 #if defined(FW_BUILD) || !defined(__clang__)
@@ -702,9 +680,9 @@ void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(63);
 
-struct _SYSAccelState _SYS_getAccel(_SYSCubeID cid) _SC(117);
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(33);
-struct _SYSTiltState _SYS_getTilt(_SYSCubeID cid) _SC(61);
+uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(117);
+uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(33);
+uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(61);
 uint32_t _SYS_getShake(_SYSCubeID cid) _SC(118);
 
 uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);

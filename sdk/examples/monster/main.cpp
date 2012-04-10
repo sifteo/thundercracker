@@ -33,9 +33,7 @@ void main()
     cube.enable();
 
     while (1) {
-        _SYSAccelState state = _SYS_getAccel(cube.id());
-
-        fpMonster += state.x;
+        fpMonster += cube.physicalAccel().x;
 
         while (fpMonster < 0) fpMonster += fpMax;
         while (fpMonster > fpMax) fpMonster -= fpMax;

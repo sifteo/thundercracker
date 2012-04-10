@@ -71,7 +71,7 @@ class Cube {
     typedef _SYSCubeID ID;
     typedef _SYSSideID Side;
     typedef _SYSNeighborState Neighborhood;
-    typedef _SYSTiltState  TiltState;
+    typedef _SYSByte4 TiltState;
 
     /**
      * Default constructor leaves id() zero'ed, so that Cube objects
@@ -143,7 +143,7 @@ class Cube {
         ASSERT(side >= 0);
         ASSERT(side < NUM_SIDES);
         _SYSNeighborState state;
-        _SYS_getNeighbors(id(), &state);
+        state.value = _SYS_getNeighbors(id());
         return state.sides[side];
     }
     
@@ -159,7 +159,7 @@ class Cube {
     Side physicalSideOf(ID cube) const {
         ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
         _SYSNeighborState state;
-            _SYS_getNeighbors(id(), &state);
+        state.value = _SYS_getNeighbors(id());
         for(Side side=0; side<NUM_SIDES; ++side) {
             if (state.sides[side] == cube) { return side; }
         }
@@ -167,16 +167,19 @@ class Cube {
     }
     
     Byte2 physicalAccel() const {
-        _SYSAccelState state = _SYS_getAccel(id());
-        return Vec2(state.x, state.y);
+        _SYSByte4 v;
+        v.value = _SYS_getAccel(id());
+        return Vec2(v.x, v.y);
     }
 
     TiltState getTiltState() const {
-        return _SYS_getTilt(id());
+        _SYSByte4 t;
+        t.value = _SYS_getTilt(id());
+        return t;
     }
 
     bool isShaking() const {
-      return _SYS_getShake(id()) == SHAKING;
+        return _SYS_getShake(id());
     }
 
     /**
