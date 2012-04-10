@@ -19,8 +19,6 @@ public:
 
     static AudioMixer instance;
 
-    void init();
-
     static void test();
 
     bool play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle,

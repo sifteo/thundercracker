@@ -16,11 +16,6 @@ AudioMixer::AudioMixer() :
 {
 }
 
-void AudioMixer::init()
-{
-    playingChannelMask = 0;
-}
-
 /*
  * Mix audio from flash into the audio device's buffer via each of the channels.
  *
