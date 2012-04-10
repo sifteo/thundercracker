@@ -19,6 +19,8 @@ void loadAssets()
 {
     Metadata()
         .title("TMNT: Ninja Slide");
+//         .cubeRange(???)
+//         .bootStrap() ???
 //         .icon(GameIcon);
 
     cube.enable();

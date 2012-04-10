@@ -1,7 +1,6 @@
 #ifndef THING_H
 #define THING_H
 #include <sifteo.h>
-#include <string.h>
 #include "rect.h"
 
 using namespace Sifteo;
@@ -9,7 +8,6 @@ using namespace Sifteo;
 
 class Thing;
 
-typedef int CellNum;
 
 // World is information that all Things have access to.
 class World {
@@ -30,7 +28,7 @@ class World {
 
     World(){
         numThings = 0;
-        memset(things, 0, arraysize(things));
+        _SYS_memset32(reinterpret_cast<uint32_t*>(things), 0x33445566, arraysize(things));
         platformsMustStop = PLATFORM_MOVE_DELAY;
     }
 
@@ -46,13 +44,29 @@ class World {
 
 };
 
+/*
+ * CellNum
+ *
+ *  0  1  2  3
+ *  5  6  7  8
+ * 10 11 12 13
+ * 14 15 16 17
+ */
+typedef int CellNum;
+
 bool isValidCellNum(CellNum cellNum){
-    int cellX = cellNum % World::CELLS_PER_ROW;
+    int cellX = cellNum % World::CELL_NUM_PITCH;
     int cellY = int(cellNum / World::CELL_NUM_PITCH);
     return (cellX >= 0
         || cellX < World::CELLS_PER_ROW
         || cellY >= 0
         || cellY < World::CELLS_PER_ROW);
+}
+
+Float2 cellNumToPoint(CellNum cellNum){
+    int cellX = cellNum % World::CELL_NUM_PITCH;
+    int cellY = int(cellNum / World::CELL_NUM_PITCH);
+    return Vec2(cellX * World::PIXELS_PER_CELL, cellY * World::PIXELS_PER_CELL);
 }
 
 class Thing {
@@ -130,21 +144,10 @@ class Thing {
         return result;
     }
 
-
-    // If you can walk to 'to', then return pointer to Thing at that cell.
-    // Otherwise return NULL
-    Thing * canWalk(CellNum from, CellNum to){
-        ASSERT(isValidCellNum(from));
-        ASSERT(isValidCellNum(to));
-
-        for(int i=0; i < World::MAX_THING; i++){
-            if (pWorld->things[i] && pWorld->things[i]->cellNum() == to){
-                return pWorld->things[i];
-            }
-        }
-        
-        return NULL;
+    virtual bool occupiesCell(CellNum theCell){
+        return cellNum()==theCell;
     }
+
 
     // returns the screen space x,y coordinate of the nearest cell
     Int2 nearestCellCoordinate(Float2 point){

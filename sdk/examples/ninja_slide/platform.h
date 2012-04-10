@@ -4,9 +4,6 @@
 #include "thing.h"
 
 class Platform : public Thing {
-  private :
-    typedef Thing super; // Private prevents erroneous use by other classes.
-
   public:
 
     Platform(World &world, int id, Int2 pos) : Thing(world, id, pos) {} 
@@ -37,6 +34,15 @@ class LPlatform : public Platform {
     static const int ORIENTATION_BOTTOM_RIGHT = 2;
     static const int ORIENTATION_BOTTOM_LEFT = 3;
     char orientation;       // where the hole is in the L
+    
+    virtual bool occupiesCell(CellNum dest){
+        Float2 destPoint = cellNumToPoint(dest);
+        Rect theBounds[NUM_BOUNDS_RECTS];
+        bounds(theBounds);
+        bool result = theBounds[0].contains(destPoint)
+            || theBounds[1].contains(destPoint);
+        return result;
+    }
 
     LPlatform(World &world, int id, Int2 pos) : Platform(world, id, pos) {
         orientation = ORIENTATION_TOP_LEFT;

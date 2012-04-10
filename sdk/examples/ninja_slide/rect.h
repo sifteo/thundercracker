@@ -39,6 +39,20 @@ class Rect {
         return size.x <= 0 || size.y <= 0;
     }
 
+    float right(){
+        return origin.x + size.x - 1;
+    }
+
+    float bottom(){
+        return origin.y + size.y - 1;
+    }
+
+    bool contains(Float2 &point){
+        return !isEmpty()
+            && origin.x <= point.x && point.x <= right()
+            && origin.y <= point.y && point.y <= bottom();
+    }
+
 //     Rect intersection(Rect &other){
 //         Rect result;
 
@@ -62,8 +76,8 @@ class Rect {
 
     bool isTouching(Rect &other){
         return !isEmpty() && !other.isEmpty()
-            && origin.x <= (other.origin.x + other.size.x - 1) && (origin.x + size.x - 1) >= other.origin.x
-            && origin.y <= (other.origin.y + other.size.y - 1) && (origin.y + size.y - 1) >= other.origin.y;
+            && origin.x <= other.right() && right() >= other.origin.x
+            && origin.y <= other.bottom() && bottom() >= other.origin.y;
     }
 
 
