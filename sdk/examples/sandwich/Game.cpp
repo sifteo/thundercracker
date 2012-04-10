@@ -54,6 +54,14 @@ void Game::DoPaint(bool sync) {
   // New/Lost Cube Hook?
 }
 
+void Game::UnlockAllViews() {
+  auto i = ListLockedViews();
+  while(i.MoveNext()) {
+    i->GetRoomView()->Unlock();
+  }
+  mLockedViewMask = 0;
+}
+
 void Game::MoveBlock(Sokoblock* block, Int2 u) {
   if (block) {
     block->Move(u);
@@ -168,6 +176,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room, true);
   WalkTo(target, false);
+  UnlockAllViews();
   CheckMapNeighbors();
 }
 

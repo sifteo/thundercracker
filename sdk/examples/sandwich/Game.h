@@ -65,16 +65,21 @@ public:
   
   // listing views
   ViewSlot* ViewAt(int i) { return mViews+i; }
-  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { return ViewSlot::Iterator(mask & mActiveViewMask); }
+
+  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { 
+    return ViewSlot::Iterator(mask & mActiveViewMask); 
+  }
+
   ViewSlot::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
   void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetCubeMask(); }
   void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetCubeMask(); }
+  void UnlockAllViews();
 
   struct {
     ViewSlot::Iterator begin() { return ++Game::Inst()->ListViews(); }
     ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
   } views;
-  
+
 private:
 
   static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
