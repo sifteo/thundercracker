@@ -2,7 +2,7 @@
 
 VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		VideoBuffer& gfx = ViewAt(i)->Video();
+		VideoBuffer& gfx = ViewAt(i)->Canvas();
 		gfx.initMode(BG0_SPR_BG1);
 		gfx.bg0.image(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
@@ -19,7 +19,7 @@ VideoBuffer* Game::IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewAt(i)->Video().bg1.setPanning(vec(0.f, 72 - 128*u));
+			ViewAt(i)->Canvas().bg1.setPanning(vec(0.f, 72 - 128*u));
 		}
 		DoPaint(true);
 	}
@@ -42,13 +42,13 @@ VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		CubeID c = i;
 		if (c != cube) {
-			VideoBuffer& gfx = ViewAt(i)->Video();
+			VideoBuffer& gfx = ViewAt(i)->Canvas();
 			gfx.bg1.eraseMask();
 			gfx.bg1.setPanning(vec(0,0));
 			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	VideoBuffer& mode = ViewAt(cube)->Video();
+	VideoBuffer& mode = ViewAt(cube)->Canvas();
 	// hide banner
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
@@ -151,5 +151,5 @@ VideoBuffer* Game::IntroCutscene() {
 		DoPaint(true);
 	}
 	WaitForSeconds(0.5f);
-	return &ViewAt(cube)->Video();
+	return &ViewAt(cube)->Canvas();
 }

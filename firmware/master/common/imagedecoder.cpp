@@ -398,3 +398,38 @@ void ImageIter::copyToBG1(_SYSVideoBuffer &vbuf, unsigned destX, unsigned destY)
             VRAM::poke(vbuf, mi.getTileAddr(), tile77());
     } while (next());
 }
+
+void ImageIter::copyToBG1Masked(_SYSVideoBuffer &vbuf, uint16_t key)
+{
+    /*
+     * Do a masked copy to BG1. Any tile that matches 'key' is skipped,
+     * other tiles are allocated in the bitmap. The entire bitmap is
+     * overwritten by this operation.
+     *
+     * We do this in two passes: First pass, we build a new mask and
+     * copy it to the VideoBuffer. Second pass, use copyToBG1() to
+     * draw the bitmap at the correct locations.
+     *
+     * We could do this in one pass if we iterated over the image in
+     * normal rectangular order instead of compression block order, but
+     * this would potentially mean decompressing the same blocks many
+     * times. In this order, we decompress each block at most twice.
+     */
+
+    uint16_t mask[_SYS_VRAM_BG1_WIDTH] = { 0 };
+
+    do {
+        if (tile() != key) {
+            unsigned x = getRectX();
+            unsigned y = getRectY();
+            if (x < _SYS_VRAM_BG1_WIDTH && y < _SYS_VRAM_BG1_WIDTH)
+                mask[y] |= 1 << x;
+        }
+    } while (next());
+
+    for (unsigned y = 0; y < _SYS_VRAM_BG1_WIDTH; ++y)
+        VRAM::poke(vbuf, _SYS_VA_BG1_BITMAP/2 + y, mask[y]);
+
+    reset();
+    copyToBG1(vbuf, 0, 0);
+}

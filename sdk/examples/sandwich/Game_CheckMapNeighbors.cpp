@@ -21,7 +21,7 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
   // Orient LCD to parent
   if (origin) { 
     // optimize precalc'd neighborhoods?
-    view->Video().orientTo(origin->Video()); 
+    view->Canvas().orientTo(origin->Canvas()); 
   }
 
 

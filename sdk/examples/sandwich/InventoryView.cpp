@@ -6,13 +6,13 @@
 void InventoryView::Init() {
 	CORO_RESET;
 	mSelected = 0;
-	Int2 tilt = Parent()->Video().virtualAccel().xy();
+	Int2 tilt = Parent()->Canvas().virtualAccel().xy();
 	mTilt.set(tilt.x, tilt.y);
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube().isTouching();
 	mAnim = 0;
 	Parent()->HideSprites();
-	Parent()->Video().bg0.image(vec(0,0), InventoryBackground);
+	Parent()->Canvas().bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
@@ -20,7 +20,7 @@ void InventoryView::Restore() {
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube().isTouching();
 	Parent()->HideSprites();
-	Parent()->Video().bg0.image(vec(0,0), InventoryBackground);
+	Parent()->Canvas().bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
@@ -56,16 +56,16 @@ void InventoryView::Update() {
 		{
 			uint8_t items[16];
 			int count = gGame.GetState()->GetItems(items);
-			//Parent()->Video().setWindow(80, 48);
-			Parent()->Video().setWindow(80+16,128-80-16);
-			mDialog.Init(&Parent()->Video());
+			//Parent()->Canvas().setWindow(80, 48);
+			Parent()->Canvas().setWindow(80+16,128-80-16);
+			mDialog.Init(&Parent()->Canvas());
 			mDialog.Erase();
 			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
 		}
 		gGame.NeedsSync();
 		CORO_YIELD;
 		for(t=0; t<16; t++) {
-			Parent()->Video().setWindow(80+15-(t),128-80-15+(t));
+			Parent()->Canvas().setWindow(80+15-(t),128-80-15+(t));
 			mDialog.SetAlpha(t<<4);
 			CORO_YIELD;
 		}
@@ -107,7 +107,7 @@ void InventoryView::RenderInventory() {
 	// 	}
 	}
 	// overlay.Flush();	
-	VideoBuffer& gfx = Parent()->Video();
+	VideoBuffer& gfx = Parent()->Canvas();
 	gfx.sprites[HOVERING_ICON_ID].resize(vec(16, 16));
 	gfx.sprites[HOVERING_ICON_ID].setImage(Items, items[mSelected]);
 	ComputeHoveringIconPosition();
@@ -116,7 +116,7 @@ void InventoryView::RenderInventory() {
 
 void InventoryView::ComputeHoveringIconPosition() {
 	mAnim++;
-	Parent()->Video().sprites[HOVERING_ICON_ID].move(
+	Parent()->Canvas().sprites[HOVERING_ICON_ID].move(
 		8 + (mSelected%4<<5), 
 		8 + ((mSelected>>2)<<5) + kHoverTable[ mAnim % HOVER_COUNT]
 	);
@@ -125,7 +125,7 @@ void InventoryView::ComputeHoveringIconPosition() {
 Side InventoryView::UpdateAccum() {
 	const int radix = 8;
 	const int threshold = 128;
-	Int2 tilt = Parent()->Video().virtualAccel().xy();
+	Int2 tilt = Parent()->Canvas().virtualAccel().xy();
 	mTilt = tilt;
 	Int2 delta = tilt / radix;
 	if (delta.x) {

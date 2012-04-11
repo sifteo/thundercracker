@@ -7,6 +7,7 @@
 #include "flashlayer.h"
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include "xmtrackerplayer.h"
 
 AudioMixer AudioMixer::instance;
@@ -124,7 +125,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
         return false;
     }
     AudioChannelSlot &ch = channelSlots[idx];
-    ASSERT(nextHandle < UINT32_MAX);
+    ASSERT(nextHandle < UINT_MAX);
     ch.handle = nextHandle++;
     *handle = ch.handle;
 
