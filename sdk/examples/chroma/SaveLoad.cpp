@@ -6,20 +6,20 @@
 
 #include "SaveLoad.h"
 
-/*
+
 const unsigned int HIGHSCORE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
         { 1000, 800, 600, 400, 200 };
 
 const unsigned int HIGHCUBE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
         { 20, 10, 8, 6, 4 };
-*/
 
-const unsigned int HIGHSCORE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
+
+/*const unsigned int HIGHSCORE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
         { 20, 20, 20, 20, 20 };
 
 const unsigned int HIGHCUBE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
         { 4, 4, 4, 4, 4 };
-
+*/
 
 void SaveData::InitDefaultValues()
 {
