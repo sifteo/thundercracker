@@ -40,6 +40,7 @@ SDK_DIR = ../../sdk
 SDCC = sdcc
 CDEPS = *.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+CFLAGS += -DNO_USERSPACE_HEADERS
 
 # Define our CPU's memory limits
 LDFLAGS += --xram-size 1024 --code-size 16384

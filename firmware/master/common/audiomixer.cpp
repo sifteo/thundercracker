@@ -5,21 +5,18 @@
 
 #include "audiomixer.h"
 #include "flashlayer.h"
-#include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
+#include "xmtrackerplayer.h"
 
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     playingChannelMask(0),
-    nextHandle(0)
+    nextHandle(0),
+    trackerCallbackInterval(0),
+    trackerCallbackCountdown(0)
 {
-}
-
-void AudioMixer::init()
-{
-    playingChannelMask = 0;
 }
 
 /*
@@ -72,15 +69,45 @@ void AudioMixer::pullAudio(void *p) {
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
     if (buf->writeAvailable() < sizeof(int16_t)) return;
 
-    unsigned bytesToWrite;
-    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
-    unsigned mixed = AudioMixer::instance.mixAudio(audiobuf, bytesToWrite / sizeof(int16_t));
+    unsigned bytesToMix;
+    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToMix);
+    bytesToMix -= bytesToMix % sizeof(int16_t);
+    unsigned totalBytesMixed = 0;
+
+    unsigned mixed;
+    uint32_t numSamples;
+
+    uint32_t &trackerInterval = AudioMixer::instance.trackerCallbackInterval;
+    uint32_t &trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+
+    do {
+        numSamples = (bytesToMix - totalBytesMixed) / sizeof(int16_t);
+        numSamples = trackerInterval > 0 && trackerCountdown < numSamples
+                   ? trackerCountdown : numSamples;
+        ASSERT(numSamples > 0);
+
+        mixed = AudioMixer::instance.mixAudio(audiobuf, numSamples);
+        audiobuf += mixed;
+        totalBytesMixed += mixed * sizeof(int16_t);
+
+        if (trackerInterval) {
+            ASSERT(trackerCountdown != 0);
+            ASSERT(mixed <= trackerCountdown);
+            // Update the callback countdown
+            trackerCountdown -= mixed;
+
+            // Fire the callback
+            if (trackerCountdown == 0) {
+                XmTrackerPlayer::mixerCallback();
+                trackerCountdown = trackerInterval;
+            }
+        }
+    } while(mixed == numSamples && bytesToMix > totalBytesMixed);
 
     // mixed as returned by mixAudio measure samples, but we care about bytes
-    mixed *= sizeof(int16_t);
-    ASSERT(mixed <= bytesToWrite);
-    if (mixed > 0) {
-        buf->commit(mixed);
+    ASSERT(totalBytesMixed <= bytesToMix);
+    if (totalBytesMixed > 0) {
+        buf->commit(totalBytesMixed);
     }
 }
 
@@ -97,6 +124,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
         return false;
     }
     AudioChannelSlot &ch = channelSlots[idx];
+    ASSERT(nextHandle < UINT32_MAX);
     ch.handle = nextHandle++;
     *handle = ch.handle;
 
@@ -155,6 +183,23 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
         // TODO - implement
     }
     return 0;
+}
+
+void AudioMixer::setTrackerCallbackInterval(uint32_t usec)
+{
+    static const uint64_t kMicroSecondsPerSecond = 1000000;
+
+    // Convert to frames
+    trackerCallbackInterval = ((uint64_t)usec * (uint64_t)curSampleRate) / kMicroSecondsPerSecond;
+
+    // Catch underflow. No one should ever need callbacks this often. Ever.
+    ASSERT(usec == 0 || trackerCallbackInterval > 0);
+    // But if we're not DEBUG, we may as well let it happen every sample.
+    if (usec > 0 && trackerCallbackInterval == 0) {
+        trackerCallbackInterval = 1;
+    }
+
+    trackerCallbackCountdown = trackerCallbackInterval;
 }
 
 AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t mask)

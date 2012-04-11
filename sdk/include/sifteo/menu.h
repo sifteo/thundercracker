@@ -10,9 +10,7 @@
  * It is not part of the default set of headers in sifteo.h.
  */
 
-#ifndef _SIFTEO_MENU_H
-#define _SIFTEO_MENU_H
-
+#pragma once
 #ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
@@ -22,5 +20,3 @@
 #include <sifteo/menu/public.h>
 #include <sifteo/menu/states.h>
 #include <sifteo/menu/events.h>
-
-#endif
