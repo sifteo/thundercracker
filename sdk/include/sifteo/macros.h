@@ -22,25 +22,33 @@
  * On debug builds, the actual log messages and assert failure messages are
  * included in a separate debug symbol ELF section, not in your application's
  * normal data section.
+ *
+ * Normally you would disable debugging by linking your binary as a release
+ * build. However, sometimes it can be useful to have a build with symbols
+ * but without ASSERTs and LOGs. For example, this can be used to isolate
+ * problems that, for whatever reason, only show up with ASSERTs or LOGs
+ * disabled. You can do this by setting the -DNO_ASSERT or -DNO_LOG
+ * compiler options.
  */
 
-#define LOG(...) do { \
-    if (_SYS_lti_isDebug()) \
-        _SYS_lti_log(__VA_ARGS__); \
-} while (0)
+#define DEBUG_ONLY(_x)  do { if (_SYS_lti_isDebug()) { _x } } while (0)
 
-#define DEBUG_ONLY(_x) do { \
-    if (_SYS_lti_isDebug()) { \
-        _x \
-    } \
-} while (0)
+#ifdef NO_LOG
+#   define LOG(...)
+#else
+#   define LOG(...)     do { if (_SYS_lti_isDebug()) _SYS_lti_log(__VA_ARGS__); } while (0)
+#endif
 
-#define ASSERT(_x) do { \
-    if (_SYS_lti_isDebug() && !(_x)) { \
-        _SYS_lti_log("ASSERT failure at %s:%d, (%s)\n", __FILE__, __LINE__, #_x); \
-        _SYS_abort(); \
-    } \
-} while (0)
+#ifdef NO_ASSERT
+#   define ASSERT(_x)
+#else
+#   define ASSERT(_x) do { \
+        if (_SYS_lti_isDebug() && !(_x)) { \
+            _SYS_lti_log("ASSERT failure at %s:%d, (%s)\n", __FILE__, __LINE__, #_x); \
+            _SYS_abort(); \
+        } \
+    } while (0)
+#endif
 
 /// Convenient trace macros for printing the values of variables
 #define LOG_INT(_x)     LOG("%s = %d\n", #_x, (_x));

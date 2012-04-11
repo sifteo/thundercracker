@@ -31,12 +31,21 @@ CFLAGS += -g
 # By default, generate a binary with lightweight debug info and symbols.
 # If the "RELEASE" var is set, we instead generate a fully stripped
 # release binary by omitting "-g" in our slinky invocation.
+
 ifeq ($(RELEASE),)
     LDFLAGS += -g
 endif
 
 ifneq ($(DISABLE_INLINING),)
     LDFLAGS += -disable-inlining
+endif
+
+ifneq ($(NO_LOG),)
+    CFLAGS += -DNO_LOG
+endif
+
+ifneq ($(NO_ASSERT),)
+    CFLAGS += -DNO_ASSERT
 endif
 
 ifneq ($(DISABLE_OPT),)
