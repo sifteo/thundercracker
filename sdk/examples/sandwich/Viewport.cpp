@@ -11,7 +11,6 @@ Viewport* Viewport::Iterator::operator->() {
 	return gGame.ViewAt(currentId);
 }
 
-//Viewport* Viewport::Iterator::ptr() {
 Viewport::Iterator::operator Viewport*() {
 	return gGame.ViewAt(currentId);
 }
@@ -21,8 +20,9 @@ bool Viewport::Touched() const {
 }
 
 void Viewport::Init() {
-	mBuffer.initMode(BG0_SPR_BG1);
-  	mBuffer.setWindow(0, 128);
+	mCanvas.attach(this - gGame.ViewAt(0));
+	mCanvas.initMode(BG0_SPR_BG1);
+  	mCanvas.setWindow(0, 128);
 	if (!gGame.ShowingMinimap() || pMinimap) {
 		mFlags.view = VIEW_IDLE;
 		mView.idle.Init();
@@ -36,16 +36,16 @@ void Viewport::Init() {
 
 void Viewport::HideSprites() {
 	for(unsigned i=0; i<8; ++i) {
-		mBuffer.sprites[i].hide();
+		mCanvas.sprites[i].hide();
 	}
 }
 
 void Viewport::SanityCheckVram() {
-	if (mBuffer.mode() != BG0_SPR_BG1) {
-		mBuffer.setWindow(0,128);
-		mBuffer.initMode(BG0_SPR_BG1);
+	if (mCanvas.mode() != BG0_SPR_BG1) {
+		mCanvas.setWindow(0,128);
+		mCanvas.initMode(BG0_SPR_BG1);
 	}
-	mBuffer.bg0.setPanning(vec(0,0));
+	mCanvas.bg0.setPanning(vec(0,0));
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId, bool doFlush) {
@@ -109,8 +109,8 @@ void Viewport::SetSecondaryView(unsigned viewId, bool doFlush) {
 }
 
 void Viewport::Restore(bool doFlush) {
-	mBuffer.setMode(BG0_SPR_BG1);
-  	mBuffer.setWindow(0, 128);
+	mCanvas.setMode(BG0_SPR_BG1);
+  	mCanvas.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
@@ -246,9 +246,9 @@ void Viewport::RefreshInventory(bool doFlush) {
 }
 
 Viewport* Viewport::VirtualNeighborAt(Side side) const {
-	Neighborhood hood = mBuffer.virtualNeighbors();
+	Neighborhood hood = mCanvas.virtualNeighbors();
 	CubeID neighbor = hood.neighborAt(side);
-	return neighbor.isDefined() ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
+	return neighbor.isDefined() ? gGame.ViewAt(neighbor-CUBE_ID_BASE) : 0;
 }
 
 //----------------------------------------------------------------------
@@ -262,7 +262,7 @@ Viewport* Viewport::VirtualNeighborAt(Side side) const {
 #endif
 
 Side Viewport::VirtualTiltDirection() const {
-  Int2 accel = mBuffer.virtualAccel().xy();
+  Int2 accel = mCanvas.virtualAccel().xy();
   if (accel.y < -TILT_THRESHOLD) {
     return TOP;
   } else if (accel.x < -TILT_THRESHOLD) {

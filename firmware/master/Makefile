@@ -13,7 +13,7 @@ include $(TC_DIR)/Makefile.platform
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include -DNOT_USERSPACE
-CFLAGS_STM32 := -Istm32 -DHAVE_CONFIG_H
+CFLAGS_STM32 := -Istm32
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include
 
 ifneq ($(MASTER_RF_CHAN),)
@@ -78,7 +78,7 @@ program: $(BIN_STM32)
 clean:
 	rm -f $(BINS)
 	rm -f $(OBJS_SIM)
-	rm -f $(OBJS_STM32) 
+	rm -f $(OBJS_STM32_MASTER)
 	rm -rf .dep
 
 # include the dep files, and make a folder for them if necessary

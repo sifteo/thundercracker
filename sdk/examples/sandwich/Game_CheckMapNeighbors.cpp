@@ -21,8 +21,9 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
   // Orient LCD to parent
   if (origin) { 
     // optimize precalc'd neighborhoods?
-    view->Video().orientTo(origin->Video()); 
+    view->Canvas().orientTo(origin->Canvas()); 
   }
+
 
   // Attempt to show location (returns true on change)
   const bool didDisplayLocation = view->ShowLocation(loc, false, false);
@@ -59,7 +60,6 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
       }
     }
   }
-
   return RESULT_OKAY;
 }
 

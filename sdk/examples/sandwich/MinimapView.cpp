@@ -4,8 +4,8 @@
 
 void MinimapView::Init() {
 	Parent()->HideSprites();
-	Parent()->Video().bg1.eraseMask();
-	VideoBuffer& g = Parent()->Video();
+	Parent()->Canvas().bg1.eraseMask();
+	VideoBuffer& g = Parent()->Canvas();
 	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;
@@ -64,7 +64,7 @@ void MinimapView::Restore() {
 }
 
 void MinimapView::Update() {
-	Parent()->Video().sprites[SPRITE_DOT_ID].move(
+	Parent()->Canvas().sprites[SPRITE_DOT_ID].move(
 		(gGame.GetPlayer()->Position()<<3) / 128 + mCanvasOffset.toInt()
 	);
 }

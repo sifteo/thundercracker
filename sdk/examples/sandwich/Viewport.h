@@ -26,12 +26,12 @@ private:
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
     	unsigned prevTouch	: 1;
   	} mFlags;
-  	VideoBuffer mBuffer;
+  	VideoBuffer mCanvas;
 
 public:
 
-	VideoBuffer& Video() { return mBuffer; }
-	CubeID GetCube() const { return mBuffer.cube(); }
+	VideoBuffer& Canvas() { return mCanvas; }
+	CubeID GetCube() const { return mCanvas.cube(); }
 	unsigned GetMask() const { return 1 << (31-GetCube()); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }

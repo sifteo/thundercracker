@@ -9,8 +9,8 @@ void IdleView::Init() {
   mStartFrame = gGame.AnimFrame();
   //DrawInventorySprites();
   Parent()->HideSprites();
-  Parent()->Video().bg0.image(vec(0,0), Blank);
-  Parent()->Video().bg1.eraseMask();
+  Parent()->Canvas().bg0.image(vec(0,0), Blank);
+  Parent()->Canvas().bg1.eraseMask();
 }
 
 void IdleView::Restore() {

@@ -76,7 +76,8 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             sd->wstring[5] = 0x0030;    // 0
             sd->wstring[6] = 0x0030;    // 0
 
-            sd->wstring[7] = 0x0055;    // Vendor Code & padding
+            sd->wstring[7] = UsbDevice::WINUSB_COMPATIBLE_ID;   // Vendor Code & padding
+            *len = MIN(*len, sd->bLength);
             return 1;
         }
 
