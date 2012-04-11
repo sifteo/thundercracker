@@ -86,7 +86,7 @@ private:
 
   // cutscenes
   VideoBuffer* IntroCutscene();
-  void WinScreen();
+  //void WinScreen();
 
 
   // helpers

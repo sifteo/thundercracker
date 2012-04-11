@@ -23,7 +23,7 @@ struct BroadLocation {
 };
 
 struct BroadPath {
-  Side steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
+  int8_t steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
   BroadPath();
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
@@ -31,11 +31,11 @@ struct BroadPath {
 };
 
 struct NarrowPath {
-  Side moves[PATH_CAPACITY];
-  Side *pFirstMove;
+  int8_t moves[PATH_CAPACITY];
+  int8_t *pFirstMove;
   int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
-  const Side* Begin() { return pFirstMove; }
-  const Side* End() { return moves + PATH_CAPACITY; }
+  const int8_t* Begin() { return pFirstMove; }
+  const int8_t* End() { return moves + PATH_CAPACITY; }
 };
 
 //-----------------------------------------------------------------------------

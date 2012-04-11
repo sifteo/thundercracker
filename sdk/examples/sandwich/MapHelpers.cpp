@@ -11,5 +11,5 @@ Side ComputeGateSide(const GatewayData* gate) {
 	} else if (ady > adx) {
 		return dy > 0 ? BOTTOM : TOP;
 	}	
-	return SIDE_UNDEFINED;
+	return NO_SIDE;
 }

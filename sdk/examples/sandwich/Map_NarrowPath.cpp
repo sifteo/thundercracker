@@ -41,7 +41,7 @@ struct AStar {
 
 void AStar::VisitNeighbor(ARecord* parent, Side dir) {
   Int2 tile = IDToTile(parent->tileID);
-  Int2 ntile = tile + kSideToUnit[dir].toInt();
+  Int2 ntile = tile + Int2::unit(dir);
   if (ntile.x < 0 || ntile.y < 0 || ntile.x >= cellPitch || ntile.y >= cellRowCount) {
     return;
   }
@@ -78,7 +78,7 @@ bool Map::FindNarrowPath(BroadLocation bloc, Side dir, NarrowPath* outPath) {
   BroadLocation dbloc;
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
   Int2 loc = bloc.view->Location();
-  Int2 dloc = loc + kSideToUnit[dir].toInt();
+  Int2 dloc = loc + Int2::unit(dir);
   Room* src = GetRoom(loc);
   Room* dst = GetRoom(dloc);
   
@@ -141,16 +141,16 @@ bool Map::FindNarrowPath(BroadLocation bloc, Side dir, NarrowPath* outPath) {
         while(tile != as.src) {
           (outPath->pFirstMove)--;
           *(outPath->pFirstMove) = (pSelected->parentDirection + 2) % 4;
-          tile += kSideToUnit[pSelected->parentDirection].toInt();
+          tile += Int2::unit(pSelected->parentDirection);
           pSelected = as.records + as.cells[as.TileToID(tile)].record;
         }
         return true;
       } else {
         // visit NSEW neighbors - first in target dir, then orth dirs, then opposite dir
         as.VisitNeighbor(pSelected, dir);
-        as.VisitNeighbor(pSelected, (dir+1)%4);
-        as.VisitNeighbor(pSelected, (dir+3)%4);
-        as.VisitNeighbor(pSelected, (dir+2)%4);
+        as.VisitNeighbor(pSelected, (Side)((dir+1)%4));
+        as.VisitNeighbor(pSelected, (Side)((dir+3)%4));
+        as.VisitNeighbor(pSelected, (Side)((dir+2)%4));
       }
     }
   } while(pSelected);
