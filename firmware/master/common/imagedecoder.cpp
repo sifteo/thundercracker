@@ -342,13 +342,34 @@ uint32_t ImageIter::getDestBytes(uint32_t stride) const
      * greater than or equal to width.
      *
      * All arithmetic is overflow-safe. On error, we return 0xFFFFFFFF.
+     *
+     * Note that the result isn't actually (stride * height). The
+     * last row we write to won't actually cover the full stride, it
+     * will only cover the specified width. This becomes important for
+     * calculating the amount of memory to map. If we overestimate, we
+     * could cause false failures in mapping. This can happen, for example,
+     * when drawing to the lower-right corner of a memory buffer.
      */
     
     uint32_t w = getWidth();
     uint32_t h = getHeight();
-    if (stride < w) return 0xFFFFFFFF;
-    uint32_t words = mulsat16x16(stride, h);
-    return mulsat16x16(words, 2);
+
+    if (h == 0)
+        return 0;
+
+    // Bad stride?
+    if (stride < w || stride > 0xFFFF)
+        return 0xFFFFFFFF;
+
+    // Words for everything except the last scanline
+    uint32_t words = mulsat16x16(stride, h - 1);
+    if (words > 0xFFFF)
+        return 0xFFFFFFFF;
+
+    // Words for the last scanline.
+    words += w;
+
+    return words * 2;
 }
 
 void ImageIter::copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr,
