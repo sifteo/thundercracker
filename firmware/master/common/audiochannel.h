@@ -65,7 +65,6 @@ private:
 
     uint8_t state;
     int16_t volume;
-    _SYSAudioHandle handle;
 
     struct _SYSAudioModule mod;
     AudioSampleData samples;
