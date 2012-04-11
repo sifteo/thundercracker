@@ -29,6 +29,18 @@
  * problems that, for whatever reason, only show up with ASSERTs or LOGs
  * disabled. You can do this by setting the -DNO_ASSERT or -DNO_LOG
  * compiler options.
+ *
+ * Logging supports a variety of format specifiers. Most of the standard
+ * printf() specifiers are supported, plus we have several new ones:
+ *
+ *   - Literal characters, and %%
+ *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
+ *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
+ *   - Four chars packed into a 32-bit integer: %C
+ *   - Binary integers: %b
+ *   - C-style strings: %s
+ *   - Hex-dump of fixed width buffers: %<width>h
+ *   - Pointer, printed as a resolved symbol when possible: %P
  */
 
 #define DEBUG_ONLY(_x)  do { if (_SYS_lti_isDebug()) { _x } } while (0)

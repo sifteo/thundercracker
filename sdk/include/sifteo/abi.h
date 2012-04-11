@@ -593,16 +593,8 @@ struct _SYSMetadataImage {
  *
  * These functions are replaced during link-time optimization.
  *
- * Logging supports many standard printf() format specifiers:
- *
- *   - Literal characters, and %%
- *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
- *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
- *   - Four chars packed into a 32-bit integer: %C
- *   - Binary integers: %b
- *   - C-style strings: %s
- *   - Hex-dump of fixed width buffers: %<width>h
- *   - Pointer, printed as a resolved symbol when possible: %P
+ * Logging supports many standard printf() format specifiers,
+ * as documented in sifteo/macros.h
  *
  * To work around limitations in C variadic functions, _SYS_lti_metadata()
  * supports a format string which specifies what data type each argument
