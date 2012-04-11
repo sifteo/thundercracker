@@ -387,9 +387,8 @@ struct _SYSAttachedVideoBuffer {
  * Audio handles
  */
 
-#define _SYS_AUDIO_INVALID_HANDLE   ((uint32_t)-1)
-
-typedef uint32_t _SYSAudioHandle;
+typedef uint8_t _SYSAudioChannelID;     /// Audio channel slot index
+#define _SYS_AUDIO_INVALID_CHANNEL_ID   ((_SYSAudioChannelID)-1)
 
 // NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
 // but must also accommodate a full frame's worth of speex data. If we go narrowband,
@@ -413,7 +412,6 @@ enum _SYSAudioLoopType {
     _SYS_LOOP_UNDEF     = -1,
     _SYS_LOOP_ONCE      = 0,
     _SYS_LOOP_REPEAT    = 1,
-    _SYS_LOOP_PING_PONG = 2
 };
 
 struct _SYSAudioModule {
@@ -811,14 +809,14 @@ void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(19);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(35);
 
-uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(50);
-uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(127);
-void _SYS_audio_stop(_SYSAudioHandle h) _SC(52);
-void _SYS_audio_pause(_SYSAudioHandle h) _SC(128);
-void _SYS_audio_resume(_SYSAudioHandle h) _SC(129);
-int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(130);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(131);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(50);
+uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch) _SC(127);
+void _SYS_audio_stop(_SYSAudioChannelID ch) _SC(52);
+void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
+void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
+int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
+void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
+uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
 
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
 void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);

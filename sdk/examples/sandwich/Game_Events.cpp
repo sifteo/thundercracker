@@ -58,21 +58,21 @@ void Game::OnYesOhMyGodExplosion(Bomb* bomb) {
   }
 
   LOG(("YES OH MY GOD!\n"));
-  //for(;;) DoPaint(false);
+  //for(;;) DoPaint();
 }
 
 void Game::OnToggleSwitch(const SwitchData* pSwitch) {
   RestorePearlIdle();
   for(unsigned i=1; i<=7; ++i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-    Paint(true);
-    Paint(true);
+    Paint();
+    Paint();
   }
   OnTriggerEvent(pSwitch->eventType, pSwitch->eventId);
   for(int i=6; i>=0; --i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-    Paint(true);
-    Paint(true);
+    Paint();
+    Paint();
   }
 }
 
@@ -82,19 +82,19 @@ void Game::OnTrapdoor(Room *pRoom) {
   // animate the tiles opening
   for(unsigned i=1; i<=7; ++i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-    Paint(true);
-    Paint(true);
+    Paint();
+    Paint();
   }
   // animate pearl falling TODO
   mPlayer.CurrentView()->HidePlayer();
   for(unsigned i=0; i<16; ++i) {
-    Paint(true);
+    Paint();
   }
   // animate the tiles closing
   for(int i=6; i>=0; --i) { // magic
     mPlayer.CurrentView()->DrawTrapdoorFrame(i);
-    Paint(true);
-    Paint(true);
+    Paint();
+    Paint();
   }
   // pan to respawn point
   ScrollTo(pRoom->Trapdoor()->respawnRoomId);
@@ -104,14 +104,14 @@ void Game::OnTrapdoor(Room *pRoom) {
   int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
   for(unsigned i=0; i<arraysize(animHeights); ++i) {
     pView->GetRoomView()->DrawPlayerFalling(animHeights[i]);
-    Paint(true);
+    Paint();
   }
   const Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
   mPlayer.SetPosition(targetRoom->Center(0));
   mPlayer.SetDirection(BOTTOM);
   pView->ShowLocation(mPlayer.Position()/128, true);
   CheckMapNeighbors();
-  Paint(true);
+  Paint();
 }
 
 void Game::OnInventoryChanged() {
@@ -240,14 +240,14 @@ void Game::OnNpcChatter(const NpcData* pNpc) {
   // PLAYER TRIGGERED NPC DIALOG
   mPlayer.SetStatus(PLAYER_STATUS_IDLE);
   mPlayer.CurrentView()->UpdatePlayer();
-  for(int i=0; i<16; ++i) { Paint(true); }
+  for(int i=0; i<16; ++i) { Paint(); }
   if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
   NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent());
-  DoPaint(true);
+  DoPaint();
   OnTriggerEvent(pNpc->trigger);
-  mPlayer.CurrentView()->Parent()->Restore(false);
+  mPlayer.CurrentView()->Parent()->Restore();
   RestorePearlIdle();
-  DoPaint(true);
+  DoPaint();
 }
 
 void Game::OnDropEquipment(Room *pRoom) {
@@ -335,7 +335,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
       Viewport::Iterator p = ListViews();
       while(p.MoveNext()) {
         if (p->ShowingRoom()) {
-          p->Restore(false);
+          p->Restore();
         }
       }
       break;
@@ -370,13 +370,13 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         if (!didRestore) {
           ScrollTo(door.trigger.room);
           Wait(0.5f);
-          mPlayer.CurrentView()->Parent()->ShowLocation(mMap.GetLocation(door.trigger.room), true, true);
+          mPlayer.CurrentView()->Parent()->ShowLocation(mMap.GetLocation(door.trigger.room), true);
           Wait(0.5f);
           IrisOut(mPlayer.CurrentView()->Parent());
-          mPlayer.CurrentView()->Parent()->ShowLocation(mPlayer.Position()/128, true, false);
+          mPlayer.CurrentView()->Parent()->ShowLocation(mPlayer.Position()/128, true);
           Slide(mPlayer.CurrentView()->Parent());
           CheckMapNeighbors();
-          Paint(true);
+          Paint();
         }
         break;
       }

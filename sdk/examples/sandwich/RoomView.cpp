@@ -164,7 +164,6 @@ void RoomView::HideOverlay(bool flag) {
   if (flags.hideOverlay != flag) {
     flags.hideOverlay = flag;
     DrawBackground();
-    gGame.NeedsSync();
   }
 }
 

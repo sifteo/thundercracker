@@ -2,7 +2,7 @@
 
 VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		VideoBuffer& gfx = ViewAt(i)->Canvas();
+		VideoBuffer& gfx = ViewAt(i).Canvas();
 		gfx.initMode(BG0_SPR_BG1);
 		gfx.bg0.image(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
@@ -19,9 +19,9 @@ VideoBuffer* Game::IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewAt(i)->Canvas().bg1.setPanning(vec(0.f, 72 - 128*u));
+			ViewAt(i).Canvas().bg1.setPanning(vec(0.f, 72 - 128*u));
 		}
-		DoPaint(true);
+		DoPaint();
 	}
 	
 	// wait for a touch
@@ -42,19 +42,19 @@ VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		CubeID c = i;
 		if (c != cube) {
-			VideoBuffer& gfx = ViewAt(i)->Canvas();
-			gfx.bg1.eraseMask();
+			VideoBuffer& gfx = ViewAt(i).Canvas();
+			gfx.bg1.eraseMask(false);
 			gfx.bg1.setPanning(vec(0,0));
 			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	VideoBuffer& mode = ViewAt(cube)->Canvas();
+	VideoBuffer& mode = ViewAt(cube).Canvas();
 	// hide banner
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		mode.bg1.setPanning(vec(0.f, -56 + 128*u));
-		DoPaint(true);
+		DoPaint();
 	}
 	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
@@ -65,7 +65,7 @@ VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<48/2; ++i) {
 		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
 		mode.sprites[0].move(64-16, 128-i-i);
-		DoPaint(true);
+		DoPaint();
 	}
 	// face front
 	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
@@ -100,21 +100,21 @@ VideoBuffer* Game::IntroCutscene() {
 		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
 			mode.sprites[i+1].move(x, 42 - j);
-			DoPaint(false);
+			DoPaint();
 		}
 		for(int j=6; j>0; --j) {
 			mode.sprites[i+1].move(x, 42 - j);
-			DoPaint(false);
+			DoPaint();
 		}
 		mode.sprites[i+1].move(x, 42);
-		DoPaint(true);
+		DoPaint();
 	}
 	WaitForSeconds(1.f);
 
 	// do the pickup animation
 	for(unsigned i=0; i<PlayerPickup.numFrames(); ++i) {
 		mode.sprites[0].setImage(PlayerPickup.tile(0) + i * PlayerPickup.numTilesPerFrame());
-		DoPaint(true);
+		DoPaint();
 		WaitForSeconds(0.05f);
 	}
 	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
@@ -126,7 +126,7 @@ VideoBuffer* Game::IntroCutscene() {
 	mode.sprites[3].hide();
 	mode.sprites[4].hide();
 	mode.bg0.image(vec(0,0), Sting);
-	DoPaint(true);
+	DoPaint();
 
 	// walk off
 	PlaySfx(sfx_running);
@@ -134,7 +134,7 @@ VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<76/2; ++i) {
 		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
 		mode.sprites[0].move(64-16, 80-i-i);
-		DoPaint(true);
+		DoPaint();
 	}
 	mode.sprites[0].hide();
 
@@ -148,8 +148,8 @@ VideoBuffer* Game::IntroCutscene() {
 			mode.bg0.image(vec(i, y), BlackTile);
 			mode.bg0.image(vec(16-i-1, y), BlackTile);
 		}
-		DoPaint(true);
+		DoPaint();
 	}
 	WaitForSeconds(0.5f);
-	return &ViewAt(cube)->Canvas();
+	return &ViewAt(cube).Canvas();
 }
