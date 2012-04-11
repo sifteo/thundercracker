@@ -20,7 +20,7 @@
 #ifndef _SIFTEO_ABI_H
 #define _SIFTEO_ABI_H
 
-#ifdef NO_USERSPACE_HEADERS
+#ifdef NOT_USERSPACE
 #   include <stdint.h>
 #endif
 
@@ -38,7 +38,7 @@ typedef uint8_t bool;
  * from stdint.h above.
  */
 
-#ifndef NO_USERSPACE_HEADERS
+#ifndef NOT_USERSPACE
     typedef signed char int8_t;
     typedef unsigned char uint8_t;
     typedef signed short int16_t;
@@ -71,9 +71,13 @@ typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset 
  * or return values, declared using C linkage.
  */
 
-#ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
+#ifndef NOT_USERSPACE
 void main(void);
 #endif
+
+/**
+ * Asset loading
+ */
 
 #define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
