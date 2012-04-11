@@ -43,7 +43,7 @@ VideoBuffer* Game::IntroCutscene() {
 		CubeID c = i;
 		if (c != cube) {
 			VideoBuffer& gfx = ViewAt(i).Canvas();
-			gfx.bg1.eraseMask(false);
+			gfx.bg1.eraseMask();
 			gfx.bg1.setPanning(vec(0,0));
 			gfx.bg0.image(vec(0,0), Blank);
 		}

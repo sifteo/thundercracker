@@ -37,7 +37,7 @@ void Game::DoPaint() {
 void Game::UnlockAllViews() {
   auto i = ListLockedViews();
   while(i.MoveNext()) {
-    i->GetRoomView()->Unlock();
+    i->GetRoomView().Unlock();
   }
   mLockedViewMask = 0;
 }
@@ -51,11 +51,11 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
     const Side dir = InferDirection(u);
     Viewport* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
     if (view && view->ShowingRoom()) {
-      RoomView* pRoomView = view->GetRoomView();
-      if (pRoomView->Block()) {
-        pRoomView->UpdateBlock();
+      RoomView& roomView = view->GetRoomView();
+      if (roomView.Block()) {
+        roomView.UpdateBlock();
       } else {
-        pRoomView->ShowBlock(block);
+        roomView.ShowBlock(block);
       }
     }
     //
@@ -160,7 +160,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 
 void Game::IrisOut(Viewport* view) {
   view->HideSprites();
-  view->Canvas().bg1.eraseMask(false);
+  view->Canvas().bg1.eraseMask();
   VideoBuffer& mode = view->Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -217,7 +217,7 @@ void Game::ScrollTo(unsigned roomId) {
   // hide sprites and overlay
   pView->HideSprites();
   VideoBuffer& mode = pView->Canvas();
-  mode.bg1.eraseMask(false);
+  mode.bg1.eraseMask();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
@@ -360,15 +360,15 @@ void Game::RestorePearlIdle() {
 }
 
 void Game::RoomNod(Viewport* view) {
-  view->GetRoomView()->StartNod();
-  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  view->GetRoomView().StartNod();
+  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
     Paint();
   }
 }
 
 void Game::RoomShake(Viewport* view) {
-  view->GetRoomView()->StartShake();
-  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  view->GetRoomView().StartShake();
+  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
     Paint();
   }
 }

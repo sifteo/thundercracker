@@ -71,15 +71,14 @@ void Game::MainLoop() {
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
-	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
-	      				p->GetRoomView()->StartShake();
-	      				//p->GetRoomView()->Lock();
+	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView().StartShake();
 	      			}
 	      		}
 	      	}
     	}
     	if (mViews[targetViewId].ShowingRoom()) {
-    		mViews[targetViewId].GetRoomView()->StartNod();
+    		mViews[targetViewId].GetRoomView().StartNod();
     	}
 
 	    //-------------------------------------------------------------------------

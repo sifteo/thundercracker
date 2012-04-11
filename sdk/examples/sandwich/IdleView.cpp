@@ -11,7 +11,7 @@ void IdleView::Init() {
   mStartFrame = gGame.AnimFrame();
   Parent()->HideSprites();
   mCanvas.bg0.image(vec(0,0), Blank);
-  mCanvas.bg1.eraseMask(false);
+  mCanvas.bg1.eraseMask();
 }
 
 void IdleView::Restore() {
