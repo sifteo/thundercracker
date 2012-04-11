@@ -24,9 +24,16 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protecto
 # generate dependency files
 CFLAGS += -MD -MP
 
-# Debug symbols
+# We can always let the C compiler generate debug symbols; slinky
+# will filter those out or not depending on its command line options.
 CFLAGS += -g
-LDFLAGS += -g
+
+# By default, generate a binary with lightweight debug info and symbols.
+# If the "RELEASE" var is set, we instead generate a fully stripped
+# release binary by omitting "-g" in our slinky invocation.
+ifeq ($(RELEASE),)
+    LDFLAGS += -g
+endif
 
 ifneq ($(DISABLE_INLINING),)
     LDFLAGS += -disable-inlining

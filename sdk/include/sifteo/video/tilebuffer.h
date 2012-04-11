@@ -43,7 +43,7 @@ struct TileBuffer {
         _SYSAssetImage image;
         _SYSCubeID cube;
     } sys;
-    uint16_t tiles[tTileWidth * tTileHeight];
+    uint16_t tiles[tTileWidth * tTileHeight * tFrames];
 
     /// Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(&sys.image); }
@@ -148,17 +148,38 @@ struct TileBuffer {
     }
 
     /**
+     * Return the number of frames in this image.
+     */
+    static int numFrames() {
+        return tFrames;
+    }
+
+    /**
+     * Return the number of tiles in each frame of the image.
+     */
+    static int numTilesPerFrame() {
+        return tileWidth() * tileHeight();
+    }
+
+    /**
+     * Return the total number of tiles in every frame of the image.
+     */
+    static int numTiles() {
+        return numFrames() * numTilesPerFrame();
+    }
+
+    /**
      * Returns the size of this drawable's tile data, in bytes
      */
     static unsigned sizeInBytes() {
-        return tileWidth() * tileHeight() * 2;
+        return numTiles() * 2;
     }
 
     /**
      * Returns the size of this drawable's tile data, in 16-bit words
      */
     static unsigned sizeInWords() {
-        return tileWidth() * tileHeight();
+        return numTiles();
     }
 
     /**
@@ -179,13 +200,41 @@ struct TileBuffer {
 
     /**
      * Plot a single tile, by absolute tile index,
-     * at location 'pos' in tile units.
+     * at linear position 'i'.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void plot(UInt2 pos, uint16_t tileIndex) {
-        ASSERT(pos.x < tileWidth() && pos.y < tileHeight());
-        tiles[pos.x + pos.y * tileWidth()] = tileIndex;
+    void plot(unsigned i, uint16_t tileIndex) {
+        ASSERT(i < numTiles());
+        tiles[i] = tileIndex;
+    }
+
+    /**
+     * Plot a single tile, by absolute tile index,
+     * at location 'pos' in tile units, on the given frame.
+     *
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    void plot(UInt2 pos, uint16_t tileIndex, unsigned frame = 0) {
+        ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
+        tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()] = tileIndex;
+    }
+
+    /**
+     * Returns the index of the tile at linear position 'i' in the image.
+     */
+    uint16_t tile(unsigned i) const {
+        ASSERT(i < numTiles());
+        return tiles[i];
+    };
+
+    /**
+     * Return the index of the tile at the specified (x, y) tile coordinates,
+     * and optionally on the specified frame number.
+     */
+    uint16_t tile(Int2 pos, unsigned frame = 0) const {
+        ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
+        return tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()];
     }
 
     /**
@@ -194,20 +243,21 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void span(UInt2 pos, unsigned width, unsigned tileIndex)
+    void span(UInt2 pos, unsigned width, unsigned tileIndex, unsigned frame = 0)
     {
         ASSERT(pos.x <= tileWidth() && width <= tileWidth() &&
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
-        memset16(&tiles[pos.x + pos.y * tileWidth()], tileIndex, width);
+        memset16(&tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()],
+            tileIndex, width);
     }
 
     /**
      * Plot a horizontal span of tiles, using the first tile of a pinned asset.
      * All coordinates must be in range. This function performs no clipping.
      */
-    void span(UInt2 pos, unsigned width, const PinnedAssetImage &image)
+    void span(UInt2 pos, unsigned width, const PinnedAssetImage &image, unsigned frame = 0)
     {
-        span(pos, width, image.tile(sys.cube));
+        span(pos, width, image.tile(sys.cube), frame);
     }
 
     /**
@@ -216,10 +266,10 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void fill(UInt2 topLeft, UInt2 size, unsigned tileIndex)
+    void fill(UInt2 topLeft, UInt2 size, unsigned tileIndex, unsigned frame = 0)
     {
         while (size.y) {
-            span(topLeft, size.x, tileIndex);
+            span(topLeft, size.x, tileIndex, frame);
             size.y--;
             topLeft.y++;
         }
@@ -231,9 +281,9 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void fill(UInt2 topLeft, UInt2 size, const PinnedAssetImage &image)
+    void fill(UInt2 topLeft, UInt2 size, const PinnedAssetImage &image, unsigned frame = 0)
     {
-        fill(topLeft, size, image.tile(sys.cube));
+        fill(topLeft, size, image.tile(sys.cube), frame);
     }
 
     /**
@@ -243,10 +293,13 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void image(UInt2 pos, const AssetImage &image, unsigned frame = 0)
+    void image(UInt2 pos, const AssetImage &image, unsigned srcFrame = 0, unsigned destFrame = 0)
     {
-        _SYS_image_memDraw(&tiles[pos.x + pos.y * tileWidth()],
-            image, tileWidth(), frame);
+        ASSERT(pos.x < tileWidth() && pos.x + image.tileWidth() <= tileWidth() &&
+               pos.y < tileHeight() && pos.y + image.tileHeight() <= tileHeight() &&
+               destFrame < numFrames());
+        _SYS_image_memDraw(&tiles[pos.x + (pos.y + destFrame * tileHeight()) * tileWidth()],
+            image, tileWidth(), srcFrame);
     }
 
     /**
@@ -256,10 +309,14 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY, unsigned frame = 0)
+    void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY,
+        unsigned srcFrame = 0, unsigned destFrame = 0)
     {
-        _SYS_image_memDrawRect(&tiles[destXY.x + destXY.y * tileWidth()],
-            image, tileWidth(), frame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
+        ASSERT(destXY.x < tileWidth() && destXY.x + size.x <= tileWidth() &&
+               destXY.y < tileHeight() && destXY.y + size.y <= tileHeight() &&
+               destFrame < numFrames());
+        _SYS_image_memDrawRect(&tiles[destXY.x + (destXY.y + destFrame * tileHeight()) * tileWidth()],
+            image, tileWidth(), srcFrame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
     /**
@@ -267,9 +324,10 @@ struct TileBuffer {
      * is represented by a consecutive 'frame' in the image. Characters not
      * present in the font will be skipped.
      */
-    void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
+    void text(Int2 topLeft, const AssetImage &font, const char *str,
+        unsigned destFrame = 0, char firstChar = ' ')
     {
-        uint16_t *addr = &tiles[topLeft.x + topLeft.y * tileWidth()];
+        uint16_t *addr = &tiles[topLeft.x + (topLeft.y + destFrame * tileHeight()) * tileWidth()];
         uint16_t *lineAddr = addr;
         char c;
 
@@ -277,6 +335,8 @@ struct TileBuffer {
             if (c == '\n') {
                 addr = (lineAddr += tileWidth());
             } else {
+                ASSERT(font.tileWidth() + (font.tileHeight() - 1) * tileWidth() + addr
+                    <= numTiles() + tiles);
                 _SYS_image_memDraw(addr, font, tileWidth(), c - firstChar);
                 addr += font.tileWidth();
             }
