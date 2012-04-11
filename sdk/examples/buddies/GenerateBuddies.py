@@ -49,6 +49,7 @@ def ProcessFull(image_bg_path, image_parts_path):
     image_parts = Image.open(image_parts_path)
     
     image_bg.paste(image_parts, (0, 0), image_parts)
+    image_bg = image_bg.crop((8, 8, 136, 136))
     
     buddy = os.path.basename(image_bg_path)[:4]
     buddy_index = names[buddy]
@@ -73,22 +74,22 @@ def ProcessParts(image_path):
     
     for i in range(num_frames_src):
         box_src = boxes_src[i]
-        frame = image.copy().crop(box_src)
+        frame = Image.new('RGBA', (48, 48))
+        if i == 0:
+            frame.paste(image.crop(box_src), (0, 0))
+        elif i == 1:
+            frame.paste(image.crop(box_src), (0, 0))
+        elif i == 2:
+            frame.paste(image.crop(box_src), (0, 8))
+        elif i == 3:
+            frame.paste(image.crop(box_src), (8, 0))
         for j in range(4):
             y = (parts_size[1] * j * 4) + (parts_size[1] * i)
-            if j == 0:
-                final_bg1.paste(frame, (0, y))
-            elif j == 1:
-                final_bg1.paste(frame, (0, y + 8))
-            elif j == 2:
-                final_bg1.paste(frame, (0, y))
-            elif j == 3:
-                final_bg1.paste(frame, (8, y))
-            offset = (64 - 48) / 2
-            y = (sprite_size[1] * j * 4) + (sprite_size[1] * i) + offset
-            box_sprite = (offset, y)
-            final_sprite.paste(frame, box_sprite)
-            
+            final_bg1.paste(frame, (0, y))
+            #y = (sprite_size[1] * j * 4) + (sprite_size[1] * i) + offset
+            #offset = (64 - 48) / 2
+            #box_sprite = (offset, y)
+            #final_sprite.paste(frame, box_sprite)
             frame = frame.rotate(90)
     
     buddy = os.path.basename(image_path)[:4]
@@ -98,8 +99,8 @@ def ProcessParts(image_path):
     name = 'parts%d.png' % names[buddy]
     final_bg1.save(os.path.join(dir, name))
     
-    name = 'parts%d_sprite.png' % names[buddy]
-    final_sprite.save(os.path.join(dir, name))
+    #name = 'parts%d_sprite.png' % names[buddy]
+    #final_sprite.save(os.path.join(dir, name))
     
 def ProcessFolder(image_folder):
     dir = os.path.join(image_folder, 'output')
