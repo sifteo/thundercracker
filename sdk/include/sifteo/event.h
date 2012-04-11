@@ -26,6 +26,15 @@ struct CubeEventVector {
     CubeEventVector() {}
 
     /**
+     * Disable this event vector. This acts like a no-op handler was
+     * registered, but of course it's more efficient than setting an
+     * actual no-op handler.
+     */
+    void unset() const {
+        _SYS_setVector(tID, 0, 0);
+    }
+
+    /**
      * Set this event vector, given a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
@@ -86,6 +95,15 @@ struct CubeEventVector {
 template <_SYSVectorID tID>
 struct NeighborEventVector {
     NeighborEventVector() {}
+
+    /**
+     * Disable this event vector. This acts like a no-op handler was
+     * registered, but of course it's more efficient than setting an
+     * actual no-op handler.
+     */
+    void unset() const {
+        _SYS_setVector(tID, 0, 0);
+    }
 
     /**
      * Set this event vector, given a closure consisting of an arbitrary
