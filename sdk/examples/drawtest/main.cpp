@@ -19,18 +19,17 @@ void main()
 {
     static VideoBuffer vid;
     const CubeID cube(0);
-    TileBuffer<5,2,2> buf(cube);
 
-    buf.text(vec(0,0), Font, "Hello", 1);
-    buf.text(vec(0,0), Font, "World", 0);
-
-    vid.initMode(BG0);
-    vid.bg0.erase(WhiteTile);
-    vid.bg0.image(vec(2,1), buf, 1);
-    vid.bg0.image(vec(7,8), buf, 0);
-    vid.bg0.image(vec(3,13), buf, 1);
+    vid.initMode(BG0_SPR_BG1);
+    vid.bg0.erase(Background);
     vid.attach(cube);
 
-    System::paint();
-    System::finish();
+    unsigned animFrame = 0;
+    while (1) {
+        vid.bg1.maskedImage(Animation, Transparent, animFrame);
+        if (++animFrame == Animation.numFrames()) animFrame = 0;
+
+        vid.bg0.setPanning(vid.bg0.getPanning() + vec(1,0));
+        System::paint();
+    }
 }
