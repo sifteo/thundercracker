@@ -21,6 +21,7 @@ bool Viewport::Touched() const {
 }
 
 void Viewport::Init() {
+	mBuffer.attach(this - gGame.ViewAt(0));
 	mBuffer.initMode(BG0_SPR_BG1);
   	mBuffer.setWindow(0, 128);
 	if (!gGame.ShowingMinimap() || pMinimap) {
@@ -248,7 +249,7 @@ void Viewport::RefreshInventory(bool doFlush) {
 Viewport* Viewport::VirtualNeighborAt(Side side) const {
 	Neighborhood hood = mBuffer.virtualNeighbors();
 	CubeID neighbor = hood.neighborAt(side);
-	return neighbor.isDefined() ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
+	return neighbor.isDefined() ? gGame.ViewAt(neighbor-CUBE_ID_BASE) : 0;
 }
 
 //----------------------------------------------------------------------

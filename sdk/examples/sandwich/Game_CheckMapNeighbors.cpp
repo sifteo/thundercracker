@@ -24,6 +24,7 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
     view->Video().orientTo(origin->Video()); 
   }
 
+
   // Attempt to show location (returns true on change)
   const bool didDisplayLocation = view->ShowLocation(loc, false, false);
   if (didDisplayLocation) {
@@ -59,7 +60,6 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
       }
     }
   }
-
   return RESULT_OKAY;
 }
 

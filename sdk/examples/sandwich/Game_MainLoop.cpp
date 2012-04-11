@@ -34,11 +34,12 @@ void Game::MainLoop() {
 	mNeedsSync = 0;
 	mState.Init();
 	mMap.Init();
-	mPlayer.Init(pPrimary);
 	Viewport::Iterator p = ListViews();
 	while(p.MoveNext()) {
-		if (&(p->Video()) != pPrimary) { p->Init(); }
+		//if (&(p->Video()) != pPrimary) { p->Init(); }
+		p->Init();
 	}
+	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
