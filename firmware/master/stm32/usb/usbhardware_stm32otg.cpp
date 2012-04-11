@@ -377,7 +377,9 @@ IRQ_HANDLER ISR_UsbOtg_FS()
             volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
             // only really interested in XFRC to indicate TX complete
             if (ep.DIEPINT & 0x1) {
-                if (i != 0)
+                if (i == 0)
+                    UsbControl::controlRequest(0, TransactionIn);
+                else
                     UsbDevice::inEndpointCallback(i);
                 ep.DIEPINT = 0x1;
             }
