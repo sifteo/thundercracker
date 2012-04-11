@@ -34,12 +34,18 @@ public:
 
     uint32_t pos(_SYSAudioHandle handle);
 
-    bool active() const { return playingChannelMask != 0; }
+    bool active() const {
+        return playingChannelMask != 0;
+    }
 
     static void pullAudio(void *p);
 
-    void setSampleRate(uint32_t samplerate) { curSampleRate = samplerate; };
-    uint32_t sampleRate() { return curSampleRate; }
+    void setSampleRate(uint32_t samplerate) {
+        curSampleRate = samplerate;
+    }
+    uint32_t sampleRate() {
+        return curSampleRate;
+    }
 
 protected:
     friend class XmTrackerPlayer; // can call setTrackerCallbackInterval()
