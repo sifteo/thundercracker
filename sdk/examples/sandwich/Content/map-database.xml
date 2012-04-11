@@ -1,5 +1,5 @@
 <map-database>
-	<map id="forest">
+	<!--map id="forest">
 		<name>The Forest</name>
 	</map>
 	<map id="castle">
@@ -7,7 +7,7 @@
 	</map>
 	<map id="dungeon">
 		<name>Lembas Caverns</name>
-	</map>
+	</map-->
 	
 	
 	<map id="temple_level1">
@@ -40,8 +40,8 @@
 	
 
 
-	<map id="sandbox">
+	<!--map id="sandbox">
 		<name>Programming Sandbox</name>
-	</map>
+	</map-->
 
 </map-database>

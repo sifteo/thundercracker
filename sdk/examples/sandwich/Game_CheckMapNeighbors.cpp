@@ -26,7 +26,7 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
 
 
   // Attempt to show location (returns true on change)
-  const bool didDisplayLocation = view->ShowLocation(loc, false, false);
+  const bool didDisplayLocation = view->ShowLocation(loc, false);
   if (didDisplayLocation) {
     status->changeMask |= view->GetMask();
   }
@@ -88,7 +88,7 @@ void Game::CheckMapNeighbors() {
   unsigned newChangeMask = 0;
   auto i = ListViews(~status.visitMask);
   while(i.MoveNext()) {
-    if (i->HideLocation(false)) {
+    if (i->HideLocation()) {
       newChangeMask |= i->GetMask();
     }
   }
@@ -98,9 +98,5 @@ void Game::CheckMapNeighbors() {
     PlaySfx(sfx_neighbor);
   } else if (newChangeMask) {
     PlaySfx(sfx_deNeighbor);
-  }
-
-  if (newChangeMask || status.changeMask) {
-    DoPaint(true);
   }
 }

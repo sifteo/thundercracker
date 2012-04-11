@@ -116,7 +116,7 @@ bool Map::FindBroadPath(BroadPath* outPath, unsigned* outViewId) {
   bool anyTouches = false;
   for(unsigned i=0; i<NUM_CUBES; ++i) { 
     sVisitMask[i] = 0; 
-    anyTouches |= gGame.ViewAt(i)->Touched();
+    anyTouches |= gGame.ViewAt(i).Touched();
   }
   if (!anyTouches) { return false; }
   const BroadLocation* pRoot = gGame.GetPlayer()->Current();
