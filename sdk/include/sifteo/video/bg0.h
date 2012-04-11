@@ -111,6 +111,15 @@ struct BG0Drawable {
     }
 
     /**
+     * Retrieve the last value set by setPanning(), modulo the layer size
+     * in pixels.
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>(word & 0xFF, word >> 8);
+    }
+
+    /**
      * Calculate the video buffer address of a particular tile.
      * All coordinates must be in range. This function performs no clipping.
      */

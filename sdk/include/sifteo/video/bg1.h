@@ -411,6 +411,14 @@ struct BG1Drawable {
     }
 
     /**
+      * Retrieve the last value set by setPanning().
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>((int8_t)(word & 0xFF), (int8_t)(word >> 8));
+    }
+
+    /**
      * Plot a single tile, by absolute tile index,
      * at a specific location in the 144-tile array.
      */
