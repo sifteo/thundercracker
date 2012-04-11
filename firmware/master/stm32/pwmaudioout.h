@@ -12,7 +12,6 @@
 
 #include "audiobuffer.h"
 #include "audiooutdevice.h"
-#include "speexdecoder.h"
 class AudioMixer;
 
 class PwmAudioOut
@@ -32,7 +31,6 @@ public:
 
     bool isBusy() const;
 
-    int sampleRate() const;
     void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();

@@ -10,14 +10,9 @@
 #include <sifteo/abi.h>
 #include "audiomixer.h"
 #include "svmmemory.h"
+#include "svmruntime.h"
 
 extern "C" {
-
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
-{
-    if (SvmMemory::mapRAM(buffer, sizeof(*buffer)))
-        AudioMixer::instance.enableChannel(buffer);
-}
 
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
@@ -25,6 +20,8 @@ uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, 
     if (SvmMemory::copyROData(modCopy, mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
         return AudioMixer::instance.play(&modCopy, h, loop);
     }
+
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return false;
 }
 

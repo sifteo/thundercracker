@@ -11,6 +11,7 @@
 #include "SVMMCTargetDesc.h"
 #include "SVMMachineFunctionInfo.h"
 #include "SVMSymbolDecoration.h"
+#include "Support/ErrorReporter.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -190,6 +191,9 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
     setShouldFoldAtomicFences(true);
+
+    // Stack
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
 
     computeRegisterProperties();
 }
@@ -561,13 +565,20 @@ SDValue SVMTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     return DAG.getNode(SVMISD::WRAPPER, dl, ValTy, GA);
 }
 
+SDValue SVMTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG)
+{
+    report_fatal_error(Op.getNode(), DAG, "Unsupported dynamic stack allocation");
+    return SDValue();
+}
+
 SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
     switch (Op.getOpcode()) {
     default: llvm_unreachable("Should not custom lower this!");
-    case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
-    case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
-    case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
+    case ISD::BR_CC:                return LowerBR_CC(Op, DAG);
+    case ISD::SELECT_CC:            return LowerSELECT_CC(Op, DAG);
+    case ISD::GlobalAddress:        return LowerGlobalAddress(Op, DAG);
+    case ISD::DYNAMIC_STACKALLOC:   return LowerDYNAMIC_STACKALLOC(Op, DAG);
     }
 }
 

@@ -305,13 +305,13 @@ bool animPaint(AnimType animT,
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
+            size = vec(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
             assetFrames = objData.mSpriteAsset->frames;
         }
         else
         {
             ASSERT(objData.mAsset);
-            size = Vec2(objData.mAsset->width, objData.mAsset->height);
+            size = vec(objData.mAsset->width, objData.mAsset->height);
             assetFrames = objData.mAsset->frames;
             // FIXME write utility AABB class
             if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
@@ -368,7 +368,7 @@ bool animPaint(AnimType animT,
             {
                 Int2 letterPos = pos;
                 letterPos.y += 5; // TODO
-                bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2<int>(size.x, font.height), font, fontFrame);
+                bg1->DrawPartialAsset(letterPos, vec(0,0), vec<int>(size.x, font.height), font, fontFrame);
             }
         }
         else if (objData.mLayer == Layer_BG1)
@@ -428,39 +428,39 @@ bool animPaint(AnimType animT,
         if (false && (leftNeighbor || (rightNeighbor && !formsWord)))
         {
             // don't draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 14), Vec2(1, 0), Vec2(16, 2), BorderBottom, bottomBorderFrame);
+            vid.BG0_drawPartialAsset(vec(0, 14), vec(1, 0), vec(16, 2), BorderBottom, bottomBorderFrame);
         }
         else if (bg1)
         {
             // draw left border
-            vid.BG0_drawPartialAsset(Vec2(0, 2),
-                                     Vec2(0, 1),
-                                     Vec2(2, 14),
+            vid.BG0_drawPartialAsset(vec(0, 2),
+                                     vec(0, 1),
+                                     vec(2, 14),
                                      (leftNeighbor || formsWord) ?
                                          BorderLeft :
                                          BorderLeftNoNeighbor);
-            bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
-            bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-            vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
+            bg1->DrawPartialAsset(vec(0, 1), vec(0, 0), vec(2, 1), BorderLeft);
+            bg1->DrawPartialAsset(vec(1, 14), vec(0, 0), vec(1, 2), BorderBottom);
+            vid.BG0_drawPartialAsset(vec(2, 14), vec(1, 0), vec(14, 2), BorderBottom, bottomBorderFrame);
         }
 
         if (false && (rightNeighbor || (leftNeighbor && !formsWord)))
         {
             // don't draw right border
-            vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), BorderTop);
+            vid.BG0_drawPartialAsset(vec(0, 0), vec(0, 0), vec(16, 2), BorderTop);
         }
         else if (bg1)
         {
             // draw right border
-            vid.BG0_drawPartialAsset(Vec2(14, 0),
-                                     Vec2(0, 1),
-                                     Vec2(2, 14),
+            vid.BG0_drawPartialAsset(vec(14, 0),
+                                     vec(0, 1),
+                                     vec(2, 14),
                                      (rightNeighbor || formsWord) ?
                                          BorderRight :
                                          BorderRightNoNeighbor);
-            bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
-            bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-            vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
+            bg1->DrawPartialAsset(vec(14, 14), vec(0, 16), vec(2, 1), BorderRight);
+            bg1->DrawPartialAsset(vec(14, 0), vec(16, 0), vec(1, 2), BorderTop);
+            vid.BG0_drawPartialAsset(vec(0, 0), vec(1, 0), vec(14, 2), BorderTop);
         }
 
         const LevelProgressData &progressData =
@@ -497,7 +497,7 @@ bool animPaint(AnimType animT,
                             CheckMarkImagesBottom[(int)progressData.mPuzzleProgress[i]];
                     if (image)
                     {
-                        bg1->DrawAsset(Vec2<int>(2 + i * 2, 14), *image);
+                        bg1->DrawAsset(vec<int>(2 + i * 2, 14), *image);
                     }
                 }
                 else
@@ -506,11 +506,11 @@ bool animPaint(AnimType animT,
                     {
                         if (i - TopRowStartIndex  < GameStateMachine::getInstance().getNumHints())
                         {
-                            bg1->DrawAsset(Vec2<int>(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
+                            bg1->DrawAsset(vec<int>(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[2]);
                         }
              /*           else
                         {
-                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
+                            bg1->DrawAsset(vec(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
                         }
                         */
                     }

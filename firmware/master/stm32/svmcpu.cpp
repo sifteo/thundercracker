@@ -18,32 +18,6 @@ static struct  {
     reg_t sp;
 } userRegs;
 
-
-/*
- * These routines are temp - this should be much better, but it friggin works, so checking in!
- */
-
-static void saveHwContext(reg_t sp)
-{
-    uint32_t *spp = reinterpret_cast<uint32_t*>(sp);
-    uint32_t *hw = reinterpret_cast<uint32_t*>(&userRegs.hw);
-    userRegs.sp = sp;
-    for (unsigned i = 0; i < sizeof userRegs.hw / 4; ++i) {
-        hw[i] = spp[i];
-    }
-//    memcpy(&userRegs.hw, spp, sizeof userRegs.hw);
-}
-
-static void restoreHwContext()
-{
-    uint32_t *spp = reinterpret_cast<uint32_t*>(userRegs.sp);
-    uint32_t *hw = reinterpret_cast<uint32_t*>(&userRegs.hw);
-    for (unsigned i = 0; i < sizeof userRegs.hw / 4; ++i) {
-        spp[i] = hw[i];
-    }
-//    memcpy(spp, &userRegs.hw, sizeof userRegs.hw);
-}
-
 /***************************************************************************
  * Public Functions
  ***************************************************************************/
@@ -169,25 +143,38 @@ NAKED_HANDLER ISR_SVCall()
         "ite    eq                  \n\t"   // load r0 with msp or psp based on that
         "mrseq  r0, msp             \n\t"
         "mrsne  r0, psp             \n\t"
-        "push   { lr }              \n\t"
-        "bl     %[saveHW]           \n\t"   // save stacked hw regs (sp is in r0) - can optimize to asm when needed
+
         "ldr    r2, =%[usrirq]      \n\t"   // load pointer to userRegs.irq into r2
-        "stm    r2, { r4, r5, r6, r7, r8, r9, r10, r11 }    \n\t"   // save copy of user regs
+        "stm    r2, { r4-r11 }      \n\t"   // store copy of user regs
+
+        "ldr    r1, =%[savedSp]     \n\t"   // copy psp (r0) to user sp (r1)
+        "str    r0, [r1]            \n\t"
+
+        "ldr    r1, =%[hwirq]       \n\t"   // load address of HwContext to r1
+        "ldm    r0, { r3-r10 }      \n\t"   // use r3-10 as copy buf for HwContext
+        "stm    r1, { r3-r10 }      \n\t"   // copy to trusted HwContext
+
         "ldr    r3, [r0, #24]       \n\t"   // load r3 with the stacked PC
         "ldrb   r0, [r3, #-2]       \n\t"   // extract the imm8 from the instruction into r0
-        "bl     %[target]           \n\t"   // and pass sp and imm8 to SvmRuntime::svc
+        "push   { lr }              \n\t"
+        "bl     %[handler]          \n\t"   // and pass imm8 to SvmRuntime::svc
+
+        "ldr    r0, =%[savedSp]     \n\t"   // copy saved user sp to psp
+        "ldr    r0, [r0]            \n\t"
+        "msr    psp, r0             \n\t"
+
+        "ldr    r1, =%[hwirq]       \n\t"   // load address of HwContext to r1
+        "ldm    r1, { r3-r10 }      \n\t"   // use r3-10 as copy buf for HwContext
+        "stm    r0, { r3-r10 }      \n\t"   // copy to newly modified psp
+
         "ldr    r2, =%[usrirq]      \n\t"   // load pointer to userRegs.irq into r2
-        "ldm    r2, { r4, r5, r6, r7, r8, r9, r10, r11 }    \n\t"   // restore saved regs
-        "ldr    r3, =%[savedSp]     \n\t"
-        "ldr    r3, [r3]            \n\t"
-        "msr    psp, r3             \n\t"   // copy saved user sp to psp
-        "bl     %[restoreHW]        \n\t"   // copy hw regs to potentially modified user sp
+        "ldm    r2, { r4-r11 }      \n\t"   // restore user regs
+
         "pop    { pc }"
         :
-        : [saveHW] "i"(SvmCpu::saveHwContext),
+        : [hwirq] "i"(&SvmCpu::userRegs.hw),
             [usrirq] "i"(&SvmCpu::userRegs.irq),
-            [target] "i"(SvmRuntime::svc),
-            [restoreHW] "i"(SvmCpu::restoreHwContext),
+            [handler] "i"(SvmRuntime::svc),
             [savedSp] "i"(&SvmCpu::userRegs.sp)
     );
 }

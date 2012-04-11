@@ -67,7 +67,7 @@ public:
         void FillArea(const Sifteo::AssetImage *image, Int2 pos, Int2 size);
 	
         void DrawFraction(Fraction f, Int2 pos);
-        //void DrawDecimal(float d, Vec2 pos);
+        //void DrawDecimal(float d, vec pos);
         void DrawString(const char *string, Int2 center);
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3]);

@@ -9,8 +9,7 @@ OBJS = \
 	cube.o \
 	flavor.o \
 	particle.o \
-	portal.o \
-	loading.o
+	portal.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 CDEPS += *.h

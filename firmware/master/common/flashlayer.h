@@ -50,8 +50,6 @@ public:
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
 
-    static unsigned TERRIHACK;
-
 private:
     friend class FlashBlockRef;
 

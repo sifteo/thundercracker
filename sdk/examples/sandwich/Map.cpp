@@ -1,17 +1,26 @@
-#include "Map.h"
 #include "Game.h"
 
 void Map::Init() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
+Bomb* Map::BombFor(const ItemData* bomb) {
+  for(Bomb* p=BombBegin(); p!=BombEnd(); ++p) {
+    if (p->Item() == bomb) {
+      return p;
+    }
+  }
+  return 0;
+}
+
+
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
-    LOG(("MAP!\n"));
+    
     mData = &map; 
-    // triggers
+
     RefreshTriggers();
-    // sokoblocks
+    
     mBlockCount = 0;
     if (map.sokoblocks) {
       for (const SokoblockData* p=map.sokoblocks; p->x; ++p) {
@@ -21,12 +30,36 @@ void Map::SetData(const MapData& map) {
       ASSERT(mBlockCount <= BLOCK_CAPACITY);
     }
 
-    if (map.depots) {
-      for(const DepotData* p=map.depots; p->roomId != 0xff; ++p) {
-        mRooms[p->roomId].SetDepot(p);
+    if (mData->trapdoors) {
+      for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
+        mRooms[p->roomId].SetTrapdoor(p);
       }
     }
 
+    if (map.depots) {
+      for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
+        mRooms[p->room].SetDepot(p);
+      }
+    }
+
+    if (map.switches) {
+      for(const SwitchData* p=map.switches; p->room != 0xff; ++p) {
+        mRooms[p->room].SetSwitch(p);
+      }
+    }
+
+    if (map.bombables) {
+      // the sentinel for bombables is 127, not 255, because he only gets 7 bits :P
+      for(const BombableData* p=map.bombables; p->rid != 0x7f; ++p) {
+        if (p->orientation == BOMBABLE_ORIENTATION_HORIZONTAL) {
+          mRooms[p->rid].SetCanBomb(RIGHT);
+          mRooms[p->rid + 1].SetCanBomb(LEFT);
+        } else {
+          mRooms[p->rid].SetCanBomb(BOTTOM);
+          mRooms[p->rid + mData->width].SetCanBomb(TOP);
+        }
+      }
+    }
   }
 }
 
@@ -37,10 +70,16 @@ void Map::RefreshTriggers() {
   for(Room* p=mRooms; p!=pEnd; ++p) { p->Clear(); }
 
   // find active triggers
+  mBombCount = 0;
   if (mData->items) {
     for(const ItemData* p = mData->items; !AtEnd(p->trigger); ++p) {
       if (gGame.GetState()->IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
+        if (gItemTypeData[p->itemId].triggerType == ITEM_TRIGGER_BOMB) {
+          ASSERT(mBombCount < BOMB_CAPACITY);
+          mBomb[mBombCount].Initialize(p);
+          mBombCount++;
+        }
       }
     }
   }
@@ -58,12 +97,6 @@ void Map::RefreshTriggers() {
       if (gGame.GetState()->IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
       }
-    }
-  }
-  
-  if (mData->trapdoors) {
-    for(const TrapdoorData* p = mData->trapdoors; p->roomId!=p->respawnRoomId; ++p) {
-      mRooms[p->roomId].SetTrapdoor(p);
     }
   }
   
@@ -112,15 +145,15 @@ void Map::RefreshTriggers() {
 
 bool Map::IsVertexWalkable(Int2 vertex) {
   // convert global vertex into location / local vertex pair
-  Int2 loc = Vec2(vertex.x>>3, vertex.y>>3);
+  Int2 loc = vec(vertex.x>>3, vertex.y>>3);
   if (vertex.x == 0 || loc.x < 0 || loc.x >= mData->width || loc.y < 0 || loc.y >= mData->height) {
     return false; // out of bounds
   }
   vertex -= 8 * loc;
   return IsTileOpen(loc, vertex) && (
     vertex.x == 0 ? // are we between rooms?
-      IsTileOpen(Vec2(loc.x-1, loc.y), Vec2(7, vertex.y)) : 
-      IsTileOpen(loc, Vec2(vertex.x-1, vertex.y))
+      IsTileOpen(vec(loc.x-1, loc.y), vec(7, vertex.y)) : 
+      IsTileOpen(loc, vec(vertex.x-1, vertex.y))
   );
 
 }

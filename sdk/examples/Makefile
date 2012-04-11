@@ -1,20 +1,15 @@
 SUBDIRS = \
-	betterflow \
-	chroma \
+	drawtest \
 	hello \
 	membrane \
+	menudemo \
 	monster \
 	nyan \
-	pairing \
-	peano \
-	sandwich \
-	scroller-bg0 \
-	scroller-bg1 \
+	pantera \
 	sensors \
 	sprites \
 	stars \
-	text \
-	word \
+	text
 
 .PHONY: clean subdirs $(SUBDIRS)
 

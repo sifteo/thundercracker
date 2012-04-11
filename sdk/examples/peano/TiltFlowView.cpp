@@ -63,7 +63,7 @@ void TiltFlowView::Tick()
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-        c->foregroundLayer.DrawPartialAsset(Vec2(0,0), Vec2(0, 15), Vec2(16,1), Skins::GetSkin().vault_door); // header image
+        c->foregroundLayer.DrawPartialAsset(vec(0,0), vec(0, 15), vec(16,1), Skins::GetSkin().vault_door); // header image
         PaintFooter(c);
         c->foregroundLayer.Flush();
     }
@@ -81,7 +81,7 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
-    c->FillArea(&Dark_Purple, Vec2(0, 0), Vec2(18, 18));
+    c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
 }
 
 void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
@@ -92,20 +92,20 @@ void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
 void TiltFlowView::PaintFooter(TotalsCube *c) {
     if(menu->IsPicked())
     {
-        c->foregroundLayer.DrawPartialAsset(Vec2(0, 12), Vec2(0,0), Vec2(16,4), Skins::GetSkin().vault_door);
+        c->foregroundLayer.DrawPartialAsset(vec(0, 12), vec(0,0), vec(16,4), Skins::GetSkin().vault_door);
     }
     else
     {
-        c->foregroundLayer.DrawAsset(Vec2(0, 12), *kMarquee[mMarquee % 2]);
+        c->foregroundLayer.DrawAsset(vec(0, 12), *kMarquee[mMarquee % 2]);
     }
 }
 
 void TiltFlowView::PaintInner(TotalsCube *c) {    
     if(menu->IsDone())
     {
-        GetCube()->FillArea(&Dark_Purple, Vec2(0,0), Vec2(18,18));
-        GetCube()->Image(*menu->GetItem(mItem)->GetImage(), Vec2(3, 1), 0);
-        GetCube()->backgroundLayer.BG0_setPanning(Vec2(0,0));
+        GetCube()->FillArea(&Dark_Purple, vec(0,0), vec(18,18));
+        GetCube()->Image(*menu->GetItem(mItem)->GetImage(), vec(3, 1), 0);
+        GetCube()->backgroundLayer.BG0_setPanning(vec(0,0));
         return;
     }
     //left edge of center item
@@ -119,7 +119,7 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
         int centerLeftTile = 12 * mItem;
         int baseScreenTileX = 3 + centerLeftTile - tileX;
 
-        GetCube()->FillArea(&Dark_Purple, Vec2(0,3), Vec2(18,11));
+        GetCube()->FillArea(&Dark_Purple, vec(0,3), vec(18,11));
 
         if(mItem > 0 && !menu->IsPicked())
             DoPaintItem(menu->GetItem(mItem-1), baseScreenTileX - 12);
@@ -128,12 +128,12 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
             DoPaintItem(menu->GetItem(mItem+1), baseScreenTileX + 12);
     }
 
-    GetCube()->backgroundLayer.BG0_setPanning(Vec2(scrollX, 16));
+    GetCube()->backgroundLayer.BG0_setPanning(vec(scrollX, 16));
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x) {
     if (item->HasImage()) {
-        GetCube()->ClipImage(item->GetImage(), Vec2(x, 3));
+        GetCube()->ClipImage(item->GetImage(), vec(x, 3));
     }
 }
 

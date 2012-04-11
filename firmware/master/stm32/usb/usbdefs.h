@@ -176,6 +176,49 @@ struct LanguageDescriptor {
     uint16_t wlangid[1];
 } __attribute__((packed));
 
+/************************************************************************
+ *
+ * Windows specific descriptors
+ * http://msdn.microsoft.com/en-gb/library/windows/hardware/hh450799.aspx
+ *
+ ************************************************************************/
+
+struct WinUsbCompatIdHeaderDescriptor {
+    uint32_t dwLength;
+    uint16_t bcdVersion;
+    uint16_t wIndex;
+    uint8_t  bCount;
+    uint8_t  reserved0[7];
+} __attribute__((packed));
+
+
+struct WinUsbFunctionSectionDescriptor {
+    uint8_t  bFirstInterfaceNumber;
+    uint8_t  reserved1;
+    char     compatibleID[8];
+    char     subCompatibleID[8];
+    uint8_t  reserved2[6];
+} __attribute__((packed));
+
+
+struct WinUsbExtPropHeaderDescriptor {
+    uint32_t dwLength;
+    uint16_t bcdVersion;
+    uint16_t wIndex;
+    uint16_t wCount;
+} __attribute__((packed));
+
+
+template<unsigned namesz, unsigned valsz>
+struct WinUsbCustomPropDescriptor {
+    uint32_t dwSize;
+    uint32_t dwPropertyDataType;
+    uint16_t wPropertyNameLength;
+    uint16_t bPropertyName[namesz];
+    uint32_t wPropertyValueLength;
+    uint16_t bPropertyValue[valsz];
+} __attribute__((packed));
+
 } // namespace Usb
 
 #endif // USB_DEFS_H

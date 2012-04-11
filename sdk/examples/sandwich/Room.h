@@ -12,6 +12,7 @@
 #define SECONDARY_UNDEFINED    0
 #define SECONDARY_TRAPDOOR     1
 #define SECONDARY_DEPOT        2
+#define SECONDARY_SWITCH       3
 
 class Room {
 private:
@@ -24,6 +25,11 @@ private:
   uint8_t mPrimarySlotType : 4;
   uint8_t mPrimarySlotId : 4;
 
+  struct {
+    uint8_t canMask : 4;
+    uint8_t didMask : 4;
+  } mBomb;
+
 public:
 
   //---------------------------------------------------------------------------
@@ -33,13 +39,24 @@ public:
   unsigned Id() const;
   Int2 Location() const;
   const RoomData* Data() const;
-  inline Int2 Position() const { return 128 * Location(); }
+  Int2 Position() const { return 128 * Location(); }
   Int2 LocalCenter(unsigned subdiv) const;
-  inline Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
-  inline bool HasUserdata() const { return mPrimarySlotType; }
+  Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
+  bool HasUserdata() const { return mPrimarySlotType; }
   void Clear();
   bool IsShowingBlock(const Sokoblock* pBlock);  
-  unsigned CountOpenTilesAlongSide(Cube::Side side);
+  unsigned CountOpenTilesAlongSide(Side side);
+
+  //---------------------------------------------------------------------------
+  // bombypoos
+  //---------------------------------------------------------------------------
+
+  bool CanBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.canMask & (1<<s)) != 0; }
+  bool DidBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.didMask & (1<<s)) != 0; }
+  bool HasBombedSides() const { return mBomb.didMask != 0; }
+  void SetCanBomb(Side s) { ASSERT(0<=s && s<4); mBomb.canMask |= (1<<s); }
+  void SetDidBomb(Side s) { mBomb.didMask |= ((1<<s) & mBomb.canMask); }
+  void BombThisFucker();
 
   //---------------------------------------------------------------------------
   // triggers
@@ -66,7 +83,6 @@ public:
     mPrimarySlotId = TRIGGER_UNDEFINED; 
     mPrimarySlot = 0;
   }
-  
 
   //---------------------------------------------------------------------------
   // subdivs
@@ -96,28 +112,36 @@ public:
   // props
   //---------------------------------------------------------------------------
 
-  inline bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
-  inline bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
+  bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
+  bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
+  bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
+  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
+  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
+  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
 
-  inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
+  void SetTrapdoor(const TrapdoorData* trapDoorData) {
     ASSERT(!mPrimarySlot);
     mPrimarySlotType = PRIMARY_PROP;
     mPrimarySlotId = SECONDARY_TRAPDOOR;
     mPrimarySlot = trapDoorData;
   }
 
-  inline void SetDepot(const DepotData* depot) {
+  void SetDepot(const DepotData* depot) {
     ASSERT(!mPrimarySlot);
     ASSERT(!mSecondarySlot);
-    mPrimarySlotType == PRIMARY_PROP;
-    mPrimarySlotId == SECONDARY_TRAPDOOR;
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_DEPOT;
     mPrimarySlot = depot;
   }
 
-  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
-  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
+  void SetSwitch(const SwitchData* toggle) {
+    ASSERT(!mPrimarySlot);
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_SWITCH;
+    mPrimarySlot = toggle;
+  }
 
-  bool HasDepotContents() const { ASSERT(HasDepot()); return mSecondarySlot != 0; }
+  bool HasDepotContents() const { return HasDepot() && mSecondarySlot != 0; }
   void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mSecondarySlot = item; }
   const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mSecondarySlot; }
 

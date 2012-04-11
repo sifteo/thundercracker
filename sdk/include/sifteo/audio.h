@@ -3,10 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_AUDIO_H_
-#define _SIFTEO_AUDIO_H_
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -18,16 +16,18 @@ namespace Sifteo {
 
 class AudioChannel {
 public:
+    enum LoopMode {
+        UNDEF_LOOP = _SYS_LOOP_UNDEF,
+        ONCE = _SYS_LOOP_ONCE,
+        REPEAT = _SYS_LOOP_REPEAT,
+        PING_PONG = _SYS_LOOP_PING_PONG,
+    };
 
     AudioChannel() : handle(_SYS_AUDIO_INVALID_HANDLE)
     {}
 
-    void init() {
-        _SYS_audio_enableChannel(&buf);
-    }
-
-    bool play(const AssetAudio &mod, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod.sys, &handle, loopMode);
+    bool play(const AssetAudio &mod, LoopMode loopMode = UNDEF_LOOP) {
+        return _SYS_audio_play(&mod.sys, &handle, (_SYSAudioLoopType) loopMode);
     }
 
     bool isPlaying() const {
@@ -59,14 +59,8 @@ public:
     }
 
 private:
-    // TODO - would be nice to have a _SYSAudioChannel type with these two
-    // members, that serves as the object passed to the firmware.
-    // Then, we wouldn't have to search for a channel. given a handle - we could
-    // just calculate its offset within its array to look it up
     _SYSAudioHandle handle;
-    _SYSAudioBuffer buf;
 };
 
-} // namespace Sifteo
 
-#endif // AUDIO_H_
+} // namespace Sifteo

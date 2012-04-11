@@ -275,7 +275,7 @@ Game::GameState Run() {
                 timeout += period;
             }
 
-            narrator.GetCube()->Image(cubeId?&Narrator_Mix02:&Narrator_Mix01, Vec2(0, 0), Vec2(0,3), Vec2(16,7));
+            narrator.GetCube()->Image(cubeId?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
             firstToken.PaintNow();
             secondToken.PaintNow();
             System::paintSync();
@@ -347,7 +347,7 @@ Game::GameState Run() {
     Game::Wait(2);
 
     Game::cubes[1].OpenShuttersToReveal(Tutorial_Groups);
-    Game::cubes[1].Image(Tutorial_Groups, Vec2(0,0));
+    Game::cubes[1].Image(Tutorial_Groups, vec(0,0));
 
     Game::Wait(5);
     narrator.SetMessage("");

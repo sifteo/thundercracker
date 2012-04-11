@@ -11,7 +11,7 @@ namespace UsbHardware
     void init();
     void setAddress(uint8_t addr);
     void epSetup(uint8_t addr, uint8_t type, uint16_t max_size);
-    void epReset();
+    void reset();
     void epSetStalled(uint8_t addr, bool stalled);
     void epSetNak(uint8_t addr, bool nak);
     bool epIsStalled(uint8_t addr);

@@ -11,16 +11,10 @@ TC_DIR = ../..
 include Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
-# STM32 only dependencies
-SPEEX_DIR = speex
-include $(SPEEX_DIR)/speex.mk
-OBJS_STM32 += $(SPEEX_OBJS_STM32)
-
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -Icommon -I../include -DNO_USERSPACE_HEADERS
-CFLAGS_STM32 := -Istm32 $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER
-CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
-             -I$(DEPS_DIR)/speex/include
+CFLAGS := -Icommon -I../include -DNOT_USERSPACE
+CFLAGS_STM32 := -Istm32 -DHAVE_CONFIG_H
+CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include
 
 ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
@@ -37,7 +31,7 @@ $(BIN_SIM): $(OBJS_SIM)
 	@echo
 	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
-$(BIN_STM32): $(OBJS_STM32)
+$(BIN_STM32): $(OBJS_STM32_MASTER)
 	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 

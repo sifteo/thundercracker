@@ -15,7 +15,6 @@ WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(fal
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
-        mAudioChannels[i].init();
         mLastAudioPriority[i] = AudioPriority_None;
     }
 }

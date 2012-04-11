@@ -6,6 +6,7 @@
 #include "audiooutdevice.h"
 #include "pwmaudioout.h"
 #include "dacaudioout.h"
+#include "audiomixer.h"
 
 #include "board.h"
 #include "gpio.h"
@@ -48,8 +49,12 @@ IRQ_HANDLER ISR_TIM4()
     audioOutBackend.tmrIsr();
 }
 
-void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
+AudioMixer *AudioOutDevice::mixer;
+
+void AudioOutDevice::init(SampleRate samplerate, AudioMixer *pMixer)
 {
+    mixer = pMixer;
+    mixer->setSampleRate(sampleRate(samplerate));
 #if AUDIOOUT_BACKEND == PWM_BACKEND
 
     AFIO.MAPR |= (1 << 6);          // TIM1 partial remap for complementary channels
@@ -83,15 +88,11 @@ bool AudioOutDevice::isBusy()
     return false; //audioOutBackend.isBusy();
 }
 
-int AudioOutDevice::sampleRate()
-{
-    return 0; //audioOutBackend.sampleRate();
-}
-
 void AudioOutDevice::setSampleRate(SampleRate samplerate)
 {
     // TODO: implement?
     (void)samplerate;
+    // mixer->setSampleRate(sampleRate(samplerate));
 }
 
 void AudioOutDevice::suspend()

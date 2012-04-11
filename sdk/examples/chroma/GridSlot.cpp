@@ -144,7 +144,7 @@ GridSlot::GridSlot() :
 	m_animFrame( 0 )
 {
 	m_color = Game::random.randrange(NUM_COLORS);
-    m_lastFrameDir = Vec2( 0, 0 );
+    m_lastFrameDir = vec( 0, 0 );
 }
 
 
@@ -304,7 +304,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                     }
                     case MOVESTATE_MOVING:
                     {
-                        Int2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+                        Int2 curPos = vec( m_curMovePos.x, m_curMovePos.y );
 
                         //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
                         if( IsSpecial() )
@@ -416,8 +416,8 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                 fadeFrame = NUM_POINTS_FRAMES - 1;
 
             if( m_score > 9 )
-                vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
-            vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
+                vid.BG0_drawAsset(vec( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
+            vid.BG0_drawAsset(vec( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
         case STATE_GONE:
@@ -451,7 +451,7 @@ void GridSlot::Update(SystemTime t)
             {
                 case MOVESTATE_MOVING:
                 {
-                    Int2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+                    Int2 vDiff = vec( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
                     if( vDiff.x != 0 )
                     {
@@ -617,7 +617,7 @@ void GridSlot::die()
     m_state = STATE_GONE;
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
-    Game::Inst().CheckChain( m_pWrapper, Vec2( m_row, m_col ) );
+    Game::Inst().CheckChain( m_pWrapper, vec( m_row, m_col ) );
     m_pWrapper->checkEmpty();
     m_eventTime = SystemTime::now();
 }
@@ -694,7 +694,7 @@ unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const
 {
     //quantize and convert to the appropriate range
     //non-linear quantization.
-    quantized = Vec2( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
+    quantized = vec( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
 
     return TILTTOFRAMES[ quantized.y ][ quantized.x ];
 }

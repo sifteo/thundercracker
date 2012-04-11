@@ -12,52 +12,31 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-#include <speex/speex.h>
-
+#include "sifteo/abi.h"
 
 class AudioEncoder {
 public:
     virtual ~AudioEncoder() {}
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps) = 0;
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps, uint32_t sample_rate) = 0;
 
     virtual const char *getTypeSymbol() = 0;
     virtual const char *getName() = 0;
+    virtual const _SYSAudioType getType() = 0;
     
     static AudioEncoder *create(std::string name, float quality, bool vbr);
 };
 
 
-class SpeexEncoder : public AudioEncoder {
-public:
-    SpeexEncoder(float quality, bool vbr);
-    virtual ~SpeexEncoder();
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
-
-    virtual const char *getTypeSymbol() {
-        return "_SYS_Speex";
-    }
-
-    virtual const char *getName() {
-        return "Speex";
-    }
-
-private:
-    // max sizes from speexenc
-    static const unsigned MAX_FRAME_SIZE     = 2000;
-    static const unsigned MAX_FRAME_BYTES    = 2000;
-    
-    SpeexBits bits;
-    void *encoderState;
-    int frameSize;
-};
-
-
 class PCMEncoder : public AudioEncoder {
 public:
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps, uint32_t sample_rate);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_PCM";
+    }
+
+    virtual const _SYSAudioType getType() {
+        return _SYS_PCM;
     }
 
     virtual const char *getName() {
@@ -71,10 +50,14 @@ public:
         index(0),
         predsample(0)
     {}
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps);
+    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps, uint32_t sample_rate);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_ADPCM";
+    }
+
+    virtual const _SYSAudioType getType() {
+        return _SYS_ADPCM;
     }
 
     virtual const char *getName() {

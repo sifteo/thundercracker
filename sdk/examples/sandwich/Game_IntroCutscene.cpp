@@ -1,36 +1,38 @@
 #include "Game.h"
 
-Cube* Game::IntroCutscene() {
+VideoBuffer* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		ViewMode gfx(gCubes[i].vbuf);
-		gfx.set();
-		gfx.BG0_drawAsset(Vec2(0,0), Sting);
+		VideoBuffer& gfx = ViewAt(i)->Video();
+		gfx.initMode(BG0_SPR_BG1);
+		gfx.bg0.image(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
-			gfx.hideSprite(s);
+			gfx.sprites[s].hide();
 		}
-		BG1Helper overlay(gCubes[i]);
-		overlay.DrawAsset(Vec2(0,0), SandwichTitle);
-		overlay.Flush();
-		gfx.BG1_setPanning(Vec2(0,64));
-		gCubes[i].vbuf.touch();
+		// TODO
+		//BG1Helper overlay(gCubes[i]);
+		//overlay.DrawAsset(vec(0,0), SandwichTitle);
+		//overlay.Flush();
+		gfx.bg1.setPanning(vec(0,64));
 	}
 	float dt;
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0.f, 72 - 128*u));
+			ViewAt(i)->Video().bg1.setPanning(vec(0.f, 72 - 128*u));
 		}
-		System::paintSync();
+		DoPaint(true);
 	}
 	
 	// wait for a touch
-	Cube* pCube = 0;
-	while(!pCube) {
+	CubeID cube = 0;
+	bool hasTouch = false;
+	while(!hasTouch) {
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			if (gCubes[i].touching()) {
-				pCube = gCubes + i;
+			cube = i;
+			if (cube.isTouching()) {
 				PlaySfx(sfx_neighbor);
+				hasTouch = true;
 				break;
 			}
 		}
@@ -38,52 +40,53 @@ Cube* Game::IntroCutscene() {
 	}
 	// blank other cubes
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		if (gCubes+i != pCube) {
-			BG1Helper(gCubes[i]).Flush();
-			ViewMode gfx(gCubes[i].vbuf);
-			gfx.BG1_setPanning(Vec2(0,0));
-			gfx.BG0_drawAsset(Vec2(0,0), Blank);
+		CubeID c = i;
+		if (c != cube) {
+			VideoBuffer& gfx = ViewAt(i)->Video();
+			gfx.bg1.eraseMask();
+			gfx.bg1.setPanning(vec(0,0));
+			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	ViewMode mode(pCube->vbuf);
+	VideoBuffer& mode = ViewAt(cube)->Video();
 	// hide banner
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.BG1_setPanning(Vec2(0.f, -56 + 128*u));
-		System::paintSync();
+		mode.bg1.setPanning(vec(0.f, -56 + 128*u));
+		DoPaint(true);
 	}
 	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
 	PlaySfx(sfx_running);
-	int framesPerCycle = PlayerWalk.frames >> 2;
-	int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-	mode.resizeSprite(0, 32, 32);
+	int framesPerCycle = PlayerWalk.numFrames() >> 2;
+	int tilesPerFrame = PlayerWalk.numTilesPerFrame();
+	mode.sprites[0].resize(32, 32);
 	for(unsigned i=0; i<48/2; ++i) {
-		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
-		mode.moveSprite(0, 64-16, 128-i-i);
-		System::paintSync();
+		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
+		mode.sprites[0].move(64-16, 128-i-i);
+		DoPaint(true);
 	}
 	// face front
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
 	WaitForSeconds(0.5f);
 
 	// look left
-	mode.setSpriteImage(0, PlayerIdle.index);
+	mode.sprites[0].setImage(PlayerIdle.tile(0));
 	WaitForSeconds(0.5f);
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
 	WaitForSeconds(0.5f);
 
 	// look right
-	mode.setSpriteImage(0, PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height));
+	mode.sprites[0].setImage(PlayerIdle.tile(0) + (PlayerIdle.numTilesPerFrame()));
 	WaitForSeconds(0.5f);
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
 	WaitForSeconds(0.5f);
 
 	// thought bubble appears
-	mode.BG0_drawAsset(Vec2(10,8), TitleThoughts);
+	mode.bg0.image(vec(10,8), TitleThoughts);
 	WaitForSeconds(0.5f);
-	mode.BG0_drawAsset(Vec2(3,4), TitleBalloon);
+	mode.bg0.image(vec(3,4), TitleBalloon);
 	WaitForSeconds(0.5f);
 
 	// items appear
@@ -91,64 +94,62 @@ Cube* Game::IntroCutscene() {
 	const int innerPad = (128 - pad - pad) / 3;
 	for(unsigned i = 0; i < 4; ++i) {
 		int x = pad + innerPad * i - 8;
-		mode.setSpriteImage(i+1, Items, i);
-		mode.resizeSprite(i+1, 16, 16);
+		mode.sprites[i+1].setImage(Items, i);
+		mode.sprites[i+1].resize(16, 16);
 		// jump
 		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
-			mode.moveSprite(i+1, x, 42 - j);
-			System::paint();
+			mode.sprites[i+1].move(x, 42 - j);
+			DoPaint(false);
 		}
 		for(int j=6; j>0; --j) {
-			mode.moveSprite(i+1, x, 42 - j);
-			System::paint();
+			mode.sprites[i+1].move(x, 42 - j);
+			DoPaint(false);
 		}
-		mode.moveSprite(i+1, x, 42);
-		System::paintSync();
+		mode.sprites[i+1].move(x, 42);
+		DoPaint(true);
 	}
 	WaitForSeconds(1.f);
 
 	// do the pickup animation
-	for(unsigned i=0; i<PlayerPickup.frames; ++i) {
-		mode.setSpriteImage(0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
-		System::paintSync();
+	for(unsigned i=0; i<PlayerPickup.numFrames(); ++i) {
+		mode.sprites[0].setImage(PlayerPickup.tile(0) + i * PlayerPickup.numTilesPerFrame());
+		DoPaint(true);
 		WaitForSeconds(0.05f);
 	}
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
 	WaitForSeconds(2.f);
 
 	// hide items and bubble
-	mode.hideSprite(1);
-	mode.hideSprite(2);
-	mode.hideSprite(3);
-	mode.hideSprite(4);
-	mode.BG0_drawAsset(Vec2(0,0), Sting);
-	System::paintSync();
+	mode.sprites[1].hide();
+	mode.sprites[2].hide();
+	mode.sprites[3].hide();
+	mode.sprites[4].hide();
+	mode.bg0.image(vec(0,0), Sting);
+	DoPaint(true);
 
 	// walk off
 	PlaySfx(sfx_running);
-	unsigned downIndex = PlayerWalk.index + SIDE_BOTTOM * tilesPerFrame * framesPerCycle;
+	unsigned downIndex = PlayerWalk.tile(0) + BOTTOM * tilesPerFrame * framesPerCycle;
 	for(unsigned i=0; i<76/2; ++i) {
-		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
-		mode.moveSprite(0, 64-16, 80-i-i);
-		System::paintSync();
+		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
+		mode.sprites[0].move(64-16, 80-i-i);
+		DoPaint(true);
 	}
-	mode.hideSprite(0);
+	mode.sprites[0].hide();
 
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
 		for(unsigned x=i; x<16-i; ++x) {
-			mode.BG0_putTile(Vec2(x, i), *BlackTile.tiles);
-			mode.BG0_putTile(Vec2(x, 16-i-1), *BlackTile.tiles);
+			mode.bg0.image(vec(x, i), BlackTile);
+			mode.bg0.image(vec(x, 16-i-1), BlackTile);
 		}
 		for(unsigned y=i+1; y<16-i-1; ++y) {
-			mode.BG0_putTile(Vec2(i, y), *BlackTile.tiles);
-			mode.BG0_putTile(Vec2(16-i-1, y), *BlackTile.tiles);
+			mode.bg0.image(vec(i, y), BlackTile);
+			mode.bg0.image(vec(16-i-1, y), BlackTile);
 		}
-		System::paintSync();
+		DoPaint(true);
 	}
-	BG1Helper(*pCube).Flush();
-	ViewMode(pCube->vbuf).BG1_setPanning(Vec2(0,0));
 	WaitForSeconds(0.5f);
-	return pCube;
+	return &ViewAt(cube)->Video();
 }

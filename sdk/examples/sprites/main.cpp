@@ -6,68 +6,57 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-
 using namespace Sifteo;
 
-static Cube cube(0);
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
 
-void load()
-{
-    cube.enable();
-    cube.loadAssets(GameAssets);
+static Metadata M = Metadata()
+    .title("Sprites SDK Example")
+    .cubeRange(1);
 
-    VidMode_BG0_ROM vid(cube.vbuf);
-    vid.init();
-    do {
-        vid.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2); 
-        System::paint();
-    } while (!cube.assetDone(GameAssets));
-}
+static const CubeID cube(0);
+static VideoBuffer vid;
 
 void main()
 {
-    load();
-    
-    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
-    vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), Background);
-     
+    vid.initMode(BG0_SPR_BG1);
+    vid.attach(cube);
+
+    vid.bg0.image(vec(0,0), Background);
+
+    // Allocate sprite IDs
+    SpriteRef sBullet = vid.sprites[0];
+    SpriteRef s1UP = vid.sprites[1];
+    const unsigned num1UPs = vid.sprites.NUM_SPRITES - 1;
+
     // 1UPs
-    for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
-        vid.resizeSprite(i, Sprite.width*8, Sprite.height*8);
-        vid.setSpriteImage(i, Sprite.index);
-    }
+    for (unsigned i = 0; i < num1UPs; i++)
+        s1UP[i].setImage(Sprite);
 
     // Bullet
-    vid.resizeSprite(0, Bullet.width*8, Bullet.height*8);
-    vid.setSpriteImage(0, Bullet.index);
+    sBullet.setImage(Bullet);
 
     // BG1 Overlay
-    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
-                   + 16 - Overlay.height,
-                   ((1 << Overlay.width) - 1), Overlay.height);
-    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
-                     Overlay.tiles, 0, Overlay.width * Overlay.height);
+    const Int2 ovlPos = vid.bg1.tileSize() - Overlay.tileSize();
+    vid.bg1.setMask(BG1Mask::filled(ovlPos, Overlay.tileSize()));
+    vid.bg1.image(ovlPos, Overlay);
 
-    unsigned frame = 0;
+    SystemTime epoch = SystemTime::now();
     while (1) {
-        frame++;
+        float t = SystemTime::now() - epoch;
 
         // Circle of 1UPs
-        for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
-            
-            float angle = frame * 0.075f + (i-1) * (M_PI*2 / (_SYS_VRAM_SPRITES-1));
-            const float r = 32;
-            const Float2 center = { (128 - 16)/2, (128 - 16)/2 };
-
-            vid.moveSprite(i, Int2(center + polar(angle, r)).round());
+        for (unsigned i = 0; i < num1UPs; i++) {
+            float angle = t * 2.f + i * (M_PI*2 / num1UPs);
+            s1UP[i].move(LCD_center - Sprite.pixelExtent() + polar(angle, 32.f));
         }
 
         // Scroll BG1
-        vid.BG1_setPanning(Vec2(-frame, 0u));
+        vid.bg1.setPanning(t * vec(-10.f, 0.f));
         
         // Flying bullet
-        vid.moveSprite(0, 130-frame*3, 190-frame);
+        sBullet.move(vec(130.f, 190.f) + t * polar(0.5f, -50.f));
 
         System::paint();
     }

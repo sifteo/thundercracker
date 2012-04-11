@@ -14,6 +14,7 @@
 
 class ELFDebugInfo {
 public:
+    void clear();
     void init(const FlashRange &elf);
 
     std::string readString(const std::string &section, uint32_t offset) const;
@@ -22,6 +23,8 @@ public:
     bool readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) const;
 
 private:
+    bool initialized;
+
     struct SectionInfo {
         Elf::SectionHeader header;
         FlashRange data;

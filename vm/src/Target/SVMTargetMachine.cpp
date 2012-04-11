@@ -21,7 +21,7 @@ SVMTargetMachine::SVMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
                                    Reloc::Model RM, CodeModel::Model CM)
     : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
-      DataLayout("e-S32-p32:32:32-i64:32:32-f64:32:32-v64:32:32-a0:1:1-s0:32:32-n32"),
+      DataLayout(getDataLayoutString()),
       TLInfo(*this), TSInfo(*this), Subtarget(TT, CPU, FS)
 {}
 
@@ -71,4 +71,25 @@ uint8_t SVMTargetMachine::getPaddingByte()
      * is what the flash erases to.
      */
     return 0xFF;
+}
+
+const char *SVMTargetMachine::getDataLayoutString()
+{
+    return "e-S32-p32:32:32-i64:32:32-f64:32:32-v64:32:32-a0:1:1-s0:32:32-n32";
+}
+
+bool SVMTargetMachine::isTargetCompatible(LLVMContext& Context, const TargetData &TD)
+{
+    Type *i32 = Type::getInt64Ty(Context);
+    Type *i64 = Type::getInt64Ty(Context);
+    Type *i32i64i32 = StructType::get(i32, i64, i32, NULL);
+
+    return
+        TD.getPointerABIAlignment() == 4 &&
+        TD.getPointerSize() == 4 &&
+        TD.exceedsNaturalStackAlignment(4) == false &&
+        TD.exceedsNaturalStackAlignment(8) == true &&
+        TD.getABITypeAlignment(i64) == 4 &&
+        TD.getABITypeAlignment(i32i64i32) == 4 &&
+        TD.getTypeAllocSize(i32i64i32) == 24;
 }

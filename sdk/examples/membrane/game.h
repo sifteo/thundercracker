@@ -11,6 +11,8 @@ using namespace Sifteo;
 #define NUM_CUBES     3
 #define NUM_PARTICLES 6
 
+extern AssetSlot MainSlot;
+
 
 class Portal {
 public:
@@ -18,7 +20,7 @@ public:
 
     void setOpen(bool open);
     void animate();
-    void draw(Cube &cube);
+    void draw(VideoBuffer &vid);
     
     Float2 getTarget() const;
 
@@ -40,7 +42,7 @@ private:
 
 class CubeHilighter {
 public:
-    CubeHilighter(Cube &cube);
+    CubeHilighter(VideoBuffer &vid);
     
     void init();
     void animate(float timeStep);
@@ -49,7 +51,7 @@ public:
     bool doHilight(Int2 requestedPos);
     
 private:
-    Cube &cube;
+    VideoBuffer &vid;
     TimeTicker ticker;
     int counter;
     Int2 pos;
@@ -58,7 +60,7 @@ private:
     
 class GameCube {
 public:
-    GameCube(int id);
+    GameCube(CubeID id);
 
     void init();
     
@@ -70,17 +72,17 @@ public:
 
     Float2 velocityFromTilt();
     
-    Cube cube;
+    VideoBuffer vid;
     CubeHilighter hilighter;
     
     Portal portal_e, portal_w, portal_f, portal_a;
     Portal &getPortal(unsigned i) {
         switch (i) {
         default:
-        case SIDE_TOP:     return portal_e;
-        case SIDE_LEFT:    return portal_w;
-        case SIDE_BOTTOM:  return portal_f;
-        case SIDE_RIGHT:   return portal_a;
+        case TOP:     return portal_e;
+        case LEFT:    return portal_w;
+        case BOTTOM:  return portal_f;
+        case RIGHT:   return portal_a;
         };
     }
     
@@ -107,10 +109,10 @@ public:
 
 private:
     enum Element {
-        EARTH = SIDE_TOP,
-        WATER = SIDE_LEFT,
-        FIRE = SIDE_BOTTOM,
-        AIR = SIDE_RIGHT,
+        EARTH = TOP,
+        WATER = LEFT,
+        FIRE  = BOTTOM,
+        AIR   = RIGHT,
         
         FIRST_ELEMENT = EARTH,
         LAST_ELEMENT = AIR,
@@ -210,10 +212,8 @@ private:
     void checkMatches();
 
     // Event handlers
-    static void onNeighborAdd(Game *self,
-        _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
-    static void onNeighborRemove(Game *self,
-        _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+    void onNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
+    void onNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 };
 
 #endif

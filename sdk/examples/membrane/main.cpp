@@ -2,11 +2,17 @@
 
 #include "game.h"
 
+AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(BootAssets);
+
+static Metadata M = Metadata()
+    .title("Membrane")
+    .cubeRange(NUM_CUBES);
+
 void main()
 {
     static Game game;
 
-    game.loadAssets();
     game.title();
     game.init();
     game.run();

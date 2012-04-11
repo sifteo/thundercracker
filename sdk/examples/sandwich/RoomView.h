@@ -9,21 +9,27 @@ class Room;
 #define ANIM_TILE_CAPACITY 4
 #define ITEM_OFFSET 34
 
+#define WOBBLE_NOD          0
+#define WOBBLE_SHAKE        1
+#define WOBBLE_SLIDE_TOP    2
+#define WOBBLE_SLIDE_LLEFT  3
+#define WOBBLE_SLIDE_BOTTOM 4
+#define WOBBLE_SLIDE_RIGHT  5
+#define WOBBLE_UNUSED_0     6
+#define WOBBLE_UNUSED_1     7
+
 class RoomView : public View {
 private:
   Sokoblock *mBlock;
-
   float mWobbles;
-
   uint8_t mRoomId;
-
   uint8_t mStartFrame;
-  uint8_t mAnimTileCount;
   struct {
     uint8_t hideOverlay : 1;
-    uint8_t isNodding;
+    uint8_t locked : 1; // technically we don't need this flag -- gGame has a mask now
+    uint8_t wobbleType : 3;
+    uint8_t animTileCount : 3;
   } flags;
-
   struct AnimTile {
     uint8_t lid;
     uint8_t frameCount;
@@ -46,13 +52,19 @@ public:
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update(float dt);
+  void Update();
+
+  bool Locked() const { return flags.locked; }
+  void Lock();
+  void Unlock();
 
   void HideOverlay(bool flag);
   
   void ShowPlayer();
-  void ShowItem();
+  void ShowItem(const ItemData* item);
   void ShowBlock(Sokoblock* pBlock);
+  void RefreshDoor();
+  void RefreshDepot();
 
   void SetPlayerFrame(unsigned frame);
   void SetEquipPosition(Int2 p);
@@ -69,11 +81,14 @@ public:
 
   void StartNod();
   void StartShake();
+  void StartSlide(Side side);
+
+  void ShowFrame();
 
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
-
+  void HideOverlay();
 };

@@ -91,7 +91,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
 
     if( numStems > 0 )
     {
-        bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+        bg1helper.DrawAsset( vec( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
     }
 
     /*if( numStems <= 2 && m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )

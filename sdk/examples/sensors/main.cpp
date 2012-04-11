@@ -5,111 +5,132 @@
  */
 
 #include <sifteo.h>
-
 using namespace Sifteo;
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 3
-#endif
+static const unsigned gNumCubes = 3;
+static Metadata M = Metadata()
+    .title("Sensors SDK Example")
+    .cubeRange(gNumCubes);
 
-static Cube cubes[NUM_CUBES];
 
-struct counts_t {
-    unsigned touch, shake, neighborAdd, neighborRemove;
-};
-        
-void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
-{
-    for (unsigned i = 0; i < 14; i++) {
-        VidMode_BG0_ROM vid(cubes[cube].vbuf);
-        vid.BG0_putTile(Vec2(x,y), filled ? 0x9ff : 0);
-        x += dx;
-        y += dy;
+class EventCounters {
+public:
+    struct {
+        unsigned touch;
+        unsigned shake;
+        unsigned neighborAdd;
+        unsigned neighborRemove;
+    } cubes[CUBE_ALLOCATION];
+    
+    void install()
+    {
+        Events::cubeTouch.set(&EventCounters::onTouch, this);
+        Events::cubeShake.set(&EventCounters::onShake, this);
+        Events::neighborAdd.set(&EventCounters::onNeighborAdd, this);
+        Events::neighborRemove.set(&EventCounters::onNeighborRemove, this);
     }
-}
 
-static void onTouch(counts_t *counts, _SYSCubeID cid)
-{    
-    counts[cid].touch++;
-}
+private:
+    void onTouch(unsigned cube)
+    {
+        cubes[cube].touch++;
+        LOG("Touched cube #%d\n", cube);
+    }
 
-static void onShake(counts_t *counts, _SYSCubeID cid)
-{    
-    counts[cid].shake++;
-}
+    void onShake(unsigned cube)
+    {
+        cubes[cube].shake++;
+        LOG("Shaking cube #%d\n", cube);
+    }
 
-static void onNeighborAdd(counts_t *counts,
-    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
-{
-    LOG(("Neighbor Add: %d:%d - %d:%d\n", c0, s0, c1, s1));
-    counts[c0].neighborAdd++;
-    counts[c1].neighborAdd++;
-}
+    void onNeighborRemove(unsigned firstCube, unsigned firstSide,
+        unsigned secondCube, unsigned secondSide)
+    {
+        cubes[firstCube].neighborRemove++;
+        cubes[secondCube].neighborRemove++;
+        LOG("Neighbor Remove: %d:%d - %d:%d\n",
+            firstCube, firstSide, secondCube, secondSide);
+    }
 
-static void onNeighborRemove(counts_t *counts,
-    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
-{
-    LOG(("Neighbor Remove: %d:%d - %d:%d\n", c0, s0, c1, s1));
-    counts[c0].neighborRemove++;
-    counts[c1].neighborRemove++;
-}
+    void onNeighborAdd(unsigned firstCube, unsigned firstSide,
+        unsigned secondCube, unsigned secondSide)
+    {
+        cubes[firstCube].neighborAdd++;
+        cubes[secondCube].neighborAdd++;
+        LOG("Neighbor Add: %d:%d - %d:%d\n",
+            firstCube, firstSide, secondCube, secondSide);
+    }
+};
+
 
 void main()
 {
-    static counts_t counts[NUM_CUBES];
-    
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].enable(i);
-        VidMode_BG0_ROM(cubes[i].vbuf).init();
+    static VideoBuffer vid[CUBE_ALLOCATION];
+    static EventCounters counters;
+    counters.install();
+
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        vid[cube].initMode(BG0_ROM);
+        vid[cube].attach(cube);
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, (void*) counts);
-    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
-
-    for (;;) {
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            Cube &cube = cubes[i]; 
-            int id = cube.id();
-            VidMode_BG0_ROM vid(cube.vbuf);
+    while (1) {
+        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+            auto &draw = vid[cube].bg0rom;
             String<192> str;
 
-            uint64_t hwid = cube.hardwareID();
-            str << "I am cube #" << id << "\n";
+            /*
+             * Textual dump of current sensor state
+             */
+
+            uint64_t hwid = cube.hwID();
+            str << "I am cube #" << cube << "\n";
             str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
 
-            _SYSNeighborState nb;
-            _SYS_getNeighbors(id, &nb);
+            Neighborhood nb(cube);
             str << "nb "
-                << Hex(nb.sides[0], 2) << " "
-                << Hex(nb.sides[1], 2) << " "
-                << Hex(nb.sides[2], 2) << " "
-                << Hex(nb.sides[3], 2) << "\n";
-            
-            str << "   +" << counts[id].neighborAdd
-                << ", -" << counts[id].neighborRemove
+                << Hex(nb.neighborAt(TOP), 2) << " "
+                << Hex(nb.neighborAt(LEFT), 2) << " "
+                << Hex(nb.neighborAt(BOTTOM), 2) << " "
+                << Hex(nb.neighborAt(RIGHT), 2) << "\n";
+
+            str << "   +" << counters.cubes[cube].neighborAdd
+                << ", -" << counters.cubes[cube].neighborRemove
                 << "\n\n";
 
-            str << "bat:   " << Hex(_SYS_getBatteryV(id), 4) << "\n";
-            str << "touch: " << _SYS_isTouching(id) << " (" << counts[id].touch << ")\n";
+            str << "bat:   " << Hex(cube.batteryLevel(), 4) << "\n";
+            str << "touch: " << cube.isTouching() <<
+                " (" << counters.cubes[cube].touch << ")\n";
 
-            _SYSAccelState accel = _SYS_getAccel(id);
+            auto accel = cube.accel();
             str << "acc: "
                 << Fixed(accel.x, 3)
                 << Fixed(accel.y, 3)
                 << Fixed(accel.z, 3) << "\n";
 
-            _SYSTiltState tilt = _SYS_getTilt(id);
-            str << "tilt:  " << tilt.x << "  " << tilt.y << "\n";
-            str << "shake: " << counts[id].shake;
-                
-            vid.BG0_text(Vec2(1,2), str);
+            auto tilt = cube.tilt();
+            str << "tilt:"
+                << Fixed(tilt.x, 3)
+                << Fixed(tilt.y, 3) << "\n";
 
-            drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
-            drawSide(i, nb.sides[1] != CUBE_ID_UNDEFINED, 0,  1,  0, 1);  // Left
-            drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
-            drawSide(i, nb.sides[3] != CUBE_ID_UNDEFINED, 15, 1,  0, 1);  // Right
+            str << "shake: " << counters.cubes[cube].shake;
+
+            draw.text(vec(1,2), str);
+
+            /*
+             * Neighboring indicator bars
+             */
+
+            unsigned nbColor = draw.ORANGE;
+
+            draw.fill(vec(1, 0), vec(14, 1),
+                nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(vec(0, 1), vec(1, 14),
+                nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(vec(1, 15), vec(14, 1),
+                nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG));
+            draw.fill(vec(15, 1), vec(1, 14),
+                nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG));
         }
 
         System::paint();

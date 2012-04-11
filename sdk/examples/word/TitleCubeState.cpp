@@ -84,7 +84,7 @@ void TitleCubeState::paint()
     //default:
 #if (0)
     case 999:
-        vid.BG0_drawAsset(Vec2(0,0), Title);
+        vid.BG0_drawAsset(vec(0,0), Title);
         if (mAnimDelay <= 0.f)
         {
             if (mAnimStart)
@@ -116,7 +116,7 @@ void TitleCubeState::paint()
                 frame = MIN(frame, anim.frames - 1);
 
                 BG1Helper bg1(getStateMachine().getCube());
-                bg1.DrawAsset(Vec2(8, 0), anim, frame);
+                bg1.DrawAsset(vec(8, 0), anim, frame);
                 bg1.Flush();
             }
         }
@@ -125,7 +125,7 @@ void TitleCubeState::paint()
 
     default:
     case 1:
-        vid.BG0_drawAsset(Vec2(0, 0), StartBG);
+        vid.BG0_drawAsset(vec(0, 0), StartBG);
         vid.setSpriteImage(0, StartPrompt);
         vid.resizeSprite(0, StartPrompt.width * 8, StartPrompt.height * 8);
         {
@@ -135,12 +135,12 @@ void TitleCubeState::paint()
                 const float SHAKE = 4.f;
                 shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
             }
-            vid.moveSprite(0, Vec2(40.f - shakeOffset, 78.f));
-            vid.BG1_setPanning(Vec2<int>((unsigned)mPanning + shakeOffset, 0));
+            vid.moveSprite(0, vec(40.f - shakeOffset, 78.f));
+            vid.BG1_setPanning(vec<int>((unsigned)mPanning + shakeOffset, 0));
         }
         {            
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(0, 0), StartLid);
+            bg1.DrawAsset(vec(0, 0), StartLid);
             bg1.Flush();
         }
         break;
@@ -150,7 +150,7 @@ void TitleCubeState::paint()
     default:
         paintBorder(vid, ImageIndex_Teeth);
         /* TODO load/save
-        paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
+        paintScoreNumbers(vid, vec(3,4), FontSmall, "High Scores");
 
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
@@ -162,7 +162,7 @@ void TitleCubeState::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            paintScoreNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+            paintScoreNumbers(vid, vec(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                          FontSmall,
                          string);
         }
