@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#ifdef NO_USERSPACE_HEADERS
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
