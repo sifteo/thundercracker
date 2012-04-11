@@ -27,6 +27,11 @@ MinimapDot = image{"minimap_dot.png", width=8, height=8, pinned=true}
 Edge = image{ "edge.png" }
 IconPress = image{ "icon_press.png" }
 
+FrameLeft = image{ "frame_left.png" }
+FrameRight = image{ "frame_right.png" }
+FrameBottom = image{ "frame_bottom.png" }
+FrameTop = image{ "frame_top.png" }
+
 dofile "content.gen.lua"
 
 --[[

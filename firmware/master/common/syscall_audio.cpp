@@ -10,6 +10,7 @@
 #include <sifteo/abi.h>
 #include "audiomixer.h"
 #include "svmmemory.h"
+#include "svmruntime.h"
 
 extern "C" {
 
@@ -19,6 +20,8 @@ uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, 
     if (SvmMemory::copyROData(modCopy, mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
         return AudioMixer::instance.play(&modCopy, h, loop);
     }
+
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return false;
 }
 

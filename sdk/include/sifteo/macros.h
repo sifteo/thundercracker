@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#ifdef NO_USERSPACE_HEADERS
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -22,25 +22,45 @@
  * On debug builds, the actual log messages and assert failure messages are
  * included in a separate debug symbol ELF section, not in your application's
  * normal data section.
+ *
+ * Normally you would disable debugging by linking your binary as a release
+ * build. However, sometimes it can be useful to have a build with symbols
+ * but without ASSERTs and LOGs. For example, this can be used to isolate
+ * problems that, for whatever reason, only show up with ASSERTs or LOGs
+ * disabled. You can do this by setting the -DNO_ASSERT or -DNO_LOG
+ * compiler options.
+ *
+ * Logging supports a variety of format specifiers. Most of the standard
+ * printf() specifiers are supported, plus we have several new ones:
+ *
+ *   - Literal characters, and %%
+ *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
+ *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
+ *   - Four chars packed into a 32-bit integer: %C
+ *   - Binary integers: %b
+ *   - C-style strings: %s
+ *   - Hex-dump of fixed width buffers: %<width>h
+ *   - Pointer, printed as a resolved symbol when possible: %P
  */
 
-#define LOG(...) do { \
-    if (_SYS_lti_isDebug()) \
-        _SYS_lti_log(__VA_ARGS__); \
-} while (0)
+#define DEBUG_ONLY(_x)  do { if (_SYS_lti_isDebug()) { _x } } while (0)
 
-#define DEBUG_ONLY(_x) do { \
-    if (_SYS_lti_isDebug()) { \
-        _x \
-    } \
-} while (0)
+#ifdef NO_LOG
+#   define LOG(...)
+#else
+#   define LOG(...)     do { if (_SYS_lti_isDebug()) _SYS_lti_log(__VA_ARGS__); } while (0)
+#endif
 
-#define ASSERT(_x) do { \
-    if (_SYS_lti_isDebug() && !(_x)) { \
-        _SYS_lti_log("ASSERT failure at %s:%d, (%s)\n", __FILE__, __LINE__, #_x); \
-        _SYS_abort(); \
-    } \
-} while (0)
+#ifdef NO_ASSERT
+#   define ASSERT(_x)
+#else
+#   define ASSERT(_x) do { \
+        if (_SYS_lti_isDebug() && !(_x)) { \
+            _SYS_lti_log("ASSERT failure at %s:%d, (%s)\n", __FILE__, __LINE__, #_x); \
+            _SYS_abort(); \
+        } \
+    } while (0)
+#endif
 
 /// Convenient trace macros for printing the values of variables
 #define LOG_INT(_x)     LOG("%s = %d\n", #_x, (_x));

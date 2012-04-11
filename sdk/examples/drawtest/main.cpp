@@ -19,15 +19,16 @@ void main()
 {
     static VideoBuffer vid;
     const CubeID cube(0);
-    TileBuffer<5,10> buf(cube);
+    TileBuffer<5,2,2> buf(cube);
 
-    buf.text(vec(0,0), Font, "Hello");
+    buf.text(vec(0,0), Font, "Hello", 1);
+    buf.text(vec(0,0), Font, "World", 0);
 
     vid.initMode(BG0);
     vid.bg0.erase(WhiteTile);
-    vid.bg0.image(vec(2,1), buf);
-    vid.bg0.image(vec(7,8), buf);
-    vid.bg0.image(vec(3,13), buf);
+    vid.bg0.image(vec(2,1), buf, 1);
+    vid.bg0.image(vec(7,8), buf, 0);
+    vid.bg0.image(vec(3,13), buf, 1);
     vid.attach(cube);
 
     System::paint();

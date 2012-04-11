@@ -66,13 +66,17 @@ int64_t _SYS_ticks_ns(void)
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
 {
     if (vid < _SYS_NUM_VECTORS)
-        Event::setVector(vid, handler, context);
+        return Event::setVector(vid, handler, context);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
 }
 
 void *_SYS_getVectorHandler(_SYSVectorID vid)
 {
     if (vid < _SYS_NUM_VECTORS)
         return Event::getVectorHandler(vid);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
     return NULL;
 }
 
@@ -80,6 +84,8 @@ void *_SYS_getVectorContext(_SYSVectorID vid)
 {
     if (vid < _SYS_NUM_VECTORS)
         return Event::getVectorContext(vid);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
     return NULL;
 }
 

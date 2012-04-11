@@ -12,7 +12,7 @@ include Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -Icommon -I../include -DNO_USERSPACE_HEADERS
+CFLAGS := -Icommon -I../include -DNOT_USERSPACE
 CFLAGS_STM32 := -Istm32 -DHAVE_CONFIG_H
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include
 

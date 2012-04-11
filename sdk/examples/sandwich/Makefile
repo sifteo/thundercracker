@@ -9,6 +9,7 @@ OBJS = \
 	$(ASSETS).gen.o \
 	content.gen.o \
 	main.o \
+	Bomb.o \
 	Common.o \
 	Dialog.o \
 	DrawingHelpers.o \
@@ -18,7 +19,6 @@ OBJS = \
 	Game_Events.o \
 	Game_IntroCutscene.o \
 	Game_MainLoop.o \
-	Game_WinScreen.o \
 	GameState.o \
 	IdleView.o \
 	InventoryView.o \
@@ -31,7 +31,7 @@ OBJS = \
 	Room.o \
 	RoomView.o \
 	Sokoblock.o \
-	ViewSlot.o \
+	Viewport.o \
 
 ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
 CDEPS += *.h 

@@ -1,25 +1,29 @@
 #include "Game.h"
 
-ViewSlot* pInventory = 0;
-ViewSlot* pMinimap = 0;
+Viewport* pInventory = 0;
+Viewport* pMinimap = 0;
 
-Cube* ViewSlot::GetCube() const {
-	return gCubes + (this - gGame.ViewBegin());
+Viewport& Viewport::Iterator::operator*() {
+	return *gGame.ViewAt(currentId);
 }
 
-Cube::ID ViewSlot::GetCubeID() const {
-	return this - gGame.ViewBegin();
+Viewport* Viewport::Iterator::operator->() {
+	return gGame.ViewAt(currentId);
 }
 
-bool ViewSlot::Touched() const {
-  return !mFlags.prevTouch && GetCube()->touching();
+//Viewport* Viewport::Iterator::ptr() {
+Viewport::Iterator::operator Viewport*() {
+	return gGame.ViewAt(currentId);
 }
 
-void ViewSlot::Init() {
-	ViewMode mode(GetCube()->vbuf);
-	mode.set();
-	mode.clear();
-  	mode.setWindow(0, 128);
+bool Viewport::Touched() const {
+  return !mFlags.prevTouch && GetCube().isTouching();
+}
+
+void Viewport::Init() {
+	mBuffer.attach(this - gGame.ViewAt(0));
+	mBuffer.initMode(BG0_SPR_BG1);
+  	mBuffer.setWindow(0, 128);
 	if (!gGame.ShowingMinimap() || pMinimap) {
 		mFlags.view = VIEW_IDLE;
 		mView.idle.Init();
@@ -29,27 +33,23 @@ void ViewSlot::Init() {
 		mView.minimap.Init();
 	}
 	gGame.NeedsSync();
-
 }
 
-void ViewSlot::HideSprites() {
-	ViewMode mode = Graphics();
+void Viewport::HideSprites() {
 	for(unsigned i=0; i<8; ++i) {
-		mode.hideSprite(i);
+		mBuffer.sprites[i].hide();
 	}
 }
 
-void ViewSlot::SanityCheckVram() {
-	ViewMode gfx(GetCube()->vbuf);
-	//if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
-	if (!gfx.isInMode()) {
-		gfx.setWindow(0,128);
-		gfx.init();
+void Viewport::SanityCheckVram() {
+	if (mBuffer.mode() != BG0_SPR_BG1) {
+		mBuffer.setWindow(0,128);
+		mBuffer.initMode(BG0_SPR_BG1);
 	}
-	gfx.BG0_setPanning(vec(0,0));
+	mBuffer.bg0.setPanning(vec(0,0));
 }
 
-void ViewSlot::EvictSecondaryView(unsigned viewId, bool doFlush) {
+void Viewport::EvictSecondaryView(unsigned viewId, bool doFlush) {
 	if (pInventory == this && viewId != VIEW_INVENTORY) { 
 		pInventory = FindIdleView();
 		if (pInventory) { pInventory->SetSecondaryView(VIEW_INVENTORY, doFlush); }
@@ -67,11 +67,11 @@ void ViewSlot::EvictSecondaryView(unsigned viewId, bool doFlush) {
 	}
 }
 
-bool ViewSlot::SetLocationView(unsigned roomId, Cube::Side side, bool force, bool doFlush) {
-	unsigned view = side == SIDE_UNDEFINED ? VIEW_ROOM : VIEW_EDGE;
+bool Viewport::SetLocationView(unsigned roomId, Side side, bool force, bool doFlush) {
+	unsigned view = side == NO_SIDE ? VIEW_ROOM : VIEW_EDGE;
 	if (!force && mFlags.view == view) {
 		if (view == VIEW_ROOM && mView.room.Id() == roomId) { return false; }
-		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.Side() == side) { return false; }
+		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.GetSide() == side) { return false; }
 	}
 	SanityCheckVram();
 	mFlags.view = view;
@@ -82,16 +82,12 @@ bool ViewSlot::SetLocationView(unsigned roomId, Cube::Side side, bool force, boo
 		mView.edge.Init(roomId, side);
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-			gGame.Paint(true);
+		gGame.DoPaint(true);
 	}
 	return true;
 }
 
-void ViewSlot::SetSecondaryView(unsigned viewId, bool doFlush) {
+void Viewport::SetSecondaryView(unsigned viewId, bool doFlush) {
 	mFlags.view = viewId;
 	SanityCheckVram();
 	EvictSecondaryView(viewId, doFlush);
@@ -109,19 +105,13 @@ void ViewSlot::SetSecondaryView(unsigned viewId, bool doFlush) {
 			break;
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-			gGame.Paint(true);
+			gGame.DoPaint(true);
 	}
 }
 
-void ViewSlot::Restore(bool doFlush) {
-	ViewMode mode = Graphics();
-	mode.set();
-	mode.clear();
-  	mode.setWindow(0, 128);
+void Viewport::Restore(bool doFlush) {
+	mBuffer.setMode(BG0_SPR_BG1);
+  	mBuffer.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
@@ -140,43 +130,49 @@ void ViewSlot::Restore(bool doFlush) {
 		break;
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-		gGame.Paint(true);
+		gGame.DoPaint(true);
 	}
 }
 
-void ViewSlot::Update(float dt) {
-	mFlags.prevTouch = GetCube()->touching();
+void Viewport::Update() {
+	mFlags.prevTouch = GetCube().isTouching();
 	switch(mFlags.view) {
 	case VIEW_ROOM:
-		mView.room.Update(dt);
+		mView.room.Update();
 		break;
 	case VIEW_INVENTORY:
-		mView.inventory.Update(dt);
+		mView.inventory.Update();
 		break;
 	case VIEW_MINIMAP:
-		mView.minimap.Update(dt);
+		mView.minimap.Update();
 		break;
 	case VIEW_EDGE:
-		mView.edge.Update(dt);
+		mView.edge.Update();
 		break;
 	}
 }
   
-bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
+bool Viewport::ShowLocation(Int2 loc, bool force, bool doFlush) {
+	if (ShowingLockedRoom()) {
+		if (loc == mView.room.Location()) {
+			mView.room.Restore();
+			return true;
+		} else {
+			mView.room.ShowFrame();
+			return false;
+		}
+	}
+
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
-	Cube::Side side = SIDE_UNDEFINED;
+	Side side = NO_SIDE;
 	if (loc.x < -1) {
 		HideLocation(doFlush);
 		return false;
 	} else if (loc.x == -1) {
 		if (loc.y >= 0 && loc.y < map.height) {
 			loc.x = 0;
-			side = SIDE_LEFT;
+			side = LEFT;
 		} else {
 			HideLocation(doFlush);
 			return false;
@@ -187,12 +183,12 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 			return false;
 		} else if (loc.y == -1) {
 			loc.y = 0;
-			side = SIDE_TOP;
+			side = TOP;
 		} else if (loc.y < map.height) {
 			// noop
 		} else if (loc.y == map.height) {
 			loc.y = map.height-1;
-			side = SIDE_BOTTOM;
+			side = BOTTOM;
 		} else {
 			HideLocation(doFlush);
 			return false;
@@ -200,7 +196,7 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 	} else if (loc.x == map.width) {
 		if (loc.y >= 0 && loc.y < map.height) {
 			loc.x = map.width-1;
-			side = SIDE_RIGHT;
+			side = RIGHT;
 		} else {
 			HideLocation(doFlush);
 			return false;
@@ -212,15 +208,20 @@ bool ViewSlot::ShowLocation(Int2 loc, bool force, bool doFlush) {
 	return SetLocationView(gGame.GetMap()->GetRoomId(loc), side, force, doFlush);
 }
 
-ViewSlot* ViewSlot::FindIdleView() {
-	for (ViewSlot *p=gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) {
+Viewport* Viewport::FindIdleView() {
+	Viewport::Iterator p = gGame.ListViews();
+	while(p.MoveNext()) {
 		if (p->ViewType() == VIEW_IDLE) { return p; }
 	}
 	return 0;
 }
 
-bool ViewSlot::HideLocation(bool doFlush) {
-	if (IsShowingLocation()) {
+bool Viewport::HideLocation(bool doFlush) {
+	if (ShowingLockedRoom()) {
+		mView.room.ShowFrame();
+		return false;
+	}
+	if (ShowingLocation()) {
 		if (gGame.ShowingMinimap() && !pMinimap) {
 			SetSecondaryView(VIEW_MINIMAP, doFlush);
 		} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
@@ -233,7 +234,7 @@ bool ViewSlot::HideLocation(bool doFlush) {
 	return false;
 }
 
-void ViewSlot::RefreshInventory(bool doFlush) {
+void Viewport::RefreshInventory(bool doFlush) {
   if (mFlags.view == VIEW_INVENTORY) {
   	if (!gGame.GetState()->HasAnyItems()) {
   		SetSecondaryView(VIEW_IDLE, doFlush);
@@ -245,9 +246,10 @@ void ViewSlot::RefreshInventory(bool doFlush) {
   }
 }
 
-ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
-  Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
+Viewport* Viewport::VirtualNeighborAt(Side side) const {
+	Neighborhood hood = mBuffer.virtualNeighbors();
+	CubeID neighbor = hood.neighborAt(side);
+	return neighbor.isDefined() ? gGame.ViewAt(neighbor-CUBE_ID_BASE) : 0;
 }
 
 //----------------------------------------------------------------------
@@ -260,17 +262,17 @@ ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
 #define TILT_THRESHOLD 35
 #endif
 
-Cube::Side ViewSlot::VirtualTiltDirection() const {
-  Int2 accel = GetCube()->virtualAccel();
+Side Viewport::VirtualTiltDirection() const {
+  Int2 accel = mBuffer.virtualAccel().xy();
   if (accel.y < -TILT_THRESHOLD) {
-    return 0;
+    return TOP;
   } else if (accel.x < -TILT_THRESHOLD) {
-    return 1;
+    return LEFT;
   } else if (accel.y > TILT_THRESHOLD) {
-    return 2;
+    return BOTTOM;
   } else if (accel.x > TILT_THRESHOLD) {
-    return 3;
+    return RIGHT;
   } else {
-    return -1;
+    return NO_SIDE;
   }
 }

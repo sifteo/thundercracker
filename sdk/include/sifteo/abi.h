@@ -20,7 +20,7 @@
 #ifndef _SIFTEO_ABI_H
 #define _SIFTEO_ABI_H
 
-#ifdef NO_USERSPACE_HEADERS
+#ifdef NOT_USERSPACE
 #   include <stdint.h>
 #endif
 
@@ -38,7 +38,7 @@ typedef uint8_t bool;
  * from stdint.h above.
  */
 
-#ifndef NO_USERSPACE_HEADERS
+#ifndef NOT_USERSPACE
     typedef signed char int8_t;
     typedef unsigned char uint8_t;
     typedef signed short int16_t;
@@ -71,9 +71,13 @@ typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset 
  * or return values, declared using C linkage.
  */
 
-#ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
+#ifndef NOT_USERSPACE
 void main(void);
 #endif
+
+/**
+ * Asset loading
+ */
 
 #define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
@@ -593,16 +597,8 @@ struct _SYSMetadataImage {
  *
  * These functions are replaced during link-time optimization.
  *
- * Logging supports many standard printf() format specifiers:
- *
- *   - Literal characters, and %%
- *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
- *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
- *   - Four chars packed into a 32-bit integer: %C
- *   - Binary integers: %b
- *   - C-style strings: %s
- *   - Hex-dump of fixed width buffers: %<width>h
- *   - Pointer, printed as a resolved symbol when possible: %P
+ * Logging supports many standard printf() format specifiers,
+ * as documented in sifteo/macros.h
  *
  * To work around limitations in C variadic functions, _SYS_lti_metadata()
  * supports a format string which specifies what data type each argument

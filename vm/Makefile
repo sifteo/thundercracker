@@ -11,7 +11,7 @@ WARNFLAGS := -Werror -Wall -Wno-uninitialized
 # ABI header
 SDK_INCLUDE := $(TC_DIR)/sdk/include
 INCLUDES += -I$(SDK_INCLUDE)
-FLAGS += -DNO_USERSPACE_HEADERS
+FLAGS += -DNOT_USERSPACE
 
 include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)

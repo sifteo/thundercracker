@@ -11,12 +11,32 @@
 #define BLOCK_SPRITE_ID     4
 
 void RoomView::Init(unsigned roomId) {
+  flags.locked = false;
+  mRoomId = roomId;
+  Restore();
+}
+
+void RoomView::Lock() {
+  flags.locked = true;
+  gGame.OnViewLocked(this);
+}
+
+void RoomView::Unlock() {
+  flags.locked = false;
+  gGame.OnViewUnlocked(this);
+}
+
+void RoomView::HideOverlay() {
+  Parent()->Video().bg1.eraseMask();
+}
+
+
+void RoomView::Restore() {
   mWobbles = -1.f;
   Parent()->HideSprites();
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
-  mRoomId = roomId;
   // are we showing an items?
   mStartFrame = gGame.AnimFrame();
   ComputeAnimatedTiles();
@@ -34,9 +54,9 @@ void RoomView::Init(unsigned roomId) {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
       mAmbient.bff.Randomize();
-      mode.resizeSprite(BFF_SPRITE_ID, 8, 8);
-      mode.setSpriteImage(BFF_SPRITE_ID, Butterfly.index + 4 * mAmbient.bff.dir);
-      mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
+      mode.sprites[BFF_SPRITE_ID].resize(8, 8);
+      mode.sprites[BFF_SPRITE_ID].setImage(Butterfly.tile(0) + 4 * mAmbient.bff.dir);
+      mode.sprites[BFF_SPRITE_ID].move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
 
@@ -53,19 +73,15 @@ void RoomView::Init(unsigned roomId) {
   }
 }
 
-void RoomView::Restore() {
-  Init(mRoomId);
-}
-
-void RoomView::Update(float dt) {
-  ViewMode mode = Parent()->Graphics();
+void RoomView::Update() {
+  VideoBuffer& mode = Parent()->Video();
   // update animated tiles (could suffer some optimization)
   const unsigned t = gGame.AnimFrame() - mStartFrame;
   for(unsigned i=0; i<flags.animTileCount; ++i) {
     const AnimTile& view = mAnimTiles[i];
     const unsigned localt = t % (view.frameCount << 2);
     if (localt % 4 == 0) {
-        mode.BG0_drawAsset(
+        mode.bg0.image(
           vec((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap()->Data()->tileset),
           gGame.GetMap()->Data()->roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
@@ -75,10 +91,9 @@ void RoomView::Update(float dt) {
 
   if (gGame.GetMap()->Data()->ambientType && mAmbient.bff.active) {
     mAmbient.bff.Update();
-    mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
-    mode.setSpriteImage(
-      BFF_SPRITE_ID, 
-      Butterfly.index + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3
+    mode.sprites[BFF_SPRITE_ID].move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
+    mode.sprites[BFF_SPRITE_ID].setImage(
+      Butterfly.tile(0) + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3
     );
   }
 
@@ -86,36 +101,36 @@ void RoomView::Update(float dt) {
   if (GetRoom()->HasItem()) {
     const unsigned hoverTime = (gGame.AnimFrame() - mStartFrame) % HOVER_COUNT;
     Int2 p = 16 * GetRoom()->LocalCenter(0);
-    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + kHoverTable[hoverTime]);
+    mode.sprites[TRIGGER_SPRITE_ID].move(p.x-8, p.y + kHoverTable[hoverTime]);
   }
 
   // nod or shake
   if (IsWobbly()) {
-    mWobbles = clamp(mWobbles- 2.f*dt, 0.f, 1.f); // duration = 0.5
+    mWobbles = clamp(mWobbles- 2.f*gGame.Dt().seconds(), 0.f, 1.f); // duration = 0.5
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_0);
     ASSERT(flags.wobbleType != WOBBLE_UNUSED_1);
     switch(flags.wobbleType) {
       
       case WOBBLE_NOD: {
         const float u = 8.f * -1.2f * mWobbles * sin(M_PI * mWobbles * mWobbles * mWobbles);
-        mode.BG0_setPanning(vec(0.f, u));
-        mode.BG1_setPanning(vec(0.f, u));
+        mode.bg0.setPanning(vec(0.f, u));
+        mode.bg1.setPanning(vec(0.f, u));
         break;
       }
 
       case WOBBLE_SHAKE: {
         const float u = 8.f * 1.1f * mWobbles * sin(5 * M_PI * mWobbles);
-        mode.BG0_setPanning(vec(u, 0.f));
-        mode.BG1_setPanning(vec(u, 0.f));
+        mode.bg0.setPanning(vec(u, 0.f));
+        mode.bg1.setPanning(vec(u, 0.f));
         break;
       }
 
       default: {
-        const Cube::Side dir = flags.wobbleType - WOBBLE_SLIDE_TOP;
+        const Side dir = (Side)(flags.wobbleType - WOBBLE_SLIDE_TOP);
         const float u = 8.f * mWobbles * mWobbles * mWobbles;
-        const Int2 pan = (u * kSideToUnit[(dir+2)%4]).toInt();
-        mode.BG0_setPanning(pan);
-        mode.BG1_setPanning(pan);
+        const Int2 pan = (u * Int2::unit((dir+2)%4));
+        mode.bg0.setPanning(pan);
+        mode.bg1.setPanning(pan);
       }
 
     }
@@ -137,9 +152,9 @@ Int2 RoomView::Location() const {
 bool RoomView::GatewayTouched() const {
   const Room* pRoom = GetRoom();
   if (pRoom->HasGateway()) {
-    for(Cube::Side s=0; s<4; ++s) {
-      const ViewSlot *view = Parent()->VirtualNeighborAt(s);
-      return view && view->Touched() && view->IsShowingGatewayEdge();
+    for(int s=0; s<4; ++s) {
+      const Viewport *view = Parent()->VirtualNeighborAt((Side)s);
+      return view && view->Touched() && view->ShowingGatewayEdge();
     }
   }
   return false;
@@ -156,10 +171,10 @@ void RoomView::HideOverlay(bool flag) {
 
 void RoomView::StartNod() {
   // fill in extra rows (with real data?)
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   for(int i=0; i<16; ++i) {
-    mode.BG0_drawAsset(vec(i, 16), BlackTile);
-    mode.BG0_drawAsset(vec(i, 17), BlackTile);
+    mode.bg0.image(vec(i, 16), BlackTile);
+    mode.bg0.image(vec(i, 17), BlackTile);
   }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_NOD;
@@ -167,27 +182,27 @@ void RoomView::StartNod() {
 
 void RoomView::StartShake() {
   // fill in extra columns (with real data?)
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   for(int i=0; i<16; ++i) {
-    mode.BG0_drawAsset(vec(16, i), BlackTile);
-    mode.BG0_drawAsset(vec(17, i), BlackTile);
+    mode.bg0.image(vec(16, i), BlackTile);
+    mode.bg0.image(vec(17, i), BlackTile);
   }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_SHAKE;
 }
 
-void RoomView::StartSlide(Cube::Side side) {
+void RoomView::StartSlide(Side side) {
   ASSERT(0 <= side && side < 4);
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   if (side % 2 == 0) {
     for(int i=0; i<16; ++i) {
-      mode.BG0_drawAsset(vec(i, 16), BlackTile);
-      mode.BG0_drawAsset(vec(i, 17), BlackTile);
+      mode.bg0.image(vec(i, 16), BlackTile);
+      mode.bg0.image(vec(i, 17), BlackTile);
     }
   } else {
     for(int i=0; i<16; ++i) {
-      mode.BG0_drawAsset(vec(16, i), BlackTile);
-      mode.BG0_drawAsset(vec(17, i), BlackTile);
+      mode.bg0.image(vec(16, i), BlackTile);
+      mode.bg0.image(vec(17, i), BlackTile);
     }
   }
   mWobbles = 1.f;
@@ -200,83 +215,83 @@ void RoomView::StartSlide(Cube::Side side) {
 //---------------------------------------------------------------
 
 void RoomView::ShowPlayer() {
-  ViewMode gfx = Parent()->Graphics();
-  gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  VideoBuffer& gfx = Parent()->Video();
+  gfx.sprites[PLAYER_SPRITE_ID].resize(32, 32);
   if (gGame.GetPlayer()->Equipment()) {
-    gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
+    gfx.sprites[EQUIP_SPRITE_ID].setImage(Items, gGame.GetPlayer()->Equipment()->itemId);
   }
   UpdatePlayer();
 }
 
 void RoomView::ShowItem(const ItemData* item) {
   Room* pRoom = GetRoom();
-  ViewMode mode = Parent()->Graphics();
-  mode.setSpriteImage(TRIGGER_SPRITE_ID, Items, item->itemId);
+  VideoBuffer& mode = Parent()->Video();
+  mode.sprites[TRIGGER_SPRITE_ID].setImage(Items, item->itemId);
   Int2 p = pRoom->HasDepot() ? 
     16 * vec(pRoom->Depot()->tx+1, pRoom->Depot()->ty+1) : 
     16 * pRoom->LocalCenter(0);
-  mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+  mode.sprites[TRIGGER_SPRITE_ID].move(p.x-8, p.y);
 }
 
 void RoomView::ShowBlock(Sokoblock *pBlock) {
   mBlock = pBlock;
-  Parent()->Graphics().setSpriteImage(BLOCK_SPRITE_ID, pBlock->Asset());
+  Parent()->Video().sprites[BLOCK_SPRITE_ID].setImage(pBlock->Asset());
   UpdateBlock();
 }
 
 void RoomView::SetPlayerFrame(unsigned frame) {
-  Parent()->Graphics().setSpriteImage(PLAYER_SPRITE_ID, frame);
+  Parent()->Video().sprites[PLAYER_SPRITE_ID].setImage(frame);
 }
 
 void RoomView::SetEquipPosition(Int2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
-  ViewMode gfx = Parent()->Graphics();
-  gfx.setSpriteImage(EQUIP_SPRITE_ID, Items, gGame.GetPlayer()->Equipment()->itemId);
-  gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
+  VideoBuffer& gfx = Parent()->Video();
+  gfx.sprites[EQUIP_SPRITE_ID].setImage(Items, gGame.GetPlayer()->Equipment()->itemId);
+  gfx.sprites[EQUIP_SPRITE_ID].move(p.x-8, p.y);
 }
   
 void RoomView::SetItemPosition(Int2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
-  Parent()->Graphics().moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+  Parent()->Video().sprites[TRIGGER_SPRITE_ID].move(p.x-8, p.y);
 }
 
 void RoomView::UpdatePlayer() {
   Int2 localPosition = gGame.GetPlayer()->Position() - 128 * Location();
-  ViewMode gfx = Parent()->Graphics();
-  gfx.setSpriteImage(PLAYER_SPRITE_ID, gGame.GetPlayer()->AnimFrame());
-  gfx.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  VideoBuffer& gfx = Parent()->Video();
+  gfx.sprites[PLAYER_SPRITE_ID].setImage(gGame.GetPlayer()->AnimFrame());
+  gfx.sprites[PLAYER_SPRITE_ID].move(localPosition.x-16, localPosition.y-16);
   if (gGame.GetPlayer()->Equipment()) {
-    gfx.moveSprite(EQUIP_SPRITE_ID, localPosition.x-8, localPosition.y-ITEM_OFFSET);
+    gfx.sprites[EQUIP_SPRITE_ID].move(localPosition.x-8, localPosition.y-ITEM_OFFSET);
   }
 }
 
 void RoomView::DrawPlayerFalling(int height) {
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   Int2 localCenter = 16 * GetRoom()->LocalCenter(0);
-  mode.setSpriteImage(PLAYER_SPRITE_ID, PlayerStand.index + (2<<4));
-  mode.moveSprite(PLAYER_SPRITE_ID, localCenter.x-16, localCenter.y-32-height);
-  mode.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  mode.sprites[PLAYER_SPRITE_ID].setImage(PlayerStand.tile(0) + (2<<4));
+  mode.sprites[PLAYER_SPRITE_ID].move(localCenter.x-16, localCenter.y-32-height);
+  mode.sprites[PLAYER_SPRITE_ID].resize(32, 32);
   if (gGame.GetPlayer()->Equipment()) { 
-    mode.moveSprite(EQUIP_SPRITE_ID, localCenter.x-8, localCenter.y-16-height-ITEM_OFFSET);
+    mode.sprites[EQUIP_SPRITE_ID].move(localCenter.x-8, localCenter.y-16-height-ITEM_OFFSET);
   }
 }
 
 void RoomView::UpdateBlock() {
   ASSERT(mBlock);
   const Int2 localPosition = mBlock->Position() - vec(32, 32) - 128 * Location();
-  Parent()->Graphics().moveSprite(BLOCK_SPRITE_ID, localPosition);
+  Parent()->Video().sprites[BLOCK_SPRITE_ID].move(localPosition);
 }
 
 void RoomView::HidePlayer() {
-  ViewMode gfx = Parent()->Graphics();
-  gfx.hideSprite(PLAYER_SPRITE_ID);
-  gfx.hideSprite(EQUIP_SPRITE_ID);
+  VideoBuffer& gfx = Parent()->Video();
+  gfx.sprites[PLAYER_SPRITE_ID].hide();
+  gfx.sprites[EQUIP_SPRITE_ID].hide();
 }
 
-void RoomView::HideItem() { Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID); }
-void RoomView::HideEquip() { Parent()->Graphics().hideSprite(EQUIP_SPRITE_ID); }
+void RoomView::HideItem() { Parent()->Video().sprites[TRIGGER_SPRITE_ID].hide(); }
+void RoomView::HideEquip() { Parent()->Video().sprites[EQUIP_SPRITE_ID].hide(); }
 void RoomView::HideBlock() { 
-  Parent()->Graphics().hideSprite(BLOCK_SPRITE_ID); 
+  Parent()->Video().sprites[BLOCK_SPRITE_ID].hide(); 
   mBlock = 0;
 }
 
@@ -285,11 +300,11 @@ void RoomView::HideBlock() {
 //----------------------------------------------------------------------
 
 void RoomView::DrawTrapdoorFrame(int frame) {
-  ViewMode mode = Parent()->Graphics();
+  VideoBuffer& mode = Parent()->Video();
   Int2 firstTile = GetRoom()->LocalCenter(0) - vec(2,2);
   for(unsigned y=0; y<4; ++y)
   for(unsigned x=0; x<4; ++x) {
-    mode.BG0_drawAsset(
+    mode.bg0.image(
       vec(firstTile.x + x, firstTile.y + y) << 1,
       *(gGame.GetMap()->Data()->tileset),
       gGame.GetMap()->GetTileId(mRoomId, vec(firstTile.x + x, firstTile.y + y))+frame
@@ -302,12 +317,12 @@ void RoomView::DrawTrapdoorFrame(int frame) {
 //----------------------------------------------------------------------
 
 void RoomView::RefreshDoor() {
-  ViewMode g = Parent()->Graphics();
+  VideoBuffer& g = Parent()->Video();
   const Room *pRoom = GetRoom();
   if (pRoom->HasOpenDoor()) {
     for(int y=0; y<3; ++y)
     for(int x=3; x<5; ++x) {
-      g.BG0_drawAsset(
+      g.bg0.image(
         vec(x,y) << 1,
         *(gGame.GetMap()->Data()->tileset),
         gGame.GetMap()->GetTileId(mRoomId, vec(x, y))+2
@@ -317,14 +332,14 @@ void RoomView::RefreshDoor() {
 }
 
 void RoomView::RefreshDepot() {
-  ViewMode g = Parent()->Graphics();
+  VideoBuffer& g = Parent()->Video();
   const Room *pRoom = GetRoom();
   if (pRoom->HasDepotContents()) {
     const DepotData& depot = *pRoom->Depot();
     // assuming depots are door sizes (2x3)
     for(int y=depot.ty; y<depot.ty+3; ++y)
     for(int x=depot.tx; x<depot.tx+2; ++x) {
-      g.BG0_drawAsset(
+      g.bg0.image(
         vec(x,y) << 1,
         *(gGame.GetMap()->Data()->tileset),
         gGame.GetMap()->GetTileId(mRoomId, vec(x, y))+2
@@ -335,24 +350,36 @@ void RoomView::RefreshDepot() {
 
 }
 
+void RoomView::ShowFrame() {
+  VideoBuffer& g = Parent()->Video();
+  g.bg0.image(vec(0,0), FrameTop);
+  g.bg0.image(vec(0, 1), FrameLeft);
+  g.bg0.image(vec(15, 1), FrameRight);
+  g.bg0.image(vec(0, 15), FrameBottom);
+  HideOverlay();
+}
+
 void RoomView::DrawBackground() {
-  ViewMode mode = Parent()->Graphics();
-  mode.BG0_setPanning(vec(0,0));
-  DrawRoom(&mode, gGame.GetMap()->Data(), mRoomId);
+  VideoBuffer& mode = Parent()->Video();
+  mode.bg0.setPanning(vec(0,0));
+  DrawRoom(Parent(), gGame.GetMap()->Data(), mRoomId);
   RefreshDoor();
   RefreshDepot();
-  const Room *pRoom = GetRoom();
-  BG1Helper ovrly(*(Parent()->GetCube()));
-  if (!flags.hideOverlay && pRoom->HasOverlay()) {
-    DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
-  }
-  if (pRoom->HasNPC()) {
-      const NpcData* npc = pRoom->NPC();
-      const DialogData& dialog = gDialogData[npc->dialog];
-      ovrly.DrawAsset(vec((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
-  }
 
-  ovrly.Flush();
+  const Room *pRoom = GetRoom();
+
+  // TODO
+  // BG1Helper ovrly(*(Parent()->GetCube()));
+  // if (!flags.hideOverlay && pRoom->HasOverlay()) {
+  //   DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
+  // }
+  // if (pRoom->HasNPC()) {
+  //     const NpcData* npc = pRoom->NPC();
+  //     const DialogData& dialog = gDialogData[npc->dialog];
+  //     ovrly.DrawAsset(vec((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
+  // }
+
+  // ovrly.Flush();
 }
 
 void RoomView::ComputeAnimatedTiles() {

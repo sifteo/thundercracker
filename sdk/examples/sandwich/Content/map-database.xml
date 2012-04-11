@@ -11,24 +11,34 @@
 	
 	
 	<map id="temple_level1">
-		<name>South Temple</name>
+		<name>Sky Temple 1</name>
 	</map>
 	
 	<map id="temple_level2">
-		<name>East Temple</name>
+		<name>Sky Temple 2</name>
 	</map>
 
 	<map id="temple_level3">
-		<name>North Temple</name>
+		<name>Sky Temple 3</name>
 	</map>
 	
 	<map id="temple_level4">
-		<name>Temple area 4</name>
+		<name>Sky Temple 4</name>
 	</map>
 	
 	<map id="temple_level5">
-		<name>Temple area 5</name>
+		<name>Sky Temple 5</name>
 	</map>
+	
+		<map id="temple_level6">
+		<name>Sky Temple 6</name>
+	</map>
+	
+		<map id="temple_level7">
+		<name>Sky Temple 7</name>
+	</map>
+	
+
 
 	<map id="sandbox">
 		<name>Programming Sandbox</name>
