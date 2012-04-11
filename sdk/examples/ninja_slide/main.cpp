@@ -52,10 +52,10 @@ void main()
     static World world;
    
     int id=0;
-    static Turtle michelangelo(world, id++, Vec2(32, 32));
-    static LPlatform platform1(world, id++, Vec2(64, 64));
-    static Platform platform2(world, id++, Vec2(32, 96));
-    static Thing static_platform(world, id++, Vec2(32, 64));
+    static Turtle michelangelo(world, id++, Vec2(1.0, 1.0));
+    static Thing static_platform(world, id++, Vec2(1.0, 1.0));
+    static LPlatform platform1(world, id++, Vec2(2.0, 2.0));
+    static Platform platform2(world, id++, Vec2(1.0, 2.0));
 
     static Thing *things[] = {&michelangelo, &static_platform, &platform1, &platform2};
     static Thing *platforms[] = {&static_platform, &platform1, &platform2};
@@ -80,7 +80,6 @@ void main()
 
     while (1) {
         float dt = timeStep.delta().seconds();
-
 
         // Think
         if (world.numMovingPlatforms == 0){

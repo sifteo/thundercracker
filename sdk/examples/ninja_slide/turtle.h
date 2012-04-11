@@ -33,7 +33,6 @@ class Turtle : public Thing {
 
     virtual void think(_SYSCubeID cubeId){
         _SYSTiltState tilt = _SYS_getTilt(cubeId);
-        const float TILT_ACCELERATION = 2.0;
 
         int nextCellOffset = (tilt.x - _SYS_TILT_NEUTRAL) + (tilt.y - _SYS_TILT_NEUTRAL) * World::CELL_NUM_PITCH;
         CellNum nextCell = cellNum() + nextCellOffset;
@@ -44,7 +43,7 @@ class Turtle : public Thing {
                 isMoving = true;
                 pWorld->numMovingTurtles++;
             }
-            const float TILT_ACCELERATION = 70.0;
+            const float TILT_ACCELERATION = 1.0;
             vel.x = (tilt.x - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
             vel.y = (tilt.y - _SYS_TILT_NEUTRAL) * TILT_ACCELERATION;
         } else {

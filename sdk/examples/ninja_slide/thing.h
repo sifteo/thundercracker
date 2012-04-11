@@ -63,27 +63,38 @@ bool isValidCellNum(CellNum cellNum){
 Float2 cellNumToPoint(CellNum cellNum){
     int cellX = cellNum % World::CELL_NUM_PITCH;
     int cellY = int(cellNum / World::CELL_NUM_PITCH);
-    return Vec2(cellX * World::PIXELS_PER_CELL, cellY * World::PIXELS_PER_CELL);
+    return Vec2((float)cellX, (float)cellY);
 }
 
 class Thing {
   public:
     static const int NUM_BOUNDS_RECTS = 2;
+#define TOP_LEFT_OFFSET Vec2(0.5f, 0.5f)
 
     World *pWorld;
     int id;
-    Float2 pos;
+    Float2 pos;  // in world coordinates
     Float2 vel;
     const PinnedAssetImage *pImage;
     bool isMoving;
 
-    Thing(World &world, int id, Int2 pos){
+    Thing(World &world, int id, Float2 pos){
         this->isMoving = false;
         this->pWorld = &world;
         this->id = id;
-        this->pos = pos.toFloat();
+        this->pos = pos;
         this->pImage = NULL;
         this->pWorld->addThing(this);
+    }
+
+    /* Screen coordinates are 0..128, 0..128 where 0,0 is the upper left corner of the cube's LCD
+     * World coordinate are aligned to the centers of the cells 
+     *          E.g. world 0.0, 0.0 = 16,16 in screen coords.
+     *          upper left corner 0, 0 in screen = -0.5, -0.5 in world coords
+     */
+    static Int2 worldToScreen(Float2 worldPt){
+        Float2 screenPt = (worldPt + TOP_LEFT_OFFSET) * World::PIXELS_PER_CELL;
+        return screenPt.toInt();
     }
 
     void setSpriteImage(VidMode_BG0_SPR_BG1 &vid, const PinnedAssetImage &asset){
@@ -99,9 +110,9 @@ class Thing {
 //         vel = vel * 0.95;       // friction
 
         Float2 movement = (vel * dt);
-        pos = pos + movement;
+        pos += movement;
 
-        if (movement.len2() > 0.1){
+        if (movement.len2() > 0.0001){
             CellNum myCell = cellNum();
             for(int i=0; i < pWorld->numThings; i++){
                 if (pWorld->things[i] == this) continue;
@@ -110,8 +121,8 @@ class Thing {
         }
 
         // collision with edges
-        if (   pos.x < 0.0 || (pos.x + pixelWidth())  > VidMode::LCD_width
-            || pos.y < 0.0 || (pos.y + pixelHeight()) > VidMode::LCD_height){
+        if (   (pos.x < 0.0) || (pos.x + cellWidth() > World::CELLS_PER_ROW)
+            || (pos.y < 0.0) || (pos.y + cellHeight() > World::CELLS_PER_ROW)){
             onCollision(NULL);
         }
     }
@@ -120,14 +131,17 @@ class Thing {
     }
 
     virtual void draw(VidMode_BG0_SPR_BG1 vid){
-        vid.moveSprite(id, pos.toInt());
+        vid.moveSprite(id, worldToScreen(pos - TOP_LEFT_OFFSET));
     }
 
-    int pixelWidth(){ return pImage->pixelWidth(); }
-    int pixelHeight(){ return pImage->pixelHeight(); }
+    int pixelWidth(){ ASSERT(pImage && "Thing.pImage not yet set"); return pImage->pixelWidth(); }
+    int pixelHeight(){ ASSERT(pImage && "Thing.pImage not yet set"); return pImage->pixelHeight(); }
+    
+    int cellWidth(){ ASSERT(pImage && "Thing.pImage not yet set"); return pImage->pixelWidth() / World::PIXELS_PER_CELL; }
+    int cellHeight(){ ASSERT(pImage && "Thing.pImage not yet set"); return pImage->pixelHeight() / World::PIXELS_PER_CELL; }
 
     virtual void bounds(Rect result[NUM_BOUNDS_RECTS]){
-        result[0] = Rect(pos, Vec2(pixelWidth(), pixelHeight()));
+        result[0] = Rect(pos - TOP_LEFT_OFFSET, Vec2(cellWidth(), cellWidth()));
         result[1] = EMPTY_RECT;
     }
 
@@ -158,7 +172,7 @@ class Thing {
 
     CellNum cellNum(){
         Int2 snapPt = nearestCellCoordinate(pos);
-        int result = ((snapPt.y / World::PIXELS_PER_CELL) * World::CELL_NUM_PITCH) + (snapPt.x / World::PIXELS_PER_CELL);
+        int result = (snapPt.y * World::CELL_NUM_PITCH) + snapPt.x ;
         return result;
     }
 
@@ -166,11 +180,9 @@ class Thing {
         return cellNum()==theCell;
     }
 
-
-    // returns the screen space x,y coordinate of the nearest cell
-    Int2 nearestCellCoordinate(Float2 point){
-        return Vec2( int((pos.x / World::PIXELS_PER_CELL) + 0.5f) * World::PIXELS_PER_CELL,
-                     int((pos.y / World::PIXELS_PER_CELL) + 0.5f) * World::PIXELS_PER_CELL);
+    static Float2 nearestCellCoordinate(Float2 point){
+        Float2 result = Vec2(float(int(point.x + 0.5f)), float(int(point.y + 0.5f)));
+        return result;
     }
 
 };

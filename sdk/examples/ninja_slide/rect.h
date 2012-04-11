@@ -15,36 +15,36 @@ class Rect {
 
   public:
 
-    Int2 origin;
-    Int2 size;
+    Float2 origin;
+    Float2 size;
 
     Rect(){
-        origin = Vec2(0,0);
-        size = Vec2(0,0);
+        origin = Vec2(0.0f, 0.0f);
+        size = Vec2(0.0f, 0.0f);
     }
 
-    Rect(int x, int y, int w, int h){
+    Rect(float x, float y, float w, float h){
         origin.x = x;
         origin.y = y;
         size.x = w;
         size.y = h;
     }
 
-    Rect(Int2 origin, Int2 size){
+    Rect(Float2 origin, Float2 size){
         this->origin = origin;
         this->size = size;
     }
 
     bool isEmpty(){
-        return size.x <= 0 || size.y <= 0;
+        return size.x <= 0.0 || size.y <= 0.0;
     }
 
     float right(){
-        return origin.x + size.x - 1;
+        return origin.x + size.x;
     }
 
     float bottom(){
-        return origin.y + size.y - 1;
+        return origin.y + size.y;
     }
 
     bool contains(Float2 &point){
@@ -76,13 +76,13 @@ class Rect {
 
     bool isTouching(Rect &other){
         return !isEmpty() && !other.isEmpty()
-            && origin.x <= other.right() && right() >= other.origin.x
-            && origin.y <= other.bottom() && bottom() >= other.origin.y;
+            && origin.x < other.right() && right() > other.origin.x
+            && origin.y < other.bottom() && bottom() > other.origin.y;
     }
 
 
 };
 
-const Rect EMPTY_RECT(0,0,0,0);
+const Rect EMPTY_RECT(0,0, 0,0);
 
 #endif // RECT_H
