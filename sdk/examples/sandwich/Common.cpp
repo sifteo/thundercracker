@@ -2,15 +2,15 @@
 
 Random gRandom;
 
-Cube::Side InferDirection(Int2 u) {
+Side InferDirection(Int2 u) {
 	if (u.x > 0) {
-		return SIDE_RIGHT;
+		return RIGHT;
 	} else if (u.x < 0) {
-		return SIDE_LEFT;
+		return LEFT;
 	} else if (u.y < 0) {
-		return SIDE_TOP;
+		return TOP;
 	} else {
-		return SIDE_BOTTOM;
+		return BOTTOM;
 	}
 }
 

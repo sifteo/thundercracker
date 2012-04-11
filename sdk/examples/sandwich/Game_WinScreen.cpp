@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Dialog.h"
 
-static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* msg) {
+static void ShowDialog(Viewport* pView, const AssetImage& detail, const char* msg) {
 	System::paintSync();
 	pView->GetCube()->vbuf.touch();
 	System::paintSync();
@@ -14,7 +14,7 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	System::paintSync();
 	pView->GetCube()->vbuf.touch();
 	System::paintSync();
-	pView->Graphics().setWindow(80, 48);
+	pView->Video().setWindow(80, 48);
 	Dialog diag;
 	diag.Init(pView->GetCube());
 	diag.Erase();
@@ -26,13 +26,14 @@ static void ShowDialog(ViewSlot* pView, const AssetImage& detail, const char* ms
 	PlaySfx(sfx_neighbor);
 	for(int i=0; i<16; ++i) {
 		diag.SetAlpha(i<<4);
-		System::paint();
+		gGame.DoPaint(false);
 	}
 	diag.SetAlpha(255);
 }
 
 void Game::WinScreen() {
-	ViewSlot* views[3] = { mPlayer.View(), ViewBegin(), ViewBegin() };
+	Viewport::Iterator p = ListViews();
+	Viewport* views[3] = { mPlayer.View(), p, p };
 
 	ShowDialog(views[0], NPC_Detail_pearl_detail, "At last!\nThe Sandwich Eternis\nis complete!");
 	
@@ -59,11 +60,11 @@ void Game::WinScreen() {
 		d.Show("Thanks for Playing!");
 	}
 	PlaySfx(sfx_neighbor);
-	System::paintSync();
+	DoPaint(true);
 	for(int i=0; i<3; ++i) {
 		views[i]->GetCube()->vbuf.touch();
 	}
-	System::paintSync();
+	DoPaint(true);
 
 	t = SystemTime::now();
 	do { System::paint(); } while(SystemTime::now() - t < 5.f);

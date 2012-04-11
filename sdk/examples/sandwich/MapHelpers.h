@@ -1,4 +1,4 @@
 #pragma once
 #include "Map.h"
 
-Cube::Side ComputeGateSide(const GatewayData* gate);
+Side ComputeGateSide(const GatewayData* gate);

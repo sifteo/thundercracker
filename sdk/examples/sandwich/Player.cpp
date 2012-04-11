@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 
 void Player::Init(Cube* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  ViewSlot *pView = gGame.ViewBegin() + (pPrimary - gCubes);
+  Viewport *pView = gGame.ViewAt(pPrimary - gCubes);
   mCurrent.view = (RoomView*)(pView);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
@@ -65,7 +65,7 @@ int Player::AnimFrame() {
       } else if (mAnimFrame == 3 || mAnimFrame == 4) {
         return PlayerIdle.index + (mAnimFrame-1) * 16;
       } else {
-        return PlayerStand.index + SIDE_BOTTOM * 16;
+        return PlayerStand.index + BOTTOM * 16;
       }
     }
     case PLAYER_STATUS_WALKING:
@@ -84,14 +84,11 @@ void Player::SetStatus(int status) {
   mAnimTime = 0.f;
 }
 
-void Player::Update(float dt) {
+void Player::Update() {
   if (mStatus == PLAYER_STATUS_WALKING) {
     mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
   } else { // PLAYER_STATUS_IDLE
-    mAnimTime += dt;
-    if (mAnimTime >= 10.f) {
-      mAnimTime -= 10.f;
-    }
+    mAnimTime = fmod(mAnimTime+gGame.Dt().seconds(), 10.f);
     int before = mAnimFrame;
     if (mAnimTime > 0.5f && mAnimTime < 1.f) {
       mAnimFrame = 1;

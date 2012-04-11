@@ -12,7 +12,7 @@ void InventoryView::Init() {
 	mTouch = Parent()->GetCube()->touching();
 	mAnim = 0;
 	Parent()->HideSprites();
-	Parent()->Graphics().BG0_drawAsset(vec(0,0), InventoryBackground);
+	Parent()->Video().bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
@@ -20,14 +20,14 @@ void InventoryView::Restore() {
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube()->touching();
 	Parent()->HideSprites();
-	Parent()->Graphics().BG0_drawAsset(vec(0,0), InventoryBackground);
+	Parent()->Video().bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
 
 static const char* kLabels[4] = { "top", "left", "bottom", "right" };
 int t;
 
-void InventoryView::Update(float dt) {
+void InventoryView::Update() {
 	bool touch = UpdateTouch();
 	CORO_BEGIN;
 	while(1) {
@@ -36,7 +36,7 @@ void InventoryView::Update(float dt) {
 				ComputeHoveringIconPosition();
 			}
 			{
-				Cube::Side side = UpdateAccum();
+				Side side = UpdateAccum();
 				if (side != SIDE_UNDEFINED) {
                     Int2 pos = vec(mSelected % 4, mSelected >> 2) + kSideToUnit[side].toInt();
 					int idx = pos.x + (pos.y<<2);
@@ -67,8 +67,8 @@ void InventoryView::Update(float dt) {
 		{
 			uint8_t items[16];
 			int count = gGame.GetState()->GetItems(items);
-			//Parent()->Graphics().setWindow(80, 48);
-			Parent()->Graphics().setWindow(80+16,128-80-16);
+			//Parent()->Video().setWindow(80, 48);
+			Parent()->Video().setWindow(80+16,128-80-16);
 			mDialog.Init(Parent()->GetCube());
 			mDialog.Erase();
 			mDialog.ShowAll(gItemTypeData[items[mSelected]].description);
@@ -77,7 +77,7 @@ void InventoryView::Update(float dt) {
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 		for(t=0; t<16; t++) {
-			Parent()->Graphics().setWindow(80+15-(t),128-80-15+(t));
+			Parent()->Video().setWindow(80+15-(t),128-80-15+(t));
 			mDialog.SetAlpha(t<<4);
 			CORO_YIELD;
 		}
@@ -120,7 +120,7 @@ void InventoryView::RenderInventory() {
 		}
 	}
 	overlay.Flush();	
-	ViewMode gfx = Parent()->Graphics();
+	VideoBuffer& gfx = Parent()->Video();
 	gfx.resizeSprite(HOVERING_ICON_ID, vec(16, 16));
 	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]);
 	ComputeHoveringIconPosition();
@@ -129,14 +129,14 @@ void InventoryView::RenderInventory() {
 
 void InventoryView::ComputeHoveringIconPosition() {
 	mAnim++;
-	Parent()->Graphics().moveSprite(
+	Parent()->Video().moveSprite(
 		HOVERING_ICON_ID, 
 		8 + (mSelected%4<<5), 
 		8 + ((mSelected>>2)<<5) + kHoverTable[ mAnim % HOVER_COUNT]
 	);
 }
 
-Cube::Side InventoryView::UpdateAccum() {
+Side InventoryView::UpdateAccum() {
 	const int radix = 8;
 	const int threshold = 128;
 	Int2 tilt = Parent()->GetCube()->virtualAccel();
@@ -155,19 +155,19 @@ Cube::Side InventoryView::UpdateAccum() {
 	if (delta.x) {
 		if (mAccum.x >= threshold) {
 			mAccum.x %= threshold;
-			return SIDE_RIGHT;
+			return RIGHT;
 		} else if (mAccum.x <= -threshold) {
 			mAccum.x %= threshold;
-			return SIDE_LEFT;
+			return LEFT;
 		} 
 	}
 	if (delta.y) {
 		if (mAccum.y >= threshold) {
 			mAccum.y %= threshold;
-			return SIDE_BOTTOM;
+			return BOTTOM;
 		} else if (mAccum.y <= -threshold) {
 			mAccum.y %= threshold;
-			return SIDE_TOP;
+			return TOP;
 		}		
 	}
 	return SIDE_UNDEFINED;

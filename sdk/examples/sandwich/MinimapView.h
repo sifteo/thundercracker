@@ -11,7 +11,7 @@ private:
 public:
 	void Init();
 	void Restore();
-	void Update(float dt);
+	void Update();
 private:
 	unsigned ComputeTileId(int lx, int ly);
 };

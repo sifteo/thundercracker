@@ -165,8 +165,8 @@ struct MapData {
     const char* name;
 
     // stir pointers
-    const AssetImage* tileset;
-    const AssetImage* overlay;
+    const FlatAssetImage* tileset;
+    const FlatAssetImage* overlay;
 
     // tile buffers
     const RoomData* rooms;
