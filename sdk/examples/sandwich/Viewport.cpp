@@ -20,9 +20,6 @@ bool Viewport::Touched() const {
 }
 
 void Viewport::Init() {
-	mCanvas.attach(this - &gGame.ViewAt(0));
-	mCanvas.initMode(BG0_SPR_BG1);
-  	mCanvas.setWindow(0, 128);
 	mFlags.view = VIEW_IDLE;
 	mView.idle.Init();
 }
@@ -34,10 +31,11 @@ void Viewport::HideSprites() {
 }
 
 void Viewport::SanityCheckVram() {
+	System::finish();
 	if (mCanvas.mode() != BG0_SPR_BG1) {
-		mCanvas.setWindow(0,128);
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
+	mCanvas.setWindow(0,128);
 	mCanvas.bg0.setPanning(vec(0,0));
 }
 

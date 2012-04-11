@@ -301,7 +301,6 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
         }
         view.Erase();
         Paint();
-        gGame.Paint();
         view.ShowAll(txt.line);
         if (line > 0) {
             PlaySfx(sfx_neighbor);
@@ -309,28 +308,27 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
         // fade in and out
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(i<<4);
-            gGame.Paint();
+            Paint();
         }
         view.SetAlpha(255);
-        gGame.Paint();
+        Paint();
         Wait(5.f, true);
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(0xff - (i<<4));
-            gGame.Paint();
+            Paint();
         }
         view.SetAlpha(0);
-        gGame.Paint();
+        Paint();
     }
     for(unsigned i=0; i<16; ++i) {
-        gGame.Paint();
+        Paint();
     }
     PlaySfx(sfx_deNeighbor);
 }
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) {
   DoPaint();
-  VideoBuffer& gfx = pView->Canvas();
-  gfx.setWindow(80+16,128-80-16);
+  pView->Canvas().setWindow(80+16,128-80-16);
   Dialog view;
   view.Init(&pView->Canvas());
   view.Erase();
@@ -338,7 +336,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) 
   view.ShowAll(msg);
   Paint();
   for(int t=0; t<16; t++) {
-    gfx.setWindow(80+15-(t),128-80-15+(t));
+    pView->Canvas().setWindow(80+15-(t),128-80-15+(t));
     view.SetAlpha(t<<4);
     Paint();
   }
