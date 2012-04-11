@@ -115,14 +115,14 @@ void RoomView::Update() {
       case WOBBLE_NOD: {
         const float u = 8.f * -1.2f * mWobbles * sin(M_PI * mWobbles * mWobbles * mWobbles);
         mode.bg0.setPanning(vec(0.f, u));
-        mode.BG1_setPanning(vec(0.f, u));
+        mode.bg1.setPanning(vec(0.f, u));
         break;
       }
 
       case WOBBLE_SHAKE: {
         const float u = 8.f * 1.1f * mWobbles * sin(5 * M_PI * mWobbles);
         mode.bg0.setPanning(vec(u, 0.f));
-        mode.BG1_setPanning(vec(u, 0.f));
+        mode.bg1.setPanning(vec(u, 0.f));
         break;
       }
 
@@ -131,7 +131,7 @@ void RoomView::Update() {
         const float u = 8.f * mWobbles * mWobbles * mWobbles;
         const Int2 pan = (u * kSideToUnit[(dir+2)%4]).toInt();
         mode.bg0.setPanning(pan);
-        mode.BG1_setPanning(pan);
+        mode.bg1.setPanning(pan);
       }
 
     }
