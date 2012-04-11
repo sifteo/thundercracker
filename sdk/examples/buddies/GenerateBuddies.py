@@ -86,10 +86,9 @@ def ProcessParts(image_path):
         for j in range(4):
             y = (parts_size[1] * j * 4) + (parts_size[1] * i)
             final_bg1.paste(frame, (0, y))
-            #y = (sprite_size[1] * j * 4) + (sprite_size[1] * i) + offset
-            #offset = (64 - 48) / 2
-            #box_sprite = (offset, y)
-            #final_sprite.paste(frame, box_sprite)
+            offset = (64 - 48) / 2
+            y = (sprite_size[1] * j * 4) + (sprite_size[1] * i) + offset
+            final_sprite.paste(frame, (offset, y))
             frame = frame.rotate(90)
     
     buddy = os.path.basename(image_path)[:4]
@@ -99,8 +98,8 @@ def ProcessParts(image_path):
     name = 'parts%d.png' % names[buddy]
     final_bg1.save(os.path.join(dir, name))
     
-    #name = 'parts%d_sprite.png' % names[buddy]
-    #final_sprite.save(os.path.join(dir, name))
+    name = 'parts%d_sprite.png' % names[buddy]
+    final_sprite.save(os.path.join(dir, name))
     
 def ProcessFolder(image_folder):
     dir = os.path.join(image_folder, 'output')
