@@ -115,7 +115,4 @@ def ProcessFolder(image_folder):
         ProcessBg(bg)
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print 'ERROR - Usage: %s FOLDER_OF_PNGS' % sys.argv[0]
-    else:
-        ProcessFolder(sys.argv[1])
+    ProcessFolder('parts_source')
