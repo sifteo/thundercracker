@@ -842,8 +842,6 @@ void Game::enterScore()
         score = getDisplayedLevel();
     }
 
-    bool bTopScore = false;
-
     //walk backwards through the high score list and see which ones we can pick off
     for( int i = (int)SaveData::NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
@@ -856,7 +854,6 @@ void Game::enterScore()
                 if( i == 0 )
                 {
                     pScores[0] = score;
-                    bTopScore = true;
                 }
             }
         }
@@ -872,9 +869,6 @@ void Game::enterScore()
     }
 
     m_savedata.Save();
-
-    if( bTopScore )
-        ProcessUnlock( m_mode );
 }
 
 

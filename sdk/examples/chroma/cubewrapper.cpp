@@ -11,6 +11,7 @@
 #include "config.h"
 #include "puzzle.h"
 #include "SaveLoad.h"
+#include "CubeBuddy.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
 
@@ -788,6 +789,14 @@ void CubeWrapper::Touch()
         }
         case Game::STATE_POSTGAME:
         {
+            unsigned int myScore = Game::Inst().getScore();
+
+            if( myScore == Game::Inst().getHighScore(0) )
+            {
+                if( ProcessUnlock( Game::Inst().getMode() ) )
+                    return;
+            }
+
             if( Game::Inst().getWrapperIndex( this ) == 1 )
                 Game::Inst().ReturnToMainMenu();
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
@@ -1996,7 +2005,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
     if( bDrawBox )
         m_vid.BG0_drawAsset(Vec2(0,0), UI_BG, 0);
 
-    //LOG(( "Drawing message box with text %s\n", pTxt ));
+    LOG(( "Drawing message box with text %s\n", pTxt ));
 
     //count how many lines of text we have
     int charCnt = 0;

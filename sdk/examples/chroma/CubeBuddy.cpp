@@ -29,13 +29,17 @@ static void WaitForTouch( CubeWrapper *cubes )
             touching = true;
     }
 
+    LOG(("WaitForTouch"));
+
+    cubes[0].GetCube().vbuf.touch();
+
     while( true )
     {
         System::paint();
 
         //wait for release and retouch
         if( touching )
-        {
+        {          
             touching = false;
 
             for( int i = 0; i < NUM_CUBES; i++ )
@@ -49,7 +53,7 @@ static void WaitForTouch( CubeWrapper *cubes )
             for( int i = 0; i < NUM_CUBES; i++ )
             {
                 if( cubes[i].GetCube().touching() )
-                    break;
+                    return;
             }
         }
     }
@@ -57,6 +61,7 @@ static void WaitForTouch( CubeWrapper *cubes )
 
 static void ShowProgress( const SaveData &data )
 {
+    LOG(("ShowProgress\n"));
     //take over control flow here
     CubeWrapper *cubes = Game::Inst().m_cubes;
     //clear out the other cubes
@@ -70,19 +75,24 @@ static void ShowProgress( const SaveData &data )
 
     for( int i = 0; i < SaveData::NUM_UNLOCKS; i++ )
     {
-        if( !(data.bUnlocks[Game::Inst().getMode()]) )
+        if( !(data.bUnlocks[i]) )
         {
             if( count > 0 )
                 modes << " and ";
 
             modes << MODE_NAMES[i];
+            count++;
         }
     }
 
     String<64> str;
     str << "You've nearly freed Lumes! Play " << modes << " to free him!";
 
+    LOG(("gonna draw ShowProgress"));
+
+    cubes[0].getBG1Helper().Clear();
     cubes[0].DrawMessageBoxWithText( str );
+    cubes[0].getBG1Helper().Flush();
 
     WaitForTouch( cubes );
 }
@@ -90,6 +100,7 @@ static void ShowProgress( const SaveData &data )
 
 static void ShowUnlock()
 {
+    LOG(("ShowUnlock"));
     //take over control flow here
     CubeWrapper *cubes = Game::Inst().m_cubes;
     //clear out the other cubes
@@ -98,10 +109,11 @@ static void ShowUnlock()
         cubes[i].GetVid().clear( GemEmpty.tiles[0] );
     }
 
-    String<64> str;
-    str << "Congratulations!  Lumes unlocked.  Play Cube Buddies to see him in action!";
+    String<128> str;
+    str << "Congrats!  Lumes unlocked.  Play Cube Buddies to see him in action!";
 
     cubes[0].DrawMessageBoxWithText( str );
+    cubes[0].FlushBG1();
 
     WaitForTouch( cubes );
 }
@@ -109,26 +121,31 @@ static void ShowUnlock()
 
 
 //trigger an unlock for the given mode
-void ProcessUnlock( uint8_t mode )
+//returns whether we did something
+bool ProcessUnlock( uint8_t mode )
 {
     //did we already do this unlock?
     SaveData &data = Game::Inst().getSaveData();
 
     //TODO, possibly send a reminder to the user?
     if( data.bUnlocks[mode] )
-        return;
+        return false;
+
+    LOG(("Processing unlock"));
 
     data.bUnlocks[mode] = true;
     data.Save();
 
     for( int i = 0; i < SaveData::NUM_UNLOCKS; i++ )
     {
-        if( !data.bUnlocks[mode] )
+        LOG(("is mode unlocked? %d\n", data.bUnlocks[mode]));
+        if( !data.bUnlocks[i] )
         {
             ShowProgress( data );
-            break;
+            return true;
         }
     }
 
     ShowUnlock();
+    return true;
 }

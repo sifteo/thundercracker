@@ -12,6 +12,7 @@
 using namespace Sifteo;
 
 //trigger an unlock for the given mode
-void ProcessUnlock( uint8_t mode );
+//returns whether we did something
+bool ProcessUnlock( uint8_t mode );
 
 #endif
