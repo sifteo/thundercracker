@@ -16,23 +16,13 @@ Viewport::Iterator::operator Viewport*() {
 	return gGame.ViewAt(currentId);
 }
 
-Cube* Viewport::GetCube() const {
-	return gCubes + (this - gGame.ViewAt(0));
-}
-
-Cube::ID Viewport::GetCubeID() const {
-	return this - gGame.ViewAt(0);
-}
-
 bool Viewport::Touched() const {
-  return !mFlags.prevTouch && GetCube()->touching();
+  return !mFlags.prevTouch && GetCube().isTouching();
 }
 
 void Viewport::Init() {
-	VideoBuffer& mode(GetCube()->vbuf);
-	mode.set();
-	mode.clear();
-  	mode.setWindow(0, 128);
+	mBuffer.initMode(BG0_SPR_BG1);
+  	mBuffer.setWindow(0, 128);
 	if (!gGame.ShowingMinimap() || pMinimap) {
 		mFlags.view = VIEW_IDLE;
 		mView.idle.Init();
@@ -45,20 +35,17 @@ void Viewport::Init() {
 }
 
 void Viewport::HideSprites() {
-	VideoBuffer& mode = Graphics();
 	for(unsigned i=0; i<8; ++i) {
-		mode.hideSprite(i);
+		mBuffer.sprites[i].hide();
 	}
 }
 
 void Viewport::SanityCheckVram() {
-	VideoBuffer& gfx(GetCube()->vbuf);
-	//if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
-	if (!gfx.isInMode()) {
-		gfx.setWindow(0,128);
-		gfx.init();
+	if (mBuffer.mode() != BG0_SPR_BG1) {
+		mBuffer.setWindow(0,128);
+		mBuffer.initMode(BG0_SPR_BG1);
 	}
-	gfx.bg0.setPanning(vec(0,0));
+	mBuffer.bg0.setPanning(vec(0,0));
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId, bool doFlush) {
@@ -80,10 +67,10 @@ void Viewport::EvictSecondaryView(unsigned viewId, bool doFlush) {
 }
 
 bool Viewport::SetLocationView(unsigned roomId, Side side, bool force, bool doFlush) {
-	unsigned view = side == SIDE_UNDEFINED ? VIEW_ROOM : VIEW_EDGE;
+	unsigned view = side == NO_SIDE ? VIEW_ROOM : VIEW_EDGE;
 	if (!force && mFlags.view == view) {
 		if (view == VIEW_ROOM && mView.room.Id() == roomId) { return false; }
-		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.Side() == side) { return false; }
+		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.GetSide() == side) { return false; }
 	}
 	SanityCheckVram();
 	mFlags.view = view;
@@ -94,11 +81,7 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force, bool doFl
 		mView.edge.Init(roomId, side);
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-			gGame.Paint(true);
+		gGame.DoPaint(true);
 	}
 	return true;
 }
@@ -121,19 +104,13 @@ void Viewport::SetSecondaryView(unsigned viewId, bool doFlush) {
 			break;
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-			gGame.Paint(true);
+			gGame.DoPaint(true);
 	}
 }
 
 void Viewport::Restore(bool doFlush) {
-	VideoBuffer& mode = Graphics();
-	mode.set();
-	mode.clear();
-  	mode.setWindow(0, 128);
+	mBuffer.setMode(BG0_SPR_BG1);
+  	mBuffer.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
@@ -152,16 +129,12 @@ void Viewport::Restore(bool doFlush) {
 		break;
 	}
 	if (doFlush) {
-		#if GFX_ARTIFACT_WORKAROUNDS
-			gGame.Paint(true);
-			GetCube()->vbuf.touch();
-		#endif
-		gGame.Paint(true);
+		gGame.DoPaint(true);
 	}
 }
 
 void Viewport::Update() {
-	mFlags.prevTouch = GetCube()->touching();
+	mFlags.prevTouch = GetCube().isTouching();
 	switch(mFlags.view) {
 	case VIEW_ROOM:
 		mView.room.Update();
@@ -191,7 +164,7 @@ bool Viewport::ShowLocation(Int2 loc, bool force, bool doFlush) {
 
 	// possibilities: show room, show edge, show corner
 	const MapData& map = *gGame.GetMap()->Data();
-	Side side = SIDE_UNDEFINED;
+	Side side = NO_SIDE;
 	if (loc.x < -1) {
 		HideLocation(doFlush);
 		return false;
@@ -273,8 +246,9 @@ void Viewport::RefreshInventory(bool doFlush) {
 }
 
 Viewport* Viewport::VirtualNeighborAt(Side side) const {
-  Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
+	Neighborhood hood = mBuffer.virtualNeighbors();
+	CubeID neighbor = hood.neighborAt(side);
+	return neighbor.isDefined() ? 0 : gGame.ViewAt(neighbor-CUBE_ID_BASE);
 }
 
 //----------------------------------------------------------------------
@@ -288,16 +262,16 @@ Viewport* Viewport::VirtualNeighborAt(Side side) const {
 #endif
 
 Side Viewport::VirtualTiltDirection() const {
-  Int2 accel = GetCube()->virtualAccel();
+  Int2 accel = mBuffer.virtualAccel().xy();
   if (accel.y < -TILT_THRESHOLD) {
-    return 0;
+    return TOP;
   } else if (accel.x < -TILT_THRESHOLD) {
-    return 1;
+    return LEFT;
   } else if (accel.y > TILT_THRESHOLD) {
-    return 2;
+    return BOTTOM;
   } else if (accel.x > TILT_THRESHOLD) {
-    return 3;
+    return RIGHT;
   } else {
-    return -1;
+    return NO_SIDE;
   }
 }

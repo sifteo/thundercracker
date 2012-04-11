@@ -41,8 +41,8 @@ bool Room::OpenDoor() {
 }
 
 void Room::BombThisFucker() {
-  for(Side s=0; s<4; ++s) {
-    SetDidBomb(s);
+  for(int s=0; s<4; ++s) {
+    SetDidBomb((Side)s);
   }
   Int2 loc = Location();
   if (loc.x > 0) { 
@@ -102,6 +102,7 @@ unsigned Room::CountOpenTilesAlongSide(Side side) {
   const RoomData& data = *Data();
   unsigned cnt = 0;
   switch(side) {
+    default: ASSERT(0);
     case TOP:
       if (loc.y > 0 && map.GetPortalY(loc.x, loc.y-1)) {
         cnt = 8-__builtin_popcount(data.collisionMaskRows[0]);

@@ -18,6 +18,7 @@ bool Map::CanTraverse(BroadLocation bloc, Side side) {
     default:
       Int2 loc = bloc.view->Location();
       switch(side) {
+        default: ASSERT(false);
         case TOP: return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
         case LEFT: return loc.x > 0 && GetPortalX(loc.x-1, loc.y);
         case BOTTOM: return loc.y < mData->height-1 && GetPortalY(loc.x, loc.y);
@@ -67,7 +68,7 @@ bool BroadPath::DequeueStep(BroadLocation newRoot, BroadLocation* outNext) {
   }
   for(int i=0; i<2*NUM_CUBES; ++i) { steps[i] = steps[i+1]; }
   steps[NUM_CUBES-2] = -1;
-  if (*steps >= 0 && gGame.GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
+  if (*steps >= 0 && gGame.GetMap()->GetBroadLocationNeighbor(newRoot, (Side)*steps, outNext)) {
     return true;
   }
   steps[0] = -1;
@@ -81,26 +82,26 @@ void BroadPath::Cancel() {
 
 static bool Visit(BroadPath* outPath, BroadLocation loc, Side side, int depth, unsigned* outViewId) {
   BroadLocation next;
-  if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
+  if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCube()] & (1<<next.subdivision)) {
     if (depth > 1) {
       Viewport *nextView = loc.view->Parent()->VirtualNeighborAt(side);
       if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
         outPath->steps[depth-1] = -1;
-        *outViewId = nextView->GetCubeID();
+        *outViewId = nextView->GetCube();
         return true;
       }
     }
     return false;
   }
-  sVisitMask[next.view->Parent()->GetCubeID()] |= (1<<next.subdivision);
+  sVisitMask[next.view->Parent()->GetCube()] |= (1<<next.subdivision);
   if (next.view->Parent()->Touched()) {
     outPath->steps[depth] = -1;
-    *outViewId = next.view->Parent()->GetCubeID();
+    *outViewId = next.view->Parent()->GetCube();
     return true;
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       outPath->steps[depth] = side;
-      if (Visit(outPath, next, side, depth+1, outViewId)) {
+      if (Visit(outPath, next, (Side)side, depth+1, outViewId)) {
         return true;
       } else {
         outPath->steps[depth] = -1;
@@ -119,10 +120,10 @@ bool Map::FindBroadPath(BroadPath* outPath, unsigned* outViewId) {
   }
   if (!anyTouches) { return false; }
   const BroadLocation* pRoot = gGame.GetPlayer()->Current();
-  sVisitMask[pRoot->view->Parent()->GetCubeID()] = (1 << pRoot->subdivision);
+  sVisitMask[pRoot->view->Parent()->GetCube()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;
-    if (Visit(outPath, *pRoot, side, 1, outViewId)) {
+    if (Visit(outPath, *pRoot, (Side)side, 1, outViewId)) {
       return true;
     }
   }

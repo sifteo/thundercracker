@@ -10,7 +10,7 @@ void IdleView::Init() {
   //DrawInventorySprites();
   Parent()->HideSprites();
   Parent()->Video().bg0.image(vec(0,0), Blank);
-  BG1Helper(*Parent()->GetCube()).Flush();
+  Parent()->Video().bg1.eraseMask();
 }
 
 void IdleView::Restore() {
