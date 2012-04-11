@@ -794,7 +794,12 @@ void CubeWrapper::Touch()
             if( myScore == Game::Inst().getHighScore(0) )
             {
                 if( ProcessUnlock( Game::Inst().getMode() ) )
+                {
+                    for( int i = 0; i < NUM_CUBES; i++ )
+                        Game::Inst().m_cubes[i].setDirty();
+
                     return;
+                }
             }
 
             if( Game::Inst().getWrapperIndex( this ) == 1 )

@@ -15,7 +15,7 @@ const unsigned int HIGHCUBE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
 */
 
 const unsigned int HIGHSCORE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
-        { 200, 200, 200, 200, 200 };
+        { 20, 20, 20, 20, 20 };
 
 const unsigned int HIGHCUBE_PRESETS[ SaveData::NUM_HIGH_SCORES ] =
         { 4, 4, 4, 4, 4 };
