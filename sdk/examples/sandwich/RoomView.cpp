@@ -28,7 +28,7 @@ void RoomView::Unlock() {
 }
 
 void RoomView::HideOverlay() {
-  mCanvas.bg1.eraseMask(false);
+  mCanvas.bg1.eraseMask();
 }
 
 
