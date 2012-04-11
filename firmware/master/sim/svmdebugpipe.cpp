@@ -51,10 +51,12 @@ static const char* faultStr(FaultCode code)
     case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
     case F_RETURN_FRAME:        return "Bad saved FP value detected during return";
     case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log data";
+    case F_SYSCALL_ADDRESS:     return "Bad address in system call";
+    case F_SYSCALL_PARAM:       return "Other bad parameter in system call";
     default:                    return "unknown error";
     }
 }
-    
+
 bool SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
