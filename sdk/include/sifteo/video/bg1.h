@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG1_H
-#define _SIFTEO_VIDEO_BG1_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -413,6 +411,14 @@ struct BG1Drawable {
     }
 
     /**
+      * Retrieve the last value set by setPanning().
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>((int8_t)(word & 0xFF), (int8_t)(word >> 8));
+    }
+
+    /**
      * Plot a single tile, by absolute tile index,
      * at a specific location in the 144-tile array.
      */
@@ -465,6 +471,48 @@ struct BG1Drawable {
     }
 
     /**
+     * Draw an AssetImage, automatically allocating tiles on the BG1 mask.
+     * This replaces the entirety of the BG1 mask; other drawing on BG1
+     * will be automatically replaced.
+     *
+     * The image is always drawn to the top-left corner of BG1. You can
+     * place it anywhere on-screen by calling setPanning() afterwards.
+     *
+     * We automatically do a System::finish() by default, so we can ensure
+     * nobody is still using the old mask. This can be suppressed if you
+     * really know what you're doing, by setting finish=false.
+     */
+    void maskedImage(const AssetImage &image, const PinnedAssetImage &key,
+        unsigned frame = 0, bool finish=true)
+    {
+        if (finish)
+            _SYS_finish();
+        _SYS_image_BG1MaskedDraw(&sys, image, key.tile(0), frame);
+    }
+
+    /**
+     * Draw part of an AssetImage, automatically allocating tiles on the
+     * BG1 mask. This replaces the entirety of the BG1 mask; other drawing
+     * on BG1 will be automatically replaced.
+     *
+     * The image is always drawn to the top-left corner of BG1. You can
+     * place it anywhere on-screen by calling setPanning() afterwards.
+     *
+     * We automatically do a System::finish() by default, so we can ensure
+     * nobody is still using the old mask. This can be suppressed if you
+     * really know what you're doing, by setting finish=false.
+     */
+    void maskedImage(UInt2 size, const AssetImage &image,
+        const PinnedAssetImage &key, UInt2 srcXY,
+        unsigned frame = 0, bool finish=true)
+    {
+        if (finish)
+            _SYS_finish();
+        _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(0), frame,
+            (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
+    }
+
+    /**
      * Draw text, using an AssetImage as a fixed width font. Each character
      * is represented by a consecutive 'frame' in the image. Characters not
      * present in the font will be skipped.
@@ -503,5 +551,3 @@ struct BG1Drawable {
 
 
 };  // namespace Sifteo
-
-#endif

@@ -15,10 +15,8 @@
  * mapped to their respective functions in changeState and pollEvent.
  */
 
-#ifndef _SIFTEO_MENU_STATES_H
-#define _SIFTEO_MENU_STATES_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -354,5 +352,3 @@ inline void Menu::transFromFinish()
 
 
 };  // namespace Sifteo
-
-#endif

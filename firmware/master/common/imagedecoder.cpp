@@ -33,6 +33,9 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
      * Validate user pointers, and load the header and base address for
      * this AssetImage on this cube.
      *
+     * If the pAssetGroup is 0, we treat this as an image that does not
+     * require relocation before drawing.
+     *
      * Returns 'true' on success, 'false' on failure due to bad
      * userspace-provided data.
      */
@@ -44,13 +47,17 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
         return false;
     CubeSlot &cube = CubeSlots::instances[cid];
 
-    // Map and validate per-cube data.
-    // We don't need to map the _SYSAssetGroup itself- this is still a raw user pointer
-    _SYSAssetGroup *userGroupPtr = reinterpret_cast<_SYSAssetGroup*>(header.pAssetGroup);
-    _SYSAssetGroupCube *gc = cube.assetGroupCube(userGroupPtr);
-    if (!gc)
-        return false;
-    baseAddr = gc->baseAddr;
+    if (header.pAssetGroup) {
+        // Map and validate per-cube data.
+        // We don't need to map the _SYSAssetGroup itself- this is still a raw user pointer
+        _SYSAssetGroup *userGroupPtr = reinterpret_cast<_SYSAssetGroup*>(header.pAssetGroup);
+        _SYSAssetGroupCube *gc = cube.assetGroupCube(userGroupPtr);
+        if (!gc)
+            return false;
+        baseAddr = gc->baseAddr;
+    } else {
+        baseAddr = 0;
+    }
 
     return true;
 }
@@ -335,13 +342,34 @@ uint32_t ImageIter::getDestBytes(uint32_t stride) const
      * greater than or equal to width.
      *
      * All arithmetic is overflow-safe. On error, we return 0xFFFFFFFF.
+     *
+     * Note that the result isn't actually (stride * height). The
+     * last row we write to won't actually cover the full stride, it
+     * will only cover the specified width. This becomes important for
+     * calculating the amount of memory to map. If we overestimate, we
+     * could cause false failures in mapping. This can happen, for example,
+     * when drawing to the lower-right corner of a memory buffer.
      */
     
     uint32_t w = getWidth();
     uint32_t h = getHeight();
-    if (stride < w) return 0xFFFFFFFF;
-    uint32_t words = mulsat16x16(stride, h);
-    return mulsat16x16(words, 2);
+
+    if (h == 0)
+        return 0;
+
+    // Bad stride?
+    if (stride < w || stride > 0xFFFF)
+        return 0xFFFFFFFF;
+
+    // Words for everything except the last scanline
+    uint32_t words = mulsat16x16(stride, h - 1);
+    if (words > 0xFFFF)
+        return 0xFFFFFFFF;
+
+    // Words for the last scanline.
+    words += w;
+
+    return words * 2;
 }
 
 void ImageIter::copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr,
@@ -369,4 +397,39 @@ void ImageIter::copyToBG1(_SYSVideoBuffer &vbuf, unsigned destX, unsigned destY)
         if (mi.seek(destX + getRectX(), destY + getRectY()) && mi.hasTile())
             VRAM::poke(vbuf, mi.getTileAddr(), tile77());
     } while (next());
+}
+
+void ImageIter::copyToBG1Masked(_SYSVideoBuffer &vbuf, uint16_t key)
+{
+    /*
+     * Do a masked copy to BG1. Any tile that matches 'key' is skipped,
+     * other tiles are allocated in the bitmap. The entire bitmap is
+     * overwritten by this operation.
+     *
+     * We do this in two passes: First pass, we build a new mask and
+     * copy it to the VideoBuffer. Second pass, use copyToBG1() to
+     * draw the bitmap at the correct locations.
+     *
+     * We could do this in one pass if we iterated over the image in
+     * normal rectangular order instead of compression block order, but
+     * this would potentially mean decompressing the same blocks many
+     * times. In this order, we decompress each block at most twice.
+     */
+
+    uint16_t mask[_SYS_VRAM_BG1_WIDTH] = { 0 };
+
+    do {
+        if (tile() != key) {
+            unsigned x = getRectX();
+            unsigned y = getRectY();
+            if (x < _SYS_VRAM_BG1_WIDTH && y < _SYS_VRAM_BG1_WIDTH)
+                mask[y] |= 1 << x;
+        }
+    } while (next());
+
+    for (unsigned y = 0; y < _SYS_VRAM_BG1_WIDTH; ++y)
+        VRAM::poke(vbuf, _SYS_VA_BG1_BITMAP/2 + y, mask[y]);
+
+    reset();
+    copyToBG1(vbuf, 0, 0);
 }

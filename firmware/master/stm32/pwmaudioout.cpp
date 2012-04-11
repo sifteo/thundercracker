@@ -24,34 +24,28 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
     this->mixer = mixer;
     buf.init(&this->sys);
 
-    // must default to non-differential state to avoid direct shorting
-    outA.setControl(GPIOPin::OUT_2MHZ);
-    outB.setControl(GPIOPin::OUT_2MHZ);
-    outA.setHigh();
-    outB.setHigh();
-
-    outA.setControl(GPIOPin::OUT_ALT_50MHZ);
-    outB.setControl(GPIOPin::OUT_ALT_50MHZ);
-
     switch (samplerate) {
     case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
     case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
-    pwmTimer.init(500, 0); // TODO - tune the PWM freq we want
-    pwmTimer.configureChannelAsOutput(this->pwmChan,
+    pwmTimer.init(PWM_FREQ, 0);
+    pwmTimer.configureChannelAsOutput(pwmChan,
                                         HwTimer::ActiveHigh,
                                         HwTimer::Pwm1,
                                         HwTimer::ComplementaryOutput);
-
-    Tasks::setPending(Tasks::AudioPull, &buf, true);
+    // must default to non-differential state to avoid direct shorting
+    suspend();
 }
 
 void PwmAudioOut::start()
 {
+    resume();
     sampleTimer.enableUpdateIsr();
-    pwmTimer.enableChannel(this->pwmChan);
+    pwmTimer.enableChannel(pwmChan);
+    pwmTimer.setDuty(pwmChan, PWM_FREQ / 2);    // 50% duty cycle == "off"
+    Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
 
 void PwmAudioOut::stop()
@@ -63,7 +57,7 @@ void PwmAudioOut::stop()
 void PwmAudioOut::suspend()
 {
     sampleTimer.disableUpdateIsr();
-    pwmTimer.disableChannel(this->pwmChan);
+    pwmTimer.disableChannel(pwmChan);
     // ensure outputs are tied in the same direction to avoid leaking current
     // across the speaker
     outA.setControl(GPIOPin::OUT_2MHZ);
@@ -76,7 +70,7 @@ void PwmAudioOut::resume()
 {
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
     outB.setControl(GPIOPin::OUT_ALT_50MHZ);
-    pwmTimer.enableChannel(this->pwmChan);
+    pwmTimer.enableChannel(pwmChan);
     sampleTimer.enableUpdateIsr();
 }
 

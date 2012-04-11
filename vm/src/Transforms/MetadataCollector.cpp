@@ -17,9 +17,13 @@
  * flash block boundaries.
  */
 
+// For metadata key definitions
+#include <sifteo/abi.h>
+
 #include "Target/SVMSymbolDecoration.h"
 #include "Target/SVMMemoryLayout.h"
 #include "Target/SVMTargetMachine.h"
+#include "Support/ErrorReporter.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
@@ -107,6 +111,7 @@ namespace {
         Layout_t Layout;
 
         void collectValues(Module &M);
+        void checkValues(Module &M);
         void finalizeAll(Module &M, const TargetData *TD);
         void createLayout();
         void pack(Module &M);
@@ -124,6 +129,7 @@ bool MetadataCollectorPass::runOnModule(Module &M)
     assert(Layout.empty());
 
     collectValues(M);
+    checkValues(M);
     finalizeAll(M, TD);
     createLayout();
     
@@ -169,6 +175,15 @@ void MetadataCollectorPass::collectValues(Module &M)
         ++I;
         GV->eraseFromParent();
     }
+}
+
+void MetadataCollectorPass::checkValues(Module &M)
+{
+    if (!Dict.count(_SYS_METADATA_TITLE_STR))
+        report_warning("No title() metadata was defined! Your game will be unnamed.");
+
+    if (!Dict.count(_SYS_METADATA_CUBE_RANGE))
+        report_warning("No cubeRange() metadata was defined! No cubes will be available.");
 }
 
 void MetadataCollectorPass::finalizeAll(Module &M, const TargetData *TD)

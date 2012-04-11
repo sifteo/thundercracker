@@ -76,7 +76,6 @@ int main()
     FlashBlock::init();
     Button::init();
 
-    AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 

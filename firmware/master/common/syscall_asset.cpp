@@ -13,6 +13,7 @@
 #include "svmmemory.h"
 #include "cube.h"
 #include "cubeslots.h"
+#include "svmruntime.h"
 
 extern "C" {
 
@@ -64,14 +65,20 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot)
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
     _SYSAssetSlot slot, _SYSCubeIDVector cv)
 {
-    if (!SvmMemory::mapRAM(loader))
+    if (!SvmMemory::mapRAM(loader)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
-    if (!SvmMemory::mapRAM(group))
+    }
+    if (!SvmMemory::mapRAM(group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
+    }
 
     _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, group->pHdr))
-        return 0;
+    if (!SvmMemory::copyROData(header, group->pHdr)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return false;
+    }
 
     /*
      * Skip groups that are already loaded.
@@ -144,12 +151,16 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
      * baseAddr is updated.
      */
 
-    if (!SvmMemory::mapRAM(group, sizeof *group))
+    if (!SvmMemory::mapRAM(group, sizeof *group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
+    }
 
     _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, group->pHdr))
+    if (!SvmMemory::copyROData(header, group->pHdr)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
+    }
 
     _SYSCubeIDVector result = 0;
 

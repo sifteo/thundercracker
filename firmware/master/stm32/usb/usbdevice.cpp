@@ -12,6 +12,7 @@
 #include "board.h"
 #include "tasks.h"
 #include "assetmanager.h"
+#include "macros.h"
 
 #if (BOARD == BOARD_TEST_JIG)
 #include "testjig.h"
@@ -101,6 +102,33 @@ static const char *descriptorStrings[] = {
 };
 
 /*
+ * Windows specific descriptors.
+ */
+static const struct {
+
+    Usb::WinUsbCompatIdHeaderDescriptor     header;
+    Usb::WinUsbFunctionSectionDescriptor    functionSection;
+
+} __attribute__((packed)) compatId = {
+    // header
+    {
+       sizeof(compatId),    // dwLength
+       0x0100,              // bcdVersion
+       0x0004,              // wIndex
+       1,                   // bCount
+       { 0 },               // reserved0
+    },
+    // functionSection
+    {
+        0,                  // bFirstInterfaceNumber
+        1,                  // reserved1
+        "WINUSB",           // compatibleID
+        { 0 },              // subCompatibleID
+        { 0 }               // reserved2
+    }
+};
+
+/*
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
@@ -185,12 +213,22 @@ void UsbDevice::outEndpointCallback(uint8_t ep)
     Tasks::setPending(Tasks::UsbOUT, 0);
 }
 
-
 /*
- * Handle any specific control requests - right now we don't handle any.
+ * Handle any specific control requests.
+ * Handle Windows specific requests to auto-register ourself as a WinUSB device.
  */
 int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 {
+    if ((req->bmRequestType & Usb::ReqTypeVendor) == Usb::ReqTypeVendor) {
+        if (req->bRequest == WINUSB_COMPATIBLE_ID) {
+
+            if (req->wIndex == 0x04) {
+                *len = MIN(*len, sizeof compatId);
+                *buf = (uint8_t*)&compatId;
+                return 1;
+            }
+        }
+    }
     return 0;
 }
 

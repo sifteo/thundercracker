@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_H
-#define _SIFTEO_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -19,10 +17,9 @@
 #include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
+#include <sifteo/memory.h>
 #include <sifteo/metadata.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include <sifteo/time.h>
 #include <sifteo/video.h>
-
-#endif

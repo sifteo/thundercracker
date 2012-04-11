@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_ASSET_H
-#define _SIFTEO_ASSET_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -132,17 +130,23 @@ struct AssetGroup {
  *    AssetSlot MySlot = AssetSlot::allocate()
  *          .bootstrap(Group1)
  *          .bootstrap(Group2);
+ *
+ * AssetSlots can only be created via allocate(), or copying another
+ * AssetSlot. All ID allocation is performed in allocate().
  */
 
-struct AssetSlot {
+class AssetSlot {
     _SYSAssetSlot sys;
-    AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
+    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
+
+public:
+
+    /// Copy constructor
+    AssetSlot(const AssetSlot &other) : sys(other.sys) {}
 
     /// Implicit conversion to system object
     operator const _SYSAssetSlot& () const { return sys; }
-    operator _SYSAssetSlot& () { return sys; }
     operator const _SYSAssetSlot* () const { return &sys; }
-    operator _SYSAssetSlot* () { return &sys; }
 
     /**
      * Create a new AssetSlot. This function returns
@@ -649,5 +653,3 @@ struct AssetAudio {
 
 
 };  // namespace Sifteo
-
-#endif

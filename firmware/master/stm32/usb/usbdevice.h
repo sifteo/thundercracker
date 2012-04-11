@@ -20,6 +20,8 @@ public:
     static const uint16_t ProductID = 0x0105;
 #endif
 
+    static const unsigned WINUSB_COMPATIBLE_ID = 0x51;
+
     static const uint8_t InEpAddr = 0x81;
     static const uint8_t OutEpAddr = 0x01;
 

@@ -10,6 +10,7 @@
 #include <math.h>
 #include <sifteo/abi.h>
 #include "svmmemory.h"
+#include "svmruntime.h"
 #include "prng.h"
 
 extern "C" {
@@ -17,24 +18,28 @@ extern "C" {
 uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) {
     if (SvmMemory::mapRAM(p, sizeof *p))
         return __sync_fetch_and_or(p, t);
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return 0;
 }
 
 uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) {
     if (SvmMemory::mapRAM(p, sizeof *p))
         return __sync_fetch_and_xor(p, t);
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return 0;
 }
 
 uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) {
     if (SvmMemory::mapRAM(p, sizeof *p))
         return __sync_fetch_and_nand(p, t); // this issues warnings on GCC > 4.4, just ignoring for now
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return 0;
 }
 
 uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) {
     if (SvmMemory::mapRAM(p, sizeof *p))
         return __sync_fetch_and_and(p, t);
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return 0;
 }
 
@@ -85,22 +90,30 @@ uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state))
-        PRNG::init(state, seed);
+    if (!SvmMemory::mapRAM(state, sizeof *state))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    PRNG::init(state, seed);
 }
 
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state))
-        return PRNG::value(state);
-    return 0;
+    if (!SvmMemory::mapRAM(state, sizeof *state)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    return PRNG::value(state);
 }
 
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit)
 {
-    if (SvmMemory::mapRAM(state, sizeof *state))
-        return PRNG::valueBounded(state, limit);
-    return 0;
+    if (!SvmMemory::mapRAM(state, sizeof *state)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    return PRNG::valueBounded(state, limit);
 }
 
 }  // extern "C"

@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG0_H
-#define _SIFTEO_VIDEO_BG0_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -113,6 +111,23 @@ struct BG0Drawable {
     }
 
     /**
+     * Retrieve the last value set by setPanning(), modulo the layer size
+     * in pixels.
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>(word & 0xFF, word >> 8);
+    }
+
+    /**
+     * Calculate the video buffer address of a particular tile.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    uint16_t tileAddr(UInt2 pos) {
+        return pos.x + pos.y * tileWidth();
+    }
+
+    /**
      * Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units.
      *
@@ -120,8 +135,7 @@ struct BG0Drawable {
      */
     void plot(UInt2 pos, uint16_t tileIndex) {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight());
-        _SYS_vbuf_poke(&sys.vbuf, pos.x + pos.y * tileWidth(),
-            _SYS_TILE77(tileIndex));
+        _SYS_vbuf_poke(&sys.vbuf, tileAddr(pos), _SYS_TILE77(tileIndex));
     }
 
     /**
@@ -134,8 +148,7 @@ struct BG0Drawable {
     {
         ASSERT(pos.x <= tileWidth() && width <= tileWidth() &&
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
-        _SYS_vbuf_fill(&sys.vbuf, pos.x + pos.y * tileWidth(),
-            _SYS_TILE77(tileIndex), width);
+        _SYS_vbuf_fill(&sys.vbuf, tileAddr(pos), _SYS_TILE77(tileIndex), width);
     }
 
     /**
@@ -182,7 +195,7 @@ struct BG0Drawable {
      */
     void image(UInt2 pos, const AssetImage &image, unsigned frame = 0)
     {
-        _SYS_image_BG0Draw(&sys, image, pos.x + pos.y * tileWidth(), frame);
+        _SYS_image_BG0Draw(&sys, image, tileAddr(pos), frame);
     }
 
     /**
@@ -194,7 +207,7 @@ struct BG0Drawable {
      */
     void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY, unsigned frame = 0)
     {
-        _SYS_image_BG0DrawRect(&sys, image, destXY.x + destXY.y * tileWidth(),
+        _SYS_image_BG0DrawRect(&sys, image, tileAddr(destXY),
             frame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
@@ -205,7 +218,7 @@ struct BG0Drawable {
      */
     void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
     {
-        unsigned addr = topLeft.x + topLeft.y * tileWidth();
+        unsigned addr = tileAddr(topLeft);
         unsigned lineAddr = addr;
         char c;
 
@@ -237,5 +250,3 @@ struct BG0Drawable {
 
 
 };  // namespace Sifteo
-
-#endif
