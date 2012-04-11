@@ -21,7 +21,10 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/raw_ostream.h"
 
-#ifndef WIN32
+#ifdef WIN32
+#  include <io.h>
+#  include <fcntl.h>
+#else
 #  include <unistd.h>
 #endif
 
