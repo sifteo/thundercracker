@@ -32,7 +32,7 @@ OBJS = \
 	Room.o \
 	RoomView.o \
 	Sokoblock.o \
-	ViewSlot.o \
+	Viewport.o \
 
 ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
 CDEPS += *.h 

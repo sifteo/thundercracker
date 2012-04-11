@@ -24,6 +24,6 @@ public:
 private:
 	void RenderInventory();
 	void ComputeHoveringIconPosition();
-	Cube::Side UpdateAccum();
+	Side UpdateAccum();
 	bool UpdateTouch();
 };

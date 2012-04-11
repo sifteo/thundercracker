@@ -19,7 +19,7 @@ void Game::Paint(bool sync) {
   }
   SystemTime now = SystemTime::now();
   mPlayer.Update();
-  for(ViewSlot& view : views) {
+  for(Viewport& view : views) {
     view.Update();
   }
 
@@ -41,7 +41,8 @@ void Game::Paint(bool sync) {
 
 void Game::DoPaint(bool sync) {
   if (sync || mNeedsSync) {
-    System::paintSync();
+    System::paint();
+    System::finish();
     if (mNeedsSync > 0) {
       mNeedsSync--;
     }
@@ -68,8 +69,8 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
     mPlayer.TargetView()->UpdateBlock();
 
     // Could be optimized, perhaps
-    const Cube::Side dir = InferDirection(u);
-    ViewSlot* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
+    const Side dir = InferDirection(u);
+    Viewport* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
     if (view && view->ShowingRoom()) {
       RoomView* pRoomView = view->GetRoomView();
       if (pRoomView->Block()) {
@@ -83,10 +84,10 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
 }
 
 
-int Game::MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock* block) {
+int Game::MovePlayerOneTile(Side dir, int progress, Sokoblock* block) {
   mPlayer.SetDirection(dir);
 
-  const Int2 unit = kSideToUnit[dir];
+  const Int2 unit = Int2::unit(dir);
   if (dot(BroadDirection(), unit) != 1) { block = 0; }
 
   // if we have any progress to use, use it here
@@ -149,11 +150,11 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
     gChannelMusic.stop();
   #endif
   Int2 room = position/128;
-  ViewSlot* view = mPlayer.View();
+  Viewport* view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();
   
   // blank other cubes
-  ViewSlot::Iterator p = ListViews();
+  Viewport::Iterator p = ListViews();
   while(p.MoveNext()) {
     if (p != view) { p->HideLocation(); }
   }
@@ -164,9 +165,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   if (pMinimap) { pMinimap->Restore(); }
   Zoom(view, room.x + room.y * mMap.Data()->width);
   
-  ViewMode g = view->Graphics();
-  g.init();
-  view->GetCube()->vbuf.touch();
+  VideoBuffer& g = view->Video();
 
   // todo: expose music in level editor?
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
@@ -180,28 +179,27 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   CheckMapNeighbors();
 }
 
-void Game::IrisOut(ViewSlot* view) {
+void Game::IrisOut(Viewport* view) {
   view->HideSprites();
-  BG1Helper(*view->GetCube()).Flush();
-  ViewMode mode = view->Graphics();
+  view->Video().bg1.eraseMask();
+  VideoBuffer& mode = view->Video();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
-      mode.BG0_putTile(vec(x, i), *BlackTile.tiles);
-      mode.BG0_putTile(vec(x, 16-i-1), *BlackTile.tiles);
+      mode.bg0.image(vec(x, i), BlackTile);
+      mode.bg0.image(vec(x, 16-i-1), BlackTile);
     }
     for(unsigned y=i+1; y<16-i-1; ++y) {
-      mode.BG0_putTile(vec(i, y), *BlackTile.tiles);
-      mode.BG0_putTile(vec(16-i-1, y), *BlackTile.tiles);
+      mode.bg0.image(vec(i, y), BlackTile);
+      mode.bg0.image(vec(16-i-1, y), BlackTile);
     }
-    System::paintSync();
+    DoPaint(false);
   }
   for(unsigned i=0; i<8; ++i) {
-    view->GetCube()->vbuf.touch();
     DoPaint(true);
   }
 }
 
-void Game::Zoom(ViewSlot* view, int roomId) {
+void Game::Zoom(Viewport* view, int roomId) {
 #if DO_ZOOM
   PlaySfx(sfx_zoomIn);
   DoPaint(true);
@@ -232,14 +230,15 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 
 void Game::ScrollTo(unsigned roomId) {
   // blank other cubes
-  ViewSlot *pView = mPlayer.CurrentView()->Parent();
-  ViewSlot::Iterator p = ListViews();
+  Viewport *pView = mPlayer.CurrentView()->Parent();
+  Viewport::Iterator p = ListViews();
   while(p.MoveNext()) {
     if (p != pView) { p->HideLocation(false); }
   }
   // hide sprites and overlay
   pView->HideSprites();
-  BG1Helper(*pView->GetCube()).Flush();
+  VideoBuffer& mode = pView->Video();
+  mode.bg1.eraseMask();
   Paint(true);
 
   const Int2 targetLoc = mMap.GetLocation(roomId);
@@ -248,22 +247,21 @@ void Game::ScrollTo(unsigned roomId) {
   const Int2 delta = 128 * (targetLoc - currentLoc);
   const Int2 target = start + delta;
   Int2 pos;
-  ViewMode mode = pView->Graphics();
   SystemTime t=SystemTime::now(); 
   do {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(&mode, mMap.Data(), pos);
+    DrawOffsetMap(pView, mMap.Data(), pos);
     Paint(true);
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
-  mode.BG0_setPanning(Vec2(0,0));
-  DrawRoom(&mode, mMap.Data(), roomId);
+  mode.bg0.setPanning(vec(0,0));
+  DrawRoom(pView, mMap.Data(), roomId);
   Paint(true);
 }
 
-void Game::Slide(ViewSlot* view) {
-  ViewMode g = view->Graphics();
+void Game::Slide(Viewport* view) {
+  VideoBuffer& g = view->Video();
   const int dt = 16;
   ASSERT(128%dt == 0);
   g.setWindow(128-dt,dt);
@@ -275,7 +273,7 @@ void Game::Slide(ViewSlot* view) {
 }
 
 bool Game::AnyViewsTouched() {
-  ViewSlot::Iterator p = ListViews();
+  Viewport::Iterator p = ListViews();
   while(p.MoveNext()) {
     if (p->Touched()) { return true; }
   }
@@ -291,50 +289,40 @@ void Game::Wait(float seconds, bool touchToSkip) {
   }
 }
 
-void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
+void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
     Dialog view;
-    ViewMode mode = vslot->Graphics();
+    VideoBuffer& mode = vslot->Video();
     PlaySfx(sfx_neighbor);
-    for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
-    mode.BG0_drawAsset(vec(0,10), DialogBox);
+    for(unsigned i=0; i<8; ++i) { mode.sprites[i].hide(); }
+    mode.bg0.image(vec(0,10), DialogBox);
 
+    // TODO?
     // save BG0 (above dialog line)
-    VideoBuffer& vbuf = vslot->GetCube()->vbuf;
-    uint16_t bg0_tiles[180];
-    for(unsigned i=0; i<180; ++i) {
-      bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
-    }
+    //VideoBuffer& vbuf = vslot->Video();
+    //uint16_t bg0_tiles[180];
+    //for(unsigned i=0; i<180; ++i) {
+    //  bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
+    //}
 
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
-          if (line > 0) {
-            Paint(true);
-            mode.setWindow(0, 80);
-            _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(vec(0,0)), bg0_tiles, 180);
-          }
-          BG1Helper ovrly(*vslot->GetCube());
-          ovrly.DrawAsset(vec(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
-          ovrly.Flush();
-          Paint(true);
-          #if GFX_ARTIFACT_WORKAROUNDS
-            vslot->GetCube()->vbuf.touch();
-            Paint(true);
-            vslot->GetCube()->vbuf.touch();
-            Paint(true);
-            vslot->GetCube()->vbuf.touch();
-            Paint(true);
-          #endif
+          // TODO
+          //if (line > 0) {
+          //  Paint(true);
+          //  mode.setWindow(0, 80);
+          //  _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(vec(0,0)), bg0_tiles, 180);
+          //}
+          //BG1Helper ovrly(*vslot->GetCube());
+          //ovrly.DrawAsset(vec(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
+          //ovrly.Flush();
+          //Paint(true);
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
-          view.Init(vslot->GetCube());
+          view.Init(&vslot->Video());
         }
         view.Erase();
         Paint(true);
-        #if GFX_ARTIFACT_WORKAROUNDS
-          vslot->GetCube()->vbuf.touch();
-          Paint(true);
-        #endif
         gGame.Paint(true);
         view.ShowAll(txt.line);
         if (line > 0) {
@@ -361,20 +349,15 @@ void Game::NpcDialog(const DialogData& data, ViewSlot *vslot) {
     PlaySfx(sfx_deNeighbor);
 }
 
-void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) {
-  ViewMode gfx = pView->Graphics();
-  #if GFX_ARTIFACT_WORKAROUNDS    
-    Paint(true);
-    pView->GetCube()->vbuf.touch();
-    Paint(true);
-  #endif
+void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) {
+  DoPaint(true);
+  VideoBuffer& gfx = pView->Video();
   gfx.setWindow(80+16,128-80-16);
   Dialog view;
-  view.Init(pView->GetCube());
+  view.Init(&pView->Video());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
-  pView->GetCube()->vbuf.touch();
   Paint(true);
   for(int t=0; t<16; t++) {
     gfx.setWindow(80+15-(t),128-80-15+(t));
@@ -383,34 +366,29 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, ViewSlot* pView) 
   }
   view.SetAlpha(255);
   Wait(4, true);
-  pView->GetCube()->vbuf.touch();
   Paint(true);
   mPlayer.CurrentView()->Parent()->Restore();
-  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-  #if GFX_ARTIFACT_WORKAROUNDS    
-    Paint(true);
-    pView->GetCube()->vbuf.touch();
-    Paint(true);
-  #endif
+  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0) + (BOTTOM<<4));
+  DoPaint(true);
 }
 
 void Game::RestorePearlIdle() {
-  if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
+  if (mPlayer.Direction() != BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
     // Always look "south" after an action
-    mPlayer.SetDirection(SIDE_BOTTOM);
+    mPlayer.SetDirection(BOTTOM);
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();
   }
 }
 
-void Game::RoomNod(ViewSlot* view) {
+void Game::RoomNod(Viewport* view) {
   view->GetRoomView()->StartNod();
   while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();
   }
 }
 
-void Game::RoomShake(ViewSlot* view) {
+void Game::RoomShake(Viewport* view) {
   view->GetRoomView()->StartShake();
   while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
     Paint();

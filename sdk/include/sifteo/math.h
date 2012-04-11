@@ -258,6 +258,20 @@ template <typename T> struct Vector2 {
         }
     }
 
+    static Vector2<T> unit(int side) {
+        Vector2<T> a0 = {  0, -1 };
+        Vector2<T> a1 = { -1,  0 };
+        Vector2<T> a2 = {  0,  1 };
+        Vector2<T> a3 = {  1,  0 };
+        switch(side) {
+            default: ASSERT(0);
+            case 0: return a0;
+            case 1: return a1;
+            case 2: return a2;
+            case 3: return a3;
+        }
+    }
+
     /**
      * Calculate the scalar length (magnitude) of this vector, squared.
      * This avoids the costly square root calculation.

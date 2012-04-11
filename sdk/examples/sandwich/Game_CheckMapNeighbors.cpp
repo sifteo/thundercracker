@@ -10,28 +10,29 @@ struct VisitorStatus {
 #define RESULT_OKAY         0
 #define RESULT_INTERRUPTED  1
 
-static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, ViewSlot* origin=0, Cube::Side dir=0) {
+static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Viewport* origin=0, Side dir=NO_SIDE) {
 
   // Is it okay to visit this cube?
-  if (!view || (status->visitMask & view->GetCubeMask())) { 
+  if (!view || (status->visitMask & view->GetMask())) { 
     return RESULT_OKAY; 
   }
-  status->visitMask |= view->GetCubeMask();
+  status->visitMask |= view->GetMask();
   
   // Orient LCD to parent
   if (origin) { 
-    view->GetCube()->orientTo(*(origin->GetCube())); 
+    // optimize precalc'd neighborhoods?
+    view->Video().orientTo(origin->Video()); 
   }
 
   // Attempt to show location (returns true on change)
   const bool didDisplayLocation = view->ShowLocation(loc, false, false);
   if (didDisplayLocation) {
-    status->changeMask |= view->GetCubeMask();
+    status->changeMask |= view->GetMask();
   }
 
   // Start slide-out and possibly take over another view's lock
   if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
-    view->GetRoomView()->StartSlide((dir+2)%4);
+    view->GetRoomView()->StartSlide((Side)((dir+2)%4));
     // check this against locked views
     auto i = gGame.ListLockedViews();
     while(i.MoveNext()) {
@@ -45,13 +46,13 @@ static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, Vi
 
   // Possibly make recursive calls
   if (didDisplayLocation || !view->ShowingLockedRoom()) {
-    for(Cube::Side side=0; side<NUM_SIDES; ++side) {
+    for(unsigned side=0; side<NUM_SIDES; ++side) {
       const unsigned result = VisitMapView(
         status, 
-        view->VirtualNeighborAt(side), 
-        loc+kSideToUnit[side].toInt(), 
+        view->VirtualNeighborAt((Side)side), 
+        loc+Int2::unit(side), 
         view, 
-        side
+        (Side)side
       );
       if (result != RESULT_OKAY) {
         return result;
@@ -64,7 +65,7 @@ static unsigned VisitMapView(VisitorStatus* status, ViewSlot* view, Int2 loc, Vi
 
 void Game::CheckMapNeighbors() {
   mNeighborDirty = false;
-  ViewSlot *root = mPlayer.View();
+  Viewport *root = mPlayer.View();
   if (!root->ShowingRoom()) { 
     return; 
   }
@@ -88,7 +89,7 @@ void Game::CheckMapNeighbors() {
   auto i = ListViews(~status.visitMask);
   while(i.MoveNext()) {
     if (i->HideLocation(false)) {
-      newChangeMask |= i->GetCubeMask();
+      newChangeMask |= i->GetMask();
     }
   }
 
@@ -100,11 +101,6 @@ void Game::CheckMapNeighbors() {
   }
 
   if (newChangeMask || status.changeMask) {
-    DoPaint(true);
-    i = ListViews();
-    while(i.MoveNext()) {
-      i->GetCube()->vbuf.touch();
-    }
     DoPaint(true);
   }
 }

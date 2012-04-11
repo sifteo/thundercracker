@@ -2,9 +2,9 @@
 
 Cube* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		ViewMode gfx(gCubes[i].vbuf);
+		VideoBuffer& gfx(gCubes[i].vbuf);
 		gfx.set();
-		gfx.BG0_drawAsset(vec(0,0), Sting);
+		gfx.bg0.image(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
 			gfx.hideSprite(s);
 		}
@@ -19,7 +19,7 @@ Cube* Game::IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewMode(gCubes[i].vbuf).BG1_setPanning(vec(0.f, 72 - 128*u));
+			VideoBuffer&(gCubes[i].vbuf).BG1_setPanning(vec(0.f, 72 - 128*u));
 		}
 		DoPaint(true);
 	}
@@ -40,17 +40,17 @@ Cube* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		if (gCubes+i != pCube) {
 			BG1Helper(gCubes[i]).Flush();
-			ViewMode gfx(gCubes[i].vbuf);
+			VideoBuffer& gfx(gCubes[i].vbuf);
 			gfx.BG1_setPanning(vec(0,0));
-			gfx.BG0_drawAsset(vec(0,0), Blank);
+			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	ViewMode mode(pCube->vbuf);
+	VideoBuffer& mode(pCube->vbuf);
 	// hide banner
 	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.BG1_setPanning(Vec2(0.f, -56 + 128*u));
+		mode.BG1_setPanning(vec(0.f, -56 + 128*u));
 		DoPaint(true);
 	}
 	WaitForSeconds(0.1f);
@@ -65,25 +65,25 @@ Cube* Game::IntroCutscene() {
 		DoPaint(true);
 	}
 	// face front
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.setSpriteImage(0, PlayerStand.index + BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// look left
 	mode.setSpriteImage(0, PlayerIdle.index);
 	WaitForSeconds(0.5f);
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.setSpriteImage(0, PlayerStand.index + BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// look right
 	mode.setSpriteImage(0, PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height));
 	WaitForSeconds(0.5f);
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.setSpriteImage(0, PlayerStand.index + BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// thought bubble appears
-	mode.BG0_drawAsset(vec(10,8), TitleThoughts);
+	mode.bg0.image(vec(10,8), TitleThoughts);
 	WaitForSeconds(0.5f);
-	mode.BG0_drawAsset(vec(3,4), TitleBalloon);
+	mode.bg0.image(vec(3,4), TitleBalloon);
 	WaitForSeconds(0.5f);
 
 	// items appear
@@ -114,7 +114,7 @@ Cube* Game::IntroCutscene() {
 		DoPaint(true);
 		WaitForSeconds(0.05f);
 	}
-	mode.setSpriteImage(0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	mode.setSpriteImage(0, PlayerStand.index + BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(2.f);
 
 	// hide items and bubble
@@ -123,16 +123,16 @@ Cube* Game::IntroCutscene() {
 	mode.hideSprite(3);
 	mode.hideSprite(4);
 <<<<<<< HEAD
-	mode.BG0_drawAsset(Vec2(0,0), Sting);
+	mode.bg0.image(vec(0,0), Sting);
 	DoPaint(true);
 =======
-	mode.BG0_drawAsset(vec(0,0), Sting);
+	mode.bg0.image(vec(0,0), Sting);
 	System::paintSync();
 >>>>>>> dd11450dde0d4a58ceaa0ca1600ad57df25d12d8
 
 	// walk off
 	PlaySfx(sfx_running);
-	unsigned downIndex = PlayerWalk.index + SIDE_BOTTOM * tilesPerFrame * framesPerCycle;
+	unsigned downIndex = PlayerWalk.index + BOTTOM * tilesPerFrame * framesPerCycle;
 	for(unsigned i=0; i<76/2; ++i) {
 		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
 		mode.moveSprite(0, 64-16, 80-i-i);
@@ -153,7 +153,7 @@ Cube* Game::IntroCutscene() {
 		DoPaint(true);
 	}
 	BG1Helper(*pCube).Flush();
-	ViewMode(pCube->vbuf).BG1_setPanning(vec(0,0));
+	VideoBuffer&(pCube->vbuf).BG1_setPanning(vec(0,0));
 	WaitForSeconds(0.5f);
 	return pCube;
 }

@@ -1,48 +1,48 @@
 #include "Map.h"
 #include "Game.h"
 
-bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
+bool Map::CanTraverse(BroadLocation bloc, Side side) {
   // validate that the exit portal is reachable given the subdivision type, or else
   // check the portal buffer for the general case
   switch(bloc.view->GetRoom()->SubdivType()) {
     case SUBDIV_DIAG_POS:
-      if (side == SIDE_TOP || side == SIDE_LEFT) { return bloc.subdivision == 0; }
+      if (side == TOP || side == LEFT) { return bloc.subdivision == 0; }
       return bloc.subdivision == 1;
     case SUBDIV_DIAG_NEG:
-      if (side == SIDE_TOP || side == SIDE_RIGHT) { return bloc.subdivision == 0; }
+      if (side == TOP || side == RIGHT) { return bloc.subdivision == 0; }
       return bloc.subdivision == 1;
     case SUBDIV_BRDG_HOR:
     case SUBDIV_BRDG_VER:
-      if (side == SIDE_TOP || side == SIDE_BOTTOM) { return bloc.subdivision == 0; }
+      if (side == TOP || side == BOTTOM) { return bloc.subdivision == 0; }
       return bloc.subdivision == 1;
     default:
       Int2 loc = bloc.view->Location();
       switch(side) {
-        case SIDE_TOP: return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
-        case SIDE_LEFT: return loc.x > 0 && GetPortalX(loc.x-1, loc.y);
-        case SIDE_BOTTOM: return loc.y < mData->height-1 && GetPortalY(loc.x, loc.y);
-        case SIDE_RIGHT: return loc.x < mData->width-1 && GetPortalX(loc.x, loc.y);
+        case TOP: return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
+        case LEFT: return loc.x > 0 && GetPortalX(loc.x-1, loc.y);
+        case BOTTOM: return loc.y < mData->height-1 && GetPortalY(loc.x, loc.y);
+        case RIGHT: return loc.x < mData->width-1 && GetPortalX(loc.x, loc.y);
       }
   }
   return false;
 }
 
-bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor) {
+bool Map::GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* outNeighbor) {
   if (!CanTraverse(loc, side)) { return false; }
-  ViewSlot* gv = loc.view->Parent()->VirtualNeighborAt(side);
+  Viewport* gv = loc.view->Parent()->VirtualNeighborAt(side);
   if (!gv || !gv->ShowingRoom()) { return false; }
   outNeighbor->view = gv->GetRoomView();
   const Room* room = outNeighbor->view->GetRoom();
   switch(room->SubdivType()) {
     case SUBDIV_DIAG_POS:
-      outNeighbor->subdivision = (side == SIDE_BOTTOM || side == SIDE_RIGHT) ? 0 : 1;
+      outNeighbor->subdivision = (side == BOTTOM || side == RIGHT) ? 0 : 1;
       break;
     case SUBDIV_DIAG_NEG:
-      outNeighbor->subdivision = (side == SIDE_BOTTOM || side == SIDE_LEFT) ? 0 : 1;
+      outNeighbor->subdivision = (side == BOTTOM || side == LEFT) ? 0 : 1;
       break;
     case SUBDIV_BRDG_HOR:
     case SUBDIV_BRDG_VER:
-      outNeighbor->subdivision = (side == SIDE_TOP || side == SIDE_BOTTOM) ? 0 : 1;
+      outNeighbor->subdivision = (side == TOP || side == BOTTOM) ? 0 : 1;
       break;
     default:
       outNeighbor->subdivision = 0;
@@ -79,11 +79,11 @@ void BroadPath::Cancel() {
 }
 
 
-static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int depth, unsigned* outViewId) {
+static bool Visit(BroadPath* outPath, BroadLocation loc, Side side, int depth, unsigned* outViewId) {
   BroadLocation next;
   if (!gGame.GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
     if (depth > 1) {
-      ViewSlot *nextView = loc.view->Parent()->VirtualNeighborAt(side);
+      Viewport *nextView = loc.view->Parent()->VirtualNeighborAt(side);
       if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
         outPath->steps[depth-1] = -1;
         *outViewId = nextView->GetCubeID();

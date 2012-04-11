@@ -23,7 +23,7 @@ struct BroadLocation {
 };
 
 struct BroadPath {
-  Cube::Side steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
+  Side steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
   BroadPath();
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
@@ -31,11 +31,11 @@ struct BroadPath {
 };
 
 struct NarrowPath {
-  Cube::Side moves[PATH_CAPACITY];
-  Cube::Side *pFirstMove;
+  Side moves[PATH_CAPACITY];
+  Side *pFirstMove;
   int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
-  const Cube::Side* Begin() { return pFirstMove; }
-  const Cube::Side* End() { return moves + PATH_CAPACITY; }
+  const Side* Begin() { return pFirstMove; }
+  const Side* End() { return moves + PATH_CAPACITY; }
 };
 
 //-----------------------------------------------------------------------------
@@ -62,11 +62,11 @@ public:
   Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
   Room* GetRoom(Int2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
 
-  bool CanTraverse(BroadLocation loc, Cube::Side side);
-  bool GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor);
+  bool CanTraverse(BroadLocation loc, Side side);
+  bool GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* outNeighbor);
   bool IsVertexWalkable(Int2 globalVertex);
   bool FindBroadPath(BroadPath* outPath, unsigned* outViewId);
-  bool FindNarrowPath(BroadLocation loc, Cube::Side direction, NarrowPath* outPath);
+  bool FindNarrowPath(BroadLocation loc, Side direction, NarrowPath* outPath);
 
   unsigned BlockCount() const { return mBlockCount; }
   Sokoblock* BlockBegin() { return mBlock; }

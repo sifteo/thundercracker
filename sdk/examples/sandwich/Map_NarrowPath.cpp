@@ -36,10 +36,10 @@ struct AStar {
   inline uint8_t TileToID(Int2 tile) const { return tile.x + cellPitch * tile.y; }
   inline Int2 IDToTile(uint8_t tid) const { tid &= (~0x80); return vec(tid % cellPitch, tid / cellPitch);}
   inline uint8_t Heuristic(Int2 tile) const { return abs(tile.x - dst.x) + abs(tile.y - dst.y); }
-  void VisitNeighbor(ARecord* parent, Cube::Side dir);
+  void VisitNeighbor(ARecord* parent, Side dir);
 };
 
-void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
+void AStar::VisitNeighbor(ARecord* parent, Side dir) {
   Int2 tile = IDToTile(parent->tileID);
   Int2 ntile = tile + kSideToUnit[dir].toInt();
   if (ntile.x < 0 || ntile.y < 0 || ntile.x >= cellPitch || ntile.y >= cellRowCount) {
@@ -74,7 +74,7 @@ void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
   }    
 }
 
-bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath) {
+bool Map::FindNarrowPath(BroadLocation bloc, Side dir, NarrowPath* outPath) {
   BroadLocation dbloc;
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
   Int2 loc = bloc.view->Location();

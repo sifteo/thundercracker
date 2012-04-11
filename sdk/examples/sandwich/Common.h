@@ -9,7 +9,7 @@ using namespace Sifteo;
 // Cube Shmutz
 #define CUBE_ALLOC_MASK (((1<<NUM_CUBES)-1)<<(32-NUM_CUBES))
 
-extern Cube gCubes[NUM_CUBES];
+extern VideoBuffer gVideoBuffers[NUM_CUBES];
 
 // Audio Smutz
 #if SFX_ON
@@ -38,7 +38,7 @@ using namespace Sifteo;
 #define CORO_END mState=-1;case -1:;}
 
 // Utils
-Cube::Side InferDirection(Int2 u);
+Side InferDirection(Int2 u);
 int AdvanceTowards(int curr, int targ, int mag);
 
 // temporary until __builtin_clz stops making slinky cranky

@@ -13,7 +13,7 @@
 #define VIEW_EDGE		5
 #define VIEW_TYPE_COUNT	6
 
-class ViewSlot {
+class Viewport {
 private:
 	union { // modal views must be first in order to allow casting
 		IdleView idle;
@@ -26,13 +26,13 @@ private:
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
     	unsigned prevTouch	: 1;
   	} mFlags;
+  	VideoBuffer mBuffer;
 
 public:
 
-	Cube* GetCube() const;
-	Cube::ID GetCubeID() const;
-	unsigned GetCubeMask() const { return 1 << (31-GetCubeID()); }
-	ViewMode Graphics() const { ASSERT(mFlags.view); return ViewMode(GetCube()->vbuf); }
+	VideoBuffer& Video() { return mBuffer; }
+	CubeID GetCube() const { return mBuffer.cube(); }
+	unsigned GetMask() const { return 1 << (31-GetCube()); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
 	unsigned ViewType() const { return mFlags.view ; }
@@ -57,15 +57,15 @@ public:
 
 	void RefreshInventory(bool doFlush=true);
 
-	Cube::Side VirtualTiltDirection() const;
-	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
+	Side VirtualTiltDirection() const;
+	Viewport* VirtualNeighborAt(Side side) const;
 
 private:
-	bool SetLocationView(unsigned roomId, Cube::Side side, bool force, bool doFlush);
+	bool SetLocationView(unsigned roomId, Side side, bool force, bool doFlush);
 	void SetSecondaryView(unsigned viewId, bool doFlush);
 	void SanityCheckVram();
 	void EvictSecondaryView(unsigned viewId, bool doFlush);
-	ViewSlot* FindIdleView();
+	Viewport* FindIdleView();
 
 public:
 	class Iterator {
@@ -88,16 +88,16 @@ public:
 		bool operator==(const Iterator& i) { return currentId == i.currentId; }
 		bool operator!=(const Iterator& i) { return currentId != i.currentId; }
 
-		ViewSlot& operator*();
-		ViewSlot* operator->();
+		Viewport& operator*();
+		Viewport* operator->();
 		Iterator operator++() { 
 			MoveNext();
 			return *this;
  		}
 
-		operator ViewSlot*();
+		operator Viewport*();
 	};
 };
 
-extern ViewSlot *pInventory;
-extern ViewSlot *pMinimap;
+extern Viewport *pInventory;
+extern Viewport *pMinimap;

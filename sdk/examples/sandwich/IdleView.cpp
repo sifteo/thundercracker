@@ -9,7 +9,7 @@ void IdleView::Init() {
   mStartFrame = gGame.AnimFrame();
   //DrawInventorySprites();
   Parent()->HideSprites();
-  Parent()->Graphics().BG0_drawAsset(vec(0,0), Blank);
+  Parent()->Video().bg0.image(vec(0,0), Blank);
   BG1Helper(*Parent()->GetCube()).Flush();
 }
 

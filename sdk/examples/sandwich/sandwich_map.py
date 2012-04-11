@@ -150,37 +150,37 @@ class Map:
 			oo = str(PORTAL_OPEN)+str(PORTAL_OPEN)
 			if r.y != 0 and not self.roomat(r.x, r.y-1).isblocked():
 				ports = "".join(( str(portal_type(self.background.tileat(tx+i, ty))) for i in range(1,7) ))
-				r.portals[SIDE_TOP] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
+				r.portals[TOP] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
 			if r.x != 0 and not self.roomat(r.x-1, r.y).isblocked():
 				ports = [ portal_type(self.background.tileat(tx, ty+i)) for i in range(1,7) ]
-				r.portals[SIDE_LEFT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				r.portals[LEFT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 			if r.y != self.height-1 and not self.roomat(r.x, r.y+1).isblocked():
 				ports = "".join(( str(portal_type(self.background.tileat(tx+i, ty+7))) for i in range(1,7) ))
-				r.portals[SIDE_BOTTOM] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
+				r.portals[BOTTOM] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
 			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
 				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(1,7) ]
-				r.portals[SIDE_RIGHT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				r.portals[RIGHT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 
 		# validate boooombs
 		for room in self.rooms:
 			if room.x == 0: 
-				assert not room.can_bomb[SIDE_LEFT]
+				assert not room.can_bomb[LEFT]
 			elif room.x == self.width-1:
-				assert not room.can_bomb[SIDE_RIGHT]
+				assert not room.can_bomb[RIGHT]
 			else:
-				assert room.can_bomb[SIDE_RIGHT] == self.roomat(room.x+1, room.y).can_bomb[SIDE_LEFT]
+				assert room.can_bomb[RIGHT] == self.roomat(room.x+1, room.y).can_bomb[LEFT]
 			if room.y == 0:
-				assert not room.can_bomb[SIDE_TOP]
+				assert not room.can_bomb[TOP]
 			elif room.y == self.height-1:
-				assert not room.can_bomb[SIDE_BOTTOM]
+				assert not room.can_bomb[BOTTOM]
 			else:
-				assert room.can_bomb[SIDE_BOTTOM] == self.roomat(room.x, room.y+1).can_bomb[SIDE_TOP]
-		self.bombables = [(room.lid,0) for room in self.rooms if room.can_bomb[SIDE_RIGHT]]+[(room.lid,1) for room in self.rooms if room.can_bomb[SIDE_BOTTOM]]
+				assert room.can_bomb[BOTTOM] == self.roomat(room.x, room.y+1).can_bomb[TOP]
+		self.bombables = [(room.lid,0) for room in self.rooms if room.can_bomb[RIGHT]]+[(room.lid,1) for room in self.rooms if room.can_bomb[BOTTOM]]
 
 		# validate portals
 		for r in self.rooms:
-			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
-			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
+			assert r.portals[LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
+			assert r.portals[RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 		for x,y in product( range(self.width-1), range(self.height) ):
 			assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id + ", room: " + str(x) + "," + str(y) + " to room: " + str(x+1) + "," + str(y)
 		for x,y in product( range(self.width), range(self.height-1) ):
@@ -251,7 +251,7 @@ class Map:
 		byte = 0
 		cnt = 0
 		for y,x in product( range(self.height), range(self.width-1) ):
-			if self.roomat(x,y).portals[SIDE_RIGHT] != PORTAL_WALL:
+			if self.roomat(x,y).portals[RIGHT] != PORTAL_WALL:
 				byte = byte | (1 << cnt)
 			cnt = cnt + 1
 			if cnt == 8:
@@ -266,7 +266,7 @@ class Map:
 		byte = 0
 		cnt = 0
 		for x,y in product( range(self.width), range(self.height-1) ):
-			if self.roomat(x,y).portals[SIDE_BOTTOM] != PORTAL_WALL:
+			if self.roomat(x,y).portals[BOTTOM] != PORTAL_WALL:
 				byte = byte | (1 << cnt)
 			cnt = cnt + 1
 			if cnt == 8:

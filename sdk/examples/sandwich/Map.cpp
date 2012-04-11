@@ -52,11 +52,11 @@ void Map::SetData(const MapData& map) {
       // the sentinel for bombables is 127, not 255, because he only gets 7 bits :P
       for(const BombableData* p=map.bombables; p->rid != 0x7f; ++p) {
         if (p->orientation == BOMBABLE_ORIENTATION_HORIZONTAL) {
-          mRooms[p->rid].SetCanBomb(SIDE_RIGHT);
-          mRooms[p->rid + 1].SetCanBomb(SIDE_LEFT);
+          mRooms[p->rid].SetCanBomb(RIGHT);
+          mRooms[p->rid + 1].SetCanBomb(LEFT);
         } else {
-          mRooms[p->rid].SetCanBomb(SIDE_BOTTOM);
-          mRooms[p->rid + mData->width].SetCanBomb(SIDE_TOP);
+          mRooms[p->rid].SetCanBomb(BOTTOM);
+          mRooms[p->rid + mData->width].SetCanBomb(TOP);
         }
       }
     }

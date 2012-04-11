@@ -81,7 +81,7 @@ public:
 
   void StartNod();
   void StartShake();
-  void StartSlide(Cube::Side side);
+  void StartSlide(Side side);
 
   void ShowFrame();
 

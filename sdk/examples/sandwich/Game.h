@@ -1,5 +1,5 @@
 #pragma once
-#include "ViewSlot.h"
+#include "Viewport.h"
 #include "Player.h"
 #include "Map.h"
 #include "GameState.h"
@@ -19,7 +19,7 @@ private:
   static float sShakeTime;
   #endif
 
-  ViewSlot mViews[NUM_CUBES];
+  Viewport mViews[NUM_CUBES];
   GameState mState;
   Map mMap;
   Player mPlayer;
@@ -60,32 +60,32 @@ public:
   void NeedsSync() { mNeedsSync = 1; }
 
   // events
-  void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
-  void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
+  void OnNeighborAdd(RoomView* v1, Side s1, RoomView* v2, Side s2);
+  void OnNeighborRemove(RoomView* v1, Side s1, RoomView* v2, Side s2);
   
   // listing views
-  ViewSlot* ViewAt(int i) { return mViews+i; }
+  Viewport* ViewAt(int i) { return mViews+i; }
 
-  ViewSlot::Iterator ListViews(uint32_t mask=0xffffffff) { 
-    return ViewSlot::Iterator(mask & mActiveViewMask); 
+  Viewport::Iterator ListViews(uint32_t mask=0xffffffff) { 
+    return Viewport::Iterator(mask & mActiveViewMask); 
   }
 
-  ViewSlot::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
-  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetCubeMask(); }
-  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetCubeMask(); }
+  Viewport::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
+  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetMask(); }
+  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetMask(); }
   void UnlockAllViews();
 
   struct {
-    ViewSlot::Iterator begin() { return ++Game::Inst()->ListViews(); }
-    ViewSlot::Iterator end() { return ViewSlot::Iterator(); }
+    Viewport::Iterator begin() { return ++Game::Inst()->ListViews(); }
+    Viewport::Iterator end() { return Viewport::Iterator(); }
   } views;
 
 private:
 
-  static void onNeighbor(void *context, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+  void OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 
   // cutscenes
-  Cube* IntroCutscene();
+  VideoBuffer* IntroCutscene();
   void WinScreen();
 
 
@@ -94,19 +94,19 @@ private:
   void CheckMapNeighbors();
   void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
-  int MovePlayerOneTile(Cube::Side dir, int progress, Sokoblock *blockToPush=0);
+  int MovePlayerOneTile(Side dir, int progress, Sokoblock *blockToPush=0);
   void MoveBlock(Sokoblock* block, Int2 u);
   void TeleportTo(const MapData& m, Int2 position);
-  void IrisOut(ViewSlot* view);
-  void Zoom(ViewSlot* view, int roomId);
-  void Slide(ViewSlot* view);
-  void DescriptionDialog(const char* hdr, const char* msg, ViewSlot *view);
-  void NpcDialog(const DialogData& data, ViewSlot *view);
+  void IrisOut(Viewport* view);
+  void Zoom(Viewport* view, int roomId);
+  void Slide(Viewport* view);
+  void DescriptionDialog(const char* hdr, const char* msg, Viewport *view);
+  void NpcDialog(const DialogData& data, Viewport *view);
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
   void Wait(float seconds, bool touchToSkip=false);
-  void RoomNod(ViewSlot* view);
-  void RoomShake(ViewSlot* view);
+  void RoomNod(Viewport* view);
+  void RoomShake(Viewport* view);
 
   // events
   void OnTick();
@@ -125,7 +125,7 @@ private:
   bool OnTriggerEvent(unsigned type, unsigned id);
 
   bool TryEncounterBlock(Sokoblock* block);
-  bool TryEncounterLava(Cube::Side dir);
+  bool TryEncounterLava(Side dir);
 
 
 };

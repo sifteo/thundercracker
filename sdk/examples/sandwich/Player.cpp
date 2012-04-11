@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 
 void Player::Init(Cube* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  ViewSlot *pView = gGame.ViewAt(pPrimary - gCubes);
+  Viewport *pView = gGame.ViewAt(pPrimary - gCubes);
   mCurrent.view = (RoomView*)(pView);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
@@ -65,7 +65,7 @@ int Player::AnimFrame() {
       } else if (mAnimFrame == 3 || mAnimFrame == 4) {
         return PlayerIdle.index + (mAnimFrame-1) * 16;
       } else {
-        return PlayerStand.index + SIDE_BOTTOM * 16;
+        return PlayerStand.index + BOTTOM * 16;
       }
     }
     case PLAYER_STATUS_WALKING:

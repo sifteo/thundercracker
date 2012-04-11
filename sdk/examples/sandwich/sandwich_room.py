@@ -11,10 +11,10 @@ PORTAL_TO_CHAR = {
 	PORTAL_WALL: "X",
 	PORTAL_DOOR: "_"
 }
-SIDE_TOP = 0
-SIDE_LEFT = 1
-SIDE_BOTTOM = 2
-SIDE_RIGHT = 3
+TOP = 0
+LEFT = 1
+BOTTOM = 2
+RIGHT = 3
 SUBDIV_NONE = 0
 SUBDIV_DIAG_POS = 1
 SUBDIV_DIAG_NEG = 2
@@ -109,10 +109,10 @@ class Room:
 		for x,y in product(range(0,8), range(0,8)):
 			if "crack" in self.tileat(x,y).props:
 				# determine side
-				if x == 0 and (y > 2 and y < 7): self.can_bomb[SIDE_LEFT] = True
-				if x == 7 and (y > 2 and y < 7): self.can_bomb[SIDE_RIGHT] = True
-				if (x > 0 and x < 7) and y <  3: self.can_bomb[SIDE_TOP] = True
-				if (x > 0 and x < 7) and y == 7: self.can_bomb[SIDE_BOTTOM] = True
+				if x == 0 and (y > 2 and y < 7): self.can_bomb[LEFT] = True
+				if x == 7 and (y > 2 and y < 7): self.can_bomb[RIGHT] = True
+				if (x > 0 and x < 7) and y <  3: self.can_bomb[TOP] = True
+				if (x > 0 and x < 7) and y == 7: self.can_bomb[BOTTOM] = True
 
 
 	def contains_obj(self, obj):
@@ -210,13 +210,13 @@ class Room:
 				self._subdiv_visit(slots, 1<<side, x, y)
 			for cnt in (bit_count(slots[x+(y<<3)]) for (x,y) in cardinals): 
 				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id + " at: " + str(self.x) + "," + str(self.y)
-			tx,ty = cardinals[SIDE_TOP]
+			tx,ty = cardinals[TOP]
 			maskTop = slots[tx+(ty<<3)]
 			if bit_count(maskTop) == 2:
 				self.subdiv_masks = slots
-				if maskTop & (1<<SIDE_LEFT):
+				if maskTop & (1<<LEFT):
 					self.subdiv_type = SUBDIV_DIAG_POS
-				elif maskTop & (1<<SIDE_RIGHT):
+				elif maskTop & (1<<RIGHT):
 					self.subdiv_type = SUBDIV_DIAG_NEG
 				else:
 					raise Exception("unusual subdivision in map: " + self.map.id)

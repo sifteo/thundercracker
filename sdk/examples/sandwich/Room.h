@@ -45,17 +45,17 @@ public:
   bool HasUserdata() const { return mPrimarySlotType; }
   void Clear();
   bool IsShowingBlock(const Sokoblock* pBlock);  
-  unsigned CountOpenTilesAlongSide(Cube::Side side);
+  unsigned CountOpenTilesAlongSide(Side side);
 
   //---------------------------------------------------------------------------
   // bombypoos
   //---------------------------------------------------------------------------
 
-  bool CanBomb(Cube::Side s) const { ASSERT(0<=s && s<4); return (mBomb.canMask & (1<<s)) != 0; }
-  bool DidBomb(Cube::Side s) const { ASSERT(0<=s && s<4); return (mBomb.didMask & (1<<s)) != 0; }
+  bool CanBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.canMask & (1<<s)) != 0; }
+  bool DidBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.didMask & (1<<s)) != 0; }
   bool HasBombedSides() const { return mBomb.didMask != 0; }
-  void SetCanBomb(Cube::Side s) { ASSERT(0<=s && s<4); mBomb.canMask |= (1<<s); }
-  void SetDidBomb(Cube::Side s) { mBomb.didMask |= ((1<<s) & mBomb.canMask); }
+  void SetCanBomb(Side s) { ASSERT(0<=s && s<4); mBomb.canMask |= (1<<s); }
+  void SetDidBomb(Side s) { mBomb.didMask |= ((1<<s) & mBomb.canMask); }
   void BombThisFucker();
 
   //---------------------------------------------------------------------------

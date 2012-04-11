@@ -100,7 +100,7 @@ void Game::OnTrapdoor(Room *pRoom) {
   ScrollTo(pRoom->Trapdoor()->respawnRoomId);
 
   // fall
-  ViewSlot *pView = mPlayer.CurrentView()->Parent();
+  Viewport *pView = mPlayer.CurrentView()->Parent();
   int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
   for(unsigned i=0; i<arraysize(animHeights); ++i) {
     pView->GetRoomView()->DrawPlayerFalling(animHeights[i]);
@@ -108,7 +108,7 @@ void Game::OnTrapdoor(Room *pRoom) {
   }
   const Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
   mPlayer.SetPosition(targetRoom->Center(0));
-  mPlayer.SetDirection(SIDE_BOTTOM);
+  mPlayer.SetDirection(BOTTOM);
   pView->ShowLocation(mPlayer.Position()/128, true);
   CheckMapNeighbors();
   Paint(true);
@@ -158,10 +158,10 @@ void Game::OnPickup(Room *pRoom) {
         u = (frame + u) * du;
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
-        mPlayer.CurrentView()->SetEquipPosition(Vec2(0.f, -float(ITEM_OFFSET) * u) );
+        mPlayer.CurrentView()->SetEquipPosition(vec(0.f, -float(ITEM_OFFSET) * u) );
       } while(now-t<0.075f);
     }
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
       itemType.description, 
@@ -196,14 +196,14 @@ void Game::OnPickup(Room *pRoom) {
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
 <<<<<<< HEAD
-        mPlayer.CurrentView()->SetItemPosition(Vec2(0.f, -36.f * u) );
+        mPlayer.CurrentView()->SetItemPosition(vec(0.f, -36.f * u) );
       } while(now-t<0.075f);
 =======
         mPlayer.CurrentView()->SetItemPosition(vec(0.f, -36.f * u) );
       } while(SystemTime::now()-t<0.075f);
 >>>>>>> dd11450dde0d4a58ceaa0ca1600ad57df25d12d8
     }
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (BOTTOM<<4));
     DescriptionDialog(
       "ITEM DISCOVERED", 
       itemType.description, 
@@ -337,7 +337,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
     case EVENT_ADVANCE_QUEST_AND_REFRESH: {
       mState.AdvanceQuest();
       mMap.RefreshTriggers();
-      ViewSlot::Iterator p = ListViews();
+      Viewport::Iterator p = ListViews();
       while(p.MoveNext()) {
         if (p->ShowingRoom()) {
           p->Restore(false);
@@ -363,7 +363,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         mState.FlagTrigger(door.trigger);
         //Room* targetRoom = mMap.GetRoom(door.trigger.room);
         bool didRestore = false;
-        ViewSlot::Iterator p = ListViews();
+        Viewport::Iterator p = ListViews();
         while(p.MoveNext()) {
           if (p->ShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
             p->GetRoomView()->Restore();
@@ -403,10 +403,10 @@ bool Game::TryEncounterBlock(Sokoblock* block) {
   // no moving blocks into subdivided rooms
   if (pRoom->IsSubdivided()) { return false; }
   // no moving blocks through walls or small portals
-  Cube::Side dst_enter_side = SIDE_LEFT;
-  if (dir.x < 0) { dst_enter_side = SIDE_RIGHT; }
-  else if (dir.y > 0) { dst_enter_side = SIDE_TOP; }
-  else if (dir.y < 0) { dst_enter_side = SIDE_BOTTOM; }
+  Side dst_enter_side = LEFT;
+  if (dir.x < 0) { dst_enter_side = RIGHT; }
+  else if (dir.y > 0) { dst_enter_side = TOP; }
+  else if (dir.y < 0) { dst_enter_side = BOTTOM; }
   if (pRoom->CountOpenTilesAlongSide(dst_enter_side) < 4) {
     return false;
   }
@@ -419,21 +419,21 @@ bool Game::TryEncounterBlock(Sokoblock* block) {
   return true;
 }
 
-bool Game::TryEncounterLava(Cube::Side dir) {
+bool Game::TryEncounterLava(Side dir) {
   ASSERT(0 <= dir && dir < 4);
   const Int2 baseTile = mPlayer.Position() >> 4;
   switch(dir) {
-    case SIDE_TOP: {
+    case TOP: {
       const unsigned tid = mMap.GetGlobalTileId(baseTile - (vec<int>(1,1)));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
-    case SIDE_LEFT:
+    case LEFT:
       return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile - vec<int>(2,0)));
-    case SIDE_BOTTOM: {
+    case BOTTOM: {
       const unsigned tid = mMap.GetGlobalTileId(baseTile + vec<int>(-1,1));
       return mMap.IsTileLava(tid) || mMap.IsTileLava(tid+1);
     }
-    default: // SIDE_RIGHT
+    default: // RIGHT
       return mMap.IsTileLava(mMap.GetGlobalTileId(baseTile + vec<int>(1,0)));
   }
 }

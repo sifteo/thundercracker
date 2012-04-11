@@ -2,8 +2,8 @@
 
 void Game::onNeighbor(
 	void *context,
-    Cube::ID c0, Cube::Side s0, 
-    Cube::ID c1, Cube::Side s1) {
+    Cube::ID c0, Side s0, 
+    Cube::ID c1, Side s1) {
 	gGame.mNeighborDirty = true;
 }
 
@@ -38,7 +38,7 @@ void Game::MainLoop() {
 	mState.Init();
 	mMap.Init();
 	mPlayer.Init(pPrimary);
-	ViewSlot::Iterator p = ListViews();
+	Viewport::Iterator p = ListViews();
 	while(p.MoveNext()) {
 		if (p->GetCube() != pPrimary) { p->Init(); }
 	}
@@ -93,7 +93,7 @@ void Game::MainLoop() {
 	        }
 	      	#endif
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
-	      		ViewSlot::Iterator p = ListViews();
+	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
 	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
 	      				p->GetRoomView()->StartShake();
@@ -116,7 +116,7 @@ void Game::MainLoop() {
 	      	PlaySfx(sfx_running);
 	      	mPlayer.TargetView()->ShowPlayer();
 	      	// TODO: Walking South Through Door?
-	      	if (mPlayer.Direction() == SIDE_TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
+	      	if (mPlayer.Direction() == TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
 
 	        	//---------------------------------------------------------------------
 	        	// WALKING NORTH THROUGH DOOR
@@ -166,7 +166,7 @@ void Game::MainLoop() {
 	        	//---------------------------------------------------------------------
 	        	// A* PATHFINDING
 	      		if (mPlayer.TargetView()->GetRoom()->IsBridge()) {
-	      			const Cube::Side hideParity = 
+	      			const Side hideParity = 
 	      				mPlayer.TargetView()->GetRoom()->SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
 	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == hideParity);
 	      		}
@@ -179,7 +179,7 @@ void Game::MainLoop() {
 	      		// this loop could possibly suffer some optimizaton
 	      		// but first I'm goint to wait until after alpha and not
 	      		// more crap is going to get shoved in there
-	      		for(const Cube::Side *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
+	      		for(const Side *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
 	      			// encounter lava?
 	      			if (mMap.Data()->lavaTiles && !mPlayer.CanCrossLava()) {
 	      				if (TryEncounterLava(*pNextMove)) {
