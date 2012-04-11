@@ -165,7 +165,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   if (pMinimap) { pMinimap->Restore(); }
   Zoom(view, room.x + room.y * mMap.Data()->width);
   
-  VideoBuffer& g = view->Video();
+  VideoBuffer& g = view->Canvas();
 
   // todo: expose music in level editor?
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
@@ -181,8 +181,8 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 
 void Game::IrisOut(Viewport* view) {
   view->HideSprites();
-  view->Video().bg1.eraseMask();
-  VideoBuffer& mode = view->Video();
+  view->Canvas().bg1.eraseMask();
+  VideoBuffer& mode = view->Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
       mode.bg0.image(vec(x, i), BlackTile);
@@ -237,7 +237,7 @@ void Game::ScrollTo(unsigned roomId) {
   }
   // hide sprites and overlay
   pView->HideSprites();
-  VideoBuffer& mode = pView->Video();
+  VideoBuffer& mode = pView->Canvas();
   mode.bg1.eraseMask();
   Paint(true);
 
@@ -261,7 +261,7 @@ void Game::ScrollTo(unsigned roomId) {
 }
 
 void Game::Slide(Viewport* view) {
-  VideoBuffer& g = view->Video();
+  VideoBuffer& g = view->Canvas();
   const int dt = 16;
   ASSERT(128%dt == 0);
   g.setWindow(128-dt,dt);
@@ -291,14 +291,14 @@ void Game::Wait(float seconds, bool touchToSkip) {
 
 void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
     Dialog view;
-    VideoBuffer& mode = vslot->Video();
+    VideoBuffer& mode = vslot->Canvas();
     PlaySfx(sfx_neighbor);
     for(unsigned i=0; i<8; ++i) { mode.sprites[i].hide(); }
     mode.bg0.image(vec(0,10), DialogBox);
 
     // TODO?
     // save BG0 (above dialog line)
-    //VideoBuffer& vbuf = vslot->Video();
+    //VideoBuffer& vbuf = vslot->Canvas();
     //uint16_t bg0_tiles[180];
     //for(unsigned i=0; i<180; ++i) {
     //  bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
@@ -319,7 +319,7 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
           //Paint(true);
           //Now set up a letterboxed 128x48 mode
           mode.setWindow(80, 48);
-          view.Init(&vslot->Video());
+          view.Init(&vslot->Canvas());
         }
         view.Erase();
         Paint(true);
@@ -351,10 +351,10 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) {
   DoPaint(true);
-  VideoBuffer& gfx = pView->Video();
+  VideoBuffer& gfx = pView->Canvas();
   gfx.setWindow(80+16,128-80-16);
   Dialog view;
-  view.Init(&pView->Video());
+  view.Init(&pView->Canvas());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);

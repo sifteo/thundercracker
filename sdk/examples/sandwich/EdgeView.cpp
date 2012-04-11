@@ -7,7 +7,7 @@ void EdgeView::Init(int roomId, enum Side side) {
 	mSide = side;
 	side = (Side) (((int)side+2) % 4); // flip side
 	// todo: compute screen orient
-	VideoBuffer& gfx = Parent()->Video();
+	VideoBuffer& gfx = Parent()->Canvas();
 	static const Int2 start[8] = {
 		vec(0,0), vec(0,0), vec(0, 15), vec(15,0),
 	};
@@ -56,8 +56,8 @@ void EdgeView::Update() {
 	#if GFX_ARTIFACT_WORKAROUNDS		
 		System::finish();
 	#endif
-	Parent()->Video().setWindow(80+16,128-80-16);
-	mDialog.Init(&(Parent()->Video()));
+	Parent()->Canvas().setWindow(80+16,128-80-16);
+	mDialog.Init(&(Parent()->Canvas()));
 	mDialog.Erase();
 	mDialog.Show("Touch to go to"); {
 		const MapData& targetMap = gMapData[mGateway->targetMap];
@@ -67,7 +67,7 @@ void EdgeView::Update() {
 	//touch?
 	CORO_YIELD;
 	for(t=0; t<16; t++) {
-		Parent()->Video().setWindow(80+15-(t),128-80-15+(t));
+		Parent()->Canvas().setWindow(80+15-(t),128-80-15+(t));
 		mDialog.SetAlpha(t<<4);
 		CORO_YIELD;
 	}

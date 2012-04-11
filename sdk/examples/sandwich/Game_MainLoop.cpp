@@ -13,12 +13,12 @@ void Game::MainLoop() {
   	//---------------------------------------------------------------------------
   	// INTRO
 	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c)->Video().attach(c);
-		ViewAt(c)->Video().initMode(BG0_SPR_BG1);
+		ViewAt(c)->Canvas().attach(c);
+		ViewAt(c)->Canvas().initMode(BG0_SPR_BG1);
 	}
 
 	#if FAST_FORWARD
-		VideoBuffer* pPrimary = &ViewAt(0)->Video();
+		VideoBuffer* pPrimary = &ViewAt(0)->Canvas();
 	#else
 		PlayMusic(music_sting, false);
 		VideoBuffer* pPrimary = IntroCutscene();
@@ -36,7 +36,7 @@ void Game::MainLoop() {
 	mMap.Init();
 	Viewport::Iterator p = ListViews();
 	while(p.MoveNext()) {
-		//if (&(p->Video()) != pPrimary) { p->Init(); }
+		//if (&(p->Canvas()) != pPrimary) { p->Init(); }
 		p->Init();
 	}
 	mPlayer.Init(pPrimary);
