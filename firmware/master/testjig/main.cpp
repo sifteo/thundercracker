@@ -9,8 +9,6 @@
 #include "systime.h"
 #include "radio.h"
 #include "tasks.h"
-#include "audiomixer.h"
-#include "audiooutdevice.h"
 #include "usb/usbdevice.h"
 #include "testjig.h"
 
@@ -43,11 +41,6 @@ int main()
     SysTime::init();
     Radio::open();
     Tasks::init();
-    FlashBlock::init();
-
-    AudioMixer::instance.init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
 
     UsbDevice::init();
 

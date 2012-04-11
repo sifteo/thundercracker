@@ -7,7 +7,7 @@ include $(TC_DIR)/firmware/master/Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -I../common -I../../include -DNO_USERSPACE_HEADERS
+CFLAGS := -I../common -I../../include -DNOT_USERSPACE
 CFLAGS_STM32 := -I../stm32 -I../testjig
 
 include ../Makefile.defs
