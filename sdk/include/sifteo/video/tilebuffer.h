@@ -199,6 +199,14 @@ struct TileBuffer {
     }
 
     /**
+     * Calculate the video buffer address of a particular tile.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    uint16_t tileAddr(UInt2 pos, unsigned frame = 0) {
+        return pos.x + (pos.y + frame * tileHeight()) * tileWidth();
+    }
+
+    /**
      * Plot a single tile, by absolute tile index,
      * at linear position 'i'.
      *
@@ -217,7 +225,7 @@ struct TileBuffer {
      */
     void plot(UInt2 pos, uint16_t tileIndex, unsigned frame = 0) {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
-        tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()] = tileIndex;
+        tiles[tileAddr(pos, frame)] = tileIndex;
     }
 
     /**
@@ -234,7 +242,7 @@ struct TileBuffer {
      */
     uint16_t tile(Int2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
-        return tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()];
+        return tiles[tileAddr(pos, frame)];
     }
 
     /**
@@ -247,8 +255,7 @@ struct TileBuffer {
     {
         ASSERT(pos.x <= tileWidth() && width <= tileWidth() &&
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
-        memset16(&tiles[pos.x + (pos.y + frame * tileHeight()) * tileWidth()],
-            tileIndex, width);
+        memset16(&tiles[tileAddr(pos, frame)], tileIndex, width);
     }
 
     /**
@@ -298,8 +305,7 @@ struct TileBuffer {
         ASSERT(pos.x < tileWidth() && pos.x + image.tileWidth() <= tileWidth() &&
                pos.y < tileHeight() && pos.y + image.tileHeight() <= tileHeight() &&
                destFrame < numFrames());
-        _SYS_image_memDraw(&tiles[pos.x + (pos.y + destFrame * tileHeight()) * tileWidth()],
-            image, tileWidth(), srcFrame);
+        _SYS_image_memDraw(&tiles[tileAddr(pos, destFrame)], image, tileWidth(), srcFrame);
     }
 
     /**
@@ -315,7 +321,7 @@ struct TileBuffer {
         ASSERT(destXY.x < tileWidth() && destXY.x + size.x <= tileWidth() &&
                destXY.y < tileHeight() && destXY.y + size.y <= tileHeight() &&
                destFrame < numFrames());
-        _SYS_image_memDrawRect(&tiles[destXY.x + (destXY.y + destFrame * tileHeight()) * tileWidth()],
+        _SYS_image_memDrawRect(&tiles[tileAddr(destXY, destFrame)],
             image, tileWidth(), srcFrame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
@@ -327,7 +333,7 @@ struct TileBuffer {
     void text(Int2 topLeft, const AssetImage &font, const char *str,
         unsigned destFrame = 0, char firstChar = ' ')
     {
-        uint16_t *addr = &tiles[topLeft.x + (topLeft.y + destFrame * tileHeight()) * tileWidth()];
+        uint16_t *addr = &tiles[tileAddr(topLeft, destFrame)];
         uint16_t *lineAddr = addr;
         char c;
 
