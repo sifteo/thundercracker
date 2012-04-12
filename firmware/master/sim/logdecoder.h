@@ -18,7 +18,7 @@ public:
     static size_t decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer);
 
 private:
-    static void formatLog(char *out, size_t outSize,
+    static void formatLog(ELFDebugInfo &DI, char *out, size_t outSize,
         char *fmt, uint32_t *args, size_t argCount);
 };
 

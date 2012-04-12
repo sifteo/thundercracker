@@ -1,9 +1,9 @@
 #include "DrawingHelpers.h"
-
+#include "Game.h"
 
 void WaitForSeconds(float dt) {
   SystemTime deadline = SystemTime::now() + dt;
-  do { System::paint(); } while(deadline.inFuture());
+  do { gGame.DoPaint(); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------
@@ -26,14 +26,14 @@ namespace BffDir {
 }
 
 static const Int2 sBffTable[] = {
-  Vec2(1, 0),
-  Vec2(1, 1),
-  Vec2(0, 1),
-  Vec2(-1, 1),
-  Vec2(-1, 0),
-  Vec2(-1, -1),
-  Vec2(0, -1),
-  Vec2(1, -1),
+  vec(1, 0),
+  vec(1, 1),
+  vec(0, 1),
+  vec(-1, 1),
+  vec(-1, 0),
+  vec(-1, -1),
+  vec(0, -1),
+  vec(1, -1),
 };
 
 void ButterflyFriend::Randomize() {
@@ -113,59 +113,62 @@ void ButterflyFriend::Update() {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void DrawRoom(ViewMode* gfx, const MapData* pMap, int roomId) {
+void DrawRoom(Viewport* gfx, const MapData* pMap, int roomId) {
 	const uint8_t *pTile = pMap->roomTiles[roomId].tiles;
-	const AssetImage& tileset = *pMap->tileset;
+	const FlatAssetImage& tileset = *pMap->tileset;
 	Int2 p;
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?
-		gfx->BG0_drawAsset(p, tileset, *(pTile++));
+    gfx->Canvas().bg0.image(p, tileset, *(pTile++));
 	}
 }
 
-void DrawRoomOverlay(BG1Helper* ovrly, const MapData* pMap, unsigned tid, const uint8_t *pRle) {
-  const AssetImage& img = *(pMap->overlay);
+void DrawRoomOverlay(Viewport* ovrly, const MapData* pMap, unsigned tid, const uint8_t *pRle) {
+  // TODO - overlaaaaay w/o bg1 helper
+  /*
+  const FlatAssetImage& img = *(pMap->overlay);
     while(tid < 64) {
       if (*pRle == 0xff) {
         tid += pRle[1];
         pRle+=2;
       } else {
-        ovrly->DrawAsset(2*Vec2(tid%8, tid>>3), img, *pRle);
+        ovrly->DrawAsset(2*vec(tid%8, tid>>3), img, *pRle);
         tid++;
         pRle++;
       }
     }  
+    */
 }
 
-bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Int2 from, Int2 to) {
-	// inserted as a potential optimization point, 
-	// because we only need to "replot" the delta tiles
+bool DrawOffsetMapFromTo(Viewport* gfx, const MapData* pMap, Int2 from, Int2 to) {
+  //inserted as a potential optimization point, 
+	//because we only need to "replot" the delta tiles
 	DrawOffsetMap(gfx, pMap, to);
 	return true;
 }
 
-void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
+void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 	const int xmax = 128 * (pMap->width-1);
 	const int ymax = 128 * (pMap->height-1);
 	if (pos.x < 0) { pos.x = 0; } else if (pos.x > xmax) { pos.x = xmax; }
 	if (pos.y < 0) { pos.y = 0; } else if (pos.y > ymax) { pos.y = ymax; }
-	Int2 loc = Vec2(pos.x>>7, pos.y>>7);
-	Int2 pan = Vec2(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
-	gfx->BG0_setPanning(pan);
-	Int2 start_tile = Vec2(pan.x>>4, pan.y>>4);
+	Int2 loc = vec(pos.x>>7, pos.y>>7);
+	Int2 pan = vec(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
+	gfx->Canvas().bg0.setPanning(pan);
+	Int2 start_tile = vec(pan.x>>4, pan.y>>4);
 	Int2 t;
 	/*
 	for(t.x=0; t.x<18; ++t.x)
 	for(t.y=0; t.y<18; ++t.y) {
-		gfx->BG0_drawAsset(t, Black);
+		gfx->bg0.image(t, Black);
 	}
 	*/
 	// top-left room
 	for(t.y=start_tile.y; t.y<8; ++t.y)
 	for(t.x=start_tile.x; t.x<8; ++t.x) {
-		gfx->BG0_drawAsset(
-			Vec2(t.x<<1, t.y<<1),
+		gfx->Canvas().bg0.image(
+			vec(t.x<<1, t.y<<1),
 			*pMap->tileset,
 			pMap->roomTiles[loc.x + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
 		);
@@ -175,8 +178,8 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 		// top-right room
 		for(t.y=start_tile.y; t.y<8; ++t.y)
 		for(t.x=0; t.x<=start_tile.x; ++t.x) {
-			gfx->BG0_drawAsset(
-				Vec2((8 + t.x)%9<<1, t.y<<1),
+			gfx->Canvas().bg0.image(
+				vec((8 + t.x)%9<<1, t.y<<1),
 				*pMap->tileset,
 				pMap->roomTiles[(loc.x+1) + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
 			);
@@ -186,8 +189,8 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 			// bottom-right room
 			for(t.y=0; t.y<=start_tile.y; ++t.y)
 			for(t.x=0; t.x<=start_tile.x; ++t.x) {
-				gfx->BG0_drawAsset(
-					Vec2((8 + t.x)%9<<1, (8 + t.y)%9<<1),
+				gfx->Canvas().bg0.image(
+					vec((8 + t.x)%9<<1, (8 + t.y)%9<<1),
 					*pMap->tileset,
 					pMap->roomTiles[(loc.x+1) + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
 				);
@@ -200,8 +203,8 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Int2 pos) {
 		// bottom-left room
 		for(t.y=0; t.y<=start_tile.y; ++t.y)
 		for(t.x=start_tile.x; t.x<8; ++t.x) {
-			gfx->BG0_drawAsset(
-				Vec2(t.x<<1, (8 + t.y)%9<<1),
+			gfx->Canvas().bg0.image(
+				vec(t.x<<1, (8 + t.y)%9<<1),
 				*pMap->tileset,
 				pMap->roomTiles[loc.x + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
 			);

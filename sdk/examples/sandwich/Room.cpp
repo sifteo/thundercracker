@@ -10,13 +10,13 @@ Int2 Room::LocalCenter(unsigned subdiv) const {
     ASSERT(mPrimarySlotType == PRIMARY_SUBDIV);
     if (mPrimarySlotId == SUBDIV_DIAG_POS || mPrimarySlotId == SUBDIV_DIAG_NEG) {
       const DiagonalSubdivisionData* p = SubdivAsDiagonal();
-      return Vec2(p->altCenterX, p->altCenterY); 
+      return vec(p->altCenterX, p->altCenterY); 
     } else if (mPrimarySlotId == SUBDIV_BRDG_HOR || mPrimarySlotId == SUBDIV_BRDG_VER) {
       const BridgeSubdivisionData* p = SubdivAsBridge();
-      return Vec2(p->altCenterX, p->altCenterY);
+      return vec(p->altCenterX, p->altCenterY);
     }
   }
-  return Vec2(Data()->centerX, Data()->centerY); 
+  return vec(Data()->centerX, Data()->centerY); 
 }
 
 Int2 Room::Location() const {
@@ -38,6 +38,25 @@ bool Room::HasClosedDoor() const {
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
   return gGame.GetState()->FlagTrigger(Door()->trigger);
+}
+
+void Room::BombThisFucker() {
+  for(int s=0; s<4; ++s) {
+    SetDidBomb((Side)s);
+  }
+  Int2 loc = Location();
+  if (loc.x > 0) { 
+    gGame.GetMap()->GetRoom(loc+vec(-1,0))->SetDidBomb(RIGHT); 
+  }
+  if (loc.x < gGame.GetMap()->Data()->width-1) { 
+    gGame.GetMap()->GetRoom(loc+vec(1,0))->SetDidBomb(LEFT); 
+  }
+  if (loc.y > 0) { 
+    gGame.GetMap()->GetRoom(loc+vec(0,-1))->SetDidBomb(BOTTOM); 
+  }
+  if (loc.y < gGame.GetMap()->Data()->height-1) { 
+    gGame.GetMap()->GetRoom(loc+vec(0,1))->SetDidBomb(TOP); 
+  }
 }
 
 const uint8_t* Room::OverlayBegin() const {
@@ -64,41 +83,44 @@ void Room::Clear() {
   mPrimarySlot = 0;
   mSecondarySlot = 0;
   mOverlayIndex = 0xffff;
+  mBomb.canMask = 0;
+  mBomb.didMask = 0;
 }
 
 bool Room::IsShowingBlock(const Sokoblock* pBlock) {
   ASSERT(pBlock);
-  const Int2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Int2 blockTopLeft = pBlock->Position() - vec(32, 32);
   const Int2 roomTopLeft = 128 * Location();
   const Int2 delta = blockTopLeft - roomTopLeft;
   return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
 }
 
-unsigned Room::CountOpenTilesAlongSide(Cube::Side side) {
+unsigned Room::CountOpenTilesAlongSide(Side side) {
   ASSERT(0 <= side && side < 4);
   const Int2 loc = Location();
   const Map& map = *gGame.GetMap();
   const RoomData& data = *Data();
   unsigned cnt = 0;
   switch(side) {
-    case SIDE_TOP:
+    default: ASSERT(0);
+    case TOP:
       if (loc.y > 0 && map.GetPortalY(loc.x, loc.y-1)) {
         cnt = 8-__builtin_popcount(data.collisionMaskRows[0]);
       }
       break;
-    case SIDE_LEFT:
+    case LEFT:
       if (loc.x > 0 && map.GetPortalY(loc.x-1, loc.y)) {
         for(unsigned row=0; row<8; ++row) {
           cnt += (~data.collisionMaskRows[row]) & 0x01;
         }
       }
       break;
-    case SIDE_BOTTOM:
+    case BOTTOM:
       if (loc.y < map.Data()->height-1 && map.GetPortalY(loc.x, loc.y)) {
         cnt = 8-__builtin_popcount(~data.collisionMaskRows[7]);
       }
       break;
-    case SIDE_RIGHT:
+    case RIGHT:
       if (loc.x < map.Data()->width-1 && map.GetPortalX(loc.x, loc.y)) {
         for(unsigned row=0; row<8; ++row) {
           cnt += (data.collisionMaskRows[row]) & 0x80;

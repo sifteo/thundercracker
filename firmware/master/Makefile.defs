@@ -23,11 +23,7 @@ endif
 #
 # Without optimization, a lot of our code ends up too large and/or slow
 # to run on real hardware!
-#allow games to turn off -O2 via environment variable
-ifneq ($(GAMEDEBUG),)
-else
-	CFLAGS += -O2
-endif
+CFLAGS += -O3
 
 # Always build with debug symbols (It can't hurt)
 CFLAGS += -g3
@@ -64,8 +60,7 @@ CCFLAGS += -fno-use-cxa-atexit
 
 include $(TC_DIR)/Makefile.platform
 
-LDFLAGS_SIM +=  -L$(DEPS_DIR)/speex/lib \
-                -L$(DEPS_DIR)/portaudio/lib
+LDFLAGS_SIM +=  -L$(DEPS_DIR)/portaudio/lib
 
 ifeq ($(BUILD_PLATFORM), Darwin)
     # these are all required by portaudio, believe it or not
@@ -75,9 +70,9 @@ endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
     # note : portaudio had to come *before* winmm on my machine
-    LDFLAGS_SIM +=  -lws2_32 -lole32 -lspeex -lportaudio -lwinmm
+    LDFLAGS_SIM +=  -lws2_32 -lole32 -lportaudio -lwinmm
 else
-	LDFLAGS_SIM += -lspeex -lportaudio
+	LDFLAGS_SIM += -lportaudio
 endif
 
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR

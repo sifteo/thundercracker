@@ -72,6 +72,8 @@ enum FaultCode {
     F_PRELOAD_ADDRESS,      // Bad address for async preload
     F_RETURN_FRAME,         // Bad saved FP value detected during ret()
     F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
+    F_SYSCALL_ADDRESS,      // Bad address in system call
+    F_SYSCALL_PARAM,        // Other bad parameter in system call
 };
 
 /**

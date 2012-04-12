@@ -101,7 +101,7 @@ void NarratorView::Paint() {
     c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
-        c->Image(*emotes[mEmote], Vec2<int>(0,16-emotes[mEmote]->height));
+        c->Image(*emotes[mEmote], vec<int>(0,16-emotes[mEmote]->height));
     }
 
     if (mOffset > 0) {
@@ -110,7 +110,7 @@ void NarratorView::Paint() {
 
 
     if(mString[0]) {
-        GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
+        GetCube()->foregroundLayer.DrawAsset(vec(0,0), Narrator_Balloon);
     }
 }
 

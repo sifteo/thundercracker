@@ -13,6 +13,7 @@
 #include "svmdebugpipe.h"
 #include "svmdebugger.h"
 #include "svmruntime.h"
+#include "svmloader.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
@@ -20,14 +21,21 @@
 
 extern "C" {
 
-void _SYS_abort() {
+uint32_t _SYS_getFeatures()
+{
+    // Reserved for future use. There are no feature bits yet.
+    return 0;
+}
+
+void _SYS_abort()
+{
     SvmRuntime::fault(Svm::F_ABORT);
 }
 
 void _SYS_exit(void)
 {
     SvmDebugger::signal(Svm::Debugger::S_TERM);
-    SvmRuntime::exit();
+    SvmLoader::exit();
 }
 
 void _SYS_yield(void)
@@ -58,13 +66,17 @@ int64_t _SYS_ticks_ns(void)
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
 {
     if (vid < _SYS_NUM_VECTORS)
-        Event::setVector(vid, handler, context);
+        return Event::setVector(vid, handler, context);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
 }
 
 void *_SYS_getVectorHandler(_SYSVectorID vid)
 {
     if (vid < _SYS_NUM_VECTORS)
         return Event::getVectorHandler(vid);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
     return NULL;
 }
 
@@ -72,6 +84,8 @@ void *_SYS_getVectorContext(_SYSVectorID vid)
 {
     if (vid < _SYS_NUM_VECTORS)
         return Event::getVectorContext(vid);
+
+    SvmRuntime::fault(F_SYSCALL_PARAM);
     return NULL;
 }
 

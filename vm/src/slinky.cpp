@@ -42,6 +42,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "Analysis/CounterAnalysis.h"
 #include "Analysis/UUIDGenerator.h"
+#include "Target/SVMTargetMachine.h"
 #include <memory>
 using namespace llvm;
 
@@ -55,6 +56,8 @@ namespace llvm {
     ModulePass *createMetadataCollectorPass();
     BasicBlockPass *createEarlyLTIPass();
     BasicBlockPass *createLateLTIPass();
+    BasicBlockPass *createMisalignStackPass();
+    FunctionPass *createStaticAllocaPass();
 }
 
 static const char HelpText[] =
@@ -141,6 +144,27 @@ cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
     cl::desc("Do not verify input module"));
 
 
+static void PrepareModule(LLVMContext& Context, Module *M)
+{
+    assert(SVMTargetMachine::isTargetCompatible(Context,
+        TargetData(SVMTargetMachine::getDataLayoutString())));
+    
+    // See if the datalayout is at all compatible with SVM
+    TargetData TD(M);
+    if (!SVMTargetMachine::isTargetCompatible(Context, TD)) {
+        report_fatal_error("Module \"" + M->getModuleIdentifier() +
+            "\" has incompatible target data layout. "
+            "Your compiler may not be configured properly.\n"
+            "    Your module's data layout: " + M->getDataLayout() + "\n"
+            "    Our preferred data layout: " +
+            SVMTargetMachine::getDataLayoutString());
+    }
+
+    // Always override the target triple and data layout
+    M->setTargetTriple(Triple::normalize("thumb-sifteo-vm"));
+    M->setDataLayout(SVMTargetMachine::getDataLayoutString());
+}
+
 static std::auto_ptr<Module> LoadFile(const char *argv0,
     const std::string &FN, LLVMContext& Context)
 {
@@ -157,8 +181,10 @@ static std::auto_ptr<Module> LoadFile(const char *argv0,
   
     const std::string &FNStr = Filename.str();
     Result = ParseIRFile(FNStr, Err, Context);
-    if (Result)
+    if (Result) {
+        PrepareModule(Context, Result);
         return std::auto_ptr<Module>(Result);   // Load successful!
+    }
 
     Err.Print(argv0, errs());
     return std::auto_ptr<Module>();
@@ -254,6 +280,9 @@ static void AddStandardLinkPasses(PassManagerBase &PM, unsigned OptLevel)
 static void AddPasses(PassManagerBase &PM,
     FunctionPassManager &FPM, unsigned OLvl)
 {
+    // First thing, strip unneeded stack allocation alignments
+    PM.add(createMisalignStackPass());
+
     // Basic link-time optimization and inlining
     AddStandardLinkPasses(PM, OLvl);
 
@@ -280,6 +309,9 @@ static void AddPasses(PassManagerBase &PM,
 
     // Final optimization pass
     AddOptimizationPasses(PM, FPM, OLvl);
+
+    // Just before code generation, make all stack allocations static.
+    PM.add(createStaticAllocaPass());
 }
 
 int main(int argc, char **argv)
@@ -320,11 +352,8 @@ int main(int argc, char **argv)
         return 1;
     Module &mod = *Composite.get();
 
-    // Always override the target triple
-    mod.setTargetTriple(Triple::normalize("thumb-sifteo-vm"));
-    Triple TheTriple(mod.getTargetTriple());
-
     // Allocate target machine
+    Triple TheTriple(mod.getTargetTriple());
     const Target *TheTarget = 0;
     {
         std::string Err;

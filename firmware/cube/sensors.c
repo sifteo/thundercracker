@@ -86,15 +86,12 @@ uint8_t accel_y;
  */
 
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
-#define NB_RX_BITS          15      // 2 mask, 13 payload
+#define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
-// 2us pulses, 48us bit periods
-// TODO: bit period is maxed out to account for measured tank ring down of
-// about 48us. Better squelching should hopefully allow us to reduce this significantly.
-#define NB_BIT_TICKS        70      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   72      // Tweak for sampling halfway between pulses
- 
-#define NB_DEADLINE         70      // 48us (previously 15 us - please tune me back down) (Max 48 us)
+// 2us pulses, 9.75us bit periods, 156us packets
+#define NB_BIT_TICKS        13      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   2       // Tweak for sampling halfway between pulses 
+#define NB_DEADLINE         13      // Max amount Timer0 can be late by
 
 #define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 
@@ -104,6 +101,7 @@ uint8_t nb_tx_packet[2];            // The packet we're broadcasting
 __bit nb_tx_mode;                   // We're in the middle of an active transmission
 __bit nb_rx_mask_state0;
 __bit nb_rx_mask_state1;
+__bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
 __bit nb_rx_mask_bit1;
 __bit touch;
@@ -483,12 +481,6 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
         ;     capturing TL1.
         ;
 
-        ; We also begin our masking sequence, so that we can detect
-        ; which side we are receiving on. Set up mask bit 0.  This must
-        ; happen well before the next bit arrives!
-
-        anl     _MISC_DIR, #~MISC_NB_MASK0
-
         ; Trigger Timer 2
 
         mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
@@ -499,6 +491,7 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
         mov     _nb_bits_remaining, #NB_RX_BITS
         clr     _nb_rx_mask_state0
         clr     _nb_rx_mask_state1
+        clr     _nb_rx_mask_state2
 
         reti
     __endasm;
@@ -540,20 +533,28 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         orl     _MISC_DIR, #MISC_NB_OUT         ; Clear squelch and/or masking
         #endif
 
-        jb      _nb_rx_mask_state0, 1$          ; Finished first mask bit?
+        jb      _nb_rx_mask_state0, 1$          ; First state
         setb    _nb_rx_mask_state0
-        mov     _nb_rx_mask_bit0, c             ;    Store mask bit
         #ifdef NBR_IO
-        anl     _MISC_DIR, #~MISC_NB_MASK1      ;    Prepare mask for next bit
+        anl     _MISC_DIR, #~MISC_NB_MASK0      ;    Prepare mask for first bit
         #endif
         sjmp    10$                             ;    End of masking
 1$:
 
-        jb      _nb_rx_mask_state1, 2$          ; Finished second mask bit?
+        jb      _nb_rx_mask_state1, 2$          ; Second state
         setb    _nb_rx_mask_state1
-        mov     _nb_rx_mask_bit1, c             ;    Store mask bit
+        mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
+        #ifdef NBR_IO
+        anl     _MISC_DIR, #~MISC_NB_MASK1      ;    Prepare mask for next bit
+        #endif
         sjmp    10$                             ;    End of masking
 2$:
+
+        jb      _nb_rx_mask_state2, 3$          ; Finished second mask bit?
+        setb    _nb_rx_mask_state2
+        mov     _nb_rx_mask_bit1, c             ;    Store mask bit
+        sjmp    10$                             ;    End of masking
+3$:
 
         ; Finished receiving the mask bits. For future bits, we want to set the mask only
         ; to the exact side that we need. This serves as a check for the side bits we
@@ -564,18 +565,18 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; We decode them rapidly using a jump tree.
 
         #ifdef NBR_IO
-        jb      _nb_rx_mask_bit0, 3$
-         jb     _nb_rx_mask_bit1, 4$
+        jb      _nb_rx_mask_bit0, 4$
+         jb     _nb_rx_mask_bit1, 5$
           anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_0_TOP)      ; 00
           sjmp  10$
-4$:
+5$:
           anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_1_LEFT)     ; 01
           sjmp  10$
-3$:
-         jb     _nb_rx_mask_bit1, 5$
+4$:
+         jb     _nb_rx_mask_bit1, 6$
           anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_2_BOTTOM)   ; 10
           sjmp  10$
-5$:
+6$:
           anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_3_RIGHT)    ; 11
         #endif
 

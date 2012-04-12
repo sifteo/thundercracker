@@ -23,7 +23,8 @@ if __name__ == '__main__':
         sz = ""
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
             sz = sz + chr(c)
-
+			
+        dev.set_configuration()
         dev.write(OUT_EP, sz)
         sys.stderr.write("erasing (please wait)...")
         # once we hear 0 back, erase is complete

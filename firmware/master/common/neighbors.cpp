@@ -101,7 +101,7 @@ bool NeighborSlot::sendNextEvent()
 void NeighborSlot::resetSlots(_SYSCubeIDVector cv) {
     while (cv) {
         _SYSCubeID cubeId = Intrinsic::CLZ(cv);
-        memset(instances[cubeId].neighbors.sides, 0xff, sizeof instances[cubeId].neighbors);
+        memset(instances[cubeId].neighbors.sides, _SYS_CUBE_ID_INVALID, sizeof instances[cubeId].neighbors);
         memset(instances[cubeId].prevNeighbors, 0x00, sizeof instances[cubeId].prevNeighbors);
         cv ^= Intrinsic::LZ(cubeId);
     }
@@ -138,13 +138,13 @@ bool NeighborSlot::clearSide(_SYSSideID side) {
     // Sends at most one event.
 
     _SYSCubeID otherId = neighbors.sides[side];
-    neighbors.sides[side] = 0xff;
-    if (otherId == 0xff)
+    neighbors.sides[side] = _SYS_CUBE_ID_INVALID;
+    if (otherId == _SYS_CUBE_ID_INVALID)
         return false;
 
     for (_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
         if (instances[otherId].neighbors.sides[otherSide] == id()) {
-            instances[otherId].neighbors.sides[otherSide] = 0xff;
+            instances[otherId].neighbors.sides[otherSide] = _SYS_CUBE_ID_INVALID;
 
             Event::callNeighborEvent(_SYS_NEIGHBOR_REMOVE, id(), side, otherId, otherSide);
             return true;

@@ -23,8 +23,6 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
 #endif
     this->mixer = mixer;
     buf.init(&this->sys);
-    outA.setControl(GPIOPin::OUT_ALT_50MHZ);
-    outB.setControl(GPIOPin::OUT_ALT_50MHZ);
 
     switch (samplerate) {
     case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
@@ -32,17 +30,22 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
-    pwmTimer.init(500, 0); // TODO - tune the PWM freq we want
-    pwmTimer.configureChannelAsOutput(this->pwmChan,
+    pwmTimer.init(PWM_FREQ, 0);
+    pwmTimer.configureChannelAsOutput(pwmChan,
                                         HwTimer::ActiveHigh,
                                         HwTimer::Pwm1,
                                         HwTimer::ComplementaryOutput);
+    // must default to non-differential state to avoid direct shorting
+    suspend();
 }
 
 void PwmAudioOut::start()
 {
+    resume();
     sampleTimer.enableUpdateIsr();
-    pwmTimer.enableChannel(this->pwmChan);
+    pwmTimer.enableChannel(pwmChan);
+    pwmTimer.setDuty(pwmChan, PWM_FREQ / 2);    // 50% duty cycle == "off"
+    Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
 
 void PwmAudioOut::stop()
@@ -54,7 +57,7 @@ void PwmAudioOut::stop()
 void PwmAudioOut::suspend()
 {
     sampleTimer.disableUpdateIsr();
-    pwmTimer.disableChannel(this->pwmChan);
+    pwmTimer.disableChannel(pwmChan);
     // ensure outputs are tied in the same direction to avoid leaking current
     // across the speaker
     outA.setControl(GPIOPin::OUT_2MHZ);
@@ -67,7 +70,7 @@ void PwmAudioOut::resume()
 {
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
     outB.setControl(GPIOPin::OUT_ALT_50MHZ);
-    pwmTimer.enableChannel(this->pwmChan);
+    pwmTimer.enableChannel(pwmChan);
     sampleTimer.enableUpdateIsr();
 }
 
@@ -80,12 +83,9 @@ void PwmAudioOut::tmrIsr()
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.toggle();
 #endif
-    // TODO - tune the refill threshold if needed
-    if (buf.readAvailable() < buf.capacity() / 2) {
-        Tasks::setPending(Tasks::AudioOutEmpty, &buf);
-        if (buf.readAvailable() < 2)
-            return;
-    }
+    // DANGER DANGER DANGER!
+    if (buf.readAvailable() < 2)
+        return;
 
     uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period

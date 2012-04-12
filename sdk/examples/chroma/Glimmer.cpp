@@ -12,13 +12,13 @@
 #include "cubewrapper.h"
 
 
-Int2 GLIMMER_ORDER_1[] = { Vec2( 0, 0 ) };
-Int2 GLIMMER_ORDER_2[] = { Vec2( 1, 0 ), Vec2( 0, 1 ) };
-Int2 GLIMMER_ORDER_3[] = { Vec2( 2, 0 ), Vec2( 1, 1 ), Vec2( 0, 2 ) };
-Int2 GLIMMER_ORDER_4[] = { Vec2( 3, 0 ), Vec2( 1, 2 ), Vec2( 2, 1 ), Vec2( 0, 3 ) };
-Int2 GLIMMER_ORDER_5[] = { Vec2( 3, 1 ), Vec2( 2, 2 ), Vec2( 1, 3 ) };
-Int2 GLIMMER_ORDER_6[] = { Vec2( 3, 2 ), Vec2( 2, 3 ) };
-Int2 GLIMMER_ORDER_7[] = { Vec2( 3, 3 ) };
+Int2 GLIMMER_ORDER_1[] = { vec( 0, 0 ) };
+Int2 GLIMMER_ORDER_2[] = { vec( 1, 0 ), vec( 0, 1 ) };
+Int2 GLIMMER_ORDER_3[] = { vec( 2, 0 ), vec( 1, 1 ), vec( 0, 2 ) };
+Int2 GLIMMER_ORDER_4[] = { vec( 3, 0 ), vec( 1, 2 ), vec( 2, 1 ), vec( 0, 3 ) };
+Int2 GLIMMER_ORDER_5[] = { vec( 3, 1 ), vec( 2, 2 ), vec( 1, 3 ) };
+Int2 GLIMMER_ORDER_6[] = { vec( 3, 2 ), vec( 2, 3 ) };
+Int2 GLIMMER_ORDER_7[] = { vec( 3, 3 ) };
 
 //list of locations to glimmer in order
 Int2 *Glimmer::GLIMMER_ORDER[NUM_GLIMMER_GROUPS] =
@@ -120,10 +120,10 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
                 if( pSlot->IsFixed() )
                 {
                     if( pSlot->getMultiplier() <= 1 )
-                        bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
+                        bg1helper.DrawAsset( vec( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
                 }
                 else if( pSlot->getColor() != GridSlot::ROCKCOLOR )
-                    bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+                    bg1helper.DrawAsset( vec( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
             }
         }
     }

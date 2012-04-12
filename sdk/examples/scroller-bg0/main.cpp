@@ -19,7 +19,7 @@ void load()
     VidMode_BG0_ROM vid(cube.vbuf);
     vid.init();
     do {
-        vid.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2); 
+        vid.BG0_progressBar(vec(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2); 
         System::paint();
     } while (!cube.assetDone(GameAssets));
 }
@@ -74,24 +74,22 @@ void main()
         int xi = x + 0.5f;
         
         // Integer tiles
-        int xt = x / 8;
+        int xt = (x < 0 ? x - 8.f : x) / 8; // special case for x < 0 because int rounds up when < 0
         
         LOG(("Main loop: x=%f prev_xt=%d xt=%d\n", x, prev_xt, xt));
         
         while (prev_xt < xt) {
             // Fill in new tiles, just past the right edge of the screen
-            draw_bg_column(prev_xt + 17);
-            prev_xt++;
+            draw_bg_column(++prev_xt + 16);
         }
         
         while (prev_xt > xt) {
             // Fill in new tiles, just past the left edge
-            draw_bg_column(prev_xt - 2);
-            prev_xt--;
+            draw_bg_column(--prev_xt);
         }
         
         // Firmware handles all pixel-level scrolling
-        vid.BG0_setPanning(Vec2(xi, 0));
+        vid.BG0_setPanning(vec(xi, 0));
         
         System::paint();
     }

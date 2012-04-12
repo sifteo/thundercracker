@@ -7,15 +7,15 @@ private:
 	const GatewayData* mGateway;
 	Dialog mDialog;
 	uint8_t mRoomId;
-	Cube::Side mSide;
+	Side mSide;
 	uint8_t t;
 
 public:
-	inline unsigned Id() const { return mRoomId;}
-	inline Cube::Side Side() const { return mSide; }
-	inline bool ShowingGateway() const { return mGateway!=0; }
+	unsigned Id() const { return mRoomId;}
+	Side GetSide() const { return mSide; }
+	bool ShowingGateway() const { return mGateway!=0; }
 
-	void Init(int roomId, Cube::Side side);
+	void Init(int roomId, enum Side side);
 	void Restore();
-	void Update(float dt);
+	void Update();
 };
