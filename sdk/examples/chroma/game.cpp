@@ -36,7 +36,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
-                m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                m_Multiplier(1)//, m_bForcePaintSync( false )
   , m_bStabilized( false ), m_bIsChainHappening( false )
 {
 	//Reset();
@@ -127,12 +127,12 @@ void Game::Update()
             break;
     }
 
-    if( m_bForcePaintSync )
+    /*if( m_bForcePaintSync )
     {
         needsync = true;
         System::paintSync();
         m_bForcePaintSync = false;
-    }
+    }*/
 
     switch( m_state )
     {
@@ -216,7 +216,7 @@ void Game::Update()
 
     //always finishing works
     //System::finish();
-#if !SLOW_MODE
+/*#if !SLOW_MODE
     //if any of our cubes have messed with bg1's bitmaps,
     //force a finish here
     for( int i = 0; i < NUM_CUBES; i++ )
@@ -230,18 +230,18 @@ void Game::Update()
             break;
         }
     }
-#endif
+#endif*/
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].testFlushBG1();
 
-#if SLOW_MODE
+/*#if SLOW_MODE
     System::paintSync();
 #else
     if( needsync )
         System::paintSync();
-    else
+    else*/
         System::paint();
-#endif
+//#endif
 
     m_pSoundThisFrame = NULL;
 }
@@ -1230,14 +1230,14 @@ void Game::HandleMenu()
     }
 
     struct MenuEvent e;
-    Menu menu(&m_cubes[0].GetCube(), pAssets, pItems);
+    Menu menu(m_cubes[0].GetVid(), pAssets, pItems);
 
     menu.setIconYOffset( 25 );
 
     //clear out the other cubes
     for( int i = 1; i < NUM_CUBES; i++ )
     {
-        m_cubes[i].GetVid().clear( GemEmpty.tiles[0] );
+        m_cubes[i].GetVid().bg0.image( vec( 0, 0 ), UI_BG );
     }
 
     while(menu.pollEvent(&e))
@@ -1270,7 +1270,7 @@ void Game::HandleMenu()
                         if( e.item == 0 )
                         {
                             int progress = m_savedata.lastPlayedPuzzle + 1;
-                            DrawSpriteNum( m_cubes[0].GetVid(), progress, Vec2( 64, 64 ) );
+                            DrawSpriteNum( m_cubes[0].GetVid(), progress, vec( 64, 64 ) );
                         }
                         break;
                     }
@@ -1278,7 +1278,7 @@ void Game::HandleMenu()
                     {
                         if( e.item < numTotal )
                         {
-                            DrawSpriteNum( m_cubes[0].GetVid(), e.item + 1, Vec2( 42, 50 ) );
+                            DrawSpriteNum( m_cubes[0].GetVid(), e.item + 1, vec( 42, 50 ) );
                         }
                         break;
                     }
@@ -1287,7 +1287,7 @@ void Game::HandleMenu()
                         if( e.item < numTotal )
                         {
                             int puzzleNum = e.item + Puzzle::GetPuzzleOffset( m_iChapterViewed ) + 1;
-                            DrawSpriteNum( m_cubes[0].GetVid(), puzzleNum, Vec2( 52, 49 ) );
+                            DrawSpriteNum( m_cubes[0].GetVid(), puzzleNum, vec( 52, 49 ) );
                         }
                         break;
                     }

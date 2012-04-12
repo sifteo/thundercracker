@@ -135,7 +135,7 @@ public:
     //play random slosh sound
     void playSlosh();
 
-    inline void forcePaintSync() { m_bForcePaintSync = true; }
+    //inline void forcePaintSync() { m_bForcePaintSync = true; }
 
     inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
     inline void useShake() { m_ShakesRemaining--; }
@@ -217,7 +217,7 @@ private:
     unsigned int m_Multiplier;
 
     //force a 1 frame paint sync before/after drawing
-    bool m_bForcePaintSync;
+    //bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on

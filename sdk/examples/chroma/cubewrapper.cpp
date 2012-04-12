@@ -1967,7 +1967,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
     if( bDrawBox )
         m_vid.bg0.image(vec(0,0), UI_BG, 0);
 
-    LOG(( "Drawing message box with text %s\n", pTxt ));
+    //LOG(( "Drawing message box with text %s\n", pTxt ));
 
     //count how many lines of text we have
     int charCnt = 0;
