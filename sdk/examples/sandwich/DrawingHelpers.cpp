@@ -3,7 +3,7 @@
 
 void WaitForSeconds(float dt) {
   SystemTime deadline = SystemTime::now() + dt;
-  do { gGame.DoPaint(false); } while(deadline.inFuture());
+  do { gGame.DoPaint(); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void DrawRoom(Viewport* gfx, const MapData* pMap, int roomId) {
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?
-    gfx->Video().bg0.image(p, tileset, *(pTile++));
+    gfx->Canvas().bg0.image(p, tileset, *(pTile++));
 	}
 }
 
@@ -155,7 +155,7 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 	if (pos.y < 0) { pos.y = 0; } else if (pos.y > ymax) { pos.y = ymax; }
 	Int2 loc = vec(pos.x>>7, pos.y>>7);
 	Int2 pan = vec(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
-	gfx->Video().bg0.setPanning(pan);
+	gfx->Canvas().bg0.setPanning(pan);
 	Int2 start_tile = vec(pan.x>>4, pan.y>>4);
 	Int2 t;
 	/*
@@ -167,7 +167,7 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 	// top-left room
 	for(t.y=start_tile.y; t.y<8; ++t.y)
 	for(t.x=start_tile.x; t.x<8; ++t.x) {
-		gfx->Video().bg0.image(
+		gfx->Canvas().bg0.image(
 			vec(t.x<<1, t.y<<1),
 			*pMap->tileset,
 			pMap->roomTiles[loc.x + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
@@ -178,7 +178,7 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 		// top-right room
 		for(t.y=start_tile.y; t.y<8; ++t.y)
 		for(t.x=0; t.x<=start_tile.x; ++t.x) {
-			gfx->Video().bg0.image(
+			gfx->Canvas().bg0.image(
 				vec((8 + t.x)%9<<1, t.y<<1),
 				*pMap->tileset,
 				pMap->roomTiles[(loc.x+1) + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
@@ -189,7 +189,7 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 			// bottom-right room
 			for(t.y=0; t.y<=start_tile.y; ++t.y)
 			for(t.x=0; t.x<=start_tile.x; ++t.x) {
-				gfx->Video().bg0.image(
+				gfx->Canvas().bg0.image(
 					vec((8 + t.x)%9<<1, (8 + t.y)%9<<1),
 					*pMap->tileset,
 					pMap->roomTiles[(loc.x+1) + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
@@ -203,7 +203,7 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 		// bottom-left room
 		for(t.y=0; t.y<=start_tile.y; ++t.y)
 		for(t.x=start_tile.x; t.x<8; ++t.x) {
-			gfx->Video().bg0.image(
+			gfx->Canvas().bg0.image(
 				vec(t.x<<1, (8 + t.y)%9<<1),
 				*pMap->tileset,
 				pMap->roomTiles[loc.x + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]

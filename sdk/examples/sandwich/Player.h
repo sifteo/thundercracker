@@ -36,7 +36,7 @@ public:
   Side Direction() { return (Side)mDir; }
   bool TestCollision(Sokoblock* block) const { return (mPosition - block->Position()).len2() < (48*48); }
   Int2 Position() const { return mPosition; }
-  Int2 Location() const { return View()->ShowingRoom() ? View()->GetRoomView()->Location() : mPosition/128; }
+  Int2 Location() const { return View()->ShowingRoom() ? View()->GetRoomView().Location() : mPosition/128; }
   int Status() const { return (Side)mStatus; }
   const ItemData* Equipment() const { return mEquipment; }
   bool CanCrossLava() const { return mEquipment && gItemTypeData[mEquipment->itemId].triggerType == ITEM_TRIGGER_BOOT; }

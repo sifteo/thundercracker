@@ -5,11 +5,12 @@ class Viewport;
 
 class View {
 public:
-	Viewport* Parent() const { 
+	Viewport* Parent() { 
 		// this works because the union of all subviews is the
 		// first parameter in Viewport.  Otherwise, we'd
 		// need to implemented some offsetof() magic here :P
-		return (Viewport*)this; 
+		return reinterpret_cast<Viewport*>(this); 
 	}
 };
+
 

@@ -1,4 +1,5 @@
 MainAssets = group{}
 
-WhiteTile = image{"white.png", pinned=1}
-Font = image{"font-8x16.png", width=8, height=16, pinned=1}
+Transparent = image{"transparent.png", pinned=1, quality=10}
+Background = image{"stripey8x8.png", pinned=1, quality=10}
+Animation = image{"twirly.png", width=128, height=128}

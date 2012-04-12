@@ -49,6 +49,7 @@ public:
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
 
+
   // methods
   void Init(unsigned rid);
   void Restore();

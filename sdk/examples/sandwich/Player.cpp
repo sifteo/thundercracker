@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 
 void Player::Init(VideoBuffer* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  Viewport *pView = gGame.ViewAt(pPrimary->cube());
+  Viewport *pView = &gGame.ViewAt(pPrimary->cube());
   mCurrent.view = (RoomView*)(pView);
   mCurrent.subdivision = 0;
   mTarget.view = 0;

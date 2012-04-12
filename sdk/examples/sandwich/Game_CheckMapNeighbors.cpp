@@ -21,25 +21,25 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
   // Orient LCD to parent
   if (origin) { 
     // optimize precalc'd neighborhoods?
-    view->Video().orientTo(origin->Video()); 
+    view->Canvas().orientTo(origin->Canvas()); 
   }
 
 
   // Attempt to show location (returns true on change)
-  const bool didDisplayLocation = view->ShowLocation(loc, false, false);
+  const bool didDisplayLocation = view->ShowLocation(loc, false);
   if (didDisplayLocation) {
     status->changeMask |= view->GetMask();
   }
 
   // Start slide-out and possibly take over another view's lock
   if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
-    view->GetRoomView()->StartSlide((Side)((dir+2)%4));
+    view->GetRoomView().StartSlide((Side)((dir+2)%4));
     // check this against locked views
     auto i = gGame.ListLockedViews();
     while(i.MoveNext()) {
-      if (i->GetRoomView()->Id() == view->GetRoomView()->Id()) {
-        view->GetRoomView()->Lock();
-        i->GetRoomView()->Unlock();
+      if (i->GetRoomView().Id() == view->GetRoomView().Id()) {
+        view->GetRoomView().Lock();
+        i->GetRoomView().Unlock();
         return RESULT_INTERRUPTED;
       }
     }
@@ -81,14 +81,14 @@ void Game::CheckMapNeighbors() {
   unsigned result;
   do {
     status.visitMask = 0x00000000;
-    result = VisitMapView(&status, root, root->GetRoomView()->Location());
+    result = VisitMapView(&status, root, root->GetRoomView().Location());
   } while(result != RESULT_OKAY);
   
   // Make sure all views outside the neighborhood are not showing rooms
   unsigned newChangeMask = 0;
   auto i = ListViews(~status.visitMask);
   while(i.MoveNext()) {
-    if (i->HideLocation(false)) {
+    if (i->HideLocation()) {
       newChangeMask |= i->GetMask();
     }
   }
@@ -98,9 +98,5 @@ void Game::CheckMapNeighbors() {
     PlaySfx(sfx_neighbor);
   } else if (newChangeMask) {
     PlaySfx(sfx_deNeighbor);
-  }
-
-  if (newChangeMask || status.changeMask) {
-    DoPaint(true);
   }
 }
