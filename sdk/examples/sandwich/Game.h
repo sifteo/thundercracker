@@ -33,9 +33,9 @@ public:
   static Game* Inst();
 
   // getters
-  GameState* GetState() { return &mState; }
-  Map* GetMap() { return &mMap; }
-  Player* GetPlayer() { return &mPlayer; }
+  GameState& GetState() { return mState; }
+  Map& GetMap() { return mMap; }
+  Player& GetPlayer() { return mPlayer; }
   
   unsigned AnimFrame() const { return mAnimFrames; }
   Int2 BroadDirection() {
@@ -101,26 +101,26 @@ private:
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
   void Wait(float seconds, bool touchToSkip=false);
-  void RoomNod(Viewport* view);
-  void RoomShake(Viewport* view);
+  void RoomNod(Viewport& view);
+  void RoomShake(Viewport& view);
 
   // events
   void OnTick();
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
-  void OnYesOhMyGodExplosion(Bomb* p);
+  void OnYesOhMyGodExplosion(Bomb& p);
   void OnInventoryChanged();
-  void OnTrapdoor(Room *pRoom);
-  void OnToggleSwitch(const SwitchData* pSwitch);
-  void OnPickup(Room *pRoom);
-  void OnDropEquipment(Room *pRoom);
+  void OnTrapdoor(Room& room);
+  void OnToggleSwitch(const SwitchData& pSwitch);
+  void OnPickup(Room& room);
+  void OnDropEquipment(Room& room);
   void OnUseEquipment();
-  void OnEnterGateway(const GatewayData* pGate);
-  void OnNpcChatter(const NpcData* pNpc);
+  void OnEnterGateway(const GatewayData& pGate);
+  void OnNpcChatter(const NpcData& pNpc);
   bool OnTriggerEvent(const TriggerData& trig) { return OnTriggerEvent(trig.eventType, trig.eventId); }
   bool OnTriggerEvent(unsigned type, unsigned id);
 
-  bool TryEncounterBlock(Sokoblock* block);
+  bool TryEncounterBlock(Sokoblock& block);
   bool TryEncounterLava(Side dir);
 
 

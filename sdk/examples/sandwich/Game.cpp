@@ -146,7 +146,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
 
   // walk out of the in-gate
-  Int2 target = mMap.GetRoom(room)->Center(0);
+  Int2 target = mMap.GetRoom(room).Center(0);
   mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room, true);
   WalkTo(target, false);
@@ -350,16 +350,16 @@ void Game::RestorePearlIdle() {
   }
 }
 
-void Game::RoomNod(Viewport* view) {
-  view->GetRoomView().StartNod();
-  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
+void Game::RoomNod(Viewport& view) {
+  view.GetRoomView().StartNod();
+  while(view.ShowingRoom() && view.GetRoomView().IsWobbly()) {
     Paint();
   }
 }
 
-void Game::RoomShake(Viewport* view) {
-  view->GetRoomView().StartShake();
-  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
+void Game::RoomShake(Viewport& view) {
+  view.GetRoomView().StartShake();
+  while(view.ShowingRoom() && view.GetRoomView().IsWobbly()) {
     Paint();
   }
 }

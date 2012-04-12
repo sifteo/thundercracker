@@ -30,8 +30,8 @@ public:
   BroadLocation* Target() { return &mTarget; }
   RoomView* CurrentView() { return mCurrent.view; }
   RoomView* TargetView() { return mTarget.view; }
-  Room* CurrentRoom() { return mCurrent.view->GetRoom(); }
-  Room* TargetRoom() { return mTarget.view->GetRoom(); }
+  Room* CurrentRoom() { return &mCurrent.view->GetRoom(); }
+  Room* TargetRoom() { return &mTarget.view->GetRoom(); }
   Viewport* View() const { return mTarget.view==0?mCurrent.view->Parent():mTarget.view->Parent(); }
   Side Direction() { return (Side)mDir; }
   bool TestCollision(Sokoblock* block) const { return (mPosition - block->Position()).len2() < (48*48); }

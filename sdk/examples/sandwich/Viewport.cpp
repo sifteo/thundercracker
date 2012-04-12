@@ -33,7 +33,7 @@ void Viewport::RestoreCanonicalVram() {
 	if (mCanvas.mode() == BG0_SPR_BG1) {
 	  	mCanvas.bg0.setPanning(vec(0,0));
 		for(unsigned i=0; i<8; ++i) { mCanvas.sprites[i].hide(); }
-		mCanvas.bg1.eraseMask(false);
+		mCanvas.bg1.eraseMask(false); 
 	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
@@ -147,7 +147,7 @@ bool Viewport::ShowLocation(Int2 loc, bool force) {
 	}
 
 	// possibilities: show room, show edge, show corner
-	const MapData& map = *gGame.GetMap()->Data();
+	const MapData& map = *gGame.GetMap().Data();
 	Side side = NO_SIDE;
 	if (loc.x < -1) {
 		HideLocation();
@@ -188,7 +188,7 @@ bool Viewport::ShowLocation(Int2 loc, bool force) {
 		HideLocation();
 		return false;
 	}
-	return SetLocationView(gGame.GetMap()->GetRoomId(loc), side, force);
+	return SetLocationView(gGame.GetMap().GetRoomId(loc), side, force);
 }
 
 Viewport* Viewport::FindIdleView() {
@@ -207,7 +207,7 @@ bool Viewport::HideLocation() {
 	if (ShowingLocation()) {
 		//if (gGame.ShowingMinimap() && !pMinimap) {
 		//	SetSecondaryView(VIEW_MINIMAP);
-		//} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
+		//} else if (gGame.GetState().HasAnyItems() && !pInventory) {
 		//	SetSecondaryView(VIEW_INVENTORY);
 		//} else {
 			SetSecondaryView(VIEW_IDLE);
@@ -219,12 +219,12 @@ bool Viewport::HideLocation() {
 
 void Viewport::RefreshInventory() {
   if (mFlags.view == VIEW_INVENTORY) {
-  	if (!gGame.GetState()->HasAnyItems()) {
+  	if (!gGame.GetState().HasAnyItems()) {
   		SetSecondaryView(VIEW_IDLE);
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
-  } else if (mFlags.view == VIEW_IDLE && gGame.GetState()->HasAnyItems() && !pInventory) { 
+  } else if (mFlags.view == VIEW_IDLE && gGame.GetState().HasAnyItems() && !pInventory) { 
 	SetSecondaryView(VIEW_INVENTORY);
   }
 }
