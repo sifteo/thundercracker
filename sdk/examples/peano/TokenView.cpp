@@ -440,9 +440,54 @@ void TokenView::PaintBottom(bool lit)
 
 void TokenView::PaintCenterCap(uint8_t masks[4])
 {
+    //here be a mask for all that may appear on bg1
+    const BG1Mask bg1Mask = // total tiles = 8+8+8+8+4+4+96 -> 32+8+96 -> 136
+            //horizontal at 1       4x(2x1) -> 8
+            BG1Mask::filled(vec(3,0), Horizontal_Left.tileSize())
+            | BG1Mask::filled(vec(3,13), Horizontal_Left.tileSize())
+            | BG1Mask::filled(vec(3,14), Horizontal_Left.tileSize())
+            | BG1Mask::filled(vec(3,15), Horizontal_Left.tileSize())
+            //horizontal at 2       4x(2x1) -> 8
+            | BG1Mask::filled(vec(9,0), Horizontal_Right.tileSize())
+            | BG1Mask::filled(vec(9,13), Horizontal_Right.tileSize())
+            | BG1Mask::filled(vec(9,14), Horizontal_Right.tileSize())
+            | BG1Mask::filled(vec(9,15), Horizontal_Right.tileSize())
+            //vertical at 1         4x(1x2) -> 8
+            | BG1Mask::filled(vec(0,3), Vertical_Top.tileSize())
+            | BG1Mask::filled(vec(13,3), Vertical_Top.tileSize())
+            | BG1Mask::filled(vec(14,3), Vertical_Top.tileSize())
+            | BG1Mask::filled(vec(15,3), Vertical_Top.tileSize())
+            //vertical at 2         4x(1x2) -> 8
+            | BG1Mask::filled(vec(0,9), Vertical_Bottom.tileSize())
+            | BG1Mask::filled(vec(13,9), Vertical_Bottom.tileSize())
+            | BG1Mask::filled(vec(14,9), Vertical_Bottom.tileSize())
+            | BG1Mask::filled(vec(15,9), Vertical_Bottom.tileSize())
+            //minor diagonals       4x(1x1) -> 4
+            | BG1Mask::filled(vec(2,2), MinorNW.tileSize())
+            | BG1Mask::filled(vec(2,11), MinorSW.tileSize())
+            | BG1Mask::filled(vec(11,11), MinorSE.tileSize())
+            | BG1Mask::filled(vec(11,2), MinorNE.tileSize())
+            //major diagonals       4x(1x1) -> 4
+            | BG1Mask::filled(vec(4,4), MajorNW.tileSize())
+            | BG1Mask::filled(vec(4,9), MajorSW.tileSize())
+            | BG1Mask::filled(vec(9,9), MajorSE.tileSize())
+            | BG1Mask::filled(vec(9,4), MajorNE.tileSize())
+            //major cardinals       4x(8x3) -> 96
+            | BG1Mask::filled(vec(3,1), MajorN.tileSize())
+            | BG1Mask::filled(vec(1,3), MajorW.tileSize())
+            | BG1Mask::filled(vec(3,10), MajorS.tileSize())
+            | BG1Mask::filled(vec(10,3), MajorE.tileSize())
+            //crazy number hack 1   (ranges overlap)
+            | BG1Mask::filled(vec(5,3), Transparent_4x1.tileSize())
+            | BG1Mask::filled(vec(3,3), MajorN_Frame2_AccentDigit.tileSize())
+            //crazy number hack 2   (ranges overlap)
+            | BG1Mask::filled(vec(5,10), Transparent_4x1.tileSize())
+            | BG1Mask::filled(vec(3,10), MajorS_Frame109_AccentDigit.tileSize());
+
     // compute the screen state union (assuming it's valid)
     uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
     TotalsCube *c = GetCube();
+    c->vid.bg1.setMask(bg1Mask);
 
     ASSERT(vunion < (1<<6));
 
