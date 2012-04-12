@@ -42,12 +42,12 @@ void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
     uart->CR1 = (1 << 13) |     // UE - enable
                 (0 << 12) |     // M - word length, 8 bits
                 (0 << 8) |      // PEIE - interrupt on parity error
-                (0 << 5) |      // RXNEIE - interrupt on ORE (overrun) or RXNE (rx register not empty)
+                (1 << 5) |      // RXNEIE - interrupt on ORE (overrun) or RXNE (rx register not empty)
                 (1 << 3) |      // TE - transmitter enable
                 (1 << 2);       // RE - receiver enable
     uart->CR2 = (1 << 14) |     // LINEN - LIN mode enable
                 (bits << 12);   // STOP - bits
-    // TODO - support interrupts/DMA
+
     uart->SR = 0;
     (void)uart->SR;  // SR reset step 1.
     (void)uart->DR;  // SR reset step 2.
@@ -70,6 +70,35 @@ void Usart::deinit()
     else if (uart == &UART5) {
         RCC.APB1ENR &= ~(1 << 20);
     }
+}
+
+/*
+ * Return the status register to indicate what kind of event we responded to.
+ * If we received a byte and the caller provided a buf, give it to them.
+ */
+uint16_t Usart::isr(uint8_t *buf)
+{
+    uint16_t sr = uart->SR;
+    uint8_t  dr = uart->DR;  // always read DR to reset SR
+
+    // error states: ORE, NE, FE, PE
+    if (sr & 0xf) {
+        // do something helpful?
+    }
+
+    // RXNE: data available
+    if (sr & STATUS_RXED) {
+        if (buf) {
+            *buf = dr;
+        }
+    }
+
+    // TXE: transmission complete
+    if (sr & STATUS_TXED) {
+
+    }
+
+    return sr;
 }
 
 /*
