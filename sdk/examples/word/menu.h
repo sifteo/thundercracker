@@ -86,7 +86,7 @@ typedef enum {
 
 // computed constants
 #define kPixelsPerTile 8
-#define kPeekTiles 1
+#define kPeekTiles 2
 #define kIconPixelWidth (kIconTileWidth * kPixelsPerTile)
 #define kIconPixelHeight (kIconTileHeight * kPixelsPerTile)
 #define kItemTileWidth (int)(((kEndCapPadding + kPixelsPerTile - 1) / kPixelsPerTile) + kIconTileWidth - kPeekTiles)
