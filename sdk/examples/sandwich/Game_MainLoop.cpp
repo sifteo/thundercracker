@@ -1,27 +1,23 @@
 #include "Game.h"
 
-void Game::OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {
-	gGame.mNeighborDirty = true;
-}
-
 void Game::MainLoop() {
 	ASSERT(this == &gGame);
-	
 	mActiveViewMask = CUBE_ALLOC_MASK;
 	mLockedViewMask = 0x00000000;
+	mTouchMask = 0x00000000;
 
   	//---------------------------------------------------------------------------
   	// INTRO
 	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c).Canvas().attach(c);
 		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
+		ViewAt(c).Canvas().attach(c);
 	}
 
 	#if FAST_FORWARD
-		VideoBuffer* pPrimary = &ViewAt(0).Canvas();
+		Viewport* pPrimary = &ViewAt(0);
 	#else
 		PlayMusic(music_sting, false);
-		VideoBuffer* pPrimary = IntroCutscene();
+		Viewport* pPrimary = IntroCutscene();
 	#endif
 
 	//---------------------------------------------------------------------------
@@ -43,6 +39,7 @@ void Game::MainLoop() {
 	PlayMusic(music_castle);
 	Events::neighborAdd.set(&Game::OnNeighbor, this);
     Events::neighborRemove.set(&Game::OnNeighbor, this);
+    Events::cubeTouch.set(&Game::OnTouch, this);
 	CheckMapNeighbors();
 
 	mIsDone = false;
@@ -56,6 +53,7 @@ void Game::MainLoop() {
 		unsigned targetViewId = 0xff;
 		while(targetViewId == 0xff) {
 			Paint();
+
 			OnTick();
 			if (mPlayer.CurrentView()->Parent()->Touched()) {
 				if (mPlayer.Equipment()) {
@@ -71,15 +69,14 @@ void Game::MainLoop() {
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
-	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
-	      				p->GetRoomView()->StartShake();
-	      				//p->GetRoomView()->Lock();
+	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView().StartShake();
 	      			}
 	      		}
 	      	}
     	}
     	if (mViews[targetViewId].ShowingRoom()) {
-    		mViews[targetViewId].GetRoomView()->StartNod();
+    		mViews[targetViewId].GetRoomView().StartNod();
     	}
 
 	    //-------------------------------------------------------------------------
@@ -205,8 +202,9 @@ void Game::MainLoop() {
 		} while(mPath.DequeueStep(*mPlayer.Current(), mPlayer.Target()));
   		OnActiveTrigger();
 	}
-	Events::neighborAdd.set(0);
-    Events::neighborRemove.set(0);
+	Events::neighborAdd.unset();
+    Events::neighborRemove.unset();
+    Events::cubeTouch.unset();
 	for(unsigned i=0; i<64; ++i) { 
 		DoPaint();
 	}

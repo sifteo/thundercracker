@@ -335,10 +335,10 @@ struct VideoBuffer {
      */
     static Neighborhood physicalToVirtual(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
         return result;
     }
 
@@ -353,10 +353,10 @@ struct VideoBuffer {
      */
     static Neighborhood virtualToPhysical(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
         return result;
     }
 

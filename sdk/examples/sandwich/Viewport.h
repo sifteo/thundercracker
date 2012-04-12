@@ -24,6 +24,7 @@ private:
 	} mView;
   	struct {
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
+    	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
   	} mFlags;
   	VideoBuffer mCanvas;
@@ -41,20 +42,20 @@ public:
 	bool ShowingEdge() const { return mFlags.view == VIEW_EDGE; }
 	bool ShowingGatewayEdge() const { return ShowingEdge() && mView.edge.ShowingGateway(); }
 	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
-	IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
-	RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
-	InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
-	MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
+	IdleView& GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return mView.idle; }
+	RoomView& GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return mView.room; }
+	InventoryView& GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return mView.inventory; }
+	MinimapView& GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return mView.minimap; }
 
 	void Init();
 	void Restore();
+	void UpdateTouch();
 	void Update();
   
-  	void HideSprites();
-
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
+	void RestoreCanonicalVram();
 	void RefreshInventory();
 
 	Side VirtualTiltDirection() const;
@@ -63,7 +64,6 @@ public:
 private:
 	bool SetLocationView(unsigned roomId, Side side, bool force);
 	void SetSecondaryView(unsigned viewId);
-	void SanityCheckVram();
 	void EvictSecondaryView(unsigned viewId);
 	Viewport* FindIdleView();
 

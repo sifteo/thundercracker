@@ -179,24 +179,19 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     /*
      * Third priority: Sensor time synchronization
      *
-     * XXX: Time syncs are kind of special.  We use them to assign
-     *      each cube to a different timeslice of our sensor polling
-     *      period, allowing the neighbor sensors to cooperate via
-     *      time division multiplexing. The packet itself is a short
-     *      (3 byte) and simple packet which simply adjusts the phase
-     *      of the cube's sensor timer.
+     * Time syncs are kind of special.  We use them to assign
+     * each cube to a different timeslice of our sensor polling
+     * period, allowing the neighbor sensors to cooperate via
+     * time division multiplexing. The packet itself is a short
+     * (3 byte) and simple packet which simply adjusts the phase
+     * of the cube's sensor timer.
      */
 
     if (timeSyncState)  {
         timeSyncState--;
     } else if (tx.packet.len == 0) {
         timeSyncState = 1000;
-        // cube timer runs at 16Mhz with a prescaler of 12
-        const SysTime::Ticks cubeticks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
-
-        const uint16_t cubeSyncTime = (cubeticks + (id() * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
-
-        codec.timeSync(tx.packet, cubeSyncTime);
+        codec.timeSync(tx.packet, calculateTimeSync());
         tx.noAck = true;    // just throw it out there UDP style
         return true;
     }
@@ -400,4 +395,48 @@ uint64_t CubeSlot::getHWID()
     uint64_t result = 0;
     memcpy(&result, hwid, sizeof hwid);
     return result;
+}
+
+uint16_t CubeSlot::calculateTimeSync()
+{
+    /*
+     * Calculate the phase value to, at this very moment, deliver to the
+     * cube in order to settle it into the proper neighbor timeslot.
+     */
+
+    /*
+     * This returns a raw timer reload value. The timer runs off a 16 MHz
+     * clock, with a divide-by-12 prescaler. The counter rolls over at 13 bits.
+     */
+    const SysTime::Ticks cubeTicks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
+    const unsigned timerPeriod = 0x2000;
+    const unsigned timerMask   = 0x1FFF;
+
+    /*
+     * We nominally want to divide this period totally evenly by
+     * _SYS_NUM_CUBE_SLOTS, to give each cube the same size allocation.
+     * However, any padding we can provide around the slots can help us
+     * be more robust in the face of failures, plus they can help us
+     * debug hardware issues by occasionally choosing a slower baud rate
+     * for the neighbor packets.
+     *
+     * An easy way to do this is to reverse the bits in our cube ID number,
+     * then scale the resulting number by the nominal size of a slot. This
+     * way, the slots appear to subdivide every time log2(N) of the number of
+     * cubes increases.
+     */
+
+    // 5-bit lookup table for bit reversal
+    static const uint8_t rev5[] = {
+        0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,
+        0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,
+        0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,
+        0x03, 0x13, 0x0b, 0x1b, 0x07, 0x17, 0x0f, 0x1f,
+    };
+
+    STATIC_ASSERT(arraysize(rev5) == _SYS_NUM_CUBE_SLOTS);
+    const unsigned slotWidth = timerPeriod / _SYS_NUM_CUBE_SLOTS;
+    unsigned slotID = rev5[id()];
+
+    return (cubeTicks + slotID * slotWidth) & timerMask;
 }

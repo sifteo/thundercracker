@@ -1,6 +1,6 @@
 #include "Game.h"
 
-VideoBuffer* Game::IntroCutscene() {
+Viewport* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		VideoBuffer& gfx = ViewAt(i).Canvas();
 		gfx.initMode(BG0_SPR_BG1);
@@ -151,5 +151,5 @@ VideoBuffer* Game::IntroCutscene() {
 		DoPaint();
 	}
 	WaitForSeconds(0.5f);
-	return &ViewAt(cube).Canvas();
+	return &ViewAt(cube);
 }
