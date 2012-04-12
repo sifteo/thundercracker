@@ -34,8 +34,8 @@ void Viewport::SanityCheckVram() {
 	System::finish();
 	if (mCanvas.mode() != BG0_SPR_BG1) {
 		mCanvas.initMode(BG0_SPR_BG1);
+		mCanvas.setWindow(0,128);
 	}
-	mCanvas.setWindow(0,128);
 	mCanvas.bg0.setPanning(vec(0,0));
 }
 

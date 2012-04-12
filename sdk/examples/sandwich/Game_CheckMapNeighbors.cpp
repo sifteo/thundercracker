@@ -47,16 +47,14 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
 
   // Possibly make recursive calls
   if (didDisplayLocation || !view->ShowingLockedRoom()) {
+    auto nhood = view->Canvas().virtualNeighbors();
     for(unsigned side=0; side<NUM_SIDES; ++side) {
-      const unsigned result = VisitMapView(
-        status, 
-        view->VirtualNeighborAt((Side)side), 
-        loc+Int2::unit(side), 
-        view, 
-        (Side)side
-      );
-      if (result != RESULT_OKAY) {
-        return result;
+      auto cid = nhood.neighborAt((Side)side);
+      if (cid.isDefined()) {
+        const unsigned result = VisitMapView(
+          status, &gGame.ViewAt(cid), loc+Int2::unit(side), view, (Side)side
+        );
+        if (result != RESULT_OKAY) { return result; }
       }
     }
   }
@@ -98,5 +96,9 @@ void Game::CheckMapNeighbors() {
     PlaySfx(sfx_neighbor);
   } else if (newChangeMask) {
     PlaySfx(sfx_deNeighbor);
+  }
+
+  if (status.changeMask || newChangeMask) {
+    System::finish();
   }
 }
