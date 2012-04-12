@@ -2,6 +2,7 @@
 *.a
 *.o
 master-sim
+*.elf
 *.bc
 *.ll
 

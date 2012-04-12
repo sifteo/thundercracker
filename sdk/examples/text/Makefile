@@ -1,12 +1,8 @@
+APP = text
 TC_DIR = ../../..
-include $(TC_DIR)/firmware/master/Makefile.defs
+include $(TC_DIR)/sdk/Makefile.defs
 
-BIN_SIM = text.sim$(BIN_EXT)
-OBJS_SIM = main.sim.o
-
-BIN_STM32 = text.stm32
-OBJS_STM32 = main.stm32.o
-
+OBJS = main.o
 CDEPS += *.h
 
-include $(TC_DIR)/firmware/master/Makefile.rules
+include $(TC_DIR)/sdk/Makefile.rules

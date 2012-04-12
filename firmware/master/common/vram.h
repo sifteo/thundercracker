@@ -1,16 +1,14 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _VRAM_H
 #define _VRAM_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
+
 
 /**
  * Utilities for accessing VRAM buffers.
@@ -29,6 +27,8 @@
 
 struct VRAM {
 
+    static const uint32_t DEFAULT_LOCK_FLAGS = _SYS_VBF_NEED_PAINT;
+
     static uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < arraysize(vbuf.cm1));
@@ -41,19 +41,13 @@ struct VRAM {
     }
 
     static uint32_t maskCM1(uint16_t addr) {
-        return Sifteo::Intrinsic::LZ(indexCM1(addr));
+        return Intrinsic::LZ(indexCM1(addr));
     }
 
-    static uint32_t maskCM32(uint16_t addr) {
-        ASSERT(addr < _SYS_VRAM_WORDS);
-        STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < 32);
-        return Sifteo::Intrinsic::LZ(addr >> 5);
-    }
-
-    static uint32_t maskLock(uint16_t addr) {
+    static uint32_t maskCM16(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 4) < 32);
-        return Sifteo::Intrinsic::LZ(addr >> 4);
+        return Intrinsic::LZ(addr >> 4);
     }
 
     static void truncateByteAddr(uint16_t &addr) {
@@ -64,44 +58,46 @@ struct VRAM {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
-    static uint16_t index14(uint16_t i) {
-        return ((i << 2) & 0xFE00) | ((i << 1) & 0x00FE);
+    static void truncateWordAddr(unsigned &addr) {
+        addr &= _SYS_VRAM_WORD_MASK;
     }
 
-    static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
+    static void lock(_SYSVideoBuffer &vbuf, uint16_t addr,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
+        DEBUG_LOG(("VBUF[%p]: lock at %04x, flags %08x\n", &vbuf, addr, lockFlags));
+        Atomic::Or(vbuf.flags, lockFlags);
         ASSERT(addr < _SYS_VRAM_WORDS);
-
-        vbuf.lock |= maskLock(addr);
-        vbuf.cm32next |= maskCM32(addr);
-        Sifteo::Atomic::Barrier();
+        vbuf.lock |= maskCM16(addr);
     }
 
     static void unlock(_SYSVideoBuffer &vbuf) {
-        Sifteo::Atomic::Barrier();
-        Sifteo::Atomic::Or(vbuf.cm32, vbuf.cm32next);
+        Atomic::Or(vbuf.cm16, vbuf.lock);
         vbuf.lock = 0;
-        Sifteo::Atomic::Or(vbuf.needPaint, vbuf.cm32next);
-        vbuf.cm32next = 0;
     }
 
-    static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word) {
+    static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
         ASSERT(addr < _SYS_VRAM_WORDS);
 
         if (vbuf.vram.words[addr] != word) {
-            lock(vbuf, addr);
+            lock(vbuf, addr, lockFlags);
             vbuf.vram.words[addr] = word;
-            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
+            Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
         }
     }
 
-    static void pokeb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte) {
+    static void pokeb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
         ASSERT(addr < _SYS_VRAM_BYTES);
 
         if (vbuf.vram.bytes[addr] != byte) {
             uint16_t addrw = addr >> 1;
-            lock(vbuf, addrw);
+            lock(vbuf, addrw, lockFlags);
             vbuf.vram.bytes[addr] = byte;
-            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
+            Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
         }
     }
 
@@ -122,10 +118,114 @@ struct VRAM {
 
     static void init(_SYSVideoBuffer &vbuf) {
         vbuf.lock = 0xFFFFFFFF;
-        vbuf.cm32next = 0xFFFFFFFF;
         for (unsigned i = 0; i < arraysize(vbuf.cm1); i++)
             vbuf.cm1[i] = 0xFFFFFFFF;
+        vbuf.flags = DEFAULT_LOCK_FLAGS;
     }
 };
+
+
+/**
+ * An iterator for walking the BG1 mask bitmap.
+ *
+ * This iterator can seek to any (x,y) location on BG1, and
+ * determine what address, if any, the corresponding tile is at.
+ * It supports random access, but it's optimized for sequential access.
+ */
+
+class BG1MaskIter {
+public:
+    BG1MaskIter(const _SYSVideoBuffer &vbuf)
+        : vbuf(vbuf) {
+        reset();
+    }
+
+    void reset() {
+        // Reset iteration to the beginning of the bitmap
+        tileAddr = firstTileAddr;
+        bmpAddr = firstBmpAddr;
+        bmpValue = VRAM::peek(vbuf, bmpAddr);
+        bmpShift = 0;
+    }
+
+    bool next() {
+        // Nowhere to go?
+        if (tileAddr == lastTileAddr)
+            return false;
+
+        // Move forward by one bit
+        if (bmpShift != 15) {
+            if (hasTile())
+                tileAddr++;
+            bmpShift++;
+            return true;
+        }
+
+        // Next word
+        if (bmpAddr != lastBmpAddr) {
+            if (hasTile())
+                tileAddr++;
+            bmpShift = 0;
+            bmpAddr++;
+            bmpValue = VRAM::peek(vbuf, bmpAddr);
+            return true;
+        }
+
+        // End of iteration
+        return false;
+    }
+
+    bool seek(unsigned x, unsigned y) {
+        // Move the iterator to a particular (x,y) location on BG1.
+        // Returns false if out of range.
+
+        if (x > 15 || y > 15)
+            return false;
+
+        unsigned destBmpAddr = y + firstBmpAddr;
+        if (destBmpAddr < bmpAddr)
+            reset();
+        else if (destBmpAddr == bmpAddr && x < bmpShift)
+            reset();
+
+        while (destBmpAddr != bmpAddr)
+            if (!next())
+                return false;
+        while (bmpShift != x)
+            if (!next())
+                return false;
+
+        return true;
+    }
+
+    uint16_t getTileAddr() const {
+        ASSERT(hasTile());
+        return tileAddr;
+    }
+
+    bool hasTile() const {
+        // Is the current location allocated?
+        return (bmpValue >> bmpShift) & 1;
+    }
+
+private:
+    static const unsigned firstTileAddr = _SYS_VA_BG1_TILES / 2;
+    static const unsigned lastTileAddr = firstTileAddr + _SYS_VRAM_BG1_TILES - 1;
+    static const unsigned firstBmpAddr = _SYS_VA_BG1_BITMAP / 2;
+    static const unsigned lastBmpAddr = firstBmpAddr + 15;
+    
+    const _SYSVideoBuffer &vbuf;
+    uint16_t tileAddr;
+    uint16_t bmpAddr;
+    uint16_t bmpValue;
+    uint8_t bmpShift;
+
+    
+    #define _SYS_VA_BG1_TILES       0x288
+#define _SYS_VA_COLORMAP        0x300
+#define _SYS_VA_BG1_BITMAP      0x3a8
+
+};
+
 
 #endif

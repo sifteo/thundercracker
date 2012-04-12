@@ -3,16 +3,18 @@
 #include "sifteo.h"
 #include <stddef.h>
 
+using namespace Sifteo;
+
 namespace TotalsGame
 {
 
   class TiltFlowItem
   {
       const char *name;
-      Vec2 sourcePosition;
+      Int2 sourcePosition;
       int imageIndex;
-      const PinnedAssetImage **images;
-      const PinnedAssetImage *singleImage;
+      const Sifteo::AssetImage **images;
+      const Sifteo::AssetImage *singleImage;
       int numImages;
       int opt;
 
@@ -20,32 +22,29 @@ namespace TotalsGame
     static const int Passive = -2357;   //arbitrary value
 
     int id;
-//TODO    public readonly Color color;
     const char *GetName();
     const char *description;
-    const AssetImage *GetImages();
+    const Sifteo::AssetImage *GetImages();
     int GetNumImages();
-    Vec2 GetSourcePosition();
+    Int2 GetSourcePosition();
 
-    TiltFlowItem (/*Color color TODO */);
+    TiltFlowItem ();
 
-    TiltFlowItem(const PinnedAssetImage *image);
+    TiltFlowItem(const Sifteo::AssetImage *image);
 
     void IncrementImageIndex();
 
-    TiltFlowItem(const PinnedAssetImage **_images, int _numImages);
+    TiltFlowItem(const Sifteo::AssetImage **_images, int _numImages);
     int GetOpt();
     void SetOpt(int val);
 
-    const PinnedAssetImage *GetImage();
+    void SetImage(const Sifteo::AssetImage *image);
+    void SetImages(const Sifteo::AssetImage **_images, int _numImages);
+    const Sifteo::AssetImage *GetImage();
 
     bool IsToggle();
 
     bool HasImage();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
   };
 }
 

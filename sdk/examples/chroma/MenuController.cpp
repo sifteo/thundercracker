@@ -43,14 +43,11 @@ void MenuController::Init()
 
 bool MenuController::Update( int &choice )
 {
-    float t = System::clock();
-    float dt = t - m_fLastTime;
-    m_fLastTime = t;
-
-    bool result = m_Menu.Tick(dt);
+    bool result = m_Menu.Tick(m_timeStep.delta());
     choice = m_Menu.GetKeyView()->GetItem();
             
     System::paint();
+    m_timeStep.next();
 
 	return result;
 }

@@ -1,21 +1,22 @@
+#include "config.h"
+
 #pragma once
 
 #include "sifteo.h"
 #include "PuzzleDatabase.h"
-#include "StateMachine.h"
 #include "SaveData.h"
 #include "TotalsCube.h"
+#include "Puzzle.h"
+
+using namespace Sifteo;
 
 namespace TotalsGame {
 
     class Puzzle;
 
-	class Game
+    
+	namespace Game
 	{
-	private:
-		Game() {};	//singleton
-
-	public:
 
         class NeighborEventHandler
         {
@@ -23,50 +24,70 @@ namespace TotalsGame {
             virtual void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
             virtual void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
         };
-        NeighborEventHandler *neighborEventHandler;
-
-
-        static const int NUMBER_OF_CUBES = 4;		
         
-		static Game &GetInstance();
-		StateMachine sceneMgr;
+        extern NeighborEventHandler *neighborEventHandler;
 
-		static const int FrameRate = 15;
+        enum
+        {
+            RandomPuzzlesPerChapter = 5
+        };
 
-		TotalsCube *cubes;
-		static TotalsCube *GetCube(int i) {return &Game::GetInstance().cubes[i];}
-		static void ClearCubeViews();
-		static void ClearCubeEventHandlers();
-		static void DrawVaultDoorsClosed();
-		static void PaintCubeViews();
-        static void UpdateCubeViews(float dt);
 
-		Puzzle *currentPuzzle;
-		Puzzle *previousPuzzle;
+        enum GameState
+        {
+            GameState_Menu,
+            GameState_Tutorial,
+            GameState_Puzzle,
+            GameState_Advance,
+            GameState_Interstitial,
+            GameState_Victory,
+            GameState_IsOver
+        };
 
-		static Random rand;
+        enum SkillLevel {
+            SkillLevel_Novice,
+            SkillLevel_Expert
+        };
 
-		Difficulty difficulty;
-		NumericMode mode;
-		Random seed;
-		SaveData saveData;
+        enum ExperienceLevel {
+            ExperienceLevel_Neophyte,
+            ExperienceLevel_Master
+        };
+
+        extern SkillLevel skillLevel;
+        ExperienceLevel GetExperienceLevel();
+        Difficulty GetDifficulty();
+
+        void SaveOptions();
+
+		void ClearCubeViews();
+		void ClearCubeEventHandlers();
+		void DrawVaultDoorsClosed();
+		void PaintCubeViews();
+
+        extern TotalsCube cubes[NUM_CUBES];
+
+        extern Puzzle *currentPuzzle;
+        extern Puzzle *previousPuzzle;
+
+		extern Random rand;
+
+        extern int randomPuzzleCount;
+		extern SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
-		bool mDirty;
-		float mTime;
-		float dt;
-		bool IsPaused;
 
-		void Setup(TotalsCube *cubes, int nCubes);
+        extern float dt;
 
-		void Tick();
+        void Run();
+
+        void UpdateDt();
+        void Wait(float delay);
 
         bool IsPlayingRandom();
 
-		static const char *Initialize();
+        GameState Advance();
 
-        static const char *Advance();
-
-		const char *IsGameOver(const char *transitionId);
+		GameState IsGameOver();
 
 		void OnPause();
 
@@ -75,14 +96,14 @@ namespace TotalsGame {
 
 		void OnStopped();
 
-	private:
 
-        static void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-        static void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 
-        static void OnCubeTouch(void*, _SYSCubeID cid);
-        static void OnCubeShake(void*, _SYSCubeID cid);
-	};
+        void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+        void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+
+        void OnCubeTouch(void*, _SYSCubeID cid);
+        void OnCubeShake(void*, _SYSCubeID cid);
+	}
 
 }
 

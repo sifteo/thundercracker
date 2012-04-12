@@ -39,7 +39,9 @@ class CPPWriter {
     void head();
     virtual void foot();
 
-    void writeArray(const std::vector<uint8_t> &array);
+    void writeArray(const std::vector<uint8_t> &data);
+    void writeArray(const std::vector<uint16_t> &data);
+    void writeString(const std::vector<uint8_t> &data);
 };
 
 
@@ -58,8 +60,7 @@ class CPPSourceWriter : public CPPWriter {
 
  private:
     void writeImage(const Image &image);
-    
-    int mCurrentID;
+    unsigned nextGroupOrdinal;
 };
 
 

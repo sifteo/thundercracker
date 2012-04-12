@@ -8,6 +8,8 @@
 #include "ScoredCubeState_NotWord.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 ScoredCubeState_NotWord::ScoredCubeState_NotWord()
 {
 }

@@ -6,13 +6,12 @@
 
 class MinimapView : public View {
 private:
-	int8_t mCanvasOffsetX;
-	int8_t mCanvasOffsetY;
+	Byte2 mCanvasOffset;
 
 public:
 	void Init();
 	void Restore();
-	void Update(float dt);
+	void Update();
 private:
 	unsigned ComputeTileId(int lx, int ly);
 };

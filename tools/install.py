@@ -1,24 +1,21 @@
-import sys, serial
+import sys, usb.core, usb.util
 
-TIMEOUT = 2
-LONG_TIMEOUT = 100
+IN_EP = 0x81
+OUT_EP = 0x1
 
-def waitForStatus(port):
-    port.timeout = LONG_TIMEOUT # this might take a while
-    status = port.read()
-    port.timeout = TIMEOUT
-    return ord(status)
+def getByte(dev, _timeout):
+    return dev.read(IN_EP, 1, timeout = _timeout)[0]
 
 if __name__ == '__main__':
     
-    if (len(sys.argv) < 3):
-        print "usage: python asset_install.py COM# /path/to/my/assetfile"
+    if (len(sys.argv) < 2):
+        print "usage: python asset_install.py /path/to/my/assetfile"
         sys.exit(1)
     
-    portName = sys.argv[1]
-    filepath = sys.argv[2]
-    port = serial.Serial(port = portName, baudrate = 115200, timeout = TIMEOUT)
-    port.flushInput()
+    filepath = sys.argv[1]
+    dev = usb.core.find(idVendor = 0x22fa, idProduct = 0x0105)
+    if dev is None:
+        raise ValueError('Device not found')
     
     try:
         blob = open(filepath, 'rb').read()
@@ -26,13 +23,14 @@ if __name__ == '__main__':
         sz = ""
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
             sz = sz + chr(c)
-
-        port.write(sz)
+			
+        dev.set_configuration()
+        dev.write(OUT_EP, sz)
         sys.stderr.write("erasing (please wait)...")
         # once we hear 0 back, erase is complete
         count = 0
         while True:
-            if ord(port.read()) == 0:
+            if getByte(dev, 5000) == 0:
                 break
             count = count + 1
             if count % 10 == 0:
@@ -40,16 +38,19 @@ if __name__ == '__main__':
         sys.stderr.write("\n")
 
         sys.stderr.write("loading %s, %d bytes" % (filepath, size))
+        count = 0
         while blob:
-            blockSize = min(16384, len(blob))
-            sys.stderr.write(".")
-            port.write(blob[:blockSize])
+            blockSize = min(64, len(blob))
+            count = count + 1
+            if count % 100 == 0:
+                sys.stderr.write(".")
+            dev.write(OUT_EP, blob[:blockSize])
             blob = blob[blockSize:]
 
         sys.stderr.write("\n")
         
         sys.stderr.write("verifying...")
-        status = waitForStatus(port)
+        status = getByte(dev, 100 * 1000)
         if status == 0:
             print "success!"
         else:
@@ -57,5 +58,3 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         print "keyboard interrupt"
-
-    port.close()

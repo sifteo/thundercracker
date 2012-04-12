@@ -1,0 +1,47 @@
+<map-database>
+	<!--map id="forest">
+		<name>The Forest</name>
+	</map>
+	<map id="castle">
+		<name>Castle Hoagie</name>
+	</map>
+	<map id="dungeon">
+		<name>Lembas Caverns</name>
+	</map-->
+	
+	
+	<map id="temple_level1">
+		<name>Sky Temple 1</name>
+	</map>
+	
+	<map id="temple_level2">
+		<name>Sky Temple 2</name>
+	</map>
+
+	<map id="temple_level3">
+		<name>Sky Temple 3</name>
+	</map>
+	
+	<map id="temple_level4">
+		<name>Sky Temple 4</name>
+	</map>
+	
+	<map id="temple_level5">
+		<name>Sky Temple 5</name>
+	</map>
+	
+		<map id="temple_level6">
+		<name>Sky Temple 6</name>
+	</map>
+	
+		<map id="temple_level7">
+		<name>Sky Temple 7</name>
+	</map>
+	
+
+
+	<!--map id="sandbox">
+		<name>Programming Sandbox</name>
+	</map-->
+
+</map-database>

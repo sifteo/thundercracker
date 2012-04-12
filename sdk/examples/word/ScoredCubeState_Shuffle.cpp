@@ -10,6 +10,8 @@
 #include "SavedData.h"
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
@@ -46,7 +48,7 @@ void ScoredCubeState_Shuffle::paint()
         }
         else
         {
-            vid.BG0_drawAsset(Vec2(0, 0), TileBG);
+            vid.BG0_drawAsset(vec(0, 0), TileBG);
         }
         paintBorder(vid, ImageIndex_Teeth, true, true);
         //DEBUG_LOG(("shuffle: [c: %d] teeth closing %f\n", c.id(), GameStateMachine::getTime()));
@@ -61,7 +63,7 @@ void ScoredCubeState_Shuffle::paint()
         else*/
         {
             // no letters during blip
-            vid.BG0_drawAsset(Vec2(0, 0), TileBG);
+            vid.BG0_drawAsset(vec(0, 0), TileBG);
         }
         paintBorder(vid, ImageIndex_Teeth, true, false, false, false, TEETH_ANIM_LENGTH);
         //DEBUG_LOG(("shuffle: [c: %d] teeth opening %f\n", c.id(), GameStateMachine::getTime()));

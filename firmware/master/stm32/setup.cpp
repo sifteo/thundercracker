@@ -1,42 +1,30 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo.h>
-#include "radio.h"
-#include "usb.h"
-#include "flashlayer.h"
-#include "runtime.h"
 #include "board.h"
-#include "vectors.h"
-#include "systime.h"
 #include "gpio.h"
-#include "macronixmx25.h"
-#include "tasks.h"
-#include "audiomixer.h"
-#include "audiooutdevice.h"
-#include "usart.h"
-#include "button.h"
+
+#include <string.h>
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" unsigned __bss_start;
-extern "C" unsigned __bss_end;
-extern "C" unsigned __data_start;
-extern "C" unsigned __data_end;
-extern "C" unsigned __data_src;
-extern "C" initFunc_t __init_array_start;
-extern "C" initFunc_t __init_array_end;
+extern unsigned     __bss_start;
+extern unsigned     __bss_end;
+extern unsigned     __data_start;
+extern unsigned     __data_end;
+extern unsigned     __data_src;
+extern initFunc_t   __init_array_start;
+extern initFunc_t   __init_array_end;
+
+extern int main() __attribute__((noreturn));
 
 extern "C" void _start()
 {
@@ -77,21 +65,21 @@ extern "C" void _start()
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
     // fire up the PLL
-    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
-                (0 << 17) |         // PLL XTPRE - no divider
-                (1 << 16);          // PLLSRC - HSE
-    RCC.CR   |= (1 << 24);          // turn PLL on
-    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+    RCC.CFGR |= (7 << 18) |                 // PLLMUL (x9)
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16);                  // PLLSRC - HSE
+    RCC.CR   |= (1 << 24);                  // turn PLL on
+    while (!(RCC.CR & (1 << 25)));          // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
-                (0 << 22)       |   // USBPRE - divide by 3
-                (7 << 18)       |   // PLLMUL - x9
-                (0 << 17)       |   // PLLXTPRE - no divider
-                (1 << 16)       |   // PLLSRC - HSE
-                (4 << 11)       |   // PPRE2 - APB2 prescaler, divide by 2
-                (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
-                (0 << 4);           // HPRE - AHB prescaler, no divisor
+    RCC.CFGR =  (0 << 24)                 | // MCO - mcu clock output
+                (0 << 22)                 | // USBPRE - divide by 3
+                (7 << 18)                 | // PLLMUL - x9
+                (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
+                (1 << 16)                 | // PLLSRC - HSE
+                (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
+                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable
                 (1 << 1);   // two wait states since we're @ 72MHz
@@ -122,11 +110,13 @@ extern "C" void _start()
         vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
 
-        /*
+#if (BOARD == BOARD_TC_MASTER_REV2)
+        // XXX: this only wants to be enabled when USB is connected.
+        // just leaving enabled for now during dev, and until we put power sequencing in.
         GPIOPin vcc33 = VCC33_ENABLE_GPIO;
         vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
-        */
+#endif
     }
 
     /*
@@ -150,95 +140,12 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
-    // This is the earliest point at which it's safe to use Usart::Dbg.
-    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-
-#ifndef DEBUG
-    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
-    MacronixMX25::instance.init();
-#else
-    DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
-                 (1 << 29) |        // TIM13 ""
-                 (1 << 28) |        // TIM12 ""
-                 (1 << 27) |        // TIM11 ""
-                 (1 << 26) |        // TIM10 ""
-                 (1 << 25) |        // TIM9 ""
-                 (1 << 20) |        // TIM8 ""
-                 (1 << 19) |        // TIM7 ""
-                 (1 << 18) |        // TIM6 ""
-                 (1 << 17) |        // TIM5 ""
-                 (1 << 13) |        // TIM4 ""
-                 (1 << 12) |        // TIM3 ""
-                 (1 << 11) |        // TIM2 ""
-                 (1 << 10);         // TIM1 ""
-#endif
-
-    /*
-     * Nested Vectored Interrupt Controller setup.
-     *
-     * This won't actually enable any peripheral interrupts yet, since
-     * those need to be unmasked by the peripheral's driver code.
-     */
-
-    NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
-
-    NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
-
-    NVIC.irqEnable(IVT.EXTI0);                  //  home button
-
-    NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
-
-    /*
-     * High-level hardware initialization
-     */
-
-    SysTime::init();
-    Radio::open();
-    Tasks::init();
-    FlashLayer::init();
-    Button::init();
-
-    AudioMixer::instance.init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
-
-#ifdef USB_LOAD
-    // ALERT! ST's usb library appears to overwrite registers related to
-    // SysTick and as such, cannot be used while you want to talk to cubes
-    // over the radio. It's fine for loading data over USB, though.
-    Usb::init();
-    // super hack: just wait around for data to be loaded. revel in the crappiness
-    // as you disable this block and reflash your board to re-enable SysTick.
-    for (;;) {
-        Tasks::work();
-        Sifteo::System::yield();
-    }
-#endif
-
-    /*
-     * Launch our game runtime!
-     */
-
-    Runtime::run();
+    // application specific entry point
+    main();
 }
 
 extern "C" void *_sbrk(intptr_t increment)
 {
-#if 1
-    // speex needs to alloc some memory on init...this allows it to but
-    // doesn't allow alloc'd mem to be reclaimed. just a hack until we decide what to do.
-    // NOTE - this also requires passing -fno-threasafe-statics in your CPPFLAGS
-    // since GCC will normally create guards around static data
-    static uintptr_t __heap = (uintptr_t)&__bss_end + 4;
-
-    void *p = (void*)__heap;
-    __heap += increment;
-    return p;
-
-#else
     /*
      * We intentionally don't want to support dynamic allocation yet.
      * If anyone tries a malloc(), we'll just trap here infinitely.
@@ -250,5 +157,4 @@ extern "C" void *_sbrk(intptr_t increment)
 
     while (1);
     return NULL;
-#endif
 }

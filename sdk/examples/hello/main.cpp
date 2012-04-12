@@ -6,89 +6,121 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-
 using namespace Sifteo;
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 1
-#endif
+static const unsigned gNumCubes = 1;
+static VideoBuffer vid[CUBE_ALLOCATION];
 
-static Cube cubes[] = { Cube(0), Cube(1) };
-static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(BootAssets);
 
-static void onAccelChange(void *context, _SYSCubeID cid)
+static Metadata M = Metadata()
+    .title("Hello World SDK Example")
+    .icon(GameIcon)
+    .cubeRange(gNumCubes);
+
+
+static void loadAssets()
 {
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
+    /*
+     * Load our main assets, while animating Kirby walking across the screen
+     */
 
-    String<64> str;
-    str << "Tilt: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
+    AssetLoader loader;
+    loader.init();
 
-    vid[cid].BG0_text(Vec2(2,4), Font, str);
-    vid[cid].BG0_setPanning(Vec2(-state.x/2, -state.y/2));
-}
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        // Set up a blank white screen on this cube
+        vid[cube].initMode(BG0);
+        vid[cube].attach(cube);
+        vid[cube].bg0.erase(WhiteTile);
 
-static void init()
-{
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].enable();
-        cubes[i].loadAssets(GameAssets);
-
-        VidMode_BG0_ROM rom(cubes[i].vbuf);
-        rom.init();
-        rom.BG0_text(Vec2(1,1), "Loading...");
-    }
-
-    for (;;) {
-        bool done = true;
-
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-            if (!cubes[i].assetDone(GameAssets))
-                done = false;
-        }
-
-        System::paint();
-
-        if (done)
-            break;
-    }
-
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        vid[i].init();
-        vid[i].clear(Font.tiles[0]);
-    }
-}
-
-void siftmain()
-{
-    init();
-
-    _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
-
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
-        vid[i].BG0_drawAsset(Vec2(1,10), Logo);
-        onAccelChange(NULL, cubes[i].id());
+        // Start asynchronously loading MainGroup
+        loader.start(MainAssets, MainSlot, cube);
     } 
 
-    unsigned frame = 0;
-    const unsigned rate = 2;
+    int frame = 0;
+    while (!loader.isComplete()) {
 
-    while (1) {
-        float t = System::clock();
-        String<64> timeStr;
-        timeStr << "Time: " << Fixed((int)t, 4) << "." << ((int)(t * 10) % 10);
+        // Animate Kirby running across the screen as MainAssets loads.
+        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+            auto &draw = vid[cube].bg0;
+            const int xMin = -16;
+            const int xMax = 16 + LCD_width - Kirby.pixelWidth();
+            const int yMiddle = (LCD_height - Kirby.pixelHeight()) / 2;
+            
+            Int2 pan = vec(loader.progress(cube, xMin, xMax), yMiddle);
+            LOG_INT2(pan);
 
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            vid[i].BG0_text(Vec2(2,6), Font, timeStr);
-            vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
+            draw.image(vec(0,0), Kirby, frame);
+            draw.setPanning(-pan);
         }
 
-        if (++frame == Kirby.frames << rate)
+        if (++frame == Kirby.numFrames())
             frame = 0;
-            
+
+        /*
+         * Frame rate limit: Drawing has higher priority than asset loading,
+         * so in order to load assets quickly we need to explicitly leave some
+         * time for the system to send asset data over the radio.
+         */
+        for (unsigned i = 0; i < 4; i++)
+            System::paint();
+    }
+
+    loader.finish();
+}
+
+static void onAccelChange(void *, unsigned cid)
+{
+    /*
+     * Event callback for Accelerometer input. Draw it to the screen.
+     */
+     
+    auto accel = CubeID(cid).accel();
+    auto &draw = vid[cid].bg0;
+
+    String<64> str;
+    str << "Accel: " << Hex(accel.x + 0x80, 2) << " " << Hex(accel.y + 0x80, 2);
+    LOG_STR(str);
+
+    draw.text(vec(2,3), Font, str);
+    draw.setPanning(accel.xy() / -2);
+}
+
+static void helloWorld()
+{
+    /*
+     * Hello World! Do some animation and react to accelerometer data.
+     */
+
+    Events::cubeAccelChange.set(onAccelChange);
+
+    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+        auto &draw = vid[cube].bg0;
+
+        draw.erase(WhiteTile);
+        draw.text(vec(2,1), Font, "Hello World!");
+        draw.image(vec(1,10), Logo);
+
+        onAccelChange(0, cube);
+    } 
+    
+    int frame = 0;
+    while (1) {
+        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+            auto &draw = vid[cube].bg0;
+            draw.image(vec(7,6), Ball, frame);
+        }
+        if (++frame == Ball.numFrames())
+            frame = 0;
+
         System::paint();
     }
+}
+
+void main()
+{
+    loadAssets();
+    helloWorld();
 }

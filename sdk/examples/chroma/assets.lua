@@ -13,8 +13,7 @@ UI_Highscores_lowscore = image{"UI_highScore_bg_lowScore.png"}
 UI_Highlight = image{"UI_highlight.png"}
 
 --points text
-PointFont = image{"points.png", height=16}
-BannerPoints = image{"Bannerpoints.png", height=16}
+PointFont = image{"points.png", height=48}
 BannerPointsWhite = image{"BannerpointsWhite.png", height=16}
 
 --the gems
@@ -45,7 +44,7 @@ FixedExplode5 = image{"fixedExplode5.png", height=32}
 FixedExplode6 = image{"fixedExplode6.png", height=32}
 FixedExplode7 = image{"fixedExplode7.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
-Cover = image{"cover.png"}
+--Cover = image{"cover.png"}
 --special dots
 hyperdot_idle = image{"hyperball_idle.png", height=32}
 hyperdot_explode = image{"hyperball_explode.png", height=32}
@@ -61,56 +60,61 @@ timerStem = image{"timerstem.png", height=32}
 timerSprite = image{"timerSprite.png", height=32, pinned=true}
 timerLow = image{"timer_5sec.png", height=32, pinned=true}
 --explosions
-ExplodeGem0 = image{"Gem0Explode.png", height=32}
-ExplodeGem1 = image{"Gem1Explode.png", height=32}
-ExplodeGem2 = image{"Gem2Explode.png", height=32}
-ExplodeGem3 = image{"Gem3Explode.png", height=32}
-ExplodeGem4 = image{"Gem4Explode.png", height=32}
-ExplodeGem5 = image{"Gem5Explode.png", height=32}
-ExplodeGem6 = image{"Gem6Explode.png", height=32}
-ExplodeGem7 = image{"Gem7Explode.png", height=32}
---death animations
-DieUp = image{"DieUp.png", height=64, pinned=true}
-DieLeft = image{"DieLeft.png", height=16, pinned=true}
-DieDown = image{"DieDown.png", height=64, pinned=true}
-DieRight = image{"DieRight.png", height=16, pinned=true}
+ExplodeGem0 = image{"GemExplode0.png", height=32}
+ExplodeGem1 = image{"GemExplode1.png", height=32}
+ExplodeGem2 = image{"GemExplode2.png", height=32}
+ExplodeGem3 = image{"GemExplode3.png", height=32}
+ExplodeGem4 = image{"GemExplode4.png", height=32}
+ExplodeGem5 = image{"GemExplode5.png", height=32}
+ExplodeGem6 = image{"GemExplode6.png", height=32}
+ExplodeGem7 = image{"GemExplode7.png", height=32}
 --idle glimmer
 GlimmerImg = image{"Glimmer.png", height=32}
 
 
 --UI
 --Main menu
-UI_Main_Menu_Blitz = image{"ui_main_menu_blitz.png"}
+UI_Main_Menu_Blitz = image{"ui_main_menu_rush.png"}
 UI_Main_Menu_Puzzle = image{"ui_main_menu_puzzle.png"}
 UI_Main_Menu_Survival = image{"ui_main_menu_survival.png"}
 UI_Main_Menu_Settings = image{"ui_main_menu_settings.png"}
 UI_Main_Menu_TipsTouch = image{"ui_main_menu_tips_touch.png"}
 UI_Main_Menu_TipsTilt = image{"ui_main_menu_tips_tilt.png"}
 UI_Main_Menu_Topbar = image{"ui_main_menu_topbar.png"}
+UI_Game_Menu_Continue = image{"ui_game_menu_continue.png"}
+UI_Game_Menu_Restart = image{"UI_screen_touch_restart.png"}
+--UI_Main_Menu_Continue = image{"ui_main_menu_continue.png"}
 --for clearing
 White = image{"White.png"}
 
+bubbles1 = image{"bubbles1.png", height=16, pinned=true}
+bubbles2 = image{"bubbles2.png", height=16, pinned=true}
+
+--lumes
+Lumes_Happy = image{"lumes_happy.png"}
+Lumes_Neutral = image{"lumes_inprogress.png"}
+Lumes_Sad = image{"lumes_sad.png"}
 
 --sounds
-astrokraut = sound{"astrokraut.raw", encode="PCM"}
-bubble_pop_02 = sound{"bubble_pop_02.raw", encode="PCM"}
---charge_03 = sound{"charge_03.raw", encode="PCM"}
-clear1 = sound{"clear1.raw", encode="PCM"}
-clear2 = sound{"clear2.raw", encode="PCM"}
-clear3 = sound{"clear3.raw", encode="PCM"}
-clear4 = sound{"clear4.raw", encode="PCM"}
-collide_02 = sound{"collide_02.raw", encode="PCM"}
-frozen_06 = sound{"frozen_06.raw", encode="PCM"}
-game_over = sound{"game_over.raw", encode="PCM"}
-glimmer_fx_03 = sound{"glimmer_fx_03.raw", encode="PCM"}
-glom_delay = sound{"glom_delay.raw", encode="PCM"}
-match2 = sound{"match2.raw", encode="PCM"}
-message_pop_03_fx = sound{"message_pop_03_fx.raw", encode="PCM"}
-slide_39 = sound{"slide_39.raw", encode="PCM"}
-slosh_multi_01 = sound{"slosh_multi_01.raw", encode="PCM"}
-slosh_multi_02 = sound{"slosh_multi_02.raw", encode="PCM"}
-StingerIV2 = sound{"StingerIV2.raw", encode="PCM"}
-timer_explode = sound{"timer_explode.raw", encode="PCM"}
+astrokraut = sound{"astrokraut.raw"}
+bubble_pop_02 = sound{"bubble_pop_02.raw"}
+--charge_03 = sound{"charge_03.raw"}
+clear1 = sound{"clear1.raw"}
+clear2 = sound{"clear2.raw"}
+clear3 = sound{"clear3.raw"}
+clear4 = sound{"clear4.raw"}
+collide_02 = sound{"collide_02.raw"}
+frozen_06 = sound{"frozen_06.raw"}
+game_over = sound{"game_over.raw"}
+glimmer_fx_03 = sound{"glimmer_fx_03.raw"}
+glom_delay = sound{"glom_delay.raw"}
+match2 = sound{"match2.raw"}
+message_pop_03_fx = sound{"message_pop_03_fx.raw"}
+slide_39 = sound{"slide_39.raw"}
+slosh_multi_01 = sound{"slosh_multi_01.raw"}
+slosh_multi_02 = sound{"slosh_multi_02.raw"}
+StingerIV2 = sound{"StingerIV2.raw"}
+timer_explode = sound{"timer_explode.raw"}
 
 
 --UI audio

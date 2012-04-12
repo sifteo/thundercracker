@@ -14,7 +14,7 @@ class QuestDatabase:
 		self.world = world
 		self.path = path
 		xml = lxml.etree.parse(path)
-		self.quests = [Quest(i, elem) for i,elem in enumerate(xml.findall("quest"))]
+		self.quests = [Quest(self, i, elem) for i,elem in enumerate(xml.findall("quest"))]
 		if len(self.quests) > 1:
 			for index,quest in enumerate(self.quests[0:-1]):
 				for otherQuest in self.quests[index+1:]:
@@ -45,13 +45,20 @@ class QuestDatabase:
 
 
 class Quest:
-	def __init__(self, index, xml):
+	def __init__(self, db, index, xml):
+		self.db = db
 		self.index = index
 		self.id = xml.get("id").lower()
 		print "Quest:", self.id
 		self.map = xml.get("map").lower()
-		self.x = int(xml.get("x"))
-		self.y = int(xml.get("y"))
+		if "loc" in xml.attrib:
+			self.loc = xml.get("loc", "DefaultSpawn").lower()
+			self.x = 0
+			self.y = 0
+		else:
+			self.loc = ""
+			self.x = int(xml.get("x"))
+			self.y = int(xml.get("y"))
 		self.flags = [Flag(i, False, elem) for i,elem in enumerate(xml.findall("flag"))]
 		assert len(self.flags) <= 32, "Too Many Flags for Quest: %s" % self.id
 		if len(self.flags) > 1:
@@ -68,6 +75,14 @@ class Quest:
 			assert len(self.flags) <= 32, "Too many flags for quest: %s" % self.id
 		return self.flag_dict[id]
 
+	def resolve_location(self):
+		if len(self.loc) > 0:
+			assert self.map in self.db.world.maps.map_dict, "quest map missing: " + self.map
+			mp = self.db.world.maps.map_dict[self.map]
+			assert self.loc in mp.location_dict, "quest location missing from map: " + self.loc
+			loc = mp.location_dict[self.loc]
+			self.x = loc.rx
+			self.y = loc.ry
 
 class Flag:
 	def __init__(self, index, is_global, xml_or_id):

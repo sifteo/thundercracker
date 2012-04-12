@@ -1,7 +1,12 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "audiooutdevice.h"
 #include "portaudiooutdevice.h"
-#include <sifteo/macros.h>
+#include "macros.h"
+#include "audiomixer.h"
 
 /*
  * Host side implementation of AudioOutDevice - just forward calls to the
@@ -15,8 +20,13 @@
 
 static PortAudioOutDevice portaudio;
 
-void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
+AudioMixer *AudioOutDevice::mixer;
+
+void AudioOutDevice::init(SampleRate samplerate, AudioMixer *pMixer)
 {
+	mixer = pMixer;
+	mixer->setSampleRate(sampleRate(samplerate));
+
     ASSERT(Pa_Initialize() == paNoError);
     portaudio.init(samplerate, mixer);
 }
@@ -36,14 +46,10 @@ bool AudioOutDevice::isBusy()
     return false;
 }
 
-int AudioOutDevice::sampleRate()
-{
-    return 0;
-}
-
 void AudioOutDevice::setSampleRate(SampleRate samplerate)
 {
     (void)samplerate;
+    // mixer->setSampleRate(sampleRate(samplerate));
 }
 
 void AudioOutDevice::suspend()

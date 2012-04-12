@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _STM32_VECTORS_H
@@ -16,6 +13,7 @@
  */
 
 #define IRQ_HANDLER     extern "C" void __attribute__ ((interrupt ("IRQ")))
+#define NAKED_HANDLER   extern "C" void __attribute__ ((naked))
 
 extern "C" void _start();
 
@@ -24,7 +22,7 @@ IRQ_HANDLER ISR_HardFault();
 IRQ_HANDLER ISR_MemManage();
 IRQ_HANDLER ISR_BusFault();
 IRQ_HANDLER ISR_UsageFault();
-IRQ_HANDLER ISR_SVCall();
+NAKED_HANDLER ISR_SVCall();
 IRQ_HANDLER ISR_Debug();
 IRQ_HANDLER ISR_PendSV();
 IRQ_HANDLER ISR_SysTick();

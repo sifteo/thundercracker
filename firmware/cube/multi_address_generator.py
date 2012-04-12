@@ -23,6 +23,6 @@ for chan in ["0x02","0x10","0x20"]:
 	for addr in ["0x00","0x01","0x02"]:
 		subprocess.check_call(["make","clean"])
 		myenv = dict(os.environ)
-		myenv["CFLAGS"] = "-DCUBE_ADDR="+addr+" -DCUBE_CHAN="+chan
+		myenv["CFLAGS"] = "-DCUBE_ADDR="+addr+" -DCUBE_CHAN="+chan+" -DHWREV=2"
 		subprocess.check_call(["make"], env=myenv)
-		shutil.move("cube.ihx", "cube_"+date+"_chan_"+chan+"_addr_"+addr+".hex")
+		shutil.move("cube.hex", "cube_"+date+"_chan_"+chan+"_addr_"+addr+".hex")

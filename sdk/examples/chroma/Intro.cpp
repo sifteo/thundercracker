@@ -42,7 +42,7 @@ void Intro::Reset( bool ingamereset)
 }
 
 
-bool Intro::Update( float dt, Banner &banner )
+bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
 {
     m_fTimer += dt;
 
@@ -89,7 +89,7 @@ bool Intro::Update( float dt, Banner &banner )
         }
     }
 
-    banner.Update( dt );
+    banner.Update( t );
 
     return true;
 }
@@ -135,9 +135,9 @@ bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &
 
 
 
-Vec2 Intro::LerpPosition( Vec2 &start, Vec2 &end, float timePercent )
+Int2 Intro::LerpPosition( Int2 &start, Int2 &end, float timePercent )
 {
-    Vec2 result( start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent );
+    Int2 result = { start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent };
 
     return result;
 }

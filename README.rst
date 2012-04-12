@@ -33,8 +33,12 @@ attic
 
 hw
   Hardware schematics and layout
-
   
+vm
+  Tools for working with the virtual machine sandbox that games execute in.
+  Includes "slinky", the Sifteo linker and code generator for LLVM.
+
+
 Operating System
 ----------------
   

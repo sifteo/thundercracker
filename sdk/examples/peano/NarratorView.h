@@ -8,7 +8,7 @@ namespace TotalsGame {
 
   class NarratorView : public View {
 
-      static const AssetImage *emotes[];
+      static const Sifteo::AssetImage *emotes[];
 
   public:
       enum Emote
@@ -34,7 +34,9 @@ private:
 
 
   public:
-    NarratorView(TotalsCube *c);
+    NarratorView();
+
+    void Reset();
 
     void SetMessage(const char *msg, Emote emote=EmoteNone);
 
@@ -44,12 +46,7 @@ private:
 
     void Paint();
 
-    void PaintText();
-
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-  };
+   };
 
 }
 

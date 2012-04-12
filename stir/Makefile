@@ -13,7 +13,6 @@ OBJS = \
 	src/script.o \
 	src/proof.o \
 	src/proof_html.o \
-	src/asegwriter.o \
 	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \
@@ -23,19 +22,14 @@ OBJS = \
 	src/logger.o \
 	src/lodepng.o \
 	src/sha1.o \
-	src/speexencoder.o \
+	src/audioencoder.o \
+	src/dubencoder.o \
 	$(OBJS_lua) \
 
 TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
 LDFLAGS += $(LIB_STDCPP)
-
-# speex
-SPEEX_DIR := $(DEPS_DIR)/speex
-INCLUDES += -I$(SPEEX_DIR)/include
-LDFLAGS += -L$(SPEEX_DIR)/lib
-LDFLAGS += -lspeex
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	OBJS += src/winres.o
@@ -45,7 +39,9 @@ endif
 
 DEPFILES := $(OBJS:.o=.d)
 FIRMWARE_INC = $(TC_DIR)/firmware/include
-CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
+SYS_INC = $(TC_DIR)/sdk/include
+CFLAGS += -DNOT_USERSPACE
+CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 

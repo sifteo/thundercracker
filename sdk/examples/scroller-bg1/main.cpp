@@ -19,7 +19,7 @@ void load()
     VidMode_BG0_ROM vid(cube.vbuf);
     vid.init();
     do {
-        vid.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2); 
+        vid.BG0_progressBar(vec(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2); 
         System::paint();
     } while (!cube.assetDone(GameAssets));
 }
@@ -36,7 +36,7 @@ void draw_bg_column(unsigned x)
     }
 }
 
-void siftmain()
+void main()
 {
     load();
     
@@ -61,7 +61,7 @@ void siftmain()
                    
     unsigned frame = 0;
     while (1) {
-        unsigned pan_x = frame*3;
+        int pan_x = frame*3;
         
         // Fill in new tiles, just past the right edge of the screen
         draw_bg_column(pan_x/8 + 17);
@@ -71,7 +71,7 @@ void siftmain()
                          Sprite.tiles + (frame/2 % Sprite.frames) * (Sprite.width * Sprite.height),
                          0, Sprite.width * Sprite.height);
 
-        vid.BG0_setPanning(Vec2(pan_x, 0));
+        vid.BG0_setPanning(vec(pan_x, 0));
         
         System::paint();
         frame++;

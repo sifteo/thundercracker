@@ -1,8 +1,0 @@
-*~
-*.o
-*.gen.h
-*.gen.cpp
-assets.html
-*.sim
-*.sim.exe
-*.stm32

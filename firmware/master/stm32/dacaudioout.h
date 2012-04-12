@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef DAC_AUDIO_OUT_H
 #define DAC_AUDIO_OUT_H
 
@@ -8,7 +13,6 @@
 
 #include "audiobuffer.h"
 #include "audiooutdevice.h"
-#include "speexdecoder.h"
 class AudioMixer;
 
 class DacAudioOut
@@ -26,7 +30,6 @@ public:
 
     bool isBusy() const;
 
-    int sampleRate() const;
     void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();

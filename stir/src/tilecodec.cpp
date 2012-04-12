@@ -170,15 +170,8 @@ TileCodec::TileCodec(std::vector<uint8_t>& buffer)
     memset(&stats, 0, sizeof stats);
 }
 
-void TileCodec::encode(const TileRef tile, bool autoErase)
+void TileCodec::encode(const TileRef tile)
 {
-    /*
-     * Auto-erase mode spreads out our erases over the course of the
-     * write, erasing each block right before we start programming it.
-     */
-    if (autoErase && !(currentAddress.linear % FlashAddress::BLOCK_SIZE))
-        erase(1);
-
     currentAddress.linear += FlashAddress::TILE_SIZE;
 
     /*
@@ -383,30 +376,6 @@ void TileCodec::dumpStatistics(Logger &log)
     }
 
     log.infoEnd();
-}
-
-void TileCodec::address(FlashAddress addr)
-{
-    currentAddress = addr;
-
-    encodeOp(FLS_OP_ADDRESS);
-    dataBuf.push_back(addr.lat1());
-    dataBuf.push_back(addr.lat2());
-    flush();
-}
-
-void TileCodec::erase(unsigned numBlocks)
-{
-    if (numBlocks) {
-        uint8_t count = numBlocks - 1;
-        uint8_t check = -count -currentAddress.lat1() - currentAddress.lat2();
-        check ^= 0xFF;
-
-        encodeOp(FLS_OP_ERASE);
-        dataBuf.push_back(count);
-        dataBuf.push_back(check);
-    }
-    flush();
 }
 
 };  // namespace Stir

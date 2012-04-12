@@ -22,6 +22,7 @@ extern "C" {
 #include "logger.h"
 #include "tile.h"
 #include "imagestack.h"
+#include "sifteo/abi.h"
 
 namespace Stir {
 
@@ -129,7 +130,7 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
-    uint64_t getSignature() const;
+    uint64_t getHash() const;
 
 private:
     lua_Number quality;
@@ -164,7 +165,7 @@ public:
         return mName;
     }
 
-    Group *getGroup() {
+    Group *getGroup() const {
         return mGroup;
     }
 
@@ -175,6 +176,16 @@ public:
     bool isPinned() const {
         return mTileOpt.pinned;
     }
+    
+    bool isFlat() const {
+        return mIsFlat;
+    }
+
+    const char *getClassName() const;
+
+    uint16_t encodePinned() const;
+    void encodeFlat(std::vector<uint16_t> &data) const;
+    bool encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const;
 
  private:
     Group *mGroup;
@@ -182,6 +193,7 @@ public:
     TileOptions mTileOpt;
     std::vector<TileGrid> mGrids;
     std::string mName;
+    bool mIsFlat;
 
     void createGrids();
 
@@ -212,6 +224,36 @@ public:
     {
         mQuality = quality;
     }
+    
+    void setVBR(bool vbr)
+    {
+        mVBR = vbr;
+    }
+
+    void setSampleRate(uint32_t sample_rate)
+    {
+        mSampleRate = sample_rate;
+    }
+
+    void setLoopStart(uint32_t loop_start)
+    {
+        mLoopStart = loop_start;
+    }
+
+    void setLoopLength(uint32_t loop_length)
+    {
+        mLoopLength = loop_length;
+    }
+
+    void setLoopType(_SYSAudioLoopType loop_type)
+    {
+        mLoopType = loop_type;
+    }
+
+    void setVolume(uint16_t volume)
+    {
+        mVolume = volume;
+    }
 
     const std::string &getName() const {
         return mName;
@@ -229,11 +271,41 @@ public:
         return mQuality;
     }
     
+    const bool getVBR() const {
+        return mVBR;
+    }
+
+    const uint32_t getSampleRate() const {
+        return mSampleRate;
+    }
+
+    const uint32_t getLoopStart() const {
+        return mLoopStart;
+    }
+    
+    const uint32_t getLoopLength() const {
+        return mLoopLength;
+    }
+
+    const _SYSAudioLoopType getLoopType() const {
+        return mLoopType;
+    }
+
+    const uint16_t getVolume() const {
+        return mVolume;
+    }
+
 private:
     std::string mName;
     std::string mFile;
     std::string mEncode;
     int mQuality;
+    uint32_t mSampleRate;
+    uint32_t mLoopStart;
+    uint32_t mLoopLength;
+    uint16_t mVolume;
+    _SYSAudioLoopType mLoopType;
+    bool mVBR;
 };
 
 

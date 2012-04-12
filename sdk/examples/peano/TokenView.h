@@ -13,7 +13,12 @@ namespace TotalsGame {
 
   class TokenView : public View 
   {
+  public:
+      void OnShakeStarted(TotalsCube *c) ;
+      
+      void OnButtonEvent(TotalsCube *c, bool isPressed);
 
+      
   private:
 	  static int sHintParity;
 
@@ -29,7 +34,7 @@ namespace TotalsGame {
 
   public:
 
-	static const Vec2 Mid;
+    static const Int2 Mid;
 
     static const int BIT_TOP = 1<<SIDE_TOP;
     static const int BIT_LEFT = 1<<SIDE_LEFT;
@@ -61,8 +66,12 @@ namespace TotalsGame {
     // PUBLIC METHODS
     //-------------------------------------------------------------------------
 
-    TokenView(TotalsCube *cube, Token *_token, bool showDigitOnInit=true);
+    TokenView();
 	virtual ~TokenView() {}
+
+    void Reset();
+
+    void SetToken(Token *t);
 
     void HideOps() ;
 
@@ -85,10 +94,6 @@ namespace TotalsGame {
 
     void SetHideMode(int mask);
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-
 private:
     bool NotHiding(Cube::Side side) ;
 
@@ -100,16 +105,12 @@ private:
     //-------------------------------------------------------------------------
 public:
     virtual void DidAttachToCube(TotalsCube *c) ;
-
-    void OnShakeStarted(TotalsCube *c) ;
-    
-    void OnButtonEvent(TotalsCube *c, bool isPressed);
     
     virtual void WillDetachFromCube(TotalsCube *c) ;
 
-    virtual void Update(float dt) ;
-    
-    virtual void Paint() ;
+    void Update() ;
+
+    void PaintNow();
   
     //-------------------------------------------------------------------------
     // HELPER METHODS

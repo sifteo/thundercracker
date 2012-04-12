@@ -1,23 +1,20 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include <stdio.h>
 #include <protocol.h>
-#include <sifteo/machine.h>
-
+#include "machine.h"
 #include "cubecodec.h"
-#include "flashlayer.h"
+#include "cubeslots.h"
+#include "svmmemory.h"
+#include "tasks.h"
 
-using namespace Sifteo;
-using namespace Sifteo::Intrinsic;
+using namespace Intrinsic;
 
 
-void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
+bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
     /*
      * Note that we have to sweep that change map as we go. Since
@@ -45,28 +42,26 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * This loop terminates when all of VRAM has been flushed, or when
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
+     *
+     * Returns true iff all VRAM has been flushed.
      */
+
+    bool flushed = false;
 
     // Emit buffered bits from the previous packet
     txBits.flush(buf);
 
     if (vb) {
         do {
-            /*
-             * This AND is important, it prevents out-of-bounds indexing
-             * or infinite looping if userspace gives us a bogus cm32
-             * value! This is equivalent to bounds-checking idx32 and addr
-             * below, as well as checking for infinite looping. Much more
-             * efficient to do it here though :)
-             */
-            uint32_t cm32 = vb->cm32 & 0xFFFF0000;
-
-            if (!cm32)
+            uint32_t cm16 = vb->cm16;
+            if (!cm16)
                 break;
 
-            uint32_t idx32 = CLZ(cm32);
+            uint32_t idx32 = CLZ(cm16) >> 1;
             ASSERT(idx32 < arraysize(vb->cm1));
             uint32_t cm1 = vb->cm1[idx32];
+
+            DEBUG_LOG(("CODEC[%p] cm16=%08x cm1[%d]=%08x\n", vb, cm16, idx32, cm1));
 
             if (cm1) {
                 uint32_t idx1 = CLZ(cm1);
@@ -93,8 +88,13 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
             }
 
             if (!cm1) {
-                cm32 &= ROR(0x7FFFFFFF, idx32);
-                vb->cm32 = cm32;
+                // We operate at a 1:32 resolution, half that of the cm16.
+                // So, clear two bits at a time.
+                cm16 &= ROR(0x3FFFFFFF, idx32 << 1);
+                vb->cm16 = cm16;
+                DEBUG_LOG(("CODEC[%p] cm16=%08x, cm1 cleared\n", vb, cm16));
+                if (!cm16)
+                    flushed = true;
             }
         } while (!buf.isFull());
     }
@@ -113,6 +113,8 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
         flushDSRuns(true);
         txBits.flush(buf);
     }
+
+    return flushed;
 }
 
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
@@ -344,6 +346,11 @@ void CubeCodec::flushDSRuns(bool rleSafe)
 
 bool CubeCodec::flashReset(PacketBuffer &buf)
 {
+    // Warning, a flash reset does not wait for the cube's
+    // decode buffer to drain. We need to wait until the previous asset
+    // group is fully written to flash before a reset for the next group
+    // can be sent!
+    
     // No room in output buffer
     if (!txBits.hasRoomForFlush(buf, 12))
         return false;
@@ -356,63 +363,168 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     return true;
 }
 
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-                          _SYSAssetGroupCube *ac, bool &done)
+bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done)
 {
     /*
-     * Since we're dealing with asset group pointers as well as
-     * per-cube state that reside in untrusted memory, this code
-     * has to be carefully written to read each user value exactly
+     * Since we're dealing with asset loader state in untrusted memory,
+     * this code has to be carefully written to read each user value exactly
      * once, and check it before use.
      *
-     * We only do this if we have asset data, obviously, but also
+     * We only send if we have asset data buffered, obviously, but also
      * if the cube has enough buffer space to accept it, and if
      * there's enough room in the packet for both the escape code
      * and at least one byte of flash data.
      *
-     * After this initial check, any further checks exist only as
-     * protection against buggy or malicious user code.
+     * This function MUST NOT access flash memory or the cache, since it's
+     * running in interrupt context. All of our state must come from the
+     * _SYSAssetLoaderCube object in RAM.
+     *
+     * Returns 'true' if and only if we sent a flashEscape.
+     * Sets 'done' to 'true' if and only if the assset group is fully written.
      */
 
-    // Cube has no room in its buffer
-    if (!loadBufferAvail)
+    ASSERT(lc);
+
+    // Sample the FIFO state exactly once, and validate it.
+    int head = lc->head;
+    int tail = lc->tail;
+    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
+        return false;
+    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
+
+    /*
+     * We have a state bit in CubeSlots to keep track of whether we
+     * need to send an addressing command to the decoder, so that it
+     * knows this asset group's load address. Addressing commands are
+     * part of the loadstream that we send over the radio, but they're
+     * created dynamically rather than coming straight from flash.
+     */
+    _SYSCubeIDVector cubeBit = Intrinsic::LZ(cube);
+    bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+
+    /*
+     * If and only if we may need to send an address, prepare that address.
+     * It's in user RAM, so this mapping may fail.
+     */
+    uint16_t baseAddr = 0;
+    if (flashAddrPending) {
+        SvmMemory::PhysAddr groupCubePA;
+        SvmMemory::VirtAddr groupCubeVA =
+            lc->pAssetGroup + sizeof(_SYSAssetGroup) + sizeof(_SYSAssetGroupCube) * cube;
+        
+        if (!SvmMemory::mapRAM(groupCubeVA, sizeof(_SYSAssetGroupCube), groupCubePA))
+            return false;
+
+        baseAddr = reinterpret_cast<_SYSAssetGroupCube*>(groupCubePA)->baseAddr;
+    }
+
+    /*
+     * How much space do we need? The minimum unit of asset data is
+     * just a byte, but an addressing command is three bytes. If we don't
+     * have enough, we need to be able to determine this before sending a
+     * flash escape. Once we send the escape, we're committed.
+     */
+    const unsigned escapeSizeInBits = 12;
+    unsigned dataSizeInBytes = flashAddrPending ? 3 : 1;
+    unsigned dataSizeInBits = dataSizeInBytes << 3;
+    if (!txBits.hasRoomForFlush(buf, escapeSizeInBits + dataSizeInBits))
         return false;
 
-    // No room in output buffer
-    if (!txBits.hasRoomForFlush(buf, 12 + 8))
+    // The cube also must have enough buffer space to receive our minimum data
+    if (loadBufferAvail < dataSizeInBytes)
         return false;
 
-    // Per-cube asset state pointer is invalid
-    if (!ac)
-        return false;
+    /*
+     * Read 'progress' from untrusted memory only once. See if we're done.
+     * Note that this tracks how many bytes have been enqueued into the FIFO,
+     * not how many bytes were sent over the radio.
+     *
+     * We require that 'progress' is only updated after enqueueing data into
+     * the FIFO and updating the FIFO!
+     */
 
-    uint32_t dataSize = group->size;
-    uint32_t progress = ac->progress;
-    if (progress > dataSize)
-        return false;
-    
-    uint32_t count;
-
-    flashEscape(buf);
-
-    // We're limited by the size of the packet, the asset, and the cube's FIFO
-    count = MIN(buf.bytesFree(), dataSize - progress);
-    count = MIN(count, loadBufferAvail);
-
-    FlashRegion fr;
-    if (!FlashLayer::getRegion(progress + group->offset, count, &fr)) {
+    uint32_t progress = lc->progress;
+    uint32_t dataSize = lc->dataSize;
+    if (progress >= dataSize && fifoCount == 0) {
+        if (loadBufferAvail == FLS_FIFO_USABLE)
+            done = true;
         return false;
     }
-    uint8_t *region = static_cast<uint8_t*>(fr.data());
-    buf.appendUser(region, fr.size());
-    progress += fr.size();
-    loadBufferAvail -= fr.size();
-    FlashLayer::releaseRegion(fr);
 
-    ac->progress = progress;
-    ASSERT(progress <= dataSize);
-    if (progress >= dataSize)
-        done = true;
+    /*
+     * If we don't need to send the address, make sure we at least have one
+     * byte of data in the FIFO to send. Must happen after the done-ness
+     * check above.
+     */
+
+    if (!flashAddrPending && fifoCount == 0) {
+        Tasks::setPending(Tasks::AssetLoader);
+        return false;
+    }
+
+    /*
+     * The escape command indicates that the entire remainder of 'buf' is
+     * data for the flash codec. We can figure out how much data to send
+     * now. We're limited by the size of the packet buffer, the size of
+     * the data left to send, and the amount of space in the cube's FIFO.
+     */
+
+    flashEscape(buf);
+    uint32_t count = MIN(buf.bytesFree(), loadBufferAvail);
+    ASSERT(count >= dataSizeInBytes);
+
+    /*
+     * If we need to send an address command, send that first. If we can
+     * still cram in some actual loadstream data, awesome, but this is
+     * the only part that must succeed.
+     */
+
+    if (flashAddrPending) {
+        ASSERT(buf.bytesFree() >= 3);
+
+        // Opcode, lat1, lat2
+        buf.append(0xe1);
+        buf.append(baseAddr << 1);
+        buf.append((baseAddr >> 6) & 0xfe);
+
+        Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
+        ASSERT(count >= 3);
+        ASSERT(loadBufferAvail >= 3);
+        count -= 3;
+        loadBufferAvail -= 3;
+        if (!count)
+            return true;
+    }
+
+    /*
+     * Stream flash data, as it becomes available from the FIFO
+     */
+
+    // May have reached this point after sending an addr, but without any FIFO data
+    if (!fifoCount)
+        return true;
+
+    count = MIN(count, fifoCount);
+    ASSERT(count > 0);
+    ASSERT(loadBufferAvail >= count);
+    loadBufferAvail -= count;
+
+    while (count--) {
+        buf.append(lc->buf[head++]);
+        if (head == _SYS_ASSETLOAD_BUF_SIZE)
+            head = 0;
+    }
+
+    // Update FIFO state
+    lc->head = head;
+
+    // If we're done, remember that. If not, make sure we fetch more data.
+    if (progress >= dataSize && head == tail) {
+        if (loadBufferAvail == FLS_FIFO_USABLE)
+            done = true;
+    } else {
+        Tasks::setPending(Tasks::AssetLoader);
+    }
 
     return true;
 }

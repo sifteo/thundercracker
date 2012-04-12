@@ -3,6 +3,8 @@
 import lxml.etree
 import posixpath
 
+TILE_SIZE = 16
+
 class Map:
 	def __init__(self, path):
 		doc = lxml.etree.parse(path)
@@ -10,8 +12,8 @@ class Map:
 		self.dir = posixpath.dirname(path)
 		self.width = int(doc.getroot().get("width"))
 		self.height = int(doc.getroot().get("height"))
-		self.pw = 16 * self.width
-		self.ph = 16 * self.height
+		self.pw = TILE_SIZE * self.width
+		self.ph = TILE_SIZE * self.height
 		self.tilesets = [TileSet(self, elem) for elem in doc.findall("tileset")]
 		self.layers = [Layer(self, elem) for elem in doc.findall("layer")]
 		self.layer_dict = dict((layer.name,layer) for layer in self.layers)
@@ -36,8 +38,8 @@ class TileSet:
 		assert posixpath.exists(posixpath.join(map.dir, self.imgpath)), "TileSet image missing:  %s" % self.imgpath
 		self.pw = int(img.get("width"))
 		self.ph = int(img.get("height"))
-		self.width = self.pw/16
-		self.height = self.ph/16
+		self.width = self.pw/TILE_SIZE
+		self.height = self.ph/TILE_SIZE
 		self.count = self.width * self.height
 		self.tiles = [Tile(self, lid) for lid in range(self.count)]
 		for node in xml.findall("tile/properties"):
@@ -85,11 +87,25 @@ class Layer:
 class Obj:
 	def __init__(self, map, xml):
 		self.map = map
-		self.name = xml.get("name")
+		self.name = xml.get("name", "").lower()
 		self.type = xml.get("type").lower()
 		self.px = int(xml.get("x"))
 		self.py = int(xml.get("y"))
 		self.pw = int(xml.get("width"))
 		self.ph = int(xml.get("height"))
-		self.tile = map.gettile(int(xml.get("gid", "0")))
+
+		self.tx = self.px / TILE_SIZE
+		self.ty = self.py / TILE_SIZE
+		self.tw = self.pw / TILE_SIZE
+		self.th = self.ph / TILE_SIZE
+
+		if self.tw < 1: self.tw = 1
+		if self.th < 1: self.th = 1
+
+		#self.tile = map.gettile(int(xml.get("gid", "0")))
 		self.props = dict((prop.get("name").lower(), prop.get("value")) for prop in xml.findall("properties/property"))
+
+	def is_overlapping(self, tx, ty):
+		return tx >= self.tx and ty >= self.ty and tx < self.tx + self.tw and ty < self.ty + self.th
+
+

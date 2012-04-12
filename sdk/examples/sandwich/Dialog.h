@@ -4,13 +4,12 @@
 
 class Dialog {
 private:
-    Cube* mCube;
-    Vec2 mPosition;
+    VideoBuffer* mCube;
+    Short2 mPosition;
 
 public:
-    Dialog(Cube *mCube);
-    void Init();
-    Cube* GetCube() const { return mCube; }
+    void Init(VideoBuffer *cube);
+    VideoBuffer* GetVideoBuffer() const { return mCube; }
     void ShowAll(const char* lines);
     const char* Show(const char* msg);
     void Erase();

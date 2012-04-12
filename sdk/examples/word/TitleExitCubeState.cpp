@@ -7,6 +7,8 @@
 #include "GameStateMachine.h"
 #include "SavedData.h"
 
+using namespace Sifteo;
+
 unsigned TitleExitCubeState::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)

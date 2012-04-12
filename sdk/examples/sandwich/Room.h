@@ -1,20 +1,34 @@
 #pragma once
 #include "Common.h"
 #include "Content.h"
+#include "Sokoblock.h"
 
-#define USERDATA_NONE 0
-#define USERDATA_TRIGGER 1
-#define USERDATA_SUBDIV 2
-#define USERDATA_TRAPDOOR 3 // generalize to EVENT(?)/TRAPDOOR
+#define PRIMARY_NONE     0
+#define PRIMARY_TRIGGER  1
+#define PRIMARY_SUBDIV   2
+#define PRIMARY_PROP     3
+// MAX COUNT = 16
+
+#define SECONDARY_UNDEFINED    0
+#define SECONDARY_TRAPDOOR     1
+#define SECONDARY_DEPOT        2
+#define SECONDARY_SWITCH       3
 
 class Room {
 private:
-  const void* mUserdata; // pointer to a trigger or subdivision or trapdoor
-  const DoorData* mDoor;
+  const void* mPrimarySlot;
+  const void* mSecondarySlot;
+  
   uint16_t mOverlayIndex;
   uint8_t mOverlayTile;
-  uint8_t mUserdataType : 4;
-  uint8_t mInnerType : 4;
+  
+  uint8_t mPrimarySlotType : 4;
+  uint8_t mPrimarySlotId : 4;
+
+  struct {
+    uint8_t canMask : 4;
+    uint8_t didMask : 4;
+  } mBomb;
 
 public:
 
@@ -23,127 +37,123 @@ public:
   //---------------------------------------------------------------------------
 
   unsigned Id() const;
-  Vec2 Location() const;
+  Int2 Location() const;
   const RoomData* Data() const;
-  inline Vec2 Position() const { return 128 * Location(); }
-  Vec2 LocalCenter(unsigned subdiv) const;
-  inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
-  inline bool HasUserdata() const { return mUserdataType; }
+  Int2 Position() const { return 128 * Location(); }
+  Int2 LocalCenter(unsigned subdiv) const;
+  Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
+  bool HasUserdata() const { return mPrimarySlotType; }
   void Clear();
+  bool IsShowingBlock(const Sokoblock* pBlock);  
+  unsigned CountOpenTilesAlongSide(Side side);
+
+  //---------------------------------------------------------------------------
+  // bombypoos
+  //---------------------------------------------------------------------------
+
+  bool CanBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.canMask & (1<<s)) != 0; }
+  bool DidBomb(Side s) const { ASSERT(0<=s && s<4); return (mBomb.didMask & (1<<s)) != 0; }
+  bool HasBombedSides() const { return mBomb.didMask != 0; }
+  void SetCanBomb(Side s) { ASSERT(0<=s && s<4); mBomb.canMask |= (1<<s); }
+  void SetDidBomb(Side s) { mBomb.didMask |= ((1<<s) & mBomb.canMask); }
+  void BombThisFucker();
 
   //---------------------------------------------------------------------------
   // triggers
   //---------------------------------------------------------------------------
 
-  inline int TriggerType() const { 
-    return mUserdataType == USERDATA_TRIGGER ? mInnerType : 0; 
-  }
+  int TriggerType() const { return mPrimarySlotType == PRIMARY_TRIGGER ? mPrimarySlotId : 0; }
+  bool HasTrigger() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId; }
+  bool HasGateway() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_GATEWAY; }
+  bool HasItem() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_ITEM; }
+  bool HasNPC() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_NPC; }
+  const GatewayData* Gateway() const { ASSERT(HasGateway());  return (const GatewayData*) mPrimarySlot; }
+  const ItemData* Item() const { ASSERT(HasItem()); return (const ItemData*) mPrimarySlot; }
+  const NpcData* NPC() const { ASSERT(HasNPC()); return (const NpcData*) mPrimarySlot; }
 
-  inline bool HasTrigger() const {
-    return mUserdataType == USERDATA_TRIGGER && mInnerType; 
-  }
-
-  inline bool HasGateway() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_GATEWAY; 
-  }
-
-  inline bool HasItem() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_ITEM; 
-  }
-
-  inline bool HasNPC() const { 
-    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; 
+  void SetTrigger(int type, const TriggerData* p) { 
+    ASSERT(!mPrimarySlot);
+    mPrimarySlotType = PRIMARY_TRIGGER;
+    mPrimarySlotId = type; 
+    mPrimarySlot = p; 
   }
   
-  inline const GatewayData* TriggerAsGate() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_GATEWAY); 
-    return (const GatewayData*) mUserdata; 
+  void ClearTrigger() { 
+    ASSERT(mPrimarySlotType == PRIMARY_TRIGGER);
+    mPrimarySlotId = TRIGGER_UNDEFINED; 
+    mPrimarySlot = 0;
   }
-
-  inline const ItemData* TriggerAsItem() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_ITEM); 
-    return (const ItemData*) mUserdata; 
-  }
-
-  inline const NpcData* TriggerAsNPC() const { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    ASSERT(mInnerType == TRIGGER_NPC); 
-    return (const NpcData*) mUserdata; 
-  }
-
-  inline void SetTrigger(int type, const TriggerData* p) { 
-    mUserdataType = USERDATA_TRIGGER;
-    mInnerType = type; 
-    mUserdata = p; 
-  }
-  
-  inline void ClearTrigger() { 
-    ASSERT(mUserdataType == USERDATA_TRIGGER);
-    mInnerType = TRIGGER_UNDEFINED; 
-  }
-  
 
   //---------------------------------------------------------------------------
   // subdivs
   //---------------------------------------------------------------------------
 
-  bool IsSubdivided() const { 
-    return mUserdataType == USERDATA_SUBDIV && mInnerType; 
-  }
+  bool IsSubdivided() const { return mPrimarySlotType == PRIMARY_SUBDIV && mPrimarySlotId; }
+  int SubdivType() const { return mPrimarySlotType == PRIMARY_SUBDIV ? mPrimarySlotId : 0; }
 
   bool IsBridge() const { 
-    return mUserdataType == USERDATA_SUBDIV && (
-      mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR
+    return mPrimarySlotType == PRIMARY_SUBDIV && (
+      mPrimarySlotId == SUBDIV_BRDG_VER || mPrimarySlotId == SUBDIV_BRDG_HOR
+    ); 
+  }
+  bool IsDiag() const {
+    return mPrimarySlotType == PRIMARY_SUBDIV && (
+      mPrimarySlotId == SUBDIV_DIAG_POS || mPrimarySlotId == SUBDIV_DIAG_NEG
     ); 
   }
 
-  int SubdivType() const { 
-    return mUserdataType == USERDATA_SUBDIV ? mInnerType : 0; 
-  }
-
-  const DiagonalSubdivisionData* SubdivAsDiagonal() const { 
-    ASSERT(mUserdataType == USERDATA_SUBDIV);
-    ASSERT(mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG);  
-    return (const DiagonalSubdivisionData*)mUserdata; 
-  }
-
-  const BridgeSubdivisionData* SubdivAsBridge() const { 
-    ASSERT(mUserdataType == USERDATA_SUBDIV);
-    ASSERT(mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR); 
-    return (const BridgeSubdivisionData*)mUserdata; 
-  }
+  const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(IsDiag()); return (const DiagonalSubdivisionData*)mPrimarySlot; }
+  const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(IsBridge()); return (const BridgeSubdivisionData*)mPrimarySlot;}
 
   void SetDiagonalSubdivision(const DiagonalSubdivisionData* diag);
   void SetBridgeSubdivision(const BridgeSubdivisionData* bridge);
 
   //---------------------------------------------------------------------------
-  // trapdoors
+  // props
   //---------------------------------------------------------------------------
 
-  inline bool HasTrapdoor() const {
-    return mUserdataType == USERDATA_TRAPDOOR;
+  bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
+  bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
+  bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
+  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
+  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
+  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
+
+  void SetTrapdoor(const TrapdoorData* trapDoorData) {
+    ASSERT(!mPrimarySlot);
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_TRAPDOOR;
+    mPrimarySlot = trapDoorData;
   }
 
-  inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
-    mUserdataType = USERDATA_TRAPDOOR;
-    mUserdata = trapDoorData;
+  void SetDepot(const DepotData* depot) {
+    ASSERT(!mPrimarySlot);
+    ASSERT(!mSecondarySlot);
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_DEPOT;
+    mPrimarySlot = depot;
   }
 
-  const TrapdoorData* Trapdoor() const {
-    ASSERT(mUserdataType == USERDATA_TRAPDOOR);
-    return (const TrapdoorData*) mUserdata;
+  void SetSwitch(const SwitchData* toggle) {
+    ASSERT(!mPrimarySlot);
+    mPrimarySlotType = PRIMARY_PROP;
+    mPrimarySlotId = SECONDARY_SWITCH;
+    mPrimarySlot = toggle;
   }
+
+  bool HasDepotContents() const { return HasDepot() && mSecondarySlot != 0; }
+  void SetDepotContents(const ItemData* item) { ASSERT(HasDepot()); mSecondarySlot = item; }
+  const ItemData* DepotContents() const { ASSERT(HasDepot()); return (const ItemData*) mSecondarySlot; }
 
   //---------------------------------------------------------------------------
   // doors
   //---------------------------------------------------------------------------
 
-  bool HasDoor() const { return mDoor != 0; }
+  bool HasDoor() const { return !HasDepot() && mSecondarySlot != 0; }
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
-  void SetDoor(const DoorData* p) { mDoor = p; }
+  const DoorData* Door() const { ASSERT(HasDoor()); return (const DoorData*) mSecondarySlot; }
+  void SetDoor(const DoorData* p) { ASSERT(!HasDepot()); mSecondarySlot = p; }
   bool OpenDoor();
 
   //---------------------------------------------------------------------------

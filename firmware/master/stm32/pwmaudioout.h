@@ -1,8 +1,6 @@
 /*
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef PWM_AUDIO_OUT_H_
@@ -14,7 +12,6 @@
 
 #include "audiobuffer.h"
 #include "audiooutdevice.h"
-#include "speexdecoder.h"
 class AudioMixer;
 
 class PwmAudioOut
@@ -34,7 +31,6 @@ public:
 
     bool isBusy() const;
 
-    int sampleRate() const;
     void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();
@@ -43,6 +39,8 @@ public:
     void tmrIsr();
 
 private:
+    static const unsigned PWM_FREQ = 500;   // TODO: tune this!
+
     HwTimer pwmTimer;
     int pwmChan;
     HwTimer sampleTimer;

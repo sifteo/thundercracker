@@ -30,15 +30,11 @@ void flash_handle_fifo();
  * Low-level hardware abstraction layer
  */
 
-#define FLASH_SIZE              (2 * 1024 * 1024)
-#define FLASH_BLOCK_SIZE        (64 * 1024)
-#define FLASH_NUM_BLOCKS        32
+extern uint8_t flash_addr_low;          // Low 7 bits of address, left-justified
+extern uint8_t flash_addr_lat1;         // Middle 7 bits of address, left-justified
+extern uint8_t flash_addr_lat2;         // High 7 bits of address, left-justified
+extern __bit flash_need_autoerase;      // Do we need to test for auto-erase at next write?
 
-extern uint8_t flash_addr_low;
-extern uint8_t flash_addr_lat1;
-extern uint8_t flash_addr_lat2;
-
-void flash_erase(uint8_t blockCount);
 void flash_program_start(void);
 void flash_program_end(void);
 void flash_program_word(uint16_t dat) __naked;

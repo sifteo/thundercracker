@@ -3,6 +3,8 @@
 #include <sifteo.h>
 #include "WordGame.h"
 
+using namespace Sifteo;
+
 
 /*
  * XXX: Only used for bsearch() currently. We should think about what kind of low-level VM

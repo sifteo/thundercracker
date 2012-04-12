@@ -1,116 +1,85 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include <protocol.h>
-#include <sifteo/machine.h>
 
+#include "machine.h"
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
+#include "event.h"
 #include "flashlayer.h"
-
+#include "svmdebugpipe.h"
+#include "tasks.h"
 #include "neighbors.h"
+#include "paintcontrol.h"
 
 
-using namespace Sifteo;
-
-/*
- * Frame rate control parameters
- *
- * fpsLow --
- *    "Minimum" frame rate. If we're waiting more than this long
- *    for a frame to render, give up. Prevents us from getting wedged
- *    if a cube stops responding.
- *
- * fpsHigh --
- *    Maximum frame rate. Paint will always block until at least this
- *    long since the previous frame, in order to provide a global rate
- *    limit for the whole app.
- *
- * fpContinuous --
- *    When at least this many frames are pending acknowledgment, we
- *    switch to continuous rendering mode. Instead of waiting for a
- *    signal from us, the cubes will just render continuously.
- *
- * fpSingle --
- *    The inverse of fpContinuous. When at least this few frames are
- *    pending, we switch back to one-shot triggered rendering.
- *
- * fpMax --
- *    Maximum number of pending frames to track. If we hit this limit,
- *    Paint() calls will block.
- *
- * fpMin --
- *    Minimum number of pending frames to track. If we go below this
- *    limit, we'll start ignoring acknowledgments.
- */
-
-static const SysTime::Ticks fpsLow = SysTime::hzTicks(4);
-static const SysTime::Ticks fpsHigh = SysTime::hzTicks(60);
-static const int8_t fpContinuous = 3;
-static const int8_t fpSingle = -4;
-static const int8_t fpMax = 5;
-static const int8_t fpMin = -8;
-
-
-#ifndef DISABLE_CUBE
-
-
-void CubeSlot::loadAssets(_SYSAssetGroup *a)
+void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 {
-    _SYSAssetGroupCube *ac = assetCube(a);
+    /*
+     * Trigger the beginning of an asset group installation for this cube.
+     * There must be a SYSAssetLoader currently set.
+     */
 
-    if (!ac)
+    // Translate and verify addresses
+    SvmMemory::PhysAddr groupPA;
+    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
         return;
-    if (isAssetGroupLoaded(a))
+    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+    _SYSAssetLoader *L = CubeSlots::assetLoader;
+    if (!L) return;
+    _SYSAssetLoaderCube *LC = assetLoaderCube(L);
+    if (!LC) return;
+    _SYSAssetGroupCube *GC = assetGroupCube(G);
+    if (!GC) return;
+
+    // Read (cached) asset group header. Must be valid.
+    const _SYSAssetGroupHeader *headerVA =
+        reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
+    _SYSAssetGroupHeader header;
+    if (!SvmMemory::copyROData(header, headerVA))
         return;
-    
-    // XXX: Pick a base address too!
-    ac->progress = 0;
-    
-    LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
-    
+
+    // Because we're storing this in a 32-bit struct field, squash groupVA
+    SvmMemory::squashPhysicalAddr(groupVA);
+
+    // Initialize state
+    Atomic::ClearLZ(L->complete, id());
+    GC->baseAddr = baseAddr;
+    LC->pAssetGroup = groupVA;
+    LC->progress = 0;
+    LC->dataSize = header.dataSize;
+    LC->reserved = 0;
+    LC->head = 0;
+    LC->tail = 0;
+
+    LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
+        id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
+
     DEBUG_ONLY({
         // In debug builds, we log the asset download time
         assetLoadTimestamp = SysTime::ticks();
     });
 
-    FlashRegion region;
-    unsigned entryOffset = a->id * sizeof(AssetIndexEntry);
-    // XXX: this is assuming an offset of 0 for the whole asset segment.
-    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
-    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &region)) {
-        LOG(("failed to get flash block for asset index entry\n"));
-        return;
-    }
-    AssetIndexEntry entry;
-    memcpy(&entry, region.data(), sizeof(AssetIndexEntry));
-    FlashLayer::releaseRegion(region);
+    // Start by resetting the flash decoder.
+    requestFlashReset();
+    Atomic::SetLZ(CubeSlots::flashAddrPending, id());
 
-    unsigned offset = entry.offset;
-    if (!FlashLayer::getRegion(offset, sizeof(AssetGroupHeader), &region)) {
-        LOG(("failed to get flash block for asset group header\n"));
-        return;
-    }
-    AssetGroupHeader header;
-    memcpy(&header, region.data(), sizeof(AssetGroupHeader));
-    FlashLayer::releaseRegion(region);
+    // Only _after_ triggering the reset, start the actual download
+    // by marking cubeVec as valid.
+    Atomic::SetLZ(L->cubeVec, id());
 
-    a->offset = offset + sizeof(AssetGroupHeader);
-    a->size = header.dataSize;
-    
-    // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
+    // Start filling our asset data FIFOs.
+    Tasks::setPending(Tasks::AssetLoader);
+}
+
+void CubeSlot::requestFlashReset()
+{
     Atomic::And(CubeSlots::flashResetSent, ~bit());
     Atomic::Or(CubeSlots::flashResetWait, bit());
-    
-    // Then start streaming asset data for this group
-    a->reqCubes |= bit();
-    loadGroup = a;
 }
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
@@ -139,7 +108,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     // First priority: Send video buffer updates
 
-    codec.encodeVRAM(tx.packet, vbuf);
+    if (codec.encodeVRAM(tx.packet, vbuf))
+        paintControl.vramFlushed(this);
 
     // Second priority: Download assets to flash
 
@@ -176,24 +146,32 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     } else {
         // Not waiting on a reset. See if we need to send asset data.
+        // Since we can't read external flash pages in our ISR, we're
+        // restricted to accessing user RAM only. So, we send data from
+        // a small user-ram buffer, and use a Task to refill that buffer.
 
-        bool done = false;
-        _SYSAssetGroup *group = loadGroup;
+        _SYSAssetLoader *L = CubeSlots::assetLoader;
+        if (isAssetLoading(L)) {
+            _SYSAssetLoaderCube *LC = assetLoaderCube(L);
+            if (LC) {
+                bool done = false;
+                bool escape = codec.flashSend(tx.packet, LC, id(), done);
 
-        if (group && !(group->doneCubes & bit()) &&
-            codec.flashSend(tx.packet, group, assetCube(group), done)) {
+                if (done) {
+                    /* Finished sending the group, and the cube finished writing it. */
+                    Atomic::SetLZ(L->complete, id());
+                    Event::setPending(_SYS_CUBE_ASSETDONE, id());
 
-            if (done) {
-                /* Finished asset loading */
-                Atomic::SetLZ(group->doneCubes, id());
-                Event::setPending(_SYS_CUBE_ASSETDONE, id());
+                    DEBUG_ONLY({
+                        // In debug builds only, we log the asset download time
+                        float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                        LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
+                    });
+                }
 
-                DEBUG_ONLY({
-                    // In debug builds only, we log the asset download time
-                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                    LOG(("FLASH[%d]: Finished loading group %p in %.3f seconds\n",
-                         id(), group, seconds));
-                })
+                // We can't put anything else in this packet if an escape was written
+                if (escape)
+                    return true;
             }
         }
     }
@@ -239,12 +217,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (!connected()) {
         Event::setPending(_SYS_CUBE_FOUND, id());
         setConnected();
-		
-        uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
-        LOG(("%u cubes connected\n", count));
-        if (count >= CubeSlots::minCubes) {
-            Event::resume();
-        }
+
+        LOG(("%u cubes connected\n",
+            Intrinsic::POPCOUNT(CubeSlots::vecConnected)));
     }
     
     // If we're expecting a stale packet, completely ignore its contents.
@@ -252,23 +227,21 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
         return;
     }
-    
+
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
         // This ACK includes a valid frame_count counter
 
-        if (CubeSlots::frameACKValid & bit()) {
-            // Some frame(s) finished rendering.
-
-            uint8_t frameACK = ack->frame_count - framePrevACK;
-            Atomic::Add(pendingFrames, -(int32_t)frameACK);
-
-        } else {
-            Atomic::SetLZ(CubeSlots::frameACKValid, id());
-        }
-
+        uint8_t delta = ack->frame_count - framePrevACK;
         framePrevACK = ack->frame_count;
+
+        if ((CubeSlots::frameACKValid & bit()) == 0) {
+            Atomic::SetLZ(CubeSlots::frameACKValid, id());
+        } else if (delta) {
+            // Some frame(s) finished rendering.
+            paintControl.ackFrames(this, delta);
+        }
     }
 
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
@@ -326,14 +299,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // Translate from radio packet coordinates to SDK coordinates
         int8_t x = -ack->accel[0];
         int8_t y = -ack->accel[1];
+        int8_t z = -ack->accel[2];
 
-        //test for gestures
+        // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
         accel.update(x, y);
 
-        if (x != accelState.x || y != accelState.y) {
+        if (x != accelState.x || y != accelState.y || z != accelState.z) {
             accelState.x = x;
             accelState.y = y;
+            accelState.z = z;
             Event::setPending(_SYS_CUBE_ACCELCHANGE, id());
         }
     }
@@ -365,22 +340,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
         // Has valid battery voltage
         
-        rawBatteryV = ack->battery_v;
+        rawBatteryV = ack->battery_v[0] | (ack->battery_v[1] << 8);
     }
     
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
         // Has valid hardware ID
-        
-        memcpy(hwid.bytes, ack->hwid, sizeof ack->hwid);
-    }
-}
 
-void CubeSlot::getRawNeighbors(uint8_t buf[4]) {
-    // XXX: Raw neighbor data for testing/demoing only
-    buf[0] = neighbors[0];
-    buf[1] = neighbors[1];
-    buf[2] = neighbors[2];
-    buf[3] = neighbors[3];
+        STATIC_ASSERT(sizeof hwid == sizeof ack->hwid);
+        memcpy(hwid, ack->hwid, sizeof ack->hwid);
+        Atomic::SetLZ(CubeSlots::hwidValid, id());
+    }
 }
 
 // Are we being touched right now?
@@ -400,178 +369,35 @@ void CubeSlot::radioTimeout()
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
         LOG(("%u cubes connected\n", count));
-        if (count < CubeSlots::minCubes) {
-            Event::pause();
-        }
     }
 }
 
-void CubeSlot::waitForPaint()
+uint64_t CubeSlot::getHWID()
 {
     /*
-     * Wait until we're allowed to do another paint. Since our
-     * rendering is usually not fully synchronous, this is not nearly
-     * as strict as waitForFinish()!
+     * Return this cube's Hardware ID. If we don't know the ID yet, this
+     * blocks until the ID can be retrieved over the radio. (This happens
+     * as a side-effect of completing a Flash Reset.)
      */
 
-    for (;;) {
-        Atomic::Barrier();
-        SysTime::Ticks now = SysTime::ticks();
+    if (!(CubeSlots::hwidValid & bit())) {
+        if (!enabled() || !connected()) {
+            // Cube disappeared! Cancel.
+            return _SYS_INVALID_HWID;
+        }
 
-        // Watchdog expired? Give up waiting.
-        if (now > (paintTimestamp + fpsLow))
-            break;
+        // If no assets are loading / have loaded, send our own reset.
+        // (We don't want to stomp on an ongoing asset download!)
+        if (!isAssetLoading())
+            requestFlashReset();
 
-        // Wait for minimum frame rate AND for pending renders
-        if (now > (paintTimestamp + fpsHigh)
-            && pendingFrames <= fpMax)
-            break;
-
-        Radio::halt();
+        do {
+            Tasks::work();
+            Radio::halt();
+        } while (!(CubeSlots::hwidValid & bit()));
     }
+    
+    uint64_t result = 0;
+    memcpy(&result, hwid, sizeof hwid);
+    return result;
 }
-
-void CubeSlot::waitForFinish()
-{
-    /*
-     * Wait until all previous rendering has finished, and all of VRAM
-     * has been updated over the radio.  Does *not* wait for any
-     * minimum frame rate. If no rendering is pending, we return
-     * immediately.
-     *
-     * Continuous rendering is turned off, if it was on.
-     */
-
-    uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
-    if (flags & _SYS_VF_CONTINUOUS) {
-        /*
-         * If we were in continuous rendering mode, pendingFrames isn't
-         * exact; it's more of a running accumulator. In that case, we have
-         * to turn off continuous rendering mode, flush everything over the
-         * radio, then do one Paint(). This is what paintSync() does.
-         * So, at this point we just need to reset pendingFrames to zero
-         * and turn off continuous mode.
-         */
-         
-        pendingFrames = 0;
-
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags & ~_SYS_VF_CONTINUOUS);
-        VRAM::unlock(*vbuf);
-    }
-     
-    for (;;) {
-        Atomic::Barrier();
-        SysTime::Ticks now = SysTime::ticks();
-
-        if (now > (paintTimestamp + fpsLow)) {
-            // Watchdog expired. Give up waiting, and forcibly reset pendingFrames.
-            pendingFrames = 0;
-            break;
-        }
-
-        if (pendingFrames <= 0 && (vbuf == 0 || vbuf->cm32 == 0)) {
-            // No pending renders or VRAM updates
-            break;
-        }
-
-        Radio::halt();
-    }
-}
-
-void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
-{
-    _SYSAssetGroup *group = loadGroup;
-        
-    if (vbuf) {
-        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
-        int32_t pending = Atomic::Load(pendingFrames);
-        int32_t newPending = pending;
-
-        /*
-         * Keep pendingFrames above the lower limit. We make this
-         * adjustment lazily, rather than doing it from inside the
-         * ISR.
-         */
-        if (pending < fpMin)
-            newPending = fpMin;
-
-        /*
-         * Count all requested paint operations, so that we can
-         * loosely match them with acknowledged frames. This isn't a
-         * strict 1:1 mapping, but it's used to close the loop on
-         * repaint speed.
-         *
-         * We don't want to unlock() until we're actually ready to
-         * start transmitting data over the radio, so we'll detect new
-         * frames by either checking for bits that are already
-         * unlocked (in needPaint) or bits that are pending unlock.
-         */
-        uint32_t needPaint = vbuf->needPaint | vbuf->cm32next;
-        if (needPaint)
-            newPending++;
-
-        /*
-         * We turn on continuous rendering only when we're doing a
-         * good job at keeping the cube busy continuously, as measured
-         * using our pendingFrames counter. We have some hysteresis,
-         * so that continuous rendering is only turned off once the
-         * cube is clearly pulling ahead of our ability to provide it
-         * with frames.
-         *
-         * We only allow continuous rendering when we aren't downloading
-         * assets to this cube. Continuous rendering makes flash downloading
-         * extremely slow- flash is strictly lower priority than graphics
-         * on the cube, but continuous rendering asks the cube to render
-         * graphics as fast as possible.
-         */
-
-        if (group && !(group->doneCubes & bit())) {
-            flags &= ~_SYS_VF_CONTINUOUS;
-        } else {
-            if (newPending >= fpContinuous)
-                flags |= _SYS_VF_CONTINUOUS;
-            if (newPending <= fpSingle)
-                flags &= ~_SYS_VF_CONTINUOUS;
-        }
-                
-        /*
-         * If we're not using continuous mode, each frame is triggered
-         * explicitly by toggling a bit in the flags register.
-         *
-         * We can always trigger a render by setting the TOGGLE bit to
-         * the inverse of framePrevACK's LSB. If we don't know the ACK data
-         * yet, we have to punt and set continuous mode for now.
-         */
-        if (!(flags & _SYS_VF_CONTINUOUS) && needPaint) {
-            if (CubeSlots::frameACKValid & bit()) {
-                flags &= ~_SYS_VF_TOGGLE;
-                if (!(framePrevACK & 1))
-                    flags |= _SYS_VF_TOGGLE;
-            } else {
-                flags |= _SYS_VF_CONTINUOUS;
-            }
-        }
-
-        /*
-         * Atomically apply our changes to pendingFrames.
-         */
-        Atomic::Add(pendingFrames, newPending - pending);
-
-        /*
-         * Now we're ready to set the ISR loose on transmitting this frame over the radio.
-         */
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
-        VRAM::unlock(*vbuf);
-        vbuf->needPaint = 0;
-    }
-
-    /*
-     * We must always update paintTimestamp, even if this turned out
-     * to be a no-op. An application which makes no changes to VRAM
-     * but just calls paint() in a tight loop should iterate at the
-     * 'fastPeriod' defined above.
-     */
-    paintTimestamp = timestamp;
-}
-
-#endif // DISABLE_CUBE

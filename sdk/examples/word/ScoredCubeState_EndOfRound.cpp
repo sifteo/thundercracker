@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace Sifteo;
+
 const unsigned START_SCREEN_CUBE_INDEX = 1;
 const unsigned SCORE_RHS_X = 9;
 const unsigned SCORE_RHS_Y = 2;
@@ -63,7 +65,7 @@ void ScoredCubeState_EndOfRound::paint()
             break;
 
         default:
-            vid.BG0_drawAsset(Vec2(0,0), TileBG);
+            vid.BG0_drawAsset(vec(0,0), TileBG);
             break;
         }
 
@@ -79,7 +81,7 @@ void ScoredCubeState_EndOfRound::paint()
         unsigned frame = (unsigned) (animTime * ScoreBackground.frames);
         frame = MIN(frame, ScoreBackground.frames - 1);
 
-        vid.BG0_drawAsset(Vec2(0, 0), ScoreBackground, frame);
+        vid.BG0_drawAsset(vec(0, 0), ScoreBackground, frame);
         return;
     }
 
@@ -87,31 +89,31 @@ void ScoredCubeState_EndOfRound::paint()
     {
     default:
         // paint "Score" asset
-        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
-        vid.BG0_drawAsset(Vec2(4,0), Score);
+        vid.BG0_drawAsset(vec(0,0), ScoreBackground, ScoreBackground.frames - 1);
+        vid.BG0_drawAsset(vec(4,0), Score);
         {
             String<17> string;
             string << GameStateMachine::getScore();
             BG1Helper bg1(getStateMachine().getCube());
-            paintScoreNumbers(bg1, Vec2(SCORE_RHS_X,SCORE_RHS_Y), string);
+            paintScoreNumbers(bg1, vec(SCORE_RHS_X,SCORE_RHS_Y), string);
             bg1.Flush(); // TODO only flush if mask has changed recently
         }
         WordGame::instance()->setNeedsPaintSync();
         break;
 
     case START_SCREEN_CUBE_INDEX:
-        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
+        vid.BG0_drawAsset(vec(0,0), ScoreBackground, ScoreBackground.frames - 1);
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
             float animTime =
-                    fmodf(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
+                    fmod(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
             animTime = MIN(animTime, 1.f);
             unsigned frame = (unsigned) (animTime * anim.frames);
             frame = MIN(frame, anim.frames - 1);
 
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(5, 2), anim, frame);
+            bg1.DrawAsset(vec(5, 2), anim, frame);
             bg1.Flush(); // TODO only flush if mask has changed recently
             WordGame::instance()->setNeedsPaintSync();
         }
@@ -119,8 +121,8 @@ void ScoredCubeState_EndOfRound::paint()
 
     case 0:
         // paint "high scores" asset
-        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
-        vid.BG0_drawAsset(Vec2(1,0), HighScores);
+        vid.BG0_drawAsset(vec(0,0), ScoreBackground, ScoreBackground.frames - 1);
+        vid.BG0_drawAsset(vec(1,0), HighScores);
         BG1Helper bg1(getStateMachine().getCube());
 
         for (int i = arraysize(SavedData::sHighScores) - 1;
@@ -134,7 +136,7 @@ void ScoredCubeState_EndOfRound::paint()
             String<17> string;
             string << SavedData::sHighScores[i];
             paintScoreNumbers(bg1,
-                              Vec2(SCORE_RHS_X,SCORE_RHS_Y + (arraysize(SavedData::sHighScores) - 1 - i) * 2),
+                              vec(SCORE_RHS_X,SCORE_RHS_Y + (arraysize(SavedData::sHighScores) - 1 - i) * 2),
                               string);
         }
         bg1.Flush(); // TODO only flush if mask has changed recently

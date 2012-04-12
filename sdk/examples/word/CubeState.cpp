@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace Sifteo;
+
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
     mStateMachine = &csm;

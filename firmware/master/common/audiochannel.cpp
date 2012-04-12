@@ -1,124 +1,97 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
-#include <sifteo/macros.h>
-#include <sifteo/math.h>
-#include <sifteo/audio.h>
+#include "macros.h"
+#include "svmmemory.h"
 #include "audiochannel.h"
-#include "speexdecoder.h"
 #include <limits.h>
+#include "audiomixer.h"
 
-using namespace Sifteo;
-
-AudioChannelSlot::AudioChannelSlot() :
-    mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
+void AudioChannelSlot::init()
 {
+    state = STATE_STOPPED;
 }
 
-void AudioChannelSlot::init(_SYSAudioBuffer *b)
+void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 {
-    buf.init(b);
-    volume = Audio::MAX_VOLUME / 2;
+    increment = (sampleRate << SAMPLE_FRAC_SIZE) / AudioMixer::instance.sampleRate();
 }
 
-void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)
 {
-    // if this is a sample & either the passed in decoder is null, or our
-    // internal decoder is not null, we've got problems
-    ASSERT(!(mod->type == Sample && dec == NULL));
-    ASSERT(!(mod->type == Sample && this->decoder != NULL));
+    mod = *module;
+    samples.init(&mod, mod.loopStart);
+    offset = 0;
 
-    this->decoder = dec;
-    this->mod = mod;
-    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    if (this->decoder != 0) {
-        this->decoder->setOffset(mod->offset, mod->size);
+    // Let the module decide
+    if (loopMode == _SYS_LOOP_UNDEF)
+        loopMode = _SYSAudioLoopType(mod.loopType);
+
+    if (loopMode == _SYS_LOOP_ONCE) {
+        state &= ~STATE_LOOP;
+    } else {
+        state |= STATE_LOOP;
     }
+
+    // Set up initial playback parameters
+    setSpeed(mod.sampleRate);
+    setVolume(mod.volume);
+
+    state &= ~STATE_STOPPED;
 }
 
-void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec)
+uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 {
-    this->pcmDecoder = dec;
-    this->mod = mod;
-    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    if (this->pcmDecoder != 0) {
-        this->pcmDecoder->setOffset(mod->offset, mod->size);
-    }
-}
+    // Early out if this channel is in the process of being stopped by the main thread.
+    if (state & STATE_STOPPED)
+        return 0;
 
-int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
-{
-    ASSERT(!(state & STATE_STOPPED));
+    uint64_t fpLimit = state & STATE_LOOP
+                     ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
+                     : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
+    uint32_t framesLeft = len;
 
-    int mixable = MIN(buf.readAvailable() / sizeof(*buffer), len);
-    if (mixable > 0) {
-        for (int i = 0; i < mixable; i++) {
-            ASSERT(buf.readAvailable() >= 2);
-            int16_t src = buf.dequeue() | (buf.dequeue() << 8);
-
-            // Mix this sample, after volume adjustment, with the existing buffer contents
-            int32_t sample = *buffer + ((src * (int32_t)this->volume) / Audio::MAX_VOLUME);
-            
-            // TODO - more subtle compression instead of hard limiter
-            *buffer = Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
-            buffer++;
-        }
-        // if we have nothing buffered, and there's nothing else to read, we're done
-        if (decoder && decoder->endOfStream() && buf.readAvailable() == 0) {
-            if (this->state & STATE_LOOP) {
-                this->decoder->setOffset(mod->offset, mod->size);
-            }
-            else {
-                return -1;
+    while(framesLeft > 0) {
+        // Looping logic
+        if (offset > fpLimit) {
+            if (state & STATE_LOOP) {
+                uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
+                offset = fpLoopStart + (offset - fpLimit);
+            } else {
+                stop();
+                break;
             }
         }
-        else if (pcmDecoder && pcmDecoder->endOfStream() && buf.readAvailable() == 0) {
-            if (this->state & STATE_LOOP) {
-                this->pcmDecoder->setOffset(mod->offset, mod->size);
-            }
-            else {
-                return -1;
-            }
-        }
-    }
-    return mixable;
-}
 
-void AudioChannelSlot::fetchData()
-{
-    ASSERT(!(state & STATE_STOPPED));
-    switch (mod->type) {
-    case Sample: {
-        if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {
-            return;
+        // Compute the next sample
+        int32_t sample;
+        if ((offset & SAMPLE_FRAC_MASK) == 0) {
+            // Offset is aligned with an asset sample
+            sample = samples[offset >> SAMPLE_FRAC_SIZE];
+        } else {
+            int32_t sample_next = samples[(offset >> SAMPLE_FRAC_SIZE) + 1];
+            sample = samples[offset >> SAMPLE_FRAC_SIZE];
+            // Linearly interpolate between the two relevant samples
+            sample += ((sample_next - sample) * (offset & SAMPLE_FRAC_MASK)) >> SAMPLE_FRAC_SIZE;
         }
-        
-        unsigned bytesAvail;
-        uint8_t *p = buf.reserve(SpeexDecoder::DECODED_FRAME_SIZE, &bytesAvail);
-        uint32_t sz = decoder->decodeFrame(p, bytesAvail);
-        ASSERT(sz == SpeexDecoder::DECODED_FRAME_SIZE || sz == 0);
-        if (sz) {
-            buf.commit(sz);
-        }
-    }
-        break;
-    case PCM: {
-        if (pcmDecoder->endOfStream() || buf.writeAvailable() < PCMDecoder::FRAME_SIZE) {
-            return;
-        }
-        
-        unsigned bytesAvail;
-        uint8_t *p = buf.reserve(PCMDecoder::FRAME_SIZE, &bytesAvail);
-        uint32_t sz = pcmDecoder->decodeFrame(p, bytesAvail);
-        ASSERT(sz <= PCMDecoder::FRAME_SIZE);
-        buf.commit(sz);
-    }
-    default:
-        break;
-    }
-}
 
-void AudioChannelSlot::onPlaybackComplete()
-{
-    state |= STATE_STOPPED;
-    this->decoder = 0;
-    this->mod = 0;
+        // Mix volume
+        sample = (sample * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME;
+
+        // Mix into buffer
+        sample += *buffer;
+        // TODO - more subtle compression instead of hard limiter
+        *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+
+        // Advance to the next output sample
+        offset += increment;
+        framesLeft--;
+        buffer++;
+    }
+
+    samples.releaseRef();
+
+    return len - framesLeft;
 }

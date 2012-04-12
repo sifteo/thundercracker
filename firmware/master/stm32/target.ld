@@ -1,13 +1,22 @@
 ENTRY(_start)
 
+/*
+ * Our ram is split into 3 sections:
+ * - system ram, used for .data and stack of the firmware
+ * - flash block cache, used to cache blocks of game code/data from external flash
+ * - user ram, used as .data and stack for user applications
+ */
 MEMORY
 {
-    RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 64K
+    SYSRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 28K
+    CACHERAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM), LENGTH = 4K
+    USERRAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM) + LENGTH(CACHERAM), LENGTH = 32K
+
     FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
 }
 
-/* Stack starts at the top of RAM */
-_stack = 0x20000000 + (64*1024) - 4;
+/* Main stack starts at the top of SYSRAM */
+_stack = ORIGIN(SYSRAM) + LENGTH(SYSRAM);
 
 SECTIONS
 {
@@ -70,18 +79,32 @@ SECTIONS
         __data_start = .;
         *(.data .data.*)
         __data_end = .;
-    } >RAM
+    } >SYSRAM
 
     /*
      * Zero-initialized data. Nothing is stored in flash.
      */
 
-    .bss : {
+    .bss (NOLOAD) : {
         . = ALIGN(4);
         __bss_start = .;
         *(.bss .bss.*);
         __bss_end = .;
-    } >RAM   
+    } >SYSRAM
+
+    .blockcache (NOLOAD) : {
+        . = ALIGN(4);
+        __blockcache_start = .;
+        *(.blockcache);
+        __blockcache_end = .;
+    } >CACHERAM
+
+    .userram (NOLOAD) : {
+        . = ALIGN(4);
+        __userram_start = .;
+        *(.userram);
+        __userram_end = .;
+    } >USERRAM
 
     /*
      * Junk we don't want.
@@ -142,6 +165,6 @@ DMA2 = 0x40020400;
 RCC = 0x40021000;
 FLASH = 0x40022000;
 CRC = 0x40023000;
-USBOTG = 0x50000000;
+OTG = 0x50000000;
 NVIC = 0xe000e000;
 DBGMCU_CR = 0xe0042004;

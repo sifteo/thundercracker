@@ -6,6 +6,8 @@
 #include "GameStateMachine.h"
 #include "ScoredCubeState_OldWord.h"
 
+using namespace Sifteo;
+
 ScoredCubeState_OldWord::ScoredCubeState_OldWord()
 {
 }

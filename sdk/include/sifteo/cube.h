@@ -4,295 +4,248 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_CUBE_H
-#define _SIFTEO_CUBE_H
+#pragma once
+#ifdef NOT_USERSPACE
+#   error This is a userspace-only header, not allowed by the current build.
+#endif
 
-#include <sifteo/asset.h>
-#include <sifteo/video.h>
-
-#define CUBE_ID_UNDEFINED (0xff)
-#define NUM_SIDES (4)
-#define SIDE_TOP (0)
-#define SIDE_LEFT (1)
-#define SIDE_BOTTOM (2)
-#define SIDE_RIGHT (3)
-#define SIDE_UNDEFINED (-1)
-
+#include <sifteo/macros.h>
+#include <sifteo/math.h>
 
 namespace Sifteo {
 
-/**
- * These lookup tables should be relocated to an external translation unit;
- * their inclusion here is tomporary.
- * 
- * Also todo: replace raw neighbors with coalesced neighbors onces that's up and
- * working.
- */
-
-// unit vectors for directions
-static const Vec2 kSideToUnit[4] = {
-  Vec2(0, -1),
-  Vec2(-1, 0),
-  Vec2(0, 1),
-  Vec2(1, 0)
-};
-
-// complex rotation vectors for directions
-static const Vec2 kSideToQ[4] = { 
-  Vec2(1,0),
-  Vec2(0,1),
-  Vec2(-1,0),
-  Vec2(0,-1)
-};
-
-#ifdef SIFTEO_SIMULATOR
-
-// internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
-  VidMode::ROT_NORMAL,
-  VidMode::ROT_LEFT_90,
-  VidMode::ROT_180,
-  VidMode::ROT_RIGHT_90
-};
-
-#else
-// internal -- used by setOrientation()
-static const VidMode::Rotation kSideToRotation[4] = {
-  VidMode::ROT_NORMAL,
-  VidMode::ROT_RIGHT_90,
-  VidMode::ROT_180,
-  VidMode::ROT_LEFT_90
-};
-
-#endif
-
-// internal -- used by orientTo()
-static const int kOrientationTable[4][4] = {
-  {2,1,0,3},
-  {3,2,1,0},
-  {0,3,2,1},
-  {1,0,3,2}
-};
-
 
 /**
- * Represents one Sifteo cube. These Cube objects are statically
- * allocated, and really they represent a slot for a potential cube in
- * your game. If you only work with three cubes, you only need to
- * allocate three cube objects.  Every cube starts out in a
- * disconnected state.
+ * Side is an enumeration which names the four sides of a Sifteo cube.
+ * Depending on context, these names can refer to either "physical" sides
+ * (relative to the hardware in a cube) or "virtual" sides (relative to the
+ * current screen rotation.)
  */
 
-class Cube {
- public:
-    typedef _SYSCubeID ID;
-    typedef _SYSSideID Side;
-    typedef _SYSNeighborState Neighborhood;
-	typedef _SYSTiltState  TiltState;
-	
-	Cube()
-		: mID(CUBE_ID_UNDEFINED) {}
-	
-    Cube(ID id)
-        : mID(id) {}
+enum Side {
+    TOP = 0,
+    LEFT,
+    BOTTOM,
+    RIGHT,
+    NUM_SIDES,
+    NO_SIDE = -1
+};
+
+/**
+ * CubeID is the main Cube data type that games should be using, but it
+ * is not a POD type. PCubeID is a POD type that can be used to store
+ * cube IDs, and to construct a CubeID when necessary.
+ */
+typedef _SYSCubeID PCubeID;
+
+/**
+ * CubeID is a lightweight identifier for one Sifteo cube. It is a small
+ * unsigned integer which refers to a "cube slot", a collection of resources
+ * that the operating system maintains for each cube or potential cube.
+ *
+ * CubeID objects can be used as accessors for state that is stored in this
+ * "cube slot", and as mutators to change the state of the slot. Use a CubeID
+ * to read sensor state from a cube, to connect a new cube, or as a parameter
+ * for other APIs which need to tell cubes apart.
+ */
+
+struct CubeID {
+    _SYSCubeID sys;
+
+    /// The maximum number of distinct CubeIDs.
+    static const _SYSCubeID NUM_SLOTS = _SYS_NUM_CUBE_SLOTS;
+
+    /// A reserved ID, used to mark undefined CubeIDs.
+    static const _SYSCubeID UNDEFINED = _SYS_CUBE_ID_INVALID;
 
     /**
-     * Prepare this cube for use. Tell the system to start trying to
-     * connect to a cube, and initialize the VideoBUffer.
+     * Default constructor. By default, a CubeID is initialized to a
+     * special Undefined value. This value can be tested for with the
+     * isDefined() predicate.
      */
+    CubeID() : sys(UNDEFINED) {}
 
-    void enable(ID id=CUBE_ID_UNDEFINED) {
-		if (id != CUBE_ID_UNDEFINED) {
-			mID = id;
-		}
-        ASSERT(mID != CUBE_ID_UNDEFINED);
-        vbuf.init();
-        _SYS_setVideoBuffer(mID, &vbuf.sys);
-        _SYS_enableCubes(Intrinsic::LZ(mID));
-    }
+    /**
+     * Initialize a CubeID with a concrete slot value. Slots are numbered
+     * from 0 to NUM_SLOTS - 1.
+     */
+    CubeID(_SYSCubeID sys) : sys(sys) {}
 
-    void disable() {
-        _SYS_disableCubes(Intrinsic::LZ(mID));
-    }
-    
-    void loadAssets(AssetGroup &group) {
-        _SYS_loadAssets(mID, &group.sys);
+    /**
+     * Implicit conversion to _SYSCubeID, for use in low-level system calls.
+     */
+    operator _SYSCubeID() const {
+        return sys;
     }
 
     /**
-     * Get the asset loading progress, on this cube, scaled between 0 and 'max'.
-     * By default, this returns percent complete.
+     * Return the _SYSCubeIDVector bit associated with this ID. These bits
+     * are used for some system calls, and they can be used to quickly
+     * describe a set of cubes.
      */
-    
-    int assetProgress(AssetGroup &group, int max=100) {
-        ASSERT(id() < arraysize(group.cubes));
-        return group.cubes[id()].progress * max / group.sys.size;
-    }
-    
-    bool assetDone(AssetGroup &group) {
-        return !!(group.sys.doneCubes & Sifteo::Intrinsic::LZ(id()));
-    }
-
-    ID id() const {
-        return mID;
-    }
-    
-    /**
-     * Retrieve the neighor on the given is, of CUBE_ID_UNDEFINED if it is open.
-     */
-    
-    ID physicalNeighborAt(Side side) const {
-        ASSERT(side >= 0);
-        ASSERT(side < NUM_SIDES);
-        _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
-        return state.sides[side];
-    }
-    
-    ID hasPhysicalNeighborAt(Side side) const {
-        return physicalNeighborAt(side) != CUBE_ID_UNDEFINED;
+     
+    _SYSCubeIDVector bit() const {
+        return 0x80000000 >> sys;
     }
     
     /**
-     * If the current cube is currently neighbored to this, retrieve
-     * the id of it's side, otherwise return SIDE_UNDEFINED.
+     * Is this a CubeID that was initialized with a valid slot number, and
+     * not one that was initialized as undefined?
      */
-    
-    Side physicalSideOf(ID cube) const {
-        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-        _SYSNeighborState state;
-		    _SYS_getNeighbors(mID, &state);
-        for(Side side=0; side<NUM_SIDES; ++side) {
-            if (state.sides[side] == cube) { return side; }
-        }
-        return SIDE_UNDEFINED;
+    bool isDefined() const {
+        return sys != UNDEFINED;
     }
-    
-	Vec2 physicalAccel() const {
-	  _SYSAccelState state;
-	  _SYS_getAccel(mID, &state);
-	  return Vec2(state.x, state.y);
-	}
-
-	TiltState getTiltState() const {
-		TiltState state;
-		_SYS_getTilt(mID, &state);
-
-		return state;
-	}
 
     /**
-     * Retrieve the current LCD rotation from the video buffer.
+     * Return the physical accelerometer state, as a signed byte-vector.
      */
-    
-    VidMode::Rotation rotation() const {
-        const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
-        uint8_t flags = vbuf.peekb(offsetof(_SYSVideoRAM, flags));
-        return (VidMode::Rotation)(flags & mask);
+    Byte3 accel() const {
+        ASSERT(sys < NUM_SLOTS);
+        _SYSByte4 v;
+        v.value = _SYS_getAccel(*this);
+        return vec(v.x, v.y, v.z);
     }
-    
+
     /**
-     * Map the LCD rotation mask to screen orientation.  This is the side
-     * which maps to the physical "top" of the screen.
+     * Return the 'tilt' state, derived from the raw accelerometer data
+     * by a built-in filter. Tilt is a vector, where each component is
+     * in the set (-1, 0, +1).
      */
-    
-    Side orientation() const {
-      #ifdef SIFTEO_SIMULATOR
-        switch(rotation()) {
-            case VidMode::ROT_NORMAL: return SIDE_TOP;
-            case VidMode::ROT_LEFT_90: return SIDE_LEFT;
-            case VidMode::ROT_180: return SIDE_BOTTOM;
-            case VidMode::ROT_RIGHT_90: return SIDE_RIGHT;
-            default: return SIDE_UNDEFINED;
-        }
-      #else
-        switch(rotation()) {
-            case VidMode::ROT_NORMAL: return SIDE_TOP;
-            case VidMode::ROT_RIGHT_90: return SIDE_LEFT;
-            case VidMode::ROT_180: return SIDE_BOTTOM;
-            case VidMode::ROT_LEFT_90: return SIDE_RIGHT;
-            default: return SIDE_UNDEFINED;
-        }
-      #endif
+    Byte2 tilt() const {
+        ASSERT(sys < NUM_SLOTS);
+        _SYSByte4 v;
+        v.value = _SYS_getTilt(*this);
+        return vec(v.x, v.y);
     }
-    
-	void setOrientation(Side topSide) {
-		ASSERT(topSide >= 0);
-        ASSERT(topSide < 4);
-	  	VidMode mode(vbuf);
-	  	mode.setRotation(kSideToRotation[topSide]);
-	}
-	
-	void orientTo(const Cube& src) {
-		Side srcSide = src.physicalSideOf(mID);
-		Side dstSide = physicalSideOf(src.mID);
-		ASSERT(srcSide != SIDE_UNDEFINED);
-		ASSERT(dstSide != SIDE_UNDEFINED);
-		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
-		if (srcSide < 0) { srcSide += NUM_SIDES; }
-		setOrientation(kOrientationTable[dstSide][srcSide]);
-	}
-	
-	Side physicalToVirtual(Side side) const {
-        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
-        ASSERT(side >= 0);
-        ASSERT(side < 4);
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        side = (side - rot) % NUM_SIDES;
-        return side < 0 ? side + NUM_SIDES : side;
-        
-	}
-	
-	Side virtualToPhysical(Side side) const {
-        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
-        ASSERT(side >= 0);
-        ASSERT(side < 4);
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        return (side + rot) % NUM_SIDES;
-	}
-	
+
     /**
-     * Like physicalNeighborAt, but relative to the current LCD rotation.
+     * Is this cube being touched right now? Return the current state
+     * of the touch sensor.
      */
-    
-    ID virtualNeighborAt(Side side) const {
-        return physicalNeighborAt(virtualToPhysical(side));
-    }
-    
-    ID hasVirtualNeighborAt(Side side) const {
-        return virtualNeighborAt(side) != CUBE_ID_UNDEFINED;
+    bool isTouching() const {
+        ASSERT(sys < NUM_SLOTS);
+        return _SYS_isTouching(*this);
     }
     
     /**
-     * Like physicalSideOf, but relative to the current LCD rotation.
+     * Is a shake event being detected on this cube?
      */
-    
-    Side virtualSideOf(ID cube) const {
-        return physicalToVirtual(physicalSideOf(cube));
+    bool isShaking() const {
+        ASSERT(sys < NUM_SLOTS);
+        return _SYS_getShake(*this);
     }
+
+    /**
+     * Return the cube's unique 64-bit hardware ID. This ID uniquely
+     * identifies the cube that this slot is paired with.
+     *
+     * The system caches these IDs, so usually this function will return
+     * nearly instantly. However, if the HWID is not yet known, this may block
+     * while we wait on a radio round-trip to discover the HWID.
+     */
+    uint64_t hwID() const {
+        ASSERT(sys < NUM_SLOTS);
+        return _SYS_getCubeHWID(*this);
+    }
+
+    /**
+     * Detach any video buffer which was previously attached to this
+     * cube. After this point, we'll refrain from sending any video updates
+     * to this cube. The cube will retain its existing screen contents.
+     *
+     * Waits for all cubes to finish rendering before detaching.
+     */
+    void detachVideoBuffer() const {
+        ASSERT(sys < NUM_SLOTS);
+        _SYS_finish();
+        _SYS_setVideoBuffer(*this, 0);
+    }
+
+    /**
+     * Get this cube's battery level.
+     *
+     * XXX: Units are currently TBD.
+     */
+    unsigned batteryLevel() const {
+        ASSERT(sys < NUM_SLOTS);
+        return _SYS_getBatteryV(*this);
+    }
+
+    CubeID operator ++() { return ++sys; }
+    CubeID operator ++(int) { return sys++; }
+    CubeID operator --() { return --sys; }
+    CubeID operator --(int) { return sys--; }
+};
+
+
+/**
+ * A Neighborhood is a description of all neighbors for a single cube,
+ * packed into a small value. Each side can be empty, or it can refer to
+ * another cube by its CubeID.
+ */
+
+struct Neighborhood {
+    _SYSNeighborState sys;
+
+    /**
+     * Default constructor. Leaves the Neighborhood uninitialized.
+     */
+    Neighborhood() {}
     
-	Vec2 virtualAccel() const {
-		Side rot = orientation();
-		ASSERT(rot != SIDE_UNDEFINED);
-	  	return physicalAccel() * kSideToQ[rot];
-	}
+    /**
+     * Initialize a Neighborhood from a low-level _SYSNeighborState object.
+     */
+    Neighborhood(_SYSNeighborState sys) : sys(sys) {}
 
-  bool touching() const {
-    return _SYS_isTouching(mID);
-    //uint8_t nbuf[4];
-    //_SYS_getRawNeighbors(mID, nbuf);
-    //return nbuf[0] & 0x40;
-  }
+    /**
+     * Implicit conversion to _SYSNeighborState,
+     * for use in low-level system calls.
+     */
+    operator _SYSNeighborState& () {
+        return sys;
+    }
 
-    VideoBuffer vbuf;
+    /**
+     * Get a Neighborhood representing the physical neighbors for a cube.
+     *
+     * The sides in this Neighborhood are relative to the physical cube
+     * hardware, not to the current screen orientation. (A CubeID object has
+     * no way of knowing what the current screen orientation is.)
+     */
+    Neighborhood(CubeID cube) {
+        ASSERT(cube < cube.NUM_SLOTS);
+        sys.value = _SYS_getNeighbors(cube);
+    }
 
- private:
-    ID mID;
+    /**
+     * Return the neighbor at a particular side.
+     * If no neighbor exists at that side, we return an undefined CubeID.
+     */
+    CubeID neighborAt(Side side) const {
+        ASSERT(side >= 0 && side < NUM_SIDES);
+        return sys.sides[side];
+    }
+
+    /**
+     * Is there a neighbor at this side? This is equivalent to calling
+     * isDefined() on the result of neighborAt().
+     */
+    bool hasNeighborAt(Side side) const {
+        return neighborAt(side).isDefined();
+    }
+
+    /**
+     * If the specified cube is part of this neighborhood (i.e. it was
+     * neighbored to the cube that this Neighborhood was created for),
+     * return the Side where that cube is found. Otherwise, returns NO_SIDE.
+     */
+    Side sideOf(CubeID cube) const {
+        for (Side side = (Side)0; side < NUM_SIDES; ++side)
+            if (sys.sides[side] == cube)
+                return side;
+        return NO_SIDE;
+    }
 };
 
 
 };  // namespace Sifteo
-
-#endif

@@ -4,14 +4,17 @@
 #include "assets.gen.h"
 #include "config.h"
 
-extern Cube gCubes[NUM_CUBES];
-//extern uint8_t gTouchFlags[NUM_CUBES];
+using namespace Sifteo;
 
+// Cube Shmutz
+#define CUBE_ALLOC_MASK (((1<<NUM_CUBES)-1)<<(32-NUM_CUBES))
+
+extern VideoBuffer gVideoBuffers[NUM_CUBES];
 
 // Audio Smutz
 #if SFX_ON
 extern AudioChannel gChannelSfx;
-void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
+void PlaySfx(const AssetAudio& handle, bool preempt=true);
 #else
 #define PlaySfx(...)
 #endif
@@ -19,12 +22,12 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
 
 #if MUSIC_ON
 extern AudioChannel gChannelMusic;
-void PlayMusic(_SYSAudioModule& music, bool loop=true);
+void PlayMusic(const AssetAudio& music, bool loop=true);
 #else
 #define PlayMusic(...)
 #endif
 
-extern Math::Random gRandom;
+extern Random gRandom;
 
 using namespace Sifteo;
 
@@ -35,4 +38,16 @@ using namespace Sifteo;
 #define CORO_END mState=-1;case -1:;}
 
 // Utils
-Cube::Side InferDirection(Vec2 u);
+Side InferDirection(Int2 u);
+int AdvanceTowards(int curr, int targ, int mag);
+
+// temporary until __builtin_clz stops making slinky cranky
+inline unsigned fastclz(unsigned v) { 
+    int x = (0 != (v >> 16)) * 16; 
+    x += (0 != (v >> (x + 8))) * 8; 
+    x += (0 != (v >> (x + 4))) * 4; 
+    x += (0 != (v >> (x + 2))) * 2; 
+    x += (0 != (v >> (x + 1))); 
+    x += (0 != (v >> x)); 
+    return 32 - x; 
+} 
