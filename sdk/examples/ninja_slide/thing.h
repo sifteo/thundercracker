@@ -173,19 +173,6 @@ class Thing {
     }
 
     virtual void onCollision(Thing *other){
-        if (other && id < other->id){
-            LOG(("platform.onCollision: <%d> collided with <%d>\n", id, other->id));
-            Rect b[2];
-            bounds(b);
-            LOG(("platform.onCollision:    my bounds=%.4f %.4f %.1f %.1f vel=%.3f %.3f\n",
-                        b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y, vel.x, vel.y));
-            other->bounds(b);
-            LOG(("platform.onCollision: other bounds=%.4f %.4f %.1f %.1f vel=%.3f %.3f\n", 
-                        b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y, other->vel.x, other->vel.y));
-        } else {
-//             LOG(("platform.onCollision: <%d> collided with edges\n", id ));
-        }
-
         vel = Vec2(0.0f, 0.0f);
         pos = nearestCellCoordinate(pos);
     }

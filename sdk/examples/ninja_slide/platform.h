@@ -21,7 +21,6 @@ class Platform : public Thing {
         if (!isMoving && vel.len2() > 0.0001){
             isMoving = true;
             pWorld->numMovingPlatforms++;
-//             LOG(("Platform %d: slide sound: start\n", id));
             channel.play(sliding_sound, LoopRepeat);
         }
     }
@@ -30,7 +29,6 @@ class Platform : public Thing {
         if (isMoving){
             isMoving = false;
             pWorld->numMovingPlatforms--;
-//             LOG(("Platform %d: slide sound: STOP\n", id));
             channel.stop();
         }
         super::onCollision(other);

@@ -7,18 +7,15 @@ ASSETDEPS += images/*.png $(ASSETS).lua sounds/*.raw
 
 include $(TC_DIR)/sdk/Makefile.rules
 
-ctags: 
-	/usr/local/bin/ctags -Rf tags ../../include .
-echo:
-	echo $(ASSETDEPS)
-
-run: all 
-	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
-	../../../firmware/master/master-sim ninja_slide.elf
-
 siftulator:
 	$(TC_DIR)/emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator &
 
-run_flash_stats: ctags all 
+run: all 
 	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
-	../../../firmware/master/master-sim ninja_slide.elf --flash_stats
+	$(TC_DIR)/firmware/master/master-sim ninja_slide.elf
+
+ctags: 
+	/usr/local/bin/ctags -Rf tags $(TC_DIR)/sdk/include .
+
+run_prog: ctags run
+
