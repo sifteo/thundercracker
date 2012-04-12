@@ -670,7 +670,7 @@ bool _SYS_lti_isConstant(unsigned value);
  * 32 or 64 bits wide.
  */
 
-#if defined(FW_BUILD) || !defined(__clang__)
+#ifdef NOT_USERSPACE
 #  define _SC(n)
 #  define _NORET
 #else
@@ -783,8 +783,6 @@ void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
-void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
-
 uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(117);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(33);
 uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(61);
@@ -794,6 +792,25 @@ uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(51);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(120);
 
+// Audio
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(50);
+uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch) _SC(127);
+void _SYS_audio_stop(_SYSAudioChannelID ch) _SC(52);
+void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
+void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
+int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
+void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
+uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
+
+// Asset group/slot management
+uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
+void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
+uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
+void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
+uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
+
+// Video buffers
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(55);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(121);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(122);
@@ -809,21 +826,7 @@ void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(19);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(35);
 
-uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(50);
-uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch) _SC(127);
-void _SYS_audio_stop(_SYSAudioChannelID ch) _SC(52);
-void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
-void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
-int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
-void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
-uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
-
-uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
-void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
-uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
-void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
-uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
-
+// Asset images
 void _SYS_image_memDraw(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
 void _SYS_image_memDrawRect(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
 void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);

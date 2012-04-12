@@ -4,7 +4,7 @@
 
 Game gGame;
 SystemTime Game::mPrevTime;
-TimeDelta Game::mDt(0.f);
+TimeDelta Game::mDt(0.1f);
 #if PLAYTESTING_HACKS
 float Game::sShakeTime = -1.f;
 #endif
@@ -14,15 +14,10 @@ Game* Game::Inst() {
 }
 
 void Game::Paint() {
-  if (mNeighborDirty) { 
-    LOG(("CHECK NEIGHBORS\n"));
-    CheckMapNeighbors(); 
-  }
-  SystemTime now = SystemTime::now();
+  if (mNeighborDirty) { CheckMapNeighbors(); }
   mPlayer.Update();
-  for(Viewport& view : views) {
-    view.Update();
-  }
+  for(Viewport& view : views) { view.Update(); }
+  if (mTouchMask) { CheckTouches(); }
   DoPaint();
   mAnimFrames++;
 }
@@ -160,8 +155,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 }
 
 void Game::IrisOut(Viewport* view) {
-  view->HideSprites();
-  view->Canvas().bg1.eraseMask(false);
+  view->RestoreCanonicalVram();
   VideoBuffer& mode = view->Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -216,9 +210,7 @@ void Game::ScrollTo(unsigned roomId) {
     if (p != pView) { p->HideLocation(); }
   }
   // hide sprites and overlay
-  pView->HideSprites();
-  VideoBuffer& mode = pView->Canvas();
-  mode.bg1.eraseMask(false);
+  pView->RestoreCanonicalVram();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
@@ -234,7 +226,7 @@ void Game::ScrollTo(unsigned roomId) {
     DrawOffsetMap(pView, mMap.Data(), pos);
     DoPaint();
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
-  mode.bg0.setPanning(vec(0,0));
+  pView->Canvas().bg0.setPanning(vec(0,0));
   DrawRoom(pView, mMap.Data(), roomId);
   DoPaint();
 }
