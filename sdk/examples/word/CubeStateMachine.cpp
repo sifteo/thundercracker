@@ -1002,7 +1002,7 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
 
     case AnimType_HintSlideL:
     case AnimType_HintSlideR:
-        return AnimType_None;// TODO HintBarDisappear;
+        return AnimType_HintBarIdle;// TODO HintBarDisappear;
 
     case AnimType_HintWindUpSlide:
         {
@@ -1013,7 +1013,7 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
                 switch (tiltDir)
                 {
                 default:
-                    return AnimType_None;
+                    return AnimType_HintBarIdle;
 
                 case 1:
                     return AnimType_HintSlideR;
@@ -1023,7 +1023,7 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
                 }
             }
         }
-        return AnimType_None;
+        return AnimType_HintBarIdle;
 
     case AnimType_NormalTilesEnter:
         return AnimType_NotWord;
