@@ -22,14 +22,14 @@ public:
               GPIOPin _nbr_out4,
               HwTimer _output_timer,
               HwTimer _input_timer) :
-                nbr_in1(_nbr_in1),
-                nbr_in2(_nbr_in2),
-                nbr_in3(_nbr_in3),
-                nbr_in4(_nbr_in4),
-                nbr_out1(_nbr_out1),
-                nbr_out2(_nbr_out2),
-                nbr_out3(_nbr_out3),
-                nbr_out4(_nbr_out4),
+                in1(_nbr_in1),
+                in2(_nbr_in2),
+                in3(_nbr_in3),
+                in4(_nbr_in4),
+                out1(_nbr_out1),
+                out2(_nbr_out2),
+                out3(_nbr_out3),
+                out4(_nbr_out4),
                 txPeriodTimer(_output_timer),
                 rxPeriodTimer(_input_timer)
     {}
@@ -60,15 +60,15 @@ private:
     uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
     uint8_t input_bit_counter;
 
-    GPIOPin nbr_in1;
-    GPIOPin nbr_in2;
-    GPIOPin nbr_in3;
-    GPIOPin nbr_in4;
+    GPIOPin in1;
+    GPIOPin in2;
+    GPIOPin in3;
+    GPIOPin in4;
 
-    GPIOPin nbr_out1;
-    GPIOPin nbr_out2;
-    GPIOPin nbr_out3;
-    GPIOPin nbr_out4;
+    GPIOPin out1;
+    GPIOPin out2;
+    GPIOPin out3;
+    GPIOPin out4;
 
     HwTimer txPeriodTimer;
     HwTimer rxPeriodTimer;

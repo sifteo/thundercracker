@@ -4,19 +4,20 @@
  */
 
 #include "neighbor.h"
+#include "board.h"
 
 void Neighbor::init()
 {
     txData = 0;
 
-    nbr_out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
 
-    nbr_in1.irqInit();
-    nbr_in1.irqSetFallingEdge();
-    nbr_in1.irqDisable();
+    in1.irqInit();
+    in1.irqSetFallingEdge();
+    in1.irqDisable();
 
     // this is currently about 87 us
     txPeriodTimer.init(625, 4);
@@ -31,10 +32,10 @@ void Neighbor::init()
 
 void Neighbor::enablePwm()
 {
-    nbr_out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    nbr_out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
+    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
 
     txPeriodTimer.enableChannel(1);
     txPeriodTimer.enableChannel(2);
@@ -59,10 +60,10 @@ void Neighbor::disablePwm()
     txPeriodTimer.disableChannel(3);
     txPeriodTimer.disableChannel(4);
 
-    nbr_out1.setControl(GPIOPin::IN_FLOAT);
-    nbr_out2.setControl(GPIOPin::IN_FLOAT);
-    nbr_out3.setControl(GPIOPin::IN_FLOAT);
-    nbr_out4.setControl(GPIOPin::IN_FLOAT);
+    out1.setControl(GPIOPin::IN_FLOAT);
+    out2.setControl(GPIOPin::IN_FLOAT);
+    out3.setControl(GPIOPin::IN_FLOAT);
+    out4.setControl(GPIOPin::IN_FLOAT);
 }
 
 /*
@@ -96,8 +97,8 @@ void Neighbor::transmitNextBit()
 void Neighbor::beginReceiving()
 {
     receiving_side = -1;
-    nbr_in1.setControl(GPIOPin::IN_FLOAT);
-    nbr_in1.irqEnable();
+    in1.setControl(GPIOPin::IN_FLOAT);
+    in1.irqEnable();
 }
 
 /*
@@ -106,10 +107,10 @@ void Neighbor::beginReceiving()
 void Neighbor::onRxPulse(uint8_t side)
 {
     if (side == 0) {
-        nbr_in1.irqAcknowledge();
+        in1.irqAcknowledge();
 
-        nbr_out1.setControl(GPIOPin::OUT_2MHZ);
-        nbr_out1.setLow();
+        out1.setControl(GPIOPin::OUT_2MHZ);
+        out1.setLow();
 
         switch (rxState) {
         case WaitingForStart:
@@ -128,15 +129,15 @@ void Neighbor::onRxPulse(uint8_t side)
     }
 
     if (side == 1)  {
-        nbr_in2.irqAcknowledge();
+        in2.irqAcknowledge();
     }
 
     if (side == 2)  {
-        nbr_in3.irqAcknowledge();
+        in3.irqAcknowledge();
     }
 
     if (side == 3)  {
-        nbr_in4.irqAcknowledge();
+        in4.irqAcknowledge();
     }
 }
 
@@ -145,7 +146,7 @@ void Neighbor::onRxPulse(uint8_t side)
  */
 void Neighbor::rxPeriodIsr()
 {
-    nbr_out1.setControl(GPIOPin::IN_FLOAT);
+    out1.setControl(GPIOPin::IN_FLOAT);
 
     switch (rxState) {
     case Squelch:
