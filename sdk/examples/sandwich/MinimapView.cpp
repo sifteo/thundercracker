@@ -6,8 +6,6 @@
 #define mDotSprite		(Parent()->Canvas().sprites[0])
 
 void MinimapView::Init() {
-	Parent()->HideSprites();
-	mCanvas.bg1.eraseMask();
 	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;

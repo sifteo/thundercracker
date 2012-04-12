@@ -10,18 +10,13 @@ void InventoryView::Init() {
 	mSelected = 0;
 	Int2 tilt = mCanvas.virtualAccel().xy();
 	mTilt.set(tilt.x, tilt.y);
-	mAccum.set(0,0);
-	mTouch = Parent()->GetCube().isTouching();
 	mAnim = 0;
-	Parent()->HideSprites();
-	mCanvas.bg0.image(vec(0,0), InventoryBackground);
-	RenderInventory();
+	Restore();
 }
 
 void InventoryView::Restore() {
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube().isTouching();
-	Parent()->HideSprites();
 	mCanvas.bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
@@ -53,7 +48,7 @@ void InventoryView::Update() {
 			}
 			CORO_YIELD;
 		} while(!touch);
-		gGame.DoPaint();
+		System::finish();
 		CORO_YIELD;
 		{
 			uint8_t items[16];
@@ -73,7 +68,7 @@ void InventoryView::Update() {
 		while(Parent()->GetCube().isTouching()) {
 			CORO_YIELD;	
 		}
-		gGame.DoPaint();
+		System::finish();
 		Parent()->Restore();
 		mAccum.set(0,0);
 		CORO_YIELD;

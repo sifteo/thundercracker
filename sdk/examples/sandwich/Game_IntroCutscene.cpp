@@ -1,6 +1,6 @@
 #include "Game.h"
 
-VideoBuffer* Game::IntroCutscene() {
+Viewport* Game::IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		VideoBuffer& gfx = ViewAt(i).Canvas();
 		gfx.initMode(BG0_SPR_BG1);
@@ -43,7 +43,7 @@ VideoBuffer* Game::IntroCutscene() {
 		CubeID c = i;
 		if (c != cube) {
 			VideoBuffer& gfx = ViewAt(i).Canvas();
-			gfx.bg1.eraseMask();
+			gfx.bg1.eraseMask(false);
 			gfx.bg1.setPanning(vec(0,0));
 			gfx.bg0.image(vec(0,0), Blank);
 		}
@@ -151,5 +151,5 @@ VideoBuffer* Game::IntroCutscene() {
 		DoPaint();
 	}
 	WaitForSeconds(0.5f);
-	return &ViewAt(cube).Canvas();
+	return &ViewAt(cube);
 }

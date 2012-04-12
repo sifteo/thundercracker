@@ -26,6 +26,7 @@ private:
 
   uint32_t mActiveViewMask;
   uint32_t mLockedViewMask;
+  uint32_t mTouchMask;
 
 public:
 
@@ -54,8 +55,6 @@ public:
   void DoPaint();
 
   // events
-  void OnNeighborAdd(RoomView* v1, Side s1, RoomView* v2, Side s2);
-  void OnNeighborRemove(RoomView* v1, Side s1, RoomView* v2, Side s2);
   
   // listing views
   Viewport& ViewAt(int i) { return mViews[i]; }
@@ -65,6 +64,7 @@ public:
   }
 
   Viewport::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
+  Viewport::Iterator ListTouchedViews() { return ListViews(mTouchMask); }
   void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetMask(); }
   void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetMask(); }
   void UnlockAllViews();
@@ -77,15 +77,17 @@ public:
 private:
 
   void OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
+  void OnTouch(unsigned cube);
+  void CheckMapNeighbors();
+  void CheckTouches();
 
   // cutscenes
-  VideoBuffer* IntroCutscene();
+  Viewport* IntroCutscene();
   //void WinScreen();
 
 
   // helpers
   bool AnyViewsTouched();
-  void CheckMapNeighbors();
   void WalkTo(Int2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
   int MovePlayerOneTile(Side dir, int progress, Sokoblock *blockToPush=0);

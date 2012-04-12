@@ -202,10 +202,13 @@ class CubeCodec {
         /*
          * Escape to flash mode (two-nybble code 33) plus one extra
          * dummy nybble to force a byte flush if necessary.
+         *
+         * This implies an encoder state reset.
          */
         txBits.append(0xF33, 12);
         txBits.flush(buf);
         txBits.init();
+        stateReset();
     }
 
     void encodeDS(uint8_t d, uint8_t s);
