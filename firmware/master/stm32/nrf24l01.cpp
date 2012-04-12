@@ -112,6 +112,24 @@ void NRF24L01::ptxMode()
     transmitPacket();
 }
 
+void NRF24L01::setTxPower(Radio::TxPower pwr)
+{
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
+    spi.transfer(0x08 | pwr);   // enforce 2Mbit/sec transfer rate
+    spi.end();
+}
+
+Radio::TxPower NRF24L01::txPower()
+{
+    spi.begin();
+    spi.transfer(CMD_R_REGISTER | REG_RF_SETUP);
+    uint8_t setup = spi.transfer(0);
+    spi.end();
+
+    return static_cast<Radio::TxPower>(setup);
+}
+
 void NRF24L01::isr()
 {
     // Acknowledge to the IRQ controller
