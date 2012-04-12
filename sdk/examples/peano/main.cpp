@@ -7,31 +7,48 @@
 
 using namespace Sifteo;
 
-void *operator new(size_t) throw() {return NULL;}
+
+static AssetSlot MainSlot = AssetSlot::allocate();
+
+static Metadata M = Metadata() 
+.title("Peano\'s Vault") 
+.cubeRange(6);
+
+
+
+void *operator new(unsigned long) throw() {return NULL;}
 void operator delete(void*) throw() {}
+
+namespace TotalsGame 
+{
+    Int2 kSideToUnit[4]=
+    {
+        vec(0, -1),
+        vec(-1, 0),
+        vec(0, 1),
+        vec(1, 0)
+    };
+}
+
+AssetLoader loader;
 
 void main() {
     TotalsGame::TotalsCube *cubes = TotalsGame::Game::cubes;
+        
+    loader.start(GameAssets, 0, (uint32_t)((1<<NUM_CUBES)-1)<<(32-NUM_CUBES));
 
   for (int i = 0; i < NUM_CUBES; i++) {
-    cubes[i].enable(i);
-#if LOAD_ASSETS
-    cubes[i].loadAssets(GameAssets);
-#endif
-    VidMode_BG0_ROM rom(cubes[i].vbuf);
-    rom.init();
-    rom.BG0_text(vec(1,1), "Loading...");
+      cubes[i].sys = i;
+      cubes[i].vid.initMode(BG0_ROM);
+      cubes[i].vid.attach(cubes[i]);
+      cubes[i].vid.bg0rom.text(vec(1,1), "Loading...");
   }
 #if LOAD_ASSETS
-  for (;;) {
-    bool done = true;
+  while(!loader.isComplete()) {
     for (int i = 0; i < NUM_CUBES; i++) {
-      VidMode_BG0_ROM rom(cubes[i].vbuf);
-      rom.BG0_progressBar(vec(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-      done &= cubes[i].assetDone(GameAssets);
+      cubes[i].vid.bg0rom.hBargraph(vec(0,7), loader.progress(i, 128));
     }
     System::paint();
-    if (done) break;
   }
 
 #endif

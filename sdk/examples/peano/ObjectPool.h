@@ -4,7 +4,7 @@
 	static unsigned long allocationMask; \
 	static char *allocationPool; \
 	public: \
-	static void *operator new(size_t size) throw() \
+    static void *operator new(unsigned long size) throw() \
     { \
 		static char chunk[MAX_POOL * sizeof(classname)]; \
 		if(!allocationPool) allocationPool = chunk; \
@@ -23,8 +23,8 @@
 	static void operator delete(void *p) \
     { \
 		if(!p) return; \
-		size_t offset = (char*)p - (char*)&allocationPool[0]; \
-		size_t index = offset / sizeof(classname); \
+        unsigned long offset = (char*)p - (char*)&allocationPool[0]; \
+        unsigned long index = offset / sizeof(classname); \
         allocationMask &= ~(1 << index); \
     }\
     static void ResetAllocationPool()\

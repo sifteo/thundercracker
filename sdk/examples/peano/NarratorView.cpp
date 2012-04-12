@@ -43,7 +43,6 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         if(!hadMessage)
         {
             Paint();
-            GetCube()->foregroundLayer.Flush();
         }
         else if(emoteChanged)
         {
@@ -101,7 +100,7 @@ void NarratorView::Paint() {
     c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
-        c->Image(*emotes[mEmote], vec<int>(0,16-emotes[mEmote]->height));
+        c->Image(*emotes[mEmote], vec<int>(0,16-emotes[mEmote]->tileHeight()));
     }
 
     if (mOffset > 0) {
@@ -110,7 +109,8 @@ void NarratorView::Paint() {
 
 
     if(mString[0]) {
-        GetCube()->foregroundLayer.DrawAsset(vec(0,0), Narrator_Balloon);
+        GetCube()->vid.bg1.fillMask(vec(0,0), vec(Narrator_Balloon.tileWidth(), Narrator_Balloon.tileHeight()));
+        GetCube()->vid.bg1.image(vec(0,0), Narrator_Balloon);
     }
 }
 

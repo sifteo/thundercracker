@@ -11,14 +11,15 @@ namespace TotalsGame
 
 	
 
-	class TotalsCube: public Sifteo::Cube
+	class TotalsCube: public Sifteo::CubeID
 	{
 		View *view;
         bool overlayShown;
 
     public:
-        Sifteo::VidMode_BG0_SPR_BG1 backgroundLayer;
-        Sifteo::BG1Helper foregroundLayer;
+        //Sifteo::VidMode_BG0_SPR_BG1 backgroundLayer;
+        //Sifteo::BG1Helper foregroundLayer;
+        VideoBuffer vid;
 
 		class EventHandler
 		{            
@@ -41,8 +42,6 @@ namespace TotalsGame
 
         bool DoesNeighbor(TotalsCube *other);
 
-        Int2 GetTilt();
-
         void HideSprites();
 
 private:
@@ -61,10 +60,8 @@ public:
         void Image(const Sifteo::AssetImage &image);
         void Image(const Sifteo::AssetImage &image, Int2 pos, int frame=0);
         void Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size);
-        void Image(const Sifteo::PinnedAssetImage *image, Int2 coord, int frame=0);
         void ClipImage(const Sifteo::AssetImage *image, Int2 pos);
-        void ClipImage(const Sifteo::PinnedAssetImage *image, Int2 pos, int frame = 0);
-        void FillArea(const Sifteo::AssetImage *image, Int2 pos, Int2 size);
+        void FillArea(const Sifteo::PinnedAssetImage *image, Int2 pos, Int2 size);
 	
         void DrawFraction(Fraction f, Int2 pos);
         //void DrawDecimal(float d, vec pos);

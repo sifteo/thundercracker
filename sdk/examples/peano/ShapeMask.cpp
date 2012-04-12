@@ -24,12 +24,12 @@ bool Connection::IsRight() {
     return dir.x == 1 && dir.y == 0;
 }
 
-ShapeMask::ShapeMask(Int2 size, bool *flags, size_t numFlags) {
+ShapeMask::ShapeMask(Int2 size, bool *flags, unsigned numFlags) {
     this->size = size;
     this->bits = 0L;
     for(int x=0; x<size.x; ++x) {
         for(int y=0; y<size.y; ++y) {
-            size_t index = (y * size.x + x);
+            unsigned index = (y * size.x + x);
             ASSERT(index < numFlags);
             if (flags[index]) {
                 bits |= (1L<<index);

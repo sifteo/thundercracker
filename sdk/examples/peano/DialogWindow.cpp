@@ -161,23 +161,8 @@ void DialogWindow::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-    uint16_t dest = (mPosition.y << 4) | (mPosition.x >> 3);
-    unsigned shift = mPosition.x & 7;
 
-    for (unsigned i = 0; i < kFontHeight; i++) {
-        mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] << shift));
-        dest += 16;
-    }
-
-    if (shift) {
-        dest += -16*kFontHeight + 1;
-        shift = 8 - shift;
-
-        for (unsigned i = 0; i < kFontHeight; i++) {
-            mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] >> shift));
-            dest += 16;
-        }
-    }
+    mCube->vid.fb128.bitmap(mPosition, vec(8, kFontHeight), data, 2);
 
     mPosition.x += escapement;
 }
@@ -210,64 +195,26 @@ void DialogWindow::MeasureText(const char *str, unsigned *outCount, unsigned *ou
 
 void DialogWindow::Erase() {
     mPosition.y = 3;
-    for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
-        mCube->vbuf.poke(i, 0);
-    }
-}
-
-void DialogWindow::Fade() {
-    const unsigned speed = 4;
-    const unsigned hold = 100;
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-                    offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-                    color_lerp(2*i)
-                    );
-        System::paint();
-    }
-    for (unsigned i = 0; i < hold; i++) {
-        System::paint();
-    }
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-                    offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-                    color_lerp(0xFF - 2*i)
-                    );
-        System::paint();
-    }
+    mCube->vid.fb128.fill(vec(0,0), mCube->vid.fb128.size(), 0);
 }
 
 void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
 {
-    System::paintSync();
-    mCube->vbuf.touch();
-    System::paintSync();
-
-    mCube->backgroundLayer.setWindow(yTop, ySize);
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, fg);
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, bg);
-    mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
-
-    Erase();
+    mCube->vid.initMode(FB128);
+    mCube->vid.setWindow(yTop, ySize);
+    mCube->vid.colormap[0].set(fg);
+    mCube->vid.colormap[1].set(bg);
 
     const char* pNextChar = text;
     while(*pNextChar) {
         pNextChar = Show(pNextChar);
     }
-
-
-    System::paintSync();
-
 }
 
 void DialogWindow::EndIt()
 {
-    System::paintSync();
-    mCube->backgroundLayer.set();
-    mCube->backgroundLayer.clear();
-    mCube->foregroundLayer.Clear();
-    mCube->backgroundLayer.setWindow(0, 128);
-    mCube->foregroundLayer.Flush();
+    mCube->vid.initMode(BG0_SPR_BG1);
+    mCube->vid.setWindow(0, 128);
 }
 
 }

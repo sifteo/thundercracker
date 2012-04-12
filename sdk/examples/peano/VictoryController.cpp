@@ -39,7 +39,8 @@ Game::GameState Run() {
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         nv.SetTransitionAmount(t/kTransitionTime);
         nv.Paint();
-        System::paintSync();
+        System::paint();
+        System::finish();
         Game::UpdateDt();
     }
     nv.SetTransitionAmount(-1);
@@ -89,12 +90,10 @@ Game::GameState Run() {
             nv.SetMessage("Or I can create\nrandom puzzles for you!", NarratorView::EmoteMix01);
             {
                 Game::Wait(0);
-                System::paintSync();
-                nv.GetCube()->backgroundLayer.set();
-                nv.GetCube()->backgroundLayer.clear();
-                nv.GetCube()->foregroundLayer.Clear();
-                nv.GetCube()->foregroundLayer.Flush();
-                nv.GetCube()->backgroundLayer.setWindow(72,56);
+                System::paint();
+                System::finish();
+                nv.GetCube()->vid.initMode(BG0_SPR_BG1);
+                nv.GetCube()->vid.setWindow(72,56);
 
                 SystemTime t = SystemTime::now() + 3.0f;
                 float timeout = 0.0;
@@ -106,7 +105,8 @@ Game::GameState Run() {
                         timeout += 0.05;
                         nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                     }
-                    System::paintSync();
+                    System::paint();
+                    System::finish();
                     Game::UpdateDt();
                 }
             }
@@ -115,14 +115,10 @@ Game::GameState Run() {
         Game::Wait(3);
     } else {
         nv.SetMessage("Are you ready for\nthe next chapter?", NarratorView::EmoteMix01);
+        System::paint();
         {
-            Game::Wait(0);
-            System::paintSync();
-            nv.GetCube()->backgroundLayer.set();
-            nv.GetCube()->backgroundLayer.clear();
-            nv.GetCube()->foregroundLayer.Clear();
-            nv.GetCube()->foregroundLayer.Flush();
-            nv.GetCube()->backgroundLayer.setWindow(72,56);
+            nv.GetCube()->vid.initMode(BG0_SPR_BG1);
+            nv.GetCube()->vid.setWindow(72,56);
 
             SystemTime t = SystemTime::now() + 3.0f;
             float timeout = 0.0;
@@ -134,7 +130,8 @@ Game::GameState Run() {
                     timeout += 0.05;
                     nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                 }
-                System::paintSync();
+                System::paint();
+                System::finish();
                 Game::UpdateDt();
             }
         }
@@ -147,7 +144,8 @@ Game::GameState Run() {
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         nv.SetTransitionAmount(1-t/kTransitionTime);
         nv.Paint();
-        System::paintSync();
+        System::paint();
+        System::finish();
         Game::UpdateDt();
     }
     nv.SetTransitionAmount(0);

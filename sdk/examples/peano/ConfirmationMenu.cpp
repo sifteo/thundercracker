@@ -19,9 +19,9 @@ static const float kTransitionTime = 0.333f;
 
 const int kPad = 1;
 
-void OnCubeTouch(void *, Cube::ID cid)
+void OnCubeTouch(void *, unsigned cid)
 {
-    bool pressed = Game::cubes[cid].touching();
+    bool pressed = Game::cubes[cid].isTouching();
     if(cid == YES || cid ==NO)
     {
         if(pressed)
@@ -36,7 +36,7 @@ void OnCubeTouch(void *, Cube::ID cid)
 }
     
 #if NO_TOUCH_HACK
-void OnCubeTilt(void*, Cube::ID cid)
+void OnCubeTilt(void*, unsigned cid)
 {
     static int oldState = _SYS_TILT_NEUTRAL;
     _SYSTiltState ts = Game::cubes[cid].getTiltState();
@@ -109,11 +109,13 @@ void AnimateDoors(TotalsCube *c, bool opening)
         float amount = opening ? t/kTransitionTime : 1-t/kTransitionTime;
 
         PaintTheDoors(c, (7+6+kPad) * amount, opening);
-        System::paintSync();
+        System::paint();
+        System::finish();
         Game::UpdateDt();
     }
     PaintTheDoors(c, opening? (7+6+kPad): 0, opening);
-    System::paintSync();
+    System::paint();
+    System::finish();
 }
 
 //true means selected first choice (yes)

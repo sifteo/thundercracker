@@ -36,7 +36,8 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
     {
         mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
         Paint();
-        System::paintSync();
+        System::paint();
+        System::finish();
         Game::UpdateDt();
     }
 
@@ -62,7 +63,8 @@ void TiltFlowDetailView::HideDescription() {
         {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
-            System::paintSync();
+            System::paint();
+            System::finish();
             Game::UpdateDt();
         }
 
@@ -90,9 +92,9 @@ void TiltFlowDetailView::Paint() {
         c->ClipImage(&skin.vault_door, vec(0,1-16));
         c->ClipImage(&skin.vault_door, vec(0, bottom));
 
-        if(!GetCube()->backgroundLayer.isSpriteHidden(0))
+        if(!GetCube()->vid.sprites[0].isHidden())
         {
-            GetCube()->backgroundLayer.hideSprite(0);   //enabled by interstitialview
+            GetCube()->vid.sprites[0].hide();   //enabled by interstitialview
         }
     }
 }

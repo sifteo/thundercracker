@@ -10,15 +10,15 @@ namespace StingController
 bool gotTouchOn=false;
 bool skip = false;
 
-void OnCubeTouch(void*, _SYSCubeID cid)
+void OnCubeTouch(void*, unsigned cid)
 {
-    if(Game::cubes[cid].touching())
+    if(Game::cubes[cid].isTouching())
         gotTouchOn = true;
     else if(gotTouchOn) //touch off now, but got touch on before
         skip = true;
 }
 
-void OnCubeShake(void*, _SYSCubeID cid)
+void OnCubeShake(void*, unsigned cid)
 {
     skip = true;
 }

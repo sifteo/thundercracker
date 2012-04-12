@@ -7,6 +7,8 @@
 
 namespace TotalsGame {
 
+extern Int2 kSideToUnit[4];
+    
 namespace PuzzleController
 {
 
@@ -21,19 +23,19 @@ EventHandler eventHandlers[NUM_CUBES];
 class NeighborEventHandler: public Game::NeighborEventHandler
 {
 public:
-    void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-    void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+    void OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
+    void OnNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 };
 NeighborEventHandler neighborEventHandler;
 
 struct RemoveEvent
 {
-    Cube::ID c0;
-    Cube::Side s0;
-    Cube::ID c1;
-    Cube::Side s1;
+    unsigned c0;
+    unsigned s0;
+    unsigned c1;
+    unsigned s1;
 
-    void Set(Cube::ID _c0, Cube::Side _s0, Cube::ID _c1, Cube::Side _s1)
+    void Set(unsigned _c0, unsigned _s0, unsigned _c1, unsigned _s1)
     {
         c0 = _c0;
         s0 = _s0;
@@ -142,12 +144,8 @@ void ShowPuzzleCount()
 
                 //set window to bottom half of screen so we can animate peano
                 //while text window is open above
-                System::paintSync();
-                nv.GetCube()->backgroundLayer.set();
-                nv.GetCube()->backgroundLayer.clear();
-                nv.GetCube()->foregroundLayer.Clear();
-                nv.GetCube()->foregroundLayer.Flush();
-                nv.GetCube()->backgroundLayer.setWindow(72,56);
+                nv.GetCube()->vid.initMode(BG0_SPR_BG1);
+                nv.GetCube()->vid.setWindow(72,56);
 
                 SystemTime t = SystemTime::now() + 3.0f;
                 float timeout = 0.0;
@@ -159,7 +157,8 @@ void ShowPuzzleCount()
                         timeout += 0.05;
                         nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                     }
-                    System::paintSync();
+                    System::paint();
+                    System::finish();
                     Game::UpdateDt();
                 }
             } else {
@@ -261,12 +260,9 @@ Game::GameState Run()
                     // transition out
                     for(int t=0; t<puzzle->GetNumTokens(); ++t)
                     {
-                        Game::cubes[t].Image(skin.background);
-                        Game::cubes[t].HideSprites();
-                        Game::cubes[t].foregroundLayer.Clear();
-                        Game::cubes[t].foregroundLayer.Flush();
+                        Game::cubes[t].vid.bg0.erase();
+                        Game::cubes[t].Image(skin.background);                
                         Game::cubes[t].SetView(NULL);
-
                         Game::cubes[t].CloseShutters();
                         Game::cubes[t].DrawVaultDoorsClosed();
                     }
@@ -323,10 +319,8 @@ Game::GameState Run()
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {                      
             TotalsCube *c = puzzle->GetToken(i)->GetTokenView()->GetCube();
+            Game::cubes[i].vid.bg0.erase();
             Game::cubes[i].Image(skin.background_lit);
-            c->HideSprites();
-            c->foregroundLayer.Clear();
-            c->foregroundLayer.Flush();
             c->SetView(NULL);
 
             c->CloseShutters();
@@ -352,7 +346,7 @@ Game::GameState Run()
 //-------------------------------------------------------------------------
 // EVENTS
 //-------------------------------------------------------------------------
-void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void PuzzleController::NeighborEventHandler::OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     if (paused || numRemoveEvents > 0) { return; }
 
@@ -361,7 +355,7 @@ void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Si
     TokenView *nv = (TokenView*)Game::cubes[c1].GetView();
     if (v == NULL || nv == NULL) { return; }
     if (s0 != ((s1+2)%NUM_SIDES)) { return; }
-    if (s0 == SIDE_LEFT || s0 == SIDE_TOP)
+    if (s0 == LEFT || s0 == TOP)
     {
         OnNeighborAdd(c1, s1, c0, s0);
         return;
@@ -380,7 +374,7 @@ void PuzzleController::NeighborEventHandler::OnNeighborAdd(Cube::ID c0, Cube::Si
     }
 }
 
-void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void PuzzleController::NeighborEventHandler::OnNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     if (paused || numRemoveEvents > 0)
     {

@@ -117,7 +117,7 @@ Press_To_Select = image { "press_to_select.png"}
 Tilt_For_More = image { "tilt_for_more.png"}
 Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
 
-Dark_Purple = image { "dark_purple.png" }
+Dark_Purple = image { "dark_purple.png", pinned = true }
 Tutorial_Groups = image { "tutorial_groups.png" }
 Nan = image { "nan.png" }
 

@@ -18,7 +18,6 @@ private:
     void DrawText(const char* msg);
     void MeasureText(const char *str, unsigned *outCount, unsigned *outPx);
     void Erase();
-    void Fade();
 
 
 public:

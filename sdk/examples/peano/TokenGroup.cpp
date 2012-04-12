@@ -4,6 +4,9 @@
 
 namespace TotalsGame
 {
+    extern Int2 kSideToUnit[4];
+    
+    
 	DEFINE_POOL(TokenGroup)
 
     Fraction TokenGroup::GetValue()
@@ -67,7 +70,7 @@ namespace TotalsGame
     }
 
      TokenGroup::TokenGroup(
-         IExpression *src, Int2 srcPos, Token *srcToken, Cube::Side srcSide,
+         IExpression *src, Int2 srcPos, Token *srcToken, unsigned srcSide,
          IExpression *dst, Int2 dstPos, Token *dstToken,
          Fraction val,
          ShapeMask mask
@@ -89,11 +92,11 @@ namespace TotalsGame
      void TokenGroup::RecomputeValue() {
          if (src->IsTokenGroup()) { ((TokenGroup*)src)->RecomputeValue(); }
          if (dst->IsTokenGroup()) { ((TokenGroup*)dst)->RecomputeValue(); }
-         mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
+         mValue = OpHelper::Compute(src->GetValue(), srcSide == RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
      }
 
      TokenGroup::TokenGroup(
-         IExpression *src, Token *srcToken, Cube::Side srcSide,
+         IExpression *src, Token *srcToken, unsigned srcSide,
          IExpression *dst, Token *dstToken
          )
      {
@@ -108,7 +111,7 @@ namespace TotalsGame
              dst->PositionOf(dstToken, &dp);
              Int2 d = kSideToUnit[srcSide];
              ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mMask, &srcPos, &dstPos);
-             mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
+             mValue = OpHelper::Compute(src->GetValue(), srcSide == RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
              mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
 
@@ -122,12 +125,12 @@ namespace TotalsGame
          if (!ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mask, &d1, &d2)) {
              return NULL;
          }
-         Cube::Side srcSide = d.x == 1 ? SIDE_RIGHT : SIDE_BOTTOM;
+         unsigned srcSide = d.x == 1 ? RIGHT : BOTTOM;
 
          return new TokenGroup(
              src, d1, srcToken, srcSide,
              dst, d2, dstToken,
-             OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue()),
+             OpHelper::Compute(src->GetValue(), srcSide == RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue()),
              mask
              );
      }

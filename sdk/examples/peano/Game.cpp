@@ -31,13 +31,13 @@ SaveData saveData;
 float dt;
 TimeStep timeStep;
 
-void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void OnNeighborAdd(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     if(neighborEventHandler)
         neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
 }
 
-void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void OnNeighborRemove(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     {
         if(neighborEventHandler)
@@ -46,13 +46,13 @@ void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side
 
 }
     
-void OnCubeTouch(void*, _SYSCubeID cid)
+void OnCubeTouch(void*, unsigned cid)
 {
     TotalsCube *c = &Game::cubes[cid];
-    c->DispatchOnCubeTouch(c, c->touching());
+    c->DispatchOnCubeTouch(c, c->isTouching());
 }
 
-void OnCubeShake(void*, _SYSCubeID cid)
+void OnCubeShake(void*, unsigned cid)
 {
     TotalsCube *cube = &Game::cubes[cid];
     cube->DispatchOnCubeShake(cube);
@@ -61,7 +61,7 @@ void OnCubeShake(void*, _SYSCubeID cid)
     
 #if NO_TOUCH_HACK
 //tilt y to touch
-void OnCubeTilt(void*, _SYSCubeID cid)
+void OnCubeTilt(void*, unsigned cid)
 {
     static int oldState = _SYS_TILT_NEUTRAL;
     _SYSTiltState ts = cubes[cid].getTiltState();
@@ -148,7 +148,7 @@ void Run()
     //reset to bg_spr_bg1 as needed
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        cubes[i].backgroundLayer.set();
+        cubes[i].vid.initMode(BG0_SPR_BG1);
     }
 
     _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
@@ -225,7 +225,8 @@ void UpdateDt()
 void Wait(float delay)
 {    
     PaintCubeViews();
-    System::paintSync();
+    System::paint();
+    System::finish();
 
     SystemTime t = SystemTime::now();
 

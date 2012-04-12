@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include "sifteo.h"
-#include <stddef.h>
 
 using namespace Sifteo;
 
@@ -28,7 +27,7 @@ namespace TotalsGame {
 		static const ShapeMask Zero;
 		static const ShapeMask Unity;
 
-        ShapeMask(Int2 size, bool *flags, size_t numFlags);
+        ShapeMask(Int2 size, bool *flags, unsigned numFlags);
 
         ShapeMask(Int2 size, long bits);
 

@@ -50,7 +50,8 @@ Game::GameState Run() {
     {
         Game::cubes[i].DrawVaultDoorsClosed();
     }
-    System::paintSync();
+    System::paint();
+    System::finish();
 
     Skins::SetSkin(skin);
 
