@@ -114,35 +114,3 @@ void HwTimer::configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t fil
 
     tim->CCER |= edge << ((ch - 1) * 4);
 }
-
-void HwTimer::enableChannel(int ch)
-{
-    tim->SR &= ~(1 << ch);  // CCxIF bits start at 1, so no need to subtract from 1-based channel num
-    tim->CCER |= 1 << ((ch - 1) * 4);
-}
-
-void HwTimer::disableChannel(int ch)
-{
-    tim->CCER &= ~(0x1 << ((ch - 1) * 4));
-}
-
-bool HwTimer::channelIsEnabled(int ch)
-{
-    return tim->CCER & (1 << ((ch - 1) * 4));
-}
-
-void HwTimer::setDuty(int ch, uint16_t duty)
-{
-    tim->CCR[ch - 1] = duty;
-}
-
-uint16_t HwTimer::period() const
-{
-    return tim->ARR;
-}
-
-void HwTimer::setPeriod(uint16_t period, uint16_t prescaler)
-{
-    tim->ARR = period;
-    tim->PSC = prescaler;
-}
