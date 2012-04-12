@@ -90,10 +90,10 @@ static void ShowProgress( const SaveData &data )
 
     LOG(("gonna draw ShowProgress"));
 
-    cubes[0].getBG1Helper().Clear();
+    cubes[0].ClearBG1();
     cubes[0].setDirty();
     cubes[0].DrawMessageBoxWithText( str );
-    cubes[0].getBG1Helper().Flush();
+    cubes[0].FlushBG1();
 
     WaitForTouch( cubes );
 }
@@ -113,10 +113,10 @@ static void ShowUnlock()
     String<128> str;
     str << "Congrats!  Lumes unlocked.  Play Cube Buddies to see him in action!";
 
-    cubes[0].getBG1Helper().Clear();
+    cubes[0].ClearBG1();
     cubes[0].setDirty();
     cubes[0].DrawMessageBoxWithText( str );
-    cubes[0].getBG1Helper().Flush();
+    cubes[0].FlushBG1();
 
     WaitForTouch( cubes );
 }

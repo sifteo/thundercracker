@@ -27,8 +27,8 @@ static void DoBubbleTransition()
     //initialize bubble positions
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        Game::Inst().m_cubes[i].getBG1Helper().Clear();
-        Game::Inst().m_cubes[i].getBG1Helper().Flush();
+        Game::Inst().m_cubes[i].ClearBG1();
+        Game::Inst().m_cubes[i].FlushBG1();
         for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
         {
             float yPos = Game::random.uniform( 128.0f, 160.0f );

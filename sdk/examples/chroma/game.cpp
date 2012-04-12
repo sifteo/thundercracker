@@ -213,7 +213,7 @@ void Game::Update()
     //force a finish here
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].getBG1Helper().NeedFinish() )
+        if( m_cubes[i].getbg1buffer().NeedFinish() )
         {
             //System::finish();
             System::paintSync();

@@ -26,12 +26,12 @@ void TimeKeeper::Reset()
     //m_blinkCounter = 0;
 }
 
-void TimeKeeper::Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
+void TimeKeeper::Draw( TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid )
 {
 	//find out what proportion of our timer is left, then multiply by number of tiles
 	float fTimerProportion = m_fTimer / TIME_INITIAL;
 
-    DrawMeter( fTimerProportion, bg1helper, vid );
+    DrawMeter( fTimerProportion, bg1buffer, vid );
 }
 
 
@@ -48,7 +48,7 @@ void TimeKeeper::Init( SystemTime t )
 }
 
 
-void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
+void TimeKeeper::DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid )
 {
     if( amount > 1.0f )
         amount = 1.0f;
@@ -90,7 +90,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
 
     if( numStems > 0 )
     {
-        bg1helper.DrawAsset( vec( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+        bg1buffer.image( vec( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
     }
 
     /*if( numStems <= 2 && m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )

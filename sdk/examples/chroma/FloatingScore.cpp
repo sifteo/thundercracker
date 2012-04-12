@@ -21,7 +21,7 @@ void FloatingScore::Reset()
     m_fLifetime = -1.0f;
 }
 
-void FloatingScore::Draw( BG1Helper &bg1helper )
+void FloatingScore::Draw( TileBuffer<16, 16> &bg1buffer )
 {
     if( m_fLifetime < 0.0f )
         return;
@@ -31,7 +31,7 @@ void FloatingScore::Draw( BG1Helper &bg1helper )
     if( m_fLifetime < START_FADING_TIME )
         frame = ( START_FADING_TIME - m_fLifetime ) / START_FADING_TIME * NUM_POINTS_FRAMES;
 
-    Banner::DrawScore( bg1helper, m_pos, Banner::LEFT, m_score, frame );*/
+    Banner::DrawScore( bg1buffer, m_pos, Banner::LEFT, m_score, frame );*/
     String<16> buf;
     buf << m_score;
 
@@ -44,7 +44,7 @@ void FloatingScore::Draw( BG1Helper &bg1helper )
 
     for( int i = 0; i < iLen; i++ )
     {
-        bg1helper.DrawAsset( vec( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
+        bg1buffer.image( vec( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
     }
 }
 

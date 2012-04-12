@@ -115,7 +115,6 @@ public:
     //bool IsIdle() const;
     inline int getLastTiltDir() const { return m_lastTiltDir; }
     inline Float2 getTiltDir() const { return m_curFluidDir; }
-    inline BG1Helper &getBG1Helper() { return m_bg1helper; }
 
     //if we need to, flush bg1
     void FlushBG1();
@@ -152,6 +151,12 @@ public:
     //in_yOffset - optional y offset for text
     void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 ) __attribute__ ((noinline));
 
+    //bg1buffer helpers
+    //clears bg1 to White tile
+    void ClearBG1();
+    //draws bg1
+    void FlushBG1();
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -171,7 +176,8 @@ private:
 	Cube m_cube;
     VidMode_BG0_SPR_BG1 m_vid;
 	VidMode_BG0_ROM m_rom;
-	BG1Helper m_bg1helper;
+    //render bg1 here
+    TileBuffer<16, 16> m_bg1buffer;
 
 	CubeState m_state;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];

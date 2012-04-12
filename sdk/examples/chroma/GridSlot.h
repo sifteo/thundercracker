@@ -84,7 +84,7 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState ) __attribute__ ((noinline));
+    void Draw( VidMode_BG0_SPR_BG1 &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState ) __attribute__ ((noinline));
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }

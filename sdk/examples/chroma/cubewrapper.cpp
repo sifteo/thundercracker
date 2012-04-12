@@ -31,7 +31,7 @@ const float CubeWrapper::TOUCH_TIME_FOR_MENU = 1.7f;
 const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
-        m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
+        m_bg1buffer( m_cube ), m_state( STATE_PLAYING ),
         m_fTouchTime( 0.0f ), m_curFluidDir(vec( 0, 0 )), m_curFluidVel(vec( 0, 0 )), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
         m_bubbles( m_vid )
@@ -82,7 +82,7 @@ void CubeWrapper::Reset()
     }
 
     m_timeTillGlimmer = 0.0f;
-    m_bg1helper.Clear();
+    ClearBG1();
     m_queuedFlush = true;
     m_intro.Reset();
     m_glimmer.Reset();
@@ -111,7 +111,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1buffer, m_vid, this );
 
             //possible to be already playing in intro mode
             if( m_intro.getState() != Intro::STATE_BALLEXPLOSION )
@@ -148,12 +148,12 @@ void CubeWrapper::Draw()
 
                     //draw glimmer before timer
                     if( m_glimmer.IsActive() )
-                        m_glimmer.Draw( m_bg1helper, this );
+                        m_glimmer.Draw( m_bg1buffer, this );
 
                     if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
-                        Game::Inst().getTimer().Draw( m_bg1helper, m_vid );
-                        m_floatscore.Draw( m_bg1helper );
+                        Game::Inst().getTimer().Draw( m_bg1buffer, m_vid );
+                        m_floatscore.Draw( m_bg1buffer );
                         m_queuedFlush = true;
                     }
                     else
@@ -164,7 +164,7 @@ void CubeWrapper::Draw()
                     }
                     if( m_banner.IsActive() )
                     {
-                        m_banner.Draw( m_bg1helper );
+                        m_banner.Draw( m_bg1buffer );
                         m_queuedFlush = true;
                     }
 
@@ -173,11 +173,11 @@ void CubeWrapper::Draw()
                     //m_queuedFlush = true;
 
                     //super debug code!
-                    //Banner::DrawScore( m_bg1helper, vec( 0, 0 ), Banner::LEFT, m_cube.id() );
+                    //Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, m_cube.id() );
 
                     //for debugging combo count
                     //if( Game::Inst().getMode() == Game::MODE_BLITZ )
-                      //  Banner::DrawScore( m_bg1helper, vec( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
+                      //  Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
 
 					break;
 				}
@@ -186,7 +186,7 @@ void CubeWrapper::Draw()
                     m_vid.BG0_drawAsset(vec(0,0), UI_NCubesCleared, 0);
                     int level = Game::Inst().getDisplayedLevel();
 
-                    Banner::DrawScore( m_bg1helper, vec<int>( Banner::CENTER_PT, 3 ),
+                    Banner::DrawScore( m_bg1buffer, vec<int>( Banner::CENTER_PT, 3 ),
                                        Banner::CENTER, level );
 
                     m_vid.BG1_setPanning( vec( 0, -4 ) );
@@ -196,7 +196,7 @@ void CubeWrapper::Draw()
 				}
                 case STATE_REFILL:
                 {
-                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
+                    m_intro.Draw( Game::Inst().getTimer(), m_bg1buffer, m_vid, this );
                     m_queuedFlush = true;
                     break;
                 }
@@ -240,14 +240,14 @@ void CubeWrapper::Draw()
                 else
                 {
                     m_vid.BG0_drawAsset(vec(0,0), UI_Highscores_lowscore, 0);
-                    Banner::DrawScore( m_bg1helper, vec( 11, 14 ), Banner::CENTER, myScore );
+                    Banner::DrawScore( m_bg1buffer, vec( 11, 14 ), Banner::CENTER, myScore );
                 }
 
                 for( unsigned int i = 0; i < SaveData::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
 
-                    Banner::DrawScore( m_bg1helper, vec<int>( 7, HIGH_SCORE_OFFSET+2*i ), Banner::RIGHT, score );
+                    Banner::DrawScore( m_bg1buffer, vec<int>( 7, HIGH_SCORE_OFFSET+2*i ), Banner::RIGHT, score );
 
                     if( i == SaveData::NUM_HIGH_SCORES - 2 && highScoreIndex < 0 )
                         break;
@@ -260,7 +260,7 @@ void CubeWrapper::Draw()
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
                 m_vid.BG0_drawAsset(vec(0,0), UI_Touch_Replay, 0);
-                //m_bg1helper.DrawTextf( vec( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
+                //m_bg1buffer.DrawTextf( vec( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 
             m_queuedFlush = true;
@@ -274,8 +274,8 @@ void CubeWrapper::Draw()
 
             if( Game::Inst().getStateTime() < Game::LUMES_FACE_TIME )
             {
-                m_bg1helper.Clear();
-                m_bg1helper.Flush();
+                ClearBG1();
+                FlushBG1();
                 m_vid.BG0_drawAsset(vec(0,0), Lumes_Happy, 0);
             }
             else
@@ -338,8 +338,8 @@ void CubeWrapper::Draw()
             }
             else if( Game::Inst().getWrapperIndex( this ) == 2 )
             {
-                m_bg1helper.Clear();
-                m_bg1helper.Flush();
+                ClearBG1();
+                FlushBG1();
                 m_vid.BG0_drawAsset(vec(0,0), UI_Game_Menu_Continue, 0);
             }
             break;
@@ -347,8 +347,8 @@ void CubeWrapper::Draw()
         case Game::STATE_GAMEMENU:
         {
             TurnOffSprites();
-            m_bg1helper.Clear();
-            m_bg1helper.Flush();
+            ClearBG1();
+            FlushBG1();
 
             switch( Game::Inst().getWrapperIndex( this ) )
             {
@@ -376,7 +376,7 @@ void CubeWrapper::Draw()
         }
         case Game::STATE_GAMEOVERBANNER:
         {
-            m_banner.Draw( m_bg1helper );
+            m_banner.Draw( m_bg1buffer );
             m_queuedFlush = true;
             break;
         }
@@ -1630,7 +1630,7 @@ void CubeWrapper::FlushBG1()
 {
     if( m_queuedFlush )
     {
-        m_bg1helper.Flush();
+        FlushBG1();
         m_queuedFlush = false;
     }
 }
@@ -2091,7 +2091,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
         int xOffset = MAX_LINES - ( length / 2 );
 
         _SYS_strlcpy( aBuf, pTxt + lineBreakIndices[i] + 1, length );
-        m_bg1helper.DrawText( vec( xOffset, yOffset ), WhiteFont, aBuf );
+        m_bg1buffer.DrawText( vec( xOffset, yOffset ), WhiteFont, aBuf );
 
         yOffset += 2;
     }
@@ -2118,7 +2118,7 @@ void CubeWrapper::DrawGrid()
         for( int j = 0; j < NUM_COLS; j++ )
         {
             GridSlot &slot = m_grid[i][j];
-            slot.Draw( m_vid, m_bg1helper, m_curFluidDir );
+            slot.Draw( m_vid, m_bg1buffer, m_curFluidDir );
         }
     }
 }
@@ -2169,4 +2169,20 @@ void CubeWrapper::SpawnScore( unsigned int score, const Int2 &slotpos )
     Int2 pos = { slotpos.y * 4 + 1, slotpos.x * 4 + 1 };
 
     m_floatscore.Spawn( score, pos );
+}
+
+
+
+//bg1buffer helpers
+//clears bg1 to White tile
+void CubeWrapper::ClearBG1()
+{
+    m_bg1buffer.erase( White );
+}
+
+
+//draws bg1
+void CubeWrapper::FlushBG1()
+{
+    m_vid.bg1.maskedImage( m_bg1buffer, White, 0 );
 }

@@ -242,7 +242,7 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
+void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
 {
 	Int2 vec = { m_col * 4, m_row * 4 };
 
@@ -382,7 +382,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         //figure out frame based on mark break delay
                         unsigned int frame = pImg->frames * perc;
 
-                        bg1helper.DrawAsset( vec, *pImg, frame );
+                        bg1buffer.image( vec, *pImg, frame );
                     }
                 }
             }
