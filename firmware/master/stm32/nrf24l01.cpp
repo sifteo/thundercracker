@@ -24,7 +24,7 @@ void NRF24L01::init() {
     irq.irqInit();
     irq.irqSetFallingEdge();
 
-    static const uint8_t radio_setup[]  = {
+    const uint8_t radio_setup[]  = {
         /* Enable nRF24L01 features */
         2, CMD_W_REGISTER | REG_FEATURE,        0x07,
         
@@ -71,7 +71,7 @@ void NRF24L01::ptxMode()
      * Setup for Primary Transmitter (PTX) mode
      */
 
-    static const uint8_t ptx_setup[]  = {
+    const uint8_t ptx_setup[]  = {
         /* Discard any packets queued in hardware */
         1, CMD_FLUSH_RX,
         1, CMD_FLUSH_TX,
