@@ -1,7 +1,8 @@
 #include "Game.h"
 
 void Game::OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {
-	gGame.mNeighborDirty = true;
+	LOG(("NEIGHBOR\n"));
+	mNeighborDirty = true;
 }
 
 void Game::MainLoop() {
@@ -11,18 +12,16 @@ void Game::MainLoop() {
 
   	//---------------------------------------------------------------------------
   	// INTRO
-  	System::finish();
 	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c).Canvas().attach(c);
 		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
-		ViewAt(c).Canvas().setWindow(0,128);
+		ViewAt(c).Canvas().attach(c);
 	}
 
 	#if FAST_FORWARD
-		VideoBuffer* pPrimary = &ViewAt(0).Canvas();
+		Viewport* pPrimary = &ViewAt(0);
 	#else
 		PlayMusic(music_sting, false);
-		VideoBuffer* pPrimary = IntroCutscene();
+		Viewport* pPrimary = IntroCutscene();
 	#endif
 
 	//---------------------------------------------------------------------------
