@@ -14,12 +14,7 @@
 
 namespace Cube {
 
-/*
- * XXX: Currently fake word-mode access, since that's what we're doing in the firmware.
- *      It's a hack there, and this is a hack here.
- */
-#define EMULATE_FAKE_WORD_MODE
-
+// Fake word-mode used by Rev 1 firmware. Not needed on any other version.
 #ifdef EMULATE_FAKE_WORD_MODE
 
 const FlashModel::command_sequence FlashModel::cmd_byte_program[FlashModel::CMD_LENGTH] = {
