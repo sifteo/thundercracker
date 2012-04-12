@@ -43,7 +43,6 @@
 ,2,1,8,2
 "AnimType_Shuffle",2,0,2,2
 ,2,1,8,2
-"AnimType_CityProgression","x",0,3,3
 "AnimType_HintBarAppear","x",0,56,16
 "AnimType_HintBarIdle","x",0,56,16
 "AnimType_HintBarDisappear","x",0,56,16

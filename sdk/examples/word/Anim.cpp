@@ -177,11 +177,14 @@ bool animPaint(AnimType animT,
                         {
                             if (sparkleOffset < size.y)
                             {
+                                unsigned sparkleFrame =
+                                        MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct));
+                             //   DEBUG_LOG(("sparkle frame %d\n", sparkleFrame));
                                 bg1->DrawPartialAsset(Vec2(pos.x, sparkleRow),
                                                       Vec2(0,0),
                                                       Vec2(size.x, 1),
                                                       SparkleWipe,
-                                                      MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct)));
+                                                      sparkleFrame);
                                 if (sparkleRow < letterPos.y + font.height - 1)
                                 {
                                     bg1->DrawPartialAsset(Vec2(letterPos.x, sparkleRow + 1),

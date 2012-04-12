@@ -276,15 +276,22 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesReveal) <= 0 &&
                         GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesExit) <= 0)
                     {
-                        switch (Dictionary::getPuzzleIndex())
+
+                        // TODO
+                        if (0&&Dictionary::currentIsMetaPuzzle())
                         {
-                        default:
+                            WordGame::onEvent(EventID_PuzzleSolved, EventData());
+                            newStateIndex = GameStateIndex_StoryCityProgression;
+                        }
+                        else
+
+                        {
                             // wait for all the cube states to exit the new word state
                             // then shuffle
+                            WordGame::onEvent(EventID_PuzzleSolved, EventData());
                             createNewAnagram();
                             WordGame::playAudio(shake, AudioChannelIndex_Shake);
                             // TODO new audio
-                            break;
                         }
                     }
                 }
@@ -420,12 +427,12 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case GameStateIndex_StoryCityProgression:
-        switch (eventID)
+        /* TODO remove switch (eventID)
         {
         case EventID_Shake:
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
             newStateIndex = GameStateIndex_ShuffleScored;
-        }
+        }*/
         break;
 
     case GameStateIndex_Loading:

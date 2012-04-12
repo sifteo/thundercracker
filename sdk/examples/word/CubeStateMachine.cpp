@@ -1,3 +1,4 @@
+#include <sifteo.h>
 #include "CubeStateMachine.h"
 #include "EventID.h"
 #include "EventData.h"
@@ -182,10 +183,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
         case GameStateIndex_ShuffleScored:
             queueAnim(AnimType_Shuffle);
-            break;
-
-        case GameStateIndex_StoryCityProgression:
-            queueAnim(AnimType_CityProgression);
             break;
 
         case GameStateIndex_StoryStartOfRound:
@@ -537,7 +534,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case CubeStateIndex_NewWordScored:
+    case CubeStateIndex_StoryCityProgression:
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            break;
+        }
+        break;
+
     case CubeStateIndex_OldWordScored:
         break;
 
@@ -612,6 +616,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     WordGame::hideSprites(vid);
                     newStateIndex = CubeStateIndex_Menu;
                 }
+                break;
+
+            case GameStateIndex_StoryCityProgression:
+                newStateIndex = CubeStateIndex_StoryCityProgression;
                 break;
 
             default:
@@ -1261,80 +1269,16 @@ void CubeStateMachine::paint()
     case CubeStateIndex_Title:
         vid.init();
         {
-            // FIXME vertical words
-        /*    const Sifteo::AssetImage& bg =
-                (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-                 c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
-                    BGNewWordConnectedMiddle :
-                    BGNewWordConnectedLeft;
-                    */
-            /* TODO remove
-            {
-                vid.BG0_drawAsset(Vec2(0,0), Test);
-            }
-
-            return;
-        */
             const float ANIM_START_DELAY = 2.f;
 
             switch (getCube().id() - CUBE_ID_BASE)
             {
-            //default:
-        #if (0)
-            case 999:
-                vid.BG0_drawAsset(Vec2(0,0), Title);
-                if (mAnimDelay <= 0.f)
-                {
-                    if (mAnimStart)
-                    {
-                        mAnimStart = false;
-                        mAnimStartTime = getTime();
-                    }
-
-                    if (getTime() - mAnimStartTime >= SMOKE_ANIM_LENGTH)
-                    {
-                        if (mFirstAnimDelay)
-                        {
-                            mFirstAnimDelay = false;
-                            mAnimStart = true;
-                            mAnimDelay = 0.f;
-                        }
-                        else
-                        {
-                            mAnimDelay = WordGame::random.uniform(2.f, 4.f);
-                        }
-                    }
-                    else
-                    {
-                        const AssetImage& anim = TitleSmoke;
-                        float animTime =
-                                fmodf(getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
-                        animTime = MIN(animTime, 1.f);
-                        unsigned frame = (unsigned) (animTime * anim.frames);
-                        frame = MIN(frame, anim.frames - 1);
-
-                        BG1Helper bg1(getCube());
-                        bg1.DrawAsset(Vec2(8, 0), anim, frame);
-                        bg1.Flush();
-                    }
-                }
-                break;
-        #endif
-
             default:
-            case 1:
                 vid.BG0_drawAsset(Vec2(0, 0), StartBG);
                 vid.setSpriteImage(0, StartPrompt);
                 vid.resizeSprite(0, StartPrompt.width * 8, StartPrompt.height * 8);
                 {
                     float shakeOffset = 0.f;
-                    /* misleads player to shake
-                    if (mShakeDelay < 0.5f)
-                    {
-                        const float SHAKE = 4.f;
-                        shakeOffset = SHAKE/2.f - WordGame::random.uniform(0.f, SHAKE);
-                    }
-                    */
                     vid.moveSprite(0, Vec2(39 - shakeOffset, 74));
                     vid.BG1_setPanning(Vec2((int)mPanning + shakeOffset, 0));
                     bg1.DrawAsset(Vec2(0, 0), StartLid);
@@ -1382,78 +1326,59 @@ void CubeStateMachine::paint()
         }
         break;
 
+    case CubeStateIndex_StoryCityProgression:
+        vid.init();
+        vid.BG0_drawAsset(Vec2(0,0), MenuBlank);
+        if (&getCube() == WordGame::instance()->getMenuCube())
+        {
+            /* TODO animtype?
+            char slideOffset = 0;
+            char slideStart = -10;
+            const char clueHeight = 12;
+            const float transitionLength = .5f;
+            const float endTransitionStart = 2.5f;
+            if (mStateTime[CubeAnim_Main] < transitionLength)
+            {
+                slideOffset =
+                        (1.f - mStateTime[CubeAnim_Main] / transitionLength) * slideStart;
+            }
+            else if (mStateTime[CubeAnim_Main] >= endTransitionStart)
+            {
+                if (mStateTime[CubeAnim_Main] >= endTransitionStart + transitionLength)
+                {
+                    //newState
+                }
+            }
+            */
+            vid.BG0_drawAsset(Vec2(2,2), ClueGreece);
+            // TODO drive from python script that looks at puzzles
+            unsigned char numMetaPuzzles = 4;
+            unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
+            unsigned char startPuzzle = 0;
+            const unsigned char MAX_SLAT_WIDTH = 24;
+            unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetaPuzzles);
+            //const static *AssetImage SLATS[] = { &Slat1, &Slat2, &Slat3 };
+            //const *AssetImage slat = SLATS[slatWidth/8 - 1];
+            // TODO odd number handling
+            for (unsigned char i = 0; i < numMetaPuzzles; ++i)
+            {
+                if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
+                {
+                }
+                else
+                {
+                    vid.BG0_drawAsset(Vec2(2 + i * slatWidth/8, 2), Slat3);
+                }
+            }
+
+        }
+        break;
+
     default:
         vid.init();
         vid.BG0_drawAsset(Vec2(0,0), TileBG);
         paintLetters(vid, bg1, Font1Letter, true);
         vid.BG0_setPanning(Vec2(0.f, 0.f));
-
-        /* not word
-        Cube& c = getCube();
-        // FIXME vertical words
-        bool neighbored =
-                (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-                c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-        VidMode_BG0_SPR_BG1 vid(c.vbuf);
-        vid.init();
-        switch (GameStateMachine::getCurrentMaxLettersPerCube())
-        {
-        case 2:
-            paintLetters(vid, Font2Letter, true);
-            break;
-
-        case 3:
-            paintLetters(vid, Font3Letter, true);
-            break;
-
-        default:
-            paintLetters(vid, Font1Letter, true);
-            break;
-        }
-
-        if (neighbored)
-        {
-            paintBorder(vid, ImageIndex_Neighbored, true, false, true, false);
-        }
-        else
-        {
-            paintBorder(vid, ImageIndex_Teeth, false, true, false, true);
-        }
-    */
-
-        /* old word
-        Cube& c = getCube();
-        VidMode_BG0_SPR_BG1 vid(c.vbuf);
-        vid.init();
-
-        switch (GameStateMachine::getCurrentMaxLettersPerCube())
-        {
-        case 2:
-            paintLetters(vid, Font2Letter, true);
-            break;
-
-        case 3:
-            paintLetters(vid, Font3Letter, true);
-            break;
-
-        default:
-            paintLetters(vid, Font1Letter, true);
-            break;
-        }
-
-        ImageIndex ii = ImageIndex_Connected;
-        if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-        {
-            ii = ImageIndex_ConnectedLeft;
-        }
-        else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-                 c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-        {
-            ii = ImageIndex_ConnectedRight;
-        }
-        paintBorder(vid, ii, true, false, true, false);
-        */
 
         break;
     }
@@ -1808,9 +1733,6 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     switch (mAnimTypes[CubeAnim_Main])
     {
     case AnimType_NewWord:
-    /* TODO remove case AnimType_NormalTilesReveal:
-    case AnimType_MetaTilesReveal:
-    */
         break;
 
     default:
@@ -1825,84 +1747,6 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     AnimParams params;
     getAnimParams(&params);
     updateAnim(vid, &bg1, &params);
-
-#if (0)
-    switch (GameStateMachine::getCurrentMaxLettersPerCube())
-    {
-    case 2:
-        {
-        }
-      break;
-
-    case 3:
-        /* TODO remove
-vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
-        vid.BG0_drawPartialAsset(Vec2(17, 0),
-                                 Vec2(0, 0),
-                                 Vec2(1, 16),
-                                 ScreenOff);
-        vid.BG0_drawPartialAsset(Vec2(16, 0),
-                                 Vec2(0, 0),
-                                 Vec2(1, 16),
-                                 ScreenOff);
-                                 */
-        {
-            unsigned frame = str[0] - (int)'A';
-
-            if (frame < font.frames)
-            {
-                vid.BG0_drawAsset(Vec2(0,6), font, frame);
-            }
-
-            frame = str[1] - (int)'A';
-            if (frame < font.frames)
-            {
-                vid.BG0_drawAsset(Vec2(6,6), font, frame);
-            }
-
-            frame = str[2] - (int)'A';
-            if (frame < font.frames)
-            {
-                vid.BG0_drawAsset(Vec2(12,6), font, frame);
-            }
-        }
-      break;
-
-    default:
-        vid.BG0_drawAsset(Vec2(0,0), TileBG);
-        {
-            unsigned frame = *str - (int)'A';
-
-            if (frame < font.frames)
-            {
-                vid.BG0_drawAsset(Vec2(1,3), font, frame);
-
-/*
-                if (paintSprites)
-                {
-                                WordGame::random.uniform(BlinkDelayMin[personality],
-                                                         BlinkDelayMax[personality]);
-                        }
-                        mEyeState = newEyeState;
-                    }
-
-                    switch (mEyeState)
-                    {
-                    case EyeState_Closed:
-                        vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeftBlink.index);
-                        vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
-                        vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
-                }
-                else
-                {
-                    WordGame::hideSprites(vid);
-                }
-                */
-            }
-        }
-        break;
-    }
-#endif
 }
 
 void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)

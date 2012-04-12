@@ -16,7 +16,6 @@ enum AnimType
     AnimType_NewWord,
     AnimType_EndofRound,
     AnimType_Shuffle,
-    AnimType_CityProgression,
     AnimType_HintBarAppear,
     AnimType_HintBarIdle,
     AnimType_HintBarDisappear,
@@ -29,8 +28,7 @@ enum AnimType
     AnimType_MetaTilesShow,
     AnimType_MetaTilesExit,
     AnimType_MetaTilesReveal,
-    AnimType_NormalTilesReveal,
-    AnimType_MenuSpareCube,
+    AnimType_NormalTilesReveal, // reveal the letter on the just solved puzzle
 
     NumAnimTypes
 };

@@ -5,6 +5,7 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "WordGame.h"
+#include "Dictionary.h"
 
 /*
  * XXX: Only used for qsort() currently. We should think about what kind of low-level VM
@@ -23,6 +24,11 @@ SavedData::SavedData()
             mHighScores[i][j] = 0;
         }
     }
+
+    for (unsigned j = 0; j < arraysize(mCompletedPuzzles); ++j)
+    {
+        mCompletedPuzzles[j] = 0;
+    }
 }
 
 static int compare_ints(const void* a, const void* b)   // comparison function
@@ -38,6 +44,16 @@ void SavedData::OnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
+    case EventID_PuzzleSolved:
+        {
+            mLastSolvedPuzzle = Dictionary::getPuzzleIndex();
+            unsigned byteIndex = mLastSolvedPuzzle / 8;
+            unsigned bitIndex = mLastSolvedPuzzle % 8;
+            ASSERT(byteIndex < arraysize(mCompletedPuzzles));
+            mCompletedPuzzles[byteIndex] |= (1 << bitIndex);
+        }
+        break;
+
     case EventID_GameStateChanged:
         if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_EndOfRoundScored)
         {
@@ -89,4 +105,12 @@ void SavedData::OnEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
+}
+
+bool SavedData::isPuzzleSolved(unsigned index) const
+{
+    unsigned byteIndex = index / 8;
+    unsigned bitIndex = index % 8;
+    ASSERT(byteIndex < arraysize(mCompletedPuzzles));
+    return (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0;
 }

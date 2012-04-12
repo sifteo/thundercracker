@@ -6,7 +6,6 @@
 "AnimType_NewWord","x",1.5,"FALSE"
 "AnimType_EndofRound","x",1,"TRUE"
 "AnimType_Shuffle","x",0.5,"TRUE"
-"AnimType_CityProgression","x",1,"TRUE"
 "AnimType_HintBarAppear","x",1,"FALSE"
 "AnimType_HintBarIdle","x",3,"TRUE"
 "AnimType_HintBarDisappear","x",0.3,"FALSE"
@@ -20,4 +19,3 @@
 "AnimType_MetaTilesExit","x",1.1,"FALSE"
 "AnimType_MetaTilesReveal","x",1.1,"FALSE"
 "AnimType_NormalTilesReveal","x",1.1,"FALSE"
-"AnimType_MenuSpareCube","x",1,"TRUE"

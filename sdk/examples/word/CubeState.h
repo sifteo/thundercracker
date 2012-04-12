@@ -11,6 +11,7 @@ enum CubeStateIndex
     CubeStateIndex_OldWordScored,
     CubeStateIndex_StartOfRoundScored,
     CubeStateIndex_StoryStartOfRound,
+    CubeStateIndex_StoryCityProgression,
     CubeStateIndex_EndOfRoundScored,
     CubeStateIndex_ShuffleScored,
 

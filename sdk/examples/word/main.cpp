@@ -98,7 +98,7 @@ void siftmain()
     }
 
 #ifndef DEBUGz
-    if (1 && LOAD_ASSETS)
+    if (0 && LOAD_ASSETS)
     {
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)

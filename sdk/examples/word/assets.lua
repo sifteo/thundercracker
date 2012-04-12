@@ -20,7 +20,10 @@ MenuBlank = image{"menu_blank.png"}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_tilt.png", pinned=true, width=16, height=16, quality=10}
-LevelComplete = image{"level_complete.png", quality=10}
+ClueGreece = image{"ClueGreece.png", quality=10}
+Slat1 = image{"woodslat_thin.png"}
+Slat2 = image{"woodslat_thick.png"}
+Slat3 = image{"woodslat_extra_thick.png"}
 BorderTop = image{"wp2_border_top.png", quality=10}
 SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=10}
 BorderBottom = image{"wp2_border_bottom.png", height=16, quality=10}

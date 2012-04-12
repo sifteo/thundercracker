@@ -19,6 +19,9 @@ public:
 
     bool isFirstRun() const { return true; } // TODO first run detect
 
+    bool isPuzzleSolved(unsigned index) const;
+    unsigned getLastSolvedPuzzle() const { return mLastSolvedPuzzle; }
+
 private:
     uint32_t mHighScores[MAX_CUBES][3];
     uint8_t mCompletedPuzzles[NUM_PUZZLE_BYTES]; // bit array
@@ -26,6 +29,7 @@ private:
     uint8_t mNumHints;
     uint8_t mMainMenuSelection;
     uint8_t mPauseMenuSelection;
+    unsigned mLastSolvedPuzzle;
 };
 
 #endif // SAVEDDATA_H
