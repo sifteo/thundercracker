@@ -53,7 +53,7 @@ void InventoryView::Update() {
 			}
 			CORO_YIELD;
 		} while(!touch);
-		gGame.DoPaint();
+		System::finish();
 		CORO_YIELD;
 		{
 			uint8_t items[16];
@@ -73,7 +73,7 @@ void InventoryView::Update() {
 		while(Parent()->GetCube().isTouching()) {
 			CORO_YIELD;	
 		}
-		gGame.DoPaint();
+		System::finish();
 		Parent()->Restore();
 		mAccum.set(0,0);
 		CORO_YIELD;

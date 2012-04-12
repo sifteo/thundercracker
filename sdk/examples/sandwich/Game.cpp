@@ -4,7 +4,7 @@
 
 Game gGame;
 SystemTime Game::mPrevTime;
-TimeDelta Game::mDt(0.f);
+TimeDelta Game::mDt(0.1f);
 #if PLAYTESTING_HACKS
 float Game::sShakeTime = -1.f;
 #endif
@@ -14,15 +14,10 @@ Game* Game::Inst() {
 }
 
 void Game::Paint() {
-  if (mNeighborDirty) { 
-    LOG(("CHECK NEIGHBORS\n"));
-    CheckMapNeighbors(); 
-  }
-  SystemTime now = SystemTime::now();
+  if (mNeighborDirty) { CheckMapNeighbors(); }
   mPlayer.Update();
-  for(Viewport& view : views) {
-    view.Update();
-  }
+  for(Viewport& view : views) { view.Update(); }
+  if (mTouchMask) { CheckTouches(); }
   DoPaint();
   mAnimFrames++;
 }

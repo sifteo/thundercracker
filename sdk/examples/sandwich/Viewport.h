@@ -24,6 +24,7 @@ private:
 	} mView;
   	struct {
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
+    	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
   	} mFlags;
   	VideoBuffer mCanvas;
@@ -48,6 +49,7 @@ public:
 
 	void Init();
 	void Restore();
+	void UpdateTouch();
 	void Update();
   
   	void HideSprites();

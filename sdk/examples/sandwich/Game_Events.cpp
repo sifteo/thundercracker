@@ -57,7 +57,6 @@ void Game::OnYesOhMyGodExplosion(Bomb* bomb) {
     }
   }
 
-  LOG(("YES OH MY GOD!\n"));
   //for(;;) DoPaint();
 }
 

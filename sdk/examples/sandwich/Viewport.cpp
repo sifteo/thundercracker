@@ -16,11 +16,13 @@ Viewport::Iterator::operator Viewport*() {
 }
 
 bool Viewport::Touched() const {
-  return !mFlags.prevTouch && GetCube().isTouching();
+  return mFlags.currTouch && !mFlags.prevTouch;
 }
 
 void Viewport::Init() {
 	mFlags.view = VIEW_IDLE;
+	mFlags.currTouch = 0;
+	mFlags.prevTouch = 0;
 	mView.idle.Init();
 }
 
@@ -31,12 +33,9 @@ void Viewport::HideSprites() {
 }
 
 void Viewport::SanityCheckVram() {
-	System::finish();
 	if (mCanvas.mode() != BG0_SPR_BG1) {
 		mCanvas.initMode(BG0_SPR_BG1);
-		mCanvas.setWindow(0,128);
 	}
-	mCanvas.bg0.setPanning(vec(0,0));
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId) {
@@ -63,9 +62,9 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 		if (view == VIEW_ROOM && mView.room.Id() == roomId) { return false; }
 		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.GetSide() == side) { return false; }
 	}
-	SanityCheckVram();
 	mFlags.view = view;
-	EvictSecondaryView(view);
+	//SanityCheckVram();
+	//EvictSecondaryView(view);
 	if (view == VIEW_ROOM) {
 		mView.room.Init(roomId);
 	} else {
@@ -76,8 +75,8 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 
 void Viewport::SetSecondaryView(unsigned viewId) {
 	mFlags.view = viewId;
-	SanityCheckVram();
-	EvictSecondaryView(viewId);
+	//SanityCheckVram();
+	//EvictSecondaryView(viewId);
 	switch(viewId) {
 		case VIEW_IDLE:
 			mView.idle.Init();
@@ -94,8 +93,6 @@ void Viewport::SetSecondaryView(unsigned viewId) {
 }
 
 void Viewport::Restore() {
-	mCanvas.setMode(BG0_SPR_BG1);
-  	mCanvas.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
@@ -115,8 +112,11 @@ void Viewport::Restore() {
 	}
 }
 
+void Viewport::UpdateTouch() {
+	mFlags.currTouch = GetCube().isTouching();
+}
+
 void Viewport::Update() {
-	mFlags.prevTouch = GetCube().isTouching();
 	switch(mFlags.view) {
 	case VIEW_ROOM:
 		mView.room.Update();
@@ -131,6 +131,7 @@ void Viewport::Update() {
 		mView.edge.Update();
 		break;
 	}
+	mFlags.prevTouch = mFlags.currTouch;
 }
   
 bool Viewport::ShowLocation(Int2 loc, bool force) {
@@ -203,13 +204,13 @@ bool Viewport::HideLocation() {
 		return false;
 	}
 	if (ShowingLocation()) {
-		if (gGame.ShowingMinimap() && !pMinimap) {
-			SetSecondaryView(VIEW_MINIMAP);
-		} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
-			SetSecondaryView(VIEW_INVENTORY);
-		} else {
+		//if (gGame.ShowingMinimap() && !pMinimap) {
+		//	SetSecondaryView(VIEW_MINIMAP);
+		//} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
+		//	SetSecondaryView(VIEW_INVENTORY);
+		//} else {
 			SetSecondaryView(VIEW_IDLE);
-		}
+		//}
 		return true;
 	}
 	return false;
