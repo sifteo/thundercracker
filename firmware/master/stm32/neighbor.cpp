@@ -7,6 +7,8 @@
 
 void Neighbor::init()
 {
+    txData = 0;
+
     nbr_out1.setControl(GPIOPin::OUT_ALT_50MHZ);
     nbr_out2.setControl(GPIOPin::OUT_ALT_50MHZ);
     nbr_out3.setControl(GPIOPin::OUT_ALT_50MHZ);
@@ -16,6 +18,7 @@ void Neighbor::init()
     nbr_in1.irqSetFallingEdge();
     nbr_in1.irqDisable();
 
+    // this is currently about 87 us
     txPeriodTimer.init(625, 4);
 
     rxPeriodTimer.init(900, 0);
@@ -37,6 +40,8 @@ void Neighbor::enablePwm()
     txPeriodTimer.enableChannel(2);
     txPeriodTimer.enableChannel(3);
     txPeriodTimer.enableChannel(4);
+
+    txPeriodTimer.enableUpdateIsr();
 }
 
 void Neighbor::setDuty(uint16_t duty)
@@ -66,8 +71,8 @@ void Neighbor::disablePwm()
 void Neighbor::beginTransmit(uint16_t data)
 {
     txData = data;
+    transmitNextBit();  // ensure duty is set before enabling pwm channels
     enablePwm();
-    transmitNextBit();
 }
 
 /*
@@ -77,17 +82,13 @@ void Neighbor::beginTransmit(uint16_t data)
 void Neighbor::transmitNextBit()
 {
     // if there are no more bits to send, we're done
-    if (!txData)  {
+    if (!isTransmitting()) {
         disablePwm();
         return;
     }
 
     // set the duty for this bit period
-    if (txData & 1)
-        setDuty(TX_ACTIVE_PULSE_DUTY);
-    else
-        setDuty(0);
-
+    setDuty((txData & 1) ? TX_ACTIVE_PULSE_DUTY : 0);
     txData >>= 1;
 }
 

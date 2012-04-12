@@ -31,8 +31,11 @@ int main()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-//    NVIC.irqEnable(IVT.TIM3);                   // sample rate timer
-//    NVIC.irqPrioritize(IVT.TIM3, 0x60);         //  Higher prio than radio
+    NVIC.irqEnable(IVT.TIM3);                   // neighbor tx
+    NVIC.irqPrioritize(IVT.TIM3, 0x60);
+
+    NVIC.irqEnable(IVT.TIM5);                   // neighbor rx
+    NVIC.irqPrioritize(IVT.TIM5, 0x60);
 
     /*
      * High-level hardware initialization

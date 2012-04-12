@@ -42,6 +42,7 @@ TestJig::TestHandler const TestJig::handlers[] = {
 void TestJig::init()
 {
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
+    neighbor.init();
 }
 
 /*
