@@ -168,10 +168,10 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
          * if we see frames stacking up in newPending.
          */
 
-        if (newPending >= fpMax) {
+        if (newPending >= fpMax && allowContinuous(cube)) {
             uint8_t vf = getFlags(vbuf);
             if (!(vf & _SYS_VF_CONTINUOUS)) {
-                enterContinuous(vbuf, vf);
+                enterContinuous(cube, vbuf, vf);
                 setFlags(vbuf, vf);
             }
             newPending = fpMax;
@@ -322,7 +322,7 @@ void PaintControl::vramFlushed(CubeSlot *cube)
              */
 
              if (!(vf & _SYS_VF_CONTINUOUS))
-                enterContinuous(vbuf, vf);
+                enterContinuous(cube, vbuf, vf);
         }
 
         setFlags(vbuf, vf);
@@ -333,14 +333,31 @@ void PaintControl::vramFlushed(CubeSlot *cube)
     }
 }
 
-void PaintControl::enterContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags)
+bool PaintControl::allowContinuous(CubeSlot *cube)
 {
-    DEBUG_LOG((LOG_PREFIX "enterContinuous\n", LOG_PARAMS));
+    // Conserve cube CPU time during asset loading; don't use continuous rendering.
+    return !cube->isAssetLoading();
+}
+
+void PaintControl::enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags)
+{
+    bool allowed = allowContinuous(cube);
+
+    DEBUG_LOG((LOG_PREFIX "enterContinuous, allowed=%d\n", LOG_PARAMS, allowed));
 
     // Entering continuous mode; all synchronization goes out the window.
     Atomic::And(vbuf->flags, ~_SYS_VBF_SYNC_ACK);
     Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
-    flags |= _SYS_VF_CONTINUOUS;
+
+    if (allowed) {
+        flags |= _SYS_VF_CONTINUOUS;
+    } else {
+        // Ugh.. can't do real synchronous rendering, but we also can't
+        // use continuous rendering here. So... just flip the toggle bit
+        // and hope for the best.
+        flags &= ~_SYS_VF_CONTINUOUS;
+        flags ^= _SYS_VF_TOGGLE;
+    }
 }
 
 void PaintControl::exitContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags,

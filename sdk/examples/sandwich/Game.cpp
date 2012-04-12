@@ -15,6 +15,7 @@ Game* Game::Inst() {
 
 void Game::Paint() {
   if (mNeighborDirty) { 
+    LOG(("CHECK NEIGHBORS\n"));
     CheckMapNeighbors(); 
   }
   SystemTime now = SystemTime::now();
@@ -160,7 +161,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 
 void Game::IrisOut(Viewport* view) {
   view->HideSprites();
-  view->Canvas().bg1.eraseMask();
+  view->Canvas().bg1.eraseMask(false);
   VideoBuffer& mode = view->Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -217,7 +218,7 @@ void Game::ScrollTo(unsigned roomId) {
   // hide sprites and overlay
   pView->HideSprites();
   VideoBuffer& mode = pView->Canvas();
-  mode.bg1.eraseMask();
+  mode.bg1.eraseMask(false);
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();

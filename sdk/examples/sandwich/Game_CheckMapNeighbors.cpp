@@ -47,16 +47,14 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
 
   // Possibly make recursive calls
   if (didDisplayLocation || !view->ShowingLockedRoom()) {
+    auto nhood = view->Canvas().virtualNeighbors();
     for(unsigned side=0; side<NUM_SIDES; ++side) {
-      const unsigned result = VisitMapView(
-        status, 
-        view->VirtualNeighborAt((Side)side), 
-        loc+Int2::unit(side), 
-        view, 
-        (Side)side
-      );
-      if (result != RESULT_OKAY) {
-        return result;
+      auto cid = nhood.neighborAt((Side)side);
+      if (cid.isDefined()) {
+        const unsigned result = VisitMapView(
+          status, &gGame.ViewAt(cid), loc+Int2::unit(side), view, (Side)side
+        );
+        if (result != RESULT_OKAY) { return result; }
       }
     }
   }
@@ -79,10 +77,14 @@ void Game::CheckMapNeighbors() {
   // (some actions may cause us to have to start over becaues the tree is
   // modified as a side-effect)
   unsigned result;
+  unsigned iterations=0;
   do {
     status.visitMask = 0x00000000;
     result = VisitMapView(&status, root, root->GetRoomView().Location());
+    iterations++;
   } while(result != RESULT_OKAY);
+
+  LOG_INT((iterations));
   
   // Make sure all views outside the neighborhood are not showing rooms
   unsigned newChangeMask = 0;
@@ -99,4 +101,9 @@ void Game::CheckMapNeighbors() {
   } else if (newChangeMask) {
     PlaySfx(sfx_deNeighbor);
   }
+
+  if (status.changeMask || newChangeMask) {
+    System::finish();
+  }
+  LOG(("AFTER\n"));
 }

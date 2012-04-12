@@ -7,7 +7,7 @@
 
 void MinimapView::Init() {
 	Parent()->HideSprites();
-	mCanvas.bg1.eraseMask();
+	mCanvas.bg1.eraseMask(false);
 	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;

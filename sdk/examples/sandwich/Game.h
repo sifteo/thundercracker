@@ -79,7 +79,7 @@ private:
   void OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 
   // cutscenes
-  VideoBuffer* IntroCutscene();
+  Viewport* IntroCutscene();
   //void WinScreen();
 
 

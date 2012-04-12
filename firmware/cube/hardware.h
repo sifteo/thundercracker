@@ -20,7 +20,7 @@
  */
 
 #define HWREV_LATEST    2
-#define HWREV_DEFAULT   1
+#define HWREV_DEFAULT   2
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
 #endif
