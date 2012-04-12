@@ -1299,8 +1299,8 @@ void Game::HandleMenu()
             }
             case MENU_ITEM_DEPART:
             {
-                m_cubes[0].GetVid().resizeSprite( 0, 0, 0 );
-                m_cubes[0].GetVid().resizeSprite( 1, 0, 0 );
+                m_cubes[0].ClearSprite(0);
+                m_cubes[0].ClearSprite(1);
                 break;
             }
             default:

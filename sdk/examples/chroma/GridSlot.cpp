@@ -272,16 +272,14 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                         SystemTime t = SystemTime::now();
                         
                         unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.frames);
-                        vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
-                        vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
-                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
+                        vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
+                        vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
 
                         //number on bg1
                         if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
                         {
-                            vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
-                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
-                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 6 );
+                            vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
+                            vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
                         }
                     }
                 }

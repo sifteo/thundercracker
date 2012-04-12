@@ -33,7 +33,7 @@ void BubbleSpawner::Reset( VideoBuffer &vid )
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
         m_aBubbles[i].Disable();
-        vid.resizeSprite(BUBBLE_SPRITEINDEX + i, 0, 0);
+        vid.sprites[BUBBLE_SPRITEINDEX + i].hide();
     }
 }
 
@@ -75,7 +75,7 @@ void BubbleSpawner::Draw( VideoBuffer &vid, CubeWrapper *pWrapper )
         if( m_aBubbles[i].isAlive() )
             m_aBubbles[i].Draw( vid, spriteindex, pWrapper );
         else
-            vid.resizeSprite(spriteindex, 0, 0);
+            vid.sprites[spriteindex].hide();
     }
 }
 
@@ -164,10 +164,9 @@ void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
 
     if( visible )
     {
-        vid.resizeSprite(index, m_pTex->width*8, m_pTex->height*8);
-        vid.setSpriteImage(index, *m_pTex, frame);
-        vid.moveSprite(index, m_pos.x, m_pos.y);
+        vid.sprites[spriteindex].setImage(index, *m_pTex, frame);
+        vid.sprites[spriteindex].move(m_pos);
     }
     else
-        vid.resizeSprite(index, 0, 0);
+        vid.sprites[index].hide();
 }

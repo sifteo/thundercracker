@@ -42,12 +42,11 @@ void RockExplosion::Draw( VideoBuffer &vid, int spriteindex )
 {
     if( m_pos.x >= 0 )
     {
-        vid.resizeSprite(spriteindex, rock_explode.width*8, rock_explode.height*8);
-        vid.setSpriteImage(spriteindex, rock_explode, m_animFrame);
-        vid.moveSprite(spriteindex, m_pos.x, m_pos.y);
+        vid.sprites[spriteindex].setImage(rock_explode, m_animFrame);
+        vid.sprites[spriteindex].move(m_pos);
     }
     else
-        vid.resizeSprite(spriteindex, 0, 0);
+        vid.sprites[spriteindex].hide();
 }
 
 

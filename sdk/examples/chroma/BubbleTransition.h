@@ -50,9 +50,8 @@ static void DoBubbleTransition()
 
             for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
             {
-                vid.resizeSprite(j, bubbles1.width*8, bubbles1.height*8);
-                vid.setSpriteImage(j, bubbles1, frame);
-                vid.moveSprite(j, BubblePos[i][j].x, BubblePos[i][j].y);
+                vid.sprites[j].setImage(bubbles1, frame);
+                vid.sprites[j].move(BubblePos[i][j]);
 
                 BubblePos[i][j].y += Game::random.uniform( -2.5f, 2.5f );
                 BubblePos[i][j].y -= BUBBLE_Y_VEL * delta * Game::random.uniform( VEL_ADJUSTMENT_MIN, VEL_ADJUSTMENT_MAX );
@@ -77,7 +76,7 @@ static void DoBubbleTransition()
 
         for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
         {
-            vid.resizeSprite(j, 0, 0);
+            vid.sprites[j].hide();
         }
     }
 

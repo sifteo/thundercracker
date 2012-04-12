@@ -1943,17 +1943,13 @@ void CubeWrapper::UpMultiplier()
 
 void CubeWrapper::ClearSprite( unsigned int id )
 {
-    m_vid.resizeSprite( id, 0, 0 );
+    m_vid.sprites[id].hide();
 }
 
 
 void CubeWrapper::TurnOffSprites()
 {
-    ClearSprite( TimeKeeper::TIMER_SPRITE_NUM_ID );
-    ClearSprite( GridSlot::MULT_SPRITE_ID );
-    ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
-
-    m_bubbles.Reset( m_vid );
+    m_vid.sprites.erase();
 }
 
 

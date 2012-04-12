@@ -13,14 +13,12 @@ void DrawSpriteNum( VidMode_BG0_SPR_BG1 &vid, unsigned int number, Int2 pos )
     //show current puzzle
     if( number >= 10 )
     {
-        vid.resizeSprite( 1, BannerPointsWhite.width * 8, BannerPointsWhite.height * 8 );
-        vid.setSpriteImage(1, BannerPointsWhite, number / 10);
-        vid.moveSprite(1, pos.x, pos.y);
+        vid.sprites[1].setImage(BannerPointsWhite, number / 10);
+        vid.sprites[1].move(pos);
     }
 
-    vid.resizeSprite( 0, BannerPointsWhite.width * 8, BannerPointsWhite.height * 8 );
-    vid.setSpriteImage(0, BannerPointsWhite, number % 10);
-    vid.moveSprite(0, pos.x + ( BannerPointsWhite.width * 8 ), pos.y);
+    vid.sprites[0].setImage(BannerPointsWhite, number % 10);
+    vid.sprites[0].move(pos.x + ( BannerPointsWhite.width * 8 ), pos.y);
 }
 
 #endif
