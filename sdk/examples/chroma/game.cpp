@@ -233,7 +233,7 @@ void Game::Update()
     }
 #endif
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].FlushBG1();
+        m_cubes[i].testFlushBG1();
 
 #if SLOW_MODE
     System::paintSync();
@@ -282,24 +282,6 @@ void Game::Reset(  bool bInGame )
 
     m_bStabilized = false;
     m_bIsChainHappening = false;
-}
-
-
-CubeWrapper *Game::GetWrapper( Cube *pCube )
-{
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( pCube == &m_cubes[i].GetCube() )
-            return &m_cubes[i];
-    }
-
-    return NULL;
-}
-
-
-CubeWrapper *Game::GetWrapper( unsigned int index )
-{
-    return &m_cubes[index];
 }
 
 
@@ -357,7 +339,7 @@ void Game::TestMatches()
     if( !Game::Inst().AreMovesLegal() )
         return;
 
-	//for every cube test matches with every other cube
+    //for every cube test matches with every other cube
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
         m_cubes[i].testMatches();

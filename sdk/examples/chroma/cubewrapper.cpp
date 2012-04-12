@@ -1037,7 +1037,7 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 }
 
 
-int CubeWrapper::GetSideNeighboredOn( _SYSCubeID id, Cube &cube )
+int CubeWrapper::GetSideNeighboredOn( _SYSCubeID id, CubeID &cube )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -1616,7 +1616,7 @@ void CubeWrapper::setState( CubeState state )
 
 
 //if we need to, flush bg1
-void CubeWrapper::FlushBG1()
+void CubeWrapper::testFlushBG1()
 {
     if( m_queuedFlush )
     {

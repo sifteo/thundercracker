@@ -84,13 +84,13 @@ public:
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
 
-	int GetSideNeighboredOn( _SYSCubeID id, Cube &cube );
+    int GetSideNeighboredOn( _SYSCubeID id, CubeID &cube );
 
 	//get the number of dots that are marked or exploding
 	unsigned int getNumMarked() const;
 
 	GridSlot *GetSlot( int row, int col );
-	Cube &GetCube() { return m_cube; }
+    CubeID &GetCube() { return m_cube; }
 
 	//fill in which colors we're using
 	void fillColorMap( bool *pMap ) const;
@@ -115,7 +115,7 @@ public:
     inline Float2 getTiltDir() const { return m_curFluidDir; }
 
     //if we need to, flush bg1
-    void FlushBG1();
+    void testFlushBG1();
 
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
@@ -171,7 +171,7 @@ private:
     void fillPuzzleCube();    
     void DrawGrid() __attribute__ ((noinline));
 
-	Cube m_cube;
+    CubeID m_cube;
     VideoBuffer m_vid;
     //render bg1 here
     TileBuffer<16, 16> m_bg1buffer;

@@ -28,7 +28,7 @@ void Banner::Draw( TileBuffer<16, 16> &bg1buffer )
         return;
 
     //bg1buffer.image( vec( 0, 6 ), BannerImg );
-    bg1buffer.image( vec<int>( CENTER_PT - m_tiles, 6 ), vec<int>( CENTER_PT - m_tiles, 0 ), vec<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
+    bg1buffer.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( CENTER_PT - m_tiles, 0 ), BannerImg, vec<unsigned>( m_tiles * 2, BANNER_ROWS ) );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
