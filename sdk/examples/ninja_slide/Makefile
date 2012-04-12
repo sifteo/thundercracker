@@ -12,7 +12,7 @@ ctags:
 echo:
 	echo $(ASSETDEPS)
 
-run: ctags all 
+run: all 
 	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
 	../../../firmware/master/master-sim ninja_slide.elf
 
