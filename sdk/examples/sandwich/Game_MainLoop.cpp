@@ -6,15 +6,16 @@ void Game::OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {
 
 void Game::MainLoop() {
 	ASSERT(this == &gGame);
-	
 	mActiveViewMask = CUBE_ALLOC_MASK;
 	mLockedViewMask = 0x00000000;
 
   	//---------------------------------------------------------------------------
   	// INTRO
+  	System::finish();
 	for(CubeID c=0; c<NUM_CUBES; ++c) {
 		ViewAt(c).Canvas().attach(c);
 		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
+		ViewAt(c).Canvas().setWindow(0,128);
 	}
 
 	#if FAST_FORWARD
@@ -71,15 +72,14 @@ void Game::MainLoop() {
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
-	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
-	      				p->GetRoomView()->StartShake();
-	      				//p->GetRoomView()->Lock();
+	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView().StartShake();
 	      			}
 	      		}
 	      	}
     	}
     	if (mViews[targetViewId].ShowingRoom()) {
-    		mViews[targetViewId].GetRoomView()->StartNod();
+    		mViews[targetViewId].GetRoomView().StartNod();
     	}
 
 	    //-------------------------------------------------------------------------

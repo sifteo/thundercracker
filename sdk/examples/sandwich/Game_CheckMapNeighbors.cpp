@@ -33,13 +33,13 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport* view, Int2 loc, Vi
 
   // Start slide-out and possibly take over another view's lock
   if (didDisplayLocation && view->ShowingRoom() && !view->ShowingLockedRoom()) {
-    view->GetRoomView()->StartSlide((Side)((dir+2)%4));
+    view->GetRoomView().StartSlide((Side)((dir+2)%4));
     // check this against locked views
     auto i = gGame.ListLockedViews();
     while(i.MoveNext()) {
-      if (i->GetRoomView()->Id() == view->GetRoomView()->Id()) {
-        view->GetRoomView()->Lock();
-        i->GetRoomView()->Unlock();
+      if (i->GetRoomView().Id() == view->GetRoomView().Id()) {
+        view->GetRoomView().Lock();
+        i->GetRoomView().Unlock();
         return RESULT_INTERRUPTED;
       }
     }
@@ -81,7 +81,7 @@ void Game::CheckMapNeighbors() {
   unsigned result;
   do {
     status.visitMask = 0x00000000;
-    result = VisitMapView(&status, root, root->GetRoomView()->Location());
+    result = VisitMapView(&status, root, root->GetRoomView().Location());
   } while(result != RESULT_OKAY);
   
   // Make sure all views outside the neighborhood are not showing rooms

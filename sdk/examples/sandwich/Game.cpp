@@ -37,7 +37,7 @@ void Game::DoPaint() {
 void Game::UnlockAllViews() {
   auto i = ListLockedViews();
   while(i.MoveNext()) {
-    i->GetRoomView()->Unlock();
+    i->GetRoomView().Unlock();
   }
   mLockedViewMask = 0;
 }
@@ -51,11 +51,11 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
     const Side dir = InferDirection(u);
     Viewport* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
     if (view && view->ShowingRoom()) {
-      RoomView* pRoomView = view->GetRoomView();
-      if (pRoomView->Block()) {
-        pRoomView->UpdateBlock();
+      RoomView& roomView = view->GetRoomView();
+      if (roomView.Block()) {
+        roomView.UpdateBlock();
       } else {
-        pRoomView->ShowBlock(block);
+        roomView.ShowBlock(block);
       }
     }
     //
@@ -160,7 +160,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 
 void Game::IrisOut(Viewport* view) {
   view->HideSprites();
-  view->Canvas().bg1.eraseMask(false);
+  view->Canvas().bg1.eraseMask();
   VideoBuffer& mode = view->Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -217,7 +217,7 @@ void Game::ScrollTo(unsigned roomId) {
   // hide sprites and overlay
   pView->HideSprites();
   VideoBuffer& mode = pView->Canvas();
-  mode.bg1.eraseMask(false);
+  mode.bg1.eraseMask();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
@@ -301,7 +301,6 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
         }
         view.Erase();
         Paint();
-        gGame.Paint();
         view.ShowAll(txt.line);
         if (line > 0) {
             PlaySfx(sfx_neighbor);
@@ -309,28 +308,27 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
         // fade in and out
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(i<<4);
-            gGame.Paint();
+            Paint();
         }
         view.SetAlpha(255);
-        gGame.Paint();
+        Paint();
         Wait(5.f, true);
         for (unsigned i = 0; i < 16; i ++) {
             view.SetAlpha(0xff - (i<<4));
-            gGame.Paint();
+            Paint();
         }
         view.SetAlpha(0);
-        gGame.Paint();
+        Paint();
     }
     for(unsigned i=0; i<16; ++i) {
-        gGame.Paint();
+        Paint();
     }
     PlaySfx(sfx_deNeighbor);
 }
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) {
   DoPaint();
-  VideoBuffer& gfx = pView->Canvas();
-  gfx.setWindow(80+16,128-80-16);
+  pView->Canvas().setWindow(80+16,128-80-16);
   Dialog view;
   view.Init(&pView->Canvas());
   view.Erase();
@@ -338,7 +336,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) 
   view.ShowAll(msg);
   Paint();
   for(int t=0; t<16; t++) {
-    gfx.setWindow(80+15-(t),128-80-15+(t));
+    pView->Canvas().setWindow(80+15-(t),128-80-15+(t));
     view.SetAlpha(t<<4);
     Paint();
   }
@@ -360,15 +358,15 @@ void Game::RestorePearlIdle() {
 }
 
 void Game::RoomNod(Viewport* view) {
-  view->GetRoomView()->StartNod();
-  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  view->GetRoomView().StartNod();
+  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
     Paint();
   }
 }
 
 void Game::RoomShake(Viewport* view) {
-  view->GetRoomView()->StartShake();
-  while(view->ShowingRoom() && view->GetRoomView()->IsWobbly()) {
+  view->GetRoomView().StartShake();
+  while(view->ShowingRoom() && view->GetRoomView().IsWobbly()) {
     Paint();
   }
 }

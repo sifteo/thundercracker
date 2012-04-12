@@ -46,12 +46,12 @@ void Game::OnYesOhMyGodExplosion(Bomb* bomb) {
   } else {
     auto p = ListLockedViews();
     while(p.MoveNext()) {
-      const auto pRoom = p->GetRoomView()->GetRoom();
+      const auto pRoom = p->GetRoomView().GetRoom();
       if (pRoom->HasItem() && pRoom->Item() == bomb->Item()) {
         pRoom->ClearTrigger();
         pRoom->BombThisFucker();
-        p->GetRoomView()->Unlock();
-        p->GetRoomView()->HideItem();
+        p->GetRoomView().Unlock();
+        p->GetRoomView().HideItem();
         break;
       }
     }
@@ -103,7 +103,7 @@ void Game::OnTrapdoor(Room *pRoom) {
   Viewport *pView = mPlayer.CurrentView()->Parent();
   int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
   for(unsigned i=0; i<arraysize(animHeights); ++i) {
-    pView->GetRoomView()->DrawPlayerFalling(animHeights[i]);
+    pView->GetRoomView().DrawPlayerFalling(animHeights[i]);
     Paint();
   }
   const Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
@@ -360,8 +360,8 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         bool didRestore = false;
         Viewport::Iterator p = ListViews();
         while(p.MoveNext()) {
-          if (p->ShowingRoom() && p->GetRoomView()->Id() == door.trigger.room) {
-            p->GetRoomView()->Restore();
+          if (p->ShowingRoom() && p->GetRoomView().Id() == door.trigger.room) {
+            p->GetRoomView().Restore();
             RoomNod(p);
             didRestore = true;
             break;

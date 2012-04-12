@@ -32,7 +32,7 @@ bool Map::GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* 
   if (!CanTraverse(loc, side)) { return false; }
   Viewport* gv = loc.view->Parent()->VirtualNeighborAt(side);
   if (!gv || !gv->ShowingRoom()) { return false; }
-  outNeighbor->view = gv->GetRoomView();
+  outNeighbor->view = &gv->GetRoomView();
   const Room* room = outNeighbor->view->GetRoom();
   switch(room->SubdivType()) {
     case SUBDIV_DIAG_POS:
