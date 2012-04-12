@@ -17,6 +17,7 @@ class World {
     static const int CELL_NUM_PITCH = CELLS_PER_ROW+1; // Add this to your cellNum to get to the next row.
         // We want an invalid cellNum at end of each row to detect when we have gone of the edge.
     static const int MAX_THING = 5;
+    static const float VEL_NEAR_ZERO = 0.0001;
 
     /*
      * properties
@@ -102,6 +103,11 @@ class Thing {
         pImage = &asset;
     }
 
+    void setSpriteImage(VidMode_BG0_SPR_BG1 &vid, const PinnedAssetImage &asset, int frame){
+        vid.setSpriteImage(id, asset, frame);
+        pImage = &asset;
+    }
+
 
     virtual void think(_SYSCubeID cubeId){
     }
@@ -141,7 +147,8 @@ class Thing {
     int cellHeight(){ ASSERT(pImage && "Thing.pImage not yet set"); return pImage->pixelHeight() / World::PIXELS_PER_CELL; }
 
     virtual void bounds(Rect result[NUM_BOUNDS_RECTS]){
-        result[0] = Rect(pos - TOP_LEFT_OFFSET, Vec2(cellWidth(), cellWidth()));
+        const int MARGIN = 0.1;
+        result[0] = Rect(pos - TOP_LEFT_OFFSET, Vec2(cellWidth() - MARGIN, cellWidth() - MARGIN));
         result[1] = EMPTY_RECT;
     }
 
@@ -166,15 +173,17 @@ class Thing {
     }
 
     virtual void onCollision(Thing *other){
-        if (other){
+        if (other && id < other->id){
             LOG(("platform.onCollision: <%d> collided with <%d>\n", id, other->id));
             Rect b[2];
             bounds(b);
-            LOG(("platform.onCollision: my bounds=%.1f %.1f %.1f %.1f\n", b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y));
+            LOG(("platform.onCollision:    my bounds=%.4f %.4f %.1f %.1f vel=%.3f %.3f\n",
+                        b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y, vel.x, vel.y));
             other->bounds(b);
-            LOG(("platform.onCollision: other bounds=%.1f %.1f %.1f %.1f\n", b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y));
+            LOG(("platform.onCollision: other bounds=%.4f %.4f %.1f %.1f vel=%.3f %.3f\n", 
+                        b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y, other->vel.x, other->vel.y));
         } else {
-            LOG(("platform.onCollision: <%d> collided with edges\n", id ));
+//             LOG(("platform.onCollision: <%d> collided with edges\n", id ));
         }
 
         vel = Vec2(0.0f, 0.0f);

@@ -21,7 +21,7 @@ class Platform : public Thing {
         if (!isMoving && vel.len2() > 0.0001){
             isMoving = true;
             pWorld->numMovingPlatforms++;
-            LOG(("Platform %d: slide sound: start\n", id));
+//             LOG(("Platform %d: slide sound: start\n", id));
             channel.play(sliding_sound, LoopRepeat);
         }
     }
@@ -30,7 +30,7 @@ class Platform : public Thing {
         if (isMoving){
             isMoving = false;
             pWorld->numMovingPlatforms--;
-            LOG(("Platform %d: slide sound: STOP\n", id));
+//             LOG(("Platform %d: slide sound: STOP\n", id));
             channel.stop();
         }
         super::onCollision(other);
@@ -102,6 +102,11 @@ class LPlatform : public Platform {
                 // bottom left
                 result[1] = Rect(topLeft.x,     topLeft.y + 1, 1, 1);
         }
+        const int MARGIN = 0.1;
+        result[0].size.x -= MARGIN;
+        result[0].size.y -= MARGIN;
+        result[1].size.x -= MARGIN;
+        result[1].size.y -= MARGIN;
     }
 
 };

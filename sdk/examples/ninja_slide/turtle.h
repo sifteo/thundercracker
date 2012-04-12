@@ -4,6 +4,9 @@
 #include "thing.h"
 
 class Turtle : public Thing {
+  private:
+    typedef Thing super;
+
   public:
     Int2 direction;
 
@@ -56,6 +59,25 @@ class Turtle : public Thing {
                 pWorld->numMovingTurtles--;
             }
         }
+    }
+
+    virtual void draw(VidMode_BG0_SPR_BG1 vid){
+        if (vel.len2() > World::VEL_NEAR_ZERO){
+            // direction we are facing.
+
+            enum {DOWN, RIGHT, UP, LEFT};
+            int frame = 0;
+            if (abs(vel.x) > abs(vel.y)){
+                if (vel.x > 0) frame = RIGHT;
+                else frame=LEFT;
+            } else {
+                if (vel.y > 0) frame = DOWN;
+                else frame = UP;
+            }
+            setSpriteImage(vid, *pImage, frame);
+        }
+
+        super::draw(vid);
     }
 };
 
