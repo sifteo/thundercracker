@@ -4,6 +4,7 @@
 #include "macros.h"
 
 #include "radio.h"
+#include "flash.h"
 
 uint8_t FactoryTest::commandBuf[MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
@@ -69,13 +70,19 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
     Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
     Radio::setTxPower(pwr);
 
-    uint8_t response[] = { 3, args[0], Radio::txPower() };
+    const uint8_t response[] = { 3, args[0], Radio::txPower() };
     Usart::Dbg.write(response, sizeof response);
 }
 
 void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
 {
+    Flash::JedecID id;
+    Flash::readId(&id);
 
+    uint8_t result = (id.manufacturerID == Flash::MACRONIX_MFGR_ID) ? 1 : 0;
+
+    const uint8_t response[] = { 3, args[0], result };
+    Usart::Dbg.write(response, sizeof response);
 }
 
 void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
