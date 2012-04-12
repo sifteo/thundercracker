@@ -19,7 +19,7 @@ all: $(BIN)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 #not sure why, but qt creator doesn't like this
 ifeq ($(QTCREATOR_TERMINAL),)
-	@perl -pi -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
+	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 endif
 
 $(BIN): $(OBJS) $(LD)
