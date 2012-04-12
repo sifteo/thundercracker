@@ -14,7 +14,7 @@ using namespace Sifteo;
 #endif
 
 static Cube cubes[NUM_CUBES];
-static AudioChannel channel;
+AudioChannel channel;
 
 static void init() {
     for (unsigned i=0; i<NUM_CUBES; i++) {

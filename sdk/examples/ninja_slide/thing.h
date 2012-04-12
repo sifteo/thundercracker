@@ -47,7 +47,7 @@ class World {
  *  0  1  2  3
  *  5  6  7  8
  * 10 11 12 13
- * 14 15 16 17
+ * 15 16 17 18
  */
 typedef int CellNum;
 
@@ -165,7 +165,18 @@ class Thing {
             || myBounds[1].contains(point);
     }
 
-    virtual void onCollision(Thing *otherThing){
+    virtual void onCollision(Thing *other){
+        if (other){
+            LOG(("platform.onCollision: <%d> collided with <%d>\n", id, other->id));
+            Rect b[2];
+            bounds(b);
+            LOG(("platform.onCollision: my bounds=%.1f %.1f %.1f %.1f\n", b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y));
+            other->bounds(b);
+            LOG(("platform.onCollision: other bounds=%.1f %.1f %.1f %.1f\n", b[0].origin.x, b[0].origin.y, b[0].size.x, b[0].size.y));
+        } else {
+            LOG(("platform.onCollision: <%d> collided with edges\n", id ));
+        }
+
         vel = Vec2(0.0f, 0.0f);
         pos = nearestCellCoordinate(pos);
     }

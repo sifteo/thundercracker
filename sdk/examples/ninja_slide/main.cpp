@@ -13,6 +13,8 @@
 
 using namespace Sifteo;
 
+AudioChannel channel;
+
 static Cube cube(0);
 
 void loadAssets()
@@ -62,6 +64,7 @@ void main()
 
 
     loadAssets();
+    channel.init();
 
     VidMode_BG0_SPR_BG1 vid(cube.vbuf);
     vid.init();
