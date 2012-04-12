@@ -4,14 +4,13 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_TIME_H
-#define _SIFTEO_TIME_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
 #include <sifteo/macros.h>
+#include <sifteo/abi.h>
 
 namespace Sifteo {
 
@@ -466,4 +465,3 @@ private:
 
 }   // namespace Sifteo
 
-#endif

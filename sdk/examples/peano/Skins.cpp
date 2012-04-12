@@ -67,19 +67,19 @@ void SetSkin(SkinType skinType)
         //bring in from top and bottom
         for(int frame = 0; frame <= 9; frame++)
         {
-            cube->ClipImage(&s.vault_door, Vec2(0, -18 + frame));
-            cube->ClipImage(&s.vault_door, Vec2(0, 16 - frame));
+            cube->ClipImage(&s.vault_door, vec(0, -18 + frame));
+            cube->ClipImage(&s.vault_door, vec(0, 16 - frame));
             Game::Wait(0);
         }
 
         //slide it over a bit
         for(int frame = 0; frame <= 9; frame++)
         {
-            cube->ClipImage(&s.vault_door, Vec2(-frame, -9));
-            cube->ClipImage(&s.vault_door, Vec2(-frame, 7));
+            cube->ClipImage(&s.vault_door, vec(-frame, -9));
+            cube->ClipImage(&s.vault_door, vec(-frame, 7));
 
-            cube->ClipImage(&s.vault_door, Vec2(16-frame, -9));
-            cube->ClipImage(&s.vault_door, Vec2(16-frame, 7));
+            cube->ClipImage(&s.vault_door, vec(16-frame, -9));
+            cube->ClipImage(&s.vault_door, vec(16-frame, 7));
 
             Game::Wait(0);
         }

@@ -137,7 +137,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
             setPanning(vid, 0.f);
-            vid.BG1_setPanning(Vec2(0, 0));
+            vid.BG1_setPanning(vec(0, 0));
         }
         mIdleTime = 0.f;
         switch (data.mGameStateChanged.mNewStateIndex)
@@ -487,7 +487,7 @@ void CubeStateMachine::calcSpriteParams(unsigned i)
             mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
                                                                              angle * 1.25f),
                                                     WordGame::random.uniform(32.f, 52.f));
-            mSpriteParams.mEndPositions[i] += Vec2(56.f, 56.f);
+            mSpriteParams.mEndPositions[i] += vec(56.f, 56.f);
             mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
         }
         break;
@@ -812,7 +812,7 @@ void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
         mTilePositions[i].x = ((mTilePositions[i].x + tileWidth + 2) % (16 + 2 * tileWidth));
         mTilePositions[i].x -= tileWidth + 2;
     }
-    //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
+    //vid.BG0_setPanning(vec((int)mBG0Panning, 0.f));
 }
 
 void CubeStateMachine::paint()
@@ -825,10 +825,10 @@ void CubeStateMachine::paint()
     Cube& c = getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), TileBG);
+    vid.BG0_drawAsset(vec(0,0), TileBG);
     BG1Helper bg1(c);
     paintLetters(vid, bg1, Font1Letter, true);
-    vid.BG0_setPanning(Vec2(0.f, 0.f));
+    vid.BG0_setPanning(vec(0.f, 0.f));
 
     /* not word
     Cube& c = getCube();
@@ -1002,7 +1002,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         for (unsigned j=0; j < 16; ++j) // columns
         {
 
-            Vec2 texCoord(j, i);
+            vec texCoord(j, i);
             switch (teethImageIndex)
             {
             case ImageIndex_Connected:
@@ -1072,15 +1072,15 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        vid.BG0_drawPartialAsset(Vec2(j, i),
-                                                 Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                                 Vec2(1, 1),
+                        vid.BG0_drawPartialAsset(vec(j, i),
+                                                 vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                                 vec(1, 1),
                                                  *teethNumber,
                                                  frame - 2);
                     }
                     else
                     {
-                        vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        vid.BG0_drawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     break;
                 }
@@ -1096,15 +1096,15 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i),
-                                             Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                             Vec2(1, 1),
+                        bg1.DrawPartialAsset(vec(j, i),
+                                             vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                             vec(1, 1),
                                              *teethNumber,
                                              frame - 2);
                     }
                     else
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        bg1.DrawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     ++bg1Tiles;
                 }
@@ -1161,11 +1161,11 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 
             if (highDigitAnim[AnimType] > 0)
             {
-                bg1.DrawAsset(Vec2(((3 - 2 + 0) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - 2 + 0) * 4 + 1), 14),
                               *highDigitAnim[AnimType],
                               frame);
             }
-            bg1.DrawAsset(Vec2(((3 - 2 + 1) * 4 + 1), 14),
+            bg1.DrawAsset(vec(((3 - 2 + 1) * 4 + 1), 14),
                           *lowDigitAnim[AnimType],
                           frame);
         }
@@ -1178,7 +1178,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
             for (unsigned i = 0; i < len; ++i)
             {
                 frame = string[i] - '0';
-                bg1.DrawAsset(Vec2(((3 - len + i) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - len + i) * 4 + 1), 14),
                               FontTeeth,
                               frame);
             }
@@ -1198,18 +1198,18 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         unsigned tensDigit = GameStateMachine::getNumAnagramsLeft() / 10;
         if (tensDigit)
         {
-            bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
+            bg1.DrawAsset(vec(7,11), FontSmall, tensDigit);
         }
-        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
+        bg1.DrawAsset(vec(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
 
         if (GameStateMachine::getNumBonusAnagramsLeft())
         {
             tensDigit = GameStateMachine::getNumBonusAnagramsLeft() / 10;
             if (tensDigit)
             {
-                bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
+                bg1.DrawAsset(vec(1,11), FontBonus, tensDigit);
             }
-            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
+            bg1.DrawAsset(vec(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
         }
     }
 
@@ -1271,14 +1271,14 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
 
     case 3:
         /* TODO remove
-vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
-        vid.BG0_drawPartialAsset(Vec2(17, 0),
-                                 Vec2(0, 0),
-                                 Vec2(1, 16),
+vid.BG0_drawAsset(vec(0,0), ScreenOff);
+        vid.BG0_drawPartialAsset(vec(17, 0),
+                                 vec(0, 0),
+                                 vec(1, 16),
                                  ScreenOff);
-        vid.BG0_drawPartialAsset(Vec2(16, 0),
-                                 Vec2(0, 0),
-                                 Vec2(1, 16),
+        vid.BG0_drawPartialAsset(vec(16, 0),
+                                 vec(0, 0),
+                                 vec(1, 16),
                                  ScreenOff);
                                  */
         {
@@ -1286,31 +1286,31 @@ vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
 
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(0,6), font, frame);
+                vid.BG0_drawAsset(vec(0,6), font, frame);
             }
 
             frame = str[1] - (int)'A';
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(6,6), font, frame);
+                vid.BG0_drawAsset(vec(6,6), font, frame);
             }
 
             frame = str[2] - (int)'A';
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(12,6), font, frame);
+                vid.BG0_drawAsset(vec(12,6), font, frame);
             }
         }
       break;
 
     default:
-        vid.BG0_drawAsset(Vec2(0,0), TileBG);
+        vid.BG0_drawAsset(vec(0,0), TileBG);
         {
             unsigned frame = *str - (int)'A';
 
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(1,3), font, frame);
+                vid.BG0_drawAsset(vec(1,3), font, frame);
 
 /*
                 if (paintSprites)

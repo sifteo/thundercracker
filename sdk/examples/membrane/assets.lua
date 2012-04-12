@@ -1,6 +1,7 @@
-GameAssets = group{quality=9.95}
-
+BootAssets = group{quality=8.90}
 Title = image{"title.png", width=128, height=128}
+
+GameAssets = group{quality=9.95}
 
 Playfield = image{"playfield.png"}
 Markers = image{"markers.png", width=16, height=16}

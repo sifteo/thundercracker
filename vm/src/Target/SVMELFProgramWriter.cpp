@@ -72,6 +72,9 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
             writeSectionHeader(Layout, SD);
         }
     }
+
+    // End-of-file should be block aligned
+    padToAlignment(SVMTargetMachine::getBlockSize());
 }
 
 void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout)
@@ -204,6 +207,14 @@ void SVMELFProgramWriter::padToOffset(uint32_t O)
     if (size > 0)
         writePadding(size);
     assert(O == OS.tell());
+}
+
+void SVMELFProgramWriter::padToAlignment(uint32_t A)
+{
+    int32_t remainder = OS.tell() % A;
+    if (remainder != 0)
+        writePadding(A - remainder);
+    assert(0 == (OS.tell() % A));
 }
 
 void SVMELFProgramWriter::writeDebugMessage()

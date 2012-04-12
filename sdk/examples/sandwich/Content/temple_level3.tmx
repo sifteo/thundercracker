@@ -1162,15 +1162,11 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="72" height="64">
-  <object name="temple_level2Gate" type="Gateway" x="1114" y="687" width="32" height="32">
+  <object name="temple_level4Gate" type="Gateway" x="816" y="992" width="32" height="32">
    <properties>
-    <property name="target" value="temple_level2:temple_level3Gate"/>
+    <property name="target" value="temple_level4:SpawnPoint"/>
    </properties>
   </object>
-  <object name="temple_level1Gate" type="Gateway" x="816" y="992" width="32" height="32">
-   <properties>
-    <property name="target" value="temple_level1:temple_level3Gate"/>
-   </properties>
-  </object>
+  <object name="SpawnPoint" type="Location" x="1108" y="684" width="32" height="32"/>
  </objectgroup>
 </map>

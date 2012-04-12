@@ -223,9 +223,7 @@ namespace {
                 case 'X':
                 case 'x':
                 case 'p':
-                case 'b':
-                case 'c':
-                case 'C': {
+                case 'c': {
                     if (argBegin == argEnd)
                         reportError("Too few arguments");
 
@@ -247,6 +245,29 @@ namespace {
                         args.push_back(v);
                         fmt.append(fmtBegin, S);
                     }
+
+                    fmtBegin = S;
+                    ++argBegin;
+                    return;
+                }
+
+                // Nonstandard integer specifiers (No compile-time resolution)
+                case 'b':
+                case 'P':
+                case 'C': {
+                    if (argBegin == argEnd)
+                        reportError("Too few arguments");
+
+                    Value *v = argBegin->get();
+                    if (!v->getType()->isIntegerTy() && !v->getType()->isPointerTy())
+                        reportError("Expected integer or pointer argument for %" + Twine(c));
+                    if (v->getType() != i32)
+                        v = CastInst::CreatePointerCast(v, i32, "", I);
+
+                    if (args.size() >= MAX_ARGS)
+                        flush();
+                    args.push_back(v);
+                    fmt.append(fmtBegin, S);
 
                     fmtBegin = S;
                     ++argBegin;

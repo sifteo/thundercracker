@@ -252,13 +252,20 @@ class LCD {
             mode_te = 1;
             break;
 
-            /*
-             * Assume this firmware is expecting a Truly  Undo its model-specific tweaks.
-             */
+        /*
+         * Look for specific magic commands in order to guess what LCD this
+         * firmware build is expecting to talk to. Then, undo that firmware's
+         * model-specific workarounds.
+         */
+
         case CMD_MAGIC_TRULY:
             model.madctr_xor = MADCTR_MX | MADCTR_MY;
             model.row_adj = -32;
             model.col_adj = 0;
+            break;
+            
+        case CMD_MAGIC_TIANMA_HX8353:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
             break;
 
         }
@@ -326,7 +333,8 @@ class LCD {
     static const uint8_t MADCTR_RGB   = 0x08;   // Not implemented
 
     // Vendor-specific commands that we use to detect an LCD model
-    static const uint8_t CMD_MAGIC_TRULY   = 0xC4;
+    static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
+    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xE3;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;
