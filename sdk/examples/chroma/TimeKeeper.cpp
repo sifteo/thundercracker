@@ -64,10 +64,10 @@ void TimeKeeper::DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VideoBu
     if( numStems <= 2 )
     {
         float spritePerc = 1.0f - fmod( m_fTimer, TIMER_LOW_SPRITE_PERIOD ) / TIMER_LOW_SPRITE_PERIOD;
-        unsigned int spriteframe = spritePerc * ( timerLow.frames + 1 );
+        unsigned int spriteframe = spritePerc * ( timerLow.numFrames() + 1 );
 
-        if( spriteframe >= timerLow.frames )
-            spriteframe = timerLow.frames - 1;
+        if( spriteframe >= timerLow.numFrames() )
+            spriteframe = timerLow.numFrames() - 1;
 
         vid.sprites[TIMER_SPRITE_NUM_ID].setImage(timerLow, spriteframe);
         vid.sprites[TIMER_SPRITE_NUM_ID].move(TIMER_SPRITE_POS, TIMER_SPRITE_POS);
@@ -76,10 +76,10 @@ void TimeKeeper::DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VideoBu
     {
         //figure out what frame we're on
         float spritePerc = 1.0f - fmod( m_fTimer, TIMER_SPRITE_PERIOD ) / TIMER_SPRITE_PERIOD;
-        unsigned int spriteframe = spritePerc * ( timerSprite.frames + 1 );
+        unsigned int spriteframe = spritePerc * ( timerSprite.numFrames() + 1 );
 
-        if( spriteframe >= timerSprite.frames )
-            spriteframe = timerSprite.frames - 1;
+        if( spriteframe >= timerSprite.numFrames() )
+            spriteframe = timerSprite.numFrames() - 1;
 
         vid.sprites[TIMER_SPRITE_NUM_ID].setImage(timerSprite, spriteframe);
         vid.sprites[TIMER_SPRITE_NUM_ID].move(TIMER_SPRITE_POS, TIMER_SPRITE_POS);

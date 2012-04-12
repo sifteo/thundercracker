@@ -30,7 +30,7 @@ void RockExplosion::Update()
     {
         m_animFrame = float(SystemTime::now() - m_startTime) * FRAMES_PER_SECOND;
 
-        if( m_animFrame >= rock_explode.frames )
+        if( m_animFrame >= rock_explode.numFrames() )
         {
             Reset();
         }

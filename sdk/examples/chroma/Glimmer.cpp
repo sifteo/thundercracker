@@ -56,7 +56,7 @@ void Glimmer::Update( float dt, CubeWrapper *pWrapper )
     {
         m_frame++;
 
-        if( m_frame >= GlimmerImg.frames )
+        if( m_frame >= GlimmerImg.numFrames() )
         {
             m_frame = 0;
             m_group++;

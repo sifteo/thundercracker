@@ -39,10 +39,10 @@ static void DoBubbleTransition()
     while( SystemTime::now() - startTime < ANIM_LENGTH )
     {
         float delta = SystemTime::now() - lastTime;
-        unsigned int frame = float( SystemTime::now() - startTime ) / ANIM_LENGTH * bubbles1.frames;
+        unsigned int frame = float( SystemTime::now() - startTime ) / ANIM_LENGTH * bubbles1.numFrames();
 
-        if( frame >= bubbles1.frames )
-            frame = bubbles1.frames - 1;
+        if( frame >= bubbles1.numFrames() )
+            frame = bubbles1.numFrames() - 1;
 
         for( int i = 0; i < NUM_CUBES; i++ )
         {

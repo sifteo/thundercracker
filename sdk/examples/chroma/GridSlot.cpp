@@ -233,7 +233,7 @@ unsigned int GridSlot::GetSpecialFrame()
     {
         m_animFrame++;
 
-        if( m_animFrame >= GetSpecialTexture().frames )
+        if( m_animFrame >= GetSpecialTexture().numFrames() )
             m_animFrame = 0;
 
         return m_animFrame;
@@ -271,7 +271,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                     {
                         SystemTime t = SystemTime::now();
                         
-                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.frames);
+                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
                         vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
                         vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
 
@@ -378,7 +378,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                     if( perc >= 0.0f && perc < 1.0f )
                     {
                         //figure out frame based on mark break delay
-                        unsigned int frame = pImg->frames * perc;
+                        unsigned int frame = pImg->numFrames() * perc;
 
                         bg1buffer.image( vec, *pImg, frame );
                     }

@@ -121,17 +121,17 @@ void Bubble::Update( float dt, const Float2 &tilt )
 
 void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
 {
-    unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * m_pTex->frames;
+    unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * m_pTex->numFrames();
     bool visible = true;
 
-    if( frame >= m_pTex->frames )
-        frame = m_pTex->frames - 1;
+    if( frame >= m_pTex->numFrames() )
+        frame = m_pTex->numFrames() - 1;
 
     //sometimes bubbles are obscured by chromits
     if( m_fTimeAlive / BUBBLE_LIFETIME < BEHIND_CHROMITS_THRESHOLD )
     {
         //find our center
-        Float2 center = { m_pos.x + m_pTex->width*4, m_pos.y + m_pTex->height*4 };
+        Float2 center = m_pos + m_pTex->pixelExtent();
         Int2 gridslot = { center.x / 32, center.y / 32 };
 
         GridSlot *pSlot = pWrapper->GetSlot( gridslot.y, gridslot.x );
@@ -164,8 +164,8 @@ void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
 
     if( visible )
     {
-        vid.sprites[spriteindex].setImage(index, *m_pTex, frame);
-        vid.sprites[spriteindex].move(m_pos);
+        vid.sprites[index].setImage(*m_pTex, frame);
+        vid.sprites[index].move(m_pos);
     }
     else
         vid.sprites[index].hide();
