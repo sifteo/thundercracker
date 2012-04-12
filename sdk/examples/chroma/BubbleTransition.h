@@ -46,7 +46,7 @@ static void DoBubbleTransition()
 
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            VidMode_BG0_SPR_BG1 &vid = Game::Inst().m_cubes[i].GetVid();
+            VideoBuffer &vid = Game::Inst().m_cubes[i].GetVid();
 
             for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
             {
@@ -71,7 +71,7 @@ static void DoBubbleTransition()
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        VidMode_BG0_SPR_BG1 &vid = Game::Inst().m_cubes[i].GetVid();
+        VideoBuffer &vid = Game::Inst().m_cubes[i].GetVid();
 
         vid.BG0_drawAsset( vec( 0, 0 ), UI_BG );
 

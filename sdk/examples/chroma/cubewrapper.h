@@ -62,10 +62,8 @@ public:
 
 	CubeWrapper();
 
-	void Init( AssetGroup &assets );
+    void Init();
 	void Reset();
-	//draw loading progress.  return true if done
-	bool DrawProgress( AssetGroup &assets );
     void Draw() __attribute__ ((noinline));
     void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
 	void vidInit();
@@ -145,7 +143,7 @@ public:
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
     //each cube can have one floating score at a time
     void SpawnScore( unsigned int score, const Int2 &slotpos );
-    VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
+    VideoBuffer &GetVid() { return m_vid; }
     //draw a message box with centered text
     //bDrawBox - draw the box or not
     //in_yOffset - optional y offset for text
@@ -174,8 +172,7 @@ private:
     void DrawGrid() __attribute__ ((noinline));
 
 	Cube m_cube;
-    VidMode_BG0_SPR_BG1 m_vid;
-	VidMode_BG0_ROM m_rom;
+    VideoBuffer m_vid;
     //render bg1 here
     TileBuffer<16, 16> m_bg1buffer;
 

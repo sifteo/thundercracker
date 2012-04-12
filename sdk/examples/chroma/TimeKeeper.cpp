@@ -26,7 +26,7 @@ void TimeKeeper::Reset()
     //m_blinkCounter = 0;
 }
 
-void TimeKeeper::Draw( TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid )
+void TimeKeeper::Draw( TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid )
 {
 	//find out what proportion of our timer is left, then multiply by number of tiles
 	float fTimerProportion = m_fTimer / TIME_INITIAL;
@@ -48,7 +48,7 @@ void TimeKeeper::Init( SystemTime t )
 }
 
 
-void TimeKeeper::DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid )
+void TimeKeeper::DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid )
 {
     if( amount > 1.0f )
         amount = 1.0f;

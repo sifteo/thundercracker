@@ -38,7 +38,7 @@ void RockExplosion::Update()
 }
 
 
-void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
+void RockExplosion::Draw( VideoBuffer &vid, int spriteindex )
 {
     if( m_pos.x >= 0 )
     {

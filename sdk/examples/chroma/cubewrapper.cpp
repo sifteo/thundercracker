@@ -30,7 +30,7 @@ const float CubeWrapper::TOUCH_TIME_FOR_MENU = 1.7f;
 //how long we wait until we autorefill an empty cube in survival mode
 const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf),
         m_bg1buffer( m_cube ), m_state( STATE_PLAYING ),
         m_fTouchTime( 0.0f ), m_curFluidDir(vec( 0, 0 )), m_curFluidVel(vec( 0, 0 )), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
@@ -52,15 +52,12 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 }
 
 
-void CubeWrapper::Init( AssetGroup &assets )
+void CubeWrapper::Init()
 {
     m_cube.enable();
-#if LOAD_ASSETS
-    m_cube.loadAssets( assets );
-#endif
 
-    m_rom.init();
-    m_rom.BG0_text(vec(1,1), "Loading...");
+    m_vid.attach( m_cube.ID() );
+    m_vid.initMode( BG0_SPR_BG1 );
 }
 
 
@@ -91,13 +88,6 @@ void CubeWrapper::Reset()
 
     m_dirty = true;
 	Refill();
-}
-
-bool CubeWrapper::DrawProgress( AssetGroup &assets )
-{
-    m_rom.BG0_progressBar(vec(0,7), m_cube.assetProgress(assets, m_vid.LCD_width), 2);
-        
-	return m_cube.assetDone(assets);
 }
 
 void CubeWrapper::Draw()

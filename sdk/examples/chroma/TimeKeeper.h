@@ -29,11 +29,11 @@ public:
 	TimeKeeper();
 
 	void Reset();
-    void Draw( TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid );
+    void Draw( TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid );
     void Update( TimeDelta dt );
 	void Init( SystemTime t );
 	
-    void DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VidMode_BG0_SPR_BG1 &vid );
+    void DrawMeter( float amount, TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid );
 	float getTime() const { return m_fTimer; }
 
 private:

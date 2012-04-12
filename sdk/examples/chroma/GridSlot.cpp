@@ -242,7 +242,7 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
+void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
 {
 	Int2 vec = { m_col * 4, m_row * 4 };
 
@@ -774,7 +774,7 @@ unsigned int GridSlot::GetIdleFrame()
 */
 
 
-void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
+void GridSlot::DrawIntroFrame( VideoBuffer &vid, unsigned int frame )
 {
     Int2 vec = { m_col * 4, m_row * 4 };
 

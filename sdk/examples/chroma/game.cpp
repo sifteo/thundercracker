@@ -45,28 +45,37 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 
 void Game::Init()
 {
-	for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Init(GameAssets);
-
 #if LOAD_ASSETS
-    bool done = false;
+    ScopedAssetLoader loader;
+    m_cube.loadAssets( assets );
+
+    VideoBuffer vids[NUM_CUBES];
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        vids[i].attach(i);
+        vids[i].initMode(BG0_ROM);
+        vids[i].bg0rom.erase();
+        vids[i].bg0rom.text(vec(1,1), "Loading...");
+    }
 
 	PRINT( "getting ready to load" );
 
-	while( !done )
+    while( !loader.isComplete() )
 	{
-		done = true;
+        PRINT( "in load loop" );
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
-            if( !m_cubes[i].DrawProgress(GameAssets) )
-				done = false;
-
-			PRINT( "in load loop" );
+            m_rom.hBargraph(vec(0,7), loader.progress(i, vids[i].LCD_width));
 		}
 		System::paint();
 	}
     PRINT( "done loading" );
 #endif
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].Init();
+
     Reset( false );
 
     for( int i = 0; i < NUM_CUBES; i++ )

@@ -20,13 +20,13 @@ const float BubbleSpawner::MAX_LONG_SPAWN = 8.0f;
 const float BubbleSpawner::SHORT_PERIOD_CHANCE = 0.75f;
 
 
-BubbleSpawner::BubbleSpawner( VidMode_BG0_SPR_BG1 &vid )
+BubbleSpawner::BubbleSpawner( VideoBuffer &vid )
 {
     Reset( vid );
 }
 
 
-void BubbleSpawner::Reset( VidMode_BG0_SPR_BG1 &vid )
+void BubbleSpawner::Reset( VideoBuffer &vid )
 {
     m_fTimeTillSpawn = Game::random.uniform( MAX_SHORT_SPAWN, MIN_LONG_SPAWN );
 
@@ -67,7 +67,7 @@ void BubbleSpawner::Update( float dt, const Float2 &tilt )
 
 
 
-void BubbleSpawner::Draw( VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
+void BubbleSpawner::Draw( VideoBuffer &vid, CubeWrapper *pWrapper )
 {
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
@@ -119,7 +119,7 @@ void Bubble::Update( float dt, const Float2 &tilt )
         Disable();
 }
 
-void Bubble::Draw( VidMode_BG0_SPR_BG1 &vid, int index, CubeWrapper *pWrapper )
+void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
 {
     unsigned int frame = m_fTimeAlive / BUBBLE_LIFETIME * m_pTex->frames;
     bool visible = true;
