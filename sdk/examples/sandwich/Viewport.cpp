@@ -23,17 +23,18 @@ void Viewport::Init() {
 	mFlags.view = VIEW_IDLE;
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
+	RestoreCanonicalVram();
+	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
 }
 
-void Viewport::HideSprites() {
-	for(unsigned i=0; i<8; ++i) {
-		mCanvas.sprites[i].hide();
-	}
-}
-
-void Viewport::SanityCheckVram() {
-	if (mCanvas.mode() != BG0_SPR_BG1) {
+void Viewport::RestoreCanonicalVram() {
+	//System::finish();
+	if (mCanvas.mode() == BG0_SPR_BG1) {
+	  	mCanvas.bg0.setPanning(vec(0,0));
+		for(unsigned i=0; i<8; ++i) { mCanvas.sprites[i].hide(); }
+		mCanvas.bg1.eraseMask(false);
+	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
 }
@@ -63,7 +64,7 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.GetSide() == side) { return false; }
 	}
 	mFlags.view = view;
-	//SanityCheckVram();
+	RestoreCanonicalVram();
 	//EvictSecondaryView(view);
 	if (view == VIEW_ROOM) {
 		mView.room.Init(roomId);
@@ -75,7 +76,7 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 
 void Viewport::SetSecondaryView(unsigned viewId) {
 	mFlags.view = viewId;
-	//SanityCheckVram();
+	RestoreCanonicalVram();
 	//EvictSecondaryView(viewId);
 	switch(viewId) {
 		case VIEW_IDLE:

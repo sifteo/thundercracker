@@ -34,7 +34,6 @@ void RoomView::HideOverlay() {
 
 void RoomView::Restore() {
   mWobbles = -1.f;
-  Parent()->HideSprites();
   Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
   // are we showing an items?

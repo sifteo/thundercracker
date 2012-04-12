@@ -7,7 +7,6 @@ void Game::OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {
 }
 
 void Game::OnTouch(unsigned cube) {
-  LOG("Touch\n");
   mTouchMask |= ViewAt(cube).GetMask();
 }
 
@@ -27,15 +26,16 @@ struct VisitorStatus {
 #define RESULT_OKAY         0
 #define RESULT_INTERRUPTED  1
 
-static unsigned VisitMapView(VisitorStatus* status, Viewport& view, Int2 loc, Viewport* origin=0, Side dir=NO_SIDE) {
+static unsigned VisitMapView(VisitorStatus* status, Viewport& view, Int2 loc, Viewport* origin=0, Neighborhood originhood=Neighborhood(), Side dir=NO_SIDE) {
 
   // Is it okay to visit this cube?
   status->visitMask |= view.GetMask();
   
   // Orient LCD to parent
+  auto hood = view.Canvas().physicalNeighbors();
   if (origin) { 
     // optimize precalc'd neighborhoods?
-    view.Canvas().orientTo(origin->Canvas()); 
+    view.Canvas().orientTo(hood, origin->Canvas(), originhood); 
   }
 
 
@@ -61,12 +61,12 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport& view, Int2 loc, Vi
 
   // Possibly make recursive calls
   if (didDisplayLocation || !view.ShowingLockedRoom()) {
-    auto nhood = view.Canvas().virtualNeighbors();
+    auto nhood = view.Canvas().physicalToVirtual(hood);
     for(Side side=(Side)0; side<NUM_SIDES; ++side) {
       auto cid = nhood.neighborAt(side);
       if (cid.isDefined() && !(status->visitMask & gGame.ViewAt(cid).GetMask())) {
         const unsigned result = VisitMapView(
-          status, gGame.ViewAt(cid), loc+Int2::unit(side), &view, side
+          status, gGame.ViewAt(cid), loc+Int2::unit(side), &view, hood, side
         );
         if (result != RESULT_OKAY) { return result; }
       }

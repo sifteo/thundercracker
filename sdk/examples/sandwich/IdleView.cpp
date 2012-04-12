@@ -13,7 +13,5 @@ void IdleView::Init() {
 }
 
 void IdleView::Restore() {
-  Parent()->HideSprites();
-  mCanvas.bg0.setPanning(vec(0,0));
   mCanvas.bg0.image(vec(0,0), Blank);
 }

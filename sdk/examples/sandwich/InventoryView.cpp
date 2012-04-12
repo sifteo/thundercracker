@@ -10,18 +10,13 @@ void InventoryView::Init() {
 	mSelected = 0;
 	Int2 tilt = mCanvas.virtualAccel().xy();
 	mTilt.set(tilt.x, tilt.y);
-	mAccum.set(0,0);
-	mTouch = Parent()->GetCube().isTouching();
 	mAnim = 0;
-	Parent()->HideSprites();
-	mCanvas.bg0.image(vec(0,0), InventoryBackground);
-	RenderInventory();
+	Restore();
 }
 
 void InventoryView::Restore() {
 	mAccum.set(0,0);
 	mTouch = Parent()->GetCube().isTouching();
-	Parent()->HideSprites();
 	mCanvas.bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
