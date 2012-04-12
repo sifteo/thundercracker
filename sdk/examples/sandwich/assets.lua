@@ -18,7 +18,7 @@ Items = image{"items.png", width=16, height=16, pinned=true}
 InventoryReticle = image{"inventory_reticle.png", width=32, height=32}
 
 WhiteTile = image{"flash.png"}
-BlackTile = image{"black.png"}
+BlackTile = image{"black.png", pinned=true}
 DialogBox = image{"dialog_box.png"}
 
 InventoryBackground = image{"inventory_background.png"}

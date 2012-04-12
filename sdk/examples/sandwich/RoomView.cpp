@@ -34,7 +34,6 @@ void RoomView::HideOverlay() {
 
 void RoomView::Restore() {
   mWobbles = -1.f;
-  Parent()->HideSprites();
   Map& map = *gGame.GetMap();
   flags.hideOverlay = false;
   // are we showing an items?
@@ -47,6 +46,7 @@ void RoomView::Restore() {
   if (this->Parent() == gGame.GetPlayer()->View()) { 
     ShowPlayer(); 
   }
+  mCanvas.bg0.erase(BlackTile);
   DrawBackground();
   // initialize ambient fx?
   if (map.Data()->ambientType) {
@@ -169,37 +169,18 @@ void RoomView::HideOverlay(bool flag) {
 
 void RoomView::StartNod() {
   // fill in extra rows (with real data?)
-  for(int i=0; i<16; ++i) {
-    mCanvas.bg0.image(vec(i, 16), BlackTile);
-    mCanvas.bg0.image(vec(i, 17), BlackTile);
-  }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_NOD;
 }
 
 void RoomView::StartShake() {
   // fill in extra columns (with real data?)
-  for(int i=0; i<16; ++i) {
-    mCanvas.bg0.image(vec(16, i), BlackTile);
-    mCanvas.bg0.image(vec(17, i), BlackTile);
-  }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_SHAKE;
 }
 
 void RoomView::StartSlide(Side side) {
   ASSERT(0 <= side && side < 4);
-  if (side % 2 == 0) {
-    for(int i=0; i<16; ++i) {
-      mCanvas.bg0.image(vec(i, 16), BlackTile);
-      mCanvas.bg0.image(vec(i, 17), BlackTile);
-    }
-  } else {
-    for(int i=0; i<16; ++i) {
-      mCanvas.bg0.image(vec(16, i), BlackTile);
-      mCanvas.bg0.image(vec(17, i), BlackTile);
-    }
-  }
   mWobbles = 1.f;
   flags.wobbleType = WOBBLE_SLIDE_TOP + side;
 
