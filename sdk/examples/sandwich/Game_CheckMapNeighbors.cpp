@@ -77,10 +77,14 @@ void Game::CheckMapNeighbors() {
   // (some actions may cause us to have to start over becaues the tree is
   // modified as a side-effect)
   unsigned result;
+  unsigned iterations=0;
   do {
     status.visitMask = 0x00000000;
     result = VisitMapView(&status, root, root->GetRoomView().Location());
+    iterations++;
   } while(result != RESULT_OKAY);
+
+  LOG_INT((iterations));
   
   // Make sure all views outside the neighborhood are not showing rooms
   unsigned newChangeMask = 0;
@@ -101,4 +105,5 @@ void Game::CheckMapNeighbors() {
   if (status.changeMask || newChangeMask) {
     System::finish();
   }
+  LOG(("AFTER\n"));
 }

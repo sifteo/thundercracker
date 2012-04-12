@@ -28,7 +28,7 @@ void RoomView::Unlock() {
 }
 
 void RoomView::HideOverlay() {
-  mCanvas.bg1.eraseMask();
+  mCanvas.bg1.eraseMask(false);
 }
 
 
@@ -350,7 +350,7 @@ void RoomView::DrawBackground() {
   RefreshDoor();
   RefreshDepot();
 
-  const Room *pRoom = GetRoom();
+  //const Room *pRoom = GetRoom();
 
   // TODO
   // BG1Helper ovrly(*(Parent()->GetCube()));

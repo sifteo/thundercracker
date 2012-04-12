@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#ifdef NOT_USERSPACE
+#ifdef NO_USERSPACE_HEADERS
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -307,7 +307,7 @@ struct BG1Drawable {
      * and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
-        eraseMask();
+        eraseMask(false);
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
             _SYS_TILE77(index), numTiles());
         setPanning(vec(0,0));
@@ -411,14 +411,6 @@ struct BG1Drawable {
     }
 
     /**
-      * Retrieve the last value set by setPanning().
-     */
-    Int2 getPanning() const {
-        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
-        return vec<int>((int8_t)(word & 0xFF), (int8_t)(word >> 8));
-    }
-
-    /**
      * Plot a single tile, by absolute tile index,
      * at a specific location in the 144-tile array.
      */
@@ -468,48 +460,6 @@ struct BG1Drawable {
     {
         _SYS_image_BG1DrawRect(&sys, image, (_SYSInt2*) &destXY,
             frame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
-    }
-
-    /**
-     * Draw an AssetImage, automatically allocating tiles on the BG1 mask.
-     * This replaces the entirety of the BG1 mask; other drawing on BG1
-     * will be automatically replaced.
-     *
-     * The image is always drawn to the top-left corner of BG1. You can
-     * place it anywhere on-screen by calling setPanning() afterwards.
-     *
-     * We automatically do a System::finish() by default, so we can ensure
-     * nobody is still using the old mask. This can be suppressed if you
-     * really know what you're doing, by setting finish=false.
-     */
-    void maskedImage(const AssetImage &image, const PinnedAssetImage &key,
-        unsigned frame = 0, bool finish=true)
-    {
-        if (finish)
-            _SYS_finish();
-        _SYS_image_BG1MaskedDraw(&sys, image, key.tile(0), frame);
-    }
-
-    /**
-     * Draw part of an AssetImage, automatically allocating tiles on the
-     * BG1 mask. This replaces the entirety of the BG1 mask; other drawing
-     * on BG1 will be automatically replaced.
-     *
-     * The image is always drawn to the top-left corner of BG1. You can
-     * place it anywhere on-screen by calling setPanning() afterwards.
-     *
-     * We automatically do a System::finish() by default, so we can ensure
-     * nobody is still using the old mask. This can be suppressed if you
-     * really know what you're doing, by setting finish=false.
-     */
-    void maskedImage(UInt2 size, const AssetImage &image,
-        const PinnedAssetImage &key, UInt2 srcXY,
-        unsigned frame = 0, bool finish=true)
-    {
-        if (finish)
-            _SYS_finish();
-        _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(0), frame,
-            (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
     /**

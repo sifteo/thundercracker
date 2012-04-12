@@ -21,7 +21,7 @@ private:
   float mAnimTime;
 
 public:
-  void Init(VideoBuffer* pPrimary);
+  void Init(Viewport* pPrimary);
   int AnimFrame();
 
   Room* GetRoom() const;
