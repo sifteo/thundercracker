@@ -36,7 +36,12 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stmExternalFlashReadWriteHandler,
     nrfCommsHandler,
     setFixtureVoltageHandler,
-    getFixtureVoltageHandler
+    getFixtureVoltageHandler,
+    getFixtureCurrentHandler,
+    getStmVsysVoltageHandler,
+    getStmBattVoltageHandler,
+    storeStmBattVoltageHandler,
+    enableTestJigNeighborTx,
 };
 
 void TestJig::init()
@@ -109,6 +114,30 @@ void TestJig::setFixtureVoltageHandler(uint8_t *args, uint8_t len)
 void TestJig::getFixtureVoltageHandler(uint8_t *args, uint8_t len)
 {
 
+}
+
+void TestJig::getFixtureCurrentHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::getStmVsysVoltageHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::getStmBattVoltageHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::storeStmBattVoltageHandler(uint8_t *args, uint8_t len)
+{
+
+}
+
+void TestJig::enableTestJigNeighborTx(uint8_t *args, uint8_t len)
+{
 }
 
 /*******************************************

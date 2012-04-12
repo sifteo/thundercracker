@@ -8,9 +8,6 @@
 
 #include <stdint.h>
 
-#define MAX_NUMBER_OF_COMMANDS 2
-#define SIZE_OF_COMMAND_BUFFER 10
-
 class TestJig
 {
 public:
@@ -25,15 +22,16 @@ public:
 private:
 
     enum Command {
-        StmExternalFlashComms,
-        StmExternalFlashReadWrite,
-        NrfComms,
-        SetFixtureVoltage,
-        ReadFixtureVoltage,
-        ReadStmVsysVoltage,
-        ReadFixtureCurrent,
-        Read_STM_batt_voltage,
-        Store_STM_batt_voltage,
+        StmExternalFlashComms                   = 0,
+        StmExternalFlashReadWrite               = 1,
+        NrfComms                                = 2,
+        SetFixtureVoltage                       = 3,
+        ReadFixtureVoltage                      = 4,
+        ReadFixtureCurrent                      = 5,
+        ReadStmVsysVoltage                      = 6,
+        ReadStmBattVoltage                      = 7,
+        StoreStmBattVoltage                     = 8,
+        EnableTestJigNeighborTransmit           = 9,
         Set_Speaker_on,
         Set_Speaker_off,
         SetFixtureUsbPower,
@@ -45,7 +43,6 @@ private:
         Set_Master_start_active,
         Enable_STM_neighbor_transmit,
         Enable_Fixture_neighbor_receive,
-        Enable_Fixture_neighbor_transmit,
         Set_STM_neighbor_ID,
         Set_fixture_neighbor_ID
     };
@@ -61,6 +58,11 @@ private:
     static void nrfCommsHandler(uint8_t *args, uint8_t len);
     static void setFixtureVoltageHandler(uint8_t *args, uint8_t len);
     static void getFixtureVoltageHandler(uint8_t *args, uint8_t len);
+    static void getFixtureCurrentHandler(uint8_t *args, uint8_t len);
+    static void getStmVsysVoltageHandler(uint8_t *args, uint8_t len);
+    static void getStmBattVoltageHandler(uint8_t *args, uint8_t len);
+    static void storeStmBattVoltageHandler(uint8_t *args, uint8_t len);
+    static void enableTestJigNeighborTx(uint8_t *args, uint8_t len);
 };
 
 #endif // _TEST_JIG_H
