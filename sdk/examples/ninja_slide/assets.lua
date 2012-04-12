@@ -9,4 +9,4 @@ tile_platform02 = image{"images/tile_platform02.png", width=32, height=32, pinne
 Michelangelo = image{"images/turtle01_idle.png", width=32, height=32, pinned=true}
 
 -- sounds
-sliding_sound = sound{"sounds/sliding_sound.raw", quality=10}
+sliding_sound = sound{"sounds/sliding_sound_loop.raw", quality=10}

@@ -9,4 +9,4 @@ tags
 
 sdk/examples/ninja_slide/tests/*.o
 sdk/examples/ninja_slide/tests/*.a
-sdk/examples/ninja_slide/tests/*_tests
+sdk/examples/ninja_slide/tests/alltests

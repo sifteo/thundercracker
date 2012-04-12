@@ -1,15 +1,16 @@
-# All tests produced by this Makefile.  Remember to add new tests you
-# created to the list.
-TESTS = rect_tests
 
 TC_DIR = ../../../..
-USER_DIR = ..
+SRC_DIR = ..
 TEST_DIR = .
 GTEST_DIR = $(TC_DIR)/deps/src/gtest-1.6.0
 SIFTEO_SDK_DIR = $(TC_DIR)/sdk/include
 
+TEST_SRCS = $(wildcard $(TEST_DIR)/*_tests.cpp)
+TEST_OBJS = $(patsubst %.cpp,%.o,$(TEST_SRCS))
+
+
 # Flags passed to the preprocessor.
-CPPFLAGS += -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR) -I$(USER_DIR)
+CPPFLAGS += -I$(SRC_DIR) -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR)  
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra
@@ -21,11 +22,19 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-all : $(TESTS) 
-	./rect_tests
+all : alltests gtest_main.a 
+	./alltests
 
 clean :
 	rm -f $(TESTS) gtest.a gtest_main.a *.o
+
+alltests: $(TEST_OBJS) gtest_main.a $(IMPL_SRCS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+%.o: %.cpp $(patsubst %_test.cpp,%.h,$(SRC_DIR)) $(CDEPS)
+	echo %.cpp $(SRC_DIR)/%.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $^
+
 
 # Builds gtest.a and gtest_main.a.
 
@@ -51,19 +60,6 @@ gtest.a : gtest-all.o
 gtest_main.a : gtest-all.o gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
-# Builds a sample test.  A test should link with either gtest.a or
-# gtest_main.a, depending on whether it defines its own main()
-# function.
 
-# sample1.o : $(USER_DIR)/sample1.cc $(USER_DIR)/sample1.h $(GTEST_HEADERS)
-#         $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1.cc
 
-# test.o : $(TEST_DIR)/test.cpp
-#         $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(TEST_DIR)/test.cpp
-
-rect_tests: rect_tests.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
-
-%.o: %.cpp $(CDEPS)
-	$(CXX) $(CPPFLAGS) -c -o $@ $< $(CXXFLAGS)
 
