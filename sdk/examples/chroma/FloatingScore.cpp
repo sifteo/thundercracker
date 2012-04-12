@@ -39,12 +39,12 @@ void FloatingScore::Draw( TileBuffer<16, 16> &bg1buffer )
     if( iLen == 0 )
         return;
 
-    unsigned int xOff = ( 16 - ( iLen * PointFont.width ) ) / 2;
-    unsigned int yOff = ( 16 - ( PointFont.height ) ) / 2;
+    unsigned int xOff = ( 16 - ( iLen * PointFont.tileWidth() ) ) / 2;
+    unsigned int yOff = ( 16 - ( PointFont.tileHeight() ) ) / 2;
 
     for( int i = 0; i < iLen; i++ )
     {
-        bg1buffer.image( vec( xOff + ( i * PointFont.width ), yOff ), PointFont, buf[i] - '0' );
+        bg1buffer.image( vec( xOff + ( i * PointFont.pixelWidth() ), yOff ), PointFont, buf[i] - '0' );
     }
 }
 

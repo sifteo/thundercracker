@@ -58,7 +58,7 @@ static void onShake(void *context, _SYSCubeID cid)
 
 static void onTouch(void *context, _SYSCubeID cid)
 {
-    if( _SYS_isTouching( cid ) )
+    if( CubeID(cid).isTouching() )
         game.m_cubes[cid - CUBE_ID_BASE].Touch();
 }
 

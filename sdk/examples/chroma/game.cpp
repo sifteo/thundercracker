@@ -4,7 +4,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <sifteo/menu.h>
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
@@ -13,6 +12,7 @@
 #include "Banner.h"
 #include "SpriteNumber.h"
 #include "CubeBuddy.h"
+#include <sifteo/menu.h>
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
@@ -47,9 +47,10 @@ void Game::Init()
 {
 #if LOAD_ASSETS
     ScopedAssetLoader loader;
-    m_cube.loadAssets( assets );
 
     VideoBuffer vids[NUM_CUBES];
+
+    AssetSlot MySlot = AssetSlot::allocate();
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
@@ -57,6 +58,7 @@ void Game::Init()
         vids[i].initMode(BG0_ROM);
         vids[i].bg0rom.erase();
         vids[i].bg0rom.text(vec(1,1), "Loading...");
+        loader.start( GameAssets, MySlot, m_cubes[i].GetCube());
     }
 
 	PRINT( "getting ready to load" );
@@ -66,7 +68,7 @@ void Game::Init()
         PRINT( "in load loop" );
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
-            m_rom.hBargraph(vec(0,7), loader.progress(i, vids[i].LCD_width));
+            vids[i].bg0rom.hBargraph(vec(0,7), loader.progress(i, LCD_width));
 		}
 		System::paint();
 	}
@@ -80,9 +82,6 @@ void Game::Init()
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
-
-	for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].vidInit();
 
 #if MUSIC_ON
     //doesn't seem to work

@@ -60,7 +60,7 @@ static void DoBubbleTransition()
                 Int2 offset = { j*2, (int)( BubblePos[i][j].y / 8 ) + 1 };
 
                 if( offset.y >= 0 && offset.y < 16 )
-                    vid.BG0_drawPartialAsset( offset, offset, vec( 2, 16 - offset.y ), UI_BG );
+                    vid.bg0.image( offset, offset, UI_BG, vec( 2, 16 - offset.y ) );
             }
         }
 
@@ -72,7 +72,7 @@ static void DoBubbleTransition()
     {
         VideoBuffer &vid = Game::Inst().m_cubes[i].GetVid();
 
-        vid.BG0_drawAsset( vec( 0, 0 ), UI_BG );
+        vid.bg0.image( vec( 0, 0 ), UI_BG );
 
         for( unsigned int j = 0; j < NUM_BUBBLES; j++ )
         {

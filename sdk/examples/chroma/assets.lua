@@ -94,7 +94,7 @@ UI_Puzzle_Menu_Topbar = image{"ui_puzzle_mode_topbar.png"}
 UI_ChapterSelect_Topbar = image{"ui_chapter_select_topbar.png"}
 UI_PuzzleSelect_Menu_Topbar = image{"ui_puzzle_select_topbar.png"}
 --for clearing
-White = image{"White.png"}
+White = image{"White.png", pinned=true}
 
 bubbles1 = image{"bubbles1.png", height=16, pinned=true}
 bubbles2 = image{"bubbles2.png", height=16, pinned=true}

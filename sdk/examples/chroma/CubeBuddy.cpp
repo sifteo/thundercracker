@@ -25,13 +25,13 @@ static void WaitForTouch( CubeWrapper *cubes )
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( cubes[i].GetCube().touching() )
+        if( cubes[i].GetCube().isTouching() )
             touching = true;
     }
 
     LOG(("WaitForTouch"));
 
-    cubes[0].GetCube().vbuf.touch();
+    //cubes[0].GetCube().vbuf.touch();
 
     while( true )
     {
@@ -44,7 +44,7 @@ static void WaitForTouch( CubeWrapper *cubes )
 
             for( int i = 0; i < NUM_CUBES; i++ )
             {
-                if( cubes[i].GetCube().touching() )
+                if( cubes[i].GetCube().isTouching() )
                     touching = true;
             }
         }
@@ -52,7 +52,7 @@ static void WaitForTouch( CubeWrapper *cubes )
         {
             for( int i = 0; i < NUM_CUBES; i++ )
             {
-                if( cubes[i].GetCube().touching() )
+                if( cubes[i].GetCube().isTouching() )
                     return;
             }
         }
@@ -67,7 +67,7 @@ static void ShowProgress( const SaveData &data )
     //clear out the other cubes
     for( int i = 1; i < NUM_CUBES; i++ )
     {
-        cubes[i].GetVid().clear( GemEmpty.tiles[0] );
+        cubes[i].GetVid().bg0.image( vec( 0, 0 ), UI_BG );
     }
 
     String<20> modes;
@@ -107,7 +107,7 @@ static void ShowUnlock()
     //clear out the other cubes
     for( int i = 1; i < NUM_CUBES; i++ )
     {
-        cubes[i].GetVid().clear( GemEmpty.tiles[0] );
+        cubes[i].GetVid().bg0.image( vec( 0, 0 ), UI_BG );
     }
 
     String<128> str;
@@ -141,7 +141,7 @@ bool ProcessUnlock( uint8_t mode )
 
     for( int i = 0; i < SaveData::NUM_UNLOCKS; i++ )
     {
-        LOG(("is mode unlocked? %d\n", data.bUnlocks[mode]));
+        //LOG(("is mode unlocked? %d\n", data.bUnlocks[mode]));
         if( !data.bUnlocks[i] )
         {
             ShowProgress( data );

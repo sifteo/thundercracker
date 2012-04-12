@@ -6,7 +6,7 @@
 
 //draw an up to 2-digit number using our number sprites
 
-void DrawSpriteNum( VidMode_BG0_SPR_BG1 &vid, unsigned int number, Int2 pos )
+void DrawSpriteNum( VideoBuffer &vid, unsigned int number, Int2 pos )
 {
     ASSERT( number < 100 );
 
@@ -18,7 +18,7 @@ void DrawSpriteNum( VidMode_BG0_SPR_BG1 &vid, unsigned int number, Int2 pos )
     }
 
     vid.sprites[0].setImage(BannerPointsWhite, number % 10);
-    vid.sprites[0].move(pos.x + ( BannerPointsWhite.width * 8 ), pos.y);
+    vid.sprites[0].move(pos.x + ( BannerPointsWhite.pixelWidth() ), pos.y);
 }
 
 #endif

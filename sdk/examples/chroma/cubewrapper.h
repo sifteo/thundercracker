@@ -66,7 +66,6 @@ public:
 	void Reset();
     void Draw() __attribute__ ((noinline));
     void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
-	void vidInit();
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
