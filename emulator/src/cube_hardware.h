@@ -47,8 +47,8 @@ static const uint8_t CTRL_PORT_DIR   = REG_P3DIR;
 static const uint8_t MISC_TOUCH      = (1 << 7);
 
 static const uint8_t CTRL_LCD_DCX    = (1 << 0);
-static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);
-static const uint8_t CTRL_FLASH_LAT2 = (1 << 1);
+static const uint8_t CTRL_FLASH_LAT1 = (1 << 1);
+static const uint8_t CTRL_FLASH_LAT2 = (1 << 2);
 static const uint8_t CTRL_FLASH_WE   = (1 << 5);
 static const uint8_t CTRL_FLASH_OE   = (1 << 6);
 

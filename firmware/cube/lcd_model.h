@@ -127,7 +127,7 @@
 #endif
 
 #ifdef LCD_MODEL_TIANMA_HX8353
-#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB)
 #endif
 
 /*

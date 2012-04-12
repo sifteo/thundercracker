@@ -1,27 +1,27 @@
 #include "Game.h"
 
 void Game::OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {
-	gGame.mNeighborDirty = true;
+	LOG(("NEIGHBOR\n"));
+	mNeighborDirty = true;
 }
 
 void Game::MainLoop() {
 	ASSERT(this == &gGame);
-	
 	mActiveViewMask = CUBE_ALLOC_MASK;
 	mLockedViewMask = 0x00000000;
 
   	//---------------------------------------------------------------------------
   	// INTRO
 	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c)->Canvas().attach(c);
-		ViewAt(c)->Canvas().initMode(BG0_SPR_BG1);
+		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
+		ViewAt(c).Canvas().attach(c);
 	}
 
 	#if FAST_FORWARD
-		VideoBuffer* pPrimary = &ViewAt(0)->Canvas();
+		Viewport* pPrimary = &ViewAt(0);
 	#else
 		PlayMusic(music_sting, false);
-		VideoBuffer* pPrimary = IntroCutscene();
+		Viewport* pPrimary = IntroCutscene();
 	#endif
 
 	//---------------------------------------------------------------------------
@@ -31,12 +31,10 @@ void Game::MainLoop() {
 	pInventory = 0;
 	pMinimap = 0;
 	mAnimFrames = 0;
-	mNeedsSync = 0;
 	mState.Init();
 	mMap.Init();
 	Viewport::Iterator p = ListViews();
 	while(p.MoveNext()) {
-		//if (&(p->Canvas()) != pPrimary) { p->Init(); }
 		p->Init();
 	}
 	mPlayer.Init(pPrimary);
@@ -70,38 +68,17 @@ void Game::MainLoop() {
 			} else if (mPlayer.CurrentView()->GatewayTouched()) {
 				OnEnterGateway(mPlayer.CurrentView()->GetRoom()->Gateway());
 			}
-      		#if PLAYTESTING_HACKS
-          	else if (sShakeTime > 2.0f) {
-	          	sShakeTime = -1.f;
-	          	mState.AdvanceQuest();
-	          	const QuestData* quest = mState.Quest();
-	          	const MapData& map = gMapData[quest->mapId];
-	          	const RoomData& room = map.rooms[quest->roomId];
-	          	mPlayer.SetEquipment(0);
-	          	TeleportTo(
-	          		map, 
-	          		vec(
-	          			128 * (quest->roomId % map.width) + 16 * room.centerX,
-	          			128 * (quest->roomId / map.width) + 16 * room.centerY
-	          		)
-	          	);
-	          	mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-	          	mPlayer.CurrentView()->UpdatePlayer();
-
-	        }
-	      	#endif
 	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
-	      			if ( p->Touched() && p->ShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
-	      				p->GetRoomView()->StartShake();
-	      				//p->GetRoomView()->Lock();
+	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView().StartShake();
 	      			}
 	      		}
 	      	}
     	}
     	if (mViews[targetViewId].ShowingRoom()) {
-    		mViews[targetViewId].GetRoomView()->StartNod();
+    		mViews[targetViewId].GetRoomView().StartNod();
     	}
 
 	    //-------------------------------------------------------------------------
@@ -132,7 +109,7 @@ void Game::MainLoop() {
 	      			mPlayer.CurrentRoom()->OpenDoor();
 	      			mPlayer.CurrentView()->RefreshDoor();
 	      			mPlayer.CurrentView()->HideEquip();
-	      			Paint(true);
+	      			Paint();
 	      			Wait(0.5f);
 	      			PlaySfx(sfx_doorOpen);
 	          		// finish up
@@ -230,7 +207,7 @@ void Game::MainLoop() {
 	Events::neighborAdd.set(0);
     Events::neighborRemove.set(0);
 	for(unsigned i=0; i<64; ++i) { 
-		DoPaint(false);
+		DoPaint();
 	}
 	//PlayMusic(music_winscreen, false);
 	//WinScreen();

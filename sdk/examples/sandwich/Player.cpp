@@ -9,10 +9,9 @@ inline int fast_abs(int x) {
 	return x<0?-x:x;
 }
 
-void Player::Init(VideoBuffer* pPrimary) {
+void Player::Init(Viewport* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  Viewport *pView = gGame.ViewAt(pPrimary->cube());
-  mCurrent.view = (RoomView*)(pView);
+  mCurrent.view = reinterpret_cast<RoomView*>(pPrimary);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
   mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;

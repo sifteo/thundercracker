@@ -14,19 +14,14 @@ private:
   static TimeDelta mDt;
 
 
-  bool mNeighborDirty;
-  #if PLAYTESTING_HACKS
-  static float sShakeTime;
-  #endif
-
   Viewport mViews[NUM_CUBES];
+  bool mNeighborDirty;
   GameState mState;
   Map mMap;
   Player mPlayer;
   unsigned mAnimFrames;
   BroadPath mPath;
   NarrowPath mMoves;
-  uint8_t mNeedsSync;
   uint8_t mIsDone;
 
   uint32_t mActiveViewMask;
@@ -55,16 +50,15 @@ public:
 
   // methods  
   void MainLoop();
-  void Paint(bool sync=false);
-  void DoPaint(bool sync);
-  void NeedsSync() { mNeedsSync = 1; }
+  void Paint();
+  void DoPaint();
 
   // events
   void OnNeighborAdd(RoomView* v1, Side s1, RoomView* v2, Side s2);
   void OnNeighborRemove(RoomView* v1, Side s1, RoomView* v2, Side s2);
   
   // listing views
-  Viewport* ViewAt(int i) { return mViews+i; }
+  Viewport& ViewAt(int i) { return mViews[i]; }
 
   Viewport::Iterator ListViews(uint32_t mask=0xffffffff) { 
     return Viewport::Iterator(mask & mActiveViewMask); 
@@ -85,7 +79,7 @@ private:
   void OnNeighbor(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 
   // cutscenes
-  VideoBuffer* IntroCutscene();
+  Viewport* IntroCutscene();
   //void WinScreen();
 
 

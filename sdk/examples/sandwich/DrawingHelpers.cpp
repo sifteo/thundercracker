@@ -3,7 +3,7 @@
 
 void WaitForSeconds(float dt) {
   SystemTime deadline = SystemTime::now() + dt;
-  do { gGame.DoPaint(false); } while(deadline.inFuture());
+  do { gGame.DoPaint(); } while(deadline.inFuture());
 }
 
 //-----------------------------------------------------------------------------

@@ -71,6 +71,7 @@ namespace llvm {
 
         void writePadding(unsigned N);
         void padToOffset(uint32_t O);
+        void padToAlignment(uint32_t A);
 
         void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout);
         void writeProgramHeader(SVMProgramSection S);

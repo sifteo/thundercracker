@@ -45,7 +45,8 @@ class PaintControl {
         VRAM::unlock(*vbuf);
     }
 
-    void enterContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags);
+    static bool allowContinuous(CubeSlot *cube);
+    void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags);
     void exitContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags, SysTime::Ticks timestamp);
     bool isContinuous(_SYSVideoBuffer *vbuf);
     void setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf, 

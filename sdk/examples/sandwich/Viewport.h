@@ -41,30 +41,30 @@ public:
 	bool ShowingEdge() const { return mFlags.view == VIEW_EDGE; }
 	bool ShowingGatewayEdge() const { return ShowingEdge() && mView.edge.ShowingGateway(); }
 	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
-	IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
-	RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
-	InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
-	MinimapView* GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return &(mView.minimap); }
+	IdleView& GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return mView.idle; }
+	RoomView& GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return mView.room; }
+	InventoryView& GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return mView.inventory; }
+	MinimapView& GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return mView.minimap; }
 
 	void Init();
-	void Restore(bool doFlush=true);
+	void Restore();
 	void Update();
   
   	void HideSprites();
 
-	bool ShowLocation(Int2 location, bool force, bool doFlush=true);
-	bool HideLocation(bool doFlush=true);
+	bool ShowLocation(Int2 location, bool force);
+	bool HideLocation();
 
-	void RefreshInventory(bool doFlush=true);
+	void RefreshInventory();
 
 	Side VirtualTiltDirection() const;
 	Viewport* VirtualNeighborAt(Side side) const;
 
 private:
-	bool SetLocationView(unsigned roomId, Side side, bool force, bool doFlush);
-	void SetSecondaryView(unsigned viewId, bool doFlush);
+	bool SetLocationView(unsigned roomId, Side side, bool force);
+	void SetSecondaryView(unsigned viewId);
 	void SanityCheckVram();
-	void EvictSecondaryView(unsigned viewId, bool doFlush);
+	void EvictSecondaryView(unsigned viewId);
 	Viewport* FindIdleView();
 
 public:
