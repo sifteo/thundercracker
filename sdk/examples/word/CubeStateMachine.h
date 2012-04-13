@@ -76,7 +76,7 @@ private:
                     bool paintTime=false,
                     float animStartTime=0.f);
     void paintLetters(BG1Mask& bg1, bool paintSprites=false);
-    void paintScoreNumbers(const Vec2& position, const char* string);
+    void paintScoreNumbers(BG1Mask &bg1,const Vec2& position, const char* string);
 
     void setLettersStart(unsigned s);
 

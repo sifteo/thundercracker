@@ -453,6 +453,11 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_EnterState:
             mShakeDelay = 0.f;
             mPanning = -16.f;// * ((getCube() & 1) ? -1.f : 1.f);
+            {
+                BG1Mask bg1;
+                bg1.filled(vec(0,2), vec(15, 8));
+                mVidBuf->bg1.setMask(bg1);
+            }
             paint();
             if (eventID == EventID_EnterState)
             {
@@ -1751,7 +1756,8 @@ void CubeStateMachine::paintLetters(BG1Mask& bg1,
     updateAnim(bg1, &params);
 }
 
-void CubeStateMachine::paintScoreNumbers(const Vec2& position_RHS,
+void CubeStateMachine::paintScoreNumbers(BG1Mask &bg1,
+                                         const Vec2& position_RHS,
                                          const char* string)
 {
     Vec2 position(position_RHS);

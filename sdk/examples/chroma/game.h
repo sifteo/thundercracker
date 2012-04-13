@@ -12,6 +12,7 @@
 #include "cubewrapper.h"
 #include "TimeKeeper.h"
 #include "config.h"
+#include "SaveLoad.h"
 
 using namespace Sifteo;
 struct PuzzleCubeData;
@@ -39,6 +40,11 @@ public:
         STATE_NEXTPUZZLE,
         STATE_GAMEMENU,
         STATE_GAMEOVERBANNER,
+
+        //more menus
+        STATE_PUZZLEMENU,
+        STATE_CHAPTERSELECTMENU,
+        STATE_PUZZLESELECTMENU,
 	} GameState;
 
 	typedef enum
@@ -53,8 +59,6 @@ public:
 	
 	Game();
 
-    static const unsigned int NUM_MAIN_MENU_ITEMS = 4;
-    static const unsigned int NUM_HIGH_SCORES = 5;
     static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
@@ -89,8 +93,6 @@ public:
 	void Update();
     void Reset( bool bInGame = true );
 
-    CubeWrapper *GetWrapper( Cube *pCube );
-    CubeWrapper *GetWrapper( unsigned int index );
     int getWrapperIndex( const CubeWrapper *pWrapper );
 
 	//flag self to test matches
@@ -133,7 +135,7 @@ public:
     //play random slosh sound
     void playSlosh();
 
-    inline void forcePaintSync() { m_bForcePaintSync = true; }
+    //inline void forcePaintSync() { m_bForcePaintSync = true; }
 
     inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
     inline void useShake() { m_ShakesRemaining--; }
@@ -163,6 +165,7 @@ public:
 
     void ReturnToMainMenu();
     void gotoNextPuzzle( bool bAdvance );
+    inline SaveData &getSaveData() { return m_savedata; }
 
 private:
 	void TestMatches();
@@ -170,7 +173,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void HandleMainMenu();
+    void HandleMenu();
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
@@ -182,7 +185,10 @@ private:
     //how many colors were involved in this
     bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
-	unsigned int m_iLevel;
+    uint8_t m_iLevel;
+    //used to track which chapter we're looking at in puzzle menus
+    uint8_t m_iChapterViewed;
+    SaveData m_savedata;
 	GameState m_state;
 	GameMode m_mode;
     float m_stateTime;
@@ -201,8 +207,6 @@ private:
     //use to avoid playing the same sound multiple times in one frame
     const AssetAudio *m_pSoundThisFrame;
 
-    static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
-    static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
     //how long until we respawn one piece in timer mode
     float m_fTimeTillRespawn;
@@ -213,7 +217,7 @@ private:
     unsigned int m_Multiplier;
 
     //force a 1 frame paint sync before/after drawing
-    bool m_bForcePaintSync;
+    //bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on
