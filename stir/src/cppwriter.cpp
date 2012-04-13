@@ -218,7 +218,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
         indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
         indent << "/* dataSize   */ " << data.size() << ",\n" <<
-        indent << "/* pData      */ (uint8_t *)" << sound.getName() << "_data,\n" <<
+        indent << "/* pData      */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
         "}};\n\n";
 
     delete enc;

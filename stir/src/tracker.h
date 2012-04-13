@@ -41,6 +41,10 @@ public:
 		assert(i < song.nInstruments);
 		return instruments[i];
 	}
+	const uint8_t *getSample(uint8_t i) const {
+		assert(i < sampleDatas.size());
+		return sampleDatas[i];
+	}
 
 private:
 	bool openTracker(const char *filename);
@@ -90,6 +94,7 @@ private:
 	std::vector<uint8_t> patternTable;
 
 	std::vector<_SYSXMInstrument> instruments;
+	std::vector<uint8_t *> sampleDatas;
 	std::queue<std::string> sampleNames;
 };
 

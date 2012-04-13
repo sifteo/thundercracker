@@ -471,7 +471,8 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             uint8_t *buf = (uint8_t*)malloc(sample.dataSize);
             if (!buf) return false;
             getbuf(buf, sample.dataSize);
-            sample.pData = buf;
+            sample.pData = sampleDatas.size();
+            sampleDatas.push_back(buf);
             sample.type = _SYS_ADPCM;
             break;
         }
@@ -491,7 +492,8 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // Encode to today's default format
             AudioEncoder *enc = AudioEncoder::create("");
             sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
-            sample.pData = (uint8_t *)realloc(buf, sample.dataSize);
+            sample.pData = sampleDatas.size();
+            sampleDatas.push_back(realloc(buf, sample.dataSize));
             sample.type = enc->getType();
             break;
         }
@@ -523,12 +525,13 @@ void XmTrackerLoader::processName(std::string &name)
  */
 bool XmTrackerLoader::init()
 {
-    for (unsigned i = 0; i < instruments.size(); i++) {
-        if (instruments[i].volumeEnvelopePoints) free(instruments[i].volumeEnvelopePoints);
-        if (instruments[i].sample.pData) free(instruments[i].sample.pData);
+    for (unsigned i = 0; i < sampleDatas.size(); i++) {
+        free(sampleDatas[i]);
     }
 
     instruments.clear();
+    sampleDatas.clear();
+
     patterns.clear();
     patternDatas.clear();
     patternTable.clear();
