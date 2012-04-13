@@ -62,7 +62,7 @@ void AStar::VisitNeighbor(ARecord* parent, Side dir) {
     p->tileID = nid;
     recordCount++;
     // is it walkable? (remember to convert normalized tile position to global tile position)
-    if (gGame.GetMap()->IsVertexWalkable(ntile + vec(2,2) + (8 * offset))) {
+    if (gGame.GetMap().IsVertexWalkable(ntile + vec(2,2) + (8 * offset))) {
       // open the record
       p->parentDirection = (dir+2)%4;
       p->costToThis = parent->costToThis + 1;
@@ -79,15 +79,15 @@ bool Map::FindNarrowPath(BroadLocation bloc, Side dir, NarrowPath* outPath) {
   if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
   Int2 loc = bloc.view->Location();
   Int2 dloc = loc + Int2::unit(dir);
-  Room* src = GetRoom(loc);
-  Room* dst = GetRoom(dloc);
+  Room& src = GetRoom(loc);
+  Room& dst = GetRoom(dloc);
   
   AStar as;
   _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
   as.offset = dir<2 ? dloc : loc;
-  as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - vec(2,2);
-  as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - vec(2,2);
+  as.src = src.LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - vec(2,2);
+  as.dst = dst.LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - vec(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 

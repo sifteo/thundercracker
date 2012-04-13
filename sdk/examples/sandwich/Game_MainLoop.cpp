@@ -35,7 +35,7 @@ void Game::MainLoop() {
 	}
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
-	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
+	mPlayer.View().ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
 	Events::neighborAdd.set(&Game::OnNeighbor, this);
     Events::neighborRemove.set(&Game::OnNeighbor, this);
@@ -55,18 +55,18 @@ void Game::MainLoop() {
 			Paint();
 
 			OnTick();
-			if (mPlayer.CurrentView()->Parent()->Touched()) {
+			if (mPlayer.CurrentView()->Parent().Touched()) {
 				if (mPlayer.Equipment()) {
 					OnUseEquipment();
 				} else if (mPlayer.GetRoom()->HasItem()) {
-					OnPickup(mPlayer.GetRoom());
+					OnPickup(*mPlayer.GetRoom());
 				} else {
 					OnActiveTrigger();
 				}
 			} else if (mPlayer.CurrentView()->GatewayTouched()) {
-				OnEnterGateway(mPlayer.CurrentView()->GetRoom()->Gateway());
+				OnEnterGateway(mPlayer.CurrentView()->GetRoom().Gateway());
 			}
-	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
+	      	if (!gGame.GetMap().FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
 				while(p.MoveNext()) {
 	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
@@ -94,7 +94,7 @@ void Game::MainLoop() {
 	        	//---------------------------------------------------------------------
 	        	// WALKING NORTH THROUGH DOOR
 	        	// walk up to the door
-	        	const DoorData& door = *mPlayer.CurrentRoom()->Door();
+	        	const DoorData& door = mPlayer.CurrentRoom()->Door();
 	      		int progress;
 	      		STATIC_ASSERT(24 % WALK_SPEED == 0);
 	      		for(progress=0; progress<24; progress+=WALK_SPEED) {
@@ -134,12 +134,12 @@ void Game::MainLoop() {
 
 	        	//---------------------------------------------------------------------
 	        	// A* PATHFINDING
-	      		if (mPlayer.TargetView()->GetRoom()->IsBridge()) {
+	      		if (mPlayer.TargetView()->GetRoom().IsBridge()) {
 	      			const unsigned hideParity =
-	      				mPlayer.TargetView()->GetRoom()->SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
+	      				mPlayer.TargetView()->GetRoom().SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
 	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == hideParity);
 	      		}
-	      		gGame.GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
+	      		gGame.GetMap().FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
 	      		int progress = 0;
 	      		Sokoblock* block = mPlayer.TargetView()->Block();
 	      		bool pushing = false;
@@ -150,7 +150,7 @@ void Game::MainLoop() {
 	      		// more crap is going to get shoved in there
 	      		for(const int8_t *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
 	      			// encounter lava?
-	      			if (mMap.Data()->lavaTiles && !mPlayer.CanCrossLava()) {
+	      			if (mMap.Data().lavaTiles && !mPlayer.CanCrossLava()) {
 	      				if (TryEncounterLava((Side)*pNextMove)) {
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
 	      						progress = MovePlayerOneTile((Side)(((*(pNextMove-1))+2)%4), progress);
@@ -162,7 +162,7 @@ void Game::MainLoop() {
 	      			}
 	      			// encounter a block?
 	      			if(!pushing && block && mPlayer.TestCollision(block)) {
-	      				pushing = TryEncounterBlock(block);
+	      				pushing = TryEncounterBlock(*block);
 	      				if (!pushing) {
 	      					// rewind back to the start
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
@@ -178,8 +178,8 @@ void Game::MainLoop() {
 
 	      		if (pushing) {
 	      			// finish moving the block to the next cube
-	      			const Room* targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
-	      			const Int2 targ = targRoom->Center(0);
+	      			auto& targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
+	      			const Int2 targ = targRoom.Center(0);
 	      			Int2 curr= block->Position();
 	      			while(curr != targ) {
 	      				curr.x = AdvanceTowards(curr.x, targ.x, WALK_SPEED);

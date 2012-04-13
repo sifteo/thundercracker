@@ -108,7 +108,7 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 static RGB565 color_lerp(uint8_t alpha) {
-    return RGB565::fromRGB(0x000000).lerp(RGB565::fromRGB(0xddedc1), alpha);
+    return RGB565::fromRGB(0xddedc1).lerp(RGB565::fromRGB(0x000000), alpha);
 }
 
 void Dialog::Init(VideoBuffer *cube) {

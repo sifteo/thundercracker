@@ -113,50 +113,85 @@ void ButterflyFriend::Update() {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void DrawRoom(Viewport* gfx, const MapData* pMap, int roomId) {
-	const uint8_t *pTile = pMap->roomTiles[roomId].tiles;
-	const FlatAssetImage& tileset = *pMap->tileset;
+void DrawRoom(Viewport& gfx, const MapData& map, int roomId) {
+	const uint8_t *pTile = map.roomTiles[roomId].tiles;
+	const FlatAssetImage& tileset = *map.tileset;
 	Int2 p;
 
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?
-    gfx->Canvas().bg0.image(p, tileset, *(pTile++));
+    gfx.Canvas().bg0.image(p, tileset, *(pTile++));
 	}
 }
 
-void DrawRoomOverlay(Viewport* ovrly, const MapData* pMap, unsigned tid, const uint8_t *pRle) {
-  // TODO - overlaaaaay w/o bg1 helper
-  /*
-  const FlatAssetImage& img = *(pMap->overlay);
-    while(tid < 64) {
-      if (*pRle == 0xff) {
-        tid += pRle[1];
-        pRle+=2;
-      } else {
-        ovrly->DrawAsset(2*vec(tid%8, tid>>3), img, *pRle);
-        tid++;
-        pRle++;
+void DrawRoomOverlay(Viewport& gfx, const MapData& map, unsigned tid, const uint8_t *pRle) {
+  // this method's a little annoyingly complex because metatiles are 2x2, so I need to replot
+  // each row twice, in a sense, in order to get them in the correct bg1 mask order :P
+  const FlatAssetImage& img = *map.overlay;
+  BG1Mask mask;
+  mask.clear();
+  unsigned location = 0;
+  unsigned prevRow = 0;
+  unsigned tileCount = 0;
+  unsigned prevTileCount = 0;
+  unsigned prevTid = tid;
+  const uint8_t* prevRle = pRle;
+  while(tid < 64) {
+    // compute the current row
+    unsigned row = tid >> 3;
+    if (row > prevRow) {
+      while (tileCount > prevTileCount) {
+        // plot the "bottom half" of the metatiles from this row
+        if (*prevRle == 0xff) {
+          // skip ahead a run of transparent tiles
+          prevTid += prevRle[1];
+          prevRle+=2;
+        } else {
+          // plot the "bottom two" tiles of the metatile
+          Int2 p = vec(prevTid%8, row)<<1;
+          mask.plot(p+vec(0,1));
+          mask.plot(p+vec(1,1));
+          gfx.Canvas().bg1.plot(location++, img.tile(gfx.GetID(), vec(0,1), *prevRle));
+          gfx.Canvas().bg1.plot(location++, img.tile(gfx.GetID(), vec(1,1), *prevRle));
+          prevTileCount++;
+          prevTid++;
+          prevRle++;
+        }
       }
-    }  
-    */
+      // sync up
+      prevRow = row;
+      prevTid = tid;
+      prevRle = pRle;
+    }
+    if (*pRle == 0xff) {
+      // skip ahead a run of transparent tiles
+      tid += pRle[1];
+      pRle+=2;
+    } else {
+      // plot the "top two" actual tiles of the metatile
+      Int2 p = vec(tid%8, row)<<1;
+      mask.plot(p);
+      mask.plot(p+vec(1,0));
+      gfx.Canvas().bg1.plot(location++, img.tile(gfx.GetID(), vec(0,0), *pRle));
+      gfx.Canvas().bg1.plot(location++, img.tile(gfx.GetID(), vec(1,0), *pRle));
+      tileCount++;
+      tid++;
+      pRle++;
+    }
+  }
+  gfx.Canvas().bg1.setMask(mask, false);
 }
 
-bool DrawOffsetMapFromTo(Viewport* gfx, const MapData* pMap, Int2 from, Int2 to) {
-  //inserted as a potential optimization point, 
-	//because we only need to "replot" the delta tiles
-	DrawOffsetMap(gfx, pMap, to);
-	return true;
-}
-
-void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
-	const int xmax = 128 * (pMap->width-1);
-	const int ymax = 128 * (pMap->height-1);
+void DrawOffsetMap(Viewport& gfx, const MapData& map, Int2 pos) {
+  // TODO: Refactor to use Forthcoming BG0 Scroller in SDK
+	const int xmax = 128 * (map.width-1);
+	const int ymax = 128 * (map.height-1);
 	if (pos.x < 0) { pos.x = 0; } else if (pos.x > xmax) { pos.x = xmax; }
 	if (pos.y < 0) { pos.y = 0; } else if (pos.y > ymax) { pos.y = ymax; }
 	Int2 loc = vec(pos.x>>7, pos.y>>7);
 	Int2 pan = vec(pos.x - (loc.x << 7), pos.y - (loc.y << 7));
-	gfx->Canvas().bg0.setPanning(pan);
+	gfx.Canvas().bg0.setPanning(pan);
 	Int2 start_tile = vec(pan.x>>4, pan.y>>4);
 	Int2 t;
 	/*
@@ -168,10 +203,10 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 	// top-left room
 	for(t.y=start_tile.y; t.y<8; ++t.y)
 	for(t.x=start_tile.x; t.x<8; ++t.x) {
-		gfx->Canvas().bg0.image(
+		gfx.Canvas().bg0.image(
 			vec(t.x<<1, t.y<<1),
-			*pMap->tileset,
-			pMap->roomTiles[loc.x + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
+			*map.tileset,
+			map.roomTiles[loc.x + loc.y * map.width].tiles[t.x + (t.y<<3)]
 		);
 	}
 	
@@ -179,10 +214,10 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 		// top-right room
 		for(t.y=start_tile.y; t.y<8; ++t.y)
 		for(t.x=0; t.x<=start_tile.x; ++t.x) {
-			gfx->Canvas().bg0.image(
+			gfx.Canvas().bg0.image(
 				vec((8 + t.x)%9<<1, t.y<<1),
-				*pMap->tileset,
-				pMap->roomTiles[(loc.x+1) + loc.y * pMap->width].tiles[t.x + (t.y<<3)]
+				*map.tileset,
+				map.roomTiles[(loc.x+1) + loc.y * map.width].tiles[t.x + (t.y<<3)]
 			);
 		}
 
@@ -190,10 +225,10 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 			// bottom-right room
 			for(t.y=0; t.y<=start_tile.y; ++t.y)
 			for(t.x=0; t.x<=start_tile.x; ++t.x) {
-				gfx->Canvas().bg0.image(
+				gfx.Canvas().bg0.image(
 					vec((8 + t.x)%9<<1, (8 + t.y)%9<<1),
-					*pMap->tileset,
-					pMap->roomTiles[(loc.x+1) + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
+					*map.tileset,
+					map.roomTiles[(loc.x+1) + (loc.y+1) * map.width].tiles[t.x + (t.y<<3)]
 				);
 			}
 		}
@@ -204,10 +239,10 @@ void DrawOffsetMap(Viewport* gfx, const MapData* pMap, Int2 pos) {
 		// bottom-left room
 		for(t.y=0; t.y<=start_tile.y; ++t.y)
 		for(t.x=start_tile.x; t.x<8; ++t.x) {
-			gfx->Canvas().bg0.image(
+			gfx.Canvas().bg0.image(
 				vec(t.x<<1, (8 + t.y)%9<<1),
-				*pMap->tileset,
-				pMap->roomTiles[loc.x + (loc.y+1) * pMap->width].tiles[t.x + (t.y<<3)]
+				*map.tileset,
+				map.roomTiles[loc.x + (loc.y+1) * map.width].tiles[t.x + (t.y<<3)]
 			);
 		}
 	}
