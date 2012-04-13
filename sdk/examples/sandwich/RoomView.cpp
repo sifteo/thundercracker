@@ -330,21 +330,9 @@ void RoomView::DrawBackground() {
   DrawRoom(Parent(), gGame.GetMap()->Data(), mRoomId);
   RefreshDoor();
   RefreshDepot();
-
-  //const Room *pRoom = GetRoom();
-
-  // TODO
-  // BG1Helper ovrly(*(Parent()->GetCube()));
-  // if (!flags.hideOverlay && pRoom->HasOverlay()) {
-  //   DrawRoomOverlay(&ovrly, gGame.GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
-  // }
-  // if (pRoom->HasNPC()) {
-  //     const NpcData* npc = pRoom->NPC();
-  //     const DialogData& dialog = gDialogData[npc->dialog];
-  //     ovrly.DrawAsset(vec((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
-  // }
-
-  // ovrly.Flush();
+  if (GetRoom().HasOverlay()) {
+    DrawRoomOverlay(Parent(), gGame.GetMap().Data(), GetRoom().OverlayTile(), room.OverlayBegin());
+  }
 }
 
 void RoomView::ComputeAnimatedTiles() {
