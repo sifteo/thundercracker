@@ -19,4 +19,4 @@ struct ButterflyFriend {
 // todo: remove
 
 #define HOVER_COUNT 32
-extern const int8_t kHoverTable[HOVER_COUNT];
+extern const int8_t kHoverTable[HOVER_COUNT]; // duuuude kill this and just use trig!!

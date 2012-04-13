@@ -55,12 +55,6 @@ bool Map::GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* 
   return true;
 }
 
-BroadPath::BroadPath() {
-  for(int i=0; i<2*NUM_CUBES; ++i) {
-    steps[i] = -1;
-  }
-}
-
 bool BroadPath::DequeueStep(BroadLocation newRoot, BroadLocation* outNext) {
   if (steps[0] == -1 || steps[1] == -1) {
     steps[0] = -1;
@@ -84,11 +78,14 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Side side, int depth, u
   BroadLocation next;
   if (!gGame.GetMap().GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent().GetID()] & (1<<next.subdivision)) {
     if (depth > 1) {
-      Viewport *nextView = loc.view->Parent().VirtualNeighborAt(side);
-      if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
-        outPath->steps[depth-1] = -1;
-        *outViewId = nextView->GetID();
-        return true;
+      if (loc.view->GetRoom().HasGateway()) {
+        Viewport *nextView = loc.view->Parent().VirtualNeighborAt(side);
+        if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
+          outPath->triggeredByEdgeGate = true;
+          outPath->steps[depth-1] = -1;
+          *outViewId = nextView->GetID();
+          return true;
+        }
       }
     }
     return false;
@@ -120,11 +117,12 @@ bool Map::FindBroadPath(BroadPath* outPath, unsigned* outViewId) {
   auto vp = gGame.ListViews();
   while(vp.MoveNext()) {
     sVisitMask[vp->GetID()] = 0x00;
-    anyTouches |= vp->Touched();
+    anyTouches |= vp->Touched() && (vp->ShowingRoom() || vp->ShowingGatewayEdge());
   }
   if (!anyTouches) { 
     return false; 
   }
+  outPath->triggeredByEdgeGate = false;
   const BroadLocation* pRoot = gGame.GetPlayer().Current();
   sVisitMask[pRoot->view->Parent().GetID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {

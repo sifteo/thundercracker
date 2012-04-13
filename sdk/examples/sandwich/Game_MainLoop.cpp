@@ -201,7 +201,12 @@ void Game::MainLoop() {
 		      	}
 		    }
 		} while(mPath.DequeueStep(*mPlayer.Current(), mPlayer.Target()));
-  		OnActiveTrigger();
+		if (mPath.triggeredByEdgeGate) {
+			OnEnterGateway(mPlayer.CurrentRoom()->Gateway());
+		} else {
+			OnActiveTrigger();
+		}
+  		
 	}
 	Events::neighborAdd.unset();
     Events::neighborRemove.unset();

@@ -7,7 +7,6 @@
 #define PATH_CAPACITY   (32)
 #define BLOCK_CAPACITY  (8)
 #define BOMB_CAPACITY   (4)
-#define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
 // DATA STRUCTURES FOR PATH - these are a bit messy as a side-effect of 
@@ -24,7 +23,8 @@ struct BroadLocation {
 
 struct BroadPath {
   int8_t steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
-  BroadPath();
+  bool triggeredByEdgeGate;
+  
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
@@ -51,7 +51,6 @@ private:
   Bomb mBomb[BOMB_CAPACITY];
   uint8_t mBlockCount;
   uint8_t mBombCount;
-
 
 public:
   void Init();
