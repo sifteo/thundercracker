@@ -45,7 +45,7 @@ void Game::MoveBlock(Sokoblock* block, Int2 u) {
 
     // Could be optimized, perhaps
     const Side dir = InferDirection(u);
-    Viewport* view = mPlayer.TargetView()->Parent()->VirtualNeighborAt(dir);
+    Viewport* view = mPlayer.TargetView()->Parent().VirtualNeighborAt(dir);
     if (view && view->ShowingRoom()) {
       RoomView& roomView = view->GetRoomView();
       if (roomView.Block()) {
@@ -125,22 +125,22 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
     gChannelMusic.stop();
   #endif
   Int2 room = position/128;
-  Viewport* view = mPlayer.View();
+  Viewport& view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();
   
   // blank other cubes
   Viewport::Iterator p = ListViews();
   while(p.MoveNext()) {
-    if (p != view) { p->HideLocation(); }
+    if (p != &view) { p->HideLocation(); }
   }
 
   IrisOut(view);
   mMap.SetData(m);
   mPlayer.SetPosition(position);
   if (pMinimap) { pMinimap->Restore(); }
-  Zoom(view, room.x + room.y * mMap.Data()->width);
+  Zoom(view, room.x + room.y * mMap.Data().width);
   
-  VideoBuffer& g = view->Canvas();
+  VideoBuffer& g = view.Canvas();
 
   // todo: expose music in level editor?
   PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
@@ -148,23 +148,23 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   // walk out of the in-gate
   Int2 target = mMap.GetRoom(room).Center(0);
   mPlayer.SetDirection(InferDirection(target - position));
-  view->ShowLocation(room, true);
+  view.ShowLocation(room, true);
   WalkTo(target, false);
   UnlockAllViews();
   CheckMapNeighbors();
 }
 
-void Game::IrisOut(Viewport* view) {
-  view->RestoreCanonicalVram();
-  VideoBuffer& mode = view->Canvas();
+void Game::IrisOut(Viewport& view) {
+  view.RestoreCanonicalVram();
+  auto& g = view.Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
-      mode.bg0.image(vec(x, i), BlackTile);
-      mode.bg0.image(vec(x, 16-i-1), BlackTile);
+      g.bg0.image(vec(x, i), BlackTile);
+      g.bg0.image(vec(x, 16-i-1), BlackTile);
     }
     for(unsigned y=i+1; y<16-i-1; ++y) {
-      mode.bg0.image(vec(i, y), BlackTile);
-      mode.bg0.image(vec(16-i-1, y), BlackTile);
+      g.bg0.image(vec(i, y), BlackTile);
+      g.bg0.image(vec(16-i-1, y), BlackTile);
     }
     DoPaint();
   }
@@ -173,11 +173,13 @@ void Game::IrisOut(Viewport* view) {
   }
 }
 
-void Game::Zoom(Viewport* view, int roomId) {
+void Game::Zoom(Viewport& view, int roomId) {
 #if DO_ZOOM
   PlaySfx(sfx_zoomIn);
+  //TODO: Impl w/ new SDK
+  /*
   DoPaint();
-  VidMode_BG2 vid(view->GetCube()->vbuf);
+  VidMode_BG2 vid(view.GetID()->vbuf);
   vid.init();
   vid.BG2_setBorder(0x0000);
   for(int x=0; x<8; ++x) {
@@ -199,18 +201,19 @@ void Game::Zoom(Viewport* view, int roomId) {
     DoPaint();
   }    
   DoPaint();
+  */
 #endif
 }
 
 void Game::ScrollTo(unsigned roomId) {
   // blank other cubes
-  Viewport *pView = mPlayer.CurrentView()->Parent();
+  auto& view = mPlayer.CurrentView()->Parent();
   Viewport::Iterator p = ListViews();
   while(p.MoveNext()) {
-    if (p != pView) { p->HideLocation(); }
+    if (p != &view) { p->HideLocation(); }
   }
   // hide sprites and overlay
-  pView->RestoreCanonicalVram();
+  view.RestoreCanonicalVram();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
@@ -223,16 +226,16 @@ void Game::ScrollTo(unsigned roomId) {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(pView, mMap.Data(), pos);
+    DrawOffsetMap(view, pos);
     DoPaint();
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
-  pView->Canvas().bg0.setPanning(vec(0,0));
-  DrawRoom(pView, mMap.Data(), roomId);
+  view.Canvas().bg0.setPanning(vec(0,0));
+  DrawRoom(view, roomId);
   DoPaint();
 }
 
-void Game::Slide(Viewport* view) {
-  VideoBuffer& g = view->Canvas();
+void Game::Slide(Viewport& view) {
+  auto& g = view.Canvas();
   const int dt = 16;
   ASSERT(128%dt == 0);
   g.setWindow(128-dt,dt);
@@ -260,42 +263,31 @@ void Game::Wait(float seconds, bool touchToSkip) {
   }
 }
 
-void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
+void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
     Dialog view;
-    VideoBuffer& mode = vslot->Canvas();
+    auto& g = viewport.Canvas();
     PlaySfx(sfx_neighbor);
-    for(unsigned i=0; i<8; ++i) { mode.sprites[i].hide(); }
-    mode.bg0.image(vec(0,10), DialogBox);
+    for(unsigned i=0; i<8; ++i) { g.sprites[i].hide(); }
+    g.bg0.image(vec(0,10), DialogBox);
 
-    // TODO?
-    // save BG0 (above dialog line)
-    //VideoBuffer& vbuf = vslot->Canvas();
-    //uint16_t bg0_tiles[180];
-    //for(unsigned i=0; i<180; ++i) {
-    //  bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
-    //}
-
-    for(unsigned line=0; line<data.lineCount; ++line) {
-        const DialogTextData& txt = data.lines[line];
-        if (line == 0 || data.lines[line-1].detail != txt.detail) {
-          // TODO
-          //if (line > 0) {
-          //  Paint();
-          //  mode.setWindow(0, 80);
-          //  _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(vec(0,0)), bg0_tiles, 180);
-          //}
-          //BG1Helper ovrly(*vslot->GetCube());
-          //ovrly.DrawAsset(vec(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
-          //ovrly.Flush();
-          //Paint();
-          //Now set up a letterboxed 128x48 mode
-          mode.setWindow(80, 48);
-          view.Init(&vslot->Canvas());
+    for(auto p = data.lines; p->detail; ++p) {
+        if (p == data.lines || (p-1)->detail != p->detail) {
+          if (p != data.lines) {
+            DrawRoom(viewport, viewport.GetRoomView().Id());
+            g.bg0.image(vec(0,10), DialogBox);
+          }
+          g.bg1.fillMask(vec(1, 0), vec(p->detail->tileWidth(), 10), true);
+          g.bg1.image(vec(1,0), *(p->detail));
+          Paint();
+          System::finish();
+          
+          g.setWindow(80, 48);
+          view.Init(&g);
         }
         view.Erase();
         Paint();
-        view.ShowAll(txt.line);
-        if (line > 0) {
+        view.ShowAll(p->line);
+        if (p != data.lines) {
             PlaySfx(sfx_neighbor);
         }
         // fade in and out
@@ -319,24 +311,24 @@ void Game::NpcDialog(const DialogData& data, Viewport *vslot) {
     PlaySfx(sfx_deNeighbor);
 }
 
-void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport* pView) {
+void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewport) {
   DoPaint();
-  pView->Canvas().setWindow(80+16,128-80-16);
+  viewport.Canvas().setWindow(80+16,128-80-16);
   Dialog view;
-  view.Init(&pView->Canvas());
+  view.Init(&viewport.Canvas());
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
   Paint();
   for(int t=0; t<16; t++) {
-    pView->Canvas().setWindow(80+15-(t),128-80-15+(t));
+    viewport.Canvas().setWindow(80+15-(t),128-80-15+(t));
     view.SetAlpha(t<<4);
     Paint();
   }
   view.SetAlpha(255);
   Wait(4, true);
   Paint();
-  mPlayer.CurrentView()->Parent()->Restore();
+  mPlayer.CurrentView()->Parent().Restore();
   mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0) + (BOTTOM<<4));
   DoPaint();
 }

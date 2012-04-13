@@ -79,7 +79,7 @@ public:
 
   // Map Data Getters
 
-  const MapData* Data() const { return mData; }
+  const MapData& Data() const { return *mData; }
   
   const bool GetPortalX(int x, int y) const {
     // note that the pitch here is one less than the width because 

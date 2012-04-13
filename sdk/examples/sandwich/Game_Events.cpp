@@ -99,16 +99,16 @@ void Game::OnTrapdoor(Room& room) {
   ScrollTo(room.Trapdoor().respawnRoomId);
 
   // fall
-  Viewport *pView = mPlayer.CurrentView()->Parent();
+  auto &view = mPlayer.CurrentView()->Parent();
   int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
   for(unsigned i=0; i<arraysize(animHeights); ++i) {
-    pView->GetRoomView().DrawPlayerFalling(animHeights[i]);
+    view.GetRoomView().DrawPlayerFalling(animHeights[i]);
     Paint();
   }
   auto& targetRoom = mMap.GetRoom(room.Trapdoor().respawnRoomId);
   mPlayer.SetPosition(targetRoom.Center(0));
   mPlayer.SetDirection(BOTTOM);
-  pView->ShowLocation(mPlayer.Position()/128, true);
+  view.ShowLocation(mPlayer.Position()/128, true);
   CheckMapNeighbors();
   Paint();
 }
@@ -244,7 +244,7 @@ void Game::OnNpcChatter(const NpcData& npc) {
   NpcDialog(gDialogData[npc.dialog], mPlayer.CurrentView()->Parent());
   DoPaint();
   OnTriggerEvent(npc.trigger);
-  mPlayer.CurrentView()->Parent()->Restore();
+  mPlayer.CurrentView()->Parent().Restore();
   RestorePearlIdle();
   DoPaint();
 }
@@ -269,7 +269,7 @@ void Game::OnDropEquipment(Room& room) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0));
       Wait(0.075f, false);
       // check if event should fire
-      const auto& map = *mMap.Data();
+      const auto& map = mMap.Data();
       const auto& group = map.depotGroups[room.Depot().group];
       unsigned count = 0;
       for(const DepotData* p=map.depots; p->room != 0xff; ++p) {
@@ -352,7 +352,7 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
     }
     case EVENT_OPEN_DOOR: {
       const bool needsPan = true;
-      const DoorData& door = mMap.Data()->doors[id];
+      const DoorData& door = mMap.Data().doors[id];
       if (mState.IsActive(door.trigger)) {
         mState.FlagTrigger(door.trigger);
         //Room* targetRoom = mMap.GetRoom(door.trigger.room);
@@ -369,10 +369,10 @@ bool Game::OnTriggerEvent(unsigned type, unsigned id) {
         if (!didRestore) {
           ScrollTo(door.trigger.room);
           Wait(0.5f);
-          mPlayer.CurrentView()->Parent()->ShowLocation(mMap.GetLocation(door.trigger.room), true);
+          mPlayer.CurrentView()->Parent().ShowLocation(mMap.GetLocation(door.trigger.room), true);
           Wait(0.5f);
           IrisOut(mPlayer.CurrentView()->Parent());
-          mPlayer.CurrentView()->Parent()->ShowLocation(mPlayer.Position()/128, true);
+          mPlayer.CurrentView()->Parent().ShowLocation(mPlayer.Position()/128, true);
           Slide(mPlayer.CurrentView()->Parent());
           CheckMapNeighbors();
           Paint();

@@ -65,8 +65,8 @@ public:
 
   Viewport::Iterator ListLockedViews() { return ListViews(mLockedViewMask); }
   Viewport::Iterator ListTouchedViews() { return ListViews(mTouchMask); }
-  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent()->GetMask(); }
-  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent()->GetMask(); }
+  void OnViewLocked(RoomView* pRoom) { mLockedViewMask |= pRoom->Parent().GetMask(); }
+  void OnViewUnlocked(RoomView* pRoom) { mLockedViewMask &= ~pRoom->Parent().GetMask(); }
   void UnlockAllViews();
 
   struct {
@@ -93,11 +93,11 @@ private:
   int MovePlayerOneTile(Side dir, int progress, Sokoblock *blockToPush=0);
   void MoveBlock(Sokoblock* block, Int2 u);
   void TeleportTo(const MapData& m, Int2 position);
-  void IrisOut(Viewport* view);
-  void Zoom(Viewport* view, int roomId);
-  void Slide(Viewport* view);
-  void DescriptionDialog(const char* hdr, const char* msg, Viewport *view);
-  void NpcDialog(const DialogData& data, Viewport *view);
+  void IrisOut(Viewport& view);
+  void Zoom(Viewport& view, int roomId);
+  void Slide(Viewport& view);
+  void DescriptionDialog(const char* hdr, const char* msg, Viewport& view);
+  void NpcDialog(const DialogData& data, Viewport& view);
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
   void Wait(float seconds, bool touchToSkip=false);

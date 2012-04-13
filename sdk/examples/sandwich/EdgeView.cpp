@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "MapHelpers.h"
 
-#define mCanvas         (Parent()->Canvas())  
+#define mCanvas         (Parent().Canvas())  
 
 void EdgeView::Init(int roomId, enum Side side) {
 	CORO_RESET;

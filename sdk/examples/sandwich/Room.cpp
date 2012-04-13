@@ -48,19 +48,19 @@ void Room::BombThisFucker() {
   if (loc.x > 0) { 
     gGame.GetMap().GetRoom(loc+vec(-1,0)).SetDidBomb(RIGHT); 
   }
-  if (loc.x < gGame.GetMap().Data()->width-1) { 
+  if (loc.x < gGame.GetMap().Data().width-1) { 
     gGame.GetMap().GetRoom(loc+vec(1,0)).SetDidBomb(LEFT); 
   }
   if (loc.y > 0) { 
     gGame.GetMap().GetRoom(loc+vec(0,-1)).SetDidBomb(BOTTOM); 
   }
-  if (loc.y < gGame.GetMap().Data()->height-1) { 
+  if (loc.y < gGame.GetMap().Data().height-1) { 
     gGame.GetMap().GetRoom(loc+vec(0,1)).SetDidBomb(TOP); 
   }
 }
 
 const uint8_t* Room::OverlayBegin() const {
-  return gGame.GetMap().Data()->rle_overlay + mOverlayIndex;
+  return gGame.GetMap().Data().rle_overlay + mOverlayIndex;
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
@@ -116,12 +116,12 @@ unsigned Room::CountOpenTilesAlongSide(Side side) {
       }
       break;
     case BOTTOM:
-      if (loc.y < map.Data()->height-1 && map.GetPortalY(loc.x, loc.y)) {
+      if (loc.y < map.Data().height-1 && map.GetPortalY(loc.x, loc.y)) {
         cnt = 8-__builtin_popcount(~data.collisionMaskRows[7]);
       }
       break;
     case RIGHT:
-      if (loc.x < map.Data()->width-1 && map.GetPortalX(loc.x, loc.y)) {
+      if (loc.x < map.Data().width-1 && map.GetPortalX(loc.x, loc.y)) {
         for(unsigned row=0; row<8; ++row) {
           cnt += (data.collisionMaskRows[row]) & 0x80;
         }

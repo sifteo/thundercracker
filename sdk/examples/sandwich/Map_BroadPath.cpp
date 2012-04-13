@@ -30,7 +30,7 @@ bool Map::CanTraverse(BroadLocation bloc, Side side) {
 
 bool Map::GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* outNeighbor) {
   if (!CanTraverse(loc, side)) { return false; }
-  Viewport* gv = loc.view->Parent()->VirtualNeighborAt(side);
+  Viewport* gv = loc.view->Parent().VirtualNeighborAt(side);
   if (!gv || !gv->ShowingRoom()) { return false; }
   outNeighbor->view = &gv->GetRoomView();
   auto& room = outNeighbor->view->GetRoom();
@@ -82,21 +82,21 @@ void BroadPath::Cancel() {
 
 static bool Visit(BroadPath* outPath, BroadLocation loc, Side side, int depth, unsigned* outViewId) {
   BroadLocation next;
-  if (!gGame.GetMap().GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCube()] & (1<<next.subdivision)) {
+  if (!gGame.GetMap().GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent().GetID()] & (1<<next.subdivision)) {
     if (depth > 1) {
-      Viewport *nextView = loc.view->Parent()->VirtualNeighborAt(side);
+      Viewport *nextView = loc.view->Parent().VirtualNeighborAt(side);
       if (nextView && nextView->ShowingGatewayEdge() && nextView->Touched()) {
         outPath->steps[depth-1] = -1;
-        *outViewId = nextView->GetCube();
+        *outViewId = nextView->GetID();
         return true;
       }
     }
     return false;
   }
-  sVisitMask[next.view->Parent()->GetCube()] |= (1<<next.subdivision);
-  if (next.view->Parent()->Touched()) {
+  sVisitMask[next.view->Parent().GetID()] |= (1<<next.subdivision);
+  if (next.view->Parent().Touched()) {
     outPath->steps[depth] = -1;
-    *outViewId = next.view->Parent()->GetCube();
+    *outViewId = next.view->Parent().GetID();
     return true;
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
@@ -120,7 +120,7 @@ bool Map::FindBroadPath(BroadPath* outPath, unsigned* outViewId) {
   }
   if (!anyTouches) { return false; }
   const BroadLocation* pRoot = gGame.GetPlayer().Current();
-  sVisitMask[pRoot->view->Parent()->GetCube()] = (1 << pRoot->subdivision);
+  sVisitMask[pRoot->view->Parent().GetID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;
     if (Visit(outPath, *pRoot, (Side)side, 1, outViewId)) {

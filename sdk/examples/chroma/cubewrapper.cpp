@@ -2142,4 +2142,5 @@ void CubeWrapper::ClearBG1()
 void CubeWrapper::FlushBG1()
 {
     m_vid.bg1.maskedImage( m_bg1buffer, White, 0 );
+    ClearBG1();
 }

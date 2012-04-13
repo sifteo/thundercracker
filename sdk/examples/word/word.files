@@ -26,11 +26,6 @@ PrototypeWordList.cpp
 SavedData.h
 SavedData.cpp
 ../../include/sifteo/video.h
-TileTransparencyLookup.h
-TileTransparencyLookup.cpp
-TileTransparencyLookupData.cpp
-PartialAnimationData.cpp
-PartialAnimationData.h
 config.h
 PrototypeWordListData.h
 DictionaryData.h

@@ -4,12 +4,13 @@
 #include "MapHelpers.h"
 
 #define ROOM_UNDEFINED      0xff
-#define mCanvas         (Parent()->Canvas())  
-#define mBffSprite      (Parent()->Canvas().sprites[0])
-#define mTriggerSprite  (Parent()->Canvas().sprites[1])
-#define mEquipSprite    (Parent()->Canvas().sprites[2])
-#define mPlayerSprite   (Parent()->Canvas().sprites[3])
-#define mBlockSprite    (Parent()->Canvas().sprites[4])
+#define mCanvas         (Parent().Canvas())  
+#define mBffSprite      (Parent().Canvas().sprites[0])
+#define mTriggerSprite  (Parent().Canvas().sprites[1])
+#define mEquipSprite    (Parent().Canvas().sprites[2])
+#define mPlayerSprite   (Parent().Canvas().sprites[3])
+#define mNpcSprite      (Parent().Canvas().sprites[4])
+#define mBlockSprite    (Parent().Canvas().sprites[5])
   
 void RoomView::Init(unsigned roomId) {
   flags.locked = false;
@@ -43,13 +44,19 @@ void RoomView::Restore() {
   if (r.HasItem()) {
     ShowItem(&r.Item());
   }
-  if (this->Parent() == gGame.GetPlayer().View()) { 
+  if (r.HasNPC()) {
+    auto& npc = r.NPC();
+    auto& dialog = gDialogData[npc.dialog];
+    mNpcSprite.setImage(*dialog.npc);
+    mNpcSprite.move(npc.x-16, npc.y-16);
+  }
+  if (&this->Parent() == &gGame.GetPlayer().View()) { 
     ShowPlayer(); 
   }
   mCanvas.bg0.erase(BlackTile);
   DrawBackground();
   // initialize ambient fx?
-  if (map.Data()->ambientType) {
+  if (map.Data().ambientType) {
     if (r.HasTrigger()) {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
@@ -82,13 +89,13 @@ void RoomView::Update() {
     if (localt % 4 == 0) {
         mCanvas.bg0.image(
           vec((view.lid%8)<<1,(view.lid>>3)<<1),
-          *(gGame.GetMap().Data()->tileset),
-          gGame.GetMap().Data()->roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
+          *(gGame.GetMap().Data().tileset),
+          gGame.GetMap().Data().roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
         );
     }
   }
 
-  if (gGame.GetMap().Data()->ambientType && mAmbient.bff.active) {
+  if (gGame.GetMap().Data().ambientType && mAmbient.bff.active) {
     mAmbient.bff.Update();
     mBffSprite.move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     mBffSprite.setImage(
@@ -275,7 +282,7 @@ void RoomView::DrawTrapdoorFrame(int frame) {
   for(unsigned x=0; x<4; ++x) {
     mCanvas.bg0.image(
       vec(firstTile.x + x, firstTile.y + y) << 1,
-      *(gGame.GetMap().Data()->tileset),
+      *(gGame.GetMap().Data().tileset),
       gGame.GetMap().GetTileId(mRoomId, vec(firstTile.x + x, firstTile.y + y))+frame
     );    
   }
@@ -292,7 +299,7 @@ void RoomView::RefreshDoor() {
     for(int x=3; x<5; ++x) {
       mCanvas.bg0.image(
         vec(x,y) << 1,
-        *(gGame.GetMap().Data()->tileset),
+        *(gGame.GetMap().Data().tileset),
         gGame.GetMap().GetTileId(mRoomId, vec(x, y))+2
       );
     }
@@ -308,7 +315,7 @@ void RoomView::RefreshDepot() {
     for(int x=depot.tx; x<depot.tx+2; ++x) {
       mCanvas.bg0.image(
         vec(x,y) << 1,
-        *(gGame.GetMap().Data()->tileset),
+        *(gGame.GetMap().Data().tileset),
         gGame.GetMap().GetTileId(mRoomId, vec(x, y))+2
       );
     }
@@ -327,33 +334,23 @@ void RoomView::ShowFrame() {
 
 void RoomView::DrawBackground() {
   mCanvas.bg0.setPanning(vec(0,0));
-  DrawRoom(Parent(), gGame.GetMap().Data(), mRoomId);
+  DrawRoom(Parent(), mRoomId);
   RefreshDoor();
   RefreshDepot();
-
-  //const Room *pRoom = GetRoom();
-
-  // TODO
-  // BG1Helper ovrly(*(Parent()->GetCube()));
-  // if (!flags.hideOverlay && pRoom->HasOverlay()) {
-  //   DrawRoomOverlay(&ovrly, gGame.GetMap().Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
-  // }
-  // if (pRoom->HasNPC()) {
-  //     const NpcData* npc = pRoom->NPC();
-  //     const DialogData& dialog = gDialogData[npc->dialog];
-  //     ovrly.DrawAsset(vec((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
-  // }
-
-  // ovrly.Flush();
+  auto& room = GetRoom();
+  if (room.HasOverlay()) {
+    DrawRoomOverlay(Parent(), room.OverlayTile(), room.OverlayBegin());
+    Parent().FlagOverlay();
+  }
 }
 
 void RoomView::ComputeAnimatedTiles() {
   flags.animTileCount = 0;
-  const unsigned tc = gGame.GetMap().Data()->animatedTileCount;
+  const unsigned tc = gGame.GetMap().Data().animatedTileCount;
   if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
-  const AnimatedTileData* pAnims = gGame.GetMap().Data()->animatedTiles;
+  const AnimatedTileData* pAnims = gGame.GetMap().Data().animatedTiles;
   for(unsigned lid=0; lid<64; ++lid) {
-    uint8_t tid = gGame.GetMap().Data()->roomTiles[mRoomId].tiles[lid];
+    uint8_t tid = gGame.GetMap().Data().roomTiles[mRoomId].tiles[lid];
     bool is_animated = false;
     for(unsigned i=0; i<tc; ++i) {
       if (pAnims[i].tileId == tid) {

@@ -26,14 +26,15 @@ private:
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
+    	unsigned hasOverlay : 1;
   	} mFlags;
   	VideoBuffer mCanvas;
 
 public:
 
 	VideoBuffer& Canvas() { return mCanvas; }
-	CubeID GetCube() const { return mCanvas.cube(); }
-	unsigned GetMask() const { return 1 << (31-GetCube()); }
+	CubeID GetID() const { return mCanvas.cube(); }
+	unsigned GetMask() const { return 1 << (31-GetID()); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
 	unsigned ViewType() const { return mFlags.view ; }
@@ -55,6 +56,7 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
+	void FlagOverlay() { mFlags.hasOverlay = true; }
 	void RestoreCanonicalVram();
 	void RefreshInventory();
 

@@ -9,7 +9,6 @@ private:
 
 public:
     void Init(VideoBuffer *cube);
-    VideoBuffer* GetVideoBuffer() const { return mCube; }
     void ShowAll(const char* lines);
     const char* Show(const char* msg);
     void Erase();

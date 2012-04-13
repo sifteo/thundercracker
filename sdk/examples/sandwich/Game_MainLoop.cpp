@@ -35,7 +35,7 @@ void Game::MainLoop() {
 	}
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
-	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
+	mPlayer.View().ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
 	Events::neighborAdd.set(&Game::OnNeighbor, this);
     Events::neighborRemove.set(&Game::OnNeighbor, this);
@@ -55,7 +55,7 @@ void Game::MainLoop() {
 			Paint();
 
 			OnTick();
-			if (mPlayer.CurrentView()->Parent()->Touched()) {
+			if (mPlayer.CurrentView()->Parent().Touched()) {
 				if (mPlayer.Equipment()) {
 					OnUseEquipment();
 				} else if (mPlayer.GetRoom()->HasItem()) {
@@ -150,7 +150,7 @@ void Game::MainLoop() {
 	      		// more crap is going to get shoved in there
 	      		for(const int8_t *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
 	      			// encounter lava?
-	      			if (mMap.Data()->lavaTiles && !mPlayer.CanCrossLava()) {
+	      			if (mMap.Data().lavaTiles && !mPlayer.CanCrossLava()) {
 	      				if (TryEncounterLava((Side)*pNextMove)) {
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
 	      						progress = MovePlayerOneTile((Side)(((*(pNextMove-1))+2)%4), progress);
