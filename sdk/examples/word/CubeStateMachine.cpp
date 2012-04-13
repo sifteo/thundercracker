@@ -16,7 +16,7 @@ CubeStateMachine::CubeStateMachine() :
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mVidBuf(0),
+        mLettersStartOld(0), mVidBuf(0),
         mShakeDelay(0.f), mPanning(0.f), mTouchHoldTime(0.f),
         mTouchHoldWaitForUntouch(false)
 
@@ -275,22 +275,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_NewWordFound:
-        {
-            CubeID c = getCube();
-            Neighborhood hood(c);
-            mImageIndex = ImageIndex_ConnectedWord;
-            if (hood.neighborAt(LEFT) == CubeID::UNDEFINED &&
-                hood.neighborAt(RIGHT) != CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (hood.neighborAt(LEFT) != CubeID::UNDEFINED &&
-                     hood.neighborAt(RIGHT) == CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
-        }
-
         switch (mAnimTypes[CubeAnim_Main])
         {
         case AnimType_NewWord:
@@ -777,18 +761,6 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
     case AnimType_NewWord:
         {
             CubeID c = getCube();
-            mImageIndex = ImageIndex_ConnectedWord;
-            Neighborhood hood(c);
-            if (hood.neighborAt(LEFT) == CubeID::UNDEFINED &&
-                hood.neighborAt(RIGHT) != CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (hood.neighborAt(LEFT) != CubeID::UNDEFINED &&
-                     hood.neighborAt(RIGHT) == CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
 
             // setup sprite params
             for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
@@ -1399,8 +1371,7 @@ void CubeStateMachine::paint()
     mPainting = false;
 }
 
-void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
-                                   bool animate,
+void CubeStateMachine::paintScore(bool animate,
                                    bool reverseAnim,
                                    bool loopAnim,
                                    bool paintTime,
