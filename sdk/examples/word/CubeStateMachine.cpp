@@ -16,7 +16,7 @@ CubeStateMachine::CubeStateMachine() :
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mVidBuf(0),
+        mLettersStartOld(0), mVidBuf(0),
         mShakeDelay(0.f), mPanning(0.f), mTouchHoldTime(0.f),
         mTouchHoldWaitForUntouch(false)
 
@@ -275,22 +275,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_NewWordFound:
-        {
-            CubeID c = getCube();
-            Neighborhood hood(c);
-            mImageIndex = ImageIndex_ConnectedWord;
-            if (hood.neighborAt(LEFT) == CubeID::UNDEFINED &&
-                hood.neighborAt(RIGHT) != CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (hood.neighborAt(LEFT) != CubeID::UNDEFINED &&
-                     hood.neighborAt(RIGHT) == CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
-        }
-
         switch (mAnimTypes[CubeAnim_Main])
         {
         case AnimType_NewWord:
@@ -453,6 +437,11 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_EnterState:
             mShakeDelay = 0.f;
             mPanning = -16.f;// * ((getCube() & 1) ? -1.f : 1.f);
+            {
+                BG1Mask bg1;
+                bg1.filled(vec(0,2), vec(15, 8));
+                mVidBuf->bg1.setMask(bg1);
+            }
             paint();
             if (eventID == EventID_EnterState)
             {
@@ -772,18 +761,6 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
     case AnimType_NewWord:
         {
             CubeID c = getCube();
-            mImageIndex = ImageIndex_ConnectedWord;
-            Neighborhood hood(c);
-            if (hood.neighborAt(LEFT) == CubeID::UNDEFINED &&
-                hood.neighborAt(RIGHT) != CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (hood.neighborAt(LEFT) != CubeID::UNDEFINED &&
-                     hood.neighborAt(RIGHT) == CubeID::UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
 
             // setup sprite params
             for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
@@ -1394,8 +1371,7 @@ void CubeStateMachine::paint()
     mPainting = false;
 }
 
-void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
-                                   bool animate,
+void CubeStateMachine::paintScore(bool animate,
                                    bool reverseAnim,
                                    bool loopAnim,
                                    bool paintTime,
@@ -1751,7 +1727,8 @@ void CubeStateMachine::paintLetters(BG1Mask& bg1,
     updateAnim(bg1, &params);
 }
 
-void CubeStateMachine::paintScoreNumbers(const Vec2& position_RHS,
+void CubeStateMachine::paintScoreNumbers(BG1Mask &bg1,
+                                         const Vec2& position_RHS,
                                          const char* string)
 {
     Vec2 position(position_RHS);

@@ -6,7 +6,6 @@
 #include "config.h"
 #include "Anim.h"
 #include "Constants.h"
-#include "TileTransparencyLookup.h"
 
 
 using namespace Sifteo;
@@ -69,14 +68,13 @@ private:
     AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
     void paint();
 
-    void paintScore(ImageIndex teethImageIndex,
-                    bool animate=false,
+    void paintScore(bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,
                     bool paintTime=false,
                     float animStartTime=0.f);
     void paintLetters(BG1Mask& bg1, bool paintSprites=false);
-    void paintScoreNumbers(const Vec2& position, const char* string);
+    void paintScoreNumbers(BG1Mask &bg1,const Vec2& position, const char* string);
 
     void setLettersStart(unsigned s);
 
@@ -110,7 +108,6 @@ private:
     unsigned mLettersStart;
     unsigned mLettersStartOld;
 
-    ImageIndex mImageIndex;
     SpriteParams mSpriteParams;
 
     VideoBuffer* mVidBuf;
