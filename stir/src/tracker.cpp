@@ -493,7 +493,7 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             AudioEncoder *enc = AudioEncoder::create("");
             sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
             sample.pData = sampleDatas.size();
-            sampleDatas.push_back(realloc(buf, sample.dataSize));
+            sampleDatas.push_back((uint8_t *)realloc(buf, sample.dataSize));
             sample.type = enc->getType();
             break;
         }
