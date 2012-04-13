@@ -582,19 +582,6 @@ Sound::Sound(lua_State *L)
         setEncode("");  // Default
     }
     
-    if (Script::argMatch(L, "quality")) {
-        setQuality(lua_tonumber(L, -1));
-    } else {
-        lua_getglobal(L, GLOBAL_QUALITY);
-        setQuality(lua_tonumber(L, -1));
-    }
-
-    if (Script::argMatch(L, "vbr")) {
-        setVBR(lua_toboolean(L, -1));
-    } else {
-        setVBR(false);
-    }
-
     if (Script::argMatch(L, "sample_rate")) {
         setSampleRate(lua_tonumber(L, -1));
     } else {
@@ -635,7 +622,7 @@ Sound::Sound(lua_State *L)
 
     // Validate the encoder parameters immediately, so we can raise an error
     // during script execution rather than during actual audio compression.
-    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality(), getVBR());
+    AudioEncoder *enc = AudioEncoder::create(getEncode());
     if (enc)
         delete enc;
     else

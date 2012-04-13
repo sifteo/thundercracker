@@ -157,14 +157,13 @@ void CPPSourceWriter::writeGroup(const Group &group)
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
     std::vector<uint8_t> data;
-    AudioEncoder *enc = AudioEncoder::create(sound.getEncode(), sound.getQuality(), sound.getVBR());
+    AudioEncoder *enc = AudioEncoder::create(sound.getEncode());
     assert(enc != 0);
 
-    float kbps;
-    enc->encodeFile(sound.getFile(), data, kbps, sound.getSampleRate());
+    enc->encodeFile(sound.getFile(), data);
     mLog.infoLineWithLabel(sound.getName().c_str(),
-        "%7.02f kiB, %6.02f kbps %s (%s)",
-        data.size() / 1024.0f, kbps, enc->getName(), sound.getFile().c_str());
+        "%7.02f kiB, %s (%s)",
+        data.size() / 1024.0f, enc->getName(), sound.getFile().c_str());
 
     if (data.empty()) {
         mLog.error("Error encoding audio file '%s'", sound.getFile().c_str());
@@ -219,7 +218,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
         indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
         indent << "/* dataSize   */ " << data.size() << ",\n" <<
-        indent << "/* pData      */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
+        indent << "/* pData      */ (uint8_t *)" << sound.getName() << "_data,\n" <<
         "}};\n\n";
 
     delete enc;
