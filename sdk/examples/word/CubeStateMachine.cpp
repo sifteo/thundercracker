@@ -965,7 +965,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
     }
 }
 
-void CubeStateMachine::updateAnim(AnimParams *params)
+void CubeStateMachine::updateAnim(BG1Mask &bg1, AnimParams *params)
 {
     for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
@@ -1259,7 +1259,7 @@ void CubeStateMachine::setPanning(float panning)
         mTilePositions[i].x = ((mTilePositions[i].x + tileWidth + 2) % (16 + 2 * tileWidth));
         mTilePositions[i].x -= tileWidth + 2;
     }
-    //mVidBuf->BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
+    //mVidBuf->BG0_setPanning(vec((int)mBG0Panning, 0.f));
 }
 
 void CubeStateMachine::paint()
@@ -1271,6 +1271,7 @@ void CubeStateMachine::paint()
 
     mPainting = true;
     CubeID c = getCube();
+    BG1Mask bg1;
     ASSERT(mVidBuf != NULL);
 
     switch (getCurrentStateIndex())
@@ -1284,12 +1285,12 @@ void CubeStateMachine::paint()
             default:
                 mVidBuf->bg0.image(vec(0, 0), StartBG);
                 mVidBuf->sprites[0].setImage(StartPrompt);
-                mVidBuf->sprites[0].resize(StartPrompt.width * 8, StartPrompt.height * 8);
+                mVidBuf->sprites[0].resize(StartPrompt.pixelWidth(),
+                                           StartPrompt.pixelHeight());
                 {
-                    float shakeOffset = 0.f;
-                    mVidBuf->moveSprite(0, Vec2(39 - shakeOffset, 74));
-                    mVidBuf->bg1.setPanning(vec((int)mPanning + shakeOffset, 0));
-                    bg1.DrawAsset(vec(0, 0), StartLid);
+                    mVidBuf->sprites[0].move(vec(39, 74));
+                    mVidBuf->bg1.setPanning(vec((int)mPanning, 0));
+                    mVidBuf->bg1.image(vec(0, 0), StartLid);
                 }
                 break;
 
@@ -1298,7 +1299,7 @@ void CubeStateMachine::paint()
             default:
                 paintBorder(vid, ImageIndex_Teeth);
                 /* TODO load/save
-                paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
+                paintScoreNumbers(vid, vec(3,4), FontSmall, "High Scores");
 
                 for (unsigned i = arraysize(SavedData::sHighScores) - 1;
                      i >= 0;
@@ -1310,7 +1311,7 @@ void CubeStateMachine::paint()
                     }
                     char string[17];
                     sprintf(string, "%.5d", SavedData::sHighScores[i]);
-                    paintScoreNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+                    paintScoreNumbers(vid, vec(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                                  FontSmall,
                                  string);
                 }
@@ -1322,20 +1323,20 @@ void CubeStateMachine::paint()
         break;
 
     case CubeStateIndex_Menu:
-        if (&getCube() == WordGame::instance()->getMenuCube())
+        if (getCube() == WordGame::instance()->getMenuCube())
         {
             mPainting = false;
             return;
         }
         else
         {
-            mVidBuf->BG0_drawAsset(Vec2(0,0), MenuBlank);
+            mVidBuf->bg0.image(vec(0,0), MenuBlank);
         }
         break;
 
     case CubeStateIndex_StoryCityProgression:
-        mVidBuf->BG0_drawAsset(Vec2(0,0), MenuBlank);
-        if (&getCube() == WordGame::instance()->getMenuCube())
+        mVidBuf->bg0.image(vec(0,0), MenuBlank);
+        if (getCube() == WordGame::instance()->getMenuCube())
         {
             /* TODO animtype?
             char slideOffset = 0;
@@ -1356,7 +1357,7 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            mVidBuf->BG0_drawAsset(Vec2(2,2), ClueGreece);
+            mVidBuf->bg0.image(vec(2,2), ClueGreece);
             // TODO drive from python script that looks at puzzles
             unsigned char numMetaPuzzles = 4;
             unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
@@ -1373,7 +1374,7 @@ void CubeStateMachine::paint()
                 }
                 else
                 {
-                    mVidBuf->BG0_drawAsset(Vec2(2 + i * slatWidth/8, 2), Slat3);
+                    mVidBuf->bg0.image(vec(2 + i * slatWidth/8, 2), Slat3);
                 }
             }
 
@@ -1381,14 +1382,14 @@ void CubeStateMachine::paint()
         break;
 
     default:
-        mVidBuf->BG0_drawAsset(Vec2(0,0), TileBG);
-        paintLetters(vid, bg1, Font1Letter, true);
-        mVidBuf->BG0_setPanning(Vec2(0.f, 0.f));
+        mVidBuf->bg0.image(vec(0,0), TileBG);
+        paintLetters(bg1, true);
+        mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 
         break;
     }
 
-    bg1.Flush(); // TODO only flush if mask has changed recently
+    //bg1.Flush(); // TODO only flush if mask has changed recently
 
     mPainting = false;
 }
@@ -1562,15 +1563,15 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        mVidBuf->BG0_drawPartialAsset(Vec2(j, i),
-                                                 Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                                 Vec2(1, 1),
+                        mVidBuf->BG0_drawPartialAsset(vec(j, i),
+                                                 vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                                 vec(1, 1),
                                                  *teethNumber,
                                                  frame - 2);
                     }
                     else
                     {
-                        mVidBuf->BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        mVidBuf->BG0_drawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     break;
                 }
@@ -1586,15 +1587,15 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i),
-                                             Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                             Vec2(1, 1),
+                        bg1.DrawPartialAsset(vec(j, i),
+                                             vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                             vec(1, 1),
                                              *teethNumber,
                                              frame - 2);
                     }
                     else
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        bg1.DrawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     ++bg1Tiles;
                 }
@@ -1651,11 +1652,11 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
 
             if (highDigitAnim[AnimType] > 0)
             {
-                bg1.DrawAsset(Vec2(((3 - 2 + 0) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - 2 + 0) * 4 + 1), 14),
                               *highDigitAnim[AnimType],
                               frame);
             }
-            bg1.DrawAsset(Vec2(((3 - 2 + 1) * 4 + 1), 14),
+            bg1.DrawAsset(vec(((3 - 2 + 1) * 4 + 1), 14),
                           *lowDigitAnim[AnimType],
                           frame);
         }
@@ -1668,7 +1669,7 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
             for (unsigned i = 0; i < len; ++i)
             {
                 frame = string[i] - '0';
-                bg1.DrawAsset(Vec2(((3 - len + i) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - len + i) * 4 + 1), 14),
                               FontTeeth,
                               frame);
             }
@@ -1688,18 +1689,18 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
         unsigned tensDigit = GameStateMachine::getNumAnagramsLeft() / 10;
         if (tensDigit)
         {
-            bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
+            bg1.DrawAsset(vec(7,11), FontSmall, tensDigit);
         }
-        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
+        bg1.DrawAsset(vec(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
 
         if (GameStateMachine::getNumBonusAnagramsLeft())
         {
             tensDigit = GameStateMachine::getNumBonusAnagramsLeft() / 10;
             if (tensDigit)
             {
-                bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
+                bg1.DrawAsset(vec(1,11), FontBonus, tensDigit);
             }
-            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
+            bg1.DrawAsset(vec(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
         }
     }
 
@@ -1708,7 +1709,7 @@ void CubeStateMachine::paintScore(ImageIndex teethImageIndex,
 #endif // (0)
 }
 
-void CubeStateMachine::paintLetters(const AssetImage &fontREMOVE,
+void CubeStateMachine::paintLetters(BG1Mask& bg1,
                                     bool paintSprites)
 {
     const static AssetImage* fonts[] =
@@ -1744,10 +1745,10 @@ void CubeStateMachine::paintLetters(const AssetImage &fontREMOVE,
         break;
     }
 
-    CubeID &c = getCube();
+    CubeID c = getCube();
     AnimParams params;
     getAnimParams(&params);
-    updateAnim(vid, &bg1, &params);
+    updateAnim(bg1, &params);
 }
 
 void CubeStateMachine::paintScoreNumbers(const Vec2& position_RHS,
@@ -1771,9 +1772,9 @@ void CubeStateMachine::paintScoreNumbers(const Vec2& position_RHS,
     for (; *string; ++string)
     {
         unsigned index = *string - '0';
-        ASSERT(index < font.frames);
+        ASSERT(index < font.numFrames());
         position.x++;
-        bg1.DrawAsset(position, font, index);
+        mVidBuf->bg1.image(position, font, index);
     }
 }
 
@@ -1781,7 +1782,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
 {
     bool retval = true;
     ASSERT(params);
-    CubeID &c = getCube();
+    CubeID c = getCube();
     params->mLetters[0] = '\0';
     switch (mAnimTypes[CubeAnim_Main])
     {
@@ -1833,6 +1834,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         break;
     }
 
+    Neighborhood hood(getCube());
     params->mLeftNeighbor = (hood.neighborAt(LEFT) != CubeID::UNDEFINED);
     params->mRightNeighbor = (hood.neighborAt(RIGHT) != CubeID::UNDEFINED);
     params->mCubeID = getCube();
@@ -2004,7 +2006,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, getCube());
+    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 
