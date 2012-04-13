@@ -327,6 +327,10 @@ public:
         return loader.getInstrument(i);
     }
 
+    const uint8_t *getSample(uint8_t i) const {
+        return loader.getSample(i);
+    }
+
 private:
     friend class Script;
     std::string mName;
