@@ -220,16 +220,6 @@ public:
         mEncode = encode;
     }
     
-    void setQuality(int quality)
-    {
-        mQuality = quality;
-    }
-    
-    void setVBR(bool vbr)
-    {
-        mVBR = vbr;
-    }
-
     void setSampleRate(uint32_t sample_rate)
     {
         mSampleRate = sample_rate;
@@ -266,14 +256,6 @@ public:
     const std::string &getEncode() const {
         return mEncode;
     }
-    
-    const int getQuality() const {
-        return mQuality;
-    }
-    
-    const bool getVBR() const {
-        return mVBR;
-    }
 
     const uint32_t getSampleRate() const {
         return mSampleRate;
@@ -299,13 +281,11 @@ private:
     std::string mName;
     std::string mFile;
     std::string mEncode;
-    int mQuality;
     uint32_t mSampleRate;
     uint32_t mLoopStart;
     uint32_t mLoopLength;
     uint16_t mVolume;
     _SYSAudioLoopType mLoopType;
-    bool mVBR;
 };
 
 
