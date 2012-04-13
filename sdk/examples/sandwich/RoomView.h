@@ -45,7 +45,6 @@ public:
   unsigned Id() const { return mRoomId; }
   Int2 Location() const;
   Room& GetRoom() const;
-  bool GatewayTouched() const;
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
 

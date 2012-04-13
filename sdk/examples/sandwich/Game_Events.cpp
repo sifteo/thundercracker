@@ -14,7 +14,7 @@ void Game::OnTick() {
 
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasGateway()) {
+  if (pRoom->HasGateway() && !pRoom->OnEdge()) {
     OnEnterGateway(pRoom->Gateway());
   } else if (pRoom->HasNPC()) {
     const auto& npc = pRoom->NPC();

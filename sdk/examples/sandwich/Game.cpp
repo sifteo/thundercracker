@@ -255,10 +255,11 @@ bool Game::AnyViewsTouched() {
 }
 
 void Game::Wait(float seconds, bool touchToSkip) {
-  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<seconds;) { 
-    Paint(); 
+  SystemTime deadline = SystemTime::now() + seconds;
+  while(deadline.inFuture()) {
+    Paint();
     if (touchToSkip && AnyViewsTouched()) {
-      return;
+      break;
     }
   }
 }

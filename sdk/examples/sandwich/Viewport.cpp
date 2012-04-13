@@ -15,10 +15,6 @@ Viewport::Iterator::operator Viewport*() {
 	return &gGame.ViewAt(currentId);
 }
 
-bool Viewport::Touched() const {
-  return mFlags.currTouch && !mFlags.prevTouch;
-}
-
 void Viewport::Init() {
 	mFlags.view = VIEW_IDLE;
 	mFlags.currTouch = 0;

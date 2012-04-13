@@ -155,18 +155,6 @@ Int2 RoomView::Location() const {
   return gGame.GetMap().GetLocation(mRoomId);
 }
 
-bool RoomView::GatewayTouched() const {
-  auto& room = GetRoom();
-  if (room.HasGateway()) {
-    for(int s=0; s<4; ++s) {
-      const Viewport *view = ((Viewport*)this)->VirtualNeighborAt((Side)s);
-      return view && view->Touched() && view->ShowingGatewayEdge();
-    }
-  }
-  return false;
-}
-
-
 void RoomView::HideOverlay(bool flag) {
   if (flags.hideOverlay != flag) {
     flags.hideOverlay = flag;

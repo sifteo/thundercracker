@@ -1,6 +1,9 @@
 #include "Map.h"
 #include "Game.h"
 
+// TODO: stack alloc?
+static uint8_t sVisitMask[NUM_CUBES];
+
 bool Map::CanTraverse(BroadLocation bloc, Side side) {
   // validate that the exit portal is reachable given the subdivision type, or else
   // check the portal buffer for the general case
@@ -51,9 +54,6 @@ bool Map::GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* 
   }
   return true;
 }
-
-// TODO: stack alloc?
-static uint8_t sVisitMask[NUM_CUBES];
 
 BroadPath::BroadPath() {
   for(int i=0; i<2*NUM_CUBES; ++i) {
@@ -113,12 +113,18 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Side side, int depth, u
 }
 
 bool Map::FindBroadPath(BroadPath* outPath, unsigned* outViewId) {
+  // TODO: Add some heuristics to prevent Pearl from taking obviously wrong paths when several
+  // cubes are involved
+  // optimize to put touched-cubes into an iteratable mask?
   bool anyTouches = false;
-  for(unsigned i=0; i<NUM_CUBES; ++i) { 
-    sVisitMask[i] = 0; 
-    anyTouches |= gGame.ViewAt(i).Touched();
+  auto vp = gGame.ListViews();
+  while(vp.MoveNext()) {
+    sVisitMask[vp->GetID()] = 0x00;
+    anyTouches |= vp->Touched();
   }
-  if (!anyTouches) { return false; }
+  if (!anyTouches) { 
+    return false; 
+  }
   const BroadLocation* pRoot = gGame.GetPlayer().Current();
   sVisitMask[pRoot->view->Parent().GetID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
