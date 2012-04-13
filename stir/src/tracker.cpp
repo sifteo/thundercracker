@@ -398,7 +398,10 @@ bool XmTrackerLoader::readNextInstrument()
     }
 
     // Read and process sample
-    if (!readSample(instrument)) return false;
+    if (!readSample(instrument)) {
+        free(instrument.volumeEnvelopePoints);
+        return false;
+    }
 
     /*
      * That's it for instrument/sample data.
