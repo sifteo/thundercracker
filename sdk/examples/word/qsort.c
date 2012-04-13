@@ -75,7 +75,7 @@ PORTABILITY
  */
 
 
-#include <stdlib.h>
+typedef unsigned size_t;
 
 #define _PARAMS(_x)         _x
 #define _AND                ,

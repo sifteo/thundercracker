@@ -36,6 +36,7 @@ struct AnimData
 
 bool animPaint(AnimType animT,
                VideoBuffer &vid,
+               BG1Mask &bg1,
                float animTime,
                const AnimParams *params)
 {
@@ -66,7 +67,7 @@ bool animPaint(AnimType animT,
 
     float animPct =
             data.mLoop ?
-                fmodf(animTime, data.mDuration)/data.mDuration :
+                fmod(animTime, data.mDuration)/data.mDuration :
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
@@ -76,7 +77,7 @@ bool animPaint(AnimType animT,
                 (unsigned char) ((float)objData.mNumFrames * animPct);
         frame = MIN(frame, objData.mNumFrames - 1);
 
-        unsigned fontFrame = font.frames + 1;
+        unsigned fontFrame = font.numFrames() + 1;
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
         bool metaLetterTile = false;
