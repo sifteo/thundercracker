@@ -16,7 +16,8 @@ uint8_t FactoryTest::commandLen;
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,
     flashCommsHandler,
-    flashReadWriteHandler
+    flashReadWriteHandler,
+    ledHandler
 };
 
 void FactoryTest::init()
@@ -106,6 +107,34 @@ void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
     uint8_t result = (memcmp(txbuf, rxbuf, sizeof txbuf) == 0) ? 1 : 0;
 
     const uint8_t response[] = { 3, args[0], result };
+    Usart::Dbg.write(response, sizeof response);
+}
+
+/*
+ * args[1] - color, bit0 == green, bit1 == red
+ */
+void FactoryTest::ledHandler(uint8_t argc, uint8_t *args)
+{
+    GPIOPin green = LED_GREEN_GPIO;
+    green.setControl(GPIOPin::OUT_2MHZ);
+
+    GPIOPin red = LED_RED_GPIO;
+    red.setControl(GPIOPin::OUT_2MHZ);
+
+    uint8_t status = args[1];
+
+    if (status & 1)
+        green.setLow();
+    else
+        green.setHigh();
+
+    if (status & (1 << 1))
+        red.setLow();
+    else
+        red.setHigh();
+
+    // no result - just respond to indicate that we're done
+    const uint8_t response[] = { 2, args[0] };
     Usart::Dbg.write(response, sizeof response);
 }
 

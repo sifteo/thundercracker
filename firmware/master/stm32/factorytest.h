@@ -13,7 +13,8 @@ public:
     enum Command {
         NrfComms        = 0,
         FlashComms      = 1,
-        FlashReadWrite  = 2
+        FlashReadWrite  = 2,
+        Led             = 3
     };
 
     static void init();
@@ -30,6 +31,7 @@ private:
     static void nrfCommsHandler(uint8_t argc, uint8_t *args);
     static void flashCommsHandler(uint8_t argc, uint8_t *args);
     static void flashReadWriteHandler(uint8_t argc, uint8_t *args);
+    static void ledHandler(uint8_t argc, uint8_t *args);
 };
 
 #endif // FACTORYTEST_H
