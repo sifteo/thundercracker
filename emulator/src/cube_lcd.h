@@ -265,7 +265,7 @@ class LCD {
             break;
             
         case CMD_MAGIC_TIANMA_HX8353:
-            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            // Nothing to do here currently; all defaults
             break;
 
         }

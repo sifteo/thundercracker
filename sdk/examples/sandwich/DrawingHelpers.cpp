@@ -117,6 +117,7 @@ void DrawRoom(Viewport* gfx, const MapData* pMap, int roomId) {
 	const uint8_t *pTile = pMap->roomTiles[roomId].tiles;
 	const FlatAssetImage& tileset = *pMap->tileset;
 	Int2 p;
+
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?

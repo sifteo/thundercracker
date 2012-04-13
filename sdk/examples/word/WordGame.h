@@ -3,10 +3,15 @@
 
 #include <sifteo.h>
 #include "GameStateMachine.h"
+#include <sifteo/menu.h>
+#include "SavedData.h"
 
 using namespace Sifteo;
 
 union EventData;
+
+
+//class Menu;
 
 enum AudioChannelIndex
 {
@@ -34,27 +39,32 @@ enum AudioPriority
 class WordGame
 {
 public:
-    WordGame(Cube cubes[]);
+    WordGame(VideoBuffer vidBuffers[], CubeID pMenuCube, Menu &m);
     void update(float dt);
 
     bool needsPaintSync() const { return mNeedsPaintSync; }
     void setNeedsPaintSync() { mNeedsPaintSync = true; }
-    void paintSync() { System::paintSync(); mNeedsPaintSync = false; }
+    void paintSync() { System::paint(); System::finish(); mNeedsPaintSync = false; }
 
-    static WordGame* instance() { return sInstance; }
-
-    static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
+    static WordGame* instance() { ASSERT(sInstance); return sInstance; }
+    Menu* getMenu() { return mMenu; }
+    const CubeID getMenuCube() { return mMenuCube; }
+    const SavedData& getSavedData() const { return mSavedData; }
+    static void hideSprites(VideoBuffer &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const AssetAudio &mod,
                           AudioChannelIndex channel = AudioChannelIndex_Music,
-                          _SYSAudioLoopType loopMode = LoopOnce,
+                          AudioChannel::LoopMode loopMode = AudioChannel::ONCE,
                           AudioPriority priority = AudioPriority_Normal);
+
+    static void getRandomCubePermutation(unsigned char *indexArray);
 
     static Random random;
 
 private:
-    bool _playAudio(const AssetAudio &mod, AudioChannelIndex channel,
-                    _SYSAudioLoopType loopMode,
+    bool _playAudio(const AssetAudio &mod,
+                    AudioChannelIndex channel,
+                    AudioChannel::LoopMode loopMode,
                     AudioPriority priority);
     void _onEvent(unsigned eventID, const EventData& data);
 
@@ -62,6 +72,10 @@ private:
     AudioChannel mAudioChannels[NumAudioChannelIndexes];
     bool mNeedsPaintSync;
     AudioPriority mLastAudioPriority[NumAudioChannelIndexes];
+    Menu* mMenu;
+    CubeID mMenuCube;
+    SavedData mSavedData;
+
     static WordGame* sInstance;
 };
 
