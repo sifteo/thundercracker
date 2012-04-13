@@ -23,12 +23,14 @@ extern "C" {
 #include "tile.h"
 #include "imagestack.h"
 #include "sifteo/abi.h"
+#include "tracker.h"
 
 namespace Stir {
 
 class Group;
 class Image;
 class Sound;
+class Tracker;
 
 /*
  * Script --
@@ -58,11 +60,13 @@ public:
     const char *outputProof;
 
     std::set<Group*> groups;
+    std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
 
     friend class Group;
     friend class Image;
     friend class Sound;
+    friend class Tracker;
 
     bool luaRunFile(const char *filename);
     void collect();
@@ -288,6 +292,47 @@ private:
     _SYSAudioLoopType mLoopType;
 };
 
+class Tracker {
+public:
+    static const char className[];
+    static Lunar<Tracker>::RegType methods[];
+
+    Tracker(lua_State *L);
+
+    void setName(const char *s) {
+        mName = s;
+    }
+
+    const std::string &getName() const {
+        return mName;
+    }
+
+    const std::string &getFile() const {
+        return mFile;
+    }
+
+    const _SYSXMSong &getSong() const {
+        return loader.getSong();
+    }
+
+    const _SYSXMPattern &getPattern(uint8_t i) const {
+        return loader.getPattern(i);
+    }
+
+    const std::vector<uint8_t> &getPatternData(uint8_t i) const {
+        return loader.getPatternData(i);
+    }
+
+    const _SYSXMInstrument &getInstrument(uint8_t i) const {
+        return loader.getInstrument(i);
+    }
+
+private:
+    friend class Script;
+    std::string mName;
+    std::string mFile;
+    XmTrackerLoader loader;
+};
 
 };  // namespace Stir
 
