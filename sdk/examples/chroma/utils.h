@@ -8,16 +8,6 @@
 #define PRINT(...) 
 #endif
 
-typedef enum
-{
-	UP,
-	LEFT, 
-	DOWN,
-    RIGHT,
-    NONE
-} Side;
-
-
 namespace Util
 {
 

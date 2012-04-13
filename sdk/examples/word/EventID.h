@@ -11,9 +11,14 @@ enum EventID
     EventID_ExitState,
     EventID_Shake,
     EventID_Tilt,
-    EventID_NewAnagram,
+    EventID_Touch,
+    EventID_TouchAndHold,
+    EventID_TouchAndHoldWaitForUntouch,
+    EventID_NewPuzzle,
+    EventID_NewMeta,
     EventID_NewWordFound,
     EventID_OldWordFound,
+    EventID_PuzzleSolved,
     EventID_WordBroken,
     EventID_GameStateChanged,
     EventID_LetterOrderChange,
@@ -21,6 +26,8 @@ enum EventID
     EventID_HintSolutionUpdated,
     EventID_SpendHint,
     EventID_Start,
+    EventID_NormalTilesReveal,
+    EventID_Update,
 
     NumEventIds
 };

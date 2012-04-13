@@ -47,7 +47,7 @@ void Glimmer::Reset()
 }
 
 
-void Glimmer::Update( float dt )
+void Glimmer::Update( float dt, CubeWrapper *pWrapper )
 {
     if( m_group == 0 && m_frame == 0 )
         Game::Inst().playSound(glimmer_fx_03);
@@ -56,10 +56,13 @@ void Glimmer::Update( float dt )
     {
         m_frame++;
 
-        if( m_frame >= GlimmerImg.frames )
+        if( m_frame >= GlimmerImg.numFrames() )
         {
             m_frame = 0;
             m_group++;
+
+            if( m_group >= NUM_GLIMMER_GROUPS )
+                pWrapper->setNeedFlush();
             //Game::Inst().playSound(glimmer_fx_03);
         }
     }
@@ -78,7 +81,7 @@ int Glimmer::NUM_PER_GROUP[NUM_GLIMMER_GROUPS] =
 };
 
 
-void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
+void Glimmer::Draw( TileBuffer<16, 16> &bg1buffer, CubeWrapper *pWrapper )
 {
     //old sprite version
     /*if( m_group >= NUM_GLIMMER_GROUPS )
@@ -103,11 +106,6 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
     }*/
 
     //bg1 version
-    if( m_group >= NUM_GLIMMER_GROUPS )
-    {
-        return;
-    }
-
     for( int i = 0; i < MAX_GLIMMERS; i++ )
     {
         if( i < NUM_PER_GROUP[ m_group ] )
@@ -120,13 +118,15 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
                 if( pSlot->IsFixed() )
                 {
                     if( pSlot->getMultiplier() <= 1 )
-                        bg1helper.DrawAsset( vec( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
+                        bg1buffer.image( vec( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
                 }
                 else if( pSlot->getColor() != GridSlot::ROCKCOLOR )
-                    bg1helper.DrawAsset( vec( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+                    bg1buffer.image( vec( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
             }
         }
     }
+
+    pWrapper->setNeedFlush();
 }
 
 

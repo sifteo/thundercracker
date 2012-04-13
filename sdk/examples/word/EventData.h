@@ -12,23 +12,32 @@ union EventData
     struct
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
-        unsigned char mPuzzlePieceIndexes[NUM_CUBES];
-        int mOffLengthIndex;
-        unsigned mNumAnagrams;
-        unsigned mNumBonusAnagrams;
-        bool mLeadingSpaces;
-    } mNewAnagram;
+        unsigned char mCubeOrderingIndexes[NUM_CUBES];
+        unsigned char mLetterStartIndexes[NUM_CUBES];
+        unsigned char mNumAnagrams;
+        unsigned char mLeadingSpaces;
+        unsigned char mMaxLettersPerCube;
+    } mNewPuzzle;
+
+    struct
+    {
+        char mWord[MAX_LETTERS_PER_WORD + 1];
+        unsigned char mCubeOrderingIndexes[NUM_CUBES];
+        unsigned char mLetterStartIndexes[NUM_CUBES];
+        unsigned char mLeadingSpaces;
+        unsigned char mMaxLettersPerCube;
+    } mNewMeta;
 
     struct
     {
         const char* mWord;
-        Cube::ID mCubeIDStart;
+        PCubeID mCubeIDStart;
         bool mBonus;
     } mWordFound; // used for NewWordFound and OldWordFound
 
     struct
     {
-        Cube::ID mCubeIDStart;
+        PCubeID mCubeIDStart;
     } mWordBroken;
 
     struct
@@ -45,13 +54,23 @@ union EventData
 
     struct
     {
-        Cube::ID mCubeID;
-    } mInput; // also tilt
+        PCubeID mCubeID;
+    } mInput; // also tilt, touch
+
+    struct
+    {
+        PCubeID mCubeID;
+    } mTouchAndHoldWaitForUntouch;
 
     struct
     {
         char mHintSolution[NUM_CUBES][MAX_LETTERS_PER_CUBE];
     } mHintSolutionUpdate;
+
+    struct
+    {
+        float mDT;
+    } mUpdate;
 };
 
 #endif // EVENTDATA_H
