@@ -14,7 +14,7 @@ private:
   static TimeDelta mDt;
 
 
-  Viewport mViews[NUM_CUBES];
+  Viewport mViews[CUBE_ALLOCATION];
   bool mNeighborDirty;
   GameState mState;
   Map mMap;

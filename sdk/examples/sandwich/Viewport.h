@@ -57,7 +57,7 @@ public:
 	bool HideLocation();
 
 	void FlagOverlay() { mFlags.hasOverlay = true; }
-	void RestoreCanonicalVram();
+	void RestoreCanonicalVideo();
 	void RefreshInventory();
 
 	Side VirtualTiltDirection() const;

@@ -155,7 +155,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 }
 
 void Game::IrisOut(Viewport& view) {
-  view.RestoreCanonicalVram();
+  view.RestoreCanonicalVideo();
   auto& g = view.Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -213,7 +213,7 @@ void Game::ScrollTo(unsigned roomId) {
     if (p != &view) { p->HideLocation(); }
   }
   // hide sprites and overlay
-  view.RestoreCanonicalVram();
+  view.RestoreCanonicalVideo();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();

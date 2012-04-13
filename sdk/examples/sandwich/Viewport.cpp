@@ -24,12 +24,12 @@ void Viewport::Init() {
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
 	mFlags.hasOverlay = 0;
-	RestoreCanonicalVram();
+	RestoreCanonicalVideo();
 	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
 }
 
-void Viewport::RestoreCanonicalVram() {
+void Viewport::RestoreCanonicalVideo() {
 	if (mCanvas.mode() == BG0_SPR_BG1) {
 	  	mCanvas.bg0.setPanning(vec(0,0));
 		for(unsigned i=0; i<8; ++i) { mCanvas.sprites[i].hide(); }
@@ -67,7 +67,7 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 		if (view == VIEW_EDGE && mView.edge.Id() == roomId && mView.edge.GetSide() == side) { return false; }
 	}
 	mFlags.view = view;
-	RestoreCanonicalVram();
+	RestoreCanonicalVideo();
 	//EvictSecondaryView(view);
 	if (view == VIEW_ROOM) {
 		mView.room.Init(roomId);
@@ -79,7 +79,7 @@ bool Viewport::SetLocationView(unsigned roomId, Side side, bool force) {
 
 void Viewport::SetSecondaryView(unsigned viewId) {
 	mFlags.view = viewId;
-	RestoreCanonicalVram();
+	RestoreCanonicalVideo();
 	//EvictSecondaryView(viewId);
 	switch(viewId) {
 		case VIEW_IDLE:
@@ -97,6 +97,7 @@ void Viewport::SetSecondaryView(unsigned viewId) {
 }
 
 void Viewport::Restore() {
+	RestoreCanonicalVideo();
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
