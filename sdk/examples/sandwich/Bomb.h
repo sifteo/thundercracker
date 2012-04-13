@@ -18,6 +18,6 @@ public:
 	void UpdateFuse();
 
 	const ItemData* Item() const { return pItem; }
-	Room* RespawnRoom() const;
+	Room& RespawnRoom() const;
 	bool FuseLit() const { return mCountdown != 0; }
 };

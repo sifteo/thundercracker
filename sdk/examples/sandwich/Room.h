@@ -38,7 +38,7 @@ public:
 
   unsigned Id() const;
   Int2 Location() const;
-  const RoomData* Data() const;
+  const RoomData& Data() const;
   Int2 Position() const { return 128 * Location(); }
   Int2 LocalCenter(unsigned subdiv) const;
   Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
@@ -67,9 +67,9 @@ public:
   bool HasGateway() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_GATEWAY; }
   bool HasItem() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_ITEM; }
   bool HasNPC() const { return mPrimarySlotType == PRIMARY_TRIGGER && mPrimarySlotId == TRIGGER_NPC; }
-  const GatewayData* Gateway() const { ASSERT(HasGateway());  return (const GatewayData*) mPrimarySlot; }
-  const ItemData* Item() const { ASSERT(HasItem()); return (const ItemData*) mPrimarySlot; }
-  const NpcData* NPC() const { ASSERT(HasNPC()); return (const NpcData*) mPrimarySlot; }
+  const GatewayData& Gateway() const { ASSERT(HasGateway());  return *reinterpret_cast<const GatewayData*>(mPrimarySlot); }
+  const ItemData& Item() const { ASSERT(HasItem()); return *reinterpret_cast<const ItemData*>(mPrimarySlot); }
+  const NpcData& NPC() const { ASSERT(HasNPC()); return *reinterpret_cast<const NpcData*>(mPrimarySlot); }
 
   void SetTrigger(int type, const TriggerData* p) { 
     ASSERT(!mPrimarySlot);
@@ -102,8 +102,8 @@ public:
     ); 
   }
 
-  const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(IsDiag()); return (const DiagonalSubdivisionData*)mPrimarySlot; }
-  const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(IsBridge()); return (const BridgeSubdivisionData*)mPrimarySlot;}
+  const DiagonalSubdivisionData& SubdivAsDiagonal() const { ASSERT(IsDiag()); return *reinterpret_cast<const DiagonalSubdivisionData*>(mPrimarySlot); }
+  const BridgeSubdivisionData& SubdivAsBridge() const { ASSERT(IsBridge()); return *reinterpret_cast<const BridgeSubdivisionData*>(mPrimarySlot);}
 
   void SetDiagonalSubdivision(const DiagonalSubdivisionData* diag);
   void SetBridgeSubdivision(const BridgeSubdivisionData* bridge);
@@ -115,9 +115,9 @@ public:
   bool HasTrapdoor() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_TRAPDOOR; }
   bool HasDepot() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_DEPOT; }
   bool HasSwitch() const { return mPrimarySlotType == PRIMARY_PROP && mPrimarySlotId == SECONDARY_SWITCH; }
-  const TrapdoorData* Trapdoor() const { ASSERT(HasTrapdoor()); return (const TrapdoorData*) mPrimarySlot; }
-  const DepotData* Depot() const { ASSERT(HasDepot()); return (const DepotData*) mPrimarySlot; }
-  const SwitchData* Switch() const { ASSERT(HasSwitch()); return (const SwitchData*) mPrimarySlot; }
+  const TrapdoorData& Trapdoor() const { ASSERT(HasTrapdoor()); return *reinterpret_cast<const TrapdoorData*>(mPrimarySlot); }
+  const DepotData& Depot() const { ASSERT(HasDepot()); return *reinterpret_cast<const DepotData*>(mPrimarySlot); }
+  const SwitchData& Switch() const { ASSERT(HasSwitch()); return *reinterpret_cast<const SwitchData*>(mPrimarySlot); }
 
   void SetTrapdoor(const TrapdoorData* trapDoorData) {
     ASSERT(!mPrimarySlot);
@@ -152,7 +152,7 @@ public:
   bool HasDoor() const { return !HasDepot() && mSecondarySlot != 0; }
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
-  const DoorData* Door() const { ASSERT(HasDoor()); return (const DoorData*) mSecondarySlot; }
+  const DoorData& Door() const { ASSERT(HasDoor()); return *reinterpret_cast<const DoorData*>(mSecondarySlot); }
   void SetDoor(const DoorData* p) { ASSERT(!HasDepot()); mSecondarySlot = p; }
   bool OpenDoor();
 

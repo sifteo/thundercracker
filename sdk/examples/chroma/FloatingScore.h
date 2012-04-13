@@ -21,7 +21,7 @@ public:
     FloatingScore();
 
     void Reset();
-    void Draw( BG1Helper &bg1helper );
+    void Draw( TileBuffer<16, 16> &bg1buffer ) __attribute__ ((noinline));
     void Update(float dt);
 
     void Spawn( unsigned int score, const Int2 &pos );

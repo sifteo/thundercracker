@@ -20,7 +20,7 @@ public:
     RockExplosion();
     void Reset();
     void Update();
-    void Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex );
+    void Draw( VideoBuffer &vid, int spriteindex );
     void Spawn( const Int2 &pos, int whichpiece );
 
     inline bool isUnused() const { return m_pos.x < 0; }

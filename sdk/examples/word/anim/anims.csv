@@ -1,0 +1,15 @@
+"AnimType","Duration","Loop"
+"AnimType_NotWord,",1,TRUE
+"AnimType_SlideL,",0.5,FALSE
+"AnimType_SlideR,",0.5,FALSE
+"AnimType_OldWord,",1,TRUE
+"AnimType_NewWord,",1.5,TRUE
+"AnimType_EndofRound,",1,TRUE
+"AnimType_Shuffle,",0.5,TRUE
+"AnimType_CityProgression,",1,TRUE
+"AnimType_HintBarAppear,",1,TRUE
+"AnimType_HintBarIdle,",3,FALSE
+"AnimType_HintBarDisappear,",0.3,FALSE
+"AnimType_HintWindUpSlide,",2,FALSE
+"AnimType_HintSlideL,",1,TRUE
+"AnimType_HintSlideR,",1,TRUE

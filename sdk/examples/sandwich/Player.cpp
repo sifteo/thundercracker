@@ -24,12 +24,12 @@ void Player::Init(Viewport* pPrimary) {
 }
 
 Room* Player::GetRoom() const {
-  return gGame.GetMap()->GetRoom(Location());
+  return &gGame.GetMap().GetRoom(Location());
 }
 
 void Player::ConsumeEquipment() {
   ASSERT(mEquipment);
-  gGame.GetState()->FlagTrigger(mEquipment->trigger);
+  gGame.GetState().FlagTrigger(mEquipment->trigger);
   mEquipment = 0;
 }
 

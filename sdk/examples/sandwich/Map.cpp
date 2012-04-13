@@ -4,9 +4,9 @@ void Map::Init() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
-Bomb* Map::BombFor(const ItemData* bomb) {
+Bomb* Map::BombFor(const ItemData& bomb) {
   for(Bomb* p=BombBegin(); p!=BombEnd(); ++p) {
-    if (p->Item() == bomb) {
+    if (p->Item() == &bomb) {
       return p;
     }
   }
@@ -73,7 +73,7 @@ void Map::RefreshTriggers() {
   mBombCount = 0;
   if (mData->items) {
     for(const ItemData* p = mData->items; !AtEnd(p->trigger); ++p) {
-      if (gGame.GetState()->IsActive(p->trigger)) {
+      if (gGame.GetState().IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
         if (gItemTypeData[p->itemId].triggerType == ITEM_TRIGGER_BOMB) {
           ASSERT(mBombCount < BOMB_CAPACITY);
@@ -86,7 +86,7 @@ void Map::RefreshTriggers() {
 
   if (mData->gates) {
     for(const GatewayData* p = mData->gates; !AtEnd(p->trigger); ++p) {
-      if (gGame.GetState()->IsActive(p->trigger)) {
+      if (gGame.GetState().IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &p->trigger);
       }
     }
@@ -94,7 +94,7 @@ void Map::RefreshTriggers() {
   
   if (mData->npcs) {
     for(const NpcData* p = mData->npcs; !AtEnd(p->trigger); ++p) {
-      if (gGame.GetState()->IsActive(p->trigger)) {
+      if (gGame.GetState().IsActive(p->trigger)) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
       }
     }
