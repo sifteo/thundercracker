@@ -31,6 +31,12 @@ public:
     static unsigned int GetNumPuzzles();
 
     const PuzzleCubeData *getCubeData( unsigned int cubeIndex ) const;
+    //given puzzle, return chapter index
+    static unsigned int GetChapter( unsigned int puzzle );
+    static unsigned int GetNumChapters();
+    static unsigned int GetNumPuzzlesInChapter( unsigned int chapter );
+    //index of first puzzle in the given chapter
+    static unsigned int GetPuzzleOffset( unsigned int chapter );
 
     const char *m_pName;
     const char *m_pInstr;

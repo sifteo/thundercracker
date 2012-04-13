@@ -233,7 +233,7 @@ unsigned int GridSlot::GetSpecialFrame()
     {
         m_animFrame++;
 
-        if( m_animFrame >= GetSpecialTexture().frames )
+        if( m_animFrame >= GetSpecialTexture().numFrames() )
             m_animFrame = 0;
 
         return m_animFrame;
@@ -242,7 +242,7 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
+void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
 {
 	Int2 vec = { m_col * 4, m_row * 4 };
 
@@ -256,32 +256,30 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 		case STATE_LIVING:
 		{
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
             {
                 if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
                 {
-                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
                 }
                 else
                 {
-                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
+                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ]);
 
                     if( m_multiplier > 1 )
                     {
                         SystemTime t = SystemTime::now();
                         
-                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.frames);
-                        vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
-                        vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
-                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
+                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
+                        vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
+                        vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
 
                         //number on bg1
                         if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
                         {
-                            vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
-                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
-                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 6 );
+                            vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
+                            vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
                         }
                     }
                 }
@@ -299,20 +297,20 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                             frame = GetIdleFrame();
                         else*/
                             frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                        vid.BG0_drawAsset(vec, animtex, frame);
+                        vid.bg0.image(vec, animtex, frame);
                         break;
                     }
                     case MOVESTATE_MOVING:
                     {
-                        Int2 curPos = vec( m_curMovePos.x, m_curMovePos.y );
+                        Int2 curPos = m_curMovePos;
 
                         //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
                         if( IsSpecial() )
-                            vid.BG0_drawAsset(curPos, GetSpecialTexture(), GetSpecialFrame());
+                            vid.bg0.image(curPos, GetSpecialTexture(), GetSpecialFrame());
                         else
                         {
                             const AssetImage &tex = *TEXTURES[m_color];
-                            vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
+                            vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
                         }
                         break;
                     }
@@ -320,11 +318,11 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                     case MOVESTATE_BUMPED:
                     {
                         if( IsSpecial() )
-                            vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+                            vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
                         else
                         {
                             const AssetImage &animtex = *TEXTURES[ m_color ];
-                            vid.BG0_drawAsset(vec, animtex, m_animFrame);
+                            vid.bg0.image(vec, animtex, m_animFrame);
                         }
                         break;
                     }
@@ -338,16 +336,16 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
         {
             if( m_color == HYPERCOLOR )
             {
-                //vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+                //vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
                 const AssetImage &exTex = GetSpecialExplodingTexture();
 
-                vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
+                vid.bg0.image(vec, exTex, GetSpecialFrame());
             }
             else
             {
                 if( m_color == RAINBALLCOLOR )
                 {
-                    vid.BG0_drawAsset(vec, rainball_idle, 0);
+                    vid.bg0.image(vec, rainball_idle, 0);
                 }
                 else
                 {
@@ -355,7 +353,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 
                     unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
-                    vid.BG0_drawAsset(vec, exTex, markFrame);
+                    vid.bg0.image(vec, exTex, markFrame);
                 }
 
                 if( m_bWasRainball || m_bWasInfected )
@@ -380,9 +378,9 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                     if( perc >= 0.0f && perc < 1.0f )
                     {
                         //figure out frame based on mark break delay
-                        unsigned int frame = pImg->frames * perc;
+                        unsigned int frame = pImg->numFrames() * perc;
 
-                        bg1helper.DrawAsset( vec, *pImg, frame );
+                        bg1buffer.image( vec, *pImg, frame );
                     }
                 }
             }
@@ -391,12 +389,12 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 		case STATE_EXPLODING:
 		{
             /*if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
             else*/
             {
-                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                vid.bg0.image(vec, GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
-                //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+                //vid.bg0.image(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
 			break;
 		}
@@ -404,7 +402,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 		{
             if( m_score > 99 )
                 m_score = 99;
-			vid.BG0_drawAsset(vec, GemEmpty, 0);
+            vid.bg0.image(vec, GemEmpty, 0);
             unsigned int fadeFrame = 0;
 
             float fadeTime = float(SystemTime::now() - m_eventTime) - START_FADING_TIME;
@@ -416,13 +414,13 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                 fadeFrame = NUM_POINTS_FRAMES - 1;
 
             if( m_score > 9 )
-                vid.BG0_drawAsset(vec( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
-            vid.BG0_drawAsset(vec( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
+                vid.bg0.image(vec( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
+            vid.bg0.image(vec( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
         case STATE_GONE:
 		{
-			vid.BG0_drawAsset(vec, GemEmpty, 0);
+            vid.bg0.image(vec, GemEmpty, 0);
 			break;
         }*/
 		default:
@@ -558,7 +556,7 @@ void GridSlot::Update(SystemTime t)
         {
             Int2 vec = { m_col * 4, m_row * 4 };
             m_pWrapper->QueueClear( vec );
-            //vid.BG0_drawAsset(vec, GemEmpty, 0);
+            //vid.bg0.image(vec, GemEmpty, 0);
             break;
         }
 		default:
@@ -606,7 +604,6 @@ void GridSlot::explode()
     {
         Game::Inst().UpMultiplier();
         m_multiplier = 1;
-        DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
 	m_eventTime = SystemTime::now();
@@ -774,39 +771,39 @@ unsigned int GridSlot::GetIdleFrame()
 */
 
 
-void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
+void GridSlot::DrawIntroFrame( VideoBuffer &vid, unsigned int frame )
 {
     Int2 vec = { m_col * 4, m_row * 4 };
 
     if( !isAlive() )
-        vid.BG0_drawAsset(vec, GemEmpty, 0);
+        vid.bg0.image(vec, GemEmpty, 0);
     else if( IsSpecial() )
-        vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+        vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
     else
     {
         switch( frame )
         {
             case 0:
             {
-                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                vid.bg0.image(vec, GemEmpty, 0);
                 break;
             }
             case 1:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, 1);
+                vid.bg0.image(vec, exTex, 1);
                 break;
             }
             case 2:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, 0);
+                vid.bg0.image(vec, exTex, 0);
                 break;
             }
             default:
             {
                 const AssetImage &tex = *TEXTURES[ m_color ];
-                vid.BG0_drawAsset(vec, tex, 0);
+                vid.bg0.image(vec, tex, 0);
                 break;
             }
         }

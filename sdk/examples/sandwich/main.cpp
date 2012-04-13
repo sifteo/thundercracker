@@ -6,7 +6,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
 	.title("Sandwich Kingdom")
-	.cubeRange(3,CubeID::NUM_SLOTS);
+	.cubeRange(NUM_CUBES);
 
 #if SFX_ON
 AudioChannel gChannelSfx;

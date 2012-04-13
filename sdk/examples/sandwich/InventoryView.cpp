@@ -1,8 +1,8 @@
 #include "Game.h"
 #include "DrawingHelpers.h"
 
-#define mCanvas         (Parent()->Canvas())  
-#define mHoveringSprite (Parent()->Canvas().sprites[0])  
+#define mCanvas         (Parent().Canvas())  
+#define mHoveringSprite (Parent().Canvas().sprites[0])  
 
 
 void InventoryView::Init() {
@@ -16,7 +16,7 @@ void InventoryView::Init() {
 
 void InventoryView::Restore() {
 	mAccum.set(0,0);
-	mTouch = Parent()->GetCube().isTouching();
+	mTouch = Parent().GetID().isTouching();
 	mCanvas.bg0.image(vec(0,0), InventoryBackground);
 	RenderInventory();
 }
@@ -38,7 +38,7 @@ void InventoryView::Update() {
                     Int2 pos = vec(mSelected % 4, mSelected >> 2) + Int2::unit(side);
 					int idx = pos.x + (pos.y<<2);
 					uint8_t items[16];
-					int count = gGame.GetState()->GetItems(items);
+					int count = gGame.GetState().GetItems(items);
 					if (idx >= 0 && idx < count) {
 						mSelected = idx;
 						mAnim = 0;
@@ -52,7 +52,7 @@ void InventoryView::Update() {
 		CORO_YIELD;
 		{
 			uint8_t items[16];
-			int count = gGame.GetState()->GetItems(items);
+			int count = gGame.GetState().GetItems(items);
 			mCanvas.setWindow(80+16,128-80-16);
 			mDialog.Init(&mCanvas);
 			mDialog.Erase();
@@ -65,11 +65,11 @@ void InventoryView::Update() {
 			CORO_YIELD;
 		}
 		mDialog.SetAlpha(255);
-		while(Parent()->GetCube().isTouching()) {
+		while(Parent().GetID().isTouching()) {
 			CORO_YIELD;	
 		}
 		System::finish();
-		Parent()->Restore();
+		Parent().Restore();
 		mAccum.set(0,0);
 		CORO_YIELD;
 	}
@@ -82,11 +82,11 @@ void InventoryView::OnInventoryChanged() {
 
 void InventoryView::RenderInventory() {
 	// TODO
-	// BG1Helper overlay(*Parent()->GetCube());
+	// BG1Helper overlay(*Parent().GetID());
 	// const int pad = 24;
 	// const int innerPad = (128-pad-pad)/3;
 	uint8_t items[16];
-	unsigned count = gGame.GetState()->GetItems(items);
+	unsigned count = gGame.GetState().GetItems(items);
 	for(unsigned i=0; i<count; ++i) {
 	 	const int x = i % 4;
 	 	const int y = i >> 2;
@@ -147,7 +147,7 @@ Side InventoryView::UpdateAccum() {
 }
 
 bool InventoryView::UpdateTouch() {
-	bool touch = Parent()->GetCube().isTouching();
+	bool touch = Parent().GetID().isTouching();
 	if (touch != mTouch) {
 		mTouch = touch;
 		return mTouch;

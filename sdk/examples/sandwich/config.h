@@ -1,7 +1,7 @@
 #pragma once
 
 #define CUBE_ID_BASE				0
-#define NUM_CUBES					3
+#define NUM_CUBES					5
 #define MUSIC_ON      				0
 #define SFX_ON        				0
 #define GFX_ARTIFACT_WORKAROUNDS	1

@@ -23,17 +23,20 @@ void Viewport::Init() {
 	mFlags.view = VIEW_IDLE;
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
+	mFlags.hasOverlay = 0;
 	RestoreCanonicalVram();
 	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
 }
 
 void Viewport::RestoreCanonicalVram() {
-	//System::finish();
 	if (mCanvas.mode() == BG0_SPR_BG1) {
 	  	mCanvas.bg0.setPanning(vec(0,0));
 		for(unsigned i=0; i<8; ++i) { mCanvas.sprites[i].hide(); }
-		mCanvas.bg1.eraseMask(false);
+		if (mFlags.hasOverlay) {
+			mCanvas.bg1.erase(); 
+			mFlags.hasOverlay = 0;
+		}
 	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
@@ -114,7 +117,7 @@ void Viewport::Restore() {
 }
 
 void Viewport::UpdateTouch() {
-	mFlags.currTouch = GetCube().isTouching();
+	mFlags.currTouch = GetID().isTouching();
 }
 
 void Viewport::Update() {
@@ -147,7 +150,7 @@ bool Viewport::ShowLocation(Int2 loc, bool force) {
 	}
 
 	// possibilities: show room, show edge, show corner
-	const MapData& map = *gGame.GetMap()->Data();
+	auto& map = gGame.GetMap().Data();
 	Side side = NO_SIDE;
 	if (loc.x < -1) {
 		HideLocation();
@@ -188,7 +191,7 @@ bool Viewport::ShowLocation(Int2 loc, bool force) {
 		HideLocation();
 		return false;
 	}
-	return SetLocationView(gGame.GetMap()->GetRoomId(loc), side, force);
+	return SetLocationView(gGame.GetMap().GetRoomId(loc), side, force);
 }
 
 Viewport* Viewport::FindIdleView() {
@@ -207,7 +210,7 @@ bool Viewport::HideLocation() {
 	if (ShowingLocation()) {
 		//if (gGame.ShowingMinimap() && !pMinimap) {
 		//	SetSecondaryView(VIEW_MINIMAP);
-		//} else if (gGame.GetState()->HasAnyItems() && !pInventory) {
+		//} else if (gGame.GetState().HasAnyItems() && !pInventory) {
 		//	SetSecondaryView(VIEW_INVENTORY);
 		//} else {
 			SetSecondaryView(VIEW_IDLE);
@@ -219,12 +222,12 @@ bool Viewport::HideLocation() {
 
 void Viewport::RefreshInventory() {
   if (mFlags.view == VIEW_INVENTORY) {
-  	if (!gGame.GetState()->HasAnyItems()) {
+  	if (!gGame.GetState().HasAnyItems()) {
   		SetSecondaryView(VIEW_IDLE);
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
-  } else if (mFlags.view == VIEW_IDLE && gGame.GetState()->HasAnyItems() && !pInventory) { 
+  } else if (mFlags.view == VIEW_IDLE && gGame.GetState().HasAnyItems() && !pInventory) { 
 	SetSecondaryView(VIEW_INVENTORY);
   }
 }

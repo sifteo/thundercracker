@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "MapHelpers.h"
 
-#define mCanvas         (Parent()->Canvas())  
+#define mCanvas         (Parent().Canvas())  
 
 void EdgeView::Init(int roomId, enum Side side) {
 	CORO_RESET;
@@ -16,10 +16,10 @@ void EdgeView::Init(int roomId, enum Side side) {
 		vec(1,0), vec(0,1), vec(1,0), vec(0,1)
 	};
 	Side gateSide = NO_SIDE;
-	Room* pRoom = gGame.GetMap()->GetRoom(roomId);
-	if (pRoom->HasGateway()) {
+	Room& room = gGame.GetMap().GetRoom(roomId);
+	if (room.HasGateway()) {
 		// compute which "side" of the room the gateway is on
-		mGateway = pRoom->Gateway();
+		mGateway = &room.Gateway();
 		gateSide = ComputeGateSide(mGateway);
 		if (gateSide == mSide) {
 			// render gateway special

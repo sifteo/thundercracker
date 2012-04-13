@@ -7,8 +7,8 @@ void Bomb::Initialize(const ItemData* babomb) {
 	mCountdown = 0;
 }
 
-Room* Bomb::RespawnRoom() const {
-	return gGame.GetMap()->GetRoom(pItem->trigger.room);
+Room& Bomb::RespawnRoom() const {
+	return gGame.GetMap().GetRoom(pItem->trigger.room);
 }
 
 void Bomb::OnPickup() {
