@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG0ROM_H
-#define _SIFTEO_VIDEO_BG0ROM_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -125,6 +123,14 @@ struct BG0ROMDrawable {
     }
 
     /**
+     * Calculate the video buffer address of a particular tile.
+     * All coordinates must be in range. This function performs no clipping.
+     */
+    uint16_t tileAddr(UInt2 pos) {
+        return pos.x + pos.y * tileWidth();
+    }
+
+    /**
      * Erase mode-specific VRAM, filling the BG0 buffer with the specified
      * value and resetting the panning registers.
      */
@@ -147,6 +153,15 @@ struct BG0ROMDrawable {
     }
 
     /**
+     * Retrieve the last value set by setPanning(), modulo the layer size
+     * in pixels.
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>(word & 0xFF, word >> 8);
+    }
+
+    /**
      * Calculate the tile index of one character in the ROM font.
      */
     static uint16_t charTile(char c, enum Palette palette = BLACK) {
@@ -160,8 +175,7 @@ struct BG0ROMDrawable {
      */
     void plot(UInt2 pos, uint16_t tileIndex) {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight());
-        _SYS_vbuf_poke(&sys.vbuf, pos.x + pos.y * tileWidth(),
-            _SYS_TILE77(tileIndex));
+        _SYS_vbuf_poke(&sys.vbuf, tileAddr(pos), _SYS_TILE77(tileIndex));
     }
 
     /**
@@ -174,8 +188,7 @@ struct BG0ROMDrawable {
     {
         ASSERT(pos.x <= tileWidth() && width <= tileWidth() &&
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
-        _SYS_vbuf_fill(&sys.vbuf, pos.x + pos.y * tileWidth(),
-            _SYS_TILE77(tileIndex), width);
+        _SYS_vbuf_fill(&sys.vbuf, tileAddr(pos), _SYS_TILE77(tileIndex), width);
     }
 
     /**
@@ -204,7 +217,7 @@ struct BG0ROMDrawable {
     void hBargraph(Int2 topLeft, unsigned pixelWidth,
         enum Palette palette = BLACK, unsigned tileHeight = 1)
     {
-        unsigned addr = topLeft.x + topLeft.y * tileWidth();
+        unsigned addr = tileAddr(topLeft);
         int wTiles = pixelWidth / 8;
         int wRemainder = pixelWidth % 8;
 
@@ -225,7 +238,7 @@ struct BG0ROMDrawable {
      */
     void text(Int2 topLeft, const char *str, enum Palette palette = BLACK)
     {
-        unsigned addr = topLeft.x + topLeft.y * tileWidth();
+        unsigned addr = tileAddr(topLeft);
         unsigned lineAddr = addr;
         char c;
 
@@ -256,4 +269,3 @@ struct BG0ROMDrawable {
 
 };  // namespace Sifteo
 
-#endif

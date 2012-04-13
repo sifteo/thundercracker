@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_H
-#define _SIFTEO_VIDEO_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -21,6 +19,7 @@
 #include <sifteo/video/bg0.h>
 #include <sifteo/video/bg1.h>
 #include <sifteo/video/bg2.h>
+#include <sifteo/video/tilebuffer.h>
 
 namespace Sifteo {
 
@@ -336,10 +335,10 @@ struct VideoBuffer {
      */
     static Neighborhood physicalToVirtual(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
         return result;
     }
 
@@ -354,10 +353,10 @@ struct VideoBuffer {
      */
     static Neighborhood virtualToPhysical(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
         return result;
     }
 
@@ -595,5 +594,3 @@ struct VideoBuffer {
 
 
 };  // namespace Sifteo
-
-#endif

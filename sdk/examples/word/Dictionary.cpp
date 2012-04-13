@@ -6,108 +6,149 @@
 #include "EventData.h"
 #include "WordGame.h"
 #include "DictionaryData.h"
+#include "SavedData.h"
 
 WordID Dictionary::sPossibleWordIDs[MAX_WORDS_PER_PUZZLE];
 bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
 unsigned Dictionary::sNumPossibleWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-unsigned Dictionary::sPuzzleIndex = 0;
+int Dictionary::sPuzzleIndex = -1; // start at -1, or invalid
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 
 Dictionary::Dictionary()
 {
+    STATIC_ASSERT(NUM_PUZZLE_BYTES * 8 >= NUM_PUZZLES);
 }
 
-bool Dictionary::pickWord(char* buffer,
-                          unsigned& numAnagrams,
-                          unsigned& numBonusAnagrams,
-                          bool& leadingSpaces)
+bool Dictionary::getNextPuzzle(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube)
 {
     ASSERT(buffer);
-    if (true || GameStateMachine::getCurrentMaxLettersPerCube() > 1)
+    sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
+    if (!getPuzzle(sPuzzleIndex,
+                   buffer,
+                   numAnagrams,
+                   leadingSpaces,
+                   maxLettersPerCube))
     {
-        _SYS_strlcpy(buffer, puzzles[sPuzzleIndex], MAX_LETTERS_PER_WORD + 1);
-
-        // TODO make data-driven
-        numAnagrams = MAX(1, puzzlesNumGoalAnagrams[sPuzzleIndex]);
-        sNumPossibleWords = puzzlesNumPossibleAnagrams[sPuzzleIndex];
-        for (unsigned i = 0; i < sNumPossibleWords; ++i)
-        {
-            sPossibleWordIDs[i] = puzzlesPossibleWordIndexes[sPuzzleIndex][i];
-            sPossibleWordFound[i] = false;
-        }
-        leadingSpaces = puzzlesUseLeadingSpaces[sPuzzleIndex];
-        sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
-        return true;
+        return false;
     }
 
-    if (PrototypeWordList::pickWord(buffer))
+    sNumPossibleWords = puzzlesNumPossibleAnagrams[sPuzzleIndex];
+    for (unsigned i = 0; i < sNumPossibleWords; ++i)
     {
-        DEBUG_LOG(("picked word %s\n", buffer));
+        sPossibleWordIDs[i] = puzzlesPossibleWordIndexes[sPuzzleIndex][i];
+        sPossibleWordFound[i] = false;
+    }
+
+    return true;
+
+    /* TODO move to another function if (PrototypeWordList::getNextPuzzle(buffer))
+    {
+        LOG("picked word %s\n", buffer);
         return true;
     }
     return false;
+    */
 }
 
-unsigned Dictionary::getPuzzleIndex()
+bool Dictionary::getPuzzle(int index,
+                           char* buffer,
+                           unsigned char& numAnagrams,
+                           unsigned char& leadingSpaces,
+                           unsigned char& maxLettersPerCube)
+{
+    ASSERT(buffer);
+    ASSERT(index >= 0);
+    ASSERT(index < (int)arraysize(puzzles));
+    _SYS_strlcpy(buffer, puzzles[index], MAX_LETTERS_PER_WORD + 1);
+
+    numAnagrams = MAX(1, puzzlesNumGoalAnagrams[index]);
+    // TODO how many leading spaces?
+    leadingSpaces = puzzlesNumLeadingSpaces[index];
+
+    // TODO data-driven
+    maxLettersPerCube =
+            (_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) > 6) ? 3 : 2;
+
+    // update for next pick
+    return true;
+}
+
+int Dictionary::getPuzzleIndex()
 {
     // TODO data-driven
     return sPuzzleIndex;
+}
+
+bool Dictionary::shouldScrambleCurrentWord()
+{
+    return sPuzzleIndex < 0 || sPuzzleIndex >= (int)arraysize(puzzlesScramble) ?
+                true : puzzlesScramble[sPuzzleIndex];
 }
 
 bool Dictionary::findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,
                                             char wordPieces[][MAX_LETTERS_PER_CUBE])
 {
+    unsigned maxLengthSolution = 0;
+    char maxLengthWord[MAX_LETTERS_PER_WORD + 1];
     for (unsigned i = 0; i < sNumPossibleWords; ++i)
     {
         if (!sPossibleWordFound[i])
         {
-            char word[MAX_LETTERS_PER_WORD + 1];
             WordID wid = sPossibleWordIDs[i];
             ASSERT(wid >=0);
+            char word[MAX_LETTERS_PER_WORD + 1];
             if (getWordFromID(wid, word))
             {
-                return getSolutionPieces(word, maxPieces, maxLettersPerPiece, wordPieces);
+                unsigned len = _SYS_strnlen(word, sizeof word);
+                if (len > maxLengthSolution)
+                {
+                    maxLengthSolution = len;
+                    _SYS_strlcpy(maxLengthWord, word, sizeof maxLengthWord);
+                }
+            }
+            else
+            {
+                ASSERT(0); // bad word ID
             }
         }
     }
-    return false;
+
+    ASSERT(maxLengthSolution > 0);
+    return getSolutionPieces(maxLengthWord, maxPieces, maxLettersPerPiece, wordPieces);
 }
 
 bool Dictionary::getCurrentPieces(unsigned maxPieces,
                                   unsigned maxLettersPerPiece,
                                   char puzzlePieces[][MAX_LETTERS_PER_CUBE])
 {
+    if (sPuzzleIndex < 0)
+    {
+        return false;
+    }
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
 
-    unsigned puzzleIndex = sPuzzleIndex ? sPuzzleIndex-1 : 0;
-    const char *word = puzzles[puzzleIndex];
+    const char *word = puzzles[sPuzzleIndex];
     unsigned wordLen = _SYS_strnlen(word, MAX_LETTERS_PER_WORD + 1);
     ASSERT(GameStateMachine::getCurrentMaxLettersPerWord() >= wordLen);
     unsigned numBlanks =
             GameStateMachine::getCurrentMaxLettersPerWord() - wordLen;
-    unsigned leadingBlanks = 0;
+    unsigned leadingBlanks = puzzlesNumLeadingSpaces[sPuzzleIndex];
     if (numBlanks == 0)
     {
         _SYS_strlcpy(spacesAdded, word, sizeof spacesAdded);
     }
     else
     {
-        if (puzzlesUseLeadingSpaces[puzzleIndex])
-        {
-            leadingBlanks = numBlanks;
-        }
-        else
-        {
-            leadingBlanks = 0;
-        }
-
         unsigned i;
         for (i = 0;
              i < GameStateMachine::getCurrentMaxLettersPerWord();
@@ -157,7 +198,7 @@ bool Dictionary::getSolutionPieces(const char *word,
         {
             for (unsigned j=0; j < maxLettersPerPiece; ++j)
             {
-                wordPieces[i][j] = ' ';
+                wordPieces[i][j] = '\0';
             }
         }
     }
@@ -315,11 +356,67 @@ bool Dictionary::trim(const char* word, char* buffer)
     return (firstLetter < wordLen && lastLetter >= 0 && lastLetter >= firstLetter);
 }
 
+unsigned char Dictionary::getPuzzleMetaLetterIndex(int puzzleIndex)
+{
+    return puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
+                0 : puzzlesMetaLetterIndex[puzzleIndex];
+}
+
+unsigned char Dictionary::getCurrentPuzzleMetaLetterIndex()
+{
+    return getPuzzleMetaLetterIndex(sPuzzleIndex);
+}
+
+
+bool Dictionary::isMetaPuzzle(int index)
+{
+    return getPuzzleMetaLetterIndex(index) == 255;
+}
+
+bool Dictionary::currentIsMetaPuzzle()
+{
+    return isMetaPuzzle(sPuzzleIndex);
+}
+
+bool Dictionary::currentStartsNewMetaPuzzle()
+{
+    // TODO
+    return sPuzzleIndex == 0 || isMetaPuzzle(sPuzzleIndex - 1);
+}
+
+bool Dictionary::getMetaPuzzle(char *buffer,
+                               unsigned char &leadingSpaces,
+                               unsigned char &maxLettersPerCube)
+{
+    for (int m = sPuzzleIndex; m < (int)NUM_PUZZLES; ++m)
+    {
+        if (isMetaPuzzle(m))
+        {
+            unsigned char numAnagrams;
+            return getPuzzle(m, buffer, numAnagrams, leadingSpaces, maxLettersPerCube);
+        }
+    }
+    return false;
+}
+
+char Dictionary::getMetaLetter()
+{
+    unsigned char i = getCurrentPuzzleMetaLetterIndex();
+    char word[MAX_LETTERS_PER_WORD + 1];
+    unsigned char a, b, c;
+    if (getPuzzle(sPuzzleIndex, word, a, b, c))
+    {
+        return word[i];
+    }
+    ASSERT(0);
+    return ' ';
+}
+
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_NewAnagram:
+    case EventID_NewPuzzle:
         for (unsigned i = 0; i < arraysize(sPossibleWordIDs); ++i)
         {
             // TODO get all the possible words

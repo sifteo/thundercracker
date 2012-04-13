@@ -2,10 +2,10 @@
 
 #define SPRITE_DOT_ID	0
 
+#define mCanvas         (Parent()->Canvas())  
+#define mDotSprite		(Parent()->Canvas().sprites[0])
+
 void MinimapView::Init() {
-	Parent()->HideSprites();
-	BG1Helper(*Parent()->GetCube()).Flush();
-	ViewMode g = Parent()->Graphics();
 	Map *pMap = gGame.GetMap();
 	const MapData* pData = pMap->Data();
 	unsigned padLeft = (16 - pData->width) >> 1;
@@ -16,7 +16,7 @@ void MinimapView::Init() {
 	// fill in the top
 	for(unsigned row=0; row<padTop; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(vec(col, row), BlackTile);
+			mCanvas.bg0.image(vec(col, row), BlackTile);
 		}
 	}
 
@@ -25,37 +25,35 @@ void MinimapView::Init() {
 		unsigned y = row + padTop;
 		// fill in the left
 		for(unsigned col=0; col<padLeft; ++col) {
-			g.BG0_drawAsset(vec(col, y), BlackTile);
+			mCanvas.bg0.image(vec(col, y), BlackTile);
 		}
 		// fill in the map data
 		for(unsigned col=0; col<pData->width; ++col) {
 			unsigned x = col + padLeft;
-			g.BG0_drawAsset(vec(x,y), MinimapBasic, ComputeTileId(col, row));
+			mCanvas.bg0.image(vec(x,y), MinimapBasic, ComputeTileId(col, row));
 		}
 
 		// fill in the right
 		for (unsigned col=padLeft+pData->width; col<18; ++col) {
-			g.BG0_drawAsset(vec(col, y), BlackTile);
+			mCanvas.bg0.image(vec(col, y), BlackTile);
 		}
 	}
 
 	// fill in the bottom
 	for(unsigned row=padTop+pData->height; row<18; ++row) {
 		for(unsigned col=0; col<18; ++col) {
-			g.BG0_drawAsset(vec(col, row), BlackTile);
+			mCanvas.bg0.image(vec(col, row), BlackTile);
 		}
 	}
 
 	Int2 pan = vec(-((pData->width%2)<<2), -((pData->height%2)<<2));
-	g.BG0_setPanning(pan);
+	mCanvas.bg0.setPanning(pan);
 
 	mCanvasOffset.x = 8 * padLeft - pan.x - 4;
 	mCanvasOffset.x = 8 * padTop - pan.y - 4;
 
-	g.resizeSprite(SPRITE_DOT_ID, 8, 8);
-	g.setSpriteImage(SPRITE_DOT_ID, MinimapDot);
-	g.moveSprite(
-		SPRITE_DOT_ID, 
+	mDotSprite.setImage(MinimapDot);
+	mDotSprite.move(
 		(gGame.GetPlayer()->Position()<<3) / 128 + mCanvasOffset.toInt()
 	);
 }
@@ -64,9 +62,8 @@ void MinimapView::Restore() {
 	Init();
 }
 
-void MinimapView::Update(float dt) {
-	Parent()->Graphics().moveSprite(
-		SPRITE_DOT_ID, 
+void MinimapView::Update() {
+	mDotSprite.move(
 		(gGame.GetPlayer()->Position()<<3) / 128 + mCanvasOffset.toInt()
 	);
 }

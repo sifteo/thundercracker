@@ -20,12 +20,35 @@
 #ifndef _SIFTEO_ABI_H
 #define _SIFTEO_ABI_H
 
-#include <stdint.h>
+#ifdef NOT_USERSPACE
+#   include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #else
 typedef uint8_t bool;
+#endif
+
+/*
+ * Standard integer types. This is a subset of what's in stdint.h,
+ * but we define them ourselves since system headers are not available.
+ *
+ * If we're doing a non-userspace build, however, these are pulled in
+ * from stdint.h above.
+ */
+
+#ifndef NOT_USERSPACE
+    typedef signed char int8_t;
+    typedef unsigned char uint8_t;
+    typedef signed short int16_t;
+    typedef unsigned short uint16_t;
+    typedef signed int int32_t;
+    typedef unsigned int uint32_t;
+    typedef signed long long int64_t;
+    typedef unsigned long long uint64_t;
+    typedef signed long intptr_t;
+    typedef unsigned long uintptr_t;
 #endif
 
 /**
@@ -48,9 +71,13 @@ typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset 
  * or return values, declared using C linkage.
  */
 
-#ifdef __clang__   // Workaround for gcc's complaints about main() not returning int
+#ifndef NOT_USERSPACE
 void main(void);
 #endif
+
+/**
+ * Asset loading
+ */
 
 #define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
 
@@ -96,7 +123,7 @@ enum _SYSAssetImageFormat {
 };
 
 struct _SYSAssetImage {
-    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM
+    uint32_t pAssetGroup;       /// Address for _SYSAssetGroup in RAM, 0 for pre-relocated
     uint16_t width;             /// Width of the asset image, in tiles
     uint16_t height;            /// Height of the asset image, in tiles
     uint16_t frames;            /// Number of "frames" in this image
@@ -360,9 +387,8 @@ struct _SYSAttachedVideoBuffer {
  * Audio handles
  */
 
-#define _SYS_AUDIO_INVALID_HANDLE   ((uint32_t)-1)
-
-typedef uint32_t _SYSAudioHandle;
+typedef uint8_t _SYSAudioChannelID;     /// Audio channel slot index
+#define _SYS_AUDIO_INVALID_CHANNEL_ID   ((_SYSAudioChannelID)-1)
 
 // NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
 // but must also accommodate a full frame's worth of speex data. If we go narrowband,
@@ -386,7 +412,6 @@ enum _SYSAudioLoopType {
     _SYS_LOOP_UNDEF     = -1,
     _SYS_LOOP_ONCE      = 0,
     _SYS_LOOP_REPEAT    = 1,
-    _SYS_LOOP_PING_PONG = 2
 };
 
 struct _SYSAudioModule {
@@ -611,16 +636,8 @@ struct _SYSMetadataImage {
  *
  * These functions are replaced during link-time optimization.
  *
- * Logging supports many standard printf() format specifiers:
- *
- *   - Literal characters, and %%
- *   - Standard integer specifiers: %d, %i, %o, %u, %X, %x, %p, %c
- *   - Standard float specifiers: %f, %F, %e, %E, %g, %G
- *   - Four chars packed into a 32-bit integer: %C
- *   - Binary integers: %b
- *   - C-style strings: %s
- *   - Hex-dump of fixed width buffers: %<width>h
- *   - Pointer, printed as a resolved symbol when possible: %P
+ * Logging supports many standard printf() format specifiers,
+ * as documented in sifteo/macros.h
  *
  * To work around limitations in C variadic functions, _SYS_lti_metadata()
  * supports a format string which specifies what data type each argument
@@ -694,7 +711,7 @@ bool _SYS_lti_isConstant(unsigned value);
  * 32 or 64 bits wide.
  */
 
-#if defined(FW_BUILD) || !defined(__clang__)
+#ifdef NOT_USERSPACE
 #  define _SC(n)
 #  define _NORET
 #else
@@ -807,8 +824,6 @@ void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
-void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
-
 uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(117);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(33);
 uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(61);
@@ -818,6 +833,25 @@ uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(51);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(120);
 
+// Audio
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(50);
+uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch) _SC(127);
+void _SYS_audio_stop(_SYSAudioChannelID ch) _SC(52);
+void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
+void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
+int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
+void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
+uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
+
+// Asset group/slot management
+uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
+void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
+uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
+void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
+uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
+
+// Video buffers
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(55);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(121);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(122);
@@ -833,29 +867,18 @@ void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(19);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(35);
 
-uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(50);
-uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(127);
-void _SYS_audio_stop(_SYSAudioHandle h) _SC(52);
-void _SYS_audio_pause(_SYSAudioHandle h) _SC(128);
-void _SYS_audio_resume(_SYSAudioHandle h) _SC(129);
-int32_t _SYS_audio_volume(_SYSAudioHandle h) _SC(130);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume) _SC(131);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(132);
-
-uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
-void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
-uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
-void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
-uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
-
+// Asset images
 void _SYS_image_memDraw(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
 void _SYS_image_memDrawRect(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
 void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
 void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
 void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
 void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(142);
+void _SYS_image_BG1MaskedDraw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t key, unsigned frame) _SC(146);
+void _SYS_image_BG1MaskedDrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t key, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(147);
 void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
 void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
+
 
 #ifdef __cplusplus
 }  // extern "C"

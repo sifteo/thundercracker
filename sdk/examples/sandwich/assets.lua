@@ -18,7 +18,7 @@ Items = image{"items.png", width=16, height=16, pinned=true}
 InventoryReticle = image{"inventory_reticle.png", width=32, height=32}
 
 WhiteTile = image{"flash.png"}
-BlackTile = image{"black.png"}
+BlackTile = image{"black.png", pinned=true}
 DialogBox = image{"dialog_box.png"}
 
 InventoryBackground = image{"inventory_background.png"}
@@ -26,6 +26,11 @@ MinimapBasic = image{"minimap_basic.png", width=8, height=8}
 MinimapDot = image{"minimap_dot.png", width=8, height=8, pinned=true}
 Edge = image{ "edge.png" }
 IconPress = image{ "icon_press.png" }
+
+FrameLeft = image{ "frame_left.png" }
+FrameRight = image{ "frame_right.png" }
+FrameBottom = image{ "frame_bottom.png" }
+FrameTop = image{ "frame_top.png" }
 
 dofile "content.gen.lua"
 

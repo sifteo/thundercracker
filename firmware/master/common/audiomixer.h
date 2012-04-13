@@ -21,25 +21,31 @@ public:
 
     static void test();
 
-    bool play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle,
+    bool play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch,
         _SYSAudioLoopType loopMode = _SYS_LOOP_ONCE);
-    bool isPlaying(_SYSAudioHandle handle);
-    void stop(_SYSAudioHandle handle);
+    bool isPlaying(_SYSAudioChannelID ch);
+    void stop(_SYSAudioChannelID ch);
 
-    void pause(_SYSAudioHandle handle);
-    void resume(_SYSAudioHandle handle);
+    void pause(_SYSAudioChannelID ch);
+    void resume(_SYSAudioChannelID ch);
 
-    void setVolume(_SYSAudioHandle handle, uint16_t volume);
-    int volume(_SYSAudioHandle handle);
+    void setVolume(_SYSAudioChannelID ch, uint16_t volume);
+    int volume(_SYSAudioChannelID ch);
 
-    uint32_t pos(_SYSAudioHandle handle);
+    uint32_t pos(_SYSAudioChannelID ch);
 
-    bool active() const { return playingChannelMask != 0; }
+    bool active() const {
+        return playingChannelMask != 0;
+    }
 
     static void pullAudio(void *p);
 
-    void setSampleRate(uint32_t samplerate) { curSampleRate = samplerate; };
-    uint32_t sampleRate() { return curSampleRate; }
+    void setSampleRate(uint32_t samplerate) {
+        curSampleRate = samplerate;
+    }
+    uint32_t sampleRate() {
+        return curSampleRate;
+    }
 
 protected:
     friend class XmTrackerPlayer; // can call setTrackerCallbackInterval()
@@ -47,7 +53,6 @@ protected:
 
 private:
     uint32_t playingChannelMask;    // channels that are actively playing
-    _SYSAudioHandle nextHandle;
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t curSampleRate;
 
@@ -56,7 +61,6 @@ private:
     uint32_t trackerCallbackCountdown;
 
     int mixAudio(int16_t *buffer, uint32_t numsamples);
-    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask = 0);
 };
 
 #endif /* AUDIOMIXER_H_ */

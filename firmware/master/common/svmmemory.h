@@ -186,17 +186,18 @@ public:
 
     /**
      * Convenience functions to read a single value from RAM or Flash.
-     * On error, returns a default value.
+     * Returns NULL on failure.
      */
     template <typename T>
-    static inline T peek(FlashBlockRef &ref, VirtAddr va, T defaultValue=0) {
+    static inline T* peek(FlashBlockRef &ref, VirtAddr va)
+    {
         uint32_t length = sizeof(T);
         PhysAddr pa;
         
         if (mapROData(ref, va, length, pa) && length == sizeof(T))
-            return *reinterpret_cast<T*>(pa);
+            return reinterpret_cast<T*>(pa);
         else
-            return defaultValue;
+            return NULL;
     }
 
     /**

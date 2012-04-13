@@ -19,7 +19,7 @@ void main()
 {
     const CubeID cube(0);
     static VideoBuffer vid;
-    static AudioChannel channel;
+    static AudioChannel channel(0);
 
     channel.play(Nyan, channel.REPEAT);
 

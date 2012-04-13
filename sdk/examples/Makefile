@@ -1,10 +1,12 @@
 SUBDIRS = \
+	drawtest \
 	hello \
 	membrane \
 	menudemo \
 	monster \
 	nyan \
 	pantera \
+	sandwich \
 	sensors \
 	sprites \
 	stars \

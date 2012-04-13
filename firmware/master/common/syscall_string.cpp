@@ -12,6 +12,7 @@
 
 #include <sifteo/abi.h>
 #include "svmmemory.h"
+#include "svmruntime.h"
 
 extern "C" {
 
@@ -32,8 +33,9 @@ void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) MEMSET_BODY()
 void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count)
 {
     FlashBlockRef ref;
-    if (SvmMemory::mapRAM(dest, count))
-        SvmMemory::copyROData(ref, dest, reinterpret_cast<SvmMemory::VirtAddr>(src), count);
+    if (!SvmMemory::mapRAM(dest, count) ||
+        !SvmMemory::copyROData(ref, dest, reinterpret_cast<SvmMemory::VirtAddr>(src), count))
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
 }
 
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count)
@@ -63,10 +65,14 @@ int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
         uint32_t chunkA = count;
         uint32_t chunkB = count;
 
-        if (!SvmMemory::mapROData(refA, vaA, chunkA, paA))
+        if (!SvmMemory::mapROData(refA, vaA, chunkA, paA)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             break;
-        if (!SvmMemory::mapROData(refB, vaB, chunkB, paB))
+        }
+        if (!SvmMemory::mapROData(refB, vaB, chunkB, paB)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             break;
+        }
 
         uint32_t chunk = MIN(chunkA, chunkB);
         vaA += chunk;
@@ -94,8 +100,10 @@ uint32_t _SYS_strnlen(const char *str, uint32_t maxLen)
 
     while (len < maxLen) {
         uint32_t chunk = maxLen - len;
-        if (!SvmMemory::mapROData(ref, va, chunk, pa))
+        if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             break;
+        }
 
         va += chunk;        
         while (chunk) {
@@ -117,15 +125,26 @@ void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
      * We check the src pointer as we go, since the size is not known ahead of time.
      */
      
-    if (destSize == 0 || !SvmMemory::mapRAM(dest, destSize))
+    if (destSize == 0)
         return;
+    
+    if (!SvmMemory::mapRAM(dest, destSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
 
     FlashBlockRef ref;
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     char *last = dest + destSize - 1;
 
     while (dest < last) {
-        char c = SvmMemory::peek<uint8_t>(ref, srcVA);
+        uint8_t *p = SvmMemory::peek<uint8_t>(ref, srcVA);
+        if (!p) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            break;
+        }
+
+        char c = *p;
         if (c) {
             *(dest++) = c;
             srcVA++;
@@ -140,8 +159,13 @@ void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
 
 void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
 {
-    if (destSize == 0 || !SvmMemory::mapRAM(dest, destSize))
+    if (destSize == 0)
         return;
+    
+    if (!SvmMemory::mapRAM(dest, destSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
 
     FlashBlockRef ref;
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
@@ -153,7 +177,13 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
 
     // Append all the bytes we can
     while (dest < last) {
-        char c = SvmMemory::peek<uint8_t>(ref, srcVA);
+        uint8_t *p = SvmMemory::peek<uint8_t>(ref, srcVA);
+        if (!p) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            break;
+        }
+
+        char c = *p;
         if (c) {
             *(dest++) = c;
             srcVA++;
@@ -173,8 +203,13 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
      * (or sniprintf on embedded builds) but doesn't necessarily need to.
      */
 
-    if (destSize == 0 || !SvmMemory::mapRAM(dest, destSize))
+    if (destSize == 0)
         return;
+    
+    if (!SvmMemory::mapRAM(dest, destSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
 
     char *last = dest + destSize - 1;
 
@@ -191,8 +226,13 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
 
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
 {
-    if (destSize == 0 || !SvmMemory::mapRAM(dest, destSize))
+    if (destSize == 0)
         return;
+    
+    if (!SvmMemory::mapRAM(dest, destSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
 
     char *last = dest + destSize - 1;
 
@@ -209,8 +249,13 @@ void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, ui
 
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
 {
-    if (destSize == 0 || !SvmMemory::mapRAM(dest, destSize))
+    if (destSize == 0)
         return;
+    
+    if (!SvmMemory::mapRAM(dest, destSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
 
     char *last = dest + destSize - 1;
 
@@ -236,10 +281,14 @@ int32_t _SYS_strncmp(const char *a, const char *b, uint32_t count)
         uint32_t chunkA = count;
         uint32_t chunkB = count;
 
-        if (!SvmMemory::mapROData(refA, vaA, chunkA, paA))
+        if (!SvmMemory::mapROData(refA, vaA, chunkA, paA)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             break;
-        if (!SvmMemory::mapROData(refB, vaB, chunkB, paB))
+        }
+        if (!SvmMemory::mapROData(refB, vaB, chunkB, paB)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             break;
+        }
 
         uint32_t chunk = MIN(chunkA, chunkB);
         vaA += chunk;

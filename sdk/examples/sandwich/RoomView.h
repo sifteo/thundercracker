@@ -26,9 +26,9 @@ private:
   uint8_t mStartFrame;
   struct {
     uint8_t hideOverlay : 1;
+    uint8_t locked : 1; // technically we don't need this flag -- gGame has a mask now
     uint8_t wobbleType : 3;
     uint8_t animTileCount : 3;
-    uint8_t unused : 1;
   } flags;
   struct AnimTile {
     uint8_t lid;
@@ -49,10 +49,15 @@ public:
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
 
+
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update(float dt);
+  void Update();
+
+  bool Locked() const { return flags.locked; }
+  void Lock();
+  void Unlock();
 
   void HideOverlay(bool flag);
   
@@ -77,12 +82,14 @@ public:
 
   void StartNod();
   void StartShake();
-  void StartSlide(Cube::Side side);
+  void StartSlide(Side side);
+
+  void ShowFrame();
 
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
-
+  void HideOverlay();
 };

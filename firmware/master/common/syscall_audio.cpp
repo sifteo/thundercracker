@@ -10,51 +10,54 @@
 #include <sifteo/abi.h>
 #include "audiomixer.h"
 #include "svmmemory.h"
+#include "svmruntime.h"
 
 extern "C" {
 
-uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop)
 {
     _SYSAudioModule modCopy;
-    if (SvmMemory::copyROData(modCopy, mod) && SvmMemory::mapRAM(h, sizeof(*h))) {
-        return AudioMixer::instance.play(&modCopy, h, loop);
+    if (SvmMemory::copyROData(modCopy, mod)) {
+        return AudioMixer::instance.play(&modCopy, ch, loop);
     }
+
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
     return false;
 }
 
-uint32_t _SYS_audio_isPlaying(_SYSAudioHandle h)
+uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch)
 {
-    return AudioMixer::instance.isPlaying(h);
+    return AudioMixer::instance.isPlaying(ch);
 }
 
-void _SYS_audio_stop(_SYSAudioHandle h)
+void _SYS_audio_stop(_SYSAudioChannelID ch)
 {
-    AudioMixer::instance.stop(h);
+    AudioMixer::instance.stop(ch);
 }
 
-void _SYS_audio_pause(_SYSAudioHandle h)
+void _SYS_audio_pause(_SYSAudioChannelID ch)
 {
-    AudioMixer::instance.pause(h);
+    AudioMixer::instance.pause(ch);
 }
 
-void _SYS_audio_resume(_SYSAudioHandle h)
+void _SYS_audio_resume(_SYSAudioChannelID ch)
 {
-    AudioMixer::instance.resume(h);
+    AudioMixer::instance.resume(ch);
 }
 
-int32_t _SYS_audio_volume(_SYSAudioHandle h)
+int32_t _SYS_audio_volume(_SYSAudioChannelID ch)
 {
-    return AudioMixer::instance.volume(h);
+    return AudioMixer::instance.volume(ch);
 }
 
-void _SYS_audio_setVolume(_SYSAudioHandle h, int32_t volume)
+void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume)
 {
-    AudioMixer::instance.setVolume(h, volume);
+    AudioMixer::instance.setVolume(ch, volume);
 }
 
-uint32_t _SYS_audio_pos(_SYSAudioHandle h)
+uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
 {
-    return AudioMixer::instance.pos(h);
+    return AudioMixer::instance.pos(ch);
 }
 
 }  // extern "C"

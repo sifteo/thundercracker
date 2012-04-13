@@ -50,15 +50,22 @@ public:
         STATE_REFILL,
 	} CubeState;
 
+    typedef struct
+    {
+        unsigned int color;
+        bool bCorners;
+        bool bSide1;
+        bool bSide2;
+
+        bool TotallySatisfied() const { return bCorners && bSide1 && bSide2; }
+    } GridTestInfo;
+
 	CubeWrapper();
 
-	void Init( AssetGroup &assets );
+    void Init();
 	void Reset();
-	//draw loading progress.  return true if done
-	bool DrawProgress( AssetGroup &assets );
-	void Draw();
-    void Update(SystemTime t, TimeDelta dt);
-	void vidInit();
+    void Draw() __attribute__ ((noinline));
+    void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
 	void Tilt( int dir );
     static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
@@ -76,18 +83,19 @@ public:
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
 
-	int GetSideNeighboredOn( _SYSCubeID id, Cube &cube );
+    int GetSideNeighboredOn( _SYSCubeID id, CubeID &cube );
 
 	//get the number of dots that are marked or exploding
 	unsigned int getNumMarked() const;
 
 	GridSlot *GetSlot( int row, int col );
-	Cube &GetCube() { return m_cube; }
+    CubeID &GetCube() { return m_cube; }
 
 	//fill in which colors we're using
 	void fillColorMap( bool *pMap ) const;
 	//do we have the given color anywhere?
-	bool hasColor( unsigned int color ) const;
+    //bAllowWilds will count rain/hyper chromits as a color
+    bool hasColor( unsigned int color, bool bAllowWilds ) const;
 
 	//do we have stranded fixed dots?
 	bool hasStrandedFixedDots() const;
@@ -104,10 +112,9 @@ public:
     //bool IsIdle() const;
     inline int getLastTiltDir() const { return m_lastTiltDir; }
     inline Float2 getTiltDir() const { return m_curFluidDir; }
-    inline BG1Helper &getBG1Helper() { return m_bg1helper; }
 
     //if we need to, flush bg1
-    void FlushBG1();
+    void testFlushBG1();
 
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
@@ -119,7 +126,7 @@ public:
     bool HasHyperDot() const;
 
     //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
-    void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
+    void UpdateColorPositions( GridTestInfo &testInfo ) const __attribute__ ((noinline));
 
     //add one piece
     void RespawnOnePiece();
@@ -129,12 +136,23 @@ public:
     void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
+    inline void setNeedFlush() { m_queuedFlush = true; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
     //each cube can have one floating score at a time
     void SpawnScore( unsigned int score, const Int2 &slotpos );
-    VidMode_BG0_SPR_BG1 &GetVid() { return m_vid; }
+    VideoBuffer &GetVid() { return m_vid; }
+    //draw a message box with centered text
+    //bDrawBox - draw the box or not
+    //in_yOffset - optional y offset for text
+    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 ) __attribute__ ((noinline));
+
+    //bg1buffer helpers
+    //clears bg1 to White tile
+    void ClearBG1();
+    //draws bg1
+    void FlushBG1();
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -144,22 +162,18 @@ private:
     static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     //check different parts of the given grid for the given color
-    static void TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 );
+    static void TestGridForColor( GridTestInfo &testInfo, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
     //recursive function to tilt and test grid
-    static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
+    static void TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     bool HasFloatingDots() const;
-    void fillPuzzleCube();
-    //draw a message box with centered text
-    //bDrawBox - draw the box or not
-    //in_yOffset - optional y offset for text
-    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 );
-    void DrawGrid();
+    void fillPuzzleCube();    
+    void DrawGrid() __attribute__ ((noinline));
 
-	Cube m_cube;
-    VidMode_BG0_SPR_BG1 m_vid;
-	VidMode_BG0_ROM m_rom;
-	BG1Helper m_bg1helper;
+    CubeID m_cube;
+    VideoBuffer m_vid;
+    //render bg1 here
+    TileBuffer<16, 16> m_bg1buffer;
 
 	CubeState m_state;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];

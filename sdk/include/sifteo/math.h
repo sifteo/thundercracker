@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MATH_H
-#define _SIFTEO_MATH_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -252,6 +250,20 @@ template <typename T> struct Vector2 {
         switch (angle) {
             default: ASSERT(0);
             case 0: return *this;
+            case 1: return a1;
+            case 2: return a2;
+            case 3: return a3;
+        }
+    }
+
+    static Vector2<T> unit(int side) {
+        Vector2<T> a0 = {  0, -1 };
+        Vector2<T> a1 = { -1,  0 };
+        Vector2<T> a2 = {  0,  1 };
+        Vector2<T> a3 = {  1,  0 };
+        switch(side) {
+            default: ASSERT(0);
+            case 0: return a0;
             case 1: return a1;
             case 2: return a2;
             case 3: return a3;
@@ -782,5 +794,3 @@ struct AffineMatrix {
 
 
 }   // namespace Sifteo
-
-#endif

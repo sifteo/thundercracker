@@ -84,8 +84,8 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState );
-    void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
+    void Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState ) __attribute__ ((noinline));
+    void DrawIntroFrame( VideoBuffer &vid, unsigned int frame );
     void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
     bool isEmpty() const { return m_state == STATE_GONE; }
@@ -141,17 +141,17 @@ private:
     unsigned int GetFixedFrame( unsigned int index );
 
 	SLOT_STATE m_state;
-    MOVE_STATE m_Movestate;
-	unsigned int m_color;
+    MOVE_STATE m_Movestate;	
 	SystemTime m_eventTime;
 	CubeWrapper *m_pWrapper;
-	unsigned int m_row;
-	unsigned int m_col;
+    uint8_t m_color;
+    uint8_t m_row;
+    uint8_t m_col;
 
 	//current position in 16x16 grid for use when moving
 	Int2 m_curMovePos;
 
-	unsigned int m_score;
+    uint8_t  m_score;
 	//fixed dot
 	bool		 m_bFixed;
     //used to tell if this dot was a rainball (for a special animation)
@@ -160,10 +160,10 @@ private:
     bool         m_bWasInfected;
 
     //only fixed dots can have multipliers
-    unsigned int m_multiplier;
+    uint8_t  m_multiplier;
 
-	unsigned int m_animFrame;
-    unsigned int m_RockHealth;
+    uint8_t  m_animFrame;
+    uint8_t  m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
     Int2 m_lastFrameDir;
 };
