@@ -59,7 +59,7 @@ void TestJig::onTestDataReceived(uint8_t *buf, unsigned len)
     uint8_t testId = buf[0];
     if (testId < arraysize(handlers)) {
         TestHandler handler = handlers[testId];
-        handler(buf, len);
+        handler(len, buf);
     }
 }
 
@@ -91,52 +91,52 @@ void TestJig::enableUsbPower()
  * T E S T  H A N D L E R S
  ******************************************/
 
-void TestJig::stmExternalFlashCommsHandler(uint8_t *args, uint8_t len)
+void TestJig::stmExternalFlashCommsHandler(uint8_t argc, uint8_t *args)
+{
+    
+}
+
+void TestJig::stmExternalFlashReadWriteHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::stmExternalFlashReadWriteHandler(uint8_t *args, uint8_t len)
+void TestJig::nrfCommsHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::nrfCommsHandler(uint8_t *args, uint8_t len)
+void TestJig::setFixtureVoltageHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::setFixtureVoltageHandler(uint8_t *args, uint8_t len)
+void TestJig::getFixtureVoltageHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::getFixtureVoltageHandler(uint8_t *args, uint8_t len)
+void TestJig::getFixtureCurrentHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::getFixtureCurrentHandler(uint8_t *args, uint8_t len)
+void TestJig::getStmVsysVoltageHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::getStmVsysVoltageHandler(uint8_t *args, uint8_t len)
+void TestJig::getStmBattVoltageHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::getStmBattVoltageHandler(uint8_t *args, uint8_t len)
+void TestJig::storeStmBattVoltageHandler(uint8_t argc, uint8_t *args)
 {
 
 }
 
-void TestJig::storeStmBattVoltageHandler(uint8_t *args, uint8_t len)
-{
-
-}
-
-void TestJig::enableTestJigNeighborTx(uint8_t *args, uint8_t len)
+void TestJig::enableTestJigNeighborTx(uint8_t argc, uint8_t *args)
 {
 }
 

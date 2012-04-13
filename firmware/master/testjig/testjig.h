@@ -50,19 +50,19 @@ private:
     static void enableUsbPower();
     static void disableUsbPower();
 
-    typedef void(*TestHandler)(uint8_t *args, uint8_t len);
+    typedef void(*TestHandler)(uint8_t argc, uint8_t *args);
     static const TestHandler handlers[];
 
-    static void stmExternalFlashCommsHandler(uint8_t *args, uint8_t len);
-    static void stmExternalFlashReadWriteHandler(uint8_t *args, uint8_t len);
-    static void nrfCommsHandler(uint8_t *args, uint8_t len);
-    static void setFixtureVoltageHandler(uint8_t *args, uint8_t len);
-    static void getFixtureVoltageHandler(uint8_t *args, uint8_t len);
-    static void getFixtureCurrentHandler(uint8_t *args, uint8_t len);
-    static void getStmVsysVoltageHandler(uint8_t *args, uint8_t len);
-    static void getStmBattVoltageHandler(uint8_t *args, uint8_t len);
-    static void storeStmBattVoltageHandler(uint8_t *args, uint8_t len);
-    static void enableTestJigNeighborTx(uint8_t *args, uint8_t len);
+    static void stmExternalFlashCommsHandler(uint8_t argc, uint8_t *args);
+    static void stmExternalFlashReadWriteHandler(uint8_t argc, uint8_t *args);
+    static void nrfCommsHandler(uint8_t argc, uint8_t *args);
+    static void setFixtureVoltageHandler(uint8_t argc, uint8_t *args);
+    static void getFixtureVoltageHandler(uint8_t argc, uint8_t *args);
+    static void getFixtureCurrentHandler(uint8_t argc, uint8_t *args);
+    static void getStmVsysVoltageHandler(uint8_t argc, uint8_t *args);
+    static void getStmBattVoltageHandler(uint8_t argc, uint8_t *args);
+    static void storeStmBattVoltageHandler(uint8_t argc, uint8_t *args);
+    static void enableTestJigNeighborTx(uint8_t argc, uint8_t *args);
 };
 
 #endif // _TEST_JIG_H
