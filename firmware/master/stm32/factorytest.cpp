@@ -87,7 +87,26 @@ void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
 
 void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
 {
+    uint32_t sectorAddr = args[1] * Flash::SECTOR_SIZE;
+    uint32_t addr = sectorAddr + args[2];
 
+    Flash::eraseSector(sectorAddr);
+
+    const uint8_t txbuf[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    Flash::write(addr, txbuf, sizeof txbuf);
+
+    // write/erase only wait before starting the *next* operation, so make sure
+    // this write is complete before reading
+    while (Flash::writeInProgress())
+        ;
+
+    uint8_t rxbuf[sizeof txbuf];
+    Flash::read(addr, rxbuf, sizeof rxbuf);
+
+    uint8_t result = (memcmp(txbuf, rxbuf, sizeof txbuf) == 0) ? 1 : 0;
+
+    const uint8_t response[] = { 3, args[0], result };
+    Usart::Dbg.write(response, sizeof response);
 }
 
 IRQ_HANDLER ISR_USART3()
