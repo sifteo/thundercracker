@@ -61,19 +61,15 @@ void Game::Init()
         loader.start( GameAssets, MySlot, m_cubes[i].GetCube());
     }
 
-	PRINT( "getting ready to load" );
-
     while( !loader.isComplete() )
 	{
-        PRINT( "in load loop" );
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
             vids[i].bg0rom.hBargraph(vec(0,7), loader.progress(i, LCD_width));
 		}
 		System::paint();
 	}
-    PRINT( "done loading" );
-#endif
+ #endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Init();

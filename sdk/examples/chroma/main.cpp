@@ -14,6 +14,11 @@ using namespace Sifteo;
 
 static Game &game = Game::Inst();
 
+static Metadata M = Metadata()
+    .title("Chroma")
+    .icon(White)
+    .cubeRange(NUM_CUBES);
+
 /*
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
