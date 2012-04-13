@@ -66,6 +66,10 @@ void FactoryTest::onUartIsr()
  *
  **************************************************************************/
 
+/*
+ * len: 3
+ * args[1] - radio tx power
+ */
 void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
 {
     Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
@@ -75,6 +79,10 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
     Usart::Dbg.write(response, sizeof response);
 }
 
+/*
+ * len: 2
+ * no args
+ */
 void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
 {
     Flash::JedecID id;
@@ -86,6 +94,11 @@ void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
     Usart::Dbg.write(response, sizeof response);
 }
 
+/*
+ * len: 4
+ * args[1] - sector number
+ * args[2] - offset into sector
+ */
 void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
 {
     uint32_t sectorAddr = args[1] * Flash::SECTOR_SIZE;
