@@ -49,13 +49,12 @@ void EdgeView::Restore() {
 void EdgeView::Update() {
 	if (!mGateway) { return; }
 	CORO_BEGIN;
-	mCanvas.setWindow(80+16,128-80-16);
+	CORO_YIELD; // let the Init'd view have one frame
 	mDialog.Init(&mCanvas);
+	mCanvas.setWindow(80+16,128-80-16);
 	mDialog.Erase();
-	mDialog.Show("Touch to go to"); {
-		const MapData& targetMap = gMapData[mGateway->targetMap];
-		mDialog.Show(targetMap.name);
-	}
+	mDialog.Show("Touch to go to");
+	mDialog.Show(gMapData[mGateway->targetMap].name);
 	//touch?
 	CORO_YIELD;
 	for(t=0; t<16; t++) {

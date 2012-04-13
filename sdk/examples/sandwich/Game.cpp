@@ -226,11 +226,11 @@ void Game::ScrollTo(unsigned roomId) {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(view, pos);
+    view.DrawOffsetMap(pos);
     DoPaint();
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
   view.Canvas().bg0.setPanning(vec(0,0));
-  DrawRoom(view, roomId);
+  view.DrawRoom(roomId);
   DoPaint();
 }
 
@@ -273,16 +273,23 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
     for(auto p = data.lines; p->detail; ++p) {
         if (p == data.lines || (p-1)->detail != p->detail) {
           if (p != data.lines) {
-            DrawRoom(viewport, viewport.GetRoomView().Id());
+            g.initMode(BG0_SPR_BG1);
+            viewport.DrawRoom(viewport.GetRoomView().Id());
             g.bg0.image(vec(0,10), DialogBox);
           }
-          g.bg1.fillMask(vec(1, 0), vec(p->detail->tileWidth(), 10), true);
-          g.bg1.image(vec(1,0), *(p->detail));
-          Paint();
+          g.bg1.fillMask(vec(0, 0), p->detail->tileSize());
+          g.bg1.image(vec(0,0), *(p->detail));
+          if (p == data.lines) {
+            for(int i=0; i<8; ++i) {
+              g.bg1.setPanning(vec(-i, 0));
+              Paint();
+            }
+          } else {
+            Paint();
+          }
           System::finish();
-          
-          g.setWindow(80, 48);
           view.Init(&g);
+          g.setWindow(80, 48);
         }
         view.Erase();
         Paint();
