@@ -109,11 +109,10 @@ class World:
 				src.write("static const DialogTextData %s_lines[] = {\n" % d.id)
 				for l in d.lines:
 					src.write("    { &NPC_Detail_%s, \"%s\" },\n" % (l.image, l.text))
-				src.write("};\n")
+				src.write("    {0x0,0x0}\n};\n")
 			src.write("\nconst DialogData gDialogData[] = {\n")
 			for d in self.dialogs.dialogs:
-				src.write("    { &NPC_%s, %d, %s_lines },\n" % (d.npc, len(d.lines), d.id))
-
+				src.write("    { &NPC_%s, %s_lines },\n" % (d.npc, d.id))
 			src.write("};\n\n")
 			self.items.write(src)
 

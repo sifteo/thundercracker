@@ -6,9 +6,9 @@
 void WaitForSeconds(float dt);
 
 
-void DrawRoom(Viewport& vp, const MapData& pMap, int roomId);
-void DrawRoomOverlay(Viewport& vp, const MapData& pMap, unsigned tid, const uint8_t *pRle);
-void DrawOffsetMap(Viewport& vp, const MapData& pMap, Int2 pos);
+void DrawRoom(Viewport& vp, int roomId);
+void DrawRoomOverlay(Viewport& vp, unsigned tid, const uint8_t *pRle);
+void DrawOffsetMap(Viewport& vp, Int2 pos);
 
 struct ButterflyFriend {
     

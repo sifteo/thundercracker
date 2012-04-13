@@ -113,7 +113,8 @@ void ButterflyFriend::Update() {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void DrawRoom(Viewport& gfx, const MapData& map, int roomId) {
+void DrawRoom(Viewport& gfx, int roomId) {
+  auto& map = gGame.GetMap().Data();
 	const uint8_t *pTile = map.roomTiles[roomId].tiles;
 	const FlatAssetImage& tileset = *map.tileset;
 	Int2 p;
@@ -125,9 +126,10 @@ void DrawRoom(Viewport& gfx, const MapData& map, int roomId) {
 	}
 }
 
-void DrawRoomOverlay(Viewport& gfx, const MapData& map, unsigned tid, const uint8_t *pRle) {
+void DrawRoomOverlay(Viewport& gfx, unsigned tid, const uint8_t *pRle) {
   // this method's a little annoyingly complex because metatiles are 2x2, so I need to replot
   // each row twice, in a sense, in order to get them in the correct bg1 mask order :P
+  auto& map = gGame.GetMap().Data();
   const FlatAssetImage& img = *map.overlay;
   BG1Mask mask;
   mask.clear();
@@ -183,8 +185,9 @@ void DrawRoomOverlay(Viewport& gfx, const MapData& map, unsigned tid, const uint
   gfx.Canvas().bg1.setMask(mask, false);
 }
 
-void DrawOffsetMap(Viewport& gfx, const MapData& map, Int2 pos) {
+void DrawOffsetMap(Viewport& gfx, Int2 pos) {
   // TODO: Refactor to use Forthcoming BG0 Scroller in SDK
+  const MapData& map = gGame.GetMap().Data();
 	const int xmax = 128 * (map.width-1);
 	const int ymax = 128 * (map.height-1);
 	if (pos.x < 0) { pos.x = 0; } else if (pos.x > xmax) { pos.x = xmax; }

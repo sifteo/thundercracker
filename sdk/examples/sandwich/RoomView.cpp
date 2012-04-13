@@ -334,12 +334,12 @@ void RoomView::ShowFrame() {
 
 void RoomView::DrawBackground() {
   mCanvas.bg0.setPanning(vec(0,0));
-  DrawRoom(Parent(), gGame.GetMap().Data(), mRoomId);
+  DrawRoom(Parent(), mRoomId);
   RefreshDoor();
   RefreshDepot();
   auto& room = GetRoom();
   if (room.HasOverlay()) {
-    DrawRoomOverlay(Parent(), gGame.GetMap().Data(), room.OverlayTile(), room.OverlayBegin());
+    DrawRoomOverlay(Parent(), room.OverlayTile(), room.OverlayBegin());
     Parent().FlagOverlay();
   }
 }

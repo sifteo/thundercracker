@@ -226,11 +226,11 @@ void Game::ScrollTo(unsigned roomId) {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(view, mMap.Data(), pos);
+    DrawOffsetMap(view, pos);
     DoPaint();
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
   view.Canvas().bg0.setPanning(vec(0,0));
-  DrawRoom(view, mMap.Data(), roomId);
+  DrawRoom(view, roomId);
   DoPaint();
 }
 
@@ -270,35 +270,24 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
     for(unsigned i=0; i<8; ++i) { g.sprites[i].hide(); }
     g.bg0.image(vec(0,10), DialogBox);
 
-    // TODO?
-    // save BG0 (above dialog line)
-    //VideoBuffer& vbuf = vslot->Canvas();
-    //uint16_t bg0_tiles[180];
-    //for(unsigned i=0; i<180; ++i) {
-    //  bg0_tiles[i] = vbuf.peek( mode.BG0_addr(vec(i%18, i/18)) );
-    //}
-
-    for(unsigned line=0; line<data.lineCount; ++line) {
-        const DialogTextData& txt = data.lines[line];
-        if (line == 0 || data.lines[line-1].detail != txt.detail) {
-          // TODO
-          //if (line > 0) {
-          //  Paint();
-          //  mode.setWindow(0, 80);
-          //  _SYS_vbuf_write(&vbuf.sys, mode.BG0_addr(vec(0,0)), bg0_tiles, 180);
-          //}
-          //BG1Helper ovrly(*vslot->GetID());
-          //ovrly.DrawAsset(vec(txt.detail == &NPC_Detail_pearl_detail ? 1 : 2, 0), *(txt.detail));
-          //ovrly.Flush();
-          //Paint();
-          //Now set up a letterboxed 128x48 mode
+    for(auto p = data.lines; p->detail; ++p) {
+        if (p == data.lines || (p-1)->detail != p->detail) {
+          if (p != data.lines) {
+            DrawRoom(viewport, viewport.GetRoomView().Id());
+            g.bg0.image(vec(0,10), DialogBox);
+          }
+          g.bg1.fillMask(vec(1, 0), vec(p->detail->tileWidth(), 10), true);
+          g.bg1.image(vec(1,0), *(p->detail));
+          Paint();
+          System::finish();
+          
           g.setWindow(80, 48);
           view.Init(&g);
         }
         view.Erase();
         Paint();
-        view.ShowAll(txt.line);
-        if (line > 0) {
+        view.ShowAll(p->line);
+        if (p != data.lines) {
             PlaySfx(sfx_neighbor);
         }
         // fade in and out
