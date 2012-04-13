@@ -76,15 +76,9 @@ class World:
 					assetname,
 					posixpath.join(self.dir, assetname+".png")
 				))
-
-			#for filename in (posixpath.basename(path) for path in os.listdir(self.dir) if path.endswith(".tmx")):
-			#	name = filename[:-4]
-			#	lua.write("TileSet_%s = image{ \"%s.png\", width=16, height=16 }\n" % (name,name))
-			#	if posixpath.exists(name + "_overlay.png"):
-			#		lua.write("Overlay_%s = image{ \"%s_overlay.png\", width=16, height=16 }\n" % (name,name))
 			lua.write("\n-- DIALOG IMAGES\n")
 			for name in self.dialogs.list_npc_image_names():
-				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32 }\n" % (name,posixpath.join(self.dir, name)))
+				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32, pinned=true }\n" % (name,posixpath.join(self.dir, name)))
 			for name in self.dialogs.list_detail_image_names():
 				lua.write("NPC_Detail_%s = image{ \"%s.png\" }\n" % (name,posixpath.join(self.dir, name)))
 		

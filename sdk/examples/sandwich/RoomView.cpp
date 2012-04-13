@@ -9,7 +9,8 @@
 #define mTriggerSprite  (Parent().Canvas().sprites[1])
 #define mEquipSprite    (Parent().Canvas().sprites[2])
 #define mPlayerSprite   (Parent().Canvas().sprites[3])
-#define mBlockSprite    (Parent().Canvas().sprites[4])
+#define mNpcSprite      (Parent().Canvas().sprites[4])
+#define mBlockSprite    (Parent().Canvas().sprites[5])
   
 void RoomView::Init(unsigned roomId) {
   flags.locked = false;
@@ -42,6 +43,12 @@ void RoomView::Restore() {
   auto& r = GetRoom();
   if (r.HasItem()) {
     ShowItem(&r.Item());
+  }
+  if (r.HasNPC()) {
+    auto& npc = r.NPC();
+    auto& dialog = gDialogData[npc.dialog];
+    mNpcSprite.setImage(*dialog.npc);
+    mNpcSprite.move(npc.x-16, npc.y-16);
   }
   if (&this->Parent() == &gGame.GetPlayer().View()) { 
     ShowPlayer(); 
