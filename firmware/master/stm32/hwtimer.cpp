@@ -7,7 +7,7 @@
 
 #define IS_ADVANCED(t) ((t) == &TIM1 || (t) == &TIM8)
 
-void HwTimer::init(int period, int prescaler)
+void HwTimer::init(uint16_t period, uint16_t prescaler)
 {
     if (tim == &TIM2) {
         RCC.APB1ENR |= (1 << 0); // TIM2 enable
@@ -36,8 +36,8 @@ void HwTimer::init(int period, int prescaler)
     }
 
     // Timer configuration
-    tim->PSC  = (uint16_t)prescaler;
-    tim->ARR  = (uint16_t)period;
+    tim->PSC  = prescaler;
+    tim->ARR  = period;
 
     if (IS_ADVANCED(tim)) {
         tim->BDTR = (1 << 15);  // MOE - main output enable

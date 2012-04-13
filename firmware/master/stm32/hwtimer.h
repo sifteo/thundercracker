@@ -46,7 +46,7 @@ public:
     HwTimer(volatile TIM_t *_hw) :
         tim(_hw) {}
 
-    void init(int period, int prescaler);
+    void init(uint16_t period, uint16_t prescaler);
     void deinit();
 
     uint16_t status() const {
@@ -73,13 +73,14 @@ public:
     }
 
     void enableCompareCaptureIsr(int ch) {
+        tim->SR &= ~(1 << ch);  // clear pending ISR status
         tim->DIER |= (1 << ch);
     }
     void disableCompareCaptureIsr(int ch) {
         tim->DIER &= ~(1 << ch);
     }
     void enableUpdateIsr() {
-        tim->SR &= ~(1 << 0);   // clear any pending ISRs
+        tim->SR &= ~(1 << 0);   // clear pending ISR status
         tim->DIER |= (1 << 0);
     }
     void disableUpdateIsr() {
@@ -92,6 +93,10 @@ public:
 
     uint16_t count() const {
         return tim->CNT;
+    }
+
+    void setCount(uint16_t c) {
+        tim->CNT = c;
     }
 
     uint16_t period() const {
