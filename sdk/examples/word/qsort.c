@@ -74,6 +74,7 @@ PORTABILITY
  * SUCH DAMAGE.
  */
 
+#include "qsort.h"
 
 typedef unsigned size_t;
 

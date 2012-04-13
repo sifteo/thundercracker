@@ -81,12 +81,12 @@ bool animPaint(AnimType animT,
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
         bool metaLetterTile = false;
-        if (params && params->mLetters && params->mLetters[0] && bg1)
+        if (params && params->mLetters && params->mLetters[0])
         {
             if (i < lettersPerCube)
             {
                 fontFrame = params->mLetters[i] - (int)'A';
-                drawLetterOnTile = (fontFrame < font.frames);
+                drawLetterOnTile = (fontFrame < font.numFrames());
                 blankLetterTile = !drawLetterOnTile;
                 metaLetterTile =
                         !blankLetterTile &&
@@ -96,22 +96,22 @@ bool animPaint(AnimType animT,
 
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
-        Vec2 clipOffset(0,0);
-        Vec2 size(0, 0);
+        Int2 clipOffset(0,0);
+        Int2 size(0, 0);
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
+            size = Vec2(objData.mSpriteAsset->pixelWidth(), objData.mSpriteAsset->pixelHeight());
             assetFrames =
                     (animT == AnimType_HintSlideL || animT == AnimType_HintSlideR) ?
-                        MIN(4, objData.mSpriteAsset->frames) : // TODO use the right indexes for left/right, with ping/pong
-                        objData.mSpriteAsset->frames;
+                        MIN(4, objData.mSpriteAsset->numFrames()) : // TODO use the right indexes for left/right, with ping/pong
+                        objData.mSpriteAsset->numFrames();
         }
         else
         {
             ASSERT(objData.mAsset);
-            size = Vec2(objData.mAsset->width, objData.mAsset->height);
-            assetFrames = objData.mAsset->frames;
+            size = Vec2(objData.mAsset->tileWidth(), objData.mAsset->tileHeight());
+            assetFrames = objData.mAsset->numFrames();
             // FIXME write utility AABB class
             if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
             {
@@ -120,8 +120,8 @@ bool animPaint(AnimType animT,
             pos.x = MAX(pos.x, 0);
             pos.y = MAX(pos.y, 0);
             clipOffset = pos - objData.mPositions[frame];
-            if (clipOffset.x >= (int)objData.mAsset->width ||
-                clipOffset.y >= (int)objData.mAsset->height)
+            if (clipOffset.x >= (int)objData.mAsset->tileWidth() ||
+                clipOffset.y >= (int)objData.mAsset->tileHeight())
             {
                 continue; // totally offscreen
             }
@@ -151,7 +151,7 @@ bool animPaint(AnimType animT,
         {
             if (blankLetterTile)
             {
-                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mBlankLetterAsset, assetFrame);
+                vid.bg0.drawPartialAsset(pos, clipOffset, size, *objData.mBlankLetterAsset, assetFrame);
             }
             else if (metaLetterTile)
             {
