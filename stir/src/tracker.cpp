@@ -163,23 +163,23 @@ unsigned XmTrackerLoader::compressPattern(uint16_t pattern)
         bool wasEncoded = !!(code & 0x80);
 
         if (code & 0x80) {
-            if (code & 1 << 0) {
+            if (code & (1 << 0)) {
                 assert(r < data.size());
                 note = data[r++];
             }
-            if (code & 1 << 1) {
+            if (code & (1 << 1)) {
                 assert(r < data.size());
                 instrument = data[r++];
             }
-            if (code & 1 << 2) {
+            if (code & (1 << 2)) {
                 assert(r < data.size());
                 volume = data[r++];
             }
-            if (code & 1 << 3) {
+            if (code & (1 << 3)) {
                 assert(r < data.size());
                 effectType = data[r++];
             }
-            if (code & 1 << 4) {
+            if (code & (1 << 4)) {
                 assert(r < data.size());
                 effectParam = data[r++];
             }
@@ -212,19 +212,19 @@ unsigned XmTrackerLoader::compressPattern(uint16_t pattern)
             if (!wasEncoded) ops++;
             
             data[w++] = code;
-            if (code & 1 << 0) {
+            if (code & (1 << 0)) {
                 data[w++] = note;
             }
-            if (code & 1 << 1) {
+            if (code & (1 << 1)) {
                 data[w++] = instrument;
             }
-            if (code & 1 << 2) {
+            if (code & (1 << 2)) {
                 data[w++] = volume;
             }
-            if (code & 1 << 3) {
+            if (code & (1 << 3)) {
                 data[w++] = effectType;
             }
-            if (code & 1 << 4) {
+            if (code & (1 << 4)) {
                 data[w++] = effectParam;
             }
         }
@@ -273,13 +273,13 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
 
-    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
+    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
     uint16_t vEnvelope[12];
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
         uint16_t eValue = get16();
-        assert(eOffset == eOffset & 0x01FF); // 9 bits
-        assert(eValue == eValue & 0x7F); // 7 bits
+        assert(eOffset == (eOffset & 0x01FF)); // 9 bits
+        assert(eValue == (eValue & 0x7F)); // 7 bits
         vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
     }
 
