@@ -326,9 +326,9 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewport) {
   DoPaint();
-  viewport.Canvas().setWindow(80+16,128-80-16);
   Dialog view;
   view.Init(&viewport.Canvas());
+  viewport.Canvas().setWindow(80+16,128-80-16);
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);

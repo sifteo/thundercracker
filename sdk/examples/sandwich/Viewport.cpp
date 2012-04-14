@@ -277,7 +277,7 @@ void Viewport::DrawRoom(int roomId) {
 	}
 }
 
-void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *pRle) {
+void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *rle) {
   // this method's a little annoyingly complex because metatiles are 2x2, so I need to replot
   // each row twice, in a sense, in order to get them in the correct bg1 mask order :P
   auto& map = gGame.GetMap().Data();
@@ -285,16 +285,33 @@ void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *pRle) {
   BG1Mask mask;
   mask.clear();
   unsigned location = 0;
-  unsigned prevRow = 0;
   unsigned tileCount = 0;
   unsigned prevTileCount = 0;
   unsigned prevTid = tid;
-  const uint8_t* prevRle = pRle;
+  const uint8_t* prevRle = rle;
+  unsigned row = tid >> 3;
+  unsigned prevRow = row;
   while(tid < 64) {
     // compute the current row
-    unsigned row = tid >> 3;
-    if (row > prevRow) {
-      while (tileCount > prevTileCount) {
+    if (*rle == 0xff) {
+      // skip ahead a run of transparent tiles
+      tid += rle[1];
+      rle+=2;
+    } else {
+      // plot the "top two" actual tiles of the metatile
+      Int2 p = vec(tid%8, row)<<1;
+      mask.plot(p);
+      mask.plot(p+vec(1,0));
+      mCanvas.bg1.plot(location++, img.tile(GetID(), vec(0,0), *rle));
+      mCanvas.bg1.plot(location++, img.tile(GetID(), vec(1,0), *rle));
+      tileCount++;
+      tid++;
+      rle++;
+    }
+	row = tid >> 3;  
+	// does the next row need to catch up?  
+    if (row > prevRow || tid >= 64) {
+      while (prevTid < tid) {
         // plot the "bottom half" of the metatiles from this row
         if (*prevRle == 0xff) {
           // skip ahead a run of transparent tiles
@@ -302,7 +319,7 @@ void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *pRle) {
           prevRle+=2;
         } else {
           // plot the "bottom two" tiles of the metatile
-          Int2 p = vec(prevTid%8, row)<<1;
+          Int2 p = vec(prevTid%8, prevRow)<<1;
           mask.plot(p+vec(0,1));
           mask.plot(p+vec(1,1));
           mCanvas.bg1.plot(location++, img.tile(GetID(), vec(0,1), *prevRle));
@@ -314,24 +331,8 @@ void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *pRle) {
       }
       // sync up
       prevRow = row;
-      prevTid = tid;
-      prevRle = pRle;
-    }
-    if (*pRle == 0xff) {
-      // skip ahead a run of transparent tiles
-      tid += pRle[1];
-      pRle+=2;
-    } else {
-      // plot the "top two" actual tiles of the metatile
-      Int2 p = vec(tid%8, row)<<1;
-      mask.plot(p);
-      mask.plot(p+vec(1,0));
-      mCanvas.bg1.plot(location++, img.tile(GetID(), vec(0,0), *pRle));
-      mCanvas.bg1.plot(location++, img.tile(GetID(), vec(1,0), *pRle));
-      tileCount++;
-      tid++;
-      pRle++;
-    }
+      prevRle = rle;
+    }    
   }
   mCanvas.bg1.setMask(mask, false);
 }
