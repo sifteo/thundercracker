@@ -286,6 +286,133 @@ void CPPSourceWriter::writeImage(const Image &image)
     mStream << "};\n\n";
 }
 
+void CPPSourceWriter::writeTracker(const Tracker &tracker)
+{
+    const _SYSXMSong &song = tracker.getSong();
+
+    // Samples:
+    for (unsigned i = 0; i < song.nInstruments; i++) {
+        const _SYSXMInstrument &instrument = tracker.getInstrument(i);
+
+        if (instrument.sample.pData < song.nInstruments) {
+            const std::vector<uint8_t> &buf = tracker.getSample(instrument.sample.pData);
+            mStream << "static const char " << tracker.getName() << "_instrument" << i << "_sampleData[] = " <<
+                       "// " << buf.size() << " bytes\n";
+            writeString(buf);
+            mStream << ";\n\n";
+        }
+    }
+
+    // Envelopes:
+    for (unsigned i = 0; i < song.nInstruments; i++) {
+        const _SYSXMInstrument &instrument = tracker.getInstrument(i);
+
+        // Then the envelope:
+        if (instrument.volumeEnvelopePoints < song.nInstruments) {
+            const std::vector<uint8_t> &buf = tracker.getEnvelope(instrument.volumeEnvelopePoints);
+            mStream << "static const char " << tracker.getName() << "_instrument" << i << "_envelope[] = " <<
+                       "// " << buf.size() << " bytes\n";
+            writeString(buf);
+            mStream << ";\n\n";
+        }
+    }
+
+    // Instrument array:
+    mStream << "static const _SYSXMInstrument " << tracker.getName() << "_instruments[] = {";
+    for (unsigned i = 0; i < song.nInstruments; i++) {
+        const _SYSXMInstrument &instrument = tracker.getInstrument(i);
+
+        mStream <<
+        "\n{ // Instrument " << i << "\n" <<
+        indent << "/* sample */ {\n" <<
+        indent << indent << "/* sampleRate */ " << instrument.sample.sampleRate << ",\n" <<
+        indent << indent << "/* loopStart  */ " << instrument.sample.loopStart << ",\n" <<
+        indent << indent << "/* loopEnd    */ " << instrument.sample.loopEnd << ",\n" <<
+        indent << indent << "/* loopType   */ " << (instrument.sample.loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
+        indent << indent << "/* type       */ " << (uint32_t)instrument.sample.type << ",\n" <<
+        indent << indent << "/* volume     */ " << instrument.sample.volume << ",\n" <<
+        indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
+        indent << indent << "/* pData      */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n" <<
+        indent << "},\n" <<
+        indent << "/* finetune              */ " << (uint32_t)instrument.finetune << ",\n" <<
+        indent << "/* relativeNoteNumber    */ " << (uint32_t)instrument.relativeNoteNumber << ",\n" <<
+        indent << "/* volumeEnvelopePoints  */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n" <<
+        indent << "/* nVolumeEnvelopePoints */ " << (uint32_t)instrument.nVolumeEnvelopePoints << ",\n" <<
+        indent << "/* volumeSustainPoint    */ " << (uint32_t)instrument.volumeSustainPoint << ",\n" <<
+        indent << "/* volumeLoopStartPoint  */ " << (uint32_t)instrument.volumeLoopStartPoint << ",\n" <<
+        indent << "/* volumeLoopEndPoint    */ " << (uint32_t)instrument.volumeLoopEndPoint << ",\n" <<
+        indent << "/* volumeType            */ " << (uint32_t)instrument.volumeType << ",\n" <<
+        indent << "/* vibratoType           */ " << (uint32_t)instrument.vibratoType << ",\n" <<
+        indent << "/* vibratoSweep          */ " << (uint32_t)instrument.vibratoSweep << ",\n" <<
+        indent << "/* vibratoDepth          */ " << (uint32_t)instrument.vibratoDepth << ",\n" <<
+        indent << "/* vibratoRate           */ " << (uint32_t)instrument.vibratoRate << ",\n" <<
+        indent << "/* volumeFadeout         */ " << instrument.volumeFadeout << ",\n" <<
+        "},";
+    }
+    mStream << "};\n\n";
+
+    // Pattern data:
+    for (unsigned i = 0; i < song.nPatterns; i++) {
+        const std::vector<uint8_t> &buf = tracker.getPatternData(i);
+        mStream << "static const char " << tracker.getName() << "_pattern" << i << "_data[] = " <<
+                   "// " << buf.size() << " bytes\n";
+        writeString(buf);
+        mStream << ";\n\n";
+    }
+
+    // Patterns:
+    mStream << "static const _SYSXMPattern " << tracker.getName() << "_patterns[] = {";
+    for (unsigned i = 0; i < song.nPatterns; i++) {
+        const _SYSXMPattern &pattern = tracker.getPattern(i);
+        
+        mStream <<
+        "\n{ // Pattern " << i << "\n" <<
+        indent << "/* nRows     */ " << (uint32_t)pattern.nRows << ",\n" <<
+        indent << "/* dataSize  */ " << (uint32_t)pattern.dataSize << ",\n" <<
+        indent << "/* pData     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_pattern" << i << "_data),\n" <<
+        "},";
+    }
+    mStream << "};\n\n";
+
+    // Pattern table:
+    {
+        const std::vector<uint8_t> &buf = tracker.getPatternTable();
+        mStream << "static const char " << tracker.getName() << "_patternOrderTable[] = " <<
+                   "// " << buf.size() << " bytes\n";
+        writeString(buf);
+        mStream << ";\n\n";
+    }
+
+    // Song:
+    mStream <<
+    "extern const Sifteo::AssetTracker " << tracker.getName() << " = {{\n" <<
+    indent << "/* patternOrderTable     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patternOrderTable),\n" <<
+    indent << "/* patternOrderTableSize */ " << song.patternOrderTableSize << ",\n" <<
+    indent << "/* restartPosition       */ " << (uint32_t)song.restartPosition << ",\n" <<
+    indent << "/* nChannels             */ " << (uint32_t)song.nChannels << ",\n" <<
+    indent << "/* nPatterns             */ " << song.nPatterns << ",\n" <<
+    indent << "/* patterns              */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patterns),\n" <<
+    indent << "/* nInstruments          */ " << (uint32_t)song.nInstruments << ",\n" <<
+    indent << "/* instruments           */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instruments),\n" <<
+    indent << "/* frequencyTable        */ " << (uint32_t)song.frequencyTable << ",\n" <<
+    indent << "/* tempo                 */ " << song.tempo << ",\n" <<
+    indent << "/* bpm                   */ " << song.bpm << ",\n" <<
+    "}};\n\n";
+
+    mLog.infoBegin("Overall compression");
+    unsigned compressedSize = tracker.getSize();
+    unsigned uncompressedSize = tracker.getFileSize();
+    double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
+
+    mLog.infoLine("% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
+                 song.nPatterns,
+                 song.nInstruments,
+                 compressedSize / 1024.0f,
+                 ratio,
+                 tracker.getFile().c_str());
+    mLog.infoEnd();
+}
+
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename)
 {
@@ -353,6 +480,11 @@ void CPPHeaderWriter::writeGroup(const Group &group)
 void CPPHeaderWriter::writeSound(const Sound &sound)
 {
     mStream << "extern const Sifteo::AssetAudio " << sound.getName() << ";\n";
+}
+
+void CPPHeaderWriter::writeTracker(const Tracker &tracker)
+{
+    mStream << "extern const Sifteo::AssetTracker " << tracker.getName() << ";\n";
 }
 
 };  // namespace Stir
