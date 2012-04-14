@@ -113,15 +113,19 @@ bool Script::run(const char *filename)
         log.infoEnd();
     }
 
-    for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
-        Tracker *tracker = *i;
-        log.heading(tracker->getName().c_str());
+    if (!trackers.empty()) {
+        log.heading("Tracker");
+        log.infoBegin("Module compression");
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
 
-        if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
-            return false;
+            if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
+                return false;
+            }
+            header.writeTracker(*tracker);
+            source.writeTracker(*tracker);
         }
-        header.writeTracker(*tracker);
-        source.writeTracker(*tracker);
+        log.infoEnd();
     }
 
     proof.close();

@@ -399,18 +399,16 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
     indent << "/* bpm                   */ " << song.bpm << ",\n" <<
     "}};\n\n";
 
-    mLog.infoBegin("Overall compression");
     unsigned compressedSize = tracker.getSize();
     unsigned uncompressedSize = tracker.getFileSize();
     double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
 
-    mLog.infoLine("% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
+    mLog.infoLineWithLabel(tracker.getName().c_str(), "% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
                  song.nPatterns,
                  song.nInstruments,
                  compressedSize / 1024.0f,
                  ratio,
                  tracker.getFile().c_str());
-    mLog.infoEnd();
 }
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
