@@ -337,7 +337,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewpor
   Wait(4, true);
   Paint();
   mPlayer.CurrentView()->Parent().Restore();
-  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0) + (BOTTOM<<4));
+  RestorePearlIdle();
   DoPaint();
 }
 

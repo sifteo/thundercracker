@@ -47,8 +47,9 @@ void RoomView::Restore() {
   if (r.HasNPC()) {
     auto& npc = r.NPC();
     auto& dialog = gDialogData[npc.dialog];
-    mNpcSprite.setImage(*dialog.npc);
-    mNpcSprite.move(npc.x-16, npc.y-16);
+    auto& img = *dialog.npc;
+    mNpcSprite.setImage(img);
+    mNpcSprite.move(vec(npc.x,npc.y) - img.pixelSize()/2);
   }
   if (&this->Parent() == &gGame.GetPlayer().View()) { 
     ShowPlayer(); 
@@ -61,8 +62,7 @@ void RoomView::Restore() {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
       mAmbient.bff.Randomize();
-      mBffSprite.resize(8, 8);
-      mBffSprite.setImage(Butterfly.tile(0) + 4 * mAmbient.bff.dir);
+      mBffSprite.setImage(Butterfly, 4 * mAmbient.bff.dir);
       mBffSprite.move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
@@ -98,9 +98,7 @@ void RoomView::Update() {
   if (gGame.GetMap().Data().ambientType && mAmbient.bff.active) {
     mAmbient.bff.Update();
     mBffSprite.move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
-    mBffSprite.setImage(
-      Butterfly.tile(0) + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3
-    );
+    mBffSprite.setImage(Butterfly, 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3);
   }
 
   // item hover
@@ -186,7 +184,6 @@ void RoomView::StartSlide(Side side) {
 //---------------------------------------------------------------
 
 void RoomView::ShowPlayer() {
-  mPlayerSprite.resize(32, 32);
   if (gGame.GetPlayer().Equipment()) {
     mEquipSprite.setImage(Items, gGame.GetPlayer().Equipment()->itemId);
   }
@@ -208,8 +205,8 @@ void RoomView::ShowBlock(Sokoblock *pBlock) {
   UpdateBlock();
 }
 
-void RoomView::SetPlayerFrame(unsigned frame) {
-  mPlayerSprite.setImage(frame);
+void RoomView::SetPlayerImage(const PinnedAssetImage& img, unsigned frame) {
+  mPlayerSprite.setImage(img, frame);
 }
 
 void RoomView::SetEquipPosition(Int2 p) {
@@ -225,7 +222,7 @@ void RoomView::SetItemPosition(Int2 p) {
 
 void RoomView::UpdatePlayer() {
   Int2 localPosition = gGame.GetPlayer().Position() - 128 * Location();
-  mPlayerSprite.setImage(gGame.GetPlayer().AnimFrame());
+  mPlayerSprite.setImage(gGame.GetPlayer().Image(), gGame.GetPlayer().Frame());
   mPlayerSprite.move(localPosition.x-16, localPosition.y-16);
   if (gGame.GetPlayer().Equipment()) {
     mEquipSprite.move(localPosition.x-8, localPosition.y-ITEM_OFFSET);
@@ -234,9 +231,8 @@ void RoomView::UpdatePlayer() {
 
 void RoomView::DrawPlayerFalling(int height) {
   Int2 localCenter = 16 * GetRoom().LocalCenter(0);
-  mPlayerSprite.setImage(PlayerStand.tile(0) + (2<<4));
+  mPlayerSprite.setImage(PlayerStand, 2);
   mPlayerSprite.move(localCenter.x-16, localCenter.y-32-height);
-  mPlayerSprite.resize(32, 32);
   if (gGame.GetPlayer().Equipment()) { 
     mEquipSprite.move(localCenter.x-8, localCenter.y-16-height-ITEM_OFFSET);
   }

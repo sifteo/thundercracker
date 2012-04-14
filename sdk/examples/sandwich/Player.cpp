@@ -5,10 +5,6 @@
 #define DOOR_PAD 10
 #define GAME_FRAMES_PER_ANIM_FRAME 2
 
-inline int fast_abs(int x) {
-	return x<0?-x:x;
-}
-
 void Player::Init(Viewport* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
   mCurrent.view = reinterpret_cast<RoomView*>(pPrimary);
@@ -21,6 +17,8 @@ void Player::Init(Viewport* pPrimary) {
   mAnimFrame = 0;
   mAnimTime = 0.f;
   mEquipment = 0;
+  mImageStrip = &PlayerStand;
+  ComputeFrame();
 }
 
 Room* Player::GetRoom() const {
@@ -54,52 +52,62 @@ void Player::AdvanceToTarget() {
   mCurrent.view->UpdatePlayer();
 }
 
-int Player::AnimFrame() {
-  switch(mStatus) {
-    case PLAYER_STATUS_IDLE: {
-      if (mAnimFrame == 1) {
-        return PlayerIdle.tile(0);
-      } else if (mAnimFrame == 2) {
-        return PlayerIdle.tile(0) + 16;
-      } else if (mAnimFrame == 3 || mAnimFrame == 4) {
-        return PlayerIdle.tile(0) + (mAnimFrame-1) * 16;
-      } else {
-        return PlayerStand.tile(0) + BOTTOM * 16;
-      }
-    }
-    case PLAYER_STATUS_WALKING:
-      int frame = mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME;
-      int tilesPerFrame = PlayerWalk.numTilesPerFrame();
-      int tilesPerStrip = tilesPerFrame * (PlayerWalk.numFrames()>>2);
-      return PlayerWalk.tile(0) + mDir * tilesPerStrip + frame * tilesPerFrame;
-  }
-  return 0;
-}
-
 void Player::SetStatus(int status) {
   if (mStatus == status) { return; }
   mStatus = status;
-  mAnimFrame = 0;
   mAnimTime = 0.f;
+  mAnimFrame = 0;
+  ComputeFrame();
+}
+
+// the following stuff is kinda hacky because it's been iterated on so much
+// I'll fix it up later, I promiiiiseeeee
+
+void Player::ComputeFrame() {
+  switch(mStatus) {
+    case PLAYER_STATUS_IDLE:
+      if (mAnimFrame) {
+        mSpriteFrame = mAnimFrame-1;
+        mImageStrip = &PlayerIdle;
+      } else {
+        mSpriteFrame = 2;
+        mImageStrip = &PlayerStand;
+      }
+      break;
+    
+    case PLAYER_STATUS_WALKING:
+      mSpriteFrame = mDir * (PlayerWalk.numFrames()>>2) + (mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME);
+      mImageStrip = &PlayerWalk;
+      break;
+  }
 }
 
 void Player::Update() {
-  if (mStatus == PLAYER_STATUS_WALKING) {
-    mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.numFrames()>>2));
-  } else { // PLAYER_STATUS_IDLE
-    mAnimTime = fmod(mAnimTime+gGame.Dt().seconds(), 10.f);
-    int before = mAnimFrame;
-    if (mAnimTime > 0.5f && mAnimTime < 1.f) {
-      mAnimFrame = 1;
-    } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
-      mAnimFrame = 2;
-    } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
-      mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
-    } else {
-      mAnimFrame = 0;
-    }
-    if (before != mAnimFrame) {
-      mCurrent.view->UpdatePlayer();
-    }
-  }  
+  switch(mStatus) {
+    
+    case PLAYER_STATUS_WALKING:
+      mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * PlayerWalk.numFrames()/4);
+      ComputeFrame();
+      break;
+    
+    case PLAYER_STATUS_IDLE:
+      mAnimTime = fmod(mAnimTime+gGame.Dt().seconds(), 10.f);
+      int before = mAnimFrame;
+      if (mAnimTime > 0.5f && mAnimTime < 1.f) {
+        mAnimFrame = 1;
+      } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
+        mAnimFrame = 2;
+      } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
+        mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
+      } else {
+        mAnimFrame = 0;
+      }
+      ComputeFrame();
+      if (before != mAnimFrame) {
+        mCurrent.view->UpdatePlayer();
+      }
+      break;
+  }
 }
+
+
