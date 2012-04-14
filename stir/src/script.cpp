@@ -120,9 +120,8 @@ bool Script::run(const char *filename)
         if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
             return false;
         }
-        // TODO:
-        //header.writeTracker(*tracker);
-        //source.writeTracker(*tracker);
+        header.writeTracker(*tracker);
+        source.writeTracker(*tracker);
     }
 
     proof.close();
