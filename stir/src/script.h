@@ -312,23 +312,38 @@ public:
     }
 
     const _SYSXMSong &getSong() const {
-        return loader.getSong();
+        assert(loader.song.nPatterns);
+        return loader.song;
     }
-
     const _SYSXMPattern &getPattern(uint8_t i) const {
-        return loader.getPattern(i);
+        assert(i < loader.song.nPatterns);
+        return loader.patterns[i];
     }
-
     const std::vector<uint8_t> &getPatternData(uint8_t i) const {
-        return loader.getPatternData(i);
+        assert(i < loader.song.nPatterns);
+        return loader.patternDatas[i];
     }
-
+    const std::vector<uint8_t> &getPatternTable() const {
+        return loader.patternTable;
+    }
     const _SYSXMInstrument &getInstrument(uint8_t i) const {
-        return loader.getInstrument(i);
+        assert(i < loader.song.nInstruments);
+        return loader.instruments[i];
+    }
+    const std::vector<uint8_t> &getEnvelope(uint8_t i) const {
+        assert(i < loader.envelopes.size());
+        return loader.envelopes[i];
+    }
+    const std::vector<uint8_t> &getSample(uint8_t i) const {
+        assert(i < loader.sampleDatas.size());
+        return loader.sampleDatas[i];
     }
 
-    const uint8_t *getSample(uint8_t i) const {
-        return loader.getSample(i);
+    const uint32_t getFileSize() const {
+        return loader.fileSize;
+    }
+    const uint32_t getSize() const {
+        return loader.size;
     }
 
 private:
