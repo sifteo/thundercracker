@@ -24,8 +24,9 @@ const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "IMA 4-bit
  *
  * Returns success or failure.
  */
-bool XmTrackerLoader::load(const char *filename, Logger &pLog)
+bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
 {
+    filename = pFilename;
     log = &pLog;
 
     // If this instance already contains module data, clean it up first.
@@ -36,6 +37,8 @@ bool XmTrackerLoader::load(const char *filename, Logger &pLog)
 
     if (!readSong()) return init();
 
+    fseek(f, 0, SEEK_END);
+    fileSize = ftell(f);
     fclose(f);
     f = 0;
 
@@ -121,6 +124,13 @@ bool XmTrackerLoader::readSong()
     assert(sampleNames.size() == 0);
     log->infoEnd();
 
+    // Verification:
+    assert(patternDatas.size() == song.nPatterns);
+    assert(patterns.size() == song.nPatterns);
+    assert(patternDatas.size() == song.nPatterns);
+    assert(instruments.size() == song.nInstruments);
+
+    size += sizeof(song);
     return true;
 }
 
@@ -142,12 +152,12 @@ bool XmTrackerLoader::readNextPattern()
 
     // Get pattern data
     aseek(offset + headerLength);
-    std::vector<uint8_t> patternData;
-    for (int i = 0; i < pattern.dataSize; i++) {
-        patternData.push_back(get8());
-    }
+    std::vector<uint8_t> patternData(pattern.dataSize);
+    getbuf(&patternData[0], pattern.dataSize);
 
+    size += sizeof(pattern);
     patterns.push_back(pattern);
+    size += patternData.size();
     patternDatas.push_back(patternData);
 
     return true;
@@ -290,22 +300,25 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Number of samples
     uint16_t nSamples = get16();
     if (nSamples == 0) {
-        log->error("Instruments with no samples have not been tested");
+        log->error("%s, instrument %u: Instruments with no samples have not been tested",
+                   filename, instruments.size());
         /* There is nothing more to read, padding aside, the next thing in the
          * file is the next instrument.
          */
+        size += sizeof(instrument);
+        instruments.push_back(instrument);
         aseek(offset + instrumentLength);
         return true;
     }
     if (nSamples > 1) {
-        log->error("Instrument has %u samples, expected 1", nSamples);
+        log->error("%s, instrument %u: found %u samples, expected 1", filename, instruments.size(), nSamples);
         return false;
     }
 
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
 
-    // FILE: Volume envelope
+    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
     uint16_t vEnvelope[12];
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
@@ -324,15 +337,17 @@ bool XmTrackerLoader::readNextInstrument()
     // Now that we have all the volume envelope data, alloc and save to instrument
     size_t envelopeSize = instrument.nVolumeEnvelopePoints * sizeof(*vEnvelope);
     if (envelopeSize == 0) {
-        instrument.volumeEnvelopePoints = 0;
+        instrument.volumeEnvelopePoints = -1;
     } else {
-        instrument.volumeEnvelopePoints = (uint16_t *)malloc(envelopeSize);
-        if (instrument.volumeEnvelopePoints == 0) return false;
-        memcpy(instrument.volumeEnvelopePoints, vEnvelope, envelopeSize);
+        instrument.volumeEnvelopePoints = envelopes.size();
+        std::vector<uint8_t> envelope(envelopeSize * sizeof(*vEnvelope));
+        memcpy(&envelope[0], vEnvelope, envelopeSize);
+        size += envelopeSize;
+        envelopes.push_back(envelope);
 
         float ratio = 100.0 - envelopeSize * 100.0 / 48;
-        log->infoLine("Envelope %2u: %2u points, % 5.01f%% compression %s",
-            instruments.size(), instrument.nVolumeEnvelopePoints, ratio, instrumentName.c_str());
+        log->infoLine("Instrument %2u: %2u points, % 5.01f%% compression %s",
+           instruments.size(), instrument.nVolumeEnvelopePoints, ratio, instrumentName.c_str());
     }
 
     // FILE: Number of points in panning envelope
@@ -375,7 +390,7 @@ bool XmTrackerLoader::readNextInstrument()
     if (reserved) {
         // The ad hoc stripped spec claims this can be either 0x00 (pcm) and 0xAD (adpcm), so let's run with that.
         if (reserved == 0xAD) {
-            log->error("Instrument %u: Assuming adpcm sample encoding", instruments.size());
+            log->error("%s, instrument %u: Assuming adpcm encoding", filename, instruments.size());
             sample.loopType = (sample.loopType & 0x3) | 1 << 3;
         }
         // Other tracker implementations claim that this byte is reserved, so ignore if invalid.
@@ -398,10 +413,7 @@ bool XmTrackerLoader::readNextInstrument()
     }
 
     // Read and process sample
-    if (!readSample(instrument)) {
-        free(instrument.volumeEnvelopePoints);
-        return false;
-    }
+    if (!readSample(instrument)) return false;
 
     /*
      * That's it for instrument/sample data.
@@ -423,7 +435,8 @@ bool XmTrackerLoader::readNextInstrument()
         // Ping-pong loops are not supported
         if (sample.loopType > 1) {
             assert(sample.loopType == 2);
-            log->error("Instrument %u: Ping-pong loops are not supported, falling back to normal looping", instruments.size());
+            log->error("%s, instrument %u: Ping-pong loops are not supported, falling back to normal looping",
+                       filename, instruments.size());
             sample.loopType = 1;
         }
     
@@ -442,6 +455,7 @@ bool XmTrackerLoader::readNextInstrument()
     }
 
     // Save instrument
+    size += sizeof(instrument);
     instruments.push_back(instrument);
 
     return true;
@@ -459,7 +473,8 @@ bool XmTrackerLoader::readNextInstrument()
 bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
 {
     _SYSAudioModule &sample = instrument.sample;
-    sample.pData = 0;
+    sample.pData = -1;
+    sample.sampleRate = 8363;
     uint8_t format = (sample.loopType >> 3) & 0x3;
 
     if (sample.dataSize == 0) return true;
@@ -468,11 +483,11 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
     switch (format) {
         case kSampleFormatADPCM: {
             // if adpcm, read directly into memory and done
-            uint8_t *buf = (uint8_t*)malloc(sample.dataSize);
-            if (!buf) return false;
-            getbuf(buf, sample.dataSize);
+            std::vector<uint8_t> sampleData(sample.dataSize);
+            getbuf(&sampleData[0], sample.dataSize);
             sample.pData = sampleDatas.size();
-            sampleDatas.push_back(buf);
+            size += sample.dataSize;
+            sampleDatas.push_back(sampleData);
             sample.type = _SYS_ADPCM;
             break;
         }
@@ -492,13 +507,18 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // Encode to today's default format
             AudioEncoder *enc = AudioEncoder::create("");
             sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
+
+            std::vector<uint8_t> sampleData(sample.dataSize);
+            memcpy(&sampleData[0], buf, sample.dataSize);
+            free(buf);
             sample.pData = sampleDatas.size();
-            sampleDatas.push_back((uint8_t *)realloc(buf, sample.dataSize));
+            size += sample.dataSize;
+            sampleDatas.push_back(sampleData);
             sample.type = enc->getType();
             break;
         }
         default: {
-            log->error("Instrument %u has unknown sample type %u", instruments.size(), format);
+            log->error("%s, instrument %u: Unknown sample encoding", filename, instruments.size());
             return false;
         }
     }
@@ -525,10 +545,7 @@ void XmTrackerLoader::processName(std::string &name)
  */
 bool XmTrackerLoader::init()
 {
-    for (unsigned i = 0; i < sampleDatas.size(); i++) {
-        free(sampleDatas[i]);
-    }
-
+    size = 0;
     instruments.clear();
     sampleDatas.clear();
 
@@ -543,10 +560,4 @@ bool XmTrackerLoader::init()
     memset(&song, 0, sizeof(song));
     return false;
 }
-
-XmTrackerLoader::~XmTrackerLoader()
-{
-    init();
-}
-
 }

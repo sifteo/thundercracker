@@ -428,7 +428,7 @@ struct _SYSAudioModule {
 struct _SYSXMPattern {
     uint16_t nRows;         /// Number of rows in the pattern
     uint16_t dataSize;      /// Size of compressed data, in bytes
-    uint8_t* pData;         /// Flash address for compressed data
+    uint32_t pData;         /// Flash address for compressed data
 };
 
 struct _SYSXMInstrument {
@@ -436,7 +436,7 @@ struct _SYSXMInstrument {
     int8_t finetune;                /// Minor frequency adjustment to note, as x/128 halftone (-1..127/128).
     int8_t relativeNoteNumber;      /// Relative note number (for increasing/decreasing native sample bitrate) (-96..95, 0 = C-4)
     
-    uint16_t* volumeEnvelopePoints; /// Flash address for array of envelope points, each is 9 bits of offset (?,0..130) and 7 bits of value (0..64)
+    uint32_t volumeEnvelopePoints;  /// Flash address for array of envelope points, each is 9 bits of offset (?,0..130) and 7 bits of value (0..64)
     uint8_t nVolumeEnvelopePoints;  /// Size of volumeEnvelopePoints in shorts (0..12)
     uint8_t volumeSustainPoint;     /// TODO
     uint8_t volumeLoopStartPoint;   /// TODO
@@ -450,16 +450,16 @@ struct _SYSXMInstrument {
 };
 
 struct _SYSXMSong {
-    uint8_t* patternOrderTable;     /// Flash address for the song's list of patterns to play
+    uint32_t patternOrderTable;     /// Flash address for the song's list of patterns to play
     uint16_t patternOrderTableSize; /// Size of patternOrderTable in bytes (1..256)
     uint8_t restartPosition;        /// Zero-indexed position in patternOrderTable to loop to (0..255)
     uint8_t nChannels;              /// Number of channels used by the tracker (1.._SYS_AUDIO_MAX_CHANNELS)
     
     uint16_t nPatterns;             /// Number of patterns in patterns (1..256)
-    struct _SYSXMPattern* patterns; /// Flash address for the patterns of the song
+    uint32_t patterns;              /// Flash address for the patterns of the song
     
-    uint8_t nInstruments;                 /// Number of instruments in instruments (0..128)
-    struct _SYSXMInstrument* instruments; /// Flash address for the instruments of the song
+    uint8_t nInstruments;           /// Number of instruments in instruments (0..128)
+    uint32_t instruments;           /// Flash address for the instruments of the song
     
     uint8_t frequencyTable;         /// Which frequency table the track uses (0: Amiga, 1: Linear)
     uint16_t tempo;                 /// Default playback speed (ticks)

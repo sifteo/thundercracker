@@ -21,32 +21,11 @@ namespace Stir {
 
 class XmTrackerLoader {
 public:
-	XmTrackerLoader() : log(0) {}
-	~XmTrackerLoader();
+	XmTrackerLoader() : log(0), size(0) {}
 	bool load(const char *filename, Logger &pLog);
 
-	const _SYSXMSong &getSong() const {
-		assert(song.nPatterns);
-		return song;
-	}
-	const _SYSXMPattern &getPattern(uint8_t i) const {
-		assert(i < song.nPatterns);
-		return patterns[i];
-	}
-	const std::vector<uint8_t> &getPatternData(uint8_t i) const {
-		assert(i < song.nPatterns);
-		return patternDatas[i];
-	}
-	const _SYSXMInstrument &getInstrument(uint8_t i) const {
-		assert(i < song.nInstruments);
-		return instruments[i];
-	}
-	const uint8_t *getSample(uint8_t i) const {
-		assert(i < sampleDatas.size());
-		return sampleDatas[i];
-	}
-
 private:
+	friend class Tracker;
 	bool openTracker(const char *filename);
 	bool readSong();
 
@@ -85,16 +64,20 @@ private:
 	};
 	static const char *encodings[3];
 
+	const char *filename;
 	FILE *f;
 	Logger *log;
 	_SYSXMSong song;
+	uint32_t size;
+	uint32_t fileSize;
 	
 	std::vector<std::vector<uint8_t> > patternDatas;
 	std::vector<_SYSXMPattern> patterns;
 	std::vector<uint8_t> patternTable;
 
 	std::vector<_SYSXMInstrument> instruments;
-	std::vector<uint8_t *> sampleDatas;
+	std::vector<std::vector<uint8_t> > envelopes;
+	std::vector<std::vector<uint8_t> > sampleDatas;
 	std::queue<std::string> sampleNames;
 };
 
