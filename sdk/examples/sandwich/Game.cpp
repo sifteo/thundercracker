@@ -255,13 +255,18 @@ bool Game::AnyViewsTouched() {
 }
 
 void Game::Wait(float seconds, bool touchToSkip) {
-  SystemTime deadline = SystemTime::now() + seconds;
+  auto deadline = SystemTime::now() + seconds;
   while(deadline.inFuture()) {
     Paint();
     if (touchToSkip && AnyViewsTouched()) {
       break;
     }
   }
+}
+
+void Game::DoWait(float seconds) {
+  auto deadline = SystemTime::now() + seconds;
+  while(deadline.inFuture()) { DoPaint(); }
 }
 
 void Game::NpcDialog(const DialogData& data, Viewport& viewport) {

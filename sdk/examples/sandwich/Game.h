@@ -101,6 +101,7 @@ private:
   void RestorePearlIdle();
   void ScrollTo(unsigned roomId); // see impl for notes on how to "clean up" after this call :P
   void Wait(float seconds, bool touchToSkip=false);
+  void DoWait(float seconds);
   void RoomNod(Viewport& view);
   void RoomShake(Viewport& view);
 
