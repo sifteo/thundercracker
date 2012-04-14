@@ -74,55 +74,19 @@ bool XmTrackerLoader::readSong()
     aseek(17 + 20 + 1 + 20 + 2 + headerSize); // This format is kinda stupid!
 
     // Load patterns
-    bool compressed = false;
     for (unsigned i = 0; i < song.nPatterns; i++) {
-
         if (!readNextPattern()) return false;
 
-        uint32_t uncompressedSize = patternDatas[i].size();
-        unsigned ops = compressPattern(i);
+        compressPattern(i);
         if (patternDatas[i].size() == 0) return false;
-        
-        /* Only output compression statistics if we saved any space.
-         * In practice, trackers seem to be pretty good at optimising patterns themselves.
-         */
-        if (ops) {
-            if (!compressed) {
-                log->infoBegin("Pattern compression");
-                compressed = true;
-            }
-            float ratio = 100.0 - patternDatas[i].size() * 100.0 / uncompressedSize;
-            log->infoLine("%4u: % 7u ops, % 4u rows, % 5u bytes, % 5.01f%% compression",
-                          i, ops, patterns[i].nRows, patternDatas[i].size(), ratio);
-        }
     }
-    if (compressed) log->infoEnd();
 
     /* We compress both envelopes and samples in readNextInstrument and its
      * callees, but they only print envelope compression statistics.
      */
-    log->infoBegin("Envelope compression");
     for (unsigned i = 0; i < song.nInstruments; i++) {
         if (!readNextInstrument()) return false;
     }
-    log->infoEnd();
-
-    /* Print sample compression statistics separately from envelope
-     * compression statistics
-     */
-    log->infoBegin("Sample compression");
-    uint8_t sampleNum = 0;
-    for (unsigned i = 0; i < instruments.size(); i++) {
-        if (instruments[i].sample.dataSize) {
-            log->infoLine("Sample %2u: %5u bytes, %s %s",
-                          sampleNum++, instruments[i].sample.dataSize,
-                          encodings[instruments[i].sample.type],
-                          sampleNames.front().c_str());
-            sampleNames.pop();
-        }
-    }
-    assert(sampleNames.size() == 0);
-    log->infoEnd();
 
     // Verification:
     assert(patternDatas.size() == song.nPatterns);
@@ -285,17 +249,8 @@ bool XmTrackerLoader::readNextInstrument()
     uint32_t offset = pos();
     uint32_t instrumentLength = get32();
 
-    // FILE: Instrument name
-    std::string instrumentName;
-    for (int i = 0; i < 22; i++)
-        instrumentName += get8();
-    // Make it pretty for the logger
-    processName(instrumentName);
-    if (instrumentName.size())
-        instrumentName.insert(0, 1, '(').push_back(')');
-
-    // FILE: Instrument type
-    seek(1);
+    // FILE: Instrument name and type
+    seek(22 + 1);
 
     // FILE: Number of samples
     uint16_t nSamples = get16();
@@ -344,10 +299,6 @@ bool XmTrackerLoader::readNextInstrument()
         memcpy(&envelope[0], vEnvelope, envelopeSize);
         size += envelopeSize;
         envelopes.push_back(envelope);
-
-        float ratio = 100.0 - envelopeSize * 100.0 / 48;
-        log->infoLine("Instrument %2u: %2u points, % 5.01f%% compression %s",
-           instruments.size(), instrument.nVolumeEnvelopePoints, ratio, instrumentName.c_str());
     }
 
     // FILE: Number of points in panning envelope
@@ -396,21 +347,8 @@ bool XmTrackerLoader::readNextInstrument()
         // Other tracker implementations claim that this byte is reserved, so ignore if invalid.
     }
 
-    // FILE: Sample name, we don't want it if theres no sampledata
-    if (sample.dataSize) {
-        std::string sampleName;
-        for (int i = 0; i < 22; i++) {
-            sampleName += get8();
-        }
-        // Make it pretty for the logger
-        processName(sampleName);
-        if (sampleName.size()) {
-            sampleName.insert(0, 1, '(').push_back(')');
-        }
-        sampleNames.push(sampleName);        
-    } else {
-        seek(22);
-    }
+    // FILE: Sample name
+    seek(22);
 
     // Read and process sample
     if (!readSample(instrument)) return false;
@@ -526,20 +464,6 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
 }
 
 /*
- * Remove padding from names.
- *
- * Name fields in XM files are defined to be between 17 and 22 ASCII chars,
- * padded by 0x20 chars. In practice it is also common to find names padded
- * with NULs, which std::string will happily store.
- */
-void XmTrackerLoader::processName(std::string &name)
-{
-    while ((name[name.size() - 1] == ' ' || name[name.size() - 1] == '\0') && name.size()) {
-        name.erase(name.size() - 1);
-    }
-}
-
-/*
  * Clear all allocations and collections.
  * Called either by the destructor, on a loader error, or when loading another module.
  */
@@ -552,10 +476,6 @@ bool XmTrackerLoader::init()
     patterns.clear();
     patternDatas.clear();
     patternTable.clear();
-
-    while (!sampleNames.empty()) {
-        sampleNames.pop();
-    }
 
     memset(&song, 0, sizeof(song));
     return false;

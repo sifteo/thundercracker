@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <vector>
-#include <queue>
 #include "logger.h"
 #include "sifteo/abi.h"
 
@@ -78,7 +77,6 @@ private:
 	std::vector<_SYSXMInstrument> instruments;
 	std::vector<std::vector<uint8_t> > envelopes;
 	std::vector<std::vector<uint8_t> > sampleDatas;
-	std::queue<std::string> sampleNames;
 };
 
 }
