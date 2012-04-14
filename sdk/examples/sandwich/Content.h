@@ -51,8 +51,7 @@ struct DialogTextData {
 };
 
 struct DialogData {
-    const AssetImage* npc;
-    uint32_t lineCount;
+    const PinnedAssetImage* npc;
     const DialogTextData* lines;
 };
 

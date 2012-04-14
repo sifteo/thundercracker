@@ -26,15 +26,16 @@ private:
     	unsigned view 		: 3; // 2^bitCount <= VIEW_TYPE_COUNT
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
+    	unsigned hasOverlay : 1;
   	} mFlags;
   	VideoBuffer mCanvas;
 
 public:
 
 	VideoBuffer& Canvas() { return mCanvas; }
-	CubeID GetCube() const { return mCanvas.cube(); }
-	unsigned GetMask() const { return 1 << (31-GetCube()); }
-	bool Touched() const; // cube->touching && !prevTouch
+	CubeID GetID() const { return mCanvas.cube(); }
+	unsigned GetMask() const { return 1 << (31-GetID()); }
+	bool Touched() const { return mFlags.currTouch && !mFlags.prevTouch; }
 	bool Active() const { return mFlags.view; }
 	unsigned ViewType() const { return mFlags.view ; }
 	bool ShowingRoom() const { return mFlags.view == VIEW_ROOM; }
@@ -44,6 +45,7 @@ public:
 	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
 	IdleView& GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return mView.idle; }
 	RoomView& GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return mView.room; }
+	EdgeView& GetEdgeView() { ASSERT(mFlags.view == VIEW_EDGE); return mView.edge; }
 	InventoryView& GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return mView.inventory; }
 	MinimapView& GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return mView.minimap; }
 
@@ -55,11 +57,19 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
-	void RestoreCanonicalVram();
+	void FlagOverlay() { mFlags.hasOverlay = true; }
+	void RestoreCanonicalVideo();
 	void RefreshInventory();
 
 	Side VirtualTiltDirection() const;
 	Viewport* VirtualNeighborAt(Side side) const;
+
+	// Helper Methods
+	void DrawRoom(int roomId);
+	void DrawRoomOverlay(unsigned tid, const uint8_t *pRle);
+	void DrawOffsetMap(Int2 pos);
+
+
 
 private:
 	bool SetLocationView(unsigned roomId, Side side, bool force);

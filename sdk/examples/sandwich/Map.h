@@ -7,7 +7,6 @@
 #define PATH_CAPACITY   (32)
 #define BLOCK_CAPACITY  (8)
 #define BOMB_CAPACITY   (4)
-#define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
 // DATA STRUCTURES FOR PATH - these are a bit messy as a side-effect of 
@@ -24,7 +23,8 @@ struct BroadLocation {
 
 struct BroadPath {
   int8_t steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
-  BroadPath();
+  bool triggeredByEdgeGate;
+  
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
@@ -52,15 +52,14 @@ private:
   uint8_t mBlockCount;
   uint8_t mBombCount;
 
-
 public:
   void Init();
 
   void SetData(const MapData& map);
   void RefreshTriggers();
 
-  Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
-  Room* GetRoom(Int2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
+  Room& GetRoom(int roomId) { return mRooms[roomId]; }
+  Room& GetRoom(Int2 loc) { return mRooms[loc.x + mData->width * loc.y]; }
 
   bool CanTraverse(BroadLocation loc, Side side);
   bool GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* outNeighbor);
@@ -75,11 +74,11 @@ public:
   unsigned BombCount() const { return mBombCount; }
   Bomb* BombBegin() { return mBomb; }
   Bomb* BombEnd() { return mBomb + mBombCount; }
-  Bomb* BombFor(const ItemData* bomb);
+  Bomb* BombFor(const ItemData& bomb);
 
   // Map Data Getters
 
-  const MapData* Data() const { return mData; }
+  const MapData& Data() const { return *mData; }
   
   const bool GetPortalX(int x, int y) const {
     // note that the pitch here is one less than the width because 
