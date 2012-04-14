@@ -23,14 +23,14 @@ public:
     void init();
 
     void startSample();
-    void isr();
+    bool isr();
     uint16_t lastReading() const {
         return reading;
     }
 
 private:
     HwTimer timer;
-    int timerChan;
+    const uint8_t timerChan;
     GPIOPin pin;
     uint16_t startTime;
     uint16_t reading;
