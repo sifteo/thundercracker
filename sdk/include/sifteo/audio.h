@@ -14,6 +14,13 @@
 namespace Sifteo {
 
 /**
+ * @defgroup audio Audio
+ *
+ * Audio overview blurb here...
+ * @{
+ */
+
+/**
  * Provides audio sample playback support.
  *
  * Supported sample formats are ADPCM and standard PCM format. stir processes
@@ -136,5 +143,8 @@ struct AudioChannel {
     }
 };
 
+/**
+ * @} endgroup Audio
+*/
 
 } // namespace Sifteo
