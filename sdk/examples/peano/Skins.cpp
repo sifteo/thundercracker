@@ -1,6 +1,7 @@
 #include "assets.gen.h"
 #include "Skins.h"
 #include "Game.h"
+#include "AudioPlayer.h"
 
 namespace TotalsGame
 {
@@ -63,6 +64,8 @@ void SetSkin(SkinType skinType)
     //animate transition to new skin
     for(int c = 0; c < NUM_CUBES; c++)
     {
+        AudioPlayer::PlayShutterOpen();
+
         TotalsCube *cube = Game::cubes+c;
         //bring in from top and bottom
         for(int frame = 0; frame <= 9; frame++)
