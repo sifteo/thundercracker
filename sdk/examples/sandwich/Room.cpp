@@ -27,6 +27,12 @@ const RoomData& Room::Data() const {
   return *gGame.GetMap().GetRoomData(Id());
 }
 
+bool Room::OnEdge() const {
+  auto& data = gGame.GetMap().Data();
+  auto loc = Location();
+  return loc.x == 0 || loc.y == 0 || loc.x == data.width-1 || loc.y == data.height-1;
+}
+
 bool Room::HasOpenDoor() const {
   return HasDoor() && !gGame.GetState().IsActive(Door().trigger);
 }

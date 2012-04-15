@@ -29,10 +29,7 @@ void Game::MainLoop() {
 	mAnimFrames = 0;
 	mState.Init();
 	mMap.Init();
-	Viewport::Iterator p = ListViews();
-	while(p.MoveNext()) {
-		p->Init();
-	}
+	for (auto& view : views) { view.Init(); }
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View().ShowLocation(mPlayer.Location(), true);
@@ -53,7 +50,6 @@ void Game::MainLoop() {
 		unsigned targetViewId = 0xff;
 		while(targetViewId == 0xff) {
 			Paint();
-
 			OnTick();
 			if (mPlayer.CurrentView()->Parent().Touched()) {
 				if (mPlayer.Equipment()) {
@@ -63,8 +59,13 @@ void Game::MainLoop() {
 				} else {
 					OnActiveTrigger();
 				}
-			} else if (mPlayer.CurrentView()->GatewayTouched()) {
-				OnEnterGateway(mPlayer.CurrentView()->GetRoom().Gateway());
+			} else if (mPlayer.CurrentRoom()->HasGateway()) {
+				// edge mask for faster listing?
+				for(auto& view : views) {
+					if (view.Touched() && view.ShowingGatewayEdge()) {
+						OnEnterGateway(*view.GetEdgeView().Gateway());
+					}
+				}
 			}
 	      	if (!gGame.GetMap().FindBroadPath(&mPath, &targetViewId)) {
 	      		Viewport::Iterator p = ListViews();
@@ -200,7 +201,12 @@ void Game::MainLoop() {
 		      	}
 		    }
 		} while(mPath.DequeueStep(*mPlayer.Current(), mPlayer.Target()));
-  		OnActiveTrigger();
+		if (mPath.triggeredByEdgeGate) {
+			OnEnterGateway(mPlayer.CurrentRoom()->Gateway());
+		} else {
+			OnActiveTrigger();
+		}
+  		
 	}
 	Events::neighborAdd.unset();
     Events::neighborRemove.unset();

@@ -45,7 +45,6 @@ public:
   unsigned Id() const { return mRoomId; }
   Int2 Location() const;
   Room& GetRoom() const;
-  bool GatewayTouched() const;
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
 
@@ -67,7 +66,7 @@ public:
   void RefreshDoor();
   void RefreshDepot();
 
-  void SetPlayerFrame(unsigned frame);
+  void SetPlayerImage(const PinnedAssetImage& img, unsigned frame=0);
   void SetEquipPosition(Int2 p);
   void SetItemPosition(Int2 p);
 

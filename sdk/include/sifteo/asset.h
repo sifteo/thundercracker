@@ -651,5 +651,8 @@ struct AssetAudio {
     _SYSAudioModule sys;
 };
 
+struct AssetTracker {
+    _SYSXMSong song;
+};
 
 };  // namespace Sifteo
