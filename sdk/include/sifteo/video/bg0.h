@@ -187,7 +187,7 @@ struct BG0Drawable {
      */
     void fill(UInt2 topLeft, UInt2 size, const PinnedAssetImage &image)
     {
-        fill(topLeft, size, image.tile(sys.cube));
+        fill(topLeft, size, image.tile(sys.cube, 0));
     }
 
     /**
