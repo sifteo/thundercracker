@@ -323,7 +323,7 @@ void RunSetup()
         items[4].SetImage(&Icon_Back);
 
 #define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
-        SET_PARAMS(items[0], Toggle_SkillLevel, (int)Game::skillLevel, "Toggle Mathematical Difficulty.");
+        SET_PARAMS(items[0], Toggle_SkillLevel, (int)Game::skillLevel, "Toggle\nMathematical\nDifficulty.");
         SET_PARAMS(items[1], Toggle_Music, AudioPlayer::MusicMuted(), "Toggle\nbackground music.");
         SET_PARAMS(items[2], Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
         SET_PARAMS(items[3], Clear_Data, 0, "Clear your\nauto-save data.");

@@ -172,9 +172,9 @@ void TiltFlowView::UpdateMenu() {
 
     Byte2 tilt = GetCube()->tilt();
     if (
-            tilt.x == 1 ||
-            (tilt.x < 1 && mItem == menu->GetNumItems()-1 && mOffsetX >= 0) ||
-            (tilt.x > 1 && mItem == 0 && mOffsetX <= 0)
+            tilt.x == 0 ||
+            (tilt.x < 0 && mItem == menu->GetNumItems()-1 && mOffsetX >= 0) ||
+            (tilt.x > 0 && mItem == 0 && mOffsetX <= 0)
             )
     {
         AudioPlayer::HaltSfx(sfx_Menu_Tilt);
@@ -199,10 +199,10 @@ void TiltFlowView::UpdateMenu() {
 
         // accelerate in the direction of tilt
         mDrawLabel = false;
-        int vSign = tilt.x < 1 ? -1 : 1;
+        int vSign = tilt.x < 0 ? -1 : 1;
 
         // if we're way overtilted (into the upper corners!), accelerate super-fast
-        bool deepMult = tilt.x == 2 ? kDeepTiltAccel : 1;
+        bool deepMult = tilt.x == 1 ? kDeepTiltAccel : 1;
 
         if (vSign > 0) {
             if (mItem > 0) {

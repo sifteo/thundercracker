@@ -17,8 +17,6 @@ private:
     unsigned MeasureGlyph(char ch);
     void DrawText(const char* msg);
     void MeasureText(const char *str, unsigned *outCount, unsigned *outPx);
-    void Erase();
-
 
 public:
     DialogWindow(TotalsCube *mCube);

@@ -260,7 +260,7 @@ Game::GameState Run()
                     // transition out
                     for(int t=0; t<puzzle->GetNumTokens(); ++t)
                     {
-                        Game::cubes[t].vid.bg0.erase();
+                        Game::cubes[t].vid.erase();
                         Game::cubes[t].Image(skin.background);                
                         Game::cubes[t].SetView(NULL);
                         Game::cubes[t].CloseShutters();
@@ -319,7 +319,7 @@ Game::GameState Run()
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {                      
             TotalsCube *c = puzzle->GetToken(i)->GetTokenView()->GetCube();
-            Game::cubes[i].vid.bg0.erase();
+            Game::cubes[i].vid.erase();
             Game::cubes[i].Image(skin.background_lit);
             c->SetView(NULL);
 

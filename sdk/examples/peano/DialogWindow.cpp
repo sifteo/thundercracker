@@ -161,7 +161,6 @@ void DialogWindow::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-
     mCube->vid.fb128.bitmap(mPosition, vec(8, kFontHeight), data, 2);
 
     mPosition.x += escapement;
@@ -193,11 +192,6 @@ void DialogWindow::MeasureText(const char *str, unsigned *outCount, unsigned *ou
     if (c) { (*outCount)++; }
 }
 
-void DialogWindow::Erase() {
-    mPosition.y = 3;
-    mCube->vid.fb128.fill(vec(0,0), mCube->vid.fb128.size(), 0);
-}
-
 void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
 {
     mCube->vid.initMode(FB128);
@@ -205,6 +199,7 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
     mCube->vid.colormap[0].set(fg);
     mCube->vid.colormap[1].set(bg);
 
+    mPosition.y = 3;
     const char* pNextChar = text;
     while(*pNextChar) {
         pNextChar = Show(pNextChar);
