@@ -13,6 +13,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline void Menu::detectNeighbors()
 {
@@ -185,5 +189,8 @@ inline int Menu::computeCurrentTile()
     return ut;
 }
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo
