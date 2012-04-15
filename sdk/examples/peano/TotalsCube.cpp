@@ -13,11 +13,14 @@ namespace TotalsGame
 	{
 		view = NULL;
 		eventHandler = NULL;       
-
-        overlayShown = false;     
-        
-        vid.attach(*this);
+        overlayShown = false;                     
 	}
+
+    void TotalsCube::Init(Sifteo::CubeID id)
+    {
+        sys = id;
+        vid.attach(*this);
+    }
 
     void TotalsCube::AddEventHandler(EventHandler *e)
     {

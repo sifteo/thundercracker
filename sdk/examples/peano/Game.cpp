@@ -144,10 +144,9 @@ void SaveOptions()
 
 void Run()
 {
-    //loading assets resets video mode to bg0 only.
-    //reset to bg_spr_bg1 as needed
     for(int i = 0; i < NUM_CUBES; i++)
     {
+        cubes[i].Init(i);
         cubes[i].vid.initMode(BG0_SPR_BG1);
     }
 

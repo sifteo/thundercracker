@@ -13,7 +13,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata() 
 .title("Peano\'s Vault") 
-.cubeRange(6);
+.cubeRange(3);
 
 
 
@@ -32,10 +32,6 @@ namespace TotalsGame
 }
 
 void main() {
-    TotalsGame::TotalsCube *cubes = TotalsGame::Game::cubes;
-   for (int i = 0; i < NUM_CUBES; i++) {
-      cubes[i].sys = i;
-   }
 
     TotalsGame::Game::Run();
 }

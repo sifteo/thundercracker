@@ -34,6 +34,7 @@ namespace TotalsGame
 		};
 
 		TotalsCube();
+        void Init(Sifteo::CubeID id);
 		static const float kTransitionTime = 0.1f;
 
         void SetView(View *v);
