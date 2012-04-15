@@ -143,12 +143,14 @@ void SaveOptions()
 }
 
 void Run()
-{
+{    
     for(int i = 0; i < NUM_CUBES; i++)
     {
         cubes[i].Init(i);
         cubes[i].vid.initMode(BG0_SPR_BG1);
     }
+
+    AudioPlayer::Init();
 
     _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);

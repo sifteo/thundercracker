@@ -24,6 +24,8 @@ namespace TotalsGame
 	class AudioPlayer
 	{
 	public:
+        static void Init();
+
 		static void PlaySfx(const AssetAudio& handle, bool preempt=true);
 		static void PlayMusic(const AssetAudio& music, bool loop=true);
 
@@ -40,7 +42,7 @@ namespace TotalsGame
         static void PlayNeighborRemove();
 
 	private:
-        static const int NumSfxChannels = 8;
+        static const int NumSfxChannels = AudioChannel::NUM_CHANNELS - 1;   //save one for music
 #if SFX_ON
 		static AudioChannel channelSfx[NumSfxChannels];
         static const AssetAudio *whatsPlaying[NumSfxChannels];
