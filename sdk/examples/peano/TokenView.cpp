@@ -346,11 +346,6 @@ void TokenView::PaintNow()
     else
     {
         PaintDigit();
-        if(!(mHideMask&BIT_MESSAGE))
-        {
-            GetCube()->vid.sprites[5].setImage(Press_And_Hold, 0);
-            GetCube()->vid.sprites[5].move(128-Press_And_Hold.tileWidth()*8, 128-Press_And_Hold.tileHeight()*8);
-        }
     }
 }
 
