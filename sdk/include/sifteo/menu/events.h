@@ -36,6 +36,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline void Menu::handleNeighborAdd()
 {
@@ -125,5 +129,8 @@ inline bool Menu::dispatchEvent(struct MenuEvent *ev)
     return false;
 }
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo

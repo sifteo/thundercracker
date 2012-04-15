@@ -77,8 +77,8 @@ static unsigned VisitMapView(VisitorStatus* status, Viewport& view, Int2 loc, Vi
 
 void Game::CheckMapNeighbors() {
   mNeighborDirty = false;
-  Viewport *root = mPlayer.View();
-  if (!root->ShowingRoom()) { return; }
+  auto& root = mPlayer.View();
+  if (!root.ShowingRoom()) { return; }
   
   // will be used to track the status of the visitor as he
   // walks the "neighborhood tree"
@@ -91,7 +91,7 @@ void Game::CheckMapNeighbors() {
   unsigned result;
   do {
     status.visitMask = 0x00000000;
-    result = VisitMapView(&status, *root, root->GetRoomView().Location());
+    result = VisitMapView(&status, root, root.GetRoomView().Location());
   } while(result != RESULT_OKAY);
 
   // Make sure all views outside the neighborhood are not showing rooms

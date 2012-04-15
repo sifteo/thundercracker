@@ -24,6 +24,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline void Menu::changeState(MenuState newstate)
 {
@@ -350,5 +354,8 @@ inline void Menu::transFromFinish()
     }
 }
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo

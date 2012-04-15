@@ -15,6 +15,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * This is a POD type to represent a 16-bit 5:6:5 color,
@@ -333,5 +337,8 @@ struct Colormap {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo

@@ -167,7 +167,7 @@ void Dialog::Erase() {
 }
 
 void Dialog::SetAlpha(uint8_t i) {
-    mCube->colormap[0] = color_lerp(i);
+    mCube->colormap[1] = color_lerp(i);
 }
 
 void Dialog::ShowAll(const char* lines) {

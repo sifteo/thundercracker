@@ -15,6 +15,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * SpriteRefs refer to a single sprite on a single cube. Typically these
@@ -277,5 +281,8 @@ struct SpriteLayer {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo

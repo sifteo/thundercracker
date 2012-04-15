@@ -95,7 +95,7 @@ bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
 }
 
 //return whether we touched bg1 or not
-bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
+bool Intro::Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid, CubeWrapper *pWrapper )
 {
     float timePercent = m_fTimer / STATE_TIMES[ m_state ];
 
@@ -126,7 +126,7 @@ bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &
             break;
         }
         default:
-            pWrapper->getBanner().Draw( bg1helper );
+            pWrapper->getBanner().Draw( bg1buffer );
             return true;
     }
 

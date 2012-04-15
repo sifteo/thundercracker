@@ -25,9 +25,10 @@ public:
 
     Glimmer();
     void Reset();
-    void Update( float dt );
-    void Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper );
+    void Update( float dt, CubeWrapper *pWrapper );
+    void Draw( TileBuffer<16, 16> &bg1buffer, CubeWrapper *pWrapper ) __attribute__ ((noinline));
     inline void Stop() { m_group = NUM_GLIMMER_GROUPS; }
+    inline bool IsActive() const { return m_group < NUM_GLIMMER_GROUPS; }
 	
 private:
     unsigned int m_frame;

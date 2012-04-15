@@ -27,6 +27,7 @@ namespace Stir {
 const char Group::className[] = "group";
 const char Image::className[] = "image";
 const char Sound::className[] = "sound";
+const char Tracker::className[] = "tracker";
 
 Lunar<Group>::RegType Group::methods[] = {
     {0,0}
@@ -45,6 +46,9 @@ Lunar<Sound>::RegType Sound::methods[] = {
     {0,0}
 };
 
+Lunar<Tracker>::RegType Tracker::methods[] = {
+    {0,0}
+};
 
 Script::Script(Logger &l)
     : log(l), anyOutputs(false), outputHeader(NULL),
@@ -60,6 +64,7 @@ Script::Script(Logger &l)
     Lunar<Group>::Register(L);
     Lunar<Image>::Register(L);
     Lunar<Sound>::Register(L);
+    Lunar<Tracker>:: Register(L);
 }
 
 Script::~Script()
@@ -105,6 +110,21 @@ bool Script::run(const char *filename)
             source.writeSound(*sound);
         }
 
+        log.infoEnd();
+    }
+
+    if (!trackers.empty()) {
+        log.heading("Tracker");
+        log.infoBegin("Module compression");
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
+
+            if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
+                return false;
+            }
+            header.writeTracker(*tracker);
+            source.writeTracker(*tracker);
+        }
         log.infoEnd();
     }
 
@@ -274,6 +294,7 @@ void Script::collect()
         Group *group = Lunar<Group>::cast(L, -2);
         Image *image = Lunar<Image>::cast(L, -2);
         Sound *sound = Lunar<Sound>::cast(L, -2);
+        Tracker *tracker = Lunar<Tracker>::cast(L, -2);
 
         if (name && name[0] != '_') {
             if (group || image || sound)
@@ -286,6 +307,10 @@ void Script::collect()
             if (image) {
                 image->setName(name);
                 image->getGroup()->addImage(image);
+            }
+            if (tracker) {
+                tracker->setName(name);
+                trackers.insert(tracker);
             }
             if (sound) {
                 sound->setName(name);
@@ -582,19 +607,6 @@ Sound::Sound(lua_State *L)
         setEncode("");  // Default
     }
     
-    if (Script::argMatch(L, "quality")) {
-        setQuality(lua_tonumber(L, -1));
-    } else {
-        lua_getglobal(L, GLOBAL_QUALITY);
-        setQuality(lua_tonumber(L, -1));
-    }
-
-    if (Script::argMatch(L, "vbr")) {
-        setVBR(lua_toboolean(L, -1));
-    } else {
-        setVBR(false);
-    }
-
     if (Script::argMatch(L, "sample_rate")) {
         setSampleRate(lua_tonumber(L, -1));
     } else {
@@ -635,12 +647,24 @@ Sound::Sound(lua_State *L)
 
     // Validate the encoder parameters immediately, so we can raise an error
     // during script execution rather than during actual audio compression.
-    AudioEncoder *enc = AudioEncoder::create(getEncode(), getQuality(), getVBR());
+    AudioEncoder *enc = AudioEncoder::create(getEncode());
     if (enc)
         delete enc;
     else
         luaL_error(L, "Invalid audio encoding parameters");
 }
 
+Tracker::Tracker(lua_State *L)
+{
+    if (!Script::argBegin(L, className))
+        return;
+        
+    if (Script::argMatch(L, 1)) {
+        const char *filename = lua_tostring(L, -1);
+        mFile = filename;
+    }
+
+    Script::argEnd(L);
+}
 
 };  // namespace Stir

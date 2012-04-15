@@ -13,6 +13,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     struct MenuItem *aItems)
@@ -227,6 +231,9 @@ inline void Menu::setIconYOffset(uint8_t px)
     updateBG0();
 }
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo
 
