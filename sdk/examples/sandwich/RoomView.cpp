@@ -83,6 +83,8 @@ void RoomView::Restore() {
 void RoomView::Update() {
   // update animated tiles (could suffer some optimization)
   const unsigned t = gGame.AnimFrame() - mStartFrame;
+
+
   for(unsigned i=0; i<flags.animTileCount; ++i) {
     const AnimTile& view = mAnimTiles[i];
     const unsigned localt = t % (view.frameCount << 2);
@@ -90,7 +92,7 @@ void RoomView::Update() {
         mCanvas.bg0.image(
           vec((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap().Data().tileset),
-          gGame.GetMap().Data().roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
+          gGame.GetMap().GetTileId(mRoomId, view.lid) + (localt>>2)
         );
     }
   }
@@ -334,7 +336,7 @@ void RoomView::ComputeAnimatedTiles() {
   if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
   const AnimatedTileData* pAnims = gGame.GetMap().Data().animatedTiles;
   for(unsigned lid=0; lid<64; ++lid) {
-    uint8_t tid = gGame.GetMap().Data().roomTiles[mRoomId].tiles[lid];
+    uint8_t tid = gGame.GetMap().GetTileId(mRoomId, lid);
     bool is_animated = false;
     for(unsigned i=0; i<tc; ++i) {
       if (pAnims[i].tileId == tid) {

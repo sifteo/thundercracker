@@ -65,7 +65,7 @@ public:
 	Viewport* VirtualNeighborAt(Side side) const;
 
 	// Helper Methods
-	void DrawRoom(int roomId);
+	void DrawRoom(unsigned roomId);
 	void DrawRoomOverlay(unsigned tid, const uint8_t *pRle);
 	void DrawOffsetMap(Int2 pos);
 
