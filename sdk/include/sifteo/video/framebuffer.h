@@ -15,6 +15,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * An FBDrawable object is a VRAM accessor for drawing pixel graphics,
@@ -296,5 +300,8 @@ typedef FBDrawable<32,32,4> FB32Drawable;
 typedef FBDrawable<64,64,1> FB64Drawable;
 typedef FBDrawable<128,48,1> FB128Drawable;
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo
