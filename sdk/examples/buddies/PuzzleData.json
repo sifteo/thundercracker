@@ -526,44 +526,44 @@
               }
             }, 
             {
-              "name": "boff", 
+              "name": "amor", 
               "pieces_end": {
                 "bottom": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "mouth", 
                   "solve": true
                 }, 
                 "left": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_left", 
                   "solve": true
                 }, 
                 "right": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_right", 
                   "solve": true
                 }, 
                 "top": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "hair", 
                   "solve": true
                 }
               }, 
               "pieces_start": {
                 "bottom": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "hair"
                 }, 
                 "left": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_left"
                 }, 
                 "right": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_right"
                 }, 
                 "top": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "mouth"
                 }
               }
@@ -604,7 +604,7 @@
             ]
           }, 
           "shuffles": 0, 
-          "title": "The\nMysterious\nVisitor"
+          "title": "Mysterious\nVisitor"
         }, 
         {
           "buddies": [
@@ -695,44 +695,44 @@
               }
             }, 
             {
-              "name": "boff", 
+              "name": "amor", 
               "pieces_end": {
                 "bottom": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "mouth", 
                   "solve": true
                 }, 
                 "left": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_left", 
                   "solve": true
                 }, 
                 "right": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_right", 
                   "solve": true
                 }, 
                 "top": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "hair", 
                   "solve": true
                 }
               }, 
               "pieces_start": {
                 "bottom": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "mouth"
                 }, 
                 "left": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_left"
                 }, 
                 "right": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "eye_right"
                 }, 
                 "top": {
-                  "buddy": "boff", 
+                  "buddy": "amor", 
                   "part": "hair"
                 }
               }

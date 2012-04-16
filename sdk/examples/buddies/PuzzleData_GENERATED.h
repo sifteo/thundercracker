@@ -313,7 +313,7 @@ const CutsceneLine kCutsceneLinesEnd_2_0[] =
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Way to go!"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's do some\nmore!"),
 };
-const BuddyId kBuddies_2_0[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_BOFF };
+const BuddyId kBuddies_2_0[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_AMOR };
 const Piece kPiecesStart_2_0[][NUM_SIDES] =
 {
     {
@@ -329,10 +329,10 @@ const Piece kPiecesStart_2_0[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_HAIR),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
 };
 const Piece kPiecesEnd_2_0[][NUM_SIDES] =
@@ -350,10 +350,10 @@ const Piece kPiecesEnd_2_0[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
     },
 };
 
@@ -374,7 +374,7 @@ const CutsceneLine kCutsceneLinesEnd_2_1[] =
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Way to go!"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's do some\nmore!"),
 };
-const BuddyId kBuddies_2_1[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_BOFF };
+const BuddyId kBuddies_2_1[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_AMOR };
 const Piece kPiecesStart_2_1[][NUM_SIDES] =
 {
     {
@@ -390,10 +390,10 @@ const Piece kPiecesStart_2_1[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
 };
 const Piece kPiecesEnd_2_1[][NUM_SIDES] =
@@ -411,10 +411,10 @@ const Piece kPiecesEnd_2_1[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
     },
 };
 
@@ -504,7 +504,7 @@ const Puzzle kPuzzles[8] =
         0,
         kPiecesStart_1_0, kPiecesEnd_1_0),
     Puzzle(
-        "Eldritch\nHorror",
+        "Mysterious\nVisitor",
         "You have to\nbreak up a\nface to fix\na face.",
         kCutsceneBuddiesStart_2_0, arraysize(kCutsceneBuddiesStart_2_0),
         kCutsceneLinesStart_2_0, arraysize(kCutsceneLinesStart_2_0),
