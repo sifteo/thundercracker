@@ -47,11 +47,11 @@ class PaintControl {
 
     static bool allowContinuous(CubeSlot *cube);
     void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags);
-    void exitContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags, SysTime::Ticks timestamp);
+    void exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags, SysTime::Ticks timestamp);
     bool isContinuous(_SYSVideoBuffer *vbuf);
     void setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf, 
         uint8_t &flags, SysTime::Ticks timestamp);
-    void makeSynchronous(_SYSVideoBuffer *vbuf);
+    void makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf);
     bool canMakeSynchronous(_SYSVideoBuffer *vbuf, SysTime::Ticks timestamp);
 };
 

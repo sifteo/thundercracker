@@ -10,8 +10,8 @@
 #include "cube.h"
 #include "systime.h"
 
-#define LOG_PREFIX  "PAINT[%p]: %12u us  "
-#define LOG_PARAMS  this, unsigned(SysTime::ticks() / SysTime::usTicks(1))
+#define LOG_PREFIX  "PAINT[%d]: %12u us  "
+#define LOG_PARAMS  cube->id(), unsigned(SysTime::ticks() / SysTime::usTicks(1))
 
 
 /*
@@ -103,7 +103,7 @@ void PaintControl::waitForPaint(CubeSlot *cube)
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (vbuf && canMakeSynchronous(vbuf, now)) {
-        makeSynchronous(vbuf);
+        makeSynchronous(cube, vbuf);
         pendingFrames = 0;
     }
 
@@ -216,7 +216,7 @@ void PaintControl::waitForFinish(CubeSlot *cube)
 
     // Disable continuous rendering now, if it was on.
     uint8_t vf = getFlags(vbuf);
-    exitContinuous(vbuf, vf, now);
+    exitContinuous(cube, vbuf, vf, now);
     setFlags(vbuf, vf);
 
     // Things to wait for...
@@ -234,7 +234,7 @@ void PaintControl::waitForFinish(CubeSlot *cube)
     }
 
     // We know we're sync'ed now.
-    makeSynchronous(vbuf);
+    makeSynchronous(cube, vbuf);
 
     DEBUG_LOG((LOG_PREFIX "-waitForFinish(), flags=%08x vf=%02x ack=%02x\n",
         LOG_PARAMS, vbuf->flags, getFlags(vbuf), cube->getLastFrameACK()));
@@ -268,7 +268,7 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
         // Too few pending frames? Disable continuous mode.
         if (pendingFrames < fpMin) {
             uint8_t vf = getFlags(vbuf);
-            exitContinuous(vbuf, vf, SysTime::ticks());
+            exitContinuous(cube, vbuf, vf, SysTime::ticks());
             setFlags(vbuf, vf);
         }
 
@@ -362,8 +362,8 @@ void PaintControl::enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_
     }
 }
 
-void PaintControl::exitContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags,
-    SysTime::Ticks timestamp)
+void PaintControl::exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+    uint8_t &flags, SysTime::Ticks timestamp)
 {
     DEBUG_LOG((LOG_PREFIX "exitContinuous\n", LOG_PARAMS));
 
@@ -391,7 +391,7 @@ void PaintControl::setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf,
         flags |= _SYS_VF_TOGGLE;
 }
 
-void PaintControl::makeSynchronous(_SYSVideoBuffer *vbuf)
+void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
 {
     DEBUG_LOG((LOG_PREFIX "makeSynchronous\n", LOG_PARAMS));
 
