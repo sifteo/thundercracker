@@ -1,4 +1,5 @@
 import sys, usb.core, usb.util
+import serial
 import mastertests
 
 IN_EP = 0x81
@@ -7,6 +8,32 @@ OUT_EP = 0x1
 SIFTEO_VID  = 0x22fa    # Sifteo
 MASTER_PID  = 0x0105    # Master Cube product ID
 TESTJIG_PID = 0x0110    # Test Jig product ID
+
+class TestResponse(object):
+    def __init__(self, opcode, payload):
+        self.opcode = opcode
+        self.payload = payload
+
+class SerialDevice(object):
+    def __init__(self, comport):
+        self._dev = serial.Serial(baudrate = 115200, port = comport)
+        self._dev.flushInput()
+        self._dev.flushOutput()
+
+    # first byte is length, followed by payload
+    def writeMsg(self, payload):
+        msg = [len(payload) + 1]
+        msg.extend(payload)
+        bytestr = "".join(chr(b) for b in msg)
+        self._dev.write(bytestr)
+
+    # first byte indicates length, then return the payload as an array
+    def getResponse(self):
+        numBytes = ord(self._dev.read())
+        payloadStr = self._dev.read(numBytes - 1)
+        payload = [ord(b) for b in payloadStr]
+
+        return TestResponse(payload[0], payload[1:])
 
 class UsbDevice(object):
     def __init__(self, pid):
@@ -24,29 +51,38 @@ class UsbDevice(object):
 
 # simple manager to lazily access devices
 class DeviceManager(object):
-    def __init__(self):
-        self._master = None
+    def __init__(self, comport = None):
+        self._masterUSB = None
         self._testjig = None
+        self._masterUART = None
+        self._comport = comport
 
     def testjig(self):
         if self._testjig is None:
             self._testjig = UsbDevice(TESTJIG_PID)
         return self._testjig
 
-    def master(self):
-        if self._master is None:
-            self._master = UsbDevice(MASTER_PID)
-        return self._master
+    def masterUSB(self):
+        if self._masterUSB is None:
+            self._masterUSB = UsbDevice(MASTER_PID)
+        return self._masterUSB
 
-def runAllTests():
-    mgr = DeviceManager()
+    def masterUART(self):
+        if self._masterUART is None:
+            self._masterUART = SerialDevice(self._comport)
+        return self._masterUART
 
-    # mastertests.StmExternalFlashComms(mgr)
-    mastertests.StmNeighborRx(mgr)
+def runAllTests(devManager):
+    
+    mastertests.StmExternalFlashComms(devManager)
 
 if __name__ == '__main__':
 
-    if (len(sys.argv) == 1):
-        runAllTests()
-    else:
-        print "TODO: run specific tests"
+    if len(sys.argv) < 2:
+        print >> sys.stderr, "usage: python factorytest.py <comport>"
+        sys.exit(1)
+
+    comport = sys.argv[1]
+    mgr = DeviceManager(comport)
+    
+    runAllTests(mgr)
