@@ -49,7 +49,7 @@ struct ItemTypeData {
 };
 
 struct DialogTextData {
-    const AssetImage* detail;
+    const FlatAssetImage* detail;
     const char* line;
 };
 

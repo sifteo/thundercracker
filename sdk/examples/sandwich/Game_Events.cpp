@@ -40,10 +40,12 @@ unsigned Game::OnPassiveTrigger() {
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
   RoomView* view;
+  unsigned by;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
     view = mPlayer.CurrentView();
+    by = view->EquipSprite().y();
     view->HideEquip();
   } else {
     auto p = ListLockedViews();
@@ -54,16 +56,30 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
         room.BombThisFucker();
         view = &(p->GetRoomView());
         view->Unlock();
+        by = view->TriggerSprite().y();
         view->HideItem();
         break;
       }
     }
   }
-  view->HideOverlay();
+  
   auto& g = view->Parent().Canvas();
-  g.bg0.erase(WhiteTile);
+  view->HideOverlay();
 
-  for(;;) Paint();
+  // compute the tile-row of the bomb
+  by >>= 3;
+  for(int rt=by, rb=by+1; rt>=0||rb<16; --rt, ++rb) {
+    if (rt>=0) {
+      LOG_INT(rt);
+      g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0));
+    }
+    if (rb<16) {
+      g.bg0.span(vec(0, rb), 16, WhiteTile);
+    }
+    DoPaint();
+  }
+
+  for(;;) DoPaint();
 
   view->RefreshOverlay();
 }

@@ -157,6 +157,7 @@ void Hardware::graphicsTick()
 
     Flash::Pins flashp = {
         /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
+        /* power   */ ctrl_port & CTRL_DS_EN,
         /* oe      */ ctrl_port & CTRL_FLASH_OE,
         /* ce      */ 0,
         /* we      */ ctrl_port & CTRL_FLASH_WE,
@@ -164,6 +165,7 @@ void Hardware::graphicsTick()
     };
 
     LCD::Pins lcdp = {
+        /* power   */ ctrl_port & CTRL_3V3_EN,
         /* csx     */ 0,
         /* dcx     */ ctrl_port & CTRL_LCD_DCX,
         /* wrx     */ addr_port & 1,
@@ -271,10 +273,10 @@ void Hardware::initVCD(VCDWriter &vcd)
     
         // Ctrl port, broken out
         vcd.define("lcd_dcx", &cpu.mSFR[CTRL_PORT], 1, 0);
-        vcd.define("flash_lat2", &cpu.mSFR[CTRL_PORT], 1, 1);
-        vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 2);
+        vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 1);
+        vcd.define("flash_lat2", &cpu.mSFR[CTRL_PORT], 1, 2);
         vcd.define("en3v3", &cpu.mSFR[CTRL_PORT], 1, 3);
-        vcd.define("lcd_backlight", &cpu.mSFR[CTRL_PORT], 1, 4);
+        vcd.define("ds_en", &cpu.mSFR[CTRL_PORT], 1, 4);
         vcd.define("flash_we", &cpu.mSFR[CTRL_PORT], 1, 5);
         vcd.define("flash_oe", &cpu.mSFR[CTRL_PORT], 1, 6);
         vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8); 
