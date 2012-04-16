@@ -69,6 +69,7 @@ struct VRAM {
         Atomic::Or(vbuf.flags, lockFlags);
         ASSERT(addr < _SYS_VRAM_WORDS);
         vbuf.lock |= maskCM16(addr);
+        Atomic::Barrier();
     }
 
     static void unlock(_SYSVideoBuffer &vbuf) {

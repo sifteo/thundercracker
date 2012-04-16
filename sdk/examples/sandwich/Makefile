@@ -34,13 +34,12 @@ OBJS = \
 	Viewport.o \
 
 ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
-CDEPS += *.h 
-
-include $(TC_DIR)/sdk/Makefile.rules
 
 GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
 GENERATED_FILES += content_crc.txt
+
+include $(TC_DIR)/sdk/Makefile.rules
 
 content.gen.cpp: content_crc.txt
 

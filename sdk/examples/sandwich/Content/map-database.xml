@@ -1,4 +1,9 @@
 <map-database>
+
+	<map id="sandbox">
+		<name>Programming Sandbox</name>
+	</map>
+	
 	<!--
 
 	<map id="forest">
@@ -39,11 +44,7 @@
 		<map id="temple_level7">
 		<name>Sky Temple 7</name>
 	</map>
-
+	
 	-->
-
-	<map id="sandbox">
-		<name>Programming Sandbox</name>
-	</map>
 
 </map-database>

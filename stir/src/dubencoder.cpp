@@ -206,8 +206,8 @@ void DUBEncoder::encodeBlock(uint16_t *pTopLeft,
 
 void DUBEncoder::debugCode(int x, int y, DUBEncoder::Code c, int tile) const
 {
-#if 0
-    printf("(%d, %d) - {%d,%d} = %04x\n", x, y, c.type, c.value, tile);
+#ifdef DEBUG_DUB
+    printf("DUB: (%d, %d) - {%d,%d} = %04x\n", x, y, c.type, c.value, tile);
 #endif
 }
 

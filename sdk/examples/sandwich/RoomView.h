@@ -47,6 +47,12 @@ public:
   Room& GetRoom() const;
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
+  SpriteRef BffSprite();
+  SpriteRef TriggerSprite();
+  SpriteRef EquipSprite();
+  SpriteRef PlayerSprite();
+  SpriteRef NpcSprite();
+  SpriteRef BlockSprite();
 
 
   // methods
