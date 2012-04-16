@@ -6,8 +6,6 @@ OBJS = $(ASSETS).gen.o main.o StateMachine.o \
 GameStateMachine.o WordGame.o \
 CubeStateMachine.o Dictionary.o \
 PrototypeWordList.o SavedData.o \
-TileTransparencyLookup.o \
-TileTransparencyLookupData.o PartialAnimationData.o \
 Utility.o Anim.o \
 qsort.o bsearch.o
 

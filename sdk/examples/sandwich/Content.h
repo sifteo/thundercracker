@@ -23,6 +23,9 @@ using namespace Sifteo;
 #define ITEM_TRIGGER_BOOT   1
 #define ITEM_TRIGGER_BOMB   2
 
+#define TILE_TYPE_8         0
+#define TILE_TYPE_16        1
+
 #define TARGET_TYPE_GATEWAY 0
 #define TARGET_TYPE_ROOM    1
 
@@ -46,13 +49,12 @@ struct ItemTypeData {
 };
 
 struct DialogTextData {
-    const AssetImage* detail;
+    const FlatAssetImage* detail;
     const char* line;
 };
 
 struct DialogData {
-    const AssetImage* npc;
-    uint32_t lineCount;
+    const PinnedAssetImage* npc;
     const DialogTextData* lines;
 };
 
@@ -170,7 +172,7 @@ struct MapData {
 
     // tile buffers
     const RoomData* rooms;
-    const RoomTileData* roomTiles;
+    const void* roomTiles;
     const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
     const uint8_t* yportals; // bit array of portals between rooms (x,y) and (x,y+1)
@@ -194,6 +196,7 @@ struct MapData {
     // other counts
     uint8_t animatedTileCount; // do we really need this? can we null-terminate?
     uint8_t ambientType; // 0 - None
+    uint8_t tileType;
 
     // size
     uint8_t width : 4;
