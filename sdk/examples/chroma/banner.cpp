@@ -18,7 +18,7 @@ Banner::Banner()
 }
 
 
-void Banner::Draw( TileBuffer<16, 16> &bg1buffer )
+void Banner::Draw( VideoBuffer &vid )
 {
     int iLen = m_Msg.size();
     if( iLen == 0 )
@@ -27,8 +27,12 @@ void Banner::Draw( TileBuffer<16, 16> &bg1buffer )
     if( m_tiles == 0 )
         return;
 
+    vid.bg1.eraseMask();
+    vid.bg1.setMask(BG1Mask::filled(vec(0,6), vec(16,7)));
+
     //bg1buffer.image( vec( 0, 6 ), BannerImg );
-    bg1buffer.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( CENTER_PT - m_tiles, 0 ), BannerImg, vec<unsigned>( m_tiles * 2, BANNER_ROWS ) );
+    //bg1buffer.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( CENTER_PT - m_tiles, 0 ), BannerImg, vec<unsigned>( m_tiles * 2, BANNER_ROWS ) );
+    vid.bg1.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( m_tiles * 2, BANNER_ROWS ), BannerImg, vec<unsigned>( CENTER_PT - m_tiles, 0 ) );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -36,7 +40,8 @@ void Banner::Draw( TileBuffer<16, 16> &bg1buffer )
     {
         int iOffset = iStartXTile + i;
 
-        bg1buffer.image( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        vid.bg1.image( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        //bg1buffer.image( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
     }
 }
 

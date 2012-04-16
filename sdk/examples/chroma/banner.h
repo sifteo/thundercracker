@@ -28,7 +28,7 @@ public:
 
 	Banner();
 
-    void Draw( TileBuffer<16, 16> &bg1buffer );
+    void Draw( VideoBuffer &vid );
     void Update( SystemTime t );
 
     void SetMessage( const char *pMsg, float fTime = DEFAULT_FADE_DELAY );

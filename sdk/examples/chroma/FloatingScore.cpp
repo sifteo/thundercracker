@@ -44,7 +44,7 @@ void FloatingScore::Draw( TileBuffer<16, 16> &bg1buffer )
 
     for( int i = 0; i < iLen; i++ )
     {
-        bg1buffer.image( vec( xOff + ( i * PointFont.pixelWidth() ), yOff ), PointFont, buf[i] - '0' );
+        bg1buffer.image( vec( xOff + ( i * PointFont.tileWidth() ), yOff ), PointFont, buf[i] - '0' );
     }
 }
 
