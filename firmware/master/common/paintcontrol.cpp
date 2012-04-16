@@ -130,8 +130,10 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     int32_t pending = Atomic::Load(pendingFrames);
     int32_t newPending = pending;
 
-    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x vf=%02x\n",
-        LOG_PARAMS, pending, vbuf->flags, getFlags(vbuf)));
+    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x vf=%02x "
+        "lock=%08x cm16=%08x\n",
+        LOG_PARAMS, pending, vbuf->flags, getFlags(vbuf),
+        vbuf->lock, vbuf->cm16));
 
     bool needPaint = (vbuf->flags & _SYS_VBF_NEED_PAINT) != 0;
     Atomic::And(vbuf->flags, ~_SYS_VBF_NEED_PAINT);
