@@ -29,6 +29,7 @@ class LCD {
     struct Pins {
         /* Configured for an 8-bit parallel bus, in 80-system mode */
         
+        uint8_t   power;      // IN, active-high
         uint8_t   csx;        // IN, active-low
         uint8_t   dcx;        // IN, low=cmd high=data
         uint8_t   wrx;        // IN, rising edge
@@ -61,6 +62,7 @@ class LCD {
         mode_awake = 0;
         mode_display_on = 0;
         mode_te = 0;
+        mode_power_on = 1;
         
         write_count = 0;
         pixel_count = 0;
@@ -76,14 +78,23 @@ class LCD {
          *   - 16-bit color depth, RGB-565 (3AH = 05)
          */
         
-        if (!pins->csx && pins->wrx && !prev_wrx) {
-            if (pins->dcx) {
-                /* Data write strobe */
-                data(pins->data_in);
-            } else {
-                /* Command write strobe */
-                command(pins->data_in);
+        if (pins->power) {
+            if (!mode_power_on)
+                init();
+        
+            if (!pins->csx && pins->wrx && !prev_wrx) {
+                if (pins->dcx) {
+                    /* Data write strobe */
+                    data(pins->data_in);
+                } else {
+                    /* Command write strobe */
+                    command(pins->data_in);
+                }
             }
+        } else {
+            mode_display_on = 0;
+            mode_awake = 0;
+            mode_power_on = 0;
         }
 
         prev_wrx = pins->wrx;
@@ -362,6 +373,7 @@ class LCD {
     uint8_t mode_awake;
     uint8_t mode_display_on;
     uint8_t mode_te;
+    uint8_t mode_power_on;
 
     /*
      * Model-specific emulation characteristics.

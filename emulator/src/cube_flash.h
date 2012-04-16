@@ -32,6 +32,7 @@ class Flash {
 
     struct Pins {
         uint32_t  addr;       // IN
+        uint8_t   power;      // IN, active-high
         uint8_t   oe;         // IN, active-low
         uint8_t   ce;         // IN, active-low
         uint8_t   we;         // IN, active-low
@@ -165,7 +166,7 @@ class Flash {
     }
 
     ALWAYS_INLINE void cycle(Pins *pins) {
-        if (pins->ce) {
+        if (pins->ce || !pins->power) {
             // Chip disabled
             pins->data_drv = 0;
             prev_we = 1;
