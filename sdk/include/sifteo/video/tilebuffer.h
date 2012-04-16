@@ -18,6 +18,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * A TileBuffer is a drawable that's backed by plain memory, instead of
@@ -351,5 +355,8 @@ struct TileBuffer {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo

@@ -7,7 +7,6 @@
 #define PATH_CAPACITY   (32)
 #define BLOCK_CAPACITY  (8)
 #define BOMB_CAPACITY   (4)
-#define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
 // DATA STRUCTURES FOR PATH - these are a bit messy as a side-effect of 
@@ -24,7 +23,8 @@ struct BroadLocation {
 
 struct BroadPath {
   int8_t steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
-  BroadPath();
+  bool triggeredByEdgeGate;
+  
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
@@ -51,7 +51,6 @@ private:
   Bomb mBomb[BOMB_CAPACITY];
   uint8_t mBlockCount;
   uint8_t mBombCount;
-
 
 public:
   void Init();
@@ -98,22 +97,40 @@ public:
     return mData->yportals[idx>>3] & (1<<(idx%8));
   }
   
-  const RoomData* GetRoomData(int roomId) const {
-    ASSERT(roomId < mData->width * mData->height);
-    return mData->rooms + roomId;
+  const RoomData* GetRoomData(int rid) const {
+    ASSERT(rid < mData->width * mData->height);
+    return mData->rooms + rid;
   }
 
   const RoomData* GetRoomData(Int2 location) const {
     return GetRoomData(GetRoomId(location));
   }
-
-  uint8_t GetTileId(unsigned roomId, Int2 tile) const {
-    ASSERT(0 <= tile.x && tile.x < 8);
-    ASSERT(0 <= tile.y && tile.y < 8);
-    return mData->roomTiles[roomId].tiles[(tile.y<<3) + tile.x];
+  
+  uint8_t GetTile8(unsigned rid, unsigned lid) const {
+    ASSERT(mData->tileType == TILE_TYPE_8);
+    ASSERT(lid < 64);
+    ASSERT(rid < mData->width * mData->height);
+    return reinterpret_cast<const uint8_t*>(mData->roomTiles)[(rid<<6) + lid];
   }
 
-  uint8_t GetGlobalTileId(Int2 tile) {
+  uint16_t GetTile16(unsigned rid, unsigned lid) const {
+    ASSERT(mData->tileType == TILE_TYPE_16);
+    ASSERT(lid < 64);
+    ASSERT(rid < mData->width * mData->height);
+    return reinterpret_cast<const uint16_t*>(mData->roomTiles)[(rid<<6) + lid];
+  }
+
+  unsigned GetTileId(unsigned rid, unsigned lid) const {
+    return mData->tileType == TILE_TYPE_8 ? 
+      GetTile8(rid, lid) : 
+      GetTile16(rid, lid);
+  }
+
+  unsigned GetTileId(unsigned rid, Int2 tile) const {
+    return GetTileId(rid, (tile.y<<3) + tile.x);
+  }
+
+  unsigned GetGlobalTileId(Int2 tile) {
     const Int2 loc = tile >> 3;
     return GetTileId(loc.x + mData->width * loc.y, tile - (loc<<3));
   }

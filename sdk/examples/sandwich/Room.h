@@ -39,6 +39,7 @@ public:
   unsigned Id() const;
   Int2 Location() const;
   const RoomData& Data() const;
+  bool OnEdge() const;
   Int2 Position() const { return 128 * Location(); }
   Int2 LocalCenter(unsigned subdiv) const;
   Int2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
