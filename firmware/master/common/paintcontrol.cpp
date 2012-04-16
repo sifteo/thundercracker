@@ -403,8 +403,7 @@ void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
         Atomic::Or(vbuf->flags, _SYS_VBF_SYNC_ACK);
 
     // No longer out of sync.
-    Atomic::And(vbuf->flags, ~(_SYS_VBF_DIRTY_RENDER |
-                               _SYS_VBF_TRIGGER_ON_FLUSH));
+    Atomic::And(vbuf->flags, ~_SYS_VBF_DIRTY_RENDER);
 }
 
 bool PaintControl::canMakeSynchronous(_SYSVideoBuffer *vbuf, SysTime::Ticks timestamp)
