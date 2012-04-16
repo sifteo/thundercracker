@@ -72,9 +72,37 @@ class DeviceManager(object):
             self._masterUART = SerialDevice(self._comport)
         return self._masterUART
 
-def runAllTests(devManager):
-    
-    mastertests.StmExternalFlashComms(devManager)
+class TestRunner(object):
+    def __init__(self, mgr):
+        self.mgr = mgr
+        self.successCount = 0
+        self.failCount = 0
+
+    def numTestsRun(self):
+        return self.successCount + self.failCount
+
+    def run(self, t):
+        success = t(self.mgr)
+        sys.stdout.write(t.func_name + "...")
+        if success == False:
+            print "FAIL"
+            self.failCount = self.failCount + 1
+        else:
+            print "SUCCESS"
+            self.successCount = self.successCount + 1
+
+    @staticmethod
+    def runAll(devManager):
+        runner = TestRunner(devManager)
+
+        # TODO: better way to aggregate tests automatically
+        runner.run(mastertests.StmExternalFlashComms)
+
+        print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
+        if runner.failCount == 0:
+            return 0
+        else:
+            return 1
 
 if __name__ == '__main__':
 
@@ -83,6 +111,5 @@ if __name__ == '__main__':
         sys.exit(1)
 
     comport = sys.argv[1]
-    mgr = DeviceManager(comport)
-    
-    runAllTests(mgr)
+    result = TestRunner.runAll(DeviceManager(comport))
+    sys.exit(result)
