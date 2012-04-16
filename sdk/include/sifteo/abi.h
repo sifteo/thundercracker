@@ -51,7 +51,7 @@ typedef uint8_t bool;
     typedef unsigned long uintptr_t;
 #endif
 
-/**
+/*
  * Data types which are valid across the user/system boundary.
  *
  * Data directions are from the userspace's perspective. IN is
@@ -66,7 +66,7 @@ typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
 typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset slots
 
-/**
+/*
  * Entry point. Our standard entry point is main(), with no arguments
  * or return values, declared using C linkage.
  */
@@ -75,7 +75,7 @@ typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset 
 void main(void);
 #endif
 
-/**
+/*
  * Asset loading
  */
 
@@ -259,7 +259,7 @@ union _SYSVideoRAM {
     };
 };
 
-/**
+/*
  * The _SYSVideoBuffer is a low-level data structure that serves to
  * collect graphics state updates so that the system can send them
  * over the radio to cubes.
@@ -361,7 +361,7 @@ struct _SYSVideoBuffer {
     union _SYSVideoRAM vram;
 };
 
-/**
+/*
  * In general, the system likes working with raw _SYSVideoBuffers: but in
  * userspace, it's very common to want to know both the _SYSVideoBuffer and
  * the ID of the cube it's currently attached with. For these cases, we
@@ -374,7 +374,7 @@ struct _SYSAttachedVideoBuffer {
     struct _SYSVideoBuffer vbuf;
 };
 
-/**
+/*
  * Tiles in the _SYSVideoBuffer are typically encoded in 7:7 format, in
  * which a 14-bit tile ID is packed into the upper 7 bits of each byte
  * in a 16-bit word.
@@ -422,7 +422,48 @@ struct _SYSAudioModule {
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
+    uint32_t pData;            /// Flash address for compressed data
+};
+
+struct _SYSXMPattern {
+    uint16_t nRows;         /// Number of rows in the pattern
+    uint16_t dataSize;      /// Size of compressed data, in bytes
     uint32_t pData;         /// Flash address for compressed data
+};
+
+struct _SYSXMInstrument {
+    struct _SYSAudioModule sample; /// Instrument's sample data
+    int8_t finetune;                /// Minor frequency adjustment to note, as x/128 halftone (-1..127/128).
+    int8_t relativeNoteNumber;      /// Relative note number (for increasing/decreasing native sample bitrate) (-96..95, 0 = C-4)
+    
+    uint32_t volumeEnvelopePoints;  /// Flash address for array of envelope points, each is 9 bits of offset (?,0..130) and 7 bits of value (0..64)
+    uint8_t nVolumeEnvelopePoints;  /// Size of volumeEnvelopePoints in shorts (0..12)
+    uint8_t volumeSustainPoint;     /// TODO
+    uint8_t volumeLoopStartPoint;   /// TODO
+    uint8_t volumeLoopEndPoint;     /// TODO
+    uint8_t volumeType;             /// (0: On, 1: Sustain, 2: Loop)
+    uint8_t vibratoType;            /// TODO
+    uint8_t vibratoSweep;           /// TODO
+    uint8_t vibratoDepth;           /// TODO
+    uint8_t vibratoRate;            /// TODO
+    uint16_t volumeFadeout;         /// TODO
+};
+
+struct _SYSXMSong {
+    uint32_t patternOrderTable;     /// Flash address for the song's list of patterns to play
+    uint16_t patternOrderTableSize; /// Size of patternOrderTable in bytes (1..256)
+    uint8_t restartPosition;        /// Zero-indexed position in patternOrderTable to loop to (0..255)
+    uint8_t nChannels;              /// Number of channels used by the tracker (1.._SYS_AUDIO_MAX_CHANNELS)
+    
+    uint16_t nPatterns;             /// Number of patterns in patterns (1..256)
+    uint32_t patterns;              /// Flash address for the patterns of the song
+    
+    uint8_t nInstruments;           /// Number of instruments in instruments (0..128)
+    uint32_t instruments;           /// Flash address for the instruments of the song
+    
+    uint8_t frequencyTable;         /// Which frequency table the track uses (0: Amiga, 1: Linear)
+    uint16_t tempo;                 /// Default playback speed (ticks)
+    uint16_t bpm;                   /// Default beats per minute (notes)
 };
 
 struct _SYSAudioBuffer {
@@ -432,7 +473,7 @@ struct _SYSAudioBuffer {
 };
 
 
-/**
+/*
  * Small vector types
  */
 
@@ -453,7 +494,7 @@ union _SYSNeighborState {
 };
 
 
-/**
+/*
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary, via _SYS_setVector / _SYS_getVector.
  */
@@ -486,7 +527,7 @@ typedef enum {
                                   (0x80000000 >> _SYS_CUBE_TILT) |\
                                   (0x80000000 >> _SYS_CUBE_SHAKE) )
 
-/**
+/*
  * Internal state of the Pseudorandom Number Generator, maintained in user RAM.
  */
 
@@ -494,7 +535,7 @@ struct _SYSPseudoRandomState {
     uint32_t a, b, c, d;
 };
 
-/**
+/*
  * Hardware IDs are 64-bit numbers that uniquely identify a
  * particular cube. A valid HWIDs never contains 0xFF bytes.
  */
@@ -503,7 +544,7 @@ struct _SYSPseudoRandomState {
 #define _SYS_HWID_BITS          64
 #define _SYS_INVALID_HWID       ((uint64_t)-1)
 
-/**
+/*
  * RFC4122 compatible UUIDs.
  *
  * These are used in game metadata, to uniquely identify a particular
@@ -527,7 +568,7 @@ struct _SYSUUID {
     };
 };
 
-/**
+/*
  * ELF binary format.
  *
  * Loadable programs in this system are standard ELF binaries, however their
@@ -590,7 +631,7 @@ struct _SYSMetadataImage {
     uint32_t  pData;            /// Format-specific data or data pointer
 };
 
-/**
+/*
  * Link-time intrinsics.
  *
  * These functions are replaced during link-time optimization.
@@ -641,7 +682,7 @@ uint32_t _SYS_lti_uuid(unsigned key, unsigned index);
 const void *_SYS_lti_initializer(const void *value, bool require);
 bool _SYS_lti_isConstant(unsigned value);
 
-/**
+/*
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
  * Normally these don't need to be used in usermode code, they're inserted
  * automatically by slinky when expanding _SYS_lti_log().
@@ -651,7 +692,7 @@ bool _SYS_lti_isConstant(unsigned value);
 #define _SYS_LOGTYPE_STRING     1       // param = 0, v1 = ptr
 #define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
 
-/**
+/*
  * Low-level system call interface.
  *
  * System calls #0-63 are faster and smaller than normal function calls,

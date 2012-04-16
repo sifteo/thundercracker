@@ -16,6 +16,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * This is a VRAM accessor for drawing graphics in the BG0 mode.
@@ -248,5 +252,8 @@ struct BG0Drawable {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo

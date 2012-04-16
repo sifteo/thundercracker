@@ -155,7 +155,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
 }
 
 void Game::IrisOut(Viewport& view) {
-  view.RestoreCanonicalVram();
+  view.RestoreCanonicalVideo();
   auto& g = view.Canvas();
   for(unsigned i=0; i<8; ++i) {
     for(unsigned x=i; x<16-i; ++x) {
@@ -213,7 +213,7 @@ void Game::ScrollTo(unsigned roomId) {
     if (p != &view) { p->HideLocation(); }
   }
   // hide sprites and overlay
-  view.RestoreCanonicalVram();
+  view.RestoreCanonicalVideo();
   DoPaint();
   const Int2 targetLoc = mMap.GetLocation(roomId);
   const Int2 currentLoc = mPlayer.GetRoom()->Location();
@@ -226,11 +226,11 @@ void Game::ScrollTo(unsigned roomId) {
     float u = float(SystemTime::now()-t) / 2.333f;
     u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
     pos = vec(start.x + int(u * delta.x), start.y + int(u * delta.y));
-    DrawOffsetMap(view, pos);
+    view.DrawOffsetMap(pos);
     DoPaint();
   } while(SystemTime::now()-t<2.333f && (pos-target).len2() > 4);
   view.Canvas().bg0.setPanning(vec(0,0));
-  DrawRoom(view, roomId);
+  view.DrawRoom(roomId);
   DoPaint();
 }
 
@@ -255,12 +255,18 @@ bool Game::AnyViewsTouched() {
 }
 
 void Game::Wait(float seconds, bool touchToSkip) {
-  for(SystemTime t=SystemTime::now(); SystemTime::now()-t<seconds;) { 
-    Paint(); 
+  auto deadline = SystemTime::now() + seconds;
+  while(deadline.inFuture()) {
+    Paint();
     if (touchToSkip && AnyViewsTouched()) {
-      return;
+      break;
     }
   }
+}
+
+void Game::DoWait(float seconds) {
+  auto deadline = SystemTime::now() + seconds;
+  while(deadline.inFuture()) { DoPaint(); }
 }
 
 void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
@@ -273,16 +279,23 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
     for(auto p = data.lines; p->detail; ++p) {
         if (p == data.lines || (p-1)->detail != p->detail) {
           if (p != data.lines) {
-            DrawRoom(viewport, viewport.GetRoomView().Id());
+            g.initMode(BG0_SPR_BG1);
+            viewport.DrawRoom(viewport.GetRoomView().Id());
             g.bg0.image(vec(0,10), DialogBox);
           }
-          g.bg1.fillMask(vec(1, 0), vec(p->detail->tileWidth(), 10), true);
-          g.bg1.image(vec(1,0), *(p->detail));
-          Paint();
+          g.bg1.fillMask(vec(0, 0), p->detail->tileSize());
+          g.bg1.image(vec(0,0), *(p->detail));
+          if (p == data.lines) {
+            for(int i=0; i<8; ++i) {
+              g.bg1.setPanning(vec(-i, 0));
+              Paint();
+            }
+          } else {
+            Paint();
+          }
           System::finish();
-          
-          g.setWindow(80, 48);
           view.Init(&g);
+          g.setWindow(80, 48);
         }
         view.Erase();
         Paint();
@@ -313,9 +326,9 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewport) {
   DoPaint();
-  viewport.Canvas().setWindow(80+16,128-80-16);
   Dialog view;
   view.Init(&viewport.Canvas());
+  viewport.Canvas().setWindow(80+16,128-80-16);
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);
@@ -329,7 +342,7 @@ void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewpor
   Wait(4, true);
   Paint();
   mPlayer.CurrentView()->Parent().Restore();
-  mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0) + (BOTTOM<<4));
+  RestorePearlIdle();
   DoPaint();
 }
 

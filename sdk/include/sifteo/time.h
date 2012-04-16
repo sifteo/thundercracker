@@ -18,6 +18,13 @@ class SystemTime;
 
 
 /**
+ * @defgroup time Time
+ *
+ * Time overview blurb here...
+ * @{
+ */
+
+/**
  * TimeDelta is a class which efficiently represents a difference between
  * two SystemTimes, with moderate resolution. Deltas are internally stored
  * as 32-bit millisecond counts, but they can be converted to many other units.
@@ -462,6 +469,10 @@ private:
     TimeDelta mRemainder;
     TimeDelta mPeriod;
 };
+
+/**
+ * @} endgroup Time
+*/
 
 }   // namespace Sifteo
 

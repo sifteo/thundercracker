@@ -14,6 +14,7 @@ public:
 	unsigned Id() const { return mRoomId;}
 	Side GetSide() const { return mSide; }
 	bool ShowingGateway() const { return mGateway!=0; }
+	const GatewayData* Gateway() const { return mGateway; }
 
 	void Init(int roomId, enum Side side);
 	void Restore();

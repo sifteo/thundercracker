@@ -56,38 +56,38 @@ Viewport* Game::IntroCutscene() {
 		mode.bg1.setPanning(vec(0.f, -56 + 128*u));
 		DoPaint();
 	}
-	WaitForSeconds(0.1f);
+	DoWait(0.1f);
 	// pearl walks up from bottom
 	PlaySfx(sfx_running);
 	int framesPerCycle = PlayerWalk.numFrames() >> 2;
 	int tilesPerFrame = PlayerWalk.numTilesPerFrame();
 	mode.sprites[0].resize(32, 32);
 	for(unsigned i=0; i<48/2; ++i) {
-		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
+		mode.sprites[0].setImage(PlayerWalk, (i%framesPerCycle));
 		mode.sprites[0].move(64-16, 128-i-i);
 		DoPaint();
 	}
 	// face front
-	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
-	WaitForSeconds(0.5f);
+	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	DoWait(0.5f);
 
 	// look left
-	mode.sprites[0].setImage(PlayerIdle.tile(0));
-	WaitForSeconds(0.5f);
-	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
-	WaitForSeconds(0.5f);
+	mode.sprites[0].setImage(PlayerIdle);
+	DoWait(0.5f);
+	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	DoWait(0.5f);
 
 	// look right
-	mode.sprites[0].setImage(PlayerIdle.tile(0) + (PlayerIdle.numTilesPerFrame()));
-	WaitForSeconds(0.5f);
-	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
-	WaitForSeconds(0.5f);
+	mode.sprites[0].setImage(PlayerIdle, 1);
+	DoWait(0.5f);
+	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	DoWait(0.5f);
 
 	// thought bubble appears
 	mode.bg0.image(vec(10,8), TitleThoughts);
-	WaitForSeconds(0.5f);
+	DoWait(0.5f);
 	mode.bg0.image(vec(3,4), TitleBalloon);
-	WaitForSeconds(0.5f);
+	DoWait(0.5f);
 
 	// items appear
 	const int pad = 36;
@@ -109,16 +109,16 @@ Viewport* Game::IntroCutscene() {
 		mode.sprites[i+1].move(x, 42);
 		DoPaint();
 	}
-	WaitForSeconds(1.f);
+	DoWait(1.f);
 
 	// do the pickup animation
 	for(unsigned i=0; i<PlayerPickup.numFrames(); ++i) {
-		mode.sprites[0].setImage(PlayerPickup.tile(0) + i * PlayerPickup.numTilesPerFrame());
+		mode.sprites[0].setImage(PlayerPickup, i);
 		DoPaint();
-		WaitForSeconds(0.05f);
+		DoWait(0.05f);
 	}
-	mode.sprites[0].setImage(PlayerStand.tile(0) + BOTTOM * (PlayerStand.numTilesPerFrame()));
-	WaitForSeconds(2.f);
+	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	DoWait(2.f);
 
 	// hide items and bubble
 	mode.sprites[1].hide();
@@ -130,9 +130,8 @@ Viewport* Game::IntroCutscene() {
 
 	// walk off
 	PlaySfx(sfx_running);
-	unsigned downIndex = PlayerWalk.tile(0) + BOTTOM * tilesPerFrame * framesPerCycle;
 	for(unsigned i=0; i<76/2; ++i) {
-		mode.sprites[0].setImage(PlayerWalk.tile(0) + tilesPerFrame * (i%framesPerCycle));
+		mode.sprites[0].setImage(PlayerWalk, i%framesPerCycle);
 		mode.sprites[0].move(64-16, 80-i-i);
 		DoPaint();
 	}
@@ -150,6 +149,6 @@ Viewport* Game::IntroCutscene() {
 		}
 		DoPaint();
 	}
-	WaitForSeconds(0.5f);
+	DoWait(0.5f);
 	return &ViewAt(cube);
 }

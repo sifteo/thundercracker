@@ -14,7 +14,7 @@ void Game::OnTick() {
 
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasGateway()) {
+  if (pRoom->HasGateway() && !pRoom->OnEdge()) {
     OnEnterGateway(pRoom->Gateway());
   } else if (pRoom->HasNPC()) {
     const auto& npc = pRoom->NPC();
@@ -39,10 +39,12 @@ unsigned Game::OnPassiveTrigger() {
 }
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
+  RoomView* view;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
-    mPlayer.CurrentView()->HideEquip();
+    view = mPlayer.CurrentView();
+    view->HideEquip();
   } else {
     auto p = ListLockedViews();
     while(p.MoveNext()) {
@@ -50,14 +52,20 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
       if (room.HasItem() && (&room.Item() == bomb.Item())) {
         room.ClearTrigger();
         room.BombThisFucker();
-        p->GetRoomView().Unlock();
-        p->GetRoomView().HideItem();
+        view = &(p->GetRoomView());
+        view->Unlock();
+        view->HideItem();
         break;
       }
     }
   }
+  view->HideOverlay();
+  auto& g = view->Parent().Canvas();
+  g.bg0.erase(WhiteTile);
 
-  //for(;;) DoPaint();
+  for(;;) Paint();
+
+  view->RefreshOverlay();
 }
 
 void Game::OnToggleSwitch(const SwitchData& pSwitch) {
@@ -145,7 +153,7 @@ void Game::OnPickup(Room& room) {
     mPlayer.SetEquipment(&item);
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.numFrames(); ++frame) {
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0) + (frame<<4));
+      mPlayer.CurrentView()->SetPlayerImage(PlayerPickup, frame);
       SystemTime t=SystemTime::now();
       Paint();
       SystemTime now;
@@ -160,7 +168,7 @@ void Game::OnPickup(Room& room) {
         mPlayer.CurrentView()->SetEquipPosition(vec(0.f, -float(ITEM_OFFSET) * u) );
       } while(now-t<0.075f);
     }
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0)+ (BOTTOM<<4));
+    RestorePearlIdle();
     DescriptionDialog(
       "ITEM DISCOVERED", 
       itemType.description, 
@@ -171,6 +179,13 @@ void Game::OnPickup(Room& room) {
       ASSERT(p);
       p->OnPickup();
       mPlayer.CurrentView()->Unlock();
+
+      //---------------------------------------------------------------------
+      // OMG DEV HACK
+      //---------------------------------------------------------------------
+
+      OnYesOhMyGodExplosion(*p);
+
     }
   } else {
     //-----------------------------------------------------------------------
@@ -182,7 +197,7 @@ void Game::OnPickup(Room& room) {
     }
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.numFrames(); ++frame) {
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0) + (frame<<4));
+      mPlayer.CurrentView()->SetPlayerImage(PlayerPickup, frame);
       SystemTime t=SystemTime::now();
       Paint();
       SystemTime now;
@@ -197,7 +212,7 @@ void Game::OnPickup(Room& room) {
         mPlayer.CurrentView()->SetItemPosition(vec(0.f, -36.f * u) );
       } while(now-t<0.075f);
     }
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.tile(0)+ (BOTTOM<<4));
+    RestorePearlIdle();
     DescriptionDialog(
       "ITEM DISCOVERED", 
       itemType.description, 
@@ -258,7 +273,7 @@ void Game::OnDropEquipment(Room& room) {
     } else {
       // place the item in the depot
       for(int frame=PlayerPickup.numFrames()-1; frame>0; --frame) {
-        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0) + (frame<<4));
+        mPlayer.CurrentView()->SetPlayerImage(PlayerPickup, frame);
         Wait(0.075f, false);
       }
       mPlayer.SetEquipment(0);
@@ -266,7 +281,7 @@ void Game::OnDropEquipment(Room& room) {
       mPlayer.CurrentView()->StartNod();
       mPlayer.CurrentView()->HideEquip();
       mPlayer.CurrentView()->RefreshDepot();
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0));
+      mPlayer.CurrentView()->SetPlayerImage(PlayerPickup);
       Wait(0.075f, false);
       // check if event should fire
       const auto& map = mMap.Data();
@@ -295,14 +310,14 @@ void Game::OnDropEquipment(Room& room) {
     } else {
       // show the dropped item as a normal trigger
       for(int frame=PlayerPickup.numFrames()-1; frame>0; --frame) {
-        mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0) + (frame<<4));
+        mPlayer.CurrentView()->SetPlayerImage(PlayerPickup, frame);
         Wait(0.075f, false);
       }
       mPlayer.SetEquipment(0);
       room.SetTrigger(TRIGGER_ITEM, &pItem->trigger);
       mPlayer.CurrentView()->HideEquip();
       mPlayer.CurrentView()->ShowItem(pItem);
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.tile(0));
+      mPlayer.CurrentView()->SetPlayerImage(PlayerPickup);
       mPlayer.CurrentView()->StartNod();
 
       if (gItemTypeData[pItem->itemId].triggerType == ITEM_TRIGGER_BOMB) {

@@ -27,15 +27,17 @@ private:
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
     	unsigned hasOverlay : 1;
+    	unsigned touchHack	: 2;
   	} mFlags;
   	VideoBuffer mCanvas;
+
 
 public:
 
 	VideoBuffer& Canvas() { return mCanvas; }
 	CubeID GetID() const { return mCanvas.cube(); }
 	unsigned GetMask() const { return 1 << (31-GetID()); }
-	bool Touched() const; // cube->touching && !prevTouch
+	bool Touched() const { return mFlags.currTouch && !mFlags.prevTouch; }
 	bool Active() const { return mFlags.view; }
 	unsigned ViewType() const { return mFlags.view ; }
 	bool ShowingRoom() const { return mFlags.view == VIEW_ROOM; }
@@ -45,6 +47,7 @@ public:
 	bool ShowingLocation() const { return ShowingRoom() || ShowingEdge(); }
 	IdleView& GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return mView.idle; }
 	RoomView& GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return mView.room; }
+	EdgeView& GetEdgeView() { ASSERT(mFlags.view == VIEW_EDGE); return mView.edge; }
 	InventoryView& GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return mView.inventory; }
 	MinimapView& GetMinimapView() { ASSERT(mFlags.view == VIEW_MINIMAP); return mView.minimap; }
 
@@ -56,12 +59,20 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
-	void FlagOverlay() { mFlags.hasOverlay = true; }
-	void RestoreCanonicalVram();
+	void FlagOverlay(bool flag=true) { mFlags.hasOverlay = flag; }
+	void EnqueueHackyTouches() { mFlags.touchHack = 2; }
+	void RestoreCanonicalVideo();
 	void RefreshInventory();
 
 	Side VirtualTiltDirection() const;
 	Viewport* VirtualNeighborAt(Side side) const;
+
+	// Helper Methods
+	void DrawRoom(unsigned roomId);
+	void DrawRoomOverlay(unsigned tid, const uint8_t *pRle);
+	void DrawOffsetMap(Int2 pos);
+
+
 
 private:
 	bool SetLocationView(unsigned roomId, Side side, bool force);
