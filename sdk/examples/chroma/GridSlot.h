@@ -37,12 +37,12 @@ public:
 
     static const unsigned int NUM_COLORS_INCLUDING_SPECIALS = NUM_COLORS + NUM_SPECIALS;
 
-    static const AssetImage *TEXTURES[ NUM_COLORS ];
-    static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
-    static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
-    static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
-    static const AssetImage *SPECIALTEXTURES[ NUM_SPECIALS ];
-    static const AssetImage *SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ];
+    static const FlatAssetImage *TEXTURES[ NUM_COLORS ];
+    static const FlatAssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const FlatAssetImage *FIXED_TEXTURES[ NUM_COLORS ];
+    static const FlatAssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const FlatAssetImage *SPECIALTEXTURES[ NUM_SPECIALS ];
+    static const FlatAssetImage *SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ];
 
 
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
@@ -128,10 +128,10 @@ private:
     void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
     unsigned int GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const;
-    const AssetImage &GetTexture() const;
-    const AssetImage &GetExplodingTexture() const;
-    const AssetImage &GetSpecialTexture() const;
-    const AssetImage &GetSpecialExplodingTexture() const;
+    const FlatAssetImage &GetTexture() const;
+    const FlatAssetImage &GetExplodingTexture() const;
+    const FlatAssetImage &GetSpecialTexture() const;
+    const FlatAssetImage &GetSpecialExplodingTexture() const;
     unsigned int GetSpecialFrame();
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
