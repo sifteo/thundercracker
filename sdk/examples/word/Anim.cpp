@@ -12,9 +12,12 @@ enum Layer
 
 struct AnimObjData
 {
-    const AssetImage *mAsset;
-    const AssetImage *mBlankLetterAsset;
-    const AssetImage *mMetaLetterAsset;
+    const FlatAssetImage *mAsset;
+//     const AssetImage *mAsset;
+    const FlatAssetImage *mBlankLetterAsset;
+//     const AssetImage *mBlankLetterAsset;
+    const FlatAssetImage *mMetaLetterAsset;
+//     const AssetImage *mMetaLetterAsset;
     const PinnedAssetImage *mSpriteAsset;
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
@@ -39,7 +42,7 @@ bool animPaint(AnimType animT,
                float animTime,
                const AnimParams *params)
 {
-    BG1Drawable & bg1 = vid.bg1;
+    BG1Drawable &bg1 = vid.bg1;
     const int LETTER_Y_OFFSET = 5;
     unsigned char lettersPerCube = params ? params->mLettersPerCube : 1;
     lettersPerCube = clamp<unsigned>(lettersPerCube, 1, MAX_LETTERS_PER_CUBE);
@@ -101,7 +104,7 @@ bool animPaint(AnimType animT,
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = vec(objData.mSpriteAsset->pixelWidth(), objData.mSpriteAsset->pixelHeight());
+            size = vec(objData.mSpriteAsset->tileWidth(), objData.mSpriteAsset->tileHeight());
             assetFrames =
                     (animT == AnimType_HintSlideL || animT == AnimType_HintSlideR) ?
                         MIN(4, objData.mSpriteAsset->numFrames()) : // TODO use the right indexes for left/right, with ping/pong
@@ -188,10 +191,13 @@ bool animPaint(AnimType animT,
                                                       SparkleWipe,
                                                       vec(0,0),
                                                       sparkleFrame);
-                                if (sparkleRow < letterPos.y + font.pixelHeight() - 1)
+                                if (sparkleRow < letterPos.y + font.tileHeight() - 1)
                                 {
+                                    LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d  src=%d %d\n", letterPos.x, sparkleRow + 1, 
+                                            size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow,
+                                            0, sparkleRow + 1 - letterPos.y);
                                     bg1.image(vec(letterPos.x, sparkleRow + 1),
-                                                  vec(size.x, letterPos.y + font.pixelHeight() - 1 - sparkleRow),
+                                                  vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
                                                   font,
                                                   vec(0, sparkleRow + 1 - letterPos.y),
                                                   fontFrame);
@@ -200,14 +206,17 @@ bool animPaint(AnimType animT,
                         }
                         else
                         {
-                            bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.pixelHeight())), font, vec(0,0), fontFrame);
+                            LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
+                                size.x, MIN(16 - letterPos.y, font.tileHeight()));
+
+                            bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                         }
                     }
                     break;
 
                 case AnimType_MetaTilesReveal:
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.pixelHeight())), font, vec(0,0), fontFrame);
+                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                         int sparkleRow = (1.f - animPct) * 12 + 2;
                         unsigned char sparkleOffset = sparkleRow - pos.y;
                         if (i == params->mMetaLetterIndex && sparkleOffset < size.y)
@@ -217,6 +226,8 @@ bool animPaint(AnimType animT,
                                               SparkleWipe,
                                               vec(0,0),
                                               MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct)));
+                            LOG("**** AnimType_MetaTilesReveal: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
+                                    size.x, sparkleRow - letterPos.y);
                             if (sparkleRow > letterPos.y)
                             {
                                 bg1.image(letterPos,
@@ -230,14 +241,16 @@ bool animPaint(AnimType animT,
                 break;
 
                 default:
+//                     LOG("**** default: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
+//                                     size.x, MIN(16 - letterPos.y, font.tileHeight()));
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.pixelHeight())), font, vec(0,0), 'Z' + 1 - 'A');
+                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), 'Z' + 1 - 'A');
 
                     }
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.pixelHeight())), font, vec(0,0), fontFrame);
+                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                     }
                     break;
                 }
@@ -256,6 +269,12 @@ bool animPaint(AnimType animT,
             vid.sprites[0].setImage(*objData.mSpriteAsset, assetFrame);
         }
     }
+//<????
+LOG("****** printing test image\n");
+bg1.image(vec(0,0), vec(1,1), font, vec(0,0), 2);
+BG1Mask bg1mask;
+bg1mask.plot(0,0);
+bg1.setMask(bg1mask);
 
     // do procedural sprite stuff, it may not be a good fit for the data
     // driven approach
@@ -280,7 +299,7 @@ bool animPaint(AnimType animT,
             {
                 //LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
                 vid.sprites[i].move(params->mSpriteParams->mPositions[i]);
-                vid.sprites[i].resize(Sparkle.pixelWidth(), Sparkle.pixelHeight());
+                vid.sprites[i].resize(Sparkle.pixelWidth(), Sparkle.tileHeight());
                 vid.sprites[i].setImage(Sparkle, assetFrame);
             }
         }
