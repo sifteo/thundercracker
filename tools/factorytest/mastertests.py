@@ -1,18 +1,64 @@
 
 # test IDs
-NrfComms = 0
-ExternalFlashComms = 1
-EnableTestJigNeighborTransmit = 9
 
-def StmExternalFlashComms(devMgr):
+NrfCommsID = 0
+ExternalFlashCommsID = 1
+ExternalFlashReadWriteID = 2
+LedID = 3
+
+def NrfComms(devMgr):
     uart = devMgr.masterUART()
-    uart.writeMsg([ExternalFlashComms])
+    txpower = 0
+    uart.writeMsg([NrfCommsID, txpower])
     resp = uart.getResponse()
-
-    success = ((resp.opcode == ExternalFlashComms) and (resp.payload[0] != 0))
+    
+    if resp.opcode != NrfCommsID:
+        return False
+    
+    success = (resp.payload[0] != 0)
     return success
 
-def StmNeighborRx(devMgr):
-    msg = [1, EnableTestJigNeighborTransmit]
-    devMgr.testjig().txPacket(msg)
+def ExternalFlashComms(devMgr):
+    uart = devMgr.masterUART()
+    uart.writeMsg([ExternalFlashCommsID])
+    resp = uart.getResponse()
+
+    success = ((resp.opcode == ExternalFlashCommsID) and (resp.payload[0] != 0))
+    return success
+    
+def ExternalFlashReadWrite(devMgr):
+    uart = devMgr.masterUART()
+    sectorAddr = 0
+    offset = 0
+    uart.writeMsg([ExternalFlashReadWriteID, sectorAddr, offset])
+    resp = uart.getResponse()
+
+    success = ((resp.opcode == ExternalFlashReadWriteID) and (resp.payload[0] != 0))
+    return success
+    
+def LedHelper(uart, color, code):
+    uart.writeMsg([LedID, code])
+    resp = uart.getResponse()
+    
+    s = raw_input("Is LED %s? (y/n) " % color)
+    if resp.opcode != LedID or not s.startswith("y"):
+        return False
+    return True
+    
+def LedTest(devMgr):
+    uart = devMgr.masterUART()
+    
+    combos = { "green" : 1,
+                "red" : 2,
+                "both on" : 3 }
+
+    for key, val in combos.iteritems():
+        if not LedHelper(uart, key, val):
+            return False
+    
+    # make sure off is last
+    if not LedHelper(uart, "off", 0):
+        return False
+
+    return True
 

@@ -83,12 +83,10 @@ class TestRunner(object):
 
     def run(self, t):
         success = t(self.mgr)
-        sys.stdout.write(t.func_name + "...")
         if success == False:
-            print "FAIL"
+            print "%s... FAIL" % t.func_name
             self.failCount = self.failCount + 1
         else:
-            print "SUCCESS"
             self.successCount = self.successCount + 1
 
     @staticmethod
@@ -96,7 +94,10 @@ class TestRunner(object):
         runner = TestRunner(devManager)
 
         # TODO: better way to aggregate tests automatically
-        runner.run(mastertests.StmExternalFlashComms)
+        runner.run(mastertests.NrfComms)
+        runner.run(mastertests.ExternalFlashComms)
+        runner.run(mastertests.ExternalFlashReadWrite)
+        runner.run(mastertests.LedTest)
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:
