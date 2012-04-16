@@ -236,10 +236,10 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        vid.bg0.image(vec(0,0),vec(9,9), skin.vault_door,vec(x,y));
-        vid.bg0.image(vec(x,0),vec(0,9), skin.vault_door,vec(16-x,y));
-        vid.bg0.image(vec(0,y),vec(9,0), skin.vault_door,vec(x,16-y));
-        vid.bg0.image(vec(x,y),vec(0,0), skin.vault_door,vec(16-x,16-y));
+        vid.bg0.image(vec(0,0),vec(x,y), skin.vault_door,vec(9,9));
+        vid.bg0.image(vec(x,0),vec(16-x,y), skin.vault_door,vec(0,9));
+        vid.bg0.image(vec(0,y),vec(x,16-y), skin.vault_door,vec(9,0));
+        vid.bg0.image(vec(x,y),vec(16-x,16-y), skin.vault_door,vec(0,0));
 	}
 
     void TotalsCube::OpenShuttersToReveal(const Sifteo::AssetImage &image)
@@ -297,6 +297,9 @@ namespace TotalsGame
             Game::UpdateDt();
 		}			
 
+        DrawVaultDoorsClosed();
+        System::paint();
+
     }
 
 
@@ -311,10 +314,10 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        vid.bg0.image(vec(0,0), vec(16-x,16-yTop),skin.vault_door, vec(x,yTop));			//Top left
-        vid.bg0.image(vec(x,0), vec(0,16-yTop),skin.vault_door, vec(16-x,yTop));			//top right
-        vid.bg0.image(vec(0,yBottom), vec(16-x,0),skin.vault_door, vec(x,16-yBottom));	//bottom left
-        vid.bg0.image(vec(x,yBottom), vec(0,0),skin.vault_door, vec(16-x,16-yBottom));	//bottom right
+        vid.bg0.image(vec(0,0), vec(x,yTop),skin.vault_door, vec(16-x,16-yTop));			//Top left
+        vid.bg0.image(vec(x,0), vec(16-x,yTop),skin.vault_door, vec(0,16-yTop));			//top right
+        vid.bg0.image(vec(0,yBottom), vec(x,16-yBottom),skin.vault_door, vec(16-x,0));	//bottom left
+        vid.bg0.image(vec(x,yBottom), vec(16-x,16-yBottom),skin.vault_door, vec(0,0));	//bottom right
 		/*
 		if (innerImage && yTop != yBottom) 
 		{
@@ -333,10 +336,10 @@ namespace TotalsGame
 
         const Skins::Skin &skin = Skins::GetSkin();
 
-        vid.bg0.image(vec(0,0), vec(16-xLeft,16-(y-4)),skin.vault_door, vec(xLeft,y-4));			//Top left
-        vid.bg0.image(vec(xRight,0), vec(0,16-(y-4)),skin.vault_door, vec(16-xRight,y-4));		//Top right
-        vid.bg0.image(vec(0,y+4), vec(16-xLeft,0),skin.vault_door, vec(xLeft,16-(y+4)));			//bottom left
-        vid.bg0.image(vec(xRight,y+4), vec(0,0),skin.vault_door, vec(16-xRight,16-(y+4)));			//bottom right
+        vid.bg0.image(vec(0,0), vec(xLeft,y-4),skin.vault_door, vec(16-xLeft,16-(y-4)));			//Top left
+        vid.bg0.image(vec(xRight,0), vec(16-xRight,y-4),skin.vault_door, vec(0,16-(y-4)));		//Top right
+        vid.bg0.image(vec(0,y+4), vec(xLeft,16-(y+4)),skin.vault_door, vec(16-xLeft,0));			//bottom left
+        vid.bg0.image(vec(xRight,y+4), vec(16-xRight,16-(y+4)),skin.vault_door, vec(0,0));			//bottom right
 		/*
 		if (innerImage && xLeft != xRight) {
 			mode.BG0_drawPartialAsset(vec(xLeft,0), vec(xLeft,0), vec(xRight-xLeft,16), *innerImage); // "inner" column
