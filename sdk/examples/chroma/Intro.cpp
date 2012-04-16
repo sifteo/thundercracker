@@ -126,7 +126,7 @@ bool Intro::Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer 
             break;
         }
         default:
-            pWrapper->getBanner().Draw( bg1buffer );
+            pWrapper->getBanner().Draw( vid );
             return true;
     }
 

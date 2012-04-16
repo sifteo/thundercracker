@@ -60,7 +60,7 @@ static void DoBubbleTransition()
                 Int2 offset = { j*2, (int)( BubblePos[i][j].y / 8 ) + 1 };
 
                 if( offset.y >= 0 && offset.y < 16 )
-                    vid.bg0.image( offset, offset, UI_BG, vec( 2, 16 - offset.y ) );
+                    vid.bg0.image( offset, vec( 2, 16 - offset.y ), UI_BG, offset );
             }
         }
 
