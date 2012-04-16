@@ -11,7 +11,13 @@
 #define mPlayerSprite   (Parent().Canvas().sprites[3])
 #define mNpcSprite      (Parent().Canvas().sprites[4])
 #define mBlockSprite    (Parent().Canvas().sprites[5])
-  
+SpriteRef RoomView::BffSprite() { return mBffSprite; }
+SpriteRef RoomView::TriggerSprite() { return mTriggerSprite; }
+SpriteRef RoomView::EquipSprite() { return mEquipSprite; }
+SpriteRef RoomView::PlayerSprite() { return mPlayerSprite; }
+SpriteRef RoomView::NpcSprite() { return mNpcSprite; }
+SpriteRef RoomView::BlockSprite() { return mBlockSprite; }
+
 void RoomView::Init(unsigned roomId) {
   flags.locked = false;
   mRoomId = roomId;
@@ -46,7 +52,7 @@ void RoomView::RefreshOverlay() {
 void RoomView::HideOverlay() {
   if (GetRoom().HasOverlay() && !flags.hideOverlay) {
     flags.hideOverlay = true;
-    mCanvas.bg1.eraseMask();
+    mCanvas.bg1.erase();
     Parent().EnqueueHackyTouches();
     Parent().FlagOverlay(false);
   }

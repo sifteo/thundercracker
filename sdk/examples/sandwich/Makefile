@@ -33,10 +33,10 @@ OBJS = \
 	Sokoblock.o \
 	Viewport.o \
 
-ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
-CDEPS += *.h 
 
 include $(TC_DIR)/sdk/Makefile.rules
+
+ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
 
 GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
