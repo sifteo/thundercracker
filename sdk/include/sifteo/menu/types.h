@@ -21,6 +21,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 typedef enum {
     MENU_UNEVENTFUL = 0,
@@ -201,5 +205,8 @@ class Menu {
     int computeCurrentTile();
 };
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo

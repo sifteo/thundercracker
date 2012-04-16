@@ -8,10 +8,13 @@ WordGame* WordGame::sInstance = 0;
 Random WordGame::random;
 
 
-WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
+WordGame::WordGame(VideoBuffer vidBufs[], CubeID pMenuCube, Menu& menu) :
+    mGameStateMachine(vidBufs), mNeedsPaintSync(false)
 {
     STATIC_ASSERT(NumAudioChannelIndexes == 2);// HACK work around API bug
     sInstance = this;
+    mMenu = &menu;
+    mMenuCube = pMenuCube;
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
@@ -35,11 +38,12 @@ void WordGame::onEvent(unsigned eventID, const EventData& data)
 void WordGame::_onEvent(unsigned eventID, const EventData& data)
 {
     mGameStateMachine.onEvent(eventID, data);
+    mSavedData.OnEvent(eventID, data);
 }
 
 bool WordGame::playAudio(const AssetAudio &mod,
                          AudioChannelIndex channel ,
-                         _SYSAudioLoopType loopMode,
+                         AudioChannel::LoopMode loopMode,
                          AudioPriority priority)
 {
 
@@ -66,7 +70,7 @@ bool WordGame::playAudio(const AssetAudio &mod,
 
 bool WordGame::_playAudio(const AssetAudio &mod,
                           AudioChannelIndex channel,
-                          _SYSAudioLoopType loopMode,
+                          AudioChannel::LoopMode loopMode,
                           AudioPriority priority)
 {
     ASSERT((unsigned)channel < arraysize(mAudioChannels));
@@ -92,12 +96,37 @@ bool WordGame::_playAudio(const AssetAudio &mod,
     return played;
 }
 
-void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
+void WordGame::hideSprites(VideoBuffer &vid)
 {
     for (int i=0; i < 8; ++i)
     {
-        vid.hideSprite(i);
+        vid.sprites[i].hide();
     }
 }
 
 
+void WordGame::getRandomCubePermutation(unsigned char *indexArray)
+{
+    // first scramble the cube to word fragments mapping
+    int cubeIndexes[NUM_CUBES];
+    for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
+    {
+        cubeIndexes[i] = i;
+    }
+
+    // assign cube indexes to the puzzle piece indexes array, randomly
+    for (int i = 0; i < (int)NUM_CUBES; ++i)
+    {
+        for (unsigned j = WordGame::random.randrange((unsigned)1, NUM_CUBES);
+             true;
+             j = ((j + 1) % NUM_CUBES))
+        {
+            if (cubeIndexes[j] >= 0)
+            {
+                indexArray[i] = cubeIndexes[j];
+                cubeIndexes[j] = -1;
+                break;
+            }
+        }
+    }
+}

@@ -7,7 +7,6 @@
 #define PATH_CAPACITY   (32)
 #define BLOCK_CAPACITY  (8)
 #define BOMB_CAPACITY   (4)
-#define TILE_CAPACITY 
 
 //-----------------------------------------------------------------------------
 // DATA STRUCTURES FOR PATH - these are a bit messy as a side-effect of 
@@ -24,7 +23,8 @@ struct BroadLocation {
 
 struct BroadPath {
   int8_t steps[2*NUM_CUBES]; // assuming each cube could be visited twice...
-  BroadPath();
+  bool triggeredByEdgeGate;
+  
   bool IsDefined() const { return *steps >= 0; }
   bool DequeueStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
@@ -52,15 +52,14 @@ private:
   uint8_t mBlockCount;
   uint8_t mBombCount;
 
-
 public:
   void Init();
 
   void SetData(const MapData& map);
   void RefreshTriggers();
 
-  Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
-  Room* GetRoom(Int2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
+  Room& GetRoom(int roomId) { return mRooms[roomId]; }
+  Room& GetRoom(Int2 loc) { return mRooms[loc.x + mData->width * loc.y]; }
 
   bool CanTraverse(BroadLocation loc, Side side);
   bool GetBroadLocationNeighbor(BroadLocation loc, Side side, BroadLocation* outNeighbor);
@@ -75,11 +74,11 @@ public:
   unsigned BombCount() const { return mBombCount; }
   Bomb* BombBegin() { return mBomb; }
   Bomb* BombEnd() { return mBomb + mBombCount; }
-  Bomb* BombFor(const ItemData* bomb);
+  Bomb* BombFor(const ItemData& bomb);
 
   // Map Data Getters
 
-  const MapData* Data() const { return mData; }
+  const MapData& Data() const { return *mData; }
   
   const bool GetPortalX(int x, int y) const {
     // note that the pitch here is one less than the width because 
@@ -98,22 +97,40 @@ public:
     return mData->yportals[idx>>3] & (1<<(idx%8));
   }
   
-  const RoomData* GetRoomData(int roomId) const {
-    ASSERT(roomId < mData->width * mData->height);
-    return mData->rooms + roomId;
+  const RoomData* GetRoomData(int rid) const {
+    ASSERT(rid < mData->width * mData->height);
+    return mData->rooms + rid;
   }
 
   const RoomData* GetRoomData(Int2 location) const {
     return GetRoomData(GetRoomId(location));
   }
-
-  uint8_t GetTileId(unsigned roomId, Int2 tile) const {
-    ASSERT(0 <= tile.x && tile.x < 8);
-    ASSERT(0 <= tile.y && tile.y < 8);
-    return mData->roomTiles[roomId].tiles[(tile.y<<3) + tile.x];
+  
+  uint8_t GetTile8(unsigned rid, unsigned lid) const {
+    ASSERT(mData->tileType == TILE_TYPE_8);
+    ASSERT(lid < 64);
+    ASSERT(rid < mData->width * mData->height);
+    return reinterpret_cast<const uint8_t*>(mData->roomTiles)[(rid<<6) + lid];
   }
 
-  uint8_t GetGlobalTileId(Int2 tile) {
+  uint16_t GetTile16(unsigned rid, unsigned lid) const {
+    ASSERT(mData->tileType == TILE_TYPE_16);
+    ASSERT(lid < 64);
+    ASSERT(rid < mData->width * mData->height);
+    return reinterpret_cast<const uint16_t*>(mData->roomTiles)[(rid<<6) + lid];
+  }
+
+  unsigned GetTileId(unsigned rid, unsigned lid) const {
+    return mData->tileType == TILE_TYPE_8 ? 
+      GetTile8(rid, lid) : 
+      GetTile16(rid, lid);
+  }
+
+  unsigned GetTileId(unsigned rid, Int2 tile) const {
+    return GetTileId(rid, (tile.y<<3) + tile.x);
+  }
+
+  unsigned GetGlobalTileId(Int2 tile) {
     const Int2 loc = tile >> 3;
     return GetTileId(loc.x + mData->width * loc.y, tile - (loc<<3));
   }

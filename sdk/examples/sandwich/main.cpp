@@ -6,14 +6,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
 	.title("Sandwich Kingdom")
-	.cubeRange(3,CubeID::NUM_SLOTS);
-
-#if SFX_ON
-AudioChannel gChannelSfx;
-#endif
-#if MUSIC_ON
-AudioChannel gChannelMusic;
-#endif
+	.cubeRange(NUM_CUBES);
 
 void main() {
 	while(1) {

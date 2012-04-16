@@ -23,6 +23,12 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup video Video
+ *
+ * Video group overview blurb here...
+ * @{
+ */
 
 static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
 static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
@@ -592,5 +598,8 @@ struct VideoBuffer {
     }
 };
 
+/**
+ * @} endgroup video
+*/
 
 };  // namespace Sifteo
