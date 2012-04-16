@@ -20,6 +20,7 @@ void Viewport::Init() {
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
 	mFlags.hasOverlay = 0;
+	mFlags.touchHack = 3;
 	RestoreCanonicalVideo();
 	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
@@ -36,6 +37,7 @@ void Viewport::RestoreCanonicalVideo() {
 	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
+	mFlags.touchHack = 2;
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId) {
@@ -133,6 +135,10 @@ void Viewport::Update() {
 		break;
 	}
 	mFlags.prevTouch = mFlags.currTouch;
+	if (mFlags.touchHack) {
+		mCanvas.touch();
+		mFlags.touchHack--;
+	}
 }
   
 bool Viewport::ShowLocation(Int2 loc, bool force) {

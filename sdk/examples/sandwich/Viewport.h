@@ -27,8 +27,10 @@ private:
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
     	unsigned hasOverlay : 1;
+    	unsigned touchHack	: 2;
   	} mFlags;
   	VideoBuffer mCanvas;
+
 
 public:
 

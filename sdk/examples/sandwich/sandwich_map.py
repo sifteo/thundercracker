@@ -3,6 +3,7 @@ from sandwich_room import *
 from sandwich_item import *
 from sandwich_trigger import *
 from itertools import product
+from sys import stdout
 
 class MapDatabase:
 	def __init__(self, world, path):
@@ -100,7 +101,7 @@ class Map:
 	def __init__(self, db, xml):
 		world = db.world
 		path = posixpath.join(world.dir, xml.get("id")+".tmx")
-		print "Reading Map: ", path
+		stdout.write("Reading Map: " + path)
 		self.world = world
 		self.id = posixpath.basename(path)[:-4].lower()
 		self.readable_name = xml.findtext("name")
@@ -110,7 +111,7 @@ class Map:
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		self.wide_tiles = self.background.gettileset().count > 256
-	
+		print " ...16-bit" if self.wide_tiles else " ...8-bit"
 		# validate tiles
 		for lid,tid in enumerate(self.background.tiles):
 			tile = self.raw.gettile(tid)
