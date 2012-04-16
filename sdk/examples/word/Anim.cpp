@@ -36,10 +36,10 @@ struct AnimData
 
 bool animPaint(AnimType animT,
                VideoBuffer &vid,
-               BG1Drawable &bg1,
                float animTime,
                const AnimParams *params)
 {
+    BG1Drawable & bg1 = vid.bg1;
     const int LETTER_Y_OFFSET = 5;
     unsigned char lettersPerCube = params ? params->mLettersPerCube : 1;
     lettersPerCube = clamp<unsigned>(lettersPerCube, 1, MAX_LETTERS_PER_CUBE);

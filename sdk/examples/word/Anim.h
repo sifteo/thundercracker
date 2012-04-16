@@ -56,9 +56,10 @@ struct AnimParams
     SpriteParams *mSpriteParams;
 };
 
-bool animPaint(AnimType anim,
+bool animPaint(AnimType animT,
                VideoBuffer &vid,
-               float animTime = 0.f,
-               const AnimParams *params=0);
+               float animTime,
+               const AnimParams *params);
+
 
 #endif // ANIM_H
