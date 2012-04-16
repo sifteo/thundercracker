@@ -59,7 +59,8 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
-	void FlagOverlay() { mFlags.hasOverlay = true; }
+	void FlagOverlay(bool flag=true) { mFlags.hasOverlay = flag; }
+	void EnqueueHackyTouches() { mFlags.touchHack = 2; }
 	void RestoreCanonicalVideo();
 	void RefreshInventory();
 

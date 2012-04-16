@@ -20,7 +20,7 @@ void Viewport::Init() {
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
 	mFlags.hasOverlay = 0;
-	mFlags.touchHack = 2;
+	EnqueueHackyTouches();
 	RestoreCanonicalVideo();
 	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
@@ -37,7 +37,7 @@ void Viewport::RestoreCanonicalVideo() {
 	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
-	mFlags.touchHack = 2;
+	EnqueueHackyTouches();
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId) {

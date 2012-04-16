@@ -28,8 +28,28 @@ void RoomView::Unlock() {
   gGame.OnViewUnlocked(this);
 }
 
+void RoomView::ShowOverlay() {
+  if (flags.hideOverlay) {
+    flags.hideOverlay = false;
+    RefreshOverlay();
+  }
+}
+
+void RoomView::RefreshOverlay() {
+  auto& room = GetRoom();
+  if (room.HasOverlay() && !flags.hideOverlay) {
+    Parent().DrawRoomOverlay(room.OverlayTile(), room.OverlayBegin());
+    Parent().FlagOverlay();
+  }
+}
+
 void RoomView::HideOverlay() {
-  mCanvas.bg1.eraseMask(false);
+  if (GetRoom().HasOverlay() && !flags.hideOverlay) {
+    flags.hideOverlay = true;
+    mCanvas.bg1.eraseMask();
+    Parent().EnqueueHackyTouches();
+    Parent().FlagOverlay(false);
+  }
 }
 
 
@@ -153,13 +173,6 @@ Room& RoomView::GetRoom() const {
 
 Int2 RoomView::Location() const {
   return gGame.GetMap().GetLocation(mRoomId);
-}
-
-void RoomView::HideOverlay(bool flag) {
-  if (flags.hideOverlay != flag) {
-    flags.hideOverlay = flag;
-    DrawBackground();
-  }
 }
 
 void RoomView::StartNod() {
@@ -323,11 +336,7 @@ void RoomView::DrawBackground() {
   Parent().DrawRoom(mRoomId);
   RefreshDoor();
   RefreshDepot();
-  auto& room = GetRoom();
-  if (room.HasOverlay()) {
-    Parent().DrawRoomOverlay(room.OverlayTile(), room.OverlayBegin());
-    Parent().FlagOverlay();
-  }
+  RefreshOverlay();
 }
 
 void RoomView::ComputeAnimatedTiles() {
