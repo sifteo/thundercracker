@@ -2,6 +2,14 @@
 
 Random gRandom;
 
+#if SFX_ON
+AudioChannel gChannelSfx;
+#endif
+#if MUSIC_ON
+AudioChannel gChannelMusic;
+#endif
+
+
 Side InferDirection(Int2 u) {
 	if (u.x > 0) {
 		return RIGHT;

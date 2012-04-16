@@ -58,7 +58,9 @@ public:
   void Lock();
   void Unlock();
 
-  void HideOverlay(bool flag);
+  void ShowOverlay();
+  void RefreshOverlay();
+  void HideOverlay();
   
   void ShowPlayer();
   void ShowItem(const ItemData* item);
@@ -90,5 +92,4 @@ public:
 
 private:
   void ComputeAnimatedTiles();
-  void HideOverlay();
 };

@@ -39,10 +39,12 @@ unsigned Game::OnPassiveTrigger() {
 }
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
+  RoomView* view;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
-    mPlayer.CurrentView()->HideEquip();
+    view = mPlayer.CurrentView();
+    view->HideEquip();
   } else {
     auto p = ListLockedViews();
     while(p.MoveNext()) {
@@ -50,14 +52,20 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
       if (room.HasItem() && (&room.Item() == bomb.Item())) {
         room.ClearTrigger();
         room.BombThisFucker();
-        p->GetRoomView().Unlock();
-        p->GetRoomView().HideItem();
+        view = &(p->GetRoomView());
+        view->Unlock();
+        view->HideItem();
         break;
       }
     }
   }
+  view->HideOverlay();
+  auto& g = view->Parent().Canvas();
+  g.bg0.erase(WhiteTile);
 
-  //for(;;) DoPaint();
+  for(;;) Paint();
+
+  view->RefreshOverlay();
 }
 
 void Game::OnToggleSwitch(const SwitchData& pSwitch) {
@@ -171,6 +179,13 @@ void Game::OnPickup(Room& room) {
       ASSERT(p);
       p->OnPickup();
       mPlayer.CurrentView()->Unlock();
+
+      //---------------------------------------------------------------------
+      // OMG DEV HACK
+      //---------------------------------------------------------------------
+
+      OnYesOhMyGodExplosion(*p);
+
     }
   } else {
     //-----------------------------------------------------------------------
