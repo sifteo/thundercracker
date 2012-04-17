@@ -28,11 +28,14 @@ void Game::MainLoop() {
 	#else
 		PlayMusic(music_sting, false);
 		Viewport* pPrimary = IntroCutscene();
+		pPrimary = MainMenu(pPrimary);
 	#endif
 
 	//---------------------------------------------------------------------------
   	// RESET VIEWS
-	for (auto& view : views) { view.Init(); }
+  	for(auto& view : views) {
+  		view.Init();
+  	}
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View().ShowLocation(mPlayer.Location(), true);
