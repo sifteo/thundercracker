@@ -16,6 +16,8 @@ System::System()
         opt_continueOnException(false),
         opt_turbo(false),
         opt_lockRotationByDefault(false),
+        opt_svmTrace(false),
+        opt_svmFlashStats(false),
         opt_cube0Debug(NULL),
         mIsInitialized(false),
         mIsStarted(false)
@@ -75,6 +77,7 @@ void System::start()
     mIsStarted = true;
 
     sc.start();
+    smc.start();
 }
 
 void System::exit()
@@ -84,10 +87,12 @@ void System::exit()
     mIsInitialized = false;
 
     if (mIsStarted) {
+        smc.stop();
         sc.stop();
         mIsStarted = false;
     }
 
+    smc.exit();
     sc.exit();
     tracer.close();
 }

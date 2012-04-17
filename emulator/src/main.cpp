@@ -47,12 +47,12 @@ static void usage()
             "Sifteo Thundercracker simulator\n"
             "\n"
             "Options:\n"
-            "  -h                Show this help message, and exit\n"
-            "  -n NUM            Set initial number of cubes\n"
-            "  -T                Turbo mode; run faster than real-time if we can\n"
-            "  --lock-rotation   Lock rotation by default\n"
-            "  --trace           Trace SVM instruction execution\n"
-            "  --flash-stats     Dump statistics about flash memory usage\n"
+            "  -h                  Show this help message, and exit\n"
+            "  -n NUM              Set initial number of cubes\n"
+            "  -T                  Turbo mode; run faster than real-time if we can\n"
+            "  --lock-rotation     Lock rotation by default\n"
+            "  --svm-trace         Trace SVM instruction execution\n"
+            "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -158,11 +158,21 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (!strcmp(arg, "-LR")) {
+        if (!strcmp(arg, "--lock-rotation")) {
             sys.opt_lockRotationByDefault = true;
             continue;
         }
-         
+
+        if (!strcmp(arg, "--svm-trace")) {
+            sys.opt_svmTrace = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--svm-flash-stats")) {
+            sys.opt_svmFlashStats = true;
+            continue;
+        }
+
         if (!strcmp(arg, "-f") && argv[c+1]) {
             sys.opt_cubeFirmware = argv[c+1];
             c++;
@@ -208,16 +218,18 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        /*
-         * No positional command line options yet. In the future this
-         * may be a game binary to run on the master block.
-         */
+        if (sys.opt_elfFile.empty()) {
+            // First positional argument is interpreted as an ELF file name
+            sys.opt_elfFile = arg;
+            continue;
+        }
+
         message("Unrecognized argument: '%s'", arg);
         usage();
         return 1;
     }
 
-    // Necessary even when running windowless, since we use GLFW for threading
+    // Necessary even when running windowless, since we use GLFW for time
     glfwInit();
 
     return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys);

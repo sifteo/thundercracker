@@ -43,6 +43,11 @@ class System {
     bool opt_turbo;
     bool opt_lockRotationByDefault;
 
+    // SVM options
+    bool opt_svmTrace;
+    bool opt_svmFlashStats;
+    std::string opt_elfFile;
+
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
     std::string opt_cube0Flash;
