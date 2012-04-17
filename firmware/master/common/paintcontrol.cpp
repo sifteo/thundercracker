@@ -10,13 +10,20 @@
 #include "cube.h"
 #include "systime.h"
 
-#define LOG_PREFIX  "PAINT[%d]: %6u.%03us pend=%-3d flags=%08x vf=%02x ack=%02x lock=%08x cm16=%08x  "
+#define LOG_PREFIX  "PAINT[%d]: %6u.%03us pend=%-3d flags=%08x [%c%c%c%c%c] vf=%02x [%c%c] ack=%02x lock=%08x cm16=%08x  "
 #define LOG_PARAMS  cube->id(), \
                     unsigned(SysTime::ticks() / SysTime::sTicks(1)), \
                     unsigned((SysTime::ticks() % SysTime::sTicks(1)) / SysTime::msTicks(1)), \
                     pendingFrames, \
                     vbuf ? vbuf->flags : 0xFFFFFFFF, \
+                        (vbuf && (vbuf->flags & _SYS_VBF_FLAG_SYNC))        ? 's' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_TRIGGER_ON_FLUSH)) ? 't' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_SYNC_ACK))         ? 'a' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_DIRTY_RENDER))     ? 'R' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_NEED_PAINT))       ? 'P' : ' ', \
                     vbuf ? getFlags(vbuf): 0xFF, \
+                        (vbuf && (getFlags(vbuf) & _SYS_VF_TOGGLE))         ? 't' : ' ', \
+                        (vbuf && (getFlags(vbuf) & _SYS_VF_CONTINUOUS))     ? 'C' : ' ', \
                     cube->getLastFrameACK(), \
                     vbuf ? vbuf->lock : 0xFFFFFFFF, \
                     vbuf ? vbuf->cm16 : 0xFFFFFFFF
@@ -94,8 +101,10 @@ void PaintControl::waitForPaint(CubeSlot *cube)
         now = SysTime::ticks();
 
         // Watchdog expired? Give up waiting.
-        if (now > paintTimestamp + fpsLow)
+        if (now > paintTimestamp + fpsLow) {
+            DEBUG_LOG((LOG_PREFIX "waitForPaint(), TIMED OUT\n", LOG_PARAMS));
             break;
+        }
 
         // Wait for minimum frame rate AND for pending renders
         if (now > paintTimestamp + fpsHigh && pendingFrames <= fpMax)
@@ -229,18 +238,13 @@ void PaintControl::waitForFinish(CubeSlot *cube)
             break;
         }
 
-        if (_SYS_VBF_TRIGGER_ON_FLUSH & Atomic::Load(vbuf->flags)) {
-            // Make sure we complete a flush
-            VRAM::lock(*vbuf, _SYS_VA_FLAGS/2, 0);
-            VRAM::unlock(*vbuf);
-        }
-
         Tasks::work();
         Radio::halt();
     }
 
     // We know we're sync'ed now.
     makeSynchronous(cube, vbuf);
+    Atomic::And(vbuf->flags, ~mask);
 
     DEBUG_LOG((LOG_PREFIX "-waitForFinish()\n", LOG_PARAMS));
 }
