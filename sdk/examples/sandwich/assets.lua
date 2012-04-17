@@ -13,7 +13,7 @@ PlayerIdle = image{"idle.png", width=32, height=32, pinned=true}
 
 Butterfly = image{"butterfly.png", width=8, height=8, pinned=true}
 BombAccent = image{"BombAccent.png", width=16, height=16, pinned=true}
-Explosion = image{"explosion.png", width=48, height=48, flat=1}
+Explosion = image{"explosion.png", width=48, height=48 }
 
 
 Items = image{"items.png", width=16, height=16, pinned=true}
