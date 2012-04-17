@@ -471,7 +471,7 @@ void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
 #ifdef SIFTEO_SIMULATOR
     if (stackMonitorEnabled && sp < stackLowWaterMark) {
         stackLowWaterMark = sp;
-        LOG(("new stack low water mark: 0x%p (%d bytes)\n",
+        LOG(("SVM: New stack low water mark, 0x%p (%d bytes)\n",
              reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
     }
 #endif

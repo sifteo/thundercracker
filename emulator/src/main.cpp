@@ -52,6 +52,7 @@ static void usage()
             "  -T                  Turbo mode; run faster than real-time if we can\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
+            "  --svm-stack         Monitor SVM stack usage\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "\n"
@@ -166,6 +167,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "--svm-trace")) {
             sys.opt_svmTrace = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--svm-stack")) {
+            sys.opt_svmStackMonitor = true;
             continue;
         }
 

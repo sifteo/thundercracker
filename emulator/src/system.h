@@ -47,6 +47,7 @@ class System {
     // SVM options
     bool opt_svmTrace;
     bool opt_svmFlashStats;
+    bool opt_svmStackMonitor;
     std::string opt_elfFile;
 
     // Debug options, applicable to cube 0 only

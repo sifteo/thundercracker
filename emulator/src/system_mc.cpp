@@ -63,9 +63,10 @@ bool SystemMC::init(System *sys)
 
     if (sys->opt_svmTrace)
         SvmCpu::enableTracing();
-
     if (sys->opt_svmFlashStats)
         FlashBlock::enableStats();
+    if (sys->opt_svmStackMonitor)
+        SvmRuntime::enableStackMonitoring();
 
     if (!sys->opt_elfFile.empty() && !installELF(sys->opt_elfFile.c_str()))
         return false;
