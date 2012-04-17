@@ -62,9 +62,7 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
   }
   auto& g = view->Parent().Canvas();
   view->HideOverlay();
-  for(unsigned i=0; i<8; ++i) {
-    g.sprites[i].hide();
-  }
+  view->Parent().HideSprites();
   // flash white
   g.bg1.fillMask(vec(40,40)>>3, Explosion.tileSize());
   unsigned ef = 0;
@@ -77,7 +75,7 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
   }
   // repaint room and quake
   view->Parent().DrawRoom(view->Id());
-  auto deadline = SystemTime::now() + 2.5f;
+  auto deadline = SystemTime::now() + 2.333f;
   while(deadline.inFuture()) {
     float t = deadline - SystemTime::now();
     g.bg0.setPanning(vec(
@@ -95,7 +93,6 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
     ++ef;
     DoPaint();
   }
-  g.erase();
   view->Restore();
   DoWait(1.f);
   CheckMapNeighbors();

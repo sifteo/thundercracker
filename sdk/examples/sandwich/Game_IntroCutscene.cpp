@@ -49,48 +49,50 @@ Viewport* Game::IntroCutscene() {
 			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	auto& mode = ViewAt(cube).Canvas();
+	auto& g = ViewAt(cube).Canvas();
 	// hide banner
 	startTime = SystemTime::now();
 	deadline = startTime + 0.9f;
 	while(deadline.inFuture()) {
 		float u = 1.f - (float(SystemTime::now() - startTime) / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.bg1.setPanning(vec(0.f, -56 + 128*u));
+		g.bg1.setPanning(vec(0.f, -56 + 128*u));
 		DoPaint();
 	}
-	mode.bg1.erase();
+	g.bg1.erase();
 	DoWait(0.1f);
+
+	//
 	// pearl walks up from bottom
 	PlaySfx(sfx_running);
 	int framesPerCycle = PlayerWalk.numFrames() >> 2;
 	int tilesPerFrame = PlayerWalk.numTilesPerFrame();
-	mode.sprites[0].resize(32, 32);
+	g.sprites[0].resize(32, 32);
 	for(unsigned i=0; i<48/2; ++i) {
-		mode.sprites[0].setImage(PlayerWalk, (i%framesPerCycle));
-		mode.sprites[0].move(64-16, 128-i-i);
+		g.sprites[0].setImage(PlayerWalk, (i%framesPerCycle));
+		g.sprites[0].move(64-16, 128-i-i);
 		DoPaint();
 	}
 	// face front
-	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	g.sprites[0].setImage(PlayerStand, BOTTOM);
 	DoWait(0.5f);
 
 	// look left
-	mode.sprites[0].setImage(PlayerIdle);
+	g.sprites[0].setImage(PlayerIdle);
 	DoWait(0.5f);
-	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	g.sprites[0].setImage(PlayerStand, BOTTOM);
 	DoWait(0.5f);
 
 	// look right
-	mode.sprites[0].setImage(PlayerIdle, 1);
+	g.sprites[0].setImage(PlayerIdle, 1);
 	DoWait(0.5f);
-	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	g.sprites[0].setImage(PlayerStand, BOTTOM);
 	DoWait(0.5f);
 
 	// thought bubble appears
-	mode.bg0.image(vec(10,8), TitleThoughts);
+	g.bg0.image(vec(10,8), TitleThoughts);
 	DoWait(0.5f);
-	mode.bg0.image(vec(3,4), TitleBalloon);
+	g.bg0.image(vec(3,4), TitleBalloon);
 	DoWait(0.5f);
 
 	// items appear
@@ -98,61 +100,79 @@ Viewport* Game::IntroCutscene() {
 	const int innerPad = (128 - pad - pad) / 3;
 	for(unsigned i = 0; i < 4; ++i) {
 		int x = pad + innerPad * i - 8;
-		mode.sprites[i+1].setImage(Items, i);
-		mode.sprites[i+1].resize(16, 16);
+		g.sprites[i+1].setImage(Items, i);
+		g.sprites[i+1].resize(16, 16);
 		// jump
 		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
-			mode.sprites[i+1].move(x, 42 - j);
+			g.sprites[i+1].move(x, 42 - j);
 			DoPaint();
 		}
 		for(int j=6; j>0; --j) {
-			mode.sprites[i+1].move(x, 42 - j);
+			g.sprites[i+1].move(x, 42 - j);
 			DoPaint();
 		}
-		mode.sprites[i+1].move(x, 42);
+		g.sprites[i+1].move(x, 42);
 		DoPaint();
 	}
 	DoWait(1.f);
 
 	// do the pickup animation
 	for(unsigned i=0; i<PlayerPickup.numFrames(); ++i) {
-		mode.sprites[0].setImage(PlayerPickup, i);
+		g.sprites[0].setImage(PlayerPickup, i);
 		DoPaint();
 		DoWait(0.05f);
 	}
-	mode.sprites[0].setImage(PlayerStand, BOTTOM);
+	g.sprites[0].setImage(PlayerStand, BOTTOM);
 	DoWait(2.f);
 
 	// hide items and bubble
-	mode.sprites[1].hide();
-	mode.sprites[2].hide();
-	mode.sprites[3].hide();
-	mode.sprites[4].hide();
-	mode.bg0.image(vec(0,0), Sting);
+	g.sprites[1].hide();
+	g.sprites[2].hide();
+	g.sprites[3].hide();
+	g.sprites[4].hide();
+	g.bg0.image(vec(0,0), Sting);
 	DoPaint();
 
 	// walk off
 	PlaySfx(sfx_running);
 	for(unsigned i=0; i<76/2; ++i) {
-		mode.sprites[0].setImage(PlayerWalk, i%framesPerCycle);
-		mode.sprites[0].move(64-16, 80-i-i);
+		g.sprites[0].setImage(PlayerWalk, i%framesPerCycle);
+		g.sprites[0].move(64-16, 80-i-i);
 		DoPaint();
 	}
-	mode.sprites[0].hide();
+	g.sprites[0].hide();
+	//
 
-	// iris out
-	for(unsigned i=0; i<8; ++i) {
-		for(unsigned x=i; x<16-i; ++x) {
-			mode.bg0.image(vec(x, i), BlackTile);
-			mode.bg0.image(vec(x, 16-i-1), BlackTile);
+	// slide out
+	startTime = SystemTime::now();
+	deadline = startTime + 1.333f;
+	unsigned rowsPlotted = 0;
+	while(deadline.inFuture()) {
+		float u = clamp(float(SystemTime::now() - startTime) / (1.333f-0.0001f), 0.f, 1.f);
+		u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+		unsigned rowsNeeded = unsigned(16.f * u)+1;
+		while(rowsNeeded > rowsPlotted) {
+			rowsPlotted++;
+			if (rowsPlotted <= 3) {
+				g.bg0.image(vec<unsigned>(0,18-rowsPlotted), vec<unsigned>(16,1), MenuFooter, vec<unsigned>(0, 3-rowsPlotted));
+			} else if (rowsPlotted >= 14) {
+				g.bg0.image(vec<unsigned>(0,18-rowsPlotted), vec<unsigned>(16,1), MenuHeader, vec<unsigned>(0, 16-rowsPlotted));
+			} else {
+				g.bg0.span(vec<unsigned>(0, 18-rowsPlotted), 16, MenuBackground);
+			}
 		}
-		for(unsigned y=i+1; y<16-i-1; ++y) {
-			mode.bg0.image(vec(i, y), BlackTile);
-			mode.bg0.image(vec(16-i-1, y), BlackTile);
-		}
+		g.bg0.setPanning(vec<unsigned>(0, -int(128 * u)));
 		DoPaint();
 	}
-	DoWait(0.5f);
+
+	System::finish();
+	g.bg0.setPanning(vec(0,0));
+	g.bg0.image(vec(0,0), MenuHeader);
+	g.bg0.fill(vec(0, 3), vec(16, 16-3-3), MenuBackground);
+	g.bg0.image(vec(0,16-3), MenuFooter);
+	DoPaint();
+	System::finish();
+
 	return &ViewAt(cube);
 }
