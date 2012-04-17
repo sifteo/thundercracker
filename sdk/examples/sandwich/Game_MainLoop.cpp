@@ -1,27 +1,13 @@
 #include "Game.h"
 
 void Game::MainLoop() {
+  	//---------------------------------------------------------------------------
+  	// RESET DATA
 	ASSERT(this == &gGame);
 	mActiveViewMask = CUBE_ALLOC_MASK;
 	mLockedViewMask = 0x00000000;
 	mTouchMask = 0x00000000;
 
-  	//---------------------------------------------------------------------------
-  	// INTRO
-	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
-		ViewAt(c).Canvas().attach(c);
-	}
-
-	#if FAST_FORWARD
-		Viewport* pPrimary = &ViewAt(0);
-	#else
-		PlayMusic(music_sting, false);
-		Viewport* pPrimary = IntroCutscene();
-	#endif
-
-	//---------------------------------------------------------------------------
-  	// RESET EVERYTHING
 	mNeighborDirty = false;
 	mPrevTime = SystemTime::now();
 	pInventory = 0;
@@ -29,7 +15,27 @@ void Game::MainLoop() {
 	mAnimFrames = 0;
 	mState.Init();
 	mMap.Init();
-	for (auto& view : views) { view.Init(); }
+
+  	//---------------------------------------------------------------------------
+  	// INTRO
+  	for(auto& view : views) {
+		view.Canvas().initMode(BG0_SPR_BG1);
+		view.Canvas().attach(&view - &ViewAt(0));
+	}
+
+	#if FAST_FORWARD
+		Viewport* pPrimary = &ViewAt(0);
+	#else
+		PlayMusic(music_sting, false);
+		Viewport* pPrimary = IntroCutscene();
+		pPrimary = MainMenu(pPrimary);
+	#endif
+
+	//---------------------------------------------------------------------------
+  	// RESET VIEWS
+  	for(auto& view : views) {
+  		view.Init();
+  	}
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
 	mPlayer.View().ShowLocation(mPlayer.Location(), true);

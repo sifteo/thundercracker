@@ -23,6 +23,7 @@ void Viewport::Init() {
 	EnqueueHackyTouches();
 	RestoreCanonicalVideo();
 	mCanvas.bg0.erase(BlackTile);
+	mCanvas.bg1.erase();
 	mView.idle.Init();
 }
 
@@ -270,6 +271,12 @@ Side Viewport::VirtualTiltDirection() const {
 //-----------------------------------------------------------------------------
 // DRAWING HELPERS
 //-----------------------------------------------------------------------------
+
+void Viewport::HideSprites() {
+	for(unsigned i=0; i<8; ++i) {
+		mCanvas.sprites[i].hide();
+	}
+}
 
 void Viewport::DrawRoom(unsigned roomId) {
   	auto& map = gGame.GetMap().Data();

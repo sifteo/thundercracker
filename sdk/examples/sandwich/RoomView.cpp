@@ -21,6 +21,19 @@ SpriteRef RoomView::BlockSprite() { return mBlockSprite; }
 void RoomView::Init(unsigned roomId) {
   flags.locked = false;
   mRoomId = roomId;
+  mBlock = 0;
+  auto& map = gGame.GetMap();
+  auto& r = GetRoom();
+  if (!r.IsSubdivided()) {
+    // Should there be some sort of spatial hash?
+    for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
+      if (r.IsShowingBlock(pBlock)) {
+        // assuming for now that we're only showing one block per cube :/
+        mBlock = pBlock;
+        break;
+      }
+    }
+  }
   Restore();
 }
 
@@ -61,7 +74,7 @@ void RoomView::HideOverlay() {
 
 void RoomView::Restore() {
   mWobbles = -1.f;
-  Map& map = gGame.GetMap();
+  auto& map = gGame.GetMap();
   flags.hideOverlay = false;
   // are we showing an items?
   mStartFrame = gGame.AnimFrame();
@@ -82,7 +95,6 @@ void RoomView::Restore() {
   }
   mCanvas.bg0.erase(BlackTile);
   DrawBackground();
-  // initialize ambient fx?
   if (map.Data().ambientType) {
     if (r.HasTrigger()) {
       mAmbient.bff.active = 0;
@@ -92,17 +104,10 @@ void RoomView::Restore() {
       mBffSprite.move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
-
-  mBlock = 0;
-  if (!r.IsSubdivided()) {
-    // Should there be some sort of spatial hash?
-    for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
-      if (r.IsShowingBlock(pBlock)) {
-        // assuming for now that we're only showing one block per cube :/
-        ShowBlock(pBlock);
-        break;
-      }
-    }
+  if (mBlock && r.IsShowingBlock(mBlock)) {
+    ShowBlock(mBlock);
+  } else {
+    mBlock = 0;
   }
 }
 
