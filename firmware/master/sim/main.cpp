@@ -24,10 +24,8 @@
 // XXX: Hack, for testing SVM only
 static bool installElfFile(const char *path)
 {
-    if (!path) {
-        LOG(("usage: master-sim program.elf\n"));
+    if (!path)
         return false;
-    }
 
     FILE *elfFile = fopen(path, "rb");
     if (elfFile == NULL) {
@@ -53,8 +51,31 @@ static bool installElfFile(const char *path)
     return true;
 }
 
+static void usage()
+{
+    fprintf(stderr,
+            "\n"
+            "usage: master-sim FILE.elf [OPTIONS]\n"
+            "\n"
+            "Sifteo Master Cube Firmware Runner.\n"
+            "Runs a host build of the application running on the Sifteo Master Cube,\n"
+            "including additional debug and diagnostic support.\n"
+            "\n"
+            "Options:\n"
+            "  -h               Show this help message, and exit\n"
+            "  --flash_stats    Periodically print external flash usage diagnostics\n"
+            "  --trace          Dump the SvmCpu state at each instruction\n"
+            "  --stack          Log each new low water mark reached for stack usage\n"
+            "\n"
+            "Copyright <c> 2012 Sifteo, Inc. All rights reserved.\n"
+            "\n");
+}
+
 int main(int argc, char **argv)
 {
+    if (argc < 2)
+        usage();
+
     // handle cmd line args - arg 1 is always the elf binary to run
     for (int c = 2; c < argc; c++) {
 
