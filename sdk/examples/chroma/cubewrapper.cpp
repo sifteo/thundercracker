@@ -78,7 +78,8 @@ void CubeWrapper::Reset()
 
     m_timeTillGlimmer = 0.0f;
     ClearBG1();
-    m_queuedFlush = true;
+    m_vid.bg1.eraseMask();
+    //m_queuedFlush = true;
     m_intro.Reset();
     m_glimmer.Reset();
     m_bubbles.Reset( m_vid );
@@ -105,7 +106,7 @@ void CubeWrapper::Draw()
             if( m_intro.getState() != Intro::STATE_BALLEXPLOSION )
                 DrawGrid();
 
-            m_queuedFlush = true;
+            //m_queuedFlush = true;
             break;
         }
 		case Game::STATE_PLAYING:
@@ -135,8 +136,8 @@ void CubeWrapper::Draw()
                     DrawGrid();
 
                     //draw glimmer before timer
-                    if( m_glimmer.IsActive() )
-                        m_glimmer.Draw( m_bg1buffer, this );
+                    //if( m_glimmer.IsActive() )
+                        //m_glimmer.Draw( m_bg1buffer, this );
 
                     if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
@@ -152,8 +153,7 @@ void CubeWrapper::Draw()
                     }
                     if( m_banner.IsActive() )
                     {
-                        m_banner.Draw( m_bg1buffer );
-                        m_queuedFlush = true;
+                        m_banner.Draw( m_vid );
                     }
 
                     m_bubbles.Draw( m_vid, this );
@@ -364,8 +364,7 @@ void CubeWrapper::Draw()
         }
         case Game::STATE_GAMEOVERBANNER:
         {
-            m_banner.Draw( m_bg1buffer );
-            m_queuedFlush = true;
+            m_banner.Draw( m_vid );
             break;
         }
 		default:
@@ -1592,7 +1591,6 @@ void CubeWrapper::testFlushBG1()
     if( m_queuedFlush )
     {
         FlushBG1();
-        m_queuedFlush = false;
     }
 }
 
@@ -2141,6 +2139,8 @@ void CubeWrapper::ClearBG1()
 //draws bg1
 void CubeWrapper::FlushBG1()
 {
+    LOG("flushing bg1\n");
     m_vid.bg1.maskedImage( m_bg1buffer, White, 0 );
     ClearBG1();
+    m_queuedFlush = false;
 }

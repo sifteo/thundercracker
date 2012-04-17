@@ -170,15 +170,14 @@ SvmMemory::VirtAddr ImageDecoder::readIndex(unsigned i)
 
 bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
 {
-    DEBUG_LOG(("DUB[%08x]: Decompressing block %d, %d tiles\n",
-        header.pData, index, numTiles));
-
     struct Code {
         int type;
         int arg;
     };
     
     SvmMemory::VirtAddr va = readIndex(index);
+    DEBUG_LOG(("DUB[%08x]: Decompressing block %d, %d tiles, at VA %p\n",
+        header.pData, index, numTiles, reinterpret_cast<void*>(va) ));
 
     if (!va)
         return false;
@@ -226,6 +225,9 @@ bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
          * Act on this code, possibly multiple times.
          */
 
+        DEBUG_LOG(("DUB[%08x]: Code (%d, %d), rep=%d\n",
+            header.pData, thisCode.type, thisCode.arg, repeats));
+        
         do {
             if (thisCode.type) {
                 // Backreference, guaranteed to be valid
@@ -237,6 +239,9 @@ bool ImageDecoder::decompressDUB(unsigned index, unsigned numTiles)
                 // First tile, delta from baseAddr.
                 tiles[tileIndex] = baseAddr + thisCode.arg;
             }
+
+            DEBUG_LOG(("DUB[%08x]: tiles[%d] = %04x\n",
+                header.pData, tileIndex, tiles[tileIndex]));
 
             tileIndex++;
             if (tileIndex == numTiles)
@@ -263,6 +268,10 @@ unsigned BitReader::read(unsigned bits)
             unsigned result = buffer & mask;
             buffer >>= bits;
             bitCount -= bits;
+
+            DEBUG_LOG(("DUB: read(%d) -> 0x%02x, buffer: 0x%08x%08x (%d)\n",
+                bits, result, (uint32_t)(buffer >> 32), (uint32_t) buffer,
+                bitCount));
             return result;
         }
 
