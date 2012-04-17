@@ -38,6 +38,7 @@ class SystemCubes {
     // End an event, resume cube execution.
     void endEvent() {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
+        mEventDeadline.reset();
         mEventInProgress = false;
         mEventCond.notify_all();
     }

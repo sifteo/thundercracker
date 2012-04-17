@@ -228,7 +228,6 @@ ALWAYS_INLINE void SystemCubes::tick(unsigned count)
         mEventCond.notify_all();
         while (mEventInProgress)
             mEventCond.wait(mEventMutex);
-        mEventDeadline.reset();
     }
 }
 

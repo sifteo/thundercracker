@@ -21,6 +21,7 @@
 #include "assetmanager.h"
 #include "svmloader.h"
 #include "svmcpu.h"
+#include "svmruntime.h"
 #include "mc_gdbserver.h"
 
 SystemMC *SystemMC::instance;
@@ -157,6 +158,7 @@ void SystemMC::doRadioPacket()
         Cube::Radio::Packet packet;
         Cube::Radio::Packet reply;
         bool ack;
+        unsigned cubeID;
     } buf;
     memset(&buf, 0, sizeof buf);
     buf.ptx.packet.bytes = buf.packet.payload;
@@ -179,9 +181,11 @@ void SystemMC::doRadioPacket()
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             Cube::Radio &radio = sys->cubes[i].spi.radio;
 
-            if (radio.getPackedRXAddr() == addr) {
-                buf.ack = radio.handlePacket(buf.packet, buf.reply);
+            if (radio.getPackedRXAddr() == addr &&
+                radio.handlePacket(buf.packet, buf.reply)) {
+                buf.ack = true;
                 buf.prx.len = buf.reply.len;
+                buf.cubeID = i;
                 retry = MAX_RETRIES;
                 break;
             }
@@ -189,18 +193,30 @@ void SystemMC::doRadioPacket()
 
         // Log this transaction
         if (sys->opt_radioTrace) {
-            LOG(("RADIO: %6dms -- TX[%2d] ",
-                int(SysTime::ticks() / SysTime::msTicks(1)), buf.packet.len));
-            for (unsigned i = 0; i < buf.packet.len; i++)
-                LOG(("%02x", buf.packet.payload[i]));
-            LOG((" -- RX["));
+            LOG(("RADIO: %6dms %02d/%02x%02x%02x%02x%02x -- TX[%2d] ",
+                int(SysTime::ticks() / SysTime::msTicks(1)),
+                buf.ptx.dest->channel,
+                buf.ptx.dest->id[4],
+                buf.ptx.dest->id[3],
+                buf.ptx.dest->id[2],
+                buf.ptx.dest->id[1],
+                buf.ptx.dest->id[0],
+                buf.packet.len));
+
+            for (unsigned i = 0; i < sizeof buf.packet.payload; i++) {
+                if (i < buf.packet.len)
+                    LOG(("%02x", buf.packet.payload[i]));
+                else
+                    LOG(("  "));
+            }
+
             if (buf.ack) {
-                LOG(("%2d]", buf.reply.len));
+                LOG((" -- Cube %d: ACK[%2d] ", buf.cubeID, buf.reply.len));
                 for (unsigned i = 0; i < buf.reply.len; i++)
                     LOG(("%02x", buf.reply.payload[i]));
                 LOG(("\n"));
             } else {
-                LOG(("timeout, retry #%d]\n", retry));
+                LOG((" -- TIMEOUT, retry #%d\n", retry));
             }
         }
 
@@ -212,7 +228,7 @@ void SystemMC::doRadioPacket()
         } else {
             RadioManager::ackEmpty();
         }
-    
+
         sys->endCubeEvent();
     }
 }
