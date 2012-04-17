@@ -2114,7 +2114,7 @@ void CubeWrapper::ClearBG1()
 //draws bg1
 void CubeWrapper::FlushBG1()
 {
-    LOG("flushing bg1\n");
+    //LOG("flushing bg1\n");
     m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0, false );
     ClearBG1();
     m_queuedFlush = false;
