@@ -11,6 +11,7 @@
 
 #include "tinythread.h"
 #include "macros.h"
+#include "vtime.h"
 
 class System;
 
@@ -25,6 +26,20 @@ class SystemCubes {
 
     void setNumCubes(unsigned n);
     void resetCube(unsigned id);
+
+    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
+    void beginEvent(uint64_t deadline) {
+        tthread::lock_guard<tthread::mutex> guard(mEventMutex);
+        mEventDeadline.set(deadline);
+        while (!mEventInProgress)
+            mEventCond.wait(mEventMutex);
+    }
+
+    // End an event, resume cube execution.
+    void endEvent() {
+        tthread::lock_guard<tthread::mutex> guard(mEventMutex);
+        mEventInProgress = false;
+    }
 
  private: 
     void startThread();
@@ -42,6 +57,11 @@ class SystemCubes {
     System *sys;
     tthread::thread *mThread;
     bool mThreadRunning;
+
+    TickDeadline mEventDeadline;
+    bool mEventInProgress;
+    tthread::mutex mEventMutex;
+    tthread::condition_variable mEventCond;
 };
 
 #endif

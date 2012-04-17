@@ -21,6 +21,7 @@
 #include "system_cubes.h"
 #include "system_mc.h"
 #include "tracer.h"
+#include "tinythread.h"
 
 
 class System {
@@ -61,12 +62,17 @@ class System {
 
     bool isTraceAllowed();
 
-    unsigned mcDeadlineRemaining() const {
-        // XXX
-        return 1000;
+    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
+    void beginCubeEvent(uint64_t deadline) {
+        sc.beginEvent(deadline);
     }
 
- private: 
+    // End an event, resume cube execution.
+    void endCubeEvent() {
+        sc.endEvent();
+    }
+
+ private:
     bool mIsInitialized;
     bool mIsStarted;
 
