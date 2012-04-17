@@ -18,9 +18,9 @@ void Game::MainLoop() {
 
   	//---------------------------------------------------------------------------
   	// INTRO
-	for(CubeID c=0; c<NUM_CUBES; ++c) {
-		ViewAt(c).Canvas().initMode(BG0_SPR_BG1);
-		ViewAt(c).Canvas().attach(c);
+  	for(auto& view : views) {
+		view.Canvas().initMode(BG0_SPR_BG1);
+		view.Canvas().attach(&view - &ViewAt(0));
 	}
 
 	#if FAST_FORWARD
