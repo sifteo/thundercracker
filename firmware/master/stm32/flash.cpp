@@ -40,3 +40,8 @@ void Flash::chipErase() {
 bool Flash::writeInProgress() {
     return flash.writeInProgress();
 }
+
+void Flash::readId(JedecID *id)
+{
+    flash.readId(id);
+}
