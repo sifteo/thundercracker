@@ -1,10 +1,20 @@
 #include "Game.h"
 
 void Game::MainLoop() {
+  	//---------------------------------------------------------------------------
+  	// RESET DATA
 	ASSERT(this == &gGame);
 	mActiveViewMask = CUBE_ALLOC_MASK;
 	mLockedViewMask = 0x00000000;
 	mTouchMask = 0x00000000;
+
+	mNeighborDirty = false;
+	mPrevTime = SystemTime::now();
+	pInventory = 0;
+	pMinimap = 0;
+	mAnimFrames = 0;
+	mState.Init();
+	mMap.Init();
 
   	//---------------------------------------------------------------------------
   	// INTRO
@@ -21,14 +31,7 @@ void Game::MainLoop() {
 	#endif
 
 	//---------------------------------------------------------------------------
-  	// RESET EVERYTHING
-	mNeighborDirty = false;
-	mPrevTime = SystemTime::now();
-	pInventory = 0;
-	pMinimap = 0;
-	mAnimFrames = 0;
-	mState.Init();
-	mMap.Init();
+  	// RESET VIEWS
 	for (auto& view : views) { view.Init(); }
 	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
