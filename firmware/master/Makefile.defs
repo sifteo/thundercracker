@@ -40,7 +40,6 @@ endif
 CCFLAGS := -Icommon -Istm32 -I../include -I$(SDK_DIR)/include -DNOT_USERSPACE
 
 # Disable unwanted warnings, but be generally pretty pedantic
-# XXX - no-strict-aliasing is needed in syscall.cpp, perhaps only apply to that file
 CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
 CCFLAGS += -ffunction-sections -fdata-sections -ffast-math

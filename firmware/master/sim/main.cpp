@@ -52,7 +52,7 @@ static bool installElfFile(const char *path)
     return true;
 }
 
-int main(int argc, char **argv)
+int firmware_main(int argc, char **argv)
 {
     // handle cmd line args - arg 1 is always the elf binary to run
     for (int c = 2; c < argc; c++) {

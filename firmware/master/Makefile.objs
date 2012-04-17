@@ -39,19 +39,19 @@ OBJS_COMMON = \
 
 # Sources for the host build only
 OBJS_SIM = \
-    $(OBJS_COMMON:.o=.sim.o) \
-    $(MASTER_DIR)/sim/tinythread.sim.o \
-    $(MASTER_DIR)/sim/audiooutdevice.sim.o \
-    $(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
-    $(MASTER_DIR)/sim/flashstorage.sim.o \
-    $(MASTER_DIR)/sim/flash.sim.o \
-    $(MASTER_DIR)/sim/svmcpu.sim.o \
-    $(MASTER_DIR)/sim/svmdebugpipe.sim.o \
-    $(MASTER_DIR)/sim/elfdebuginfo.sim.o \
-    $(MASTER_DIR)/sim/logdecoder.sim.o \
-    $(MASTER_DIR)/sim/gdbserver.sim.o \
-    $(MASTER_DIR)/sim/siftulator.sim.o \
-    $(MASTER_DIR)/sim/main.sim.o
+    $(OBJS_COMMON) \
+    $(MASTER_DIR)/sim/tinythread.o \
+    $(MASTER_DIR)/sim/audiooutdevice.o \
+    $(MASTER_DIR)/sim/portaudiooutdevice.o \
+    $(MASTER_DIR)/sim/flashstorage.o \
+    $(MASTER_DIR)/sim/flash.o \
+    $(MASTER_DIR)/sim/svmcpu.o \
+    $(MASTER_DIR)/sim/svmdebugpipe.o \
+    $(MASTER_DIR)/sim/elfdebuginfo.o \
+    $(MASTER_DIR)/sim/logdecoder.o \
+    $(MASTER_DIR)/sim/gdbserver.o \
+    $(MASTER_DIR)/sim/siftulator.o \
+    $(MASTER_DIR)/sim/main.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
