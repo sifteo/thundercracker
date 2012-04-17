@@ -1162,9 +1162,8 @@ bool CubeStateMachine::isConnectedToCubeOnSide(CubeID cubeIDStart,
     // search for a matching cubeID in the given direction through the
     // neighbor chain
     CubeID aCube = getCube();
-    while (aCube != cubeIDStart)
+    while (aCube.isDefined() && aCube != cubeIDStart)
     {
-        LOG("isConnectedToCubeOnSide: aCube=%d\n", aCube.sys);
         Neighborhood hood(aCube);
         aCube = hood.neighborAt(side);
     }
