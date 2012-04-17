@@ -18,6 +18,7 @@ $(BIN).app: $(OBJS)
 	cp resources/Info.plist "$(BIN).app/Contents/Info.plist"
 	cp resources/siftrunner_icon.icns "$(BIN).app/Contents/Resources/$(BIN).icns"
 	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN).app/contents/MacOS/$(BIN)"
+	touch "$@"
 else
 # Default link
 $(BIN): $(OBJS)
