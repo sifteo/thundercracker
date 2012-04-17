@@ -40,7 +40,7 @@ Game::GameState Run() {
         nv.SetTransitionAmount(t/kTransitionTime);
         nv.Paint();
         System::paint();
-        System::finish();
+        //System::finish();
         Game::UpdateDt();
     }
     nv.SetTransitionAmount(-1);
@@ -91,7 +91,7 @@ Game::GameState Run() {
             {
                 Game::Wait(0);
                 System::paint();
-                System::finish();
+                //System::finish();
                 nv.GetCube()->vid.initMode(BG0_SPR_BG1);
                 nv.GetCube()->vid.setWindow(72,56);
 
@@ -106,7 +106,7 @@ Game::GameState Run() {
                         nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                     }
                     System::paint();
-                    System::finish();
+                    //System::finish();
                     Game::UpdateDt();
                 }
             }
@@ -131,7 +131,7 @@ Game::GameState Run() {
                     nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                 }
                 System::paint();
-                System::finish();
+                //System::finish();
                 Game::UpdateDt();
             }
         }
@@ -145,7 +145,7 @@ Game::GameState Run() {
         nv.SetTransitionAmount(1-t/kTransitionTime);
         nv.Paint();
         System::paint();
-        System::finish();
+        //System::finish();
         Game::UpdateDt();
     }
     nv.SetTransitionAmount(0);

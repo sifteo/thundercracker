@@ -37,7 +37,7 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
         mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
         Paint();
         System::paint();
-        System::finish();
+        //System::finish();
         Game::UpdateDt();
     }
 
@@ -64,7 +64,7 @@ void TiltFlowDetailView::HideDescription() {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
             System::paint();
-            System::finish();
+            //System::finish();
             Game::UpdateDt();
         }
 

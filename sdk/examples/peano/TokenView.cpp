@@ -328,16 +328,22 @@ void TokenView::PaintNow()
         c->Image(skin.accent, vec(0,yPos));
         if(isInGroup)
         {
-            c->vid.bg1.image(vec<int>(8-Accent_Current.tileWidth()/2, yPos+1), Accent_Current);
+            Int2 p = vec<int>(8-Accent_Current.tileWidth()/2, yPos+1);
+            c->vid.bg1.setMask(BG1Mask::filled(p, Accent_Current.tileSize()));
+            c->vid.bg1.image(p, Accent_Current);
         }
         else
         {
-            c->vid.bg1.image(vec<int>(8-Accent_Target.tileWidth()/2, yPos+1), Accent_Target);
+            Int2 p = vec<int>(8-Accent_Target.tileWidth()/2, yPos+1);
+            c->vid.bg1.setMask(BG1Mask::filled(p, Accent_Target.tileSize()));
+            c->vid.bg1.image(p, Accent_Target);
         }
 
         if (result.IsNan())
         {
-            c->vid.bg1.image(vec(8-Nan.tileWidth()/2, yPos+4-Nan.tileHeight()/2), Nan);
+            Int2 p = vec(8-Nan.tileWidth()/2, yPos+4-Nan.tileHeight()/2);
+            c->vid.bg1.setMask(BG1Mask::filled(p, Nan.tileSize()));
+            c->vid.bg1.image(p, Nan);
         } else {
             //uses sprites -> pixel coords
             c->DrawFraction(result, vec(64, yPos*8+32));

@@ -110,12 +110,12 @@ void AnimateDoors(TotalsCube *c, bool opening)
 
         PaintTheDoors(c, (7+6+kPad) * amount, opening);
         System::paint();
-        System::finish();
+        //System::finish();
         Game::UpdateDt();
     }
     PaintTheDoors(c, opening? (7+6+kPad): 0, opening);
     System::paint();
-    System::finish();
+    //System::finish();
 }
 
 //true means selected first choice (yes)
@@ -135,6 +135,7 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
 
     AnimateDoors(Game::cubes+YES, true);
     Game::cubes[YES].Image(*choice1, vec(3, 1));
+    System::paint();
 
     AnimateDoors(Game::cubes+NO, true);
     Game::cubes[NO].Image(*choice2, vec(3, 1));
@@ -147,7 +148,7 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
         AnimateDoors(Game::cubes+ASK, true);        
         dw.SetForegroundColor(75, 0, 85);
         dw.SetBackgroundColor(255, 255, 255);
-        dw.DoDialog(msg, 16, 20);
+        dw.DoDialog(msg, 16, 16);
     }
 
     gotTouchOn[0] = gotTouchOn[1] = gotTouchOn[2] = false;

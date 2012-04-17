@@ -57,15 +57,18 @@ void TiltFlowView::Tick()
 
     TotalsCube *c = GetCube();
 
+    const BG1Mask mask = BG1Mask::filled(vec(0,0), vec(16,1))
+                        | BG1Mask::filled(vec(0,12), vec(16,4));
+    c->vid.bg1.setMask(mask);
+
     int newMarquee = menu->GetSimTime() / kMarqueeDelay;
     if(menu->IsPicked())
         newMarquee = -1;
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-//TODO        c->foregroundLayer.DrawPartialAsset(vec(0,0), vec(0, 15), vec(16,1), Skins::GetSkin().vault_door); // header image
+        c->vid.bg1.image(vec(0,0), vec(16,1), Skins::GetSkin().vault_door, vec(0,15));
         PaintFooter(c);
-//TODO        c->foregroundLayer.Flush();
     }
 
     if (mDirty)
@@ -81,22 +84,22 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
-    c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
+    //c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
 }
 
 void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
     c->RemoveEventHandler(&eventHandler);
-//TODO    c->foregroundLayer.Flush();
+    c->vid.bg1.erase();
 }
 
 void TiltFlowView::PaintFooter(TotalsCube *c) {
     if(menu->IsPicked())
     {
-//TODO        c->foregroundLayer.DrawPartialAsset(vec(0, 12), vec(0,0), vec(16,4), Skins::GetSkin().vault_door);
+        c->vid.bg1.image(vec(0,12), vec(16,4), Skins::GetSkin().vault_door, vec(0,0));
     }
     else
     {
-//TODO        c->foregroundLayer.DrawAsset(vec(0, 12), *kMarquee[mMarquee % 2]);
+        c->vid.bg1.image(vec(0,12), *kMarquee[mMarquee % 2]);
     }
 }
 

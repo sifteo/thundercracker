@@ -98,7 +98,7 @@ void WaitWithTokenUpdate(float delay)
 {
     Game::PaintCubeViews();
     System::paint();
-    System::finish();
+    //System::finish();
 
     SystemTime t = SystemTime::now();
 
@@ -158,7 +158,7 @@ Game::GameState Run() {
     Game::Wait(3);
     narrator.SetMessage("We're going to learn\nto solve secret codes!");
     Game::Wait(3);
-    narrator.SetMessage("These codes let you\ninto the treasure vault!", NarratorView::EmoteYay);
+    narrator.SetMessage("These codes\nlet you into the\ntreasure vault!", NarratorView::EmoteYay);
     Game::Wait(3);
 
     // initailize puzzle
@@ -235,7 +235,7 @@ Game::GameState Run() {
     WaitWithTokenUpdate(0.5f);  //two waits with token update so overlay has time to turn off
     narrator.SetMessage("Good job!", NarratorView::EmoteYay);
     WaitWithTokenUpdate(3);
-    narrator.SetMessage("See how this\ncombination equals 2-1=1.");
+    narrator.SetMessage("See how this\ncombination\nequals 2-1=1.");
     Game::Wait(3);
 
     // mix up
@@ -261,13 +261,12 @@ Game::GameState Run() {
     // press your luck flourish
     {
         PLAY_SFX(sfx_Tutorial_Mix_Nums);
-        float timeout = period;
+        TimeDelta timeout = period;
         int cubeId = 0;
-        float t=0;
-        while(t<3.0f) {
-            t += Game::dt;
+        SystemTime t = SystemTime::now();
+        while(t + 3.0 > SystemTime::now()) {
             timeout -= Game::dt;
-            while (timeout < 0) {
+            while (timeout < 0.0f) {
                 (cubeId==0?firstToken:secondToken).PaintRandomNumeral();
                 narrator.SetEmote(cubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
                 cubeId = (cubeId+1) % 2;
@@ -277,7 +276,7 @@ Game::GameState Run() {
             narrator.GetCube()->Image(cubeId?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
             firstToken.PaintNow();
             secondToken.PaintNow();
-            System::finish();
+            //System::finish();
             Game::UpdateDt();
         }
 
@@ -289,7 +288,7 @@ Game::GameState Run() {
         secondToken.token->val = 3;
         secondToken.token->SetOpBottom(OpDivide);
         // thread in the real numbers
-        float finishCountdown = 2;
+        TimeDelta finishCountdown = 2;
         while(finishCountdown > 0) {
             Game::Wait(0);
             timeout -= Game::dt;
