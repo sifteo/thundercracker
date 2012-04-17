@@ -288,11 +288,11 @@ Game::GameState Run() {
         secondToken.token->val = 3;
         secondToken.token->SetOpBottom(OpDivide);
         // thread in the real numbers
-        TimeDelta finishCountdown = 2;
+        int finishCountdown = 2;
         while(finishCountdown > 0) {
             Game::Wait(0);
             timeout -= Game::dt;
-            while(finishCountdown > 0 && timeout < 0) {
+            while(finishCountdown > 0 && timeout < 0.0f) {
                 --finishCountdown;
                 (cubeId==1?firstToken:secondToken).ResetNumeral();
                 cubeId++;
