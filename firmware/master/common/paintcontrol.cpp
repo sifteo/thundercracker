@@ -10,8 +10,15 @@
 #include "cube.h"
 #include "systime.h"
 
-#define LOG_PREFIX  "PAINT[%d]: %12u us  "
-#define LOG_PARAMS  cube->id(), unsigned(SysTime::ticks() / SysTime::usTicks(1))
+#define LOG_PREFIX  "PAINT[%d]: %12u ms pend=%-3d flags=%08x vf=%02x ack=%02x lock=%08x cm16=%08x  "
+#define LOG_PARAMS  cube->id(), \
+                    unsigned(SysTime::ticks() / SysTime::msTicks(1)), \
+                    pendingFrames, \
+                    vbuf ? vbuf->flags : 0xFFFFFFFF, \
+                    vbuf ? getFlags(vbuf): 0xFF, \
+                    cube->getLastFrameACK(), \
+                    vbuf ? vbuf->lock : 0xFFFFFFFF, \
+                    vbuf ? vbuf->cm16 : 0xFFFFFFFF
 
 
 /*
@@ -76,9 +83,10 @@ void PaintControl::waitForPaint(CubeSlot *cube)
      * as strict as waitForFinish()!
      */
 
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+
     DEBUG_LOG((LOG_PREFIX "------------------------\n", LOG_PARAMS));
-    DEBUG_LOG((LOG_PREFIX "+waitForPaint() pend=%d\n",
-        LOG_PARAMS, pendingFrames));
+    DEBUG_LOG((LOG_PREFIX "+waitForPaint()\n", LOG_PARAMS));
 
     SysTime::Ticks now;
     for (;;) {
@@ -101,15 +109,13 @@ void PaintControl::waitForPaint(CubeSlot *cube)
      * Can we opportunistically regain our synchronicity here?
      */
 
-    _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (vbuf && canMakeSynchronous(vbuf, now)) {
         makeSynchronous(cube, vbuf);
         pendingFrames = 0;
     }
 
-    DEBUG_LOG((LOG_PREFIX "-waitForPaint(), pending=%d, %d ms since last paint\n",
-        LOG_PARAMS, pendingFrames,
-        int((now - paintTimestamp) / SysTime::msTicks(1))));
+    DEBUG_LOG((LOG_PREFIX "-waitForPaint(), %d ms since last paint\n",
+        LOG_PARAMS, int((now - paintTimestamp) / SysTime::msTicks(1))));
 }
 
 void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
@@ -130,10 +136,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     int32_t pending = Atomic::Load(pendingFrames);
     int32_t newPending = pending;
 
-    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x vf=%02x "
-        "lock=%08x cm16=%08x\n",
-        LOG_PARAMS, pending, vbuf->flags, getFlags(vbuf),
-        vbuf->lock, vbuf->cm16));
+    DEBUG_LOG((LOG_PREFIX "+triggerPaint\n", LOG_PARAMS));
 
     bool needPaint = (vbuf->flags & _SYS_VBF_NEED_PAINT) != 0;
     Atomic::And(vbuf->flags, ~_SYS_VBF_NEED_PAINT);
@@ -190,8 +193,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     // Atomically apply our changes to pendingFrames.
     Atomic::Add(pendingFrames, newPending - pending);
 
-    DEBUG_LOG((LOG_PREFIX "-triggerPaint, pend=%d flags=%08x vf=%02x\n",
-        LOG_PARAMS, newPending, vbuf->flags, getFlags(vbuf)));
+    DEBUG_LOG((LOG_PREFIX "-triggerPaint\n", LOG_PARAMS));
 }
 
 void PaintControl::waitForFinish(CubeSlot *cube)
@@ -208,8 +210,7 @@ void PaintControl::waitForFinish(CubeSlot *cube)
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     ASSERT(vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "+waitForFinish(), flags=%08x vf=%02x\n",
-        LOG_PARAMS, vbuf->flags, getFlags(vbuf)));
+    DEBUG_LOG((LOG_PREFIX "+waitForFinish()\n", LOG_PARAMS));
 
     SysTime::Ticks now = SysTime::ticks();
     SysTime::Ticks deadline = now + fpsLow;
@@ -224,8 +225,7 @@ void PaintControl::waitForFinish(CubeSlot *cube)
 
     while (mask & Atomic::Load(vbuf->flags)) {
         if (SysTime::ticks() > deadline) {
-            DEBUG_LOG((LOG_PREFIX "waitForFinish() -- TIMED OUT -- flags=%08x vf=%02x\n",
-                LOG_PARAMS, vbuf->flags, getFlags(vbuf)));
+            DEBUG_LOG((LOG_PREFIX "-waitForFinish(), TIMED OUT\n", LOG_PARAMS));
             break;
         }
 
@@ -236,8 +236,7 @@ void PaintControl::waitForFinish(CubeSlot *cube)
     // We know we're sync'ed now.
     makeSynchronous(cube, vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "-waitForFinish(), flags=%08x vf=%02x ack=%02x\n",
-        LOG_PARAMS, vbuf->flags, getFlags(vbuf), cube->getLastFrameACK()));
+    DEBUG_LOG((LOG_PREFIX "-waitForFinish()\n", LOG_PARAMS));
 }
 
 void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
@@ -272,9 +271,7 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
             setFlags(vbuf, vf);
         }
 
-        DEBUG_LOG((LOG_PREFIX "ackFrames(%d), ack=%02x pend=%d flags=%08x vf=%02x\n",
-            LOG_PARAMS, count, cube->getLastFrameACK(), pendingFrames,
-            vbuf->flags, getFlags(vbuf)));
+        DEBUG_LOG((LOG_PREFIX "ACK %d frames\n", LOG_PARAMS, count));
     }
 }
 
@@ -297,8 +294,7 @@ void PaintControl::vramFlushed(CubeSlot *cube)
         return;
     uint8_t vf = getFlags(vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "vramFlushed(), vf=%02x flags=%08x\n",
-        LOG_PARAMS, vf, vbuf->flags));
+    DEBUG_LOG((LOG_PREFIX "vramFlushed()\n", LOG_PARAMS));
 
     // We've flushed VRAM, flags are sync'ed from now on.
     Atomic::Or(vbuf->flags, _SYS_VBF_FLAG_SYNC);
@@ -306,7 +302,7 @@ void PaintControl::vramFlushed(CubeSlot *cube)
     if (vbuf->flags & _SYS_VBF_TRIGGER_ON_FLUSH) {
         // Trying to trigger a render
 
-        DEBUG_LOG((LOG_PREFIX "Triggering\n", LOG_PARAMS));
+        DEBUG_LOG((LOG_PREFIX "TRIGGERING\n", LOG_PARAMS));
 
         if (cube->hasValidFrameACK() && (vbuf->flags & _SYS_VBF_SYNC_ACK)) {
             // We're sync'ed up. Trigger a one-shot render
