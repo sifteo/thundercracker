@@ -9,13 +9,20 @@ static MenuAssets kMenuAssets = {
 static MenuItem kMenuItems[] = { 
 	{&MenuIconPearl, &MenuHeaderContinue}, 
 	{&MenuIconSprout, &MenuHeaderReplayCavern},
+	{&MenuIconHuh, &MenuHeaderLocked},
+	{&MenuIconHuh, &MenuHeaderLocked},
+	{&MenuIconHuh, &MenuHeaderLocked},
+	{&MenuIconHuh, &MenuHeaderLocked},
+	{&MenuIconHuh, &MenuHeaderLocked},
 	{&MenuIconBurgher, &MenuHeaderClearData},
+
+
+
 	{ 0, 0}
 };
 
 Viewport* Game::MainMenu(Viewport* keyViewport) {
 	Menu mainMenu(keyViewport->Canvas(), &kMenuAssets, kMenuItems);
-	System::finish();
 	mainMenu.setIconYOffset(24);
 	MenuEvent ev;
 	unsigned scroll = 0;

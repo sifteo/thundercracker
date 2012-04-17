@@ -39,11 +39,13 @@ MenuBackground = image{ "menu_background.png", pinned=true }
 MenuHeader = image{ "menu_header_blank.png" }
 MenuHeaderContinue = image{ "menu_header_continue.png" }
 MenuHeaderReplayCavern = image{ "menu_header_replay_caverns.png" }
+MenuHeaderLocked = image{ "menu_header_locked.png" }
 MenuHeaderClearData = image{ "menu_header_clear_data.png" }
 MenuFooter = image{ "menu_footer.png" }
 MenuIconPearl = image{ "menu_icon_pearl.png" }
 MenuIconSprout = image{ "menu_icon_sprout.png" }
 MenuIconBurgher = image{ "menu_icon_burgher.png" }
+MenuIconHuh = image{ "menu_icon_huh.png" }
 
 dofile "content.gen.lua"
 
