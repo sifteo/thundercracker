@@ -13,25 +13,25 @@ OBJS = \
         graphics_fb64.rel \
         graphics_fb128.rel \
         graphics_solid.rel \
-	overlay.rel \
-	power.rel \
+        overlay.rel \
+        power.rel \
         lcd.rel \
         radio.rel \
         sensors.rel \
-	battery.rel \
+        battery.rel \
         flash_hal.rel \
         flash_decoder.rel \
-	params.rel \
+        params.rel \
         draw.rel \
         tilerom.rel \
         demo.rel \
-	
+        
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
 # is just the right size to pad the rest of the segment up until
 # the tilerom data begins.
 OBJS += \
-	graphics_bg1_line.rel \
+        graphics_bg1_line.rel \
         graphics_bg0_rom.rel \
         
 FIRMWARE_INC = ../include
