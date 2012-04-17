@@ -35,6 +35,16 @@ FrameRight = image{ "frame_right.png" }
 FrameBottom = image{ "frame_bottom.png" }
 FrameTop = image{ "frame_top.png" }
 
+MenuBackground = image{ "menu_background.png", pinned=true }
+MenuHeader = image{ "menu_header_blank.png" }
+MenuHeaderContinue = image{ "menu_header_continue.png" }
+MenuHeaderReplayCavern = image{ "menu_header_replay_caverns.png" }
+MenuHeaderClearData = image{ "menu_header_clear_data.png" }
+MenuFooter = image{ "menu_footer.png" }
+MenuIconPearl = image{ "menu_icon_pearl.png" }
+MenuIconSprout = image{ "menu_icon_sprout.png" }
+MenuIconBurgher = image{ "menu_icon_burgher.png" }
+
 dofile "content.gen.lua"
 
 --[[

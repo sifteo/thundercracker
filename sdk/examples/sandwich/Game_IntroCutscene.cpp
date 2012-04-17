@@ -1,61 +1,65 @@
 #include "Game.h"
 
 Viewport* Game::IntroCutscene() {
-	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		VideoBuffer& gfx = ViewAt(i).Canvas();
+
+	for(auto& view : views) {
+		auto& gfx = view.Canvas();
 		gfx.initMode(BG0_SPR_BG1);
 		gfx.bg0.image(vec(0,0), Sting);
 		for(unsigned s=0; s<8; ++s) {
 			gfx.sprites[s].hide();
 		}
-		// TODO
-		//BG1Helper overlay(gCubes[i]);
-		//overlay.DrawAsset(vec(0,0), SandwichTitle);
-		//overlay.Flush();
+		gfx.bg1.fillMask(vec(0,0), vec(128,64)/8);
+		gfx.bg1.image(vec(0,0), SandwichTitle);
 		gfx.bg1.setPanning(vec(0,64));
 	}
-	float dt;
-	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
-		float u = 1.f - (dt / 0.9f);
+
+	auto startTime = SystemTime::now();
+	auto deadline = startTime + 0.9f;
+	while(deadline.inFuture()) {
+		float u = 1.f - float(SystemTime::now() - startTime) / 0.9f;
 		u = 1.f - (u*u*u*u);
-		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewAt(i).Canvas().bg1.setPanning(vec(0.f, 72 - 128*u));
+		for(auto& view : views) {
+			view.Canvas().bg1.setPanning(vec(0.f, 72 - 128*u));
 		}
 		DoPaint();
 	}
-	
+
 	// wait for a touch
 	CubeID cube = 0;
 	bool hasTouch = false;
 	while(!hasTouch) {
-		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			cube = i;
+		for(auto& view : views) {
+			cube = view.GetID();
 			if (cube.isTouching()) {
 				PlaySfx(sfx_neighbor);
 				hasTouch = true;
 				break;
 			}
 		}
-		System::yield();
+		System::paint();
 	}
 	// blank other cubes
-	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		CubeID c = i;
+	for(auto& view : views) {
+		CubeID c = view.GetID();
 		if (c != cube) {
-			VideoBuffer& gfx = ViewAt(i).Canvas();
-			gfx.bg1.eraseMask(false);
+			auto& gfx = view.Canvas();
+			gfx.bg1.erase();
 			gfx.bg1.setPanning(vec(0,0));
 			gfx.bg0.image(vec(0,0), Blank);
 		}
 	}
-	VideoBuffer& mode = ViewAt(cube).Canvas();
+	auto& mode = ViewAt(cube).Canvas();
 	// hide banner
-	for(SystemTime t=SystemTime::now(); (dt=(SystemTime::now()-t))<0.9f;) {
-		float u = 1.f - (dt / 0.9f);
+	startTime = SystemTime::now();
+	deadline = startTime + 0.9f;
+	while(deadline.inFuture()) {
+		float u = 1.f - (float(SystemTime::now() - startTime) / 0.9f);
 		u = 1.f - (u*u*u*u);
 		mode.bg1.setPanning(vec(0.f, -56 + 128*u));
 		DoPaint();
 	}
+	mode.bg1.erase();
 	DoWait(0.1f);
 	// pearl walks up from bottom
 	PlaySfx(sfx_running);

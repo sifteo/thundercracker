@@ -23,7 +23,7 @@ const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
 const float GridSlot::MULTIPLIER_NUMBER_PERCENTON = 0.7f;
 
 
-const FlatAssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
+const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &Gem0,
     &Gem1,
@@ -35,7 +35,7 @@ const FlatAssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
     &Gem7,
 };
 
-const FlatAssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
+const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &ExplodeGem0,
     &ExplodeGem1,
@@ -48,7 +48,7 @@ const FlatAssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 
-const FlatAssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
+const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &FixedGem0,
     &FixedGem1,
@@ -60,7 +60,7 @@ const FlatAssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
     &FixedGem7,
 };
 
-const FlatAssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
+const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &FixedExplode0,
     &FixedExplode1,
@@ -73,7 +73,7 @@ const FlatAssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] 
 };
 
 
-const FlatAssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
+const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
     &hyperdot_idle,
     &rockdot,
@@ -82,7 +82,7 @@ const FlatAssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 
 
 
-const FlatAssetImage *GridSlot::SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ] =
+const AssetImage *GridSlot::SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ] =
 {
     &hyperdot_explode,
     &rockdot,
@@ -189,13 +189,13 @@ bool GridSlot::matchesColor( unsigned int color ) const
 }
 
 
-const FlatAssetImage &GridSlot::GetTexture() const
+const AssetImage &GridSlot::GetTexture() const
 {
 	return *TEXTURES[ m_color ];
 }
 
 
-const FlatAssetImage &GridSlot::GetExplodingTexture() const
+const AssetImage &GridSlot::GetExplodingTexture() const
 {
     if( IsFixed() )
         return *FIXED_EXPLODINGTEXTURES[ m_color ];
@@ -204,7 +204,7 @@ const FlatAssetImage &GridSlot::GetExplodingTexture() const
 }
 
 
-const FlatAssetImage &GridSlot::GetSpecialTexture() const
+const AssetImage &GridSlot::GetSpecialTexture() const
 {
     ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS);
 
@@ -212,7 +212,7 @@ const FlatAssetImage &GridSlot::GetSpecialTexture() const
 }
 
 
-const FlatAssetImage &GridSlot::GetSpecialExplodingTexture() const
+const AssetImage &GridSlot::GetSpecialExplodingTexture() const
 {
     ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS);
 
@@ -291,7 +291,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                     case MOVESTATE_STATIONARY:
                     case MOVESTATE_PENDINGMOVE:
                     {
-                        const FlatAssetImage &animtex = *TEXTURES[ m_color ];
+                        const AssetImage &animtex = *TEXTURES[ m_color ];
                         unsigned int frame;
                         /*if( m_pWrapper->IsIdle() )
                             frame = GetIdleFrame();
@@ -309,7 +309,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                             vid.bg0.image(curPos, GetSpecialTexture(), GetSpecialFrame());
                         else
                         {
-                            const FlatAssetImage &tex = *TEXTURES[m_color];
+                            const AssetImage &tex = *TEXTURES[m_color];
                             vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
                         }
                         break;
@@ -321,7 +321,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                             vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
                         else
                         {
-                            const FlatAssetImage &animtex = *TEXTURES[ m_color ];
+                            const AssetImage &animtex = *TEXTURES[ m_color ];
                             vid.bg0.image(vec, animtex, m_animFrame);
                         }
                         break;
@@ -337,7 +337,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
             if( m_color == HYPERCOLOR )
             {
                 //vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
-                const FlatAssetImage &exTex = GetSpecialExplodingTexture();
+                const AssetImage &exTex = GetSpecialExplodingTexture();
 
                 vid.bg0.image(vec, exTex, GetSpecialFrame());
             }
@@ -349,7 +349,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                 }
                 else
                 {
-                    const FlatAssetImage &exTex = GetExplodingTexture();
+                    const AssetImage &exTex = GetExplodingTexture();
 
                     unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
@@ -358,7 +358,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
 
                 if( m_bWasRainball || m_bWasInfected )
                 {
-                    const FlatAssetImage *pImg = 0;
+                    const AssetImage *pImg = 0;
 
                     if( m_bWasRainball )
                     {
@@ -393,7 +393,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
             else*/
             {
                 vid.bg0.image(vec, GemEmpty, 0);
-                //const FlatAssetImage &exTex = GetExplodingTexture();
+                //const AssetImage &exTex = GetExplodingTexture();
                 //vid.bg0.image(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
 			break;
@@ -790,19 +790,19 @@ void GridSlot::DrawIntroFrame( VideoBuffer &vid, unsigned int frame )
             }
             case 1:
             {
-                const FlatAssetImage &exTex = GetExplodingTexture();
+                const AssetImage &exTex = GetExplodingTexture();
                 vid.bg0.image(vec, exTex, 1);
                 break;
             }
             case 2:
             {
-                const FlatAssetImage &exTex = GetExplodingTexture();
+                const AssetImage &exTex = GetExplodingTexture();
                 vid.bg0.image(vec, exTex, 0);
                 break;
             }
             default:
             {
-                const FlatAssetImage &tex = *TEXTURES[ m_color ];
+                const AssetImage &tex = *TEXTURES[ m_color ];
                 vid.bg0.image(vec, tex, 0);
                 break;
             }

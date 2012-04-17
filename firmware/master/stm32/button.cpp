@@ -66,6 +66,8 @@ IRQ_HANDLER ISR_EXTI2()
 {
     Button::isr();
 }
+#elif (BOARD == BOARD_TEST_JIG)
+// this isr is used elsewhere for the test jig
 #else
 #error "no button isr declared";
 #endif

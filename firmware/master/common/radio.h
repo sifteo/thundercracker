@@ -139,6 +139,25 @@ class Radio {
  public:
     static void open();
     static void halt();
+
+    /*
+     * Values for the L01's tx power register.
+     * Should these be abstracted?
+     */
+    enum TxPower {
+        dBmMinus18              = 0,
+        dBmMinus12              = 1 << 1,
+        dBmMinus6               = 2 << 1,
+        dBm0                    = 3 << 1
+    };
+
+    /*
+     * Setter/getter for transmit power.
+     * We don't strictly need a getter, but it is used for testing purposes
+     * to verify that we can read/write registers properly.
+     */
+    static void setTxPower(TxPower pwr);
+    static TxPower txPower();
 };
 
 /**

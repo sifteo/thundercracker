@@ -19,6 +19,7 @@ OBJS = \
 	Game_Events.o \
 	Game_IntroCutscene.o \
 	Game_MainLoop.o \
+	Game_MainMenu.o \
 	GameState.o \
 	IdleView.o \
 	InventoryView.o \
