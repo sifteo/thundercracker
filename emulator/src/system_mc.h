@@ -9,9 +9,12 @@
 #ifndef _SYSTEM_MC_H
 #define _SYSTEM_MC_H
 
+#include <setjmp.h>
 #include "tinythread.h"
 
 class System;
+class Radio;
+class SysTime;
 
 
 class SystemMC {
@@ -23,14 +26,24 @@ class SystemMC {
     void stop();
 
  private: 
-    void startThread();
-    void stopThread();
+    static const uint32_t TICK_HZ = 16000000;
+    static const uint32_t TICKS_PER_PACKET = 7200;   // 450us, minimum packet period
+    static const uint32_t MAX_RETRIES = 150;         // Simulates (hardware * software) retries
 
-    static void threadFn(void *param);
+    bool installELF(const char *name);
+    void doRadioPacket();
+    static void threadFn(void *);
+
+    friend class Radio;
+    friend class SysTime;
+
+    static SystemMC *instance;
+    uint64_t ticks;
 
     System *sys;
     tthread::thread *mThread;
     bool mThreadRunning;
+    jmp_buf mThreadExitJmp;
 };
 
 #endif

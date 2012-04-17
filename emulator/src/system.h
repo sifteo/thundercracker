@@ -42,6 +42,7 @@ class System {
     bool opt_continueOnException;
     bool opt_turbo;
     bool opt_lockRotationByDefault;
+    bool opt_radioTrace;
 
     // SVM options
     bool opt_svmTrace;

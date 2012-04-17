@@ -21,6 +21,13 @@ class RadioManager;
 struct RadioAddress {
     uint8_t channel;
     uint8_t id[5];
+
+    uint64_t pack() const {
+        uint64_t addr = 0;
+        for (int i = 4; i >= 0; i--)
+            addr = (addr << 8) | id[i];
+        return addr | ((uint64_t)channel << 56);
+    }
 };
  
 /**
@@ -63,15 +70,6 @@ struct PacketBuffer {
 
         memcpy(bytes + len, src, count);
         len += count;
-    }
-
-    void log() const {
-        #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
-        LOG(("[%2d] ", len));
-        for  (unsigned i = 0; i < len; i++)
-            LOG(("%02x", bytes[i]));
-        LOG(("\n"));
-        #endif
     }
 };
 

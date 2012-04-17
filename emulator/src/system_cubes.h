@@ -39,6 +39,7 @@ class SystemCubes {
     void endEvent() {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
         mEventInProgress = false;
+        mEventCond.notify_all();
     }
 
  private: 

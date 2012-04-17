@@ -221,10 +221,11 @@ void SystemCubes::threadFn(void *param)
 ALWAYS_INLINE void SystemCubes::tick(unsigned count)
 {
     sys->time.tick(count);
-    
+
     if (mEventDeadline.hasPassed()) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
         mEventInProgress = true;
+        mEventCond.notify_all();
         while (mEventInProgress)
             mEventCond.wait(mEventMutex);
         mEventDeadline.reset();

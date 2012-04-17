@@ -53,6 +53,7 @@ static void usage()
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
+            "  --radio-trace       Trace all radio packet contents\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -170,6 +171,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "--svm-flash-stats")) {
             sys.opt_svmFlashStats = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--radio-trace")) {
+            sys.opt_radioTrace = true;
             continue;
         }
 
