@@ -442,13 +442,6 @@ void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
                 }
             }
 
-            /*if( m_mode == MODE_BLITZ && !bannered )
-            {
-                String<16> aBuf;
-                aBuf << comboScore;
-                pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
-            }*/
-
             if( m_mode == MODE_BLITZ )
             {
                 SetChain( false );
@@ -930,7 +923,7 @@ void Game::EndGame()
     {
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
+            m_cubes[i].getBanner().SetMessage( m_cubes[i].GetVid(), "NO MORE MATCHES", 3.5f );
         }
     }
 

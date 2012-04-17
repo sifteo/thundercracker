@@ -414,7 +414,7 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
             }
         }
 
-        if( !m_intro.Update( t, dt, m_banner ) )
+        if( !m_intro.Update( t, dt, m_banner, GetVid() ) )
         {
             if( m_state == STATE_REFILL )
                 m_state = STATE_PLAYING;
@@ -1084,11 +1084,6 @@ void CubeWrapper::checkRefill()
         Refill();
 
         m_vid.bg1.setPanning( vec( 0, 0 ) );
-
-        /*if( Game::Inst().getMode() == Game::MODE_SURVIVAL && Game::Inst().getScore() > 0 )
-		{
-			m_banner.SetMessage( "FREE SHAKE!" );
-        }*/
 	}
 	else
 	{
@@ -1098,28 +1093,6 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill();
 		}
-        /*else if( Game::Inst().getShakesLeft() > 0 )
-		{
-            setState( STATE_REFILL );
-            m_intro.Reset( true );
-            Refill( true );
-            Game::Inst().useShake();
-
-            if( Game::Inst().getShakesLeft() == 0 )
-				m_banner.SetMessage( "NO SHAKES LEFT" );
-            else if( Game::Inst().getShakesLeft() == 1 )
-				m_banner.SetMessage( "1 SHAKE LEFT" );
-			else
-			{
-                String<16> buf;
-                buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
-                m_banner.SetMessage( buf );
-			}
-		}
-		else
-		{
-            m_banner.SetMessage( "NO SHAKES LEFT" );
-        }*/
 	}
 }
  
