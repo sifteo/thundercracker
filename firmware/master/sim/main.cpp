@@ -16,6 +16,7 @@
 #include "flashlayer.h"
 #include "assetmanager.h"
 #include "svmloader.h"
+#include "svmruntime.h"
 #include "svmcpu.h"
 #include "gdbserver.h"
 
@@ -65,6 +66,11 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[c], "--trace")) {
             LOG(("INFO: running with SVM trace enabled.\n"));
             SvmCpu::enableTracing();
+        }
+
+        else if (!strcmp(argv[c], "--stack")) {
+            LOG(("INFO: running with stack monitor enabled.\n"));
+            SvmRuntime::enableStackMonitoring();
         }
 
         else {
