@@ -70,6 +70,7 @@ void Banner::SetMessage( VideoBuffer &vid, const char *pMsg, float fTime )
     m_tiles = 0;
     vid.bg1.eraseMask();
     vid.bg1.setMask(BG1Mask::filled(vec(0,6), vec(16,4)));
+    vid.bg1.erase(Transparent);
 }
 
 

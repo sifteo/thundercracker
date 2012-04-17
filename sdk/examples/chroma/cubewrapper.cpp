@@ -49,6 +49,8 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++),
 			slot.Init( this, i, j );
 		}
 	}
+
+    m_bg1buffer.erase(Transparent);
 }
 
 
@@ -2105,7 +2107,7 @@ void CubeWrapper::SpawnScore( unsigned int score, const Int2 &slotpos )
 //clears bg1 to White tile
 void CubeWrapper::ClearBG1()
 {
-    m_bg1buffer.erase( White );
+    m_bg1buffer.erase( Transparent );
 }
 
 
@@ -2113,7 +2115,7 @@ void CubeWrapper::ClearBG1()
 void CubeWrapper::FlushBG1()
 {
     LOG("flushing bg1\n");
-    m_vid.bg1.maskedImage( m_bg1buffer, White, 0 );
+    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0 );
     ClearBG1();
     m_queuedFlush = false;
 }
