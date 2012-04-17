@@ -442,13 +442,6 @@ void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
                 }
             }
 
-            /*if( m_mode == MODE_BLITZ && !bannered )
-            {
-                String<16> aBuf;
-                aBuf << comboScore;
-                pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
-            }*/
-
             if( m_mode == MODE_BLITZ )
             {
                 SetChain( false );
@@ -930,7 +923,7 @@ void Game::EndGame()
     {
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
+            m_cubes[i].getBanner().SetMessage( m_cubes[i].GetVid(), "NO MORE MATCHES", 3.5f );
         }
     }
 
@@ -1119,25 +1112,25 @@ void Game::HandleMenu()
     MenuItem allmenuitems[][ MAX_MENU_ITEMS ] =
     {
         //main menu
-        { {(const AssetImage *)&UI_Main_Menu_Survival, NULL}, {(const AssetImage *)&UI_Main_Menu_Blitz, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
         //puzzle menu
-        { {(const AssetImage *)&UI_Main_Menu_Continue, NULL}, {(const AssetImage *)&UI_Main_Menu_NewGame, NULL}, {(const AssetImage *)&UI_Main_Menu_ChapterSelect, NULL}, {(const AssetImage *)&UI_Main_Menu_Back, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Continue, NULL}, {&UI_Main_Menu_NewGame, NULL}, {&UI_Main_Menu_ChapterSelect, NULL}, {&UI_Main_Menu_Back, NULL}, {NULL, NULL} },
         //chapter select menu
-        { {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_Chapter, NULL}, {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL}, {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
         //puzzle select menu
-        { {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL}, {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL}, {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
+        { {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
     };
 
     MenuAssets allmenuassets[] =
     {
         //main menu
-        {&White, (const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Main_Menu_Topbar, {(const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Main_Menu_TipsTilt, NULL}},
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
         //puzzle menu
-        {&White, (const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Puzzle_Menu_Topbar, {(const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Main_Menu_TipsTilt, NULL}},
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Puzzle_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
         //chapter select menu
-        {&White, (const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_ChapterSelect_Topbar, {(const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Main_Menu_TipsTilt, NULL}},
+        {&White, &UI_Main_Menu_TipsTouch, &UI_ChapterSelect_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
         //puzzle select menu
-        {&White, (const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_PuzzleSelect_Menu_Topbar, {(const AssetImage *)&UI_Main_Menu_TipsTouch, (const AssetImage *)&UI_Main_Menu_TipsTilt, NULL}},
+        {&White, &UI_Main_Menu_TipsTouch, &UI_PuzzleSelect_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
     };
 
     MenuItem *pItems = allmenuitems[0];
@@ -1169,8 +1162,8 @@ void Game::HandleMenu()
 
             //LOG(( "Num selectables = %d\n", numSelectables));
 
-            MenuItem unlocked = {(const AssetImage *)&UI_Main_Menu_Chapter, NULL};
-            MenuItem locked = {(const AssetImage *)&UI_Main_Menu_ChapterLock, NULL};
+            MenuItem unlocked = {&UI_Main_Menu_Chapter, NULL};
+            MenuItem locked = {&UI_Main_Menu_ChapterLock, NULL};
 
             numTotal = Puzzle::GetNumChapters();
 
@@ -1185,7 +1178,7 @@ void Game::HandleMenu()
                     allmenuitems[2][i] = locked;
             }
 
-            MenuItem back = {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
             MenuItem nullItem = {NULL, NULL};
             allmenuitems[2][ numTotal ] = back;
             allmenuitems[2][ numTotal + 1 ] = nullItem;
@@ -1197,8 +1190,8 @@ void Game::HandleMenu()
             pAssets = &allmenuassets[3];
             //certain menu types will have to reinit the menu items list
 
-            MenuItem unlocked = {(const AssetImage *)&UI_Main_Menu_Puzzle, NULL};
-            MenuItem locked = {(const AssetImage *)&UI_Main_Menu_PuzzleLock, NULL};
+            MenuItem unlocked = {&UI_Main_Menu_Puzzle, NULL};
+            MenuItem locked = {&UI_Main_Menu_PuzzleLock, NULL};
 
             numTotal = Puzzle::GetNumPuzzlesInChapter( m_iChapterViewed );
             int puzzleOffset = Puzzle::GetPuzzleOffset( m_iChapterViewed );
@@ -1215,7 +1208,7 @@ void Game::HandleMenu()
                     allmenuitems[3][i] = locked;
             }
 
-            MenuItem back = {(const AssetImage *)&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
             MenuItem nullItem = {NULL, NULL};
             allmenuitems[3][ numTotal ] = back;
             allmenuitems[3][ numTotal + 1 ] = nullItem;

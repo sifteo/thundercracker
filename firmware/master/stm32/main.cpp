@@ -64,7 +64,11 @@ int main()
     NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
     NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
+    NVIC.irqEnable(IVT.USART3);                 // factory test uart
+    NVIC.irqPrioritize(IVT.USART3, 0x99);       //  loooooowest prio
+
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
+
     /*
      * High-level hardware initialization
      */

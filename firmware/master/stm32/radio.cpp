@@ -53,3 +53,13 @@ void Radio::halt()
     __asm__ __volatile__ ("wfi");
 #endif
 }
+
+void Radio::setTxPower(TxPower pwr)
+{
+    NordicRadio.setTxPower(pwr);
+}
+
+Radio::TxPower Radio::txPower()
+{
+    return NordicRadio.txPower();
+}

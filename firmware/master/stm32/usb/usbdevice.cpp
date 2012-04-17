@@ -9,9 +9,14 @@
 #include "usb/usbdefs.h"
 
 #include "hardware.h"
+#include "board.h"
 #include "tasks.h"
 #include "assetmanager.h"
 #include "macros.h"
+
+#if (BOARD == BOARD_TEST_JIG)
+#include "testjig.h"
+#endif
 
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
@@ -89,7 +94,11 @@ static const struct {
 static const char *descriptorStrings[] = {
     "x",
     "Sifteo Inc.",
+#if (BOARD == BOARD_TEST_JIG)
+    "Sifteo TestJig",
+#else
     "Thundercracker",
+#endif
 };
 
 /*
@@ -128,7 +137,19 @@ void UsbDevice::handleOUTData(void *p)
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {
-        AssetManager::onData(buf, numBytes);
+        switch (buf[0]) {
+
+        case 0:
+            AssetManager::onData(buf, numBytes);
+            break;
+
+#if (BOARD == BOARD_TEST_JIG)
+        case 1:
+            TestJig::onTestDataReceived(buf + 1, numBytes - 1);
+            break;
+#endif
+
+        }
     }
 }
 

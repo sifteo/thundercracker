@@ -7,6 +7,7 @@
 #define MACRONIX_MX25_H
 
 #include "spi.h"
+#include "flash.h"
 
 class MacronixMX25
 {
@@ -37,6 +38,8 @@ public:
     inline bool writeInProgress() {
         return readReg(ReadStatusReg) & WriteInProgress;
     }
+
+    void readId(Flash::JedecID *id);
 
     void deepSleep();
     void wakeFromDeepSleep();
@@ -84,12 +87,6 @@ private:
         Reset                       = 0x99,
         ReleaseReadEnhanced         = 0xFF
     };
-
-    typedef struct JedecID_t {
-        uint8_t manufacturerID;
-        uint8_t memoryType;
-        uint8_t memoryDensity;
-    } JedecID;
 
     SPIMaster spi;
 
