@@ -138,8 +138,8 @@ void CubeWrapper::Draw()
                     DrawGrid();
 
                     //draw glimmer before timer
-                    //if( m_glimmer.IsActive() )
-                        //m_glimmer.Draw( m_bg1buffer, this );
+                    if( m_glimmer.IsActive() )
+                        m_glimmer.Draw( m_bg1buffer, this );
 
                     if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
@@ -2115,7 +2115,7 @@ void CubeWrapper::ClearBG1()
 void CubeWrapper::FlushBG1()
 {
     LOG("flushing bg1\n");
-    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0 );
+    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0, false );
     ClearBG1();
     m_queuedFlush = false;
 }
