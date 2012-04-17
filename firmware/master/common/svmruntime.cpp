@@ -25,12 +25,23 @@ SvmMemory::PhysAddr SvmRuntime::stackLimit;
 reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
 
+#ifdef SIFTEO_SIMULATOR
+bool SvmRuntime::stackMonitorEnabled = false;
+SvmMemory::PhysAddr SvmRuntime::topOfStackPA;
+SvmMemory::PhysAddr SvmRuntime::stackLowWaterMark;
+#endif
 
 void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
         SvmMemory::VirtAddr stackTopVA)
 {
     if (!SvmMemory::mapRAM(stackLimitVA, 0, stackLimit))
         SvmRuntime::fault(F_BAD_STACK);
+
+#ifdef SIFTEO_SIMULATOR
+    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
+    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
+    stackLowWaterMark = topOfStackPA;
+#endif
 
     SvmCpu::run(mapSP(stackTopVA - (entryFunc >> 24) * 4),
                 mapBranchTarget(entryFunc));
@@ -446,7 +457,24 @@ reg_t SvmRuntime::mapSP(reg_t addr)
     if (pa < stackLimit)
         SvmRuntime::fault(F_STACK_OVERFLOW);
 
+    onStackModification(pa);
+
     return reinterpret_cast<reg_t>(pa);
+}
+
+/*
+ * If enabled, monitor stack usage and print when we have a new low water mark.
+ * Simulator only.
+ */
+void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
+{
+#ifdef SIFTEO_SIMULATOR
+    if (stackMonitorEnabled && sp < stackLowWaterMark) {
+        stackLowWaterMark = sp;
+        LOG(("new stack low water mark: 0x%p (%d bytes)\n",
+             reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
+    }
+#endif
 }
 
 void SvmRuntime::branch(reg_t addr)

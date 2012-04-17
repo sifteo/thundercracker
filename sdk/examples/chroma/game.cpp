@@ -94,7 +94,7 @@ void Game::Init()
     //TODO READ THIS FROM SAVE FILE
     //if save file doesn't exist, create and initialize it
     m_savedata.Load();
-    m_savedata.furthestProgress = 30;
+    //m_savedata.furthestProgress = 30;
     m_iChapterViewed = 0;
 }
 

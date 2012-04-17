@@ -33,7 +33,7 @@ const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 CubeWrapper::CubeWrapper() : m_cube(s_id++),
         m_bg1buffer( m_cube ), m_state( STATE_PLAYING ),
         m_fTouchTime( 0.0f ), m_curFluidDir(vec( 0, 0 )), m_curFluidVel(vec( 0, 0 )), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ),
+        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ), m_needFinish( false ),
         m_bubbles( m_vid )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
@@ -2114,8 +2114,11 @@ void CubeWrapper::ClearBG1()
 //draws bg1
 void CubeWrapper::FlushBG1()
 {
-    LOG("flushing bg1\n");
-    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0 );
+    //LOG("flushing bg1\n");
+    //m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0, m_needFinish );
+    //finish makes things halt now
+    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0, false );
     ClearBG1();
     m_queuedFlush = false;
+    m_needFinish = false;
 }
