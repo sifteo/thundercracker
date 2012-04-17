@@ -1,6 +1,5 @@
 GameAssets = group{}
 
-TEMP_FOR_GAMESTOP = true
 -- Test = image{"font_bigger_2.png", quality=8}
 --TestGlow = image{"font_bigger_2_glow.png", quality=8}
 -- Menu
@@ -41,23 +40,23 @@ BorderSlotHint = image{"hint_pulse_morph.png", quality=8, width=16}
 
 transparent = image{"transparent.png", quality=8, pinned=true}
 
-Tile2 = image{"tile_ivory_idle00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile2Glow = image{"tile_ivory_glow00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile2Blank = image{"tile_ivory_blank.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile2Meta = image{"wp2_tile05.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile3 = image{"tile_ivory_narrow_idle00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile3Blank = image{"tile_ivory_narrow_blank.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
-Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
+Tile2 = image{"tile_ivory_idle00.png", quality=8}
+Tile2Glow = image{"tile_ivory_glow00.png", quality=8}
+Tile2Blank = image{"tile_ivory_blank.png", quality=8}
+Tile2Meta = image{"wp2_tile05.png", quality=8}
+Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=8}
+Tile3 = image{"tile_ivory_narrow_idle00.png", quality=8}
+Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=8}
+Tile3Blank = image{"tile_ivory_narrow_blank.png", quality=8}
+Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=8}
+Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=8}
 Font1Letter = image{"font_idle_big.png", width=80, height=64, quality=0}
 Font1LetterGlow = image{"font_glow_big.png", width=80, height=64, quality=0}
 Font2Letter = image{"font_idle_medium.png", width=48, height=32, quality=8}
 Font2LetterGlow = image{"font_glow_medium.png", width=48, height=32, quality=8}
 Font3Letter = image{"font_idle_small.png", width=32, height=24, quality=8}
 Font3LetterGlow = image{"font_glow_small.png", width=32, height=24, quality=8}
-TileBG = image{"bg_puzzlebox.png", quality=8, flat=TEMP_FOR_GAMESTOP}
+TileBG = image{"bg_puzzlebox.png", quality=8}
 StartPrompt = image{"wp2_gameselect_prompt.png", pinned=true, quality=8}
 StartBG = image{"wp2_gameselect.png", quality=8}
 StartLid = image{"wp2_gameselect_lid.png", quality=8}

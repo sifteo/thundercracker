@@ -12,12 +12,9 @@ enum Layer
 
 struct AnimObjData
 {
-    const FlatAssetImage *mAsset;
-//     const AssetImage *mAsset;
-    const FlatAssetImage *mBlankLetterAsset;
-//     const AssetImage *mBlankLetterAsset;
-    const FlatAssetImage *mMetaLetterAsset;
-//     const AssetImage *mMetaLetterAsset;
+    const AssetImage *mAsset;
+    const AssetImage *mBlankLetterAsset;
+    const AssetImage *mMetaLetterAsset;
     const PinnedAssetImage *mSpriteAsset;
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
