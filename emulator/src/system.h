@@ -18,7 +18,8 @@
 #include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
-#include "system_network.h"
+#include "system_cubes.h"
+#include "system_mc.h"
 #include "tracer.h"
 
 
@@ -47,42 +48,30 @@ class System {
     std::string opt_cube0Profile;
 
     System();
-    
+
     bool init();
     void start();
     void exit();
     void setNumCubes(unsigned n);
-    
+    void resetCube(unsigned id);
+
     bool isRunning() {
-        return threadRunning;
+        return mIsStarted;
     }
-    
+
     bool isTraceAllowed();
 
-    // Use with care... They must remain exactly paired.
-    void startThread();
-    void stopThread();
+    unsigned mcDeadlineRemaining() const {
+        // XXX
+        return 1000;
+    }
 
  private: 
-    static void threadFn(void *param);
-    bool initCube(unsigned id, bool wakeFromSleep=false);
-    void exitCube(unsigned id);
-    ALWAYS_INLINE void tick(unsigned count=1);
-    
-    NEVER_INLINE void tickLoopDebug();
-    NEVER_INLINE void tickLoopGeneral();
-    NEVER_INLINE void tickLoopFastSBT();
-
-    GLFWthread thread;
-    bool threadRunning;
-
-    FILE *textTraceFile;
-    FILE *vcdTraceFile;
-    bool mIsTracing;
     bool mIsInitialized;
     bool mIsStarted;
-    
-    SystemNetwork network;
+
+    SystemCubes sc;
+    SystemMC smc;
 };
 
 #endif

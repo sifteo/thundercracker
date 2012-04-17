@@ -42,14 +42,17 @@ static void usage()
      */
 
     message("\n"
-            "usage: tc-siftulator [OPTIONS]\n"
+            "usage: tc-siftulator [OPTIONS] [program.elf]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
             "\n"
             "Options:\n"
-            "  -h            Show this help message, and exit\n"
-            "  -n NUM        Set initial number of cubes\n"
-            "  -T            Turbo mode; run faster than real-time if we can\n"
+            "  -h                Show this help message, and exit\n"
+            "  -n NUM            Set initial number of cubes\n"
+            "  -T                Turbo mode; run faster than real-time if we can\n"
+            "  --lock-rotation   Lock rotation by default\n"
+            "  --trace           Trace SVM instruction execution\n"
+            "  --flash-stats     Dump statistics about flash memory usage\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
