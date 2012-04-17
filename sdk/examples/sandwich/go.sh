@@ -1,4 +1,4 @@
 #!/bin/bash
-../../../emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator -n 3 -T -LR &
+tc-siftulator -n 3 -T -LR & 
 sleep 0.1s
-../../../firmware/master/master-sim sandwichcraft.elf
+master-sim sandwichcraft.elf #| grep PAINT --line-buffered

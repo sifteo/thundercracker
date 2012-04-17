@@ -40,12 +40,11 @@ unsigned Game::OnPassiveTrigger() {
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
   RoomView* view;
-  unsigned by;
+  bool wasLocked = false;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
     view = mPlayer.CurrentView();
-    by = view->EquipSprite().y();
     view->HideEquip();
   } else {
     auto p = ListLockedViews();
@@ -56,32 +55,44 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
         room.BombThisFucker();
         view = &(p->GetRoomView());
         view->Unlock();
-        by = view->TriggerSprite().y();
         view->HideItem();
         break;
       }
     }
   }
-  
   auto& g = view->Parent().Canvas();
   view->HideOverlay();
-
-  // compute the tile-row of the bomb
-  by >>= 3;
-  for(int rt=by, rb=by+1; rt>=0||rb<16; --rt, ++rb) {
-    if (rt>=0) {
-      LOG_INT(rt);
-      g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0));
-    }
-    if (rb<16) {
-      g.bg0.span(vec(0, rb), 16, WhiteTile);
-    }
+  for(unsigned i=0; i<8; ++i) {
+    g.sprites[i].hide();
+  }
+  // flash white
+  g.bg1.fillMask(vec(40,40)/8, vec(48,48)/8);
+  unsigned ef = 0;
+  for(int rt=7, rb=8; rt>=0||rb<16; --rt, ++rb) {
+    if (rt>=0) { g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0)); }
+    if (rb<16) { g.bg0.span(vec(0, rb), 16, WhiteTile); }
+    if (ef%2 == 0) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    ++ef;
     DoPaint();
   }
-
-  for(;;) DoPaint();
-
-  view->RefreshOverlay();
+  // repaint room and quake
+  view->Parent().DrawRoom(view->Id());
+  auto deadline = SystemTime::now() + 2.5f;
+  view->UpdatePlayer();
+  while(deadline.inFuture()) {
+    float t = deadline - SystemTime::now();
+    g.bg0.setPanning(vec(
+      5.f * t * cos(16.f * t),
+      5.f * t * sin(16.f * 2.1f*t)
+    ));
+    if (ef/2 == Explosion.numFrames()) { g.bg1.erase(); }
+    else if (ef%2 == 0 && ef/2 < Explosion.numFrames()) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    ++ef;
+    DoPaint();
+  }
+  view->Restore();
+  DoWait(1.f);
+  CheckMapNeighbors();
 }
 
 void Game::OnToggleSwitch(const SwitchData& pSwitch) {
@@ -195,13 +206,6 @@ void Game::OnPickup(Room& room) {
       ASSERT(p);
       p->OnPickup();
       mPlayer.CurrentView()->Unlock();
-
-      //---------------------------------------------------------------------
-      // OMG DEV HACK
-      //---------------------------------------------------------------------
-
-      OnYesOhMyGodExplosion(*p);
-
     }
   } else {
     //-----------------------------------------------------------------------
