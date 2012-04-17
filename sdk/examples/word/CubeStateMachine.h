@@ -41,7 +41,7 @@ public:
     unsigned getMetaLetters(char *buffer, bool forPaint) const;
     void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);
     void queueNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
-    void updateAnim(BG1Mask &bg1, AnimParams *params = 0);
+    void updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params = 0);
     AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
     bool canBeginWord();
@@ -73,7 +73,7 @@ private:
                     bool loopAnim=false,
                     bool paintTime=false,
                     float animStartTime=0.f);
-    void paintLetters(BG1Mask& bg1, bool paintSprites=false);
+    void paintLetters(TileBuffer<16,16,1> &bg1TileBuf, bool paintSprites=false);
     void paintScoreNumbers(BG1Mask &bg1,const Vec2& position, const char* string);
 
     void setLettersStart(unsigned s);

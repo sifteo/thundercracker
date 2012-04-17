@@ -58,6 +58,7 @@ struct AnimParams
 
 bool animPaint(AnimType animT,
                VideoBuffer &vid,
+               TileBuffer<16,16,1> &bg1TileBuf,
                float animTime,
                const AnimParams *params);
 

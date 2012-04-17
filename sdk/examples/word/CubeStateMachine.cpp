@@ -942,7 +942,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
     }
 }
 
-void CubeStateMachine::updateAnim(BG1Mask &bg1, AnimParams *params)
+void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params)
 {
     for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
@@ -951,7 +951,7 @@ void CubeStateMachine::updateAnim(BG1Mask &bg1, AnimParams *params)
             params->mCubeAnim = i;
         }
         if (mAnimTypes[i] != AnimType_None &&
-            !animPaint(mAnimTypes[i], *mVidBuf, mAnimTimes[i], params))
+            !animPaint(mAnimTypes[i], *mVidBuf, bg1TileBuf, mAnimTimes[i], params))
         {
             queueNextAnim((CubeAnim)i);//, vid, bg1, params);
         }
@@ -1248,8 +1248,10 @@ void CubeStateMachine::paint()
 
     mPainting = true;
     CubeID c = getCube();
-    BG1Mask bg1;
+    TileBuffer<16,16,1> bg1TileBuf(c);
     ASSERT(mVidBuf != NULL);
+
+    bg1TileBuf.erase(transparent);
 
     switch (getCurrentStateIndex())
     {
@@ -1267,7 +1269,7 @@ void CubeStateMachine::paint()
                 {
                     mVidBuf->sprites[0].move(vec(39, 74));
                     mVidBuf->bg1.setPanning(vec((int)mPanning, 0));
-                    mVidBuf->bg1.image(vec(0, 0), StartLid);
+                    bg1TileBuf.image(vec(0, 0), StartLid);
                 }
                 break;
 
@@ -1360,13 +1362,15 @@ void CubeStateMachine::paint()
 
     default:
         mVidBuf->bg0.image(vec(0,0), TileBG);
-        paintLetters(bg1, true);
+        paintLetters(bg1TileBuf, true);
         mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 
         break;
     }
 
     //bg1.Flush(); // TODO only flush if mask has changed recently
+    mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+
 
     mPainting = false;
 }
@@ -1685,7 +1689,7 @@ void CubeStateMachine::paintScore(bool animate,
 #endif // (0)
 }
 
-void CubeStateMachine::paintLetters(BG1Mask& bg1,
+void CubeStateMachine::paintLetters(TileBuffer<16,16,1> &bg1TileBuf,
                                     bool paintSprites)
 {
     const static AssetImage* fonts[] =
@@ -1724,7 +1728,7 @@ void CubeStateMachine::paintLetters(BG1Mask& bg1,
     CubeID c = getCube();
     AnimParams params;
     getAnimParams(&params);
-    updateAnim(bg1, &params);
+    updateAnim(bg1TileBuf, &params);
 }
 
 void CubeStateMachine::paintScoreNumbers(BG1Mask &bg1,

@@ -38,6 +38,9 @@ BorderSlotBonus = image{"border_created_bonus.png", quality=8, width=16}
 BorderSlotHint = image{"hint_pulse_morph.png", quality=8, width=16}
 --Tile1 = image{"tile_ivory_big_idle.png", quality=8}
 --Tile1Glow = image{"tile_ivory_big_glow.png", width=96, quality=8}
+
+transparent = image{"transparent.png", quality=8, pinned=true}
+
 Tile2 = image{"tile_ivory_idle00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=8, flat=TEMP_FOR_GAMESTOP}
 Tile2Blank = image{"tile_ivory_blank.png", quality=8, flat=TEMP_FOR_GAMESTOP}

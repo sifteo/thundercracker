@@ -39,10 +39,10 @@ struct AnimData
 
 bool animPaint(AnimType animT,
                VideoBuffer &vid,
+               TileBuffer<16,16,1> &bg1TileBuf,
                float animTime,
                const AnimParams *params)
 {
-    BG1Drawable &bg1 = vid.bg1;
     const int LETTER_Y_OFFSET = 5;
     unsigned char lettersPerCube = params ? params->mLettersPerCube : 1;
     lettersPerCube = clamp<unsigned>(lettersPerCube, 1, MAX_LETTERS_PER_CUBE);
@@ -73,6 +73,9 @@ bool animPaint(AnimType animT,
                 fmod(animTime, data.mDuration)/data.mDuration :
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
+
+    bg1TileBuf.erase(transparent);
+
     for (unsigned i = 0; i < data.mNumObjs; ++i)
     {
         const AnimObjData &objData = data.mObjs[i];
@@ -159,7 +162,6 @@ bool animPaint(AnimType animT,
             }
             else if (metaLetterTile)
             {
-//     void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY, unsigned frame = 0)
                 vid.bg0.image(pos, size, *objData.mMetaLetterAsset, clipOffset, assetFrame);
             }
             else
@@ -186,7 +188,7 @@ bool animPaint(AnimType animT,
                                 unsigned sparkleFrame =
                                         MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
                              //   LOG(("sparkle frame %d\n", sparkleFrame));
-                                bg1.image(vec(pos.x, sparkleRow),
+                                bg1TileBuf.image(vec(pos.x, sparkleRow),
                                                       vec(size.x, 1),
                                                       SparkleWipe,
                                                       vec(0,0),
@@ -196,7 +198,7 @@ bool animPaint(AnimType animT,
                                     LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d  src=%d %d\n", letterPos.x, sparkleRow + 1, 
                                             size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow,
                                             0, sparkleRow + 1 - letterPos.y);
-                                    bg1.image(vec(letterPos.x, sparkleRow + 1),
+                                    bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
                                                   vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
                                                   font,
                                                   vec(0, sparkleRow + 1 - letterPos.y),
@@ -209,19 +211,19 @@ bool animPaint(AnimType animT,
                             LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
                                 size.x, MIN(16 - letterPos.y, font.tileHeight()));
 
-                            bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                            bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                         }
                     }
                     break;
 
                 case AnimType_MetaTilesReveal:
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                         int sparkleRow = (1.f - animPct) * 12 + 2;
                         unsigned char sparkleOffset = sparkleRow - pos.y;
                         if (i == params->mMetaLetterIndex && sparkleOffset < size.y)
                         {
-                            bg1.image(vec(pos.x, sparkleRow),
+                            bg1TileBuf.image(vec(pos.x, sparkleRow),
                                               vec(size.x, 1),
                                               SparkleWipe,
                                               vec(0,0),
@@ -230,7 +232,7 @@ bool animPaint(AnimType animT,
                                     size.x, sparkleRow - letterPos.y);
                             if (sparkleRow > letterPos.y)
                             {
-                                bg1.image(letterPos,
+                                bg1TileBuf.image(letterPos,
                                               vec(size.x, sparkleRow - letterPos.y),
                                               font,
                                               vec(0, 0),
@@ -241,16 +243,14 @@ bool animPaint(AnimType animT,
                 break;
 
                 default:
-//                     LOG("**** default: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
-//                                     size.x, MIN(16 - letterPos.y, font.tileHeight()));
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), 'Z' + 1 - 'A');
+                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), 'Z' + 1 - 'A');
 
                     }
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
-                        bg1.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                     }
                     break;
                 }
@@ -260,7 +260,7 @@ bool animPaint(AnimType animT,
         }
         else if (objData.mLayer == Layer_BG1)
         {
-            bg1.image(pos, size, *objData.mAsset, clipOffset, assetFrame);
+            bg1TileBuf.image(pos, size, *objData.mAsset, clipOffset, assetFrame);
         }
         else // Layer_Sprite
         {
@@ -269,12 +269,6 @@ bool animPaint(AnimType animT,
             vid.sprites[0].setImage(*objData.mSpriteAsset, assetFrame);
         }
     }
-//<????
-LOG("****** printing test image\n");
-bg1.image(vec(0,0), vec(1,1), font, vec(0,0), 2);
-BG1Mask bg1mask;
-bg1mask.plot(0,0);
-bg1.setMask(bg1mask);
 
     // do procedural sprite stuff, it may not be a good fit for the data
     // driven approach
@@ -350,7 +344,7 @@ bg1.setMask(bg1mask);
                     if (image)
                     {
                         isBonus = (progressData.mPuzzleProgress[i] == CheckMarkState_CheckedBonus);
-                        bg1.image(vec((unsigned)2 + i * 2, (unsigned)14), *image, MIN(image->numFrames()-1, 2));
+                        bg1TileBuf.image(vec((unsigned)2 + i * 2, (unsigned)14), *image, MIN(image->numFrames()-1, 2));
                     }
                 }
             }
@@ -373,7 +367,7 @@ bg1.setMask(bg1mask);
                                 assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
                             }
 
-                            bg1.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0), *CheckMarkImagesTop[2], assetFrame);
+                            bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0), *CheckMarkImagesTop[2], assetFrame);
                         }
              /*           else
                         {
@@ -409,8 +403,8 @@ bg1.setMask(bg1mask);
                          vec(2, 14),
                          (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
                          vec(0, 1));
-            bg1.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
-            bg1.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
+            bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
+            bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
             vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
 
             // draw right border
@@ -418,8 +412,8 @@ bg1.setMask(bg1mask);
                          vec(2, 14),
                          (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
                          vec(0, 1));
-            bg1.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
-            bg1.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
+            bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
+            bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
             vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
             break;
 
