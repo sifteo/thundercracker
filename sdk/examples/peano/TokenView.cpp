@@ -11,6 +11,49 @@ const Vector2<int> TokenView::Mid = vec(7,7);
 int TokenView::sHintParity = 0;
 const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };
 
+//this mask covers all the main bg1 drawing.  matches coords in paintCenterCap
+const BG1Mask primaryBG1Mask = // total tiles = 8+8+8+8+4+4+96 -> 32+8+96 -> 136
+        //horizontal at 1       4x(2x1) -> 8
+        BG1Mask::filled(vec(3,0), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,13), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,14), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,15), Horizontal_Left.tileSize())
+        //horizontal at 2       4x(2x1) -> 8
+        | BG1Mask::filled(vec(9,0), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,13), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,14), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,15), Horizontal_Right.tileSize())
+        //vertical at 1         4x(1x2) -> 8
+        | BG1Mask::filled(vec(0,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(13,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(14,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(15,3), Vertical_Top.tileSize())
+        //vertical at 2         4x(1x2) -> 8
+        | BG1Mask::filled(vec(0,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(13,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(14,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(15,9), Vertical_Bottom.tileSize())
+        //minor diagonals       4x(1x1) -> 4
+        | BG1Mask::filled(vec(2,2), MinorNW.tileSize())
+        | BG1Mask::filled(vec(2,11), MinorSW.tileSize())
+        | BG1Mask::filled(vec(11,11), MinorSE.tileSize())
+        | BG1Mask::filled(vec(11,2), MinorNE.tileSize())
+        //major diagonals       4x(1x1) -> 4
+        | BG1Mask::filled(vec(4,4), MajorNW.tileSize())
+        | BG1Mask::filled(vec(4,9), MajorSW.tileSize())
+        | BG1Mask::filled(vec(9,9), MajorSE.tileSize())
+        | BG1Mask::filled(vec(9,4), MajorNE.tileSize())
+        //major cardinals       4x(8x3) -> 96
+        | BG1Mask::filled(vec(3,1), MajorN.tileSize())
+        | BG1Mask::filled(vec(1,3), MajorW.tileSize())
+        | BG1Mask::filled(vec(3,10), MajorS.tileSize())
+        | BG1Mask::filled(vec(10,3), MajorE.tileSize())
+        //crazy number hack 1   (ranges overlap)
+        | BG1Mask::filled(vec(5,3), Transparent_4x1.tileSize())
+        | BG1Mask::filled(vec(3,3), MajorN_Frame2_AccentDigit.tileSize())
+        //crazy number hack 2   (ranges overlap)
+        | BG1Mask::filled(vec(5,10), Transparent_4x1.tileSize())
+        | BG1Mask::filled(vec(3,10), MajorS_Frame109_AccentDigit.tileSize());
 
 TokenView::Status TokenView::GetCurrentStatus()
 {
@@ -33,6 +76,13 @@ void TokenView::Reset()
     mHideMask = 0;
     mDigitId = 0;
     useAccentDigit = false;
+
+    NeedRepaint();
+}
+
+void TokenView::NeedRepaint()
+{
+    needRepaint = true;
 }
 
 void TokenView::SetToken(Token *t)
@@ -47,7 +97,7 @@ void TokenView::SetToken(Token *t)
 void TokenView::HideOps()
 {
     mDigitId = 0;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::PaintRandomNumeral()
@@ -56,7 +106,7 @@ void TokenView::PaintRandomNumeral()
     while (d == mDigitId) { mDigitId = Game::rand.randrange(9) + 1; }
     useAccentDigit = false;
     renderedDigit = mDigitId;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::ResetNumeral()
@@ -66,7 +116,7 @@ void TokenView::ResetNumeral()
         renderedDigit = token->val;
     }
     mDigitId = -1;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::WillJoinGroup()
@@ -89,7 +139,7 @@ void TokenView::DidJoinGroup()
 
     if (grp != NULL)
     {
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -114,7 +164,7 @@ void TokenView::ShowLit()
 {
     if (!mLit) {
         mLit = true;
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -123,7 +173,7 @@ void TokenView::HideOverlay()
     if (mStatus == StatusOverlay)
     {
         SetState(StatusIdle);
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -132,7 +182,7 @@ void TokenView::SetHideMode(int mask)
     if (mHideMask != mask)
     {
         mHideMask = mask;
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -170,7 +220,7 @@ void TokenView::SetState(Status state, bool resetTimer, bool resetExpr)
                 GetCube()->HideSprites();
             }
         }
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -244,15 +294,33 @@ void TokenView::Update()
             }
         }
     }
+
+    //paint if dirty
+    PaintNow();
 }
 
 void TokenView::PaintNow()
 {
+    if(!needRepaint) return;
+    needRepaint = false;
+
     TotalsCube *c = GetCube();
     if(!c) return;
 
-    c->vid.bg1.erase();
-    c->HideSprites();
+    c->vid.bg1.setMask(primaryBG1Mask);
+    c->vid.bg1.erase(Transparent_4x1);
+    c->HideSprites();    
+/*
+    int count = 0;
+    for(int r=0;r<16;r++)
+    {
+        for(int b=0;b<16;b++)
+            if(primaryBG1Mask.rows()[r]&(1<<b))
+                count++;
+    }
+    LOG("COUNT %d\n", count);
+*/
+    //ok begin main drawing here
 
     const Skins::Skin &skin = Skins::GetSkin();
 
@@ -283,7 +351,6 @@ void TokenView::PaintNow()
             if (NotHiding(RIGHT) && rightStatus == SideStatusOpen) { PaintRight(false); }
         }
     }
-
 
     bool isInGroup = mCurrentExpression != token;
     if (isInGroup)
@@ -328,22 +395,22 @@ void TokenView::PaintNow()
         c->Image(skin.accent, vec(0,yPos));
         if(isInGroup)
         {
+            c->vid.sprites[5].setImage(Accent_Current);
             Int2 p = vec<int>(8-Accent_Current.tileWidth()/2, yPos+1);
-            c->vid.bg1.setMask(BG1Mask::filled(p, Accent_Current.tileSize()));
-            c->vid.bg1.image(p, Accent_Current);
+            c->vid.sprites[5].move(p*8);
         }
         else
         {
+            c->vid.sprites[5].setImage(Accent_Target);
             Int2 p = vec<int>(8-Accent_Target.tileWidth()/2, yPos+1);
-            c->vid.bg1.setMask(BG1Mask::filled(p, Accent_Target.tileSize()));
-            c->vid.bg1.image(p, Accent_Target);
+            c->vid.sprites[5].move(p*8);
         }
 
         if (result.IsNan())
         {
+            c->vid.sprites[5].setImage(Nan);
             Int2 p = vec(8-Nan.tileWidth()/2, yPos+4-Nan.tileHeight()/2);
-            c->vid.bg1.setMask(BG1Mask::filled(p, Nan.tileSize()));
-            c->vid.bg1.image(p, Nan);
+            c->vid.sprites[5].move(p*8);
         } else {
             //uses sprites -> pixel coords
             c->DrawFraction(result, vec(64, yPos*8+32));
@@ -441,54 +508,9 @@ void TokenView::PaintBottom(bool lit)
 
 void TokenView::PaintCenterCap(uint8_t masks[4])
 {
-    //here be a mask for all that may appear on bg1
-    const BG1Mask bg1Mask = // total tiles = 8+8+8+8+4+4+96 -> 32+8+96 -> 136
-            //horizontal at 1       4x(2x1) -> 8
-            BG1Mask::filled(vec(3,0), Horizontal_Left.tileSize())
-            | BG1Mask::filled(vec(3,13), Horizontal_Left.tileSize())
-            | BG1Mask::filled(vec(3,14), Horizontal_Left.tileSize())
-            | BG1Mask::filled(vec(3,15), Horizontal_Left.tileSize())
-            //horizontal at 2       4x(2x1) -> 8
-            | BG1Mask::filled(vec(9,0), Horizontal_Right.tileSize())
-            | BG1Mask::filled(vec(9,13), Horizontal_Right.tileSize())
-            | BG1Mask::filled(vec(9,14), Horizontal_Right.tileSize())
-            | BG1Mask::filled(vec(9,15), Horizontal_Right.tileSize())
-            //vertical at 1         4x(1x2) -> 8
-            | BG1Mask::filled(vec(0,3), Vertical_Top.tileSize())
-            | BG1Mask::filled(vec(13,3), Vertical_Top.tileSize())
-            | BG1Mask::filled(vec(14,3), Vertical_Top.tileSize())
-            | BG1Mask::filled(vec(15,3), Vertical_Top.tileSize())
-            //vertical at 2         4x(1x2) -> 8
-            | BG1Mask::filled(vec(0,9), Vertical_Bottom.tileSize())
-            | BG1Mask::filled(vec(13,9), Vertical_Bottom.tileSize())
-            | BG1Mask::filled(vec(14,9), Vertical_Bottom.tileSize())
-            | BG1Mask::filled(vec(15,9), Vertical_Bottom.tileSize())
-            //minor diagonals       4x(1x1) -> 4
-            | BG1Mask::filled(vec(2,2), MinorNW.tileSize())
-            | BG1Mask::filled(vec(2,11), MinorSW.tileSize())
-            | BG1Mask::filled(vec(11,11), MinorSE.tileSize())
-            | BG1Mask::filled(vec(11,2), MinorNE.tileSize())
-            //major diagonals       4x(1x1) -> 4
-            | BG1Mask::filled(vec(4,4), MajorNW.tileSize())
-            | BG1Mask::filled(vec(4,9), MajorSW.tileSize())
-            | BG1Mask::filled(vec(9,9), MajorSE.tileSize())
-            | BG1Mask::filled(vec(9,4), MajorNE.tileSize())
-            //major cardinals       4x(8x3) -> 96
-            | BG1Mask::filled(vec(3,1), MajorN.tileSize())
-            | BG1Mask::filled(vec(1,3), MajorW.tileSize())
-            | BG1Mask::filled(vec(3,10), MajorS.tileSize())
-            | BG1Mask::filled(vec(10,3), MajorE.tileSize())
-            //crazy number hack 1   (ranges overlap)
-            | BG1Mask::filled(vec(5,3), Transparent_4x1.tileSize())
-            | BG1Mask::filled(vec(3,3), MajorN_Frame2_AccentDigit.tileSize())
-            //crazy number hack 2   (ranges overlap)
-            | BG1Mask::filled(vec(5,10), Transparent_4x1.tileSize())
-            | BG1Mask::filled(vec(3,10), MajorS_Frame109_AccentDigit.tileSize());
-
     // compute the screen state union (assuming it's valid)
     uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
-    TotalsCube *c = GetCube();
-    c->vid.bg1.setMask(bg1Mask);
+    TotalsCube *c = GetCube();    
 
     ASSERT(vunion < (1<<6));
 
@@ -594,7 +616,7 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
             int frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
             if(0 != frame && 2 != frame)
             {
-                c->vid.bg0.image(vec(5,3), vec(2,2), MajorN, vec(4,1), frame);
+                c->vid.bg0.image(vec(5,3), vec(4,1), MajorN, vec(2,2), frame);
                 c->vid.bg1.image(vec(5,3), Transparent_4x1);
             }
 
@@ -608,7 +630,7 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
             int frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
             if(111 != frame && 109 != frame)
             {
-                c->vid.bg0.image(vec(5,10), vec(2,0), MajorS, vec(4,1), frame);
+                c->vid.bg0.image(vec(5,10), vec(4,1), MajorS, vec(2,0), frame);
                 c->vid.bg1.image(vec(5,10), Transparent_4x1);
             }
 
@@ -618,8 +640,8 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     }
     else
     {
-        c->vid.bg1.image(vec(3,1), vec(0,0), MajorN, vec<int>(MajorN.tileWidth(), 2), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-        c->vid.bg1.image(vec(3,11),vec(0,1), MajorS, vec<int>(MajorS.tileWidth(), MajorS.tileHeight()-1), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        c->vid.bg1.image(vec(3,1), vec<int>(MajorN.tileWidth(), 2), MajorN, vec(0,0), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->vid.bg1.image(vec(3,11), vec<int>(MajorS.tileWidth(), MajorS.tileHeight()-1), MajorS, vec(0,1), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
     }
 }
 

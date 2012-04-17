@@ -212,6 +212,7 @@ Game::GameState Run()
         Game::cubes[i].SetView(tv+i);
         tv[i].SetToken(puzzle->GetToken(i));
         Game::cubes[i].OpenShuttersToReveal(Skins::GetSkin().background);
+        tv[i].NeedRepaint();
         tv[i].PaintNow();
         PLAY_SFX(sfx_Tutorial_Correct); //a noise to help indicate how many cubes in use
     }
@@ -228,11 +229,13 @@ Game::GameState Run()
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             tv[i].ShowOverlay();
+            tv[i].PaintNow();
         }
         Game::Wait(3.0f);        
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             tv[i].HideOverlay();
+            tv[i].PaintNow();
         }
         System::paint();
     }
@@ -244,12 +247,12 @@ Game::GameState Run()
         Game::neighborEventHandler = &neighborEventHandler;
         { // game loop
             while(!puzzle->IsComplete()) {
-
-                Game::Wait(0);
                 for(int i = 0; i < NUM_CUBES; i++)
                 {
                     tv[i].Update();
                 }
+                System::paint();                
+                Game::UpdateDt();
 
                 // should pause?
                 pauseHelper.Update();
@@ -289,6 +292,7 @@ Game::GameState Run()
                         Game::cubes[i].OpenShuttersToReveal(skin.background);
 
                         Game::cubes[i].SetView(puzzle->GetToken(i)->GetTokenView());
+                        ((TokenView*)Game::cubes[i].GetView())->NeedRepaint();
                         ((TokenView*)Game::cubes[i].GetView())->PaintNow();
                         Game::Wait(0.1f);
                     }
@@ -306,11 +310,17 @@ Game::GameState Run()
 
 
     { // flourish out
+        for(int i = 0; i < puzzle->GetNumTokens(); i++)
+        {
+            tv[i].Update();
+        }
+
         Game::Wait(1);
         PLAY_SFX(sfx_Level_Clear);
         for(int i = 0; i < puzzle->GetNumTokens(); i++)
         {
             puzzle->GetToken(i)->GetTokenView()->ShowLit();
+            tv[i].Update();
         }
         Game::Wait(3);
     }

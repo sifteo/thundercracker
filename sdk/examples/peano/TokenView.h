@@ -112,6 +112,7 @@ public:
     void Update() ;
 
     void PaintNow();
+    void NeedRepaint();
   
     //-------------------------------------------------------------------------
     // HELPER METHODS
@@ -132,6 +133,7 @@ public:
     void PaintBottom(bool lit);
     // // // //
 
+    bool needRepaint;
    
   };
   
