@@ -10,9 +10,10 @@
 #include "cube.h"
 #include "systime.h"
 
-#define LOG_PREFIX  "PAINT[%d]: %12u ms pend=%-3d flags=%08x vf=%02x ack=%02x lock=%08x cm16=%08x  "
+#define LOG_PREFIX  "PAINT[%d]: %6u.%03us pend=%-3d flags=%08x vf=%02x ack=%02x lock=%08x cm16=%08x  "
 #define LOG_PARAMS  cube->id(), \
-                    unsigned(SysTime::ticks() / SysTime::msTicks(1)), \
+                    unsigned(SysTime::ticks() / SysTime::sTicks(1)), \
+                    unsigned((SysTime::ticks() % SysTime::sTicks(1)) / SysTime::msTicks(1)), \
                     pendingFrames, \
                     vbuf ? vbuf->flags : 0xFFFFFFFF, \
                     vbuf ? getFlags(vbuf): 0xFF, \
@@ -85,7 +86,6 @@ void PaintControl::waitForPaint(CubeSlot *cube)
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
 
-    DEBUG_LOG((LOG_PREFIX "------------------------\n", LOG_PARAMS));
     DEBUG_LOG((LOG_PREFIX "+waitForPaint()\n", LOG_PARAMS));
 
     SysTime::Ticks now;
@@ -227,6 +227,12 @@ void PaintControl::waitForFinish(CubeSlot *cube)
         if (SysTime::ticks() > deadline) {
             DEBUG_LOG((LOG_PREFIX "-waitForFinish(), TIMED OUT\n", LOG_PARAMS));
             break;
+        }
+
+        if (_SYS_VBF_TRIGGER_ON_FLUSH & Atomic::Load(vbuf->flags)) {
+            // Make sure we complete a flush
+            VRAM::lock(*vbuf, _SYS_VA_FLAGS/2, 0);
+            VRAM::unlock(*vbuf);
         }
 
         Tasks::work();
