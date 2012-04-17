@@ -1,1 +1,4 @@
 PuzzleData.h
+*.dump
+*.config
+*.user
