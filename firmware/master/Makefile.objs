@@ -37,22 +37,6 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o
 
-# Sources for the host build only
-OBJS_SIM = \
-    $(OBJS_COMMON) \
-    $(MASTER_DIR)/sim/tinythread.o \
-    $(MASTER_DIR)/sim/audiooutdevice.o \
-    $(MASTER_DIR)/sim/portaudiooutdevice.o \
-    $(MASTER_DIR)/sim/flashstorage.o \
-    $(MASTER_DIR)/sim/flash.o \
-    $(MASTER_DIR)/sim/svmcpu.o \
-    $(MASTER_DIR)/sim/svmdebugpipe.o \
-    $(MASTER_DIR)/sim/elfdebuginfo.o \
-    $(MASTER_DIR)/sim/logdecoder.o \
-    $(MASTER_DIR)/sim/gdbserver.o \
-    $(MASTER_DIR)/sim/siftulator.o \
-    $(MASTER_DIR)/sim/main.o
-
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
     $(OBJS_COMMON:.o=.stm32.o) \

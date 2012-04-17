@@ -6,7 +6,7 @@
 #ifndef LOG_DECODER_H
 #define LOG_DECODER_H
 
-#include "elfdebuginfo.h"
+#include "mc_elfdebuginfo.h"
 #include "svmdebugpipe.h"
 
 class LogDecoder {

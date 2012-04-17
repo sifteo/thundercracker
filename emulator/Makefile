@@ -6,7 +6,7 @@ include $(TC_DIR)/Makefile.platform
 include $(TC_DIR)/firmware/master/Makefile.objs
 
 # For faster 'make' invocation, track dependencies only for our own sources.
-OBJS := $(OBJS_SIM) $(LOCAL_OBJS)
+OBJS := $(OBJS_COMMON) $(LOCAL_OBJS)
 DEPFILES := $(LOCAL_OBJS:.o=.d)
 
 # All external libraries and library source files

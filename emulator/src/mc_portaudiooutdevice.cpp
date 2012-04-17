@@ -4,7 +4,7 @@
  */
 
 #include <string.h>
-#include "portaudiooutdevice.h"
+#include "mc_portaudiooutdevice.h"
 #include "audiomixer.h"
 #include "tasks.h"
 #include "macros.h"

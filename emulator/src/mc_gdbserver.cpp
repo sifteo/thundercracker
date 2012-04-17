@@ -24,9 +24,9 @@
 #   define closesocket(_s) close(_s)
 #endif
 
-#include "gdbserver.h"
+#include "mc_gdbserver.h"
+#include "mc_elfdebuginfo.h"
 #include "macros.h"
-#include "elfdebuginfo.h"
 #include "svmdebugpipe.h"
 #include <string.h>
 #include <stdio.h>

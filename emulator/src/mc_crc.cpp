@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "crc.h"
 #include <string.h>
 

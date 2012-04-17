@@ -17,7 +17,7 @@
 #include "assetmanager.h"
 #include "svmloader.h"
 #include "svmcpu.h"
-#include "gdbserver.h"
+#include "mc_gdbserver.h"
 
 
 // XXX: Hack, for testing SVM only
@@ -52,7 +52,7 @@ static bool installElfFile(const char *path)
     return true;
 }
 
-int firmware_main(int argc, char **argv)
+extern "C" int firmware_main(int argc, char **argv)
 {
     // handle cmd line args - arg 1 is always the elf binary to run
     for (int c = 2; c < argc; c++) {
