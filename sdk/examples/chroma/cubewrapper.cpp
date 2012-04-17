@@ -49,6 +49,8 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++),
 			slot.Init( this, i, j );
 		}
 	}
+
+    m_bg1buffer.erase(Transparent);
 }
 
 
@@ -414,7 +416,7 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
             }
         }
 
-        if( !m_intro.Update( t, dt, m_banner ) )
+        if( !m_intro.Update( t, dt, m_banner, GetVid() ) )
         {
             if( m_state == STATE_REFILL )
                 m_state = STATE_PLAYING;
@@ -1084,11 +1086,6 @@ void CubeWrapper::checkRefill()
         Refill();
 
         m_vid.bg1.setPanning( vec( 0, 0 ) );
-
-        /*if( Game::Inst().getMode() == Game::MODE_SURVIVAL && Game::Inst().getScore() > 0 )
-		{
-			m_banner.SetMessage( "FREE SHAKE!" );
-        }*/
 	}
 	else
 	{
@@ -1098,28 +1095,6 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill();
 		}
-        /*else if( Game::Inst().getShakesLeft() > 0 )
-		{
-            setState( STATE_REFILL );
-            m_intro.Reset( true );
-            Refill( true );
-            Game::Inst().useShake();
-
-            if( Game::Inst().getShakesLeft() == 0 )
-				m_banner.SetMessage( "NO SHAKES LEFT" );
-            else if( Game::Inst().getShakesLeft() == 1 )
-				m_banner.SetMessage( "1 SHAKE LEFT" );
-			else
-			{
-                String<16> buf;
-                buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
-                m_banner.SetMessage( buf );
-			}
-		}
-		else
-		{
-            m_banner.SetMessage( "NO SHAKES LEFT" );
-        }*/
 	}
 }
  
@@ -2132,7 +2107,7 @@ void CubeWrapper::SpawnScore( unsigned int score, const Int2 &slotpos )
 //clears bg1 to White tile
 void CubeWrapper::ClearBG1()
 {
-    m_bg1buffer.erase( White );
+    m_bg1buffer.erase( Transparent );
 }
 
 
@@ -2140,7 +2115,7 @@ void CubeWrapper::ClearBG1()
 void CubeWrapper::FlushBG1()
 {
     LOG("flushing bg1\n");
-    m_vid.bg1.maskedImage( m_bg1buffer, White, 0 );
+    m_vid.bg1.maskedImage( m_bg1buffer, Transparent, 0 );
     ClearBG1();
     m_queuedFlush = false;
 }

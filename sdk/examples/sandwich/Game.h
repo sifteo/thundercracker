@@ -82,7 +82,8 @@ private:
   void CheckTouches();
 
   // cutscenes
-  Viewport* IntroCutscene();
+  Viewport* IntroCutscene() NOINLINE;
+  Viewport* MainMenu(Viewport* keyViewport) NOINLINE;
   //void WinScreen();
 
 
