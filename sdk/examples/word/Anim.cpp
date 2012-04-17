@@ -158,7 +158,6 @@ bool animPaint(AnimType animT,
             if (blankLetterTile)
             {
                 vid.bg0.image(pos, size, *objData.mBlankLetterAsset, clipOffset, assetFrame);
-//                 vid.bg0.drawPartialAsset(pos, clipOffset, size, *objData.mBlankLetterAsset, assetFrame);
             }
             else if (metaLetterTile)
             {
@@ -167,7 +166,6 @@ bool animPaint(AnimType animT,
             else
             {
                 vid.bg0.image(pos, size, *objData.mAsset, clipOffset, assetFrame);
-//                 vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
             }
 
             if (drawLetterOnTile && size.y > LETTER_Y_OFFSET)
@@ -187,7 +185,6 @@ bool animPaint(AnimType animT,
                             {
                                 unsigned sparkleFrame =
                                         MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
-                             //   LOG(("sparkle frame %d\n", sparkleFrame));
                                 bg1TileBuf.image(vec(pos.x, sparkleRow),
                                                       vec(size.x, 1),
                                                       SparkleWipe,
@@ -195,9 +192,6 @@ bool animPaint(AnimType animT,
                                                       sparkleFrame);
                                 if (sparkleRow < letterPos.y + font.tileHeight() - 1)
                                 {
-                                    LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d  src=%d %d\n", letterPos.x, sparkleRow + 1, 
-                                            size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow,
-                                            0, sparkleRow + 1 - letterPos.y);
                                     bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
                                                   vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
                                                   font,
@@ -208,9 +202,6 @@ bool animPaint(AnimType animT,
                         }
                         else
                         {
-                            LOG("**** AnimType_NormalTilesReveal: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
-                                size.x, MIN(16 - letterPos.y, font.tileHeight()));
-
                             bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
                         }
                     }
@@ -228,8 +219,6 @@ bool animPaint(AnimType animT,
                                               SparkleWipe,
                                               vec(0,0),
                                               MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct)));
-                            LOG("**** AnimType_MetaTilesReveal: destPos=%d %d  size=%d %d\n", letterPos.x, letterPos.y, 
-                                    size.x, sparkleRow - letterPos.y);
                             if (sparkleRow > letterPos.y)
                             {
                                 bg1TileBuf.image(letterPos,

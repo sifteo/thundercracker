@@ -101,11 +101,11 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         const float BG0_PANNING_WRAP = 144.f;
 
                         Byte2 tilt = getCube().tilt();
-                        if (tilt.x != 1)
+                        if (tilt.x != 0) // if not neutral
                         {
 
                             mBG0TargetPanning -=
-                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (tilt.x - 1);
+                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * tilt.x;
                             while (mBG0TargetPanning < 0.f)
                             {
                                 mBG0TargetPanning += BG0_PANNING_WRAP;
@@ -114,7 +114,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
                             ASSERT(mVidBuf != NULL);
                             setPanning(mBG0Panning);
-                            if (tilt.x < 1)
+                            if (tilt.x < 0)
                             {
                                 queueAnim(AnimType_SlideL);//, vid); // FIXME
                             }
@@ -136,7 +136,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 lpc = mPuzzleLettersPerCube;
 
                             }
-                            unsigned newStart = (tilt.x == 0) ? start + 1 : start + (lpc - 1);
+                            unsigned newStart = (tilt.x == -1) ? start + 1 : start + (lpc - 1);
                             newStart = (newStart % lpc);
                             setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but
@@ -480,9 +480,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 }
 
                 Byte3 accelState = getCube().accel();
-                /* TODO remove _SYSTiltState tiltState;
-                _SYS_getTilt(getCube(), &tiltState);
-            */
                 if (!getCube().isShaking() && abs<int>(accelState.x) > 10)
                 {
                     mShakeDelay = 0.f;
@@ -1167,6 +1164,7 @@ bool CubeStateMachine::isConnectedToCubeOnSide(CubeID cubeIDStart,
     CubeID aCube = getCube();
     while (aCube != cubeIDStart)
     {
+        LOG("isConnectedToCubeOnSide: aCube=%d\n", aCube.sys);
         Neighborhood hood(aCube);
         aCube = hood.neighborAt(side);
     }
