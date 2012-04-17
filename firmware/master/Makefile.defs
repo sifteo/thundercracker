@@ -1,14 +1,20 @@
-CC_SIM = gcc
-RANLIB_SIM = ranlib
-LIBTOOL_SIM = libtool
-
-CC_STM32 = arm-none-eabi-gcc
-GDB_STM32 = arm-none-eabi-gdb
-RANLIB_STM32 = arm-none-eabi-ranlib
-AR_STM32 = arm-none-eabi-ar
+CC = arm-none-eabi-gcc
+GDB = arm-none-eabi-gdb
+RANLIB = arm-none-eabi-ranlib
+AR = arm-none-eabi-ar
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
+
+
+
+# CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
+CFLAGS := -Icommon -Istm32 -I../include -DNOT_USERSPACE
+
+ifneq ($(MASTER_RF_CHAN),)
+    CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
+endif
+
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)

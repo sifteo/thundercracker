@@ -1,25 +1,9 @@
-BIN_SIM = master-sim
-BIN_STM32 = master-stm32.elf
-
-BINS = $(BIN_SIM)
-ifneq ($(BUILD_STM32),)
-	BINS += $(BIN_STM32)
-endif
+BINS = master-stm32.elf
 
 TC_DIR = ../..
 
 include Makefile.objs
 include $(TC_DIR)/Makefile.platform
-
-# CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -Icommon -I../include -DNOT_USERSPACE
-CFLAGS_STM32 := -Istm32
-CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include
-
-ifneq ($(MASTER_RF_CHAN),)
-    CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
-endif
-
 include Makefile.defs
 
 # Override default CDEPS
@@ -34,10 +18,6 @@ $(BIN_SIM): $(OBJS_SIM)
 $(BIN_STM32): $(OBJS_STM32_MASTER)
 	@echo
 	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
-
-%.sim.o: %.cpp $(CDEPS)
-	@echo
-	$(CC_SIM) -c $(CCFLAGS_SIM) $(DEPFLAGS) $< -o $@
 
 %.stm32.o: %.cpp $(CDEPS)
 	@echo
@@ -77,7 +57,6 @@ program: $(BIN_STM32)
 # Several steps, to work around Win32 command line length limits
 clean:
 	rm -f $(BINS)
-	rm -f $(OBJS_SIM)
 	rm -f $(OBJS_STM32_MASTER)
 	rm -rf .dep
 
