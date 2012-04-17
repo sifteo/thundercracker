@@ -16,6 +16,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * A BG1 tile mask. In other words, this is a 16x16-bit two-dimensional
@@ -549,5 +553,8 @@ struct BG1Drawable {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo

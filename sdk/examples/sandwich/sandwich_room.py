@@ -231,10 +231,10 @@ class Room:
 			self._subdiv_visit(slots, mask, x, y-1)
 
 	def write_tiles_to(self, src):
-		src.write("    {{")
+		src.write("    ")
 		for ty,tx in product(range(8),range(8)):
 			src.write("0x%x," % self.tileat(tx,ty).lid)
-		src.write("}},\n")
+		src.write("\n")
 
 	def write_telem_source_to(self, src):
 		src.write("    {0x%x,0x%x,{" % self.primary_center())

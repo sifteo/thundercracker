@@ -39,10 +39,13 @@ unsigned Game::OnPassiveTrigger() {
 }
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
+  RoomView* view;
+  bool wasLocked = false;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
-    mPlayer.CurrentView()->HideEquip();
+    view = mPlayer.CurrentView();
+    view->HideEquip();
   } else {
     auto p = ListLockedViews();
     while(p.MoveNext()) {
@@ -50,14 +53,46 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
       if (room.HasItem() && (&room.Item() == bomb.Item())) {
         room.ClearTrigger();
         room.BombThisFucker();
-        p->GetRoomView().Unlock();
-        p->GetRoomView().HideItem();
+        view = &(p->GetRoomView());
+        view->Unlock();
+        view->HideItem();
         break;
       }
     }
   }
-
-  //for(;;) DoPaint();
+  auto& g = view->Parent().Canvas();
+  view->HideOverlay();
+  for(unsigned i=0; i<8; ++i) {
+    g.sprites[i].hide();
+  }
+  // flash white
+  g.bg1.fillMask(vec(40,40)/8, vec(48,48)/8);
+  unsigned ef = 0;
+  for(int rt=7, rb=8; rt>=0||rb<16; --rt, ++rb) {
+    if (rt>=0) { g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0)); }
+    if (rb<16) { g.bg0.span(vec(0, rb), 16, WhiteTile); }
+    if (ef%2 == 0) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    ++ef;
+    DoPaint();
+  }
+  // repaint room and quake
+  view->Parent().DrawRoom(view->Id());
+  auto deadline = SystemTime::now() + 2.5f;
+  view->UpdatePlayer();
+  while(deadline.inFuture()) {
+    float t = deadline - SystemTime::now();
+    g.bg0.setPanning(vec(
+      5.f * t * cos(16.f * t),
+      5.f * t * sin(16.f * 2.1f*t)
+    ));
+    if (ef/2 == Explosion.numFrames()) { g.bg1.erase(); }
+    else if (ef%2 == 0 && ef/2 < Explosion.numFrames()) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    ++ef;
+    DoPaint();
+  }
+  view->Restore();
+  DoWait(1.f);
+  CheckMapNeighbors();
 }
 
 void Game::OnToggleSwitch(const SwitchData& pSwitch) {

@@ -138,7 +138,11 @@ void Game::MainLoop() {
 	      		if (mPlayer.TargetView()->GetRoom().IsBridge()) {
 	      			const unsigned hideParity =
 	      				mPlayer.TargetView()->GetRoom().SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
-	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == hideParity);
+	      			if (mPlayer.Direction()%2 == hideParity) {
+		      			mPlayer.TargetView()->HideOverlay();
+	      			} else {
+	      				mPlayer.TargetView()->ShowOverlay();
+	      			}
 	      		}
 	      		gGame.GetMap().FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
 	      		int progress = 0;

@@ -3,6 +3,7 @@ from sandwich_room import *
 from sandwich_item import *
 from sandwich_trigger import *
 from itertools import product
+from sys import stdout
 
 class MapDatabase:
 	def __init__(self, world, path):
@@ -100,7 +101,7 @@ class Map:
 	def __init__(self, db, xml):
 		world = db.world
 		path = posixpath.join(world.dir, xml.get("id")+".tmx")
-		print "Reading Map: ", path
+		stdout.write("Reading Map: " + path)
 		self.world = world
 		self.id = posixpath.basename(path)[:-4].lower()
 		self.readable_name = xml.findtext("name")
@@ -109,8 +110,8 @@ class Map:
 		self.height = self.raw.ph / 128
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
-		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
-		
+		self.wide_tiles = self.background.gettileset().count > 256
+		print " ...16-bit" if self.wide_tiles else " ...8-bit"
 		# validate tiles
 		for lid,tid in enumerate(self.background.tiles):
 			tile = self.raw.gettile(tid)
@@ -408,7 +409,10 @@ class Map:
 		src.write("};\n")
 
 		### EXPORT ROOM TILES ###
-		src.write("static const RoomTileData %s_tiles[] = {\n" % self.id)
+		if self.wide_tiles:
+			src.write("static const uint16_t %s_tiles[] = {\n" % self.id)
+		else:
+			src.write("static const uint8_t %s_tiles[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_tiles_to(src)
 		src.write("};\n")
@@ -420,7 +424,7 @@ class Map:
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \
-			"%(name)s_tiles, " \
+			"(void*)%(name)s_tiles, " \
 			"%(overlay_rle)s, " \
 			"%(name)s_xportals, " \
 			"%(name)s_yportals, " \
@@ -440,6 +444,7 @@ class Map:
 			"%(bombables)s," \
 			"0x%(nanimtiles)x, " \
 			"0x%(ambient)x, " \
+			"0x%(tile_type)x," \
 			"0x%(w)x, " \
 			"0x%(h)x },\n" % \
 			{ 
@@ -465,7 +470,8 @@ class Map:
 				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
 				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0",
-				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0"
+				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0",
+				"tile_type": 1 if self.wide_tiles else 0
 			})
 
 

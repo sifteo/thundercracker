@@ -16,6 +16,12 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup assets Assets
+ *
+ * Assets overview blurb here...
+ * @{
+ */
 
 /**
  * An asset group. At build time, STIR creates a statically
@@ -507,7 +513,7 @@ struct PinnedAssetImage {
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return sys.pData + i;
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -530,7 +536,7 @@ struct PinnedAssetImage {
     uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + sys.pData + i;
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -603,7 +609,7 @@ struct FlatAssetImage {
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return tileArray()[i];
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -626,7 +632,7 @@ struct FlatAssetImage {
     uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + tileArray()[i];
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -654,5 +660,9 @@ struct AssetAudio {
 struct AssetTracker {
     _SYSXMSong song;
 };
+
+/**
+ * @} end addtogroup assets
+ */
 
 };  // namespace Sifteo

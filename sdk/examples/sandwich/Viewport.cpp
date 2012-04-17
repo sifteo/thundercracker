@@ -20,6 +20,7 @@ void Viewport::Init() {
 	mFlags.currTouch = 0;
 	mFlags.prevTouch = 0;
 	mFlags.hasOverlay = 0;
+	EnqueueHackyTouches();
 	RestoreCanonicalVideo();
 	mCanvas.bg0.erase(BlackTile);
 	mView.idle.Init();
@@ -36,6 +37,7 @@ void Viewport::RestoreCanonicalVideo() {
 	} else {
 		mCanvas.initMode(BG0_SPR_BG1);
 	}
+	EnqueueHackyTouches();
 }
 
 void Viewport::EvictSecondaryView(unsigned viewId) {
@@ -133,6 +135,10 @@ void Viewport::Update() {
 		break;
 	}
 	mFlags.prevTouch = mFlags.currTouch;
+	if (mFlags.touchHack) {
+		mCanvas.touch();
+		mFlags.touchHack--;
+	}
 }
   
 bool Viewport::ShowLocation(Int2 loc, bool force) {
@@ -265,16 +271,25 @@ Side Viewport::VirtualTiltDirection() const {
 // DRAWING HELPERS
 //-----------------------------------------------------------------------------
 
-void Viewport::DrawRoom(int roomId) {
+void Viewport::DrawRoom(unsigned roomId) {
   	auto& map = gGame.GetMap().Data();
-	const uint8_t *pTile = map.roomTiles[roomId].tiles;
 	const FlatAssetImage& tileset = *map.tileset;
 	Int2 p;
-	for(p.y=0; p.y<16; p.y+=2)
-	for(p.x=0; p.x<16; p.x+=2) {
-		// inline and optimize this function?
-    	mCanvas.bg0.image(p, tileset, *(pTile++));
-	}
+  	if (map.tileType == TILE_TYPE_8) {
+		const uint8_t *pTile = reinterpret_cast<const uint8_t*>(map.roomTiles) + (roomId<<6);
+		for(p.y=0; p.y<16; p.y+=2)
+		for(p.x=0; p.x<16; p.x+=2) {
+			// inline and optimize this function?
+	    	mCanvas.bg0.image(p, tileset, *(pTile++));
+		}
+  	} else {
+		const uint16_t *pTile = reinterpret_cast<const uint16_t*>(map.roomTiles) + (roomId<<6);
+		for(p.y=0; p.y<16; p.y+=2)
+		for(p.x=0; p.x<16; p.x+=2) {
+			// inline and optimize this function?
+	    	mCanvas.bg0.image(p, tileset, *(pTile++));
+		}
+  	}
 }
 
 void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *rle) {
@@ -338,10 +353,15 @@ void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *rle) {
 }
 
 void Viewport::DrawOffsetMap(Int2 pos) {
-  // TODO: Refactor to use Forthcoming BG0 Scroller in SDK
-  	const MapData& map = gGame.GetMap().Data();
-	const int xmax = 128 * (map.width-1);
-	const int ymax = 128 * (map.height-1);
+  	// TODO: Refactor to use Forthcoming BG0 Scroller in SDK
+	// This isn't great code anyway because of the use of convenience GetTileId(),
+	// which internally has a conditional branch that could be moved outside the whole
+	// method body.
+  	auto& map = gGame.GetMap();
+  	auto& data = map.Data();
+  	auto& tileset = *map.Data().tileset;
+	const int xmax = 128 * (data.width-1);
+	const int ymax = 128 * (data.height-1);
 	if (pos.x < 0) { pos.x = 0; } else if (pos.x > xmax) { pos.x = xmax; }
 	if (pos.y < 0) { pos.y = 0; } else if (pos.y > ymax) { pos.y = ymax; }
 	Int2 loc = vec(pos.x>>7, pos.y>>7);
@@ -354,8 +374,8 @@ void Viewport::DrawOffsetMap(Int2 pos) {
 	for(t.x=start_tile.x; t.x<8; ++t.x) {
 		mCanvas.bg0.image(
 			vec(t.x<<1, t.y<<1),
-			*map.tileset,
-			map.roomTiles[loc.x + loc.y * map.width].tiles[t.x + (t.y<<3)]
+			tileset,
+			map.GetTileId(loc.x + loc.y * data.width, t.x + (t.y<<3))
 		);
 	}
 	
@@ -365,8 +385,8 @@ void Viewport::DrawOffsetMap(Int2 pos) {
 		for(t.x=0; t.x<=start_tile.x; ++t.x) {
 			mCanvas.bg0.image(
 				vec((8 + t.x)%9<<1, t.y<<1),
-				*map.tileset,
-				map.roomTiles[(loc.x+1) + loc.y * map.width].tiles[t.x + (t.y<<3)]
+				tileset,
+				map.GetTileId((loc.x+1) + loc.y * data.width, t.x + (t.y<<3))
 			);
 		}
 
@@ -376,8 +396,8 @@ void Viewport::DrawOffsetMap(Int2 pos) {
 			for(t.x=0; t.x<=start_tile.x; ++t.x) {
 				mCanvas.bg0.image(
 					vec((8 + t.x)%9<<1, (8 + t.y)%9<<1),
-					*map.tileset,
-					map.roomTiles[(loc.x+1) + (loc.y+1) * map.width].tiles[t.x + (t.y<<3)]
+					tileset,
+					map.GetTileId((loc.x+1) + (loc.y+1) * data.width, t.x + (t.y<<3))
 				);
 			}
 		}
@@ -389,8 +409,8 @@ void Viewport::DrawOffsetMap(Int2 pos) {
 		for(t.x=start_tile.x; t.x<8; ++t.x) {
 			mCanvas.bg0.image(
 				vec(t.x<<1, (8 + t.y)%9<<1),
-				*map.tileset,
-				map.roomTiles[loc.x + (loc.y+1) * map.width].tiles[t.x + (t.y<<3)]
+				tileset,
+				map.GetTileId(loc.x + (loc.y+1) * data.width, t.x + (t.y<<3))
 			);
 		}
 	}

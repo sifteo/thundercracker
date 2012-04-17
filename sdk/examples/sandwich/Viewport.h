@@ -27,8 +27,10 @@ private:
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
     	unsigned hasOverlay : 1;
+    	unsigned touchHack	: 2;
   	} mFlags;
   	VideoBuffer mCanvas;
+
 
 public:
 
@@ -57,7 +59,8 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
-	void FlagOverlay() { mFlags.hasOverlay = true; }
+	void FlagOverlay(bool flag=true) { mFlags.hasOverlay = flag; }
+	void EnqueueHackyTouches() { mFlags.touchHack = 2; }
 	void RestoreCanonicalVideo();
 	void RefreshInventory();
 
@@ -65,7 +68,7 @@ public:
 	Viewport* VirtualNeighborAt(Side side) const;
 
 	// Helper Methods
-	void DrawRoom(int roomId);
+	void DrawRoom(unsigned roomId);
 	void DrawRoomOverlay(unsigned tid, const uint8_t *pRle);
 	void DrawOffsetMap(Int2 pos);
 

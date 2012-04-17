@@ -47,6 +47,12 @@ public:
   Room& GetRoom() const;
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
+  SpriteRef BffSprite();
+  SpriteRef TriggerSprite();
+  SpriteRef EquipSprite();
+  SpriteRef PlayerSprite();
+  SpriteRef NpcSprite();
+  SpriteRef BlockSprite();
 
 
   // methods
@@ -58,7 +64,9 @@ public:
   void Lock();
   void Unlock();
 
-  void HideOverlay(bool flag);
+  void ShowOverlay();
+  void RefreshOverlay();
+  void HideOverlay();
   
   void ShowPlayer();
   void ShowItem(const ItemData* item);
@@ -90,5 +98,4 @@ public:
 
 private:
   void ComputeAnimatedTiles();
-  void HideOverlay();
 };

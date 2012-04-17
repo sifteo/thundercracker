@@ -293,7 +293,6 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
           } else {
             Paint();
           }
-          System::finish();
           view.Init(&g);
           g.setWindow(80, 48);
         }
