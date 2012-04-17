@@ -38,7 +38,8 @@ void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
         SvmRuntime::fault(F_BAD_STACK);
 
 #ifdef SIFTEO_SIMULATOR
-    ASSERT(SvmMemory::mapRAM(SvmMemory::VIRTUAL_RAM_TOP, 0, topOfStackPA));
+    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
+    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
     stackLowWaterMark = topOfStackPA;
 #endif
 
@@ -471,7 +472,7 @@ void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
     if (stackMonitorEnabled && sp < stackLowWaterMark) {
         stackLowWaterMark = sp;
         LOG(("new stack low water mark: 0x%p (%d bytes)\n",
-             reinterpret_cast<void*>(stackLowWaterMark), topOfStackPA - stackLowWaterMark));
+             reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
     }
 #endif
 }
