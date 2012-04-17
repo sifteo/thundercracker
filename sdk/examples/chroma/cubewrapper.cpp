@@ -138,8 +138,8 @@ void CubeWrapper::Draw()
                     DrawGrid();
 
                     //draw glimmer before timer
-                    if( m_glimmer.IsActive() )
-                        m_glimmer.Draw( m_bg1buffer, this );
+                    //if( m_glimmer.IsActive() )
+                        //m_glimmer.Draw( m_bg1buffer, this );
 
                     if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
