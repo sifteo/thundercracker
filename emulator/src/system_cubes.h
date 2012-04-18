@@ -29,7 +29,13 @@ class SystemCubes {
     void setNumCubes(unsigned n);
     void resetCube(unsigned id);
 
-    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
+    /**
+     * Begin an event that's synchronized with cube execution.
+     * Sets 'deadline' as the next halt point, and waits for the cubes
+     * to halt. Note that the cubes may halt prior to the stated
+     * deadline, in the event that they were already waiting when
+     * beginEvent() was called.
+     */
     void beginEvent(uint64_t deadline) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
         mEventDeadline.resetTo(deadline);
@@ -38,7 +44,10 @@ class SystemCubes {
         mEventAtDeadline = false;
     }
 
-    // End an event, resume cube execution. Let it get as far as 'nextDeadline' without stopping.
+    /**
+     * End an event, resume cube execution.
+     * Let it get as far as 'nextDeadline' without stopping.
+     */
     void endEvent(uint64_t nextDeadline) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
         mEventDeadline.resetTo(nextDeadline);

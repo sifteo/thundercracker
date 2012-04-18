@@ -16,6 +16,9 @@ bool SystemCubes::init(System *sys)
     this->sys = sys;
     mEventDeadline.init(&sys->time);
 
+    // Don't run at all until we get our first deadline.
+    mEventDeadline.resetTo(0);
+
     if (sys->opt_cubeFirmware.empty() && (!sys->opt_cube0Profile.empty() || 
                                            sys->opt_cube0Debug)) {
         /*

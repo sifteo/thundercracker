@@ -222,9 +222,19 @@ void SystemMC::beginPacket()
 {
     // Advance time, and rally with the cube thread at the proper timestamp.
     // Between beginCubeEvent() and endCubeEvent(), both simulation threads are synchronized.
+
     ticks += SystemMC::TICKS_PER_PACKET;
     sys->beginCubeEvent(ticks);
-    ASSERT(ticks == sys->time.clocks);
+
+    // beginCubeEvent may have already been waiting when we called, and it could
+    // be earlier than the deadline we asked for. Now that we're sync'ed, run
+    // up until the proper deadline if necessary.
+
+    ASSERT(ticks >= sys->time.clocks);
+    while (ticks > sys->time.clocks) {
+        sys->endCubeEvent(ticks);
+        sys->beginCubeEvent(ticks);
+    }
 }
 
 void SystemMC::endPacket()
