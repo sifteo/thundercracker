@@ -501,6 +501,7 @@
   </object>
   <object name="CaveGate" type="Gateway" x="432" y="64" width="32" height="32">
    <properties>
+    <property name="noedge" value=""/>
     <property name="target" value="demo_cave:ForestGate"/>
    </properties>
   </object>

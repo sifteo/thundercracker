@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Dialog.h"
 #include "DrawingHelpers.h"
-
+#include "MapHelpers.h"
 
 void Game::OnTick() {
   for(Bomb* p=mMap.BombBegin(); p!=mMap.BombEnd(); ++p) {
@@ -14,8 +14,10 @@ void Game::OnTick() {
 
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasGateway() && !pRoom->OnEdge()) {
-    OnEnterGateway(pRoom->Gateway());
+  if (pRoom->HasGateway()) {
+    if (pRoom->Gateway().noEdge || !pRoom->OnEdge()) {
+      OnEnterGateway(pRoom->Gateway());
+    }
   } else if (pRoom->HasNPC()) {
     const auto& npc = pRoom->NPC();
     if (npc.optional) { OnNpcChatter(npc); }
