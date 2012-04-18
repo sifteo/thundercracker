@@ -142,6 +142,8 @@ class CubeSlot {
         return vbuf;
     }
 
+    const RadioAddress *getRadioAddress();
+
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;

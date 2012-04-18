@@ -82,7 +82,7 @@ void CubeSlot::requestFlashReset()
     Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
-bool CubeSlot::radioProduce(PacketTransmission &tx)
+const RadioAddress *CubeSlot::getRadioAddress()
 {
     /*
      * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
@@ -103,7 +103,12 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     address.id[3] = 0xe7;
     address.id[4] = 0xe7;
 
-    tx.dest = &address;
+    return &address;
+}
+
+bool CubeSlot::radioProduce(PacketTransmission &tx)
+{
+    tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
     // First priority: Send video buffer updates

@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <setjmp.h>
+#include <errno.h>
 
 #include "system.h"
 #include "system_mc.h"
@@ -23,6 +24,7 @@
 #include "svmcpu.h"
 #include "svmruntime.h"
 #include "mc_gdbserver.h"
+#include "cube.h"
 
 SystemMC *SystemMC::instance;
 
@@ -31,7 +33,7 @@ bool SystemMC::installELF(const char *path)
 {
     FILE *elfFile = fopen(path, "rb");
     if (elfFile == NULL) {
-        LOG(("Error, couldn't open ELF file '%s'\n", path));
+        LOG(("Error, couldn't open ELF file '%s' (%s)\n", path, strerror(errno)));
         return false;
     }
 
@@ -151,7 +153,6 @@ void SystemMC::doRadioPacket()
         Cube::Radio::Packet packet;
         Cube::Radio::Packet reply;
         bool ack;
-        unsigned cubeID;
     } buf;
     memset(&buf, 0, sizeof buf);
     buf.ptx.packet.bytes = buf.packet.payload;
@@ -160,24 +161,15 @@ void SystemMC::doRadioPacket()
     // MC firmware produces a packet
     RadioManager::produce(buf.ptx);
     ASSERT(buf.ptx.dest != NULL);
-    uint64_t addr = buf.ptx.dest->pack();
     buf.packet.len = buf.ptx.packet.len;
+    Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
 
     for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
 
         beginPacket();
 
         // Deliver it to the proper cube
-        for (unsigned i = 0; i < sys->opt_numCubes; i++) {
-            Cube::Radio &radio = sys->cubes[i].spi.radio;
-
-            if (radio.getPackedRXAddr() == addr &&
-                radio.handlePacket(buf.packet, buf.reply)) {
-                buf.ack = true;
-                buf.cubeID = i;
-                break;
-            }
-        }
+        buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
 
         // Log this transaction
         if (sys->opt_radioTrace) {
@@ -199,7 +191,7 @@ void SystemMC::doRadioPacket()
             }
 
             if (buf.ack) {
-                LOG((" -- Cube %d: ACK[%2d] ", buf.cubeID, buf.reply.len));
+                LOG((" -- Cube %d: ACK[%2d] ", cube->id(), buf.reply.len));
                 for (unsigned i = 0; i < buf.reply.len; i++)
                     LOG(("%02x", buf.reply.payload[i]));
                 LOG(("\n"));
@@ -239,4 +231,22 @@ void SystemMC::endPacket()
 {
     // Let the cube keep running, but no farther than our next transmit opportunity
     sys->endCubeEvent(ticks + SystemMC::TICKS_PER_PACKET);
+}
+
+Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)
+{
+    return getCubeForAddress(slot->getRadioAddress());
+}
+
+Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
+{
+    uint64_t packed = addr->pack();
+
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+        Cube::Hardware &cube = sys->cubes[i];
+        if (cube.spi.radio.getPackedRXAddr() == packed)
+            return &cube;
+    }
+
+    return NULL;
 }

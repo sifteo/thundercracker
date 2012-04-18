@@ -1,3 +1,0 @@
-tc-siftulator -n 3 &
-sleep 1s
-../../../firmware/master/master-sim betterflow.elf
