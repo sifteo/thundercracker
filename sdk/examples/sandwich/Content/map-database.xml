@@ -1,11 +1,16 @@
 <map-database>
-
-	<map id="sandbox">
-		<name>Programming Sandbox</name>
+	<map id="garden_level1">
+		<name>Walled Garden 1</name>
 	</map>
-	
-	<!--
-
+	<map id="garden_level2">
+		<name>Walled Garden 2</name>
+	</map>
+	<map id="garden_level3">
+		<name>Walled Garden 3</name>
+	</map>
+	<map id="garden_level4">
+		<name>Walled Garden 4</name>
+	</map>	
 	<map id="forest">
 		<name>The Forest</name>
 	</map>
@@ -45,6 +50,10 @@
 		<name>Sky Temple 7</name>
 	</map>
 	
-	-->
+
+
+	<map id="sandbox">
+		<name>Programming Sandbox</name>
+	</map>
 
 </map-database>
