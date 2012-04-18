@@ -147,6 +147,11 @@
     <property name="target" value="demo_forest:CaveGate"/>
    </properties>
   </object>
+  <object name="Burgher" type="NPC" x="48" y="16" width="32" height="32">
+   <properties>
+    <property name="id" value="burgher_hello"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="32" height="40" visible="0" opacity="0.88">
   <data encoding="csv">
