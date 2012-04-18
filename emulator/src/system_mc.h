@@ -15,6 +15,9 @@
 class System;
 class Radio;
 class SysTime;
+class Cube::Hardware;
+class RadioAddress;
+class CubeSlot;
 
 
 class SystemMC {
@@ -32,11 +35,14 @@ class SystemMC {
     static const uint32_t STARTUP_DELAY = TICK_HZ / 4;   // 1/4 second from cube to MC startup
 
     bool installELF(const char *name);
-    void doRadioPacket();
     static void threadFn(void *);
 
+    void doRadioPacket();
     void beginPacket();
     void endPacket();
+
+    Cube::Hardware *getCubeForSlot(CubeSlot *slot);
+    Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
     friend class Radio;
     friend class SysTime;
