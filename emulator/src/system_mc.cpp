@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <setjmp.h>
+#include <errno.h>
 
 #include "system.h"
 #include "system_mc.h"
