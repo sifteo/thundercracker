@@ -1366,6 +1366,8 @@ void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 
 void App::UpdateMenuMain()
 {
+    mCubeWrappers[0].GetCube().vbuf.touch(); // Helps with BG green flash...
+        
     MenuAssets menuAssets =
     {
         &BgTile,
@@ -1512,6 +1514,8 @@ void App::UpdateMenuMain()
 
 void App::UpdateMenuStory()
 {
+    mCubeWrappers[0].GetCube().vbuf.touch(); // Helps with BG green flash...
+    
     MenuAssets menuAssets =
     {
         &BgTile,
