@@ -62,31 +62,34 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
   }
   auto& g = view->Parent().Canvas();
   view->HideOverlay();
-  for(unsigned i=0; i<8; ++i) {
-    g.sprites[i].hide();
-  }
+  view->Parent().HideSprites();
   // flash white
-  g.bg1.fillMask(vec(40,40)/8, vec(48,48)/8);
+  g.bg1.fillMask(vec(40,40)>>3, Explosion.tileSize());
   unsigned ef = 0;
   for(int rt=7, rb=8; rt>=0||rb<16; --rt, ++rb) {
     if (rt>=0) { g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0)); }
     if (rb<16) { g.bg0.span(vec(0, rb), 16, WhiteTile); }
-    if (ef%2 == 0) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    if (ef%3 == 0) { g.bg1.image(vec(40,40)>>3, Explosion, ef/3); }
     ++ef;
     DoPaint();
   }
   // repaint room and quake
   view->Parent().DrawRoom(view->Id());
-  auto deadline = SystemTime::now() + 2.5f;
-  view->UpdatePlayer();
+  auto deadline = SystemTime::now() + 2.333f;
   while(deadline.inFuture()) {
     float t = deadline - SystemTime::now();
     g.bg0.setPanning(vec(
       5.f * t * cos(16.f * t),
       5.f * t * sin(16.f * 2.1f*t)
     ));
-    if (ef/2 == Explosion.numFrames()) { g.bg1.erase(); }
-    else if (ef%2 == 0 && ef/2 < Explosion.numFrames()) { g.bg1.image(vec(40,40)/8, Explosion, ef>>1); }
+    if (ef%3 == 0) {
+      auto frm = ef/3;
+      if (frm == Explosion.numFrames()) {
+        g.bg1.erase();
+      } else if (frm < Explosion.numFrames()) {
+        g.bg1.image(vec(40,40)>>3, Explosion, frm);
+      }
+    }
     ++ef;
     DoPaint();
   }

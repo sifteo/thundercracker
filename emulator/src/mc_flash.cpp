@@ -4,7 +4,7 @@
  */
 
 #include "flash.h"
-#include "flashstorage.h"
+#include "mc_flashstorage.h"
 
 static FlashStorage flash;
 

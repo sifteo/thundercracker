@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include "macros.h"
-#include "logdecoder.h"
+#include "mc_logdecoder.h"
 
 
 void LogDecoder::formatLog(ELFDebugInfo &DI,

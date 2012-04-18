@@ -9,9 +9,9 @@
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "elfdefs.h"
-#include "elfdebuginfo.h"
-#include "logdecoder.h"
-#include "gdbserver.h"
+#include "mc_elfdebuginfo.h"
+#include "mc_gdbserver.h"
+#include "mc_logdecoder.h"
 #include "tinythread.h"
 #include "tasks.h"
 using namespace Svm;

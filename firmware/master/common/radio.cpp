@@ -66,17 +66,11 @@ void RadioManager::produce(PacketTransmission &tx)
             break;
         }
     }
-
-    DEBUG_LOG(("Radio TX: [%dms] ", (int)(SysTime::ticks() / SysTime::msTicks(1))));
-    tx.log();
 }
 
 void RadioManager::ackWithPacket(const PacketBuffer &packet)
 {
     CubeSlot &slot = CubeSlot::getInstance(fifoPop());
-
-    DEBUG_LOG(("Radio ACK: "));
-    packet.log();
 
     if (slot.enabled())
         slot.radioAcknowledge(packet);
@@ -91,8 +85,6 @@ void RadioManager::ackEmpty()
 void RadioManager::timeout()
 {
     CubeSlot &slot = CubeSlot::getInstance(fifoPop());
-
-    DEBUG_LOG(("Radio TIMEOUT\n"));
 
     if (slot.enabled())
         slot.radioTimeout();

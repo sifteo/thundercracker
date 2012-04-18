@@ -1,4 +1,5 @@
 SUBDIRS = \
+	chroma \
 	drawtest \
 	hello \
 	membrane \

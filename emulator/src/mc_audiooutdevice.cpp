@@ -4,7 +4,7 @@
  */
 
 #include "audiooutdevice.h"
-#include "portaudiooutdevice.h"
+#include "mc_portaudiooutdevice.h"
 #include "macros.h"
 #include "audiomixer.h"
 
