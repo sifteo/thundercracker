@@ -1,4 +1,16 @@
 <map-database>
+
+	<map id="demo_castle">
+		<name>Castle Hoagie</name>
+	</map>
+	<map id="demo_forest">
+		<name>The Royal Forest</name>
+	</map>
+	<map id="demo_cave">
+		<name>Underground Cavern</name>
+	</map>
+
+	<!--
 	<map id="garden_level1">
 		<name>Walled Garden 1</name>
 	</map>
@@ -55,5 +67,6 @@
 	<map id="sandbox">
 		<name>Programming Sandbox</name>
 	</map>
+	-->
 
 </map-database>

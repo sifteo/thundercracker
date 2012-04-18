@@ -28,7 +28,12 @@ void Game::MainLoop() {
 	#else
 		PlayMusic(music_sting, false);
 		Viewport* pPrimary = IntroCutscene();
-		pPrimary = MainMenu(pPrimary);
+		#if DO_MENU
+			pPrimary = MainMenu(pPrimary);
+		#else
+			IrisOut(*pPrimary);
+			DoWait(0.5f);
+		#endif
 	#endif
 
 	//---------------------------------------------------------------------------
