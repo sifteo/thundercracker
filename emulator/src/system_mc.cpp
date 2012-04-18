@@ -165,10 +165,7 @@ void SystemMC::doRadioPacket()
 
     for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
 
-        // Advance time, and rally with the cube thread at the proper timestamp.
-        // Between beginCubeEvent() and endCubeEvent(), both simulation threads are synchronized.
-        ticks += SystemMC::TICKS_PER_PACKET;
-        sys->beginCubeEvent(ticks);
+        beginPacket();
 
         // Deliver it to the proper cube
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
@@ -219,13 +216,27 @@ void SystemMC::doRadioPacket()
             } else {
                 RadioManager::ackEmpty();
             }
-
-            sys->endCubeEvent();
+            endPacket();
             return;
         }
     }
     
     // Out of retries
     RadioManager::timeout();
-    sys->endCubeEvent();
+    endPacket();
+}
+
+void SystemMC::beginPacket()
+{
+    // Advance time, and rally with the cube thread at the proper timestamp.
+    // Between beginCubeEvent() and endCubeEvent(), both simulation threads are synchronized.
+    ticks += SystemMC::TICKS_PER_PACKET;
+    sys->beginCubeEvent(ticks);
+    ASSERT(ticks == sys->time.clocks);
+}
+
+void SystemMC::endPacket()
+{
+    // Let the cube keep running, but no farther than our next transmit opportunity
+    sys->endCubeEvent(ticks + SystemMC::TICKS_PER_PACKET);
 }

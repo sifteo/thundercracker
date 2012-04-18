@@ -35,6 +35,9 @@ class SystemMC {
     void doRadioPacket();
     static void threadFn(void *);
 
+    void beginPacket();
+    void endPacket();
+
     friend class Radio;
     friend class SysTime;
 
