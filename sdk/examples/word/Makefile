@@ -12,3 +12,9 @@ qsort.o bsearch.o
 ASSETDEPS += *.png $(ASSETS).lua
 
 include $(TC_DIR)/sdk/Makefile.rules
+
+run: all 
+	/usr/local/bin/ctags -Rf tags $(TC_DIR)/sdk/include .
+	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
+	$(TC_DIR)/firmware/master/master-sim word.elf
+
