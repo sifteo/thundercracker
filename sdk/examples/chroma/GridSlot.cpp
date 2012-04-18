@@ -242,30 +242,31 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
+void GridSlot::Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
 {
-	Int2 vec = { m_col * 4, m_row * 4 };
+    UByte2 vec = { m_row, m_col };
+    unsigned int cubeIndex = Game::Inst().getWrapperIndex( m_pWrapper );
 
     switch( m_state )
 	{
         case STATE_SPAWNING:
         {
-            DrawIntroFrame( vid, m_animFrame );
+            DrawIntroFrame( pDrawer, m_animFrame );
             break;
         }
 		case STATE_LIVING:
 		{
             if( IsSpecial() )
-                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
+                pDrawer->queue( cubeIndex,  vec, &GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
             {
                 if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
                 {
-                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+                    pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
                 }
                 else
                 {
-                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ]);
+                    pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ]);
 
                     if( m_multiplier > 1 )
                     {
@@ -284,35 +285,35 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                     }
                 }
             }
-			else
+            else
 			{
                 switch( m_Movestate )
                 {
                     case MOVESTATE_STATIONARY:
                     case MOVESTATE_PENDINGMOVE:
                     {
-                        const AssetImage &animtex = *TEXTURES[ m_color ];
+                        const AssetImage *animtex = TEXTURES[ m_color ];
                         unsigned int frame;
                         /*if( m_pWrapper->IsIdle() )
                             frame = GetIdleFrame();
                         else*/
                             frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                        vid.bg0.image(vec, animtex, frame);
+                        pDrawer->queue( cubeIndex, vec, animtex, frame);
                         break;
                     }
                     case MOVESTATE_MOVING:
                     {
                         Int2 curPos = m_curMovePos;
 
-                        const AssetImage &tex = *TEXTURES[m_color];
-                        vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
+                        const AssetImage *tex = TEXTURES[m_color];
+                        pDrawer->queue( cubeIndex, curPos, tex, GetRollingFrame( m_animFrame ));
                         break;
                     }
                     case MOVESTATE_FINISHINGMOVE:
                     case MOVESTATE_BUMPED:
                     {
-                        const AssetImage &animtex = *TEXTURES[ m_color ];
-                        vid.bg0.image(vec, animtex, m_animFrame);
+                        const AssetImage *animtex = TEXTURES[ m_color ];
+                        pDrawer->queue( cubeIndex, vec, animtex, m_animFrame);
                         break;
                     }
                     default:
@@ -321,28 +322,28 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
 			}
 			break;
 		}
-		case STATE_MARKED:
+        case STATE_MARKED:
         {
             if( m_color == HYPERCOLOR )
             {
-                //vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
-                const AssetImage &exTex = GetSpecialExplodingTexture();
+                //pDrawer->queue( cubeIndex, vec, GetSpecialTexture(), GetSpecialFrame() );
+                const AssetImage *exTex = &GetSpecialExplodingTexture();
 
-                vid.bg0.image(vec, exTex, GetSpecialFrame());
+                pDrawer->queue( cubeIndex, vec, exTex, GetSpecialFrame());
             }
             else
             {
                 if( m_color == RAINBALLCOLOR )
                 {
-                    vid.bg0.image(vec, rainball_idle, 0);
+                    pDrawer->queue( cubeIndex, vec, &rainball_idle, 0);
                 }
                 else
                 {
-                    const AssetImage &exTex = GetExplodingTexture();
+                    const AssetImage *exTex = &GetExplodingTexture();
 
                     unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
-                    vid.bg0.image(vec, exTex, markFrame);
+                    pDrawer->queue( cubeIndex, vec, exTex, markFrame);
                 }
 
                 if( m_bWasRainball || m_bWasInfected )
@@ -374,16 +375,16 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                 }
             }
 			break;
-		}
+        }
 		case STATE_EXPLODING:
 		{
             /*if( IsSpecial() )
-                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
+                pDrawer->queue( cubeIndex, vec, GetSpecialTexture(), GetSpecialFrame());
             else*/
             {
-                vid.bg0.image(vec, GemEmpty, 0);
+                pDrawer->queue( cubeIndex, vec, &GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
-                //vid.bg0.image(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+                //pDrawer->queue( cubeIndex, vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
 			break;
 		}
@@ -735,39 +736,40 @@ unsigned int GridSlot::GetIdleFrame()
 */
 
 
-void GridSlot::DrawIntroFrame( VideoBuffer &vid, unsigned int frame )
+void GridSlot::DrawIntroFrame( ChromitDrawer *pDrawer, unsigned int frame )
 {
-    Int2 vec = { m_col * 4, m_row * 4 };
+    UByte2 vec = { m_row, m_col };
+    unsigned int cubeIndex = Game::Inst().getWrapperIndex( m_pWrapper );
 
     if( !isAlive() )
-        vid.bg0.image(vec, GemEmpty, 0);
+        pDrawer->queue( cubeIndex, vec, &GemEmpty, 0);
     else if( IsSpecial() )
-        vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
+        pDrawer->queue( cubeIndex, vec, &GetSpecialTexture(), GetSpecialFrame());
     else
     {
         switch( frame )
         {
             case 0:
             {
-                vid.bg0.image(vec, GemEmpty, 0);
+                pDrawer->queue( cubeIndex, vec, &GemEmpty, 0);
                 break;
             }
             case 1:
             {
-                const AssetImage &exTex = GetExplodingTexture();
-                vid.bg0.image(vec, exTex, 1);
+                const AssetImage *exTex = &GetExplodingTexture();
+                pDrawer->queue( cubeIndex, vec, exTex, 1);
                 break;
             }
             case 2:
             {
-                const AssetImage &exTex = GetExplodingTexture();
-                vid.bg0.image(vec, exTex, 0);
+                const AssetImage *exTex = &GetExplodingTexture();
+                pDrawer->queue( cubeIndex, vec, exTex, 0);
                 break;
             }
             default:
             {
-                const AssetImage &tex = *TEXTURES[ m_color ];
-                vid.bg0.image(vec, tex, 0);
+                const AssetImage *tex = TEXTURES[ m_color ];
+                pDrawer->queue( cubeIndex, vec, tex, 0);
                 break;
             }
         }

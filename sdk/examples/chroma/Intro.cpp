@@ -120,7 +120,7 @@ bool Intro::Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer 
                     if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
                         frame--;
 
-                    pSlot->DrawIntroFrame( vid, frame );
+                    pSlot->DrawIntroFrame( &Game::Inst().getChromitDrawer(), frame );
                 }
             }
             break;

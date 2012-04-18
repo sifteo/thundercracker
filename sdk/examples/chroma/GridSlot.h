@@ -10,6 +10,7 @@
 #include <sifteo.h>
 
 using namespace Sifteo;
+class ChromitDrawer;
 class CubeWrapper;
 
 //space for a gem
@@ -84,8 +85,8 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState ) __attribute__ ((noinline));
-    void DrawIntroFrame( VideoBuffer &vid, unsigned int frame );
+    void Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState ) __attribute__ ((noinline));
+    void DrawIntroFrame( ChromitDrawer *pDrawer, unsigned int frame );
     void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
     bool isEmpty() const { return m_state == STATE_GONE; }
