@@ -11,7 +11,8 @@ SUBDIRS = \
 	sensors \
 	sprites \
 	stars \
-	text
+	text \
+	word
 
 .PHONY: clean subdirs $(SUBDIRS)
 
