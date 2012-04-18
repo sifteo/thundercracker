@@ -43,6 +43,7 @@ class System {
     bool opt_turbo;
     bool opt_lockRotationByDefault;
     bool opt_radioTrace;
+    bool opt_traceEnabledAtStartup;
 
     // SVM options
     bool opt_svmTrace;

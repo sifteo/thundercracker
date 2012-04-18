@@ -102,7 +102,8 @@ void SystemMC::threadFn(void *param)
     if (setjmp(instance->mThreadExitJmp))
         return;
 
-    SysTime::init();
+    // Start the master at some point shortly after the cubes come up
+    instance->ticks = instance->sys->time.clocks + STARTUP_DELAY;
 
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
@@ -111,14 +112,6 @@ void SystemMC::threadFn(void *param)
     GDBServer::start(2345);
 
     SvmLoader::run(111);
-}
-
-void SysTime::init()
-{
-    VirtualTime *vtime = &SystemMC::instance->sys->time;
-
-    // Zero is reserved.
-    SystemMC::instance->ticks = MAX(1, vtime->clocks);
 }
 
 SysTime::Ticks SysTime::ticks()
@@ -186,7 +179,6 @@ void SystemMC::doRadioPacket()
                 buf.ack = true;
                 buf.prx.len = buf.reply.len;
                 buf.cubeID = i;
-                retry = MAX_RETRIES;
                 break;
             }
         }
@@ -221,14 +213,18 @@ void SystemMC::doRadioPacket()
         }
 
         // Send the response
-        if (!buf.ack) {
-            RadioManager::timeout();
-        } else if (buf.reply.len) {
-            RadioManager::ackWithPacket(buf.prx);
-        } else {
-            RadioManager::ackEmpty();
-        }
+        if (buf.ack) {
+            if (buf.reply.len)
+                RadioManager::ackWithPacket(buf.prx);
+            else
+                RadioManager::ackEmpty();
 
-        sys->endCubeEvent();
+            sys->endCubeEvent();
+            return;
+        }
     }
+    
+    // Out of retries
+    RadioManager::timeout();
+    sys->endCubeEvent();
 }

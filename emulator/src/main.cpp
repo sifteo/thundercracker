@@ -31,7 +31,8 @@ static void usage()
 {
     /*
      * There are additionally several undocumented options that are
-     * only useful for internal development:
+     * only useful for internal development. They intentionally have short
+     * names, so that the long names don't show up in our binary's strings.
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
      *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
@@ -39,6 +40,7 @@ static void usage()
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      *  -c                Continue executing on exception, rather than stopping the debugger.
+     *  -R                Cube trace enabled at startup.
      */
 
     message("\n"
@@ -157,6 +159,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-T")) {
             sys.opt_turbo = true;
+            continue;
+        }
+        
+        if (!strcmp(arg, "-R")) {
+            sys.opt_traceEnabledAtStartup = true;
             continue;
         }
 

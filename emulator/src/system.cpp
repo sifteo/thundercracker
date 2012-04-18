@@ -76,6 +76,8 @@ void System::start()
         return;
     mIsStarted = true;
 
+    tracer.setEnabled(opt_traceEnabledAtStartup && isTraceAllowed());
+
     sc.start();
     smc.start();
 }
