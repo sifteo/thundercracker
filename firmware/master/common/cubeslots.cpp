@@ -30,8 +30,8 @@ _SYSAssetLoader *CubeSlots::assetLoader = 0;
 
 void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {
-	minCubes = min;
-	maxCubes = max;
+    minCubes = min;
+    maxCubes = max;
 }
 
 void CubeSlots::enableCubes(_SYSCubeIDVector cv)

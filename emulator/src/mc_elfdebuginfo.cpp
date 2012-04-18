@@ -4,7 +4,7 @@
  */
 
 #include <cxxabi.h>
-#include "elfdebuginfo.h"
+#include "mc_elfdebuginfo.h"
 #include "flash.h"
 #include <string.h>
 #include <stdlib.h>
