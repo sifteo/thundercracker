@@ -224,10 +224,12 @@ ALWAYS_INLINE void SystemCubes::tick(unsigned count)
 
     if (mEventDeadline.hasPassed()) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
-        mEventInProgress = true;
-        mEventCond.notify_all();
-        while (mEventInProgress)
-            mEventCond.wait(mEventMutex);
+        mEventAtDeadline = true;
+        mEventAtDeadlineCond.notify_all();
+        // Between beginEvent() and endEvent()...
+        while (!mEventDone)
+            mEventDoneCond.wait(mEventMutex);
+        mEventDone = false;
     }
 }
 

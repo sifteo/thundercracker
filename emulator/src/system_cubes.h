@@ -18,6 +18,8 @@ class System;
 
 class SystemCubes {
  public:
+    SystemCubes() : mEventAtDeadline(false), mEventDone(false) {}
+
     bool init(System *sys);
     void exit();
 
@@ -30,17 +32,18 @@ class SystemCubes {
     // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
     void beginEvent(uint64_t deadline) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
-        mEventDeadline.set(deadline);
-        while (!mEventInProgress)
-            mEventCond.wait(mEventMutex);
+        mEventDeadline.resetTo(deadline);
+        while (!mEventAtDeadline)
+            mEventAtDeadlineCond.wait(mEventMutex);
+        mEventAtDeadline = false;
     }
 
-    // End an event, resume cube execution.
-    void endEvent() {
+    // End an event, resume cube execution. Let it get as far as 'nextDeadline' without stopping.
+    void endEvent(uint64_t nextDeadline) {
         tthread::lock_guard<tthread::mutex> guard(mEventMutex);
-        mEventDeadline.reset();
-        mEventInProgress = false;
-        mEventCond.notify_all();
+        mEventDeadline.resetTo(nextDeadline);
+        mEventDone = true;
+        mEventDoneCond.notify_all();
     }
 
  private: 
@@ -61,9 +64,10 @@ class SystemCubes {
     bool mThreadRunning;
 
     TickDeadline mEventDeadline;
-    bool mEventInProgress;
     tthread::mutex mEventMutex;
-    tthread::condition_variable mEventCond;
+    bool mEventAtDeadline, mEventDone;
+    tthread::condition_variable mEventAtDeadlineCond;
+    tthread::condition_variable mEventDoneCond;
 };
 
 #endif

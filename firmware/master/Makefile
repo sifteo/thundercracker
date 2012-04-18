@@ -2,7 +2,6 @@ BIN = master-stm32.elf
 TC_DIR = ../..
 
 include Makefile.objs
-include $(TC_DIR)/Makefile.platform
 include Makefile.defs
 
 # Override default CDEPS

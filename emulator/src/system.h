@@ -76,8 +76,8 @@ class System {
     }
 
     // End an event, resume cube execution.
-    void endCubeEvent() {
-        sc.endEvent();
+    void endCubeEvent(uint32_t nextDeadline) {
+        sc.endEvent(nextDeadline);
     }
 
  private:
