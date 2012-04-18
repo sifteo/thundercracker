@@ -1438,9 +1438,13 @@ void App::UpdateMenuMain()
             }
             case MENU_NEIGHBOR_ADD:
             {
-                ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
-                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
-                menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                // It's possible for spurious arrive/depart messages to come in even while the
+                // cubes are not being tilted. So make sure to only assign items if they are valid.
+                if (item >= 0 && item < arraysize(kMenuNeighborAssets))
+                {
+                    ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                    menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                }
                 
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
                 neighbored[menuEvent.neighbor.neighbor] = true;
