@@ -23,6 +23,7 @@ LOCAL_OBJS = \
     src/cube_flash_storage.o \
     src/cube_hardware.o \
     src/cube_neighbors.o \
+    src/lsdec.o \
     src/tinythread.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
