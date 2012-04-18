@@ -31,6 +31,9 @@ endif
 ifeq ($(MOTHERSHIP),1)
 	FLAGS += -DMOTHERSHIP
 endif
+ifeq ($(DEBUG),1)
+	FLAGS += -DDEBUG
+endif
 
 # Debug / optimization
 #

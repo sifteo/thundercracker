@@ -237,7 +237,17 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     }
 
     // Finalize this packet. Must be last.
-    codec.endPacket(tx.packet);
+    bool hasContent = codec.endPacket(tx.packet);
+
+    // Debugging: Scrub the VRAM if we have no video data in-flight
+    DEBUG_ONLY({
+        _SYSVideoBuffer *vb = vbuf;
+        if (hasContent)
+            consecutiveEmptyPackets = 0;
+        else if (++consecutiveEmptyPackets == 3 && vbuf
+            && vbuf->lock == 0 && vbuf->cm16 == 0)
+            SystemMC::checkQuiescentVRAM(this);
+    });
 
     /*
      * XXX: We don't have to always return true... we can return false if
