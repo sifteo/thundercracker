@@ -155,7 +155,7 @@ void SystemMC::doRadioPacket()
     } buf;
     memset(&buf, 0, sizeof buf);
     buf.ptx.packet.bytes = buf.packet.payload;
-    buf.prx.bytes = buf.packet.payload;
+    buf.prx.bytes = buf.reply.payload;
 
     // MC firmware produces a packet
     RadioManager::produce(buf.ptx);
@@ -177,7 +177,6 @@ void SystemMC::doRadioPacket()
             if (radio.getPackedRXAddr() == addr &&
                 radio.handlePacket(buf.packet, buf.reply)) {
                 buf.ack = true;
-                buf.prx.len = buf.reply.len;
                 buf.cubeID = i;
                 break;
             }
@@ -214,10 +213,12 @@ void SystemMC::doRadioPacket()
 
         // Send the response
         if (buf.ack) {
-            if (buf.reply.len)
+            if (buf.reply.len) {
+                buf.prx.len = buf.reply.len;
                 RadioManager::ackWithPacket(buf.prx);
-            else
+            } else {
                 RadioManager::ackEmpty();
+            }
 
             sys->endCubeEvent();
             return;
