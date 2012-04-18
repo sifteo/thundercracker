@@ -717,7 +717,7 @@ void Menu::transToFinish() {
     canvas.BG0_setPanning(Vec2(0, 0));
 
     // blank out the background layer
-    for(int row=0; row<kIconTileHeight; ++row)
+    for(int row=0; row<kNumTilesY; ++row) // ALPHA HACK: was row<kIconTileHeight, but that doesn't clear it all
     for(int col=0; col<kNumTilesX; ++col) {
         canvas.BG0_drawAsset(Vec2(col, row), *assets->background);
     }
