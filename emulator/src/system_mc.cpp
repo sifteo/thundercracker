@@ -259,7 +259,7 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
      * the cube's vbuf. At these quiescent points, we should be able to
      * ASSERT that our SYSVideoBuffer matches the cube's actual VRAM.
      */
-    
+
     ASSERT(slot);
     _SYSVideoBuffer *vbuf = slot->getVBuf();
     if (!vbuf)
@@ -269,12 +269,14 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
     if (!hw)
         return;
 
+    unsigned errors = 0;
+
     ASSERT(vbuf->cm16 == 0);
     for (unsigned i = 0; i < arraysize(vbuf->cm1); i++) {
         if (vbuf->cm1[i] != 0) {
             LOG(("VRAM[%d]: Changes still present in cm1[%d], 0x%08x\n",
                 slot->id(), i, vbuf->cm1[i]));
-            ASSERT(0);
+            errors++;
         }
     }
 
@@ -285,8 +287,13 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
         if (hwMem[i] != bufMem[i]) {
             LOG(("VRAM[%d]: Mismatch at 0x%03x, hw=%02x buf=%02x\n",
                 slot->id(), i, hwMem[i], bufMem[i]));
-            ASSERT(0);
+            errors++;
         }
+    }
+
+    if (errors) {
+        LOG(("VRAM[%d]: %d total errors\n", slot->id(), errors));
+        ASSERT(0);
     }
 
     DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
