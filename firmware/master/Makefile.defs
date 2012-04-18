@@ -52,8 +52,6 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 # for them - disable this since those dtors will never be called
 CCFLAGS += -fno-use-cxa-atexit
 
-include $(TC_DIR)/Makefile.platform
-
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
 
 # Build architecture
