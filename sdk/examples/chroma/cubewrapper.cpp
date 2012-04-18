@@ -303,78 +303,83 @@ void CubeWrapper::DrawUI()
     //m_cube.vbuf.touch();
 }
 
+
+static const CubeDrawCallback s_aCubeStateDrawCallbacks[ CubeWrapper::STATE_CNT ] =
+{
+  &CubeWrapper::DrawInPlay,
+  &CubeWrapper::DrawEmpty,
+  &CubeWrapper::DrawRefill,
+};
+
+
+void CubeWrapper::DrawInPlay()
+{
+    if( Game::Inst().getMode() == Game::MODE_PUZZLE)
+    {
+        if( DrawPuzzleModeStuff() )
+            return;
+    }
+
+    DrawGrid();
+
+    //draw glimmer before timer
+    //if( m_glimmer.IsActive() )
+        //m_glimmer.Draw( m_bg1buffer, this );
+
+
+    if( Game::Inst().getMode() == Game::MODE_BLITZ )
+        DrawBlitzModeStuff();
+    else
+    {
+        //rocks
+        for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
+        {
+            if( m_aExplosions[ i ].isUsed() )
+                m_aExplosions[i].Draw( m_vid, i );
+        }
+    }
+
+    if( m_banner.IsActive() )
+    {
+        m_banner.Draw( m_vid );
+    }
+
+    if( m_bubbles.isActive() )
+        m_bubbles.Draw( m_vid, this );
+
+    //m_queuedFlush = true;
+
+    //super debug code!
+    //Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, m_cube.id() );
+
+    //for debugging combo count
+    //if( Game::Inst().getMode() == Game::MODE_BLITZ )
+      //  Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
+}
+
+void CubeWrapper::DrawEmpty()
+{
+    m_vid.bg0.image(vec(0,0), UI_NCubesCleared, 0);
+    int level = Game::Inst().getDisplayedLevel();
+
+    Banner::DrawScore( m_bg1buffer, vec<int>( Banner::CENTER_PT, 3 ),
+                       Banner::CENTER, level );
+
+    m_vid.bg1.setPanning( vec( 0, -4 ) );
+
+    m_queuedFlush = true;
+}
+
+void CubeWrapper::DrawRefill()
+{
+    m_intro.Draw( Game::Inst().getTimer(), m_bg1buffer, m_vid, this );
+    m_queuedFlush = true;
+}
+
+
 void CubeWrapper::DrawPlaying()
 {
-    switch( m_state )
-    {
-        case STATE_PLAYING:
-        {
-            if( Game::Inst().getMode() == Game::MODE_PUZZLE)
-            {
-                if( DrawPuzzleModeStuff() )
-                    break;
-            }
-
-            DrawGrid();
-
-            //draw glimmer before timer
-            //if( m_glimmer.IsActive() )
-                //m_glimmer.Draw( m_bg1buffer, this );
-
-
-            if( Game::Inst().getMode() == Game::MODE_BLITZ )
-                DrawBlitzModeStuff();
-            else
-            {
-                //rocks
-                for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
-                {
-                    if( m_aExplosions[ i ].isUsed() )
-                        m_aExplosions[i].Draw( m_vid, i );
-                }
-            }
-
-            if( m_banner.IsActive() )
-            {
-                m_banner.Draw( m_vid );
-            }
-
-            if( m_bubbles.isActive() )
-                m_bubbles.Draw( m_vid, this );
-
-            //m_queuedFlush = true;
-
-            //super debug code!
-            //Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, m_cube.id() );
-
-            //for debugging combo count
-            //if( Game::Inst().getMode() == Game::MODE_BLITZ )
-              //  Banner::DrawScore( m_bg1buffer, vec( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
-
-            break;
-        }
-        case STATE_EMPTY:
-        {
-            m_vid.bg0.image(vec(0,0), UI_NCubesCleared, 0);
-            int level = Game::Inst().getDisplayedLevel();
-
-            Banner::DrawScore( m_bg1buffer, vec<int>( Banner::CENTER_PT, 3 ),
-                               Banner::CENTER, level );
-
-            m_vid.bg1.setPanning( vec( 0, -4 ) );
-
-            m_queuedFlush = true;
-            break;
-        }
-        case STATE_REFILL:
-        {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1buffer, m_vid, this );
-            m_queuedFlush = true;
-            break;
-        }
-        default:
-            break;
-    }
+    (this->*s_aCubeStateDrawCallbacks[ m_state ])();
 }
 
 

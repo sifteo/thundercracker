@@ -48,6 +48,7 @@ public:
 		STATE_PLAYING,
 		STATE_EMPTY,
         STATE_REFILL,
+        STATE_CNT,
 	} CubeState;
 
     typedef struct
@@ -68,6 +69,9 @@ public:
     //draw callbacks, one for STATE_PLAYING, and one for the rest of the states
     void DrawUI();
     void DrawPlaying() __attribute__ ((noinline));
+    void DrawInPlay() __attribute__ ((noinline));
+    void DrawEmpty() __attribute__ ((noinline));
+    void DrawRefill() __attribute__ ((noinline));
 
     void Draw() __attribute__ ((noinline));
     void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
