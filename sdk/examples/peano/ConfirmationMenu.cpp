@@ -105,17 +105,16 @@ void AnimateDoors(TotalsCube *c, bool opening)
         AudioPlayer::PlayShutterOpen();
     else
         AudioPlayer::PlayShutterClose();
+    System::finish();
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         float amount = opening ? t/kTransitionTime : 1-t/kTransitionTime;
 
         PaintTheDoors(c, (7+6+kPad) * amount, opening);
         System::paint();
-        //System::finish();
         Game::UpdateDt();
     }
     PaintTheDoors(c, opening? (7+6+kPad): 0, opening);
     System::paint();
-    //System::finish();
 }
 
 //true means selected first choice (yes)

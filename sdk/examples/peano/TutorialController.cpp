@@ -315,7 +315,7 @@ Game::GameState Run() {
         System::paint();
     }
     PLAY_SFX(sfx_Tutorial_Correct);
-    PLAY_SFX2(sfx_Tutorial_Oops, false);
+    //PLAY_SFX2(sfx_Tutorial_Oops, false);
     Game::ClearCubeEventHandlers();
     Game::neighborEventHandler = NULL;
     WaitWithTokenUpdate(0.5f);

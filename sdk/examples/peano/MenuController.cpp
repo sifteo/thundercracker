@@ -222,7 +222,7 @@ void RunWelcomeBack()
         ADD_ITEM(Icon_Continue, Continue, "Continue from your\nauto-save data.");
     }
 
-    ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!");
+    ADD_ITEM(Icon_Random, RandomPuzzle, "Create some\nrandom puzzles!");
     ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teachn\nyou how to play!");
     ADD_ITEM(Icon_Level_Select, Level, "Replay any level.");
     ADD_ITEM(Icon_Setup, Setup, "Change your\ngame settings.");

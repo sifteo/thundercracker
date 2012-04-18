@@ -78,26 +78,34 @@ namespace TotalsGame
     void AudioPlayer::PlaySfx(const AssetAudio& handle, bool preempt)
 	{
 #if SFX_ON
+        if(!preempt)
+        {
+            //if the sound is already playing, dont play it again
+            for(int i = 0; i < NumSfxChannels; i++)
+            {
+                if(whatsPlaying[i] == &handle && channelSfx[i].isPlaying())
+                {
+                    return;
+                }
+            }
+        }
+
 		//find a nonplaying channel
-		int index = 0;
+        static int startChannel = 0;
+        int index = startChannel;
 		for(int i = 0; i < NumSfxChannels; i++)
 		{
-			if(!channelSfx[i].isPlaying())
+            if(!channelSfx[(startChannel+i)%NumSfxChannels].isPlaying())
 			{
-				index = i;
+                index = (startChannel+i)%NumSfxChannels;
 			}
 		}
+        startChannel = (startChannel+1)%NumSfxChannels;
 
 
-		if (channelSfx[index].isPlaying()) {
-			if (preempt)
-			{
-				channelSfx[index].stop();
-			} 
-			else
-			{
-				return;
-			}
+        if (channelSfx[index].isPlaying())
+        {
+            channelSfx[index].stop();
 		}
 		channelSfx[index].play(handle);
         whatsPlaying[index] = &handle;
