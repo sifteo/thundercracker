@@ -31,6 +31,8 @@ class SystemMC {
     void start();
     void stop();
 
+    static Cube::Hardware *getCubeForSlot(CubeSlot *slot);
+
  private: 
     static const uint32_t TICK_HZ = 16000000;
     static const uint32_t TICKS_PER_PACKET = 7200;       // 450us, minimum packet period
@@ -44,7 +46,6 @@ class SystemMC {
     void beginPacket();
     void endPacket();
 
-    Cube::Hardware *getCubeForSlot(CubeSlot *slot);
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
     friend class Radio;

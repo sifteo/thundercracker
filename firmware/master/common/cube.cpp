@@ -15,6 +15,14 @@
 #include "tasks.h"
 #include "neighbors.h"
 #include "paintcontrol.h"
+#include "cubeslots.h"
+
+// Simulator headers, for simAssetLoaderBypass.
+#ifdef SIFTEO_SIMULATOR
+#   include "system_mc.h"
+#   include "cube_hardware.h"
+#   include "lsdec.h"
+#endif
 
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
@@ -55,6 +63,33 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->reserved = 0;
     LC->head = 0;
     LC->tail = 0;
+
+#ifdef SIFTEO_SIMULATOR
+    if (CubeSlots::simAssetLoaderBypass) {
+        /*
+         * Asset loader bypass mode: Instead of actually sending this
+         * loadstream over the radio, instantaneously decompress it into
+         * the cube's flash memory.
+         */
+
+        // Use our reference implementation of the Loadstream decoder
+        Cube::Hardware *simCube = SystemMC::getCubeForSlot(this);
+        if (simCube) {
+            LoadstreamDecoder lsdec(simCube->flashStorage);
+            lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
+
+            LOG(("FLASH[%d]: Installed asset group %s at base address "
+                "0x%08x (loader bypassed)\n",
+                id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
+
+            // Mark this as done already.
+            LC->progress = header.dataSize;
+            Atomic::SetLZ(L->complete, id());
+
+            return;
+        }
+    }
+#endif
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
         id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));

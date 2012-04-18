@@ -118,7 +118,7 @@ class CubeSlot {
         if (vbuf)
             paintControl.waitForFinish(this);
     }
-        
+
     void triggerPaint(SysTime::Ticks timestamp) {
         // Allow continuous rendering only when not loading assets
         paintControl.triggerPaint(this, timestamp);

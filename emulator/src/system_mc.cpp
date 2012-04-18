@@ -235,7 +235,7 @@ void SystemMC::endPacket()
 
 Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)
 {
-    return getCubeForAddress(slot->getRadioAddress());
+    return instance->getCubeForAddress(slot->getRadioAddress());
 }
 
 Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
