@@ -505,6 +505,11 @@
     <property name="target" value="demo_cave:ForestGate"/>
    </properties>
   </object>
+  <object name="Sprout" type="NPC" x="128" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="sprout_hello"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="40" height="24" visible="0" opacity="0.74">
   <data encoding="csv">
