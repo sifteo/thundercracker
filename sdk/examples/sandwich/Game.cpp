@@ -18,7 +18,7 @@ void Game::Paint() {
   mPlayer.Update();
   for(Viewport& view : views) { view.Update(); }
   //hack
-    mTouchMask = 0xffffffff;
+    //mTouchMask = 0xffffffff;
   //
   if (mTouchMask) { CheckTouches(); }
   DoPaint();
