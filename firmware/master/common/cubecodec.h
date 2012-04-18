@@ -74,6 +74,10 @@ class BitBuffer {
         append(value & ((1 << width) - 1), width);
     }
 
+    bool hasPartialByte() const {
+        return count > 0 && count < 8;
+    }
+
  private:
     uint32_t bits;
     uint8_t count;
@@ -89,6 +93,7 @@ class CubeCodec {
     void stateReset() { 
         codePtr = 0;
         codeS = -1;
+        txBits.init();
     }
 
     // Returns 'true' if finished.
@@ -105,41 +110,7 @@ class CubeCodec {
         ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
     }
 
-    bool endPacket(PacketBuffer &buf) {
-        /*
-         * If we didn't emit a full packet, that implies an encoder state reset.
-         *
-         * If we have any partial codes buffered, they'll be lost forever. So,
-         * flush them out by adding a nybble which doesn't mean anything on its own.
-         *
-         * Returns 'true' if this packet contained any content.
-         */
-
-        bool content = true;
-
-        if (!buf.isFull()) {
-            stateReset();
-            txBits.append(0xF, 4);
-            txBits.flush(buf);
-            txBits.init();
-
-            if (!buf.len) {
-                /*
-                 * If we have nothing to send, make it an empty 'ping' packet.
-                 * But the nRF24L01 can't actually send a zero-byte packet, so
-                 * we have to pad it with a no-op. We don't have any explicit
-                 * no-op in our protocol, but we can send only the first byte
-                 * from a multi-byte code.
-                 *
-                 * This is the first byte of a 14-bit literal.
-                 */
-                buf.append(0xFF);
-                content = false;
-            }
-        }
-
-        return content;
-    }
+    bool endPacket(PacketBuffer &buf);
 
     void timeSync(PacketBuffer &buf, uint16_t rawTimer) {
         /*
@@ -214,7 +185,6 @@ class CubeCodec {
          */
         txBits.append(0xF33, 12);
         txBits.flush(buf);
-        txBits.init();
         stateReset();
     }
 
