@@ -339,7 +339,8 @@ void CubeWrapper::DrawPlaying()
                 m_banner.Draw( m_vid );
             }
 
-            m_bubbles.Draw( m_vid, this );
+            if( m_bubbles.isActive() )
+                m_bubbles.Draw( m_vid, this );
 
             //m_queuedFlush = true;
 

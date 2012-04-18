@@ -35,17 +35,23 @@ void BubbleSpawner::Reset( VideoBuffer &vid )
         m_aBubbles[i].Disable();
         vid.sprites[BUBBLE_SPRITEINDEX + i].hide();
     }
+
+    m_bActive = false;
 }
 
 
 void BubbleSpawner::Update( float dt, const Float2 &tilt )
 {
     int slotAvailable = -1;
+    m_bActive = false;
 
     for( unsigned int i = 0; i < MAX_BUBBLES; i++ )
     {
         if( m_aBubbles[i].isAlive() )
+        {
             m_aBubbles[i].Update( dt, tilt );
+            m_bActive = true;
+        }
         else if( slotAvailable < 0 )
             slotAvailable = i;
     }
@@ -61,6 +67,7 @@ void BubbleSpawner::Update( float dt, const Float2 &tilt )
             else
                 m_fTimeTillSpawn = Game::random.uniform( MIN_LONG_SPAWN, MAX_LONG_SPAWN );
             m_aBubbles[slotAvailable].Spawn();
+            m_bActive = true;
         }
     }
 }
