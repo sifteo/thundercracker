@@ -105,14 +105,18 @@ class CubeCodec {
         ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
     }
 
-    void endPacket(PacketBuffer &buf) {
+    bool endPacket(PacketBuffer &buf) {
         /*
          * If we didn't emit a full packet, that implies an encoder state reset.
          *
          * If we have any partial codes buffered, they'll be lost forever. So,
          * flush them out by adding a nybble which doesn't mean anything on its own.
+         *
+         * Returns 'true' if this packet contained any content.
          */
-        
+
+        bool content = true;
+
         if (!buf.isFull()) {
             stateReset();
             txBits.append(0xF, 4);
@@ -130,8 +134,11 @@ class CubeCodec {
                  * This is the first byte of a 14-bit literal.
                  */
                 buf.append(0xFF);
+                content = false;
             }
         }
+
+        return content;
     }
 
     void timeSync(PacketBuffer &buf, uint16_t rawTimer) {

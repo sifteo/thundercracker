@@ -250,3 +250,44 @@ Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
 
     return NULL;
 }
+
+void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
+{
+    /*
+     * This function can be called at points where we know there are no
+     * packets in-flight and no data that still needs to be encoded from
+     * the cube's vbuf. At these quiescent points, we should be able to
+     * ASSERT that our SYSVideoBuffer matches the cube's actual VRAM.
+     */
+    
+    ASSERT(slot);
+    _SYSVideoBuffer *vbuf = slot->getVBuf();
+    if (!vbuf)
+        return;
+
+    Cube::Hardware *hw = getCubeForSlot(slot);
+    if (!hw)
+        return;
+
+    ASSERT(vbuf->cm16 == 0);
+    for (unsigned i = 0; i < arraysize(vbuf->cm1); i++) {
+        if (vbuf->cm1[i] != 0) {
+            LOG(("VRAM[%d]: Changes still present in cm1[%d], 0x%08x\n",
+                slot->id(), i, vbuf->cm1[i]));
+            ASSERT(0);
+        }
+    }
+
+    const uint8_t *hwMem = hw->cpu.mExtData;
+    const uint8_t *bufMem = vbuf->vram.bytes;
+
+    for (unsigned i = 0; i < _SYS_VRAM_BYTES; i++) {
+        if (hwMem[i] != bufMem[i]) {
+            LOG(("VRAM[%d]: Mismatch at 0x%03x, hw=%02x buf=%02x\n",
+                slot->id(), i, hwMem[i], bufMem[i]));
+            ASSERT(0);
+        }
+    }
+
+    DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
+}
