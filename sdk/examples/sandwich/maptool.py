@@ -136,7 +136,7 @@ def export(file_path):
  		tmx.write('</map>\n\n')
 
 if __name__ == "__main__":
-	test_path = "/Users/max/Dropbox/Sandwich/Ian Concepts/cave_interactions3 copy.png"
+	test_path = "/foo/bar/baz" #"/Users/max/Dropbox/Sandwich/Ian Concepts/cave_interactions3 copy.png"
 	if os.path.exists(test_path):
 		export(test_path)
 	else:
