@@ -6,6 +6,9 @@
 	<map id="demo_forest">
 		<name>The Royal Forest</name>
 	</map>
+	<map id="demo_cave">
+		<name>Underground Cavern</name>
+	</map>
 
 	<!--
 	<map id="garden_level1">

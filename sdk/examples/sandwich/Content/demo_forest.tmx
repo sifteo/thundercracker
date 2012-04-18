@@ -499,6 +499,11 @@
     <property name="target" value="demo_castle:ForestGate"/>
    </properties>
   </object>
+  <object name="CaveGate" type="Gateway" x="432" y="64" width="32" height="32">
+   <properties>
+    <property name="target" value="demo_cave:ForestGate"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="40" height="24" visible="0" opacity="0.74">
   <data encoding="csv">
@@ -528,7 +533,7 @@
 153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153
 </data>
  </layer>
- <layer name="grid" width="40" height="24" opacity="0.16">
+ <layer name="grid" width="40" height="24" opacity="0.15">
   <data encoding="csv">
 153,153,153,153,153,153,153,153,154,154,154,154,154,154,154,154,153,153,153,153,153,153,153,153,154,154,154,154,154,154,154,154,153,153,153,153,153,153,153,153,
 153,153,153,153,153,153,153,153,154,154,154,154,154,154,154,154,153,153,153,153,153,153,153,153,154,154,154,154,154,154,154,154,153,153,153,153,153,153,153,153,
