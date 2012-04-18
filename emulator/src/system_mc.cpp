@@ -31,7 +31,7 @@ bool SystemMC::installELF(const char *path)
 {
     FILE *elfFile = fopen(path, "rb");
     if (elfFile == NULL) {
-        LOG(("Error, couldn't open ELF file '%s'\n", path));
+        LOG(("Error, couldn't open ELF file '%s' (%s)\n", path, strerror(errno)));
         return false;
     }
 
