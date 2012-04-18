@@ -34,6 +34,9 @@ endif
 ifeq ($(DEBUG),1)
 	FLAGS += -DDEBUG
 endif
+ifeq ($(CODEC_DEBUG),1)
+	FLAGS += -DDEBUG -DCODEC_DEBUG
+endif
 
 # Debug / optimization
 #

@@ -59,7 +59,7 @@ class BitBuffer {
     }
 
     void append(uint32_t value, unsigned width) {
-        CODEC_DEBUG_LOG(("\tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
+        CODEC_DEBUG_LOG(("CODEC: \tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
 
         // Overflow-safe asserts
         ASSERT(count <= 32);
