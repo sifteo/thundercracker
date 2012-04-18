@@ -145,7 +145,7 @@ bool animPaint(AnimType animT,
         case AnimType_NewWord:
             break;
         default:
-            LOG("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame);
+//             LOG("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame);
             break;
         }
 #endif

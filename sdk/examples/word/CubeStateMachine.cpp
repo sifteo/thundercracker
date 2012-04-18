@@ -1985,7 +1985,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
+//     LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 

@@ -20,6 +20,9 @@ WordGame::WordGame(VideoBuffer vidBufs[], CubeID pMenuCube, Menu& menu) :
     {
         mLastAudioPriority[i] = AudioPriority_None;
     }
+    for (unsigned i = 0; i < NumAudioChannelIndexes; ++i) {
+        mAudioChannels[i].init(i);
+    }
 }
 
 void WordGame::update(float dt)
