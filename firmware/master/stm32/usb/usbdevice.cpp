@@ -137,19 +137,23 @@ void UsbDevice::handleOUTData(void *p)
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {
+    // XXX: going to need to figure out what dispatch looks like here once
+    // we get some actual protocol support in place
+#if (BOARD == BOARD_TEST_JIG)
         switch (buf[0]) {
 
         case 0:
             AssetManager::onData(buf, numBytes);
+            UsbDevice::write(buf, numBytes);
             break;
 
-#if (BOARD == BOARD_TEST_JIG)
         case 1:
             TestJig::onTestDataReceived(buf + 1, numBytes - 1);
             break;
-#endif
-
         }
+#else
+        AssetManager::onData(buf, numBytes);
+#endif
     }
 }
 
