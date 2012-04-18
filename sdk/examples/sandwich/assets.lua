@@ -49,7 +49,6 @@ MenuIconHuh = image{ "menu_icon_huh.png" }
 
 dofile "content.gen.lua"
 
---[[
 music_castle = sound{ "music_castle.raw"}
 music_dungeon = sound{ "music_dungeon.raw" }
 music_sting = sound{ "music_sting.raw" }
@@ -63,4 +62,3 @@ sfx_running = sound{ "sfx_running.raw" }
 sfx_walkStart = sound{ "sfx_walkStart.raw" }
 sfx_zoomIn = sound{ "sfx_zoomIn.raw" }
 sfx_zoomOut = sound{ "sfx_zoomOut.raw" }
-]]--
