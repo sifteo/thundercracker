@@ -528,3 +528,87 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
 
     return true;
 }
+
+bool CubeCodec::endPacket(PacketBuffer &buf)
+{
+    /*
+     * Big note:
+     *   - If we didn't emit a full packet, that implies an encoder state reset.
+     *   - Period. It doesn't matter what's in the packet, just whether or not
+     *     it's full!
+     *
+     * End conditions:
+     *   - Full packet. We already totally filled the buffer, and we may have
+     *     additional bits saved in txBits for later. We're done.
+     *   - Single nybble buffered on a not-yet-full packet. We can flush that
+     *     nybble by adding a 'junk' nybble afterwards: anything that doesn't
+     *     represent a full code.
+     *   - BUT, if we happen to end up with a full packet after padding, there
+     *     is no state reset afterwards and this junk nybble will be interpreted
+     *     as part of the next packet.
+     *
+     * SO, we do need to pad, but we may not be able to pad with pure junk.
+     * If we're in this last situation, we can pad with some arbitrary
+     * harmless code, like a skip (00), as long as we keep the encode and
+     * decode state in sync.
+     *
+     * Returns 'true' if this packet contained any content.
+     */
+
+    bool content = true;
+
+    if (!buf.isFull()) {
+        // If not full, pad with a single nybble 0. This is usable as a junk
+        // nybble, plus it can be the beginning of a skip code if necessary.
+
+        ASSERT(codeRuns == 0);
+
+        if (txBits.hasPartialByte()) {
+            txBits.append(0, 4);
+            txBits.flush(buf);
+        }
+
+        if (buf.isFull()) {
+            // That just filled up the packet! No state reset, and gear up
+            // to begin the next packet with a tiny skip code (00).
+            
+            codePtr = (codePtr + 1) & _SYS_VRAM_WORD_MASK;
+            txBits.append(0, 4);
+            CODEC_DEBUG_LOG(("CODEC: Padded with split short skip code\n"));
+
+        } else {
+            // Still not full. This will be a state reset, and we can discard
+            // the nybble above as junk.
+
+            if (!buf.len) {
+                /*
+                 * If we have nothing to send, make it an empty 'ping' packet.
+                 * But the nRF24L01 can't actually send a zero-byte packet, so
+                 * we have to pad it with a no-op. We don't have any explicit
+                 * no-op in our protocol, but we can send only the first byte
+                 * from a multi-byte code.
+                 *
+                 * This is the first byte of a 14-bit literal.
+                 *
+                 * Note that we may have buffered some bits ahead of this,
+                 * such as the second nybble of the split skip code above.
+                 * This should be fine- worst case, we will end up discarding
+                 * the second nybble of this ping code.
+                 *
+                 * stateReset() must come after this, not before. It discards
+                 * buffered bits, and we must not do that prior to emitting
+                 * the ping.
+                 */
+                
+                txBits.append(0xFF, 8);
+                txBits.flush(buf); 
+
+                content = false;
+            }
+
+            stateReset();
+        }
+    }
+
+    return content;
+}
