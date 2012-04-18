@@ -15,9 +15,12 @@
 class System;
 class Radio;
 class SysTime;
-class Cube::Hardware;
 class RadioAddress;
 class CubeSlot;
+
+namespace Cube {
+    class Hardware;
+}
 
 
 class SystemMC {

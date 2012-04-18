@@ -16,9 +16,17 @@
 #ifndef _LSDEC_H
 #define _LSDEC_H
 
+#include "macros.h"
+
+namespace Cube {
+    class FlashStorage;
+}
+
+
 class LoadstreamDecoder {
 public:
     LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize);
+    LoadstreamDecoder(Cube::FlashStorage &storage);
 
     void reset();
     void handleByte(uint8_t b);

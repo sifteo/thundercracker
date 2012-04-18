@@ -13,13 +13,24 @@
  * simulation.
  */
 
+#include <string.h>
 #include "macros.h"
 #include "lsdec.h"
+#include "cube_flash_model.h"
+#include "cube_flash_storage.h"
 
 
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
     : buffer(buffer), bufferSize(bufferSize)
 {
+    ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
+    reset();
+}
+
+LoadstreamDecoder::LoadstreamDecoder(Cube::FlashStorage &storage)
+    : buffer(storage.data.ext), bufferSize(sizeof storage.data.ext)
+{
+    ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
     reset();
 }
 
@@ -43,7 +54,12 @@ void LoadstreamDecoder::setAddress(uint32_t addr)
 void LoadstreamDecoder::write8(uint8_t value)
 {
     ASSERT(flashAddr < bufferSize);
-    buffer[flashAddr++] = value;
+
+    // Auto-erase
+    if ((flashAddr % Cube::FlashModel::BLOCK_SIZE) == 0)
+        memset(buffer + flashAddr, 0xFF, Cube::FlashModel::BLOCK_SIZE);
+
+    buffer[flashAddr++] &= value;
     if (flashAddr == bufferSize)
         flashAddr = 0;
 }
