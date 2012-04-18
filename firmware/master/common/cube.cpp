@@ -341,10 +341,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
         // Has valid accelerometer data. Is it different from our previous state?
 
-        // Translate from radio packet coordinates to SDK coordinates
-        int8_t x = -ack->accel[0];
-        int8_t y = -ack->accel[1];
-        int8_t z = -ack->accel[2];
+        int8_t x = ack->accel[0];
+        int8_t y = ack->accel[1];
+        int8_t z = ack->accel[2];
 
         // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
