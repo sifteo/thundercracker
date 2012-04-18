@@ -17,6 +17,9 @@ void Game::Paint() {
   if (mNeighborDirty) { CheckMapNeighbors(); }
   mPlayer.Update();
   for(Viewport& view : views) { view.Update(); }
+  //hack
+    mTouchMask = 0xffffffff;
+  //
   if (mTouchMask) { CheckTouches(); }
   DoPaint();
   mAnimFrames++;
