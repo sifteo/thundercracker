@@ -242,10 +242,9 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
+void GridSlot::Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex )
 {
     UByte2 vec = { m_row, m_col };
-    unsigned int cubeIndex = Game::Inst().getWrapperIndex( m_pWrapper );
 
     switch( m_state )
 	{
@@ -254,71 +253,18 @@ void GridSlot::Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16
             DrawIntroFrame( pDrawer, m_animFrame );
             break;
         }
-		case STATE_LIVING:
+        case STATE_LIVING:
 		{
             if( IsSpecial() )
-                pDrawer->queue( cubeIndex,  vec, &GetSpecialTexture(), GetSpecialFrame() );
+                DrawSpecial( pDrawer, cubeIndex, vec );
+
             else if( IsFixed() )
             {
-                if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
-                {
-                    pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
-                }
-                else
-                {
-                    pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ]);
-
-                    if( m_multiplier > 1 )
-                    {
-                        SystemTime t = SystemTime::now();
-                        
-                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
-                        vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
-                        vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
-
-                        //number on bg1
-                        if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
-                        {
-                            vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
-                            vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
-                        }
-                    }
-                }
+                DrawFixed( pDrawer, vid, cubeIndex, vec);
             }
             else
 			{
-                switch( m_Movestate )
-                {
-                    case MOVESTATE_STATIONARY:
-                    case MOVESTATE_PENDINGMOVE:
-                    {
-                        const AssetImage *animtex = TEXTURES[ m_color ];
-                        unsigned int frame;
-                        /*if( m_pWrapper->IsIdle() )
-                            frame = GetIdleFrame();
-                        else*/
-                            frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                        pDrawer->queue( cubeIndex, vec, animtex, frame);
-                        break;
-                    }
-                    case MOVESTATE_MOVING:
-                    {
-                        Int2 curPos = m_curMovePos;
-
-                        const AssetImage *tex = TEXTURES[m_color];
-                        pDrawer->queue( cubeIndex, curPos, tex, GetRollingFrame( m_animFrame ));
-                        break;
-                    }
-                    case MOVESTATE_FINISHINGMOVE:
-                    case MOVESTATE_BUMPED:
-                    {
-                        const AssetImage *animtex = TEXTURES[ m_color ];
-                        pDrawer->queue( cubeIndex, vec, animtex, m_animFrame);
-                        break;
-                    }
-                    default:
-                        ASSERT( 0 );
-                }
+                DrawRegular( pDrawer, cubeIndex, vec, tiltState );
 			}
 			break;
 		}
@@ -845,3 +791,78 @@ void GridSlot::Bump( const Float2 &dir )
         m_lastFrameDir = newDir;
     }
 }
+
+
+
+void GridSlot::DrawMultiplier( VideoBuffer &vid )
+{
+    SystemTime t = SystemTime::now();
+
+    unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
+    vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
+    vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
+
+    //number on bg1
+    if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
+    {
+        vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
+        vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
+    }
+}
+
+
+
+void GridSlot::DrawSpecial( ChromitDrawer *pDrawer, unsigned int cubeIndex, UByte2 vec )
+{
+    pDrawer->queue( cubeIndex,  vec, &GetSpecialTexture(), GetSpecialFrame() );
+}
+
+void GridSlot::DrawFixed( ChromitDrawer *pDrawer, VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec )
+{
+    if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
+    {
+        pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+    }
+    else
+    {
+        pDrawer->queue( cubeIndex, vec, FIXED_TEXTURES[ m_color ]);
+
+        if( m_multiplier > 1 )
+        {
+            DrawMultiplier( vid );
+        }
+    }
+}
+
+void GridSlot::DrawRegular( ChromitDrawer *pDrawer, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState )
+{
+    const AssetImage *tex = TEXTURES[m_color];
+
+    switch( m_Movestate )
+    {
+        case MOVESTATE_STATIONARY:
+        case MOVESTATE_PENDINGMOVE:
+        {
+            unsigned int frame;
+
+            frame = GetTiltFrame( tiltState, m_lastFrameDir );
+            pDrawer->queue( cubeIndex, vec, tex, frame);
+            break;
+        }
+        case MOVESTATE_MOVING:
+        {
+            Int2 curPos = m_curMovePos;
+            pDrawer->queue( cubeIndex, curPos, tex, GetRollingFrame( m_animFrame ));
+            break;
+        }
+        case MOVESTATE_FINISHINGMOVE:
+        case MOVESTATE_BUMPED:
+        {
+            pDrawer->queue( cubeIndex, vec, tex, m_animFrame);
+            break;
+        }
+        default:
+            ASSERT( 0 );
+    }
+}
+

@@ -2072,13 +2072,15 @@ void CubeWrapper::DrawGrid()
     ClearSprite( GridSlot::MULT_SPRITE_ID );
     ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
 
+    unsigned int cubeIndex = Game::Inst().getWrapperIndex( this );
+
     //draw grid
     for( int i = 0; i < NUM_ROWS; i++ )
     {
         for( int j = 0; j < NUM_COLS; j++ )
         {
             GridSlot &slot = m_grid[i][j];
-            slot.Draw( &Game::Inst().getChromitDrawer(), m_vid, m_bg1buffer, m_curFluidDir );
+            slot.Draw( &Game::Inst().getChromitDrawer(), m_vid, m_bg1buffer, m_curFluidDir, cubeIndex );
         }
     }
 }
