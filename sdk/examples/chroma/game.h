@@ -46,6 +46,7 @@ public:
         STATE_PUZZLEMENU,
         STATE_CHAPTERSELECTMENU,
         STATE_PUZZLESELECTMENU,
+        STATE_CNT
 	} GameState;
 
 	typedef enum
