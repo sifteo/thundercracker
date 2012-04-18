@@ -61,7 +61,11 @@ PORTABILITY
 No supporting OS subroutines are required.
 */
 
-#include <stdlib.h>
+// #include <stdlib.h>
+#include "bsearch.h"
+typedef unsigned size_t;
+#define NULL 0
+
 
 #define _CONST              const
 #define _PARAMS(_x)         _x
