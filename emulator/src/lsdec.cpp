@@ -18,6 +18,7 @@
 #include "lsdec.h"
 #include "cube_flash_model.h"
 #include "cube_flash_storage.h"
+#include "svmmemory.h"
 
 
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
@@ -36,6 +37,7 @@ LoadstreamDecoder::LoadstreamDecoder(Cube::FlashStorage &storage)
 
 void LoadstreamDecoder::reset()
 {
+    memset(lut, 0, sizeof lut);
     state = S_OPCODE;
     flashAddr = 0;
 }
@@ -44,6 +46,17 @@ void LoadstreamDecoder::handleBytes(uint8_t *byte, uint32_t count)
 {
     while (count--)
         handleByte(*(byte++));
+}
+
+void LoadstreamDecoder::handleSVM(uint32_t va, uint32_t bytes)
+{
+    FlashBlockRef ref;
+    while (bytes--) {
+        uint8_t *p = SvmMemory::peek<uint8_t>(ref, va++);
+        if (!p)
+            break;
+        handleByte(*p);
+    }
 }
 
 void LoadstreamDecoder::setAddress(uint32_t addr)
@@ -59,7 +72,10 @@ void LoadstreamDecoder::write8(uint8_t value)
     if ((flashAddr % Cube::FlashModel::BLOCK_SIZE) == 0)
         memset(buffer + flashAddr, 0xFF, Cube::FlashModel::BLOCK_SIZE);
 
-    buffer[flashAddr++] &= value;
+    // Endian swap
+    buffer[flashAddr ^ 1] &= value;
+
+    flashAddr++;
     if (flashAddr == bufferSize)
         flashAddr = 0;
 }

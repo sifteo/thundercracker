@@ -13,6 +13,7 @@
 #include "radio.h"
 #include "tasks.h"
 #include "panic.h"
+#include "cubeslots.h"
 
 #include <sifteo/abi.h>
 #include <string.h>
@@ -99,6 +100,10 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
         return;
     }
 
+#if defined(SIFTEO_SIMULATOR) && !defined(ASSET_BOOTSTRAP_SLOW_AND_STEADY)
+    CubeSlots::simAssetLoaderBypass = true;
+#endif
+
     for (unsigned i = 0; i < count; i++) {
         _SYSMetadataBootAsset &BA = vec[i];
         PanicMessenger msg;
@@ -136,44 +141,49 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
             _SYS_asset_loadStart(loader, group, BA.slot, cubes);
         }
 
-        for (;;) {
+        if ((loader->complete & cubes) != cubes)
+            for (;;) {
 
-            // Draw status to each cube
-            _SYSCubeIDVector statusCV = cubes;
-            while (statusCV) {
-                _SYSCubeID c = Intrinsic::CLZ(statusCV);
-                statusCV ^= Intrinsic::LZ(c);
+                // Draw status to each cube
+                _SYSCubeIDVector statusCV = cubes;
+                while (statusCV) {
+                    _SYSCubeID c = Intrinsic::CLZ(statusCV);
+                    statusCV ^= Intrinsic::LZ(c);
 
-                msg.at(1,1) << "Bootstrapping";
-                msg.at(1,2) << "game assets...";
-                msg.at(4,5) << lc[c].progress;
-                msg.at(7,7) << "of";
-                msg.at(4,9) << lc[c].dataSize;
+                    msg.at(1,1) << "Bootstrapping";
+                    msg.at(1,2) << "game assets...";
+                    msg.at(4,5) << lc[c].progress;
+                    msg.at(7,7) << "of";
+                    msg.at(4,9) << lc[c].dataSize;
 
-                msg.paint(c);
-            }
+                    msg.paint(c);
+                }
             
-            // Are we done? Leave with the final status on-screen
-            if ((loader->complete & cubes) == cubes)
-                break;
+                // Are we done? Leave with the final status on-screen
+                if ((loader->complete & cubes) == cubes)
+                    break;
 
-            // Load for a while, with the display idle. The PanicMessenger
-            // is really wasteful with the cube's CPU time, so we need to
-            // paint pretty infrequently in order to load assets full-speed.
+                // Load for a while, with the display idle. The PanicMessenger
+                // is really wasteful with the cube's CPU time, so we need to
+                // paint pretty infrequently in order to load assets full-speed.
 
-            uint32_t milestone = lc[0].progress + 2000;
-            while (lc[0].progress < milestone 
-                   && (loader->complete & cubes) != cubes) {
-                Tasks::work();
-                Radio::halt();
+                uint32_t milestone = lc[0].progress + 2000;
+                while (lc[0].progress < milestone 
+                       && (loader->complete & cubes) != cubes) {
+                    Tasks::work();
+                    Radio::halt();
+                }
             }
-        }
 
         _SYS_asset_loadFinish(loader);
 
         LOG(("SVM: Finished instaling bootstrap asset group %s\n",
             SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
     }
+
+#ifdef SIFTEO_SIMULATOR
+    CubeSlots::simAssetLoaderBypass = false;
+#endif
 }
 
 
