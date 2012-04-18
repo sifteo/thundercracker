@@ -304,26 +304,15 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                     {
                         Int2 curPos = m_curMovePos;
 
-                        //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-                        if( IsSpecial() )
-                            vid.bg0.image(curPos, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &tex = *TEXTURES[m_color];
-                            vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
-                        }
+                        const AssetImage &tex = *TEXTURES[m_color];
+                        vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
                         break;
                     }
                     case MOVESTATE_FINISHINGMOVE:
                     case MOVESTATE_BUMPED:
                     {
-                        if( IsSpecial() )
-                            vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &animtex = *TEXTURES[ m_color ];
-                            vid.bg0.image(vec, animtex, m_animFrame);
-                        }
+                        const AssetImage &animtex = *TEXTURES[ m_color ];
+                        vid.bg0.image(vec, animtex, m_animFrame);
                         break;
                     }
                     default:
@@ -398,31 +387,6 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
             }
 			break;
 		}
-        /*case STATE_SHOWINGSCORE:
-		{
-            if( m_score > 99 )
-                m_score = 99;
-            vid.bg0.image(vec, GemEmpty, 0);
-            unsigned int fadeFrame = 0;
-
-            float fadeTime = float(SystemTime::now() - m_eventTime) - START_FADING_TIME;
-
-            if( fadeTime > 0.0f )
-                fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
-
-            if( fadeFrame >= NUM_POINTS_FRAMES )
-                fadeFrame = NUM_POINTS_FRAMES - 1;
-
-            if( m_score > 9 )
-                vid.bg0.image(vec( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
-            vid.bg0.image(vec( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
-			break;
-		}
-        case STATE_GONE:
-		{
-            vid.bg0.image(vec, GemEmpty, 0);
-			break;
-        }*/
 		default:
 			break;
 	}
