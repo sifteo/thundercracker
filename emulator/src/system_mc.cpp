@@ -25,6 +25,7 @@
 #include "svmruntime.h"
 #include "mc_gdbserver.h"
 #include "cube.h"
+#include "protocol.h"
 
 SystemMC *SystemMC::instance;
 
@@ -183,17 +184,34 @@ void SystemMC::doRadioPacket()
                 buf.ptx.dest->id[0],
                 buf.packet.len));
 
+            // Nybbles in little-endian order. With the exception
+            // of flash-escaped bytes, the TX packets are always nybble streams.
+
             for (unsigned i = 0; i < sizeof buf.packet.payload; i++) {
-                if (i < buf.packet.len)
-                    LOG(("%02x", buf.packet.payload[i]));
-                else
+                if (i < buf.packet.len) {
+                    uint8_t b = buf.packet.payload[i];
+                    LOG(("%x%x", b & 0xf, b >> 4));
+                } else {
                     LOG(("  "));
+                }
             }
+
+            // ACK data segmented into struct pieces
 
             if (buf.ack) {
                 LOG((" -- Cube %d: ACK[%2d] ", cube->id(), buf.reply.len));
-                for (unsigned i = 0; i < buf.reply.len; i++)
+                for (unsigned i = 0; i < buf.reply.len; i++) {
+                    switch (i) {
+                        case RF_ACK_LEN_FRAME:
+                        case RF_ACK_LEN_ACCEL:
+                        case RF_ACK_LEN_NEIGHBOR:
+                        case RF_ACK_LEN_FLASH_FIFO:
+                        case RF_ACK_LEN_BATTERY_V:
+                        case RF_ACK_LEN_HWID:
+                            LOG(("-"));
+                    }
                     LOG(("%02x", buf.reply.payload[i]));
+                }
                 LOG(("\n"));
             } else {
                 LOG((" -- TIMEOUT, retry #%d\n", retry));
