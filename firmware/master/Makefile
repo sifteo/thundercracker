@@ -33,7 +33,7 @@ unlock:
 		-c reset \
 		-c exit
 
-program: $(BIN_STM32)
+program: $(BIN)
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 		-c init \
 		-c "reset halt" \
