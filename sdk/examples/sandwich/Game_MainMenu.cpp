@@ -21,6 +21,8 @@ static MenuItem kMenuItems[] = {
 	{ 0, 0}
 };
 
+// don't forget credits!
+
 Viewport* Game::MainMenu(Viewport* keyViewport) {
 	Menu mainMenu(keyViewport->Canvas(), &kMenuAssets, kMenuItems);
 	mainMenu.setIconYOffset(24);
