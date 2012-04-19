@@ -73,14 +73,8 @@ class System {
 
     bool isTraceAllowed();
 
-    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
-    void beginCubeEvent(uint64_t deadline) {
-        sc.beginEvent(deadline);
-    }
-
-    // End an event, resume cube execution.
-    void endCubeEvent(uint32_t nextDeadline) {
-        sc.endEvent(nextDeadline);
+    DeadlineSynchronizer &getCubeSync() {
+        return sc.deadlineSync;
     }
 
  private:
