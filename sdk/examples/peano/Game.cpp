@@ -63,11 +63,11 @@ void OnCubeShake(void*, unsigned cid)
 //tilt y to touch
 void OnCubeTilt(void*, unsigned cid)
 {
-    static int oldState = _SYS_TILT_NEUTRAL;
-    _SYSTiltState ts = cubes[cid].getTiltState();
+    static int oldState = 0;
+    Byte2 ts = cubes[cid].getTiltState();
     if(ts.y != oldState)
     {
-        cubes[cid].DispatchOnCubeTouch(cubes+cid, ts.y != _SYS_TILT_NEUTRAL);
+        cubes[cid].DispatchOnCubeTouch(cubes+cid, ts.y != 0);
         oldState = ts.y;
     }
 }
@@ -152,12 +152,12 @@ void Run()
 
     AudioPlayer::Init();
 
-    _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+    Events::neighborAdd.set(&OnNeighborAdd);
+    Events::neighborRemove.set(&OnNeighborRemove);
+    Events::cubeTouch.set(&OnCubeTouch);
+    Events::cubeShake.set(&OnCubeShake);
 #if NO_TOUCH_HACK
-    _SYS_setVector(_SYS_CUBE_TILT, (void*)&OnCubeTilt, NULL);
+    Events::cubeTilt.set(&OnCubeTilt);
 #endif
 
     neighborEventHandler = NULL;

@@ -43,11 +43,11 @@ void Run()
         Game::cubes[i].OpenShuttersToReveal(Title);
     }
 
-    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
-    void *oldShake = _SYS_getVectorHandler(_SYS_CUBE_SHAKE);
+    void *oldTouch = Events::cubeTouch.handler();
+    void *oldShake = Events::cubeShake.handler();
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+    Events::cubeTouch.set(&OnCubeTouch);
+    Events::cubeShake.set(&OnCubeShake);
 
     gotTouchOn = false;
     skip = false;
@@ -58,8 +58,8 @@ void Run()
         System::paint();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, oldShake, NULL);
+    Events::cubeTouch.set((void(*)(void*,unsigned ))oldTouch);
+    Events::cubeShake.set((void(*)(void*,unsigned))oldShake);
 
     for(int i = 0; i < NUM_CUBES; i++)
     {

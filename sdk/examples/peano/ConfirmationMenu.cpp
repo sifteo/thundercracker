@@ -38,13 +38,13 @@ void OnCubeTouch(void *, unsigned cid)
 #if NO_TOUCH_HACK
 void OnCubeTilt(void*, unsigned cid)
 {
-    static int oldState = _SYS_TILT_NEUTRAL;
-    _SYSTiltState ts = Game::cubes[cid].getTiltState();
+    static int oldState = 0;
+    Byte2 ts = Game::cubes[cid].getTiltState();
     if(ts.y != oldState)
     {
         oldState = ts.y;
         //copy pasta from ontouch
-        bool pressed = ts.y != _SYS_TILT_NEUTRAL;
+        bool pressed = ts.y != 0;
         if(cid == YES || cid ==NO)
         {
             if(pressed)
@@ -152,11 +152,11 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
 
     gotTouchOn[0] = gotTouchOn[1] = gotTouchOn[2] = false;
     triggered[0] = triggered[1] = triggered[2] = false;
-    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+    void *oldTouch = Events::cubeTouch.handler();
+    Events::cubeTouch.set(&OnCubeTouch);
 #if NO_TOUCH_HACK
-    void *oldTilt = _SYS_getVectorHandler(_SYS_CUBE_TILT);
-    _SYS_setVector(_SYS_CUBE_TILT, (void*)&OnCubeTilt, NULL);
+    void *oldTilt = Events::cubeTilt.handler();
+    Events::cubeTilt.set(&OnCubeTilt);
 #endif
 
     while(!(triggered[YES] || triggered[NO])) {
@@ -164,10 +164,10 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
         Game::UpdateDt();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
+    Events::cubeTouch.set((void(*)(void*,unsigned))oldTouch);
 
 #if NO_TOUCH_HACK
-    _SYS_setVector(_SYS_CUBE_TILT, oldTilt, NULL);
+    Events::cubeTilt.set(oldTilt);
 #endif
     
     AnimateDoors(Game::cubes+YES, false);

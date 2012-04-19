@@ -27,7 +27,7 @@ public:
         }
 #if NO_TOUCH_HACK
         for(int i=0; i<NUM_CUBES; ++i) {
-            if (Game::cubes[i].getTiltState().y != _SYS_TILT_NEUTRAL) {
+            if (Game::cubes[i].getTiltState().y != 0) {
                 mSeconds += Game::dt;
                 return;
             }
