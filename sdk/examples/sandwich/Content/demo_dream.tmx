@@ -94,10 +94,15 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="48" height="24">
-  <object name="SpawnPoint" type="Location" x="48" y="160" width="32" height="32"/>
+  <object name="SpawnPoint" type="Location" x="432" y="176" width="32" height="32"/>
   <object name="GardenGate" type="Gateway" x="0" y="160" width="32" height="32">
    <properties>
     <property name="target" value="demo_garden:DreamGate"/>
+   </properties>
+  </object>
+  <object name="TowerGate" type="Gateway" x="432" y="0" width="32" height="32">
+   <properties>
+    <property name="target" value="demo_tower:DreamGate"/>
    </properties>
   </object>
  </objectgroup>

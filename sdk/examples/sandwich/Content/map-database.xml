@@ -19,7 +19,10 @@
 		<name>Botanical Gardens</name>
 	</map>
 	<map id="demo_dream">
-		<name>The Dream world</name>
+		<name>The Dream World</name>
+	</map>
+	<map id="demo_tower">
+		<name>The Dark Tower</name>
 	</map>
 
 
