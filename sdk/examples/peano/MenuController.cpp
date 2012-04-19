@@ -177,7 +177,7 @@ int DoMenu(const char *name, TiltFlowItem *items, int nItems)
 
     // close labelView
     labelView.message = "";
-    labelView.HideDescription();
+    labelView.HideDescription();    
     labelView.TransitionSync(kDuration, false);
 
     // transition out
@@ -327,7 +327,7 @@ void RunSetup()
         SET_PARAMS(items[1], Toggle_Music, AudioPlayer::MusicMuted(), "Toggle\nbackground music.");
         SET_PARAMS(items[2], Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
         SET_PARAMS(items[3], Clear_Data, 0, "Clear your\nauto-save data.");
-        SET_PARAMS(items[4], Back, 0, "Return to the main menu.");
+        SET_PARAMS(items[4], Back, 0, "Return to\nthe main menu.");
 #undef SET_PARAMS
 
         TiltFlowView tiltFlowView;
@@ -439,7 +439,7 @@ void RunChapterSelect()
     TiltFlowItem *item = chapterItems + numChapterItems;
     item->SetImage(&Icon_Back);
     item->id = BackId;
-    item->description="Return to the main menu.";
+    item->description="Return to\nthe main menu.";
     numChapterItems++;
 
     int resultId = DoMenu("Select a Level", chapterItems, numChapterItems);

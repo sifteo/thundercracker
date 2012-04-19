@@ -24,6 +24,7 @@ public:
     void SetBackgroundColor(uint8_t r, uint8_t g, uint8_t b);
     void SetForegroundColor(uint8_t r, uint8_t g, uint8_t b);
     void DoDialog(const char *text, int yTop, int ySize);
+    void ChangeText(const char *text);
     void EndIt();
 };
 

@@ -424,6 +424,15 @@ namespace TotalsGame
         overlayShown = true;
     }
 
+    void TotalsCube::ChangeOverlayText(const char *text)
+    {
+        if(overlayShown)
+        {
+            DialogWindow dw(this);
+            dw.ChangeText(text);
+        }
+    }
+
     void TotalsCube::DisableTextOverlay()
     {
         //turn it off

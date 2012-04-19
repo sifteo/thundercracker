@@ -57,10 +57,6 @@ void TiltFlowView::Tick()
 
     TotalsCube *c = GetCube();
 
-    const BG1Mask mask = BG1Mask::filled(vec(0,0), vec(16,1))
-                        | BG1Mask::filled(vec(0,12), vec(16,4));
-    c->vid.bg1.setMask(mask);
-
     int newMarquee = menu->GetSimTime() / kMarqueeDelay;
     if(menu->IsPicked())
         newMarquee = -1;
@@ -73,6 +69,7 @@ void TiltFlowView::Tick()
 
     if (mDirty)
     {
+        //mDirty = false;
         mLastTileX = -1;
         PaintInner(c);
     }
@@ -84,6 +81,10 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
+    const BG1Mask mask = BG1Mask::filled(vec(0,0), vec(16,1))
+                        | BG1Mask::filled(vec(0,12), vec(16,4));
+    c->vid.bg1.setMask(mask);
+
     //c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
 }
 
@@ -106,6 +107,7 @@ void TiltFlowView::PaintFooter(TotalsCube *c) {
 void TiltFlowView::PaintInner(TotalsCube *c) {    
     if(menu->IsDone())
     {
+        System::finish();
         GetCube()->FillArea(&Dark_Purple, vec(0,0), vec(18,18));
         GetCube()->Image(*menu->GetItem(mItem)->GetImage(), vec(3, 1), 0);
         GetCube()->vid.bg0.setPanning(vec(0,0));
@@ -205,7 +207,7 @@ void TiltFlowView::UpdateMenu() {
         int vSign = tilt.x < 0 ? -1 : 1;
 
         // if we're way overtilted (into the upper corners!), accelerate super-fast
-        bool deepMult = tilt.x == 1 ? kDeepTiltAccel : 1;
+        bool deepMult = tilt.y == 1 ? kDeepTiltAccel : 1;
 
         if (vSign > 0) {
             if (mItem > 0) {

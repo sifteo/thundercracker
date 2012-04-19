@@ -184,6 +184,18 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
     System::paint();
 }
 
+void DialogWindow::ChangeText(const char *text)
+{
+    mCube->vid.fb128.fill(0);
+    mPosition.y = 3;
+    const char* pNextChar = text;
+    while(*pNextChar) {
+        pNextChar = Show(pNextChar);
+    }
+
+    System::paint();
+}
+
 void DialogWindow::EndIt()
 {
     mCube->vid.initMode(BG0_SPR_BG1);

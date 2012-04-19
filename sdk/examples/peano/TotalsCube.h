@@ -69,6 +69,7 @@ public:
         void DrawString(const char *string, Int2 center);
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3]);
+        void ChangeOverlayText(const char *text);
         void DisableTextOverlay();
         bool IsTextOverlayEnabled();
 

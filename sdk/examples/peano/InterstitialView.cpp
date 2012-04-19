@@ -91,6 +91,10 @@ int InterstitialView::CollapsesPauses(int off)
 
 void InterstitialView::Paint()
 {
+    if(GetCube()->IsTextOverlayEnabled())
+    {
+        return;
+    }
     PaintWithOffset(GetCube(), mOffset, mBackwards);
     if (mOffset >= 17)
     {       
