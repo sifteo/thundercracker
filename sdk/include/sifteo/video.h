@@ -79,9 +79,9 @@ enum Rotation {
     ROT_NORMAL              = 0,
     ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
     ROT_MIRROR              = _SYS_VF_X_FLIP,
-    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
     ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
-    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
     ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
     ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
 };
