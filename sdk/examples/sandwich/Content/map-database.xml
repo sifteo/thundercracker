@@ -9,6 +9,9 @@
 	<map id="demo_cave">
 		<name>Underground Cavern</name>
 	</map>
+	<map id="demo_skytemple">
+		<name>Sky Temple</name>
+	</map>
 
 	<!--
 	<map id="garden_level1">
