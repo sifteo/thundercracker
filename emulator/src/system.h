@@ -45,6 +45,9 @@ class System {
     bool opt_radioTrace;
     bool opt_traceEnabledAtStartup;
 
+    // Master firmware debug options
+    bool opt_paintTrace;
+
     // SVM options
     bool opt_svmTrace;
     bool opt_svmFlashStats;

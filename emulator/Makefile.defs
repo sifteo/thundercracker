@@ -51,7 +51,8 @@ endif
 # -fomit-frame-pointer is actually really important here. It helps
 # a lot with our SBT code, since there are many tiny function calls. 
 
-FLAGS += -O3 -g -fomit-frame-pointer
+FLAGS += -O3 -fomit-frame-pointer
+FLAGS += -g
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
