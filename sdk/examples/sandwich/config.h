@@ -8,4 +8,4 @@
 #define PLAYTESTING_HACKS			0
 #define FAST_FORWARD				0
 #define DO_ZOOM						0
-#define DO_MENU						0
+#define DO_MENU						1

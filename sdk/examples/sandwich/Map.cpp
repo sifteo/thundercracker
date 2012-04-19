@@ -17,11 +17,12 @@ Bomb* Map::BombFor(const ItemData& bomb) {
 void Map::SetData(const MapData& map) { 
   if (mData != &map) {
     
+    mBombCount = 0;
+    mBlockCount = 0;
     mData = &map; 
 
     RefreshTriggers();
     
-    mBlockCount = 0;
     if (map.sokoblocks) {
       for (const SokoblockData* p=map.sokoblocks; p->x; ++p) {
         mBlock[mBlockCount].Init(*p);
