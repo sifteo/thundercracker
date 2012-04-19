@@ -172,6 +172,11 @@ public:
 
     void ClearBG1();
 
+    //this handles drawing that was moved out of cubewrapper so it could be done in a way that
+    //thrashed the cache less
+    //needDraw is a boolean array telling which cubes need drawing
+    void DrawGame( bool needDraw[] );
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
@@ -180,7 +185,7 @@ private:
     void check_puzzle();
     void HandleMenu() __attribute__ ((noinline));
 
-	bool m_bTestMatches;
+    bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
 	//running total

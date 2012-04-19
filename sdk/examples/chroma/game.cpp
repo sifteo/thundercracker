@@ -208,8 +208,21 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Update( t, dt );
 
+    bool needGameDraw[ NUM_CUBES ];
+
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Draw();
+    {
+        //CubeWrapper::draw now only handles special case drawing.  shortcut it here
+        if( m_state == STATE_PLAYING && m_cubes[i].getState() == CubeWrapper::STATE_PLAYING )
+            needGameDraw[i] = true;
+        else
+        {
+            m_cubes[i].Draw();
+            needGameDraw[i] = false;
+        }
+    }
+
+    DrawGame( needGameDraw );
 
     //m_chromitDrawer.drawAll();
 
@@ -1389,4 +1402,90 @@ void Game::ClearBG1()
 {
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].GetVid().bg1.eraseMask();
+}
+
+
+
+//this handles drawing that was moved out of cubewrapper so it could be done in a way that
+//thrashed the cache less
+//needDraw is a boolean array telling which cubes need drawing
+void Game::DrawGame( bool needDraw[] )
+{
+    if( Game::Inst().getMode() == Game::MODE_PUZZLE)
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                if( m_cubes[i].DrawPuzzleModeStuff() )
+                    needDraw[i] = false;
+            }
+        }
+
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].DrawGrid();
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            //draw glimmer before timer
+            if( m_cubes[i].m_glimmer.IsActive() )
+                m_cubes[i].m_glimmer.Draw( m_cubes[i].GetBG1Buffer(), &m_cubes[i] );
+        }
+    }
+
+
+    if( Game::Inst().getMode() == Game::MODE_BLITZ )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                m_cubes[i].DrawBlitzModeStuff();
+            }
+        }
+    }
+    else
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                //rocks
+                for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
+                {
+                    if( m_cubes[i].m_aExplosions[ j ].isUsed() )
+                        m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
+                }
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            if( m_cubes[i].getBanner().IsActive() )
+            {
+                m_cubes[i].getBanner().Draw( m_cubes[i].GetVid() );
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            if( m_cubes[i].m_bubbles.isActive() )
+                m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
+        }
+    }
 }

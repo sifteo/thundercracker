@@ -162,6 +162,17 @@ public:
     void ClearBG1();
     //draws bg1
     void FlushBG1();
+    TileBuffer<16, 16> &GetBG1Buffer() { return m_bg1buffer; }
+
+    void DrawGrid();
+    //special drawing unique to modes
+    bool DrawPuzzleModeStuff() __attribute__ ((noinline));
+    void DrawBlitzModeStuff() __attribute__ ((noinline));
+
+    Glimmer m_glimmer;
+    //allow up to 4 rock explosions simultaneously
+    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
+    BubbleSpawner m_bubbles;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -176,12 +187,7 @@ private:
     static void TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     bool HasFloatingDots() const;
-    void fillPuzzleCube();    
-    void DrawGrid() __attribute__ ((noinline));
-
-    //special drawing unique to modes
-    bool DrawPuzzleModeStuff() __attribute__ ((noinline));
-    void DrawBlitzModeStuff() __attribute__ ((noinline));
+    void fillPuzzleCube();        
 
     CubeID m_cube;
     VideoBuffer m_vid;
@@ -207,7 +213,6 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
-    Glimmer m_glimmer;
 
     float m_timeTillGlimmer;
 
@@ -226,9 +231,6 @@ private:
     //we know our mask changed, force a finish
     bool m_needFinish;
 
-    //allow up to 4 rock explosions simultaneously
-    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
-    BubbleSpawner m_bubbles;
     FloatingScore m_floatscore;
 };
 
