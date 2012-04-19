@@ -84,7 +84,7 @@ src/proof_html.cpp: src/proof_html.py
 
 .PHONY: clean
 
-clean:ls 
+clean:
 	rm -f $(BIN_DIR)/$(BIN)$(BIN_EXT) $(BIN).dSYM src/$(BIN)-d.exe $(OBJS) $(DEPFILES)
 
 -include $(DEPFILES)

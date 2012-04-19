@@ -1,4 +1,4 @@
-all: $(BIN_DIR)/$(BIN)
+all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
 
 ifeq ($(BUILD_PLATFORM),windows32)
 # Win32 Link: Stripped and packed binaries, and separate debug symbols.
@@ -23,7 +23,7 @@ else
 # Default link
 $(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
-endif	
+endif
 endif
 
 %.o: %.cpp
