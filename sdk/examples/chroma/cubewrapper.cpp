@@ -89,6 +89,7 @@ void CubeWrapper::Reset()
 
     m_dirty = true;
 	Refill();
+    m_fTouchTime = 0.0f;
 }
 
 void CubeWrapper::Draw()
