@@ -383,6 +383,9 @@ struct _SYSAttachedVideoBuffer {
 #define _SYS_TILE77(_idx)   ((((_idx) << 2) & 0xFE00) | \
                              (((_idx) << 1) & 0x00FE))
 
+#define _SYS_INVERSE_TILE77(_t77)   ((((_t77) & 0xFE00) >> 2) | \
+                                     (((_t77) & 0x00FE) >> 1))
+
 /*
  * Audio handles
  */

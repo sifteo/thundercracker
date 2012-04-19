@@ -142,29 +142,7 @@ class CubeCodec {
         codePtr = (codePtr + words) & _SYS_VRAM_WORD_MASK;
     }
 
-    unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset) {
-        uint16_t ptr = codePtr - offset;
-        ptr &= _SYS_VRAM_WORD_MASK;
-
-        if ((vb->lock & VRAM::maskCM16(ptr)) ||
-            (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
-
-            // Can't match a locked or modified word
-            return (unsigned) -1;
-        }
-
-        uint16_t sample = VRAM::peek(*vb, ptr);
-
-        if ((sample & 0x0101) != (data & 0x0101)) {
-            // Different LSBs, can't possibly reach it via a delta
-            return (unsigned) -1;
-        }
-
-        int16_t dI = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-        int16_t sI = ((sample & 0xFF) >> 1) | ((sample & 0xFF00) >> 2);
-
-        return dI - sI + RF_VRAM_DIFF_BASE;
-    }
+    unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset);
 
     void appendDS(uint8_t d, uint8_t s) {
         if (d == RF_VRAM_DIFF_BASE) {
