@@ -612,3 +612,42 @@ bool CubeCodec::endPacket(PacketBuffer &buf)
 
     return content;
 }
+
+unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset)
+{
+    uint16_t ptr = codePtr - offset;
+    ptr &= _SYS_VRAM_WORD_MASK;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "lock=%08x mask=%08x codePtr=%03x\n",
+        data, offset, vb->lock, VRAM::maskCM16(ptr), codePtr));
+
+    if ((vb->lock & VRAM::maskCM16(ptr)) ||
+        (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
+
+        // Can't match a locked or modified word
+        return (unsigned) -1;
+    }
+
+    uint16_t sample = VRAM::peek(*vb, ptr);
+
+    if ((sample & 0x0101) != (data & 0x0101)) {
+        // Different LSBs, can't possibly reach it via a delta
+        return (unsigned) -1;
+    }
+
+    int16_t dI = _SYS_INVERSE_TILE77(data);
+    int16_t sI = _SYS_INVERSE_TILE77(sample);
+
+    // Note that our delta codes leave the LSBs untouched
+    ASSERT(_SYS_TILE77(dI) == (data & 0xFEFE));
+    ASSERT(_SYS_TILE77(sI) == (sample & 0xFEFE));
+
+    unsigned result = dI - sI + RF_VRAM_DIFF_BASE;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "sample=%04x dI=%04x sI=%04x res=%d\n",
+        data, offset, sample, dI, sI, result));
+
+    return result;
+}
