@@ -231,7 +231,12 @@
     <property name="asset" value="companion_cube"/>
    </properties>
   </object>
-  <object name="SpawnPoint" type="Location" x="18" y="193" width="32" height="32"/>
+  <object name="SpawnPoint" type="Location" x="32" y="192" width="32" height="32"/>
+  <object name="DesertGate" type="Gateway" x="0" y="192" width="32" height="32">
+   <properties>
+    <property name="target" value="demo_desert:GardenGate"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="32" height="32">
   <data encoding="csv">
