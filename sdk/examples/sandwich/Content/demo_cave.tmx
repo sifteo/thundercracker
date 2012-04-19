@@ -153,6 +153,12 @@
    </properties>
   </object>
   <object name="SpawnPoint" type="Location" x="48" y="176" width="32" height="32"/>
+  <object name="Bomb" type="Item" x="48" y="448" width="32" height="32">
+   <properties>
+    <property name="id" value="bomb"/>
+    <property name="target" value="sandbox:RespawnTest"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="32" height="40" visible="0" opacity="0.88">
   <data encoding="csv">

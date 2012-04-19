@@ -12,6 +12,12 @@
 	<map id="demo_skytemple">
 		<name>Sky Temple</name>
 	</map>
+	<map id="demo_desert">
+		<name>Dessert Desert</name>
+	</map>
+	<map id="demo_garden">
+		<name>Botanical Gardens</name>
+	</map>
 
 	<!--
 	<map id="garden_level1">

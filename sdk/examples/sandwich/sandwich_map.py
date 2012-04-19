@@ -220,7 +220,7 @@ class Map:
 		assert len(self.sokoblocks) <= 8
 		# find me some lava tiles
 		self.lava_tiles = [ t for t in self.background.gettileset().tiles if "lava" in t.props ]
-		assert len(self.lava_tiles) <= 8
+		#assert len(self.lava_tiles) <= 8
 
 		self.depots = [ Depot(self,obj) for obj in self.raw.objects if obj.type == "depot" ]
 		self.depot_dict = dict((d.obj.name, d) for d in self.depots)
