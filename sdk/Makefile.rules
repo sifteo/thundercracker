@@ -20,7 +20,7 @@ ifeq ($(NO_PATH_MUNGE),)
 	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 endif
 
-$(BIN): $(OBJS) $(LD)
+$(BIN): $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
 ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h
