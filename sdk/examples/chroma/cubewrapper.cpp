@@ -1258,7 +1258,7 @@ void CubeWrapper::Refill()
 			while( true )
 			{
 				//random neighbor side
-				int side = Game::random.randrange( NUM_SIDES );
+				int side = Game::random.randrange<int>( NUM_SIDES );
 				int neighborX = curX, neighborY = curY;
 				//up left down right
 				//note that x is rows in this context
