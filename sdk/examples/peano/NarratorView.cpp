@@ -90,8 +90,6 @@ void NarratorView::SetTransitionAmount(float u) {
 }
 
 void NarratorView::Paint() {
-    System::finish();
-
     TotalsCube *c = GetCube();
 
     if (mOffset == 0) {

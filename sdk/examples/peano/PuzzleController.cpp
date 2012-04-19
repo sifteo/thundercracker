@@ -154,9 +154,9 @@ void ShowPuzzleCount()
                     timeout -= Game::dt;
                     while (timeout < 0) {
                         i = 1 - i;
-                        timeout += 0.05;
-                        nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
+                        timeout += 0.05;                        
                     }
+                    nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                     System::paint();
                     //System::finish();
                     Game::UpdateDt();

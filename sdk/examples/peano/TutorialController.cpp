@@ -106,6 +106,10 @@ void WaitWithTokenUpdate(float delay)
     do {
         pFirstToken->Update();
         pSecondToken->Update();
+
+        pFirstToken->PaintNow();
+        pSecondToken->PaintNow();
+
         System::paint();
         Game::UpdateDt();
     } while(SystemTime::now() < t);
@@ -179,11 +183,13 @@ Game::GameState Run() {
     firstToken.SetToken(puzzle->GetToken(0));
     Game::cubes[1].SetView(&firstToken);
     firstToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP | TokenView::BIT_MESSAGE);
+    firstToken.PaintNow();
     Game::Wait(0.25f);
     Game::cubes[2].OpenShuttersToReveal(skin.background);
     secondToken.SetToken(puzzle->GetToken(1));
     Game::cubes[2].SetView(&secondToken);
     secondToken.SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP | TokenView::BIT_MESSAGE);
+    secondToken.PaintNow();
     Game::Wait(0.5f);
 
     // wait for neighbor
@@ -261,22 +267,22 @@ Game::GameState Run() {
     // press your luck flourish
     {
         PLAY_SFX(sfx_Tutorial_Mix_Nums);
-        TimeDelta timeout = period;
-        int cubeId = 0;
-        SystemTime t = SystemTime::now();
-        while(t + 3.0 > SystemTime::now()) {
-            timeout -= Game::dt;
-            while (timeout < 0.0f) {
-                (cubeId==0?firstToken:secondToken).PaintRandomNumeral();
-                narrator.SetEmote(cubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
-                cubeId = (cubeId+1) % 2;
-                timeout += period;
-            }
 
+        float timeout = period;
+        int cubeId = 0;
+        SystemTime t = SystemTime::now() + 3.0;
+        while(t > SystemTime::now()) {
+            timeout -= Game::dt;
+            //while (timeout < 0.0f) {
+                cubeId = (cubeId+1) % 2;
+            //    timeout += period;
+            //}
+            (cubeId==0?firstToken:secondToken).PaintRandomNumeral();
             narrator.GetCube()->Image(cubeId?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
             firstToken.PaintNow();
             secondToken.PaintNow();
-            //System::finish();
+            System::paint();
+            System::finish();
             Game::UpdateDt();
         }
 
@@ -307,8 +313,22 @@ Game::GameState Run() {
     Game::neighborEventHandler = &makeSixEventHandler;
 
 
+    bool oopsies = false;
     while(firstToken.token->current->GetValue() != Fraction(6))
     {
+
+        if (oopsies && firstToken.token->current == firstToken.token) {
+            oopsies = false;
+            pNarrator->SetMessage("Can you build\nthe number 6?");
+        }
+
+        if(!oopsies && firstToken.token->current != firstToken.token && firstToken.token->current->GetValue() != Fraction(6))
+        {
+            oopsies = true;
+            PLAY_SFX2(sfx_Tutorial_Oops, false);
+            pNarrator->SetMessage("Oops,\nlet's try again...", NarratorView::EmoteSad);
+        }
+
         firstToken.Update();
         secondToken.Update();
         Game::UpdateDt();
@@ -333,7 +353,7 @@ Game::GameState Run() {
     Game::cubes[2].DrawVaultDoorsClosed();
 
     Game::cubes[1].Image(Skin_Default_Background);
-    Game::cubes[2].vid.bg1.erase();
+    Game::cubes[1].vid.bg1.erase();
     Game::cubes[1].HideSprites();
     Game::cubes[1].CloseShutters();
     Game::cubes[1].DrawVaultDoorsClosed();
@@ -365,25 +385,27 @@ Game::GameState Run() {
     Game::cubes[1].OpenShuttersToReveal(skin.background);
     Game::cubes[1].SetView(&firstToken);
     firstToken.DidGroupDisconnect();
+    firstToken.NeedRepaint();
     Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
     Game::cubes[2].OpenShuttersToReveal(skin.background);
     Game::cubes[2].SetView(&secondToken);
     secondToken.DidGroupDisconnect();
+    secondToken.NeedRepaint();
     Game::Wait(1);
 
     narrator.SetMessage("Try it out!  Shake one!");
     Game::cubes[1].AddEventHandler(&waitForShakeEventHandler[0]);
     Game::cubes[2].AddEventHandler(&waitForShakeEventHandler[1]);
     while(!(waitForShakeEventHandler[0].DidShake()||waitForShakeEventHandler[1].DidShake())) {
-        Game::Wait(0);
+        WaitWithTokenUpdate(0);
     }
     Game::ClearCubeEventHandlers();
-    Game::Wait(0.5f);
+    WaitWithTokenUpdate(0.5);
     narrator.SetMessage("Nice!", NarratorView::EmoteYay);
-    Game::Wait(3);
-    narrator.SetMessage("Careful!\nYou only get a few hints!");
+    WaitWithTokenUpdate(3);
+    narrator.SetMessage("Careful!\nYou only get\na few hints!");
     Game::Wait(3);
     narrator.SetMessage("If you forget\nthe target,\npress the screen.");
     Game::Wait(2);
@@ -392,12 +414,12 @@ Game::GameState Run() {
     Game::cubes[1].AddEventHandler(&waitForTouchEventHandler[0]);
     Game::cubes[2].AddEventHandler(&waitForTouchEventHandler[1]);
     while(!(waitForTouchEventHandler[0].DidTouch()||waitForTouchEventHandler[1].DidTouch())) {
-        Game::Wait(0);
+        WaitWithTokenUpdate(0);
     }
 
-    Game::Wait(0.5f);
+    WaitWithTokenUpdate(0.5f);
     narrator.SetMessage("Great!", NarratorView::EmoteYay);
-    Game::Wait(3);
+    WaitWithTokenUpdate(3);
     firstToken.token->GetPuzzle()->target = NULL;
 
     Game::cubes[2].HideSprites();
@@ -425,7 +447,7 @@ Game::GameState Run() {
     narrator.SetMessage("Thanks!\nYou can always change\nthis in the Settings!");
     Game::Wait(3);
 
-    narrator.SetMessage("Press-and-hold a cube\nto access the main menu.");
+    narrator.SetMessage("Press-and-hold\na cube to access\nthe main menu.");
     Game::Wait(3);
     narrator.SetMessage("Remember, you need\nto use every Key!");
     Game::Wait(3);
@@ -542,8 +564,8 @@ void OnNeighborRemove(TotalsCube *c, unsigned s, TotalsCube *nc, unsigned ns) {
 
     void ConnectTwoCubesHorizontalEventHandler::OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
     {
-        if ((s0 == RIGHT && s1 == LEFT && c1 == pSecondToken->GetCube()->sys)
-            ||(s0 == LEFT && s1 == RIGHT && c0 == pSecondToken->GetCube()->sys))
+        if ((s0 == RIGHT && s1 == LEFT && c0 == pFirstToken->GetCube()->sys && c1 == pSecondToken->GetCube()->sys)
+            ||(s0 == LEFT && s1 == RIGHT && c1 == pFirstToken->GetCube()->sys && c0 == pSecondToken->GetCube()->sys))
         {
             Game::neighborEventHandler = NULL;
             TokenGroup *grp = TokenGroup::Connect(pFirstToken->token, kSideToUnit[RIGHT], pSecondToken->token);
@@ -565,8 +587,8 @@ void OnNeighborRemove(TotalsCube *c, unsigned s, TotalsCube *nc, unsigned ns) {
 
     void ConnectTwoCubesVerticalEventHandler::OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
     {
-        if ((s0 == TOP && s1 == BOTTOM && c1 == pSecondToken->GetCube()->sys)
-            ||(s0 == BOTTOM && s1 == TOP && c0 == pSecondToken->GetCube()->sys))
+        if ((s0 == TOP && s1 == BOTTOM && c0 == pFirstToken->GetCube()->sys && c1 == pSecondToken->GetCube()->sys)
+            ||(s0 == BOTTOM && s1 == TOP && c1 == pFirstToken->GetCube()->sys && c0 == pSecondToken->GetCube()->sys))
         {
             Game::neighborEventHandler = NULL;
             TokenGroup *grp = TokenGroup::Connect(pFirstToken->token, kSideToUnit[TOP], pSecondToken->token);
@@ -588,18 +610,11 @@ void OnNeighborRemove(TotalsCube *c, unsigned s, TotalsCube *nc, unsigned ns) {
     void MakeSixEventHandler::OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
     {
         TutorialController::OnNeighborAdd(&Game::cubes[c0], s0, &Game::cubes[c1], s1);
-        if (pFirstToken->token->current->GetValue() != Fraction(6)) {
-            PLAY_SFX2(sfx_Tutorial_Oops, false);
-            pNarrator->SetMessage("Oops,\nlet's try again...", NarratorView::EmoteSad);
-        }
     }
 
     void MakeSixEventHandler::OnNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
     {
         TutorialController::OnNeighborRemove(&Game::cubes[c0],s0, &Game::cubes[c1], s1);
-        if (pFirstToken->token->current == pFirstToken->token) {
-            pNarrator->SetMessage("Can you build\nthe number 6?");
-        }
     }
 
 
