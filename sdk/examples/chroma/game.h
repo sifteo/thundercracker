@@ -8,11 +8,12 @@
 #define _GAME_H
 
 #include <sifteo.h>
-#include "Level.h"
-#include "cubewrapper.h"
-#include "TimeKeeper.h"
+//#include "ChromitDrawer.h"
 #include "config.h"
+#include "cubewrapper.h"
+#include "Level.h"
 #include "SaveLoad.h"
+#include "TimeKeeper.h"
 
 using namespace Sifteo;
 struct PuzzleCubeData;
@@ -45,6 +46,7 @@ public:
         STATE_PUZZLEMENU,
         STATE_CHAPTERSELECTMENU,
         STATE_PUZZLESELECTMENU,
+        STATE_CNT
 	} GameState;
 
 	typedef enum
@@ -166,6 +168,7 @@ public:
     void ReturnToMainMenu();
     void gotoNextPuzzle( bool bAdvance );
     inline SaveData &getSaveData() { return m_savedata; }
+    //inline ChromitDrawer &getChromitDrawer() { return m_chromitDrawer; }
 
 private:
 	void TestMatches();
@@ -215,6 +218,7 @@ private:
     unsigned int m_comboCount;
     float m_fTimeSinceCombo;
     unsigned int m_Multiplier;
+    //ChromitDrawer m_chromitDrawer;
 
     //force a 1 frame paint sync before/after drawing
     //bool m_bForcePaintSync;

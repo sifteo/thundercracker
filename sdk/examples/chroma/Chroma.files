@@ -94,3 +94,5 @@ SaveLoad.cpp
 CubeBuddy.h
 CubeBuddy.cpp
 SpriteNumber.h
+ChromitDrawer.h
+ChromitDrawer.cpp
