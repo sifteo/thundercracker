@@ -183,7 +183,8 @@ class Room:
 		return False
 	
 	def find_subdivisions(self):
-		if all((portal == PORTAL_OPEN for portal in self.portals)):
+		# either all portals are open or we're bordering the edge, or something?
+		if True:#all((portal == PORTAL_OPEN for portal in self.portals)):
 			#first bridge-rows or cols
 			for y in range(8):
 				if all(("bridge" in self.tileat(x,y).type.props for x in range(8))):
@@ -196,6 +197,7 @@ class Room:
 					return
 			# let's try looking for diagonals
 			# start by listing the "canonical" cardinal open tiles
+		if all((portal == PORTAL_OPEN for portal in self.portals)):
 			cardinals = [
 				((x,0) for x in range(8) if self.iswalkable(x,0)).next(),
 				((0,y) for y in range(8) if self.iswalkable(0,y)).next(),
