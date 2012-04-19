@@ -46,7 +46,6 @@ void MenuController::TransitionView::SetTransition(int offset)
 
         Paint();
         System::paint();
-        //System::finish();
     }
     else
     {
@@ -187,11 +186,9 @@ int DoMenu(const char *name, TiltFlowItem *items, int nItems)
         tv.SetTransitionAmount(1.0f-t/kDuration);
         Game::UpdateDt();
         System::paint();
-        //System::finish();
     }
     tv.SetTransitionAmount(0);
     System::paint();
-    //System::finish();
 
     return menu.GetResultItem()->id;
 }
@@ -384,7 +381,6 @@ void RunSetup()
             }
             tv.SetTransitionAmount(0);
             System::paint();
-            //System::finish();
         }
 
         if (menu.GetResultItem()->id == Back)

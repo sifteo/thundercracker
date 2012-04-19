@@ -167,8 +167,6 @@ void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
 {
     mCube->vid.touch();
     System::paint();
-    System::finish();
-
 
     mCube->vid.initMode(FB128);
     mCube->vid.setWindow(yTop, ySize);

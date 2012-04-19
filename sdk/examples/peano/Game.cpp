@@ -226,8 +226,7 @@ void UpdateDt()
 void Wait(float delay)
 {    
     PaintCubeViews();
-    System::paint();
-    //System::finish();
+    System::paint();    
 
     SystemTime t = SystemTime::now();
 

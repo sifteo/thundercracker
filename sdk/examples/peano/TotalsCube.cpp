@@ -250,14 +250,12 @@ namespace TotalsGame
             Image(image);
             DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime);
             System::paint();
-            //System::finish();
             Game::UpdateDt();
 		}
         
         Image(image);
         DrawVaultDoorsOpenStep1(32);
         System::paint();
-        //System::finish();
         Game::UpdateDt();
 
         
@@ -266,7 +264,6 @@ namespace TotalsGame
             Image(image);
             DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime);
             System::paint();
-            //System::finish();
             Game::UpdateDt();
 		}
         
@@ -280,20 +277,17 @@ namespace TotalsGame
 		{
             DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime);
             System::paint();
-            //System::finish();
             Game::UpdateDt();
 		}
         
         DrawVaultDoorsOpenStep2(0);
         System::paint();
-        //System::finish();
         Game::UpdateDt();
         
         for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
 		{
             DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime);
             System::paint();
-            //System::finish();
             Game::UpdateDt();
 		}			
 

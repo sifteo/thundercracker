@@ -98,7 +98,6 @@ void WaitWithTokenUpdate(float delay)
 {
     Game::PaintCubeViews();
     System::paint();
-    //System::finish();
 
     SystemTime t = SystemTime::now();
 
@@ -282,7 +281,6 @@ Game::GameState Run() {
             firstToken.PaintNow();
             secondToken.PaintNow();
             System::paint();
-            System::finish();
             Game::UpdateDt();
         }
 

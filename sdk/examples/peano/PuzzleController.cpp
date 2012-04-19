@@ -158,7 +158,6 @@ void ShowPuzzleCount()
                     }
                     nv.GetCube()->Image(i?&Narrator_Mix02:&Narrator_Mix01, vec(0, 0), vec(0,3), vec(16,7));
                     System::paint();
-                    //System::finish();
                     Game::UpdateDt();
                 }
             } else {

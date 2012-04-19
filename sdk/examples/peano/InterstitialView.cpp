@@ -42,7 +42,6 @@ void InterstitialView::TransitionSync(float duration, bool opening)
     for(float t=0; t<duration; t+=Game::dt) {
         SetTransitionAmount((opening? t : duration-t)/duration);
         System::paint();
-        //System::finish();
         Game::UpdateDt();
     }
     SetTransitionAmount(opening? 1 : 0);

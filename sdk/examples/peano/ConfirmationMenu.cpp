@@ -105,7 +105,7 @@ void AnimateDoors(TotalsCube *c, bool opening)
         AudioPlayer::PlayShutterOpen();
     else
         AudioPlayer::PlayShutterClose();
-    System::finish();
+
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         float amount = opening ? t/kTransitionTime : 1-t/kTransitionTime;
 
