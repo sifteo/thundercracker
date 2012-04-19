@@ -131,7 +131,10 @@ void Dialog::DrawGlyph(char ch) {
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
     const Int2 size = {8, kFontHeight};
-    mCube->fb128.bitmap(mPosition, size, data, 1);
+    auto extent = mPosition.toInt() + size;
+    if (mPosition.x > 0 && mPosition.y > 0 && extent.x < 128 && extent.y < 48) {
+        mCube->fb128.bitmap(mPosition, size, data, 1);
+    }
     mPosition.x += escapement;
 }
 

@@ -13,7 +13,7 @@ PlayerIdle = image{"idle.png", width=32, height=32, pinned=true}
 
 Butterfly = image{"butterfly.png", width=8, height=8, pinned=true}
 BombAccent = image{"BombAccent.png", width=16, height=16, pinned=true}
-Explosion = image{"explosion.png", width=48, height=48, flat=1}
+Explosion = image{"explosion.png", width=48, height=48 }
 
 
 Items = image{"items.png", width=16, height=16, pinned=true}
@@ -35,9 +35,20 @@ FrameRight = image{ "frame_right.png" }
 FrameBottom = image{ "frame_bottom.png" }
 FrameTop = image{ "frame_top.png" }
 
+MenuBackground = image{ "menu_background.png", pinned=true }
+MenuHeader = image{ "menu_header_blank.png" }
+MenuHeaderContinue = image{ "menu_header_continue.png" }
+MenuHeaderReplayCavern = image{ "menu_header_replay_caverns.png" }
+MenuHeaderLocked = image{ "menu_header_locked.png" }
+MenuHeaderClearData = image{ "menu_header_clear_data.png" }
+MenuFooter = image{ "menu_footer.png" }
+MenuIconPearl = image{ "menu_icon_pearl.png" }
+MenuIconSprout = image{ "menu_icon_sprout.png" }
+MenuIconBurgher = image{ "menu_icon_burgher.png" }
+MenuIconHuh = image{ "menu_icon_huh.png" }
+
 dofile "content.gen.lua"
 
---[[
 music_castle = sound{ "music_castle.raw"}
 music_dungeon = sound{ "music_dungeon.raw" }
 music_sting = sound{ "music_sting.raw" }
@@ -51,4 +62,3 @@ sfx_running = sound{ "sfx_running.raw" }
 sfx_walkStart = sound{ "sfx_walkStart.raw" }
 sfx_zoomIn = sound{ "sfx_zoomIn.raw" }
 sfx_zoomOut = sound{ "sfx_zoomOut.raw" }
-]]--

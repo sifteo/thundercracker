@@ -1,5 +1,29 @@
 <dialog-database>
 
+	<dialog id="sprout_hello" npc="sprout">
+		<text image="sprout_detail">
+			Good morrow, my Liege!
+		</text>
+		<text image="sprout_detail">
+			Are you prepared to
+			seek The Sandwich?
+		</text>
+		<text image="pearl_detail">
+			I was born ready!
+		</text>
+	</dialog>
+
+	<dialog id="burgher_hello" npc="burgher">
+		<text image="burgher_detail">
+			That's it for now!
+			Muahahaha!
+		</text>
+		<text image="pearl_detail">
+			Thanks for playing!
+		</text>
+	</dialog>
+		
+	<!--
 	<dialog id="lembas_bread_description" npc="lembas_bread">
 		<text image="pearl_detail">
 			The foundation of a
@@ -7,22 +31,6 @@
 		</text>
 	</dialog>
 
-	<dialog id="sprout_hello" npc="sprout">
-		<text image="sprout_detail">
-			unused
-		</text>
-		<text image="sprout_detail">
-			unused
-		</text>
-
-	</dialog>
-
-	<dialog id="burgher_unused" npc="sprout">
-		<text image="burgher_detail">
-			unused
-		</text>
-	</dialog>
-		
 	<dialog id="sprout_followMe1" npc="sprout">
 		<text image="sprout_detail">
 			Hello, Princess Pearl!
@@ -69,4 +77,7 @@
 			and bring them home!
 		</text>
 	</dialog>
+
+-->
+
 </dialog-database>

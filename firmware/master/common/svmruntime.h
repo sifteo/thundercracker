@@ -109,6 +109,12 @@ public:
         SvmCpu::setReg(7, r7);
     }
 
+#ifdef SIFTEO_SIMULATOR
+    static void enableStackMonitoring() {
+        stackMonitorEnabled = true;
+    }
+#endif
+
 private:
     enum ReturnActions {
         RET_BRANCH          = 1 << 0,
@@ -144,6 +150,14 @@ private:
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
+
+    static void onStackModification(SvmMemory::PhysAddr sp);
+
+#ifdef SIFTEO_SIMULATOR
+    static bool stackMonitorEnabled;
+    static SvmMemory::PhysAddr topOfStackPA;
+    static SvmMemory::PhysAddr stackLowWaterMark;
+#endif
 };
 
 #endif // SVM_RUNTIME_H

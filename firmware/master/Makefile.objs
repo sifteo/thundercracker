@@ -37,22 +37,6 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o
 
-# Sources for the host build only
-OBJS_SIM = \
-    $(OBJS_COMMON:.o=.sim.o) \
-    $(MASTER_DIR)/sim/tinythread.sim.o \
-    $(MASTER_DIR)/sim/audiooutdevice.sim.o \
-    $(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
-    $(MASTER_DIR)/sim/flashstorage.sim.o \
-    $(MASTER_DIR)/sim/flash.sim.o \
-    $(MASTER_DIR)/sim/svmcpu.sim.o \
-    $(MASTER_DIR)/sim/svmdebugpipe.sim.o \
-    $(MASTER_DIR)/sim/elfdebuginfo.sim.o \
-    $(MASTER_DIR)/sim/logdecoder.sim.o \
-    $(MASTER_DIR)/sim/gdbserver.sim.o \
-    $(MASTER_DIR)/sim/siftulator.sim.o \
-    $(MASTER_DIR)/sim/main.sim.o
-
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
     $(OBJS_COMMON:.o=.stm32.o) \
@@ -85,11 +69,13 @@ OBJS_STM32 = \
 # Sources for normal master firmware
 OBJS_STM32_MASTER = \
     $(OBJS_STM32) \
-    $(MASTER_DIR)/stm32/main.stm32.o
+    $(MASTER_DIR)/stm32/main.stm32.o \
+    $(MASTER_DIR)/stm32/factorytest.stm32.o
 
 # Sources for stm32-based test jig firmware
 OBJS_STM32_TESTJIG = \
     $(OBJS_STM32)                                       \
     $(MASTER_DIR)/testjig/main.stm32.o                  \
-    $(TC_DIR)/firmware/master/stm32/neighbor.stm32.o    \
-    $(TC_DIR)/firmware/master/stm32/i2c.stm32.o
+    $(MASTER_DIR)/testjig/testjig.stm32.o               \
+    $(MASTER_DIR)/stm32/neighbor.stm32.o                \
+    $(MASTER_DIR)/stm32/i2c.stm32.o

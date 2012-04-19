@@ -49,7 +49,7 @@ struct ItemTypeData {
 };
 
 struct DialogTextData {
-    const FlatAssetImage* detail;
+    const AssetImage* detail;
     const char* line;
 };
 
@@ -81,7 +81,8 @@ struct GatewayData {
     TriggerData trigger;
     uint8_t targetMap;
     uint8_t targetType : 1;
-    uint8_t targetId : 7;
+    uint8_t noEdge : 1;
+    uint8_t targetId : 6;
     uint8_t x;
     uint8_t y;
 };

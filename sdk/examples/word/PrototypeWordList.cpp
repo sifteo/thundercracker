@@ -2,6 +2,7 @@
 #include "PrototypeWordListData.h"
 #include <sifteo.h>
 #include "WordGame.h"
+#include "bsearch.h"
 
 using namespace Sifteo;
 
@@ -12,7 +13,7 @@ using namespace Sifteo;
  *      behavior) and design it with a proper syscall interface. But for now, we're leaking
  *      some libc code into the game :(
  */
-#include <stdlib.h>
+// #include <stdlib.h>
 
 //#define DAWG_TEST 1
 #ifdef DAWG_TEST

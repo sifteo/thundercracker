@@ -6,22 +6,17 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#define STRINGIFY(_x)   #_x
-#define TOSTRING(_x)    STRINGIFY(_x)
-#define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
-
-/*
- * Firmware internal debug macros
- *
- * Variants of the standard LOG and ASSERT macros, for building game code
- * which is to be compiled into a firmware image. Logging and ASSERTs are
- * always disabled on hardware builds and enabled on simulation builds.
- */
-
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
 #include <inttypes.h>
+
+#define APP_TITLE      "Thundercracker"
+#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+
+#define STRINGIFY(_x)   #_x
+#define TOSTRING(_x)    STRINGIFY(_x)
+#define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
 #ifdef _NEWLIB_STDIO_H
 #define printf      iprintf
@@ -69,6 +64,35 @@
 
 #ifndef offsetof
 #define offsetof(t,m)  ((uintptr_t)(uint8_t*)&(((t*)0)->m))
+#endif
+
+#define ALWAYS_INLINE   __attribute__ ((always_inline))
+#define NEVER_INLINE    __attribute__ ((noinline))
+
+#define LIKELY(x)       __builtin_expect((x), 1)
+#define UNLIKELY(x)     __builtin_expect((x), 0)
+
+#ifndef MIN
+#define MIN(a,b)        ((a)<(b)?(a):(b))
+#define MAX(a,b)        ((a)>(b)?(a):(b))
+#endif
+
+#ifndef FASTCALL
+#   ifdef __i386__
+#       define FASTCALL __attribute__ ((fastcall))
+#   else
+#       define FASTCALL
+#   endif
+#endif
+
+#ifndef PRIu64
+#   if defined(_WIN32)
+#      define PRIu64 "I64u"
+#   elif !defined(_LP64)
+#      define PRIu64 "lu"
+#   else
+#      define PRIu64 "llu"
+#   endif
 #endif
 
 template <typename T> inline T clamp(const T& value, const T& low, const T& high)

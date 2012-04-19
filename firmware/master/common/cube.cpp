@@ -15,6 +15,14 @@
 #include "tasks.h"
 #include "neighbors.h"
 #include "paintcontrol.h"
+#include "cubeslots.h"
+
+// Simulator headers, for simAssetLoaderBypass.
+#ifdef SIFTEO_SIMULATOR
+#   include "system_mc.h"
+#   include "cube_hardware.h"
+#   include "lsdec.h"
+#endif
 
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
@@ -56,6 +64,33 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->head = 0;
     LC->tail = 0;
 
+#ifdef SIFTEO_SIMULATOR
+    if (CubeSlots::simAssetLoaderBypass) {
+        /*
+         * Asset loader bypass mode: Instead of actually sending this
+         * loadstream over the radio, instantaneously decompress it into
+         * the cube's flash memory.
+         */
+
+        // Use our reference implementation of the Loadstream decoder
+        Cube::Hardware *simCube = SystemMC::getCubeForSlot(this);
+        if (simCube) {
+            LoadstreamDecoder lsdec(simCube->flashStorage);
+            lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
+
+            LOG(("FLASH[%d]: Installed asset group %s at base address "
+                "0x%08x (loader bypassed)\n",
+                id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
+
+            // Mark this as done already.
+            LC->progress = header.dataSize;
+            Atomic::SetLZ(L->complete, id());
+
+            return;
+        }
+    }
+#endif
+
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
         id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
 
@@ -82,7 +117,7 @@ void CubeSlot::requestFlashReset()
     Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
-bool CubeSlot::radioProduce(PacketTransmission &tx)
+const RadioAddress *CubeSlot::getRadioAddress()
 {
     /*
      * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
@@ -103,7 +138,12 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     address.id[3] = 0xe7;
     address.id[4] = 0xe7;
 
-    tx.dest = &address;
+    return &address;
+}
+
+bool CubeSlot::radioProduce(PacketTransmission &tx)
+{
+    tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
     // First priority: Send video buffer updates
@@ -197,7 +237,17 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     }
 
     // Finalize this packet. Must be last.
-    codec.endPacket(tx.packet);
+    bool hasContent = codec.endPacket(tx.packet);
+
+    // Debugging: Scrub the VRAM if we have no video data in-flight
+    DEBUG_ONLY({
+        _SYSVideoBuffer *vb = vbuf;
+        if (hasContent)
+            consecutiveEmptyPackets = 0;
+        else if (++consecutiveEmptyPackets == 3 && vbuf
+            && vbuf->lock == 0 && vbuf->cm16 == 0)
+            SystemMC::checkQuiescentVRAM(this);
+    });
 
     /*
      * XXX: We don't have to always return true... we can return false if
@@ -291,10 +341,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
         // Has valid accelerometer data. Is it different from our previous state?
 
-        // Translate from radio packet coordinates to SDK coordinates
-        int8_t x = -ack->accel[0];
-        int8_t y = -ack->accel[1];
-        int8_t z = -ack->accel[2];
+        int8_t x = ack->accel[0];
+        int8_t y = ack->accel[1];
+        int8_t z = ack->accel[2];
 
         // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );

@@ -68,7 +68,7 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
                 uint16_t addr = (idx32 << 5) | idx1;
 
                 ASSERT(addr < _SYS_VRAM_WORDS);
-                CODEC_DEBUG_LOG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
+                CODEC_DEBUG_LOG(("CODEC: -encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
 
                 if (!encodeVRAMAddr(buf, addr) ||
                     !encodeVRAMData(buf, vb, VRAM::peek(*vb, addr))) {
@@ -133,7 +133,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         if (delta <= 8) {
             // We can use a short skip code
 
-            CODEC_DEBUG_LOG((" addr delta %d\n", delta));
+            CODEC_DEBUG_LOG(("CODEC: addr delta %d\n", delta));
 
             delta--;
             txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
@@ -142,7 +142,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         } else {
             // Too large a delta, use a longer literal code
 
-            CODEC_DEBUG_LOG((" addr literal %04x\n", addr));
+            CODEC_DEBUG_LOG(("CODEC: addr literal %04x\n", addr));
 
             txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
             txBits.flush(buf);
@@ -237,7 +237,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         if (buf.isFull())
             return false;
 
-        CODEC_DEBUG_LOG((" data literal-16 %04x\n", data));
+        CODEC_DEBUG_LOG(("CODEC: data literal-16 %04x\n", data));
 
         txBits.append(0x23 | (data << 8), 24);
         txBits.flush(buf);
@@ -258,7 +258,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         flushDSRuns(false);
 
         uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-        CODEC_DEBUG_LOG((" data literal-14 %04x\n", index));
+        CODEC_DEBUG_LOG(("CODEC: data literal-14 %04x\n", index));
 
         txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
         txBits.flush(buf);
@@ -282,7 +282,7 @@ void CubeCodec::encodeDS(uint8_t d, uint8_t s)
     } else {
         flushDSRuns(false);
 
-        CODEC_DEBUG_LOG((" ds %d %d\n", d, s));
+        CODEC_DEBUG_LOG(("CODEC: ds %d %d\n", d, s));
         appendDS(d, s);
         codeD = d;
         codeS = s;
@@ -315,7 +315,7 @@ void CubeCodec::flushDSRuns(bool rleSafe)
     ASSERT(codeRuns <= RF_VRAM_MAX_RUN);
 
     if (codeRuns) {
-        CODEC_DEBUG_LOG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
+        CODEC_DEBUG_LOG(("CODEC: flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
 
         // Save room for the trailing non-RLE code
         if (rleSafe)
@@ -527,4 +527,127 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     }
 
     return true;
+}
+
+bool CubeCodec::endPacket(PacketBuffer &buf)
+{
+    /*
+     * Big note:
+     *   - If we didn't emit a full packet, that implies an encoder state reset.
+     *   - Period. It doesn't matter what's in the packet, just whether or not
+     *     it's full!
+     *
+     * End conditions:
+     *   - Full packet. We already totally filled the buffer, and we may have
+     *     additional bits saved in txBits for later. We're done.
+     *   - Single nybble buffered on a not-yet-full packet. We can flush that
+     *     nybble by adding a 'junk' nybble afterwards: anything that doesn't
+     *     represent a full code.
+     *   - BUT, if we happen to end up with a full packet after padding, there
+     *     is no state reset afterwards and this junk nybble will be interpreted
+     *     as part of the next packet.
+     *
+     * SO, we do need to pad, but we may not be able to pad with pure junk.
+     * If we're in this last situation, we can pad with some arbitrary
+     * harmless code, like a skip (00), as long as we keep the encode and
+     * decode state in sync.
+     *
+     * Returns 'true' if this packet contained any content.
+     */
+
+    bool content = true;
+
+    if (!buf.isFull()) {
+        // If not full, pad with a single nybble 0. This is usable as a junk
+        // nybble, plus it can be the beginning of a skip code if necessary.
+
+        ASSERT(codeRuns == 0);
+
+        if (txBits.hasPartialByte()) {
+            txBits.append(0, 4);
+            txBits.flush(buf);
+        }
+
+        if (buf.isFull()) {
+            // That just filled up the packet! No state reset, and gear up
+            // to begin the next packet with a tiny skip code (00).
+            
+            codePtr = (codePtr + 1) & _SYS_VRAM_WORD_MASK;
+            txBits.append(0, 4);
+            CODEC_DEBUG_LOG(("CODEC: Padded with split short skip code\n"));
+
+        } else {
+            // Still not full. This will be a state reset, and we can discard
+            // the nybble above as junk.
+
+            if (!buf.len) {
+                /*
+                 * If we have nothing to send, make it an empty 'ping' packet.
+                 * But the nRF24L01 can't actually send a zero-byte packet, so
+                 * we have to pad it with a no-op. We don't have any explicit
+                 * no-op in our protocol, but we can send only the first byte
+                 * from a multi-byte code.
+                 *
+                 * This is the first byte of a 14-bit literal.
+                 *
+                 * Note that we may have buffered some bits ahead of this,
+                 * such as the second nybble of the split skip code above.
+                 * This should be fine- worst case, we will end up discarding
+                 * the second nybble of this ping code.
+                 *
+                 * stateReset() must come after this, not before. It discards
+                 * buffered bits, and we must not do that prior to emitting
+                 * the ping.
+                 */
+                
+                txBits.append(0xFF, 8);
+                txBits.flush(buf); 
+
+                content = false;
+            }
+
+            stateReset();
+        }
+    }
+
+    return content;
+}
+
+unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset)
+{
+    uint16_t ptr = codePtr - offset;
+    ptr &= _SYS_VRAM_WORD_MASK;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "lock=%08x mask=%08x codePtr=%03x\n",
+        data, offset, vb->lock, VRAM::maskCM16(ptr), codePtr));
+
+    if ((vb->lock & VRAM::maskCM16(ptr)) ||
+        (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
+
+        // Can't match a locked or modified word
+        return (unsigned) -1;
+    }
+
+    uint16_t sample = VRAM::peek(*vb, ptr);
+
+    if ((sample & 0x0101) != (data & 0x0101)) {
+        // Different LSBs, can't possibly reach it via a delta
+        return (unsigned) -1;
+    }
+
+    int16_t dI = _SYS_INVERSE_TILE77(data);
+    int16_t sI = _SYS_INVERSE_TILE77(sample);
+
+    // Note that our delta codes leave the LSBs untouched
+    ASSERT(_SYS_TILE77(dI) == (data & 0xFEFE));
+    ASSERT(_SYS_TILE77(sI) == (sample & 0xFEFE));
+
+    unsigned result = dI - sI + RF_VRAM_DIFF_BASE;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "sample=%04x dI=%04x sI=%04x res=%d\n",
+        data, offset, sample, dI, sI, result));
+
+    return result;
 }

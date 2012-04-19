@@ -27,11 +27,15 @@ _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
 _SYSAssetLoader *CubeSlots::assetLoader = 0;
 
+#ifdef SIFTEO_SIMULATOR
+bool CubeSlots::simAssetLoaderBypass;
+#endif
+
 
 void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {
-	minCubes = min;
-	maxCubes = max;
+    minCubes = min;
+    maxCubes = max;
 }
 
 void CubeSlots::enableCubes(_SYSCubeIDVector cv)

@@ -87,16 +87,22 @@ class Neighbors {
 
     void ioTick(CPU::em8051 &cpu);
 
+    static const unsigned PIN_0_TOP_IDX     = 4;
+    static const unsigned PIN_1_LEFT_IDX    = 5;
+    static const unsigned PIN_2_BOTTOM_IDX  = 0;
+    static const unsigned PIN_3_RIGHT_IDX   = 1;
+
  private:
     void transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide);
 
-    static const unsigned PORT          = REG_P1;
-    static const unsigned DIR           = REG_P1DIR;
-    static const unsigned PIN_IN        = (1 << 6);
-    static const unsigned PIN_0_TOP     = (1 << 0);
-    static const unsigned PIN_1_LEFT    = (1 << 1);
-    static const unsigned PIN_2_BOTTOM  = (1 << 4);
-    static const unsigned PIN_3_RIGHT   = (1 << 5);
+    static const unsigned PORT              = REG_P1;
+    static const unsigned DIR               = REG_P1DIR;
+    static const unsigned PIN_IN            = (1 << 6);
+
+    static const unsigned PIN_0_TOP         = (1 << PIN_0_TOP_IDX);
+    static const unsigned PIN_1_LEFT        = (1 << PIN_1_LEFT_IDX);
+    static const unsigned PIN_2_BOTTOM      = (1 << PIN_2_BOTTOM_IDX);
+    static const unsigned PIN_3_RIGHT       = (1 << PIN_3_RIGHT_IDX);
     
     uint8_t inputMask;
     uint8_t prevDriveHigh;

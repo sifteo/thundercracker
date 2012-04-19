@@ -22,3 +22,8 @@ docs/doxygen/html
 /sdk/examples/tiltshake/tiltshake.sim.exe
 /df
 /firmware/master/master-sim.exe
+
+/sdk/examples/ninja_slide/tags
+/sdk/examples/ninja_slide/tests/*.o
+/sdk/examples/ninja_slide/tests/*.a
+/sdk/examples/ninja_slide/tests/alltests

@@ -74,8 +74,9 @@ PORTABILITY
  * SUCH DAMAGE.
  */
 
+#include "qsort.h"
 
-#include <stdlib.h>
+typedef unsigned size_t;
 
 #define _PARAMS(_x)         _x
 #define _AND                ,
@@ -142,12 +143,17 @@ _DEFUN(med3, (a, b, c, cmp),
               :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
 }
 
-void
-_DEFUN(qsort, (a, n, es, cmp),
-	void *a _AND
-	size_t n _AND
-	size_t es _AND
-	int (*cmp)())
+/* void*/
+/* _DEFUN(qsort, (a, n, es, cmp),*/
+/*         void *a _AND*/
+/*         size_t n _AND*/
+/*         size_t es _AND*/
+/*         int (*cmp)(const void*, const void*))*/
+void qsort(
+	void *a,
+	unsigned n,
+	unsigned es,
+	int (*cmp)(const void*, const void*))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;

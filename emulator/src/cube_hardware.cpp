@@ -282,14 +282,14 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8); 
 
         // Misc port, broken out
-        vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, 0);
-        vcd.define("nb_top_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 0);
-        vcd.define("nb_left", &cpu.mSFR[MISC_PORT], 1, 1);
-        vcd.define("nb_left_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 1);
-        vcd.define("nb_bottom", &cpu.mSFR[MISC_PORT], 1, 7);
-        vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 7);
-        vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, 5);
-        vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 5);
+        vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_0_TOP_IDX);
+        vcd.define("nb_top_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_0_TOP_IDX);
+        vcd.define("nb_left", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_1_LEFT_IDX);
+        vcd.define("nb_left_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_1_LEFT_IDX);
+        vcd.define("nb_bottom", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_2_BOTTOM_IDX);
+        vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_2_BOTTOM_IDX);
+        vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_3_RIGHT_IDX);
+        vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_3_RIGHT_IDX);
         
         /*
          * Neighbor IN is sampled from t012 instead of MISC_PORT,
