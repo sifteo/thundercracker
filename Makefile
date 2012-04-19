@@ -4,10 +4,6 @@ include Makefile.platform
 TOOLS = emulator stir vm firmware
 SUBDIRS = $(TOOLS) docs/doxygen sdk/examples
 
-# List of LLVM binaries to stage with the SDK
-LLVM_SDK_BINS := \
-	$(LLVM_BIN)/arm-clang$(BIN_EXT)
-
 .PHONY: clean subdirs sdk-deps $(SUBDIRS)
 
 all: sdk-deps $(SUBDIRS)
@@ -20,8 +16,10 @@ $(SUBDIRS):
 	@$(MAKE) -C $@
 
 # Stage the platform-specific SDK dependencies
-sdk-deps:
-	install -C -s $(LLVM_SDK_BINS) sdk/bin
+sdk-deps: sdk/bin/arm-clang$(BIN_EXT)
+
+sdk/bin/arm-clang$(BIN_EXT): $(LLVM_BIN)/arm-clang$(BIN_EXT)
+	install -s $< $@
 
 clean:
 	rm -Rf sdk/doc/*
