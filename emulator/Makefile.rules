@@ -23,7 +23,7 @@ else
 # Default link
 $(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
-endif	
+endif
 endif
 
 %.o: %.cpp
