@@ -242,110 +242,50 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &tiltState )
+void GridSlot::Draw( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex )
 {
-	Int2 vec = { m_col * 4, m_row * 4 };
+    //UByte2 vec = { m_row, m_col };
+    UByte2 vec = { m_col * 4, m_row * 4 };
 
     switch( m_state )
 	{
         case STATE_SPAWNING:
         {
+            //DrawIntroFrame( pDrawer, m_animFrame );
             DrawIntroFrame( vid, m_animFrame );
             break;
         }
-		case STATE_LIVING:
+        case STATE_LIVING:
 		{
             if( IsSpecial() )
-                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
+            {
+                //DrawSpecial( pDrawer, cubeIndex, vec );
+                DrawSpecial( vid, cubeIndex, vec );
+            }
             else if( IsFixed() )
             {
-                if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
-                {
-                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
-                }
-                else
-                {
-                    vid.bg0.image(vec, *FIXED_TEXTURES[ m_color ]);
-
-                    if( m_multiplier > 1 )
-                    {
-                        SystemTime t = SystemTime::now();
-                        
-                        unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
-                        vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
-                        vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
-
-                        //number on bg1
-                        if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
-                        {
-                            vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
-                            vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
-                        }
-                    }
-                }
+                DrawFixed( /*pDrawer, */vid, cubeIndex, vec);
             }
-			else
+            else
 			{
-                switch( m_Movestate )
-                {
-                    case MOVESTATE_STATIONARY:
-                    case MOVESTATE_PENDINGMOVE:
-                    {
-                        const AssetImage &animtex = *TEXTURES[ m_color ];
-                        unsigned int frame;
-                        /*if( m_pWrapper->IsIdle() )
-                            frame = GetIdleFrame();
-                        else*/
-                            frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                        vid.bg0.image(vec, animtex, frame);
-                        break;
-                    }
-                    case MOVESTATE_MOVING:
-                    {
-                        Int2 curPos = m_curMovePos;
-
-                        //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-                        if( IsSpecial() )
-                            vid.bg0.image(curPos, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &tex = *TEXTURES[m_color];
-                            vid.bg0.image(curPos, tex, GetRollingFrame( m_animFrame ));
-                        }
-                        break;
-                    }
-                    case MOVESTATE_FINISHINGMOVE:
-                    case MOVESTATE_BUMPED:
-                    {
-                        if( IsSpecial() )
-                            vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &animtex = *TEXTURES[ m_color ];
-                            vid.bg0.image(vec, animtex, m_animFrame);
-                        }
-                        break;
-                    }
-                    default:
-                        ASSERT( 0 );
-                }
+                DrawRegular( /*pDrawer, */vid, cubeIndex, vec, tiltState );
 			}
 			break;
 		}
-		case STATE_MARKED:
+        case STATE_MARKED:
         {
             if( m_color == HYPERCOLOR )
             {
-                //vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame() );
+                //vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame() );
                 const AssetImage &exTex = GetSpecialExplodingTexture();
 
-                vid.bg0.image(vec, exTex, GetSpecialFrame());
+                vid.bg0.image( vec, exTex, GetSpecialFrame());
             }
             else
             {
                 if( m_color == RAINBALLCOLOR )
                 {
-                    vid.bg0.image(vec, rainball_idle, 0);
+                    vid.bg0.image( vec, rainball_idle, 0);
                 }
                 else
                 {
@@ -353,7 +293,7 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
 
                     unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
-                    vid.bg0.image(vec, exTex, markFrame);
+                    vid.bg0.image( vec, exTex, markFrame);
                 }
 
                 if( m_bWasRainball || m_bWasInfected )
@@ -385,44 +325,19 @@ void GridSlot::Draw( VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 &ti
                 }
             }
 			break;
-		}
+        }
 		case STATE_EXPLODING:
 		{
             /*if( IsSpecial() )
-                vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
+                vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame());
             else*/
             {
-                vid.bg0.image(vec, GemEmpty, 0);
+                vid.bg0.image( vec, GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
-                //vid.bg0.image(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+                //vid.bg0.image( vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
 			break;
 		}
-        /*case STATE_SHOWINGSCORE:
-		{
-            if( m_score > 99 )
-                m_score = 99;
-            vid.bg0.image(vec, GemEmpty, 0);
-            unsigned int fadeFrame = 0;
-
-            float fadeTime = float(SystemTime::now() - m_eventTime) - START_FADING_TIME;
-
-            if( fadeTime > 0.0f )
-                fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
-
-            if( fadeFrame >= NUM_POINTS_FRAMES )
-                fadeFrame = NUM_POINTS_FRAMES - 1;
-
-            if( m_score > 9 )
-                vid.bg0.image(vec( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
-            vid.bg0.image(vec( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
-			break;
-		}
-        case STATE_GONE:
-		{
-            vid.bg0.image(vec, GemEmpty, 0);
-			break;
-        }*/
 		default:
 			break;
 	}
@@ -771,39 +686,42 @@ unsigned int GridSlot::GetIdleFrame()
 */
 
 
-void GridSlot::DrawIntroFrame( VideoBuffer &vid, unsigned int frame )
+void GridSlot::DrawIntroFrame( /*ChromitDrawer *pDrawer, */ VideoBuffer &vid, unsigned int frame )
 {
-    Int2 vec = { m_col * 4, m_row * 4 };
+    //UByte2 vec = { m_row, m_col };
+    UByte2 vec = { m_col * 4, m_row * 4 };
+
+    unsigned int cubeIndex = Game::Inst().getWrapperIndex( m_pWrapper );
 
     if( !isAlive() )
-        vid.bg0.image(vec, GemEmpty, 0);
+        vid.bg0.image( vec, GemEmpty, 0);
     else if( IsSpecial() )
-        vid.bg0.image(vec, GetSpecialTexture(), GetSpecialFrame());
+        vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame());
     else
     {
         switch( frame )
         {
             case 0:
             {
-                vid.bg0.image(vec, GemEmpty, 0);
+                vid.bg0.image( vec, GemEmpty, 0);
                 break;
             }
             case 1:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.bg0.image(vec, exTex, 1);
+                vid.bg0.image( vec, exTex, 1);
                 break;
             }
             case 2:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.bg0.image(vec, exTex, 0);
+                vid.bg0.image( vec, exTex, 0);
                 break;
             }
             default:
             {
                 const AssetImage &tex = *TEXTURES[ m_color ];
-                vid.bg0.image(vec, tex, 0);
+                vid.bg0.image( vec, tex, 0);
                 break;
             }
         }
@@ -879,3 +797,79 @@ void GridSlot::Bump( const Float2 &dir )
         m_lastFrameDir = newDir;
     }
 }
+
+
+
+void GridSlot::DrawMultiplier( VideoBuffer &vid )
+{
+    SystemTime t = SystemTime::now();
+
+    unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
+    vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
+    vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
+
+    //number on bg1
+    if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
+    {
+        vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
+        vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
+    }
+}
+
+
+
+void GridSlot::DrawSpecial( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec )
+{
+    vid.bg0.image(  vec, GetSpecialTexture(), GetSpecialFrame() );
+}
+
+void GridSlot::DrawFixed( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec )
+{
+    if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
+    {
+        vid.bg0.image( vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+    }
+    else
+    {
+        vid.bg0.image( vec, *FIXED_TEXTURES[ m_color ]);
+
+        if( m_multiplier > 1 )
+        {
+            DrawMultiplier( vid );
+        }
+    }
+}
+
+void GridSlot::DrawRegular( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState )
+{
+    const AssetImage &tex = *TEXTURES[m_color];
+
+    switch( m_Movestate )
+    {
+        case MOVESTATE_STATIONARY:
+        case MOVESTATE_PENDINGMOVE:
+        {
+            unsigned int frame;
+
+            frame = GetTiltFrame( tiltState, m_lastFrameDir );
+            vid.bg0.image( vec, tex, frame);
+            break;
+        }
+        case MOVESTATE_MOVING:
+        {
+            Int2 curPos = m_curMovePos;
+            //THIS CAN'T USE STRAIGHT CHROMITDRAWER
+            vid.bg0.image( curPos, tex, GetRollingFrame( m_animFrame ));
+            break;
+        }
+        case MOVESTATE_FINISHINGMOVE:
+        case MOVESTATE_BUMPED:
+        {
+            vid.bg0.image( vec, tex, m_animFrame);
+            break;
+        }
+        default:
+            ASSERT( 0 );
+    }
+}
+
