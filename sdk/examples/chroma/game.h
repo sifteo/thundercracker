@@ -170,6 +170,8 @@ public:
     inline SaveData &getSaveData() { return m_savedata; }
     //inline ChromitDrawer &getChromitDrawer() { return m_chromitDrawer; }
 
+    void ClearBG1();
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();

@@ -1382,3 +1382,10 @@ void Game::HandleMenu()
         m_cubes[i].Reset();
     }
 }
+
+
+void Game::ClearBG1()
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].GetVid().bg1.eraseMask();
+}
