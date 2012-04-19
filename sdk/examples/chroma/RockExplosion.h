@@ -20,10 +20,10 @@ public:
     RockExplosion();
     void Reset();
     void Update();
-    void Draw( VideoBuffer &vid, int spriteindex );
+    void Draw( VideoBuffer &vid, int spriteindex ) __attribute__ ((noinline));
     void Spawn( const Int2 &pos, int whichpiece );
 
-    inline bool isUnused() const { return m_pos.x < 0; }
+    inline bool isUsed() const { return m_pos.x >= 0; }
     inline unsigned int getAnimFrame() const { return m_animFrame; }
 	
 private:

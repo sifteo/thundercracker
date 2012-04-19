@@ -82,6 +82,7 @@ bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner, VideoBuffer &vid
                 banner.SetMessage( vid, "Go!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_CNT:
+                vid.bg1.eraseMask();
                 Game::Inst().setState( Game::STATE_PLAYING );
                 return false;
             default:
@@ -120,7 +121,7 @@ bool Intro::Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer 
                     if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
                         frame--;
 
-                    pSlot->DrawIntroFrame( vid, frame );
+                    pSlot->DrawIntroFrame( /*&Game::Inst().getChromitDrawer(), */vid, frame );
                 }
             }
             break;

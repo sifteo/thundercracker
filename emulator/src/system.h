@@ -18,8 +18,10 @@
 #include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
-#include "system_network.h"
+#include "system_cubes.h"
+#include "system_mc.h"
 #include "tracer.h"
+#include "tinythread.h"
 
 
 class System {
@@ -40,6 +42,14 @@ class System {
     bool opt_continueOnException;
     bool opt_turbo;
     bool opt_lockRotationByDefault;
+    bool opt_radioTrace;
+    bool opt_traceEnabledAtStartup;
+
+    // SVM options
+    bool opt_svmTrace;
+    bool opt_svmFlashStats;
+    bool opt_svmStackMonitor;
+    std::string opt_elfFile;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
@@ -47,42 +57,35 @@ class System {
     std::string opt_cube0Profile;
 
     System();
-    
+
     bool init();
     void start();
     void exit();
     void setNumCubes(unsigned n);
-    
+    void resetCube(unsigned id);
+
     bool isRunning() {
-        return threadRunning;
+        return mIsStarted;
     }
-    
+
     bool isTraceAllowed();
 
-    // Use with care... They must remain exactly paired.
-    void startThread();
-    void stopThread();
+    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
+    void beginCubeEvent(uint64_t deadline) {
+        sc.beginEvent(deadline);
+    }
 
- private: 
-    static void threadFn(void *param);
-    bool initCube(unsigned id, bool wakeFromSleep=false);
-    void exitCube(unsigned id);
-    ALWAYS_INLINE void tick(unsigned count=1);
-    
-    NEVER_INLINE void tickLoopDebug();
-    NEVER_INLINE void tickLoopGeneral();
-    NEVER_INLINE void tickLoopFastSBT();
+    // End an event, resume cube execution.
+    void endCubeEvent(uint32_t nextDeadline) {
+        sc.endEvent(nextDeadline);
+    }
 
-    GLFWthread thread;
-    bool threadRunning;
-
-    FILE *textTraceFile;
-    FILE *vcdTraceFile;
-    bool mIsTracing;
+ private:
     bool mIsInitialized;
     bool mIsStarted;
-    
-    SystemNetwork network;
+
+    SystemCubes sc;
+    SystemMC smc;
 };
 
 #endif

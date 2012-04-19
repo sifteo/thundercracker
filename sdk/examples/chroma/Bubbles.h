@@ -52,10 +52,12 @@ public:
     BubbleSpawner( VideoBuffer &vid );
     void Reset( VideoBuffer &vid );
     void Update( float dt, const Float2 &tilt );
-    void Draw( VideoBuffer &vid, CubeWrapper *pWrapper );
+    void Draw( VideoBuffer &vid, CubeWrapper *pWrapper ) __attribute__ ((noinline));
+    inline bool isActive() { return m_bActive; }
 private:
     Bubble m_aBubbles[MAX_BUBBLES];
     float m_fTimeTillSpawn;
+    bool m_bActive;
 };
 
 

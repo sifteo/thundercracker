@@ -85,6 +85,10 @@ class Hardware {
         return cpu.deepSleep;
     }
 
+    ALWAYS_INLINE unsigned id() const {
+        return cpu.id;
+    }
+
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
         if (!isSleeping()) {
             CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);

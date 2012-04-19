@@ -36,7 +36,10 @@ class Radio {
         memset(debug, 0, DEBUG_REG_SIZE);
         cpu = _cpu;
 
-        // Active low
+        // Radio off by default
+        ASSERT(ce == 0);
+
+        // Active low; SPI idle by default
         csn = 1;
 
         regs[REG_CONFIG] = 0x08;

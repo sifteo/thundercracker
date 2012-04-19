@@ -383,6 +383,9 @@ struct _SYSAttachedVideoBuffer {
 #define _SYS_TILE77(_idx)   ((((_idx) << 2) & 0xFE00) | \
                              (((_idx) << 1) & 0x00FE))
 
+#define _SYS_INVERSE_TILE77(_t77)   ((((_t77) & 0xFE00) >> 2) | \
+                                     (((_t77) & 0x00FE) >> 1))
+
 /*
  * Audio handles
  */
@@ -503,16 +506,20 @@ typedef void (*_SYSCubeEvent)(void *context, _SYSCubeID cid);
 typedef void (*_SYSNeighborEvent)(void *context,
     _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
+/*
+ * The order of these vector IDs dictates priority, so choose them accordingly.
+ * For example, it's important to have accel update last, since it's the spammiest.
+ */
 typedef enum {
     _SYS_NEIGHBOR_ADD = 0,
     _SYS_NEIGHBOR_REMOVE,
     _SYS_CUBE_FOUND,
     _SYS_CUBE_LOST,
     _SYS_CUBE_ASSETDONE,
-    _SYS_CUBE_ACCELCHANGE,
     _SYS_CUBE_TOUCH,
     _SYS_CUBE_TILT,
     _SYS_CUBE_SHAKE,
+    _SYS_CUBE_ACCELCHANGE,
 
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;

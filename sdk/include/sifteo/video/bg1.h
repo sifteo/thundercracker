@@ -338,7 +338,7 @@ struct BG1Drawable {
      *
      * Because of this, we automatically do a System::finish() by default,
      * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
+     * suppressed (only if you REALLY know what you're doing) by setting
      * finish=false.
      */
     void eraseMask(bool finish=true) {
@@ -358,7 +358,7 @@ struct BG1Drawable {
      *
      * Because of this, we automatically do a System::finish() by default,
      * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
+     * suppressed (only if you REALLY know what you're doing) by setting
      * finish=false.
      */
     void setMask(const BG1Mask &mask, bool finish=true) {
@@ -388,7 +388,7 @@ struct BG1Drawable {
      *
      * Because of this, we automatically do a System::finish() by default,
      * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
+     * suppressed (only if you REALLY know what you're doing) by setting
      * finish=false.
      */
     void fillMask(UInt2 topLeft, UInt2 size, bool finish=true) {
@@ -482,9 +482,10 @@ struct BG1Drawable {
      * The image is always drawn to the top-left corner of BG1. You can
      * place it anywhere on-screen by calling setPanning() afterwards.
      *
-     * We automatically do a System::finish() by default, so we can ensure
-     * nobody is still using the old mask. This can be suppressed if you
-     * really know what you're doing, by setting finish=false.
+     * Because of this, we automatically do a System::finish() by default,
+     * so we can ensure nobody is still using the old mask. This can be
+     * suppressed (only if you REALLY know what you're doing) by setting
+     * finish=false.
      */
     void maskedImage(const AssetImage &image, const PinnedAssetImage &key,
         unsigned frame = 0, bool finish=true)
@@ -502,9 +503,10 @@ struct BG1Drawable {
      * The image is always drawn to the top-left corner of BG1. You can
      * place it anywhere on-screen by calling setPanning() afterwards.
      *
-     * We automatically do a System::finish() by default, so we can ensure
-     * nobody is still using the old mask. This can be suppressed if you
-     * really know what you're doing, by setting finish=false.
+     * Because of this, we automatically do a System::finish() by default,
+     * so we can ensure nobody is still using the old mask. This can be
+     * suppressed (only if you REALLY know what you're doing) by setting
+     * finish=false.
      */
     void maskedImage(UInt2 size, const AssetImage &image,
         const PinnedAssetImage &key, UInt2 srcXY,

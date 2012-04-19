@@ -94,7 +94,7 @@ void Game::Init()
     //TODO READ THIS FROM SAVE FILE
     //if save file doesn't exist, create and initialize it
     m_savedata.Load();
-    m_savedata.furthestProgress = 30;
+    //m_savedata.furthestProgress = 30;
     m_iChapterViewed = 0;
 }
 
@@ -210,6 +210,8 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
 
+    //m_chromitDrawer.drawAll();
+
     //always finishing works
     //System::finish();
 /*#if !SLOW_MODE
@@ -249,6 +251,8 @@ void Game::Reset(  bool bInGame )
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
+
+    //m_chromitDrawer.Reset();
 
     //m_bHyperDotMatched = false;
 

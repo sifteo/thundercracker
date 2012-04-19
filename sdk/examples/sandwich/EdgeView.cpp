@@ -17,7 +17,7 @@ void EdgeView::Init(int roomId, enum Side side) {
 	};
 	Side gateSide = NO_SIDE;
 	Room& room = gGame.GetMap().GetRoom(roomId);
-	if (room.HasGateway()) {
+	if (room.HasGateway() && !room.Gateway().noEdge) {
 		// compute which "side" of the room the gateway is on
 		mGateway = &room.Gateway();
 		gateSide = ComputeGateSide(mGateway);

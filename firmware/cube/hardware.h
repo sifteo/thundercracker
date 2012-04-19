@@ -68,14 +68,14 @@
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
-#define MISC_NB_0_TOP          (1 << 0)
-#define MISC_NB_1_LEFT         (1 << 1)
+#define MISC_NB_0_TOP          (1 << 4)
+#define MISC_NB_1_LEFT         (1 << 5)
 #if HWREV >= 1
-#   define MISC_NB_2_BOTTOM    (1 << 4)
+#   define MISC_NB_2_BOTTOM    (1 << 0)
 #else
 #   define MISC_NB_2_BOTTOM    (1 << 7)
 #endif
-#define MISC_NB_3_RIGHT        (1 << 5)
+#define MISC_NB_3_RIGHT        (1 << 1)
 
 #define BATTERY_ADC_CH  0
 
