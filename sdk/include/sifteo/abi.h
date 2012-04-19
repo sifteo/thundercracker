@@ -842,6 +842,9 @@ void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
 int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
 void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
+bool _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
+bool _SYS_tracker_isPlaying() _SC(126);
+void _SYS_tracker_stop() _SC(148);
 
 // Asset group/slot management
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);

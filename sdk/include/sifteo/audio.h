@@ -136,5 +136,35 @@ struct AudioChannel {
     }
 };
 
+/**
+ * Provides module playback support.
+ *
+ * Supported module format is standard XM. stir processes
+ * your modules as part of the application packaging process.
+ */
+struct AudioTracker {
+    /**
+     * Begin playback of a module.
+     * @param asset specifies the module for playback.
+     */
+    bool play(const AssetTracker &asset) {
+        return _SYS_tracker_play(&asset.song);
+    }
+
+    /**
+     * Is the tracker currently playing a module?
+     */
+    bool isPlaying() const {
+        return _SYS_tracker_isPlaying();
+    }
+
+    /**
+     * Stop playback of the current module.
+     * Has no effect if a module is not currently playing.
+     */
+    void stop() {
+        _SYS_tracker_stop();
+    }
+};
 
 } // namespace Sifteo
