@@ -33,6 +33,7 @@ class SystemMC {
 
     static Cube::Hardware *getCubeForSlot(CubeSlot *slot);
     static void checkQuiescentVRAM(CubeSlot *slot);
+    static const System *getSystem();
 
  private: 
     static const uint32_t TICK_HZ = 16000000;

@@ -14,10 +14,7 @@
 bool SystemCubes::init(System *sys)
 {
     this->sys = sys;
-    mEventDeadline.init(&sys->time);
-
-    // Don't run at all until we get our first deadline.
-    mEventDeadline.resetTo(0);
+    deadlineSync.init(&sys->time);
 
     if (sys->opt_cubeFirmware.empty() && (!sys->opt_cube0Profile.empty() || 
                                            sys->opt_cube0Debug)) {
@@ -224,16 +221,7 @@ void SystemCubes::threadFn(void *param)
 ALWAYS_INLINE void SystemCubes::tick(unsigned count)
 {
     sys->time.tick(count);
-
-    if (mEventDeadline.hasPassed()) {
-        tthread::lock_guard<tthread::mutex> guard(mEventMutex);
-        mEventAtDeadline = true;
-        mEventAtDeadlineCond.notify_all();
-        // Between beginEvent() and endEvent()...
-        while (!mEventDone)
-            mEventDoneCond.wait(mEventMutex);
-        mEventDone = false;
-    }
+    deadlineSync.tick();
 }
 
 NEVER_INLINE void SystemCubes::tickLoopDebug()
@@ -322,7 +310,7 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
         }
 
         tick(stepSize);
-        stepSize = std::min(nextStep, (unsigned)mEventDeadline.remaining());
+        stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
     }
 }
 
