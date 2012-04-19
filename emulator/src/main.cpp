@@ -57,6 +57,7 @@ static void usage()
             "  --svm-stack         Monitor SVM stack usage\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
+            "  --paint-trace       Trace the state of the repaint controller\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -189,6 +190,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "--radio-trace")) {
             sys.opt_radioTrace = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--paint-trace")) {
+            sys.opt_paintTrace = true;
             continue;
         }
 
