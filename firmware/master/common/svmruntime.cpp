@@ -43,7 +43,7 @@ void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
     stackLowWaterMark = topOfStackPA;
 #endif
 
-    SvmCpu::run(mapSP(stackTopVA - (entryFunc >> 24) * 4),
+    SvmCpu::run(mapSP(stackTopVA - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
 }
 
@@ -122,7 +122,7 @@ void SvmRuntime::call(reg_t addr)
     TRACING_ONLY({
         LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
             "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
     });
 
@@ -146,7 +146,7 @@ void SvmRuntime::tailcall(reg_t addr)
 
     TRACING_ONLY({
         LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             reinterpret_cast<void*>(fp)));
     });
 
@@ -155,8 +155,9 @@ void SvmRuntime::tailcall(reg_t addr)
 
 void SvmRuntime::enterFunction(reg_t addr)
 {
+
     // Allocate stack space for this function, and enter it
-    adjustSP(-(addr >> 24));
+    adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);
 }
 

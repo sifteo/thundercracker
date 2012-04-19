@@ -45,7 +45,7 @@ class TileSet:
 		for node in xml.findall("tile/properties"):
 			self.tiles[int(node.getparent().get("id"))].props = \
 				dict((prop.get("name").lower(), prop.get("value")) for prop in node)
-
+	
 	def tileat(self, x, y):
 		return self.tiles[x + y * self.width]
 
