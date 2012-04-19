@@ -12,6 +12,7 @@
 using namespace Sifteo;
 
 class CubeWrapper;
+class GridSlot;
 
 class Bubble
 {
@@ -33,6 +34,9 @@ public:
     inline bool isAlive() const { return m_fTimeAlive >= 0.0f; }
 
 private:
+    //check if we're bumping against a chromit
+    bool CheckBump( Float2 diff, GridSlot *pSlot ) __attribute__ ((noinline));
+
     Float2 m_pos;
     float m_fTimeAlive;
     const Sifteo::PinnedAssetImage *m_pTex;
