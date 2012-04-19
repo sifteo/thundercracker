@@ -21,7 +21,7 @@ $(SUBDIRS):
 
 # Stage the platform-specific SDK dependencies
 sdk-deps:
-	install -s $(LLVM_SDK_BINS) sdk/bin
+	install -C -s $(LLVM_SDK_BINS) sdk/bin
 
 clean:
 	rm -Rf sdk/doc/*
