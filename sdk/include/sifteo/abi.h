@@ -864,6 +864,7 @@ void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(121);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(122);
 void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(18);
 void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(24);
+void _SYS_vbuf_xorb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(148);
 uint32_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(123);
 uint32_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(54);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(20);

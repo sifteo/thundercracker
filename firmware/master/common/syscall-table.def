@@ -146,3 +146,4 @@
     /*  145 */ (SvmSyscall)_SYS_getFeatures,
     /*  146 */ (SvmSyscall)_SYS_image_BG1MaskedDraw,
     /*  147 */ (SvmSyscall)_SYS_image_BG1MaskedDrawRect,
+    /*  148 */ (SvmSyscall)_SYS_vbuf_xorb,
