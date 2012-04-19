@@ -1,4 +1,4 @@
-# we expect $(SDK_DIR)/Makefile.defs has already been included
+# We expect $(SDK_DIR)/Makefile.defs has already been included.
 
 ######## Normal target rules
 
@@ -28,7 +28,7 @@ ifneq ($(ASSETS_BUILD_PROOF),)
     ASSET_GEN_FILES += -o $(ASSETS).html
 endif
 
-$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+$(ASSETS).gen.cpp: $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua $(ASSET_GEN_FILES) -v
 
 clean:
@@ -40,8 +40,10 @@ clean:
 
 ######## Development utility rules
 
+# These rely on tools that aren't part of the standard SDK distribution.
+
 llvm-dis: $(OBJS)
-	$(LLVM_BIN)/llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
+	llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
 
 objdump: $(BIN)
 	arm-none-eabi-objdump -d $(BIN) | arm-none-eabi-c++filt | less
