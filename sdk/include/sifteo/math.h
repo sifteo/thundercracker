@@ -666,7 +666,7 @@ struct Random {
      */
     template <typename T>
     T randint(T a, T b) {
-        return a + _SYS_prng_valueBounded(&state, b - a);
+        return T(a + _SYS_prng_valueBounded(&state, b - a));
     }
 
     /**
@@ -675,7 +675,7 @@ struct Random {
      */
     template <typename T>
     T randrange(T a, T b) {
-        return randint<T>(a, b - 1);
+        return randint<T>(a, T(b - 1));
     }
 
     /**
@@ -685,7 +685,7 @@ struct Random {
      */
     template <typename T>
     T randrange(T count) {
-        return randrange<T>(0, count);
+        return randrange<T>(T(0), count);
     }
 };
 
