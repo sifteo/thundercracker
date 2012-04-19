@@ -34,7 +34,6 @@ void NarratorView::Reset()
 void NarratorView::SetMessage(const char *msg, Emote emote) {
     bool hadMessage = mString[0] != 0;
     bool emoteChanged = emote != mEmote;
-
     mString = msg;
     mEmote = emote;
 
@@ -54,7 +53,7 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         GetCube()->EnableTextOverlay(msg, 8, 40, fg, bg);
     }
     else
-    {
+    {       
         GetCube()->DisableTextOverlay();
         Paint();
     }
@@ -96,7 +95,6 @@ void NarratorView::Paint() {
         c->DrawVaultDoorsClosed();
         return;
     }
-
     c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
@@ -105,13 +103,13 @@ void NarratorView::Paint() {
 
     if (mOffset > 0) {
         c->DrawVaultDoorsOpenStep1(mOffset);
-    }
-
+    }    
 
     if(mString[0]) {
-        GetCube()->vid.bg1.fillMask(vec(0,0), vec(Narrator_Balloon.tileWidth(), Narrator_Balloon.tileHeight()));
+        BG1Mask m = BG1Mask::filled(vec(0,0), vec(Narrator_Balloon.tileWidth(), Narrator_Balloon.tileHeight()));
+        GetCube()->vid.bg1.setMask(m);
         GetCube()->vid.bg1.image(vec(0,0), Narrator_Balloon);
-    }
+    }    
 }
 
 
