@@ -29,7 +29,7 @@ class SerialDevice(object):
 
     # first byte indicates length, then return the payload as an array
     def getResponse(self):
-        numBytes = ord(self._dev.read())
+        numBytes = ord(self._dev.read(1))
         payloadStr = self._dev.read(numBytes - 1)
         payload = [ord(b) for b in payloadStr]
 

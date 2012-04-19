@@ -163,14 +163,19 @@ void SystemMC::doRadioPacket()
     RadioManager::produce(buf.ptx);
     ASSERT(buf.ptx.dest != NULL);
     buf.packet.len = buf.ptx.packet.len;
-    Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
 
     for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
 
+        /*
+         * Deliver it to the proper cube.
+         *
+         * Interaction with the cube simulation must take place
+         * between beginPacket() and endPacket() only.
+         */
         beginPacket();
-
-        // Deliver it to the proper cube
+        Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
         buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
+        endPacket();
 
         // Log this transaction
         if (sys->opt_radioTrace) {
@@ -226,14 +231,12 @@ void SystemMC::doRadioPacket()
             } else {
                 RadioManager::ackEmpty();
             }
-            endPacket();
             return;
         }
     }
     
     // Out of retries
     RadioManager::timeout();
-    endPacket();
 }
 
 void SystemMC::beginPacket()
@@ -325,4 +328,9 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
     }
 
     DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
+}
+
+const System *SystemMC::getSystem()
+{
+    return instance->sys;
 }

@@ -311,7 +311,7 @@ struct BG1Drawable {
      * and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
-        eraseMask(false);
+        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
             _SYS_TILE77(index), numTiles());
         setPanning(vec(0,0));
@@ -336,14 +336,11 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed (only if you REALLY know what you're doing) by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void eraseMask(bool finish=true) {
-        if (finish)
-            _SYS_finish();
+    void eraseMask() {
+        _SYS_finish();
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
     }
 
@@ -356,14 +353,11 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed (only if you REALLY know what you're doing) by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void setMask(const BG1Mask &mask, bool finish=true) {
-        if (finish)
-            _SYS_finish();
+    void setMask(const BG1Mask &mask) {
+        _SYS_finish();
         _SYS_vbuf_write(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_bitmap)/2,
             mask.rows(), 16);
     }
@@ -386,14 +380,11 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed (only if you REALLY know what you're doing) by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void fillMask(UInt2 topLeft, UInt2 size, bool finish=true) {
-        if (finish)
-            _SYS_finish();
+    void fillMask(UInt2 topLeft, UInt2 size) {
+        _SYS_finish();
         _SYS_vbuf_fill(&sys.vbuf,
             offsetof(_SYSVideoRAM, bg1_bitmap)/2 + topLeft.y,
             ((1 << size.x) - 1) << topLeft.x, size.y);
@@ -482,16 +473,13 @@ struct BG1Drawable {
      * The image is always drawn to the top-left corner of BG1. You can
      * place it anywhere on-screen by calling setPanning() afterwards.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed (only if you REALLY know what you're doing) by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
     void maskedImage(const AssetImage &image, const PinnedAssetImage &key,
-        unsigned frame = 0, bool finish=true)
+        unsigned frame = 0)
     {
-        if (finish)
-            _SYS_finish();
+        _SYS_finish();
         _SYS_image_BG1MaskedDraw(&sys, image, key.tile(0), frame);
     }
 
@@ -503,17 +491,14 @@ struct BG1Drawable {
      * The image is always drawn to the top-left corner of BG1. You can
      * place it anywhere on-screen by calling setPanning() afterwards.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed (only if you REALLY know what you're doing) by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
     void maskedImage(UInt2 size, const AssetImage &image,
         const PinnedAssetImage &key, UInt2 srcXY,
-        unsigned frame = 0, bool finish=true)
+        unsigned frame = 0)
     {
-        if (finish)
-            _SYS_finish();
+        _SYS_finish();
         _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(0), frame,
             (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
