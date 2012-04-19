@@ -46,8 +46,10 @@ SYS_INC = $(TC_DIR)/sdk/include
 CFLAGS += -DNOT_USERSPACE
 
 # Note that -O4 is link-time optimization on Mac OS.
-CFLAGS += -O4 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
-LDFLAGS += -g -lm -lstdc++
+FLAGS += -O4 -g
+
+CFLAGS += $(FLAGS) -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
+LDFLAGS += $(FLAGS) -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
 # Symbol table trimming
