@@ -7,7 +7,7 @@
  */
 
 #include "power.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "lcd.h"
 #include "radio.h"
 

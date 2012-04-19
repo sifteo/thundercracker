@@ -11,7 +11,7 @@
 
 #include "tinythread.h"
 #include "macros.h"
-#include "vtime.h"
+#include "deadlinesynchronizer.h"
 
 class System;
 
@@ -27,24 +27,8 @@ class SystemCubes {
     void setNumCubes(unsigned n);
     void resetCube(unsigned id);
 
-    /**
-     * Begin an event that's synchronized with cube execution.
-     * Sets 'deadline' as the next halt point, and waits for the cubes
-     * to halt. Note that the cubes may halt prior to the stated
-     * deadline, in the event that they were already waiting when
-     * beginEvent() was called.
-     */
-    void beginEvent(uint64_t deadline) {
-        deadlineSync.beginEvent(deadline);
-    }
-
-    /**
-     * End an event, resume cube execution.
-     * Let it get as far as 'nextDeadline' without stopping.
-     */
-    void endEvent(uint64_t nextDeadline) {
-        deadlineSync.endEvent(nextDeadline);
-    }
+    // Allow other threads to synchronize with cube execution
+    DeadlineSynchronizer deadlineSync;
 
  private: 
     void startThread();
@@ -62,8 +46,6 @@ class SystemCubes {
     System *sys;
     tthread::thread *mThread;
     bool mThreadRunning;
-    
-    DeadlineSynchronizer deadlineSync;
 };
 
 #endif

@@ -268,8 +268,13 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
             // if one is present for this symbol's address, though.
             // This is important for function pointers, including the entry
             // point address for main().
+            //
+            // We also set the LSB, in order to differentiate a valid function
+            // address from a possible NULL. We could set either of the two LSBs
+            // or the MSB, but this approach makes function addresses clearly
+            // distinct from normal VAs even with SPAdj==0.
 
-            SI.Value = shortVA | SPAdj;
+            SI.Value = shortVA | SPAdj | 1;
             SI.Kind = SVMSymbolInfo::LOCAL;
         }
 

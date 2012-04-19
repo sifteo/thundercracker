@@ -20,7 +20,7 @@
  */
 
 #include "graphics_bg1.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 
 #define BG1_LOOP(lbl)                                           __endasm; \
     __asm djnz    R_LOOP_COUNT, lbl                             __endasm; \

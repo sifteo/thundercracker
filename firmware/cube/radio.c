@@ -6,7 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "radio.h"
 #include "flash.h"
 #include "params.h"

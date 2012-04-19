@@ -14,7 +14,7 @@
 bool SystemCubes::init(System *sys)
 {
     this->sys = sys;
-    deadlineSync.init(&sys->time);
+    deadlineSync.init(&sys->time, &mThreadRunning);
 
     if (sys->opt_cubeFirmware.empty() && (!sys->opt_cube0Profile.empty() || 
                                            sys->opt_cube0Debug)) {
@@ -67,6 +67,7 @@ void SystemCubes::stopThread()
 {
     mThreadRunning = false;
     __asm__ __volatile__ ("" : : : "memory");
+    deadlineSync.wake();
     mThread->join();
     delete mThread;
     mThread = 0;
@@ -189,7 +190,6 @@ void SystemCubes::threadFn(void *param)
     srand(glfwGetTime() * 1e6);
         
     while (self->mThreadRunning) {
-        
         /*
          * Pick one of several specific tick batch loops. This keeps the loop tight by
          * eliminating unused features when possible.

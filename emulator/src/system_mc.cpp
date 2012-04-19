@@ -90,6 +90,7 @@ void SystemMC::stop()
 {
     mThreadRunning = false;
     __asm__ __volatile__ ("" : : : "memory");
+    sys->getCubeSync().wake();
     mThread->join();
     delete mThread;
     mThread = 0;
@@ -242,26 +243,16 @@ void SystemMC::doRadioPacket()
 void SystemMC::beginPacket()
 {
     // Advance time, and rally with the cube thread at the proper timestamp.
-    // Between beginCubeEvent() and endCubeEvent(), both simulation threads are synchronized.
+    // Between beginEvent() and endEvent(), both simulation threads are synchronized.
 
     ticks += SystemMC::TICKS_PER_PACKET;
-    sys->beginCubeEvent(ticks);
-
-    // beginCubeEvent may have already been waiting when we called, and it could
-    // be earlier than the deadline we asked for. Now that we're sync'ed, run
-    // up until the proper deadline if necessary.
-
-    ASSERT(ticks >= sys->time.clocks);
-    while (ticks > sys->time.clocks) {
-        sys->endCubeEvent(ticks);
-        sys->beginCubeEvent(ticks);
-    }
+    sys->getCubeSync().beginEventAt(ticks, mThreadRunning);
 }
 
 void SystemMC::endPacket()
 {
     // Let the cube keep running, but no farther than our next transmit opportunity
-    sys->endCubeEvent(ticks + SystemMC::TICKS_PER_PACKET);
+    sys->getCubeSync().endEvent(ticks + SystemMC::TICKS_PER_PACKET);
 }
 
 Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)

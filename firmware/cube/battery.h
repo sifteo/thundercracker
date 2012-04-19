@@ -9,7 +9,7 @@
 #ifndef _BATTERY_H
 #define _BATTERY_H
 
-#include "hardware.h"
+#include "cube_hardware.h"
 
 void battery_poll();
 

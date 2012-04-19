@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include "sensors.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "radio.h"
 #include "time.h"
 
