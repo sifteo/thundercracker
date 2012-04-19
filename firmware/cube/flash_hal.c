@@ -16,7 +16,7 @@
  NOTE: this has been updated to also support the Winbond W29GL032C.
  Relevant changes:
   - flash_addr_lat2 increments by 2 instead of 4 for adjacent sector addresses for erase
-  - lat1 and lat2 lines are swapped on buddy cube rev 1 - this is accounted for in hardware.h
+  - lat1 and lat2 lines are swapped on buddy cube rev 1 - this is accounted for in cube_hardware.h
   - due to a routing error on buddy cube rev 1, we must use WORD_MODE instead of
     BYTE_MODE, and your board must be modded accordingly, since the BYTE select
     pin would normally be tied low.

@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 #include <protocol.h>
-#include "hardware.h"
+#include "cube_hardware.h"
 
 
 /*

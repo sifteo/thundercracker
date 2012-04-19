@@ -7,7 +7,7 @@
  */
 
 #include "graphics_bg1.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "radio.h"
 
 

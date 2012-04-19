@@ -10,7 +10,7 @@
 #include "sensors.h"
 #include "radio.h"
 #include "graphics.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "flash.h"
 #include "params.h"
 #include "battery.h"

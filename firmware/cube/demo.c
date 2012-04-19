@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include "graphics.h"
-#include "hardware.h"
+#include "cube_hardware.h"
 #include "flash.h"
 #include "draw.h"
 #include "radio.h"

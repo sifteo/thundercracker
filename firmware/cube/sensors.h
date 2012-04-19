@@ -9,7 +9,7 @@
 #ifndef _SENSORS_H
 #define _SENSORS_H
 
-#include "hardware.h"
+#include "cube_hardware.h"
 
 void sensors_init();
 
