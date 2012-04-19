@@ -45,14 +45,14 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 
 void Game::Init()
 {
+    //turn off LOAD_ASSETS to bootstrap everything
 #if LOAD_ASSETS
-//    ScopedAssetLoader loader;
+    ScopedAssetLoader loader;
 
-//    VideoBuffer vids[NUM_CUBES];
+    VideoBuffer vids[NUM_CUBES];
 
-    static AssetSlot MySlot = AssetSlot::allocate().bootstrap(GameAssets);
+    AssetSlot MySlot = AssetSlot::allocate();
 
-#if 0
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         vids[i].attach(i);
@@ -71,7 +71,6 @@ void Game::Init()
 		System::paint();
 	}
 #endif
- #endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Init();
