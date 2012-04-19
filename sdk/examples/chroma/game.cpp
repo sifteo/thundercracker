@@ -46,12 +46,13 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 void Game::Init()
 {
 #if LOAD_ASSETS
-    ScopedAssetLoader loader;
+//    ScopedAssetLoader loader;
 
-    VideoBuffer vids[NUM_CUBES];
+//    VideoBuffer vids[NUM_CUBES];
 
-    AssetSlot MySlot = AssetSlot::allocate();
+    static AssetSlot MySlot = AssetSlot::allocate().bootstrap(GameAssets);
 
+#if 0
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         vids[i].attach(i);
@@ -69,6 +70,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
+#endif
  #endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
@@ -210,6 +212,8 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
 
+    //m_chromitDrawer.drawAll();
+
     //always finishing works
     //System::finish();
 /*#if !SLOW_MODE
@@ -249,6 +253,8 @@ void Game::Reset(  bool bInGame )
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
+
+    //m_chromitDrawer.Reset();
 
     //m_bHyperDotMatched = false;
 

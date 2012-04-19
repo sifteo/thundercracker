@@ -356,7 +356,7 @@ void Viewport::DrawRoomOverlay(unsigned tid, const uint8_t *rle) {
       prevRle = rle;
     }    
   }
-  mCanvas.bg1.setMask(mask, false);
+  mCanvas.bg1.setMask(mask);
 }
 
 void Viewport::DrawOffsetMap(Int2 pos) {

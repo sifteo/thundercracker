@@ -24,7 +24,7 @@ class PaintControl {
 
     void waitForPaint(CubeSlot *cube);
     void waitForFinish(CubeSlot *cube);
-    void triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp);
+    void triggerPaint(CubeSlot *cube, SysTime::Ticks now);
 
     // Called in ISR context
     void ackFrames(CubeSlot *cube, int32_t count);
@@ -32,7 +32,7 @@ class PaintControl {
 
  private:
     SysTime::Ticks paintTimestamp;      // Last user call to _SYS_paint()
-    SysTime::Ticks triggerTimestamp;    // Last time we hit TOGGLE.
+    SysTime::Ticks asyncTimestamp;      // TOGGLE, TRIGGER_ON_FLUSH, exiting CONTINUOUS mode
     int32_t pendingFrames;
 
     uint8_t getFlags(_SYSVideoBuffer *vbuf) {
