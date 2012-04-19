@@ -82,6 +82,7 @@ bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner, VideoBuffer &vid
                 banner.SetMessage( vid, "Go!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_CNT:
+                vid.bg1.eraseMask();
                 Game::Inst().setState( Game::STATE_PLAYING );
                 return false;
             default:
