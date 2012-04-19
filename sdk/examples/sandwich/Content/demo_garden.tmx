@@ -237,6 +237,11 @@
     <property name="target" value="demo_desert:GardenGate"/>
    </properties>
   </object>
+  <object name="DreamGate" type="Gateway" x="480" y="64" width="32" height="32">
+   <properties>
+    <property name="target" value="demo_dream:GardenGate"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer name="mask" width="32" height="32">
   <data encoding="csv">

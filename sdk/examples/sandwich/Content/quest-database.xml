@@ -1,7 +1,7 @@
 <quest-database>
 
 
-	<quest id="alf" map="demo_desert" loc="SpawnPoint" />
+	<quest id="alf" map="demo_dream" loc="SpawnPoint" />
 
 	<!--
 	<quest id="garden_level4" map="garden_level4" loc="SpawnPoint" />	

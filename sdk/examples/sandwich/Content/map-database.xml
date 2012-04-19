@@ -18,6 +18,10 @@
 	<map id="demo_garden">
 		<name>Botanical Gardens</name>
 	</map>
+	<map id="demo_dream">
+		<name>The Dream world</name>
+	</map>
+
 
 	<!--
 	<map id="garden_level1">
