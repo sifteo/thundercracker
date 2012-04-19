@@ -2080,7 +2080,7 @@ void CubeWrapper::DrawGrid()
         for( int j = 0; j < NUM_COLS; j++ )
         {
             GridSlot &slot = m_grid[i][j];
-            slot.Draw( &Game::Inst().getChromitDrawer(), m_vid, m_bg1buffer, m_curFluidDir, cubeIndex );
+            slot.Draw( /*&Game::Inst().getChromitDrawer(), */m_vid, m_bg1buffer, m_curFluidDir, cubeIndex );
         }
     }
 }

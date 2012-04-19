@@ -10,7 +10,7 @@
 #include <sifteo.h>
 
 using namespace Sifteo;
-class ChromitDrawer;
+//class ChromitDrawer;
 class CubeWrapper;
 
 //space for a gem
@@ -85,8 +85,8 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( ChromitDrawer *pDrawer, VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex ) __attribute__ ((noinline));
-    void DrawIntroFrame( ChromitDrawer *pDrawer, unsigned int frame );
+    void Draw( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex ) __attribute__ ((noinline));
+    void DrawIntroFrame( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int frame );
     void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
     bool isEmpty() const { return m_state == STATE_GONE; }
@@ -142,9 +142,9 @@ private:
     unsigned int GetFixedFrame( unsigned int index );
 
     void DrawMultiplier( VideoBuffer &vid ) __attribute__ ((noinline));
-    void DrawSpecial( ChromitDrawer *pDrawer, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
-    void DrawFixed( ChromitDrawer *pDrawer, VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
-    void DrawRegular( ChromitDrawer *pDrawer, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState ) __attribute__ ((noinline));
+    void DrawSpecial( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
+    void DrawFixed( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
+    void DrawRegular( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState ) __attribute__ ((noinline));
 
 	SLOT_STATE m_state;
     MOVE_STATE m_Movestate;	

@@ -32,6 +32,20 @@ public:
 
 private:
     SlotInfo m_allInfo[ NUM_CUBES ][CubeWrapper::NUM_ROWS][CubeWrapper::NUM_COLS];
+
+    struct MovingSlot
+    {
+        Int2 pos;
+        SlotInfo slot;
+    };
+
+    //array of queued clears.
+    //clears get queued up in update, then they get drawn before any draws and cleared out
+    /*Int2 m_queuedClears[ NUM_CUBES ][NUM_ROWS * NUM_COLS];
+    int m_numQueuedClears[ NUM_CUBES ];
+
+    MovingSlot m_movingChromits[ NUM_CUBES ][NUM_ROWS * NUM_COLS];
+    int m_numMovingChromits[ NUM_CUBES ];*/
 };
 
 #endif
