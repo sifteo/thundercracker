@@ -1234,7 +1234,7 @@ void CubeStateMachine::setPanning(float panning)
         mTilePositions[i].x = ((mTilePositions[i].x + tileWidth + 2) % (16 + 2 * tileWidth));
         mTilePositions[i].x -= tileWidth + 2;
     }
-    //mVidBuf->BG0_setPanning(vec((int)mBG0Panning, 0.f));
+    mVidBuf->bg0.setPanning(vec((int)mBG0Panning, 0));
 }
 
 void CubeStateMachine::paint()
