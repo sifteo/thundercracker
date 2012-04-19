@@ -1,6 +1,8 @@
-BIN = tc-siftulator
-
 TC_DIR := ..
+
+BIN_DIR := $(TC_DIR)/sdk/bin
+BIN := tc-siftulator
+
 include Makefile.objs
 include $(TC_DIR)/Makefile.platform
 include $(TC_DIR)/firmware/master/Makefile.objs

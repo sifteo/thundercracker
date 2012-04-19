@@ -1,27 +1,27 @@
-all: $(BIN)
+all: $(BIN_DIR)/$(BIN)
 
 ifeq ($(BUILD_PLATFORM),windows32)
 # Win32 Link: Stripped and packed binaries, and separate debug symbols.
-$(BIN): $(OBJS)
+$(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
 	$(OBJCOPY) --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
-	$(STRIP) -s "src/$(BIN)-d.exe" -o "$(BIN).exe"
-	$(UPX) "$(BIN).exe"
+	$(STRIP) -s "src/$(BIN)-d$(BIN_EXT)" -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
+	$(UPX) "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
 else
 ifeq ($(BUILD_PLATFORM),Darwin)
 # Mac OS Link: Create an app bundle with a stripped binary.
-$(BIN): $(BIN).app
-$(BIN).app: $(OBJS)
+$(BIN_DIR)/$(BIN): $(BIN_DIR)/$(BIN).app
+$(BIN_DIR)/$(BIN).app: $(OBJS)
 	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
-	mkdir -p "$(BIN).app/Contents/MacOS"
-	mkdir -p "$(BIN).app/Contents/Resources"
-	cp resources/Info.plist "$(BIN).app/Contents/Info.plist"
-	cp resources/siftrunner_icon.icns "$(BIN).app/Contents/Resources/$(BIN).icns"
-	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN).app/contents/MacOS/$(BIN)"
+	mkdir -p "$(BIN_DIR)/$(BIN).app/Contents/MacOS"
+	mkdir -p "$(BIN_DIR)/$(BIN).app/Contents/Resources"
+	cp resources/Info.plist "$(BIN_DIR)/$(BIN).app/Contents/Info.plist"
+	cp resources/siftrunner_icon.icns "$(BIN_DIR)/$(BIN).app/Contents/Resources/$(BIN).icns"
+	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN_DIR)/$(BIN).app/contents/MacOS/$(BIN)"
 	touch "$@"
 else
 # Default link
-$(BIN): $(OBJS)
+$(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 endif	
 endif
@@ -59,4 +59,6 @@ firmware:
 .PHONY: clean firmware
 
 clean:
-	rm -Rf $(BIN) $(OBJS) $(DEPFILES) $(BIN).exe $(BIN).dSYM $(BIN).app
+	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT)
+	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT).app
+	rm -Rf $(OBJS) $(DEPFILES) $(BIN).dSYM

@@ -1,9 +1,9 @@
-ifndef TC_DIR
-TC_DIR = ../../..
+ifndef SDK_DIR
+SDK_DIR = ../..
 endif
 
 APP = sandwichcraft
-include $(TC_DIR)/sdk/Makefile.defs
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = \
 	$(ASSETS).gen.o \
@@ -40,7 +40,7 @@ GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
 GENERATED_FILES += content_crc.txt
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules
 
 content.gen.cpp: content_crc.txt
 

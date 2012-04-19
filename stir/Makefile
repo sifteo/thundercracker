@@ -1,4 +1,9 @@
-BIN = stir
+TC_DIR := ..
+include $(TC_DIR)/Makefile.platform
+
+BIN_DIR := $(TC_DIR)/sdk/bin
+BIN := stir
+all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
 
 OBJS_lua = \
 	src/lua/lapi.o src/lua/lcode.o src/lua/ldebug.o src/lua/ldo.o src/lua/ldump.o \
@@ -27,9 +32,6 @@ OBJS = \
 	src/tracker.o \
 	$(OBJS_lua) \
 
-TC_DIR := ..
-include $(TC_DIR)/Makefile.platform
-
 LDFLAGS += $(LIB_STDCPP)
 
 ifeq ($(BUILD_PLATFORM), windows32)
@@ -42,25 +44,31 @@ DEPFILES := $(OBJS:.o=.d)
 FIRMWARE_INC = $(TC_DIR)/firmware/include
 SYS_INC = $(TC_DIR)/sdk/include
 CFLAGS += -DNOT_USERSPACE
-CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
+
+# Note that -O4 is link-time optimization on Mac OS.
+CFLAGS += -O4 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
-all: $(BIN)
+# Symbol table trimming
+ifeq ($(BUILD_PLATFORM), Darwin)
+	LDFLAGS += -Xlinker -unexported_symbol -Xlinker "*"
+endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
-$(BIN): $(OBJS)
+$(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
-	strip -s src/$(BIN)-d.exe -o $(BIN).exe
-	$(UPX) $(BIN).exe
+	strip -s src/$(BIN)-d.exe -o $(BIN_DIR)/$(BIN).exe
+	$(UPX) $(BIN_DIR)/$(BIN).exe
 else
 # Default link
-$(BIN): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
-endif	
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o src/$(BIN)-d $(OBJS) $(LDFLAGS)
+	strip -o $(BIN_DIR)/$(BIN) src/$(BIN)-d
+endif
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
@@ -76,7 +84,7 @@ src/proof_html.cpp: src/proof_html.py
 
 .PHONY: clean
 
-clean:
-	rm -f $(BIN) $(BIN).exe $(BIN).dSYM src/$(BIN)-d.exe $(OBJS) $(DEPFILES)
+clean:ls 
+	rm -f $(BIN_DIR)/$(BIN)$(BIN_EXT) $(BIN).dSYM src/$(BIN)-d.exe $(OBJS) $(DEPFILES)
 
 -include $(DEPFILES)

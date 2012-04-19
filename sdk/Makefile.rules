@@ -1,5 +1,4 @@
-# we expect $(TC_DIR)/sdk/Makefile.defs has already been included
-
+# we expect $(SDK_DIR)/Makefile.defs has already been included
 
 ######## Normal target rules
 

@@ -18,6 +18,9 @@ firmware
 
 sdk
   Development kit for game software, running on the master.
+  This directory is intended to contain only redistributable components.
+  During build, pre-packaged binaries, built binaries, and built docs
+  are copied here.
 
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.

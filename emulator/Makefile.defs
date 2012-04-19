@@ -49,10 +49,18 @@ endif
 # optimized builds are significantly harder to reverse engineer.
 #
 # -fomit-frame-pointer is actually really important here. It helps
-# a lot with our SBT code, since there are many tiny function calls. 
+# a lot with our SBT code, since there are many tiny function calls.
+#
+# -O4 is like -O3, but includes link-time optimization on Mac OS.
 
-FLAGS += -O3 -fomit-frame-pointer
+FLAGS += -O4 -fomit-frame-pointer
 FLAGS += -g
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
+
+# Symbol table trimming
+ifeq ($(BUILD_PLATFORM), Darwin)
+	LIBS += -Xlinker -unexported_symbol -Xlinker "*"
+endif
+

@@ -1,21 +1,14 @@
 APP = ninja_slide
-TC_DIR = ../../..
-include $(TC_DIR)/sdk/Makefile.defs
+SDK_DIR = ../..
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o
 ASSETDEPS += images/*.png $(ASSETS).lua sounds/*.raw
 
-include $(TC_DIR)/sdk/Makefile.rules
-
-siftulator:
-	$(TC_DIR)/emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator &
-
-run: all 
-	osascript -e 'tell application "tc-siftulator"' -e 'activate' -e 'end tell'
-	$(TC_DIR)/firmware/master/master-sim ninja_slide.elf
+include $(SDK_DIR)/Makefile.rules
 
 ctags: 
-	/usr/local/bin/ctags -Rf tags $(TC_DIR)/sdk/include .
+	/usr/local/bin/ctags -Rf tags $(SDK_DIR)/include .
 
 run_prog: ctags run
 
