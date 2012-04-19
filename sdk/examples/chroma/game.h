@@ -178,7 +178,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void HandleMenu();
+    void HandleMenu() __attribute__ ((noinline));
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
