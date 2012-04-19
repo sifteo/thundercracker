@@ -1,5 +1,6 @@
 GameAssets = group{quality=10}
 --UI
+Transparent = image{"Transparent.png", pinned=true}
 Font = image{"font-8x16.png", width=8, height=16}
 WhiteFont = image{"WhiteFont.png", width=8, height=16}
 BannerImg = image{"banner.png"}

@@ -101,11 +101,11 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         const float BG0_PANNING_WRAP = 144.f;
 
                         Byte2 tilt = getCube().tilt();
-                        if (tilt.x != 1)
+                        if (tilt.x != 0) // if not neutral
                         {
 
                             mBG0TargetPanning -=
-                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (tilt.x - 1);
+                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * tilt.x;
                             while (mBG0TargetPanning < 0.f)
                             {
                                 mBG0TargetPanning += BG0_PANNING_WRAP;
@@ -114,7 +114,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
                             ASSERT(mVidBuf != NULL);
                             setPanning(mBG0Panning);
-                            if (tilt.x < 1)
+                            if (tilt.x < 0)
                             {
                                 queueAnim(AnimType_SlideL);//, vid); // FIXME
                             }
@@ -136,7 +136,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 lpc = mPuzzleLettersPerCube;
 
                             }
-                            unsigned newStart = (tilt.x == 0) ? start + 1 : start + (lpc - 1);
+                            unsigned newStart = (tilt.x == -1) ? start + 1 : start + (lpc - 1);
                             newStart = (newStart % lpc);
                             setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but
@@ -480,9 +480,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 }
 
                 Byte3 accelState = getCube().accel();
-                /* TODO remove _SYSTiltState tiltState;
-                _SYS_getTilt(getCube(), &tiltState);
-            */
                 if (!getCube().isShaking() && abs<int>(accelState.x) > 10)
                 {
                     mShakeDelay = 0.f;
@@ -734,6 +731,7 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
+if (cubeAnim == CubeAnim_Hint) return; //??? There is a bug in the hint code which makes the letters on tiles disappear. Fix after GameStop demo. -ww Apr '12
     LOG("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
                (PCubeID)getCube(), anim, cubeAnim);
 
@@ -942,7 +940,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
     }
 }
 
-void CubeStateMachine::updateAnim(BG1Mask &bg1, AnimParams *params)
+void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params)
 {
     for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
@@ -951,7 +949,7 @@ void CubeStateMachine::updateAnim(BG1Mask &bg1, AnimParams *params)
             params->mCubeAnim = i;
         }
         if (mAnimTypes[i] != AnimType_None &&
-            !animPaint(mAnimTypes[i], *mVidBuf, mAnimTimes[i], params))
+            !animPaint(mAnimTypes[i], *mVidBuf, bg1TileBuf, mAnimTimes[i], params))
         {
             queueNextAnim((CubeAnim)i);//, vid, bg1, params);
         }
@@ -1165,7 +1163,7 @@ bool CubeStateMachine::isConnectedToCubeOnSide(CubeID cubeIDStart,
     // search for a matching cubeID in the given direction through the
     // neighbor chain
     CubeID aCube = getCube();
-    while (aCube != cubeIDStart)
+    while (aCube.isDefined() && aCube != cubeIDStart)
     {
         Neighborhood hood(aCube);
         aCube = hood.neighborAt(side);
@@ -1248,8 +1246,10 @@ void CubeStateMachine::paint()
 
     mPainting = true;
     CubeID c = getCube();
-    BG1Mask bg1;
+    TileBuffer<16,16,1> bg1TileBuf(c);
     ASSERT(mVidBuf != NULL);
+
+    bg1TileBuf.erase(transparent);
 
     switch (getCurrentStateIndex())
     {
@@ -1267,7 +1267,7 @@ void CubeStateMachine::paint()
                 {
                     mVidBuf->sprites[0].move(vec(39, 74));
                     mVidBuf->bg1.setPanning(vec((int)mPanning, 0));
-                    mVidBuf->bg1.image(vec(0, 0), StartLid);
+                    bg1TileBuf.image(vec(0, 0), StartLid);
                 }
                 break;
 
@@ -1360,13 +1360,15 @@ void CubeStateMachine::paint()
 
     default:
         mVidBuf->bg0.image(vec(0,0), TileBG);
-        paintLetters(bg1, true);
+        paintLetters(bg1TileBuf, true);
         mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 
         break;
     }
 
     //bg1.Flush(); // TODO only flush if mask has changed recently
+    mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+
 
     mPainting = false;
 }
@@ -1685,7 +1687,7 @@ void CubeStateMachine::paintScore(bool animate,
 #endif // (0)
 }
 
-void CubeStateMachine::paintLetters(BG1Mask& bg1,
+void CubeStateMachine::paintLetters(TileBuffer<16,16,1> &bg1TileBuf,
                                     bool paintSprites)
 {
     const static AssetImage* fonts[] =
@@ -1724,7 +1726,7 @@ void CubeStateMachine::paintLetters(BG1Mask& bg1,
     CubeID c = getCube();
     AnimParams params;
     getAnimParams(&params);
-    updateAnim(bg1, &params);
+    updateAnim(bg1TileBuf, &params);
 }
 
 void CubeStateMachine::paintScoreNumbers(BG1Mask &bg1,
@@ -1983,7 +1985,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
+//     LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 

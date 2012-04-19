@@ -23,6 +23,12 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup video Video
+ *
+ * Video group overview blurb here...
+ * @{
+ */
 
 static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
 static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
@@ -127,14 +133,14 @@ struct VideoBuffer {
     // Implicit conversions
     operator _SYSVideoBuffer* () { return &sys.vbuf; }
     operator const _SYSVideoBuffer* () const { return &sys.vbuf; }
-    operator _SYSAttachedVideoBuffer* () { return &sys; };
-    operator const _SYSAttachedVideoBuffer* () const { return &sys; };
+    operator _SYSAttachedVideoBuffer* () { return &sys; }
+    operator const _SYSAttachedVideoBuffer* () const { return &sys; }
 
     /**
      * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer
      * to the CubeID constructor, to easily get a CubeID instance for the
      * current cube that this buffer is attached to.
-     */
+     */
     operator _SYSCubeID () const {
         return sys.cube;
     }
@@ -592,5 +598,8 @@ struct VideoBuffer {
     }
 };
 
+/**
+ * @} endgroup video
+*/
 
 };  // namespace Sifteo

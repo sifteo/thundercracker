@@ -8,10 +8,6 @@
 
 #include <sifteo/abi.h>
 
-#ifdef USE_MOCK_CUBE
-  #define CubeSlot MockCubeSlot
-#endif
-
 class CubeSlot;
 struct PacketBuffer;
 
@@ -41,7 +37,15 @@ namespace CubeSlots {
      * individual _SYSAssetLoaderCubes.
      */
     extern _SYSAssetLoader *assetLoader;
-    
+
+    /*
+     * In simulation only: We can opt to bypass the actual asset loader, and
+     * instead decompress loadstream data directly into cube flash.
+     */
+#ifdef SIFTEO_SIMULATOR
+    extern bool simAssetLoaderBypass;
+#endif
+
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;

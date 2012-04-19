@@ -17,6 +17,9 @@ void Game::Paint() {
   if (mNeighborDirty) { CheckMapNeighbors(); }
   mPlayer.Update();
   for(Viewport& view : views) { view.Update(); }
+  //hack
+    //mTouchMask = 0xffffffff;
+  //
   if (mTouchMask) { CheckTouches(); }
   DoPaint();
   mAnimFrames++;
@@ -143,7 +146,7 @@ void Game::TeleportTo(const MapData& m, Int2 position) {
   VideoBuffer& g = view.Canvas();
 
   // todo: expose music in level editor?
-  PlayMusic(mMap.Data()->tileset == &TileSet_dungeon ? music_dungeon : music_castle);
+  PlayMusic(mMap.Data().tileset == &TileSet_cave_background ? music_dungeon : music_castle);
 
   // walk out of the in-gate
   Int2 target = mMap.GetRoom(room).Center(0);
@@ -293,7 +296,6 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
           } else {
             Paint();
           }
-          System::finish();
           view.Init(&g);
           g.setWindow(80, 48);
         }
@@ -326,9 +328,9 @@ void Game::NpcDialog(const DialogData& data, Viewport& viewport) {
 
 void Game::DescriptionDialog(const char* hdr, const char* msg, Viewport& viewport) {
   DoPaint();
-  viewport.Canvas().setWindow(80+16,128-80-16);
   Dialog view;
   view.Init(&viewport.Canvas());
+  viewport.Canvas().setWindow(80+16,128-80-16);
   view.Erase();
   if (hdr) { view.Show(hdr); }
   view.ShowAll(msg);

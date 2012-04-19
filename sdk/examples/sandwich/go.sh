@@ -1,4 +1,2 @@
 #!/bin/bash
-../../../emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator -n 3 -T -LR &
-sleep 0.1s
-../../../firmware/master/master-sim sandwichcraft.elf
+/Users/max/src/thundercracker/emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator  -n 3 -T --lock-rotation ~/src/thundercracker/sdk/examples/sandwich/sandwichcraft.elf  

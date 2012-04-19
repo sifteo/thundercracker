@@ -15,6 +15,12 @@
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
+/**
+ * @defgroup menu Menu
+ *
+ * Menu overview blurb here...
+ */
+
 #include <sifteo/menu/types.h>
 #include <sifteo/menu/util.h>
 #include <sifteo/menu/public.h>

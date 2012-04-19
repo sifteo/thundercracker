@@ -209,7 +209,14 @@ as_6:
 
         ; 7. Read Y axis high byte.
 as_7:
+        #if HWREV == 2
+        ; y axis is inverted on rev 2 hardware
+        mov     a, _W2DAT
+        cpl     a
+        mov     _accel_y, a
+        #else
         mov     _accel_y, _W2DAT
+        #endif
         mov     _accel_state, #(as_8 - as_1)
         sjmp    as_ret
 

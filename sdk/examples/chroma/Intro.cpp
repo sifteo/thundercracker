@@ -42,7 +42,7 @@ void Intro::Reset( bool ingamereset)
 }
 
 
-bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
+bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner, VideoBuffer &vid )
 {
     m_fTimer += dt;
 
@@ -63,25 +63,26 @@ bool Intro::Update( SystemTime t, TimeDelta dt, Banner &banner )
                     return false;
                 }
                 else if( Game::Inst().getMode() == Game::MODE_BLITZ )
-                    banner.SetMessage( "60 seconds", READYSETGO_BANNER_TIME );
+                    banner.SetMessage( vid, "60 seconds", READYSETGO_BANNER_TIME );
                 else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
                 {
                     Game::Inst().setState( Game::STATE_PLAYING );
                     return false;
                 }
                 else
-                    banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
+                    banner.SetMessage( vid, "Clear the cubes!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_SET:
                 if( Game::Inst().getMode() == Game::MODE_BLITZ )
-                    banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
+                    banner.SetMessage( vid, "Ready", READYSETGO_BANNER_TIME );
                 else
                     return false;
                 break;
             case STATE_GO:
-                banner.SetMessage( "Go!", READYSETGO_BANNER_TIME );
+                banner.SetMessage( vid, "Go!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_CNT:
+                vid.bg1.eraseMask();
                 Game::Inst().setState( Game::STATE_PLAYING );
                 return false;
             default:
@@ -120,13 +121,13 @@ bool Intro::Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer 
                     if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
                         frame--;
 
-                    pSlot->DrawIntroFrame( vid, frame );
+                    pSlot->DrawIntroFrame( /*&Game::Inst().getChromitDrawer(), */vid, frame );
                 }
             }
             break;
         }
         default:
-            pWrapper->getBanner().Draw( bg1buffer );
+            pWrapper->getBanner().Draw( vid );
             return true;
     }
 

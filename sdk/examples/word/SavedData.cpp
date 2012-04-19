@@ -15,7 +15,8 @@ using namespace Sifteo;
  *      behavior) and design it with a proper syscall interface. But for now, we're leaking
  *      some libc code into the game :(
  */
-#include <stdlib.h>
+// #include <stdlib.h>
+#include "qsort.h"
 
 SavedData::SavedData()
 {

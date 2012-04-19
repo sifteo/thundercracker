@@ -11,10 +11,29 @@
 #define mPlayerSprite   (Parent().Canvas().sprites[3])
 #define mNpcSprite      (Parent().Canvas().sprites[4])
 #define mBlockSprite    (Parent().Canvas().sprites[5])
-  
+SpriteRef RoomView::BffSprite() { return mBffSprite; }
+SpriteRef RoomView::TriggerSprite() { return mTriggerSprite; }
+SpriteRef RoomView::EquipSprite() { return mEquipSprite; }
+SpriteRef RoomView::PlayerSprite() { return mPlayerSprite; }
+SpriteRef RoomView::NpcSprite() { return mNpcSprite; }
+SpriteRef RoomView::BlockSprite() { return mBlockSprite; }
+
 void RoomView::Init(unsigned roomId) {
   flags.locked = false;
   mRoomId = roomId;
+  mBlock = 0;
+  auto& map = gGame.GetMap();
+  auto& r = GetRoom();
+  if (!r.IsSubdivided()) {
+    // Should there be some sort of spatial hash?
+    for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
+      if (r.IsShowingBlock(pBlock)) {
+        // assuming for now that we're only showing one block per cube :/
+        mBlock = pBlock;
+        break;
+      }
+    }
+  }
   Restore();
 }
 
@@ -28,14 +47,34 @@ void RoomView::Unlock() {
   gGame.OnViewUnlocked(this);
 }
 
+void RoomView::ShowOverlay() {
+  if (flags.hideOverlay) {
+    flags.hideOverlay = false;
+    RefreshOverlay();
+  }
+}
+
+void RoomView::RefreshOverlay() {
+  auto& room = GetRoom();
+  if (room.HasOverlay() && !flags.hideOverlay) {
+    Parent().DrawRoomOverlay(room.OverlayTile(), room.OverlayBegin());
+    Parent().FlagOverlay();
+  }
+}
+
 void RoomView::HideOverlay() {
-  mCanvas.bg1.eraseMask(false);
+  if (GetRoom().HasOverlay() && !flags.hideOverlay) {
+    flags.hideOverlay = true;
+    mCanvas.bg1.erase();
+    Parent().EnqueueHackyTouches();
+    Parent().FlagOverlay(false);
+  }
 }
 
 
 void RoomView::Restore() {
   mWobbles = -1.f;
-  Map& map = gGame.GetMap();
+  auto& map = gGame.GetMap();
   flags.hideOverlay = false;
   // are we showing an items?
   mStartFrame = gGame.AnimFrame();
@@ -56,7 +95,6 @@ void RoomView::Restore() {
   }
   mCanvas.bg0.erase(BlackTile);
   DrawBackground();
-  // initialize ambient fx?
   if (map.Data().ambientType) {
     if (r.HasTrigger()) {
       mAmbient.bff.active = 0;
@@ -66,23 +104,18 @@ void RoomView::Restore() {
       mBffSprite.move(mAmbient.bff.pos.x-68, mAmbient.bff.pos.y-68);
     }
   }
-
-  mBlock = 0;
-  if (!r.IsSubdivided()) {
-    // Should there be some sort of spatial hash?
-    for(Sokoblock* pBlock = map.BlockBegin(); pBlock != map.BlockEnd(); ++pBlock) {
-      if (r.IsShowingBlock(pBlock)) {
-        // assuming for now that we're only showing one block per cube :/
-        ShowBlock(pBlock);
-        break;
-      }
-    }
+  if (mBlock && r.IsShowingBlock(mBlock)) {
+    ShowBlock(mBlock);
+  } else {
+    mBlock = 0;
   }
 }
 
 void RoomView::Update() {
   // update animated tiles (could suffer some optimization)
   const unsigned t = gGame.AnimFrame() - mStartFrame;
+
+
   for(unsigned i=0; i<flags.animTileCount; ++i) {
     const AnimTile& view = mAnimTiles[i];
     const unsigned localt = t % (view.frameCount << 2);
@@ -90,7 +123,7 @@ void RoomView::Update() {
         mCanvas.bg0.image(
           vec((view.lid%8)<<1,(view.lid>>3)<<1),
           *(gGame.GetMap().Data().tileset),
-          gGame.GetMap().Data().roomTiles[mRoomId].tiles[view.lid] + (localt>>2)
+          gGame.GetMap().GetTileId(mRoomId, view.lid) + (localt>>2)
         );
     }
   }
@@ -151,13 +184,6 @@ Room& RoomView::GetRoom() const {
 
 Int2 RoomView::Location() const {
   return gGame.GetMap().GetLocation(mRoomId);
-}
-
-void RoomView::HideOverlay(bool flag) {
-  if (flags.hideOverlay != flag) {
-    flags.hideOverlay = flag;
-    DrawBackground();
-  }
 }
 
 void RoomView::StartNod() {
@@ -321,11 +347,7 @@ void RoomView::DrawBackground() {
   Parent().DrawRoom(mRoomId);
   RefreshDoor();
   RefreshDepot();
-  auto& room = GetRoom();
-  if (room.HasOverlay()) {
-    Parent().DrawRoomOverlay(room.OverlayTile(), room.OverlayBegin());
-    Parent().FlagOverlay();
-  }
+  RefreshOverlay();
 }
 
 void RoomView::ComputeAnimatedTiles() {
@@ -334,7 +356,7 @@ void RoomView::ComputeAnimatedTiles() {
   if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
   const AnimatedTileData* pAnims = gGame.GetMap().Data().animatedTiles;
   for(unsigned lid=0; lid<64; ++lid) {
-    uint8_t tid = gGame.GetMap().Data().roomTiles[mRoomId].tiles[lid];
+    uint8_t tid = gGame.GetMap().GetTileId(mRoomId, lid);
     bool is_animated = false;
     for(unsigned i=0; i<tc; ++i) {
       if (pAnims[i].tileId == tid) {

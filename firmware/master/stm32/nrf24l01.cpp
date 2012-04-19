@@ -24,7 +24,7 @@ void NRF24L01::init() {
     irq.irqInit();
     irq.irqSetFallingEdge();
 
-    static const uint8_t radio_setup[]  = {
+    const uint8_t radio_setup[]  = {
         /* Enable nRF24L01 features */
         2, CMD_W_REGISTER | REG_FEATURE,        0x07,
         
@@ -71,7 +71,7 @@ void NRF24L01::ptxMode()
      * Setup for Primary Transmitter (PTX) mode
      */
 
-    static const uint8_t ptx_setup[]  = {
+    const uint8_t ptx_setup[]  = {
         /* Discard any packets queued in hardware */
         1, CMD_FLUSH_RX,
         1, CMD_FLUSH_TX,
@@ -110,6 +110,24 @@ void NRF24L01::ptxMode()
      */
 
     transmitPacket();
+}
+
+void NRF24L01::setTxPower(Radio::TxPower pwr)
+{
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
+    spi.transfer(0x08 | pwr);   // enforce 2Mbit/sec transfer rate
+    spi.end();
+}
+
+Radio::TxPower NRF24L01::txPower()
+{
+    spi.begin();
+    spi.transfer(CMD_R_REGISTER | REG_RF_SETUP);
+    uint8_t setup = spi.transfer(0);
+    spi.end();
+
+    return static_cast<Radio::TxPower>(setup);
 }
 
 void NRF24L01::isr()

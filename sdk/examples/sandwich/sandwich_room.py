@@ -28,13 +28,11 @@ def bit_count(mask):
 		mask >>= 1
 	return result
 
-def iswalkable(tile, x, y): 
-	if "wall" in tile.props or "obstacle" in tile.props:
-		return False
-	for obj in tile.tileset.map.objects:
-		if obj.type == "obstacle" and obj.is_overlapping(x, y):
-			return False
-	return True
+def iswalkable(tile): 
+	mask = tile.type.tileset.map.layer_dict.get("mask", None)
+	if mask is None:
+		return not ("wall" in tile.type.props or "obstacle" in tile.type.props)
+	return mask.tiles[tile.idx] is None
 	
 
 class Room:
@@ -107,7 +105,7 @@ class Room:
 		# bombs
 		self.can_bomb = [ False, False, False, False ]
 		for x,y in product(range(0,8), range(0,8)):
-			if "crack" in self.tileat(x,y).props:
+			if "crack" in self.tileat(x,y).type.props:
 				# determine side
 				if x == 0 and (y > 2 and y < 7): self.can_bomb[LEFT] = True
 				if x == 7 and (y > 2 and y < 7): self.can_bomb[RIGHT] = True
@@ -124,7 +122,7 @@ class Room:
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
-	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y), 8*self.x + x, 8*self.y + y)
+	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y))
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
 	def resolve_trigger_event_id(self):
@@ -164,7 +162,7 @@ class Room:
 		return (0,0)
 	
 	def ispath(self, x, y):
-		return "path" in self.tileat(x,y).props
+		return "path" in self.tileat(x,y).type.props
 
 	def adjust(self, x, y):
 		if self.ispath(x-1,y):
@@ -188,11 +186,11 @@ class Room:
 		if all((portal == PORTAL_OPEN for portal in self.portals)):
 			#first bridge-rows or cols
 			for y in range(8):
-				if all(("bridge" in self.tileat(x,y).props for x in range(8))):
+				if all(("bridge" in self.tileat(x,y).type.props for x in range(8))):
 					self.subdiv_type = SUBDIV_BRDG_HOR
 					self.first_bridge_row = y
 					return
-				elif all(("bridge" in self.tileat(y,x).props for x in range(8))):
+				elif all(("bridge" in self.tileat(y,x).type.props for x in range(8))):
 					self.subdiv_type = SUBDIV_BRDG_VER
 					self.first_bridge_col = y
 					return
@@ -231,10 +229,10 @@ class Room:
 			self._subdiv_visit(slots, mask, x, y-1)
 
 	def write_tiles_to(self, src):
-		src.write("    {{")
+		src.write("    ")
 		for ty,tx in product(range(8),range(8)):
-			src.write("0x%x," % self.tileat(tx,ty).lid)
-		src.write("}},\n")
+			src.write("0x%x," % self.tileat(tx,ty).type.lid)
+		src.write("\n")
 
 	def write_telem_source_to(self, src):
 		src.write("    {0x%x,0x%x,{" % self.primary_center())

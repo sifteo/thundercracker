@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Dialog.h"
 #include "DrawingHelpers.h"
-
+#include "MapHelpers.h"
 
 void Game::OnTick() {
   for(Bomb* p=mMap.BombBegin(); p!=mMap.BombEnd(); ++p) {
@@ -14,8 +14,10 @@ void Game::OnTick() {
 
 void Game::OnActiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
-  if (pRoom->HasGateway() && !pRoom->OnEdge()) {
-    OnEnterGateway(pRoom->Gateway());
+  if (pRoom->HasGateway()) {
+    if (pRoom->Gateway().noEdge || !pRoom->OnEdge()) {
+      OnEnterGateway(pRoom->Gateway());
+    }
   } else if (pRoom->HasNPC()) {
     const auto& npc = pRoom->NPC();
     if (npc.optional) { OnNpcChatter(npc); }
@@ -39,10 +41,13 @@ unsigned Game::OnPassiveTrigger() {
 }
 
 void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
+  RoomView* view;
+  bool wasLocked = false;
   if (bomb.Item() == mPlayer.Equipment()) {
     mPlayer.CurrentView()->GetRoom().BombThisFucker();
     mPlayer.SetEquipment(0);
-    mPlayer.CurrentView()->HideEquip();
+    view = mPlayer.CurrentView();
+    view->HideEquip();
   } else {
     auto p = ListLockedViews();
     while(p.MoveNext()) {
@@ -50,14 +55,49 @@ void Game::OnYesOhMyGodExplosion(Bomb& bomb) {
       if (room.HasItem() && (&room.Item() == bomb.Item())) {
         room.ClearTrigger();
         room.BombThisFucker();
-        p->GetRoomView().Unlock();
-        p->GetRoomView().HideItem();
+        view = &(p->GetRoomView());
+        view->Unlock();
+        view->HideItem();
         break;
       }
     }
   }
-
-  //for(;;) DoPaint();
+  auto& g = view->Parent().Canvas();
+  view->HideOverlay();
+  view->Parent().HideSprites();
+  // flash white
+  g.bg1.fillMask(vec(40,40)>>3, Explosion.tileSize());
+  unsigned ef = 0;
+  for(int rt=7, rb=8; rt>=0||rb<16; --rt, ++rb) {
+    if (rt>=0) { g.bg0.span(vec(0, rt), 16, WhiteTile.tile(0)); }
+    if (rb<16) { g.bg0.span(vec(0, rb), 16, WhiteTile); }
+    if (ef%3 == 0) { g.bg1.image(vec(40,40)>>3, Explosion, ef/3); }
+    ++ef;
+    DoPaint();
+  }
+  // repaint room and quake
+  view->Parent().DrawRoom(view->Id());
+  auto deadline = SystemTime::now() + 2.333f;
+  while(deadline.inFuture()) {
+    float t = deadline - SystemTime::now();
+    g.bg0.setPanning(vec(
+      5.f * t * cos(16.f * t),
+      5.f * t * sin(16.f * 2.1f*t)
+    ));
+    if (ef%3 == 0) {
+      auto frm = ef/3;
+      if (frm == Explosion.numFrames()) {
+        g.bg1.erase();
+      } else if (frm < Explosion.numFrames()) {
+        g.bg1.image(vec(40,40)>>3, Explosion, frm);
+      }
+    }
+    ++ef;
+    DoPaint();
+  }
+  view->Restore();
+  DoWait(1.f);
+  CheckMapNeighbors();
 }
 
 void Game::OnToggleSwitch(const SwitchData& pSwitch) {

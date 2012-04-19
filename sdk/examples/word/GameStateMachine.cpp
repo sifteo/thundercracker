@@ -596,7 +596,7 @@ void GameStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
     EventData data;
     data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
-    LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
+//     LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldStateIndex);
     onEvent(EventID_GameStateChanged, data);

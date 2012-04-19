@@ -27,11 +27,12 @@ private:
     	unsigned currTouch	: 1;
     	unsigned prevTouch	: 1;
     	unsigned hasOverlay : 1;
+    	unsigned touchHack	: 2;
   	} mFlags;
   	VideoBuffer mCanvas;
 
-public:
 
+public:
 	VideoBuffer& Canvas() { return mCanvas; }
 	CubeID GetID() const { return mCanvas.cube(); }
 	unsigned GetMask() const { return 1 << (31-GetID()); }
@@ -57,7 +58,8 @@ public:
 	bool ShowLocation(Int2 location, bool force);
 	bool HideLocation();
 
-	void FlagOverlay() { mFlags.hasOverlay = true; }
+	void FlagOverlay(bool flag=true) { mFlags.hasOverlay = flag; }
+	void EnqueueHackyTouches() { mFlags.touchHack = 2; }
 	void RestoreCanonicalVideo();
 	void RefreshInventory();
 
@@ -65,11 +67,10 @@ public:
 	Viewport* VirtualNeighborAt(Side side) const;
 
 	// Helper Methods
-	void DrawRoom(int roomId);
+	void HideSprites();
+	void DrawRoom(unsigned roomId);
 	void DrawRoomOverlay(unsigned tid, const uint8_t *pRle);
 	void DrawOffsetMap(Int2 pos);
-
-
 
 private:
 	bool SetLocationView(unsigned roomId, Side side, bool force);
@@ -83,7 +84,6 @@ public:
 		friend class Game;
 		unsigned mask;
 		unsigned currentId;
-
 		Iterator(unsigned setMask) : mask(setMask) {}
 		Iterator() : mask(0x0), currentId(32) {}
 
@@ -94,18 +94,15 @@ public:
 			mask ^= (0x80000000 >> currentId);
 			return currentId < 32;
 		}
-
+		operator Viewport*();
 		bool operator==(const Iterator& i) { return currentId == i.currentId; }
 		bool operator!=(const Iterator& i) { return currentId != i.currentId; }
-
 		Viewport& operator*();
 		Viewport* operator->();
 		Iterator operator++() { 
 			MoveNext();
 			return *this;
  		}
-
-		operator Viewport*();
 	};
 };
 

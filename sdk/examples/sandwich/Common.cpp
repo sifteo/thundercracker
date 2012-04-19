@@ -2,6 +2,14 @@
 
 Random gRandom;
 
+#if SFX_ON
+AudioChannel gChannelSfx(1);
+#endif
+#if MUSIC_ON
+AudioChannel gChannelMusic(0);
+#endif
+
+
 Side InferDirection(Int2 u) {
 	if (u.x > 0) {
 		return RIGHT;
@@ -51,6 +59,6 @@ void PlayMusic(const AssetAudio& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
-  gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
+  gChannelMusic.play(music, loop ? AudioChannel::REPEAT : AudioChannel::ONCE);
 }
 #endif

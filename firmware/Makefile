@@ -1,13 +1,19 @@
-TARGETS := master
+# Default build is determined by environment vars
+ifneq ($(BUILD_STM32),)
+	TARGETS := master
+endif
 ifneq ($(BUILD_8051),)
-	TARGETS += cube.hex
+	TARGETS += cube
 endif
 
-all: $(TARGETS)
+default: $(TARGETS)
 
-.PHONY: all clean $(TARGETS)
+# Explicitly build everything
+all: master cube
 
-cube.hex:
+.PHONY: default all clean cube master
+
+cube:
 	@make -C cube
 
 master:

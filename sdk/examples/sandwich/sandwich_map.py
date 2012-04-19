@@ -3,6 +3,7 @@ from sandwich_room import *
 from sandwich_item import *
 from sandwich_trigger import *
 from itertools import product
+from sys import stdout
 
 class MapDatabase:
 	def __init__(self, world, path):
@@ -100,7 +101,7 @@ class Map:
 	def __init__(self, db, xml):
 		world = db.world
 		path = posixpath.join(world.dir, xml.get("id")+".tmx")
-		print "Reading Map: ", path
+		stdout.write("Reading Map: " + path)
 		self.world = world
 		self.id = posixpath.basename(path)[:-4].lower()
 		self.readable_name = xml.findtext("name")
@@ -109,16 +110,13 @@ class Map:
 		self.height = self.raw.ph / 128
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
-		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
-		
+		self.wide_tiles = self.background.gettileset().count > 256
+		print " ...16-bit" if self.wide_tiles else " ...8-bit"
 		# validate tiles
-		for lid,tid in enumerate(self.background.tiles):
-			tile = self.raw.gettile(tid)
-			x = lid % self.width
-			y = lid / self.width
+		for tile in self.background.tiles:
 			assert tile is not None, path + " has an undefined tile in the background"
-			if "bridge" in tile.props: 
-				assert iswalkable(tile, x, y), "unwalkable bridge tile detected in map: " + self.id
+			if "bridge" in tile.type.props: 
+				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
 
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
@@ -194,7 +192,7 @@ class Map:
 		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
 		# validate animated tile capacity (max 4 per room)
 		for r in self.rooms:
-			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
+			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).type.props]) <= 4, "too many tiles in room in map: " + self.id
 		# unpack triggers
 		for obj in self.raw.objects:
 			if obj.type in KEYWORD_TO_TRIGGER_TYPE:
@@ -372,7 +370,7 @@ class Map:
 					if emptycount > 0:
 						src.write("0xff,0x%x," % emptycount)
 						emptycount = 0
-					src.write("0x%x, " % t.lid)
+					src.write("0x%x, " % t.type.lid)
 				else:
 					emptycount += 1
 			while emptycount >= 0xff:
@@ -408,7 +406,10 @@ class Map:
 		src.write("};\n")
 
 		### EXPORT ROOM TILES ###
-		src.write("static const RoomTileData %s_tiles[] = {\n" % self.id)
+		if self.wide_tiles:
+			src.write("static const uint16_t %s_tiles[] = {\n" % self.id)
+		else:
+			src.write("static const uint8_t %s_tiles[] = {\n" % self.id)
 		for y,x in product(range(self.height), range(self.width)):
 			self.roomat(x,y).write_tiles_to(src)
 		src.write("};\n")
@@ -420,7 +421,7 @@ class Map:
 			"&TileSet_%(bg)s, " \
 			"%(overlay)s, " \
 			"%(name)s_rooms, " \
-			"%(name)s_tiles, " \
+			"(void*)%(name)s_tiles, " \
 			"%(overlay_rle)s, " \
 			"%(name)s_xportals, " \
 			"%(name)s_yportals, " \
@@ -440,6 +441,7 @@ class Map:
 			"%(bombables)s," \
 			"0x%(nanimtiles)x, " \
 			"0x%(ambient)x, " \
+			"0x%(tile_type)x," \
 			"0x%(w)x, " \
 			"0x%(h)x },\n" % \
 			{ 
@@ -465,14 +467,13 @@ class Map:
 				"nanimtiles": len(self.animatedtiles),
 				"sokoblocks": self.id + "_sokoblocks" if len(self.sokoblocks) > 0 else "0",
 				"lavatiles": self.id + "_lavatiles" if len(self.lava_tiles) > 0 else "0",
-				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0"
+				"bombables": self.id + "_bombables" if len(self.bombables) > 0 else "0",
+				"tile_type": 1 if self.wide_tiles else 0
 			})
 
 
 def portal_type(tile):
-	if "door" in tile.props:
+	if "door" in tile.type.props:
 		return PORTAL_DOOR
-	elif "wall" in tile.props or "obstacle" in tile.props:
-		return PORTAL_WALL
-	else:
-		return PORTAL_OPEN
+	return PORTAL_OPEN if iswalkable(tile) else PORTAL_WALL
+

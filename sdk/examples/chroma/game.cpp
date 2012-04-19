@@ -46,12 +46,13 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 void Game::Init()
 {
 #if LOAD_ASSETS
-    ScopedAssetLoader loader;
+//    ScopedAssetLoader loader;
 
-    VideoBuffer vids[NUM_CUBES];
+//    VideoBuffer vids[NUM_CUBES];
 
-    AssetSlot MySlot = AssetSlot::allocate();
+    static AssetSlot MySlot = AssetSlot::allocate().bootstrap(GameAssets);
 
+#if 0
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         vids[i].attach(i);
@@ -69,6 +70,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
+#endif
  #endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
@@ -94,7 +96,7 @@ void Game::Init()
     //TODO READ THIS FROM SAVE FILE
     //if save file doesn't exist, create and initialize it
     m_savedata.Load();
-    m_savedata.furthestProgress = 30;
+    //m_savedata.furthestProgress = 30;
     m_iChapterViewed = 0;
 }
 
@@ -210,6 +212,8 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Draw();
 
+    //m_chromitDrawer.drawAll();
+
     //always finishing works
     //System::finish();
 /*#if !SLOW_MODE
@@ -249,6 +253,8 @@ void Game::Reset(  bool bInGame )
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
+
+    //m_chromitDrawer.Reset();
 
     //m_bHyperDotMatched = false;
 
@@ -441,13 +447,6 @@ void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
                         playSound(clear1);
                 }
             }
-
-            /*if( m_mode == MODE_BLITZ && !bannered )
-            {
-                String<16> aBuf;
-                aBuf << comboScore;
-                pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
-            }*/
 
             if( m_mode == MODE_BLITZ )
             {
@@ -930,7 +929,7 @@ void Game::EndGame()
     {
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
+            m_cubes[i].getBanner().SetMessage( m_cubes[i].GetVid(), "NO MORE MATCHES", 3.5f );
         }
     }
 

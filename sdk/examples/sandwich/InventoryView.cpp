@@ -48,7 +48,6 @@ void InventoryView::Update() {
 			}
 			CORO_YIELD;
 		} while(!touch);
-		System::finish();
 		CORO_YIELD;
 		{
 			uint8_t items[16];
@@ -68,7 +67,6 @@ void InventoryView::Update() {
 		while(Parent().GetID().isTouching()) {
 			CORO_YIELD;	
 		}
-		System::finish();
 		Parent().Restore();
 		mAccum.set(0,0);
 		CORO_YIELD;

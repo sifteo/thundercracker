@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <glfw.h>
+#include "tinythread.h"
 
 
 class VirtualTime {
@@ -227,6 +228,10 @@ class TickDeadline {
         ticks = MIN(latest, ticks);
     }
 
+    void resetTo(uint64_t latest) {
+        ticks = latest;
+    }
+
     uint64_t setRelative(uint64_t diff) {
         uint64_t absolute = vtime->clocks + diff;
         set(absolute);
@@ -282,6 +287,105 @@ private:
     uint32_t counter;
     float hz;
 };
-   
+
+
+/**
+ * Provide a way for a VirtualTime-based thread to rally at specific
+ * deadlines set by some other external thread. During one of these
+ * synchronization events, both threads run synchronously. As soon as the
+ * event ends, both threads may resume running. The VirtualTime-based thread
+ * can run up until the next deadline.
+ */
+class DeadlineSynchronizer {
+public:
+    
+    /**
+     * Initialize the simulation thread, and bind this synchronizer to a clock.
+     */
+    void init(const VirtualTime *vtime)
+    {
+        mThreadWaiting = false;
+        mInEvent = false;
+        mDeadline.init(vtime);
+        
+        // Don't run at all until we get our first deadline.
+        mDeadline.resetTo(0);
+    }
+
+    /**
+     * Begin an event that's synchronized with thread execution.
+     * Sets 'deadline' as the next halt point, and waits for the thread
+     * to halt. Note that the cubes may halt prior to the stated
+     * deadline, in the event that they were already waiting when
+     * beginEvent() was called.
+     */
+    void beginEvent(uint64_t deadline)
+    {
+        ASSERT(!mInEvent);
+        mMutex.lock();
+        mDeadline.resetTo(deadline);
+        mInEvent = true;
+
+        while (!mThreadWaiting) {
+            mCond.notify_all();
+            mCond.wait(mMutex);
+        }
+    }
+
+    /**
+     * End an event, resume thread execution.
+     * Let it get as far as 'nextDeadline' without stopping.
+     */
+    void endEvent(uint64_t nextDeadline)
+    {
+        ASSERT(mThreadWaiting);
+        ASSERT(mInEvent);
+        mDeadline.resetTo(nextDeadline);
+
+        mThreadWaiting = false;
+        mCond.notify_all();
+        mInEvent = false;
+        mMutex.unlock();
+    }
+
+    /**
+     * Tick handler for the simulation thread
+     */
+    ALWAYS_INLINE void tick()
+    {
+        if (mDeadline.hasPassed())
+            deadlineWork();
+    }
+    
+    /**
+     * Remaining ticks before the deadline
+     */
+    ALWAYS_INLINE uint64_t remaining()
+    {
+        return mDeadline.remaining();
+    }
+    
+private:
+    NEVER_INLINE void deadlineWork()
+    {
+        tthread::lock_guard<tthread::mutex> guard(mMutex);
+        mThreadWaiting = true;
+        while (mThreadWaiting) {
+            mCond.notify_all();
+            mCond.wait(mMutex);
+        }
+    }
+
+    TickDeadline mDeadline;
+    tthread::mutex mMutex;
+    tthread::condition_variable mCond;
+
+    // Set to 'true' by tick thread, 'false' by external thread
+    bool mThreadWaiting;
+    
+    // Between begin and end? For ASSERTs only.
+    bool mInEvent;
+};
+
 
 #endif

@@ -244,8 +244,10 @@ void CPPSourceWriter::writeImage(const Image &image)
         indent << "/* height   */ " << height << ",\n" <<
         indent << "/* frames   */ " << grids.size() << ",\n";
 
+    bool autoFormat = !(image.isPinned() || image.isFlat());
     bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
-    if (image.isPinned() || isSingleTile) {
+
+    if (image.isPinned() || (autoFormat && isSingleTile)) {
         mStream <<
             indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
             indent << "/* reserved */ 0,\n" <<
@@ -253,8 +255,8 @@ void CPPSourceWriter::writeImage(const Image &image)
         return;
     }
     
-    // If we aren't explicitly writing a Flat asset, try to compress it
-    if (!image.isFlat()) {
+    // Try to compress the asset, if it isn't explicitly flat.
+    if (autoFormat) {
         std::vector<uint16_t> data;
         std::string format;
         if (image.encodeDUB(data, mLog, format)) {

@@ -48,6 +48,7 @@ public:
 		STATE_PLAYING,
 		STATE_EMPTY,
         STATE_REFILL,
+        STATE_CNT,
 	} CubeState;
 
     typedef struct
@@ -64,6 +65,14 @@ public:
 
     void Init();
 	void Reset();
+
+    //draw callbacks, one for STATE_PLAYING, and one for the rest of the states
+    void DrawUI();
+    void DrawPlaying() __attribute__ ((noinline));
+    void DrawInPlay() __attribute__ ((noinline));
+    void DrawEmpty() __attribute__ ((noinline));
+    void DrawRefill() __attribute__ ((noinline));
+
     void Draw() __attribute__ ((noinline));
     void Update(SystemTime t, TimeDelta dt) __attribute__ ((noinline));
 	void Tilt( int dir );
@@ -136,7 +145,7 @@ public:
     void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
-    inline void setNeedFlush() { m_queuedFlush = true; }
+    inline void setNeedFlush( bool bNeedFinish ) { m_queuedFlush = true; m_needFinish = bNeedFinish; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
@@ -169,6 +178,10 @@ private:
     bool HasFloatingDots() const;
     void fillPuzzleCube();    
     void DrawGrid() __attribute__ ((noinline));
+
+    //special drawing unique to modes
+    bool DrawPuzzleModeStuff() __attribute__ ((noinline));
+    void DrawBlitzModeStuff() __attribute__ ((noinline));
 
     CubeID m_cube;
     VideoBuffer m_vid;
@@ -210,6 +223,8 @@ private:
     bool m_queuedFlush;
     //TODO, need to start using this for other screens
     bool m_dirty;
+    //we know our mask changed, force a finish
+    bool m_needFinish;
 
     //allow up to 4 rock explosions simultaneously
     RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
