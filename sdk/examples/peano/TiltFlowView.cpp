@@ -107,9 +107,10 @@ void TiltFlowView::PaintFooter(TotalsCube *c) {
 void TiltFlowView::PaintInner(TotalsCube *c) {    
     if(menu->IsDone())
     {
+        System::finish();
+        GetCube()->vid.bg0.setPanning(vec(0,0));
         GetCube()->FillArea(&Dark_Purple, vec(0,0), vec(18,18));
         GetCube()->Image(*menu->GetItem(mItem)->GetImage(), vec(3, 1), 0);
-        GetCube()->vid.bg0.setPanning(vec(0,0));
         return;
     }
     //left edge of center item
