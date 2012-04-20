@@ -8708,7 +8708,7 @@ static int FASTCALL sbt_block_14d3(em8051 *aCPU)
 	clk += Opcodes::mov_mem_mem         (aCPU, pc, 0x85,0x60,0x5e);
 	clk += Opcodes::mov_mem_mem         (aCPU, pc, 0x85,0x61,0x5f);
 	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0x5d,0x12);
-	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xcc,0xd0);
+	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xcc,0xf3);
 	clk += Opcodes::setb_bitaddr        (aCPU, pc, 0xd2,0xc8,0x00);
 	aCPU->mPC = pc & PC_MASK;
 	return clk;
@@ -9465,7 +9465,7 @@ static int FASTCALL sbt_block_169e(em8051 *aCPU)
 	clk += Opcodes::orl_mem_imm         (aCPU, pc, 0x43,0xb9,0x08);
 	clk += Opcodes::setb_bitaddr        (aCPU, pc, 0xd2,0xab,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xcb,0xff);
-	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xca,0xd0);
+	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xca,0xf3);
 	clk += Opcodes::orl_mem_imm         (aCPU, pc, 0x43,0xc8,0x10);
 	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0xcd,0xff);
 	clk += Opcodes::orl_mem_imm         (aCPU, pc, 0x43,0xa9,0x20);
