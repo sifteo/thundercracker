@@ -45,8 +45,9 @@ FIRMWARE_INC = $(TC_DIR)/firmware/include
 SYS_INC = $(TC_DIR)/sdk/include
 CFLAGS += -DNOT_USERSPACE
 
-# Note that -O4 is link-time optimization on Mac OS.
-FLAGS += -O4 -g
+# XXX: We'd like to use -O4 (link-time optimization) but bibble
+#      seems to be unable to link its own .o files when LTO is enabled...
+FLAGS += -O3 -g
 
 CFLAGS += $(FLAGS) -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
 LDFLAGS += $(FLAGS) -lm -lstdc++
