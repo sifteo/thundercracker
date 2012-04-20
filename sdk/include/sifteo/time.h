@@ -136,8 +136,8 @@ public:
 
     operator float() const { return seconds(); }
     operator double() const { return seconds(); }
-    TimeDelta operator+= (TimeDelta b) { mMilli += b.mMilli; return *this; };
-    TimeDelta operator-= (TimeDelta b) { mMilli -= b.mMilli; return *this; };
+    TimeDelta operator+= (TimeDelta b) { mMilli += b.mMilli; return *this; }
+    TimeDelta operator-= (TimeDelta b) { mMilli -= b.mMilli; return *this; }
 
 private:
     friend class SystemTime;

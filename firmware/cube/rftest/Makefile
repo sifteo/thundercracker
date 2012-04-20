@@ -1,8 +1,8 @@
 BIN = rftest-cube.hex
 OBJS = main.rel
         
-FIRMWARE_INC = ../include
-SDK_DIR = ../../sdk
+FIRMWARE_INC = ../../include
+SDK_DIR = ../../../sdk
 
 SDCC = sdcc
 CDEPS = $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
