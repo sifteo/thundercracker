@@ -42,7 +42,6 @@ public:
     
     // Drawing
     void DrawClear();
-    void DrawFlush();
     
     void DrawBuddy();
     
@@ -113,6 +112,7 @@ private:
     
     Sifteo::VideoBuffer mVideoBuffer;
     Sifteo::CubeID mCubeId;
+    Sifteo::BG1Mask mBg1Mask;
     
     bool mEnabled;
     BuddyId mBuddyId;

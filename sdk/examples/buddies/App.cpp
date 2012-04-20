@@ -267,7 +267,6 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
             ASSERT(iLine < numLines);
             ASSERT(iChar < numChar);
             lines[iLine][iChar] = '\0';
-            
             ++iLine;
             iChar = 0;
         }
@@ -275,18 +274,17 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
         {
             ASSERT(iLine < numLines);
             ASSERT(iChar < numChar);
-            lines[iLine][iChar++] = buffer[i];
-            
-            if (i == (buffer.size() - 1))
-            {
-                ASSERT(iLine < numLines);
-                ASSERT(iChar < numChar);
-                lines[iLine][iChar] = '\0';
-            }
+            lines[iLine][iChar] = buffer[i];
+            ++iChar;
         }
     }
     
-    return iLine + 1;
+    ASSERT(iLine < numLines);
+    ASSERT(iChar < numChar);
+    lines[iLine][iChar] = '\0';
+    ++iLine;
+    
+    return iLine;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,12 +400,12 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, uns
     cubeWrapper.DrawUiText(vec(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
     
     String<32> bufferTitle;
-    bufferTitle << "\"" << GetPuzzle(bookIndex, puzzleIndex).GetTitle() << "\"";
+    bufferTitle << GetPuzzle(bookIndex, puzzleIndex).GetTitle();
     
     char lines[2][16];
     int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), bufferTitle.c_str());
     
-    for (int i = 0; i <= numLines; ++i)
+    for (int i = 0; i < numLines; ++i)
     {
         String<16> s;
         s << lines[i];
@@ -437,7 +435,7 @@ void DrawStoryClue(
     char lines[5][16];
     int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), text);
     
-    for (int i = 0; i <= numLines; ++i)
+    for (int i = 0; i < numLines; ++i)
     {
         String<16> s;
         s << lines[i];
@@ -595,6 +593,8 @@ void DrawStoryCutscene(
             }
         }
     }
+    
+    cubeWrapper.GetVideoBuffer().touch();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1471,7 +1471,6 @@ void App::UpdateMenuMain()
                         mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
                         mCubeWrappers[i].DrawUiAsset(vec(0, 0), LabelEmpty);
                         mCubeWrappers[i].DrawUiAsset(vec(0, 14), Footer);
-                        mCubeWrappers[i].DrawFlush();
                     }
                 }
                 break;
@@ -1615,7 +1614,6 @@ void App::UpdateMenuStory()
                         mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
                         mCubeWrappers[i].DrawUiAsset(vec(0, 0), LabelEmpty);
                         mCubeWrappers[i].DrawUiAsset(vec(0, 14), Footer);
-                        mCubeWrappers[i].DrawFlush();
                     }
                 }
                 break;
@@ -3061,7 +3059,6 @@ void App::DrawGameState()
         {
             mCubeWrappers[i].DrawClear();
             DrawGameStateCube(mCubeWrappers[i]);
-            mCubeWrappers[i].DrawFlush();
         }
     }
 }

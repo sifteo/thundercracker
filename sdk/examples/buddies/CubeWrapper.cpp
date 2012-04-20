@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "CubeWrapper.h"
+#include <sifteo/string.h>
 #include "Config.h"
 #include "assets.gen.h"
 
@@ -89,6 +90,46 @@ const Int2 kPartPositions[NUM_SIDES] =
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void GetTextSize(const char *text, int &numLines, int &maxLength)
+{
+    ASSERT(text != NULL);
+    
+    numLines = 0;
+    maxLength = 0;
+    
+    String<128> buffer;
+    buffer << text;
+    
+    int length = 0;
+    
+    for (int i = 0; i < buffer.size(); ++i)
+    {
+        if (buffer[i] == '\n')
+        {
+            if (length > maxLength)
+            {
+                maxLength = length;
+            }
+            length = 0;
+            ++numLines;
+        }
+        else
+        {
+            ++length;
+        }
+    }
+    
+    if (length > maxLength)
+    {
+        maxLength = length;
+    }
+    length = 0;
+    ++numLines;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,6 +138,7 @@ const Int2 kPartPositions[NUM_SIDES] =
 CubeWrapper::CubeWrapper()
     : mVideoBuffer()
     , mCubeId(0)
+    , mBg1Mask(BG1Mask::empty())
     , mEnabled(false)
     , mBuddyId(BUDDY_GLUV)
     , mPieces()
@@ -169,26 +211,10 @@ bool CubeWrapper::Update(float dt)
 void CubeWrapper::DrawClear()
 {
     mVideoBuffer.initMode(BG0_SPR_BG1);
-    mVideoBuffer.bg0.setPanning(vec(0, 0));
-    mVideoBuffer.bg1.setPanning(vec(0, 0));
-    
-    for (int i = 0; i < SpriteLayer::NUM_SPRITES; ++i)
-    {
-        mVideoBuffer.sprites[i].hide();
-    }
-    
-    // TODO: BG1 refactor
-    //mBg1Helper.Clear();
-    //mBg1Helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawFlush()
-{
-    // TODO: BG1 refactor
-    //mBg1Helper.Flush();
+    mVideoBuffer.bg0.erase();
+    mVideoBuffer.bg1.erase();
+    mVideoBuffer.sprites.erase();
+    mBg1Mask.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,8 +323,9 @@ void CubeWrapper::DrawUiAsset(
     Int2 position,
     const AssetImage &asset, unsigned int assetFrame)
 {
-    // TODO: BG1 refactor
-    //mBg1Helper.DrawAsset(position, asset, assetFrame);
+    mBg1Mask.fill(position, asset.tileSize());
+    mVideoBuffer.bg1.setMask(mBg1Mask);
+    mVideoBuffer.bg1.image(position, asset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,8 +337,9 @@ void CubeWrapper::DrawUiAssetPartial(
     Sifteo::Int2 size,
     const Sifteo::AssetImage &asset, unsigned int assetFrame)
 {
-    // TODO: BG1 refactor
-    //mBg1Helper.DrawPartialAsset(position, offset, size, asset, assetFrame);
+    mBg1Mask.fill(position, size);
+    mVideoBuffer.bg1.setMask(mBg1Mask);
+    mVideoBuffer.bg1.image(position, size, asset, offset, assetFrame);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,8 +351,14 @@ void CubeWrapper::DrawUiText(
     const char *text)
 {
     ASSERT(text != NULL);
-    // TODO: BG1 refactor
-    //mBg1Helper.DrawText(position, assetFont, text);
+    
+    int numLines = 0;
+    int maxLength = 0;
+    GetTextSize(text, numLines, maxLength);
+    
+    mBg1Mask.fill(position, vec(maxLength, 2 * numLines));
+    mVideoBuffer.bg1.setMask(mBg1Mask);
+    mVideoBuffer.bg1.text(position, assetFont, text);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -332,8 +366,7 @@ void CubeWrapper::DrawUiText(
 
 void CubeWrapper::ScrollUi(Int2 position)
 {
-    // TODO: BG1 refactor
-    //mVideoBuffer.BG1_setPanning(position);
+    mVideoBuffer.bg1.setPanning(position);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
