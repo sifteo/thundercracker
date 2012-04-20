@@ -200,11 +200,10 @@ int main(int argc, char **argv)
         }
         
         if (!strcmp(arg, "--stdout") && argv[c+1]) {
-            if( !freopen( argv[c+1], "w", stdout ) ) {
-                message("Error: opening file %s for write)", argv[c+1]);
+            if(!freopen(argv[c+1], "w", stdout)) {
+                message("Error: opening file %s for write", argv[c+1]);
                 return 1;
             }
-
             c++;
             continue;
         }
