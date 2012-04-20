@@ -30,6 +30,9 @@ bool System::init()
     if (mIsInitialized)
         return true;
 
+    if (!flash.init(opt_flashFilename.empty() ? NULL : opt_flashFilename.c_str()))
+        return false;
+
     if (!sc.init(this))
         return false;
 
@@ -97,5 +100,6 @@ void System::exit()
 
     smc.exit();
     sc.exit();
+    flash.exit();
     tracer.close();
 }

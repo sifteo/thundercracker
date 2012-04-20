@@ -12,9 +12,8 @@
 
 namespace Cube {
 
-bool Hardware::init(VirtualTime *masterTimer,
-                    const char *firmwareFile, const char *flashFile,
-                    bool wakeFromSleep)
+bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
+    FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep)
 {
     time = masterTimer;
     hwDeadline.init(time);
@@ -47,12 +46,7 @@ bool Hardware::init(VirtualTime *masterTimer,
         CPU::em8051_init_sbt(&cpu);
     }
 
-    if (!flashStorage.init(flashFile)) {
-        fprintf(stderr, "Error: Failed to initialize flash memory\n");
-        return false;
-    }
-    
-    flash.init(&flashStorage);
+    flash.init(flashStorage);
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
@@ -73,11 +67,6 @@ bool Hardware::init(VirtualTime *masterTimer,
 void Hardware::reset()
 {
     CPU::em8051_reset(&cpu, false);
-}
-
-void Hardware::exit()
-{
-    flashStorage.exit();
 }
 
 // cube_cpu_callbacks.h
@@ -106,10 +95,10 @@ int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
         except(cpu, EXCEPTION_NVM);
         return 0;
     }
-            
+
     // Program flash bits (1 -> 0)
-    self->flashStorage.data.nvm[addr] &= data;
-    self->flashStorage.asyncWrite(*self->time, &self->cpu);
+    ASSERT(addr < sizeof self->flash.getStorage()->nvm);
+    self->flash.getStorage()->nvm[addr] &= data;
     
     // Self-timed write cycles
     return 12800;
@@ -119,7 +108,9 @@ int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
 uint8_t CPU::NVM::read(CPU::em8051 *cpu, uint16_t addr)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
-    return self->flashStorage.data.nvm[addr];
+
+    ASSERT(addr < sizeof self->flash.getStorage()->nvm);
+    return self->flash.getStorage()->nvm[addr];
 }
 
 void Hardware::sfrWrite(int reg)
@@ -222,7 +213,6 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, &cpu);
     i2c.tick(hwDeadline, &cpu);
     flash.tick(hwDeadline, &cpu);
-    flashStorage.tick(hwDeadline);
     spi.radio.tick(rfcken, &cpu);
 }
 

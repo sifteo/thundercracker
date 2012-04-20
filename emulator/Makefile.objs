@@ -10,6 +10,7 @@ LOCAL_OBJS = \
     src/system_cubes.o \
     src/system_mc.o \
     src/tracer.o \
+    src/flash_storage.o \
     src/vcdwriter.o \
     src/cube_cpu_core.o \
     src/cube_cpu_disasm.o \
@@ -20,7 +21,6 @@ LOCAL_OBJS = \
     src/cube_debug_popups.o \
     src/cube_debug.o \
     src/cube_flash_model.o \
-    src/cube_flash_storage.o \
     src/cube_hardware.o \
     src/cube_neighbors.o \
     src/lsdec.o \
@@ -28,7 +28,6 @@ LOCAL_OBJS = \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
     src/mc_portaudiooutdevice.o \
-    src/mc_flashstorage.o \
     src/mc_flash.o \
     src/mc_svmcpu.o \
     src/mc_svmdebugpipe.o \

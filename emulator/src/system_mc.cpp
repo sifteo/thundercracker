@@ -26,6 +26,7 @@
 #include "mc_gdbserver.h"
 #include "cube.h"
 #include "protocol.h"
+#include "tasks.h"
 
 SystemMC *SystemMC::instance;
 
@@ -51,7 +52,6 @@ bool SystemMC::installELF(const char *path)
         }
     }
     fclose(elfFile);
-    Flash::flush();
 
     return true;
 }
@@ -59,7 +59,7 @@ bool SystemMC::installELF(const char *path)
 bool SystemMC::init(System *sys)
 {
     this->sys = sys;
-    instance = 0;
+    instance = this;
 
     Flash::init();
     FlashBlock::init();
@@ -81,7 +81,6 @@ bool SystemMC::init(System *sys)
 void SystemMC::start()
 {
     mThreadRunning = true;
-    instance = this;
     __asm__ __volatile__ ("" : : : "memory");
     mThread = new tthread::thread(threadFn, 0);
 }
@@ -116,6 +115,12 @@ void SystemMC::threadFn(void *param)
     GDBServer::start(2345);
 
     SvmLoader::run(111);
+
+    for (;;) {
+        // If SVM exits, at least let the cube simulation run...
+        Tasks::work();
+        Radio::halt();
+    }
 }
 
 SysTime::Ticks SysTime::ticks()

@@ -32,9 +32,6 @@ public:
     };
 
     static void readId(JedecID *id);
-
-    // sim only
-    static void flush();
 };
 
 #endif // FLASH_H

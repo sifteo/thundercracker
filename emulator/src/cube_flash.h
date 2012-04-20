@@ -13,8 +13,8 @@
 
 #include "vtime.h"
 #include "cube_cpu.h"
-#include "cube_flash_storage.h"
 #include "cube_flash_model.h"
+#include "flash_storage.h"
 
 namespace Cube {
 
@@ -41,7 +41,7 @@ class Flash {
         uint8_t   data_drv;   // OUT, active-high
     };
 
-    void init(FlashStorage *_storage) {
+    void init(FlashStorage::CubeRecord *_storage) {
         storage = _storage;
         
         cycle_count = 0;
@@ -58,6 +58,10 @@ class Flash {
         prev_oe = 0;
         status_byte = 0;
         previous_clocks = 0;
+    }
+
+    FlashStorage::CubeRecord *getStorage() const {
+        return storage;
     }
 
     uint32_t getCycleCount() {
@@ -111,7 +115,6 @@ class Flash {
                  */
 
                 cpu->needHardwareTick = true;
-                storage->asyncWrite(deadline);
                 
                 switch (busy) {
                 case BF_PROGRAM:
@@ -228,8 +231,7 @@ class Flash {
          * invoked more frequently (every tick) by hardware.c, in order to
          * update the flash data when data_drv is asserted.
          */
-        return busy ? status_byte :
-            storage->data.ext[latched_addr];
+        return busy ? status_byte : storage->ext[latched_addr];
     }
 
  private:
@@ -250,7 +252,9 @@ class Flash {
     }
 
     void erase(unsigned addr, unsigned size) {
-        memset(storage->data.ext + (addr & ~(size - 1)), 0xFF, size);
+        addr &= ~(size - 1);
+        ASSERT(addr + size <= sizeof storage->ext);
+        memset(storage->ext + addr, 0xFF, size);
     }
 
     void matchCommands() {
@@ -260,7 +264,7 @@ class Flash {
             return;
 
         if (matchCommand(FlashModel::cmd_byte_program)) {
-            storage->data.ext[st->addr] &= st->data;
+            storage->ext[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
             write_count++;
@@ -296,7 +300,7 @@ class Flash {
         uint8_t data;
     };
 
-    FlashStorage *storage;
+    FlashStorage::CubeRecord *storage;
 
     // For clock speed / power metrics
     uint32_t cycle_count;
