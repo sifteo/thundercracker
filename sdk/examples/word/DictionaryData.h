@@ -703,7 +703,7 @@ const static bool puzzlesScramble[] =
     true,	// ARTIFACT
     true,	// STRING
     true,	// RINGS 
-    true,	// BELONG
+    false,	// BELONG
     true,	//  CLOUD
     true,	//  FAVOR
     true,	// CAREER
@@ -716,14 +716,14 @@ const static bool puzzlesScramble[] =
     true,	// FIGHT 
     true,	// INSECT
     true,	//  SMILE
-    true,	// MIDDLE
+    false,	// MIDDLE
     true,	// TOOL
     true,	// CUSP
     true,	// SIGN
     true,	// PAST
     true,	// MOSAIC
     true,	//  RUNNY
-    true,	//  FUNNY
+    false,	//  FUNNY
     true,	//  JETTY
     true,	// UNEASY
     true,	//  KITTY
