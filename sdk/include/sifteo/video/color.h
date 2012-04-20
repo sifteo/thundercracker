@@ -96,7 +96,7 @@ struct RGB565 {
      */
     uint8_t red() const {
         /*
-         * A good approximation is (r5 << 3) | (r5 >> 2), but this
+         * A good approximation is `(r5 << 3) | (r5 >> 2)`, but this
          * is still not quite as accurate as the implementation here.
          */
         return red5() * 255 / 31;
@@ -238,7 +238,7 @@ struct Colormap {
      * on a single VideoBuffer. You don't need to store this reference
      * typically; for example:
      *
-     *   vbuf.colormap[16].set(1.f, 0.f, 0.f);
+     *     vbuf.colormap[16].set(1.f, 0.f, 0.f);
      */
     ColormapSlot operator[](unsigned index) {
         ASSERT(index < NUM_COLORS);
