@@ -9,9 +9,6 @@
 #include "cube_hardware.h"
 #include "params.h"
 
-// Combined hardware and firmware revision
-#define REVISION_CODE       (0x10 + HWREV)
-
 
 void params_init()
 {
@@ -33,7 +30,7 @@ void params_init()
 
     if (params.hwid[0] == 0xFF) {
         FSR_WEN = 1;
-        params.hwid[0] = REVISION_CODE;
+        params.hwid[0] = HWID_REVISION_CODE;
         FSR_WEN = 0;
     }
 

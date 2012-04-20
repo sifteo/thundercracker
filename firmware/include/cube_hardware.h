@@ -25,6 +25,10 @@
 #  define HWREV HWREV_DEFAULT
 #endif
 
+// Combined hardware and firmware revision.
+// Available to firmware and userspace, as part of HWID.
+#define HWID_REVISION_CODE  0x01
+
 /*
  * GPIO Ports
  */
