@@ -171,15 +171,16 @@ void Run()
     //TODO		saveData.Load();
 
     StingController::Run();
-
-    GameState nextState =
-    #if SKIP_INTRO_TUTORIAL
-        GameState_Menu;
-    #else
-        saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+    
+    GameState nextState = GameState_Menu;
+    
+    #if !SKIP_INTRO_TUTORIAL
+    if(!saveData.HasCompletedTutorial())
+    {
+        nextState = TutorialController::Run(true);   
+    }
     #endif
-
-
+    
     while(1)
     {
         switch(nextState)

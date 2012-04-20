@@ -12,7 +12,7 @@
 #define LOAD_ASSETS   	01
 
 //these should probably be 0 for release
-#define SKIP_INTRO_TUTORIAL 01
+#define SKIP_INTRO_TUTORIAL 0
 
 #define NO_TOUCH_HACK   0
 

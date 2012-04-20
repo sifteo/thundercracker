@@ -115,7 +115,7 @@ void WaitWithTokenUpdate(float delay)
 }
 
 
-Game::GameState Run() {
+Game::GameState Run(bool startPuzzleAfterwards) {
 
     const Skins::Skin &skin = Skins::GetSkin();
 
@@ -475,15 +475,23 @@ Game::GameState Run() {
     TokenGroup::ResetAllocationPool();
 
     Game::saveData.CompleteTutorial();
-    if (Game::currentPuzzle == NULL) {
-        if (!Game::saveData.AllChaptersSolved()) {
-            Game::currentPuzzle = Game::saveData.FindNextPuzzle();
-        } else {
-            Game::currentPuzzle = Database::GetPuzzleInChapter(0, 0);
+    
+    if(startPuzzleAfterwards)
+    {
+        if (Game::currentPuzzle == NULL) {
+            if (!Game::saveData.AllChaptersSolved()) {
+                Game::currentPuzzle = Game::saveData.FindNextPuzzle();
+            } else {
+                Game::currentPuzzle = Database::GetPuzzleInChapter(0, 0);
+            }
         }
-    }
 
-    return Game::GameState_Interstitial;
+        return Game::GameState_Interstitial;
+    }
+    else
+    {
+        return Game::GameState_Menu;
+    }
 
 
 }
