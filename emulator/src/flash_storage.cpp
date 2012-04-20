@@ -139,6 +139,36 @@ bool FlashStorage::mapFile(const char *filename)
 {
 #ifdef _WIN32
 
+    HANDLE fh = CreateFile(filename, GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+    if (fh == INVALID_HANDLE_VALUE) {
+        LOG(("FLASH: Can't open backing file '%s' (%08x)\n",
+            filename, (unsigned)GetLastError()));
+        return false;
+    }
+
+    fileHandle = (uintptr_t) fh;
+    bool newFile = GetFileSize(fh, NULL) == (DWORD)0;
+
+    HANDLE mh = CreateFileMapping(fh, NULL, PAGE_READWRITE, 0, sizeof *data, NULL);
+    if (mh == NULL) {
+        CloseHandle(fh);
+        LOG(("FLASH: Can't create mapping for file '%s' (%08x)\n",
+            filename, (unsigned)GetLastError()));
+        return false;
+    }
+    mappingHandle = (uintptr_t) mh;
+
+    LPVOID mapping = MapViewOfFile(mh, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, sizeof *data);
+    if (mapping == NULL) {
+        CloseHandle(mh);
+        CloseHandle(fh);
+        LOG(("FLASH: Can't map view of file '%s' (%08x)\n",
+            filename, (unsigned)GetLastError()));
+        return false;
+    }
+
 #else
 
     fileHandle = open(filename, O_RDWR | O_CREAT, 0777);
@@ -167,19 +197,24 @@ bool FlashStorage::mapFile(const char *filename)
             filename, strerror(errno)));
         return false;
     }
-    data = (FileRecord*) mapping;
 
+#endif
+
+    data = (FileRecord*) mapping;
     if (newFile)
         initData();
 
     return true;
-
-#endif
 }
 
 void FlashStorage::unmapFile()
 {
 #ifdef _WIN32
+
+    FlushViewOfFile(data, sizeof *data);
+    UnmapViewOfFile(data);
+    CloseHandle((HANDLE) mappingHandle);
+    CloseHandle((HANDLE) fileHandle);
 
 #else
 
