@@ -4,6 +4,9 @@
 
 all: $(BIN)
 
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 # On Win32, it's necessary to munge the paths in our dependency file.
 # This makefile, being unixy in nature, likes forward slashes. But
 # the Win32 build of clang, quite understandably, likes backslashes.
@@ -40,7 +43,8 @@ clean:
 
 ######## Development utility rules
 
-# These rely on tools that aren't part of the standard SDK distribution.
+# These rely on common open source tools that aren't
+# part of the standard SDK distribution.
 
 llvm-dis: $(OBJS)
 	llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
