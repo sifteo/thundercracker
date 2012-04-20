@@ -62,12 +62,13 @@ endif
 .SUFFIXES:
 
 ifeq ($(BUILD_PLATFORM), windows32)
-# We like having stripped binaries plus a separate file with
-# debug info. Do that on Win32 too.
+# Win32 Link: Stripped and packed binaries, and separate debug symbols.
+# upx doesn't like overwriting the output file - rm it in case we're not building after clean
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
 	strip -s "src/$(BIN)-d.exe" -o "src/$(BIN)-stripped.exe"
+	rm "$(BIN_DIR)/$(BIN).exe"
 	$(UPX) -o "$(BIN_DIR)/$(BIN).exe" "src/$(BIN)-stripped.exe"
 else
 # Default link
