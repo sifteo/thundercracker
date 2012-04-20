@@ -208,9 +208,10 @@ void Game::OnPickup(Room& room) {
     );
     if (gItemTypeData[item.itemId].triggerType == ITEM_TRIGGER_BOMB) {
       Bomb* p = mMap.BombFor(item);
-      ASSERT(p);
-      p->OnPickup();
-      mPlayer.CurrentView()->Unlock();
+      if (p) {
+        p->OnPickup();
+        mPlayer.CurrentView()->Unlock();
+      }
     }
   } else {
     //-----------------------------------------------------------------------
