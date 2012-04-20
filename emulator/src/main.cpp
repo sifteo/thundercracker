@@ -58,7 +58,7 @@ static void usage()
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
-            "  -file FILENAME      Redirect output to FILENAME\n"
+            "  --stdout FILENAME   Redirect output to FILENAME\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -198,6 +198,16 @@ int main(int argc, char **argv)
             sys.opt_paintTrace = true;
             continue;
         }
+        
+        if (!strcmp(arg, "--stdout") && argv[c+1]) {
+            if( !freopen( argv[c+1], "w", stdout ) ) {
+                message("Error: opening file %s for write)", argv[c+1]);
+                return 1;
+            }
+
+            c++;
+            continue;
+        }
 
         if (!strcmp(arg, "-f") && argv[c+1]) {
             sys.opt_cubeFirmware = argv[c+1];
@@ -229,16 +239,6 @@ int main(int argc, char **argv)
                 message("Error: Unsupported number of cubes (Minimum 0, maximum %d)", sys.MAX_CUBES);
                 return 1;
             }
-            c++;
-            continue;
-        }
-
-        if (!strcmp(arg, "-file") && argv[c+1]) {
-            if( !freopen( argv[c+1], "w", stdout ) ) {
-                message("Error: opening file %s for write)", argv[c+1]);
-                return 1;
-            }
-
             c++;
             continue;
         }
