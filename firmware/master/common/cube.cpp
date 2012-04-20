@@ -279,6 +279,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // This ACK includes a valid frame_count counter
 
         uint8_t delta = ack->frame_count - framePrevACK;
+        delta &= FRAME_ACK_COUNT;
         framePrevACK = ack->frame_count;
 
         if ((CubeSlots::frameACKValid & bit()) == 0) {
@@ -296,7 +297,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Two valid ACKs in a row, we can count bytes.
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
-        
+
             DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
                 id(), loadACK,
                 !!(CubeSlots::flashResetWait & bit()),
