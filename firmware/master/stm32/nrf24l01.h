@@ -16,7 +16,7 @@
 
 
 class NRF24L01 {
- public:
+public:
     NRF24L01(GPIOPin _ce,
              GPIOPin _irq,
              SPIMaster _spi)
@@ -26,6 +26,11 @@ class NRF24L01 {
 
     void init();
     void ptxMode();
+
+    void setTxPower(Radio::TxPower pwr);
+    Radio::TxPower txPower();
+
+    void setConstantCarrier(bool enabled, unsigned channel);
 
     void isr();
 

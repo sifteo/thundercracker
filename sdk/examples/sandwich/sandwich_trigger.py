@@ -86,6 +86,7 @@ class Trigger:
 			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
 			self.target_map = m.group(1).lower()
 			self.target_gate = m.group(2).lower()
+			self.no_edge = "noedge" in obj.props
 		
 		elif obj.type == "npc":
 			did = obj.props["id"].lower()
@@ -160,7 +161,7 @@ class Trigger:
 			targettype = 1
 			targetid = target_map.location_dict[self.target_gate].rid
 		x,y = self.local_position()
-		src.write(",0x%x,0x%x,0x%x,0x%x,0x%x}," % (mapid, targettype, targetid, x, y))
+		src.write(",0x%x,0x%x,0x%x,0x%x,0x%x,0x%x}," % (mapid, targettype, 1 if self.no_edge else 0, targetid, x, y))
 	
 	def write_npc_to(self, src):
 		src.write("{")

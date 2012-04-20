@@ -8,7 +8,7 @@ void Flavor::randomize()
 {
     // Always choose two different elements    
     elements[0] = Game::random.randint(FIRST_ELEMENT, LAST_ELEMENT);
-    elements[1] = Game::random.randint(FIRST_ELEMENT, LAST_ELEMENT-1);
+    elements[1] = Game::random.randrange(FIRST_ELEMENT, LAST_ELEMENT);
     if (elements[1] >= elements[0])
         elements[1]++;
         

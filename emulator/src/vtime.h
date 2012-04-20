@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <glfw.h>
+#include "tinythread.h"
 
 
 class VirtualTime {
@@ -227,6 +228,10 @@ class TickDeadline {
         ticks = MIN(latest, ticks);
     }
 
+    void resetTo(uint64_t latest) {
+        ticks = latest;
+    }
+
     uint64_t setRelative(uint64_t diff) {
         uint64_t absolute = vtime->clocks + diff;
         set(absolute);
@@ -282,6 +287,6 @@ private:
     uint32_t counter;
     float hz;
 };
-   
+
 
 #endif

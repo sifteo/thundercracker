@@ -17,13 +17,13 @@ private:
 public:
 	void Init();
 	void Restore();
-	void Update(float dt);
+	void Update();
 
 	void OnInventoryChanged();
 
 private:
 	void RenderInventory();
 	void ComputeHoveringIconPosition();
-	Cube::Side UpdateAccum();
+	Side UpdateAccum();
 	bool UpdateTouch();
 };

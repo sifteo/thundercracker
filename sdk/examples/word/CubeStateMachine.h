@@ -3,38 +3,33 @@
 
 #include <sifteo.h>
 #include "StateMachine.h"
-#include "TitleCubeState.h"
-#include "TitleExitCubeState.h"
-#include "ScoredCubeState_NotWord.h"
-#include "ScoredCubeState_NewWord.h"
-#include "ScoredCubeState_OldWord.h"
-#include "ScoredCubeState_StartOfRound.h"
-#include "ScoredCubeState_EndOfRound.h"
-#include "ScoredCubeState_Shuffle.h"
 #include "config.h"
 #include "Anim.h"
 #include "Constants.h"
 
+
 using namespace Sifteo;
+
+// TODO remove in next merge commit
+typedef Int2 Vec2;
 
 enum CubeAnim
 {
     CubeAnim_Main,
     CubeAnim_Hint,
-    CubeAnim_Border,
 
     NumCubeAnims
 };
 
+// TODO drive machine by anim state only
 class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine();
-    void setCube(Cube& cube);
-    Cube& getCube();
+    void setVideoBuffer(VideoBuffer& vidBuf);
+    CubeID getCube();
 
     virtual unsigned getNumStates() const;
-    virtual State& getState(unsigned index);
 
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
     virtual void update(float dt);
@@ -42,26 +37,18 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    unsigned getLetters(char *buffer, bool forPaint=false);
-    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
-                   VidMode_BG0_SPR_BG1 &vid,
-                    BG1Helper *bg1 = 0,
-                    const AnimParams *params = 0);*/
+    unsigned getLetters(char *buffer, bool forPaint) const;
+    unsigned getMetaLetters(char *buffer, bool forPaint) const;
+    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);
     void queueNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
-            /*VidMode_BG0_SPR_BG1 &vid,
-                                  BG1Helper *bg1 = 0,
-                                  const AnimParams *params = 0);*/
-
-    void updateAnim(VidMode_BG0_SPR_BG1 &vid,
-                     BG1Helper *bg1 = 0,
-                     AnimParams *params = 0);
+    void updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params = 0);
     AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
     unsigned findRowLength();
-    bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
-    bool hasNoNeighbors() const;
+    bool isConnectedToCubeOnSide(CubeID cubeIDStart, Side side=LEFT);
+    bool hasNoNeighbors();
     float getIdleTime() const { return mIdleTime; }
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
@@ -73,20 +60,21 @@ public:
     void startHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
     void stopHint() { queueAnim(AnimType_HintWindUpSlide, CubeAnim_Hint); }
 
+protected:
+    void setState(unsigned newStateIndex, unsigned oldStateIndex);
+
 private:
-    void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
-    AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main) const;
+    void setPanning(float panning);
+    AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
     void paint();
 
-    void paintScore(VidMode_BG0_SPR_BG1& vid,
-                    ImageIndex teethImageIndex,
-                    bool animate=false,
+    void paintScore(bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,
                     bool paintTime=false,
                     float animStartTime=0.f);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
-    void paintScoreNumbers(BG1Helper &bg1, Int2 position, const char* string);
+    void paintLetters(TileBuffer<16,16,1> &bg1TileBuf, bool paintSprites=false);
+    void paintScoreNumbers(BG1Mask &bg1,const Vec2& position, const char* string);
 
     void setLettersStart(unsigned s);
 
@@ -99,9 +87,14 @@ private:
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     char mHintSolution[MAX_LETTERS_PER_CUBE + 1];
-    Int2 mTilePositions[MAX_LETTERS_PER_CUBE];
-    unsigned mNumLetters;
-    unsigned mPuzzlePieceIndex;
+    char mMetaLetters[MAX_LETTERS_PER_CUBE + 1];
+    Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
+    unsigned char mPuzzleLettersPerCube;
+    unsigned char mPuzzlePieceIndex;
+    unsigned char mMetaPieceIndex;
+    unsigned char mMetaLettersStart;
+    unsigned char mMetaLettersStartOld;
+    unsigned char mMetaLettersPerCube;
     float mIdleTime;
     bool mNewHint;
     AnimType mAnimTypes[NumCubeAnims];
@@ -115,18 +108,13 @@ private:
     unsigned mLettersStart;
     unsigned mLettersStartOld;
 
-    ImageIndex mImageIndex;
     SpriteParams mSpriteParams;
 
-    Cube* mCube;
-    TitleCubeState mTitleState;
-    TitleExitCubeState mTitleExitState;
-    ScoredCubeState_NotWord mNotWordScoredState;
-    ScoredCubeState_NewWord mNewWordScoredState;
-    ScoredCubeState_OldWord mOldWordScoredState;
-    ScoredCubeState_StartOfRound mStartOfRoundScoredState;
-    ScoredCubeState_EndOfRound mEndOfRoundScoredState;
-    ScoredCubeState_Shuffle mShuffleScoredState;
+    VideoBuffer* mVidBuf;
+    float mShakeDelay;
+    float mPanning;
+    float mTouchHoldTime;
+    bool mTouchHoldWaitForUntouch;
 };
 
 #endif // CUBESTATEMACHINE_H

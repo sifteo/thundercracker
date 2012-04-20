@@ -309,9 +309,7 @@ LuaCube::LuaCube(lua_State *L)
 
 int LuaCube::reset(lua_State *L)
 {
-    LuaSystem::sys->stopThread();
-    LuaSystem::sys->cubes[id].reset();
-    LuaSystem::sys->startThread();
+    LuaSystem::sys->resetCube(id);
 
     return 0;
 }

@@ -22,7 +22,7 @@ class Map:
 		self.props = dict((prop.get("name"), prop.get("value")) for prop in doc.findall("properties/property"))
 
 
-	def gettile(self, gid):
+	def get_tile_type(self, gid):
 		for result in (tileset.gettile(gid) for tileset in self.tilesets):
 			if result is not None:
 				return result
@@ -41,11 +41,11 @@ class TileSet:
 		self.width = self.pw/TILE_SIZE
 		self.height = self.ph/TILE_SIZE
 		self.count = self.width * self.height
-		self.tiles = [Tile(self, lid) for lid in range(self.count)]
+		self.tiles = [TileType(self, lid) for lid in range(self.count)]
 		for node in xml.findall("tile/properties"):
 			self.tiles[int(node.getparent().get("id"))].props = \
 				dict((prop.get("name").lower(), prop.get("value")) for prop in node)
-
+	
 	def tileat(self, x, y):
 		return self.tiles[x + y * self.width]
 
@@ -55,7 +55,7 @@ class TileSet:
 			return self.tiles[lid]
 		return None
 
-class Tile:
+class TileType:
 	def __init__(self, tileset, lid):
 		self.tileset = tileset
 		self.lid = lid
@@ -63,6 +63,15 @@ class Tile:
 		self.x = lid % tileset.width
 		self.y = lid / tileset.width
 		self.props = {}
+
+class Tile:
+	def __init__(self, layer, idx, gid):
+		self.layer = layer
+		self.gid = gid
+		self.idx = idx
+		self.x = idx % layer.width
+		self.y = idx / layer.height
+		self.type = layer.map.get_tile_type(gid)
 
 class Layer:
 	def __init__(self, map, xml):
@@ -73,15 +82,20 @@ class Layer:
 		self.visible = xml.get("visible", "1") != "0"
 		self.opacity = float(xml.get("opacity", "1"))
 		# replace with csv module?  support base64?
-		self.tiles = [int(ch) for l in xml.findtext("data").strip().splitlines() for ch in l.split(',') if len(ch) > 0]
+		tile_ids = (int(ch) for l in xml.findtext("data").strip().splitlines() for ch in l.split(',') if len(ch) > 0)
+		self.tiles = [ self.maketile(i,id) for i,id in enumerate(tile_ids) ]
+
+	def maketile(self, i, gid):
+		return None if gid == 0 else Tile(self, i, gid)
 		
 	def tileat(self, x, y):
-		return self.map.gettile(self.tiles[x + y * self.width])
+		return self.tiles[x + y * self.width]
 
 	def gettileset(self):
-		for tile in (self.map.gettile(t) for t in self.tiles):
+		# assumes layer tiles are homogeneous
+		for tile in self.tiles:
 			if tile is not None:
-				return tile.tileset
+				return tile.type.tileset
 		return None
 
 class Obj:

@@ -18,9 +18,7 @@
 
 using namespace std;
 
-#define SAMPLE_RATE 16000
-
-AudioEncoder *AudioEncoder::create(std::string name, float quality, bool vbr)
+AudioEncoder *AudioEncoder::create(std::string name)
 {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
@@ -35,7 +33,7 @@ AudioEncoder *AudioEncoder::create(std::string name, float quality, bool vbr)
 
 
 void PCMEncoder::encodeFile(const std::string &path,
-    std::vector<uint8_t> &out, float &kbps)
+    std::vector<uint8_t> &out)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -50,9 +48,12 @@ void PCMEncoder::encodeFile(const std::string &path,
 
         out.insert(out.end(), &inbuf[0], &inbuf[rx]);
     }
+}
 
-    // Constant bit rate (uncompressed)
-    kbps = SAMPLE_RATE * (16.0f / 1000.0f);
+uint32_t PCMEncoder::encodeBuffer(void *buf, uint32_t bufsize)
+{
+    // buffer is already PCM!
+    return bufsize;
 }
 
 const uint16_t ADPCMEncoder::stepSizeTable[89] = {
@@ -70,7 +71,7 @@ const int8_t ADPCMEncoder::indexTable[16] = {
     0xff, 0xff, 0xff, 0xff, 2, 4, 6, 8
 };
 
-void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out, float &kbps)
+void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out)
 {
     FILE *fin = fopen(path.c_str(), "rb");
     if (fin == 0)
@@ -88,10 +89,25 @@ void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out
         out.push_back(adpcmByte);
     }
 
-    // Constant bit rate (compressed @ 1/4)
-    kbps = SAMPLE_RATE * (4.0f / 1000.0f);
-
     fclose(fin);
+}
+
+uint32_t ADPCMEncoder::encodeBuffer(void *buf, uint32_t bufsize)
+{
+    int16_t *rbuf = (int16_t *)buf;
+    uint8_t *wbuf = (uint8_t *)buf;
+    uint32_t r = 0;
+    uint32_t w = 0;
+
+    // In-place compression of samples
+    while (r < bufsize / sizeof(int16_t)) {
+        int16_t samples[2] = {rbuf[r++], 0};
+        if (r < bufsize / sizeof(int16_t)) samples[1] = rbuf[r++];
+
+        wbuf[w++] = encodeSample(samples[0]) | (encodeSample(samples[1]) << 4);
+    }
+
+    return w;
 }
 
 uint8_t ADPCMEncoder::encodeSample(int16_t sample)

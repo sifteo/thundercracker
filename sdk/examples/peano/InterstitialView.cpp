@@ -96,7 +96,7 @@ void InterstitialView::Paint()
         if (image && message[0] && GetCube()->backgroundLayer.isSpriteHidden(0))
         {
             GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
-            GetCube()->backgroundLayer.moveSprite(0, Vec2(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
+            GetCube()->backgroundLayer.moveSprite(0, vec(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
         }
     }
     else
@@ -120,25 +120,25 @@ void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
 
     if (off < 7) {
         // moving to the left
-        c->ClipImage(&skin.vault_door, Vec2(7-off, 7));
-        c->ClipImage(&skin.vault_door, Vec2(7-16-off,7));
-        c->ClipImage(&skin.vault_door, Vec2(7-off, 7-16));
-        c->ClipImage(&skin.vault_door, Vec2(7-16-off, 7-16));
+        c->ClipImage(&skin.vault_door, vec(7-off, 7));
+        c->ClipImage(&skin.vault_door, vec(7-16-off,7));
+        c->ClipImage(&skin.vault_door, vec(7-off, 7-16));
+        c->ClipImage(&skin.vault_door, vec(7-16-off, 7-16));
     } else if (off < 7+6)
     {
         // moving up
         off -= 7;
-        c->ClipImage(&skin.vault_door, Vec2(0, 7-off));
-        c->ClipImage(&skin.vault_door, Vec2(0, 7-off-16));
+        c->ClipImage(&skin.vault_door, vec(0, 7-off));
+        c->ClipImage(&skin.vault_door, vec(0, 7-off-16));
     } else {
         // opening
         off -= (7 + 6);
         if (!backwards && off > 0)
         {
-            c->FillArea(&Dark_Purple, Vec2(0, 1), Vec2(16, off));
+            c->FillArea(&Dark_Purple, vec(0, 1), vec(16, off));
         }
-        c->ClipImage(&skin.vault_door, Vec2(0, 1-16));
-        c->ClipImage(&skin.vault_door, Vec2(0, 1+off));
+        c->ClipImage(&skin.vault_door, vec(0, 1-16));
+        c->ClipImage(&skin.vault_door, vec(0, 1+off));
     }
 }
 

@@ -1,9 +1,11 @@
-# we expect $(TC_DIR)/sdk/Makefile.defs has already been included
-
+# We expect $(SDK_DIR)/Makefile.defs has already been included.
 
 ######## Normal target rules
 
 all: $(BIN)
+
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
 
 # On Win32, it's necessary to munge the paths in our dependency file.
 # This makefile, being unixy in nature, likes forward slashes. But
@@ -17,12 +19,17 @@ all: $(BIN)
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
-#not sure why, but qt creator doesn't like this
-ifeq ($(QTCREATOR_TERMINAL),)
-	@perl -pi -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
+ifeq ($(NO_PATH_MUNGE),)
+	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 endif
 
-$(BIN): $(OBJS) $(LD)
+%.o: %.c $(CDEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+ifeq ($(NO_PATH_MUNGE),)
+	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
+endif
+
+$(BIN): $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
 ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h
@@ -30,7 +37,7 @@ ifneq ($(ASSETS_BUILD_PROOF),)
     ASSET_GEN_FILES += -o $(ASSETS).html
 endif
 
-$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+$(ASSETS).gen.cpp: $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua $(ASSET_GEN_FILES) -v
 
 clean:
@@ -42,8 +49,11 @@ clean:
 
 ######## Development utility rules
 
+# These rely on common open source tools that aren't
+# part of the standard SDK distribution.
+
 llvm-dis: $(OBJS)
-	$(LLVM_BIN)/llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
+	llvm-link $(OBJS) -S -o - | arm-none-eabi-c++filt | less
 
 objdump: $(BIN)
 	arm-none-eabi-objdump -d $(BIN) | arm-none-eabi-c++filt | less

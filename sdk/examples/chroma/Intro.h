@@ -33,9 +33,9 @@ public:
 
     Intro();
     void Reset( bool ingamereset = false );
-    bool Update( SystemTime t, TimeDelta dt, Banner &banner );
+    bool Update( SystemTime t, TimeDelta dt, Banner &banner, VideoBuffer &vid );
     //return whether we touched bg1 or not
-    bool Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper );
+    bool Draw( TimeKeeper &timer, TileBuffer<16, 16> &bg1buffer, VideoBuffer &vid, CubeWrapper *pWrapper );
     inline IntroState getState() const { return m_state; }
 	
 private:

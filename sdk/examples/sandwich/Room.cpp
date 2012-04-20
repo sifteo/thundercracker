@@ -2,46 +2,71 @@
 #include "Game.h"
 
 unsigned Room::Id() const {
-  return (int)(this - gGame.GetMap()->GetRoom(0));
+  return (int)(this - &gGame.GetMap().GetRoom(0));
 }
 
 Int2 Room::LocalCenter(unsigned subdiv) const { 
   if (subdiv) {
     ASSERT(mPrimarySlotType == PRIMARY_SUBDIV);
     if (mPrimarySlotId == SUBDIV_DIAG_POS || mPrimarySlotId == SUBDIV_DIAG_NEG) {
-      const DiagonalSubdivisionData* p = SubdivAsDiagonal();
-      return Vec2(p->altCenterX, p->altCenterY); 
+      auto& diag = SubdivAsDiagonal();
+      return vec(diag.altCenterX, diag.altCenterY); 
     } else if (mPrimarySlotId == SUBDIV_BRDG_HOR || mPrimarySlotId == SUBDIV_BRDG_VER) {
-      const BridgeSubdivisionData* p = SubdivAsBridge();
-      return Vec2(p->altCenterX, p->altCenterY);
+      auto& brdg = SubdivAsBridge();
+      return vec(brdg.altCenterX, brdg.altCenterY);
     }
   }
-  return Vec2(Data()->centerX, Data()->centerY); 
+  return vec(Data().centerX, Data().centerY); 
 }
 
 Int2 Room::Location() const {
-  return gGame.GetMap()->GetLocation(Id());
+  return gGame.GetMap().GetLocation(Id());
 }
 
-const RoomData* Room::Data() const {
-  return gGame.GetMap()->GetRoomData(Id());
+const RoomData& Room::Data() const {
+  return *gGame.GetMap().GetRoomData(Id());
+}
+
+bool Room::OnEdge() const {
+  auto& data = gGame.GetMap().Data();
+  auto loc = Location();
+  return loc.x == 0 || loc.y == 0 || loc.x == data.width-1 || loc.y == data.height-1;
 }
 
 bool Room::HasOpenDoor() const {
-  return HasDoor() && !gGame.GetState()->IsActive(Door()->trigger);
+  return HasDoor() && !gGame.GetState().IsActive(Door().trigger);
 }
 
 bool Room::HasClosedDoor() const {
-  return HasDoor() && gGame.GetState()->IsActive(Door()->trigger);
+  return HasDoor() && gGame.GetState().IsActive(Door().trigger);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
-  return gGame.GetState()->FlagTrigger(Door()->trigger);
+  return gGame.GetState().FlagTrigger(Door().trigger);
+}
+
+void Room::BombThisFucker() {
+  for(int s=0; s<4; ++s) {
+    SetDidBomb((Side)s);
+  }
+  Int2 loc = Location();
+  if (loc.x > 0) { 
+    gGame.GetMap().GetRoom(loc+vec(-1,0)).SetDidBomb(RIGHT); 
+  }
+  if (loc.x < gGame.GetMap().Data().width-1) { 
+    gGame.GetMap().GetRoom(loc+vec(1,0)).SetDidBomb(LEFT); 
+  }
+  if (loc.y > 0) { 
+    gGame.GetMap().GetRoom(loc+vec(0,-1)).SetDidBomb(BOTTOM); 
+  }
+  if (loc.y < gGame.GetMap().Data().height-1) { 
+    gGame.GetMap().GetRoom(loc+vec(0,1)).SetDidBomb(TOP); 
+  }
 }
 
 const uint8_t* Room::OverlayBegin() const {
-  return gGame.GetMap()->Data()->rle_overlay + mOverlayIndex;
+  return gGame.GetMap().Data().rle_overlay + mOverlayIndex;
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
@@ -70,38 +95,39 @@ void Room::Clear() {
 
 bool Room::IsShowingBlock(const Sokoblock* pBlock) {
   ASSERT(pBlock);
-  const Int2 blockTopLeft = pBlock->Position() - Vec2(32, 32);
+  const Int2 blockTopLeft = pBlock->Position() - vec(32, 32);
   const Int2 roomTopLeft = 128 * Location();
   const Int2 delta = blockTopLeft - roomTopLeft;
   return delta.x > -64 && delta.x < 64 && delta.y > -64 && delta.y < 64;
 }
 
-unsigned Room::CountOpenTilesAlongSide(Cube::Side side) {
+unsigned Room::CountOpenTilesAlongSide(Side side) {
   ASSERT(0 <= side && side < 4);
   const Int2 loc = Location();
-  const Map& map = *gGame.GetMap();
-  const RoomData& data = *Data();
+  const auto& map = gGame.GetMap();
+  const auto& data = Data();
   unsigned cnt = 0;
   switch(side) {
-    case SIDE_TOP:
+    default: ASSERT(0);
+    case TOP:
       if (loc.y > 0 && map.GetPortalY(loc.x, loc.y-1)) {
         cnt = 8-__builtin_popcount(data.collisionMaskRows[0]);
       }
       break;
-    case SIDE_LEFT:
+    case LEFT:
       if (loc.x > 0 && map.GetPortalY(loc.x-1, loc.y)) {
         for(unsigned row=0; row<8; ++row) {
           cnt += (~data.collisionMaskRows[row]) & 0x01;
         }
       }
       break;
-    case SIDE_BOTTOM:
-      if (loc.y < map.Data()->height-1 && map.GetPortalY(loc.x, loc.y)) {
+    case BOTTOM:
+      if (loc.y < map.Data().height-1 && map.GetPortalY(loc.x, loc.y)) {
         cnt = 8-__builtin_popcount(~data.collisionMaskRows[7]);
       }
       break;
-    case SIDE_RIGHT:
-      if (loc.x < map.Data()->width-1 && map.GetPortalX(loc.x, loc.y)) {
+    case RIGHT:
+      if (loc.x < map.Data().width-1 && map.GetPortalX(loc.x, loc.y)) {
         for(unsigned row=0; row<8; ++row) {
           cnt += (data.collisionMaskRows[row]) & 0x80;
         }

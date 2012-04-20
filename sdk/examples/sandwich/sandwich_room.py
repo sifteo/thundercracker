@@ -11,10 +11,10 @@ PORTAL_TO_CHAR = {
 	PORTAL_WALL: "X",
 	PORTAL_DOOR: "_"
 }
-SIDE_TOP = 0
-SIDE_LEFT = 1
-SIDE_BOTTOM = 2
-SIDE_RIGHT = 3
+TOP = 0
+LEFT = 1
+BOTTOM = 2
+RIGHT = 3
 SUBDIV_NONE = 0
 SUBDIV_DIAG_POS = 1
 SUBDIV_DIAG_NEG = 2
@@ -28,13 +28,11 @@ def bit_count(mask):
 		mask >>= 1
 	return result
 
-def iswalkable(tile, x, y): 
-	if "wall" in tile.props or "obstacle" in tile.props:
-		return False
-	for obj in tile.tileset.map.objects:
-		if obj.type == "obstacle" and obj.is_overlapping(x, y):
-			return False
-	return True
+def iswalkable(tile): 
+	mask = tile.type.tileset.map.layer_dict.get("mask", None)
+	if mask is None:
+		return not ("wall" in tile.type.props or "obstacle" in tile.type.props)
+	return mask.tiles[tile.idx] is None
 	
 
 class Room:
@@ -107,12 +105,12 @@ class Room:
 		# bombs
 		self.can_bomb = [ False, False, False, False ]
 		for x,y in product(range(0,8), range(0,8)):
-			if "crack" in self.tileat(x,y).props:
+			if "crack" in self.tileat(x,y).type.props:
 				# determine side
-				if x == 0 and (y > 2 and y < 7): self.can_bomb[SIDE_LEFT] = True
-				if x == 7 and (y > 2 and y < 7): self.can_bomb[SIDE_RIGHT] = True
-				if (x > 0 and x < 7) and y <  3: self.can_bomb[SIDE_TOP] = True
-				if (x > 0 and x < 7) and y == 7: self.can_bomb[SIDE_BOTTOM] = True
+				if x == 0 and (y > 2 and y < 7): self.can_bomb[LEFT] = True
+				if x == 7 and (y > 2 and y < 7): self.can_bomb[RIGHT] = True
+				if (x > 0 and x < 7) and y <  3: self.can_bomb[TOP] = True
+				if (x > 0 and x < 7) and y == 7: self.can_bomb[BOTTOM] = True
 
 
 	def contains_obj(self, obj):
@@ -124,7 +122,7 @@ class Room:
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
-	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y), 8*self.x + x, 8*self.y + y)
+	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y))
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
 	def resolve_trigger_event_id(self):
@@ -164,7 +162,7 @@ class Room:
 		return (0,0)
 	
 	def ispath(self, x, y):
-		return "path" in self.tileat(x,y).props
+		return "path" in self.tileat(x,y).type.props
 
 	def adjust(self, x, y):
 		if self.ispath(x-1,y):
@@ -185,19 +183,21 @@ class Room:
 		return False
 	
 	def find_subdivisions(self):
-		if all((portal == PORTAL_OPEN for portal in self.portals)):
+		# either all portals are open or we're bordering the edge, or something?
+		if True:#all((portal == PORTAL_OPEN for portal in self.portals)):
 			#first bridge-rows or cols
 			for y in range(8):
-				if all(("bridge" in self.tileat(x,y).props for x in range(8))):
+				if all(("bridge" in self.tileat(x,y).type.props for x in range(8))):
 					self.subdiv_type = SUBDIV_BRDG_HOR
 					self.first_bridge_row = y
 					return
-				elif all(("bridge" in self.tileat(y,x).props for x in range(8))):
+				elif all(("bridge" in self.tileat(y,x).type.props for x in range(8))):
 					self.subdiv_type = SUBDIV_BRDG_VER
 					self.first_bridge_col = y
 					return
 			# let's try looking for diagonals
 			# start by listing the "canonical" cardinal open tiles
+		if all((portal == PORTAL_OPEN for portal in self.portals)):
 			cardinals = [
 				((x,0) for x in range(8) if self.iswalkable(x,0)).next(),
 				((0,y) for y in range(8) if self.iswalkable(0,y)).next(),
@@ -209,14 +209,14 @@ class Room:
 			for side,(x,y) in enumerate(cardinals): 
 				self._subdiv_visit(slots, 1<<side, x, y)
 			for cnt in (bit_count(slots[x+(y<<3)]) for (x,y) in cardinals): 
-				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id
-			tx,ty = cardinals[SIDE_TOP]
+				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id + " at: " + str(self.x) + "," + str(self.y)
+			tx,ty = cardinals[TOP]
 			maskTop = slots[tx+(ty<<3)]
 			if bit_count(maskTop) == 2:
 				self.subdiv_masks = slots
-				if maskTop & (1<<SIDE_LEFT):
+				if maskTop & (1<<LEFT):
 					self.subdiv_type = SUBDIV_DIAG_POS
-				elif maskTop & (1<<SIDE_RIGHT):
+				elif maskTop & (1<<RIGHT):
 					self.subdiv_type = SUBDIV_DIAG_NEG
 				else:
 					raise Exception("unusual subdivision in map: " + self.map.id)
@@ -231,10 +231,10 @@ class Room:
 			self._subdiv_visit(slots, mask, x, y-1)
 
 	def write_tiles_to(self, src):
-		src.write("    {{")
+		src.write("    ")
 		for ty,tx in product(range(8),range(8)):
-			src.write("0x%x," % self.tileat(tx,ty).lid)
-		src.write("}},\n")
+			src.write("0x%x," % self.tileat(tx,ty).type.lid)
+		src.write("\n")
 
 	def write_telem_source_to(self, src):
 		src.write("    {0x%x,0x%x,{" % self.primary_center())

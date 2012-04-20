@@ -14,24 +14,7 @@ void MacronixMX25::init()
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
 
-#if (BOARD == BOARD_TC_MASTER_REV2)
-    GPIOPin regEnable = FLASH_REG_EN_GPIO;
-    regEnable.setControl(GPIOPin::OUT_2MHZ);
-    regEnable.setHigh();
-#endif
-
     spi.init();
-
-    // reset
-#if 0
-    spi.begin();
-    spi.transfer(ResetEnable);
-    spi.end();
-
-    spi.begin();
-    spi.transfer(Reset);
-    spi.end();
-#endif
 
     // prepare to write the status register
     spi.begin();
@@ -46,16 +29,6 @@ void MacronixMX25::init()
     while (readReg(ReadStatusReg) != Ok) {
         ; // sanity checking?
     }
-
-#if 0
-    JedecID id;
-    spi.begin();
-    spi.transfer(ReadID);
-    id.manufacturerID = spi.transfer(Nop);
-    id.memoryType = spi.transfer(Nop);
-    id.memoryDensity = spi.transfer(Nop);
-    spi.end();
-#endif
 }
 
 /*
@@ -177,6 +150,18 @@ void MacronixMX25::ensureWriteEnabled()
         spi.transfer(WriteEnable);
         spi.end();
     } while (!(readReg(ReadStatusReg) & WriteEnableLatch));
+}
+
+void MacronixMX25::readId(Flash::JedecID *id)
+{
+    spi.begin();
+
+    spi.transfer(ReadID);
+    id->manufacturerID = spi.transfer(Nop);
+    id->memoryType = spi.transfer(Nop);
+    id->memoryDensity = spi.transfer(Nop);
+
+    spi.end();
 }
 
 /*

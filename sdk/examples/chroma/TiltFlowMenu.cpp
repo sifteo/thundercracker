@@ -347,7 +347,7 @@ void TiltFlowView::PaintInfo() {
    /*
   if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   DoPaintItem(Item, 24, 80); // magic
-  TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,24)); // magic
+  TiltFlowMenu::Inst()->Font.Paint(c, Item.name, vec(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new vec(128,24)); // magic
   */
 }
 
@@ -370,7 +370,7 @@ void TiltFlowView::PaintMenu() {
   //DEBUG DRAW
   /*for( unsigned int i = 0; i < VidMode_BG0::BG0_width; i++ )
   {
-      vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
+      vid.BG0_textf( vec( i, 0 ), Font, "%d", i%10 );
   }*/
 
   Int2 offset = { 24, 0 };
@@ -389,12 +389,12 @@ void TiltFlowView::PaintMenu() {
 	  }
 
 	  if (mDrawLabel) {
-		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-		  bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, vec(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new vec(128, 20)); // magic
+		  bg1helper.DrawAsset(vec(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
 	  }
 
 	  //draw the current tip
-	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+	  bg1helper.DrawAsset(vec(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
 
       //bg1helper.Flush();
       mFlushNeeded = true;
@@ -404,7 +404,7 @@ void TiltFlowView::PaintMenu() {
 
 
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
+  vid.BG0_setPanning(vec((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
   //TODO, fix hack!
   mpCube->vbuf.touch();
 }
@@ -413,8 +413,8 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
-      Int2 offset = Vec2( 0, 0 );
-      Int2 size = Vec2( pItem->mImage.width, pItem->mImage.height );
+      Int2 offset = vec( 0, 0 );
+      Int2 size = vec( pItem->mImage.width, pItem->mImage.height );
 
       int leftMostTile = -mOffsetX / 8 - 1;
       int rightMostTile = leftMostTile + VidMode_BG0::BG0_width - 1;
@@ -468,16 +468,16 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
 
       //need to draw on the right tiles.
       if( curTile + size.x < (int)VidMode_BG0::BG0_width )
-        vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
+        vid.BG0_drawPartialAsset(vec(curTile,yOffset), offset, size, pItem->mImage, 0);
       //Handle wrapping
       else
       {
           int wrapAmt = curTile + size.x - VidMode_BG0::BG0_width;
           size.x -= wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(vec(curTile,yOffset), offset, size, pItem->mImage, 0);
           offset.x += size.x;
           size.x = wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(0,yOffset), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(vec(0,yOffset), offset, size, pItem->mImage, 0);
       }
   }
 }
@@ -489,7 +489,7 @@ void TiltFlowView::PaintItem() {
   if (w > 0) {
     DoPaintItem(Item, x, w);
     if (mDrawLabel) {
-      TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,20)); // magic
+      TiltFlowMenu::Inst()->Font.Paint(c, Item.name, vec(0,0), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new vec(128,20)); // magic
     }
   }*/
 }
@@ -683,15 +683,15 @@ void TiltFlowView::StopScrolling() {
 
 bool PositionOf(Cube c, out Int2 pos) {
   if (Cube == c) {
-    pos = Vec2(0,0);
+    pos = vec(0,0);
     return true;
   }
   if (Cube == NULL || Cube.Neighbors.IsEmpty) {
-    pos = Vec2(0,0);
+    pos = vec(0,0);
     return false;
   }
   foreach(var view in TiltFlowMenu::Inst()->Views) { view.mVisited = false; }
-  mGridPosition = Vec2(0,0);
+  mGridPosition = vec(0,0);
   mVisited = true;
   for(int i=0; i<4; ++i) {
     Int2 p;
@@ -700,19 +700,19 @@ bool PositionOf(Cube c, out Int2 pos) {
       return true;
     }
   }
-  pos = Vec2(0,0);
+  pos = vec(0,0);
   return false;
 }
 
 bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Int2 result) {
   var n = origin.Cube.Neighbors[s];
   if (n == NULL) {
-    result = Vec2(0,0);
+    result = vec(0,0);
     return false;
   };
   var view = n.userData as TiltFlowView;
   if (view.mVisited) {
-    result = Vec2(0,0);
+    result = vec(0,0);
     return false;
   }
   view.mVisited = true;
@@ -728,7 +728,7 @@ bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Int2 result) 
         return true;
       }
     }
-    result = Vec2(0,0);
+    result = vec(0,0);
     return false;
   }
 
@@ -753,5 +753,5 @@ void TiltFlowView::Flush()
 void TiltFlowView::Cleanup()
 {
     VidMode_BG0 vid( mpCube->vbuf );
-    vid.BG0_setPanning(Vec2(0, 0));
+    vid.BG0_setPanning(vec(0, 0));
 }

@@ -9,83 +9,119 @@
 
 #include <sifteo/abi.h>
 #include "svmmemory.h"
+#include "svmruntime.h"
 #include "vram.h"
 
 extern "C" {
 
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::init(*vbuf);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
     }
+
+    VRAM::init(*vbuf);
 }
 
 void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::truncateWordAddr(addr);
-        VRAM::lock(*vbuf, addr);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
     }
+
+    VRAM::truncateWordAddr(addr);
+    VRAM::lock(*vbuf, addr);
 }
 
 void _SYS_vbuf_unlock(_SYSVideoBuffer *vbuf)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::unlock(*vbuf);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
     }
+
+    VRAM::unlock(*vbuf);
 }
 
 void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::truncateWordAddr(addr);
-        VRAM::poke(*vbuf, addr, word);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
     }
+
+    VRAM::truncateWordAddr(addr);
+    VRAM::poke(*vbuf, addr, word);
 }
 
 void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::truncateByteAddr(addr);
-        VRAM::pokeb(*vbuf, addr, byte);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
     }
+
+    VRAM::truncateByteAddr(addr);
+    VRAM::pokeb(*vbuf, addr, byte);
+}
+
+void _SYS_vbuf_xorb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
+{
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
+
+    VRAM::truncateByteAddr(addr);
+    VRAM::xorb(*vbuf, addr, byte);
 }
 
 uint32_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::truncateWordAddr(addr);
-        return VRAM::peek(*vbuf, addr);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
     }
-    return 0;
+
+    VRAM::truncateWordAddr(addr);
+    return VRAM::peek(*vbuf, addr);
 }
 
 uint32_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        VRAM::truncateByteAddr(addr);
-        return VRAM::peekb(*vbuf, addr);
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
     }
-    return 0;
+
+    VRAM::truncateByteAddr(addr);
+    return VRAM::peekb(*vbuf, addr);
 }
 
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
                     uint16_t word, uint16_t count)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        while (count) {
-            VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, word);
-            count--;
-            addr++;
-        }
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
+
+    while (count) {
+        VRAM::truncateWordAddr(addr);
+        VRAM::poke(*vbuf, addr, word);
+        count--;
+        addr++;
     }
 }
 
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count)
 {
-    if (!SvmMemory::mapRAM(vbuf, sizeof *vbuf))
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
+    }
 
     FlashBlockRef ref;
     uint32_t bytes = SvmMemory::arraySize(sizeof *src, count);
@@ -94,8 +130,10 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 
     while (bytes) {
         uint32_t chunk = bytes;
-        if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
+        if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             return;
+        }
 
         srcVA += chunk;
         bytes -= chunk;
@@ -114,8 +152,10 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src,
                       uint16_t offset, uint16_t count)
 {
-    if (!SvmMemory::mapRAM(vbuf, sizeof *vbuf))
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
+    }
 
     FlashBlockRef ref;
     uint32_t bytes = SvmMemory::arraySize(sizeof *src, count);
@@ -125,8 +165,10 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
     ASSERT((bytes & 1) == 0);
     while (bytes) {
         uint32_t chunk = bytes;
-        if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA))
+        if (!SvmMemory::mapROData(ref, srcVA, chunk, srcPA)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
             return;
+        }
 
         ASSERT((chunk & 1) == 0);
         srcVA += chunk;
@@ -136,7 +178,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
             uint16_t index = offset + *reinterpret_cast<uint16_t*>(srcPA);
 
             VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, VRAM::index14(index));
+            VRAM::poke(*vbuf, addr, _SYS_TILE77(index));
             addr++;
 
             chunk -= sizeof(uint16_t);
@@ -147,14 +189,17 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
 
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count)
 {
-    if (SvmMemory::mapRAM(vbuf, sizeof *vbuf)) {
-        while (count) {
-            VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, VRAM::index14(index));
-            count--;
-            addr++;
-            index++;
-        }
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
+
+    while (count) {
+        VRAM::truncateWordAddr(addr);
+        VRAM::poke(*vbuf, addr, _SYS_TILE77(index));
+        count--;
+        addr++;
+        index++;
     }
 }
 

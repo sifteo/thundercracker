@@ -8,16 +8,11 @@
 #include "utils.h"
 #include "assets.gen.h"
 #include "Puzzle.h"
-#include <sifteo/menu.h>
 #include "BubbleTransition.h"
-
-//TODO, load this from save file
-unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
-        { 1000, 800, 600, 400, 200 };
-
-unsigned int Game::s_HighCubes[ Game::NUM_HIGH_SCORES ] =
-        { 20, 10, 8, 6, 4 };
-
+#include "Banner.h"
+#include "SpriteNumber.h"
+#include "CubeBuddy.h"
+#include <sifteo/menu.h>
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
@@ -41,7 +36,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
-                m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                m_Multiplier(1)//, m_bForcePaintSync( false )
   , m_bStabilized( false ), m_bIsChainHappening( false )
 {
 	//Reset();
@@ -50,35 +45,40 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 
 void Game::Init()
 {
-	for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Init(GameAssets);
-
+    //turn off LOAD_ASSETS to bootstrap everything
 #if LOAD_ASSETS
-    bool done = false;
+    ScopedAssetLoader loader;
 
-	PRINT( "getting ready to load" );
+    VideoBuffer vids[NUM_CUBES];
 
-	while( !done )
+    AssetSlot MySlot = AssetSlot::allocate();
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        vids[i].attach(i);
+        vids[i].initMode(BG0_ROM);
+        vids[i].bg0rom.erase();
+        vids[i].bg0rom.text(vec(1,1), "Loading...");
+        loader.start( GameAssets, MySlot, m_cubes[i].GetCube());
+    }
+
+    while( !loader.isComplete() )
 	{
-		done = true;
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
-            if( !m_cubes[i].DrawProgress(GameAssets) )
-				done = false;
-
-			PRINT( "in load loop" );
+            vids[i].bg0rom.hBargraph(vec(0,7), loader.progress(i, LCD_width));
 		}
 		System::paint();
 	}
-    PRINT( "done loading" );
 #endif
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].Init();
+
     Reset( false );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
-
-	for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].vidInit();
 
 #if MUSIC_ON
     //doesn't seem to work
@@ -91,6 +91,12 @@ void Game::Init()
 #endif
 
     m_stateTime = 0.0f;
+
+    //TODO READ THIS FROM SAVE FILE
+    //if save file doesn't exist, create and initialize it
+    m_savedata.Load();
+    //m_savedata.furthestProgress = 30;
+    m_iChapterViewed = 0;
 }
 
 
@@ -104,18 +110,26 @@ void Game::Update()
     bool needsync = false;
 
     //painting is handled by menu manager
-    if( m_state == STATE_MAINMENU )
+    switch( m_state )
     {
-        HandleMainMenu();
-        return;
+        case STATE_MAINMENU:
+        case STATE_PUZZLEMENU:
+        case STATE_CHAPTERSELECTMENU:
+        case STATE_PUZZLESELECTMENU:
+        {
+            HandleMenu();
+            return;
+        }
+        default:
+            break;
     }
 
-    if( m_bForcePaintSync )
+    /*if( m_bForcePaintSync )
     {
         needsync = true;
         System::paintSync();
         m_bForcePaintSync = false;
-    }
+    }*/
 
     switch( m_state )
     {
@@ -194,17 +208,32 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Update( t, dt );
 
+    bool needGameDraw[ NUM_CUBES ];
+
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Draw();
+    {
+        //CubeWrapper::draw now only handles special case drawing.  shortcut it here
+        if( m_state == STATE_PLAYING && m_cubes[i].getState() == CubeWrapper::STATE_PLAYING )
+            needGameDraw[i] = true;
+        else
+        {
+            m_cubes[i].Draw();
+            needGameDraw[i] = false;
+        }
+    }
+
+    DrawGame( needGameDraw, t, dt );
+
+    //m_chromitDrawer.drawAll();
 
     //always finishing works
     //System::finish();
-#if !SLOW_MODE
+/*#if !SLOW_MODE
     //if any of our cubes have messed with bg1's bitmaps,
     //force a finish here
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].getBG1Helper().NeedFinish() )
+        if( m_cubes[i].getbg1buffer().NeedFinish() )
         {
             //System::finish();
             System::paintSync();
@@ -213,18 +242,18 @@ void Game::Update()
             break;
         }
     }
-#endif
+#endif*/
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].FlushBG1();
+        m_cubes[i].testFlushBG1();
 
-#if SLOW_MODE
+/*#if SLOW_MODE
     System::paintSync();
 #else
     if( needsync )
         System::paintSync();
-    else
+    else*/
         System::paint();
-#endif
+//#endif
 
     m_pSoundThisFrame = NULL;
 }
@@ -236,6 +265,8 @@ void Game::Reset(  bool bInGame )
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
+
+    //m_chromitDrawer.Reset();
 
     //m_bHyperDotMatched = false;
 
@@ -264,24 +295,6 @@ void Game::Reset(  bool bInGame )
 
     m_bStabilized = false;
     m_bIsChainHappening = false;
-}
-
-
-CubeWrapper *Game::GetWrapper( Cube *pCube )
-{
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( pCube == &m_cubes[i].GetCube() )
-            return &m_cubes[i];
-    }
-
-    return NULL;
-}
-
-
-CubeWrapper *Game::GetWrapper( unsigned int index )
-{
-    return &m_cubes[index];
 }
 
 
@@ -339,7 +352,7 @@ void Game::TestMatches()
     if( !Game::Inst().AreMovesLegal() )
         return;
 
-	//for every cube test matches with every other cube
+    //for every cube test matches with every other cube
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
         m_cubes[i].testMatches();
@@ -447,13 +460,6 @@ void Game::CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos )
                 }
             }
 
-            /*if( m_mode == MODE_BLITZ && !bannered )
-            {
-                String<16> aBuf;
-                aBuf << comboScore;
-                pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
-            }*/
-
             if( m_mode == MODE_BLITZ )
             {
                 SetChain( false );
@@ -490,20 +496,17 @@ void Game::checkGameOver()
 
 bool Game::NoMatches()
 {
+    ASSERT( m_mode == MODE_SURVIVAL || m_mode == MODE_PUZZLE );
     //shakes mode checks for no possible moves, whereas puzzle mode checks if the puzzle is lost
-    if( m_mode == MODE_SURVIVAL )
-    {
-        if( AreAllColorsUnmatchable() )
-            return true;
-        if( DoCubesOnlyHaveStrandedDots() )
-            return true;
-    }
-    else if( m_mode == MODE_PUZZLE )
+    if( m_mode == MODE_PUZZLE )
     {
         //""" Return True if no matches are possible with the current gems. """
         if( no_match_color_imbalance() )
+        {
+            //LOG(("Imbalance!\n"));
             return true;
-        if( numColors() == 1 )
+        }
+        /*if( numColors() == 1 )
         {
             if( no_match_stranded_interior() )
                 return true;
@@ -511,7 +514,19 @@ bool Game::NoMatches()
                 return true;
             else if( no_match_mismatch_side() )
                 return true;
-        }
+        }*/
+
+    }
+
+    if( AreAllColorsUnmatchable() )
+    {
+        //LOG(("All colors unmatchable!\n"));
+        return true;
+    }
+    if( DoCubesOnlyHaveStrandedDots() )
+    {
+        //LOG(("stranded dots!\n"));
+        return true;
     }
 
     return false;
@@ -552,7 +567,16 @@ bool Game::no_match_color_imbalance() const
             return true;
 	}
 
-	return false;
+    //check if we have wilds on one cube and no chromits on any other
+    unsigned int numCubesWithChromits = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].getNumDots() > 0 )
+            numCubesWithChromits++;
+    }
+
+    return ( numCubesWithChromits == 1 );
 }
 
 
@@ -576,17 +600,21 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].hasColor(color) )
+        if( m_cubes[i].hasColor(color, true) )
         {
             total++;
             aHasColor[i] = true;
+            //LOG(("cube %d has color %d\n", i, color));
         }
         else
             aHasColor[i] = false;
     }
 
     if( total <= 1 )
+    {
+        //LOG(("%d cubes have color %d\n", total, color));
         return true;
+    }
 
     int numCorners = 0;
     bool side1 = false;
@@ -595,15 +623,18 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
     //also, make sure these colors on these cubes can possibly match
     for( int i = 0; i < NUM_CUBES; i++ )
     {
+        //LOG(("cube %d do we have color? %d\n", i, aHasColor[i]));
         if( aHasColor[i] )
         {
-            bool localCorners = false;
-            bool localside1 = false;
-            bool localside2 = false;
+            CubeWrapper::GridTestInfo testInfo = { color, false, false, false };
 
-            m_cubes[i].UpdateColorPositions( color, localCorners, localside1, localside2 );
+            //LOG(("local testInfo at %x\n", &testInfo));
 
-            if( localCorners )
+            m_cubes[i].UpdateColorPositions( testInfo );
+
+            //LOG(("cube %d has corners = %d, side1 = %d, side2 = %d", i, testInfo.bCorners, testInfo.bSide1, testInfo.bSide2));
+
+            if( testInfo.bCorners )
             {
                 numCorners++;
                 //this color has corners on multiple cubes, there's a match!
@@ -612,24 +643,25 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
             }
 
             //side1 on one cube can match side2 on another
-            if( localside1 )
+            if( testInfo.bSide1 )
             {
                 if( side2 )
                     return false;
             }
-            if( localside2 )
+            if( testInfo.bSide2 )
             {
                 if( side1 )
                     return false;
             }
 
-            if( localside1 )
+            if( testInfo.bSide1 )
                 side1 = true;
-            if( localside2 )
+            if( testInfo.bSide2 )
                 side2 = true;
         }
     }
 
+    //LOG(("Failed to find a match!  color %d\n", color));
     return true;
 }
 
@@ -637,16 +669,25 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
 unsigned int Game::NumCubesWithColor( unsigned int color ) const
 {
     int total = 0;
+    int totalWithWilds = 0;
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( m_cubes[i].hasColor(color) )
+        if( m_cubes[i].hasColor(color, false) )
         {
             total++;
+            totalWithWilds++;
+        }
+        else if( m_cubes[i].hasColor(color, true) )
+        {
+            totalWithWilds++;
         }
     }
 
-    return total;
+    if( total == 0 )
+        return 0;
+    else
+        return totalWithWilds;
 }
 
 
@@ -758,14 +799,14 @@ bool Game::DoCubesOnlyHaveStrandedDots() const
 
 unsigned int Game::getHighScore( unsigned int index ) const
 {
-    ASSERT( index < NUM_HIGH_SCORES );
+    ASSERT( index < SaveData::NUM_HIGH_SCORES );
 
-    if( index < NUM_HIGH_SCORES )
+    if( index < SaveData::NUM_HIGH_SCORES )
     {
         if( m_mode == MODE_BLITZ )
-            return s_HighScores[ index ];
+            return m_savedata.aHighScores[ index ];
         else
-            return s_HighCubes[ index ];
+            return m_savedata.aHighCubes[ index ];
     }
     else
         return 0;
@@ -780,31 +821,33 @@ void Game::enterScore()
 
     if( m_mode == MODE_BLITZ )
     {
-        pScores = s_HighScores;
+        pScores = m_savedata.aHighScores;
         score = m_iScore;
     }
     else
     {
-        pScores = s_HighCubes;
+        pScores = m_savedata.aHighCubes;
         score = getDisplayedLevel();
     }
 
     //walk backwards through the high score list and see which ones we can pick off
-    for( int i = (int)NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    for( int i = (int)SaveData::NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
         if( pScores[i] < score )
         {
-            if( i < (int)NUM_HIGH_SCORES - 1 )
+            if( i < (int)SaveData::NUM_HIGH_SCORES - 1 )
             {
                 pScores[i+1] = pScores[i];
 
                 if( i == 0 )
+                {
                     pScores[0] = score;
+                }
             }
         }
         else
         {
-            if( i < (int)NUM_HIGH_SCORES - 1 )
+            if( i < (int)SaveData::NUM_HIGH_SCORES - 1 )
             {
                 pScores[i+1] = score;
             }
@@ -812,6 +855,8 @@ void Game::enterScore()
             break;
         }
     }
+
+    m_savedata.Save();
 }
 
 
@@ -896,7 +941,7 @@ void Game::EndGame()
     {
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES", 3.5f );
+            m_cubes[i].getBanner().SetMessage( m_cubes[i].GetVid(), "NO MORE MATCHES", 3.5f );
         }
     }
 
@@ -1033,7 +1078,10 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     //TODO, end game celebration!
     if( !pPuzzle )
+    {
+        ProcessUnlock( MODE_PUZZLE );
         return;
+    }
 
     //intro puzzles (<3 cubes) will jump straight into the next puzzle
     if( pPuzzle->m_numCubes < 3 )
@@ -1043,6 +1091,12 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Refill();
+
+    //adjust save data
+    if( m_iLevel > m_savedata.furthestProgress )
+        m_savedata.furthestProgress = m_iLevel;
+    m_savedata.lastPlayedPuzzle = m_iLevel;
+    m_savedata.Save();
 }
 
 
@@ -1069,66 +1123,372 @@ void Game::ReturnToMainMenu()
 
 
 
-void Game::HandleMainMenu()
+void Game::HandleMenu()
 {
-    struct MenuItem items[NUM_MAIN_MENU_ITEMS + 1] = { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Settings, NULL}, {NULL, NULL} };
-    struct MenuAssets assets = {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}};
+    const unsigned int MAX_MENU_ITEMS = 10;
+
+    MenuItem allmenuitems[][ MAX_MENU_ITEMS ] =
+    {
+        //main menu
+        { {&UI_Main_Menu_Survival, NULL}, {&UI_Main_Menu_Blitz, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {NULL, NULL} },
+        //puzzle menu
+        { {&UI_Main_Menu_Continue, NULL}, {&UI_Main_Menu_NewGame, NULL}, {&UI_Main_Menu_ChapterSelect, NULL}, {&UI_Main_Menu_Back, NULL}, {NULL, NULL} },
+        //chapter select menu
+        { {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_Chapter, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
+        //puzzle select menu
+        { {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_Puzzle, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {&UI_Main_Menu_PuzzleBack, NULL}, {NULL, NULL} },
+    };
+
+    MenuAssets allmenuassets[] =
+    {
+        //main menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Main_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //puzzle menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_Puzzle_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //chapter select menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_ChapterSelect_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+        //puzzle select menu
+        {&White, &UI_Main_Menu_TipsTouch, &UI_PuzzleSelect_Menu_Topbar, {&UI_Main_Menu_TipsTouch, &UI_Main_Menu_TipsTilt, NULL}},
+    };
+
+    MenuItem *pItems = allmenuitems[0];
+    MenuAssets *pAssets = &allmenuassets[0];
+
+    unsigned int numSelectables = 0;
+    unsigned int numTotal = 0;
+
+    switch( m_state )
+    {
+        case STATE_MAINMENU:
+        {
+            pItems = allmenuitems[0];
+            pAssets = &allmenuassets[0];
+            break;
+        }
+        case STATE_PUZZLEMENU:
+        {
+            pItems = allmenuitems[1];
+            pAssets = &allmenuassets[1];
+            break;
+        }
+        case STATE_CHAPTERSELECTMENU:
+        {
+            pItems = allmenuitems[2];
+            pAssets = &allmenuassets[2];
+
+            numSelectables = Puzzle::GetChapter( m_savedata.furthestProgress ) + 1;
+
+            //LOG(( "Num selectables = %d\n", numSelectables));
+
+            MenuItem unlocked = {&UI_Main_Menu_Chapter, NULL};
+            MenuItem locked = {&UI_Main_Menu_ChapterLock, NULL};
+
+            numTotal = Puzzle::GetNumChapters();
+
+            ASSERT( numTotal <= MAX_MENU_ITEMS - 2 );
+
+            //certain menu types will have to reinit the menu items list
+            for( int i = 0; i < numTotal; i++ )
+            {
+                if( i < numSelectables )
+                    allmenuitems[2][i] = unlocked;
+                else
+                    allmenuitems[2][i] = locked;
+            }
+
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem nullItem = {NULL, NULL};
+            allmenuitems[2][ numTotal ] = back;
+            allmenuitems[2][ numTotal + 1 ] = nullItem;
+            break;
+        }
+        case STATE_PUZZLESELECTMENU:
+        {
+            pItems = allmenuitems[3];
+            pAssets = &allmenuassets[3];
+            //certain menu types will have to reinit the menu items list
+
+            MenuItem unlocked = {&UI_Main_Menu_Puzzle, NULL};
+            MenuItem locked = {&UI_Main_Menu_PuzzleLock, NULL};
+
+            numTotal = Puzzle::GetNumPuzzlesInChapter( m_iChapterViewed );
+            int puzzleOffset = Puzzle::GetPuzzleOffset( m_iChapterViewed );
+
+            //certain menu types will have to reinit the menu items list
+            for( int i = 0; i < numTotal; i++ )
+            {
+                if( i + puzzleOffset <= m_savedata.furthestProgress )
+                {
+                    allmenuitems[3][i] = unlocked;
+                    numSelectables++;
+                }
+                else
+                    allmenuitems[3][i] = locked;
+            }
+
+            MenuItem back = {&UI_Main_Menu_PuzzleBack, NULL};
+            MenuItem nullItem = {NULL, NULL};
+            allmenuitems[3][ numTotal ] = back;
+            allmenuitems[3][ numTotal + 1 ] = nullItem;
+            break;
+        }
+        default:
+        ASSERT(0);
+    }
 
     struct MenuEvent e;
-    Menu menu(&m_cubes[0].GetCube(), &assets, items);
+    Menu menu(m_cubes[0].GetVid(), pAssets, pItems);
 
     menu.setIconYOffset( 25 );
+
+    //clear out the other cubes
+    for( int i = 1; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].GetVid().bg0.image( vec( 0, 0 ), UI_BG );
+    }
 
     while(menu.pollEvent(&e))
     {
         switch(e.type)
         {
             case MENU_ITEM_PRESS:
-                // settings not usable
-                if(e.item == 3) {
-                    menu.preventDefault();
+            {
+                switch( m_state )
+                {
+                    case STATE_CHAPTERSELECTMENU:
+                    case STATE_PUZZLESELECTMENU:
+                    {
+                        //LOG(( "item %d, num selectables = %d, num Total = %d\n", e.item, numSelectables, numTotal ));
+                        if( e.item < numTotal && e.item >= numSelectables )
+                            menu.preventDefault();
+                        break;
+                    }
+                    default:
+                        break;
                 }
                 break;
+            }
+            case MENU_ITEM_ARRIVE:
+            {
+                switch( m_state )
+                {
+                    case STATE_PUZZLEMENU:
+                    {
+                        if( e.item == 0 )
+                        {
+                            int progress = m_savedata.lastPlayedPuzzle + 1;
+                            DrawSpriteNum( m_cubes[0].GetVid(), progress, vec( 64, 64 ) );
+                        }
+                        break;
+                    }
+                    case STATE_CHAPTERSELECTMENU:
+                    {
+                        if( e.item < numTotal )
+                        {
+                            DrawSpriteNum( m_cubes[0].GetVid(), e.item + 1, vec( 42, 50 ) );
+                        }
+                        break;
+                    }
+                    case STATE_PUZZLESELECTMENU:
+                    {
+                        if( e.item < numTotal )
+                        {
+                            int puzzleNum = e.item + Puzzle::GetPuzzleOffset( m_iChapterViewed ) + 1;
+                            DrawSpriteNum( m_cubes[0].GetVid(), puzzleNum, vec( 52, 49 ) );
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case MENU_ITEM_DEPART:
+            {
+                m_cubes[0].ClearSprite(0);
+                m_cubes[0].ClearSprite(1);
+                break;
+            }
             default:
                 break;
         }
     }
 
-    TransitionToState( STATE_INTRO );
-    m_mode = (GameMode)e.item;
 
-    if( m_mode == MODE_BLITZ )
-        m_iLevel = 3;
-    else
-        m_iLevel = 0;
+    switch( m_state )
+    {
+        case STATE_MAINMENU:
+        {
+            GameState targetState = STATE_INTRO;
+            m_mode = (GameMode)e.item;
+            m_iLevel = 0;
+
+            if( m_mode == MODE_BLITZ )
+                m_iLevel = 3;
+            else if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
+                targetState = STATE_PUZZLEMENU;
+
+            TransitionToState( targetState );
+            break;
+        }
+        case STATE_PUZZLEMENU:
+        {
+            switch( e.item )
+            {
+                //continue
+                case 0:
+                {
+                    m_iLevel = m_savedata.lastPlayedPuzzle;
+                    gotoNextPuzzle( false );
+                    break;
+                }
+                //new game
+                case 1:
+                {
+                    m_iLevel = 0;
+                    TransitionToState( STATE_INTRO );
+                    break;
+                }
+                //chapter select
+                case 2:
+                {
+                    TransitionToState( STATE_CHAPTERSELECTMENU );
+                    break;
+                }
+                //back
+                case 3:
+                {
+                    TransitionToState( STATE_MAINMENU );
+                    break;
+                }
+            }
+
+            break;
+        }
+        case STATE_CHAPTERSELECTMENU:
+        {
+            if( e.item < numSelectables )
+            {
+                m_iChapterViewed = e.item;
+                TransitionToState( STATE_PUZZLESELECTMENU );
+            }
+            else if( e.item == numTotal )
+                TransitionToState( STATE_PUZZLEMENU );
+            break;
+        }
+        case STATE_PUZZLESELECTMENU:
+        {
+            if( e.item < numSelectables )
+            {
+                m_iLevel = e.item + Puzzle::GetPuzzleOffset( m_iChapterViewed );
+                gotoNextPuzzle( false );
+            }
+            else if( e.item == numTotal )
+                TransitionToState( STATE_CHAPTERSELECTMENU );
+            break;
+        }
+        default:
+            ASSERT(0);
+    }
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         m_cubes[i].Reset();
     }
+}
 
-    /*int choice;
 
-    if( !m_menu.Update( choice ) )
+void Game::ClearBG1()
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].GetVid().bg1.eraseMask();
+}
+
+
+
+//this handles drawing that was moved out of cubewrapper so it could be done in a way that
+//thrashed the cache less
+//needDraw is a boolean array telling which cubes need drawing
+void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
+{
+    if( Game::Inst().getMode() == Game::MODE_PUZZLE)
     {
-        setState( STATE_INTRO );
-        if( choice < MODE_CNT )
+        for( int i = 0; i < NUM_CUBES; i++ )
         {
-            m_mode = (GameMode)choice;
-
-            if( m_mode == MODE_BLITZ )
-                m_iLevel = 3;
-            else
-                m_iLevel = 0;
-
-            for( int i = 0; i < NUM_CUBES; i++ )
+            if( needDraw[i] )
             {
-                m_cubes[i].Reset();
+                if( m_cubes[i].DrawPuzzleModeStuff() )
+                    needDraw[i] = false;
             }
         }
-        else
-            ASSERT( 0 );  //TODO settings!
+
     }
 
-    */
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].DrawGrid();
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            //draw glimmer before timer
+            if( m_cubes[i].m_glimmer.IsActive() )
+                m_cubes[i].m_glimmer.Draw( m_cubes[i].GetBG1Buffer(), &m_cubes[i] );
+        }
+    }
+
+
+    if( Game::Inst().getMode() == Game::MODE_BLITZ )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                m_cubes[i].DrawBlitzModeStuff( dt );
+            }
+        }
+    }
+    else
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                //rocks
+                for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
+                {
+                    m_cubes[i].m_aExplosions[i].Update();
+                    if( m_cubes[i].m_aExplosions[ j ].isUsed() )
+                        m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
+                }
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].getBanner().Update(t);
+            if( m_cubes[i].getBanner().IsActive() )
+            {
+                m_cubes[i].getBanner().Draw( m_cubes[i].GetVid() );
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].m_bubbles.Update(dt, m_cubes[i].getTiltDir() );
+            if( m_cubes[i].m_bubbles.isActive() )
+                m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
+        }
+    }
 }

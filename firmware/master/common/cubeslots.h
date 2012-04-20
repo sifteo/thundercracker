@@ -8,21 +8,17 @@
 
 #include <sifteo/abi.h>
 
-#ifdef USE_MOCK_CUBE
-  #define CubeSlot MockCubeSlot
-#endif
-
 class CubeSlot;
 struct PacketBuffer;
 
 namespace CubeSlots {
     extern CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
-    
+
     /*
      * One-bit flags for each cube are packed into global vectors
      */
     extern _SYSCubeIDVector vecEnabled;         /// Cube enabled
-	extern _SYSCubeIDVector vecConnected;       /// Cube connected
+    extern _SYSCubeIDVector vecConnected;       /// Cube connected
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     extern _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
@@ -35,6 +31,21 @@ namespace CubeSlots {
     extern _SYSCubeID minCubes;
     extern _SYSCubeID maxCubes;
     
+    /*
+     * Shared asset loader, for all cubes. This pointer itself must be
+     * validated when it's set, but there is no guarantee of valididty for
+     * individual _SYSAssetLoaderCubes.
+     */
+    extern _SYSAssetLoader *assetLoader;
+
+    /*
+     * In simulation only: We can opt to bypass the actual asset loader, and
+     * instead decompress loadstream data directly into cube flash.
+     */
+#ifdef SIFTEO_SIMULATOR
+    extern bool simAssetLoaderBypass;
+#endif
+
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
@@ -53,6 +64,9 @@ namespace CubeSlots {
     
     void paintCubes(_SYSCubeIDVector cv);
     void finishCubes(_SYSCubeIDVector cv);
+
+    void assetLoaderTask(void *);
+    void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
 }
 
 #endif

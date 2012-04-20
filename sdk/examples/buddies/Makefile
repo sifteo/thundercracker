@@ -1,7 +1,7 @@
 APP = buddies
 
-TC_DIR = ../../..
-include $(TC_DIR)/sdk/Makefile.defs
+SDK_DIR = ../..
+include $(SDK_DIR)/Makefile.defs
 
 OBJECTS = $(filter-out $(ASSETS).gen.cpp, $(wildcard *.cpp))
 OBJS = $(ASSETS).gen.o $(patsubst %.cpp, %.o, $(OBJECTS))
@@ -9,7 +9,7 @@ OBJS = $(ASSETS).gen.o $(patsubst %.cpp, %.o, $(OBJECTS))
 ASSETDEPS += assets/*.png $(ASSETS).lua
 CDEPS += *.h
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules
 
 GENERATED_FILES += PuzzleData_GENERATED.h
 PuzzleData.o: PuzzleData_GENERATED.h

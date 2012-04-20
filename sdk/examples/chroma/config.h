@@ -8,10 +8,7 @@
 #define NUM_CUBES 3
 #define MUSIC_ON 0
 #define SFX_ON 0
-#define LOAD_ASSETS 1
-
-//turn this on to limit to only 1 puzzle, saving internal flash
-#define ONE_PUZZLE_MODE 0
+#define LOAD_ASSETS 0
 
 #define SPLASH_ON 0
 

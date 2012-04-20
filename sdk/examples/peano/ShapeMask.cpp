@@ -2,8 +2,8 @@
 
 namespace TotalsGame
 {
-const ShapeMask ShapeMask::Zero = ShapeMask(Vec2(0,0), 0L);
-const ShapeMask ShapeMask::Unity = ShapeMask(Vec2(1,1), 1L);
+const ShapeMask ShapeMask::Zero = ShapeMask(vec(0,0), 0L);
+const ShapeMask ShapeMask::Unity = ShapeMask(vec(1,1), 1L);
 
 
 
@@ -45,16 +45,16 @@ ShapeMask::ShapeMask(Int2 size, long bits) {
 
 ShapeMask::ShapeMask()
 {
-    size = Vec2(0,0);
+    size = vec(0,0);
     bits = 0;
 }
 
 ShapeMask ShapeMask::GetRotation() {
-    Int2 s = Vec2(size.y, size.x);
+    Int2 s = vec(size.y, size.x);
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
-            if (BitAt(Vec2(y, size.y-1-x))) {
+            if (BitAt(vec(y, size.y-1-x))) {
                 int shift = y * s.x + x;
                 bts |= (1L<<shift);
             }
@@ -64,11 +64,11 @@ ShapeMask ShapeMask::GetRotation() {
 }
 
 ShapeMask ShapeMask::GetReflection() {
-    Int2 s = Vec2(size.x, size.y);
+    Int2 s = vec(size.x, size.y);
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
-            if (BitAt(Vec2(x, size.y-1-y))) {
+            if (BitAt(vec(x, size.y-1-y))) {
                 int shift = y * s.x + x;
                 bts |= (1L<<shift);
             }
@@ -88,7 +88,7 @@ ShapeMask ShapeMask::SubMask(Int2 p, Int2 s) {
     long bts = 0L;
     for(int x=0; x<s.x; ++x) {
         for(int y=0; y<s.y; ++y) {
-            if (BitAt(p+Vec2(x,y))) {
+            if (BitAt(p+vec(x,y))) {
                 int shift = y * s.x + x;
                 bts |= (1L<<shift);
             }
@@ -112,14 +112,14 @@ void ShapeMask::ListOutConnections(Connection *connections, int *numConnections,
         {
             if (BitAt(p))
             {
-                if (!BitAt(p+Vec2(1,0)))
+                if (!BitAt(p+vec(1,0)))
                 {
                     ASSERT(*numConnections < maxConnections);
                     connections[*numConnections].pos = p;
                     connections[*numConnections].dir.set(1,0);
                     (*numConnections)++;
                 }
-                if (!BitAt(p+Vec2(0,1)))
+                if (!BitAt(p+vec(0,1)))
                 {
                     ASSERT(*numConnections < maxConnections);
                     connections[*numConnections].pos = p;
@@ -142,14 +142,14 @@ void ShapeMask::ListInConnections(Connection *connections, int *numConnections, 
         {
             if (BitAt(p))
             {
-                if (!BitAt(p-Vec2(1,0)))
+                if (!BitAt(p-vec(1,0)))
                 {
                     ASSERT(*numConnections < maxConnections);
                     connections[*numConnections].pos = p;
                     connections[*numConnections].dir.set(1,0);
                     (*numConnections)++;
                 }
-                if (!BitAt(p-Vec2(0,1)))
+                if (!BitAt(p-vec(0,1)))
                 {
                     ASSERT(*numConnections < maxConnections);
                     connections[*numConnections].pos = p;
@@ -175,11 +175,11 @@ bool ShapeMask::TryConcat(
         )
 #endif
 {
-    Int2 min = Vec2(
+    Int2 min = vec(
                 MIN(offset.x, 0),
                 MIN(offset.y, 0)
                 );
-    Int2 max = Vec2(
+    Int2 max = vec(
                 MAX(m1.size.x, offset.x + m2.size.x),
                 MAX(m1.size.y, offset.y + m2.size.y)
                 );
@@ -209,7 +209,7 @@ bool ShapeMask::TryConcat(
     }
     *result = ShapeMask(newsize, newbits);
     //d1 = min - Int2.Zero;
-    *d1 = Vec2(0,0) - min;
+    *d1 = vec(0,0) - min;
 
     *d2 = offset - min;
     return true;

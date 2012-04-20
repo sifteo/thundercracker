@@ -9,11 +9,15 @@
 #include "cubecodec.h"
 #include "cubeslots.h"
 #include "svmmemory.h"
+#include "tasks.h"
 
 using namespace Intrinsic;
 
+uint16_t CubeCodec::exemptionBegin;
+uint16_t CubeCodec::exemptionEnd;
 
-void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
+
+bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
     /*
      * Note that we have to sweep that change map as we go. Since
@@ -41,35 +45,45 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * This loop terminates when all of VRAM has been flushed, or when
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
+     *
+     * Returns true iff all VRAM has been flushed.
      */
+
+    bool flushed = false;
 
     // Emit buffered bits from the previous packet
     txBits.flush(buf);
 
     if (vb) {
-        do {
-            /*
-             * This AND is important, it prevents out-of-bounds indexing
-             * or infinite looping if userspace gives us a bogus cm32
-             * value! This is equivalent to bounds-checking idx32 and addr
-             * below, as well as checking for infinite looping. Much more
-             * efficient to do it here though :)
-             */
-            uint32_t cm32 = vb->cm32 & 0xFFFF0000;
+        /*
+         * Clear the lock exemption range. This tracks words that, despite
+         * being locked or dirty, we can rely on during encode because we
+         * encoded them already during the same packet. This could be an
+         * arbitrary set of addresses, but to keep tracking simple we only
+         * track the last contiguous range of addresses.
+         *
+         * This helps us create good delta codes for runs that occur in
+         * data which is changing too fast to fully synchronize between frames.
+        */
+        exemptionBegin = exemptionEnd = (uint16_t) -1;
 
-            if (!cm32)
+        do {
+            uint32_t cm16 = vb->cm16;
+            if (!cm16)
                 break;
 
-            uint32_t idx32 = CLZ(cm32);
+            uint32_t idx32 = CLZ(cm16) >> 1;
             ASSERT(idx32 < arraysize(vb->cm1));
             uint32_t cm1 = vb->cm1[idx32];
+
+            DEBUG_LOG(("CODEC[%p] cm16=%08x cm1[%d]=%08x\n", vb, cm16, idx32, cm1));
 
             if (cm1) {
                 uint32_t idx1 = CLZ(cm1);
                 uint16_t addr = (idx32 << 5) | idx1;
 
                 ASSERT(addr < _SYS_VRAM_WORDS);
-                CODEC_DEBUG_LOG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
+                CODEC_DEBUG_LOG(("CODEC: -encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
 
                 if (!encodeVRAMAddr(buf, addr) ||
                     !encodeVRAMData(buf, vb, VRAM::peek(*vb, addr))) {
@@ -84,13 +98,23 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
                     break;
                 }
 
+                // Extend or reset the exemption range.
+                if (addr != exemptionEnd)
+                    exemptionBegin = addr;
+                exemptionEnd = addr + 1;
+
                 cm1 &= ROR(0x7FFFFFFF, idx1);
                 vb->cm1[idx32] = cm1;
             }
 
             if (!cm1) {
-                cm32 &= ROR(0x7FFFFFFF, idx32);
-                vb->cm32 = cm32;
+                // We operate at a 1:32 resolution, half that of the cm16.
+                // So, clear two bits at a time.
+                cm16 &= ROR(0x3FFFFFFF, idx32 << 1);
+                vb->cm16 = cm16;
+                DEBUG_LOG(("CODEC[%p] cm16=%08x, cm1 cleared\n", vb, cm16));
+                if (!cm16)
+                    flushed = true;
             }
         } while (!buf.isFull());
     }
@@ -109,6 +133,8 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
         flushDSRuns(true);
         txBits.flush(buf);
     }
+
+    return flushed;
 }
 
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
@@ -127,7 +153,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         if (delta <= 8) {
             // We can use a short skip code
 
-            CODEC_DEBUG_LOG((" addr delta %d\n", delta));
+            CODEC_DEBUG_LOG(("CODEC: addr delta %d\n", delta));
 
             delta--;
             txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
@@ -136,7 +162,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         } else {
             // Too large a delta, use a longer literal code
 
-            CODEC_DEBUG_LOG((" addr literal %04x\n", addr));
+            CODEC_DEBUG_LOG(("CODEC: addr literal %04x\n", addr));
 
             txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
             txBits.flush(buf);
@@ -231,7 +257,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         if (buf.isFull())
             return false;
 
-        CODEC_DEBUG_LOG((" data literal-16 %04x\n", data));
+        CODEC_DEBUG_LOG(("CODEC: data literal-16 %04x\n", data));
 
         txBits.append(0x23 | (data << 8), 24);
         txBits.flush(buf);
@@ -252,7 +278,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         flushDSRuns(false);
 
         uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-        CODEC_DEBUG_LOG((" data literal-14 %04x\n", index));
+        CODEC_DEBUG_LOG(("CODEC: data literal-14 %04x\n", index));
 
         txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
         txBits.flush(buf);
@@ -276,7 +302,7 @@ void CubeCodec::encodeDS(uint8_t d, uint8_t s)
     } else {
         flushDSRuns(false);
 
-        CODEC_DEBUG_LOG((" ds %d %d\n", d, s));
+        CODEC_DEBUG_LOG(("CODEC: ds %d %d\n", d, s));
         appendDS(d, s);
         codeD = d;
         codeS = s;
@@ -309,7 +335,7 @@ void CubeCodec::flushDSRuns(bool rleSafe)
     ASSERT(codeRuns <= RF_VRAM_MAX_RUN);
 
     if (codeRuns) {
-        CODEC_DEBUG_LOG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
+        CODEC_DEBUG_LOG(("CODEC: flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
 
         // Save room for the trailing non-RLE code
         if (rleSafe)
@@ -357,26 +383,34 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     return true;
 }
 
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-    _SYSAssetGroupCube *ac, _SYSCubeIDVector cubeBit, bool &done)
+bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done)
 {
     /*
-     * Since we're dealing with asset group pointers as well as
-     * per-cube state that reside in untrusted memory, this code
-     * has to be carefully written to read each user value exactly
+     * Since we're dealing with asset loader state in untrusted memory,
+     * this code has to be carefully written to read each user value exactly
      * once, and check it before use.
      *
-     * We only do this if we have asset data, obviously, but also
+     * We only send if we have asset data buffered, obviously, but also
      * if the cube has enough buffer space to accept it, and if
      * there's enough room in the packet for both the escape code
      * and at least one byte of flash data.
      *
-     * After this initial check, any further checks exist only as
-     * protection against buggy or malicious user code.
+     * This function MUST NOT access flash memory or the cache, since it's
+     * running in interrupt context. All of our state must come from the
+     * _SYSAssetLoaderCube object in RAM.
      *
      * Returns 'true' if and only if we sent a flashEscape.
      * Sets 'done' to 'true' if and only if the assset group is fully written.
      */
+
+    ASSERT(lc);
+
+    // Sample the FIFO state exactly once, and validate it.
+    int head = lc->head;
+    int tail = lc->tail;
+    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
+        return false;
+    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
 
     /*
      * We have a state bit in CubeSlots to keep track of whether we
@@ -385,7 +419,24 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      * part of the loadstream that we send over the radio, but they're
      * created dynamically rather than coming straight from flash.
      */
-     bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+    _SYSCubeIDVector cubeBit = Intrinsic::LZ(cube);
+    bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
+
+    /*
+     * If and only if we may need to send an address, prepare that address.
+     * It's in user RAM, so this mapping may fail.
+     */
+    uint16_t baseAddr = 0;
+    if (flashAddrPending) {
+        SvmMemory::PhysAddr groupCubePA;
+        SvmMemory::VirtAddr groupCubeVA =
+            lc->pAssetGroup + sizeof(_SYSAssetGroup) + sizeof(_SYSAssetGroupCube) * cube;
+        
+        if (!SvmMemory::mapRAM(groupCubeVA, sizeof(_SYSAssetGroupCube), groupCubePA))
+            return false;
+
+        baseAddr = reinterpret_cast<_SYSAssetGroupCube*>(groupCubePA)->baseAddr;
+    }
 
     /*
      * How much space do we need? The minimum unit of asset data is
@@ -403,22 +454,31 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     if (loadBufferAvail < dataSizeInBytes)
         return false;
 
-    // Per-cube asset state pointer is invalid?
-    if (!ac)
-        return false;
+    /*
+     * Read 'progress' from untrusted memory only once. See if we're done.
+     * Note that this tracks how many bytes have been enqueued into the FIFO,
+     * not how many bytes were sent over the radio.
+     *
+     * We require that 'progress' is only updated after enqueueing data into
+     * the FIFO and updating the FIFO!
+     */
 
-    // Read (cached) asset group header. Must be valid.
-    const _SYSAssetGroupHeader *headerVA =
-        reinterpret_cast<const _SYSAssetGroupHeader*>(group->pHdr);
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, headerVA))
-        return false;
-
-    // Read 'progress' from untrusted memory only once, and validate it.
-    uint32_t progress = ac->progress;
-    if (progress >= header.dataSize) {
+    uint32_t progress = lc->progress;
+    uint32_t dataSize = lc->dataSize;
+    if (progress >= dataSize && fifoCount == 0) {
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
+        return false;
+    }
+
+    /*
+     * If we don't need to send the address, make sure we at least have one
+     * byte of data in the FIFO to send. Must happen after the done-ness
+     * check above.
+     */
+
+    if (!flashAddrPending && fifoCount == 0) {
+        Tasks::setPending(Tasks::AssetLoader);
         return false;
     }
 
@@ -440,13 +500,12 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
      */
 
     if (flashAddrPending) {
-        uint16_t addr = ac->baseAddr;
         ASSERT(buf.bytesFree() >= 3);
 
         // Opcode, lat1, lat2
         buf.append(0xe1);
-        buf.append(addr << 1);
-        buf.append((addr >> 6) & 0xfe);
+        buf.append(baseAddr << 1);
+        buf.append((baseAddr >> 6) & 0xfe);
 
         Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
         ASSERT(count >= 3);
@@ -458,44 +517,163 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     }
 
     /*
-     * We access flash data through the cache, instead of FlashStream, for
-     * important reasons. Even though it may seem like asset loading is
-     * a purely streaming operation, it actually isn't:
-     *
-     *   - When loading to multiple cubes concurrently, the same data is often
-     *     reused, and the cache can in fact cut down bus traffic quite a bit.
-     *
-     *   - We consume loadstream data in potentially very tiny chunks, which
-     *     would come with significant overhead if we made separate SPI
-     *     bus transactions out of each. By utilizing the block cache, we can
-     *     amortize this cost over many packets.
+     * Stream flash data, as it becomes available from the FIFO
      */
 
-    FlashBlockRef ref;
-    SvmMemory::VirtAddr dataVA = reinterpret_cast<SvmMemory::VirtAddr>(headerVA);
-    dataVA += header.hdrSize;
-    dataVA += progress;
+    // May have reached this point after sending an addr, but without any FIFO data
+    if (!fifoCount)
+        return true;
 
-    count = MIN(count, header.dataSize - progress);
-    progress += count;
+    count = MIN(count, fifoCount);
+    ASSERT(count > 0);
     ASSERT(loadBufferAvail >= count);
     loadBufferAvail -= count;
 
-    while (count) {
-        SvmMemory::PhysAddr dataPA;
-        uint32_t chunk = count;
-        if (!SvmMemory::mapROData(ref, dataVA, chunk, dataPA))
-            return false;
-
-        buf.append(dataPA, chunk);
-        count -= chunk;
-        dataVA += chunk;
+    while (count--) {
+        buf.append(lc->buf[head++]);
+        if (head == _SYS_ASSETLOAD_BUF_SIZE)
+            head = 0;
     }
 
-    ac->progress = progress;
-    ASSERT(progress <= header.dataSize);
-    if (progress >= header.dataSize && loadBufferAvail == FLS_FIFO_USABLE)
-        done = true;
+    // Update FIFO state
+    lc->head = head;
+
+    // If we're done, remember that. If not, make sure we fetch more data.
+    if (progress >= dataSize && head == tail) {
+        if (loadBufferAvail == FLS_FIFO_USABLE)
+            done = true;
+    } else {
+        Tasks::setPending(Tasks::AssetLoader);
+    }
 
     return true;
+}
+
+bool CubeCodec::endPacket(PacketBuffer &buf)
+{
+    /*
+     * Big note:
+     *   - If we didn't emit a full packet, that implies an encoder state reset.
+     *   - Period. It doesn't matter what's in the packet, just whether or not
+     *     it's full!
+     *
+     * End conditions:
+     *   - Full packet. We already totally filled the buffer, and we may have
+     *     additional bits saved in txBits for later. We're done.
+     *   - Single nybble buffered on a not-yet-full packet. We can flush that
+     *     nybble by adding a 'junk' nybble afterwards: anything that doesn't
+     *     represent a full code.
+     *   - BUT, if we happen to end up with a full packet after padding, there
+     *     is no state reset afterwards and this junk nybble will be interpreted
+     *     as part of the next packet.
+     *
+     * SO, we do need to pad, but we may not be able to pad with pure junk.
+     * If we're in this last situation, we can pad with some arbitrary
+     * harmless code, like a skip (00), as long as we keep the encode and
+     * decode state in sync.
+     *
+     * Returns 'true' if this packet contained any content.
+     */
+
+    bool content = true;
+
+    if (!buf.isFull()) {
+        // If not full, pad with a single nybble 0. This is usable as a junk
+        // nybble, plus it can be the beginning of a skip code if necessary.
+
+        ASSERT(codeRuns == 0);
+
+        if (txBits.hasPartialByte()) {
+            txBits.append(0, 4);
+            txBits.flush(buf);
+        }
+
+        if (buf.isFull()) {
+            // That just filled up the packet! No state reset, and gear up
+            // to begin the next packet with a tiny skip code (00).
+            
+            codePtr = (codePtr + 1) & _SYS_VRAM_WORD_MASK;
+            txBits.append(0, 4);
+            CODEC_DEBUG_LOG(("CODEC: Padded with split short skip code\n"));
+
+        } else {
+            // Still not full. This will be a state reset, and we can discard
+            // the nybble above as junk.
+
+            if (!buf.len) {
+                /*
+                 * If we have nothing to send, make it an empty 'ping' packet.
+                 * But the nRF24L01 can't actually send a zero-byte packet, so
+                 * we have to pad it with a no-op. We don't have any explicit
+                 * no-op in our protocol, but we can send only the first byte
+                 * from a multi-byte code.
+                 *
+                 * This is the first byte of a 14-bit literal.
+                 *
+                 * Note that we may have buffered some bits ahead of this,
+                 * such as the second nybble of the split skip code above.
+                 * This should be fine- worst case, we will end up discarding
+                 * the second nybble of this ping code.
+                 *
+                 * stateReset() must come after this, not before. It discards
+                 * buffered bits, and we must not do that prior to emitting
+                 * the ping.
+                 */
+                
+                txBits.append(0xFF, 8);
+                txBits.flush(buf); 
+
+                content = false;
+            }
+
+            stateReset();
+        }
+    }
+
+    return content;
+}
+
+unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset)
+{
+    uint16_t ptr = codePtr - offset;
+    ptr &= _SYS_VRAM_WORD_MASK;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "lock=%08x mask=%08x codePtr=%03x\n",
+        data, offset, vb->lock, VRAM::maskCM16(ptr), codePtr));
+
+    if ((vb->lock & VRAM::maskCM16(ptr)) ||
+        (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
+
+        // This word is locked, but it may be exempt from the
+        // lock because we've encoded it during this very same packet
+        // (while we have userspace blocked, and the vbuf can't change).
+        
+        if (ptr < exemptionBegin || ptr >= exemptionEnd) {
+            // Not exempt. Can't match a locked or modified word
+            return (unsigned) -1;
+        }
+    }
+
+    uint16_t sample = VRAM::peek(*vb, ptr);
+
+    if ((sample & 0x0101) != (data & 0x0101)) {
+        // Different LSBs, can't possibly reach it via a delta
+        return (unsigned) -1;
+    }
+
+    int16_t dI = _SYS_INVERSE_TILE77(data);
+    int16_t sI = _SYS_INVERSE_TILE77(sample);
+
+    // Note that our delta codes leave the LSBs untouched
+    ASSERT(_SYS_TILE77(dI) == (data & 0xFEFE));
+    ASSERT(_SYS_TILE77(sI) == (sample & 0xFEFE));
+
+    unsigned result = dI - sI + RF_VRAM_DIFF_BASE;
+
+    CODEC_DEBUG_LOG(("CODEC: deltaSample(%04x, %03x) "
+        "sample=%04x dI=%04x sI=%04x res=%d\n",
+        data, offset, sample, dI, sI, result));
+
+    return result;
 }

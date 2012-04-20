@@ -18,7 +18,7 @@ void Portal::setOpen(bool open)
 
 void Portal::animate()
 {
-    const unsigned maxFrame = PlayfieldE.frames - 1;
+    const unsigned maxFrame = PlayfieldE.numFrames() - 1;
     
     switch (state) {
     
@@ -45,7 +45,7 @@ void Portal::animate()
     }
 }
 
-void Portal::draw(Cube &cube)
+void Portal::draw(VideoBuffer &vid)
 {
     static const struct {
         const AssetImage *asset;
@@ -56,9 +56,8 @@ void Portal::draw(Cube &cube)
         { &PlayfieldF, { 2,  13 } },
         { &PlayfieldA, { 13, 2  }  },
     };
-    
-    VidMode_BG0 vid(cube.vbuf);
-    vid.BG0_drawAsset(info[side].pos, *info[side].asset, frame);
+
+    vid.bg0.image(info[side].pos, *info[side].asset, frame);
 }
 
 Float2 Portal::getTarget() const
@@ -82,9 +81,9 @@ float Portal::distanceFrom(Float2 coord)
 {
     switch (side) {    
     default:
-    case SIDE_TOP:     return coord.y;
-    case SIDE_LEFT:    return coord.x;
-    case SIDE_BOTTOM:  return VidMode::LCD_height - coord.y;
-    case SIDE_RIGHT:   return VidMode::LCD_width - coord.x;
+    case TOP:     return coord.y;
+    case LEFT:    return coord.x;
+    case BOTTOM:  return LCD_height - coord.y;
+    case RIGHT:   return LCD_width - coord.x;
     }
 }

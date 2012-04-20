@@ -40,6 +40,7 @@ class CPPWriter {
     virtual void foot();
 
     void writeArray(const std::vector<uint8_t> &data);
+    void writeArray(const std::vector<uint16_t> &data);
     void writeString(const std::vector<uint8_t> &data);
 };
 
@@ -56,9 +57,11 @@ class CPPSourceWriter : public CPPWriter {
     CPPSourceWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
+    void writeTracker(const Tracker &tracker);
 
  private:
     void writeImage(const Image &image);
+    unsigned nextGroupOrdinal;
 };
 
 
@@ -74,6 +77,7 @@ class CPPHeaderWriter : public CPPWriter {
     CPPHeaderWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
+    void writeTracker(const Tracker &tracker);
 
  protected:
     void head();

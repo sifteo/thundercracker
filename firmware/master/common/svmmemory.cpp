@@ -37,6 +37,7 @@ bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
 
     // Check the extent of this region.
     // Note that with length==0, the address (VIRTUAL_RAM_BASE + RAM_SIZE_IN_BYTES) is valid.
+    // This calculation must work securely for any possible 32-bit length value.
     return length <= (RAM_SIZE_IN_BYTES - offset);
 }
 
@@ -119,7 +120,7 @@ void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
 
 bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 {
-    // Callers expect us to ignore the two LSBs. All real branch addresses
+    // Callers expect us to ignore the two LSBs and 8 MSBs. All real branch addresses
     // are 32-bit aligned, and some callers use these bits for special purposes.
     uint32_t flashOffset = (uint32_t)va & 0xfffffc;
 

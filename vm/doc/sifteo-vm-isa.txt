@@ -197,6 +197,12 @@ SVC encodings:
   11011111 11110rrr     (A) Call validate(rN), with SP adjust
   11011111 11111rrr     (B) Tail call validate(rN), with SP adjust
 
+During indirect calls (A) and (B) the least significant 2 bits and most
+significant 1 bit are ignored. It is recommended that at least one of these
+bits is nonzero, to differentiate a legitimate function at 0x80000000 with
+an SP adjust of zero from a NULL pointer. Currently we set the LSB for this
+purpose.
+
 Since 0 is never a valid indirect address (every code page by definition
 has a valid instruction at the beginning), code 0x00 is reserved for Return.
 

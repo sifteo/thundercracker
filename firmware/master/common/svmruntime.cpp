@@ -10,12 +10,12 @@
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
 #include "svmdebugger.h"
+#include "svmloader.h"
 #include "event.h"
 #include "tasks.h"
+#include "panic.h"
 
 #include <sifteo/abi.h>
-#include <string.h>
-#include <stdlib.h>
 
 using namespace Svm;
 
@@ -25,75 +25,28 @@ SvmMemory::PhysAddr SvmRuntime::stackLimit;
 reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
 
-
-static void logTitleInfo(Elf::ProgramInfo &pInfo)
-{
 #ifdef SIFTEO_SIMULATOR
-    FlashBlockRef ref;
-
-    const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
-    LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
-
-    const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
-    if (uuid) {
-        LOG(("SVM: Title UUID is {"));
-        for (unsigned i = 0; i < 16; i++)
-            LOG(("%02x%s", uuid->bytes[i], (i == 3 || i == 5 || i == 7 || i == 9) ? "-" : ""));
-        LOG(("}\n"));
-    }
+bool SvmRuntime::stackMonitorEnabled = false;
+SvmMemory::PhysAddr SvmRuntime::topOfStackPA;
+SvmMemory::PhysAddr SvmRuntime::stackLowWaterMark;
 #endif
-}
 
-void SvmRuntime::run(uint16_t appId)
+void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
+        SvmMemory::VirtAddr stackTopVA)
 {
-    // TODO: look this up via appId
-    FlashRange elf(0, 0xFFFF0000);
-
-    Elf::ProgramInfo pInfo;
-    if (!pInfo.init(elf))
-        return;
-
-    // On simulator builds, log some info about the program we're running
-    logTitleInfo(pInfo);
-    
-    // On simulation, with the built-in debugger, point SvmDebug to
-    // the proper ELF binary to load debug symbols from.
-    SvmDebugPipe::setSymbolSourceELF(elf);
-
-    // Initialize rodata segment
-    SvmMemory::setFlashSegment(pInfo.rodata.data);
-
-    // Clear RAM (including implied BSS)
-    SvmMemory::erase();
-    SvmCpu::init();
-
-    // Load RWDATA into RAM
-    SvmMemory::PhysAddr rwdataPA;
-    if (!pInfo.rwdata.data.isEmpty() &&
-        SvmMemory::mapRAM(SvmMemory::VirtAddr(pInfo.rwdata.vaddr),
-            pInfo.rwdata.size, rwdataPA)) {
-        FlashStream rwDataStream(pInfo.rwdata.data);
-        rwDataStream.read(rwdataPA, pInfo.rwdata.size);
-    }
-
-    // Stack setup
-    SvmMemory::mapRAM(pInfo.bss.vaddr + pInfo.bss.size, 0, stackLimit);
-
-    reg_t sp = mapSP(SvmMemory::VIRTUAL_RAM_TOP);   // reset sp
-    int spAdjust = (pInfo.entry >> 24) * 4;         // Allocate stack space for this function
-
-    SvmCpu::run(mapSP(sp - spAdjust), mapBranchTarget(pInfo.entry));
-}
-
-void SvmRuntime::exit()
-{
-    // XXX - Temporary
+    if (!SvmMemory::mapRAM(stackLimitVA, 0, stackLimit))
+        SvmRuntime::fault(F_BAD_STACK);
 
 #ifdef SIFTEO_SIMULATOR
-    ::exit(0);
+    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
+    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
+    stackLowWaterMark = topOfStackPA;
 #endif
-    while (1);
+
+    SvmCpu::run(mapSP(stackTopVA - getSPAdjustBytes(entryFunc)),
+                mapBranchTarget(entryFunc));
 }
+
 
 void SvmRuntime::fault(FaultCode code)
 {
@@ -108,8 +61,26 @@ void SvmRuntime::fault(FaultCode code)
     if (SvmDebugPipe::fault(code))
         return;
 
-    // Unhandled fault; exit
-    exit();
+    /* 
+     * Unhandled fault; panic!
+     * Draw a message to cube #0 and exit.
+     */
+
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+    PanicMessenger msg;
+    msg.init(0x10000);
+
+    msg.at(1,1) << "Oh noes!";
+    msg.at(1,3) << "Fault code " << uint8_t(code);
+    msg.at(1,5) << "PC: " << pcVA;
+    for (unsigned r = 0; r < 8; r++) {
+        reg_t value = SvmCpu::reg(r);
+        SvmMemory::squashPhysicalAddr(value);
+        msg.at(1,6+r) << 'r' << char('0' + r) << ": " << uint32_t(value);
+    }
+
+    msg.paint(0);
+    SvmLoader::exit();
 }
 
 void SvmRuntime::call(reg_t addr)
@@ -151,7 +122,7 @@ void SvmRuntime::call(reg_t addr)
     TRACING_ONLY({
         LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
             "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
     });
 
@@ -175,7 +146,7 @@ void SvmRuntime::tailcall(reg_t addr)
 
     TRACING_ONLY({
         LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             reinterpret_cast<void*>(fp)));
     });
 
@@ -184,8 +155,9 @@ void SvmRuntime::tailcall(reg_t addr)
 
 void SvmRuntime::enterFunction(reg_t addr)
 {
+
     // Allocate stack space for this function, and enter it
-    adjustSP(-(addr >> 24));
+    adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);
 }
 
@@ -197,7 +169,7 @@ void SvmRuntime::ret(unsigned actions)
     if (!fp) {
         // No more functions on the stack. Return from main() is exit().
         if (actions & RET_EXIT)
-            exit();
+            SvmLoader::exit();
         return;
     }
 
@@ -486,7 +458,24 @@ reg_t SvmRuntime::mapSP(reg_t addr)
     if (pa < stackLimit)
         SvmRuntime::fault(F_STACK_OVERFLOW);
 
+    onStackModification(pa);
+
     return reinterpret_cast<reg_t>(pa);
+}
+
+/*
+ * If enabled, monitor stack usage and print when we have a new low water mark.
+ * Simulator only.
+ */
+void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
+{
+#ifdef SIFTEO_SIMULATOR
+    if (stackMonitorEnabled && sp < stackLowWaterMark) {
+        stackLowWaterMark = sp;
+        LOG(("SVM: New stack low water mark, 0x%p (%d bytes)\n",
+             reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
+    }
+#endif
 }
 
 void SvmRuntime::branch(reg_t addr)

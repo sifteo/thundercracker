@@ -22,12 +22,15 @@ extern "C" {
 #include "logger.h"
 #include "tile.h"
 #include "imagestack.h"
+#include "sifteo/abi.h"
+#include "tracker.h"
 
 namespace Stir {
 
 class Group;
 class Image;
 class Sound;
+class Tracker;
 
 /*
  * Script --
@@ -57,11 +60,13 @@ public:
     const char *outputProof;
 
     std::set<Group*> groups;
+    std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
 
     friend class Group;
     friend class Image;
     friend class Sound;
+    friend class Tracker;
 
     bool luaRunFile(const char *filename);
     void collect();
@@ -129,7 +134,7 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
-    uint64_t getSignature() const;
+    uint64_t getHash() const;
 
 private:
     lua_Number quality;
@@ -175,6 +180,16 @@ public:
     bool isPinned() const {
         return mTileOpt.pinned;
     }
+    
+    bool isFlat() const {
+        return mIsFlat;
+    }
+
+    const char *getClassName() const;
+
+    uint16_t encodePinned() const;
+    void encodeFlat(std::vector<uint16_t> &data) const;
+    bool encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const;
 
  private:
     Group *mGroup;
@@ -182,6 +197,7 @@ public:
     TileOptions mTileOpt;
     std::vector<TileGrid> mGrids;
     std::string mName;
+    bool mIsFlat;
 
     void createGrids();
 
@@ -208,14 +224,29 @@ public:
         mEncode = encode;
     }
     
-    void setQuality(int quality)
+    void setSampleRate(uint32_t sample_rate)
     {
-        mQuality = quality;
+        mSampleRate = sample_rate;
     }
-    
-    void setVBR(bool vbr)
+
+    void setLoopStart(uint32_t loop_start)
     {
-        mVBR = vbr;
+        mLoopStart = loop_start;
+    }
+
+    void setLoopLength(uint32_t loop_length)
+    {
+        mLoopLength = loop_length;
+    }
+
+    void setLoopType(_SYSAudioLoopType loop_type)
+    {
+        mLoopType = loop_type;
+    }
+
+    void setVolume(uint16_t volume)
+    {
+        mVolume = volume;
     }
 
     const std::string &getName() const {
@@ -229,23 +260,98 @@ public:
     const std::string &getEncode() const {
         return mEncode;
     }
-    
-    const int getQuality() const {
-        return mQuality;
+
+    const uint32_t getSampleRate() const {
+        return mSampleRate;
+    }
+
+    const uint32_t getLoopStart() const {
+        return mLoopStart;
     }
     
-    const bool getVBR() const {
-        return mVBR;
+    const uint32_t getLoopLength() const {
+        return mLoopLength;
     }
-    
+
+    const _SYSAudioLoopType getLoopType() const {
+        return mLoopType;
+    }
+
+    const uint16_t getVolume() const {
+        return mVolume;
+    }
+
 private:
     std::string mName;
     std::string mFile;
     std::string mEncode;
-    int mQuality;
-    bool mVBR;
+    uint32_t mSampleRate;
+    uint32_t mLoopStart;
+    uint32_t mLoopLength;
+    uint16_t mVolume;
+    _SYSAudioLoopType mLoopType;
 };
 
+class Tracker {
+public:
+    static const char className[];
+    static Lunar<Tracker>::RegType methods[];
+
+    Tracker(lua_State *L);
+
+    void setName(const char *s) {
+        mName = s;
+    }
+
+    const std::string &getName() const {
+        return mName;
+    }
+
+    const std::string &getFile() const {
+        return mFile;
+    }
+
+    const _SYSXMSong &getSong() const {
+        assert(loader.song.nPatterns);
+        return loader.song;
+    }
+    const _SYSXMPattern &getPattern(uint8_t i) const {
+        assert(i < loader.song.nPatterns);
+        return loader.patterns[i];
+    }
+    const std::vector<uint8_t> &getPatternData(uint8_t i) const {
+        assert(i < loader.song.nPatterns);
+        return loader.patternDatas[i];
+    }
+    const std::vector<uint8_t> &getPatternTable() const {
+        return loader.patternTable;
+    }
+    const _SYSXMInstrument &getInstrument(uint8_t i) const {
+        assert(i < loader.song.nInstruments);
+        return loader.instruments[i];
+    }
+    const std::vector<uint8_t> &getEnvelope(uint8_t i) const {
+        assert(i < loader.envelopes.size());
+        return loader.envelopes[i];
+    }
+    const std::vector<uint8_t> &getSample(uint8_t i) const {
+        assert(i < loader.sampleDatas.size());
+        return loader.sampleDatas[i];
+    }
+
+    const uint32_t getFileSize() const {
+        return loader.fileSize;
+    }
+    const uint32_t getSize() const {
+        return loader.size;
+    }
+
+private:
+    friend class Script;
+    std::string mName;
+    std::string mFile;
+    XmTrackerLoader loader;
+};
 
 };  // namespace Stir
 

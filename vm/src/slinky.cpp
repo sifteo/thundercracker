@@ -144,8 +144,22 @@ cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
     cl::desc("Do not verify input module"));
 
 
-static void PrepareModule(Module *M)
+static void PrepareModule(LLVMContext& Context, Module *M)
 {
+    assert(SVMTargetMachine::isTargetCompatible(Context,
+        TargetData(SVMTargetMachine::getDataLayoutString())));
+    
+    // See if the datalayout is at all compatible with SVM
+    TargetData TD(M);
+    if (!SVMTargetMachine::isTargetCompatible(Context, TD)) {
+        report_fatal_error("Module \"" + M->getModuleIdentifier() +
+            "\" has incompatible target data layout. "
+            "Your compiler may not be configured properly.\n"
+            "    Your module's data layout: " + M->getDataLayout() + "\n"
+            "    Our preferred data layout: " +
+            SVMTargetMachine::getDataLayoutString());
+    }
+
     // Always override the target triple and data layout
     M->setTargetTriple(Triple::normalize("thumb-sifteo-vm"));
     M->setDataLayout(SVMTargetMachine::getDataLayoutString());
@@ -168,7 +182,7 @@ static std::auto_ptr<Module> LoadFile(const char *argv0,
     const std::string &FNStr = Filename.str();
     Result = ParseIRFile(FNStr, Err, Context);
     if (Result) {
-        PrepareModule(Result);
+        PrepareModule(Context, Result);
         return std::auto_ptr<Module>(Result);   // Load successful!
     }
 

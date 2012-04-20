@@ -31,7 +31,6 @@ public:
 
     bool isBusy() const;
 
-    int sampleRate() const;
     void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();
@@ -40,6 +39,8 @@ public:
     void tmrIsr();
 
 private:
+    static const unsigned PWM_FREQ = 500;   // TODO: tune this!
+
     HwTimer pwmTimer;
     int pwmChan;
     HwTimer sampleTimer;

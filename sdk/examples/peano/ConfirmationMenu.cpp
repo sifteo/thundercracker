@@ -51,10 +51,10 @@ void PaintTheDoors(TotalsCube *c, int offset, bool opening)
     const Skins::Skin &skin = Skins::GetSkin();
     if (offset < 7) {
         // moving to the left
-        c->ClipImage(&skin.vault_door, Vec2(7-offset, 7));
-        c->ClipImage(&skin.vault_door, Vec2(7-16-offset, 7));
-        c->ClipImage(&skin.vault_door, Vec2(7-offset, 7-16));
-        c->ClipImage(&skin.vault_door, Vec2(7-16-offset,7-16));
+        c->ClipImage(&skin.vault_door, vec(7-offset, 7));
+        c->ClipImage(&skin.vault_door, vec(7-16-offset, 7));
+        c->ClipImage(&skin.vault_door, vec(7-offset, 7-16));
+        c->ClipImage(&skin.vault_door, vec(7-16-offset,7-16));
     } else {
         // opening
         int off = offset - 7;
@@ -63,11 +63,11 @@ void PaintTheDoors(TotalsCube *c, int offset, bool opening)
 
         if (opening && bottom-top > 0)
         {
-            c->FillArea(&Dark_Purple, Vec2(0, top), Vec2(16, bottom-top));
+            c->FillArea(&Dark_Purple, vec(0, top), vec(16, bottom-top));
         }
 
-        c->ClipImage(&skin.vault_door, Vec2(0, top-16));
-        c->ClipImage(&skin.vault_door, Vec2(0, bottom));
+        c->ClipImage(&skin.vault_door, vec(0, top-16));
+        c->ClipImage(&skin.vault_door, vec(0, bottom));
     }
 }
 
@@ -104,10 +104,10 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
     }
 
     AnimateDoors(Game::cubes+YES, true);
-    Game::cubes[YES].Image(*choice1, Vec2(3, 1));
+    Game::cubes[YES].Image(*choice1, vec(3, 1));
 
     AnimateDoors(Game::cubes+NO, true);
-    Game::cubes[NO].Image(*choice2, Vec2(3, 1));
+    Game::cubes[NO].Image(*choice2, vec(3, 1));
     System::paint();
 
     DialogWindow dw(Game::cubes+ASK);
@@ -138,7 +138,7 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
     if(msg)
     {
         dw.EndIt();
-        Game::cubes[ASK].FillArea(&Dark_Purple, Vec2(0, 0), Vec2(16, 16));
+        Game::cubes[ASK].FillArea(&Dark_Purple, vec(0, 0), vec(16, 16));
         AnimateDoors(Game::cubes+ASK, false);
     }
 

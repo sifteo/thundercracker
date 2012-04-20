@@ -78,3 +78,18 @@ const char *SVMTargetMachine::getDataLayoutString()
     return "e-S32-p32:32:32-i64:32:32-f64:32:32-v64:32:32-a0:1:1-s0:32:32-n32";
 }
 
+bool SVMTargetMachine::isTargetCompatible(LLVMContext& Context, const TargetData &TD)
+{
+    Type *i32 = Type::getInt64Ty(Context);
+    Type *i64 = Type::getInt64Ty(Context);
+    Type *i32i64i32 = StructType::get(i32, i64, i32, NULL);
+
+    return
+        TD.getPointerABIAlignment() == 4 &&
+        TD.getPointerSize() == 4 &&
+        TD.exceedsNaturalStackAlignment(4) == false &&
+        TD.exceedsNaturalStackAlignment(8) == true &&
+        TD.getABITypeAlignment(i64) == 4 &&
+        TD.getABITypeAlignment(i32i64i32) == 4 &&
+        TD.getTypeAllocSize(i32i64i32) == 24;
+}

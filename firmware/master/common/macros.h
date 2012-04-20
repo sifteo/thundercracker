@@ -6,20 +6,17 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#include <stdio.h>
+#include <assert.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#define APP_TITLE      "Thundercracker"
+#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
-
-/*
- * Firmware internal debug macros
- *
- * Variants of the standard LOG and ASSERT macros, for building game code
- * which is to be compiled into a firmware image. Logging and ASSERTs are
- * always disabled on hardware builds and enabled on simulation builds.
- */
-
-#include <stdio.h>
-#include <assert.h>
 
 #ifdef _NEWLIB_STDIO_H
 #define printf      iprintf
@@ -69,6 +66,35 @@
 #define offsetof(t,m)  ((uintptr_t)(uint8_t*)&(((t*)0)->m))
 #endif
 
+#define ALWAYS_INLINE   __attribute__ ((always_inline))
+#define NEVER_INLINE    __attribute__ ((noinline))
+
+#define LIKELY(x)       __builtin_expect((x), 1)
+#define UNLIKELY(x)     __builtin_expect((x), 0)
+
+#ifndef MIN
+#define MIN(a,b)        ((a)<(b)?(a):(b))
+#define MAX(a,b)        ((a)>(b)?(a):(b))
+#endif
+
+#ifndef FASTCALL
+#   ifdef __i386__
+#       define FASTCALL __attribute__ ((fastcall))
+#   else
+#       define FASTCALL
+#   endif
+#endif
+
+#ifndef PRIu64
+#   if defined(_WIN32)
+#      define PRIu64 "I64u"
+#   elif !defined(_LP64)
+#      define PRIu64 "lu"
+#   else
+#      define PRIu64 "llu"
+#   endif
+#endif
+
 template <typename T> inline T clamp(const T& value, const T& low, const T& high)
 {
     if (value < low) {
@@ -87,5 +113,30 @@ template <typename T> inline T abs(const T& value)
     }
     return value;
 }
+
+/**
+ * Compute the unsigned remainder from dividing two signed integers.
+ */
+unsigned inline umod(int a, int b)
+{
+    int r = a % b;
+    if (r < 0)
+        r += b;
+    return r;
+}
+
+/**
+ * Saturating 16x16=32 multiply.
+ *
+ * If the operands are greater than 0xFFFF, the result will automatically
+ * saturate to 0xFFFFFFFF. Guaranteed not to overflow a uint32_t.
+ */
+uint32_t inline mulsat16x16(uint32_t a, uint32_t b)
+{
+    if (a > 0xFFFF) return 0xFFFFFFFF;
+    if (b > 0xFFFF) return 0xFFFFFFFF;
+    return a * b;
+}
+
 
 #endif

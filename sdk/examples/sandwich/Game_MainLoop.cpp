@@ -1,45 +1,53 @@
 #include "Game.h"
 
-void Game::onNeighbor(
-	void *context,
-    Cube::ID c0, Cube::Side s0, 
-    Cube::ID c1, Cube::Side s1) {
-	sNeighborDirty = true;
-}
-
 void Game::MainLoop() {
   	//---------------------------------------------------------------------------
-  	// INTRO
+  	// RESET DATA
+	ASSERT(this == &gGame);
+	mActiveViewMask = CUBE_ALLOC_MASK;
+	mLockedViewMask = 0x00000000;
+	mTouchMask = 0x00000000;
 
-	for(Cube* p=gCubes; p!=gCubes+NUM_CUBES; ++p) {
-		VidMode(p->vbuf).setWindow(0, 128);
-	}
-
-	#if FAST_FORWARD
-		Cube* pPrimary = gCubes;
-	#else
-		PlayMusic(music_sting, false);
-		Cube* pPrimary = IntroCutscene();
-	#endif
-
-	//---------------------------------------------------------------------------
-  	// RESET EVERYTHING
+	mNeighborDirty = false;
+	mPrevTime = SystemTime::now();
 	pInventory = 0;
 	pMinimap = 0;
 	mAnimFrames = 0;
-	mNeedsSync = 0;
-	mSimTime = SystemTime::now();
 	mState.Init();
 	mMap.Init();
-	mPlayer.Init(pPrimary);
-	for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
-		if (v->GetCube() != pPrimary) { v->Init(); }
+
+  	//---------------------------------------------------------------------------
+  	// INTRO
+  	for(auto& view : views) {
+		view.Canvas().initMode(BG0_SPR_BG1);
+		view.Canvas().attach(&view - &ViewAt(0));
 	}
+
+	#if FAST_FORWARD
+		Viewport* pPrimary = &ViewAt(0);
+	#else
+		PlayMusic(music_sting, false);
+		Viewport* pPrimary = IntroCutscene();
+		#if DO_MENU
+			pPrimary = MainMenu(pPrimary);
+		#else
+			IrisOut(*pPrimary);
+			DoWait(0.5f);
+		#endif
+	#endif
+
+	//---------------------------------------------------------------------------
+  	// RESET VIEWS
+  	for(auto& view : views) {
+  		view.Init();
+  	}
+	mPlayer.Init(pPrimary);
 	Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
-	mPlayer.View()->ShowLocation(mPlayer.Location(), true);
+	mPlayer.View().ShowLocation(mPlayer.Location(), true);
 	PlayMusic(music_castle);
-	_SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
-	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
+	Events::neighborAdd.set(&Game::OnNeighbor, this);
+    Events::neighborRemove.set(&Game::OnNeighbor, this);
+    Events::cubeTouch.set(&Game::OnTouch, this);
 	CheckMapNeighbors();
 
 	mIsDone = false;
@@ -53,47 +61,34 @@ void Game::MainLoop() {
 		unsigned targetViewId = 0xff;
 		while(targetViewId == 0xff) {
 			Paint();
-			if (mPlayer.CurrentView()->Parent()->Touched()) {
+			OnTick();
+			if (mPlayer.CurrentView()->Parent().Touched()) {
 				if (mPlayer.Equipment()) {
 					OnUseEquipment();
 				} else if (mPlayer.GetRoom()->HasItem()) {
-					OnPickup(mPlayer.GetRoom());
+					OnPickup(*mPlayer.GetRoom());
 				} else {
 					OnActiveTrigger();
 				}
-			} else if (mPlayer.CurrentView()->GatewayTouched()) {
-				OnEnterGateway(mPlayer.CurrentView()->GetRoom()->Gateway());
+			} else if (mPlayer.CurrentRoom()->HasGateway()) {
+				// edge mask for faster listing?
+				for(auto& view : views) {
+					if (view.Touched() && view.ShowingGatewayEdge()) {
+						OnEnterGateway(*view.GetEdgeView().Gateway());
+					}
+				}
 			}
-      		#if PLAYTESTING_HACKS
-          	else if (sShakeTime > 2.0f) {
-	          	sShakeTime = -1.f;
-	          	mState.AdvanceQuest();
-	          	const QuestData* quest = mState.Quest();
-	          	const MapData& map = gMapData[quest->mapId];
-	          	const RoomData& room = map.rooms[quest->roomId];
-	          	mPlayer.SetEquipment(0);
-	          	TeleportTo(
-	          		map, 
-	          		Vec2(
-	          			128 * (quest->roomId % map.width) + 16 * room.centerX,
-	          			128 * (quest->roomId / map.width) + 16 * room.centerY
-	          		)
-	          	);
-	          	mPlayer.SetStatus(PLAYER_STATUS_IDLE);
-	          	mPlayer.CurrentView()->UpdatePlayer();
-
-	        }
-	      	#endif
-	      	if (!gGame.GetMap()->FindBroadPath(&mPath, &targetViewId)) {
-	      		for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
-	      			if ( p->Touched() && p->IsShowingRoom() && p->GetRoomView() != mPlayer.CurrentView()) {
-	      				p->GetRoomView()->StartShake();
+	      	if (!gGame.GetMap().FindBroadPath(&mPath, &targetViewId)) {
+	      		Viewport::Iterator p = ListViews();
+				while(p.MoveNext()) {
+	      			if ( p->Touched() && p->ShowingRoom() && &p->GetRoomView() != mPlayer.CurrentView()) {
+	      				p->GetRoomView().StartShake();
 	      			}
 	      		}
 	      	}
     	}
-    	if (mViews[targetViewId].IsShowingRoom()) {
-    		mViews[targetViewId].GetRoomView()->StartNod();
+    	if (mViews[targetViewId].ShowingRoom()) {
+    		mViews[targetViewId].GetRoomView().StartNod();
     	}
 
 	    //-------------------------------------------------------------------------
@@ -101,17 +96,17 @@ void Game::MainLoop() {
 	    mPlayer.SetStatus(PLAYER_STATUS_WALKING);
 	    do {
 	      	// animate walking to target
-	      	mPlayer.SetDirection(mPath.steps[0]);
+	      	mPlayer.SetDirection((Side)mPath.steps[0]);
 	      	mMap.GetBroadLocationNeighbor(*mPlayer.Current(), mPlayer.Direction(), mPlayer.Target());
 	      	PlaySfx(sfx_running);
 	      	mPlayer.TargetView()->ShowPlayer();
 	      	// TODO: Walking South Through Door?
-	      	if (mPlayer.Direction() == SIDE_TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
+	      	if (mPlayer.Direction() == TOP && mPlayer.CurrentRoom()->HasClosedDoor()) {
 
 	        	//---------------------------------------------------------------------
 	        	// WALKING NORTH THROUGH DOOR
 	        	// walk up to the door
-	        	const DoorData& door = *mPlayer.CurrentRoom()->Door();
+	        	const DoorData& door = mPlayer.CurrentRoom()->Door();
 	      		int progress;
 	      		STATIC_ASSERT(24 % WALK_SPEED == 0);
 	      		for(progress=0; progress<24; progress+=WALK_SPEED) {
@@ -124,20 +119,13 @@ void Game::MainLoop() {
 	      			mPlayer.CurrentRoom()->OpenDoor();
 	      			mPlayer.CurrentView()->RefreshDoor();
 	      			mPlayer.CurrentView()->HideEquip();
-	      			SystemTime timeout = SystemTime::now();
-	          		#if GFX_ARTIFACT_WORKAROUNDS
-	      			Paint(true);
-	      			mPlayer.CurrentView()->Parent()->GetCube()->vbuf.touch();
-	          		#endif
-	      			Paint(true);
-	      			do {
-	      				Paint();
-	      			} while(SystemTime::now() - timeout <  0.5f);
+	      			Paint();
+	      			Wait(0.5f);
 	      			PlaySfx(sfx_doorOpen);
 	          		// finish up
 	      			for(; progress+WALK_SPEED<=128; progress+=WALK_SPEED) {
-	      				mPlayer.Move(0,-WALK_SPEED);
 	      				Paint();
+	      				mPlayer.Move(0,-WALK_SPEED);
 	      			}
 	          		// fill in the remainder
 	      			mPlayer.SetPosition(
@@ -148,7 +136,7 @@ void Game::MainLoop() {
 	      			PlaySfx(sfx_doorBlock);
 	      			mPath.Cancel();
 	      			mPlayer.ClearTarget();
-	      			mPlayer.SetDirection( (mPlayer.Direction()+2)%4 );
+	      			mPlayer.SetDirection( (Side)((mPlayer.Direction()+2)%4) );
 	      			for(progress=0; progress<24; progress+=WALK_SPEED) {
 	      				Paint();
 	      				mPlayer.Move(0, WALK_SPEED);
@@ -158,12 +146,16 @@ void Game::MainLoop() {
 
 	        	//---------------------------------------------------------------------
 	        	// A* PATHFINDING
-	      		if (mPlayer.TargetView()->GetRoom()->IsBridge()) {
-	      			const Cube::Side hideParity = 
-	      				mPlayer.TargetView()->GetRoom()->SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
-	      			mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == hideParity);
+	      		if (mPlayer.TargetView()->GetRoom().IsBridge()) {
+	      			const unsigned hideParity =
+	      				mPlayer.TargetView()->GetRoom().SubdivType() == SUBDIV_BRDG_HOR ? 1 : 0;
+	      			if (mPlayer.Direction()%2 == hideParity) {
+		      			mPlayer.TargetView()->HideOverlay();
+	      			} else {
+	      				mPlayer.TargetView()->ShowOverlay();
+	      			}
 	      		}
-	      		gGame.GetMap()->FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
+	      		gGame.GetMap().FindNarrowPath(*mPlayer.Current(), mPlayer.Direction(), &mMoves);
 	      		int progress = 0;
 	      		Sokoblock* block = mPlayer.TargetView()->Block();
 	      		bool pushing = false;
@@ -172,12 +164,12 @@ void Game::MainLoop() {
 	      		// this loop could possibly suffer some optimizaton
 	      		// but first I'm goint to wait until after alpha and not
 	      		// more crap is going to get shoved in there
-	      		for(const Cube::Side *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
+	      		for(const int8_t *pNextMove=mMoves.Begin(); pNextMove!=mMoves.End(); ++pNextMove) {
 	      			// encounter lava?
-	      			if (mMap.Data()->lavaTiles && !mPlayer.CanCrossLava()) {
-	      				if (TryEncounterLava(*pNextMove)) {
+	      			if (mMap.Data().lavaTiles && !mPlayer.CanCrossLava()) {
+	      				if (TryEncounterLava((Side)*pNextMove)) {
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
-	      						progress = MovePlayerOneTile(((*(pNextMove-1))+2)%4, progress);
+	      						progress = MovePlayerOneTile((Side)(((*(pNextMove-1))+2)%4), progress);
 	      					}
 	      					mPath.Cancel();
 	      					mPlayer.ClearTarget();
@@ -186,24 +178,24 @@ void Game::MainLoop() {
 	      			}
 	      			// encounter a block?
 	      			if(!pushing && block && mPlayer.TestCollision(block)) {
-	      				pushing = TryEncounterBlock(block);
+	      				pushing = TryEncounterBlock(*block);
 	      				if (!pushing) {
 	      					// rewind back to the start
 	      					for(; pNextMove!=mMoves.Begin(); --pNextMove) {
-	      						progress = MovePlayerOneTile(((*(pNextMove-1))+2)%4, progress);
+	      						progress = MovePlayerOneTile((Side)(((*(pNextMove-1))+2)%4), progress);
 	      					}
 	      					mPath.Cancel();
 	      					mPlayer.ClearTarget();
 	      					break;
 	      				}
 	      			}
-      				progress = MovePlayerOneTile(*pNextMove, progress, pushing?block:0);
+      				progress = MovePlayerOneTile((Side)*pNextMove, progress, pushing?block:0);
 	      		}
 
 	      		if (pushing) {
 	      			// finish moving the block to the next cube
-	      			const Room* targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
-	      			const Int2 targ = targRoom->Center(0);
+	      			auto& targRoom = mMap.GetRoom(mPlayer.TargetRoom()->Location() + BroadDirection());
+	      			const Int2 targ = targRoom.Center(0);
 	      			Int2 curr= block->Position();
 	      			while(curr != targ) {
 	      				curr.x = AdvanceTowards(curr.x, targ.x, WALK_SPEED);
@@ -224,13 +216,19 @@ void Game::MainLoop() {
 		      	}
 		    }
 		} while(mPath.DequeueStep(*mPlayer.Current(), mPlayer.Target()));
-  		OnActiveTrigger();
+		if (mPath.triggeredByEdgeGate) {
+			OnEnterGateway(mPlayer.CurrentRoom()->Gateway());
+		} else {
+			OnActiveTrigger();
+		}
+  		
 	}
-	_SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);
-	_SYS_setVector(_SYS_NEIGHBOR_REMOVE, NULL, NULL);
+	Events::neighborAdd.unset();
+    Events::neighborRemove.unset();
+    Events::cubeTouch.unset();
 	for(unsigned i=0; i<64; ++i) { 
-		System::paint(); 
+		DoPaint();
 	}
-	PlayMusic(music_winscreen, false);
-	WinScreen();
+	//PlayMusic(music_winscreen, false);
+	//WinScreen();
 }

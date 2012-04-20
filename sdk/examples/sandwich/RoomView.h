@@ -26,9 +26,9 @@ private:
   uint8_t mStartFrame;
   struct {
     uint8_t hideOverlay : 1;
+    uint8_t locked : 1; // technically we don't need this flag -- gGame has a mask now
     uint8_t wobbleType : 3;
     uint8_t animTileCount : 3;
-    uint8_t unused : 1;
   } flags;
   struct AnimTile {
     uint8_t lid;
@@ -44,17 +44,29 @@ public:
   // getters
   unsigned Id() const { return mRoomId; }
   Int2 Location() const;
-  Room* GetRoom() const;
-  bool GatewayTouched() const;
+  Room& GetRoom() const;
   Sokoblock* Block() const { return mBlock; }
   bool IsWobbly() const { return mWobbles > 0.0001f; }
+  SpriteRef BffSprite();
+  SpriteRef TriggerSprite();
+  SpriteRef EquipSprite();
+  SpriteRef PlayerSprite();
+  SpriteRef NpcSprite();
+  SpriteRef BlockSprite();
+
 
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update(float dt);
+  void Update();
 
-  void HideOverlay(bool flag);
+  bool Locked() const { return flags.locked; }
+  void Lock();
+  void Unlock();
+
+  void ShowOverlay();
+  void RefreshOverlay();
+  void HideOverlay();
   
   void ShowPlayer();
   void ShowItem(const ItemData* item);
@@ -62,7 +74,7 @@ public:
   void RefreshDoor();
   void RefreshDepot();
 
-  void SetPlayerFrame(unsigned frame);
+  void SetPlayerImage(const PinnedAssetImage& img, unsigned frame=0);
   void SetEquipPosition(Int2 p);
   void SetItemPosition(Int2 p);
 
@@ -77,12 +89,13 @@ public:
 
   void StartNod();
   void StartShake();
-  void StartSlide(Cube::Side side);
+  void StartSlide(Side side);
+
+  void ShowFrame();
 
   void DrawTrapdoorFrame(int delta);
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
-
 };

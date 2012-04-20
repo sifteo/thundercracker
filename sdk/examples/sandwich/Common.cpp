@@ -2,15 +2,23 @@
 
 Random gRandom;
 
-Cube::Side InferDirection(Int2 u) {
+#if SFX_ON
+AudioChannel gChannelSfx(1);
+#endif
+#if MUSIC_ON
+AudioChannel gChannelMusic(0);
+#endif
+
+
+Side InferDirection(Int2 u) {
 	if (u.x > 0) {
-		return SIDE_RIGHT;
+		return RIGHT;
 	} else if (u.x < 0) {
-		return SIDE_LEFT;
+		return LEFT;
 	} else if (u.y < 0) {
-		return SIDE_TOP;
+		return TOP;
 	} else {
-		return SIDE_BOTTOM;
+		return BOTTOM;
 	}
 }
 
@@ -51,6 +59,6 @@ void PlayMusic(const AssetAudio& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
-  gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
+  gChannelMusic.play(music, loop ? AudioChannel::REPEAT : AudioChannel::ONCE);
 }
 #endif

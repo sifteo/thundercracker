@@ -107,29 +107,14 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
     return (r5 << 11) | (g6 << 5) | b5;
 }
 
-static uint16_t color_lerp(uint8_t alpha) {
-    // Linear interpolation between foreground and background
-
-    const unsigned bg_r = 0x0;
-    const unsigned bg_g = 0x0;
-    const unsigned bg_b = 0x0;
-
-    const unsigned fg_r = 0xdd;
-    const unsigned fg_g = 0xed;
-    const unsigned fg_b = 0xc1;
-    
-    const uint8_t invalpha = 0xff - alpha;
-
-    return rgb565( (bg_r * invalpha + fg_r * alpha) / 0xff,
-                   (bg_g * invalpha + fg_g * alpha) / 0xff,
-                   (bg_b * invalpha + fg_b * alpha) / 0xff );
+static RGB565 color_lerp(uint8_t alpha) {
+    return RGB565::fromRGB(0x000000).lerp(RGB565::fromRGB(0xddedc1), alpha);
 }
 
-void Dialog::Init(Cube *cube) {
+void Dialog::Init(VideoBuffer *cube) {
     mCube = cube;
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
-    mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
+    mCube->initMode(FB128);
+    mCube->colormap.setMono(color_lerp(0), color_lerp(0));    
 }
 
 const char* Dialog::Show(const char* str) {
@@ -145,24 +130,11 @@ void Dialog::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-    uint16_t dest = (mPosition.y << 4) | (mPosition.x >> 3);
-    unsigned shift = mPosition.x & 7;
-
-    for (unsigned i = 0; i < kFontHeight; i++) {
-        mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] << shift));
-        dest += 16;
+    const Int2 size = {8, kFontHeight};
+    auto extent = mPosition.toInt() + size;
+    if (mPosition.x > 0 && mPosition.y > 0 && extent.x < 128 && extent.y < 48) {
+        mCube->fb128.bitmap(mPosition, size, data, 1);
     }
-
-    if (shift) {
-        dest += -16*kFontHeight + 1;
-        shift = 8 - shift;
-
-        for (unsigned i = 0; i < kFontHeight; i++) {
-            mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] >> shift));
-            dest += 16;
-        }
-    }
-
     mPosition.x += escapement;
 }
 
@@ -194,16 +166,11 @@ void Dialog::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
 
 void Dialog::Erase() {
     mPosition.y = 5;
-    for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
-    	mCube->vbuf.poke(i, 0);
-    }
+    mCube->fb128.fill(0);
 }
 
 void Dialog::SetAlpha(uint8_t i) {
-    mCube->vbuf.poke(
-        offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-        color_lerp(i)
-    );
+    mCube->colormap[1] = color_lerp(i);
 }
 
 void Dialog::ShowAll(const char* lines) {

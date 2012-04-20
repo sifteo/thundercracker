@@ -5,14 +5,9 @@
 #define DOOR_PAD 10
 #define GAME_FRAMES_PER_ANIM_FRAME 2
 
-inline int fast_abs(int x) {
-	return x<0?-x:x;
-}
-
-void Player::Init(Cube* pPrimary) {
+void Player::Init(Viewport* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  ViewSlot *pView = gGame.ViewBegin() + (pPrimary - gCubes);
-  mCurrent.view = (RoomView*)(pView);
+  mCurrent.view = reinterpret_cast<RoomView*>(pPrimary);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
   mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;
@@ -22,15 +17,17 @@ void Player::Init(Cube* pPrimary) {
   mAnimFrame = 0;
   mAnimTime = 0.f;
   mEquipment = 0;
+  mImageStrip = &PlayerStand;
+  ComputeFrame();
 }
 
 Room* Player::GetRoom() const {
-  return gGame.GetMap()->GetRoom(Location());
+  return &gGame.GetMap().GetRoom(Location());
 }
 
 void Player::ConsumeEquipment() {
   ASSERT(mEquipment);
-  gGame.GetState()->FlagTrigger(mEquipment->trigger);
+  gGame.GetState().FlagTrigger(mEquipment->trigger);
   mEquipment = 0;
 }
 
@@ -55,55 +52,62 @@ void Player::AdvanceToTarget() {
   mCurrent.view->UpdatePlayer();
 }
 
-int Player::AnimFrame() {
-  switch(mStatus) {
-    case PLAYER_STATUS_IDLE: {
-      if (mAnimFrame == 1) {
-        return PlayerIdle.index;
-      } else if (mAnimFrame == 2) {
-        return PlayerIdle.index + 16;
-      } else if (mAnimFrame == 3 || mAnimFrame == 4) {
-        return PlayerIdle.index + (mAnimFrame-1) * 16;
-      } else {
-        return PlayerStand.index + SIDE_BOTTOM * 16;
-      }
-    }
-    case PLAYER_STATUS_WALKING:
-      int frame = mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME;
-      int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-      int tilesPerStrip = tilesPerFrame * (PlayerWalk.frames>>2);
-      return PlayerWalk.index + mDir * tilesPerStrip + frame * tilesPerFrame;
-  }
-  return 0;
-}
-
 void Player::SetStatus(int status) {
   if (mStatus == status) { return; }
   mStatus = status;
-  mAnimFrame = 0;
   mAnimTime = 0.f;
+  mAnimFrame = 0;
+  ComputeFrame();
 }
 
-void Player::Update(float dt) {
-  if (mStatus == PLAYER_STATUS_WALKING) {
-    mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
-  } else { // PLAYER_STATUS_IDLE
-    mAnimTime += dt;
-    if (mAnimTime >= 10.f) {
-      mAnimTime -= 10.f;
-    }
-    int before = mAnimFrame;
-    if (mAnimTime > 0.5f && mAnimTime < 1.f) {
-      mAnimFrame = 1;
-    } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
-      mAnimFrame = 2;
-    } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
-      mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
-    } else {
-      mAnimFrame = 0;
-    }
-    if (before != mAnimFrame) {
-      mCurrent.view->UpdatePlayer();
-    }
-  }  
+// the following stuff is kinda hacky because it's been iterated on so much
+// I'll fix it up later, I promiiiiseeeee
+
+void Player::ComputeFrame() {
+  switch(mStatus) {
+    case PLAYER_STATUS_IDLE:
+      if (mAnimFrame) {
+        mSpriteFrame = mAnimFrame-1;
+        mImageStrip = &PlayerIdle;
+      } else {
+        mSpriteFrame = 2;
+        mImageStrip = &PlayerStand;
+      }
+      break;
+    
+    case PLAYER_STATUS_WALKING:
+      mSpriteFrame = mDir * (PlayerWalk.numFrames()>>2) + (mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME);
+      mImageStrip = &PlayerWalk;
+      break;
+  }
 }
+
+void Player::Update() {
+  switch(mStatus) {
+    
+    case PLAYER_STATUS_WALKING:
+      mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * PlayerWalk.numFrames()/4);
+      ComputeFrame();
+      break;
+    
+    case PLAYER_STATUS_IDLE:
+      mAnimTime = fmod(mAnimTime+gGame.Dt().seconds(), 10.f);
+      int before = mAnimFrame;
+      if (mAnimTime > 0.5f && mAnimTime < 1.f) {
+        mAnimFrame = 1;
+      } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
+        mAnimFrame = 2;
+      } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
+        mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
+      } else {
+        mAnimFrame = 0;
+      }
+      ComputeFrame();
+      if (before != mAnimFrame) {
+        mCurrent.view->UpdatePlayer();
+      }
+      break;
+  }
+}
+
+

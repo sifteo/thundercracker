@@ -28,13 +28,13 @@ public:
 
 	Banner();
 
-    void Draw( BG1Helper &bg1helper );
+    void Draw( VideoBuffer &vid );
     void Update( SystemTime t );
 
-    void SetMessage( const char *pMsg, float fTime = DEFAULT_FADE_DELAY );
+    void SetMessage( VideoBuffer &vid, const char *pMsg, float fTime = DEFAULT_FADE_DELAY );
 	bool IsActive() const;
 
-    static void DrawScore( BG1Helper &bg1helper, const Int2 &pos, Anchor anchor, int score );
+    static void DrawScore( TileBuffer<16, 16> &bg1buffer, const Int2 &pos, Anchor anchor, int score );
 
 private:
     String<BANNER_WIDTH + 1> m_Msg;
