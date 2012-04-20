@@ -167,7 +167,7 @@ public:
     void DrawGrid();
     //special drawing unique to modes
     bool DrawPuzzleModeStuff() __attribute__ ((noinline));
-    void DrawBlitzModeStuff() __attribute__ ((noinline));
+    void DrawBlitzModeStuff( TimeDelta dt ) __attribute__ ((noinline));
 
     Glimmer m_glimmer;
     //allow up to 4 rock explosions simultaneously
@@ -188,6 +188,7 @@ private:
 
     bool HasFloatingDots() const;
     void fillPuzzleCube();        
+    void UpdateRefill( SystemTime t, TimeDelta dt ) __attribute__ ((noinline));
 
     CubeID m_cube;
     VideoBuffer m_vid;

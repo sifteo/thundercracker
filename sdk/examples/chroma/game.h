@@ -175,7 +175,7 @@ public:
     //this handles drawing that was moved out of cubewrapper so it could be done in a way that
     //thrashed the cache less
     //needDraw is a boolean array telling which cubes need drawing
-    void DrawGame( bool needDraw[] );
+    void DrawGame( bool needDraw[], SystemTime t, TimeDelta dt );
 
 private:
 	void TestMatches();

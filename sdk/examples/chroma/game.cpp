@@ -222,7 +222,7 @@ void Game::Update()
         }
     }
 
-    DrawGame( needGameDraw );
+    DrawGame( needGameDraw, t, dt );
 
     //m_chromitDrawer.drawAll();
 
@@ -1409,7 +1409,7 @@ void Game::ClearBG1()
 //this handles drawing that was moved out of cubewrapper so it could be done in a way that
 //thrashed the cache less
 //needDraw is a boolean array telling which cubes need drawing
-void Game::DrawGame( bool needDraw[] )
+void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
 {
     if( Game::Inst().getMode() == Game::MODE_PUZZLE)
     {
@@ -1449,7 +1449,7 @@ void Game::DrawGame( bool needDraw[] )
         {
             if( needDraw[i] )
             {
-                m_cubes[i].DrawBlitzModeStuff();
+                m_cubes[i].DrawBlitzModeStuff( dt );
             }
         }
     }
@@ -1462,6 +1462,7 @@ void Game::DrawGame( bool needDraw[] )
                 //rocks
                 for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
                 {
+                    m_cubes[i].m_aExplosions[i].Update();
                     if( m_cubes[i].m_aExplosions[ j ].isUsed() )
                         m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
                 }
@@ -1473,6 +1474,7 @@ void Game::DrawGame( bool needDraw[] )
     {
         if( needDraw[i] )
         {
+            m_cubes[i].getBanner().Update(t);
             if( m_cubes[i].getBanner().IsActive() )
             {
                 m_cubes[i].getBanner().Draw( m_cubes[i].GetVid() );
@@ -1484,6 +1486,7 @@ void Game::DrawGame( bool needDraw[] )
     {
         if( needDraw[i] )
         {
+            m_cubes[i].m_bubbles.Update(dt, m_cubes[i].getTiltDir() );
             if( m_cubes[i].m_bubbles.isActive() )
                 m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
         }

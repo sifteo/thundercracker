@@ -430,28 +430,9 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
 
     if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
     {
-        //update all dots
-        for( int i = 0; i < NUM_ROWS; i++ )
-        {
-            for( int j = 0; j < NUM_COLS; j++ )
-            {
-                GridSlot &slot = m_grid[i][j];
-                slot.Update( t );
-            }
-        }
-
-        if( !m_intro.Update( t, dt, m_banner, GetVid() ) )
-        {
-            if( m_state == STATE_REFILL )
-                m_state = STATE_PLAYING;
-        }
+        UpdateRefill( t, dt );
         return;
     }
-    /*else if( m_state == STATE_CUBEBONUS )
-    {
-        if( m_stateTime > SHOW_BONUS_TIME )
-            setState( STATE_EMPTY );
-    }*/
 
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
@@ -499,17 +480,6 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
             }
         }
 
-        //update rocks
-        if( Game::Inst().getMode() != Game::MODE_BLITZ )
-        {
-            for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
-                m_aExplosions[i].Update();
-        }
-
-        m_banner.Update(t);
-        m_bubbles.Update(dt, getTiltDir() );
-        m_floatscore.Update( dt );
-
         //tilt state
         Byte3 state = m_cube.accel();
 
@@ -518,21 +488,6 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
 
         //hooke's law
         Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
-
-        /*if( force.len2() < MOVEMENT_THRESHOLD )
-        {
-            m_idleTimer += dt;
-
-            if( m_idleTimer > IDLE_FINISH_THRESHOLD )
-            {
-                m_idleTimer = 0.0f;
-                //kick off force in a random direction
-                //for now, just single direction
-                //force = Float2( 100.0f, 0.0f );
-            }
-        }
-        else
-            m_idleTimer = 0.0f;*/
 
         //if sign of velocity changes, play a slosh
         Float2 oldvel = m_curFluidVel;
@@ -2174,11 +2129,33 @@ bool CubeWrapper::DrawPuzzleModeStuff()
 }
 
 
-void CubeWrapper::DrawBlitzModeStuff()
+void CubeWrapper::DrawBlitzModeStuff( TimeDelta dt )
 {
     ASSERT( Game::Inst().getMode() == Game::MODE_BLITZ );
 
     Game::Inst().getTimer().Draw( m_bg1buffer, m_vid );
+    m_floatscore.Update( dt );
     m_floatscore.Draw( m_bg1buffer );
     m_queuedFlush = true;
+}
+
+
+
+void CubeWrapper::UpdateRefill( SystemTime t, TimeDelta dt )
+{
+    //update all dots
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.Update( t );
+        }
+    }
+
+    if( !m_intro.Update( t, dt, m_banner, GetVid() ) )
+    {
+        if( m_state == STATE_REFILL )
+            m_state = STATE_PLAYING;
+    }
 }
