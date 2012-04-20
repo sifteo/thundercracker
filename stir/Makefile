@@ -68,7 +68,7 @@ $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
 	strip -s "src/$(BIN)-d.exe" -o "src/$(BIN)-stripped.exe"
-	rm "$(BIN_DIR)/$(BIN).exe"
+	rm -f "$(BIN_DIR)/$(BIN).exe"
 	$(UPX) -o "$(BIN_DIR)/$(BIN).exe" "src/$(BIN)-stripped.exe"
 else
 # Default link
