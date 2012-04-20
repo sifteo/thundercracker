@@ -17,7 +17,8 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,
     flashCommsHandler,
     flashReadWriteHandler,
-    ledHandler
+    ledHandler,
+    uniqueIdHandler
 };
 
 void FactoryTest::init()
@@ -148,6 +149,16 @@ void FactoryTest::ledHandler(uint8_t argc, uint8_t *args)
 
     // no result - just respond to indicate that we're done
     const uint8_t response[] = { 2, args[0] };
+    Usart::Dbg.write(response, sizeof response);
+}
+
+/*
+ * No args - just return hw id.
+ */
+void FactoryTest::uniqueIdHandler(uint8_t argc, uint8_t *args)
+{
+    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof(response), args[0] };
+    memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
     Usart::Dbg.write(response, sizeof response);
 }
 
