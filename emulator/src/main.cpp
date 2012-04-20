@@ -58,6 +58,7 @@ static void usage()
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
+            "  -file FILENAME      Redirect output to FILENAME\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
     static System sys;
 
     // Attach an existing console, if it's already handy
-    getConsole();
+    getConsole();	
 
     /*
      * Parse command line options
@@ -228,6 +229,16 @@ int main(int argc, char **argv)
                 message("Error: Unsupported number of cubes (Minimum 0, maximum %d)", sys.MAX_CUBES);
                 return 1;
             }
+            c++;
+            continue;
+        }
+
+        if (!strcmp(arg, "-file") && argv[c+1]) {
+            if( !freopen( argv[c+1], "w", stdout ) ) {
+                message("Error: opening file %s for write)", argv[c+1]);
+                return 1;
+            }
+
             c++;
             continue;
         }
