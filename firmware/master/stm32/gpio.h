@@ -90,6 +90,10 @@ class GPIOPin {
         EXTI.PR = bit();
     }
 
+    bool irqPending() const {
+        return (EXTI.PR & bit()) != 0;
+    }
+
     volatile GPIO_t *port() const {
         return (volatile GPIO_t*)(0xFFFFFF00 & value);
     }
