@@ -250,7 +250,7 @@ struct SpriteLayer {
      * VideoBuffer. You don't need to store this reference typically;
      * for example:
      *
-     *   vbuf.sprites[2].setImage(MyAsset);
+     *     vbuf.sprites[2].setImage(MyAsset);
      */
     SpriteRef operator[](unsigned id) {
         ASSERT(id < NUM_SPRITES);
