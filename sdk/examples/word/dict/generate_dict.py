@@ -276,7 +276,7 @@ def generate_dict():
     else:
         puzzle_file_name = "puzzles.csv"
         print "reading " + puzzle_file_name
-        f = open(puzzle_file_name, 'rt')
+        f = open(puzzle_file_name, 'rU')
         try:
             prev_row = {}
             for row in csv.DictReader(f):
