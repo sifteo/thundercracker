@@ -23,6 +23,12 @@ ifeq ($(NO_PATH_MUNGE),)
 	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
 endif
 
+%.o: %.c $(CDEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+ifeq ($(NO_PATH_MUNGE),)
+	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
+endif
+
 $(BIN): $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
