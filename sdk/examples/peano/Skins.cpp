@@ -89,13 +89,14 @@ Skin_##name##_Unlit_Top\
                 } while (now-start < halfDuration);
                 
                 //slide it over a bit        
+                start += halfDuration;
                 do 
                 {
                     TimeDelta d = now - start;
                     
                     //by our exit condition, d will never equal halfduration.  max actual frame is 9.
-                    int frame = 10.0f * (float)d / halfDuration;
-                    
+                    int frame = 10.0f * (float)d / halfDuration;                   
+
                     cube->ClipImage(&s.vault_door, vec(-frame, -9));
                     cube->ClipImage(&s.vault_door, vec(-frame, 7));
                     
@@ -104,7 +105,7 @@ Skin_##name##_Unlit_Top\
                     System::paint();
                     
                     now = SystemTime::now();
-                } while (now-start < totalDuration);
+                } while (now-start < halfDuration);
                 
                 //make sure the door is fully in place
                 cube->ClipImage(&s.vault_door, vec(-9, -9));
