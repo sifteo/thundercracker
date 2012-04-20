@@ -32,7 +32,7 @@ Buddies::App sApp;
 
 void Init()
 {
-    Sifteo::AssetSlot MainSlot = Sifteo::AssetSlot::allocate().bootstrap(GameAssets);
+    Sifteo::AssetSlot::allocate().bootstrap(GameAssets);
     Sifteo::Metadata().title("CubeBuddies").cubeRange(Buddies::kNumCubes);
     
     sApp.Init();

@@ -168,7 +168,7 @@ bool CubeWrapper::Update(float dt)
 
 void CubeWrapper::DrawClear()
 {
-    mVideoBuffer.erase();
+    mVideoBuffer.initMode(BG0_SPR_BG1);
     mVideoBuffer.bg0.setPanning(vec(0, 0));
     mVideoBuffer.bg1.setPanning(vec(0, 0));
     

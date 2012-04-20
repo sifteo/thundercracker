@@ -1332,7 +1332,8 @@ void App::UpdateCubes(float dt)
 
 void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 {
-    mChannel.play(audioAsset);
+    // TODO: put back in sound
+    //mChannel.play(audioAsset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
