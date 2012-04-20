@@ -384,6 +384,7 @@ Game::GameState Run(bool startPuzzleAfterwards) {
     Game::cubes[1].SetView(&firstToken);
     firstToken.DidGroupDisconnect();
     firstToken.NeedRepaint();
+    firstToken.PaintNow();
     Game::Wait(0.1f);
 
     //Game::cubes[2]->SetView(NULL);
@@ -391,6 +392,7 @@ Game::GameState Run(bool startPuzzleAfterwards) {
     Game::cubes[2].SetView(&secondToken);
     secondToken.DidGroupDisconnect();
     secondToken.NeedRepaint();
+    secondToken.PaintNow();
     Game::Wait(1);
 
     narrator.SetMessage("Try it out!  Shake one!");
