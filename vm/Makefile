@@ -56,10 +56,12 @@ endif
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.
 #
-# Note that -O4 is link-time optimization on Mac OS.
+# XXX: We'd love to use -O4 for link-time optimization on Mac OS, but it
+#      seems to be broken on some people's machines still...
+
 ifeq ($(DEBUG),)
 	FLAGS += -DNDEBUG
-	FLAGS += -O4 -fomit-frame-pointer
+	FLAGS += -O3 -fomit-frame-pointer
 endif
 
 # Automatic dependency generation (*.d files)
