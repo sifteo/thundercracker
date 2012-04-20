@@ -151,20 +151,7 @@ void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
 
             if( diff.len2() < CHROMIT_OBSCURE_DIST_2 )
             {
-                visible = false;
-
-                //move away from chromit
-                if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
-                {
-                    visible = true;
-                    diff = diff.normalize();
-                    //m_pos += ( diff * CHROMIT_OBSCURE_DIST );
-                    m_pos += diff;
-                    //DEBUG_LOG(( "moving bubble to %0.2f, %0.2f\n", m_pos.x, m_pos.y ));
-
-                    //bump the chromit
-                    pSlot->Bump( diff );
-                }
+                visible = CheckBump( diff, pSlot );
             }
         }
     }
@@ -176,4 +163,25 @@ void Bubble::Draw( VideoBuffer &vid, int index, CubeWrapper *pWrapper )
     }
     else
         vid.sprites[index].hide();
+}
+
+
+
+//check if we're bumping against a chromit
+bool Bubble::CheckBump( Float2 diff, GridSlot *pSlot )
+{
+    //move away from chromit
+    if( m_fTimeAlive / BUBBLE_LIFETIME > CHROMITS_COLLISION_DEPTH )
+    {
+        diff = diff.normalize();
+        //m_pos += ( diff * CHROMIT_OBSCURE_DIST );
+        m_pos += diff;
+        //DEBUG_LOG(( "moving bubble to %0.2f, %0.2f\n", m_pos.x, m_pos.y ));
+
+        //bump the chromit
+        pSlot->Bump( diff );
+        return true;
+    }
+
+    return false;
 }

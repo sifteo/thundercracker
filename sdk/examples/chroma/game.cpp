@@ -45,14 +45,14 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 
 void Game::Init()
 {
+    //turn off LOAD_ASSETS to bootstrap everything
 #if LOAD_ASSETS
-//    ScopedAssetLoader loader;
+    ScopedAssetLoader loader;
 
-//    VideoBuffer vids[NUM_CUBES];
+    VideoBuffer vids[NUM_CUBES];
 
-    static AssetSlot MySlot = AssetSlot::allocate().bootstrap(GameAssets);
+    AssetSlot MySlot = AssetSlot::allocate();
 
-#if 0
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         vids[i].attach(i);
@@ -71,7 +71,6 @@ void Game::Init()
 		System::paint();
 	}
 #endif
- #endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Init();
@@ -209,8 +208,21 @@ void Game::Update()
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Update( t, dt );
 
+    bool needGameDraw[ NUM_CUBES ];
+
     for( int i = 0; i < NUM_CUBES; i++ )
-        m_cubes[i].Draw();
+    {
+        //CubeWrapper::draw now only handles special case drawing.  shortcut it here
+        if( m_state == STATE_PLAYING && m_cubes[i].getState() == CubeWrapper::STATE_PLAYING )
+            needGameDraw[i] = true;
+        else
+        {
+            m_cubes[i].Draw();
+            needGameDraw[i] = false;
+        }
+    }
+
+    DrawGame( needGameDraw, t, dt );
 
     //m_chromitDrawer.drawAll();
 
@@ -1382,5 +1394,101 @@ void Game::HandleMenu()
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         m_cubes[i].Reset();
+    }
+}
+
+
+void Game::ClearBG1()
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].GetVid().bg1.eraseMask();
+}
+
+
+
+//this handles drawing that was moved out of cubewrapper so it could be done in a way that
+//thrashed the cache less
+//needDraw is a boolean array telling which cubes need drawing
+void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
+{
+    if( Game::Inst().getMode() == Game::MODE_PUZZLE)
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                if( m_cubes[i].DrawPuzzleModeStuff() )
+                    needDraw[i] = false;
+            }
+        }
+
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].DrawGrid();
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            //draw glimmer before timer
+            if( m_cubes[i].m_glimmer.IsActive() )
+                m_cubes[i].m_glimmer.Draw( m_cubes[i].GetBG1Buffer(), &m_cubes[i] );
+        }
+    }
+
+
+    if( Game::Inst().getMode() == Game::MODE_BLITZ )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                m_cubes[i].DrawBlitzModeStuff( dt );
+            }
+        }
+    }
+    else
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( needDraw[i] )
+            {
+                //rocks
+                for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
+                {
+                    m_cubes[i].m_aExplosions[i].Update();
+                    if( m_cubes[i].m_aExplosions[ j ].isUsed() )
+                        m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
+                }
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].getBanner().Update(t);
+            if( m_cubes[i].getBanner().IsActive() )
+            {
+                m_cubes[i].getBanner().Draw( m_cubes[i].GetVid() );
+            }
+        }
+    }
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( needDraw[i] )
+        {
+            m_cubes[i].m_bubbles.Update(dt, m_cubes[i].getTiltDir() );
+            if( m_cubes[i].m_bubbles.isActive() )
+                m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
+        }
     }
 }
