@@ -170,15 +170,22 @@ public:
     inline SaveData &getSaveData() { return m_savedata; }
     //inline ChromitDrawer &getChromitDrawer() { return m_chromitDrawer; }
 
+    void ClearBG1();
+
+    //this handles drawing that was moved out of cubewrapper so it could be done in a way that
+    //thrashed the cache less
+    //needDraw is a boolean array telling which cubes need drawing
+    void DrawGame( bool needDraw[], SystemTime t, TimeDelta dt );
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void HandleMenu();
+    void HandleMenu() __attribute__ ((noinline));
 
-	bool m_bTestMatches;
+    bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
 	//running total
