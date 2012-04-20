@@ -1,6 +1,5 @@
 TC_DIR := .
 include Makefile.platform
-include Makefile.sdk-deps
 
 TOOLS := emulator stir vm firmware
 SUBDIRS := $(TOOLS) docs/doxygen sdk/examples
@@ -19,3 +18,5 @@ $(SUBDIRS):
 clean: sdk-deps-clean
 	rm -Rf sdk/doc/*
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
+
+include Makefile.sdk-deps
