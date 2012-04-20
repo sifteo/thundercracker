@@ -22,8 +22,14 @@ class CubeSlot;
 class PaintControl {
  public:
 
+    // Start doing a _SYS_finish()
+    void beginFinish(CubeSlot *cube);
+
+    // Inner loop for _SYS_finish(). Returns 'true' when finished.
+    bool pollForFinish(CubeSlot *cube, SysTime::Ticks now);
+
+    // Two halves of _SYS_paint()
     void waitForPaint(CubeSlot *cube);
-    void waitForFinish(CubeSlot *cube);
     void triggerPaint(CubeSlot *cube, SysTime::Ticks now);
 
     // Called in ISR context
