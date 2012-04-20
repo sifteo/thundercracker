@@ -75,14 +75,17 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 	LDFLAGS += -Xlinker -unexported_symbol -Xlinker "*"
 endif
 
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 ifeq ($(BUILD_PLATFORM), windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
-	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
-	strip -s src/$(BIN)-d.exe -o $(BIN_DIR)/$(BIN).exe
-	$(UPX) $(BIN_DIR)/$(BIN).exe
+	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug "src/$(BIN)-d$(BIN_EXT)" "$(BIN).dSYM"
+	strip -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
 else
 # Default link
 $(BIN_DIR)/$(BIN): $(OBJS)

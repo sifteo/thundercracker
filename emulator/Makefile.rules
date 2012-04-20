@@ -1,12 +1,16 @@
 all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
 
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 ifeq ($(BUILD_PLATFORM),windows32)
+
 # Win32 Link: Stripped and packed binaries, and separate debug symbols.
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
 	$(OBJCOPY) --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
-	$(STRIP) -s "src/$(BIN)-d$(BIN_EXT)" -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
-	$(UPX) "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
+	$(STRIP) -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
 else
 ifeq ($(BUILD_PLATFORM),Darwin)
 # Mac OS Link: Create an app bundle with a stripped binary.
