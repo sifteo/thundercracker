@@ -325,7 +325,7 @@ void CubeWrapper::DrawUiAsset(
 {
     mBg1Mask.fill(position, asset.tileSize());
     mVideoBuffer.bg1.setMask(mBg1Mask);
-    mVideoBuffer.bg1.image(position, asset);
+    mVideoBuffer.bg1.image(position, asset, assetFrame);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,45 +718,45 @@ void CubeWrapper::DrawPiece(const Piece &piece, Side side)
         {
             int tiles_off = -point.x;
             
-            //mBg1Helper.DrawPartialAsset(
-            //    vec(0, point.y),
-            //    vec(tiles_off, 0),
-            //    vec(width - tiles_off, height),
-            //    asset, frame);
+            DrawUiAssetPartial(
+                vec(0, point.y),
+                vec(tiles_off, 0),
+                vec(width - tiles_off, height),
+                asset, frame);
         }
         else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
         {
             int tiles_off = (point.x + width) - max_tiles_x;
             
-            //mBg1Helper.DrawPartialAsset(
-            //    vec(point.x, point.y),
-            //    vec(0, 0),
-            //    vec(width - tiles_off, height),
-            //    asset, frame);
+            DrawUiAssetPartial(
+                vec(point.x, point.y),
+                vec(0, 0),
+                vec(width - tiles_off, height),
+                asset, frame);
         }
         else if (point.y > -height && point.y < 0)
         {
             int tiles_off = -point.y;
             
-            //mBg1Helper.DrawPartialAsset(
-            //    vec(point.x, 0),
-            //    vec(0, tiles_off),
-            //    vec(width, height - tiles_off),
-            //    asset, frame);
+            DrawUiAssetPartial(
+                vec(point.x, 0),
+                vec(0, tiles_off),
+                vec(width, height - tiles_off),
+                asset, frame);
         }
         else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
         {
             int tiles_off = (point.y + height) - max_tiles_y;
             
-            //mBg1Helper.DrawPartialAsset(
-            //    vec(point.x, point.y),
-            //    vec(0, 0),
-            //    vec(width, height - tiles_off),
-            //    asset, frame);
+            DrawUiAssetPartial(
+                vec(point.x, point.y),
+                vec(0, 0),
+                vec(width, height - tiles_off),
+                asset, frame);
         }    
         else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
         {
-            //mBg1Helper.DrawAsset(vec(point.x, point.y), asset, frame);
+            DrawUiAsset(vec(point.x, point.y), asset, frame);
         }
     }
 }
