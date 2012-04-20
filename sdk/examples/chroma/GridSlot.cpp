@@ -368,18 +368,32 @@ void GridSlot::Update(SystemTime t)
 
                     if( vDiff.x != 0 )
                     {
-                        m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.x / abs( vDiff.x ) );
+                        m_curMovePos.x += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row, m_col - dir )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_row, m_curMovePos.x - (mult*dir), false );
+                        }
 
                         if( abs( vDiff.x ) == 1 )
                             Game::Inst().playSound(collide_02);
                     }
                     else if( vDiff.y != 0 )
                     {
-                        m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.y / abs( vDiff.y ) );
+                        m_curMovePos.y += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row - dir, m_col )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_col, m_curMovePos.y - (mult*dir), true );
+                        }
 
                         if( abs( vDiff.y ) == 1 )
                             Game::Inst().playSound(collide_02);
@@ -470,8 +484,8 @@ void GridSlot::Update(SystemTime t)
         case STATE_GONE:
         {
             Int2 vec = { m_col * 4, m_row * 4 };
-            m_pWrapper->QueueClear( vec );
-            //vid.bg0.image(vec, GemEmpty, 0);
+            //m_pWrapper->QueueClear( vec );
+            m_pWrapper->GetVid().bg0.image(  vec, GemEmpty, 0 );
             break;
         }
 		default:
