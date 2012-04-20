@@ -14,7 +14,7 @@ all: $(LOGFILE)
 
 $(LOGFILE): $(DEPS)
 	rm -Rf $(OUTPUT_DIR)/*
-	$(DOXYGEN)
+	DOXYGEN_OUTPUT_DIR=$(OUTPUT_DIR) $(DOXYGEN)
 	@ cat $(LOGFILE)
 	@ ! grep -q warning $(LOGFILE)
 
