@@ -1,0 +1,29 @@
+# Implements the top-level "sdk-deps" target, for staging
+# platform-specific binaries from deps into sdk/bin.
+
+# Platform-independent
+ALL_SDK_DEPS := \
+	sdk/bin/arm-clang$(BIN_EXT)
+
+# Windows-only
+ifeq ($(BUILD_PLATFORM), windows32)
+	ALL_SDK_DEPS += \
+		sdk/bin/libgcc_s_dw2-1.dll \
+		sdk/bin/libstdc++-6.dll
+endif
+
+.PHONY: sdk-deps sdk-deps-clean
+
+sdk-deps: $(ALL_SDK_DEPS)
+
+sdk-deps-clean:
+	rm -Rf sdk/bin/*
+
+sdk/bin/arm-clang$(BIN_EXT): $(LLVM_BIN)/arm-clang$(BIN_EXT)
+	install -s $< $@
+
+sdk/bin/libgcc_s_dw2-1.dll: $(LLVM_BIN)/libgcc_s_dw2-1.dll
+	install -s $< $@
+
+sdk/bin/libstdc++-6.dll: $(LLVM_BIN)/libstdc++-6.dll
+	install -s $< $@
