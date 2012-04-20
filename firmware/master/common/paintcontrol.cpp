@@ -70,7 +70,17 @@
  * fpsLow --
  *    "Minimum" frame rate. If we're waiting more than this long
  *    for a frame to render, give up. Prevents us from getting wedged
- *    if a cube stops responding.
+ *    if a cube stops responding, and this is necessary for some types
+ *    of Finish operations, e.g. when transitioning from continuous to
+ *    fully synchronous rendering.
+ *
+ *    So, this period needs to be as short as possible while still
+ *    being above the slowest expected frame rendering duration.
+ *
+ *    XXX: It'd be nice if we had a way to transition from continuous to
+ *         fully synchronous without this last-resort timeout. We'd need a
+ *         way for the cube to confirm that it's returned to its main loop
+ *         and seen the continuous flag unset in VRAM.
  *
  * fpsHigh --
  *    Maximum frame rate. Paint will always block until at least this
@@ -86,7 +96,7 @@
  *    If we go below this limit, we'll start ignoring acknowledgments.
  */
 
-static const SysTime::Ticks fpsLow = SysTime::hzTicks(4);
+static const SysTime::Ticks fpsLow = SysTime::hzTicks(10);
 static const SysTime::Ticks fpsHigh = SysTime::hzTicks(60);
 static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
