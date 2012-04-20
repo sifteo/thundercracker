@@ -267,10 +267,4 @@ void lcd_end_frame()
     // until after the first frame has fully rendered.
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
 #endif
-
-    // Acknowledge this frame
-    __asm
-        inc     (_ack_data + RF_ACK_FRAME)
-        orl     _ack_bits, #RF_ACK_BIT_FRAME
-    __endasm ;
 }

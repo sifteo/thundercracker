@@ -75,16 +75,18 @@ class PaintControl {
 
  private:
     SysTime::Ticks paintTimestamp;      // Last user call to _SYS_paint()
-    SysTime::Ticks asyncTimestamp;      // TOGGLE, TRIGGER_ON_FLUSH, exiting CONTINUOUS mode
+    SysTime::Ticks asyncTimestamp;      // TOGGLE, TRIGGER_ON_FLUSH, entering CONTINUOUS mode
     int32_t pendingFrames;
 
     static bool allowContinuous(CubeSlot *cube);
-    void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, VRAMFlags &flags);
-    void exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, VRAMFlags &flags, SysTime::Ticks timestamp);
+    void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+        VRAMFlags &flags, SysTime::Ticks timestamp);
+    void exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, VRAMFlags &flags);
     void setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf, 
         VRAMFlags &flags, SysTime::Ticks timestamp);
     void makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf);
-    bool canMakeSynchronous(_SYSVideoBuffer *vbuf, VRAMFlags &flags, SysTime::Ticks timestamp);
+    bool canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+        VRAMFlags &flags, SysTime::Ticks timestamp);
 };
 
 
