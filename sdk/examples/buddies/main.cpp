@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <sifteo/abi.h>
+#include <sifteo/event.h>
 #include <sifteo/asset.h> // TODO: This is only included to let metadata.h compile
 #include <sifteo/macros.h> // TODO: This is only included to let metadata.h compile
 #include <sifteo/metadata.h>
@@ -14,6 +15,7 @@
 #include <sifteo/time.h>
 #include "App.h"
 #include "Config.h"
+#include "assets.gen.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,40 +32,10 @@ Buddies::App sApp;
 
 void Init()
 {
-    Sifteo::Metadata().title("CubeBuddies");
+    Sifteo::AssetSlot MainSlot = Sifteo::AssetSlot::allocate().bootstrap(GameAssets);
+    Sifteo::Metadata().title("CubeBuddies").cubeRange(Buddies::kNumCubes);
     
     sApp.Init();
-    
-    if (Buddies::kLoadAssets)
-    {
-        for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
-        {
-            if (sApp.GetCubeWrapper(i).IsEnabled())
-            {
-                sApp.GetCubeWrapper(i).LoadAssets();
-            }
-        }
-        
-        bool allLoaded = false;
-        while (!allLoaded)
-        {
-            allLoaded = true;
-            
-            for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
-            {
-                if (sApp.GetCubeWrapper(i).IsEnabled())
-                {
-                    if (!sApp.GetCubeWrapper(i).IsLoadingAssets())
-                    {
-                        allLoaded = false;
-                    }
-                    sApp.GetCubeWrapper(i).DrawLoadingAssets();
-                }
-            }
-            
-            Sifteo::System::paint();
-        }
-    }
     
     for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
     {
@@ -72,47 +44,24 @@ void Init()
             sApp.GetCubeWrapper(i).DrawClear();
         }
     }
-    Sifteo::System::paintSync();
     Sifteo::System::paint();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnNeighborAdd(void *, _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void OnNeighborAdd(void *, unsigned int c0, unsigned int s0, unsigned int c1, unsigned int s1)
 {
     if (sApp.GetCubeWrapper(c0).IsEnabled() && sApp.GetCubeWrapper(c1).IsEnabled())
     {
-        sApp.OnNeighborAdd(c0, s0, c1, s1);
+        sApp.OnNeighborAdd(c0, Sifteo::Side(s0), c1, Sifteo::Side(s1));
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnFound(void *, _SYSCubeID cid)
-{
-    if (!sApp.GetCubeWrapper(cid).IsEnabled())
-    {
-        sApp.GetCubeWrapper(cid).Enable(cid);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void OnLost(void *, _SYSCubeID cid)
-{
-    if (sApp.GetCubeWrapper(cid).IsEnabled())
-    {
-        sApp.GetCubeWrapper(cid).Disable();
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void OnTilt(void *, _SYSCubeID cid)
+void OnTilt(void *, unsigned cid)
 {
     if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
@@ -123,7 +72,7 @@ void OnTilt(void *, _SYSCubeID cid)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnShake(void *, _SYSCubeID cid)
+void OnShake(void *, unsigned cid)
 {
     if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
@@ -136,11 +85,9 @@ void OnShake(void *, _SYSCubeID cid)
 
 void Setup()
 {
-    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void *)OnNeighborAdd, NULL);
-    //_SYS_setVector(_SYS_CUBE_FOUND, (void *)OnFound, NULL);
-    //_SYS_setVector(_SYS_CUBE_LOST, (void *)OnLost, NULL);
-    _SYS_setVector(_SYS_CUBE_TILT, (void *)OnTilt, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void *)OnShake, NULL);
+    Sifteo::Events::cubeTilt.set(&OnTilt);
+    Sifteo::Events::cubeShake.set(&OnShake);
+    Sifteo::Events::neighborAdd.set(&OnNeighborAdd);
     
     sApp.Reset();
     sApp.Draw();

@@ -350,7 +350,7 @@ unsigned int Puzzle::GetNumBuddies() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Piece &Puzzle::GetPieceStart(unsigned int buddy, Cube::Side side) const
+const Piece &Puzzle::GetPieceStart(unsigned int buddy, Side side) const
 {
     ASSERT(buddy < arraysize(mPiecesStart));
     ASSERT(side < int(arraysize(mPiecesStart[buddy])));
@@ -360,7 +360,7 @@ const Piece &Puzzle::GetPieceStart(unsigned int buddy, Cube::Side side) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Puzzle::SetPieceStart(unsigned int buddy, Cube::Side side, const Piece &piece)
+void Puzzle::SetPieceStart(unsigned int buddy, Side side, const Piece &piece)
 {
     ASSERT(buddy < arraysize(mPiecesStart));
     ASSERT(side < int(arraysize(mPiecesStart[buddy])));
@@ -370,7 +370,7 @@ void Puzzle::SetPieceStart(unsigned int buddy, Cube::Side side, const Piece &pie
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Piece &Puzzle::GetPieceEnd(unsigned int buddy, Cube::Side side) const
+const Piece &Puzzle::GetPieceEnd(unsigned int buddy, Side side) const
 {
     ASSERT(buddy < arraysize(mPiecesEnd));
     ASSERT(side < int(arraysize(mPiecesEnd[buddy])));
@@ -380,7 +380,7 @@ const Piece &Puzzle::GetPieceEnd(unsigned int buddy, Cube::Side side) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Puzzle::SetPieceEnd(unsigned int buddy, Cube::Side side, const Piece &piece)
+void Puzzle::SetPieceEnd(unsigned int buddy, Side side, const Piece &piece)
 {
     ASSERT(buddy < arraysize(mPiecesEnd));
     ASSERT(side < int(arraysize(mPiecesEnd[buddy])));

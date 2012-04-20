@@ -45,7 +45,7 @@ Environment_0_Left = image{"assets/cutscene_background1_left.png"}
 Environment_0_Right = image{"assets/cutscene_background1_right.png"}
 
 -- Menu
-BgTile = image{"assets/menu/bg_blue_8x8.png"}
+BgTile = image{"assets/menu/bg_blue_8x8.png", pinned = true}
 IconFreePlay = image{"assets/menu/IconFreePlay.png"}
 IconStory = image{"assets/menu/IconStory.png"}
 IconShuffle = image{"assets/menu/IconShuffle.png"}

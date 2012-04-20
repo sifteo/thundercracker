@@ -7,7 +7,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "CubeWrapper.h"
-#include <sifteo/asset.h>
 #include "Config.h"
 #include "assets.gen.h"
 
@@ -69,20 +68,20 @@ const BuddyPartAssetImage *kBuddyParts[] =
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
-    Vec2(32, -8),
-    Vec2(-8, 32),
-    Vec2(32, 72),
-    Vec2(72, 32),
+    vec(32, -8),
+    vec(-8, 32),
+    vec(32, 72),
+    vec(72, 32),
 };
 
 #else
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
-    Vec2(40,  0),
-    Vec2( 0, 40),
-    Vec2(40, 80),
-    Vec2(80, 40),
+    vec(40,  0),
+    vec( 0, 40),
+    vec(40, 80),
+    vec(80, 40),
 };
 
 #endif
@@ -96,22 +95,22 @@ const Int2 kPartPositions[NUM_SIDES] =
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CubeWrapper::CubeWrapper()
-    : mCube()
-    , mBg1Helper(mCube)
+    : mVideoBuffer()
+    , mCubeId(0)
     , mEnabled(false)
     , mBuddyId(BUDDY_GLUV)
     , mPieces()
     , mPiecesSolution()
     , mPieceOffsets()
-    , mPieceBlinking(SIDE_UNDEFINED)
+    , mPieceBlinking(NO_SIDE)
     , mPieceBlinkTimer(0.0f)
     , mPieceBlinkingOn(false)
     , mBumpTimer(0.0f)
-    , mBumpSide(SIDE_TOP)
+    , mBumpSide(TOP)
 {
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
-        mPieceOffsets[i] = Vec2(0, 0);
+        mPieceOffsets[i] = vec(0, 0);
     }
 }
 
@@ -124,9 +123,9 @@ void CubeWrapper::Reset()
     {
         mPieces[i] = Piece();
         mPiecesSolution[i] = Piece();
-        mPieceOffsets[i] = Vec2(0, 0);
+        mPieceOffsets[i] = vec(0, 0);
     }
-    mPieceBlinking = SIDE_UNDEFINED;
+    mPieceBlinking = NO_SIDE;
     mPieceBlinkTimer = 0.0f;
     mPieceBlinkingOn = false;
 }
@@ -169,18 +168,18 @@ bool CubeWrapper::Update(float dt)
 
 void CubeWrapper::DrawClear()
 {
-    Video().set();
-    Video().clear();
-    Video().BG0_setPanning(Vec2(0, 0));
-    Video().BG1_setPanning(Vec2(0, 0));
+    mVideoBuffer.erase();
+    mVideoBuffer.bg0.setPanning(vec(0, 0));
+    mVideoBuffer.bg1.setPanning(vec(0, 0));
     
-    for (int i = 0; i < _SYS_VRAM_SPRITES; ++i)
+    for (int i = 0; i < SpriteLayer::NUM_SPRITES; ++i)
     {
-        Video().hideSprite(i);
+        mVideoBuffer.sprites[i].hide();
     }
     
-    mBg1Helper.Clear();
-    mBg1Helper.Flush();
+    // TODO: BG1 refactor
+    //mBg1Helper.Clear();
+    //mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,15 +187,8 @@ void CubeWrapper::DrawClear()
 
 void CubeWrapper::DrawFlush()
 {
-    mBg1Helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool CubeWrapper::DrawNeedsSync()
-{
-    return mBg1Helper.NeedFinish();
+    // TODO: BG1 refactor
+    //mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,8 +202,8 @@ void CubeWrapper::DrawBuddy()
     if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
         // Parallax Shift
-        Cube::TiltState tiltState = GetTiltState();
-        Int2 offset = Vec2(tiltState.x - 1, tiltState.y - 1);
+        Byte2 tiltState = GetTiltState();
+        Int2 offset = vec(tiltState.x - 1, tiltState.y - 1);
         offset.x *= -kParallaxDistance;
         offset.y *= -kParallaxDistance;
         
@@ -225,32 +217,34 @@ void CubeWrapper::DrawBuddy()
             
             switch (mBumpSide)
             {
-                case SIDE_TOP:
+                case TOP:
                     offset.y += d;
                     break;
-                case SIDE_LEFT:
+                case LEFT:
                     offset.x += d;
                     break;
-                case SIDE_BOTTOM:
+                case BOTTOM:
                     offset.y -= d;
                     break;
-                case SIDE_RIGHT:
+                case RIGHT:
                     offset.x -= d;
+                    break;
+                default:
                     break;
             }
         }
         
-        ScrollBackground(Vec2(int(VidMode::TILE), int(VidMode::TILE)) + offset);
+        ScrollBackground(vec(int(TILE), int(TILE)) + offset);
         
         // Draw the actual asset
         DrawBackground(*asset);
     }
     
-    for (unsigned int i = 0; i < NUM_SIDES; ++i)
+    for (int i = 0; i < NUM_SIDES; ++i)
     {
-        if (mPieceBlinking != int(i) || !mPieceBlinkingOn)
+        if (mPieceBlinking != i || !mPieceBlinkingOn)
         {
-            DrawPiece(mPieces[i], i);
+            DrawPiece(mPieces[i], Side(i));
         }
     }
 }
@@ -260,7 +254,7 @@ void CubeWrapper::DrawBuddy()
 
 void CubeWrapper::DrawBackground(const AssetImage &asset)
 {
-    Video().BG0_drawAsset(Vec2(0, 0), asset);
+    mVideoBuffer.bg0.image(vec(0, 0), asset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,7 +266,7 @@ void CubeWrapper::DrawBackgroundPartial(
     Sifteo::Int2 size,
     const Sifteo::AssetImage &asset)
 {
-    Video().BG0_drawPartialAsset(position, offset, size, asset);
+    mVideoBuffer.bg0.image(position, size, asset, offset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +274,7 @@ void CubeWrapper::DrawBackgroundPartial(
 
 void CubeWrapper::ScrollBackground(Int2 position)
 {
-    Video().BG0_setPanning(position);
+    mVideoBuffer.bg0.setPanning(position);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,8 +286,8 @@ void CubeWrapper::DrawSprite(
     const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame)
 {
     ASSERT(spriteIndex >= 0 && spriteIndex < _SYS_VRAM_SPRITES);
-    Video().setSpriteImage(spriteIndex, asset, assetFrame);
-    Video().moveSprite(spriteIndex, position);
+    mVideoBuffer.sprites[spriteIndex].setImage(asset, assetFrame);
+    mVideoBuffer.sprites[spriteIndex].move(position);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +297,8 @@ void CubeWrapper::DrawUiAsset(
     Int2 position,
     const AssetImage &asset, unsigned int assetFrame)
 {
-    mBg1Helper.DrawAsset(position, asset, assetFrame);
+    // TODO: BG1 refactor
+    //mBg1Helper.DrawAsset(position, asset, assetFrame);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,7 +310,8 @@ void CubeWrapper::DrawUiAssetPartial(
     Sifteo::Int2 size,
     const Sifteo::AssetImage &asset, unsigned int assetFrame)
 {
-    mBg1Helper.DrawPartialAsset(position, offset, size, asset, assetFrame);
+    // TODO: BG1 refactor
+    //mBg1Helper.DrawPartialAsset(position, offset, size, asset, assetFrame);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,7 +323,8 @@ void CubeWrapper::DrawUiText(
     const char *text)
 {
     ASSERT(text != NULL);
-    mBg1Helper.DrawText(position, assetFont, text);
+    // TODO: BG1 refactor
+    //mBg1Helper.DrawText(position, assetFont, text);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,49 +332,16 @@ void CubeWrapper::DrawUiText(
 
 void CubeWrapper::ScrollUi(Int2 position)
 {
-    Video().BG1_setPanning(position);
+    // TODO: BG1 refactor
+    //mVideoBuffer.BG1_setPanning(position);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool CubeWrapper::IsLoadingAssets()
+PCubeID CubeWrapper::GetId()
 {
-    ASSERT(IsEnabled());
-    
-    return mCube.assetDone(GameAssets);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::LoadAssets()
-{
-    ASSERT(IsEnabled());
-    
-    mCube.loadAssets(GameAssets);
-    
-    VidMode_BG0_ROM rom(mCube.vbuf);
-    rom.init();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawLoadingAssets()
-{
-    ASSERT(IsEnabled());
-    
-    VidMode_BG0_ROM rom(mCube.vbuf);
-    rom.BG0_progressBar(Vec2(0, 0), mCube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 16);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-Cube::ID CubeWrapper::GetId()
-{
-    return mCube.id();
+    return mCubeId;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -391,14 +355,16 @@ bool CubeWrapper::IsEnabled() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::Enable(Cube::ID cubeId)
+void CubeWrapper::Enable(PCubeID cubeId)
 {
     ASSERT(!IsEnabled());
     
-    mCube.enable(cubeId);
+    mCubeId = cubeId;
+    mVideoBuffer.initMode(BG0_ROM);
+    mVideoBuffer.attach(mCubeId);
     
     // This ensure proper video state is set, even if we have kLoadAssets = false.
-    Video().setWindow(0, VidMode::LCD_height);
+    mVideoBuffer.setWindow(0, LCD_height);
     
     mEnabled = true;
 }
@@ -411,7 +377,6 @@ void CubeWrapper::Disable()
     ASSERT(IsEnabled());
     
     mEnabled = false;
-    mCube.disable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -433,7 +398,7 @@ void CubeWrapper::SetBuddyId(BuddyId buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Piece &CubeWrapper::GetPiece(Cube::Side side) const
+const Piece &CubeWrapper::GetPiece(Side side) const
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -443,7 +408,7 @@ const Piece &CubeWrapper::GetPiece(Cube::Side side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPiece(Cube::Side side, const Piece &piece)
+void CubeWrapper::SetPiece(Side side, const Piece &piece)
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -453,7 +418,7 @@ void CubeWrapper::SetPiece(Cube::Side side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Piece &CubeWrapper::GetPieceSolution(Cube::Side side) const
+const Piece &CubeWrapper::GetPieceSolution(Side side) const
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -463,7 +428,7 @@ const Piece &CubeWrapper::GetPieceSolution(Cube::Side side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceSolution(Cube::Side side, const Piece &piece)
+void CubeWrapper::SetPieceSolution(Side side, const Piece &piece)
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -473,7 +438,7 @@ void CubeWrapper::SetPieceSolution(Cube::Side side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Int2 CubeWrapper::GetPieceOffset(Cube::Side side) const
+Int2 CubeWrapper::GetPieceOffset(Side side) const
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -483,7 +448,7 @@ Int2 CubeWrapper::GetPieceOffset(Cube::Side side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceOffset(Cube::Side side, Int2 offset)
+void CubeWrapper::SetPieceOffset(Side side, Int2 offset)
 {
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
@@ -493,7 +458,7 @@ void CubeWrapper::SetPieceOffset(Cube::Side side, Int2 offset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::StartPieceBlinking(Cube::Side side)
+void CubeWrapper::StartPieceBlinking(Side side)
 {
     mPieceBlinking = side;
     mPieceBlinkTimer = kHintBlinkTimerDuration;
@@ -505,7 +470,7 @@ void CubeWrapper::StartPieceBlinking(Cube::Side side)
 
 void CubeWrapper::StopPieceBlinking()
 {
-    mPieceBlinking = SIDE_UNDEFINED;
+    mPieceBlinking = NO_SIDE;
     mPieceBlinkTimer = 0.0f;
     mPieceBlinkingOn = false;
 }
@@ -513,23 +478,23 @@ void CubeWrapper::StopPieceBlinking()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Cube::TiltState CubeWrapper::GetTiltState() const
+Byte2 CubeWrapper::GetTiltState() const
 {
-    return mCube.getTiltState();
+    return mCubeId.tilt();
 }
  
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Int2 CubeWrapper::GetAccelState() const
+Byte3 CubeWrapper::GetAccelState() const
 {
-    return mCube.physicalAccel();
+    return mCubeId.accel();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::StartBump(Sifteo::Cube::Side side)
+void CubeWrapper::StartBump(Side side)
 {
     mBumpTimer = kBumpTimerDuration;
     mBumpSide = side;
@@ -562,15 +527,7 @@ bool CubeWrapper::IsSolved() const
 
 bool CubeWrapper::IsTouching() const
 {
-    return mCube.touching();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-VidMode_BG0_SPR_BG1 CubeWrapper::Video()
-{
-    return VidMode_BG0_SPR_BG1(mCube.vbuf);
+    return mCubeId.isTouching();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -588,30 +545,30 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
     float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;
     float d = 8.0f;
-    Int2 nudge = Vec2(x * d, y * d);
+    Int2 nudge = vec(x * d, y * d);
     
     Int2 point = kPartPositions[side] + nudge;
     switch(side)
     {
-        case SIDE_TOP:
+        case TOP:
         {
             point.x += mPieceOffsets[side].x;
             point.y += mPieceOffsets[side].y;
             break;
         }
-        case SIDE_LEFT:
+        case LEFT:
         {
             point.x += mPieceOffsets[side].x;
             point.y += mPieceOffsets[side].y;
             break;
         }
-        case SIDE_BOTTOM:
+        case BOTTOM:
         {
             point.x -= mPieceOffsets[side].x;
             point.y -= mPieceOffsets[side].y;
             break;
         }
-        case SIDE_RIGHT:
+        case RIGHT:
         {
             point.x -= mPieceOffsets[side].x;
             point.y += mPieceOffsets[side].y;
@@ -624,33 +581,33 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     {
         unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
         ASSERT(frame < asset->frames);
-        Video().setSpriteImage(spriteUnder, *asset, frame);
-        Video().moveSprite(spriteUnder, point);
+        mVideoBuffer.setSpriteImage(spriteUnder, *asset, frame);
+        mVideoBuffer.moveSprite(spriteUnder, point);
     }
     
     if (piece.GetAttribute() == Piece::ATTR_FIXED)
     {
-        Video().setSpriteImage(spriteOver, BuddyPartFixed, 0);
-        Video().moveSprite(spriteOver, point);
+        mVideoBuffer.setSpriteImage(spriteOver, BuddyPartFixed, 0);
+        mVideoBuffer.moveSprite(spriteOver, point);
     }
     else if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
     {
-        Video().setSpriteImage(spriteOver, BuddyPartHidden, 0);
-        Video().moveSprite(spriteOver, point);
-        Video().hideSprite(spriteUnder);
+        mVideoBuffer.setSpriteImage(spriteOver, BuddyPartHidden, 0);
+        mVideoBuffer.moveSprite(spriteOver, point);
+        mVideoBuffer.hideSprite(spriteUnder);
     }
 }
 
 #else
 
-void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
+void CubeWrapper::DrawPiece(const Piece &piece, Side side)
 {
     ASSERT(piece.GetBuddy() < arraysize(kBuddyParts));
     if (const AssetImage *assetImage = kBuddyParts[piece.GetBuddy()])
     {
         AssetImage asset = *assetImage;
         unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
-        ASSERT(frame < asset.frames);
+        ASSERT(frame < asset.numFrames());
         
         if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
         {
@@ -658,46 +615,50 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
             frame = 0;
         }
         
-        Cube::TiltState tiltState = GetTiltState();
-        Int2 nudge = Vec2((tiltState.x - 1) * VidMode::TILE, (tiltState.y - 1) * VidMode::TILE);
+        Byte2 tiltState = GetTiltState();
+        Int2 nudge = vec((tiltState.x - 1) * TILE, (tiltState.y - 1) * TILE);
         
         Int2 point = kPartPositions[side] + nudge;
         
         switch(side)
         {
-            case SIDE_TOP:
+            case TOP:
             {
                 point.x += mPieceOffsets[side].x;
                 point.y += mPieceOffsets[side].y;
                 break;
             }
-            case SIDE_LEFT:
+            case LEFT:
             {
                 point.x += mPieceOffsets[side].x;
                 point.y += mPieceOffsets[side].y;
                 break;
             }
-            case SIDE_BOTTOM:
+            case BOTTOM:
             {
                 point.x -= mPieceOffsets[side].x;
                 point.y -= mPieceOffsets[side].y;
                 break;
             }
-            case SIDE_RIGHT:
+            case RIGHT:
             {
                 point.x -= mPieceOffsets[side].x;
                 point.y += mPieceOffsets[side].y;
                 break;
             }
+            default:
+            {
+                break;
+            }
         }
         
-        point.x /= float(VidMode::TILE);
-        point.y /= float(VidMode::TILE);
+        point.x /= float(TILE);
+        point.y /= float(TILE);
         
-        const int width = asset.width;
-        const int height = asset.height;
-        const int max_tiles_x = VidMode::LCD_width / VidMode::TILE;
-        const int max_tiles_y = VidMode::LCD_height / VidMode::TILE;
+        const int width = asset.tileWidth();
+        const int height = asset.tileHeight();
+        const int max_tiles_x = LCD_width / TILE;
+        const int max_tiles_y = LCD_height / TILE;
         
         // Clamp X
         if (point.x < -width)
@@ -706,7 +667,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         }
         else if (point.x > (max_tiles_x + width))
         {
-            point.x = max_tiles_x + asset.width;
+            point.x = max_tiles_x + width;
         }
         
         // Clamp Y
@@ -724,45 +685,45 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         {
             int tiles_off = -point.x;
             
-            mBg1Helper.DrawPartialAsset(
-                Vec2(0, point.y),
-                Vec2(tiles_off, 0),
-                Vec2(width - tiles_off, height),
-                asset, frame);
+            //mBg1Helper.DrawPartialAsset(
+            //    vec(0, point.y),
+            //    vec(tiles_off, 0),
+            //    vec(width - tiles_off, height),
+            //    asset, frame);
         }
         else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
         {
             int tiles_off = (point.x + width) - max_tiles_x;
             
-            mBg1Helper.DrawPartialAsset(
-                Vec2(point.x, point.y),
-                Vec2(0, 0),
-                Vec2(width - tiles_off, height),
-                asset, frame);
+            //mBg1Helper.DrawPartialAsset(
+            //    vec(point.x, point.y),
+            //    vec(0, 0),
+            //    vec(width - tiles_off, height),
+            //    asset, frame);
         }
         else if (point.y > -height && point.y < 0)
         {
             int tiles_off = -point.y;
             
-            mBg1Helper.DrawPartialAsset(
-                Vec2(point.x, 0),
-                Vec2(0, tiles_off),
-                Vec2(width, height - tiles_off),
-                asset, frame);
+            //mBg1Helper.DrawPartialAsset(
+            //    vec(point.x, 0),
+            //    vec(0, tiles_off),
+            //    vec(width, height - tiles_off),
+            //    asset, frame);
         }
         else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
         {
             int tiles_off = (point.y + height) - max_tiles_y;
             
-            mBg1Helper.DrawPartialAsset(
-                Vec2(point.x, point.y),
-                Vec2(0, 0),
-                Vec2(width, height - tiles_off),
-                asset, frame);
+            //mBg1Helper.DrawPartialAsset(
+            //    vec(point.x, point.y),
+            //    vec(0, 0),
+            //    vec(width, height - tiles_off),
+            //    asset, frame);
         }    
         else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
         {
-            mBg1Helper.DrawAsset(Vec2(point.x, point.y), asset, frame);
+            //mBg1Helper.DrawAsset(vec(point.x, point.y), asset, frame);
         }
     }
 }
