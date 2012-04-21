@@ -1411,6 +1411,11 @@ void Game::ClearBG1()
 //needDraw is a boolean array telling which cubes need drawing
 void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
 {
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].TurnOffSprites();
+    }
+
     if( Game::Inst().getMode() == Game::MODE_PUZZLE)
     {
         for( int i = 0; i < NUM_CUBES; i++ )
@@ -1462,9 +1467,8 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
                 //rocks
                 for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
                 {
-                    m_cubes[i].m_aExplosions[i].Update();
                     if( m_cubes[i].m_aExplosions[ j ].isUsed() )
-                        m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
+                        m_cubes[i].m_aExplosions[j].UpdateDraw( m_cubes[i].GetVid(), j );
                 }
             }
         }
