@@ -23,6 +23,25 @@ Dictionary::Dictionary()
     STATIC_ASSERT(NUM_PUZZLE_BYTES * 8 >= NUM_PUZZLES);
 }
 
+bool Dictionary::getCurrentPuzzle(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube)
+{
+    ASSERT(buffer);
+    if (!getPuzzle(sPuzzleIndex,
+                   buffer,
+                   numAnagrams,
+                   leadingSpaces,
+                   maxLettersPerCube))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
 bool Dictionary::getNextPuzzle(char* buffer,
                           unsigned char& numAnagrams,
                           unsigned char& leadingSpaces,

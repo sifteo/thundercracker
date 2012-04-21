@@ -1117,7 +1117,22 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) 
             if (Dictionary::trim(wordBuffer, trimmedWord))
             {
                 _SYS_strlcpy(wordBuffer, trimmedWord, sizeof trimmedWord);
-                if (Dictionary::isWord(trimmedWord, isBonus))
+                if (Dictionary::currentIsMetaPuzzle())
+                {
+                    char puzzle[MAX_LETTERS_PER_WORD + 1];
+                    unsigned char numAnagrams;
+                    unsigned char leadingSpaces;
+                    unsigned char maxLettersPerCube;
+
+                    if (Dictionary::getCurrentPuzzle(puzzle,
+                                          numAnagrams,
+                                          leadingSpaces,
+                                          maxLettersPerCube))
+                    {
+                        return _SYS_strncmp(puzzle, trimmedWord, sizeof puzzle) == 0;
+                    }
+                }
+                else if (Dictionary::isWord(trimmedWord, isBonus))
                 {
                     isOld = Dictionary::isOldWord(trimmedWord);
                     return true;
