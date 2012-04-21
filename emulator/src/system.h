@@ -55,7 +55,7 @@ class System {
     bool opt_svmTrace;
     bool opt_svmFlashStats;
     bool opt_svmStackMonitor;
-    std::string opt_elfFile;
+    unsigned opt_gdbServerPort;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;

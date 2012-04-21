@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include "system.h"
 #include "cube_debug.h"
+#include "mc_gdbserver.h"
+
 
 System::System()
         : opt_numCubes(DEFAULT_CUBES),
@@ -19,6 +21,7 @@ System::System()
         opt_paintTrace(false),
         opt_svmTrace(false),
         opt_svmFlashStats(false),
+        opt_gdbServerPort(0),
         opt_cube0Debug(NULL),
         mIsInitialized(false),
         mIsStarted(false)
@@ -84,6 +87,9 @@ void System::start()
 
     sc.start();
     smc.start();
+
+    if (opt_gdbServerPort)
+        GDBServer::start(opt_gdbServerPort);
 }
 
 void System::exit()
@@ -93,8 +99,12 @@ void System::exit()
     mIsInitialized = false;
 
     if (mIsStarted) {
+        if (opt_gdbServerPort)
+            GDBServer::stop();
+
         smc.stop();
         sc.stop();
+
         mIsStarted = false;
     }
 
