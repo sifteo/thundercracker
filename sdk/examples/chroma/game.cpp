@@ -167,7 +167,10 @@ void Game::Update()
                 TestMatches();
 
                 if( m_state == STATE_POSTGAME || m_state == STATE_GAMEMENU )
+                {
+                    SetStartingLevel();
                     Reset();
+                }
 
                 m_bTestMatches = false;
             }
@@ -1321,11 +1324,10 @@ void Game::HandleMenu()
         {
             GameState targetState = STATE_INTRO;
             m_mode = (GameMode)e.item;
-            m_iLevel = 0;
 
-            if( m_mode == MODE_BLITZ )
-                m_iLevel = 3;
-            else if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
+            SetStartingLevel();
+
+            if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
                 targetState = STATE_PUZZLEMENU;
 
             TransitionToState( targetState );
@@ -1495,4 +1497,14 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
                 m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
         }
     }
+}
+
+
+
+void Game::SetStartingLevel()
+{
+    if( m_mode == MODE_BLITZ )
+        m_iLevel = 3;
+    else
+        m_iLevel = 0;
 }

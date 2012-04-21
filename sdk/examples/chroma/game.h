@@ -184,6 +184,7 @@ private:
     void RespawnOnePiece();
     void check_puzzle();
     void HandleMenu() __attribute__ ((noinline));
+    void SetStartingLevel();
 
     bool m_bTestMatches;
 	//how much our current dot is worth
