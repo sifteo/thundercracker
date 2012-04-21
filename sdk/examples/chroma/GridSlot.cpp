@@ -568,7 +568,7 @@ void GridSlot::hurtNeighboringRock( int row, int col )
 
     //PRINT( "pneighbor = %p", pNeighbor );
     //PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->getColor() == ROCKCOLOR )
+    if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == ROCKCOLOR )
         pNeighbor->DamageRock();
 }
 
