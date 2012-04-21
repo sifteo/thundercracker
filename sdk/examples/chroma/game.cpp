@@ -36,7 +36,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
-                m_Multiplier(1)//, m_bForcePaintSync( false )
+                m_Multiplier(1)
   , m_bStabilized( false ), m_bIsChainHappening( false )
 {
 	//Reset();
@@ -124,13 +124,6 @@ void Game::Update()
             break;
     }
 
-    /*if( m_bForcePaintSync )
-    {
-        needsync = true;
-        System::paintSync();
-        m_bForcePaintSync = false;
-    }*/
-
     switch( m_state )
     {
         case STATE_SPLASH:
@@ -167,7 +160,10 @@ void Game::Update()
                 TestMatches();
 
                 if( m_state == STATE_POSTGAME || m_state == STATE_GAMEMENU )
+                {
+                    SetStartingLevel();
                     Reset();
+                }
 
                 m_bTestMatches = false;
             }
@@ -226,34 +222,10 @@ void Game::Update()
 
     //m_chromitDrawer.drawAll();
 
-    //always finishing works
-    //System::finish();
-/*#if !SLOW_MODE
-    //if any of our cubes have messed with bg1's bitmaps,
-    //force a finish here
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( m_cubes[i].getbg1buffer().NeedFinish() )
-        {
-            //System::finish();
-            System::paintSync();
-            needsync = true;
-            //printf( "finishing\n" );
-            break;
-        }
-    }
-#endif*/
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].testFlushBG1();
 
-/*#if SLOW_MODE
-    System::paintSync();
-#else
-    if( needsync )
-        System::paintSync();
-    else*/
-        System::paint();
-//#endif
+    System::paint();
 
     m_pSoundThisFrame = NULL;
 }
@@ -1321,11 +1293,10 @@ void Game::HandleMenu()
         {
             GameState targetState = STATE_INTRO;
             m_mode = (GameMode)e.item;
-            m_iLevel = 0;
 
-            if( m_mode == MODE_BLITZ )
-                m_iLevel = 3;
-            else if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
+            SetStartingLevel();
+
+            if( m_mode == MODE_PUZZLE && m_savedata.furthestProgress > 0 )
                 targetState = STATE_PUZZLEMENU;
 
             TransitionToState( targetState );
@@ -1411,6 +1382,11 @@ void Game::ClearBG1()
 //needDraw is a boolean array telling which cubes need drawing
 void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
 {
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].TurnOffSprites();
+    }
+
     if( Game::Inst().getMode() == Game::MODE_PUZZLE)
     {
         for( int i = 0; i < NUM_CUBES; i++ )
@@ -1437,6 +1413,15 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
         if( needDraw[i] )
         {
             //draw glimmer before timer
+            m_cubes[i].m_timeTillGlimmer -= dt;
+
+            if( m_cubes[i].m_timeTillGlimmer < 0.0f )
+            {
+                m_cubes[i].m_timeTillGlimmer = random.uniform( CubeWrapper::MIN_GLIMMER_TIME, CubeWrapper::MAX_GLIMMER_TIME );
+                m_cubes[i].m_glimmer.Reset();
+            }
+            m_cubes[i].m_glimmer.Update( dt, &m_cubes[i] );
+
             if( m_cubes[i].m_glimmer.IsActive() )
                 m_cubes[i].m_glimmer.Draw( m_cubes[i].GetBG1Buffer(), &m_cubes[i] );
         }
@@ -1462,9 +1447,8 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
                 //rocks
                 for( int j = 0; j < RockExplosion::MAX_ROCK_EXPLOSIONS; j++ )
                 {
-                    m_cubes[i].m_aExplosions[i].Update();
                     if( m_cubes[i].m_aExplosions[ j ].isUsed() )
-                        m_cubes[i].m_aExplosions[j].Draw( m_cubes[i].GetVid(), j );
+                        m_cubes[i].m_aExplosions[j].UpdateDraw( m_cubes[i].GetVid(), j );
                 }
             }
         }
@@ -1491,4 +1475,14 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
                 m_cubes[i].m_bubbles.Draw( m_cubes[i].GetVid(), &m_cubes[i] );
         }
     }
+}
+
+
+
+void Game::SetStartingLevel()
+{
+    if( m_mode == MODE_BLITZ )
+        m_iLevel = 3;
+    else
+        m_iLevel = 0;
 }

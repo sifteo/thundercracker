@@ -86,7 +86,7 @@ public:
     bool isEmpty() const;
 	void checkEmpty();
 
-	void checkRefill();
+    void checkRefill() __attribute__ ((noinline));
     void Refill();
 
 	void testMatches();
@@ -148,7 +148,7 @@ public:
     void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
-    inline void setNeedFlush( bool bNeedFinish ) { m_queuedFlush = true; m_needFinish = bNeedFinish; }
+    inline void setNeedFlush() { m_queuedFlush = true; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
@@ -232,10 +232,10 @@ private:
     bool m_queuedFlush;
     //TODO, need to start using this for other screens
     bool m_dirty;
-    //we know our mask changed, force a finish
-    bool m_needFinish;
 
     FloatingScore m_floatscore;
+
+    friend class Game;
 };
 
 #endif

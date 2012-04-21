@@ -498,6 +498,16 @@ void GridSlot::mark()
 {
     if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
         return;
+
+    if( m_color == ROCKCOLOR )
+    {
+        //rock special case, 4x explosiveness!
+        for( int i = 0; i < MAX_ROCK_HEALTH; i++ )
+            DamageRock();
+
+        return;
+    }
+
     m_animFrame = 0;
 	m_state = STATE_MARKED;
     m_eventTime = SystemTime::now();
@@ -551,6 +561,8 @@ void GridSlot::die()
 
 void GridSlot::markNeighbor( int row, int col )
 {
+    if( IsSpecial() )
+        return;
 	//find my neighbor and see if we match
 	GridSlot *pNeighbor = m_pWrapper->GetSlot( row, col );
 
@@ -568,7 +580,7 @@ void GridSlot::hurtNeighboringRock( int row, int col )
 
     //PRINT( "pneighbor = %p", pNeighbor );
     //PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->getColor() == ROCKCOLOR )
+    if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == ROCKCOLOR )
         pNeighbor->DamageRock();
 }
 
@@ -762,7 +774,8 @@ void GridSlot::UpMultiplier()
 //morph from rainball to given color
 void GridSlot::RainballMorph( unsigned int color )
 {
-    FillColor( color );
+    if( color != ROCKCOLOR )
+        FillColor( color );
     m_bWasRainball = true;
 }
 
