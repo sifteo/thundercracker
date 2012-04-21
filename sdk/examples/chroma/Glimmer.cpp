@@ -121,10 +121,14 @@ void Glimmer::Draw( TileBuffer<16, 16> &bg1buffer, CubeWrapper *pWrapper )
                         bg1buffer.image( vec( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
                 }
                 else if( pSlot->getColor() != GridSlot::ROCKCOLOR )
+                {
                     bg1buffer.image( vec( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+                }
             }
         }
     }
+
+    pWrapper->setNeedFlush();
 }
 
 
