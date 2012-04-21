@@ -10,7 +10,7 @@
 #include "vram.h"
 #include "accel.h"
 #include "event.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 #include "svmdebugpipe.h"
 #include "tasks.h"
 #include "neighbors.h"

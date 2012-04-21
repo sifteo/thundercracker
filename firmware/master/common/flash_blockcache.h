@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef FLASH_LAYER_H_
-#define FLASH_LAYER_H_
+#ifndef FLASH_BLOCKCACHE_H_
+#define FLASH_BLOCKCACHE_H_
 
 #include "svmvalidator.h"
 #include "systime.h"
@@ -368,4 +368,4 @@ private:
 };
 
 
-#endif // FLASH_LAYER_H_
+#endif

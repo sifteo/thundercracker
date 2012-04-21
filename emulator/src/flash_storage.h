@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <sifteo/abi.h>
 #include "cube_flash_model.h"
-#include "flash.h"
+#include "flash_device.h"
 
 
 class FlashStorage {
@@ -32,12 +32,12 @@ class FlashStorage {
     };
 
     struct MasterRecord {
-        uint8_t bytes[Flash::CAPACITY];
+        uint8_t bytes[FlashDevice::CAPACITY];
     };
 
     struct HeaderRecord {
         union {
-            uint8_t bytes[Flash::PAGE_SIZE];    // Pad to one full page
+            uint8_t bytes[FlashDevice::PAGE_SIZE];    // Pad to one full page
 
             struct {
                 uint64_t    magic;

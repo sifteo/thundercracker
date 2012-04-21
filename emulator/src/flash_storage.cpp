@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "macros.h"
+#include "flash_device.h"
 #include "flash_storage.h"
 
 
@@ -101,8 +102,8 @@ void FlashStorage::initData()
     data->header.cube_count = arraysize(data->cubes);
     data->header.cube_nvmSize = sizeof data->cubes[0].nvm;
     data->header.cube_extSize = sizeof data->cubes[0].ext;
-    data->header.mc_pageSize = Flash::PAGE_SIZE;
-    data->header.mc_capacity = Flash::CAPACITY;
+    data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
+    data->header.mc_capacity = FlashDevice::CAPACITY;
 }
 
 bool FlashStorage::checkData()
@@ -126,8 +127,8 @@ bool FlashStorage::checkData()
         data->header.cube_count != arraysize(data->cubes) ||
         data->header.cube_nvmSize != sizeof data->cubes[0].nvm ||
         data->header.cube_extSize != sizeof data->cubes[0].ext ||
-        data->header.mc_pageSize != Flash::PAGE_SIZE ||
-        data->header.mc_capacity != Flash::CAPACITY) {
+        data->header.mc_pageSize != FlashDevice::PAGE_SIZE ||
+        data->header.mc_capacity != FlashDevice::CAPACITY) {
         LOG(("FLASH: Storage file has an unsupported memory layout\n"));
         return false;
     }

@@ -17,9 +17,9 @@
 #include "systime.h"
 #include "audiooutdevice.h"
 #include "audiomixer.h"
-#include "flash.h"
-#include "flashlayer.h"
-#include "assetmanager.h"
+#include "flash_device.h"
+#include "flash_blockcache.h"
+#include "usbprotocol.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
@@ -41,13 +41,13 @@ bool SystemMC::installELF(const char *path)
 
     // write the file to external flash
     uint8_t buf[512];
-    Flash::chipErase();
+    FlashDevice::chipErase();
 
     unsigned addr = 0;
     while (!feof(elfFile)) {
         unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
         if (rxed > 0) {
-            Flash::write(addr, buf, rxed);
+            FlashDevice::write(addr, buf, rxed);
             addr += rxed;
         }
     }
@@ -61,9 +61,9 @@ bool SystemMC::init(System *sys)
     this->sys = sys;
     instance = this;
 
-    Flash::init();
+    FlashDevice::init();
     FlashBlock::init();
-    AssetManager::init();
+    USBProtocolHandler::init();
 
     if (sys->opt_svmTrace)
         SvmCpu::enableTracing();

@@ -3,13 +3,13 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "flash.h"
 #include "system.h"
 #include "system_mc.h"
+#include "flash_device.h"
 #include "flash_storage.h"
 
 
-void Flash::read(uint32_t address, uint8_t *buf, unsigned len)
+void FlashDevice::read(uint32_t address, uint8_t *buf, unsigned len)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
 
@@ -23,7 +23,7 @@ void Flash::read(uint32_t address, uint8_t *buf, unsigned len)
     }
 }
 
-void Flash::write(uint32_t address, const uint8_t *buf, unsigned len)
+void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
 
@@ -44,31 +44,31 @@ void Flash::write(uint32_t address, const uint8_t *buf, unsigned len)
     }
 }
 
-void Flash::eraseSector(uint32_t address)
+void FlashDevice::eraseSector(uint32_t address)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
 
-    if (address < Flash::CAPACITY) {
+    if (address < FlashDevice::CAPACITY) {
         // Address can be anywhere inside the actual sector
-        unsigned sector = address - (address % Flash::SECTOR_SIZE);
-        memset(storage.bytes + sector, 0xFF, Flash::SECTOR_SIZE);
+        unsigned sector = address - (address % FlashDevice::SECTOR_SIZE);
+        memset(storage.bytes + sector, 0xFF, FlashDevice::SECTOR_SIZE);
     } else {
         ASSERT(0 && "MC flash eraseSector() out of range");
     }
 }
 
-void Flash::chipErase()
+void FlashDevice::chipErase()
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
     memset(storage.bytes, 0xFF, sizeof storage.bytes);
 }
 
-void Flash::init()
+void FlashDevice::init()
 {
     // No-op in the simulator
 }
 
-bool Flash::writeInProgress()
+bool FlashDevice::writeInProgress()
 {
     // This is never async in the simulator
     return false;

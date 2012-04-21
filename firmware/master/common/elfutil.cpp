@@ -5,7 +5,7 @@
 
 #include "elfdefs.h"
 #include "elfutil.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 #include <string.h>
 

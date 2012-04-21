@@ -3,12 +3,12 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef FLASH_H
-#define FLASH_H
+#ifndef FLASH_DEVICE_H
+#define FLASH_DEVICE_H
 
 #include <stdint.h>
 
-class Flash {
+class FlashDevice {
 public:
     static const unsigned PAGE_SIZE = 256;              // programming granularity
     static const unsigned SECTOR_SIZE = 1024 * 4;       // smallest erase granularity
@@ -34,4 +34,5 @@ public:
     static void readId(JedecID *id);
 };
 
-#endif // FLASH_H
+#endif
+
