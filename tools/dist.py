@@ -20,8 +20,9 @@ if __name__ == '__main__':
 
     # don'y copy sifteo games - this won't be needed once they're in their own repo
     shutil.copytree("sdk", packagedir, ignore = shutil.ignore_patterns(
-        '.git', '.gitignore', 'buddies', 'chroma', 'ninja_slide', 'peano', 'sandwich', 'word')
-    )
+        '.git', '.gitignore', '.DS_Store',
+        'buddies', 'chroma', 'ninja_slide', 'peano', 'sandwich', 'word'
+    ))
 
     print "creating sdk archive....."
     shutil.make_archive(packagedir, "zip", packagedir)
