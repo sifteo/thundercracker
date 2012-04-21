@@ -21,8 +21,8 @@ namespace TotalsGame {
         class NeighborEventHandler
         {
         public:
-            virtual void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
-            virtual void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {};
+            virtual void OnNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {};
+            virtual void OnNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1) {};
         };
         
         extern NeighborEventHandler *neighborEventHandler;
@@ -98,11 +98,11 @@ namespace TotalsGame {
 
 
 
-        void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-        void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+        void OnNeighborAdd(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1);
+        void OnNeighborRemove(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1);
 
-        void OnCubeTouch(void*, _SYSCubeID cid);
-        void OnCubeShake(void*, _SYSCubeID cid);
+        void OnCubeTouch(void*, unsigned cid);
+        void OnCubeShake(void*, unsigned cid);
 	}
 
 }

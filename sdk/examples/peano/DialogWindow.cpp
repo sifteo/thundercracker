@@ -103,49 +103,20 @@ static const uint8_t font_data[] = {
 #define kFontHeight 11
 
 
-static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-    // Round to the nearest 5/6 bit color. Note that simple
-    // bit truncation does NOT produce the best result!
-    uint16_t r5 = ((uint16_t)r * 31 + 128) / 255;
-    uint16_t g6 = ((uint16_t)g * 63 + 128) / 255;
-    uint16_t b5 = ((uint16_t)b * 31 + 128) / 255;
-    return (r5 << 11) | (g6 << 5) | b5;
-}
-
-static uint16_t color_lerp(uint8_t alpha) {
-    // Linear interpolation between foreground and background
-
-    const unsigned bg_r = 0xe8;
-    const unsigned bg_g = 0xdc;
-    const unsigned bg_b = 0xcc;
-
-    const unsigned fg_r = 0x0;//0xf4;
-    const unsigned fg_g = 0x0;//0xd8;
-    const unsigned fg_b = 0x0;//0xb7;
-    
-    const uint8_t invalpha = 0xff - alpha;
-
-    return rgb565( (bg_r * invalpha + fg_r * alpha) / 0xff,
-                   (bg_g * invalpha + fg_g * alpha) / 0xff,
-                   (bg_b * invalpha + fg_b * alpha) / 0xff );
-}
-
-
-
 
 DialogWindow::DialogWindow(TotalsCube* pCube) : mCube(pCube) {
-    fg = rgb565(0,0,0);
-    bg = rgb565(255,255,255);
+    fg = RGB565::fromRGB((uint8_t)0,(uint8_t)0,(uint8_t)0);
+    bg = RGB565::fromRGB((uint8_t)255,(uint8_t)255,(uint8_t)255);
 }
 
-void DialogWindow::SetBackgroundColor(unsigned r, unsigned g, unsigned b)
+void DialogWindow::SetBackgroundColor(uint8_t r, uint8_t g, uint8_t b)
 {
-    bg = rgb565(r, g, b);
+    bg = RGB565::fromRGB(r, g, b);
 }
 
-void DialogWindow::SetForegroundColor(unsigned r, unsigned g, unsigned b)
+void DialogWindow::SetForegroundColor(uint8_t r, uint8_t g, uint8_t b)
 {
-    fg = rgb565(r, g, b);
+    fg = RGB565::fromRGB(r, g, b);
 }
 
 const char* DialogWindow::Show(const char* str) {
@@ -161,25 +132,9 @@ void DialogWindow::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
-    uint16_t dest = (mPosition.y << 4) | (mPosition.x >> 3);
-    unsigned shift = mPosition.x & 7;
+    mCube->vid.fb128.bitmap(mPosition, vec(8, kFontHeight), data, 1);
 
-    for (unsigned i = 0; i < kFontHeight; i++) {
-        mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] << shift));
-        dest += 16;
-    }
-
-    if (shift) {
-        dest += -16*kFontHeight + 1;
-        shift = 8 - shift;
-
-        for (unsigned i = 0; i < kFontHeight; i++) {
-            mCube->vbuf.pokeb(dest, mCube->vbuf.peekb(dest) | (data[i] >> shift));
-            dest += 16;
-        }
-    }
-
-    mPosition.x += escapement;
+    mPosition.x += escapement;    
 }
 
 unsigned DialogWindow::MeasureGlyph(char ch) {
@@ -208,66 +163,41 @@ void DialogWindow::MeasureText(const char *str, unsigned *outCount, unsigned *ou
     if (c) { (*outCount)++; }
 }
 
-void DialogWindow::Erase() {
-    mPosition.y = 3;
-    for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
-        mCube->vbuf.poke(i, 0);
-    }
-}
-
-void DialogWindow::Fade() {
-    const unsigned speed = 4;
-    const unsigned hold = 100;
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-                    offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-                    color_lerp(2*i)
-                    );
-        System::paint();
-    }
-    for (unsigned i = 0; i < hold; i++) {
-        System::paint();
-    }
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-                    offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-                    color_lerp(0xFF - 2*i)
-                    );
-        System::paint();
-    }
-}
-
 void DialogWindow::DoDialog(const char *text, int yTop, int ySize)
 {
-    System::paintSync();
-    mCube->vbuf.touch();
-    System::paintSync();
+    mCube->vid.touch();
+    System::paint();
 
-    mCube->backgroundLayer.setWindow(yTop, ySize);
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, fg);
-    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, bg);
-    mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
+    mCube->vid.initMode(FB128);
+    mCube->vid.setWindow(yTop, ySize);
+    mCube->vid.colormap[0].set(fg);
+    mCube->vid.colormap[1].set(bg);
 
-    Erase();
-
+    mPosition.y = 3;
     const char* pNextChar = text;
     while(*pNextChar) {
         pNextChar = Show(pNextChar);
     }
 
+    System::paint();
+}
 
-    System::paintSync();
+void DialogWindow::ChangeText(const char *text)
+{
+    mCube->vid.fb128.fill(0);
+    mPosition.y = 3;
+    const char* pNextChar = text;
+    while(*pNextChar) {
+        pNextChar = Show(pNextChar);
+    }
 
+    System::paint();
 }
 
 void DialogWindow::EndIt()
 {
-    System::paintSync();
-    mCube->backgroundLayer.set();
-    mCube->backgroundLayer.clear();
-    mCube->foregroundLayer.Clear();
-    mCube->backgroundLayer.setWindow(0, 128);
-    mCube->foregroundLayer.Flush();
+    mCube->vid.initMode(BG0_SPR_BG1);
+    mCube->vid.setWindow(0, 128);
 }
 
 }

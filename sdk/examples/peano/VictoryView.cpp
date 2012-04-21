@@ -33,13 +33,13 @@ bool VictoryParticle::Paint(TotalsCube *c, int type, int id, float time) {
     Vector2<float> p = initialPosition + initialVelocity * time + halfG * time * time;
 
     if (IsOnScreen(p)) {
-        c->backgroundLayer.setSpriteImage(id, *sprites[type][sizeIndex], 0);
-        c->backgroundLayer.moveSprite(id, p.x, p.y);
+        c->vid.sprites[id].setImage(*sprites[type][sizeIndex], 0);
+        c->vid.sprites[id].move(p);
         return true;
     }
-    else if(!c->backgroundLayer.isSpriteHidden(id))
+    else if(!c->vid.sprites[id].isHidden())
     {
-        c->backgroundLayer.resizeSprite(id, 0,0);
+        c->vid.sprites[id].hide();
     }
     return false;
 }
@@ -78,7 +78,7 @@ void VictoryView::Paint () {
         {
             &Narrator_Diamond,   &Narrator_Ruby, &Narrator_Emerald, &Narrator_Coin
         };
-        GetCube()->Image(*narratorTypes[mType], vec<int>(0,16-narratorTypes[mType]->height));
+        GetCube()->Image(*narratorTypes[mType], vec<int>(0,16-narratorTypes[mType]->tileHeight()));
 
         for(int i=0; i<8; ++i) {
             mParticles[i].Paint(GetCube(), mType, i, time);
@@ -86,7 +86,7 @@ void VictoryView::Paint () {
     }
     else
     {
-        GetCube()->Image(Narrator_GetReady, vec<int>(0,16-Narrator_GetReady.height));
+        GetCube()->Image(Narrator_GetReady, vec<int>(0,16-Narrator_GetReady.tileHeight()));
     }
 }
 
