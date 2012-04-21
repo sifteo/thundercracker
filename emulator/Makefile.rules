@@ -15,8 +15,10 @@ $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
 else
 ifeq ($(BUILD_PLATFORM),Darwin)
-# Mac OS Link: Create an app bundle with a stripped binary.
+# Mac OS Link: Create an app bundle with a stripped binary,
+# and a separate symlink for easier command line use.
 $(BIN_DIR)/$(BIN): $(BIN_DIR)/$(BIN).app
+	ln -sf tc-siftulator.app/Contents/MacOS/tc-siftulator "$@"
 $(BIN_DIR)/$(BIN).app: $(OBJS)
 	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
 	mkdir -p "$(BIN_DIR)/$(BIN).app/Contents/MacOS"
