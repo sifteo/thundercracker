@@ -41,7 +41,7 @@ void InterstitialView::TransitionSync(float duration, bool opening)
 
     for(float t=0; t<duration; t+=Game::dt) {
         SetTransitionAmount((opening? t : duration-t)/duration);
-        System::paintSync();
+        System::paint();
         Game::UpdateDt();
     }
     SetTransitionAmount(opening? 1 : 0);
@@ -90,19 +90,23 @@ int InterstitialView::CollapsesPauses(int off)
 
 void InterstitialView::Paint()
 {
+    if(GetCube()->IsTextOverlayEnabled())
+    {
+        return;
+    }
     PaintWithOffset(GetCube(), mOffset, mBackwards);
     if (mOffset >= 17)
     {       
-        if (image && message[0] && GetCube()->backgroundLayer.isSpriteHidden(0))
+        if (image && message[0] && GetCube()->vid.sprites[0].isHidden())
         {
-            GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
-            GetCube()->backgroundLayer.moveSprite(0, vec(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
+            GetCube()->vid.sprites[0].setImage(*image, 0);
+            GetCube()->vid.sprites[0].move(vec(64-8*image->tileWidth()/2, 88 - 8*image->tileHeight()/2 + mImageOffset));
         }
     }
     else
     {
-        if(!GetCube()->backgroundLayer.isSpriteHidden(0))
-            GetCube()->backgroundLayer.hideSprite(0);
+        if(!GetCube()->vid.sprites[0].isHidden())
+            GetCube()->vid.sprites[0].hide();
     }
 }
 

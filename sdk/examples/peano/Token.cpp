@@ -4,6 +4,9 @@
 
 namespace TotalsGame {
 
+extern Int2 kSideToUnit[4];
+    
+    
 DEFINE_POOL(Token)
 
 Puzzle *Token::GetPuzzle()
@@ -97,7 +100,7 @@ void Token::PopGroup() {
     }
 }
 
-SideStatus Token::StatusOfSide(Cube::Side side, IExpression *current)
+SideStatus Token::StatusOfSide(unsigned side, IExpression *current)
 {
     if (current == this)
     {
@@ -139,7 +142,7 @@ SideStatus Token::StatusOfSide(Cube::Side side, IExpression *current)
     return SideStatusBlocked;
 }
 
-bool Token::ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp)
+bool Token::ConnectsOnSideAtDepth(unsigned s, int depth, IExpression *exp)
 {
     if (exp == NULL)
     {
@@ -229,9 +232,9 @@ void Token::SetOpBottom(Difficulty dif, Op value)
 }
 
 
-bool SideHelper::IsSource(Cube::Side side)
+bool SideHelper::IsSource(unsigned side)
 {
-    return side == SIDE_RIGHT || side == SIDE_BOTTOM;
+    return side == RIGHT || side == BOTTOM;
 }
 
 

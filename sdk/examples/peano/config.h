@@ -8,12 +8,12 @@
 
 //these should probably be 1 for release
 #define MUSIC_ON      	0
-#define SFX_ON        	0
+#define SFX_ON        	01
 #define LOAD_ASSETS   	01
 
 //these should probably be 0 for release
-#define SKIP_INTRO_TUTORIAL 01
+#define SKIP_INTRO_TUTORIAL 0
 
-#define NO_STACK_PARAMS_HACK 1
+#define NO_TOUCH_HACK   0
 
 #endif

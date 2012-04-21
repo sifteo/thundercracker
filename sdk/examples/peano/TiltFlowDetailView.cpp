@@ -18,27 +18,30 @@ TiltFlowDetailView::TiltFlowDetailView()
 
 
 void TiltFlowDetailView::ShowDescription(const char * desc) {
-    if (mDescription == desc) { return; }    //should be using same string pointer
-
+    if (mDescription == desc) { return; }    //should be using same string pointer    
     mDescription = desc;
 
     if (mDescription[0]) {
         PLAY_SFX(sfx_Menu_Tilt_Stop);
     }    
 
-    if(GetCube()->IsTextOverlayEnabled())
+    if(mAmount >= 1 && GetCube()->IsTextOverlayEnabled())
     {
-        //text box is already up, but we need to redraw it
-        GetCube()->DisableTextOverlay();
+        //overlay already up. just replace the text
+        GetCube()->ChangeOverlayText(desc);
+        return;
     }
+
+    if(GetCube()->IsTextOverlayEnabled())
+        GetCube()->DisableTextOverlay();
 
     while(mAmount < 1)
     {
         mAmount = MIN(mAmount + Game::dt / TotalsCube::kTransitionTime, 1);
         Paint();
-        System::paintSync();
+        System::paint();
         Game::UpdateDt();
-    }
+    }    
 
     int fg[] = {75, 0, 85};
     int bg[] = {255 ,255, 255};
@@ -49,7 +52,7 @@ void TiltFlowDetailView::ShowDescription(const char * desc) {
 void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
         if(mAmount > 0)
-            PLAY_SFX(sfx_Menu_Tilt_Stop);
+            PLAY_SFX2(sfx_Menu_Tilt_Stop, false);
 
         mDescription = "";
 
@@ -62,7 +65,7 @@ void TiltFlowDetailView::HideDescription() {
         {
             mAmount = MAX(mAmount - Game::dt / TotalsCube::kTransitionTime, 0);
             Paint();
-            System::paintSync();
+            System::paint();
             Game::UpdateDt();
         }
 
@@ -76,8 +79,12 @@ void TiltFlowDetailView::HideDescription() {
 }
 
 
-void TiltFlowDetailView::Paint() {
+void TiltFlowDetailView::Paint() {   
     TotalsCube *c = GetCube();
+    if(c->IsTextOverlayEnabled())
+    {
+        return;
+    }
     if (mAmount == 0) {
         InterstitialView::Paint();
     } else {
@@ -90,9 +97,9 @@ void TiltFlowDetailView::Paint() {
         c->ClipImage(&skin.vault_door, vec(0,1-16));
         c->ClipImage(&skin.vault_door, vec(0, bottom));
 
-        if(!GetCube()->backgroundLayer.isSpriteHidden(0))
+        if(!GetCube()->vid.sprites[0].isHidden())
         {
-            GetCube()->backgroundLayer.hideSprite(0);   //enabled by interstitialview
+            GetCube()->vid.sprites[0].hide();   //enabled by interstitialview
         }
     }
 }

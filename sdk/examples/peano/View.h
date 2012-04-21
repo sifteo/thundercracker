@@ -2,7 +2,6 @@
 
 #include "sifteo.h"
 #include "ObjectPool.h"
-#include <stddef.h>
 
 namespace TotalsGame
 {
