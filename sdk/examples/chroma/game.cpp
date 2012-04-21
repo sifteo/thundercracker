@@ -36,7 +36,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_lastSloshTime(), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
-                m_Multiplier(1)//, m_bForcePaintSync( false )
+                m_Multiplier(1)
   , m_bStabilized( false ), m_bIsChainHappening( false )
 {
 	//Reset();
@@ -123,13 +123,6 @@ void Game::Update()
         default:
             break;
     }
-
-    /*if( m_bForcePaintSync )
-    {
-        needsync = true;
-        System::paintSync();
-        m_bForcePaintSync = false;
-    }*/
 
     switch( m_state )
     {
@@ -229,34 +222,10 @@ void Game::Update()
 
     //m_chromitDrawer.drawAll();
 
-    //always finishing works
-    //System::finish();
-/*#if !SLOW_MODE
-    //if any of our cubes have messed with bg1's bitmaps,
-    //force a finish here
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( m_cubes[i].getbg1buffer().NeedFinish() )
-        {
-            //System::finish();
-            System::paintSync();
-            needsync = true;
-            //printf( "finishing\n" );
-            break;
-        }
-    }
-#endif*/
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].testFlushBG1();
 
-/*#if SLOW_MODE
-    System::paintSync();
-#else
-    if( needsync )
-        System::paintSync();
-    else*/
-        System::paint();
-//#endif
+    System::paint();
 
     m_pSoundThisFrame = NULL;
 }

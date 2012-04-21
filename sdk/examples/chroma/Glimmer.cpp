@@ -43,7 +43,6 @@ void Glimmer::Reset()
 {
     m_frame = 0;
     m_group = 0;
-    m_bNeedFinish = true;
     //Game::Inst().playSound(glimmer_fx_03);
 }
 
@@ -61,10 +60,9 @@ void Glimmer::Update( float dt, CubeWrapper *pWrapper )
         {
             m_frame = 0;
             m_group++;
-            m_bNeedFinish = true;
 
             if( m_group >= NUM_GLIMMER_GROUPS )
-                pWrapper->setNeedFlush( true );
+                pWrapper->setNeedFlush();
             //Game::Inst().playSound(glimmer_fx_03);
         }
     }
@@ -127,9 +125,6 @@ void Glimmer::Draw( TileBuffer<16, 16> &bg1buffer, CubeWrapper *pWrapper )
             }
         }
     }
-
-    pWrapper->setNeedFlush( m_bNeedFinish );
-    m_bNeedFinish = false;
 }
 
 
