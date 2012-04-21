@@ -7,7 +7,7 @@
 #define ELF_DEBUG_INFO_H
 
 #include "elfdefs.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 #include <vector>
 #include <map>
 #include <string>

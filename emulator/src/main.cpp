@@ -36,7 +36,6 @@ static void usage()
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
      *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
-     *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      *  -c                Continue executing on exception, rather than stopping the debugger.
@@ -52,6 +51,7 @@ static void usage()
             "  -h                  Show this help message, and exit\n"
             "  -n NUM              Set initial number of cubes\n"
             "  -T                  Turbo mode; run faster than real-time if we can\n"
+            "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
         }
 
         if (!strcmp(arg, "-F") && argv[c+1]) {
-            sys.opt_cube0Flash = argv[c+1];
+            sys.opt_flashFilename = argv[c+1];
             c++;
             continue;
         }

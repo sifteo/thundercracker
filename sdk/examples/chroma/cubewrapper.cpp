@@ -33,7 +33,7 @@ const float CubeWrapper::AUTOREFILL_TIME = 3.5f;
 CubeWrapper::CubeWrapper() : m_bubbles( m_vid ), m_cube(s_id++),
         m_bg1buffer( m_cube ), m_state( STATE_PLAYING ),
         m_fTouchTime( 0.0f ), m_curFluidDir(vec( 0, 0 )), m_curFluidVel(vec( 0, 0 )), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true ), m_needFinish( false )
+        m_lastTiltDir( 0 ), m_queuedFlush( false ), m_dirty( true ), m_needFinish( false )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -84,11 +84,17 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_glimmer.Reset();
     m_bubbles.Reset( m_vid );
-    m_numQueuedClears = 0;
 
     m_dirty = true;
 	Refill();
     m_fTouchTime = 0.0f;
+
+    //flush our queued clears
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        m_queuedClearRows[i] = -1;
+        m_queuedClearCols[i] = -1;
+    }
 }
 
 
@@ -296,8 +302,6 @@ void CubeWrapper::DrawUI()
         default:
             break;
     }
-
-    m_numQueuedClears = 0;
 
     //TODO, fix hack!
     //m_cube.vbuf.touch();
@@ -1549,11 +1553,21 @@ void CubeWrapper::testFlushBG1()
 }
 
 
-void CubeWrapper::QueueClear( Int2 &pos )
+//queue up a col/row to be cleared (4 tiles)
+//used when a chromit is being moved
+//This exists because we need to do all our clears first, and then do our draws
+//index is a col/row index
+//tile is a tile position
+void CubeWrapper::QueueClear( uint8_t index, uint8_t tile, bool bRow )
 {
-    m_queuedClears[m_numQueuedClears] = pos;
-    m_numQueuedClears++;
-    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS );
+    if( bRow )
+    {
+        m_queuedClearRows[index] = tile;
+    }
+    else
+    {
+        m_queuedClearCols[index] = tile;
+    }
 }
 
 
@@ -2010,16 +2024,24 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int i
 
 void CubeWrapper::DrawGrid()
 {
-    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
-
     //flush our queued clears
-    for( int i = 0; i < m_numQueuedClears; i++ )
+    for( int i = 0; i < NUM_ROWS; i++ )
     {
-        m_vid.bg0.image(m_queuedClears[i], GemEmpty, 0);
+        if( m_queuedClearRows[i] >= 0 )
+        {
+            m_vid.bg0.image(vec( i * 4, (int)m_queuedClearRows[i] ), vec( NUM_COLS, 1 ), GemEmpty, vec( 0, 0 ), 0);
+        }
+        if( m_queuedClearCols[i] >= 0 )
+        {
+            m_vid.bg0.image(vec( (int)m_queuedClearCols[i], i * 4 ), vec( 1, NUM_ROWS ), GemEmpty, vec( 0, 0 ), 0);
+        }
+
+        m_queuedClearRows[i] = -1;
+        m_queuedClearCols[i] = -1;
     }
 
-    ClearSprite( GridSlot::MULT_SPRITE_ID );
-    ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
+    //ClearSprite( GridSlot::MULT_SPRITE_ID );
+    //ClearSprite( GridSlot::MULT_SPRITE_NUM_ID );
 
     unsigned int cubeIndex = Game::Inst().getWrapperIndex( this );
 

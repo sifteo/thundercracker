@@ -17,15 +17,16 @@
 #include "systime.h"
 #include "audiooutdevice.h"
 #include "audiomixer.h"
-#include "flash.h"
-#include "flashlayer.h"
-#include "assetmanager.h"
+#include "flash_device.h"
+#include "flash_blockcache.h"
+#include "usbprotocol.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
 #include "mc_gdbserver.h"
 #include "cube.h"
 #include "protocol.h"
+#include "tasks.h"
 
 SystemMC *SystemMC::instance;
 
@@ -40,18 +41,17 @@ bool SystemMC::installELF(const char *path)
 
     // write the file to external flash
     uint8_t buf[512];
-    Flash::chipErase();
+    FlashDevice::chipErase();
 
     unsigned addr = 0;
     while (!feof(elfFile)) {
         unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
         if (rxed > 0) {
-            Flash::write(addr, buf, rxed);
+            FlashDevice::write(addr, buf, rxed);
             addr += rxed;
         }
     }
     fclose(elfFile);
-    Flash::flush();
 
     return true;
 }
@@ -59,11 +59,11 @@ bool SystemMC::installELF(const char *path)
 bool SystemMC::init(System *sys)
 {
     this->sys = sys;
-    instance = 0;
+    instance = this;
 
-    Flash::init();
+    FlashDevice::init();
     FlashBlock::init();
-    AssetManager::init();
+    USBProtocolHandler::init();
 
     if (sys->opt_svmTrace)
         SvmCpu::enableTracing();
@@ -81,7 +81,6 @@ bool SystemMC::init(System *sys)
 void SystemMC::start()
 {
     mThreadRunning = true;
-    instance = this;
     __asm__ __volatile__ ("" : : : "memory");
     mThread = new tthread::thread(threadFn, 0);
 }
@@ -116,6 +115,12 @@ void SystemMC::threadFn(void *param)
     GDBServer::start(2345);
 
     SvmLoader::run(111);
+
+    for (;;) {
+        // If SVM exits, at least let the cube simulation run...
+        Tasks::work();
+        Radio::halt();
+    }
 }
 
 SysTime::Ticks SysTime::ticks()

@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "assetmanager.h"
-#include "flash.h"
+#include "usbprotocol.h"
+#include "flash_device.h"
 #include "macros.h"
 
 #ifndef SIFTEO_SIMULATOR
@@ -12,9 +12,9 @@
 #include "hardware.h"
 #endif
 
-struct AssetManager::AssetInstallation AssetManager::installation;
+struct USBProtocolHandler::AssetInstallation USBProtocolHandler::installation;
 
-void AssetManager::init()
+void USBProtocolHandler::init()
 {
     installation.state = WaitingForLength;
 }
@@ -28,7 +28,7 @@ static uint8_t status;
     bytes we receive are the length.
     But, calculate the CRC as it goes in & verify it on the data written to flash.
 */
-void AssetManager::onData(const uint8_t *buf, unsigned len)
+void USBProtocolHandler::onData(const uint8_t *buf, unsigned len)
 {
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/
@@ -41,12 +41,12 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 
         // make sure enough sectors are erased for this asset
         // XXX: just starting from 0 for now, assuming only one game's assets
-        for (unsigned i = 0; i < installation.size; i += Flash::SECTOR_SIZE) {
+        for (unsigned i = 0; i < installation.size; i += FlashDevice::SECTOR_SIZE) {
 #ifndef SIFTEO_SIMULATOR
             status = 2;
             UsbDevice::write(&status, 1);
 #endif
-            Flash::eraseSector(i);
+            FlashDevice::eraseSector(i);
         }
 #ifndef SIFTEO_SIMULATOR
         status = 0x0;
@@ -59,7 +59,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 
     unsigned chunk = MIN(installation.size - installation.currentAddress, len);
 
-    Flash::write(installation.currentAddress, buf, chunk);
+    FlashDevice::write(installation.currentAddress, buf, chunk);
     installation.currentAddress += chunk;
 
     addToCrc(buf, chunk);
@@ -80,14 +80,14 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
         installation.crcword = 0;
 
         // wait for the last transaction to finish
-        while (Flash::writeInProgress())
+        while (FlashDevice::writeInProgress())
             ;
         // debug: read back out and verify CRC
-        uint8_t b[Flash::PAGE_SIZE];
+        uint8_t b[FlashDevice::PAGE_SIZE];
         unsigned addr = 0;
         while (addr < installation.size) {  // XXX: assumes 0 based offset
             unsigned chunksize = MIN(installation.size - addr, sizeof(b));
-            Flash::read(addr, b, chunksize);
+            FlashDevice::read(addr, b, chunksize);
             addToCrc(b, chunksize);
             addr += chunksize;
         }
@@ -103,7 +103,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
     Gather 4-byte words of data and update the CRC.
     Track the number of bytes buffered in crcword.
 */
-void AssetManager::addToCrc(const uint8_t *buf, unsigned len)
+void USBProtocolHandler::addToCrc(const uint8_t *buf, unsigned len)
 {
     while (len) {
         installation.crcword |= (*buf << (installation.crcwordBytes * 8));
