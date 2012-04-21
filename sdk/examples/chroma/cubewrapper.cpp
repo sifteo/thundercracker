@@ -439,16 +439,7 @@ void CubeWrapper::Update(SystemTime t, TimeDelta dt)
     }
 
     if( Game::Inst().getState() == Game::STATE_PLAYING )
-    {
-        m_timeTillGlimmer -= dt;
-
-        if( m_timeTillGlimmer < 0.0f )
-        {
-            m_timeTillGlimmer = Game::random.uniform( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
-            m_glimmer.Reset();
-        }
-        m_glimmer.Update( dt, this );
-
+    {        
         //check for shaking
         if( Game::Inst().getMode() == Game::MODE_BLITZ && ( m_ShakeTime.isValid() && t - m_ShakeTime > SHAKE_FILL_DELAY ) )
         {

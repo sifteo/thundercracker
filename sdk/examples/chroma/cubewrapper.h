@@ -86,7 +86,7 @@ public:
     bool isEmpty() const;
 	void checkEmpty();
 
-	void checkRefill();
+    void checkRefill() __attribute__ ((noinline));
     void Refill();
 
 	void testMatches();
@@ -234,6 +234,8 @@ private:
     bool m_dirty;
 
     FloatingScore m_floatscore;
+
+    friend class Game;
 };
 
 #endif

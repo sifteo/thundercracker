@@ -1413,6 +1413,15 @@ void Game::DrawGame( bool needDraw[], SystemTime t, TimeDelta dt )
         if( needDraw[i] )
         {
             //draw glimmer before timer
+            m_cubes[i].m_timeTillGlimmer -= dt;
+
+            if( m_cubes[i].m_timeTillGlimmer < 0.0f )
+            {
+                m_cubes[i].m_timeTillGlimmer = random.uniform( CubeWrapper::MIN_GLIMMER_TIME, CubeWrapper::MAX_GLIMMER_TIME );
+                m_cubes[i].m_glimmer.Reset();
+            }
+            m_cubes[i].m_glimmer.Update( dt, &m_cubes[i] );
+
             if( m_cubes[i].m_glimmer.IsActive() )
                 m_cubes[i].m_glimmer.Draw( m_cubes[i].GetBG1Buffer(), &m_cubes[i] );
         }
