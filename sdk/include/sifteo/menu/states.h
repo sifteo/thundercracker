@@ -292,15 +292,15 @@ inline void Menu::transFromInertia()
  */
 inline void Menu::transToFinish()
 {
-    // prepare screen for item animation
-    // isolate the selected icon
-    vid.bg0.setPanning(vec(0, 0));
+    // Prepare screen for item animation
+
+    // We're about to switch things up in VRAM, make sure the cubes are done drawing.
+    System::finish();
 
     // blank out the background layer
-    for(int row=0; row<kIconTileHeight; ++row)
-    for(int col=0; col<kNumTilesX; ++col) {
-        vid.bg0.image(vec(col, row), *assets->background);
-    }
+    vid.bg0.setPanning(vec(0, 0));
+    vid.bg0.erase(*assets->background);
+
     if (assets->header) {
         Int2 vec = {0, 0};
         vid.bg0.image(vec, *assets->header);
