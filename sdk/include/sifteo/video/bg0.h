@@ -187,7 +187,7 @@ struct BG0Drawable {
      */
     void fill(UInt2 topLeft, UInt2 size, const PinnedAssetImage &image)
     {
-        fill(topLeft, size, image.tile(sys.cube,0));
+        fill(topLeft, size, image.tile(sys.cube, 0));
     }
 
     /**
@@ -228,7 +228,7 @@ struct BG0Drawable {
 
         while ((c = *str)) {
             if (c == '\n') {
-                addr = (lineAddr += tileWidth());
+                addr = (lineAddr += font.tileHeight() * tileWidth());
             } else {
                 _SYS_image_BG0Draw(&sys, font, addr, c - firstChar);
                 addr += font.tileWidth();

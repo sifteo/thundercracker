@@ -3,6 +3,12 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * The second layer of the flash stack: Cached access to physical
+ * flash blocks. This layer knows nothing of virtual-to-physical address
+ * translation, only of retrieving and caching physical blocks.
+ */
+
 #ifndef FLASH_BLOCKCACHE_H_
 #define FLASH_BLOCKCACHE_H_
 
@@ -43,10 +49,10 @@ extern FlashStats gFlashStats;
 class FlashBlock
 {
 public:
-    static const unsigned NUM_BLOCKS = 16;
+    static const unsigned NUM_CACHE_BLOCKS = 16;
     static const unsigned BLOCK_SIZE = 256;     // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
-    static const unsigned MAX_REFCOUNT = NUM_BLOCKS;
+    static const unsigned MAX_REFCOUNT = NUM_CACHE_BLOCKS;
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
 
@@ -58,8 +64,8 @@ private:
     uint16_t validCodeBytes;
     uint8_t refCount;
 
-    static uint8_t mem[NUM_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
-    static FlashBlock instances[NUM_BLOCKS];
+    static uint8_t mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
+    static FlashBlock instances[NUM_CACHE_BLOCKS];
     static uint32_t referencedBlocksMap;
     static uint32_t latestStamp;
 
@@ -318,53 +324,6 @@ public:
 
 private:
     uint32_t offset;
-};
-
-
-/**
- * A buffer that, combined with FlashStream, provides buffered I/O with
- * zero copies in the common case.
- *
- * The buffer will pull data from flash as necessary, by calling read() on
- * the provided stream. If sufficient data is already present in the buffer,
- * no read() call will occur.
- *
- * Any time the underlying FlashStream object is init()'ed or seek()'ed, the
- * buffer must be reset().
- */
-template <unsigned bufSize>
-class FlashStreamBuffer {
-public:
-    inline void reset() {
-        writePtr = readPtr = 0;
-    }
-
-    /// Returns NULL on unexpected EOF.
-    uint8_t *read(FlashStream &stream, uint32_t length) {
-        ASSERT(length < bufSize);
-        uint32_t bufferedBytes = writePtr - readPtr;
-
-        if (bufferedBytes < length) {
-            // Need more data!
-            memmove(data, data + readPtr, bufferedBytes);
-            bufferedBytes += stream.read(data + bufferedBytes, bufSize - bufferedBytes);
-            readPtr = 0;
-            writePtr = bufferedBytes;
-        }
-        if (bufferedBytes < length) {
-            // EOF
-            return NULL;
-        }
-
-        uint8_t *result = data + readPtr;
-        readPtr += length;
-        stream.advance(length);
-        return result;
-    }
-
-private:
-    uint16_t writePtr, readPtr;
-    uint8_t data[bufSize];
 };
 
 
