@@ -16,6 +16,7 @@
 #include "usb/usbdevice.h"
 #include "button.h"
 #include "svmloader.h"
+#include "powermanager.h"
 
 /*
  * Application specific entry point.
@@ -81,6 +82,7 @@ int main()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
+    PowerManager::init();
     UsbDevice::init();
 
     /*
