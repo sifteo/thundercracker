@@ -64,7 +64,9 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbhardware_stm32otg.stm32.o \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
-    $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o
+    $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o \
+    $(MASTER_DIR)/stm32/powermanager.stm32.o \
+    $(MASTER_DIR)/stm32/exti.stm32.o
 
 # Sources for normal master firmware
 OBJS_STM32_MASTER = \
