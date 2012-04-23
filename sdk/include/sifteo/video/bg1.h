@@ -516,10 +516,10 @@ struct BG1Drawable {
         while ((c = *str)) {
             if (c == '\n') {
                 pos.x = topLeft.x;
-                pos.y += font.tileHeight();
+                pos.y++;
             } else {
                 _SYS_image_BG1Draw(&sys, font, (_SYSInt2*) &pos, c - firstChar);
-                pos.x += font.tileWidth();
+                pos.x++;
             }
             str++;
         }

@@ -297,7 +297,7 @@ inline void Menu::transToFinish()
     vid.bg0.setPanning(vec(0, 0));
 
     // blank out the background layer
-    for(int row=0; row<kNumTilesY; ++row)
+    for(int row=0; row<kIconTileHeight; ++row)
     for(int col=0; col<kNumTilesX; ++col) {
         vid.bg0.image(vec(col, row), *assets->background);
     }
