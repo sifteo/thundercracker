@@ -602,7 +602,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     unsigned int spriteOver = side + 0;
     unsigned int spriteUnder = side + NUM_SIDES;
     
-    // TODO: nudge support
+    // TODO: Nudge support
     Int2 accelState = GetAccelState();
     float x = float(accelState.x + 61) / (123.0f * 0.5f) - 1.0f;
     float y = float(accelState.y + 61) / (123.0f * 0.5f) - 1.0f;

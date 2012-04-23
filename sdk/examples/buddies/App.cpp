@@ -751,15 +751,6 @@ int GetRotationTarget(const Piece &piece, Side side)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: kill this in favor of just using the above
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool IsAtRotationTarget(const Piece &piece, Side side)
-{
-    return piece.GetRotation() == GetRotationTarget(piece, side);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 int ClampMod(int value, int modulus)
@@ -795,6 +786,21 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
         {
             buddyId = BuddyId((buddyId + 1) % numBuddies);
         }
+    }
+    
+    return buddyId;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+BuddyId GetNextOtherBuddyId(App &app, BuddyId buddyId)
+{
+    int numBuddies = NUM_BUDDIES - 1; // Don't allow invisible buddy!
+       
+    while (IsBuddyUsed(app, buddyId))
+    {
+        buddyId = BuddyId((buddyId + 1) % numBuddies);
     }
     
     return buddyId;
@@ -1178,7 +1184,8 @@ void App::OnShake(PCubeID cubeId)
                 PlaySound(SoundFreePlayReset);
                 
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
-            
+                
+                // TODO: should this be GetNextOtherBuddyId?
                 BuddyId newBuddyId =
                     GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
                 mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
@@ -1420,7 +1427,7 @@ void App::UpdateMenuMain()
                 }
                 else if (menuEvent.item == 3)
                 {
-                    // TODO: options config menu
+                    // TODO: Options config menu
                     menu.preventDefault();
                 }
                 break;
@@ -2253,7 +2260,7 @@ void App::UpdateGameState(float dt)
                     if (mTouching[i] == TOUCH_STATE_BEGIN)
                     {
                         BuddyId newBuddyId =
-                            GetRandomOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                            GetNextOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
                         mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
@@ -3769,7 +3776,7 @@ void App::UpdateSwap(float dt)
             if (UpdateTimer(mSwapAnimationRotateTimer, dt))
             {            
                 Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(Side(mSwapPiece0 % NUM_SIDES));
-                if (!IsAtRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)))
+                if (piece0.GetRotation() != GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)))
                 {
                     piece0.SetRotation(piece0.GetRotation() - 1);
                     if (piece0.GetRotation() < 0)
@@ -3780,7 +3787,7 @@ void App::UpdateSwap(float dt)
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(Side(mSwapPiece0 % NUM_SIDES), piece0);
                 
                 Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES));
-                if (!IsAtRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
+                if (piece1.GetRotation() != GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
                 {
                     piece1.SetRotation(piece1.GetRotation() - 1);
                     if (piece1.GetRotation() < 0)
@@ -3790,8 +3797,8 @@ void App::UpdateSwap(float dt)
                 }
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(Side(mSwapPiece1 % NUM_SIDES), piece1);
                 
-                if (!IsAtRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) ||
-                    !IsAtRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
+                if (piece0.GetRotation() != GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) ||
+                    piece1.GetRotation() != GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
                 {
                     mSwapAnimationRotateTimer += kSwapAnimationSlide / NUM_SIDES;
                 }
@@ -3803,8 +3810,8 @@ void App::UpdateSwap(float dt)
         const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES));
         
         if (mSwapAnimationSlideTimer <= 0.0f &&
-            IsAtRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) &&
-            IsAtRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
+            piece0.GetRotation() == GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) &&
+            piece1.GetRotation() == GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
         {
             OnSwapFinish();
         }
