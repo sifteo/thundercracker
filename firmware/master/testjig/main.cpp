@@ -5,7 +5,6 @@
 
 #include "usart.h"
 #include "board.h"
-#include "flash.h"
 #include "systime.h"
 #include "radio.h"
 #include "tasks.h"
