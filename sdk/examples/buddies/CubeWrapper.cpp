@@ -79,11 +79,17 @@ const Int2 kPartPositions[NUM_SIDES] =
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
-    vec(40,  0),
-    vec( 0, 40),
-    vec(40, 80),
-    vec(80, 40),
+    vec(48,  8),
+    vec( 8, 48),
+    vec(48, 88),
+    vec(88, 48),
 };
+
+const BG1Mask kPartsMask =
+    BG1Mask::filled(vec( 5,  0), vec(6, 6)) |
+    BG1Mask::filled(vec( 0,  5), vec(6, 6)) |
+    BG1Mask::filled(vec( 5, 10), vec(6, 6)) |
+    BG1Mask::filled(vec(10,  5), vec(6, 6));
 
 #endif
 
@@ -265,6 +271,8 @@ void CubeWrapper::DrawBuddy()
         // Draw the actual asset
         DrawBackground(*asset);
     }
+    
+    mVideoBuffer.bg1.setMask(kPartsMask);
     
     for (int i = 0; i < NUM_SIDES; ++i)
     {
@@ -718,45 +726,49 @@ void CubeWrapper::DrawPiece(const Piece &piece, Side side)
         {
             int tiles_off = -point.x;
             
-            DrawUiAssetPartial(
+            mVideoBuffer.bg1.image(
                 vec(0, point.y),
-                vec(tiles_off, 0),
                 vec(width - tiles_off, height),
-                asset, frame);
+                asset,
+                vec(tiles_off, 0),
+                frame);
         }
         else if (point.x < max_tiles_x && (point.x + width) > max_tiles_x)
         {
             int tiles_off = (point.x + width) - max_tiles_x;
             
-            DrawUiAssetPartial(
+            mVideoBuffer.bg1.image(
                 vec(point.x, point.y),
-                vec(0, 0),
                 vec(width - tiles_off, height),
-                asset, frame);
+                asset,
+                vec(0, 0),
+                frame);
         }
         else if (point.y > -height && point.y < 0)
         {
             int tiles_off = -point.y;
             
-            DrawUiAssetPartial(
+            mVideoBuffer.bg1.image(
                 vec(point.x, 0),
-                vec(0, tiles_off),
                 vec(width, height - tiles_off),
-                asset, frame);
+                asset,
+                vec(0, tiles_off),
+                frame);
         }
         else if (point.y < max_tiles_y && (point.y + height) > max_tiles_y)
         {
             int tiles_off = (point.y + height) - max_tiles_y;
             
-            DrawUiAssetPartial(
+            mVideoBuffer.bg1.image(
                 vec(point.x, point.y),
-                vec(0, 0),
                 vec(width, height - tiles_off),
-                asset, frame);
+                asset,
+                vec(0, 0),
+                frame);
         }    
         else if (point.x >= 0 && point.x < max_tiles_x && point.y >= 0 && point.y < max_tiles_y)
         {
-            DrawUiAsset(vec(point.x, point.y), asset, frame);
+            mVideoBuffer.bg1.image(vec(point.x, point.y), asset, frame);
         }
     }
 }
