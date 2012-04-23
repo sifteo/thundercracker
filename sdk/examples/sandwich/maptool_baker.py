@@ -86,8 +86,7 @@ def bake_tileset(imgpath):
 		# save maps (kinda hacky - read in origin source and just change the part that I know I touched)
 		tiles_per_row = w / TILE_SIZE
 		gid_offset = tiles_per_row * (new_height - h) / TILE_SIZE
-		for map_index in dirty_maps:
-			map = tiled_maps[map_index]
+		for map_index,map in enumerate(tiled_maps):
 			firstGid = map.layer_dict["background"].gettileset().gid
 
 			doc = lxml.etree.parse(map.path)
