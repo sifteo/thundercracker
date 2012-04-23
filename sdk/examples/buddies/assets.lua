@@ -31,13 +31,13 @@ AddBuddy(10, "veax")
 AddBuddy(11, "yawp")
 
 -- Buddy Overlays
-if UseSprites then
-    BuddyPartFixed = image{"assets/fixed_sprite.png", pinned = UseSprites}
-    BuddyPartHidden = image{"assets/hidden_sprite.png", pinned = UseSprites}
-else
-    BuddyPartFixed = image{"assets/fixed.png"}
-    BuddyPartHidden = image{"assets/hidden.png"}
-end
+--if UseSprites then
+--    BuddyPartFixed = image{"assets/fixed_sprite.png", pinned = UseSprites}
+--    BuddyPartHidden = image{"assets/hidden_sprite.png", pinned = UseSprites}
+--else
+--    BuddyPartFixed = image{"assets/fixed.png"}
+--    BuddyPartHidden = image{"assets/hidden.png"}
+--end
 
 -- Environments
 Environment_0 = image{"assets/cutscene_background1.png"}

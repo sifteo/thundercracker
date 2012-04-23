@@ -671,11 +671,11 @@ void CubeWrapper::DrawPiece(const Piece &piece, Side side)
         unsigned int frame = (piece.GetRotation() * NUM_SIDES) + piece.GetPart();
         ASSERT(frame < asset.numFrames());
         
-        if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
-        {
-            asset = BuddyPartHidden;
-            frame = 0;
-        }
+        //if (piece.GetAttribute() == Piece::ATTR_HIDDEN)
+        //{
+        //    asset = BuddyPartHidden;
+        //    frame = 0;
+        //}
         
         // Nudge
         Byte2 tiltState = GetTiltState();
