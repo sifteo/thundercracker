@@ -172,6 +172,12 @@ const AssetImage *kStoryCutsceneEnvironmentsRight[] =
     &Environment_0_Right,
 };
 
+const BG1Mask kStoryProgressMask =
+    BG1Mask::filled(vec(2, 2), vec( 2, 2)) |
+    BG1Mask::filled(vec(5, 2), vec(10, 2)) |
+    BG1Mask::filled(vec(6, 7), vec( 2, 2)) |
+    BG1Mask::filled(vec(8, 7), vec( 2, 2));
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -602,15 +608,22 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
 {
     cubeWrapper.DrawBackground(StoryProgress);
     
+    // Mask
+    cubeWrapper.GetVideoBuffer().bg1.setMask(kStoryProgressMask);
+    
+    // Buddy Small
     BuddyId buddyId = GetBook(bookIndex).mUnlockBuddyId;
     ASSERT(buddyId < arraysize(kBuddiesSmall));
-    cubeWrapper.DrawUiAsset(vec(2, 2), *kBuddiesSmall[buddyId]);
+    cubeWrapper.DrawUiAsset(vec(2, 2), *kBuddiesSmall[buddyId], 0, false);
     
+    // Chapter Title
     String<16> buffer;
     buffer << "Chapter " << (puzzleIndex + 1);
-    cubeWrapper.DrawUiText( vec(5, 2), UiFontHeadingOrangeNoOutline, buffer.c_str());
-    cubeWrapper.DrawUiAsset(vec(6, 7), StoryProgressNumbers, puzzleIndex + 1);
-    cubeWrapper.DrawUiAsset(vec(8, 7), StoryProgressNumbers, GetBook(bookIndex).mNumPuzzles);
+    cubeWrapper.DrawUiText( vec(5, 2), UiFontHeadingOrangeNoOutline, buffer.c_str(), false);
+    
+    // Progress
+    cubeWrapper.DrawUiAsset(vec(6, 7), StoryProgressNumbers, puzzleIndex + 1, false);
+    cubeWrapper.DrawUiAsset(vec(8, 7), StoryProgressNumbers, GetBook(bookIndex).mNumPuzzles, false);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

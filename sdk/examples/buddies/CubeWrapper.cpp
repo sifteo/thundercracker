@@ -338,10 +338,14 @@ void CubeWrapper::DrawSprite(
 
 void CubeWrapper::DrawUiAsset(
     Int2 position,
-    const AssetImage &asset, unsigned int assetFrame)
+    const AssetImage &asset, unsigned int assetFrame,
+    bool setMask)
 {
-    mBg1Mask.fill(position, asset.tileSize());
-    mVideoBuffer.bg1.setMask(mBg1Mask);
+    if (setMask)
+    {
+        mBg1Mask.fill(position, asset.tileSize());
+        mVideoBuffer.bg1.setMask(mBg1Mask);
+    }
     mVideoBuffer.bg1.image(position, asset, assetFrame);
 }
 
@@ -352,10 +356,14 @@ void CubeWrapper::DrawUiAssetPartial(
     Sifteo::Int2 position,
     Sifteo::Int2 offset,
     Sifteo::Int2 size,
-    const Sifteo::AssetImage &asset, unsigned int assetFrame)
+    const Sifteo::AssetImage &asset, unsigned int assetFrame,
+    bool setMask)
 {
-    mBg1Mask.fill(position, size);
-    mVideoBuffer.bg1.setMask(mBg1Mask);
+    if (setMask)
+    {
+        mBg1Mask.fill(position, size);
+        mVideoBuffer.bg1.setMask(mBg1Mask);
+    }
     mVideoBuffer.bg1.image(position, size, asset, offset, assetFrame);
 }
 
@@ -365,16 +373,20 @@ void CubeWrapper::DrawUiAssetPartial(
 void CubeWrapper::DrawUiText(
     Int2 position,
     const AssetImage &assetFont,
-    const char *text)
+    const char *text,
+    bool setMask)
 {
     ASSERT(text != NULL);
     
-    int numLines = 0;
-    int maxLength = 0;
-    GetTextSize(text, numLines, maxLength);
-    
-    mBg1Mask.fill(position, vec(maxLength, 2 * numLines));
-    mVideoBuffer.bg1.setMask(mBg1Mask);
+    if (setMask)
+    {
+        int numLines = 0;
+        int maxLength = 0;
+        GetTextSize(text, numLines, maxLength);
+        
+        mBg1Mask.fill(position, vec(maxLength, 2 * numLines));
+        mVideoBuffer.bg1.setMask(mBg1Mask);
+    }
     mVideoBuffer.bg1.text(position, assetFont, text);
 }
 

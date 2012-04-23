@@ -60,16 +60,19 @@ public:
     
     void DrawUiAsset(
         Sifteo::Int2 position,
-        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0,
+        bool setMask = true);
     void DrawUiAssetPartial(
         Sifteo::Int2 position,
         Sifteo::Int2 offset,
         Sifteo::Int2 size,
-        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0,
+        bool setMask = true);
     void DrawUiText(
         Sifteo::Int2 position,
         const Sifteo::AssetImage &assetFont,
-        const char *text);
+        const char *text,
+        bool setMask = true);
     void ScrollUi(Sifteo::Int2 position);
     
     Sifteo::PCubeID GetId();
