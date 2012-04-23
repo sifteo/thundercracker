@@ -1,4 +1,5 @@
 SUBDIRS = \
+	buddies \
 	chroma \
 	drawtest \
 	hello \
