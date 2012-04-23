@@ -858,7 +858,7 @@ const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels 
 
 App::App()
     : mCubeWrappers()
-    , mChannel()
+    , mChannel(0)
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
     , mOptionsTimer(0.0f)
@@ -1345,8 +1345,7 @@ void App::UpdateCubes(float dt)
 
 void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 {
-    // TODO: put back in sound
-    //mChannel.play(audioAsset);
+    mChannel.play(audioAsset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
