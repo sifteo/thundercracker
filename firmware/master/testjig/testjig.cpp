@@ -26,26 +26,23 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
                          JIG_NBR_OUT4_GPIO,
                          HwTimer(&TIM3),
                          HwTimer(&TIM5));
+// control for the pass-through USB of the master under test
+static GPIOPin testUsbEnable = USB_PWR_GPIO;
+
 
 /*
  * Table of test handlers.
  * Order must match the Command enum.
  */
 TestJig::TestHandler const TestJig::handlers[] = {
-    stmExternalFlashCommsHandler,
-    stmExternalFlashReadWriteHandler,
-    nrfCommsHandler,
-    setFixtureVoltageHandler,
-    getFixtureVoltageHandler,
-    getFixtureCurrentHandler,
-    getStmVsysVoltageHandler,
-    getStmBattVoltageHandler,
-    storeStmBattVoltageHandler,
-    enableTestJigNeighborTx,
+    setUsbPowerHandler,
 };
 
 void TestJig::init()
 {
+    testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
+    testUsbEnable.setHigh();    // default to enabled
+
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
     neighbor.init();
 }
@@ -73,37 +70,25 @@ uint16_t TestJig::get_received_data()
     return neighbor.getLastRxData();
 }
 
-void TestJig::disableUsbPower()
-{
-    GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_2MHZ);
-    usbpwr.setLow();
-}
-
-void TestJig::enableUsbPower()
-{
-    GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_2MHZ);
-    usbpwr.setHigh();
-}
-
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
 
-void TestJig::stmExternalFlashCommsHandler(uint8_t argc, uint8_t *args)
+/*
+ * args[1] == non-zero for enable, 0 for disable
+ */
+void TestJig::setUsbPowerHandler(uint8_t argc, uint8_t *args)
 {
-    
-}
+    bool enable = args[1];
+    if (enable) {
+        testUsbEnable.setHigh();
+    } else {
+        testUsbEnable.setLow();
+    }
 
-void TestJig::stmExternalFlashReadWriteHandler(uint8_t argc, uint8_t *args)
-{
-
-}
-
-void TestJig::nrfCommsHandler(uint8_t argc, uint8_t *args)
-{
-
+    // no response data - just indicate that we're done
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
 void TestJig::setFixtureVoltageHandler(uint8_t argc, uint8_t *args)
