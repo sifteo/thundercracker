@@ -33,8 +33,6 @@ public:
 private:
     unsigned int m_frame;
     unsigned int m_group;
-    //did we change the mask?
-    bool m_bNeedFinish;
 };
 
 #endif

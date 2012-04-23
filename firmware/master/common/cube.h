@@ -109,19 +109,28 @@ class CubeSlot {
 
     void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
 
+    void beginFinish() {
+        if (vbuf)
+            return paintControl.beginFinish(this);
+    }
+
+    bool pollForFinish(SysTime::Ticks now) {
+        // Finish is only meaningful when we still have a vbuf attached.
+        // Returns 'true' if we're finished.
+
+        if (vbuf)
+            return paintControl.pollForFinish(this, now);
+        else
+            return true;
+    }
+
     void waitForPaint() {
         paintControl.waitForPaint(this);
     }
 
-    void waitForFinish() {
-        // Finish is only meaningful when we still have a vbuf attached.
-        if (vbuf)
-            paintControl.waitForFinish(this);
-    }
-
-    void triggerPaint(SysTime::Ticks timestamp) {
+    void triggerPaint(SysTime::Ticks now) {
         // Allow continuous rendering only when not loading assets
-        paintControl.triggerPaint(this, timestamp);
+        paintControl.triggerPaint(this, now);
     }
 
     uint64_t getHWID();

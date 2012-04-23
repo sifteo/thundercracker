@@ -11,7 +11,7 @@
 #include "hardware.h"
 #include "board.h"
 #include "tasks.h"
-#include "assetmanager.h"
+#include "usbprotocol.h"
 #include "macros.h"
 
 #if (BOARD == BOARD_TEST_JIG)
@@ -143,7 +143,7 @@ void UsbDevice::handleOUTData(void *p)
         switch (buf[0]) {
 
         case 0:
-            AssetManager::onData(buf, numBytes);
+            USBProtocolHandler::onData(buf, numBytes);
             UsbDevice::write(buf, numBytes);
             break;
 
@@ -152,7 +152,7 @@ void UsbDevice::handleOUTData(void *p)
             break;
         }
 #else
-        AssetManager::onData(buf, numBytes);
+        USBProtocolHandler::onData(buf, numBytes);
 #endif
     }
 }

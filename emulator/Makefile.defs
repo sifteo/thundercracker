@@ -52,8 +52,9 @@ endif
 # a lot with our SBT code, since there are many tiny function calls.
 #
 # -O4 is like -O3, but includes link-time optimization on Mac OS.
+# XXX: Currently, -O4 seems to break our GUI... not using it at the moment.
 
-FLAGS += -O4 -fomit-frame-pointer
+FLAGS += -O3 -fomit-frame-pointer
 FLAGS += -g
 
 # Automatic dependency generation (*.d files)

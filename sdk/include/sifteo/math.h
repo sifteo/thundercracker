@@ -406,14 +406,14 @@ template <typename T> inline Double2 operator+=(Vector2<T> &u, double k) { retur
 template <typename T> inline Double2 operator*=(Vector2<T> &u, double k) { return vec<double>(u.x*=k, u.y*=k); }
 
 // Vector int -> float promotion
-inline Float2 operator+=(Float2 &u, Int2 v) { return vec(u.x+=v.x, u.y+=v.y); }
-inline Float2 operator-=(Float2 &u, Int2 v) { return vec(u.x-=v.x, u.y-=v.y); }
-inline Float2 operator+(Float2 u, Int2 v) { return vec(u.x+v.x, u.y+v.y); }
-inline Float2 operator-(Float2 u, Int2 v) { return vec(u.x-v.x, u.y-v.y); }
-inline Float2 operator*(Float2 u, Int2 v) { return vec(u.x*v.x, u.y*v.y); }
-inline Float2 operator+(Int2 u, Float2 v) { return vec(u.x+v.x, u.y+v.y); }
-inline Float2 operator-(Int2 u, Float2 v) { return vec(u.x-v.x, u.y-v.y); }
-inline Float2 operator*(Int2 u, Float2 v) { return vec(u.x*v.x, u.y*v.y); }
+inline Vector2<float> operator+=(Vector2<float> &u, Int2 v) { return vec(u.x+=v.x, u.y+=v.y); }
+inline Vector2<float> operator-=(Vector2<float> &u, Int2 v) { return vec(u.x-=v.x, u.y-=v.y); }
+inline Vector2<float> operator+(Vector2<float> u, Int2 v) { return vec(u.x+v.x, u.y+v.y); }
+inline Vector2<float> operator-(Vector2<float> u, Int2 v) { return vec(u.x-v.x, u.y-v.y); }
+inline Vector2<float> operator*(Vector2<float> u, Int2 v) { return vec(u.x*v.x, u.y*v.y); }
+inline Vector2<float> operator+(Int2 u, Vector2<float> v) { return vec(u.x+v.x, u.y+v.y); }
+inline Vector2<float> operator-(Int2 u, Vector2<float> v) { return vec(u.x-v.x, u.y-v.y); }
+inline Vector2<float> operator*(Int2 u, Vector2<float> v) { return vec(u.x*v.x, u.y*v.y); }
 
 
 /**

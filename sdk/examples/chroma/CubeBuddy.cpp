@@ -86,7 +86,7 @@ static void ShowProgress( const SaveData &data )
     }
 
     String<64> str;
-    str << "You've nearly freed Lumes! Play " << modes << " to free him!";
+    str << "You've nearly freed Lumis! Play " << modes << " to free him!";
 
     LOG(("gonna draw ShowProgress"));
 
@@ -111,7 +111,7 @@ static void ShowUnlock()
     }
 
     String<128> str;
-    str << "Congrats!  Lumes unlocked.  Play Cube Buddies to see him in action!";
+    str << "Congrats!  Lumis unlocked.  Play Cube Buddies to see him in action!";
 
     cubes[0].ClearBG1();
     cubes[0].setDirty();

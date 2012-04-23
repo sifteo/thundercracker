@@ -52,15 +52,23 @@ void main(void)
     while (1) {
         global_busy_flag = 0;
         
-        // Main tasks
+        /*
+         * Main tasks
+         */
+
         graphics_render();
+        graphics_ack();
+
         flash_handle_fifo();
         power_idle_poll();
+
+        /*
+         * Idle-only tasks
+         */
         
         if (global_busy_flag)
             continue;
         
-        // Idle-only tasks
         battery_poll();
     }
 }

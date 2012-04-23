@@ -26,5 +26,22 @@
 	<string>Copyright &lt;c&gt; 2011-2012 Sifteo, Inc. All rights reserved.</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.6</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Shell</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>tc-siftulator.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Sifteo VM Application</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>elf</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

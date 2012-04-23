@@ -98,6 +98,7 @@ class TestRunner(object):
         runner.run(mastertests.ExternalFlashComms)
         runner.run(mastertests.ExternalFlashReadWrite)
         runner.run(mastertests.LedTest)
+        runner.run(mastertests.UniqueIdTest)
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:

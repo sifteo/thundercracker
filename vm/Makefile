@@ -56,10 +56,12 @@ endif
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.
 #
-# Note that -O4 is link-time optimization on Mac OS.
+# XXX: We'd love to use -O4 for link-time optimization on Mac OS, but it
+#      seems to be broken on some people's machines still...
+
 ifeq ($(DEBUG),)
 	FLAGS += -DNDEBUG
-	FLAGS += -O4 -fomit-frame-pointer
+	FLAGS += -O3 -fomit-frame-pointer
 endif
 
 # Automatic dependency generation (*.d files)
@@ -73,14 +75,17 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 	LDFLAGS += -Xlinker -unexported_symbol -Xlinker "*"
 endif
 
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 ifeq ($(BUILD_PLATFORM), windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
-	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
-	strip -s src/$(BIN)-d.exe -o $(BIN_DIR)/$(BIN).exe
-	$(UPX) $(BIN_DIR)/$(BIN).exe
+	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug "src/$(BIN)-d$(BIN_EXT)" "$(BIN).dSYM"
+	strip -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
 else
 # Default link
 $(BIN_DIR)/$(BIN): $(OBJS)

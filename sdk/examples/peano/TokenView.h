@@ -36,10 +36,11 @@ namespace TotalsGame {
 
     static const Int2 Mid;
 
-    static const int BIT_TOP = 1<<SIDE_TOP;
-    static const int BIT_LEFT = 1<<SIDE_LEFT;
-    static const int BIT_BOTTOM = 1<<SIDE_BOTTOM;
-    static const int BIT_RIGHT = 1<<SIDE_RIGHT;
+    static const int BIT_TOP = 1<<TOP;
+    static const int BIT_LEFT = 1<<LEFT;
+    static const int BIT_BOTTOM = 1<<BOTTOM;
+    static const int BIT_RIGHT = 1<<RIGHT;
+    static const int BIT_MESSAGE = 1<<7;
     static const char *kOpNames[4];
     
 	enum Status 
@@ -95,7 +96,7 @@ namespace TotalsGame {
     void SetHideMode(int mask);
 
 private:
-    bool NotHiding(Cube::Side side) ;
+    bool NotHiding(unsigned side) ;
 
     void SetState(Status state, bool resetTimer=true, bool resetExpr=true);
 
@@ -111,6 +112,7 @@ public:
     void Update() ;
 
     void PaintNow();
+    void NeedRepaint();
   
     //-------------------------------------------------------------------------
     // HELPER METHODS
@@ -131,6 +133,7 @@ public:
     void PaintBottom(bool lit);
     // // // //
 
+    bool needRepaint;
    
   };
   

@@ -215,9 +215,10 @@ struct VideoBuffer {
     void setRotation(Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
-        flags &= ~mask;
-        flags |= r & mask;
-        pokeb(offsetof(_SYSVideoRAM, flags), flags);
+
+        // Must do this atomically; the asynchronous paint controller can
+        // modify other bits within this flags byte.
+        xorb(offsetof(_SYSVideoRAM, flags), (r ^ flags) & mask);
     }
 
     /**
@@ -583,6 +584,14 @@ struct VideoBuffer {
      */
     void pokei(uint16_t addr, uint16_t index) {
         _SYS_vbuf_poke(*this, addr, _SYS_TILE77(index));
+    }
+
+    /**
+     * Like pokeb(), but atomically XORs a value with the byte.
+     * This is a no-op if and only if byte==0.
+     */
+    void xorb(uint16_t addr, uint8_t byte) {
+        _SYS_vbuf_xorb(*this, addr, byte);
     }
 
     /**

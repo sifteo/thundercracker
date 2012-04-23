@@ -2,16 +2,15 @@
 
 ###########################
 
-# Tool definitions
-STIR := $(SDK_DIR)/bin/stir
-LD := $(SDK_DIR)/bin/slinky
-CC := $(SDK_DIR)/bin/arm-clang
+# Tool definitions.
+STIR := PATH=$(SDK_DIR)/bin stir
+LD := PATH=$(SDK_DIR)/bin slinky
+CC := PATH=$(SDK_DIR)/bin arm-clang
 
 BIN := $(APP).elf
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
-CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files

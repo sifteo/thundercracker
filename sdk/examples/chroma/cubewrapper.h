@@ -86,7 +86,7 @@ public:
     bool isEmpty() const;
 	void checkEmpty();
 
-	void checkRefill();
+    void checkRefill() __attribute__ ((noinline));
     void Refill();
 
 	void testMatches();
@@ -125,9 +125,12 @@ public:
     //if we need to, flush bg1
     void testFlushBG1();
 
-    //queue a location to be cleared by gemEmpty.
+    //queue up a col/row to be cleared (4 tiles)
+    //used when a chromit is being moved
     //This exists because we need to do all our clears first, and then do our draws
-    void QueueClear( Int2 &pos );
+    //index is a col/row index
+    //tile is a tile position
+    void QueueClear( uint8_t index, uint8_t tile, bool bRow );
     void SpawnSpecial( unsigned int color );
     bool SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
@@ -145,7 +148,7 @@ public:
     void TurnOffSprites();
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
-    inline void setNeedFlush( bool bNeedFinish ) { m_queuedFlush = true; m_needFinish = bNeedFinish; }
+    inline void setNeedFlush() { m_queuedFlush = true; }
 
     void StopGlimmer();
     void SpawnRockExplosion( const Int2 &pos, unsigned int health );
@@ -162,6 +165,17 @@ public:
     void ClearBG1();
     //draws bg1
     void FlushBG1();
+    TileBuffer<16, 16> &GetBG1Buffer() { return m_bg1buffer; }
+
+    void DrawGrid();
+    //special drawing unique to modes
+    bool DrawPuzzleModeStuff() __attribute__ ((noinline));
+    void DrawBlitzModeStuff( TimeDelta dt ) __attribute__ ((noinline));
+
+    Glimmer m_glimmer;
+    //allow up to 4 rock explosions simultaneously
+    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
+    BubbleSpawner m_bubbles;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -176,12 +190,8 @@ private:
     static void TiltAndTestGrid( GridTestInfo &testInfo, int iterations, const GridSlot grid[][NUM_COLS] ) __attribute__ ((noinline));
 
     bool HasFloatingDots() const;
-    void fillPuzzleCube();    
-    void DrawGrid() __attribute__ ((noinline));
-
-    //special drawing unique to modes
-    bool DrawPuzzleModeStuff() __attribute__ ((noinline));
-    void DrawBlitzModeStuff() __attribute__ ((noinline));
+    void fillPuzzleCube();        
+    void UpdateRefill( SystemTime t, TimeDelta dt ) __attribute__ ((noinline));
 
     CubeID m_cube;
     VideoBuffer m_vid;
@@ -193,7 +203,7 @@ private:
 	Banner m_banner;
 
 	//neighbor info
-	int m_neighbors[NUM_SIDES];
+    int8_t m_neighbors[NUM_SIDES];
 	//what time did we start shaking?
     SystemTime m_ShakeTime;
     //how long have we been touching the cube?
@@ -207,29 +217,25 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
-    Glimmer m_glimmer;
 
     float m_timeTillGlimmer;
 
     float m_stateTime;
-    int m_lastTiltDir;
 
     //array of queued clears.
     //clears get queued up in update, then they get drawn before any draws and cleared out
-    Int2 m_queuedClears[NUM_ROWS * NUM_COLS];
-    int m_numQueuedClears;
+    int8_t m_queuedClearRows[NUM_COLS];
+    int8_t m_queuedClearCols[NUM_ROWS];
+    uint8_t m_lastTiltDir;
 
     //do we need to do a bg1 flush?
     bool m_queuedFlush;
     //TODO, need to start using this for other screens
     bool m_dirty;
-    //we know our mask changed, force a finish
-    bool m_needFinish;
 
-    //allow up to 4 rock explosions simultaneously
-    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
-    BubbleSpawner m_bubbles;
     FloatingScore m_floatscore;
+
+    friend class Game;
 };
 
 #endif

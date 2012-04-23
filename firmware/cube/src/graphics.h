@@ -17,6 +17,7 @@
  */
 
 void graphics_render() __naked;
+void graphics_ack() __naked;
 
 /*
  * Video mode entry points

@@ -4,7 +4,7 @@
 #include "macros.h"
 
 #include "radio.h"
-#include "flash.h"
+#include "flash_device.h"
 
 uint8_t FactoryTest::commandBuf[MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
@@ -17,7 +17,8 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,
     flashCommsHandler,
     flashReadWriteHandler,
-    ledHandler
+    ledHandler,
+    uniqueIdHandler
 };
 
 void FactoryTest::init()
@@ -85,10 +86,10 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
  */
 void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
 {
-    Flash::JedecID id;
-    Flash::readId(&id);
+    FlashDevice::JedecID id;
+    FlashDevice::readId(&id);
 
-    uint8_t result = (id.manufacturerID == Flash::MACRONIX_MFGR_ID) ? 1 : 0;
+    uint8_t result = (id.manufacturerID == FlashDevice::MACRONIX_MFGR_ID) ? 1 : 0;
 
     const uint8_t response[] = { 3, args[0], result };
     Usart::Dbg.write(response, sizeof response);
@@ -101,21 +102,21 @@ void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
  */
 void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
 {
-    uint32_t sectorAddr = args[1] * Flash::SECTOR_SIZE;
+    uint32_t sectorAddr = args[1] * FlashDevice::SECTOR_SIZE;
     uint32_t addr = sectorAddr + args[2];
 
-    Flash::eraseSector(sectorAddr);
+    FlashDevice::eraseSector(sectorAddr);
 
     const uint8_t txbuf[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    Flash::write(addr, txbuf, sizeof txbuf);
+    FlashDevice::write(addr, txbuf, sizeof txbuf);
 
     // write/erase only wait before starting the *next* operation, so make sure
     // this write is complete before reading
-    while (Flash::writeInProgress())
+    while (FlashDevice::writeInProgress())
         ;
 
     uint8_t rxbuf[sizeof txbuf];
-    Flash::read(addr, rxbuf, sizeof rxbuf);
+    FlashDevice::read(addr, rxbuf, sizeof rxbuf);
 
     uint8_t result = (memcmp(txbuf, rxbuf, sizeof txbuf) == 0) ? 1 : 0;
 
@@ -148,6 +149,16 @@ void FactoryTest::ledHandler(uint8_t argc, uint8_t *args)
 
     // no result - just respond to indicate that we're done
     const uint8_t response[] = { 2, args[0] };
+    Usart::Dbg.write(response, sizeof response);
+}
+
+/*
+ * No args - just return hw id.
+ */
+void FactoryTest::uniqueIdHandler(uint8_t argc, uint8_t *args)
+{
+    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof(response), args[0] };
+    memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
     Usart::Dbg.write(response, sizeof response);
 }
 

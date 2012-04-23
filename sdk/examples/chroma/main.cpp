@@ -14,10 +14,17 @@ using namespace Sifteo;
 
 static Game &game = Game::Inst();
 
+
+
 static Metadata M = Metadata()
     .title("Chroma")
     .icon(White)
     .cubeRange(NUM_CUBES);
+
+#if !LOAD_ASSETS
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
+#endif
 
 /*
 static void onAccelChange(void *context, _SYSCubeID cid)

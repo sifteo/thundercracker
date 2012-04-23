@@ -45,9 +45,12 @@ FIRMWARE_INC = $(TC_DIR)/firmware/include
 SYS_INC = $(TC_DIR)/sdk/include
 CFLAGS += -DNOT_USERSPACE
 
-# Note that -O4 is link-time optimization on Mac OS.
-CFLAGS += -O4 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
-LDFLAGS += -g -lm -lstdc++
+# XXX: We'd like to use -O4 (link-time optimization) but bibble
+#      seems to be unable to link its own .o files when LTO is enabled...
+FLAGS += -O3 -g
+
+CFLAGS += $(FLAGS) -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
+LDFLAGS += $(FLAGS) -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
 # Symbol table trimming
@@ -55,14 +58,18 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 	LDFLAGS += -Xlinker -unexported_symbol -Xlinker "*"
 endif
 
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 ifeq ($(BUILD_PLATFORM), windows32)
-# We like having stripped binaries plus a separate file with
-# debug info. Do that on Win32 too.
+# Win32 Link: Stripped and packed binaries, and separate debug symbols.
+# upx doesn't like overwriting the output file - rm it in case we're not building after clean
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
-	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
-	strip -s src/$(BIN)-d.exe -o $(BIN_DIR)/$(BIN).exe
-	$(UPX) $(BIN_DIR)/$(BIN).exe
+	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
+	strip -s "src/$(BIN)-d.exe" -o "src/$(BIN)-stripped.exe"
+	rm -f "$(BIN_DIR)/$(BIN).exe"
+	$(UPX) -o "$(BIN_DIR)/$(BIN).exe" "src/$(BIN)-stripped.exe"
 else
 # Default link
 $(BIN_DIR)/$(BIN): $(OBJS)
@@ -84,7 +91,7 @@ src/proof_html.cpp: src/proof_html.py
 
 .PHONY: clean
 
-clean:ls 
+clean:
 	rm -f $(BIN_DIR)/$(BIN)$(BIN_EXT) $(BIN).dSYM src/$(BIN)-d.exe $(OBJS) $(DEPFILES)
 
 -include $(DEPFILES)

@@ -133,7 +133,7 @@ struct AssetGroup {
  * To ensure that AssetSlots used in metadata are constant at compile-time,
  * the preferred allocation pattern is to declare a global variable such as:
  *
- *    AssetSlot MySlot = AssetSlot::allocate()
+ *     AssetSlot MySlot = AssetSlot::allocate()
  *          .bootstrap(Group1)
  *          .bootstrap(Group2);
  *
@@ -273,7 +273,7 @@ struct AssetLoader {
      *
      * We return 'true' if the asset download started and/or we found a cached
      * asset for every one of the specified cubes. If one or more of the
-     * specified cubes has no room in "slot", we return false.     
+     * specified cubes has no room in "slot", we return false.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeIDVector cubes) {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
@@ -465,7 +465,7 @@ struct AssetImage {
  * This doesn't store any separate tilemap information, just the index for
  * the first tile in the sequence.
  *
- * Generate a PinnedAssetImage by passing the "pinned=1" option to image{}
+ * Generate a PinnedAssetImage by passing the `pinned=1` option to image{}
  * in your STIR script.
  *
  * Pinned assets are required for sprites, since the hardware requires all
@@ -559,7 +559,7 @@ struct PinnedAssetImage {
  * than compressed AssetImages, but they allow you to have cheap random
  * access to any tile in the image.
  *
- * Generate a FlatAssetImage by passing the "flat=1" option to image{}
+ * Generate a FlatAssetImage by passing the `flat=1` option to image{}
  * in your STIR script.
  */
  

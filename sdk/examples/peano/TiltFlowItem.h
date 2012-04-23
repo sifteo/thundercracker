@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sifteo.h"
-#include <stddef.h>
 
 using namespace Sifteo;
 

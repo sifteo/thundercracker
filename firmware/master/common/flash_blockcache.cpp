@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "flashlayer.h"
-#include "flash.h"
+#include "flash_blockcache.h"
+#include "flash_device.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
 #include "svmdebugger.h"
@@ -184,7 +184,7 @@ void FlashBlock::load(uint32_t blockAddr)
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
 
-    Flash::read(blockAddr, data, BLOCK_SIZE);
+    FlashDevice::read(blockAddr, data, BLOCK_SIZE);
     SvmDebugger::patchFlashBlock(blockAddr, data);
 }
 
@@ -218,7 +218,7 @@ uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
 {
     uint32_t chunk = MIN(maxLength, remaining());
     if (chunk)
-        Flash::read(getAddress() + offset, dest, chunk);
+        FlashDevice::read(getAddress() + offset, dest, chunk);
     FLASHLAYER_STATS_ONLY(gFlashStats.streamBytes += chunk);
     return chunk;
 }

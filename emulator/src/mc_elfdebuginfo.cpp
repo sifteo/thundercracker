@@ -5,7 +5,7 @@
 
 #include <cxxabi.h>
 #include "mc_elfdebuginfo.h"
-#include "flash.h"
+#include "flash_device.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -37,7 +37,7 @@ void ELFDebugInfo::init(const FlashRange &elf)
         Elf::SectionHeader *pHdr = &SI.header;
         FlashRange rHdr = elf.split(header->e_shoff + i * header->e_shentsize, sizeof *pHdr);
         ASSERT(rHdr.getSize() == sizeof *pHdr);
-        Flash::read(rHdr.getAddress(), (uint8_t*)pHdr, rHdr.getSize());
+        FlashDevice::read(rHdr.getAddress(), (uint8_t*)pHdr, rHdr.getSize());
         SI.data = elf.split(pHdr->sh_offset, pHdr->sh_size);
     }
 
@@ -64,7 +64,7 @@ std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset) con
 {
     char buf[1024];
     FlashRange r = SI->data.split(offset, sizeof buf - 1);
-    Flash::read(r.getAddress(), (uint8_t*)buf, r.getSize());
+    FlashDevice::read(r.getAddress(), (uint8_t*)buf, r.getSize());
     buf[r.getSize()] = '\0';
     return buf;
 }
@@ -98,7 +98,7 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
             FlashRange r = SI->data.split(index * sizeof currentSym, sizeof currentSym);
             if (r.getSize() != sizeof currentSym)
                 break;
-            Flash::read(r.getAddress(), (uint8_t*) &currentSym, r.getSize());
+            FlashDevice::read(r.getAddress(), (uint8_t*) &currentSym, r.getSize());
 
             uint32_t offset = address - currentSym.st_value;
             if (offset < currentSym.st_size && offset < bestOffset) {
@@ -180,7 +180,7 @@ bool ELFDebugInfo::readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) co
             continue;
 
         // Success, we can read from the ELF
-        Flash::read(r.getAddress(), buffer, bytes);
+        FlashDevice::read(r.getAddress(), buffer, bytes);
         return true;
     }
 

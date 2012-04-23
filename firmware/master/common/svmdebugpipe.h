@@ -15,7 +15,7 @@
 #include <inttypes.h>
 
 #include "svm.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include <string>

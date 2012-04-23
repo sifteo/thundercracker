@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "svm.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 
 class SvmMemory {

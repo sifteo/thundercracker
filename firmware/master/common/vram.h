@@ -112,9 +112,18 @@ struct VRAM {
         return vbuf.vram.bytes[addr];
     }
 
-    static void xorb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte) {
+    // Like pokeb(), but does an atomic XOR.
+    static void xorb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte,
+        uint32_t lockFlags = DEFAULT_LOCK_FLAGS)
+    {
         ASSERT(addr < _SYS_VRAM_BYTES);
-        pokeb(vbuf, addr, peekb(vbuf, addr) ^ byte);
+
+        if (byte != 0) {
+            uint16_t addrw = addr >> 1;
+            lock(vbuf, addrw, lockFlags);
+            __sync_xor_and_fetch(&vbuf.vram.bytes[addr], byte);
+            Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
+        }
     }
 
     static void init(_SYSVideoBuffer &vbuf) {

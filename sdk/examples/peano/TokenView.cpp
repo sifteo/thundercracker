@@ -11,6 +11,49 @@ const Vector2<int> TokenView::Mid = vec(7,7);
 int TokenView::sHintParity = 0;
 const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };
 
+//this mask covers all the main bg1 drawing.  matches coords in paintCenterCap
+const BG1Mask primaryBG1Mask = // total tiles = 8+8+8+8+4+4+96 -> 32+8+96 -> 136
+        //horizontal at 1       4x(2x1) -> 8
+        BG1Mask::filled(vec(3,0), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,13), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,14), Horizontal_Left.tileSize())
+        | BG1Mask::filled(vec(3,15), Horizontal_Left.tileSize())
+        //horizontal at 2       4x(2x1) -> 8
+        | BG1Mask::filled(vec(9,0), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,13), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,14), Horizontal_Right.tileSize())
+        | BG1Mask::filled(vec(9,15), Horizontal_Right.tileSize())
+        //vertical at 1         4x(1x2) -> 8
+        | BG1Mask::filled(vec(0,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(13,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(14,3), Vertical_Top.tileSize())
+        | BG1Mask::filled(vec(15,3), Vertical_Top.tileSize())
+        //vertical at 2         4x(1x2) -> 8
+        | BG1Mask::filled(vec(0,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(13,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(14,9), Vertical_Bottom.tileSize())
+        | BG1Mask::filled(vec(15,9), Vertical_Bottom.tileSize())
+        //minor diagonals       4x(1x1) -> 4
+        | BG1Mask::filled(vec(2,2), MinorNW.tileSize())
+        | BG1Mask::filled(vec(2,11), MinorSW.tileSize())
+        | BG1Mask::filled(vec(11,11), MinorSE.tileSize())
+        | BG1Mask::filled(vec(11,2), MinorNE.tileSize())
+        //major diagonals       4x(1x1) -> 4
+        | BG1Mask::filled(vec(4,4), MajorNW.tileSize())
+        | BG1Mask::filled(vec(4,9), MajorSW.tileSize())
+        | BG1Mask::filled(vec(9,9), MajorSE.tileSize())
+        | BG1Mask::filled(vec(9,4), MajorNE.tileSize())
+        //major cardinals       4x(8x3) -> 96
+        | BG1Mask::filled(vec(3,1), MajorN.tileSize())
+        | BG1Mask::filled(vec(1,3), MajorW.tileSize())
+        | BG1Mask::filled(vec(3,10), MajorS.tileSize())
+        | BG1Mask::filled(vec(10,3), MajorE.tileSize())
+        //crazy number hack 1   (ranges overlap)
+        | BG1Mask::filled(vec(5,3), Transparent_4x1.tileSize())
+        | BG1Mask::filled(vec(3,3), MajorN_Frame2_AccentDigit.tileSize())
+        //crazy number hack 2   (ranges overlap)
+        | BG1Mask::filled(vec(5,10), Transparent_4x1.tileSize())
+        | BG1Mask::filled(vec(3,10), MajorS_Frame109_AccentDigit.tileSize());
 
 TokenView::Status TokenView::GetCurrentStatus()
 {
@@ -33,21 +76,28 @@ void TokenView::Reset()
     mHideMask = 0;
     mDigitId = 0;
     useAccentDigit = false;
+
+    NeedRepaint();
+}
+
+void TokenView::NeedRepaint()
+{
+    needRepaint = true;
 }
 
 void TokenView::SetToken(Token *t)
 {
+    mDigitId = -1;
     token = t;
     token->view = this;
-    renderedDigit = token->val;
-    mCurrentExpression = token;
-    mDigitId = -1;
+    renderedDigit = t->val;
+    mCurrentExpression = t;
 }
 
 void TokenView::HideOps()
 {
     mDigitId = 0;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::PaintRandomNumeral()
@@ -56,7 +106,7 @@ void TokenView::PaintRandomNumeral()
     while (d == mDigitId) { mDigitId = Game::rand.randrange(9) + 1; }
     useAccentDigit = false;
     renderedDigit = mDigitId;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::ResetNumeral()
@@ -66,7 +116,7 @@ void TokenView::ResetNumeral()
         renderedDigit = token->val;
     }
     mDigitId = -1;
-    PaintNow();
+    NeedRepaint();
 }
 
 void TokenView::WillJoinGroup()
@@ -89,7 +139,7 @@ void TokenView::DidJoinGroup()
 
     if (grp != NULL)
     {
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -114,7 +164,7 @@ void TokenView::ShowLit()
 {
     if (!mLit) {
         mLit = true;
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -123,7 +173,7 @@ void TokenView::HideOverlay()
     if (mStatus == StatusOverlay)
     {
         SetState(StatusIdle);
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -132,11 +182,11 @@ void TokenView::SetHideMode(int mask)
     if (mHideMask != mask)
     {
         mHideMask = mask;
-        PaintNow();
+        NeedRepaint();
     }
 }
 
-bool TokenView::NotHiding(Cube::Side side)
+bool TokenView::NotHiding(unsigned side)
 {
     return (mHideMask & (1<<(int)side)) == 0;
 }
@@ -170,7 +220,7 @@ void TokenView::SetState(Status state, bool resetTimer, bool resetExpr)
                 GetCube()->HideSprites();
             }
         }
-        PaintNow();
+        NeedRepaint();
     }
 }
 
@@ -244,15 +294,33 @@ void TokenView::Update()
             }
         }
     }
+
+    //paint if dirty
+    PaintNow();
 }
 
 void TokenView::PaintNow()
 {
+    if(!needRepaint) return;
+    needRepaint = false;
+
     TotalsCube *c = GetCube();
     if(!c) return;
 
-    c->foregroundLayer.Clear();
-    c->HideSprites();
+    c->vid.bg1.setMask(primaryBG1Mask);
+    c->vid.bg1.erase(Transparent_4x1);
+    c->HideSprites();    
+/*
+    int count = 0;
+    for(int r=0;r<16;r++)
+    {
+        for(int b=0;b<16;b++)
+            if(primaryBG1Mask.rows()[r]&(1<<b))
+                count++;
+    }
+    LOG("COUNT %d\n", count);
+*/
+    //ok begin main drawing here
 
     const Skins::Skin &skin = Skins::GetSkin();
 
@@ -271,19 +339,18 @@ void TokenView::PaintNow()
     }
     else
     {
-        bottomStatus = token->StatusOfSide(SIDE_BOTTOM, mCurrentExpression);
-        rightStatus = token->StatusOfSide(SIDE_RIGHT, mCurrentExpression);
-        topStatus = token->StatusOfSide(SIDE_TOP, mCurrentExpression);
-        leftStatus = token->StatusOfSide(SIDE_LEFT, mCurrentExpression);
+        bottomStatus = token->StatusOfSide(BOTTOM, mCurrentExpression);
+        rightStatus = token->StatusOfSide(RIGHT, mCurrentExpression);
+        topStatus = token->StatusOfSide(TOP, mCurrentExpression);
+        leftStatus = token->StatusOfSide(LEFT, mCurrentExpression);
         if (token->current->GetCount() < token->GetPuzzle()->GetNumTokens())
         {
-            if (NotHiding(SIDE_TOP) && topStatus == SideStatusOpen) { PaintTop(false); }
-            if (NotHiding(SIDE_LEFT) && leftStatus == SideStatusOpen) { PaintLeft(false); }
-            if (NotHiding(SIDE_BOTTOM) && bottomStatus == SideStatusOpen) { PaintBottom(false); }
-            if (NotHiding(SIDE_RIGHT) && rightStatus == SideStatusOpen) { PaintRight(false); }
+            if (NotHiding(TOP) && topStatus == SideStatusOpen) { PaintTop(false); }
+            if (NotHiding(LEFT) && leftStatus == SideStatusOpen) { PaintLeft(false); }
+            if (NotHiding(BOTTOM) && bottomStatus == SideStatusOpen) { PaintBottom(false); }
+            if (NotHiding(RIGHT) && rightStatus == SideStatusOpen) { PaintRight(false); }
         }
     }
-
 
     bool isInGroup = mCurrentExpression != token;
     if (isInGroup)
@@ -316,10 +383,10 @@ void TokenView::PaintNow()
     {
         renderedDigit = token->val;
 
-        if (NotHiding(SIDE_TOP) && topStatus == SideStatusConnected) { PaintTop(true); }
-        if (NotHiding(SIDE_LEFT) && leftStatus == SideStatusConnected) { PaintLeft(true); }
-        if (NotHiding(SIDE_BOTTOM) && bottomStatus == SideStatusConnected) { PaintBottom(true); }
-        if (NotHiding(SIDE_RIGHT) && rightStatus == SideStatusConnected) { PaintRight(true); }
+        if (NotHiding(TOP) && topStatus == SideStatusConnected) { PaintTop(true); }
+        if (NotHiding(LEFT) && leftStatus == SideStatusConnected) { PaintLeft(true); }
+        if (NotHiding(BOTTOM) && bottomStatus == SideStatusConnected) { PaintBottom(true); }
+        if (NotHiding(RIGHT) && rightStatus == SideStatusConnected) { PaintRight(true); }
     }
     if (mStatus == StatusOverlay)
     {
@@ -328,16 +395,22 @@ void TokenView::PaintNow()
         c->Image(skin.accent, vec(0,yPos));
         if(isInGroup)
         {
-            c->foregroundLayer.DrawAsset(vec<int>(8-Accent_Current.width/2, yPos+1), Accent_Current);
+            c->vid.sprites[5].setImage(Accent_Current);
+            Int2 p = vec<int>(8-Accent_Current.tileWidth()/2, yPos+1);
+            c->vid.sprites[5].move(p*8);
         }
         else
         {
-            c->foregroundLayer.DrawAsset(vec<int>(8-Accent_Target.width/2, yPos+1), Accent_Target);
+            c->vid.sprites[5].setImage(Accent_Target);
+            Int2 p = vec<int>(8-Accent_Target.tileWidth()/2, yPos+1);
+            c->vid.sprites[5].move(p*8);
         }
 
         if (result.IsNan())
         {
-            c->foregroundLayer.DrawAsset(vec(8-Nan.width/2, yPos+4-Nan.height/2), Nan);
+            c->vid.sprites[5].setImage(Nan);
+            Int2 p = vec(8-Nan.tileWidth()/2, yPos+4-Nan.tileHeight()/2);
+            c->vid.sprites[5].move(p*8);
         } else {
             //uses sprites -> pixel coords
             c->DrawFraction(result, vec(64, yPos*8+32));
@@ -347,8 +420,6 @@ void TokenView::PaintNow()
     {
         PaintDigit();
     }
-
-    c->foregroundLayer.Flush();
 }
 
 // // // //
@@ -358,23 +429,26 @@ void TokenView::PaintNow()
 void TokenView::PaintTop(bool lit) {
     const Skins::Skin &skin = Skins::GetSkin();
     const PinnedAssetImage &asset = lit? skin.lit_top : skin.unlit_top;
-    GetCube()->backgroundLayer.setSpriteImage(6, asset, 0);
-    GetCube()->backgroundLayer.moveSprite(6, 8*vec<int>(Mid.x - asset.width/2, 0));
+
+    GetCube()->vid.sprites[6].setImage(asset, 0);
+    GetCube()->vid.sprites[6].move(8*(Mid.x - asset.tileWidth()/2), 0);
 }
+
 void TokenView::PaintLeft(bool lit) {
     if (mStatus == StatusOverlay) { return; }
     const Skins::Skin &skin = Skins::GetSkin();
     const PinnedAssetImage &asset = lit? skin.lit_left : skin.unlit_left;
-    GetCube()->backgroundLayer.setSpriteImage(1, asset, 0);
-    GetCube()->backgroundLayer.moveSprite(1, 8*vec<int>(0, Mid.y - asset.height/2));
+
+    GetCube()->vid.sprites[1].setImage(asset, 0);
+    GetCube()->vid.sprites[1].move(0, 8*(Mid.y - asset.tileHeight()/2));
 }
+
 void TokenView::PaintRight(bool lit) {
     if (mStatus == StatusOverlay) { return; }
     const Skins::Skin &skin = Skins::GetSkin();
+    const PinnedAssetImage *asset=NULL;
     if (mDigitId >= 0) {
-        const PinnedAssetImage &asset = lit? skin.lit_right : skin.unlit_right;
-        GetCube()->backgroundLayer.setSpriteImage(2, asset, 0);
-        GetCube()->backgroundLayer.moveSprite(2, 8*vec(16-asset.width, Mid.y - asset.height/2));
+        asset = lit? &skin.lit_right : &skin.unlit_right;
     } else {
         if (lit) {
             const PinnedAssetImage* const assets[4]=
@@ -384,9 +458,7 @@ void TokenView::PaintRight(bool lit) {
                 &skin.lit_right_mul,
                 &skin.lit_right_div,
             };
-            const PinnedAssetImage *asset = assets[(int)token->GetOpRight()];
-            GetCube()->backgroundLayer.setSpriteImage(2, *asset, 0);
-            GetCube()->backgroundLayer.moveSprite(2, 8*vec(16-asset->width, Mid.y - asset->height/2));
+            asset = assets[(int)token->GetOpRight()];
         } else {
             const PinnedAssetImage* const assets[4]=
             {
@@ -395,20 +467,19 @@ void TokenView::PaintRight(bool lit) {
                 &skin.unlit_right_mul,
                 &skin.unlit_right_div,
             };
-            const PinnedAssetImage *asset = assets[(int)token->GetOpRight()];
-            GetCube()->backgroundLayer.setSpriteImage(2, *asset, 0);
-            GetCube()->backgroundLayer.moveSprite(2, 8*vec(16-asset->width, Mid.y - asset->height/2));
+            asset = assets[(int)token->GetOpRight()];
         }
-
     }
+    GetCube()->vid.sprites[2].setImage(*asset, 0);
+    GetCube()->vid.sprites[2].move(8*(16-asset->tileWidth()), 8*(Mid.y - asset->tileHeight()/2));
+
 }
 void TokenView::PaintBottom(bool lit)
 {
     const Skins::Skin &skin = Skins::GetSkin();
+    const PinnedAssetImage *asset=NULL;
     if (mDigitId >= 0) {
-        const PinnedAssetImage &asset = lit? skin.lit_bottom : skin.unlit_bottom;
-        GetCube()->backgroundLayer.setSpriteImage(7, asset, 0);
-        GetCube()->backgroundLayer.moveSprite(7, 8*vec(Mid.x - asset.width/2, 16-asset.height));
+        asset = lit? &skin.lit_bottom : &skin.unlit_bottom;
     } else {
         if (lit) {
             const PinnedAssetImage* const assets[4] =
@@ -418,9 +489,7 @@ void TokenView::PaintBottom(bool lit)
                 &skin.lit_bottom_mul,
                 &skin.lit_bottom_div,
             };
-            const PinnedAssetImage *asset = assets[(int)token->GetOpBottom()];
-            GetCube()->backgroundLayer.setSpriteImage(7, *asset, 0);
-            GetCube()->backgroundLayer.moveSprite(7, 8*vec(Mid.x - asset->width/2, 16-asset->height));
+            asset = assets[(int)token->GetOpBottom()];
         } else {
             const PinnedAssetImage* const assets[4]=
             {
@@ -429,19 +498,19 @@ void TokenView::PaintBottom(bool lit)
                 &skin.unlit_bottom_mul,
                 &skin.unlit_bottom_div,
             };
-            const PinnedAssetImage* asset = assets[(int)token->GetOpBottom()];
-            GetCube()->backgroundLayer.setSpriteImage(7, *asset, 0);
-            GetCube()->backgroundLayer.moveSprite(7, 8*vec(Mid.x - asset->width/2, 16-asset->height));
+            asset = assets[(int)token->GetOpBottom()];
         }
-
     }
+    GetCube()->vid.sprites[7].setImage(*asset, 0);
+    GetCube()->vid.sprites[7].move(8*(Mid.x - asset->tileWidth()/2), 8*(16-asset->tileHeight()));
+
 }
 
 void TokenView::PaintCenterCap(uint8_t masks[4])
 {
     // compute the screen state union (assuming it's valid)
     uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
-    TotalsCube *c = GetCube();
+    TotalsCube *c = GetCube();    
 
     ASSERT(vunion < (1<<6));
 
@@ -457,64 +526,63 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     if(lowestBit < 5 && !showingOverlay)   //5 is completely transparent.  the rest, completely opaque
     {
         for(int i=5; i<9; ++i) {
-            c->backgroundLayer.BG0_drawAsset(vec(i,4), Center, lowestBit);
-            c->backgroundLayer.BG0_drawAsset(vec(i,9), Center, lowestBit);
+            c->vid.bg0.image(vec(i,4), Center, lowestBit);
+            c->vid.bg0.image(vec(i,9), Center, lowestBit);
         }
         for(unsigned i=5; i<9; ++i) {
             for(unsigned j=4; j<10; ++j) {
-                c->backgroundLayer.BG0_drawAsset(vec(j,i), Center, lowestBit);
+                c->vid.bg0.image(vec(j,i), Center, lowestBit);
             }
         }
     }
 
     // Horizontal
 #define HORIZONTAL_AT(x, y, side)    do {\
-     c->foregroundLayer.DrawAsset(vec(x,y), Horizontal_Left, masks[side]); \
+     c->vid.bg1.image(vec(x,y), Horizontal_Left, masks[side]);\
     if(masks[side]) {\
-        c->backgroundLayer.BG0_drawAsset(vec(x+2,y), Horizontal_Center, masks[side]); \
+        c->vid.bg0.image(vec(x+2,y), Horizontal_Center, masks[side]); \
     }\
-    c->foregroundLayer.DrawAsset(vec(x+6,y), Horizontal_Right, masks[side]); }while(0)
+    c->vid.bg1.image(vec(x+6,y), Horizontal_Right, masks[side]); }while(0)
 
-
-    HORIZONTAL_AT(3,0,SIDE_TOP);
-    HORIZONTAL_AT(3,13, SIDE_BOTTOM);
-    HORIZONTAL_AT(3,14, SIDE_BOTTOM);
-    HORIZONTAL_AT(3,15, SIDE_BOTTOM);
+    HORIZONTAL_AT(3,0,TOP);
+    HORIZONTAL_AT(3,13, BOTTOM);
+    HORIZONTAL_AT(3,14, BOTTOM);
+    HORIZONTAL_AT(3,15, BOTTOM);
 #undef HORIZONTAL_AT
 
 #define VERTICTAL_AT(x, y, side)    do {\
-     if(!showingOverlay) c->foregroundLayer.DrawAsset(vec(x,y), Vertical_Top, masks[side]); \
-    if(masks[side]) c->backgroundLayer.BG0_drawAsset(vec(x,y+2), Vertical_Center, masks[side]); \
-    if(!showingOverlay) c->foregroundLayer.DrawAsset(vec(x,y+6), Vertical_Bottom, masks[side]); }while(0)
+    if(!showingOverlay) c->vid.bg1.image(vec(x,y), Vertical_Top, masks[side]); \
+    if(masks[side]) c->vid.bg0.image(vec(x,y+2), Vertical_Center, masks[side]); \
+    if(!showingOverlay) c->vid.bg1.image(vec(x,y+6), Vertical_Bottom, masks[side]); }while(0)
 
     // Vertical
-    VERTICTAL_AT(0,3,SIDE_LEFT);
-    VERTICTAL_AT(13,3,SIDE_RIGHT);
-    VERTICTAL_AT(14,3,SIDE_RIGHT);
-    VERTICTAL_AT(15,3,SIDE_RIGHT);
+    VERTICTAL_AT(0,3,LEFT);
+    VERTICTAL_AT(13,3,RIGHT);
+    VERTICTAL_AT(14,3,RIGHT);
+    VERTICTAL_AT(15,3,RIGHT);
 #undef VERTICTAL_AT
 
     // Minor Diagonals
     if (vunion & 0x10) {
-        c->foregroundLayer.DrawAsset(vec(2,2), MinorNW, 1);
-        c->foregroundLayer.DrawAsset(vec(2,11), MinorSW, 1);
-        c->foregroundLayer.DrawAsset(vec(11,11), MinorSE, 0);
-        c->foregroundLayer.DrawAsset(vec(11,2), MinorNE, 0);
+        c->vid.bg1.image(vec(2,2), MinorNW, 1);
+        c->vid.bg1.image(vec(2,11), MinorSW, 1);
+        c->vid.bg1.image(vec(11,11), MinorSE, 0);
+        c->vid.bg1.image(vec(11,2), MinorNE, 0);
     }
 
     // Major Diagonals
     if(!showingOverlay)
     {
         if (lowestBit > 1) {
-            c->backgroundLayer.BG0_drawAsset(vec(4,4), Center, lowestBit);
-            c->backgroundLayer.BG0_drawAsset(vec(4,9), Center, lowestBit);
-            c->backgroundLayer.BG0_drawAsset(vec(9,9), Center, lowestBit);
-            c->backgroundLayer.BG0_drawAsset(vec(9,4), Center, lowestBit);
+            c->vid.bg0.image(vec(4,4), Center, lowestBit);
+            c->vid.bg0.image(vec(4,9), Center, lowestBit);
+            c->vid.bg0.image(vec(9,9), Center, lowestBit);
+            c->vid.bg0.image(vec(9,4), Center, lowestBit);
         } else {
-            c->foregroundLayer.DrawAsset(vec(4,4), MajorNW, vunion & 0x03);
-            c->foregroundLayer.DrawAsset(vec(4,9), MajorSW, vunion & 0x03);
-            c->foregroundLayer.DrawAsset(vec(9,9), MajorSE, 3 - (vunion & 0x03));
-            c->foregroundLayer.DrawAsset(vec(9,4), MajorNE, 3 - (vunion & 0x03));
+            c->vid.bg1.image(vec(4,4), MajorNW, vunion & 0x03);
+            c->vid.bg1.image(vec(4,9), MajorSW, vunion & 0x03);
+            c->vid.bg1.image(vec(9,9), MajorSE, 3 - (vunion & 0x03));
+            c->vid.bg1.image(vec(9,4), MajorNE, 3 - (vunion & 0x03));
         }
     }
 
@@ -523,10 +591,10 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
     // Major Joints            
     if(!showingOverlay)
     {
-        c->foregroundLayer.DrawAsset(vec(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-        c->foregroundLayer.DrawAsset(vec(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
-        c->foregroundLayer.DrawAsset(vec(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
-        c->foregroundLayer.DrawAsset(vec(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+        c->vid.bg1.image(vec(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->vid.bg1.image(vec(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
+        c->vid.bg1.image(vec(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        c->vid.bg1.image(vec(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
 
         //small hack to keep foreground tile count under 144.
         //a few numbers are slightly obscured at the top and bottom
@@ -548,12 +616,12 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
             int frame = keyIndices[vunion] + CountBits(vunion ^ masks[0]);
             if(0 != frame && 2 != frame)
             {
-                c->backgroundLayer.BG0_drawPartialAsset(vec(5,3), vec(2,2), vec(4,1), MajorN, frame);
-                c->foregroundLayer.DrawAsset(vec(5,3), Transparent_4x1);
+                c->vid.bg0.image(vec(5,3), vec(4,1), MajorN, vec(2,2), frame);
+                c->vid.bg1.image(vec(5,3), Transparent_4x1);
             }
 
             if(2 == frame)
-                c->foregroundLayer.DrawAsset(vec(3,3), MajorN_Frame2_AccentDigit);
+               c->vid.bg1.image(vec(3,3), MajorN_Frame2_AccentDigit);
         }
 
         if(renderedDigit == 2 || renderedDigit == 3 || renderedDigit == 5 ||
@@ -562,21 +630,18 @@ void TokenView::PaintCenterCap(uint8_t masks[4])
             int frame = 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]);
             if(111 != frame && 109 != frame)
             {
-                c->backgroundLayer.BG0_drawPartialAsset(vec(5,10), vec(2,0), vec(4,1), MajorS, frame);
-                c->foregroundLayer.DrawAsset(vec(5,10), Transparent_4x1);
+                c->vid.bg0.image(vec(5,10), vec(4,1), MajorS, vec(2,0), frame);
+                c->vid.bg1.image(vec(5,10), Transparent_4x1);
             }
 
             if(109 == frame)
-                c->foregroundLayer.DrawAsset(vec(3,10), MajorS_Frame109_AccentDigit);
-
+               c->vid.bg1.image(vec(3,10), MajorS_Frame109_AccentDigit);
         }
-
-
     }
     else
     {
-        c->foregroundLayer.DrawPartialAsset(vec(3,1), vec(0,0), vec<int>(MajorN.width, 2), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-        c->foregroundLayer.DrawPartialAsset(vec(3,11),vec(0,1), vec<int>(MajorS.width, MajorS.height-1), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        c->vid.bg1.image(vec(3,1), vec<int>(MajorN.tileWidth(), 2), MajorN, vec(0,0), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        c->vid.bg1.image(vec(3,11), vec<int>(MajorS.tileWidth(), MajorS.tileHeight()-1), MajorS, vec(0,1), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
     }
 }
 
@@ -622,10 +687,10 @@ void TokenView::PaintDigit()
     {
         int index = useAccentDigit? digit + 10 : digit;
         Vector2<int> p;
-        p.x = 8*(TokenView::Mid.x - assets[index]->width / 2);
-        p.y = 8*(TokenView::Mid.y - assets[index]->height / 2);
-        GetCube()->backgroundLayer.setSpriteImage(0, *assets[index], 0);
-        GetCube()->backgroundLayer.moveSprite(0, p);
+        p.x = 8*(TokenView::Mid.x - assets[index]->tileWidth() / 2);
+        p.y = 8*(TokenView::Mid.y - assets[index]->tileHeight() / 2);
+        GetCube()->vid.sprites[0].setImage(*assets[index], 0);
+        GetCube()->vid.sprites[0].move(p);
     }
 
 }

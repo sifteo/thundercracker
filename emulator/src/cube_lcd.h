@@ -147,22 +147,31 @@ class LCD {
         col = xs;
     }
 
+    void applyMirroring(uint8_t flags, unsigned &row, unsigned &col) {
+        row = (flags & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
+        col = (flags & MADCTR_MX) ? (WIDTH - 1 - col) : col;
+    }
+
     void writePixel(uint16_t pixel) {
-        unsigned vRow, vCol, addr;
+        unsigned vRow = row;
+        unsigned vCol = col;
         uint8_t m = madctr ^ model.madctr_xor;
 
-        // Logical to physical address translation
-        vRow = (m & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
-        vCol = (m & MADCTR_MX) ? (WIDTH - 1 - col) : col;
+        if (model.order == model.MIRROR_BEFORE_SWAP)
+            applyMirroring(m, vRow, vCol);
+
         vRow += model.row_adj;
         vCol += model.col_adj;
 
-        addr = (m & MADCTR_MV) 
-            ? (vRow + (vCol << FB_ROW_SHIFT))
-            : (vCol + (vRow << FB_ROW_SHIFT));
-    
+        if (m & MADCTR_MV)
+            std::swap(vRow, vCol);
+
+        if (model.order == model.SWAP_BEFORE_MIRROR)
+            applyMirroring(m, vRow, vCol);
+
+        unsigned addr = vCol + (vRow << FB_ROW_SHIFT);
         fb_mem[addr & FB_MASK] = pixel;
-        
+
         if (++col > xe) {
             col = xs;
             if (++row > ye)
@@ -229,7 +238,7 @@ class LCD {
         cmd_bytecount = 0;
 
         switch (op) {
-        
+
         case CMD_RAMWR:
             firstPixel();
             write_count++;
@@ -242,7 +251,7 @@ class LCD {
         case CMD_SLPIN:
             mode_awake = 0;
             break;
-            
+
         case CMD_SLPOUT:
             mode_awake = 1;
             break;
@@ -250,7 +259,7 @@ class LCD {
         case CMD_DISPOFF:
             mode_display_on = 0;
             break;
-        
+
         case CMD_DISPON:
             mode_display_on = 1;
             break;
@@ -274,9 +283,9 @@ class LCD {
             model.row_adj = -32;
             model.col_adj = 0;
             break;
-            
+
         case CMD_MAGIC_TIANMA_HX8353:
-            // Nothing to do here currently; all defaults
+            model.order = model.SWAP_BEFORE_MIRROR;
             break;
 
         }
@@ -387,6 +396,10 @@ class LCD {
         uint8_t madctr_xor;
         int8_t row_adj;
         int8_t col_adj;
+        enum {
+            MIRROR_BEFORE_SWAP,
+            SWAP_BEFORE_MIRROR,
+        } order;
     } model;
 };
 

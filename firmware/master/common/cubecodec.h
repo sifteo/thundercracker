@@ -137,6 +137,12 @@ class CubeCodec {
     uint8_t codeRuns;           /// Codec run count
     uint16_t codePtr;           /// Codec's VRAM write pointer state (word address)
 
+    // Temporary state, used only during encode.
+    // These are static, so they don't use space per-cube and they're fast to access.
+
+    static uint16_t exemptionBegin;    /// Lock exemption range, first address
+    static uint16_t exemptionEnd;      /// Lock exemption range, last address
+
     void codePtrAdd(uint16_t words) {
         ASSERT(codePtr < _SYS_VRAM_WORDS);
         codePtr = (codePtr + words) & _SYS_VRAM_WORD_MASK;
