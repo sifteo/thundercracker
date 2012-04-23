@@ -244,10 +244,10 @@
                 "top": { "buddy": "suli", "part": "hair", "solve": true }
               }, 
               "pieces_start": {
-                "bottom": { "buddy": "suli", "part": "eye_right" }, 
-                "left": { "buddy": "suli", "part": "mouth" }, 
-                "right": { "buddy": "suli", "part": "hair" }, 
-                "top": { "buddy": "suli", "part": "eye_left" }
+                "top": { "buddy": "suli", "part": "mouth" },
+                "left": { "buddy": "suli", "part": "eye_left" }, 
+                "bottom": { "buddy": "suli", "part": "hair" }, 
+                "right": { "buddy": "suli", "part": "eye_right" }
               }
             }, 
             {

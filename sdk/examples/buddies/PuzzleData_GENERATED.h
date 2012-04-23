@@ -215,10 +215,10 @@ const BuddyId kBuddies_0_4[] = { BUDDY_SULI, BUDDY_INVISIBLE };
 const Piece kPiecesStart_0_4[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT),
         Piece(BUDDY_SULI, Piece::PART_MOUTH),
-        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT),
         Piece(BUDDY_SULI, Piece::PART_HAIR),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
     {
         Piece(BUDDY_INVISIBLE, Piece::PART_HAIR),
