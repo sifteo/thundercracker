@@ -37,7 +37,8 @@ ifneq ($(MASTER_RF_CHAN),)
 endif
 
 # Environment defs
-CCFLAGS := -Icommon -Istm32 -I../include -I$(SDK_DIR)/include -DNOT_USERSPACE
+# NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
+CCFLAGS := -I$(MASTER_DIR)/common -I$(MASTER_DIR)/stm32 -I$(MASTER_DIR)/../include -I$(SDK_DIR)/include -DNOT_USERSPACE
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
