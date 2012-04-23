@@ -114,6 +114,10 @@ struct RGB565 {
  *    conversion of 8-bit RGB colors.
  */
 
+namespace CLIELabConstants {
+    const double gamma = 2.2;
+}
+
 struct CIELab {
 
     union {
@@ -122,8 +126,6 @@ struct CIELab {
         };
         double axis[3];
     };
-
-    static const double gamma = 2.2;
 
     CIELab() {
         L = a = b = 0;

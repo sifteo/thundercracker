@@ -1,6 +1,0 @@
-firmware/master: make clean && make BUILD_STM32=1 USB_LOAD=1 -j2
-sandwich: make program
-sandwich: ../../../tools/install.py /dev/tty.usbmodemXXX asegment.bin
-firmware/master: make clean && make BUILD_STM32=1 MASTER_RF_CHAN=0xb -j2
-sandwich: make program
-

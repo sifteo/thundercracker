@@ -1,69 +1,75 @@
 /*
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef AUDIOCHANNEL_H_
 #define AUDIOCHANNEL_H_
 
-#include <sifteo/audio.h>
-#include <sifteo/machine.h>
+#include <sifteo/abi.h>
 #include <stdint.h>
-#include "audiobuffer.h"
+#include "machine.h"
+#include "audiosampledata.h"
 
-class SpeexDecoder;
-class PCMDecoder;
+// Fixed-point math offsets
+#define SAMPLE_FRAC_SIZE 12
+#define SAMPLE_FRAC_MASK ((1 << SAMPLE_FRAC_SIZE) - 1)
 
-// TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
-// Maybe "AudioChannelSlot", by analogy with "CubeSlot"?
 class AudioChannelSlot {
 public:
-    static const int STATE_PAUSED   = (1 << 0);
-    static const int STATE_LOOP     = (1 << 1);
-    static const int STATE_STOPPED  = (1 << 2);
+    AudioChannelSlot() { init(); }
 
-    AudioChannelSlot();
-    void init(_SYSAudioBuffer *b);
+    void init();
 
-    bool isEnabled() const {
-        return buf.isValid();
-    }
-
-    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
-    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec);
-    int mixAudio(int16_t *buffer, unsigned len);
+    void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
     _SYSAudioType channelType() const {
-        ASSERT(mod != NULL);
-        return mod->type;
+        return (_SYSAudioType)mod.type;
     }
 
     void pause() {
         state |= STATE_PAUSED;
     }
+
     bool isPaused() const {
-        return state & STATE_PAUSED;
+        return (state & STATE_PAUSED) != 0;
     }
+
+    bool isStopped() const {
+        return (state & STATE_STOPPED) != 0;
+    }
+
     void resume() {
         state &= ~STATE_PAUSED;
     }
 
+    void stop() {
+        state |= STATE_STOPPED;
+    }
+
+    void setSpeed(uint32_t sampleRate);
+
+    void setVolume(uint16_t newVolume) {
+        ASSERT(newVolume <= _SYS_AUDIO_MAX_VOLUME);
+        volume = newVolume;
+    }
+
 protected:
-    void fetchData();
-    void onPlaybackComplete();
+    uint32_t mixAudio(int16_t *buffer, uint32_t len);
+    friend class AudioMixer;    // mixer can tell us to mixAudio()
 
-    AudioBuffer buf;
-    const struct _SYSAudioModule *mod;
+private:
+    static const int STATE_PAUSED   = (1 << 0);
+    static const int STATE_LOOP     = (1 << 1);
+    static const int STATE_STOPPED  = (1 << 2);
+
     uint8_t state;
-    _SYSAudioHandle handle;
-    // TODO: Make an IAudioDecoder interface.
-    SpeexDecoder *decoder;
-    PCMDecoder *pcmDecoder;
-    int volume;
+    int16_t volume;
 
-    friend class AudioMixer;    // mixer can tell us to fetchData()
+    struct _SYSAudioModule mod;
+    AudioSampleData samples;
+    uint64_t offset;
+    int32_t increment;
 };
 
 #endif /* AUDIOCHANNEL_H_ */

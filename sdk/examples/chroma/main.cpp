@@ -14,6 +14,18 @@ using namespace Sifteo;
 
 static Game &game = Game::Inst();
 
+
+
+static Metadata M = Metadata()
+    .title("Chroma")
+    .icon(White)
+    .cubeRange(NUM_CUBES);
+
+#if !LOAD_ASSETS
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
+#endif
+
 /*
 static void onAccelChange(void *context, _SYSCubeID cid)
 {
@@ -37,23 +49,29 @@ static void onAccelChange(void *context, _SYSCubeID cid)
 
 static void onTilt(void *context, _SYSCubeID cid)
 {
-    Cube::TiltState state = game.m_cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
+    Byte2 state = CubeID(cid).tilt();
 
-	if( state.x == _SYS_TILT_POSITIVE )
+    if( state.x == 1 )
         game.m_cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
-	else if( state.x == _SYS_TILT_NEGATIVE )
+    else if( state.x == -1 )
         game.m_cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
-	if( state.y == _SYS_TILT_POSITIVE )
-        game.m_cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
-	else if( state.y == _SYS_TILT_NEGATIVE )
-        game.m_cubes[cid - CUBE_ID_BASE].Tilt( UP);
+    if( state.y == 1 )
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( BOTTOM );
+    else if( state.y == -1 )
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( TOP);
 }
 
 static void onShake(void *context, _SYSCubeID cid)
 {
-    _SYSShakeState state;
-    _SYS_getShake(cid, &state);
-    game.m_cubes[cid - CUBE_ID_BASE].Shake(state);
+
+    bool isShaking = CubeID(cid).isShaking();
+    game.m_cubes[cid - CUBE_ID_BASE].Shake(isShaking);
+}
+
+static void onTouch(void *context, _SYSCubeID cid)
+{
+    if( CubeID(cid).isTouching() )
+        game.m_cubes[cid - CUBE_ID_BASE].Touch();
 }
 
 static void init()
@@ -61,13 +79,14 @@ static void init()
 	game.Init();
 }
 
-void siftmain()
+void main()
 {
     init();
 
     //_SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*) onAccelChange, NULL);
     _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, NULL);
 
     while (1) {
         game.Update();        

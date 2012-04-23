@@ -35,14 +35,14 @@ const unsigned char MAX_HINTS = 3;
 class GameStateMachine : public StateMachine
 {
 public:
-    GameStateMachine(Cube cubes[]);
+    GameStateMachine(VideoBuffer vidBufs[]);
 
     virtual void update(float dt);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
     const LevelProgressData& getLevelProgressData() const { return mLevelProgressData; }
 
-    static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
+    static CubeStateMachine* findCSMFromID(CubeID cubeID);
 
     static GameStateMachine& getInstance() { ASSERT(sInstance); return *sInstance; }
     static float getAnagramCooldown() { return getInstance().mAnagramCooldown; }
@@ -82,7 +82,7 @@ private:
     unsigned char mNumHints;
     unsigned mMetaLetterUnlockedMask;
     unsigned mMetaLetterUnlockedMaskOld;
-    Cube::ID mHintCubeIDOnUpdate;
+    CubeID mHintCubeIDOnUpdate;
     bool mNeedsNewAnagram;
 
     static GameStateMachine* sInstance;

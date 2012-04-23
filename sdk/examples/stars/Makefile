@@ -1,12 +1,8 @@
-TC_DIR = ../../..
-include $(TC_DIR)/firmware/master/Makefile.defs
+APP = stars
+SDK_DIR = ../..
+include $(SDK_DIR)/Makefile.defs
 
-BIN_SIM = stars.sim$(BIN_EXT)
-OBJS_SIM = $(ASSETS).gen.sim.o main.sim.o
-
-BIN_STM32 = stars.stm32
-OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o
-
+OBJS = $(ASSETS).gen.o main.o
 ASSETDEPS += *.png $(ASSETS).lua
 
-include $(TC_DIR)/firmware/master/Makefile.rules
+include $(SDK_DIR)/Makefile.rules

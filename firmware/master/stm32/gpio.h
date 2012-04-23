@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _STM32_GPIO_H
@@ -91,6 +88,10 @@ class GPIOPin {
     void irqAcknowledge() const {
         // Write 1 to clear
         EXTI.PR = bit();
+    }
+
+    bool irqPending() const {
+        return (EXTI.PR & bit()) != 0;
     }
 
     volatile GPIO_t *port() const {

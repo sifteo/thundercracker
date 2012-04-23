@@ -1,17 +1,17 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #include "cubeslots.h"
 #include "cube.h"
 #include "neighbors.h"
-#include <sifteo/machine.h>
-
-using namespace Sifteo;
-
+#include "machine.h"
+#include "tasks.h"
+#include "radio.h"
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
-
-/*
- * Slot instances
- */
 _SYSCubeIDVector CubeSlots::vecEnabled = 0;
 _SYSCubeIDVector CubeSlots::vecConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
@@ -20,44 +20,60 @@ _SYSCubeIDVector CubeSlots::flashACKValid = 0;
 _SYSCubeIDVector CubeSlots::frameACKValid = 0;
 _SYSCubeIDVector CubeSlots::neighborACKValid = 0;
 _SYSCubeIDVector CubeSlots::expectStaleACK = 0;
-
+_SYSCubeIDVector CubeSlots::flashAddrPending = 0;
+_SYSCubeIDVector CubeSlots::hwidValid = 0;
 
 _SYSCubeID CubeSlots::minCubes = 0;
 _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
-void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max) {
-	minCubes = min;
-	maxCubes = max;
+_SYSAssetLoader *CubeSlots::assetLoader = 0;
+
+#ifdef SIFTEO_SIMULATOR
+bool CubeSlots::simAssetLoaderBypass;
+#endif
+
+
+void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
+{
+    minCubes = min;
+    maxCubes = max;
 }
 
-void CubeSlots::enableCubes(_SYSCubeIDVector cv) {
+void CubeSlots::enableCubes(_SYSCubeIDVector cv)
+{
     NeighborSlot::resetSlots(cv);
-    Sifteo::Atomic::Or(CubeSlots::vecEnabled, cv);
-}
-
-void CubeSlots::disableCubes(_SYSCubeIDVector cv) {
-    Sifteo::Atomic::And(CubeSlots::vecEnabled, ~cv);
-}
-
-void CubeSlots::connectCubes(_SYSCubeIDVector cv) {
-    Sifteo::Atomic::Or(CubeSlots::vecConnected, cv);
+    Atomic::Or(CubeSlots::vecEnabled, cv);
 
     // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
-    Sifteo::Atomic::Or(CubeSlots::expectStaleACK, cv);
+    Atomic::Or(CubeSlots::expectStaleACK, cv);
 }
 
-void CubeSlots::disconnectCubes(_SYSCubeIDVector cv) {
-    Sifteo::Atomic::And(CubeSlots::vecConnected, ~cv);
+void CubeSlots::disableCubes(_SYSCubeIDVector cv)
+{
+    Atomic::And(CubeSlots::vecEnabled, ~cv);
 
-    Sifteo::Atomic::And(CubeSlots::flashResetWait, ~cv);
-    Sifteo::Atomic::And(CubeSlots::flashResetSent, ~cv);
-    Sifteo::Atomic::And(CubeSlots::flashACKValid, ~cv);
-    Sifteo::Atomic::And(CubeSlots::neighborACKValid, ~cv);
+    Atomic::And(CubeSlots::flashResetWait, ~cv);
+    Atomic::And(CubeSlots::flashResetSent, ~cv);
+    Atomic::And(CubeSlots::flashACKValid, ~cv);
+    Atomic::And(CubeSlots::neighborACKValid, ~cv);
+    Atomic::And(CubeSlots::hwidValid, ~cv);
+
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
+
     // TODO: if any of the cubes in cv are currently part of a
     // neighbor-pair with any cubes that are still active, those
     // active cubes neeed to remove their now-defunct neighbors
+}
+
+void CubeSlots::connectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::Or(CubeSlots::vecConnected, cv);
+}
+
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
+    Atomic::And(CubeSlots::vecConnected, ~cv);
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv)
@@ -96,9 +112,130 @@ void CubeSlots::paintCubes(_SYSCubeIDVector cv)
 
 void CubeSlots::finishCubes(_SYSCubeIDVector cv)
 {
-    while (cv) {
-        _SYSCubeID id = Intrinsic::CLZ(cv);
-        CubeSlots::instances[id].waitForFinish();
-        cv ^= Intrinsic::LZ(id);
+    /*
+     * Wait for rendering to finish on all cubes.
+     *
+     * Unlike paint(), finish may involve each cube being in a different
+     * phase of rendering and require different inputs. To wait for each
+     * cube concurrently instead of serially, we manage the main iteration
+     * loop here and poll each cube in turn. Each poll operation may cause
+     * state changes which get that cube closer to finishing.
+     */
+
+    _SYSCubeIDVector beginVec = cv;
+    while (beginVec) {
+        _SYSCubeID id = Intrinsic::CLZ(beginVec);
+        CubeSlots::instances[id].beginFinish();
+        beginVec ^= Intrinsic::LZ(id);
     }
+
+    for (;;) {
+        SysTime::Ticks now = SysTime::ticks();
+        _SYSCubeIDVector pollVec = cv;
+        bool finished = true;
+
+        while (pollVec) {
+            _SYSCubeID id = Intrinsic::CLZ(pollVec);
+            if (!CubeSlots::instances[id].pollForFinish(now))
+                finished = false;
+            pollVec ^= Intrinsic::LZ(id);
+        }
+    
+        if (finished)
+            break;
+
+        // Wait...
+        Tasks::work();
+        Radio::halt();
+    }
+}
+
+void CubeSlots::assetLoaderTask(void *)
+{
+    /*
+     * Pump data from flash memory into the current _SYSAssetLoader as needed.
+     * This lets us install assets from ISR context without accessing flash
+     * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
+     */
+
+    _SYSAssetLoader *L = assetLoader;
+    _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);
+    if (!L) return;
+
+    _SYSCubeIDVector cubeVec = L->cubeVec & ~L->complete;
+    while (cubeVec) {
+        _SYSCubeID id = Intrinsic::CLZ(cubeVec);
+        cubeVec ^= Intrinsic::LZ(id);
+        _SYSAssetLoaderCube *cube = cubeArray + id;
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            fetchAssetLoaderData(cube);
+    }
+}
+
+void CubeSlots::fetchAssetLoaderData(_SYSAssetLoaderCube *lc)
+{
+    /*
+     * Given a guaranteed-valid pointer to a _SYSAssetLoaderCube,
+     * try to top off the FIFO buffer with data from flash memory.
+     */
+
+    // Sample the FIFO state exactly once, and validate it.
+    int head = lc->head;
+    int tail = lc->tail;
+    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
+        return;
+    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
+    unsigned fifoAvail = _SYS_ASSETLOAD_BUF_SIZE - 1 - fifoCount;
+
+    /*
+     * Sample the progress state exactly once, and figure out how much
+     * data can be copied into the FIFO right now.
+     */
+    uint32_t progress = lc->progress;
+    uint32_t dataSize = lc->dataSize;
+    if (progress > dataSize)
+        return;
+    unsigned count = MIN(fifoAvail, dataSize - progress);
+
+    // Nothing to do?
+    if (count == 0)
+        return;
+
+    // Follow the pAssetGroup pointer
+    SvmMemory::VirtAddr groupVA = lc->pAssetGroup;
+    SvmMemory::PhysAddr groupPA;
+    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
+        return;
+    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
+
+    /*
+     * Calculate the VA we're reading from in flash. We can do this without
+     * mapping the _SYSAssetGroupHeader at all, which avoids a bit of
+     * cache pollution.
+     */
+
+    SvmMemory::VirtAddr srcVA = G->pHdr + sizeof(_SYSAssetGroupHeader) + progress;
+
+    // Write to the FIFO.
+
+    FlashBlockRef ref;
+    progress += count;
+    while (count--) {
+        SvmMemory::copyROData(ref, &lc->buf[tail], srcVA, 1);
+        if (++tail == _SYS_ASSETLOAD_BUF_SIZE)
+            tail = 0;
+        srcVA++;
+    }
+
+    /*
+     * Order matters when writing back state: The CubeCodec detects
+     * completion by noticing that progress==dataSize and the FIFO is empty.
+     * To avoid it detecting a false positive, we must update 'progress'
+     * after writing 'tail'.
+     */
+    
+    lc->tail = tail;
+    Atomic::Barrier();
+    lc->progress = progress;
+    ASSERT(progress <= dataSize);
 }

@@ -14,12 +14,9 @@
 const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
 const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
 const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
-const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = ( GridSlot::MARK_BREAK_DELAY - GridSlot::MARK_SPREAD_DELAY ) / (float) GridSlot::NUM_EXPLODE_FRAMES;
 const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
-const float GridSlot::START_FADING_TIME = 1.75f;
-const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
 const float GridSlot::MULTIPLIER_LIGHTNING_PERIOD = 0.75f;
 const float GridSlot::MULTIPLIER_NUMBER_PERIOD = 1.0f;
 //what proportion of MULTIPLIER_NUMBER_PERIOD is the number displayed
@@ -125,7 +122,7 @@ enum
 //quantize our tilt state from [-128, 128] to [-3, 3], then offset to [0, 6]
 //use those values to index into this lookup table to find which frame to render
 //in row, column format
-unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
+const uint8_t TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
     //most northward
     { FRAME_NW3, FRAME_NW3, FRAME_N3, FRAME_N3, FRAME_N3, FRAME_NE3, FRAME_NE3 },
     { FRAME_NW3, FRAME_NW2, FRAME_N2, FRAME_N2, FRAME_N2, FRAME_NE2, FRAME_NE3 },
@@ -140,14 +137,14 @@ unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUA
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
     m_Movestate( MOVESTATE_STATIONARY ),
-	m_eventTime( 0.0f ),
+	m_eventTime(),
 	m_score( 0 ),
 	m_bFixed( false ),
     m_multiplier( 1 ),
 	m_animFrame( 0 )
 {
 	m_color = Game::random.randrange(NUM_COLORS);
-    m_lastFrameDir = Vec2( 0, 0 );
+    m_lastFrameDir = vec( 0, 0 );
 }
 
 
@@ -179,7 +176,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     m_bWasRainball = false;
     m_bWasInfected = false;
     m_multiplier = 1;
-    m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -236,7 +233,7 @@ unsigned int GridSlot::GetSpecialFrame()
     {
         m_animFrame++;
 
-        if( m_animFrame >= GetSpecialTexture().frames )
+        if( m_animFrame >= GetSpecialTexture().numFrames() )
             m_animFrame = 0;
 
         return m_animFrame;
@@ -245,109 +242,50 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
+void GridSlot::Draw( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex )
 {
-	Vec2 vec( m_col * 4, m_row * 4 );
+    //UByte2 vec = { m_row, m_col };
+    UByte2 vec = { m_col * 4, m_row * 4 };
 
     switch( m_state )
 	{
         case STATE_SPAWNING:
         {
+            //DrawIntroFrame( pDrawer, m_animFrame );
             DrawIntroFrame( vid, m_animFrame );
             break;
         }
-		case STATE_LIVING:
+        case STATE_LIVING:
 		{
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+            {
+                //DrawSpecial( pDrawer, cubeIndex, vec );
+                DrawSpecial( vid, cubeIndex, vec );
+            }
             else if( IsFixed() )
             {
-                if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
-                {
-                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
-                }
-                else
-                {
-                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
-
-                    if( m_multiplier > 1 )
-                    {
-                        unsigned int frame = Math::fmodf( (float)System::clock(), MULTIPLIER_LIGHTNING_PERIOD ) / MULTIPLIER_LIGHTNING_PERIOD * mult_lightning.frames;
-                        vid.setSpriteImage( MULT_SPRITE_ID, mult_lightning, frame );
-                        vid.resizeSprite( MULT_SPRITE_ID, 32, 32 );
-                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 );
-
-                        //number on bg1
-                        if( Math::fmodf( (float)System::clock(), MULTIPLIER_NUMBER_PERIOD ) / MULTIPLIER_NUMBER_PERIOD < MULTIPLIER_NUMBER_PERCENTON )
-                        {
-                            vid.setSpriteImage( MULT_SPRITE_NUM_ID, mult_numbers, m_multiplier - 2 );
-                            vid.resizeSprite( MULT_SPRITE_NUM_ID, 32, 16 );
-                            vid.moveSprite( MULT_SPRITE_NUM_ID, m_col * 32, m_row * 32 + 6 );
-                        }
-                    }
-                }
+                DrawFixed( /*pDrawer, */vid, cubeIndex, vec);
             }
-			else
+            else
 			{
-                switch( m_Movestate )
-                {
-                    case MOVESTATE_STATIONARY:
-                    case MOVESTATE_PENDINGMOVE:
-                    {
-                        const AssetImage &animtex = *TEXTURES[ m_color ];
-                        unsigned int frame;
-                        /*if( m_pWrapper->IsIdle() )
-                            frame = GetIdleFrame();
-                        else*/
-                            frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                        vid.BG0_drawAsset(vec, animtex, frame);
-                        break;
-                    }
-                    case MOVESTATE_MOVING:
-                    {
-                        Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
-
-                        //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-                        if( IsSpecial() )
-                            vid.BG0_drawAsset(curPos, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &tex = *TEXTURES[m_color];
-                            vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
-                        }
-                        break;
-                    }
-                    case MOVESTATE_FINISHINGMOVE:
-                    {
-                        if( IsSpecial() )
-                            vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
-                        else
-                        {
-                            const AssetImage &animtex = *TEXTURES[ m_color ];
-                            vid.BG0_drawAsset(vec, animtex, m_animFrame);
-                        }
-                        break;
-                    }
-                    default:
-                        ASSERT( 0 );
-                }
+                DrawRegular( /*pDrawer, */vid, cubeIndex, vec, tiltState );
 			}
 			break;
 		}
-		case STATE_MARKED:
+        case STATE_MARKED:
         {
             if( m_color == HYPERCOLOR )
             {
-                //vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+                //vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame() );
                 const AssetImage &exTex = GetSpecialExplodingTexture();
 
-                vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
+                vid.bg0.image( vec, exTex, GetSpecialFrame());
             }
             else
             {
                 if( m_color == RAINBALLCOLOR )
                 {
-                    vid.BG0_drawAsset(vec, rainball_idle, 0);
+                    vid.bg0.image( vec, rainball_idle, 0);
                 }
                 else
                 {
@@ -355,7 +293,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 
                     unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
-                    vid.BG0_drawAsset(vec, exTex, markFrame);
+                    vid.bg0.image( vec, exTex, markFrame);
                 }
 
                 if( m_bWasRainball || m_bWasInfected )
@@ -373,65 +311,40 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                         vec.y += 1;
                     }
 
-                    float timeDiff = System::clock() - (float)m_eventTime;
+                    float timeDiff = SystemTime::now() - m_eventTime;
                     float perc = timeDiff / MARK_BREAK_DELAY;
 
                     //for some reason I'm seeing extremely small negative values at times.
                     if( perc >= 0.0f && perc < 1.0f )
                     {
                         //figure out frame based on mark break delay
-                        unsigned int frame = pImg->frames * perc;
+                        unsigned int frame = pImg->numFrames() * perc;
 
-                        bg1helper.DrawAsset( vec, *pImg, frame );
+                        bg1buffer.image( vec, *pImg, frame );
                     }
                 }
             }
 			break;
-		}
+        }
 		case STATE_EXPLODING:
 		{
             /*if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+                vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame());
             else*/
             {
-                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                vid.bg0.image( vec, GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
-                //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+                //vid.bg0.image( vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
 			break;
 		}
-		case STATE_SHOWINGSCORE:
-		{
-            if( m_score > 99 )
-                m_score = 99;
-			vid.BG0_drawAsset(vec, GemEmpty, 0);
-            unsigned int fadeFrame = 0;
-
-            float fadeTime = System::clock() - START_FADING_TIME - m_eventTime;
-
-            if( fadeTime > 0.0f )
-                fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
-
-            if( fadeFrame >= NUM_POINTS_FRAMES )
-                fadeFrame = NUM_POINTS_FRAMES - 1;
-
-            if( m_score > 9 )
-                vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
-            vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
-			break;
-		}
-        /*case STATE_GONE:
-		{
-			vid.BG0_drawAsset(vec, GemEmpty, 0);
-			break;
-        }*/
 		default:
 			break;
 	}
 }
 
 
-void GridSlot::Update(float t)
+void GridSlot::Update(SystemTime t)
 {
 	switch( m_state )
 	{
@@ -451,22 +364,36 @@ void GridSlot::Update(float t)
             {
                 case MOVESTATE_MOVING:
                 {
-                    Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+                    Int2 vDiff = vec( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
                     if( vDiff.x != 0 )
                     {
-                        m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.x / abs( vDiff.x ) );
+                        m_curMovePos.x += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row, m_col - dir )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_row, m_curMovePos.x - (mult*dir), false );
+                        }
 
                         if( abs( vDiff.x ) == 1 )
                             Game::Inst().playSound(collide_02);
                     }
                     else if( vDiff.y != 0 )
                     {
-                        m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.y / abs( vDiff.y ) );
+                        m_curMovePos.y += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row - dir, m_col )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_col, m_curMovePos.y - (mult*dir), true );
+                        }
 
                         if( abs( vDiff.y ) == 1 )
                             Game::Inst().playSound(collide_02);
@@ -487,7 +414,7 @@ void GridSlot::Update(float t)
                 {
                     //interpolate frames back to normal state
                     Float2 cubeDir = m_pWrapper->getTiltDir();
-                    Vec2 curDir;
+                    Int2 curDir;
 
                     GetTiltFrame( cubeDir, curDir );
 
@@ -518,6 +445,11 @@ void GridSlot::Update(float t)
 
                     break;
                 }
+                case MOVESTATE_BUMPED:
+                {
+                    m_Movestate = MOVESTATE_FINISHINGMOVE;
+                    break;
+                }
                 default:
                     break;
             }
@@ -528,7 +460,7 @@ void GridSlot::Update(float t)
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
             {
-                m_animFrame = ( ( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
+                m_animFrame = ( float( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
                 spread_mark();
             }
             else
@@ -548,21 +480,12 @@ void GridSlot::Update(float t)
                 die();
 			break;
 		}
-		case STATE_SHOWINGSCORE:
-		{
-			if( t - m_eventTime > SCORE_FADE_DELAY )
-			{
-                m_state = STATE_GONE;
-				m_pWrapper->checkEmpty();
-			}
-			break;
-		}
         //clear this out in update, so it doesn't bash moving balls
         case STATE_GONE:
         {
-            Vec2 vec( m_col * 4, m_row * 4 );
-            m_pWrapper->QueueClear( vec );
-            //vid.BG0_drawAsset(vec, GemEmpty, 0);
+            Int2 vec = { m_col * 4, m_row * 4 };
+            //m_pWrapper->QueueClear( vec );
+            m_pWrapper->GetVid().bg0.image(  vec, GemEmpty, 0 );
             break;
         }
 		default:
@@ -575,9 +498,19 @@ void GridSlot::mark()
 {
     if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
         return;
+
+    if( m_color == ROCKCOLOR )
+    {
+        //rock special case, 4x explosiveness!
+        for( int i = 0; i < MAX_ROCK_HEALTH; i++ )
+            DamageRock();
+
+        return;
+    }
+
     m_animFrame = 0;
 	m_state = STATE_MARKED;
-	m_eventTime = System::clock();
+    m_eventTime = SystemTime::now();
     Game::Inst().playSound(match2);
     Game::Inst().SetChain( true );
 
@@ -610,24 +543,26 @@ void GridSlot::explode()
     {
         Game::Inst().UpMultiplier();
         m_multiplier = 1;
-        DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
-	m_eventTime = System::clock();
+	m_eventTime = SystemTime::now();
 }
 
 void GridSlot::die()
 {
-	m_state = STATE_SHOWINGSCORE;
+    m_state = STATE_GONE;
     m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
-	Game::Inst().CheckChain( m_pWrapper );
-	m_eventTime = System::clock();
+    Game::Inst().CheckChain( m_pWrapper, vec( m_row, m_col ) );
+    m_pWrapper->checkEmpty();
+    m_eventTime = SystemTime::now();
 }
 
 
 void GridSlot::markNeighbor( int row, int col )
 {
+    if( IsSpecial() )
+        return;
 	//find my neighbor and see if we match
 	GridSlot *pNeighbor = m_pWrapper->GetSlot( row, col );
 
@@ -645,7 +580,7 @@ void GridSlot::hurtNeighboringRock( int row, int col )
 
     //PRINT( "pneighbor = %p", pNeighbor );
     //PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->getColor() == ROCKCOLOR )
+    if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == ROCKCOLOR )
         pNeighbor->DamageRock();
 }
 
@@ -654,7 +589,7 @@ void GridSlot::DamageRock()
 {
     if( m_RockHealth > 0 )
     {
-        Vec2 vec( m_col * 4, m_row * 4 );
+        Int2 vec = { m_col * 4, m_row * 4 };
 
         m_RockHealth--;
 
@@ -693,11 +628,11 @@ void GridSlot::startPendingMove()
 
 
 //given tilt state, return our desired frame
-unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const
+unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const
 {
     //quantize and convert to the appropriate range
     //non-linear quantization.
-    quantized = Vec2( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
+    quantized = vec( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
 
     return TILTTOFRAMES[ quantized.y ][ quantized.x ];
 }
@@ -777,39 +712,42 @@ unsigned int GridSlot::GetIdleFrame()
 */
 
 
-void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
+void GridSlot::DrawIntroFrame( /*ChromitDrawer *pDrawer, */ VideoBuffer &vid, unsigned int frame )
 {
-    Vec2 vec( m_col * 4, m_row * 4 );
+    //UByte2 vec = { m_row, m_col };
+    UByte2 vec = { m_col * 4, m_row * 4 };
+
+    unsigned int cubeIndex = Game::Inst().getWrapperIndex( m_pWrapper );
 
     if( !isAlive() )
-        vid.BG0_drawAsset(vec, GemEmpty, 0);
+        vid.bg0.image( vec, GemEmpty, 0);
     else if( IsSpecial() )
-        vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+        vid.bg0.image( vec, GetSpecialTexture(), GetSpecialFrame());
     else
     {
         switch( frame )
         {
             case 0:
             {
-                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                vid.bg0.image( vec, GemEmpty, 0);
                 break;
             }
             case 1:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, 1);
+                vid.bg0.image( vec, exTex, 1);
                 break;
             }
             case 2:
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, 0);
+                vid.bg0.image( vec, exTex, 0);
                 break;
             }
             default:
             {
                 const AssetImage &tex = *TEXTURES[ m_color ];
-                vid.BG0_drawAsset(vec, tex, 0);
+                vid.bg0.image( vec, tex, 0);
                 break;
             }
         }
@@ -836,6 +774,129 @@ void GridSlot::UpMultiplier()
 //morph from rainball to given color
 void GridSlot::RainballMorph( unsigned int color )
 {
-    FillColor( color );
+    if( color != ROCKCOLOR )
+        FillColor( color );
     m_bWasRainball = true;
 }
+
+
+
+//bubble is bumping this chromit, tilt it in the given direction
+void GridSlot::Bump( const Float2 &dir )
+{
+    if( isAlive() && !IsFixed() && !IsSpecial() && ( m_Movestate == MOVESTATE_STATIONARY || m_Movestate == MOVESTATE_BUMPED || m_Movestate == MOVESTATE_FINISHINGMOVE ) )
+    {
+        m_Movestate = MOVESTATE_BUMPED;
+
+        Int2 newDir = m_lastFrameDir;
+
+        //(2/sqrtf(5))
+        const float DIR_THRESH = -.4472136f;
+
+        //push one frame over in dir direction
+        if( dir.x < DIR_THRESH )
+        {
+            newDir.x-=4;
+            if( newDir.x < 0 )
+                newDir.x = 0;
+        }
+        else if( dir.x > DIR_THRESH )
+        {
+            newDir.x+=4;
+            if( newDir.x >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.x = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        if( dir.y < DIR_THRESH )
+        {
+            newDir.y-=4;
+            if( newDir.y < 0 )
+                newDir.y = 0;
+        }
+        else if( dir.y > DIR_THRESH )
+        {
+            newDir.y+=4;
+            if( newDir.y >= (int)NUM_QUANTIZED_TILT_VALUES )
+                newDir.y = NUM_QUANTIZED_TILT_VALUES - 1;
+        }
+
+        m_animFrame = TILTTOFRAMES[ newDir.y ][ newDir.x ];
+        m_lastFrameDir = newDir;
+    }
+}
+
+
+
+void GridSlot::DrawMultiplier( VideoBuffer &vid )
+{
+    SystemTime t = SystemTime::now();
+
+    unsigned int frame = t.cycleFrame(MULTIPLIER_LIGHTNING_PERIOD, mult_lightning.numFrames());
+    vid.sprites[MULT_SPRITE_ID].setImage(mult_lightning, frame);
+    vid.sprites[MULT_SPRITE_ID].move( m_col * 32, m_row * 32 );
+
+    //number on bg1
+    if( t.cyclePhase(MULTIPLIER_NUMBER_PERIOD) < MULTIPLIER_NUMBER_PERCENTON )
+    {
+        vid.sprites[MULT_SPRITE_NUM_ID].setImage(mult_numbers, m_multiplier - 2);
+        vid.sprites[MULT_SPRITE_NUM_ID].move( m_col * 32, m_row * 32 + 6 );
+    }
+}
+
+
+
+void GridSlot::DrawSpecial( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec )
+{
+    vid.bg0.image(  vec, GetSpecialTexture(), GetSpecialFrame() );
+}
+
+void GridSlot::DrawFixed( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec )
+{
+    if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
+    {
+        vid.bg0.image( vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+    }
+    else
+    {
+        vid.bg0.image( vec, *FIXED_TEXTURES[ m_color ]);
+
+        if( m_multiplier > 1 )
+        {
+            DrawMultiplier( vid );
+        }
+    }
+}
+
+void GridSlot::DrawRegular( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState )
+{
+    const AssetImage &tex = *TEXTURES[m_color];
+
+    switch( m_Movestate )
+    {
+        case MOVESTATE_STATIONARY:
+        case MOVESTATE_PENDINGMOVE:
+        {
+            unsigned int frame;
+
+            frame = GetTiltFrame( tiltState, m_lastFrameDir );
+            vid.bg0.image( vec, tex, frame);
+            break;
+        }
+        case MOVESTATE_MOVING:
+        {
+            Int2 curPos = m_curMovePos;
+            //THIS CAN'T USE STRAIGHT CHROMITDRAWER
+            vid.bg0.image( curPos, tex, GetRollingFrame( m_animFrame ));
+            break;
+        }
+        case MOVESTATE_FINISHINGMOVE:
+        case MOVESTATE_BUMPED:
+        {
+            vid.bg0.image( vec, tex, m_animFrame);
+            break;
+        }
+        default:
+            ASSERT( 0 );
+    }
+}
+

@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_RADIO_H
@@ -11,7 +8,7 @@
 
 #include <string.h>
 #include <sifteo/abi.h>
-#include "runtime.h"
+#include "macros.h"
 
 class RadioManager;
 
@@ -24,6 +21,13 @@ class RadioManager;
 struct RadioAddress {
     uint8_t channel;
     uint8_t id[5];
+
+    uint64_t pack() const {
+        uint64_t addr = 0;
+        for (int i = 4; i >= 0; i--)
+            addr = (addr << 8) | id[i];
+        return addr | ((uint64_t)channel << 56);
+    }
 };
  
 /**
@@ -67,20 +71,6 @@ struct PacketBuffer {
         memcpy(bytes + len, src, count);
         len += count;
     }
-
-    void appendUser(uint8_t *src, unsigned count) {
-        if (Runtime::checkUserPointer(src, count))
-            append(src, count);
-    }
-
-    void log() const {
-        #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
-        LOG(("[%2d] ", len));
-        for  (unsigned i = 0; i < len; i++)
-            LOG(("%02x", bytes[i]));
-        LOG(("\n"));
-        #endif
-    }
 };
 
 /**
@@ -99,15 +89,6 @@ struct PacketTransmission {
 
     PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
         : packet(PacketBuffer(_bytes, _len)), dest(_dest), noAck(false) {}
-
-    void log() const {
-        #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
-        LOG(("%2d/%02x%02x%02x%02x%02x ",
-             dest->channel,
-             dest->id[0], dest->id[1], dest->id[2], dest->id[3], dest->id[4]));
-        packet.log();
-        #endif
-    }
 };
 
 /**
@@ -147,6 +128,25 @@ class Radio {
  public:
     static void open();
     static void halt();
+
+    /*
+     * Values for the L01's tx power register.
+     * Should these be abstracted?
+     */
+    enum TxPower {
+        dBmMinus18              = 0,
+        dBmMinus12              = 1 << 1,
+        dBmMinus6               = 2 << 1,
+        dBm0                    = 3 << 1
+    };
+
+    /*
+     * Setter/getter for transmit power.
+     * We don't strictly need a getter, but it is used for testing purposes
+     * to verify that we can read/write registers properly.
+     */
+    static void setTxPower(TxPower pwr);
+    static TxPower txPower();
 };
 
 /**
@@ -170,9 +170,6 @@ class RadioManager {
     static void timeout();
 
  private:
-     friend class RadioTest_ackWithPacketShouldCallRadioAcknowledgeOnEnabledCube_Test;
-     friend class RadioTest_ackWithPacketShouldNotCallRadioAcknowledgeOnDisabledCube_Test;
-     
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
      * This lets us match up ACKs with endpoints. Accessed ONLY in

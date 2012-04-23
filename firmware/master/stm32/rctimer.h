@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
 #ifndef RCTIMER_H
 #define RCTIMER_H
 
@@ -18,14 +23,14 @@ public:
     void init();
 
     void startSample();
-    void isr();
+    bool isr();
     uint16_t lastReading() const {
         return reading;
     }
 
 private:
     HwTimer timer;
-    int timerChan;
+    const uint8_t timerChan;
     GPIOPin pin;
     uint16_t startTime;
     uint16_t reading;

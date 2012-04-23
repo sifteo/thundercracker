@@ -1,6 +1,7 @@
 #ifndef CUBESTATE_H
 #define CUBESTATE_H
 
+using namespace Sifteo;
 enum CubeStateIndex
 {
     CubeStateIndex_Menu,

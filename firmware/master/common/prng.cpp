@@ -1,21 +1,18 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
- /*
-  * Our own local pseudo-random number generator.
-  *
-  * We use this instead of the system PRNG, so that we can guarantee
-  * the same numbers will be returned in real hardware and on all
-  * simulation platforms.
-  *
-  * The PRNG we use is a very simple public-domain algorithm, documented here:
-  * http://burtleburtle.net/bob/rand/smallprng.html
-  */
+/*
+ * Our own local pseudo-random number generator.
+ *
+ * We use this instead of the system PRNG, so that we can guarantee
+ * the same numbers will be returned in real hardware and on all
+ * simulation platforms.
+ *
+ * The PRNG we use is a very simple public-domain algorithm, documented here:
+ * http://burtleburtle.net/bob/rand/smallprng.html
+ */
 
 #include "prng.h"
 

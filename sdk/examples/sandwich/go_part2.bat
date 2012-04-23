@@ -1,1 +1,0 @@
-.\sandwichcraft.sim.exe

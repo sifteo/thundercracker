@@ -1,0 +1,4 @@
+Build-time configuration for Clang and LLVM in deps:
+
+--enable-targets=arm --target=arm --disable-jit --disable-docs --disable-threads --disable-pthreads --disable-pic --disable-libffi
+

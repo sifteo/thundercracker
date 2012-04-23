@@ -1,9 +1,13 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "hwtimer.h"
 
 #define IS_ADVANCED(t) ((t) == &TIM1 || (t) == &TIM8)
 
-void HwTimer::init(int period, int prescaler)
+void HwTimer::init(uint16_t period, uint16_t prescaler)
 {
     if (tim == &TIM2) {
         RCC.APB1ENR |= (1 << 0); // TIM2 enable
@@ -32,8 +36,8 @@ void HwTimer::init(int period, int prescaler)
     }
 
     // Timer configuration
-    tim->PSC  = (uint16_t)prescaler;
-    tim->ARR  = (uint16_t)period;
+    tim->PSC  = prescaler;
+    tim->ARR  = period;
 
     if (IS_ADVANCED(tim)) {
         tim->BDTR = (1 << 15);  // MOE - main output enable
@@ -109,36 +113,4 @@ void HwTimer::configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t fil
     }
 
     tim->CCER |= edge << ((ch - 1) * 4);
-}
-
-void HwTimer::enableChannel(int ch)
-{
-    tim->SR &= ~(1 << ch);  // CCxIF bits start at 1, so no need to subtract from 1-based channel num
-    tim->CCER |= 1 << ((ch - 1) * 4);
-}
-
-void HwTimer::disableChannel(int ch)
-{
-    tim->CCER &= ~(0x1 << ((ch - 1) * 4));
-}
-
-bool HwTimer::channelIsEnabled(int ch)
-{
-    return tim->CCER & (1 << ((ch - 1) * 4));
-}
-
-void HwTimer::setDuty(int ch, uint16_t duty)
-{
-    tim->CCR[ch - 1] = duty;
-}
-
-uint16_t HwTimer::period() const
-{
-    return tim->ARR;
-}
-
-void HwTimer::setPeriod(uint16_t period, uint16_t prescaler)
-{
-    tim->ARR = period;
-    tim->PSC = prescaler;
 }

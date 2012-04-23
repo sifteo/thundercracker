@@ -24,23 +24,22 @@ Dictionary::Dictionary()
 }
 
 bool Dictionary::getCurrentPuzzle(char* buffer,
-                          unsigned char& numAnagrams,
-                          unsigned char& leadingSpaces,
-                          unsigned char& maxLettersPerCube)
+                         unsigned char& numAnagrams,
+                         unsigned char& leadingSpaces,
+                         unsigned char& maxLettersPerCube)
 {
-    ASSERT(buffer);
-    if (!getPuzzle(sPuzzleIndex,
-                   buffer,
-                   numAnagrams,
-                   leadingSpaces,
-                   maxLettersPerCube))
-    {
-        return false;
-    }
+   ASSERT(buffer);
+   if (!getPuzzle(sPuzzleIndex,
+                  buffer,
+                  numAnagrams,
+                  leadingSpaces,
+                  maxLettersPerCube))
+   {
+       return false;
+   }
 
-    return true;
+   return true;
 }
-
 
 bool Dictionary::getNextPuzzle(char* buffer,
                           unsigned char& numAnagrams,
@@ -69,7 +68,7 @@ bool Dictionary::getNextPuzzle(char* buffer,
 
     /* TODO move to another function if (PrototypeWordList::getNextPuzzle(buffer))
     {
-        DEBUG_LOG(("picked word %s\n", buffer));
+        LOG("picked word %s\n", buffer);
         return true;
     }
     return false;

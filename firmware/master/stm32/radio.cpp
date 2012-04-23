@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
@@ -13,48 +10,15 @@
 
 #include "radio.h"
 #include "nrf24l01.h"
-#include "debug.h"
-#include "board.h"
-#include "audiomixer.h"
-#include "tasks.h"
-
-static NRF24L01 NordicRadio(RF_CE_GPIO,
-                            RF_IRQ_GPIO,
-                            SPIMaster(&RF_SPI,              // SPI:
-                                      RF_SPI_CSN_GPIO,      //   CSN
-                                      RF_SPI_SCK_GPIO,      //   SCK
-                                      RF_SPI_MISO_GPIO,     //   MISO
-                                      RF_SPI_MOSI_GPIO));   //   MOSI
-
-#if BOARD == BOARD_TC_MASTER_REV1
-IRQ_HANDLER ISR_EXTI9_5()
-{
-    NordicRadio.isr();
-}
-#else
-IRQ_HANDLER ISR_EXTI15_10()
-{
-    NordicRadio.isr();
-}
-#endif
 
 void Radio::open()
 {
-    NordicRadio.init();
-    NordicRadio.ptxMode();
+    NRF24L01::instance.init();
+    NRF24L01::instance.ptxMode();
 }
 
 void Radio::halt()
 {
-    /*
-      TODO - these are temporary, but we don't currently have another
-      better context in which to handle longer running tasks. Ultimately this is likely
-      to be interleaved with the runtime, or done periodically on a timer
-      interrupt (ie, separate thread in the simulator).
-    */
-    AudioMixer::instance.fetchData();
-    Tasks::work();
-
     /*
      * Wait for any interrupt
      *
@@ -66,4 +30,14 @@ void Radio::halt()
 #ifndef DEBUG
     __asm__ __volatile__ ("wfi");
 #endif
+}
+
+void Radio::setTxPower(TxPower pwr)
+{
+    NRF24L01::instance.setTxPower(pwr);
+}
+
+Radio::TxPower Radio::txPower()
+{
+    return NRF24L01::instance.txPower();
 }

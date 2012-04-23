@@ -26,7 +26,7 @@ namespace TotalsGame {
 
 	class Token : public IExpression {
 
-        DECLARE_POOL(Token, Game::NUMBER_OF_CUBES);
+        DECLARE_POOL(Token, NUM_CUBES);
 
 	public:
 
@@ -52,8 +52,8 @@ namespace TotalsGame {
 		virtual int GetDepth();
 		virtual int GetCount();
 		virtual ShapeMask GetMask();
-		virtual bool TokenAt(const Vec2 &p, Token **t);
-		virtual bool PositionOf(Token *t, Vec2 *p);
+        virtual bool TokenAt(Int2 p, Token **t);
+        virtual bool PositionOf(Token *t, Int2 *p);
 		virtual bool Contains(Token *t);
 		virtual void SetCurrent(IExpression *exp);
 
@@ -62,8 +62,8 @@ namespace TotalsGame {
 
 		void PopGroup();
 
-		SideStatus StatusOfSide(Cube::Side side, IExpression *current);
-		bool ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp);
+		SideStatus StatusOfSide(unsigned side, IExpression *current);
+		bool ConnectsOnSideAtDepth(unsigned s, int depth, IExpression *exp);
 
 		bool CheckDepth(int depth, IExpression *exp);
 
@@ -87,7 +87,7 @@ namespace TotalsGame {
 	class SideHelper 
 	{
 	public:
-		static bool IsSource(Cube::Side side);
+		static bool IsSource(unsigned side);
 	private:
 		SideHelper();	//non-instantiable
 	};

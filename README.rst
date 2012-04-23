@@ -18,6 +18,9 @@ firmware
 
 sdk
   Development kit for game software, running on the master.
+  This directory is intended to contain only redistributable components.
+  During build, pre-packaged binaries, built binaries, and built docs
+  are copied here.
 
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.
@@ -31,10 +34,11 @@ deps
 attic
   Old or experimental code, not part of the main toolchain.
 
-hw
-  Hardware schematics and layout
+vm
+  Tools for working with the virtual machine sandbox that games execute in.
+  Includes "slinky", the Sifteo linker and code generator for LLVM.
 
-  
+
 Operating System
 ----------------
   

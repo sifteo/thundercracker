@@ -1,25 +1,10 @@
-CC_SIM = gcc
-RANLIB_SIM = ranlib
-LIBTOOL_SIM = libtool
-
-CC_STM32 = arm-none-eabi-gcc
-GDB_STM32 = arm-none-eabi-gdb
-RANLIB_STM32 = arm-none-eabi-ranlib
-AR_STM32 = arm-none-eabi-ar
+CC = arm-none-eabi-gcc
+GDB = arm-none-eabi-gdb
+RANLIB = arm-none-eabi-ranlib
+AR = arm-none-eabi-ar
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
-STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
-SPEEXENC = $(TC_DIR)/speex/encoder/speexencoder$(BIN_EXT)
-
-BINS = $(BIN_SIM)
-ifneq ($(BUILD_STM32),)
-	BINS += $(BIN_STM32)
-endif
-
-ASSETS = assets
-GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html MAPFILE.map
-CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 # Only disable this in debugging emergencies!
 #
@@ -29,84 +14,59 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 #
 # Without optimization, a lot of our code ends up too large and/or slow
 # to run on real hardware!
-#allow games to turn off -O2 via environment variable
-ifneq ($(GAMEDEBUG),)
-else
-	CFLAGS += -O2
-endif
+CCFLAGS += -O3
 
 # Always build with debug symbols (It can't hurt)
-CFLAGS += -g3
+CCFLAGS += -g3
+
+# NOTE: putting DEPFLAGS here separately, since $(@F) didn't want to expand
+# properly when included as part of CCFLAGS
+DEPFLAGS = -MD -MP -MF .dep/$(@F).d
 
 # Heavy debug options, only enabled by an explicit environment variable.
 # This can prevent the firmware from operating normally, so only enable it
 # if you know what you're doing! The main effect it has right now is to make
 # JTAG debugging possible, at the expense of flash memory access.
 ifneq ($(DEBUG),)
-    CFLAGS += -DDEBUG
+    CCFLAGS += -DDEBUG
 endif
 
-ifneq ($(QTCREATOR),)
-	CFLAGS += -DQTCREATOR
+# Configurable radio channel
+ifneq ($(MASTER_RF_CHAN),)
+    CCFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
 endif
 
-ifneq ($(QTCREATOR_TERMINAL),)
-	CFLAGS += -DQTCREATOR_TERMINAL
-endif
+# Environment defs
+# NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
+CCFLAGS := -I$(MASTER_DIR)/common -I$(MASTER_DIR)/stm32 -I$(MASTER_DIR)/../include -I$(SDK_DIR)/include -DNOT_USERSPACE
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused
+CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
-# generate dependency files
-CFLAGS += -MD -MP
-
-CFLAGS += -g -I$(SDK_DIR)/include \
-          -ffunction-sections -fdata-sections \
-          -ffast-math
+CCFLAGS += -ffunction-sections -fdata-sections -ffast-math
 LDFLAGS += -lm
-
-# CC is C++, CPP is the C Preprocessor. C++ code inherits CFLAGS,
-# but it may have additional C++-specific flags set as well.
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
-include $(TC_DIR)/Makefile.platform
+# When dtors are defined for static objects, gcc wants to create special handling
+# for them - disable this since those dtors will never be called
+CCFLAGS += -fno-use-cxa-atexit
 
-ifeq ($(BUILD_PLATFORM), windows32)
-    # portaudio requirements
-    LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
-endif
-ifeq ($(BUILD_PLATFORM), Darwin)
-    # these are all required by portaudio, believe it or not
-    LDFLAGS_SIM += -framework CoreAudio -framework AudioToolbox \
-                    -framework AudioUnit -framework CoreServices
-endif
-ifeq ($(BUILD_PLATFORM), Linux)
-	LDFLAGS_SIM += -lspeex -lportaudio
-endif
+LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
 
-LIBS_SIM := $(MASTER_DIR)/master-sim.a
-CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
-LDFLAGS_SIM += $(LDFLAGS)
+# Build architecture
+ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
+    -msoft-float -mno-thumb-interwork
 
-LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
-LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
-
-ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
-              -msoft-float -mno-thumb-interwork
-
-CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
-CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
-# TODO - provide $(APP) or similar to specify name of map file
-LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
-              -Wl,-Map=MAPFILE.map,--cref,--gc-sections,-u,IVT \
-              -T $(LDSCRIPT_STM32) -nostartfiles
+CCFLAGS += $(ARCH)
+LDFLAGS += $(ARCH) \
+              -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
+              -T $(LDSCRIPT) -nostartfiles
 
 #Determines whether the jtagkey2 or the olimex cfg files should be used for programming
-ifeq ($(OLIMEX), 1)
-	PROG_CONFIG := olimex.cfg
+ifneq ($(OLIMEX),)
+    PROG_CONFIG := olimex.cfg
 else 
-	PROG_CONFIG := jtagkey2.cfg
+    PROG_CONFIG := jtagkey2.cfg
 endif

@@ -19,50 +19,46 @@ RockExplosion::RockExplosion()
 
 void RockExplosion::Reset()
 {
-    m_pos.set( -1, -1 );
+    m_pos.set( -100, -100 );
     m_animFrame = 0;
 }
 
 
-void RockExplosion::Update()
+void RockExplosion::UpdateDraw( VideoBuffer &vid, int spriteindex )
 {
-    if( m_pos.x >= 0 )
+    //if( m_pos.x >= 0 )
     {
-        m_animFrame = ( System::clock() - m_startTime ) * FRAMES_PER_SECOND;
+        m_animFrame = float(SystemTime::now() - m_startTime) * FRAMES_PER_SECOND;
 
-        if( m_animFrame >= rock_explode.frames )
+        if( m_animFrame >= rock_explode.numFrames() )
         {
             Reset();
         }
+        else
+        {
+            int cubeid = _SYSCubeID( vid.cube() );
+            //LOG("cube %d: drawing rock explosion %d, frame %d xpos = %d\n", cubeid, spriteindex, m_animFrame, m_pos.x);
+            vid.sprites[spriteindex].setImage(rock_explode, m_animFrame);
+            vid.sprites[spriteindex].move((Int2)m_pos);
+        }
     }
+    //else
+      //  vid.sprites[spriteindex].hide();
 }
 
 
-void RockExplosion::Draw( VidMode_BG0_SPR_BG1 &vid, int spriteindex )
+static const Byte2 OFFSET[] =
 {
-    if( m_pos.x >= 0 )
-    {
-        vid.resizeSprite(spriteindex, rock_explode.width*8, rock_explode.height*8);
-        vid.setSpriteImage(spriteindex, rock_explode, m_animFrame);
-        vid.moveSprite(spriteindex, m_pos.x, m_pos.y);
-    }
-    else
-        vid.resizeSprite(spriteindex, 0, 0);
-}
-
-
-static const Vec2 OFFSET[] =
-{
-    Vec2( -8, 8 ),
-    Vec2( 8, 8 ),
-    Vec2( 8, -8 ),
-    Vec2( -8, -8 ),
+    vec( -8, 8 ),
+    vec( 8, 8 ),
+    vec( 8, -8 ),
+    vec( -8, -8 ),
 };
 
 
-void RockExplosion::Spawn( const Vec2 &pos, int whichpiece )
+void RockExplosion::Spawn( const Int2 &pos, int whichpiece )
 {
     m_pos.set( pos.x * 8 + OFFSET[whichpiece].x, pos.y * 8 + OFFSET[whichpiece].y );
     m_animFrame = 0;
-    m_startTime = System::clock();
+    m_startTime = SystemTime::now();
 }

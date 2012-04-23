@@ -3,33 +3,24 @@
 #include "Game.h"
 #include "AudioPlayer.h"
 #include "TokenView.h"
-#include "string.h"
 #include "DialogWindow.h"
+#include "Skins.h"
 
 namespace TotalsGame
 {
     TotalsCube::TotalsCube():
-        Sifteo::Cube(),
-      backgroundLayer(this->vbuf),
-        foregroundLayer(*this)
+        Sifteo::CubeID()
 	{
-		CORO_RESET;
 		view = NULL;
 		eventHandler = NULL;       
-        //backgroundLayer.init();
-        backgroundLayer.set();
-
-        overlayText = NULL;
-        overlayYTop = 0;
-        overlayYSize = 0;
-        overlayBg[0] = 0;
-        overlayBg[1] = 0;
-        overlayBg[2] = 0;
-        overlayFg[0] = 0;
-        overlayFg[1] = 0;
-        overlayFg[2] = 0;
-        overlayShown = false;        
+        overlayShown = false;                     
 	}
+
+    void TotalsCube::Init(Sifteo::CubeID id)
+    {
+        sys = id;
+        vid.attach(*this);
+    }
 
     void TotalsCube::AddEventHandler(EventHandler *e)
     {
@@ -94,29 +85,25 @@ namespace TotalsGame
             {
                 view->WillDetachFromCube(this);
             }
-            //now that all views are statically allocated, delete is useless.
-            //in fact not deleting them is good because it mimics c#'s
-            //behavior better.
-            //delete view;
             view = v;
             if(view)
             {
-                view->DidAttachToCube(this);
+                view->mCube = this;
+                if(view)
+                {
+                    view->DidAttachToCube(this);
+                }
             }
         }
 
     }
 
-    Vec2 TotalsCube::GetTilt()
-    {
-        Cube::TiltState s = getTiltState();return Vec2(s.x, s.y);
-    }
-
     bool TotalsCube::DoesNeighbor(TotalsCube *other)
     {
+        Neighborhood n(*this);
         for(int i = 0; i < NUM_SIDES; i++)
         {
-            if(physicalNeighborAt(i) == other->id())
+            if(n.neighborAt((Sifteo::Side)i).sys == other->sys)
                 return true;
         }
         return false;
@@ -150,130 +137,62 @@ namespace TotalsGame
             e = e->next;
         }
     }
-
-	float TotalsCube::OpenShutters(const AssetImage *image)
-	{						
-		CORO_BEGIN
-
-		AudioPlayer::PlayShutterOpen();
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-		{
-			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-
-		DrawVaultDoorsOpenStep1(32, image);			
-		CORO_YIELD(0);
-
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt)
-		{
-			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-		CORO_END
-		CORO_RESET;
-
-		return -1;
-	}
-
-	float TotalsCube::CloseShutters(const AssetImage *image)
-	{
-		CORO_BEGIN
-
-		AudioPlayer::PlayShutterClose();
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-		{
-			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
-			CORO_YIELD(0);
-		}
-
-		DrawVaultDoorsOpenStep2(0, image);
-		CORO_YIELD(0);
-
-		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-		{
-			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
-			CORO_YIELD(0);
-		}			
-
-		CORO_END
-		CORO_RESET;
-
-		return -1;
-	}
 	
-    void TotalsCube::Image(const AssetImage *image, const Vec2 &pos, int frame)
+    void TotalsCube::Image(const Sifteo::AssetImage &image, Int2 pos, int frame)
 	{
-        backgroundLayer.BG0_drawAsset(pos, *image, frame);
+        vid.bg0.image(pos, image, frame);
 	}
 
-	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
+    void TotalsCube::Image(const Sifteo::AssetImage *image, const Int2 &coord, const Int2 &offset, const Int2 &size)
 	{
-        backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
+        vid.bg0.image(coord, size, *image, offset);
 	}
 
-    void TotalsCube::Image(const PinnedAssetImage *image, const Vec2 &coord, int frame)
+    void TotalsCube::FillArea(const Sifteo::PinnedAssetImage *image, Int2 pos, Int2 size)
     {
-        int tile = image->index + image->width * image->height * frame;
-        for(int y = coord.y; y < coord.y + (int)image->height; y++)
+        Int2 p = pos;
+        Int2 s = size;
+
+        if(p.x < 0)
         {
-            for(int x = coord.x; x < coord.x + (int)image->width; x++)
-            {
-                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
-            }
+            s.x += p.x;
+            p.x = 0;
         }
+
+        if(p.y < 0)
+        {
+            s.y += p.y;
+            p.y = 0;
+        }
+
+        if(p.x + s.x > 18)
+        {
+            s.x = 18 - p.x;
+        }
+
+        if(p.y + s.y > 18)
+        {
+            s.y = 18 - p.y;
+        }
+
+        if(s.x <= 0 || s.y <= 0)
+        {
+            return;
+        }
+
+        vid.bg0.fill(p, s, *image);
     }
 
-    void TotalsCube::ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame)
+    void TotalsCube::Image(const Sifteo::AssetImage &image)
     {
-        int tile = image->index + image->width * image->height * frame;
-        int y = pos.y;
-        int maxy = y + image->height;
-        if(y < 0)
-        {
-            tile += -y*image->width;
-            y = 0;
-        }
-        if(maxy > 16)
-        {
-            maxy = 16;
-        }
-        for(; y < maxy; y++)
-        {
-
-            int x = pos.x;
-            int maxx = x + image->width;
-            int tileSkip = tile + image->width;
-            if(x < 0)
-            {
-                tile += -x;
-                x = 0;
-            }
-            if(maxx > 16)
-            {
-                maxx = 16;
-            }
-
-            for(;x < maxx; x++)
-            {
-                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
-            }
-
-            tile = tileSkip;
-
-        }
+        vid.bg0.image(vec(0,0), image);
     }
 
-    void TotalsCube::FillScreen(const AssetImage *image)
+    void TotalsCube::ClipImage(const Sifteo::AssetImage *image, Int2 pos)
     {
-        backgroundLayer.clear(image->tiles[0]);
-    }
-
-    void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)
-    {
-        Vec2 p = pos;
-        Vec2 o(0,0);
-        Vec2 s(image->width, image->height);
+        Int2 p = pos;
+        Int2 o = vec(0,0);
+        Int2 s = vec(image->tileWidth(), image->tileHeight());
 
         if(p.x < 0)
         {
@@ -289,17 +208,17 @@ namespace TotalsGame
             p.y = 0;
         }
 
-        if(p.x + s.x > 16)
+        if(p.x + s.x > 18)
         {
-            s.x = 16 - p.x;
+            s.x = 18 - p.x;
         }
 
-        if(p.y + s.y > 16)
+        if(p.y + s.y > 18)
         {
-            s.y = 16 - p.y;
+            s.y = 18 - p.y;
         }
 
-        if(s.x == 0 || s.y == 0)
+        if(s.x <= 0 || s.y <= 0)
         {
             return;
         }
@@ -315,13 +234,71 @@ namespace TotalsGame
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0),Vec2(9,9),Vec2(x,y), VaultDoor, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,0),Vec2(0,9),Vec2(16-x,y), VaultDoor, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,y),Vec2(9,0),Vec2(x,16-y), VaultDoor, 0);
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), VaultDoor, 0);
+        const Skins::Skin &skin = Skins::GetSkin();
+
+        vid.bg0.image(vec(0,0),vec(x,y), skin.vault_door,vec(9,9));
+        vid.bg0.image(vec(x,0),vec(16-x,y), skin.vault_door,vec(0,9));
+        vid.bg0.image(vec(0,y),vec(x,16-y), skin.vault_door,vec(9,0));
+        vid.bg0.image(vec(x,y),vec(16-x,16-y), skin.vault_door,vec(0,0));
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
+    void TotalsCube::OpenShuttersToReveal(const Sifteo::AssetImage &image)
+    {	
+		AudioPlayer::PlayShutterOpen();
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
+		{
+            Image(image);
+            DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime);
+            System::paint();
+            Game::UpdateDt();
+		}
+        
+        Image(image);
+        DrawVaultDoorsOpenStep1(32);
+        System::paint();
+        Game::UpdateDt();
+
+        
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
+		{
+            Image(image);
+            DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime);
+            System::paint();
+            Game::UpdateDt();
+		}
+        
+        Image(image, vec(0,0));
+    }
+
+    void TotalsCube::CloseShutters()
+    {
+        AudioPlayer::PlayShutterClose();
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
+		{
+            DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime);
+            System::paint();
+            Game::UpdateDt();
+		}
+        
+        DrawVaultDoorsOpenStep2(0);
+        System::paint();
+        Game::UpdateDt();
+        
+        for(float t=0.0f; t<kTransitionTime; t+=Game::dt)
+		{
+            DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime);
+            System::paint();
+            Game::UpdateDt();
+		}			
+
+        DrawVaultDoorsClosed();
+        System::paint();
+
+    }
+
+
+
+    void TotalsCube::DrawVaultDoorsOpenStep1(int offset)
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
@@ -329,23 +306,21 @@ namespace TotalsGame
 		int yTop = x - (offset+4)/8;
 		int yBottom = y + (offset+4)/8;
 
-		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
+        const Skins::Skin &skin = Skins::GetSkin();
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-x,16-yTop), Vec2(x,yTop), VaultDoor);			//Top left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,0), Vec2(0,16-yTop), Vec2(16-x,yTop), VaultDoor);			//top right
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,yBottom), Vec2(16-x,0), Vec2(x,16-yBottom), VaultDoor);	//bottom left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(x,yBottom), Vec2(0,0), Vec2(16-x,16-yBottom), VaultDoor);	//bottom right
-
+        vid.bg0.image(vec(0,0), vec(x,yTop),skin.vault_door, vec(16-x,16-yTop));			//Top left
+        vid.bg0.image(vec(x,0), vec(16-x,yTop),skin.vault_door, vec(0,16-yTop));			//top right
+        vid.bg0.image(vec(0,yBottom), vec(x,16-yBottom),skin.vault_door, vec(16-x,0));	//bottom left
+        vid.bg0.image(vec(x,yBottom), vec(16-x,16-yBottom),skin.vault_door, vec(0,0));	//bottom right
 		/*
 		if (innerImage && yTop != yBottom) 
 		{
-			mode.BG0_drawPartialAsset(Vec2(0,yTop), Vec2(0,yTop), Vec2(16,yBottom-yTop), *innerImage); // "inner" row
+			mode.BG0_drawPartialAsset(vec(0,yTop), vec(0,yTop), vec(16,yBottom-yTop), *innerImage); // "inner" row
 		} 
 		*/
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
+    void TotalsCube::DrawVaultDoorsOpenStep2(int offset)
 	{
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
@@ -353,52 +328,28 @@ namespace TotalsGame
 		int xLeft = x - (offset+4)/8;
 		int xRight = y + (offset+4)/8;
 
-		if(innerImage)
-            backgroundLayer.BG0_drawAsset(Vec2(0,0), *innerImage);
+        const Skins::Skin &skin = Skins::GetSkin();
 
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(y-4)), Vec2(xLeft,y-4), VaultDoor);			//Top left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(y-4)), Vec2(16-xRight,y-4), VaultDoor);		//Top right
-        backgroundLayer.BG0_drawPartialAsset(Vec2(0,y+4), Vec2(16-xLeft,0), Vec2(xLeft,16-(y+4)), VaultDoor);			//bottom left
-        backgroundLayer.BG0_drawPartialAsset(Vec2(xRight,y+4), Vec2(0,0), Vec2(16-xRight,16-(y+4)), VaultDoor);			//bottom right
-		
+        vid.bg0.image(vec(0,0), vec(xLeft,y-4),skin.vault_door, vec(16-xLeft,16-(y-4)));			//Top left
+        vid.bg0.image(vec(xRight,0), vec(16-xRight,y-4),skin.vault_door, vec(0,16-(y-4)));		//Top right
+        vid.bg0.image(vec(0,y+4), vec(xLeft,16-(y+4)),skin.vault_door, vec(16-xLeft,0));			//bottom left
+        vid.bg0.image(vec(xRight,y+4), vec(16-xRight,16-(y+4)),skin.vault_door, vec(0,0));			//bottom right
 		/*
 		if (innerImage && xLeft != xRight) {
-			mode.BG0_drawPartialAsset(Vec2(xLeft,0), Vec2(xLeft,0), Vec2(xRight-xLeft,16), *innerImage); // "inner" column
+			mode.BG0_drawPartialAsset(vec(xLeft,0), vec(xLeft,0), vec(xRight-xLeft,16), *innerImage); // "inner" column
 		}
 		*/
 	}
 
 
-    void TotalsCube::DrawFraction(Fraction f, const Vec2 &pos)
+    void TotalsCube::DrawFraction(Fraction f, Int2 pos)
     {
-        String<10> string;
+        Sifteo::String<10> string;
         f.ToString(&string);
         DrawString(string, pos);
     }
-/* never used.  removing is easier than fixing snprintf call
-    void TotalsCube::DrawDecimal(float d, const Vec2 &pos)
-    {
-        char string[10];
-        snprintf(string, 10, "%f", d);
 
-        char *dot = strchr(string, '.');
-        if (!dot)
-        {
-                DrawString(string, pos);
-        }
-        else
-        {
-            int decimalCount = 1;
-            while(decimalCount < 3 && *(dot+decimalCount))
-                decimalCount++;
-            *(dot+decimalCount) = 0;
-            DrawString(string, pos);
-        }
-
-    }
-    */
-
-    void TotalsCube::DrawString(const char *string, const Vec2 &center)
+    void TotalsCube::DrawString(const char *string, Int2 center)
     {
         int hw = 0;
         const char *s = string;
@@ -422,7 +373,7 @@ namespace TotalsGame
             }
             s++;
         }
-        Vec2 p = center - Vec2(hw, 8);
+        Int2 p = center - vec(hw, 8);
 
         int curSprite = 0;
         s = string;
@@ -431,23 +382,23 @@ namespace TotalsGame
             switch(*s)
             {
             case '-':
-                backgroundLayer.setSpriteImage(curSprite, Digits, 10);
-                backgroundLayer.moveSprite(curSprite, p + Vec2(0,3));
+                vid.sprites[curSprite].setImage(Digits, 10);
+                vid.sprites[curSprite].move(p + vec(0,3));
                 p.x += 10-1;
                 break;
             case '/':
-                backgroundLayer.setSpriteImage(curSprite, Digits, 12);
-                backgroundLayer.moveSprite(curSprite, p);
+                vid.sprites[curSprite].setImage(Digits, 12);
+                vid.sprites[curSprite].move(p);
                 p.x += 12-1;
                 break;
             case '.':
-                backgroundLayer.setSpriteImage(curSprite, Digits, 11);
-                backgroundLayer.moveSprite(curSprite, p + Vec2(0,12-7));
+                vid.sprites[curSprite].setImage(Digits, 11);
+                vid.sprites[curSprite].move(p + vec(0,12-7));
                 p.x += 8-1;
                 break;
             default:
-                backgroundLayer.setSpriteImage(curSprite, Digits, (*s)-'0');
-                backgroundLayer.moveSprite(curSprite, p);
+                vid.sprites[curSprite].setImage(Digits, (*s)-'0');
+                vid.sprites[curSprite].move(p);
                 p.x += 12-1;
                 break;
             }
@@ -458,57 +409,42 @@ namespace TotalsGame
 
     }
 
-    void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
-    {return;//todo
-        overlayText = text;
-        overlayYTop = yTop;
-        overlayYSize = ySize;
-        overlayBg[0] = br;
-        overlayBg[1] = bg;
-        overlayBg[2] = bb;
-        overlayFg[0] = fr;
-        overlayFg[1] = fg;
-        overlayFg[2] = fb;
-        overlayShown = false;
+    void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int fg[3], int bg[3])
+    {
+        DialogWindow dw(this);
+        dw.SetBackgroundColor(bg[0], bg[1], bg[2]);
+        dw.SetForegroundColor(fg[0], fg[1], fg[2]);
+        dw.DoDialog(text, yTop, ySize);
+        overlayShown = true;
+    }
+
+    void TotalsCube::ChangeOverlayText(const char *text)
+    {
+        if(overlayShown)
+        {
+            DialogWindow dw(this);
+            dw.ChangeText(text);
+        }
     }
 
     void TotalsCube::DisableTextOverlay()
     {
-        overlayText = NULL;
-    }
+        //turn it off
+        vid.initMode(BG0_SPR_BG1);
+        view->Paint();
+        System::paint();
 
-    void TotalsCube::UpdateTextOverlay()
-    {
-        if(overlayText && !overlayShown)
-        {
-            //turn it on
-            DialogWindow dw(this);
-            dw.SetBackgroundColor(overlayBg[0], overlayBg[1], overlayBg[2]);
-            dw.SetForegroundColor(overlayFg[0], overlayFg[1], overlayFg[2]);
-            dw.DoDialog(overlayText, overlayYTop, overlayYSize);
-            overlayShown = true;
-        }
-        else if(!overlayText && overlayShown)
-        {
-            //turn it off
-            System::paint();
-            System::paintSync();
-            backgroundLayer.set();
-            backgroundLayer.setWindow(0, 128);
-            //is the paint necessary? it'll get painted next draw call
-/*            foregroundLayer.Clear();
-            view->Paint();
-            foregroundLayer.Flush();
-            System::paint();
-            System::paintSync();    */
-            overlayShown = false;
-        }
-
+        overlayShown = false;
     }
 
     bool TotalsCube::IsTextOverlayEnabled()
     {
         return overlayShown;
+    }
+
+    void TotalsCube::HideSprites()
+    {
+        vid.sprites.erase();
     }
 
 }

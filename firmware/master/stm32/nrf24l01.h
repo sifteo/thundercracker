@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
@@ -19,18 +16,26 @@
 
 
 class NRF24L01 {
- public:
+public:
     NRF24L01(GPIOPin _ce,
              GPIOPin _irq,
              SPIMaster _spi)
-        : ce(_ce), irq(_irq), spi(_spi),
+        : irq(_irq), ce(_ce), spi(_spi),
           txBuffer(NULL, txData), rxBuffer(rxData)
           {}
+
+    static NRF24L01 instance;
 
     void init();
     void ptxMode();
 
+    void setTxPower(Radio::TxPower pwr);
+    Radio::TxPower txPower();
+
+    void setConstantCarrier(bool enabled, unsigned channel);
+
     void isr();
+    GPIOPin irq;
 
  private:
     enum Command {
@@ -85,7 +90,6 @@ class NRF24L01 {
     static const unsigned SOFT_RETRY_MAX = 32;
 
     GPIOPin ce;
-    GPIOPin irq;
     SPIMaster spi;
 
     PacketTransmission txBuffer;

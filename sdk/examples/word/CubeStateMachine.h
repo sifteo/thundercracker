@@ -6,9 +6,12 @@
 #include "config.h"
 #include "Anim.h"
 #include "Constants.h"
-#include "TileTransparencyLookup.h"
+
 
 using namespace Sifteo;
+
+// TODO remove in next merge commit
+typedef Int2 Vec2;
 
 enum CubeAnim
 {
@@ -23,8 +26,8 @@ class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine();
-    void setCube(Cube& cube);
-    Cube& getCube() const;
+    void setVideoBuffer(VideoBuffer& vidBuf);
+    CubeID getCube();
 
     virtual unsigned getNumStates() const;
 
@@ -36,25 +39,16 @@ public:
 
     unsigned getLetters(char *buffer, bool forPaint) const;
     unsigned getMetaLetters(char *buffer, bool forPaint) const;
-    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);/*
-                   VidMode_BG0_SPR_BG1 &vid,
-                    BG1Helper *bg1 = 0,
-                    const AnimParams *params = 0);*/
+    void queueAnim(AnimType anim, CubeAnim cubeAnim=CubeAnim_Main);
     void queueNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
-            /*VidMode_BG0_SPR_BG1 &vid,
-                                  BG1Helper *bg1 = 0,
-                                  const AnimParams *params = 0);*/
-
-    void updateAnim(VidMode_BG0_SPR_BG1 &vid,
-                     BG1Helper *bg1 = 0,
-                     AnimParams *params = 0);
+    void updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params = 0);
     AnimType getAnim() const { return mAnimTypes[CubeAnim_Main]; }
 
-    bool canBeginWord() const;
-    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) const;
+    bool canBeginWord();
+    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
     unsigned findRowLength();
-    bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
-    bool hasNoNeighbors() const;
+    bool isConnectedToCubeOnSide(CubeID cubeIDStart, Side side=LEFT);
+    bool hasNoNeighbors();
     float getIdleTime() const { return mIdleTime; }
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
     int getPanning() const { return (int)mBG0Panning; }
@@ -70,19 +64,17 @@ protected:
     void setState(unsigned newStateIndex, unsigned oldStateIndex);
 
 private:
-    void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
-    AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main) const;
+    void setPanning(float panning);
+    AnimType getNextAnim(CubeAnim cubeAnim=CubeAnim_Main);
     void paint();
 
-    void paintScore(VidMode_BG0_SPR_BG1& vid,
-                    ImageIndex teethImageIndex,
-                    bool animate=false,
+    void paintScore(bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,
                     bool paintTime=false,
                     float animStartTime=0.f);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1, const AssetImage &font, bool paintSprites=false);
-    void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
+    void paintLetters(TileBuffer<16,16,1> &bg1TileBuf, bool paintSprites=false);
+    void paintScoreNumbers(BG1Mask &bg1,const Vec2& position, const char* string);
 
     void setLettersStart(unsigned s);
 
@@ -116,10 +108,9 @@ private:
     unsigned mLettersStart;
     unsigned mLettersStartOld;
 
-    ImageIndex mImageIndex;
     SpriteParams mSpriteParams;
 
-    Cube* mCube;
+    VideoBuffer* mVidBuf;
     float mShakeDelay;
     float mPanning;
     float mTouchHoldTime;

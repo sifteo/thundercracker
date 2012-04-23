@@ -10,6 +10,7 @@
 #include <sifteo.h>
 
 using namespace Sifteo;
+//class ChromitDrawer;
 class CubeWrapper;
 
 //space for a gem
@@ -52,14 +53,10 @@ public:
     static const float MARK_SPREAD_DELAY;
     static const float MARK_BREAK_DELAY;
     static const float MARK_EXPLODE_DELAY;
-    static const float SCORE_FADE_DELAY;
-    static const float START_FADING_TIME;
-    static const float FADE_FRAME_TIME;
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
     static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
-    static const unsigned int NUM_POINTS_FRAMES = 4;
     static const unsigned int NUM_FIXED_FRAMES = 5;
     static const unsigned int MAX_ROCK_HEALTH = 4;
 
@@ -70,7 +67,6 @@ public:
 		STATE_LIVING,
 		STATE_MARKED,
 		STATE_EXPLODING,
-		STATE_SHOWINGSCORE,
 		STATE_GONE,
     } SLOT_STATE;
 
@@ -80,6 +76,7 @@ public:
         MOVESTATE_PENDINGMOVE,
         MOVESTATE_MOVING,
         MOVESTATE_FINISHINGMOVE,
+        MOVESTATE_BUMPED,
         MOVESTATE_FIXEDATTEMPT,
     } MOVE_STATE;
 
@@ -88,11 +85,11 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState );
-    void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
-    void Update(float t);
+    void Draw( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, TileBuffer<16, 16> &bg1buffer, Float2 tiltState, unsigned int cubeIndex ) __attribute__ ((noinline));
+    void DrawIntroFrame( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int frame );
+    void Update(SystemTime t);
     bool isAlive() const { return m_state == STATE_LIVING; }
-    bool isEmpty() const { return m_state == STATE_GONE || m_state == STATE_SHOWINGSCORE; }
+    bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_MARKED ); }
     bool isMatchable() const { return isAlive() || isMarked(); }
@@ -124,12 +121,14 @@ public:
     //morph from rainball to given color
     void RainballMorph( unsigned int color );
     void Infect() { m_bWasInfected = true; }
+    //bubble is bumping this chromit, tilt it in the given direction
+    void Bump( const Float2 &dir );
 
 private:
 	void markNeighbor( int row, int col );
     void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
-    unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
+    unsigned int GetTiltFrame( Float2 &tiltState, Int2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
@@ -142,18 +141,23 @@ private:
     //unsigned int GetIdleFrame();
     unsigned int GetFixedFrame( unsigned int index );
 
+    void DrawMultiplier( VideoBuffer &vid ) __attribute__ ((noinline));
+    void DrawSpecial( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
+    void DrawFixed( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec ) __attribute__ ((noinline));
+    void DrawRegular( /*ChromitDrawer *pDrawer, */VideoBuffer &vid, unsigned int cubeIndex, UByte2 vec, Float2 &tiltState ) __attribute__ ((noinline));
+
 	SLOT_STATE m_state;
-    MOVE_STATE m_Movestate;
-	unsigned int m_color;
-	float m_eventTime;
+    MOVE_STATE m_Movestate;	
+	SystemTime m_eventTime;
 	CubeWrapper *m_pWrapper;
-	unsigned int m_row;
-	unsigned int m_col;
+    uint8_t m_color;
+    uint8_t m_row;
+    uint8_t m_col;
 
 	//current position in 16x16 grid for use when moving
-	Vec2 m_curMovePos;
+	Int2 m_curMovePos;
 
-	unsigned int m_score;
+    uint8_t  m_score;
 	//fixed dot
 	bool		 m_bFixed;
     //used to tell if this dot was a rainball (for a special animation)
@@ -162,12 +166,12 @@ private:
     bool         m_bWasInfected;
 
     //only fixed dots can have multipliers
-    unsigned int m_multiplier;
+    uint8_t  m_multiplier;
 
-	unsigned int m_animFrame;
-    unsigned int m_RockHealth;
+    uint8_t  m_animFrame;
+    uint8_t  m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
-    Vec2 m_lastFrameDir;
+    Int2 m_lastFrameDir;
 };
 
 

@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "CubeStateMachine.h"
+
 using namespace Sifteo;
 
 union EventData
@@ -30,13 +31,13 @@ union EventData
     struct
     {
         const char* mWord;
-        Cube::ID mCubeIDStart;
+        PCubeID mCubeIDStart;
         bool mBonus;
     } mWordFound; // used for NewWordFound and OldWordFound
 
     struct
     {
-        Cube::ID mCubeIDStart;
+        PCubeID mCubeIDStart;
     } mWordBroken;
 
     struct
@@ -53,12 +54,12 @@ union EventData
 
     struct
     {
-        Cube::ID mCubeID;
+        PCubeID mCubeID;
     } mInput; // also tilt, touch
 
     struct
     {
-        Cube::ID mCubeID;
+        PCubeID mCubeID;
     } mTouchAndHoldWaitForUntouch;
 
     struct

@@ -1,10 +1,7 @@
-TC_DIR = ../../..
-include $(TC_DIR)/firmware/master/Makefile.defs
+APP = sensors
+SDK_DIR = ../..
+include $(SDK_DIR)/Makefile.defs
 
-BIN_SIM = sensors.sim$(BIN_EXT)
-OBJS_SIM = main.sim.o
+OBJS = main.o
 
-BIN_STM32 = sensors.stm32
-OBJS_STM32 = main.stm32.o
-
-include $(TC_DIR)/firmware/master/Makefile.rules
+include $(SDK_DIR)/Makefile.rules

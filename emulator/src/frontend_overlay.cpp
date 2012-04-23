@@ -143,7 +143,7 @@ void FrontendOverlay::drawCubeInspector(FrontendCube *fe,
         int flashHeight = height - margin - (y - top);
 
         renderer->overlayCubeFlash(id, x, y, flashWidth, flashHeight,
-            sys->cubes[id].flashStorage.data.ext, hasChanged);
+            sys->cubes[id].flash.getStorage()->ext, hasChanged);
     }
 }
 
@@ -180,6 +180,7 @@ void FrontendOverlay::drawHelp()
         "Mouse wheel resizes the play surface.",
         "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
         "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
+        "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",
         "",
         APP_COPYRIGHT,

@@ -1,29 +1,19 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _CUBE_H
 #define _CUBE_H
 
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
+#include "machine.h"
 #include "radio.h"
-#include "runtime.h"
+#include "svmmemory.h"
 #include "cubeslots.h"
 #include "systime.h"
-
-//#include "cubecodec.h"
-
-#ifndef USE_MOCK_CUBE_CODEC
-  #include "cubecodec.h"
-#else
-  #include "mockcubecodec.h"
-  #define CubeCodec MockCubeCodec
-#endif
+#include "cubecodec.h"
+#include "paintcontrol.h"
 
 
 /**
@@ -58,82 +48,115 @@ class CubeSlot {
 
     _SYSCubeIDVector bit() const {
         STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
-        return Sifteo::Intrinsic::LZ(id());
+        return Intrinsic::LZ(id());
     }
 
     bool enabled() const {
         return !!(bit() & CubeSlots::vecEnabled);
     }
-	
-	bool connected() const {
+    
+    bool connected() const {
         return !!(bit() & CubeSlots::vecConnected);
     }
-	
-	void setConnected() {
-		CubeSlots::connectCubes(Sifteo::Intrinsic::LZ(id()));
-	}
-	
-	void setDisconnected() {
-		CubeSlots::disconnectCubes(Sifteo::Intrinsic::LZ(id()));
-	}
+    
+    void setConnected() {
+        CubeSlots::connectCubes(Intrinsic::LZ(id()));
+    }
+    
+    void setDisconnected() {
+        CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
+    }
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
-    
-    bool isAssetGroupLoaded(_SYSAssetGroup *a) {
-        return !!(bit() & a->doneCubes);
+
+    const _SYSByte4 &getAccelState() {
+        return accelState;
     }
 
-    _SYSAssetGroup *getLastAssetGroup(void) const {
-        return loadGroup;
+    inline const uint8_t *getRawNeighbors() const {
+        return neighbors;
     }
-
-    void getAccelState(struct _SYSAccelState *state) {
-        *state = accelState;
-    }
-
-    void getRawNeighbors(uint8_t buf[4]);
 
     bool isTouching() const;
-    
-    _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
-        /*
-         * Safely return this cube's per-cube data on a particular
-         * asset group.  If the user-pointer check fails, returns
-         * NULL.
-         */
-        _SYSCubeID i = id();
-        if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
-            return &group->cubes[i];
-        return 0;
+
+    _SYSAssetGroupCube *assetGroupCube(struct _SYSAssetGroup *group) {
+        _SYSAssetGroupCube *cube = reinterpret_cast<_SYSAssetGroupCube*>(group + 1) + id();
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            return cube;
+        else
+            return 0;
     }
 
-    void loadAssets(_SYSAssetGroup *a);
-    void waitForPaint();
-    void waitForFinish();
-    void triggerPaint(SysTime::Ticks timestamp);
-
-    const _SYSCubeHWID & getHWID() const {
-        return hwid;
+    _SYSAssetLoaderCube *assetLoaderCube(struct _SYSAssetLoader *loader) {
+        _SYSAssetLoaderCube *cube = reinterpret_cast<_SYSAssetLoaderCube*>(loader + 1) + id();
+        if (SvmMemory::mapRAM(cube, sizeof *cube))
+            return cube;
+        else
+            return 0;
     }
-    
+
+    bool isAssetLoading(_SYSAssetLoader *L) const {
+        // Caller-provided SYSAssetLoader, to support cases when we
+        // must read "assetLoader" exactly once.
+        return L && (L->cubeVec & ~L->complete & bit());
+    }
+
+    bool isAssetLoading() const {
+        return isAssetLoading(CubeSlots::assetLoader);
+    }
+
+    void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
+
+    void beginFinish() {
+        if (vbuf)
+            return paintControl.beginFinish(this);
+    }
+
+    bool pollForFinish(SysTime::Ticks now) {
+        // Finish is only meaningful when we still have a vbuf attached.
+        // Returns 'true' if we're finished.
+
+        if (vbuf)
+            return paintControl.pollForFinish(this, now);
+        else
+            return true;
+    }
+
+    void waitForPaint() {
+        paintControl.waitForPaint(this);
+    }
+
+    void triggerPaint(SysTime::Ticks now) {
+        // Allow continuous rendering only when not loading assets
+        paintControl.triggerPaint(this, now);
+    }
+
+    uint64_t getHWID();
+
     uint16_t getRawBatteryV() const {
         return rawBatteryV;
     }
 
+    uint8_t getLastFrameACK() const {
+        return framePrevACK;
+    }
+
+    bool hasValidFrameACK() const {
+        return CubeSlots::frameACKValid & bit();
+    }
+
+    _SYSVideoBuffer *getVBuf() const {
+        return vbuf;
+    }
+
+    const RadioAddress *getRadioAddress();
+
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
-    // number of cube (ie, not master) ticks for a neighbor tx slot.
-    // represents cube bit period * num total bits in a tx sequence.
-    // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c
-    // XXX: at the moment, NB_TX_BITS is 18 on the cube, but making it waaaaay wider
-    // here (40) since we are observing failures to neighbor otherwise :(
-    static const unsigned NEIGHBOR_TX_SLOT_TICKS = 64 * 40;
-    // rollover duration of cube timer, in cube ticks
-    static const unsigned NEIGHBOR_TIMER_PERIOD_TICKS = 0x1FFF; // 13 bit
-    
+
     /*
      * Data buffers, provided by game code.
      *
@@ -142,37 +165,32 @@ class CubeSlot {
      * pointer is guaranteed to remain valid until it's set to NULL or
      * to a different pointer, which can happen only outside of IRQ
      * context.
-     *
-     * The loadGroup pointer can be set only in non-IRQ context, and
-     * only by application code. It represents the current group we're
-     * downloading, or the last group that was sent. The 'loadGroup'
-     * pointer is not automatically NULL'ed after we finish loading the
-     * group, since it's used for event dispatch purposes as well.
      */
 
-    _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
     RadioAddress address;
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-    
-    SysTime::Ticks paintTimestamp;      // Used only by thread
+    DEBUG_ONLY(unsigned consecutiveEmptyPackets);
+
     SysTime::Ticks flashDeadline;       // Used only by ISR
-    int32_t pendingFrames;
     uint32_t timeSyncState;             // XXX: For the current time-sync hack
 
-    // Packet encoder state
+    PaintControl paintControl;
     CubeCodec codec;
 
     // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
     uint8_t neighbors[4];
+    uint8_t hwid[_SYS_HWID_BYTES];
 
-    // Sensors
+    // Other sensor data
+    _SYSByte4 accelState;
     uint16_t rawBatteryV;
-    _SYSAccelState accelState;
-    _SYSCubeHWID hwid;
+
+    void requestFlashReset();
+    uint16_t calculateTimeSync();
 };
 
 #endif

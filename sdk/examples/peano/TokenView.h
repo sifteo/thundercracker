@@ -13,7 +13,12 @@ namespace TotalsGame {
 
   class TokenView : public View 
   {
+  public:
+      void OnShakeStarted(TotalsCube *c) ;
+      
+      void OnButtonEvent(TotalsCube *c, bool isPressed);
 
+      
   private:
 	  static int sHintParity;
 
@@ -29,12 +34,13 @@ namespace TotalsGame {
 
   public:
 
-	static const Vec2 Mid;
+    static const Int2 Mid;
 
-    static const int BIT_TOP = 1<<SIDE_TOP;
-    static const int BIT_LEFT = 1<<SIDE_LEFT;
-    static const int BIT_BOTTOM = 1<<SIDE_BOTTOM;
-    static const int BIT_RIGHT = 1<<SIDE_RIGHT;
+    static const int BIT_TOP = 1<<TOP;
+    static const int BIT_LEFT = 1<<LEFT;
+    static const int BIT_BOTTOM = 1<<BOTTOM;
+    static const int BIT_RIGHT = 1<<RIGHT;
+    static const int BIT_MESSAGE = 1<<7;
     static const char *kOpNames[4];
     
 	enum Status 
@@ -61,8 +67,12 @@ namespace TotalsGame {
     // PUBLIC METHODS
     //-------------------------------------------------------------------------
 
-    TokenView(TotalsCube *cube, Token *_token, bool showDigitOnInit=true);
+    TokenView();
 	virtual ~TokenView() {}
+
+    void Reset();
+
+    void SetToken(Token *t);
 
     void HideOps() ;
 
@@ -85,12 +95,8 @@ namespace TotalsGame {
 
     void SetHideMode(int mask);
 
-    //for placement new
-    void* operator new (size_t size, void* ptr) throw() {return ptr;}
-    void operator delete(void *ptr) {}
-
 private:
-    bool NotHiding(Cube::Side side) ;
+    bool NotHiding(unsigned side) ;
 
     void SetState(Status state, bool resetTimer=true, bool resetExpr=true);
 
@@ -100,16 +106,13 @@ private:
     //-------------------------------------------------------------------------
 public:
     virtual void DidAttachToCube(TotalsCube *c) ;
-
-    void OnShakeStarted(TotalsCube *c) ;
-    
-    void OnButtonEvent(TotalsCube *c, bool isPressed);
     
     virtual void WillDetachFromCube(TotalsCube *c) ;
 
-    virtual void Update(float dt) ;
-    
-    virtual void Paint() ;
+    void Update() ;
+
+    void PaintNow();
+    void NeedRepaint();
   
     //-------------------------------------------------------------------------
     // HELPER METHODS
@@ -130,6 +133,7 @@ public:
     void PaintBottom(bool lit);
     // // // //
 
+    bool needRepaint;
    
   };
   

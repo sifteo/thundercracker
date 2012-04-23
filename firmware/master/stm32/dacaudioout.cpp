@@ -1,3 +1,7 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #include "dacaudioout.h"
 #include "audiomixer.h"
@@ -32,6 +36,8 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
 
     dac.init();
     dac.configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
+
+    Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
 
 void DacAudioOut::start()
@@ -79,12 +85,9 @@ void DacAudioOut::tmrIsr()
     tim4TestPin.toggle();
 #endif
 
-    // TODO - tune the refill threshold if needed
-    if (buf.readAvailable() < buf.capacity() / 2) {
-        Tasks::setPending(Tasks::AudioOutEmpty, &buf);
-        if (buf.readAvailable() < 2)
-            return;
-    }
+    // DANGER DANGER DANGER
+    if (buf.readAvailable() < 2)
+        return;
 
     uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output

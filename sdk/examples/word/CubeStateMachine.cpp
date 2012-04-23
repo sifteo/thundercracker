@@ -16,7 +16,7 @@ CubeStateMachine::CubeStateMachine() :
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
-        mLettersStartOld(0), mImageIndex(ImageIndex_ConnectedWord), mCube(0),
+        mLettersStartOld(0), mVidBuf(0),
         mShakeDelay(0.f), mPanning(0.f), mTouchHoldTime(0.f),
         mTouchHoldWaitForUntouch(false)
 
@@ -36,9 +36,9 @@ CubeStateMachine::CubeStateMachine() :
     }
 }
 
-void CubeStateMachine::setCube(Cube& cube)
+void CubeStateMachine::setVideoBuffer(VideoBuffer& vidBuf)
 {
-    mCube = &cube;
+    mVidBuf = &vidBuf;
 
     for (unsigned i = 0; i < arraysize(mTilePositions); ++i)
     {
@@ -47,10 +47,10 @@ void CubeStateMachine::setCube(Cube& cube)
     }
 }
 
-Cube& CubeStateMachine::getCube() const
+CubeID CubeStateMachine::getCube()
 {
-    ASSERT(mCube != 0);
-    return *mCube;
+    ASSERT(mVidBuf != 0);
+    return mVidBuf->cube();
 }
 
 unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
@@ -65,14 +65,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_Touch:
-        if (data.mInput.mCubeID == getCube().id() && !mTouchHoldWaitForUntouch)
+        if (data.mInput.mCubeID == getCube() && !mTouchHoldWaitForUntouch)
         {
             mTouchHoldTime = 0.f;
         }
         break;
 
     case EventID_TouchAndHoldWaitForUntouch:
-        if (data.mTouchAndHoldWaitForUntouch.mCubeID == getCube().id())
+        if (data.mTouchAndHoldWaitForUntouch.mCubeID == getCube())
         {
             mTouchHoldWaitForUntouch = true;
         }
@@ -90,7 +90,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         case AnimType_OldWord:
         case AnimType_NewWord:
 
-            if (data.mInput.mCubeID == getCube().id())
+            if (data.mInput.mCubeID == getCube())
             {
                 switch (GameStateMachine::getCurrentMaxLettersPerCube())
                 {
@@ -100,22 +100,21 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     {
                         const float BG0_PANNING_WRAP = 144.f;
 
-                        _SYSTiltState state;
-                        _SYS_getTilt(getCube().id(), &state);
-                        if (state.x != 1)
+                        Byte2 tilt = getCube().tilt();
+                        if (tilt.x != 0) // if not neutral
                         {
 
                             mBG0TargetPanning -=
-                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (state.x - 1);
+                                    BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * tilt.x;
                             while (mBG0TargetPanning < 0.f)
                             {
                                 mBG0TargetPanning += BG0_PANNING_WRAP;
                                 mBG0Panning += BG0_PANNING_WRAP;
                             }
 
-                            VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
-                            setPanning(vid, mBG0Panning);
-                            if (state.x < 1)
+                            ASSERT(mVidBuf != NULL);
+                            setPanning(mBG0Panning);
+                            if (tilt.x < 0)
                             {
                                 queueAnim(AnimType_SlideL);//, vid); // FIXME
                             }
@@ -137,7 +136,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                                 lpc = mPuzzleLettersPerCube;
 
                             }
-                            unsigned newStart = (state.x == 0) ? start + 1 : start + (lpc - 1);
+                            unsigned newStart = (tilt.x == -1) ? start + 1 : start + (lpc - 1);
                             newStart = (newStart % lpc);
                             setLettersStart(newStart);
                             // letters are unavailable until anim finishes, but
@@ -151,7 +150,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     break;
                 }
             }
-            if (data.mInput.mCubeID == mCube->id())
+            if (data.mInput.mCubeID == getCube())
             {
                 mIdleTime = 0.f;
             }
@@ -160,7 +159,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_Shake:
-        if (data.mInput.mCubeID == mCube->id())
+        if (data.mInput.mCubeID == getCube())
         {
             mIdleTime = 0.f;
         }
@@ -170,9 +169,8 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         mBG0PanningLocked = (data.mGameStateChanged.mNewStateIndex != GameStateIndex_PlayScored);
         mBG0TargetPanning = 0.f;
         {
-            VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
-            setPanning(vid, 0.f);
-            vid.BG1_setPanning(Vec2(0, 0));
+            setPanning(0.f);
+            mVidBuf->bg1.setPanning(vec(0, 0));
         }
         mIdleTime = 0.f;
         switch (data.mGameStateChanged.mNewStateIndex)
@@ -243,7 +241,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     EventData wordFoundData;
                     if (beginsWord(isOldWord, wordBuffer, wordFoundData.mWordFound.mBonus))
                     {
-                        wordFoundData.mWordFound.mCubeIDStart = getCube().id();
+                        wordFoundData.mWordFound.mCubeIDStart = getCube();
                         wordFoundData.mWordFound.mWord = wordBuffer;
                         if (isOldWord)
                         {
@@ -259,7 +257,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     else
                     {
                         EventData wordBrokenData;
-                        wordBrokenData.mWordBroken.mCubeIDStart = getCube().id();
+                        wordBrokenData.mWordBroken.mCubeIDStart = getCube();
                         GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
                         queueAnim(AnimType_NotWord);
                     }
@@ -277,21 +275,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_NewWordFound:
-        {
-            Cube& c = getCube();
-            mImageIndex = ImageIndex_ConnectedWord;
-            if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-                c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-                     c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
-        }
-
         switch (mAnimTypes[CubeAnim_Main])
         {
         case AnimType_NewWord:
@@ -340,7 +323,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewPuzzle:
         {
-            unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+            unsigned cubeIndex = (getCube() - CUBE_ID_BASE);
             mPuzzlePieceIndex = data.mNewPuzzle.mCubeOrderingIndexes[cubeIndex];
             setLettersStart(data.mNewPuzzle.mLetterStartIndexes[cubeIndex]);
             for (unsigned i = 0; i < arraysize(mLetters); ++i)
@@ -362,7 +345,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewMeta:
         {
-            unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+            unsigned cubeIndex = (getCube() - CUBE_ID_BASE);
             mMetaPieceIndex = data.mNewMeta.mCubeOrderingIndexes[cubeIndex];
             mMetaLettersStart = data.mNewMeta.mLetterStartIndexes[cubeIndex];
             for (unsigned i = 0; i < arraysize(mMetaLetters); ++i)
@@ -453,7 +436,12 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         // TODO debug: case EventID_Paint:
         case EventID_EnterState:
             mShakeDelay = 0.f;
-            mPanning = -16.f;// * ((getCube().id() & 1) ? -1.f : 1.f);
+            mPanning = -16.f;// * ((getCube() & 1) ? -1.f : 1.f);
+            {
+                BG1Mask bg1;
+                bg1.filled(vec(0,2), vec(15, 8));
+                mVidBuf->bg1.setMask(bg1);
+            }
             paint();
             if (eventID == EventID_EnterState)
             {
@@ -491,24 +479,18 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     mShakeDelay = SHAKE_DELAY;
                 }
 
-                _SYSAccelState accelState;
-                _SYS_getAccel(getCube().id(), &accelState);
-                _SYSShakeState shakeState;
-                _SYS_getShake(getCube().id(), &shakeState);
-                /* TODO remove _SYSTiltState tiltState;
-                _SYS_getTilt(getCube().id(), &tiltState);
-            */
-                if (shakeState == NOT_SHAKING && abs<int>(accelState.x) > 10)
+                Byte3 accelState = getCube().accel();
+                if (!getCube().isShaking() && abs<int>(accelState.x) > 10)
                 {
                     mShakeDelay = 0.f;
                     mPanning += dt * -5.f * accelState.x; // FIXME treat as accel, not velocity set
                 }
                 /*if (mPanning != 0.f)
                 {
-                    DEBUG_LOG(("panning %f\n", mPanning));
+                    LOG(("panning %f\n", mPanning));
                 }*/
                 //mPanning = fmodf(mPanning, 128.f);
-                if (fabs(mPanning) > 86.f)
+                if (abs(mPanning) > 86.f)
                 {
                     GameStateMachine::sOnEvent(EventID_Start, EventData());
                     // refresh after event handling
@@ -611,9 +593,9 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case GameStateIndex_PauseMenu:
             case GameStateIndex_MainMenu:
                 {
-                    Cube& c = getCube();
-                    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-                    WordGame::hideSprites(vid);
+                    CubeID c = getCube();
+                    ASSERT(mVidBuf != NULL);
+                    WordGame::hideSprites(*mVidBuf);
                     newStateIndex = CubeStateIndex_Menu;
                 }
                 break;
@@ -693,7 +675,7 @@ unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint) const
         }
         else
         {
-            //DEBUG_LOG(("letters start: %d\n", mLettersStart));
+            //LOG(("letters start: %d\n", mLettersStart));
             // copy from the (offset) start to the end of the letters
             _SYS_strlcpy(buffer, &letters[start], lettersPerCube + 1 - start);
             // fill in the rest of the buffer with the substring of the letters
@@ -749,8 +731,9 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
-    DEBUG_LOG(("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
-               getCube().id(), anim, cubeAnim));
+if (cubeAnim == CubeAnim_Hint) return; //??? There is a bug in the hint code which makes the letters on tiles disappear. Fix after GameStop demo. -ww Apr '12
+    LOG("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
+               (PCubeID)getCube(), anim, cubeAnim);
 
     mAnimTypes[cubeAnim] = anim;
     mAnimTimes[cubeAnim] = 0.f;
@@ -775,18 +758,7 @@ void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 
     case AnimType_NewWord:
         {
-            Cube& c = getCube();
-            mImageIndex = ImageIndex_ConnectedWord;
-            if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-                c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedLeftWord;
-            }
-            else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-                     c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-            {
-                mImageIndex = ImageIndex_ConnectedRightWord;
-            }
+            CubeID c = getCube();
 
             // setup sprite params
             for (unsigned i=0; i<arraysize(mSpriteParams.mPositions); ++i)
@@ -835,7 +807,7 @@ void CubeStateMachine::calcSpriteParams(unsigned i)
             mSpriteParams.mEndPositions[i].setPolar(WordGame::random.uniform(angle * .75f,
                                                                              angle * 1.25f),
                                                     WordGame::random.uniform(32.f, 52.f));
-            mSpriteParams.mEndPositions[i] += Float2(56.f, 56.f);
+            mSpriteParams.mEndPositions[i] += vec(56.f, 56.f);
             mSpriteParams.mStartDelay[i] = WordGame::random.random() * 0.5f;
             mSpriteParams.mSpeeds[i] = 5.5f + WordGame::random.random() * 1.f;
             mSpriteParams.mLoop[i] = true;
@@ -867,20 +839,20 @@ void CubeStateMachine::calcSpriteParams(unsigned i)
             if (tileIndex >= firstTileIndex && tileIndex < firstTileIndex + lpc)
             {
                 mSpriteParams.mPositions[i].x =
-                        Sparkle.width * 8.f * i +
+                        Sparkle.pixelWidth() * i +
                         ((tileIndex - firstTileIndex + startOffset) % lpc) * 96/lpc + 16.f;
                 mSpriteParams.mEndPositions[i].x = mSpriteParams.mPositions[i].x;
                 if (getAnim() == AnimType_NormalTilesReveal)
                 {
                     mSpriteParams.mPositions[i].y = 16.f;
                     mSpriteParams.mEndPositions[i].y =
-                            VidMode::LCD_height - (Sparkle.height * 8.f + 16.f);
+                            LCD_height - (Sparkle.pixelHeight() + 16.f);
                 }
                 else
                 {
                     mSpriteParams.mEndPositions[i].y = 16.f;
                     mSpriteParams.mPositions[i].y =
-                            VidMode::LCD_height - (Sparkle.height * 8.f + 16.f);
+                            LCD_height - (Sparkle.pixelHeight() + 16.f);
                 }
                 mSpriteParams.mSpeeds[i] = 1.0f;
                 mSpriteParams.mStartDelay[i] = 0.f;
@@ -926,7 +898,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
                 bool isOldWord = false;
                 if (beginsWord(isOldWord, wordBuffer, wordFoundData.mWordFound.mBonus))
                 {
-                    wordFoundData.mWordFound.mCubeIDStart = getCube().id();
+                    wordFoundData.mWordFound.mCubeIDStart = getCube();
                     wordFoundData.mWordFound.mWord = wordBuffer;
 
                     if (anim == AnimType_OldWord)
@@ -944,7 +916,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
         case AnimType_NotWord:
             {
                 EventData wordBrokenData;
-                wordBrokenData.mWordBroken.mCubeIDStart = getCube().id();
+                wordBrokenData.mWordBroken.mCubeIDStart = getCube();
                 GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
             }
             break;
@@ -968,9 +940,7 @@ void CubeStateMachine::queueNextAnim(CubeAnim cubeAnim)
     }
 }
 
-void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
-                                  BG1Helper *bg1,
-                                  AnimParams *params)
+void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *params)
 {
     for (unsigned i = 0; i < NumCubeAnims; ++i)
     {
@@ -978,6 +948,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
         {
             params->mCubeAnim = i;
         }
+
         // skip subanims for meta puzzle borders
         if (i > CubeAnim_Main && !animHasNormalBorder(mAnimTypes[CubeAnim_Main]))
         {
@@ -985,21 +956,23 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
         }
 
         if (mAnimTypes[i] != AnimType_None &&
-            !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
+            !animPaint(mAnimTypes[i], *mVidBuf, bg1TileBuf, mAnimTimes[i], params))
         {
             queueNextAnim((CubeAnim)i);//, vid, bg1, params);
         }
     }
 }
 
-bool CubeStateMachine::canBeginWord() const
+bool CubeStateMachine::canBeginWord()
 {
+    // check if this is the left-most cube in a neighbor chain
+    Neighborhood hood(getCube());
     return (mPuzzleLettersPerCube > 0 &&
-            mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-            mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+            hood.neighborAt(LEFT) == CubeID::UNDEFINED &&
+            hood.neighborAt(RIGHT) != CubeID::UNDEFINED);
 }
 
-AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
+AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim)
 {
     switch (mAnimTypes[(int) cubeAnim])
     {
@@ -1093,30 +1066,43 @@ AnimType CubeStateMachine::getNextAnim(CubeAnim cubeAnim) const
     }
 }
 
-bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) const
+bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus)
 {
     if (canBeginWord())
     {        
         wordBuffer[0] = '\0';
-        const CubeStateMachine* csm = this;
+        CubeStateMachine* csm = this;
         bool neighborLetters = false;
-        for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT);
-             csm && neighborID != CUBE_ID_UNDEFINED;
-             neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT),
-             csm = GameStateMachine::findCSMFromID(neighborID))
+        CubeID rightCube = getCube();
+
+        // since this is the left-most cube in a neighbor chain, we can iterate
+        // through all the neighbors to the right
+        do
         {
+            // if there are no letters in the current cube state machine, done
             if (csm->mPuzzleLettersPerCube <= 0)
             {
                 break;
             }
+
+            // if fails to get letters in the current cube state machine, done
             char str[MAX_LETTERS_PER_CUBE + 1];
             if (!csm->getLetters(str, false))
             {
                 return false;
             }
+
+            // otherwise concat letters from current CubeStateMachine on string
             _SYS_strlcat(wordBuffer, str, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
             neighborLetters = true;
+
+            Neighborhood hood(csm->getCube());
+            rightCube = hood.neighborAt(RIGHT);
+            csm = GameStateMachine::findCSMFromID(rightCube);
         }
+        while (csm != NULL);
+
+        // if a neighbor to the right has letters
         if (neighborLetters)
         {
             char trimmedWord[MAX_LETTERS_PER_WORD + 1];
@@ -1131,18 +1117,18 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) 
                     unsigned char maxLettersPerCube;
 
                     if (Dictionary::getCurrentPuzzle(puzzle,
-                                          numAnagrams,
-                                          leadingSpaces,
-                                          maxLettersPerCube))
+                                                     numAnagrams,
+                                                     leadingSpaces,
+                                                     maxLettersPerCube))
                     {
                         return _SYS_strncmp(puzzle, trimmedWord, sizeof puzzle) == 0;
                     }
-                }
-                else if (Dictionary::isWord(trimmedWord, isBonus))
-                {
-                    isOld = Dictionary::isOldWord(trimmedWord);
-                    return true;
-                }
+               }
+               else if (Dictionary::isWord(trimmedWord, isBonus))
+               {
+                   isOld = Dictionary::isOldWord(trimmedWord);
+                   return true;
+               }
             }
         }
     }
@@ -1152,29 +1138,33 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus) 
 unsigned CubeStateMachine::findRowLength()
 {
     unsigned result = 1;
-    for (Cube::Side side = SIDE_LEFT; side <= SIDE_RIGHT; side +=2)
+    for (int side = LEFT; side <= RIGHT; side += 2)
     {
         CubeStateMachine* csm = this;
-        for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(side);
-             csm && neighborID != CUBE_ID_UNDEFINED;
-             neighborID = csm->mCube->physicalNeighborAt(side),
-             csm = GameStateMachine::findCSMFromID(neighborID))
+        CubeID nextCube = CubeID::UNDEFINED;
+        // go through all neighbors in the direction of the current side
+        do
         {
             if (csm != this)
             {
                 ++result;
             }
+            Neighborhood hood(csm->getCube());
+            nextCube = hood.neighborAt((Side)side);
+            csm = GameStateMachine::findCSMFromID(nextCube);
         }
+        while(csm != NULL);
     }
 
     return result;
 }
 
-bool CubeStateMachine::hasNoNeighbors() const
+bool CubeStateMachine::hasNoNeighbors()
 {
-    for (Cube::Side side = 0; side < NUM_SIDES; ++side)
+    Neighborhood hood(getCube());
+    for (int side = 0; side < NUM_SIDES; ++side)
     {
-        if (mCube->physicalNeighborAt(side) != CUBE_ID_UNDEFINED)
+        if (hood.hasNeighborAt((Side)side))
         {
             return false;
         }
@@ -1182,28 +1172,25 @@ bool CubeStateMachine::hasNoNeighbors() const
     return true;
 }
 
-bool CubeStateMachine::isConnectedToCubeOnSide(Cube::ID cubeIDStart,
-                                               Cube::Side side)
+bool CubeStateMachine::isConnectedToCubeOnSide(CubeID cubeIDStart,
+                                               Side side)
 {
-    if (mCube->id() == cubeIDStart)
+    if (getCube() == cubeIDStart)
     {
         return true;
     }
 
     CubeStateMachine* csm = this;
-    for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(side);
-         csm && neighborID != CUBE_ID_UNDEFINED;
-         neighborID = csm->mCube->physicalNeighborAt(side),
-         csm = GameStateMachine::findCSMFromID(neighborID))
+
+    // search for a matching cubeID in the given direction through the
+    // neighbor chain
+    CubeID aCube = getCube();
+    while (aCube.isDefined() && aCube != cubeIDStart)
     {
-        // only check the left most letter, as it it the one that
-        // determines the entire word state
-        if (neighborID == cubeIDStart)
-        {
-            return true;
-        }
+        Neighborhood hood(aCube);
+        aCube = hood.neighborAt(side);
     }
-    return false;
+    return (aCube == cubeIDStart);
 }
 
 unsigned CubeStateMachine::getNumStates() const
@@ -1222,7 +1209,7 @@ void CubeStateMachine::update(float dt)
         }
     }
     updateSpriteParams(dt);
-    bool touching = getCube().touching();
+    bool touching = getCube().isTouching();
     if (mTouchHoldWaitForUntouch)
     {
         if (!touching)
@@ -1237,7 +1224,7 @@ void CubeStateMachine::update(float dt)
         if (mTouchHoldTime >= 0.5f)
         {
             EventData data;
-            data.mInput.mCubeID = getCube().id();
+            data.mInput.mCubeID = getCube();
             WordGame::onEvent(EventID_TouchAndHold, data);
             mTouchHoldWaitForUntouch = true;
         }
@@ -1247,8 +1234,7 @@ void CubeStateMachine::update(float dt)
     if ((int)mBG0Panning != (int)mBG0TargetPanning)
     {
         mBG0Panning += (mBG0TargetPanning - mBG0Panning) * dt * 7.5f;
-        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
-        setPanning(vid, mBG0Panning);
+        setPanning(mBG0Panning);
     }
     switch (mAnimTypes[CubeAnim_Main])
     {
@@ -1257,10 +1243,10 @@ void CubeStateMachine::update(float dt)
     }
 }
 
-void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
+void CubeStateMachine::setPanning(float panning)
 {
     mBG0Panning = panning;
-    int tilePanning = fmodf(mBG0Panning, 144.f);
+    int tilePanning = fmod(mBG0Panning, 144.f);
     tilePanning /= 8;
     // TODO clean this up
     int tileWidth = 12/GameStateMachine::getCurrentMaxLettersPerCube();
@@ -1270,7 +1256,7 @@ void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
         mTilePositions[i].x = ((mTilePositions[i].x + tileWidth + 2) % (16 + 2 * tileWidth));
         mTilePositions[i].x -= tileWidth + 2;
     }
-    //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
+    mVidBuf->bg0.setPanning(vec((int)mBG0Panning, 0));
 }
 
 void CubeStateMachine::paint()
@@ -1281,28 +1267,29 @@ void CubeStateMachine::paint()
     }
 
     mPainting = true;
-    Cube& c = getCube();
-    VidMode_BG0_SPR_BG1 vid(c.vbuf);
-    BG1Helper bg1(c);
+    CubeID c = getCube();
+    TileBuffer<16,16,1> bg1TileBuf(c);
+    ASSERT(mVidBuf != NULL);
+
+    bg1TileBuf.erase(transparent);
 
     switch (getCurrentStateIndex())
     {
     case CubeStateIndex_Title:
-        vid.init();
         {
             const float ANIM_START_DELAY = 2.f;
 
-            switch (getCube().id() - CUBE_ID_BASE)
+            switch (getCube() - CUBE_ID_BASE)
             {
             default:
-                vid.BG0_drawAsset(Vec2(0, 0), StartBG);
-                vid.setSpriteImage(0, StartPrompt);
-                vid.resizeSprite(0, StartPrompt.width * 8, StartPrompt.height * 8);
+                mVidBuf->bg0.image(vec(0, 0), StartBG);
+                mVidBuf->sprites[0].setImage(StartPrompt);
+                mVidBuf->sprites[0].resize(StartPrompt.pixelWidth(),
+                                           StartPrompt.pixelHeight());
                 {
-                    float shakeOffset = 0.f;
-                    vid.moveSprite(0, Vec2(39 - shakeOffset, 74));
-                    vid.BG1_setPanning(Vec2((int)mPanning + shakeOffset, 0));
-                    bg1.DrawAsset(Vec2(0, 0), StartLid);
+                    mVidBuf->sprites[0].move(vec(39, 74));
+                    mVidBuf->bg1.setPanning(vec((int)mPanning, 0));
+                    bg1TileBuf.image(vec(0, 0), StartLid);
                 }
                 break;
 
@@ -1311,7 +1298,7 @@ void CubeStateMachine::paint()
             default:
                 paintBorder(vid, ImageIndex_Teeth);
                 /* TODO load/save
-                paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
+                paintScoreNumbers(vid, vec(3,4), FontSmall, "High Scores");
 
                 for (unsigned i = arraysize(SavedData::sHighScores) - 1;
                      i >= 0;
@@ -1323,7 +1310,7 @@ void CubeStateMachine::paint()
                     }
                     char string[17];
                     sprintf(string, "%.5d", SavedData::sHighScores[i]);
-                    paintScoreNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+                    paintScoreNumbers(vid, vec(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                                  FontSmall,
                                  string);
                 }
@@ -1335,22 +1322,20 @@ void CubeStateMachine::paint()
         break;
 
     case CubeStateIndex_Menu:
-        if (&getCube() == WordGame::instance()->getMenuCube())
+        if (getCube() == WordGame::instance()->getMenuCube())
         {
             mPainting = false;
             return;
         }
         else
         {
-            vid.init();
-            vid.BG0_drawAsset(Vec2(0,0), MenuBlank);
+            mVidBuf->bg0.image(vec(0,0), MenuBlank);
         }
         break;
 
     case CubeStateIndex_StoryCityProgression:
-        vid.init();
-        vid.BG0_drawAsset(Vec2(0,0), MenuBlank);
-        if (&getCube() == WordGame::instance()->getMenuCube())
+        mVidBuf->bg0.image(vec(0,0), MenuBlank);
+        if (getCube() == WordGame::instance()->getMenuCube())
         {
             /* TODO animtype?
             char slideOffset = 0;
@@ -1371,7 +1356,7 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            vid.BG0_drawAsset(Vec2(2,2), ClueGreece);
+            mVidBuf->bg0.image(vec(2,2), ClueGreece);
             // TODO drive from python script that looks at puzzles
             unsigned char numMetaPuzzles = 4;
             unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
@@ -1388,7 +1373,7 @@ void CubeStateMachine::paint()
                 }
                 else
                 {
-                    vid.BG0_drawAsset(Vec2(2 + i * slatWidth/8, 2), Slat3);
+                    mVidBuf->bg0.image(vec(2 + i * slatWidth/8, 2), Slat3);
                 }
             }
 
@@ -1396,26 +1381,25 @@ void CubeStateMachine::paint()
         break;
 
     default:
-        vid.init();
-        vid.BG0_drawAsset(Vec2(0,0), TileBG);
-        paintLetters(vid, bg1, Font1Letter, true);
-        vid.BG0_setPanning(Vec2(0.f, 0.f));
+        mVidBuf->bg0.image(vec(0,0), TileBG);
+        paintLetters(bg1TileBuf, true);
+        mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 
         break;
     }
 
-    bg1.Flush(); // TODO only flush if mask has changed recently
+    //bg1.Flush(); // TODO only flush if mask has changed recently
+    mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+
 
     mPainting = false;
 }
 
-void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
-                           ImageIndex teethImageIndex,
-                           bool animate,
-                           bool reverseAnim,
-                           bool loopAnim,
-                           bool paintTime,
-                           float animStartTime)
+void CubeStateMachine::paintScore(bool animate,
+                                   bool reverseAnim,
+                                   bool loopAnim,
+                                   bool paintTime,
+                                   float animStartTime)
 {
 #if (0)
     return;
@@ -1495,7 +1479,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         frame = (unsigned) (animTime * teeth->frames);
         frame = MIN(frame, teeth->frames - 1);
 
-        //DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
+        //LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getCube(), teethImageIndex, frame, GameStateMachine::getTime()));
 
     }
     else if (reverseAnim)
@@ -1503,7 +1487,6 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         frame = teeth->frames - 1;
     }
 
-    BG1Helper bg1(getCube());
     unsigned bg1Tiles = 2;
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
@@ -1580,15 +1563,15 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        vid.BG0_drawPartialAsset(Vec2(j, i),
-                                                 Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                                 Vec2(1, 1),
+                        mVidBuf->BG0_drawPartialAsset(vec(j, i),
+                                                 vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                                 vec(1, 1),
                                                  *teethNumber,
                                                  frame - 2);
                     }
                     else
                     {
-                        vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        mVidBuf->BG0_drawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     break;
                 }
@@ -1604,15 +1587,15 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
                         i >= ((unsigned) TEETH_NUM_POS.y) &&
                         i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i),
-                                             Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                             Vec2(1, 1),
+                        bg1.DrawPartialAsset(vec(j, i),
+                                             vec(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                             vec(1, 1),
                                              *teethNumber,
                                              frame - 2);
                     }
                     else
                     {
-                        bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                        bg1.DrawPartialAsset(vec(j, i), texCoord, vec(1, 1), *teeth, frame);
                     }
                     ++bg1Tiles;
                 }
@@ -1669,11 +1652,11 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 
             if (highDigitAnim[AnimType] > 0)
             {
-                bg1.DrawAsset(Vec2(((3 - 2 + 0) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - 2 + 0) * 4 + 1), 14),
                               *highDigitAnim[AnimType],
                               frame);
             }
-            bg1.DrawAsset(Vec2(((3 - 2 + 1) * 4 + 1), 14),
+            bg1.DrawAsset(vec(((3 - 2 + 1) * 4 + 1), 14),
                           *lowDigitAnim[AnimType],
                           frame);
         }
@@ -1686,7 +1669,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
             for (unsigned i = 0; i < len; ++i)
             {
                 frame = string[i] - '0';
-                bg1.DrawAsset(Vec2(((3 - len + i) * 4 + 1), 14),
+                bg1.DrawAsset(vec(((3 - len + i) * 4 + 1), 14),
                               FontTeeth,
                               frame);
             }
@@ -1706,18 +1689,18 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
         unsigned tensDigit = GameStateMachine::getNumAnagramsLeft() / 10;
         if (tensDigit)
         {
-            bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
+            bg1.DrawAsset(vec(7,11), FontSmall, tensDigit);
         }
-        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
+        bg1.DrawAsset(vec(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
 
         if (GameStateMachine::getNumBonusAnagramsLeft())
         {
             tensDigit = GameStateMachine::getNumBonusAnagramsLeft() / 10;
             if (tensDigit)
             {
-                bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
+                bg1.DrawAsset(vec(1,11), FontBonus, tensDigit);
             }
-            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
+            bg1.DrawAsset(vec(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
         }
     }
 
@@ -1726,9 +1709,7 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
 #endif // (0)
 }
 
-void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
-                                    BG1Helper &bg1,
-                                    const AssetImage &fontREMOVE,
+void CubeStateMachine::paintLetters(TileBuffer<16,16,1> &bg1TileBuf,
                                     bool paintSprites)
 {
     const static AssetImage* fonts[] =
@@ -1747,7 +1728,7 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
         break;
 
     default:
-        vid.hideSprite(0); // TODO sprite IDs
+        mVidBuf->sprites[0].hide(); // TODO sprite IDs
         break;
     }
 
@@ -1759,18 +1740,20 @@ void CubeStateMachine::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     default:
         for (unsigned i=1; i<8; ++i)
         {
-            vid.hideSprite(i);
+            mVidBuf->sprites[i].hide();
         }
         break;
     }
 
-    Cube &c = getCube();
+    CubeID c = getCube();
     AnimParams params;
     getAnimParams(&params);
-    updateAnim(vid, &bg1, &params);
+    updateAnim(bg1TileBuf, &params);
 }
 
-void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
+void CubeStateMachine::paintScoreNumbers(BG1Mask &bg1,
+                                         const Vec2& position_RHS,
+                                         const char* string)
 {
     Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
@@ -1790,9 +1773,9 @@ void CubeStateMachine::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RH
     for (; *string; ++string)
     {
         unsigned index = *string - '0';
-        ASSERT(index < font.frames);
+        ASSERT(index < font.numFrames());
         position.x++;
-        bg1.DrawAsset(position, font, index);
+        mVidBuf->bg1.image(position, font, index);
     }
 }
 
@@ -1800,7 +1783,7 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
 {
     bool retval = true;
     ASSERT(params);
-    Cube &c = getCube();
+    CubeID c = getCube();
     params->mLetters[0] = '\0';
     switch (mAnimTypes[CubeAnim_Main])
     {
@@ -1852,9 +1835,10 @@ bool CubeStateMachine::getAnimParams(AnimParams *params)
         break;
     }
 
-    params->mLeftNeighbor = (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED);
-    params->mRightNeighbor = (c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-    params->mCubeID = getCube().id();
+    Neighborhood hood(getCube());
+    params->mLeftNeighbor = (hood.neighborAt(LEFT) != CubeID::UNDEFINED);
+    params->mRightNeighbor = (hood.neighborAt(RIGHT) != CubeID::UNDEFINED);
+    params->mCubeID = getCube();
     //params->mBonus = GameStateMachine::getCurrentWordIsBonus();
     unsigned mlpc = GameStateMachine::getCurrentMaxLettersPerCube();
     unsigned letter0Index = mPuzzlePieceIndex * mlpc;
@@ -2023,7 +2007,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-    DEBUG_LOG(("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, getCube().id()));
+//     LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 

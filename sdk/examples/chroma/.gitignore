@@ -1,10 +1,4 @@
-*~
-*.o
-*.gen.h
-*.gen.cpp
-assets.html
-*.sim
-*.sim.exe
-*.stm32
-*_enc.raw
 PuzzleData.h
+*.dump
+*.config
+*.user

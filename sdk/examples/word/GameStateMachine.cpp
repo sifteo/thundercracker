@@ -10,12 +10,12 @@ const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
-GameStateMachine::GameStateMachine(Cube cubes[]) :
+GameStateMachine::GameStateMachine(VideoBuffer vidBufs[]) :
     StateMachine(GameStateIndex_LoadingFinished), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
     mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0),
-    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CUBE_ID_UNDEFINED)
+    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CubeID::UNDEFINED)
 {
-    ASSERT(cubes != 0);
+    ASSERT(vidBufs != 0);
     sInstance = this;
     for (unsigned i = 0; i < arraysize(mLevelProgressData.mPuzzleProgress); ++i)
     {
@@ -24,7 +24,7 @@ GameStateMachine::GameStateMachine(Cube cubes[]) :
 
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
-        mCubeStateMachines[i].setCube(cubes[i]);
+        mCubeStateMachines[i].setVideoBuffer(vidBufs[i]);
     }
 }
 
@@ -120,7 +120,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                 if (mLevelProgressData.mPuzzleProgress[i] == CheckMarkState_Hidden)
                 {
                     // TODO out of range, unexpected
-                    DEBUG_LOG(("Warning: attempted to create another word after finding them all\n"));
+                    LOG("Warning: attempted to create another word after finding them all\n");
                     break;
                 }
             }
@@ -167,7 +167,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case EventID_EnterState:
             WordGame::playAudio(flap_laugh_fireball, AudioChannelIndex_Time);
-            WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
+            WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, AudioChannel::REPEAT);
             break;
 
         case EventID_Start:
@@ -216,7 +216,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_Update:
             {
                 float dt = data.mUpdate.mDT;
-                if (mHintCubeIDOnUpdate != CUBE_ID_UNDEFINED)
+                if (mHintCubeIDOnUpdate != CubeID::UNDEFINED)
                 {
                     if (GameStateMachine::getInstance().getNumHints() > 0)
                     {
@@ -231,7 +231,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         bool canUseHint = false;
                         for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
                         {
-                            Cube::ID cubeID = ci + CUBE_ID_BASE;
+                            CubeID cubeID = ci + CUBE_ID_BASE;
                             CubeStateMachine *csm =
                                 GameStateMachine::findCSMFromID(cubeID);
                             ASSERT(csm);
@@ -254,7 +254,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                             // will do so and message the rest to stop
                             for (unsigned ci = 0; ci < NUM_CUBES; ++ci)
                             {
-                                Cube::ID cubeID = ci + CUBE_ID_BASE;
+                                CubeID cubeID = ci + CUBE_ID_BASE;
                                 CubeStateMachine *csm =
                                     GameStateMachine::findCSMFromID(cubeID);
                                 ASSERT(csm);
@@ -262,7 +262,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                             }
                         }
                     }
-                    mHintCubeIDOnUpdate = CUBE_ID_UNDEFINED;
+                    mHintCubeIDOnUpdate = CubeID::UNDEFINED;
                 }
 
                 if (GameStateMachine::getSecondsLeft() <= 0)
@@ -358,7 +358,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
                 if (mStateTime > TRANSITION_ANIM_LENGTH)
                 {
-                    WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
+                    WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, AudioChannel::REPEAT);
                     createNewAnagram();
                     newStateIndex = GameStateIndex_PlayScored;
                 }
@@ -375,7 +375,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (eventID)
         {
         case EventID_EnterState:
-            WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
+            WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, AudioChannel::REPEAT);
             WordGame::playAudio(teeth_close, AudioChannelIndex_Teeth);
             break;
 
@@ -487,7 +487,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                             exitMenu = true;
                             {
                                 EventData data;
-                                data.mTouchAndHoldWaitForUntouch.mCubeID = WordGame::instance()->getMenuCube()->id();
+                                data.mTouchAndHoldWaitForUntouch.mCubeID =
+                                        (PCubeID)WordGame::instance()->getMenuCube();
                                 WordGame::onEvent(EventID_TouchAndHoldWaitForUntouch, data);
                             }
                         }
@@ -504,20 +505,20 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         break;
 
                     case MENU_NEIGHBOR_ADD:
-                        //DEBUG_LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
+                        //LOG(("found cube %d on side %d of menu (neighbor's %d side)\n",
                           //   e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
                         break;
                     case MENU_NEIGHBOR_REMOVE:
-                        //DEBUG_LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
+                        //LOG(("lost cube %d on side %d of menu (neighbor's %d side)\n",
                           //   e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide));
                         break;
 
                     case MENU_ITEM_ARRIVE:
-                        //DEBUG_LOG(("arriving at menu item %d\n", e.item));
+                        //LOG(("arriving at menu item %d\n", e.item));
                         break;
 
                     case MENU_ITEM_DEPART:
-                        //DEBUG_LOG(("departing from menu item %d\n", e.item));
+                        //LOG(("departing from menu item %d\n", e.item));
                         break;
 
                     case MENU_PREPAINT:
@@ -534,7 +535,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                     }
                 }
                 //ASSERT(e.type == MENU_EXIT);
-                //DEBUG_LOG(("Selected Game: %d\n", e.item));
+                //LOG(("Selected Game: %d\n", e.item));
 
             }
             break;
@@ -570,18 +571,18 @@ unsigned GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
     return 0;
 }
 
-CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
+CubeStateMachine* GameStateMachine::findCSMFromID(CubeID cubeID)
 {
-    if (cubeID == CUBE_ID_UNDEFINED)
+    if (cubeID == CubeID::UNDEFINED)
     {
-        return 0;
+        return NULL;
     }
 
     if (sInstance)
     {
         for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
         {
-            if (sInstance->mCubeStateMachines[i].getCube().id() == cubeID)
+            if (sInstance->mCubeStateMachines[i].getCube() == cubeID)
             {
                 return &sInstance->mCubeStateMachines[i];
             }
@@ -595,7 +596,7 @@ void GameStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
     EventData data;
     data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
-    DEBUG_LOG(("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex));
+//     LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldStateIndex);
     onEvent(EventID_GameStateChanged, data);
@@ -673,7 +674,7 @@ void GameStateMachine::onAudioEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_AddNeighbor:
-        WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor, LoopOnce, AudioPriority_Low);
+        WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor, AudioChannel::ONCE, AudioPriority_Low);
         break;
 
     case EventID_NewWordFound:
@@ -703,7 +704,7 @@ void GameStateMachine::onAudioEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_OldWordFound:
-        WordGame::playAudio(lip_snort, AudioChannelIndex_Score, LoopOnce, AudioPriority_Low);
+        WordGame::playAudio(lip_snort, AudioChannelIndex_Score, AudioChannel::ONCE, AudioPriority_Low);
         break;
 
     case EventID_ClockTick:
@@ -712,29 +713,29 @@ void GameStateMachine::onAudioEvent(unsigned eventID, const EventData& data)
         case 30:
 //            WordGame::playAudio(bonus, AudioChannelIndex_Time);
 
-            WordGame::playAudio(timer_30sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_30sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
 
         case 20:
 //            WordGame::playAudio(pause_on, AudioChannelIndex_Time);
-            WordGame::playAudio(timer_20sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_20sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
 
         case 10:
 //            WordGame::playAudio(pause_off, AudioChannelIndex_Time);
-            WordGame::playAudio(timer_10sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_10sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
 
         case 3:
-            WordGame::playAudio(timer_3sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_3sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
 
         case 2:
-            WordGame::playAudio(timer_2sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_2sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
 
         case 1:
-            WordGame::playAudio(timer_1sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
+            WordGame::playAudio(timer_1sec, AudioChannelIndex_Time, AudioChannel::ONCE, AudioPriority_High);
             break;
         }
         break;
@@ -861,7 +862,7 @@ void GameStateMachine::createNewAnagram()
         }
     }
 
-    LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
+    LOG("scrambled %s to %s\n", spacesAdded, scrambled);
     ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
            _SYS_strnlen(spacesAdded, GameStateMachine::getCurrentMaxLettersPerWord() + 1));
     _SYS_strlcpy(data.mNewPuzzle.mWord, scrambled, sizeof data.mNewPuzzle.mWord);

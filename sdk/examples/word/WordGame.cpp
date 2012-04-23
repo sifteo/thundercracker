@@ -5,11 +5,11 @@
 using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
-Math::Random WordGame::random;
+Random WordGame::random;
 
 
-WordGame::WordGame(Cube cubes[], Cube* pMenuCube, Menu& menu) :
-    mGameStateMachine(cubes), mNeedsPaintSync(false)
+WordGame::WordGame(VideoBuffer vidBufs[], CubeID pMenuCube, Menu& menu) :
+    mGameStateMachine(vidBufs), mNeedsPaintSync(false)
 {
     STATIC_ASSERT(NumAudioChannelIndexes == 2);// HACK work around API bug
     sInstance = this;
@@ -18,8 +18,10 @@ WordGame::WordGame(Cube cubes[], Cube* pMenuCube, Menu& menu) :
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
-        mAudioChannels[i].init();
         mLastAudioPriority[i] = AudioPriority_None;
+    }
+    for (unsigned i = 0; i < NumAudioChannelIndexes; ++i) {
+        mAudioChannels[i].init(i);
     }
 }
 
@@ -42,9 +44,9 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
     mSavedData.OnEvent(eventID, data);
 }
 
-bool WordGame::playAudio(_SYSAudioModule &mod,
+bool WordGame::playAudio(const AssetAudio &mod,
                          AudioChannelIndex channel ,
-                         _SYSAudioLoopType loopMode,
+                         AudioChannel::LoopMode loopMode,
                          AudioPriority priority)
 {
 
@@ -69,9 +71,9 @@ bool WordGame::playAudio(_SYSAudioModule &mod,
     return sInstance->_playAudio(mod, channel, loopMode, priority);
 }
 
-bool WordGame::_playAudio(_SYSAudioModule &mod,
+bool WordGame::_playAudio(const AssetAudio &mod,
                           AudioChannelIndex channel,
-                          _SYSAudioLoopType loopMode,
+                          AudioChannel::LoopMode loopMode,
                           AudioPriority priority)
 {
     ASSERT((unsigned)channel < arraysize(mAudioChannels));
@@ -97,11 +99,11 @@ bool WordGame::_playAudio(_SYSAudioModule &mod,
     return played;
 }
 
-void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
+void WordGame::hideSprites(VideoBuffer &vid)
 {
     for (int i=0; i < 8; ++i)
     {
-        vid.hideSprite(i);
+        vid.sprites[i].hide();
     }
 }
 

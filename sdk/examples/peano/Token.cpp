@@ -4,6 +4,9 @@
 
 namespace TotalsGame {
 
+extern Int2 kSideToUnit[4];
+    
+    
 DEFINE_POOL(Token)
 
 Puzzle *Token::GetPuzzle()
@@ -52,7 +55,7 @@ ShapeMask Token::GetMask()
     return ShapeMask::Unity;
 }
 
-bool Token::TokenAt(const Vec2 &p, Token **t)
+bool Token::TokenAt(Int2 p, Token **t)
 {
     if (p.x == 0 && p.y == 0)
     {
@@ -63,7 +66,7 @@ bool Token::TokenAt(const Vec2 &p, Token **t)
     return false;
 }
 
-bool Token::PositionOf(Token *t, Vec2 *p)
+bool Token::PositionOf(Token *t, Int2 *p)
 {
     p->set(0,0);
     return t == this;
@@ -97,15 +100,15 @@ void Token::PopGroup() {
     }
 }
 
-SideStatus Token::StatusOfSide(Cube::Side side, IExpression *current)
+SideStatus Token::StatusOfSide(unsigned side, IExpression *current)
 {
     if (current == this)
     {
         return SideStatusOpen;
     }
-    Vec2 pos;
+    Int2 pos;
     current->PositionOf(this, &pos);
-    Vec2 del = kSideToUnit[side];
+    Int2 del = kSideToUnit[side];
     if (!current->GetMask().BitAt(pos+del))
     {
         return SideStatusOpen;
@@ -139,7 +142,7 @@ SideStatus Token::StatusOfSide(Cube::Side side, IExpression *current)
     return SideStatusBlocked;
 }
 
-bool Token::ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp)
+bool Token::ConnectsOnSideAtDepth(unsigned s, int depth, IExpression *exp)
 {
     if (exp == NULL)
     {
@@ -229,9 +232,9 @@ void Token::SetOpBottom(Difficulty dif, Op value)
 }
 
 
-bool SideHelper::IsSource(Cube::Side side)
+bool SideHelper::IsSource(unsigned side)
 {
-    return side == SIDE_RIGHT || side == SIDE_BOTTOM;
+    return side == RIGHT || side == BOTTOM;
 }
 
 

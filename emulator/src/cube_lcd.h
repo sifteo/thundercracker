@@ -29,6 +29,7 @@ class LCD {
     struct Pins {
         /* Configured for an 8-bit parallel bus, in 80-system mode */
         
+        uint8_t   power;      // IN, active-high
         uint8_t   csx;        // IN, active-low
         uint8_t   dcx;        // IN, low=cmd high=data
         uint8_t   wrx;        // IN, rising edge
@@ -61,6 +62,7 @@ class LCD {
         mode_awake = 0;
         mode_display_on = 0;
         mode_te = 0;
+        mode_power_on = 1;
         
         write_count = 0;
         pixel_count = 0;
@@ -76,14 +78,23 @@ class LCD {
          *   - 16-bit color depth, RGB-565 (3AH = 05)
          */
         
-        if (!pins->csx && pins->wrx && !prev_wrx) {
-            if (pins->dcx) {
-                /* Data write strobe */
-                data(pins->data_in);
-            } else {
-                /* Command write strobe */
-                command(pins->data_in);
+        if (pins->power) {
+            if (!mode_power_on)
+                init();
+        
+            if (!pins->csx && pins->wrx && !prev_wrx) {
+                if (pins->dcx) {
+                    /* Data write strobe */
+                    data(pins->data_in);
+                } else {
+                    /* Command write strobe */
+                    command(pins->data_in);
+                }
             }
+        } else {
+            mode_display_on = 0;
+            mode_awake = 0;
+            mode_power_on = 0;
         }
 
         prev_wrx = pins->wrx;
@@ -136,22 +147,31 @@ class LCD {
         col = xs;
     }
 
+    void applyMirroring(uint8_t flags, unsigned &row, unsigned &col) {
+        row = (flags & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
+        col = (flags & MADCTR_MX) ? (WIDTH - 1 - col) : col;
+    }
+
     void writePixel(uint16_t pixel) {
-        unsigned vRow, vCol, addr;
+        unsigned vRow = row;
+        unsigned vCol = col;
         uint8_t m = madctr ^ model.madctr_xor;
 
-        // Logical to physical address translation
-        vRow = (m & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
-        vCol = (m & MADCTR_MX) ? (WIDTH - 1 - col) : col;
+        if (model.order == model.MIRROR_BEFORE_SWAP)
+            applyMirroring(m, vRow, vCol);
+
         vRow += model.row_adj;
         vCol += model.col_adj;
 
-        addr = (m & MADCTR_MV) 
-            ? (vRow + (vCol << FB_ROW_SHIFT))
-            : (vCol + (vRow << FB_ROW_SHIFT));
-    
+        if (m & MADCTR_MV)
+            std::swap(vRow, vCol);
+
+        if (model.order == model.SWAP_BEFORE_MIRROR)
+            applyMirroring(m, vRow, vCol);
+
+        unsigned addr = vCol + (vRow << FB_ROW_SHIFT);
         fb_mem[addr & FB_MASK] = pixel;
-        
+
         if (++col > xe) {
             col = xs;
             if (++row > ye)
@@ -218,7 +238,7 @@ class LCD {
         cmd_bytecount = 0;
 
         switch (op) {
-        
+
         case CMD_RAMWR:
             firstPixel();
             write_count++;
@@ -231,7 +251,7 @@ class LCD {
         case CMD_SLPIN:
             mode_awake = 0;
             break;
-            
+
         case CMD_SLPOUT:
             mode_awake = 1;
             break;
@@ -239,7 +259,7 @@ class LCD {
         case CMD_DISPOFF:
             mode_display_on = 0;
             break;
-        
+
         case CMD_DISPON:
             mode_display_on = 1;
             break;
@@ -252,13 +272,20 @@ class LCD {
             mode_te = 1;
             break;
 
-            /*
-             * Assume this firmware is expecting a Truly  Undo its model-specific tweaks.
-             */
+        /*
+         * Look for specific magic commands in order to guess what LCD this
+         * firmware build is expecting to talk to. Then, undo that firmware's
+         * model-specific workarounds.
+         */
+
         case CMD_MAGIC_TRULY:
             model.madctr_xor = MADCTR_MX | MADCTR_MY;
             model.row_adj = -32;
             model.col_adj = 0;
+            break;
+
+        case CMD_MAGIC_TIANMA_HX8353:
+            model.order = model.SWAP_BEFORE_MIRROR;
             break;
 
         }
@@ -326,7 +353,8 @@ class LCD {
     static const uint8_t MADCTR_RGB   = 0x08;   // Not implemented
 
     // Vendor-specific commands that we use to detect an LCD model
-    static const uint8_t CMD_MAGIC_TRULY   = 0xC4;
+    static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
+    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xE3;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;
@@ -354,6 +382,7 @@ class LCD {
     uint8_t mode_awake;
     uint8_t mode_display_on;
     uint8_t mode_te;
+    uint8_t mode_power_on;
 
     /*
      * Model-specific emulation characteristics.
@@ -367,6 +396,10 @@ class LCD {
         uint8_t madctr_xor;
         int8_t row_adj;
         int8_t col_adj;
+        enum {
+            MIRROR_BEFORE_SWAP,
+            SWAP_BEFORE_MIRROR,
+        } order;
     } model;
 };
 

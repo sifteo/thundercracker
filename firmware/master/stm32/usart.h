@@ -1,8 +1,6 @@
 /*
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef USART_H_
@@ -14,6 +12,10 @@
 class Usart
 {
 public:
+
+    static const uint16_t STATUS_OVERRUN    = (1 << 3);
+    static const uint16_t STATUS_RXED       = (1 << 5);
+    static const uint16_t STATUS_TXED       = (1 << 7);
 
     static Usart Dbg;
 
@@ -35,8 +37,11 @@ public:
     void put(char c);
     char get();
 
+    uint16_t isr(uint8_t *buf = 0);
+
 private:
     volatile USART_t *uart;
+
 };
 
 #endif /* USART_H_ */

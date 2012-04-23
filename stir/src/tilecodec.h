@@ -105,10 +105,7 @@ class RLECodec4 {
 struct FlashAddress {
     uint32_t linear;
 
-    static const unsigned FLASH_SIZE = 2 * 1024 * 1024;
-    static const unsigned BLOCK_SIZE = 64 * 1024;
     static const unsigned TILE_SIZE = 128;
-    static const unsigned TILES_PER_BLOCK = BLOCK_SIZE / TILE_SIZE;
     
     FlashAddress(uint32_t addr)
         : linear(addr) {}
@@ -129,10 +126,6 @@ struct FlashAddress {
     uint8_t lat2() const {
         return (linear >> 14) << 1;
     }
-
-    static unsigned tilesToBlocks(unsigned tiles) {
-        return (tiles + TILES_PER_BLOCK - 1) / TILES_PER_BLOCK;
-    }
 };
 
 
@@ -149,9 +142,7 @@ class TileCodec {
  public:
     TileCodec(std::vector<uint8_t>& buffer);
 
-    void address(FlashAddress addr);
-    void erase(unsigned numBlocks);
-    void encode(const TileRef tile, bool autoErase=false);
+    void encode(const TileRef tile);
     void flush();
 
     void dumpStatistics(Logger &log);

@@ -1,0 +1,6 @@
+*.exe
+*.o
+*.inc
+*.dSYM
+src/slinky-d*
+slinky

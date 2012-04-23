@@ -5,6 +5,8 @@
 #include "LevelProgressData.h"
 #include "Constants.h"
 
+using namespace Sifteo;
+
 enum AnimType
 {
     AnimType_None = -1,
@@ -46,7 +48,7 @@ struct AnimParams
 {
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     bool mLeftNeighbor, mRightNeighbor;
-    Cube::ID mCubeID;
+    CubeID mCubeID;
     int mCubeAnim;
     unsigned char mMetaLetterIndex;
     unsigned char mLettersPerCube;
@@ -54,11 +56,11 @@ struct AnimParams
     SpriteParams *mSpriteParams;
 };
 
-bool animPaint(AnimType anim,
-               VidMode_BG0_SPR_BG1 &vid,
-               BG1Helper *bg1 = 0,
-               float animTime = 0.f,
-               const AnimParams *params=0);
+bool animPaint(AnimType animT,
+               VideoBuffer &vid,
+               TileBuffer<16,16,1> &bg1TileBuf,
+               float animTime,
+               const AnimParams *params);
 
 bool animHasNormalBorder(AnimType animT);
 

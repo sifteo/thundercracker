@@ -1,9 +1,6 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #include <string.h>
@@ -69,17 +66,11 @@ void RadioManager::produce(PacketTransmission &tx)
             break;
         }
     }
-
-    DEBUG_LOG(("Radio TX: [%dms] ", (int)(SysTime::ticks() / SysTime::msTicks(1))));
-    tx.log();
 }
 
 void RadioManager::ackWithPacket(const PacketBuffer &packet)
 {
     CubeSlot &slot = CubeSlot::getInstance(fifoPop());
-
-    DEBUG_LOG(("Radio ACK: "));
-    packet.log();
 
     if (slot.enabled())
         slot.radioAcknowledge(packet);
@@ -94,8 +85,6 @@ void RadioManager::ackEmpty()
 void RadioManager::timeout()
 {
     CubeSlot &slot = CubeSlot::getInstance(fifoPop());
-
-    DEBUG_LOG(("Radio TIMEOUT\n"));
 
     if (slot.enabled())
         slot.radioTimeout();

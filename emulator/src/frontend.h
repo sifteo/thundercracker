@@ -12,6 +12,7 @@
 #include "gl_renderer.h"
 #include "system.h"
 #include "frontend_cube.h"
+#include "frontend_mothership.h"
 #include "frontend_overlay.h"
 
 #include <Box2D/Box2D.h>
@@ -117,14 +118,21 @@ class Frontend {
     std::string createScreenshotName();
     void drawOverlay();
 
+    void toggleRotationLock();
+
     System *sys;
     unsigned frameCount;
     unsigned idleFrames;
+
+    unsigned mothershipCount; // this belongs in System methinks...
+    FrontendMothership motherships[1];
+
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;
     bool isFullscreen;
     bool isRunning;
+    bool isRotationFixed;
 
     int mouseX, mouseY;
     int mouseWheelPos;
@@ -153,7 +161,7 @@ class Frontend {
 
     GLRenderer renderer;
     FrontendOverlay overlay;
-    
+
     static Frontend *instance;
 };
 

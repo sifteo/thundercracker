@@ -2,7 +2,6 @@
 
 //#include "Guid.h"
 #include "ObjectPool.h"
-#include <stddef.h>
 
 namespace TotalsGame 
 {
@@ -13,11 +12,6 @@ namespace TotalsGame
 	enum Difficulty 
 	{
 		DifficultyEasy = 0, DifficultyMedium = 1, DifficultyHard = 2
-	};
-
-	enum NumericMode
-	{
-		NumericModeFraction, NumericModeDecimal
 	};
 
 	class Puzzle {

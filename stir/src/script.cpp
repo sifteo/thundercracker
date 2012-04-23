@@ -8,22 +8,26 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "sha.h"
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
-#include "asegwriter.h"
+#include "audioencoder.h"
+#include "dubencoder.h"
 
 namespace Stir {
 
 // Important global variables
 #define GLOBAL_DEFGROUP         "_defaultGroup"
 #define GLOBAL_QUALITY          "quality"
+#define SAMPLE_RATE 16000
 
 const char Group::className[] = "group";
 const char Image::className[] = "image";
 const char Sound::className[] = "sound";
+const char Tracker::className[] = "tracker";
 
 Lunar<Group>::RegType Group::methods[] = {
     {0,0}
@@ -42,6 +46,9 @@ Lunar<Sound>::RegType Sound::methods[] = {
     {0,0}
 };
 
+Lunar<Tracker>::RegType Tracker::methods[] = {
+    {0,0}
+};
 
 Script::Script(Logger &l)
     : log(l), anyOutputs(false), outputHeader(NULL),
@@ -57,6 +64,7 @@ Script::Script(Logger &l)
     Lunar<Group>::Register(L);
     Lunar<Image>::Register(L);
     Lunar<Sound>::Register(L);
+    Lunar<Tracker>:: Register(L);
 }
 
 Script::~Script()
@@ -77,8 +85,7 @@ bool Script::run(const char *filename)
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
     CPPSourceWriter source(log, outputSource);
-    ASegWriter aseg(log, "asegment.bin");
-    
+
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
         Group *group = *i;
         TilePool &pool = group->getPool();
@@ -91,14 +98,34 @@ bool Script::run(const char *filename)
         proof.writeGroup(*group);
         header.writeGroup(*group);
         source.writeGroup(*group);
-        aseg.writeGroup(*group);
     }
-    
-    for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
-        Sound *sound = *i;
-        header.writeSound(*sound);
-        source.writeSound(*sound);
-        aseg.writeSound(*sound);
+
+    if (!sounds.empty()) {
+        log.heading("Audio");
+        log.infoBegin("Sound compression");
+
+        for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
+            Sound *sound = *i;
+            header.writeSound(*sound);
+            source.writeSound(*sound);
+        }
+
+        log.infoEnd();
+    }
+
+    if (!trackers.empty()) {
+        log.heading("Tracker");
+        log.infoBegin("Module compression");
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
+
+            if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
+                return false;
+            }
+            header.writeTracker(*tracker);
+            source.writeTracker(*tracker);
+        }
+        log.infoEnd();
     }
 
     proof.close();
@@ -267,8 +294,12 @@ void Script::collect()
         Group *group = Lunar<Group>::cast(L, -2);
         Image *image = Lunar<Image>::cast(L, -2);
         Sound *sound = Lunar<Sound>::cast(L, -2);
+        Tracker *tracker = Lunar<Tracker>::cast(L, -2);
 
         if (name && name[0] != '_') {
+            if (group || image || sound)
+                log.setMinLabelWidth(strlen(name));
+
             if (group) {
                 group->setName(name);
                 groups.insert(group);
@@ -276,6 +307,10 @@ void Script::collect()
             if (image) {
                 image->setName(name);
                 image->getGroup()->addImage(image);
+            }
+            if (tracker) {
+                tracker->setName(name);
+                trackers.insert(tracker);
             }
             if (sound) {
                 sound->setName(name);
@@ -327,11 +362,11 @@ Group *Group::getDefault(lua_State *L)
     return obj;
 }
 
-uint64_t Group::getSignature() const
+uint64_t Group::getHash() const
 {
     /*
-     * Signatures are calculated automatically, as a portion of the
-     * SHA1 hash of the loadstream.
+     * Hashes are calculated automatically, as a
+     * truncated SHA1 of the loadstream.
      */
 
     SHA_CTX ctx;
@@ -384,6 +419,16 @@ Image::Image(lua_State *L)
         mImages.setHeight(lua_tointeger(L, -1));
     if (Script::argMatch(L, "pinned"))
         mTileOpt.pinned = lua_toboolean(L, -1);
+
+    if (Script::argMatch(L, "flat"))
+        mIsFlat = lua_toboolean(L, -1);
+    else
+        mIsFlat = false;
+
+    if (isFlat() && isPinned()) {
+        luaL_error(L, "Image formats 'flat' and 'pinned' are mutually exclusive");
+        return;
+    }
 
     if (Script::argMatch(L, 1)) {
         /*
@@ -477,6 +522,74 @@ void Image::createGrids()
     }
 }
 
+const char *Image::getClassName() const
+{
+    if (isPinned())
+        return "PinnedAssetImage";
+    else if (isFlat())
+        return "FlatAssetImage";
+    else
+        return "AssetImage";
+}
+
+uint16_t Image::encodePinned() const
+{
+    // Pinned assets are just represented by a single index
+
+    const TileGrid &firstGrid = mGrids[0];
+    const TilePool &pool = firstGrid.getPool();  
+    return pool.index(firstGrid.tile(0, 0));
+}
+
+void Image::encodeFlat(std::vector<uint16_t> &data) const
+{
+    // Flat assets are an uncompressed array of indices
+
+    for (unsigned f = 0; f < mGrids.size(); f++) {
+        const TileGrid &grid = mGrids[f];
+        const TilePool &pool = grid.getPool();
+
+        for (unsigned y = 0; y < grid.height(); y++)
+            for (unsigned x = 0; x < grid.width(); x++)
+                data.push_back(pool.index(grid.tile(x, y)));
+    }
+}
+
+bool Image::encodeDUB(std::vector<uint16_t> &data, Logger &log, std::string &format) const
+{
+    // Compressed image, encoded using the DUB codec.
+    
+    DUBEncoder encoder( mImages.getWidth() / Tile::SIZE,
+                        mImages.getHeight() / Tile::SIZE,
+                        mImages.getFrames() );
+
+    std::vector<uint16_t> tiles;
+    encodeFlat(tiles);
+
+    encoder.encodeTiles(tiles);
+    
+    // Too large to encode correctly?
+    if (encoder.isTooLarge()) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (too large for compression codec)",
+            encoder.getTileCount());
+        return false;
+    }
+
+    // Not compressible enough to bother?
+    if (encoder.getRatio() < 10.0f) {
+        log.infoLineWithLabel(getName().c_str(),
+            "%4d tiles,      (not compressible)",
+            encoder.getTileCount());
+        return false;
+    }
+    
+    encoder.logStats(getName(), log);
+    encoder.getResult(data);
+    format = encoder.isIndex16() ? "_SYS_AIF_DUB_I16" : "_SYS_AIF_DUB_I8";
+
+    return true;
+}
 
 Sound::Sound(lua_State *L)
 {
@@ -491,18 +604,67 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "encode")) {
         setEncode(lua_tostring(L, -1));
     } else {
-        setEncode("Sample");    // TODO: this will eventually change to "SpeexSample" in the master FW
+        setEncode("");  // Default
     }
     
-    if (Script::argMatch(L, "quality")) {
-        setQuality(lua_tonumber(L, -1));
+    if (Script::argMatch(L, "sample_rate")) {
+        setSampleRate(lua_tonumber(L, -1));
     } else {
-        setQuality(10);
+        setSampleRate(SAMPLE_RATE);
+    }
+
+    if (Script::argMatch(L, "loop_start")) {
+        setLoopStart(lua_tonumber(L, -1));
+    } else {
+        setLoopStart(0);
+    }
+
+    if (Script::argMatch(L, "loop_length")) {
+        setLoopLength(lua_tonumber(L, -1));
+    } else {
+        setLoopLength(0);
+    }
+
+    if (Script::argMatch(L, "loop")) {
+        int16_t loopType = lua_tonumber(L, -1);
+        if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE) {
+            luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
+            return;
+        }
+        setLoopType((_SYSAudioLoopType)loopType);
+    } else {
+        setLoopType(_SYS_LOOP_ONCE);
+    }
+
+    if (Script::argMatch(L, "volume")) {
+        setVolume(lua_tonumber(L, -1));
+    } else {
+        setVolume(_SYS_AUDIO_DEFAULT_VOLUME);
     }
 
     if (!Script::argEnd(L))
         return;
+
+    // Validate the encoder parameters immediately, so we can raise an error
+    // during script execution rather than during actual audio compression.
+    AudioEncoder *enc = AudioEncoder::create(getEncode());
+    if (enc)
+        delete enc;
+    else
+        luaL_error(L, "Invalid audio encoding parameters");
 }
 
+Tracker::Tracker(lua_State *L)
+{
+    if (!Script::argBegin(L, className))
+        return;
+        
+    if (Script::argMatch(L, 1)) {
+        const char *filename = lua_tostring(L, -1);
+        mFile = filename;
+    }
+
+    Script::argEnd(L);
+}
 
 };  // namespace Stir

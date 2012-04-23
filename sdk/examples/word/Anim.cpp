@@ -19,7 +19,7 @@ struct AnimObjData
     Layer mLayer : 2;
     uint16_t mInvisibleFrames; // bitmask
     unsigned char mNumFrames;
-    const Vec2 *mPositions;
+    const Int2 *mPositions;
 };
 
 struct AnimData
@@ -35,8 +35,8 @@ struct AnimData
 
 
 bool animPaint(AnimType animT,
-               VidMode_BG0_SPR_BG1 &vid,
-               BG1Helper *bg1,
+               VideoBuffer &vid,
+               TileBuffer<16,16,1> &bg1TileBuf,
                float animTime,
                const AnimParams *params)
 {
@@ -67,9 +67,12 @@ bool animPaint(AnimType animT,
 
     float animPct =
             data.mLoop ?
-                fmodf(animTime, data.mDuration)/data.mDuration :
+                fmod(animTime, data.mDuration)/data.mDuration :
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
+
+    //bg1TileBuf.erase(transparent);
+
     for (unsigned i = 0; i < data.mNumObjs; ++i)
     {
         const AnimObjData &objData = data.mObjs[i];
@@ -77,16 +80,16 @@ bool animPaint(AnimType animT,
                 (unsigned char) ((float)objData.mNumFrames * animPct);
         frame = MIN(frame, objData.mNumFrames - 1);
 
-        unsigned fontFrame = font.frames + 1;
+        unsigned fontFrame = font.numFrames() + 1;
         bool drawLetterOnTile = false;
         bool blankLetterTile = false;
         bool metaLetterTile = false;
-        if (params && params->mLetters && params->mLetters[0] && bg1)
+        if (params && params->mLetters && params->mLetters[0])
         {
             if (i < lettersPerCube)
             {
                 fontFrame = params->mLetters[i] - (int)'A';
-                drawLetterOnTile = (fontFrame < font.frames);
+                drawLetterOnTile = (fontFrame < font.numFrames());
                 blankLetterTile = !drawLetterOnTile;
                 metaLetterTile =
                         !blankLetterTile &&
@@ -95,23 +98,23 @@ bool animPaint(AnimType animT,
         }
 
         // clip to screen
-        Vec2 pos(objData.mPositions[frame]);
-        Vec2 clipOffset(0,0);
-        Vec2 size(0, 0);
+        Int2 pos(objData.mPositions[frame]);
+        Int2 clipOffset = {0,0};
+        Int2 size = {0, 0};
         unsigned assetFrames = 0;
         if (objData.mLayer == Layer_Sprite)
         {
-            size = Vec2(objData.mSpriteAsset->width * 8, objData.mSpriteAsset->height * 8);
+            size = vec(objData.mSpriteAsset->tileWidth(), objData.mSpriteAsset->tileHeight());
             assetFrames =
                     (animT == AnimType_HintSlideL || animT == AnimType_HintSlideR) ?
-                        MIN(4, objData.mSpriteAsset->frames) : // TODO use the right indexes for left/right, with ping/pong
-                        objData.mSpriteAsset->frames;
+                        MIN(4, objData.mSpriteAsset->numFrames()) : // TODO use the right indexes for left/right, with ping/pong
+                        objData.mSpriteAsset->numFrames();
         }
         else
         {
             ASSERT(objData.mAsset);
-            size = Vec2(objData.mAsset->width, objData.mAsset->height);
-            assetFrames = objData.mAsset->frames;
+            size = vec(objData.mAsset->tileWidth(), objData.mAsset->tileHeight());
+            assetFrames = objData.mAsset->numFrames();
             // FIXME write utility AABB class
             if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
             {
@@ -120,8 +123,8 @@ bool animPaint(AnimType animT,
             pos.x = MAX(pos.x, 0);
             pos.y = MAX(pos.y, 0);
             clipOffset = pos - objData.mPositions[frame];
-            if (clipOffset.x >= (int)objData.mAsset->width ||
-                clipOffset.y >= (int)objData.mAsset->height)
+            if (clipOffset.x >= (int)objData.mAsset->tileWidth() ||
+                clipOffset.y >= (int)objData.mAsset->tileHeight())
             {
                 continue; // totally offscreen
             }
@@ -142,7 +145,7 @@ bool animPaint(AnimType animT,
         case AnimType_NewWord:
             break;
         default:
-            DEBUG_LOG(("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame));
+//             LOG("anim cube ID: %d, anim type: %d, anim time: %f pct:%f frame: %d\n", params ? params->mCubeID : -1, animT, animTime, animPct, frame);
             break;
         }
 #endif
@@ -151,76 +154,98 @@ bool animPaint(AnimType animT,
         {
             if (blankLetterTile)
             {
-                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mBlankLetterAsset, assetFrame);
+                vid.bg0.image(pos, size, *objData.mBlankLetterAsset, clipOffset, assetFrame);
             }
             else if (metaLetterTile)
             {
-                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mMetaLetterAsset, assetFrame);
+                vid.bg0.image(pos, size, *objData.mMetaLetterAsset, clipOffset, assetFrame);
             }
             else
             {
-                vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+                vid.bg0.image(pos, size, *objData.mAsset, clipOffset, assetFrame);
             }
 
             if (drawLetterOnTile && size.y > LETTER_Y_OFFSET)
             {
-                Vec2 letterPos(pos);
+                Int2 letterPos(pos);
                 letterPos.y += LETTER_Y_OFFSET; // TODO
 
                 switch (animT)
                 {
                 case AnimType_NormalTilesReveal:
                     {
-                        unsigned char sparkleRow = animPct * 12 + 2;
-                        unsigned char sparkleOffset = sparkleRow - pos.y;
+                        int sparkleRow = animPct * 12 + 2;
+                        int sparkleOffset = sparkleRow - pos.y;
                         if (metaLetterTile)
                         {
                             if (sparkleOffset < size.y)
                             {
                                 unsigned sparkleFrame =
-                                        MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct));
-                             //   DEBUG_LOG(("sparkle frame %d\n", sparkleFrame));
-                                bg1->DrawPartialAsset(Vec2(pos.x, sparkleRow),
-                                                      Vec2(0,0),
-                                                      Vec2(size.x, 1),
-                                                      SparkleWipe,
-                                                      sparkleFrame);
-                                if (sparkleRow < letterPos.y + font.height - 1)
+                                        MIN(SparkleWipe.numFrames()-1,
+                                            (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
+                                bg1TileBuf.image(vec(pos.x, sparkleRow),
+                                                 vec(size.x, SparkleWipe.tileHeight()),
+                                                 SparkleWipe,
+                                                 vec(0,0),
+                                                 sparkleFrame);
+                                if (sparkleRow < letterPos.y + font.tileHeight() - 1)
                                 {
-                                    bg1->DrawPartialAsset(Vec2(letterPos.x, sparkleRow + 1),
-                                                          Vec2(0, sparkleRow + 1 - letterPos.y),
-                                                          Vec2(size.x, letterPos.y + font.height - 1 - sparkleRow),
-                                                          font,
-                                                          fontFrame);
+                                    if (sparkleRow >= letterPos.y)
+                                    {
+                                        bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
+                                                      vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
+                                                      font,
+                                                      vec(0, sparkleRow + 1 - letterPos.y),
+                                                      fontFrame);
+                                    }
+                                    else
+                                    {
+                                        bg1TileBuf.image(letterPos,
+                                                      vec(size.x, font.tileHeight()),
+                                                      font,
+                                                      vec(0, 0),
+                                                      fontFrame);
+                                    }
                                 }
                             }
                         }
                         else
                         {
-                            bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+                            bg1TileBuf.image(letterPos,
+                                             vec(size.x,
+                                                 MIN(16 - letterPos.y, font.tileHeight())),
+                                             font,
+                                             vec(0,0),
+                                             fontFrame);
                         }
                     }
                     break;
 
                 case AnimType_MetaTilesReveal:
                     {
-                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
-                        unsigned char sparkleRow = (1.f - animPct) * 12 + 2;
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         fontFrame);
+                        int sparkleRow = (1.f - animPct) * 12 + 2;
                         unsigned char sparkleOffset = sparkleRow - pos.y;
                         if (i == params->mMetaLetterIndex && sparkleOffset < size.y)
                         {
-                            bg1->DrawPartialAsset(Vec2(pos.x, sparkleRow),
-                                                  Vec2(0,0),
-                                                  Vec2(size.x, 1),
-                                                  SparkleWipe,
-                                                  MIN(SparkleWipe.frames-1, (unsigned char) ((float)SparkleWipe.frames * animPct)));
+                            bg1TileBuf.image(vec(pos.x, sparkleRow),
+                                             vec(size.x, SparkleWipe.tileHeight()),
+                                             SparkleWipe,
+                                             vec(0,0),
+                                             MIN(SparkleWipe.numFrames()-1,
+                                                 (unsigned char) ((float)SparkleWipe.numFrames() * animPct)));
                             if (sparkleRow > letterPos.y)
                             {
-                                bg1->DrawPartialAsset(letterPos,
-                                                      Vec2(0, 0),
-                                                      Vec2(size.x, sparkleRow - letterPos.y),
-                                                      font,
-                                                      ('Z' + 1) - 'A');
+                                // draw the question mark that is being wiped off
+                                bg1TileBuf.image(letterPos,
+                                                 vec(size.x, MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                                 font,
+                                                 vec(0, 0),
+                                                 ('Z' + 1) - 'A');
                             }
                         }
                     }
@@ -229,12 +254,21 @@ bool animPaint(AnimType animT,
                 default:
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
-                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, 'Z' + 1 - 'A');
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         'Z' + 1 - 'A');
 
                     }
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
-                        bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, MIN(16 - letterPos.y, font.height)), font, fontFrame);
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y,
+                                                         font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         fontFrame);
                     }
                     break;
                 }
@@ -244,13 +278,13 @@ bool animPaint(AnimType animT,
         }
         else if (objData.mLayer == Layer_BG1)
         {
-            bg1->DrawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+            bg1TileBuf.image(pos, size, *objData.mAsset, clipOffset, assetFrame);
         }
         else // Layer_Sprite
         {
-            vid.moveSprite(0, objData.mPositions[frame]);
-            vid.resizeSprite(0, size);
-            vid.setSpriteImage(0, *objData.mSpriteAsset, assetFrame);
+            vid.sprites[0].move(objData.mPositions[frame]);
+            vid.sprites[0].resize(size);
+            vid.sprites[0].setImage(*objData.mSpriteAsset, assetFrame);
         }
     }
 
@@ -265,20 +299,20 @@ bool animPaint(AnimType animT,
             t *= 4.f;
             start = 1;
         }
-        t = fmodf(t, 1.0f);
-        unsigned assetFrame = MIN(Sparkle.frames-1, (unsigned)(t*((float)Sparkle.frames)));
+        t = fmod(t, 1.0f);
+        unsigned assetFrame = MIN(Sparkle.numFrames()-1, (unsigned)(t*((float)Sparkle.numFrames())));
         for (unsigned i=start; i<8; ++i)
         {
             if (params->mSpriteParams->mStartDelay[i] > 0.f)
             {
-                vid.hideSprite(i);
+                vid.sprites[i].hide();
             }
             else
             {
-                //DEBUG_LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
-                vid.moveSprite(i, params->mSpriteParams->mPositions[i]);
-                vid.resizeSprite(i, Sparkle.width * 8, Sparkle.height * 8);
-                vid.setSpriteImage(i, Sparkle, assetFrame);
+                //LOG(("sparkle %d, (%d, %d), frame: %d, t: %f\n", i, pos.x, pos.y, assetFrame, t));
+                vid.sprites[i].move(params->mSpriteParams->mPositions[i]);
+                vid.sprites[i].resize(Sparkle.pixelWidth(), Sparkle.tileHeight());
+                vid.sprites[i].setImage(Sparkle, assetFrame);
             }
         }
     }
@@ -328,7 +362,9 @@ bool animPaint(AnimType animT,
                     if (image)
                     {
                         isBonus = (progressData.mPuzzleProgress[i] == CheckMarkState_CheckedBonus);
-                        bg1->DrawAsset(Vec2(2 + i * 2, 14), *image, MIN(image->frames-1, 2));
+                        bg1TileBuf.image(vec((unsigned)2 + i * 2, (unsigned)14),
+                                         *image,
+                                         MIN(image->numFrames()-1, 2));
                     }
                 }
             }
@@ -342,20 +378,22 @@ bool animPaint(AnimType animT,
                         unsigned numHints = GameStateMachine::getInstance().getNumHints();
                         if (hintIndex  < numHints)
                         {
-                            unsigned char assetFrames = (*CheckMarkImagesTop[2]).frames;
+                            unsigned char assetFrames = (*CheckMarkImagesTop[2]).numFrames();
                             unsigned char assetFrame = 0;
                             if (animT == AnimType_HintWindUpSlide && hintIndex == numHints-1)
                             {
                                 // loop X times
-                                float f = fmodf(animPct * 3.f, 1.f);
+                                float f = fmod(animPct * 3.f, 1.f);
                                 assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
                             }
 
-                            bg1->DrawAsset(Vec2(1 + hintIndex * 2, 0), *CheckMarkImagesTop[2], assetFrame);
+                            bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0),
+                                             *CheckMarkImagesTop[2],
+                                             assetFrame);
                         }
              /*           else
                         {
-                            bg1->DrawAsset(Vec2(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
+                            bg1.DrawAsset(vec(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
                         }
                         */
                     }
@@ -368,7 +406,7 @@ bool animPaint(AnimType animT,
         {
             //const float ANIM_DURATION = 0.5f;
             float t = 2.f *animTime/data.mDuration;
-            t = fmodf(t, 1.0f);
+            t = fmod(t, 1.0f);
             bottomBorderFrame =
                     (isBonus) ?
                         NewBonusWordBorderFrames[MIN(arraysize(NewBonusWordBorderFrames)-1, (unsigned)(t*((float)arraysize(NewBonusWordBorderFrames))))]:
@@ -382,77 +420,50 @@ bool animPaint(AnimType animT,
         switch (params->mCubeAnim)
         {
         case CubeAnim_Main:
-
-
-
             if (Dictionary::currentIsMetaPuzzle() || !animHasNormalBorder(animT))
             {
-                // TODO simplify conditionals
-                if (bg1)
-                {
-                    // draw left border
-                    vid.BG0_drawPartialAsset(Vec2(0, 2),
-                                             Vec2(0, 1),
-                                             Vec2(2, 14),
-                                             (leftNeighbor || formsWord) ?
-                                                 BorderGoldLeft :
-                                                 BorderGoldLeft);//NoNeighbor);
-                    bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderGoldLeft);
-                    bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderGoldBottom);
-                    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderGoldBottom);
-                }
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeft, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderGoldLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderGoldBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderGoldBottom, vec(1, 0));//, bottomBorderGoldFrame);
 
-
-                if (bg1)
-                {
-                    // draw right BorderGold
-                    vid.BG0_drawPartialAsset(Vec2(14, 0),
-                                             Vec2(0, 1),
-                                             Vec2(2, 14),
-                                             (rightNeighbor || formsWord) ?
-                                                 BorderGoldRight :
-                                                 BorderGoldRight);//NoNeighbor);
-                    bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderGoldRight);
-                    bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderGoldTop);
-                    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderGoldTop);
-                }
+                // draw right BorderGold
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRight, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderGoldRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderGoldTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderGoldTop, vec(1, 0));
             }
             else
             {
-                // TODO simplify conditionals
-                if (bg1)
-                {
-                    // draw left border
-                    vid.BG0_drawPartialAsset(Vec2(0, 2),
-                                             Vec2(0, 1),
-                                             Vec2(2, 14),
-                                             (leftNeighbor || formsWord) ?
-                                                 BorderLeft :
-                                                 BorderLeftNoNeighbor);
-                    bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
-                    bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-                    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
-                }
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
 
-
-                if (bg1)
-                {
-                    // draw right border
-                    vid.BG0_drawPartialAsset(Vec2(14, 0),
-                                             Vec2(0, 1),
-                                             Vec2(2, 14),
-                                             (rightNeighbor || formsWord) ?
-                                                 BorderRight :
-                                                 BorderRightNoNeighbor);
-                    bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
-                    bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-                    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
-                }
+                // draw right border
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
             }
             break;
 
         default:
-                break;
+            break;
         }
 
     }
@@ -464,19 +475,19 @@ bool animPaint(AnimType animT,
 
 bool animHasNormalBorder(AnimType animT)
 {
-    switch (animT)
-    {
-    case AnimType_NotWord:
-    case AnimType_SlideL:
-    case AnimType_SlideR:
-    case AnimType_OldWord:
-    case AnimType_NewWord:
-    case AnimType_NormalTilesEnter:
-    case AnimType_NormalTilesExit:
-    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
-        return true;
+   switch (animT)
+   {
+   case AnimType_NotWord:
+   case AnimType_SlideL:
+   case AnimType_SlideR:
+   case AnimType_OldWord:
+   case AnimType_NewWord:
+   case AnimType_NormalTilesEnter:
+   case AnimType_NormalTilesExit:
+   case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
+       return true;
 
-    default:
-        return false;
-    }
+   default:
+       return false;
+   }
 }

@@ -8,11 +8,12 @@
 #define _GAME_H
 
 #include <sifteo.h>
-#include "Level.h"
-#include "cubewrapper.h"
-#include "MenuController.h"
-#include "TimeKeeper.h"
+//#include "ChromitDrawer.h"
 #include "config.h"
+#include "cubewrapper.h"
+#include "Level.h"
+#include "SaveLoad.h"
+#include "TimeKeeper.h"
 
 using namespace Sifteo;
 struct PuzzleCubeData;
@@ -34,10 +35,18 @@ public:
 #endif
         STATE_INTRO,
 		STATE_PLAYING,		
-        STATE_DYING,
 		STATE_POSTGAME,
         STATE_GOODJOB,
+        STATE_FAILPUZZLE,
         STATE_NEXTPUZZLE,
+        STATE_GAMEMENU,
+        STATE_GAMEOVERBANNER,
+
+        //more menus
+        STATE_PUZZLEMENU,
+        STATE_CHAPTERSELECTMENU,
+        STATE_PUZZLESELECTMENU,
+        STATE_CNT
 	} GameState;
 
 	typedef enum
@@ -52,8 +61,6 @@ public:
 	
 	Game();
 
-    //static const int NUM_CUBES = 3;
-    static const unsigned int NUM_HIGH_SCORES = 5;
     static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
@@ -64,7 +71,9 @@ public:
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
     static const int MAX_MULTIPLIER = 7;
-    static const float GOODJOB_TIME;
+    static const float LUMES_FACE_TIME;
+    //show lumes + "Good job"
+    static const float FULLGOODJOB_TIME;
 
 
     //number of dots needed for certain thresholds
@@ -80,14 +89,12 @@ public:
     };
 
     CubeWrapper m_cubes[NUM_CUBES];
-    static Math::Random random;
+    static Random random;
 
 	void Init();
 	void Update();
     void Reset( bool bInGame = true );
 
-    CubeWrapper *GetWrapper( Cube *pCube );
-    CubeWrapper *GetWrapper( unsigned int index );
     int getWrapperIndex( const CubeWrapper *pWrapper );
 
 	//flag self to test matches
@@ -96,10 +103,13 @@ public:
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	inline GameState getState() const { return m_state; }
+    inline float getStateTime() const { return m_stateTime; }
     void setState( GameState state );
+    //go to state through bubble transition
+    void TransitionToState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
-	inline unsigned int getScore() const { return m_iScore; }
+    unsigned int getScore() const;
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
     inline void addLevel() { m_iLevel++; }
@@ -109,7 +119,7 @@ public:
     unsigned int getHighScore( unsigned int index ) const;
     void enterScore();
 
-	void CheckChain( CubeWrapper *pWrapper );
+    void CheckChain( CubeWrapper *pWrapper, const Int2 &slotPos );
 	void checkGameOver();
 	bool NoMatches();
 	unsigned int numColors() const;
@@ -123,11 +133,9 @@ public:
     bool DoCubesOnlyHaveStrandedDots() const;
     bool OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const;
 
-    void playSound( _SYSAudioModule &sound );
+    void playSound( const AssetAudio &sound );
     //play random slosh sound
     void playSlosh();
-
-    inline void forcePaintSync() { m_bForcePaintSync = true; }
 
     inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
     inline void useShake() { m_ShakesRemaining--; }
@@ -151,11 +159,21 @@ public:
     void UpMultiplier();
     const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
-    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel + 1; }
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
     bool AreMovesLegal() const;
 
     void ReturnToMainMenu();
+    void gotoNextPuzzle( bool bAdvance );
+    inline SaveData &getSaveData() { return m_savedata; }
+    //inline ChromitDrawer &getChromitDrawer() { return m_chromitDrawer; }
+
+    void ClearBG1();
+
+    //this handles drawing that was moved out of cubewrapper so it could be done in a way that
+    //thrashed the cache less
+    //needDraw is a boolean array telling which cubes need drawing
+    void DrawGame( bool needDraw[], SystemTime t, TimeDelta dt );
 
 private:
 	void TestMatches();
@@ -163,9 +181,10 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void gotoNextPuzzle( bool bAdvance );
+    void HandleMenu() __attribute__ ((noinline));
+    void SetStartingLevel();
 
-	bool m_bTestMatches;
+    bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
 	//running total
@@ -175,14 +194,16 @@ private:
     //how many colors were involved in this
     bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
-	unsigned int m_iLevel;
+    uint8_t m_iLevel;
+    //used to track which chapter we're looking at in puzzle menus
+    uint8_t m_iChapterViewed;
+    SaveData m_savedata;
 	GameState m_state;
 	GameMode m_mode;
     float m_stateTime;
 	TimeKeeper m_timer;
-    MenuController m_menu;
-    float m_fLastTime;
-    float m_fLastSloshTime;
+    TimeStep m_timeStep;
+    SystemTime m_lastSloshTime;
 
 #if SFX_ON
     AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];
@@ -193,10 +214,8 @@ private:
     AudioChannel m_musicChannel;
 #endif
     //use to avoid playing the same sound multiple times in one frame
-    const _SYSAudioModule *m_pSoundThisFrame;
+    const AssetAudio *m_pSoundThisFrame;
 
-    static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
-    static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
     //how long until we respawn one piece in timer mode
     float m_fTimeTillRespawn;
@@ -205,9 +224,8 @@ private:
     unsigned int m_comboCount;
     float m_fTimeSinceCombo;
     unsigned int m_Multiplier;
+    //ChromitDrawer m_chromitDrawer;
 
-    //force a 1 frame paint sync before/after drawing
-    bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on
