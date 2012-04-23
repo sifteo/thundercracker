@@ -3,6 +3,12 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * The second layer of the flash stack: Cached access to physical
+ * flash blocks. This layer knows nothing of virtual-to-physical address
+ * translation, only of retrieving and caching physical blocks.
+ */
+
 #ifndef FLASH_BLOCKCACHE_H_
 #define FLASH_BLOCKCACHE_H_
 
@@ -43,10 +49,10 @@ extern FlashStats gFlashStats;
 class FlashBlock
 {
 public:
-    static const unsigned NUM_BLOCKS = 16;
+    static const unsigned NUM_CACHE_BLOCKS = 16;
     static const unsigned BLOCK_SIZE = 256;     // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
-    static const unsigned MAX_REFCOUNT = NUM_BLOCKS;
+    static const unsigned MAX_REFCOUNT = NUM_CACHE_BLOCKS;
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
 
@@ -58,8 +64,8 @@ private:
     uint16_t validCodeBytes;
     uint8_t refCount;
 
-    static uint8_t mem[NUM_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
-    static FlashBlock instances[NUM_BLOCKS];
+    static uint8_t mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
+    static FlashBlock instances[NUM_CACHE_BLOCKS];
     static uint32_t referencedBlocksMap;
     static uint32_t latestStamp;
 

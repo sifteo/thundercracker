@@ -14,8 +14,8 @@
 struct FlashStats gFlashStats;
 #endif
 
-uint8_t FlashBlock::mem[NUM_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
-FlashBlock FlashBlock::instances[NUM_BLOCKS];
+uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
+FlashBlock FlashBlock::instances[NUM_CACHE_BLOCKS];
 uint32_t FlashBlock::referencedBlocksMap;
 uint32_t FlashBlock::latestStamp;
 
@@ -23,7 +23,7 @@ uint32_t FlashBlock::latestStamp;
 void FlashBlock::init()
 {
     // All blocks start out with no valid data
-    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+    for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
         instances[i].address = INVALID_ADDRESS;
     }
 }
@@ -47,7 +47,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 
         FlashBlock *recycled = recycleBlock();
         ASSERT(recycled->refCount == 0);
-        ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_BLOCKS]);
+        ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
         FLASHLAYER_STATS_ONLY(gFlashStats.blockMiss++);
 
         recycled->load(blockAddr);
@@ -89,7 +89,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
             gFlashStats.blockMiss = 0;
             gFlashStats.streamBytes = 0;
 
-            for (unsigned i = 0; i < NUM_BLOCKS; i++) {
+            for (unsigned i = 0; i < NUM_CACHE_BLOCKS; i++) {
                 FlashBlock &block = instances[i];
                 SvmMemory::VirtAddr va = SvmMemory::flashToVirtAddr(block.address);
                 std::string name = SvmDebugPipe::formatAddress(va);
@@ -126,7 +126,7 @@ FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
     // the refcount is zero. Right now there's no faster way to find
     // a block than performing a linear search.
     
-    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+    for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
         FlashBlock *b = &instances[i];
         if (b->address == blockAddr)
             return b;
@@ -144,8 +144,8 @@ FlashBlock *FlashBlock::recycleBlock()
     // 32-bit timestamp which is updated every time a cache hit occurs. We
     // can quickly scan through and find the block with the oldest stamp.
 
-    STATIC_ASSERT(NUM_BLOCKS <= 32);
-    const uint32_t allBlocks = ((1 << NUM_BLOCKS) - 1) << (32 - NUM_BLOCKS);
+    STATIC_ASSERT(NUM_CACHE_BLOCKS <= 32);
+    const uint32_t allBlocks = ((1 << NUM_CACHE_BLOCKS) - 1) << (32 - NUM_CACHE_BLOCKS);
     uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
     ASSERT(availableBlocks &&
         "Oh no, all cache blocks are in use. Is there a reference leak?");
@@ -199,7 +199,7 @@ void FlashBlock::invalidate()
      * replacement. Blocks with a reference are reloaded in-place.
      */
 
-    for (unsigned idx = 0; idx < NUM_BLOCKS; idx++) {
+    for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
         FlashBlock *block = &instances[idx];
 
         if (block->refCount)
