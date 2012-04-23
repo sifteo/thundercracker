@@ -1185,9 +1185,8 @@ void App::OnShake(PCubeID cubeId)
                 
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
                 
-                // TODO: should this be GetNextOtherBuddyId?
                 BuddyId newBuddyId =
-                    GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
+                    GetNextOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
                 mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
                 
                 ResetCubesToPuzzle(GetPuzzleDefault(), false);
