@@ -12,5 +12,3 @@
 
 #define SPLASH_ON 0
 
-//if this is set to 1, sync every frame.  Prevents graphical glitches, but runs more slowly
-#define SLOW_MODE 0

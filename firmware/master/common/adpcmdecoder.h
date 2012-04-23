@@ -7,7 +7,7 @@
 #define ADPCMDECODER_H
 
 #include "audiobuffer.h"
-#include "flashlayer.h"
+
 
 class AdPcmDecoder
 {

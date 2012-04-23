@@ -6,7 +6,7 @@
 #include "svmruntime.h"
 #include "svmloader.h"
 #include "elfutil.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"

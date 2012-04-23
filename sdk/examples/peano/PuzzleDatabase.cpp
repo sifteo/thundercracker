@@ -69,7 +69,7 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
             else { dst = groups[x_dstId - numTokens]; }
             groups[i] = new TokenGroup(
                         src, result->GetToken(x_src),
-                        (Cube::Side)x_side,
+                        (unsigned)x_side,
                         dst, result->GetToken(x_dst)
                         );
         }

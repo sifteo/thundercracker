@@ -25,13 +25,13 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/neighbors.o \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
-    $(MASTER_DIR)/common/flashlayer.o \
+    $(MASTER_DIR)/common/flash_blockcache.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/svmmemory.o \
     $(MASTER_DIR)/common/svmdebugger.o \
-    $(MASTER_DIR)/common/assetmanager.o \
+    $(MASTER_DIR)/common/usbprotocol.o \
     $(MASTER_DIR)/common/elfutil.o \
     $(MASTER_DIR)/common/panic.o \
     $(MASTER_DIR)/common/imagedecoder.o \
@@ -47,7 +47,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/gpio.stm32.o \
     $(MASTER_DIR)/stm32/button.stm32.o \
     $(MASTER_DIR)/stm32/spi.stm32.o \
-    $(MASTER_DIR)/stm32/flash.stm32.o \
+    $(MASTER_DIR)/stm32/flash_device.stm32.o \
     $(MASTER_DIR)/stm32/nrf24l01.stm32.o \
     $(MASTER_DIR)/stm32/debug.stm32.o \
     $(MASTER_DIR)/stm32/usart.stm32.o \
@@ -64,7 +64,9 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbhardware_stm32otg.stm32.o \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
-    $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o
+    $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o \
+    $(MASTER_DIR)/stm32/powermanager.stm32.o \
+    $(MASTER_DIR)/stm32/exti.stm32.o
 
 # Sources for normal master firmware
 OBJS_STM32_MASTER = \

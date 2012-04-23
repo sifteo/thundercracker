@@ -10,15 +10,15 @@ namespace StingController
 bool gotTouchOn=false;
 bool skip = false;
 
-void OnCubeTouch(void*, _SYSCubeID cid)
+void OnCubeTouch(void*, unsigned cid)
 {
-    if(Game::cubes[cid].touching())
+    if(Game::cubes[cid].isTouching())
         gotTouchOn = true;
     else if(gotTouchOn) //touch off now, but got touch on before
         skip = true;
 }
 
-void OnCubeShake(void*, _SYSCubeID cid)
+void OnCubeShake(void*, unsigned cid)
 {
     skip = true;
 }
@@ -32,7 +32,7 @@ void Run()
 
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        Game::cubes[i].Image(Skin_Default_VaultDoor, vec(0,0));
+        Game::cubes[i].DrawVaultDoorsClosed();
     }
     System::paint();
 
@@ -43,11 +43,11 @@ void Run()
         Game::cubes[i].OpenShuttersToReveal(Title);
     }
 
-    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
-    void *oldShake = _SYS_getVectorHandler(_SYS_CUBE_SHAKE);
+    void *oldTouch = Events::cubeTouch.handler();
+    void *oldShake = Events::cubeShake.handler();
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+    Events::cubeTouch.set(&OnCubeTouch);
+    Events::cubeShake.set(&OnCubeShake);
 
     gotTouchOn = false;
     skip = false;
@@ -58,8 +58,8 @@ void Run()
         System::paint();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, oldShake, NULL);
+    Events::cubeTouch.set((void(*)(void*,unsigned ))oldTouch);
+    Events::cubeShake.set((void(*)(void*,unsigned))oldShake);
 
     for(int i = 0; i < NUM_CUBES; i++)
     {

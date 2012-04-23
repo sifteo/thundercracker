@@ -34,7 +34,6 @@ void NarratorView::Reset()
 void NarratorView::SetMessage(const char *msg, Emote emote) {
     bool hadMessage = mString[0] != 0;
     bool emoteChanged = emote != mEmote;
-
     mString = msg;
     mEmote = emote;
 
@@ -43,7 +42,6 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         if(!hadMessage)
         {
             Paint();
-            GetCube()->foregroundLayer.Flush();
         }
         else if(emoteChanged)
         {
@@ -55,7 +53,7 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         GetCube()->EnableTextOverlay(msg, 8, 40, fg, bg);
     }
     else
-    {
+    {       
         GetCube()->DisableTextOverlay();
         Paint();
     }
@@ -97,21 +95,21 @@ void NarratorView::Paint() {
         c->DrawVaultDoorsClosed();
         return;
     }
-
     c->Image(Narrator_Base);
     if(mEmote != EmoteNone)
     {
-        c->Image(*emotes[mEmote], vec<int>(0,16-emotes[mEmote]->height));
+        c->Image(*emotes[mEmote], vec<int>(0,16-emotes[mEmote]->tileHeight()));
     }
 
     if (mOffset > 0) {
         c->DrawVaultDoorsOpenStep1(mOffset);
-    }
-
+    }    
 
     if(mString[0]) {
-        GetCube()->foregroundLayer.DrawAsset(vec(0,0), Narrator_Balloon);
-    }
+        BG1Mask m = BG1Mask::filled(vec(0,0), vec(Narrator_Balloon.tileWidth(), Narrator_Balloon.tileHeight()));
+        GetCube()->vid.bg1.setMask(m);
+        GetCube()->vid.bg1.image(vec(0,0), Narrator_Balloon);
+    }    
 }
 
 

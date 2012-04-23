@@ -80,9 +80,6 @@ void SystemCubes::setNumCubes(unsigned n)
 
     // Must change opt_numCubes only while our thread is stopped!
     stopThread();
-    
-    while (sys->opt_numCubes > n)
-        exitCube(--sys->opt_numCubes);
 
     while (sys->opt_numCubes < n)
         if (initCube(sys->opt_numCubes))
@@ -102,10 +99,12 @@ void SystemCubes::resetCube(unsigned id)
 
 bool SystemCubes::initCube(unsigned id, bool wakeFromSleep)
 {
-    if (!sys->cubes[id].init(&sys->time,
-        sys->opt_cubeFirmware.empty() ? NULL : sys->opt_cubeFirmware.c_str(),
-        (id != 0 || sys->opt_cube0Flash.empty()) ? NULL : sys->opt_cube0Flash.c_str(),
-        wakeFromSleep))
+    const char *firmware = sys->opt_cubeFirmware.empty()
+        ? NULL : sys->opt_cubeFirmware.c_str();
+
+    ASSERT(sys->flash.data);
+    if (!sys->cubes[id].init(&sys->time, firmware,
+        &sys->flash.data->cubes[id], wakeFromSleep))
         return false;
 
     sys->cubes[id].cpu.id = id;
@@ -133,11 +132,6 @@ bool SystemCubes::initCube(unsigned id, bool wakeFromSleep)
     return true;
 }
 
-void SystemCubes::exitCube(unsigned id)
-{
-    sys->cubes[id].exit();
-}
-
 void SystemCubes::start()
 {
     if (sys->opt_cube0Debug) {
@@ -158,9 +152,6 @@ void SystemCubes::stop()
 
 void SystemCubes::exit()
 {
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        exitCube(i);
-
     if (!sys->opt_cube0Profile.empty())
         Cube::Debug::writeProfile(&sys->cubes[0].cpu, sys->opt_cube0Profile.c_str());
 }

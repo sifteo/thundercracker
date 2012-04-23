@@ -12,7 +12,7 @@
 #include "svm.h"
 #include "svmcpu.h"
 #include "svmmemory.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 using namespace Svm;
 

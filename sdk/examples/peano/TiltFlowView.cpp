@@ -63,13 +63,13 @@ void TiltFlowView::Tick()
     if (newMarquee != mMarquee)
     {
         mMarquee = newMarquee;
-        c->foregroundLayer.DrawPartialAsset(vec(0,0), vec(0, 15), vec(16,1), Skins::GetSkin().vault_door); // header image
+        c->vid.bg1.image(vec(0,0), vec(16,1), Skins::GetSkin().vault_door, vec(0,15));
         PaintFooter(c);
-        c->foregroundLayer.Flush();
     }
 
     if (mDirty)
     {
+        //mDirty = false;
         mLastTileX = -1;
         PaintInner(c);
     }
@@ -81,31 +81,36 @@ void TiltFlowView::Tick()
 
 void TiltFlowView::DidAttachToCube(TotalsCube *c) {
     c->AddEventHandler(&eventHandler);
-    c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
+    const BG1Mask mask = BG1Mask::filled(vec(0,0), vec(16,1))
+                        | BG1Mask::filled(vec(0,12), vec(16,4));
+    c->vid.bg1.setMask(mask);
+
+    //c->FillArea(&Dark_Purple, vec(0, 0), vec(18, 18));
 }
 
 void TiltFlowView::WillDetachFromCube(TotalsCube *c) {
     c->RemoveEventHandler(&eventHandler);
-    c->foregroundLayer.Flush();
+    c->vid.bg1.erase();
 }
 
 void TiltFlowView::PaintFooter(TotalsCube *c) {
     if(menu->IsPicked())
     {
-        c->foregroundLayer.DrawPartialAsset(vec(0, 12), vec(0,0), vec(16,4), Skins::GetSkin().vault_door);
+        c->vid.bg1.image(vec(0,12), vec(16,4), Skins::GetSkin().vault_door, vec(0,0));
     }
     else
     {
-        c->foregroundLayer.DrawAsset(vec(0, 12), *kMarquee[mMarquee % 2]);
+        c->vid.bg1.image(vec(0,12), *kMarquee[mMarquee % 2]);
     }
 }
 
 void TiltFlowView::PaintInner(TotalsCube *c) {    
     if(menu->IsDone())
     {
+        System::finish();
+        GetCube()->vid.bg0.setPanning(vec(0,0));
         GetCube()->FillArea(&Dark_Purple, vec(0,0), vec(18,18));
         GetCube()->Image(*menu->GetItem(mItem)->GetImage(), vec(3, 1), 0);
-        GetCube()->backgroundLayer.BG0_setPanning(vec(0,0));
         return;
     }
     //left edge of center item
@@ -128,7 +133,7 @@ void TiltFlowView::PaintInner(TotalsCube *c) {
             DoPaintItem(menu->GetItem(mItem+1), baseScreenTileX + 12);
     }
 
-    GetCube()->backgroundLayer.BG0_setPanning(vec(scrollX, 16));
+    GetCube()->vid.bg0.setPanning(vec(scrollX, 16));
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x) {
@@ -170,10 +175,11 @@ void TiltFlowView::UpdateMenu() {
         menu->GetDetails()->HideDescription();
     }
 
+    Byte2 tilt = GetCube()->tilt();
     if (
-            GetCube()->GetTilt().x == 1 ||
-            (GetCube()->GetTilt().x < 1 && mItem == menu->GetNumItems()-1 && mOffsetX >= 0) ||
-            (GetCube()->GetTilt().x > 1 && mItem == 0 && mOffsetX <= 0)
+            tilt.x == 0 ||
+            (tilt.x < 0 && mItem == menu->GetNumItems()-1 && mOffsetX >= 0) ||
+            (tilt.x > 0 && mItem == 0 && mOffsetX <= 0)
             )
     {
         AudioPlayer::HaltSfx(sfx_Menu_Tilt);
@@ -198,10 +204,10 @@ void TiltFlowView::UpdateMenu() {
 
         // accelerate in the direction of tilt
         mDrawLabel = false;
-        int vSign = GetCube()->GetTilt().x < 1 ? -1 : 1;
+        int vSign = tilt.x < 0 ? -1 : 1;
 
         // if we're way overtilted (into the upper corners!), accelerate super-fast
-        bool deepMult = GetCube()->GetTilt().x == 2 ? kDeepTiltAccel : 1;
+        bool deepMult = tilt.y == 1 ? kDeepTiltAccel : 1;
 
         if (vSign > 0) {
             if (mItem > 0) {

@@ -45,7 +45,7 @@ void MenuController::TransitionView::SetTransition(int offset)
         mOffset = offset;
 
         Paint();
-        System::paintSync();
+        System::paint();
     }
     else
     {
@@ -176,7 +176,7 @@ int DoMenu(const char *name, TiltFlowItem *items, int nItems)
 
     // close labelView
     labelView.message = "";
-    labelView.HideDescription();
+    labelView.HideDescription();    
     labelView.TransitionSync(kDuration, false);
 
     // transition out
@@ -185,10 +185,10 @@ int DoMenu(const char *name, TiltFlowItem *items, int nItems)
     for(float t=0; t<kDuration; t+=Game::dt) {
         tv.SetTransitionAmount(1.0f-t/kDuration);
         Game::UpdateDt();
-        System::paintSync();
+        System::paint();
     }
     tv.SetTransitionAmount(0);
-    System::paintSync();
+    System::paint();
 
     return menu.GetResultItem()->id;
 }
@@ -219,7 +219,7 @@ void RunWelcomeBack()
         ADD_ITEM(Icon_Continue, Continue, "Continue from your\nauto-save data.");
     }
 
-    ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!");
+    ADD_ITEM(Icon_Random, RandomPuzzle, "Create some\nrandom puzzles!");
     ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teachn\nyou how to play!");
     ADD_ITEM(Icon_Level_Select, Level, "Replay any level.");
     ADD_ITEM(Icon_Setup, Setup, "Change your\ngame settings.");
@@ -320,11 +320,11 @@ void RunSetup()
         items[4].SetImage(&Icon_Back);
 
 #define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
-        SET_PARAMS(items[0], Toggle_SkillLevel, (int)Game::skillLevel, "Toggle Mathematical Difficulty.");
+        SET_PARAMS(items[0], Toggle_SkillLevel, (int)Game::skillLevel, "Toggle\nMathematical\nDifficulty.");
         SET_PARAMS(items[1], Toggle_Music, AudioPlayer::MusicMuted(), "Toggle\nbackground music.");
         SET_PARAMS(items[2], Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
         SET_PARAMS(items[3], Clear_Data, 0, "Clear your\nauto-save data.");
-        SET_PARAMS(items[4], Back, 0, "Return to the main menu.");
+        SET_PARAMS(items[4], Back, 0, "Return to\nthe main menu.");
 #undef SET_PARAMS
 
         TiltFlowView tiltFlowView;
@@ -380,7 +380,7 @@ void RunSetup()
                 Game::UpdateDt();
             }
             tv.SetTransitionAmount(0);
-            System::paintSync();
+            System::paint();
         }
 
         if (menu.GetResultItem()->id == Back)
@@ -435,7 +435,7 @@ void RunChapterSelect()
     TiltFlowItem *item = chapterItems + numChapterItems;
     item->SetImage(&Icon_Back);
     item->id = BackId;
-    item->description="Return to the main menu.";
+    item->description="Return to\nthe main menu.";
     numChapterItems++;
 
     int resultId = DoMenu("Select a Level", chapterItems, numChapterItems);

@@ -62,8 +62,8 @@ namespace TotalsGame {
 
 		void PopGroup();
 
-		SideStatus StatusOfSide(Cube::Side side, IExpression *current);
-		bool ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp);
+		SideStatus StatusOfSide(unsigned side, IExpression *current);
+		bool ConnectsOnSideAtDepth(unsigned s, int depth, IExpression *exp);
 
 		bool CheckDepth(int depth, IExpression *exp);
 
@@ -87,7 +87,7 @@ namespace TotalsGame {
 	class SideHelper 
 	{
 	public:
-		static bool IsSource(Cube::Side side);
+		static bool IsSource(unsigned side);
 	private:
 		SideHelper();	//non-instantiable
 	};

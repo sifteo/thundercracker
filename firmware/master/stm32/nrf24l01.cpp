@@ -9,6 +9,15 @@
 
 #include "nrf24l01.h"
 #include "debug.h"
+#include "board.h"
+
+NRF24L01 NRF24L01::instance(RF_CE_GPIO,
+                            RF_IRQ_GPIO,
+                            SPIMaster(&RF_SPI,              // SPI:
+                                      RF_SPI_CSN_GPIO,      //   CSN
+                                      RF_SPI_SCK_GPIO,      //   SCK
+                                      RF_SPI_MISO_GPIO,     //   MISO
+                                      RF_SPI_MOSI_GPIO));   //   MOSI
 
 void NRF24L01::init() {
     /*

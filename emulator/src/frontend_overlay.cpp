@@ -143,7 +143,7 @@ void FrontendOverlay::drawCubeInspector(FrontendCube *fe,
         int flashHeight = height - margin - (y - top);
 
         renderer->overlayCubeFlash(id, x, y, flashWidth, flashHeight,
-            sys->cubes[id].flashStorage.data.ext, hasChanged);
+            sys->cubes[id].flash.getStorage()->ext, hasChanged);
     }
 }
 

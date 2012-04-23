@@ -9,6 +9,7 @@
 
 #include "board.h"
 #include "gpio.h"
+#include "powermanager.h"
 
 #include <string.h>
 
@@ -105,26 +106,10 @@ extern "C" void _start()
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
 
-    {
-        GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-        vcc20.setControl(GPIOPin::OUT_2MHZ);
-        vcc20.setHigh();
-
-#if (BOARD >= BOARD_TC_MASTER_REV2)
-
-        GPIOPin regEnable = FLASH_REG_EN_GPIO;
-        regEnable.setControl(GPIOPin::OUT_2MHZ);
-        regEnable.setHigh();
-
-        // XXX: this only wants to be enabled when USB is connected.
-        // just leaving enabled for now during dev, and until we put power sequencing in.
-        // This must be done *after* the flash reg has been enabled.
-        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
-        vcc33.setControl(GPIOPin::OUT_2MHZ);
-        vcc33.setHigh();
-
-#endif
-    }
+    /*
+     * Enable VCC SYS asap.
+     */
+    PowerManager::earlyInit();
 
     /*
      * Initialize data segments (In parallel with oscillator startup)

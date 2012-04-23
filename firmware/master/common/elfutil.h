@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 namespace Elf {
 

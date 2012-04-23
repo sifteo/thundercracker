@@ -25,6 +25,7 @@
 #include "cube_debug.h"
 #include "vtime.h"
 #include "tracer.h"
+#include "flash_storage.h"
 
 
 namespace Cube {
@@ -69,16 +70,13 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     MDU mdu;
-    FlashStorage flashStorage;
     Flash flash;
     Neighbors neighbors;
     RNG rng;
-    
-    bool init(VirtualTime *masterTimer,
-              const char *firmwareFile, const char *flashFile,
-              bool wakeFromSleep);
 
-    void exit();    
+    bool init(VirtualTime *masterTimer, const char *firmwareFile,
+        FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep);
+
     void reset();
 
     ALWAYS_INLINE bool isSleeping() {

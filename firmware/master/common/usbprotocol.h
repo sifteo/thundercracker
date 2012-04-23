@@ -3,15 +3,14 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef ASSETMANAGER_H
-#define ASSETMANAGER_H
+#ifndef USBPROTOCOL_H
+#define USBPROTOCOL_H
 
 #include <stdint.h>
 
-class AssetManager
-{
+class USBProtocolHandler {
 public:
-    AssetManager();
+    USBProtocolHandler();
 
     static void init();
     static void onData(const uint8_t *buf, unsigned len);
@@ -35,4 +34,5 @@ private:
     static void addToCrc(const uint8_t *buf, unsigned len);
 };
 
-#endif // ASSETMANAGER_H
+#endif
+

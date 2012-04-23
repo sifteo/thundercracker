@@ -19,15 +19,14 @@ public:
 
     RockExplosion();
     void Reset();
-    void Update();
-    void Draw( VideoBuffer &vid, int spriteindex ) __attribute__ ((noinline));
+    void UpdateDraw( VideoBuffer &vid, int spriteindex ) __attribute__ ((noinline));
     void Spawn( const Int2 &pos, int whichpiece );
 
-    inline bool isUsed() const { return m_pos.x >= 0; }
+    inline bool isUsed() const { return m_pos.x != -100; }
     inline unsigned int getAnimFrame() const { return m_animFrame; }
 	
 private:
-    Int2 m_pos;
+    Byte2 m_pos;
     unsigned int m_animFrame;
     SystemTime m_startTime;
 };

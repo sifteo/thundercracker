@@ -9,7 +9,7 @@ class DialogWindow {
 private:
     TotalsCube* mCube;
     Int2 mPosition;
-    uint16_t fg, bg;
+    Sifteo::RGB565 fg, bg;
 
 
     const char* Show(const char* msg);
@@ -17,16 +17,14 @@ private:
     unsigned MeasureGlyph(char ch);
     void DrawText(const char* msg);
     void MeasureText(const char *str, unsigned *outCount, unsigned *outPx);
-    void Erase();
-    void Fade();
-
 
 public:
     DialogWindow(TotalsCube *mCube);
     TotalsCube* GetCube() const { return mCube; }
-    void SetBackgroundColor(unsigned r, unsigned g, unsigned b);
-    void SetForegroundColor(unsigned r, unsigned g, unsigned b);
+    void SetBackgroundColor(uint8_t r, uint8_t g, uint8_t b);
+    void SetForegroundColor(uint8_t r, uint8_t g, uint8_t b);
     void DoDialog(const char *text, int yTop, int ySize);
+    void ChangeText(const char *text);
     void EndIt();
 };
 

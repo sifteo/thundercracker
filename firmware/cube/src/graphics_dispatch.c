@@ -9,6 +9,8 @@
 #include "graphics.h"
 #include "main.h"
 
+static uint8_t next_ack;
+
 
 void graphics_render(void) __naked
 {
@@ -16,19 +18,38 @@ void graphics_render(void) __naked
      * Check the toggle bit (rendering trigger), in bit 1 of
      * vram.flags. If it matches the LSB of frame_count, we have
      * nothing to do.
+     *
+     * This is also where we calculate the next ACK byte, which will
+     * be sent back after this frame is fully rendered. The bits in this
+     * byte are explained by protocol.h.
      */
 
     __asm
+
+        orl     _next_ack, #FRAME_ACK_CONTINUOUS
+
         mov     dptr, #_SYS_VA_FLAGS
         movx    a, @dptr
-        jb      acc.3, 1$                       ; Handle _SYS_VF_CONTINUOUS
+        jb      acc.3, 1$               ; Check _SYS_VF_CONTINUOUS
+
+        ; Toggle mode
+
+        anl     _next_ack, #~FRAME_ACK_CONTINUOUS
         rr      a
-        xrl     a, (_ack_data + RF_ACK_FRAME)   ; Compare _SYS_VF_TOGGLE with frame_count LSB
+        xrl     a, _next_ack            ; Compare _SYS_VF_TOGGLE with bit 0
         rrc     a
-        jnc     3$                              ; Return if no toggle
+        jnc     3$                      ; Return if no toggle
+
+        ; Increment frame counter field
 1$:
+        mov     a, _next_ack
+        inc     a
+        xrl     a, _next_ack
+        anl     a, #FRAME_ACK_COUNT
+        xrl     _next_ack, a
+
     __endasm ;
-    
+
     global_busy_flag = 1;
 
     /*
@@ -80,6 +101,26 @@ void graphics_render(void) __naked
 25$:    ljmp    _lcd_sleep      ; 0x3c (unused)
 
 3$:     ret
+
+    __endasm ;
+}
+
+void graphics_ack(void) __naked
+{
+    /*
+     * If next_ack doesn't match RF_ACK_FRAME, send a packet.
+     * This must happen only after the frame has fully rendered.
+     */
+
+    __asm
+
+        mov     a, _next_ack
+        xrl     a, (_ack_data + RF_ACK_FRAME)
+        jz      1$
+        xrl     (_ack_data + RF_ACK_FRAME), a
+        orl     _ack_bits, #RF_ACK_BIT_FRAME
+1$:
+        ret
 
     __endasm ;
 }

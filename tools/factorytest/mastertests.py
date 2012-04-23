@@ -5,6 +5,7 @@ NrfCommsID = 0
 ExternalFlashCommsID = 1
 ExternalFlashReadWriteID = 2
 LedID = 3
+UniqueIdID = 4
 
 def NrfComms(devMgr):
     uart = devMgr.masterUART()
@@ -62,3 +63,14 @@ def LedTest(devMgr):
 
     return True
 
+def UniqueIdTest(devMgr):
+    uart = devMgr.masterUART()
+    uart.writeMsg([UniqueIdID])
+    resp = uart.getResponse()
+    
+    if resp.opcode == UniqueIdID and len(resp.payload) == 12:
+        # TODO: capture this, do something with it?
+        return True
+    else:
+        return False
+    
