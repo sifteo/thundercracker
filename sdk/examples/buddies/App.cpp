@@ -489,6 +489,8 @@ void DrawStoryCutscene(
     BuddyId buddyId0, BuddyId buddyId1,
     bool jump0, bool jump1)
 {
+    ASSERT(line.mSpeaker >= 0 && line.mSpeaker <= 2);
+    ASSERT(line.mView < CutsceneLine::NUM_VIEWS);
     ASSERT(line.mText != NULL);
     
     if (line.mSpeaker == 0)
@@ -3259,12 +3261,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
+                const Puzzle &puzzle = GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex);
                 DrawStoryCutscene(
                     cubeWrapper,
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneEnvironment(),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneLineStart(mStoryCutsceneIndex),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(0),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(1),
+                    puzzle.GetCutsceneEnvironment(),
+                    puzzle.GetCutsceneLineStart(mStoryCutsceneIndex),
+                    puzzle.GetCutsceneBuddyStart(0),
+                    puzzle.GetCutsceneBuddyStart(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }

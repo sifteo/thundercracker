@@ -214,7 +214,7 @@ unsigned int Puzzle::GetNumCutsceneBuddiesStart() const
 void Puzzle::AddCutsceneLineStart(const CutsceneLine &line)
 {
     ASSERT(mNumCutsceneLineStart < arraysize(mCutsceneLineStart));
-    ASSERT(line.mSpeaker < 2);
+    ASSERT(line.mSpeaker <= 2);
     ASSERT(line.mText != NULL);
     mCutsceneLineStart[mNumCutsceneLineStart++] = line;
 }
@@ -268,6 +268,7 @@ unsigned int Puzzle::GetNumCutsceneBuddiesEnd() const
 void Puzzle::AddCutsceneLineEnd(const CutsceneLine &line)
 {
     ASSERT(mNumCutsceneLineEnd < arraysize(mCutsceneLineEnd));
+    ASSERT(line.mSpeaker <= 2);
     ASSERT(line.mText != NULL);
     mCutsceneLineEnd[mNumCutsceneLineEnd++] = line;
 }
