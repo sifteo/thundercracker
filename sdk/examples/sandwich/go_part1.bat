@@ -1,1 +1,0 @@
-..\..\..\emulator\tc-siftulator.exe -LR -n 3 -T &
