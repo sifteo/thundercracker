@@ -7,7 +7,6 @@ SUBDIRS = \
 	monster \
 	nyan \
 	pantera \
-	sandwich \
 	sensors \
 	sprites \
 	stars \
