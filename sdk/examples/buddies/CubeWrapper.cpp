@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "CubeWrapper.h"
+#include <sifteo/math.h>
 #include <sifteo/string.h>
 #include "Config.h"
 #include "assets.gen.h"
@@ -84,12 +85,6 @@ const Int2 kPartPositions[NUM_SIDES] =
     vec(40, 80),
     vec(80, 40),
 };
-
-const BG1Mask kPartsMask =
-    BG1Mask::filled(vec( 5,  0), vec(6, 6)) |
-    BG1Mask::filled(vec( 0,  5), vec(6, 6)) |
-    BG1Mask::filled(vec( 5, 10), vec(6, 6)) |
-    BG1Mask::filled(vec(10,  5), vec(6, 6));
 
 #endif
 
@@ -269,8 +264,25 @@ void CubeWrapper::DrawBuddy()
         DrawBackground(*asset);
     }
     
-    mVideoBuffer.bg1.setMask(kPartsMask);
+    // Generate BG1 mask
+    BG1Mask partsMask = BG1Mask::empty();
+    for (int i = 0; i < arraysize(kPartPositions); ++i)
+    {
+        Int2 offset =
+            vec(int(kPartPositions[i].x / TILE), int(kPartPositions[i].y / TILE)) +
+            GetTiltState();
+        offset.x = clamp<int>(offset.x, 0, (LCD_width / TILE) - 1);
+        offset.y = clamp<int>(offset.y, 0, (LCD_width / TILE) - 1);
+        
+        Int2 size = vec(6, 6);
+        size.x = clamp<int>(size.x, 0, (LCD_width / TILE) - offset.x);
+        size.y = clamp<int>(size.y, 0, (LCD_width / TILE) - offset.y);
+        
+        partsMask.fill(offset, size);
+    }
+    mVideoBuffer.bg1.setMask(partsMask);
     
+    // Draw the pieces
     for (int i = 0; i < NUM_SIDES; ++i)
     {
         if (mPieceBlinking != i || !mPieceBlinkingOn)
