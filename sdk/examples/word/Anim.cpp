@@ -320,7 +320,7 @@ bool animPaint(AnimType animT,
         {
             if (i < TopRowStartIndex)
             {
-                if (params->mCubeAnim == CubeAnim_Main)
+                if (params->mCubeAnim == CubeAnim_Main && animHasNormalBorder(animT))
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -384,33 +384,70 @@ bool animPaint(AnimType animT,
         case CubeAnim_Main:
 
 
-            if (bg1)
+
+            if (Dictionary::currentIsMetaPuzzle() || !animHasNormalBorder(animT))
             {
-                // draw left border
-                vid.BG0_drawPartialAsset(Vec2(0, 2),
-                                         Vec2(0, 1),
-                                         Vec2(2, 14),
-                                         (leftNeighbor || formsWord) ?
-                                             BorderLeft :
-                                             BorderLeftNoNeighbor);
-                bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
-                bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
-                vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
+                // TODO simplify conditionals
+                if (bg1)
+                {
+                    // draw left border
+                    vid.BG0_drawPartialAsset(Vec2(0, 2),
+                                             Vec2(0, 1),
+                                             Vec2(2, 14),
+                                             (leftNeighbor || formsWord) ?
+                                                 BorderGoldLeft :
+                                                 BorderGoldLeft);//NoNeighbor);
+                    bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderGoldLeft);
+                    bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderGoldBottom);
+                    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderGoldBottom);
+                }
+
+
+                if (bg1)
+                {
+                    // draw right BorderGold
+                    vid.BG0_drawPartialAsset(Vec2(14, 0),
+                                             Vec2(0, 1),
+                                             Vec2(2, 14),
+                                             (rightNeighbor || formsWord) ?
+                                                 BorderGoldRight :
+                                                 BorderGoldRight);//NoNeighbor);
+                    bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderGoldRight);
+                    bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderGoldTop);
+                    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderGoldTop);
+                }
             }
-
-
-            if (bg1)
+            else
             {
-                // draw right border
-                vid.BG0_drawPartialAsset(Vec2(14, 0),
-                                         Vec2(0, 1),
-                                         Vec2(2, 14),
-                                         (rightNeighbor || formsWord) ?
-                                             BorderRight :
-                                             BorderRightNoNeighbor);
-                bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
-                bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
-                vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
+                // TODO simplify conditionals
+                if (bg1)
+                {
+                    // draw left border
+                    vid.BG0_drawPartialAsset(Vec2(0, 2),
+                                             Vec2(0, 1),
+                                             Vec2(2, 14),
+                                             (leftNeighbor || formsWord) ?
+                                                 BorderLeft :
+                                                 BorderLeftNoNeighbor);
+                    bg1->DrawPartialAsset(Vec2(0, 1), Vec2(0, 0), Vec2(2, 1), BorderLeft);
+                    bg1->DrawPartialAsset(Vec2(1, 14), Vec2(0, 0), Vec2(1, 2), BorderBottom);
+                    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(1, 0), Vec2(14, 2), BorderBottom, bottomBorderFrame);
+                }
+
+
+                if (bg1)
+                {
+                    // draw right border
+                    vid.BG0_drawPartialAsset(Vec2(14, 0),
+                                             Vec2(0, 1),
+                                             Vec2(2, 14),
+                                             (rightNeighbor || formsWord) ?
+                                                 BorderRight :
+                                                 BorderRightNoNeighbor);
+                    bg1->DrawPartialAsset(Vec2(14, 14), Vec2(0, 16), Vec2(2, 1), BorderRight);
+                    bg1->DrawPartialAsset(Vec2(14, 0), Vec2(16, 0), Vec2(1, 2), BorderTop);
+                    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(1, 0), Vec2(14, 2), BorderTop);
+                }
             }
             break;
 
@@ -425,3 +462,21 @@ bool animPaint(AnimType animT,
 }
 
 
+bool animHasNormalBorder(AnimType animT)
+{
+    switch (animT)
+    {
+    case AnimType_NotWord:
+    case AnimType_SlideL:
+    case AnimType_SlideR:
+    case AnimType_OldWord:
+    case AnimType_NewWord:
+    case AnimType_NormalTilesEnter:
+    case AnimType_NormalTilesExit:
+    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
+        return true;
+
+    default:
+        return false;
+    }
+}

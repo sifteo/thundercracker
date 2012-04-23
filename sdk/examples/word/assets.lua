@@ -24,11 +24,15 @@ ClueGreece = image{"ClueGreece.png", quality=10}
 Slat1 = image{"woodslat_thin.png"}
 Slat2 = image{"woodslat_thick.png"}
 Slat3 = image{"woodslat_extra_thick.png"}
-BorderTop = image{"wp2_border_top.png", quality=10}
 SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=10}
+BorderTop = image{"wp2_border_top.png", quality=10}
 BorderBottom = image{"wp2_border_bottom.png", height=16, quality=10}
 BorderLeft = image{"wp2_border_left.png", quality=10}
 BorderRight = image{"wp2_border_right.png", quality=10}
+BorderGoldTop = image{"border_gold_top.png", quality=10}
+BorderGoldBottom = image{"border_gold_bottom.png", height=16, quality=10}
+BorderGoldLeft = image{"border_gold_left.png", quality=10}
+BorderGoldRight = image{"border_gold_right.png", quality=10}
 BorderRightNoNeighbor = image{"border_right_noneighbor.png", quality=10}
 BorderLeftNoNeighbor = image{"border_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available.png", quality=10}
@@ -40,13 +44,13 @@ BorderSlotHint = image{"hint_pulse_morph.png", quality=10, width=16}
 Tile2 = image{"tile_ivory_idle00.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow00.png", quality=10}
 Tile2Blank = image{"tile_ivory_blank.png", quality=10}
-Tile2Meta = image{"wp2_tile05.png", quality=10}
-Tile2MetaGlow = image{"tile_metatile_glow00.png", quality=10}
+Tile2Meta = image{"tile_metatile_idle.png", quality=10}
+Tile2MetaGlow = image{"tile_metatile_glow.png", quality=10}
 Tile3 = image{"tile_ivory_narrow_idle00.png", quality=10}
 Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=10}
 Tile3Blank = image{"tile_ivory_narrow_blank.png", quality=10}
-Tile3Meta = image{"tile_metatile_narrow_idle00.png", quality=10}
-Tile3MetaGlow = image{"tile_metatile_narrow_glow00.png", quality=10}
+Tile3Meta = image{"tile_metatile_narrow_idle.png", quality=10}
+Tile3MetaGlow = image{"tile_metatile_narrow_glow.png", quality=10}
 Font1Letter = image{"font_idle_big.png", width=80, height=64, quality=0}
 Font1LetterGlow = image{"font_glow_big.png", width=80, height=64, quality=0}
 Font2Letter = image{"font_idle_medium.png", width=48, height=32, quality=10}

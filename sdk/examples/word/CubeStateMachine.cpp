@@ -978,6 +978,12 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
         {
             params->mCubeAnim = i;
         }
+        // skip subanims for meta puzzle borders
+        if (i > CubeAnim_Main && !animHasNormalBorder(mAnimTypes[CubeAnim_Main]))
+        {
+            continue;
+        }
+
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], vid, bg1, mAnimTimes[i], params))
         {
