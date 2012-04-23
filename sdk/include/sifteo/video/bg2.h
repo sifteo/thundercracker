@@ -236,7 +236,7 @@ struct BG2Drawable {
 
         while ((c = *str)) {
             if (c == '\n') {
-                addr = (lineAddr += tileWidth());
+                addr = (lineAddr += font.tileHeight() * tileWidth());
             } else {
                 _SYS_image_BG2Draw(&sys, font, addr, c - firstChar);
                 addr += font.tileWidth();

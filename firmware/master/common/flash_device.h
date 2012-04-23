@@ -3,6 +3,11 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * The lowest (first) layer of the flash stack: Physical access to the
+ * flash device. The implementation of this layer is platform-specific.
+ */
+
 #ifndef FLASH_DEVICE_H
 #define FLASH_DEVICE_H
 

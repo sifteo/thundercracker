@@ -278,8 +278,10 @@ struct VideoBuffer {
     void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
         int srcSide = srcN.sideOf(cube());
         int dstSide = thisN.sideOf(src.cube());
-        ASSERT(srcSide != NO_SIDE && dstSide != NO_SIDE);
-        setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        if(srcSide != NO_SIDE && dstSide != NO_SIDE) {
+            setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        }
+        
     }
 
     /**
