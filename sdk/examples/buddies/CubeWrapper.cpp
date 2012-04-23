@@ -79,10 +79,10 @@ const Int2 kPartPositions[NUM_SIDES] =
 
 const Int2 kPartPositions[NUM_SIDES] =
 {
-    vec(48,  8),
-    vec( 8, 48),
-    vec(48, 88),
-    vec(88, 48),
+    vec(40,  0),
+    vec( 0, 40),
+    vec(40, 80),
+    vec(80, 40),
 };
 
 const BG1Mask kPartsMask =
@@ -234,12 +234,9 @@ void CubeWrapper::DrawBuddy()
     if (const AssetImage *asset = kBuddyBackgrounds[mBuddyId])
     {
         // Parallax Shift
-        Byte2 tiltState = GetTiltState();
-        Int2 offset = vec(tiltState.x - 1, tiltState.y - 1);
+        Byte2 offset = GetTiltState();
         offset.x *= -kParallaxDistance;
         offset.y *= -kParallaxDistance;
-        
-        // Nudge
         
         // Bump
         if (mBumpTimer > 0.0f)
@@ -656,9 +653,9 @@ void CubeWrapper::DrawPiece(const Piece &piece, Side side)
             frame = 0;
         }
         
+        // Nudge
         Byte2 tiltState = GetTiltState();
-        Int2 nudge = vec((tiltState.x - 1) * TILE, (tiltState.y - 1) * TILE);
-        
+        Int2 nudge = vec(tiltState.x * TILE, tiltState.y * TILE);
         Int2 point = kPartPositions[side] + nudge;
         
         switch(side)

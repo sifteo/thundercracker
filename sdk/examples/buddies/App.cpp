@@ -1080,7 +1080,7 @@ void App::OnTilt(PCubeID cubeId)
         case GAME_STATE_FREEPLAY_PLAY:
         {
             Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
-            if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+            if (tiltState.x != 0 || tiltState.y != 0)
             {
                 PlaySound(SoundPieceNudge);
             }
@@ -1096,7 +1096,7 @@ void App::OnTilt(PCubeID cubeId)
             if (mSwapState == SWAP_STATE_NONE)
             {
                 Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
-                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                if (tiltState.x != 0 || tiltState.y != 0)
                 {
                     PlaySound(SoundPieceNudge);
                 }
@@ -1124,7 +1124,7 @@ void App::OnTilt(PCubeID cubeId)
             if (mSwapState == SWAP_STATE_NONE)
             {
                 Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
-                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                if (tiltState.x != 0 || tiltState.y != 0)
                 {
                     PlaySound(SoundPieceNudge);
                 }
