@@ -14,6 +14,7 @@
 #include "neighbor.h"
 #include "gpio.h"
 #include "macros.h"
+#include "dac.h"
 
 static I2CSlave i2c(&I2C1);
 static Neighbor neighbor(JIG_NBR_IN1_GPIO,
@@ -40,6 +41,14 @@ TestJig::TestHandler const TestJig::handlers[] = {
 
 void TestJig::init()
 {
+    GPIOPin dacOut = BATTERY_SIM_GPIO;
+    dacOut.setControl(GPIOPin::IN_ANALOG);
+
+    Dac::instance.init();
+    Dac::instance.configureChannel(BATTERY_SIM_DAC_CH);
+    Dac::instance.enableChannel(BATTERY_SIM_DAC_CH);
+    Dac::instance.write(BATTERY_SIM_DAC_CH, 0); // default to off
+
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
 
@@ -91,9 +100,18 @@ void TestJig::setUsbPowerHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::setFixtureVoltageHandler(uint8_t argc, uint8_t *args)
+/*
+ * args[1] == value, LSB
+ * args[2] == value, MSB
+ */
+void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t val = (args[1] | args[2] << 8);
+    Dac::instance.write(BATTERY_SIM_DAC_CH, val);
 
+    // no response data - just indicate that we're done
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
 void TestJig::getFixtureVoltageHandler(uint8_t argc, uint8_t *args)
