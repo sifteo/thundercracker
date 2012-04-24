@@ -612,7 +612,7 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
     cubeWrapper.DrawBackground(StoryProgress);
     
     // Mask
-    cubeWrapper.GetVideoBuffer().bg1.setMask(kStoryProgressMask);
+    cubeWrapper.SetUiMask(kStoryProgressMask);
     
     // Buddy Small
     BuddyId buddyId = GetBook(bookIndex).mUnlockBuddyId;
@@ -1347,9 +1347,6 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
             }
             else
             {
-                // TODO: This is definitely hacky... instead of igoring the active puzzle,
-                // the Free Play shake shuffle should alter the current Puzzle. But then we'd
-                // need to keep an editable copy of Puzzle around...
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
                     BuddyId buddyId = mCubeWrappers[i].GetBuddyId();
@@ -1423,8 +1420,6 @@ void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 
 void App::UpdateMenuMain()
 {
-    mCubeWrappers[0].GetVideoBuffer().touch(); // Helps with BG green flash...
-    
     MenuAssets menuAssets =
     {
         &BgTile,
@@ -1570,8 +1565,6 @@ void App::UpdateMenuMain()
 
 void App::UpdateMenuStory()
 {
-    mCubeWrappers[0].GetVideoBuffer().touch(); // Helps with BG green flash...
-    
     MenuAssets menuAssets =
     {
         &BgTile,
@@ -2140,8 +2133,6 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
             {
-                // TODO: Disabled for Alpha build
-#if 0
                 if (NextUnlockedBuddy() != -1)
                 {
                     mStoryPreGame = true;
@@ -2152,13 +2143,6 @@ void App::UpdateGameState(float dt)
                     
                     StartGameState(GAME_STATE_MENU_MAIN);
                 }
-#else
-                mStoryBuddyUnlockMask |= mSaveDataBuddyUnlockMask;
-                {
-                    
-                    StartGameState(GAME_STATE_MENU_MAIN);
-                }
-#endif
             }
             break;
         }

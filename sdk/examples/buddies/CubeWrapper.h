@@ -35,10 +35,11 @@ public:
     CubeWrapper();
     
     void Reset();
-    bool Update(float dt); // TODO: Hacky hook for blink event
+    bool Update(float dt); // TODO: bool return is hacky hook for blink event
     
-    // TODO: This is only here for menu access... breaks encapsulation :(
-    Sifteo::CubeID &GetCube() { return mCubeId; }
+    // TODO: This is only here for menu access, which breaks encapsulation.
+    // Maybe all the draw stuff should fall away in favor of exposing the
+    // video buffer directly?
     Sifteo::VideoBuffer &GetVideoBuffer() { return mVideoBuffer; }
     
     // Drawing
@@ -59,6 +60,7 @@ public:
         Sifteo::Int2 position,
         const Sifteo::PinnedAssetImage &asset, unsigned int assetFrame = 0);
     
+    void SetUiMask(const Sifteo::BG1Mask &mask);
     void DrawUiAsset(
         Sifteo::Int2 position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0,
