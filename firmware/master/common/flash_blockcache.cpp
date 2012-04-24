@@ -66,28 +66,25 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
         if (dt > 1.0f) {
             gFlashStats.timestamp = now;
         
-            uint32_t totalBytes = gFlashStats.streamBytes
-                + gFlashStats.blockMiss * BLOCK_SIZE;
+            uint32_t totalBytes = gFlashStats.blockMiss * BLOCK_SIZE;
 
             const float flashBusMHZ = 18.0f;
             const float bytesToMBits = 10.0f * 1e-6;
             float effectiveMHZ = totalBytes / dt * bytesToMBits;
 
             LOG(("Flashlayer: %9.1f acc/s, %8.1f same/s, "
-                "%8.1f cached/s, %8.1f miss/s, %5.1f stream kB/s, "
+                "%8.1f cached/s, %8.1f miss/s, "
                 "%8.2f%% bus utilization\n",
                 gFlashStats.blockTotal / dt,
                 gFlashStats.blockHitSame / dt,
                 gFlashStats.blockHitOther / dt,
                 gFlashStats.blockMiss / dt,
-                gFlashStats.streamBytes / dt * 1e-3,
                 effectiveMHZ / flashBusMHZ * 100.0f));
 
             gFlashStats.blockTotal = 0;
             gFlashStats.blockHitSame = 0;
             gFlashStats.blockHitOther = 0;
             gFlashStats.blockMiss = 0;
-            gFlashStats.streamBytes = 0;
 
             for (unsigned i = 0; i < NUM_CACHE_BLOCKS; i++) {
                 FlashBlock &block = instances[i];
@@ -102,23 +99,6 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
     }
 #endif
 }
-
-uint8_t *FlashBlock::getByte(FlashBlockRef &ref, uint32_t address)
-{
-    uint32_t offset = address & BLOCK_MASK;
-    get(ref, address & ~BLOCK_MASK);
-    return ref->getData() + offset;
-}
-
-uint8_t *FlashBlock::getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length)
-{
-    uint32_t offset = address & BLOCK_MASK;
-    uint32_t maxLength = BLOCK_SIZE - offset;
-    if (length > maxLength)
-        length = maxLength;
-
-    return getByte(ref, address);
-}   
 
 FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
 {
@@ -212,27 +192,4 @@ void FlashBlock::invalidate()
 void FlashBlock::preload(uint32_t blockAddr)
 {
     // XXX: Implement me
-}
-
-uint32_t FlashStream::read(uint8_t *dest, uint32_t maxLength)
-{
-    uint32_t chunk = MIN(maxLength, remaining());
-    if (chunk)
-        FlashDevice::read(getAddress() + offset, dest, chunk);
-    FLASHLAYER_STATS_ONLY(gFlashStats.streamBytes += chunk);
-    return chunk;
-}
-
-FlashRange FlashRange::split(uint32_t sliceOffset, uint32_t sliceSize) const
-{
-    // Catch underflow
-    if (sliceOffset >= size)
-        return FlashRange(getAddress(), 0);
-
-    // Truncate overflows
-    uint32_t maxSliceSize = getSize() - sliceOffset;
-    if (sliceSize > maxSliceSize)
-        sliceSize = maxSliceSize;
-    
-    return FlashRange(getAddress() + sliceOffset, sliceSize);
 }

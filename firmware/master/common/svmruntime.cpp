@@ -4,7 +4,6 @@
  */
 
 #include "svmruntime.h"
-#include "elfutil.h"
 #include "flash_blockcache.h"
 #include "svm.h"
 #include "svmmemory.h"
@@ -299,7 +298,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
-        addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
+        addrOp(opnum, SvmMemory::SEGMENT_0_VA + (literal & 0xffffff));
     }
     else {
         SvmRuntime::fault(F_RESERVED_SVC);

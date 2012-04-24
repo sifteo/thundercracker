@@ -8,14 +8,24 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+#include "elfprogram.h"
 
 
 class SvmLoader {
 public:
     SvmLoader();  // Do not implement
 
-    static void run(uint16_t appId);
+    static void run(const Elf::Program &program);
+    static void run(int id);
     static void exit();
+
+private:
+    static _SYSCubeIDVector getCubeVector(const Elf::Program &program);
+    static void bootstrap(const Elf::Program &program);
+    static void bootstrapAssets(const Elf::Program &program, _SYSCubeIDVector cubes);
+
+    static void logTitleInfo(const Elf::Program &program);
+    static void loadRWData(const Elf::Program &program);
 };
 
 

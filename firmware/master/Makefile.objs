@@ -26,13 +26,14 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flash_blockcache.o \
+    $(MASTER_DIR)/common/flash_allocation.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/svmmemory.o \
     $(MASTER_DIR)/common/svmdebugger.o \
     $(MASTER_DIR)/common/usbprotocol.o \
-    $(MASTER_DIR)/common/elfutil.o \
+    $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/panic.o \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o

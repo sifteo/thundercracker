@@ -227,9 +227,9 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     return replyWords;
 }
 
-void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
+void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
 {
-    gELFDebugInfo.init(elf);
+    gELFDebugInfo.init(program);
     GDBServer::setDebugInfo(&gELFDebugInfo);
     GDBServer::setMessageCallback(debuggerMsgCallback);
 }
