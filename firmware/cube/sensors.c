@@ -36,6 +36,10 @@ volatile uint8_t sensor_tick_counter_high;
 #define ACCEL_CTRL_REG4         0x23
 #define ACCEL_REG4_INIT         0x80    // block update, 2g full-scale, little endian
 
+#define ACCEL_CTRL_REG6			0x25
+#define ACCEL_IO_00				0x00
+#define ACCEL_IO_11				0x02
+
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
 uint8_t accel_state;
@@ -107,6 +111,16 @@ __bit nb_rx_mask_state1;
 __bit nb_rx_mask_bit0;
 __bit nb_rx_mask_bit1;
 __bit touch;
+//#define TOUCH_DEBOUNCE
+#ifdef TOUCH_DEBOUNCE
+	#define TOUCH_DEBOUNCE_ON 5
+	#define TOUCH_DEBOUNCE_OFF 10
+	uint8_t touch_on;
+	uint8_t touch_off;
+#endif
+#ifdef DEBUG_TOUCH
+	uint8_t touch_count;
+#endif
 
 /*
  * We do a little bit of signal conditioning on neighbors before
@@ -419,11 +433,24 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         anl     a, #MISC_TOUCH
         cjne    a, #MISC_TOUCH, 6$
         
-        jb      _touch, 8$   
+        jb      _touch, 8$
+#ifdef TOUCH_DEBOUNCE
+        mov		_touch_off, #(TOUCH_DEBOUNCE_OFF)
+        djnz	_touch_on, 8$
+#endif
+#ifdef DEBUG_TOUCH
+        mov		a, _touch_count
+        inc 	a
+        mov		_touch_count, a
+#endif
         setb    _touch
         sjmp    7$
 6$:
         jnb     _touch, 8$
+#ifdef TOUCH_DEBOUNCE
+        mov		_touch_on, #(TOUCH_DEBOUNCE_ON)
+        djnz	_touch_off, 8$
+#endif
         clr     _touch
 7$: 
 
@@ -869,9 +896,11 @@ void sensors_init()
 
         const __code uint8_t init1[] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
         const __code uint8_t init2[] = { ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
+        const __code uint8_t init3[] = { ACCEL_CTRL_REG6, ACCEL_IO_00 };
 
         i2c_tx(ACCEL_ADDR, init1, sizeof init1);
         i2c_tx(ACCEL_ADDR, init2, sizeof init2);
+        i2c_tx(ACCEL_ADDR, init3, sizeof init3);
     }
     /*
         test loop for reading data, blocking style.
@@ -952,4 +981,13 @@ void sensors_init()
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
     nb_tx_packet[1] = ~nb_tx_packet[0];
+
+    /*
+     * Initialize touch detection
+     */
+#ifdef TOUCH_DEBOUNCE
+    touch_on = TOUCH_DEBOUNCE_ON;
+    touch_off = TOUCH_DEBOUNCE_OFF;
+#endif
+
 }

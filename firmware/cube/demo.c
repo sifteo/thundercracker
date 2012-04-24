@@ -12,7 +12,7 @@
 #include "flash.h"
 #include "draw.h"
 #include "radio.h"
-//#include "touch.h"
+#include "sensors.h"
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
@@ -65,14 +65,14 @@ void demo(void)
 
     while(1) {
 
-    	//MISC_DIR |= MISC_TOUCH;
-
     	draw_xy = XY(1,14);
-    	if( MISC_PORT & MISC_TOUCH ) {
+    	if( touch ) {
     		draw_string("Touch!");
     	} else {
     		draw_string("      ");
     	}
+    	draw_xy = XY(8,14);
+    	draw_hex(touch_count);
 
     	graphics_render();
 
@@ -80,4 +80,9 @@ void demo(void)
 #endif
 
     draw_exit();
+
+#ifdef DEBUG_FLASH
+    vram.mode = _SYS_VM_BG0;
+    vram.flags = _SYS_VF_CONTINUOUS;
+#endif
 }
