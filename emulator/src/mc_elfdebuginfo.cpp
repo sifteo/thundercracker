@@ -93,7 +93,8 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
         for (unsigned index = 0;; index++) {
             uint32_t tableOffset = index * sizeof currentSym;
             if (tableOffset + sizeof currentSym >= SI->sh_size ||
-                !program.getProgramSpan().copyBytes(tableOffset,
+                !program.getProgramSpan().copyBytes(
+                    SI->sh_offset + tableOffset,
                     (uint8_t*) &currentSym, sizeof currentSym))
                 break;
 

@@ -180,8 +180,7 @@ const FlashAllocSpan Elf::Program::getRODataSpan() const
     FlashBlockRef ref;
     const ProgramHeader *ph = getRODataSegment(ref);
     ASSERT(ph);
-    return span.split(ph->p_offset / FlashBlock::BLOCK_SIZE,
-                      ph->p_filesz / FlashBlock::BLOCK_SIZE);
+    return span.splitRoundingUp(ph->p_offset, ph->p_filesz);
 }
 
 const char *Elf::Program::getMetaString(FlashBlockRef &ref, uint16_t key) const

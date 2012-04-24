@@ -18,9 +18,8 @@
 class SvmMemory {
 public:
     // Flash
-    static const unsigned FLASH_VA_BIT = 0x80000000;
-    static const unsigned SEGMENT_0_VA = FLASH_VA_BIT | (0 << 30);
-    static const unsigned SEGMENT_1_VA = FLASH_VA_BIT | (1 << 30);
+    static const unsigned SEGMENT_0_VA = 0x80000000;
+    static const unsigned SEGMENT_1_VA = 0xc0000000;
     static const unsigned NUM_FLASH_SEGMENTS = 2;
 
     // RAM
@@ -307,7 +306,7 @@ public:
                 r = offset + VIRTUAL_RAM_BASE;
         }
 #endif
-    }   
+    }
 
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES] SECTION(".userram");

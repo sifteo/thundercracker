@@ -250,9 +250,12 @@ void SvmLoader::run(const Elf::Program &program)
 
 void SvmLoader::run(int id)
 {
-    // XXX: Temporary
-    
+    // XXX: Temporary. Set up an identity mapping.
+
     FlashAllocMap map;
+    for (unsigned i = 0; i < arraysize(map.blocks); i++)
+        map.blocks[i].id = i;
+
     Elf::Program program;
     if (program.init(FlashAllocSpan::create(&map, 0, 0xFFFF)))
         run(program);

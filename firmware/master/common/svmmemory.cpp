@@ -43,37 +43,24 @@ bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
 
 bool SvmMemory::checkROData(VirtAddr va, uint32_t length)
 {
-    if (!(va & FLASH_VA_BIT)) {
-        // RAM address        
-        PhysAddr pa;
-        return mapRAM(va, length, pa);
-    }
-
+    PhysAddr pa;
     STATIC_ASSERT(arraysize(flashSeg) == 2);
-    return flashSeg[0].offsetIsValid(va - SEGMENT_0_VA) ||
+    return mapRAM(va, length, pa) ||
+           flashSeg[0].offsetIsValid(va - SEGMENT_0_VA) ||
            flashSeg[1].offsetIsValid(va - SEGMENT_1_VA);
 }
 
 bool SvmMemory::mapROData(FlashBlockRef &ref, VirtAddr va,
     uint32_t &length, PhysAddr &pa)
 {
-    if (!(va & FLASH_VA_BIT)) {
-        // RAM address
-        return mapRAM(va, length, pa);
-    }
-
     STATIC_ASSERT(arraysize(flashSeg) == 2);
-    return flashSeg[0].getBytes(ref, va - SEGMENT_0_VA, pa, length) ||
+    return mapRAM(va, length, pa) ||
+           flashSeg[0].getBytes(ref, va - SEGMENT_0_VA, pa, length) ||
            flashSeg[1].getBytes(ref, va - SEGMENT_1_VA, pa, length);
 }
 
 bool SvmMemory::preload(VirtAddr va)
 {
-    if (!(va & FLASH_VA_BIT)) {
-        // Not flash? Nothing to preload.
-        return true;
-    }
-
     STATIC_ASSERT(arraysize(flashSeg) == 2);
     return flashSeg[0].preloadBlock(va - SEGMENT_0_VA) ||
            flashSeg[1].preloadBlock(va - SEGMENT_1_VA);
@@ -82,15 +69,8 @@ bool SvmMemory::preload(VirtAddr va)
 void SvmMemory::validateBase(FlashBlockRef &ref, VirtAddr va,
     PhysAddr &bro, PhysAddr &brw)
 {
-    if (!(va & FLASH_VA_BIT)) {
-        // RAM address
-
-        if (mapRAM(va, 1, bro)) {
-            brw = bro;
-            return;
-        }
-        
-        brw = bro = 0;
+    if (mapRAM(va, 1, bro)) {
+        brw = bro;
         return;
     }
 
@@ -108,7 +88,7 @@ bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
     uint32_t flashOffset = (uint32_t)va & 0xfffffc;
 
     // Code can only execute from segment 0.
-    if (!flashSeg[0].getBlock(ref, flashOffset))
+    if (!flashSeg[0].getBlock(ref, flashOffset & ~FlashBlock::BLOCK_MASK))
         return false;
 
     // Check against SvmValidator
@@ -123,14 +103,11 @@ bool SvmMemory::mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa)
 bool SvmMemory::copyROData(FlashBlockRef &ref,
     PhysAddr dest, VirtAddr src, uint32_t length)
 {
-    if (!(src & FLASH_VA_BIT)) {
-        // RAM address
-        PhysAddr srcPA;
-        if (mapRAM(src, length, srcPA)) {
-            memcpy(dest, srcPA, length);
-            return true;
-        }
-        return false;
+    // RAM address
+    PhysAddr srcPA;
+    if (mapRAM(src, length, srcPA)) {
+        memcpy(dest, srcPA, length);
+        return true;
     }
 
     STATIC_ASSERT(arraysize(flashSeg) == 2);

@@ -82,7 +82,10 @@ public:
     uint16_t firstBlock;
     uint16_t numBlocks;
 
-    typedef uintptr_t ByteOffset;   // Number of bytes from the beginning of the span
+    // We *do* want ByteOffset to be 32-bit. It is important that we discard
+    // extraneous high-bits on 64-bit hosts when translating flash addresses.
+
+    typedef uint32_t ByteOffset;    // Number of bytes from the beginning of the span
     typedef uint32_t FlashAddr;     // Low-level flash address, in bytes
     typedef uint8_t* PhysAddr;      // Physical RAM address, in the block cache
 
@@ -95,9 +98,11 @@ public:
     {
         STATIC_ASSERT(FlashAllocMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
         STATIC_ASSERT(sizeof firstBlock == sizeof numBlocks);
+        FlashAllocSpan result = { map, firstBlock, numBlocks };
         ASSERT(firstBlock < FlashAllocMap::NUM_CACHE_BLOCKS);
         ASSERT(numBlocks < FlashAllocMap::NUM_CACHE_BLOCKS);
-        FlashAllocSpan result = { map, firstBlock, numBlocks };
+        ASSERT(result.firstBlock == firstBlock);
+        ASSERT(result.numBlocks == numBlocks);
         return result;
     }
 
@@ -117,6 +122,10 @@ public:
         return (uint32_t)numBlocks * FlashBlock::BLOCK_SIZE;
     }
 
+    uint32_t firstByte() const {
+        return (uint32_t)firstBlock * FlashBlock::BLOCK_SIZE;
+    }
+
     bool offsetIsValid(ByteOffset byteOffset) const {
         return byteOffset < sizeInBytes();
     }
@@ -124,6 +133,9 @@ public:
     /// Split off a portion of this FlashAllocSpan as a new span.
     FlashAllocSpan split(unsigned blockOffset,
         unsigned blockCount = FlashAllocMap::NUM_CACHE_BLOCKS) const;
+
+    /// Range specified in bytes. Offset must be aligned, length is rounded up.
+    FlashAllocSpan splitRoundingUp(unsigned byteOffset, unsigned byteCount) const;
 
     // Translation functions
     bool flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const;
