@@ -28,6 +28,10 @@ void PowerManager::init()
     vbus.irqSetFallingEdge();
     vbus.irqSetRisingEdge();
     vbus.irqEnable();
+    
+    GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
+    flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
+    flashRegEnable.setHigh();
 
     vbusIsr();     // set initial state
 }
@@ -50,17 +54,16 @@ void PowerManager::vbusIsr()
          * - on transition to usb power, enable flash then enable 3v3
          * - on transition to battery power, disable 3v3 then disable flash
          */
+         
         GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
-        GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
+        vcc3v3.setControl(GPIOPin::OUT_2MHZ);
 
         switch (s) {
         case BatteryPwr:
             vcc3v3.setLow();
-            flashRegEnable.setLow();
             break;
 
         case UsbPwr:
-            flashRegEnable.setHigh();
             vcc3v3.setHigh();
             break;
 
