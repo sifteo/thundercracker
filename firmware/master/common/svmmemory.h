@@ -247,9 +247,9 @@ public:
     static VirtAddr flashToVirtAddr(uint32_t addr) {
         STATIC_ASSERT(arraysize(flashSeg) == 2);
         FlashAllocSpan::ByteOffset offset;
-        if (flashSeg[0].blockAddrToOffset(addr, offset))
+        if (flashSeg[0].flashAddrToOffset(addr, offset))
             return offset + SEGMENT_0_VA;
-        if (flashSeg[1].blockAddrToOffset(addr, offset))
+        if (flashSeg[1].flashAddrToOffset(addr, offset))
             return offset + SEGMENT_1_VA;
         return 0;
     }
@@ -260,10 +260,10 @@ public:
      */
     static uint32_t virtToFlashAddr(VirtAddr va) {
         STATIC_ASSERT(arraysize(flashSeg) == 2);
-        FlashAllocSpan::BlockAddr addr;
-        if (flashSeg[0].offsetToBlockAddr(addr - SEGMENT_0_VA, addr))
+        FlashAllocSpan::FlashAddr addr;
+        if (flashSeg[0].offsetToFlashAddr(addr - SEGMENT_0_VA, addr))
             return addr;
-        if (flashSeg[1].offsetToBlockAddr(addr - SEGMENT_1_VA, addr))
+        if (flashSeg[1].offsetToFlashAddr(addr - SEGMENT_1_VA, addr))
             return addr;
         return 0;
     }     

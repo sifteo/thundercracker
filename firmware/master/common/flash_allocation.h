@@ -83,8 +83,8 @@ public:
     uint16_t numBlocks;
 
     typedef uintptr_t ByteOffset;   // Number of bytes from the beginning of the span
-    typedef uint32_t BlockAddr;     // Block address, in bytes
-    typedef uint8_t* PhysAddr;      // Physical address, in the block cache
+    typedef uint32_t FlashAddr;     // Low-level flash address, in bytes
+    typedef uint8_t* PhysAddr;      // Physical RAM address, in the block cache
 
     /**
      * Initialize the FlashAllocSpan to a particular range of the
@@ -118,8 +118,8 @@ public:
         unsigned blockCount = FlashAllocMap::NUM_CACHE_BLOCKS) const;
 
     // Translation functions
-    bool blockAddrToOffset(BlockAddr blockAddr, ByteOffset &byteOffset) const;
-    bool offsetToBlockAddr(ByteOffset byteOffset, BlockAddr &blockAddr) const;
+    bool flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const;
+    bool offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const;
     bool offsetIsValid(ByteOffset byteOffset) const;
 
     // Cached data access

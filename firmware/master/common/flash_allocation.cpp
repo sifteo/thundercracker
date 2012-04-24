@@ -16,12 +16,12 @@ FlashAllocSpan FlashAllocSpan::split(unsigned blockOffset, unsigned blockCount) 
         std::min(blockCount, numBlocks - blockOffset));
 }
 
-bool FlashAllocSpan::blockAddrToOffset(BlockAddr blockAddr, ByteOffset &byteOffset) const
+bool FlashAllocSpan::flashAddrToOffset(FlashAddr flockAddr, ByteOffset &byteOffset) const
 {
     return false;
 }
 
-bool FlashAllocSpan::offsetToBlockAddr(ByteOffset byteOffset, BlockAddr &blockAddr) const
+bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flockAddr) const
 {
     return false;
 }

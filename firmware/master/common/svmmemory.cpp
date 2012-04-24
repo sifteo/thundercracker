@@ -144,7 +144,7 @@ unsigned SvmMemory::reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc)
         FlashAllocSpan::ByteOffset offset;
 
         // Code only runs from segment 0.
-        if (flashSeg[0].blockAddrToOffset(ref->getAddress(), offset)) {
+        if (flashSeg[0].flashAddrToOffset(ref->getAddress(), offset)) {
             offset += pc & FlashBlock::BLOCK_MASK;
             offset += SEGMENT_0_VA;
             return offset;
