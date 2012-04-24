@@ -10,6 +10,7 @@ function AddBuddy (i, name)
     _G["BuddySpriteFront" .. i] = image{"assets/sprite_"      .. name    .. "_front.png", pinned = true}
     _G["BuddySpriteRight" .. i] = image{"assets/sprite_"      .. name    .. "_right.png", pinned = true}
     _G["BuddySpriteLeft"  .. i] = image{"assets/sprite_"      .. name    .. "_left.png", pinned = true}
+    _G["BuddySpritePose"  .. i] = image{"assets/sprite_"      .. name    .. "_pose.png", pinned = true}
     _G["BuddyRibbon"      .. i] = image{"assets/ribbon_"      .. name    .. ".png"}
     _G["BuddySmall"       .. i] = image{"assets/buddy_small_" .. name    .. ".png"}
     if UseSprites then
