@@ -873,6 +873,7 @@ App::App()
     , mUiIndex(0)
     , mUiIndexSync()
     , mTitleBuddy(0)
+    , mTitleBuddyTimer(0.0f)
     , mTouching()
     , mTouchSync(false)
     , mTouchEndChoiceTimer(0.0f)
@@ -2151,22 +2152,23 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
-                    mDelayTimer += kTitleSwapDuration;
+                    mDelayTimer += kStateTimeDelayLong;
                     
                     ++mUiIndex;
+                    mTitleBuddyTimer = kTitleSwapDuration;
                 }
             }
             else if (mUiIndex == 2)
             {
-                if (UpdateTimer(mDelayTimer, dt))
+                if (UpdateTimer(mTitleBuddyTimer, dt))
                 {
-                    mDelayTimer += kTitleSwapDuration;
+                    mTitleBuddyTimer += kTitleSwapDuration;
                     
                     // Swap through the buddies
                     mTitleBuddy = (mTitleBuddy + 1) % (NUM_BUDDIES - 1);
                 }
                 
-                if (AnyTouchEnd())
+                if (UpdateTimer(mDelayTimer, dt) || AnyTouchEnd())
                 {
                     if (NextUnlockedBuddy() != -1)
                     {

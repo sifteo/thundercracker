@@ -132,6 +132,7 @@ private:
     
     // Title
     int mTitleBuddy;
+    float mTitleBuddyTimer;
     
     // Input
     TouchState mTouching[kNumCubes];
