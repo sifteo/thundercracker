@@ -41,13 +41,6 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Touch, data);
-
-#ifdef DEBUGzz
-    LOG("cube event touch->shake, ID:\t%d\n", cid);
-    EventData data;
-    data.mInput.mCubeID = cid;
-    WordGame::onEvent(EventID_Shake, data);
-#endif
 }
 
 void onCubeEventShake(void *context, _SYSCubeID cid)
@@ -107,61 +100,6 @@ void main()
         vidBufs[i].attach(cubes[i]);
     }
 
-#ifdef OLD_LOAD
-    if (1 && LOAD_ASSETS)
-    {
-        // start loading assets
-        for (unsigned i = 0; i < arraysize(cubes); i++)
-        {
-            cubes[i].loadAssets(GameAssets);
-
-            VideoBuffer rom(VideoMode::BG0_ROM);//cubes[i].vbuf);
-            // TODO attach
-            rom.init();
-
-            rom.BG0_text(vec(1,1), "Loading...");
-        }
-
-        // wait for assets to finish loading
-        for (;;)
-        {
-            bool done = true;
-
-            for (unsigned i = 0; i < arraysize(cubes); i++)
-            {
-                VideoBuffer rom(VideoMode::BG0_ROM);//cubes[i].vbuf);
-                // TODO attach
-                rom.BG0_progressBar(vec(0,7),
-                                    cubes[i].assetProgress(GameAssets,
-                                                           VideoBuffer::LCD_width),
-                                    2);
-
-                if (!cubes[i].assetDone(GameAssets))
-                {
-                    done = false;
-                }
-            }
-
-            System::paint();
-
-            if (done)
-            {
-                break;
-            }
-        }
-
-
-    }
-#endif // ifndef DEBUG
-
-    // sync up
-    /*
-    WordGame::paintSync();
-    for(CubeID p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
-    System::paintSync();
-    for(CubeID p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
-    System::paintSync();
-*/
     CubeID menuCube = cubes[0];
     Menu m(vidBufs[0], &gAssets, gItems);
 

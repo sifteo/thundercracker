@@ -4,18 +4,15 @@ GameAssets = group{}
 --TestGlow = image{"font_bigger_2_glow.png", quality=8}
 -- Menu
 BgTile = image{ "fabric_basic.png", pinned=true }
-Tip0 = image{ "Tip0.png" }
-Tip1 = image{ "Tip1.png" }
+Tip0 = image{ "option_chooseAnOption.png" }
+Tip1 = image{ "option_tiltToContinue.png" }
 Tip2 = image{ "Tip2.png" }
 Footer = image{"Footer.png", quality=8}
 LabelEmpty = image{"LabelEmpty.png", quality=8}
-LabelContinue = image{ "LabelContinue.png" }
-LabelLocked = image{ "LabelLocked.png" }
-IconContinue = image{ "IconContinue.png" }
-IconLocked0 = image{ "IconLocked0.png" }
-IconLocked1 = image{ "IconLocked1.png" }
-IconLocked2 = image{ "IconLocked2.png" }
-IconLocked3 = image{ "IconLocked3.png" }
+LabelContinue = image{ "option_continue.png" }
+LabelLocked = image{ "option_disabled.png" }
+IconGreece = image{ "athens_sample.png" }
+IconLocked = image{ "scroll_locked.png" }
 MenuBlank = image{"menu_blank.png"}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=8}
