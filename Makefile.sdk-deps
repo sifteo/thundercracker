@@ -14,6 +14,12 @@ ifeq ($(BUILD_PLATFORM), windows32)
         sdk/bin/rm.exe
 endif
 
+# Mac-only
+ifeq ($(BUILD_PLATFORM), Darwin)
+	ALL_SDK_DEPS += \
+		sdk/bin/make
+endif
+
 .PHONY: sdk-deps sdk-deps-clean
 
 sdk-deps: $(ALL_SDK_DEPS)
@@ -29,6 +35,9 @@ sdk/bin/libgcc_s_dw2-1.dll: $(LLVM_BIN)/libgcc_s_dw2-1.dll
 
 sdk/bin/libstdc++-6.dll: $(LLVM_BIN)/libstdc++-6.dll
 	install $< $@
+
+sdk/bin/make: $(DEPS_DIR)/gnu/make
+	install -s $< $@
 
 sdk/bin/make.exe: $(DEPS_DIR)/UnxUtils/usr/local/wbin/make.exe
 	install -s $< $@
