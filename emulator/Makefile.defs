@@ -21,8 +21,14 @@ endif
 # everywhere. In particular, -march=native is very much NOT what we
 # want, since we need to avoid using Intel-only or AMD-only extensions
 # like LZCNT.
-FLAGS += -march=pentium4 -mtune=core2
+#
+# Looks like we currently only need to specify this explicitly on Win32.
+# Keep in mind that 64-bit platforms will need different flags!
 
+ifeq ($(BUILD_PLATFORM), windows32)
+    FLAGS += -march=pentium4 -mtune=core2
+endif
+    
 # Linker flags
 ifneq ($(BUILD_PLATFORM),Darwin)
 	# Not supported on Apple's LLVM GCC frontend
