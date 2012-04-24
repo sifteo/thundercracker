@@ -16,10 +16,12 @@ ifeq ($(BUILD_PLATFORM), windows32)
 	OBJS += resources/winres.o
 endif
 
-# 32-bit mingw needs this for the __sync_fetch_* family of routines
-ifeq ($(BUILD_PLATFORM), windows32)
-	FLAGS += -march=native
-endif
+# Need to set -march in order to use atomic op intrinsics, but we
+# should be relatively conservative about CPU type so that this runs
+# everywhere. In particular, -march=native is very much NOT what we
+# want, since we need to avoid using Intel-only or AMD-only extensions
+# like LZCNT.
+FLAGS += -march=pentium4 -mtune=core2
 
 # Linker flags
 ifneq ($(BUILD_PLATFORM),Darwin)
