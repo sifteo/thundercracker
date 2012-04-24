@@ -29,13 +29,12 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong) {
     song = *pSong;
     
     bpm = song.bpm;
-    tempo = song.tempo;
-    ticks = bpm;
+    ticks = tempo = song.tempo;
     phrase = 0;
     row = 0;
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
 
-    AudioMixer::instance.setTrackerCallbackInterval(2500000 / tempo);
+    AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
     tick();
 
     return true;
@@ -96,7 +95,7 @@ uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order) {
 
 void XmTrackerPlayer::tick()
 {
-    if (ticks++ >= bpm) {
+    if (ticks++ >= song.tempo) {
         ticks = 0;
 
         // load next notes into the process channels
