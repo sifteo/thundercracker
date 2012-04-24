@@ -2142,12 +2142,21 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
-                    mDelayTimer += kTitleSwapDuration;
+                    mDelayTimer += kTitleScaleDelay;
                     
                     ++mUiIndex;
                 }
             }
             else if (mUiIndex == 1)
+            {
+                if (UpdateTimer(mDelayTimer, dt))
+                {
+                    mDelayTimer += kTitleSwapDuration;
+                    
+                    ++mUiIndex;
+                }
+            }
+            else if (mUiIndex == 2)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
@@ -3181,7 +3190,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 ASSERT(mTitleBuddy >= 0 && mTitleBuddy < BUDDY_INVISIBLE);
                 video.bg2.image(vec(0, 0), *kBuddiesFull[mTitleBuddy]);
             }
-            else if (mUiIndex == 1)
+            else
             {
                 ASSERT(mTitleBuddy >= 0 && mTitleBuddy < BUDDY_INVISIBLE);
                 cubeWrapper.DrawBackground(*kBuddiesFull[mTitleBuddy]);

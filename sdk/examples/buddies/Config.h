@@ -30,6 +30,7 @@ const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;
 const float kTitleScaleDuration = 1.5f;
+const float kTitleScaleDelay = 0.5f;
 const float kTitleSwapDuration = 0.175f;
 const float kModeTitleDelay = 2.5f;
 const float kOptionsTimerDuration = 1.5f;
