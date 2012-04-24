@@ -37,6 +37,7 @@ static GPIOPin testUsbEnable = USB_PWR_GPIO;
  */
 TestJig::TestHandler const TestJig::handlers[] = {
     setUsbPowerHandler,
+    setSimulatedBatteryVoltageHandler,
 };
 
 void TestJig::init()
@@ -51,6 +52,10 @@ void TestJig::init()
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
+
+    GPIOPin led1 = LED_RED1_GPIO;
+    led1.setControl(GPIOPin::OUT_2MHZ);
+    led1.setHigh();
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
     neighbor.init();
