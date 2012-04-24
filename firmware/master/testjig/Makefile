@@ -4,7 +4,8 @@ TC_DIR = ../../..
 include $(TC_DIR)/firmware/master/Makefile.objs
 include $(TC_DIR)/firmware/master/Makefile.defs
 
-CCFLAGS += -I.
+# testjig specific flags
+CCFLAGS += -I. -DBOARD=BOARD_TEST_JIG
 
 # Override default CDEPS
 CDEPS := ../common/syscall-table.def

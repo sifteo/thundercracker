@@ -62,5 +62,6 @@ bool animPaint(AnimType animT,
                float animTime,
                const AnimParams *params);
 
+bool animHasNormalBorder(AnimType animT);
 
 #endif // ANIM_H

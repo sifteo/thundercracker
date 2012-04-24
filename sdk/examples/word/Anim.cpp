@@ -354,7 +354,7 @@ bool animPaint(AnimType animT,
         {
             if (i < TopRowStartIndex)
             {
-                if (params->mCubeAnim == CubeAnim_Main)
+                if (params->mCubeAnim == CubeAnim_Main && animHasNormalBorder(animT))
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -391,11 +391,6 @@ bool animPaint(AnimType animT,
                                              *CheckMarkImagesTop[2],
                                              assetFrame);
                         }
-             /*           else
-                        {
-                            bg1.DrawAsset(vec(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
-                        }
-                        */
                     }
                 }
             }
@@ -420,23 +415,46 @@ bool animPaint(AnimType animT,
         switch (params->mCubeAnim)
         {
         case CubeAnim_Main:
-            // draw left border
-            vid.bg0.image(vec(0, 2),
-                         vec(2, 14),
-                         (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
-                         vec(0, 1));
-            bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
-            bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
-            vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
+            if (Dictionary::currentIsMetaPuzzle() || !animHasNormalBorder(animT))
+            {
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeft, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderGoldLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderGoldBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderGoldBottom, vec(1, 0));//, bottomBorderGoldFrame);
 
-            // draw right border
-            vid.bg0.image(vec(14, 0),
-                         vec(2, 14),
-                         (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
-                         vec(0, 1));
-            bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
-            bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
-            vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
+                // draw right BorderGold
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRight, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderGoldRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderGoldTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderGoldTop, vec(1, 0));
+            }
+            else
+            {
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
+
+                // draw right border
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
+            }
             break;
 
         default:
@@ -450,3 +468,21 @@ bool animPaint(AnimType animT,
 }
 
 
+bool animHasNormalBorder(AnimType animT)
+{
+   switch (animT)
+   {
+   case AnimType_NotWord:
+   case AnimType_SlideL:
+   case AnimType_SlideR:
+   case AnimType_OldWord:
+   case AnimType_NewWord:
+   case AnimType_NormalTilesEnter:
+   case AnimType_NormalTilesExit:
+   case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
+       return true;
+
+   default:
+       return false;
+   }
+}

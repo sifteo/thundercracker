@@ -87,4 +87,7 @@
 
 #define USB_PWR_GPIO        GPIOPin(&GPIOB, 15)
 
+#define BATTERY_SIM_GPIO    GPIOPin(&GPIOA, 5)
+#define BATTERY_SIM_DAC_CH  2
+
 #endif // _BOARD_TESTJIG_H
