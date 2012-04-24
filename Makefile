@@ -1,18 +1,24 @@
 TC_DIR := .
+SDK_DIR := $(abspath $(TC_DIR)/sdk)
 include Makefile.platform
 
 TOOLS := emulator stir vm firmware
-SUBDIRS := $(TOOLS) docs/doxygen sdk/examples
+DOCS := docs/doxygen
+EXAMPLES := sdk/examples
 
-.PHONY: clean subdirs $(SUBDIRS)
+.PHONY: clean subdirs $(TOOLS) $(DOCS) $(EXAMPLES)
 
-all: sdk-deps $(SUBDIRS)
+all: sdk-deps $(TOOLS) $(DOCS) $(EXAMPLES)
 
-subdirs: $(SUBDIRS)
+subdirs: $(TOOLS) $(DOCS) $(EXAMPLES)
 
 tools: $(TOOLS)
 
-$(SUBDIRS):
+# Set up environment vars before building examples
+$(EXAMPLES):
+	PATH=$(SDK_DIR)/bin SDK_DIR=$(SDK_DIR) make -C $@
+
+$(TOOLS) $(DOCS):
 	@$(MAKE) -C $@
 
 clean: sdk-deps-clean
