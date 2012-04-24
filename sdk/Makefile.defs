@@ -36,6 +36,9 @@ CFLAGS += -g
 
 ifeq ($(RELEASE),)
     LDFLAGS += -g
+    LINK_MESSAGE += (Debug)
+else
+    LINK_MESSAGE += (Release)
 endif
 
 ifneq ($(DISABLE_INLINING),)

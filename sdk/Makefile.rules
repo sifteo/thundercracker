@@ -16,7 +16,7 @@ all: $(BIN)
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
 $(BIN): $(OBJS)
-	@echo Linking $@
+	@echo Linking $@ "$(LINK_MESSAGE)"
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
 ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h

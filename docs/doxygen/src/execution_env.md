@@ -22,3 +22,5 @@ In the event that you overflow the stack, the SVM runtime faults and execution o
 The maximum supported size of a binary on the Sifteo platform is @b 16MB. Currently, this is also the maximum amout of external storage available on the Sifteo Base, so it's not practical to assume that a shipping application can consume all 16MB.
 
 The .elf binary for your application contains all of the code, data, and assets required to run your game, so the total size of the .elf binary is the effective size of your application.
+
+@note If your application is linked for Debug (the default), the .elf binary will also include debug information which does not get installed to hardware. To see the final size of your application, make sure you are linking a release build with "make clean && make RELEASE=1".
