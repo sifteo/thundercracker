@@ -1,6 +1,4 @@
 SUBDIRS = \
-	buddies \
-	chroma \
 	drawtest \
 	hello \
 	membrane \
@@ -11,8 +9,7 @@ SUBDIRS = \
 	sensors \
 	sprites \
 	stars \
-	text \
-	word
+	text
 
 .PHONY: clean subdirs $(SUBDIRS)
 
