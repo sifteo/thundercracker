@@ -102,6 +102,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     }
 
     setIconYOffset(kDefaultIconYOffset);
+    setPeekTiles(kDefaultPeekTiles);
 }
 
 inline bool Menu::pollEvent(struct MenuEvent *ev)
@@ -228,6 +229,13 @@ inline void Menu::setIconYOffset(uint8_t px)
 {
     ASSERT(px >= 0 || px < kNumTilesX * 8);
     kIconYOffset = -px;
+    updateBG0();
+}
+
+inline void Menu::setPeekTiles(uint8_t numTiles)
+{
+    ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
+    kPeekTiles = numTiles;
     updateBG0();
 }
 

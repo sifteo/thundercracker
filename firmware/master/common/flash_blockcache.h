@@ -32,7 +32,6 @@ struct FlashStats {
     unsigned blockHitOther;
     unsigned blockMiss;
     unsigned blockTotal;
-    unsigned streamBytes;
     unsigned globalRefcount;
     SysTime::Ticks timestamp;
     bool enabled;
@@ -116,18 +115,6 @@ public:
     static void preload(uint32_t blockAddr);
     static void invalidate();
     static void get(FlashBlockRef &ref, uint32_t blockAddr);
-    static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
-    static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);
-
-    template <typename T>
-    static inline T* getValue(FlashBlockRef &ref, uint32_t address) {
-        uint32_t length = sizeof(T);
-        uint8_t *p = getBytes(ref, address, length);
-        if (length == sizeof(T))
-            return reinterpret_cast<T*>(p);
-        else
-            return 0;
-    }
 
 private:
     inline void incRef() {
@@ -219,111 +206,6 @@ public:
 
 private:
     FlashBlock *block;
-};
-
-
-/**
- * A contiguous range of bytes in Flash. Has a beginning and an end.
- */
-class FlashRange {
-public:
-    FlashRange() {}
-
-    FlashRange(uint32_t address, uint32_t size)
-        : address(address), size(size) {}
-
-    inline void init(uint32_t address, uint32_t size) {
-        this->address = address;
-        this->size = size;
-    }
-
-    inline void clear() {
-        this->size = 0;
-    }
-
-    inline uint32_t getAddress() const {
-        return address;
-    }
-
-    inline uint32_t getSize() const {
-        return size;
-    }
-    
-    inline bool isEmpty() const {
-        return size == 0;
-    }
-    
-    inline bool isAligned() const {
-        return (address & FlashBlock::BLOCK_MASK) == 0;
-    }
-
-    inline bool isAligned(unsigned alignment) const {
-        return (address & (alignment - 1)) == 0;
-    }
-
-    FlashRange split(uint32_t sliceOffset, uint32_t sliceSize) const;
-
-private:
-    uint32_t address;
-    uint32_t size;
-};
-
-
-/**
- * A contiguous region of flash, not necessarily block-aligned, used as a
- * source for streaming data. This does not use the cache layer, since it's
- * assumed that we'll be reading a large object in mostly linear order
- * and we'd rather not pollute the cache with all of these blocks that will
- * not be reused.
- */
-class FlashStream : public FlashRange {
-public:
-    FlashStream() {}
-
-    FlashStream(const FlashRange &r)
-        : FlashRange(r), offset(0) {}
-
-    FlashStream(uint32_t address, uint32_t size)
-        : FlashRange(address, size), offset(0) {}
-
-    inline void init(uint32_t address, uint32_t size) {
-        FlashRange::init(address, size);
-        this->offset = 0;
-    }
-
-    inline void clear() {
-        FlashRange::clear();
-        this->offset = 0;
-    }
-
-    inline bool eof() const {
-        ASSERT(offset <= getSize());
-        return offset >= getSize();
-    }
-
-    inline uint32_t tell() const {
-        return offset;
-    }
-
-    inline void seek(uint32_t o) {
-        ASSERT(o <= getSize());
-        offset = o;
-    }
-
-    inline uint32_t remaining() const {
-        ASSERT(offset <= getSize());
-        return getSize() - offset;
-    }
-
-    inline void advance(uint32_t bytes) {
-        seek(bytes + tell());
-    }
-
-    // Reads at the current offset, does *not* auto-advance.
-    uint32_t read(uint8_t *dest, uint32_t maxLength);
-
-private:
-    uint32_t offset;
 };
 
 
