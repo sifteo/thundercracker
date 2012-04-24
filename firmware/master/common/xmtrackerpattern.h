@@ -28,6 +28,14 @@ public:
     void loadPattern(uint16_t i);
     void getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note);
 
+    static void resetNote(struct XmTrackerNote &note) {
+        note.note = kNoNote;
+        note.instrument = kNoInstrument;
+        note.volumeColumnByte = kNoVolume;
+        note.effectType = kNoEffect;
+        note.effectParam = 0;
+    }
+
     static const uint8_t kNoteOff = 97;
     static const uint8_t kNoNote = 0;
     static const uint8_t kNoInstrument = 0xFF;
