@@ -38,6 +38,7 @@ public:
     bool Update(float dt); // TODO: Hacky hook for blink event
     
     // TODO: This is only here for menu access... breaks encapsulation :(
+    Sifteo::CubeID &GetCube() { return mCubeId; }
     Sifteo::VideoBuffer &GetVideoBuffer() { return mVideoBuffer; }
     
     // Drawing

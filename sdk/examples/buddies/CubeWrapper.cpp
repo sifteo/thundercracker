@@ -425,9 +425,6 @@ void CubeWrapper::Enable(PCubeID cubeId)
     mVideoBuffer.initMode(BG0_ROM);
     mVideoBuffer.attach(mCubeId);
     
-    // This ensure proper video state is set, even if we have kLoadAssets = false.
-    mVideoBuffer.setWindow(0, LCD_height);
-    
     mEnabled = true;
 }
 

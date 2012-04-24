@@ -57,6 +57,8 @@ public:
     float GetBestTime(unsigned int place) const;
     
 private:
+    void LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex);
+
     void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
     void ResetCubesToShuffleStart();
     void UpdateCubes(float dt);
@@ -111,6 +113,9 @@ private:
     int GetNumBuddiesLeftToUnlock() const;
     
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
+    
+    // Assets
+    Sifteo::AssetSlot mAssetSlot;
     
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];

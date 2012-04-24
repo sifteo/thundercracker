@@ -1,9 +1,11 @@
 UseSprites = false
-GameAssets = group{quality = 10}
 
--- TOOD: Put each buddy in its own asset group
+GameAssets = group{}
+
+--GroupBuddies = group{}
+
 function AddBuddy (i, name)
-    _G["BuddyFull"        .. i] = image{"assets/buddy_full_"  .. (i + 1) .. ".png"}
+    --_G["BuddyGroup"       .. i] = group{}
     _G["BuddyBackground"  .. i] = image{"assets/bg"           .. (i + 1) .. ".png"}
     _G["BuddySpriteFront" .. i] = image{"assets/sprite_"      .. name    .. "_front.png", pinned = true}
     _G["BuddySpriteRight" .. i] = image{"assets/sprite_"      .. name    .. "_right.png", pinned = true}
@@ -29,6 +31,22 @@ AddBuddy(8, "erol")
 AddBuddy(9, "flur")
 AddBuddy(10, "veax")
 AddBuddy(11, "yawp")
+
+--GameAssets = group{}
+
+BuddySmallLoad = image{"assets/buddy_small_suli.png"}
+BuddyFull0 = image{"assets/buddy_full_1.png"}
+BuddyFull1 = image{"assets/buddy_full_2.png"}
+BuddyFull2 = image{"assets/buddy_full_3.png"}
+BuddyFull3 = image{"assets/buddy_full_4.png"}
+BuddyFull4 = image{"assets/buddy_full_5.png"}
+BuddyFull5 = image{"assets/buddy_full_6.png"}
+BuddyFull6 = image{"assets/buddy_full_7.png"}
+BuddyFull7 = image{"assets/buddy_full_8.png"}
+BuddyFull8 = image{"assets/buddy_full_9.png"}
+BuddyFull9 = image{"assets/buddy_full_10.png"}
+BuddyFull10 = image{"assets/buddy_full_11.png"}
+BuddyFull11 = image{"assets/buddy_full_12.png"}
 
 -- Buddy Overlays
 --if UseSprites then

@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
+#include <sifteo/metadata.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include <sifteo/time.h>
@@ -30,12 +31,12 @@ namespace Buddies { namespace {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+const char *kTitle = "CubeBuddies";
 const int kMaxTilesX = LCD_width / TILE;
 const int kMaxTilesY = LCD_width / TILE;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Buddy Assets
-// - TODO: Is there a way to automate this using clever Lua scripting?
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const PinnedAssetImage *kBuddySpritesFront[] =
@@ -863,7 +864,8 @@ const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 App::App()
-    : mCubeWrappers()
+    : mAssetSlot(AssetSlot::allocate().bootstrap(GameAssets))
+    , mCubeWrappers()
     , mChannel(0)
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
@@ -941,7 +943,9 @@ App::App()
 
 void App::Init()
 {
-    // Note: manually enabling all cubes until the found/lost events start working.
+    Metadata().title(kTitle).cubeRange(kNumCubes);
+    
+    // Manually enable all cubes until the found/lost events are implemented
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         ASSERT(i < arraysize(mCubeWrappers));
@@ -1254,6 +1258,39 @@ float App::GetBestTime(unsigned int place) const
     ASSERT(place < arraysize(mSaveDataBestTimes));
     return mSaveDataBestTimes[place];
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if 0
+void App::LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex)
+{
+    ScopedAssetLoader assetLoader;
+    
+    VideoBuffer videoBuffers[kNumCubes];
+    
+    for (CubeID cube = 0; cube < kNumCubes; ++cube)
+    {
+        videoBuffers[cube].initMode(BG0_ROM);
+        videoBuffers[cube].attach(cube);
+        videoBuffers[cube].bg0rom.text(vec(1, 1), "Loading...");
+        
+        bool started = assetLoader.start(GroupBuddies, mAssetSlot, cube);
+        ASSERT(started);
+    } 
+    
+    while (!assetLoader.isComplete())
+    {
+        for (CubeID cube = 0; cube < kNumCubes; ++cube)
+        {
+            int progress = assetLoader.progress(cube, LCD_width);
+            videoBuffers[cube].bg0rom.hBargraph(vec(0, 7), progress);
+        }
+        
+        System::paint();
+    }
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1894,6 +1931,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_BOOK_START:
         {
             mDelayTimer = kModeTitleDelay;
+            //LoadBuddies(mStoryBookIndex, 0);
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
@@ -1902,6 +1940,7 @@ void App::StartGameState(GameState gameState)
             ResetCubesToPuzzle(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex), true);
             mDelayTimer = kModeTitleDelay;
             PlaySound(SoundStoryChapterTitle);
+            //LoadBuddies(mStoryBookIndex, mStoryPuzzleIndex);
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_START:
