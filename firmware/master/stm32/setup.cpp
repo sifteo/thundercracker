@@ -9,6 +9,7 @@
 
 #include "board.h"
 #include "gpio.h"
+#include "powermanager.h"
 
 #include <string.h>
 
@@ -77,6 +78,7 @@ extern "C" void _start()
                 (7 << 18)                 | // PLLMUL - x9
                 (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
                 (1 << 16)                 | // PLLSRC - HSE
+                (2 << 14)                 | // ADCPRE - div6, ADCCLK is 14Mhz max
                 (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
                 (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
                 (0 << 4);                   // HPRE - AHB prescaler, no divisor
@@ -105,19 +107,10 @@ extern "C" void _start()
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
 
-    {
-        GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-        vcc20.setControl(GPIOPin::OUT_2MHZ);
-        vcc20.setHigh();
-
-#if (BOARD == BOARD_TC_MASTER_REV2)
-        // XXX: this only wants to be enabled when USB is connected.
-        // just leaving enabled for now during dev, and until we put power sequencing in.
-        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
-        vcc33.setControl(GPIOPin::OUT_2MHZ);
-        vcc33.setHigh();
-#endif
-    }
+    /*
+     * Enable VCC SYS asap.
+     */
+    PowerManager::earlyInit();
 
     /*
      * Initialize data segments (In parallel with oscillator startup)

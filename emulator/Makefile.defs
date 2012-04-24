@@ -1,0 +1,75 @@
+INCLUDES += \
+    -Isrc \
+    -I$(MASTER_DIR)/common \
+    -I$(MASTER_DIR)/sim \
+    -I$(TC_DIR)/firmware/include \
+    -I$(TC_DIR)/sdk/include \
+
+# Non-userspace simulator build
+FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR
+
+# Disable unwanted warnings, but be generally pretty pedantic
+WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
+
+# Resources
+ifeq ($(BUILD_PLATFORM), windows32)
+	OBJS += resources/winres.o
+endif
+
+# Need to set -march in order to use atomic op intrinsics, but we
+# should be relatively conservative about CPU type so that this runs
+# everywhere. In particular, -march=native is very much NOT what we
+# want, since we need to avoid using Intel-only or AMD-only extensions
+# like LZCNT.
+#
+# Looks like we currently only need to specify this explicitly on Win32.
+# Keep in mind that 64-bit platforms will need different flags!
+
+ifeq ($(BUILD_PLATFORM), windows32)
+    FLAGS += -march=pentium4 -mtune=core2
+endif
+    
+# Linker flags
+ifneq ($(BUILD_PLATFORM),Darwin)
+	# Not supported on Apple's LLVM GCC frontend
+	LIBS += -Wl,--gc-sections
+endif
+
+# Config options
+ifeq ($(MOTHERSHIP),1)
+	FLAGS += -DMOTHERSHIP
+endif
+ifeq ($(DEBUG),1)
+	FLAGS += -DDEBUG
+endif
+ifeq ($(CODEC_DEBUG),1)
+	FLAGS += -DDEBUG -DCODEC_DEBUG
+endif
+
+# Debug / optimization
+#
+# Unsurprisingly, compiler optimization produces a very dramatic
+# difference in performance. Leave these options on at all times
+# unless you have a very good reason to do otherwise.
+#
+# Do NOT publish unoptimized builds. Besides running several times
+# slower, they will reveal too much about how our firmware works. The
+# optimized builds are significantly harder to reverse engineer.
+#
+# -fomit-frame-pointer is actually really important here. It helps
+# a lot with our SBT code, since there are many tiny function calls.
+#
+# -O4 is like -O3, but includes link-time optimization on Mac OS.
+# XXX: Currently, -O4 seems to break our GUI... not using it at the moment.
+
+FLAGS += -O3 -fomit-frame-pointer
+FLAGS += -g
+
+# Automatic dependency generation (*.d files)
+FLAGS += -MMD
+
+# Symbol table trimming
+ifeq ($(BUILD_PLATFORM), Darwin)
+	LIBS += -Xlinker -unexported_symbol -Xlinker "*"
+endif
+

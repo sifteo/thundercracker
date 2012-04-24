@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MENU_UTIL_H
-#define _SIFTEO_MENU_UTIL_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -15,6 +13,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline void Menu::detectNeighbors()
 {
@@ -177,17 +179,21 @@ inline int Menu::computeCurrentTile()
     /* these are necessary if the icon widths are an odd number of tiles,
      * because the position is no longer aligned with the tile domain.
      */
-    const int kPositionAlignment = kEndCapPadding % TILE == 0 ? 0 : TILE - kEndCapPadding % TILE;
-    const int kTilePadding = kEndCapPadding / TILE;
+
+    const int kPixelsPerTile = TILE;
+    const int kPositionAlignment = kEndCapPadding % kPixelsPerTile == 0
+        ? 0 : kPixelsPerTile - kEndCapPadding % kPixelsPerTile;
+    const int kTilePadding = kEndCapPadding / kPixelsPerTile;
 
     int ui = position - kPositionAlignment;
-    int ut = (ui < 0 ? ui - TILE : ui) / TILE; // special case because int rounds up when < 0
+    int ut = (ui < 0 ? ui - kPixelsPerTile : ui) / kPixelsPerTile; // special case because int rounds up when < 0
     ut -= kTilePadding;
 
     return ut;
 }
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo
-
-#endif

@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_H
-#define _SIFTEO_VIDEO_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -21,9 +19,16 @@
 #include <sifteo/video/bg0.h>
 #include <sifteo/video/bg1.h>
 #include <sifteo/video/bg2.h>
+#include <sifteo/video/tilebuffer.h>
 
 namespace Sifteo {
 
+/**
+ * @defgroup video Video
+ *
+ * Video group overview blurb here...
+ * @{
+ */
 
 static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
 static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
@@ -74,9 +79,9 @@ enum Rotation {
     ROT_NORMAL              = 0,
     ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
     ROT_MIRROR              = _SYS_VF_X_FLIP,
-    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
     ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
-    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
     ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
     ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
 };
@@ -128,14 +133,14 @@ struct VideoBuffer {
     // Implicit conversions
     operator _SYSVideoBuffer* () { return &sys.vbuf; }
     operator const _SYSVideoBuffer* () const { return &sys.vbuf; }
-    operator _SYSAttachedVideoBuffer* () { return &sys; };
-    operator const _SYSAttachedVideoBuffer* () const { return &sys; };
+    operator _SYSAttachedVideoBuffer* () { return &sys; }
+    operator const _SYSAttachedVideoBuffer* () const { return &sys; }
 
     /**
      * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer
      * to the CubeID constructor, to easily get a CubeID instance for the
      * current cube that this buffer is attached to.
-     */
+     */
     operator _SYSCubeID () const {
         return sys.cube;
     }
@@ -210,9 +215,10 @@ struct VideoBuffer {
     void setRotation(Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
-        flags &= ~mask;
-        flags |= r & mask;
-        pokeb(offsetof(_SYSVideoRAM, flags), flags);
+
+        // Must do this atomically; the asynchronous paint controller can
+        // modify other bits within this flags byte.
+        xorb(offsetof(_SYSVideoRAM, flags), (r ^ flags) & mask);
     }
 
     /**
@@ -272,8 +278,10 @@ struct VideoBuffer {
     void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
         int srcSide = srcN.sideOf(cube());
         int dstSide = thisN.sideOf(src.cube());
-        ASSERT(srcSide != NO_SIDE && dstSide != NO_SIDE);
-        setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        if(srcSide != NO_SIDE && dstSide != NO_SIDE) {
+            setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        }
+        
     }
 
     /**
@@ -336,10 +344,10 @@ struct VideoBuffer {
      */
     static Neighborhood physicalToVirtual(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
         return result;
     }
 
@@ -354,10 +362,10 @@ struct VideoBuffer {
      */
     static Neighborhood virtualToPhysical(Neighborhood nb, Side rot) {
         Neighborhood result;
-        result.sys.sides[0] = nb.sys.sides[virtualToPhysical(Side(0), rot)];
-        result.sys.sides[1] = nb.sys.sides[virtualToPhysical(Side(1), rot)];
-        result.sys.sides[2] = nb.sys.sides[virtualToPhysical(Side(2), rot)];
-        result.sys.sides[3] = nb.sys.sides[virtualToPhysical(Side(3), rot)];
+        result.sys.sides[0] = nb.sys.sides[physicalToVirtual(Side(0), rot)];
+        result.sys.sides[1] = nb.sys.sides[physicalToVirtual(Side(1), rot)];
+        result.sys.sides[2] = nb.sys.sides[physicalToVirtual(Side(2), rot)];
+        result.sys.sides[3] = nb.sys.sides[physicalToVirtual(Side(3), rot)];
         return result;
     }
 
@@ -579,6 +587,14 @@ struct VideoBuffer {
     }
 
     /**
+     * Like pokeb(), but atomically XORs a value with the byte.
+     * This is a no-op if and only if byte==0.
+     */
+    void xorb(uint16_t addr, uint8_t byte) {
+        _SYS_vbuf_xorb(*this, addr, byte);
+    }
+
+    /**
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
@@ -593,7 +609,8 @@ struct VideoBuffer {
     }
 };
 
+/**
+ * @} endgroup video
+*/
 
 };  // namespace Sifteo
-
-#endif

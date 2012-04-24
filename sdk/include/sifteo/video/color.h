@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_COLOR_H
-#define _SIFTEO_VIDEO_COLOR_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -17,6 +15,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * This is a POD type to represent a 16-bit 5:6:5 color,
@@ -94,7 +96,7 @@ struct RGB565 {
      */
     uint8_t red() const {
         /*
-         * A good approximation is (r5 << 3) | (r5 >> 2), but this
+         * A good approximation is `(r5 << 3) | (r5 >> 2)`, but this
          * is still not quite as accurate as the implementation here.
          */
         return red5() * 255 / 31;
@@ -236,7 +238,7 @@ struct Colormap {
      * on a single VideoBuffer. You don't need to store this reference
      * typically; for example:
      *
-     *   vbuf.colormap[16].set(1.f, 0.f, 0.f);
+     *     vbuf.colormap[16].set(1.f, 0.f, 0.f);
      */
     ColormapSlot operator[](unsigned index) {
         ASSERT(index < NUM_COLORS);
@@ -335,7 +337,8 @@ struct Colormap {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo
-
-#endif

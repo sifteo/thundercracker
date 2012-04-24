@@ -25,6 +25,7 @@
 #include "cube_debug.h"
 #include "vtime.h"
 #include "tracer.h"
+#include "flash_storage.h"
 
 
 namespace Cube {
@@ -47,8 +48,10 @@ static const uint8_t CTRL_PORT_DIR   = REG_P3DIR;
 static const uint8_t MISC_TOUCH      = (1 << 7);
 
 static const uint8_t CTRL_LCD_DCX    = (1 << 0);
-static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);
-static const uint8_t CTRL_FLASH_LAT2 = (1 << 1);
+static const uint8_t CTRL_FLASH_LAT1 = (1 << 1);
+static const uint8_t CTRL_FLASH_LAT2 = (1 << 2);
+static const uint8_t CTRL_3V3_EN     = (1 << 3);
+static const uint8_t CTRL_DS_EN      = (1 << 4);
 static const uint8_t CTRL_FLASH_WE   = (1 << 5);
 static const uint8_t CTRL_FLASH_OE   = (1 << 6);
 
@@ -67,20 +70,21 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     MDU mdu;
-    FlashStorage flashStorage;
     Flash flash;
     Neighbors neighbors;
     RNG rng;
-    
-    bool init(VirtualTime *masterTimer,
-              const char *firmwareFile, const char *flashFile,
-              bool wakeFromSleep);
 
-    void exit();    
+    bool init(VirtualTime *masterTimer, const char *firmwareFile,
+        FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep);
+
     void reset();
 
     ALWAYS_INLINE bool isSleeping() {
         return cpu.deepSleep;
+    }
+
+    ALWAYS_INLINE unsigned id() const {
+        return cpu.id;
     }
 
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {

@@ -1,6 +1,3 @@
 #!/bin/bash
-#ls *.raw > audio.txt
-make
-tc-siftulator -n 5 &
-sleep 1s
-./peano.sim
+/c/users/kevin/desktop/thundercracker\ kevin/emulator/tc-siftulator  -n 3 --lock-rotation /c/users/kevin/desktop/thundercracker\ kevin/sdk/examples/peano/peano.elf
+

@@ -10,11 +10,19 @@
 #include "vram.h"
 #include "accel.h"
 #include "event.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 #include "svmdebugpipe.h"
 #include "tasks.h"
 #include "neighbors.h"
 #include "paintcontrol.h"
+#include "cubeslots.h"
+
+// Simulator headers, for simAssetLoaderBypass.
+#ifdef SIFTEO_SIMULATOR
+#   include "system_mc.h"
+#   include "cube_hardware.h"
+#   include "lsdec.h"
+#endif
 
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
@@ -56,6 +64,34 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->head = 0;
     LC->tail = 0;
 
+#ifdef SIFTEO_SIMULATOR
+    if (CubeSlots::simAssetLoaderBypass) {
+        /*
+         * Asset loader bypass mode: Instead of actually sending this
+         * loadstream over the radio, instantaneously decompress it into
+         * the cube's flash memory.
+         */
+
+        // Use our reference implementation of the Loadstream decoder
+        Cube::Hardware *simCube = SystemMC::getCubeForSlot(this);
+        if (simCube) {
+            FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
+            LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
+            lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
+
+            LOG(("FLASH[%d]: Installed asset group %s at base address "
+                "0x%08x (loader bypassed)\n",
+                id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
+
+            // Mark this as done already.
+            LC->progress = header.dataSize;
+            Atomic::SetLZ(L->complete, id());
+
+            return;
+        }
+    }
+#endif
+
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
         id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
 
@@ -82,7 +118,7 @@ void CubeSlot::requestFlashReset()
     Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
-bool CubeSlot::radioProduce(PacketTransmission &tx)
+const RadioAddress *CubeSlot::getRadioAddress()
 {
     /*
      * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
@@ -103,7 +139,12 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     address.id[3] = 0xe7;
     address.id[4] = 0xe7;
 
-    tx.dest = &address;
+    return &address;
+}
+
+bool CubeSlot::radioProduce(PacketTransmission &tx)
+{
+    tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
     // First priority: Send video buffer updates
@@ -179,30 +220,35 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     /*
      * Third priority: Sensor time synchronization
      *
-     * XXX: Time syncs are kind of special.  We use them to assign
-     *      each cube to a different timeslice of our sensor polling
-     *      period, allowing the neighbor sensors to cooperate via
-     *      time division multiplexing. The packet itself is a short
-     *      (3 byte) and simple packet which simply adjusts the phase
-     *      of the cube's sensor timer.
+     * Time syncs are kind of special.  We use them to assign
+     * each cube to a different timeslice of our sensor polling
+     * period, allowing the neighbor sensors to cooperate via
+     * time division multiplexing. The packet itself is a short
+     * (3 byte) and simple packet which simply adjusts the phase
+     * of the cube's sensor timer.
      */
 
     if (timeSyncState)  {
         timeSyncState--;
     } else if (tx.packet.len == 0) {
         timeSyncState = 1000;
-        // cube timer runs at 16Mhz with a prescaler of 12
-        const SysTime::Ticks cubeticks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
-
-        const uint16_t cubeSyncTime = (cubeticks + (id() * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
-
-        codec.timeSync(tx.packet, cubeSyncTime);
+        codec.timeSync(tx.packet, calculateTimeSync());
         tx.noAck = true;    // just throw it out there UDP style
         return true;
     }
 
     // Finalize this packet. Must be last.
-    codec.endPacket(tx.packet);
+    bool hasContent = codec.endPacket(tx.packet);
+
+    // Debugging: Scrub the VRAM if we have no video data in-flight
+    DEBUG_ONLY({
+        _SYSVideoBuffer *vb = vbuf;
+        if (hasContent)
+            consecutiveEmptyPackets = 0;
+        else if (++consecutiveEmptyPackets == 3 && vbuf
+            && vbuf->lock == 0 && vbuf->cm16 == 0)
+            SystemMC::checkQuiescentVRAM(this);
+    });
 
     /*
      * XXX: We don't have to always return true... we can return false if
@@ -234,6 +280,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // This ACK includes a valid frame_count counter
 
         uint8_t delta = ack->frame_count - framePrevACK;
+        delta &= FRAME_ACK_COUNT;
         framePrevACK = ack->frame_count;
 
         if ((CubeSlots::frameACKValid & bit()) == 0) {
@@ -251,7 +298,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Two valid ACKs in a row, we can count bytes.
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
-        
+
             DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
                 id(), loadACK,
                 !!(CubeSlots::flashResetWait & bit()),
@@ -296,10 +343,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
         // Has valid accelerometer data. Is it different from our previous state?
 
-        // Translate from radio packet coordinates to SDK coordinates
-        int8_t x = -ack->accel[0];
-        int8_t y = -ack->accel[1];
-        int8_t z = -ack->accel[2];
+        int8_t x = ack->accel[0];
+        int8_t y = ack->accel[1];
+        int8_t z = ack->accel[2];
 
         // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
@@ -400,4 +446,48 @@ uint64_t CubeSlot::getHWID()
     uint64_t result = 0;
     memcpy(&result, hwid, sizeof hwid);
     return result;
+}
+
+uint16_t CubeSlot::calculateTimeSync()
+{
+    /*
+     * Calculate the phase value to, at this very moment, deliver to the
+     * cube in order to settle it into the proper neighbor timeslot.
+     */
+
+    /*
+     * This returns a raw timer reload value. The timer runs off a 16 MHz
+     * clock, with a divide-by-12 prescaler. The counter rolls over at 13 bits.
+     */
+    const SysTime::Ticks cubeTicks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
+    const unsigned timerPeriod = 0x2000;
+    const unsigned timerMask   = 0x1FFF;
+
+    /*
+     * We nominally want to divide this period totally evenly by
+     * _SYS_NUM_CUBE_SLOTS, to give each cube the same size allocation.
+     * However, any padding we can provide around the slots can help us
+     * be more robust in the face of failures, plus they can help us
+     * debug hardware issues by occasionally choosing a slower baud rate
+     * for the neighbor packets.
+     *
+     * An easy way to do this is to reverse the bits in our cube ID number,
+     * then scale the resulting number by the nominal size of a slot. This
+     * way, the slots appear to subdivide every time log2(N) of the number of
+     * cubes increases.
+     */
+
+    // 5-bit lookup table for bit reversal
+    static const uint8_t rev5[] = {
+        0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,
+        0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,
+        0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,
+        0x03, 0x13, 0x0b, 0x1b, 0x07, 0x17, 0x0f, 0x1f,
+    };
+
+    STATIC_ASSERT(arraysize(rev5) == _SYS_NUM_CUBE_SLOTS);
+    const unsigned slotWidth = timerPeriod / _SYS_NUM_CUBE_SLOTS;
+    unsigned slotID = rev5[id()];
+
+    return (cubeTicks + slotID * slotWidth) & timerMask;
 }

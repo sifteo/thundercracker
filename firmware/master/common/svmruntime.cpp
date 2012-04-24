@@ -4,8 +4,7 @@
  */
 
 #include "svmruntime.h"
-#include "elfutil.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
@@ -25,6 +24,11 @@ SvmMemory::PhysAddr SvmRuntime::stackLimit;
 reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
 
+#ifdef SIFTEO_SIMULATOR
+bool SvmRuntime::stackMonitorEnabled = false;
+SvmMemory::PhysAddr SvmRuntime::topOfStackPA;
+SvmMemory::PhysAddr SvmRuntime::stackLowWaterMark;
+#endif
 
 void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
         SvmMemory::VirtAddr stackTopVA)
@@ -32,7 +36,13 @@ void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
     if (!SvmMemory::mapRAM(stackLimitVA, 0, stackLimit))
         SvmRuntime::fault(F_BAD_STACK);
 
-    SvmCpu::run(mapSP(stackTopVA - (entryFunc >> 24) * 4),
+#ifdef SIFTEO_SIMULATOR
+    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
+    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
+    stackLowWaterMark = topOfStackPA;
+#endif
+
+    SvmCpu::run(mapSP(stackTopVA - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
 }
 
@@ -111,7 +121,7 @@ void SvmRuntime::call(reg_t addr)
     TRACING_ONLY({
         LOG(("CALL: %08x, sp-%u, Saving frame %p: pc=%08x fp=%08x r2=%08x "
             "r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             fp, fp->pc, fp->fp, fp->r2, fp->r3, fp->r4, fp->r5, fp->r6, fp->r7));
     });
 
@@ -135,7 +145,7 @@ void SvmRuntime::tailcall(reg_t addr)
 
     TRACING_ONLY({
         LOG(("TAILCALL: %08x, sp-%u, Keeping frame %p\n",
-            (unsigned)(addr & 0xffffff), (unsigned)(addr >> 24),
+            (unsigned)(addr & 0xfffffc), getSPAdjustWords(addr),
             reinterpret_cast<void*>(fp)));
     });
 
@@ -144,8 +154,9 @@ void SvmRuntime::tailcall(reg_t addr)
 
 void SvmRuntime::enterFunction(reg_t addr)
 {
+
     // Allocate stack space for this function, and enter it
-    adjustSP(-(addr >> 24));
+    adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);
 }
 
@@ -287,7 +298,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
-        addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
+        addrOp(opnum, SvmMemory::SEGMENT_0_VA + (literal & 0xffffff));
     }
     else {
         SvmRuntime::fault(F_RESERVED_SVC);
@@ -446,7 +457,24 @@ reg_t SvmRuntime::mapSP(reg_t addr)
     if (pa < stackLimit)
         SvmRuntime::fault(F_STACK_OVERFLOW);
 
+    onStackModification(pa);
+
     return reinterpret_cast<reg_t>(pa);
+}
+
+/*
+ * If enabled, monitor stack usage and print when we have a new low water mark.
+ * Simulator only.
+ */
+void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
+{
+#ifdef SIFTEO_SIMULATOR
+    if (stackMonitorEnabled && sp < stackLowWaterMark) {
+        stackLowWaterMark = sp;
+        LOG(("SVM: New stack low water mark, 0x%p (%d bytes)\n",
+             reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
+    }
+#endif
 }
 
 void SvmRuntime::branch(reg_t addr)

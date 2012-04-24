@@ -1,3 +1,4 @@
+#include "config.h"
 #include "ConfirmationMenu.h"
 #include "Skins.h"
 #include "DialogWindow.h"
@@ -18,9 +19,9 @@ static const float kTransitionTime = 0.333f;
 
 const int kPad = 1;
 
-void OnCubeTouch(void *, Cube::ID cid)
+void OnCubeTouch(void *, unsigned cid)
 {
-    bool pressed = Game::cubes[cid].touching();
+    bool pressed = Game::cubes[cid].isTouching();
     if(cid == YES || cid ==NO)
     {
         if(pressed)
@@ -33,6 +34,33 @@ void OnCubeTouch(void *, Cube::ID cid)
         }
     }
 }
+    
+#if NO_TOUCH_HACK
+void OnCubeTilt(void*, unsigned cid)
+{
+    static int oldState = 0;
+    Byte2 ts = Game::cubes[cid].getTiltState();
+    if(ts.y != oldState)
+    {
+        oldState = ts.y;
+        //copy pasta from ontouch
+        bool pressed = ts.y != 0;
+        if(cid == YES || cid ==NO)
+        {
+            if(pressed)
+                gotTouchOn[cid] = true;
+            
+            if (!pressed && gotTouchOn[cid])
+            {
+                triggered[cid] = true;
+                PLAY_SFX(sfx_Menu_Tilt_Stop);
+            }
+        }
+
+        
+    }
+}
+#endif
 
 int CollapsesPauses(int off) {
   if (off > 7) {
@@ -77,15 +105,16 @@ void AnimateDoors(TotalsCube *c, bool opening)
         AudioPlayer::PlayShutterOpen();
     else
         AudioPlayer::PlayShutterClose();
+
     for(float t=0; t<kTransitionTime; t+=Game::dt) {
         float amount = opening ? t/kTransitionTime : 1-t/kTransitionTime;
 
         PaintTheDoors(c, (7+6+kPad) * amount, opening);
-        System::paintSync();
+        System::paint();
         Game::UpdateDt();
     }
     PaintTheDoors(c, opening? (7+6+kPad): 0, opening);
-    System::paintSync();
+    System::paint();
 }
 
 //true means selected first choice (yes)
@@ -105,6 +134,7 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
 
     AnimateDoors(Game::cubes+YES, true);
     Game::cubes[YES].Image(*choice1, vec(3, 1));
+    System::paint();
 
     AnimateDoors(Game::cubes+NO, true);
     Game::cubes[NO].Image(*choice2, vec(3, 1));
@@ -117,21 +147,29 @@ bool Run(const char *msg, const Sifteo::AssetImage *choice1, const Sifteo::Asset
         AnimateDoors(Game::cubes+ASK, true);        
         dw.SetForegroundColor(75, 0, 85);
         dw.SetBackgroundColor(255, 255, 255);
-        dw.DoDialog(msg, 16, 20);
+        dw.DoDialog(msg, 16, 16);
     }
 
     gotTouchOn[0] = gotTouchOn[1] = gotTouchOn[2] = false;
     triggered[0] = triggered[1] = triggered[2] = false;
-    void *oldTouch = _SYS_getVectorHandler(_SYS_CUBE_TOUCH);
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+    void *oldTouch = Events::cubeTouch.handler();
+    Events::cubeTouch.set(&OnCubeTouch);
+#if NO_TOUCH_HACK
+    void *oldTilt = Events::cubeTilt.handler();
+    Events::cubeTilt.set(&OnCubeTilt);
+#endif
 
     while(!(triggered[YES] || triggered[NO])) {
         System::yield();
         Game::UpdateDt();
     }
 
-    _SYS_setVector(_SYS_CUBE_TOUCH, oldTouch, NULL);
+    Events::cubeTouch.set((void(*)(void*,unsigned))oldTouch);
 
+#if NO_TOUCH_HACK
+    Events::cubeTilt.set(oldTilt);
+#endif
+    
     AnimateDoors(Game::cubes+YES, false);
     AnimateDoors(Game::cubes+NO, false);
 

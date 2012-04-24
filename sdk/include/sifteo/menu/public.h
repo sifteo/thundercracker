@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MENU_PUBLIC_H
-#define _SIFTEO_MENU_PUBLIC_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -15,6 +13,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     struct MenuItem *aItems)
@@ -100,6 +102,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     }
 
     setIconYOffset(kDefaultIconYOffset);
+    setPeekTiles(kDefaultPeekTiles);
 }
 
 inline bool Menu::pollEvent(struct MenuEvent *ev)
@@ -229,7 +232,16 @@ inline void Menu::setIconYOffset(uint8_t px)
     updateBG0();
 }
 
+inline void Menu::setPeekTiles(uint8_t numTiles)
+{
+    ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
+    kPeekTiles = numTiles;
+    updateBG0();
+}
+
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo
 
-#endif

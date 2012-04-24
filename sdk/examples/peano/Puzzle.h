@@ -2,7 +2,6 @@
 
 //#include "Guid.h"
 #include "ObjectPool.h"
-#include <stddef.h>
 
 namespace TotalsGame 
 {

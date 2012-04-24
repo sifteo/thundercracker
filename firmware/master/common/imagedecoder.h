@@ -76,6 +76,11 @@ public:
           right(decoder.getWidth()), bottom(decoder.getHeight()),
           frame(frame), blockMask(decoder.getBlockMask()) {}
 
+    void reset() {
+        x = left;
+        y = top;
+    }
+
     bool next() {
         {
             unsigned nextX = x + 1;                         // Next tile over within the block
@@ -130,6 +135,7 @@ public:
 
     void copyToVRAM(_SYSVideoBuffer &vbuf, uint16_t originAddr, unsigned stride);
     void copyToBG1(_SYSVideoBuffer &vbuf, unsigned destX, unsigned destY);
+    void copyToBG1Masked(_SYSVideoBuffer &vbuf, uint16_t key);
     void copyToMem(uint16_t *dest, unsigned stride);
 
 private:

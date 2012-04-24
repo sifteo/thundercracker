@@ -1,8 +1,8 @@
 APP = text
-TC_DIR = ../../..
-include $(TC_DIR)/sdk/Makefile.defs
+SDK_DIR = ../..
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = main.o
 CDEPS += *.h
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules

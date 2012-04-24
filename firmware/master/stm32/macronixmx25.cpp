@@ -4,9 +4,10 @@
  */
 
 #include "macronixmx25.h"
-#include "flash.h"
+#include "flash_device.h"
 #include "board.h"
 #include "macros.h"
+
 
 void MacronixMX25::init()
 {
@@ -14,24 +15,7 @@ void MacronixMX25::init()
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
 
-#if (BOARD == BOARD_TC_MASTER_REV2)
-    GPIOPin regEnable = FLASH_REG_EN_GPIO;
-    regEnable.setControl(GPIOPin::OUT_2MHZ);
-    regEnable.setHigh();
-#endif
-
     spi.init();
-
-    // reset
-#if 0
-    spi.begin();
-    spi.transfer(ResetEnable);
-    spi.end();
-
-    spi.begin();
-    spi.transfer(Reset);
-    spi.end();
-#endif
 
     // prepare to write the status register
     spi.begin();
@@ -46,16 +30,6 @@ void MacronixMX25::init()
     while (readReg(ReadStatusReg) != Ok) {
         ; // sanity checking?
     }
-
-#if 0
-    JedecID id;
-    spi.begin();
-    spi.transfer(ReadID);
-    id.manufacturerID = spi.transfer(Nop);
-    id.memoryType = spi.transfer(Nop);
-    id.memoryDensity = spi.transfer(Nop);
-    spi.end();
-#endif
 }
 
 /*
@@ -91,7 +65,7 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
     while (len) {
         // align writes to PAGE_SIZE chunks
-        uint32_t pagelen = Flash::PAGE_SIZE - (address & (Flash::PAGE_SIZE - 1));
+        uint32_t pagelen = FlashDevice::PAGE_SIZE - (address & (FlashDevice::PAGE_SIZE - 1));
         if (pagelen > len) pagelen = len;
 
         // wait for any previous write/erase to complete
@@ -177,6 +151,18 @@ void MacronixMX25::ensureWriteEnabled()
         spi.transfer(WriteEnable);
         spi.end();
     } while (!(readReg(ReadStatusReg) & WriteEnableLatch));
+}
+
+void MacronixMX25::readId(FlashDevice::JedecID *id)
+{
+    spi.begin();
+
+    spi.transfer(ReadID);
+    id->manufacturerID = spi.transfer(Nop);
+    id->memoryType = spi.transfer(Nop);
+    id->memoryDensity = spi.transfer(Nop);
+
+    spi.end();
 }
 
 /*

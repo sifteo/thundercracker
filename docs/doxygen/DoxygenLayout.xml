@@ -3,7 +3,7 @@
   <navindex>
     <tab type="mainpage" visible="yes" title="Home"/>
     <tab type="pages" visible="yes" title="Guides" intro="Below you'll find overviews and guides that will teach you the ways of the Sifteo SDK"/>
-    <tab type="modules" visible="no" title="" intro=""/>
+    <tab type="modules" visible="yes" title="Modules" intro="Below are logical groupings of API by domain"/>
     <tab type="namespaces" visible="no" title="">
       <tab type="namespaces" visible="yes" title="" intro=""/>
       <tab type="namespacemembers" visible="yes" title="" intro=""/>

@@ -247,6 +247,10 @@
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
 #define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
 
+#define FRAME_ACK_CONTINUOUS    0x40
+#define FRAME_ACK_COUNT         0x3F
+#define FRAME_ACK_TOGGLE        0x01
+
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
     struct {
@@ -254,9 +258,20 @@ typedef union {
          * For synchronizing LCD refreshes, the master can keep track
          * of how many repaints the cube has performed. Ideally these
          * repaints would be in turn sync'ed with the LCDC's hardware
-         * refresh timer. If we're tight on space, we don't need a
-         * full byte for this. Even a one-bit toggle would work,
-         * though we might want two bits to allow deeper queues.
+         * refresh timer.
+         *
+         * The various bits in here are multi-purpose...
+         *
+         *   [7]    Reserved. Always zero.
+         *
+         *   [6]    Continuous rendering bit, captured synchronously
+         *          with the firmware's read of this bit at the top of
+         *          the render loop.
+         *
+         *   [5:0]  Count of total frames rendered, modulo 64.
+         *
+         *   [0]    Doubles as a captured copy of the last read of the
+         *          toggle bit.
          */
         uint8_t frame_count;
 

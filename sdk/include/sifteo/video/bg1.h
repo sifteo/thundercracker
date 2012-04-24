@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_BG1_H
-#define _SIFTEO_VIDEO_BG1_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -18,6 +16,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * A BG1 tile mask. In other words, this is a 16x16-bit two-dimensional
@@ -309,7 +311,7 @@ struct BG1Drawable {
      * and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
-        eraseMask();
+        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
             _SYS_TILE77(index), numTiles());
         setPanning(vec(0,0));
@@ -334,15 +336,12 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void eraseMask(bool finish=true) {
-        if (finish)
-            _SYS_finish();
-        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
+    void eraseMask() {
+        _SYS_finish();
+        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP/2, 0, _SYS_VRAM_BG1_WIDTH);
     }
 
     /**
@@ -354,14 +353,11 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void setMask(const BG1Mask &mask, bool finish=true) {
-        if (finish)
-            _SYS_finish();
+    void setMask(const BG1Mask &mask) {
+        _SYS_finish();
         _SYS_vbuf_write(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_bitmap)/2,
             mask.rows(), 16);
     }
@@ -384,14 +380,11 @@ struct BG1Drawable {
      * BG1 mode isn't currently active, or when you've ensured
      * that the cube isn't currently rendering asynchronously.
      *
-     * Because of this, we automatically do a System::finish() by default,
-     * so we can ensure nobody is still using the old mask. This can be
-     * suppressed if you really know what you're doing, by setting
-     * finish=false.
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
      */
-    void fillMask(UInt2 topLeft, UInt2 size, bool finish=true) {
-        if (finish)
-            _SYS_finish();
+    void fillMask(UInt2 topLeft, UInt2 size) {
+        _SYS_finish();
         _SYS_vbuf_fill(&sys.vbuf,
             offsetof(_SYSVideoRAM, bg1_bitmap)/2 + topLeft.y,
             ((1 << size.x) - 1) << topLeft.x, size.y);
@@ -410,6 +403,14 @@ struct BG1Drawable {
         unsigned x = pixels.x & 0xFF;
         unsigned y = pixels.y & 0xFF;
         _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, bg1_x) / 2, x | (y << 8));
+    }
+
+    /**
+      * Retrieve the last value set by setPanning().
+     */
+    Int2 getPanning() const {
+        unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
+        return vec<int>((int8_t)(word & 0xFF), (int8_t)(word >> 8));
     }
 
     /**
@@ -465,6 +466,44 @@ struct BG1Drawable {
     }
 
     /**
+     * Draw an AssetImage, automatically allocating tiles on the BG1 mask.
+     * This replaces the entirety of the BG1 mask; other drawing on BG1
+     * will be automatically replaced.
+     *
+     * The image is always drawn to the top-left corner of BG1. You can
+     * place it anywhere on-screen by calling setPanning() afterwards.
+     *
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
+     */
+    void maskedImage(const AssetImage &image, const PinnedAssetImage &key,
+        unsigned frame = 0)
+    {
+        _SYS_finish();
+        _SYS_image_BG1MaskedDraw(&sys, image, key.tile(0), frame);
+    }
+
+    /**
+     * Draw part of an AssetImage, automatically allocating tiles on the
+     * BG1 mask. This replaces the entirety of the BG1 mask; other drawing
+     * on BG1 will be automatically replaced.
+     *
+     * The image is always drawn to the top-left corner of BG1. You can
+     * place it anywhere on-screen by calling setPanning() afterwards.
+     *
+     * Because of this, we automatically do a System::finish()
+     * so we can ensure nobody is still using the old mask.
+     */
+    void maskedImage(UInt2 size, const AssetImage &image,
+        const PinnedAssetImage &key, UInt2 srcXY,
+        unsigned frame = 0)
+    {
+        _SYS_finish();
+        _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(0), frame,
+            (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
+    }
+
+    /**
      * Draw text, using an AssetImage as a fixed width font. Each character
      * is represented by a consecutive 'frame' in the image. Characters not
      * present in the font will be skipped.
@@ -477,10 +516,10 @@ struct BG1Drawable {
         while ((c = *str)) {
             if (c == '\n') {
                 pos.x = topLeft.x;
-                pos.y++;
+                pos.y += font.tileHeight();
             } else {
                 _SYS_image_BG1Draw(&sys, font, (_SYSInt2*) &pos, c - firstChar);
-                pos.x++;
+                pos.x += font.tileWidth();
             }
             str++;
         }
@@ -501,7 +540,8 @@ struct BG1Drawable {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo
-
-#endif

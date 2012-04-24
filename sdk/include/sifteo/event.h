@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_EVENT_H
-#define _SIFTEO_EVENT_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -26,6 +24,15 @@ namespace Sifteo {
 template <_SYSVectorID tID>
 struct CubeEventVector {
     CubeEventVector() {}
+
+    /**
+     * Disable this event vector. This acts like a no-op handler was
+     * registered, but of course it's more efficient than setting an
+     * actual no-op handler.
+     */
+    void unset() const {
+        _SYS_setVector(tID, 0, 0);
+    }
 
     /**
      * Set this event vector, given a closure consisting of an arbitrary
@@ -88,6 +95,15 @@ struct CubeEventVector {
 template <_SYSVectorID tID>
 struct NeighborEventVector {
     NeighborEventVector() {}
+
+    /**
+     * Disable this event vector. This acts like a no-op handler was
+     * registered, but of course it's more efficient than setting an
+     * actual no-op handler.
+     */
+    void unset() const {
+        _SYS_setVector(tID, 0, 0);
+    }
 
     /**
      * Set this event vector, given a closure consisting of an arbitrary
@@ -177,5 +193,3 @@ namespace Events {
 
 };  // namespace Events
 };  // namespace Sifteo
-
-#endif

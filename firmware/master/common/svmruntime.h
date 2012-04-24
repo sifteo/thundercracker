@@ -12,7 +12,7 @@
 #include "svm.h"
 #include "svmcpu.h"
 #include "svmmemory.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
 
 using namespace Svm;
 
@@ -109,6 +109,12 @@ public:
         SvmCpu::setReg(7, r7);
     }
 
+#ifdef SIFTEO_SIMULATOR
+    static void enableStackMonitoring() {
+        stackMonitorEnabled = true;
+    }
+#endif
+
 private:
     enum ReturnActions {
         RET_BRANCH          = 1 << 0,
@@ -138,12 +144,30 @@ private:
 
     static void enterFunction(reg_t addr);
     static reg_t mapBranchTarget(reg_t addr);
+
+    static unsigned getSPAdjustWords(reg_t addr) {
+        // High bit is reserved
+        return (addr >> 24) & 0x7F;
+    }
+
+    static unsigned getSPAdjustBytes(reg_t addr) {
+        return getSPAdjustWords(addr) * 4;
+    }
+
     static void validate(reg_t addr);
     static void syscall(unsigned num);
     static void tailsyscall(unsigned num);
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
+
+    static void onStackModification(SvmMemory::PhysAddr sp);
+
+#ifdef SIFTEO_SIMULATOR
+    static bool stackMonitorEnabled;
+    static SvmMemory::PhysAddr topOfStackPA;
+    static SvmMemory::PhysAddr stackLowWaterMark;
+#endif
 };
 
 #endif // SVM_RUNTIME_H

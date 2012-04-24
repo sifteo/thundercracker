@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_LIMITS_H
-#define _SIFTEO_LIMITS_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -22,6 +20,4 @@
 
 #ifndef CUBE_ALLOCATION
 #define CUBE_ALLOCATION  12
-#endif
-
 #endif

@@ -6,6 +6,8 @@
 #include "audiosampledata.h"
 #include "svmmemory.h"
 
+#define LGPFX "AudioSampleData: "
+
 /* Providing an array interface to sample data is convenient for the audio
  * channel, but it's a bit misleading because truly random access patterns
  * can incur massive performance penalties. In general, requests should be

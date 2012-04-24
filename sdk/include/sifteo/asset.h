@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_ASSET_H
-#define _SIFTEO_ASSET_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -18,6 +16,12 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup assets Assets
+ *
+ * Assets overview blurb here...
+ * @{
+ */
 
 /**
  * An asset group. At build time, STIR creates a statically
@@ -129,20 +133,26 @@ struct AssetGroup {
  * To ensure that AssetSlots used in metadata are constant at compile-time,
  * the preferred allocation pattern is to declare a global variable such as:
  *
- *    AssetSlot MySlot = AssetSlot::allocate()
+ *     AssetSlot MySlot = AssetSlot::allocate()
  *          .bootstrap(Group1)
  *          .bootstrap(Group2);
+ *
+ * AssetSlots can only be created via allocate(), or copying another
+ * AssetSlot. All ID allocation is performed in allocate().
  */
 
-struct AssetSlot {
+class AssetSlot {
     _SYSAssetSlot sys;
-    AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
+    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
+
+public:
+
+    /// Copy constructor
+    AssetSlot(const AssetSlot &other) : sys(other.sys) {}
 
     /// Implicit conversion to system object
     operator const _SYSAssetSlot& () const { return sys; }
-    operator _SYSAssetSlot& () { return sys; }
     operator const _SYSAssetSlot* () const { return &sys; }
-    operator _SYSAssetSlot* () { return &sys; }
 
     /**
      * Create a new AssetSlot. This function returns
@@ -263,7 +273,7 @@ struct AssetLoader {
      *
      * We return 'true' if the asset download started and/or we found a cached
      * asset for every one of the specified cubes. If one or more of the
-     * specified cubes has no room in "slot", we return false.     
+     * specified cubes has no room in "slot", we return false.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeIDVector cubes) {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
@@ -455,7 +465,7 @@ struct AssetImage {
  * This doesn't store any separate tilemap information, just the index for
  * the first tile in the sequence.
  *
- * Generate a PinnedAssetImage by passing the "pinned=1" option to image{}
+ * Generate a PinnedAssetImage by passing the `pinned=1` option to image{}
  * in your STIR script.
  *
  * Pinned assets are required for sprites, since the hardware requires all
@@ -503,7 +513,7 @@ struct PinnedAssetImage {
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return sys.pData + i;
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -526,7 +536,7 @@ struct PinnedAssetImage {
     uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + sys.pData + i;
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -549,7 +559,7 @@ struct PinnedAssetImage {
  * than compressed AssetImages, but they allow you to have cheap random
  * access to any tile in the image.
  *
- * Generate a FlatAssetImage by passing the "flat=1" option to image{}
+ * Generate a FlatAssetImage by passing the `flat=1` option to image{}
  * in your STIR script.
  */
  
@@ -599,7 +609,7 @@ struct FlatAssetImage {
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return tileArray()[i];
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -622,7 +632,7 @@ struct FlatAssetImage {
     uint16_t tile(_SYSCubeID cube, unsigned i) const {
         ASSERT(i < numTiles());
         return assetGroup().baseAddress(cube) + tileArray()[i];
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,
@@ -647,7 +657,12 @@ struct AssetAudio {
     _SYSAudioModule sys;
 };
 
+struct AssetTracker {
+    _SYSXMSong song;
+};
+
+/**
+ * @} end addtogroup assets
+ */
 
 };  // namespace Sifteo
-
-#endif

@@ -7,7 +7,8 @@
 #include "cube.h"
 #include "neighbors.h"
 #include "machine.h"
-
+#include "tasks.h"
+#include "radio.h"
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
@@ -27,11 +28,15 @@ _SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
 
 _SYSAssetLoader *CubeSlots::assetLoader = 0;
 
+#ifdef SIFTEO_SIMULATOR
+bool CubeSlots::simAssetLoaderBypass;
+#endif
+
 
 void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
 {
-	minCubes = min;
-	maxCubes = max;
+    minCubes = min;
+    maxCubes = max;
 }
 
 void CubeSlots::enableCubes(_SYSCubeIDVector cv)
@@ -107,10 +112,41 @@ void CubeSlots::paintCubes(_SYSCubeIDVector cv)
 
 void CubeSlots::finishCubes(_SYSCubeIDVector cv)
 {
-    while (cv) {
-        _SYSCubeID id = Intrinsic::CLZ(cv);
-        CubeSlots::instances[id].waitForFinish();
-        cv ^= Intrinsic::LZ(id);
+    /*
+     * Wait for rendering to finish on all cubes.
+     *
+     * Unlike paint(), finish may involve each cube being in a different
+     * phase of rendering and require different inputs. To wait for each
+     * cube concurrently instead of serially, we manage the main iteration
+     * loop here and poll each cube in turn. Each poll operation may cause
+     * state changes which get that cube closer to finishing.
+     */
+
+    _SYSCubeIDVector beginVec = cv;
+    while (beginVec) {
+        _SYSCubeID id = Intrinsic::CLZ(beginVec);
+        CubeSlots::instances[id].beginFinish();
+        beginVec ^= Intrinsic::LZ(id);
+    }
+
+    for (;;) {
+        SysTime::Ticks now = SysTime::ticks();
+        _SYSCubeIDVector pollVec = cv;
+        bool finished = true;
+
+        while (pollVec) {
+            _SYSCubeID id = Intrinsic::CLZ(pollVec);
+            if (!CubeSlots::instances[id].pollForFinish(now))
+                finished = false;
+            pollVec ^= Intrinsic::LZ(id);
+        }
+    
+        if (finished)
+            break;
+
+        // Wait...
+        Tasks::work();
+        Radio::halt();
     }
 }
 

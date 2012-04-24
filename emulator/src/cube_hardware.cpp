@@ -12,9 +12,8 @@
 
 namespace Cube {
 
-bool Hardware::init(VirtualTime *masterTimer,
-                    const char *firmwareFile, const char *flashFile,
-                    bool wakeFromSleep)
+bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
+    FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep)
 {
     time = masterTimer;
     hwDeadline.init(time);
@@ -47,12 +46,7 @@ bool Hardware::init(VirtualTime *masterTimer,
         CPU::em8051_init_sbt(&cpu);
     }
 
-    if (!flashStorage.init(flashFile)) {
-        fprintf(stderr, "Error: Failed to initialize flash memory\n");
-        return false;
-    }
-    
-    flash.init(&flashStorage);
+    flash.init(flashStorage);
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
@@ -73,11 +67,6 @@ bool Hardware::init(VirtualTime *masterTimer,
 void Hardware::reset()
 {
     CPU::em8051_reset(&cpu, false);
-}
-
-void Hardware::exit()
-{
-    flashStorage.exit();
 }
 
 // cube_cpu_callbacks.h
@@ -106,10 +95,10 @@ int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
         except(cpu, EXCEPTION_NVM);
         return 0;
     }
-            
+
     // Program flash bits (1 -> 0)
-    self->flashStorage.data.nvm[addr] &= data;
-    self->flashStorage.asyncWrite(*self->time, &self->cpu);
+    ASSERT(addr < sizeof self->flash.getStorage()->nvm);
+    self->flash.getStorage()->nvm[addr] &= data;
     
     // Self-timed write cycles
     return 12800;
@@ -119,7 +108,9 @@ int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
 uint8_t CPU::NVM::read(CPU::em8051 *cpu, uint16_t addr)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
-    return self->flashStorage.data.nvm[addr];
+
+    ASSERT(addr < sizeof self->flash.getStorage()->nvm);
+    return self->flash.getStorage()->nvm[addr];
 }
 
 void Hardware::sfrWrite(int reg)
@@ -157,6 +148,7 @@ void Hardware::graphicsTick()
 
     Flash::Pins flashp = {
         /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
+        /* power   */ ctrl_port & CTRL_DS_EN,
         /* oe      */ ctrl_port & CTRL_FLASH_OE,
         /* ce      */ 0,
         /* we      */ ctrl_port & CTRL_FLASH_WE,
@@ -164,6 +156,7 @@ void Hardware::graphicsTick()
     };
 
     LCD::Pins lcdp = {
+        /* power   */ ctrl_port & CTRL_3V3_EN,
         /* csx     */ 0,
         /* dcx     */ ctrl_port & CTRL_LCD_DCX,
         /* wrx     */ addr_port & 1,
@@ -220,7 +213,6 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, &cpu);
     i2c.tick(hwDeadline, &cpu);
     flash.tick(hwDeadline, &cpu);
-    flashStorage.tick(hwDeadline);
     spi.radio.tick(rfcken, &cpu);
 }
 
@@ -271,23 +263,23 @@ void Hardware::initVCD(VCDWriter &vcd)
     
         // Ctrl port, broken out
         vcd.define("lcd_dcx", &cpu.mSFR[CTRL_PORT], 1, 0);
-        vcd.define("flash_lat2", &cpu.mSFR[CTRL_PORT], 1, 1);
-        vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 2);
+        vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 1);
+        vcd.define("flash_lat2", &cpu.mSFR[CTRL_PORT], 1, 2);
         vcd.define("en3v3", &cpu.mSFR[CTRL_PORT], 1, 3);
-        vcd.define("lcd_backlight", &cpu.mSFR[CTRL_PORT], 1, 4);
+        vcd.define("ds_en", &cpu.mSFR[CTRL_PORT], 1, 4);
         vcd.define("flash_we", &cpu.mSFR[CTRL_PORT], 1, 5);
         vcd.define("flash_oe", &cpu.mSFR[CTRL_PORT], 1, 6);
         vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8); 
 
         // Misc port, broken out
-        vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, 0);
-        vcd.define("nb_top_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 0);
-        vcd.define("nb_left", &cpu.mSFR[MISC_PORT], 1, 1);
-        vcd.define("nb_left_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 1);
-        vcd.define("nb_bottom", &cpu.mSFR[MISC_PORT], 1, 7);
-        vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 7);
-        vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, 5);
-        vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 5);
+        vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_0_TOP_IDX);
+        vcd.define("nb_top_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_0_TOP_IDX);
+        vcd.define("nb_left", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_1_LEFT_IDX);
+        vcd.define("nb_left_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_1_LEFT_IDX);
+        vcd.define("nb_bottom", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_2_BOTTOM_IDX);
+        vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_2_BOTTOM_IDX);
+        vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_3_RIGHT_IDX);
+        vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_3_RIGHT_IDX);
         
         /*
          * Neighbor IN is sampled from t012 instead of MISC_PORT,

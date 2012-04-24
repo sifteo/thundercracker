@@ -336,4 +336,4 @@ if __name__ == "__main__":
         ):
         t.loadImage(img)
 
-    t.saveCode("tilerom.c")
+    t.saveCode("src/tilerom.c")

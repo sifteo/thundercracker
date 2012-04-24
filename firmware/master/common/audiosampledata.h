@@ -10,8 +10,8 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "adpcmdecoder.h"
+#include "flash_blockcache.h"
 
- #define LGPFX "AudioSampleData: "
 
 class AudioSampleData {
 public:

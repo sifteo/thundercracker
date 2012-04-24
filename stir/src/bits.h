@@ -53,7 +53,12 @@ class BitBuffer {
         // Mask to 'width'
         value = value & ((1 << width) - 1);
 
-        bits |= value << count;
+        #ifdef DEBUG_DUB
+        printf("BITS: 0x%02x (%d) -- 0x%08x%08x (%d)\n", value, width,
+            (uint32_t)(bits >> 32), (uint32_t)bits, count);
+        #endif
+
+        bits |= (uint64_t)value << count;
         count += width;
         assert(count <= sizeof(bits)*8);
     }

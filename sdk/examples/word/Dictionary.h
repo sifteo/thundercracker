@@ -11,26 +11,51 @@ class Dictionary
 {
 public:
     Dictionary();
+    static bool getCurrentPuzzle(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube);
 
-    static bool pickWord(char* buffer, unsigned& numAnagrams, unsigned& numBonusAnagrams, bool& leadingSpaces);
+    static bool getNextPuzzle(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube);
+    static bool getMetaPuzzle(char *buffer,
+                              unsigned char& leadingSpaces,
+                              unsigned char& maxLettersPerCube);
+    static char getMetaLetter();
+
     static bool findNextSolutionWordPieces(unsigned maxPieces,
                                            unsigned maxLettersPerPiece,
                                            char wordPieces[][MAX_LETTERS_PER_CUBE]);
+    static bool isWord(const char* string, bool& isCommon);
+    static bool isOldWord(const char* word);
+    static bool trim(const char* word, char* buffer);
+    static int getPuzzleIndex();
+    static bool shouldScrambleCurrentWord();
+    static unsigned char getCurrentPuzzleMetaLetterIndex();
+    static bool currentIsMetaPuzzle();
+    static bool currentStartsNewMetaPuzzle();
+    static void sOnEvent(unsigned eventID, const EventData& data);
+
+private:
+    static bool getPuzzle(int index,
+                          char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube);
+    static bool isMetaPuzzle(int index);
+
     static bool getSolutionPieces(const char *word,
                                   unsigned maxPieces,
                                   unsigned maxLettersPerPiece,
                                   char wordPieces[][MAX_LETTERS_PER_CUBE]);
+
     static bool getCurrentPieces(unsigned maxPieces,
                                  unsigned maxLettersPerPiece,
                                  char puzzlePieces[][MAX_LETTERS_PER_CUBE]);
 
-    static bool isWord(const char* string, bool& isCommon);
-    static bool isOldWord(const char* word);
-    static bool trim(const char* word, char* buffer);
-    static unsigned getPuzzleIndex();
-    static void sOnEvent(unsigned eventID, const EventData& data);
-
-private:
+    static unsigned char getPuzzleMetaLetterIndex(int puzzleIndex);
     static WordID findWordID(const char* word);
     static bool getWordFromID(WordID wid, char *buffer);
 
@@ -39,7 +64,7 @@ private:
     static unsigned sNumPossibleWords;
     static unsigned sRandSeed;
     static unsigned sRound;
-    static unsigned sPuzzleIndex;
+    static int sPuzzleIndex;
 };
 
 #endif // DICTIONARY_H

@@ -109,19 +109,28 @@ class CubeSlot {
 
     void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
 
+    void beginFinish() {
+        if (vbuf)
+            return paintControl.beginFinish(this);
+    }
+
+    bool pollForFinish(SysTime::Ticks now) {
+        // Finish is only meaningful when we still have a vbuf attached.
+        // Returns 'true' if we're finished.
+
+        if (vbuf)
+            return paintControl.pollForFinish(this, now);
+        else
+            return true;
+    }
+
     void waitForPaint() {
         paintControl.waitForPaint(this);
     }
 
-    void waitForFinish() {
-        // Finish is only meaningful when we still have a vbuf attached.
-        if (vbuf)
-            paintControl.waitForFinish(this);
-    }
-        
-    void triggerPaint(SysTime::Ticks timestamp) {
+    void triggerPaint(SysTime::Ticks now) {
         // Allow continuous rendering only when not loading assets
-        paintControl.triggerPaint(this, timestamp);
+        paintControl.triggerPaint(this, now);
     }
 
     uint64_t getHWID();
@@ -142,19 +151,12 @@ class CubeSlot {
         return vbuf;
     }
 
+    const RadioAddress *getRadioAddress();
+
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
 
-    // number of cube (ie, not master) ticks for a neighbor tx slot.
-    // represents cube bit period * num total bits in a tx sequence.
-    // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c
-    // XXX: at the moment, NB_TX_BITS is 18 on the cube, but making it waaaaay wider
-    // here (40) since we are observing failures to neighbor otherwise :(
-    static const unsigned NEIGHBOR_TX_SLOT_TICKS = 64 * 40;
-    // rollover duration of cube timer, in cube ticks
-    static const unsigned NEIGHBOR_TIMER_PERIOD_TICKS = 0x1FFF; // 13 bit
-    
     /*
      * Data buffers, provided by game code.
      *
@@ -169,7 +171,8 @@ class CubeSlot {
     RadioAddress address;
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-    
+    DEBUG_ONLY(unsigned consecutiveEmptyPackets);
+
     SysTime::Ticks flashDeadline;       // Used only by ISR
     uint32_t timeSyncState;             // XXX: For the current time-sync hack
 
@@ -185,8 +188,9 @@ class CubeSlot {
     // Other sensor data
     _SYSByte4 accelState;
     uint16_t rawBatteryV;
-    
+
     void requestFlashReset();
+    uint16_t calculateTimeSync();
 };
 
 #endif

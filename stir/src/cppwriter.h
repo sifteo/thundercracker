@@ -57,6 +57,7 @@ class CPPSourceWriter : public CPPWriter {
     CPPSourceWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
+    void writeTracker(const Tracker &tracker);
 
  private:
     void writeImage(const Image &image);
@@ -76,6 +77,7 @@ class CPPHeaderWriter : public CPPWriter {
     CPPHeaderWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
+    void writeTracker(const Tracker &tracker);
 
  protected:
     void head();

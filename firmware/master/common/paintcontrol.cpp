@@ -10,8 +10,32 @@
 #include "cube.h"
 #include "systime.h"
 
-#define LOG_PREFIX  "PAINT[%p]: %12u us  "
-#define LOG_PARAMS  this, unsigned(SysTime::ticks() / SysTime::usTicks(1))
+#ifdef SIFTEO_SIMULATOR
+#   include "system.h"
+#   include "system_mc.h"
+#   define PAINT_LOG(_x)    do { if (SystemMC::getSystem()->opt_paintTrace) { LOG(_x); }} while (0)
+#else
+#   define PAINT_LOG(_x)
+#endif
+
+#define LOG_PREFIX  "PAINT[%d]: %6u.%03us [+%4ums] pend=%-3d flags=%08x[%c%c%c%c%c] vf=%02x[%c%c] ack=%02x lock=%08x cm16=%08x  "
+#define LOG_PARAMS  cube->id(), \
+                    unsigned(SysTime::ticks() / SysTime::sTicks(1)), \
+                    unsigned((SysTime::ticks() % SysTime::sTicks(1)) / SysTime::msTicks(1)), \
+                    unsigned((SysTime::ticks() - paintTimestamp) / SysTime::msTicks(1)), \
+                    pendingFrames, \
+                    vbuf ? vbuf->flags : 0xFFFFFFFF, \
+                        (vbuf && (vbuf->flags & _SYS_VBF_FLAG_SYNC))        ? 's' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_TRIGGER_ON_FLUSH)) ? 't' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_SYNC_ACK))         ? 'a' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_DIRTY_RENDER))     ? 'R' : ' ', \
+                        (vbuf && (vbuf->flags & _SYS_VBF_NEED_PAINT))       ? 'P' : ' ', \
+                    vbuf ? VRAMFlags(vbuf).vf : 0xFF, \
+                        (vbuf && VRAMFlags(vbuf).test(_SYS_VF_TOGGLE))      ? 't' : ' ', \
+                        (vbuf && VRAMFlags(vbuf).test(_SYS_VF_CONTINUOUS))  ? 'C' : ' ', \
+                    cube->getLastFrameACK(), \
+                    vbuf ? vbuf->lock : 0xFFFFFFFF, \
+                    vbuf ? vbuf->cm16 : 0xFFFFFFFF
 
 
 /*
@@ -37,6 +61,7 @@
 #define _SYS_VBF_DIRTY_RENDER       (1 << 16)   // Still rendering changed VRAM
 #define _SYS_VBF_SYNC_ACK           (1 << 17)   // Frame ACK is synchronous (pendingFrames is 0 or 1)
 #define _SYS_VBF_TRIGGER_ON_FLUSH   (1 << 18)   // Trigger a paint from vramFlushed()
+#define _SYS_VBF_FLAG_SYNC          (1 << 19)   // This VideoBuffer has sync'ed flags with the cube
 
 
 /*
@@ -45,7 +70,17 @@
  * fpsLow --
  *    "Minimum" frame rate. If we're waiting more than this long
  *    for a frame to render, give up. Prevents us from getting wedged
- *    if a cube stops responding.
+ *    if a cube stops responding, and this is necessary for some types
+ *    of Finish operations, e.g. when transitioning from continuous to
+ *    fully synchronous rendering.
+ *
+ *    So, this period needs to be as short as possible while still
+ *    being above the slowest expected frame rendering duration.
+ *
+ *    XXX: It'd be nice if we had a way to transition from continuous to
+ *         fully synchronous without this last-resort timeout. We'd need a
+ *         way for the cube to confirm that it's returned to its main loop
+ *         and seen the continuous flag unset in VRAM.
  *
  * fpsHigh --
  *    Maximum frame rate. Paint will always block until at least this
@@ -61,7 +96,7 @@
  *    If we go below this limit, we'll start ignoring acknowledgments.
  */
 
-static const SysTime::Ticks fpsLow = SysTime::hzTicks(4);
+static const SysTime::Ticks fpsLow = SysTime::hzTicks(10);
 static const SysTime::Ticks fpsHigh = SysTime::hzTicks(60);
 static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
@@ -75,9 +110,9 @@ void PaintControl::waitForPaint(CubeSlot *cube)
      * as strict as waitForFinish()!
      */
 
-    DEBUG_LOG((LOG_PREFIX "------------------------\n", LOG_PARAMS));
-    DEBUG_LOG((LOG_PREFIX "+waitForPaint() pend=%d\n",
-        LOG_PARAMS, pendingFrames));
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+
+    PAINT_LOG((LOG_PREFIX "+waitForPaint\n", LOG_PARAMS));
 
     SysTime::Ticks now;
     for (;;) {
@@ -85,8 +120,10 @@ void PaintControl::waitForPaint(CubeSlot *cube)
         now = SysTime::ticks();
 
         // Watchdog expired? Give up waiting.
-        if (now > paintTimestamp + fpsLow)
+        if (now > paintTimestamp + fpsLow) {
+            PAINT_LOG((LOG_PREFIX "waitForPaint, TIMED OUT\n", LOG_PARAMS));
             break;
+        }
 
         // Wait for minimum frame rate AND for pending renders
         if (now > paintTimestamp + fpsHigh && pendingFrames <= fpMax)
@@ -100,18 +137,18 @@ void PaintControl::waitForPaint(CubeSlot *cube)
      * Can we opportunistically regain our synchronicity here?
      */
 
-    _SYSVideoBuffer *vbuf = cube->getVBuf();
-    if (vbuf && canMakeSynchronous(vbuf, now)) {
-        makeSynchronous(vbuf);
-        pendingFrames = 0;
+    if (vbuf) {
+        VRAMFlags vf(vbuf);
+        if (canMakeSynchronous(cube, vbuf, vf, now)) {
+            makeSynchronous(cube, vbuf);
+            pendingFrames = 0;
+        }
     }
 
-    DEBUG_LOG((LOG_PREFIX "-waitForPaint(), pending=%d, %d ms since last paint\n",
-        LOG_PARAMS, pendingFrames,
-        int((now - paintTimestamp) / SysTime::msTicks(1))));
+    PAINT_LOG((LOG_PREFIX "-waitForPaint\n", LOG_PARAMS));
 }
 
-void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
+void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks now)
 {
     _SYSVideoBuffer *vbuf = cube->getVBuf();
 
@@ -121,7 +158,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
      * but just calls paint() in a tight loop should iterate at the
      * 'fastPeriod' defined above.
      */
-    paintTimestamp = timestamp;
+    paintTimestamp = now;
 
     if (!vbuf)
         return;
@@ -129,8 +166,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     int32_t pending = Atomic::Load(pendingFrames);
     int32_t newPending = pending;
 
-    DEBUG_LOG((LOG_PREFIX "+triggerPaint, pend=%d flags=%08x vf=%02x\n",
-        LOG_PARAMS, pending, vbuf->flags, getFlags(vbuf)));
+    PAINT_LOG((LOG_PREFIX "+triggerPaint\n", LOG_PARAMS));
 
     bool needPaint = (vbuf->flags & _SYS_VBF_NEED_PAINT) != 0;
     Atomic::And(vbuf->flags, ~_SYS_VBF_NEED_PAINT);
@@ -152,6 +188,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
      */
 
     if (needPaint) {
+        VRAMFlags vf(vbuf);
         newPending++;
 
         /*
@@ -167,18 +204,24 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
          * if we see frames stacking up in newPending.
          */
 
-        if (newPending >= fpMax) {
-            uint8_t vf = getFlags(vbuf);
-            if (!(vf & _SYS_VF_CONTINUOUS)) {
-                enterContinuous(vbuf, vf);
-                setFlags(vbuf, vf);
+        if (newPending >= fpMax && allowContinuous(cube)) {
+            if (!vf.test(_SYS_VF_CONTINUOUS)) {
+                enterContinuous(cube, vbuf, vf, now);
+                vf.apply(vbuf);
             }
             newPending = fpMax;
         }
 
         // When the codec calls us back in vramFlushed(), trigger a render
-        if (!isContinuous(vbuf))
+        if (!vf.test(_SYS_VF_CONTINUOUS)) {
+            // Trigger on the next flush
+            asyncTimestamp = now;
             Atomic::Or(vbuf->flags, _SYS_VBF_TRIGGER_ON_FLUSH);
+
+            // Provoke a VRAM flush, just in case this wasn't happening anyway.
+            if (vbuf->lock == 0)
+                VRAM::lock(*vbuf, _SYS_VA_FLAGS/2);
+        }
 
         // Unleash the radio codec!
         VRAM::unlock(*vbuf);
@@ -187,16 +230,38 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks timestamp)
     // Atomically apply our changes to pendingFrames.
     Atomic::Add(pendingFrames, newPending - pending);
 
-    DEBUG_LOG((LOG_PREFIX "-triggerPaint, pend=%d flags=%08x vf=%02x\n",
-        LOG_PARAMS, newPending, vbuf->flags, getFlags(vbuf)));
+    PAINT_LOG((LOG_PREFIX "-triggerPaint\n", LOG_PARAMS));
 }
 
-void PaintControl::waitForFinish(CubeSlot *cube)
+void PaintControl::beginFinish(CubeSlot *cube)
 {
     /*
-     * Wait until all previous rendering has finished, and all of VRAM
-     * has been updated over the radio.  Does *not* wait for any
-     * minimum frame rate. If no rendering is pending, we return
+     * We're about to start a _SYS_finish. Every cube has their
+     * beginFinish() method invoked before any cube is polled.
+     *
+     * Requires a valid attached video buffer.
+     */
+
+    _SYSVideoBuffer *vbuf = cube->getVBuf();
+    ASSERT(vbuf);
+
+    PAINT_LOG((LOG_PREFIX "+finish\n", LOG_PARAMS));
+
+    // Disable continuous rendering now, if it was on. No effect otherwise.
+    VRAMFlags vf(vbuf);
+    exitContinuous(cube, vbuf, vf);
+    vf.apply(vbuf);
+}
+
+bool PaintControl::pollForFinish(CubeSlot *cube, SysTime::Ticks now)
+{
+    /*
+     * Is this cube finished? This is the interior of _SYS_finish's loop,
+     * which performes interleaved polling of all cubes we're trying to finish.
+     *
+     * Returns 'true' only when all previous rendering is known to have
+     * finished, and all of VRAM has been sent over the radio. Does *not*
+     * wait for any minimum frame rate. If no rendering is pending, we return
      * immediately.
      *
      * Requires a valid attached video buffer.
@@ -205,33 +270,42 @@ void PaintControl::waitForFinish(CubeSlot *cube)
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     ASSERT(vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "+waitForFinish(), flags=%08x\n", LOG_PARAMS, vbuf->flags));
-
-    SysTime::Ticks now = SysTime::ticks();
-    SysTime::Ticks deadline = now + fpsLow;
-
-    // Disable continuous rendering now, if it was on.
-    uint8_t vf = getFlags(vbuf);
-    exitContinuous(vbuf, vf, now);
-    setFlags(vbuf, vf);
-
     // Things to wait for...
     const uint32_t mask = _SYS_VBF_TRIGGER_ON_FLUSH | _SYS_VBF_DIRTY_RENDER;
+    uint32_t flags = Atomic::Load(vbuf->flags);
 
-    while (mask & Atomic::Load(vbuf->flags)) {
-        if (SysTime::ticks() > deadline) {
-            DEBUG_LOG((LOG_PREFIX "waitForFinish() -- TIMED OUT\n", LOG_PARAMS));
-            break;
-        }
-
-        Tasks::work();
-        Radio::halt();
+    // Already done, without any arm-twisting?
+    if ((mask & flags) == 0) {
+        PAINT_LOG((LOG_PREFIX "-finish: flags okay, done\n", LOG_PARAMS));
+        return true;
     }
 
-    // We know we're sync'ed now.
-    makeSynchronous(vbuf);
+    // Has it been a while since the last trigger?
+    VRAMFlags vf(vbuf);
+    if (canMakeSynchronous(cube, vbuf, vf, now)) {
+        makeSynchronous(cube, vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "-waitForFinish()\n", LOG_PARAMS));
+        if (flags & _SYS_VBF_DIRTY_RENDER) {
+            // Still need a render. Re-trigger now, and keep waiting.
+
+            Atomic::Or(vbuf->flags, _SYS_VBF_NEED_PAINT);
+            triggerPaint(cube, now);
+
+            PAINT_LOG((LOG_PREFIX " finish RE-TRIGGER\n", LOG_PARAMS));
+            ASSERT(!VRAMFlags(vbuf).test(_SYS_VF_CONTINUOUS));
+            return false;
+
+        } else {
+            // The trigger expired, and we don't need to render. We're done.
+
+            Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
+
+            PAINT_LOG((LOG_PREFIX "-finish: trigger expired, done\n", LOG_PARAMS));
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
@@ -250,25 +324,20 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (vbuf) {
-        uint32_t vf = getFlags(vbuf);
+        VRAMFlags vf(vbuf);
 
-        if ((vf & _SYS_VF_CONTINUOUS) == 0 &&
-            (vbuf->flags & _SYS_VBF_SYNC_ACK) != 0) {
-
+        if (!vf.test(_SYS_VF_CONTINUOUS) && (vbuf->flags & _SYS_VBF_SYNC_ACK)) {
             // Render is clean
             Atomic::And(vbuf->flags, ~_SYS_VBF_DIRTY_RENDER);
         }
 
         // Too few pending frames? Disable continuous mode.
         if (pendingFrames < fpMin) {
-            uint8_t vf = getFlags(vbuf);
-            exitContinuous(vbuf, vf, SysTime::ticks());
-            setFlags(vbuf, vf);
+            exitContinuous(cube, vbuf, vf);
+            vf.apply(vbuf);
         }
 
-        DEBUG_LOG((LOG_PREFIX "ackFrames(%d), ack=%02x pend=%d flags=%08x vf=%02x\n",
-            LOG_PARAMS, count, cube->getLastFrameACK(), pendingFrames,
-            vbuf->flags, getFlags(vbuf)));
+        PAINT_LOG((LOG_PREFIX "ACK(%d)\n", LOG_PARAMS, count));
     }
 }
 
@@ -289,23 +358,27 @@ void PaintControl::vramFlushed(CubeSlot *cube)
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (!vbuf)
         return;
-    uint8_t vf = getFlags(vbuf);
+    VRAMFlags vf(vbuf);
 
-    DEBUG_LOG((LOG_PREFIX "vramFlushed(), vf=%02x flags=%08x\n",
-        LOG_PARAMS, vf, vbuf->flags));
+    PAINT_LOG((LOG_PREFIX "vramFlushed\n", LOG_PARAMS));
+
+    // We've flushed VRAM, flags are sync'ed from now on.
+    Atomic::Or(vbuf->flags, _SYS_VBF_FLAG_SYNC);
 
     if (vbuf->flags & _SYS_VBF_TRIGGER_ON_FLUSH) {
         // Trying to trigger a render
 
-        DEBUG_LOG((LOG_PREFIX "Triggering\n", LOG_PARAMS));
+        SysTime::Ticks now = SysTime::ticks();
+
+        PAINT_LOG((LOG_PREFIX "TRIGGERING\n", LOG_PARAMS));
 
         if (cube->hasValidFrameACK() && (vbuf->flags & _SYS_VBF_SYNC_ACK)) {
             // We're sync'ed up. Trigger a one-shot render
 
             // Should never have SYNC_ACK set when in CONTINUOUS mode.
-            ASSERT((vf & _SYS_VF_CONTINUOUS) == 0);
+            ASSERT(!vf.test(_SYS_VF_CONTINUOUS));
 
-            setToggle(cube, vbuf, vf, SysTime::ticks());
+            setToggle(cube, vbuf, vf, now);
 
         } else {
             /*
@@ -314,11 +387,11 @@ void PaintControl::vramFlushed(CubeSlot *cube)
              * break synchronization, in the interest of keeping our speed up.
              */
 
-             if (!(vf & _SYS_VF_CONTINUOUS))
-                enterContinuous(vbuf, vf);
+             if (!vf.test(_SYS_VF_CONTINUOUS))
+                enterContinuous(cube, vbuf, vf, now);
         }
 
-        setFlags(vbuf, vf);
+        vf.apply(vbuf);
 
         // Propagate the bits...
         Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
@@ -326,56 +399,83 @@ void PaintControl::vramFlushed(CubeSlot *cube)
     }
 }
 
-void PaintControl::enterContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags)
+bool PaintControl::allowContinuous(CubeSlot *cube)
 {
-    DEBUG_LOG((LOG_PREFIX "enterContinuous\n", LOG_PARAMS));
+    // Conserve cube CPU time during asset loading; don't use continuous rendering.
+    return !cube->isAssetLoading();
+}
+
+void PaintControl::enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+    VRAMFlags &flags, SysTime::Ticks timestamp)
+{
+    bool allowed = allowContinuous(cube);
+
+    PAINT_LOG((LOG_PREFIX "enterContinuous, allowed=%d\n", LOG_PARAMS, allowed));
 
     // Entering continuous mode; all synchronization goes out the window.
     Atomic::And(vbuf->flags, ~_SYS_VBF_SYNC_ACK);
     Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
-    flags |= _SYS_VF_CONTINUOUS;
-}
 
-void PaintControl::exitContinuous(_SYSVideoBuffer *vbuf, uint8_t &flags,
-    SysTime::Ticks timestamp)
-{
-    DEBUG_LOG((LOG_PREFIX "exitContinuous\n", LOG_PARAMS));
+    // For now, we may be async even if the ACK byte does not indicate continuous rendering
+    asyncTimestamp = timestamp;
 
-    // Exiting continuous mode; treat this as the last trigger point.
-    if (flags & _SYS_VF_CONTINUOUS) {
-        flags &= ~_SYS_VF_CONTINUOUS;
-        triggerTimestamp = timestamp;
+    if (allowed) {
+        flags.set(_SYS_VF_CONTINUOUS);
+    } else {
+        // Ugh.. can't do real synchronous rendering, but we also can't
+        // use continuous rendering here. So... just flip the toggle bit
+        // and hope for the best.
+        flags.clear(_SYS_VF_CONTINUOUS);
+        flags.toggle(_SYS_VF_TOGGLE);
     }
 }
 
-bool PaintControl::isContinuous(_SYSVideoBuffer *vbuf)
+void PaintControl::exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+    VRAMFlags &flags)
 {
-    return (getFlags(vbuf) & _SYS_VF_CONTINUOUS) != 0;
+    // Exiting continuous mode; treat this as the last trigger point.
+    if (flags.test(_SYS_VF_CONTINUOUS)) {
+        PAINT_LOG((LOG_PREFIX "exitContinuous\n", LOG_PARAMS));
+        flags.clear(_SYS_VF_CONTINUOUS);
+    }
 }
 
 void PaintControl::setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf,
-    uint8_t &flags, SysTime::Ticks timestamp)
+    VRAMFlags &flags, SysTime::Ticks timestamp)
 {
-    DEBUG_LOG((LOG_PREFIX "setToggle\n", LOG_PARAMS));
+    PAINT_LOG((LOG_PREFIX "setToggle\n", LOG_PARAMS));
 
-    triggerTimestamp = timestamp;
-    if (cube->getLastFrameACK() & 1)
-        flags &= ~_SYS_VF_TOGGLE;
-    else
-        flags |= _SYS_VF_TOGGLE;
+    asyncTimestamp = timestamp;
+    flags.setTo(_SYS_VF_TOGGLE, !(cube->getLastFrameACK() & FRAME_ACK_TOGGLE));
 }
 
-void PaintControl::makeSynchronous(_SYSVideoBuffer *vbuf)
+void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
 {
-    DEBUG_LOG((LOG_PREFIX "makeSynchronous\n", LOG_PARAMS));
+    PAINT_LOG((LOG_PREFIX "makeSynchronous\n", LOG_PARAMS));
 
     pendingFrames = 0;
-    Atomic::Or(vbuf->flags, _SYS_VBF_SYNC_ACK);
-    Atomic::And(vbuf->flags, ~(_SYS_VBF_DIRTY_RENDER |
-                               _SYS_VBF_TRIGGER_ON_FLUSH));
+
+    // We can only enter SYNC_ACK state if we know that vbuf's flags
+    // match what's on real hardware. We know this after any vramFlushed().
+    if (vbuf->flags & _SYS_VBF_FLAG_SYNC)
+        Atomic::Or(vbuf->flags, _SYS_VBF_SYNC_ACK);
 }
 
-bool PaintControl::canMakeSynchronous(_SYSVideoBuffer *vbuf, SysTime::Ticks timestamp)
+bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+    VRAMFlags &flags, SysTime::Ticks timestamp)
 {
-    return !isContinuous(vbuf) && timestamp > triggerTimestamp + fpsLow;
+    /*
+     * Our asyncTimestamp keeps track of the last event that may
+     * have broke synchronization: a frame trigger, entering
+     * continuous mode, or setting up a trigger-on-flush.
+     *
+     * We need this event to be far enough in the past that we can be
+     * sure that it's had an effect on the cube already. We also need
+     * To not currently be in continuous mode, and to have received
+     * acknowledgment that we've exited continuous mode.
+     */
+
+    return !flags.test(_SYS_VF_CONTINUOUS)
+        && !(cube->getLastFrameACK() & FRAME_ACK_CONTINUOUS)
+        && timestamp > asyncTimestamp + fpsLow;
 }

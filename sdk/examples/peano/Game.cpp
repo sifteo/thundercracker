@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "sifteo.h"
 #include "Game.h"
 
@@ -29,13 +31,13 @@ SaveData saveData;
 float dt;
 TimeStep timeStep;
 
-void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void OnNeighborAdd(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     if(neighborEventHandler)
         neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
 }
 
-void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void OnNeighborRemove(void*, unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
     {
         if(neighborEventHandler)
@@ -43,19 +45,35 @@ void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side
     }
 
 }
-
-void OnCubeTouch(void*, _SYSCubeID cid)
+    
+void OnCubeTouch(void*, unsigned cid)
 {
     TotalsCube *c = &Game::cubes[cid];
-    c->DispatchOnCubeTouch(c, c->touching());
+    c->DispatchOnCubeTouch(c, c->isTouching());
 }
 
-void OnCubeShake(void*, _SYSCubeID cid)
+void OnCubeShake(void*, unsigned cid)
 {
     TotalsCube *cube = &Game::cubes[cid];
     cube->DispatchOnCubeShake(cube);
 }
 
+    
+#if NO_TOUCH_HACK
+//tilt y to touch
+void OnCubeTilt(void*, unsigned cid)
+{
+    static int oldState = 0;
+    Byte2 ts = cubes[cid].getTiltState();
+    if(ts.y != oldState)
+    {
+        cubes[cid].DispatchOnCubeTouch(cubes+cid, ts.y != 0);
+        oldState = ts.y;
+    }
+}
+#endif
+
+    
 void ClearCubeViews()
 {
     for(int i = 0; i < NUM_CUBES; i++)
@@ -125,18 +143,22 @@ void SaveOptions()
 }
 
 void Run()
-{
-    //loading assets resets video mode to bg0 only.
-    //reset to bg_spr_bg1 as needed
+{    
     for(int i = 0; i < NUM_CUBES; i++)
     {
-        cubes[i].backgroundLayer.set();
+        cubes[i].Init(i);
+        cubes[i].vid.initMode(BG0_SPR_BG1);
     }
 
-    _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
-    _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
-    _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
-    _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
+    AudioPlayer::Init();
+
+    Events::neighborAdd.set(&OnNeighborAdd);
+    Events::neighborRemove.set(&OnNeighborRemove);
+    Events::cubeTouch.set(&OnCubeTouch);
+    Events::cubeShake.set(&OnCubeShake);
+#if NO_TOUCH_HACK
+    Events::cubeTilt.set(&OnCubeTilt);
+#endif
 
     neighborEventHandler = NULL;
 
@@ -149,15 +171,16 @@ void Run()
     //TODO		saveData.Load();
 
     StingController::Run();
-
-    GameState nextState =
-    #if SKIP_INTRO_TUTORIAL
-        GameState_Menu;
-    #else
-        saveData.HasCompletedTutorial() ? GameState_Menu : GameState_Tutorial;
+    
+    GameState nextState = GameState_Menu;
+    
+    #if !SKIP_INTRO_TUTORIAL
+    if(!saveData.HasCompletedTutorial())
+    {
+        nextState = TutorialController::Run(true);   
+    }
     #endif
-
-
+    
     while(1)
     {
         switch(nextState)
@@ -204,7 +227,7 @@ void UpdateDt()
 void Wait(float delay)
 {    
     PaintCubeViews();
-    System::paintSync();
+    System::paint();    
 
     SystemTime t = SystemTime::now();
 

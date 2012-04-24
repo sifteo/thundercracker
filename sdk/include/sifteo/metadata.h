@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_METADATA_H
-#define _SIFTEO_METADATA_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -21,17 +19,17 @@ namespace Sifteo {
  * game's ELF binary with additional data. Metadata can be added inside
  * a function, as follows:
  *
- *   Metadata().title("My game");
+ *     Metadata().title("My game");
  *
  * You can chain multiple kinds of metadata into one statement:
  *
- *   Metadata()
+ *     Metadata()
  *      .title("My game")
  *      .icon(MyIconAsset);
  *
  * You can also declare metadata as a global variable:
  *
- *   static Metadata M = Metadata()
+ *     static Metadata M = Metadata()
  *      .title("My game")
  *      .icon(MyIconAsset);
  *
@@ -132,5 +130,3 @@ public:
 
 
 }   // namespace Sifteo
-
-#endif

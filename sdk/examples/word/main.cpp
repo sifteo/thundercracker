@@ -4,24 +4,46 @@
 #include "WordGame.h"
 #include "EventID.h"
 #include "EventData.h"
+#include <sifteo/menu.h>
 
 using namespace Sifteo;
+
+static AssetSlot MainSlot = AssetSlot::allocate()
+    .bootstrap(GameAssets);
+
+static Metadata M = Metadata()
+    .title("Word Caravan")
+    .cubeRange(3,CubeID::NUM_SLOTS);
 
 static const char* sideNames[] =
 {
   "top", "left", "bottom", "right"  
 };
 
+static struct MenuItem gItems[] =
+{ {&IconGreece, &LabelContinue},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {NULL, NULL} };
+
+static struct MenuAssets gAssets =
+{&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
+
 void onCubeEventTouch(void *context, _SYSCubeID cid)
 {
-    DEBUG_LOG(("cube event touch:\t%d\n", cid));
-/* TODO Touch    EventData data;
+    LOG("cube event touch:\t%d\n", cid);
+    // TODO TouchAndHold timer
+    EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Touch, data);
-    */
 
-#ifdef DEBUG
-    DEBUG_LOG(("cube event touch->shake, ID:\t%d\n", cid));
+#ifdef DEBUGzz
+    LOG("cube event touch->shake, ID:\t%d\n", cid);
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Shake, data);
@@ -30,7 +52,7 @@ void onCubeEventTouch(void *context, _SYSCubeID cid)
 
 void onCubeEventShake(void *context, _SYSCubeID cid)
 {
-    DEBUG_LOG(("cube event shake, ID:\t%d\n", cid));
+    LOG("cube event shake, ID:\t%d\n", cid);
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Shake, data);
@@ -38,7 +60,7 @@ void onCubeEventShake(void *context, _SYSCubeID cid)
 
 void onCubeEventTilt(void *context, _SYSCubeID cid)
 {
-    DEBUG_LOG(("cube event tilt:\t%d\n", cid));
+    LOG("cube event tilt:\t%d\n", cid);
     EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Tilt, data);
@@ -49,7 +71,7 @@ void onNeighborEventAdd(void *context,
 {
     EventData data;
     WordGame::onEvent(EventID_AddNeighbor, data);
-    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    LOG("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]);
 }
 
 void onNeighborEventRemove(void *context,
@@ -57,17 +79,17 @@ void onNeighborEventRemove(void *context,
 {
     EventData data;
     WordGame::onEvent(EventID_RemoveNeighbor, data);
-    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    LOG("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]);
 }
 
 void accel(_SYSCubeID c)
 {
-    DEBUG_LOG(("accelerometer changed\n"));
+    LOG("accelerometer changed\n");
 }
 
 void main()
 {
-    DEBUG_LOG(("Hello, Word Play 2\n"));
+    LOG("Hello, Word Caravan\n");
 
     _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onCubeEventTouch, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onCubeEventShake, NULL);
@@ -75,22 +97,26 @@ void main()
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborEventAdd, NULL);
     _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborEventRemove, NULL);
 
-    static Cube cubes[NUM_CUBES]; // must be static!
+    static CubeID cubes[NUM_CUBES];
+    static VideoBuffer vidBufs[NUM_CUBES];
 
     for (unsigned i = 0; i < arraysize(cubes); i++)
     {
-        cubes[i].enable(i + CUBE_ID_BASE);
+        cubes[i].sys =  i;// + CUBE_ID_BASE;
+        vidBufs[i].initMode(BG0_SPR_BG1);
+        vidBufs[i].attach(cubes[i]);
     }
 
-#ifndef DEBUGz
-    if (LOAD_ASSETS)
+#ifdef OLD_LOAD
+    if (1 && LOAD_ASSETS)
     {
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)
         {
             cubes[i].loadAssets(GameAssets);
 
-            VidMode_BG0_ROM rom(cubes[i].vbuf);
+            VideoBuffer rom(VideoMode::BG0_ROM);//cubes[i].vbuf);
+            // TODO attach
             rom.init();
 
             rom.BG0_text(vec(1,1), "Loading...");
@@ -103,10 +129,11 @@ void main()
 
             for (unsigned i = 0; i < arraysize(cubes); i++)
             {
-                VidMode_BG0_ROM rom(cubes[i].vbuf);
+                VideoBuffer rom(VideoMode::BG0_ROM);//cubes[i].vbuf);
+                // TODO attach
                 rom.BG0_progressBar(vec(0,7),
                                     cubes[i].assetProgress(GameAssets,
-                                                           VidMode_BG0_SPR_BG1::LCD_width),
+                                                           VideoBuffer::LCD_width),
                                     2);
 
                 if (!cubes[i].assetDone(GameAssets))
@@ -122,11 +149,25 @@ void main()
                 break;
             }
         }
+
+
     }
 #endif // ifndef DEBUG
 
+    // sync up
+    /*
+    WordGame::paintSync();
+    for(CubeID p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
+    System::paintSync();
+    for(CubeID p=cubes; p!=cubes+NUM_CUBES; ++p) { p->vbuf.touch(); }
+    System::paintSync();
+*/
+    CubeID menuCube = cubes[0];
+    Menu m(vidBufs[0], &gAssets, gItems);
+    m.setPeekTiles(2);
+
     // main loop
-    WordGame game(cubes); // must not be static!
+    WordGame game(vidBufs, menuCube, m); // must not be static!
 
     TimeStep ts;
     ts.next();
@@ -173,3 +214,7 @@ void assertWrapper(bool testResult)
     }
 #endif
 }
+
+
+
+

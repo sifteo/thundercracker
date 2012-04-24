@@ -9,8 +9,14 @@
 #include "usb/usbdefs.h"
 
 #include "hardware.h"
+#include "board.h"
 #include "tasks.h"
-#include "assetmanager.h"
+#include "usbprotocol.h"
+#include "macros.h"
+
+#if (BOARD == BOARD_TEST_JIG)
+#include "testjig.h"
+#endif
 
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
@@ -88,7 +94,38 @@ static const struct {
 static const char *descriptorStrings[] = {
     "x",
     "Sifteo Inc.",
+#if (BOARD == BOARD_TEST_JIG)
+    "Sifteo TestJig",
+#else
     "Thundercracker",
+#endif
+};
+
+/*
+ * Windows specific descriptors.
+ */
+static const struct {
+
+    Usb::WinUsbCompatIdHeaderDescriptor     header;
+    Usb::WinUsbFunctionSectionDescriptor    functionSection;
+
+} __attribute__((packed)) compatId = {
+    // header
+    {
+       sizeof(compatId),    // dwLength
+       0x0100,              // bcdVersion
+       0x0004,              // wIndex
+       1,                   // bCount
+       { 0 },               // reserved0
+    },
+    // functionSection
+    {
+        0,                  // bFirstInterfaceNumber
+        1,                  // reserved1
+        "WINUSB",           // compatibleID
+        { 0 },              // subCompatibleID
+        { 0 }               // reserved2
+    }
 };
 
 /*
@@ -100,7 +137,13 @@ void UsbDevice::handleOUTData(void *p)
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {
-        AssetManager::onData(buf, numBytes);
+    // XXX: going to need to figure out what dispatch looks like here once
+    // we get some actual protocol support in place
+#if (BOARD == BOARD_TEST_JIG)
+        TestJig::onTestDataReceived(buf, numBytes);
+#else
+        USBProtocolHandler::onData(buf, numBytes);
+#endif
     }
 }
 
@@ -164,12 +207,22 @@ void UsbDevice::outEndpointCallback(uint8_t ep)
     Tasks::setPending(Tasks::UsbOUT, 0);
 }
 
-
 /*
- * Handle any specific control requests - right now we don't handle any.
+ * Handle any specific control requests.
+ * Handle Windows specific requests to auto-register ourself as a WinUSB device.
  */
 int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 {
+    if ((req->bmRequestType & Usb::ReqTypeVendor) == Usb::ReqTypeVendor) {
+        if (req->bRequest == WINUSB_COMPATIBLE_ID) {
+
+            if (req->wIndex == 0x04) {
+                *len = MIN(*len, sizeof compatId);
+                *buf = (uint8_t*)&compatId;
+                return 1;
+            }
+        }
+    }
     return 0;
 }
 

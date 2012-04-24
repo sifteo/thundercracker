@@ -12,10 +12,14 @@
 #include "gpio.h"
 #include "hwtimer.h"
 
+// available backends
 #define PWM_BACKEND         0
 #define DAC_BACKEND         1
-#define AUDIOOUT_BACKEND    DAC_BACKEND
 
+// default backend
+#ifndef AUDIOOUT_BACKEND
+#define AUDIOOUT_BACKEND    PWM_BACKEND
+#endif
 
 // a bit cheesy, but pound define the static audio backend instance
 // since we don't want to bother with inheritance/virtual methods

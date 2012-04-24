@@ -44,8 +44,8 @@ skin("red")
 skin("turquoise")
 
 
-Accent_Current = image{ "accent_current.png" }
-Accent_Target = image{ "accent_target.png" }
+Accent_Current = image{ "accent_current.png", pinned=true }
+Accent_Target = image{ "accent_target.png", pinned=true }
 
 Hint_0 = image { "hint_0.png", pinned=true }
 Hint_1 = image { "hint_1.png", pinned=true }
@@ -116,9 +116,9 @@ Press_To_Select = image { "press_to_select.png"}
 Tilt_For_More = image { "tilt_for_more.png"}
 Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
 
-Dark_Purple = image { "dark_purple.png" }
+Dark_Purple = image { "dark_purple.png", pinned = true }
 Tutorial_Groups = image { "tutorial_groups.png" }
-Nan = image { "nan.png" }
+Nan = image { "nan.png", pinned=true }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }
 
@@ -160,7 +160,7 @@ Vertical_Bottom = image{"assets_vertical_bottom.png", width=8, height=16}
 
 MajorN_Frame2_AccentDigit = image{"assets_jointN_frame2_accentdigit.png"}
 MajorS_Frame109_AccentDigit = image{"assets_jointS_frame109_accentdigit.png"}
-Transparent_4x1 = image {"transparent_4x1.png"}
+Transparent_4x1 = image {"transparent_4x1.png", pinned=true}
 
 MajorN = image{"assets_jointN.png", width=64, height=24}
 MajorW = image{"assets_jointW.png", width=24, height=64}

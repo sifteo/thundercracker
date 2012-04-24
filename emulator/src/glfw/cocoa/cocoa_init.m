@@ -251,12 +251,18 @@ int _glfwPlatformInit( void )
     [thread start];
     [thread release];
 
+    /*
+     * SIFTEO: We don't want this chdir.. nothing useful is in Resources, and
+     *         we want paths provided on the command line to work intuitively.
+     */
+#if 0
     NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
 
     if( access( [resourcePath cStringUsingEncoding:NSUTF8StringEncoding], R_OK ) == 0 )
     {
         chdir( [resourcePath cStringUsingEncoding:NSUTF8StringEncoding] );
     }
+#endif
 
     // Setting up menu bar must go exactly here else weirdness ensues
     setUpMenuBar();

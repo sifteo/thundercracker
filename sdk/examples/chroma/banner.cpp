@@ -18,7 +18,7 @@ Banner::Banner()
 }
 
 
-void Banner::Draw( BG1Helper &bg1helper )
+void Banner::Draw( VideoBuffer &vid )
 {
     int iLen = m_Msg.size();
     if( iLen == 0 )
@@ -27,8 +27,10 @@ void Banner::Draw( BG1Helper &bg1helper )
     if( m_tiles == 0 )
         return;
 
-    //bg1helper.DrawAsset( vec( 0, 6 ), BannerImg );
-    bg1helper.DrawPartialAsset( vec<int>( CENTER_PT - m_tiles, 6 ), vec<int>( CENTER_PT - m_tiles, 0 ), vec<int>( m_tiles * 2, BANNER_ROWS ), BannerImg );
+    //bg1buffer.image( vec( 0, 6 ), BannerImg );
+    //bg1buffer.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( CENTER_PT - m_tiles, 0 ), BannerImg, vec<unsigned>( m_tiles * 2, BANNER_ROWS ) );
+    vid.bg1.image( vec<unsigned>( CENTER_PT - m_tiles, 6 ), vec<unsigned>( m_tiles * 2, BANNER_ROWS ), BannerImg, vec<unsigned>( CENTER_PT - m_tiles, 0 ) );
+    //vid.bg1.image( vec<unsigned>( 0, 6 ), vec<unsigned>( 16, BANNER_ROWS ), BannerImg, vec<unsigned>( 0, 0 ) );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -36,7 +38,8 @@ void Banner::Draw( BG1Helper &bg1helper )
     {
         int iOffset = iStartXTile + i;
 
-        bg1helper.DrawAsset( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        vid.bg1.image( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        //bg1buffer.image( vec( iOffset, 7 ), Font, m_Msg[i] - ' ' );
     }
 }
 
@@ -59,12 +62,15 @@ void Banner::Update(SystemTime t)
 }
 
 
-void Banner::SetMessage( const char *pMsg, float fTime )
+void Banner::SetMessage( VideoBuffer &vid, const char *pMsg, float fTime )
 {
     m_Msg = pMsg;
     float msgTime = fTime;
     m_endTime = SystemTime::now() + msgTime;
     m_tiles = 0;
+    vid.bg1.eraseMask();
+    vid.bg1.setMask(BG1Mask::filled(vec(0,6), vec(16,4)));
+    vid.bg1.erase(Transparent);
 }
 
 
@@ -74,7 +80,7 @@ bool Banner::IsActive() const
 }
 
 
-void Banner::DrawScore( BG1Helper &bg1helper, const Int2 &pos, Banner::Anchor anchor, int score )
+void Banner::DrawScore( TileBuffer<16, 16> &bg1buffer, const Int2 &pos, Banner::Anchor anchor, int score )
 {
     String<16> buf;
     buf << score;
@@ -115,8 +121,8 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Int2 &pos, Banner::Anchor an
     for( int i = 0; i < iLen; i++ )
     {
         /*if( frame >= 0 )
-            bg1helper.DrawAsset( vec( pos.x + i + offset, pos.y ), PointFont, ( buf[i] - '0' ) * FloatingScore::NUM_POINTS_FRAMES + frame );
+            bg1buffer.image( vec( pos.x + i + offset, pos.y ), PointFont, ( buf[i] - '0' ) * FloatingScore::NUM_POINTS_FRAMES + frame );
         else*/
-            bg1helper.DrawAsset( vec( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
+            bg1buffer.image( vec( pos.x + i + offset, pos.y ), BannerPointsWhite, buf[i] - '0' );
     }
 }

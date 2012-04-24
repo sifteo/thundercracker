@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_MENU_TYPES_H
-#define _SIFTEO_MENU_TYPES_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -23,6 +21,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup menu
+ * @{
+ */
 
 typedef enum {
     MENU_UNEVENTFUL = 0,
@@ -99,6 +101,7 @@ class Menu {
     void replaceIcon(uint8_t item, const AssetImage *);
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
+    void setPeekTiles(uint8_t numTiles);
 
  private:
     static const float kTimeDilator = 13.1f;
@@ -111,7 +114,7 @@ class Menu {
     static const float kAccelThresholdOn = 1.15f;
     static const float kAccelThresholdOff = 0.85f;
     static const uint8_t kDefaultIconYOffset = 16;
-    static const unsigned kPeekTiles = 1;
+    static const uint8_t kDefaultPeekTiles = 1;
 
     // instance-constants
     uint8_t kHeaderHeight;
@@ -120,7 +123,8 @@ class Menu {
     uint8_t kIconTileWidth;
     uint8_t kIconTileHeight;
     int8_t kEndCapPadding;
-    
+    uint8_t kPeekTiles;
+
     // runtime computed constants
     unsigned kIconPixelWidth() const { return kIconTileWidth * TILE; }
     unsigned kIconPixelHeight() const { return kIconTileHeight * TILE; }
@@ -203,7 +207,8 @@ class Menu {
     int computeCurrentTile();
 };
 
+/**
+ * @} end addtogroup menu
+ */
 
 };  // namespace Sifteo
-
-#endif

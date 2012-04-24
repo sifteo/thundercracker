@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "adpcmdecoder.h"
 
 const uint16_t AdPcmDecoder::stepSizeTable[89] = {

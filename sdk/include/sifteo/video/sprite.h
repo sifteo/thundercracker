@@ -4,10 +4,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_VIDEO_SPRITE_H
-#define _SIFTEO_VIDEO_SPRITE_H
-
-#ifdef NO_USERSPACE_HEADERS
+#pragma once
+#ifdef NOT_USERSPACE
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
@@ -17,6 +15,10 @@
 
 namespace Sifteo {
 
+/**
+ * @addtogroup video
+ * @{
+ */
 
 /**
  * SpriteRefs refer to a single sprite on a single cube. Typically these
@@ -248,7 +250,7 @@ struct SpriteLayer {
      * VideoBuffer. You don't need to store this reference typically;
      * for example:
      *
-     *   vbuf.sprites[2].setImage(MyAsset);
+     *     vbuf.sprites[2].setImage(MyAsset);
      */
     SpriteRef operator[](unsigned id) {
         ASSERT(id < NUM_SPRITES);
@@ -279,7 +281,8 @@ struct SpriteLayer {
     }
 };
 
+/**
+ * @} end addtogroup video
+ */
 
 };  // namespace Sifteo
-
-#endif
