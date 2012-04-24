@@ -1189,11 +1189,38 @@ void App::OnShake(PCubeID cubeId)
                 
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
                 
-                BuddyId newBuddyId =
-                    GetNextOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
-                mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
+                // Randomize pieces on this cube
                 
-                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                bool moved[NUM_SIDES] = { false, false, false, false };
+                
+                Random random;
+                
+                while(GetNumMovedPieces(moved, arraysize(moved)) != arraysize(moved))
+                {
+                    int side0 = random.randrange(arraysize(moved));
+                    while (moved[side0])
+                    {
+                        side0 = random.randrange(arraysize(moved)); 
+                    }
+                    moved[side0] = true;
+                    
+                    int side1 = random.randrange(arraysize(moved));
+                    while (moved[side1])
+                    {
+                        side1 = random.randrange(arraysize(moved)); 
+                    }
+                    moved[side1] = true;
+                    
+                    Piece piece0 = mCubeWrappers[cubeId].GetPiece(Side(side0));
+                    piece0.SetRotation(GetRotationTarget(piece0, Side(side1)));
+                    
+                    Piece piece1 = mCubeWrappers[cubeId].GetPiece(Side(side1));
+                    piece1.SetRotation(GetRotationTarget(piece1, Side(side0)));
+                    
+                    mCubeWrappers[cubeId].SetPiece(Side(side0), piece1);
+                    mCubeWrappers[cubeId].SetPiece(Side(side1), piece0);
+                }
+                
             }
             break;
         }
