@@ -11,23 +11,46 @@ FlashAllocSpan FlashAllocSpan::split(unsigned blockOffset, unsigned blockCount) 
 {
     if (blockOffset >= numBlocks)
         return empty();
-
-    return create(map, firstBlock + blockOffset,
-        std::min(blockCount, numBlocks - blockOffset));
+    else
+        return create(map, firstBlock + blockOffset,
+            std::min(blockCount, numBlocks - blockOffset));
 }
 
-bool FlashAllocSpan::flashAddrToOffset(FlashAddr flockAddr, ByteOffset &byteOffset) const
+bool FlashAllocSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const
 {
+    if (!map)
+        return false;
+
+    // Split the flash address
+    uint32_t allocBlock = flashAddr / FlashAllocBlock::BLOCK_SIZE;
+    uint32_t allocOffset = flashAddr & FlashAllocBlock::BLOCK_MASK;
+
+    // We have no direct index for this, so do a linear search in our map
+    for (unsigned i = 0; i < arraysize(map->blocks); i++)
+        if (map->blocks[i].id == allocBlock) {
+            ByteOffset result = i * FlashAllocBlock::BLOCK_SIZE + allocOffset;
+            if (offsetIsValid(result)) {
+                byteOffset = result;
+                return true;
+            }
+            return false;
+        }
+
+    // No match
     return false;
 }
 
-bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flockAddr) const
+bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const
 {
-    return false;
-}
+    if (!map)
+        return false;
 
-bool FlashAllocSpan::offsetIsValid(ByteOffset byteOffset) const
-{
+    if (!offsetIsValid(byteOffset))
+        return false;
+    
+    // Split the byte address
+    
+
     return false;
 }
 
@@ -48,6 +71,13 @@ bool FlashAllocSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr
 
 bool FlashAllocSpan::preloadBlock(ByteOffset byteOffset) const
 {
+    FlashAddr flashAddr;
+
+    if (offsetToFlashAddr(byteOffset, flashAddr)) {
+        FlashBlock::preload(flashAddr);
+        return true;
+    }
+
     return false;
 }
 

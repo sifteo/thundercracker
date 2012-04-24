@@ -113,6 +113,14 @@ public:
         return numBlocks == 0;
     }
 
+    uint32_t sizeInBytes() const {
+        return (uint32_t)numBlocks * FlashBlock::BLOCK_SIZE;
+    }
+
+    bool offsetIsValid(ByteOffset byteOffset) const {
+        return byteOffset < sizeInBytes();
+    }
+
     /// Split off a portion of this FlashAllocSpan as a new span.
     FlashAllocSpan split(unsigned blockOffset,
         unsigned blockCount = FlashAllocMap::NUM_CACHE_BLOCKS) const;
@@ -120,7 +128,6 @@ public:
     // Translation functions
     bool flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const;
     bool offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const;
-    bool offsetIsValid(ByteOffset byteOffset) const;
 
     // Cached data access
     bool getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const;
