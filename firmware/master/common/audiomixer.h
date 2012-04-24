@@ -32,6 +32,8 @@ public:
     void setVolume(_SYSAudioChannelID ch, uint16_t volume);
     int volume(_SYSAudioChannelID ch);
 
+    void setSpeed(_SYSAudioChannelID ch, uint32_t samplerate);
+
     uint32_t pos(_SYSAudioChannelID ch);
 
     bool active() const {
