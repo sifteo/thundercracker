@@ -33,7 +33,6 @@ private:
 	// bool saveInstruments();
 
 	bool readNextPattern();
-	unsigned compressPattern(uint16_t pattern);
 	bool savePatterns();
 
 	bool init();
