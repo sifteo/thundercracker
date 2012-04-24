@@ -28,7 +28,7 @@ static struct MenuItem gItems[] =
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
-  {&IconLocked, &LabelLocked},
+  {&IconLockedRight, &LabelLocked},
   {NULL, NULL} };
 
 static struct MenuAssets gAssets =

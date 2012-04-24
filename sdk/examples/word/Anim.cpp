@@ -193,7 +193,8 @@ bool animPaint(AnimType animT,
                                     if (sparkleRow >= letterPos.y)
                                     {
                                         bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
-                                                      vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
+                                                      vec(MIN(size.x, font.tileWidth()),
+                                                          letterPos.y + font.tileHeight() - 1 - sparkleRow),
                                                       font,
                                                       vec(0, sparkleRow + 1 - letterPos.y),
                                                       fontFrame);
@@ -201,7 +202,8 @@ bool animPaint(AnimType animT,
                                     else
                                     {
                                         bg1TileBuf.image(letterPos,
-                                                      vec(size.x, font.tileHeight()),
+                                                      vec(MIN(size.x, font.tileWidth()),
+                                                          font.tileHeight()),
                                                       font,
                                                       vec(0, 0),
                                                       fontFrame);
@@ -212,7 +214,7 @@ bool animPaint(AnimType animT,
                         else
                         {
                             bg1TileBuf.image(letterPos,
-                                             vec(size.x,
+                                             vec(MIN(size.x, font.tileWidth()),
                                                  MIN(16 - letterPos.y, font.tileHeight())),
                                              font,
                                              vec(0,0),
@@ -224,7 +226,8 @@ bool animPaint(AnimType animT,
                 case AnimType_MetaTilesReveal:
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y, font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          fontFrame);
@@ -242,7 +245,8 @@ bool animPaint(AnimType animT,
                             {
                                 // draw the question mark that is being wiped off
                                 bg1TileBuf.image(letterPos,
-                                                 vec(size.x, MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                                 vec(MIN(size.x, font.tileWidth()),
+                                                     MIN(font.tileHeight(), sparkleRow - letterPos.y)),
                                                  font,
                                                  vec(0, 0),
                                                  ('Z' + 1) - 'A');
@@ -255,7 +259,8 @@ bool animPaint(AnimType animT,
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y, font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          'Z' + 1 - 'A');
@@ -264,8 +269,9 @@ bool animPaint(AnimType animT,
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y,
-                                                         font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y,
+                                                 font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          fontFrame);

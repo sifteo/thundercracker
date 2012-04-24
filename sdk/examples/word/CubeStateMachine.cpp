@@ -1355,7 +1355,7 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            mVidBuf->bg0.image(vec(2,2), ClueGreece);
+            mVidBuf->bg0.image(vec(2,2), IconGreece);
             // TODO drive from python script that looks at puzzles
             unsigned char numMetaPuzzles = 4;
             unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
@@ -1380,7 +1380,14 @@ void CubeStateMachine::paint()
         break;
 
     default:
-        mVidBuf->bg0.image(vec(0,0), TileBG);
+        if (animHasNormalBorder(getAnim()))
+        {
+            mVidBuf->bg0.image(vec(0,0), TileBG);
+        }
+        else
+        {
+            mVidBuf->bg0.image(vec(0,0), TileBGGold);
+        }
         paintLetters(bg1TileBuf, true);
         mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 

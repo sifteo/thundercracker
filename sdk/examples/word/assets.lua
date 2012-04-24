@@ -3,31 +3,31 @@ GameAssets = group{}
 -- Test = image{"font_bigger_2.png", quality=8}
 --TestGlow = image{"font_bigger_2_glow.png", quality=8}
 -- Menu
-BgTile = image{ "fabric_basic.png", pinned=true }
+BgTile = image{ "scroll_bgTile.png", pinned=true }
 Tip0 = image{ "option_chooseAnOption.png" }
-Tip1 = image{ "option_tiltToContinue.png" }
-Tip2 = image{ "Tip2.png" }
-Footer = image{"Footer.png", quality=8}
-LabelEmpty = image{"LabelEmpty.png", quality=8}
+Tip1 = image{ "option_tiltToScroll.png" }
+Tip2 = image{ "option_touchToSelect.png" }
+Footer = image{"option_blank_bottom.png", quality=8}
+LabelEmpty = image{"option_blank.png", quality=8}
 LabelContinue = image{ "option_continue.png" }
 LabelLocked = image{ "option_disabled.png" }
 IconGreece = image{ "athens_sample.png" }
 IconLocked = image{ "scroll_locked.png" }
+IconLockedRight = image{ "scroll_locked_right.png" }
 MenuBlank = image{"menu_blank.png"}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=8}
 HintSprite = image{"hint_tilt.png", pinned=true, width=16, height=16, quality=8}
-ClueGreece = image{"ClueGreece.png", quality=8}
 Slat1 = image{"woodslat_thin.png"}
 Slat2 = image{"woodslat_thick.png"}
 Slat3 = image{"woodslat_extra_thick.png"}
-BorderTop = image{"wp2_border_top.png", quality=8}
 SparkleWipe = image{"sparklewipe.png", height=16, width=48, quality=8}
-BorderBottom = image{"wp2_border_bottom.png", height=16, quality=8}
-BorderLeft = image{"wp2_border_left.png", quality=8}
-BorderRight = image{"wp2_border_right.png", quality=8}
+BorderBottom = image{"border.png", height=16, quality=8}
+BorderTop = image{"border_top.png", quality=8}
+BorderLeft = image{"border_left.png", quality=8}
+BorderRight = image{"border_right.png", quality=8}
 BorderGoldTop = image{"border_gold_top.png", quality=10}
-BorderGoldBottom = image{"border_gold_bottom.png", height=16, quality=10}
+BorderGoldBottom = image{"border_gold.png", height=16, quality=10}
 BorderGoldLeft = image{"border_gold_left.png", quality=10}
 BorderGoldRight = image{"border_gold_right.png", quality=10}
 BorderRightNoNeighbor = image{"border_right_noneighbor.png", quality=8}
@@ -41,13 +41,18 @@ BorderSlotHint = image{"hint_pulse_morph.png", quality=8, width=16}
 
 transparent = image{"transparent.png", quality=8, pinned=true}
 
-Tile2 = image{"tile_ivory_idle00.png", quality=8}
-Tile2Glow = image{"tile_ivory_glow00.png", quality=8}
+-- TODO border_ambientGlow.png
+-- TODO hint_pulse_morph_tilt.png
+-- TODO icon_tilt.png
+-- TODO timer.png
+-- TODO title.png
+Tile2 = image{"tile_ivory_idle.png", quality=8}
+Tile2Glow = image{"tile_ivory_glow.png", quality=8}
 Tile2Blank = image{"tile_ivory_blank.png", quality=8}
 Tile2Meta = image{"tile_metatile_idle.png", quality=8}
 Tile2MetaGlow = image{"tile_metatile_glow.png", quality=8}
-Tile3 = image{"tile_ivory_narrow_idle00.png", quality=8}
-Tile3Glow = image{"tile_ivory_narrow_glow00.png", quality=8}
+Tile3 = image{"tile_ivory_narrow_idle.png", quality=8}
+Tile3Glow = image{"tile_ivory_narrow_glow.png", quality=8}
 Tile3Blank = image{"tile_ivory_narrow_blank.png", quality=8}
 Tile3Meta = image{"tile_metatile_narrow_idle.png", quality=8}
 Tile3MetaGlow = image{"tile_metatile_narrow_glow.png", quality=8}
@@ -58,6 +63,7 @@ Font2LetterGlow = image{"font_glow_medium.png", width=48, height=32, quality=8}
 Font3Letter = image{"font_idle_small.png", width=32, height=24, quality=8}
 Font3LetterGlow = image{"font_glow_small.png", width=32, height=24, quality=8}
 TileBG = image{"bg_puzzlebox.png", quality=8}
+TileBGGold = image{"bg_puzzlebox_gold.png", quality=10} --compression creates banding
 StartPrompt = image{"wp2_gameselect_prompt.png", pinned=true, quality=8}
 StartBG = image{"wp2_gameselect.png", quality=8}
 StartLid = image{"wp2_gameselect_lid.png", quality=8}
