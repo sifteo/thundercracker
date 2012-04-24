@@ -57,7 +57,7 @@ public:
     float GetBestTime(unsigned int place) const;
     
 private:
-    void LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex);
+    //void LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex);
 
     void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
     void ResetCubesToShuffleStart();
