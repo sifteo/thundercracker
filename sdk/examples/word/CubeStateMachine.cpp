@@ -731,7 +731,6 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
-if (cubeAnim == CubeAnim_Hint) return; //??? There is a bug in the hint code which makes the letters on tiles disappear. Fix after GameStop demo. -ww Apr '12
     LOG("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
                (PCubeID)getCube(), anim, cubeAnim);
 
@@ -948,6 +947,13 @@ void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *p
         {
             params->mCubeAnim = i;
         }
+
+        // skip subanims for meta puzzle borders
+        if (i > CubeAnim_Main && !animHasNormalBorder(mAnimTypes[CubeAnim_Main]))
+        {
+            continue;
+        }
+
         if (mAnimTypes[i] != AnimType_None &&
             !animPaint(mAnimTypes[i], *mVidBuf, bg1TileBuf, mAnimTimes[i], params))
         {
@@ -1102,11 +1108,26 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus)
             if (Dictionary::trim(wordBuffer, trimmedWord))
             {
                 _SYS_strlcpy(wordBuffer, trimmedWord, sizeof trimmedWord);
-                if (Dictionary::isWord(trimmedWord, isBonus))
+                if (Dictionary::currentIsMetaPuzzle())
                 {
-                    isOld = Dictionary::isOldWord(trimmedWord);
-                    return true;
-                }
+                    char puzzle[MAX_LETTERS_PER_WORD + 1];
+                    unsigned char numAnagrams;
+                    unsigned char leadingSpaces;
+                    unsigned char maxLettersPerCube;
+
+                    if (Dictionary::getCurrentPuzzle(puzzle,
+                                                     numAnagrams,
+                                                     leadingSpaces,
+                                                     maxLettersPerCube))
+                    {
+                        return _SYS_strncmp(puzzle, trimmedWord, sizeof puzzle) == 0;
+                    }
+               }
+               else if (Dictionary::isWord(trimmedWord, isBonus))
+               {
+                   isOld = Dictionary::isOldWord(trimmedWord);
+                   return true;
+               }
             }
         }
     }

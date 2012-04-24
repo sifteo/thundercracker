@@ -11,6 +11,10 @@ class Dictionary
 {
 public:
     Dictionary();
+    static bool getCurrentPuzzle(char* buffer,
+                          unsigned char& numAnagrams,
+                          unsigned char& leadingSpaces,
+                          unsigned char& maxLettersPerCube);
 
     static bool getNextPuzzle(char* buffer,
                           unsigned char& numAnagrams,
