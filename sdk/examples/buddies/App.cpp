@@ -3179,8 +3179,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 float progress = mDelayTimer / kTitleScaleDuration;
                 
-                AffineMatrix matrix = AffineMatrix::scaling((1.0f - progress) * 0.5f + 0.5f);
-                matrix *= AffineMatrix::translation(-32.0f * progress, -32.0f * progress);
+                AffineMatrix matrix = AffineMatrix::scaling(1.0f - progress);
+                matrix *= AffineMatrix::translation(-64.0f * progress, -64.0f * progress);
                 
                 VideoBuffer &video = cubeWrapper.GetVideoBuffer();
                 video.initMode(BG2);
