@@ -107,6 +107,7 @@ UiFontHeadingOrangeNoOutline = image{"assets/fontstrip_heading_orange_nooutline.
 
 -- Ui Misc
 UiTitleScreen = image{"assets/titlescreen.png"}
+UiTitleText = image{"assets/title128.png"}
 --UiBannerFaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 UiBannerFaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 UiBackground = image{"assets/ui_background.png"}

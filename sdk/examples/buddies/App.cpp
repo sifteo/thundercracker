@@ -1715,7 +1715,8 @@ void App::StartGameState(GameState gameState)
     {
         case GAME_STATE_TITLE:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = 1.0f;
+            mUiIndex = 0;
             break;
         }
         case GAME_STATE_MENU_MAIN:
@@ -2131,17 +2132,37 @@ void App::UpdateGameState(float dt)
     {
         case GAME_STATE_TITLE:
         {
-            if (UpdateTimer(mDelayTimer, dt) || AnyTouchBegin())
+            if (mUiIndex == 0)
             {
-                if (NextUnlockedBuddy() != -1)
+                if (UpdateTimer(mDelayTimer, dt))
                 {
-                    mStoryPreGame = true;
-                    StartGameState(GAME_STATE_UNLOCKED_1);
+                    ++mUiIndex;
+                    mDelayTimer += 0.175f;
                 }
-                else
+            }
+            else
+            {
+                if (UpdateTimer(mDelayTimer, dt))
                 {
+                    mDelayTimer += 0.175f;
                     
-                    StartGameState(GAME_STATE_MENU_MAIN);
+                    --mUiIndex;
+                    mUiIndex = (mUiIndex + 1) % (NUM_BUDDIES - 1);
+                    ++mUiIndex;
+                }
+                
+                if (AnyTouchEnd())
+                {
+                    if (NextUnlockedBuddy() != -1)
+                    {
+                        mStoryPreGame = true;
+                        StartGameState(GAME_STATE_UNLOCKED_1);
+                    }
+                    else
+                    {
+                        
+                        StartGameState(GAME_STATE_MENU_MAIN);
+                    }
                 }
             }
             break;
@@ -3139,7 +3160,26 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
     {
         case GAME_STATE_TITLE:
         {
-            cubeWrapper.DrawBackground(UiTitleScreen);
+            if (mUiIndex == 0)
+            {
+                float progress = mDelayTimer / 1.0f;
+                
+                AffineMatrix matrix = AffineMatrix::scaling((1.0f - progress) * 0.5f + 0.5f);
+                matrix *= AffineMatrix::translation(-32.0f * progress, -32.0f * progress);
+                
+                VideoBuffer &video = cubeWrapper.GetVideoBuffer();
+                video.initMode(BG2);
+                video.bg2.setBorder(RGB565::fromRGB(uint8_t(0), uint8_t(0), uint8_t(51)));
+                video.bg2.setMatrix(matrix);
+                video.bg2.image(vec(0, 0), BuddyFull1);
+            }
+            else
+            {
+                int buddy = mUiIndex - 1;
+                ASSERT(buddy >= 0 && buddy < BUDDY_INVISIBLE);
+                cubeWrapper.DrawBackground(*kBuddiesFull[buddy]);
+                cubeWrapper.DrawUiAsset(vec(0, 5), UiTitleText);
+            }
             break;
         }
         case GAME_STATE_FREEPLAY_TITLE:

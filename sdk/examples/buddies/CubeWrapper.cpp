@@ -212,9 +212,6 @@ bool CubeWrapper::Update(float dt)
 void CubeWrapper::DrawClear()
 {
     mVideoBuffer.initMode(BG0_SPR_BG1);
-    mVideoBuffer.bg0.erase();
-    mVideoBuffer.bg1.erase();
-    mVideoBuffer.sprites.erase();
     mBg1Mask.clear();
 }
 
