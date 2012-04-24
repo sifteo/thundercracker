@@ -25,8 +25,7 @@ private:
 
     static void setUsbPowerHandler(uint8_t argc, uint8_t *args);
     static void setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args);
-    static void getFixtureVoltageHandler(uint8_t argc, uint8_t *args);
-    static void getFixtureCurrentHandler(uint8_t argc, uint8_t *args);
+    static void getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args);
     static void getStmVsysVoltageHandler(uint8_t argc, uint8_t *args);
     static void getStmBattVoltageHandler(uint8_t argc, uint8_t *args);
     static void storeStmBattVoltageHandler(uint8_t argc, uint8_t *args);
