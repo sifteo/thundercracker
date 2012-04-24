@@ -24,6 +24,8 @@
  */
 int main()
 {
+    PowerManager::init();
+
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
@@ -82,7 +84,6 @@ int main()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-    PowerManager::init();
     UsbDevice::init();
 
     /*
