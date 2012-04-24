@@ -1,4 +1,5 @@
 @echo off
+rem SDK Setup Script for Windows
 
 set SDK_DIR=%~dp0
 set PATH=%SDK_DIR%\bin;%PATH%
