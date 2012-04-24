@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "macros.h"
 #include "dac.h"
+#include "adc.h"
 
 static I2CSlave i2c(&I2C1);
 static Neighbor neighbor(JIG_NBR_IN1_GPIO,
@@ -30,6 +31,10 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
 
+static Adc adc(&PWR_MEASURE_ADC);
+static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
+
+static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 /*
  * Table of test handlers.
@@ -38,6 +43,7 @@ static GPIOPin testUsbEnable = USB_PWR_GPIO;
 TestJig::TestHandler const TestJig::handlers[] = {
     setUsbPowerHandler,
     setSimulatedBatteryVoltageHandler,
+    getBatterySupplyCurrentHandler
 };
 
 void TestJig::init()
@@ -50,12 +56,18 @@ void TestJig::init()
     Dac::instance.enableChannel(BATTERY_SIM_DAC_CH);
     Dac::instance.write(BATTERY_SIM_DAC_CH, 0); // default to off
 
+    GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
+    v3CurrentPin.setControl(GPIOPin::IN_ANALOG);
+
+    GPIOPin usbCurrentPin = USB_CURRENT_GPIO;
+    usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
+
+    adc.init();
+    adc.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    adc.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
-
-    GPIOPin led1 = LED_RED1_GPIO;
-    led1.setControl(GPIOPin::OUT_2MHZ);
-    led1.setHigh();
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
     neighbor.init();
@@ -119,14 +131,15 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::getFixtureVoltageHandler(uint8_t argc, uint8_t *args)
+/*
+ *
+ */
+void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t sample = adc.sample(V3_CURRENT_ADC_CH);
 
-}
-
-void TestJig::getFixtureCurrentHandler(uint8_t argc, uint8_t *args)
-{
-
+    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    UsbDevice::write(response, sizeof response);
 }
 
 void TestJig::getStmVsysVoltageHandler(uint8_t argc, uint8_t *args)

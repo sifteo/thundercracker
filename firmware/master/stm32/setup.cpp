@@ -78,6 +78,7 @@ extern "C" void _start()
                 (7 << 18)                 | // PLLMUL - x9
                 (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
                 (1 << 16)                 | // PLLSRC - HSE
+                (2 << 14)                 | // ADCPRE - div6, ADCCLK is 14Mhz max
                 (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
                 (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
                 (0 << 4);                   // HPRE - AHB prescaler, no divisor
