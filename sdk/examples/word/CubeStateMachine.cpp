@@ -731,7 +731,6 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
 
 void CubeStateMachine::queueAnim(AnimType anim, CubeAnim cubeAnim)
 {
-if (cubeAnim == CubeAnim_Hint) return; //??? There is a bug in the hint code which makes the letters on tiles disappear. Fix after GameStop demo. -ww Apr '12
     LOG("queue anim cube ID: %d,\tAnimType: %d,\tCubeAnim:\t%d\n",
                (PCubeID)getCube(), anim, cubeAnim);
 

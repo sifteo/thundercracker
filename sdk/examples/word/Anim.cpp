@@ -390,12 +390,6 @@ bool animPaint(AnimType animT,
                             bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0),
                                              *CheckMarkImagesTop[2],
                                              assetFrame);
-                        }
-             /*           else
-                        {
-                            bg1.DrawAsset(vec(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
-                        }
-                        */
                     }
                 }
             }
