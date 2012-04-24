@@ -130,6 +130,9 @@ private:
     unsigned int mUiIndex;
     bool mUiIndexSync[kNumCubes];
     
+    // Title
+    int mTitleBuddy;
+    
     // Input
     TouchState mTouching[kNumCubes];
     bool mTouchSync;

@@ -872,6 +872,7 @@ App::App()
     , mOptionsTimer(0.0f)
     , mUiIndex(0)
     , mUiIndexSync()
+    , mTitleBuddy(0)
     , mTouching()
     , mTouchSync(false)
     , mTouchEndChoiceTimer(0.0f)
@@ -1715,8 +1716,13 @@ void App::StartGameState(GameState gameState)
     {
         case GAME_STATE_TITLE:
         {
-            mDelayTimer = 1.0f;
+            mDelayTimer = kTitleScaleDuration;
             mUiIndex = 0;
+            
+            // TODO: Since this random happens right after start, the seed is always the same,
+            // and we get the same buddy each time. Find a better way!
+            Random random;
+            mTitleBuddy = random.randrange(NUM_BUDDIES - 1);
             break;
         }
         case GAME_STATE_MENU_MAIN:
@@ -2136,19 +2142,19 @@ void App::UpdateGameState(float dt)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
+                    mDelayTimer += kTitleSwapDuration;
+                    
                     ++mUiIndex;
-                    mDelayTimer += 0.175f;
                 }
             }
-            else
+            else if (mUiIndex == 1)
             {
                 if (UpdateTimer(mDelayTimer, dt))
                 {
-                    mDelayTimer += 0.175f;
+                    mDelayTimer += kTitleSwapDuration;
                     
-                    --mUiIndex;
-                    mUiIndex = (mUiIndex + 1) % (NUM_BUDDIES - 1);
-                    ++mUiIndex;
+                    // Swap through the buddies
+                    mTitleBuddy = (mTitleBuddy + 1) % (NUM_BUDDIES - 1);
                 }
                 
                 if (AnyTouchEnd())
@@ -3162,7 +3168,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (mUiIndex == 0)
             {
-                float progress = mDelayTimer / 1.0f;
+                float progress = mDelayTimer / kTitleScaleDuration;
                 
                 AffineMatrix matrix = AffineMatrix::scaling((1.0f - progress) * 0.5f + 0.5f);
                 matrix *= AffineMatrix::translation(-32.0f * progress, -32.0f * progress);
@@ -3171,13 +3177,14 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 video.initMode(BG2);
                 video.bg2.setBorder(RGB565::fromRGB(uint8_t(0), uint8_t(0), uint8_t(51)));
                 video.bg2.setMatrix(matrix);
-                video.bg2.image(vec(0, 0), BuddyFull1);
+                
+                ASSERT(mTitleBuddy >= 0 && mTitleBuddy < BUDDY_INVISIBLE);
+                video.bg2.image(vec(0, 0), *kBuddiesFull[mTitleBuddy]);
             }
-            else
+            else if (mUiIndex == 1)
             {
-                int buddy = mUiIndex - 1;
-                ASSERT(buddy >= 0 && buddy < BUDDY_INVISIBLE);
-                cubeWrapper.DrawBackground(*kBuddiesFull[buddy]);
+                ASSERT(mTitleBuddy >= 0 && mTitleBuddy < BUDDY_INVISIBLE);
+                cubeWrapper.DrawBackground(*kBuddiesFull[mTitleBuddy]);
                 cubeWrapper.DrawUiAsset(vec(0, 5), UiTitleText);
             }
             break;
