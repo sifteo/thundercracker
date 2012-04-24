@@ -2162,46 +2162,45 @@ void App::UpdateGameState(float dt)
                     UpdateTimer(mFreePlayShakeThrottleTimer, dt);
                 }
                 
-                // Check for holding, which enables the options menu.
-                if (AnyTouchHold())
+                if (mTouchSync)
                 {
-                    if (UpdateTimer(mOptionsTimer, dt))
+                    for (int i = 0; i < arraysize(mTouching); ++i)
                     {
-                        mTouchSync = true;
-                        StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
+                        if (mTouching[i] == TOUCH_STATE_BEGIN)
+                        {
+                            mTouchSync = false;
+                        }
                     }
                 }
                 else
                 {
-                    mOptionsTimer = kOptionsTimerDuration;
-                }
-                
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                {
-                    if (mCubeWrappers[i].IsEnabled())
+                    // Check for holding, which enables the options menu.
+                    if (AnyTouchHold())
                     {
-                        if (mTouching[i] == TOUCH_STATE_BEGIN || mTouching[i] == TOUCH_STATE_HOLD)
+                        if (UpdateTimer(mOptionsTimer, dt))
                         {
-                            if (!mTouchSync)
-                            {
-                                if (mTouching[i] == TOUCH_STATE_BEGIN)
-                                {
-                                    PlaySound(SoundPiecePinch);
-                                }
-                                mCubeWrappers[i].SetPieceOffset(TOP,    vec(0U, TILE));
-                                mCubeWrappers[i].SetPieceOffset(LEFT,   vec(TILE, 0U));
-                                mCubeWrappers[i].SetPieceOffset(BOTTOM, vec(0U, TILE));
-                                mCubeWrappers[i].SetPieceOffset(RIGHT,  vec(TILE, 0U));
-                            }
+                            mTouchSync = true;
+                            StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
                         }
-                        else if (mTouching[i] == TOUCH_STATE_END)
+                    }
+                    else
+                    {
+                        mOptionsTimer = kOptionsTimerDuration;
+                    }
+                    
+                    // Check for character swap
+                    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                    {
+                        if (mCubeWrappers[i].IsEnabled())
                         {
-                            mTouchSync = false;
-                            
-                            mCubeWrappers[i].SetPieceOffset(TOP,    vec(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(LEFT,   vec(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(BOTTOM, vec(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(RIGHT,  vec(0, 0));
+                            if (mTouching[i] == TOUCH_STATE_END)
+                            {
+                                BuddyId newBuddyId =
+                                    GetNextOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                                mCubeWrappers[i].SetBuddyId(newBuddyId);
+                                
+                                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                            }
                         }
                     }
                 }
@@ -2295,7 +2294,7 @@ void App::UpdateGameState(float dt)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    if (mTouching[i] == TOUCH_STATE_END)
                     {
                         BuddyId newBuddyId =
                             GetNextOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
