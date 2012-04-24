@@ -29,7 +29,7 @@ public:
     void getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note);
 
     static const uint8_t kNoteOff = 97;
-    static const uint8_t kNoNote = 0xFF;
+    static const uint8_t kNoNote = 0;
     static const uint8_t kNoInstrument = 0xFF;
     static const uint8_t kNoEffect = 0xFF;
     static const uint8_t kNoVolume = 0;

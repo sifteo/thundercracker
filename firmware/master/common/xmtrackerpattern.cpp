@@ -108,7 +108,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     noteOffset++;
 
     // Clean up values
-    if (note.note > kNoteOff && note.note != kNoNote)
+    if (note.note > kNoteOff)
         note.note = kNoteOff;
 
     if (note.instrument >= song->nInstruments)
