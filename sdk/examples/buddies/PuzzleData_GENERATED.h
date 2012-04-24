@@ -148,52 +148,148 @@ const Piece kPiecesEnd_0_2[][NUM_SIDES] =
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Puzzle 0_3
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const BuddyId kCutsceneBuddiesStart_0_3[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const CutsceneLine kCutsceneLinesStart_0_3[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "I'm a little\nbit out of\nwhack."),
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Can you fix\nme up?"),
+};
+const BuddyId kCutsceneBuddiesEnd_0_3[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const CutsceneLine kCutsceneLinesEnd_0_3[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Way to go!"),
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Let's do some\nmore!"),
+};
+const BuddyId kBuddies_0_3[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const Piece kPiecesStart_0_3[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_SULI, Piece::PART_HAIR),
+        Piece(BUDDY_SULI, Piece::PART_MOUTH),
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH),
+        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT),
+    },
+};
+const Piece kPiecesEnd_0_3[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_SULI, Piece::PART_HAIR, true),
+        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_SULI, Piece::PART_MOUTH, true),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT, false),
+    },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Puzzle 0_4
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const BuddyId kCutsceneBuddiesStart_0_4[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const CutsceneLine kCutsceneLinesStart_0_4[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "I'm a little\nbit out of\nwhack."),
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Can you fix\nme up?"),
+};
+const BuddyId kCutsceneBuddiesEnd_0_4[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const CutsceneLine kCutsceneLinesEnd_0_4[] =
+{
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Way to go!"),
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Let's do some\nmore!"),
+};
+const BuddyId kBuddies_0_4[] = { BUDDY_SULI, BUDDY_INVISIBLE };
+const Piece kPiecesStart_0_4[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_SULI, Piece::PART_MOUTH),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_SULI, Piece::PART_HAIR),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT),
+    },
+};
+const Piece kPiecesEnd_0_4[][NUM_SIDES] =
+{
+    {
+        Piece(BUDDY_SULI, Piece::PART_HAIR, true),
+        Piece(BUDDY_SULI, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_SULI, Piece::PART_MOUTH, true),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
+    },
+    {
+        Piece(BUDDY_INVISIBLE, Piece::PART_HAIR, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_LEFT, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_MOUTH, false),
+        Piece(BUDDY_INVISIBLE, Piece::PART_EYE_RIGHT, false),
+    },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Puzzle 1_0
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const BuddyId kCutsceneBuddiesStart_1_0[] = { BUDDY_BOFF, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesStart_1_0[] = { BUDDY_AMOR, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesStart_1_0[] =
 {
-    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Hey there.\nI'm Boff."),
-    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Wow Boff,\nyou're buff."),
-    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Yes. Yes I am.\nYou can be\nbuff like me!"),
-    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's get\nPUMPED UP!"),
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Hello, I'm\nAmor."),
+    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Amor, you're\nso pretty!"),
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "Yes. Yes I am.\nYou can be\npretty too!"),
+    CutsceneLine(1, CutsceneLine::VIEW_FRONT, "I love it!"),
 };
-const BuddyId kCutsceneBuddiesEnd_1_0[] = { BUDDY_BOFF, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesEnd_1_0[] = { BUDDY_AMOR, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesEnd_1_0[] =
 {
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Way to go!"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's do some\nmore!"),
 };
-const BuddyId kBuddies_1_0[] = { BUDDY_BOFF, BUDDY_SULI };
+const BuddyId kBuddies_1_0[] = { BUDDY_AMOR, BUDDY_SULI };
 const Piece kPiecesStart_1_0[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
         Piece(BUDDY_SULI, Piece::PART_MOUTH),
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
     {
         Piece(BUDDY_SULI, Piece::PART_HAIR),
         Piece(BUDDY_SULI, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
     },
 };
 const Piece kPiecesEnd_1_0[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR, false),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT, false),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH, false),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
     },
     {
-        Piece(BUDDY_SULI, Piece::PART_HAIR, false),
+        Piece(BUDDY_SULI, Piece::PART_HAIR, true),
         Piece(BUDDY_SULI, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_SULI, Piece::PART_MOUTH, false),
-        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, false),
+        Piece(BUDDY_SULI, Piece::PART_MOUTH, true),
+        Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
     },
 };
 
@@ -201,28 +297,30 @@ const Piece kPiecesEnd_1_0[][NUM_SIDES] =
 // Puzzle 2_0
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const BuddyId kCutsceneBuddiesStart_2_0[] = { BUDDY_GLUV, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesStart_2_0[] = { BUDDY_MARO, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesStart_2_0[] =
 {
-    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Hi I'm Gluv!"),
-    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Gluv, you are\nhorrifying!"),
-    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "I just want\nto get along."),
-    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's party!"),
+    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Hi, I'm Suli.\nAnd you are?"),
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "..."),
+    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Um, hello?\nWho are you?"),
+    CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "..."),
+    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "You are\nfreaking me\nway out."),
+    CutsceneLine(0, CutsceneLine::VIEW_FRONT, "..."),
 };
-const BuddyId kCutsceneBuddiesEnd_2_0[] = { BUDDY_GLUV, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesEnd_2_0[] = { BUDDY_MARO, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesEnd_2_0[] =
 {
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Way to go!"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's do some\nmore!"),
 };
-const BuddyId kBuddies_2_0[] = { BUDDY_GLUV, BUDDY_SULI, BUDDY_BOFF };
+const BuddyId kBuddies_2_0[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_AMOR };
 const Piece kPiecesStart_2_0[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_GLUV, Piece::PART_MOUTH),
-        Piece(BUDDY_GLUV, Piece::PART_HAIR),
+        Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_MARO, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_MARO, Piece::PART_MOUTH),
+        Piece(BUDDY_MARO, Piece::PART_HAIR),
     },
     {
         Piece(BUDDY_SULI, Piece::PART_HAIR),
@@ -231,19 +329,19 @@ const Piece kPiecesStart_2_0[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_HAIR),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
 };
 const Piece kPiecesEnd_2_0[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_GLUV, Piece::PART_HAIR, true),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_GLUV, Piece::PART_MOUTH, true),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_MARO, Piece::PART_HAIR, true),
+        Piece(BUDDY_MARO, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_MARO, Piece::PART_MOUTH, true),
+        Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT, true),
     },
     {
         Piece(BUDDY_SULI, Piece::PART_HAIR, true),
@@ -252,10 +350,10 @@ const Piece kPiecesEnd_2_0[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
     },
 };
 
@@ -263,27 +361,27 @@ const Piece kPiecesEnd_2_0[][NUM_SIDES] =
 // Puzzle 2_1
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const BuddyId kCutsceneBuddiesStart_2_1[] = { BUDDY_GLUV, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesStart_2_1[] = { BUDDY_MARO, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesStart_2_1[] =
 {
-    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Gluv, what the\nname of Sifteo\nare you doing?"),
+    CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Maro, what the\nname of Sifteo\nare you doing?"),
     CutsceneLine(0, CutsceneLine::VIEW_RIGHT, "This place is\nsoooo lame."),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "It's time to\nmix things up!"),
 };
-const BuddyId kCutsceneBuddiesEnd_2_1[] = { BUDDY_GLUV, BUDDY_SULI };
+const BuddyId kCutsceneBuddiesEnd_2_1[] = { BUDDY_MARO, BUDDY_SULI };
 const CutsceneLine kCutsceneLinesEnd_2_1[] =
 {
     CutsceneLine(1, CutsceneLine::VIEW_LEFT, "Way to go!"),
     CutsceneLine(0, CutsceneLine::VIEW_FRONT, "Let's do some\nmore!"),
 };
-const BuddyId kBuddies_2_1[] = { BUDDY_GLUV, BUDDY_SULI, BUDDY_BOFF };
+const BuddyId kBuddies_2_1[] = { BUDDY_MARO, BUDDY_SULI, BUDDY_AMOR };
 const Piece kPiecesStart_2_1[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_GLUV, Piece::PART_HAIR),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_GLUV, Piece::PART_MOUTH),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_MARO, Piece::PART_HAIR),
+        Piece(BUDDY_MARO, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_MARO, Piece::PART_MOUTH),
+        Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT),
     },
     {
         Piece(BUDDY_SULI, Piece::PART_HAIR),
@@ -292,19 +390,19 @@ const Piece kPiecesStart_2_1[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT),
     },
 };
 const Piece kPiecesEnd_2_1[][NUM_SIDES] =
 {
     {
-        Piece(BUDDY_GLUV, Piece::PART_HAIR, true),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_GLUV, Piece::PART_MOUTH, true),
-        Piece(BUDDY_GLUV, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_MARO, Piece::PART_HAIR, true),
+        Piece(BUDDY_MARO, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_MARO, Piece::PART_MOUTH, true),
+        Piece(BUDDY_MARO, Piece::PART_EYE_RIGHT, true),
     },
     {
         Piece(BUDDY_SULI, Piece::PART_HAIR, true),
@@ -313,10 +411,10 @@ const Piece kPiecesEnd_2_1[][NUM_SIDES] =
         Piece(BUDDY_SULI, Piece::PART_EYE_RIGHT, true),
     },
     {
-        Piece(BUDDY_BOFF, Piece::PART_HAIR, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_LEFT, true),
-        Piece(BUDDY_BOFF, Piece::PART_MOUTH, true),
-        Piece(BUDDY_BOFF, Piece::PART_EYE_RIGHT, true),
+        Piece(BUDDY_AMOR, Piece::PART_HAIR, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_LEFT, true),
+        Piece(BUDDY_AMOR, Piece::PART_MOUTH, true),
+        Piece(BUDDY_AMOR, Piece::PART_EYE_RIGHT, true),
     },
 };
 
@@ -326,18 +424,18 @@ const Piece kPiecesEnd_2_1[][NUM_SIDES] =
 
 const Book kBooks[3] =
 {
-    Book("Meet Suli!", 3, BUDDY_SULI),
-    Book("Meet Boff!", 1, BUDDY_BOFF),
-    Book("Meet Gluv!", 2, BUDDY_GLUV),
+    Book("Meet Suli!", 5, BUDDY_SULI),
+    Book("Meet Amor!", 1, BUDDY_AMOR),
+    Book("Meet Maro!", 2, BUDDY_MARO),
 };
 
-const unsigned int kBookOffsets[3] = { 0, 3, 4 };
+const unsigned int kBookOffsets[3] = { 0, 5, 6 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Puzzles Array
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Puzzle kPuzzles[6] =
+const Puzzle kPuzzles[8] =
 {
     Puzzle(
         "Welcome to\nCube Buddies",
@@ -373,7 +471,29 @@ const Puzzle kPuzzles[6] =
         0,
         kPiecesStart_0_2, kPiecesEnd_0_2),
     Puzzle(
-        "Get Buff\nWith Boff",
+        "Puzzle 4",
+        "Move the out-\nof-place piece\nto the correct\nspot.",
+        kCutsceneBuddiesStart_0_3, arraysize(kCutsceneBuddiesStart_0_3),
+        kCutsceneLinesStart_0_3, arraysize(kCutsceneLinesStart_0_3),
+        kCutsceneBuddiesEnd_0_3, arraysize(kCutsceneBuddiesEnd_0_3),
+        kCutsceneLinesEnd_0_3, arraysize(kCutsceneLinesEnd_0_3),
+        0,
+        kBuddies_0_3, arraysize(kBuddies_0_3),
+        0,
+        kPiecesStart_0_3, kPiecesEnd_0_3),
+    Puzzle(
+        "Puzzle 5",
+        "Rotate each\npiece to the\ncorrect spot.",
+        kCutsceneBuddiesStart_0_4, arraysize(kCutsceneBuddiesStart_0_4),
+        kCutsceneLinesStart_0_4, arraysize(kCutsceneLinesStart_0_4),
+        kCutsceneBuddiesEnd_0_4, arraysize(kCutsceneBuddiesEnd_0_4),
+        kCutsceneLinesEnd_0_4, arraysize(kCutsceneLinesEnd_0_4),
+        0,
+        kBuddies_0_4, arraysize(kBuddies_0_4),
+        0,
+        kPiecesStart_0_4, kPiecesEnd_0_4),
+    Puzzle(
+        "Amor and Suli",
         "Swap between\nfaces to\nunscramble\nthem.",
         kCutsceneBuddiesStart_1_0, arraysize(kCutsceneBuddiesStart_1_0),
         kCutsceneLinesStart_1_0, arraysize(kCutsceneLinesStart_1_0),
@@ -384,7 +504,7 @@ const Puzzle kPuzzles[6] =
         0,
         kPiecesStart_1_0, kPiecesEnd_1_0),
     Puzzle(
-        "Eldritch\nHorror",
+        "Mysterious\nVisitor",
         "You have to\nbreak up a\nface to fix\na face.",
         kCutsceneBuddiesStart_2_0, arraysize(kCutsceneBuddiesStart_2_0),
         kCutsceneLinesStart_2_0, arraysize(kCutsceneLinesStart_2_0),

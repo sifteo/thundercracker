@@ -30,13 +30,24 @@ struct CutsceneLine
     };
     
     CutsceneLine(
-        unsigned int speaker = 0,
+        unsigned int speaker = 0U,
         View view = VIEW_RIGHT,
         const char *text = NULL)
         : mSpeaker(speaker)
         , mView(view)
         , mText(text)
     {
+    }
+    
+    CutsceneLine &operator=(const CutsceneLine &rhs)
+    {
+        if (this != &rhs)
+        {
+            mSpeaker = rhs.mSpeaker;
+            mView = rhs.mView;
+            mText = rhs.mText;
+        }
+        return *this;
     }
     
     unsigned int mSpeaker;

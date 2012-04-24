@@ -43,20 +43,22 @@ public:
     void Draw();
     
     /// CubeWrapper Accessors
-    const CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId) const;
-    CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId);
+    const CubeWrapper &GetCubeWrapper(Sifteo::PCubeID cubeId) const;
+    CubeWrapper &GetCubeWrapper(Sifteo::PCubeID cubeId);
     
     /// Event Notifications
     void OnNeighborAdd(
-        Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0,
-        Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
-    void OnTilt(Sifteo::Cube::ID cubeId);
-    void OnShake(Sifteo::Cube::ID cubeId);
+        Sifteo::PCubeID cubeId0, Sifteo::Side cubeSide0,
+        Sifteo::PCubeID cubeId1, Sifteo::Side cubeSide1);
+    void OnTilt(Sifteo::PCubeID cubeId);
+    void OnShake(Sifteo::PCubeID cubeId);
     
     unsigned int GetNumBestTimes() const;
     float GetBestTime(unsigned int place) const;
     
 private:
+    //void LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex);
+
     void ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies);
     void ResetCubesToShuffleStart();
     void UpdateCubes(float dt);
@@ -112,6 +114,9 @@ private:
     
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
     
+    // Assets
+    Sifteo::AssetSlot mAssetSlot;
+    
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
     
@@ -142,7 +147,8 @@ private:
     unsigned char mSaveDataStoryBookProgress;
     unsigned char mSaveDataStoryPuzzleProgress;
     unsigned int mSaveDataBuddyUnlockMask;
-    float mSaveDataBestTimes[3];
+    static const int kNumSaveDataBestTimes = 3;
+    float mSaveDataBestTimes[kNumSaveDataBestTimes];
     
     // Swapping
     enum SwapState
@@ -179,9 +185,9 @@ private:
     float mFreePlayShakeThrottleTimer;
     
     // Shuffle Mode
-    Piece mShufflePiecesStart[NUM_BUDDIES][NUM_SIDES];
+    Piece mShufflePiecesStart[NUM_BUDDIES][Sifteo::NUM_SIDES];
     unsigned int mShuffleMoveCounter;
-    bool mShufflePiecesMoved[kNumCubes * NUM_SIDES];
+    bool mShufflePiecesMoved[kNumCubes * Sifteo::NUM_SIDES];
     
     // Story Mode
     bool mStoryPreGame;
