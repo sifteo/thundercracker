@@ -5,7 +5,7 @@
 
 union EventData;
 //extern const unsigned NUM_PUZZLES;
-const unsigned char NUM_PUZZLE_BYTES = 40/8;//NUM_PUZZLES/8;
+const unsigned char NUM_PUZZLE_BYTES = 64/8;//NUM_PUZZLES/8;
 const unsigned char MAX_CUBES = 12;
 
 class SavedData

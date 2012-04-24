@@ -17,7 +17,6 @@ using namespace Sifteo;
  */
 // #include <stdlib.h>
 #include "qsort.h"
-
 SavedData::SavedData()
 {
     for (unsigned i = 0; i < arraysize(mHighScores); ++i)
