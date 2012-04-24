@@ -33,6 +33,9 @@ void PowerManager::init()
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
 
+    GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
+    vcc3v3.setControl(GPIOPin::OUT_2MHZ);
+
     vbusIsr();     // set initial state
 }
 
@@ -56,7 +59,6 @@ void PowerManager::vbusIsr()
          */
          
         GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
-        vcc3v3.setControl(GPIOPin::OUT_2MHZ);
 
         switch (s) {
         case BatteryPwr:
