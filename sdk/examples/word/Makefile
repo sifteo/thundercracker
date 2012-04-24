@@ -15,5 +15,5 @@ include $(SDK_DIR)/Makefile.rules
 
 run: all 
 	/usr/local/bin/ctags -Rf tags $(SDK_DIR)/include .
-	$(SDK_DIR)/bin/tc-siftulator.app/Contents/MacOS/tc-siftulator /Users/winstonw/sifteo/thundercracker/sdk/examples/word/word.elf
+	$(SDK_DIR)/bin/siftulator.app/Contents/MacOS/siftulator /Users/winstonw/sifteo/thundercracker/sdk/examples/word/word.elf
 

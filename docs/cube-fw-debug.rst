@@ -5,7 +5,7 @@ Debug Cube Firmware In The Emulator
 
 2. Run the simulator with a firmware file specified (selects emulation rather than static binary translation) and with debug mode enabled:
 
- tc-siftulator.exe -f /path/to/cube.hex -d
+ siftulator.exe -f /path/to/cube.hex -d
 
 3. You should see a text-mode debug UI. On Mac this will show up in the terminal you launched siftulator from, on Windows it'll be a separate window. Also, if you have multiple cubes, only cube #0 will be in debug mode. It will be identified by a red "Debugging" label in the UI.
 

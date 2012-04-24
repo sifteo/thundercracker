@@ -44,7 +44,7 @@ static void usage()
      */
 
     message("\n"
-            "usage: tc-siftulator [OPTIONS] [program.elf]\n"
+            "usage: siftulator [OPTIONS] [program.elf]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
             "\n"
