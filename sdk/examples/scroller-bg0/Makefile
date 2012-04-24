@@ -1,5 +1,5 @@
 APP = scroller-bg0
-SDK_DIR = ../..
+
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o

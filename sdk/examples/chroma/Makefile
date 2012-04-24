@@ -1,5 +1,5 @@
 APP = chroma
-SDK_DIR = ../..
+
 
 include $(SDK_DIR)/Makefile.defs
 

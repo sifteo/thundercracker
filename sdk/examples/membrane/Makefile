@@ -1,5 +1,5 @@
 APP = membrane
-SDK_DIR = ../..
+
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = \

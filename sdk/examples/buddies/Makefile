@@ -1,6 +1,6 @@
 APP = buddies
 
-SDK_DIR = ../..
+
 include $(SDK_DIR)/Makefile.defs
 
 OBJECTS = $(filter-out $(ASSETS).gen.cpp, $(wildcard *.cpp))
