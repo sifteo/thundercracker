@@ -164,6 +164,7 @@ void main()
 */
     CubeID menuCube = cubes[0];
     Menu m(vidBufs[0], &gAssets, gItems);
+    m.setPeekTiles(2);
 
     // main loop
     WordGame game(vidBufs, menuCube, m); // must not be static!
