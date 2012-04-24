@@ -390,6 +390,7 @@ bool animPaint(AnimType animT,
                             bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0),
                                              *CheckMarkImagesTop[2],
                                              assetFrame);
+                        }
                     }
                 }
             }
