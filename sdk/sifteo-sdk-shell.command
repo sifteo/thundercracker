@@ -1,7 +1,7 @@
 #!/bin/bash
 # SDK Setup Script for Mac OS
 
-export SDK_DIR="$(dirname $0)"
+export SDK_DIR="`(cd $(dirname $0); pwd)`"
 export PATH="$SDK_DIR/bin:$PATH"
 
 export PS1="[\[\e[1;32m\]Sifteo\[\e[0m\]] \h:\W \u\$ "
