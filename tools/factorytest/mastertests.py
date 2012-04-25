@@ -1,4 +1,5 @@
 import time
+from factorytest_common import rangeHelper
 
 ################################################################
 # NOTE: All functions in this module with 'Test' in the name
@@ -16,11 +17,6 @@ UniqueIdID                  = 4
 SetUsbEnabledID             = 0
 SimulatedBatteryVoltageID   = 1
 GetBattSupplyCurrentID      = 2
-
-def _rangeHelper(value, min1, max1, min2, max2):
-    range1 = (max1 - min1)
-    range2 = (max2 - min2)
-    return (((value - min1) * range2) / range1) + min2
 
 def _setUsbEnabled(jig, enabled):
     pkt = [SetUsbEnabledID, enabled]
@@ -115,7 +111,7 @@ def VBattCurrentDrawTest(devMgr):
 
         # set voltage
         # scale voltages to the 12-bit DAC output, and send them LSB first
-        bit12 = int(_rangeHelper(voltage, 0.0, 3.3, 0, 0xfff))
+        bit12 = int(rangeHelper(voltage, 0.0, 3.3, 0, 0xfff))
         pkt = [SimulatedBatteryVoltageID, bit12 & 0xff, (bit12 >> 8) & 0xff]
         jig.txPacket(pkt)
         resp = jig.rxPacket()
