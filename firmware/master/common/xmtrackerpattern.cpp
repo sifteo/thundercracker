@@ -77,7 +77,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     SvmMemory::VirtAddr va = pattern.pData + offset;
     if(!SvmMemory::copyROData(ref, noteData, va, sizeof(noteData))) {
         LOG((LGPFX"Could not copy %p (length %lu)!\n",
-                 (void *)va, sizeof(noteData)));
+                 (void *)va, (long unsigned)sizeof(noteData)));
         ASSERT(false);
 
         // At worst, do no harm.
