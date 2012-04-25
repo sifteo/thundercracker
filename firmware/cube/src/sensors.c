@@ -261,9 +261,6 @@ as_9:
         sjmp    as_ret
 
         ; NACK handler. Stop, go back to the default state, try again.
-        ;
-        ; Also try a different I2C address... some of these accelerometer
-        ; chips are shipping with different addresses!
 
 as_nack:
         orl     _W2CON0, #W2CON0_STOP  
@@ -700,14 +697,6 @@ nb_tx_handoff:
         ; frequency very close to our neighbor resonance. So, this keeps the
         ; signals cleaner.
 
-        ; Trigger the next accelerometer read, and reset the I2C bus. We do
-        ; this each time, to avoid a lockup condition that can persist
-        ; for multiple packets. We include a brief GPIO frob first, to try
-        ; and clear the lockup on the accelerometer end.
-
-        ; orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
-        ; anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
-        ; xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
         mov     _accel_state, #0          ; Reset accelerometer state machine
         mov     _W2CON0, #0               ; Reset I2C master
         mov     _W2CON0, #1               ;   Turn on I2C controller
