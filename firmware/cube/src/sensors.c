@@ -27,7 +27,7 @@ volatile uint8_t sensor_tick_counter_high;
  * LIS3DH accelerometer.
  */
 
-#define ACCEL_ADDR              0x30    // 00110010 - SDO is tied LOW
+#define ACCEL_ADDR_TX           0x30    // 00110010 - SDO is tied LOW
 #define ACCEL_ADDR_RX           0x31    // 00110011 - SDO is tied LOW
 
 #define ACCEL_CTRL_REG1         0x20
@@ -38,9 +38,16 @@ volatile uint8_t sensor_tick_counter_high;
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
-uint8_t accel_state;
-uint8_t accel_x;
-uint8_t accel_y;
+/*
+ * Other I2C definitions
+ */
+
+#define FACTORY_ADDR_TX         0xAA
+#define FACTORY_ADDR_RX         0xAB
+
+uint8_t i2c_state;
+uint8_t i2c_temp_1;
+uint8_t i2c_temp_2;
 
 /*
  * Parameters that affect the neighboring protocol. Some of these are
@@ -144,6 +151,9 @@ uint8_t __idata nb_prev_state[4];
  *
  *    The kick-off (writing the first byte) is handled by some inlined
  *    code in sensors.h, which we include in the radio ISR.
+ *
+ *    After every accelerometer read finishes, we do a quick poll for
+ *    factory test commands.
  */
 
 void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
@@ -157,8 +167,6 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         mov     _DPS, #0
 
         ;--------------------------------------------------------------------
-        ; Accelerometer State Machine
-        ;--------------------------------------------------------------------
 
         ; Check status of I2C engine.
 
@@ -167,57 +175,82 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         jb      acc.1, as_nack          ; Was not acknowledged!
 
         mov     dptr, #as_1
-        mov     a, _accel_state
+        mov     a, _i2c_state
         jmp     @a+dptr
+
+        ;--------------------------------------------------------------------
+
+        ; NACK handler. Stop, go back to the default state, try again.
+as_nack:
+        orl     _W2CON0, #W2CON0_STOP  
+        mov     _i2c_state, #0
+
+        ; Fall through to as_ret.
+
+        ;--------------------------------------------------------------------
+
+        ; Return from IRQ. We get called back after the next byte finishes.
+
+as_ret:
+        pop     _DPS
+        pop     dph
+        pop     dpl
+        pop     psw
+        pop     acc
+        reti
+
+        ;--------------------------------------------------------------------
+        ; Accelerometer States
+        ;--------------------------------------------------------------------
 
         ; 1. TX address finished, Send register address next
 
 as_1:
         mov     _W2DAT, #ACCEL_START_READ_X
-        mov     _accel_state, #(as_2 - as_1)
+        mov     _i2c_state, #(as_2 - as_1)
         sjmp    as_ret
 
         ; 2. Register address finished. Send repeated start, and RX address
 as_2:
         orl     _W2CON0, #W2CON0_START
         mov     _W2DAT, #ACCEL_ADDR_RX
-        mov     _accel_state, #(as_3 - as_1)
+        mov     _i2c_state, #(as_3 - as_1)
         sjmp    as_ret
 
         ; 3. RX address finished. Subsequent bytes will be reads.
 as_3:
-        mov     _accel_state, #(as_4 - as_1)
+        mov     _i2c_state, #(as_4 - as_1)
         sjmp    as_ret
 
         ; 4. Read (and discard) X axis low byte.
 as_4:
         mov     a, _W2DAT
-        mov     _accel_state, #(as_5 - as_1)
+        mov     _i2c_state, #(as_5 - as_1)
         sjmp    as_ret
 
         ; 5. Read X axis high byte.
 as_5:
-        mov     _accel_x, _W2DAT
-        mov     _accel_state, #(as_6 - as_1)
+        mov     _i2c_temp_1, _W2DAT
+        mov     _i2c_state, #(as_6 - as_1)
         sjmp    as_ret
 
         ; 6. Read (and discard) Y axis low byte.
 as_6:
         mov     a, _W2DAT
-        mov     _accel_state, #(as_7 - as_1)
+        mov     _i2c_state, #(as_7 - as_1)
         sjmp    as_ret
 
         ; 7. Read Y axis high byte.
 as_7:
-        #if HWREV == 2
+    #if HWREV == 2
         ; y axis is inverted on rev 2 hardware
         mov     a, _W2DAT
         cpl     a
-        mov     _accel_y, a
-        #else
-        mov     _accel_y, _W2DAT
-        #endif
-        mov     _accel_state, #(as_8 - as_1)
+        mov     _i2c_temp_2, a
+    #else
+        mov     _i2c_temp_2, _W2DAT
+    #endif
+        mov     _i2c_state, #(as_8 - as_1)
         sjmp    as_ret
 
         ; 8. Read (and discard) Z axis low byte.
@@ -225,7 +258,7 @@ as_7:
 as_8:
         mov     a, _W2DAT
         orl     _W2CON0, #W2CON0_STOP ; stopping after last read below for now
-        mov     _accel_state, #(as_9 - as_1)
+        mov     _i2c_state, #(as_9 - as_1)
         sjmp    as_ret
 
         ; 9. Read Z axis high byte.
@@ -243,39 +276,114 @@ as_9:
         orl     _ack_bits, #RF_ACK_BIT_ACCEL
 1$:
 
-        mov     a, _accel_y
+        mov     a, _i2c_temp_2
         xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
         jz      2$
         xrl     (_ack_data + RF_ACK_ACCEL + 1), a
         orl     _ack_bits, #RF_ACK_BIT_ACCEL
 2$:
 
-        mov     a, _accel_x
+        mov     a, _i2c_temp_1
         xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
         jz      3$
         xrl     (_ack_data + RF_ACK_ACCEL + 0), a
         orl     _ack_bits, #RF_ACK_BIT_ACCEL
 3$:
 
-        mov     _accel_state, #0
-        sjmp    as_ret
-
-        ; NACK handler. Stop, go back to the default state, try again.
-
-as_nack:
-        orl     _W2CON0, #W2CON0_STOP  
-        mov     _accel_state, #0
+        mov     _i2c_state, #(fs_1 - as_1)
         sjmp    as_ret
 
         ;--------------------------------------------------------------------
+        ; Factory Test States
+        ;--------------------------------------------------------------------
 
-as_ret:
-        pop     _DPS
-        pop     dph
-        pop     dpl
-        pop     psw
-        pop     acc
-        reti
+        ; See cube-factorytest-protocol.rst for a description of
+        ; the overall sequence of operations here as well as the actual
+        ; allowed packet formats.
+
+        ; 1. Start writing.
+        ;
+        ; Unless we are connected to a factory test jig, this will just
+        ; land us in as_nack next time through.
+        ;
+        ; Here we use i2c_temp_1 to hold the current address in our ACK,
+        ; and i2c_temp_2 as a down-counter.
+
+fs_1:
+        mov     _W2DAT, #FACTORY_ADDR_TX
+        mov     _i2c_temp_1, #_ack_data
+        mov     _i2c_temp_2, #RF_ACK_LEN_MAX
+        mov     _i2c_state, #(fs_2 - as_1)
+fs_ret:
+        ljmp    as_ret
+
+        ; 2. Send an ACK byte.
+        ;
+        ; Note that we need to trash a register here in order to address
+        ; the ACK buffer, but all of the non-test code manages to avoid
+        ; touching anything other than the accumulator and DPTR. So, do a
+        ; quick local save-and-restore of r0, taking care to also reset our
+        ; register bank.
+
+fs_2:
+        mov     psw, #0             ; Back to register bank 0
+        push    ar0                 ; Save R0
+        mov     r0, _i2c_temp_1     ; Send next ACK byte
+        mov     a, @r0
+        mov     _W2DAT, a
+        pop     ar0                 ; Restore R0
+
+        inc     _i2c_temp_1         ; Iterate over all ACK bytes
+        djnz    _i2c_temp_2, fs_ret
+
+        mov     _i2c_state, #(fs_3 - as_1)
+        sjmp    fs_ret
+
+        ; 3. Send repeated start, and RX address
+
+fs_3:
+        orl     _W2CON0, #W2CON0_START
+        mov     _W2DAT, #FACTORY_ADDR_RX
+        mov     _i2c_state, #(fs_4 - as_1)
+        sjmp    fs_ret
+
+        ; 4. RX address finished. Subsequent bytes will be reads.
+
+fs_4:
+        mov     _i2c_state, #(fs_5 - as_1)
+        sjmp    fs_ret
+
+        ; 5. Read first byte of factory test packet
+
+fs_5:
+        mov     _i2c_temp_1, _W2DAT
+        mov     _i2c_state, #(fs_6 - as_1)
+        sjmp    fs_ret
+
+        ; 6. Read second byte of factory test packet
+
+fs_6:
+        mov     _i2c_temp_2, _W2DAT
+        mov     _i2c_state, #(fs_7 - as_1)
+        sjmp    fs_ret
+
+        ; 7. Read third and final byte of factory test packet,
+        ;    and perform the indicated operation.
+        ;
+        ; This loops back to state 5 afterwards, to read as many
+        ; three-byte packets as the test jig is willing to send us.
+
+fs_7:
+        mov     dpl, _i2c_temp_1
+        mov     a, _i2c_temp_2
+        anl     a, #3                   ; Enforce VRAM address limit
+        mov     dph, a
+        mov     a, _W2DAT               ; Poke byte into VRAM
+        movx    @dptr, a
+
+        mov     _i2c_state, #(fs_5 - as_1)
+        sjmp    fs_ret
+
     __endasm ;
 }
 
@@ -697,11 +805,11 @@ nb_tx_handoff:
         ; frequency very close to our neighbor resonance. So, this keeps the
         ; signals cleaner.
 
-        mov     _accel_state, #0          ; Reset accelerometer state machine
+        mov     _i2c_state, #0            ; Reset our state machine
         mov     _W2CON0, #0               ; Reset I2C master
         mov     _W2CON0, #1               ;   Turn on I2C controller
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
-        mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
+        mov     _W2DAT, #ACCEL_ADDR_TX    ; Trigger the next I2C transaction
         
         ;--------------------------------------------------------------------
 
@@ -839,8 +947,8 @@ void sensors_init()
     
     // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
     {
-        const __code uint8_t init1[] = { ACCEL_ADDR, ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        const __code uint8_t init2[] = { ACCEL_ADDR, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
+        const __code uint8_t init1[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
+        const __code uint8_t init2[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
         i2c_tx(init1, sizeof init1);
         i2c_tx(init2, sizeof init2);
     }
