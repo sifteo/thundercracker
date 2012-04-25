@@ -11,6 +11,7 @@
 #include "audiomixer.h"
 #include "svmmemory.h"
 #include "svmruntime.h"
+#include "xmtrackerplayer.h"
 
 extern "C" {
 
@@ -58,6 +59,27 @@ void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume)
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
 {
     return AudioMixer::instance.pos(ch);
+}
+
+bool _SYS_tracker_play(const struct _SYSXMSong *song)
+{
+    _SYSXMSong modCopy;
+    if (SvmMemory::copyROData(modCopy, song)) {
+        return XmTrackerPlayer::instance.play(&modCopy);
+    }
+
+    SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    return false;
+}
+
+bool _SYS_tracker_isPlaying()
+{
+    return XmTrackerPlayer::instance.isPlaying();
+}
+
+void _SYS_tracker_stop()
+{
+    XmTrackerPlayer::instance.stop();
 }
 
 }  // extern "C"

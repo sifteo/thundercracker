@@ -20,63 +20,62 @@ namespace Stir {
 
 class XmTrackerLoader {
 public:
-    XmTrackerLoader() : log(0), size(0) {}
-    bool load(const char *filename, Logger &pLog);
+	XmTrackerLoader() : log(0), size(0) {}
+	bool load(const char *filename, Logger &pLog);
 
 private:
-    friend class Tracker;
-    bool openTracker(const char *filename);
-    bool readSong();
+	friend class Tracker;
+	bool openTracker(const char *filename);
+	bool readSong();
 
-    bool readNextInstrument();
-    bool readSample(_SYSXMInstrument &instrument);
-    // bool saveInstruments();
+	bool readNextInstrument();
+	bool readSample(_SYSXMInstrument &instrument);
+	// bool saveInstruments();
 
-    bool readNextPattern();
-    unsigned compressPattern(uint16_t pattern);
-    bool savePatterns();
+	bool readNextPattern();
+	bool savePatterns();
 
-    bool init();
+	bool init();
 
-    // Portable file functions, modules are little-endian binary files!
-    void seek(uint32_t offset) { fseek(f, offset, SEEK_CUR); }
-    void aseek(uint32_t offset) { fseek(f, offset, SEEK_SET); }
-    uint32_t pos() { return ftell(f); }
-    uint8_t get8() { return getc(f); }
-    uint16_t get16() { return get8() | (uint16_t)get8() << 8; }
-    uint32_t get32() { return get16() | (uint32_t)get16() << 16; }
-    void getbuf( void *buf, uint32_t bufsiz ) {
-        uint8_t *wbuf = (uint8_t*)buf;
-        for (uint32_t i = 0; i < bufsiz; i++) {
-            wbuf[i] = get8();
-        }
-    }
+	// Portable file functions, modules are little-endian binary files!
+	void seek(uint32_t offset) { fseek(f, offset, SEEK_CUR); }
+	void aseek(uint32_t offset) { fseek(f, offset, SEEK_SET); }
+	uint32_t pos() { return ftell(f); }
+	uint8_t get8() { return getc(f); }
+	uint16_t get16() { return get8() | (uint16_t)get8() << 8; }
+	uint32_t get32() { return get16() | (uint32_t)get16() << 16; }
+	void getbuf( void *buf, uint32_t bufsiz ) {
+		uint8_t *wbuf = (uint8_t*)buf;
+		for (uint32_t i = 0; i < bufsiz; i++) {
+			wbuf[i] = get8();
+		}
+	}
 
-    void processName(std::string &name);
+	void processName(std::string &name);
 
-    // constants
-    enum {
-        kSampleFormatPCM8 = 0,
-        kSampleFormatADPCM,
-        kSampleFormatPCM16,
-        kSampleFormatUnknown
-    };
-    static const char *encodings[3];
+	// constants
+	enum {
+		kSampleFormatPCM8 = 0,
+		kSampleFormatADPCM,
+		kSampleFormatPCM16,
+		kSampleFormatUnknown
+	};
+	static const char *encodings[3];
 
-    const char *filename;
-    FILE *f;
-    Logger *log;
-    _SYSXMSong song;
-    uint32_t size;
-    uint32_t fileSize;
+	const char *filename;
+	FILE *f;
+	Logger *log;
+	_SYSXMSong song;
+	uint32_t size;
+	uint32_t fileSize;
+	
+	std::vector<std::vector<uint8_t> > patternDatas;
+	std::vector<_SYSXMPattern> patterns;
+	std::vector<uint8_t> patternTable;
 
-    std::vector<std::vector<uint8_t> > patternDatas;
-    std::vector<_SYSXMPattern> patterns;
-    std::vector<uint8_t> patternTable;
-
-    std::vector<_SYSXMInstrument> instruments;
-    std::vector<std::vector<uint8_t> > envelopes;
-    std::vector<std::vector<uint8_t> > sampleDatas;
+	std::vector<_SYSXMInstrument> instruments;
+	std::vector<std::vector<uint8_t> > envelopes;
+	std::vector<std::vector<uint8_t> > sampleDatas;
 };
 
 }
