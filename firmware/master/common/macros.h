@@ -11,8 +11,8 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define APP_TITLE      "Thundercracker"
-#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_TITLE       "Sifteo Cubes"
+#define APP_COPYRIGHT   "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)

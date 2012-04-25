@@ -1,7 +1,8 @@
 TC_DIR := ..
 
 BIN_DIR := $(TC_DIR)/sdk/bin
-BIN := siftulator
+BIN := Siftulator
+LOWERCASE_BIN := siftulator
 
 include Makefile.objs
 include $(TC_DIR)/Makefile.platform
