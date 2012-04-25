@@ -181,7 +181,10 @@ gx = {}
                 gx.lastExceptionCount = newExceptionCount
                 error("Cube CPU exception!")
             end
-            
+
+            -- Send a radio ping, keep the cube from sleeping.
+            radio:txn("ff")
+
             -- Wait for the expected number of pixels, with a timeout
             pixelsWritten = bit.band(gx.cube:lcdPixelCount() - pixelCount, 0xFFFFFFFF)
             if pixelsWritten > gx.expectedPixelCount then
