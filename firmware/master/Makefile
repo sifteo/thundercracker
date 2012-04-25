@@ -42,7 +42,13 @@ program: $(BIN)
 		-c "reset run" \
 		-c exit
 
-.PHONY: all clean syscall-table ocd unlock program
+objdump: $(BIN)
+	arm-none-eabi-objdump -d $< | less
+
+readelf: $(BIN)
+	arm-none-eabi-readelf -a $< | less
+
+.PHONY: all clean syscall-table ocd unlock program objdump
 
 # Several steps, to work around Win32 command line length limits
 clean:
