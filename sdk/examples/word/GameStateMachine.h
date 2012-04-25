@@ -7,6 +7,7 @@
 #include "Utility.h"
 #include "LevelProgressData.h"
 #include "Anim.h"
+#include "CutsceneIndex.h"
 
 using namespace Sifteo;
 
@@ -23,7 +24,7 @@ enum GameStateIndex
     GameStateIndex_Loading,
     GameStateIndex_MainMenu,
     GameStateIndex_PauseMenu,
-    GameStateIndex_CutScene,
+    GameStateIndex_Cutscene,
     GameStateIndex_CubeBuddyUnlock,
     GameStateIndex_LoadingFinished,
 
@@ -31,6 +32,7 @@ enum GameStateIndex
 };
 
 const unsigned char MAX_HINTS = 3;
+const float TOUCH_ADVANCE_DELAY = 1.0f;
 
 class GameStateMachine : public StateMachine
 {
@@ -63,6 +65,7 @@ public:
     bool isMetaLetterIndexUnlockedLast(unsigned char i) const { return ((mMetaLetterUnlockedMask ^ mMetaLetterUnlockedMaskOld) & (1 << i)) != 0; }
     void setNumHints(unsigned char i) { mNumHints = i; }
     void initNewMeta();
+    CutsceneIndex getCutsceneIndex() const { return mCutsceneIndex; }
 
 protected:
     virtual void setState(unsigned newStateIndex, unsigned oldStateIndex);
@@ -84,6 +87,7 @@ private:
     unsigned mMetaLetterUnlockedMaskOld;
     CubeID mHintCubeIDOnUpdate;
     bool mNeedsNewAnagram;
+    CutsceneIndex mCutsceneIndex;
 
     static GameStateMachine* sInstance;
 };

@@ -8,6 +8,7 @@
 #include "WordGame.h"
 #include "assets.gen.h"
 #include "CubeState.h"
+#include "CutscenePaintData.h"
 
 const float SHAKE_DELAY = 3.5f;
 
@@ -527,11 +528,37 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             {
             case GameStateIndex_StoryStartOfRound:
                 newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
+            case GameStateIndex_Cutscene:
+                newStateIndex = CubeStateIndex_Cutscene;
+                break;
             }
             break;
         }
         break;
 
+    case CubeStateIndex_Cutscene:
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            break;
+
+        case EventID_GameStateChanged:
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
+            case GameStateIndex_Cutscene:
+                // force re-entry to reset timer
+                setState(CubeStateIndex_Cutscene, getCurrentStateIndex());
+                break;
+            }
+            break;
+        }
+        break;
     case CubeStateIndex_OldWordScored:
         break;
 
@@ -1452,6 +1479,23 @@ void CubeStateMachine::paint()
                     ++slatsIndex;
                 }
 
+            }
+        }
+        break;
+
+    case CubeStateIndex_Cutscene:
+        {
+            const AssetImage* image =
+                    CUTSCENE_IMAGES[GameStateMachine::getInstance().getCutsceneIndex()];
+
+            mVidBuf->bg0.image(vec(0,0),
+                               *image,
+                               MIN(image->numFrames(), (int)getCube()));
+            if (mStateTime >= TOUCH_ADVANCE_DELAY)
+            {
+                bg1TileBuf.image(vec(13, 13),
+                                 IconPress,
+                                 (unsigned)(mStateTime / .3f ) % IconPress.numFrames());
             }
         }
         break;

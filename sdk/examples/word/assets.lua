@@ -46,6 +46,7 @@ transparent = image{"transparent.png", quality=8, pinned=true}
 -- TODO icon_tilt.png
 -- TODO timer.png
 -- TODO title.png
+IconPress = image{"icon_press.png", width=16, quality=8}
 Tile2 = image{"tile_ivory_idle.png", quality=8}
 Tile2Glow = image{"tile_ivory_glow.png", quality=8}
 Tile2Blank = image{"tile_ivory_blank.png", quality=8}
@@ -72,6 +73,21 @@ HighScores = image{"score_highscores.png", quality=8}
 Score = image{"score_endscore.png", quality=8}
 FontSmall = image{"score_font.png", width=8, height=16, quality=8}
 FontBonus = image{"score_font_bonus.png", width=8, height=16, quality=8}
+
+-- Cutscenes
+-- TODO break into asset groups
+Scene01a = image{"Scene01a.png", width=128, height=128, quality=8}
+Scene01b = image{"Scene01b.png", width=128, height=128, quality=8}
+Scene01c = image{"Scene01c.png", width=128, height=128, quality=8}
+Scene02a = image{"Scene02a.png", width=128, height=128, quality=8}
+Scene02b = image{"Scene02b.png", width=128, height=128, quality=8}
+Scene02c = image{"Scene02c.png", width=128, height=128, quality=8}
+Scene03a = image{"Scene03a.png", width=128, height=128, quality=8}
+Scene03b = image{"Scene03b.png", width=128, height=128, quality=8}
+Scene03c = image{"Scene03c.png", width=128, height=128, quality=8}
+Scene04a = image{"Scene04a.png", width=128, height=128, quality=8}
+Scene04b = image{"Scene04b.png", width=128, height=128, quality=8}
+Scene04c = image{"Scene04c.png", width=128, height=128, quality=8}
 
 blip = sound{"blip.raw"}
 bonus = sound{"bonus.raw"}

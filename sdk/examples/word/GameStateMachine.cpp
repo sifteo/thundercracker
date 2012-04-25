@@ -5,6 +5,7 @@
 #include "SavedData.h"
 #include "WordGame.h"
 #include "assets.gen.h"
+#include "CutsceneData.h"
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 const float CITY_PROGRESSION_STATE_TIME = 3.0f;
@@ -14,7 +15,8 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 GameStateMachine::GameStateMachine(VideoBuffer vidBufs[]) :
     StateMachine(GameStateIndex_LoadingFinished), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
     mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0),
-    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CubeID::UNDEFINED)
+    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CubeID::UNDEFINED),
+    mCutsceneIndex(CutsceneIndex_Scene01a)
 {
     ASSERT(vidBufs != 0);
     sInstance = this;
@@ -431,7 +433,17 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_Update:
             if (getTime() >= CITY_PROGRESSION_STATE_TIME)
             {
-                newStateIndex = GameStateIndex_StoryStartOfRound;
+                // if there is a cut scene to show, go to cut scene mode
+                // TODO make data-driven
+                switch (Dictionary::getPuzzleIndex())
+                {
+
+                default:
+                    newStateIndex = GameStateIndex_Cutscene;
+                    // TODO newStateIndex = GameStateIndex_StoryStartOfRound;
+                    break;
+                }
+
             }
         }
         break;
@@ -543,7 +555,26 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case GameStateIndex_CutScene:
+    case GameStateIndex_Cutscene:
+        switch (eventID)
+        {
+        case EventID_Touch:
+            if (mStateTime >= TOUCH_ADVANCE_DELAY)
+            {
+                LOG("cutscene touch, index: %d\n", (int)mCutsceneIndex);
+                if (CUTSCENE_ADVANCE_TO_NEXT[mCutsceneIndex++])
+                {
+                    // TODO signal screen wipes
+                    // force re-entry to state, to reset timers and events
+                    setState(GameStateIndex_Cutscene, getCurrentStateIndex());
+                }
+                else
+                {
+                    newStateIndex = GameStateIndex_StoryStartOfRound;
+                }
+            }
+            break;
+        }
         break;
 
     case GameStateIndex_CubeBuddyUnlock:

@@ -65,3 +65,8 @@ CubeState.h
 ../../include/sifteo/video/bg1.h
 ../../include/sifteo/video/bg0rom.h
 ../../include/sifteo/video/bg0.h
+CutsceneData.h
+CutscenePaintData.h
+CutsceneIndex.h
+Dialog.h
+Dialog.cpp
