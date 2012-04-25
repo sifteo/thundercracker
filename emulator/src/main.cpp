@@ -25,6 +25,7 @@ static bool hasConsole = true;
 #include "system.h"
 #include "lua_script.h"
 
+
 static void message(const char *fmt, ...);
 
 static void usage()
@@ -36,7 +37,6 @@ static void usage()
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
      *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
-     *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      *  -c                Continue executing on exception, rather than stopping the debugger.
@@ -44,7 +44,7 @@ static void usage()
      */
 
     message("\n"
-            "usage: tc-siftulator [OPTIONS] [program.elf]\n"
+            "usage: siftulator [OPTIONS] [program.elf]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
             "\n"
@@ -52,12 +52,15 @@ static void usage()
             "  -h                  Show this help message, and exit\n"
             "  -n NUM              Set initial number of cubes\n"
             "  -T                  Turbo mode; run faster than real-time if we can\n"
+            "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
+            "  -P port             Run a GDB debug server on the specified TCP port number\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
+            "  --stdout FILENAME   Redirect output to FILENAME\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -100,7 +103,7 @@ static void message(const char *fmt, ...)
     fprintf(stderr, "%s\n", buf);
 }
 
-static int runFrontend(System &sys)
+static int runFrontend(System &sys, const char *elfFile)
 {
     static Frontend fe;
         
@@ -112,6 +115,12 @@ static int runFrontend(System &sys)
         message("Graphical frontend failed to initialize");
         return 1;
     }    
+
+    if (elfFile && !SystemMC::installELF(elfFile)) {
+        message("Failed to load ELF file");
+        return 1;
+    }
+
     sys.start();
     while (fe.runFrame());
     fe.exit();
@@ -130,11 +139,12 @@ static int runScript(System &sys, const char *file)
 
 int main(int argc, char **argv)
 {
-    const char *scriptFile = NULL;
     static System sys;
+    const char *scriptFile = NULL;
+    const char *elfFile = NULL;
 
     // Attach an existing console, if it's already handy
-    getConsole();
+    getConsole();	
 
     /*
      * Parse command line options
@@ -197,6 +207,15 @@ int main(int argc, char **argv)
             sys.opt_paintTrace = true;
             continue;
         }
+        
+        if (!strcmp(arg, "--stdout") && argv[c+1]) {
+            if(!freopen(argv[c+1], "w", stdout)) {
+                message("Error: opening file %s for write", argv[c+1]);
+                return 1;
+            }
+            c++;
+            continue;
+        }
 
         if (!strcmp(arg, "-f") && argv[c+1]) {
             sys.opt_cubeFirmware = argv[c+1];
@@ -211,7 +230,7 @@ int main(int argc, char **argv)
         }
 
         if (!strcmp(arg, "-F") && argv[c+1]) {
-            sys.opt_cube0Flash = argv[c+1];
+            sys.opt_flashFilename = argv[c+1];
             c++;
             continue;
         }
@@ -231,6 +250,12 @@ int main(int argc, char **argv)
             c++;
             continue;
         }
+
+        if (!strcmp(arg, "-P") && argv[c+1]) {
+            sys.opt_gdbServerPort = atoi(argv[c+1]);
+            c++;
+            continue;
+        }
         
         if (!strncmp(arg, "-psn_", 5)) {
             // Used by Mac OS app bundles; ignore it.
@@ -243,9 +268,9 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (sys.opt_elfFile.empty()) {
+        if (!elfFile) {
             // First positional argument is interpreted as an ELF file name
-            sys.opt_elfFile = arg;
+            elfFile = arg;
             continue;
         }
 
@@ -257,5 +282,11 @@ int main(int argc, char **argv)
     // Necessary even when running windowless, since we use GLFW for time
     glfwInit();
 
-    return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys);
+    return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys, elfFile);
+}
+
+extern "C" bool glfwSifteoOpenFile(const char *filename)
+{
+    // Entry point for platform-specific drag and drop in GLFW.
+    return SystemMC::installELF(filename);
 }

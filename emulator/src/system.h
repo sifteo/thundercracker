@@ -22,6 +22,7 @@
 #include "system_mc.h"
 #include "tracer.h"
 #include "tinythread.h"
+#include "flash_storage.h"
 
 
 class System {
@@ -33,10 +34,12 @@ class System {
 
     Cube::Hardware cubes[MAX_CUBES];
     Tracer tracer;
+    FlashStorage flash;
 
     // Static Options; can be set prior to init only
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
+    std::string opt_flashFilename;
 
     // Global debug options
     bool opt_continueOnException;
@@ -52,11 +55,10 @@ class System {
     bool opt_svmTrace;
     bool opt_svmFlashStats;
     bool opt_svmStackMonitor;
-    std::string opt_elfFile;
+    unsigned opt_gdbServerPort;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
-    std::string opt_cube0Flash;
     std::string opt_cube0Profile;
 
     System();
@@ -73,14 +75,8 @@ class System {
 
     bool isTraceAllowed();
 
-    // Begin an event that's synchronized with cube execution. Halts the cube thread at 'deadline'.
-    void beginCubeEvent(uint64_t deadline) {
-        sc.beginEvent(deadline);
-    }
-
-    // End an event, resume cube execution.
-    void endCubeEvent(uint32_t nextDeadline) {
-        sc.endEvent(nextDeadline);
+    DeadlineSynchronizer &getCubeSync() {
+        return sc.deadlineSync;
     }
 
  private:

@@ -15,7 +15,9 @@
 #include <inttypes.h>
 
 #include "svm.h"
-#include "flashlayer.h"
+#include "elfprogram.h"
+#include "flash_blockcache.h"
+#include "flash_allocation.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include <string>
@@ -108,7 +110,7 @@ public:
      */
     static bool fault(FaultCode code);
 
-    static void setSymbolSourceELF(const FlashRange &elf);
+    static void setSymbolSource(const Elf::Program &program);
 
 #ifdef SIFTEO_SIMULATOR
     static std::string formatAddress(uint32_t address);

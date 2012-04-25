@@ -1,8 +1,9 @@
 TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
-BIN = slinky
-all: $(BIN)$(BIN_EXT)
+BIN_DIR := $(TC_DIR)/sdk/bin
+BIN := slinky
+all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
 
 INCLUDES += -Isrc
 FLAGS += -g
@@ -54,6 +55,10 @@ endif
 # The DEBUG-ness of this build must match what LLVM was compiled with.
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.
+#
+# XXX: We'd love to use -O4 for link-time optimization on Mac OS, but it
+#      seems to be broken on some people's machines still...
+
 ifeq ($(DEBUG),)
 	FLAGS += -DNDEBUG
 	FLAGS += -O3 -fomit-frame-pointer
@@ -65,18 +70,27 @@ FLAGS += -MMD
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 LDFLAGS := $(FLAGS) $(LIBS) $(LIB_STDCPP)
 
+# Symbol table trimming
+ifeq ($(BUILD_PLATFORM), Darwin)
+	LDFLAGS += -Xlinker -unexported_symbol -Xlinker "*"
+endif
+
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
 ifeq ($(BUILD_PLATFORM), windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
-$(BIN)$(BIN_EXT): $(OBJS)
-	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
-	strip -s src/$(BIN)-d.exe -o $(BIN).exe
-	$(UPX) $(BIN).exe
+$(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
+	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug "src/$(BIN)-d$(BIN_EXT)" "$(BIN).dSYM"
+	strip -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
 else
 # Default link
-$(BIN): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o src/$(BIN)-d $(OBJS) $(LDFLAGS)
+	strip -o $(BIN_DIR)/$(BIN) src/$(BIN)-d
 endif
 
 %.o: %.cpp $(TABLES)
@@ -85,6 +99,6 @@ endif
 .PHONY: clean
 
 clean:
-	rm -Rf $(BIN) $(OBJS) $(DEPFILES) $(TABLES) $(BIN).exe
+	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT) $(OBJS) $(DEPFILES) $(TABLES)
 
 -include $(DEPFILES)

@@ -4,19 +4,19 @@
  */
 
 #include "usart.h"
-#include "flash.h"
+#include "flash_device.h"
 #include "hardware.h"
 #include "board.h"
 #include "gpio.h"
 #include "systime.h"
 #include "radio.h"
 #include "tasks.h"
-#include "flashlayer.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
 #include "usb/usbdevice.h"
 #include "button.h"
 #include "svmloader.h"
+#include "powermanager.h"
 
 /*
  * Application specific entry point.
@@ -24,11 +24,13 @@
  */
 int main()
 {
+    PowerManager::init();
+
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
 #ifndef DEBUG
-    Flash::init();
+    FlashDevice::init();
 #else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""

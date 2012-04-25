@@ -67,6 +67,17 @@ void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
     VRAM::pokeb(*vbuf, addr, byte);
 }
 
+void _SYS_vbuf_xorb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
+{
+    if (!SvmMemory::mapRAM(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
+
+    VRAM::truncateByteAddr(addr);
+    VRAM::xorb(*vbuf, addr, byte);
+}
+
 uint32_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
     if (!SvmMemory::mapRAM(vbuf)) {

@@ -11,7 +11,7 @@
 #include "hardware.h"
 #include "board.h"
 #include "tasks.h"
-#include "assetmanager.h"
+#include "usbprotocol.h"
 #include "macros.h"
 
 #if (BOARD == BOARD_TEST_JIG)
@@ -140,19 +140,9 @@ void UsbDevice::handleOUTData(void *p)
     // XXX: going to need to figure out what dispatch looks like here once
     // we get some actual protocol support in place
 #if (BOARD == BOARD_TEST_JIG)
-        switch (buf[0]) {
-
-        case 0:
-            AssetManager::onData(buf, numBytes);
-            UsbDevice::write(buf, numBytes);
-            break;
-
-        case 1:
-            TestJig::onTestDataReceived(buf + 1, numBytes - 1);
-            break;
-        }
+        TestJig::onTestDataReceived(buf, numBytes);
 #else
-        AssetManager::onData(buf, numBytes);
+        USBProtocolHandler::onData(buf, numBytes);
 #endif
     }
 }

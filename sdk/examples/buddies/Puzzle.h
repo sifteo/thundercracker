@@ -41,8 +41,8 @@ public:
         unsigned int cutsceneEnvironment,
         const BuddyId buddies[], unsigned int numBuddies,
         unsigned int numShuffles,
-        const Piece piecesStart[][NUM_SIDES],
-        const Piece piecesEnd[][NUM_SIDES]);
+        const Piece piecesStart[][Sifteo::NUM_SIDES],
+        const Piece piecesEnd[][Sifteo::NUM_SIDES]);
     
     void Reset();
     
@@ -78,11 +78,11 @@ public:
     BuddyId GetBuddy(unsigned int buddyIndex) const;
     unsigned int GetNumBuddies() const;
     
-    const Piece &GetPieceStart(unsigned int buddy, Sifteo::Cube::Side side) const;
-    void SetPieceStart(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
+    const Piece &GetPieceStart(unsigned int buddy, Sifteo::Side side) const;
+    void SetPieceStart(unsigned int buddy, Sifteo::Side side, const Piece &piece);
     
-    const Piece &GetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side) const;
-    void SetPieceEnd(unsigned int buddy, Sifteo::Cube::Side side, const Piece &piece);
+    const Piece &GetPieceEnd(unsigned int buddy, Sifteo::Side side) const;
+    void SetPieceEnd(unsigned int buddy, Sifteo::Side side, const Piece &piece);
     
 private:
     // TODO: Optimzie for size better
@@ -100,8 +100,8 @@ private:
     unsigned char mCutsceneEnvironemnt : 3;
     unsigned char mNumShuffles : 8;
     unsigned char mNumBuddies : 5;
-    Piece mPiecesStart[NUM_BUDDIES][NUM_SIDES];
-    Piece mPiecesEnd[NUM_BUDDIES][NUM_SIDES];    
+    Piece mPiecesStart[NUM_BUDDIES][Sifteo::NUM_SIDES];
+    Piece mPiecesEnd[NUM_BUDDIES][Sifteo::NUM_SIDES];    
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

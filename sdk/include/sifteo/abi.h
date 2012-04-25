@@ -851,7 +851,7 @@ void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
 bool _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
 bool _SYS_tracker_isPlaying() _SC(126);
-void _SYS_tracker_stop() _SC(148);
+void _SYS_tracker_stop() _SC(149);
 
 // Asset group/slot management
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
@@ -867,6 +867,7 @@ void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(121);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(122);
 void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(18);
 void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(24);
+void _SYS_vbuf_xorb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(148);
 uint32_t _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(123);
 uint32_t _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(54);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(20);

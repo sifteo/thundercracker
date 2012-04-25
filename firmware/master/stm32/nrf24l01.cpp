@@ -9,6 +9,15 @@
 
 #include "nrf24l01.h"
 #include "debug.h"
+#include "board.h"
+
+NRF24L01 NRF24L01::instance(RF_CE_GPIO,
+                            RF_IRQ_GPIO,
+                            SPIMaster(&RF_SPI,              // SPI:
+                                      RF_SPI_CSN_GPIO,      //   CSN
+                                      RF_SPI_SCK_GPIO,      //   SCK
+                                      RF_SPI_MISO_GPIO,     //   MISO
+                                      RF_SPI_MOSI_GPIO));   //   MOSI
 
 void NRF24L01::init() {
     /*
@@ -110,6 +119,45 @@ void NRF24L01::ptxMode()
      */
 
     transmitPacket();
+}
+
+/*
+ * Test mode support for emitting a constant carrier on the given channel.
+ */
+void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
+{
+// From the L01 datasheet:
+//    1. Set PWR_UP  = 1 and  PRIM_RX = 0 in the  CONFIG  register.
+//    2. Wait 1.5ms  PWR_UP ->standby.
+//    3. In the RF register set:
+//    X CONT_WAVE = 1.
+//    X PLL_LOCK  = 1.
+//    X RF_PWR.
+//    4. Set the wanted RF channel.
+//    5. Set CE high.
+//    6. Keep CE high as long as the carrier is needed.
+
+    if (enabled) {
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
+        spi.transfer(0x0e | (1 << 7) | (1 << 4));
+        spi.end();
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_RF_CH);
+        spi.transfer(channel);
+        spi.end();
+
+        ce.setHigh();
+    } else {
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
+        spi.transfer(0x0e);
+        spi.end();
+
+        ce.setLow();
+    }
 }
 
 void NRF24L01::setTxPower(Radio::TxPower pwr)

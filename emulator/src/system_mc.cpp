@@ -17,53 +17,27 @@
 #include "systime.h"
 #include "audiooutdevice.h"
 #include "audiomixer.h"
-#include "flash.h"
-#include "flashlayer.h"
-#include "assetmanager.h"
+#include "flash_device.h"
+#include "flash_blockcache.h"
+#include "usbprotocol.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "mc_gdbserver.h"
 #include "cube.h"
 #include "protocol.h"
+#include "tasks.h"
 
 SystemMC *SystemMC::instance;
 
 
-bool SystemMC::installELF(const char *path)
-{
-    FILE *elfFile = fopen(path, "rb");
-    if (elfFile == NULL) {
-        LOG(("Error, couldn't open ELF file '%s' (%s)\n", path, strerror(errno)));
-        return false;
-    }
-
-    // write the file to external flash
-    uint8_t buf[512];
-    Flash::chipErase();
-
-    unsigned addr = 0;
-    while (!feof(elfFile)) {
-        unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
-        if (rxed > 0) {
-            Flash::write(addr, buf, rxed);
-            addr += rxed;
-        }
-    }
-    fclose(elfFile);
-    Flash::flush();
-
-    return true;
-}
-
 bool SystemMC::init(System *sys)
 {
     this->sys = sys;
-    instance = 0;
+    instance = this;
 
-    Flash::init();
+    FlashDevice::init();
     FlashBlock::init();
-    AssetManager::init();
+    USBProtocolHandler::init();
 
     if (sys->opt_svmTrace)
         SvmCpu::enableTracing();
@@ -72,16 +46,12 @@ bool SystemMC::init(System *sys)
     if (sys->opt_svmStackMonitor)
         SvmRuntime::enableStackMonitoring();
 
-    if (!sys->opt_elfFile.empty() && !installELF(sys->opt_elfFile.c_str()))
-        return false;
-
     return true;
 }
 
 void SystemMC::start()
 {
     mThreadRunning = true;
-    instance = this;
     __asm__ __volatile__ ("" : : : "memory");
     mThread = new tthread::thread(threadFn, 0);
 }
@@ -90,6 +60,7 @@ void SystemMC::stop()
 {
     mThreadRunning = false;
     __asm__ __volatile__ ("" : : : "memory");
+    sys->getCubeSync().wake();
     mThread->join();
     delete mThread;
     mThread = 0;
@@ -102,19 +73,25 @@ void SystemMC::exit()
 
 void SystemMC::threadFn(void *param)
 {
-    if (setjmp(instance->mThreadExitJmp))
+    if (setjmp(instance->mThreadExitJmp)) {
+        // Any actual cleanup on exit would go here...
         return;
+    }
 
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + STARTUP_DELAY;
 
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
-
     Radio::open();
-    GDBServer::start(2345);
 
     SvmLoader::run(111);
+
+    for (;;) {
+        // If SVM exits, at least let the cube simulation run...
+        Tasks::work();
+        Radio::halt();
+    }
 }
 
 SysTime::Ticks SysTime::ticks()
@@ -242,26 +219,16 @@ void SystemMC::doRadioPacket()
 void SystemMC::beginPacket()
 {
     // Advance time, and rally with the cube thread at the proper timestamp.
-    // Between beginCubeEvent() and endCubeEvent(), both simulation threads are synchronized.
+    // Between beginEvent() and endEvent(), both simulation threads are synchronized.
 
     ticks += SystemMC::TICKS_PER_PACKET;
-    sys->beginCubeEvent(ticks);
-
-    // beginCubeEvent may have already been waiting when we called, and it could
-    // be earlier than the deadline we asked for. Now that we're sync'ed, run
-    // up until the proper deadline if necessary.
-
-    ASSERT(ticks >= sys->time.clocks);
-    while (ticks > sys->time.clocks) {
-        sys->endCubeEvent(ticks);
-        sys->beginCubeEvent(ticks);
-    }
+    sys->getCubeSync().beginEventAt(ticks, mThreadRunning);
 }
 
 void SystemMC::endPacket()
 {
     // Let the cube keep running, but no farther than our next transmit opportunity
-    sys->endCubeEvent(ticks + SystemMC::TICKS_PER_PACKET);
+    sys->getCubeSync().endEvent(ticks + SystemMC::TICKS_PER_PACKET);
 }
 
 Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)
@@ -330,7 +297,43 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
     DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
 }
 
-const System *SystemMC::getSystem()
+bool SystemMC::installELF(const char *path)
 {
-    return instance->sys;
+    bool success = true;
+    bool restartThread = instance->mThreadRunning;
+
+    if (restartThread)
+        instance->stop();
+
+    LOG(("FLASH: Installing ELF binary '%s'\n", path));
+
+    FILE *elfFile = fopen(path, "rb");
+
+    if (elfFile == NULL) {
+        LOG(("FLASH: Error, couldn't open ELF file '%s' (%s)\n",
+            path, strerror(errno)));
+        success = false;
+
+    } else {
+        uint8_t buf[512];
+        FlashDevice::chipErase();
+
+        unsigned addr = 0;
+        while (!feof(elfFile)) {
+            unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
+            if (rxed > 0) {
+                FlashDevice::write(addr, buf, rxed);
+                addr += rxed;
+            }
+        }
+        fclose(elfFile);
+    }
+
+    // Blow away our flash block cache
+    FlashBlock::invalidate();
+
+    if (restartThread)
+        instance->start();
+
+    return success;
 }

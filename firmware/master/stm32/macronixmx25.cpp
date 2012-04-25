@@ -4,21 +4,16 @@
  */
 
 #include "macronixmx25.h"
-#include "flash.h"
+#include "flash_device.h"
 #include "board.h"
 #include "macros.h"
+
 
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
-
-#if (BOARD == BOARD_TC_MASTER_REV2)
-    GPIOPin regEnable = FLASH_REG_EN_GPIO;
-    regEnable.setControl(GPIOPin::OUT_2MHZ);
-    regEnable.setHigh();
-#endif
 
     spi.init();
 
@@ -70,7 +65,7 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
     while (len) {
         // align writes to PAGE_SIZE chunks
-        uint32_t pagelen = Flash::PAGE_SIZE - (address & (Flash::PAGE_SIZE - 1));
+        uint32_t pagelen = FlashDevice::PAGE_SIZE - (address & (FlashDevice::PAGE_SIZE - 1));
         if (pagelen > len) pagelen = len;
 
         // wait for any previous write/erase to complete
@@ -158,7 +153,7 @@ void MacronixMX25::ensureWriteEnabled()
     } while (!(readReg(ReadStatusReg) & WriteEnableLatch));
 }
 
-void MacronixMX25::readId(Flash::JedecID *id)
+void MacronixMX25::readId(FlashDevice::JedecID *id)
 {
     spi.begin();
 

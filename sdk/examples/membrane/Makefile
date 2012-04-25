@@ -1,6 +1,6 @@
 APP = membrane
-TC_DIR = ../../..
-include $(TC_DIR)/sdk/Makefile.defs
+
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = \
 	$(ASSETS).gen.o \
@@ -14,4 +14,4 @@ OBJS = \
 ASSETDEPS += *.png $(ASSETS).lua
 CDEPS += *.h
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules

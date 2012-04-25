@@ -5,7 +5,6 @@
 
 #include <cxxabi.h>
 #include "mc_elfdebuginfo.h"
-#include "flash.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,42 +15,38 @@ void ELFDebugInfo::clear()
     sectionMap.clear();
 }
 
-void ELFDebugInfo::init(const FlashRange &elf)
+void ELFDebugInfo::init(const Elf::Program &program)
 {
     /*
-     * The ELF header has already been validated for runtime purposes
-     * by ElfUtil. Now we want to pull out the section header table,
-     * so that we can read debug symbols at runtime.
+     * Build a table of debug sections.
      */
 
     clear();
+    this->program = program;
 
     FlashBlockRef ref;
-    FlashBlock::get(ref, elf.getAddress());
-    Elf::FileHeader *header = reinterpret_cast<Elf::FileHeader*>(ref->getData());
+    const Elf::FileHeader *header = program.getFileHeader(ref);
 
     // First pass, copy out all the headers.
     for (unsigned i = 0; i < header->e_shnum; i++) {
-        sections.push_back(SectionInfo());
-        SectionInfo &SI = sections.back();
-        Elf::SectionHeader *pHdr = &SI.header;
-        FlashRange rHdr = elf.split(header->e_shoff + i * header->e_shentsize, sizeof *pHdr);
-        ASSERT(rHdr.getSize() == sizeof *pHdr);
-        Flash::read(rHdr.getAddress(), (uint8_t*)pHdr, rHdr.getSize());
-        SI.data = elf.split(pHdr->sh_offset, pHdr->sh_size);
+        sections.push_back(Elf::SectionHeader());
+        Elf::SectionHeader *pHdr = &sections.back();
+        FlashAllocSpan::ByteOffset off = header->e_shoff + i * header->e_shentsize;
+        if (!program.getProgramSpan().copyBytes(off, (uint8_t*)pHdr, sizeof *pHdr))
+            memset(pHdr, 0xFF, sizeof *pHdr);
     }
 
     // Read section names, set up sectionMap.
     if (header->e_shstrndx < sections.size()) {
-        const SectionInfo *strTab = &sections[header->e_shstrndx];
+        const Elf::SectionHeader *strTab = &sections[header->e_shstrndx];
         for (unsigned i = 0, e = sections.size(); i != e; ++i) {
-            SectionInfo &SI = sections[i];
-            sectionMap[readString(strTab, SI.header.sh_name)] = &SI;
+            Elf::SectionHeader *pHdr = &sections[i];
+            sectionMap[readString(strTab, pHdr->sh_name)] = pHdr;
         }
     }
 }
 
-const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const std::string &name) const
+const Elf::SectionHeader *ELFDebugInfo::findSection(const std::string &name) const
 {
     sectionMap_t::const_iterator I = sectionMap.find(name);
     if (I == sectionMap.end())
@@ -60,18 +55,19 @@ const ELFDebugInfo::SectionInfo *ELFDebugInfo::findSection(const std::string &na
         return I->second;
 }
 
-std::string ELFDebugInfo::readString(const SectionInfo *SI, uint32_t offset) const
+std::string ELFDebugInfo::readString(const Elf::SectionHeader *SI, uint32_t offset) const
 {
-    char buf[1024];
-    FlashRange r = SI->data.split(offset, sizeof buf - 1);
-    Flash::read(r.getAddress(), (uint8_t*)buf, r.getSize());
-    buf[r.getSize()] = '\0';
+    static char buf[1024];
+    uint32_t size = std::min<uint32_t>(sizeof buf - 1, SI->sh_size - offset);
+    if (!program.getProgramSpan().copyBytes(SI->sh_offset + offset, (uint8_t*)buf, size))
+        size = 0;
+    buf[size] = '\0';
     return buf;
 }
 
 std::string ELFDebugInfo::readString(const std::string &section, uint32_t offset) const
 {
-    const SectionInfo *SI = findSection(section);
+    const Elf::SectionHeader *SI = findSection(section);
     if (SI)
         return readString(SI, offset);
     else
@@ -88,22 +84,24 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
     // If nothing is found, we still fill in the output buffer and name
     // with "(unknown)" and zeroes, but 'false' is returned.
 
-    const SectionInfo *SI = findSection(".symtab");
+    const Elf::SectionHeader *SI = findSection(".symtab");
     if (SI) {
         Elf::Symbol currentSym;
         const uint32_t worstOffset = (uint32_t) -1;
         uint32_t bestOffset = worstOffset;
 
         for (unsigned index = 0;; index++) {
-            FlashRange r = SI->data.split(index * sizeof currentSym, sizeof currentSym);
-            if (r.getSize() != sizeof currentSym)
+            uint32_t tableOffset = index * sizeof currentSym;
+            if (tableOffset + sizeof currentSym >= SI->sh_size ||
+                !program.getProgramSpan().copyBytes(
+                    SI->sh_offset + tableOffset,
+                    (uint8_t*) &currentSym, sizeof currentSym))
                 break;
-            Flash::read(r.getAddress(), (uint8_t*) &currentSym, r.getSize());
 
-            uint32_t offset = address - currentSym.st_value;
-            if (offset < currentSym.st_size && offset < bestOffset) {
+            uint32_t addrOffset = address - currentSym.st_value;
+            if (addrOffset < currentSym.st_size && addrOffset < bestOffset) {
                 symbol = currentSym;
-                bestOffset = offset;
+                bestOffset = addrOffset;
             }
         }
 
@@ -164,24 +162,22 @@ bool ELFDebugInfo::readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) co
     for (sections_t::const_iterator I = sections.begin(), E = sections.end(); I != E; ++I) {
 
         // Section must be allocated program data
-        if (I->header.sh_type != Elf::SHT_PROGBITS)
+        if (I->sh_type != Elf::SHT_PROGBITS)
             continue;
-        if (!(I->header.sh_flags & Elf::SHF_ALLOC))
+        if (!(I->sh_flags & Elf::SHF_ALLOC))
             continue;
 
         // Section must not be writeable
-        if (I->header.sh_flags & Elf::SHF_WRITE)
+        if (I->sh_flags & Elf::SHF_WRITE)
             continue;
 
         // Address range must be fully contained within the section
-        uint32_t offset = address - I->header.sh_addr;
-        FlashRange r = I->data.split(offset, bytes);
-        if (r.getSize() != bytes)
+        uint32_t offset = address - I->sh_addr;
+        if (offset > I->sh_size || offset + bytes > I->sh_size)
             continue;
 
         // Success, we can read from the ELF
-        Flash::read(r.getAddress(), buffer, bytes);
-        return true;
+        return program.getProgramSpan().copyBytes(offset, buffer, bytes);
     }
 
     return false;

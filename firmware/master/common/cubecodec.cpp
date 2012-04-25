@@ -13,6 +13,9 @@
 
 using namespace Intrinsic;
 
+uint16_t CubeCodec::exemptionBegin;
+uint16_t CubeCodec::exemptionEnd;
+
 
 bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
@@ -52,6 +55,18 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
     txBits.flush(buf);
 
     if (vb) {
+        /*
+         * Clear the lock exemption range. This tracks words that, despite
+         * being locked or dirty, we can rely on during encode because we
+         * encoded them already during the same packet. This could be an
+         * arbitrary set of addresses, but to keep tracking simple we only
+         * track the last contiguous range of addresses.
+         *
+         * This helps us create good delta codes for runs that occur in
+         * data which is changing too fast to fully synchronize between frames.
+        */
+        exemptionBegin = exemptionEnd = (uint16_t) -1;
+
         do {
             uint32_t cm16 = vb->cm16;
             if (!cm16)
@@ -82,6 +97,11 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
                      */
                     break;
                 }
+
+                // Extend or reset the exemption range.
+                if (addr != exemptionEnd)
+                    exemptionBegin = addr;
+                exemptionEnd = addr + 1;
 
                 cm1 &= ROR(0x7FFFFFFF, idx1);
                 vb->cm1[idx32] = cm1;
@@ -625,8 +645,14 @@ unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t off
     if ((vb->lock & VRAM::maskCM16(ptr)) ||
         (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
 
-        // Can't match a locked or modified word
-        return (unsigned) -1;
+        // This word is locked, but it may be exempt from the
+        // lock because we've encoded it during this very same packet
+        // (while we have userspace blocked, and the vbuf can't change).
+        
+        if (ptr < exemptionBegin || ptr >= exemptionEnd) {
+            // Not exempt. Can't match a locked or modified word
+            return (unsigned) -1;
+        }
     }
 
     uint16_t sample = VRAM::peek(*vb, ptr);

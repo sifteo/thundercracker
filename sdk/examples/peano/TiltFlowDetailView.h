@@ -3,7 +3,6 @@
 #include "ObjectPool.h"
 #include "AudioPlayer.h"
 #include "TotalsCube.h"
-#include "string.h"
 
 namespace TotalsGame {
 

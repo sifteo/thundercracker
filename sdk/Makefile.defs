@@ -1,15 +1,17 @@
-# Tool definitions
-include $(TC_DIR)/Makefile.platform
-SDK_DIR := $(TC_DIR)/sdk
-STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
-LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
-CC := $(LLVM_BIN)/arm-clang
+# We expect SDK_DIR to point to the directory containing this file,
+# and PATH must include $(SDK_DIR)/bin.
+
+###########################
+
+# Tool definitions. These are in our PATH.
+STIR := stir
+LD := slinky
+CC := arm-clang
 
 BIN := $(APP).elf
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
-CDEPS += $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
 # Compile for a minimal environment, generate LLVM object files
@@ -34,6 +36,9 @@ CFLAGS += -g
 
 ifeq ($(RELEASE),)
     LDFLAGS += -g
+    LINK_MESSAGE += (Debug)
+else
+    LINK_MESSAGE += (Release)
 endif
 
 ifneq ($(DISABLE_INLINING),)

@@ -15,7 +15,6 @@
 
 void AudioBuffer::init(_SYSAudioBuffer *buf) {
     STATIC_ASSERT((sizeof(buf->buf) & (sizeof(buf->buf) - 1)) == 0); // must be power of 2
-    ASSERT(sys == 0); // should only get initialized once
     sys = buf;
     sys->head = sys->tail = 0;
 }

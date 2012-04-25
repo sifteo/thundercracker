@@ -19,7 +19,7 @@ namespace TotalsGame
         Int2 GetSrcPos() {return srcPos;}
         Int2 GetDstPos() {return dstPos;}
 		Token *GetSrcToken() {return srcToken;}
-		Cube::Side GetSrcSide() {return srcSide;}
+		unsigned GetSrcSide() {return srcSide;}
 		Token *GetDstToken() {return dstToken;}
 
 
@@ -62,12 +62,12 @@ namespace TotalsGame
         void RecomputeValue();
 
 		TokenGroup(
-			IExpression *src, Token *srcToken, Cube::Side srcSide,
+			IExpression *src, Token *srcToken, unsigned srcSide,
 			IExpression *dst, Token *dstToken
             );
 
 		TokenGroup(
-            IExpression *src, Int2 srcPos, Token *srcToken, Cube::Side srcSide,
+            IExpression *src, Int2 srcPos, Token *srcToken, unsigned srcSide,
             IExpression *dst, Int2 dstPos, Token *dstToken,
 			Fraction val,
 			ShapeMask mask
@@ -81,7 +81,7 @@ namespace TotalsGame
         Int2 srcPos;
         Int2 dstPos;
 		Token *srcToken;
-		Cube::Side srcSide;
+		unsigned srcSide;
 		Token *dstToken;
 
 		Fraction mValue; // mutable because it changes when the difficulty changes

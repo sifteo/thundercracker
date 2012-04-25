@@ -21,14 +21,14 @@ static const char* sideNames[] =
 };
 
 static struct MenuItem gItems[] =
-{ {&IconContinue, &LabelContinue},
-  {&IconLocked1, &LabelLocked},
-  {&IconLocked2, &LabelLocked},
-  {&IconLocked3, &LabelLocked},
-  {&IconLocked0, &LabelLocked},
-  {&IconLocked1, &LabelLocked},
-  {&IconLocked2, &LabelLocked},
-  {&IconLocked3, &LabelLocked},
+{ {&IconGreece, &LabelContinue},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
+  {&IconLocked, &LabelLocked},
   {NULL, NULL} };
 
 static struct MenuAssets gAssets =
@@ -164,6 +164,7 @@ void main()
 */
     CubeID menuCube = cubes[0];
     Menu m(vidBufs[0], &gAssets, gItems);
+    m.setPeekTiles(2);
 
     // main loop
     WordGame game(vidBufs, menuCube, m); // must not be static!

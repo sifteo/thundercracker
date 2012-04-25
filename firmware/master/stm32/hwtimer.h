@@ -72,6 +72,18 @@ public:
         return (tim->CCER & (1 << ((ch - 1) * 4))) != 0;
     }
 
+    /*
+     * NOTE: the complementary output control routines below do not work for
+     * channel 4, since its layout in CCER is irregular. Special case it
+     * if we need it.
+     */
+    void enableComplementaryOutput(int ch) {
+        tim->CCER |= (1 << ((ch-1 * 4) + 2));
+    }
+    void disableComplementaryOutput(int ch) {
+        tim->CCER &= ~(1 << ((ch-1 * 4) + 2));
+    }
+
     void enableCompareCaptureIsr(int ch) {
         tim->SR &= ~(1 << ch);  // clear pending ISR status
         tim->DIER |= (1 << ch);

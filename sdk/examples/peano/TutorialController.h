@@ -9,7 +9,7 @@ namespace TotalsGame {
     {                      
 
 
-        Game::GameState Run();
+        Game::GameState Run(bool startPuzzleAfterwards=false);
     }
 }
 

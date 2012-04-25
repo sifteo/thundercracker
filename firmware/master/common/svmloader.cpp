@@ -5,8 +5,8 @@
 
 #include "svmruntime.h"
 #include "svmloader.h"
-#include "elfutil.h"
-#include "flashlayer.h"
+#include "elfprogram.h"
+#include "flash_blockcache.h"
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
@@ -22,15 +22,15 @@
 using namespace Svm;
 
 
-static void logTitleInfo(Elf::ProgramInfo &pInfo)
+void SvmLoader::logTitleInfo(const Elf::Program &program)
 {
 #ifdef SIFTEO_SIMULATOR
     FlashBlockRef ref;
 
-    const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
+    const char *title = program.getMetaString(ref, _SYS_METADATA_TITLE_STR);
     LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
 
-    const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
+    const _SYSUUID *uuid = program.getMetaValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
     if (uuid) {
         LOG(("SVM: Title UUID is {"));
         for (unsigned i = 0; i < 16; i++)
@@ -40,7 +40,7 @@ static void logTitleInfo(Elf::ProgramInfo &pInfo)
 #endif
 }
 
-static _SYSCubeIDVector getCubeVector(Elf::ProgramInfo &pInfo)
+_SYSCubeIDVector SvmLoader::getCubeVector(const Elf::Program &program)
 {
     /*
      * XXX: BIG HACK.
@@ -52,7 +52,7 @@ static _SYSCubeIDVector getCubeVector(Elf::ProgramInfo &pInfo)
     // Look up CubeRange
     FlashBlockRef ref;
     const _SYSMetadataCubeRange *range =
-        pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
+        program.getMetaValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
     unsigned minCubes = range ? range->minCubes : 0;
 
     if (!minCubes) {
@@ -65,7 +65,7 @@ static _SYSCubeIDVector getCubeVector(Elf::ProgramInfo &pInfo)
     return cubes;
 }
 
-static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
+void SvmLoader::bootstrapAssets(const Elf::Program &program, _SYSCubeIDVector cubes)
 {
     /*
      * XXX: BIG HACK.
@@ -88,7 +88,7 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
     uint32_t actualSize;
     FlashBlockRef ref;
     _SYSMetadataBootAsset *vec = (_SYSMetadataBootAsset*)
-        pInfo.meta.get(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
+        program.getMeta(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
     if (!vec) {
         LOG(("SVM: No bootstrap assets found\n"));
         return;
@@ -186,58 +186,81 @@ static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
 #endif
 }
 
-
-void SvmLoader::run(uint16_t appId)
+void SvmLoader::bootstrap(const Elf::Program &program)
 {
-    // TODO: look this up via appId
-    FlashRange elf(0, 0xFFFF0000);
+    // Use the game's RODATA segment
+    SvmMemory::setFlashSegment(0, program.getRODataSpan());
 
-    Elf::ProgramInfo pInfo;
-    if (!pInfo.init(elf))
+    // Enable the game's minimum set of cubes
+    _SYSCubeIDVector cv = getCubeVector(program);
+    _SYS_enableCubes(cv);
+
+    // Temporary asset bootstrapper
+    bootstrapAssets(program, cv);
+
+    // PanicMessenger leaves CubeSlot out of sync with the cube's paint state.
+    // Reset all CubeSlot state before running the game.
+    _SYS_disableCubes(cv);
+    _SYS_enableCubes(cv);
+}
+
+void SvmLoader::loadRWData(const Elf::Program &program)
+{
+    FlashBlockRef ref;
+    const Elf::ProgramHeader *ph = program.getRWDataSegment(ref);
+    if (!ph)
         return;
 
+    /*
+     * Temporarily use segment 0 to do the copy.
+     * If anything is wrong, this will cause an SVM fault, just as if
+     * the copy was done from userspace.
+     */
+    SvmMemory::setFlashSegment(0, program.getProgramSpan());
+    _SYS_memcpy8(reinterpret_cast<uint8_t*>( ph->p_vaddr ),
+                 reinterpret_cast<uint8_t*>( ph->p_offset + SvmMemory::SEGMENT_0_VA ),
+                 ph->p_memsz);
+}
+
+void SvmLoader::run(const Elf::Program &program)
+{
     // On simulator builds, log some info about the program we're running
-    logTitleInfo(pInfo);
+    logTitleInfo(program);
 
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
-    SvmDebugPipe::setSymbolSourceELF(elf);
-
-    // Initialize rodata segment
-    SvmMemory::setFlashSegment(pInfo.rodata.data);
+    SvmDebugPipe::setSymbolSource(program);
 
     // Setup that the loader will eventually be responsible for...
-    {
-        // Enable the game's minimum set of cubes
-        _SYSCubeIDVector cv = getCubeVector(pInfo);
-        _SYS_enableCubes(cv);
+    bootstrap(program);
 
-        // Temporary asset bootstrapper
-        xxxBootstrapAssets(pInfo, cv);
-
-        // PanicMessenger leaves CubeSlot out of sync with the cube's paint state.
-        // Reset all CubeSlot state before running the game.
-        _SYS_disableCubes(cv);
-        _SYS_enableCubes(cv);
-    }
-
-    // Clear RAM (including implied BSS)
+    // Initialize memory and CPU
     SvmMemory::erase();
     SvmCpu::init();
 
     // Load RWDATA into RAM
-    SvmMemory::PhysAddr rwdataPA;
-    if (!pInfo.rwdata.data.isEmpty() &&
-        SvmMemory::mapRAM(SvmMemory::VirtAddr(pInfo.rwdata.vaddr),
-            pInfo.rwdata.size, rwdataPA)) {
-        FlashStream rwDataStream(pInfo.rwdata.data);
-        rwDataStream.read(rwdataPA, pInfo.rwdata.size);
-    }
+    loadRWData(program);
+ 
+    // Set up default flash segment
+    SvmMemory::setFlashSegment(0, program.getRODataSpan());
 
-    SvmRuntime::run(pInfo.entry,
-                    pInfo.bss.vaddr + pInfo.bss.size,
+    SvmRuntime::run(program.getEntry(), program.getTopOfRAM(),
                     SvmMemory::VIRTUAL_RAM_TOP);
 }
+
+void SvmLoader::run(int id)
+{
+    // XXX: Temporary. Set up an identity mapping.
+
+    FlashAllocMap map;
+    for (unsigned i = 0; i < arraysize(map.blocks); i++)
+        map.blocks[i].id = i;
+
+    Elf::Program program;
+    if (program.init(FlashAllocSpan::create(&map, 0, 0xFFFF)))
+        run(program);
+}
+
 
 void SvmLoader::exit()
 {

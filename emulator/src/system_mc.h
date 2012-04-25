@@ -33,7 +33,12 @@ class SystemMC {
 
     static Cube::Hardware *getCubeForSlot(CubeSlot *slot);
     static void checkQuiescentVRAM(CubeSlot *slot);
-    static const System *getSystem();
+
+    static bool installELF(const char *name);
+
+    static const System *getSystem() {
+        return instance->sys;
+    }
 
  private: 
     static const uint32_t TICK_HZ = 16000000;
@@ -41,7 +46,6 @@ class SystemMC {
     static const uint32_t MAX_RETRIES = 150;             // Simulates (hardware * software) retries
     static const uint32_t STARTUP_DELAY = TICK_HZ / 4;   // 1/4 second from cube to MC startup
 
-    bool installELF(const char *name);
     static void threadFn(void *);
 
     void doRadioPacket();

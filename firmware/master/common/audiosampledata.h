@@ -10,6 +10,8 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "adpcmdecoder.h"
+#include "flash_blockcache.h"
+
 
 class AudioSampleData {
 public:

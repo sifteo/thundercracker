@@ -14,6 +14,8 @@
 #include "neighbor.h"
 #include "gpio.h"
 #include "macros.h"
+#include "dac.h"
+#include "adc.h"
 
 static I2CSlave i2c(&I2C1);
 static Neighbor neighbor(JIG_NBR_IN1_GPIO,
@@ -26,26 +28,47 @@ static Neighbor neighbor(JIG_NBR_IN1_GPIO,
                          JIG_NBR_OUT4_GPIO,
                          HwTimer(&TIM3),
                          HwTimer(&TIM5));
+// control for the pass-through USB of the master under test
+static GPIOPin testUsbEnable = USB_PWR_GPIO;
+
+static Adc adc(&PWR_MEASURE_ADC);
+static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
+
+static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 /*
  * Table of test handlers.
  * Order must match the Command enum.
  */
 TestJig::TestHandler const TestJig::handlers[] = {
-    stmExternalFlashCommsHandler,
-    stmExternalFlashReadWriteHandler,
-    nrfCommsHandler,
-    setFixtureVoltageHandler,
-    getFixtureVoltageHandler,
-    getFixtureCurrentHandler,
-    getStmVsysVoltageHandler,
-    getStmBattVoltageHandler,
-    storeStmBattVoltageHandler,
-    enableTestJigNeighborTx,
+    setUsbPowerHandler,
+    setSimulatedBatteryVoltageHandler,
+    getBatterySupplyCurrentHandler
 };
 
 void TestJig::init()
 {
+    GPIOPin dacOut = BATTERY_SIM_GPIO;
+    dacOut.setControl(GPIOPin::IN_ANALOG);
+
+    Dac::instance.init();
+    Dac::instance.configureChannel(BATTERY_SIM_DAC_CH);
+    Dac::instance.enableChannel(BATTERY_SIM_DAC_CH);
+    Dac::instance.write(BATTERY_SIM_DAC_CH, 0); // default to off
+
+    GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
+    v3CurrentPin.setControl(GPIOPin::IN_ANALOG);
+
+    GPIOPin usbCurrentPin = USB_CURRENT_GPIO;
+    usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
+
+    adc.init();
+    adc.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    adc.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+
+    testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
+    testUsbEnable.setHigh();    // default to enabled
+
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
     neighbor.init();
 }
@@ -73,52 +96,50 @@ uint16_t TestJig::get_received_data()
     return neighbor.getLastRxData();
 }
 
-void TestJig::disableUsbPower()
-{
-    GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_2MHZ);
-    usbpwr.setLow();
-}
-
-void TestJig::enableUsbPower()
-{
-    GPIOPin usbpwr = USB_PWR_GPIO;
-    usbpwr.setControl(GPIOPin::OUT_2MHZ);
-    usbpwr.setHigh();
-}
-
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
 
-void TestJig::stmExternalFlashCommsHandler(uint8_t argc, uint8_t *args)
+/*
+ * args[1] == non-zero for enable, 0 for disable
+ */
+void TestJig::setUsbPowerHandler(uint8_t argc, uint8_t *args)
 {
-    
+    bool enable = args[1];
+    if (enable) {
+        testUsbEnable.setHigh();
+    } else {
+        testUsbEnable.setLow();
+    }
+
+    // no response data - just indicate that we're done
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::stmExternalFlashReadWriteHandler(uint8_t argc, uint8_t *args)
+/*
+ * args[1] == value, LSB
+ * args[2] == value, MSB
+ */
+void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t val = (args[1] | args[2] << 8);
+    Dac::instance.write(BATTERY_SIM_DAC_CH, val);
 
+    // no response data - just indicate that we're done
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::nrfCommsHandler(uint8_t argc, uint8_t *args)
+/*
+ *
+ */
+void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t sample = adc.sample(V3_CURRENT_ADC_CH);
 
-}
-
-void TestJig::setFixtureVoltageHandler(uint8_t argc, uint8_t *args)
-{
-
-}
-
-void TestJig::getFixtureVoltageHandler(uint8_t argc, uint8_t *args)
-{
-
-}
-
-void TestJig::getFixtureCurrentHandler(uint8_t argc, uint8_t *args)
-{
-
+    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    UsbDevice::write(response, sizeof response);
 }
 
 void TestJig::getStmVsysVoltageHandler(uint8_t argc, uint8_t *args)

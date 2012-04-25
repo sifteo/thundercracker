@@ -9,7 +9,7 @@
 using namespace Svm;
 
 
-void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
+void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
 {
     // Do nothing (Only used in simulation)
 }

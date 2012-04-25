@@ -71,7 +71,7 @@ bool animPaint(AnimType animT,
                 MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
 
-    bg1TileBuf.erase(transparent);
+    //bg1TileBuf.erase(transparent);
 
     for (unsigned i = 0; i < data.mNumObjs; ++i)
     {
@@ -181,48 +181,71 @@ bool animPaint(AnimType animT,
                             if (sparkleOffset < size.y)
                             {
                                 unsigned sparkleFrame =
-                                        MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
+                                        MIN(SparkleWipe.numFrames()-1,
+                                            (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
                                 bg1TileBuf.image(vec(pos.x, sparkleRow),
-                                                      vec(size.x, 1),
-                                                      SparkleWipe,
-                                                      vec(0,0),
-                                                      sparkleFrame);
+                                                 vec(size.x, SparkleWipe.tileHeight()),
+                                                 SparkleWipe,
+                                                 vec(0,0),
+                                                 sparkleFrame);
                                 if (sparkleRow < letterPos.y + font.tileHeight() - 1)
                                 {
-                                    bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
-                                                  vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
-                                                  font,
-                                                  vec(0, sparkleRow + 1 - letterPos.y),
-                                                  fontFrame);
+                                    if (sparkleRow >= letterPos.y)
+                                    {
+                                        bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
+                                                      vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
+                                                      font,
+                                                      vec(0, sparkleRow + 1 - letterPos.y),
+                                                      fontFrame);
+                                    }
+                                    else
+                                    {
+                                        bg1TileBuf.image(letterPos,
+                                                      vec(size.x, font.tileHeight()),
+                                                      font,
+                                                      vec(0, 0),
+                                                      fontFrame);
+                                    }
                                 }
                             }
                         }
                         else
                         {
-                            bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                            bg1TileBuf.image(letterPos,
+                                             vec(size.x,
+                                                 MIN(16 - letterPos.y, font.tileHeight())),
+                                             font,
+                                             vec(0,0),
+                                             fontFrame);
                         }
                     }
                     break;
 
                 case AnimType_MetaTilesReveal:
                     {
-                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         fontFrame);
                         int sparkleRow = (1.f - animPct) * 12 + 2;
                         unsigned char sparkleOffset = sparkleRow - pos.y;
                         if (i == params->mMetaLetterIndex && sparkleOffset < size.y)
                         {
                             bg1TileBuf.image(vec(pos.x, sparkleRow),
-                                              vec(size.x, 1),
-                                              SparkleWipe,
-                                              vec(0,0),
-                                              MIN(SparkleWipe.numFrames()-1, (unsigned char) ((float)SparkleWipe.numFrames() * animPct)));
+                                             vec(size.x, SparkleWipe.tileHeight()),
+                                             SparkleWipe,
+                                             vec(0,0),
+                                             MIN(SparkleWipe.numFrames()-1,
+                                                 (unsigned char) ((float)SparkleWipe.numFrames() * animPct)));
                             if (sparkleRow > letterPos.y)
                             {
+                                // draw the question mark that is being wiped off
                                 bg1TileBuf.image(letterPos,
-                                              vec(size.x, sparkleRow - letterPos.y),
-                                              font,
-                                              vec(0, 0),
-                                              ('Z' + 1) - 'A');
+                                                 vec(size.x, MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                                 font,
+                                                 vec(0, 0),
+                                                 ('Z' + 1) - 'A');
                             }
                         }
                     }
@@ -231,12 +254,21 @@ bool animPaint(AnimType animT,
                 default:
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
-                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), 'Z' + 1 - 'A');
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         'Z' + 1 - 'A');
 
                     }
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
-                        bg1TileBuf.image(letterPos, vec(size.x, MIN(16 - letterPos.y, font.tileHeight())), font, vec(0,0), fontFrame);
+                        bg1TileBuf.image(letterPos,
+                                         vec(size.x, MIN(16 - letterPos.y,
+                                                         font.tileHeight())),
+                                         font,
+                                         vec(0,0),
+                                         fontFrame);
                     }
                     break;
                 }
@@ -322,7 +354,7 @@ bool animPaint(AnimType animT,
         {
             if (i < TopRowStartIndex)
             {
-                if (params->mCubeAnim == CubeAnim_Main)
+                if (params->mCubeAnim == CubeAnim_Main && animHasNormalBorder(animT))
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -330,7 +362,9 @@ bool animPaint(AnimType animT,
                     if (image)
                     {
                         isBonus = (progressData.mPuzzleProgress[i] == CheckMarkState_CheckedBonus);
-                        bg1TileBuf.image(vec((unsigned)2 + i * 2, (unsigned)14), *image, MIN(image->numFrames()-1, 2));
+                        bg1TileBuf.image(vec((unsigned)2 + i * 2, (unsigned)14),
+                                         *image,
+                                         MIN(image->numFrames()-1, 2));
                     }
                 }
             }
@@ -353,13 +387,10 @@ bool animPaint(AnimType animT,
                                 assetFrame = MIN(assetFrames-1, (unsigned char) ((float)f * assetFrames));
                             }
 
-                            bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0), *CheckMarkImagesTop[2], assetFrame);
+                            bg1TileBuf.image(vec((unsigned)1 + hintIndex * 2, (unsigned)0),
+                                             *CheckMarkImagesTop[2],
+                                             assetFrame);
                         }
-             /*           else
-                        {
-                            bg1.DrawAsset(vec(2 + (i - TopRowStartIndex) * 2, 0), *CheckMarkImagesTop[1]);
-                        }
-                        */
                     }
                 }
             }
@@ -384,23 +415,46 @@ bool animPaint(AnimType animT,
         switch (params->mCubeAnim)
         {
         case CubeAnim_Main:
-            // draw left border
-            vid.bg0.image(vec(0, 2),
-                         vec(2, 14),
-                         (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
-                         vec(0, 1));
-            bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
-            bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
-            vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
+            if (Dictionary::currentIsMetaPuzzle() || !animHasNormalBorder(animT))
+            {
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeft, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderGoldLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderGoldBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderGoldBottom, vec(1, 0));//, bottomBorderGoldFrame);
 
-            // draw right border
-            vid.bg0.image(vec(14, 0),
-                         vec(2, 14),
-                         (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
-                         vec(0, 1));
-            bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
-            bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
-            vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
+                // draw right BorderGold
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRight, //NoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderGoldRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderGoldTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderGoldTop, vec(1, 0));
+            }
+            else
+            {
+                // draw left border
+                vid.bg0.image(vec(0, 2),
+                             vec(2, 14),
+                             (leftNeighbor || formsWord) ? BorderLeft : BorderLeftNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderLeft, vec(0, 0));
+                bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderBottom, vec(0, 0));
+                vid.bg0.image(vec(2, 14), vec(14, 2), BorderBottom, vec(1, 0), bottomBorderFrame);
+
+                // draw right border
+                vid.bg0.image(vec(14, 0),
+                             vec(2, 14),
+                             (rightNeighbor || formsWord) ? BorderRight : BorderRightNoNeighbor,
+                             vec(0, 1));
+                bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderRight, vec(0, 16));
+                bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderTop, vec(16, 0));
+                vid.bg0.image(vec(0, 0), vec(14, 2), BorderTop, vec(1, 0));
+            }
             break;
 
         default:
@@ -414,3 +468,21 @@ bool animPaint(AnimType animT,
 }
 
 
+bool animHasNormalBorder(AnimType animT)
+{
+   switch (animT)
+   {
+   case AnimType_NotWord:
+   case AnimType_SlideL:
+   case AnimType_SlideR:
+   case AnimType_OldWord:
+   case AnimType_NewWord:
+   case AnimType_NormalTilesEnter:
+   case AnimType_NormalTilesExit:
+   case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
+       return true;
+
+   default:
+       return false;
+   }
+}

@@ -6,6 +6,16 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <stdint.h>
+
+/*
+ * Common to all boards
+ */
+namespace Board {
+    static const uint8_t* UniqueId = (uint8_t*)0x1FFFF7E8;
+    static const unsigned UniqueIdNumBytes = 12;
+}
+
 // available boards to choose from
 #define BOARD_TC_MASTER_REV1    1
 #define BOARD_TC_MASTER_REV2    2

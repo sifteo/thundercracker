@@ -12,8 +12,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <sifteo/BG1Helper.h>
+#include <sifteo/asset.h>
 #include <sifteo/cube.h>
+#include <sifteo/video.h>
 #include "BuddyId.h"
 #include "GameState.h"
 #include "Piece.h"
@@ -37,12 +38,11 @@ public:
     bool Update(float dt); // TODO: Hacky hook for blink event
     
     // TODO: This is only here for menu access... breaks encapsulation :(
-    Sifteo::Cube &GetCube() { return mCube; }
+    Sifteo::CubeID &GetCube() { return mCubeId; }
+    Sifteo::VideoBuffer &GetVideoBuffer() { return mVideoBuffer; }
     
     // Drawing
     void DrawClear();
-    void DrawFlush();
-    bool DrawNeedsSync();
     
     void DrawBuddy();
     
@@ -61,28 +61,26 @@ public:
     
     void DrawUiAsset(
         Sifteo::Int2 position,
-        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0,
+        bool setMask = true);
     void DrawUiAssetPartial(
         Sifteo::Int2 position,
         Sifteo::Int2 offset,
         Sifteo::Int2 size,
-        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0,
+        bool setMask = true);
     void DrawUiText(
         Sifteo::Int2 position,
         const Sifteo::AssetImage &assetFont,
-        const char *text);
+        const char *text,
+        bool setMask = true);
     void ScrollUi(Sifteo::Int2 position);
     
-    // Asset Loading
-    bool IsLoadingAssets();
-    void LoadAssets();
-    void DrawLoadingAssets();
-    
-    Sifteo::Cube::ID GetId();
+    Sifteo::PCubeID GetId();
     
     // Enable/Disable
     bool IsEnabled() const;
-    void Enable(Sifteo::Cube::ID cubeId);
+    void Enable(Sifteo::PCubeID cubeId);
     void Disable();
     
     // Buddy
@@ -90,51 +88,50 @@ public:
     void SetBuddyId(BuddyId buddyId);
     
     // Pieces
-    const Piece &GetPiece(Sifteo::Cube::Side side) const;
-    void SetPiece(Sifteo::Cube::Side side, const Piece &piece);
+    const Piece &GetPiece(Sifteo::Side side) const;
+    void SetPiece(Sifteo::Side side, const Piece &piece);
     
-    const Piece &GetPieceSolution(Sifteo::Cube::Side side) const;
-    void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
+    const Piece &GetPieceSolution(Sifteo::Side side) const;
+    void SetPieceSolution(Sifteo::Side, const Piece &piece);
     
-    Sifteo::Int2 GetPieceOffset(Sifteo::Cube::Side side) const;
-    void SetPieceOffset(Sifteo::Cube::Side side, Sifteo::Int2 offset);
+    Sifteo::Int2 GetPieceOffset(Sifteo::Side side) const;
+    void SetPieceOffset(Sifteo::Side side, Sifteo::Int2 offset);
     
-    void StartPieceBlinking(Sifteo::Cube::Side side);
+    void StartPieceBlinking(Sifteo::Side side);
     void StopPieceBlinking();
     
     // Tilt
-    Sifteo::Cube::TiltState GetTiltState() const;
-    Sifteo::Int2 GetAccelState() const;
+    Sifteo::Byte2 GetTiltState() const;
+    Sifteo::Byte3 GetAccelState() const;
     
     // Bump
-    void StartBump(Sifteo::Cube::Side side);
+    void StartBump(Sifteo::Side side);
     
     // State
     bool IsSolved() const;
     bool IsTouching() const;
     
 private:
-    Sifteo::VidMode_BG0_SPR_BG1 Video();
+    void DrawPiece(const Piece &piece, Sifteo::Side side);
     
-    void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
-    
-    Sifteo::Cube mCube;
-    Sifteo::BG1Helper mBg1Helper;
+    Sifteo::VideoBuffer mVideoBuffer;
+    Sifteo::CubeID mCubeId;
+    Sifteo::BG1Mask mBg1Mask;
     
     bool mEnabled;
     BuddyId mBuddyId;
     
-    Piece mPieces[NUM_SIDES];
-    Piece mPiecesSolution[NUM_SIDES];
+    Piece mPieces[Sifteo::NUM_SIDES];
+    Piece mPiecesSolution[Sifteo::NUM_SIDES];
     
-    Sifteo::Int2 mPieceOffsets[NUM_SIDES];
+    Sifteo::Int2 mPieceOffsets[Sifteo::NUM_SIDES];
     
-    Sifteo::Cube::Side mPieceBlinking;
+    Sifteo::Side mPieceBlinking;
     float mPieceBlinkTimer;
     bool mPieceBlinkingOn;
     
     float mBumpTimer;
-    Sifteo::Cube::Side mBumpSide;
+    Sifteo::Side mBumpSide;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

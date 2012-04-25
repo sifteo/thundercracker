@@ -79,9 +79,9 @@ enum Rotation {
     ROT_NORMAL              = 0,
     ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
     ROT_MIRROR              = _SYS_VF_X_FLIP,
-    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+    ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
     ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
-    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+    ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
     ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
     ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
 };
@@ -215,9 +215,10 @@ struct VideoBuffer {
     void setRotation(Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = peekb(offsetof(_SYSVideoRAM, flags));
-        flags &= ~mask;
-        flags |= r & mask;
-        pokeb(offsetof(_SYSVideoRAM, flags), flags);
+
+        // Must do this atomically; the asynchronous paint controller can
+        // modify other bits within this flags byte.
+        xorb(offsetof(_SYSVideoRAM, flags), (r ^ flags) & mask);
     }
 
     /**
@@ -277,8 +278,10 @@ struct VideoBuffer {
     void orientTo(const Neighborhood &thisN, const VideoBuffer &src, const Neighborhood &srcN) {
         int srcSide = srcN.sideOf(cube());
         int dstSide = thisN.sideOf(src.cube());
-        ASSERT(srcSide != NO_SIDE && dstSide != NO_SIDE);
-        setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        if(srcSide != NO_SIDE && dstSide != NO_SIDE) {
+            setOrientation(Side(umod(2 + dstSide - srcSide + src.orientation(), NUM_SIDES)));
+        }
+        
     }
 
     /**
@@ -581,6 +584,14 @@ struct VideoBuffer {
      */
     void pokei(uint16_t addr, uint16_t index) {
         _SYS_vbuf_poke(*this, addr, _SYS_TILE77(index));
+    }
+
+    /**
+     * Like pokeb(), but atomically XORs a value with the byte.
+     * This is a no-op if and only if byte==0.
+     */
+    void xorb(uint16_t addr, uint8_t byte) {
+        _SYS_vbuf_xorb(*this, addr, byte);
     }
 
     /**

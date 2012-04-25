@@ -122,7 +122,7 @@ enum
 //quantize our tilt state from [-128, 128] to [-3, 3], then offset to [0, 6]
 //use those values to index into this lookup table to find which frame to render
 //in row, column format
-unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
+const uint8_t TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
     //most northward
     { FRAME_NW3, FRAME_NW3, FRAME_N3, FRAME_N3, FRAME_N3, FRAME_NE3, FRAME_NE3 },
     { FRAME_NW3, FRAME_NW2, FRAME_N2, FRAME_N2, FRAME_N2, FRAME_NE2, FRAME_NE3 },
@@ -368,18 +368,32 @@ void GridSlot::Update(SystemTime t)
 
                     if( vDiff.x != 0 )
                     {
-                        m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.x / abs( vDiff.x ) );
+                        m_curMovePos.x += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row, m_col - dir )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_row, m_curMovePos.x - (mult*dir), false );
+                        }
 
                         if( abs( vDiff.x ) == 1 )
                             Game::Inst().playSound(collide_02);
                     }
                     else if( vDiff.y != 0 )
                     {
-                        m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-                        //clear this out in update
-                        m_pWrapper->QueueClear( m_curMovePos );
+                        int dir = ( vDiff.y / abs( vDiff.y ) );
+                        m_curMovePos.y += dir;
+
+                        //we only need to clear if this is the last of the pack
+                        //that means if no chromit is destined to be in the location where this is coming from
+                        if( !m_pWrapper->GetSlot( m_row - dir, m_col )->isAlive() )
+                        {
+                            int mult = ( dir > 0 ) ? 4 : 1;
+                            m_pWrapper->QueueClear( m_col, m_curMovePos.y - (mult*dir), true );
+                        }
 
                         if( abs( vDiff.y ) == 1 )
                             Game::Inst().playSound(collide_02);
@@ -470,8 +484,8 @@ void GridSlot::Update(SystemTime t)
         case STATE_GONE:
         {
             Int2 vec = { m_col * 4, m_row * 4 };
-            m_pWrapper->QueueClear( vec );
-            //vid.bg0.image(vec, GemEmpty, 0);
+            //m_pWrapper->QueueClear( vec );
+            m_pWrapper->GetVid().bg0.image(  vec, GemEmpty, 0 );
             break;
         }
 		default:
@@ -484,6 +498,16 @@ void GridSlot::mark()
 {
     if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
         return;
+
+    if( m_color == ROCKCOLOR )
+    {
+        //rock special case, 4x explosiveness!
+        for( int i = 0; i < MAX_ROCK_HEALTH; i++ )
+            DamageRock();
+
+        return;
+    }
+
     m_animFrame = 0;
 	m_state = STATE_MARKED;
     m_eventTime = SystemTime::now();
@@ -537,6 +561,8 @@ void GridSlot::die()
 
 void GridSlot::markNeighbor( int row, int col )
 {
+    if( IsSpecial() )
+        return;
 	//find my neighbor and see if we match
 	GridSlot *pNeighbor = m_pWrapper->GetSlot( row, col );
 
@@ -554,7 +580,7 @@ void GridSlot::hurtNeighboringRock( int row, int col )
 
     //PRINT( "pneighbor = %p", pNeighbor );
     //PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->getColor() == ROCKCOLOR )
+    if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == ROCKCOLOR )
         pNeighbor->DamageRock();
 }
 
@@ -748,7 +774,8 @@ void GridSlot::UpMultiplier()
 //morph from rainball to given color
 void GridSlot::RainballMorph( unsigned int color )
 {
-    FillColor( color );
+    if( color != ROCKCOLOR )
+        FillColor( color );
     m_bWasRainball = true;
 }
 

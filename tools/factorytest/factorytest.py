@@ -1,6 +1,7 @@
 import sys, usb.core, usb.util
 import serial
-import mastertests
+import mastertests, jigtests
+import time
 
 IN_EP = 0x81
 OUT_EP = 0x1
@@ -44,10 +45,12 @@ class UsbDevice(object):
 
     def txPacket(self, bytes):
         bytestr = "".join(chr(b) for b in bytes)
-        self._dev.write(OUT_EP, bytestr)
+        self._dev.write(OUT_EP, bytes)
 
     def rxPacket(self, numbytes, timeout):
-        self._dev.read(IN_EP, numbytes, timeout = timeout)
+        payload = self._dev.read(IN_EP, numbytes, timeout = timeout)
+        
+        return TestResponse(payload[0], payload[1:])
 
 # simple manager to lazily access devices
 class DeviceManager(object):
@@ -94,10 +97,13 @@ class TestRunner(object):
         runner = TestRunner(devManager)
 
         # TODO: better way to aggregate tests automatically
-        runner.run(mastertests.NrfComms)
-        runner.run(mastertests.ExternalFlashComms)
-        runner.run(mastertests.ExternalFlashReadWrite)
-        runner.run(mastertests.LedTest)
+        # runner.run(mastertests.NrfComms)
+        # runner.run(mastertests.ExternalFlashComms)
+        # runner.run(mastertests.ExternalFlashReadWrite)
+        # runner.run(mastertests.LedTest)
+        # runner.run(mastertests.UniqueIdTest)
+        
+        runner.run(jigtests.setSimulatedBatteryVoltage)
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:
@@ -110,7 +116,11 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print >> sys.stderr, "usage: python factorytest.py <comport>"
         sys.exit(1)
-
-    comport = sys.argv[1]
+    
+    if sys.argv[1] == "testjig":
+        comport = 0
+    else:
+        comport = sys.argv[1]
+        
     result = TestRunner.runAll(DeviceManager(comport))
     sys.exit(result)

@@ -15,6 +15,43 @@ class CubeSlot;
 
 
 /**
+ * The tiny VRAMFlags class provides a convenient way to batch changes
+ * to the 'flags' byte in VRAM. Changes are always applied via atomic XOR.
+ */
+
+struct VRAMFlags {
+    uint8_t vf;
+    uint8_t vfPrev;
+
+    VRAMFlags(_SYSVideoBuffer *vbuf) {
+        vf = vfPrev = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+    }
+
+    bool test(uint8_t flags) const { return (vf & flags) == flags; }
+    void set(uint8_t flags) { vf |= flags; }
+    void clear(uint8_t flags) { vf &= ~flags; }
+    void toggle(uint8_t flags) { vf ^= flags; }
+
+    void setTo(uint8_t flags, bool b) {
+        if (b)
+            set(flags);
+        else
+            clear(flags);
+    }
+
+    void apply(_SYSVideoBuffer *vbuf) {
+        uint8_t x = vf ^ vfPrev;
+        if (x) {
+            // Lock flags = 0, don't mark the "needs paint" flag.
+            VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), x, 0);
+            VRAM::unlock(*vbuf);
+            vfPrev = vf;
+        }
+    }
+};
+
+
+/**
  * Paint controller for one cube. This manages frame rate control, frame
  * triggering, and tracking rendering-finished state.
  */
@@ -22,8 +59,14 @@ class CubeSlot;
 class PaintControl {
  public:
 
+    // Start doing a _SYS_finish()
+    void beginFinish(CubeSlot *cube);
+
+    // Inner loop for _SYS_finish(). Returns 'true' when finished.
+    bool pollForFinish(CubeSlot *cube, SysTime::Ticks now);
+
+    // Two halves of _SYS_paint()
     void waitForPaint(CubeSlot *cube);
-    void waitForFinish(CubeSlot *cube);
     void triggerPaint(CubeSlot *cube, SysTime::Ticks now);
 
     // Called in ISR context
@@ -32,27 +75,18 @@ class PaintControl {
 
  private:
     SysTime::Ticks paintTimestamp;      // Last user call to _SYS_paint()
-    SysTime::Ticks asyncTimestamp;      // TOGGLE, TRIGGER_ON_FLUSH, exiting CONTINUOUS mode
+    SysTime::Ticks asyncTimestamp;      // TOGGLE, TRIGGER_ON_FLUSH, entering CONTINUOUS mode
     int32_t pendingFrames;
 
-    uint8_t getFlags(_SYSVideoBuffer *vbuf) {
-        return VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
-    }
-
-    void setFlags(_SYSVideoBuffer *vbuf, uint8_t flags) {
-        // Set no flags on lock
-        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags, 0);
-        VRAM::unlock(*vbuf);
-    }
-
     static bool allowContinuous(CubeSlot *cube);
-    void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags);
-    void exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, uint8_t &flags, SysTime::Ticks timestamp);
-    bool isContinuous(_SYSVideoBuffer *vbuf);
+    void enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+        VRAMFlags &flags, SysTime::Ticks timestamp);
+    void exitContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf, VRAMFlags &flags);
     void setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf, 
-        uint8_t &flags, SysTime::Ticks timestamp);
+        VRAMFlags &flags, SysTime::Ticks timestamp);
     void makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf);
-    bool canMakeSynchronous(_SYSVideoBuffer *vbuf, SysTime::Ticks timestamp);
+    bool canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
+        VRAMFlags &flags, SysTime::Ticks timestamp);
 };
 
 

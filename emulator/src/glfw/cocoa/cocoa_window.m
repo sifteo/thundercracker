@@ -31,6 +31,9 @@
 
 #include <AvailabilityMacros.h>
 
+extern bool glfwSifteoOpenFile(const char *filename);
+
+
 //========================================================================
 // Delegate for window related notifications
 // (but also used as an application delegate)
@@ -40,6 +43,12 @@
 @end
 
 @implementation GLFWWindowDelegate
+
+// SIFTEO: Support for file drag-and-drop.
+- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
+{
+    return glfwSifteoOpenFile([filename UTF8String]);
+}
 
 - (BOOL)windowShouldClose:(id)window
 {

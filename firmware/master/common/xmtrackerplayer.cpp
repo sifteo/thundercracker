@@ -5,7 +5,6 @@
 
 #include "xmtrackerplayer.h"
 #include "audiomixer.h"
-#include "flash.h"
 
 #include "xmtrackertables.h"
 

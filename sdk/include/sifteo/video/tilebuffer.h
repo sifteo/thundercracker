@@ -238,7 +238,7 @@ struct TileBuffer {
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
         return tiles[i];
-    };
+    }
 
     /**
      * Return the index of the tile at the specified (x, y) tile coordinates,

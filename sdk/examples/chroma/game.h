@@ -137,8 +137,6 @@ public:
     //play random slosh sound
     void playSlosh();
 
-    //inline void forcePaintSync() { m_bForcePaintSync = true; }
-
     inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
     inline void useShake() { m_ShakesRemaining--; }
 
@@ -170,15 +168,23 @@ public:
     inline SaveData &getSaveData() { return m_savedata; }
     //inline ChromitDrawer &getChromitDrawer() { return m_chromitDrawer; }
 
+    void ClearBG1();
+
+    //this handles drawing that was moved out of cubewrapper so it could be done in a way that
+    //thrashed the cache less
+    //needDraw is a boolean array telling which cubes need drawing
+    void DrawGame( bool needDraw[], SystemTime t, TimeDelta dt );
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void HandleMenu();
+    void HandleMenu() __attribute__ ((noinline));
+    void SetStartingLevel();
 
-	bool m_bTestMatches;
+    bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
 	//running total
@@ -220,8 +226,6 @@ private:
     unsigned int m_Multiplier;
     //ChromitDrawer m_chromitDrawer;
 
-    //force a 1 frame paint sync before/after drawing
-    //bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on

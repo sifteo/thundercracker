@@ -1,12 +1,12 @@
 APP = chroma
-TC_DIR = ../../..
 
-include $(TC_DIR)/sdk/Makefile.defs
+
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o banner.o Bubbles.o ChromitDrawer.o CubeBuddy.o cubewrapper.o FloatingScore.o Glimmer.o GridSlot.o game.o Intro.o Level.o Puzzle.o RockExplosion.o SaveLoad.o TimeKeeper.o
 ASSETDEPS += *.png $(ASSETS).lua
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules
 
 GENERATED_FILES += PuzzleData.h
 

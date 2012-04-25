@@ -1,6 +1,6 @@
 APP = peano
-TC_DIR = ../../..
-include $(TC_DIR)/sdk/Makefile.defs
+
+include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o \
         puzzles.gen.o main.o Puzzle.o ShapeMask.o Token.o Fraction.o \
@@ -17,7 +17,7 @@ OBJS = $(ASSETS).gen.o \
 ASSETDEPS += *.png $(ASSETS).lua
 ASSETS_BUILD_PROOF = TRUE
 
-include $(TC_DIR)/sdk/Makefile.rules
+include $(SDK_DIR)/Makefile.rules
 
 GENERATED_FILES += PeanoTools.exe
 

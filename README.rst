@@ -18,6 +18,9 @@ firmware
 
 sdk
   Development kit for game software, running on the master.
+  This directory is intended to contain only redistributable components.
+  During build, pre-packaged binaries, built binaries, and built docs
+  are copied here.
 
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.
@@ -84,7 +87,7 @@ framework written in Lua which currently covers the graphics code in
 our cube firmware. To run all existing tests, from the "emulator"
 directory:
 
-  tc-siftulator [-f ../firmware/cube.hex] -e scripts/tests.lua
+  siftulator [-f ../firmware/cube.hex] -e scripts/tests.lua
   
 You'll see the tests run headless, with pass/fail information on the
 console. To run tests with the GUI frontend enabled, set the

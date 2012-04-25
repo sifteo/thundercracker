@@ -18,18 +18,49 @@ void Adc::init()
         RCC.APB2ENR |= (1 << 15);
     }
 
-    hw->CR2 |= (1 << 2); // begin calibration
-//    while (hw->CR2 & (1 << 2)); // wait for it to complete ?
-    hw->SQR1 = 0;   // single conversion in all channels
+    /*
+     * Enable SWSTART as our external event selection, default channel selection
+     * to none, and enable the periph.
+     */
+    hw->CR2 = 7 << 17;
+    hw->SQR1 = 0;
+    hw->SQR2 = 0;
+    hw->SQR3 = 0;
+    hw->SMPR1 = 0;
+    hw->SMPR2 = 0;
+    hw->CR2 |= 0x1;
+
+    // reset calibration & wait for it to complete
+    const uint32_t resetCalibration = (1 << 3);
+    hw->CR2 |= resetCalibration;
+    while (hw->CR2 & resetCalibration)
+        ;
+
+    // perform calibration & wait for it to complete
+    const uint32_t calibrate = (1 << 2);
+    hw->CR2 |= calibrate;
+    while (hw->CR2 & calibrate)
+        ;
+}
+
+void Adc::setSampleRate(uint8_t channel, SampleRate rate)
+{
+    if (channel < 10) {
+        hw->SMPR2 |= rate << (channel * 3);
+    } else {
+        hw->SMPR1 |= rate << (channel * 3);
+    }
 }
 
 /*
-  Super simple (and super inefficient) single conversion mode for now.
-  on() must be called before invoking sample() if it was previously off().
+ * Super simple (and inefficient) synchronous single conversion mode for now.
 */
-uint16_t Adc::sample()
+uint16_t Adc::sample(uint8_t channel)
 {
-    hw->CR2 |= (1 << 0);            // set ADON to start the conversion
-    while (!(hw->SR & (1 << 1)));   // wait for EOC
-    return hw->DR;                  // automatically resets EOC
+    hw->SQR3 = channel;
+
+    hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
+    while (!(hw->SR & (1 << 1)))            // wait for EOC
+        ;
+    return hw->DR;
 }

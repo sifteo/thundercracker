@@ -11,14 +11,20 @@
 #include <string.h>
 
 #include "svm.h"
-#include "flashlayer.h"
+#include "flash_blockcache.h"
+#include "flash_allocation.h"
 
 
 class SvmMemory {
 public:
-    static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
-    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
+    // Flash
+    static const unsigned SEGMENT_0_VA = 0x80000000;
+    static const unsigned SEGMENT_1_VA = 0xc0000000;
+    static const unsigned NUM_FLASH_SEGMENTS = 2;
+
+    // RAM
     static const unsigned RAM_SIZE_IN_BYTES = 32 * 1024;
+    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
     static const unsigned VIRTUAL_RAM_TOP = VIRTUAL_RAM_BASE + RAM_SIZE_IN_BYTES;
 
     typedef uint8_t* PhysAddr;
@@ -115,7 +121,7 @@ public:
      * Read-only code memory validator. Ensures that the supplied va is a
      * legal jump target, and maps it to a physical address.
      *
-     * Assumes 'va' is a flash address. The VIRTUAL_FLASH_BASE bit is ignored.
+     * Assumes 'va' is a flash address in segment 0. High bits are ignored.
      */
     static bool mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa);
 
@@ -125,12 +131,6 @@ public:
      * block aligned.
      */
     static bool copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length);
-
-    /**
-     * Initialize a FlashStream with read-only data from a flash pointer.
-     * Does NOT support RAM addresses, unlike all the *ROData functions.
-     */
-    static bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out);
 
     /**
      * Asynchronously preload the given VirtAddr. If it's a flash address, this
@@ -205,28 +205,27 @@ public:
      * This is initialized to the current binary's RODATA segment by our ELF
      * loader.
      */
-    static void setFlashSegment(const FlashRange &segment) {
-        ASSERT(segment.isAligned());
-        flashSeg = segment;
+    static void setFlashSegment(unsigned index, const FlashAllocSpan &span) {
+        ASSERT(index < NUM_FLASH_SEGMENTS);
+        flashSeg[index] = span;
     }
 
     /**
-     * Clear all user RAM. Should happen before launching a new game.
+     * Clear all user RAM and unmap all Flash segments.
+     * Should happen before launching a new game.
      */
     static void erase() {
         memset(userRAM, 0, RAM_SIZE_IN_BYTES);
+        for (unsigned i = 0; i < arraysize(flashSeg); i++)
+            setFlashSegment(i, FlashAllocSpan::empty());
     }
 
     /**
      * Reconstruct a code address, given a FlashBlock and low-level PC.
-     * Used for debugging, as well as function calls.
+     * Used for debugging, as well as function calls. Assumes 'pc' is in
+     * the default flash segment.
      */
-    static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc) {
-        if (ref.isHeld())
-            return ref->getAddress() + (pc & FlashBlock::BLOCK_MASK)
-                - flashSeg.getAddress() + VIRTUAL_FLASH_BASE;
-        return 0;
-    }
+    static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc);
 
     /**
      * Reconstruct a RAM address, doing a Physical to Virtual translation.
@@ -241,24 +240,30 @@ public:
     }
     
     /**
-     * Convert a flash block address to a VA in the current segment.
-     * If the block address is not in the current segment at all, returns zero.
+     * Convert a flash block address to a VA in any valid segment.
+     * If the block address is not in any segment at all, returns zero.
      */
     static VirtAddr flashToVirtAddr(uint32_t addr) {
-        uint32_t offset = addr - flashSeg.getAddress();
-        if (offset < flashSeg.getSize())
-            return offset + VIRTUAL_FLASH_BASE;
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        FlashAllocSpan::ByteOffset offset;
+        if (flashSeg[0].flashAddrToOffset(addr, offset))
+            return offset + SEGMENT_0_VA;
+        if (flashSeg[1].flashAddrToOffset(addr, offset))
+            return offset + SEGMENT_1_VA;
         return 0;
     }
 
     /**
-     * Convert a VA to a flash block address, using the current segment.
+     * Convert a VA to a flash block address in any valid segment.
      * If the VA is not a valid flash address, returns zero.
      */
     static uint32_t virtToFlashAddr(VirtAddr va) {
-        uint32_t offset = va - VIRTUAL_FLASH_BASE;
-        if (offset < flashSeg.getSize())
-            return flashSeg.getAddress() + offset;
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        FlashAllocSpan::FlashAddr addr;
+        if (flashSeg[0].offsetToFlashAddr(addr - SEGMENT_0_VA, addr))
+            return addr;
+        if (flashSeg[1].offsetToFlashAddr(addr - SEGMENT_1_VA, addr))
+            return addr;
         return 0;
     }     
 
@@ -301,11 +306,11 @@ public:
                 r = offset + VIRTUAL_RAM_BASE;
         }
 #endif
-    }   
+    }
 
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES] SECTION(".userram");
-    static FlashRange flashSeg;
+    static FlashAllocSpan flashSeg[NUM_FLASH_SEGMENTS];
 };
 
 

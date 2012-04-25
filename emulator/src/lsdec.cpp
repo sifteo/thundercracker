@@ -17,19 +17,11 @@
 #include "macros.h"
 #include "lsdec.h"
 #include "cube_flash_model.h"
-#include "cube_flash_storage.h"
 #include "svmmemory.h"
 
 
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
     : buffer(buffer), bufferSize(bufferSize)
-{
-    ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
-    reset();
-}
-
-LoadstreamDecoder::LoadstreamDecoder(Cube::FlashStorage &storage)
-    : buffer(storage.data.ext), bufferSize(sizeof storage.data.ext)
 {
     ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
     reset();

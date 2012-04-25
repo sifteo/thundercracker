@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include "sifteo.h"
-#include <stddef.h>
 
 using namespace Sifteo;
 
@@ -28,7 +27,7 @@ namespace TotalsGame {
 		static const ShapeMask Zero;
 		static const ShapeMask Unity;
 
-        ShapeMask(Int2 size, bool *flags, size_t numFlags);
+        ShapeMask(Int2 size, bool *flags, unsigned numFlags);
 
         ShapeMask(Int2 size, long bits);
 
@@ -47,19 +46,10 @@ namespace TotalsGame {
 
         void ListInConnections(Connection *connections, int *numConnections, int maxConnections);
 
-#if NO_STACK_PARAMS_HACK
-        static ShapeMask m1;
-        static ShapeMask m2;
-        static bool TryConcat(
-            Int2 offset,
-            ShapeMask *result, Int2 *d1, Int2 *d2
-            );
-#else
 		static bool TryConcat(
             const ShapeMask &m1, const ShapeMask &m2, Int2 offset,
             ShapeMask *result, Int2 *d1, Int2 *d2
             );
-#endif
     };
 
 }

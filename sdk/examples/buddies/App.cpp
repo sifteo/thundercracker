@@ -7,10 +7,11 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
-#include <limits.h>
-#include <sifteo/menu.h>
+#include <sifteo/metadata.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
+#include <sifteo/time.h>
+#include <sifteo/menu.h>
 #include "Book.h"
 #include "Config.h"
 #include "Puzzle.h"
@@ -30,12 +31,12 @@ namespace Buddies { namespace {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const int kMaxTilesX = VidMode::LCD_width / VidMode::TILE;
-const int kMaxTilesY = VidMode::LCD_width / VidMode::TILE;
+const char *kTitle = "CubeBuddies";
+const int kMaxTilesX = LCD_width / TILE;
+const int kMaxTilesY = LCD_width / TILE;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Buddy Assets
-// - TODO: Is there a way to automate this using clever Lua scripting?
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const PinnedAssetImage *kBuddySpritesFront[] =
@@ -172,6 +173,12 @@ const AssetImage *kStoryCutsceneEnvironmentsRight[] =
     &Environment_0_Right,
 };
 
+const BG1Mask kStoryProgressMask =
+    BG1Mask::filled(vec(2, 2), vec( 2, 2)) |
+    BG1Mask::filled(vec(5, 2), vec(10, 2)) |
+    BG1Mask::filled(vec(6, 7), vec( 2, 2)) |
+    BG1Mask::filled(vec(8, 7), vec( 2, 2));
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -239,22 +246,6 @@ bool AllSolved(App& app)
     
     return true;
 }
-                    
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool NeedPaintSync(App& app)
-{
-    for (unsigned int i = 0; i < kNumCubes; ++i)
-    {
-        if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).DrawNeedsSync())
-        {
-            return true;
-        }
-    }
-    
-    return false;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +274,6 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
             ASSERT(iLine < numLines);
             ASSERT(iChar < numChar);
             lines[iLine][iChar] = '\0';
-            
             ++iLine;
             iChar = 0;
         }
@@ -291,18 +281,17 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
         {
             ASSERT(iLine < numLines);
             ASSERT(iChar < numChar);
-            lines[iLine][iChar++] = buffer[i];
-            
-            if (i == (buffer.size() - 1))
-            {
-                ASSERT(iLine < numLines);
-                ASSERT(iChar < numChar);
-                lines[iLine][iChar] = '\0';
-            }
+            lines[iLine][iChar] = buffer[i];
+            ++iChar;
         }
     }
     
-    return iLine + 1;
+    ASSERT(iLine < numLines);
+    ASSERT(iChar < numChar);
+    lines[iLine][iChar] = '\0';
+    ++iLine;
+    
+    return iLine;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,24 +299,21 @@ int SplitLines(char lines[5][16], int numLines, int numChar, const char *text)
 
 void DrawShuffleCutscene(CubeWrapper &cubeWrapper, Int2 scroll, BuddyId buddyId, bool spriteJump)
 {
-    const unsigned int maxTilesX = VidMode::LCD_width / VidMode::TILE;
-    const unsigned int maxTilesY = VidMode::LCD_width / VidMode::TILE;
-            
     cubeWrapper.DrawBackgroundPartial(
-        Vec2(0, 0),
-        Vec2(-scroll.x, 0),
-        Vec2(maxTilesX + scroll.x, maxTilesY),
+        vec(0, 0),
+        vec(-scroll.x, 0),
+        vec(kMaxTilesX + scroll.x, kMaxTilesY),
         UiCongratulations);
     
     int jump_offset = 8;
     
     cubeWrapper.DrawSprite(
         0,
-        Vec2(
-            (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE),
+        vec(
+            (LCD_width / 2) - 32 + (scroll.x * TILE),
             spriteJump ?
-                VidMode::LCD_height / 2 - 32 :
-                VidMode::LCD_height / 2 - 32 + jump_offset),
+                LCD_height / 2 - 32 :
+                LCD_height / 2 - 32 + jump_offset),
         *kBuddySpritesFront[buddyId]);
 }
 
@@ -368,7 +354,7 @@ void DrawShuffleScore(
         buffer << labels[i] << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
         
         cubeWrapper.DrawUiText(
-            Vec2(4, 4 + (int(i) * 2)),
+            vec(4, 4 + (int(i) * 2)),
             place == i ? UiFontWhite : UiFontOrange,
             buffer.c_str());
     }
@@ -382,7 +368,7 @@ void DrawShuffleScore(
         String<16> buffer;
         buffer << "Time " << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true);
     
-        cubeWrapper.DrawUiText(Vec2(3, 11), UiFontWhite, buffer.c_str());
+        cubeWrapper.DrawUiText(vec(3, 11), UiFontWhite, buffer.c_str());
     }
 }
 
@@ -399,13 +385,13 @@ void DrawStoryBookTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsign
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
-        Vec2((VidMode::LCD_width / 2) - 32, 20U),
+        vec((LCD_width / 2) - 32, 20U),
         *kBuddySpritesFront[buddyId]);
     
     String<16> bufferTitle;
     bufferTitle << GetBook(bookIndex).mTitle;
     int xTitle = (kMaxTilesX / 2) - (bufferTitle.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xTitle, 12), UiFontWhite, bufferTitle.c_str());
+    cubeWrapper.DrawUiText(vec(xTitle, 12), UiFontWhite, bufferTitle.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,27 +404,27 @@ void DrawStoryChapterTitle(CubeWrapper &cubeWrapper, unsigned int bookIndex, uns
     String<16> bufferChapter;
     bufferChapter << "Chapter " << (puzzleIndex + 1);
     int xChapter = (kMaxTilesX / 2) - (bufferChapter.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
+    cubeWrapper.DrawUiText(vec(xChapter, 6), UiFontHeadingOrange, bufferChapter.c_str());
     
     String<32> bufferTitle;
-    bufferTitle << "\"" << GetPuzzle(bookIndex, puzzleIndex).GetTitle() << "\"";
+    bufferTitle << GetPuzzle(bookIndex, puzzleIndex).GetTitle();
     
     char lines[2][16];
     int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), bufferTitle.c_str());
     
-    for (int i = 0; i <= numLines; ++i)
+    for (int i = 0; i < numLines; ++i)
     {
         String<16> s;
         s << lines[i];
         
         int x = (kMaxTilesX / 2) - (s.size() / 2);
         int y = 8 + i * 2;
-        cubeWrapper.DrawUiText(Vec2(x, y), UiFontOrange, s.c_str());
+        cubeWrapper.DrawUiText(vec(x, y), UiFontOrange, s.c_str());
     }
     
     if (bufferChapter.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+        cubeWrapper.ScrollUi(vec(TILE / 2, 0U));
     }
 }
 
@@ -456,14 +442,14 @@ void DrawStoryClue(
     char lines[5][16];
     int numLines = SplitLines(lines, arraysize(lines), arraysize(lines[0]), text);
     
-    for (int i = 0; i <= numLines; ++i)
+    for (int i = 0; i < numLines; ++i)
     {
         String<16> s;
         s << lines[i];
         
         int x = (kMaxTilesX / 2) - (s.size() / 2);
         int y = 9 - numLines + (i * 2);
-        cubeWrapper.DrawUiText(Vec2(x, y), UiFontOrange, s.c_str());
+        cubeWrapper.DrawUiText(vec(x, y), UiFontOrange, s.c_str());
     }
     
     // Scroll over if first line is not even length
@@ -471,7 +457,7 @@ void DrawStoryClue(
     s << lines[0];
     if (s.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+        cubeWrapper.ScrollUi(vec(TILE / 2, 0U));
     }
 }
 
@@ -486,11 +472,11 @@ void DrawStoryFaceComplete(CubeWrapper &cubeWrapper)
     buffer << "Face Solved!";
     
     int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(x, 7), UiFontWhite, buffer.c_str());
+    cubeWrapper.DrawUiText(vec(x, 7), UiFontWhite, buffer.c_str());
     
     if (buffer.size() % 2 != 0)
     {
-        cubeWrapper.ScrollUi(Vec2(VidMode::TILE / 2, 0U));
+        cubeWrapper.ScrollUi(vec(TILE / 2, 0U));
     }
 }
 
@@ -504,6 +490,8 @@ void DrawStoryCutscene(
     BuddyId buddyId0, BuddyId buddyId1,
     bool jump0, bool jump1)
 {
+    ASSERT(line.mSpeaker >= 0 && line.mSpeaker <= 2);
+    ASSERT(line.mView < CutsceneLine::NUM_VIEWS);
     ASSERT(line.mText != NULL);
     
     if (line.mSpeaker == 0)
@@ -517,31 +505,31 @@ void DrawStoryCutscene(
         {
             if (kBuddySpritesRight[buddyId0] != NULL)
             {
-                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+                cubeWrapper.DrawSprite(0, vec( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_LEFT)
         {
             if (kBuddySpritesLeft[buddyId0] != NULL)
             {
-                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId0]);
+                cubeWrapper.DrawSprite(0, vec( 0, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId0]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_FRONT)
         {
             if (kBuddySpritesFront[buddyId0] != NULL)
             {
-                cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId0]);
+                cubeWrapper.DrawSprite(0, vec( 0, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId0]);
             }
         }
         
         if (kBuddySpritesLeft[buddyId1] != NULL)
         {
-            cubeWrapper.DrawSprite(1, Vec2(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+            cubeWrapper.DrawSprite(1, vec(64, jump1 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
         }
         
         // Text
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontOrange, line.mText);
+        cubeWrapper.DrawUiText(vec(1, 1), UiFontOrange, line.mText);
     }
     else if (line.mSpeaker == 1)
     {
@@ -552,33 +540,33 @@ void DrawStoryCutscene(
         // Sprites
         if (kBuddySpritesRight[buddyId0] != NULL)
         {
-            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+            cubeWrapper.DrawSprite(0, vec( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
         }
         
         if (line.mView == CutsceneLine::VIEW_RIGHT)
         {
             if (kBuddySpritesRight[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_LEFT)
         {
             if (kBuddySpritesLeft[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_FRONT)
         {
             if (kBuddySpritesFront[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
             }
         }
         
         // Text
-        cubeWrapper.DrawUiText(Vec2(1, 1), UiFontOrange, line.mText);
+        cubeWrapper.DrawUiText(vec(1, 1), UiFontOrange, line.mText);
     }
     else if (line.mSpeaker == 2)
     {
@@ -589,28 +577,28 @@ void DrawStoryCutscene(
         // Sprites
         if (kBuddySpritesRight[buddyId0] != NULL)
         {
-            cubeWrapper.DrawSprite(0, Vec2( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
+            cubeWrapper.DrawSprite(0, vec( 0, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId0]);
         }
         
         if (line.mView == CutsceneLine::VIEW_RIGHT)
         {
             if (kBuddySpritesRight[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesRight[buddyId1]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_LEFT)
         {
             if (kBuddySpritesLeft[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesLeft[buddyId1]);
             }
         }
         else if (line.mView == CutsceneLine::VIEW_FRONT)
         {
             if (kBuddySpritesFront[buddyId1] != NULL)
             {
-                cubeWrapper.DrawSprite(1, Vec2(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
+                cubeWrapper.DrawSprite(1, vec(64, jump0 ? 60 : 66), *kBuddySpritesFront[buddyId1]);
             }
         }
     }
@@ -623,15 +611,22 @@ void DrawStoryProgress(CubeWrapper &cubeWrapper, unsigned int bookIndex, unsigne
 {
     cubeWrapper.DrawBackground(StoryProgress);
     
+    // Mask
+    cubeWrapper.GetVideoBuffer().bg1.setMask(kStoryProgressMask);
+    
+    // Buddy Small
     BuddyId buddyId = GetBook(bookIndex).mUnlockBuddyId;
     ASSERT(buddyId < arraysize(kBuddiesSmall));
-    cubeWrapper.DrawUiAsset(Vec2(2, 2), *kBuddiesSmall[buddyId]);
+    cubeWrapper.DrawUiAsset(vec(2, 2), *kBuddiesSmall[buddyId], 0, false);
     
+    // Chapter Title
     String<16> buffer;
     buffer << "Chapter " << (puzzleIndex + 1);
-    cubeWrapper.DrawUiText( Vec2(5, 2), UiFontHeadingOrangeNoOutline, buffer.c_str());
-    cubeWrapper.DrawUiAsset(Vec2(6, 7), StoryProgressNumbers, puzzleIndex + 1);
-    cubeWrapper.DrawUiAsset(Vec2(8, 7), StoryProgressNumbers, GetBook(bookIndex).mNumPuzzles);
+    cubeWrapper.DrawUiText( vec(5, 2), UiFontHeadingOrangeNoOutline, buffer.c_str(), false);
+    
+    // Progress
+    cubeWrapper.DrawUiAsset(vec(6, 7), StoryProgressNumbers, puzzleIndex + 1, false);
+    cubeWrapper.DrawUiAsset(vec(8, 7), StoryProgressNumbers, GetBook(bookIndex).mNumPuzzles, false);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -641,12 +636,12 @@ void DrawUnlocked3Sprite(CubeWrapper &cubeWrapper, BuddyId buddyId, Int2 scroll,
 {
     int jump_offset = 4;
     
-    int x = (VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE);
+    int x = (LCD_width / 2) - 32 + (scroll.x * TILE);
     int y = jump ? 28 - jump_offset : 28;
-    y += -VidMode::LCD_height + ((scroll.y + 2) * VidMode::TILE); // TODO: +2 is fudge, refactor
+    y += -LCD_height + ((scroll.y + 2) * TILE); // TODO: +2 is fudge, refactor
     
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
-    cubeWrapper.DrawSprite(0, Vec2(x, y), *kBuddySpritesFront[buddyId]);
+    cubeWrapper.DrawSprite(0, vec(x, y), *kBuddySpritesFront[buddyId]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -657,7 +652,7 @@ void DrawUnlocked4Sprite(CubeWrapper &cubeWrapper, BuddyId buddyId, Int2 scroll)
     ASSERT(buddyId < arraysize(kBuddySpritesFront));
     cubeWrapper.DrawSprite(
         0,
-        Vec2((VidMode::LCD_width / 2) - 32 + (scroll.x * VidMode::TILE), 28U),
+        vec((LCD_width / 2) - 32 + (scroll.x * TILE), 28U),
         *kBuddySpritesFront[buddyId]);
 }
 
@@ -721,7 +716,7 @@ bool UpdateCounter(int &counter, int speed)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool IsHinting(Cube::ID cubeId, int hintPiece)
+bool IsHinting(PCubeID cubeId, int hintPiece)
 {
     return hintPiece != -1 && (hintPiece / NUM_SIDES) == int(cubeId);
 }
@@ -745,7 +740,7 @@ bool IsBuddyUsed(App &app, BuddyId buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-int GetRotationTarget(const Piece &piece, Cube::Side side)
+int GetRotationTarget(const Piece &piece, Side side)
 {
     int rotation = side - piece.GetPart();
     if (rotation < 0)
@@ -754,15 +749,6 @@ int GetRotationTarget(const Piece &piece, Cube::Side side)
     }
     
     return rotation;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: kill this in favor of just using the above
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool IsAtRotationTarget(const Piece &piece, Cube::Side side)
-{
-    return piece.GetRotation() == GetRotationTarget(piece, side);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -801,6 +787,21 @@ BuddyId GetRandomOtherBuddyId(App &app, BuddyId buddyId)
         {
             buddyId = BuddyId((buddyId + 1) % numBuddies);
         }
+    }
+    
+    return buddyId;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+BuddyId GetNextOtherBuddyId(App &app, BuddyId buddyId)
+{
+    int numBuddies = NUM_BUDDIES - 1; // Don't allow invisible buddy!
+       
+    while (IsBuddyUsed(app, buddyId))
+    {
+        buddyId = BuddyId((buddyId + 1) % numBuddies);
     }
     
     return buddyId;
@@ -863,8 +864,9 @@ const int kSwapAnimationCount = 64 - 8; // Note: piceces are offset by 8 pixels 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 App::App()
-    : mCubeWrappers()
-    , mChannel()
+    : mAssetSlot(AssetSlot::allocate().bootstrap(GameAssets))
+    , mCubeWrappers()
+    , mChannel(0)
     , mGameState(GAME_STATE_NONE)
     , mDelayTimer(0.0f)
     , mOptionsTimer(0.0f)
@@ -876,7 +878,7 @@ App::App()
     , mTouchEndChoice(-1)
     , mScoreTimer(0.0f)
     , mScoreMoves(0)
-    , mScorePlace(UINT_MAX)
+    , mScorePlace(kNumSaveDataBestTimes)
     , mSaveDataStoryBookProgress(0)
     , mSaveDataStoryPuzzleProgress(0)
     , mSaveDataBuddyUnlockMask(0)
@@ -887,7 +889,7 @@ App::App()
     , mSwapAnimationSlideTimer(0)
     , mSwapAnimationRotateTimer(0.0f)
     , mFaceCompleteTimers()
-    , mBackgroundScroll(Vec2(0, 0))
+    , mBackgroundScroll(vec(0, 0))
     , mHintTimer(0.0f)
     , mHintPiece0(-1)
     , mHintPiece1(-1)
@@ -941,7 +943,9 @@ App::App()
 
 void App::Init()
 {
-    // Note: manually enabling all cubes until the found/lost events start working.
+    Metadata().title(kTitle).cubeRange(kNumCubes);
+    
+    // Manually enable all cubes until the found/lost events are implemented
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         ASSERT(i < arraysize(mCubeWrappers));
@@ -999,11 +1003,6 @@ void App::Draw()
     if (mGameState != GAME_STATE_MENU_MAIN && mGameState != GAME_STATE_MENU_STORY)
     {   
         DrawGameState();
-        
-        if (NeedPaintSync(*this))
-        {
-            System::paintSync();
-        }
         System::paint();
     }
 }
@@ -1011,7 +1010,7 @@ void App::Draw()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId) const
+const CubeWrapper &App::GetCubeWrapper(PCubeID cubeId) const
 {
     ASSERT(cubeId < arraysize(mCubeWrappers));
     
@@ -1021,7 +1020,7 @@ const CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
+CubeWrapper &App::GetCubeWrapper(PCubeID cubeId)
 {
     ASSERT(cubeId < arraysize(mCubeWrappers));
     
@@ -1031,9 +1030,7 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::OnNeighborAdd(
-    Cube::ID cubeId0, Cube::Side cubeSide0,
-    Cube::ID cubeId1, Cube::Side cubeSide1)
+void App::OnNeighborAdd(PCubeID cubeId0, Side cubeSide0, PCubeID cubeId1, Side cubeSide1)
 {
     if (mGameState == GAME_STATE_STORY_CLUE)
     {
@@ -1101,14 +1098,14 @@ void App::OnNeighborAdd(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::OnTilt(Cube::ID cubeId)
+void App::OnTilt(PCubeID cubeId)
 {
     switch (mGameState)
     {
         case GAME_STATE_FREEPLAY_PLAY:
         {
-            Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
-            if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+            Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
+            if (tiltState.x != 0 || tiltState.y != 0)
             {
                 PlaySound(SoundPieceNudge);
             }
@@ -1123,8 +1120,8 @@ void App::OnTilt(Cube::ID cubeId)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
-                Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
-                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
+                if (tiltState.x != 0 || tiltState.y != 0)
                 {
                     PlaySound(SoundPieceNudge);
                 }
@@ -1151,8 +1148,8 @@ void App::OnTilt(Cube::ID cubeId)
         {
             if (mSwapState == SWAP_STATE_NONE)
             {
-                Cube::TiltState tiltState = GetCubeWrapper(cubeId).GetTiltState();
-                if (tiltState.x == 0 || tiltState.y == 0 || tiltState.x == 2 || tiltState.y == 2)
+                Byte2 tiltState = GetCubeWrapper(cubeId).GetTiltState();
+                if (tiltState.x != 0 || tiltState.y != 0)
                 {
                     PlaySound(SoundPieceNudge);
                 }
@@ -1180,7 +1177,7 @@ void App::OnTilt(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::OnShake(Cube::ID cubeId)
+void App::OnShake(PCubeID cubeId)
 {
     switch (mGameState)
     {
@@ -1191,12 +1188,39 @@ void App::OnShake(Cube::ID cubeId)
                 PlaySound(SoundFreePlayReset);
                 
                 mFreePlayShakeThrottleTimer = kFreePlayShakeThrottleDuration;
-            
-                BuddyId newBuddyId =
-                    GetRandomOtherBuddyId(*this, mCubeWrappers[cubeId].GetBuddyId());
-                mCubeWrappers[cubeId].SetBuddyId(newBuddyId);
                 
-                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                // Randomize pieces on this cube
+                
+                bool moved[NUM_SIDES] = { false, false, false, false };
+                
+                Random random;
+                
+                while(GetNumMovedPieces(moved, arraysize(moved)) != arraysize(moved))
+                {
+                    int side0 = random.randrange(arraysize(moved));
+                    while (moved[side0])
+                    {
+                        side0 = random.randrange(arraysize(moved)); 
+                    }
+                    moved[side0] = true;
+                    
+                    int side1 = random.randrange(arraysize(moved));
+                    while (moved[side1])
+                    {
+                        side1 = random.randrange(arraysize(moved)); 
+                    }
+                    moved[side1] = true;
+                    
+                    Piece piece0 = mCubeWrappers[cubeId].GetPiece(Side(side0));
+                    piece0.SetRotation(GetRotationTarget(piece0, Side(side1)));
+                    
+                    Piece piece1 = mCubeWrappers[cubeId].GetPiece(Side(side1));
+                    piece1.SetRotation(GetRotationTarget(piece1, Side(side0)));
+                    
+                    mCubeWrappers[cubeId].SetPiece(Side(side0), piece1);
+                    mCubeWrappers[cubeId].SetPiece(Side(side1), piece0);
+                }
+                
             }
             break;
         }
@@ -1265,6 +1289,39 @@ float App::GetBestTime(unsigned int place) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0
+void App::LoadBuddies(unsigned int storyBookIndex, unsigned int storyPuzzleIndex)
+{
+    ScopedAssetLoader assetLoader;
+    
+    VideoBuffer videoBuffers[kNumCubes];
+    
+    for (CubeID cube = 0; cube < kNumCubes; ++cube)
+    {
+        videoBuffers[cube].initMode(BG0_ROM);
+        videoBuffers[cube].attach(cube);
+        videoBuffers[cube].bg0rom.text(vec(1, 1), "Loading...");
+        
+        bool started = assetLoader.start(GroupBuddies, mAssetSlot, cube);
+        ASSERT(started);
+    } 
+    
+    while (!assetLoader.isComplete())
+    {
+        for (CubeID cube = 0; cube < kNumCubes; ++cube)
+        {
+            int progress = assetLoader.progress(cube, LCD_width);
+            videoBuffers[cube].bg0rom.hBargraph(vec(0, 7), progress);
+        }
+        
+        System::paint();
+    }
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
 {
     for (unsigned int i = 0; i < puzzle.GetNumBuddies(); ++i)
@@ -1279,13 +1336,13 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 
                 for (unsigned int j = 0; j < NUM_SIDES; ++j)
                 {
-                    Piece pieceStart = puzzle.GetPieceStart(i, j);
-                    pieceStart.SetRotation(GetRotationTarget(pieceStart, j));
-                    mCubeWrappers[i].SetPiece(j, pieceStart);
+                    Piece pieceStart = puzzle.GetPieceStart(i, Side(j));
+                    pieceStart.SetRotation(GetRotationTarget(pieceStart, Side(j)));
+                    mCubeWrappers[i].SetPiece(Side(j), pieceStart);
                     
-                    Piece pieceEnd = puzzle.GetPieceEnd(i, j);
-                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, j));
-                    mCubeWrappers[i].SetPieceSolution(j, pieceEnd);
+                    Piece pieceEnd = puzzle.GetPieceEnd(i, Side(j));
+                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, Side(j)));
+                    mCubeWrappers[i].SetPieceSolution(Side(j), pieceEnd);
                 }
             }
             else
@@ -1297,13 +1354,13 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle, bool resetBuddies)
                 {
                     BuddyId buddyId = mCubeWrappers[i].GetBuddyId();
                     
-                    Piece pieceStart = puzzle.GetPieceStart(buddyId, j);
-                    pieceStart.SetRotation(GetRotationTarget(pieceStart, j));
-                    mCubeWrappers[i].SetPiece(j, pieceStart);
+                    Piece pieceStart = puzzle.GetPieceStart(buddyId, Side(j));
+                    pieceStart.SetRotation(GetRotationTarget(pieceStart, Side(j)));
+                    mCubeWrappers[i].SetPiece(Side(j), pieceStart);
                     
-                    Piece pieceEnd = puzzle.GetPieceEnd(buddyId, j);
-                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, j));
-                    mCubeWrappers[i].SetPieceSolution(j, pieceEnd);
+                    Piece pieceEnd = puzzle.GetPieceEnd(buddyId, Side(j));
+                    pieceEnd.SetRotation(GetRotationTarget(pieceEnd, Side(j)));
+                    mCubeWrappers[i].SetPieceSolution(Side(j), pieceEnd);
                 }
             }
         }
@@ -1323,9 +1380,9 @@ void App::ResetCubesToShuffleStart()
             
             for (unsigned int j = 0; j < NUM_SIDES; ++j)
             {
-                mCubeWrappers[i].SetPiece(j, mShufflePiecesStart[i][j]);
+                mCubeWrappers[i].SetPiece(Side(j), mShufflePiecesStart[i][j]);
                 mCubeWrappers[i].SetPieceSolution(
-                    j, GetPuzzleDefault().GetPieceEnd(mCubeWrappers[i].GetBuddyId(), j));
+                    Side(j), GetPuzzleDefault().GetPieceEnd(mCubeWrappers[i].GetBuddyId(), Side(j)));
             }
         }
     }
@@ -1366,6 +1423,8 @@ void App::PlaySound(const Sifteo::AssetAudio &audioAsset)
 
 void App::UpdateMenuMain()
 {
+    mCubeWrappers[0].GetVideoBuffer().touch(); // Helps with BG green flash...
+    
     MenuAssets menuAssets =
     {
         &BgTile,
@@ -1405,7 +1464,7 @@ void App::UpdateMenuMain()
         neighbored[i] = false;
     }
     
-    Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    Menu menu(mCubeWrappers[0].GetVideoBuffer(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
     
     // TODO: Sound
@@ -1431,16 +1490,20 @@ void App::UpdateMenuMain()
                 }
                 else if (menuEvent.item == 3)
                 {
-                    // TODO: options config menu
+                    // TODO: Options config menu
                     menu.preventDefault();
                 }
                 break;
             }
             case MENU_NEIGHBOR_ADD:
             {
-                ASSERT(item >= 0 && item < arraysize(kMenuNeighborAssets));
-                ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
-                menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                // It's possible for spurious arrive/depart messages to come in even while the
+                // cubes are not being tilted. So make sure to only assign items if they are valid.
+                if (item >= 0 && item < arraysize(kMenuNeighborAssets))
+                {
+                    ASSERT(menuEvent.neighbor.neighbor < arraysize(menuNeighborIndices));
+                    menuNeighborIndices[menuEvent.neighbor.neighbor] = item;
+                }
                 
                 ASSERT(menuEvent.neighbor.neighbor < arraysize(neighbored));
                 neighbored[menuEvent.neighbor.neighbor] = true;
@@ -1488,9 +1551,8 @@ void App::UpdateMenuMain()
                     if (mCubeWrappers[i].IsEnabled())
                     {
                         mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
-                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
-                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
-                        mCubeWrappers[i].DrawFlush();
+                        mCubeWrappers[i].DrawUiAsset(vec(0, 0), LabelEmpty);
+                        mCubeWrappers[i].DrawUiAsset(vec(0, 14), Footer);
                     }
                 }
                 break;
@@ -1508,6 +1570,8 @@ void App::UpdateMenuMain()
 
 void App::UpdateMenuStory()
 {
+    mCubeWrappers[0].GetVideoBuffer().touch(); // Helps with BG green flash...
+    
     MenuAssets menuAssets =
     {
         &BgTile,
@@ -1548,7 +1612,7 @@ void App::UpdateMenuStory()
         neighbored[i] = false;
     }
     
-    Menu menu(&mCubeWrappers[0].GetCube(), &menuAssets, menuItems);
+    Menu menu(mCubeWrappers[0].GetVideoBuffer(), &menuAssets, menuItems);
     menu.setIconYOffset(32);
     
     // TODO: Sound
@@ -1630,9 +1694,8 @@ void App::UpdateMenuStory()
                     if (mCubeWrappers[i].IsEnabled())
                     {
                         mCubeWrappers[i].DrawBackground(*kMenuNeighborAssets[menuNeighborIndices[i]]);
-                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 0), LabelEmpty);
-                        mCubeWrappers[i].DrawUiAsset(Vec2(0, 14), Footer);
-                        mCubeWrappers[i].DrawFlush();
+                        mCubeWrappers[i].DrawUiAsset(vec(0, 0), LabelEmpty);
+                        mCubeWrappers[i].DrawUiAsset(vec(0, 14), Footer);
                     }
                 }
                 break;
@@ -1653,7 +1716,7 @@ void App::StartGameState(GameState gameState)
     mGameState = gameState;
     
     ASSERT(gameState < int(arraysize(kGameStateNames)));  
-    LOG(("Game State = %s\n", kGameStateNames[mGameState]));
+    LOG("Game State = %s\n", kGameStateNames[mGameState]);
     
     switch (mGameState)
     {
@@ -1824,7 +1887,7 @@ void App::StartGameState(GameState gameState)
                     {
                         ASSERT(i < arraysize(mShufflePiecesStart));
                         ASSERT(j < arraysize(mShufflePiecesStart[i]));
-                        mShufflePiecesStart[i][j] = mCubeWrappers[i].GetPiece(j);
+                        mShufflePiecesStart[i][j] = mCubeWrappers[i].GetPiece(Side(j));
                     }
                 }
             }
@@ -1836,7 +1899,7 @@ void App::StartGameState(GameState gameState)
             mOptionsTimer = kOptionsTimerDuration;
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
-            mScorePlace = UINT_MAX;
+            mScorePlace = kNumSaveDataBestTimes;
             for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
                 mFaceCompleteTimers[i] = 0.0f;
@@ -1895,6 +1958,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_BOOK_START:
         {
             mDelayTimer = kModeTitleDelay;
+            //LoadBuddies(mStoryBookIndex, 0);
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
@@ -1903,6 +1967,7 @@ void App::StartGameState(GameState gameState)
             ResetCubesToPuzzle(GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex), true);
             mDelayTimer = kModeTitleDelay;
             PlaySound(SoundStoryChapterTitle);
+            //LoadBuddies(mStoryBookIndex, mStoryPuzzleIndex);
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_START:
@@ -2037,13 +2102,13 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_UNLOCKED_1:
         {
             mDelayTimer = kStateTimeDelayLong;
-            mBackgroundScroll = Vec2(0, 0);
+            mBackgroundScroll = vec(0, 0);
             break;
         }
         case GAME_STATE_UNLOCKED_2:
         {
             mDelayTimer = kStateTimeDelayLong;
-            mBackgroundScroll = Vec2(0, 0);
+            mBackgroundScroll = vec(0, 0);
             mCutsceneSpriteJump0 = false;
             break;
         }
@@ -2124,46 +2189,45 @@ void App::UpdateGameState(float dt)
                     UpdateTimer(mFreePlayShakeThrottleTimer, dt);
                 }
                 
-                // Check for holding, which enables the options menu.
-                if (AnyTouchHold())
+                if (mTouchSync)
                 {
-                    if (UpdateTimer(mOptionsTimer, dt))
+                    for (int i = 0; i < arraysize(mTouching); ++i)
                     {
-                        mTouchSync = true;
-                        StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
+                        if (mTouching[i] == TOUCH_STATE_BEGIN)
+                        {
+                            mTouchSync = false;
+                        }
                     }
                 }
                 else
                 {
-                    mOptionsTimer = kOptionsTimerDuration;
-                }
-                
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                {
-                    if (mCubeWrappers[i].IsEnabled())
+                    // Check for holding, which enables the options menu.
+                    if (AnyTouchHold())
                     {
-                        if (mTouching[i] == TOUCH_STATE_BEGIN || mTouching[i] == TOUCH_STATE_HOLD)
+                        if (UpdateTimer(mOptionsTimer, dt))
                         {
-                            if (!mTouchSync)
-                            {
-                                if (mTouching[i] == TOUCH_STATE_BEGIN)
-                                {
-                                    PlaySound(SoundPiecePinch);
-                                }
-                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0U, VidMode::TILE));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(VidMode::TILE, 0U));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0U, VidMode::TILE));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(VidMode::TILE, 0U));
-                            }
+                            mTouchSync = true;
+                            StartGameState(GAME_STATE_FREEPLAY_OPTIONS);
                         }
-                        else if (mTouching[i] == TOUCH_STATE_END)
+                    }
+                    else
+                    {
+                        mOptionsTimer = kOptionsTimerDuration;
+                    }
+                    
+                    // Check for character swap
+                    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                    {
+                        if (mCubeWrappers[i].IsEnabled())
                         {
-                            mTouchSync = false;
-                            
-                            mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
-                            mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                            if (mTouching[i] == TOUCH_STATE_END)
+                            {
+                                BuddyId newBuddyId =
+                                    GetNextOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                                mCubeWrappers[i].SetBuddyId(newBuddyId);
+                                
+                                ResetCubesToPuzzle(GetPuzzleDefault(), false);
+                            }
                         }
                     }
                 }
@@ -2193,10 +2257,10 @@ void App::UpdateGameState(float dt)
                         {
                             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
                             {
-                                mCubeWrappers[i].SetPieceOffset(SIDE_TOP,    Vec2(0, 0));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_LEFT,   Vec2(0, 0));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_BOTTOM, Vec2(0, 0));
-                                mCubeWrappers[i].SetPieceOffset(SIDE_RIGHT,  Vec2(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(TOP,    vec(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(LEFT,   vec(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(BOTTOM, vec(0, 0));
+                                mCubeWrappers[i].SetPieceOffset(RIGHT,  vec(0, 0));
                             }
                             PlaySound(SoundUnpause);
                             StartGameState(GAME_STATE_FREEPLAY_PLAY);
@@ -2257,10 +2321,10 @@ void App::UpdateGameState(float dt)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    if (mTouching[i] == TOUCH_STATE_BEGIN)
+                    if (mTouching[i] == TOUCH_STATE_END)
                     {
                         BuddyId newBuddyId =
-                            GetRandomOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
+                            GetNextOtherBuddyId(*this, mCubeWrappers[i].GetBuddyId());
                         mCubeWrappers[i].SetBuddyId(newBuddyId);
                         
                         ResetCubesToPuzzle(GetPuzzleDefault(), false);
@@ -2903,7 +2967,7 @@ void App::UpdateGameState(float dt)
             }
             else
             {
-                if (mBackgroundScroll.y < int(kMaxTilesX + StoryRibbonNewCharacter.height))
+                if (mBackgroundScroll.y < int(kMaxTilesX + StoryRibbonNewCharacter.tileHeight()))
                 {
                     ++mBackgroundScroll.y;
                 }
@@ -3078,7 +3142,6 @@ void App::DrawGameState()
         {
             mCubeWrappers[i].DrawClear();
             DrawGameStateCube(mCubeWrappers[i]);
-            mCubeWrappers[i].DrawFlush();
         }
     }
 }
@@ -3148,11 +3211,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mUiIndex == 0 && !mUiIndexSync[cubeWrapper.GetId()])
             {
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleTouchToSwap);
+                cubeWrapper.DrawUiAsset(vec(0, 0), ShuffleTouchToSwap);
             }
             else if (mUiIndex == 1 && !mUiIndexSync[cubeWrapper.GetId()])
             {
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShuffleShakeToShuffle);
+                cubeWrapper.DrawUiAsset(vec(0, 0), ShuffleShakeToShuffle);
             }
             break;
         }
@@ -3190,7 +3253,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
                 cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
+                cubeWrapper.DrawUiAsset(vec(0, 0), UiBannerFaceCompleteOrange);
             }
             else
             {
@@ -3198,7 +3261,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 
                 if (mDelayTimer > 0.0f)
                 {
-                    cubeWrapper.DrawSprite(0, Vec2(48, 48), UiGoOrange);
+                    cubeWrapper.DrawSprite(0, vec(48, 48), UiGoOrange);
                 }
             }
             break;
@@ -3225,7 +3288,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 ASSERT(cubeWrapper.GetBuddyId() < arraysize(kBuddiesFull));
                 cubeWrapper.DrawBackground(*kBuddiesFull[cubeWrapper.GetBuddyId()]);
-                cubeWrapper.DrawUiAsset(Vec2(0, 0), UiBannerFaceCompleteOrange);
+                cubeWrapper.DrawUiAsset(vec(0, 0), UiBannerFaceCompleteOrange);
             }
             else
             {
@@ -3235,7 +3298,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         }
         case GAME_STATE_SHUFFLE_CONGRATULATIONS:
         {
-            DrawShuffleCutscene(cubeWrapper, Vec2(0, 0), cubeWrapper.GetBuddyId(), mCutsceneSpriteJump0);
+            DrawShuffleCutscene(cubeWrapper, vec(0, 0), cubeWrapper.GetBuddyId(), mCutsceneSpriteJump0);
             break;
         }
         case GAME_STATE_SHUFFLE_END_GAME_NAV:
@@ -3268,12 +3331,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             if (cubeWrapper.GetId() == 0)
             {
+                const Puzzle &puzzle = GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex);
                 DrawStoryCutscene(
                     cubeWrapper,
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneEnvironment(),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneLineStart(mStoryCutsceneIndex),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(0),
-                    GetPuzzle(mStoryBookIndex, mStoryPuzzleIndex).GetCutsceneBuddyStart(1),
+                    puzzle.GetCutsceneEnvironment(),
+                    puzzle.GetCutsceneLineStart(mStoryCutsceneIndex),
+                    puzzle.GetCutsceneBuddyStart(0),
+                    puzzle.GetCutsceneBuddyStart(1),
                     mCutsceneSpriteJump0,
                     mCutsceneSpriteJump1);
             }
@@ -3355,7 +3419,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     
                     if (mDelayTimer > 0.0f)
                     {
-                        cubeWrapper.DrawSprite(0, Vec2(48, 48), UiGoOrange);
+                        cubeWrapper.DrawSprite(0, vec(48, 48), UiGoOrange);
                     }
                 }
             }
@@ -3430,28 +3494,28 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (mBackgroundScroll.y > 0 && mBackgroundScroll.y < 20)
             {
-                int y = mBackgroundScroll.y - StoryRibbonNewCharacter.height;
+                int y = mBackgroundScroll.y - StoryRibbonNewCharacter.tileHeight();
                 int assetOffset = 0;
-                int assetHeight = StoryRibbonNewCharacter.height;
+                int assetHeight = StoryRibbonNewCharacter.tileHeight();
                 
-                if (mBackgroundScroll.y < int(StoryRibbonNewCharacter.height))
+                if (mBackgroundScroll.y < int(StoryRibbonNewCharacter.tileHeight()))
                 {
                     y = 0;
-                    assetOffset = StoryRibbonNewCharacter.height - mBackgroundScroll.y;
+                    assetOffset = StoryRibbonNewCharacter.tileHeight() - mBackgroundScroll.y;
                     assetHeight = mBackgroundScroll.y;
                 }
                 else if (mBackgroundScroll.y > kMaxTilesY)
                 {
                     assetOffset = 0;
-                    assetHeight = StoryRibbonNewCharacter.height - (mBackgroundScroll.y - kMaxTilesY);
+                    assetHeight = StoryRibbonNewCharacter.tileHeight() - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
-                ASSERT(assetOffset >= 0 && assetOffset <  int(StoryRibbonNewCharacter.height));
-                ASSERT(assetHeight >  0 && assetHeight <= int(StoryRibbonNewCharacter.height));
+                ASSERT(assetOffset >= 0 && assetOffset <  int(StoryRibbonNewCharacter.tileHeight()));
+                ASSERT(assetHeight >  0 && assetHeight <= int(StoryRibbonNewCharacter.tileHeight()));
                 cubeWrapper.DrawUiAssetPartial(
-                    Vec2(0, y),
-                    Vec2(0, assetOffset),
-                    Vec2(kMaxTilesX, assetHeight),
+                    vec(0, y),
+                    vec(0, assetOffset),
+                    vec(kMaxTilesX, assetHeight),
                     StoryRibbonNewCharacter);
             }
             break;
@@ -3468,30 +3532,30 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 ASSERT(buddyId < arraysize(kBuddyRibbons));
                 const AssetImage &ribbon = *kBuddyRibbons[buddyId];
                 
-                int y = mBackgroundScroll.y - ribbon.height;
+                int y = mBackgroundScroll.y - ribbon.tileHeight();
                 int assetOffset = 0;
-                int assetHeight = ribbon.height;
+                int assetHeight = ribbon.tileHeight();
                 
-                if (mBackgroundScroll.y < int(ribbon.height))
+                if (mBackgroundScroll.y < int(ribbon.tileHeight()))
                 {
                     y = 0;
-                    assetOffset = ribbon.height - mBackgroundScroll.y;
+                    assetOffset = ribbon.tileHeight() - mBackgroundScroll.y;
                     assetHeight = mBackgroundScroll.y;
                 }
                 else if (mBackgroundScroll.y > kMaxTilesY)
                 {
                     assetOffset = 0;
-                    assetHeight = ribbon.height - (mBackgroundScroll.y - kMaxTilesY);
+                    assetHeight = ribbon.tileHeight() - (mBackgroundScroll.y - kMaxTilesY);
                 }
                 
                 DrawUnlocked3Sprite(cubeWrapper, BuddyId(buddyId), mBackgroundScroll, mCutsceneSpriteJump0);
                 
-                ASSERT(assetOffset >= 0 && assetOffset <  int(ribbon.height));
-                ASSERT(assetHeight >  0 && assetHeight <= int(ribbon.height));
+                ASSERT(assetOffset >= 0 && assetOffset <  int(ribbon.tileHeight()));
+                ASSERT(assetHeight >  0 && assetHeight <= int(ribbon.tileHeight()));
                 cubeWrapper.DrawUiAssetPartial(
-                    Vec2(0, y),
-                    Vec2(0, assetOffset),
-                    Vec2(kMaxTilesX, assetHeight),
+                    vec(0, y),
+                    vec(0, assetOffset),
+                    vec(kMaxTilesX, assetHeight),
                     ribbon);
             }
             break;
@@ -3508,7 +3572,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     BuddyId buddyId = GetBook(mStoryBookIndex + 1).mUnlockBuddyId;
                     
                     ASSERT(buddyId < arraysize(kBuddySpritesFront));
-                    cubeWrapper.DrawSprite(0, Vec2(32, 14), *kBuddySpritesFront[buddyId]);
+                    cubeWrapper.DrawSprite(0, vec(32, 14), *kBuddySpritesFront[buddyId]);
                 }
                 else
                 {
@@ -3528,7 +3592,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_STORY_GAME_END_CONGRATS:
         {
             cubeWrapper.DrawBackground(UiCongratulations);
-            cubeWrapper.DrawUiAsset(Vec2(0, 7), StoryRibbonComplete);
+            cubeWrapper.DrawUiAsset(vec(0, 7), StoryRibbonComplete);
             break;
         }
         case GAME_STATE_STORY_GAME_END_MORE:
@@ -3537,7 +3601,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             int numUnlockLeft = GetNumBuddiesLeftToUnlock();
             int xSpan = numUnlockLeft * 2 + (numUnlockLeft - 1) * 1;
-            int xBase = (VidMode::LCD_width / VidMode::TILE / 2) - (xSpan / 2);
+            int xBase = (LCD_width / TILE / 2) - (xSpan / 2);
             
             // No invisible buddies!
             int iFace = 0;
@@ -3548,7 +3612,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                     int x = xBase + iFace * 3;
                     
                     ASSERT(iBuddy < arraysize(kBuddiesSmall));
-                    cubeWrapper.DrawUiAsset(Vec2(x, 5), *kBuddiesSmall[iBuddy]);
+                    cubeWrapper.DrawUiAsset(vec(x, 5), *kBuddiesSmall[iBuddy]);
                     
                     ++iFace;
                 }
@@ -3556,7 +3620,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             
             if (numUnlockLeft % 2 == 0)
             {
-                cubeWrapper.ScrollUi(Vec2(-VidMode::TILE / 2, 0U));
+                cubeWrapper.ScrollUi(vec(-TILE / 2, 0U));
             }
             
             break;
@@ -3613,8 +3677,8 @@ void App::InsertScore()
 void App::SaveData()
 {
 #if 0
-    LOG(("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
-        mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+    LOG("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
+        mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]);
     
     FILE *saveDataFile = std::fopen("SaveData.bin", "wb");
     ASSERT(saveDataFile != NULL);
@@ -3652,7 +3716,7 @@ void App::LoadData()
         
         if (sizeFile != sizeData)
         {
-            LOG(("SaveData.bin is wrong size. Re-saving...\n"));
+            LOG("SaveData.bin is wrong size. Re-saving...\n");
             SaveData();
         }
         else
@@ -3671,8 +3735,8 @@ void App::LoadData()
             int success2 = std::fclose(saveDataFile);
             ASSERT(success2 == 0);
             
-            LOG(("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
-                mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]));
+            LOG("SaveData = (%u, %u, %.2ff, %.2ff, %.2ff)\n",
+                mSaveDataStoryBookProgress, mSaveDataStoryPuzzleProgress, mSaveDataBestTimes[0], mSaveDataBestTimes[1], mSaveDataBestTimes[1]);
         }
     }
 #else
@@ -3701,30 +3765,30 @@ void App::UpdateSwap(float dt)
         int swap_anim_counter = mSwapAnimationSlideTimer / slide_tick;
         int swapOffset = -kSwapAnimationCount + swap_anim_counter;
         
-        if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
+        if ((mSwapPiece0 % NUM_SIDES) == TOP || (mSwapPiece0 % NUM_SIDES) == BOTTOM)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece0 % NUM_SIDES,
-                Vec2(0, swapOffset));
+                Side(mSwapPiece0 % NUM_SIDES),
+                vec(0, swapOffset));
         }
-         else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
+         else if ((mSwapPiece0 % NUM_SIDES) == LEFT || (mSwapPiece0 % NUM_SIDES) == RIGHT)
         {
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece0 % NUM_SIDES,
-                Vec2(swapOffset, 0));
+                Side(mSwapPiece0 % NUM_SIDES),
+                vec(swapOffset, 0));
         }
         
-        if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
+        if ((mSwapPiece1 % NUM_SIDES) == TOP || (mSwapPiece1 % NUM_SIDES) == BOTTOM)
         {        
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(0, swapOffset));
+                Side(mSwapPiece1 % NUM_SIDES),
+                vec(0, swapOffset));
         }
-        else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
+        else if ((mSwapPiece1 % NUM_SIDES) == LEFT || (mSwapPiece1 % NUM_SIDES) == RIGHT)
         {
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                mSwapPiece1 % NUM_SIDES,
-                Vec2(swapOffset, 0));
+                Side(mSwapPiece1 % NUM_SIDES),
+                vec(swapOffset, 0));
         }
         
         if (done)
@@ -3744,30 +3808,30 @@ void App::UpdateSwap(float dt)
             
             int swapOffset = -swap_anim_counter;
             
-            if ((mSwapPiece0 % NUM_SIDES) == SIDE_TOP || (mSwapPiece0 % NUM_SIDES) == SIDE_BOTTOM)
+            if ((mSwapPiece0 % NUM_SIDES) == TOP || (mSwapPiece0 % NUM_SIDES) == BOTTOM)
             {
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                    mSwapPiece0 % NUM_SIDES,
-                    Vec2(0, swapOffset));
+                    Side(mSwapPiece0 % NUM_SIDES),
+                    vec(0, swapOffset));
             }
-            else if ((mSwapPiece0 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece0 % NUM_SIDES) == SIDE_RIGHT)
+            else if ((mSwapPiece0 % NUM_SIDES) == LEFT || (mSwapPiece0 % NUM_SIDES) == RIGHT)
             {
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
-                    mSwapPiece0 % NUM_SIDES,
-                    Vec2(swapOffset, 0));
+                    Side(mSwapPiece0 % NUM_SIDES),
+                    vec(swapOffset, 0));
             }
             
-            if ((mSwapPiece1 % NUM_SIDES) == SIDE_TOP || (mSwapPiece1 % NUM_SIDES) == SIDE_BOTTOM)
+            if ((mSwapPiece1 % NUM_SIDES) == TOP || (mSwapPiece1 % NUM_SIDES) == BOTTOM)
             {
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                    mSwapPiece1 % NUM_SIDES,
-                    Vec2(0, swapOffset));
+                    Side(mSwapPiece1 % NUM_SIDES),
+                    vec(0, swapOffset));
             }
-            else if ((mSwapPiece1 % NUM_SIDES) == SIDE_LEFT || (mSwapPiece1 % NUM_SIDES) == SIDE_RIGHT)
+            else if ((mSwapPiece1 % NUM_SIDES) == LEFT || (mSwapPiece1 % NUM_SIDES) == RIGHT)
             {
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
-                    mSwapPiece1 % NUM_SIDES,
-                    Vec2(swapOffset, 0));
+                    Side(mSwapPiece1 % NUM_SIDES),
+                    vec(swapOffset, 0));
             }
         }
         
@@ -3775,8 +3839,8 @@ void App::UpdateSwap(float dt)
         {
             if (UpdateTimer(mSwapAnimationRotateTimer, dt))
             {            
-                Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
-                if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES))
+                Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(Side(mSwapPiece0 % NUM_SIDES));
+                if (piece0.GetRotation() != GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)))
                 {
                     piece0.SetRotation(piece0.GetRotation() - 1);
                     if (piece0.GetRotation() < 0)
@@ -3784,10 +3848,10 @@ void App::UpdateSwap(float dt)
                         piece0.SetRotation(piece0.GetRotation() + NUM_SIDES);
                     }
                 }
-                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(Side(mSwapPiece0 % NUM_SIDES), piece0);
                 
-                Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
-                if (!IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+                Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES));
+                if (piece1.GetRotation() != GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
                 {
                     piece1.SetRotation(piece1.GetRotation() - 1);
                     if (piece1.GetRotation() < 0)
@@ -3795,10 +3859,10 @@ void App::UpdateSwap(float dt)
                         piece1.SetRotation(piece1.GetRotation() + NUM_SIDES);
                     }
                 }
-                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(Side(mSwapPiece1 % NUM_SIDES), piece1);
                 
-                if (!IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) ||
-                    !IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+                if (piece0.GetRotation() != GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) ||
+                    piece1.GetRotation() != GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
                 {
                     mSwapAnimationRotateTimer += kSwapAnimationSlide / NUM_SIDES;
                 }
@@ -3806,12 +3870,12 @@ void App::UpdateSwap(float dt)
         }
         
         // Are we done here?
-        const Piece &piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
-        const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
+        const Piece &piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(Side(mSwapPiece0 % NUM_SIDES));
+        const Piece &piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES));
         
         if (mSwapAnimationSlideTimer <= 0.0f &&
-            IsAtRotationTarget(piece0, mSwapPiece0 % NUM_SIDES) &&
-            IsAtRotationTarget(piece1, mSwapPiece1 % NUM_SIDES))
+            piece0.GetRotation() == GetRotationTarget(piece0, Side(mSwapPiece0 % NUM_SIDES)) &&
+            piece1.GetRotation() == GetRotationTarget(piece1, Side(mSwapPiece1 % NUM_SIDES)))
         {
             OnSwapFinish();
         }
@@ -3828,8 +3892,8 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
     mSwapState = SWAP_STATE_OUT;
     mSwapAnimationSlideTimer = kSwapAnimationSlide;
     
-    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, Vec2(0, 0));
-    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, Vec2(0, 0));
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(Side(mSwapPiece0 % NUM_SIDES), vec(0, 0));
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(Side(mSwapPiece1 % NUM_SIDES), vec(0, 0));
     
     mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = 0.0f;
     mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = 0.0f;
@@ -3848,8 +3912,8 @@ void App::OnSwapExchange()
     mSwapAnimationRotateTimer = kSwapAnimationSlide / NUM_SIDES;
     mSwapAnimationRotateTimer *= 2.0f; // Double the delay for first rotation, so we can see it
     
-    int side0 = mSwapPiece0 % NUM_SIDES;
-    int side1 = mSwapPiece1 % NUM_SIDES;
+    Side side0 = Side(mSwapPiece0 % NUM_SIDES);
+    Side side1 = Side(mSwapPiece1 % NUM_SIDES);
     
     Piece piece0 = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(side0);
     Piece piece1 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(side1);
@@ -3895,8 +3959,8 @@ void App::OnSwapFinish()
     mSwapState = SWAP_STATE_NONE;
     mSwapAnimationSlideTimer = 0.0f;
     
-    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, Vec2(0, 0));
-    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, Vec2(0, 0));
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(Side(mSwapPiece0 % NUM_SIDES), vec(0, 0));
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(Side(mSwapPiece1 % NUM_SIDES), vec(0, 0));
     
     if (mGameState == GAME_STATE_FREEPLAY_PLAY)
     {
@@ -3936,15 +4000,15 @@ void App::OnSwapFinish()
     {
         bool swap0Solved =
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).Compare(
-                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).GetMustSolve();
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(Side(mSwapPiece0 % NUM_SIDES)).Compare(
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece0 % NUM_SIDES))) &&
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece0 % NUM_SIDES)).GetMustSolve();
         
         bool swap1Solved =
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).Compare(
-                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).GetMustSolve();
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES)).Compare(
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece1 % NUM_SIDES))) &&     
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece1 % NUM_SIDES)).GetMustSolve();
         
         if (AllSolved(*this))
         {
@@ -4000,15 +4064,15 @@ void App::OnSwapFinish()
     {
         bool swap0Solved =
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).Compare(
-                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).GetMustSolve();
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(Side(mSwapPiece0 % NUM_SIDES)).Compare(
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece0 % NUM_SIDES))) &&
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece0 % NUM_SIDES)).GetMustSolve();
         
         bool swap1Solved =
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).Compare(
-                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).GetMustSolve();
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(Side(mSwapPiece1 % NUM_SIDES)).Compare(
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece1 % NUM_SIDES))) &&     
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(Side(mSwapPiece1 % NUM_SIDES)).GetMustSolve();
         
         if (AllSolved(*this))
         {
@@ -4060,26 +4124,26 @@ void App::ChooseHint()
     {
         if (mCubeWrappers[iCube0].IsEnabled())
         {
-            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            for (int iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
             {
                 for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
                 {
                     if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
                     {
-                        for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                        for (int iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
                         {
-                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
-                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
+                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(Side(iSide0));
+                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(Side(iSide1));
                             
-                            if (mCubeWrappers[iCube0].GetPieceSolution(iSide0).GetMustSolve() &&
+                            if (mCubeWrappers[iCube0].GetPieceSolution(Side(iSide0)).GetMustSolve() &&
                                 piece0.GetAttribute() != Piece::ATTR_FIXED &&
-                                mCubeWrappers[iCube1].GetPieceSolution(iSide1).GetMustSolve() &&
+                                mCubeWrappers[iCube1].GetPieceSolution(Side(iSide1)).GetMustSolve() &&
                                 piece1.GetAttribute() != Piece::ATTR_FIXED)
                             {
                                 const Piece &pieceSolution0 =
-                                    mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                                    mCubeWrappers[iCube0].GetPieceSolution(Side(iSide0));
                                 const Piece &pieceSolution1 =
-                                    mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                    mCubeWrappers[iCube1].GetPieceSolution(Side(iSide1));
                                 
                                 if (!piece0.Compare(pieceSolution0) &&
                                     !piece1.Compare(pieceSolution1))
@@ -4105,10 +4169,10 @@ void App::ChooseHint()
     {
         if (mCubeWrappers[iCube0].IsEnabled())
         {
-            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            for (int iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
             {
-                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
-                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(Side(iSide0));
+                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(Side(iSide0));
                 
                 if (piece0.GetAttribute() != Piece::ATTR_FIXED && !piece0.Compare(pieceSolution0))
                 {
@@ -4116,12 +4180,12 @@ void App::ChooseHint()
                     {
                         if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
                         {
-                            for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                            for (int iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
                             {
                                 if (mHintPieceSkip != int(iCube1 * NUM_SIDES + iSide1))
                                 {
                                     const Piece &pieceSolution1 =
-                                        mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                        mCubeWrappers[iCube1].GetPieceSolution(Side(iSide1));
                                     
                                     if (piece0.Compare(pieceSolution1))
                                     {
@@ -4144,24 +4208,24 @@ void App::ChooseHint()
     {
         if (mCubeWrappers[iCube0].IsEnabled())
         {
-            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            for (int iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
             {
                 for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
                 {
                     if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
                     {
-                        for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                        for (int iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
                         {
-                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
-                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
+                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(Side(iSide0));
+                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(Side(iSide1));
                             
                             if (piece0.GetAttribute() != Piece::ATTR_FIXED &&
                                 piece1.GetAttribute() != Piece::ATTR_FIXED)
                             {
                                 const Piece &pieceSolution0 =
-                                    mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                                    mCubeWrappers[iCube0].GetPieceSolution(Side(iSide0));
                                 const Piece &pieceSolution1 =
-                                    mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                    mCubeWrappers[iCube1].GetPieceSolution(Side(iSide1));
                                 
                                 if (!piece0.Compare(pieceSolution0) &&
                                     !piece1.Compare(pieceSolution1))
@@ -4186,10 +4250,10 @@ void App::ChooseHint()
     {
         if (mCubeWrappers[iCube0].IsEnabled())
         {
-            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            for (int iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
             {
-                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
-                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(Side(iSide0));
+                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(Side(iSide0));
                 
                 if (piece0.GetAttribute() != Piece::ATTR_FIXED && !piece0.Compare(pieceSolution0))
                 {
@@ -4198,8 +4262,8 @@ void App::ChooseHint()
                     // so just swap it anywhere. But make sure to remember where we swapped it
                     // so we don't just swap it back here next turn.
                     
-                    Cube::ID iCube1 = (iCube0 + 1) % kNumCubes;
-                    Cube::Side iSide1 = iSide0;
+                    int iCube1 = (iCube0 + 1) % kNumCubes;
+                    int iSide1 = iSide0;
                     
                     mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
                     mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
@@ -4223,8 +4287,8 @@ void App::StartHint()
     
     ASSERT(IsHinting());
     
-    mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(mHintPiece0 % NUM_SIDES);
-    mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(mHintPiece1 % NUM_SIDES);
+    mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(Side(mHintPiece0 % NUM_SIDES));
+    mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(Side(mHintPiece1 % NUM_SIDES));
     
     mHintTimer = kHintTimerOffDuration;
 }
@@ -4362,9 +4426,9 @@ void App::DrawBackgroundWithTouchBump(CubeWrapper &cubeWrapper, const AssetImage
         mTouching[cubeWrapper.GetId()] == TOUCH_STATE_HOLD;
     
     cubeWrapper.DrawBackgroundPartial(
-        Vec2(0, 0),
-        Vec2(1, holding ? 2 : 1),
-        Vec2(16, 16),                      
+        vec(0, 0),
+        vec(1, holding ? 2 : 1),
+        vec(16, 16),                      
         background);
 }
 
@@ -4380,14 +4444,14 @@ void App::DrawStoryChapterNext(CubeWrapper &cubeWrapper, unsigned int bookIndex,
     String<16> buffer;
     buffer << "Chapter " << (nextPuzzleIndex + 1);
     int x = (kMaxTilesX / 2) - (buffer.size() / 2);
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    cubeWrapper.DrawUiText(vec(x, 9), UiFontOrange, buffer.c_str());
     
     Int2 scroll;
     scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
+    scroll.y = TILE / 2;
     if (buffer.size() % 2 != 0)
     {
-        scroll.x = VidMode::TILE / 2;
+        scroll.x = TILE / 2;
     }
     cubeWrapper.ScrollUi(scroll);
 }
@@ -4403,14 +4467,14 @@ void App::DrawStoryChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleInd
     buffer << "Chapter " << (puzzleIndex + 1);
     int x = (kMaxTilesX / 2) - (buffer.size() / 2);
     
-    cubeWrapper.DrawUiText(Vec2(x, 9), UiFontOrange, buffer.c_str());
+    cubeWrapper.DrawUiText(vec(x, 9), UiFontOrange, buffer.c_str());
     
     Int2 scroll;
     scroll.x = 0;
-    scroll.y = VidMode::TILE / 2;
+    scroll.y = TILE / 2;
     if (buffer.size() % 2 != 0)
     {
-        scroll.x = VidMode::TILE / 2;
+        scroll.x = TILE / 2;
     }
     cubeWrapper.ScrollUi(scroll);
 }

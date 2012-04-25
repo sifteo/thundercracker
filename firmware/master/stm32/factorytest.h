@@ -14,7 +14,8 @@ public:
         NrfComms        = 0,
         FlashComms      = 1,
         FlashReadWrite  = 2,
-        Led             = 3
+        Led             = 3,
+        UniqueId        = 4
     };
 
     static void init();
@@ -32,6 +33,7 @@ private:
     static void flashCommsHandler(uint8_t argc, uint8_t *args);
     static void flashReadWriteHandler(uint8_t argc, uint8_t *args);
     static void ledHandler(uint8_t argc, uint8_t *args);
+    static void uniqueIdHandler(uint8_t argc, uint8_t *args);
 };
 
 #endif // FACTORYTEST_H
