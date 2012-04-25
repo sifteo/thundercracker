@@ -56,30 +56,13 @@ bool SystemCubes::init(System *sys)
     return true;
 }
 
-void SystemCubes::startThread()
-{
-    mThreadRunning = true;
-    __asm__ __volatile__ ("" : : : "memory");
-    mThread = new tthread::thread(threadFn, this);
-}
-
-void SystemCubes::stopThread()
-{
-    mThreadRunning = false;
-    __asm__ __volatile__ ("" : : : "memory");
-    deadlineSync.wake();
-    mThread->join();
-    delete mThread;
-    mThread = 0;
-}
-
 void SystemCubes::setNumCubes(unsigned n)
 {
     if (n == sys->opt_numCubes)
         return;
 
     // Must change opt_numCubes only while our thread is stopped!
-    stopThread();
+    tthread::lock_guard<tthread::mutex> guard(mBigCubeLock);
 
     // Initialize any new cubes
     while (sys->opt_numCubes < n)
@@ -91,15 +74,12 @@ void SystemCubes::setNumCubes(unsigned n)
     // Nothing special needed to remove a cube
     ASSERT(sys->opt_numCubes >= n);
     sys->opt_numCubes = n;
-
-    startThread();
 }
 
 void SystemCubes::resetCube(unsigned id)
 {
-    stopThread();
+    tthread::lock_guard<tthread::mutex> guard(mBigCubeLock);
     sys->cubes[id].reset();
-    startThread();
 }
 
 bool SystemCubes::initCube(unsigned id, bool wakeFromSleep)
@@ -144,12 +124,19 @@ void SystemCubes::start()
         Cube::Debug::stopOnException = !sys->opt_continueOnException;
     }
 
-    startThread();
+    mThreadRunning = true;
+    __asm__ __volatile__ ("" : : : "memory");
+    mThread = new tthread::thread(threadFn, this);
 }
 
 void SystemCubes::stop()
 {
-    stopThread();
+    mThreadRunning = false;
+    __asm__ __volatile__ ("" : : : "memory");
+    deadlineSync.wake();
+    mThread->join();
+    delete mThread;
+    mThread = 0;
 
     if (sys->opt_cube0Debug)
         Cube::Debug::exit();
@@ -193,7 +180,8 @@ void SystemCubes::threadFn(void *param)
          * All batch loops are marked NEVER_INLINE, so that they will show up separately
          * in profilers.
          */
-         
+
+        self->mBigCubeLock.lock();
         if (debug) {
             self->tickLoopDebug();
         } else if (nCubes < 1 || !sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
@@ -201,6 +189,7 @@ void SystemCubes::threadFn(void *param)
         } else {
             self->tickLoopFastSBT();
         }
+        self->mBigCubeLock.unlock();
 
         /*
          * Use TimeGovernor to keep us running no faster than real-time.
