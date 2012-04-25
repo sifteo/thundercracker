@@ -473,3 +473,31 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
         break;
     }
 }
+
+bool Dictionary::getCurrentWorldInfo(unsigned char &world,
+                                     unsigned char &numMetas,
+                                     unsigned char *indexes,
+                                     unsigned char &numIndexes)
+{
+    // optimized for memory, not CPU time
+    numMetas = 0;
+    world = 0;
+    numIndexes = 0;
+    for (int i = 0; i <= sPuzzleIndex; ++i)
+    {
+        if (isMetaPuzzle(i))
+        {
+            ++numMetas;
+            if (numMetas > puzzlesMetaPuzzlesPerWorld[world])
+            {
+                numIndexes = 0;
+                ++world;
+                numMetas = 1;
+            }
+            ASSERT(numIndexes < MAX_METAS_PER_WORLD); // buffer overrun
+            indexes[numIndexes++] = i;
+        }
+    }
+    numMetas = puzzlesMetaPuzzlesPerWorld[world];
+    return world;
+}

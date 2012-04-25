@@ -7,6 +7,7 @@
 #include "assets.gen.h"
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
+const float CITY_PROGRESSION_STATE_TIME = 3.0f;
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -190,7 +191,6 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         case EventID_Update:
             if (getNumCubesInAnim(AnimType_NotWord) >= NUM_CUBES)
             {
-
                 newStateIndex = GameStateIndex_PlayScored;
             }
             break;
@@ -277,8 +277,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesExit) <= 0)
                     {
 
-                        // TODO
-                        if (0&&Dictionary::currentIsMetaPuzzle())
+                        if (Dictionary::currentIsMetaPuzzle())
                         {
                             WordGame::onEvent(EventID_PuzzleSolved, EventData());
                             newStateIndex = GameStateIndex_StoryCityProgression;
@@ -427,12 +426,14 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case GameStateIndex_StoryCityProgression:
-        /* TODO remove switch (eventID)
+        switch (eventID)
         {
-        case EventID_Shake:
-            WordGame::playAudio(shake, AudioChannelIndex_Shake);
-            newStateIndex = GameStateIndex_ShuffleScored;
-        }*/
+        case EventID_Update:
+            if (getTime() >= CITY_PROGRESSION_STATE_TIME)
+            {
+                newStateIndex = GameStateIndex_StoryStartOfRound;
+            }
+        }
         break;
 
     case GameStateIndex_Loading:
@@ -596,7 +597,7 @@ void GameStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
     EventData data;
     data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
-//     LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
+    LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldStateIndex);
     onEvent(EventID_GameStateChanged, data);

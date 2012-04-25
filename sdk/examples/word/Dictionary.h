@@ -5,7 +5,8 @@
 
 typedef int WordID;
 const WordID WORD_ID_NONE = -1;
-const unsigned MAX_WORDS_PER_PUZZLE = 16; // as determined by offline check
+const unsigned char MAX_WORDS_PER_PUZZLE = 16; // as determined by offline check
+const unsigned char MAX_METAS_PER_WORLD = 12;
 
 class Dictionary
 {
@@ -36,6 +37,10 @@ public:
     static unsigned char getCurrentPuzzleMetaLetterIndex();
     static bool currentIsMetaPuzzle();
     static bool currentStartsNewMetaPuzzle();
+    static bool getCurrentWorldInfo(unsigned char &world,
+                                    unsigned char &numMetas,
+                                    unsigned char *indexes,
+                                    unsigned char &numIndexes);
     static void sOnEvent(unsigned eventID, const EventData& data);
 
 private:

@@ -521,6 +521,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case EventID_EnterState:
             break;
+
+        case EventID_GameStateChanged:
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+            }
+            break;
         }
         break;
 
@@ -1355,27 +1363,96 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            mVidBuf->bg0.image(vec(2,2), IconGreece);
-            // TODO drive from python script that looks at puzzles
-            unsigned char numMetaPuzzles = 4;
-            unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
-            unsigned char startPuzzle = 0;
-            const unsigned char MAX_SLAT_WIDTH = 24;
-            unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetaPuzzles);
-            //const static *AssetImage SLATS[] = { &Slat1, &Slat2, &Slat3 };
-            //const *AssetImage slat = SLATS[slatWidth/8 - 1];
-            // TODO odd number handling
-            for (unsigned char i = 0; i < numMetaPuzzles; ++i)
+            // FIXME data-drive icon name
+            const static AssetImage *icons[] =
             {
-                if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+                &IconGreece,
+            };
+            unsigned char world;
+            // TODO drive from python script that looks at puzzles
+            unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
+            unsigned char numMetas;
+            unsigned char numIndexes;
+            Dictionary::getCurrentWorldInfo(world, numMetas, metaPuzzleIndexes, numIndexes);
+            mVidBuf->bg0.image(vec(2,2), *icons[world]);
+            //unsigned char startPuzzle = 0;
+            //const unsigned char MAX_SLAT_WIDTH = 24;
+            //unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetas);
+            //unsigned char wideSlatWidth =
+              //      MIN(MAX_SLAT_WIDTH, 96 - 8*(slatWidth/8) * numMetas);
+            const static AssetImage* SLATS[] = { &Slat1, &Slat2, &Slat3 };
+            const static unsigned char SLAT_TILE_WIDTHS[] = { 1, 2, 3 };
+            unsigned char numSlats[] = {0, 0, 0};
+            // solve for num wide and extra wide slats
+            for (unsigned i = 0; i < 12/SLAT_TILE_WIDTHS[1]; ++i)
+            {
+                for (unsigned j = 0; j < 12/SLAT_TILE_WIDTHS[2]; ++j)
                 {
+                    if ((SLAT_TILE_WIDTHS[1]-1)*i + (SLAT_TILE_WIDTHS[2]-1)*j == 12 - numMetas)
+                    {
+                        numSlats[1] = i;
+                        numSlats[2] = j;
+                        break;
+                    }
                 }
-                else
+                if (numSlats[1])
                 {
-                    mVidBuf->bg0.image(vec(2 + i * slatWidth/8, 2), Slat3);
+                    break;
                 }
             }
+            numSlats[0] = numMetas - numSlats[1] - numSlats[2];
 
+            //const AssetImage* slat = SLATS[slatWidth/8 - 1];
+            //unsigned char numWideSlats =
+              //      (unsigned char) _ceilf(((float)96 - 8*(slatWidth/8) * numMetas)/((float)MAX_SLAT_WIDTH - 8));
+            unsigned char slatOffset = 0;
+            // TODO odd number handling
+            unsigned slatsIndex = 0;
+            while (slatsIndex < arraysize(numSlats))
+            {
+                if (numSlats[slatsIndex])
+                {
+                    break;
+                }
+                ++slatsIndex;
+            }
+            for (unsigned char i = 0; i < numMetas; ++i)
+            {
+                bool solved = false;
+                if (i < numIndexes)
+                {
+                    solved =
+                        WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]);
+                }
+
+                if (!solved)
+                {
+                    const AssetImage* slat = SLATS[slatsIndex];
+                    mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
+                    //LOG("slat %d\n", slatsIndex);
+                }
+                slatOffset += SLAT_TILE_WIDTHS[slatsIndex];
+                --numSlats[slatsIndex];
+                while (slatsIndex < arraysize(numSlats))
+                {
+                    if (numSlats[slatsIndex])
+                    {
+                        break;
+                    }
+                    ++slatsIndex;
+                }
+
+            }
         }
         break;
 
@@ -2013,7 +2090,7 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-//     LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
+    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 
