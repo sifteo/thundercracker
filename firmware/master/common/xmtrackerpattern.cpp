@@ -28,7 +28,7 @@ void XmTrackerPattern::loadPattern(uint16_t i)
     if (!SvmMemory::copyROData(pattern, va)) {
         // Fail in as many ways as possible!
         LOG((LGPFX"Could not copy %p (length %lu)!\n",
-             (void *)va, sizeof(_SYSXMPattern)));
+             (void *)va, (long unsigned)sizeof(_SYSXMPattern)));
         ASSERT(false);
         return;
     }
