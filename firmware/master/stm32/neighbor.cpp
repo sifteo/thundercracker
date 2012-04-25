@@ -6,64 +6,65 @@
 #include "neighbor.h"
 #include "board.h"
 
+GPIOPin Neighbor::inPins[4] = {
+    JIG_NBR_IN1_GPIO,
+    JIG_NBR_IN2_GPIO,
+    JIG_NBR_IN3_GPIO,
+    JIG_NBR_IN4_GPIO,
+
+};
+
+GPIOPin Neighbor::outPins[4] = {
+    JIG_NBR_OUT1_GPIO,
+    JIG_NBR_OUT2_GPIO,
+    JIG_NBR_OUT3_GPIO,
+    JIG_NBR_OUT4_GPIO
+};
+
 void Neighbor::init()
 {
     txData = 0;
 
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    for (unsigned i = 0; i < 4; ++i)
+        outPins[i].setControl(GPIOPin::OUT_ALT_50MHZ);
 
+    GPIOPin &in1 = inPins[0];
     in1.irqInit();
     in1.irqSetFallingEdge();
     in1.irqDisable();
 
     // this is currently about 87 us
     txPeriodTimer.init(625, 4);
-
     rxPeriodTimer.init(900, 0);
 
-    txPeriodTimer.configureChannelAsOutput(1, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(2, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(3, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(4, HwTimer::ActiveHigh, HwTimer::Pwm1);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.configureChannelAsOutput(i, HwTimer::ActiveHigh, HwTimer::Pwm1);
 }
 
 void Neighbor::enablePwm()
 {
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    for (unsigned i = 0; i < 4; ++i)
+        outPins[i].setControl(GPIOPin::OUT_ALT_50MHZ);
 
-    txPeriodTimer.enableChannel(1);
-    txPeriodTimer.enableChannel(2);
-    txPeriodTimer.enableChannel(3);
-    txPeriodTimer.enableChannel(4);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.enableChannel(i);
 
     txPeriodTimer.enableUpdateIsr();
 }
 
 void Neighbor::setDuty(uint16_t duty)
 {
-    txPeriodTimer.setDuty(1, duty);
-    txPeriodTimer.setDuty(2, duty);
-    txPeriodTimer.setDuty(3, duty);
-    txPeriodTimer.setDuty(4, duty);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.setDuty(i, duty);
 }
 
 void Neighbor::disablePwm()
 {
-    txPeriodTimer.disableChannel(1);
-    txPeriodTimer.disableChannel(2);
-    txPeriodTimer.disableChannel(3);
-    txPeriodTimer.disableChannel(4);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.disableChannel(i);
 
-    out1.setControl(GPIOPin::IN_FLOAT);
-    out2.setControl(GPIOPin::IN_FLOAT);
-    out3.setControl(GPIOPin::IN_FLOAT);
-    out4.setControl(GPIOPin::IN_FLOAT);
+    for (unsigned i = 0; i < 4; ++i)
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
 }
 
 /*
@@ -97,6 +98,8 @@ void Neighbor::transmitNextBit()
 void Neighbor::beginReceiving()
 {
     receiving_side = -1;
+
+    GPIOPin &in1 = inPins[0];
     in1.setControl(GPIOPin::IN_FLOAT);
     in1.irqEnable();
 }
@@ -106,9 +109,11 @@ void Neighbor::beginReceiving()
  */
 void Neighbor::onRxPulse(uint8_t side)
 {
-    if (side == 0) {
-        in1.irqAcknowledge();
+    inPins[side].irqAcknowledge();
 
+    if (side == 0) {
+
+        GPIOPin &out1 = outPins[0];
         out1.setControl(GPIOPin::OUT_2MHZ);
         out1.setLow();
 
@@ -127,18 +132,6 @@ void Neighbor::onRxPulse(uint8_t side)
             break;
         }
     }
-
-    if (side == 1)  {
-        in2.irqAcknowledge();
-    }
-
-    if (side == 2)  {
-        in3.irqAcknowledge();
-    }
-
-    if (side == 3)  {
-        in4.irqAcknowledge();
-    }
 }
 
 /*
@@ -146,7 +139,7 @@ void Neighbor::onRxPulse(uint8_t side)
  */
 void Neighbor::rxPeriodIsr()
 {
-    out1.setControl(GPIOPin::IN_FLOAT);
+    outPins[0].setControl(GPIOPin::IN_FLOAT);
 
     switch (rxState) {
     case Squelch:
