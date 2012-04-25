@@ -81,11 +81,16 @@ void SystemCubes::setNumCubes(unsigned n)
     // Must change opt_numCubes only while our thread is stopped!
     stopThread();
 
+    // Initialize any new cubes
     while (sys->opt_numCubes < n)
         if (initCube(sys->opt_numCubes))
             sys->opt_numCubes++;
         else
             break;
+
+    // Nothing special needed to remove a cube
+    ASSERT(sys->opt_numCubes >= n);
+    sys->opt_numCubes = n;
 
     startThread();
 }
