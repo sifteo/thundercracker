@@ -38,12 +38,13 @@ static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 /*
  * Table of test handlers.
- * Order must match the Command enum.
+ * Their index in this table specifies their ID.
  */
 TestJig::TestHandler const TestJig::handlers[] = {
-    setUsbPowerHandler,
-    setSimulatedBatteryVoltageHandler,
-    getBatterySupplyCurrentHandler
+    setUsbEnabledHandler,                   // 0
+    setSimulatedBatteryVoltageHandler,      // 1
+    getBatterySupplyCurrentHandler,         // 2
+    getUsbCurrentHandler                    // 3
 };
 
 void TestJig::init()
@@ -103,7 +104,7 @@ uint16_t TestJig::get_received_data()
 /*
  * args[1] == non-zero for enable, 0 for disable
  */
-void TestJig::setUsbPowerHandler(uint8_t argc, uint8_t *args)
+void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 {
     bool enable = args[1];
     if (enable) {
@@ -132,7 +133,7 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
- *
+ *  no args
  */
 void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
@@ -142,23 +143,15 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::getStmVsysVoltageHandler(uint8_t argc, uint8_t *args)
+/*
+ *  no args
+ */
+void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t sample = adc.sample(USB_CURRENT_ADC_CH);
 
-}
-
-void TestJig::getStmBattVoltageHandler(uint8_t argc, uint8_t *args)
-{
-
-}
-
-void TestJig::storeStmBattVoltageHandler(uint8_t argc, uint8_t *args)
-{
-
-}
-
-void TestJig::enableTestJigNeighborTx(uint8_t argc, uint8_t *args)
-{
+    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*******************************************
