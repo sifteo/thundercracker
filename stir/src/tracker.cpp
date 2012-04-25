@@ -167,8 +167,8 @@ bool XmTrackerLoader::readNextInstrument()
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
         uint16_t eValue = get16();
-        assert(eOffset == eOffset & 0x01FF); // 9 bits
-        assert(eValue == eValue & 0x7F); // 7 bits
+        assert(eOffset == (eOffset & 0x01FF));  // 9 bits
+        assert(eValue == (eValue & 0x7F));      // 7 bits
         vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
     }
 
