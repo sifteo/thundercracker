@@ -733,60 +733,37 @@ nb_irq_ret:
     __endasm;
 }
 
-#define I2C_TX_BYTE(b) {        \
-            IR_SPI = 0;         \
-            W2DAT = (b);        \
-            while (!IR_SPI);    \
-        }
-
-#define I2C_TX_W_ACK(b, fail) {             \
-    for (;;) {                              \
-        uint8_t status;                     \
-        I2C_TX_BYTE(b);                     \
-        status = W2CON1;                    \
-        if (!(status & W2CON1_READY)) {     \
-            continue;                       \
-        }                                   \
-        if (status & W2CON1_NACK)           \
-            goto fail;                      \
-        else                                \
-            break;                          \
-    }                                       \
-}
-
-#if 0
-// used during testing
-static void i2c_rx(uint8_t devaddr, uint8_t regaddr, uint8_t *buf, uint8_t len)
+static void i2c_tx(const __code uint8_t *buf, uint8_t len)
 {
-    I2C_TX_W_ACK(devaddr, cleanup);
-    I2C_TX_W_ACK(regaddr, cleanup);
+    /*
+     * Standalone I2C transmit, used during initialization.
+     */
 
-    W2CON0 |= W2CON0_START;
-
-    I2C_TX_W_ACK(devaddr | 0x1, cleanup);
-
-    // wait for bytes
     while (len) {
-        while (!IR_SPI);                // Wait until 2-Wire irq flag is set
-        IR_SPI = 0;                     // Clear the interrupt flag
-        *buf = W2DAT;        // Read received data
+        uint8_t b = *buf;
         buf++;
         len--;
-    }
 
-cleanup:
-    W2CON0 |= W2CON0_STOP;
-}
-#endif
+        for (;;) {
+            uint8_t status;
 
-// TODO - asm these functions
-static void i2c_tx(uint8_t addr, const __code uint8_t *buf, uint8_t len)
-{
-    I2C_TX_W_ACK(addr, cleanup);
-
-    while (len--) {
-        I2C_TX_W_ACK(*buf, cleanup);
-        buf++;
+            // Transmit one byte, and wait for it.
+            IR_SPI = 0;
+            W2DAT = b;
+            while (!IR_SPI);
+            
+            status = W2CON1;
+            if (!(status & W2CON1_READY)) {
+                // Retry whole byte
+                continue;
+            }
+            if (status & W2CON1_NACK) {
+                // Failed!
+                goto cleanup;
+            } else {
+                break;
+            }
+        }
     }
 
 cleanup:
@@ -871,32 +848,13 @@ void sensors_init()
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Reset interrupt flag (used below)
     
+    // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
     {
-        // put LIS3D in low power mode with all 3 axes enabled &
-        // block data update enabled
-
-        const __code uint8_t init1[] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        const __code uint8_t init2[] = { ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
-
-        i2c_tx(ACCEL_ADDR, init1, sizeof init1);
-        i2c_tx(ACCEL_ADDR, init2, sizeof init2);
+        const __code uint8_t init1[] = { ACCEL_ADDR, ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
+        const __code uint8_t init2[] = { ACCEL_ADDR, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
+        i2c_tx(init1, sizeof init1);
+        i2c_tx(init2, sizeof init2);
     }
-    /*
-        test loop for reading data, blocking style.
-        NOTE - this works *without* having to reset the I2C peripheral...
-        investigate this further, so we don't have to reset it at the beginning
-        of each sample series in the interrupt handler loop
-    */
-#if 0
-    for (;;) {
-        uint16_t c;
-        uint8_t samples[2] = { ACCEL_START_READ_X };
-
-        i2c_rx(ACCEL_ADDR, ACCEL_START_READ_X, samples, sizeof(samples));
-
-        for (c = 0; c < 0xFFF; ++c);
-    }
-#endif
 
     IRCON = 0;                  // Clear any spurious IRQs from the above initialization
     IP0 |= 0x04;                // Interrupt priority level 1.
