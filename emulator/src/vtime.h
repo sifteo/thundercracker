@@ -220,6 +220,11 @@ class TickDeadline {
         reset();
     }
 
+    void initTo(const VirtualTime *_vtime, uint64_t latest) {
+        vtime = _vtime;
+        resetTo(latest);
+    }
+
     void reset() {
         ticks = 0xFFFFFFFFFFFFFFFFULL;
     }

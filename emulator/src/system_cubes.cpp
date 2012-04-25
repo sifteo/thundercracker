@@ -283,22 +283,21 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
     unsigned batch = sys->time.timestepTicks();
     unsigned nCubes = sys->opt_numCubes;
     unsigned stepSize = 1;
-    
-    while (batch) {
+
+    /*
+     * Run until our batch is empty, or someone tells us to stop.
+     *
+     * Note: stepSize is only equal to 0 in exceptional cases, such as
+     *       if our thread is exiting and deadlineSync is halted on the same
+     *       clock tick, preventing us from making forward progress.
+     */
+
+    while (batch && stepSize) {
         unsigned nextStep;
 
         batch -= stepSize;
         nextStep = batch;
-        
-#if 0
-        // Debugging batch sizes
-        printf("batch %d, cubes: %d @%04x, %d @%04x, %d @%04x\n",
-                stepSize,
-                cubes[0].cpu.mTickDelay, cubes[0].cpu.mPC,
-                cubes[1].cpu.mTickDelay, cubes[1].cpu.mPC,
-                cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
-#endif
-        
+
         for (unsigned i = 0; i < nCubes; i++) {
             Cube::Hardware &cube = sys->cubes[i];
             if (!cube.isSleeping())

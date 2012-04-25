@@ -32,10 +32,23 @@ public:
         mThreadWaiting = false;
         mInEvent = false;
         mTickRunFlag = tickRunFlag;
-        mDeadline.init(vtime);
-        
-        // Don't run at all until we get our first deadline.
-        mDeadline.resetTo(0);
+
+        /*
+         * Note 1: Must reset to 0 so that we don't run at all until the
+         *         first deadline has been set.
+         *
+         * Note 2: We must initialize atomically to the above state, without
+         *         the normal reset state of "infinitely far in the future".
+         *         This init() could happen asynchronously with respect to the
+         *         MC thread, so we could be init'ing while the MC thread is
+         *         waiting in beginEvent(). So, we take advantage of the fact
+         *         that we are always allowed to wake up sooner than called
+         *         for, just never later, and we use initTo() to to directly
+         *         to the distant past.
+         *
+         * Yes, a very long-winded explanation for one boring line of code...
+         */
+        mDeadline.initTo(vtime, 0);
     }
 
     /**
@@ -149,11 +162,6 @@ private:
         while (mThreadWaiting && *mTickRunFlag) {
             wake();
             mCond.wait(mMutex);
-        }
-
-        if (!*mTickRunFlag) {
-            // Make sure we don't re-enter the deadline right away if we're exiting
-            mDeadline.reset();
         }
 
         DEBUG_LOG(("SYNC: -deadlineWork (run=%d)\n", *mTickRunFlag));
