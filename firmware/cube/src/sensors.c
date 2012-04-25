@@ -290,8 +290,7 @@ as_9:
         orl     _ack_bits, #RF_ACK_BIT_ACCEL
 3$:
 
-        mov     _i2c_state, #(fs_1 - as_1)
-        sjmp    as_ret
+        ; Fall through to fs_1...
 
         ;--------------------------------------------------------------------
         ; Factory Test States
@@ -312,7 +311,7 @@ as_9:
 fs_1:
         mov     _W2DAT, #FACTORY_ADDR_TX
         mov     _i2c_temp_1, #_ack_data
-        mov     _i2c_temp_2, #RF_ACK_LEN_MAX
+        mov     _i2c_temp_2, #RF_MEM_ACK_LEN
         mov     _i2c_state, #(fs_2 - as_1)
 fs_ret:
         ljmp    as_ret
@@ -356,9 +355,12 @@ fs_4:
         ; 5. Read first byte of factory test packet
 
 fs_5:
-        mov     _i2c_temp_1, _W2DAT
+        mov     a, _W2DAT
+        mov     _i2c_temp_1, a
         mov     _i2c_state, #(fs_6 - as_1)
-        sjmp    fs_ret
+
+        cjne    a, #0xff, #fs_ret       ; Check for sentinel [ff] packet
+        ljmp    as_nack                 ;   End of transaction.
 
         ; 6. Read second byte of factory test packet
 
@@ -374,11 +376,11 @@ fs_6:
         ; three-byte packets as the test jig is willing to send us.
 
 fs_7:
-        mov     dpl, _i2c_temp_1
-        mov     a, _i2c_temp_2
+        mov     dpl, _i2c_temp_2
+        mov     a, _i2c_temp_1
         anl     a, #3                   ; Enforce VRAM address limit
         mov     dph, a
-        mov     a, _W2DAT               ; Poke byte into VRAM
+        mov     a, _W2DAT               ; Poke byte into VRAM, read from i2c.
         movx    @dptr, a
 
         mov     _i2c_state, #(fs_5 - as_1)
