@@ -181,7 +181,7 @@ uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
     SvmMemory::VirtAddr va = song.patternOrderTable + order;
     if(!SvmMemory::copyROData(buf, va)) {
         LOG((LGPFX"Could not copy %p (length %lu)!\n",
-             (void *)va, sizeof(buf)));
+             (void *)va, (long unsigned)sizeof(buf)));
         ASSERT(false);
 
         // At worst, try to do no harm?
