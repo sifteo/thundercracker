@@ -448,8 +448,36 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                 {
 
                 default:
-                    newStateIndex = GameStateIndex_Cutscene;
-                    // TODO newStateIndex = GameStateIndex_StoryStartOfRound;
+                    {
+                        unsigned char world;
+                        // TODO drive from python script that looks at puzzles
+                        unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
+                        unsigned char numMetas;
+                        unsigned char numIndexes;
+                        Dictionary::getCurrentWorldInfo(world,
+                                                        numMetas,
+                                                        metaPuzzleIndexes,
+                                                        numIndexes);
+
+                        unsigned char numMetasSolved = 0;
+                        for (unsigned char i = 0; i < numIndexes; ++i)
+                        {
+                            if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
+                            {
+                                ++numMetasSolved;
+                            }
+                        }
+
+                        if (CUTSCENE_CITY_END[getCutsceneIndex()] &&
+                            numMetasSolved < numMetas)
+                        {
+                            newStateIndex = GameStateIndex_StoryStartOfRound;
+                        }
+                        else
+                        {
+                            newStateIndex = GameStateIndex_Cutscene;
+                        }
+                    }
                     break;
                 }
 

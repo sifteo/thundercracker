@@ -8,20 +8,39 @@
 
 const static bool CUTSCENE_ADVANCE_TO_NEXT[Num_CutsceneIndexes] =
 {
-    true,
-    true,
-    false,
-
-    false,
+    true,   // first run
     true,
     false,
 
+    false, // first meta solve
+    true,
+    false,  // second meta solve
+
+    true, // third solve
     true,
     true,
-    false,
 
     true,
     true,
+    false,
+};
+
+const static bool CUTSCENE_CITY_END[Num_CutsceneIndexes] =
+{
+    false,
+    false,
+    false,
+
+    false,
+    false,
+    false,
+
+    true,
+    false,
+    false,
+
+    false,
+    false,
     false,
 };
 

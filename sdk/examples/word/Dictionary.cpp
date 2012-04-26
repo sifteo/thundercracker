@@ -86,7 +86,7 @@ bool Dictionary::getPuzzle(int index,
     ASSERT(index < (int)arraysize(puzzles));
     _SYS_strlcpy(buffer, puzzles[index], MAX_LETTERS_PER_WORD + 1);
 
-    numAnagrams = MAX(1, puzzlesNumGoalAnagrams[index]);
+    numAnagrams = 1;//MAX(1, puzzlesNumGoalAnagrams[index]);
     // TODO how many leading spaces?
     leadingSpaces = puzzlesNumLeadingSpaces[index];
 

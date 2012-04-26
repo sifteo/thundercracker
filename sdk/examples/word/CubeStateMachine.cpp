@@ -1571,8 +1571,10 @@ void CubeStateMachine::paint()
         break;
     }
 
-    //bg1.Flush(); // TODO only flush if mask has changed recently
-    mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+    if (mVidBuf->mode() == BG0_SPR_BG1)
+    {
+        mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+    }
 
 
     mPainting = false;
