@@ -7,18 +7,18 @@
 #include "board.h"
 
 GPIOPin Neighbor::inPins[4] = {
-    JIG_NBR_IN1_GPIO,
-    JIG_NBR_IN2_GPIO,
-    JIG_NBR_IN3_GPIO,
-    JIG_NBR_IN4_GPIO,
+    NBR_IN1_GPIO,
+    NBR_IN2_GPIO,
+    NBR_IN3_GPIO,
+    NBR_IN4_GPIO,
 
 };
 
 GPIOPin Neighbor::outPins[4] = {
-    JIG_NBR_OUT1_GPIO,
-    JIG_NBR_OUT2_GPIO,
-    JIG_NBR_OUT3_GPIO,
-    JIG_NBR_OUT4_GPIO
+    NBR_OUT1_GPIO,
+    NBR_OUT2_GPIO,
+    NBR_OUT3_GPIO,
+    NBR_OUT4_GPIO
 };
 
 void Neighbor::init()

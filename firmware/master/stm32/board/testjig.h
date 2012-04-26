@@ -33,10 +33,15 @@
 #define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
 
 // N E I G H B O R
-#define NBR_OUT3_GPIO       GPIOPin(&GPIOB, 8)
-#define NBR_OUT4_GPIO       GPIOPin(&GPIOB, 9)
-#define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 1)  //this kills the green LED, but good for testing
-#define NBR_OUT2_GPIO       GPIOPin(&GPIOB, 1)
+#define NBR_OUT1_GPIO       GPIOPin(&GPIOA, 0)
+#define NBR_OUT2_GPIO       GPIOPin(&GPIOA, 2)
+#define NBR_OUT3_GPIO       GPIOPin(&GPIOA, 1)
+#define NBR_OUT4_GPIO       GPIOPin(&GPIOA, 3)
+
+#define NBR_IN1_GPIO        GPIOPin(&GPIOA, 6)
+#define NBR_IN2_GPIO        GPIOPin(&GPIOA, 7)
+#define NBR_IN3_GPIO        GPIOPin(&GPIOB, 0)
+#define NBR_IN4_GPIO        GPIOPin(&GPIOB, 1)
 
 // U A R T
 #define UART_DBG            USART3
@@ -74,16 +79,6 @@
 #define JIG_I2C             I2C1
 #define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
 #define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
-
-#define JIG_NBR_IN1_GPIO    GPIOPin(&GPIOA, 0)
-#define JIG_NBR_IN2_GPIO    GPIOPin(&GPIOA, 1)
-#define JIG_NBR_IN3_GPIO    GPIOPin(&GPIOA, 2)
-#define JIG_NBR_IN4_GPIO    GPIOPin(&GPIOA, 3)
-
-#define JIG_NBR_OUT1_GPIO   GPIOPin(&GPIOA, 6)
-#define JIG_NBR_OUT2_GPIO   GPIOPin(&GPIOA, 7)
-#define JIG_NBR_OUT3_GPIO   GPIOPin(&GPIOB, 0)
-#define JIG_NBR_OUT4_GPIO   GPIOPin(&GPIOB, 1)
 
 #define PWR_MEASURE_ADC     ADC1
 #define USB_PWR_GPIO        GPIOPin(&GPIOB, 15)
