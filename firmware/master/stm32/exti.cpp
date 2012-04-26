@@ -2,6 +2,7 @@
 
 #include "nrf24l01.h"
 #include "powermanager.h"
+#include "board.h"
 
 #if (BOARD == BOARD_TEST_JIG)
 #include "testjig.h"
