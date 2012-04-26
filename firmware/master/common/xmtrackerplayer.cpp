@@ -152,11 +152,9 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
         return;
     }
 
-    LOG(("%s:%d: NOT_TESTED\n", __FILE__, __LINE__));
-
     // Save some space in my editor.
     _SYSXMInstrument &instrument = channel.instrument;
-    struct XmTrackerEnvelopeMemory &envelope = envelope;
+    struct XmTrackerEnvelopeMemory &envelope = channel.envelope;
 
     ASSERT(instrument.nVolumeEnvelopePoints > 0);
 
@@ -263,7 +261,6 @@ void XmTrackerPlayer::commit()
         int32_t volume = (channel.volume * 0xFF) >> 6;
 
         if (channel.instrument.volumeType) {
-            LOG(("%s:%d: NOT_TESTED: envelope value: %u\n", __FILE__, __LINE__, channel.envelope.value));
             volume = (volume * channel.envelope.value) >> 6;
 
             if (channel.note.note == XmTrackerPattern::kNoteOff) {
@@ -289,7 +286,6 @@ void XmTrackerPlayer::commit()
             }
         }
 
-        // TODO: volume values are all wrong. check again after effects are implemented
         mixer.setVolume(CHANNEL_FOR(i), clamp(volume, 0, _SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
