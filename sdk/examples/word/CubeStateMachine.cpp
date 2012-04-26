@@ -997,7 +997,9 @@ void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *p
         }
 
         // skip subanims for meta puzzle borders
-        if (i > CubeAnim_Main && !animHasNormalBorder(mAnimTypes[CubeAnim_Main]))
+        if (i > CubeAnim_Main &&
+            !animHasNormalBorder(mAnimTypes[CubeAnim_Main]) &&
+                !Dictionary::currentIsMetaPuzzle())
         {
             continue;
         }
@@ -1381,7 +1383,7 @@ void CubeStateMachine::paint()
         break;
 
     case CubeStateIndex_StoryCityProgression:
-        mVidBuf->bg0.image(vec(0,0), MenuBlank);
+        mVidBuf->bg0.image(vec(0,0), CityProgressionBlank);
         if (getCube() == WordGame::instance()->getMenuCube())
         {
             /* TODO animtype?
@@ -1406,25 +1408,29 @@ void CubeStateMachine::paint()
             // FIXME data-drive icon name
             const static AssetImage *icons[] =
             {
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
-                &IconGreece,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
+                &IconAthens,
             };
             unsigned char world;
             // TODO drive from python script that looks at puzzles
             unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
             unsigned char numMetas;
             unsigned char numIndexes;
-            Dictionary::getCurrentWorldInfo(world, numMetas, metaPuzzleIndexes, numIndexes);
-            mVidBuf->bg0.image(vec(2,2), *icons[world]);
+            Dictionary::getCurrentWorldInfo(world,
+                                            numMetas,
+                                            metaPuzzleIndexes,
+                                            numIndexes);
+            //mVidBuf->bg0.image(vec(2,2), vec(1,12) IconLondon, vec(0, 0));
+            //mVidBuf->bg0.image(vec(13,2), vec(1,12) IconLockedRightmost, vec(11, 0));
             //unsigned char startPuzzle = 0;
             //const unsigned char MAX_SLAT_WIDTH = 24;
             //unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetas);
@@ -1475,10 +1481,18 @@ void CubeStateMachine::paint()
                         WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]);
                 }
 
-                if (!solved)
+                if (solved)
                 {
-                    const AssetImage* slat = SLATS[slatsIndex];
-                    mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
+//                    mVidBuf->bg0.image(vec(3,2), vec(10,12) *icons[world], vec(1, 0));
+                    mVidBuf->bg0.image(vec(2 + slatOffset, 2),
+                                       vec((int)SLAT_TILE_WIDTHS[slatsIndex],12),
+                                       *icons[world],
+                                       vec((int)slatOffset, 0));
+                }
+                else
+                {
+  //                  const AssetImage* slat = SLATS[slatsIndex];
+    //                mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
                     //LOG("slat %d\n", slatsIndex);
                 }
                 slatOffset += SLAT_TILE_WIDTHS[slatsIndex];

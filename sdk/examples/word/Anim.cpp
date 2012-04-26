@@ -360,7 +360,9 @@ bool animPaint(AnimType animT,
         {
             if (i < TopRowStartIndex)
             {
-                if (params->mCubeAnim == CubeAnim_Main && animHasNormalBorder(animT))
+                if (params->mCubeAnim == CubeAnim_Main &&
+                    (animHasNormalBorder(animT) ||
+                     Dictionary::currentIsMetaPuzzle()))
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -473,7 +475,6 @@ bool animPaint(AnimType animT,
     return data.mLoop || animTime <= data.mDuration;
 }
 
-
 bool animHasNormalBorder(AnimType animT)
 {
    switch (animT)
@@ -483,10 +484,12 @@ bool animHasNormalBorder(AnimType animT)
    case AnimType_SlideR:
    case AnimType_OldWord:
    case AnimType_NewWord:
+       return !Dictionary::currentIsMetaPuzzle();
+
    case AnimType_NormalTilesEnter:
    case AnimType_NormalTilesExit:
    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
-       return true;
+       return false;
 
    default:
        return false;

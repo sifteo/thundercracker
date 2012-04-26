@@ -24,7 +24,7 @@ const static char* CUTSCENE_DIALOGUE[Num_CutsceneIndexes] =
     "You've arrived in\nLondon, England",
     "You're staying with an\nold friend this summer,\n Doc. Henry Bhat.",
     "Doc's' old trunk begins\nto glow. You decide to\nopen it.",
-    "Hey, kiddo! Bad news.\nI lost my job at the museum...\nHold on!",
+    "Hey, kiddo! Bad news.\nI lost my job at\nthe museum... Hold on!",
     "Test",
     "Test",
     "Test",
