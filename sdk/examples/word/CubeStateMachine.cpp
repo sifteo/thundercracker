@@ -1444,7 +1444,7 @@ void CubeStateMachine::paint()
                 }
             }
 
-            const float WIPE_TIME = 2.0f;
+            const float WIPE_TIME = 1.5f;
             float animPct = fmod(mStateTime / .5f, 1.f);
             float transPct = mStateTime / WIPE_TIME;
             UByte2 pos = vec(2, 2);
@@ -1483,9 +1483,12 @@ void CubeStateMachine::paint()
                     */
                 }
             }
-            else
+            else if (numMetasSolved >= numMetas)
             {
-
+                mVidBuf->bg0.image(vec(2, 0),
+                                   vec(12, 2),
+                                   LabelAthens, // TODO array
+                                   vec(2, 0));
             }
 
             LOG("sparklerow %d\n", sparkleRow);
