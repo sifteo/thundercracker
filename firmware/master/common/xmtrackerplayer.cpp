@@ -326,7 +326,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxFineVolumeSlideUp:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    channel.volume = MIN((uint32_t)channel.volume + (channel.note.effectParam & 0xF), kMaxVolume);
                     break;
                 case fxFineVolumeSlideDown:
                     LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));

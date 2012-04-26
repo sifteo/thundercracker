@@ -68,7 +68,8 @@ private:
     uint32_t getPeriod(uint16_t note, int8_t finetune) const;
     uint32_t getFrequency(uint32_t period) const;
 
-    // Envelopes
+    // Volume/Envelopes
+    static const uint8_t kMaxVolume = 64;
     static const uint8_t kEnvelopeSustain = 1;
     static const uint8_t kEnvelopeLoop = 2;
     inline static const uint16_t envelopeOffset(uint16_t enc) {
