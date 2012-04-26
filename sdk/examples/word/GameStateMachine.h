@@ -32,7 +32,7 @@ enum GameStateIndex
 };
 
 const unsigned char MAX_HINTS = 3;
-const float TOUCH_ADVANCE_DELAY = .1f; // was .5
+const float TOUCH_ADVANCE_DELAY = .5f; // was .5
 
 class GameStateMachine : public StateMachine
 {
