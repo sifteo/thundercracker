@@ -65,7 +65,7 @@ private:
     static const uint8_t kAmigaFrequencies = 0x00;
     static const uint16_t AmigaPeriodTab[];
     static const uint32_t LinearFrequencyTab[];
-    uint32_t getPeriod(int16_t note, int8_t finetune) const;
+    uint32_t getPeriod(uint16_t note, int8_t finetune) const;
     uint32_t getFrequency(uint32_t period) const;
 
     // Envelopes
