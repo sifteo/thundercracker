@@ -256,8 +256,11 @@ bool XmTrackerLoader::readNextInstrument()
      * Sanity check parameters and convert to expected units/ranges.
      */
 
-    // Sifteo volume range is (0..256), XM is (0..64)
-    sample.volume *= 4;
+    if (sample.volume > 64) {
+        log->error("%s, instrument %u: Sample volume is %u, clamped to %u",
+                   filename, instruments.size(), sample.volume, 64);
+        sample.volume = 64;
+    }
 
     // Loop type should store only the loop type
     uint8_t format = (sample.loopType >> 3) & 0x3;
