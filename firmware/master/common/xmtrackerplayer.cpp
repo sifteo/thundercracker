@@ -270,7 +270,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetVolume:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            channel.volume = MIN(channel.note.effectParam, kMaxVolume);
             break;
         case fxPatternBreak:
             LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
