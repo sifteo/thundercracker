@@ -174,7 +174,16 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Start:
-            newStateIndex = GameStateIndex_StoryStartOfRound;
+            // TODO first run only
+            if (WordGame::instance()->getSavedData().isFirstRun())
+            {
+                newStateIndex = GameStateIndex_Cutscene;
+            }
+            else
+            {
+                // TODO one menu?
+                newStateIndex = GameStateIndex_PauseMenu;
+            }
             break;
 
         default:

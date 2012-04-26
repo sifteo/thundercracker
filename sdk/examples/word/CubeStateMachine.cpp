@@ -469,6 +469,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case GameStateIndex_PlayScored:
                 newStateIndex = CubeStateIndex_NotWordScored;
                 break;
+
+            case GameStateIndex_Cutscene:
+                newStateIndex = CubeStateIndex_Cutscene;
+                break;
             }
             break;
 
