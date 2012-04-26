@@ -288,7 +288,11 @@ void XmTrackerPlayer::commit()
         mixer.setVolume(CHANNEL_FOR(i), clamp(volume, 0, _SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
-        mixer.setSpeed(CHANNEL_FOR(i), getFrequency(channel.period));
+        if (channel.period > 0) {
+            mixer.setSpeed(CHANNEL_FOR(i), getFrequency(channel.period));
+        } else {
+            mixer.stop(CHANNEL_FOR(i));
+        }
     }
 
     // Future effects are capable of adjusting the tempo/bpm
