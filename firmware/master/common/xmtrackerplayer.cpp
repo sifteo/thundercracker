@@ -65,7 +65,7 @@ inline void XmTrackerPlayer::loadNextNotes()
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
         pattern.getNote(row, i, note);
-        bool valid = false;
+        channel.valid = false;
         bool recovered = false;
 
         // Note recovery/validation
@@ -76,7 +76,7 @@ inline void XmTrackerPlayer::loadNextNotes()
                 note.instrument < song.nInstruments)
             {
                 note.note = channel.note.note;
-                valid = true;
+                channel.valid = true;
             }
         }
 
@@ -85,20 +85,20 @@ inline void XmTrackerPlayer::loadNextNotes()
             recovered = true;
             // No instrument, with either an inactive note or a previously existing instrument.
             if (note.note == XmTrackerPattern::kNoteOff) {
-                valid = true;
+                channel.valid = true;
             }
             if (channel.note.instrument != XmTrackerPattern::kNoInstrument) {
                 ASSERT(channel.instrument.sample.pData);
                 note.instrument = channel.note.instrument;
-                valid = true;
+                channel.valid = true;
             }
         }
 
         if (!recovered) {
-            valid = true;
+            channel.valid = true;
         }
 
-        if (valid) {
+        if (channel.valid) {
             if (channel.note.instrument != note.instrument) {
                 // Change the instrument.
                 // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
@@ -110,13 +110,17 @@ inline void XmTrackerPlayer::loadNextNotes()
             channel.restart = true;
             channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
 
+            // TODO
+            channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
+
             // Volume
+            memset(&channel.envelope, 0, sizeof(channel.envelope));
+            channel.fadeout = UINT16_MAX;
             channel.volume = channel.instrument.sample.volume;
             if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
                     channel.volume = note.volumeColumnByte - 0x10;
-        } else {
-            memset(&channel, 0, sizeof(channel));
-            XmTrackerPattern::resetNote(channel.note);
+
+            channel.active = true;
         }
     }
     pattern.releaseRef();
@@ -142,28 +146,151 @@ inline void XmTrackerPlayer::loadNextNotes()
     }
 }
 
+void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
+{
+    if (!channel.instrument.volumeType || channel.envelope.done) {
+        return;
+    }
+
+    LOG(("%s:%d: NOT_TESTED\n", __FILE__, __LINE__));
+
+    // Save some space in my editor.
+    _SYSXMInstrument &instrument = channel.instrument;
+    struct XmTrackerEnvelopeMemory &envelope = envelope;
+
+    ASSERT(instrument.nVolumeEnvelopePoints > 0);
+
+    if (instrument.volumeType & kEnvelopeSustain && channel.note.note != XmTrackerPattern::kNoteOff) {
+        // volumeSustainPoint is a maxima, don't exceed it.
+        if (envelope.point >= instrument.volumeSustainPoint) {
+            envelope.point = instrument.volumeSustainPoint;
+            envelope.tick = 0;
+        }
+    } else if (instrument.volumeType & kEnvelopeLoop) {
+        // Loop the loop
+        if (envelope.point >= instrument.volumeLoopEndPoint) {
+            envelope.point = instrument.volumeLoopStartPoint;
+            envelope.tick = 0;
+        }
+    }
+
+    int16_t pointLength = 0;
+    uint16_t envPt0 , envPt1 = 0;
+    if (envelope.point == instrument.nVolumeEnvelopePoints - 1) {
+        // End of envelope
+        envelope.done = true;
+
+        // Load the last envelope point from flash.
+        SvmMemory::VirtAddr va = instrument.volumeEnvelopePoints + envelope.point * sizeof(uint16_t);
+        if (!SvmMemory::copyROData(envPt0, va)) {
+            ASSERT(0); stop(); return;
+        }
+    } else {
+        ASSERT(envelope.point < instrument.nVolumeEnvelopePoints - 1);
+
+        // Load current and next envelope points from flash.
+        FlashBlockRef ref;
+        SvmMemory::VirtAddr va = instrument.volumeEnvelopePoints + envelope.point * sizeof(uint16_t);
+        if (!SvmMemory::copyROData(ref, envPt0, va)) {
+            ASSERT(0); stop(); return;
+        }
+        if (!SvmMemory::copyROData(ref, envPt1, va + sizeof(uint16_t))) {
+            ASSERT(0); stop(); return;
+        }
+
+        pointLength = envelopeOffset(envPt1) - envelopeOffset(envPt0);
+    }
+
+    if (envelope.point >= instrument.nVolumeEnvelopePoints - 1 ||
+        envelope.tick == 0)
+    {
+        // Beginning of node/end of envelope, no interpolation.
+        envelope.value = envelopeValue(envPt0);
+    } else {
+        /* Interpolates unnecessarily with tick == pointLength, but specifically
+         * catching that case isn't really worth it.
+         */
+        int16_t v1 = envelopeValue(envPt0);
+        int16_t v2 = envelopeValue(envPt1);
+        envelope.value = v1 + envelope.tick * (v2 - v1) / pointLength;
+    }
+
+    // Progress!
+    if (envelope.point < instrument.nVolumeEnvelopePoints - 1) {
+        envelope.tick++;
+        if (envelope.tick >= pointLength) {
+            envelope.tick = 0;
+            envelope.point++;
+        }
+    }
+}
+
+void XmTrackerPlayer::process()
+{
+    for (unsigned i = 0; i < song.nChannels; i++) {
+        struct XmTrackerChannel &channel = channels[i];
+
+        processEnvelope(channel);
+    }
+}
+
 void XmTrackerPlayer::commit()
 {
     AudioMixer &mixer = AudioMixer::instance;
 
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
-        if (!channel.instrument.sample.pData && mixer.isPlaying(CHANNEL_FOR(i))) {
+
+        if (!channel.active && mixer.isPlaying(CHANNEL_FOR(i))) {
             mixer.stop(CHANNEL_FOR(i));
             continue;
         }
 
         if (channel.restart) {
             channel.restart = false;
+            if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
             if (!mixer.play(&channel.instrument.sample,
                             CHANNEL_FOR(i),
-                            (_SYSAudioLoopType)channel.instrument.sample.loopType))
+                            (_SYSAudioLoopType)channel.instrument.sample.loopType)) {
+                channel.active = false;
                 continue;
+            }
         }
 
+        channel.active = mixer.isPlaying(CHANNEL_FOR(i));
+
         // Volume
-        int16_t volume = (channel.volume * 0xFF) >> 6;
-        mixer.setVolume(CHANNEL_FOR(i), clamp((int)volume, 0, _SYS_AUDIO_MAX_VOLUME));
+        int32_t volume = (channel.volume * 0xFF) >> 6;
+
+        if (channel.instrument.volumeType) {
+            LOG(("%s:%d: NOT_TESTED: envelope value: %u\n", __FILE__, __LINE__, channel.envelope.value));
+            volume = (volume * channel.envelope.value) >> 6;
+
+            if (channel.note.note == XmTrackerPattern::kNoteOff) {
+                // Update fade
+                if (channel.instrument.volumeFadeout > 0xFFF ||
+                    channel.instrument.volumeFadeout > channel.fadeout ||
+                    channel.instrument.volumeFadeout == 0)
+                {
+                    channel.fadeout = 0;
+                } else {
+                    channel.fadeout -= channel.instrument.volumeFadeout;
+                }
+
+                // Completely faded -> stop playing sample.
+                if (channel.fadeout == 0) {
+                    channel.active = false;
+                }
+
+                LOG(("%s:%d: NOT_TESTED: fadeout\n", __FILE__, __LINE__));
+
+                // Apply fadeout
+                volume = volume * channel.fadeout / UINT16_MAX;
+            }
+        }
+
+        // TODO: volume values are all wrong. check again after effects are implemented
+        mixer.setVolume(CHANNEL_FOR(i), clamp(volume, 0, _SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
         mixer.setSpeed(CHANNEL_FOR(i), getFrequency(channel.period));
@@ -200,6 +327,7 @@ void XmTrackerPlayer::tick()
     }
 
     // process effects and envelopes
+    process();
 
     // update mixer
     commit();

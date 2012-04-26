@@ -12,12 +12,24 @@
 #include "svmmemory.h"
 #include "macros.h"
 
+struct XmTrackerEnvelopeMemory {
+    int16_t tick;
+    uint8_t point;
+    uint8_t value;
+    bool done;
+};
+
 struct XmTrackerChannel {
     struct _SYSXMInstrument instrument;
     struct XmTrackerNote note;
     uint16_t volume;
+    uint16_t fadeout;
     uint32_t period;
     bool restart;
+    bool active;
+    bool valid;
+
+    struct XmTrackerEnvelopeMemory envelope;
 
     inline uint8_t realNote() const {
         if (!instrument.sample.pData ||
@@ -56,6 +68,17 @@ private:
     uint32_t getPeriod(int16_t note, int8_t finetune) const;
     uint32_t getFrequency(uint32_t period) const;
 
+    // Envelopes
+    static const uint8_t kEnvelopeSustain = 1;
+    static const uint8_t kEnvelopeLoop = 2;
+    inline static const uint16_t envelopeOffset(uint16_t enc) {
+        return enc & 0x01FF;
+    }
+    inline static const uint16_t envelopeValue(uint16_t enc) {
+        return enc >> 9;
+    }
+
+
     // channels
     struct XmTrackerChannel channels[_SYS_AUDIO_MAX_CHANNELS];
     // voice ptrs
@@ -76,6 +99,8 @@ private:
     uint16_t row;     // Current row within pattern, above
 
     void loadNextNotes();
+    void processEnvelope(XmTrackerChannel &channel);
+    void process();
     void commit();
     uint8_t patternOrderTable(uint16_t order);
     void tick();
