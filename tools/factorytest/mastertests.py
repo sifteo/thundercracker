@@ -17,6 +17,12 @@ UniqueIdID                  = 4
 SetUsbEnabledID             = 0
 SimulatedBatteryVoltageID   = 1
 GetBattSupplyCurrentID      = 2
+GetusbCurrentID             = 3
+BeginNeighborRxID           = 4
+StopNeighborRxID            = 5
+
+# testjig event IDs
+NeighborRxID                = 6
 
 def _setUsbEnabled(jig, enabled):
     pkt = [SetUsbEnabledID, enabled]
@@ -129,5 +135,33 @@ def VBattCurrentDrawTest(devMgr):
         print "current draw @ %.2fV: 0x%x" % (voltage, current)
         if current < minCurrent or current > maxCurrent:
             return False
+
+    return True
+
+def ListenForNeighborsTest(devMgr):
+    jig = devMgr.testjig()
+
+    jig.txPacket([BeginNeighborRxID])
+    resp = jig.rxPacket()
+    if resp.opcode != BeginNeighborRxID:
+        print "error while starting to listen for neighbors"
+        return False
+
+    # TODO: determine how we actually want to test this
+    count = 0
+    while count < 1000:
+        resp = jig.rxPacket(timeout = 5000)
+        if resp.opcode == NeighborRxID:
+            # NB! neighbor data is big endian
+            neighbordata = resp.payload[1] << 8 | resp.payload[2]
+            nbrId = resp.payload[1] & 0xf
+            print "neighbor rx, side %d  id %d (data 0x%x)" % (resp.payload[0], nbrId, neighbordata)
+            count = count + 1
+
+    jig.txPacket([StopNeighborRxID])
+    resp = jig.rxPacket()
+    if resp.opcode != StopNeighborRxID:
+        print "error while stopping neighbor rx"
+        return False
 
     return True
