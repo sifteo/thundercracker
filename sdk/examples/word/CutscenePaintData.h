@@ -21,10 +21,10 @@ const static AssetImage* CUTSCENE_IMAGES[Num_CutsceneIndexes] =
 
 const static char* CUTSCENE_DIALOGUE[Num_CutsceneIndexes] =
 {
-    "Test",
-    "Test",
-    "Test",
-    "Test",
+    "You've arrived in\nLondon, England",
+    "You're staying with an\nold friend this summer,\n Doc. Henry Bhat.",
+    "What's this?",
+    "Hey, kiddo! Bad news. I lost\nmy job at the museum... Hold on!",
     "Test",
     "Test",
     "Test",
@@ -39,14 +39,17 @@ const static bool CUTSCENE_DIALOGUE_TOP[Num_CutsceneIndexes] =
 {
     false,
     false,
+    true,
+
     false,
     false,
     false,
+
     false,
+    true,
     false,
-    false,
-    false,
-    false,
+
+    true,
     false,
     false,
 };

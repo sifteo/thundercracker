@@ -107,13 +107,13 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 static RGB565 color_lerp(uint8_t alpha) {
-    return RGB565::fromRGB(0x000000).lerp(RGB565::fromRGB(0xddedc1), alpha);
+    return RGB565::fromRGB(0x000000).lerp(RGB565::fromRGB(0xfae7c6), alpha);
 }
 
 void Dialog::Init(VideoBuffer *cube) {
     mCube = cube;
     mCube->initMode(FB128);
-    mCube->colormap.setMono(color_lerp(0), color_lerp(0));    
+    mCube->colormap.setMono(color_lerp(255), color_lerp(0));
 }
 
 const char* Dialog::Show(const char* str) {

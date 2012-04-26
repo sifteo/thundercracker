@@ -9,6 +9,7 @@
 #include "assets.gen.h"
 #include "CubeState.h"
 #include "CutscenePaintData.h"
+#include "Dialog.h"
 
 const float SHAKE_DELAY = 3.5f;
 
@@ -542,6 +543,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (eventID)
         {
         case EventID_EnterState:
+            break;
+
+        case EventID_ExitState:
+            if (mVidBuf->mode() != BG0_SPR_BG1)
+            {
+                mVidBuf->setDefaultWindow();
+                mVidBuf->initMode(BG0_SPR_BG1);
+            }
             break;
 
         case EventID_GameStateChanged:
@@ -1485,17 +1494,41 @@ void CubeStateMachine::paint()
 
     case CubeStateIndex_Cutscene:
         {
-            const AssetImage* image =
-                    CUTSCENE_IMAGES[GameStateMachine::getInstance().getCutsceneIndex()];
-
-            mVidBuf->bg0.image(vec(0,0),
-                               *image,
-                               MIN(image->numFrames(), (int)getCube()));
-            if (mStateTime >= TOUCH_ADVANCE_DELAY)
+            CutsceneIndex index =
+                GameStateMachine::getInstance().getCutsceneIndex();
+            if (mVidBuf->mode() == BG0_SPR_BG1)
             {
-                bg1TileBuf.image(vec(13, 13),
-                                 IconPress,
-                                 (unsigned)(mStateTime / .3f ) % IconPress.numFrames());
+                const AssetImage* image = CUTSCENE_IMAGES[index];
+
+                mVidBuf->bg0.image(vec(0,0),
+                                   *image,
+                                   MIN(image->numFrames(), (int)getCube()));
+                if (mStateTime >= TOUCH_ADVANCE_DELAY)
+                {
+                    bg1TileBuf.image(vec(13, 13),
+                                     IconPress,
+                                     (unsigned)(mStateTime / .3f ) % IconPress.numFrames());
+                }
+            }
+
+            if (mStateTime > .1f &&
+                 getCube() == WordGame::instance()->getMenuCube() &&
+                 CUTSCENE_DIALOGUE[index] &&
+                 mVidBuf->mode() == BG0_SPR_BG1)
+            {
+                Dialog d;
+                d.Init(mVidBuf);
+                //uint8_t firstLine, uint8_t numLines
+                if (CUTSCENE_DIALOGUE_TOP[index])
+                {
+                    mVidBuf->setWindow(0, 48);
+                }
+                else
+                {
+                    mVidBuf->setWindow(80, 48);
+                }
+                d.Erase();
+                d.ShowAll(CUTSCENE_DIALOGUE[index]);
             }
         }
         break;
