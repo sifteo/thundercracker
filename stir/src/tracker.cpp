@@ -33,7 +33,10 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     if (patterns.size()) init();
 
     f = fopen(filename, "rb");
-    if (f == 0) return false;
+    if (f == 0) {
+        log->error("Could not open %s", filename);
+        return false;
+    }
 
     if (!readSong()) return init();
 
