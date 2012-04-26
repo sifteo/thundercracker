@@ -87,8 +87,7 @@ inline void XmTrackerPlayer::loadNextNotes()
             if (note.note == XmTrackerPattern::kNoteOff) {
                 channel.valid = true;
             }
-            if (channel.note.instrument != XmTrackerPattern::kNoInstrument) {
-                ASSERT(channel.instrument.sample.pData);
+            if (channel.note.instrument < song.nInstruments) {
                 note.instrument = channel.note.instrument;
                 channel.valid = true;
             }
@@ -99,7 +98,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         }
 
         if (channel.valid) {
-            if (channel.note.instrument != note.instrument) {
+            if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
                 // Change the instrument.
                 // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
                 if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
@@ -107,7 +106,7 @@ inline void XmTrackerPlayer::loadNextNotes()
                 }
             }
             channel.note = note;
-            channel.restart = true;
+            channel.restart = channel.instrument.sample.pData != 0;
             channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
 
             // TODO
