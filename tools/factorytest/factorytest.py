@@ -85,11 +85,13 @@ class TestRunner(object):
         return self.successCount + self.failCount
 
     def run(self, t):
+        sys.stdout.write("running %s... " % t.func_name)
         success = t(self.mgr)
         if success == False:
-            print "%s... FAIL" % t.func_name
+            print "FAIL"
             self.failCount = self.failCount + 1
         else:
+            print "SUCCESS"
             self.successCount = self.successCount + 1
 
     @staticmethod
