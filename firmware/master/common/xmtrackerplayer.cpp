@@ -167,25 +167,25 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
 
     switch (command) {
         case vxSlideDown:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxSlideUp:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxFineVolumeDown:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxFineVolumeUp:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxVibratoSpeed:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxVibratoDepth:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxVibratoDepth vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         case vxTonePortamento:
-            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            LOG(("%s:%d: NOT_TESTED: vxTonePortamento vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         default:
             break;
@@ -237,108 +237,108 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 {
     switch (channel.note.effectType) {
         case fxArpeggio:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxArpeggio fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxPortaUp:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxPortaUp fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxPortaDown:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxPortaDown fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxTonePorta:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxTonePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVibrato:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxVibrato fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxTonePortaAndVolumeSlide:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxTonePortaAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVibratoAndVolumeSlide:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxVibratoAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxTremolo:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxTremolo fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSampleOffset:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVolumeSlide:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxPositionJump:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxPositionJump fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetVolume:
             channel.volume = MIN(channel.note.effectParam, kMaxVolume);
             break;
         case fxPatternBreak:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxPatternBreak fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetTempoAndBPM:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxSetTempoAndBPM fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetGlobalVolume:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxSetGlobalVolume fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxGlobalVolumeSlide:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxGlobalVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetEnvelopePos:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxPanSlide:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxPanSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxMultiRetrigNote:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxMultiRetrigNote fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxTremor:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxExtraFinePorta:
-            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxExtraFinePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxOverflow:
             switch (channel.note.effectParam >> 4) {
                 case fxFinePortaUp:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinePortaUp fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxFinePortaDown:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinePortaDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxGlissControl:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxVibratoControl:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxFinetune:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxLoopPattern:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxTremoloControl:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxRetrigNote:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxFineVolumeSlideUp:
                     channel.volume = MIN((uint32_t)channel.volume + (channel.note.effectParam & 0xF), kMaxVolume);
                     break;
                 case fxFineVolumeSlideDown:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    channel.volume = (uint16_t)MAX((int32_t)channel.volume - (channel.note.effectParam & 0xF), 0);
                     break;
                 case fxNoteCut:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxNoteDelay:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxPatternDelay:
-                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxPatternDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
             }
             break;
