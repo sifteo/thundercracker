@@ -60,6 +60,12 @@ bool XmTrackerLoader::readSong()
     song.patternOrderTableSize = get16();
     song.restartPosition = get16();
     song.nChannels = get16();
+    if (song.nChannels > _SYS_AUDIO_MAX_CHANNELS) {
+        log->error("%s: Song contains %u channels, max %u supported",
+                   filename, song.nChannels, _SYS_AUDIO_MAX_CHANNELS);
+        return false;
+    }
+
     song.nPatterns = get16();
     song.nInstruments = get16();
     song.frequencyTable = get16();
