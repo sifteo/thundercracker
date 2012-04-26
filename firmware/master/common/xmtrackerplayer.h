@@ -99,6 +99,8 @@ private:
     uint16_t row;     // Current row within pattern, above
 
     void loadNextNotes();
+    void processVolume(XmTrackerChannel &channel);
+    void processEffects(XmTrackerChannel &channel);
     void processEnvelope(XmTrackerChannel &channel);
     void process();
     void commit();

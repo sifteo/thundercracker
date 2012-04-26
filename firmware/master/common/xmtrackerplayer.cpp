@@ -145,6 +145,206 @@ inline void XmTrackerPlayer::loadNextNotes()
     }
 }
 
+// Volume commands
+enum {
+    vxSlideDown              = 6,
+    vxSlideUp,              // 7
+    vxFineVolumeDown,       // 8
+    vxFineVolumeUp,         // 9
+    vxVibratoSpeed,         // A
+    vxVibratoDepth,         // B
+    vxTonePortamento        // F. C, D, and E are panning commands
+};
+void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
+{
+    uint8_t command = channel.note.volumeColumnByte >> 4;
+    uint8_t param = channel.note.volumeColumnByte & 0xF;
+
+    switch (command) {
+        case vxSlideDown:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxSlideUp:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxFineVolumeDown:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxFineVolumeUp:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxVibratoSpeed:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxVibratoDepth:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        case vxTonePortamento:
+            LOG(("%s:%d: NOT_TESTED: vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            break;
+        default:
+            break;
+    }
+}
+
+// Note effects
+enum {
+    fxArpeggio                   = 0x00, // "Appregio" in the file spec *frown*
+    fxPortaUp,                  // 0x01
+    fxPortaDown,                // 0x02
+    fxTonePorta,                // 0x03
+    fxVibrato,                  // 0x04
+    fxTonePortaAndVolumeSlide,  // 0x05
+    fxVibratoAndVolumeSlide,    // 0x06
+    fxTremolo,                  // 0x07
+    // fx8 is Set Panning, not implemented.
+    fxSampleOffset               = 0x09,
+    fxVolumeSlide,              // 0x0A
+    fxPositionJump,             // 0x0B
+    fxSetVolume,                // 0x0C
+    fxPatternBreak,             // 0x0D
+    fxOverflow,                 // 0x0E, hack inherited from the MOD format
+    fxSetTempoAndBPM,           // 0x0F
+    fxSetGlobalVolume,          // 0x10 / G
+    fxGlobalVolumeSlide,        // 0x11 / H
+    fxSetEnvelopePos             = 0x15, // L
+    fxPanSlide                   = 0x19, // P
+    fxMultiRetrigNote            = 0x1B, // R
+    fxTremor                     = 0x1D, // T
+    fxExtraFinePorta             = 0x21, // X
+};
+enum {
+    fxFinePortaUp                = 0x01, // E1
+    fxFinePortaDown,            // 0x02
+    fxGlissControl,             // 0x03
+    fxVibratoControl,           // 0x04
+    fxFinetune,                 // 0x05
+    fxLoopPattern,              // 0x06, called "Set loop begin/loop" in XM spec
+    fxTremoloControl,           // 0x07
+    fxRetrigNote                 = 0x09, // 8 is not used
+    fxFineVolumeSlideUp,        // 0x0A
+    fxFineVolumeSlideDown,      // 0x0B
+    fxNoteCut,                  // 0x0C
+    fxNoteDelay,                // 0x0D
+    fxPatternDelay              // 0x0E
+};
+void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
+{
+    switch (channel.note.effectType) {
+        case fxArpeggio:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxPortaUp:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxPortaDown:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxTonePorta:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxVibrato:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxTonePortaAndVolumeSlide:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxVibratoAndVolumeSlide:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxTremolo:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxSampleOffset:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxVolumeSlide:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxPositionJump:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxSetVolume:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxPatternBreak:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxSetTempoAndBPM:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxSetGlobalVolume:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxGlobalVolumeSlide:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxSetEnvelopePos:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxPanSlide:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxMultiRetrigNote:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxTremor:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxExtraFinePorta:
+            LOG(("%s:%d: NOT_TESTED: fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            break;
+        case fxOverflow:
+            switch (channel.note.effectParam >> 4) {
+                case fxFinePortaUp:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxFinePortaDown:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxGlissControl:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxVibratoControl:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxFinetune:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxLoopPattern:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxTremoloControl:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxRetrigNote:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxFineVolumeSlideUp:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxFineVolumeSlideDown:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxNoteCut:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxNoteDelay:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+                case fxPatternDelay:
+                    LOG(("%s:%d: NOT_TESTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    break;
+            }
+            break;
+        default:
+            LOG(("%s:%d: NOT_IMPLEMENTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+            break;
+        case XmTrackerPattern::kNoEffect:
+            break;
+    }
+}
+
 void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
 {
     if (!channel.instrument.volumeType || channel.envelope.done) {
@@ -227,6 +427,12 @@ void XmTrackerPlayer::process()
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
 
+        // TODO: Reset
+        // ch->tickrel_period=0;
+        // ch->tickrel_volume=0;
+
+        processVolume(channel);
+        processEffects(channel);
         processEnvelope(channel);
     }
 }
