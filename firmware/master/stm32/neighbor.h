@@ -31,9 +31,6 @@ public:
     void transmitNextBit();
     void onRxPulse(uint8_t side);
     void rxPeriodIsr();
-    uint16_t getLastRxData() {
-        return lastRxData;
-    }
 
     inline static bool inIrqPending(uint8_t side) {
         return inPins[side].irqPending();
@@ -63,13 +60,11 @@ private:
 
     int8_t receivingSide;   // we only receive on one side at a time - which one?
     uint16_t rxDataBuffer;  // rx data in progress
-    uint16_t lastRxData;    // last complete rx
     uint8_t rxBitCounter;   // how many bits have we shifted into rxDataBuffer?
 
     enum RxState {
         WaitingForStart,    // waiting for next start bit, rxBitCounter == 0
-        Squelch,            //
-        WaitingForNextBit
+        ReceivingData       // an rx sequence is in progress
     };
 
     RxState rxState;

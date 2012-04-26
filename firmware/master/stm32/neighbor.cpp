@@ -30,7 +30,7 @@ void Neighbor::init()
     txData = 0;
 
     for (unsigned i = 0; i < 4; ++i) {
-        outPins[i].setControl(GPIOPin::OUT_ALT_50MHZ);
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
 
         GPIOPin &in = inPins[i];
         in.irqInit();
@@ -38,9 +38,8 @@ void Neighbor::init()
         in.irqDisable();
     }
 
-    // this is currently about 87 us
     txPeriodTimer.init(625, 4);
-    rxPeriodTimer.init(900, 0);
+    rxPeriodTimer.init(820, 0); // ~ 24 us
 
     for (unsigned i = 1; i < 5; ++i)
         txPeriodTimer.configureChannelAsOutput(i, HwTimer::ActiveHigh, HwTimer::Pwm1);
@@ -138,6 +137,13 @@ void Neighbor::stopReceiving()
  */
 void Neighbor::onRxPulse(uint8_t side)
 {
+    inPins[side].irqAcknowledge();
+
+    // TODO: may need to time the squelch more precisely to ensure we don't
+    // worsen the ringing
+    GPIOPin &out = outPins[side];
+    out.setControl(GPIOPin::OUT_50MHZ);
+    out.setLow();
 
     /*
      * Start of a new sequence?
@@ -145,65 +151,62 @@ void Neighbor::onRxPulse(uint8_t side)
      */
     if (rxState == WaitingForStart) {
 
-        // sync our counter to this start bit - this may need to be higher precision?
+        receivingSide = side;
+        rxDataBuffer = 1;   // init bit 0 to 1 - we're here because we received a pulse after all
+        rxBitCounter = 0;   // this gets incremented at the end of the bit period
+        rxState = ReceivingData;
+
+        /*
+         * Sync our counter to this start bit, but wait as long as posible
+         * to reset our counter, such that we're sampling
+         * as far into the bit period as possible
+         **/
         rxPeriodTimer.setCount(0);
 
-        receivingSide = side;
-        rxDataBuffer = 1;  // init bit 0 to 1 - we're here because we received a pulse after all
-        rxBitCounter = 1;
-
-        for (int i = 0; i < 4; ++i) {
-            if (i != receivingSide)
-                inPins[i].irqDisable();
-        }
-
-        rxState = WaitingForNextBit;
     } else {
-
         // Otherwise, record the new bit that has arrived.
-        rxDataBuffer |= 0x1;
+        if (side == receivingSide)
+            rxDataBuffer |= 0x1;
     }
-
-    inPins[side].irqAcknowledge();
-
-    GPIOPin &out = outPins[side];
-    out.setControl(GPIOPin::OUT_50MHZ);
-    out.setLow();
 }
 
 /*
  * Our bit period timer has expired during an RX operation.
  *
  * Allow our output pin to float, stopping the squelch on the tank.
- * Shift our next
+ *
+ * If this was the last bit in a transmission, verify that it's valid,
+ * and reset our state. Otherwise, shift the value received during this bit
+ * period along 'rxDataBuffer'
  */
 void Neighbor::rxPeriodIsr()
 {
+    outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
     // if we haven't gotten a start bit, nothing to do here
     if (rxState == WaitingForStart)
         return;
 
-    outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
-
-    /*
-     * All bits received?
-     * Reset state, transfer data into lastRxData and re-enable RX IRQs
-     */
     rxBitCounter++;
 
-    if (rxBitCounter >= NUM_RX_BITS) {
-        lastRxData = rxDataBuffer;
-        rxState = WaitingForStart;
-        rxDataBuffer = 0;
+    if (rxBitCounter < NUM_RX_BITS) {
+        rxDataBuffer <<= 1;
+    } else {
+        /*
+         * The second byte of a successful message must match the complement
+         * of its first byte. Enforce that here before forwarding the message.
+         */
+        int8_t lsb = rxDataBuffer & 0xff;
+        int8_t msb = (rxDataBuffer >> 8) & 0xff;
+        if (lsb == ~msb) {
 
 #if (BOARD == BOARD_TEST_JIG)
-        TestJig::onNeighborMsgRx(receivingSide, lastRxData);
+            TestJig::onNeighborMsgRx(receivingSide, rxDataBuffer);
 #endif
 
-        for (unsigned i = 0; i < 4; ++i)
-            inPins[i].irqEnable();
-    }
+        }
 
-    rxDataBuffer <<= 1;
+        rxState = WaitingForStart;
+        rxDataBuffer = 0;
+    }
 }

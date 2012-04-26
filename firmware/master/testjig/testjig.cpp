@@ -104,7 +104,7 @@ void TestJig::neighborInIsr(uint8_t side)
  */
 void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
 {
-    const uint8_t response[] = { 6, side, msg & 0xff, (msg >> 8) & 0xff};
+    const uint8_t response[] = { 6, side, msg & 0xff, (msg >> 8) & 0xff };
     UsbDevice::write(response, sizeof response);
 }
 
