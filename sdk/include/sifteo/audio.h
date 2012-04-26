@@ -154,14 +154,14 @@ struct AudioTracker {
      * Begin playback of a module.
      * @param asset specifies the module for playback.
      */
-    bool play(const AssetTracker &asset) {
+    static bool play(const AssetTracker &asset) {
         return _SYS_tracker_play(&asset.song);
     }
 
     /**
      * Is the tracker currently playing a module?
      */
-    bool isPlaying() const {
+    static bool isPlaying() {
         return _SYS_tracker_isPlaying();
     }
 
@@ -169,7 +169,7 @@ struct AudioTracker {
      * Stop playback of the current module.
      * Has no effect if a module is not currently playing.
      */
-    void stop() {
+    static void stop() {
         _SYS_tracker_stop();
     }
 };

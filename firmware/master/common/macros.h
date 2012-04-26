@@ -18,13 +18,6 @@
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
-#ifdef _NEWLIB_STDIO_H
-#define printf      iprintf
-#define sprintf     siprintf
-#define snprintf    sniprintf
-#define vsnprintf   vsniprintf
-#endif
-
 #ifdef SIFTEO_SIMULATOR
 #   ifdef DEBUG
 #      define DEBUG_LOG(_x)   printf _x

@@ -171,7 +171,7 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     char *last = dest + destSize - 1;
 
-    // Skip to NUL character
+    // Skip to end
     while (dest < last && *dest)
         dest++;
 
@@ -198,11 +198,6 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
 
 void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
 {
-    /*
-     * Integer to string conversion. Currently uses snprintf
-     * (or sniprintf on embedded builds) but doesn't necessarily need to.
-     */
-
     if (destSize == 0)
         return;
     
@@ -213,15 +208,33 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
 
     char *last = dest + destSize - 1;
 
-    // Skip to NUL character
+    // Skip to end
     while (dest < last && *dest)
         dest++;
 
-    if (dest < last)
-        snprintf(dest, last-dest, "%d", src);
+    // Leading sign
+    if (dest < last && src < 0) {
+        *(dest++) = '-';
+        src = -src;
+    }
+
+    // Calculate a floating divisor for the leftmost digit
+    unsigned divisor = 1;
+    for (;;) {
+        unsigned nextDivisor = divisor * 10;
+        if (nextDivisor > (unsigned)src)
+            break;
+        divisor = nextDivisor;
+    }
+
+    // Output all normal digits
+    while (dest < last && divisor) {
+        *(dest++) = '0' + (src / divisor) % 10;
+        divisor /= 10;
+    }
 
     // Guaranteed to NUL-termiante
-    *last = '\0';
+    *dest = '\0';
 }
 
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
@@ -236,15 +249,48 @@ void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, ui
 
     char *last = dest + destSize - 1;
 
-    // Skip to NUL character
+    // Skip to end
     while (dest < last && *dest)
         dest++;
 
-    if (dest < last)
-        snprintf(dest, last-dest, lz ? "%0*d" : "%*d", width, src);
+    // Write right-to-left. Position at the end, in an overflow-safe way.
+    char *first = dest;
+    width = MIN(width, last - first);
+    dest += width;
+    ASSERT(dest >= first && dest <= last);
 
-    // Guaranteed to NUL-termiante
-    *last = '\0';
+    // Start with the NUL terminator.
+    *(dest--) = '\0';
+
+    // Save the sign for later
+    bool negative = src < 0;
+    if (negative)
+        src = -src;
+
+    // First digit is always present
+    if (dest >= first) {
+        *(dest--) = '0' + (src % 10);
+        src /= 10;
+    }
+
+    // Other digits, only if nonzero
+    while (dest >= first && src) {
+        *(dest--) = '0' + (src % 10);
+        src /= 10;
+    }
+
+    // Leading characters
+    while (dest >= first) {
+        if (negative && (dest == first || !lz)) {
+            *dest = '-';
+            negative = false;
+        } else if (lz) {
+            *dest = '0';
+        } else {
+            *dest = ' ';
+        }
+        dest--;
+    }
 }
 
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
@@ -259,15 +305,25 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
 
     char *last = dest + destSize - 1;
 
-    // Skip to NUL character
+    // Skip to end
     while (dest < last && *dest)
         dest++;
 
-    if (dest < last)
-        snprintf(dest, last-dest, lz ? "%0*x" : "%*x", width, src);
+    // Write right-to-left. Position at the end, in an overflow-safe way.
+    char *first = dest;
+    width = MIN(width, last - first);
+    dest += width;
+    ASSERT(dest >= first && dest <= last);
 
-    // Guaranteed to NUL-termiante
-    *last = '\0';
+    // Start with the NUL terminator.
+    *(dest--) = '\0';
+
+    // Work backwards, writing each digit
+    while (dest >= first) {
+        static const char lut[] = "0123456789abcdef";
+        *(dest--) = lut[src & 0xf];
+        src >>= 4;
+    }
 }
 
 int32_t _SYS_strncmp(const char *a, const char *b, uint32_t count)
