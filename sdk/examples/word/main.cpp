@@ -21,7 +21,7 @@ static const char* sideNames[] =
 };
 
 static struct MenuItem gItems[] =
-{ {&IconLondon, &LabelContinue},
+{ {&IconLondon, &LabelLondon},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},

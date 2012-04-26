@@ -8,7 +8,7 @@
 #include "CutsceneData.h"
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
-const float CITY_PROGRESSION_STATE_TIME = 1.0f;
+const float CITY_PROGRESSION_STATE_TIME = 3.0f;
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 

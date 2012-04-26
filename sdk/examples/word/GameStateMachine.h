@@ -32,7 +32,7 @@ enum GameStateIndex
 };
 
 const unsigned char MAX_HINTS = 3;
-const float TOUCH_ADVANCE_DELAY = 1.0f;
+const float TOUCH_ADVANCE_DELAY = .5f;
 
 class GameStateMachine : public StateMachine
 {
@@ -61,7 +61,7 @@ public:
     static unsigned sOnEvent(unsigned eventID, const EventData& data);
     static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
     unsigned char getNumHints() const { return mNumHints; }
-    bool isMetaLetterIndexUnlocked(unsigned char i) const { return (mMetaLetterUnlockedMask & (1 << i)) != 0; }
+    bool isMetaLetterIndexUnlocked(unsigned char i) const { return true; }//(mMetaLetterUnlockedMask & (1 << i)) != 0; }
     bool isMetaLetterIndexUnlockedLast(unsigned char i) const { return ((mMetaLetterUnlockedMask ^ mMetaLetterUnlockedMaskOld) & (1 << i)) != 0; }
     void setNumHints(unsigned char i) { mNumHints = i; }
     void initNewMeta();

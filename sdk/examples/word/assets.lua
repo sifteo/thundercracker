@@ -9,13 +9,14 @@ Tip1 = image{ "option_tiltToScroll.png" }
 Tip2 = image{ "option_touchToSelect.png" }
 Footer = image{"option_blank_bottom.png", quality=10}
 LabelEmpty = image{"option_blank.png", quality=10}
-LabelContinue = image{ "option_continue.png" }
+LabelLondon = image{ "label_london.png" }
+LabelAthens = image{ "label_athens.png" }
 LabelLocked = image{ "option_disabled.png" }
 IconLondon = image{ "scroll_london.png" }
 IconAthens = image{ "scroll_athens.png" }
 IconLocked = image{ "scroll_locked.png" }
 IconLockedRight = image{ "scroll_locked_right.png" }
-MenuBlank = image{"menu_blank.png"}
+MenuBlank = image{"boxEmpty.png"}
 
 Sparkle = image{"sparkle01.png", pinned=true, width=16, height=16, quality=10}
 HintSprite = image{"hint_tilt.png", pinned=true, width=16, height=16, quality=10}

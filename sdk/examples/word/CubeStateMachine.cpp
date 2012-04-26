@@ -1488,12 +1488,13 @@ void CubeStateMachine::paint()
                                        vec((int)SLAT_TILE_WIDTHS[slatsIndex],12),
                                        *icons[world],
                                        vec((int)slatOffset, 0));
+                    LOG("city solved %d\n", slatsIndex);
                 }
                 else
                 {
   //                  const AssetImage* slat = SLATS[slatsIndex];
     //                mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
-                    //LOG("slat %d\n", slatsIndex);
+                    LOG("city unsolved %d\n", slatsIndex);
                 }
                 slatOffset += SLAT_TILE_WIDTHS[slatsIndex];
                 --numSlats[slatsIndex];
