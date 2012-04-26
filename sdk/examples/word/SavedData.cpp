@@ -113,7 +113,7 @@ bool SavedData::isPuzzleSolved(unsigned index) const
 {
     unsigned byteIndex = index / 8;
     unsigned bitIndex = index % 8;
-    ASSERT(byteIndex < arraysize(mCompletedPuzzles));
     LOG("isPuzzleSolved: %d?, %d\n", index, (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0);
+    ASSERT(byteIndex < arraysize(mCompletedPuzzles));
     return (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0;
 }

@@ -12,6 +12,22 @@
 #include "Dialog.h"
 
 const float SHAKE_DELAY = 3.5f;
+const unsigned char FIRST_REVEAL_WIDTH = 2;
+// FIXME data-drive icon name
+const static AssetImage *icons[] =
+{
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+};
 
 CubeStateMachine::CubeStateMachine() :
         StateMachine(CubeStateIndex_Menu), mPuzzleLettersPerCube(0),
@@ -449,6 +465,10 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             {
                 WordGame::instance()->setNeedsPaintSync();
             }
+            break;
+
+        case EventID_ExitState:
+            mVidBuf->sprites.erase();
             break;
 
         case EventID_Paint:
@@ -1384,7 +1404,7 @@ void CubeStateMachine::paint()
 
     case CubeStateIndex_StoryCityProgression:
         mVidBuf->bg0.image(vec(0,0), CityProgressionBlank);
-        if (getCube() == WordGame::instance()->getMenuCube())
+        //if (getCube() == WordGame::instance()->getMenuCube())
         {
             /* TODO animtype?
             char slideOffset = 0;
@@ -1405,21 +1425,6 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            // FIXME data-drive icon name
-            const static AssetImage *icons[] =
-            {
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-                &IconAthens,
-            };
             unsigned char world;
             // TODO drive from python script that looks at puzzles
             unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
@@ -1429,83 +1434,79 @@ void CubeStateMachine::paint()
                                             numMetas,
                                             metaPuzzleIndexes,
                                             numIndexes);
-            //mVidBuf->bg0.image(vec(2,2), vec(1,12) IconLondon, vec(0, 0));
-            //mVidBuf->bg0.image(vec(13,2), vec(1,12) IconLockedRightmost, vec(11, 0));
-            //unsigned char startPuzzle = 0;
-            //const unsigned char MAX_SLAT_WIDTH = 24;
-            //unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetas);
-            //unsigned char wideSlatWidth =
-              //      MIN(MAX_SLAT_WIDTH, 96 - 8*(slatWidth/8) * numMetas);
-            const static AssetImage* SLATS[] = { &Slat1, &Slat2, &Slat3 };
-            const static unsigned char SLAT_TILE_WIDTHS[] = { 1, 2, 3 };
-            unsigned char numSlats[] = {0, 0, 0};
-            // solve for num wide and extra wide slats
-            for (unsigned i = 0; i < 12/SLAT_TILE_WIDTHS[1]; ++i)
+
+            unsigned char numMetasSolved = 0;
+            for (unsigned char i = 0; i < numIndexes; ++i)
             {
-                for (unsigned j = 0; j < 12/SLAT_TILE_WIDTHS[2]; ++j)
+                if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
                 {
-                    if ((SLAT_TILE_WIDTHS[1]-1)*i + (SLAT_TILE_WIDTHS[2]-1)*j == 12 - numMetas)
-                    {
-                        numSlats[1] = i;
-                        numSlats[2] = j;
-                        break;
-                    }
-                }
-                if (numSlats[1])
-                {
-                    break;
+                    ++numMetasSolved;
                 }
             }
-            numSlats[0] = numMetas - numSlats[1] - numSlats[2];
 
-            //const AssetImage* slat = SLATS[slatWidth/8 - 1];
-            //unsigned char numWideSlats =
-              //      (unsigned char) _ceilf(((float)96 - 8*(slatWidth/8) * numMetas)/((float)MAX_SLAT_WIDTH - 8));
-            unsigned char slatOffset = 0;
-            // TODO odd number handling
-            unsigned slatsIndex = 0;
-            while (slatsIndex < arraysize(numSlats))
-            {
-                if (numSlats[slatsIndex])
-                {
-                    break;
-                }
-                ++slatsIndex;
-            }
-            for (unsigned char i = 0; i < numMetas; ++i)
-            {
-                bool solved = false;
-                if (i < numIndexes)
-                {
-                    solved =
-                        WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]);
-                }
+            const float WIPE_TIME = 2.0f;
+            float animPct = fmod(mStateTime / .5f, 1.f);
+            float transPct = mStateTime / WIPE_TIME;
+            UByte2 pos = vec(2, 2);
+            UByte2 size = vec(12, 12);
 
-                if (solved)
+            int sparkleRow = (1.f - transPct) * 12 + 2;
+            unsigned char sparkleOffset = sparkleRow - pos.y;
+            unsigned char sparkleFrame = MIN(SparkleWipe.numFrames()-1,
+                                             (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
+            if (mStateTime <= WIPE_TIME)
+            {
+                if (sparkleOffset < size.y)
                 {
-//                    mVidBuf->bg0.image(vec(3,2), vec(10,12) *icons[world], vec(1, 0));
-                    mVidBuf->bg0.image(vec(2 + slatOffset, 2),
-                                       vec((int)SLAT_TILE_WIDTHS[slatsIndex],12),
-                                       *icons[world],
-                                       vec((int)slatOffset, 0));
-                    LOG("city solved %d\n", slatsIndex);
-                }
-                else
-                {
-  //                  const AssetImage* slat = SLATS[slatsIndex];
-    //                mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
-                    LOG("city unsolved %d\n", slatsIndex);
-                }
-                slatOffset += SLAT_TILE_WIDTHS[slatsIndex];
-                --numSlats[slatsIndex];
-                while (slatsIndex < arraysize(numSlats))
-                {
-                    if (numSlats[slatsIndex])
+                    bg1TileBuf.image(vec((int)pos.x, sparkleRow),
+                                     vec(MIN((unsigned char)SparkleWipe.tileWidth(), size.x),
+                                         (unsigned char)SparkleWipe.tileHeight()),
+                                     SparkleWipe,
+                                     vec(0,0),
+                                     sparkleFrame);
+                    bg1TileBuf.image(vec((int)(pos.x + SparkleWipe.tileWidth()), sparkleRow),
+                                     vec(MIN((unsigned char)SparkleWipe.tileWidth(), size.x),
+                                         (unsigned char)SparkleWipe.tileHeight()),
+                                     SparkleWipe,
+                                     vec(0,0),
+                                     sparkleFrame);
+                    /*if (sparkleRow > letterPos.y)
                     {
-                        break;
+                        // draw the question mark that is being wiped off
+                        bg1TileBuf.image(letterPos,
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                         font,
+                                         vec(0, 0),
+                                         ('Z' + 1) - 'A');
                     }
-                    ++slatsIndex;
+                    */
                 }
+            }
+            else
+            {
+
+            }
+
+            LOG("sparklerow %d\n", sparkleRow);
+            // first paint old state, above sparklewipe
+            if (sparkleRow > pos.y)
+            {
+                paintCityProgressionWindow(numMetas,
+                                           numMetasSolved-1,
+                                           world,
+                                           pos.y,
+                                           sparkleRow - 1);
+            }
+
+            // next paint newly revealed state, under and below sparklewipe
+            if (sparkleRow < pos.y + size.y)// && (sparkleFrame & 1))
+            {
+                paintCityProgressionWindow(numMetas,
+                                           numMetasSolved,
+                                           world,
+                                           MAX(sparkleRow, pos.y),
+                                           pos.y + size.y - 1);
 
             }
         }
@@ -2190,3 +2191,110 @@ void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 
+
+void CubeStateMachine::paintCityProgressionWindow(unsigned char numMetas,
+                                                  unsigned char numMetasSolved,
+                                                  unsigned char world,
+                                                  unsigned char firstRow,
+                                                  unsigned char lastRow)
+{
+    LOG("metas solved %d\n", numMetasSolved);
+
+
+    //mVidBuf->bg0.image(vec(2,2), vec(1,12) IconLondon, vec(0, 0));
+    //mVidBuf->bg0.image(vec(13,2), vec(1,12) IconLockedRightmost, vec(11, 0));
+    //unsigned char startPuzzle = 0;
+    //const unsigned char MAX_SLAT_WIDTH = 24;
+    //unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetas);
+    //unsigned char wideSlatWidth =
+      //      MIN(MAX_SLAT_WIDTH, 96 - 8*(slatWidth/8) * numMetas);
+    const static AssetImage* SLATS[] = { &Slat1, &Slat2, &Slat3 };
+    const static unsigned char SLAT_TILE_WIDTHS[] = { 1, 2, 3 };
+    unsigned char numSlats[] = {0, 0, 0};
+    // solve for num wide and extra wide slats
+    for (unsigned i = 0; i < 12/SLAT_TILE_WIDTHS[1]; ++i)
+    {
+        for (unsigned j = 0; j < 12/SLAT_TILE_WIDTHS[2]; ++j)
+        {
+            if ((SLAT_TILE_WIDTHS[1]-1)*i + (SLAT_TILE_WIDTHS[2]-1)*j == 12 - numMetas)
+            {
+                numSlats[1] = i;
+                numSlats[2] = j;
+                break;
+            }
+        }
+        if (numSlats[1])
+        {
+            break;
+        }
+    }
+    numSlats[0] = numMetas - numSlats[1] - numSlats[2];
+
+    //const AssetImage* slat = SLATS[slatWidth/8 - 1];
+    //unsigned char numWideSlats =
+      //      (unsigned char) _ceilf(((float)96 - 8*(slatWidth/8) * numMetas)/((float)MAX_SLAT_WIDTH - 8));
+    unsigned char slatOffset = 0;
+    // TODO odd number handling
+    unsigned slatsIndex = 0;
+    while (slatsIndex < arraysize(numSlats))
+    {
+        if (numSlats[slatsIndex])
+        {
+            break;
+        }
+        ++slatsIndex;
+    }
+
+    unsigned char imageHorizOffset = slatOffset + 1;
+    if (numMetasSolved > 0)
+    {
+        // first meta is def solved, and is special case b/c of fade into
+        // first column of image isn't quite enough to see without one
+        // more column shown to the right
+        mVidBuf->bg0.image(vec((unsigned char)(2 + imageHorizOffset),
+                               firstRow),
+                           vec(2,
+                               14 - firstRow),
+                           *icons[world],
+                           vec((int)imageHorizOffset,
+                               firstRow - 2));
+    }
+
+    slatOffset = FIRST_REVEAL_WIDTH;
+
+    for (unsigned char i = 1; i < numMetas; ++i)
+    {
+        bool solved = (i < numMetasSolved);
+        imageHorizOffset = slatOffset + 1;
+        if (solved)
+        {
+//                    mVidBuf->bg0.image(vec(3,2), vec(10,12) *icons[world], vec(1, 0));
+            mVidBuf->bg0.image(vec((unsigned char)(2 + imageHorizOffset),
+                                   firstRow),
+                               vec((i == numMetas-1) ? icons[world]->tileWidth() -  imageHorizOffset: 1,//(int)SLAT_TILE_WIDTHS[slatsIndex],
+                                   14 - firstRow),
+                               *icons[world],
+                               vec((int)imageHorizOffset,
+                                   firstRow - 2));
+            //LOG("city solved %d\n", slatOffset);
+        }
+        else
+        {
+//                  const AssetImage* slat = SLATS[slatsIndex];
+//                mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
+            //LOG("city unsolved %d\n", slatOffset);
+        }
+        slatOffset += 1;//SLAT_TILE_WIDTHS[slatsIndex];
+        /*--numSlats[slatsIndex];
+        while (slatsIndex < arraysize(numSlats))
+        {
+            if (numSlats[slatsIndex])
+            {
+                break;
+            }
+            ++slatsIndex;
+        }*/
+
+    }
+
+}
