@@ -68,28 +68,33 @@ inline void XmTrackerPlayer::loadNextNotes()
         channel.valid = false;
         bool recovered = false;
 
-        // Note recovery/validation
-        if (note.note == XmTrackerPattern::kNoNote) {
-            recovered = true;
-            // No note, with a valid instrument somewhere, carry over the previous note.
-            if (channel.note.instrument < song.nInstruments ||
-                note.instrument < song.nInstruments)
-            {
-                note.note = channel.note.note;
-                channel.valid = true;
+        if ((note.note != XmTrackerPattern::kNoNote ||
+             note.instrument != XmTrackerPattern::kNoInstrument) &&
+            note.note != XmTrackerPattern::kNoteOff)
+        {
+            // Note recovery/validation
+            if (note.note == XmTrackerPattern::kNoNote) {
+                recovered = true;
+                // No note, with a valid instrument somewhere, carry over the previous note.
+                if (channel.note.instrument < song.nInstruments ||
+                    note.instrument < song.nInstruments)
+                {
+                    note.note = channel.note.note;
+                    channel.valid = true;
+                }
             }
-        }
 
-        // Instrument recovery/validation
-        if (note.instrument == XmTrackerPattern::kNoInstrument) {
-            recovered = true;
-            // No instrument, with either an inactive note or a previously existing instrument.
-            if (note.note == XmTrackerPattern::kNoteOff) {
-                channel.valid = true;
-            }
-            if (channel.note.instrument < song.nInstruments) {
-                note.instrument = channel.note.instrument;
-                channel.valid = true;
+            // Instrument recovery/validation
+            if (note.instrument == XmTrackerPattern::kNoInstrument) {
+                recovered = true;
+                // No instrument, with either an inactive note or a previously existing instrument.
+                if (note.note == XmTrackerPattern::kNoteOff) {
+                    channel.valid = true;
+                }
+                if (channel.note.instrument < song.nInstruments) {
+                    note.instrument = channel.note.instrument;
+                    channel.valid = true;
+                }
             }
         }
 
