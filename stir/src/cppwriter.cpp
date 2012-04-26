@@ -337,7 +337,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* pData      */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n" <<
         indent << "},\n" <<
         indent << "/* finetune              */ " << (int32_t)instrument.finetune << ",\n" <<
-        indent << "/* relativeNoteNumber    */ " << (uint32_t)instrument.relativeNoteNumber << ",\n" <<
+        indent << "/* relativeNoteNumber    */ " << (int32_t)instrument.relativeNoteNumber << ",\n" <<
         indent << "/* volumeEnvelopePoints  */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n" <<
         indent << "/* nVolumeEnvelopePoints */ " << (uint32_t)instrument.nVolumeEnvelopePoints << ",\n" <<
         indent << "/* volumeSustainPoint    */ " << (uint32_t)instrument.volumeSustainPoint << ",\n" <<
