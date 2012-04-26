@@ -45,7 +45,7 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
 uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
-    if (state & STATE_STOPPED)
+    if (state & STATE_STOPPED || samples.numSamples() == 0)
         return 0;
 
     uint64_t fpLimit = state & STATE_LOOP
