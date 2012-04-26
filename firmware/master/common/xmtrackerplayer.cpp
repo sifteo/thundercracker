@@ -276,7 +276,15 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             LOG(("%s:%d: NOT_TESTED: fxPatternBreak fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetTempoAndBPM:
-            LOG(("%s:%d: NOT_TESTED: fxSetTempoAndBPM fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            // Only useful at the start of a note
+            ASSERT(ticks == 0);
+            channel.note.effectType = XmTrackerPattern::kNoEffect;
+            if (channel.note.effectParam == 0) break;
+
+            if (channel.note.effectParam < 0x1F)
+                tempo = channel.note.effectParam;
+            else
+                bpm = channel.note.effectParam;
             break;
         case fxSetGlobalVolume:
             LOG(("%s:%d: NOT_TESTED: fxSetGlobalVolume fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
