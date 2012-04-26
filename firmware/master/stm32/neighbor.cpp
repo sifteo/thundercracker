@@ -6,6 +6,10 @@
 #include "neighbor.h"
 #include "board.h"
 
+#if (BOARD == BOARD_TEST_JIG)
+#include "testjig.h"
+#endif
+
 GPIOPin Neighbor::inPins[4] = {
     NBR_IN1_GPIO,
     NBR_IN2_GPIO,
@@ -25,13 +29,14 @@ void Neighbor::init()
 {
     txData = 0;
 
-    for (unsigned i = 0; i < 4; ++i)
+    for (unsigned i = 0; i < 4; ++i) {
         outPins[i].setControl(GPIOPin::OUT_ALT_50MHZ);
 
-    GPIOPin &in1 = inPins[0];
-    in1.irqInit();
-    in1.irqSetFallingEdge();
-    in1.irqDisable();
+        GPIOPin &in = inPins[i];
+        in.irqInit();
+        in.irqSetFallingEdge();
+        in.irqDisable();
+    }
 
     // this is currently about 87 us
     txPeriodTimer.init(625, 4);
@@ -72,6 +77,9 @@ void Neighbor::disablePwm()
  */
 void Neighbor::beginTransmit(uint16_t data)
 {
+    if (isTransmitting())
+        return;
+
     txData = data;
     transmitNextBit();  // ensure duty is set before enabling pwm channels
     enablePwm();
@@ -94,77 +102,108 @@ void Neighbor::transmitNextBit()
     txData >>= 1;
 }
 
-
+/*
+ * Initialize state, and enable IRQs on input pins & rx timer.
+ */
 void Neighbor::beginReceiving()
 {
-    receiving_side = -1;
+    rxState = WaitingForStart;
+    receivingSide = 0;  // just initialize to something safe
 
-    GPIOPin &in1 = inPins[0];
-    in1.setControl(GPIOPin::IN_FLOAT);
-    in1.irqEnable();
+    for (unsigned i = 0; i < 4; ++i) {
+        GPIOPin &in = inPins[i];
+        in.setControl(GPIOPin::IN_FLOAT);
+        in.irqEnable();
+    }
+
+    rxPeriodTimer.enableUpdateIsr();
+}
+
+/*
+ * Disable IRQs for input pins and rx timer.
+ */
+void Neighbor::stopReceiving()
+{
+    for (unsigned i = 0; i < 4; ++i)
+        inPins[i].irqDisable();
+
+    rxPeriodTimer.disableUpdateIsr();
 }
 
 /*
  * Called from within the EXTI ISR for one of our neighbor RX inputs.
+ * OR a 1 into our rxDataBuffer for this bit period.
+ *
+ * NOTE: rxDataBuffer gets shifted at the bit period boundary (rxPeriodIsr())
  */
 void Neighbor::onRxPulse(uint8_t side)
 {
+
+    /*
+     * Start of a new sequence?
+     * Record which side we're listening to and disable the others.
+     */
+    if (rxState == WaitingForStart) {
+
+        // sync our counter to this start bit - this may need to be higher precision?
+        rxPeriodTimer.setCount(0);
+
+        receivingSide = side;
+        rxDataBuffer = 1;  // init bit 0 to 1 - we're here because we received a pulse after all
+        rxBitCounter = 1;
+
+        for (int i = 0; i < 4; ++i) {
+            if (i != receivingSide)
+                inPins[i].irqDisable();
+        }
+
+        rxState = WaitingForNextBit;
+    } else {
+
+        // Otherwise, record the new bit that has arrived.
+        rxDataBuffer |= 0x1;
+    }
+
     inPins[side].irqAcknowledge();
 
-    if (side == 0) {
-
-        GPIOPin &out1 = outPins[0];
-        out1.setControl(GPIOPin::OUT_2MHZ);
-        out1.setLow();
-
-        switch (rxState) {
-        case WaitingForStart:
-            received_data_buffer = 1;  //set bit 0 to 1
-            input_bit_counter = 1;
-            rxState = Squelch;
-            break;
-
-        case WaitingForNextBit:
-        case Squelch:
-            received_data_buffer |= (1 << input_bit_counter);
-            input_bit_counter++;
-            rxState = Squelch;
-            break;
-        }
-    }
+    GPIOPin &out = outPins[side];
+    out.setControl(GPIOPin::OUT_50MHZ);
+    out.setLow();
 }
 
 /*
  * Our bit period timer has expired during an RX operation.
+ *
+ * Allow our output pin to float, stopping the squelch on the tank.
+ * Shift our next
  */
 void Neighbor::rxPeriodIsr()
 {
-    outPins[0].setControl(GPIOPin::IN_FLOAT);
 
-    switch (rxState) {
-    case Squelch:
-        rxState = WaitingForNextBit;
-        break;
+    // if we haven't gotten a start bit, nothing to do here
+    if (rxState == WaitingForStart)
+        return;
 
-    case WaitingForNextBit:
-        // input bit must be a zero
-        input_bit_counter++;
-        rxState = Squelch;
-        if (input_bit_counter >= NUM_RX_BITS) {
-            lastRxData = received_data_buffer;
-            rxState = WaitingForStart;
-            received_data_buffer = 0;
-        }
-        break;
+    outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
-    default:
-        break;
+    /*
+     * All bits received?
+     * Reset state, transfer data into lastRxData and re-enable RX IRQs
+     */
+    rxBitCounter++;
+
+    if (rxBitCounter >= NUM_RX_BITS) {
+        lastRxData = rxDataBuffer;
+        rxState = WaitingForStart;
+        rxDataBuffer = 0;
+
+#if (BOARD == BOARD_TEST_JIG)
+        TestJig::onNeighborMsgRx(receivingSide, lastRxData);
+#endif
+
+        for (unsigned i = 0; i < 4; ++i)
+            inPins[i].irqEnable();
     }
-}
 
-uint16_t Neighbor::getLastRxData()
-{
-    uint16_t val = lastRxData;
-    lastRxData = 0;
-    return val;
+    rxDataBuffer <<= 1;
 }
