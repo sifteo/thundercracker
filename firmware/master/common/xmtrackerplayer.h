@@ -25,7 +25,7 @@ struct XmTrackerChannel {
     uint16_t volume;
     uint16_t fadeout;
     uint32_t period;
-    bool restart;
+    bool start;
     bool active;
     bool valid;
 
@@ -100,6 +100,9 @@ private:
     uint16_t row;     // Current row within pattern, above
 
     void loadNextNotes();
+    void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
+    void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
+    void processVolumeSlide(XmTrackerChannel &channel);
     void processVolume(XmTrackerChannel &channel);
     void processEffects(XmTrackerChannel &channel);
     void processEnvelope(XmTrackerChannel &channel);

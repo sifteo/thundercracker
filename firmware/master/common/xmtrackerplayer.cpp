@@ -68,37 +68,38 @@ inline void XmTrackerPlayer::loadNextNotes()
         channel.valid = false;
         bool recovered = false;
 
-        if ((note.note != XmTrackerPattern::kNoNote ||
-             note.instrument != XmTrackerPattern::kNoInstrument) &&
-            note.note != XmTrackerPattern::kNoteOff)
-        {
-            // Note recovery/validation
-            if (note.note == XmTrackerPattern::kNoNote) {
-                recovered = true;
-                // No note, with a valid instrument somewhere, carry over the previous note.
-                if (channel.note.instrument < song.nInstruments ||
-                    note.instrument < song.nInstruments)
-                {
-                    note.note = channel.note.note;
-                    channel.valid = true;
-                }
-            }
-
-            // Instrument recovery/validation
-            if (note.instrument == XmTrackerPattern::kNoInstrument) {
-                recovered = true;
-                // No instrument, with either an inactive note or a previously existing instrument.
-                if (note.note == XmTrackerPattern::kNoteOff) {
-                    channel.valid = true;
-                }
-                if (channel.note.instrument < song.nInstruments) {
-                    note.instrument = channel.note.instrument;
-                    channel.valid = true;
-                }
+        // Note recovery/validation
+        if (note.note == XmTrackerPattern::kNoNote) {
+            recovered = true;
+            // No note, with a valid instrument somewhere, carry over the previous note.
+            if (note.instrument < song.nInstruments) {
+                channel.valid = true;
+            } else if (channel.note.instrument < song.nInstruments) {
+                note.note = channel.note.note;
+                note.instrument = channel.note.instrument;
+                channel.valid = true;
             }
         }
 
-        if (!recovered) {
+        // Instrument recovery/validation
+        if (note.instrument == XmTrackerPattern::kNoInstrument) {
+            recovered = true;
+            // No instrument, with either an inactive note or a previously existing instrument.
+            if (note.note == XmTrackerPattern::kNoteOff) {
+                channel.valid = true;
+            }
+            if (channel.note.instrument < song.nInstruments) {
+                note.instrument = channel.note.instrument;
+                channel.valid = true;
+            }
+        }
+
+        // Invalid notes should still let effects through.
+        if (recovered && !channel.valid) {
+            note.note = channel.note.note;
+            note.instrument = channel.note.instrument;
+            channel.valid = true;
+        } else if (!recovered) {
             channel.valid = true;
         }
 
@@ -109,18 +110,25 @@ inline void XmTrackerPlayer::loadNextNotes()
                 if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                     ASSERT(false);
                 }
+            } else if (note.instrument >= song.nInstruments) {
+                channel.instrument.sample.pData = 0;
             }
+            channel.start = note.note != channel.note.note;
+            if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote)
+                channel.start = false;
+            if (channel.instrument.sample.pData == 0)
+                channel.start = false;
             channel.note = note;
-            channel.restart = channel.instrument.sample.pData != 0;
+            if (!channel.start) continue;
+
             channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
 
-            // TODO
+            // TODO: verify envelopes
             channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
 
             // Volume
             memset(&channel.envelope, 0, sizeof(channel.envelope));
             channel.fadeout = UINT16_MAX;
-            channel.volume = channel.instrument.sample.volume;
             if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
                     channel.volume = note.volumeColumnByte - 0x10;
 
@@ -160,6 +168,17 @@ enum {
     vxVibratoDepth,         // B
     vxTonePortamento        // F. C, D, and E are panning commands
 };
+
+void XmTrackerPlayer::processVolumeSlideUp(uint16_t &volume, uint8_t inc)
+{
+    volume = MIN(volume + inc, kMaxVolume);
+}
+
+void XmTrackerPlayer::processVolumeSlideDown(uint16_t &volume, uint8_t dec)
+{
+    volume = (uint16_t)MAX((int32_t)volume - dec, 0);
+}
+
 void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
 {
     uint8_t command = channel.note.volumeColumnByte >> 4;
@@ -168,15 +187,21 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
     switch (command) {
         case vxSlideDown:
             LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processVolumeSlideDown(channel.volume, param);
             break;
         case vxSlideUp:
             LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processVolumeSlideUp(channel.volume, param);
             break;
         case vxFineVolumeDown:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            if (ticks) break;
+            processVolumeSlideDown(channel.volume, param);
             break;
         case vxFineVolumeUp:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            if (ticks) break;
+            processVolumeSlideUp(channel.volume, param);
             break;
         case vxVibratoSpeed:
             LOG(("%s:%d: NOT_TESTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
@@ -218,6 +243,7 @@ enum {
     fxTremor                     = 0x1D, // T
     fxExtraFinePorta             = 0x21, // X
 };
+
 enum {
     fxFinePortaUp                = 0x01, // E1
     fxFinePortaDown,            // 0x02
@@ -233,6 +259,19 @@ enum {
     fxNoteDelay,                // 0x0D
     fxPatternDelay              // 0x0E
 };
+
+void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
+{
+    if (ticks == 0 || channel.note.effectParam == 0) return;
+    uint8_t up = channel.note.effectParam >> 4;
+    uint8_t down = channel.note.effectParam & 0x0F;
+
+    if (up)
+        processVolumeSlideUp(channel.volume, up);
+    else if (down)
+        processVolumeSlideDown(channel.volume, down);
+}
+
 void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 {
     switch (channel.note.effectType) {
@@ -264,7 +303,8 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             LOG(("%s:%d: NOT_TESTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVolumeSlide:
-            LOG(("%s:%d: NOT_TESTED: fxVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            if (channel.note.effectParam == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxVolumeSlide\n", __FILE__, __LINE__));
+            processVolumeSlide(channel);
             break;
         case fxPositionJump:
             LOG(("%s:%d: NOT_TESTED: fxPositionJump fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
@@ -276,8 +316,8 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             LOG(("%s:%d: NOT_TESTED: fxPatternBreak fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxSetTempoAndBPM:
-            // Only useful at the start of a note
             ASSERT(ticks == 0);
+            // Only useful at the start of a note
             channel.note.effectType = XmTrackerPattern::kNoEffect;
             if (channel.note.effectParam == 0) break;
 
@@ -334,10 +374,17 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxFineVolumeSlideUp:
-                    channel.volume = MIN((uint32_t)channel.volume + (channel.note.effectParam & 0xF), kMaxVolume);
+                    if (channel.note.effectParam & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
+                    // Apply once, at beginning of note
+                    if (ticks) break;
+                    processVolumeSlideUp(channel.volume, (channel.note.effectParam & 0xF));
                     break;
                 case fxFineVolumeSlideDown:
-                    channel.volume = (uint16_t)MAX((int32_t)channel.volume - (channel.note.effectParam & 0xF), 0);
+                    LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    if (channel.note.effectParam & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
+                    // Apply once, at beginning of note
+                    if (ticks) break;
+                    processVolumeSlideDown(channel.volume, (channel.note.effectParam & 0xF));
                     break;
                 case fxNoteCut:
                     LOG(("%s:%d: NOT_TESTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
@@ -462,8 +509,8 @@ void XmTrackerPlayer::commit()
             continue;
         }
 
-        if (channel.restart) {
-            channel.restart = false;
+        if (channel.start) {
+            channel.start = false;
             if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
             if (!mixer.play(&channel.instrument.sample,
                             CHANNEL_FOR(i),
@@ -476,7 +523,7 @@ void XmTrackerPlayer::commit()
         channel.active = mixer.isPlaying(CHANNEL_FOR(i));
 
         // Volume
-        int32_t volume = (channel.volume * 0xFF) >> 6;
+        int32_t volume = channel.volume;
 
         if (channel.instrument.volumeType) {
             volume = (volume * channel.envelope.value) >> 6;
@@ -503,7 +550,7 @@ void XmTrackerPlayer::commit()
                 volume = volume * channel.fadeout / UINT16_MAX;
             }
         }
-
+        volume *= 4;
         mixer.setVolume(CHANNEL_FOR(i), clamp(volume, 0, _SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
