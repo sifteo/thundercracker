@@ -428,7 +428,7 @@ bool animPaint(AnimType animT,
                 // draw left border
                 vid.bg0.image(vec(0, 2),
                              vec(2, 14),
-                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeft, //NoNeighbor,
+                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeftNoNeighbor,
                              vec(0, 1));
                 bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderGoldLeft, vec(0, 0));
                 bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderGoldBottom, vec(0, 0));
@@ -437,7 +437,7 @@ bool animPaint(AnimType animT,
                 // draw right BorderGold
                 vid.bg0.image(vec(14, 0),
                              vec(2, 14),
-                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRight, //NoNeighbor,
+                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRightNoNeighbor,
                              vec(0, 1));
                 bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderGoldRight, vec(0, 16));
                 bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderGoldTop, vec(16, 0));
@@ -484,12 +484,11 @@ bool animHasNormalBorder(AnimType animT)
    case AnimType_SlideR:
    case AnimType_OldWord:
    case AnimType_NewWord:
-       return !Dictionary::currentIsMetaPuzzle();
-
    case AnimType_NormalTilesEnter:
    case AnimType_NormalTilesExit:
    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
-       return false;
+       return !Dictionary::currentIsMetaPuzzle();
+
 
    default:
        return false;

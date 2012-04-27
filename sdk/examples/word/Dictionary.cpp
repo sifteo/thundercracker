@@ -13,7 +13,7 @@ bool Dictionary::sPossibleWordFound[MAX_WORDS_PER_PUZZLE];
 unsigned Dictionary::sNumPossibleWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-int Dictionary::sPuzzleIndex = 0;//-1; // start at -1, or invalid
+int Dictionary::sPuzzleIndex = -1; // start at -1, or invalid
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
@@ -48,6 +48,20 @@ bool Dictionary::getNextPuzzle(char* buffer,
 {
     ASSERT(buffer);
     sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
+
+    if (CHEATER_MODE)
+    {
+        if (!currentIsMetaPuzzle())
+        {
+            do
+            {
+                sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
+            }
+            while (!currentIsMetaPuzzle());
+            --sPuzzleIndex;
+        }
+    }
+
     if (!getPuzzle(sPuzzleIndex,
                    buffer,
                    numAnagrams,
@@ -86,8 +100,15 @@ bool Dictionary::getPuzzle(int index,
     ASSERT(index < (int)arraysize(puzzles));
     _SYS_strlcpy(buffer, puzzles[index], MAX_LETTERS_PER_WORD + 1);
 
-    numAnagrams = 1;//MAX(1, puzzlesNumGoalAnagrams[index]);
-    // TODO how many leading spaces?
+    if (CHEATER_MODE)
+    {
+        numAnagrams = 1;
+    }
+    else
+    {
+        numAnagrams = MAX(1, puzzlesNumGoalAnagrams[index]);
+    }
+
     leadingSpaces = puzzlesNumLeadingSpaces[index];
 
     // TODO data-driven

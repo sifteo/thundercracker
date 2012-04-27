@@ -34,6 +34,8 @@ BorderGoldLeft = image{"border_gold_left.png", quality=10}
 BorderGoldRight = image{"border_gold_right.png", quality=10}
 BorderRightNoNeighbor = image{"border_right_noneighbor.png", quality=10}
 BorderLeftNoNeighbor = image{"border_left_noneighbor.png", quality=10}
+BorderGoldRightNoNeighbor = image{"border_gold_right_noneighbor.png", quality=10}
+BorderGoldLeftNoNeighbor = image{"border_gold_left_noneighbor.png", quality=10}
 BorderSlotBlank = image{"border_available.png", quality=10}
 BorderSlotNormal = image{"border_created_basic.png", quality=10, width=16}
 BorderSlotBonus = image{"border_created_bonus.png", quality=10, width=16}
@@ -47,7 +49,6 @@ transparent = image{"transparent.png", quality=10, pinned=true}
 -- TODO hint_pulse_morph_tilt.png
 -- TODO icon_tilt.png
 -- TODO timer.png
--- TODO title.png
 IconPress = image{"icon_press.png", width=16, quality=10}
 Tile2 = image{"tile_ivory_idle.png", quality=10}
 Tile2Glow = image{"tile_ivory_glow.png", quality=10}
@@ -70,7 +71,7 @@ TileBGGold = image{"bg_puzzlebox_gold.png", quality=10} --compression creates ba
 StartPrompt = image{"wp2_gameselect_prompt.png", pinned=true, quality=10}
 StartBG = image{"wp2_gameselect.png", quality=10}
 StartLid = image{"wp2_gameselect_lid.png", quality=10}
-Title = image{"wp2_gameselect.png", quality=10}
+Title = image{"title.png", quality=10}
 HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}

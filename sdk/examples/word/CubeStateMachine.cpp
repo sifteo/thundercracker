@@ -30,7 +30,7 @@ const static AssetImage *icons[] =
 };
 
 CubeStateMachine::CubeStateMachine() :
-        StateMachine(CubeStateIndex_Menu), mPuzzleLettersPerCube(0),
+        StateMachine(CubeStateIndex_Title), mPuzzleLettersPerCube(0),
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
@@ -453,6 +453,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         // TODO debug: case EventID_Paint:
         case EventID_EnterState:
+            /* TODO move to story start round
             mShakeDelay = 0.f;
             mPanning = -16.f;// * ((getCube() & 1) ? -1.f : 1.f);
             {
@@ -460,6 +461,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 bg1.filled(vec(0,2), vec(15, 8));
                 mVidBuf->bg1.setMask(bg1);
             }
+            */
             paint();
             if (eventID == EventID_EnterState)
             {
@@ -497,7 +499,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Update:
-            {
+            /* TODO move to story start round {
                 float dt = data.mUpdate.mDT;
                 mShakeDelay -= dt;
                 if (mShakeDelay <= 0.f)
@@ -511,10 +513,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     mShakeDelay = 0.f;
                     mPanning += dt * -5.f * accelState.x; // FIXME treat as accel, not velocity set
                 }
-                /*if (mPanning != 0.f)
-                {
-                    LOG(("panning %f\n", mPanning));
-                }*/
+
                 //mPanning = fmodf(mPanning, 128.f);
                 if (abs(mPanning) > 86.f)
                 {
@@ -522,7 +521,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     // refresh after event handling
                     newStateIndex = getCurrentStateIndex();
                 }
-            }
+            }*/
             break;
         }
         break;
@@ -781,7 +780,14 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
         for (unsigned i = 0; i < lettersPerCube; ++i)
         {
             unsigned src = (i + start) % lettersPerCube;
-            if (GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex))
+            bool unlocked =
+                    GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex);
+            if (CHEATER_MODE)
+            {
+                unlocked = true;
+            }
+
+            if (unlocked)
             {
                 buffer[i] = letters[src];
             }
@@ -1345,6 +1351,9 @@ void CubeStateMachine::paint()
     switch (getCurrentStateIndex())
     {
     case CubeStateIndex_Title:
+        mVidBuf->bg0.image(vec(0, 0), Title);
+#if 0
+        /* TODO move to story start round
         {
             const float ANIM_START_DELAY = 2.f;
 
@@ -1363,7 +1372,7 @@ void CubeStateMachine::paint()
                 break;
 
                 // TODO high scores
-        #if BLAH
+
             default:
                 paintBorder(vid, ImageIndex_Teeth);
                 /* TODO load/save
@@ -1385,9 +1394,10 @@ void CubeStateMachine::paint()
                 }
                 */
                 break;
-        #endif
+
             }
         }
+#endif
         break;
 
     case CubeStateIndex_Menu:
@@ -1444,7 +1454,7 @@ void CubeStateMachine::paint()
                 }
             }
 
-            const float WIPE_TIME = 1.5f;
+            const float WIPE_TIME = 1.25f;
             float animPct = fmod(mStateTime / .5f, 1.f);
             float transPct = mStateTime / WIPE_TIME;
             UByte2 pos = vec(2, 2);
@@ -1491,7 +1501,7 @@ void CubeStateMachine::paint()
                                    vec(2, 0));
             }
 
-            LOG("sparklerow %d\n", sparkleRow);
+            //LOG("sparklerow %d\n", sparkleRow);
             // first paint old state, above sparklewipe
             if (sparkleRow > pos.y)
             {
@@ -1510,7 +1520,6 @@ void CubeStateMachine::paint()
                                            world,
                                            MAX(sparkleRow, pos.y),
                                            pos.y + size.y - 1);
-
             }
         }
         break;
@@ -2203,7 +2212,7 @@ void CubeStateMachine::paintCityProgressionWindow(unsigned char numMetas,
                                                   unsigned char firstRow,
                                                   unsigned char lastRow)
 {
-    LOG("metas solved %d\n", numMetasSolved);
+    //LOG("metas solved %d\n", numMetasSolved);
 
 
     //mVidBuf->bg0.image(vec(2,2), vec(1,12) IconLondon, vec(0, 0));
@@ -2276,7 +2285,7 @@ void CubeStateMachine::paintCityProgressionWindow(unsigned char numMetas,
 //                    mVidBuf->bg0.image(vec(3,2), vec(10,12) *icons[world], vec(1, 0));
             mVidBuf->bg0.image(vec((unsigned char)(2 + imageHorizOffset),
                                    firstRow),
-                               vec((i == numMetas-1) ? icons[world]->tileWidth() -  imageHorizOffset: 1,//(int)SLAT_TILE_WIDTHS[slatsIndex],
+                               vec((i == numMetas-1) ? icons[world]->tileWidth() - 1 - imageHorizOffset: 1,//(int)SLAT_TILE_WIDTHS[slatsIndex],
                                    14 - firstRow),
                                *icons[world],
                                vec((int)imageHorizOffset,
@@ -2299,7 +2308,5 @@ void CubeStateMachine::paintCityProgressionWindow(unsigned char numMetas,
             }
             ++slatsIndex;
         }*/
-
     }
-
 }
