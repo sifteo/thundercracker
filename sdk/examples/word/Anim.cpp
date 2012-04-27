@@ -193,7 +193,8 @@ bool animPaint(AnimType animT,
                                     if (sparkleRow >= letterPos.y)
                                     {
                                         bg1TileBuf.image(vec(letterPos.x, sparkleRow + 1),
-                                                      vec(size.x, letterPos.y + font.tileHeight() - 1 - sparkleRow),
+                                                      vec(MIN(size.x, font.tileWidth()),
+                                                          letterPos.y + font.tileHeight() - 1 - sparkleRow),
                                                       font,
                                                       vec(0, sparkleRow + 1 - letterPos.y),
                                                       fontFrame);
@@ -201,7 +202,8 @@ bool animPaint(AnimType animT,
                                     else
                                     {
                                         bg1TileBuf.image(letterPos,
-                                                      vec(size.x, font.tileHeight()),
+                                                      vec(MIN(size.x, font.tileWidth()),
+                                                          font.tileHeight()),
                                                       font,
                                                       vec(0, 0),
                                                       fontFrame);
@@ -212,7 +214,7 @@ bool animPaint(AnimType animT,
                         else
                         {
                             bg1TileBuf.image(letterPos,
-                                             vec(size.x,
+                                             vec(MIN(size.x, font.tileWidth()),
                                                  MIN(16 - letterPos.y, font.tileHeight())),
                                              font,
                                              vec(0,0),
@@ -224,7 +226,8 @@ bool animPaint(AnimType animT,
                 case AnimType_MetaTilesReveal:
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y, font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          fontFrame);
@@ -242,7 +245,8 @@ bool animPaint(AnimType animT,
                             {
                                 // draw the question mark that is being wiped off
                                 bg1TileBuf.image(letterPos,
-                                                 vec(size.x, MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                                 vec(MIN(size.x, font.tileWidth()),
+                                                     MIN(font.tileHeight(), sparkleRow - letterPos.y)),
                                                  font,
                                                  vec(0, 0),
                                                  ('Z' + 1) - 'A');
@@ -255,7 +259,8 @@ bool animPaint(AnimType animT,
                     if (i == params->mMetaLetterIndex && animT == AnimType_MetaTilesEnter)
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y, font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y, font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          'Z' + 1 - 'A');
@@ -264,8 +269,9 @@ bool animPaint(AnimType animT,
                     else if (!metaLetterTile || animT != AnimType_NormalTilesExit)
                     {
                         bg1TileBuf.image(letterPos,
-                                         vec(size.x, MIN(16 - letterPos.y,
-                                                         font.tileHeight())),
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(16 - letterPos.y,
+                                                 font.tileHeight())),
                                          font,
                                          vec(0,0),
                                          fontFrame);
@@ -354,7 +360,9 @@ bool animPaint(AnimType animT,
         {
             if (i < TopRowStartIndex)
             {
-                if (params->mCubeAnim == CubeAnim_Main && animHasNormalBorder(animT))
+                if (params->mCubeAnim == CubeAnim_Main &&
+                    (animHasNormalBorder(animT) ||
+                     Dictionary::currentIsMetaPuzzle()))
                 {
                     // row 1, bottom
                     const AssetImage *image =
@@ -420,7 +428,7 @@ bool animPaint(AnimType animT,
                 // draw left border
                 vid.bg0.image(vec(0, 2),
                              vec(2, 14),
-                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeft, //NoNeighbor,
+                             (leftNeighbor || formsWord) ? BorderGoldLeft : BorderGoldLeftNoNeighbor,
                              vec(0, 1));
                 bg1TileBuf.image(vec(0, 1), vec(2, 1), BorderGoldLeft, vec(0, 0));
                 bg1TileBuf.image(vec(1, 14), vec(1, 2), BorderGoldBottom, vec(0, 0));
@@ -429,7 +437,7 @@ bool animPaint(AnimType animT,
                 // draw right BorderGold
                 vid.bg0.image(vec(14, 0),
                              vec(2, 14),
-                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRight, //NoNeighbor,
+                             (rightNeighbor || formsWord) ? BorderGoldRight : BorderGoldRightNoNeighbor,
                              vec(0, 1));
                 bg1TileBuf.image(vec(14, 14), vec(2, 1), BorderGoldRight, vec(0, 16));
                 bg1TileBuf.image(vec(14, 0), vec(1, 2), BorderGoldTop, vec(16, 0));
@@ -460,13 +468,11 @@ bool animPaint(AnimType animT,
         default:
             break;
         }
-
     }
 
     // finished?
     return data.mLoop || animTime <= data.mDuration;
 }
-
 
 bool animHasNormalBorder(AnimType animT)
 {
@@ -480,7 +486,7 @@ bool animHasNormalBorder(AnimType animT)
    case AnimType_NormalTilesEnter:
    case AnimType_NormalTilesExit:
    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
-       return true;
+       return !Dictionary::currentIsMetaPuzzle();
 
    default:
        return false;

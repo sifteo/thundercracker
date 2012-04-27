@@ -49,6 +49,7 @@ void SavedData::OnEvent(unsigned eventID, const EventData& data)
     case EventID_PuzzleSolved:
         {
             mLastSolvedPuzzle = Dictionary::getPuzzleIndex();
+            LOG("puzzle solved event, %d\n", Dictionary::getPuzzleIndex());
             unsigned byteIndex = mLastSolvedPuzzle / 8;
             unsigned bitIndex = mLastSolvedPuzzle % 8;
             ASSERT(byteIndex < arraysize(mCompletedPuzzles));
@@ -111,8 +112,13 @@ void SavedData::OnEvent(unsigned eventID, const EventData& data)
 
 bool SavedData::isPuzzleSolved(unsigned index) const
 {
+    if (CHEATER_MODE)
+    {
+        return true;
+    }
     unsigned byteIndex = index / 8;
     unsigned bitIndex = index % 8;
+    //LOG("isPuzzleSolved: %d?, %d\n", index, (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0);
     ASSERT(byteIndex < arraysize(mCompletedPuzzles));
     return (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0;
 }

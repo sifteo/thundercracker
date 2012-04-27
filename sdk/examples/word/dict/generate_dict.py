@@ -599,6 +599,23 @@ def generate_dict():
                 fi.write("    " + str(index) + ',\t// "' + word + '"' + '[' + row['Letter'] + ']\n')            
     fi.write("};\n\n")
     
+    fi.write("const static unsigned char puzzlesMetaPuzzlesPerWorld[] =\n")
+    fi.write("{\n")
+    num_metas = 0
+    current_world = 1
+    for row in puzzle_rows:        
+        if row['Is Meta']:
+            if row['World'] == str(current_world):
+                num_metas += 1
+            else:
+                # FIXME currently doesn't handle out of order worlds
+                assert row['World'] == str(current_world + 1)
+                fi.write("    " + str(num_metas) + ',\t// world ' + str(current_world) + '\n')    
+                current_world = int(row['World'])
+                num_metas = 1
+    fi.write("    " + str(num_metas) + ',\t// world ' + str(current_world) + '\n')    
+    fi.write("};\n\n")
+
     
 def unicode_csv_DictReader(utf8_data, dialect=csv.excel, **kwargs):
     csv_reader = csv.DictReader(utf8_data, dialect=dialect, **kwargs)
