@@ -198,8 +198,8 @@ void XmTrackerPlayer::processVolumeSlideDown(uint16_t &volume, uint8_t dec)
 
 void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
 {
-    uint8_t command = channel.note.volumeColumnByte >> 4;
-    uint8_t param = channel.note.volumeColumnByte & 0xF;
+    uint8_t command = channel.note.volumeColumnByte & 0xF;
+    uint8_t param = channel.note.volumeColumnByte >> 4;
 
     switch (command) {
         case vxSlideDown:
