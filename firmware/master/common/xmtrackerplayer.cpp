@@ -6,10 +6,15 @@
 #include "xmtrackerplayer.h"
 #include "audiomixer.h"
 
-#include "xmtrackertables.h"
-
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
+const uint8_t XmTrackerPlayer::kLinearFrequencies;
+const uint8_t XmTrackerPlayer::kAmigaFrequencies;
+const uint8_t XmTrackerPlayer::kMaxVolume;
+const uint8_t XmTrackerPlayer::kEnvelopeSustain;
+const uint8_t XmTrackerPlayer::kEnvelopeLoop;
+
+#include "xmtrackertables.h"
 
 // To be replaced someday by a channel allocator and array
 #define CHANNEL_FOR(x) (_SYS_AUDIO_MAX_CHANNELS - ((x) + 1))
@@ -67,29 +72,32 @@ inline void XmTrackerPlayer::loadNextNotes()
         struct XmTrackerChannel &channel = channels[i];
         pattern.getNote(row, i, note);
         channel.valid = false;
-        bool recovered = false;
+        bool recovered = false,
+             recNote = false,
+             recInst = false;
 
-        // Note recovery/validation
         if (note.note == XmTrackerPattern::kNoNote) {
+            // Note recovery/validation
             recovered = true;
             // No note, with a valid instrument somewhere, carry over the previous note.
             if (note.instrument < song.nInstruments) {
                 channel.valid = true;
             } else if (channel.note.instrument < song.nInstruments) {
+                recNote = true;
+                recInst = true;
                 note.note = channel.note.note;
                 note.instrument = channel.note.instrument;
                 channel.valid = true;
             }
-        }
-
-        // Instrument recovery/validation
-        if (note.instrument == XmTrackerPattern::kNoInstrument) {
+        } else if (note.instrument == XmTrackerPattern::kNoInstrument) {
+            // Instrument recovery/validation
             recovered = true;
             // No instrument, with either an inactive note or a previously existing instrument.
             if (note.note == XmTrackerPattern::kNoteOff) {
                 channel.valid = true;
             }
             if (channel.note.instrument < song.nInstruments) {
+                recInst = true;
                 note.instrument = channel.note.instrument;
                 channel.valid = true;
             }
@@ -97,8 +105,8 @@ inline void XmTrackerPlayer::loadNextNotes()
 
         // Invalid notes should still let effects through.
         if (recovered && !channel.valid) {
-            note.note = channel.note.note;
-            note.instrument = channel.note.instrument;
+            note.note = XmTrackerPattern::kNoteOff;
+            note.instrument = XmTrackerPattern::kNoInstrument;
             channel.valid = true;
         } else if (!recovered) {
             channel.valid = true;
@@ -114,11 +122,13 @@ inline void XmTrackerPlayer::loadNextNotes()
             } else if (note.instrument >= song.nInstruments) {
                 channel.instrument.sample.pData = 0;
             }
-            channel.start = note.note != channel.note.note;
-            if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote)
-                channel.start = false;
+            channel.start = !recovered || !recNote || !recInst;
             if (channel.instrument.sample.pData == 0)
                 channel.start = false;
+            if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote) {
+                channel.start = false;
+                channel.active = false;
+            }
             channel.note = note;
             if (!channel.start) continue;
 
@@ -140,22 +150,28 @@ inline void XmTrackerPlayer::loadNextNotes()
 
     // Advance song position
     row++;
-    if (row >= pattern.nRows()) {
-        // Reached end of pattern
-        row = 0;
-        phrase++;
-
-        // Reached end of song
-        if (phrase >= song.patternOrderTableSize) {
-            if (song.restartPosition < song.nPatterns) {
-                phrase = song.restartPosition;
-            } else {
-                stop();
-                return;
-            }
+    if (row >= pattern.nRows() || next.set) {
+        if (!next.set) {
+            processPatternBreak(song.patternOrderTableSize, 0);
+            if (!isPlaying()) return;
         }
+LOG(("was: %u, %u; next: %u, %u\n", phrase, row, next.phrase, next.row));
 
-        pattern.loadPattern(patternOrderTable(phrase));
+        if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
+            pattern.loadPattern(patternOrderTable(next.phrase));
+            // TODO: clear active notes/effects here?
+        } else if (next.phrase >= song.patternOrderTableSize) {
+            stop();
+        }
+        phrase = next.phrase;
+
+        if (row < pattern.nRows()) {
+            row = next.row;
+        } else {
+            stop();
+        }
+        
+        next.set = false;
     }
 }
 
@@ -188,30 +204,37 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
     switch (command) {
         case vxSlideDown:
             LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             processVolumeSlideDown(channel.volume, param);
             break;
         case vxSlideUp:
             LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             processVolumeSlideUp(channel.volume, param);
             break;
         case vxFineVolumeDown:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             if (ticks) break;
             processVolumeSlideDown(channel.volume, param);
             break;
         case vxFineVolumeUp:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             if (ticks) break;
             processVolumeSlideUp(channel.volume, param);
             break;
         case vxVibratoSpeed:
             LOG(("%s:%d: NOT_TESTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             break;
         case vxVibratoDepth:
             LOG(("%s:%d: NOT_TESTED: vxVibratoDepth vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             break;
         case vxTonePortamento:
             LOG(("%s:%d: NOT_TESTED: vxTonePortamento vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            processPatternBreak(0, 0);
             break;
         default:
             break;
@@ -273,128 +296,177 @@ void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
         processVolumeSlideDown(channel.volume, down);
 }
 
+void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
+{
+    next.set = true;
+
+    // Adjust phrase as appropriate
+    if (nextPhrase >= song.patternOrderTableSize) next.phrase = phrase + 1;
+    else next.phrase = nextPhrase;
+
+    // This is bounds-checked later, when the pattern is loaded.
+    next.row = nextRow;
+
+    // Reached end of song
+    if (nextPhrase >= song.patternOrderTableSize) {
+        // This is bounds-checked later, when the break is applied.
+        phrase = song.restartPosition;
+    }
+}
+
 void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 {
+    const uint8_t param = channel.note.effectParam;
     switch (channel.note.effectType) {
         case fxArpeggio:
             LOG(("%s:%d: NOT_TESTED: fxArpeggio fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxPortaUp:
-            LOG(("%s:%d: NOT_TESTED: fxPortaUp fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxPortaUp\n", __FILE__, __LINE__));
+            if (ticks == 0) break;
+            channel.period -= param; // TODO: bounds checking?
             break;
         case fxPortaDown:
-            LOG(("%s:%d: NOT_TESTED: fxPortaDown fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxPortaDown\n", __FILE__, __LINE__));
+            if (ticks == 0) break;
+            channel.period += param; // TODO: bounds checking?
             break;
         case fxTonePorta:
             LOG(("%s:%d: NOT_TESTED: fxTonePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxVibrato:
             LOG(("%s:%d: NOT_TESTED: fxVibrato fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxTonePortaAndVolumeSlide:
             LOG(("%s:%d: NOT_TESTED: fxTonePortaAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxVibratoAndVolumeSlide:
             LOG(("%s:%d: NOT_TESTED: fxVibratoAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxTremolo:
             LOG(("%s:%d: NOT_TESTED: fxTremolo fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxSampleOffset:
             LOG(("%s:%d: NOT_TESTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxVolumeSlide:
-            if (channel.note.effectParam == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxVolumeSlide\n", __FILE__, __LINE__));
+            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxVolumeSlide\n", __FILE__, __LINE__));
             processVolumeSlide(channel);
             break;
         case fxPositionJump:
             LOG(("%s:%d: NOT_TESTED: fxPositionJump fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxSetVolume:
-            channel.volume = MIN(channel.note.effectParam, kMaxVolume);
+            channel.volume = MIN(param, kMaxVolume);
             break;
         case fxPatternBreak:
-            LOG(("%s:%d: NOT_TESTED: fxPatternBreak fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            // Seriously, the spec says the higher order nibble is * 10, not * 16.
+            processPatternBreak(-1, param & 0xF + (param >> 4) * 10);
             break;
         case fxSetTempoAndBPM:
             ASSERT(ticks == 0);
             // Only useful at the start of a note
             channel.note.effectType = XmTrackerPattern::kNoEffect;
-            if (channel.note.effectParam == 0) break;
+            if (param == 0) break;
 
-            if (channel.note.effectParam < 0x1F)
-                tempo = channel.note.effectParam;
+            if (param < 0x1F)
+                tempo = param;
             else
-                bpm = channel.note.effectParam;
+                bpm = param;
             break;
         case fxSetGlobalVolume:
             LOG(("%s:%d: NOT_TESTED: fxSetGlobalVolume fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxGlobalVolumeSlide:
             LOG(("%s:%d: NOT_TESTED: fxGlobalVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxSetEnvelopePos:
             LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxPanSlide:
             LOG(("%s:%d: NOT_TESTED: fxPanSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxMultiRetrigNote:
             LOG(("%s:%d: NOT_TESTED: fxMultiRetrigNote fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxTremor:
             LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxExtraFinePorta:
             LOG(("%s:%d: NOT_TESTED: fxExtraFinePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processPatternBreak(0, 0);
             break;
         case fxOverflow:
-            switch (channel.note.effectParam >> 4) {
+            switch (param >> 4) {
                 case fxFinePortaUp:
-                    LOG(("%s:%d: NOT_TESTED: fxFinePortaUp fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinePortaUp fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxFinePortaDown:
-                    LOG(("%s:%d: NOT_TESTED: fxFinePortaDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinePortaDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxGlissControl:
-                    LOG(("%s:%d: NOT_TESTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxVibratoControl:
-                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxFinetune:
-                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxLoopPattern:
-                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxTremoloControl:
-                    LOG(("%s:%d: NOT_TESTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxRetrigNote:
-                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxFineVolumeSlideUp:
-                    if (channel.note.effectParam & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
+                    if (param & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
-                    processVolumeSlideUp(channel.volume, (channel.note.effectParam & 0xF));
+                    processVolumeSlideUp(channel.volume, (param & 0xF));
                     break;
                 case fxFineVolumeSlideDown:
-                    LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
-                    if (channel.note.effectParam & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
+                    LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    if (param & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
-                    processVolumeSlideDown(channel.volume, (channel.note.effectParam & 0xF));
+                    processVolumeSlideDown(channel.volume, (param & 0xF));
                     break;
                 case fxNoteCut:
-                    LOG(("%s:%d: NOT_TESTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxNoteDelay:
-                    LOG(("%s:%d: NOT_TESTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    LOG(("%s:%d: NOT_TESTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    processPatternBreak(0, 0);
                     break;
                 case fxPatternDelay:
-                    delay = channel.note.effectParam & 0x0f;
+                    delay = param & 0x0f;
                     break;
             }
             break;
@@ -590,6 +662,7 @@ void XmTrackerPlayer::tick()
 
         // load next notes into the process channels
         loadNextNotes();
+        if (!isPlaying()) return;
     }
 
     // process effects and envelopes

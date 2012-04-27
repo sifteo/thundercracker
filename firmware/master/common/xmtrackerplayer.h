@@ -47,13 +47,19 @@ public:
     static XmTrackerPlayer instance;
 
     static void mixerCallback() {
-        if (instance.song.nPatterns == 0) return;
+        if (instance.song.nPatterns == 0) {
+            /* This should never happen.
+             * stop() sets nPatterns to 0 and kills the callback.
+             */
+            XmTrackerPlayer::instance.stop();
+            return;
+        }
 
         instance.tick();
     }
 
     bool play(const struct _SYSXMSong *pSong);
-    bool isPlaying() { return song.nPatterns > 0; }
+    bool isPlaying() const { return song.nPatterns > 0; }
     void stop();
 
     // TODO: future:
@@ -99,11 +105,17 @@ private:
     uint16_t phrase;          // The current index into the pattern order table
     XmTrackerPattern pattern; // The current pattern
     uint16_t row;     // Current row within pattern, above
+    struct {
+        bool set;
+        uint16_t phrase;
+        uint16_t row;
+    } next;
 
     void loadNextNotes();
     void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
     void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
     void processVolumeSlide(XmTrackerChannel &channel);
+    void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processVolume(XmTrackerChannel &channel);
     void processEffects(XmTrackerChannel &channel);
     void processEnvelope(XmTrackerChannel &channel);
