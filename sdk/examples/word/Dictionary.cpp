@@ -49,7 +49,7 @@ bool Dictionary::getNextPuzzle(char* buffer,
     ASSERT(buffer);
     sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
 
-    if (CHEATER_MODE)
+    if (false&&CHEATER_MODE)
     {
         if (!currentIsMetaPuzzle())
         {
@@ -397,6 +397,9 @@ bool Dictionary::trim(const char* word, char* buffer)
 
 unsigned char Dictionary::getPuzzleMetaLetterIndex(int puzzleIndex)
 {
+    LOG("getPuzzleMetaLetterIndex for %d = %d\n", puzzleIndex, puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
+            0 : puzzlesMetaLetterIndex[puzzleIndex]);
+
     return puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
                 0 : puzzlesMetaLetterIndex[puzzleIndex];
 }
@@ -514,6 +517,7 @@ bool Dictionary::getCurrentWorldInfo(unsigned char &world,
                 numIndexes = 0;
                 ++world;
                 numMetas = 1;
+                LOG("checking metas for world %d\n", world);
             }
             ASSERT(numIndexes < MAX_METAS_PER_WORLD); // buffer overrun
             indexes[numIndexes++] = i;

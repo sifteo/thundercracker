@@ -112,6 +112,10 @@ void SavedData::OnEvent(unsigned eventID, const EventData& data)
 
 bool SavedData::isPuzzleSolved(unsigned index) const
 {
+    if (CHEATER_MODE)
+    {
+        return true;
+    }
     unsigned byteIndex = index / 8;
     unsigned bitIndex = index % 8;
     //LOG("isPuzzleSolved: %d?, %d\n", index, (mCompletedPuzzles[byteIndex] & (1 << bitIndex)) != 0);

@@ -1453,7 +1453,7 @@ void CubeStateMachine::paint()
                     ++numMetasSolved;
                 }
             }
-
+            LOG("metasSolved %d/%d (indexes %d)\n", numMetasSolved, numMetas, numIndexes);
             const float WIPE_TIME = 1.25f;
             float animPct = fmod(mStateTime / .5f, 1.f);
             float transPct = mStateTime / WIPE_TIME;

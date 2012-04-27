@@ -468,7 +468,6 @@ bool animPaint(AnimType animT,
         default:
             break;
         }
-
     }
 
     // finished?
@@ -488,7 +487,6 @@ bool animHasNormalBorder(AnimType animT)
    case AnimType_NormalTilesExit:
    case AnimType_NormalTilesReveal: // reveal the letter on the just solved puzzle
        return !Dictionary::currentIsMetaPuzzle();
-
 
    default:
        return false;

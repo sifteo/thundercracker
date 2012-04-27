@@ -15,6 +15,6 @@ const bool MUSIC_ON = false;
 const bool SFX_ON = true;
 const bool LOAD_ASSETS = true; //- do we load assets, or not?
 
-const bool CHEATER_MODE = true;
+const bool CHEATER_MODE = false;
 
 #endif // CONFIG_H

@@ -201,7 +201,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (eventID)
         {
         case EventID_EnterState:
-            if (Dictionary::getPuzzleIndex() < 0)
+            //if (Dictionary::getPuzzleIndex() < 0)
             {
                 createNewAnagram();
             }
@@ -309,8 +309,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                             WordGame::onEvent(EventID_PuzzleSolved, EventData());
                             WordGame::playAudio(shake, AudioChannelIndex_Shake);
                             // TODO new audio
+                            createNewAnagram();
                         }
-                        createNewAnagram();
                     }
                 }
             }
