@@ -66,6 +66,8 @@ void XmTrackerPlayer::stop()
 
 inline void XmTrackerPlayer::loadNextNotes()
 {
+    ASSERT(ticks == 0);
+
     // Get and process the next row of notes
     struct XmTrackerNote note;
     for (unsigned i = 0; i < song.nChannels; i++) {
@@ -155,7 +157,6 @@ inline void XmTrackerPlayer::loadNextNotes()
             processPatternBreak(song.patternOrderTableSize, 0);
             if (!isPlaying()) return;
         }
-LOG(("was: %u, %u; next: %u, %u\n", phrase, row, next.phrase, next.row));
 
         if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
             pattern.loadPattern(patternOrderTable(next.phrase));
@@ -368,6 +369,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             channel.volume = MIN(param, kMaxVolume);
             break;
         case fxPatternBreak:
+            if (ticks > 0) break;
             // Seriously, the spec says the higher order nibble is * 10, not * 16.
             processPatternBreak(-1, param & 0xF + (param >> 4) * 10);
             break;
