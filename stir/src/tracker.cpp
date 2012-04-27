@@ -335,7 +335,8 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // intentional fall-through
         case kSampleFormatPCM16: {
             uint32_t numSamples = sample.dataSize / (pcm8 ? 1 : 2);
-            int16_t *buf = (int16_t*)malloc(numSamples * 2);
+            sample.dataSize = numSamples * sizeof(int16_t);
+            int16_t *buf = (int16_t*)malloc(sample.dataSize);
             if (!buf) return false;
             for (unsigned i = 0; i < numSamples; i++) {
                 buf[i] = pcm8
