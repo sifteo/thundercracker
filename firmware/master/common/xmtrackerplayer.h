@@ -93,6 +93,7 @@ private:
      */
     uint8_t bpm;    // Speed of piece (yes, tempo)
     uint8_t tempo;  // Ticks per note
+    uint8_t delay;  // Delay added to end of pattern
 
     // Playback positions
     uint16_t phrase;          // The current index into the pattern order table

@@ -37,6 +37,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     
     bpm = song.bpm;
     ticks = tempo = song.tempo;
+    delay = 0;
     phrase = 0;
     row = 0;
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
@@ -393,7 +394,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_TESTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
                     break;
                 case fxPatternDelay:
-                    LOG(("%s:%d: NOT_TESTED: fxPatternDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+                    delay = channel.note.effectParam & 0x0f;
                     break;
             }
             break;
@@ -584,8 +585,8 @@ uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
 
 void XmTrackerPlayer::tick()
 {
-    if (ticks++ >= song.tempo) {
-        ticks = 0;
+    if (ticks++ >= tempo + delay) {
+        ticks = delay = 0;
 
         // load next notes into the process channels
         loadNextNotes();
