@@ -31,6 +31,13 @@ struct XmTrackerChannel {
 
     struct XmTrackerEnvelopeMemory envelope;
 
+    struct {
+        uint8_t phase;
+        uint8_t speed;
+        uint8_t depth;
+        uint8_t type;
+    } vibrato;
+
     inline uint8_t realNote() const {
         if (!instrument.sample.pData ||
             note.note == XmTrackerPattern::kNoteOff)
@@ -112,13 +119,18 @@ private:
     } next;
 
     void loadNextNotes();
+
     void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
     void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
+    void processVibrato(XmTrackerChannel &channel);
+    void processVolume(XmTrackerChannel &channel);
+
     void processVolumeSlide(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
-    void processVolume(XmTrackerChannel &channel);
     void processEffects(XmTrackerChannel &channel);
+
     void processEnvelope(XmTrackerChannel &channel);
+
     void process();
     void commit();
     uint8_t patternOrderTable(uint16_t order);
