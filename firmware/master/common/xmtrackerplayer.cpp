@@ -165,7 +165,7 @@ LOG(("was: %u, %u; next: %u, %u\n", phrase, row, next.phrase, next.row));
         }
         phrase = next.phrase;
 
-        if (row < pattern.nRows()) {
+        if (next.row < pattern.nRows()) {
             row = next.row;
         } else {
             stop();
