@@ -84,22 +84,37 @@ void power_init(void)
     MISC_PORT = MISC_IDLE;
 
     /*
-     * Neighbor TX pins
-     *
-     * We enable pull-downs for input mode, when we're receiving pulses from
-     * our neighbors. This improves the isolation between each side's input.
-     *
-     * High drive is enabled.
+     * Neighbor Tx Experimental setting.
+     * Hope is to generate stronger magnetic field
      */
-
+//#define NBR_HIGH_DRIVE 1
+#ifdef NBR_HIGH_DRIVE
     MISC_CON = 0x60;
     MISC_CON = 0x61;
     MISC_CON = 0x65;
-#if HWREV >= 1
-    MISC_CON = 0x64;
-#else
-    MISC_CON = 0x67;
+	#if HWREV >= 1
+    	MISC_CON = 0x64;
+	#else
+    	MISC_CON = 0x67;
+	#endif
 #endif
+
+    /*
+     *  Neighbor Rx Experimental setting.
+     *  Hope is to provide greater damping for tank oscillation
+     */
+//#define NBR_PULLDOWN 1
+#ifdef NBR_PULLDOWN
+    MISC_CON = 0x30;
+    MISC_CON = 0x31;
+    MISC_CON = 0x35;
+	#if HWREV >= 1
+    	MISC_CON = 0x34;
+	#else
+    	MISC_CON = 0x37;
+	#endif
+#endif
+
 }
 
 void power_sleep(void)

@@ -12,8 +12,6 @@
 #include "radio.h"
 #include "time.h"
 
-#define NBR_IO      // comment out to turn off neighbor IO
-
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
@@ -89,15 +87,21 @@ uint8_t accel_y;
  *    [4:0] -- ID for the transmitting cube.
  */
 
-#define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
+#define NBR_TX		// comment out to turn off neighbor TX
+#define NBR_RX		// comment out to turn off neighbor RX
+
+#ifdef NBR_RX
+//#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
+#endif
+
+#define NB_TX_BITS          17      // 1 header, 2 mask, 13 payload, 1 damping
 #define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
 // 2us pulses, 9.75us bit periods, 156us packets
-#define NB_BIT_TICKS        13      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   2       // Tweak for sampling halfway between pulses 
+#define NB_BIT_TICKS        16      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   1       // Sampling tweak to ignore secondary pulses
 #define NB_DEADLINE         13      // Max amount Timer0 can be late by
 
-#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
@@ -542,6 +546,12 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 {
     __asm
+    	; Squelch immediately. Doesnt matter if it is Tx
+
+    	#ifdef NBR_SQUELCH_ENABLE
+    	anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
+    	#endif
+
         push    acc
         push    psw
         
@@ -551,26 +561,17 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Neighbor Bit Receive
         ;--------------------------------------------------------------------
 
-        ; Briefly squelch the receive LC tanks, and clear the mask.
-        ; Do this concurently with capturing and resetting Timer 1.
-        
-        #if defined(NBR_SQUELCH_ENABLE) && defined(NBR_IO)
-        anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
-        #endif
+        ; Capture Timer1 here.
+        ; We will reset at a later point so as so ignore secondary pulses
 
         mov     a, TL1                          ; Capture count from Timer 1
-        mov     TL1, #0                         ; Reset Timer 1
         add     a, #0xFF                        ; Nonzero -> C
         mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
 
-        #ifdef NBR_IO
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear squelch and/or masking
-        #endif
-
         jb      _nb_rx_mask_state0, 1$          ; First state
         setb    _nb_rx_mask_state0
-        #ifdef NBR_IO
-        anl     _MISC_DIR, #~MISC_NB_MASK0      ;    Prepare mask for first bit
+        #ifdef NBR_RX
+        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
         #endif
         sjmp    10$                             ;    End of masking
 1$:
@@ -578,16 +579,21 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         jb      _nb_rx_mask_state1, 2$          ; Second state
         setb    _nb_rx_mask_state1
         mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
-        #ifdef NBR_IO
-        anl     _MISC_DIR, #~MISC_NB_MASK1      ;    Prepare mask for next bit
+        #ifdef NBR_RX
+        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
         #endif
         sjmp    10$                             ;    End of masking
 2$:
 
+		#ifdef NBR_SQUELCH_ENABLE
+        ; since we are squelching we have to setup side mask every time
         jb      _nb_rx_mask_state2, 3$          ; Finished second mask bit?
+		#else
+        ; otherwise we setup side mask only once (before receiving first payload bit)
+        jb      _nb_rx_mask_state2, 10$         ; Finished second mask bit?
+		#endif
         setb    _nb_rx_mask_state2
         mov     _nb_rx_mask_bit1, c             ;    Store mask bit
-        sjmp    10$                             ;    End of masking
 3$:
 
         ; Finished receiving the mask bits. For future bits, we want to set the mask only
@@ -598,20 +604,36 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; At this point, the side bits have been stored independently in nb_rx_mask_bit*.
         ; We decode them rapidly using a jump tree.
 
-        #ifdef NBR_IO
+        #ifdef NBR_RX
         jb      _nb_rx_mask_bit0, 4$
          jb     _nb_rx_mask_bit1, 5$
-          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_0_TOP)      ; 00
+		  #ifdef NBR_SQUELCH_ENABLE
+          orl 	_MISC_DIR, #(MISC_NB_0_TOP)
+          #else
+          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
+		  #endif
           sjmp  10$
 5$:
-          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_1_LEFT)     ; 01
+		  #ifdef NBR_SQUELCH_ENABLE
+          orl 	_MISC_DIR, #(MISC_NB_1_LEFT)
+		  #else
+          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
+		  #endif
           sjmp  10$
 4$:
          jb     _nb_rx_mask_bit1, 6$
-          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_2_BOTTOM)   ; 10
+		  #ifdef NBR_SQUELCH_ENABLE
+          orl 	_MISC_DIR, #(MISC_NB_2_BOTTOM)
+		  #else
+          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
+		  #endif
           sjmp  10$
 6$:
-          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_3_RIGHT)    ; 11
+		  #ifdef NBR_SQUELCH_ENABLE
+          orl 	_MISC_DIR, #(MISC_NB_3_RIGHT)
+		  #else
+          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
+		  #endif
         #endif
 
 10$:
@@ -651,9 +673,9 @@ nb_tx:
         rlc     a
         jnc     2$
 
-#ifdef NBR_IO
+#ifdef NBR_TX
+        anl     _MISC_DIR, #~MISC_NB_OUT		; TODO: do this just once before initiating tx
         orl     MISC_PORT, #MISC_NB_OUT
-        anl     _MISC_DIR, #~MISC_NB_OUT        ; 4  HIGH
 #endif
 2$:
         mov     a, (_nb_buffer + 1)             ; 2  Now do a proper 16-bit shift.
@@ -664,23 +686,25 @@ nb_tx:
         rlc     a                               ; 1
         mov     _nb_buffer, a                   ; 3
 
-        mov     a, #0x2                         ; 2
-        djnz    ACC, .                          ; 12 (3 iters, 4 cycles each)
+        mov     a, #0x4                         ; 2
+        djnz    ACC, .                          ; 16 (4 iters, 4 cycles each)
         nop                                     ; 1
 
-#ifdef NBR_IO
+#ifdef NBR_TX
         anl     MISC_PORT, #~MISC_NB_OUT        ; LOW
 #endif
 
         ;--------------------------------------------------------------------
 
 nb_bit_done:
+        ; We now reset Timer-1. It may have incremented due
+        ; to a secondary pulse and we must ignore it.
+        ; Any transition from this point on, will be accounted towards the next bit
+        mov     TL1, #0                         ; Reset Timer 1.
 
         djnz    _nb_bits_remaining, nb_irq_ret  ; More bits left?
 
         clr     _T2CON_T2I0                     ; Nope. Disable the IRQ
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
-
         jb      _nb_tx_mode, nb_tx_handoff      ; TX mode? Nothing to store.
 
         ;--------------------------------------------------------------------
@@ -749,8 +773,12 @@ nb_packet_done:
         mov     TH1, #0xFF
         clr     _nb_tx_mode
         setb    _TCON_TR1
+#if defined(NBR_TX) || defined(NBR_RX)
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
+#endif
 
 nb_irq_ret:
+
         clr     _IR_TF2                         ; Must ack IRQ (TF2 is not auto-clear)
 
         pop     psw
