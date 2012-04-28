@@ -16,9 +16,9 @@ $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 else
 ifeq ($(BUILD_PLATFORM),Darwin)
 # Mac OS Link: Create an app bundle with a stripped binary,
-# and a separate symlink for easier command line use.
+# and a separate (lowercase) symlink for easier command line use.
 $(BIN_DIR)/$(BIN): $(BIN_DIR)/$(BIN).app
-	ln -sf siftulator.app/Contents/MacOS/siftulator "$@"
+	ln -sf $(BIN).app/Contents/MacOS/$(BIN) $(BIN_DIR)/$(LOWERCASE_BIN)
 $(BIN_DIR)/$(BIN).app: $(OBJS)
 	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
 	mkdir -p "$(BIN_DIR)/$(BIN).app/Contents/MacOS"

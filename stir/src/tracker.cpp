@@ -74,12 +74,8 @@ bool XmTrackerLoader::readSong()
     aseek(17 + 20 + 1 + 20 + 2 + headerSize); // This format is kinda stupid!
 
     // Load patterns
-    for (unsigned i = 0; i < song.nPatterns; i++) {
+    for (unsigned i = 0; i < song.nPatterns; i++)
         if (!readNextPattern()) return false;
-
-        compressPattern(i);
-        if (patternDatas[i].size() == 0) return false;
-    }
 
     /* We compress both envelopes and samples in readNextInstrument and its
      * callees, but they only print envelope compression statistics.
@@ -128,113 +124,6 @@ bool XmTrackerLoader::readNextPattern()
 }
 
 /*
- * (Re)compress a pattern.
- *
- * The XM pattern format supports two different methods of storing notes. The
- * first is as five bytes: the note, instrument, volume, effect type, and
- * effect parameter. Notes are within the range of (0..97), so the first byte
- * of this note format always has it's MSB = 0.
- *
- * The second format begins with a code byte, with it's MSB set, the bottom
- * 5 bits of which stand for, in order:
- *      0: Note byte follows
- *      1: Instrument byte follows
- *      2: Volume byte follows
- *      3: Effect type byte follows
- *      4: Effect parameter byte follows
- * Thus a new note using the channel's existing instrument with a new volume
- * and no effects could be described with uint8_t[3] = {0x83, <note>, <volume>}
- */
-unsigned XmTrackerLoader::compressPattern(uint16_t pattern)
-{
-    unsigned ops = 0;
-    uint32_t w = 0;
-    uint32_t r = 0;
-    std::vector<uint8_t> &data = patternDatas[pattern];
-
-    while(r < data.size()) {
-        // decode note
-        uint8_t code = data[r++];
-        uint8_t note = 0;
-        uint8_t instrument = 0;
-        uint8_t volume = 0;
-        uint8_t effectType = 0;
-        uint8_t effectParam = 0;
-        bool wasEncoded = !!(code & 0x80);
-
-        if (code & 0x80) {
-            if (code & (1 << 0)) {
-                assert(r < data.size());
-                note = data[r++];
-            }
-            if (code & (1 << 1)) {
-                assert(r < data.size());
-                instrument = data[r++];
-            }
-            if (code & (1 << 2)) {
-                assert(r < data.size());
-                volume = data[r++];
-            }
-            if (code & (1 << 3)) {
-                assert(r < data.size());
-                effectType = data[r++];
-            }
-            if (code & (1 << 4)) {
-                assert(r < data.size());
-                effectParam = data[r++];
-            }
-        } else {
-            assert(r < data.size() - 4);
-            note = code;
-            instrument = data[r++];
-            volume = data[r++];
-            effectType = data[r++];
-            effectParam = data[r++];
-        }
-
-        // value consistency checking here
-        code = 0x80;
-        code |= note == 0 ? 0 : 1 << 0;
-        code |= instrument == 0 ? 0 : 1 << 1;
-        code |= volume == 0 ? 0 : 1 << 2;
-        code |= effectType == 0 ? 0 : 1 << 3;
-        code |= effectParam == 0 ? 0 : 1 << 4;
-
-        // store uncompressed if it saves space, or if it doesn't make a difference and it wasn't encoded before.
-        if (__builtin_popcount(code & 0x1F) > 4 || (__builtin_popcount(code & 0x1F) > 3 && !wasEncoded)) {
-            if (wasEncoded) ops++;
-            data[w++] = note;
-            data[w++] = instrument;
-            data[w++] = volume;
-            data[w++] = effectType;
-            data[w++] = effectParam;
-        } else {
-            if (!wasEncoded) ops++;
-            
-            data[w++] = code;
-            if (code & (1 << 0)) {
-                data[w++] = note;
-            }
-            if (code & (1 << 1)) {
-                data[w++] = instrument;
-            }
-            if (code & (1 << 2)) {
-                data[w++] = volume;
-            }
-            if (code & (1 << 3)) {
-                data[w++] = effectType;
-            }
-            if (code & (1 << 4)) {
-                data[w++] = effectParam;
-            }
-        }
-    }
-
-    while (w < data.size()) data.pop_back();
-    return ops;
-}
-
-/*
  * Read an instrument's data from the module.
  *
  * In the process, this function also computes loop start and end positions in
@@ -273,13 +162,13 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
 
-    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
+    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
     uint16_t vEnvelope[12];
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
         uint16_t eValue = get16();
-        assert(eOffset == (eOffset & 0x01FF)); // 9 bits
-        assert(eValue == (eValue & 0x7F)); // 7 bits
+        assert(eOffset == (eOffset & 0x01FF));  // 9 bits
+        assert(eValue == (eValue & 0x7F));      // 7 bits
         vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
     }
 

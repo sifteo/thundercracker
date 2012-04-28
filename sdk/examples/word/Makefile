@@ -1,12 +1,12 @@
 APP = word
-SDK_DIR = ../..
+
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o StateMachine.o \
 GameStateMachine.o WordGame.o \
 CubeStateMachine.o Dictionary.o \
 PrototypeWordList.o SavedData.o \
-Utility.o Anim.o \
+Utility.o Anim.o Dialog.o \
 qsort.o bsearch.o
 
 ASSETDEPS += *.png $(ASSETS).lua

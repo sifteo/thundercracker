@@ -46,6 +46,9 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, handleRadioPacket),
     LUNAR_DECLARE_METHOD(LuaCube, saveScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, testScreenshot),
+    LUNAR_DECLARE_METHOD(LuaCube, testSetEnabled),
+    LUNAR_DECLARE_METHOD(LuaCube, testGetACK),
+    LUNAR_DECLARE_METHOD(LuaCube, testWriteVRAM),
     LUNAR_DECLARE_METHOD(LuaCube, xbPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xwPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xbPeek),
@@ -519,4 +522,27 @@ int LuaCube::getRadioAddress(lua_State *L)
         
     lua_pushstring(L, buf);
     return 1;
+}
+
+int LuaCube::testSetEnabled(lua_State *L)
+{
+    Cube::I2CTestJig &test = LuaSystem::sys->cubes[id].i2c.testjig;
+    test.setEnabled(lua_toboolean(L, 1));
+    return 0;
+}
+
+int LuaCube::testGetACK(lua_State *L)
+{
+    Cube::I2CTestJig &test = LuaSystem::sys->cubes[id].i2c.testjig;
+    std::vector<uint8_t> buffer;
+    test.getACK(buffer);
+    lua_pushlstring(L, (const char *) &buffer[0], buffer.size());
+    return 1;
+}
+
+int LuaCube::testWriteVRAM(lua_State *L)
+{
+    Cube::I2CTestJig &test = LuaSystem::sys->cubes[id].i2c.testjig;
+    test.writeVRAM(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    return 0;
 }

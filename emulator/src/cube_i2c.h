@@ -19,6 +19,7 @@
 #include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_accel.h"
+#include "cube_testjig.h"
 
 namespace Cube {
 
@@ -28,6 +29,7 @@ class I2CBus {
 
     // Peripherals on this bus
     I2CAccelerometer accel;
+    I2CTestJig testjig;
 
     void init() {
         timer = 0;
@@ -221,22 +223,28 @@ class I2CBus {
         Tracer::log(cpu, "I2C: BUS start"); 
 
         accel.i2cStart();
+        testjig.i2cStart();
     }
 
     void busStop(CPU::em8051 *cpu) {
         Tracer::log(cpu, "I2C: BUS stop");
 
         accel.i2cStop();
+        testjig.i2cStop();
     }
     
     uint8_t busWrite(CPU::em8051 *cpu, uint8_t byte) {
-        Tracer::log(cpu, "I2C: BUS write %02x", byte); 
+        // Simulated open-drain
+        uint8_t ack = accel.i2cWrite(byte) | testjig.i2cWrite(byte);
+        
+        Tracer::log(cpu, "I2C: BUS write(%d) %02x", ack, byte); 
 
-        return accel.i2cWrite(byte);
+        return ack;
     }
 
     uint8_t busRead(CPU::em8051 *cpu, uint8_t ack) {
-        uint8_t result = accel.i2cRead(ack);
+        // Simulated open-drain
+        uint8_t result = accel.i2cRead(ack) & testjig.i2cRead(ack);
 
         Tracer::log(cpu, "I2C: BUS read(%d) %02x", ack, result);
 

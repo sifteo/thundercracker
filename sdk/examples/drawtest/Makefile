@@ -1,5 +1,5 @@
 APP = drawtest
-SDK_DIR = ../..
+
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o

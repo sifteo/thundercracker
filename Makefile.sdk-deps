@@ -9,7 +9,15 @@ ALL_SDK_DEPS := \
 ifeq ($(BUILD_PLATFORM), windows32)
 	ALL_SDK_DEPS += \
 		sdk/bin/libgcc_s_dw2-1.dll \
-		sdk/bin/libstdc++-6.dll
+		sdk/bin/libstdc++-6.dll \
+        sdk/bin/make.exe \
+        sdk/bin/rm.exe
+endif
+
+# Mac-only
+ifeq ($(BUILD_PLATFORM), Darwin)
+	ALL_SDK_DEPS += \
+		sdk/bin/make
 endif
 
 .PHONY: sdk-deps sdk-deps-clean
@@ -23,7 +31,16 @@ sdk/bin/arm-clang$(BIN_EXT): $(LLVM_BIN)/arm-clang$(BIN_EXT)
 	install -s $< $@
 
 sdk/bin/libgcc_s_dw2-1.dll: $(LLVM_BIN)/libgcc_s_dw2-1.dll
-	install -s $< $@
+	install $< $@
 
 sdk/bin/libstdc++-6.dll: $(LLVM_BIN)/libstdc++-6.dll
+	install $< $@
+
+sdk/bin/make: $(DEPS_DIR)/gnu/make
+	install -s $< $@
+
+sdk/bin/make.exe: $(DEPS_DIR)/UnxUtils/usr/local/wbin/make.exe
+	install -s $< $@
+
+sdk/bin/rm.exe: $(DEPS_DIR)/UnxUtils/usr/local/wbin/rm.exe
 	install -s $< $@

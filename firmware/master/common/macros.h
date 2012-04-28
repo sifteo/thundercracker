@@ -11,19 +11,12 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define APP_TITLE      "Thundercracker"
-#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_TITLE       "Sifteo Cubes"
+#define APP_COPYRIGHT   "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
-
-#ifdef _NEWLIB_STDIO_H
-#define printf      iprintf
-#define sprintf     siprintf
-#define snprintf    sniprintf
-#define vsnprintf   vsniprintf
-#endif
 
 #ifdef SIFTEO_SIMULATOR
 #   ifdef DEBUG

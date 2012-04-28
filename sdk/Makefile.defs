@@ -1,11 +1,12 @@
-# We expect SDK_DIR to point to the directory containing this file.
+# We expect SDK_DIR to point to the directory containing this file,
+# and PATH must include $(SDK_DIR)/bin.
 
 ###########################
 
-# Tool definitions.
-STIR := PATH=$(SDK_DIR)/bin stir
-LD := PATH=$(SDK_DIR)/bin slinky
-CC := PATH=$(SDK_DIR)/bin arm-clang
+# Tool definitions. These are in our PATH.
+STIR := stir
+LD := slinky
+CC := arm-clang
 
 BIN := $(APP).elf
 ASSETS = assets
@@ -35,6 +36,9 @@ CFLAGS += -g
 
 ifeq ($(RELEASE),)
     LDFLAGS += -g
+    LINK_MESSAGE += (Debug)
+else
+    LINK_MESSAGE += (Release)
 endif
 
 ifneq ($(DISABLE_INLINING),)

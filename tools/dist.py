@@ -20,12 +20,24 @@ if __name__ == '__main__':
     zipFilename = "%s.zip" % packagedir
     shutil.rmtree(packagedir, ignore_errors = True)
 
-    # don'y copy sifteo games - this won't be needed once they're in their own repo
-    shutil.copytree("sdk", packagedir, True, ignore = shutil.ignore_patterns(
+    # Basic ignoreables...
+    patterns = [
         '.git', '.gitignore', '.DS_Store',
         '*.o', '*.d', '*.bak', '*.gen.h', '*.gen.cpp',
-        'buddies', 'chroma', 'ninja_slide', 'peano', 'word'
-    ))
+    ]
+
+    # don't copy sifteo games - this won't be needed once they're in their own repo
+    patterns += [
+        'buddies', 'chroma', 'ninja_slide', 'peano', 'word',
+    ]
+
+    # Platform-specific
+    if os.name != 'posix':
+        patterns.append('sifteo-sdk-shell.command')
+    if os.name != 'nt':
+        patterns.append('sifteo-sdk-shell.cmd')
+
+    shutil.copytree("sdk", packagedir, True, ignore = shutil.ignore_patterns(*patterns))
 
     print "creating sdk archive '%s'....." % zipFilename
     ZipDir(packagedir, zipFilename)

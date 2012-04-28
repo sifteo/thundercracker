@@ -18,36 +18,42 @@
 #include "adc.h"
 
 static I2CSlave i2c(&I2C1);
-static Neighbor neighbor(JIG_NBR_IN1_GPIO,
-                         JIG_NBR_IN2_GPIO,
-                         JIG_NBR_IN3_GPIO,
-                         JIG_NBR_IN4_GPIO,
-                         JIG_NBR_OUT1_GPIO,
-                         JIG_NBR_OUT2_GPIO,
-                         JIG_NBR_OUT3_GPIO,
-                         JIG_NBR_OUT4_GPIO,
-                         HwTimer(&TIM3),
-                         HwTimer(&TIM5));
+static Neighbor neighbor(&TIM3, &TIM5);
+
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
 
 static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
-
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 /*
  * Table of test handlers.
- * Order must match the Command enum.
+ * Their index in this table specifies their ID.
  */
 TestJig::TestHandler const TestJig::handlers[] = {
-    setUsbPowerHandler,
-    setSimulatedBatteryVoltageHandler,
-    getBatterySupplyCurrentHandler
+    setUsbEnabledHandler,                   // 0
+    setSimulatedBatteryVoltageHandler,      // 1
+    getBatterySupplyCurrentHandler,         // 2
+    getUsbCurrentHandler,                   // 3
+    beginNeighborRxHandler,                 // 4
+    stopNeighborRxHandler,                  // 5
 };
 
 void TestJig::init()
 {
+    NVIC.irqEnable(IVT.TIM3);                   // neighbor tx
+    NVIC.irqPrioritize(IVT.TIM3, 0x60);
+
+    NVIC.irqEnable(IVT.TIM5);                   // neighbor rx
+    NVIC.irqPrioritize(IVT.TIM5, 0x50);
+
+    NVIC.irqEnable(IVT.EXTI0);                   // neighbor in2
+    NVIC.irqPrioritize(IVT.EXTI0, 0x64);
+
+    NVIC.irqEnable(IVT.EXTI1);                   // neighbor in3
+    NVIC.irqPrioritize(IVT.EXTI1, 0x64);
+
     GPIOPin dacOut = BATTERY_SIM_GPIO;
     dacOut.setControl(GPIOPin::IN_ANALOG);
 
@@ -86,14 +92,21 @@ void TestJig::onTestDataReceived(uint8_t *buf, unsigned len)
     }
 }
 
-void TestJig::enable_neighbor_receive()
+// this additional glue is required to service IRQs from the shared EXTI vector.
+void TestJig::neighborInIsr(uint8_t side)
 {
-    neighbor.beginReceiving();
+    neighbor.onRxPulse(side);
 }
 
-uint16_t TestJig::get_received_data()
+/*
+ * Called from ISR context within Neighbors once we've received a message.
+ * Forward it on over USB.
+ */
+void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
 {
-    return neighbor.getLastRxData();
+    // NB! neighbor transmitted in its native big endian format
+    const uint8_t response[] = { 6, side, (msg >> 8) & 0xff, msg & 0xff };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*******************************************
@@ -103,7 +116,7 @@ uint16_t TestJig::get_received_data()
 /*
  * args[1] == non-zero for enable, 0 for disable
  */
-void TestJig::setUsbPowerHandler(uint8_t argc, uint8_t *args)
+void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 {
     bool enable = args[1];
     if (enable) {
@@ -132,7 +145,7 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
- *
+ *  no args
  */
 void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
@@ -142,23 +155,31 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::getStmVsysVoltageHandler(uint8_t argc, uint8_t *args)
+/*
+ *  no args
+ */
+void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
 {
+    uint16_t sample = adc.sample(USB_CURRENT_ADC_CH);
 
+    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::getStmBattVoltageHandler(uint8_t argc, uint8_t *args)
+void TestJig::beginNeighborRxHandler(uint8_t argc, uint8_t *args)
 {
+    neighbor.beginReceiving();
 
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
-void TestJig::storeStmBattVoltageHandler(uint8_t argc, uint8_t *args)
+void TestJig::stopNeighborRxHandler(uint8_t argc, uint8_t *args)
 {
+    neighbor.stopReceiving();
 
-}
-
-void TestJig::enableTestJigNeighborTx(uint8_t argc, uint8_t *args)
-{
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*******************************************
@@ -180,22 +201,15 @@ IRQ_HANDLER ISR_TIM5()
     TIM5.SR = 0; // must clear status to acknowledge the ISR
 }
 
+/*
+ * Neighbor Ins 2 and 3 are on EXTI lines 0 and 1 respectively.
+ */
 IRQ_HANDLER ISR_EXTI0()
-{
-    neighbor.onRxPulse(0);
-}
-
-IRQ_HANDLER ISR_EXTI1()
-{
-    neighbor.onRxPulse(1);
-}
-
-IRQ_HANDLER ISR_EXTI2()
 {
     neighbor.onRxPulse(2);
 }
 
-IRQ_HANDLER ISR_EXTI3()
+IRQ_HANDLER ISR_EXTI1()
 {
     neighbor.onRxPulse(3);
 }

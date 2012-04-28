@@ -6,64 +6,69 @@
 #include "neighbor.h"
 #include "board.h"
 
+#if (BOARD == BOARD_TEST_JIG)
+#include "testjig.h"
+#endif
+
+GPIOPin Neighbor::inPins[4] = {
+    NBR_IN1_GPIO,
+    NBR_IN2_GPIO,
+    NBR_IN3_GPIO,
+    NBR_IN4_GPIO,
+
+};
+
+GPIOPin Neighbor::outPins[4] = {
+    NBR_OUT1_GPIO,
+    NBR_OUT2_GPIO,
+    NBR_OUT3_GPIO,
+    NBR_OUT4_GPIO
+};
+
 void Neighbor::init()
 {
     txData = 0;
 
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    for (unsigned i = 0; i < 4; ++i) {
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
 
-    in1.irqInit();
-    in1.irqSetFallingEdge();
-    in1.irqDisable();
+        GPIOPin &in = inPins[i];
+        in.irqInit();
+        in.irqSetFallingEdge();
+        in.irqDisable();
+    }
 
-    // this is currently about 87 us
     txPeriodTimer.init(625, 4);
+    rxPeriodTimer.init(820, 0); // ~ 24 us
 
-    rxPeriodTimer.init(900, 0);
-
-    txPeriodTimer.configureChannelAsOutput(1, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(2, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(3, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(4, HwTimer::ActiveHigh, HwTimer::Pwm1);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.configureChannelAsOutput(i, HwTimer::ActiveHigh, HwTimer::Pwm1);
 }
 
 void Neighbor::enablePwm()
 {
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    for (unsigned i = 0; i < 4; ++i)
+        outPins[i].setControl(GPIOPin::OUT_ALT_50MHZ);
 
-    txPeriodTimer.enableChannel(1);
-    txPeriodTimer.enableChannel(2);
-    txPeriodTimer.enableChannel(3);
-    txPeriodTimer.enableChannel(4);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.enableChannel(i);
 
     txPeriodTimer.enableUpdateIsr();
 }
 
 void Neighbor::setDuty(uint16_t duty)
 {
-    txPeriodTimer.setDuty(1, duty);
-    txPeriodTimer.setDuty(2, duty);
-    txPeriodTimer.setDuty(3, duty);
-    txPeriodTimer.setDuty(4, duty);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.setDuty(i, duty);
 }
 
 void Neighbor::disablePwm()
 {
-    txPeriodTimer.disableChannel(1);
-    txPeriodTimer.disableChannel(2);
-    txPeriodTimer.disableChannel(3);
-    txPeriodTimer.disableChannel(4);
+    for (unsigned i = 1; i < 5; ++i)
+        txPeriodTimer.disableChannel(i);
 
-    out1.setControl(GPIOPin::IN_FLOAT);
-    out2.setControl(GPIOPin::IN_FLOAT);
-    out3.setControl(GPIOPin::IN_FLOAT);
-    out4.setControl(GPIOPin::IN_FLOAT);
+    for (unsigned i = 0; i < 4; ++i)
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
 }
 
 /*
@@ -71,6 +76,9 @@ void Neighbor::disablePwm()
  */
 void Neighbor::beginTransmit(uint16_t data)
 {
+    if (isTransmitting())
+        return;
+
     txData = data;
     transmitNextBit();  // ensure duty is set before enabling pwm channels
     enablePwm();
@@ -93,85 +101,112 @@ void Neighbor::transmitNextBit()
     txData >>= 1;
 }
 
-
+/*
+ * Initialize state, and enable IRQs on input pins & rx timer.
+ */
 void Neighbor::beginReceiving()
 {
-    receiving_side = -1;
-    in1.setControl(GPIOPin::IN_FLOAT);
-    in1.irqEnable();
+    rxState = WaitingForStart;
+    receivingSide = 0;  // just initialize to something safe
+
+    for (unsigned i = 0; i < 4; ++i) {
+        GPIOPin &in = inPins[i];
+        in.setControl(GPIOPin::IN_FLOAT);
+        in.irqEnable();
+    }
+
+    rxPeriodTimer.enableUpdateIsr();
+}
+
+/*
+ * Disable IRQs for input pins and rx timer.
+ */
+void Neighbor::stopReceiving()
+{
+    for (unsigned i = 0; i < 4; ++i)
+        inPins[i].irqDisable();
+
+    rxPeriodTimer.disableUpdateIsr();
 }
 
 /*
  * Called from within the EXTI ISR for one of our neighbor RX inputs.
+ * OR a 1 into our rxDataBuffer for this bit period.
+ *
+ * NOTE: rxDataBuffer gets shifted at the bit period boundary (rxPeriodIsr())
  */
 void Neighbor::onRxPulse(uint8_t side)
 {
-    if (side == 0) {
-        in1.irqAcknowledge();
+    inPins[side].irqAcknowledge();
 
-        out1.setControl(GPIOPin::OUT_2MHZ);
-        out1.setLow();
+    // TODO: may need to time the squelch more precisely to ensure we don't
+    // worsen the ringing
+    GPIOPin &out = outPins[side];
+    out.setControl(GPIOPin::OUT_50MHZ);
+    out.setLow();
 
-        switch (rxState) {
-        case WaitingForStart:
-            received_data_buffer = 1;  //set bit 0 to 1
-            input_bit_counter = 1;
-            rxState = Squelch;
-            break;
+    /*
+     * Start of a new sequence?
+     * Record which side we're listening to and disable the others.
+     */
+    if (rxState == WaitingForStart) {
 
-        case WaitingForNextBit:
-        case Squelch:
-            received_data_buffer |= (1 << input_bit_counter);
-            input_bit_counter++;
-            rxState = Squelch;
-            break;
-        }
-    }
+        receivingSide = side;
+        rxDataBuffer = 1;   // init bit 0 to 1 - we're here because we received a pulse after all
+        rxBitCounter = 0;   // this gets incremented at the end of the bit period
+        rxState = ReceivingData;
 
-    if (side == 1)  {
-        in2.irqAcknowledge();
-    }
+        /*
+         * Sync our counter to this start bit, but wait as long as posible
+         * to reset our counter, such that we're sampling
+         * as far into the bit period as possible
+         **/
+        rxPeriodTimer.setCount(0);
 
-    if (side == 2)  {
-        in3.irqAcknowledge();
-    }
-
-    if (side == 3)  {
-        in4.irqAcknowledge();
+    } else {
+        // Otherwise, record the new bit that has arrived.
+        if (side == receivingSide)
+            rxDataBuffer |= 0x1;
     }
 }
 
 /*
  * Our bit period timer has expired during an RX operation.
+ *
+ * Allow our output pin to float, stopping the squelch on the tank.
+ *
+ * If this was the last bit in a transmission, verify that it's valid,
+ * and reset our state. Otherwise, shift the value received during this bit
+ * period along 'rxDataBuffer'
  */
 void Neighbor::rxPeriodIsr()
 {
-    out1.setControl(GPIOPin::IN_FLOAT);
+    outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
-    switch (rxState) {
-    case Squelch:
-        rxState = WaitingForNextBit;
-        break;
+    // if we haven't gotten a start bit, nothing to do here
+    if (rxState == WaitingForStart)
+        return;
 
-    case WaitingForNextBit:
-        // input bit must be a zero
-        input_bit_counter++;
-        rxState = Squelch;
-        if (input_bit_counter >= NUM_RX_BITS) {
-            lastRxData = received_data_buffer;
-            rxState = WaitingForStart;
-            received_data_buffer = 0;
+    rxBitCounter++;
+
+    if (rxBitCounter < NUM_RX_BITS) {
+        rxDataBuffer <<= 1;
+    } else {
+        /*
+         * The second byte of a successful message must match the complement
+         * of its first byte. Enforce that here before forwarding the message.
+         */
+        int8_t lsb = rxDataBuffer & 0xff;
+        int8_t msb = (rxDataBuffer >> 8) & 0xff;
+        if (lsb == ~msb) {
+
+#if (BOARD == BOARD_TEST_JIG)
+            TestJig::onNeighborMsgRx(receivingSide, rxDataBuffer);
+#endif
+
         }
-        break;
 
-    default:
-        break;
+        rxState = WaitingForStart;
+        rxDataBuffer = 0;
     }
-}
-
-uint16_t Neighbor::getLastRxData()
-{
-    uint16_t val = lastRxData;
-    lastRxData = 0;
-    return val;
 }

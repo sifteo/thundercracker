@@ -15,6 +15,7 @@ enum CubeStateIndex
     CubeStateIndex_StoryCityProgression,
     CubeStateIndex_EndOfRoundScored,
     CubeStateIndex_ShuffleScored,
+    CubeStateIndex_Cutscene,
 
     CubeStateIndex_NumStates
 };

@@ -113,7 +113,15 @@ private:
      
     int saveScreenshot(lua_State *L);
     int testScreenshot(lua_State *L);
-    
+
+    /*
+     * Factory test interface
+     */
+
+    int testSetEnabled(lua_State *L);
+    int testGetACK(lua_State *L);
+    int testWriteVRAM(lua_State *L);
+
     /*
      * Peek/poke operators for different memory regions and sizes.
      * Note that these are all asynchronous, since we run in a

@@ -12,6 +12,7 @@ require('scripts/vram')
 -- Test code
 require('scripts/test-graphics')
 require('scripts/test-radio')
+require('scripts/test-testjig')
 
 --[[
     XXX: There are some big gaps in our testing coverage...
