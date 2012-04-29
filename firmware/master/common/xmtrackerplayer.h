@@ -132,9 +132,9 @@ private:
     void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
     void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
     void processVibrato(XmTrackerChannel &channel);
+    void processPorta(XmTrackerChannel &channel);
     void processVolume(XmTrackerChannel &channel);
 
-    void processPorta(XmTrackerChannel &channel);
     void processVolumeSlide(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processEffects(XmTrackerChannel &channel);
