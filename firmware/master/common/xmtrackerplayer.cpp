@@ -5,6 +5,7 @@
 
 #include "xmtrackerplayer.h"
 #include "audiomixer.h"
+#include <stdlib.h>
 
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
@@ -131,11 +132,21 @@ inline void XmTrackerPlayer::loadNextNotes()
             }
         }
 
-        channel.note = note;
+        if (!channel.active && !channel.start) {
+            channel.note = note;
+            continue;
+        }
 
-        if (!channel.start) continue;
-
+        // Remember old/current period for portamento slide.
+        channel.porta.period = channel.period;
         channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
+        if (note.instrument != channel.note.instrument ||
+            channel.porta.period == 0)
+        {
+            channel.porta.period = channel.period;
+        }
+
+        channel.note = note;
 
         // TODO: verify envelopes
         channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
@@ -263,6 +274,24 @@ enum {
     fxPatternDelay              // 0x0E
 };
 
+void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
+{
+    ASSERT(channel.porta.period);
+
+    int32_t delta=(int32_t)channel.period-(int32_t)channel.porta.period;
+
+    if (delta == 0)
+        return;
+
+    if (abs(delta) < channel.tonePorta) {
+        channel.period = channel.porta.period;
+    } else if (delta < 0) {
+        channel.period += channel.tonePorta;
+    } else {
+        channel.period -= channel.tonePorta;
+    }
+}
+
 void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
 {
     if (ticks == 0 || channel.note.effectParam == 0) return;
@@ -312,8 +341,15 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             channel.period += channel.portaDown;
             break;
         case fxTonePorta:
-            LOG(("%s:%d: NOT_TESTED: fxTonePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
-            processPatternBreak(0, 0);
+            if (param != 0) channel.tonePorta = param;
+            if (ticks == 0) {
+                uint32_t tmp;
+                tmp = channel.period;
+                channel.period = channel.porta.period;
+                channel.porta.period = tmp;
+                // Not playing a new note anymore, sustain-shifting to another.
+                channel.start = false;
+            }
             break;
         case fxVibrato:
             LOG(("%s:%d: NOT_TESTED: fxVibrato fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
