@@ -112,6 +112,7 @@ inline void XmTrackerPlayer::loadNextNotes()
             if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                 ASSERT(false);
             }
+            channel.volume = channel.instrument.sample.volume;
         } else if (note.instrument >= song.nInstruments) {
             channel.instrument.sample.pData = 0;
         }
