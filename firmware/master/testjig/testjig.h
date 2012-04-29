@@ -18,6 +18,8 @@ public:
     static uint16_t get_received_data();
 
     static void onTestDataReceived(uint8_t *buf, unsigned len);
+    static void neighborInIsr(uint8_t side);
+    static void onNeighborMsgRx(uint8_t side, uint16_t msg);
 
 private:
     typedef void(*TestHandler)(uint8_t argc, uint8_t *args);
@@ -27,6 +29,8 @@ private:
     static void setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args);
     static void getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args);
     static void getUsbCurrentHandler(uint8_t argc, uint8_t *args);
+    static void beginNeighborRxHandler(uint8_t argc, uint8_t *args);
+    static void stopNeighborRxHandler(uint8_t argc, uint8_t *args);
 };
 
 #endif // _TEST_JIG_H

@@ -84,6 +84,12 @@ private:
     bool calcHintTiltDirection(unsigned &newLettersStart,
                                unsigned &tiltDirection) const;
 
+    void paintCityProgressionWindow(unsigned char numMetas,
+                                    unsigned char numMetasSolved,
+                                    unsigned char world,
+                                    unsigned char firstRow,
+                                    unsigned char lastRow);
+
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     char mHintSolution[MAX_LETTERS_PER_CUBE + 1];

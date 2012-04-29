@@ -21,14 +21,14 @@ static const char* sideNames[] =
 };
 
 static struct MenuItem gItems[] =
-{ {&IconGreece, &LabelContinue},
+{ {&IconLondon, &LabelLondon},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
   {&IconLocked, &LabelLocked},
-  {&IconLocked, &LabelLocked},
+  {&IconLockedRight, &LabelLocked},
   {NULL, NULL} };
 
 static struct MenuAssets gAssets =

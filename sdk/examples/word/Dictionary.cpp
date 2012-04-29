@@ -48,6 +48,20 @@ bool Dictionary::getNextPuzzle(char* buffer,
 {
     ASSERT(buffer);
     sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
+
+    if (false&&CHEATER_MODE)
+    {
+        if (!currentIsMetaPuzzle())
+        {
+            do
+            {
+                sPuzzleIndex = (sPuzzleIndex + 1) % NUM_PUZZLES;
+            }
+            while (!currentIsMetaPuzzle());
+            --sPuzzleIndex;
+        }
+    }
+
     if (!getPuzzle(sPuzzleIndex,
                    buffer,
                    numAnagrams,
@@ -86,8 +100,15 @@ bool Dictionary::getPuzzle(int index,
     ASSERT(index < (int)arraysize(puzzles));
     _SYS_strlcpy(buffer, puzzles[index], MAX_LETTERS_PER_WORD + 1);
 
-    numAnagrams = MAX(1, puzzlesNumGoalAnagrams[index]);
-    // TODO how many leading spaces?
+    if (CHEATER_MODE)
+    {
+        numAnagrams = 1;
+    }
+    else
+    {
+        numAnagrams = MAX(1, puzzlesNumGoalAnagrams[index]);
+    }
+
     leadingSpaces = puzzlesNumLeadingSpaces[index];
 
     // TODO data-driven
@@ -376,6 +397,9 @@ bool Dictionary::trim(const char* word, char* buffer)
 
 unsigned char Dictionary::getPuzzleMetaLetterIndex(int puzzleIndex)
 {
+    LOG("getPuzzleMetaLetterIndex for %d = %d\n", puzzleIndex, puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
+            0 : puzzlesMetaLetterIndex[puzzleIndex]);
+
     return puzzleIndex < 0 || puzzleIndex >= (int)arraysize(puzzlesMetaLetterIndex) ?
                 0 : puzzlesMetaLetterIndex[puzzleIndex];
 }
@@ -472,4 +496,33 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
+}
+
+bool Dictionary::getCurrentWorldInfo(unsigned char &world,
+                                     unsigned char &numMetas,
+                                     unsigned char *indexes,
+                                     unsigned char &numIndexes)
+{
+    // optimized for memory, not CPU time
+    numMetas = 0;
+    world = 0;
+    numIndexes = 0;
+    for (int i = 0; i <= sPuzzleIndex; ++i)
+    {
+        if (isMetaPuzzle(i))
+        {
+            ++numMetas;
+            if (numMetas > puzzlesMetaPuzzlesPerWorld[world])
+            {
+                numIndexes = 0;
+                ++world;
+                numMetas = 1;
+                LOG("checking metas for world %d\n", world);
+            }
+            ASSERT(numIndexes < MAX_METAS_PER_WORLD); // buffer overrun
+            indexes[numIndexes++] = i;
+        }
+    }
+    numMetas = puzzlesMetaPuzzlesPerWorld[world];
+    return world;
 }

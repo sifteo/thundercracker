@@ -8,11 +8,29 @@
 #include "WordGame.h"
 #include "assets.gen.h"
 #include "CubeState.h"
+#include "CutscenePaintData.h"
+#include "Dialog.h"
 
 const float SHAKE_DELAY = 3.5f;
+const unsigned char FIRST_REVEAL_WIDTH = 2;
+// FIXME data-drive icon name
+const static AssetImage *icons[] =
+{
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+    &IconAthens,
+};
 
 CubeStateMachine::CubeStateMachine() :
-        StateMachine(CubeStateIndex_Menu), mPuzzleLettersPerCube(0),
+        StateMachine(CubeStateIndex_Title), mPuzzleLettersPerCube(0),
         mPuzzlePieceIndex(0), mMetaLettersPerCube(0), mIdleTime(0.f),
         mNewHint(false), mPainting(false), mBG0Panning(0.f),
         mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0),
@@ -435,6 +453,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         // TODO debug: case EventID_Paint:
         case EventID_EnterState:
+            /* TODO move to story start round
             mShakeDelay = 0.f;
             mPanning = -16.f;// * ((getCube() & 1) ? -1.f : 1.f);
             {
@@ -442,11 +461,16 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                 bg1.filled(vec(0,2), vec(15, 8));
                 mVidBuf->bg1.setMask(bg1);
             }
+            */
             paint();
             if (eventID == EventID_EnterState)
             {
                 WordGame::instance()->setNeedsPaintSync();
             }
+            break;
+
+        case EventID_ExitState:
+            mVidBuf->sprites.erase();
             break;
 
         case EventID_Paint:
@@ -467,11 +491,15 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case GameStateIndex_PlayScored:
                 newStateIndex = CubeStateIndex_NotWordScored;
                 break;
+
+            case GameStateIndex_Cutscene:
+                newStateIndex = CubeStateIndex_Cutscene;
+                break;
             }
             break;
 
         case EventID_Update:
-            {
+            /* TODO move to story start round {
                 float dt = data.mUpdate.mDT;
                 mShakeDelay -= dt;
                 if (mShakeDelay <= 0.f)
@@ -485,10 +513,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     mShakeDelay = 0.f;
                     mPanning += dt * -5.f * accelState.x; // FIXME treat as accel, not velocity set
                 }
-                /*if (mPanning != 0.f)
-                {
-                    LOG(("panning %f\n", mPanning));
-                }*/
+
                 //mPanning = fmodf(mPanning, 128.f);
                 if (abs(mPanning) > 86.f)
                 {
@@ -496,7 +521,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     // refresh after event handling
                     newStateIndex = getCurrentStateIndex();
                 }
-            }
+            }*/
             break;
         }
         break;
@@ -521,9 +546,51 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case EventID_EnterState:
             break;
+
+        case EventID_GameStateChanged:
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
+            case GameStateIndex_Cutscene:
+                newStateIndex = CubeStateIndex_Cutscene;
+                break;
+            }
+            break;
         }
         break;
 
+    case CubeStateIndex_Cutscene:
+        switch (eventID)
+        {
+        case EventID_EnterState:
+            break;
+
+        case EventID_ExitState:
+            if (mVidBuf->mode() != BG0_SPR_BG1)
+            {
+                mVidBuf->setDefaultWindow();
+                mVidBuf->initMode(BG0_SPR_BG1);
+            }
+            break;
+
+        case EventID_GameStateChanged:
+            switch (data.mGameStateChanged.mNewStateIndex)
+            {
+            case GameStateIndex_StoryStartOfRound:
+                newStateIndex = CubeStateIndex_StoryStartOfRound;
+                break;
+
+            case GameStateIndex_Cutscene:
+                // force re-entry to reset timer
+                setState(CubeStateIndex_Cutscene, getCurrentStateIndex());
+                break;
+            }
+            break;
+        }
+        break;
     case CubeStateIndex_OldWordScored:
         break;
 
@@ -713,7 +780,14 @@ unsigned CubeStateMachine::getMetaLetters(char *buffer, bool forPaint) const
         for (unsigned i = 0; i < lettersPerCube; ++i)
         {
             unsigned src = (i + start) % lettersPerCube;
-            if (GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex))
+            bool unlocked =
+                    GameStateMachine::getInstance().isMetaLetterIndexUnlocked(src + mMetaLettersPerCube * mMetaPieceIndex);
+            if (CHEATER_MODE)
+            {
+                unlocked = true;
+            }
+
+            if (unlocked)
             {
                 buffer[i] = letters[src];
             }
@@ -949,7 +1023,9 @@ void CubeStateMachine::updateAnim(TileBuffer<16,16,1> &bg1TileBuf, AnimParams *p
         }
 
         // skip subanims for meta puzzle borders
-        if (i > CubeAnim_Main && !animHasNormalBorder(mAnimTypes[CubeAnim_Main]))
+        if (i > CubeAnim_Main &&
+            !animHasNormalBorder(mAnimTypes[CubeAnim_Main]) &&
+                !Dictionary::currentIsMetaPuzzle())
         {
             continue;
         }
@@ -1275,6 +1351,9 @@ void CubeStateMachine::paint()
     switch (getCurrentStateIndex())
     {
     case CubeStateIndex_Title:
+        mVidBuf->bg0.image(vec(0, 0), Title);
+#if 0
+        /* TODO move to story start round
         {
             const float ANIM_START_DELAY = 2.f;
 
@@ -1293,7 +1372,7 @@ void CubeStateMachine::paint()
                 break;
 
                 // TODO high scores
-        #if BLAH
+
             default:
                 paintBorder(vid, ImageIndex_Teeth);
                 /* TODO load/save
@@ -1315,9 +1394,10 @@ void CubeStateMachine::paint()
                 }
                 */
                 break;
-        #endif
+
             }
         }
+#endif
         break;
 
     case CubeStateIndex_Menu:
@@ -1333,8 +1413,8 @@ void CubeStateMachine::paint()
         break;
 
     case CubeStateIndex_StoryCityProgression:
-        mVidBuf->bg0.image(vec(0,0), MenuBlank);
-        if (getCube() == WordGame::instance()->getMenuCube())
+        mVidBuf->bg0.image(vec(0,0), CityProgressionBlank);
+        //if (getCube() == WordGame::instance()->getMenuCube())
         {
             /* TODO animtype?
             char slideOffset = 0;
@@ -1355,40 +1435,155 @@ void CubeStateMachine::paint()
                 }
             }
             */
-            mVidBuf->bg0.image(vec(2,2), ClueGreece);
+            unsigned char world;
             // TODO drive from python script that looks at puzzles
-            unsigned char numMetaPuzzles = 4;
-            unsigned char metaPuzzleIndexes[16] = { 8, 16, 23, 33 };
-            unsigned char startPuzzle = 0;
-            const unsigned char MAX_SLAT_WIDTH = 24;
-            unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetaPuzzles);
-            //const static *AssetImage SLATS[] = { &Slat1, &Slat2, &Slat3 };
-            //const *AssetImage slat = SLATS[slatWidth/8 - 1];
-            // TODO odd number handling
-            for (unsigned char i = 0; i < numMetaPuzzles; ++i)
+            unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
+            unsigned char numMetas;
+            unsigned char numIndexes;
+            Dictionary::getCurrentWorldInfo(world,
+                                            numMetas,
+                                            metaPuzzleIndexes,
+                                            numIndexes);
+
+            unsigned char numMetasSolved = 0;
+            for (unsigned char i = 0; i < numIndexes; ++i)
             {
                 if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
                 {
+                    ++numMetasSolved;
                 }
-                else
+            }
+            LOG("metasSolved %d/%d (indexes %d)\n", numMetasSolved, numMetas, numIndexes);
+            const float WIPE_TIME = 1.25f;
+            float animPct = fmod(mStateTime / .5f, 1.f);
+            float transPct = mStateTime / WIPE_TIME;
+            UByte2 pos = vec(2, 2);
+            UByte2 size = vec(12, 12);
+
+            int sparkleRow = (1.f - transPct) * 12 + 2;
+            unsigned char sparkleOffset = sparkleRow - pos.y;
+            unsigned char sparkleFrame = MIN(SparkleWipe.numFrames()-1,
+                                             (unsigned char) ((float)SparkleWipe.numFrames() * animPct));
+            if (mStateTime <= WIPE_TIME)
+            {
+                if (sparkleOffset < size.y)
                 {
-                    mVidBuf->bg0.image(vec(2 + i * slatWidth/8, 2), Slat3);
+                    bg1TileBuf.image(vec((int)pos.x, sparkleRow),
+                                     vec(MIN((unsigned char)SparkleWipe.tileWidth(), size.x),
+                                         (unsigned char)SparkleWipe.tileHeight()),
+                                     SparkleWipe,
+                                     vec(0,0),
+                                     sparkleFrame);
+                    bg1TileBuf.image(vec((int)(pos.x + SparkleWipe.tileWidth()), sparkleRow),
+                                     vec(MIN((unsigned char)SparkleWipe.tileWidth(), size.x),
+                                         (unsigned char)SparkleWipe.tileHeight()),
+                                     SparkleWipe,
+                                     vec(0,0),
+                                     sparkleFrame);
+                    /*if (sparkleRow > letterPos.y)
+                    {
+                        // draw the question mark that is being wiped off
+                        bg1TileBuf.image(letterPos,
+                                         vec(MIN(size.x, font.tileWidth()),
+                                             MIN(font.tileHeight(), sparkleRow - letterPos.y)),
+                                         font,
+                                         vec(0, 0),
+                                         ('Z' + 1) - 'A');
+                    }
+                    */
+                }
+            }
+            else if (numMetasSolved >= numMetas)
+            {
+                mVidBuf->bg0.image(vec(2, 0),
+                                   vec(12, 2),
+                                   LabelAthens, // TODO array
+                                   vec(2, 0));
+            }
+
+            //LOG("sparklerow %d\n", sparkleRow);
+            // first paint old state, above sparklewipe
+            if (sparkleRow > pos.y)
+            {
+                paintCityProgressionWindow(numMetas,
+                                           numMetasSolved-1,
+                                           world,
+                                           pos.y,
+                                           sparkleRow - 1);
+            }
+
+            // next paint newly revealed state, under and below sparklewipe
+            if (sparkleRow < pos.y + size.y)// && (sparkleFrame & 1))
+            {
+                paintCityProgressionWindow(numMetas,
+                                           numMetasSolved,
+                                           world,
+                                           MAX(sparkleRow, pos.y),
+                                           pos.y + size.y - 1);
+            }
+        }
+        break;
+
+    case CubeStateIndex_Cutscene:
+        {
+            CutsceneIndex index =
+                GameStateMachine::getInstance().getCutsceneIndex();
+            if (mVidBuf->mode() == BG0_SPR_BG1)
+            {
+                const AssetImage* image = CUTSCENE_IMAGES[index];
+
+                mVidBuf->bg0.image(vec(0,0),
+                                   *image,
+                                   MIN(image->numFrames(), (int)getCube()));
+                if (mStateTime >= TOUCH_ADVANCE_DELAY)
+                {
+                    bg1TileBuf.image(vec(13, 13),
+                                     IconPress,
+                                     (unsigned)(mStateTime / .3f ) % IconPress.numFrames());
                 }
             }
 
+            if (mStateTime > .1f &&
+                 getCube() == WordGame::instance()->getMenuCube() &&
+                 CUTSCENE_DIALOGUE[index] &&
+                 mVidBuf->mode() == BG0_SPR_BG1)
+            {
+                Dialog d;
+                d.Init(mVidBuf);
+                //uint8_t firstLine, uint8_t numLines
+                if (CUTSCENE_DIALOGUE_TOP[index])
+                {
+                    mVidBuf->setWindow(0, 48);
+                }
+                else
+                {
+                    mVidBuf->setWindow(80, 48);
+                }
+                d.Erase();
+                d.ShowAll(CUTSCENE_DIALOGUE[index]);
+            }
         }
         break;
 
     default:
-        mVidBuf->bg0.image(vec(0,0), TileBG);
+        if (animHasNormalBorder(getAnim()))
+        {
+            mVidBuf->bg0.image(vec(0,0), TileBG);
+        }
+        else
+        {
+            mVidBuf->bg0.image(vec(0,0), TileBGGold);
+        }
         paintLetters(bg1TileBuf, true);
         mVidBuf->bg0.setPanning(vec(0.f, 0.f));
 
         break;
     }
 
-    //bg1.Flush(); // TODO only flush if mask has changed recently
-    mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+    if (mVidBuf->mode() == BG0_SPR_BG1)
+    {
+        mVidBuf->bg1.maskedImage(bg1TileBuf, transparent);
+    }
 
 
     mPainting = false;
@@ -2006,7 +2201,112 @@ bool CubeStateMachine::calcHintTiltDirection(unsigned &newLettersStart,
 
 void CubeStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
-//     LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
+    LOG("CubeStateMachine::setState: %d,\told: %d\tcube %d\n", newStateIndex, oldStateIndex, (PCubeID)getCube());
     StateMachine::setState(newStateIndex, oldStateIndex);
 }
 
+
+void CubeStateMachine::paintCityProgressionWindow(unsigned char numMetas,
+                                                  unsigned char numMetasSolved,
+                                                  unsigned char world,
+                                                  unsigned char firstRow,
+                                                  unsigned char lastRow)
+{
+    //LOG("metas solved %d\n", numMetasSolved);
+
+
+    //mVidBuf->bg0.image(vec(2,2), vec(1,12) IconLondon, vec(0, 0));
+    //mVidBuf->bg0.image(vec(13,2), vec(1,12) IconLockedRightmost, vec(11, 0));
+    //unsigned char startPuzzle = 0;
+    //const unsigned char MAX_SLAT_WIDTH = 24;
+    //unsigned char slatWidth = MIN(MAX_SLAT_WIDTH, 96/numMetas);
+    //unsigned char wideSlatWidth =
+      //      MIN(MAX_SLAT_WIDTH, 96 - 8*(slatWidth/8) * numMetas);
+    const static AssetImage* SLATS[] = { &Slat1, &Slat2, &Slat3 };
+    const static unsigned char SLAT_TILE_WIDTHS[] = { 1, 2, 3 };
+    unsigned char numSlats[] = {0, 0, 0};
+    // solve for num wide and extra wide slats
+    for (unsigned i = 0; i < 12/SLAT_TILE_WIDTHS[1]; ++i)
+    {
+        for (unsigned j = 0; j < 12/SLAT_TILE_WIDTHS[2]; ++j)
+        {
+            if ((SLAT_TILE_WIDTHS[1]-1)*i + (SLAT_TILE_WIDTHS[2]-1)*j == 12 - numMetas)
+            {
+                numSlats[1] = i;
+                numSlats[2] = j;
+                break;
+            }
+        }
+        if (numSlats[1])
+        {
+            break;
+        }
+    }
+    numSlats[0] = numMetas - numSlats[1] - numSlats[2];
+
+    //const AssetImage* slat = SLATS[slatWidth/8 - 1];
+    //unsigned char numWideSlats =
+      //      (unsigned char) _ceilf(((float)96 - 8*(slatWidth/8) * numMetas)/((float)MAX_SLAT_WIDTH - 8));
+    unsigned char slatOffset = 0;
+    // TODO odd number handling
+    unsigned slatsIndex = 0;
+    while (slatsIndex < arraysize(numSlats))
+    {
+        if (numSlats[slatsIndex])
+        {
+            break;
+        }
+        ++slatsIndex;
+    }
+
+    unsigned char imageHorizOffset = slatOffset + 1;
+    if (numMetasSolved > 0)
+    {
+        // first meta is def solved, and is special case b/c of fade into
+        // first column of image isn't quite enough to see without one
+        // more column shown to the right
+        mVidBuf->bg0.image(vec((unsigned char)(2 + imageHorizOffset),
+                               firstRow),
+                           vec(2,
+                               14 - firstRow),
+                           *icons[world],
+                           vec((int)imageHorizOffset,
+                               firstRow - 2));
+    }
+
+    slatOffset = FIRST_REVEAL_WIDTH;
+
+    for (unsigned char i = 1; i < numMetas; ++i)
+    {
+        bool solved = (i < numMetasSolved);
+        imageHorizOffset = slatOffset + 1;
+        if (solved)
+        {
+//                    mVidBuf->bg0.image(vec(3,2), vec(10,12) *icons[world], vec(1, 0));
+            mVidBuf->bg0.image(vec((unsigned char)(2 + imageHorizOffset),
+                                   firstRow),
+                               vec((i == numMetas-1) ? icons[world]->tileWidth() - 1 - imageHorizOffset: 1,//(int)SLAT_TILE_WIDTHS[slatsIndex],
+                                   14 - firstRow),
+                               *icons[world],
+                               vec((int)imageHorizOffset,
+                                   firstRow - 2));
+            //LOG("city solved %d\n", slatOffset);
+        }
+        else
+        {
+//                  const AssetImage* slat = SLATS[slatsIndex];
+//                mVidBuf->bg0.image(vec(2 + slatOffset, 2), *slat);
+            //LOG("city unsolved %d\n", slatOffset);
+        }
+        slatOffset += 1;//SLAT_TILE_WIDTHS[slatsIndex];
+        /*--numSlats[slatsIndex];
+        while (slatsIndex < arraysize(numSlats))
+        {
+            if (numSlats[slatsIndex])
+            {
+                break;
+            }
+            ++slatsIndex;
+        }*/
+    }
+}

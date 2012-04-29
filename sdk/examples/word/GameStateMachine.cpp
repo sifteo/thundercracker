@@ -5,15 +5,19 @@
 #include "SavedData.h"
 #include "WordGame.h"
 #include "assets.gen.h"
+#include "CutsceneData.h"
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
+const float CITY_PROGRESSION_STATE_TIME = 4.0f;
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(VideoBuffer vidBufs[]) :
-    StateMachine(GameStateIndex_LoadingFinished), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
+    StateMachine(GameStateIndex_LoadingFinished), mAnagramCooldown(0.f),
+    mTimeLeft(.0f), mScore(0),
     mNumAnagramsLeft(0), mCurrentMaxLettersPerCube(1), mNumHints(0),
-    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CubeID::UNDEFINED)
+    mMetaLetterUnlockedMask(0xffff), mHintCubeIDOnUpdate(CubeID::UNDEFINED),
+    mCutsceneIndex(CutsceneIndex_Scene01a)
 {
     ASSERT(vidBufs != 0);
     sInstance = this;
@@ -55,7 +59,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_GameStateChanged:
-        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored &&
+        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_StoryStartOfRound &&
             data.mGameStateChanged.mPreviousStateIndex != GameStateIndex_ShuffleScored)
         {
             // TODO different state for race mode or not
@@ -171,7 +175,20 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             break;
 
         case EventID_Start:
-            newStateIndex = GameStateIndex_StoryStartOfRound;
+        case EventID_Update:
+            if (eventID == EventID_Start || mStateTime > 5.f)
+            {
+                // TODO first run only
+                if (WordGame::instance()->getSavedData().isFirstRun())
+                {
+                    newStateIndex = GameStateIndex_Cutscene;
+                }
+                else
+                {
+                    // TODO one menu?
+                    newStateIndex = GameStateIndex_PauseMenu;
+                }
+            }
             break;
 
         default:
@@ -184,13 +201,15 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         switch (eventID)
         {
         case EventID_EnterState:
-            createNewAnagram();
+            //if (Dictionary::getPuzzleIndex() < 0)
+            {
+                createNewAnagram();
+            }
             break;
 
         case EventID_Update:
             if (getNumCubesInAnim(AnimType_NotWord) >= NUM_CUBES)
             {
-
                 newStateIndex = GameStateIndex_PlayScored;
             }
             break;
@@ -277,8 +296,7 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                         GameStateMachine::getNumCubesInAnim(AnimType_NormalTilesExit) <= 0)
                     {
 
-                        // TODO
-                        if (0&&Dictionary::currentIsMetaPuzzle())
+                        if (Dictionary::currentIsMetaPuzzle())
                         {
                             WordGame::onEvent(EventID_PuzzleSolved, EventData());
                             newStateIndex = GameStateIndex_StoryCityProgression;
@@ -289,9 +307,9 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
                             // wait for all the cube states to exit the new word state
                             // then shuffle
                             WordGame::onEvent(EventID_PuzzleSolved, EventData());
-                            createNewAnagram();
                             WordGame::playAudio(shake, AudioChannelIndex_Shake);
                             // TODO new audio
+                            createNewAnagram();
                         }
                     }
                 }
@@ -427,12 +445,52 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case GameStateIndex_StoryCityProgression:
-        /* TODO remove switch (eventID)
+        switch (eventID)
         {
-        case EventID_Shake:
-            WordGame::playAudio(shake, AudioChannelIndex_Shake);
-            newStateIndex = GameStateIndex_ShuffleScored;
-        }*/
+        case EventID_Update:
+            if (getTime() >= CITY_PROGRESSION_STATE_TIME)
+            {
+                // if there is a cut scene to show, go to cut scene mode
+                // TODO make data-driven
+                switch (Dictionary::getPuzzleIndex())
+                {
+
+                default:
+                    {
+                        unsigned char world;
+                        // TODO drive from python script that looks at puzzles
+                        unsigned char metaPuzzleIndexes[MAX_METAS_PER_WORLD];
+                        unsigned char numMetas;
+                        unsigned char numIndexes;
+                        Dictionary::getCurrentWorldInfo(world,
+                                                        numMetas,
+                                                        metaPuzzleIndexes,
+                                                        numIndexes);
+
+                        unsigned char numMetasSolved = 0;
+                        for (unsigned char i = 0; i < numIndexes; ++i)
+                        {
+                            if (WordGame::instance()->getSavedData().isPuzzleSolved(metaPuzzleIndexes[i]))
+                            {
+                                ++numMetasSolved;
+                            }
+                        }
+
+                        if (CUTSCENE_CITY_END[getCutsceneIndex()] &&
+                            numMetasSolved < numMetas)
+                        {
+                            newStateIndex = GameStateIndex_StoryStartOfRound;
+                        }
+                        else
+                        {
+                            newStateIndex = GameStateIndex_Cutscene;
+                        }
+                    }
+                    break;
+                }
+
+            }
+        }
         break;
 
     case GameStateIndex_Loading:
@@ -542,7 +600,26 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case GameStateIndex_CutScene:
+    case GameStateIndex_Cutscene:
+        switch (eventID)
+        {
+        case EventID_Touch:
+            if (mStateTime >= TOUCH_ADVANCE_DELAY)
+            {
+                LOG("cutscene touch, index: %d\n", (int)mCutsceneIndex);
+                if (CUTSCENE_ADVANCE_TO_NEXT[mCutsceneIndex++])
+                {
+                    // TODO signal screen wipes
+                    // force re-entry to state, to reset timers and events
+                    setState(GameStateIndex_Cutscene, getCurrentStateIndex());
+                }
+                else
+                {
+                    newStateIndex = GameStateIndex_StoryStartOfRound;
+                }
+            }
+            break;
+        }
         break;
 
     case GameStateIndex_CubeBuddyUnlock:
@@ -596,7 +673,7 @@ void GameStateMachine::setState(unsigned newStateIndex, unsigned oldStateIndex)
 {
     EventData data;
     data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
-//     LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
+    LOG("GameStateMachine::setState: %d,\told: %d\n", newStateIndex, data.mGameStateChanged.mPreviousStateIndex);
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldStateIndex);
     onEvent(EventID_GameStateChanged, data);
@@ -862,7 +939,7 @@ void GameStateMachine::createNewAnagram()
         }
     }
 
-    LOG("scrambled %s to %s\n", spacesAdded, scrambled);
+    LOG("*************** scrambled %s to %s\n", spacesAdded, scrambled);
     ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
            _SYS_strnlen(spacesAdded, GameStateMachine::getCurrentMaxLettersPerWord() + 1));
     _SYS_strlcpy(data.mNewPuzzle.mWord, scrambled, sizeof data.mNewPuzzle.mWord);

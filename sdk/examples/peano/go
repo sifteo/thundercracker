@@ -1,3 +1,0 @@
-#!/bin/bash
-/c/users/kevin/desktop/thundercracker\ kevin/emulator/tc-siftulator  -n 3 --lock-rotation /c/users/kevin/desktop/thundercracker\ kevin/sdk/examples/peano/peano.elf
-
