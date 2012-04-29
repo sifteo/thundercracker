@@ -96,12 +96,11 @@ inline void XmTrackerPlayer::loadNextNotes()
         channel.valid = false;
         bool recNote = false,
              recInst = false;
-
         if (note.instrument == XmTrackerPattern::kNoInstrument) {
             recInst = true;
             note.instrument = channel.note.instrument;
         }
-        if (note.note == XmTrackerPattern::kNoNote && note.instrument < song.nInstruments) {
+        if (note.note == XmTrackerPattern::kNoNote) {
             recNote = true;
             note.note = channel.note.note;
         }
@@ -115,14 +114,25 @@ inline void XmTrackerPlayer::loadNextNotes()
         } else if (note.instrument >= song.nInstruments) {
             channel.instrument.sample.pData = 0;
         }
+        
         channel.start = !recNote || !recInst;
-        if (channel.instrument.sample.pData == 0)
-            channel.start = false;
-        if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote) {
-            channel.start = false;
-            channel.active = false;
+        // Don't play with an invalid instrument
+        if (channel.start) {
+            if (channel.start && note.instrument >= song.nInstruments) {
+                channel.start = false;
+            }
+            // Stop playing/don't play when no sample data or note
+            else if (note.note == XmTrackerPattern::kNoteOff ||
+                     note.note == XmTrackerPattern::kNoNote ||
+                     channel.instrument.sample.pData == 0)
+            {
+                channel.start = false;
+                channel.active = false;
+            }
         }
+
         channel.note = note;
+
         if (!channel.start) continue;
 
         channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
