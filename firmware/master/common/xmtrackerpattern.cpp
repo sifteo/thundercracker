@@ -93,7 +93,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
         note.instrument =       enc & (1 << 1) ? *(buf++) : kNoInstrument;
         note.volumeColumnByte = enc & (1 << 2) ? *(buf++) : kNoVolume;
         note.effectType =       enc & (1 << 3) ? *(buf++) : kNoEffect;
-        note.effectParam =      enc & (1 << 4) ? *(buf++) : 0;
+        note.effectParam =      enc & (1 << 4) ? *(buf++) : kNoParam;
         // If enc & 0x60 > 0 the pattern is likely corrupt, but follow Postel's Law.
         offset += Intrinsic::POPCOUNT(enc & 0x9F);
     } else {
@@ -107,29 +107,32 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     }
     noteOffset++;
 
-    // Clean up values
+    // A little late, but make sure we're not being rude.
+    ASSERT(buf <= noteData + arraysize(noteData));
+
+    // Clean up note
     if (note.note > kNoteOff)
         note.note = kNoteOff;
 
-    if (note.instrument >= song->nInstruments)
+    if (note.note == 0)
+        note.note = kNoNote;
+
+    // Clean up instrument
+    if (note.instrument > 0 && note.instrument <= song->nInstruments)
+        note.instrument--;
+    else
         note.instrument = kNoInstrument;
 
+    // Clean up volume
     if (note.volumeColumnByte <= 0x0F)
+        note.volumeColumnByte = 0;
+
+    if (note.volumeColumnByte >= 51 && note.volumeColumnByte <= 0x5F)
         note.volumeColumnByte = kNoVolume;
 
-    if (note.volumeColumnByte >= 51 && note.volumeColumnByte <= 0x5F) {
-        // LOG(("Undefined value for volume column byte (0x%02x), defaulting to %02x\n",
-        //   note.volumeColumnByte, kNoVolume));
-        note.volumeColumnByte = kNoVolume;
-    }
-    if (note.volumeColumnByte >= 0xC0 && note.volumeColumnByte <= 0xEF) {
-        LOG(("Unsupported panning in volume column byte (0x%02x), defaulting to %02x\n",
-             note.volumeColumnByte, kNoVolume));
-        note.volumeColumnByte = kNoVolume;
-    }
+    if (note.volumeColumnByte >= 0xC0 && note.volumeColumnByte <= 0xEF)
+        note.volumeColumnByte = 0;
 
-    // TODO: effects
-
-    // A little late, but make sure we're not being rude.
-    ASSERT(buf <= noteData + arraysize(noteData));
+    if (note.effectType != kNoEffect && note.effectParam == kNoParam)
+        note.effectParam = 0;
 }

@@ -68,112 +68,80 @@ inline void XmTrackerPlayer::loadNextNotes()
 {
     ASSERT(ticks == 0);
 
-    // Get and process the next row of notes
-    struct XmTrackerNote note;
-    for (unsigned i = 0; i < song.nChannels; i++) {
-        struct XmTrackerChannel &channel = channels[i];
-        pattern.getNote(row, i, note);
-        channel.valid = false;
-        bool recovered = false,
-             recNote = false,
-             recInst = false;
-
-        if (note.note == XmTrackerPattern::kNoNote) {
-            // Note recovery/validation
-            recovered = true;
-            // No note, with a valid instrument somewhere, carry over the previous note.
-            if (note.instrument < song.nInstruments) {
-                channel.valid = true;
-            } else if (channel.note.instrument < song.nInstruments) {
-                recNote = true;
-                recInst = true;
-                note.note = channel.note.note;
-                note.instrument = channel.note.instrument;
-                channel.valid = true;
-            }
-        } else if (note.instrument == XmTrackerPattern::kNoInstrument) {
-            // Instrument recovery/validation
-            recovered = true;
-            // No instrument, with either an inactive note or a previously existing instrument.
-            if (note.note == XmTrackerPattern::kNoteOff) {
-                channel.valid = true;
-            }
-            if (channel.note.instrument < song.nInstruments) {
-                recInst = true;
-                note.instrument = channel.note.instrument;
-                channel.valid = true;
-            }
-        }
-
-        // Invalid notes should still let effects through.
-        if (recovered && !channel.valid) {
-            note.note = XmTrackerPattern::kNoteOff;
-            note.instrument = XmTrackerPattern::kNoInstrument;
-            channel.valid = true;
-        } else if (!recovered) {
-            channel.valid = true;
-        }
-
-        if (channel.valid) {
-            if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
-                // Change the instrument.
-                // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
-                if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
-                    ASSERT(false);
-                }
-            } else if (note.instrument >= song.nInstruments) {
-                channel.instrument.sample.pData = 0;
-            }
-            channel.start = !recovered || !recNote || !recInst;
-            if (channel.instrument.sample.pData == 0)
-                channel.start = false;
-            if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote) {
-                channel.start = false;
-                channel.active = false;
-            }
-            channel.note = note;
-            if (!channel.start) continue;
-
-            channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
-
-            // TODO: verify envelopes
-            channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
-
-            // Volume
-            memset(&channel.envelope, 0, sizeof(channel.envelope));
-            channel.fadeout = UINT16_MAX;
-            if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
-                    channel.volume = note.volumeColumnByte - 0x10;
-
-            channel.active = true;
-        }
-    }
-    pattern.releaseRef();
-
-    // Advance song position
-    row++;
-    if (row >= pattern.nRows() || next.set) {
-        if (!next.set) {
+    // Advance song position on row overflow or effect
+    if (next.row >= pattern.nRows() || next.force) {
+        if (!next.force)
             processPatternBreak(song.patternOrderTableSize, 0);
-            if (!isPlaying()) return;
-        }
 
         if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
             pattern.loadPattern(patternOrderTable(next.phrase));
+            phrase = next.phrase;
             // TODO: clear active notes/effects here?
         } else if (next.phrase >= song.patternOrderTableSize) {
             stop();
         }
-        phrase = next.phrase;
 
-        if (next.row < pattern.nRows()) {
-            row = next.row;
-        } else {
+        if (next.row >= pattern.nRows()) {
             stop();
         }
         
-        next.set = false;
+        next.force = false;
     }
+
+    // Get and process the next row of notes
+    struct XmTrackerNote note;
+    for (unsigned i = 0; i < song.nChannels; i++) {
+        struct XmTrackerChannel &channel = channels[i];
+        pattern.getNote(next.row, i, note);
+        channel.valid = false;
+        bool recNote = false,
+             recInst = false;
+
+        if (note.instrument == XmTrackerPattern::kNoInstrument) {
+            recInst = true;
+            note.instrument = channel.note.instrument;
+        }
+        if (note.note == XmTrackerPattern::kNoNote && note.instrument < song.nInstruments) {
+            recNote = true;
+            note.note = channel.note.note;
+        }
+
+        if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
+            // Change the instrument.
+            // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
+            if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
+                ASSERT(false);
+            }
+        } else if (note.instrument >= song.nInstruments) {
+            channel.instrument.sample.pData = 0;
+        }
+        channel.start = !recNote || !recInst;
+        if (channel.instrument.sample.pData == 0)
+            channel.start = false;
+        if (note.note == XmTrackerPattern::kNoteOff || note.note == XmTrackerPattern::kNoNote) {
+            channel.start = false;
+            channel.active = false;
+        }
+        channel.note = note;
+        if (!channel.start) continue;
+
+        channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
+
+        // TODO: verify envelopes
+        channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
+
+        // Volume
+        memset(&channel.envelope, 0, sizeof(channel.envelope));
+        channel.fadeout = UINT16_MAX;
+        if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
+                channel.volume = note.volumeColumnByte - 0x10;
+
+        channel.active = true;
+    }
+    pattern.releaseRef();
+
+    // Advance song position
+    next.row++;
 }
 
 // Volume commands
@@ -299,7 +267,7 @@ void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 {
-    next.set = true;
+    next.force = true;
 
     // Adjust phrase as appropriate
     if (nextPhrase >= song.patternOrderTableSize) next.phrase = phrase + 1;
@@ -324,14 +292,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             processPatternBreak(0, 0);
             break;
         case fxPortaUp:
-            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxPortaUp\n", __FILE__, __LINE__));
+            if (param != 0) channel.portaUp = param;
             if (ticks == 0) break;
-            channel.period -= param; // TODO: bounds checking?
+            channel.period -= channel.portaUp;
             break;
         case fxPortaDown:
-            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxPortaDown\n", __FILE__, __LINE__));
+            if (param != 0) channel.portaDown = param;
             if (ticks == 0) break;
-            channel.period += param; // TODO: bounds checking?
+            channel.period += channel.portaDown;
             break;
         case fxTonePorta:
             LOG(("%s:%d: NOT_TESTED: fxTonePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));

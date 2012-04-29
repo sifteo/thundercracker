@@ -31,12 +31,18 @@ struct XmTrackerChannel {
 
     struct XmTrackerEnvelopeMemory envelope;
 
+    // Effect parameters
     struct {
-        uint8_t phase;
-        uint8_t speed;
-        uint8_t depth;
-        uint8_t type;
-    } vibrato;
+        uint8_t portaUp;
+        uint8_t portaDown;
+
+        struct {
+            uint8_t phase;
+            uint8_t speed;
+            uint8_t depth;
+            uint8_t type;
+        } vibrato;
+    };
 
     inline uint8_t realNote() const {
         if (!instrument.sample.pData ||
@@ -113,7 +119,7 @@ private:
     XmTrackerPattern pattern; // The current pattern
     uint16_t row;     // Current row within pattern, above
     struct {
-        bool set;
+        bool force;
         uint16_t phrase;
         uint16_t row;
     } next;
