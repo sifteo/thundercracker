@@ -1,7 +1,7 @@
 run: tests.stamp
 
 tests.stamp: $(SDK_DIR)/bin/* *.lua
-	TEST= siftulator -e tests.lua
+	siftulator -e tests.lua
 	touch $@
 
 clean:
