@@ -269,8 +269,14 @@ int _glfwPlatformInit( void )
 
     [NSApp finishLaunching];
 
+    /*
+     * SIFTEO: Fuck this atexit() handler. It will segfault trying to clean
+     *         up the autorelease pool if we exit() from the MC thread.
+     */
+#if 0
     // Install atexit routine
     atexit( glfw_atexit );
+#endif
 
     initThreads();
 

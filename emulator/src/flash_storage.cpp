@@ -29,7 +29,11 @@ FlashStorage::FlashStorage()
     
 FlashStorage::~FlashStorage()
 {
-    ASSERT(isInitialized == false);
+    if (isInitialized) {
+        // Normally exit() is called, but this may happen in case of
+        // unclean termination. We still need to flush and unmap the file.
+        exit();
+    }
 }
 
 bool FlashStorage::init(const char *filename)
