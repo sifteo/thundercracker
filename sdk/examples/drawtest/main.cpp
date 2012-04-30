@@ -33,6 +33,10 @@ void main()
         System::paint();
         System::finish();
 
+        SCRIPT(LUA,
+            print("Hello World!");
+        );
+
         SCRIPT_FMT(LUA,
             "Frontend():postMessage('Hello! animFrame=%d');",
             animFrame);
