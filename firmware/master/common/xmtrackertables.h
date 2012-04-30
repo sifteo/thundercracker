@@ -143,7 +143,7 @@ uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
     if (note >= XmTrackerPattern::kNoteOff) return 0;
 
     if (song.frequencyTable == kLinearFrequencies) {
-        // From file spec: Period = 10 • 12 • 16 • 4 - Note • 16 • 4 - FineTune / 2
+        // From file spec: Period = 10 •� 12 •� 16 •� 4 - Note •� 16 •� 4 - FineTune / 2
         int32_t period = (10 * 12 * 16 * 4) -
                          (((int32_t)note - 1) * 16 * 4) -
                          ((int32_t)finetune / 2);
@@ -170,7 +170,7 @@ uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
         uint8_t frac = (finetune % 16);
 
         // Base table value
-        uint32_t period = XmTrackerPlayer::AmigaPeriodTab[pos] * (~frac & 0xF + 1) / 16;
+        uint32_t period = XmTrackerPlayer::AmigaPeriodTab[pos] * ((~frac & 0xF) + 1) / 16;
         // Interpolated with next table value
         period += XmTrackerPlayer::AmigaPeriodTab[pos + 1] * frac / 16;
         /* Restore octave to note using bit shifts instead of exponents.

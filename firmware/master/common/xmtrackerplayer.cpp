@@ -5,7 +5,13 @@
 
 #include "xmtrackerplayer.h"
 #include "audiomixer.h"
+#include <stdint.h>
 #include <stdlib.h>
+
+// mingw appears to not get this quite right...
+#ifndef UINT16_MAX
+#define UINT16_MAX 0xffff
+#endif
 
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
@@ -394,7 +400,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxPatternBreak:
             if (ticks > 0) break;
             // Seriously, the spec says the higher order nibble is * 10, not * 16.
-            processPatternBreak(-1, param & 0xF + (param >> 4) * 10);
+            processPatternBreak(-1, (param & 0xF) + (param >> 4) * 10);
             break;
         case fxSetTempoAndBPM:
             ASSERT(ticks == 0);
@@ -455,14 +461,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
                 case fxFineVolumeSlideUp:
-                    if (param & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
+                    if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
                     processVolumeSlideUp(channel.volume, (param & 0xF));
                     break;
                 case fxFineVolumeSlideDown:
                     LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
-                    if (param & 0x0F == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
+                    if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
                     processVolumeSlideDown(channel.volume, (param & 0xF));
@@ -632,7 +638,7 @@ void XmTrackerPlayer::commit()
             }
         }
         volume *= 4;
-        mixer.setVolume(CHANNEL_FOR(i), clamp(volume, 0, _SYS_AUDIO_MAX_VOLUME));
+        mixer.setVolume(CHANNEL_FOR(i), clamp(volume, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
         if (channel.period > 0) {
