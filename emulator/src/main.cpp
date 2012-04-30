@@ -36,7 +36,6 @@ static void usage()
      * names, so that the long names don't show up in our binary's strings.
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
-     *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      *  -c                Continue executing on exception, rather than stopping the debugger.
@@ -53,7 +52,9 @@ static void usage()
             "  -n NUM              Set initial number of cubes\n"
             "  -T                  Turbo mode; run faster than real-time if we can\n"
             "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
-            "  -P port             Run a GDB debug server on the specified TCP port number\n"
+            "  -P PORT             Run a GDB debug server on the specified TCP port number\n"
+            "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
+            "  --headless          Run without the graphical frontend\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
@@ -103,7 +104,7 @@ static void message(const char *fmt, ...)
     fprintf(stderr, "%s\n", buf);
 }
 
-static int runFrontend(System &sys, const char *elfFile)
+static int run(System &sys, const char *elfFile)
 {
     static Frontend fe;
         
@@ -111,7 +112,8 @@ static int runFrontend(System &sys, const char *elfFile)
         message("Emulator failed to initialize");
         return 1;
     }
-    if (!fe.init(&sys)) {
+
+    if (!sys.opt_headless && !fe.init(&sys)) {
         message("Graphical frontend failed to initialize");
         return 1;
     }    
@@ -122,8 +124,15 @@ static int runFrontend(System &sys, const char *elfFile)
     }
 
     sys.start();
-    while (fe.runFrame());
-    fe.exit();
+
+    if (sys.opt_headless) {
+        while (sys.isRunning())
+            glfwSleep(0.1);
+    } else {
+        while (fe.runFrame());
+        fe.exit();
+    }
+
     sys.exit();
 
     return 0;
@@ -208,6 +217,11 @@ int main(int argc, char **argv)
             continue;
         }
         
+        if (!strcmp(arg, "--headless")) {
+            sys.opt_headless = true;
+            continue;
+        }
+        
         if (!strcmp(arg, "--stdout") && argv[c+1]) {
             if(!freopen(argv[c+1], "w", stdout)) {
                 message("Error: opening file %s for write", argv[c+1]);
@@ -282,7 +296,7 @@ int main(int argc, char **argv)
     // Necessary even when running windowless, since we use GLFW for time
     glfwInit();
 
-    return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys, elfFile);
+    return scriptFile ? runScript(sys, scriptFile) : run(sys, elfFile);
 }
 
 extern "C" bool glfwSifteoOpenFile(const char *filename)

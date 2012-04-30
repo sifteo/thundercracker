@@ -37,6 +37,7 @@ class System {
     FlashStorage flash;
 
     // Static Options; can be set prior to init only
+    bool opt_headless;
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
