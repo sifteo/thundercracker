@@ -14,6 +14,7 @@
 #include "frontend_cube.h"
 #include "frontend_mothership.h"
 #include "frontend_overlay.h"
+#include "tinythread.h"
 
 #include <Box2D/Box2D.h>
 #include <string>
@@ -41,15 +42,13 @@ class Frontend {
     Frontend();
 
     bool init(System *sys);
-    bool runFrame();
-    void exit();
 
-    void numCubesChanged();
+    static bool runFrame();
+    static void exit();
 
-    void postMessage(std::string msg) {
-        overlay.postMessage(msg);
-    }
-    
+    static void numCubesChanged();
+    static void postMessage(std::string msg);
+
  private:
     /*
      * Number of real frames per virtual LCD frame (Assume 60Hz
@@ -163,6 +162,7 @@ class Frontend {
     FrontendOverlay overlay;
 
     static Frontend *instance;
+    static tthread::mutex instanceLock;
 };
 
 #endif

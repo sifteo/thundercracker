@@ -8,13 +8,10 @@
 
 #include "frontend.h"
 #include <time.h>
-// for MAX HAX
-#if __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-
 
 Frontend *Frontend::instance = NULL;
+tthread::mutex Frontend::instanceLock;
+
 
 Frontend::Frontend() 
   : frameCount(0),
@@ -30,6 +27,12 @@ Frontend::Frontend()
 
 bool Frontend::init(System *_sys)
 {
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+
+    // Enforce singleton-ness
+    if (instance)
+        return false;
+
     instance = this;
     sys = _sys;
     frameCount = 0;
@@ -126,23 +129,29 @@ bool Frontend::init(System *_sys)
 
 void Frontend::numCubesChanged()
 {
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+    if (!instance)
+        return;
+
+    instance->idleFrames = 0;
+
     unsigned i;
 
-    idleFrames = 0;
-
-    for (i = 0; i < sys->opt_numCubes; i++)
-        if (!cubes[i].isInitialized()) {
+    for (i = 0; i < instance->sys->opt_numCubes; i++)
+        if (!instance->cubes[i].isInitialized()) {
             // Create new cubes at the mouse cursor for now
-            b2Vec2 v = mouseVec(normalViewExtent);
-            cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
-            if (isRotationFixed) {
-                cubes[i].toggleRotationLock(isRotationFixed);
-            }
+
+            b2Vec2 v = instance->mouseVec(instance->normalViewExtent);
+            instance->cubes[i].init(i, &instance->sys->cubes[i],
+                instance->world, v.x, v.y);
+
+            if (instance->isRotationFixed)
+                instance->cubes[i].toggleRotationLock(instance->isRotationFixed);
         }
 
-    for (;i < sys->MAX_CUBES; i++)
-        if (cubes[i].isInitialized())
-            cubes[i].exit();
+    for (;i < instance->sys->MAX_CUBES; i++)
+        if (instance->cubes[i].isInitialized())
+            instance->cubes[i].exit();
 }
 
 void Frontend::addCube()
@@ -241,27 +250,43 @@ unsigned Frontend::cubeID(FrontendCube *cube)
 }
 
 void Frontend::exit()
-{             
-    glfwTerminate();
+{
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+
+    if (instance) {
+        instance = 0;
+        glfwTerminate();
+    }
 }
 
 bool Frontend::runFrame()
 {
-    if (!isRunning || !sys->isRunning())
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+
+    if (!instance->isRunning || !instance->sys->isRunning())
         return false;
         
     // Simulated hardware VSync
-    if (!(frameCount % FRAME_HZ_DIVISOR))
-        for (unsigned i = 0; i < sys->opt_numCubes; i++)
-            sys->cubes[i].lcdPulseTE();
+    if (!(instance->frameCount % FRAME_HZ_DIVISOR))
+        for (unsigned i = 0; i < instance->sys->opt_numCubes; i++)
+            instance->sys->cubes[i].lcdPulseTE();
 
-    animate();
-    draw();
+    instance->animate();
+    instance->draw();
 
-    frameCount++;
-    idleFrames++;
+    instance->frameCount++;
+    instance->idleFrames++;
 
     return true;
+}
+
+void Frontend::postMessage(std::string msg)
+{
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+    if (!instance)
+        return;
+
+    instance->overlay.postMessage(msg);
 }
 
 bool Frontend::openWindow(int width, int height, bool fullscreen)

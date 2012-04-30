@@ -31,10 +31,10 @@ void main()
 
         vid.bg0.setPanning(vid.bg0.getPanning() + vec(1,0));
         System::paint();
-        
-        SCRIPT(LUA,
-            print('Hello World!');
-            print('  This is another line of code.');
-        );
+        System::finish();
+
+        SCRIPT_FMT(LUA,
+            "Frontend():postMessage('Hello! animFrame=%d');",
+            animFrame);
     }
 }
