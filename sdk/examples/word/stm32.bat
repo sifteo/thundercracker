@@ -1,1 +1,0 @@
-arm-none-eabi-objcopy -O binary word.stm32
