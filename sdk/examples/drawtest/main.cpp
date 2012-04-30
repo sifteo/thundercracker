@@ -25,7 +25,7 @@ void main()
     vid.attach(cube);
 
     unsigned animFrame = 0;
-    volatile uint32_t x = 0;
+    uint32_t x = 0;
 
     while (1) {
         vid.bg1.maskedImage(Animation, Transparent, animFrame);
