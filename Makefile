@@ -17,7 +17,7 @@ tools: $(TOOLS)
 
 # Set up environment vars before building examples
 $(EXAMPLES):
-	PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $@
+	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $@
 
 $(TOOLS) $(DOCS) $(TESTS):
 	@$(MAKE) -C $@

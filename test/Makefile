@@ -1,3 +1,6 @@
+TC_DIR := ..
+SDK_DIR := $(abspath $(TC_DIR)/sdk)
+
 SUBDIRS = \
 	firmware/cube
 
@@ -6,6 +9,7 @@ SUBDIRS = \
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	@$(MAKE) -C $@
+	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@
 
 clean:
+	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@ clean
