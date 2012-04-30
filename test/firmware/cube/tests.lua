@@ -48,5 +48,10 @@ for k,v in string.gmatch(os.getenv("TEST") or "", "[^%s]+") do
 end
 
 gx:init(os.getenv("USE_FRONTEND"))
-LuaUnit:run(tests)
+failures = LuaUnit:run(tests)
 gx:exit()
+
+if failures > 0 then
+    -- Exit with an error code
+    error("Some of the tests failed!")
+end
