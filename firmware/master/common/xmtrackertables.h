@@ -6,8 +6,6 @@
 #ifndef XMTRACKERTABLES_H_
 #define XMTRACKERTABLES_H_
 
-#include <math.h>
-
 /* Amiga period lookup table (96 notes)
  *
  * The file spec provides this table. Duplicated for reference:
@@ -140,18 +138,19 @@ const uint32_t XmTrackerPlayer::LinearFrequencyTab[768] = {
 	269555,269312,269069,268826,268583,268341,268099,267857
 };
 
-uint32_t XmTrackerPlayer::getPeriod(int16_t note, int8_t finetune) const {
-    ASSERT(song.nPatterns);
+uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
+    ASSERT(note < XmTrackerPattern::kNoteOff);
+    if (note >= XmTrackerPattern::kNoteOff) return 0;
 
     if (song.frequencyTable == kLinearFrequencies) {
-        // From file spec: Period = 10 • 12 • 16 • 4 - Note • 16 • 4 - FineTune / 2
+        // From file spec: Period = 10 •� 12 •� 16 •� 4 - Note •� 16 •� 4 - FineTune / 2
         int32_t period = (10 * 12 * 16 * 4) -
                          (((int32_t)note - 1) * 16 * 4) -
                          ((int32_t)finetune / 2);
 
         if (period <= 0) {
             LOG(("note: %u, finetune: %u resulted in <= 0 period\n", note, finetune));
-            ASSERT(period > 0);
+            ASSERT(period >= 0);
         }
 
         return (uint32_t)MAX(period, 0);
@@ -165,14 +164,20 @@ uint32_t XmTrackerPlayer::getPeriod(int16_t note, int8_t finetune) const {
          * Period = (PeriodTab[Pos] * (1 - Frac) + PeriodTab[Pos+1] * Frac) * 16 / pow(2, Note/12)
          * Frequency = 8363 * 1712 / Period
          */
-        int32_t pos = (note % 23) * 8 + finetune / 16;
-        ASSERT(pos >= 0 && pos < (int32_t)arraysize(XmTrackerPlayer::AmigaPeriodTab));
+        uint8_t pos = (note % 12) * 8 + finetune / 16;
 
-        float frac = (float)(finetune % 16) / 16.f;
+        // Fixed-point integer math is faster than floating point.
+        uint8_t frac = (finetune % 16);
 
-        int32_t period = ((float)XmTrackerPlayer::AmigaPeriodTab[pos] * (1 - frac) +
-                         (float)XmTrackerPlayer::AmigaPeriodTab[pos + 1] * frac) *
-                         16 / powf(2.f, (float)note / 12.f);
+        // Base table value
+        uint32_t period = XmTrackerPlayer::AmigaPeriodTab[pos] * ((~frac & 0xF) + 1) / 16;
+        // Interpolated with next table value
+        period += XmTrackerPlayer::AmigaPeriodTab[pos + 1] * frac / 16;
+        /* Restore octave to note using bit shifts instead of exponents.
+         * shifting 5 instead of 4 because the unofficial file spec differs
+         * from implementations in the wild by a factor of 2.
+         */
+        period = (period << 5) / (1 << (note / 12));
 
         return period;
     }

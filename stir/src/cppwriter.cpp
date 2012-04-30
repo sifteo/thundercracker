@@ -334,11 +334,24 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* type       */ " << (uint32_t)instrument.sample.type << ",\n" <<
         indent << indent << "/* volume     */ " << instrument.sample.volume << ",\n" <<
         indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
-        indent << indent << "/* pData      */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n" <<
+        indent << indent << "/* pData      */ ";
+        if (instrument.sample.pData < song.nInstruments) {
+            mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n";
+        } else {
+            mStream << "0,\n";
+        }
+        mStream <<
         indent << "},\n" <<
-        indent << "/* finetune              */ " << (uint32_t)instrument.finetune << ",\n" <<
-        indent << "/* relativeNoteNumber    */ " << (uint32_t)instrument.relativeNoteNumber << ",\n" <<
-        indent << "/* volumeEnvelopePoints  */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n" <<
+        indent << "/* finetune              */ " << (int32_t)instrument.finetune << ",\n" <<
+        indent << "/* relativeNoteNumber    */ " << (int32_t)instrument.relativeNoteNumber << ",\n" <<
+        indent << "/* volumeEnvelopePoints  */ ";
+        if (instrument.volumeEnvelopePoints < song.nInstruments) {
+            mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n";
+        } else {
+            mStream << "0,\n";
+        }
+
+        mStream <<
         indent << "/* nVolumeEnvelopePoints */ " << (uint32_t)instrument.nVolumeEnvelopePoints << ",\n" <<
         indent << "/* volumeSustainPoint    */ " << (uint32_t)instrument.volumeSustainPoint << ",\n" <<
         indent << "/* volumeLoopStartPoint  */ " << (uint32_t)instrument.volumeLoopStartPoint << ",\n" <<

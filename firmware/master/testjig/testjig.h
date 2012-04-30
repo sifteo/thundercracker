@@ -22,6 +22,8 @@ public:
     static void onNeighborMsgRx(uint8_t side, uint16_t msg);
 
 private:
+    static const unsigned I2C_SLAVE_ADDRESS = 0x55;
+
     typedef void(*TestHandler)(uint8_t argc, uint8_t *args);
     static const TestHandler handlers[];
 

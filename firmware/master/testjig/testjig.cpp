@@ -48,11 +48,21 @@ void TestJig::init()
     NVIC.irqEnable(IVT.TIM5);                   // neighbor rx
     NVIC.irqPrioritize(IVT.TIM5, 0x50);
 
-    NVIC.irqEnable(IVT.EXTI0);                   // neighbor in2
+    NVIC.irqEnable(IVT.EXTI0);                  // neighbor in2
     NVIC.irqPrioritize(IVT.EXTI0, 0x64);
 
-    NVIC.irqEnable(IVT.EXTI1);                   // neighbor in3
+    NVIC.irqEnable(IVT.EXTI1);                  // neighbor in3
     NVIC.irqPrioritize(IVT.EXTI1, 0x64);
+
+    /*
+     * Errata indicates that if i2c interrupts aren't handled quickly enough,
+     * data corruption can occur - use highest possible ISR priorities.
+     */
+    NVIC.irqEnable(IVT.I2C1_EV);                // highest
+    NVIC.irqPrioritize(IVT.I2C1_EV, 0x0);
+
+    NVIC.irqEnable(IVT.I2C1_ER);
+    NVIC.irqPrioritize(IVT.I2C1_ER, 0x0);       // highest
 
     GPIOPin dacOut = BATTERY_SIM_GPIO;
     dacOut.setControl(GPIOPin::IN_ANALOG);
@@ -75,8 +85,8 @@ void TestJig::init()
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
 
-    i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO);
-    neighbor.init();
+    i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
+//    neighbor.init();
 }
 
 /*
@@ -216,10 +226,22 @@ IRQ_HANDLER ISR_EXTI1()
 
 IRQ_HANDLER ISR_I2C1_EV()
 {
-    i2c.isr_EV();
+    uint8_t byte;
+    uint16_t status = i2c.irqEvStatus();
+
+    // send next byte
+    if (status & I2CSlave::TxEmpty)
+        byte = 0xff;
+
+    i2c.isrEV(&byte);
+
+    // we received a byte
+    if (status & I2CSlave::RxNotEmpty) {
+
+    }
 }
 
 IRQ_HANDLER ISR_I2C1_ER()
 {
-    i2c.isr_ER();
+    i2c.isrER();
 }
