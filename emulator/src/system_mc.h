@@ -36,7 +36,7 @@ class SystemMC {
 
     static bool installELF(const char *name);
 
-    static const System *getSystem() {
+    static System *getSystem() {
         return instance->sys;
     }
 

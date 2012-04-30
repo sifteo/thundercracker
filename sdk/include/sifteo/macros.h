@@ -62,6 +62,31 @@
     } while (0)
 #endif
 
+/**
+ * Inline emulator scripting, for automated testing and more.
+ */
+
+#define SCRIPT_TYPE(_type) do { \
+    _SYS_log((_SYS_SCRIPT_ ## _type) | (_SYS_LOGTYPE_SCRIPT << 27), \
+        0,0,0,0,0,0,0); \
+} while (0)
+
+#define SCRIPT_FMT(_type, ...) do { \
+    if (_SYS_lti_isDebug()) { \
+        SCRIPT_TYPE(_type); \
+        _SYS_lti_log(__VA_ARGS__); \
+        SCRIPT_TYPE(NONE); \
+    } \
+} while (0)
+
+#define SCRIPT(_type, _code) do { \
+    if (_SYS_lti_isDebug()) { \
+        SCRIPT_TYPE(_type); \
+        _SYS_lti_log("%s", #_code); \
+        SCRIPT_TYPE(NONE); \
+    } \
+} while (0)
+
 /// Convenient trace macros for printing the values of variables
 #define LOG_INT(_x)     LOG("%s = %d\n", #_x, (_x));
 #define LOG_HEX(_x)     LOG("%s = 0x%08x\n", #_x, (_x));

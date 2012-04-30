@@ -132,7 +132,7 @@ static int runFrontend(System &sys, const char *elfFile)
 static int runScript(System &sys, const char *file)
 {
     LuaScript lua(sys);
-    int result = lua.run(file);
+    int result = lua.runFile(file);
     sys.exit();
     return result;
 }

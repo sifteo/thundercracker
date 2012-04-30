@@ -29,7 +29,8 @@ public:
     LuaScript(System &sys);
     ~LuaScript();
 
-    int run(const char *filename);
+    int runFile(const char *filename);
+    int runString(const char *str);
 
     // Utilities for foolproof table argument unpacking
     static bool argBegin(lua_State *L, const char *className);

@@ -70,6 +70,9 @@ public:
     static const unsigned LOG_BUFFER_WORDS = 7;
     static const unsigned LOG_BUFFER_BYTES = LOG_BUFFER_WORDS * sizeof(uint32_t);
 
+    // Called when a new program is first starting
+    static void init();
+
     /**
      * Log messages are emitted in two steps:
      *

@@ -14,9 +14,11 @@
 #include "mc_logdecoder.h"
 #include "tinythread.h"
 #include "tasks.h"
+#include "lua_script.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
+static LogDecoder gLogDecoder;
 
 static struct DebuggerMailbox {
     tthread::mutex m;
@@ -130,7 +132,7 @@ void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
     // interface instead of going through the cache, since we don't want
     // debug log decoding to affect caching behavior.
 
-    uint32_t decodedSize = LogDecoder::decode(gELFDebugInfo, tag, buffer);
+    uint32_t decodedSize = gLogDecoder.decode(gELFDebugInfo, tag, buffer);
     ASSERT(decodedSize == bytes);
 }
 
@@ -232,4 +234,17 @@ void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
     gELFDebugInfo.init(program);
     GDBServer::setDebugInfo(&gELFDebugInfo);
     GDBServer::setMessageCallback(debuggerMsgCallback);
+}
+
+static void luaHandler(const char *str, void*)
+{
+    LuaScript s(*SystemMC::getSystem());
+    s.runString(str);
+}
+
+void SvmDebugPipe::init()
+{
+    LogDecoder::ScriptHandler lua = { luaHandler };
+    gLogDecoder.init();
+    gLogDecoder.setScriptHandler(_SYS_SCRIPT_LUA, lua);
 }

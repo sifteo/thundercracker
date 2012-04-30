@@ -8,18 +8,36 @@
 
 #include "mc_elfdebuginfo.h"
 #include "svmdebugpipe.h"
+#include <string>
+#include <map>
 
 class LogDecoder {
 public:
-    LogDecoder();   // Do not implement
+    struct ScriptHandler {
+        void (*func)(const char *str, void *context);
+        void *context;
+    };
+
+    // Reset the internal state of the decoder
+    void init();
+
+    // Add a handler for a new kind of script
+    void setScriptHandler(unsigned type, ScriptHandler handler);
 
     // Decode a log entry with the specified tag and data buffer.
     // Returns the actual number of bytes consumed from 'buffer'.
-    static size_t decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer);
+    size_t decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer);
 
 private:
-    static void formatLog(ELFDebugInfo &DI, char *out, size_t outSize,
+    void formatLog(ELFDebugInfo &DI, char *out, size_t outSize,
         char *fmt, uint32_t *args, size_t argCount);
+
+    void writeLog(const char *str);
+    void runScript();
+
+    unsigned scriptType;
+    std::string scriptBuffer;
+    std::map<unsigned, ScriptHandler> handlers;
 };
 
 #endif  // LOG_DECODER_H

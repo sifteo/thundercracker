@@ -172,6 +172,12 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
             return;
         }
 
+        // Tags that take no parameters
+        case _SYS_LOGTYPE_SCRIPT: {
+            SvmDebugPipe::logCommit(tag, SvmDebugPipe::logReserve(tag), 0);
+            return;
+        }
+
         default:
             ASSERT(0 && "Unknown _SYS_log() tag type");
             return;

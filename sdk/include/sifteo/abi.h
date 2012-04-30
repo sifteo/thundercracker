@@ -695,9 +695,13 @@ bool _SYS_lti_isConstant(unsigned value);
  * automatically by slinky when expanding _SYS_lti_log().
  */
 
-#define _SYS_LOGTYPE_FMT        0       // param = strtab offest
-#define _SYS_LOGTYPE_STRING     1       // param = 0, v1 = ptr
-#define _SYS_LOGTYPE_HEXDUMP    2       // param = length, v1 = ptr
+#define _SYS_LOGTYPE_FMT            0       // param = strtab offest
+#define _SYS_LOGTYPE_STRING         1       // param = 0, v1 = ptr
+#define _SYS_LOGTYPE_HEXDUMP        2       // param = length, v1 = ptr
+#define _SYS_LOGTYPE_SCRIPT         3       // param = script type
+
+#define _SYS_SCRIPT_NONE            0       // Normal logging
+#define _SYS_SCRIPT_LUA             1       // Built-in Lua interpreter
 
 /*
  * Low-level system call interface.

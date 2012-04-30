@@ -79,15 +79,20 @@ LuaScript::~LuaScript()
     lua_close(L);
 }
 
-int LuaScript::run(const char *filename)
+int LuaScript::runFile(const char *filename)
 {
-    int s = luaL_loadfile(L, filename);
-
-    if (!s) {
-        s = lua_pcall(L, 0, LUA_MULTRET, 0);
+    if (luaL_dofile(L, filename)) {
+        fprintf(stderr, "-!- Error: %s\n", lua_tostring(L, -1));
+        lua_pop(L, 1);
+        return 1;
     }
 
-    if (s) {
+    return 0;
+}
+
+int LuaScript::runString(const char *str)
+{
+    if (luaL_dostring(L, str)) {
         fprintf(stderr, "-!- Error: %s\n", lua_tostring(L, -1));
         lua_pop(L, 1);
         return 1;

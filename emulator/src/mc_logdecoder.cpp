@@ -8,6 +8,13 @@
 #include "mc_logdecoder.h"
 
 
+void LogDecoder::init()
+{
+    scriptType = _SYS_SCRIPT_NONE;
+    scriptBuffer.clear();
+    handlers.clear();
+}
+
 void LogDecoder::formatLog(ELFDebugInfo &DI,
     char *out, size_t outSize, char *fmt, uint32_t *args, size_t argCount)
 {
@@ -194,7 +201,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
             } else {
                 formatLog(DI, outBuffer, sizeof outBuffer, (char*) fmt.c_str(),
                     buffer, tag.getArity());
-                LOG(("%s", outBuffer));
+                writeLog(outBuffer);
             }
             return tag.getArity() * sizeof(uint32_t);
         }
@@ -205,7 +212,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
             ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
             memcpy(outBuffer, buffer, bytes);
             outBuffer[bytes] = '\0';
-            LOG(("%s", outBuffer));
+            writeLog(outBuffer);
             return bytes;
         }
 
@@ -213,13 +220,49 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
         case _SYS_LOGTYPE_HEXDUMP: {
             uint32_t bytes = tag.getParam();
             ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
-            for (unsigned i = 0; i != bytes; i++)
-                LOG(("%02x ", ((uint8_t*)buffer)[i]));
+            for (unsigned i = 0; i != bytes; i++) {
+                snprintf(outBuffer, sizeof outBuffer,
+                    "%02x ", ((uint8_t*)buffer)[i]);
+                writeLog(outBuffer);
+            }
             return bytes;
         }
-        
+
+        // Begin/end a script block
+        case _SYS_LOGTYPE_SCRIPT: {
+            if (scriptType != _SYS_SCRIPT_NONE)
+                runScript();
+            scriptType = tag.getParam();
+            scriptBuffer.clear();
+            return 0;
+        }
+
         default:
             ASSERT(0 && "Decoding unknown log type. (syscall layer should have caught this!)");
             return 0;
     }
+}
+
+void LogDecoder::writeLog(const char *str)
+{
+    if (scriptType == _SYS_SCRIPT_NONE) {
+        LOG(("%s", str));
+    } else {
+        scriptBuffer += str;
+    }
+}
+
+void LogDecoder::runScript()
+{
+    std::map<unsigned, ScriptHandler>::iterator I = handlers.find(scriptType);
+    if (I == handlers.end()) {
+        LOG(("LOG: Unsupported script type %d\n", scriptType));
+    } else {
+        I->second.func(scriptBuffer.c_str(), I->second.context);
+    }
+}
+
+void LogDecoder::setScriptHandler(unsigned type, ScriptHandler handler)
+{
+    handlers[type] = handler;
 }

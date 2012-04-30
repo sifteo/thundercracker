@@ -9,11 +9,15 @@
 using namespace Svm;
 
 
-void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
+void SvmDebugPipe::init()
 {
     // Do nothing (Only used in simulation)
 }
 
+void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
+{
+    // Do nothing (Only used in simulation)
+}
 
 bool SvmDebugPipe::fault(FaultCode code)
 {

@@ -227,6 +227,9 @@ void SvmLoader::run(const Elf::Program &program)
     // On simulator builds, log some info about the program we're running
     logTitleInfo(program);
 
+    // Reset the debugging and logging subsystem
+    SvmDebugPipe::init();
+
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
     SvmDebugPipe::setSymbolSource(program);
