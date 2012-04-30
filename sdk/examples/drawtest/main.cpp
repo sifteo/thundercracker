@@ -25,6 +25,8 @@ void main()
     vid.attach(cube);
 
     unsigned animFrame = 0;
+    volatile uint32_t x = 0;
+
     while (1) {
         vid.bg1.maskedImage(Animation, Transparent, animFrame);
         if (++animFrame == Animation.numFrames()) animFrame = 0;
@@ -34,11 +36,19 @@ void main()
         System::finish();
 
         SCRIPT(LUA,
+            rt = Runtime();
+            fe = Frontend();
             print("Hello World!");
         );
 
         SCRIPT_FMT(LUA,
-            "Frontend():postMessage('Hello! animFrame=%d');",
+            "fe:postMessage('Hello! animFrame=%d');",
             animFrame);
+
+        SCRIPT_FMT(LUA,
+            "rt:poke(%p, 12345);",
+            &x);
+
+        LOG_INT(x);
     }
 }

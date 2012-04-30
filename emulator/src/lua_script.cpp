@@ -10,11 +10,14 @@
 #include "lua_script.h"
 #include "lodepng.h"
 #include "color.h"
+#include "svmmemory.h"
 
 System *LuaSystem::sys = NULL;
 const char LuaSystem::className[] = "System";
 const char LuaFrontend::className[] = "Frontend";
 const char LuaCube::className[] = "Cube";
+const char LuaRuntime::className[] = "Runtime";
+
 
 Lunar<LuaSystem>::RegType LuaSystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaSystem, init),
@@ -62,6 +65,12 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     {0,0}
 };
 
+Lunar<LuaRuntime>::RegType LuaRuntime::methods[] = {
+    LUNAR_DECLARE_METHOD(LuaRuntime, poke),
+    {0,0}
+};
+
+
 LuaScript::LuaScript(System &sys)
 {    
     L = lua_open();
@@ -72,6 +81,7 @@ LuaScript::LuaScript(System &sys)
     Lunar<LuaSystem>::Register(L);
     Lunar<LuaFrontend>::Register(L);
     Lunar<LuaCube>::Register(L);
+    Lunar<LuaRuntime>::Register(L);
 }
 
 LuaScript::~LuaScript()
@@ -551,3 +561,25 @@ int LuaCube::testWriteVRAM(lua_State *L)
     test.writeVRAM(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
     return 0;
 }
+
+LuaRuntime::LuaRuntime(lua_State *L)
+{
+    /* Nothing to do; the SVM runtime is a singleton */
+}
+
+int LuaRuntime::poke(lua_State *L)
+{
+    SvmMemory::VirtAddr va = luaL_checkinteger(L, 1);
+    SvmMemory::PhysAddr pa;
+    uint32_t value = luaL_checkinteger(L, 2);
+
+    if (!SvmMemory::mapRAM(va, sizeof value, pa)) {
+        lua_pushfstring(L, "invalid RAM address");
+        lua_error(L);
+        return 0;
+    }
+
+    *reinterpret_cast<uint32*>(pa) = value;
+    return 0;
+}
+

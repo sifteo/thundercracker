@@ -150,4 +150,16 @@ private:
 };
 
 
+class LuaRuntime {
+public:
+    static const char className[];
+    static Lunar<LuaRuntime>::RegType methods[];
+
+    LuaRuntime(lua_State *L);
+
+private:
+    int poke(lua_State *L);
+};
+
+
 #endif

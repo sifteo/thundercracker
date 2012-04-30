@@ -19,6 +19,8 @@ using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
 static LogDecoder gLogDecoder;
+static LuaScript *gLuaScript;
+
 
 static struct DebuggerMailbox {
     tthread::mutex m;
@@ -238,12 +240,15 @@ void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
 
 static void luaHandler(const char *str, void*)
 {
-    LuaScript s(*SystemMC::getSystem());
-    s.runString(str);
+    ASSERT(gLuaScript);
+    gLuaScript->runString(str);
 }
 
 void SvmDebugPipe::init()
 {
+    delete gLuaScript;
+    gLuaScript = new LuaScript(*SystemMC::getSystem());
+
     LogDecoder::ScriptHandler lua = { luaHandler };
     gLogDecoder.init();
     gLogDecoder.setScriptHandler(_SYS_SCRIPT_LUA, lua);
