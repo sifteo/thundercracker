@@ -5,8 +5,8 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
-SCREENSHOT_PATH_FMT = "scripts/screenshots/%s.png"
-BINARY_PATH_FMT = "scripts/testdata/%s.bin"
+SCREENSHOT_PATH_FMT = "screenshots/%s.png"
+BINARY_PATH_FMT = "testdata/%s.bin"
 
 LCD_WIDTH  = 128
 LCD_HEIGHT = 128
@@ -69,7 +69,7 @@ VA_FLAGS           = 0x3ff
 -- General Utilities
 
 bit = require("bit")
-matrix = require("scripts/matrix")
+matrix = require("matrix")
 
 function clamp(x, lower, upper)
     return math.min(math.max(x, lower), upper)

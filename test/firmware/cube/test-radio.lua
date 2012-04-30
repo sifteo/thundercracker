@@ -5,9 +5,9 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
-require('scripts/luaunit')
-require('scripts/vram')
-require('scripts/radio')
+require('luaunit')
+require('vram')
+require('radio')
 
 TestRadio = {}
 

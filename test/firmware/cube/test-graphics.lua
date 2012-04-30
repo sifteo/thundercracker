@@ -5,8 +5,8 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
-require('scripts/luaunit')
-require('scripts/vram')
+require('luaunit')
+require('vram')
 
 TestGraphics = {}
 

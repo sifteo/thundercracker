@@ -6,13 +6,13 @@
 ]]--
 
 -- Libraries
-require('scripts/luaunit')
-require('scripts/vram')
+require('luaunit')
+require('vram')
 
 -- Test code
-require('scripts/test-graphics')
-require('scripts/test-radio')
-require('scripts/test-testjig')
+require('test-graphics')
+require('test-radio')
+require('test-testjig')
 
 --[[
     XXX: There are some big gaps in our testing coverage...
