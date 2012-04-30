@@ -29,18 +29,19 @@ public:
     void getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note);
 
     static void resetNote(struct XmTrackerNote &note) {
-        note.note = kNoNote;
+        note.note = kNoteOff;
         note.instrument = kNoInstrument;
-        note.volumeColumnByte = kNoVolume;
+        note.volumeColumnByte = 0;
         note.effectType = kNoEffect;
         note.effectParam = 0;
     }
 
     static const uint8_t kNoteOff = 97;
-    static const uint8_t kNoNote = 0;
+    static const uint8_t kNoNote = 0xFF;
     static const uint8_t kNoInstrument = 0xFF;
     static const uint8_t kNoEffect = 0xFF;
-    static const uint8_t kNoVolume = 0;
+    static const uint8_t kNoParam = 0xFF;
+    static const uint8_t kNoVolume = 0x55;
 private:
     void nextNote(struct XmTrackerNote &note); // Pattern iterator
 

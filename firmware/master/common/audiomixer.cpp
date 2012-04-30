@@ -91,6 +91,10 @@ void AudioMixer::pullAudio(void *p) {
         totalBytesMixed += mixed * sizeof(int16_t);
 
         if (trackerInterval) {
+            if (mixed == 0) {
+                mixed = numSamples;
+                totalBytesMixed += mixed * sizeof(int16_t);
+            }
             ASSERT(trackerCountdown != 0);
             ASSERT(mixed <= trackerCountdown);
             // Update the callback countdown

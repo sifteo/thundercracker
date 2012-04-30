@@ -33,7 +33,10 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     if (patterns.size()) init();
 
     f = fopen(filename, "rb");
-    if (f == 0) return false;
+    if (f == 0) {
+        log->error("Could not open %s", filename);
+        return false;
+    }
 
     if (!readSong()) return init();
 
@@ -60,6 +63,12 @@ bool XmTrackerLoader::readSong()
     song.patternOrderTableSize = get16();
     song.restartPosition = get16();
     song.nChannels = get16();
+    if (song.nChannels > _SYS_AUDIO_MAX_CHANNELS) {
+        log->error("%s: Song contains %u channels, max %u supported",
+                   filename, song.nChannels, _SYS_AUDIO_MAX_CHANNELS);
+        return false;
+    }
+
     song.nPatterns = get16();
     song.nInstruments = get16();
     song.frequencyTable = get16();
@@ -247,8 +256,11 @@ bool XmTrackerLoader::readNextInstrument()
      * Sanity check parameters and convert to expected units/ranges.
      */
 
-    // Sifteo volume range is (0..256), XM is (0..64)
-    sample.volume *= 4;
+    if (sample.volume > 64) {
+        log->error("%s, instrument %u: Sample volume is %u, clamped to %u",
+                   filename, instruments.size(), sample.volume, 64);
+        sample.volume = 64;
+    }
 
     // Loop type should store only the loop type
     uint8_t format = (sample.loopType >> 3) & 0x3;
@@ -323,7 +335,8 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // intentional fall-through
         case kSampleFormatPCM16: {
             uint32_t numSamples = sample.dataSize / (pcm8 ? 1 : 2);
-            int16_t *buf = (int16_t*)malloc(numSamples * 2);
+            sample.dataSize = numSamples * sizeof(int16_t);
+            int16_t *buf = (int16_t*)malloc(sample.dataSize);
             if (!buf) return false;
             for (unsigned i = 0; i < numSamples; i++) {
                 buf[i] = pcm8
