@@ -1,11 +1,7 @@
 SUBDIRS = \
-	hello \
-	membrane \
-	menudemo \
-	sensors \
-	sprites \
-	stars \
-	text
+	nyan \
+	pantera \
+	monster
 
 .PHONY: clean subdirs $(SUBDIRS)
 

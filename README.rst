@@ -7,12 +7,24 @@ This is the software toolchain for Sifteo's 2nd generation product.
 Parts
 -----
 
+deps
+  Outside dependencies, included for convenience.
+
+docs
+  Build files for the SDK documentation, as well as other miscellaneous
+  platform documentation.
+
 emulator
   The Thundercracker hardware emulator. Includes an accurate
   hardware simulation of the cubes, and the necessary glue to
   execute "sim" builds of master firmware in lockstep with this
   hardware simulation. Also includes a unit testing framework.
-  
+
+extras
+  Various userspace programs which are neither full games nor included in
+  the SDK as "example" code. This directory can be used for internal tools
+  and toys which aren't quite up to our standards for inclusion in the SDK.
+
 firmware
   Firmware source for cubes and master.
 
@@ -25,18 +37,15 @@ sdk
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.
 
-speex
-  Tools for encoding & compressing audio samples, using the speex codec. (possibly merge with stir...)
+test
+  Unit tests for firmware, SDK, and simulator.
 
-deps
-  Outside dependencies, included for convenience.
-
-attic
-  Old or experimental code, not part of the main toolchain.
+tools
+  Internal tools for SDK packaging, factory tests, etc.
 
 vm
-  Tools for working with the virtual machine sandbox that games execute in.
-  Includes "slinky", the Sifteo linker and code generator for LLVM.
+  Tools and documentation for the virtual machine sandbox that games execute
+  in. Includes "slinky", the Sifteo linker and code generator for LLVM.
 
 
 Operating System
@@ -77,20 +86,3 @@ CodeSourcery C++ distribution is preferred. On Mac OS or Linux, the following
 script will automatically build a compatible toolchain for your machine:
 
    https://github.com/jsnyder/arm-eabi-toolchain
-
-
-Running Tests
--------------
-
-The simulator has Lua scripting capabilities, and we have a testing
-framework written in Lua which currently covers the graphics code in
-our cube firmware. To run all existing tests, from the "emulator"
-directory:
-
-  siftulator [-f ../firmware/cube.hex] -e scripts/tests.lua
-  
-You'll see the tests run headless, with pass/fail information on the
-console. To run tests with the GUI frontend enabled, set the
-USE_FRONTEND environment variable. To specify a particular test to
-run, set the TEST environment var to the name of the test, in
-"TestClass:test_function" format.

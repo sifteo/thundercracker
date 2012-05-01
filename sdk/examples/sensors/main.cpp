@@ -62,6 +62,13 @@ private:
     }
 };
 
+static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
+    Int2 topLeft, Int2 size, Side s)
+{
+    unsigned nbColor = draw.ORANGE;
+    draw.fill(topLeft, size,
+        nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
+}
 
 void main()
 {
@@ -76,7 +83,7 @@ void main()
 
     while (1) {
         for (CubeID cube = 0; cube < gNumCubes; ++cube) {
-            auto &draw = vid[cube].bg0rom;
+            BG0ROMDrawable &draw = vid[cube].bg0rom;
             String<192> str;
 
             /*
@@ -121,16 +128,10 @@ void main()
              * Neighboring indicator bars
              */
 
-            unsigned nbColor = draw.ORANGE;
-
-            draw.fill(vec(1, 0), vec(14, 1),
-                nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(0, 1), vec(1, 14),
-                nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(1, 15), vec(14, 1),
-                nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(15, 1), vec(1, 14),
-                nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG));
+            drawSideIndicator(draw, nb, vec( 1,  0), vec(14,  1), TOP);
+            drawSideIndicator(draw, nb, vec( 0,  1), vec( 1, 14), LEFT);
+            drawSideIndicator(draw, nb, vec( 1, 15), vec(14,  1), BOTTOM);
+            drawSideIndicator(draw, nb, vec(15,  1), vec( 1, 14), RIGHT);
         }
 
         System::paint();

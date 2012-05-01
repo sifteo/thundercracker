@@ -4,19 +4,19 @@ include Makefile.platform
 
 TOOLS := emulator stir vm firmware
 DOCS := docs/doxygen
-EXAMPLES := sdk/examples
+USERSPACE := sdk/examples extras
 TESTS := test
 
-.PHONY: clean subdirs $(TOOLS) $(DOCS) $(TESTS) $(EXAMPLES)
+.PHONY: clean userspace-clean subdirs $(TOOLS) $(DOCS) $(TESTS) $(USERSPACE)
 
-all: sdk-deps $(TOOLS) $(DOCS) $(TESTS) $(EXAMPLES)
+all: sdk-deps $(TOOLS) $(DOCS) $(TESTS) $(USERSPACE)
 
-subdirs: $(TOOLS) $(DOCS) $(TESTS) $(EXAMPLES)
+subdirs: $(TOOLS) $(DOCS) $(TESTS) $(USERSPACE)
 
 tools: $(TOOLS)
 
-# Set up environment vars before building examples
-$(EXAMPLES):
+# Set up SDK environment vars for userspace code
+$(USERSPACE):
 	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $@
 
 $(TOOLS) $(DOCS) $(TESTS):
@@ -25,6 +25,11 @@ $(TOOLS) $(DOCS) $(TESTS):
 clean: sdk-deps-clean
 	rm -Rf sdk/doc/*
 	@for dir in $(TOOLS) $(DOCS); do $(MAKE) -C $$dir clean; done
-	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $(EXAMPLES) clean
+	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make _userspace_clean
+
+# Internal target for 'clean', with userspace environment vars set up. I couldn't
+# see a better way to set up environment vars and do the 'for' loop in one step.
+_userspace_clean:
+	@for dir in $(USERSPACE); do $(MAKE) -C $$dir clean; done
 
 include Makefile.sdk-deps
