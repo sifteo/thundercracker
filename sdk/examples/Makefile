@@ -1,5 +1,4 @@
 SUBDIRS = \
-	drawtest \
 	hello \
 	membrane \
 	menudemo \
