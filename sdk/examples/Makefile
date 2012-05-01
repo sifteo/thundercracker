@@ -1,5 +1,4 @@
 SUBDIRS = \
-	hello \
 	membrane \
 	menudemo \
 	sensors \
