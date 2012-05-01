@@ -6,6 +6,7 @@ GENERATED_FILES += tests.stamp
 all: tests.stamp
 
 tests.stamp: $(BIN)
+	@echo "\n================= Running SDK Test:" $(APP) "\n"
 	siftulator $(SIFTULATOR_FLAGS) $(BIN)
 	echo > $@
 
