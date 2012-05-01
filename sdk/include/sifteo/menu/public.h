@@ -40,9 +40,6 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
             kIconTileHeight = items[i].icon->tileHeight();
             kEndCapPadding = (kNumVisibleTilesX - kIconTileWidth) * (TILE / 2.f);
             ASSERT((kItemPixelWidth() - kIconPixelWidth()) % TILE == 0);
-            // icons should leave at least one tile on both sides for the next/prev items
-            //commenting this out, due to configurable peek/icon sizes now
-            //ASSERT(kIconTileWidth <= kNumVisibleTilesX - (kPeekTiles * 2));
         } else {
             ASSERT(items[i].icon->tileWidth() == kIconTileWidth);
             ASSERT(items[i].icon->tileHeight() == kIconTileHeight);
