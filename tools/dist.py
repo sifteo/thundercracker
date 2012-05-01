@@ -26,11 +26,6 @@ if __name__ == '__main__':
         '*.o', '*.d', '*.bak', '*.gen.h', '*.gen.cpp',
     ]
 
-    # don't copy sifteo games - this won't be needed once they're in their own repo
-    patterns += [
-        'buddies', 'chroma', 'ninja_slide', 'peano', 'word',
-    ]
-
     # Platform-specific
     if os.name != 'posix':
         patterns.append('sifteo-sdk-shell.command')
