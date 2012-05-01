@@ -1,3 +1,12 @@
+/*
+ * This is a performance stress-test for the sprite engine, which
+ * also happens to test most of its functionality.
+ *
+ * We do screenshot comparisons to ensure correctness, then the
+ * average frame rate is computed both as a performance metric to guide
+ * optimization, and as a way of detecting serious performance bugs.
+ */
+
 #include <sifteo.h>
 #include "assets.gen.h"
 using namespace Sifteo;
@@ -65,6 +74,7 @@ void main()
 
     // Enforce minimum average frame rate
     float avgFPS = numFrames / float(SystemTime::now() - startTime);
+    LOG("Average FPS = %f\n", avgFPS);
     ASSERT(avgFPS > 10.f);
     ASSERT(avgFPS < 70.f);
 }
