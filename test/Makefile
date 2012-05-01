@@ -9,6 +9,7 @@
 TESTS = \
 	firmware/cube \
 	sdk/math \
+	sdk/bg1
 
 ####################
 

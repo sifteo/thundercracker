@@ -5,8 +5,11 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
+package.path = package.path .. ";../../lib/?.lua"
+
 -- Libraries
 require('luaunit')
+require('siftulator')
 require('vram')
 
 -- Test code

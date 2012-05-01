@@ -1,2 +1,4 @@
 *.elf
+*.gen.cpp
+*.gen.h
 
