@@ -79,7 +79,7 @@ void SvmRuntime::fault(FaultCode code)
     }
 
     msg.paint(0);
-    SvmLoader::exit();
+    SvmLoader::exit(true);
 }
 
 void SvmRuntime::call(reg_t addr)

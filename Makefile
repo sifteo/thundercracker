@@ -25,6 +25,6 @@ $(TOOLS) $(DOCS) $(TESTS):
 clean: sdk-deps-clean
 	rm -Rf sdk/doc/*
 	@for dir in $(TOOLS) $(DOCS); do $(MAKE) -C $$dir clean; done
-	PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $(EXAMPLES) clean
+	@PATH="$(SDK_DIR)/bin:$(PATH)" SDK_DIR="$(SDK_DIR)" make -C $(EXAMPLES) clean
 
 include Makefile.sdk-deps

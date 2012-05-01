@@ -10,6 +10,10 @@ all: $(BIN)
 %.o: %.cpp $(CDEPS)
 	@echo Compiling $<
 	@$(CC) -c -o $@ $< $(CCFLAGS)
+
+%.o: %.cc $(CDEPS)
+	@echo Compiling $<
+	@$(CC) -c -o $@ $< $(CCFLAGS)
     
 %.o: %.c $(CDEPS)
 	@echo Compiling $<
@@ -31,7 +35,7 @@ clean:
 	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
 
 run: $(BIN)
-	siftulator $<
+	siftulator $(SIFTULATOR_FLAGS) $<
 
 .PHONY: clean all run
 

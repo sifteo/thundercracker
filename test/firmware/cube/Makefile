@@ -5,6 +5,6 @@ tests.stamp: $(SDK_DIR)/bin/* *.lua
 	echo > $@
 
 clean:
-	rm -f tests.stamp
+	rm -f tests.stamp trace.txt trace.vcd
 
 .PHONY: run clean

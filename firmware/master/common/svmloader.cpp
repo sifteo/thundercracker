@@ -265,10 +265,11 @@ void SvmLoader::run(int id)
 }
 
 
-void SvmLoader::exit()
+void SvmLoader::exit(bool fault)
 {
 #ifdef SIFTEO_SIMULATOR
-    ::exit(0);
+    // Must preserve the error code here, so that unit tests and other scripts work.
+    ::exit(fault);
 #endif
     while (1);
 }

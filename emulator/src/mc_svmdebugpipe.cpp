@@ -57,6 +57,7 @@ static const char* faultStr(FaultCode code)
     case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log data";
     case F_SYSCALL_ADDRESS:     return "Bad address in system call";
     case F_SYSCALL_PARAM:       return "Other bad parameter in system call";
+    case F_SCRIPT_EXCEPTION:    return "Exception during script execution";
     default:                    return "unknown error";
     }
 }
@@ -241,7 +242,8 @@ void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
 static void luaHandler(const char *str, void*)
 {
     ASSERT(gLuaScript);
-    gLuaScript->runString(str);
+    if (gLuaScript->runString(str))
+        SvmRuntime::fault(F_SCRIPT_EXCEPTION);
 }
 
 void SvmDebugPipe::init()

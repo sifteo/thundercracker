@@ -17,7 +17,7 @@ public:
 
     static void run(const Elf::Program &program);
     static void run(int id);
-    static void exit();
+    static void exit(bool fault=false);
 
 private:
     static _SYSCubeIDVector getCubeVector(const Elf::Program &program);
