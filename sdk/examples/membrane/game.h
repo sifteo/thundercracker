@@ -1,4 +1,8 @@
-/* Copyright <c> 2011 Sifteo, Inc. All rights reserved. */
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Sifteo SDK Example.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
 
 #ifndef _GAME_H
 #define _GAME_H
