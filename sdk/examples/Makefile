@@ -3,7 +3,6 @@ SUBDIRS = \
 	membrane \
 	menudemo \
 	sensors \
-	sprites \
 	stars \
 	text
 
