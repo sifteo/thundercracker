@@ -92,11 +92,16 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
 
         for (unsigned index = 0;; index++) {
             uint32_t tableOffset = index * sizeof currentSym;
-            if (tableOffset + sizeof currentSym >= SI->sh_size ||
+
+            if (tableOffset + sizeof currentSym > SI->sh_size ||
                 !program.getProgramSpan().copyBytesUncached(
                     SI->sh_offset + tableOffset,
                     (uint8_t*) &currentSym, sizeof currentSym))
                 break;
+
+            // Strip the Thumb bit from function symbols.
+            if ((currentSym.st_info & 0xF) == Elf::STT_FUNC)
+                currentSym.st_value &= ~1;
 
             uint32_t addrOffset = address - currentSym.st_value;
             if (addrOffset < currentSym.st_size && addrOffset < bestOffset) {
@@ -104,10 +109,6 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
                 bestOffset = addrOffset;
             }
         }
-
-        // Strip the Thumb bit from function symbols.
-        if ((symbol.st_info & 0xF) == Elf::STT_FUNC)
-            symbol.st_value &= ~1;
 
         if (bestOffset != worstOffset) {
             name = readString(".strtab", symbol.st_name);
