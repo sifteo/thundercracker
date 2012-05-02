@@ -12,6 +12,7 @@
 #ifndef FLASH_BLOCKCACHE_H_
 #define FLASH_BLOCKCACHE_H_
 
+#include "flash_device.h"
 #include "svmvalidator.h"
 #include "systime.h"
 #include "machine.h"
@@ -26,19 +27,6 @@
 #endif
 
 class FlashBlockRef;
-
-struct FlashStats {
-    unsigned blockHitSame;
-    unsigned blockHitOther;
-    unsigned blockMiss;
-    unsigned blockTotal;
-    unsigned globalRefcount;
-    SysTime::Ticks timestamp;
-    bool enabled;
-};
-
-extern FlashStats gFlashStats;
-
 
 /**
  * A single flash block, fetched via a globally shared cache.
@@ -62,6 +50,25 @@ private:
     uint32_t address;
     uint16_t validCodeBytes;
     uint8_t refCount;
+
+    struct FlashStats {
+        bool enabled;
+        unsigned globalRefcount;
+        SysTime::Ticks timestamp;
+
+        // These counters are reset on every interval
+        struct {
+            unsigned blockHitSame;
+            unsigned blockHitOther;
+            unsigned blockMiss;
+            unsigned blockTotal;
+
+            // Should be last, for efficiency. This is large!
+            uint32_t blockMissCounts[FlashDevice::CAPACITY / BLOCK_SIZE];
+        } periodic;
+    };
+
+    FLASHLAYER_STATS_ONLY(static FlashStats stats;)
 
     static uint8_t mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
     static FlashBlock instances[NUM_CACHE_BLOCKS];
@@ -96,19 +103,14 @@ public:
 
         return offset < validCodeBytes;
     }
-    
-    /**
-     * Quick predicate to check a physical address. Used only in simulation.
-     */
-#ifdef SIFTEO_SIMULATOR
-    static bool isAddrValid(uintptr_t pa) {
-        uintptr_t offset = reinterpret_cast<uint8_t*>(pa) - &mem[0][0];
-        return offset < sizeof mem;
-    }
 
-    static void enableStats() {
-        gFlashStats.enabled = true;
-    }
+#ifdef SIFTEO_SIMULATOR
+    static bool isAddrValid(uintptr_t pa);
+    static void enableStats();
+    static void resetStats();
+    static void dumpStats();
+    static bool hotBlockSort(unsigned i, unsigned j);
+    static void countBlockMiss(uint32_t blockAddr);
 #endif
 
     static void init();
@@ -126,8 +128,8 @@ private:
             referencedBlocksMap |= bit();
 
         FLASHLAYER_STATS_ONLY({
-            gFlashStats.globalRefcount++;
-            ASSERT(gFlashStats.globalRefcount <= MAX_REFCOUNT);
+            stats.globalRefcount++;
+            ASSERT(stats.globalRefcount <= MAX_REFCOUNT);
         })
     }
 
@@ -140,8 +142,8 @@ private:
             referencedBlocksMap &= ~bit();
 
         FLASHLAYER_STATS_ONLY({
-            ASSERT(gFlashStats.globalRefcount > 0);
-            gFlashStats.globalRefcount--;
+            ASSERT(stats.globalRefcount > 0);
+            stats.globalRefcount--;
         })
     }
     

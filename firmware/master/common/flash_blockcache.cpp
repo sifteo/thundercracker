@@ -5,14 +5,8 @@
 
 #include "flash_blockcache.h"
 #include "flash_device.h"
-#include "svmdebugpipe.h"
-#include "svmmemory.h"
 #include "svmdebugger.h"
 #include <string.h>
-
-#ifdef SIFTEO_SIMULATOR
-struct FlashStats gFlashStats;
-#endif
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
 FlashBlock FlashBlock::instances[NUM_CACHE_BLOCKS];
@@ -26,6 +20,8 @@ void FlashBlock::init()
     for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
         instances[i].address = INVALID_ADDRESS;
     }
+
+    FLASHLAYER_STATS_ONLY(resetStats());
 }
 
 void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
@@ -34,11 +30,11 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
 
     if (ref.isHeld() && ref->address == blockAddr) {
         // Cache layer 1: Repeated access to the same block. Keep existing ref.
-        FLASHLAYER_STATS_ONLY(gFlashStats.blockHitSame++);
+        FLASHLAYER_STATS_ONLY(stats.periodic.blockHitSame++);
 
     } else if (FlashBlock *cached = lookupBlock(blockAddr)) {
         // Cache layer 2: Block exists elsewhere in the cache
-        FLASHLAYER_STATS_ONLY(gFlashStats.blockHitOther++);
+        FLASHLAYER_STATS_ONLY(stats.periodic.blockHitOther++);
         ref.set(cached);
 
     } else {
@@ -48,7 +44,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
         FlashBlock *recycled = recycleBlock();
         ASSERT(recycled->refCount == 0);
         ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
-        FLASHLAYER_STATS_ONLY(gFlashStats.blockMiss++);
+        FLASHLAYER_STATS_ONLY(countBlockMiss(blockAddr));
 
         recycled->load(blockAddr);
         ref.set(recycled);
@@ -57,47 +53,8 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
     // Update this block's access stamp (See recycleBlock)
     ref->stamp = ++latestStamp;
 
-#ifdef SIFTEO_SIMULATOR
-    if (gFlashStats.enabled && ++gFlashStats.blockTotal >= 1000) {
-        SysTime::Ticks now = SysTime::ticks();
-        SysTime::Ticks tickDiff = now - gFlashStats.timestamp;
-        float dt = tickDiff / (float) SysTime::sTicks(1);
-
-        if (dt > 1.0f) {
-            gFlashStats.timestamp = now;
-        
-            uint32_t totalBytes = gFlashStats.blockMiss * BLOCK_SIZE;
-
-            const float flashBusMHZ = 18.0f;
-            const float bytesToMBits = 10.0f * 1e-6;
-            float effectiveMHZ = totalBytes / dt * bytesToMBits;
-
-            LOG(("Flashlayer: %9.1f acc/s, %8.1f same/s, "
-                "%8.1f cached/s, %8.1f miss/s, "
-                "%8.2f%% bus utilization\n",
-                gFlashStats.blockTotal / dt,
-                gFlashStats.blockHitSame / dt,
-                gFlashStats.blockHitOther / dt,
-                gFlashStats.blockMiss / dt,
-                effectiveMHZ / flashBusMHZ * 100.0f));
-
-            gFlashStats.blockTotal = 0;
-            gFlashStats.blockHitSame = 0;
-            gFlashStats.blockHitOther = 0;
-            gFlashStats.blockMiss = 0;
-
-            for (unsigned i = 0; i < NUM_CACHE_BLOCKS; i++) {
-                FlashBlock &block = instances[i];
-                SvmMemory::VirtAddr va = SvmMemory::flashToVirtAddr(block.address);
-                std::string name = SvmDebugPipe::formatAddress(va);
-
-                LOG(("\tblock %02d: addr=0x%06x stamp=0x%08x cb=0x%03x ref=%d va=%08x  %s\n",
-                    i, block.address, block.stamp, block.validCodeBytes,
-                    block.refCount, (unsigned)va, name.c_str()));
-            }
-        }
-    }
-#endif
+    FLASHLAYER_STATS_ONLY(stats.periodic.blockTotal++);
+    FLASHLAYER_STATS_ONLY(dumpStats());
 }
 
 FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
