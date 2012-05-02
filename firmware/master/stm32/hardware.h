@@ -75,15 +75,24 @@ extern volatile AFIO_t AFIO;
  */
 
 struct SPI_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t SR;
-    uint32_t DR;
-    uint32_t CRCPR;
-    uint32_t RXCRCR;
-    uint32_t TXCRCR;
-    uint32_t I2SCFGR;
-    uint32_t I2SPR;
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t SR;
+    uint16_t _res2;
+    uint16_t DR;
+    uint16_t _res3;
+    uint16_t CRCPR;
+    uint16_t _res4;
+    uint16_t RXCRCR;
+    uint16_t _res5;
+    uint16_t TXCRCR;
+    uint16_t _res6;
+    uint16_t I2SCFGR;
+    uint16_t _res7;
+    uint16_t I2SPR;
+    uint16_t _res8;
 };
 
 extern volatile SPI_t SPI1;
@@ -95,16 +104,24 @@ extern volatile SPI_t SPI3;
  */
 
 struct I2C_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t OAR1;
-    uint32_t OAR2;
-    uint32_t DR;
-    uint32_t SR1;
-    uint32_t SR2;
-    uint32_t CCR;
-    uint32_t TRISE;
-
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t OAR1;
+    uint16_t _res2;
+    uint16_t OAR2;
+    uint16_t _res3;
+    uint16_t DR;
+    uint16_t _res4;
+    uint16_t SR1;
+    uint16_t _res5;
+    uint16_t SR2;
+    uint16_t _res6;
+    uint16_t CCR;
+    uint16_t _res7;
+    uint16_t TRISE;
+    uint16_t _res8;
 };
 
 extern volatile I2C_t I2C1;
@@ -115,13 +132,20 @@ extern volatile I2C_t I2C2;
  */
 
 struct USART_t {
-    uint32_t SR;
-    uint32_t DR;
-    uint32_t BRR;
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t CR3;
-    uint32_t GTPR;
+    uint16_t SR;
+    uint16_t _res0;
+    uint16_t DR;
+    uint16_t _res1;
+    uint16_t BRR;
+    uint16_t _res2;
+    uint16_t CR1;
+    uint16_t _res3;
+    uint16_t CR2;
+    uint16_t _res4;
+    uint16_t CR3;
+    uint16_t _res5;
+    uint16_t GTPR;
+    uint16_t _res6;
 };
 
 extern volatile USART_t USART1;
@@ -130,27 +154,48 @@ extern volatile USART_t USART3;
 extern volatile USART_t UART4;
 extern volatile USART_t UART5;
 
+struct TIM_CCR_t {
+    uint16_t CCR;
+    uint16_t _res;
+};
+
 /*
  * Timers 1-5 & 8
  */
 struct TIM_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t SMCR;
-    uint32_t DIER;
-    uint32_t SR;
-    uint32_t EGR;
-    uint32_t CCMR1;
-    uint32_t CCMR2;
-    uint32_t CCER;
-    uint32_t CNT;
-    uint32_t PSC;
-    uint32_t ARR;
-    uint32_t RCR;       // only valid for TIM1 & TIM8
-    uint32_t CCR[4];
-    uint32_t BDTR;      // only valid for TIM1 & TIM8
-    uint32_t DCR;
-    uint32_t DMAR;
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t SMCR;
+    uint16_t _res2;
+    uint16_t DIER;
+    uint16_t _res3;
+    uint16_t SR;
+    uint16_t _res4;
+    uint16_t EGR;
+    uint16_t _res5;
+    uint16_t CCMR1;
+    uint16_t _res6;
+    uint16_t CCMR2;
+    uint16_t _res7;
+    uint16_t CCER;
+    uint16_t _res8;
+    uint16_t CNT;
+    uint16_t _res9;
+    uint16_t PSC;
+    uint16_t _res10;
+    uint16_t ARR;
+    uint16_t _res11;
+    uint16_t RCR;
+    uint16_t _res12;
+    TIM_CCR_t compareCapRegs[4];
+    uint16_t BDTR;
+    uint16_t _res17;
+    uint16_t DCR;
+    uint16_t _res18;
+    uint16_t DMAR;
+    uint16_t _res19;
 };
 
 extern volatile TIM_t TIM1;

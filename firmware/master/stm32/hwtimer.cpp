@@ -95,7 +95,7 @@ void HwTimer::configureChannelAsOutput(int ch, Polarity polarity, TimerMode timm
         pol |= 1 << 2;                      // enable OCxNE
     }
 
-    tim->CCR[ch - 1] = 0;
+    tim->compareCapRegs[ch - 1].CCR = 0;
     tim->CCER |= (pol << ((ch - 1) * 4));
 }
 

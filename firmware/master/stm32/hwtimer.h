@@ -100,7 +100,7 @@ public:
     }
 
     uint16_t lastCapture(int ch) const {
-        return tim->CCR[ch - 1];
+        return tim->compareCapRegs[ch - 1].CCR;
     }
 
     uint16_t count() const {
@@ -121,7 +121,7 @@ public:
     }
 
     void setDuty(int ch, uint16_t duty) {
-        tim->CCR[ch - 1] = duty;
+        tim->compareCapRegs[ch - 1].CCR = duty;
     }
 
     void setDutyDma(int ch, const uint16_t *data, uint16_t len);
