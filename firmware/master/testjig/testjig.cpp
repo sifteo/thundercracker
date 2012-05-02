@@ -62,7 +62,7 @@ void TestJig::init()
     NVIC.irqPrioritize(IVT.I2C1_EV, 0x0);
 
     NVIC.irqEnable(IVT.I2C1_ER);
-    NVIC.irqPrioritize(IVT.I2C1_ER, 0x0);       // highest
+    NVIC.irqPrioritize(IVT.I2C1_ER, 0x1);       // highest - 1
 
     GPIOPin dacOut = BATTERY_SIM_GPIO;
     dacOut.setControl(GPIOPin::IN_ANALOG);
@@ -117,6 +117,23 @@ void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
     // NB! neighbor transmitted in its native big endian format
     const uint8_t response[] = { 6, side, (msg >> 8) & 0xff, msg & 0xff };
     UsbDevice::write(response, sizeof response);
+}
+
+void TestJig::onI2cEvent()
+{
+    uint8_t byte;
+    uint16_t status = i2c.irqEvStatus();
+
+    // send next byte
+    if (status & I2CSlave::TxEmpty)
+        byte = 0xff;    // XXX: send test data here
+
+    i2c.isrEV(&byte);
+
+    // we received a byte
+    if (status & I2CSlave::RxNotEmpty) {
+
+    }
 }
 
 /*******************************************
@@ -226,19 +243,7 @@ IRQ_HANDLER ISR_EXTI1()
 
 IRQ_HANDLER ISR_I2C1_EV()
 {
-    uint8_t byte;
-    uint16_t status = i2c.irqEvStatus();
-
-    // send next byte
-    if (status & I2CSlave::TxEmpty)
-        byte = 0xff;
-
-    i2c.isrEV(&byte);
-
-    // we received a byte
-    if (status & I2CSlave::RxNotEmpty) {
-
-    }
+    TestJig::onI2cEvent();
 }
 
 IRQ_HANDLER ISR_I2C1_ER()

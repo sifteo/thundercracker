@@ -16,6 +16,7 @@ public:
         hw(_hw) {}
 
     enum StatusFlags {
+        OverUnderRun    = (1 << 11),
         TxEmpty         = (1 << 7),
         RxNotEmpty      = (1 << 6),
         StopBit         = (1 << 4),
