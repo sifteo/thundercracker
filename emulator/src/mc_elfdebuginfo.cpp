@@ -32,7 +32,7 @@ void ELFDebugInfo::init(const Elf::Program &program)
         sections.push_back(Elf::SectionHeader());
         Elf::SectionHeader *pHdr = &sections.back();
         FlashAllocSpan::ByteOffset off = header->e_shoff + i * header->e_shentsize;
-        if (!program.getProgramSpan().copyBytes(off, (uint8_t*)pHdr, sizeof *pHdr))
+        if (!program.getProgramSpan().copyBytesUncached(off, (uint8_t*)pHdr, sizeof *pHdr))
             memset(pHdr, 0xFF, sizeof *pHdr);
     }
 
@@ -59,7 +59,7 @@ std::string ELFDebugInfo::readString(const Elf::SectionHeader *SI, uint32_t offs
 {
     static char buf[1024];
     uint32_t size = std::min<uint32_t>(sizeof buf - 1, SI->sh_size - offset);
-    if (!program.getProgramSpan().copyBytes(SI->sh_offset + offset, (uint8_t*)buf, size))
+    if (!program.getProgramSpan().copyBytesUncached(SI->sh_offset + offset, (uint8_t*)buf, size))
         size = 0;
     buf[size] = '\0';
     return buf;
@@ -93,7 +93,7 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
         for (unsigned index = 0;; index++) {
             uint32_t tableOffset = index * sizeof currentSym;
             if (tableOffset + sizeof currentSym >= SI->sh_size ||
-                !program.getProgramSpan().copyBytes(
+                !program.getProgramSpan().copyBytesUncached(
                     SI->sh_offset + tableOffset,
                     (uint8_t*) &currentSym, sizeof currentSym))
                 break;
@@ -177,7 +177,7 @@ bool ELFDebugInfo::readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) co
             continue;
 
         // Success, we can read from the ELF
-        return program.getProgramSpan().copyBytes(offset, buffer, bytes);
+        return program.getProgramSpan().copyBytesUncached(offset, buffer, bytes);
     }
 
     return false;

@@ -146,3 +146,31 @@ bool FlashAllocSpan::copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t le
     FlashBlockRef ref;
     return copyBytes(ref, byteOffset, dest, length);
 }
+
+bool FlashAllocSpan::copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
+{
+    while (length) {
+        /*
+         * Note: Even though we are bypassing the cache, we still split on
+         *       cache block boundaries, since that's also the alignment
+         *       guaranteed by a FlashAllocSpan.
+         */
+
+        ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
+        ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
+        uint32_t maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+        uint32_t chunk = MIN(length, maxLength);
+
+        FlashAddr fa;
+        if (!offsetToFlashAddr(blockPart, fa))
+            return false;
+
+        FlashDevice::read(fa + bytePart, dest, chunk);
+
+        byteOffset += chunk;
+        dest += chunk;
+        length -= chunk;
+    }
+
+    return true;
+}

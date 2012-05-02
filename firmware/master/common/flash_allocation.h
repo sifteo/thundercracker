@@ -148,6 +148,9 @@ public:
     bool copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
     bool copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
     bool preloadBlock(ByteOffset byteOffset) const;
+
+    // Cache-bypassing data access
+    bool copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
 };
 
 #endif

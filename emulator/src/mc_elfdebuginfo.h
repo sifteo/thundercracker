@@ -7,7 +7,6 @@
 #define ELF_DEBUG_INFO_H
 
 #include "elfprogram.h"
-#include "flash_blockcache.h"
 #include <vector>
 #include <map>
 #include <string>
