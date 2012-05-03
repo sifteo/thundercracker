@@ -32,6 +32,7 @@
 
 #include <limits.h>
 
+#include <X11/XKBlib.h>  // SIFTEO
 
 /* Define GLX 1.4 FSAA tokens if not already defined */
 #ifndef GLX_VERSION_1_4
@@ -235,7 +236,8 @@ static int translateKey( int keycode )
     // Try secondary keysym, for numeric keypad keys
     // Note: This way we always force "NumLock = ON", which at least
     // enables GLFW users to detect numeric keypad keys
-    key = XKeycodeToKeysym( _glfwLibrary.display, keycode, 1 );
+    // SIFTEO: Use XKB here.
+    key = XkbKeycodeToKeysym( _glfwLibrary.display, keycode, 0, 1 );
     switch( key )
     {
         // Numeric keypad
@@ -257,7 +259,8 @@ static int translateKey( int keycode )
     }
 
     // Now try pimary keysym
-    key = XKeycodeToKeysym( _glfwLibrary.display, keycode, 0 );
+    // SIFTEO: Use XKB here.
+    key = XkbKeycodeToKeysym( _glfwLibrary.display, keycode, 0, 0 );
     switch( key )
     {
         // Special keys (non character keys)
