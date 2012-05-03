@@ -9,7 +9,6 @@
 #include "machine.h"
 
 #include <string.h>
-#include <inttypes.h>
 
 namespace SvmCpu {
 

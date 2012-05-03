@@ -4,7 +4,7 @@
  */
 
 #include "svm.h"
-#include "SvmMemory.h"
+#include "svmmemory.h"
 
 using namespace Svm;
 

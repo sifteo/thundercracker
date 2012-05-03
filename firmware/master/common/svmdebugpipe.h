@@ -11,9 +11,7 @@
 #ifndef SVM_DEBUGPIPE_H
 #define SVM_DEBUGPIPE_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
+#include "macros.h"
 #include "svm.h"
 #include "elfprogram.h"
 #include "flash_blockcache.h"

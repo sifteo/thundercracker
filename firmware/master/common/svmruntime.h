@@ -6,9 +6,7 @@
 #ifndef SVM_RUNTIME_H
 #define SVM_RUNTIME_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
+#include "macros.h"
 #include "svm.h"
 #include "svmcpu.h"
 #include "svmmemory.h"

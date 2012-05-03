@@ -7,8 +7,7 @@
 #define SVM_IMAGEDECODER_H
 
 #include <sifteo/abi.h>
-#include <stdint.h>
-#include <inttypes.h>
+#include "macros.h"
 #include "svmmemory.h"
 
 

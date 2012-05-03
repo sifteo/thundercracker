@@ -6,8 +6,7 @@
 #ifndef SVM_LOADER_H
 #define SVM_LOADER_H
 
-#include <stdint.h>
-#include <inttypes.h>
+#include "macros.h"
 #include "elfprogram.h"
 
 

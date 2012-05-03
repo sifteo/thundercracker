@@ -40,7 +40,13 @@ endif
 
 # Environment defs
 # NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
-CCFLAGS += -I$(MASTER_DIR)/common -I$(MASTER_DIR)/stm32 -I$(MASTER_DIR)/../include -I$(SDK_DIR)/include -DNOT_USERSPACE
+CCFLAGS += \
+	-I$(MASTER_DIR)/common \
+	-I$(MASTER_DIR)/stm32 \
+	-I$(MASTER_DIR)/../include \
+	-I$(SDK_DIR)/include \
+	-DNOT_USERSPACE \
+	-D__STDC_FORMAT_MACROS
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing

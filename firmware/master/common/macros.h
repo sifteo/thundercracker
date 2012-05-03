@@ -81,10 +81,10 @@
 #ifndef PRIu64
 #   if defined(_WIN32)
 #      define PRIu64 "I64u"
-#   elif !defined(_LP64)
-#      define PRIu64 "lu"
 #   else
-#      define PRIu64 "llu"
+#      error No definition for PRIu64. \
+             This is supposed to come from inttypes.h. \
+             Is __STDC_FORMAT_MACROS defined?
 #   endif
 #endif
 

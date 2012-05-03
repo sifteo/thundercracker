@@ -6,9 +6,7 @@
 #ifndef ELF_UTIL_H
 #define ELF_UTIL_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
+#include "macros.h"
 #include "elfdefs.h"
 #include "flash_blockcache.h"
 #include "flash_allocation.h"

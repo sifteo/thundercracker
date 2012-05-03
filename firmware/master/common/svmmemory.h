@@ -6,13 +6,12 @@
 #ifndef SVM_MEMORY_H
 #define SVM_MEMORY_H
 
-#include <stdint.h>
-#include <inttypes.h>
-#include <string.h>
-
+#include "macros.h"
 #include "svm.h"
 #include "flash_blockcache.h"
 #include "flash_allocation.h"
+
+#include <string.h>
 
 
 class SvmMemory {
