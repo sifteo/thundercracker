@@ -45,6 +45,13 @@ public:
 
     static int read(uint8_t *buf, unsigned len);
     static int write(const uint8_t *buf, unsigned len);
+
+    static bool isConfigured() {
+        return configured;
+    }
+
+private:
+    static bool configured;
 };
 
 #endif // USB_DEVICE_H

@@ -128,6 +128,8 @@ static const struct {
     }
 };
 
+bool UsbDevice::configured;
+
 /*
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
@@ -156,6 +158,7 @@ void UsbDevice::handleINData(void *p) {
 }
 
 void UsbDevice::init() {
+    configured = false;
     UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
 }
 
@@ -167,6 +170,7 @@ void UsbDevice::onConfigComplete(uint16_t wValue)
 {
     UsbHardware::epSetup(InEpAddr, Usb::EpAttrBulk, 64);
     UsbHardware::epSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+    configured = true;
 }
 
 void UsbDevice::handleReset()
@@ -233,6 +237,11 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
  */
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
+    // XXX: this is a little heavy handed for now, but we really don't want to
+    // be trying to write to an unconfigured device. Determine if there's a better way...
+    if (!isConfigured())
+        return 0;
+
     while (UsbHardware::epTxInProgress(InEpAddr))
         ;
     return UsbHardware::epWritePacket(InEpAddr, buf, len);
