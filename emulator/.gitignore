@@ -10,4 +10,5 @@ siftulator-*.png
 siftulator
 siftulator.exe
 src/siftulator-*
+src/Siftulator-*
 stderr.txt
