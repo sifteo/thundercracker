@@ -153,4 +153,58 @@ public:
     bool copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
 };
 
+
+/**
+ * Header for a particular allocation object in flash. Every FlashAllocBlock
+ * falls into one of three categories:
+ *
+ *   1. It contains its own valid FlashAllocHeader.
+ *   2. It is referenced by a preceeding valid FlashAllocHeader.
+ *   3. It is unallocated.
+ *
+ * Large objects that occupy more than one FlashAllocBlock only need a single
+ * FlashAllocHeader, on the object's first block. This allows a single
+ * FlashAllocSpan to reference the entirety of the object's data.
+ *
+ * In order to provide robustness against flash failures as well as robustness
+ * against power outages that occur between erasing an AllocBlock and fully
+ * writing its header, we keep a CRC for the header. If the CRC is not valid,
+ * the AllocBlock is treated as unallocated.
+ *
+ * For wear leveling, an AllocHeader must also store erase counts for every
+ * block it's referencing. These erase counts are 32-bit monotonically
+ * increasing integers, incremented every time the specified AllocBlock
+ * is erased.
+ *
+ * XXX: Work in progress.
+ */
+
+struct FlashAllocHeader
+{
+    static const unsigned NUM_BLOCKS = 4;
+    static const unsigned NUM_BYTES = FlashBlock::BLOCK_SIZE * NUM_BLOCKS;
+    static const uint32_t MAGIC = 0x74666953;   // 'Sift'
+
+    enum Type {
+        T_OBJECT = 0x4a424f46,  // 'FOBJ' = large object
+    };
+
+    // Universal header
+    struct {
+        uint32_t magic;
+        uint32_t type;
+        uint32_t crc;
+    } h;
+
+    // Type-specific data occupies the rest of the block
+    union {
+        uint32_t words[FlashBlock::BLOCK_SIZE/4 - 3];
+        struct {
+            FlashAllocMap map;
+            uint32_t eraseCounts[FlashAllocMap::NUM_ALLOC_BLOCKS];
+        } object;
+    } u;
+};
+
+
 #endif
