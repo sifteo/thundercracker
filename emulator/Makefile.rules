@@ -28,9 +28,11 @@ $(BIN_DIR)/$(BIN).app: $(OBJS)
 	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN_DIR)/$(BIN).app/contents/MacOS/$(BIN)"
 	touch "$@"
 else
-# Default link
-$(BIN_DIR)/$(BIN): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+# Default link (for Linux)
+$(BIN_DIR)/$(BIN): $(BIN_DIR)/$(LOWERCASE_BIN)
+$(BIN_DIR)/$(LOWERCASE_BIN): $(OBJS)
+	$(CC) -o "src/$(LOWERCASE_BIN)-d" $(OBJS) $(LDFLAGS)
+	$(STRIP) -s "src/$(LOWERCASE_BIN)-d" -o "$@"
 endif
 endif
 

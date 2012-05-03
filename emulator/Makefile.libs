@@ -176,6 +176,10 @@ ifeq ($(BUILD_PLATFORM), windows32)
 	LIBS +=	 -lole32 -lwinmm
 endif
 
+ifeq ($(BUILD_PLATFORM), Linux)
+	LIBS +=	 -lasound
+endif
+
 #######################################################################
 # C++ Standard Library
 
