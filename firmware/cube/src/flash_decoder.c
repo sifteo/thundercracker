@@ -299,8 +299,17 @@ static void state_ADDR_LOW(void) __naked
 
 static void state_ADDR_HIGH(void) __naked
 {
+    /*
+     * Note, we must not change LAT2 between start/end. The HAL assumes
+     * LAT2 doesn't change unless a rollover occurs. The most space-efficient
+     * way for us to change LAT2 is to end (finish the last op) then begin
+     * (reprogram LAT2) again.
+     */
+    flash_program_end();
     flash_addr_lat2 = byte & 0xFE;
     flash_need_autoerase = 1;
+    flash_program_start();
+
     state = state_OPCODE;
     STATE_RETURN();
 }
