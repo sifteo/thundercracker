@@ -7,6 +7,7 @@
 #define _TEST_JIG_H
 
 #include <stdint.h>
+#include "protocol.h"
 
 class TestJig
 {
@@ -34,6 +35,11 @@ private:
     static void getUsbCurrentHandler(uint8_t argc, uint8_t *args);
     static void beginNeighborRxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborRxHandler(uint8_t argc, uint8_t *args);
+
+    // we receive an RF_MemACKType packet from the cube over i2c to
+    // check its sensor output
+    static RF_MemACKType cubeAck;
+    static uint8_t cubeAckByteIdx;
 };
 
 #endif // _TEST_JIG_H

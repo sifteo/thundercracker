@@ -50,24 +50,20 @@ void I2CSlave::isrER()
 {
     uint32_t status = hw->SR1;
 
-    if (status & (1 << 10)) {   // AF: acknowledge failure
-        hw->SR1 &= ~(1 << 10);
+    if (status & Nack) {        // AF: acknowledge failure
+        hw->SR1 &= ~Nack;
     }
 
     if (status & (1 << 9)) {    // ARLO: arbitrarion lost
         hw->SR1 &= ~(1 << 9);
     }
 
-    if (status & OverUnderRun) {
-        hw->SR1 &= ~(OverUnderRun);
-    }
-
     if (status & (1 << 8)) {    // BERR: bus error
         hw->SR1 &= ~(1 << 8);
     }
 
-    if (status & (1 << 11)) {   // OVR: Overrun/underrun
-        hw->SR1 &= ~(1 << 11);
+    if (status & OverUnderRun) {   // OVR: Overrun/underrun
+        hw->SR1 &= ~OverUnderRun;
     }
 }
 
@@ -80,10 +76,8 @@ void I2CSlave::isrER()
  * If data has become available, write it to 'byte'.
  * If TX is empty, write 'it 'byte' to DR.
  */
-void I2CSlave::isrEV(uint8_t *byte)
+void I2CSlave::isrEV(uint16_t sr1, uint8_t *byte)
 {
-    uint16_t sr1 = hw->SR1;
-
     // ADDR: Address match for incoming transaction.
     if (sr1 & AddressMatch) {
         // second step to clear ADDR is to read SR2, dummy style
@@ -101,6 +95,7 @@ void I2CSlave::isrEV(uint8_t *byte)
     }
 
     // STOPF: Slave has detected a STOP condition on the bus
+    // NOTE: STOP does not get set in the case of a NACK
     if (sr1 & StopBit) {
         // second step to clear STOP bit is to write to CR1
         // just write something harmless

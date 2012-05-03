@@ -27,6 +27,9 @@ static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
+RF_MemACKType TestJig::cubeAck;
+uint8_t TestJig::cubeAckByteIdx;
+
 /*
  * Table of test handlers.
  * Their index in this table specifies their ID.
@@ -85,6 +88,7 @@ void TestJig::init()
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
 
+    cubeAckByteIdx = 0;
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
 //    neighbor.init();
 }
@@ -119,20 +123,44 @@ void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
     UsbDevice::write(response, sizeof response);
 }
 
+/*
+ * Called from ISR context when an i2c event has occurred.
+ * If the host has asked us to report on i2c related
+ */
 void TestJig::onI2cEvent()
 {
     uint8_t byte;
     uint16_t status = i2c.irqEvStatus();
 
+    /*
+     * Dataflow is as follows:
+     *  - cube TXes ACK packet to us
+     *  - repeated start condition follows, and we can transmit to the cube.
+     *
+     * On the repeated start condition, send the ACK packet that we
+     * received during the former transmission.
+     */
+    if (status & I2CSlave::AddressMatch) {
+        if (cubeAckByteIdx > 0) {
+            uint8_t resp[1 + sizeof cubeAck] = { 6 };
+            memcpy(resp + 1, &cubeAck, sizeof cubeAck);
+            UsbDevice::write(resp, sizeof resp);
+        }
+        cubeAckByteIdx = 0;
+    }
+
     // send next byte
     if (status & I2CSlave::TxEmpty)
         byte = 0xff;    // XXX: send test data here
 
-    i2c.isrEV(&byte);
+    i2c.isrEV(status, &byte);
 
     // we received a byte
     if (status & I2CSlave::RxNotEmpty) {
-
+        if (cubeAckByteIdx < sizeof cubeAck) {
+            uint8_t *pAck = reinterpret_cast<uint8_t*>(&cubeAck);
+            pAck[cubeAckByteIdx++] = byte;
+        }
     }
 }
 

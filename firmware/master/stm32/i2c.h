@@ -17,6 +17,7 @@ public:
 
     enum StatusFlags {
         OverUnderRun    = (1 << 11),
+        Nack            = (1 << 10),
         TxEmpty         = (1 << 7),
         RxNotEmpty      = (1 << 6),
         StopBit         = (1 << 4),
@@ -30,7 +31,7 @@ public:
         return hw->SR1;
     }
 
-    void isrEV(uint8_t *byte);
+    void isrEV(uint16_t sr1, uint8_t *byte);
     void isrER();
 
 private:
