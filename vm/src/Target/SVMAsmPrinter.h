@@ -8,7 +8,7 @@
 #ifndef SVM_ASMPRINTER_H
 #define SVM_ASMPRINTER_H
 
-#include "SVMMCInstlower.h"
+#include "SVMMCInstLower.h"
 #include "SVMBlockSizeAccumulator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"

@@ -41,17 +41,23 @@ LIBS += \
 	$(LLVM_LIB)/libLLVMMC.a \
 	$(LLVM_LIB)/libLLVMCore.a \
 	$(LLVM_LIB)/libLLVMSupport.a
-    
+
 # Platform LLVM deps
 ifeq ($(BUILD_PLATFORM), windows32)
     LIBS += -limagehlp -lpsapi
 endif
-    
+ifeq ($(BUILD_PLATFORM), Linux)
+    LIBS += -ldl
+endif
+
 # Platform UUID deps
 ifeq ($(BUILD_PLATFORM), windows32)
     LIBS += -lrpcrt4 -lws2_32
 endif
-    
+ifeq ($(BUILD_PLATFORM), Linux)
+    LIBS += -luuid
+endif
+
 # The DEBUG-ness of this build must match what LLVM was compiled with.
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.

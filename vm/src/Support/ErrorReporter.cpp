@@ -61,7 +61,12 @@ static void message_handler(const std::string &prefix, const std::string &err)
     OS << " " << err << "\n";
 
     StringRef MessageStr = OS.str();
-    (void) ::write(2, MessageStr.data(), MessageStr.size());
+
+    ssize_t result = ::write(2, MessageStr.data(), MessageStr.size());
+    if (result <= 0) {
+        // Some versions of glibc force us to check the return value...
+        assert(0);
+    }
 }
 
 static void fatal_error_handler(void *, const std::string &err)
