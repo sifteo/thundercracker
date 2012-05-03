@@ -2,3 +2,5 @@ Build-time configuration for Clang and LLVM in deps:
 
 --enable-targets=arm --target=arm --disable-jit --disable-docs --disable-threads --disable-pthreads --disable-pic --disable-libffi
 
+XXX: On the Linux build, this failed while trying to link libclang.so (due to lack of -fPIC) but that's okay... we didn't ask for nor need a shared lib.
+
