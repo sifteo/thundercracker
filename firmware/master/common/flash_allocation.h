@@ -183,6 +183,7 @@ struct FlashAllocHeader
 {
     static const unsigned NUM_BLOCKS = 4;
     static const unsigned NUM_BYTES = FlashBlock::BLOCK_SIZE * NUM_BLOCKS;
+    static const unsigned NUM_WORDS = NUM_BYTES / sizeof(uint32_t);
     static const uint32_t MAGIC = 0x74666953;   // 'Sift'
 
     enum Type {
@@ -198,7 +199,7 @@ struct FlashAllocHeader
 
     // Type-specific data occupies the rest of the block
     union {
-        uint32_t words[FlashBlock::BLOCK_SIZE/4 - 3];
+        uint32_t words[NUM_WORDS - 3];
         struct {
             FlashAllocMap map;
             uint32_t eraseCounts[FlashAllocMap::NUM_ALLOC_BLOCKS];
