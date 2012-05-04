@@ -257,7 +257,7 @@ void SvmLoader::run(int id)
 
     FlashMap map;
     for (unsigned i = 0; i < arraysize(map.blocks); i++)
-        map.blocks[i].id = i;
+        map.blocks[i].setIndex(i);
 
     Elf::Program program;
     if (program.init(FlashMapSpan::create(&map, 0, 0xFFFF)))

@@ -20,6 +20,13 @@ bool FlashBlock::isAddrValid(uintptr_t pa)
     return offset < sizeof mem;
 }
 
+void FlashBlock::verify()
+{
+    uint8_t buffer[BLOCK_SIZE];
+    FlashDevice::read(address, buffer, BLOCK_SIZE);
+    ASSERT(0 == memcmp(buffer, getData(), BLOCK_SIZE));
+}
+
 void FlashBlock::resetStats()
 {
     memset(&stats.periodic, 0, sizeof stats.periodic);

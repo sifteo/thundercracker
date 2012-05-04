@@ -33,8 +33,9 @@ bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset
     uint32_t allocOffset = flashAddr & FlashMapBlock::BLOCK_MASK;
 
     // We have no direct index for this, so do a linear search in our map
-    for (unsigned i = 0; i < arraysize(map->blocks); i++)
-        if (map->blocks[i].id == allocBlock) {
+    for (unsigned i = 0; i < arraysize(map->blocks); i++) {
+        FlashMapBlock block = map->blocks[i];
+        if (block.index() == allocBlock) {
             ByteOffset result = i * FlashMapBlock::BLOCK_SIZE + allocOffset - firstByte();
             if (offsetIsValid(result)) {
                 byteOffset = result;
@@ -42,6 +43,7 @@ bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset
             }
             return false;
         }
+    }
 
     // No match
     return false;

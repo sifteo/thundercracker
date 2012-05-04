@@ -31,7 +31,7 @@ void ELFDebugInfo::init(const Elf::Program &program)
     for (unsigned i = 0; i < header->e_shnum; i++) {
         sections.push_back(Elf::SectionHeader());
         Elf::SectionHeader *pHdr = &sections.back();
-        FlashAllocSpan::ByteOffset off = header->e_shoff + i * header->e_shentsize;
+        FlashMapSpan::ByteOffset off = header->e_shoff + i * header->e_shentsize;
         if (!program.getProgramSpan().copyBytesUncached(off, (uint8_t*)pHdr, sizeof *pHdr))
             memset(pHdr, 0xFF, sizeof *pHdr);
     }

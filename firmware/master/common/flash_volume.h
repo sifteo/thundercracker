@@ -8,6 +8,47 @@
  * is responsible for locating and allocating large discontiguous areas
  * ("Volumes") in flash. A Volume can contain, for example, an ELF object
  * file or a log-structured filesystem.
+ *
+ * Each volume begins with a volume header in its first MapBlock, containing:
+ *
+ *   - Volume prefix: Magic number, CRCs, type code, type-specific data
+ *   - A FlashMap, identifying all MapBlocks in the volume
+ *   - Erase counts for all MapBlocks in the volume
+ *
+ * A volume header is responsible for storing this information on behalf of
+ * the entire volume. For volumes consisting of multiple blocks, subsequent
+ * blocks have no header of their own. This keeps the MapSpans for the volume
+ * contiguous.
+ *
+ * Because the volume header is responsible for storing erase counts, and
+ * we must take care to preserve these erase counts even in unused areas of
+ * the flash, we need a way to mark the volume as "deleted" without
+ * invalidating the other data stored in this header.
+ *
+ * Volumes support only a few operations:
+ *
+ *   - Enumeration. With no prior knowledge, we can list all of the volumes
+ *     on our flash device by scanning for valid headers.
+ *
+ *   - Referencing. Without copying it, we can pin a FlashMap in our cache
+ *     and use it to copy or map the volume's contents.
+ *
+ *   - Deleting. A volume can be marked as deleted, causing its space to
+ *     be reclaimable for new volume allocations. Individual MapBlocks can
+ *     be reclaimed in arbitrary order, as long as the header block is
+ *     reclaimed last. Blocks should generally be reclaimed in order of
+ *     increasing erase count. This means that the header block should
+ *     typically be placed in the MapBlock with the highest erase count.
+ *
+ *   - Allocating. A volume of a given size can be allocated by erasing
+ *     and reclaiming deleted MapBlocks.
+ *
+ * Note that erase counts are temporarily deleted during an Allocate operation.
+ * If we lose power during an Allocate, the space behind that volume will be
+ * unreachable from any other volume's map, but it is not actually marked as
+ * deleted. This is also the state we're in when faced with an uninitialized
+ * flash device. We'll do the best we can, and create new erase counts by
+ * averaging all of the known erase counts from other blocks.
  */
 
 #ifndef FLASH_VOLUME_H_
@@ -15,6 +56,37 @@
 
 #include "flash_map.h"
 
+
+/**
+ * Represents a single Volume in flash: a physically discontiguous
+ * coarsely-allocated object. We don't store any of the volume contents
+ * in RAM, it's all referenced via the block cache.
+ */
+class FlashVolume
+{
+public:
+
+
+private:
+    FlashMapBlock   headerBlock;
+
+    static const uint64_t MAGIC = 0x4c4f564674666953;
+
+    struct Prefix {
+        uint64_t magic;
+        uint32_t type;
+    };
+
+    void getPrefixBlock();
+    
+    
+    
+
+/*
+ * Scanning
+ * Referencing
+ * Allocating
+ * Erasing
 
 /**
  * Header for a single flash volume.

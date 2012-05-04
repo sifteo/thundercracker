@@ -22,6 +22,9 @@
  *
  * Keeping these blocks large lets us keep the IDs small, and in turn keeps
  * the FlashMap's time and space requirements under control.
+ *
+ * We need 0 to represent an invalid ID, so that we can mark blocks as
+ * invalid (deleted) without erasing the block containing our Map.
  */
 class FlashMapBlock
 {
@@ -30,12 +33,29 @@ public:
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     static const unsigned NUM_BLOCKS = FlashDevice::CAPACITY / BLOCK_SIZE;
 
-    uint8_t id;     // 0 to NUM_BLOCKS - 1
-
     unsigned address() const {
-        STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(id) * 8)));
-        return id * BLOCK_SIZE;
+        STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
+        return index() * BLOCK_SIZE;
     }
+
+    unsigned index() const {
+        ASSERT(isValid());
+        return code - 1;
+    }
+
+    bool isValid() const {
+        return code != 0;
+    }
+
+    void setInvalid() {
+        code = 0;
+    }
+
+    void setIndex(unsigned i) {
+        code = i + 1;
+    }
+
+    uint8_t code;     // invalid=0 , valid=[1, NUM_BLOCKS]
 };
 
 
