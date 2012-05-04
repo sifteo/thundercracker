@@ -3,11 +3,11 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "flash_allocation.h"
+#include "flash_map.h"
 #include <algorithm>
 
 
-FlashAllocSpan FlashAllocSpan::split(unsigned blockOffset, unsigned blockCount) const
+FlashMapSpan FlashMapSpan::split(unsigned blockOffset, unsigned blockCount) const
 {
     if (blockOffset >= numBlocks)
         return empty();
@@ -16,26 +16,26 @@ FlashAllocSpan FlashAllocSpan::split(unsigned blockOffset, unsigned blockCount) 
             std::min(blockCount, numBlocks - blockOffset));
 }
 
-FlashAllocSpan FlashAllocSpan::splitRoundingUp(unsigned byteOffset, unsigned byteCount) const
+FlashMapSpan FlashMapSpan::splitRoundingUp(unsigned byteOffset, unsigned byteCount) const
 {
     ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
     return split(byteOffset / FlashBlock::BLOCK_SIZE,
         (byteCount + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE);
 }
 
-bool FlashAllocSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const
+bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const
 {
     if (!map)
         return false;
 
     // Split the flash address
-    uint32_t allocBlock = flashAddr / FlashAllocBlock::BLOCK_SIZE;
-    uint32_t allocOffset = flashAddr & FlashAllocBlock::BLOCK_MASK;
+    uint32_t allocBlock = flashAddr / FlashMapBlock::BLOCK_SIZE;
+    uint32_t allocOffset = flashAddr & FlashMapBlock::BLOCK_MASK;
 
     // We have no direct index for this, so do a linear search in our map
     for (unsigned i = 0; i < arraysize(map->blocks); i++)
         if (map->blocks[i].id == allocBlock) {
-            ByteOffset result = i * FlashAllocBlock::BLOCK_SIZE + allocOffset - firstByte();
+            ByteOffset result = i * FlashMapBlock::BLOCK_SIZE + allocOffset - firstByte();
             if (offsetIsValid(result)) {
                 byteOffset = result;
                 return true;
@@ -47,7 +47,7 @@ bool FlashAllocSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffs
     return false;
 }
 
-bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const
+bool FlashMapSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const
 {
     if (!map)
         return false;
@@ -56,10 +56,10 @@ bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAd
         return false;
 
     // Split the byte address
-    ASSERT(byteOffset < FlashAllocMap::NUM_BYTES);
+    ASSERT(byteOffset < FlashMap::NUM_BYTES);
     ByteOffset absoluteByte = byteOffset + firstByte();
-    ByteOffset allocBlock = absoluteByte / FlashAllocBlock::BLOCK_SIZE;
-    ByteOffset allocOffset = absoluteByte & FlashAllocBlock::BLOCK_MASK;
+    ByteOffset allocBlock = absoluteByte / FlashMapBlock::BLOCK_SIZE;
+    ByteOffset allocOffset = absoluteByte & FlashMapBlock::BLOCK_MASK;
 
     ASSERT(allocBlock < arraysize(map->blocks));
     flashAddr = map->blocks[allocBlock].address() + allocOffset;
@@ -73,7 +73,7 @@ bool FlashAllocSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAd
     return true;
 }
 
-bool FlashAllocSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const
+bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const
 {
     ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
 
@@ -85,7 +85,7 @@ bool FlashAllocSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const
     return true;
 }
 
-bool FlashAllocSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, uint32_t &length) const
+bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, uint32_t &length) const
 {
     ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
     ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
@@ -99,7 +99,7 @@ bool FlashAllocSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAdd
     return true;
 }
 
-bool FlashAllocSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr) const
+bool FlashMapSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr) const
 {
     ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
     ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
@@ -111,7 +111,7 @@ bool FlashAllocSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr
     return true;
 }
 
-bool FlashAllocSpan::preloadBlock(ByteOffset byteOffset) const
+bool FlashMapSpan::preloadBlock(ByteOffset byteOffset) const
 {
     FlashAddr flashAddr;
 
@@ -123,7 +123,7 @@ bool FlashAllocSpan::preloadBlock(ByteOffset byteOffset) const
     return false;
 }
 
-bool FlashAllocSpan::copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
+bool FlashMapSpan::copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
 {
     while (length) {
         PhysAddr srcPA;
@@ -141,19 +141,19 @@ bool FlashAllocSpan::copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_
     return true;
 }
 
-bool FlashAllocSpan::copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
+bool FlashMapSpan::copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
 {
     FlashBlockRef ref;
     return copyBytes(ref, byteOffset, dest, length);
 }
 
-bool FlashAllocSpan::copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
+bool FlashMapSpan::copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
 {
     while (length) {
         /*
          * Note: Even though we are bypassing the cache, we still split on
          *       cache block boundaries, since that's also the alignment
-         *       guaranteed by a FlashAllocSpan.
+         *       guaranteed by a FlashMapSpan.
          */
 
         ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;

@@ -255,12 +255,12 @@ void SvmLoader::run(int id)
 {
     // XXX: Temporary. Set up an identity mapping.
 
-    FlashAllocMap map;
+    FlashMap map;
     for (unsigned i = 0; i < arraysize(map.blocks); i++)
         map.blocks[i].id = i;
 
     Elf::Program program;
-    if (program.init(FlashAllocSpan::create(&map, 0, 0xFFFF)))
+    if (program.init(FlashMapSpan::create(&map, 0, 0xFFFF)))
         run(program);
 }
 

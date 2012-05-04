@@ -9,7 +9,7 @@
 #include <algorithm>
 
 
-bool Elf::Program::init(const FlashAllocSpan &span)
+bool Elf::Program::init(const FlashMapSpan &span)
 {
     this->span = span;
     FlashBlockRef ref;
@@ -175,7 +175,7 @@ uint32_t Elf::Program::getEntry() const
     return getFileHeader(ref)->e_entry;
 }
 
-const FlashAllocSpan Elf::Program::getRODataSpan() const
+const FlashMapSpan Elf::Program::getRODataSpan() const
 {
     FlashBlockRef ref;
     const ProgramHeader *ph = getRODataSegment(ref);
@@ -244,7 +244,7 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
      */
 
     const uint32_t keySize = sizeof(_SYSMetadataKey);
-    FlashAllocSpan::ByteOffset I, E;
+    FlashMapSpan::ByteOffset I, E;
     {
         const ProgramHeader *ph = getMetadataSegment(ref);
         if (!ph)
@@ -258,7 +258,7 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
 
     while (I <= E) {
         uint32_t length = keySize;
-        FlashAllocSpan::PhysAddr recordPA;
+        FlashMapSpan::PhysAddr recordPA;
 
         if (!span.getBytes(ref, I, recordPA, length) || length != keySize)
             return 0;
@@ -282,7 +282,7 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
                 return 0;
 
             // Now we can calculate the address of the value, yay.
-            FlashAllocSpan::PhysAddr valuePA;
+            FlashMapSpan::PhysAddr valuePA;
             if (!span.getBytes(ref, valueOffset + I, valuePA, actualSize)
                 || actualSize < minSize)
                 return 0;

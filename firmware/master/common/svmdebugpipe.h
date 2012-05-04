@@ -15,7 +15,7 @@
 #include "svm.h"
 #include "elfprogram.h"
 #include "flash_blockcache.h"
-#include "flash_allocation.h"
+#include "flash_map.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include <string>

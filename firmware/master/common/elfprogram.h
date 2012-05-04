@@ -9,7 +9,7 @@
 #include "macros.h"
 #include "elfdefs.h"
 #include "flash_blockcache.h"
-#include "flash_allocation.h"
+#include "flash_map.h"
 
 namespace Elf {
 
@@ -24,7 +24,7 @@ namespace Elf {
 
 class Program {
 public:
-    bool init(const FlashAllocSpan &span);
+    bool init(const FlashMapSpan &span);
 
     // Basic header accessors
     const FileHeader *getFileHeader(FlashBlockRef &ref) const;
@@ -39,11 +39,11 @@ public:
     const uint32_t getTopOfRAM() const;
     uint32_t getEntry() const;
 
-    const FlashAllocSpan getProgramSpan() const {
+    const FlashMapSpan getProgramSpan() const {
         return span;
     }
 
-    const FlashAllocSpan getRODataSpan() const;
+    const FlashMapSpan getRODataSpan() const;
 
     const char *getMetaString(FlashBlockRef &ref, uint16_t key) const;
     const void *getMeta(FlashBlockRef &ref, uint16_t key, uint32_t size) const;
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-    FlashAllocSpan span;
+    FlashMapSpan span;
 };
 
 
