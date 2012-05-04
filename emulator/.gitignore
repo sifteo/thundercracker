@@ -12,3 +12,6 @@ siftulator.exe
 src/siftulator-*
 src/Siftulator-*
 stderr.txt
+resources/data.cpp
+resources/firmware-sbt.cpp
+

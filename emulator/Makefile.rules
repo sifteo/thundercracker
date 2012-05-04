@@ -48,23 +48,11 @@ endif
 %.o: %.rc
 	$(WINDRES) -i $< -o $@
 
-# Data dependencies don't need to be rebuilt by everyone,
-# the resulting generated code is checked into git. The
-# firmware target is somewhat inconvenient, since it relies
-# on the temporary files left over after compiling the cube
-# firmware.
-#
-# Only run the firmware build if you really intend to upgrade
-# the simulator to a new stable build of the firmware! Testing
-# and debugging of the firmware is much more easily accomplished
-# using interpreted mode, and specifying a firmware image on
-# the command line.
-
 resources/data.cpp: $(DATADEPS)
 	$(PYTHON) resources/bin2c.py
 
-firmware:
-	$(PYTHON) resources/firmware-sbt.py ../firmware/cube/src/*.rst
+resources/firmware-sbt.cpp: $(FIRMWARE_RST)
+	$(PYTHON) resources/firmware-sbt.py $(FIRMWARE_RST)
 
 .PHONY: clean firmware
 
@@ -72,3 +60,5 @@ clean:
 	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT)
 	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT).app
 	rm -Rf $(OBJS) $(DEPFILES) $(BIN).dSYM
+	rm -Rf $(GENERATED_FILES)
+

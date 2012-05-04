@@ -2,7 +2,7 @@ TC_DIR := .
 SDK_DIR := $(abspath $(TC_DIR)/sdk)
 include Makefile.platform
 
-TOOLS := emulator stir vm firmware
+TOOLS := vm stir firmware emulator
 DOCS := docs/doxygen
 USERSPACE := sdk/examples extras
 TESTS := test
