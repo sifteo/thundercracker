@@ -95,15 +95,15 @@ FlashBlock *FlashBlock::recycleBlock()
         FlashBlock *block = &instances[idx];
         uint32_t age = latestStamp - block->stamp;  // Wraparound-safe
 
-#ifdef SIFTEO_SIMULATOR
-        /*
-         * While we're here, make sure that any available blocks are actually
-         * clean. If we're writing a block, it must be referenced, and we must
-         * commit that write afterwards.
-         */
-        if (block->address != INVALID_ADDRESS)
-            block->verify();
-#endif
+        DEBUG_ONLY({
+            /*
+             * While we're here, make sure that any available blocks are actually
+             * clean. If we're writing a block, it must be referenced, and we must
+             * commit that write afterwards.
+             */
+            if (block->address != INVALID_ADDRESS)
+                block->verify();
+        })
 
         if (age >= bestAge) {
             bestBlock = block;
@@ -149,10 +149,8 @@ void FlashBlockWriter::commit()
     FlashDevice::write(block->address, block->getData(),
         FlashBlock::BLOCK_SIZE);
 
-#ifdef SIFTEO_SIMULATOR
     // Make sure we are only programming bits from 1 to 0.
-    block->verify();
-#endif
+    DEBUG_ONLY(block->verify());
 }
 
 void FlashBlock::invalidate()

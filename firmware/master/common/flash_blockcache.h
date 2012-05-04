@@ -241,6 +241,11 @@ public:
     inline FlashBlock* operator->() const {
         return &*ref;
     };
+    
+    ~FlashBlockWriter() {
+        // Simulation only: Verify that changes were committed.
+        DEBUG_ONLY(ref->verify());
+    }
 
     void commit();
 
