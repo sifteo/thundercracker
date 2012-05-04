@@ -11,9 +11,9 @@
  *
  * Each volume begins with a volume header in its first MapBlock, containing:
  *
- *   - Volume prefix: Magic number, CRCs, type code, type-specific data
- *   - A FlashMap, identifying all MapBlocks in the volume
- *   - Erase counts for all MapBlocks in the volume
+ *   - Prefix: Magic number, CRCs, type code, flags
+ *   - Optional FlashMap, identifying all MapBlocks in the volume
+ *   - Optional erase counts for all MapBlocks in the volume
  *
  * A volume header is responsible for storing this information on behalf of
  * the entire volume. For volumes consisting of multiple blocks, subsequent
@@ -54,6 +54,7 @@
 #ifndef FLASH_VOLUME_H_
 #define FLASH_VOLUME_H_
 
+#include "macros.h"
 #include "flash_map.h"
 
 
@@ -65,80 +66,47 @@
 class FlashVolume
 {
 public:
-
-
-private:
-    FlashMapBlock   headerBlock;
-
-    static const uint64_t MAGIC = 0x4c4f564674666953;
-
-    struct Prefix {
-        uint64_t magic;
-        uint32_t type;
+    enum Flags {
+        F_HAS_MAP = 1 << 0,
     };
-
-    void getPrefixBlock();
-    
-    
-    
-
-/*
- * Scanning
- * Referencing
- * Allocating
- * Erasing
-
-/**
- * Header for a single flash volume.
- *
- *   1. It contains its own valid FlashMapHeader.
- *   2. It is referenced by a preceeding valid FlashMapHeader.
- *   3. It is unallocated.
- *
- * Large objects that occupy more than one FlashMapBlock only need a single
- * FlashMapHeader, on the object's first block. This allows a single
- * FlashMapSpan to reference the entirety of the object's data.
- *
- * In order to provide robustness against flash failures as well as robustness
- * against power outages that occur between erasing an AllocBlock and fully
- * writing its header, we keep a CRC for the header. If the CRC is not valid,
- * the AllocBlock is treated as unallocated.
- *
- * For wear leveling, an AllocHeader must also store erase counts for every
- * block it's referencing. These erase counts are 32-bit monotonically
- * increasing integers, incremented every time the specified AllocBlock
- * is erased.
- *
- * XXX: Work in progress.
- * XXX: This comment is outdated...
- */
-
-struct FlashVolumeHeader
-{
-    static const unsigned NUM_BLOCKS = 4;
-    static const unsigned NUM_BYTES = FlashBlock::BLOCK_SIZE * NUM_BLOCKS;
-    static const unsigned NUM_WORDS = NUM_BYTES / sizeof(uint32_t);
-    static const uint32_t MAGIC = 0x74666953;   // 'Sift'
 
     enum Type {
-        T_OBJECT = 0x4a424f46,  // 'FOBJ' = large object
+        T_DELETED   = 0,        // Must be zero
+        T_ELF       = 0x4C45,
     };
 
-    // Universal header
-    struct {
-        uint32_t magic;
-        uint32_t type;
-        uint32_t crc;
-    } h;
+    FlashVolume(FlashMapBlock block) : block(block) {}
 
-    // Type-specific data occupies the rest of the block
-    union {
-        uint32_t words[NUM_WORDS - 3];
-        struct {
-            FlashMap map;
-            uint32_t eraseCounts[FlashMap::NUM_ALLOC_BLOCKS];
-        } object;
-    } u;
+    bool isValid(FlashBlockRef &ref) const;
+    const FlashMap *getMap(FlashBlockRef &ref) const;
+    uint32_t getEraseCount(unsigned index) const;
+
+private:
+    FlashMapBlock block;
+
+    static const uint64_t MAGIC = 0x4c4f564674666953ULL;
+
+    struct Prefix {
+        uint64_t magic;                 // Must equal MAGIC
+        uint16_t flags;                 // Bitmap of F_*
+        uint16_t type;                  // One of T_*
+
+        union {
+            struct {                    // For F_HAS_MAP:
+                uint32_t crcMap;        //   CRC for FlashMap and erase count array
+            } hasMap;
+            struct {                    // For !F_HAS_MAP:
+                uint32_t eraseCount;    //   Erase count for the first and only MapBlock
+            } noMap;
+        };
+
+        uint16_t flagsCopy;             // Redundant copy of 'flags'
+        uint16_t typeCopy;              // Redundant copy of 'type'
+
+        bool isValid() const;
+    };
+
+    Prefix *getPrefix(FlashBlockRef &ref) const;
 };
 
 

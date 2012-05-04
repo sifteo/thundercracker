@@ -81,6 +81,12 @@ public:
     static const unsigned NUM_CACHE_BLOCKS = NUM_BYTES / FlashBlock::BLOCK_SIZE;
 
     FlashMapBlock blocks[NUM_ALLOC_BLOCKS];
+
+    // Convert a single FlashMapBlock pointer into a FlashMap pointer.
+    static const FlashMap *single(const FlashMapBlock *block) {
+        STATIC_ASSERT(offsetof(FlashMap, blocks) == 0);
+        return reinterpret_cast<const FlashMap*>(block);
+    }
 };
 
 
