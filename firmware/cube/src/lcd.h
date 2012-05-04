@@ -14,9 +14,7 @@
  */
 
 #include <stdint.h>
-typedef unsigned long long uint64_t;
-typedef signed long long int64_t;
-#include <sifteo/abi.h>
+#include <sifteo/abi/vram.h>
 
 static __xdata __at 0x0000 union _SYSVideoRAM vram;
 

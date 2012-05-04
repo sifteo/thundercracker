@@ -17,7 +17,7 @@ $(BIN): $(OBJS_STM32_MASTER)
 	@echo
 	$(CC) -c $(CCFLAGS) $(DEPFLAGS) $< -o $@
 
-common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi.h
+common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall.h
 	python tools/firmware-syscall-table.py < $< > $@
 
 ocd:
