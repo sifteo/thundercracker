@@ -37,3 +37,7 @@ LOCAL_OBJS = \
     src/mc_gdbserver.o \
     resources/data.o \
     resources/firmware-sbt.o
+
+GENERATED_FILES = \
+    resources/data.cpp \
+    resources/firmware-sbt.cpp

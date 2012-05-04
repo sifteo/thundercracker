@@ -9,7 +9,7 @@
 #include "macros.h"
 #include "svm.h"
 #include "flash_blockcache.h"
-#include "flash_allocation.h"
+#include "flash_map.h"
 
 #include <string.h>
 
@@ -204,7 +204,7 @@ public:
      * This is initialized to the current binary's RODATA segment by our ELF
      * loader.
      */
-    static void setFlashSegment(unsigned index, const FlashAllocSpan &span) {
+    static void setFlashSegment(unsigned index, const FlashMapSpan &span) {
         ASSERT(index < NUM_FLASH_SEGMENTS);
         flashSeg[index] = span;
     }
@@ -216,7 +216,7 @@ public:
     static void erase() {
         memset(userRAM, 0, RAM_SIZE_IN_BYTES);
         for (unsigned i = 0; i < arraysize(flashSeg); i++)
-            setFlashSegment(i, FlashAllocSpan::empty());
+            setFlashSegment(i, FlashMapSpan::empty());
     }
 
     /**
@@ -244,7 +244,7 @@ public:
      */
     static VirtAddr flashToVirtAddr(uint32_t addr) {
         STATIC_ASSERT(arraysize(flashSeg) == 2);
-        FlashAllocSpan::ByteOffset offset;
+        FlashMapSpan::ByteOffset offset;
         if (flashSeg[0].flashAddrToOffset(addr, offset))
             return offset + SEGMENT_0_VA;
         if (flashSeg[1].flashAddrToOffset(addr, offset))
@@ -258,7 +258,7 @@ public:
      */
     static uint32_t virtToFlashAddr(VirtAddr va) {
         STATIC_ASSERT(arraysize(flashSeg) == 2);
-        FlashAllocSpan::FlashAddr addr;
+        FlashMapSpan::FlashAddr addr;
         if (flashSeg[0].offsetToFlashAddr(addr - SEGMENT_0_VA, addr))
             return addr;
         if (flashSeg[1].offsetToFlashAddr(addr - SEGMENT_1_VA, addr))
@@ -309,7 +309,7 @@ public:
 
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES] SECTION(".userram");
-    static FlashAllocSpan flashSeg[NUM_FLASH_SEGMENTS];
+    static FlashMapSpan flashSeg[NUM_FLASH_SEGMENTS];
 };
 
 

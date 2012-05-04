@@ -5,6 +5,9 @@ INCLUDES += \
     -I$(TC_DIR)/firmware/include \
     -I$(TC_DIR)/sdk/include \
 
+# Relocated listings from the earlier Cube firmware build
+FIRMWARE_RST := ../firmware/cube/src/*.rst
+
 # Non-userspace simulator build
 FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 

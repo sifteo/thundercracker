@@ -27,6 +27,7 @@
 #endif
 
 class FlashBlockRef;
+class FlashBlockWriter;
 
 /**
  * A single flash block, fetched via a globally shared cache.
@@ -45,6 +46,7 @@ public:
 
 private:
     friend class FlashBlockRef;
+    friend class FlashBlockWriter;
 
     uint32_t stamp;
     uint32_t address;
@@ -111,6 +113,7 @@ public:
     static void dumpStats();
     static bool hotBlockSort(unsigned i, unsigned j);
     static void countBlockMiss(uint32_t blockAddr);
+    void verify();
 #endif
 
     static void init();
@@ -208,6 +211,51 @@ public:
 
 private:
     FlashBlock *block;
+};
+
+
+/**
+ * A utility class for writing to a flash block. Before the write starts,
+ * we perform some invalidation and checking. Then we can complete the write
+ * by actually flushing a dirty cache block to the device.
+ *
+ * We begin a write automatically when a FlashBlockWriter instance is
+ * created. Writes are committed to the device explicitly.
+ */
+
+class FlashBlockWriter
+{
+public:
+    FlashBlockWriter(FlashBlock *block) : ref(block) {
+        begin();
+    }
+
+    FlashBlockWriter(const FlashBlockRef &r) : ref(r) {
+        begin();
+    }
+
+    inline FlashBlock& operator*() const {
+        return *ref;
+    }
+
+    inline FlashBlock* operator->() const {
+        return &*ref;
+    };
+    
+    ~FlashBlockWriter() {
+        // Simulation only: Verify that changes were committed.
+        DEBUG_ONLY(ref->verify());
+    }
+
+    void commit();
+
+private:
+    void begin() {
+        // Prepare to write
+        ref->validCodeBytes = 0;
+    }
+
+    FlashBlockRef ref;
 };
 
 

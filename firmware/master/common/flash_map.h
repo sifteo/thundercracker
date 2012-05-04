@@ -5,14 +5,12 @@
 
 /*
  * The third layer of the flash stack: The flash chip is divided into
- * relatively large "allocation blocks". Each of these blocks may either
- * be unused, or may be allocated as part of an "allocation object".
- * Allocation objects may be ELF files, log-structured filesystems, or other
- * coarse-grained persistent objects.
+ * relatively large "mapping blocks", which can be discontiguously
+ * arranged into a FlashMap.
  */
 
-#ifndef FLASH_ALLOCATION_H_
-#define FLASH_ALLOCATION_H_
+#ifndef FLASH_MAP_H_
+#define FLASH_MAP_H_
 
 #include "flash_blockcache.h"
 #include "flash_device.h"
@@ -23,62 +21,88 @@
  * few of these in total, so we can refer to them using small 8-bit IDs.
  *
  * Keeping these blocks large lets us keep the IDs small, and in turn keeps
- * the FlashAllocMap's time and space requirements under control.
+ * the FlashMap's time and space requirements under control.
+ *
+ * We need 0 to represent an invalid ID, so that we can mark blocks as
+ * invalid (deleted) without erasing the block containing our Map.
  */
-class FlashAllocBlock
+class FlashMapBlock
 {
 public:
     static const unsigned BLOCK_SIZE = 128 * 1024;  // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     static const unsigned NUM_BLOCKS = FlashDevice::CAPACITY / BLOCK_SIZE;
 
-    uint8_t id;     // 0 to NUM_BLOCKS - 1
-
     unsigned address() const {
-        STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(id) * 8)));
-        return id * BLOCK_SIZE;
+        STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
+        return index() * BLOCK_SIZE;
     }
+
+    unsigned index() const {
+        ASSERT(isValid());
+        return code - 1;
+    }
+
+    bool isValid() const {
+        return code != 0;
+    }
+
+    void setInvalid() {
+        code = 0;
+    }
+
+    void setIndex(unsigned i) {
+        code = i + 1;
+    }
+
+    uint8_t code;     // invalid=0 , valid=[1, NUM_BLOCKS]
 };
 
 
 /**
  * An allocation map describes a virtual-to-physical mapping for an object
- * made up of one or more FlashAllocBlocks, up to the maximum object size.
+ * made up of one or more FlashMapBlocks, up to the maximum object size.
  *
  * Allocation maps are relatively heavy-weight objects. They require hundreds
  * of bytes of RAM, and creating an Allocation Map requires scanning the block
  * headers in our flash memory.
  *
- * Lookups are typically not made directly through a FlashAllocMap:
- * A FlashAllocSpan is used to describe some bounded region of space within the
+ * Lookups are typically not made directly through a FlashMap:
+ * A FlashMapSpan is used to describe some bounded region of space within the
  * map, which is typically smaller than the maximum supported number of bytes.
- * The FlashAllocSpan is responsible for bounds-checking, as well as applying
- * any offsets from the beginning of the first FlashAllocBlock.
+ * The FlashMapSpan is responsible for bounds-checking, as well as applying
+ * any offsets from the beginning of the first FlashMapBlock.
  */
-class FlashAllocMap
+class FlashMap
 {
 public:
     static const unsigned NUM_BYTES = 0x1000000;   // 24-bit limit imposed by SVM ISA
-    static const unsigned NUM_ALLOC_BLOCKS = NUM_BYTES / FlashAllocBlock::BLOCK_SIZE;
+    static const unsigned NUM_ALLOC_BLOCKS = NUM_BYTES / FlashMapBlock::BLOCK_SIZE;
     static const unsigned NUM_CACHE_BLOCKS = NUM_BYTES / FlashBlock::BLOCK_SIZE;
 
-    FlashAllocBlock blocks[NUM_ALLOC_BLOCKS];
+    FlashMapBlock blocks[NUM_ALLOC_BLOCKS];
+
+    // Convert a single FlashMapBlock pointer into a FlashMap pointer.
+    static const FlashMap *single(const FlashMapBlock *block) {
+        STATIC_ASSERT(offsetof(FlashMap, blocks) == 0);
+        return reinterpret_cast<const FlashMap*>(block);
+    }
 };
 
 
 /**
- * A range of virtual addresses within a FlashAllocMap. These are lightweight
- * objects that reference an externally-stored FlashAllocMap. FlashAllocSpans
- * need not be aligned to the beginning of FlashAllocBlocks, but they *are*
+ * A range of virtual addresses within a FlashMap. These are lightweight
+ * objects that reference an externally-stored FlashMap. FlashMapSpans
+ * need not be aligned to the beginning of FlashMapBlocks, but they *are*
  * aligned to FlashBlock boundaries.
  *
- * FlashAllocSpans are the lower-level objects that back individual virtual
+ * FlashMapSpans are the lower-level objects that back individual virtual
  * address spaces in SVM.
  */
-class FlashAllocSpan
+class FlashMapSpan
 {
 public:
-    FlashAllocMap *map;
+    FlashMap *map;
     uint16_t firstBlock;
     uint16_t numBlocks;
 
@@ -90,26 +114,26 @@ public:
     typedef uint8_t* PhysAddr;      // Physical RAM address, in the block cache
 
     /**
-     * Initialize the FlashAllocSpan to a particular range of the
-     * FlashAllocMap, specified in units of cache blocks.
+     * Initialize the FlashMapSpan to a particular range of the
+     * FlashMap, specified in units of cache blocks.
      */
-    static FlashAllocSpan create(FlashAllocMap *map,
+    static FlashMapSpan create(FlashMap *map,
         unsigned firstBlock, unsigned numBlocks)
     {
-        STATIC_ASSERT(FlashAllocMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
+        STATIC_ASSERT(FlashMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
         STATIC_ASSERT(sizeof firstBlock == sizeof numBlocks);
-        FlashAllocSpan result = { map, firstBlock, numBlocks };
-        ASSERT(firstBlock < FlashAllocMap::NUM_CACHE_BLOCKS);
-        ASSERT(numBlocks < FlashAllocMap::NUM_CACHE_BLOCKS);
+        FlashMapSpan result = { map, firstBlock, numBlocks };
+        ASSERT(firstBlock < FlashMap::NUM_CACHE_BLOCKS);
+        ASSERT(numBlocks < FlashMap::NUM_CACHE_BLOCKS);
         ASSERT(result.firstBlock == firstBlock);
         ASSERT(result.numBlocks == numBlocks);
         return result;
     }
 
-    /// Return an empty FlashAllocSpan. It contains no mapped blocks.
-    static FlashAllocSpan empty()
+    /// Return an empty FlashMapSpan. It contains no mapped blocks.
+    static FlashMapSpan empty()
     {
-        FlashAllocSpan result = { 0, 0, 0 };
+        FlashMapSpan result = { 0, 0, 0 };
         return result;
     }
 
@@ -130,12 +154,12 @@ public:
         return byteOffset < sizeInBytes();
     }
 
-    /// Split off a portion of this FlashAllocSpan as a new span.
-    FlashAllocSpan split(unsigned blockOffset,
-        unsigned blockCount = FlashAllocMap::NUM_CACHE_BLOCKS) const;
+    /// Split off a portion of this FlashMapSpan as a new span.
+    FlashMapSpan split(unsigned blockOffset,
+        unsigned blockCount = FlashMap::NUM_CACHE_BLOCKS) const;
 
     /// Range specified in bytes. Offset must be aligned, length is rounded up.
-    FlashAllocSpan splitRoundingUp(unsigned byteOffset, unsigned byteCount) const;
+    FlashMapSpan splitRoundingUp(unsigned byteOffset, unsigned byteCount) const;
 
     // Translation functions
     bool flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const;
@@ -152,5 +176,6 @@ public:
     // Cache-bypassing data access
     bool copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
 };
+
 
 #endif

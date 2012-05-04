@@ -5,13 +5,13 @@
 
 #include "macros.h"
 #include "crc.h"
-#include <string.h>
 
-// statics
-uint32_t Crc32::currentWord;
-uint32_t Crc32::crctable[32];
+static uint32_t gCurrentWord;
+static uint32_t gCrcTable[32];
+static bool gCrcInit = false;
 
-uint32_t Crc32::crcshift(uint32_t crctab[])
+
+static uint32_t crcshift(uint32_t crctab[])
 {
     uint32_t s = crctab[0];
     for (unsigned i = 1; i < 32; ++i)
@@ -19,7 +19,7 @@ uint32_t Crc32::crcshift(uint32_t crctab[])
     return s;
 }
 
-uint32_t Crc32::crcWord(uint32_t crctab[], const uint32_t word)
+static uint32_t crcWord(uint32_t crctab[], const uint32_t word)
 {
     static const uint32_t poly = 0x04C11DB7;
     for (unsigned j = 0; j < 32; ++j) {
@@ -33,28 +33,31 @@ uint32_t Crc32::crcWord(uint32_t crctab[], const uint32_t word)
 
 void Crc32::init()
 {
-    // nop in simulator
+    gCrcInit = true;
 }
 
 void Crc32::deinit()
 {
-    // nop in simulator
+    gCrcInit = false;
 }
 
 void Crc32::reset()
 {
-    for (unsigned i = 0; i < arraysize(crctable); ++i) {
-        crctable[i] = 1;
+    ASSERT(gCrcInit);
+    for (unsigned i = 0; i < arraysize(gCrcTable); ++i) {
+        gCrcTable[i] = 1;
     }
-    currentWord = 0;
+    gCurrentWord = 0;
 }
 
 uint32_t Crc32::get()
 {
-    return currentWord;
+    ASSERT(gCrcInit);
+    return gCurrentWord;
 }
 
 void Crc32::add(uint32_t word)
 {
-    currentWord = crcWord(crctable, word);
+    ASSERT(gCrcInit);
+    gCurrentWord = crcWord(gCrcTable, word);
 }

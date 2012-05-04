@@ -9,7 +9,7 @@
 using namespace Svm;
 
 uint8_t SvmMemory::userRAM[RAM_SIZE_IN_BYTES] __attribute__ ((aligned(4)));
-FlashAllocSpan SvmMemory::flashSeg[NUM_FLASH_SEGMENTS];
+FlashMapSpan SvmMemory::flashSeg[NUM_FLASH_SEGMENTS];
 
 
 bool SvmMemory::mapRAM(VirtAddr va, uint32_t length, PhysAddr &pa)
@@ -118,7 +118,7 @@ bool SvmMemory::copyROData(FlashBlockRef &ref,
 unsigned SvmMemory::reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc)
 {
     if (ref.isHeld()) {
-        FlashAllocSpan::ByteOffset offset;
+        FlashMapSpan::ByteOffset offset;
 
         // Code only runs from segment 0.
         if (flashSeg[0].flashAddrToOffset(ref->getAddress(), offset)) {

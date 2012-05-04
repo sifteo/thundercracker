@@ -95,6 +95,16 @@ FlashBlock *FlashBlock::recycleBlock()
         FlashBlock *block = &instances[idx];
         uint32_t age = latestStamp - block->stamp;  // Wraparound-safe
 
+        DEBUG_ONLY({
+            /*
+             * While we're here, make sure that any available blocks are actually
+             * clean. If we're writing a block, it must be referenced, and we must
+             * commit that write afterwards.
+             */
+            if (block->address != INVALID_ADDRESS)
+                block->verify();
+        })
+
         if (age >= bestAge) {
             bestBlock = block;
             bestAge = age;
@@ -110,7 +120,7 @@ void FlashBlock::load(uint32_t blockAddr)
 {
     /*
      * Handle a cache miss or invalidation. Load this block with new data
-     * from bockAddr.
+     * from blockAddr.
      */
 
     ASSERT((blockAddr & (BLOCK_SIZE - 1)) == 0);
@@ -123,6 +133,24 @@ void FlashBlock::load(uint32_t blockAddr)
 
     FlashDevice::read(blockAddr, data, BLOCK_SIZE);
     SvmDebugger::patchFlashBlock(blockAddr, data);
+}
+
+void FlashBlockWriter::commit()
+{
+    /*
+     * Write a modified flash block back to the device.
+     */
+
+    FlashBlock *block = &*ref;
+
+    // Must not have tried to run code from this block during a write.
+    ASSERT(ref->validCodeBytes == 0);
+
+    FlashDevice::write(block->address, block->getData(),
+        FlashBlock::BLOCK_SIZE);
+
+    // Make sure we are only programming bits from 1 to 0.
+    DEBUG_ONLY(block->verify());
 }
 
 void FlashBlock::invalidate()
