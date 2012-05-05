@@ -67,7 +67,7 @@ class FlashVolume
 {
 public:
     enum Flags {
-        F_HAS_MAP = 1 << 0,
+        F_HAS_MAP   = 1 << 0,
     };
 
     enum Type {

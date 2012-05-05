@@ -17,7 +17,7 @@
 
 
 /**
- * One of our coarse-grained flash allocation blocks. There are relatively
+ * One of our coarse-grained flash mapping blocks. There are relatively
  * few of these in total, so we can refer to them using small 8-bit IDs.
  *
  * Keeping these blocks large lets us keep the IDs small, and in turn keeps
@@ -60,11 +60,11 @@ public:
 
 
 /**
- * An allocation map describes a virtual-to-physical mapping for an object
+ * A FlashMap describes a virtual-to-physical mapping for an object
  * made up of one or more FlashMapBlocks, up to the maximum object size.
  *
- * Allocation maps are relatively heavy-weight objects. They require hundreds
- * of bytes of RAM, and creating an Allocation Map requires scanning the block
+ * Maps are relatively heavy-weight objects. They require hundreds of
+ * bytes of RAM, and creating a FlashMap requires scanning the block
  * headers in our flash memory.
  *
  * Lookups are typically not made directly through a FlashMap:
@@ -77,10 +77,10 @@ class FlashMap
 {
 public:
     static const unsigned NUM_BYTES = 0x1000000;   // 24-bit limit imposed by SVM ISA
-    static const unsigned NUM_ALLOC_BLOCKS = NUM_BYTES / FlashMapBlock::BLOCK_SIZE;
+    static const unsigned NUM_MAP_BLOCKS = NUM_BYTES / FlashMapBlock::BLOCK_SIZE;
     static const unsigned NUM_CACHE_BLOCKS = NUM_BYTES / FlashBlock::BLOCK_SIZE;
 
-    FlashMapBlock blocks[NUM_ALLOC_BLOCKS];
+    FlashMapBlock blocks[NUM_MAP_BLOCKS];
 
     // Convert a single FlashMapBlock pointer into a FlashMap pointer.
     static const FlashMap *single(const FlashMapBlock *block) {
