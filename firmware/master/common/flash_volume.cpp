@@ -4,6 +4,7 @@
  */
 
 #include "flash_volume.h"
+#include "crc.h"
 
 
 FlashVolume::Prefix *FlashVolume::getPrefix(FlashBlockRef &ref) const
@@ -14,16 +15,40 @@ FlashVolume::Prefix *FlashVolume::getPrefix(FlashBlockRef &ref) const
 
 bool FlashVolume::Prefix::isValid() const
 {
-    return
-        magic == MAGIC &&
-        flags == flagsCopy &&
-        type == typeCopy;
+    /*
+     * Validate everything we possibly can by looking only at the Prefix struct.
+     */
+
+    if (magic != MAGIC || flags != flagsCopy || type != typeCopy)
+        return false;
+
+    if ((flags & F_HAS_MAP) == 0 && noMap.eraseCount != noMap.eraseCountCopy)
+        return false;
+
+    return true;
 }
 
-bool FlashVolume::isValid(FlashBlockRef &ref) const
+bool FlashVolume::isValid() const
 {
     ASSERT(this);
-    return getPrefix(ref)->isValid();
+    FlashBlockRef pRef;
+    Prefix *p = getPrefix(pRef);
+    
+    if (!p->isValid())
+        return false;
+
+    // Check map CRCs
+    if (p->flags & F_HAS_MAP) {
+        FlashBlockRef mapRef;
+        if (p->hasMap.crcMap != Crc32::object(*getMap(mapRef)))
+            return false;
+        for (unsigned i = 0; i < ERASE_COUNT_BLOCKS; i++)
+            if (p->hasMap.crcErase[i] != Crc32::block(getEraseCountBlock(mapRef, i),
+                ERASE_COUNTS_PER_BLOCK))
+                return false;
+    }
+
+    return true;
 }
 
 const FlashMap *FlashVolume::getMap(FlashBlockRef &ref) const
@@ -43,8 +68,36 @@ const FlashMap *FlashVolume::getMap(FlashBlockRef &ref) const
     }
 }
 
+uint32_t *FlashVolume::getEraseCountBlock(FlashBlockRef &ref, unsigned index) const
+{
+    ASSERT(index < ERASE_COUNT_BLOCKS);
+    FlashBlock::get(ref, block.address() + (index + 1) * FlashBlock::BLOCK_SIZE);
+    return reinterpret_cast<uint32_t*>(ref->getData());
+}
+
 uint32_t FlashVolume::getEraseCount(unsigned index) const
 {
-    // XXX
-    return 0;
+    FlashBlockRef ref;
+    Prefix *p = getPrefix(ref);
+
+    if (p->flags & F_HAS_MAP) {
+        ASSERT(index < FlashMap::NUM_MAP_BLOCKS);
+        return getEraseCountBlock(ref, index / ERASE_COUNTS_PER_BLOCK)
+            [index % ERASE_COUNTS_PER_BLOCK];
+
+    } else {
+        ASSERT(index == 0);
+        return p->noMap.eraseCount;
+    }
+}
+
+void FlashVolume::markAsDeleted() const
+{
+    FlashBlockRef ref;
+    Prefix *p = getPrefix(ref);
+
+    FlashBlockWriter writer(ref);
+    p->type = T_DELETED;
+    p->typeCopy = T_DELETED;
+    writer.commit();
 }

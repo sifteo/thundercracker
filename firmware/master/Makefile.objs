@@ -27,6 +27,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/neighbors.o \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
+    $(MASTER_DIR)/common/crc.o \
     $(MASTER_DIR)/common/flash_blockcache.o \
     $(MASTER_DIR)/common/flash_map.o \
     $(MASTER_DIR)/common/flash_volume.o \
@@ -62,6 +63,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/audiooutdevice.stm32.o \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
+    $(MASTER_DIR)/stm32/crc.stm32.o \
     $(MASTER_DIR)/stm32/rctimer.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o \

@@ -49,6 +49,17 @@
  * deleted. This is also the state we're in when faced with an uninitialized
  * flash device. We'll do the best we can, and create new erase counts by
  * averaging all of the known erase counts from other blocks.
+ *
+ * Layout of a FlashVolume's first MapBlock:
+ *
+ *   First cache block:
+ *      - Fixed size "Prefix" struct, containing type/flag-specific fields
+ *      - Optional FlashMap
+ *
+ *   Optional, ERASE_COUNT_BLOCKS blocks of erase count data:
+ *      - A uint32_t erase count for each of NUM_MAP_BLOCKS
+ *
+ *   Payload data begins.
  */
 
 #ifndef FLASH_VOLUME_H_
@@ -77,15 +88,19 @@ public:
 
     FlashVolume(FlashMapBlock block) : block(block) {}
 
-    bool isValid(FlashBlockRef &ref) const;
+    bool isValid() const;
     const FlashMap *getMap(FlashBlockRef &ref) const;
     uint32_t getEraseCount(unsigned index) const;
+    void markAsDeleted() const;
 
 private:
     FlashMapBlock block;
 
     static const uint64_t MAGIC = 0x4c4f564674666953ULL;
-
+    static const unsigned ERASE_COUNT_BYTES = FlashMap::NUM_MAP_BLOCKS * sizeof(uint32_t);
+    static const unsigned ERASE_COUNT_BLOCKS = ERASE_COUNT_BYTES / FlashBlock::BLOCK_SIZE;
+    static const unsigned ERASE_COUNTS_PER_BLOCK = FlashBlock::BLOCK_SIZE / sizeof(uint32_t);
+        
     struct Prefix {
         uint64_t magic;                 // Must equal MAGIC
         uint16_t flags;                 // Bitmap of F_*
@@ -93,10 +108,12 @@ private:
 
         union {
             struct {                    // For F_HAS_MAP:
-                uint32_t crcMap;        //   CRC for FlashMap and erase count array
+                uint32_t crcMap;        //   CRC for FlashMap only
+                uint32_t crcErase[ERASE_COUNT_BLOCKS];
             } hasMap;
             struct {                    // For !F_HAS_MAP:
                 uint32_t eraseCount;    //   Erase count for the first and only MapBlock
+                uint32_t eraseCountCopy;
             } noMap;
         };
 
@@ -107,6 +124,7 @@ private:
     };
 
     Prefix *getPrefix(FlashBlockRef &ref) const;
+    uint32_t *getEraseCountBlock(FlashBlockRef &ref, unsigned index) const;
 };
 
 
