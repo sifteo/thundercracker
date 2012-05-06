@@ -258,8 +258,7 @@ void SvmLoader::run(int id)
 
     FlashVolumeIter vi;
     while (FlashVolume v = vi.next()) {
-        FlashBlockRef ref;
-        LOG(("VOLUME: map %p\n", v.getMap(ref)));
+        LOG(("VOLUME: Found volume, type %x\n", v.getType()));
     }
 
     // Set up an identity mapping

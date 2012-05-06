@@ -207,6 +207,18 @@ public:
         }
     }
 
+    /// Is every bit in this vector set to zero?
+    bool empty() const {
+        if (NUM_WORDS > 1) {
+            for (unsigned w = 0; w < NUM_WORDS; w++)
+                if (words[w])
+                    return false;
+            return true;
+        } else {
+            return words[0] == 0;
+        }
+    }
+
     /**
      * Find the lowest index where there's a marked (1) bit.
      * If any marked bits exist, returns true and puts the bit's index

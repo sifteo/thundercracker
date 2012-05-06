@@ -134,7 +134,7 @@ public:
 class FlashMapSpan
 {
 public:
-    FlashMap *map;
+    const FlashMap *map;
     uint16_t firstBlock;
     uint16_t numBlocks;
 
@@ -149,7 +149,7 @@ public:
      * Initialize the FlashMapSpan to a particular range of the
      * FlashMap, specified in units of cache blocks.
      */
-    static FlashMapSpan create(FlashMap *map,
+    static FlashMapSpan create(const FlashMap *map,
         unsigned firstBlock, unsigned numBlocks)
     {
         STATIC_ASSERT(FlashMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
