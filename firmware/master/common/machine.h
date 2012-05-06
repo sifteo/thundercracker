@@ -130,4 +130,127 @@ namespace Intrinsic {
 
 } // namespace Intrinsic
 
+
+/**
+ * A vector of bits which uses Intrinsic::CLZ to support fast iteration.
+ *
+ * Supports vectors with any fixed-size number of bits. For sizes <= 32 bits,
+ * this is just as efficient as using a bare uint32_t.
+ */
+
+template <unsigned tSize>
+class BitVector
+{
+private:
+    static const unsigned NUM_WORDS = (tSize + 31) / 32;
+    static const unsigned NUM_FULL_WORDS = tSize / 32;
+    static const unsigned REMAINDER_BITS = tSize & 31;
+
+    uint32_t words[NUM_WORDS];
+
+public:
+    /// Mark (set to 1) a single bit
+    void mark(unsigned index) {
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            words[word] |= Intrinsic::LZ(bit);
+        } else {
+            words[0] |= Intrinsic::LZ(index);
+        }
+    }
+
+    /// Clear (set to 0) a single bit
+    void clear(unsigned index) {
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            words[word] &= ~Intrinsic::LZ(bit);
+        } else {
+            words[0] &= ~Intrinsic::LZ(index);
+        }
+    }
+
+    /// Mark (set to 1) all bits in the vector
+    void mark() {
+        STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
+                      NUM_FULL_WORDS == NUM_WORDS);
+
+        // Set fully-utilized words only
+        for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
+            words[i] = -1;
+
+        if (NUM_FULL_WORDS != NUM_WORDS) {
+            // Set only bits < tSize in the last word.
+            uint32_t mask = ((uint32_t)-1) << ((32 - REMAINDER_BITS) & 31);
+            words[NUM_FULL_WORDS] = mask;
+        }
+    }
+
+    /// Clear (set to 0) all bits in the vector
+    void clear() {
+        for (unsigned i = 0; i < NUM_WORDS; ++i)
+            words[i] = 0;
+    }
+
+    /// Is a particular bit marked?
+    bool test(unsigned index) {
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            return (words[word] & Intrinsic::LZ(bit)) != 0;
+        } else {
+            return (words[0] & Intrinsic::LZ(index)) != 0;
+        }
+    }
+
+    /**
+     * Find the lowest index where there's a marked (1) bit.
+     * If any marked bits exist, returns true and puts the bit's index
+     * in "index". Iff the entire vector is zero, returns false.
+     */
+    bool findFirst(unsigned &index) {
+        if (NUM_WORDS > 1) {
+            for (unsigned w = 0; w < NUM_WORDS; w++) {
+                uint32_t v = words[w];
+                if (v) {
+                    index = (w << 5) | Intrinsic::LZ(v);
+                    ASSERT(index < tSize);
+                    return true;
+                }
+            }
+        } else {
+            uint32_t v = words[0];
+            if (v) {
+                index = Intrinsic::LZ(v);
+                ASSERT(index < tSize);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Find the lowest marked bit. If we find any marked bits,
+     * returns true, sets "index" to that bit's index, and clears the
+     * bit. This can be used as part of an iteration pattern:
+     *
+     *       unsigned index;
+     *       while (vec.clearFirst(index)) {
+     *           doStuff(index);
+     *       }
+     */
+    bool clearFirst(unsigned &index) {
+        if (findFirst(index)) {
+            clear(index);
+            return true;
+        }
+        return false;
+    }
+};
+
+
 #endif
