@@ -7,6 +7,7 @@
 #include "svmloader.h"
 #include "elfprogram.h"
 #include "flash_blockcache.h"
+#include "flash_volume.h"
 #include "svm.h"
 #include "svmmemory.h"
 #include "svmdebugpipe.h"
@@ -253,8 +254,15 @@ void SvmLoader::run(const Elf::Program &program)
 
 void SvmLoader::run(int id)
 {
-    // XXX: Temporary. Set up an identity mapping.
+    // XXX: Temporary
 
+    FlashVolumeIter vi;
+    while (FlashVolume v = vi.next()) {
+        FlashBlockRef ref;
+        LOG(("VOLUME: map %p\n", v.getMap(ref)));
+    }
+
+    // Set up an identity mapping
     FlashMap map;
     for (unsigned i = 0; i < arraysize(map.blocks); i++)
         map.blocks[i].setIndex(i);

@@ -12,6 +12,7 @@
 #ifndef FLASH_MAP_H_
 #define FLASH_MAP_H_
 
+#include "machine.h"
 #include "flash_blockcache.h"
 #include "flash_device.h"
 
@@ -32,6 +33,9 @@ public:
     static const unsigned BLOCK_SIZE = 128 * 1024;  // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     static const unsigned NUM_BLOCKS = FlashDevice::CAPACITY / BLOCK_SIZE;
+
+    // A BitVector with one bit for every possible FlashMapBlock index
+    typedef BitVector<NUM_BLOCKS> Set;
 
     unsigned address() const {
         STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
@@ -54,6 +58,31 @@ public:
     void setIndex(unsigned i) {
         code = i + 1;
     }
+
+    void mark(Set &v) const {
+        if (isValid())
+            v.mark(index());
+    }
+
+    void clear(Set &v) const {
+        if (isValid())
+            v.clear(index());
+    }
+
+    static FlashMapBlock fromIndex(unsigned i) {
+        FlashMapBlock result;
+        result.setIndex(i);
+        return result;
+    }
+
+    static FlashMapBlock invalid() {
+        FlashMapBlock result;
+        result.setInvalid();
+        return result;
+    }
+
+    /// Synonymous with isValid()
+    operator bool() const { return isValid(); }
 
     uint8_t code;     // invalid=0 , valid=[1, NUM_BLOCKS]
 };
@@ -87,6 +116,9 @@ public:
         STATIC_ASSERT(offsetof(FlashMap, blocks) == 0);
         return reinterpret_cast<const FlashMap*>(block);
     }
+
+    void mark(FlashMapBlock::Set &v) const;
+    void clear(FlashMapBlock::Set &v) const;
 };
 
 

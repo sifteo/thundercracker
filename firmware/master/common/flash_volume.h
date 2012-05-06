@@ -93,6 +93,9 @@ public:
     uint32_t getEraseCount(unsigned index) const;
     void markAsDeleted() const;
 
+    /// Synonymous with isValid()
+    operator bool() const { return isValid(); }
+
 private:
     FlashMapBlock block;
 
@@ -125,6 +128,24 @@ private:
 
     Prefix *getPrefix(FlashBlockRef &ref) const;
     uint32_t *getEraseCountBlock(FlashBlockRef &ref, unsigned index) const;
+};
+
+
+/**
+ * A lightweight iterator, capable of finding all valid FlashVolumes on
+ * the device. When iteration is over, next() returns an invalid volume.
+ */
+class FlashVolumeIter
+{
+public:
+    FlashVolumeIter() {
+        remaining.mark();
+    }
+
+    FlashVolume next();
+
+private:
+    FlashMapBlock::Set remaining;
 };
 
 

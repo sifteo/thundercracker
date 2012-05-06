@@ -31,6 +31,9 @@ bool FlashVolume::Prefix::isValid() const
 bool FlashVolume::isValid() const
 {
     ASSERT(this);
+    if (!block.isValid())
+        return false;
+
     FlashBlockRef pRef;
     Prefix *p = getPrefix(pRef);
     
@@ -100,4 +103,22 @@ void FlashVolume::markAsDeleted() const
     p->type = T_DELETED;
     p->typeCopy = T_DELETED;
     writer.commit();
+}
+
+FlashVolume FlashVolumeIter::next()
+{
+    unsigned index;
+    while (remaining.clearFirst(index)) {
+        FlashVolume vol(FlashMapBlock::fromIndex(index));
+        if (vol.isValid()) {
+
+            // Don't visit any blocks that are part of this volume
+            FlashBlockRef ref;
+            vol.getMap(ref)->clear(remaining);
+
+            return vol;
+        }
+    }
+
+    return FlashMapBlock::invalid();
 }

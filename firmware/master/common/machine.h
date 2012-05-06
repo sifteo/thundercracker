@@ -217,7 +217,7 @@ public:
             for (unsigned w = 0; w < NUM_WORDS; w++) {
                 uint32_t v = words[w];
                 if (v) {
-                    index = (w << 5) | Intrinsic::LZ(v);
+                    index = (w << 5) | Intrinsic::CLZ(v);
                     ASSERT(index < tSize);
                     return true;
                 }
@@ -225,7 +225,7 @@ public:
         } else {
             uint32_t v = words[0];
             if (v) {
-                index = Intrinsic::LZ(v);
+                index = Intrinsic::CLZ(v);
                 ASSERT(index < tSize);
                 return true;
             }
@@ -242,11 +242,31 @@ public:
      *       while (vec.clearFirst(index)) {
      *           doStuff(index);
      *       }
+     *
+     * This is functionally equivalent to findFirst() followed by
+     * clear(), but it's a tiny bit more efficient.
      */
     bool clearFirst(unsigned &index) {
-        if (findFirst(index)) {
-            clear(index);
-            return true;
+        if (NUM_WORDS > 1) {
+            for (unsigned w = 0; w < NUM_WORDS; w++) {
+                uint32_t v = words[w];
+                if (v) {
+                    unsigned bit = Intrinsic::CLZ(v);
+                    words[w] ^= Intrinsic::LZ(bit);
+                    index = (w << 5) | bit;
+                    ASSERT(index < tSize);
+                    return true;
+                }
+            }
+        } else {
+            uint32_t v = words[0];
+            if (v) {
+                unsigned bit = Intrinsic::CLZ(v);
+                words[0] ^= Intrinsic::LZ(bit);
+                index = bit;
+                ASSERT(index < tSize);
+                return true;
+            }
         }
         return false;
     }
