@@ -20,7 +20,7 @@ bool FlashVolume::Prefix::isValid() const
      */
 
     if (magic != MAGIC || flags != flagsCopy || type != typeCopy ||
-        (uint16_t)numBlocks != (uint16_t)~numBlocksCpl)
+        (numBlocks ^ numBlocksCpl) != 0xFFFF)
         return false;
 
     if ((flags & F_HAS_MAP) == 0 && noMap.eraseCount != noMap.eraseCountCopy)
