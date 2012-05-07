@@ -21,5 +21,6 @@ The Sifteo SDK is distributed as a zip archive, and can be unpacked anywhere on 
 * @b doc contains a copy of the SDK documentation
 * @b include contains the SDK headers
 * @b examples contains a variety of example projects
+* @b sifteo-sdk-shell is a shortcut which starts a new shell with the right environment variables for compiling Sifteo applications with this SDK
 
 The Sifteo SDK doesn't dictate any build tools or IDE that must be used to develop applications, but we do ship support in the SDK for building with good old Makefiles. This guide will cover a Makefile-based build setup, but you may configure your IDE of choice.
