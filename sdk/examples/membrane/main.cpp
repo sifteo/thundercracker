@@ -11,6 +11,7 @@ AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Membrane")
+    .icon(Icon)
     .cubeRange(NUM_CUBES);
 
 void main()
