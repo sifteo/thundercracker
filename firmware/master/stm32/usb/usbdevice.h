@@ -51,6 +51,8 @@ public:
     }
 
 private:
+    static bool waitForPreviousWrite();
+
     static bool configured;
 };
 

@@ -74,7 +74,7 @@ void I2CSlave::isrER()
  * the contents of 'byte' accordingly.
  *
  * If data has become available, write it to 'byte'.
- * If TX is empty, write 'it 'byte' to DR.
+ * If TX is empty, write 'byte' to DR.
  */
 void I2CSlave::isrEV(uint16_t sr1, uint8_t *byte)
 {

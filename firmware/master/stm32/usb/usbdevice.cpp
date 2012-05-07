@@ -175,7 +175,7 @@ void UsbDevice::onConfigComplete(uint16_t wValue)
 
 void UsbDevice::handleReset()
 {
-
+    configured = false;
 }
 
 void UsbDevice::handleSuspend()
@@ -231,6 +231,17 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 }
 
 /*
+ * Block until any writes in progress have completed.
+ * Also, break if we've gotten disconnected while waiting.
+ */
+bool UsbDevice::waitForPreviousWrite()
+{
+    while (configured && UsbHardware::epTxInProgress(InEpAddr))
+        ;
+    return configured;
+}
+
+/*
  * Write a packet out - will block until the previous packet is done transmitting.
  * len can be greater than max packet size, but must be less than the available
  * space in the TX FIFO.
@@ -239,11 +250,9 @@ int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
     // XXX: this is a little heavy handed for now, but we really don't want to
     // be trying to write to an unconfigured device. Determine if there's a better way...
-    if (!isConfigured())
+    if (!waitForPreviousWrite())
         return 0;
 
-    while (UsbHardware::epTxInProgress(InEpAddr))
-        ;
     return UsbHardware::epWritePacket(InEpAddr, buf, len);
 }
 
