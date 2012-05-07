@@ -53,7 +53,7 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_TITLE_STR     0x0003  // Human readable game title string
 #define _SYS_METADATA_PACKAGE_STR   0x0004  // DNS-style package string
 #define _STS_METADATA_VERSION_STR   0x0005  // Version string
-#define _SYS_METADATA_ICON_80x80    0x0006  // _SYSMetadataImage
+#define _SYS_METADATA_ICON_96x96    0x0006  // _SYSMetadataImage
 #define _SYS_METADATA_NUM_ASLOTS    0x0007  // uint8_t, count of required AssetSlots
 #define _SYS_METADATA_CUBE_RANGE    0x0008  // _SYSMetadataCubeRange
 

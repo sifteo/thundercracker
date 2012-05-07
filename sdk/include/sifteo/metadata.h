@@ -72,14 +72,16 @@ public:
 
     /**
      * Add an icon image to this game's metadata. The image needs to be
-     * 80x80 pixels, and it should reside in a separate AssetGroup.
+     * 96x96 pixels, and it should reside in a separate AssetGroup.
      */
     Metadata &icon(const _SYSAssetImage &i)
     {
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Icon", 0) != 0,
             "Duplicate Metadata::icon() instance.");
+        _SYS_lti_abort(i.width != 96/8 || i.height != 96/8,
+            "Metadata::icon() image must be 96x96 pixels in size.");
 
-        return image(_SYS_METADATA_ICON_80x80, i);
+        return image(_SYS_METADATA_ICON_96x96, i);
     }
 
     /**
