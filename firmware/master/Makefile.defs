@@ -73,8 +73,8 @@ LDFLAGS += $(ARCH) \
               -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT) -nostartfiles
 
-#Determines whether the jtagkey2 or the olimex cfg files should be used for programming
-ifneq ($(OLIMEX),)
+# Select JTAG device for programming - default to Olimex
+ifeq ($(JTAGKEY),)
     PROG_CONFIG := olimex.cfg
 else 
     PROG_CONFIG := jtagkey2.cfg

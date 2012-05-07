@@ -10,11 +10,9 @@ CDEPS := common/syscall-table.def
 all: $(BIN)
 
 $(BIN): $(OBJS_STM32_MASTER)
-	@echo
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.stm32.o: %.cpp $(CDEPS)
-	@echo
 	$(CC) -c $(CCFLAGS) $(DEPFLAGS) $< -o $@
 
 common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall.h
