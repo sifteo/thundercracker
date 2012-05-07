@@ -16,7 +16,6 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Hello World SDK Example")
-    .icon(GameIcon)
     .cubeRange(gNumCubes);
 
 
