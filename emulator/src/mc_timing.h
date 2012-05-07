@@ -47,7 +47,7 @@ struct MCTiming {
 
     // Minimum number of cycles that we bother forwarding to SystemMC in one
     // batch. Pre-multiplied by CPU_RATE_DENOMINATOR.
-    static const unsigned CPU_THRESHOLD = 200;
+    static const unsigned CPU_THRESHOLD = CPU_RATE_DENOMINATOR * 100;
 };
 
 #endif
