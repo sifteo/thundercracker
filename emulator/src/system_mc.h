@@ -40,17 +40,17 @@ class SystemMC {
         return instance->sys;
     }
 
+    /**
+     * Cause some time to pass in the MC simulation, and service any
+     * asynchronous events that occurred during this elapsed time.
+     *
+     * Must only be called from the MC thread.
+     */
+    static void elapseTicks(unsigned n);
+
  private: 
-    static const uint32_t TICK_HZ = 16000000;
-    static const uint32_t TICKS_PER_PACKET = 7200;       // 450us, minimum packet period
-    static const uint32_t MAX_RETRIES = 150;             // Simulates (hardware * software) retries
-    static const uint32_t STARTUP_DELAY = TICK_HZ / 4;   // 1/4 second from cube to MC startup
-
     static void threadFn(void *);
-
     void doRadioPacket();
-    void beginPacket();
-    void endPacket();
 
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
@@ -59,6 +59,7 @@ class SystemMC {
 
     static SystemMC *instance;
     uint64_t ticks;
+    uint64_t radioPacketDeadline;
 
     System *sys;
     tthread::thread *mThread;

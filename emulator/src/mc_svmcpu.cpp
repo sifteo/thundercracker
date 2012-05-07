@@ -7,6 +7,8 @@
 #include "svmruntime.h"
 #include "macros.h"
 #include "machine.h"
+#include "mc_timing.h"
+#include "system_mc.h"
 
 #include <string.h>
 
@@ -28,6 +30,34 @@ static struct  {
     IrqContext irq;
     HwContext hw;
 } userRegs;
+
+
+
+/***************************************************************************
+ * Timing
+ ***************************************************************************/
+
+/*
+ * First-level cycle counter. During instruction emulation, we increment this
+ * as appropriate. Periodically (on every taken branch or SVC, currently)
+ * we forward any whole clock ticks to SystemMC::elapseTicks() via
+ * calculateElapsedTicks().
+ *
+ * Values in here are pre-multiplied by the CPU_RATE_DENOMINATOR. To convert
+ * to system ticks, we just need to divide by CPU_RATE_NUMERATOR and save
+ * the remainder.
+ */
+static unsigned svmCyclesElapsed;
+
+static void calculateElapsedTicks()
+{
+    unsigned elapsed = svmCyclesElapsed;
+    if (elapsed >= MCTiming::CPU_THRESHOLD) {
+        unsigned ticks = elapsed / MCTiming::CPU_RATE_NUMERATOR;
+        svmCyclesElapsed = elapsed % MCTiming::CPU_RATE_NUMERATOR;
+        SystemMC::elapseTicks(ticks);
+    }
+}
 
 
 /***************************************************************************
@@ -215,6 +245,9 @@ static void emulateSVC(uint16_t instr)
 
     restoreUserRegs();
     emulateExitException();
+    calculateElapsedTicks();
+
+    SystemMC::elapseTicks(MCTiming::TICKS_PER_SVC);
 }
 
 static void emulateFault(FaultCode code)
@@ -543,19 +576,40 @@ static void emulateMOV(uint16_t instr)
 
 static void emulateB(uint16_t instr)
 {
-    regs[REG_PC] = branchTargetB(instr, regs[REG_PC]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetB(instr, oldPC);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 
 static void emulateCondB(uint16_t instr)
 {
-    regs[REG_PC] = branchTargetCondB(instr, regs[REG_PC], regs[REG_CPSR]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetCondB(instr, oldPC, regs[REG_CPSR]);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 static void emulateCBZ_CBNZ(uint16_t instr)
 {
     unsigned Rn = instr & 0x7;
-    regs[REG_PC] = branchTargetCBZ_CBNZ(instr, regs[REG_PC], regs[REG_CPSR], regs[Rn]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetCBZ_CBNZ(instr, oldPC, regs[REG_CPSR], regs[Rn]);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 
@@ -577,6 +631,8 @@ static void emulateSTRSPImm(uint16_t instr)
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDRSPImm(uint16_t instr)
@@ -592,6 +648,8 @@ static void emulateLDRSPImm(uint16_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateADDSpImm(uint16_t instr)
@@ -642,6 +700,8 @@ static void emulateLDRLitPool(uint16_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 
@@ -663,6 +723,8 @@ static void emulateSTR(uint32_t instr)
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDR(uint32_t instr)
@@ -678,6 +740,8 @@ static void emulateLDR(uint32_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateSTRBH(uint32_t instr)
@@ -699,6 +763,8 @@ static void emulateSTRBH(uint32_t instr)
     } else {
         *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
     }
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDRBH(uint32_t instr)
@@ -732,6 +798,8 @@ static void emulateLDRBH(uint32_t instr)
         regs[Rt] = (uint32_t)signExtend(*reinterpret_cast<uint16_t*>(addr), 16);
         break;
     }
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateMOVWT(uint32_t instr)
@@ -770,6 +838,8 @@ static void emulateDIV(uint32_t instr)
     } else {
         regs[Rd] = (int32_t)regs[Rn] / (int32_t)m32;
     }
+
+    svmCyclesElapsed += MCTiming::CPU_DIVIDE;
 }
 
 
@@ -785,6 +855,8 @@ static uint16_t fetch()
      * and the first nibble of a 32-bit instruction must be checked regardless
      * in order to determine its bitness.
      */
+
+    svmCyclesElapsed += MCTiming::CPU_FETCH;
 
     if (!SvmMemory::isAddrValid(regs[REG_PC])) {
         emulateFault(F_CODE_FETCH);

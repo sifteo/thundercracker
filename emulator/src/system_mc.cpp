@@ -26,6 +26,7 @@
 #include "cube.h"
 #include "protocol.h"
 #include "tasks.h"
+#include "mc_timing.h"
 
 SystemMC *SystemMC::instance;
 
@@ -79,7 +80,8 @@ void SystemMC::threadFn(void *param)
     }
 
     // Start the master at some point shortly after the cubes come up
-    instance->ticks = instance->sys->time.clocks + STARTUP_DELAY;
+    instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
+    instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
@@ -103,7 +105,7 @@ SysTime::Ticks SysTime::ticks()
      * This does it in 64-bit math, with 60.4 fixed-point.
      */
 
-    return ((SystemMC::instance->ticks * hzTicks(SystemMC::TICK_HZ / 16)) >> 4);
+    return ((SystemMC::instance->ticks * hzTicks(MCTiming::TICK_HZ / 16)) >> 4);
 }
 
 void Radio::open()
@@ -113,13 +115,13 @@ void Radio::open()
 
 void Radio::halt()
 {
-    SystemMC *smc = SystemMC::instance;
+    // Elapse time until the next radio packet.
+    // Note that we must actually call elapseTicks() here, since it's
+    // important to run all async events (including exit) from halt().
 
-    // Are we trying to stop() the MC thread?
-    if (!smc->mThreadRunning)
-        longjmp(smc->mThreadExitJmp, 1);
-
-    smc->doRadioPacket();
+    SystemMC *self = SystemMC::instance;
+    self->ticks = self->radioPacketDeadline;
+    self->elapseTicks(0);
 }
 
 void SystemMC::doRadioPacket()
@@ -141,18 +143,30 @@ void SystemMC::doRadioPacket()
     ASSERT(buf.ptx.dest != NULL);
     buf.packet.len = buf.ptx.packet.len;
 
+    // Simulates (hardware * software) retries
+    static const uint32_t MAX_RETRIES = 150;
+
     for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
 
         /*
          * Deliver it to the proper cube.
          *
          * Interaction with the cube simulation must take place
-         * between beginPacket() and endPacket() only.
+         * between beginEvent() and endEvent() only.
+         *
+         * Note that this causes us to sync the Cube thread's clock with
+         * radioPacketDeadline, which slightly lags our 'ticks' counter,
+         * which slightly lags the internal SvmCpu cycle count.
+         *
+         * The timestamp we give to endEvent() is the farthest we allow
+         * the Cube thread to run asynchronously before waiting for us again.
          */
-        beginPacket();
+
+        sys->getCubeSync().beginEventAt(radioPacketDeadline, mThreadRunning);
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
         buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
-        endPacket();
+        radioPacketDeadline += MCTiming::TICKS_PER_PACKET;
+        sys->getCubeSync().endEvent(radioPacketDeadline);
 
         // Log this transaction
         if (sys->opt_radioTrace) {
@@ -214,21 +228,6 @@ void SystemMC::doRadioPacket()
     
     // Out of retries
     RadioManager::timeout();
-}
-
-void SystemMC::beginPacket()
-{
-    // Advance time, and rally with the cube thread at the proper timestamp.
-    // Between beginEvent() and endEvent(), both simulation threads are synchronized.
-
-    ticks += SystemMC::TICKS_PER_PACKET;
-    sys->getCubeSync().beginEventAt(ticks, mThreadRunning);
-}
-
-void SystemMC::endPacket()
-{
-    // Let the cube keep running, but no farther than our next transmit opportunity
-    sys->getCubeSync().endEvent(ticks + SystemMC::TICKS_PER_PACKET);
 }
 
 Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)
@@ -336,4 +335,19 @@ bool SystemMC::installELF(const char *path)
         instance->start();
 
     return success;
+}
+
+void SystemMC::elapseTicks(unsigned n)
+{
+    SystemMC *self = instance;
+
+    self->ticks += n;
+
+    // Asynchronous exit
+    if (!self->mThreadRunning)
+        longjmp(self->mThreadExitJmp, 1);
+
+    // Asynchronous radio packets
+    while (self->ticks >= self->radioPacketDeadline)
+        self->doRadioPacket();
 }
