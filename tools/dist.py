@@ -5,8 +5,6 @@ import shutil, subprocess
 from ZipDir import ZipDir
 
 TC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DIST = os.path.join(TC_ROOT, "dist")
-
 
 def platformBits():
     if os.name != "posix":
@@ -44,6 +42,13 @@ if __name__ == '__main__':
     packagedir = sdkVersion()
     zipFilename = "%s.zip" % packagedir
     shutil.rmtree(packagedir, ignore_errors = True)
+
+    # remove any previous .zip archives
+    # this is really to support our CI server, which we would like to run
+    # `git clean` on after a checkout, but cannot due to an apparent bug: https://issues.jenkins-ci.org/browse/JENKINS-13685
+    for filename in os.listdir(TC_ROOT):
+        if filename.endswith('.zip'):
+            os.remove(filename)
 
     # Basic ignoreables...
     patterns = [
