@@ -71,6 +71,9 @@ int main()
 
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
 
+    NVIC.irqEnable(IVT.VOLUME_TIM);             // volume timer
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x70);
+
     /*
      * High-level hardware initialization
      */

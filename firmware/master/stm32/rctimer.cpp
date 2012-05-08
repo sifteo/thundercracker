@@ -28,6 +28,10 @@ void RCTimer::init()
 */
 void RCTimer::startSample()
 {
+    // don't bother if we're already sampling
+    if (pin.isHigh())
+        return;
+
     // charge the cap
     pin.setControl(GPIOPin::OUT_2MHZ);
     pin.setHigh();
