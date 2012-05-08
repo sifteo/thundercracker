@@ -27,8 +27,8 @@ static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
-RF_MemACKType TestJig::cubeAck;
-uint8_t TestJig::cubeAckByteIdx;
+TestJig::VramTransaction TestJig::vramTransaction;
+TestJig::SensorsTransaction TestJig::sensorsTransaction;
 
 /*
  * Table of test handlers.
@@ -41,6 +41,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     getUsbCurrentHandler,                   // 3
     beginNeighborRxHandler,                 // 4
     stopNeighborRxHandler,                  // 5
+    writeToCubeVramHandler,                 // 6
+    setCubeSensorsEnabledHandler,           // 7
 };
 
 void TestJig::init()
@@ -88,7 +90,10 @@ void TestJig::init()
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
 
-    cubeAckByteIdx = 0;
+    sensorsTransaction.enabled = false;
+    sensorsTransaction.byteIdx = 0;
+    vramTransaction.state = VramIdle;
+
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
 //    neighbor.init();
 }
@@ -141,25 +146,59 @@ void TestJig::onI2cEvent()
      * received during the former transmission.
      */
     if (status & I2CSlave::AddressMatch) {
-        if (cubeAckByteIdx > 0) {
-            uint8_t resp[1 + sizeof cubeAck] = { 6 };
-            memcpy(resp + 1, &cubeAck, sizeof cubeAck);
+        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0) {
+            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { 6 };
+            memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
             UsbDevice::write(resp, sizeof resp);
         }
-        cubeAckByteIdx = 0;
+        sensorsTransaction.byteIdx = 0;
+    }
+
+    /*
+     * The nRFLE1 and STM32 have somewhat complementary i2c hardware oddities.
+     * When the LE1 in master mode is done receiving, it will NACK the last byte
+     * before setting the stop bit. The STM32 does not emit a STOP event in the
+     * case that a NACK was received.
+     *
+     * It's a bit gross, but treat a NACK as equivalent to a STOP to work around this.
+     */
+    if (status & (I2CSlave::Nack | I2CSlave::StopBit)) {
+        vramTransaction.state = VramIdle;
     }
 
     // send next byte
-    if (status & I2CSlave::TxEmpty)
-        byte = 0xff;    // XXX: send test data here
+    if (status & I2CSlave::TxEmpty) {
+        switch (vramTransaction.state) {
+
+        case VramIdle:
+            byte = 0xff;
+            break;
+
+        case VramAddressHigh:
+            byte = vramTransaction.address >> 8;
+            vramTransaction.state = VramAddressLow;
+            break;
+
+        case VramAddressLow:
+            byte = vramTransaction.address & 0xff;
+            vramTransaction.state = VramPayload;
+            break;
+
+        case VramPayload:
+            byte = vramTransaction.payload;
+            vramTransaction.state = VramIdle;
+            break;
+
+        }
+    }
 
     i2c.isrEV(status, &byte);
 
     // we received a byte
     if (status & I2CSlave::RxNotEmpty) {
-        if (cubeAckByteIdx < sizeof cubeAck) {
-            uint8_t *pAck = reinterpret_cast<uint8_t*>(&cubeAck);
-            pAck[cubeAckByteIdx++] = byte;
+        if (sensorsTransaction.byteIdx < sizeof sensorsTransaction.cubeAck) {
+            uint8_t *pAck = reinterpret_cast<uint8_t*>(&sensorsTransaction.cubeAck);
+            pAck[sensorsTransaction.byteIdx++] = byte;
         }
     }
 }
@@ -232,6 +271,37 @@ void TestJig::beginNeighborRxHandler(uint8_t argc, uint8_t *args)
 void TestJig::stopNeighborRxHandler(uint8_t argc, uint8_t *args)
 {
     neighbor.stopReceiving();
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * args[1] - low byte of address
+ * args[2] - high byte of address
+ * args[3] - data payload
+ */
+void TestJig::writeToCubeVramHandler(uint8_t argc, uint8_t *args)
+{
+    // ensure any vram transactions in progress are complete
+    while (vramTransaction.state != VramIdle)
+        ;
+
+    vramTransaction.address = args[2] << 8 | args[1];
+    vramTransaction.payload = args[3];
+    vramTransaction.state = VramAddressHigh;
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * args[1] - 0 for disabled, non-zero for enabled
+ */
+void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
+{
+    sensorsTransaction.enabled = args[1];
+    sensorsTransaction.byteIdx = 0;
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
