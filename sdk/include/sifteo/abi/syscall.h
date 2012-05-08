@@ -98,7 +98,6 @@ uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(90)
 // Compiler atomics support
 uint32_t _SYS_fetch_and_or_4(uint32_t *p, uint32_t t) _SC(91);
 uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) _SC(92);
-uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) _SC(93);
 uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) _SC(94);
 
 // Compiler support for 64-bit operations

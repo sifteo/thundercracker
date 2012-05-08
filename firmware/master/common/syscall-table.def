@@ -91,7 +91,7 @@
     /*   90 */ (SvmSyscall)_SYS_un_f64,
     /*   91 */ (SvmSyscall)_SYS_fetch_and_or_4,
     /*   92 */ (SvmSyscall)_SYS_fetch_and_xor_4,
-    /*   93 */ (SvmSyscall)_SYS_fetch_and_nand_4,
+    /*   93 */ (SvmSyscall)0,
     /*   94 */ (SvmSyscall)_SYS_fetch_and_and_4,
     /*   95 */ (SvmSyscall)_SYS_shl_i64,
     /*   96 */ (SvmSyscall)_SYS_srl_i64,

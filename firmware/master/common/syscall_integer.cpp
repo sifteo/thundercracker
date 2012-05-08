@@ -29,13 +29,6 @@ uint32_t _SYS_fetch_and_xor_4(uint32_t *p, uint32_t t) {
     return 0;
 }
 
-uint32_t _SYS_fetch_and_nand_4(uint32_t *p, uint32_t t) {
-    if (SvmMemory::mapRAM(p, sizeof *p))
-        return __sync_fetch_and_nand(p, t); // this issues warnings on GCC > 4.4, just ignoring for now
-    SvmRuntime::fault(F_SYSCALL_ADDRESS);
-    return 0;
-}
-
 uint32_t _SYS_fetch_and_and_4(uint32_t *p, uint32_t t) {
     if (SvmMemory::mapRAM(p, sizeof *p))
         return __sync_fetch_and_and(p, t);
