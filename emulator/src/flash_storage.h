@@ -72,7 +72,7 @@ class FlashStorage {
  private:
     bool isInitialized;
     bool isFileBacked;
-    uintptr_t fileHandle;
+    int fileHandle;
     uintptr_t mappingHandle;
 
     bool mapFile(const char *filename);
