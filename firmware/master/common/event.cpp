@@ -60,7 +60,7 @@ void Event::dispatch()
                 // if any.
 
                 Atomic::And(vi.cubesPending, ~Intrinsic::LZ(cid));
-                if (callCubeEvent(vid, cid));
+                if (callCubeEvent(vid, cid))
                     return;
             }
         }

@@ -12,7 +12,7 @@ FIRMWARE_RST := ../firmware/cube/src/*.rst
 FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 
 # Disable unwanted warnings, but be generally pretty pedantic
-WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
+WARNFLAGS += -Wall -Werror -Wno-mismatched-tags -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
 
 # Resources
 ifeq ($(BUILD_PLATFORM), windows32)

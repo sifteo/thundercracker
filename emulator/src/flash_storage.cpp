@@ -176,16 +176,17 @@ bool FlashStorage::mapFile(const char *filename)
 
 #else
 
-    fileHandle = open(filename, O_RDWR | O_CREAT, 0777);
+    int fh = open(filename, O_RDWR | O_CREAT, 0777);
     struct stat st;
 
-    if (fileHandle < 0 || fstat(fileHandle, &st)) {
-        if (fileHandle >= 0)
-            close(fileHandle);
+    if (fh < 0 || fstat(fh, &st)) {
+        if (fh >= 0)
+            close(fh);
         LOG(("FLASH: Can't open backing file '%s' (%s)\n",
             filename, strerror(errno)));
         return false;
     }
+    fileHandle = fh;
 
     bool newFile = (unsigned)st.st_size == (unsigned)0;
     if ((unsigned)st.st_size < (unsigned)sizeof *data && ftruncate(fileHandle, sizeof *data)) {
