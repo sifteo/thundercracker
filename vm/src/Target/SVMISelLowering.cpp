@@ -115,7 +115,6 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     // Atomic operations
     setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, SVMRT_fetch_and_or_4);
     setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, SVMRT_fetch_and_xor_4);
-    setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, SVMRT_fetch_and_nand_4);
     setLibcallName(RTLIB::SYNC_FETCH_AND_AND_4, SVMRT_fetch_and_and_4);
 
     // 64-bit Integer operations
