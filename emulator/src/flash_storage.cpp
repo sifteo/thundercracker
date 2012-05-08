@@ -179,7 +179,7 @@ bool FlashStorage::mapFile(const char *filename)
     fileHandle = open(filename, O_RDWR | O_CREAT, 0777);
     struct stat st;
 
-    if (fileHandle < 0 || fstat(fileHandle, &st)) {
+    if (fstat(fileHandle, &st)) {
         if (fileHandle >= 0)
             close(fileHandle);
         LOG(("FLASH: Can't open backing file '%s' (%s)\n",
