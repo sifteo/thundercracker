@@ -13,6 +13,7 @@
 #include "tasks.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
+#include "volume.h"
 #include "usb/usbdevice.h"
 #include "button.h"
 #include "svmloader.h"
@@ -84,6 +85,7 @@ int main()
     FlashBlock::init();
     Button::init();
 
+    Volume::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 

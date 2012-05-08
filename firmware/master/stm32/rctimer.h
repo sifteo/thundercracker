@@ -20,10 +20,8 @@ public:
         reading(0)
     {}
 
-    void init();
-
-    void startSample();
-    bool isr();
+    void init(uint16_t period, uint16_t prescaler);
+    void isr();
     uint16_t lastReading() const {
         return reading;
     }
@@ -34,6 +32,8 @@ private:
     GPIOPin pin;
     uint16_t startTime;
     uint16_t reading;
+
+    void beginSample();
 };
 
 #endif // RCTIMER_H

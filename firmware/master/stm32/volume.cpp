@@ -9,17 +9,22 @@ namespace Volume {
 
 void init()
 {
-    timer.init();
+    /*
+     * Specify the rate at which we'd like to sample the volume level.
+     * We want to balance between something that's not frequent enough,
+     * and something that consumes too much power.
+     *
+     * The prescaler also affects the precision with which the timer will
+     * capture readings - we don't need anything too detailed, so we can
+     * dial it down a bit.
+     */
+    timer.init(0xfff, 3);
 }
 
 int systemVolume()
 {
+    // XXX: scale this to something meaningful
     return timer.lastReading();
-}
-
-void beginSample()
-{
-    timer.startSample();
 }
 
 } // namespace Volume
@@ -27,6 +32,5 @@ void beginSample()
 
 IRQ_HANDLER ISR_TIM5()
 {
-    timer.isr();
-    VOLUME_TIM.SR = 0; // must clear SR to ack irq
+    timer.isr();    // must clear the TIM IRQ internally
 }

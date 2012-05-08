@@ -9,15 +9,16 @@
  * Set our hardware timer up as an input - period doesn't much matter since
  * we only want to interrupt on capture.
 */
-void RCTimer::init()
+void RCTimer::init(uint16_t period, uint16_t prescaler)
 {
     pin.setControl(GPIOPin::OUT_2MHZ);
     pin.setLow();
 
-    timer.init(0xFFFF, 0);
+    timer.init(period, prescaler);
 
     timer.disableChannel(timerChan);
     timer.configureChannelAsInput(timerChan, HwTimer::FallingEdge);
+    timer.enableUpdateIsr();
     timer.enableCompareCaptureIsr(timerChan);
     timer.enableChannel(timerChan);
 }
@@ -26,12 +27,8 @@ void RCTimer::init()
  * Set the pin high, and then measure how long it takes to generate a
  * falling edge.
 */
-void RCTimer::startSample()
+void RCTimer::beginSample()
 {
-    // don't bother if we're already sampling
-    if (pin.isHigh())
-        return;
-
     // charge the cap
     pin.setControl(GPIOPin::OUT_2MHZ);
     pin.setHigh();
@@ -48,13 +45,18 @@ void RCTimer::startSample()
 
 /*
  * Handle timer interrupt.
- * Should only ever be getting called here on capture, but return true to
+ * return true to
  * confirm that we got an updated reading as a result of this ISR.
  */
-bool RCTimer::isr()
+void RCTimer::isr()
 {
     uint32_t status = timer.status();
     timer.clearStatus();
+
+    // update event - time to start a new sample
+    if (status & 0x1) {
+        beginSample();
+    }
 
     // capture event
     if (status & (1 << timerChan)) {
@@ -63,8 +65,5 @@ bool RCTimer::isr()
         // keep this pin low between samples to avoid power draw
         pin.setLow();
         pin.setControl(GPIOPin::OUT_2MHZ);
-        return true;
     }
-
-    return false;
 }
