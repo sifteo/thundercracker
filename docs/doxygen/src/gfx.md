@@ -51,3 +51,21 @@ This is a simplified example timeline, showing one possible way that asynchronou
 8. Likewise, the third frame begins rendering on Cube 1 once the second frame is finished. In this example, the third frame *only* includes changes to Cube 1.
 
 Note that reality is a little messier than this, since the system tries really hard to avoid blocking any one component unless it's absolutely necessary, and some latency is involved in communicating between the system and each cube. Because of this, no guarantees are made about exactly when Sifteo::System::paint() returns, only about the average rate at which *paint* calls complete. If you need hard guarantees that synchronization and rendering have finished on every cube, use Sifteo::System::finish().
+
+## Graphics Modes
+
+Due to the very limited amount of Video RAM available, the graphics engine defines several distinct *modes*, which each define a different behavior for the engine and potentially a different layout for the contents of Video RAM. These modes include different combinations of tiled layers and sprites, as well as low-resolution frame-buffer modes and a few additional special-purpose modes.
+
+Each of these modes, however, fits into a consistent overall rendering framework that provides a few constants that you can rely on no matter which video mode you use:
+
+![](@ref gfx-modes.png)
+
+* __Paint control__ happens in the same way regardless of the active video mode. Some of the Video RAM is used for paint control.
+
+* __Windowing__ is a feature in which only a portion of the display is actually repainted. The mode renderers operate on one horizontal scanline of pixels at a time, so even when windowing is in use the entire horizontal width of the display must be redrawn. Windowing can be used to create letterbox effects, to render status bars, dialogue, etc.
+
+* __Rotation__ by a multiple of 90-degrees can be enabled as the very last step in the graphics pipeline, after all mode-specific drawing, and after windowing.
+
+These effects can be composed over the course of multiple paint/finish operations. For example:
+
+![](@ref rotated-windowing.png)
