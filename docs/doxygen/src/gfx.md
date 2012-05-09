@@ -83,3 +83,14 @@ This diagram illustrates how our tiling strategy helps games run more efficientl
 3. Stir determines the smallest unique set of tiles that can represent all images in a particular Sifteo::AssetGroup. This step may optionally be lossy. (Stir can find or generate tiles that are "close enough" without being pixel-accurate.) These tiles are compressed further using a lossless codec, and included in your application's AssetGroup data.
 4. The original asset is recreated as an array of indices into the AssetGroup's tiles. This data becomes a single Sifteo::AssetImage object. The index data can be much smaller than the original image, and duplicated tiles can be encoded in very little space.
 5. At runtime, AssetGroups and AssetImages are loaded separately. The former are loaded (slowly) into Asset Flash, whereas the latter are used by application code to draw into Video RAM.
+
+# Graphics Mode Reference
+
+## BG0
+
+This is the prototypical tile-based mode that many other modes are based on. The name is short for _background zero_, and you may find both the design and terminology familiar if you've ever worked on other tile-based video game systems. Many of the most popular 2D video game systems had hardware acceleration for one or more tile-based _background_ layers.
+
+BG0 is both the simplest mode and the most efficient. It makes good use of the hardware's fast paths, and it is quite common for BG0 rendering rates to exceed the physical refresh rate of the LCD.
+
+In this mode, there is a single layer: an infinitely-repeating 18x18 tile grid. Under application control, the individual tiles in this grid can be freely defined, and the viewport may *pan* around the grid with single-pixel accuracy:
+
