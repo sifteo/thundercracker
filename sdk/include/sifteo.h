@@ -10,6 +10,7 @@
 #endif
 
 #include <sifteo/abi.h>
+#include <sifteo/array.h>
 #include <sifteo/asset.h>
 #include <sifteo/audio.h>
 #include <sifteo/cube.h>
