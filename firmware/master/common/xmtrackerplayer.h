@@ -92,8 +92,8 @@ private:
 
     // Volume/Envelopes
     static const uint8_t kMaxVolume = 64;
-    static const uint8_t kEnvelopeSustain = 1;
-    static const uint8_t kEnvelopeLoop = 2;
+    static const uint8_t kEnvelopeSustain = 1 << 1;
+    static const uint8_t kEnvelopeLoop = 1 << 2;
     inline static const uint16_t envelopeOffset(uint16_t enc) {
         return enc & 0x01FF;
     }

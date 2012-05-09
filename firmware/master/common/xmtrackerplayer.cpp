@@ -155,11 +155,12 @@ inline void XmTrackerPlayer::loadNextNotes()
 
         channel.note = note;
 
-        // TODO: verify envelopes
-        channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
+        if (channel.start) {
+            channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
+            memset(&channel.envelope, 0, sizeof(channel.envelope));
+        }
 
         // Volume
-        memset(&channel.envelope, 0, sizeof(channel.envelope));
         channel.fadeout = UINT16_MAX;
         if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
                 channel.volume = note.volumeColumnByte - 0x10;
@@ -534,7 +535,7 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
 
     ASSERT(instrument.nVolumeEnvelopePoints > 0);
 
-    if (instrument.volumeType & kEnvelopeSustain && channel.note.note != XmTrackerPattern::kNoteOff) {
+    if ((instrument.volumeType & kEnvelopeSustain) && channel.note.note != XmTrackerPattern::kNoteOff) {
         // volumeSustainPoint is a maxima, don't exceed it.
         if (envelope.point >= instrument.volumeSustainPoint) {
             envelope.point = instrument.volumeSustainPoint;
@@ -642,7 +643,7 @@ void XmTrackerPlayer::commit()
         // Volume
         int32_t volume = channel.volume;
 
-        if (channel.instrument.volumeType) {
+        if (channel.active && channel.instrument.volumeType) {
             volume = (volume * channel.envelope.value) >> 6;
 
             if (channel.active && channel.note.note == XmTrackerPattern::kNoteOff) {
