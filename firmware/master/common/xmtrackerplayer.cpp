@@ -184,14 +184,16 @@ enum {
     vxTonePortamento        // F. C, D, and E are panning commands
 };
 
-void XmTrackerPlayer::processVolumeSlideUp(uint16_t &volume, uint8_t inc)
+void XmTrackerPlayer::processVolumeSlideUp(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc)
 {
-    volume = MIN(volume + inc, kMaxVolume);
+    if (inc) channel.slideUp = inc;
+    volume = MIN(volume + channel.slideUp, kMaxVolume);
 }
 
-void XmTrackerPlayer::processVolumeSlideDown(uint16_t &volume, uint8_t dec)
+void XmTrackerPlayer::processVolumeSlideDown(XmTrackerChannel &channel, uint16_t &volume, uint8_t dec)
 {
-    volume = (uint16_t)MAX((int32_t)volume - dec, 0);
+    if (dec) channel.slideDown = dec;
+    volume = (uint16_t)MAX((int32_t)volume - channel.slideDown, 0);
 }
 
 void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
@@ -259,21 +261,21 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
     switch (command) {
         case vxSlideDown:
             LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processVolumeSlideDown(channel.volume, param);
+            processVolumeSlideDown(channel, channel.volume, param);
             break;
         case vxSlideUp:
             LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processVolumeSlideUp(channel.volume, param);
+            processVolumeSlideUp(channel, channel.volume, param);
             break;
         case vxFineVolumeDown:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             if (ticks) break;
-            processVolumeSlideDown(channel.volume, param);
+            processVolumeSlideDown(channel, channel.volume, param);
             break;
         case vxFineVolumeUp:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             if (ticks) break;
-            processVolumeSlideUp(channel.volume, param);
+            processVolumeSlideUp(channel, channel.volume, param);
             break;
         case vxVibratoSpeed:
             LOG(("%s:%d: NOT_IMPLEMENTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
@@ -336,14 +338,16 @@ enum {
 
 void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
 {
-    if (ticks == 0 || channel.note.effectParam == 0) return;
+    if (ticks == 0 || (channel.note.effectParam == 0 && channel.slide == 0)) return;
+    if (channel.note.effectParam) channel.slide = channel.note.effectParam;
     uint8_t up = channel.note.effectParam >> 4;
     uint8_t down = channel.note.effectParam & 0x0F;
 
-    if (up)
-        processVolumeSlideUp(channel.volume, up);
-    else if (down)
-        processVolumeSlideDown(channel.volume, down);
+    if (up) {
+        channel.volume = MIN(channel.volume + up, kMaxVolume);
+    } else if (down) {
+        channel.volume = (uint16_t)MAX((int32_t)channel.volume - down, 0);
+    }
 }
 
 void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
@@ -418,7 +422,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             LOG(("%s:%d: NOT_IMPLEMENTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVolumeSlide:
-            if (param == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxVolumeSlide\n", __FILE__, __LINE__));
             processVolumeSlide(channel);
             break;
         case fxPositionJump:
@@ -495,14 +498,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
-                    processVolumeSlideUp(channel.volume, (param & 0xF));
+                    processVolumeSlideUp(channel, channel.volume, (param & 0xF));
                     break;
                 case fxFineVolumeSlideDown:
                     LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
                     // Apply once, at beginning of note
                     if (ticks) break;
-                    processVolumeSlideDown(channel.volume, (param & 0xF));
+                    processVolumeSlideDown(channel, channel.volume, (param & 0xF));
                     break;
                 case fxNoteCut:
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));

@@ -36,6 +36,9 @@ struct XmTrackerChannel {
         uint8_t portaUp;
         uint8_t portaDown;
         uint8_t tonePorta;
+        uint8_t slide;
+        uint8_t slideDown;
+        uint8_t slideUp;
         struct {
             uint32_t period;
         } porta;
@@ -129,8 +132,8 @@ private:
 
     void loadNextNotes();
 
-    void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
-    void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
+    void processVolumeSlideUp(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
+    void processVolumeSlideDown(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
     void processVibrato(XmTrackerChannel &channel);
     void processPorta(XmTrackerChannel &channel);
     void processVolume(XmTrackerChannel &channel);
