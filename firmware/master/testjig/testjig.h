@@ -52,7 +52,9 @@ private:
     };
 
     struct VramTransaction {
-        VramWriteState state;
+        // volatile to ensure it gets re-loaded while we're waiting for it to
+        // get updated from within the i2c irq
+        volatile VramWriteState state;
         uint16_t address;
         uint8_t payload;
     };
