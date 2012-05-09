@@ -224,37 +224,32 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
     switch (command) {
         case vxSlideDown:
             LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
             processVolumeSlideDown(channel.volume, param);
             break;
         case vxSlideUp:
             LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
             processVolumeSlideUp(channel.volume, param);
             break;
         case vxFineVolumeDown:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
             if (ticks) break;
             processVolumeSlideDown(channel.volume, param);
             break;
         case vxFineVolumeUp:
             LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
             if (ticks) break;
             processVolumeSlideUp(channel.volume, param);
             break;
         case vxVibratoSpeed:
-            LOG(("%s:%d: NOT_TESTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
+            LOG(("%s:%d: NOT_IMPLEMENTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            // TODO: do vibrato as normal, but when complete, hold the final pitch
             break;
         case vxVibratoDepth:
-            LOG(("%s:%d: NOT_TESTED: vxVibratoDepth vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
+            LOG(("%s:%d: NOT_IMPLEMENTED: vxVibratoDepth vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            // TODO: do vibrato as normal, but when complete, hold the final pitch
             break;
         case vxTonePortamento:
-            LOG(("%s:%d: NOT_TESTED: vxTonePortamento vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            processPatternBreak(0, 0);
+            LOG(("%s:%d: NOT_IMPLEMENTED: vxTonePortamento vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             break;
         default:
             break;
