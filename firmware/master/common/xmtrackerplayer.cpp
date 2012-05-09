@@ -118,6 +118,8 @@ inline void XmTrackerPlayer::loadNextNotes()
             if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                 ASSERT(false);
             }
+            // TODO: auto-vibrato.
+            channel.vibrato.phase = 0;
             channel.volume = channel.instrument.sample.volume;
         } else if (note.instrument >= song.nInstruments) {
             channel.instrument.sample.pData = 0;
@@ -195,7 +197,41 @@ void XmTrackerPlayer::processVolumeSlideDown(uint16_t &volume, uint8_t dec)
 
 void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 {
-    // TBD
+    int32_t periodDelta = 0;
+
+    switch (channel.vibrato.type) {
+        default:
+            // Intentional fall-through
+        case 3:   // Random (but not really)
+            // Intentional fall-through
+        case 0: { // Sine
+            // Half-wave precomputed sine table.
+            static const uint8_t sineTable[] = {0,24,49,74,97,120,141,161,
+                                                180,197,212,224,235,244,250,253,
+                                                255,253,250,244,235,224,212,197,
+                                                180,161,141,120,97,74,49,24};
+            STATIC_ASSERT(arraysize(sineTable) == 32);
+            periodDelta = sineTable[channel.vibrato.phase % arraysize(sineTable)];
+            if (channel.vibrato.phase % 64 >= 32) periodDelta = -periodDelta;
+            break;
+        }
+        case 1:   // Ramp up
+            LOG(("%s:%d: NOT_TESTED: ramp vibrato\n", __FILE__, __LINE__));
+            periodDelta = (channel.vibrato.phase % 32) * -8;
+            if ((channel.vibrato.phase % 64) >= 32) periodDelta += 255;
+            break;
+        case 2:   // Square
+            LOG(("%s:%d: NOT_TESTED: square vibrato\n", __FILE__, __LINE__));
+            periodDelta = 255;
+            if (channel.vibrato.phase % 64 >= 32) periodDelta = -periodDelta;
+            break;
+    }
+    periodDelta = (periodDelta * channel.vibrato.depth) / 32;
+
+    channel.period += periodDelta;
+
+    if (ticks)
+        channel.vibrato.phase += channel.vibrato.speed;
 }
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
@@ -367,14 +403,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 if (param & 0xF0)
                     channel.vibrato.speed = (param & 0xF0) >> 4;
             }
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxVibrato fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             processVibrato(channel);
             break;
         case fxTonePortaAndVolumeSlide:
             LOG(("%s:%d: NOT_IMPLEMENTED: fxTonePortaAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
         case fxVibratoAndVolumeSlide:
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxVibratoAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: PARTIALLY_IMPLEMENTED: fxVibratoAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processVibrato(channel);
             break;
         case fxTremolo:
             LOG(("%s:%d: NOT_IMPLEMENTED: fxTremolo fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
@@ -441,7 +477,8 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
                 case fxVibratoControl:
-                    LOG(("%s:%d: NOT_IMPLEMENTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    if (ticks) break;
+                    channel.vibrato.type = (param & 0x0F);
                     break;
                 case fxFinetune:
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
