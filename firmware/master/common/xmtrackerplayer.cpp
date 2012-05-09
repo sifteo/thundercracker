@@ -703,7 +703,7 @@ uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
 
 void XmTrackerPlayer::tick()
 {
-    if (ticks++ >= tempo + delay) {
+    if (ticks++ >= tempo * (delay + 1)) {
         ticks = delay = 0;
 
         // load next notes into the process channels
