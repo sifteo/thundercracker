@@ -109,8 +109,8 @@
 			<integer>67</integer>
 			<key>Points</key>
 			<array>
-				<string>{178.5, 234}</string>
-				<string>{238, 234}</string>
+				<string>{178.5, 234.04199}</string>
+				<string>{237.50681, 234.08231}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -242,7 +242,7 @@
 			<key>Points</key>
 			<array>
 				<string>{514, 234}</string>
-				<string>{573.5, 234}</string>
+				<string>{573.50299, 238.4424}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -975,7 +975,7 @@
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2012-05-08 21:21:52 +0000</string>
+	<string>2012-05-09 01:41:59 +0000</string>
 	<key>Modifier</key>
 	<string>Beth Scott</string>
 	<key>NotesVisible</key>
@@ -1056,7 +1056,7 @@
 			</dict>
 		</array>
 		<key>Frame</key>
-		<string>{{729, 216}, {1203, 844}}</string>
+		<string>{{67, -207}, {1203, 844}}</string>
 		<key>ListView</key>
 		<true/>
 		<key>OutlineWidth</key>
@@ -1070,7 +1070,7 @@
 		<key>SidebarWidth</key>
 		<integer>120</integer>
 		<key>VisibleRegion</key>
-		<string>{{0, 44}, {1054, 674}}</string>
+		<string>{{0, 44}, {1068, 689}}</string>
 		<key>Zoom</key>
 		<real>1</real>
 		<key>ZoomValues</key>
