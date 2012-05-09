@@ -5,8 +5,6 @@
 
 #include "dac.h"
 
-Dac Dac::instance;
-
 void Dac::init()
 {
     RCC.APB1ENR |= (1 << 29); // enable dac peripheral clock
