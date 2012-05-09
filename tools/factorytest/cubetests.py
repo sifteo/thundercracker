@@ -61,9 +61,9 @@ def Bg0RomTest(devMgr):
     # set bg0 rom mode
     _writeToVram(jig, VRAM_ADDRESS_MODE, VRAM_MODE_BG0ROM)
 
-    # write 7:7 16-bit words along the beginning of bgo rom
+    # write 7:7 (left aligned) 16-bit words along the beginning of bgo rom
     for a in xrange(500):
         valueLow = (a << 1) & 0xfe
-        valueHigh = (a >> 7) & 0xfe
+        valueHigh = (a >> 6) & 0xfe
         _writeToVram(jig, a, valueLow)
         _writeToVram(jig, a, valueHigh)
