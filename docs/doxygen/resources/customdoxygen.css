@@ -8,7 +8,15 @@ body, table, div, p, dl {
 /* @group Heading Levels */
 
 h1 {
+	font-size: 200%;
+}
+
+h2 {
 	font-size: 150%;
+}
+
+h3 {
+	font-size: 100%;
 }
 
 .title {
@@ -17,12 +25,20 @@ h1 {
 	margin: 10px 2px;
 }
 
-h2 {
-	font-size: 120%;
+.textblock h1 {
+	margin: 10px 0;
+	padding: 4px 0;
+	border-bottom: 2px solid #ccc;
 }
 
-h3 {
-	font-size: 100%;
+.textblock h2 {
+	margin: 10px 0;
+	padding: 4px 0;
+	border-bottom: 1px solid #ccc;
+}
+
+.textblock li {
+	margin: 0.5em 0;
 }
 
 dt {
@@ -187,9 +203,10 @@ body {
 }
 
 div.contents {
+	width: 650px;
 	margin-top: 10px;
-	margin-left: 8px;
-	margin-right: 8px;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 td.indexkey {
