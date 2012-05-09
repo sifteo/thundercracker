@@ -439,7 +439,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             channel.note.effectType = XmTrackerPattern::kNoEffect;
             if (param == 0) break;
 
-            if (param < 0x1F)
+            if (param <= 32)
                 tempo = param;
             else
                 bpm = param;
