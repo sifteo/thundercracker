@@ -83,14 +83,12 @@ inline void XmTrackerPlayer::loadNextNotes()
         if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
             pattern.loadPattern(patternOrderTable(next.phrase));
             phrase = next.phrase;
-            // TODO: clear active notes/effects here?
         } else if (next.phrase >= song.patternOrderTableSize) {
             stop();
         }
 
-        if (next.row >= pattern.nRows()) {
+        if (next.row >= pattern.nRows())
             stop();
-        }
         
         next.force = false;
     }
@@ -359,9 +357,9 @@ void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
     next.row = nextRow;
 
     // Reached end of song
-    if (nextPhrase >= song.patternOrderTableSize) {
+    if (next.phrase >= song.patternOrderTableSize) {
         // This is bounds-checked later, when the break is applied.
-        phrase = song.restartPosition;
+        next.phrase = song.restartPosition;
     }
 }
 
