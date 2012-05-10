@@ -73,7 +73,7 @@ Stir will accept (and the cubes will attempt to play) almost any XM module, so l
 
 ### Output
 
-Stir compresses modules in a few ways. All samples (accepted formats: pcm16, pcm8, and adpcm) are compressed to adpcm (like normal AssetSamples), and envelopes are also compressed. In the future, stir/clang will deduplicate samples so multiple songs can share the same sample data, further saving space on the master cube.
+Stir compresses modules in a few ways. All samples (accepted formats: pcm16, pcm8, and adpcm) are compressed to adpcm (like normal AssetSamples), and envelopes are also compressed. In the future, stir/clang will deduplicate samples so multiple songs can share the same sample data, further saving space on the Base.
 
 ### Limitations
 
@@ -82,7 +82,7 @@ Due to hardware limitations, modules face a few hard constraints:
 * Panning is not supported and any panning information is discarded.
 * Songs using more than 8 channels are not supported.
 
-Beyond these constraints, modules on siftables are also currently limited to:
+Beyond these constraints, modules on Sifteo Cubes are also currently limited to:
 
 * No empty instruments
 * No empty patterns
