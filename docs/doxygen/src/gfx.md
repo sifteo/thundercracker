@@ -120,3 +120,18 @@ In this mode there is a single layer, an infinitely-repeating 18x18 tile grid. V
 ![](@ref bg0-viewport.png)
 
  If the panning coordinates are a multiple of 8 pixels, the BG0 tile grid is lined up with the edges of the display and you can see a 16x16 grid of whole tiles. If the panning coordinates are not a multiple of 8 pixels, the tiles on the borders of the display will be partially visible. Up to a 17x17 grid of (partial) tiles may be visible at any time. The 18th row/column can be used for advanced scrolling techniques that pre-load tile indices just before they pan into view. This so-called *infinite scrolling* technique can be used to implement menus, large side-scrolling maps, and so on.
+
+## BG0_BG1
+
+Just as you might create several composited layers in a photo manipulation or illustration tool in order to move objects independently, the Sifteo graphics engine supports a simple form of layer compositing.
+
+Sometimes you only need a single layer. Since you can modify each tile index independently in BG0, any animation is possible as long as objects move in 8-pixel increments, or the entire BG0 layer can move as a single unit. But sometimes it's invaluable to have even a single object that "breaks the grid" and moves independently. In the **BG0_BG1** mode, a second _background one_ layer floats on top of BG0. You might use this for:
+
+* Explanatory text that pops up over a scene
+* Parallax scrolling, where differents parts of the scene scroll at different rates to simulate depth
+* A scoreboard, overlaid on your game's playfield
+* Large movable objects, like enemies or menu icons, which scroll against a static background
+
+Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 supports 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not support alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
+
+![](@ref bg1-stackup.png)
