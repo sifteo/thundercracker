@@ -27,9 +27,15 @@ endif
 #
 # Looks like we currently only need to specify this explicitly on Win32.
 # Keep in mind that 64-bit platforms will need different flags!
+#
+# XXX: i686 is possibly way too conservative. We were using pentium4
+#      here for a while, but the mingw32 GCC apparently has some really
+#      boneheaded stack alignment bugs with SSE2 instructions, in which
+#      it over-eagerly uses SSE2 moves/fills on data that doesn't meet
+#      the minimum 16-byte alignment.
 
 ifeq ($(BUILD_PLATFORM), windows32)
-    FLAGS += -march=pentium4 -mtune=core2
+    FLAGS += -march=i686 -mtune=core2
 endif
     
 # Linker flags
