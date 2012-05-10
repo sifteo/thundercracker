@@ -27,7 +27,7 @@ public:
     static NRF24L01 instance;
 
     void init();
-    void ptxMode();
+    void beginTransmitting();
 
     void setTxPower(Radio::TxPower pwr);
     Radio::TxPower txPower();
@@ -98,7 +98,7 @@ public:
 
     /* XXX: Make these DMA-able */
     uint8_t txData[PacketBuffer::MAX_LEN];
-    uint8_t rxData[PacketBuffer::MAX_LEN];   
+    uint8_t rxData[PacketBuffer::MAX_LEN];
 
     void handleTimeout();
     void receivePacket();

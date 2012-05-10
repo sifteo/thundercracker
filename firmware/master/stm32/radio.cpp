@@ -11,10 +11,14 @@
 #include "radio.h"
 #include "nrf24l01.h"
 
-void Radio::open()
+void Radio::init()
 {
     NRF24L01::instance.init();
-    NRF24L01::instance.ptxMode();
+}
+
+void Radio::begin()
+{
+    NRF24L01::instance.beginTransmitting();
 }
 
 void Radio::halt()

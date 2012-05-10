@@ -18,17 +18,12 @@ void PowerManager::earlyInit()
 
 /*
  * Other initializations that can happen after global ctors have run.
+ *
+ * Important: the flash LDO must get enabled before the 3v3 line, or we
+ * risk bashing the flash IC with too much voltage.
  */
 void PowerManager::init()
 {
-    _state = PowerManager::Uninitialized;
-
-    vbus.setControl(GPIOPin::IN_FLOAT);
-    vbus.irqInit();
-    vbus.irqSetFallingEdge();
-    vbus.irqSetRisingEdge();
-    vbus.irqEnable();
-    
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
@@ -36,16 +31,23 @@ void PowerManager::init()
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
 
-    vbusIsr();     // set initial state
+    // set initial state
+    _state = PowerManager::Uninitialized;
+    vbus.setControl(GPIOPin::IN_FLOAT);
+    onVBusEdge();
+
+    // and start listening for edges
+    vbus.irqInit();
+    vbus.irqSetFallingEdge();
+    vbus.irqSetRisingEdge();
+    vbus.irqEnable();
 }
 
 /*
  * Called from ISR context when an edge on vbus is detected.
  */
-void PowerManager::vbusIsr()
+void PowerManager::onVBusEdge()
 {
-    vbus.irqAcknowledge();
-
     State s = static_cast<State>(vbus.isHigh());
     if (s != _state) {
 
@@ -57,7 +59,7 @@ void PowerManager::vbusIsr()
          * - on transition to usb power, enable flash then enable 3v3
          * - on transition to battery power, disable 3v3 then disable flash
          */
-         
+
         GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
         switch (s) {

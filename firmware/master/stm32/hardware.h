@@ -32,6 +32,148 @@ struct RCC_t {
 
 extern volatile RCC_t RCC;
 
+
+/*
+ * Power Control
+ */
+
+struct PWR_t {
+    uint32_t CR;
+    uint32_t CSR;
+};
+
+extern volatile PWR_t PWR;
+
+/*
+ * Backup Domain
+ */
+
+struct BKP_t {
+    uint32_t  _res0;
+    uint16_t DR1;
+    uint16_t  _res1;
+    uint16_t DR2;
+    uint16_t  _res2;
+    uint16_t DR3;
+    uint16_t  _res3;
+    uint16_t DR4;
+    uint16_t  _res4;
+    uint16_t DR5;
+    uint16_t  _res5;
+    uint16_t DR6;
+    uint16_t  _res6;
+    uint16_t DR7;
+    uint16_t  _res7;
+    uint16_t DR8;
+    uint16_t  _res8;
+    uint16_t DR9;
+    uint16_t  _res9;
+    uint16_t DR10;
+    uint16_t  _res10;
+    uint16_t RTCCR;
+    uint16_t  _res11;
+    uint16_t CR;
+    uint16_t  _res12;
+    uint16_t CSR;
+    uint16_t  _res13[5];
+    uint16_t DR11;
+    uint16_t  _res14;
+    uint16_t DR12;
+    uint16_t  _res15;
+    uint16_t DR13;
+    uint16_t  _res16;
+    uint16_t DR14;
+    uint16_t  _res17;
+    uint16_t DR15;
+    uint16_t  _res18;
+    uint16_t DR16;
+    uint16_t  _res19;
+    uint16_t DR17;
+    uint16_t  _res20;
+    uint16_t DR18;
+    uint16_t  _res21;
+    uint16_t DR19;
+    uint16_t  _res22;
+    uint16_t DR20;
+    uint16_t  _res23;
+    uint16_t DR21;
+    uint16_t  _res24;
+    uint16_t DR22;
+    uint16_t  _res25;
+    uint16_t DR23;
+    uint16_t  _res26;
+    uint16_t DR24;
+    uint16_t  _res27;
+    uint16_t DR25;
+    uint16_t  _res28;
+    uint16_t DR26;
+    uint16_t  _res29;
+    uint16_t DR27;
+    uint16_t  _res30;
+    uint16_t DR28;
+    uint16_t  _res31;
+    uint16_t DR29;
+    uint16_t  _res32;
+    uint16_t DR30;
+    uint16_t  _res33;
+    uint16_t DR31;
+    uint16_t  _res34;
+    uint16_t DR32;
+    uint16_t  _res35;
+    uint16_t DR33;
+    uint16_t  _res36;
+    uint16_t DR34;
+    uint16_t  _res37;
+    uint16_t DR35;
+    uint16_t  _res38;
+    uint16_t DR36;
+    uint16_t  _res39;
+    uint16_t DR37;
+    uint16_t  _res40;
+    uint16_t DR38;
+    uint16_t  _res41;
+    uint16_t DR39;
+    uint16_t  _res42;
+    uint16_t DR40;
+    uint16_t  _res43;
+    uint16_t DR41;
+    uint16_t  _res44;
+    uint16_t DR42;
+    uint16_t  _res45;
+};
+
+extern volatile BKP_t BKP;
+
+
+/*
+ * Real Time Clock
+ */
+struct RTC_t {
+    uint16_t CRH;
+    uint16_t  _res0;
+    uint16_t CRL;
+    uint16_t  _res1;
+    uint16_t PRLH;
+    uint16_t  _res2;
+    uint16_t PRLL;
+    uint16_t  _res3;
+    uint16_t DIVH;
+    uint16_t  _res4;
+    uint16_t DIVL;
+    uint16_t  _res5;
+    uint16_t CNTH;
+    uint16_t  _res6;
+    uint16_t CNTL;
+    uint16_t _res7;
+    uint16_t ALRH;
+    uint16_t  _res8;
+    uint16_t ALRL;
+    uint16_t  _res9;
+};
+
+extern volatile RTC_t RTC;
+
+
 struct CRC_t {
   uint32_t DR;
   uint32_t IDR;

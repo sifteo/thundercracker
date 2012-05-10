@@ -80,7 +80,19 @@ int main()
      */
 
     SysTime::init();
-    Radio::open();
+    SysTime::Ticks start = SysTime::ticks();
+
+    /*
+     * NOTE: the radio needs to be fully ready to transmit a packet
+     * by the time we run transmitPacket(), otherwise the first transmit
+     * will fail and we'll never get the IRQ that we would be using
+     * to start future transmissions.
+     *
+     * Allow other initializations to run while we wait for this duration to
+     * minimize busy waiting.
+     */
+    Radio::init();
+
     Tasks::init();
     FlashBlock::init();
     Button::init();
@@ -90,6 +102,17 @@ int main()
     AudioOutDevice::start();
 
     UsbDevice::init();
+
+    /*
+     * Ensure we've been powered up long enough before beginning radio
+     * transmissions. This may change as we integrate some new code that
+     * tracks whether we're actively transmitting or not, since there's
+     * a lot of overlap between this issue and some much needed
+     * radio throttling / power management.
+     */
+    while (SysTime::ticks() - start < SysTime::msTicks(110))
+        ;
+    Radio::begin();
 
     /*
      * Temporary until we have a proper context to install new games in.

@@ -85,7 +85,7 @@ void SystemMC::threadFn(void *param)
 
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
-    Radio::open();
+    Radio::init();
 
     SvmLoader::run(111);
 
@@ -108,9 +108,15 @@ SysTime::Ticks SysTime::ticks()
     return ((SystemMC::instance->ticks * hzTicks(MCTiming::TICK_HZ / 16)) >> 4);
 }
 
-void Radio::open()
+void Radio::init()
 {
     // Nothing to do in simulation
+}
+
+void Radio::begin()
+{
+    // Nothing to do in simulation - hardware requires a delay between init
+    // and the beginning of transmissions.
 }
 
 void Radio::halt()
