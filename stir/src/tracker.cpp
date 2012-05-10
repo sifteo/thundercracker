@@ -349,7 +349,7 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
 
             // XM uses delta modulation; mix into regular pcm.
             int16_t mix = 0;
-            for(int i = 0; i < numSamples; i++) {
+            for(unsigned i = 0; i < numSamples; i++) {
                 // Allowing overflow here is intentional!
                 buf[i] = (mix += buf[i]);
             }
