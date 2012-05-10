@@ -10,7 +10,7 @@ Sifteo cubes have a fairly unique graphics architecture. This section introduces
 
 ![](@ref single-cube.png)
 
-The display on each Sifteo Cube is the star of the show. It's what sets Sifteo Cubes apart from dominos, Mahjongg tiles, and most other objects people love to pick up and touch and play with.
+The display on each Sifteo Cube is the star of the show. It's what sets Sifteo Cubes apart from dominos, Mahjongg tiles, and most other tiny objects people love to pick up and touch and play with.
 
 Our displays are 128x128 pixels, with a color depth of 16 bits per pixel. This format is often called **RGB565**, since it uses 5 bits of information each to store the Red and Blue channels of each pixel, and 6 bits for Green. (The human eye is most sensitive to green, so we can certainly use an extra bit there!)
 
@@ -176,7 +176,31 @@ All of this power comes with a handful of caveats, however:
 - Sprites are still made of tiles, so they must also be at least 8x8 pixels.
 - At most four sprites may appear on the same horizontal row of pixels. If more than four sprites share a scanline, the additional sprites will not be drawn on the affected lines.
 - Sprites can be much slower than BG0 or BG1, especially when they are large, you have many overlapping sprites, or there are large transparent regions.
-- Sprites are not backed by tile grids like BG0 and BG1 are. You can specify the index of the top-left tile in the sprite, but all other tiles are assumed to be sequential. This necessitates the use of a Sifteo::PinnedAssetImage, created by setting _pinned=true_ in @ref asset_workflow "stir".
+- Sprites are not backed by tile grids like BG0 and BG1 are. You can specify the index of the top-left tile in the sprite, but all other tiles are assumed to be sequential. This necessitates the use of a Sifteo::PinnedAssetImage, created by setting _pinned=true_ in your @ref asset_workflow "stir" script.
 - Because sprites require pinned assets, sprite images typically require much more storage space than images which are only displayed on tiled layers like BG0 or BG1.
 
 The Sifteo::SpriteLayer class understands the Video RAM layout used for the sprites in **BG0_SPR_BG1** mode. You can find an instance of this class as the *sprites* member inside Sifteo::VideoBuffer.
+
+## BG2
+
+Write me!
+
+## BG0_ROM
+
+Write me!
+
+## SOLID
+
+Write me!
+
+## FB32
+
+Write me!
+
+## FB64
+
+Write me!
+
+## FB128
+
+Write me!
