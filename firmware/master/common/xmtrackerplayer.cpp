@@ -106,7 +106,7 @@ inline void XmTrackerPlayer::loadNextNotes()
              note.note, note.instrument,
              note.volumeColumnByte,
              note.effectType, note.effectParam));
-        if (i == song.nChannels - 1) LOG(("\n"));
+        if ((int)i == song.nChannels - 1) LOG(("\n"));
 #endif
 
         channel.valid = false;
