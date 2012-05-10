@@ -260,11 +260,12 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
 
     switch (command) {
         case vxSlideDown:
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideDown\n", __FILE__, __LINE__));
             LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             processVolumeSlideDown(channel, channel.volume, param);
             break;
         case vxSlideUp:
-            LOG(("%s:%d: NOT_TESTED: vxSlideUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideUp\n", __FILE__, __LINE__));
             processVolumeSlideUp(channel, channel.volume, param);
             break;
         case vxFineVolumeDown:
@@ -431,13 +432,16 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             channel.volume = MIN(param, kMaxVolume);
             break;
         case fxPatternBreak:
-            if (ticks > 0) break;
+            // Only useful at the start of a note
+            ASSERT(ticks == 0);
+            channel.note.effectType = XmTrackerPattern::kNoEffect;
+
             // Seriously, the spec says the higher order nibble is * 10, not * 16.
             processPatternBreak(-1, (param & 0xF) + (param >> 4) * 10);
             break;
         case fxSetTempoAndBPM:
-            ASSERT(ticks == 0);
             // Only useful at the start of a note
+            ASSERT(ticks == 0);
             channel.note.effectType = XmTrackerPattern::kNoEffect;
             if (param == 0) break;
 
@@ -495,17 +499,22 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
                 case fxFineVolumeSlideUp:
-                    if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideUp\n", __FILE__, __LINE__));
-                    // Apply once, at beginning of note
-                    if (ticks) break;
-                    processVolumeSlideUp(channel, channel.volume, (param & 0xF));
+                    // Only useful at the start of a note
+                    ASSERT(ticks == 0);
+                    channel.note.effectType = XmTrackerPattern::kNoEffect;
+
+                    // Save parameter for later use, shared with fxFineVolumeSlideDown.
+                    if (param & 0x0F) channel.fineSlide = (channel.fineSlide & 0x0F) | ((param & 0x0F) << 4);
+                    processVolumeSlideUp(channel, channel.volume, channel.fineSlide >> 4);
                     break;
                 case fxFineVolumeSlideDown:
-                    LOG(("%s:%d: NOT_TESTED: fxFineVolumeSlideDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
-                    if ((param & 0x0F) == 0) LOG(("%s:%d: NOT_TESTED: empty param to fxFineVolumeSlideDown\n", __FILE__, __LINE__));
-                    // Apply once, at beginning of note
-                    if (ticks) break;
-                    processVolumeSlideDown(channel, channel.volume, (param & 0xF));
+                    // Only useful at the start of a note
+                    ASSERT(ticks == 0);
+                    channel.note.effectType = XmTrackerPattern::kNoEffect;
+
+                    // Save parameter for later use, shared with fxFineVolumeSlideUp.
+                    if (param & 0x0F) channel.fineSlide = (channel.fineSlide & 0xF0) | (param & 0x0F);
+                    processVolumeSlideDown(channel, channel.volume, channel.fineSlide & 0xF);
                     break;
                 case fxNoteCut:
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
@@ -519,7 +528,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             }
             break;
         default:
-            LOG(("%s:%d: NOT_IMPLEMENTED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
+            LOG(("%s:%d: NOT_REACHED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
             break;
         case XmTrackerPattern::kNoEffect:
             break;

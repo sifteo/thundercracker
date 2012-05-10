@@ -39,6 +39,7 @@ struct XmTrackerChannel {
         uint8_t slide;
         uint8_t slideDown;
         uint8_t slideUp;
+        uint8_t fineSlide;
         struct {
             uint32_t period;
         } porta;
