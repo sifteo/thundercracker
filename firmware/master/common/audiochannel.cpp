@@ -95,3 +95,19 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 
     return len - framesLeft;
 }
+
+void AudioChannelSlot::setPos(uint32_t ofs)
+{
+    if(ofs < samples.numSamples()) {
+        offset = ofs;
+    } else if (state & STATE_LOOP) {
+        if (ofs == samples.numSamples()) {
+            offset = mod.loopStart;
+        } else {   // begin at loop start, modulo the length of the loop
+            offset = (ofs - mod.loopStart) % (mod.loopEnd - mod.loopStart) + mod.loopStart;
+        }
+    } else {
+        return;
+    }
+    offset <<= SAMPLE_FRAC_SIZE;
+}

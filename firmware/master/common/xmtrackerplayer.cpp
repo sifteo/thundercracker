@@ -12,6 +12,9 @@
 #ifndef UINT16_MAX
 #define UINT16_MAX 0xffff
 #endif
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffff
+#endif
 
 //#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
@@ -473,7 +476,10 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSampleOffset: {
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            if (ticks) break;
+            channel.offset = param << 8;
+            // Compensate for sample compression (param is in shorts, offset is in samples)
+            channel.offset *= channel.instrument.compression;
             break;
         }
         case fxVolumeSlide: {
@@ -601,7 +607,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxNoteDelay: {
-                    LOG(("%s:%d: NOT_IMPLEMENTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    channel.start = ticks == (param & 0x0F) + 1;
                     break;
                 }
                 case fxPatternDelay: {
@@ -773,6 +779,12 @@ void XmTrackerPlayer::commit()
             mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
         } else if (mixer.isPlaying(CHANNEL_FOR(i))) {
             mixer.stop(CHANNEL_FOR(i));
+        }
+
+        // Offset
+        if (channel.offset < UINT32_MAX) {
+            mixer.setPos(CHANNEL_FOR(i), channel.offset);
+            channel.offset = UINT32_MAX;
         }
     }
 

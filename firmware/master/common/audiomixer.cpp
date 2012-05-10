@@ -184,6 +184,13 @@ void AudioMixer::setSpeed(_SYSAudioChannelID ch, uint32_t samplerate)
     channelSlots[ch].setSpeed(samplerate);
 }
 
+void AudioMixer::setPos(_SYSAudioChannelID ch, uint32_t ofs)
+{
+    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+
+    channelSlots[ch].setPos(ofs);
+}
+
 uint32_t AudioMixer::pos(_SYSAudioChannelID ch)
 {
     // TODO - implement

@@ -319,6 +319,7 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
     if (sample.dataSize == 0) return true;
     
     bool pcm8 = false;
+    instrument.compression = 4;
     switch (format) {
         case kSampleFormatADPCM: {
             // if adpcm, read directly into memory and done
@@ -328,11 +329,13 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             size += sample.dataSize;
             sampleDatas.push_back(sampleData);
             sample.type = _SYS_ADPCM;
+            instrument.compression = 1;
             break;
         }
         case kSampleFormatPCM8:
             pcm8 = true;
-            // intentional fall-through
+            instrument.compression = 2;
+            // Intentional fall-through
         case kSampleFormatPCM16: {
             uint32_t numSamples = sample.dataSize / (pcm8 ? 1 : 2);
             sample.dataSize = numSamples * sizeof(int16_t);
