@@ -47,8 +47,8 @@ struct XmTrackerChannel {
         } porta;
         struct {
             uint8_t phase;
-            uint8_t speed;
-            uint8_t depth;
+            uint8_t speed:4,
+                    depth:4;
             uint8_t type;
         } vibrato;
     };

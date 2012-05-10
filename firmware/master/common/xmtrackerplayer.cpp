@@ -16,7 +16,7 @@
 #define UINT32_MAX 0xffffffff
 #endif
 
-//#define XMTRACKERDEBUG
+#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
 const uint8_t XmTrackerPlayer::kLinearFrequencies;
@@ -32,7 +32,7 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
-    // Does the world make any sense?
+    // Does the world make any sense? 
     ASSERT(pSong->nPatterns > 0);
     if (pSong->nChannels > _SYS_AUDIO_MAX_CHANNELS) {
         LOG((LGPFX"Song has %u channels, %u supported\n",
@@ -366,6 +366,7 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     uint8_t phase = ticks % 3;
     uint8_t note;
 
+    // ProTracker 2/3 sequence. FastTracker II reverses cases 1 and 2.
     switch (phase) {
         case 0:
             return;
@@ -428,14 +429,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxPortaUp: {
+            // ProTracker 2/3 does not support memory.
             if (!ticks && param) channel.portaUp = param;
-            if (!ticks) break;
             channel.period -= channel.portaUp;
             break;
         }
         case fxPortaDown: {
+            // ProTracker 2/3 does not support memory.
             if (!ticks && param) channel.portaDown = param;
-            if (!ticks) break;
             channel.period += channel.portaDown;
             break;
         }
@@ -512,8 +513,9 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             ASSERT(!ticks);
             channel.note.effectType = XmTrackerPattern::kNoEffect;
 
-            if (!param) break;
-            if (param <= 32)
+            if (!param)
+                stop();
+            else if (param <= 32)
                 tempo = param;
             else
                 bpm = param;
@@ -766,8 +768,6 @@ void XmTrackerPlayer::commit()
                     channel.active = false;
                 }
 
-                LOG(("%s:%d: NOT_TESTED: fadeout\n", __FILE__, __LINE__));
-
                 // Apply fadeout
                 volume = volume * channel.fadeout / UINT16_MAX;
             }
@@ -789,6 +789,7 @@ void XmTrackerPlayer::commit()
     }
 
     // Future effects are capable of adjusting the tempo/bpm
+    // (24 / 60 * bpm)Hz
     mixer.setTrackerCallbackInterval(2500000 / bpm);
 }
 
@@ -813,7 +814,6 @@ void XmTrackerPlayer::tick()
 {
     if (ticks++ >= tempo * (delay + 1)) {
         ticks = delay = 0;
-
         // load next notes into the process channels
         loadNextNotes();
         if (!isPlaying()) return;
