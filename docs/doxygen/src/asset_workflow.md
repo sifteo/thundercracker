@@ -84,6 +84,8 @@ Due to hardware limitations, modules face a few hard constraints:
 
 Beyond these constraints, modules on siftables are also currently limited to:
 
+* No empty instruments
+* No empty patterns
 * One sample per instrument
 * Loops are forward only (no ping-pong loops)
 
@@ -91,7 +93,14 @@ These limitations may be removed with a future version of the asset toolchain, b
 
 ### Effects
 
-While the included tracker fully supports playing notes, it currently has incomplete effect and volume column support. The following volume column effects are supported:
+While the included tracker fully supports playing notes, it has incomplete built-in effect, standard effect and volume column support.
+
+The following standard effects are not yet supported:
+
+* Automatic instrument vibrato
+* Fadeout
+
+The following volume column effects are supported:
 
 * Set volume (0x10 - 0x50)
 * Volume slide down (0x6#)
