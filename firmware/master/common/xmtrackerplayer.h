@@ -51,14 +51,17 @@ struct XmTrackerChannel {
         } vibrato;
     };
 
-    inline uint8_t realNote() const {
+    inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
+        if (pNote == XmTrackerPattern::kNoNote)
+            pNote = note.note;
+
         if (!instrument.sample.pData ||
-            note.note == XmTrackerPattern::kNoteOff)
+            pNote == XmTrackerPattern::kNoteOff)
         {
             return 0;
         }
 
-        return instrument.relativeNoteNumber + note.note;
+        return instrument.relativeNoteNumber + pNote;
     }
 };
 

@@ -125,18 +125,15 @@ inline void XmTrackerPlayer::loadNextNotes()
         
         channel.start = !recNote || !recInst;
         // Don't play with an invalid instrument
-        if (channel.start) {
-            if (channel.start && note.instrument >= song.nInstruments) {
-                channel.start = false;
-            }
-            // Stop playing/don't play when no sample data or note
-            else if (note.note == XmTrackerPattern::kNoteOff ||
-                     note.note == XmTrackerPattern::kNoNote ||
-                     channel.instrument.sample.pData == 0)
-            {
-                channel.start = false;
-                channel.active = false;
-            }
+        if (channel.start && note.instrument >= song.nInstruments) {
+            channel.start = false;
+        }
+        // Stop playing/don't play when no sample data or note
+        if (channel.realNote(note.note) >= XmTrackerPattern::kNoteOff ||
+            channel.instrument.sample.pData == 0)
+        {
+            channel.start = false;
+            channel.active = false;
         }
 
         if (!channel.active && !channel.start) {
@@ -146,7 +143,7 @@ inline void XmTrackerPlayer::loadNextNotes()
 
         // Remember old/current period for portamento slide.
         channel.porta.period = channel.period;
-        channel.period = getPeriod(channel.realNote(), channel.instrument.finetune);
+        channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
         if (note.instrument != channel.note.instrument ||
             channel.porta.period == 0)
         {
