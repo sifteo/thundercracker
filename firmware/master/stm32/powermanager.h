@@ -19,7 +19,7 @@ public:
         return _state;
     }
 
-    static void vbusIsr();
+    static void onVBusEdge();
 
     static GPIOPin vbus;
 
