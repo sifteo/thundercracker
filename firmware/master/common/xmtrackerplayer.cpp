@@ -13,6 +13,7 @@
 #define UINT16_MAX 0xffff
 #endif
 
+//#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
 const uint8_t XmTrackerPlayer::kLinearFrequencies;
@@ -98,6 +99,16 @@ inline void XmTrackerPlayer::loadNextNotes()
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
         pattern.getNote(next.row, i, note);
+
+#ifdef XMTRACKERDEBUG
+        if (i) LOG((" | "));
+        LOG(("%3d %3d x%02x x%02x x%02x",
+             note.note, note.instrument,
+             note.volumeColumnByte,
+             note.effectType, note.effectParam));
+        if (i == song.nChannels - 1) LOG(("\n"));
+#endif
+
         channel.valid = false;
         bool recNote = false,
              recInst = false;
