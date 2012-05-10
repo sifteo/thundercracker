@@ -72,19 +72,15 @@ void NRF24L01::init() {
      * trigger spuriously during init.
      */
     irq.irqEnable();
-}
 
-void NRF24L01::ptxMode()
-{
     /*
      * Setup for Primary Transmitter (PTX) mode
      */
-
     const uint8_t ptx_setup[]  = {
         /* Discard any packets queued in hardware */
         1, CMD_FLUSH_RX,
         1, CMD_FLUSH_TX,
-        
+
         /* Clear write-once-to-clear bits */
         2, CMD_W_REGISTER | REG_STATUS,         0x70,
 
@@ -93,26 +89,11 @@ void NRF24L01::ptxMode()
 
         0
     };
-    spi.transferTable(ptx_setup); 
+    spi.transferTable(ptx_setup);
+}
 
-    /*
-     * XXX: Super-Gross hack! Give the radio 100ms right here, to initialize.
-     *
-     * It needs to be fully ready to transmit a packet by the time we
-     * run transmitPacket(), otherwise that first transmit will fail and
-     * we'll never get the IRQ that we would be using to start future
-     * transmissions.
-     *
-     * We can do this asynchronously instead, firing off a timer after a while
-     * which starts the first transmit. But instead, we'll probably just want
-     * to integrate this with some new code that tracks whether we're actively
-     * transmitting or not, since there's a lot of overlap between this bugfix
-     * and some much needed radio throttling / power management.
-     */
-
-    for (unsigned i = 0; i < 100000; i++)
-        spi.transfer(0);  // About 1us
-
+void NRF24L01::beginTransmitting()
+{
     /*
      * Transmit the first packet. Subsequent packets will be sent from
      * within the isr().

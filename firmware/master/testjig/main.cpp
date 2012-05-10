@@ -36,7 +36,7 @@ int main()
      */
 
     SysTime::init();
-    Radio::open();
+    Radio::init();
     Tasks::init();
 
     UsbDevice::init();
