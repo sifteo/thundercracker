@@ -110,6 +110,11 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     // A little late, but make sure we're not being rude.
     ASSERT(buf <= noteData + arraysize(noteData));
 
+    // If the effect parameter is set but the effect was not, it was intended to be an arpeggio (effect 0)
+    if (note.effectType == kNoEffect && note.effectParam != kNoParam) {
+        note.effectType = 0;
+    }
+
     // Clean up note
     if (note.note > kNoteOff)
         note.note = kNoNote;

@@ -36,6 +36,10 @@ struct XmTrackerChannel {
         uint8_t portaUp;
         uint8_t portaDown;
         uint8_t tonePorta;
+        uint8_t slide;
+        uint8_t slideDown;
+        uint8_t slideUp;
+        uint8_t fineSlide;
         struct {
             uint32_t period;
         } porta;
@@ -47,14 +51,17 @@ struct XmTrackerChannel {
         } vibrato;
     };
 
-    inline uint8_t realNote() const {
+    inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
+        if (pNote == XmTrackerPattern::kNoNote)
+            pNote = note.note;
+
         if (!instrument.sample.pData ||
-            note.note == XmTrackerPattern::kNoteOff)
+            pNote == XmTrackerPattern::kNoteOff)
         {
             return 0;
         }
 
-        return instrument.relativeNoteNumber + note.note;
+        return instrument.relativeNoteNumber + pNote;
     }
 };
 
@@ -92,8 +99,8 @@ private:
 
     // Volume/Envelopes
     static const uint8_t kMaxVolume = 64;
-    static const uint8_t kEnvelopeSustain = 1;
-    static const uint8_t kEnvelopeLoop = 2;
+    static const uint8_t kEnvelopeSustain = 1 << 1;
+    static const uint8_t kEnvelopeLoop = 1 << 2;
     inline static const uint16_t envelopeOffset(uint16_t enc) {
         return enc & 0x01FF;
     }
@@ -129,8 +136,8 @@ private:
 
     void loadNextNotes();
 
-    void processVolumeSlideUp(uint16_t &volume, uint8_t inc);
-    void processVolumeSlideDown(uint16_t &volume, uint8_t inc);
+    void processVolumeSlideUp(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
+    void processVolumeSlideDown(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
     void processVibrato(XmTrackerChannel &channel);
     void processPorta(XmTrackerChannel &channel);
     void processVolume(XmTrackerChannel &channel);
