@@ -54,6 +54,8 @@ public:
         volume = newVolume;
     }
 
+    void setPos(uint32_t ofs);
+
 protected:
     uint32_t mixAudio(int16_t *buffer, uint32_t len);
     friend class AudioMixer;    // mixer can tell us to mixAudio()

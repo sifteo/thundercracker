@@ -12,8 +12,11 @@
 #ifndef UINT16_MAX
 #define UINT16_MAX 0xffff
 #endif
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffff
+#endif
 
-//#define XMTRACKERDEBUG
+#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
 const uint8_t XmTrackerPlayer::kLinearFrequencies;
@@ -29,7 +32,7 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
-    // Does the world make any sense?
+    // Does the world make any sense? 
     ASSERT(pSong->nPatterns > 0);
     if (pSong->nChannels > _SYS_AUDIO_MAX_CHANNELS) {
         LOG((LGPFX"Song has %u channels, %u supported\n",
@@ -74,7 +77,7 @@ void XmTrackerPlayer::stop()
 
 inline void XmTrackerPlayer::loadNextNotes()
 {
-    ASSERT(ticks == 0);
+    ASSERT(!ticks);
 
     // Advance song position on row overflow or effect
     if (next.row >= pattern.nRows() || next.force) {
@@ -106,7 +109,7 @@ inline void XmTrackerPlayer::loadNextNotes()
              note.note, note.instrument,
              note.volumeColumnByte,
              note.effectType, note.effectParam));
-        if (i == song.nChannels - 1) LOG(("\n"));
+        if ((int)i == song.nChannels - 1) LOG(("\n"));
 #endif
 
         channel.valid = false;
@@ -119,6 +122,12 @@ inline void XmTrackerPlayer::loadNextNotes()
         if (note.note == XmTrackerPattern::kNoNote) {
             recNote = true;
             note.note = channel.note.note;
+        }
+
+        if (note.effectType != XmTrackerPattern::kNoEffect &&
+            note.effectParam == XmTrackerPattern::kNoParam)
+        {
+            note.effectParam = 0;
         }
 
         if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
@@ -141,7 +150,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         }
         // Stop playing/don't play when no sample data or note
         if (channel.realNote(note.note) >= XmTrackerPattern::kNoteOff ||
-            channel.instrument.sample.pData == 0)
+            !channel.instrument.sample.pData)
         {
             channel.start = false;
             channel.active = false;
@@ -155,16 +164,14 @@ inline void XmTrackerPlayer::loadNextNotes()
         // Remember old/current period for portamento slide.
         channel.porta.period = channel.period;
         channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
-        if (note.instrument != channel.note.instrument ||
-            channel.porta.period == 0)
-        {
+        if (note.instrument != channel.note.instrument || !channel.porta.period) {
             channel.porta.period = channel.period;
         }
-
+        channel.frequency = getFrequency(channel.period);
         channel.note = note;
 
         if (channel.start) {
-            channel.envelope.done = channel.instrument.nVolumeEnvelopePoints == 0;
+            channel.envelope.done = !channel.instrument.nVolumeEnvelopePoints;
             memset(&channel.envelope, 0, sizeof(channel.envelope));
         }
 
@@ -245,12 +252,21 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
 {
+    if (!ticks) {
+        uint32_t tmp;
+        tmp = channel.period;
+        channel.period = channel.porta.period;
+        channel.porta.period = tmp;
+        // Not playing a new note anymore, sustain-shifting to another.
+        channel.start = false;
+        return;
+    }
+
     ASSERT(channel.porta.period);
 
     int32_t delta=(int32_t)channel.period-(int32_t)channel.porta.period;
 
-    if (delta == 0)
-        return;
+    if (!delta) return;
 
     if (abs(delta) < channel.tonePorta) {
         channel.period = channel.porta.period;
@@ -345,12 +361,39 @@ enum {
     fxPatternDelay              // 0x0E
 };
 
+void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
+{
+    uint8_t phase = ticks % 3;
+    uint8_t note;
+
+    // ProTracker 2/3 sequence. FastTracker II reverses cases 1 and 2.
+    switch (phase) {
+        case 0:
+            return;
+        case 1:
+            note = channel.note.effectParam >> 4;
+        case 2:
+            note = channel.note.effectParam & 0x0F;
+    }
+    note += channel.realNote();
+
+    if (note >= XmTrackerPattern::kNoteOff) {
+        LOG((LGPFX"Clipped arpeggio (base note: %d, arpeggio: %02x)\n",
+             channel.realNote(), channel.note.effectParam));
+        note = XmTrackerPattern::kNoteOff - 1;
+    }
+
+    // Apply relative period shift, to avoid disrupting other active effects
+    int32_t newPeriod = getPeriod(note, channel.instrument.finetune);
+    int32_t period = getPeriod(channel.realNote(), channel.instrument.finetune);
+    channel.frequency = getFrequency(channel.period + newPeriod - period);
+}
+
 void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
 {
-    if (ticks == 0 || (channel.note.effectParam == 0 && channel.slide == 0)) return;
-    if (channel.note.effectParam) channel.slide = channel.note.effectParam;
-    uint8_t up = channel.note.effectParam >> 4;
-    uint8_t down = channel.note.effectParam & 0x0F;
+    if (!ticks || !channel.slide) return;
+    uint8_t up = channel.slide >> 4;
+    uint8_t down = channel.slide & 0x0F;
 
     if (up) {
         channel.volume = MIN(channel.volume + up, kMaxVolume);
@@ -381,160 +424,201 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 {
     const uint8_t param = channel.note.effectParam;
     switch (channel.note.effectType) {
-        case fxArpeggio:
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxArpeggio fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+        case fxArpeggio: {
+            processArpeggio(channel);
             break;
-        case fxPortaUp:
-            if (param != 0) channel.portaUp = param;
-            if (ticks == 0) break;
+        }
+        case fxPortaUp: {
+            // ProTracker 2/3 does not support memory.
+            if (!ticks && param) channel.portaUp = param;
             channel.period -= channel.portaUp;
             break;
-        case fxPortaDown:
-            if (param != 0) channel.portaDown = param;
-            if (ticks == 0) break;
+        }
+        case fxPortaDown: {
+            // ProTracker 2/3 does not support memory.
+            if (!ticks && param) channel.portaDown = param;
             channel.period += channel.portaDown;
             break;
-        case fxTonePorta:
-            if (param != 0) channel.tonePorta = param;
-            if (ticks == 0) {
-                uint32_t tmp;
-                tmp = channel.period;
-                channel.period = channel.porta.period;
-                channel.porta.period = tmp;
-                // Not playing a new note anymore, sustain-shifting to another.
-                channel.start = false;
-            }
+        }
+        case fxTonePorta: {
+            if (!ticks && param) channel.tonePorta = param;
             processPorta(channel);
             break;
-        case fxVibrato:
-            if (ticks == 0) {
-                if (channel.start)
-                    channel.vibrato.phase = 0;
-                if (param & 0x0F)
-                    channel.vibrato.depth = param & 0x0F;
-                if (param & 0xF0)
-                    channel.vibrato.speed = (param & 0xF0) >> 4;
+        }
+        case fxVibrato: {
+            if (!ticks) {
+                if (channel.start) channel.vibrato.phase = 0;
+                if (param & 0x0F) channel.vibrato.depth = param & 0x0F;
+                if (param & 0xF0) channel.vibrato.speed = (param & 0xF0) >> 4;
             }
             processVibrato(channel);
             break;
-        case fxTonePortaAndVolumeSlide:
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxTonePortaAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+        }
+        case fxTonePortaAndVolumeSlide: {
+            /* Strictly speaking, if both nibbles in the parameter are nonzero,
+             * this command is illegal.
+             */
+            if (!ticks && param) channel.slide = param;
+            processVolumeSlide(channel);
+            processPorta(channel);
             break;
-        case fxVibratoAndVolumeSlide:
-            LOG(("%s:%d: PARTIALLY_IMPLEMENTED: fxVibratoAndVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+        }
+        case fxVibratoAndVolumeSlide: {
+            /* Strictly speaking, if both nibbles in the parameter are nonzero,
+             * this command is illegal.
+             */
+            if (param) channel.slide = param;
+            processVolumeSlide(channel);
             processVibrato(channel);
             break;
-        case fxTremolo:
+        }
+        case fxTremolo: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxTremolo fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxSampleOffset:
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxSampleOffset fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+        }
+        case fxSampleOffset: {
+            if (ticks) break;
+            channel.offset = param << 8;
+            // Compensate for sample compression (param is in shorts, offset is in samples)
+            channel.offset *= channel.instrument.compression;
             break;
-        case fxVolumeSlide:
+        }
+        case fxVolumeSlide: {
+            /* Unlike the volume slide combination effects, both nibbles in the
+             * parameter are allowed to be set.
+             */
+            if (param) channel.slide = param;
             processVolumeSlide(channel);
             break;
-        case fxPositionJump:
+        }
+        case fxPositionJump: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxPositionJump fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxSetVolume:
+        }
+        case fxSetVolume: {
             channel.volume = MIN(param, kMaxVolume);
             break;
-        case fxPatternBreak:
+        }
+        case fxPatternBreak: {
             // Only useful at the start of a note
-            ASSERT(ticks == 0);
+            ASSERT(!ticks);
             channel.note.effectType = XmTrackerPattern::kNoEffect;
 
             // Seriously, the spec says the higher order nibble is * 10, not * 16.
             processPatternBreak(-1, (param & 0xF) + (param >> 4) * 10);
             break;
-        case fxSetTempoAndBPM:
+        }
+        case fxSetTempoAndBPM: {
             // Only useful at the start of a note
-            ASSERT(ticks == 0);
+            ASSERT(!ticks);
             channel.note.effectType = XmTrackerPattern::kNoEffect;
-            if (param == 0) break;
 
-            if (param <= 32)
+            if (!param)
+                stop();
+            else if (param <= 32)
                 tempo = param;
             else
                 bpm = param;
             break;
-        case fxSetGlobalVolume:
+        }
+        case fxSetGlobalVolume: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxSetGlobalVolume fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxGlobalVolumeSlide:
+        }
+        case fxGlobalVolumeSlide: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxGlobalVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxSetEnvelopePos:
+        }
+        case fxSetEnvelopePos: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxPanSlide:
+        }
+        case fxPanSlide: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxPanSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxMultiRetrigNote:
+        }
+        case fxMultiRetrigNote: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxMultiRetrigNote fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxTremor:
+        }
+        case fxTremor: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxExtraFinePorta:
+        }
+        case fxExtraFinePorta: {
             LOG(("%s:%d: NOT_IMPLEMENTED: fxExtraFinePorta fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
             break;
-        case fxOverflow:
+        }
+        case fxOverflow: {
             switch (param >> 4) {
-                case fxFinePortaUp:
+                case fxFinePortaUp: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxFinePortaUp fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxFinePortaDown:
+                }
+                case fxFinePortaDown: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxFinePortaDown fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxGlissControl:
+                }
+                case fxGlissControl: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxVibratoControl:
+                }
+                case fxVibratoControl: {
                     if (ticks) break;
                     channel.vibrato.type = (param & 0x0F);
                     break;
-                case fxFinetune:
+                }
+                case fxFinetune: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxLoopPattern:
+                }
+                case fxLoopPattern: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxTremoloControl:
+                }
+                case fxTremoloControl: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxRetrigNote:
+                }
+                case fxRetrigNote: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxFineVolumeSlideUp:
+                }
+                case fxFineVolumeSlideUp: {
                     // Only useful at the start of a note
-                    ASSERT(ticks == 0);
+                    ASSERT(!ticks);
                     channel.note.effectType = XmTrackerPattern::kNoEffect;
 
                     // Save parameter for later use, shared with fxFineVolumeSlideDown.
                     if (param & 0x0F) channel.fineSlide = (channel.fineSlide & 0x0F) | ((param & 0x0F) << 4);
                     processVolumeSlideUp(channel, channel.volume, channel.fineSlide >> 4);
                     break;
-                case fxFineVolumeSlideDown:
+                }
+                case fxFineVolumeSlideDown: {
                     // Only useful at the start of a note
-                    ASSERT(ticks == 0);
+                    ASSERT(!ticks);
                     channel.note.effectType = XmTrackerPattern::kNoEffect;
 
                     // Save parameter for later use, shared with fxFineVolumeSlideUp.
                     if (param & 0x0F) channel.fineSlide = (channel.fineSlide & 0xF0) | (param & 0x0F);
                     processVolumeSlideDown(channel, channel.volume, channel.fineSlide & 0xF);
                     break;
-                case fxNoteCut:
+                }
+                case fxNoteCut: {
                     LOG(("%s:%d: NOT_IMPLEMENTED: fxNoteCut fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
                     break;
-                case fxNoteDelay:
-                    LOG(("%s:%d: NOT_IMPLEMENTED: fxNoteDelay fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                }
+                case fxNoteDelay: {
+                    channel.start = ticks == (param & 0x0F) + 1;
                     break;
-                case fxPatternDelay:
+                }
+                case fxPatternDelay: {
                     delay = param & 0x0f;
                     break;
+                }
             }
             break;
+        }
         default:
             LOG(("%s:%d: NOT_REACHED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
             break;
@@ -596,9 +680,7 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
         pointLength = envelopeOffset(envPt1) - envelopeOffset(envPt0);
     }
 
-    if (envelope.point >= instrument.nVolumeEnvelopePoints - 1 ||
-        envelope.tick == 0)
-    {
+    if (envelope.point >= instrument.nVolumeEnvelopePoints - 1 || !envelope.tick) {
         // Beginning of node/end of envelope, no interpolation.
         envelope.value = envelopeValue(envPt0);
     } else {
@@ -647,6 +729,10 @@ void XmTrackerPlayer::commit()
             continue;
         }
 
+        /* This code relies on the single-threaded nature of the audio
+         * stack--the sample is loaded first and volume and sampling rate
+         * adjusted shortly after.
+         */
         if (channel.start) {
             channel.start = false;
             if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
@@ -670,7 +756,7 @@ void XmTrackerPlayer::commit()
                 // Update fade
                 if (channel.instrument.volumeFadeout > 0xFFF ||
                     channel.instrument.volumeFadeout > channel.fadeout ||
-                    channel.instrument.volumeFadeout == 0)
+                    !channel.instrument.volumeFadeout)
                 {
                     channel.fadeout = 0;
                 } else {
@@ -678,28 +764,32 @@ void XmTrackerPlayer::commit()
                 }
 
                 // Completely faded -> stop playing sample.
-                if (channel.fadeout == 0) {
+                if (!channel.fadeout) {
                     channel.active = false;
                 }
-
-                LOG(("%s:%d: NOT_TESTED: fadeout\n", __FILE__, __LINE__));
 
                 // Apply fadeout
                 volume = volume * channel.fadeout / UINT16_MAX;
             }
         }
-        volume *= 4;
-        mixer.setVolume(CHANNEL_FOR(i), clamp(volume, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
+        mixer.setVolume(CHANNEL_FOR(i), clamp(volume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
         if (channel.period > 0) {
-            mixer.setSpeed(CHANNEL_FOR(i), getFrequency(channel.period));
-        } else {
+            mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
+        } else if (mixer.isPlaying(CHANNEL_FOR(i))) {
             mixer.stop(CHANNEL_FOR(i));
+        }
+
+        // Offset
+        if (channel.offset < UINT32_MAX) {
+            mixer.setPos(CHANNEL_FOR(i), channel.offset);
+            channel.offset = UINT32_MAX;
         }
     }
 
     // Future effects are capable of adjusting the tempo/bpm
+    // (24 / 60 * bpm)Hz
     mixer.setTrackerCallbackInterval(2500000 / bpm);
 }
 
@@ -724,7 +814,6 @@ void XmTrackerPlayer::tick()
 {
     if (ticks++ >= tempo * (delay + 1)) {
         ticks = delay = 0;
-
         // load next notes into the process channels
         loadNextNotes();
         if (!isPlaying()) return;

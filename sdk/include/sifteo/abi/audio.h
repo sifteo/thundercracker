@@ -65,13 +65,14 @@ struct _SYSXMInstrument {
     struct _SYSAudioModule sample; /// Instrument's sample data
     int8_t finetune;                /// Minor frequency adjustment to note, as x/128 halftone (-1..127/128).
     int8_t relativeNoteNumber;      /// Relative note number (for increasing/decreasing native sample bitrate) (-96..95, 0 = C-4)
+    uint8_t compression;            /// Original number of nibbles per sample
     
     uint32_t volumeEnvelopePoints;  /// Flash address for array of envelope points, each is 9 bits of offset (?,0..130) and 7 bits of value (0..64)
     uint8_t nVolumeEnvelopePoints;  /// Size of volumeEnvelopePoints in shorts (0..12)
-    uint8_t volumeSustainPoint;     /// TODO
-    uint8_t volumeLoopStartPoint;   /// TODO
-    uint8_t volumeLoopEndPoint;     /// TODO
-    uint8_t volumeType;             /// (0: On, 1: Sustain, 2: Loop)
+    uint8_t volumeSustainPoint;     /// Volume envelope sustain point
+    uint8_t volumeLoopStartPoint;   /// Volume envelope loop starting point
+    uint8_t volumeLoopEndPoint;     /// Volume envelope loop ending point
+    uint8_t volumeType;             /// (0: Enabled, 1: Sustain, 2: Loop)
     uint8_t vibratoType;            /// TODO
     uint8_t vibratoSweep;           /// TODO
     uint8_t vibratoDepth;           /// TODO

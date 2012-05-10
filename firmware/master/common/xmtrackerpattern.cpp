@@ -132,7 +132,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     if (note.volumeColumnByte <= 0x0F)
         note.volumeColumnByte = 0;
 
-    if (note.volumeColumnByte >= 51 && note.volumeColumnByte <= 0x5F)
+    if (note.volumeColumnByte >= 0x51 && note.volumeColumnByte <= 0x5F)
         note.volumeColumnByte = kNoVolume;
 
     if (note.volumeColumnByte >= 0xC0 && note.volumeColumnByte <= 0xEF)
