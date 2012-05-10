@@ -126,7 +126,8 @@ struct PacketTransmission {
 
 class Radio {
  public:
-    static void open();
+    static void init();
+    static void begin();
     static void halt();
 
     /*

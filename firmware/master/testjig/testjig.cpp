@@ -72,10 +72,10 @@ void TestJig::init()
     GPIOPin dacOut = BATTERY_SIM_GPIO;
     dacOut.setControl(GPIOPin::IN_ANALOG);
 
-    Dac::instance.init();
-    Dac::instance.configureChannel(BATTERY_SIM_DAC_CH);
-    Dac::instance.enableChannel(BATTERY_SIM_DAC_CH);
-    Dac::instance.write(BATTERY_SIM_DAC_CH, 0); // default to off
+    Dac::init();
+    Dac::configureChannel(BATTERY_SIM_DAC_CH);
+    Dac::enableChannel(BATTERY_SIM_DAC_CH);
+    Dac::write(BATTERY_SIM_DAC_CH, 0); // default to off
 
     GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
     v3CurrentPin.setControl(GPIOPin::IN_ANALOG);
@@ -231,7 +231,7 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t val = (args[1] | args[2] << 8);
-    Dac::instance.write(BATTERY_SIM_DAC_CH, val);
+    Dac::write(BATTERY_SIM_DAC_CH, val);
 
     // no response data - just indicate that we're done
     const uint8_t response[] = { args[0] };

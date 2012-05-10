@@ -117,17 +117,18 @@ enum Rotation {
  * and your application.  See abi.h for details on this protocol.
  */
 struct VideoBuffer {
+    /// Anonymous union of various ways to interpret the VideoBuffer memory
     union {
         _SYSAttachedVideoBuffer sys;
-        SpriteLayer             sprites;
-        Colormap                colormap;
-        FB32Drawable            fb32;
-        FB64Drawable            fb64;
-        FB128Drawable           fb128;
-        BG0ROMDrawable          bg0rom;
-        BG0Drawable             bg0;
-        BG1Drawable             bg1;
-        BG2Drawable             bg2;
+        SpriteLayer             sprites;    ///< Drawable for the sprite layer in BG0_SPR_BG1 mode
+        Colormap                colormap;   ///< Colormap accessor, for framebuffer modes
+        FB32Drawable            fb32;       ///< Drawable for the FB32 framebuffer mode
+        FB64Drawable            fb64;       ///< Drawable for the FB64 framebuffer mode
+        FB128Drawable           fb128;      ///< Drawable for the FB128 framebuffer mode
+        BG0ROMDrawable          bg0rom;     ///< Drawable for the BG0_ROM tiled mode
+        BG0Drawable             bg0;        ///< Drawable for the BG0 layer, as used in BG0, BG0_BG1, and BG0_SPR_BG1 modes
+        BG1Drawable             bg1;        ///< Drawable for the BG1 layer, as used in BG0_BG1 and BG0_SPR_BG1 modes
+        BG2Drawable             bg2;        ///< Drawable for the BG2 tiled mode
     };
 
     // Implicit conversions

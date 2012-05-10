@@ -19,7 +19,6 @@ class DacAudioOut
 {
 public:
     DacAudioOut(int dacChannel, HwTimer _sampleTimer) :
-        dac(Dac::instance),
         dacChan(dacChannel),
         sampleTimer(_sampleTimer)
     {}
@@ -38,7 +37,6 @@ public:
     void tmrIsr();
 
 private:
-    Dac &dac;
     int dacChan;
     HwTimer sampleTimer;
 

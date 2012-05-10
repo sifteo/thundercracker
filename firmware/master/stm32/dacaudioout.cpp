@@ -34,8 +34,8 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
-    dac.init();
-    dac.configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
+    Dac::init();
+    Dac::configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
 
     Tasks::setPending(Tasks::AudioPull, &buf, true);
 }
@@ -43,7 +43,7 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
 void DacAudioOut::start()
 {
     sampleTimer.enableUpdateIsr();
-    dac.enableChannel(this->dacChan);
+    Dac::enableChannel(this->dacChan);
 }
 
 void DacAudioOut::stop()
@@ -54,12 +54,12 @@ void DacAudioOut::stop()
 
 void DacAudioOut::suspend()
 {
-    dac.disableChannel(this->dacChan);
+    Dac::disableChannel(this->dacChan);
 }
 
 void DacAudioOut::resume()
 {
-    dac.enableChannel(this->dacChan);
+    Dac::enableChannel(this->dacChan);
 }
 
 #if 0
@@ -91,5 +91,5 @@ void DacAudioOut::tmrIsr()
 
     uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output
-    dac.write(this->dacChan, duty, Dac::RightAlign12Bit);
+    Dac::write(this->dacChan, duty, Dac::RightAlign12Bit);
 }

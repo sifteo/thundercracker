@@ -50,6 +50,9 @@ template <unsigned _capacity>
 class String {
 public:
 
+    typedef char* iterator;
+    typedef const char* const_iterator;
+
     String() {
         clear();
     }
@@ -76,6 +79,22 @@ public:
 
     unsigned size() const {
         return _SYS_strnlen(buffer, _capacity-1);
+    }
+
+    iterator begin() {
+        return &buffer[0];
+    }
+
+    iterator end() {
+        return &buffer[size()];
+    }
+
+    const_iterator begin() const {
+        return &buffer[0];
+    }
+
+    const_iterator end() const {
+        return &buffer[size()];
     }
 
     void clear() {

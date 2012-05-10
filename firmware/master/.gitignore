@@ -5,4 +5,4 @@ master-sim
 *.elf
 *.bc
 *.ll
-
+common/syscall-table.def

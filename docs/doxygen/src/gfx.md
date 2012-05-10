@@ -6,6 +6,25 @@ Graphics Engine       {#gfx}
 
 Sifteo cubes have a fairly unique graphics architecture. This section introduces the main differences you'll notice between Sifteo cubes and other systems you may be familiar with. We assume at least some basic familiarity with computer architecture and computer graphics.
 
+## Display
+
+![](@ref single-cube.png)
+
+The display on each Sifteo Cube is the star of the show. It's what sets Sifteo Cubes apart from dominos, Mahjongg tiles, and most other objects people love to pick up and touch and play with.
+
+Our displays are 128x128 pixels, with a color depth of 16 bits per pixel. This format is often called **RGB565**, since it uses 5 bits of information each to store the Red and Blue channels of each pixel, and 6 bits for Green. (The human eye is most sensitive to green, so we can certainly use an extra bit there!)
+
+This RGB565 color representation is used pervasively throughout the Sifteo SDK and @ref asset_workflow "Asset Preparation" toolchain. To get the best quality results, we always recommend that you start with lossless true-color images. The asset tools will automatically perform various kinds of lossless and optionally lossy compression on these images, and any existing lossy compression will simply hinder these compression passes. Your images won't be looking their best, and they will take up more space! Yuck!
+
+In particular, here are some tips for preparing graphics to use with the Sifteo SDK:
+
+* __Never use JPEG__ images, or images that have been previously stored as JPEG. Always start with images in a lossless format like PNG or PSD.
+* __Never dither__ your images! Dithered images are harder to compress, so they will take up more space and they won't look as good.
+* Keep your graphics __big__. Each cube has a small display, and you shouldn't clutter it with too many things at once.
+* Keep your graphics __vibrant__. The gamma curve of the display may change as the viewing angle changes during play, so be sure to use enough visual contrast.
+* Use __animation and interactivity__ whenever you can. More interactivity equals more fun, and Sifteo Cubes are great at fluid animation.
+* Use stir's __proof output__ or __siftulator__ if you want to see exactly how your images will look in-game.
+
 ## Distributed Rendering
 
 Unlike most game systems, the display is not directly attached to the hardware your application runs on. For this reason, Sifteo cubes use a *distributed rendering* architecture:
@@ -69,3 +88,35 @@ Each of these modes, however, fits into a consistent overall rendering framework
 These effects can be composed over the course of multiple paint/finish operations. For example:
 
 ![](@ref rotated-windowing.png)
+
+## Tiles
+
+In order to make the most efficient use of the uncompressed pixel data in each cube's Asset Flash, these pixels are grouped into 8x8-pixel *tiles* which are de-duplicated during @ref asset_workflow "Asset Preparation". Any tile in Asset Flash may be uniquely identified by a 16-bit index. These indices are much smaller to store and transmit than the raw pixel data for an image.
+
+This diagram illustrates how our tiling strategy helps games run more efficiently:
+
+![](@ref tile-grid.png)
+
+1. Asset images begin as lossless PNG files, stored on disk.
+2. These PNGs are read in by *stir*, and chopped up into a grid of 8x8-pixel tiles.
+3. Stir determines the smallest unique set of tiles that can represent all images in a particular Sifteo::AssetGroup. This step may optionally be lossy. (Stir can find or generate tiles that are "close enough" without being pixel-accurate.) These tiles are compressed further using a lossless codec, and included in your application's AssetGroup data.
+4. The original asset is recreated as an array of indices into the AssetGroup's tiles. This data becomes a single Sifteo::AssetImage object. The index data can be much smaller than the original image, and duplicated tiles can be encoded in very little space.
+5. At runtime, AssetGroups and AssetImages are loaded separately. The former are loaded (slowly) into Asset Flash, whereas the latter are used by application code to draw into Video RAM.
+
+# Graphics Mode Reference
+
+## BG0
+
+This is the prototypical tile-based mode that many other modes are based on. The name is short for _background zero_, and you may find both the design and terminology familiar if you've ever worked on other tile-based video game systems. Many of the most popular 2D video game systems had hardware acceleration for one or more tile-based _background_ layers.
+
+BG0 is both the simplest mode and the most efficient. It makes good use of the hardware's fast paths, and it is quite common for BG0 rendering rates to exceed the physical refresh rate of the LCD.
+
+The Sifteo::BG0Drawable class understands the Video RAM layout used in BG0 mode. You can find an instance of this class as the *bg0* member inside Sifteo::VideoBuffer.
+
+![](@ref bg0-layer.png)
+
+In this mode there is a single layer, an infinitely-repeating 18x18 tile grid. Video RAM contains an array of 324 tile indices, each stored as a 16-bit integer. Under application control, the individual tiles in this grid can be freely defined, and the viewport may *pan* around the grid with single-pixel accuracy:
+
+![](@ref bg0-viewport.png)
+
+ If the panning coordinates are a multiple of 8 pixels, the BG0 tile grid is lined up with the edges of the display and you can see a 16x16 grid of whole tiles. If the panning coordinates are not a multiple of 8 pixels, the tiles on the borders of the display will be partially visible. Up to a 17x17 grid of (partial) tiles may be visible at any time. The 18th row/column can be used for advanced scrolling techniques that pre-load tile indices just before they pan into view. This so-called *infinite scrolling* technique can be used to implement menus, large side-scrolling maps, and so on.

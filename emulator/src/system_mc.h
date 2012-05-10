@@ -14,8 +14,8 @@
 
 class System;
 class Radio;
-class SysTime;
-class RadioAddress;
+struct SysTime;
+struct RadioAddress;
 class CubeSlot;
 
 namespace Cube {
@@ -55,7 +55,7 @@ class SystemMC {
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
     friend class Radio;
-    friend class SysTime;
+    friend struct SysTime;
 
     static SystemMC *instance;
     uint64_t ticks;

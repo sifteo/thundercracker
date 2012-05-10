@@ -8,6 +8,7 @@
 
 TESTS = \
 	firmware/cube \
+	sdk/array \
 	sdk/math \
 	sdk/bg1 \
 	sdk/sprites

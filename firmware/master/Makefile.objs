@@ -79,7 +79,8 @@ OBJS_STM32_MASTER = \
     $(OBJS_STM32) \
     $(MASTER_DIR)/stm32/main.stm32.o \
     $(MASTER_DIR)/stm32/factorytest.stm32.o \
-    $(MASTER_DIR)/stm32/volume.stm32.o
+    $(MASTER_DIR)/stm32/volume.stm32.o \
+    $(MASTER_DIR)/stm32/realtimeclock.stm32.o
 
 # Sources for stm32-based test jig firmware
 OBJS_STM32_TESTJIG = \

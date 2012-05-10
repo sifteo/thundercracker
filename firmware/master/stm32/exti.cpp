@@ -22,8 +22,10 @@ IRQ_HANDLER ISR_EXTI9_5()
     if (NRF24L01::instance.irq.irqPending())
         NRF24L01::instance.isr();
 
-    if (PowerManager::vbus.irqPending())
-        PowerManager::vbusIsr();
+    if (PowerManager::vbus.irqPending()) {
+        PowerManager::vbus.irqAcknowledge();
+        PowerManager::onVBusEdge();
+    }
 
 #endif
 
