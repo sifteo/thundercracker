@@ -117,12 +117,14 @@ The following standard effects are supported:
 * Vibrato (4)
 * Tone portamento and volume slide (5)
 * Vibrato and volume slide (6)
+* Sample offset (9)
 * Volume slide (A)
 * Set volume (C)
 * Pattern break (D)
 * Set vibrato control (E4)
 * Fine volume slide up (EA)
 * Fine volume slide down (EB)
+* Note delay (ED)
 * Pattern delay (EE)
 * Set tempo/bpm (F)
 
@@ -131,24 +133,25 @@ Volume column effect support will generally follow standard effects. The followi
 * Fine portamento Down (E2)
 * Fine portamento Up (E1)
 * Multi retrigger note (R)
-* Note delay (ED)
 * Position jump (B)
-* Sample offset (9)
 * Tremolo (7)
 * Retrigger note (E9)
 * Set finetune (E5)
 * Set loop begin/loop (E6)
-* Set tremolo control (E7)
 * Note cut (EC)
 * Set envelope position (L)
-* Set gliss control (E3)
 * Tremor (T)
 * Set global volume (G)
 * Global volume slide (H)
 
+The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and are not supported:
+
+* Set gliss control (E3)
+* Set tremolo control (E7)
+
 ### References
 
-The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz). The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).
+The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz), but the [MiklyTracker documentation](http://www.milkytracker.org/docs/MilkyTracker.html) is significantly more useful for understanding effects. The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).
 
 # stir Options
 @b stir provides several options to configure its execution. These options are integrated into the default Makefiles that ship with the SDK, but you may wish to integrate @b stir into your workflow in additional ways.

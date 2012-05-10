@@ -448,8 +448,8 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxVibrato: {
             if (!ticks) {
                 if (channel.start) channel.vibrato.phase = 0;
-                if (param & 0x0F) channel.vibrato.depth = param & 0x0F;
                 if (param & 0xF0) channel.vibrato.speed = (param & 0xF0) >> 4;
+                if (param & 0x0F) channel.vibrato.depth = param & 0x0F;
             }
             processVibrato(channel);
             break;
