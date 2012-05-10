@@ -78,7 +78,8 @@ public:
 
     void erase(iterator item) {
         ASSERT(item >= begin() && item < end());
-        memcpy((uint8_t*)item, (uint8_t*)(item+1), (end() - item) - 1);
+        iterator next = item + 1;
+        memcpy((uint8_t*)item, (uint8_t*)next, (uint8_t*)end() - (uint8_t*)next);
         numItems--;
     }
 

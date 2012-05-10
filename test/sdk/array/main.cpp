@@ -67,7 +67,7 @@ void iterator()
     ASSERT(2 == b.count());
 }
 
-void erase()
+void eraseChar()
 {
     Array<char, 4> a;
     a.append(ob('a'));
@@ -80,6 +80,25 @@ void erase()
 
     a.erase(ob(2));
     ASSERT(2 == a.count());
+}
+
+void eraseInt()
+{
+    Array<uint16_t, 4, uint8_t> a;
+    a.append(ob(10));
+    a.append(ob(11));
+    a.append(ob(12));
+    a.append(ob(13));
+    a.erase(ob(1)); // 11
+    ASSERT(3 == a.count());
+    ASSERT(10 == a[0]);
+    ASSERT(12 == a[1]);
+    ASSERT(13 == a[2]);
+
+    a.erase(ob(2)); // 13
+    ASSERT(2 == a.count());
+    ASSERT(10 == a[0]);
+    ASSERT(12 == a[1]);
 }
 
 void findInArrayOfPointers()
@@ -100,6 +119,7 @@ void main()
     arrayOfObjectPointers();
     arrayOfInt();
     iterator();
-    erase();
+    eraseChar();
+    eraseInt();
     findInArrayOfPointers();
 }
