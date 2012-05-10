@@ -713,6 +713,10 @@ void XmTrackerPlayer::commit()
             continue;
         }
 
+        /* This code relies on the single-threaded nature of the audio
+         * stack--the sample is loaded first and volume and sampling rate
+         * adjusted shortly after.
+         */
         if (channel.start) {
             channel.start = false;
             if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
@@ -754,13 +758,12 @@ void XmTrackerPlayer::commit()
                 volume = volume * channel.fadeout / UINT16_MAX;
             }
         }
-        volume *= 4;
-        mixer.setVolume(CHANNEL_FOR(i), clamp(volume, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
+        mixer.setVolume(CHANNEL_FOR(i), clamp(volume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
         if (channel.period > 0) {
-        } else {
             mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
+        } else if (mixer.isPlaying(CHANNEL_FOR(i))) {
             mixer.stop(CHANNEL_FOR(i));
         }
     }
