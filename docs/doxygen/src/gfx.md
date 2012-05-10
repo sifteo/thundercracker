@@ -6,6 +6,25 @@ Graphics Engine       {#gfx}
 
 Sifteo cubes have a fairly unique graphics architecture. This section introduces the main differences you'll notice between Sifteo cubes and other systems you may be familiar with. We assume at least some basic familiarity with computer architecture and computer graphics.
 
+## Display
+
+![](@ref single-cube.png)
+
+The display on each Sifteo Cube is the star of the show. It's what sets Sifteo Cubes apart from dominos, Mahjongg tiles, and most other objects people love to pick up and touch and play with.
+
+Our displays are 128x128 pixels, with a color depth of 16 bits per pixel. This format is often called **RGB565**, since it uses 5 bits of information each to store the Red and Blue channels of each pixel, and 6 bits for Green. (The human eye is most sensitive to green, so we can certainly use an extra bit there!)
+
+This RGB565 color representation is used pervasively throughout the Sifteo SDK and @ref asset_workflow "Asset Preparation" toolchain. To get the best quality results, we always recommend that you start with lossless true-color images. The asset tools will automatically perform various kinds of lossless and optionally lossy compression on these images, and any existing lossy compression will simply hinder these compression passes. Your images won't be looking their best, and they will take up more space! Yuck!
+
+In particular, here are some tips for preparing graphics to use with the Sifteo SDK:
+
+* __Never use JPEG__ images, or images that have been previously stored as JPEG. Always start with images in a lossless format like PNG or PSD.
+* __Never dither__ your images! Dithered images are harder to compress, so they will take up more space and they won't look as good.
+* Keep your graphics __big__. Each cube has a small display, and you shouldn't clutter it with too many things at once.
+* Keep your graphics __vibrant__. The gamma curve of the display may change as the viewing angle changes during play, so be sure to use enough visual contrast.
+* Use __animation and interactivity__ whenever you can. More interactivity equals more fun, and Sifteo Cubes are great at fluid animation.
+* Use stir's __proof output__ or __siftulator__ if you want to see exactly how your images will look in-game.
+
 ## Distributed Rendering
 
 Unlike most game systems, the display is not directly attached to the hardware your application runs on. For this reason, Sifteo cubes use a *distributed rendering* architecture:
