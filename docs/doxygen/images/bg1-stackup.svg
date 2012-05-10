@@ -120,7 +120,7 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
+     inkscape:zoom="2"
      inkscape:cx="269.66968"
      inkscape:cy="661.83852"
      inkscape:document-units="px"
@@ -128,9 +128,9 @@
      showgrid="false"
      inkscape:window-width="1436"
      inkscape:window-height="856"
-     inkscape:window-x="195"
-     inkscape:window-y="42"
-     inkscape:window-maximized="1">
+     inkscape:window-x="113"
+     inkscape:window-y="270"
+     inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
        id="grid2985"
@@ -343,9 +343,9 @@
     </g>
     <g
        id="g4472"
-       inkscape:export-filename="/Users/beth/sifteo/thundercracker/docs/doxygen/images/bg1-stackup-1.png"
-       inkscape:export-xdpi="300"
-       inkscape:export-ydpi="300">
+       inkscape:export-filename="/Users/beth/sifteo/thundercracker/docs/doxygen/images/foo.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <g
          transform="translate(45.017767,-9.232237)"
          id="g3999">

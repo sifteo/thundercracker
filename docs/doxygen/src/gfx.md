@@ -135,3 +135,29 @@ Sometimes you only need a single layer. Since you can modify each tile index ind
 Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 supports 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not support alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
 
 ![](@ref bg1-stackup.png)
+
+In this example, BG0 contains a side-scrolling level, and BG1 contains both a player avatar and a score meter. The avatar and score meter are stationary on the screen, so we don't need to make use of BG1's pixel-panning feature. By panning BG0, the level background can scroll left and give the appearance that the player is walking right. The tiles underlying the player sprite and the score meter can be independently replaced, in order to animate the player or change the score.
+
+The amount of RAM available for BG1 is quite limited. Unfortunately, the Video RAM in each Sifteo Cube is too small to include two 18x18 grids as used by BG0. The space available to BG1 is only sufficient for a total of 144 tiles, or about 56% of the screen.
+
+To overcome this limitation, BG1 is arranged as a 16x16 tile _virtual grid_ which can be backed by up to 144 tiles. This means that at least 112 tiles in this virtual grid must be left unallocated. Unallocated tiles always appear fully transparent.
+
+Pixel panning, when applied to BG1, always describes the offset between the top-left corner of the virtual grid and the top-left corner of the display window. This means that the physical location of any tile depends both on the current pixel panning and on the tile's location in the virtual grid.
+
+Tile allocation is managed by a __mask__ bitmap. Each tile in the virtual grid has a single corresponding bit in the mask. If the bit is 0, the tile is unallocated and fully transparent. If the bit is 1, that location on the virtual grid is assigned to the next available tile index in the 144-tile array. Array locations are always assigned by scanning the mask bitmap from left-to-right and top-to-bottom.
+
+![](@ref bg1-layer.png)
+
+The Sifteo::BG1Drawable class understands the Video RAM layout used for the BG1 layer in in **BG0_BG1** mode. You can find an instance of this class as the *bg1* member inside Sifteo::VideoBuffer.
+
+This class provides several distinct methods to set up the mask and draw images to BG1. Depending on your application, it may be easiest to set up the mask by:
+
+1. Allocating tiles one row at a time, using Sifteo::BG1Drawable::eraseMask() and Sifteo::BG1Drawable::fillMask().
+2. Composing an entire mask at compile-time using Sifteo::BG1Mask, and applying it with Sifteo::BG1Drawable::setMask().
+3. Modifying a Sifteo::BG1Mask at runtime, and applying it with Sifteo::BG1Drawable::setMask().
+
+There are similarly multiple ways to draw the image data, after you've allocated tiles:
+
+1. Use a raw _locationIndex_ to plot individual values on the 144-tile array, with Sifteo::BG1Drawable::plot() and Sifteo::BG1Drawable::span().
+2. Use Sifteo::BG1Drawable::image() to draw a Sifteo::AssetImage, automatically _clipping_ it to the allocated subset of the virtual grid, and automatically calculating the proper _locationIndex_ for each tile.
+3. Use Sifteo::BG1Drawable::maskedImage() to set the mask and draw an image in one step.
