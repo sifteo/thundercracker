@@ -25,6 +25,7 @@ struct XmTrackerChannel {
     uint16_t volume;
     uint16_t fadeout;
     uint32_t period;
+    uint32_t frequency;
     bool start;
     bool active;
     bool valid;

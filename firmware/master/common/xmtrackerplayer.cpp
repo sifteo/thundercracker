@@ -166,7 +166,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         {
             channel.porta.period = channel.period;
         }
-
+        channel.frequency = getFrequency(channel.period);
         channel.note = note;
 
         if (channel.start) {
@@ -380,7 +380,7 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     // Apply relative period shift, to avoid disrupting other active effects
     int32_t newPeriod = getPeriod(note, channel.instrument.finetune);
     int32_t period = getPeriod(channel.realNote(), channel.instrument.finetune);
-    channel.period += newPeriod - period;
+    channel.frequency = getFrequency(channel.period + newPeriod - period);
 }
 
 void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
@@ -759,8 +759,8 @@ void XmTrackerPlayer::commit()
 
         // Sampling rate
         if (channel.period > 0) {
-            mixer.setSpeed(CHANNEL_FOR(i), getFrequency(channel.period));
         } else {
+            mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
             mixer.stop(CHANNEL_FOR(i));
         }
     }
