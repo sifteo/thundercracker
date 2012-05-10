@@ -115,6 +115,8 @@ The following standard effects are supported:
 * Portamento down (2)
 * Tone portamento (3)
 * Vibrato (4)
+* Tone portamento and volume slide (5)
+* Vibrato and volume slide (6)
 * Volume slide (A)
 * Set volume (C)
 * Pattern break (D)
@@ -124,7 +126,7 @@ The following standard effects are supported:
 * Pattern delay (EE)
 * Set tempo/bpm (F)
 
-Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned (in order):
+Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned:
 * Extra fine portamento (X1, X2)
 * Fine portamento Down (E2)
 * Fine portamento Up (E1)
@@ -132,9 +134,7 @@ Volume column effect support will generally follow standard effects. The followi
 * Note delay (ED)
 * Position jump (B)
 * Sample offset (9)
-* Tone portamento and volume slide (5)
 * Tremolo (7)
-* Vibrato and volume slide (6)
 * Retrigger note (E9)
 * Set finetune (E5)
 * Set loop begin/loop (E6)
