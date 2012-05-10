@@ -110,6 +110,7 @@ The following volume column effects are supported:
 
 The following standard effects are supported:
 
+* Arpeggio (0)
 * Portamento up (1)
 * Portamento down (2)
 * Tone portamento (3)
@@ -124,7 +125,6 @@ The following standard effects are supported:
 * Set tempo/bpm (F)
 
 Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned (in order):
-* Arpeggio (0)
 * Extra fine portamento (X1, X2)
 * Fine portamento Down (E2)
 * Fine portamento Up (E1)
