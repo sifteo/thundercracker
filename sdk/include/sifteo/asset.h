@@ -657,6 +657,10 @@ struct AssetAudio {
     _SYSAudioModule sys;
 };
 
+/**
+ * A song module, using any supported XM module.
+ */
+
 struct AssetTracker {
     _SYSXMSong song;
 };
