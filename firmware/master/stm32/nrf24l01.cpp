@@ -285,8 +285,9 @@ void NRF24L01::receivePacket()
 
     spi.begin();
     spi.transfer(CMD_R_RX_PAYLOAD);
-    for (unsigned i = 0; i < rxBuffer.len; i++)
-        rxBuffer.bytes[i] = spi.transfer(0);
+    spi.transferDma(rxBuffer.bytes, rxBuffer.bytes, rxBuffer.len);
+    while (spi.dmaInProgress())
+        ;
     spi.end();
 
     RadioManager::ackWithPacket(rxBuffer);
@@ -322,14 +323,16 @@ void NRF24L01::transmitPacket()
 
     spi.begin();
     spi.transfer(CMD_W_REGISTER | REG_TX_ADDR);
-    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
-        spi.transfer(txBuffer.dest->id[i]);
+    spi.txDma(txBuffer.dest->id, sizeof txBuffer.dest->id);
+    while (spi.dmaInProgress())
+        ;
     spi.end();
 
     spi.begin();
     spi.transfer(CMD_W_REGISTER | REG_RX_ADDR_P0);
-    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
-        spi.transfer(txBuffer.dest->id[i]);
+    spi.txDma(txBuffer.dest->id, sizeof txBuffer.dest->id);
+    while (spi.dmaInProgress())
+        ;
     spi.end();
 
     /*
@@ -338,8 +341,9 @@ void NRF24L01::transmitPacket()
 
     spi.begin();
     spi.transfer(txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD);
-    for (unsigned i = 0; i < txBuffer.packet.len; i++)
-        spi.transfer(txBuffer.packet.bytes[i]);
+    spi.txDma(txBuffer.packet.bytes, txBuffer.packet.len);
+    while (spi.dmaInProgress())
+        ;
     spi.end();
 
     // Start the transmitter!
