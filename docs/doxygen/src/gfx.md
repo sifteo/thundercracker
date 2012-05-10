@@ -92,5 +92,12 @@ This is the prototypical tile-based mode that many other modes are based on. The
 
 BG0 is both the simplest mode and the most efficient. It makes good use of the hardware's fast paths, and it is quite common for BG0 rendering rates to exceed the physical refresh rate of the LCD.
 
-In this mode, there is a single layer: an infinitely-repeating 18x18 tile grid. Under application control, the individual tiles in this grid can be freely defined, and the viewport may *pan* around the grid with single-pixel accuracy:
+The Sifteo::BG0Drawable class understands the Video RAM layout used in BG0 mode. You can find an instance of this class as the *bg0* member inside Sifteo::VideoBuffer.
 
+![](@ref bg0-layer.png)
+
+In this mode there is a single layer, an infinitely-repeating 18x18 tile grid. Video RAM contains an array of 324 tile indices, each stored as a 16-bit integer. Under application control, the individual tiles in this grid can be freely defined, and the viewport may *pan* around the grid with single-pixel accuracy:
+
+![](@ref bg0-viewport.png)
+
+ If the panning coordinates are a multiple of 8 pixels, the BG0 tile grid is lined up with the edges of the display and you can see a 16x16 grid of whole tiles. If the panning coordinates are not a multiple of 8 pixels, the tiles on the borders of the display will be partially visible. Up to a 17x17 grid of (partial) tiles may be visible at any time. The 18th row/column can be used for advanced scrolling techniques that pre-load tile indices just before they pan into view. This so-called *infinite scrolling* technique can be used to implement menus, large side-scrolling maps, and so on.
