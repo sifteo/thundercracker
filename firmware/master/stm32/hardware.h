@@ -144,6 +144,36 @@ struct BKP_t {
 
 extern volatile BKP_t BKP;
 
+
+/*
+ * Real Time Clock
+ */
+struct RTC_t {
+    uint16_t CRH;
+    uint16_t  _res0;
+    uint16_t CRL;
+    uint16_t  _res1;
+    uint16_t PRLH;
+    uint16_t  _res2;
+    uint16_t PRLL;
+    uint16_t  _res3;
+    uint16_t DIVH;
+    uint16_t  _res4;
+    uint16_t DIVL;
+    uint16_t  _res5;
+    uint16_t CNTH;
+    uint16_t  _res6;
+    uint16_t CNTL;
+    uint16_t _res7;
+    uint16_t ALRH;
+    uint16_t  _res8;
+    uint16_t ALRL;
+    uint16_t  _res9;
+};
+
+extern volatile RTC_t RTC;
+
+
 struct CRC_t {
   uint32_t DR;
   uint32_t IDR;
