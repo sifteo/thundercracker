@@ -142,6 +142,7 @@ private:
     void processPorta(XmTrackerChannel &channel);
     void processVolume(XmTrackerChannel &channel);
 
+    void processArpeggio(XmTrackerChannel &channel);
     void processVolumeSlide(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processEffects(XmTrackerChannel &channel);
