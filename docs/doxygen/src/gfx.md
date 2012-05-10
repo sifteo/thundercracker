@@ -148,7 +148,7 @@ Tile allocation is managed by a __mask__ bitmap. Each tile in the virtual grid h
 
 ![](@ref bg1-layer.png)
 
-The Sifteo::BG1Drawable class understands the Video RAM layout used for the BG1 layer in in **BG0_BG1** mode. You can find an instance of this class as the *bg1* member inside Sifteo::VideoBuffer.
+The Sifteo::BG1Drawable class understands the Video RAM layout used for the BG1 layer in **BG0_BG1** mode. You can find an instance of this class as the *bg1* member inside Sifteo::VideoBuffer.
 
 This class provides several distinct methods to set up the mask and draw images to BG1. Depending on your application, it may be easiest to set up the mask by:
 
@@ -161,3 +161,22 @@ There are similarly multiple ways to draw the image data, after you've allocated
 1. Use a raw _locationIndex_ to plot individual values on the 144-tile array, with Sifteo::BG1Drawable::plot() and Sifteo::BG1Drawable::span().
 2. Use Sifteo::BG1Drawable::image() to draw a Sifteo::AssetImage, automatically _clipping_ it to the allocated subset of the virtual grid, and automatically calculating the proper _locationIndex_ for each tile.
 3. Use Sifteo::BG1Drawable::maskedImage() to set the mask and draw an image in one step.
+
+## BG0_SPR_BG1
+
+Sometimes two independently-movable layers really just isn't enough. This mode adds up to __eight sprites__ per cube, which float in-between BG0 and BG1. Each sprite can be moved fully independently. This, as you can imagine, offers a lot of flexibility. Sprites are great for particle effects, items, characters, and all manner of other doodads.
+
+Sprites have a _priority_ according to their index in the sprite array, from 0 to 7. Lower-numbered sprites are higher priority, and appear above higher-numbered sprites. In other words, each sprite is tested in ascending numerical order until the first opaque pixel is found.
+
+![](@ref spr-stackup.png)
+
+All of this power comes with a handful of caveats, however:
+
+- Each sprite's width and height must both be powers of two.
+- Sprites are still made of tiles, so they must also be at least 8x8 pixels.
+- At most four sprites may appear on the same horizontal row of pixels. If more than four sprites share a scanline, the additional sprites will not be drawn on the affected lines.
+- Sprites can be much slower than BG0 or BG1, especially when they are large, you have many overlapping sprites, or there are large transparent regions.
+- Sprites are not backed by tile grids like BG0 and BG1 are. You can specify the index of the top-left tile in the sprite, but all other tiles are assumed to be sequential. This necessitates the use of a Sifteo::PinnedAssetImage, created by setting _pinned=true_ in @ref asset_workflow "stir".
+- Because sprites require pinned assets, sprite images typically require much more storage space than images which are only displayed on tiled layers like BG0 or BG1.
+
+The Sifteo::SpriteLayer class understands the Video RAM layout used for the sprites in **BG0_SPR_BG1** mode. You can find an instance of this class as the *sprites* member inside Sifteo::VideoBuffer.
