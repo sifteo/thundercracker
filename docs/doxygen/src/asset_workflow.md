@@ -58,6 +58,89 @@ Option              | Meaning
 
 ## Tracker
 
+Here's an assets.lua containing two modules:
+
+~~~~~~~~~~~~~{.lua}
+Bubbles = tracker{"bubbles.xm"}
+Slumberjack = tracker{"slumberjack.xm"}
+~~~~~~~~~~~~~
+
+Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is supported in assets.lua.
+
+### Input
+
+Stir will accept (and the cubes will attempt to play) almost any XM module, so long as some limitations (below) are met. It's recommended that you use [MilkyTracker](http://www.milkytracker.org) or [MODPlug](http://www.modplug.com/trackerinfo.html) as your authoring tool, as the Sifteo tracker is being designed to emulate them as closely as possible.
+
+### Output
+
+Stir compresses modules in a few ways. All samples (accepted formats: pcm16, pcm8, and adpcm) are compressed to adpcm (like normal AssetSamples), and envelopes are also compressed. In the future, stir/clang will deduplicate samples so multiple songs can share the same sample data, further saving space on the master cube.
+
+### Limitations
+
+Due to hardware limitations, modules face a few hard constraints:
+
+* Panning is not supported and any panning information is discarded.
+* Songs using more than 8 channels are not supported.
+
+Beyond these constraints, modules on siftables are also currently limited to:
+
+* One sample per instrument
+* Loops are forward only (no ping-pong loops)
+
+These limitations may be removed with a future version of the asset toolchain, but it should be possible to work around them in the meantime.
+
+### Effects
+
+While the included tracker fully supports playing notes, it currently has incomplete effect and volume column support. The following volume column effects are supported:
+
+* Set volume (0x10 - 0x50)
+* Volume slide down (0x6#)
+* Volume slide up (0x7#)
+* Fine volume down (0x8#)
+* Fine volume up (0x9#)
+
+The following standard effects are supported:
+
+* Portamento up (1)
+* Portamento down (2)
+* Tone portamento (3)
+* Vibrato (4)
+* Volume slide (A)
+* Set volume (C)
+* Pattern break (D)
+* Set vibrato control (E4)
+* Fine volume slide up (EA)
+* Fine volume slide down (EB)
+* Pattern delay (EE)
+* Set tempo/bpm (F)
+
+Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned (in order):
+* Arpeggio (0)
+* Extra fine portamento (X1, X2)
+* Fine portamento Down (E2)
+* Fine portamento Up (E1)
+* Multi retrigger note (R)
+* Note delay (ED)
+* Position jump (B)
+* Sample offset (9)
+* Tone portamento and volume slide (5)
+* Tremolo (7)
+* Vibrato and volume slide (6)
+* Retrigger note (E9)
+* Set finetune (E5)
+* Set loop begin/loop (E6)
+* Set tremolo control (E7)
+* Note cut (EC)
+* Set envelope position (L)
+* Set gliss control (E3)
+* Tremor (T)
+* Set global volume (G)
+* Global volume slide (H)
+
+### References
+
+The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz). The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).
+
 # stir Options
 @b stir provides several options to configure its execution. These options are integrated into the default Makefiles that ship with the SDK, but you may wish to integrate @b stir into your workflow in additional ways.
 
