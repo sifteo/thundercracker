@@ -183,7 +183,11 @@ The Sifteo::SpriteLayer class understands the Video RAM layout used for the spri
 
 ## BG2
 
-Write me!
+So far, we've been talking a lot about repositioning layers and editing tile grids, but none about common modern graphical operations like rotation, scaling, and blending. This stems from the underlying technical strengths and weaknesses of a platform as small and power-efficient as Sifteo Cubes. It's very efficient to pan a layer or manipulate tiles, but quite inefficient to do the kinds of operations you may be familiar with from toolkits like OpenGL. Modern GPUs are very good at using mathematical matrices to transform objects, but they're also very expensive and very power-hungry! The above video modes are much better at getting the most from our tiny graphics engine.
+
+Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of support for image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
+
+BG2 consists of a __16x16 tile grid__ and a matrix which applies a single __affine transform__ to the entire scene. The layer does repeat every 256 pixels horizontally and vertically, due to 8-bit integer wraparound, but the unused portions of this 256x256 space are painted with a solid-color _border_. This makes it possible to scale a full-screen image down by up to 1/2 without seeing any repeats.
 
 ## BG0_ROM
 
