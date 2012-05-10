@@ -344,6 +344,13 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
                        : (int16_t)get16();
             }
 
+            // XM uses delta modulation; mix into regular pcm.
+            int16_t mix = 0;
+            for(int i = 0; i < numSamples; i++) {
+                // Allowing overflow here is intentional!
+                buf[i] = (mix += buf[i]);
+            }
+
             // Encode to today's default format
             AudioEncoder *enc = AudioEncoder::create("");
             sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
