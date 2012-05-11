@@ -377,7 +377,7 @@ void GLRenderer::overlayRect(int x, int y,
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
 }
                     
-void GLRenderer::drawBackground(float extent, float scale)
+void GLRenderer::drawDefaultBackground(float extent, float scale)
 {
     float tc = scale * extent;
     VertexTN bg[] = {
@@ -413,7 +413,13 @@ void GLRenderer::drawBackground(float extent, float scale)
     glActiveTexture(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-}    
+}
+
+void GLRenderer::drawSolidBackground(const float color[4])
+{
+    glClearColor(color[0], color[1], color[2], color[3]);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
 
 void GLRenderer::initCubeFB(unsigned id)
 {

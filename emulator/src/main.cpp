@@ -61,6 +61,7 @@ static void usage()
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
+            "  --white-bg          Force the UI to use a plain white background\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
             "\n"
             APP_COPYRIGHT "\n");
@@ -219,6 +220,11 @@ int main(int argc, char **argv)
         
         if (!strcmp(arg, "--headless")) {
             sys.opt_headless = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--white-bg")) {
+            sys.opt_whiteBackground = true;
             continue;
         }
         
