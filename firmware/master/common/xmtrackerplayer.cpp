@@ -54,7 +54,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     bpm = song.bpm;
     ticks = tempo = song.tempo;
     delay = 0;
-    phrase = 9;
+    phrase = 0;
     row = 0;
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
 
