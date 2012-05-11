@@ -60,7 +60,7 @@
 	<array>
 		<dict>
 			<key>Bounds</key>
-			<string>{{142.50595, 260.83163}, {34.662415, 53.674316}}</string>
+			<string>{{142.50595, 258.83163}, {34.662415, 53.674316}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>ID</key>
@@ -118,6 +118,8 @@
 				</dict>
 				<key>shadow</key>
 				<dict>
+					<key>Beneath</key>
+					<string>YES</string>
 					<key>Color</key>
 					<dict>
 						<key>a</key>
@@ -32661,7 +32663,7 @@
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2012-05-11 00:38:04 +0000</string>
+	<string>2012-05-11 01:00:10 +0000</string>
 	<key>Modifier</key>
 	<string>Beth Scott</string>
 	<key>NotesVisible</key>
@@ -32742,7 +32744,7 @@
 			</dict>
 		</array>
 		<key>Frame</key>
-		<string>{{103, -10}, {1203, 844}}</string>
+		<string>{{103, 0}, {1203, 844}}</string>
 		<key>ListView</key>
 		<true/>
 		<key>OutlineWidth</key>
