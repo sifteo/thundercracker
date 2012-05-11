@@ -121,17 +121,17 @@ The following standard effects are supported:
 * Volume slide (A)
 * Set volume (C)
 * Pattern break (D)
+* Fine portamento Up (E1)
+* Fine portamento Down (E2)
 * Set vibrato control (E4)
 * Fine volume slide up (EA)
 * Fine volume slide down (EB)
 * Note delay (ED)
 * Pattern delay (EE)
 * Set tempo/bpm (F)
+* Extra fine portamento (X1, X2)
 
 Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned:
-* Extra fine portamento (X1, X2)
-* Fine portamento Down (E2)
-* Fine portamento Up (E1)
 * Multi retrigger note (R)
 * Position jump (B)
 * Tremolo (7)
@@ -144,7 +144,7 @@ Volume column effect support will generally follow standard effects. The followi
 * Set global volume (G)
 * Global volume slide (H)
 
-The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and are not supported:
+The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be supported:
 
 * Set gliss control (E3)
 * Set tremolo control (E7)
