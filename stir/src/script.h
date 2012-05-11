@@ -31,8 +31,10 @@ namespace Stir {
 
 class Group;
 class Image;
+class ImageList;
 class Sound;
 class Tracker;
+
 
 /*
  * Script --
@@ -64,7 +66,7 @@ public:
     std::set<Group*> groups;
     std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
-    std::set< std::vector<Image*> > imageLists;
+    std::vector<ImageList> imageLists;
 
 
     friend class Group;
@@ -166,7 +168,7 @@ public:
 
     Image(lua_State *L);
 
-void setName(std::string s) {
+    void setName(std::string s) {
         mName = s;
     }
 
@@ -190,6 +192,14 @@ void setName(std::string s) {
         return mIsFlat;
     }
 
+    bool inList() const {
+        return mInList;
+    }
+
+    void setInList(bool flag) {
+        mInList = flag;
+    }
+
     const char *getClassName() const;
 
     uint16_t encodePinned() const;
@@ -203,6 +213,7 @@ void setName(std::string s) {
     std::vector<TileGrid> mGrids;
     std::string mName;
     bool mIsFlat;
+    bool mInList;
 
     void createGrids();
 
@@ -212,6 +223,45 @@ void setName(std::string s) {
     int quality(lua_State *L);
     int group(lua_State *L);
 };
+
+/*
+ * ImageList --
+ * 
+ *      A wrapper for a list of images.  ImagesLists are created
+ *      from global variables bound to homogeneous tables of image
+ *      instances (that is, it contains no non-image elements, and each
+ *      element has the same C++ result type).
+ */
+
+class ImageList {
+public:
+    typedef std::vector<Image*>::const_iterator const_iterator;
+
+public:
+    ImageList(std::string name, std::vector<Image*> images) : 
+        mName(name), mImages(images) {}
+
+    const std::string &getName() const {
+        return mName;
+    }
+
+    const_iterator begin() const {
+        return mImages.begin();
+    }
+
+    const_iterator end() const {
+        return mImages.end();
+    }
+
+    const char* getImageClassName() const {
+        return mImages[0]->getClassName();
+    }
+
+private:
+    std::string mName;
+    std::vector<Image*> mImages;
+};
+
 
 class Sound {
 public:

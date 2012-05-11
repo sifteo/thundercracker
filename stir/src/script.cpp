@@ -103,6 +103,12 @@ bool Script::run(const char *filename)
         source.writeGroup(*group);
     }
 
+    for (std::vector<ImageList>::iterator i = imageLists.begin(); i!=imageLists.end(); ++i) {
+        header.writeImageList(*i);
+        source.writeImageList(*i);
+
+    }
+
     if (!sounds.empty()) {
         log.heading("Audio");
         log.infoBegin("Sound compression");
@@ -298,9 +304,11 @@ bool Script::collect()
         
         if (name && name[0] != '_') {
             if (lua_istable(L, -2)) {
-                if (!collectList(name, -2))
+                if (!collectList(name, -2)) {
                     lua_pop(L, 3); // stack empty
                     return false;
+                }
+
             } else {
                 Group *group = Lunar<Group>::cast(L, -2);
                 Image *image = Lunar<Image>::cast(L, -2);
@@ -310,18 +318,22 @@ bool Script::collect()
                 if (group || image || sound) {
                     log.setMinLabelWidth(strlen(name));
                 }
+                
                 if (group) {
                     group->setName(name);
                     groups.insert(group);
                 }
+                
                 if (image) {
                     image->setName(name);
                     image->getGroup()->addImage(image);
                 }
+                
                 if (tracker) {
                     tracker->setName(name);
                     trackers.insert(tracker);
                 }
+                
                 if (sound) {
                     sound->setName(name);
                     sounds.insert(sound);
@@ -374,14 +386,15 @@ bool Script::collectList(const char* name, int tableStackIndex) {
         
         for (unsigned i=0; i<images.size(); ++i) {
             std::stringstream sstm;
-            sstm << '_' << name << '_' << i;
+            sstm << name << '_' << i;
             std::string iname = sstm.str();
             log.setMinLabelWidth(iname.length());
             images[i]->setName(iname);
+            images[i]->setInList(true);
             images[i]->getGroup()->addImage(images[i]);
         }
 
-        imageLists.insert(images); // Can has move constructor?
+        imageLists.push_back(ImageList(name, images)); // Can has move constructor?
 
     }
 
@@ -450,7 +463,7 @@ uint64_t Group::getHash() const
     return sig;
 }
 
-Image::Image(lua_State *L)
+Image::Image(lua_State *L) : mInList(false)
 {
     if (!Script::argBegin(L, className))
         return;
