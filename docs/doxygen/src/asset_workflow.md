@@ -52,6 +52,18 @@ Option              | Meaning
 `height=16`         | Specify the height of a frame of your image, defaults to source image's native height.
 `group=MyGroup`     | Specify that this image is a member of the `group` element `MyGroup`
 
+# Asset Image Lists
+
+It is occasionally desired to export images as an array.
+
+~~~~~~~~~~~~~{.lua}
+Environments = group{}
+
+TileSets = { image{"desert.png"}, image{"ocean.png"}, image{"castle.png"} }
+~~~~~~~~~~~~~
+
+Image Lists must contain only images, or else they are ignored.  Furthermore, the images must be homogeneous: you may not interleave pinned, flat and ordinary assets in the same list.
+
 # Asset Audio
 
 ## Samples
