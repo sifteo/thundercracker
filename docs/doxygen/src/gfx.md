@@ -203,11 +203,14 @@ You can think of the matrix as a set of instructions for the rendering engine:
 
 ![](@ref bg2-transform.png)
 
+The Sifteo::BG2Drawable class understands the Video RAM layout used in the BG2 mode. You can find an instance of this class as the *bg2* member inside Sifteo::VideoBuffer.
+
 There are a few technical limitations and caveats, of course:
 
 - No other layers may be combined with BG2. Specifically, sprites are not supported in BG2 mode.
 - The graphics engine does not support filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
 - The BG2 renderer includes an optimization which works by updating the virtual Y coordinate less frequently than the X coordinate. This means that rotation quality decreases as the angle gets closer to 90 degrees. For this reason, we strongly recommend that rotations near 90 degrees are not performed using the BG2 affine transform. One workaround is to use the mode-independent display rotation to get to the nearest 90-degree multiple, then use BG2 for the remainder of the rotation angle.
+- The affine matrix is stored in Video RAM as an array of six signed 16-bit fixed point numbers in _8.8_ format. In other words, there are always 8 bits to the left of the binary point and 8 bits to the right of the binary point. The Sifteo::AffineMatrix class uses floating point numbers, however, so typically you won't have to deal with fixed point values yourself.
 
 ## BG0_ROM
 
