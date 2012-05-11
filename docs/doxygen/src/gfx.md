@@ -230,11 +230,11 @@ Tile indices in this mode are 14 bits, divided into a few distinct fields which 
 
 The Sifteo::BG0ROMDrawable class understands the Video RAM layout used in the BG0_ROM mode, plus it understands the ROM tileset layout enough to draw text and progress bars. You can find an instance of this class as the *bg0rom* member inside Sifteo::VideoBuffer.
 
-- __Note:__ Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
+- __Warning:__ Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
 
 ## SOLID
 
-The simplest video mode! It draws a single solid color, from the first entry in the Sifteo::Colormap. The colormap holds up to 16 colors in RGB565 format. You can find an instance of this calss as the *colormap* member inside Sifteo::VideoBuffer.
+The simplest video mode! It draws a single solid color, from the first entry in the Sifteo::Colormap. The colormap holds up to 16 colors in RGB565 format. You can find an instance of this class as the *colormap* member inside Sifteo::VideoBuffer.
 
 This mode can be used as a building block for advanced visual effects. When using windowing techniques to create a letterbox effect, for example, the SOLID mode can be used to paint a solid-color background. You can also use the SOLID mode to create bright flashes, wipes, and so on.
 
@@ -244,12 +244,40 @@ The SOLID mode also has the advantage of using very little space in a cube's Vid
 
 ## FB32
 
-Write me!
+You might be wondering: Why do we need this Asset Flash memory at all? Can't we just send some pixels over the radio, and draw directly to a Sifteo Cube's display?
+
+The answer: Kind of. Unfortunately, a complete framebuffer for our 128x128 16-bit display would require 32 kB of RAM, which is quite large on this system. It's much larger than the 1 kB available for each cube's Video RAM. Additionally, it would be slow to send this framebuffer image over the radio. This is a big part of why the graphics engine prefers to work with tile indices. There are so many fewer tile indices than pixels!
+
+That said, sometimes you really do just want to draw arbitrary pixels to the screen. The graphics engine includes a small set of __framebuffer modes__ which compromise by providing low-resolution and low-color-depth modes which do fit in the limited memory available.
+
+The __FB32__ mode is a 32x32 pixel 16-color framebuffer. It requires 512 bytes of RAM, or exactly half of the Video RAM. The other half includes mode-independent data, as well as a colormap which acts as a lookup table to convert each of these 16 colors into a full RGB565 color. This 32x32 _chunky-pixel_ image is scaled up by a factor of four by the mode renderer.
+
+![](@ref otto.png)
+
+The Sifteo::FBDrawable template implements Video RAM accessors for plotting individual pixels, filling rectangles, and blitting bitmaps on to the framebuffer. Sifteo::FB32Drawable is a typedef for the specialization of this template used in FB32 mode, and you can find an instance of this class as the *fb32* member inside Sifteo::VideoBuffer.
+
+The 16-entry colormap can be independently accessed via Sifteo::Colormap, which lives in the *colormap* member of Sifteo::VideoBuffer. The colormap can be modified either before or after plotting pixel data. By changing the colors associated with each color index, you can perform palette animation efficiently without changing any of the underlying framebuffer memory.
+
+- __Tip:__ Due to details of the compression used to update Video RAM over the air, it's more efficient to use even color indices than odd indices. You can optimize to take advantage of this fact by placing the most commonly used colors at even indices in the Sifteo::Colormap.
 
 ## FB64
 
-Write me!
+The __FB64__ mode is another flavor of framebuffer, but this time with a different resolution vs. color depth tradeoff. It stores data for a 64x64 pixel framebuffer, which is doubled to 128x128 during rendering. However, this only leaves memory for 1 bit per pixel, or 2 colors.
+
+This mode uses the Sifteo::FBDrawable template as well. Sifteo::FB64Drawable is a typedef for the specialization of this template used in FB64 mode, and you can find an instance of this class as the *fb64* member inside Sifteo::VideoBuffer.
+
+Only the first two entries of Sifteo::Colormap are used. The colormap lives in the *colormap* member of Sifteo::VideoBuffer.
 
 ## FB128
 
-Write me!
+The last of our framebuffer modes is __FB128__. As the name would imply, it is 128 pixels wide. Like __FB64__, it is 1 bit per pixel. (2-color)
+
+This is the only framebuffer mode which does not employ any scaling. Each pixel maps directly to one pixel on the display. This makes it a much more generally useful mode, but at a cost: There is only enough RAM for 48 rows of pixels. FB128 is a __128x48__ pixel mode which is repeated vertically if the display window is more than 48 rows high.
+
+This mode is particularly useful for text rendering, since it is the only efficient way to display fonts with proportional spacing. The SDK includes a __text__ example which makes use of the SOLID and FB128 modes:
+
+![](@ref text-example.png)
+
+This mode uses the Sifteo::FBDrawable template as well. Sifteo::FB128Drawable is a typedef for the specialization of this template used in FB128 mode, and you can find an instance of this class as the *fb128* member inside Sifteo::VideoBuffer.
+
+Only the first two entries of Sifteo::Colormap are used. The colormap lives in the *colormap* member of Sifteo::VideoBuffer.
