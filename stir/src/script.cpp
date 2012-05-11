@@ -322,7 +322,7 @@ void Script::collect()
                         lua_pop(L,1); // -1 key (copy), -2 table, -3 key
                     }
                     if (isHomogeneous && !images.empty()) {
-                        for(int i=0; i<images.size(); ++i) {
+                        for (unsigned i=0; i<images.size(); ++i) {
                             std::stringstream sstm;
                             sstm << '_' << name << '_' << i;
                             std::string iname = sstm.str();
