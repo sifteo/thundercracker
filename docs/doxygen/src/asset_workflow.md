@@ -119,6 +119,7 @@ The following standard effects are supported:
 * Vibrato and volume slide (6)
 * Sample offset (9)
 * Volume slide (A)
+* Position jump (B)
 * Set volume (C)
 * Pattern break (D)
 * Fine portamento Up (E1)
@@ -129,11 +130,10 @@ The following standard effects are supported:
 * Note delay (ED)
 * Pattern delay (EE)
 * Set tempo/bpm (F)
+* Multi retrigger note (R)
 * Extra fine portamento (X1, X2)
 
 Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned:
-* Multi retrigger note (R)
-* Position jump (B)
 * Tremolo (7)
 * Retrigger note (E9)
 * Set finetune (E5)

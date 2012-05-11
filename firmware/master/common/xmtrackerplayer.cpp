@@ -531,7 +531,11 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxPositionJump: {
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxPositionJump fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            // Only useful at the start of a note
+            ASSERT(!ticks);
+            channel.note.effectType = XmTrackerPattern::kNoEffect;
+            
+            processPatternBreak(param, 0);
             break;
         }
         case fxSetVolume: {
