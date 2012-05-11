@@ -297,57 +297,10 @@ bool Script::collect()
         const char *name = lua_tostring(L, -1);
         
         if (name && name[0] != '_') {
-        
             if (lua_istable(L, -2)) {
-                /* 
-                 * Could this be an image image list?
-                 * could be generalized to sound, music, etc, but for now 
-                 * I just want to make sure this works :) 
-                 */
-                bool isHomogeneous = true;
-                int size = luaL_getn(L, -2);
-                if (size > 0) {
-
-                    std::vector<Image*> images; // temporary buffer
-                    for (int i=1; i<=size; ++i) {
-                        lua_rawgeti(L, -2, i); // -1 list[i], -2 key copy, -3 value (table), -4 key
-                        Image *p = Lunar<Image>::cast(L, -1);
-                        
-                        if (p) {
-                            if (images.size() > 0) {
-                                /* make sure p matches the result type of the first element */
-                                if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
-
-                                    isHomogeneous = false;
-                                    log.error("Image list is not homogeneous.  Lists cannot interleave "
-                                              "pinned or flat assets with ordinary types");
-                                    lua_pop(L, 4); // stack empty
-                                    return false;
-
-                                }
-                            }
-
-                            images.push_back(p);
-                        } else {
-                            isHomogeneous = false;
-                            break;
-                        }
-
-                        lua_pop(L,1); // -1 key (copy), -2 table, -3 key
-                    }
-                    if (isHomogeneous) {
-                        for (unsigned i=0; i<images.size(); ++i) {
-                            std::stringstream sstm;
-                            sstm << '_' << name << '_' << i;
-                            std::string iname = sstm.str();
-                            log.setMinLabelWidth(iname.length());
-                            images[i]->setName(iname);
-                            images[i]->getGroup()->addImage(images[i]);
-                        }
-
-                        imageLists.insert(images); // Can has move constructor?
-                    }
-                }
+                if (!collectList(name, -2))
+                    lua_pop(L, 3); // stack empty
+                    return false;
             } else {
                 Group *group = Lunar<Group>::cast(L, -2);
                 Image *image = Lunar<Image>::cast(L, -2);
@@ -383,6 +336,57 @@ bool Script::collect()
     return true;
 }
 
+bool Script::collectList(const char* name, int tableStackIndex) {
+    /* 
+     * Could this be an image image list?
+     * could be generalized to sound, music, etc, but for now 
+     * I just want to make sure this works :) 
+     */
+    int size = luaL_getn(L, tableStackIndex);
+    if (size > 0) {
+
+        std::vector<Image*> images;
+        for (int i=1; i<=size; ++i) {
+            lua_rawgeti(L, tableStackIndex, i);
+            Image *p = Lunar<Image>::cast(L, -1);
+            if (p) {
+                if (images.size() > 0) {
+                    if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
+                        log.error("Image list is not homogeneous.  Lists cannot interleave "
+                                  "pinned or flat assets with ordinary types.");
+                        lua_pop(L, 1);
+                        return false;
+                    }
+                }
+                images.push_back(p);
+            } else {
+                /* 
+                 * This list is not strictly images, which is OK
+                 * (it might be an intermediate result), and we essentially
+                 * treat it the same way we treat an image that's not bound
+                 * to a global variable and ignore it.
+                 */
+                return true;
+            }
+
+            lua_pop(L,1);
+        }
+        
+        for (unsigned i=0; i<images.size(); ++i) {
+            std::stringstream sstm;
+            sstm << '_' << name << '_' << i;
+            std::string iname = sstm.str();
+            log.setMinLabelWidth(iname.length());
+            images[i]->setName(iname);
+            images[i]->getGroup()->addImage(images[i]);
+        }
+
+        imageLists.insert(images); // Can has move constructor?
+
+    }
+
+    return true;
+}
 
 Group::Group(lua_State *L)
 {

@@ -74,6 +74,7 @@ public:
 
     bool luaRunFile(const char *filename);
     bool collect();
+    bool collectList(const char* name, int tableStackIndex);
 
     static bool matchExtension(const char *filename, const char *ext);
 
