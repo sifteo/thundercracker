@@ -34,6 +34,7 @@ public:
 
     void setSpeed(_SYSAudioChannelID ch, uint32_t samplerate);
 
+    void setPos(_SYSAudioChannelID ch, uint32_t ofs);
     uint32_t pos(_SYSAudioChannelID ch);
 
     bool active() const {

@@ -344,6 +344,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << "},\n" <<
         indent << "/* finetune              */ " << (int32_t)instrument.finetune << ",\n" <<
         indent << "/* relativeNoteNumber    */ " << (int32_t)instrument.relativeNoteNumber << ",\n" <<
+        indent << "/* compression           */ " << (int32_t)instrument.compression << ",\n" <<
         indent << "/* volumeEnvelopePoints  */ ";
         if (instrument.volumeEnvelopePoints < song.nInstruments) {
             mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n";
