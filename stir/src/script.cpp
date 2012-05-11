@@ -296,6 +296,8 @@ void Script::collect()
         if (name && name[0] != '_') {
             if (lua_istable(L, -2)) {
                 // image list?
+                // could be generalized to sound, music, etc, but for now I just want to make sure
+                // this works :)
                 bool isHomogeneous = true;
                 int size = luaL_getn(L, -2);
                 if (size > 0) {
@@ -322,16 +324,13 @@ void Script::collect()
                     if (isHomogeneous && !images.empty()) {
                         for(int i=0; i<images.size(); ++i) {
                             std::stringstream sstm;
-                            sstm << name << '_' << i;
+                            sstm << '_' << name << '_' << i;
                             std::string iname = sstm.str();
                             log.setMinLabelWidth(iname.length());
                             images[i]->setName(iname);
-                            std::cout << "iname = " << iname << std::endl;
                             images[i]->getGroup()->addImage(images[i]);
                         }
-                        std::cout << "before insert" << std::endl;
                         imageLists.insert(images); // Can has move constructor?
-                        std::cout << "after insert" << std::endl;
                     }
                 }
             } else {
