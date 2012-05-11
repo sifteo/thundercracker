@@ -25,6 +25,8 @@ extern "C" {
 #include "sifteo/abi.h"
 #include "tracker.h"
 
+#include <iostream>
+
 namespace Stir {
 
 class Group;
@@ -62,6 +64,8 @@ public:
     std::set<Group*> groups;
     std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
+    std::set< std::vector<Image*> > imageLists;
+
 
     friend class Group;
     friend class Image;
@@ -161,7 +165,7 @@ public:
 
     Image(lua_State *L);
 
-    void setName(const char *s) {
+    void setName(std::string s) {
         mName = s;
     }
 

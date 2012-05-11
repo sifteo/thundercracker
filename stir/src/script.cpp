@@ -10,6 +10,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include <sstream>
+
 #include "sha.h"
 #include "script.h"
 #include "proof.h"
@@ -287,40 +289,81 @@ void Script::collect()
      * remain in the global namespace.
      */
 
-    lua_pushnil(L);
-    while (lua_next(L, LUA_GLOBALSINDEX)) {
-        lua_pushvalue(L, -2);   // Make a copy of the key object
+    lua_pushnil(L); // -1 key
+    while (lua_next(L, LUA_GLOBALSINDEX)) { // -1 value, -2 key
+        lua_pushvalue(L, -2);   // -1 key copy, -2 value, -3 key
         const char *name = lua_tostring(L, -1);
-        Group *group = Lunar<Group>::cast(L, -2);
-        Image *image = Lunar<Image>::cast(L, -2);
-        Sound *sound = Lunar<Sound>::cast(L, -2);
-        Tracker *tracker = Lunar<Tracker>::cast(L, -2);
-
         if (name && name[0] != '_') {
-            if (group || image || sound)
-                log.setMinLabelWidth(strlen(name));
-
-            if (group) {
-                group->setName(name);
-                groups.insert(group);
-            }
-            if (image) {
-                image->setName(name);
-                image->getGroup()->addImage(image);
-            }
-            if (tracker) {
-                tracker->setName(name);
-                trackers.insert(tracker);
-            }
-            if (sound) {
-                sound->setName(name);
-                sounds.insert(sound);
+            if (lua_istable(L, -2)) {
+                // image list?
+                bool isHomogeneous = true;
+                int size = luaL_getn(L, -2);
+                if (size > 0) {
+                    std::vector<Image*> images; // temporary buffer
+                    for(int i=1; i<=size; ++i) {
+                        lua_rawgeti(L, -2, i); // -1 list[i], -2 key copy, -3 value (table), -4 key
+                        Image *p = Lunar<Image>::cast(L, -1);
+                        if (p) {
+                            if (images.size() > 0) {
+                                // make sure p matches the result type of the first element
+                                if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
+                                    isHomogeneous = false;
+                                    // TODO - error out rather than failing silently!
+                                    break;
+                                }
+                            }
+                            images.push_back(p);
+                        } else {
+                            isHomogeneous = false;
+                            break;
+                        }
+                        lua_pop(L,1); // -1 key (copy), -2 table, -3 key
+                    }
+                    if (isHomogeneous && !images.empty()) {
+                        for(int i=0; i<images.size(); ++i) {
+                            std::stringstream sstm;
+                            sstm << name << '_' << i;
+                            std::string iname = sstm.str();
+                            log.setMinLabelWidth(iname.length());
+                            images[i]->setName(iname);
+                            std::cout << "iname = " << iname << std::endl;
+                            images[i]->getGroup()->addImage(images[i]);
+                        }
+                        std::cout << "before insert" << std::endl;
+                        imageLists.insert(images); // Can has move constructor?
+                        std::cout << "after insert" << std::endl;
+                    }
+                }
+            } else {
+                // otherwise check for one of the standard types
+                Group *group = Lunar<Group>::cast(L, -2);
+                Image *image = Lunar<Image>::cast(L, -2);
+                Sound *sound = Lunar<Sound>::cast(L, -2);
+                Tracker *tracker = Lunar<Tracker>::cast(L, -2);
+                if (group || image || sound) {
+                    log.setMinLabelWidth(strlen(name));
+                }
+                if (group) {
+                    group->setName(name);
+                    groups.insert(group);
+                }
+                if (image) {
+                    image->setName(name);
+                    image->getGroup()->addImage(image);
+                }
+                if (tracker) {
+                    tracker->setName(name);
+                    trackers.insert(tracker);
+                }
+                if (sound) {
+                    sound->setName(name);
+                    sounds.insert(sound);
+                }
             }
         }
-
-        lua_pop(L, 2);
+        lua_pop(L, 2); // -1 key
     };
-    lua_pop(L, 1);
+    lua_pop(L, 1); // stack empty
 }
 
 
