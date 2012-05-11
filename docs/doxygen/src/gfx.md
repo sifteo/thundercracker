@@ -140,7 +140,7 @@ In this example, BG0 contains a side-scrolling level, and BG1 contains both a pl
 
 The amount of RAM available for BG1 is quite limited. Unfortunately, the Video RAM in each Sifteo Cube is too small to include two 18x18 grids as used by BG0. The space available to BG1 is only sufficient for a total of 144 tiles, or about 56% of the screen.
 
-To overcome this limitation, BG1 is arranged as a 16x16 tile _virtual grid_ which can be backed by up to 144 tiles. This means that at least 112 tiles in this virtual grid must be left unallocated. Unallocated tiles always appear fully transparent.
+To overcome this limitation, BG1 is arranged as a 16x16 tile non-repeating _virtual grid_ which can be backed by up to 144 tiles. This means that at least 112 tiles in this virtual grid must be left unallocated. Unallocated tiles always appear fully transparent.
 
 Pixel panning, when applied to BG1, always describes the offset between the top-left corner of the virtual grid and the top-left corner of the display window. This means that the physical location of any tile depends both on the current pixel panning and on the tile's location in the virtual grid.
 
@@ -183,7 +183,31 @@ The Sifteo::SpriteLayer class understands the Video RAM layout used for the spri
 
 ## BG2
 
-Write me!
+So far, we've been talking a lot about repositioning layers and editing tile grids, but none about common modern graphical operations like rotation, scaling, and blending. This stems from the underlying technical strengths and weaknesses of a platform as small and power-efficient as Sifteo Cubes. It's very efficient to pan a layer or manipulate tiles, but quite inefficient to do the kinds of operations you may be familiar with from toolkits like OpenGL. Modern GPUs are very good at using mathematical matrices to transform objects, but they're also very expensive and very power-hungry! The above video modes are much better at getting the most from our tiny graphics engine.
+
+Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of support for image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
+
+BG2 consists of a __16x16 tile grid__ and a matrix which applies a single __affine transform__ to the entire scene. The layer does repeat every 256 pixels horizontally and vertically, due to 8-bit integer wraparound, but the unused portions of this 256x256 space are painted with a solid-color _border_. This makes it possible to scale a full-screen image down by up to 1/2 without seeing any repeats.
+
+![](@ref bg2-layer.png)
+
+The entire layer is transformed via a Sifteo::AffineMatrix which is used by the graphics engine to convert screen coordinates into virtual coordinates in this repeating 256x256-pixel space:
+
+![](@ref bg2-matrix.png)
+
+You can think of the matrix as a set of instructions for the rendering engine:
+
+- Start at virtual coordinate (cx, cy)
+- For every horizontal pixel on the display, add (xx, xy) to the virtual coordinate.
+- For every vertical row of the display, add (yx, yy) to the virtual coordinate for the beginning of that row.
+
+![](@ref bg2-transform.png)
+
+There are a few technical limitations and caveats, of course:
+
+- No other layers may be combined with BG2. Specifically, sprites are not supported in BG2 mode.
+- The graphics engine does not support filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
+- The BG2 renderer includes an optimization which works by updating the virtual Y coordinate less frequently than the X coordinate. This means that rotation quality decreases as the angle gets closer to 90 degrees. For this reason, we strongly recommend that rotations near 90 degrees are not performed using the BG2 affine transform. One workaround is to use the mode-independent display rotation to get to the nearest 90-degree multiple, then use BG2 for the remainder of the rotation angle.
 
 ## BG0_ROM
 
