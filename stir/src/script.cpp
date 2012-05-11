@@ -302,7 +302,7 @@ void Script::collect()
                 int size = luaL_getn(L, -2);
                 if (size > 0) {
                     std::vector<Image*> images; // temporary buffer
-                    for(int i=1; i<=size; ++i) {
+                    for (int i=1; i<=size; ++i) {
                         lua_rawgeti(L, -2, i); // -1 list[i], -2 key copy, -3 value (table), -4 key
                         Image *p = Lunar<Image>::cast(L, -1);
                         if (p) {
