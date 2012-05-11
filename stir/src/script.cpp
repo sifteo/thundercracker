@@ -82,7 +82,8 @@ bool Script::run(const char *filename)
     if (!luaRunFile(filename))
         return false;
 
-    collect();
+    if (!collect())
+        return false;
 
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
@@ -278,7 +279,7 @@ bool Script::argEnd(lua_State *L)
     return success;
 }
 
-void Script::collect()
+bool Script::collect()
 {
     /*
      * Scan through the global variables leftover after running a
@@ -290,39 +291,52 @@ void Script::collect()
      */
 
     lua_pushnil(L); // -1 key
+
     while (lua_next(L, LUA_GLOBALSINDEX)) { // -1 value, -2 key
         lua_pushvalue(L, -2);   // -1 key copy, -2 value, -3 key
         const char *name = lua_tostring(L, -1);
+        
         if (name && name[0] != '_') {
+        
             if (lua_istable(L, -2)) {
-                // image list?
-                // could be generalized to sound, music, etc, but for now I just want to make sure
-                // this works :)
+                /* 
+                 * Could this be an image image list?
+                 * could be generalized to sound, music, etc, but for now 
+                 * I just want to make sure this works :) 
+                 */
                 bool isHomogeneous = true;
                 int size = luaL_getn(L, -2);
                 if (size > 0) {
+
                     std::vector<Image*> images; // temporary buffer
-                    for(int i=1; i<=size; ++i) {
+                    for (int i=1; i<=size; ++i) {
                         lua_rawgeti(L, -2, i); // -1 list[i], -2 key copy, -3 value (table), -4 key
                         Image *p = Lunar<Image>::cast(L, -1);
+                        
                         if (p) {
                             if (images.size() > 0) {
-                                // make sure p matches the result type of the first element
+                                /* make sure p matches the result type of the first element */
                                 if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
+
                                     isHomogeneous = false;
-                                    // TODO - error out rather than failing silently!
-                                    break;
+                                    log.error("Image list is not homogeneous.  Lists cannot interleave "
+                                              "pinned or flat assets with ordinary types");
+                                    lua_pop(L, 4); // stack empty
+                                    return false;
+
                                 }
                             }
+
                             images.push_back(p);
                         } else {
                             isHomogeneous = false;
                             break;
                         }
+
                         lua_pop(L,1); // -1 key (copy), -2 table, -3 key
                     }
                     if (isHomogeneous) {
-                        for(int i=0; i<images.size(); ++i) {
+                        for (unsigned i=0; i<images.size(); ++i) {
                             std::stringstream sstm;
                             sstm << '_' << name << '_' << i;
                             std::string iname = sstm.str();
@@ -330,15 +344,16 @@ void Script::collect()
                             images[i]->setName(iname);
                             images[i]->getGroup()->addImage(images[i]);
                         }
+
                         imageLists.insert(images); // Can has move constructor?
                     }
                 }
             } else {
-                // otherwise check for one of the standard types
                 Group *group = Lunar<Group>::cast(L, -2);
                 Image *image = Lunar<Image>::cast(L, -2);
                 Sound *sound = Lunar<Sound>::cast(L, -2);
                 Tracker *tracker = Lunar<Tracker>::cast(L, -2);
+
                 if (group || image || sound) {
                     log.setMinLabelWidth(strlen(name));
                 }
@@ -360,9 +375,12 @@ void Script::collect()
                 }
             }
         }
+
         lua_pop(L, 2); // -1 key
     };
+
     lua_pop(L, 1); // stack empty
+    return true;
 }
 
 

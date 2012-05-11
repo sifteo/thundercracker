@@ -73,7 +73,7 @@ public:
     friend class Tracker;
 
     bool luaRunFile(const char *filename);
-    void collect();
+    bool collect();
 
     static bool matchExtension(const char *filename, const char *ext);
 
@@ -165,7 +165,7 @@ public:
 
     Image(lua_State *L);
 
-    void setName(std::string s) {
+void setName(std::string s) {
         mName = s;
     }
 
