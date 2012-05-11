@@ -123,7 +123,7 @@ In this mode there is a single layer, an infinitely-repeating 18x18 tile grid. V
 
 ## BG0_BG1
 
-Just as you might create several composited layers in a photo manipulation or illustration tool in order to move objects independently, the Sifteo graphics engine supports a simple form of layer compositing.
+Just as you might create several composited layers in a photo manipulation or illustration tool in order to move objects independently, the Sifteo graphics engine provides a simple form of layer compositing.
 
 Sometimes you only need a single layer. Since you can modify each tile index independently in BG0, any animation is possible as long as objects move in 8-pixel increments, or the entire BG0 layer can move as a single unit. But sometimes it's invaluable to have even a single object that "breaks the grid" and moves independently. In the **BG0_BG1** mode, a second _background one_ layer floats on top of BG0. You might use this for:
 
@@ -132,7 +132,7 @@ Sometimes you only need a single layer. Since you can modify each tile index ind
 * A scoreboard, overlaid on your game's playfield
 * Large movable objects, like enemies or menu icons, which scroll against a static background
 
-Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 supports 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not support alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
+Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 implements 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not provide any alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
 
 ![](@ref bg1-stackup.png)
 
@@ -185,7 +185,7 @@ The Sifteo::SpriteLayer class understands the Video RAM layout used for the spri
 
 So far, we've been talking a lot about repositioning layers and editing tile grids, but none about common modern graphical operations like rotation, scaling, and blending. This stems from the underlying technical strengths and weaknesses of a platform as small and power-efficient as Sifteo Cubes. It's very efficient to pan a layer or manipulate tiles, but quite inefficient to do the kinds of operations you may be familiar with from toolkits like OpenGL. Modern GPUs are very good at using mathematical matrices to transform objects, but they're also very expensive and very power-hungry! The above video modes are much better at getting the most from our tiny graphics engine.
 
-Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of support for image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
+Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
 
 BG2 consists of a __16x16 tile grid__ and a matrix which applies a single __affine transform__ to the entire scene. The layer does repeat every 256 pixels horizontally and vertically, due to 8-bit integer wraparound, but the unused portions of this 256x256 space are painted with a solid-color _border_. This makes it possible to scale a full-screen image down by up to 1/2 without seeing any repeats.
 
@@ -207,8 +207,8 @@ The Sifteo::BG2Drawable class understands the Video RAM layout used in the BG2 m
 
 There are a few technical limitations and caveats, of course:
 
-- No other layers may be combined with BG2. Specifically, sprites are not supported in BG2 mode.
-- The graphics engine does not support filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
+- No other layers may be combined with BG2. Specifically, sprites are not available in BG2 mode.
+- The graphics engine does not include any filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
 - The BG2 renderer includes an optimization which works by updating the virtual Y coordinate less frequently than the X coordinate. This means that rotation quality decreases as the angle gets closer to 90 degrees. For this reason, we strongly recommend that rotations near 90 degrees are not performed using the BG2 affine transform. One workaround is to use the mode-independent display rotation to get to the nearest 90-degree multiple, then use BG2 for the remainder of the rotation angle.
 - The affine matrix is stored in Video RAM as an array of six signed 16-bit fixed point numbers in _8.8_ format. In other words, there are always 8 bits to the left of the binary point and 8 bits to the right of the binary point. The Sifteo::AffineMatrix class uses floating point numbers, however, so typically you won't have to deal with fixed point values yourself.
 

@@ -8,7 +8,7 @@ Sifteo applications are deployed as ELF binaries, a [standard file format](http:
 Sifteo applications run on the Sifteo Base, a (very) small mobile device with limited resources.
 
 ## Read-Write Data (RAM)
-Applications have a total of @b 32K RAM available, including static allocations and the stack. Dynamic memory allocation is not (yet) supported.
+Applications have a total of @b 32K RAM available, including static allocations and the stack. Dynamic memory allocation is not available.
 
 ### Stack
 The size of the stack is equal to the total RAM available (32K) minus the total size of your application's static allocations.
@@ -19,7 +19,7 @@ In the event that you overflow the stack, the SVM runtime faults and execution o
 
 ## Read-Only Data (ROM)
 
-The maximum supported size of a binary on the Sifteo platform is @b 16MB. Currently, this is also the maximum amout of external storage available on the Sifteo Base, so it's not practical to assume that a shipping application can consume all 16MB.
+The maximum size of a binary on the Sifteo platform is @b 16MB. Currently, this is also the maximum amount of external storage available on the Sifteo Base, so it's not practical to assume that a shipping application can consume all 16MB.
 
 The .elf binary for your application contains all of the code, data, and assets required to run your game, so the total size of the .elf binary is the effective size of your application.
 

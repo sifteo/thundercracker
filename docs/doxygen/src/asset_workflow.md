@@ -65,7 +65,7 @@ Bubbles = tracker{"bubbles.xm"}
 Slumberjack = tracker{"slumberjack.xm"}
 ~~~~~~~~~~~~~
 
-Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is supported in assets.lua.
+Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is available for tracker modules.
 
 ### Input
 
@@ -79,8 +79,8 @@ Stir compresses modules in a few ways. All samples (accepted formats: pcm16, pcm
 
 Due to hardware limitations, modules face a few hard constraints:
 
-* Panning is not supported and any panning information is discarded.
-* Songs using more than 8 channels are not supported.
+* __Panning__ is not available. Any panning information is discarded.
+* Songs may not use more than __8 channels__.
 
 Beyond these constraints, modules on Sifteo Cubes are also currently limited to:
 
@@ -93,14 +93,12 @@ These limitations may be removed with a future version of the asset toolchain, b
 
 ### Effects
 
-While the included tracker fully supports playing notes, it has incomplete built-in effect, standard effect and volume column support.
-
-The following standard effects are not yet supported:
+The included tracker implements a subset of the effects available in XM modules. The following standard effects are not yet available:
 
 * Automatic instrument vibrato
 * Fadeout
 
-The following volume column effects are supported:
+The following volume column effects are implemented:
 
 * Set volume (0x10 - 0x50)
 * Volume slide down (0x6#)
@@ -108,7 +106,7 @@ The following volume column effects are supported:
 * Fine volume down (0x8#)
 * Fine volume up (0x9#)
 
-The following standard effects are supported:
+The following standard effects are implemented:
 
 * Arpeggio (0)
 * Portamento up (1)
@@ -133,7 +131,8 @@ The following standard effects are supported:
 * Multi retrigger note (R)
 * Extra fine portamento (X1, X2)
 
-Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned:
+The following standard effects are not currently implemented, but are planned:
+
 * Tremolo (7)
 * Retrigger note (E9)
 * Set finetune (E5)
@@ -144,7 +143,7 @@ Volume column effect support will generally follow standard effects. The followi
 * Set global volume (G)
 * Global volume slide (H)
 
-The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be supported:
+The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
 
 * Set gliss control (E3)
 * Set tremolo control (E7)
