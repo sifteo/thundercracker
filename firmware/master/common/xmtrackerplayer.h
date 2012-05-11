@@ -51,19 +51,31 @@ struct XmTrackerChannel {
                     depth:4;
             uint8_t type;
         } vibrato;
+        struct {
+            uint8_t speed:4,
+                    interval:4;
+            uint8_t phase;
+        } retrigger;
     };
 
     inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
-        if (pNote == XmTrackerPattern::kNoNote)
-            pNote = note.note;
+        if (pNote >= XmTrackerPattern::kNoNote) {
+            if (note.note < XmTrackerPattern::kNoNote) {
+                pNote = note.note;
+            } else {
+                return 0;
+            }
+        }
+
+        pNote += instrument.relativeNoteNumber;
 
         if (!instrument.sample.pData ||
-            pNote == XmTrackerPattern::kNoteOff)
+            pNote >= XmTrackerPattern::kNoteOff)
         {
             return 0;
         }
 
-        return instrument.relativeNoteNumber + pNote;
+        return pNote;
     }
 };
 
@@ -138,6 +150,8 @@ private:
 
     void loadNextNotes();
 
+    void incrementVolume(uint16_t &volume, uint8_t inc);
+    void decrementVolume(uint16_t &volume, uint8_t dec);
     void processVolumeSlideUp(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
     void processVolumeSlideDown(XmTrackerChannel &channel, uint16_t &volume, uint8_t inc);
     void processVibrato(XmTrackerChannel &channel);
@@ -147,6 +161,7 @@ private:
     void processArpeggio(XmTrackerChannel &channel);
     void processVolumeSlide(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
+    void processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide = 8);
     void processEffects(XmTrackerChannel &channel);
 
     void processEnvelope(XmTrackerChannel &channel);
