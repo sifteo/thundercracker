@@ -228,29 +228,30 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     delete enc;
 }
 
-void CPPSourceWriter::writeImageList(const ImageList& images) {
+void CPPSourceWriter::writeImageList(const ImageList& images)
+{
     /* 
      * First we'll write the decls, then the list itself, and
      * finally, all the data.
      */
      
-     for(ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
         writeImage(**i, true, false, false);
         mStream << "\n";
      }
 
-     mStream << "extern const Sifteo::" << images.getImageClassName() << " " << images.getName() << "[" << images.size() << "] = {\n";
+     mStream << "extern const Sifteo::" << images.getImageClassName() <<
+         " " << images.getName() << "[" << images.size() << "] = {\n";
 
-     for(ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
         writeImage(**i, false, true, false);
      }
 
      mStream << "};\n\n";
      
-     for(ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
         writeImage(**i, false, false, true);
      }
-
 }
 
 void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeAsset, bool writeData)
@@ -578,7 +579,8 @@ void CPPHeaderWriter::writeTracker(const Tracker &tracker)
 
 void CPPHeaderWriter::writeImageList(const ImageList &list)
 {
-    mStream << "extern const Sifteo::" << list.getImageClassName() << " " << list.getName() << "[" << list.size() <<"];\n";
+    mStream << "extern const Sifteo::" << list.getImageClassName() << " " <<
+        list.getName() << "[" << list.size() <<"];\n";
 }
 
 };  // namespace Stir
