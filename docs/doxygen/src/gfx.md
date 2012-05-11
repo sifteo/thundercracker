@@ -230,7 +230,7 @@ Tile indices in this mode are 14 bits, divided into a few distinct fields which 
 
 The Sifteo::BG0ROMDrawable class understands the Video RAM layout used in the BG0_ROM mode, plus it understands the ROM tileset layout enough to draw text and progress bars. You can find an instance of this class as the *bg0rom* member inside Sifteo::VideoBuffer.
 
-- __Warning:__ Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
+@warning Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
 
 ## SOLID
 
@@ -258,7 +258,7 @@ The Sifteo::FBDrawable template implements Video RAM accessors for plotting indi
 
 The 16-entry colormap can be independently accessed via Sifteo::Colormap, which lives in the *colormap* member of Sifteo::VideoBuffer. The colormap can be modified either before or after plotting pixel data. By changing the colors associated with each color index, you can perform palette animation efficiently without changing any of the underlying framebuffer memory.
 
-- __Tip:__ Due to details of the compression used to update Video RAM over the air, it's more efficient to use even color indices than odd indices. You can optimize to take advantage of this fact by placing the most commonly used colors at even indices in the Sifteo::Colormap.
+@note Due to details of the compression used to update Video RAM over the air, it's more efficient to use even color indices than odd indices. You can optimize to take advantage of this fact by placing the most commonly used colors at even indices in the Sifteo::Colormap.
 
 ## FB64
 

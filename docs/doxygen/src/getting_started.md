@@ -25,7 +25,7 @@ The Sifteo SDK is distributed as a zip archive, and can be unpacked anywhere on 
 
 The Sifteo SDK doesn't dictate any build tools or IDE that must be used to develop applications. This guide, as well as the examples included with the SDK, will assume you're building with good old Makefiles, but you may configure your IDE of choice to build Sifteo applications as long as it can use the compiler and linker we provide.
 
-* __Note:__ If you set up your own build system from scratch, be sure to use the same compiler flags that we provide by default in the Makefiles.
-  * Compile for a minimal environment, and generate LLVM object files: <pre>-emit-llvm -ffreestanding -nostdinc -msoft-float</pre>
-  * Disable unavailable C++ features: <pre>-fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protector</pre>
-  * Recommended flags for warnings and debugging:<pre>-g -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions</pre>
+@note If you set up your own build system from scratch, be sure to use the same compiler flags that we provide by default in the Makefiles.
+* Compile for a minimal environment, and generate LLVM object files: <pre>-emit-llvm -ffreestanding -nostdinc -msoft-float</pre>
+* Disable unavailable C++ features: <pre>-fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protector</pre>
+* Recommended flags for warnings and debugging:<pre>-g -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions</pre>
