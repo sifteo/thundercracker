@@ -253,6 +253,10 @@ public:
         return mImages.end();
     }
 
+    unsigned size() const {
+        return mImages.size();
+    }
+
     const char* getImageClassName() const {
         return mImages[0]->getClassName();
     }

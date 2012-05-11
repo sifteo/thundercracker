@@ -239,7 +239,7 @@ void CPPSourceWriter::writeImageList(const ImageList& images) {
         mStream << "\n";
      }
 
-     mStream << "extern const Sifteo::" << images.getImageClassName() << " " << images.getName() << "[] = {\n";
+     mStream << "extern const Sifteo::" << images.getImageClassName() << " " << images.getName() << "[" << images.size() << "] = {\n";
 
      for(ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
         writeImage(**i, false, true, false);
@@ -578,7 +578,7 @@ void CPPHeaderWriter::writeTracker(const Tracker &tracker)
 
 void CPPHeaderWriter::writeImageList(const ImageList &list)
 {
-    mStream << "extern const Sifteo::" << list.getImageClassName() << " " << list.getName() << "[];\n";
+    mStream << "extern const Sifteo::" << list.getImageClassName() << " " << list.getName() << "[" << list.size() <<"];\n";
 }
 
 };  // namespace Stir
