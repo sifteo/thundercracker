@@ -214,11 +214,33 @@ There are a few technical limitations and caveats, of course:
 
 ## BG0_ROM
 
-Write me!
+All of the video modes we've discussed so far are based on assembling pixel data that has been previously stored to Asset Flash. But what if you can't count on the contents of Asset Flash? This could be the case in debugging or error handling code, or during early bootstrapping.
+
+For these situations, the graphics engine provides the __BG0_ROM__ mode. It is identical to the BG0 mode, except that tile data comes from an internal read-only memory region in the Sifteo Cube hardware. These tile images are installed during manufacturing, and they cannot be modified. This makes the BG0_ROM mode of limited usefulness for most applications.
+
+The ROM tileset does, however, include an 8x8 fixed-width font. This system font can be really handy for debugging, diagnostics, and prototyping. For example, the *sensors* demo uses this mode as a quick way to display text:
+
+![](@ref sensors.png)
+
+Tile indices in this mode are 14 bits, divided into a few distinct fields which control the rendering process on a per-tile basis:
+
+- Nine bits are used for a tile index. The ROM has space for up to 512 two-color tiles.
+- One bit enables four-color mode, in which two adjacent two-color tiles are reinterpreted as two bit planes which combine to form a single four-color tile.
+- Four bits select one of sixteen color palettes, also stored in ROM.
+
+The Sifteo::BG0ROMDrawable class understands the Video RAM layout used in the BG0_ROM mode, plus it understands the ROM tileset layout enough to draw text and progress bars. You can find an instance of this class as the *bg0rom* member inside Sifteo::VideoBuffer.
+
+- __Note:__ Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
 
 ## SOLID
 
-Write me!
+The simplest video mode! It draws a single solid color, from the first entry in the Sifteo::Colormap. The colormap holds up to 16 colors in RGB565 format. You can find an instance of this calss as the *colormap* member inside Sifteo::VideoBuffer.
+
+This mode can be used as a building block for advanced visual effects. When using windowing techniques to create a letterbox effect, for example, the SOLID mode can be used to paint a solid-color background. You can also use the SOLID mode to create bright flashes, wipes, and so on.
+
+Unlike the tiled modes above, the SOLID mode uses Sifteo::Colormap and therefore any RGB565 color can be chosen at runtime.
+
+The SOLID mode also has the advantage of using very little space in a cube's Video RAM. You can set up the necessary parameters for this mode very quickly, using only a small amount of radio traffic.
 
 ## FB32
 
