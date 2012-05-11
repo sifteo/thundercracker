@@ -169,7 +169,9 @@ inline void XmTrackerPlayer::loadNextNotes()
                 channel.porta.period = channel.period;
             }
         }
-        channel.frequency = getFrequency(channel.period);
+        if (channel.period) {
+            channel.frequency = getFrequency(channel.period);
+        }
         channel.note = note;
 
         if (channel.start) {
@@ -280,12 +282,12 @@ void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
 
     if (!delta) return;
 
-    if (abs(delta) < channel.tonePorta) {
+    if (abs(delta) < channel.tonePorta * 4) {
         channel.period = channel.porta.period;
     } else if (delta < 0) {
-        channel.period += channel.tonePorta;
+        channel.period += channel.tonePorta * 4;
     } else {
-        channel.period -= channel.tonePorta;
+        channel.period -= channel.tonePorta * 4;
     }
     channel.frequency = getFrequency(channel.period);
 }
@@ -534,7 +536,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             // Only useful at the start of a note
             ASSERT(!ticks);
             channel.note.effectType = XmTrackerPattern::kNoEffect;
-            
+
             processPatternBreak(param, 0);
             break;
         }
