@@ -195,7 +195,7 @@ The entire layer is transformed via a Sifteo::AffineMatrix which is used by the 
 
 ![](@ref bg2-matrix.png)
 
-You can think of the matrix as a set of instructions for the rendering engine:
+You can think of this matrix as a set of instructions for the rendering engine:
 
 - Start at virtual coordinate (cx, cy)
 - For every horizontal pixel on the display, add (xx, xy) to the virtual coordinate.
