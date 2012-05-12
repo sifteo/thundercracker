@@ -123,7 +123,7 @@ In this mode there is a single layer, an infinitely-repeating 18x18 tile grid. V
 
 ## BG0_BG1
 
-Just as you might create several composited layers in a photo manipulation or illustration tool in order to move objects independently, the Sifteo graphics engine supports a simple form of layer compositing.
+Just as you might create several composited layers in a photo manipulation or illustration tool in order to move objects independently, the Sifteo graphics engine provides a simple form of layer compositing.
 
 Sometimes you only need a single layer. Since you can modify each tile index independently in BG0, any animation is possible as long as objects move in 8-pixel increments, or the entire BG0 layer can move as a single unit. But sometimes it's invaluable to have even a single object that "breaks the grid" and moves independently. In the **BG0_BG1** mode, a second _background one_ layer floats on top of BG0. You might use this for:
 
@@ -132,7 +132,7 @@ Sometimes you only need a single layer. Since you can modify each tile index ind
 * A scoreboard, overlaid on your game's playfield
 * Large movable objects, like enemies or menu icons, which scroll against a static background
 
-Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 supports 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not support alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
+Like BG0, BG1 is defined as a grid of tile indices. You can combine any number of Asset Images when drawing BG1, as long as everything is aligned to the 8-pixel tile grid. But BG0 and BG1 use two independent grid systems; you can pan each layer independently. Additionally, BG1 implements 1-bit transparency. Pixels on BG1 which are at least 50% transparent will allow BG0 to show through. Note that Sifteo Cubes do not provide any alpha blending, so all pixels that are at least 50% opaque appear as fully opaque.
 
 ![](@ref bg1-stackup.png)
 
@@ -185,7 +185,7 @@ The Sifteo::SpriteLayer class understands the Video RAM layout used for the spri
 
 So far, we've been talking a lot about repositioning layers and editing tile grids, but none about common modern graphical operations like rotation, scaling, and blending. This stems from the underlying technical strengths and weaknesses of a platform as small and power-efficient as Sifteo Cubes. It's very efficient to pan a layer or manipulate tiles, but quite inefficient to do the kinds of operations you may be familiar with from toolkits like OpenGL. Modern GPUs are very good at using mathematical matrices to transform objects, but they're also very expensive and very power-hungry! The above video modes are much better at getting the most from our tiny graphics engine.
 
-Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of support for image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
+Nevertheless, sometimes you really do need to rotate or scale an image for that one special effect. Even a little bit of image transformation can make the difference between a clunky transition and a really polished interstitial animation. This is where the __BG2__ mode can help.
 
 BG2 consists of a __16x16 tile grid__ and a matrix which applies a single __affine transform__ to the entire scene. The layer does repeat every 256 pixels horizontally and vertically, due to 8-bit integer wraparound, but the unused portions of this 256x256 space are painted with a solid-color _border_. This makes it possible to scale a full-screen image down by up to 1/2 without seeing any repeats.
 
@@ -203,28 +203,81 @@ You can think of the matrix as a set of instructions for the rendering engine:
 
 ![](@ref bg2-transform.png)
 
+The Sifteo::BG2Drawable class understands the Video RAM layout used in the BG2 mode. You can find an instance of this class as the *bg2* member inside Sifteo::VideoBuffer.
+
 There are a few technical limitations and caveats, of course:
 
-- No other layers may be combined with BG2. Specifically, sprites are not supported in BG2 mode.
-- The graphics engine does not support filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
+- No other layers may be combined with BG2. Specifically, sprites are not available in BG2 mode.
+- The graphics engine does not include any filtering, it just rounds virtual coordinates to the nearest integer pixel. This means that the scaling quality is inherently low, so it's best for quick transitions or special effects rather than for images that the user spends a lot of time seeing.
 - The BG2 renderer includes an optimization which works by updating the virtual Y coordinate less frequently than the X coordinate. This means that rotation quality decreases as the angle gets closer to 90 degrees. For this reason, we strongly recommend that rotations near 90 degrees are not performed using the BG2 affine transform. One workaround is to use the mode-independent display rotation to get to the nearest 90-degree multiple, then use BG2 for the remainder of the rotation angle.
+- The affine matrix is stored in Video RAM as an array of six signed 16-bit fixed point numbers in _8.8_ format. In other words, there are always 8 bits to the left of the binary point and 8 bits to the right of the binary point. The Sifteo::AffineMatrix class uses floating point numbers, however, so typically you won't have to deal with fixed point values yourself.
 
 ## BG0_ROM
 
-Write me!
+All of the video modes we've discussed so far are based on assembling pixel data that has been previously stored to Asset Flash. But what if you can't count on the contents of Asset Flash? This could be the case in debugging or error handling code, or during early bootstrapping.
+
+For these situations, the graphics engine provides the __BG0_ROM__ mode. It is identical to the BG0 mode, except that tile data comes from an internal read-only memory region in the Sifteo Cube hardware. These tile images are installed during manufacturing, and they cannot be modified. This makes the BG0_ROM mode of limited usefulness for most applications.
+
+The ROM tileset does, however, include an 8x8 fixed-width font. This system font can be really handy for debugging, diagnostics, and prototyping. For example, the *sensors* demo uses this mode as a quick way to display text:
+
+![](@ref sensors.png)
+
+Tile indices in this mode are 14 bits, divided into a few distinct fields which control the rendering process on a per-tile basis:
+
+- Nine bits are used for a tile index. The ROM has space for up to 512 two-color tiles.
+- One bit enables four-color mode, in which two adjacent two-color tiles are reinterpreted as two bit planes which combine to form a single four-color tile.
+- Four bits select one of sixteen color palettes, also stored in ROM.
+
+The Sifteo::BG0ROMDrawable class understands the Video RAM layout used in the BG0_ROM mode, plus it understands the ROM tileset layout enough to draw text and progress bars. You can find an instance of this class as the *bg0rom* member inside Sifteo::VideoBuffer.
+
+@warning Currently the ROM tileset artwork has not been finalized, so applications must not rely on specific tile indices. It is important to use only the public functions in Sifteo::BG0ROMDrawable.
 
 ## SOLID
 
-Write me!
+The simplest video mode! It draws a single solid color, from the first entry in the Sifteo::Colormap. The colormap holds up to 16 colors in RGB565 format. You can find an instance of this class as the *colormap* member inside Sifteo::VideoBuffer.
+
+This mode can be used as a building block for advanced visual effects. When using windowing techniques to create a letterbox effect, for example, the SOLID mode can be used to paint a solid-color background. You can also use the SOLID mode to create bright flashes, wipes, and so on.
+
+Unlike the tiled modes above, the SOLID mode uses Sifteo::Colormap and therefore any RGB565 color can be chosen at runtime.
+
+The SOLID mode also has the advantage of using very little space in a cube's Video RAM. You can set up the necessary parameters for this mode very quickly, using only a small amount of radio traffic.
 
 ## FB32
 
-Write me!
+You might be wondering: Why do we need this Asset Flash memory at all? Can't we just send some pixels over the radio, and draw directly to a Sifteo Cube's display?
+
+The answer: Kind of. Unfortunately, a complete framebuffer for our 128x128 16-bit display would require 32 kB of RAM, which is quite large on this system. It's much larger than the 1 kB available for each cube's Video RAM. Additionally, it would be slow to send this framebuffer image over the radio. This is a big part of why the graphics engine prefers to work with tile indices. There are so many fewer tile indices than pixels!
+
+That said, sometimes you really do just want to draw arbitrary pixels to the screen. The graphics engine includes a small set of __framebuffer modes__ which compromise by providing low-resolution and low-color-depth modes which do fit in the limited memory available.
+
+The __FB32__ mode is a 32x32 pixel 16-color framebuffer. It requires 512 bytes of RAM, or exactly half of the Video RAM. The other half includes mode-independent data, as well as a colormap which acts as a lookup table to convert each of these 16 colors into a full RGB565 color. This 32x32 _chunky-pixel_ image is scaled up by a factor of four by the mode renderer.
+
+![](@ref otto.png)
+
+The Sifteo::FBDrawable template implements Video RAM accessors for plotting individual pixels, filling rectangles, and blitting bitmaps on to the framebuffer. Sifteo::FB32Drawable is a typedef for the specialization of this template used in FB32 mode, and you can find an instance of this class as the *fb32* member inside Sifteo::VideoBuffer.
+
+The 16-entry colormap can be independently accessed via Sifteo::Colormap, which lives in the *colormap* member of Sifteo::VideoBuffer. The colormap can be modified either before or after plotting pixel data. By changing the colors associated with each color index, you can perform palette animation efficiently without changing any of the underlying framebuffer memory.
+
+@note Due to details of the compression used to update Video RAM over the air, it's more efficient to use even color indices than odd indices. You can optimize to take advantage of this fact by placing the most commonly used colors at even indices in the Sifteo::Colormap.
 
 ## FB64
 
-Write me!
+The __FB64__ mode is another flavor of framebuffer, but this time with a different resolution vs. color depth tradeoff. It stores data for a 64x64 pixel framebuffer, which is doubled to 128x128 during rendering. However, this only leaves memory for 1 bit per pixel, or 2 colors.
+
+This mode uses the Sifteo::FBDrawable template as well. Sifteo::FB64Drawable is a typedef for the specialization of this template used in FB64 mode, and you can find an instance of this class as the *fb64* member inside Sifteo::VideoBuffer.
+
+Only the first two entries of Sifteo::Colormap are used. The colormap lives in the *colormap* member of Sifteo::VideoBuffer.
 
 ## FB128
 
-Write me!
+The last of our framebuffer modes is __FB128__. As the name would imply, it is 128 pixels wide. Like __FB64__, it is 1 bit per pixel. (2-color)
+
+This is the only framebuffer mode which does not employ any scaling. Each pixel maps directly to one pixel on the display. This makes it a much more generally useful mode, but at a cost: There is only enough RAM for 48 rows of pixels. FB128 is a __128x48__ pixel mode which is repeated vertically if the display window is more than 48 rows high.
+
+This mode is particularly useful for text rendering, since it is the only efficient way to display fonts with proportional spacing. The SDK includes a __text__ example which makes use of the SOLID and FB128 modes:
+
+![](@ref text-example.png)
+
+This mode uses the Sifteo::FBDrawable template as well. Sifteo::FB128Drawable is a typedef for the specialization of this template used in FB128 mode, and you can find an instance of this class as the *fb128* member inside Sifteo::VideoBuffer.
+
+Only the first two entries of Sifteo::Colormap are used. The colormap lives in the *colormap* member of Sifteo::VideoBuffer.

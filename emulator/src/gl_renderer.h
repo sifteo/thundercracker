@@ -47,7 +47,9 @@ class GLRenderer {
     void beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode=0);
     void endFrame();
 
-    void drawBackground(float extent, float scale);
+    void drawDefaultBackground(float extent, float scale);
+    void drawSolidBackground(const float color[4]);
+
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);

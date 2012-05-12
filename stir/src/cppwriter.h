@@ -58,9 +58,11 @@ class CPPSourceWriter : public CPPWriter {
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
     void writeTracker(const Tracker &tracker);
+    void writeImageList(const ImageList& images);
 
  private:
-    void writeImage(const Image &image);
+    void writeImage(const Image &image, bool writeDecl=true, bool writeAsset=true, bool writeData=true);
+
     unsigned nextGroupOrdinal;
 };
 
@@ -78,6 +80,7 @@ class CPPHeaderWriter : public CPPWriter {
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
     void writeTracker(const Tracker &tracker);
+    void writeImageList(const ImageList &list);
 
  protected:
     void head();

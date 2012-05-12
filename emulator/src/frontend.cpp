@@ -759,7 +759,13 @@ void Frontend::draw()
     renderer.beginFrame(viewExtent, viewCenter, effectivePixelZoomMode);
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
-    renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
+
+    if (sys->opt_whiteBackground) {
+        static const float color[] = { 1.f, 1.f, 1.f, 0.f };
+        renderer.drawSolidBackground(color);
+    } else {
+        renderer.drawDefaultBackground(viewExtent * ratio * 50.0f, 0.2f);
+    }
 
     for (unsigned i = 0; i < mothershipCount; ++i) {
         motherships[i].draw(renderer);
