@@ -361,12 +361,12 @@ bool Script::collectList(const char* name, int tableStackIndex) {
         for (int i=1; i<=size; ++i) {
             lua_rawgeti(L, tableStackIndex, i);
             Image *p = Lunar<Image>::cast(L, -1);
+            lua_pop(L,1);
             if (p) {
                 if (images.size() > 0) {
                     if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
                         log.error("Image list is not homogeneous.  Lists cannot interleave "
                                   "pinned or flat assets with ordinary types.");
-                        lua_pop(L, 1);
                         return false;
                     }
                 }
@@ -378,11 +378,8 @@ bool Script::collectList(const char* name, int tableStackIndex) {
                  * treat it the same way we treat an image that's not bound
                  * to a global variable and ignore it.
                  */
-				lua_pop(L, 1);
                 return true;
             }
-
-            lua_pop(L,1);
         }
         
         for (unsigned i=0; i<images.size(); ++i) {
