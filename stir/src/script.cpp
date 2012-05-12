@@ -378,6 +378,7 @@ bool Script::collectList(const char* name, int tableStackIndex) {
                  * treat it the same way we treat an image that's not bound
                  * to a global variable and ignore it.
                  */
+				lua_pop(L, 1);
                 return true;
             }
 
