@@ -41,6 +41,8 @@ If you omit `width` and `height` attributes for your image elements, @b stir wil
 
 Animations consisting of multiple frames should lay out each frame contiguously in the source image. You can then specify `width` or `height` to indicate the size of a frame within your image. In this case, @b stir will divide your image into a grid of appropriately sized frames, and its `frames` attribute will be calculated accordingly from left to right, top to bottom.
 
+@note If you're creating a long animation which may have many duplicated frames in it, stir will automatically factor out these duplicated frames assuming the asset is not marked as `flat` or `pinned`. The _Dictionary Uniform Block (DUB)_ codec operates on blocks of up to 8x8 tiles within each frame. If any 8x8 tile blocks are identical, they will all be represented by the same data in memory.
+
 ## Image Option Summary
 
 Option              | Meaning
@@ -54,7 +56,7 @@ Option              | Meaning
 
 # Asset Image Lists
 
-It is occasionally desired to export images as an array.
+It is occasionally desirable to export images as an array.
 
 ~~~~~~~~~~~~~{.lua}
 Environments = group{}
@@ -63,6 +65,18 @@ TileSets = { image{"desert.png"}, image{"ocean.png"}, image{"castle.png"} }
 ~~~~~~~~~~~~~
 
 Image Lists must contain only images, or else they are ignored.  Furthermore, the images must be homogeneous: you may not interleave pinned, flat and ordinary assets in the same list.
+
+Asset Image Lists are just a way of grouping together several distinct AssetImage instances. This can be handy when you have several images which are related, but may have different dimensions or compression formats, or when each image already contains multiple frames.
+
+Note that this syntax is distinct from the following, which creates a single Sifteo::AssetImage with two frames by passing an array of PNG filenames to the image constructor:
+
+~~~~~~~~~~~~~{.lua}
+Sprites = group{}
+
+PlayerSprite = image{ { "player-sitting.png", "player-standing.png"}, pinned=true }
+~~~~~~~~~~~~~
+
+@note If you have the choice between using a single Asset Image with multiple frames, instead of an Asset Image List, the single Asset Image can be more efficient.
 
 # Asset Audio
 
