@@ -122,15 +122,8 @@ These limitations may be removed with a future version of the asset toolchain, b
 The included tracker implements a subset of the effects available in XM modules. The following standard effects are not yet available:
 
 * Automatic instrument vibrato
-* Fadeout
 
-The following volume column effects are implemented:
-
-* Set volume (0x10 - 0x50)
-* Volume slide down (0x6#)
-* Volume slide up (0x7#)
-* Fine volume down (0x8#)
-* Fine volume up (0x9#)
+All volume column effects are implemented.
 
 The following standard effects are implemented:
 

@@ -309,7 +309,6 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
     switch (command) {
         case vxSlideDown:
             if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideDown\n", __FILE__, __LINE__));
-            LOG(("%s:%d: NOT_TESTED: vxSlideDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             decrementVolume(channel.volume, param);
             break;
         case vxSlideUp:
@@ -317,25 +316,26 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
             incrementVolume(channel.volume, param);
             break;
         case vxFineVolumeDown:
-            LOG(("%s:%d: NOT_TESTED: vxFineVolumeDown vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             if (ticks) break;
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown\n", __FILE__, __LINE__));
             processVolumeSlideDown(channel, channel.volume, param);
             break;
         case vxFineVolumeUp:
-            LOG(("%s:%d: NOT_TESTED: vxFineVolumeUp vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
             if (ticks) break;
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown\n", __FILE__, __LINE__));
             processVolumeSlideUp(channel, channel.volume, param);
             break;
         case vxVibratoSpeed:
-            LOG(("%s:%d: NOT_IMPLEMENTED: vxVibratoSpeed vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            // TODO: do vibrato as normal, but when complete, hold the final pitch
+            if (param) channel.vibrato.speed = param;
+            processVibrato(channel);
             break;
         case vxVibratoDepth:
-            LOG(("%s:%d: NOT_IMPLEMENTED: vxVibratoDepth vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
-            // TODO: do vibrato as normal, but when complete, hold the final pitch
+            if (param) channel.vibrato.depth = param;
+            processVibrato(channel);
             break;
         case vxTonePortamento:
-            LOG(("%s:%d: NOT_IMPLEMENTED: vxTonePortamento vx(0x%02x)\n", __FILE__, __LINE__, channel.note.volumeColumnByte));
+            if (param) channel.tonePorta = param | (param << 4);
+            processPorta(channel);
             break;
         default:
             break;
