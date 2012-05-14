@@ -25,12 +25,16 @@ extern "C" {
 #include "sifteo/abi.h"
 #include "tracker.h"
 
+#include <iostream>
+
 namespace Stir {
 
 class Group;
 class Image;
+class ImageList;
 class Sound;
 class Tracker;
+
 
 /*
  * Script --
@@ -62,6 +66,8 @@ public:
     std::set<Group*> groups;
     std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
+    std::vector<ImageList> imageLists;
+
 
     friend class Group;
     friend class Image;
@@ -69,7 +75,8 @@ public:
     friend class Tracker;
 
     bool luaRunFile(const char *filename);
-    void collect();
+    bool collect();
+    bool collectList(const char* name, int tableStackIndex);
 
     static bool matchExtension(const char *filename, const char *ext);
 
@@ -161,7 +168,7 @@ public:
 
     Image(lua_State *L);
 
-    void setName(const char *s) {
+    void setName(std::string s) {
         mName = s;
     }
 
@@ -185,6 +192,14 @@ public:
         return mIsFlat;
     }
 
+    bool inList() const {
+        return mInList;
+    }
+
+    void setInList(bool flag) {
+        mInList = flag;
+    }
+
     const char *getClassName() const;
 
     uint16_t encodePinned() const;
@@ -198,6 +213,7 @@ public:
     std::vector<TileGrid> mGrids;
     std::string mName;
     bool mIsFlat;
+    bool mInList;
 
     void createGrids();
 
@@ -207,6 +223,50 @@ public:
     int quality(lua_State *L);
     int group(lua_State *L);
 };
+
+
+/*
+ * ImageList --
+ * 
+ *      A wrapper for a list of images.  ImagesLists are created
+ *      from global variables bound to homogeneous tables of image
+ *      instances (that is, it contains no non-image elements, and each
+ *      element has the same C++ result type).
+ */
+
+class ImageList {
+public:
+    typedef std::vector<Image*>::const_iterator const_iterator;
+
+public:
+    ImageList(std::string name, std::vector<Image*> images) : 
+        mName(name), mImages(images) {}
+
+    const std::string &getName() const {
+        return mName;
+    }
+
+    const_iterator begin() const {
+        return mImages.begin();
+    }
+
+    const_iterator end() const {
+        return mImages.end();
+    }
+
+    unsigned size() const {
+        return mImages.size();
+    }
+
+    const char* getImageClassName() const {
+        return mImages[0]->getClassName();
+    }
+
+private:
+    std::string mName;
+    std::vector<Image*> mImages;
+};
+
 
 class Sound {
 public:

@@ -851,6 +851,7 @@ dl.bug
 
 #projectlogo
 {
+	cell-width: 256;
 	text-align: center;
 	vertical-align: bottom;
 	border-collapse: separate;
@@ -863,9 +864,10 @@ dl.bug
  
 #projectname
 {
-	font: 300% Tahoma, Arial,sans-serif;
-	margin: 0px;
-	padding: 2px 0px;
+	font: 28pt Helvetica,Arial,sans-serif;
+	color:#00aedb;
+	margin: -20px 0px 0px 0px;
+	padding: 0px 0px;
 }
     
 #projectbrief

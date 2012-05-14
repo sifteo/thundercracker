@@ -42,6 +42,9 @@ class System {
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
 
+    // UI options
+    bool opt_whiteBackground;
+
     // Global debug options
     bool opt_continueOnException;
     bool opt_turbo;

@@ -41,6 +41,8 @@ If you omit `width` and `height` attributes for your image elements, @b stir wil
 
 Animations consisting of multiple frames should lay out each frame contiguously in the source image. You can then specify `width` or `height` to indicate the size of a frame within your image. In this case, @b stir will divide your image into a grid of appropriately sized frames, and its `frames` attribute will be calculated accordingly from left to right, top to bottom.
 
+@note If you're creating a long animation which may have many duplicated frames in it, stir will automatically factor out these duplicated frames assuming the asset is not marked as `flat` or `pinned`. The _Dictionary Uniform Block (DUB)_ codec operates on blocks of up to 8x8 tiles within each frame. If any 8x8 tile blocks are identical, they will all be represented by the same data in memory.
+
 ## Image Option Summary
 
 Option              | Meaning
@@ -51,6 +53,30 @@ Option              | Meaning
 `width=8`           | Specify the width of a frame in your image, defaults to source image's native width.
 `height=16`         | Specify the height of a frame of your image, defaults to source image's native height.
 `group=MyGroup`     | Specify that this image is a member of the `group` element `MyGroup`
+
+# Asset Image Lists
+
+It is occasionally desirable to export images as an array.
+
+~~~~~~~~~~~~~{.lua}
+Environments = group{}
+
+TileSets = { image{"desert.png"}, image{"ocean.png"}, image{"castle.png"} }
+~~~~~~~~~~~~~
+
+Image Lists must contain only images, or else they are ignored.  Furthermore, the images must be homogeneous: you may not interleave pinned, flat and ordinary assets in the same list.
+
+Asset Image Lists are just a way of grouping together several distinct AssetImage instances. This can be handy when you have several images which are related, but may have different dimensions or compression formats, or when each image already contains multiple frames.
+
+Note that this syntax is distinct from the following, which creates a single Sifteo::AssetImage with two frames by passing an array of PNG filenames to the image constructor:
+
+~~~~~~~~~~~~~{.lua}
+Sprites = group{}
+
+PlayerSprite = image{ { "player-sitting.png", "player-standing.png"}, pinned=true }
+~~~~~~~~~~~~~
+
+@note If you have the choice between using a single Asset Image with multiple frames, instead of an Asset Image List, the single Asset Image can be more efficient.
 
 # Asset Audio
 
@@ -65,7 +91,7 @@ Bubbles = tracker{"bubbles.xm"}
 Slumberjack = tracker{"slumberjack.xm"}
 ~~~~~~~~~~~~~
 
-Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is supported in assets.lua.
+Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is available for tracker modules.
 
 ### Input
 
@@ -79,8 +105,8 @@ Stir compresses modules in a few ways. All samples (accepted formats: pcm16, pcm
 
 Due to hardware limitations, modules face a few hard constraints:
 
-* Panning is not supported and any panning information is discarded.
-* Songs using more than 8 channels are not supported.
+* __Panning__ is not available. Any panning information is discarded.
+* Songs may not use more than __8 channels__.
 
 Beyond these constraints, modules on Sifteo Cubes are also currently limited to:
 
@@ -93,14 +119,12 @@ These limitations may be removed with a future version of the asset toolchain, b
 
 ### Effects
 
-While the included tracker fully supports playing notes, it has incomplete built-in effect, standard effect and volume column support.
-
-The following standard effects are not yet supported:
+The included tracker implements a subset of the effects available in XM modules. The following standard effects are not yet available:
 
 * Automatic instrument vibrato
 * Fadeout
 
-The following volume column effects are supported:
+The following volume column effects are implemented:
 
 * Set volume (0x10 - 0x50)
 * Volume slide down (0x6#)
@@ -108,7 +132,7 @@ The following volume column effects are supported:
 * Fine volume down (0x8#)
 * Fine volume up (0x9#)
 
-The following standard effects are supported:
+The following standard effects are implemented:
 
 * Arpeggio (0)
 * Portamento up (1)
@@ -133,7 +157,8 @@ The following standard effects are supported:
 * Multi retrigger note (R)
 * Extra fine portamento (X1, X2)
 
-Volume column effect support will generally follow standard effects. The following standard effects are not currently supported, but are planned:
+The following standard effects are not currently implemented, but are planned:
+
 * Tremolo (7)
 * Retrigger note (E9)
 * Set finetune (E5)
@@ -144,7 +169,7 @@ Volume column effect support will generally follow standard effects. The followi
 * Set global volume (G)
 * Global volume slide (H)
 
-The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be supported:
+The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
 
 * Set gliss control (E3)
 * Set tremolo control (E7)

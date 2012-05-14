@@ -149,8 +149,12 @@ void CPPSourceWriter::writeGroup(const Group &group)
 
     mLog.infoBegin("Encoding images");
     for (std::set<Image*>::iterator i = group.getImages().begin();
-         i != group.getImages().end(); i++)
-        writeImage(**i);
+         i != group.getImages().end(); i++) {
+        Image* image = *i;
+        if (!image->inList()) {
+            writeImage(*image);
+        }
+    }
     mLog.infoEnd();
 }
 
@@ -224,7 +228,33 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     delete enc;
 }
 
-void CPPSourceWriter::writeImage(const Image &image)
+void CPPSourceWriter::writeImageList(const ImageList& images)
+{
+    /* 
+     * First we'll write the decls, then the list itself, and
+     * finally, all the data.
+     */
+     
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, true, false, false);
+        mStream << "\n";
+     }
+
+     mStream << "extern const Sifteo::" << images.getImageClassName() <<
+         " " << images.getName() << "[" << images.size() << "] = {\n";
+
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, false, true, false);
+     }
+
+     mStream << "};\n\n";
+     
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, false, false, true);
+     }
+}
+
+void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeAsset, bool writeData)
 {
     const std::vector<TileGrid> &grids = image.getGrids();
     unsigned width = grids.empty() ? 0 : grids[0].width();
@@ -232,26 +262,46 @@ void CPPSourceWriter::writeImage(const Image &image)
 
     // Declare the data so we can do a forward reference,
     // to keep the header ordered first in memory when we can.
-    mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
+    if (writeDecl) {
+        mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
+    }
 
     // This header can often be optimized out by slinky, unless its address is taken.
     // Here we output just the common non-format-specific header.
-    mStream <<
-        "\n"
-        "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n" <<
-        indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
-        indent << "/* width    */ " << width << ",\n" <<
-        indent << "/* height   */ " << height << ",\n" <<
-        indent << "/* frames   */ " << grids.size() << ",\n";
+    if (writeAsset) {
+        if (image.inList()) {
+            mStream << "{{\n";
+        } else {
+            mStream << 
+                "\n"
+                "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n";
+        }
+
+        mStream <<
+            indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
+            indent << "/* width    */ " << width << ",\n" <<
+            indent << "/* height   */ " << height << ",\n" <<
+            indent << "/* frames   */ " << grids.size() << ",\n";
+    }
+
 
     bool autoFormat = !(image.isPinned() || image.isFlat());
     bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
 
     if (image.isPinned() || (autoFormat && isSingleTile)) {
-        mStream <<
-            indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
-            indent << "/* reserved */ 0,\n" <<
-            indent << "/* pData    */ " << image.encodePinned() << "\n}};\n\n";
+        if (writeAsset) {
+            mStream <<
+                indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
+                indent << "/* reserved */ 0,\n" <<
+                indent << "/* pData    */ " << image.encodePinned() << "\n}}";
+            
+            if (image.inList()) {
+                mStream << ",\n";
+            } else {
+                mStream << ";\n\n";
+            }
+        }
+        
         return;
     }
     
@@ -260,13 +310,25 @@ void CPPSourceWriter::writeImage(const Image &image)
         std::vector<uint16_t> data;
         std::string format;
         if (image.encodeDUB(data, mLog, format)) {
-            mStream <<
-                indent << "/* format   */ " << format << ",\n" <<
-                indent << "/* reserved */ 0,\n" <<
-                indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
-                "const uint16_t " << image.getName() << "_data[] = {\n";
-            writeArray(data);
-            mStream << "};\n\n";
+            if (writeAsset) {
+                mStream <<
+                    indent << "/* format   */ " << format << ",\n" <<
+                    indent << "/* reserved */ 0,\n" <<
+                    indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+            
+                if (image.inList()) {
+                    mStream << ",\n";
+                } else {
+                    mStream << ";\n\n";
+                }                
+            }
+
+            if (writeData) {
+                mStream << "const uint16_t " << image.getName() << "_data[] = {\n";
+                writeArray(data);
+                mStream << "};\n\n";
+            }
+
             return;
         }
     }
@@ -277,15 +339,27 @@ void CPPSourceWriter::writeImage(const Image &image)
     // it will still be in an AssetImage class, but the compression format will
     // be _SYS_AIF_FLAT.
 
-    mStream <<
-        indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
-        indent << "/* reserved */ 0,\n" <<
-        indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
-        "const uint16_t " << image.getName() << "_data[] = {\n";
-    std::vector<uint16_t> data;
-    image.encodeFlat(data);
-    writeArray(data);
-    mStream << "};\n\n";
+    if (writeAsset) {
+        mStream <<
+            indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
+            indent << "/* reserved */ 0,\n" <<
+            indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+
+        if (image.inList()) {
+            mStream << ",\n";
+        } else {
+            mStream << ";\n\n";
+        }
+    }
+    
+    if (writeData) {
+        mStream <<
+            "const uint16_t " << image.getName() << "_data[] = {\n";
+        std::vector<uint16_t> data;
+        image.encodeFlat(data);
+        writeArray(data);
+        mStream << "};\n\n";
+    }
 }
 
 void CPPSourceWriter::writeTracker(const Tracker &tracker)
@@ -487,7 +561,9 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {
         Image *image = *i;
-        mStream << "extern const Sifteo::" << image->getClassName() << " " << image->getName() << ";\n";
+        if (!image->inList()) {
+            mStream << "extern const Sifteo::" << image->getClassName() << " " << image->getName() << ";\n";
+        }
     }
 }
 
@@ -499,6 +575,12 @@ void CPPHeaderWriter::writeSound(const Sound &sound)
 void CPPHeaderWriter::writeTracker(const Tracker &tracker)
 {
     mStream << "extern const Sifteo::AssetTracker " << tracker.getName() << ";\n";
+}
+
+void CPPHeaderWriter::writeImageList(const ImageList &list)
+{
+    mStream << "extern const Sifteo::" << list.getImageClassName() << " " <<
+        list.getName() << "[" << list.size() <<"];\n";
 }
 
 };  // namespace Stir
