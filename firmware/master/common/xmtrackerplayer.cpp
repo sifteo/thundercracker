@@ -16,7 +16,7 @@
 #define UINT32_MAX 0xffffffff
 #endif
 
-#define XMTRACKERDEBUG
+//#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
 XmTrackerPlayer XmTrackerPlayer::instance;
 const uint8_t XmTrackerPlayer::kLinearFrequencies;
