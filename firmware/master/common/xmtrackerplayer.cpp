@@ -474,13 +474,19 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxPortaUp: {
             // ProTracker 2/3 does not support memory.
             if (!ticks && param) channel.portaUp = param;
-            channel.period -= channel.portaUp;
+            if (ticks) {
+                channel.period -= channel.portaUp * 4;
+                channel.frequency = getFrequency(channel.period);
+            }
             break;
         }
         case fxPortaDown: {
             // ProTracker 2/3 does not support memory.
             if (!ticks && param) channel.portaDown = param;
-            channel.period += channel.portaDown;
+            if (ticks) {
+                channel.period += channel.portaDown * 4;
+                channel.frequency = getFrequency(channel.period);
+            }
             break;
         }
         case fxTonePorta: {
