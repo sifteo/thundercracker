@@ -51,6 +51,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     // Ok, things look (probably) good.
     song = *pSong;
     
+    volume = kMaxVolume;
     bpm = song.bpm;
     ticks = tempo = song.tempo;
     delay = 0;
@@ -412,16 +413,16 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     channel.frequency = getFrequency(getPeriod(note, channel.instrument.finetune));
 }
 
-void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
+void XmTrackerPlayer::processVolumeSlide(uint16_t &pVolume, uint8_t param)
 {
-    if (!ticks || !channel.slide) return;
-    uint8_t up = channel.slide >> 4;
-    uint8_t down = channel.slide & 0x0F;
+    if (!ticks || !param) return;
+    uint8_t up = param >> 4;
+    uint8_t down = param & 0x0F;
 
     if (up) {
-        incrementVolume(channel.volume, up);
+        incrementVolume(pVolume, up);
     } else if (down) {
-        decrementVolume(channel.volume, down);
+        decrementVolume(pVolume, down);
     }
 }
 
@@ -526,7 +527,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
              * this command is illegal.
              */
             if (!ticks && param) channel.slide = param;
-            processVolumeSlide(channel);
+            processVolumeSlide(channel.volume, channel.slide);
             processPorta(channel);
             break;
         }
@@ -535,7 +536,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
              * this command is illegal.
              */
             if (param) channel.slide = param;
-            processVolumeSlide(channel);
+            processVolumeSlide(channel.volume, channel.slide);
             processVibrato(channel);
             break;
         }
@@ -560,7 +561,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
              * parameter are allowed to be set.
              */
             if (param) channel.slide = param;
-            processVolumeSlide(channel);
+            processVolumeSlide(channel.volume, channel.slide);
             break;
         }
         case fxPositionJump: {
@@ -598,11 +599,11 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSetGlobalVolume: {
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxSetGlobalVolume fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            volume = param;
             break;
         }
         case fxGlobalVolumeSlide: {
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxGlobalVolumeSlide fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            processVolumeSlide(volume, param);
             break;
         }
         case fxSetEnvelopePos: {
@@ -825,16 +826,17 @@ void XmTrackerPlayer::commit()
         channel.active = mixer.isPlaying(CHANNEL_FOR(i));
 
         /* Final volume is computed from the current channel volume, the
-         * current state of the instrument's volume envelope, and volume fadeout.
+         * current state of the instrument's volume envelope, sample fadeout,
+         * and global volume.
          */
-        int32_t volume = channel.volume;
+        int32_t finalVolume = channel.volume;
 
         // ProTracker 2/3 compatibility. FastTracker II maintains final tremolo volume
-        if (channel.note.effectType != fxTremolo) channel.tremolo.volume = volume;
+        if (channel.note.effectType != fxTremolo) channel.tremolo.volume = finalVolume;
 
         // Apply envelope
         if (channel.active && channel.instrument.volumeType) {
-            volume = (volume * channel.envelope.value) >> 6;
+            finalVolume = (finalVolume * channel.envelope.value) >> 6;
         }
 
         // Apply fadeout
@@ -855,9 +857,12 @@ void XmTrackerPlayer::commit()
             }
 
             // Apply fadeout
-            volume = volume * channel.fadeout / UINT16_MAX;
+            finalVolume = finalVolume * channel.fadeout / UINT16_MAX;
         }
-        mixer.setVolume(CHANNEL_FOR(i), clamp(volume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
+
+        finalVolume = finalVolume * volume / kMaxVolume;
+
+        mixer.setVolume(CHANNEL_FOR(i), clamp(finalVolume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
         // Sampling rate
         if (channel.frequency > 0) {

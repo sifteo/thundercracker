@@ -133,7 +133,7 @@ private:
     struct XmTrackerChannel channels[_SYS_AUDIO_MAX_CHANNELS];
     // voice ptrs
     _SYSXMSong song;
-
+    uint16_t volume;
     uint8_t ticks;
 
     /* The naming of bpm and tempo follows the (unofficial) XM module file
@@ -165,7 +165,7 @@ private:
     void processVolume(XmTrackerChannel &channel);
 
     void processArpeggio(XmTrackerChannel &channel);
-    void processVolumeSlide(XmTrackerChannel &channel);
+    void processVolumeSlide(uint16_t &volume, uint8_t param);
     void processTremolo(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide = 8);

@@ -155,6 +155,8 @@ The following standard effects are implemented:
 * Note delay (ED)
 * Pattern delay (EE)
 * Set tempo/bpm (F)
+* Set global volume (G)
+* Global volume slide (H)
 * Multi retrigger note (R)
 * Extra fine portamento (X1, X2)
 
@@ -166,8 +168,6 @@ The following standard effects are not currently implemented, but are planned:
 * Note cut (EC)
 * Set envelope position (L)
 * Tremor (T)
-* Set global volume (G)
-* Global volume slide (H)
 
 The following effects are not implemented, and likely inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
 
