@@ -138,9 +138,11 @@ inline void XmTrackerPlayer::loadNextNotes()
             }
             // TODO: auto-vibrato.
             channel.vibrato.phase = 0;
-            channel.volume = channel.instrument.sample.volume;
         } else if (note.instrument >= song.nInstruments) {
             channel.instrument.sample.pData = 0;
+        }
+        if (!recInst && channel.instrument.sample.pData) {
+            channel.volume = channel.instrument.sample.volume;
         }
         
         channel.start = !recNote || !recInst;
