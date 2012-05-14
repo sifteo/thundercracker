@@ -41,7 +41,8 @@ struct XmTrackerChannel {
         uint8_t slide;
         uint8_t slideDown;
         uint8_t slideUp;
-        uint8_t fineSlide;
+        uint8_t fineSlideDown:4,
+                fineSlideUp:4;
         struct {
             uint32_t period;
         } porta;
@@ -62,6 +63,11 @@ struct XmTrackerChannel {
                     depth:4;
             uint16_t volume;
         } tremolo;
+        struct {
+            uint8_t on:4,
+                    off:4;
+            uint8_t phase;
+        } tremor;
     };
 
     inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
@@ -147,12 +153,17 @@ private:
     // Playback positions
     uint16_t phrase;          // The current index into the pattern order table
     XmTrackerPattern pattern; // The current pattern
-    uint16_t row;     // Current row within pattern, above
     struct {
         bool force;
         uint16_t phrase;
         uint16_t row;
     } next;
+    struct {
+        uint16_t start;
+        uint16_t end;
+        uint8_t limit:4,
+                i:4;
+    } loop;
 
     void loadNextNotes();
 
@@ -169,6 +180,7 @@ private:
     void processTremolo(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide = 8);
+    bool processTremor(XmTrackerChannel &channel);
     void processEffects(XmTrackerChannel &channel);
 
     void processEnvelope(XmTrackerChannel &channel);
