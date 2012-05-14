@@ -141,6 +141,7 @@ The following standard effects are implemented:
 * Vibrato (4)
 * Tone portamento and volume slide (5)
 * Vibrato and volume slide (6)
+* Tremolo (7)
 * Sample offset (9)
 * Volume slide (A)
 * Position jump (B)
@@ -159,7 +160,6 @@ The following standard effects are implemented:
 
 The following standard effects are not currently implemented, but are planned:
 
-* Tremolo (7)
 * Retrigger note (E9)
 * Set finetune (E5)
 * Set loop begin/loop (E6)
@@ -169,7 +169,7 @@ The following standard effects are not currently implemented, but are planned:
 * Set global volume (G)
 * Global volume slide (H)
 
-The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
+The following effects are not implemented, and likely inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
 
 * Set gliss control (E3)
 * Set tremolo control (E7)

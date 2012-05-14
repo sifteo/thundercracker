@@ -54,8 +54,14 @@ struct XmTrackerChannel {
         struct {
             uint8_t speed:4,
                     interval:4;
-            uint8_t phase;
+            uint16_t phase;
         } retrigger;
+        struct {
+            uint8_t phase;
+            uint8_t speed:4,
+                    depth:4;
+            uint16_t volume;
+        } tremolo;
     };
 
     inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
@@ -160,6 +166,7 @@ private:
 
     void processArpeggio(XmTrackerChannel &channel);
     void processVolumeSlide(XmTrackerChannel &channel);
+    void processTremolo(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide = 8);
     void processEffects(XmTrackerChannel &channel);

@@ -101,6 +101,10 @@ inline void XmTrackerPlayer::loadNextNotes()
     struct XmTrackerNote note;
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
+
+        // ProTracker 2/3 compatibility. FastTracker II maintains final tremolo volume
+        channel.volume = channel.tremolo.volume;
+
         pattern.getNote(next.row, i, note);
 
 #ifdef XMTRACKERDEBUG
@@ -136,8 +140,6 @@ inline void XmTrackerPlayer::loadNextNotes()
             if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                 ASSERT(false);
             }
-            // TODO: auto-vibrato.
-            channel.vibrato.phase = 0;
         } else if (note.instrument >= song.nInstruments) {
             channel.instrument.sample.pData = 0;
         }
@@ -155,7 +157,6 @@ inline void XmTrackerPlayer::loadNextNotes()
             !channel.instrument.sample.pData)
         {
             channel.start = false;
-            channel.active = false;
         }
 
         if (!channel.active && !channel.start) {
@@ -176,15 +177,19 @@ inline void XmTrackerPlayer::loadNextNotes()
         }
         channel.note = note;
 
-        if (channel.start) {
-            channel.envelope.done = !channel.instrument.nVolumeEnvelopePoints;
-            memset(&channel.envelope, 0, sizeof(channel.envelope));
-        }
-
         // Volume
         channel.fadeout = UINT16_MAX;
         if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
                 channel.volume = note.volumeColumnByte - 0x10;
+
+        if (channel.start) {
+            // TODO: auto-vibrato.
+            channel.vibrato.phase = 0;
+            channel.tremolo.phase = 0;
+
+            memset(&channel.envelope, 0, sizeof(channel.envelope));
+            channel.envelope.done = !channel.instrument.nVolumeEnvelopePoints;
+        }
 
         channel.active = true;
     }
@@ -227,6 +232,12 @@ void XmTrackerPlayer::processVolumeSlideDown(XmTrackerChannel &channel, uint16_t
     decrementVolume(volume, dec);
 }
 
+// Half-wave precomputed sine table used by vibrato and tremolo.
+static const uint8_t sineTable[] = {0,24,49,74,97,120,141,161,
+                                    180,197,212,224,235,244,250,253,
+                                    255,253,250,244,235,224,212,197,
+                                    180,161,141,120,97,74,49,24};
+
 void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 {
     int32_t periodDelta = 0;
@@ -237,33 +248,28 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
         case 3:   // Random (but not really)
             // Intentional fall-through
         case 0: { // Sine
-            // Half-wave precomputed sine table.
-            static const uint8_t sineTable[] = {0,24,49,74,97,120,141,161,
-                                                180,197,212,224,235,244,250,253,
-                                                255,253,250,244,235,224,212,197,
-                                                180,161,141,120,97,74,49,24};
             STATIC_ASSERT(arraysize(sineTable) == 32);
             periodDelta = sineTable[channel.vibrato.phase % arraysize(sineTable)];
-            if (channel.vibrato.phase % 64 >= 32) periodDelta = -periodDelta;
+            if (channel.vibrato.phase >= 32) periodDelta = -periodDelta;
             break;
         }
         case 1:   // Ramp up
             LOG(("%s:%d: NOT_TESTED: ramp vibrato\n", __FILE__, __LINE__));
             periodDelta = (channel.vibrato.phase % 32) * -8;
-            if ((channel.vibrato.phase % 64) >= 32) periodDelta += 255;
+            if (channel.vibrato.phase >= 32) periodDelta += 255;
             break;
         case 2:   // Square
             LOG(("%s:%d: NOT_TESTED: square vibrato\n", __FILE__, __LINE__));
             periodDelta = 255;
-            if (channel.vibrato.phase % 64 >= 32) periodDelta = -periodDelta;
+            if (channel.vibrato.phase >= 32) periodDelta = -periodDelta;
             break;
     }
     periodDelta = (periodDelta * channel.vibrato.depth) / 32;
 
-    channel.period += periodDelta;
+    channel.frequency = getFrequency(channel.period + periodDelta);
 
     if (ticks)
-        channel.vibrato.phase += channel.vibrato.speed;
+        channel.vibrato.phase = (channel.vibrato.speed + channel.vibrato.phase) % 64;
 }
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
@@ -419,6 +425,19 @@ void XmTrackerPlayer::processVolumeSlide(XmTrackerChannel &channel)
     }
 }
 
+void XmTrackerPlayer::processTremolo(XmTrackerChannel &channel)
+{
+    if (!ticks || !channel.tremolo.depth || !channel.tremolo.speed) return;
+    STATIC_ASSERT(arraysize(sineTable) == 32);
+
+    int16_t delta;
+    delta = sineTable[channel.tremolo.phase % 31] * channel.tremolo.depth / 32;
+    if (channel.tremolo.phase >= 32) delta = -delta;
+    channel.tremolo.phase = (channel.tremolo.speed + channel.tremolo.phase) % 64;
+
+    channel.volume = clamp(channel.tremolo.volume + delta, 0, (int)kMaxVolume);
+}
+
 void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 {
     next.force = true;
@@ -496,7 +515,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         }
         case fxVibrato: {
             if (!ticks) {
-                if (channel.start) channel.vibrato.phase = 0;
                 if (param & 0xF0) channel.vibrato.speed = (param & 0xF0) >> 4;
                 if (param & 0x0F) channel.vibrato.depth = param & 0x0F;
             }
@@ -522,7 +540,12 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxTremolo: {
-            LOG(("%s:%d: NOT_IMPLEMENTED: fxTremolo fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            if (!ticks) {
+                channel.tremolo.volume = channel.volume;
+                if (param & 0xF0) channel.tremolo.speed = (param & 0xF0) >> 4;
+                if (param & 0x0F) channel.tremolo.depth = param & 0x0F;
+            }
+            processTremolo(channel);
             break;
         }
         case fxSampleOffset: {
@@ -801,31 +824,38 @@ void XmTrackerPlayer::commit()
 
         channel.active = mixer.isPlaying(CHANNEL_FOR(i));
 
-        // Volume
+        /* Final volume is computed from the current channel volume, the
+         * current state of the instrument's volume envelope, and volume fadeout.
+         */
         int32_t volume = channel.volume;
 
+        // ProTracker 2/3 compatibility. FastTracker II maintains final tremolo volume
+        if (channel.note.effectType != fxTremolo) channel.tremolo.volume = volume;
+
+        // Apply envelope
         if (channel.active && channel.instrument.volumeType) {
             volume = (volume * channel.envelope.value) >> 6;
+        }
 
-            if (channel.active && channel.note.note == XmTrackerPattern::kNoteOff) {
-                // Update fade
-                if (channel.instrument.volumeFadeout > 0xFFF ||
-                    channel.instrument.volumeFadeout > channel.fadeout ||
-                    !channel.instrument.volumeFadeout)
-                {
-                    channel.fadeout = 0;
-                } else {
-                    channel.fadeout -= channel.instrument.volumeFadeout;
-                }
-
-                // Completely faded -> stop playing sample.
-                if (!channel.fadeout) {
-                    channel.active = false;
-                }
-
-                // Apply fadeout
-                volume = volume * channel.fadeout / UINT16_MAX;
+        // Apply fadeout
+        if (channel.active && channel.note.note == XmTrackerPattern::kNoteOff) {
+            if (channel.instrument.volumeFadeout > 0xFFF ||
+                channel.instrument.volumeFadeout > channel.fadeout ||
+                !channel.instrument.volumeFadeout)
+            {
+                channel.fadeout = 0;
+            } else {
+                channel.fadeout -= channel.instrument.volumeFadeout;
             }
+
+            // Completely faded -> stop playing sample.
+            if (!channel.fadeout) {
+                channel.active = false;
+                if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
+            }
+
+            // Apply fadeout
+            volume = volume * channel.fadeout / UINT16_MAX;
         }
         mixer.setVolume(CHANNEL_FOR(i), clamp(volume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
@@ -843,8 +873,7 @@ void XmTrackerPlayer::commit()
         }
     }
 
-    // Future effects are capable of adjusting the tempo/bpm
-    // (24 / 60 * bpm)Hz
+    // Call back at (24 / 60 * bpm) Hz
     mixer.setTrackerCallbackInterval(2500000 / bpm);
 }
 
