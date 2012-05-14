@@ -22,6 +22,7 @@ struct XmTrackerEnvelopeMemory {
 struct XmTrackerChannel {
     struct _SYSXMInstrument instrument;
     struct XmTrackerNote note;
+    uint16_t userVolume;
     uint16_t volume;
     uint16_t fadeout;
     uint32_t period;
@@ -110,6 +111,7 @@ public:
     bool play(const struct _SYSXMSong *pSong);
     bool isPlaying() const { return song.nPatterns > 0; }
     void stop();
+    void setVolume(int volume, uint8_t ch);
 
     // TODO: future:
     // void muteChannel(uint8_t), unmuteChannel(uint8_t).
@@ -140,6 +142,7 @@ private:
     // voice ptrs
     _SYSXMSong song;
     uint16_t volume;
+    uint16_t userVolume;
     uint8_t ticks;
 
     /* The naming of bpm and tempo follows the (unofficial) XM module file

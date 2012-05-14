@@ -172,6 +172,17 @@ struct AudioTracker {
     static void stop() {
         _SYS_tracker_stop();
     }
+
+    /**
+     * Scale volume for current channel.
+     * Must only be called while a module is playing.
+     * @param volume from 0 to MAX_VOLUME.
+     * @param ch specifies the index of the channel in the module. Leave empty to set global volume.
+     */
+    static void setVolume(int volume, _SYSAudioChannelID ch = -1) {
+        ASSERT(volume >= 0 && volume <= _SYS_AUDIO_MAX_VOLUME);
+        _SYS_tracker_setVolume(volume, ch);
+    }
 };
 
 /**

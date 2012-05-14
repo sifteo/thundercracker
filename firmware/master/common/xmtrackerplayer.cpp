@@ -52,6 +52,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     song = *pSong;
     
     volume = kMaxVolume;
+    userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
     bpm = song.bpm;
     ticks = tempo = song.tempo;
     delay = 0;
@@ -62,6 +63,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     memset(channels, 0, sizeof(channels));
     for (unsigned i = 0; i < arraysize(channels); i++) {
         XmTrackerPattern::resetNote(channels[i].note);
+        channels[i].userVolume = _SYS_AUDIO_MAX_VOLUME;
     }
 
     AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
@@ -74,6 +76,16 @@ void XmTrackerPlayer::stop()
 {
     song.nPatterns = 0;
     AudioMixer::instance.setTrackerCallbackInterval(0);
+}
+
+void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
+{
+    pVolume = clamp(pVolume, 0, _SYS_AUDIO_MAX_VOLUME);
+    if (ch > song.nChannels) {
+        userVolume = pVolume;
+    } else {
+        channels[ch].userVolume = pVolume;
+    }
 }
 
 inline void XmTrackerPlayer::loadNextNotes()
@@ -893,7 +905,8 @@ void XmTrackerPlayer::commit()
 
         /* Final volume is computed from the current channel volume, the
          * current state of the instrument's volume envelope, sample fadeout,
-         * and global volume.
+         * global volume, user-assigned channel volume, and user-assigned
+         * global volume.
          */
         int32_t finalVolume = 0;
         if (processTremor(channel)) {
@@ -929,7 +942,12 @@ void XmTrackerPlayer::commit()
             }
         }
 
+        // Global volume
         finalVolume = finalVolume * volume / kMaxVolume;
+        // User-assigned channel volume
+        finalVolume = finalVolume * channel.userVolume / _SYS_AUDIO_MAX_VOLUME;
+        // User-assigned global volume
+        finalVolume = finalVolume * userVolume / _SYS_AUDIO_MAX_VOLUME;
 
         mixer.setVolume(CHANNEL_FOR(i), clamp(finalVolume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
 
