@@ -19,6 +19,7 @@
 #include "audiomixer.h"
 #include "flash_device.h"
 #include "flash_blockcache.h"
+#include "flash_volume.h"
 #include "usbprotocol.h"
 #include "svmloader.h"
 #include "svmcpu.h"
@@ -27,6 +28,8 @@
 #include "protocol.h"
 #include "tasks.h"
 #include "mc_timing.h"
+#include "lodepng.h"
+#include "crc.h"
 
 SystemMC *SystemMC::instance;
 
@@ -83,9 +86,20 @@ void SystemMC::threadFn(void *param)
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
+    Crc32::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
     Radio::init();
+
+    // Install any ELF data that we've previously queued
+    if (!instance->pendingInstallData.empty()) {
+        FlashVolumeWriter writer;
+        unsigned len = instance->pendingInstallData.size();
+        writer.begin(FlashVolume::T_ELF, len);
+        writer.appendPayload(&instance->pendingInstallData[0], len);
+        writer.commit();
+        instance->pendingInstallData.clear();
+    }
 
     SvmLoader::run(111);
 
@@ -307,35 +321,19 @@ bool SystemMC::installELF(const char *path)
     bool success = true;
     bool restartThread = instance->mThreadRunning;
 
+    ASSERT(instance->pendingInstallData.empty());
+
     if (restartThread)
         instance->stop();
 
     LOG(("FLASH: Installing ELF binary '%s'\n", path));
 
-    FILE *elfFile = fopen(path, "rb");
-
-    if (elfFile == NULL) {
+    LodePNG::loadFile(instance->pendingInstallData, path);
+    if (instance->pendingInstallData.empty()) {
         LOG(("FLASH: Error, couldn't open ELF file '%s' (%s)\n",
             path, strerror(errno)));
         success = false;
-
-    } else {
-        uint8_t buf[512];
-        FlashDevice::chipErase();
-
-        unsigned addr = 0;
-        while (!feof(elfFile)) {
-            unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
-            if (rxed > 0) {
-                FlashDevice::write(addr, buf, rxed);
-                addr += rxed;
-            }
-        }
-        fclose(elfFile);
     }
-
-    // Blow away our flash block cache
-    FlashBlock::invalidate();
 
     if (restartThread)
         instance->start();

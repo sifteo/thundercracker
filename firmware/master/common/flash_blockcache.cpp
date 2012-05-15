@@ -135,22 +135,55 @@ void FlashBlock::load(uint32_t blockAddr)
     SvmDebugger::patchFlashBlock(blockAddr, data);
 }
 
-void FlashBlockWriter::commit()
+void FlashBlockWriter::beginBlock(uint32_t blockAddr)
+{
+    if (ref.isHeld() && ref->getAddress() == blockAddr) {
+        // Nothing to do, already writing to the same block
+        return;
+    }
+
+    FlashBlockRef newRef;
+    FlashBlock::get(newRef, blockAddr);
+    beginBlock(newRef);
+}
+
+void FlashBlockWriter::beginBlock(const FlashBlockRef &r)
+{
+    ASSERT(r.isHeld());
+    if (ref.isHeld() && ref->getAddress() == r->getAddress()) {
+        // Nothing to do, already writing to the same block
+        return;
+    }
+
+    // Switching blocks
+    commitBlock();
+    ref = r;
+    ASSERT(ref.isHeld());
+
+    // Prepare to write
+    ref->validCodeBytes = 0;
+}
+
+void FlashBlockWriter::commitBlock()
 {
     /*
      * Write a modified flash block back to the device.
      */
 
-    FlashBlock *block = &*ref;
+    if (ref.isHeld()) {
+        FlashBlock *block = &*ref;
 
-    // Must not have tried to run code from this block during a write.
-    ASSERT(ref->validCodeBytes == 0);
+        // Must not have tried to run code from this block during a write.
+        ASSERT(ref->validCodeBytes == 0);
 
-    FlashDevice::write(block->address, block->getData(),
-        FlashBlock::BLOCK_SIZE);
+        FlashDevice::write(block->address, block->getData(),
+            FlashBlock::BLOCK_SIZE);
 
-    // Make sure we are only programming bits from 1 to 0.
-    DEBUG_ONLY(block->verify());
+        // Make sure we are only programming bits from 1 to 0.
+        DEBUG_ONLY(block->verify());
+
+        ref.release();
+    }
 }
 
 void FlashBlock::invalidate()
