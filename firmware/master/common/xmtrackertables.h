@@ -139,11 +139,11 @@ const uint32_t XmTrackerPlayer::LinearFrequencyTab[768] = {
 };
 
 uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
-    ASSERT(note < XmTrackerPattern::kNoteOff);
-    if (note >= XmTrackerPattern::kNoteOff) return 0;
+    ASSERT(note <= XmTrackerPattern::kMaxNote);
+    if (note > XmTrackerPattern::kMaxNote) return 0;
 
     if (song.frequencyTable == kLinearFrequencies) {
-        // From file spec: Period = 10 â€¢Â 12 â€¢Â 16 â€¢Â 4 - Note â€¢Â 16 â€¢Â 4 - FineTune / 2
+        // From file spec: Period = 10 * 12 * 16 * 4 - Note * 16 * 4 - FineTune / 2
         int32_t period = (10 * 12 * 16 * 4) -
                          (((int32_t)note - 1) * 16 * 4) -
                          ((int32_t)finetune / 2);
@@ -167,10 +167,15 @@ uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
         uint8_t pos = (note % 12) * 8 + finetune / 16;
 
         // Fixed-point integer math is faster than floating point.
-        uint8_t frac = (finetune % 16);
+        int8_t frac = (finetune % 16);
+        // Ensure frac is positive by shifting the position.
+        if (frac < 0) {
+        	pos--;
+        	frac += 16;
+        }
 
         // Base table value
-        uint32_t period = XmTrackerPlayer::AmigaPeriodTab[pos] * ((~frac & 0xF) + 1) / 16;
+        uint32_t period = XmTrackerPlayer::AmigaPeriodTab[pos] * ((16 - frac) + 1) / 16;
         // Interpolated with next table value
         period += XmTrackerPlayer::AmigaPeriodTab[pos + 1] * frac / 16;
         /* Restore octave to note using bit shifts instead of exponents.
