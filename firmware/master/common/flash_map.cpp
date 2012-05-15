@@ -176,15 +176,3 @@ bool FlashMapSpan::copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint3
 
     return true;
 }
-
-void FlashMap::mark(FlashMapBlock::Set &v) const
-{
-    for (unsigned i = 0; i < arraysize(blocks); ++i)
-        blocks[i].mark(v);
-}
-
-void FlashMap::clear(FlashMapBlock::Set &v) const
-{
-    for (unsigned i = 0; i < arraysize(blocks); ++i)
-        blocks[i].clear(v);
-}

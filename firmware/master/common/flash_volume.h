@@ -9,22 +9,6 @@
  * ("Volumes") in flash. A Volume can contain, for example, an ELF object
  * file or a log-structured filesystem.
  *
- * Each volume begins with a volume header in its first MapBlock, containing:
- *
- *   - Prefix: Magic number, CRCs, type code, flags
- *   - Optional FlashMap, identifying all MapBlocks in the volume
- *   - Optional erase counts for all MapBlocks in the volume
- *
- * A volume header is responsible for storing this information on behalf of
- * the entire volume. For volumes consisting of multiple blocks, subsequent
- * blocks have no header of their own. This keeps the MapSpans for the volume
- * contiguous.
- *
- * Because the volume header is responsible for storing erase counts, and
- * we must take care to preserve these erase counts even in unused areas of
- * the flash, we need a way to mark the volume as "deleted" without
- * invalidating the other data stored in this header.
- *
  * Volumes support only a few operations:
  *
  *   - Enumeration. With no prior knowledge, we can list all of the volumes
@@ -49,17 +33,6 @@
  * deleted. This is also the state we're in when faced with an uninitialized
  * flash device. We'll do the best we can, and create new erase counts by
  * averaging all of the known erase counts from other blocks.
- *
- * Layout of a FlashVolume's first MapBlock:
- *
- *   First cache block:
- *      - Fixed size "Prefix" struct, containing type/flag-specific fields
- *      - Optional FlashMap
- *
- *   Optional, ERASE_COUNT_BLOCKS blocks of erase count data:
- *      - A uint32_t erase count for each of NUM_MAP_BLOCKS
- *
- *   Payload data begins.
  */
 
 #ifndef FLASH_VOLUME_H_
@@ -82,83 +55,21 @@ public:
         T_ELF       = 0x4C45,
     };
 
-    FlashVolume(FlashMapBlock block) : block(block) {}
+    FlashMapBlock block;
 
-    /*
-     * Metadata accessors
-     */
+    FlashVolume() {}
+    FlashVolume(FlashMapBlock block) : block(block) {}
 
     bool isValid() const;
     unsigned getType() const;
-    unsigned getNumBlocks() const;
-    uint32_t getEraseCount(unsigned index) const;
-
-    FlashMapBlock getHeaderBlock() const {
-        return block;
-    }
-
-    /// Synonymous with isValid()
-    operator bool() const { return isValid(); }
-
-    /*
-     * Data accessors
-     */
-
-    const FlashMap *getMap(FlashBlockRef &ref) const;
     FlashMapSpan getData(FlashBlockRef &ref) const;
-
-    /*
-     * Volume life cycle
-     */
-
     void markAsDeleted() const;
-
-private:
-    FlashMapBlock block;
-
-    enum Flags {
-        F_HAS_MAP   = 1 << 0,
-    };
-
-    static const uint64_t MAGIC = 0x4c4f564674666953ULL;
-    static const unsigned ERASE_COUNT_BYTES = FlashMap::NUM_MAP_BLOCKS * sizeof(uint32_t);
-    static const unsigned ERASE_COUNT_BLOCKS = ERASE_COUNT_BYTES / FlashBlock::BLOCK_SIZE;
-    static const unsigned ERASE_COUNTS_PER_BLOCK = FlashBlock::BLOCK_SIZE / sizeof(uint32_t);
-        
-    struct Prefix {
-        uint64_t magic;                 // Must equal MAGIC
-        uint16_t flags;                 // Bitmap of F_*
-        uint16_t type;                  // One of T_*
-        uint16_t numBlocks;             // Total number of flash blocks in volume
-        uint16_t numBlocksCpl;          // Redundant complement of numBlocks
-
-        union {
-            struct {                    // For F_HAS_MAP:
-                uint32_t crcMap;        //   CRC for FlashMap only
-                uint32_t crcErase[ERASE_COUNT_BLOCKS];
-            } hasMap;
-            struct {                    // For !F_HAS_MAP:
-                uint32_t eraseCount;    //   Erase count for the first and only MapBlock
-                uint32_t eraseCountCopy;
-            } noMap;
-        };
-
-        uint16_t flagsCopy;             // Redundant copy of 'flags'
-        uint16_t typeCopy;              // Redundant copy of 'type'
-
-        bool isValid() const;
-    };
-
-    static unsigned getOverheadBlockCount(unsigned flags);
-
-    Prefix *getPrefix(FlashBlockRef &ref) const;
-    uint32_t *getEraseCountBlock(FlashBlockRef &ref, unsigned index) const;
 };
 
 
 /**
  * A lightweight iterator, capable of finding all valid FlashVolumes on
- * the device. When iteration is over, next() returns an invalid volume.
+ * the device.
  */
 class FlashVolumeIter
 {
@@ -167,7 +78,8 @@ public:
         remaining.mark();
     }
 
-    FlashVolume next();
+    /// Returns 'true' iff another FlashVolume can be found.
+    bool next(FlashVolume &vol);
 
 private:
     FlashMapBlock::Set remaining;
@@ -212,6 +124,8 @@ private:
 
 class FlashBlockRecycler {
 public:
+    typedef uint32_t EraseCount;
+
     FlashBlockRecycler();
 
     ~FlashBlockRecycler() {
@@ -232,7 +146,7 @@ public:
      * since it would turn the recycling operation into an O(N^2) problem
      * with the number of flash blocks in the device!
      */
-    bool next(FlashMapBlock &block, uint32_t &eraseCount);
+    bool next(FlashMapBlock &block, EraseCount &eraseCount);
 
     /**
      * Writes will be aggregated, since we commonly end up pulling multiple
@@ -249,12 +163,37 @@ private:
     FlashMapBlock::Set candidateVolumes;
     uint32_t averageEraseCount;
 
-    // Dirty recycled blocks from a deleted volume
+    /*
+     * Dirty recycled blocks from a deleted volume.
+     * "dirtyVolume" is invalid if not in use, otherwise it is
+     * a FlashVolume with F_HAS_MAP set.
+     */
     BitVector<FlashMap::NUM_MAP_BLOCKS> dirtyBlocks;
     FlashVolume dirtyVolume;
 
     void findOrphansAndDeletedVolumes();
     void findCandidateVolumes();
+};
+
+
+/**
+ * A FlashVolumeWriter keeps track of the multi-step process of writing
+ * a volume for the first time.
+ *
+ * Some volumes may be appended to or written after the initial allocation,
+ * but if you want to allocate a volume atomically you can use a
+ * FlashVolumeWriter to ensure that the volume is never marked as valid until
+ * you've fully written its contents.
+ */
+
+class FlashVolumeWriter
+{
+public:
+    FlashVolume volume;
+
+    bool begin(unsigned type, unsigned payloadBytes, unsigned hdrDataBytes = 0);
+    void writePayload(const uint8_t *bytes, uint32_t count);
+    void commit();
 };
 
 
