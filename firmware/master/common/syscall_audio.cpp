@@ -82,4 +82,9 @@ void _SYS_tracker_stop()
     XmTrackerPlayer::instance.stop();
 }
 
+void _SYS_tracker_setVolume(int volume, _SYSAudioChannelID ch)
+{
+    XmTrackerPlayer::instance.setVolume(volume, ch);
+}
+
 }  // extern "C"

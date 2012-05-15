@@ -167,6 +167,7 @@ uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
 bool _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
 bool _SYS_tracker_isPlaying() _SC(126);
 void _SYS_tracker_stop() _SC(149);
+void _SYS_tracker_setVolume(int volume, _SYSAudioChannelID ch) _SC(93);
 
 // Asset group/slot management
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
