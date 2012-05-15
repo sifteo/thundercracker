@@ -140,4 +140,9 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
 
     if (note.effectType != kNoEffect && note.effectParam == kNoParam)
         note.effectParam = 0;
+
+    /* Users of this API should be able to check if a note is real
+     * with < kNoteOff (97), so ensure it is never 0.
+     */
+    ASSERT(note.note > 0);
 }
