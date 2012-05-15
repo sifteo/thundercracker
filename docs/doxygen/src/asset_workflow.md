@@ -113,7 +113,6 @@ Beyond these constraints, modules on Sifteo Cubes are also currently limited to:
 * No empty instruments
 * No empty patterns
 * One sample per instrument
-* Loops are forward only (no ping-pong loops)
 
 These limitations may be removed with a future version of the asset toolchain, but it should be possible to work around them in the meantime.
 

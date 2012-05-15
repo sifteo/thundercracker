@@ -98,13 +98,29 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 
 void AudioChannelSlot::setPos(uint32_t ofs)
 {
-    if(ofs < samples.numSamples()) {
-        offset = ofs;
+    uint32_t numSamples = samples.numSamples();
+    uint32_t loopOffset = 0;
+
+    if (mod.loopType == _SYS_LOOP_EMULATED_PING_PONG) {
+        loopOffset = ((((mod.loopEnd + 1) - mod.loopStart) + 2) / 2) - 2;
+        numSamples -= loopOffset;
+    }
+
+    if(ofs < numSamples) {
+        offset = ofs + (ofs > mod.loopEnd ? loopOffset : 0);
     } else if (state & STATE_LOOP) {
-        if (ofs == samples.numSamples()) {
+        if (ofs == numSamples) {
             offset = mod.loopStart;
-        } else {   // begin at loop start, modulo the length of the loop
-            offset = (ofs - mod.loopStart) % (mod.loopEnd - mod.loopStart) + mod.loopStart;
+        } else {
+            /* Seeking out of bonds in a ping-pong sample is not well-defined;
+             * no tracker seems to implement loop directionality.
+             * Compute the offset based on the original sample's length, not
+             * the synthesized sample's length, and loop forward (same as
+             * MilkyTracker).
+             */
+            uint32_t loopLength = mod.loopEnd + 1 - (mod.loopStart + loopOffset);
+            // begin at loop start, modulo the length of the loop
+            offset = (ofs - mod.loopStart) % loopLength + mod.loopStart;
         }
     } else {
         return;

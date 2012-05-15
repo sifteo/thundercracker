@@ -404,8 +404,39 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* sampleRate */ " << instrument.sample.sampleRate << ",\n" <<
         indent << indent << "/* loopStart  */ " << instrument.sample.loopStart << ",\n" <<
         indent << indent << "/* loopEnd    */ " << instrument.sample.loopEnd << ",\n" <<
-        indent << indent << "/* loopType   */ " << (instrument.sample.loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
-        indent << indent << "/* type       */ " << (uint32_t)instrument.sample.type << ",\n" <<
+        indent << indent << "/* loopType   */ ";
+        switch (instrument.sample.loopType) {
+            case _SYS_LOOP_ONCE:
+                mStream << "_SYS_LOOP_ONCE";
+                break;
+            case _SYS_LOOP_REPEAT:
+                mStream << "_SYS_LOOP_REPEAT";
+                break;
+            case _SYS_LOOP_EMULATED_PING_PONG:
+                mStream << "_SYS_LOOP_EMULATED_PING_PONG";
+                break;
+            default:
+                if (instrument.sample.dataSize)
+                    mLog.error("Unknown loop type: %d", instrument.sample.loopType);
+                mStream << "(_SYSAudioType)" << (int32_t)instrument.sample.loopType;
+                break;
+        }
+        mStream << ",\n" <<
+        indent << indent << "/* type       */ ";
+        switch (instrument.sample.type) {
+            case _SYS_ADPCM:
+                mStream << "_SYS_ADPCM";
+                break;
+            case _SYS_PCM:
+                mStream << "_SYS_PCM";
+                break;
+            default:
+                if (instrument.sample.dataSize)
+                    mLog.error("Unknown sample type: %d", instrument.sample.type);
+                mStream << "(_SYSAudioType)" << (uint32_t)instrument.sample.type;
+                break;
+        }
+        mStream << ",\n" <<
         indent << indent << "/* volume     */ " << instrument.sample.volume << ",\n" <<
         indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
         indent << indent << "/* pData      */ ";

@@ -248,6 +248,27 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Sample name
     seek(22);
 
+    // Parse loop boundaries into sensible units
+    uint8_t format = (sample.loopType >> 3) & 0x3;
+    if (sample.loopEnd == 0) {
+        // If loop length is 0, no looping
+        sample.loopStart = 0;
+        // Preserve format information, it's used by readSample().
+        sample.loopType &= 0xF8;
+    } else {
+        // Compute offsets in samples
+        if (format == kSampleFormatPCM16) {
+            sample.loopStart /= sizeof(int16_t);
+            sample.loopEnd /= sizeof(int16_t);
+        } else if (format == kSampleFormatADPCM) {
+            sample.loopStart *= 2;
+            sample.loopEnd *= 2;
+        }
+
+        // convert loopLength to loopEnd (zero-indexed)
+        sample.loopEnd += sample.loopStart - 1;
+    }
+
     // Read and process sample
     if (!readSample(instrument)) return false;
 
@@ -260,37 +281,6 @@ bool XmTrackerLoader::readNextInstrument()
         log->error("%s, instrument %u: Sample volume is %u, clamped to %u",
                    filename, instruments.size(), sample.volume, 64);
         sample.volume = 64;
-    }
-
-    // Loop type should store only the loop type
-    uint8_t format = (sample.loopType >> 3) & 0x3;
-    sample.loopType &= 0x3;
-
-    // If loop length is 0, no looping
-    if (sample.loopEnd == 0) {
-        sample.loopStart = 0;
-        sample.loopType = 0;
-    } else {
-        // Ping-pong loops are not supported
-        if (sample.loopType > 1) {
-            assert(sample.loopType == 2);
-            log->error("%s, instrument %u: Ping-pong loops are not supported, falling back to normal looping",
-                       filename, instruments.size());
-            sample.loopType = 1;
-        }
-    
-        // Compute offsets in samples
-        if (format == kSampleFormatPCM16) {
-            sample.loopStart /= sizeof(int16_t);
-            sample.loopEnd /= sizeof(int16_t);
-        } else if (format == kSampleFormatADPCM) {
-            sample.loopStart *= 2;
-            sample.loopEnd *= 2;
-        }
-
-        // convert loopLength to loopEnd (zero-indexed)
-        // TODO: double check loop end!
-        sample.loopEnd += sample.loopStart - 1;
     }
 
     // Save instrument
@@ -315,6 +305,9 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
     sample.pData = -1;
     sample.sampleRate = 8363;
     uint8_t format = (sample.loopType >> 3) & 0x3;
+
+    // Loop type should store only the loop type
+    sample.loopType &= 0x3;
 
     if (sample.dataSize == 0) return true;
     
@@ -352,6 +345,37 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             for(unsigned i = 0; i < numSamples; i++) {
                 // Allowing overflow here is intentional!
                 buf[i] = (mix += buf[i]);
+            }
+
+            // Ping-pong loops
+            if (sample.loopType == 2) {
+                /* Convert a ping-pong sample from:
+                 * [start][0123456789][end] (loop length: 10)
+                 * to:
+                 * [start][012345678987654321][end] (loop length: 18)
+                 */
+                uint32_t loopLength = sample.loopEnd - sample.loopStart + 1;
+
+                // First and last samples of loop are not duplicated
+                uint32_t addlLength = loopLength - 2;
+
+                // Extend buffer
+                sample.dataSize += addlLength * sizeof(int16_t);
+                buf = (int16_t*)realloc(buf, sample.dataSize);
+                if (!buf) return false;
+
+                // Move non-looping end of sample
+                memcpy(buf + sample.loopStart + loopLength + addlLength,
+                       buf + sample.loopStart + loopLength,
+                       numSamples - (sample.loopStart + loopLength));
+
+                // Create the pong portion of the loop
+                for (unsigned i = 1; i <= addlLength; i++) {
+                    buf[sample.loopEnd + i] = buf[sample.loopEnd - i];
+                }
+
+                numSamples += addlLength;
+                sample.loopEnd += addlLength;
             }
 
             // Encode to today's default format
