@@ -23,10 +23,6 @@ public:
 
     void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
-    _SYSAudioType channelType() const {
-        return (_SYSAudioType)mod.type;
-    }
-
     void pause() {
         state |= STATE_PAUSED;
     }
