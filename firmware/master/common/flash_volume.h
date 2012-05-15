@@ -51,8 +51,9 @@ class FlashVolume
 {
 public:
     enum Type {
-        T_DELETED   = 0,        // Must be zero
-        T_ELF       = 0x4C45,
+        T_DELETED       = 0x0000,       // Must be zero
+        T_ELF           = 0x4C45,
+        T_INCOMPLETE    = 0xFFFF,       // Must be FFFF
     };
 
     FlashMapBlock block;
@@ -62,7 +63,7 @@ public:
 
     bool isValid() const;
     unsigned getType() const;
-    FlashMapSpan getData(FlashBlockRef &ref) const;
+    FlashMapSpan getPayload(FlashBlockRef &ref) const;
     void markAsDeleted() const;
 };
 
@@ -128,10 +129,6 @@ public:
 
     FlashBlockRecycler();
 
-    ~FlashBlockRecycler() {
-        commit();
-    }
-
     /**
      * Find the next recyclable block, as well as its erase count.
      *
@@ -148,28 +145,13 @@ public:
      */
     bool next(FlashMapBlock &block, EraseCount &eraseCount);
 
-    /**
-     * Writes will be aggregated, since we commonly end up pulling multiple
-     * blocks from an individual deleted volume. We automatically commit
-     * these writes during next() if we switch volumes, but they may also
-     * be committed in the FlashBlockRecycler destructor, or by calling commit()
-     * explicitly.
-     */
-    void commit();
-
 private:
     FlashMapBlock::Set orphanBlocks;
     FlashMapBlock::Set deletedVolumes;
     FlashMapBlock::Set candidateVolumes;
     uint32_t averageEraseCount;
 
-    /*
-     * Dirty recycled blocks from a deleted volume.
-     * "dirtyVolume" is invalid if not in use, otherwise it is
-     * a FlashVolume with F_HAS_MAP set.
-     */
-    BitVector<FlashMap::NUM_MAP_BLOCKS> dirtyBlocks;
-    FlashVolume dirtyVolume;
+    FlashBlockWriter dirtyVolume;
 
     void findOrphansAndDeletedVolumes();
     void findCandidateVolumes();
@@ -191,9 +173,41 @@ class FlashVolumeWriter
 public:
     FlashVolume volume;
 
+    /**
+     * Start writing a new volume. In begin() we do all of the prep work that's
+     * possible to do without actually filling in the volume's payload or header
+     * data. By the end of begin(), we've created a valid volume of type
+     * T_INCOMPLETE. The erase counts and header are all valid, so if we get
+     * interrupted (or if the download is intentionally aborted) the volume
+     * will be automatically recycled.
+     *
+     * This can take some time, as it involves erasing flash blocks as well
+     * as scanning for recyclable blocks.
+     */
     bool begin(unsigned type, unsigned payloadBytes, unsigned hdrDataBytes = 0);
-    void writePayload(const uint8_t *bytes, uint32_t count);
+    
+    /**
+     * Write any amount of payload data, starting at the beginning of the volume
+     * or at the end of the last appendPayload() chunk. This data is buffered
+     * in the flash cache until we have a complete page, then it's written to
+     * the device.
+     *
+     * We've already erased all payload blocks in begin(), so this call never
+     * has to erase.
+     */ 
+    void appendPayload(const uint8_t *bytes, uint32_t count);
+
+    /**
+     * Finish writing the volume. This completes any writes that are pending
+     * from earlier appendPayload() operations, plus it writes the correct
+     * type code into the volume's header, making it persistent.
+     */
     void commit();
+
+private:
+    FlashBlockWriter payloadWriter;
+    unsigned payloadOffset;
+    uint16_t type;
 };
 
 

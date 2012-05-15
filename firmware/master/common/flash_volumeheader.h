@@ -61,7 +61,7 @@ struct FlashVolumeHeader
      *   - Payload data
      */
 
-    static const uint64_t MAGIC = 0x4c4f564674666953ULL;
+    static const uint64_t MAGIC = 0x5f4c4f5674666953ULL;
     typedef uint32_t EraseCount;
 
     /// Get a cached FlashVolumeHeader
@@ -91,6 +91,14 @@ struct FlashVolumeHeader
         this->dataBytesCpl = ~dataBytes;
         this->typeCopy = type;
         this->reserved = 0xFFFFFFFF;
+        ASSERT(isHeaderValid());
+    }
+
+    /// Initializes only the 'type' fields
+    void setType(unsigned type)
+    {
+        this->type = type;
+        this->typeCopy = type;
         ASSERT(isHeaderValid());
     }
 
@@ -150,11 +158,16 @@ struct FlashVolumeHeader
         return dataOffsetBytes() + roundup<4>(dataBytes);
     }
 
+    /// Offset to the payload data, in bytes
+    unsigned payloadOffsetBytes() const
+    {
+        return eraseCountOffsetBytes() + (sizeof(EraseCount) * numMapEntries());
+    }
+
     /// Offset to the payload data, in cache blocks
     unsigned payloadOffsetBlocks() const
     {
-        unsigned bytes = eraseCountOffsetBytes() + (sizeof(EraseCount) * numMapEntries());
-        return (bytes + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
+        return (payloadOffsetBytes() + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
     }
 
     /// Retrieve a pointer to the FlashMap, always part of the same cache block.

@@ -10,6 +10,7 @@
 #define _SYSTEM_MC_H
 
 #include <setjmp.h>
+#include <vector>
 #include "tinythread.h"
 
 class System;
@@ -58,6 +59,7 @@ class SystemMC {
     friend struct SysTime;
 
     static SystemMC *instance;
+    std::vector<uint8_t> pendingInstallData;
     uint64_t ticks;
     uint64_t radioPacketDeadline;
 

@@ -141,16 +141,14 @@ namespace Intrinsic {
 template <unsigned tSize>
 class BitVector
 {
-private:
-    static const unsigned NUM_WORDS = (tSize + 31) / 32;
-    static const unsigned NUM_FULL_WORDS = tSize / 32;
-    static const unsigned REMAINDER_BITS = tSize & 31;
-
-    uint32_t words[NUM_WORDS];
-
 public:
+    uint32_t words[(tSize + 31) / 32];
+
     /// Mark (set to 1) a single bit
-    void mark(unsigned index) {
+    void mark(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         ASSERT(index < tSize);
         if (NUM_WORDS > 1) {
             unsigned word = index >> 5;
@@ -162,7 +160,10 @@ public:
     }
 
     /// Clear (set to 0) a single bit
-    void clear(unsigned index) {
+    void clear(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         ASSERT(index < tSize);
         if (NUM_WORDS > 1) {
             unsigned word = index >> 5;
@@ -174,7 +175,12 @@ public:
     }
 
     /// Mark (set to 1) all bits in the vector
-    void mark() {
+    void mark()
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        const unsigned NUM_FULL_WORDS = tSize / 32;
+        const unsigned REMAINDER_BITS = tSize & 31;
+
         STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
                       NUM_FULL_WORDS == NUM_WORDS);
 
@@ -190,13 +196,19 @@ public:
     }
 
     /// Clear (set to 0) all bits in the vector
-    void clear() {
+    void clear()
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         for (unsigned i = 0; i < NUM_WORDS; ++i)
             words[i] = 0;
     }
 
     /// Is a particular bit marked?
-    bool test(unsigned index) {
+    bool test(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         ASSERT(index < tSize);
         if (NUM_WORDS > 1) {
             unsigned word = index >> 5;
@@ -208,7 +220,10 @@ public:
     }
 
     /// Is every bit in this vector set to zero?
-    bool empty() const {
+    bool empty() const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         if (NUM_WORDS > 1) {
             for (unsigned w = 0; w < NUM_WORDS; w++)
                 if (words[w])
@@ -224,7 +239,10 @@ public:
      * If any marked bits exist, returns true and puts the bit's index
      * in "index". Iff the entire vector is zero, returns false.
      */
-    bool findFirst(unsigned &index) {
+    bool findFirst(unsigned &index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         if (NUM_WORDS > 1) {
             for (unsigned w = 0; w < NUM_WORDS; w++) {
                 uint32_t v = words[w];
@@ -258,7 +276,10 @@ public:
      * This is functionally equivalent to findFirst() followed by
      * clear(), but it's a tiny bit more efficient.
      */
-    bool clearFirst(unsigned &index) {
+    bool clearFirst(unsigned &index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
         if (NUM_WORDS > 1) {
             for (unsigned w = 0; w < NUM_WORDS; w++) {
                 uint32_t v = words[w];

@@ -48,7 +48,13 @@ public:
     }
 
     bool isValid() const {
-        return code != 0;
+        /*
+         * Zero is the canonical 'invalid' value, but 0xFF is also
+         * treated as invalid since we may see that value in portions of
+         * a FlashMap which have been allocated and erased but not yet written.
+         */
+        STATIC_ASSERT((unsigned)(0xFF - 1) >= NUM_BLOCKS);
+        return (unsigned)(code - 1) < NUM_BLOCKS;
     }
 
     void setInvalid() {
@@ -57,6 +63,11 @@ public:
 
     void setIndex(unsigned i) {
         code = i + 1;
+    }
+
+    void setAddress(unsigned a) {
+        setIndex(a / BLOCK_SIZE);
+        ASSERT(address() == a);
     }
 
     void mark(Set &v) const {
@@ -69,9 +80,17 @@ public:
             v.clear(index());
     }
 
+    void erase() const;
+
     static FlashMapBlock fromIndex(unsigned i) {
         FlashMapBlock result;
         result.setIndex(i);
+        return result;
+    }
+
+    static FlashMapBlock fromAddress(unsigned a) {
+        FlashMapBlock result;
+        result.setAddress(a);
         return result;
     }
 
@@ -110,12 +129,6 @@ public:
     static const unsigned NUM_CACHE_BLOCKS = NUM_BYTES / FlashBlock::BLOCK_SIZE;
 
     FlashMapBlock blocks[NUM_MAP_BLOCKS];
-
-    // Convert a single FlashMapBlock pointer into a FlashMap pointer.
-    static const FlashMap *single(const FlashMapBlock *block) {
-        STATIC_ASSERT(offsetof(FlashMap, blocks) == 0);
-        return reinterpret_cast<const FlashMap*>(block);
-    }
 };
 
 

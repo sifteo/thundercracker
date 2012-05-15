@@ -168,14 +168,20 @@ public:
     FlashBlockRef() : block(0) {}
 
     FlashBlockRef(FlashBlock *block) : block(block) {
+        ASSERT(block);
         block->incRef();
     }
 
-    FlashBlockRef(const FlashBlockRef &r) : block(&*r) {
-        block->incRef();
+    FlashBlockRef(const FlashBlockRef &r) : block(r.block) {
+        if (block)
+            block->incRef();
     }
-    
-    inline bool isHeld() const {
+
+    ~FlashBlockRef() {
+        release();
+    }
+
+    bool isHeld() const {
         if (block) {
             ASSERT(block->refCount != 0);
             ASSERT(block->refCount <= block->MAX_REFCOUNT);
@@ -184,7 +190,7 @@ public:
         return false;
     }
 
-    inline void set(FlashBlock *b) {
+    void set(FlashBlock *b) {
         if (isHeld())
             block->decRef();
         block = b;
@@ -192,21 +198,25 @@ public:
             b->incRef();
     }
     
-    inline void release() {
+    void release() {
         set(0);
+        ASSERT(!isHeld());
     }
 
-    ~FlashBlockRef() {
-        release();
-    }
-
-    inline FlashBlock& operator*() const {
+    FlashBlock& operator*() const {
         return *block;
     }
 
-    inline FlashBlock* operator->() const {
+    FlashBlock* operator->() const {
         ASSERT(isHeld());
         return block;
+    }
+
+    FlashBlockRef& operator=(const FlashBlockRef &r) {
+        block = r.block;
+        if (block)
+            block->incRef();
+        return *this;
     }
 
 private:
@@ -215,47 +225,46 @@ private:
 
 
 /**
- * A utility class for writing to a flash block. Before the write starts,
- * we perform some invalidation and checking. Then we can complete the write
- * by actually flushing a dirty cache block to the device.
+ * A utility class to represent writes-in-progress to a single flash block.
  *
- * We begin a write automatically when a FlashBlockWriter instance is
- * created. Writes are committed to the device explicitly.
+ * The FlashBlockWriter instance can be in either the 'clean' state, where
+ * no writes are pending, or the 'dirty' state, in which we have a single
+ * page in the cache which needs to be written to the device.
+ *
+ * Before the write starts,  we perform some invalidation and checking.
+ * Then we can complete the write by actually flushing a dirty cache block
+ * to the device.
  */
 
 class FlashBlockWriter
 {
 public:
-    FlashBlockWriter(FlashBlock *block) : ref(block) {
-        begin();
+    FlashBlockWriter() {}
+
+    FlashBlockWriter(const FlashBlockRef &r) {
+        beginBlock(r);
     }
 
-    FlashBlockWriter(const FlashBlockRef &r) : ref(r) {
-        begin();
-    }
-
-    inline FlashBlock& operator*() const {
-        return *ref;
-    }
-
-    inline FlashBlock* operator->() const {
-        return &*ref;
-    };
-    
     ~FlashBlockWriter() {
-        // Simulation only: Verify that changes were committed.
-        DEBUG_ONLY(ref->verify());
+        commitBlock();
     }
 
-    void commit();
-
-private:
-    void begin() {
-        // Prepare to write
-        ref->validCodeBytes = 0;
-    }
-
+    // Dirty iff ref.isHeld()
     FlashBlockRef ref;
+
+    void beginBlock(uint32_t blockAddr);
+    void beginBlock(const FlashBlockRef &r);
+    void commitBlock();
+
+    template <typename T>
+    T *getData(uint32_t address) {
+        unsigned blockPart = address & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = address & FlashBlock::BLOCK_MASK;
+        ASSERT(bytePart + sizeof(T) <= FlashBlock::BLOCK_SIZE);
+
+        beginBlock(blockPart);
+        return reinterpret_cast<T*>(ref->getData() + bytePart);
+    }
 };
 
 
