@@ -254,33 +254,36 @@ void SvmLoader::run(const Elf::Program &program)
 
 void SvmLoader::run(int id)
 {
-    // XXX: Temporary
-#if 0
+    /*
+     * XXX: Temporary. For now, just run the first program we find.
+     */
 
     FlashVolumeIter vi;
     FlashVolume vol;
-    while (vi.next(vol)) {
-        LOG(("VOLUME: Found volume, type %x\n", vol.getType()));
+
+    if (vi.next(vol)) {
+        // Run the first volume we find, regardless of what it is.
+
+        // Note that this is the ref that backs our FlashMap, and it must
+        // be held as long as the program is executing.
+        FlashBlockRef spanRef;
+
+        Elf::Program program;
+        if (program.init(vol.getPayload(spanRef)))
+            run(program);
+
+    } else {
+        LOG(("SVM: No volumes found, assuming identity mapping\n"));
+
+        // Set up an identity mapping
+        FlashMap map;
+        for (unsigned i = 0; i < arraysize(map.blocks); i++)
+            map.blocks[i].setIndex(i);
+
+        Elf::Program program;
+        if (program.init(FlashMapSpan::create(&map, 0, 0xFFFF)))
+            run(program);
     }
-    
-    FlashBlockRecycler br;
-    FlashMapBlock block;
-    FlashBlockRecycler::EraseCount ec;
-    unsigned i = 0;
-    while (br.next(block, ec)) {
-        LOG(("RECYCLE #%d: %x ec=%d\n", i++, block.address(), ec));
-    }
-
-#endif
-
-    // Set up an identity mapping
-    FlashMap map;
-    for (unsigned i = 0; i < arraysize(map.blocks); i++)
-        map.blocks[i].setIndex(i);
-
-    Elf::Program program;
-    if (program.init(FlashMapSpan::create(&map, 0, 0xFFFF)))
-        run(program);
 }
 
 

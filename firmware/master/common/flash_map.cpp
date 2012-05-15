@@ -7,6 +7,15 @@
 #include <algorithm>
 
 
+void FlashMapBlock::erase() const
+{
+    for (unsigned I = address(), E = I + BLOCK_SIZE; I != E;
+        I += FlashDevice::SECTOR_SIZE) {
+        ASSERT(I < E);
+        FlashDevice::eraseSector(I);
+    }
+}
+
 FlashMapSpan FlashMapSpan::split(unsigned blockOffset, unsigned blockCount) const
 {
     if (blockOffset >= numBlocks)
