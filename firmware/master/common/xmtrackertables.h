@@ -139,8 +139,8 @@ const uint32_t XmTrackerPlayer::LinearFrequencyTab[768] = {
 };
 
 uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
-    ASSERT(note < XmTrackerPattern::kNoteOff);
-    if (note >= XmTrackerPattern::kNoteOff) return 0;
+    ASSERT(note <= XmTrackerPattern::kMaxNote);
+    if (note > XmTrackerPattern::kMaxNote) return 0;
 
     if (song.frequencyTable == kLinearFrequencies) {
         // From file spec: Period = 10 * 12 * 16 * 4 - Note * 16 * 4 - FineTune / 2

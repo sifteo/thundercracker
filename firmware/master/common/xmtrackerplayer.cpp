@@ -176,7 +176,7 @@ inline void XmTrackerPlayer::loadNextNotes()
             channel.start = false;
         }
         // Stop playing/don't play when no sample data or note
-        if (channel.realNote(note.note) >= XmTrackerPattern::kNoteOff ||
+        if (channel.realNote(note.note) > XmTrackerPattern::kMaxNote ||
             !channel.instrument.sample.pData)
         {
             channel.start = false;
@@ -425,10 +425,10 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     }
     note += channel.realNote();
 
-    if (note >= XmTrackerPattern::kNoteOff) {
+    if (note > XmTrackerPattern::kMaxNote) {
         LOG((LGPFX"Clipped arpeggio (base note: %d, arpeggio: %02x)\n",
              channel.realNote(), channel.note.effectParam));
-        note = XmTrackerPattern::kNoteOff - 1;
+        note = XmTrackerPattern::kMaxNote;
     }
 
     // Apply relative period shift, to avoid disrupting other active effects
