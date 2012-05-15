@@ -108,6 +108,16 @@ template <typename T> inline T abs(const T& value)
 }
 
 /**
+ * Round up to the nearest 'a'-byte boundary, assuming 'a' is a
+ * constant power of two.
+ */
+template <unsigned a> inline unsigned roundup(unsigned value)
+{
+    STATIC_ASSERT((a & (a - 1)) == 0);
+    return (value + (a - 1)) & ~(a - 1);
+}
+
+/**
  * Compute the unsigned remainder from dividing two signed integers.
  */
 unsigned inline umod(int a, int b)

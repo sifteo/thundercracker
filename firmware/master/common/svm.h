@@ -53,28 +53,28 @@ enum InstructionSize {
 
 enum FaultCode {
     F_UNKNOWN = 0,
-    F_STACK_OVERFLOW,       // Stack allocation failure
-    F_BAD_STACK,            // Validation-time stack address error
-    F_BAD_CODE_ADDRESS,     // Branch-time code address error
-    F_BAD_SYSCALL,          // Unsupported syscall number
-    F_LOAD_ADDRESS,         // Runtime load address error
-    F_STORE_ADDRESS,        // Runtime store address error
-    F_LOAD_ALIGNMENT,       // Runtime load alignment error
-    F_STORE_ALIGNMENT,      // Runtime store alignment error
-    F_CODE_FETCH,           // Runtime code fetch error
-    F_CODE_ALIGNMENT,       // Runtime code alignment error
-    F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
-    F_RESERVED_SVC,         // Reserved SVC encoding
-    F_RESERVED_ADDROP,      // Reserved ADDROP encoding
-    F_ABORT,                // User call to _SYS_abort()
-    F_LONG_STACK_LOAD,      // Bad address in long stack LDR addrop
-    F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
-    F_PRELOAD_ADDRESS,      // Bad address for async preload
-    F_RETURN_FRAME,         // Bad saved FP value detected during ret()
-    F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
-    F_SYSCALL_ADDRESS,      // Bad address in system call
-    F_SYSCALL_PARAM,        // Other bad parameter in system call
-    F_SCRIPT_EXCEPTION,     // Exception during script execution
+    F_STACK_OVERFLOW,       // (0x1)  Stack allocation failure
+    F_BAD_STACK,            // (0x2)  Validation-time stack address error
+    F_BAD_CODE_ADDRESS,     // (0x3)  Branch-time code address error
+    F_BAD_SYSCALL,          // (0x4)  Unsupported syscall number
+    F_LOAD_ADDRESS,         // (0x5)  Runtime load address error
+    F_STORE_ADDRESS,        // (0x6)  Runtime store address error
+    F_LOAD_ALIGNMENT,       // (0x7)  Runtime load alignment error
+    F_STORE_ALIGNMENT,      // (0x8)  Runtime store alignment error
+    F_CODE_FETCH,           // (0x9)  Runtime code fetch error
+    F_CODE_ALIGNMENT,       // (0xA)  Runtime code alignment error
+    F_CPU_SIM,              // (0xB)  Unhandled ARM instruction in sim (validator bug)
+    F_RESERVED_SVC,         // (0xC)  Reserved SVC encoding
+    F_RESERVED_ADDROP,      // (0xD)  Reserved ADDROP encoding
+    F_ABORT,                // (0xE)  User call to _SYS_abort()
+    F_LONG_STACK_LOAD,      // (0xF)  Bad address in long stack LDR addrop
+    F_LONG_STACK_STORE,     // (0x10) Bad address in long stack STR addrop
+    F_PRELOAD_ADDRESS,      // (0x11) Bad address for async preload
+    F_RETURN_FRAME,         // (0x12) Bad saved FP value detected during ret()
+    F_LOG_FETCH,            // (0x13) Memory fault while fetching _SYS_log() data
+    F_SYSCALL_ADDRESS,      // (0x14) Bad address in system call
+    F_SYSCALL_PARAM,        // (0x15) Other bad parameter in system call
+    F_SCRIPT_EXCEPTION,     // (0x16) Exception during script execution
 };
 
 /**

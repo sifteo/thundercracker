@@ -116,9 +116,6 @@ public:
         STATIC_ASSERT(offsetof(FlashMap, blocks) == 0);
         return reinterpret_cast<const FlashMap*>(block);
     }
-
-    void mark(FlashMapBlock::Set &v) const;
-    void clear(FlashMapBlock::Set &v) const;
 };
 
 

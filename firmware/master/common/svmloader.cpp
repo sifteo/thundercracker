@@ -255,11 +255,23 @@ void SvmLoader::run(const Elf::Program &program)
 void SvmLoader::run(int id)
 {
     // XXX: Temporary
+#if 0
 
     FlashVolumeIter vi;
-    while (FlashVolume v = vi.next()) {
-        LOG(("VOLUME: Found volume, type %x\n", v.getType()));
+    FlashVolume vol;
+    while (vi.next(vol)) {
+        LOG(("VOLUME: Found volume, type %x\n", vol.getType()));
     }
+    
+    FlashBlockRecycler br;
+    FlashMapBlock block;
+    FlashBlockRecycler::EraseCount ec;
+    unsigned i = 0;
+    while (br.next(block, ec)) {
+        LOG(("RECYCLE #%d: %x ec=%d\n", i++, block.address(), ec));
+    }
+
+#endif
 
     // Set up an identity mapping
     FlashMap map;
