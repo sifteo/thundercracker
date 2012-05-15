@@ -48,7 +48,7 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
     if (state & STATE_STOPPED || samples.numSamples() == 0)
         return 0;
 
-    uint64_t fpLimit = state & STATE_LOOP
+    uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
                      ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
                      : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
     uint32_t framesLeft = len;
