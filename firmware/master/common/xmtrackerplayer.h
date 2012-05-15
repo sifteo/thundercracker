@@ -22,6 +22,7 @@ struct XmTrackerEnvelopeMemory {
 struct XmTrackerChannel {
     struct _SYSXMInstrument instrument;
     struct XmTrackerNote note;
+    uint16_t userVolume;
     uint16_t volume;
     uint16_t fadeout;
     uint32_t period;
@@ -41,7 +42,8 @@ struct XmTrackerChannel {
         uint8_t slide;
         uint8_t slideDown;
         uint8_t slideUp;
-        uint8_t fineSlide;
+        uint8_t fineSlideDown:4,
+                fineSlideUp:4;
         struct {
             uint32_t period;
         } porta;
@@ -54,8 +56,19 @@ struct XmTrackerChannel {
         struct {
             uint8_t speed:4,
                     interval:4;
-            uint8_t phase;
+            uint16_t phase;
         } retrigger;
+        struct {
+            uint8_t phase;
+            uint8_t speed:4,
+                    depth:4;
+            uint16_t volume;
+        } tremolo;
+        struct {
+            uint8_t on:4,
+                    off:4;
+            uint8_t phase;
+        } tremor;
     };
 
     inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
@@ -98,6 +111,7 @@ public:
     bool play(const struct _SYSXMSong *pSong);
     bool isPlaying() const { return song.nPatterns > 0; }
     void stop();
+    void setVolume(int volume, uint8_t ch);
 
     // TODO: future:
     // void muteChannel(uint8_t), unmuteChannel(uint8_t).
@@ -127,7 +141,8 @@ private:
     struct XmTrackerChannel channels[_SYS_AUDIO_MAX_CHANNELS];
     // voice ptrs
     _SYSXMSong song;
-
+    uint16_t volume;
+    uint16_t userVolume;
     uint8_t ticks;
 
     /* The naming of bpm and tempo follows the (unofficial) XM module file
@@ -141,12 +156,17 @@ private:
     // Playback positions
     uint16_t phrase;          // The current index into the pattern order table
     XmTrackerPattern pattern; // The current pattern
-    uint16_t row;     // Current row within pattern, above
     struct {
         bool force;
         uint16_t phrase;
         uint16_t row;
     } next;
+    struct {
+        uint16_t start;
+        uint16_t end;
+        uint8_t limit:4,
+                i:4;
+    } loop;
 
     void loadNextNotes();
 
@@ -159,9 +179,11 @@ private:
     void processVolume(XmTrackerChannel &channel);
 
     void processArpeggio(XmTrackerChannel &channel);
-    void processVolumeSlide(XmTrackerChannel &channel);
+    void processVolumeSlide(uint16_t &volume, uint8_t param);
+    void processTremolo(XmTrackerChannel &channel);
     void processPatternBreak(uint16_t nextPhrase, uint16_t row);
     void processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide = 8);
+    bool processTremor(XmTrackerChannel &channel);
     void processEffects(XmTrackerChannel &channel);
 
     void processEnvelope(XmTrackerChannel &channel);

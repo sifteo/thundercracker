@@ -119,60 +119,16 @@ These limitations may be removed with a future version of the asset toolchain, b
 
 ### Effects
 
-The included tracker implements a subset of the effects available in XM modules. The following standard effects are not yet available:
+The included tracker implements most of the effects available in XM modules. The following standard effects are not yet available:
 
 * Automatic instrument vibrato
-* Fadeout
 
-The following volume column effects are implemented:
-
-* Set volume (0x10 - 0x50)
-* Volume slide down (0x6#)
-* Volume slide up (0x7#)
-* Fine volume down (0x8#)
-* Fine volume up (0x9#)
-
-The following standard effects are implemented:
-
-* Arpeggio (0)
-* Portamento up (1)
-* Portamento down (2)
-* Tone portamento (3)
-* Vibrato (4)
-* Tone portamento and volume slide (5)
-* Vibrato and volume slide (6)
-* Sample offset (9)
-* Volume slide (A)
-* Position jump (B)
-* Set volume (C)
-* Pattern break (D)
-* Fine portamento Up (E1)
-* Fine portamento Down (E2)
-* Set vibrato control (E4)
-* Fine volume slide up (EA)
-* Fine volume slide down (EB)
-* Note delay (ED)
-* Pattern delay (EE)
-* Set tempo/bpm (F)
-* Multi retrigger note (R)
-* Extra fine portamento (X1, X2)
-
-The following standard effects are not currently implemented, but are planned:
-
-* Tremolo (7)
-* Retrigger note (E9)
-* Set finetune (E5)
-* Set loop begin/loop (E6)
-* Note cut (EC)
-* Set envelope position (L)
-* Tremor (T)
-* Set global volume (G)
-* Global volume slide (H)
-
-The following effects are either not implemented, or inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
+The following effects are not implemented, and likely inconsistent between MilkyTracker, FastTracker II, and MODPlug, and will not be available:
 
 * Set gliss control (E3)
 * Set tremolo control (E7)
+
+All other effects and all volume column effects are implemented.
 
 ### References
 
