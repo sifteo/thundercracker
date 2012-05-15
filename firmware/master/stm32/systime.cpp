@@ -41,6 +41,7 @@ void SysTime::init()
     NVIC.SysTick = 0;
 
     // Enable timer, enable interrupt
+    // NOTE: NVIC.SysTick gets loaded with NVIC.SysTick_RELOAD when 'enable' is applied
     NVIC.SysTick_CS = 3;
 }
 

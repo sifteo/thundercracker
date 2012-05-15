@@ -37,7 +37,7 @@ void Event::dispatch()
         // Currently all events are dispatched per-cube, even the neighbor
         // events. Loop over the Cube IDs from cubesPending.
 
-	    while (vi.cubesPending) {
+        while (vi.cubesPending) {
             _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(vi.cubesPending);
 
             // Type-specific event dispatch

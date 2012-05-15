@@ -246,18 +246,22 @@ void SvmRuntime::svc(uint8_t imm8)
         case 0x1c:  // 0b11100
             validate(SvmCpu::reg(r));
             break;
+
         case 0x1d:  // 0b11101
             if (r)
                 fault(F_RESERVED_SVC);
             else
                 breakpoint();
             break;
+
         case 0x1e:  // 0b11110
             call(SvmCpu::reg(r));
             break;
+
         case 0x1f:  // 0b11111
             tailcall(SvmCpu::reg(r));
             break;
+
         default:
             fault(F_RESERVED_SVC);
             break;
@@ -311,22 +315,28 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
     case 0:
         branch(address);
         break;
+
     case 1:
         if (!SvmMemory::preload(address))
             SvmRuntime::fault(F_PRELOAD_ADDRESS);
         break;
+
     case 2:
         validate(address);
         break;
+
     case 3:
         adjustSP(-(int)address);
         break;
+
     case 4:
         longSTRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
+
     case 5:
         longLDRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
+
     default:
         SvmRuntime::fault(F_RESERVED_ADDROP);
         break;
