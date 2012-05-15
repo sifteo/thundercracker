@@ -159,7 +159,6 @@ inline void XmTrackerPlayer::loadNextNotes()
 
         if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
             // Change the instrument.
-            // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
             if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                 ASSERT(false);
             }
@@ -170,7 +169,7 @@ inline void XmTrackerPlayer::loadNextNotes()
             channel.volume = channel.instrument.sample.volume;
         }
         
-        channel.start = !recNote || !recInst;
+        channel.start = !recNote;
         // Don't play with an invalid instrument
         if (channel.start && note.instrument >= song.nInstruments) {
             channel.start = false;
