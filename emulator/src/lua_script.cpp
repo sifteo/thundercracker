@@ -642,12 +642,13 @@ int LuaFilesystem::listVolumes(lua_State *L)
     FlashVolume vol;
     unsigned index = 0;
 
+    vi.begin();
     while (vi.next(vol)) {
         lua_pushnumber(L, ++index);
         lua_pushnumber(L, vol.block.code);
         lua_settable(L, -3);
     }
-    
+
     return 1;
 }
 

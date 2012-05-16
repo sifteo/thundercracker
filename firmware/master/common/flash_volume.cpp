@@ -69,6 +69,9 @@ void FlashVolume::markAsDeleted() const
 bool FlashVolumeIter::next(FlashVolume &vol)
 {
     unsigned index;
+
+    ASSERT(initialized == true);
+
     while (remaining.clearFirst(index)) {
         FlashVolume v(FlashMapBlock::fromIndex(index));
 
@@ -115,6 +118,8 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
 
     FlashVolumeIter vi;
     FlashVolume vol;
+
+    vi.begin();
     while (vi.next(vol)) {
 
         FlashBlockRef ref;

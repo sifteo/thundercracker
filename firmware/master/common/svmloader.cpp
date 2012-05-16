@@ -261,6 +261,7 @@ void SvmLoader::run(int id)
     FlashVolumeIter vi;
     FlashVolume vol;
 
+    vi.begin();
     if (vi.next(vol)) {
         // Run the first volume we find, regardless of what it is.
 
