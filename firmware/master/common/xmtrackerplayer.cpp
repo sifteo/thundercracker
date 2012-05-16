@@ -439,14 +439,17 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
 
     // ProTracker 2/3 sequence. FastTracker II reverses cases 1 and 2.
     switch (phase) {
-        case 0:
-            return;
         case 1:
             note = channel.note.effectParam >> 4;
             break;
         case 2:
             note = channel.note.effectParam & 0x0F;
             break;
+        default:
+            // Inconceivable, but the compiler doesn't think so.
+            ASSERT(false);
+        case 0:
+            return;
     }
     note += channel.realNote();
 
