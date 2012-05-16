@@ -39,9 +39,10 @@ enum _SYSAudioType {
 };
 
 enum _SYSAudioLoopType {
-    _SYS_LOOP_UNDEF     = -1,
-    _SYS_LOOP_ONCE      = 0,
-    _SYS_LOOP_REPEAT    = 1,
+    _SYS_LOOP_UNDEF              = -1,
+    _SYS_LOOP_ONCE               = 0,
+    _SYS_LOOP_REPEAT             = 1,
+    _SYS_LOOP_EMULATED_PING_PONG = 2,
 };
 
 struct _SYSAudioModule {
