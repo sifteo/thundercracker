@@ -83,13 +83,16 @@ void FlashStorage::initData()
         CubeRecord &cube = data->cubes[i];
 
         // Initialize internal (OTP) storage to its erased state
-        memset(&cube.nvm, 0xFF, sizeof cube.nvm);
+        memset(cube.nvm, 0xFF, sizeof cube.nvm);
     
         // Initialize external storage to all zeroes, so we force
         // the firmware to erase all areas before they're used. It shouldn't
         // be making assumptions about blocks being already-erased unless it
         // knows this for certain.
-        memset(&cube.ext, 0x00, sizeof cube.ext);
+        memset(cube.ext, 0x00, sizeof cube.ext);
+
+        // Zero out the erase counts
+        memset(cube.eraseCounts, 0x00, sizeof cube.eraseCounts);
     }
 
     // Initialize internal flash to all zeroes, also to make sure nobody
@@ -99,6 +102,9 @@ void FlashStorage::initData()
     // Zero unused parts of the header
     memset(data->header.bytes, 0x00, sizeof data->header.bytes);
 
+    // Zero out the erase counts
+    memset(data->master.eraseCounts, 0x00, sizeof data->master.eraseCounts);
+
     // Fill in the header...
     data->header.magic = HeaderRecord::MAGIC;
     data->header.version = HeaderRecord::CURRENT_VERSION;
@@ -106,8 +112,10 @@ void FlashStorage::initData()
     data->header.cube_count = arraysize(data->cubes);
     data->header.cube_nvmSize = sizeof data->cubes[0].nvm;
     data->header.cube_extSize = sizeof data->cubes[0].ext;
+    data->header.cube_sectorSize = Cube::FlashModel::SECTOR_SIZE;
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
     data->header.mc_capacity = FlashDevice::CAPACITY;
+    data->header.mc_sectorSize = FlashDevice::SECTOR_SIZE;
 }
 
 bool FlashStorage::checkData()
@@ -131,8 +139,10 @@ bool FlashStorage::checkData()
         data->header.cube_count != arraysize(data->cubes) ||
         data->header.cube_nvmSize != sizeof data->cubes[0].nvm ||
         data->header.cube_extSize != sizeof data->cubes[0].ext ||
+        data->header.cube_sectorSize != Cube::FlashModel::SECTOR_SIZE ||
         data->header.mc_pageSize != FlashDevice::PAGE_SIZE ||
-        data->header.mc_capacity != FlashDevice::CAPACITY) {
+        data->header.mc_capacity != FlashDevice::CAPACITY ||
+        data->header.mc_sectorSize != FlashDevice::SECTOR_SIZE) {
         LOG(("FLASH: Storage file has an unsupported memory layout\n"));
         return false;
     }
