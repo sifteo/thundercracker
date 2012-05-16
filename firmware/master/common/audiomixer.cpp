@@ -14,6 +14,7 @@ AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     playingChannelMask(0),
+    mixerVolume(_SYS_AUDIO_MAX_VOLUME),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
 {
@@ -62,6 +63,12 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
             samplesMixed = mixed;
         }
     }
+
+    // Apply master volume control.
+    for (unsigned i = 0; i < samplesMixed; i++) {
+        buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
+    }
+
     return samplesMixed;
 }
 
@@ -136,6 +143,12 @@ void AudioMixer::pullAudio(void *p) {
     if (totalBytesMixed > 0) {
         buf->commit(totalBytesMixed);
     }
+}
+
+void AudioMixer::setMixerVolume(uint16_t volume)
+{
+    ASSERT(volume < _SYS_AUDIO_MAX_VOLUME);
+    mixerVolume = clamp((int)volume, 0, _SYS_AUDIO_MAX_VOLUME);
 }
 
 bool AudioMixer::play(const struct _SYSAudioModule *mod,
