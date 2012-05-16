@@ -36,6 +36,7 @@ public:
         note.effectParam = 0;
     }
 
+    static const uint8_t kMaxNote = 118;
     static const uint8_t kNoteOff = 97;
     static const uint8_t kNoNote = 0xFF;
     static const uint8_t kNoInstrument = 0xFF;

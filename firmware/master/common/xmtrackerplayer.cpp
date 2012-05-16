@@ -159,7 +159,6 @@ inline void XmTrackerPlayer::loadNextNotes()
 
         if (channel.note.instrument != note.instrument && note.instrument < song.nInstruments) {
             // Change the instrument.
-            // TODO: Consider mapping this instead of copying, if we can be guaranteed the whole struct.
             if (!SvmMemory::copyROData(channel.instrument, song.instruments + note.instrument * sizeof(_SYSXMInstrument))) {
                 ASSERT(false);
             }
@@ -170,13 +169,13 @@ inline void XmTrackerPlayer::loadNextNotes()
             channel.volume = channel.instrument.sample.volume;
         }
         
-        channel.start = !recNote || !recInst;
+        channel.start = !recNote;
         // Don't play with an invalid instrument
         if (channel.start && note.instrument >= song.nInstruments) {
             channel.start = false;
         }
         // Stop playing/don't play when no sample data or note
-        if (channel.realNote(note.note) >= XmTrackerPattern::kNoteOff ||
+        if (channel.realNote(note.note) > XmTrackerPattern::kMaxNote ||
             !channel.instrument.sample.pData)
         {
             channel.start = false;
@@ -425,10 +424,10 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     }
     note += channel.realNote();
 
-    if (note >= XmTrackerPattern::kNoteOff) {
+    if (note > XmTrackerPattern::kMaxNote) {
         LOG((LGPFX"Clipped arpeggio (base note: %d, arpeggio: %02x)\n",
              channel.realNote(), channel.note.effectParam));
-        note = XmTrackerPattern::kNoteOff - 1;
+        note = XmTrackerPattern::kMaxNote;
     }
 
     // Apply relative period shift, to avoid disrupting other active effects

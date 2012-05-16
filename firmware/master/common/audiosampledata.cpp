@@ -83,7 +83,7 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
         if (!SvmMemory::mapROData(ref, va, bufLen, pa)) {
             // Fail in as many ways as possible!
             LOG((LGPFX"Could not map %p (length %d)!\n",
-                 (void *)va, sampleNum - newestSample));
+                 (void *)va, bytesForSamples(sampleNum - newestSample)));
             ASSERT(false);
             // The best we can now is be quiet and get out of the way.
             while(newestSample < sampleNum || newestSample == kNoSamples)
@@ -95,8 +95,18 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
         switch(mod->type) {
             case _SYS_PCM:
                 while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
-                    ASSERT(pa + bufLen - bufPtr >= (uint8_t)sizeof(int16_t));
-                    writeNextSample(*((int16_t *)bufPtr));
+                    if (pa + bufLen - bufPtr < (uint8_t)sizeof(int16_t)) {
+                        int16_t sample;
+                        if (!SvmMemory::copyROData(sample, va + (bufPtr - pa))) {
+                            // Fail in as many ways as possible!
+                            LOG((LGPFX"Could not copy %p!\n",
+                                 (void *)(va + (bufPtr - pa))));
+                            ASSERT(false);
+                        }
+                        writeNextSample(sample);
+                    } else {
+                        writeNextSample(*((int16_t *)bufPtr));
+                    }
                     bufPtr += sizeof(int16_t);
                 }
                 break;
