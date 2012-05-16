@@ -94,6 +94,12 @@ public:
         return result;
     }
 
+    static FlashMapBlock fromCode(unsigned c) {
+        FlashMapBlock result;
+        result.code = c;
+        return result;
+    }
+
     static FlashMapBlock invalid() {
         FlashMapBlock result;
         result.setInvalid();
