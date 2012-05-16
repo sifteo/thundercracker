@@ -44,6 +44,11 @@ public:
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
 
+    /// Flags
+    enum {
+        F_KNOWN_ERASED = (1 << 0),      // Contents known to be erased
+    };
+
 private:
     friend class FlashBlockRef;
     friend class FlashBlockWriter;
@@ -119,7 +124,8 @@ public:
     static void init();
     static void preload(uint32_t blockAddr);
     static void invalidate();
-    static void get(FlashBlockRef &ref, uint32_t blockAddr);
+    static void cacheEraseSector(uint32_t sectorAddr);
+    static void get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags = 0);
 
 private:
     inline void incRef() {
@@ -152,7 +158,7 @@ private:
     
     static FlashBlock *lookupBlock(uint32_t blockAddr);
     static FlashBlock *recycleBlock();
-    void load(uint32_t blockAddr);
+    void load(uint32_t blockAddr, unsigned flags = 0);
 };
 
 

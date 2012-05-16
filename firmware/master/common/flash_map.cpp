@@ -12,6 +12,8 @@ void FlashMapBlock::erase() const
     for (unsigned I = address(), E = I + BLOCK_SIZE; I != E;
         I += FlashDevice::SECTOR_SIZE) {
         ASSERT(I < E);
+
+        FlashBlock::cacheEraseSector(I);
         FlashDevice::eraseSector(I);
     }
 }
@@ -84,7 +86,7 @@ bool FlashMapSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr
     return true;
 }
 
-bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const
+bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset, unsigned flags) const
 {
     ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
 
@@ -92,17 +94,18 @@ bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const
     if (!offsetToFlashAddr(byteOffset, fa))
         return false;
 
-    FlashBlock::get(ref, fa);
+    FlashBlock::get(ref, fa, flags);
     return true;
 }
 
-bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, uint32_t &length) const
+bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset,
+    PhysAddr &ptr, uint32_t &length, unsigned flags) const
 {
     ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
     ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
     uint32_t maxLength = FlashBlock::BLOCK_SIZE - bytePart;
 
-    if (!getBlock(ref, blockPart))
+    if (!getBlock(ref, blockPart, flags))
         return false;
 
     ptr = ref->getData() + bytePart;
@@ -110,12 +113,13 @@ bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr 
     return true;
 }
 
-bool FlashMapSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr) const
+bool FlashMapSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset,
+    PhysAddr &ptr, unsigned flags) const
 {
     ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
     ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
 
-    if (!getBlock(ref, blockPart))
+    if (!getBlock(ref, blockPart, flags))
         return false;
 
     ptr = ref->getData() + bytePart;

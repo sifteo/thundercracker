@@ -10,6 +10,9 @@ require('siftulator')
 require('luaunit')
 
 fs = Filesystem()
+System():setOptions{ turbo=true }
+
+TEST_VOL_TYPE = 0x8765
 
 
 function volumeString(vol)
@@ -27,36 +30,96 @@ function volumeString(vol)
 end
 
 
+function countUsedBlocks()
+    -- How many total blocks are in use by all volumes?
+
+    local count = 0
+
+    for i, vol in ipairs(fs:listVolumes()) do
+        local type = fs:volumeType(vol)
+
+        if type ~= 0x0000 and type ~= 0xFFFF then
+            for j, block in ipairs(fs:volumeMap(vol)) do
+                if block ~= 0 then
+                    count = count + 1
+                end
+            end
+        end
+    end
+
+    return count
+end
+
+
+function getFreeSpace()
+    -- Estimate how much space is free in the filesystem, in bytes
+    local blockSize = 128 * 1024
+    local totalSize = 16 * 1024 * 1024
+    local overhead = 1024
+    return totalSize - overhead - blockSize * countUsedBlocks()
+end
+
+
 function dumpFilesystem()
     -- For debugging: Print out the current state of the filesystem.
 
     print("------ Volumes ------")
+
     for index, vol in ipairs(fs:listVolumes()) do
         print(volumeString(vol))
     end
+
+    print(string.format("Free: %d bytes", getFreeSpace()))
+end
+
+
+function filterVolumes()
+    -- Filter the list of volumes, looking for only TEST_VOL_TYPE
+
+    local result = fs:listVolumes()
+    local j = 1
+    while result[j] do
+        if fs:volumeType(result[j]) == TEST_VOL_TYPE then
+            j = j + 1
+        else
+            table.remove(result, j)
+        end
+    end
+    return result
 end
 
 
 function testFilesystem()
 
-    -- Dump and save the volumes that existed on entry.
-
-    dumpFilesystem()
-    origVolumes = fs:listVolumes()
-
-    -- Test data
-
-    data_1K = string.rep("foobars.", 1024 / 8)
-    data_128K = string.rep("foobars.", 128 * 1024 / 8)
-    data_1M = string.rep("foobars.", 1024 * 1024 / 8)
-
-    -- Create some test volumes
-
-    local v1 = fs:newVolume(0x1234, data_1K)
-    local v2 = fs:newVolume(0x1235, data_1M)
-    local v3 = fs:newVolume(0x1236, data_1K)
-    local v4 = fs:newVolume(0x1237, data_128K)
+    -- Dump the volumes that existed on entry
 
     dumpFilesystem()
 
+    -- Psuedorandomly create and delete volumes
+
+    local testData = string.rep("I am bytes, 16! ", 1024*1024)
+    local writeTotal = 0
+
+    math.randomseed(1234)
+    for iteration = 1, 50 do
+
+        -- How big of a volume to create?
+        local volSize = math.random(10 * 1024 * 1024)
+
+        -- Randomly delete volumes until we can fit this new volume
+        while getFreeSpace() < volSize do
+            local candidates = filterVolumes()
+            local vol = candidates[math.random(table.maxn(candidates))]
+
+            fs:deleteVolume(vol)
+            print(string.format("-- Deleted volume [%02x]", vol))
+        end
+
+        -- Create the volume
+        local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
+        print(string.format("-- Created volume [%02x], %d bytes", vol, volSize))
+        writeTotal = writeTotal + volSize
+    end
+
+    dumpFilesystem()
 end
