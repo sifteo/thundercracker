@@ -99,6 +99,8 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
         }
     }
 
+	prev_ut = 0;
+
     setIconYOffset(kDefaultIconYOffset);
     setPeekTiles(kDefaultPeekTiles);
 }
