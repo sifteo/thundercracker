@@ -47,7 +47,7 @@ public:
 
     void setVolume(uint16_t newVolume) {
         ASSERT(newVolume <= _SYS_AUDIO_MAX_VOLUME);
-        volume = newVolume;
+        volume = clamp((int)newVolume, 0, _SYS_AUDIO_MAX_VOLUME);
     }
 
     void setPos(uint32_t ofs);

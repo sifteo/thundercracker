@@ -2,6 +2,7 @@
 #include "volume.h"
 #include "rctimer.h"
 #include "board.h"
+#include <sifteo/abi/audio.h>
 
 static RCTimer timer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
 
@@ -23,8 +24,10 @@ void init()
 
 int systemVolume()
 {
-    // XXX: scale this to something meaningful
-    return timer.lastReading();
+    // TODO: scale this to [0, _SYS_AUDIO_MAX_VOLUME]
+    //return timer.lastReading();
+
+    return _SYS_AUDIO_MAX_VOLUME;
 }
 
 } // namespace Volume
