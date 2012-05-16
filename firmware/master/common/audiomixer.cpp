@@ -9,15 +9,16 @@
 #include <string.h>
 #include <limits.h>
 #include "xmtrackerplayer.h"
+#include "volume.h"
 
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     playingChannelMask(0),
-    mixerVolume(_SYS_AUDIO_MAX_VOLUME),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
 {
+    Volume::init();
 }
 
 /*
@@ -33,7 +34,7 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
-    int samplesMixed = 0;
+    uint32_t samplesMixed = 0;
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
@@ -56,7 +57,7 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        int mixed = ch.mixAudio(buffer, numsamples);
+        uint32_t mixed = ch.mixAudio(buffer, numsamples);
 
         // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
@@ -65,6 +66,7 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
     }
 
     // Apply master volume control.
+    uint16_t mixerVolume = Volume::systemVolume();
     for (unsigned i = 0; i < samplesMixed; i++) {
         buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
     }
@@ -143,12 +145,6 @@ void AudioMixer::pullAudio(void *p) {
     if (totalBytesMixed > 0) {
         buf->commit(totalBytesMixed);
     }
-}
-
-void AudioMixer::setMixerVolume(uint16_t volume)
-{
-    ASSERT(volume < _SYS_AUDIO_MAX_VOLUME);
-    mixerVolume = clamp((int)volume, 0, _SYS_AUDIO_MAX_VOLUME);
 }
 
 bool AudioMixer::play(const struct _SYSAudioModule *mod,

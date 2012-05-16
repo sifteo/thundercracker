@@ -50,8 +50,6 @@ public:
         return curSampleRate;
     }
 
-    void setMixerVolume(uint16_t volume);
-
 protected:
     friend class XmTrackerPlayer; // can call setTrackerCallbackInterval()
     void setTrackerCallbackInterval(uint32_t usec);
@@ -60,7 +58,6 @@ private:
     uint32_t playingChannelMask;    // channels that are actively playing
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t curSampleRate;
-    uint16_t mixerVolume;
 
     // Tracker callback timer
     uint32_t trackerCallbackInterval;
