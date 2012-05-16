@@ -102,8 +102,10 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
                             LOG((LGPFX"Could not copy %p!\n",
                                  (void *)(va + (bufPtr - pa))));
                             ASSERT(false);
+                            writeNextSample(0);
+                        } else {
+                            writeNextSample(sample);
                         }
-                        writeNextSample(sample);
                     } else {
                         writeNextSample(*((int16_t *)bufPtr));
                     }
