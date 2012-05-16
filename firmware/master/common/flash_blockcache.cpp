@@ -24,7 +24,7 @@ void FlashBlock::init()
     FLASHLAYER_STATS_ONLY(resetStats());
 }
 
-void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
+void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags)
 {
     ASSERT((blockAddr & BLOCK_MASK) == 0);
 
@@ -44,9 +44,8 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr)
         FlashBlock *recycled = recycleBlock();
         ASSERT(recycled->refCount == 0);
         ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
-        FLASHLAYER_STATS_ONLY(countBlockMiss(blockAddr));
 
-        recycled->load(blockAddr);
+        recycled->load(blockAddr, flags);
         ref.set(recycled);
     }
     
@@ -116,7 +115,7 @@ FlashBlock *FlashBlock::recycleBlock()
     return bestBlock;
 }
 
-void FlashBlock::load(uint32_t blockAddr)
+void FlashBlock::load(uint32_t blockAddr, unsigned flags)
 {
     /*
      * Handle a cache miss or invalidation. Load this block with new data
@@ -131,7 +130,18 @@ void FlashBlock::load(uint32_t blockAddr)
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
 
-    FlashDevice::read(blockAddr, data, BLOCK_SIZE);
+    if (flags & F_KNOWN_ERASED) {
+        // This is an important optimization which prevents us from reading
+        // blocks that we've just erased, especially while writing to a new volume.
+        memset(data, 0xFF, BLOCK_SIZE);
+        DEBUG_ONLY(verify());
+
+    } else {
+        // Normal cache miss; fetch from hardware
+        FlashDevice::read(blockAddr, data, BLOCK_SIZE);
+        FLASHLAYER_STATS_ONLY(countBlockMiss(blockAddr));
+    }
+
     SvmDebugger::patchFlashBlock(blockAddr, data);
 }
 
@@ -204,6 +214,31 @@ void FlashBlock::invalidate()
             block->load(block->address);
         else
             block->address = INVALID_ADDRESS;
+    }
+}
+
+void FlashBlock::cacheEraseSector(uint32_t sectorAddr)
+{
+    /*
+     * A lighter-weight alternative to invalidate(), used when erasing one
+     * flash sector. Any cached blocks in this sector which have a reference
+     * are erased, and any unreferenced blocks are evicted.
+     *
+     * Cached blocks not part of this sector are left alone.
+     */
+
+    const unsigned mask = ~(FlashDevice::SECTOR_SIZE - 1);
+    ASSERT((sectorAddr & mask) == sectorAddr);
+
+    for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
+        FlashBlock *block = &instances[idx];
+
+        if ((block->address & mask) == sectorAddr) {
+            if (block->refCount)
+                block->load(block->address, F_KNOWN_ERASED);
+            else
+                block->address = INVALID_ADDRESS;
+        }
     }
 }
 

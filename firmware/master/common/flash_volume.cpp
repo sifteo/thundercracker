@@ -81,7 +81,7 @@ bool FlashVolumeIter::next(FlashVolume &vol)
             // Don't visit any future blocks that are part of this volume
             for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
                 FlashMapBlock block = map->blocks[I];
-                if (block)
+                if (block.isValid())
                     block.clear(remaining);
             }
 
@@ -134,7 +134,7 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
 
         for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
             FlashMapBlock block = map->blocks[I];
-            if (block) {
+            if (block.isValid()) {
                 block.clear(orphanBlocks);
                 avgEraseNumerator += hdr->getEraseCount(eraseRef, vol.block, I);
                 avgEraseDenominator++;
@@ -173,7 +173,7 @@ void FlashBlockRecycler::findCandidateVolumes()
 
         for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
             FlashMapBlock block = map->blocks[I];
-            if (block && hdr->getEraseCount(eraseRef, block, I) <= averageEraseCount) {
+            if (block.isValid() && hdr->getEraseCount(eraseRef, block, I) <= averageEraseCount) {
                 candidateVolumes.mark(index);
                 break;
             }
@@ -261,7 +261,7 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
 
     for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
         FlashMapBlock candidate = map->blocks[I];
-        if (candidate && candidate != vol.block) {
+        if (candidate.isValid() && candidate.code != vol.block.code) {
             // Found a non-header block to yank! Mark it as dirty.
 
             dirtyVolume.beginBlock(ref);
@@ -273,8 +273,11 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
         }
     }
 
-    // Yanking the last (header) block.
+    // Yanking the last (header) block. Remove this volume from the pool.
+    
+    vol.block.clear(deletedVolumes);
     dirtyVolume.commitBlock();
+
     block = vol.block;
     eraseCount = hdr->getEraseCount(ref, vol.block, 0);
     return true;
@@ -402,8 +405,14 @@ void FlashVolumeWriter::appendPayload(const uint8_t *bytes, uint32_t count)
         uint32_t chunk = count;
         FlashBlockRef dataRef;
         FlashMapSpan::PhysAddr pa;
+        unsigned flags = 0;
 
-        if (!span.getBytes(dataRef, payloadOffset, pa, chunk)) {
+        if ((payloadOffset & FlashBlock::BLOCK_MASK) == 0) {
+            // We know this is the beginning of a fully erased block
+            flags |= FlashBlock::F_KNOWN_ERASED;
+        }
+
+        if (!span.getBytes(dataRef, payloadOffset, pa, chunk, flags)) {
             // This shouldn't happen unless we're writing past the end of the span!
             ASSERT(0);
             return;
