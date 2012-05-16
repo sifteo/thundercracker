@@ -94,14 +94,17 @@ public:
         return result;
     }
 
+    static FlashMapBlock fromCode(unsigned c) {
+        FlashMapBlock result;
+        result.code = c;
+        return result;
+    }
+
     static FlashMapBlock invalid() {
         FlashMapBlock result;
         result.setInvalid();
         return result;
     }
-
-    /// Synonymous with isValid()
-    operator bool() const { return isValid(); }
 
     uint8_t code;     // invalid=0 , valid=[1, NUM_BLOCKS]
 };
@@ -208,9 +211,9 @@ public:
     bool offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const;
 
     // Cached data access
-    bool getBlock(FlashBlockRef &ref, ByteOffset byteOffset) const;
-    bool getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, uint32_t &length) const;
-    bool getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr) const;
+    bool getBlock(FlashBlockRef &ref, ByteOffset byteOffset, unsigned flags = 0) const;
+    bool getBytes(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, uint32_t &length, unsigned flags = 0) const;
+    bool getByte(FlashBlockRef &ref, ByteOffset byteOffset, PhysAddr &ptr, unsigned flags = 0) const;
     bool copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
     bool copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
     bool preloadBlock(ByteOffset byteOffset) const;

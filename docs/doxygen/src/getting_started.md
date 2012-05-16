@@ -42,19 +42,9 @@ This should create `stars.elf` in the current folder - this is the binary that c
 
 @note The name of the .elf file is specified by the line `APP = stars` in the `Makefile` in the stars folder.
 
-Let's run `stars.elf` in the Siftulator. The exact command depends on your platform:
-
-__Windows__
-
-	Siftulator.exe stars.elf
-
-__OS X__
+Finally, let's run `stars.elf` in the Siftulator.
 
 	siftulator stars.elf
-
-__Linux__
-
-	Siftulator stars.elf
 
 The simulator should start up and run `stars`, which should look like the following:
 
@@ -64,7 +54,7 @@ Congratulations! You've just run your first Sifteo Cubes application. Try buildi
 
 You may also use any of the examples as a template to create an application of your own.
 * Copy the entire folder of your example of choice to a new location.
-* Rename the folder, and edit the `Makefile` to reference your project's name and source files.
+* Rename the folder, and edit the `Makefile` to reference your project's new name and source files.
 * run `make` to confirm that your new project builds, and run it in the __Siftulator__
 
 # Other Build Environments
