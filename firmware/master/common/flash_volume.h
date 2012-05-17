@@ -52,7 +52,8 @@ class FlashVolume
 public:
     enum Type {
         T_DELETED       = 0x0000,       // Must be zero
-        T_ELF           = _SYS_FS_VOL_ELF,
+        T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,
+        T_GAME          = _SYS_FS_VOL_GAME,
         T_INCOMPLETE    = 0xFFFF,       // Must be FFFF
     };
 

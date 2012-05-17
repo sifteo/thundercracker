@@ -111,8 +111,8 @@ struct _SYSPseudoRandomState {
  * Filesystem
  */
 
-/// Volume type for ELF binaries
-#define _SYS_FS_VOL_ELF         0x4C45
+#define _SYS_FS_VOL_GAME        0x4d47
+#define _SYS_FS_VOL_LAUNCHER    0x4e4c
 
 /// Opaque nonzero ID for a filesystem volume
 typedef uint32_t _SYSVolumeHandle;      
