@@ -11,6 +11,7 @@
 #
 
 INPUTS = [
+    ('rb', "../launcher/launcher.elf"),
     ('rb', "resources/img_cube_face.png"),
     ('rb', "resources/img_cube_face_hilight.png"),
     ('rb', "resources/img_cube_face_hilight_mask.png"),
