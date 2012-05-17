@@ -67,6 +67,9 @@ public:
     unsigned getType() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     void markAsDeleted() const;
+
+private:
+    static uint32_t signHandle(uint32_t h);
 };
 
 

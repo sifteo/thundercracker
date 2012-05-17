@@ -56,6 +56,7 @@ class FlashStorage {
                 uint32_t    mc_pageSize;
                 uint32_t    mc_sectorSize;
                 uint32_t    mc_capacity;
+                uint32_t    uniqueID;
             };
         };
 

@@ -5,6 +5,8 @@
 
 #include "macros.h"
 #include "crc.h"
+#include "system.h"
+#include "system_mc.h"
 
 static uint32_t gCrc;
 static bool gCrcInit = false;
@@ -138,4 +140,14 @@ void Crc32::add(uint32_t word)
     gCrc = (gCrcTable[((gCrc >> 24) ^ (word >> 16)) & 0xff] ^ (gCrc << 8));
     gCrc = (gCrcTable[((gCrc >> 24) ^ (word >> 8 )) & 0xff] ^ (gCrc << 8));
     gCrc = (gCrcTable[((gCrc >> 24) ^ (word      )) & 0xff] ^ (gCrc << 8));
+}
+
+void Crc32::addUniqueness()
+{
+    /*
+     * To properly exercise code which depends on the uniqueness of
+     * addUniqueness(), we use a 32-bit unique ID that's generated
+     * pseudorandomly at the time our emulated flash storage was initialized.
+     */
+    add(SystemMC::getSystem()->flash.data->header.uniqueID);
 }

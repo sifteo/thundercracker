@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "flash_map.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "crc.h"
@@ -500,13 +501,9 @@ _SYSVolumeHandle FlashVolume::getHandle() const
 {
     /*
      * Create a _SYSVolumeHandle to represent this FlashVolume.
-     *
-     * These are opaque 32-bit identifiers. In order to more strongly
-     * enforce their opacity and prevent bogus FlashVolumes from getting
-     * inadvertently passed in from userspace, we include a machine-specific
-     * hash in the 
      */
-    return 0;
+
+    return signHandle(block.code);
 }
 
 FlashVolume::FlashVolume(_SYSVolumeHandle vh)
@@ -517,4 +514,52 @@ FlashVolume::FlashVolume(_SYSVolumeHandle vh)
      * The volume must be tested with isValid() to see if the handle
      * was actually valid at all.
      */
+
+    if (signHandle(vh) == vh)
+        block.code = vh;
+    else
+        block.setInvalid();
+}
+
+uint32_t FlashVolume::signHandle(uint32_t h)
+{
+    /*
+     * This is part of hte implementation of FlashVolume::getHandle()
+     * and its inverse, FlashVolume::FlashVolume(_SYSVolumeHandle).
+     *
+     * These are opaque 32-bit identifiers. Currently our FlashBlockMap code
+     * is only 8 bits wide, so we have an extra 24 bits to play with in
+     * converting FlashVolumes to userspace handles.
+     *
+     * In order to more strongly enforce their opacity and prevent bogus
+     * FlashVolumes from getting inadvertently passed in from userspace,
+     * we include a machine-specific hash in these upper bits. This function
+     * replaces the upper bits of 'h' with a freshly calculated hash of
+     * the lower bits, and returns the new value.
+     *
+     * This is not at all a secure algorithm. A savvy userspace programmer
+     * could always either just brute-force attack the CRC, or they could
+     * reverse-engineer the key values from a collection of valid volume
+     * handles. But this will certainly prevent casual mistakes from giving
+     * us bogus FlashVolumes.
+     *
+     * This function uses the CRC hardware.
+     */
+
+    FlashMapBlock b;
+    STATIC_ASSERT(sizeof(b.code) == 1);   
+    b.code = h;
+
+    Crc32::reset();
+
+    // Static "secret key"
+    Crc32::add(0xe30f4f8e);
+
+    // Unique hardware-specific key
+    Crc32::addUniqueness();
+
+    // Volume code
+    Crc32::add(h);
+
+    return b.code | (Crc32::get() & 0xFFFFFF00);
 }

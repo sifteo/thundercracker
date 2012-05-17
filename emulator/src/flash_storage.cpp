@@ -22,6 +22,7 @@
 #include "macros.h"
 #include "flash_device.h"
 #include "flash_storage.h"
+#include "systime.h"
 
 
 FlashStorage::FlashStorage()
@@ -116,6 +117,9 @@ void FlashStorage::initData()
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
     data->header.mc_capacity = FlashDevice::CAPACITY;
     data->header.mc_sectorSize = FlashDevice::SECTOR_SIZE;
+
+    // Create a unique ID for this storage file
+    data->header.uniqueID = (uint32_t)(rand() ^ rand() ^ SysTime::ticks());
 }
 
 bool FlashStorage::checkData()
