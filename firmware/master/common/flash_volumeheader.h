@@ -64,11 +64,15 @@ struct FlashVolumeHeader
     static const uint64_t MAGIC = 0x5f4c4f5674666953ULL;
     typedef uint32_t EraseCount;
 
-    /// Get a cached FlashVolumeHeader
+    static FlashVolumeHeader *get(FlashBlockRef &ref)
+    {
+        return reinterpret_cast<FlashVolumeHeader*>(ref->getData());
+    }
+
     static FlashVolumeHeader *get(FlashBlockRef &ref, FlashMapBlock mb)
     {
         FlashBlock::get(ref, mb.address());
-        return reinterpret_cast<FlashVolumeHeader*>(ref->getData());
+        return get(ref);
     }
 
     /// Check whether the FlashVolumeHeader itself is superficially valid.

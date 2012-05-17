@@ -121,11 +121,18 @@ public:
     void verify();
 #endif
 
+    // Global operations
     static void init();
-    static void preload(uint32_t blockAddr);
     static void invalidate();
+
+    // Cached block accessors
+    static void preload(uint32_t blockAddr);
     static void cacheEraseSector(uint32_t sectorAddr);
     static void get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags = 0);
+
+    // Support for anonymous memory
+    static void anonymous(FlashBlockRef &ref);
+    static void anonymous(FlashBlockRef &ref, uint8_t fillByte);
 
 private:
     inline void incRef() {
@@ -258,8 +265,12 @@ public:
     // Dirty iff ref.isHeld()
     FlashBlockRef ref;
 
+    void beginBlock();
     void beginBlock(uint32_t blockAddr);
     void beginBlock(const FlashBlockRef &r);
+
+    void relocate(uint32_t blockAddr);
+
     void commitBlock();
 
     template <typename T>
