@@ -22,6 +22,8 @@
 
 using namespace Svm;
 
+FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
+
 
 void SvmLoader::logTitleInfo(const Elf::Program &program)
 {
@@ -252,7 +254,22 @@ void SvmLoader::run(const Elf::Program &program)
                     SvmMemory::VIRTUAL_RAM_TOP);
 }
 
-void SvmLoader::run(int id)
+void SvmLoader::run(FlashVolume vol)
+{
+    Elf::Program program;
+
+    if (program.init(vol.getPayload(mapRefs[0])))
+        run(program);
+    else
+        SvmRuntime::fault(F_BAD_ELF_HEADER);
+}
+
+void SvmLoader::map(FlashVolume vol)
+{
+    SvmMemory::setFlashSegment(1, vol.getPayload(mapRefs[1]));
+}
+
+void SvmLoader::runDefault()
 {
     /*
      * XXX: Temporary. For now, just run the first program we find.
@@ -264,14 +281,7 @@ void SvmLoader::run(int id)
     vi.begin();
     if (vi.next(vol)) {
         // Run the first volume we find, regardless of what it is.
-
-        // Note that this is the ref that backs our FlashMap, and it must
-        // be held as long as the program is executing.
-        FlashBlockRef spanRef;
-
-        Elf::Program program;
-        if (program.init(vol.getPayload(spanRef)))
-            run(program);
+        run(vol);
 
     } else {
         LOG(("SVM: No volumes found, assuming identity mapping\n"));
@@ -281,12 +291,20 @@ void SvmLoader::run(int id)
         for (unsigned i = 0; i < arraysize(map.blocks); i++)
             map.blocks[i].setIndex(i);
 
+        // Try to run this.. if it fails, fall through to the loop below.
         Elf::Program program;
         if (program.init(FlashMapSpan::create(&map, 0, 0xFFFF)))
             run(program);
     }
-}
 
+    // If SVM exits, at least let the cube simulation run...
+    LOG(("SVM: Runtime exited\n"));
+
+    for (;;) {
+        Tasks::work();
+        Radio::halt();
+    }
+}
 
 void SvmLoader::exit(bool fault)
 {

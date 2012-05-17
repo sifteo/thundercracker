@@ -101,13 +101,7 @@ void SystemMC::threadFn(void *param)
         instance->pendingInstallData.clear();
     }
 
-    SvmLoader::run(111);
-
-    for (;;) {
-        // If SVM exits, at least let the cube simulation run...
-        Tasks::work();
-        Radio::halt();
-    }
+    SvmLoader::runDefault();
 }
 
 SysTime::Ticks SysTime::ticks()

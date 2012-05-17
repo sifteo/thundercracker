@@ -76,6 +76,7 @@ enum FaultCode {
     F_SYSCALL_PARAM,        // (0x15) Other bad parameter in system call
     F_SCRIPT_EXCEPTION,     // (0x16) Exception during script execution
     F_BAD_VOLUME_HANDLE,    // (0x17) Bad filesystem volume handle
+    F_BAD_ELF_HEADER,       // (0x18) Bad ELF binary header
 };
 
 /**

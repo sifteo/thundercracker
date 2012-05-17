@@ -217,12 +217,27 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key, uint32_t siz
 const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
             uint32_t minSize, uint32_t &actualSize) const
 {
+    uint32_t offset = getMetaSpanOffset(ref, key, minSize, actualSize);
+    FlashMapSpan::PhysAddr valuePA;
+
+    if (offset &&
+        span.getBytes(ref, offset, valuePA, actualSize) &&
+        actualSize >= minSize)
+        return valuePA;
+    else
+        return 0;
+}
+
+const uint32_t Elf::Program::getMetaSpanOffset(FlashBlockRef &ref,
+        uint16_t key, uint32_t minSize, uint32_t &actualSize) const
+{
     /*
      * Base accessor for metadata. Looks for 'key' within the metadata
      * segment. If the key exists, is properly aligned, and at least
-     * 'minSize' bytes of data are valid, we return a pointer to the
-     * key within the flash block cache. If any of these requirements
-     * are not met, returns 0.
+     * 'minSize' bytes of data are valid, we return a byte offset to the
+     * key within the program span.
+     *
+     * If any of these requirements are not met, returns 0.
      *
      * On success, we return the actual size of the key via 'actualSize'.
      * This size includes any padding inserted by the compiler after the
@@ -282,12 +297,7 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
                 return 0;
 
             // Now we can calculate the address of the value, yay.
-            FlashMapSpan::PhysAddr valuePA;
-            if (!span.getBytes(ref, valueOffset + I, valuePA, actualSize)
-                || actualSize < minSize)
-                return 0;
-
-            return valuePA;
+            return valueOffset + I;
         }
     }
     

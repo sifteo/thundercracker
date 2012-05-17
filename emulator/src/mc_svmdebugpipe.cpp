@@ -59,6 +59,7 @@ static const char* faultStr(FaultCode code)
     case F_SYSCALL_PARAM:       return "Other bad parameter in system call";
     case F_SCRIPT_EXCEPTION:    return "Exception during script execution";
     case F_BAD_VOLUME_HANDLE:   return "Bad filesystem volume handle";
+    case F_BAD_ELF_HEADER:      return "Bad ELF binary header";
     default:                    return "unknown error";
     }
 }

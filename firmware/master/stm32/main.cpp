@@ -138,12 +138,5 @@ int main()
      * Launch our game runtime!
      */
 
-    SvmLoader::run(111);
-
-    // for now, in the event that we don't have a valid game installed at address 0,
-    // SvmLoader::run() should return (assuming it fails to parse the non-existent
-    // ELF binary, and we'll just sit here so we can at least install things over USB, etc
-    for (;;) {
-        Tasks::work();
-    }
+    SvmLoader::runDefault();
 }
