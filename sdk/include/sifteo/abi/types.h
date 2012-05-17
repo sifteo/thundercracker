@@ -108,6 +108,16 @@ struct _SYSPseudoRandomState {
 #define _SYS_INVALID_HWID       ((uint64_t)-1)
 
 /*
+ * Filesystem
+ */
+
+/// Volume type for ELF binaries
+#define _SYS_FS_VOL_ELF         0x4C45
+
+/// Opaque nonzero ID for a filesystem volume
+typedef uint32_t _SYSVolumeHandle;      
+
+/*
  * RFC4122 compatible UUIDs.
  *
  * These are used in game metadata, to uniquely identify a particular

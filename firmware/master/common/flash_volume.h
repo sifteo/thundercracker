@@ -52,7 +52,7 @@ class FlashVolume
 public:
     enum Type {
         T_DELETED       = 0x0000,       // Must be zero
-        T_ELF           = 0x4C45,
+        T_ELF           = _SYS_FS_VOL_ELF,
         T_INCOMPLETE    = 0xFFFF,       // Must be FFFF
     };
 
@@ -60,8 +60,10 @@ public:
 
     FlashVolume() {}
     FlashVolume(FlashMapBlock block) : block(block) {}
+    FlashVolume(_SYSVolumeHandle vh);
 
     bool isValid() const;
+    _SYSVolumeHandle getHandle() const;
     unsigned getType() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     void markAsDeleted() const;

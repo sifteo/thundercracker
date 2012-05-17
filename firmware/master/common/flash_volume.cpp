@@ -495,3 +495,26 @@ void FlashVolumeWriter::appendPayload(const uint8_t *bytes, uint32_t count)
         bytes += chunk;
     }
 }
+
+_SYSVolumeHandle FlashVolume::getHandle() const
+{
+    /*
+     * Create a _SYSVolumeHandle to represent this FlashVolume.
+     *
+     * These are opaque 32-bit identifiers. In order to more strongly
+     * enforce their opacity and prevent bogus FlashVolumes from getting
+     * inadvertently passed in from userspace, we include a machine-specific
+     * hash in the 
+     */
+    return 0;
+}
+
+FlashVolume::FlashVolume(_SYSVolumeHandle vh)
+{
+    /*
+     * Convert from _SYSVolumeHandle to a FlashVolume.
+     *
+     * The volume must be tested with isValid() to see if the handle
+     * was actually valid at all.
+     */
+}
