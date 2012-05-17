@@ -207,6 +207,78 @@ float inline cos(float x)
     return c;
 }
 
+/**
+ * Returns the next integer value closer to positive infinity from 'value'.
+ *
+ * E.g.:
+ *
+ *     ceil(1.0) => 1.0
+ *     ceil(1.1) => 2.0
+ *     ceil(-1.0) => -1.0
+ *     ceil(-1.1) => -1.0
+ *     ceil(-1.9) => -1.0
+ */
+
+template <typename T> inline long ceil(const T value)
+{
+    long result = value;
+    if (result >= 0 && result < value) {
+        return result+1;
+    }
+    return result;
+}
+
+/**
+ *  Returns the next integer value closer to negative infinity from 'value'.
+ *
+ *  E.g.:
+ *
+ *      floor(1.0) => 1.0
+ *      floor(1.9) => 1.0
+ *      floor(-1.0) => -1.0
+ *      floor(-1.1) => -2.0
+ *      floor(-1.9) => -2.0
+ */
+
+template <typename T> inline long floor(const T value)
+{
+   long result = value;
+   if (result <= 0 && result > value) {
+       return result - 1;
+   }
+   return result;
+}
+
+/**
+ * Rounds 'value' to the nearest whole value.
+ *
+ * E.g.:
+ *
+ *     round(1.4) => 1.0
+ *     round(1.5) => 2.0
+ *
+ *     round(-1.4) => -1.0
+ *     round(-1.5) => -1.0
+ *     round(-1.51) => -2.0
+ */
+
+template <typename T> inline long round(const T value)
+{
+    return floor(value + 0.5);
+}
+
+/**
+ * Returns true when 'a' and 'b' are within 'epsilon' of each other.
+ *
+ * For more comparing floats and choosing your 'epsilon', see:
+ * http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+ */
+
+template <typename T> inline bool almostEqual(const T a, const T b, const T epsilon)
+{
+    return abs(a-b) < epsilon;
+}
+
 
 /**
  * Generalized two-element cartesian coordinate vector.
