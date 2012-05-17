@@ -9,6 +9,7 @@
 #include <string.h>
 #include <limits.h>
 #include "xmtrackerplayer.h"
+#include "volume.h"
 
 AudioMixer AudioMixer::instance;
 
@@ -17,6 +18,7 @@ AudioMixer::AudioMixer() :
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
 {
+    Volume::init();
 }
 
 /*
@@ -32,13 +34,18 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
-    int samplesMixed = 0;
+    uint32_t samplesMixed = 0;
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
-        AudioChannelSlot &ch = channelSlots[idx];
         mask &= ~Intrinsic::LZ(idx);
+
+        if (idx >= _SYS_AUDIO_MAX_CHANNELS) {
+            ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+            continue;
+        }
+
+        AudioChannelSlot &ch = channelSlots[idx];
 
         if (ch.isStopped()) {
             Atomic::ClearLZ(playingChannelMask, idx);
@@ -50,13 +57,20 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        int mixed = ch.mixAudio(buffer, numsamples);
+        uint32_t mixed = ch.mixAudio(buffer, numsamples);
 
         // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
             samplesMixed = mixed;
         }
     }
+
+    // Apply master volume control.
+    uint16_t mixerVolume = Volume::systemVolume();
+    for (unsigned i = 0; i < samplesMixed; i++) {
+        buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
+    }
+
     return samplesMixed;
 }
 
@@ -84,7 +98,10 @@ void AudioMixer::pullAudio(void *p) {
         numSamples = (bytesToMix - totalBytesMixed) / sizeof(int16_t);
         numSamples = trackerInterval > 0 && trackerCountdown < numSamples
                    ? trackerCountdown : numSamples;
-        ASSERT(numSamples > 0);
+        if (!numSamples) {
+            ASSERT(numSamples);
+            return;
+        }
 
         mixed = AudioMixer::instance.mixAudio(audiobuf, numSamples);
         audiobuf += mixed;
@@ -95,8 +112,22 @@ void AudioMixer::pullAudio(void *p) {
                 mixed = numSamples;
                 totalBytesMixed += mixed * sizeof(int16_t);
             }
-            ASSERT(trackerCountdown != 0);
-            ASSERT(mixed <= trackerCountdown);
+
+            /* Tracker countdown should never be 0 when an interval is set--
+             * when it reaches 0 the callback is fired and the counter
+             * immediately reset.
+             */
+            if (!trackerCountdown) {
+                ASSERT(trackerCountdown);
+                trackerCountdown = mixed;
+            }
+
+            // The mixer should never mix beyond the limit of the countdown.
+            if (mixed > trackerCountdown) {
+                ASSERT(mixed <= trackerCountdown);
+                trackerCountdown = mixed;
+            }
+
             // Update the callback countdown
             trackerCountdown -= mixed;
 
@@ -108,8 +139,9 @@ void AudioMixer::pullAudio(void *p) {
         }
     } while(mixed == numSamples && bytesToMix > totalBytesMixed);
 
-    // mixed as returned by mixAudio measure samples, but we care about bytes
+    // Check for buffer overrun.
     ASSERT(totalBytesMixed <= bytesToMix);
+
     if (totalBytesMixed > 0) {
         buf->commit(totalBytesMixed);
     }
@@ -118,10 +150,15 @@ void AudioMixer::pullAudio(void *p) {
 bool AudioMixer::play(const struct _SYSAudioModule *mod,
     _SYSAudioChannelID ch, _SYSAudioLoopType loopMode)
 {
-    // NB: "mod" is a temporary contiguous copy of SYSAudioModule in RAM.
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // NB: "mod" is a temporary contiguous copy of _SYSAudioModule in RAM.
 
-    // already playing? no no
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return false;
+    }
+
+    // Already playing?
     if (isPlaying(ch))
         return false;
 
@@ -134,12 +171,23 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
 
 bool AudioMixer::isPlaying(_SYSAudioChannelID ch)
 {
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return false;
+    }
+
     return (playingChannelMask & Intrinsic::LZ(ch)) != 0;
 }
 
 void AudioMixer::stop(_SYSAudioChannelID ch)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
+
 
     channelSlots[ch].stop();
     Atomic::ClearLZ(playingChannelMask, ch);
@@ -147,7 +195,11 @@ void AudioMixer::stop(_SYSAudioChannelID ch)
 
 void AudioMixer::pause(_SYSAudioChannelID ch)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
 
     if (isPlaying(ch)) {
         channelSlots[ch].pause();
@@ -156,7 +208,11 @@ void AudioMixer::pause(_SYSAudioChannelID ch)
 
 void AudioMixer::resume(_SYSAudioChannelID ch)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
 
     if (isPlaying(ch)) {
         channelSlots[ch].resume();
@@ -165,7 +221,11 @@ void AudioMixer::resume(_SYSAudioChannelID ch)
 
 void AudioMixer::setVolume(_SYSAudioChannelID ch, uint16_t volume)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
 
     // XXX: should call setVolume
     channelSlots[ch].volume = clamp((int)volume, 0, (int)_SYS_AUDIO_MAX_VOLUME);
@@ -173,27 +233,45 @@ void AudioMixer::setVolume(_SYSAudioChannelID ch, uint16_t volume)
 
 int AudioMixer::volume(_SYSAudioChannelID ch)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return -1;
+    }
 
     return channelSlots[ch].volume;
 }
 
 void AudioMixer::setSpeed(_SYSAudioChannelID ch, uint32_t samplerate)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
 
     channelSlots[ch].setSpeed(samplerate);
 }
 
 void AudioMixer::setPos(_SYSAudioChannelID ch, uint32_t ofs)
 {
-    ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
 
     channelSlots[ch].setPos(ofs);
 }
 
 uint32_t AudioMixer::pos(_SYSAudioChannelID ch)
 {
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return (uint32_t)-1;
+    }
+
     // TODO - implement
     return 0;
 }
@@ -207,7 +285,7 @@ void AudioMixer::setTrackerCallbackInterval(uint32_t usec)
 
     // Catch underflow. No one should ever need callbacks this often. Ever.
     ASSERT(usec == 0 || trackerCallbackInterval > 0);
-    // But if we're not DEBUG, we may as well let it happen every sample.
+    // But if we're not DEBUG, we may as well let it happen every sample. Gross.
     if (usec > 0 && trackerCallbackInterval == 0) {
         trackerCallbackInterval = 1;
     }

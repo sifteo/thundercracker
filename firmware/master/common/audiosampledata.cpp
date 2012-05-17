@@ -17,8 +17,17 @@
  * the position previously declared as loop_start in init().
  */
 int16_t AudioSampleData::operator[](uint32_t sampleNum) {
-    ASSERT(mod);
-    ASSERT(sampleNum < numSamples());
+    if (!mod) {
+        LOG((LGPFX"Error: Can not get sample, no audio module loaded.\n"));
+        ASSERT(mod);
+        return 0;
+    }
+    if (sampleNum >= numSamples()) {
+        LOG((LGPFX"Error: Sample %u out of bounds (module contains %u samples).\n",
+             sampleNum, numSamples()));
+        ASSERT(sampleNum < numSamples());
+        return 0;
+    }
 
     if (sampleNum < oldestSample()) {
         if (hasSnapshot() && sampleNum > snapshotData.newestSample - kSampleBufSize) {
@@ -40,7 +49,14 @@ int16_t AudioSampleData::operator[](uint32_t sampleNum) {
     if (sampleNum > newestSample || newestSample == kNoSamples)
         decodeToSample(sampleNum);
 
-    ASSERT(sampleNum <= newestSample && sampleNum >= oldestSample());
+    /* Sanity check, revert()/reset() should have rewound as necessary, and
+     * decodeToSample() should have decoded up to (and including) the requested
+     * sample.
+     */
+    if (sampleNum > newestSample && sampleNum < oldestSample()) {
+        ASSERT(sampleNum <= newestSample && sampleNum >= oldestSample());
+        return 0;
+    }
 
     return samples[((sampleNum - oldestSample()) + ringPos) % arraysize(samples)];
 }
@@ -74,7 +90,10 @@ void AudioSampleData::writeNextSample(uint16_t sample) {
 void AudioSampleData::decodeToSample(uint32_t sampleNum)
 {
     // Decoders are not expected to decode backwards.
-    ASSERT(sampleNum >= oldestSample());
+    if (sampleNum < oldestSample()) {
+        ASSERT(sampleNum >= oldestSample());
+        reset();
+    }
 
     while(newestSample < sampleNum || newestSample == kNoSamples) {
         SvmMemory::PhysAddr pa;
@@ -102,8 +121,10 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
                             LOG((LGPFX"Could not copy %p!\n",
                                  (void *)(va + (bufPtr - pa))));
                             ASSERT(false);
+                            writeNextSample(0);
+                        } else {
+                            writeNextSample(sample);
                         }
-                        writeNextSample(sample);
                     } else {
                         writeNextSample(*((int16_t *)bufPtr));
                     }

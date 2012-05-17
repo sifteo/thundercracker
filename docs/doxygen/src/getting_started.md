@@ -29,9 +29,9 @@ The Sifteo SDK doesn't dictate any build tools or IDE that must be used to devel
 Now we'll build and run __stars__, one of the example applications in the SDK.
 
 First, open the appropriate shell, depending on your platform:
-* Windows: `sifteo-sdk-shell.cmd`
-* Mac OS X: `sifteo-sdk-shell.command`
-* Linux: `sifteo-sdk-shell.sh`
+* Windows: double click `sifteo-sdk-shell.cmd`
+* Mac OS X: double click `sifteo-sdk-shell.command`
+* Linux: run `sifteo-sdk-shell.sh`
 
 The shell opens to the __sdk/examples__ folder within the SDK distribution. From here, navigate into the __stars__ demo, and run `make` to build the project.
 
