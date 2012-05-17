@@ -552,14 +552,14 @@ uint32_t FlashVolume::signHandle(uint32_t h)
 
     Crc32::reset();
 
+    // Volume code
+    Crc32::add(b.code);
+
     // Static "secret key"
     Crc32::add(0xe30f4f8e);
 
     // Unique hardware-specific key
     Crc32::addUniqueness();
-
-    // Volume code
-    Crc32::add(h);
 
     return b.code | (Crc32::get() & 0xFFFFFF00);
 }
