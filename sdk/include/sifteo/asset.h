@@ -279,9 +279,6 @@ struct AssetLoader {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
             return false;
 
-        // Make sure the download actually started. If the system detected
-        // something was wrong, the cubeVec bit will not be set.
-        ASSERT((sys.cubeVec & cubes) == cubes);
         return true;
     }
 
