@@ -17,8 +17,7 @@
 extern "C" {
 
 #define MEMSET_BODY() {                                                 \
-    if (SvmMemory::mapRAM(dest,                                         \
-            SvmMemory::arraySize(sizeof *dest, count))) {               \
+    if (SvmMemory::mapRAM(dest, mulsat16x16(sizeof *dest, count))) {    \
         while (count) {                                                 \
             *(dest++) = value;                                          \
             count--;                                                    \
@@ -42,16 +41,14 @@ void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count)
 {
     // Currently implemented in terms of memcpy8. We may provide a
     // separate optimized implementation of this syscall in the future.   
-    _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src,
-        SvmMemory::arraySize(sizeof *dest, count));
+    _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
 }
 
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count)
 {
     // Currently implemented in terms of memcpy8. We may provide a
     // separate optimized implementation of this syscall in the future.   
-    _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src,
-        SvmMemory::arraySize(sizeof *dest, count));
+    _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
 }
 
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)

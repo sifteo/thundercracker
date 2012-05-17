@@ -22,7 +22,7 @@
 #include "macros.h"
 #include "flash_device.h"
 #include "flash_storage.h"
-#include "systime.h"
+#include "glfw.h"
 
 
 FlashStorage::FlashStorage()
@@ -119,7 +119,7 @@ void FlashStorage::initData()
     data->header.mc_sectorSize = FlashDevice::SECTOR_SIZE;
 
     // Create a unique ID for this storage file
-    data->header.uniqueID = (uint32_t)(rand() ^ rand() ^ SysTime::ticks());
+    data->header.uniqueID = rand() ^ rand() ^ uint32_t(glfwGetTime() * 1e6);
 }
 
 bool FlashStorage::checkData()
