@@ -11,7 +11,11 @@
 
 XmTrackerPattern *XmTrackerPattern::init(_SYSXMSong *pSong)
 {
-    ASSERT(pSong->nPatterns);
+    if (!pSong->nPatterns) {
+        ASSERT(pSong->nPatterns);
+        return 0;
+    }
+
     song = pSong;
 
     memset(&pattern, 0, sizeof(pattern));
@@ -21,15 +25,28 @@ XmTrackerPattern *XmTrackerPattern::init(_SYSXMSong *pSong)
 
 void XmTrackerPattern::loadPattern(uint16_t i)
 {
-    ASSERT(song);
-    ASSERT(i < song->nPatterns);
+    if (!song) {
+        LOG((LGPFX"Error: Can not load patterns without song "
+             "(did you call XmTrackerPattern::init()?)\n"));
+        ASSERT(song);
+        memset(&pattern, 0, sizeof(pattern));
+        return;
+    }
+    if (i >= song->nPatterns) {
+        ASSERT(i < song->nPatterns);
+        LOG((LGPFX"Error: Pattern %u is larger than song (%u patterns)\n",
+             i, song->nPatterns));
+        memset(&pattern, 0, sizeof(pattern));
+        return;
+    }
 
     SvmMemory::VirtAddr va = song->patterns + (i * sizeof(_SYSXMPattern));
     if (!SvmMemory::copyROData(pattern, va)) {
         // Fail in as many ways as possible!
-        LOG((LGPFX"Could not copy %p (length %lu)!\n",
+        LOG((LGPFX"Error: Could not copy %p (length %lu)!\n",
              (void *)va, (long unsigned)sizeof(_SYSXMPattern)));
         ASSERT(false);
+        memset(&pattern, 0, sizeof(pattern));
         return;
     }
 
@@ -39,27 +56,50 @@ void XmTrackerPattern::loadPattern(uint16_t i)
 
 void XmTrackerPattern::getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note)
 {
-    ASSERT(pattern.dataSize);
-    ASSERT(row < pattern.nRows);
-    ASSERT(channel < song->nChannels);
-
-    if (pattern.nRows == 0) {
-        // TODO
-        LOG(("emitting empty note\n"));
-        memset(&note, 0, sizeof(note));
+    if (!pattern.nRows) {
+        LOG((LGPFX"Error: No pattern loaded, can't load notes!\n"));
+        ASSERT(pattern.nRows);
+        resetNote(note);
+        return;
+    }
+    if (row >= pattern.nRows) {
+        LOG((LGPFX"Error: Row %u is larger than pattern (%u rows)\n",
+             row, pattern.nRows));
+        ASSERT(row < pattern.nRows);
+        resetNote(note);
+        return;
+    }
+    if (channel >= song->nChannels) {
+        LOG((LGPFX"Error: Channel %u is too large (song contains %u channels)\n",
+             channel, song->nChannels));
+        ASSERT(channel < song->nChannels);
+        resetNote(note);
+        return;
+    }
+    /* This is not an error condition, but can happen on an empty pattern.
+     * Indicated by 64 rows, but no pData/dataSize.
+     */
+    if (!pattern.dataSize || !pattern.pData) {
+        // TODO: test empty patterns
+        LOG((LGPFX"Notice: Emitting empty note\n"));
+        resetNote(note);
         return;
     }
 
     uint32_t noteIndex = row * song->nChannels + channel;
 
     if (noteIndex < noteOffset) {
-        // TODO: performance? how often does this happen?
-        LOG((LGPFX"had to seek(0) to get to note %u\n", row * song->nChannels + channel));
+        /* This happens on fxLoopPattern, but isn't terribly efficient.
+         * Composers should avoid if reasonable (Workaround: more patterns).
+         */
+        LOG((LGPFX"Notice: Had to seek(0) to get to note %u\n", row * song->nChannels + channel));
         offset = 0;
         noteOffset = 0;
     } else if (noteIndex > noteOffset) {
-        // TODO: this shouldn't happen often
-        LOG((LGPFX"reading past %u notes to get to target\n", row * song->nChannels + channel - noteOffset));
+        /* This happens on fxPatternBreak, but isn't very efficient.
+         * Composers should avoid if reasonable (Workaround: more patterns).
+         */
+        LOG((LGPFX"Notice: Reading past %u notes to get to target\n", row * song->nChannels + channel - noteOffset));
     }
 
     while(noteIndex >= noteOffset) nextNote(note);
@@ -76,12 +116,10 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     uint8_t noteData[6];
     SvmMemory::VirtAddr va = pattern.pData + offset;
     if(!SvmMemory::copyROData(ref, noteData, va, sizeof(noteData))) {
-        LOG((LGPFX"Could not copy %p (length %lu)!\n",
+        LOG((LGPFX"Error: Could not copy %p (length %lu)!\n",
                  (void *)va, (long unsigned)sizeof(noteData)));
         ASSERT(false);
-
-        // At worst, do no harm.
-        memset(&note, 0, sizeof(note));
+        resetNote(note);
         return;
     }
 
@@ -106,9 +144,6 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
         offset += 5;
     }
     noteOffset++;
-
-    // A little late, but make sure we're not being rude.
-    ASSERT(buf <= noteData + arraysize(noteData));
 
     // If the effect parameter is set but the effect was not, it was intended to be an arpeggio (effect 0)
     if (note.effectType == kNoEffect && note.effectParam != kNoParam) {
@@ -144,5 +179,8 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     /* Users of this API should be able to check if a note is real
      * with < kNoteOff (97), so ensure it is never 0.
      */
-    ASSERT(note.note > 0);
+    if (!note.note) {
+        ASSERT(note.note);
+        note.note = kNoNote;
+    }
 }

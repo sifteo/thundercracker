@@ -13,7 +13,8 @@ fs = Filesystem()
 System():setOptions{ turbo=true }
 
 TEST_VOL_TYPE = 0x8765
-
+BLOCK_SIZE = 128 * 1024
+DEVICE_SIZE = 16 * 1024 * 1024
 
 function volumeString(vol)
     -- Return a string representation of a volume
@@ -53,10 +54,8 @@ end
 
 function getFreeSpace()
     -- Estimate how much space is free in the filesystem, in bytes
-    local blockSize = 128 * 1024
-    local totalSize = 16 * 1024 * 1024
     local overhead = 1024
-    return totalSize - overhead - blockSize * countUsedBlocks()
+    return DEVICE_SIZE - overhead - BLOCK_SIZE * countUsedBlocks()
 end
 
 
@@ -70,6 +69,42 @@ function dumpFilesystem()
     end
 
     print(string.format("Free: %d bytes", getFreeSpace()))
+end
+
+
+function getMaxEraseCount()
+    local maxEC = 0
+    for index, ec in ipairs(fs:simulatedSectorEraseCounts()) do
+        maxEC = math.max(maxEC, ec)
+    end
+    return maxEC
+end
+
+
+function dumpEndurance()
+    local numBins = 40
+    local maxEC = getMaxEraseCount()
+    local binWidth = math.ceil(maxEC / numBins)
+    local histogram = {}
+    local maxCount = 0
+    local maxBin = 0    -- Due to quantization, may be less than numBins
+
+    for index, ec in ipairs(fs:simulatedSectorEraseCounts()) do
+        local bin = 1 + math.floor(ec / binWidth)
+        histogram[bin] = 1 + (histogram[bin] or 0)
+        maxCount = math.max(maxCount, histogram[bin])
+        maxBin = math.max(maxBin, bin)
+    end
+
+    print("------ Endurance Histogram ------")
+
+    for bin = 1, maxBin do
+        local count = histogram[bin] or 0
+        print(string.format("[EC < %4d] %4d blocks %s",
+            binWidth * bin, count,
+            string.rep("#", math.ceil(40 / maxCount * count))
+        ))
+    end
 end
 
 
@@ -101,7 +136,7 @@ function testFilesystem()
     local writeTotal = 0
 
     math.randomseed(1234)
-    for iteration = 1, 50 do
+    for iteration = 1, 100 do
 
         -- How big of a volume to create?
         local volSize = math.random(10 * 1024 * 1024)
@@ -112,14 +147,32 @@ function testFilesystem()
             local vol = candidates[math.random(table.maxn(candidates))]
 
             fs:deleteVolume(vol)
-            print(string.format("-- Deleted volume [%02x]", vol))
+            print(string.format("Deleted volume [%02x]", vol))
         end
 
         -- Create the volume
         local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
-        print(string.format("-- Created volume [%02x], %d bytes", vol, volSize))
+        print(string.format("Created volume [%02x], %d bytes", vol, volSize))
         writeTotal = writeTotal + volSize
     end
 
+    -- Check over the aftermath
+
     dumpFilesystem()
+    dumpEndurance()
+
+    -- Ensure that our wear levelling didn't fail too badly.
+
+    local idealEraseCount = writeTotal / DEVICE_SIZE
+    local maxEC = getMaxEraseCount()
+    local ratio = maxEC / idealEraseCount
+    local ratioLimit = 1.5
+
+    print("--        Ideal erase count: " .. idealEraseCount)
+    print("--  Actual peak erase count: " .. maxEC)
+    print("--   Ratio, actual to ideal: " .. ratio .. " (Max " .. ratioLimit .. ")")
+
+    if ratio > ratioLimit then
+        error("Wear levelling failed, peak erase count higher than allowed")
+    end
 end

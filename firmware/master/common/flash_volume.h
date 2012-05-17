@@ -75,7 +75,9 @@ public:
 class FlashVolumeIter
 {
 public:
-    FlashVolumeIter() {
+    /// Reset the iterator back to the beginning of the sequence
+    void begin() {
+        DEBUG_ONLY(initialized = true);
         remaining.mark();
     }
 
@@ -84,6 +86,7 @@ public:
 
 private:
     FlashMapBlock::Set remaining;
+    DEBUG_ONLY(bool initialized;)
 };
 
 

@@ -29,10 +29,16 @@ class FlashStorage {
     struct CubeRecord {
         uint8_t nvm[1024];                      // Nordic nonvolatile memory
         uint8_t ext[Cube::FlashModel::SIZE];    // External NOR flash
+
+        // Out-of-band endurance data
+        uint64_t eraseCounts[Cube::FlashModel::SIZE / Cube::FlashModel::SECTOR_SIZE];
     };
 
     struct MasterRecord {
         uint8_t bytes[FlashDevice::CAPACITY];
+
+        // Out-of-band endurance data
+        uint64_t eraseCounts[FlashDevice::CAPACITY / FlashDevice::SECTOR_SIZE];
     };
 
     struct HeaderRecord {
@@ -46,7 +52,9 @@ class FlashStorage {
                 uint32_t    cube_count;
                 uint32_t    cube_nvmSize;
                 uint32_t    cube_extSize;
+                uint32_t    cube_sectorSize;
                 uint32_t    mc_pageSize;
+                uint32_t    mc_sectorSize;
                 uint32_t    mc_capacity;
             };
         };

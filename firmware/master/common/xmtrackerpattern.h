@@ -21,7 +21,7 @@ struct XmTrackerNote {
 class XmTrackerPattern {
 public:
     XmTrackerPattern() : song(0) { memset(&pattern, 0, sizeof(pattern)); }
-    uint16_t nRows() { ASSERT(pattern.dataSize); return pattern.nRows; }
+    uint16_t nRows() { return pattern.nRows; }
     void releaseRef() { ref.release(); }
 
     XmTrackerPattern *init(_SYSXMSong *pSong);

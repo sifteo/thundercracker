@@ -5,6 +5,7 @@
 
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "crc.h"
 
 
 bool FlashVolume::isValid() const
@@ -29,6 +30,32 @@ bool FlashVolume::isValid() const
         return false;
     if (hdr->crcErase != hdr->calculateEraseCountCRC(block))
         return false;
+
+    /*
+     * Map assertions: These aren't necessary on release builds, we
+     * just want to check over some of our layout assumptions during
+     * testing on simulator builds.
+     */
+
+    DEBUG_ONLY({
+        const FlashMap* map = hdr->getMap();
+        unsigned mapEntries = hdr->numMapEntries();
+
+        // First map entry always describes the volume header
+        ASSERT(mapEntries >= 1);
+        ASSERT(map->blocks[0].code == block.code);
+
+        /*
+         * Header must have the lowest block index, otherwise FlashVolumeIter
+         * might find a non-header block first. (That would be a security
+         * and correctness bug, since data in the middle of a volume may be
+         * misinterpreted as a volume header!)
+         */
+        for (unsigned i = 1; i != mapEntries; ++i) {
+            FlashMapBlock b = map->blocks[i];
+            ASSERT(b.isValid() == false || map->blocks[i].code > block.code);
+        }
+    })
 
     return true;
 }
@@ -69,6 +96,9 @@ void FlashVolume::markAsDeleted() const
 bool FlashVolumeIter::next(FlashVolume &vol)
 {
     unsigned index;
+
+    ASSERT(initialized == true);
+
     while (remaining.clearFirst(index)) {
         FlashVolume v(FlashMapBlock::fromIndex(index));
 
@@ -115,6 +145,8 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
 
     FlashVolumeIter vi;
     FlashVolume vol;
+
+    vi.begin();
     while (vi.next(vol)) {
 
         FlashBlockRef ref;
@@ -288,50 +320,51 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes, unsigned hdr
     // Save the real type for later, it isn't written until commit()
     this->type = type;
 
-    // Find one block to use for the volume header
-    FlashBlockRecycler br;
-    FlashMapBlock hdrBlock;
-    FlashBlockRecycler::EraseCount hdrEC;
-    if (!br.next(hdrBlock, hdrEC))
-        return false;
-
-    // Erase it
-    hdrBlock.erase();
-    hdrEC++;
-
     /*
-     * Start building a FlashVolumeHeader in the cache.
-     *
-     * Initialize everything except the 'type' field.
-     * This includes setting up map entries for the header block.
+     * Start building a FlashVolumeHeader.
      */
 
-    FlashBlockRef hdrRef;
-    FlashVolumeHeader *hdr = FlashVolumeHeader::get(hdrRef, hdrBlock);
+    // Start an anonymous write. We'll decide on an address later.
+    FlashBlockWriter writer;
+    writer.beginBlock();
+    FlashVolumeHeader *hdr = FlashVolumeHeader::get(writer.ref);
 
+    // Initialize everything except the 'type' field.
     unsigned payloadBlocks = (payloadBytes + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
-    FlashBlockWriter hdrWriter(hdrRef);
-    ASSERT(hdrWriter.ref.isHeld());
     hdr->init(FlashVolume::T_INCOMPLETE, payloadBlocks, hdrDataBytes);
 
-    FlashMap *map = hdr->getMap();
-    map->blocks[0] = hdrBlock;
+    /*
+     * Get some temporary memory to store erase counts in.
+     *
+     * We know that the map and header fit in one block, but the erase
+     * counts have no guaranteed block-level alignment. To keep this simple,
+     * we'll store them as an aligned and packed array in anonymous RAM,
+     * which we'll later write into memory which may or may not overlap with
+     * the header block.
+     */
 
-    FlashBlockWriter ecWriter;
-    *ecWriter.getData<FlashBlockRecycler::EraseCount>
-        (hdr->eraseCountAddress(hdrBlock, 0)) = hdrEC;
+    const unsigned ecPerBlock = FlashBlock::BLOCK_SIZE / sizeof(FlashVolumeHeader::EraseCount);
+    const unsigned ecNumBlocks = FlashMap::NUM_MAP_BLOCKS / ecPerBlock;
+
+    FlashBlockRef ecBlocks[ecNumBlocks];
+    for (unsigned i = 0; i != ecNumBlocks; ++i)
+        FlashBlock::anonymous(ecBlocks[i]);
 
     /*
-     * Start filling both the map and the erase count array.
+     * Start filling both the map and the temporary erase count array.
      *
      * Note that we can fail to allocate a block at any point, but we
      * need to try our best to avoid losing any erase count data in the
-     * event of an allocation failure or power loss.
+     * event of an allocation failure or power loss. To preserve the
+     * erase count data, we follow through with allocating a volume
+     * of the T_INCOMPLETE type.
      */
 
     bool success = true;
+    FlashMap *map = hdr->getMap();
+    FlashBlockRecycler br;
 
-    for (unsigned I = 1, E = hdr->numMapEntries(); I < E; ++I) {
+    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
         FlashMapBlock block;
         FlashBlockRecycler::EraseCount ec;
 
@@ -343,36 +376,72 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes, unsigned hdr
         block.erase();
         ec++;
 
-        map->blocks[I] = block;
-        *ecWriter.getData<FlashBlockRecycler::EraseCount>
-            (hdr->eraseCountAddress(hdrBlock, I)) = ec;
+        /*
+         * We must ensure that the first block has the lowest block index,
+         * otherwise FlashVolumeIter might find a non-header block first.
+         * (That would be a security and correctness bug, since data in the
+         * middle of a volume may be misinterpreted as a volume header!)
+         */
+
+        uint32_t *ecHeader = reinterpret_cast<uint32_t*>(ecBlocks[0]->getData());
+        uint32_t *ecThis = reinterpret_cast<uint32_t*>(ecBlocks[I / ecPerBlock]->getData()) + (I % ecPerBlock);
+
+        if (I && block.index() < map->blocks[0].index()) {
+            // New lowest block index, swap.
+
+            map->blocks[I] = map->blocks[0];
+            map->blocks[0] = block;
+
+            *ecThis = *ecHeader;
+            *ecHeader = ec;
+
+        } else {
+            // Normal append
+
+            map->blocks[I] = block;
+            *ecThis = ec;
+        }
     }
-
-    /*
-     * Regardless of whether we were successful or not, write a valid
-     * set of CRCs to the header. Even if this volume remains incomplete,
-     * we use these to validate the header when using it to recycle blocks.
-     *
-     * Note: We have a litle extra error checking for FlashBlockWriter here.
-     * It is common for ecWriter and hdrWriter to actually both be referencing
-     * the same block, so we can test that edge case here.
-     */
-
-    hdr->crcMap = hdr->calculateMapCRC();
-    hdr->crcErase = hdr->calculateEraseCountCRC(hdrBlock);
-
-    ASSERT(hdrWriter.ref.isHeld());
-    ecWriter.commitBlock();
-    ASSERT(hdrWriter.ref.isHeld());
-    hdrWriter.commitBlock();
-    ASSERT(!hdrWriter.ref.isHeld());
 
     /*
      * Initialize object members
      */
 
     payloadOffset = 0;
-    volume = hdrBlock;
+    volume = map->blocks[0];
+
+    /*
+     * Now that we know the correct block order, we can finalize the header.
+     *
+     * We need to write a correct header with good CRCs, map, and erase counts
+     * even if the overall begin() operation is not successful. Also note that
+     * the erase counts may or may not overlap with the header block. We use
+     * FlashBlockWriter to manage this complexity.
+     */
+
+    // Assign a real address to the header
+    writer.relocate(volume.block.address());
+
+    hdr->crcMap = hdr->calculateMapCRC();
+
+    // Calculate erase count CRC from our anonymous memory array
+    Crc32::reset();
+    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
+        Crc32::add(*reinterpret_cast<uint32_t*>(ecBlocks[I / ecPerBlock]->getData()) + (I % ecPerBlock));
+    }
+    hdr->crcErase = Crc32::get();
+
+    // Now start writing erase counts, which may be in different blocks.
+    // Note that this implicitly releases the reference we hold to "hdr".
+
+    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
+        FlashBlockRecycler::EraseCount ec;
+        ec = *reinterpret_cast<uint32_t*>(ecBlocks[I / ecPerBlock]->getData()) + (I % ecPerBlock);
+        *writer.getData<FlashBlockRecycler::EraseCount>(hdr->eraseCountAddress(volume.block, I)) = ec;
+    }
+
+    // Finish writing
+    writer.commitBlock();
     ASSERT(volume.isValid());
 
     return success;
