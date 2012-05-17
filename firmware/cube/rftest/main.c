@@ -41,10 +41,10 @@ static void radio_init()
     spi_byte(0x07);
     spi_end();
 
-    /* 2 Mbit, max transmit power, continuous wave mode */
+    /* 2 Mbit, max transmit power, continuous wave mode, pll lock */
     spi_begin();
     spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_SETUP);
-    spi_byte(0x8e);
+    spi_byte(0x9e);
     spi_end();
 
     /* Power up, PTX mode */
