@@ -60,6 +60,7 @@ static const char* faultStr(FaultCode code)
     case F_SCRIPT_EXCEPTION:    return "Exception during script execution";
     case F_BAD_VOLUME_HANDLE:   return "Bad filesystem volume handle";
     case F_BAD_ELF_HEADER:      return "Bad ELF binary header";
+    case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
     default:                    return "unknown error";
     }
 }

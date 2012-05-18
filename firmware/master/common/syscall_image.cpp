@@ -16,12 +16,19 @@
 extern "C" {
 
 
-void _SYS_image_memDraw(uint16_t *dest, const _SYSAssetImage *im,
-    unsigned dest_stride, unsigned frame)
+void _SYS_image_memDraw(uint16_t *dest, _SYSCubeID destCID,
+    const _SYSAssetImage *im, unsigned dest_stride, unsigned frame)
 {
     ImageDecoder decoder;
-    if (!decoder.init(im))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    if (destCID == _SYS_CUBE_ID_INVALID) {
+        // Relocation disabled
+        if (!decoder.init(im))
+            return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
+    } else {
+        // Relocate to a specific cube (validated by decoder.init)
+        if (!decoder.init(im, destCID))
+            return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
+    }
 
     ImageIter iter(decoder, frame);
 
@@ -31,8 +38,8 @@ void _SYS_image_memDraw(uint16_t *dest, const _SYSAssetImage *im,
     iter.copyToMem(dest, dest_stride);
 }
 
-void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im,
-    unsigned dest_stride, unsigned frame,
+void _SYS_image_memDrawRect(uint16_t *dest, _SYSCubeID destCID,
+    const _SYSAssetImage *im, unsigned dest_stride, unsigned frame,
     struct _SYSInt2 *srcXY, struct _SYSInt2 *size)
 {
     struct _SYSInt2 lSrcXY, lSize;
@@ -42,8 +49,15 @@ void _SYS_image_memDrawRect(uint16_t *dest, const _SYSAssetImage *im,
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
 
     ImageDecoder decoder;
-    if (!decoder.init(im))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    if (destCID == _SYS_CUBE_ID_INVALID) {
+        // Relocation disabled
+        if (!decoder.init(im))
+            return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
+    } else {
+        // Relocate to a specific cube (validated by decoder.init)
+        if (!decoder.init(im, destCID))
+            return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
+    }
 
     ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
 
@@ -61,7 +75,7 @@ void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame);
     iter.copyToVRAM(vbuf->vbuf, addr, _SYS_VRAM_BG0_WIDTH);
@@ -82,7 +96,7 @@ void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
     iter.copyToVRAM(vbuf->vbuf, addr, _SYS_VRAM_BG0_WIDTH);
@@ -100,7 +114,7 @@ void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame);
     iter.copyToBG1(vbuf->vbuf, lDestXY.x, lDestXY.y);
@@ -123,7 +137,7 @@ void _SYS_image_BG1DrawRect(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
     iter.copyToBG1(vbuf->vbuf, lDestXY.x, lDestXY.y);
@@ -137,7 +151,7 @@ void _SYS_image_BG1MaskedDraw(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame);
     iter.copyToBG1Masked(vbuf->vbuf, key);
@@ -158,7 +172,7 @@ void _SYS_image_BG1MaskedDrawRect(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
     iter.copyToBG1Masked(vbuf->vbuf, key);
@@ -172,7 +186,7 @@ void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame);
     iter.copyToVRAM(vbuf->vbuf, addr, _SYS_VRAM_BG2_WIDTH);
@@ -193,7 +207,7 @@ void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf,
 
     ImageDecoder decoder;
     if (!decoder.init(im, vbuf->cube))
-        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return SvmRuntime::fault(F_BAD_ASSET_IMAGE);
 
     ImageIter iter(decoder, frame, lSrcXY.x, lSrcXY.y, lSize.x, lSize.y);
     iter.copyToVRAM(vbuf->vbuf, addr, _SYS_VRAM_BG2_WIDTH);

@@ -309,7 +309,7 @@ struct TileBuffer {
         ASSERT(pos.x < tileWidth() && pos.x + image.tileWidth() <= tileWidth() &&
                pos.y < tileHeight() && pos.y + image.tileHeight() <= tileHeight() &&
                destFrame < numFrames());
-        _SYS_image_memDraw(&tiles[tileAddr(pos, destFrame)], image, tileWidth(), srcFrame);
+        _SYS_image_memDraw(&tiles[tileAddr(pos, destFrame)], sys.cube, image, tileWidth(), srcFrame);
     }
 
     /**
@@ -325,7 +325,7 @@ struct TileBuffer {
         ASSERT(destXY.x < tileWidth() && destXY.x + size.x <= tileWidth() &&
                destXY.y < tileHeight() && destXY.y + size.y <= tileHeight() &&
                destFrame < numFrames());
-        _SYS_image_memDrawRect(&tiles[tileAddr(destXY, destFrame)],
+        _SYS_image_memDrawRect(&tiles[tileAddr(destXY, destFrame)], sys.cube,
             image, tileWidth(), srcFrame, (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 
@@ -347,7 +347,7 @@ struct TileBuffer {
             } else {
                 ASSERT(font.tileWidth() + (font.tileHeight() - 1) * tileWidth() + addr
                     <= numTiles() + tiles);
-                _SYS_image_memDraw(addr, font, tileWidth(), c - firstChar);
+                _SYS_image_memDraw(addr, sys.cube, font, tileWidth(), c - firstChar);
                 addr += font.tileWidth();
             }
             str++;
