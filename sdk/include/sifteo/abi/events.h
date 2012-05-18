@@ -37,6 +37,7 @@ typedef enum {
     _SYS_CUBE_TILT,
     _SYS_CUBE_SHAKE,
     _SYS_CUBE_ACCELCHANGE,
+    _SYS_BASE_TRACKER,
 
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;
@@ -50,6 +51,7 @@ typedef enum {
                                   (0x80000000 >> _SYS_CUBE_TOUCH) |\
                                   (0x80000000 >> _SYS_CUBE_TILT) |\
                                   (0x80000000 >> _SYS_CUBE_SHAKE) )
+#define _SYS_BASE_EVENTS      ( (0x80000000 >> _SYS_BASE_TRACKER) )
 
 
 #ifdef __cplusplus

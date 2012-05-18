@@ -15,15 +15,15 @@ namespace Sifteo {
 
 
 /**
- * Implementation for a single per-cube event vector.
+ * Implementation for a single event vector.
  *
  * Instances of this template are found in the Events namespace.
  * Typically you should not create instances of this object elsewhere.
  */
 
 template <_SYSVectorID tID>
-struct CubeEventVector {
-    CubeEventVector() {}
+struct EventVector {
+    EventVector() {}
 
     /**
      * Disable this event vector. This acts like a no-op handler was
@@ -38,7 +38,11 @@ struct CubeEventVector {
      * Set this event vector, given a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
-     *   void handler(ContextType c, unsigned cubeID);
+     *   void handler(ContextType c, unsigned parameter);
+     *
+     * For Cube events, the parameter is the Cube ID that originated the
+     * event. For Base events, the parameter has different meanings based
+     * on the event type.
      */
     template <typename tContext>
     void set(void (*handler)(tContext, unsigned), tContext context) const {
@@ -49,7 +53,11 @@ struct CubeEventVector {
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
-     *   void handler(void*, unsigned cubeID);
+     *   void handler(void*, unsigned parameter);
+     *
+     * For Cube events, the parameter is the Cube ID that originated the
+     * event. For Base events, the parameter has different meanings based
+     * on the event type.
      */
     void set(void (*handler)(void*, unsigned)) const {
         _SYS_setVector(tID, (void*) handler, 0);
@@ -183,13 +191,15 @@ namespace Events {
     static const NeighborEventVector<_SYS_NEIGHBOR_REMOVE>  neighborRemove;
 
     // Cube events
-    static const CubeEventVector<_SYS_CUBE_FOUND>       cubeFound;
-    static const CubeEventVector<_SYS_CUBE_LOST>        cubeLost;
-    static const CubeEventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
-    static const CubeEventVector<_SYS_CUBE_ACCELCHANGE> cubeAccelChange;
-    static const CubeEventVector<_SYS_CUBE_TOUCH>       cubeTouch;
-    static const CubeEventVector<_SYS_CUBE_TILT>        cubeTilt;
-    static const CubeEventVector<_SYS_CUBE_SHAKE>       cubeShake;
+    static const EventVector<_SYS_CUBE_FOUND>       cubeFound;
+    static const EventVector<_SYS_CUBE_LOST>        cubeLost;
+    static const EventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
+    static const EventVector<_SYS_CUBE_ACCELCHANGE> cubeAccelChange;
+    static const EventVector<_SYS_CUBE_TOUCH>       cubeTouch;
+    static const EventVector<_SYS_CUBE_TILT>        cubeTilt;
+    static const EventVector<_SYS_CUBE_SHAKE>       cubeShake;
 
+    // Base events
+    static const EventVector<_SYS_BASE_TRACKER>     baseTracker;
 };  // namespace Events
 };  // namespace Sifteo
