@@ -19,7 +19,7 @@ void checkTestVolumes()
 void checkSelf()
 {
     _SYSVolumeHandle volumes[64];
-    unsigned numVolumes = _SYS_fs_listVolumes(_SYS_FS_VOL_ELF, volumes, arraysize(volumes));
+    unsigned numVolumes = _SYS_fs_listVolumes(_SYS_FS_VOL_GAME, volumes, arraysize(volumes));
 
     for (unsigned i = 0; i < numVolumes; ++i) {
         _SYSVolumeHandle vol = volumes[i];
