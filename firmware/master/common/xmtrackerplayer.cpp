@@ -7,6 +7,7 @@
 #include "audiomixer.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include "event.h"
 
 // mingw appears to not get this quite right...
 #ifndef UINT16_MAX
@@ -553,8 +554,9 @@ bool XmTrackerPlayer::processTremor(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 {
-    const uint8_t param = channel.note.effectParam;
-    switch (channel.note.effectType) {
+    uint8_t &type = channel.note.effectType;
+    uint8_t &param = channel.note.effectParam;
+    switch (type) {
         case fxArpeggio: {
             processArpeggio(channel);
             break;
@@ -635,7 +637,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxPositionJump: {
             // Only useful at the start of a note
             ASSERT_BREAK(!ticks);
-            channel.note.effectType = XmTrackerPattern::kNoEffect;
+            type = XmTrackerPattern::kNoEffect;
 
             processPatternBreak(param, 0);
             break;
@@ -647,7 +649,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxPatternBreak: {
             // Only useful at the start of a note
             ASSERT_BREAK(!ticks);
-            channel.note.effectType = XmTrackerPattern::kNoEffect;
+            type = XmTrackerPattern::kNoEffect;
 
             // Seriously, the spec says the higher order nibble is * 10, not * 16.
             processPatternBreak(-1, (param & 0xF) + (param >> 4) * 10);
@@ -656,7 +658,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
         case fxSetTempoAndBPM: {
             // Only useful at the start of a note
             ASSERT_BREAK(!ticks);
-            channel.note.effectType = XmTrackerPattern::kNoEffect;
+            type = XmTrackerPattern::kNoEffect;
 
             if (!param) {
                 stop();
@@ -677,7 +679,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSetEnvelopePos: {
-            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, type));
             if (!ticks) {
                 if (param >= channel.instrument.nVolumeEnvelopePoints) {
                     LOG((LGPFX"Warning: Position %u is out of bounds "
@@ -701,7 +703,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             if (ticks) break;
             if (param & 0xF0) channel.tremor.on = (param & 0xF0) >> 4;
             if (param & 0x0F) channel.tremor.off = param & 0x0F;
-            LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, channel.note.effectType));
+            LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, type));
             break;
         }
         case fxExtraFinePorta: {
@@ -724,17 +726,17 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxGlissControl: {
-                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     break;
                 }
                 case fxVibratoControl: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     channel.vibrato.type = nparam;
                     break;
                 }
                 case fxFinetune: {
-                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     if (param & 0x8) {
                         // Signed nibble
                         channel.instrument.finetune -= 16 * ((~nparam & 0x0F) + 1);
@@ -745,7 +747,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 }
                 case fxLoopPattern: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     ASSERT_BREAK(!next.force);
 
                     if (!nparam) {
@@ -763,18 +765,18 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxTremoloControl: {
-                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     break;
                 }
                 case fxRetrigNote: {
-                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, param));
+                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
                     processRetrigger(channel, nparam);
                     break;
                 }
                 case fxFineVolumeSlideUp: {
                     // Only useful at the start of a note
                     ASSERT_BREAK(!ticks);
-                    channel.note.effectType = XmTrackerPattern::kNoEffect;
+                    type = XmTrackerPattern::kNoEffect;
 
                     // Save parameter for later use, shared with fxFineVolumeSlideDown.
                     if (nparam) channel.fineSlideUp = nparam;
@@ -784,7 +786,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 case fxFineVolumeSlideDown: {
                     // Only useful at the start of a note
                     ASSERT_BREAK(!ticks);
-                    channel.note.effectType = XmTrackerPattern::kNoEffect;
+                    type = XmTrackerPattern::kNoEffect;
 
                     // Save parameter for later use, shared with fxFineVolumeSlideUp.
                     if (nparam) channel.fineSlideDown = nparam;
@@ -803,15 +805,22 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     delay = nparam;
                     break;
                 }
+                default: {
+                    Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+                    type = XmTrackerPattern::kNoEffect;
+                    break;
+                }
             }
             break;
         }
-        default:
-            LOG(("%s:%d: NOT_REACHED: fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, channel.note.effectType, channel.note.effectParam));
-            ASSERT(false);
+        default: {
+            Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+            type = XmTrackerPattern::kNoEffect;
             break;
-        case XmTrackerPattern::kNoEffect:
+        }
+        case XmTrackerPattern::kNoEffect: {
             break;
+        }
     }
 }
 
