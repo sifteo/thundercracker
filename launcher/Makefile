@@ -1,8 +1,5 @@
 APP = launcher
 
-# Always build a release binary for inclusion in the emulator
-RELEASE := 1
-
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = main.o
