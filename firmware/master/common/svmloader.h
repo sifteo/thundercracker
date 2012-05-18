@@ -32,9 +32,13 @@ public:
     // During program execution, load a new program
     static void exec(FlashVolume vol, RunLevel level = RUNLEVEL_EXEC);
 
-    // Map a full volume in the secondary flash segment.
-    // Returns a span, whose map point is valid until the next secondaryMap().
+    /**
+     * Map a full volume in the secondary flash segment.
+     * Returns a span, whose map point is valid until the next secondaryMap()
+     * or secondaryUnmap() operation.
+     */
     static FlashMapSpan secondaryMap(FlashVolume vol);
+    static void secondaryUnmap();
 
 private:
     static FlashBlockRef mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];

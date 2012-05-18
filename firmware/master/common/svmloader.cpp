@@ -55,7 +55,7 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     // Initialize memory and CPU
     SvmMemory::erase();
     SvmCpu::init();
-    mapRefs[1].release();
+    secondaryUnmap();
 
     // Load RWDATA into RAM
     loadRWData(program);
@@ -118,6 +118,12 @@ FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)
     FlashMapSpan span = vol.getPayload(mapRefs[1]);
     SvmMemory::setFlashSegment(1, span);
     return span;
+}
+
+void SvmLoader::secondaryUnmap()
+{
+    SvmMemory::setFlashSegment(1, FlashMapSpan::empty());
+    mapRefs[1].release();
 }
 
 void SvmLoader::exit(bool fault)
