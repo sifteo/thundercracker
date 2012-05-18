@@ -82,6 +82,16 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
 void XmTrackerPlayer::stop()
 {
+    if (isPlaying()) {
+        ASSERT(song.nChannels);
+        
+        AudioMixer &mixer = AudioMixer::instance;
+
+        for (unsigned i = 0; i < song.nChannels; i++)
+            if (mixer.isPlaying(CHANNEL_FOR(i)))
+                mixer.stop(CHANNEL_FOR(i));
+    }
+
     song.nPatterns = 0;
     AudioMixer::instance.setTrackerCallbackInterval(0);
 }
