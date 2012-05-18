@@ -56,6 +56,45 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags)
     FLASHLAYER_STATS_ONLY(dumpStats());
 }
 
+void FlashBlock::anonymous(FlashBlockRef &ref)
+{
+    /*
+     * Get a new anonymous block. This block starts out with an invalid address,
+     * and a single ref (owned by the caller).
+     *
+     * The initial data contents of the block are undefined. It may contain
+     * sensitive information, for example, that should not be allowed to leak
+     * to userspace.
+     *
+     * The block may be used as-is in order to borrow memory from the cache
+     * temporarily, or it may be written to a physical location using
+     * FlashBlockWriter::commitBlock(). The latter use case supports using
+     * the cache as a place to prepare pages for later writing, even when
+     * the write address is not known ahead-of-time.
+     */
+
+    FlashBlock *recycled = recycleBlock();
+    ASSERT(recycled->refCount == 0);
+    ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
+
+    // This ensures nobody else will ref the same block.
+    recycled->address = INVALID_ADDRESS;
+    recycled->validCodeBytes = 0;
+
+    ref.set(recycled);
+    ASSERT(recycled->refCount == 1);
+}
+
+void FlashBlock::anonymous(FlashBlockRef &ref, uint8_t fillByte)
+{
+    /*
+     * Get a new anonymous block, and fill it with "fillByte"
+     */
+
+    anonymous(ref);
+    memset(ref->getData(), fillByte, BLOCK_SIZE);
+}
+
 FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
 {
     // Any slot in the cache may have a valid block, even if
@@ -174,26 +213,15 @@ void FlashBlockWriter::beginBlock(const FlashBlockRef &r)
     ref->validCodeBytes = 0;
 }
 
-void FlashBlockWriter::commitBlock()
+void FlashBlockWriter::beginBlock()
 {
     /*
-     * Write a modified flash block back to the device.
+     * Begin a new anonymous block. A specific address must be specified
+     * via relocate().
      */
 
-    if (ref.isHeld()) {
-        FlashBlock *block = &*ref;
-
-        // Must not have tried to run code from this block during a write.
-        ASSERT(ref->validCodeBytes == 0);
-
-        FlashDevice::write(block->address, block->getData(),
-            FlashBlock::BLOCK_SIZE);
-
-        // Make sure we are only programming bits from 1 to 0.
-        DEBUG_ONLY(block->verify());
-
-        ref.release();
-    }
+    commitBlock();
+    FlashBlock::anonymous(ref, 0xFF);
 }
 
 void FlashBlock::invalidate()
@@ -210,10 +238,78 @@ void FlashBlock::invalidate()
     for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
         FlashBlock *block = &instances[idx];
 
-        if (block->refCount)
-            block->load(block->address);
-        else
-            block->address = INVALID_ADDRESS;
+        if (block->address != INVALID_ADDRESS) {
+            if (block->refCount)
+                block->load(block->address);
+            else
+                block->address = INVALID_ADDRESS;
+        }
+    }
+}
+
+void FlashBlockWriter::commitBlock()
+{
+    /*
+     * Write a modified flash block back to the device.
+     */
+
+    if (ref.isHeld()) {
+        FlashBlock *block = &*ref;
+
+        // Must not have tried to run code from this block during a write.
+        ASSERT(ref->validCodeBytes == 0);
+
+        // Must not be anonymous
+        ASSERT(block->address != FlashBlock::INVALID_ADDRESS);
+
+        FlashDevice::write(block->address, block->getData(),
+            FlashBlock::BLOCK_SIZE);
+
+        // Make sure we are only programming bits from 1 to 0.
+        DEBUG_ONLY(block->verify());
+
+        ref.release();
+    }
+}
+
+void FlashBlockWriter::relocate(uint32_t blockAddr)
+{
+    /*
+     * Write this flash block to a new address in the next commitBlock().
+     *
+     * If the block was anonymous, this has the effect of committing it to
+     * a physical address. If the block already had a physical address,
+     * this copies it to an additional location. In either case, the block's
+     * "address" will change to match the new blockAddr.
+     *
+     * You must be the sole owner of this FlashBlock, and no references
+     * may be held to the destination block. (This provision is required
+     * in order to avoid having two FlashBlockRef holders use different
+     * RAM addresses for the same flash address. It would break cache
+     * coherency.)
+     */
+
+    ASSERT((blockAddr & FlashBlock::BLOCK_MASK) == 0);
+
+    // Unlike commitBlock(), we must have exactly one reference. Always.
+    ASSERT(ref.isHeld());
+    FlashBlock *block = &*ref;
+    ASSERT(block->refCount == 1);
+
+    // Same as commitBlock() if we aren't moving.
+    if (block->address != blockAddr) {
+
+        // Invalidate any blocks we're replacing. They must be unref'ed.
+        for (unsigned idx = 0; idx < FlashBlock::NUM_CACHE_BLOCKS; idx++) {
+            FlashBlock *b = &FlashBlock::instances[idx];
+            if (b->address == blockAddr) {
+                ASSERT(b->refCount == 0);
+                b->address = FlashBlock::INVALID_ADDRESS;
+            }
+        }
+
+        // Replace this block's address in the cache.
+        block->address = blockAddr;
     }
 }
 

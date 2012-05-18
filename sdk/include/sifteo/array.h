@@ -41,6 +41,11 @@ public:
         return numItems;
     }
 
+    void setCount(unsigned c) {
+        ASSERT(c <= _capacity);
+        numItems = c;
+    }
+
     bool empty() const {
         return count() == 0;
     }

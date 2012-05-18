@@ -8,22 +8,40 @@
 
 #include "macros.h"
 #include "elfprogram.h"
+#include "flash_map.h"
+#include "flash_volume.h"
+#include "svmmemory.h"
+#include "svmruntime.h"
 
 
 class SvmLoader {
 public:
+    enum RunLevel {
+        RUNLEVEL_LAUNCHER,
+        RUNLEVEL_EXEC,
+    };
+
     SvmLoader();  // Do not implement
 
-    static void run(const Elf::Program &program);
-    static void run(int id);
+    // Run the launcher program. Does not return.
+    static void runLauncher();
+
+    // Exit the current program. 
     static void exit(bool fault=false);
 
-private:
-    static _SYSCubeIDVector getCubeVector(const Elf::Program &program);
-    static void bootstrap(const Elf::Program &program);
-    static void bootstrapAssets(const Elf::Program &program, _SYSCubeIDVector cubes);
+    // During program execution, load a new program
+    static void exec(FlashVolume vol, RunLevel level = RUNLEVEL_EXEC);
 
-    static void logTitleInfo(const Elf::Program &program);
+    // Map a full volume in the secondary flash segment.
+    // Returns a span, whose map point is valid until the next secondaryMap().
+    static FlashMapSpan secondaryMap(FlashVolume vol);
+
+private:
+    static FlashBlockRef mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
+    static uint8_t runLevel;
+
+    static FlashVolume findLauncher();
+    static void prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);
     static void loadRWData(const Elf::Program &program);
 };
 

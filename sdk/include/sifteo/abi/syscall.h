@@ -195,8 +195,8 @@ void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned wi
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(35);
 
 // Asset images
-void _SYS_image_memDraw(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
-void _SYS_image_memDrawRect(uint16_t *dest, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
+void _SYS_image_memDraw(uint16_t *dest, _SYSCubeID destCID, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(137);
+void _SYS_image_memDrawRect(uint16_t *dest, _SYSCubeID destCID, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(138);
 void _SYS_image_BG0Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(139);
 void _SYS_image_BG0DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(140);
 void _SYS_image_BG1Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, struct _SYSInt2 *destXY, unsigned frame) _SC(141);
@@ -205,6 +205,12 @@ void _SYS_image_BG1MaskedDraw(struct _SYSAttachedVideoBuffer *vbuf, const struct
 void _SYS_image_BG1MaskedDrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t key, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(147);
 void _SYS_image_BG2Draw(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame) _SC(143);
 void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _SYSAssetImage *im, uint16_t addr, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(144);
+
+// Filesystem
+uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32_t maxResults) _SC(150);
+void _SYS_elf_exec(_SYSVolumeHandle vol) _SC(151);
+uint32_t _SYS_elf_map(_SYSVolumeHandle vol) _SC(152);
+void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, unsigned *actualSize) _SC(153);
 
 
 #ifdef __cplusplus

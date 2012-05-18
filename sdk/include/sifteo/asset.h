@@ -142,10 +142,11 @@ struct AssetGroup {
  */
 
 class AssetSlot {
-    _SYSAssetSlot sys;
-    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
-
 public:
+    _SYSAssetSlot sys;
+
+    /// Explicit conversion from a system object
+    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
 
     /// Copy constructor
     AssetSlot(const AssetSlot &other) : sys(other.sys) {}
@@ -279,9 +280,6 @@ struct AssetLoader {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
             return false;
 
-        // Make sure the download actually started. If the system detected
-        // something was wrong, the cubeVec bit will not be set.
-        ASSERT((sys.cubeVec & cubes) == cubes);
         return true;
     }
 

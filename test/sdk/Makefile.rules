@@ -7,7 +7,7 @@ all: tests.stamp
 
 tests.stamp: $(BIN) $(TEST_DEPS)
 	@echo "\n================= Running SDK Test:" $(APP) "\n"
-	siftulator $(SIFTULATOR_FLAGS) $(BIN)
+	siftulator $(SIFTULATOR_FLAGS) -l $(BIN)
 	echo > $@
 
 .PHONY: all

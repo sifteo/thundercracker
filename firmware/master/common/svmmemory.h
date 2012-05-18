@@ -69,20 +69,6 @@ public:
     }
     
     /**
-     * Overflow-safe array size calculation. Saturates instead of overflowing.
-     */
-    static inline uint32_t arraySize(uint32_t itemSize, uint32_t count)
-    {
-        // In 16x16-bit multiply, 32-bit overflow cannot occur.
-        STATIC_ASSERT(RAM_SIZE_IN_BYTES <= 0x10000);
-
-        if (itemSize < RAM_SIZE_IN_BYTES && count < RAM_SIZE_IN_BYTES)
-            return itemSize * count;
-        else
-            return 0xFFFFFFFFU;
-    }
-    
-    /**
      * Read-only data memory validator. Handles RAM or Flash addresses.
      *
      * Even if the entire region is valid, it is not guaranteed to all be

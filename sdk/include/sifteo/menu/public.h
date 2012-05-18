@@ -34,7 +34,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
 
     // calculate the number of items
     uint8_t i = 0;
-    while(items[i].icon != NULL) {
+    while (items[i].icon != NULL) {
         if (kIconTileWidth == 0) {
             kIconTileWidth = items[i].icon->tileWidth();
             kIconTileHeight = items[i].icon->tileHeight();
@@ -67,7 +67,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
 
     // calculate the number of tips
     i = 0;
-    while(assets->tips[i] != NULL) {
+    while (assets->tips[i] != NULL) {
         ASSERT(assets->tips[i]->tileWidth() == kNumVisibleTilesX);
         if (kFooterHeight == 0) {
             kFooterHeight = assets->tips[i]->tileHeight();
@@ -99,7 +99,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
         }
     }
 
-	prev_ut = 0;
+    prev_ut = 0;
 
     setIconYOffset(kDefaultIconYOffset);
     setPeekTiles(kDefaultPeekTiles);
@@ -135,7 +135,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     accel = kAccelScalingFactor * vid.virtualAccel().xy();
 
     // state changes
-    switch(currentState) {
+    switch (currentState) {
         case MENU_STATE_START:
             transFromStart();
             break;
@@ -157,7 +157,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     }
 
     // run loop
-    switch(currentState) {
+    switch (currentState) {
         case MENU_STATE_START:
             stateStart();
             break;
@@ -210,7 +210,7 @@ inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon)
     ASSERT(item < numItems);
     items[item].icon = icon;
 
-    for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
+    for (int i = prev_ut; i < prev_ut + kNumTilesX; i++)
         if (itemVisibleAtCol(item, i))
             drawColumn(i);
 }
@@ -219,7 +219,7 @@ inline bool Menu::itemVisible(uint8_t item)
 {
     ASSERT(item >= 0 && item < numItems);
 
-    for(int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
+    for (int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
         if (itemVisibleAtCol(item, i)) return true;
     }
     return false;

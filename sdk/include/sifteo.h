@@ -15,6 +15,7 @@
 #include <sifteo/audio.h>
 #include <sifteo/cube.h>
 #include <sifteo/event.h>
+#include <sifteo/filesystem.h>
 #include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>

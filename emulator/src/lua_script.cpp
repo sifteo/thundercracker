@@ -11,6 +11,7 @@
 #include "lodepng.h"
 #include "color.h"
 #include "svmmemory.h"
+#include "cubeslots.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 
@@ -28,6 +29,7 @@ Lunar<LuaSystem>::RegType LuaSystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaSystem, exit),
     LUNAR_DECLARE_METHOD(LuaSystem, setOptions),
     LUNAR_DECLARE_METHOD(LuaSystem, setTraceMode),
+    LUNAR_DECLARE_METHOD(LuaSystem, setAssetLoaderBypass),
     LUNAR_DECLARE_METHOD(LuaSystem, vclock),
     LUNAR_DECLARE_METHOD(LuaSystem, vsleep),
     LUNAR_DECLARE_METHOD(LuaSystem, sleep),
@@ -80,6 +82,7 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeType),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeMap),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeEraseCounts),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedSectorEraseCounts),
     {0,0}
 };
 
@@ -237,6 +240,12 @@ int LuaSystem::setOptions(lua_State *L)
 int LuaSystem::setTraceMode(lua_State *L)
 {
     sys->tracer.setEnabled(lua_toboolean(L, 1));
+    return 0;
+}
+
+int LuaSystem::setAssetLoaderBypass(lua_State *L)
+{
+    CubeSlots::simAssetLoaderBypass = lua_toboolean(L, 1);
     return 0;
 }
 
@@ -641,12 +650,13 @@ int LuaFilesystem::listVolumes(lua_State *L)
     FlashVolume vol;
     unsigned index = 0;
 
+    vi.begin();
     while (vi.next(vol)) {
         lua_pushnumber(L, ++index);
         lua_pushnumber(L, vol.block.code);
         lua_settable(L, -3);
     }
-    
+
     return 1;
 }
 
@@ -738,6 +748,26 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
     for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
         lua_pushnumber(L, I + 1);
         lua_pushnumber(L, hdr->getEraseCount(eraseRef, vol.block, I));
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaFilesystem::simulatedSectorEraseCounts(lua_State *L)
+{
+    /*
+     * No parameters. Returns a table of simulated erase counts for the
+     * master flash memory, one per sector.
+     */
+
+    FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
+
+    lua_newtable(L);
+
+    for (unsigned i = 0; i != arraysize(storage.eraseCounts); ++i) {
+        lua_pushnumber(L, i + 1);
+        lua_pushnumber(L, storage.eraseCounts[i]);
         lua_settable(L, -3);
     }
 

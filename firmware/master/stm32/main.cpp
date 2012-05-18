@@ -83,14 +83,16 @@ int main()
     SysTime::Ticks start = SysTime::ticks();
 
     /*
-     * NOTE: the radio needs to be fully ready to transmit a packet
-     * by the time we run transmitPacket(), otherwise the first transmit
-     * will fail and we'll never get the IRQ that we would be using
-     * to start future transmissions.
+     * NOTE: the radio has 2 100ms delays on a power on reset: one before
+     * we can talk to it at all, and one before we can start transmitting.
      *
-     * Allow other initializations to run while we wait for this duration to
-     * minimize busy waiting.
+     * TODO: make the delays async, such that runtime init can progress
+     * in parallel.
+     *
+     * For now, allow other initializations to run while we wait for the 2nd delay.
      */
+    while (SysTime::ticks() - start < SysTime::msTicks(110))
+        ;
     Radio::init();
 
     Tasks::init();
@@ -110,7 +112,8 @@ int main()
      * a lot of overlap between this issue and some much needed
      * radio throttling / power management.
      */
-    while (SysTime::ticks() - start < SysTime::msTicks(110))
+
+    while (SysTime::ticks() - start < SysTime::msTicks(210))
         ;
     Radio::begin();
 
@@ -132,15 +135,8 @@ int main()
     }
 
     /*
-     * Launch our game runtime!
+     * Start the game runtime, and execute the Launcher app.
      */
 
-    SvmLoader::run(111);
-
-    // for now, in the event that we don't have a valid game installed at address 0,
-    // SvmLoader::run() should return (assuming it fails to parse the non-existent
-    // ELF binary, and we'll just sit here so we can at least install things over USB, etc
-    for (;;) {
-        Tasks::work();
-    }
+    SvmLoader::runLauncher();
 }

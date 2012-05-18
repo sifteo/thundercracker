@@ -255,6 +255,11 @@ class Flash {
         addr &= ~(size - 1);
         ASSERT(addr + size <= sizeof storage->ext);
         memset(storage->ext + addr, 0xFF, size);
+
+        unsigned sBegin = addr / FlashModel::SECTOR_SIZE;
+        unsigned sEnd = (addr + size) / FlashModel::SECTOR_SIZE;
+        for (unsigned s = sBegin; s != sEnd; ++s)
+            storage->eraseCounts[s]++;
     }
 
     void matchCommands() {

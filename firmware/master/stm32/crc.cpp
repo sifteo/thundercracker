@@ -5,6 +5,8 @@
 
 #include "crc.h"
 #include "hardware.h"
+#include "board.h"
+
 
 void Crc32::init()
 {
@@ -29,4 +31,15 @@ uint32_t Crc32::get()
 void Crc32::add(uint32_t word)
 {
     CRC.DR = word;
+}
+
+void Crc32::addUniqueness()
+{
+    const uint32_t* id = reinterpret_cast<const uint32_t*>(Board::UniqueId);
+    const unsigned numWords = Board::UniqueIdNumBytes / sizeof(uint32_t);
+        
+    for (unsigned i = 0; i != numWords; ++i) {
+        add(*id);
+        id++;
+    }
 }

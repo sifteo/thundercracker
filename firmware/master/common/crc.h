@@ -18,6 +18,16 @@ public:
     static uint32_t get();
     static void add(uint32_t word);
 
+    /**
+     * Add platform-specific data which is unique per-device.
+     * Used to create harder-to-guess object hashes. This will add()
+     * some platform-specific nonzero number of words to the CRC unit.
+     */
+    static void addUniqueness();
+
+    /**
+     * CRC a block of words. Data must be word-aligned.
+     */
     static uint32_t block(const uint32_t *words, uint32_t count);
 
     template <typename T>

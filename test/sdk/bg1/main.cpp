@@ -2,8 +2,7 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-static AssetSlot MainSlot = AssetSlot::allocate()
-    .bootstrap(MainAssets);
+static AssetSlot MainSlot = AssetSlot::allocate();
 
 static Metadata M = Metadata()
     .title("BG1 test")
@@ -27,6 +26,13 @@ void testMaskedImage()
 
 void main()
 {
+    // Bootstrapping that would normally be done by the Launcher
+    _SYS_enableCubes(cube.bit());
+    ScopedAssetLoader loader;
+    SCRIPT(LUA, System():setAssetLoaderBypass(true));
+    loader.start(MainAssets, MainSlot, cube);
+    ASSERT(loader.isComplete());
+
     SCRIPT(LUA,
         package.path = package.path .. ";../../lib/?.lua"
         require('siftulator')
@@ -38,4 +44,6 @@ void main()
     vid.attach(cube);
 
     testMaskedImage();
+
+    LOG("Success.\n");
 }

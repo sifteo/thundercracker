@@ -124,7 +124,7 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
     }
 
     FlashBlockRef ref;
-    uint32_t bytes = SvmMemory::arraySize(sizeof *src, count);
+    uint32_t bytes = mulsat16x16(sizeof *src, count);
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     SvmMemory::PhysAddr srcPA;
 
@@ -158,7 +158,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
     }
 
     FlashBlockRef ref;
-    uint32_t bytes = SvmMemory::arraySize(sizeof *src, count);
+    uint32_t bytes = mulsat16x16(sizeof *src, count);
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
     SvmMemory::PhysAddr srcPA;
 

@@ -42,3 +42,9 @@ LOCAL_OBJS = \
 GENERATED_FILES = \
     resources/data.cpp \
     resources/firmware-sbt.cpp
+
+DATADEPS = \
+    resources/*.png \
+    resources/*.glsl \
+    resources/*.fnt \
+    ../launcher/*.elf

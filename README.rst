@@ -28,6 +28,11 @@ extras
 firmware
   Firmware source for cubes and master.
 
+launcher
+  Source for the "launcher" app, the shell which contains the game selector
+  menu and other non-game functionality that's packaged with the system.
+  This is compiled with the SDK as an ELF binary.
+
 sdk
   Development kit for game software, running on the master.
   This directory is intended to contain only redistributable components.

@@ -11,8 +11,7 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-static AssetSlot MainSlot = AssetSlot::allocate()
-    .bootstrap(GameAssets);
+static AssetSlot MainSlot = AssetSlot::allocate();
 
 static Metadata M = Metadata()
     .title("Sprites test")
@@ -23,6 +22,13 @@ static VideoBuffer vid;
 
 void main()
 {
+    // Bootstrapping that would normally be done by the Launcher
+    _SYS_enableCubes(cube.bit());
+    ScopedAssetLoader loader;
+    SCRIPT(LUA, System():setAssetLoaderBypass(true));
+    loader.start(GameAssets, MainSlot, cube);
+    ASSERT(loader.isComplete());
+
     SCRIPT(LUA,
         package.path = package.path .. ";../../lib/?.lua"
         require('siftulator')
@@ -77,4 +83,6 @@ void main()
     LOG("Average FPS = %f\n", avgFPS);
     ASSERT(avgFPS > 10.f);
     ASSERT(avgFPS < 70.f);
+
+    LOG("Success.\n");
 }

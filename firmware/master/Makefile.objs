@@ -6,6 +6,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_float.o \
+    $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_integer.o \
     $(MASTER_DIR)/common/syscall_image.o \
     $(MASTER_DIR)/common/syscall_runtime.o \

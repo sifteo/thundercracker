@@ -35,7 +35,8 @@ class SystemMC {
     static Cube::Hardware *getCubeForSlot(CubeSlot *slot);
     static void checkQuiescentVRAM(CubeSlot *slot);
 
-    static bool installELF(const char *name);
+    /// Queue a game for asynchronous installation. Can be called at any time.
+    static bool installGame(const char *name);
 
     static System *getSystem() {
         return instance->sys;
@@ -52,6 +53,7 @@ class SystemMC {
  private: 
     static void threadFn(void *);
     void doRadioPacket();
+    void autoInstall();
 
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
@@ -59,7 +61,9 @@ class SystemMC {
     friend struct SysTime;
 
     static SystemMC *instance;
-    std::vector<uint8_t> pendingInstallData;
+    static std::vector< std::vector<uint8_t> > pendingGameInstalls;
+    static tthread::mutex pendingGameInstallLock;
+
     uint64_t ticks;
     uint64_t radioPacketDeadline;
 

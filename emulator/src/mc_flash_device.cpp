@@ -52,6 +52,7 @@ void FlashDevice::eraseSector(uint32_t address)
         // Address can be anywhere inside the actual sector
         unsigned sector = address - (address % FlashDevice::SECTOR_SIZE);
         memset(storage.bytes + sector, 0xFF, FlashDevice::SECTOR_SIZE);
+        storage.eraseCounts[sector / FlashDevice::SECTOR_SIZE]++;
     } else {
         ASSERT(0 && "MC flash eraseSector() out of range");
     }
@@ -61,6 +62,9 @@ void FlashDevice::chipErase()
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
     memset(storage.bytes, 0xFF, sizeof storage.bytes);
+
+    for (unsigned s = 0; s != arraysize(storage.eraseCounts); ++s)
+        storage.eraseCounts[s]++;
 }
 
 void FlashDevice::init()
