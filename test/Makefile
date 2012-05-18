@@ -12,7 +12,8 @@ TESTS = \
 	sdk/math \
 	sdk/filesystem \
 	sdk/bg1 \
-	sdk/sprites
+	sdk/sprites \
+	sdk/tilebuffer
 
 ####################
 
