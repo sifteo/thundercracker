@@ -3,32 +3,26 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * XXX: This is all just a temporary proof-of-concept now.
+ */
+
 #include <sifteo.h>
 using namespace Sifteo;
 
 
-_SYSCubeIDVector getCubeVector(MappedVolume &map)
+unsigned getMinCubes(MappedVolume &map)
 {
-    /*
-     * XXX: BIG HACK.
-     *
-     * Temporary code to initialize cubes, using the CubeRange from
-     * a game's metadata.
-     */
-
     auto range = map.metadata<_SYSMetadataCubeRange>(_SYS_METADATA_CUBE_RANGE);
-    unsigned minCubes = range ? range->minCubes : 0;
-
-    if (!minCubes) {
-        LOG("LAUNCHER: No CubeRange found, not initializing any cubes.\n");
-        return 0;
-    }
-
-    _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
-    return cubes;
+    return range ? range->minCubes : 0;
 }
 
-void bootstrapAssetGroup(MappedVolume &map, _SYSCubeIDVector cubes,
+_SYSCubeIDVector getCubeVector(unsigned numCubes)
+{
+    return numCubes ? (0xFFFFFFFF << (32 - numCubes)) : 0;
+}
+
+void bootstrapAssetGroup(MappedVolume &map, unsigned numCubes,
     const _SYSMetadataBootAsset &bootAsset)
 {
     // Construct an AssetGroup on the stack
@@ -37,7 +31,7 @@ void bootstrapAssetGroup(MappedVolume &map, _SYSCubeIDVector cubes,
     group.sys.pHdr = map.translate(bootAsset.pHdr);
     AssetSlot slot(bootAsset.slot);
 
-    if (group.isInstalled(cubes)) {
+    if (group.isInstalled(getCubeVector(numCubes))) {
         LOG("LAUNCHER: Bootstrap asset group %P already installed\n", group.sys.pHdr);
         return;
     }
@@ -46,18 +40,34 @@ void bootstrapAssetGroup(MappedVolume &map, _SYSCubeIDVector cubes,
         group.sys.pHdr, slot.sys);
 
     ScopedAssetLoader loader;
-    if (!loader.start(group, slot, cubes)) {
+    if (!loader.start(group, slot, getCubeVector(numCubes))) {
         // Out of space. Erase the slot first.
         LOG("LAUNCHER: Erasing asset slot\n");
         slot.erase();
-        loader.start(group, slot, cubes);
+        loader.start(group, slot, getCubeVector(numCubes));
     }
 
-    while (!loader.isComplete())
+    VideoBuffer vid[CUBE_ALLOCATION];
+    for (CubeID cube = 0; cube != numCubes; ++cube) {
+        vid[cube].initMode(BG0_ROM);
+        vid[cube].bg0rom.text(vec(1,1), "Bootstrapping");
+        vid[cube].bg0rom.text(vec(1,2), "game assets...");
+        vid[cube].attach(cube);
+    }
+
+    while (!loader.isComplete()) {
+        for (CubeID cube = 0; cube != numCubes; ++cube) {
+            vid[cube].bg0rom.hBargraph(
+                vec(0,7),
+                loader.progress(cube, LCD_width),
+                BG0ROMDrawable::ORANGE,
+                2);
+        }
         System::paint();
+    }
 }
 
-void bootstrapAssets(MappedVolume &map, _SYSCubeIDVector cubes)
+void bootstrapAssets(MappedVolume &map, unsigned numCubes)
 {
     /*
      * XXX: BIG HACK.
@@ -84,15 +94,15 @@ void bootstrapAssets(MappedVolume &map, _SYSCubeIDVector cubes)
     }
     unsigned count = actual / sizeof *vec;
 
-    if (!cubes) {
-        LOG(("LAUNCHER: Not loading bootstrap assets, no CubeRange found\n"));
+    if (!numCubes) {
+        LOG(("LAUNCHER: Not loading bootstrap assets, no CubeRange\n"));
         return;
     }
 
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
 
     for (unsigned i = 0; i < count; i++)
-        bootstrapAssetGroup(map, cubes, vec[i]);
+        bootstrapAssetGroup(map, numCubes, vec[i]);
 
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
 }
@@ -103,12 +113,12 @@ void exec(Volume vol)
 
     LOG("LAUNCHER: Running volume %08x\n", vol.sys);
 
-    // Enable the game's minimum set of cubes
-    _SYSCubeIDVector cv = getCubeVector(map);
-    _SYS_enableCubes(cv);
+    // Enable the game's minimum set of cubes.
+    unsigned numCubes = getMinCubes(map);
+    _SYS_enableCubes(getCubeVector(numCubes));
 
     // Temporary asset bootstrapper
-    bootstrapAssets(map, cv);
+    bootstrapAssets(map, numCubes);
 
     vol.exec();
 }
