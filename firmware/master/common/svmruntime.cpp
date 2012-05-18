@@ -30,22 +30,38 @@ SvmMemory::PhysAddr SvmRuntime::topOfStackPA;
 SvmMemory::PhysAddr SvmRuntime::stackLowWaterMark;
 #endif
 
-void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
-        SvmMemory::VirtAddr stackTopVA)
+void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 {
-    if (!SvmMemory::mapRAM(stackLimitVA, 0, stackLimit))
-        SvmRuntime::fault(F_BAD_STACK);
-
-#ifdef SIFTEO_SIMULATOR
-    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
-    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
-    stackLowWaterMark = topOfStackPA;
-#endif
-
-    SvmCpu::run(mapSP(stackTopVA - getSPAdjustBytes(entryFunc)),
+    initStack(stack);
+    SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
 }
 
+void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
+{
+    initStack(stack);
+
+    // Zero all GPRs
+    for (unsigned i = 0; i < 8; ++i)
+        SvmCpu::setReg(i, 0);
+
+    // We're back in main() now, so set FP accordingly
+    SvmCpu::setReg(REG_FP, 0);
+
+    setSP(stack.top - getSPAdjustBytes(entryFunc));
+    branch(entryFunc);
+}
+
+void SvmRuntime::initStack(const StackInfo &stack)
+{
+    if (!SvmMemory::mapRAM(stack.limit, 0, stackLimit))
+        SvmRuntime::fault(F_BAD_STACK);
+
+#ifdef SIFTEO_SIMULATOR
+    ASSERT(SvmMemory::mapRAM(stack.top, (uint32_t)0, topOfStackPA));
+    stackLowWaterMark = topOfStackPA;
+#endif
+}
 
 void SvmRuntime::fault(FaultCode code)
 {

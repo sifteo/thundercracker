@@ -76,6 +76,7 @@ class FlashStorage {
     ~FlashStorage();
 
     bool init(const char *filename=NULL);
+    bool installLauncher(const char *filename=NULL);
     void exit();
 
  private:

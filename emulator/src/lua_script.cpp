@@ -11,6 +11,7 @@
 #include "lodepng.h"
 #include "color.h"
 #include "svmmemory.h"
+#include "cubeslots.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 
@@ -28,6 +29,7 @@ Lunar<LuaSystem>::RegType LuaSystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaSystem, exit),
     LUNAR_DECLARE_METHOD(LuaSystem, setOptions),
     LUNAR_DECLARE_METHOD(LuaSystem, setTraceMode),
+    LUNAR_DECLARE_METHOD(LuaSystem, setAssetLoaderBypass),
     LUNAR_DECLARE_METHOD(LuaSystem, vclock),
     LUNAR_DECLARE_METHOD(LuaSystem, vsleep),
     LUNAR_DECLARE_METHOD(LuaSystem, sleep),
@@ -238,6 +240,12 @@ int LuaSystem::setOptions(lua_State *L)
 int LuaSystem::setTraceMode(lua_State *L)
 {
     sys->tracer.setEnabled(lua_toboolean(L, 1));
+    return 0;
+}
+
+int LuaSystem::setAssetLoaderBypass(lua_State *L)
+{
+    CubeSlots::simAssetLoaderBypass = lua_toboolean(L, 1);
     return 0;
 }
 

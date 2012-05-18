@@ -69,4 +69,6 @@ void main()
     testFloor();
     testRound();
     testAlmostEqual();
+
+    LOG("Success.\n");
 }

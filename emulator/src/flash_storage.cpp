@@ -23,7 +23,13 @@
 #include "macros.h"
 #include "flash_device.h"
 #include "flash_storage.h"
+#include "flash_volume.h"
 #include "glfw.h"
+#include "lodepng.h"
+
+
+// Compiled launcher ELF binary, installed in new volumes.
+extern const uint8_t launcher[];
 
 
 FlashStorage::FlashStorage()
@@ -51,13 +57,10 @@ bool FlashStorage::init(const char *filename)
             unmapFile();
             return false;
         }
-        LOG(("FLASH: Using storage file '%s'\n", filename));
-
     } else {
         // Anonymous non-persistent flash memory
         data = new FileRecord();
         initData();
-        LOG(("FLASH: Using non-persistent storage\n"));
     }
 
     isInitialized = true;
@@ -121,6 +124,47 @@ void FlashStorage::initData()
 
     // Create a unique ID for this storage file
     data->header.uniqueID = rand() ^ rand() ^ uint32_t(glfwGetTime() * 1e6);
+}
+
+bool FlashStorage::installLauncher(const char *filename)
+{
+    /*
+     * Erase any already-installed LAUNCHER binaries, and install a new
+     * launcher using the specified file, or the built-in binary.
+     */
+
+    // Delete existing launcher(s)
+    FlashVolume vol;
+    FlashVolumeIter vi;
+    vi.begin();
+    while (vi.next(vol))
+        if (vol.getType() == FlashVolume::T_LAUNCHER)
+            vol.markAsDeleted();
+
+    // Built-in launcher
+    uint32_t launcherSize = *reinterpret_cast<const uint32_t*>(launcher);
+    const uint8_t *launcherData = launcher + 4;
+    
+    std::vector<uint8_t> data;
+    if (filename) {
+        LodePNG::loadFile(data, filename);
+        if (data.empty()) {
+            LOG(("FLASH: Launcher binary '%s' cannot be read\n", filename));
+            return false;
+        }
+        launcherSize = data.size();
+        launcherData = &data[0];
+    }
+
+    FlashVolumeWriter writer;
+    if (!writer.begin(FlashVolume::T_LAUNCHER, launcherSize)) {
+        LOG(("FLASH: Insufficient space for launcher binary\n"));
+        return false;
+    }
+
+    writer.appendPayload(launcherData, launcherSize);
+    writer.commit();
+    return true;
 }
 
 bool FlashStorage::checkData()

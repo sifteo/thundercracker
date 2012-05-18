@@ -41,6 +41,7 @@ class System {
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
+    std::string opt_launcherFilename;
 
     // UI options
     bool opt_whiteBackground;

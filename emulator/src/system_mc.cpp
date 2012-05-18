@@ -32,6 +32,8 @@
 #include "crc.h"
 
 SystemMC *SystemMC::instance;
+std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
+tthread::mutex SystemMC::pendingGameInstallLock;
 
 
 bool SystemMC::init(System *sys)
@@ -75,6 +77,28 @@ void SystemMC::exit()
     // Nothing to do yet
 }
 
+void SystemMC::autoInstall()
+{
+    // Install a launcher
+
+    const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
+    if (!sys->flash.installLauncher(launcher))
+        return;
+
+    // Install any ELF data that we've previously queued
+
+    tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
+
+    while (!pendingGameInstalls.empty()) {
+        std::vector<uint8_t> &data = pendingGameInstalls.back();
+        FlashVolumeWriter writer;
+        writer.begin(FlashVolume::T_GAME, data.size());
+        writer.appendPayload(&data[0], data.size());
+        writer.commit();
+        pendingGameInstalls.pop_back();
+    }
+}
+
 void SystemMC::threadFn(void *param)
 {
     if (setjmp(instance->mThreadExitJmp)) {
@@ -91,17 +115,9 @@ void SystemMC::threadFn(void *param)
     AudioOutDevice::start();
     Radio::init();
 
-    // Install any ELF data that we've previously queued
-    if (!instance->pendingInstallData.empty()) {
-        FlashVolumeWriter writer;
-        unsigned len = instance->pendingInstallData.size();
-        writer.begin(FlashVolume::T_GAME, len);
-        writer.appendPayload(&instance->pendingInstallData[0], len);
-        writer.commit();
-        instance->pendingInstallData.clear();
-    }
+    instance->autoInstall();
 
-    SvmLoader::runDefault();
+    SvmLoader::runLauncher();
 }
 
 SysTime::Ticks SysTime::ticks()
@@ -310,23 +326,24 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
     DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
 }
 
-bool SystemMC::installELF(const char *path)
+bool SystemMC::installGame(const char *path)
 {
     bool success = true;
-    bool restartThread = instance->mThreadRunning;
-
-    ASSERT(instance->pendingInstallData.empty());
+    bool restartThread = instance && instance->mThreadRunning;
 
     if (restartThread)
         instance->stop();
 
-    LOG(("FLASH: Installing ELF binary '%s'\n", path));
+    tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
 
-    LodePNG::loadFile(instance->pendingInstallData, path);
-    if (instance->pendingInstallData.empty()) {
+    pendingGameInstalls.push_back(std::vector<uint8_t>());
+    LodePNG::loadFile(pendingGameInstalls.back(), path);
+    
+    if (pendingGameInstalls.back().empty()) {
+        pendingGameInstalls.pop_back();
+        success = false;
         LOG(("FLASH: Error, couldn't open ELF file '%s' (%s)\n",
             path, strerror(errno)));
-        success = false;
     }
 
     if (restartThread)

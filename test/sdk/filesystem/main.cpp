@@ -45,4 +45,6 @@ void main()
     // This leaves a bunch of test volumes (Type 0x8765) in the filesystem.
     // We're guaranteed to see at least one of these.
     checkTestVolumes();
+    
+    LOG("Success.\n");
 }

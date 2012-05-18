@@ -142,10 +142,11 @@ struct AssetGroup {
  */
 
 class AssetSlot {
-    _SYSAssetSlot sys;
-    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
-
 public:
+    _SYSAssetSlot sys;
+
+    /// Explicit conversion from a system object
+    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
 
     /// Copy constructor
     AssetSlot(const AssetSlot &other) : sys(other.sys) {}

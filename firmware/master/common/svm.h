@@ -78,6 +78,7 @@ enum FaultCode {
     F_BAD_VOLUME_HANDLE,    // (0x17) Bad filesystem volume handle
     F_BAD_ELF_HEADER,       // (0x18) Bad ELF binary header
     F_BAD_ASSET_IMAGE,      // (0x19) Bad AssetImage
+    F_NO_LAUNCHER,          // (0x1A) Launcher program not found
 };
 
 /**

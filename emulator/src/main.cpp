@@ -43,7 +43,7 @@ static void usage()
      */
 
     message("\n"
-            "usage: siftulator [OPTIONS] [program.elf]\n"
+            "usage: siftulator [OPTIONS] [GAME.elf ...]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
             "\n"
@@ -54,6 +54,8 @@ static void usage()
             "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
             "  -P PORT             Run a GDB debug server on the specified TCP port number\n"
             "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
+            "  -l LAUNCHER.elf     Start the supplied binary as the system launcher\n"
+            "\n"
             "  --headless          Run without the graphical frontend\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
@@ -63,6 +65,12 @@ static void usage()
             "  --paint-trace       Trace the state of the repaint controller\n"
             "  --white-bg          Force the UI to use a plain white background\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
+            "\n"
+            "Games:\n"
+            "  Any games specified on the command line will be installed to\n"
+            "  flash prior to starting the simulation. By default, a built-in\n"
+            "  version of the system Launcher is used. This can be overridden\n"
+            "  with the -l option.\n"
             "\n"
             APP_COPYRIGHT "\n");
 }
@@ -87,7 +95,7 @@ static void getConsole()
 
 static void message(const char *fmt, ...)
 {
-    char buf[1024];
+    char buf[16*1024];
 
     va_list a;
     va_start(a, fmt);
@@ -105,7 +113,7 @@ static void message(const char *fmt, ...)
     fprintf(stderr, "%s\n", buf);
 }
 
-static int run(System &sys, const char *elfFile)
+static int run(System &sys)
 {
     static Frontend fe;
         
@@ -118,11 +126,6 @@ static int run(System &sys, const char *elfFile)
         message("Graphical frontend failed to initialize");
         return 1;
     }    
-
-    if (elfFile && !SystemMC::installELF(elfFile)) {
-        message("Failed to load ELF file");
-        return 1;
-    }
 
     sys.start();
 
@@ -151,7 +154,6 @@ int main(int argc, char **argv)
 {
     static System sys;
     const char *scriptFile = NULL;
-    const char *elfFile = NULL;
 
     // Attach an existing console, if it's already handy
     getConsole();	
@@ -255,6 +257,12 @@ int main(int argc, char **argv)
             continue;
         }
 
+        if (!strcmp(arg, "-l") && argv[c+1]) {
+            sys.opt_launcherFilename = argv[c+1];
+            c++;
+            continue;
+        }
+
         if (!strcmp(arg, "-p") && argv[c+1]) {
             sys.opt_cube0Profile = argv[c+1];
             c++;
@@ -288,25 +296,18 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (!elfFile) {
-            // First positional argument is interpreted as an ELF file name
-            elfFile = arg;
-            continue;
-        }
-
-        message("Unrecognized argument: '%s'", arg);
-        usage();
-        return 1;
+        // Other arguments are game binaries
+        SystemMC::installGame(arg);
     }
 
     // Necessary even when running windowless, since we use GLFW for time
     glfwInit();
 
-    return scriptFile ? runScript(sys, scriptFile) : run(sys, elfFile);
+    return scriptFile ? runScript(sys, scriptFile) : run(sys);
 }
 
 extern "C" bool glfwSifteoOpenFile(const char *filename)
 {
     // Entry point for platform-specific drag and drop in GLFW.
-    return SystemMC::installELF(filename);
+    return SystemMC::installGame(filename);
 }

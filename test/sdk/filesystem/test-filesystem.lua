@@ -147,12 +147,12 @@ function testFilesystem()
             local vol = candidates[math.random(table.maxn(candidates))]
 
             fs:deleteVolume(vol)
-            print(string.format("Deleted volume [%02x]", vol))
+            -- print(string.format("Deleted volume [%02x]", vol))
         end
 
         -- Create the volume
         local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
-        print(string.format("Created volume [%02x], %d bytes", vol, volSize))
+        -- print(string.format("Created volume [%02x], %d bytes", vol, volSize))
         writeTotal = writeTotal + volSize
     end
 

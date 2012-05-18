@@ -18,9 +18,22 @@ class SvmRuntime {
 public:
     SvmRuntime();  // Do not implement
 
-    // Begin execution, with a particular stack region and entry function
-    static void run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
-        SvmMemory::VirtAddr stackTopVA);
+    struct StackInfo {
+        SvmMemory::VirtAddr limit;
+        SvmMemory::VirtAddr top;
+    };
+
+    /**
+     * Begin execution, with a particular stack and entry point.
+     * Only called once. Never returns.
+     */
+    static void run(uint32_t entryFunc, const StackInfo &stack);
+
+    /**
+     * Restart execution at a new entry point and with a new stack,
+     * next time we return to user code. To be called from inside svc handlers.
+     */
+    static void exec(uint32_t entryFunc, const StackInfo &stack);
 
     // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);
@@ -127,6 +140,8 @@ private:
     static SvmMemory::PhysAddr stackLimit;
     static reg_t eventFrame;
     static bool eventDispatchFlag;
+
+    static void initStack(const StackInfo &stack);
 
     static void call(reg_t addr);
     static void tailcall(reg_t addr);    

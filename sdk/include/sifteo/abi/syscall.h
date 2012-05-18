@@ -209,7 +209,8 @@ void _SYS_image_BG2DrawRect(struct _SYSAttachedVideoBuffer *vbuf, const struct _
 // Filesystem
 uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32_t maxResults) _SC(150);
 void _SYS_elf_exec(_SYSVolumeHandle vol) _SC(151);
-void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, unsigned *actualSize) _SC(152);
+uint32_t _SYS_elf_map(_SYSVolumeHandle vol) _SC(152);
+void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, unsigned *actualSize) _SC(153);
 
 
 #ifdef __cplusplus

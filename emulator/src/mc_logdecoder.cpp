@@ -222,7 +222,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, uint32_t *buffer)
             ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
             for (unsigned i = 0; i != bytes; i++) {
                 snprintf(outBuffer, sizeof outBuffer,
-                    "%02x ", ((uint8_t*)buffer)[i]);
+                    "%02x", ((uint8_t*)buffer)[i]);
                 writeLog(outBuffer);
             }
             return bytes;

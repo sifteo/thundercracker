@@ -122,4 +122,6 @@ void main()
     eraseChar();
     eraseInt();
     findInArrayOfPointers();
+    
+    LOG("Success.\n");
 }
