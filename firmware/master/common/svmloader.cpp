@@ -16,6 +16,7 @@
 #include "panic.h"
 #include "cubeslots.h"
 
+#include <stdlib.h>
 #include <sifteo/abi.h>
 
 using namespace Svm;
