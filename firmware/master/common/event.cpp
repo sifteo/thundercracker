@@ -34,9 +34,23 @@ void Event::dispatch()
         uint32_t vidMask = Intrinsic::LZ(vid);
         VectorInfo &vi = vectors[vid];
 
-        // Currently all events are dispatched per-cube, even the neighbor
-        // events. Loop over the Cube IDs from cubesPending.
+        // Base events carry a parameter instead of a Cube ID, the meaning of
+        // which depends on the event type.
+        if (vidMask & _SYS_BASE_EVENTS) {
+            // Handle one normal Base event.
+            // Clear the event bit first, so that on the next dispatch() we
+            // immediately skip to the next pending event, if any.
 
+            Atomic::And(pending, ~vidMask);
+
+            if (callBaseEvent(vid, Atomic::Load(vi.param))) {
+                return;
+            }
+            continue;
+        }
+
+        // Currently all cube events are dispatched per-cube, even the neighbor
+        // events. Loop over the Cube IDs from cubesPending.
         while (vi.cubesPending) {
             _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(vi.cubesPending);
 
@@ -54,6 +68,7 @@ void Event::dispatch()
                 vidMask = _SYS_NEIGHBOR_EVENTS;
 
             } else {
+                ASSERT(vidMask & _SYS_CUBE_EVENTS);
                 // Handle one normal cube event.
                 // We can clear the pending bit first, so that on the next
                 // Dispatch() we immediately skip to the next pending event

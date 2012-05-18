@@ -201,7 +201,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 if (done) {
                     /* Finished sending the group, and the cube finished writing it. */
                     Atomic::SetLZ(L->complete, id());
-                    Event::setPending(_SYS_CUBE_ASSETDONE, id());
+                    Event::setCubePending(_SYS_CUBE_ASSETDONE, id());
 
                     DEBUG_ONLY({
                         // In debug builds only, we log the asset download time
@@ -261,7 +261,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     if (!connected()) {
-        Event::setPending(_SYS_CUBE_FOUND, id());
+        Event::setCubePending(_SYS_CUBE_FOUND, id());
         setConnected();
 
         LOG(("%u cubes connected\n",
@@ -355,7 +355,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             accelState.x = x;
             accelState.y = y;
             accelState.z = z;
-            Event::setPending(_SYS_CUBE_ACCELCHANGE, id());
+            Event::setCubePending(_SYS_CUBE_ACCELCHANGE, id());
         }
     }
 
@@ -366,11 +366,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Look for valid touches, signified by any edge on the touch toggle bit
 
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-                Event::setPending(_SYS_CUBE_TOUCH, id());
+                Event::setCubePending(_SYS_CUBE_TOUCH, id());
             }
 
             // Trigger a rescan of all neighbors, during event dispatch
-            Event::setPending(_SYS_NEIGHBOR_ADD, id());
+            Event::setCubePending(_SYS_NEIGHBOR_ADD, id());
 
         } else {
             Atomic::SetLZ(CubeSlots::neighborACKValid, id());
@@ -410,7 +410,7 @@ void CubeSlot::radioTimeout()
     /* XXX: Disconnect this cube */
     
     if (connected()) {
-        Event::setPending(_SYS_CUBE_LOST, id());
+        Event::setCubePending(_SYS_CUBE_LOST, id());
         setDisconnected();
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
