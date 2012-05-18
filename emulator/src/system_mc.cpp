@@ -95,7 +95,7 @@ void SystemMC::threadFn(void *param)
     if (!instance->pendingInstallData.empty()) {
         FlashVolumeWriter writer;
         unsigned len = instance->pendingInstallData.size();
-        writer.begin(FlashVolume::T_ELF, len);
+        writer.begin(FlashVolume::T_GAME, len);
         writer.appendPayload(&instance->pendingInstallData[0], len);
         writer.commit();
         instance->pendingInstallData.clear();
