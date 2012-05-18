@@ -131,6 +131,15 @@ struct BG0Drawable {
         return pos.x + pos.y * tileWidth();
     }
 
+	/**
+	 * Retrieve the absolute tile index currently set at the 
+	 * given address.  The inverse of plot().
+	 */
+	uint16_t tile(UInt2 pos) {
+        ASSERT(pos.x < tileWidth() && pos.y < tileHeight());
+		return _SYS_INVERSE_TILE77(_SYS_vbuf_peek(&sys.vbuf, tileAddr(pos)));
+	}
+	
     /**
      * Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units.
