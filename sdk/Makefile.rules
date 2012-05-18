@@ -55,7 +55,7 @@ objdump: $(BIN)
 asm: program.s
 	less $^
 
-program.s: $(OBJS) $(LD)
+program.s: $(OBJS)
 	$(LD) -asm -o $@ $(OBJS) $(LDFLAGS)
 
 readelf: $(BIN)
