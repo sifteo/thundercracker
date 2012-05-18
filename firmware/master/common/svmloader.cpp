@@ -15,6 +15,7 @@
 #include "tasks.h"
 #include "panic.h"
 #include "cubeslots.h"
+#include "cube.h"
 
 #include <stdlib.h>
 #include <sifteo/abi.h>
@@ -45,6 +46,11 @@ void SvmLoader::loadRWData(const Elf::Program &program)
 
 void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
+    // Detach any existing video buffers.
+    for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
+        CubeSlots::instances[i].setVideoBuffer(0);
+    }
+
     // Reset the debugging and logging subsystem
     SvmDebugPipe::init();
 
