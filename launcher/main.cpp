@@ -7,30 +7,7 @@
 using namespace Sifteo;
 
 
-void logVolumes(_SYSVolumeHandle *volumes, unsigned numVolumes)
-{
-    for (unsigned i = 0; i < numVolumes; ++i) {
-        _SYSVolumeHandle vol = volumes[i];
-        static _SYSUUID noUUID;
-
-        uint32_t o = _SYS_elf_map(vol);
-        const char *title = (const char*) _SYS_elf_metadata(vol, _SYS_METADATA_TITLE_STR, 1, NULL);
-        const _SYSUUID *uuid = (const _SYSUUID*) _SYS_elf_metadata(vol, _SYS_METADATA_UUID, sizeof *uuid, NULL);
-        if (!title) title = "(untitled)";
-        if (!uuid) uuid = &noUUID;
-
-        LOG("LAUNCHER: Found game vol=%08x, o=%08x, {%4h-%2h-%2h-%2h-% 6h} \"%s\"\n",
-            vol, o,
-            uuid->bytes + 0,
-            uuid->bytes + 4,
-            uuid->bytes + 6,
-            uuid->bytes + 8,
-            uuid->bytes + 10,
-            title);
-    }
-}
-
-_SYSCubeIDVector getCubeVector(_SYSVolumeHandle vol)
+_SYSCubeIDVector getCubeVector(MappedVolume &map)
 {
     /*
      * XXX: BIG HACK.
@@ -39,8 +16,7 @@ _SYSCubeIDVector getCubeVector(_SYSVolumeHandle vol)
      * a game's metadata.
      */
 
-    const _SYSMetadataCubeRange *range = (const _SYSMetadataCubeRange *)
-        _SYS_elf_metadata(vol, _SYS_METADATA_CUBE_RANGE, sizeof *range, NULL);
+    auto range = map.metadata<_SYSMetadataCubeRange>(_SYS_METADATA_CUBE_RANGE);
     unsigned minCubes = range ? range->minCubes : 0;
 
     if (!minCubes) {
@@ -52,13 +28,13 @@ _SYSCubeIDVector getCubeVector(_SYSVolumeHandle vol)
     return cubes;
 }
 
-void bootstrapAssetGroup(const _SYSMetadataBootAsset &bootAsset,
-    _SYSCubeIDVector cubes, uint32_t mapOffset)
+void bootstrapAssetGroup(MappedVolume &map, _SYSCubeIDVector cubes,
+    const _SYSMetadataBootAsset &bootAsset)
 {
     // Construct an AssetGroup on the stack
     AssetGroup group;
     bzero(group);
-    group.sys.pHdr = bootAsset.pHdr + mapOffset;
+    group.sys.pHdr = map.translate(bootAsset.pHdr);
     AssetSlot slot(bootAsset.slot);
 
     if (group.isInstalled(cubes)) {
@@ -81,7 +57,7 @@ void bootstrapAssetGroup(const _SYSMetadataBootAsset &bootAsset,
         System::paint();
 }
 
-void bootstrapAssets(_SYSVolumeHandle vol, _SYSCubeIDVector cubes, uint32_t mapOffset)
+void bootstrapAssets(MappedVolume &map, _SYSCubeIDVector cubes)
 {
     /*
      * XXX: BIG HACK.
@@ -100,14 +76,13 @@ void bootstrapAssets(_SYSVolumeHandle vol, _SYSCubeIDVector cubes, uint32_t mapO
      */
 
     // Look up BootAsset array
-    uint32_t actualSize;
-    const _SYSMetadataBootAsset *vec = (const _SYSMetadataBootAsset *)
-        _SYS_elf_metadata(vol, _SYS_METADATA_BOOT_ASSET, sizeof *vec, &actualSize);
+    uint32_t actual;
+    auto vec = map.metadata<_SYSMetadataBootAsset>(_SYS_METADATA_BOOT_ASSET, &actual);
     if (!vec) {
         LOG(("LAUNCHER: No bootstrap assets found\n"));
         return;
     }
-    unsigned count = actualSize / sizeof *vec;
+    unsigned count = actual / sizeof *vec;
 
     if (!cubes) {
         LOG(("LAUNCHER: Not loading bootstrap assets, no CubeRange found\n"));
@@ -117,39 +92,43 @@ void bootstrapAssets(_SYSVolumeHandle vol, _SYSCubeIDVector cubes, uint32_t mapO
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
 
     for (unsigned i = 0; i < count; i++)
-        bootstrapAssetGroup(vec[i], cubes, mapOffset);
+        bootstrapAssetGroup(map, cubes, vec[i]);
 
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
 }
 
-void exec(_SYSVolumeHandle vol)
+void exec(Volume vol)
 {
-    uint32_t mapOffset = _SYS_elf_map(vol);
+    MappedVolume map(vol);
 
-    LOG("LAUNCHER: Running volume %08x\n", vol);
+    LOG("LAUNCHER: Running volume %08x\n", vol.sys);
 
     // Enable the game's minimum set of cubes
-    _SYSCubeIDVector cv = getCubeVector(vol);
+    _SYSCubeIDVector cv = getCubeVector(map);
     _SYS_enableCubes(cv);
 
     // Temporary asset bootstrapper
-    bootstrapAssets(vol, cv, mapOffset);
+    bootstrapAssets(map, cv);
 
-    _SYS_elf_exec(vol);
+    vol.exec();
 }
 
 void main()
 {
-    _SYSVolumeHandle volumes[64];
-    unsigned numVolumes = _SYS_fs_listVolumes(_SYS_FS_VOL_GAME, volumes, arraysize(volumes));
+    Array<Volume, 64> gGameList;
+    Volume::list(Volume::T_GAME, gGameList);
 
-    if (numVolumes) {
-        logVolumes(volumes, numVolumes);
-        exec(volumes[0]);
-
-    } else {
+    if (gGameList.empty()) {
         LOG("LAUNCHER: No games installed\n");
         while (1)
             System::paint();
     }
+
+    for (Volume v : gGameList) {
+        MappedVolume map(v);
+        LOG("LAUNCHER: Found game vol=%08x, {%16h} \"%s\"\n",
+            v.sys, map.uuid()->bytes, map.title());
+    }
+
+    exec(gGameList[0]);
 }
