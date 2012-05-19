@@ -26,5 +26,7 @@ void main()
     SCRIPT(LUA, Cube(0):saveScreenshot("myScreenshot.png"));
     SCRIPT(LUA, Cube(0):testScreenshot("myScreenshot.png"));
 
+    SCRIPT_FMT(LUA, "Frontend():postMessage('Power is >= %d')", 9000);
+
     LOG("Success.\n");
 }
