@@ -47,7 +47,7 @@ Lunar<LuaFrontend>::RegType LuaFrontend::methods[] = {
 Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, reset),
     LUNAR_DECLARE_METHOD(LuaCube, isDebugging),
-    LUNAR_DECLARE_METHOD(LuaCube, lcdWriteCount),
+    LUNAR_DECLARE_METHOD(LuaCube, lcdFrameCount),
     LUNAR_DECLARE_METHOD(LuaCube, lcdPixelCount),
     LUNAR_DECLARE_METHOD(LuaCube, exceptionCount),
     LUNAR_DECLARE_METHOD(LuaCube, getRadioAddress),
@@ -358,9 +358,9 @@ int LuaCube::isDebugging(lua_State *L)
     return 1;
 }
 
-int LuaCube::lcdWriteCount(lua_State *L)
+int LuaCube::lcdFrameCount(lua_State *L)
 {
-    lua_pushinteger(L, LuaSystem::sys->cubes[id].lcd.getWriteCount());
+    lua_pushinteger(L, LuaSystem::sys->cubes[id].lcd.getFrameCount());
     return 1;
 }
 
