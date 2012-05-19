@@ -3,16 +3,16 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef AUDIOBUFFER_H_
-#define AUDIOBUFFER_H_
+#ifndef RING_BUFFER_H_
+#define RING_BUFFER_H_
 
 #include <stdint.h>
 #include "macros.h"
 
 template <unsigned _size>
-class AudioBuffer {
+class RingBuffer {
 public:
-    AudioBuffer()
+    RingBuffer()
     {}
 
     void init() {
@@ -117,4 +117,4 @@ private:
     uint8_t coalescer[_size];
 };
 
-#endif // AUDIOBUFFER_H_
+#endif // RING_BUFFER_H_

@@ -10,7 +10,7 @@
 #include "hardware.h"
 #include "hwtimer.h"
 
-#include "audiobuffer.h"
+#include "ringbuffer.h"
 #include "audiooutdevice.h"
 class AudioMixer;
 
@@ -47,7 +47,7 @@ private:
     GPIOPin outA;
     GPIOPin outB;
 
-    AudioBuffer<AudioOutDevice::BufferSize> buf;
+    RingBuffer<AudioOutDevice::BufferSize> buf;
 
     AudioMixer *mixer;
 

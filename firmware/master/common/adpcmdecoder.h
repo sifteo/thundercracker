@@ -6,8 +6,7 @@
 #ifndef ADPCMDECODER_H
 #define ADPCMDECODER_H
 
-#include "audiobuffer.h"
-
+#include <stdint.h>
 
 class AdPcmDecoder
 {

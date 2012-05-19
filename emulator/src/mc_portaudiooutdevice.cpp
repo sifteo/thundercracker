@@ -72,7 +72,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
         //LOG(("statusFlags: %ld\n", statusFlags));
     }
 
-    AudioBuffer<AudioOutDevice::BufferSize> &audiobuf = dev->buf;
+    RingBuffer<AudioOutDevice::BufferSize> &audiobuf = dev->buf;
     unsigned avail = audiobuf.readAvailable();
     if (avail > 0) {
         uint8_t *outBuf = (uint8_t*)outputBuffer;

@@ -6,7 +6,7 @@
 #ifndef AUDIOMIXER_H_
 #define AUDIOMIXER_H_
 
-#include "audiobuffer.h"
+#include "ringbuffer.h"
 #include "audiochannel.h"
 #include <stdint.h>
 #include <stdio.h>

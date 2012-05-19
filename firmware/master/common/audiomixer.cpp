@@ -81,7 +81,7 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 */
 void AudioMixer::pullAudio(void *p) {
     if (p == NULL) return;
-    AudioBuffer<AudioOutDevice::BufferSize> *buf = static_cast<AudioBuffer<AudioOutDevice::BufferSize>*>(p);
+    RingBuffer<AudioOutDevice::BufferSize> *buf = static_cast<RingBuffer<AudioOutDevice::BufferSize>*>(p);
     if (buf->writeAvailable() < sizeof(int16_t)) return;
 
     unsigned bytesToMix;
