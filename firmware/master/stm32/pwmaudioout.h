@@ -47,8 +47,7 @@ private:
     GPIOPin outA;
     GPIOPin outB;
 
-    AudioBuffer buf;
-    _SYSAudioBuffer sys;
+    AudioBuffer<AudioOutDevice::BufferSize> buf;
 
     AudioMixer *mixer;
 

@@ -40,8 +40,7 @@ private:
     int dacChan;
     HwTimer sampleTimer;
 
-    AudioBuffer buf;
-    _SYSAudioBuffer sys;
+    AudioBuffer<AudioOutDevice::BufferSize> buf;
 
     AudioMixer *mixer;
 

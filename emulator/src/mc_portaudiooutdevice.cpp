@@ -72,7 +72,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
         //LOG(("statusFlags: %ld\n", statusFlags));
     }
 
-    AudioBuffer &audiobuf = dev->buf;
+    AudioBuffer<AudioOutDevice::BufferSize> &audiobuf = dev->buf;
     unsigned avail = audiobuf.readAvailable();
     if (avail > 0) {
         uint8_t *outBuf = (uint8_t*)outputBuffer;
@@ -125,7 +125,7 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
         NULL                                // hostApiSpecificStreamInfo
     };
 
-    buf.init(&this->sysbuf);
+    buf.init();
 
     int rate = 0;
     switch (samplerate) {

@@ -22,7 +22,7 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
-    buf.init(&this->sys);
+    buf.init();
     // from datasheet: "once the DAC channel is aneabled, the corresponding gpio
     // is automatically connected to the analog converter output. to avoid
     // parasitic consumption, the pin should be configured to analog in"

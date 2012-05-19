@@ -23,8 +23,7 @@ public:
 private:
     PaStream *outStream;
     AudioMixer *mixer;
-    AudioBuffer buf;
-    _SYSAudioBuffer sysbuf;
+    AudioBuffer<AudioOutDevice::BufferSize> buf;
 
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,

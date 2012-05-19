@@ -22,7 +22,7 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
-    buf.init(&this->sys);
+    buf.init();
 
     switch (samplerate) {
     case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;

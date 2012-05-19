@@ -18,6 +18,8 @@ public:
         kHz16000,
         kHz32000
     };
+
+    static const unsigned BufferSize = 512;
     static void init(SampleRate samplerate, AudioMixer *mixer);
 
     static void start();
@@ -26,21 +28,18 @@ public:
     static bool isBusy();
 
     static uint32_t sampleRate(SampleRate samplerate) {
-        switch(samplerate) {
-            case kHz8000:
-                return 8000;
-            case kHz16000:
-                return 16000;
-            case kHz32000:
-                return 32000;
-            default:
-                return 0;
+        switch (samplerate) {
+            case kHz8000:   return 8000;
+            case kHz16000:  return 16000;
+            case kHz32000:  return 32000;
+            default:        return 0;
         }
     }
     static void setSampleRate(SampleRate samplerate);
 
     static void suspend();
     static void resume();
+
 private:
     static AudioMixer *mixer;
 };
