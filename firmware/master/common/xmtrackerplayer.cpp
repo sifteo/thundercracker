@@ -34,6 +34,10 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
+    if (isPlaying()) {
+        LOG((LGPFX"Notice: play() called while already playing.\n"));
+    }
+
     // Does the world make any sense? 
     if (!pSong->nPatterns) {
         LOG((LGPFX"Error: Invalid song (no patterns)\n"));
@@ -90,6 +94,9 @@ void XmTrackerPlayer::stop()
         for (unsigned i = 0; i < song.nChannels; i++)
             if (mixer.isPlaying(CHANNEL_FOR(i)))
                 mixer.stop(CHANNEL_FOR(i));
+
+    } else {
+        LOG((LGPFX"Notice: stop() called when no module was playing.\n"));
     }
 
     song.nPatterns = 0;
