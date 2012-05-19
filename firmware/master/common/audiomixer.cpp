@@ -110,6 +110,7 @@ void AudioMixer::pullAudio(void *p) {
         if (trackerInterval) {
             if (mixed == 0) {
                 mixed = numSamples;
+                memset(audiobuf, 0, mixed * sizeof(int16_t));
                 totalBytesMixed += mixed * sizeof(int16_t);
             }
 
