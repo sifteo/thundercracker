@@ -165,7 +165,7 @@ do { \
  * If the scripting backend is set to `NONE`, LOG() messages behave normally.
  * If a different scripting engine is specified, however, fully formatted
  * LOG() text is accumulated in a buffer in Siftulator until such time as
- * thhe scripting backend is set back to `NONE`. At that moment, the scripting
+ * the scripting backend is set back to `NONE`. At that moment, the scripting
  * backend has a chance to synchronously interpret the buffer of logged text.
  */
 #define SCRIPT_TYPE(_type) \
