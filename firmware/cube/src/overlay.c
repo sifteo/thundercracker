@@ -26,8 +26,10 @@ static void overlay_memory() __naked {
 	.area DSEG    (DATA)
 
 _x_bg0_first_w::
+_lcd_window_x::
 	.ds 1
 _x_bg0_last_w::
+_lcd_window_y::
 	.ds 1
 _x_bg0_first_addr::
 	.ds 1
