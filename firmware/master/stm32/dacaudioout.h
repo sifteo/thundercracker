@@ -11,8 +11,7 @@
 #include "hardware.h"
 #include "hwtimer.h"
 
-#include "ringbuffer.h"
-#include "audiooutdevice.h"
+#include "audiobuffer.h"
 class AudioMixer;
 
 class DacAudioOut
@@ -40,8 +39,7 @@ private:
     int dacChan;
     HwTimer sampleTimer;
 
-    RingBuffer<AudioOutDevice::BufferSize> buf;
-
+    AudioBuffer buf;
     AudioMixer *mixer;
 
     void dmaIsr(uint32_t flags);

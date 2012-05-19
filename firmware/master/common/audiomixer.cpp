@@ -4,7 +4,7 @@
  */
 
 #include "audiomixer.h"
-#include "audiooutdevice.h"
+#include "audiobuffer.h"
 #include "flash_blockcache.h"
 #include <stdio.h>
 #include <string.h>
@@ -81,7 +81,7 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 */
 void AudioMixer::pullAudio(void *p) {
     if (p == NULL) return;
-    RingBuffer<AudioOutDevice::BufferSize> *buf = static_cast<RingBuffer<AudioOutDevice::BufferSize>*>(p);
+    AudioBuffer *buf = static_cast<AudioBuffer*>(p);
     if (buf->writeAvailable() < sizeof(int16_t)) return;
 
     unsigned bytesToMix;

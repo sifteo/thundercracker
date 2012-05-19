@@ -7,7 +7,7 @@
 #define PORTAUDIO_OUT_DEVICE_H_
 
 #include "portaudio.h"
-#include "audiooutdevice.h"
+#include "audiobuffer.h"
 #include "ringbuffer.h"
 
 class AudioMixer;
@@ -23,7 +23,7 @@ public:
 private:
     PaStream *outStream;
     AudioMixer *mixer;
-    RingBuffer<AudioOutDevice::BufferSize> buf;
+    AudioBuffer buf;
 
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,
