@@ -19,16 +19,9 @@ extern "C" {
 
 typedef uint8_t _SYSAudioChannelID;     /// Audio channel slot index
 #define _SYS_AUDIO_INVALID_CHANNEL_ID   ((_SYSAudioChannelID)-1)
-
-// NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
-// but must also accommodate a full frame's worth of speex data. If we go narrowband,
-// that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
-// so we need to kick up to 1024 bytes. kind of a lot :/
-#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
 #define _SYS_AUDIO_MAX_CHANNELS         8
-
-#define _SYS_AUDIO_MAX_VOLUME       256   // Guaranteed to be a power of two
-#define _SYS_AUDIO_DEFAULT_VOLUME   128
+#define _SYS_AUDIO_MAX_VOLUME           256   // Guaranteed to be a power of two
+#define _SYS_AUDIO_DEFAULT_VOLUME       128
 
 /*
  * Types of audio supported by the system
@@ -97,13 +90,6 @@ struct _SYSXMSong {
     uint16_t tempo;                 /// Default playback speed (ticks)
     uint16_t bpm;                   /// Default beats per minute (notes)
 };
-
-struct _SYSAudioBuffer {
-    uint16_t head;          /// Index of the next sample to read
-    uint16_t tail;          /// Index of the next empty slot to write into
-    uint8_t buf[_SYS_AUDIO_BUF_SIZE];
-};
-
 
 #ifdef __cplusplus
 }  // extern "C"

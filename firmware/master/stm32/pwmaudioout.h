@@ -11,7 +11,6 @@
 #include "hwtimer.h"
 
 #include "audiobuffer.h"
-#include "audiooutdevice.h"
 class AudioMixer;
 
 class PwmAudioOut
@@ -48,8 +47,6 @@ private:
     GPIOPin outB;
 
     AudioBuffer buf;
-    _SYSAudioBuffer sys;
-
     AudioMixer *mixer;
 
     void dmaIsr(uint32_t flags);

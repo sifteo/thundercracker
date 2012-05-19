@@ -4,6 +4,7 @@
  */
 
 #include "audiomixer.h"
+#include "audiobuffer.h"
 #include "flash_blockcache.h"
 #include <stdio.h>
 #include <string.h>

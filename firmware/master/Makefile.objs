@@ -20,7 +20,6 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/audiomixer.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
     $(MASTER_DIR)/common/audiosampledata.o \
-    $(MASTER_DIR)/common/audiobuffer.o \
     $(MASTER_DIR)/common/audiochannel.o \
     $(MASTER_DIR)/common/xmtrackerpattern.o \
     $(MASTER_DIR)/common/xmtrackerplayer.o \
