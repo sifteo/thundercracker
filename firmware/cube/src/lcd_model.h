@@ -325,9 +325,6 @@ static const __code uint8_t lcd_setup_table[] =
     2, LCD_CMD_TEON, 0x00,
     2, LCD_CMD_NORMAL, 0x00,
 
-    // RASET happens at every frame, but CASET should happen once
-    5, LCD_CMD_CASET, 0, LCD_COL_ADDR(0), 0, LCD_COL_ADDR(127),
-
     // Use 16-bit color mode
     2, LCD_CMD_COLMOD, LCD_COLMOD_16,
 

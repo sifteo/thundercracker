@@ -117,7 +117,7 @@ public:
 
     /**
      * Map a view of the provided Volume, which must contain an ELF binary.
-     * Invalidates any previously created mappings.
+     * No other MappedVolume instances may exist at this time.
      */
     explicit MappedVolume(Volume vol)
         : vol(vol), offset(_SYS_elf_map(vol)) {
@@ -126,6 +126,9 @@ public:
 
     ~MappedVolume() {
         debugInstanceCounter(-1);
+
+        // Reclaim a little bit of memory by unmapping
+        _SYS_elf_map(0);
     }
 
     /// Returns the Volume associated with this mapping

@@ -158,7 +158,9 @@ void lcd_begin_frame()
 {
     uint8_t flags = vram.flags;
     uint8_t mode = vram.mode;
-    uint8_t first_line = vram.first_line;
+
+    lcd_window_x = 0;
+    lcd_window_y = vram.first_line;
 
     /*
      * Wake up the LCD controller, if necessary.
@@ -194,39 +196,16 @@ void lcd_begin_frame()
     }
 
     LCD_WRITE_BEGIN();
-    LCD_CMD_MODE();
 
     // Set addressing mode
+    LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_MADCTR);
     LCD_DATA_MODE();
     LCD_BYTE(LCD_MADCTR_NORMAL ^ (flags & LCD_MADCTR_VRAM));
-    LCD_CMD_MODE();
 
-    // Set the row address to first_line
-    LCD_BYTE(LCD_CMD_RASET);
-    LCD_DATA_MODE();
-    LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(first_line));
-    LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
-    LCD_CMD_MODE();
+    // Set row/column addressing, and start RAMWR.
+    lcd_address_and_write();
 
-    /*
-     * Start writing (RAMWR command).
-     *
-     * We have to do this particular command -> data transition
-     * somewhat gingerly, since the Truly LCD is really picky. If we
-     * transition from command to data while the write strobe is low,
-     * it will falsely detect that as an additional byte-write that we
-     * didn't intend.
-     *
-     * This paranoia is unnecessary but harmless on the Giantplus LCD.
-     */
-
-    LCD_BYTE(LCD_CMD_NOP);
-    ADDR_PORT = 1;
-    LCD_BYTE(LCD_CMD_RAMWR);
-    LCD_DATA_MODE();
     LCD_WRITE_END();
 
     // Vertical sync
@@ -251,7 +230,7 @@ void lcd_end_frame()
      */
 
     static const __code uint8_t table[] = {
-        1, LCD_CMD_DISPON, 0x00,
+        2, LCD_CMD_DISPON, 0x00,
         0,
     };
 
@@ -267,4 +246,68 @@ void lcd_end_frame()
     // until after the first frame has fully rendered.
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
 #endif
+}
+
+void lcd_address_and_write(void)
+{
+    /*
+     * Change the row/column address, and start a RAMWR command.
+     *
+     * Assumes we're already set up for writing to the LCD.
+     * Leaves with the bus in data mode.
+     */
+
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_CASET);
+    LCD_DATA_MODE();
+    LCD_BYTE(0);
+    LCD_BYTE(LCD_COL_ADDR(lcd_window_x));
+    LCD_BYTE(0);
+    LCD_BYTE(LCD_COL_ADDR(LCD_WIDTH - 1));
+
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_RASET);
+    LCD_DATA_MODE();
+    LCD_BYTE(0);
+    LCD_BYTE(LCD_ROW_ADDR(lcd_window_y));
+    LCD_BYTE(0);
+    LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
+
+    /*
+     * Start writing (RAMWR command).
+     *
+     * We have to do this particular command -> data transition
+     * somewhat gingerly, since the Truly LCD is really picky. If we
+     * transition from command to data while the write strobe is low,
+     * it will falsely detect that as an additional byte-write that we
+     * didn't intend.
+     *
+     * This paranoia is unnecessary but harmless on the Giantplus LCD.
+     */
+
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_NOP);
+    ADDR_PORT = 1;
+    LCD_BYTE(LCD_CMD_RAMWR);
+    LCD_DATA_MODE();
+}
+
+void vram_atomic_copy() __naked
+{
+    // dptr=src, r0=dest, r1=count
+
+    radio_irq_disable();
+    __asm
+1$:
+        movx    a, @dptr
+        mov     @r0, a
+        inc     dptr
+        inc     r0
+        djnz    r1, 1$
+    __endasm;
+    radio_irq_enable();
+
+    __asm    
+        ret
+    __endasm;
 }

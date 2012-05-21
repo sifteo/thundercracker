@@ -138,8 +138,9 @@ static void flash_autoerase(void)
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0;
 
-    // XXX: Critical section only needed for WORD_MODE hack below.
+    #if FLASH_PROGRAM_MODE == WORD_MODE
     radio_critical_section({
+    #endif
 
         // Common unlock prefix for all erase ops
         flash_prefix_aa_55();
@@ -174,8 +175,8 @@ static void flash_autoerase(void)
             ADDR_PORT = 0;
             BUS_PORT = 0x30;
             FLASH_CMD_STROBE();
-        #endif
     )};
+    #endif
 
     // Wait for completion
     FLASH_OUT();

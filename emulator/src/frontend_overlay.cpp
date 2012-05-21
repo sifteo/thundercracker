@@ -65,7 +65,7 @@ void FrontendOverlay::draw()
         
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
-            cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getWriteCount());
+            cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getFrameCount());
             snprintf(cubes[i].fps, sizeof cubes[i].fps,
                      "#%d - %.1f FPS", i, cubes[i].lcd_wr.getHZ());
         }

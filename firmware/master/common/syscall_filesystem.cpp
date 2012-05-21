@@ -100,7 +100,15 @@ uint32_t _SYS_elf_map(_SYSVolumeHandle volHandle)
      * address space. Returns an offset that can be added to a normal
      * flash VA to convert it into the mapped address, equal to the
      * mapped location of the read-only data segment minus its VA.
+     *
+     * If volHandle==0, unmaps the previous mapping and leaves
+     * nothing mapped in its place.
      */
+
+    if (volHandle == 0) {
+        SvmLoader::secondaryUnmap();
+        return 0;
+    }
 
     FlashVolume vol(volHandle);
     if (!vol.isValid()) {

@@ -35,6 +35,10 @@ void lcd_sleep();
 void lcd_begin_frame();
 void lcd_end_frame();
 
+extern uint8_t lcd_window_x;
+extern uint8_t lcd_window_y;
+void lcd_address_and_write();
+
 #define LCD_WRITE_BEGIN() {                     \
         BUS_DIR = 0;                            \
     }
@@ -82,6 +86,13 @@ void addr_inc32() __naked;
 
 #define ASM_ADDR_INC2()   __endasm; ADDR_INC2(); __asm
 #define ASM_ADDR_INC4()   __endasm; ADDR_INC4(); __asm
+
+/*
+ * VRAM utilities
+ */
+
+// dptr=src, r0=dest, r1=count
+void vram_atomic_copy() __naked;
 
 
 #endif

@@ -125,7 +125,7 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
         NULL                                // hostApiSpecificStreamInfo
     };
 
-    buf.init(&this->sysbuf);
+    buf.init();
 
     int rate = 0;
     switch (samplerate) {

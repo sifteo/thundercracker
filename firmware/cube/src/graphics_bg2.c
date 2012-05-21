@@ -190,19 +190,12 @@ void vm_bg2(void)
      * We do this as a fast block copy, in assembly.
      */
 
-    radio_irq_disable();
     __asm
         mov     dptr, #_SYS_VA_BG2_AFFINE
         mov     r0, #_bg2_state
         mov     r1, #BG2_STATE_SIZE
-5$:
-        movx    a, @dptr
-        mov     @r0, a
-        inc     dptr
-        inc     r0
-        djnz    r1, 5$
+        lcall   _vram_atomic_copy
     __endasm ;
-    radio_irq_enable();
     
     // We pre-increment in the loop below. Compensate by decrementing first.
     bg2_state.affine.cx -= bg2_state.affine.xx;
