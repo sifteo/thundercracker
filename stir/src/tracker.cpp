@@ -164,8 +164,9 @@ bool XmTrackerLoader::readNextInstrument()
         return true;
     }
     if (nSamples > 1) {
-        log->error("%s, instrument %u: found %u samples, expected 1", filename, instruments.size(), nSamples);
-        return false;
+        log->error("%s, instrument %u has %u samples, discarding all but sample 0.", filename, instruments.size(), nSamples);
+        log->error("Warning: playback of %s may differ significantly from reference!", filename);
+        nSamples--;
     }
 
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
@@ -269,8 +270,18 @@ bool XmTrackerLoader::readNextInstrument()
         sample.loopEnd += sample.loopStart - 1;
     }
 
+    // Fast-forward through the extra sample headers, if any.
+    uint32_t skipData = 0;
+    while (nSamples--) {
+        skipData += get32();
+        seek(4 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 22);
+    }
+
     // Read and process sample
     if (!readSample(instrument)) return false;
+
+    // Fast-forward through the superfluous sample data, if any.
+    if (skipData) seek(skipData);
 
     /*
      * That's it for instrument/sample data.
