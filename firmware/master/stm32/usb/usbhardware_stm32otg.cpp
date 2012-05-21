@@ -18,6 +18,9 @@ namespace UsbHardware {
 
 void init()
 {
+    // turn on the peripheral clock
+    RCC.AHBENR |= (1 << 12);
+
     // Enable VBUS sensing in device mode and power down the PHY
     OTG.global.GCCFG |= (1 << 19) |     // VBUSBSEN
                         (1 << 16);      // PWRDWN

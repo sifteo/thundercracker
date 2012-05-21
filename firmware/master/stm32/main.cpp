@@ -18,6 +18,7 @@
 #include "button.h"
 #include "svmloader.h"
 #include "powermanager.h"
+#include "crc.h"
 
 /*
  * Application specific entry point.
@@ -81,6 +82,8 @@ int main()
 
     SysTime::init();
     SysTime::Ticks start = SysTime::ticks();
+
+    Crc32::init();
 
     /*
      * NOTE: the radio has 2 100ms delays on a power on reset: one before
