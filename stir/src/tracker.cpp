@@ -166,8 +166,8 @@ bool XmTrackerLoader::readNextInstrument()
     if (nSamples > 1) {
         log->error("%s, instrument %u has %u samples, discarding all but sample 0.", filename, instruments.size(), nSamples);
         log->error("Warning: playback of %s may differ significantly from reference!", filename);
-        nSamples--;
     }
+    nSamples--;
 
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
