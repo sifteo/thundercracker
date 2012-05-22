@@ -277,6 +277,17 @@ uint32_t AudioMixer::pos(_SYSAudioChannelID ch)
     return 0;
 }
 
+void AudioMixer::setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode)
+{
+    // Invalid channel?
+    if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
+        ASSERT(ch < _SYS_AUDIO_MAX_CHANNELS);
+        return;
+    }
+
+    channelSlots[ch].setLoop(loopMode);
+}
+
 void AudioMixer::setTrackerCallbackInterval(uint32_t usec)
 {
     static const uint64_t kMicroSecondsPerSecond = 1000000;

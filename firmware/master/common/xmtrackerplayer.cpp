@@ -214,8 +214,13 @@ inline void XmTrackerPlayer::loadNextNotes()
         if (channel.start && note.instrument >= song.nInstruments) {
             channel.start = false;
         }
-        // Stop playing/don't play when no sample data or note
+        /* Don't play when:
+         * 1) computed note is out of range
+         * 2) note is not a valid playing note
+         * 3) no sample data
+         */
         if (channel.realNote(note.note) > XmTrackerPattern::kMaxNote ||
+            !channel.realNote(note.note) ||
             !channel.instrument.sample.pData)
         {
             channel.start = false;
@@ -973,6 +978,15 @@ void XmTrackerPlayer::commit()
         }
 
         channel.active = mixer.isPlaying(CHANNEL_FOR(i));
+
+        /* If note has been ended by kNoteOff, disable looping and let the
+         * sample run itself out.
+         */
+        if (channel.note.note == XmTrackerPattern::kNoteOff &&
+            mixer.isPlaying(CHANNEL_FOR(i)))
+        {
+            mixer.setLoop(CHANNEL_FOR(i), _SYS_LOOP_ONCE);
+        }
 
         /* Final volume is computed from the current channel volume, the
          * current state of the instrument's volume envelope, sample fadeout,
