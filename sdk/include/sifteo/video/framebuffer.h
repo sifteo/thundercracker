@@ -363,7 +363,7 @@ struct StampDrawable {
     
     /**
      * Set the horizontal window. This is the mode-specific X-axis
-     * counterpart to VideoBuffer:setWindow().
+     * counterpart to VideoBuffer::setWindow().
      *
      * We start drawing at 'firstColumn', and draw a total of 'numColumns' pixels
      * per line. If numColumns is greater than the framebuffer width,
@@ -376,7 +376,7 @@ struct StampDrawable {
 
     /**
      * Set both the horizontal and vertical windows, to define a 2D
-     * box of pixels that we'll draw into. If either dimensio of this
+     * box of pixels that we'll draw into. If either dimension of this
      * box is larger than our framebuffer, the framebuffer will be tiled.
      */
     void setBox(Int2 topLeft, Int2 size) {

@@ -270,14 +270,39 @@ Only the first two entries of Sifteo::Colormap are used. The colormap lives in t
 
 ## FB128
 
-The last of our framebuffer modes is __FB128__. As the name would imply, it is 128 pixels wide. Like __FB64__, it is 1 bit per pixel. (2-color)
+The last of our pure framebuffer modes is __FB128__. As the name would imply, it is 128 pixels wide. Like __FB64__, it is 1 bit per pixel. (2-color)
 
-This is the only framebuffer mode which does not employ any scaling. Each pixel maps directly to one pixel on the display. This makes it a much more generally useful mode, but at a cost: There is only enough RAM for 48 rows of pixels. FB128 is a __128x48__ pixel mode which is repeated vertically if the display window is more than 48 rows high.
+This framebuffer mode does not employ any scaling. Each pixel maps directly to one pixel on the display. This makes it a much more generally useful mode, but at a cost: There is only enough RAM for 48 rows of pixels. FB128 is a __128x48__ pixel mode which is repeated vertically if the display window is more than 48 rows high.
 
-This mode is particularly useful for text rendering, since it is the only efficient way to display fonts with proportional spacing. The SDK includes a __text__ example which makes use of the SOLID and FB128 modes:
+The FB128 mode is particularly useful for text rendering, since it is the most efficient way to display fonts with proportional spacing. The SDK includes a __text__ example which makes use of the SOLID and FB128 modes:
 
 ![](@ref text-example.png)
 
 This mode uses the Sifteo::FBDrawable template as well. Sifteo::FB128Drawable is a typedef for the specialization of this template used in FB128 mode, and you can find an instance of this class as the *fb128* member inside Sifteo::VideoBuffer.
 
 Only the first two entries of Sifteo::Colormap are used. The colormap lives in the *colormap* member of Sifteo::VideoBuffer.
+
+## STAMP
+
+The __STAMP__ mode is a special-purpose framebuffer which supports tiling, two-dimensional windowing, and 1-bit _color key_ transparency.
+
+This mode is intended for various special effects which prefer to operate in _immediate mode_. Instead of composing a full scene in Video RAM and drawing it all in one pass, _immediate mode_ refers to the technique of drawing only a small part of the scene during each hardware "frame". This is analogous to other rendering models you may be familiar with, such as OpenGL, in which each primitive is independently drawn to the screen.
+
+There are some important downsides to immediate mode rendering which typically make it inferior to the tile-based video modes above:
+
+- It is __slower__, because the Sifteo Cube hardware is not optimized for the performance of modes like STAMP.
+- It is not double-buffered: you're drawing directly to the same display memory which is scanned out to the LCD. So, most forms of animation will be accompanied with some amount of __flickering__.
+
+Nevertheless, this mode can be invaluable for certain kinds of special effects. Anything that builds up a scene gradually, such as a painting game, may use the STAMP mode as its _brush_. You can use this mode for full-screen stippling effects, for simulating fade-out. This mode may also be useful for text overlays.
+
+The _STAMP_ mode allows a portion of Video RAM to be interpreted as a framebuffer with variable dimensions. Any size may be used, as long as the width is even (making it an integral number of bytes) and the total number of pixels is less than or equal to __1536__. For example, you could use a 128x12 framebuffer, or 64x24, or 32x32.
+
+Just like the FB32 mode, we use a 16-entry color lookup table. This can be accessed via Sifteo::Colormap, which lives in the *colormap* member of Sifteo::VideoBuffer. One of these colormap indices may optionally be designated as the transparent "key" index. Any pixels matching that index will be skipped entirely rather than drawn to the framebuffer.
+
+This small framebuffer repeats in both axes, just like in FB128 mode. Horizontal windowing may be used to restrict the rendering area to a box equal in size to the framebuffer. In this usage, STAMP mode can be used much like sprites, but without erasing any drawing already present on the display. If the box is smaller, the framebuffer is cropped. If it's larger, the framebuffer repeats.
+
+![](@ref stampy.png)
+
+The __stampy__ SDK example uses this video mode both to draw a sprite-like character bouncing around the screen, and to use a time-variant stipple pattern in order to "dissolve" the trail of images that is left behind as the character bounces.
+
+The Sifteo::StampDrawable object acts as an accessor for the STAMP mode's horizontal windowing and color-keying parameters. You can find an instance of this class as the *stamp* member inside Sifteo::VideoBuffer. It provides accessors which retrieve a Sifteo::FBDrawable instance of the right geometry, which you may use to draw pixel data to the mode's framebuffer memory.
