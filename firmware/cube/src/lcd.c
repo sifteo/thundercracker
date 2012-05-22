@@ -294,7 +294,8 @@ void lcd_address_and_write(void)
 
 void vram_atomic_copy() __naked
 {
-    // dptr=src, r0=dest, r1=count
+    // dptr=src, r0=dest, r1=count.
+    // Only trashes a, r0, r1, and dptr.
 
     radio_irq_disable();
     __asm
