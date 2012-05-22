@@ -38,6 +38,5 @@ void vm_solid(void)
         djnz    r1, 1$
     __endasm ;
 
-    LCD_WRITE_END();
     lcd_end_frame();
 }

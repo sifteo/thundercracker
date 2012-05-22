@@ -52,26 +52,16 @@ static void vm_stamp_pixel() __naked __using(GFX_BANK)
         lcall   _lcd_address_and_write
         inc     r5
 
-        mov     _DPS, #1                ; Load colormap index, via DPTR1
-        rl      a
-        mov     _DPL1, a
-        movx    a, @dptr
-        mov     r0, a
-        inc     dptr
-        movx    a, @dptr
-        mov     _DPS, #0
+        ljmp    _vm_fb32_pixel
 
-        PIXEL_FROM_REGS(r0, a)          ; Draw a single pixel
-
-        ret
     __endasm ;
 }
 
+extern void vm_stamp_latch_parameters() __naked;
 static void vm_stamp_line(uint16_t src) __naked __using(GFX_BANK)
 {
     src = src;
     __asm
-        mov     _DPH1, #(_SYS_VA_COLORMAP >> 8)
         mov     psw, #(GFX_BANK << 3)
 
         ; Reuse height reg as pitch backup
@@ -109,53 +99,49 @@ static void vm_stamp_line(uint16_t src) __naked __using(GFX_BANK)
 
         djnz    r6, 1$          ; Next pixel
 
-        ; Clean up
+        ; Clean up, fall through to re-latch parameters
 3$:
         mov     psw, #0
-        ret
+ 
+        ; Latch parameters, copying them from VRAM to GFX_BANK.
+        ; Trashes dptr, r0, r1, and a.
 
-    __endasm ;
-}
-
-// Latch parameters, copying them from VRAM to GFX_BANK.
-// Trashes dptr, r0, r1, and a.
-static void vm_stamp_latch_parameters() __naked
-{
-    __asm
+_vm_stamp_latch_parameters:
         mov     dptr, #_SYS_VA_STAMP_PITCH
         mov     r0, #_gfxbank_pitch
         mov     r1, #5
         ljmp    _vram_atomic_copy
+
     __endasm ;
 }
 
 void vm_stamp(void)
 {
-    uint8_t y = vram.num_lines;
-    uint8_t heightCounter;
-    uint16_t src = 0;
-
-    vm_stamp_latch_parameters();
-    heightCounter = gfxbank_height;
-
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
+    vm_stamp_latch_parameters();
 
-    do {
-        vm_stamp_line(src);
-        vm_stamp_latch_parameters();
+    {
+        uint8_t y = vram.num_lines;
+        uint8_t heightCounter;
+        uint16_t src = 0;
 
-        if (--heightCounter) {
-            src += gfxbank_pitch;
-        } else {
-            heightCounter = gfxbank_height;
-            src = 0;
-        }
+        heightCounter = gfxbank_height;
 
-        lcd_window_y++;
+        do {
+            vm_stamp_line(src);
 
-    } while (--y);
+            if (!--heightCounter) {
+                heightCounter = gfxbank_height;
+                src = 0;
+            } else {
+                src += gfxbank_pitch;
+            }
 
-    LCD_WRITE_END();
+            lcd_window_y++;
+
+        } while (--y);
+    }
+
     lcd_end_frame();
 }

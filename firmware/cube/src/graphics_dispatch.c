@@ -52,6 +52,9 @@ void graphics_render(void) __naked
 
     global_busy_flag = 1;
 
+    // Set up colormap (Used by FB32, STAMP)
+    DPH1 = _SYS_VA_COLORMAP >> 8;
+
     /*
      * Video mode jump table.
      *

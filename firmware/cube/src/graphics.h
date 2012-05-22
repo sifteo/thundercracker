@@ -38,6 +38,9 @@ void vm_bg2();
  * Shared internal definitions
  */
 
+// Pixel plotter exported by FB32
+void vm_fb32_pixel() __naked;
+
 // Temporary bank used by some graphics modes
 #define GFX_BANK  2
 

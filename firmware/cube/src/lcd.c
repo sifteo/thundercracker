@@ -227,6 +227,9 @@ void lcd_end_frame()
      * It's important that we issue *some* kind of command here, to
      * take us out of RAMWR mode. This way, any spurious Write strobes
      * (e.g. from battery voltage sensing) won't generate pixels.
+     *
+     * Implies LCD_WRITE_END(), since this commonly occurs right before
+     * lcd_end_frame on framebuffer modes, and is harmless on other modes.
      */
 
     static const __code uint8_t table[] = {
@@ -235,6 +238,7 @@ void lcd_end_frame()
     };
 
     // Release the bus
+    LCD_WRITE_END();
     CTRL_PORT = CTRL_IDLE;
     
     lcd_cmd_table(table);
