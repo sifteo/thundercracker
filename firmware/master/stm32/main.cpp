@@ -28,28 +28,6 @@ int main()
 {
     PowerManager::init();
 
-    // This is the earliest point at which it's safe to use Usart::Dbg.
-    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-
-#ifndef DEBUG
-    FlashDevice::init();
-#else
-    DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
-                 (1 << 29) |        // TIM13 ""
-                 (1 << 28) |        // TIM12 ""
-                 (1 << 27) |        // TIM11 ""
-                 (1 << 26) |        // TIM10 ""
-                 (1 << 25) |        // TIM9 ""
-                 (1 << 20) |        // TIM8 ""
-                 (1 << 19) |        // TIM7 ""
-                 (1 << 18) |        // TIM6 ""
-                 (1 << 17) |        // TIM5 ""
-                 (1 << 13) |        // TIM4 ""
-                 (1 << 12) |        // TIM3 ""
-                 (1 << 11) |        // TIM2 ""
-                 (1 << 10);         // TIM1 ""
-#endif
-
     /*
      * Nested Vectored Interrupt Controller setup.
      *
@@ -82,6 +60,28 @@ int main()
 
     SysTime::init();
     SysTime::Ticks start = SysTime::ticks();
+
+    // This is the earliest point at which it's safe to use Usart::Dbg.
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+
+#ifndef DEBUG
+    FlashDevice::init();
+#else
+    DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
+                 (1 << 29) |        // TIM13 ""
+                 (1 << 28) |        // TIM12 ""
+                 (1 << 27) |        // TIM11 ""
+                 (1 << 26) |        // TIM10 ""
+                 (1 << 25) |        // TIM9 ""
+                 (1 << 20) |        // TIM8 ""
+                 (1 << 19) |        // TIM7 ""
+                 (1 << 18) |        // TIM6 ""
+                 (1 << 17) |        // TIM5 ""
+                 (1 << 13) |        // TIM4 ""
+                 (1 << 12) |        // TIM3 ""
+                 (1 << 11) |        // TIM2 ""
+                 (1 << 10);         // TIM1 ""
+#endif
 
     Crc32::init();
 
