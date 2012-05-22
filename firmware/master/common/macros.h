@@ -100,16 +100,18 @@ template <typename T> inline T clamp(T value, T low, T high)
 }
 
 /*
- * Scale 'value' between the ranges specified by min1 - max1 and min2 - max2
+ * Scale 'value' between the ranges specified by minIn/maxIn and minOut/maxOut.
+ *
+ * 'value' is expected to be in the range minIn - maxIn.
  */
-template <typename T> inline T scale(T value, T min1, T max1, T min2, T max2)
+template <typename T> inline T scale(T value, T minIn, T maxIn, T minOut, T maxOut)
 {
-    ASSERT(min1 < max1);
-    ASSERT(min2 < max2);
+    ASSERT(minIn < maxIn);
+    ASSERT(minOut < maxOut);
 
-    T range1 = (max1 - min1);
-    T range2 = (max2 - min2);
-    return (((value - min1) * range2) / range1) + min2;
+    T rangeIn = (maxIn - minIn);
+    T rangeOut = (maxOut - minOut);
+    return (((value - minIn) * rangeOut) / rangeIn) + minOut;
 }
 
 /**
