@@ -99,6 +99,19 @@ template <typename T> inline T clamp(T value, T low, T high)
     return value;
 }
 
+/*
+ * Scale 'value' between the ranges specified by min1 - max1 and min2 - max2
+ */
+template <typename T> inline T scale(T value, T min1, T max1, T min2, T max2)
+{
+    ASSERT(min1 < max1);
+    ASSERT(min2 < max2);
+
+    T range1 = (max1 - min1);
+    T range2 = (max2 - min2);
+    return (((value - min1) * range2) / range1) + min2;
+}
+
 /**
  * Round up to the nearest 'a'-byte boundary, assuming 'a' is a
  * constant power of two.
