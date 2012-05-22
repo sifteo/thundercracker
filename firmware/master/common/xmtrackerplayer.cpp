@@ -40,12 +40,12 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
     // Does the world make any sense? 
     if (!pSong->nPatterns) {
-        LOG((LGPFX"Error: Invalid song (no patterns)\n"));
+        LOG((LGPFX"Warning: Invalid song (no patterns).\n"));
         ASSERT(pSong->nPatterns);
         return false;
     }
     if (pSong->nChannels > _SYS_AUDIO_MAX_CHANNELS) {
-        LOG((LGPFX"Warning: Song has %u channels, %u supported\n",
+        LOG((LGPFX"Warning: Song has %u channels, %u supported.\n",
              pSong->nChannels, _SYS_AUDIO_MAX_CHANNELS));
         return false;
     }
@@ -55,8 +55,10 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
      * during playback, but it won't take long for the perp to notice.
      */
     for (unsigned i = 0; i < pSong->nChannels; i++)
-        if (AudioMixer::instance.isPlaying(CHANNEL_FOR(i)))
+        if (AudioMixer::instance.isPlaying(CHANNEL_FOR(i))) {
+            LOG((LGPFX"Warning: Channel %u is busy. Not playing module.\n", CHANNEL_FOR(i)));
             return false;
+        }
 
     // Ok, things look (probably) good.
     song = *pSong;
@@ -70,7 +72,10 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     memset(&next, 0, sizeof(next));
 
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
-    if (!isPlaying()) return false;
+    if (!isPlaying()) {
+        LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
+        return false;
+    }
 
     memset(channels, 0, sizeof(channels));
     for (unsigned i = 0; i < arraysize(channels); i++) {
@@ -135,14 +140,14 @@ inline void XmTrackerPlayer::loadNextNotes()
             phrase = next.phrase;
             memset(&loop, 0, sizeof(loop));
         } else if (next.phrase >= song.patternOrderTableSize) {
-            LOG((LGPFX"Warning: next phrase (%u) is larger than pattern order table (%u entries)\n",
+            LOG((LGPFX"Warning: next phrase (%u) is larger than pattern order table (%u entries).\n",
                  next.phrase, song.patternOrderTableSize));
             stop();
             return;
         }
 
         if (next.row >= pattern.nRows()) {
-            LOG((LGPFX"Warning: next row (%u) is larger than pattern (%u rows)\n",
+            LOG((LGPFX"Warning: next row (%u) is larger than pattern (%u rows).\n",
                  next.row, pattern.nRows()));
             stop();
             return;
@@ -151,7 +156,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         next.force = false;
 
 #ifdef XMTRACKERDEBUG
-        LOG((LGPFX"Debug: Advancing to phrase %u, row %u\n", phrase, next.row));
+        LOG((LGPFX"Debug: Advancing to phrase %u, row %u.\n", phrase, next.row));
 #endif
     }
 
@@ -321,12 +326,12 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
             break;
         }
         case 1:   // Ramp up
-            LOG(("%s:%d: NOT_TESTED: ramp vibrato\n", __FILE__, __LINE__));
+            LOG(("%s:%d: NOT_TESTED: ramp vibrato.\n", __FILE__, __LINE__));
             periodDelta = (channel.vibrato.phase % arraysize(sineTable)) * -8;
             if (channel.vibrato.phase >= arraysize(sineTable)) periodDelta += 255;
             break;
         case 2:   // Square
-            LOG(("%s:%d: NOT_TESTED: square vibrato\n", __FILE__, __LINE__));
+            LOG(("%s:%d: NOT_TESTED: square vibrato.\n", __FILE__, __LINE__));
             periodDelta = 255;
             if (channel.vibrato.phase >= arraysize(sineTable)) periodDelta = -periodDelta;
             break;
@@ -378,21 +383,21 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
 
     switch (command) {
         case vxSlideDown:
-            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideDown\n", __FILE__, __LINE__));
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideDown.\n", __FILE__, __LINE__));
             decrementVolume(channel.volume, param);
             break;
         case vxSlideUp:
-            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideUp\n", __FILE__, __LINE__));
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxSlideUp.\n", __FILE__, __LINE__));
             incrementVolume(channel.volume, param);
             break;
         case vxFineVolumeDown:
             if (ticks) break;
-            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown\n", __FILE__, __LINE__));
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown.\n", __FILE__, __LINE__));
             processVolumeSlideDown(channel, channel.volume, param);
             break;
         case vxFineVolumeUp:
             if (ticks) break;
-            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown\n", __FILE__, __LINE__));
+            if (!param) LOG(("%s:%d: NOT_IMPLEMENTED: empty param to vxFineVolumeDown.\n", __FILE__, __LINE__));
             processVolumeSlideUp(channel, channel.volume, param);
             break;
         case vxVibratoSpeed:
@@ -477,7 +482,7 @@ void XmTrackerPlayer::processArpeggio(XmTrackerChannel &channel)
     note += channel.realNote();
 
     if (note > XmTrackerPattern::kMaxNote) {
-        LOG((LGPFX"Notice: Clipped arpeggio (base note: %d, arpeggio: %02x)\n",
+        LOG((LGPFX"Notice: Clipped arpeggio (base note: %d, arpeggio: %02x).\n",
              channel.realNote(), channel.note.effectParam));
         note = XmTrackerPattern::kMaxNote;
     }
@@ -701,7 +706,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSetEnvelopePos: {
-            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x)\n", __FILE__, __LINE__, type));
+            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x).\n", __FILE__, __LINE__, type));
             if (!ticks) {
                 if (param >= channel.instrument.nVolumeEnvelopePoints) {
                     LOG((LGPFX"Warning: Position %u is out of bounds "
@@ -725,7 +730,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             if (ticks) break;
             if (param & 0xF0) channel.tremor.on = (param & 0xF0) >> 4;
             if (param & 0x0F) channel.tremor.off = param & 0x0F;
-            LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x)\n", __FILE__, __LINE__, type));
+            LOG(("%s:%d: NOT_TESTED: fxTremor fx(0x%02x).\n", __FILE__, __LINE__, type));
             break;
         }
         case fxExtraFinePorta: {
@@ -748,17 +753,17 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxGlissControl: {
-                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxGlissControl fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     break;
                 }
                 case fxVibratoControl: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NOT_TESTED: fxVibratoControl fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     channel.vibrato.type = nparam;
                     break;
                 }
                 case fxFinetune: {
-                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NOT_TESTED: fxFinetune fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     if (param & 0x8) {
                         // Signed nibble
                         channel.instrument.finetune -= 16 * ((~nparam & 0x0F) + 1);
@@ -769,7 +774,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 }
                 case fxLoopPattern: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     ASSERT_BREAK(!next.force);
 
                     if (!nparam) {
@@ -787,11 +792,11 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxTremoloControl: {
-                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxTremoloControl fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NEVER_IMPLEMENTED: fxTremoloControl fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     break;
                 }
                 case fxRetrigNote: {
-                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x)\n", __FILE__, __LINE__, type, param));
+                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     processRetrigger(channel, nparam);
                     break;
                 }
@@ -1057,7 +1062,7 @@ void XmTrackerPlayer::commit()
 uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
 {
     if (order >= song.patternOrderTableSize) {
-        LOG((LGPFX"Error: Order %u is larger than pattern order table (%u entries)\n",
+        LOG((LGPFX"Error: Order %u is larger than pattern order table (%u entries).\n",
              order, song.patternOrderTableSize));
         ASSERT(order < song.patternOrderTableSize);
         stop();
