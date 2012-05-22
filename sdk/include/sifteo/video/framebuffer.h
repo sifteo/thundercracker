@@ -300,6 +300,123 @@ typedef FBDrawable<32,32,4> FB32Drawable;
 typedef FBDrawable<64,64,1> FB64Drawable;
 typedef FBDrawable<128,48,1> FB128Drawable;
 
+
+/**
+ * A StampDrawable object VRAM accessor for the STAMP mode, a special
+ * purpose 16-color framebuffer mode which supports color-keying and
+ * tiling. It is so named because it can be used like a rubber stamp,
+ * to draw patterns or images over top of whatever already exists on the
+ * display.
+ */
+struct StampDrawable {
+    _SYSAttachedVideoBuffer sys;
+
+    /**
+     * Change the geometry of the framebuffer memory used by this stamp.
+     *
+     * The framebuffer can be any size, so long as the width is an even
+     * number of pixels (corresponding to an integer number of bytes),
+     * the total number of pixels <= 1536, and each dimension is <= 128.
+     */
+    void resizeFB(Int2 pixelSize) {
+        ASSERT((pixelSize.x & 1) == 0 &&
+            pixelSize.x * pixelSize.y <= 1536 &&
+            pixelSize.x <= 128 &&
+            pixelSize.y <= 128);
+    
+        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, stamp_pitch)/2,
+            (pixelSize.x >> 1) | (pixelSize.y << 8));
+    }
+
+    /**
+     * Obtain an FBDrawable accessor for the framebuffer memory, using
+     * the supplied framebuffer dimensions.
+     *
+     * Does not automatically resize the framebuffer to those dimensions;
+     * this is for cases when you know the framebuffer is already set up.
+     * If you don't know this for sure, or you're accessing the framebuffer
+     * for the first time without an explicit call to resize(), use initFB()
+     * instead.
+     */
+    template <unsigned tWidth, unsigned tHeight>
+    FBDrawable<tWidth, tHeight, 4>& getFB()
+    {
+        auto &fb = *reinterpret_cast<FBDrawable<tWidth, tHeight, 4>*>(this);
+        ASSERT(&fb.sys == &sys);
+        return fb;
+    }
+
+    /**
+     * Obtain an FBDrawable accessor for the framebuffer memory, using
+     * the supplied framebuffer dimensions. Automatically resizes the
+     * framebuffer to the specified dimensions, if necessary. Just like
+     * VideoBuffer::initMode() we automatically issue a System::finish()
+     * before resizing the framebuffer.
+     */
+    template <unsigned tWidth, unsigned tHeight>
+    FBDrawable<tWidth, tHeight, 4>& initFB()
+    {
+        System::finish();
+        resizeFB(vec(tWidth, tHeight));
+        return getFB<tWidth, tHeight>();
+    }
+    
+    /**
+     * Set the horizontal window. This is the mode-specific X-axis
+     * counterpart to VideoBuffer:setWindow().
+     *
+     * We start drawing at 'firstColumn', and draw a total of 'numColumns' pixels
+     * per line. If numColumns is greater than the framebuffer width,
+     * the framebuffer repeats horizontally.
+     */
+    void setHWindow(uint8_t firstColumn, uint8_t numColumns) {
+        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, stamp_x)/2,
+            firstColumn | (numColumns << 8));
+    }
+
+    /**
+     * Set both the horizontal and vertical windows, to define a 2D
+     * box of pixels that we'll draw into. If either dimensio of this
+     * box is larger than our framebuffer, the framebuffer will be tiled.
+     */
+    void setBox(Int2 topLeft, Int2 size) {
+        _SYS_vbuf_poke(&sys.vbuf, offsetof(_SYSVideoRAM, first_line)/2,
+            topLeft.y | (size.y << 8));
+        setHWindow(topLeft.x, size.x);
+    }
+
+    /**
+     * Set the palette index of the "key" color. Any pixel with this
+     * palette index is skipped, leaving a transparent "hole" at that pixel.
+     */
+    void setKeyIndex(unsigned index) {
+        _SYS_vbuf_pokeb(&sys.vbuf, offsetof(_SYSVideoRAM, stamp_key), index);
+    }
+
+    /**
+     * Disable transparency. This is equivalent to setting the key index to
+     * a color which is never used.
+     */
+    void disableKey() {
+        setKeyIndex(16);
+    }
+
+    /**
+     * Return the VideoBuffer associated with this drawable.
+     */
+    _SYSVideoBuffer &videoBuffer() {
+        return sys.vbuf;
+    }
+
+    /**
+     * Return the CubeID associated with this drawable.
+     */
+    CubeID cube() const {
+        return sys.cube;
+    }
+};
+
+
 /**
  * @} end addtogroup video
  */
