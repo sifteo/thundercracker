@@ -88,7 +88,7 @@
 #   endif
 #endif
 
-template <typename T> inline T clamp(const T& value, const T& low, const T& high)
+template <typename T> inline T clamp(T value, T low, T high)
 {
     if (value < low) {
         return low;
@@ -99,12 +99,19 @@ template <typename T> inline T clamp(const T& value, const T& low, const T& high
     return value;
 }
 
-template <typename T> inline T abs(const T& value)
+/*
+ * Scale 'value' between the ranges specified by minIn/maxIn and minOut/maxOut.
+ *
+ * 'value' is expected to be in the range minIn - maxIn.
+ */
+template <typename T> inline T scale(T value, T minIn, T maxIn, T minOut, T maxOut)
 {
-    if (value < 0) {
-        return -value;
-    }
-    return value;
+    ASSERT(minIn < maxIn);
+    ASSERT(minOut < maxOut);
+
+    T rangeIn = (maxIn - minIn);
+    T rangeOut = (maxOut - minOut);
+    return (((value - minIn) * rangeOut) / rangeIn) + minOut;
 }
 
 /**

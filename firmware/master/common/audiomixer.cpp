@@ -19,7 +19,6 @@ AudioMixer::AudioMixer() :
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
 {
-    Volume::init();
 }
 
 /*

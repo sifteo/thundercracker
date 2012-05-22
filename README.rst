@@ -75,6 +75,7 @@ Various dependencies are required:
 3. SDCC, a microcontroller cross-compiler used to build the cube firmware
 4. gcc for ARM (arm-none-eabi-gcc), used to build master-cube firmware.
 5. Python, for some of the code generation tools
+6. Doxygen, to build the SDK documentation
 
 Optional dependencies:
 
