@@ -284,7 +284,7 @@ Only the first two entries of Sifteo::Colormap are used. The colormap lives in t
 
 ## STAMP
 
-The __STAMP__ mode is a special-purpose framebuffer which supports tiling, two-dimensional windowing, and 1-bit _color key_ transparency.
+The __STAMP__ mode is a special-purpose framebuffer which supports tiling, two-dimensional windowing, and 1-bit _color key_ transparency. Like its rubber namesake, this stamp is good at splatting images on top of other images.
 
 This mode is intended for various special effects which prefer to operate in _immediate mode_. Instead of composing a full scene in Video RAM and drawing it all in one pass, _immediate mode_ refers to the technique of drawing only a small part of the scene during each hardware "frame". This is analogous to other rendering models you may be familiar with, such as OpenGL, in which each primitive is independently drawn to the screen.
 
