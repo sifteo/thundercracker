@@ -71,19 +71,19 @@ struct XmTrackerChannel {
         } tremor;
     };
 
-    inline uint8_t realNote(uint8_t pNote = XmTrackerPattern::kNoNote) const {
-        if (pNote >= XmTrackerPattern::kNoNote) {
-            if (note.note < XmTrackerPattern::kNoNote) {
-                pNote = note.note;
-            } else {
-                return 0;
-            }
-        }
+    inline uint8_t realNote(uint8_t pNote = 0) const {
+
+        // Implied argument
+        if (pNote == 0)
+            pNote = note.note;
+
+        if (pNote >= XmTrackerPattern::kNoNote)
+            return 0;
 
         pNote += instrument.relativeNoteNumber;
 
         if (!instrument.sample.pData ||
-            pNote >= XmTrackerPattern::kNoteOff)
+            pNote > XmTrackerPattern::kMaxNote)
         {
             return 0;
         }
