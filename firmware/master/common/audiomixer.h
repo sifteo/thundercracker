@@ -37,6 +37,8 @@ public:
     void setPos(_SYSAudioChannelID ch, uint32_t ofs);
     uint32_t pos(_SYSAudioChannelID ch);
 
+    void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
+
     bool active() const {
         return playingChannelMask != 0;
     }
