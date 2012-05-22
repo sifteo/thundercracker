@@ -88,21 +88,13 @@
 #   endif
 #endif
 
-template <typename T> inline T clamp(const T value, const T low, const T high)
+template <typename T> inline T clamp(T value, T low, T high)
 {
     if (value < low) {
         return low;
     }
     if (value > high) {
         return high;
-    }
-    return value;
-}
-
-template <typename T> inline T abs(const T value)
-{
-    if (value < 0) {
-        return -value;
     }
     return value;
 }
