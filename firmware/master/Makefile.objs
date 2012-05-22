@@ -60,6 +60,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o \
     $(MASTER_DIR)/stm32/pwmaudioout.stm32.o \
     $(MASTER_DIR)/stm32/dacaudioout.stm32.o \
+    $(MASTER_DIR)/stm32/volume.stm32.o \
     $(MASTER_DIR)/stm32/audiooutdevice.stm32.o \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
@@ -76,11 +77,11 @@ OBJS_STM32 = \
 
 # Sources for normal master firmware
 OBJS_STM32_MASTER = \
-    $(OBJS_STM32) \
-    $(MASTER_DIR)/stm32/main.stm32.o \
-    $(MASTER_DIR)/stm32/factorytest.stm32.o \
-    $(MASTER_DIR)/stm32/volume.stm32.o \
-    $(MASTER_DIR)/stm32/realtimeclock.stm32.o
+    $(OBJS_STM32)                                       \
+    $(MASTER_DIR)/stm32/main.stm32.o                    \
+    $(MASTER_DIR)/stm32/factorytest.stm32.o             \
+    $(MASTER_DIR)/stm32/realtimeclock.stm32.o           \
+    $(MASTER_DIR)/stm32/nrf24l01test.stm32.o
 
 # Sources for stm32-based test jig firmware
 OBJS_STM32_TESTJIG = \
