@@ -30,6 +30,7 @@
 #include "mc_timing.h"
 #include "lodepng.h"
 #include "crc.h"
+#include "volume.h"
 
 SystemMC *SystemMC::instance;
 std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
@@ -111,6 +112,7 @@ void SystemMC::threadFn(void *param)
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
     Crc32::init();
+    Volume::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
     Radio::init();
