@@ -8,8 +8,14 @@
  */
 
 #include <sifteo.h>
+#include <sifteo/menu.h>
+#include "assets.gen.h"
 using namespace Sifteo;
 
+
+#define NUM_CUBES 3
+VideoBuffer vid[CUBE_ALLOCATION];
+static AssetSlot MainSlot = AssetSlot::allocate();
 
 unsigned getMinCubes(MappedVolume &map)
 {
@@ -40,7 +46,6 @@ void bootstrapAssetGroup(AssetGroup &group, AssetSlot &slot, unsigned numCubes)
         loader.start(group, slot, getCubeVector(numCubes));
     }
 
-    VideoBuffer vid[CUBE_ALLOCATION];
     for (CubeID cube = 0; cube != numCubes; ++cube) {
         vid[cube].initMode(BG0_ROM);
         vid[cube].bg0rom.text(vec(1,1), "Bootstrapping");
@@ -117,6 +122,9 @@ void exec(Volume vol)
 
     LOG("LAUNCHER: Running volume %08x\n", vol.sys);
 
+    // Make way for the next ELF's assets.
+    MainSlot.erase();
+
     // Enable the game's minimum set of cubes.
     unsigned numCubes = getMinCubes(map);
     _SYS_enableCubes(getCubeVector(numCubes));
@@ -129,6 +137,7 @@ void exec(Volume vol)
 
 void main()
 {
+    SCRIPT(LUA, System():setAssetLoaderBypass(false));
     Array<Volume, 64> gGameList;
     Volume::list(Volume::T_GAME, gGameList);
 
@@ -146,7 +155,49 @@ void main()
 
     if (gGameList.count() == 1) {
         exec(gGameList[0]);
-    } else while (1) {
-        System::paint();
+    }
+
+    static struct MenuItem gItems[64];
+
+    // Self-bootstrapping
+    _SYS_enableCubes(getCubeVector(NUM_CUBES));
+
+    bootstrapAssetGroup(LauncherAssets, MainSlot, NUM_CUBES);
+
+    for(CubeID cube = 0; cube < NUM_CUBES; ++cube) {
+        auto &v = vid[cube];
+        v.initMode(BG0);
+        v.bg0.erase(StripeTile);
+        v.attach(cube);
+    }
+
+    for (unsigned i = 0; i < gGameList.count(); i++) {
+        MappedVolume map(gGameList[i]);
+
+        auto metacon = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
+        if (metacon) {
+            // XXX: DISABLED due to issue with ordinality
+            gItems[i].icon = &NoIcon;
+        } else {
+            gItems[i].icon = &NoIcon;
+        }
+
+        gItems[i].label = NULL;
+    }
+    gItems[gGameList.count()].icon = NULL;
+
+    static struct MenuAssets gAssets = {&BgTile, &Footer, NULL, {&Tip0, &Tip1, &Tip2, NULL}};
+
+    Menu m(vid[0], &gAssets, gItems);
+    m.setIconYOffset(8);
+
+    struct MenuEvent e;
+    while(m.pollEvent(&e)) {
+        switch(e.type) {
+            case MENU_ITEM_PRESS:
+                exec(gGameList[e.item]);
+            default:
+                break;
+        }
     }
 }

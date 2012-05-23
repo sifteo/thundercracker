@@ -219,6 +219,17 @@ public:
         bzero(group);
         group.sys.pHdr = translate(meta.pHdr);
     }
+
+    void writeAssetImage(const _SYSMetadataImage *meta, AssetImage &image)
+    {
+        bzero(image);
+        image.sys.pAssetGroup = translate(meta->groupHdr);
+        image.sys.width = meta->width;
+        image.sys.height = meta->height;
+        image.sys.frames = meta->frames;
+        image.sys.format = meta->format;
+        image.sys.pData = translate(meta->pData);
+    }
 };
 
 
