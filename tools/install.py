@@ -3,6 +3,8 @@ import sys, usb.core, usb.util
 IN_EP = 0x81
 OUT_EP = 0x1
 
+INSTALLER_HEADER = "\0\0\0\0"
+
 def getByte(dev, _timeout):
     return dev.read(IN_EP, 1, timeout = _timeout)[0]
 
@@ -20,10 +22,10 @@ if __name__ == '__main__':
     try:
         blob = open(filepath, 'rb').read()
         size = len(blob)
-        sz = ""
+        sz = INSTALLER_HEADER
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
             sz = sz + chr(c)
-			
+
         dev.set_configuration()
         dev.write(OUT_EP, sz)
         sys.stderr.write("erasing (please wait)...")
@@ -40,11 +42,12 @@ if __name__ == '__main__':
         sys.stderr.write("loading %s, %d bytes" % (filepath, size))
         count = 0
         while blob:
-            blockSize = min(64, len(blob))
+            blockSize = min(60, len(blob))
             count = count + 1
             if count % 100 == 0:
                 sys.stderr.write(".")
-            dev.write(OUT_EP, blob[:blockSize])
+            chunk = INSTALLER_HEADER + blob[:blockSize]
+            dev.write(OUT_EP, chunk)
             blob = blob[blockSize:]
 
         sys.stderr.write("\n")

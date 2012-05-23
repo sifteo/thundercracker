@@ -45,12 +45,31 @@ void init()
     timer.init(0xfff, 3);
 }
 
-int systemVolume()
+uint16_t systemVolume()
 {
     uint16_t reading = clamp(timer.lastReading(), calibratedMin, calibratedMax);
     uint16_t scaledVolume = scale(reading, calibratedMin, calibratedMax,
                                   (uint16_t)0, (uint16_t)_SYS_AUDIO_MAX_VOLUME);
     return scaledVolume;
+}
+
+uint16_t calibrate(CalibrationState state)
+{
+    uint16_t currentRawValue = timer.lastReading();
+
+    /*
+     * Save the currentRawValue as the calibrated value for the given state.
+     *
+     * TODO: determine how we're going to store calibration data and implement me!
+     */
+    switch (state) {
+    case CalibrationLow:
+        break;
+    case CalibrationHigh:
+        break;
+    }
+
+    return currentRawValue;
 }
 
 } // namespace Volume
