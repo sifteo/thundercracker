@@ -75,7 +75,9 @@ Note that reality is a little messier than this, since the system tries really h
 
 Due to the very limited amount of Video RAM available, the graphics engine defines several distinct *modes*, which each define a different behavior for the engine and potentially a different layout for the contents of Video RAM. These modes include different combinations of tiled layers and sprites, as well as low-resolution frame-buffer modes and a few additional special-purpose modes.
 
-Each of these modes, however, fits into a consistent overall rendering framework that provides a few constants that you can rely on no matter which video mode you use:
+Graphics modes are all mutually exclusive. Only a single mode may be active per-cube for a given call to Sifteo::System::paint(), and that mode may interpret Video RAM in a way which wouldn't make sense in any other mode. It is common, however, for modes to define themselves as supersets of other modes. For example, the __BG0__ and __BG0_BG1__ modes are mutually exclusive, and you can only paint with one or the other. But BG0_BG1 is defined as a mode which extends the Video RAM layout and rendering model that was introduced by BG0. Other modes, like __BG2__, have a completely distinct Video RAM layout and rendering model. Even though you can't use both BG0 and BG2 at the same time, you could use them in rapid succession in order to render different portions of the screen.
+
+Each of these modes fits into a consistent overall rendering framework that provides a few constants that you can rely on no matter which video mode you use:
 
 ![](@ref gfx-modes.png)
 
