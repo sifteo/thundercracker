@@ -8,18 +8,12 @@
 
 #include "gpio.h"
 
-class Button
+namespace Button
 {
-public:
-    static void init();
-    static void isr();
+    void init();
+    void onChange();
+    bool isPressed();
 
-    static inline bool isPressed() {
-        return homeButton.isHigh();
-    }
-
-private:
-    static GPIOPin homeButton;
-};
+} // namespace Button
 
 #endif /* BUTTON_H_ */
