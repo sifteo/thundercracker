@@ -8,6 +8,7 @@
 #include "usb/usbdevice.h"
 #include "usbprotocol.h"
 #include "volume.h"
+#include "homebutton.h"
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
@@ -74,7 +75,6 @@ void FactoryTest::usbHandler(const uint8_t *buf, unsigned len)
 {
     uint8_t cmd = buf[USBProtocol::HEADER_LEN];
     if (cmd < arraysize(handlers)) {
-        UART("factorytest handler\r\n");
         TestHandler handler = handlers[cmd];
         // arg[0] is always the 'command 'type' byte
         handler(len - USBProtocol::HEADER_LEN, buf + USBProtocol::HEADER_LEN);
@@ -207,11 +207,14 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
 }
 
 /*
- *
+ * no args - we just report the state of the home button.
  */
 void FactoryTest::homeButtonHandler(uint8_t argc, const uint8_t *args)
 {
+    const uint8_t buttonState = HomeButton::isPressed() ? 1 : 0;
 
+    const uint8_t response[] = { args[0], buttonState };
+    UsbDevice::write(response, sizeof response);
 }
 
 IRQ_HANDLER ISR_USART3()
