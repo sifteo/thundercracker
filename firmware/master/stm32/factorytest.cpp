@@ -65,6 +65,22 @@ void FactoryTest::onUartIsr()
     }
 }
 
+/*
+ * Dispatch test commands via USB.
+ * UsbMessages have a headers of UsbProtocol::HEADER_LEN bytes,
+ * followed by a byte of test command, followed by payload data.
+ */
+void FactoryTest::usbHandler(const uint8_t *buf, unsigned len)
+{
+    uint8_t cmd = buf[USBProtocol::HEADER_LEN];
+    if (cmd < arraysize(handlers)) {
+        UART("factorytest handler\r\n");
+        TestHandler handler = handlers[cmd];
+        // arg[0] is always the 'command 'type' byte
+        handler(len - USBProtocol::HEADER_LEN, buf + USBProtocol::HEADER_LEN);
+    }
+}
+
 /**************************************************************************
  * T E S T  H A N D L E R S
  *

@@ -20,7 +20,7 @@ public:
 
     static void init();
     static void onUartIsr();
-    static void onTestDataReceivedUSB(uint8_t *buf, unsigned len);
+    static void usbHandler(const uint8_t *buf, unsigned len);
 
 private:
     static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
