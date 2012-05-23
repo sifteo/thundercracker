@@ -514,7 +514,7 @@ struct VideoBuffer {
      * stream video data from this VideoBuffer to that cube.
      *
      * This call automatically reinitializes the change bitmap in this
-     * buffer, so that we'll resend its contents to the ube on next paint.
+     * buffer, so that we'll resend its contents to the cube on next paint.
      *
      * If this VideoBuffer was previously attached to a different cube,
      * you must manually attach() a different video buffer to the old
