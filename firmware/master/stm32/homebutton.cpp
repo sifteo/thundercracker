@@ -6,6 +6,8 @@
 #include "homebutton.h"
 #include "gpio.h"
 #include "board.h"
+#include "powermanager.h"
+#include "tasks.h"
 
 static GPIOPin homeButton = BTN_HOME_GPIO;
 
@@ -20,15 +22,29 @@ void init()
 }
 
 /*
-    Temporary home button handling: power off.
-    When we get a button edge, wait for the button to be held long enough
-    to be sure it's a shut down request, then blink the green LED to indicate
-    we're going away.
+    Called in ISR context when we detect an edge on the home button.
 */
 void onChange()
 {
     homeButton.irqAcknowledge();
 
+    Tasks::setPending(Tasks::HomeButton);
+}
+
+bool isPressed()
+{
+    return homeButton.isHigh();
+}
+
+/*
+ * Called from within Tasks::work to handle a button event on the main loop.
+ *
+ * Temporary home button handling: power off.
+ * Wait for the button to be held long enough to be sure it's a shut down request,
+ * then blink the green LED to indicate we're going away.
+ */
+void task(void *p)
+{
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_10MHZ);
     green.setLow();
@@ -53,23 +69,9 @@ void onChange()
         green.toggle();
     }
 
-    // release the power supply enable
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setLow();
-}
-
-bool isPressed()
-{
-    return homeButton.isHigh();
-}
-
-/*
- * Called from within Tasks::work to handle a button event on the main loop.
- */
-void task(void *p)
-{
-
+    PowerManager::shutdown();
+    for (;;)
+        ;
 }
 
 } // namespace Button
