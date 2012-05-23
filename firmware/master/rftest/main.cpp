@@ -9,7 +9,7 @@
 #include "systime.h"
 #include "radio.h"
 #include "nrf24l01.h"
-#include "button.h"
+#include "homebutton.h"
 
 /*
  * Bootloader application specific entry point.
@@ -22,7 +22,7 @@ int main()
     SysTime::init();
     SysTime::Ticks start = SysTime::ticks();
 
-    Button::init();
+    HomeButton::init();
 
     while (SysTime::ticks() - start < SysTime::msTicks(110))
         ;
@@ -36,7 +36,7 @@ int main()
     const uint8_t channels[3] = { 2, 40, 80 };
 
     NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
-    bool lastButton = Button::isPressed();
+    bool lastButton = HomeButton::isPressed();
 
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_2MHZ);
@@ -44,7 +44,7 @@ int main()
 
     for (;;) {
 
-        bool button = Button::isPressed();
+        bool button = HomeButton::isPressed();
 
         if (lastButton != button) {
 

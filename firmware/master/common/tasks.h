@@ -17,6 +17,7 @@ public:
         AudioPull,
         Debugger,
         AssetLoader,
+        HomeButton,
     };
 
     static void init();

@@ -9,6 +9,12 @@
 #include "frontend.h"
 #include <time.h>
 
+/*
+ * NB: button handling should go through FrontendMothership once that
+ * is resurrected.
+ */
+#include "homebutton.h"
+
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
 
@@ -353,26 +359,31 @@ void GLFWCALL Frontend::onKey(int key, int state)
 {
     if (state == GLFW_PRESS) {
         switch (key) {
-        
+
         case 'H':
         case '/':
         case GLFW_KEY_F1:
             instance->overlay.toggleHelp();
             break;
-        
+
         case 'Q':
         case GLFW_KEY_ESC:
             instance->isRunning = false;
             break;
-        
+
         case '1':
             instance->normalViewExtent = instance->pixelViewExtent();
             break;
-        
+
         case '2':
             instance->normalViewExtent = instance->pixelViewExtent() / 2.0f;
             break;
-        
+
+        case 'B': {
+            HomeButton::onChange();
+            break;
+        }
+
         case 'Z':
             instance->toggleZoom ^= true;
             break;
@@ -380,7 +391,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case 'F':
             instance->toggleFullscreen();
             break;
-                
+
         case 'S': {
             std::string name = instance->createScreenshotName();
             instance->overlay.postMessage("Saved screenshot \"" + name + "\"");
@@ -418,7 +429,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case '=':
             instance->addCube();
             break;
-        
+
         case GLFW_KEY_BACKSPACE:
             instance->toggleRotationLock();
             break;
@@ -430,7 +441,16 @@ void GLFWCALL Frontend::onKey(int key, int state)
         
         // Any handled key resets the idle timer
         instance->idleFrames = 0;
-    }   
+
+    } else if (state == GLFW_RELEASE) {
+        switch (key) {
+
+        case 'B':
+            HomeButton::onChange();
+            break;
+
+        }
+    }
 }
 
 void Frontend::toggleFullscreen()
@@ -447,7 +467,7 @@ void Frontend::toggleFullscreen()
         glfwCloseWindow();
         openWindow(mode.Width, mode.Height, true);
     }
-}           
+}
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
 {

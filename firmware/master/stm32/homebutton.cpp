@@ -3,12 +3,15 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "button.h"
+#include "homebutton.h"
+#include "gpio.h"
 #include "board.h"
 
-GPIOPin Button::homeButton = BTN_HOME_GPIO;
+static GPIOPin homeButton = BTN_HOME_GPIO;
 
-void Button::init()
+namespace HomeButton {
+
+void init()
 {
     homeButton.setControl(GPIOPin::IN_FLOAT);
     homeButton.irqInit();
@@ -22,7 +25,7 @@ void Button::init()
     to be sure it's a shut down request, then blink the green LED to indicate
     we're going away.
 */
-void Button::isr()
+void onChange()
 {
     homeButton.irqAcknowledge();
 
@@ -56,6 +59,21 @@ void Button::isr()
     vcc20.setLow();
 }
 
+bool isPressed()
+{
+    return homeButton.isHigh();
+}
+
+/*
+ * Called from within Tasks::work to handle a button event on the main loop.
+ */
+void task(void *p)
+{
+
+}
+
+} // namespace Button
+
 #if (BOARD == BOARD_TC_MASTER_REV1)
 IRQ_HANDLER ISR_EXTI0()
 {
@@ -64,7 +82,7 @@ IRQ_HANDLER ISR_EXTI0()
 #elif (BOARD == BOARD_TC_MASTER_REV2)
 IRQ_HANDLER ISR_EXTI2()
 {
-    Button::isr();
+    HomeButton::onChange();
 }
 #elif (BOARD == BOARD_TEST_JIG)
 // this isr is used elsewhere for the test jig
