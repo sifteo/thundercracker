@@ -6,13 +6,13 @@
 #ifndef BUTTON_H_
 #define BUTTON_H_
 
-#include "gpio.h"
-
 namespace Button
 {
     void init();
     void onChange();
     bool isPressed();
+
+    void task(void *p);
 
 } // namespace Button
 

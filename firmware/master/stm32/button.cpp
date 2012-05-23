@@ -4,6 +4,7 @@
  */
 
 #include "button.h"
+#include "gpio.h"
 #include "board.h"
 
 static GPIOPin homeButton = BTN_HOME_GPIO;
@@ -61,6 +62,14 @@ void onChange()
 bool isPressed()
 {
     return homeButton.isHigh();
+}
+
+/*
+ * Called from within Tasks::work to handle a button event on the main loop.
+ */
+void task(void *p)
+{
+
 }
 
 } // namespace Button

@@ -31,6 +31,7 @@
 #include "lodepng.h"
 #include "crc.h"
 #include "volume.h"
+#include "button.h"
 
 SystemMC *SystemMC::instance;
 std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
@@ -111,6 +112,7 @@ void SystemMC::threadFn(void *param)
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
+    Button::init();
     Crc32::init();
     Volume::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
