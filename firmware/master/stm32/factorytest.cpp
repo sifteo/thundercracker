@@ -5,8 +5,11 @@
 
 #include "radio.h"
 #include "flash_device.h"
+#include "usb/usbdevice.h"
+#include "usbprotocol.h"
+#include "volume.h"
 
-uint8_t FactoryTest::commandBuf[MAX_COMMAND_LEN];
+uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
 
 /*
@@ -14,11 +17,14 @@ uint8_t FactoryTest::commandLen;
  * Order must match the Command enum.
  */
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
-    nrfCommsHandler,
-    flashCommsHandler,
-    flashReadWriteHandler,
-    ledHandler,
-    uniqueIdHandler
+    nrfCommsHandler,            // 0
+    flashCommsHandler,          // 1
+    flashReadWriteHandler,      // 2
+    ledHandler,                 // 3
+    uniqueIdHandler,            // 4
+    volumeCalibrationHandler,   // 5
+    batteryCalibrationHandler,  // 6
+    homeButtonHandler,          // 7
 };
 
 void FactoryTest::init()
@@ -40,14 +46,14 @@ void FactoryTest::onUartIsr()
     if (status & Usart::STATUS_RXED) {
 
         // avoid overflow - reset
-        if (commandLen >= MAX_COMMAND_LEN)
+        if (commandLen >= UART_MAX_COMMAND_LEN)
             commandLen = 0;
 
         commandBuf[commandLen++] = rxbyte;
 
-        if (commandBuf[LEN_INDEX] == commandLen) {
+        if (commandBuf[UART_LEN_INDEX] == commandLen) {
             // dispatch to the appropriate handler
-            uint8_t cmd = commandBuf[CMD_INDEX];
+            uint8_t cmd = commandBuf[UART_CMD_INDEX];
             if (cmd < arraysize(handlers)) {
                 TestHandler handler = handlers[cmd];
                 // arg[0] is always the command byte
@@ -71,7 +77,7 @@ void FactoryTest::onUartIsr()
  * len: 3
  * args[1] - radio tx power
  */
-void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
+void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
     Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
     Radio::setTxPower(pwr);
@@ -84,7 +90,7 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, uint8_t *args)
  * len: 2
  * no args
  */
-void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
+void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
 {
     FlashDevice::JedecID id;
     FlashDevice::readId(&id);
@@ -100,7 +106,7 @@ void FactoryTest::flashCommsHandler(uint8_t argc, uint8_t *args)
  * args[1] - sector number
  * args[2] - offset into sector
  */
-void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
+void FactoryTest::flashReadWriteHandler(uint8_t argc, const uint8_t *args)
 {
     uint32_t sectorAddr = args[1] * FlashDevice::SECTOR_SIZE;
     uint32_t addr = sectorAddr + args[2];
@@ -127,7 +133,7 @@ void FactoryTest::flashReadWriteHandler(uint8_t argc, uint8_t *args)
 /*
  * args[1] - color, bit0 == green, bit1 == red
  */
-void FactoryTest::ledHandler(uint8_t argc, uint8_t *args)
+void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
 {
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_2MHZ);
@@ -155,11 +161,37 @@ void FactoryTest::ledHandler(uint8_t argc, uint8_t *args)
 /*
  * No args - just return hw id.
  */
-void FactoryTest::uniqueIdHandler(uint8_t argc, uint8_t *args)
+void FactoryTest::uniqueIdHandler(uint8_t argc, const uint8_t *args)
 {
     uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof(response), args[0] };
     memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
     Usart::Dbg.write(response, sizeof response);
+}
+
+/*
+ * args[1]: position, 0 = low extreme, non-zero = high extreme
+ *
+ * response: test id, calibration state, 16-bit raw reading stored as calibration.
+ */
+void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
+{
+
+}
+
+/*
+ *
+ */
+void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
+{
+
+}
+
+/*
+ *
+ */
+void FactoryTest::homeButtonHandler(uint8_t argc, const uint8_t *args)
+{
+
 }
 
 IRQ_HANDLER ISR_USART3()
