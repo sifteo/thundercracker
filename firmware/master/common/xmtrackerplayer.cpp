@@ -56,8 +56,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
      */
     for (unsigned i = 0; i < pSong->nChannels; i++)
         if (AudioMixer::instance.isPlaying(CHANNEL_FOR(i))) {
-            LOG((LGPFX"Warning: Channel %u is busy. Not playing module.\n", CHANNEL_FOR(i)));
-            return false;
+            LOG((LGPFX"Warning: Channel %u is busy. Module may clobber SFX.\n", CHANNEL_FOR(i)));
         }
 
     // Ok, things look (probably) good.
@@ -74,6 +73,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
     if (!isPlaying()) {
         LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
+        song.nPatterns = 0;
         return false;
     }
 
