@@ -48,6 +48,9 @@ class System {
      * yield() may return at any time, including immediately after
      * it's called. There is no guarantee that any particular event
      * will have occurred before it returns.
+     *
+     * Handlers registered with Sifteo::Events may be dispatched immediately
+     * prior to returning from yield().
      */
 
     static void yield() {
@@ -65,6 +68,9 @@ class System {
      * fact occurred on a cube. If nothing changed, we won't redraw
      * that cube.  If no cubes need drawing, this function yields for
      * the duration of one frame.
+     *
+     * Handlers registered with Sifteo::Events may be dispatched immediately
+     * prior to returning from paint().
      */
 
     static void paint() {
@@ -92,6 +98,9 @@ class System {
      * frame rate. Normally it's desirable to be working on building
      * the next frame while the cubes are still busy rendering the
      * previous one.
+     *
+     * Unlike paint() and yield(), finish does *not* dispatch Sifteo::Events
+     * handler functions.
      */
 
     static void finish() {

@@ -53,7 +53,7 @@ void _SYS_paint(void)
 void _SYS_finish(void)
 {
     CubeSlots::finishCubes(CubeSlots::vecEnabled);
-    SvmRuntime::dispatchEventsOnReturn();
+    // Intentionally does _not_ dispatch events!
 }
 
 int64_t _SYS_ticks_ns(void)
