@@ -22,15 +22,8 @@ _SYSCubeIDVector getCubeVector(unsigned numCubes)
     return numCubes ? (0xFFFFFFFF << (32 - numCubes)) : 0;
 }
 
-void bootstrapAssetGroup(MappedVolume &map, unsigned numCubes,
-    const _SYSMetadataBootAsset &bootAsset)
+void bootstrapAssetGroup(AssetGroup &group, AssetSlot &slot, unsigned numCubes)
 {
-    // Construct an AssetGroup on the stack
-    AssetGroup group;
-    bzero(group);
-    group.sys.pHdr = map.translate(bootAsset.pHdr);
-    AssetSlot slot(bootAsset.slot);
-
     if (group.isInstalled(getCubeVector(numCubes))) {
         LOG("LAUNCHER: Bootstrap asset group %P already installed\n", group.sys.pHdr);
         return;
@@ -65,6 +58,17 @@ void bootstrapAssetGroup(MappedVolume &map, unsigned numCubes,
         }
         System::paint();
     }
+}
+
+void bootstrapMappedAssetGroup(MappedVolume &map, unsigned numCubes,
+    const _SYSMetadataBootAsset &bootAsset)
+{
+    // Construct an AssetGroup on the stack
+    AssetGroup group;
+    map.writeAssetGroup(bootAsset, group);
+    AssetSlot slot(bootAsset.slot);
+
+    bootstrapAssetGroup(group, slot, numCubes);
 }
 
 void bootstrapAssets(MappedVolume &map, unsigned numCubes)
@@ -102,7 +106,7 @@ void bootstrapAssets(MappedVolume &map, unsigned numCubes)
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
 
     for (unsigned i = 0; i < count; i++)
-        bootstrapAssetGroup(map, numCubes, vec[i]);
+        bootstrapMappedAssetGroup(map, numCubes, vec[i]);
 
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
 }
@@ -140,5 +144,9 @@ void main()
             v.sys, map.uuid()->bytes, map.title());
     }
 
-    exec(gGameList[0]);
+    if (gGameList.count() == 1) {
+        exec(gGameList[0]);
+    } else while (1) {
+        System::paint();
+    }
 }
