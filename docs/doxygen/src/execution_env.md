@@ -8,7 +8,7 @@ Sifteo applications are deployed as ELF binaries, a [standard file format](http:
 Sifteo applications run on the Sifteo Base, a (very) small mobile device with limited resources.
 
 ## Read-Write Data (RAM)
-Applications have a total of @b 32K RAM available, including static allocations and the stack. Dynamic memory allocation is not available.
+Applications have a total of @b 32K RAM available, including static allocations and the stack. The system does not provide any built-in dynamic memory allocation facility.
 
 ### Stack
 The size of the stack is equal to the total RAM available (32K) minus the total size of your application's static allocations.
