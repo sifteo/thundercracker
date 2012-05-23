@@ -136,6 +136,8 @@ bool UsbDevice::configured;
 */
 void UsbDevice::handleOUTData(void *p)
 {
+    Tasks::clearPending(Tasks::UsbOUT);
+
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {

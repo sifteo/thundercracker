@@ -12,7 +12,6 @@ class Tasks
 {
 public:
     enum TaskID {
-        UsbIN,
         UsbOUT,
         AudioPull,
         Debugger,
@@ -22,21 +21,27 @@ public:
 
     static void init();
     static void work();
-    static void setPending(TaskID id, void *p = 0, bool runAlways = false);
+
+    /*
+     * Tasks that have been set pending get called once each time
+     * Tasks::work() is run.
+     *
+     * Call clearPending() to unregister your task. You can pend it again
+     * at any time.
+     */
+    static void setPending(TaskID id, void *p = 0);
+    static void clearPending(TaskID id);
 
 private:
     typedef void (*TaskCallback)(void *);
 
     static uint32_t pendingMask;
-    static uint32_t alwaysMask;
     struct Task {
         TaskCallback callback;
         void *param;
     };
 
     static Task TaskList[];
-
-    static void doJobs(uint32_t &mask);
 };
 
 #endif // TASKS_H
