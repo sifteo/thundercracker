@@ -13,15 +13,15 @@ namespace Volume {
 
 void init()
 {
-	ASSERT(!initialized);
-	initialized = true;
+    ASSERT(!initialized);
+    initialized = true;
 }
 
-int systemVolume()
+uint16_t systemVolume()
 {
-	ASSERT(initialized);
+    ASSERT(initialized);
 
-	// TODO: hook this into something in the siftulator.
+    // TODO: hook this into something in the siftulator.
     return _SYS_AUDIO_MAX_VOLUME;
 }
 
