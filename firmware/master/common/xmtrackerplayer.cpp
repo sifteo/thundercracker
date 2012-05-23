@@ -74,6 +74,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     pattern.init(&song)->loadPattern(patternOrderTable(phrase));
     if (!isPlaying()) {
         LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
+        song.nPatterns = 0;
         return false;
     }
 
