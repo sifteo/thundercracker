@@ -3,13 +3,13 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "button.h"
+#include "homebutton.h"
 #include "gpio.h"
 #include "board.h"
 
 static GPIOPin homeButton = BTN_HOME_GPIO;
 
-namespace Button {
+namespace HomeButton {
 
 void init()
 {
@@ -82,7 +82,7 @@ IRQ_HANDLER ISR_EXTI0()
 #elif (BOARD == BOARD_TC_MASTER_REV2)
 IRQ_HANDLER ISR_EXTI2()
 {
-    Button::onChange();
+    HomeButton::onChange();
 }
 #elif (BOARD == BOARD_TEST_JIG)
 // this isr is used elsewhere for the test jig

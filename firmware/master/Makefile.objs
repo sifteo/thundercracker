@@ -50,7 +50,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/setup.stm32.o \
     $(MASTER_DIR)/stm32/radio.stm32.o \
     $(MASTER_DIR)/stm32/gpio.stm32.o \
-    $(MASTER_DIR)/stm32/button.stm32.o \
+    $(MASTER_DIR)/stm32/homebutton.stm32.o \
     $(MASTER_DIR)/stm32/spi.stm32.o \
     $(MASTER_DIR)/stm32/flash_device.stm32.o \
     $(MASTER_DIR)/stm32/nrf24l01.stm32.o \

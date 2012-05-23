@@ -7,7 +7,7 @@
 #include "audiomixer.h"
 #include "svmdebugger.h"
 #include "cubeslots.h"
-#include "button.h"
+#include "homebutton.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -27,7 +27,7 @@ Tasks::Task Tasks::TaskList[] = {
     { AudioMixer::pullAudio, 0},
     { SvmDebugger::messageLoop, 0},
     { CubeSlots::assetLoaderTask, 0 },
-    { Button::task, 0 },
+    { HomeButton::task, 0 },
 };
 
 void Tasks::init()

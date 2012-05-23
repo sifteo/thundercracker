@@ -3,10 +3,10 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef BUTTON_H_
-#define BUTTON_H_
+#ifndef HOMEBUTTON_H_
+#define HOMEBUTTON_H_
 
-namespace Button
+namespace HomeButton
 {
     void init();
     void onChange();
@@ -16,4 +16,4 @@ namespace Button
 
 } // namespace Button
 
-#endif /* BUTTON_H_ */
+#endif // HOMEBUTTON_H_

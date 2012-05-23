@@ -1,4 +1,4 @@
-#include "button.h"
+#include "homebutton.h"
 #include <glfw.h>
 #include "tasks.h"
 #include "macros.h"
@@ -14,7 +14,7 @@ void init()
 void onChange()
 {
     if (isPressed()) {
-        Tasks::setPending(Tasks::Button);
+        Tasks::setPending(Tasks::HomeButton);
     }
 }
 

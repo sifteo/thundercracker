@@ -13,7 +13,7 @@
  * NB: button handling should go through FrontendMothership once that
  * is resurrected.
  */
-#include "button.h"
+#include "homebutton.h"
 
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
@@ -380,7 +380,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'B': {
-            Button::onChange();
+            HomeButton::onChange();
             break;
         }
 
@@ -446,7 +446,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         switch (key) {
 
         case 'B':
-            Button::onChange();
+            HomeButton::onChange();
             break;
 
         }

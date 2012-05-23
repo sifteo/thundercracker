@@ -15,7 +15,7 @@
 #include "audiooutdevice.h"
 #include "volume.h"
 #include "usb/usbdevice.h"
-#include "button.h"
+#include "homebutton.h"
 #include "svmloader.h"
 #include "powermanager.h"
 #include "crc.h"
@@ -100,7 +100,7 @@ int main()
 
     Tasks::init();
     FlashBlock::init();
-    Button::init();
+    HomeButton::init();
 
     Volume::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
@@ -126,7 +126,7 @@ int main()
      *
      * Kind of crappy, but just power cycle to start again and run the game.
      */
-    if (Button::isPressed()) {
+    if (HomeButton::isPressed()) {
 
         // indicate we're waiting
         GPIOPin green = LED_GREEN_GPIO;
@@ -135,6 +135,10 @@ int main()
 
         for (;;)
             Tasks::work();
+    }
+
+    for (;;) {
+        Tasks::work();
     }
 
     /*
