@@ -213,6 +213,12 @@ public:
         static UUID zero;
         return p ? p : &zero;
     }
+
+    void writeAssetGroup(const _SYSMetadataBootAsset &meta, AssetGroup &group)
+    {
+        bzero(group);
+        group.sys.pHdr = translate(meta.pHdr);
+    }
 };
 
 
