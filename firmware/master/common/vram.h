@@ -229,12 +229,6 @@ private:
     uint16_t bmpAddr;
     uint16_t bmpValue;
     uint8_t bmpShift;
-
-    
-    #define _SYS_VA_BG1_TILES       0x288
-#define _SYS_VA_COLORMAP        0x300
-#define _SYS_VA_BG1_BITMAP      0x3a8
-
 };
 
 
