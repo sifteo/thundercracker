@@ -165,8 +165,8 @@ inline void Menu::transFromStatic()
         changeState(MENU_STATE_TILTING);
 
         currentEvent.type = MENU_ITEM_DEPART;
-        currentEvent.item = computeSelected();
-        
+        currentEvent.direction = accel.x > 0 ? 1 : -1;
+
         // hide header
         if (kHeaderHeight) {
             const AssetImage& label = *assets->header;

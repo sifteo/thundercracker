@@ -46,6 +46,7 @@ void main() {
     m.anchor(2);
 
     struct MenuEvent e;
+    uint8_t item;
     while(1) {
         while(m.pollEvent(&e)) {
             switch(e.type) {
@@ -79,9 +80,10 @@ void main() {
 
                 case MENU_ITEM_ARRIVE:
                     LOG("arriving at menu item %d\n", e.item);
+                    item = e.item;
                     break;
                 case MENU_ITEM_DEPART:
-                    LOG("departing from menu item %d\n", e.item);
+                    LOG("departing from menu item %d, scrolling %s\n", item, e.direction > 0 ? "forward" : "backward");
                     break;
 
                 case MENU_PREPAINT:

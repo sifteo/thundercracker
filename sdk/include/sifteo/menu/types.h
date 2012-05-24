@@ -72,6 +72,7 @@ struct MenuEvent {
     union {
         struct MenuNeighbor neighbor;
         uint8_t item;
+        int8_t direction;
     };
 };
 
