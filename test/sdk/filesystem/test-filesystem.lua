@@ -9,12 +9,14 @@
 require('siftulator')
 require('luaunit')
 
-fs = Filesystem()
 System():setOptions{ turbo=true }
+fs = Filesystem()
+writeTotal = 0
 
 TEST_VOL_TYPE = 0x8765
 BLOCK_SIZE = 128 * 1024
 DEVICE_SIZE = 16 * 1024 * 1024
+
 
 function volumeString(vol)
     -- Return a string representation of a volume
@@ -108,6 +110,57 @@ function dumpEndurance()
 end
 
 
+function checkEndurance()
+    -- Ensure that our wear levelling didn't fail too badly.
+
+    local idealEraseCount = writeTotal / DEVICE_SIZE
+    local maxEC = getMaxEraseCount()
+    local ratio = maxEC / idealEraseCount
+    local ratioLimit = 1.5
+
+    print("--        Ideal erase count: " .. idealEraseCount)
+    print("--  Actual peak erase count: " .. maxEC)
+    print("--   Ratio, actual to ideal: " .. ratio .. " (Max " .. ratioLimit .. ")")
+
+    if ratio > ratioLimit then
+        error("Wear levelling failed, peak erase count higher than allowed")
+    end
+end
+
+
+function testRandomVolumes(verbose)
+    -- Psuedorandomly create and delete volumes
+
+    local testData = string.rep("I am bytes, 16! ", 1024*1024)
+
+    math.randomseed(1234)
+    for iteration = 1, 100 do
+
+        -- How big of a volume to create?
+        local volSize = math.random(10 * 1024 * 1024)
+
+        -- Randomly delete volumes until we can fit this new volume
+        while getFreeSpace() < volSize do
+            local candidates = filterVolumes()
+            local vol = candidates[math.random(table.maxn(candidates))]
+
+            fs:deleteVolume(vol)
+            if verbose then
+                print(string.format("Deleted volume [%02x]", vol))
+            end
+        end
+
+        -- Create the volume
+        local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
+        if verbose then
+            print(string.format("Created volume [%02x], %d bytes", vol, volSize))
+        end
+
+        writeTotal = writeTotal + volSize
+    end
+end
+
+
 function filterVolumes()
     -- Filter the list of volumes, looking for only TEST_VOL_TYPE
 
@@ -130,49 +183,13 @@ function testFilesystem()
 
     dumpFilesystem()
 
-    -- Psuedorandomly create and delete volumes
+    -- Individual filesystem exercises
 
-    local testData = string.rep("I am bytes, 16! ", 1024*1024)
-    local writeTotal = 0
-
-    math.randomseed(1234)
-    for iteration = 1, 100 do
-
-        -- How big of a volume to create?
-        local volSize = math.random(10 * 1024 * 1024)
-
-        -- Randomly delete volumes until we can fit this new volume
-        while getFreeSpace() < volSize do
-            local candidates = filterVolumes()
-            local vol = candidates[math.random(table.maxn(candidates))]
-
-            fs:deleteVolume(vol)
-            -- print(string.format("Deleted volume [%02x]", vol))
-        end
-
-        -- Create the volume
-        local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
-        -- print(string.format("Created volume [%02x], %d bytes", vol, volSize))
-        writeTotal = writeTotal + volSize
-    end
+    testRandomVolumes()
 
     -- Check over the aftermath
 
     dumpFilesystem()
     dumpEndurance()
-
-    -- Ensure that our wear levelling didn't fail too badly.
-
-    local idealEraseCount = writeTotal / DEVICE_SIZE
-    local maxEC = getMaxEraseCount()
-    local ratio = maxEC / idealEraseCount
-    local ratioLimit = 1.5
-
-    print("--        Ideal erase count: " .. idealEraseCount)
-    print("--  Actual peak erase count: " .. maxEC)
-    print("--   Ratio, actual to ideal: " .. ratio .. " (Max " .. ratioLimit .. ")")
-
-    if ratio > ratioLimit then
-        error("Wear levelling failed, peak erase count higher than allowed")
-    end
+    checkEndurance()
 end
