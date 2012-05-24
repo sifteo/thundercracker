@@ -13,6 +13,7 @@
 #define FLASH_MAP_H_
 
 #include "machine.h"
+#include "bits.h"
 #include "flash_blockcache.h"
 #include "flash_device.h"
 
