@@ -14,6 +14,7 @@ using namespace Sifteo;
 
 
 #define NUM_CUBES 3
+#define MAX_GAMES 24
 VideoBuffer vid[CUBE_ALLOCATION];
 static AssetSlot MainSlot = AssetSlot::allocate();
 
@@ -139,7 +140,7 @@ void exec(Volume vol)
 void main()
 {
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
-    Array<Volume, 64> gGameList;
+    Array<Volume, MAX_GAMES> gGameList;
     Volume::list(Volume::T_GAME, gGameList);
 
     if (gGameList.empty()) {
@@ -148,37 +149,38 @@ void main()
             System::paint();
     }
 
-    for (Volume v : gGameList) {
-        MappedVolume map(v);
-        LOG("LAUNCHER: Found game vol=%08x, {%16h} \"%s\"\n",
-            v.sys, map.uuid()->bytes, map.title());
-    }
-
     if (gGameList.count() == 1) {
         exec(gGameList[0]);
     }
 
-    static struct MenuItem gItems[64];
+    static TileBuffer<96 / 8, 96 / 8> icons[MAX_GAMES];
+    static struct MenuItem gItems[MAX_GAMES];
 
     // Self-bootstrapping
     _SYS_enableCubes(getCubeVector(NUM_CUBES));
 
     bootstrapAssetGroup(LauncherAssets, MainSlot, NUM_CUBES);
 
-    for(CubeID cube = 0; cube < NUM_CUBES; ++cube) {
-        auto &v = vid[cube];
-        v.initMode(BG0);
-        v.bg0.erase(StripeTile);
-        v.attach(cube);
-    }
-
     for (unsigned i = 0; i < gGameList.count(); i++) {
         MappedVolume map(gGameList[i]);
 
+        LOG("LAUNCHER: Found game vol=%08x, {%16h} \"%s\"\n",
+            gGameList[i].sys, map.uuid()->bytes, map.title());
+
         auto metacon = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
         if (metacon) {
-            // XXX: DISABLED due to issue with ordinality
-            gItems[i].icon = &NoIcon;
+            AssetImage icon;
+            map.writeAssetImage(metacon, icon);
+
+            // load the asset's group
+            AssetGroup group;
+            group.sys.pHdr = icon.sys.pAssetGroup;
+            bootstrapAssetGroup(group, MainSlot, NUM_CUBES);
+            icon.sys.pAssetGroup = reinterpret_cast<uint32_t>(&group.sys);
+
+            icons[i].setCube(vid[0].cube());
+            icons[i].image(vec(0,0), icon);
+            gItems[i].icon = (AssetImage *)&icons[i];
         } else {
             gItems[i].icon = &NoIcon;
         }
@@ -186,6 +188,14 @@ void main()
         gItems[i].label = NULL;
     }
     gItems[gGameList.count()].icon = NULL;
+
+    vid[0].attach(0);
+    for(CubeID cube = 1; cube < NUM_CUBES; ++cube) {
+        auto &v = vid[cube];
+        v.initMode(BG0);
+        v.bg0.erase(StripeTile);
+        v.attach(cube);
+    }
 
     static struct MenuAssets gAssets = {&BgTile, &Footer, NULL, {&Tip0, &Tip1, &Tip2, NULL}};
 
