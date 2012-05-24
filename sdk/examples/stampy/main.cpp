@@ -108,6 +108,10 @@ void main()
 
         /*
          * Stamp the character on top of the display's exising contents.
+         *
+         * Use paintUnlimited() here to avoid the usual frame rate limiting,
+         * since we want the per-frame delay to occur after this draw,
+         * not before it.
          */
 
         auto &charFB = vid.stamp.initFB<28,27>();
@@ -115,7 +119,7 @@ void main()
         vid.stamp.setBox(position.round(), charFB.size());
         vid.stamp.setKeyIndex(0);
 
-        System::paint();
+        System::paintUnlimited();
 
         /*
          * Make use of a rotating stipple pattern to give the appearance
