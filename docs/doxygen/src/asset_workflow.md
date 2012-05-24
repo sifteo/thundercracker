@@ -16,7 +16,7 @@ Let's look at a basic assets.lua config dealing with images only:
 ~~~~~~~~~~~~~{.lua}
 GameAssets = group{}
 
-Background = image{"stars-bg.png", quality=10}
+Background = image{"stars-bg.png", quality=9.85}
 Star = image{"star-8.png", pinned=true, width=8, height=8}
 Font = image{"font-8x16.png", pinned=true, width=8, height=16}
 ~~~~~~~~~~~~~
@@ -27,13 +27,21 @@ Each @b image element specifies that an AssetImage should be generated. Given no
 
 By default, images are compressed to save room in your game's binary. However, if you need random access to your image data from within your game, you can specify `flat=1` within your `image` element, and @b stir will create a Sifteo::FlatAssetImage instead - a larger, uncompressed version of your image. For example: `Background = image{"stars-bg.png", flat=true}`
 
+## Color
+
+No guarantees are made about the specific RGB color space for source images, since the LCD on each Sifteo Cube is not color-calibrated and colors can vary significantly with changes in viewing angle.
+
+Stir does not perform any colorspace conversion other than rounding each pixel to the nearest 16-bit RGB565 color. However, the compression process needs to evaluate the perceptibility of every individual lossy operation that could be performed, to decide which transforms would be too lossy given the current quality level. These perceptual comparisons are made in the linear CIELAB color space, after converting from an approximated sRGB colorspace with a single gamma of 2.2.
+
 ## Quality
 
-Images are compressed more or less aggressively based on their `quality` parameter. Quality can be a number from 1 to 10, with 10 meaning lossless, and lower values giving @b stir more freedom to compress.
+Images are compressed more or less aggressively based on their `quality` parameter. Quality can be any real number from 1 to 10, with 10 meaning lossless, and lower values giving @b stir more freedom to compress.
 
 All images within a Sifteo::AssetGroup can share tiles, and if @b stir determines that tiles within different images are similar enough, it can create a single tile to be shared by the 2 images, reducing the overall size of your application's installation. Of course, if the quality setting is too high, @b stir cannot take these liberties and your application will be larger as a result.
 
 Compression is a very important part of keeping your asset budget under control. Dial down the quality for your images as much as you can stand and applications will be smaller, asset installation times will be shorter, and the world will be a better place.
+
+Quality is continuously variable. Don't be shy about using a quality value like 9.998 if that's what looks best for your assets. Avoid using a quality of 10 unless it's vital that the assets are completely lossless. Lossless compression will often result in many tiles which have no visible differences.
 
 ## Frames
 
