@@ -50,6 +50,7 @@ uint32_t _SYS_getFeatures() _SC(145);   /// ABI compatibility feature bits
 void _SYS_yield(void) _SC(65);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(66);   /// Enqueue a new rendering frame
 void _SYS_finish(void) _SC(67);  /// Wait for enqueued frames to finish
+void _SYS_paintUnlimited(void) _SC(154);
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: type [31:27], arity [26:24] param [23:0]
@@ -113,8 +114,10 @@ uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(1
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(56);
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(53);
 uint32_t _SYS_sqrtf(uint32_t a) _SC(101);
+uint32_t _SYS_logf(uint32_t a) _SC(155);
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(102);
 uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(103);
+uint64_t _SYS_logd(uint32_t aL, uint32_t aH) _SC(156);
 
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(62);
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(26);

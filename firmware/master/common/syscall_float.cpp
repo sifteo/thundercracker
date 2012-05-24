@@ -7,6 +7,12 @@
  * Syscalls for software floating point support.
  */
 
+/*
+ * XXX: This needs to fully trap floating point errors, either by checking
+ *      for any condition that may generate an error before they happen,
+ *      or by trapping exceptions in some other way.
+ */
+
 #include <math.h>
 #include <sifteo/abi.h>
 #include "svmmemory.h"
@@ -256,6 +262,12 @@ uint32_t _SYS_sqrtf(uint32_t a)
     return reinterpret_cast<uint32_t&>(r);
 }
 
+uint32_t _SYS_logf(uint32_t a)
+{
+    float r = logf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;
@@ -268,6 +280,13 @@ uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;
     double r = sqrt(reinterpret_cast<double&>(a));
+    return reinterpret_cast<uint64_t&>(r);
+}
+
+uint64_t _SYS_logd(uint32_t aL, uint32_t aH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    double r = log(reinterpret_cast<double&>(a));
     return reinterpret_cast<uint64_t&>(r);
 }
 

@@ -10,7 +10,32 @@
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
 #include "hardware.h"
+#include "factorytest.h"
 #endif
+
+/*
+ * Table of USB subsystem handlers.
+ * Order in this table must match the SubSystem enum.
+ */
+const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
+    USBProtocolHandler::installerHandler,   // 0
+    #ifdef SIFTEO_SIMULATOR
+    0
+    #else
+    FactoryTest::usbHandler,                // 1
+    #endif
+};
+
+void USBProtocol::dispatch(const uint8_t *buf, unsigned len)
+{
+    unsigned subsys = static_cast<unsigned>(subsystem(buf, len));
+    if (subsys < arraysize(subsystemHandlers)) {
+        SubSystemHandler handler = subsystemHandlers[subsys];
+        handler(buf, len);
+    }
+}
+
+
 
 struct USBProtocolHandler::AssetInstallation USBProtocolHandler::installation;
 
@@ -28,8 +53,12 @@ static uint8_t status;
     bytes we receive are the length.
     But, calculate the CRC as it goes in & verify it on the data written to flash.
 */
-void USBProtocolHandler::onData(const uint8_t *buf, unsigned len)
+void USBProtocolHandler::installerHandler(const uint8_t *buf, unsigned len)
 {
+    // first word is the header
+    buf += USBProtocol::HEADER_LEN;
+    len -= USBProtocol::HEADER_LEN;
+
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/
         installation.size = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;

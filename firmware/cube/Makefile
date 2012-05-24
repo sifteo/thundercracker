@@ -13,6 +13,7 @@ OBJS = \
         src/graphics_fb64.rel \
         src/graphics_fb128.rel \
         src/graphics_solid.rel \
+        src/graphics_stamp.rel \
         src/overlay.rel \
         src/power.rel \
         src/lcd.rel \

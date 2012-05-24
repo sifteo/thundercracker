@@ -111,11 +111,12 @@ class FrontendCube {
     void animate();
     bool draw(GLRenderer &r);
 
-    void setTiltTarget(b2Vec2 angles);
     void updateNeighbor(bool touching, unsigned mySide,
                         unsigned otherSide, unsigned otherCube);
 
+    void setTiltTarget(b2Vec2 angles);
     void setHoverTarget(float h);
+    void setRotationLock(bool isRotationFixed);
     
     void setTouch(float amount) {
         hw->setTouch(amount);
@@ -134,9 +135,6 @@ class FrontendCube {
     }
 
     void computeAABB(b2AABB &aabb);
-    
-    void toggleRotationLock(bool isRotationFixed);
-
 
 private:
     b2Body *body;

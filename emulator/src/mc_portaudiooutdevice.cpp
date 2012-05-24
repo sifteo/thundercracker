@@ -160,7 +160,7 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
     }
 #endif
 
-    Tasks::setPending(Tasks::AudioPull, &buf, true);
+    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 void PortAudioOutDevice::start()

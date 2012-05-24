@@ -136,15 +136,15 @@ bool UsbDevice::configured;
 */
 void UsbDevice::handleOUTData(void *p)
 {
+    Tasks::clearPending(Tasks::UsbOUT);
+
     uint8_t buf[OutEpMaxPacket];
     int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
     if (numBytes > 0) {
-    // XXX: going to need to figure out what dispatch looks like here once
-    // we get some actual protocol support in place
 #if (BOARD == BOARD_TEST_JIG)
         TestJig::onTestDataReceived(buf, numBytes);
 #else
-        USBProtocolHandler::onData(buf, numBytes);
+        USBProtocol::dispatch(buf, numBytes);
 #endif
     }
 }

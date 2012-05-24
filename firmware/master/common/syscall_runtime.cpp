@@ -50,10 +50,16 @@ void _SYS_paint(void)
     SvmRuntime::dispatchEventsOnReturn();
 }
 
+void _SYS_paintUnlimited(void)
+{
+    CubeSlots::paintCubes(CubeSlots::vecEnabled, false);
+    SvmRuntime::dispatchEventsOnReturn();
+}
+
 void _SYS_finish(void)
 {
     CubeSlots::finishCubes(CubeSlots::vecEnabled);
-    SvmRuntime::dispatchEventsOnReturn();
+    // Intentionally does _not_ dispatch events!
 }
 
 int64_t _SYS_ticks_ns(void)

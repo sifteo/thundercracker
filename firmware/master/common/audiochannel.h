@@ -50,6 +50,14 @@ public:
         volume = clamp((int)newVolume, 0, _SYS_AUDIO_MAX_VOLUME);
     }
 
+    void setLoop(_SYSAudioLoopType loopMode) {
+        ASSERT(loopMode != _SYS_LOOP_UNDEF);
+        if (loopMode == _SYS_LOOP_ONCE)
+            state &= ~STATE_LOOP;
+        else
+            state |= STATE_LOOP;
+    }
+
     void setPos(uint32_t ofs);
 
 protected:

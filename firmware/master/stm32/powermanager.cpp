@@ -80,3 +80,11 @@ void PowerManager::onVBusEdge()
     }
 }
 
+void PowerManager::shutdown()
+{
+    // release the power supply enable
+    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
+    vcc20.setControl(GPIOPin::OUT_2MHZ);
+    vcc20.setLow();
+}
+

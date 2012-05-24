@@ -7,6 +7,7 @@
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
 #include "mc_timing.h"
+#include "system.h"
 #include "system_mc.h"
 #include <vector>
 #include <algorithm>
@@ -34,11 +35,6 @@ void FlashBlock::resetStats()
     memset(&stats.periodic, 0, sizeof stats.periodic);
 }
 
-void FlashBlock::enableStats()
-{
-    stats.enabled = true;
-}
-
 void FlashBlock::countBlockMiss(uint32_t blockAddr)
 {
     stats.periodic.blockMiss++;
@@ -61,7 +57,7 @@ void FlashBlock::dumpStats()
     const double bytesToMBits = 10.0 * 1e-6;
     const unsigned numHotBlocks = 10;
 
-    if (!stats.enabled)
+    if (!SystemMC::getSystem()->opt_svmFlashStats)
         return;
     
     SysTime::Ticks now = SysTime::ticks();

@@ -31,6 +31,7 @@
 #include "lodepng.h"
 #include "crc.h"
 #include "volume.h"
+#include "homebutton.h"
 
 SystemMC *SystemMC::instance;
 std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
@@ -45,13 +46,6 @@ bool SystemMC::init(System *sys)
     FlashDevice::init();
     FlashBlock::init();
     USBProtocolHandler::init();
-
-    if (sys->opt_svmTrace)
-        SvmCpu::enableTracing();
-    if (sys->opt_svmFlashStats)
-        FlashBlock::enableStats();
-    if (sys->opt_svmStackMonitor)
-        SvmRuntime::enableStackMonitoring();
 
     return true;
 }
@@ -111,6 +105,7 @@ void SystemMC::threadFn(void *param)
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
+    HomeButton::init();
     Crc32::init();
     Volume::init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);

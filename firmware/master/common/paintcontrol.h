@@ -71,7 +71,7 @@ class PaintControl {
 
     // Called in ISR context
     void ackFrames(CubeSlot *cube, int32_t count);
-    void vramFlushed(CubeSlot *cube);
+    bool vramFlushed(CubeSlot *cube);
 
  private:
     SysTime::Ticks paintTimestamp;      // Last user call to _SYS_paint()

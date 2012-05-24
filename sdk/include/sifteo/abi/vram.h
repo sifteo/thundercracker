@@ -67,6 +67,7 @@ extern "C" {
 #define _SYS_VM_BG0_BG1         0x1c    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
 #define _SYS_VM_BG0_SPR_BG1     0x20    // BG0, multiple linear sprites, then BG1
 #define _SYS_VM_BG2             0x24    // Background BG2: 16x16 grid with affine transform
+#define _SYS_VM_STAMP           0x28    // Reconfigurable 16-color framebuffer with transparency
 
 // Important VRAM addresses
 
@@ -82,6 +83,7 @@ extern "C" {
 #define _SYS_VA_NUM_LINES       0x3fd
 #define _SYS_VA_MODE            0x3fe
 #define _SYS_VA_FLAGS           0x3ff
+#define _SYS_VA_STAMP_PITCH     0x320
 
 struct _SYSSpriteInfo {
     /*
@@ -131,6 +133,11 @@ union _SYSVideoRAM {
     struct {
         uint8_t fb[768];                // 0x000 - 0x2ff
         uint16_t colormap[16];          // 0x300 - 0x31f
+        uint8_t stamp_pitch;            // 0x320
+        uint8_t stamp_height;           // 0x321
+        uint8_t stamp_x;                // 0x322
+        uint8_t stamp_width;            // 0x323
+        uint8_t stamp_key;              // 0x324
     };
 
     struct {

@@ -252,7 +252,7 @@ void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, ui
 
     // Write right-to-left. Position at the end, in an overflow-safe way.
     char *first = dest;
-    width = MIN(width, last - first);
+    width = MIN(width, unsigned(last - first));
     dest += width;
     ASSERT(dest >= first && dest <= last);
 
@@ -308,7 +308,7 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
 
     // Write right-to-left. Position at the end, in an overflow-safe way.
     char *first = dest;
-    width = MIN(width, last - first);
+    width = MIN(width, unsigned(last - first));
     dest += width;
     ASSERT(dest >= first && dest <= last);
 

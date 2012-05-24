@@ -45,6 +45,7 @@ VM_BG0             = 0x18    -- Background BG0: 18x18 grid
 VM_BG0_BG1         = 0x1c    -- BG0, plus overlay BG1: 16x16 bitmap + 144 indices
 VM_BG0_SPR_BG1     = 0x20    -- BG0, multiple linear sprites, then BG1
 VM_BG2             = 0x24    -- Background BG2: 16x16 grid with affine transform
+VM_STAMP           = 0x28    -- Reconfigurable 16-color framebuffer with transparency
 
 -- Important VRAM addresses
 
@@ -163,7 +164,7 @@ gx = {}
         assertEquals(bit.band(gx.cube:xbPeek(VA_FLAGS), VF_CONTINUOUS), 0)
         
         -- Trigger this next frame
-        local pixelCount = gx.cube:lcdPixelCount()
+        local frameCount = gx.cube:lcdFrameCount()
         gx.cube:xbPoke(VA_FLAGS, bit.bxor(gx.cube:xbPeek(VA_FLAGS), VF_TOGGLE))
 
         -- Wait for it to fully complete, or we time out
@@ -184,17 +185,11 @@ gx = {}
             -- Send a radio ping, keep the cube from sleeping.
             radio:txn("ff")
 
-            -- Wait for the expected number of pixels, with a timeout
-            pixelsWritten = bit.band(gx.cube:lcdPixelCount() - pixelCount, 0xFFFFFFFF)
-            if pixelsWritten > gx.expectedPixelCount then
-                error(string.format("Cube wrote too many pixels (wrote %d, expected %d due to %d-line window)",
-                                    pixelsWritten, gx.expectedPixelCount, gx.cube:xbPeek(VA_NUM_LINES)))
-            end
+            -- Wait for the frame to end, with a timeout            
             if gx.sys:vclock() - timestamp > 10.0 then
                 error("Timed out waiting for a frame to render")
             end
-        until pixelsWritten == gx.expectedPixelCount
-        
+        until frameCount ~= gx.cube:lcdFrameCount()
     end
     
     function gx:assertScreenshot(name)
@@ -249,12 +244,6 @@ gx = {}
     function gx:setWindow(first, num)
         gx.cube:xbPoke(VA_FIRST_LINE, first)
         gx.cube:xbPoke(VA_NUM_LINES, num)
-        
-        -- Zero lines will cause a wraparound and be treated as 256 lines
-        if num == 0 then
-            num = 256
-        end
-        gx.expectedPixelCount = num * LCD_WIDTH
     end
     
     function gx:RGB565(r, g, b)
@@ -299,6 +288,12 @@ gx = {}
     function gx:pokeWords(byteAddr, tab)
         for k, v in pairs(tab) do
             gx.cube:xwPoke(byteAddr/2 + k - 1, v)
+        end
+    end
+
+    function gx:pokeBytes(byteAddr, tab)
+        for k, v in pairs(tab) do
+            gx.cube:xbPoke(byteAddr + k - 1, v)
         end
     end
     

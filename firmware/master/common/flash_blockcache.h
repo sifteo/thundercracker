@@ -59,7 +59,6 @@ private:
     uint8_t refCount;
 
     struct FlashStats {
-        bool enabled;
         unsigned globalRefcount;
         SysTime::Ticks timestamp;
 
@@ -113,7 +112,6 @@ public:
 
 #ifdef SIFTEO_SIMULATOR
     static bool isAddrValid(uintptr_t pa);
-    static void enableStats();
     static void resetStats();
     static void dumpStats();
     static bool hotBlockSort(unsigned i, unsigned j);

@@ -473,8 +473,6 @@ static void vm_bg0_rom_line(void)
 1$:
 
     __endasm ;
-
-    LCD_WRITE_END();
 }
 
 void vm_bg0_rom(void)

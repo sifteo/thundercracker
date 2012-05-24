@@ -127,6 +127,7 @@ void exec(Volume vol)
 
     // Enable the game's minimum set of cubes.
     unsigned numCubes = getMinCubes(map);
+    SCRIPT_FMT(LUA, "System():setOptions{ numCubes = %d }", numCubes);
     _SYS_enableCubes(getCubeVector(numCubes));
 
     // Temporary asset bootstrapper

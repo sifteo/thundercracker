@@ -92,7 +92,8 @@ void XmTrackerPattern::getNote(uint16_t row, uint8_t channel, struct XmTrackerNo
         /* This happens on fxLoopPattern, but isn't terribly efficient.
          * Composers should avoid if reasonable (Workaround: more patterns).
          */
-        LOG((LGPFX"Notice: Had to seek(0) to get to note %u\n", row * song->nChannels + channel));
+        if (row * song->nChannels + channel > 0)
+            LOG((LGPFX"Notice: Had to seek(0) to get to note %u\n", row * song->nChannels + channel));
         offset = 0;
         noteOffset = 0;
     } else if (noteIndex > noteOffset) {

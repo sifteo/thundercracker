@@ -30,9 +30,9 @@ namespace Sifteo {
  * @{
  */
 
-static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
-static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
-static const unsigned TILE = 8;          /// Size of one tile, in pixels
+static const unsigned LCD_width = 128;   ///< Height of the LCD screen, in pixels
+static const unsigned LCD_height = 128;  ///< Width of the LCD screen, in pixels
+static const unsigned TILE = 8;          ///< Size of one tile, in pixels
 
 static const Int2 LCD_size = { LCD_width, LCD_height };
 static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
@@ -53,16 +53,17 @@ static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
  * same memory for different purposes.
  */
 enum VideoMode {
-    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   // Power saving mode, LCD is off
-    BG0_ROM        = _SYS_VM_BG0_ROM,     // BG0, with tile data from internal ROM
-    SOLID_MODE     = _SYS_VM_SOLID,       // Solid color, from colormap[0]
-    FB32           = _SYS_VM_FB32,        // 32x32 pixel 16-color framebuffer
-    FB64           = _SYS_VM_FB64,        // 64x64 pixel 2-color framebuffer
-    FB128          = _SYS_VM_FB128,       // 128x48 pixel 2-color framebuffer
-    BG0            = _SYS_VM_BG0,         // BG0 background layer
-    BG0_BG1        = _SYS_VM_BG0_BG1,     // BG0 background plus BG1 overlay
-    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, // BG0 background, 8 sprites, BG1 overlay
-    BG2            = _SYS_VM_BG2,         // 16x16 tiled mode with affine transform
+    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   ///< Power saving mode, LCD is off
+    BG0_ROM        = _SYS_VM_BG0_ROM,     ///< BG0, with tile data from internal ROM
+    SOLID_MODE     = _SYS_VM_SOLID,       ///< Solid color, from colormap[0]
+    FB32           = _SYS_VM_FB32,        ///< 32x32 pixel 16-color framebuffer
+    FB64           = _SYS_VM_FB64,        ///< 64x64 pixel 2-color framebuffer
+    FB128          = _SYS_VM_FB128,       ///< 128x48 pixel 2-color framebuffer
+    BG0            = _SYS_VM_BG0,         ///< BG0 background layer
+    BG0_BG1        = _SYS_VM_BG0_BG1,     ///< BG0 background plus BG1 overlay
+    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, ///< BG0 background, 8 sprites, BG1 overlay
+    BG2            = _SYS_VM_BG2,         ///< 16x16 tiled mode with affine transform
+    STAMP          = _SYS_VM_STAMP,       ///< Reconfigurable 16-color framebuffer with transparency
 };
 
 
@@ -129,6 +130,7 @@ struct VideoBuffer {
         BG0Drawable             bg0;        ///< Drawable for the BG0 layer, as used in BG0, BG0_BG1, and BG0_SPR_BG1 modes
         BG1Drawable             bg1;        ///< Drawable for the BG1 layer, as used in BG0_BG1 and BG0_SPR_BG1 modes
         BG2Drawable             bg2;        ///< Drawable for the BG2 tiled mode
+        StampDrawable           stamp;      ///< Drawable for the STAMP framebuffer mode
     };
 
     // Implicit conversions

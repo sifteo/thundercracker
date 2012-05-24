@@ -45,7 +45,7 @@ void PwmAudioOut::start()
     sampleTimer.enableUpdateIsr();
     pwmTimer.enableChannel(pwmChan);
     pwmTimer.setDuty(pwmChan, PWM_FREQ / 2);    // 50% duty cycle == "off"
-    Tasks::setPending(Tasks::AudioPull, &buf, true);
+    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 void PwmAudioOut::stop()

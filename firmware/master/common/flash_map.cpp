@@ -42,18 +42,29 @@ bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset
     // Split the flash address
     uint32_t allocBlock = flashAddr / FlashMapBlock::BLOCK_SIZE;
     uint32_t allocOffset = flashAddr & FlashMapBlock::BLOCK_MASK;
+    int32_t result = allocOffset - firstByte();
 
     // We have no direct index for this, so do a linear search in our map
     for (unsigned i = 0; i < arraysize(map->blocks); i++) {
-        FlashMapBlock block = map->blocks[i];
-        if (block.index() == allocBlock) {
-            ByteOffset result = i * FlashMapBlock::BLOCK_SIZE + allocOffset - firstByte();
-            if (offsetIsValid(result)) {
+        /*
+         * The block may or may not be valid. If it's part of the in-use portion
+         * of the map, that would be a problem. If not, it's perfectly legal and
+         * we shouldn't even be reading the map contents in that case.
+         *
+         * So, we order our tests such that we do the range test before the block
+         * index test. If the range test fails, we can give up our search
+         * immediately.
+         */
+        if (result >= 0) {
+            if (!offsetIsValid(result))
+                break;
+
+            if (map->blocks[i].index() == allocBlock) {
                 byteOffset = result;
                 return true;
             }
-            return false;
         }
+        result += FlashMapBlock::BLOCK_SIZE;
     }
 
     // No match

@@ -29,9 +29,11 @@ LOCAL_OBJS = \
     src/mc_audiooutdevice.o \
     src/mc_portaudiooutdevice.o \
     src/mc_volume.o \
+    src/mc_homebutton.o \
     src/mc_flash_device.o \
     src/mc_flash_blockcache.o \
     src/mc_svmcpu.o \
+    src/mc_svmruntime.o \
     src/mc_svmdebugpipe.o \
     src/mc_elfdebuginfo.o \
     src/mc_logdecoder.o \

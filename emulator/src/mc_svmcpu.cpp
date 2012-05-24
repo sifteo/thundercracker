@@ -8,6 +8,7 @@
 #include "macros.h"
 #include "machine.h"
 #include "mc_timing.h"
+#include "system.h"
 #include "system_mc.h"
 
 #include <string.h>
@@ -15,7 +16,6 @@
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
-static bool svmTrace;
 
 /*
  * We copy all user regs to trusted memory to operate on them during exception
@@ -1141,11 +1141,8 @@ void setReg(uint8_t r, reg_t val)
 }
 
 bool tracing() {
-    return svmTrace;
+    return SystemMC::getSystem()->opt_svmTrace;
 }
 
-void enableTracing() {
-    svmTrace = true;
-}
 
 }  // namespace SvmCpu
