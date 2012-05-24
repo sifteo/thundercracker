@@ -117,7 +117,8 @@ class Hardware {
     }
 
     void lcdPulseTE() {
-        lcd.pulseTE(hwDeadline);
+        if (time != NULL)
+            lcd.pulseTE(hwDeadline);
     }
 
     void setAcceleration(float xG, float yG, float zG);

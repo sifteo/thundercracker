@@ -61,7 +61,10 @@ void FrontendOverlay::draw()
         else
             realTimeColor.set(1, 0.5, 0.5);
 
-        // Calculate cube hardware rates
+        // Calculate cube hardware rates.
+        //
+        // (Note that opt_numCubes is not synchronized with this thread,
+        // but that's okay. This only needs to be an estimated cube count.)
         
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
@@ -101,8 +104,7 @@ void FrontendOverlay::drawCubeStatus(FrontendCube *fe, int x, int y)
 
     moveTo(x, y);
 
-    // Do we need to disambiguate which cube is being debugged?
-    if (sys->cubes[id].isDebugging() && sys->opt_numCubes > 1)
+    if (sys->cubes[id].isDebugging())
         text(debugColor, "Debugging", 0.5);
 
     text(ghostColor, cubes[id].fps, 0.5);

@@ -46,7 +46,6 @@ class Frontend {
     static bool runFrame();
     static void exit();
 
-    static void numCubesChanged();
     static void postMessage(std::string msg);
 
  private:
@@ -78,6 +77,7 @@ class Frontend {
 
     void animate();
     void draw();
+    void updateCubeCount();
 
     bool openWindow(int width, int height, bool fullscreen=false);
     void toggleFullscreen();
@@ -98,6 +98,7 @@ class Frontend {
     void moveWalls(bool immediate=false);
     void pushBodyTowards(b2Body *b, b2Vec2 target, float gain);
 
+    static b2Vec2 getCubeGridLoc(unsigned index, unsigned total);
     b2Body *newKBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);
 
@@ -111,9 +112,6 @@ class Frontend {
     b2Vec2 worldToScreen(b2Vec2 world);
     float worldToScreen(float x);
 
-    void addCube();
-    void removeCube();
-
     std::string createScreenshotName();
     void drawOverlay();
 
@@ -123,19 +121,21 @@ class Frontend {
     unsigned frameCount;
     unsigned idleFrames;
 
-    unsigned mothershipCount; // this belongs in System methinks...
-    FrontendMothership motherships[1];
+    // Object counts, local to the Frontend. (May lag the simulation thread)
+    unsigned mothershipCount;
+    unsigned cubeCount;
 
+    FrontendMothership motherships[1];
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;
     bool isFullscreen;
     bool isRunning;
     bool isRotationFixed;
+    bool isAnimatingNewCubeLayout;
 
     int mouseX, mouseY;
     int mouseWheelPos;
-    unsigned gridW, gridH;
     unsigned lastWindowW, lastWindowH;
 
     float viewExtent;

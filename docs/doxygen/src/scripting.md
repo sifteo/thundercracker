@@ -129,8 +129,8 @@ Set one or more key-value pairs which describe global simulation options.
 
 Option                  | Meaning
 -------                 | -------------
-`numCubes`              | Number of cubes to simulate. Must be set before calling init(). Defaults to the number specified on Siftulator's command line.
-`turbo`                 | Boolean value. If false, the simulation runs as close to real-time as possible. If true, the simulation runs as fast as possible. Can be set at any time.
+`numCubes`              | Number of cubes to simulate. Defaults to the number specified on Siftulator's command line.
+`turbo`                 | Boolean value. If false, the simulation runs as close to real-time as possible. If true, the simulation runs as fast as possible.
 
 ### System():init()
 
