@@ -62,6 +62,13 @@ void testAlmostEqual()
     ASSERT(!almostEqual(1.0f, 0.9989f, 1e-3f));
 }
 
+void testLog()
+{
+    // No need to use almostEqual, these should be bit-accurate.
+    ASSERT(log(2.0) == b(M_LN2));
+    ASSERT(log(2.0f) == float(b(M_LN2)));
+}
+
 void main()
 {
     testClamp();
@@ -69,6 +76,7 @@ void main()
     testFloor();
     testRound();
     testAlmostEqual();
+    testLog();
 
     LOG("Success.\n");
 }

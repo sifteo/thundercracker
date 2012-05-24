@@ -150,6 +150,29 @@ unsigned inline umod(int a, int b)
 }
 
 /**
+ * Compute the natural log of a floating point number.
+ * This variant operates on single-precision floats.
+ */
+
+float inline log(float a)
+{
+    uint32_t r = _SYS_logf(reinterpret_cast<uint32_t&>(a));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * Compute the natural log of a floating point number.
+ * This variant operates on double-precision floats.
+ */
+
+double inline log(double a)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t r = _SYS_logd(ia, ia >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
  * Compute the square root of a floating point number.
  * This variant operates on single-precision floats.
  */
@@ -396,7 +419,18 @@ template <typename T> struct Vector2 {
         Vector2<R> result = { x, y };
         return result;
     }
-    
+
+    /**
+     * @brief Complex multiplication
+     *
+     * Treat this vector as a complex number, and multiply it with
+     * another vector equivalently interpreted.
+     */
+    Vector2<T> cmul(Vector2<T> u) const {
+        Vector2<T> result = { x*u.x - y*u.y, x*u.y + y*u.x };
+        return result;
+    }
+
     // Shortcuts for common explicit casts
     Vector2<int> toInt() const { return cast<int>(); }
     Vector2<float> toFloat() const { return cast<float>(); }
