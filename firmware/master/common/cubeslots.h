@@ -62,7 +62,7 @@ namespace CubeSlots {
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
     
-    void paintCubes(_SYSCubeIDVector cv);
+    void paintCubes(_SYSCubeIDVector cv, bool wait=true);
     void finishCubes(_SYSCubeIDVector cv);
 
     void assetLoaderTask(void *);

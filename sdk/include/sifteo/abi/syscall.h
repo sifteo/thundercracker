@@ -50,6 +50,7 @@ uint32_t _SYS_getFeatures() _SC(145);   /// ABI compatibility feature bits
 void _SYS_yield(void) _SC(65);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(66);   /// Enqueue a new rendering frame
 void _SYS_finish(void) _SC(67);  /// Wait for enqueued frames to finish
+void _SYS_paintUnlimited(void) _SC(154);
 
 // Lightweight event logging support: string identifier plus 0-7 integers.
 // Tag bits: type [31:27], arity [26:24] param [23:0]
