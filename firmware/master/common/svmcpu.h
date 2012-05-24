@@ -21,7 +21,6 @@ namespace SvmCpu {
     } while (0)
 
     bool tracing();
-    void enableTracing();
     void run(reg_t sp, reg_t pc) __attribute__ ((noreturn));
 #else
     void run(reg_t sp, reg_t pc) __attribute__ ((naked));

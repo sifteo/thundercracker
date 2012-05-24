@@ -59,7 +59,9 @@ private:
     int setOptions(lua_State *L);
     int setTraceMode(lua_State *L);
     int setAssetLoaderBypass(lua_State *L);
-    
+
+    int numCubes(lua_State *L);
+
     int vclock(lua_State *L);
     int vsleep(lua_State *L);
     int sleep(lua_State *L);

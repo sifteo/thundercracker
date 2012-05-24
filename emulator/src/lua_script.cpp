@@ -33,6 +33,7 @@ Lunar<LuaSystem>::RegType LuaSystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaSystem, vclock),
     LUNAR_DECLARE_METHOD(LuaSystem, vsleep),
     LUNAR_DECLARE_METHOD(LuaSystem, sleep),
+    LUNAR_DECLARE_METHOD(LuaSystem, numCubes),
     {0,0}
 };
 
@@ -212,16 +213,16 @@ int LuaSystem::setOptions(lua_State *L)
 {
     if (!LuaScript::argBegin(L, className))
         return 0;
-    
+
     if (LuaScript::argMatch(L, "numCubes"))
         sys->opt_numCubes = lua_tointeger(L, -1);
-    
+
     if (LuaScript::argMatch(L, "cubeFirmware"))
         sys->opt_cubeFirmware = lua_tostring(L, -1);
-    
+
     if (LuaScript::argMatch(L, "turbo"))
         sys->opt_turbo = lua_toboolean(L, -1);
-    
+
     if (LuaScript::argMatch(L, "continueOnException"))
         sys->opt_continueOnException = lua_toboolean(L, -1);
 
@@ -231,11 +232,32 @@ int LuaSystem::setOptions(lua_State *L)
     if (LuaScript::argMatch(L, "cube0Profile"))
         sys->opt_cube0Profile = lua_tostring(L, -1);
 
+    if (LuaScript::argMatch(L, "paintTrace"))
+        sys->opt_paintTrace = lua_toboolean(L, -1);
+
+    if (LuaScript::argMatch(L, "radioTrace"))
+        sys->opt_radioTrace = lua_toboolean(L, -1);
+
+    if (LuaScript::argMatch(L, "svmTrace"))
+        sys->opt_svmTrace = lua_toboolean(L, -1);
+
+    if (LuaScript::argMatch(L, "svmFlashStats"))
+        sys->opt_svmFlashStats = lua_toboolean(L, -1);
+
+    if (LuaScript::argMatch(L, "svmStackMonitor"))
+        sys->opt_svmStackMonitor = lua_toboolean(L, -1);
+
     if (!LuaScript::argEnd(L))
         return 0;
 
     return 0;
-}   
+}
+
+int LuaSystem::numCubes(lua_State *L)
+{
+    lua_pushinteger(L, sys->opt_numCubes);
+    return 1;
+}
 
 int LuaSystem::setTraceMode(lua_State *L)
 {

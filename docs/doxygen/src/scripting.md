@@ -129,8 +129,17 @@ Set one or more key-value pairs which describe global simulation options.
 
 Option                  | Meaning
 -------                 | -------------
-`numCubes`              | Number of cubes to simulate. Defaults to the number specified on Siftulator's command line.
+`numCubes`              | Number of cubes to simulate. Also set by the `-n` command line option.
 `turbo`                 | Boolean value. If false, the simulation runs as close to real-time as possible. If true, the simulation runs as fast as possible.
+`paintTrace`            | Boolean value. If true, dump detailed Paint Controller logs.
+`radioTrace`            | Boolean value. If true, log the contents of all radio packets.
+`svmTrace`              | Boolean value. If true, log all executed SVM instructions.
+`svmFlashStats`         | Boolean value. If true, dump statistics about flash memory usage.
+`svmStackMonitor`       | Boolean value. If true, monitor SVM stack usage.
+
+### System():numCubes()
+
+Retrieve the current number of simulated cubes. This value can be set with `System():setOptions{numCubes=N}`, the `-n` command line option, or keyboard commands in the UI.
 
 ### System():init()
 

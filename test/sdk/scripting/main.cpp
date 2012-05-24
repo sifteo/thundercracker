@@ -17,16 +17,21 @@ void main()
 {
     SCRIPT(LUA,
         foobar = 0
+        System():setOptions{ numCubes = 4 }
     );
     ASSERT(luaGetInteger("foobar") == 0);
 
     luaSetInteger("foobar", 100);
     ASSERT(luaGetInteger("foobar") == 100);
+    ASSERT(luaGetInteger("System():numCubes()") == 4);
 
     SCRIPT(LUA, Cube(0):saveScreenshot("myScreenshot.png"));
     SCRIPT(LUA, Cube(0):testScreenshot("myScreenshot.png"));
 
     SCRIPT_FMT(LUA, "Frontend():postMessage('Power is >= %d')", 9000);
+
+    SCRIPT(LUA, System():setOptions{ svmTrace = true });
+    SCRIPT(LUA, System():setOptions{ svmTrace = false });
 
     LOG("Success.\n");
 }

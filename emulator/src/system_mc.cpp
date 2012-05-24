@@ -47,13 +47,6 @@ bool SystemMC::init(System *sys)
     FlashBlock::init();
     USBProtocolHandler::init();
 
-    if (sys->opt_svmTrace)
-        SvmCpu::enableTracing();
-    if (sys->opt_svmFlashStats)
-        FlashBlock::enableStats();
-    if (sys->opt_svmStackMonitor)
-        SvmRuntime::enableStackMonitoring();
-
     return true;
 }
 
