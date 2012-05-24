@@ -292,9 +292,6 @@ template <typename T> inline long round(const T value)
 
 /**
  * Returns true when 'a' and 'b' are within 'epsilon' of each other.
- *
- * For more comparing floats and choosing your 'epsilon', see:
- * http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
  */
 
 template <typename T> inline bool almostEqual(const T a, const T b, const T epsilon)
