@@ -100,6 +100,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     }
 
     prev_ut = 0;
+    startingItem = 0;
 
     setIconYOffset(kDefaultIconYOffset);
     setPeekTiles(kDefaultPeekTiles);
@@ -205,14 +206,28 @@ inline void Menu::reset()
     changeState(MENU_STATE_START);
 }
 
-inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon)
+inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon, const AssetImage *label)
 {
     ASSERT(item < numItems);
-    items[item].icon = icon;
 
+    items[item].icon = icon;
     for (int i = prev_ut; i < prev_ut + kNumTilesX; i++)
         if (itemVisibleAtCol(item, i))
             drawColumn(i);
+
+    if (label) {
+        uint8_t currentItem = computeSelected();
+        items[item].label = label;
+        
+        if (kHeaderHeight && currentState == MENU_STATE_STATIC &&
+            currentItem == item)
+        {
+            const AssetImage& label = items[currentItem].label
+                                    ? *items[currentItem].label
+                                    : *assets->header;
+            vid.bg1.image(vec(0,0), label);
+        }
+    }
 }
 
 inline bool Menu::itemVisible(uint8_t item)
@@ -237,6 +252,20 @@ inline void Menu::setPeekTiles(uint8_t numTiles)
     ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
     kPeekTiles = numTiles;
     updateBG0();
+}
+
+/**
+ * Set the menu anchor.
+ *
+ * The anchor item is the active item in the menu when the menu starts. If the
+ * menu has already started, calling this method affects the future invocations
+ * of the same menu since running the event pump after an item is pressed
+ * restarts the menu.
+ */
+void Menu::anchor(uint8_t item)
+{
+    ASSERT(item < numItems);
+    startingItem = item;
 }
 
 /**
