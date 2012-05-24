@@ -8,14 +8,12 @@
 #include "usb/usbdevice.h"
 #include "usbprotocol.h"
 #include "volume.h"
+#include "homebutton.h"
+#include "powermanager.h"
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
 
-/*
- * Table of test handlers.
- * Order must match the Command enum.
- */
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
     flashCommsHandler,          // 1
@@ -25,6 +23,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     volumeCalibrationHandler,   // 5
     batteryCalibrationHandler,  // 6
     homeButtonHandler,          // 7
+    shutdownHandler,            // 8
 };
 
 void FactoryTest::init()
@@ -74,7 +73,6 @@ void FactoryTest::usbHandler(const uint8_t *buf, unsigned len)
 {
     uint8_t cmd = buf[USBProtocol::HEADER_LEN];
     if (cmd < arraysize(handlers)) {
-        UART("factorytest handler\r\n");
         TestHandler handler = handlers[cmd];
         // arg[0] is always the 'command 'type' byte
         handler(len - USBProtocol::HEADER_LEN, buf + USBProtocol::HEADER_LEN);
@@ -207,11 +205,26 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
 }
 
 /*
- *
+ * no args - we just report the state of the home button.
  */
 void FactoryTest::homeButtonHandler(uint8_t argc, const uint8_t *args)
 {
+    const uint8_t buttonState = HomeButton::isPressed() ? 1 : 0;
 
+    const uint8_t response[] = { args[0], buttonState };
+    UsbDevice::write(response, sizeof response);
+}
+
+void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
+{
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+
+    // give usb packet a moment to be transmitted
+    for (volatile unsigned i = 0; i < 10000; ++i)
+        ;
+
+    PowerManager::shutdown();
 }
 
 IRQ_HANDLER ISR_USART3()

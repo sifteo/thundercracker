@@ -14,14 +14,11 @@
 #endif
 
 uint32_t Tasks::pendingMask;
-uint32_t Tasks::alwaysMask;
 
 Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
-    { 0 },
     #else
-    { UsbDevice::handleINData, 0},
     { UsbDevice::handleOUTData, 0},
     #endif
     { AudioMixer::pullAudio, 0},
@@ -33,24 +30,24 @@ Tasks::Task Tasks::TaskList[] = {
 void Tasks::init()
 {
     pendingMask = 0;
-    alwaysMask = 0;
 }
 
 /*
     Pend a given task handler to be run the next time we have time.
 */
-void Tasks::setPending(TaskID id, void* p, bool runAlways)
+void Tasks::setPending(TaskID id, void* p)
 {
-    ASSERT((unsigned)id < (unsigned)arraysize(TaskList));
+    ASSERT((unsigned)id < arraysize(TaskList));
     Task &task = TaskList[id];
     ASSERT(task.callback != NULL);
     task.param = p;
-    
-    if (runAlways) {
-        Atomic::SetLZ(alwaysMask, id);
-    } else {
-        Atomic::SetLZ(pendingMask, id);
-    }
+
+    Atomic::SetLZ(pendingMask, id);
+}
+
+void Tasks::clearPending(TaskID id)
+{
+    Atomic::ClearLZ(pendingMask, id);
 }
 
 /*
@@ -60,12 +57,7 @@ void Tasks::setPending(TaskID id, void* p, bool runAlways)
 */
 void Tasks::work()
 {
-    uint32_t always = alwaysMask;
-    doJobs(always);
-    doJobs(pendingMask);
-}
-
-void Tasks::doJobs(uint32_t &mask) {
+    uint32_t mask = pendingMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         // clear before calling back since callback might take a while and

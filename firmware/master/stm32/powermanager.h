@@ -21,6 +21,8 @@ public:
 
     static void onVBusEdge();
 
+    static void shutdown();
+
     static GPIOPin vbus;
 
 private:

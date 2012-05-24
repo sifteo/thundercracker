@@ -10,14 +10,6 @@ public:
     static const unsigned UART_LEN_INDEX = 0;   // first byte is length
     static const unsigned UART_CMD_INDEX = 1;   // second byte is opcode
 
-    enum Command {
-        NrfComms        = 0,
-        FlashComms      = 1,
-        FlashReadWrite  = 2,
-        Led             = 3,
-        UniqueId        = 4
-    };
-
     static void init();
     static void onUartIsr();
     static void usbHandler(const uint8_t *buf, unsigned len);
@@ -37,6 +29,7 @@ private:
     static void volumeCalibrationHandler(uint8_t argc, const uint8_t *args);
     static void batteryCalibrationHandler(uint8_t argc, const uint8_t *args);
     static void homeButtonHandler(uint8_t argc, const uint8_t *args);
+    static void shutdownHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H

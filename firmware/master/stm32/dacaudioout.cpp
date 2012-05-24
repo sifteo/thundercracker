@@ -37,7 +37,7 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     Dac::init();
     Dac::configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
 
-    Tasks::setPending(Tasks::AudioPull, &buf, true);
+    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 void DacAudioOut::start()
