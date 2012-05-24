@@ -9,29 +9,26 @@
 #include "frontend.h"
 
 FrontendMothership::FrontendMothership()
-	: body(0) {}
+    : body(0) {}
 
-void FrontendMothership::init(unsigned aId, b2World& world, float x, float y) {
-	id = aId;
+void FrontendMothership::init(unsigned aId, b2World& world, float x, float y)
+{
+    id = aId;
 
-	//------------------------------------------------------------------------------
-	// initialize body
-	//------------------------------------------------------------------------------
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_kinematicBody;
+    bodyDef.position.Set(x,y);
+    body = world.CreateBody(&bodyDef);
 
-	b2BodyDef bodyDef;
-	bodyDef.type = b2_kinematicBody;
-	bodyDef.position.Set(x,y);
-	body = world.CreateBody(&bodyDef);
+    b2PolygonShape box;
+    const b2Vec2 boxSize = 0.96f * b2Vec2(
+        MothershipConstants::SIZEX,
+        MothershipConstants::SIZEY
+    );
+    box.SetAsBox(boxSize.x, boxSize.y);
 
-	b2PolygonShape box;
-	const b2Vec2 boxSize = 0.96f * b2Vec2(
-		MothershipConstants::SIZEX,
-		MothershipConstants::SIZEY
-	); // 96% magic number yanked from frontend_cube.cpp
-	box.SetAsBox(boxSize.x, boxSize.y);
-
-	bodyFixtureData.type = FixtureData::T_MOTHERSHIP;
-	bodyFixtureData.ptr.mothership = this;	
+    bodyFixtureData.type = FixtureData::T_MOTHERSHIP;
+    bodyFixtureData.ptr.mothership = this;  
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
@@ -41,23 +38,27 @@ void FrontendMothership::init(unsigned aId, b2World& world, float x, float y) {
     bodyFixture = body->CreateFixture(&fixtureDef);
 }
 
-void FrontendMothership::exit() {
-	if (body) {
-		body->GetWorld()->DestroyBody(body);
-		body = 0;
-	}
+void FrontendMothership::exit()
+{
+    if (body) {
+        body->GetWorld()->DestroyBody(body);
+        body = 0;
+    }
 }
 
-void FrontendMothership::animate() {
-	// NOOP
-	// Gift Idea: Hurnold Fobcakes peeks out from behind 
-	// the mothership when you press the reset button.
+void FrontendMothership::animate()
+{
+    // NOOP
+    // Gift Idea: Hurnold Fobcakes peeks out from behind 
+    // the mothership when you press the reset button.
 }
 
-void FrontendMothership::draw(GLRenderer &r) {
-	r.drawMothership(id, body->GetPosition(), body->GetAngle());
+void FrontendMothership::draw(GLRenderer &r)
+{
+    r.drawMothership(id, body->GetPosition(), body->GetAngle());
 }
 
-void FrontendMothership::setResetPressed(bool isDown) {
-	// TODO
+void FrontendMothership::setResetPressed(bool isDown)
+{
+    // TODO
 }

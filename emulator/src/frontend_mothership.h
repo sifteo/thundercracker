@@ -20,18 +20,18 @@
 
 namespace MothershipConstants {
 
-	/*
-	 * Size of the mothership, int Box2D meters.
-	 */
-	const float SIZEX = 0.75;
-	const float SIZEY = 0.5; // matches CubeConstants::SIZE
+    /*
+     * Size of the mothership, int Box2D meters.
+     */
+    const float SIZEX = 0.75;
+    const float SIZEY = 0.5; // matches CubeConstants::SIZE
 
 }
 
 class FrontendMothership {
 private:
-	unsigned id; // we'll' want multiple motherships for things like pairing tests
-	b2Body* body;
+    unsigned id; // we'll' want multiple motherships for things like pairing tests
+    b2Body* body;
     b2Fixture *bodyFixture;
     FixtureData bodyFixtureData; 
 
@@ -40,19 +40,19 @@ private:
     // MotherShip::Hardware *hw;
 
 public:
-	FrontendMothership();
+    FrontendMothership();
 
-	void init(unsigned id, b2World &world, float x, float y);
-	void exit();
+    void init(unsigned id, b2World &world, float x, float y);
+    void exit();
 
-	void animate();
-	void draw(GLRenderer &r);
+    void animate();
+    void draw(GLRenderer &r);
 
-	unsigned getId() const { return id; }
-	b2Body* getBody() { return body; }
+    unsigned getId() const { return id; }
+    b2Body* getBody() { return body; }
     bool isInitialized() const { return body != 0; }
 
-	void setResetPressed(bool isDown);
+    void setResetPressed(bool isDown);
 
 };
 
