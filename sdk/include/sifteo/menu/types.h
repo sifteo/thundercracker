@@ -98,7 +98,7 @@ class Menu {
     bool pollEvent(struct MenuEvent *);
     void preventDefault();
     void reset();
-    void replaceIcon(uint8_t item, const AssetImage *);
+    void replaceIcon(uint8_t item, const AssetImage *icon, const AssetImage *label = 0);
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);

@@ -58,8 +58,8 @@ void main() {
                     }
                     if (e.item == 4) {
                         static unsigned randomIcon = 0;
-                        randomIcon = (randomIcon + 1) % 4;
-                        m.replaceIcon(e.item, gItems[randomIcon].icon);
+                        randomIcon = (randomIcon + 1) % e.item;
+                        m.replaceIcon(e.item, gItems[randomIcon].icon, gItems[randomIcon].label);
                     }
                     break;
                 case MENU_EXIT:
