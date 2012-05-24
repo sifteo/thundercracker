@@ -3,7 +3,8 @@ SUBDIRS = \
 	menudemo \
 	sensors \
 	stars \
-	text
+	text \
+	mandelbrot
 
 .PHONY: clean subdirs $(SUBDIRS)
 
