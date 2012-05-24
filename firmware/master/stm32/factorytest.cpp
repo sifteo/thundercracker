@@ -9,14 +9,11 @@
 #include "usbprotocol.h"
 #include "volume.h"
 #include "homebutton.h"
+#include "powermanager.h"
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
 
-/*
- * Table of test handlers.
- * Order must match the Command enum.
- */
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
     flashCommsHandler,          // 1
@@ -26,6 +23,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     volumeCalibrationHandler,   // 5
     batteryCalibrationHandler,  // 6
     homeButtonHandler,          // 7
+    shutdownHandler,            // 8
 };
 
 void FactoryTest::init()
@@ -215,6 +213,18 @@ void FactoryTest::homeButtonHandler(uint8_t argc, const uint8_t *args)
 
     const uint8_t response[] = { args[0], buttonState };
     UsbDevice::write(response, sizeof response);
+}
+
+void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
+{
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+
+    // give usb packet a moment to be transmitted
+    for (volatile unsigned i = 0; i < 10000; ++i)
+        ;
+
+    PowerManager::shutdown();
 }
 
 IRQ_HANDLER ISR_USART3()
