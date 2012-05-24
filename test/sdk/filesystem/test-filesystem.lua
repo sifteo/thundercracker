@@ -177,6 +177,55 @@ function filterVolumes()
 end
 
 
+function assertVolumes(t)
+    -- Raise an error if the output of filterVolumes() doesn't contain
+    -- the exact same set of volumes as 'table'. Note that the parameter
+    -- is sorted in-place.
+
+    local filtered = filterVolumes()
+
+    table.sort(filtered)
+    table.sort(t)
+
+    for index = 1, math.max(table.maxn(filtered), table.maxn(t)) do
+        if filtered[index] ~= t[index] then
+            error(string.format("Mismatch in test volumes, expected {%s}, found {%s}",
+                table.concat(t, ","), table.concat(filtered, ",")))
+        end
+    end
+end
+
+
+function testHierarchy()
+    -- Create trees of volumes, and assure that they are deleted correctly.
+
+    local a = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+    local b = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+    local c = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+    local d = fs:newVolume(TEST_VOL_TYPE, "Foo", "", c)
+    local e = fs:newVolume(TEST_VOL_TYPE, "Foo", "", d)
+
+    local f = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+    local g = fs:newVolume(TEST_VOL_TYPE, "Foo", "", f)
+    local h = fs:newVolume(TEST_VOL_TYPE, "Foo", "", g)
+    local i = fs:newVolume(TEST_VOL_TYPE, "Foo", "", h)
+
+    assertVolumes{a, b, c, d, e, f, g, h, i}
+
+    -- Delete the subtree containing {h, i}
+    fs:deleteVolume(h)
+    assertVolumes{a, b, c, d, e, f, g}
+
+    -- Delete the entire tree below 'a', but leave the other tree
+    fs:deleteVolume(a)
+    assertVolumes{f, g}
+
+    -- Now delete the other subtree
+    fs:deleteVolume(f)
+    assertVolumes{}
+end
+
+
 function testFilesystem()
 
     -- Dump the volumes that existed on entry
@@ -185,6 +234,7 @@ function testFilesystem()
 
     -- Individual filesystem exercises
 
+    testHierarchy()
     testRandomVolumes()
 
     -- Check over the aftermath

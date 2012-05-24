@@ -47,7 +47,11 @@ struct FlashVolumeHeader
 
     uint32_t crcMap;                // CRC of in-use portion of FlashMap
     uint32_t crcErase;              // CRC of in-use portion of erase count map
-    uint32_t reserved;              // Must be 0xFFFFFFFF
+
+    uint8_t  parentBlock;           // FlashMapBlock code for parent block (0 if top-level)
+    uint8_t  parentBlockCpl;        // Redundant complement of parentBlock
+
+    uint16_t reserved;              // Must be 0xFFFF
 
     /*
      * Followed by variable-sized parts:
@@ -78,15 +82,23 @@ struct FlashVolumeHeader
     /// Check whether the FlashVolumeHeader itself is superficially valid.
     bool isHeaderValid() const
     {
+        STATIC_ASSERT(sizeof payloadBlocks == 2);
+        STATIC_ASSERT(sizeof dataBytes == 2);
+        STATIC_ASSERT(sizeof parentBlock == 1);
+
         return magic == MAGIC &&
                type == typeCopy &&
                (payloadBlocks ^ payloadBlocksCpl) == 0xFFFF &&
-               (dataBytes ^ dataBytesCpl) == 0xFFFF;
+               (dataBytes ^ dataBytesCpl) == 0xFFFF &&
+               (parentBlock ^ parentBlockCpl) == 0xFF;
     }
 
     /// Initializes the FlashVolumeHeader, except for CRC fields
-    void init(unsigned type, unsigned payloadBlocks, unsigned dataBytes)
+    void init(unsigned type, unsigned payloadBlocks, unsigned dataBytes,
+        FlashMapBlock parent)
     {
+        STATIC_ASSERT(sizeof this->parentBlock == sizeof parent.code);
+
         this->magic = MAGIC;
         this->type = type;
         this->payloadBlocks = payloadBlocks;
@@ -94,7 +106,10 @@ struct FlashVolumeHeader
         this->payloadBlocksCpl = ~payloadBlocks;
         this->dataBytesCpl = ~dataBytes;
         this->typeCopy = type;
-        this->reserved = 0xFFFFFFFF;
+        this->parentBlock = parent.code;
+        this->parentBlockCpl = ~parent.code;
+        this->reserved = 0xFFFF;
+
         ASSERT(isHeaderValid());
     }
 

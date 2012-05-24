@@ -636,8 +636,9 @@ LuaFilesystem::LuaFilesystem(lua_State *L)
 int LuaFilesystem::newVolume(lua_State *L)
 {
     /*
-     * Takes three arguments: (type, payload data, type-specific data).
+     * Arguments: (type, payload data, type-specific data, parent).
      * Type-specific data is optional, and will be zero-length if omitted.
+     * Parent is optional, will be unset (zero) if omitted.
      *
      * Creates, writes, and commits the new volume. Returns its block code
      * on success, or nil on failure.
@@ -648,9 +649,10 @@ int LuaFilesystem::newVolume(lua_State *L)
     unsigned type = luaL_checkinteger(L, 1);
     const char *payloadStr = lua_tolstring(L, 2, &payloadStrLen);
     const char *dataStr = lua_tolstring(L, 3, &dataStrLen);
+    FlashMapBlock parent = FlashMapBlock::fromCode(lua_tointeger(L, 4));
 
     FlashVolumeWriter writer;
-    if (!writer.begin(type, payloadStrLen, dataStrLen))
+    if (!writer.begin(type, payloadStrLen, dataStrLen, parent))
         return 0;
 
     writer.appendPayload((const uint8_t*)payloadStr, payloadStrLen);
@@ -696,7 +698,8 @@ int LuaFilesystem::deleteVolume(lua_State *L)
         return 0;
     }
 
-    vol.markAsDeleted();
+    vol.deleteTree();
+
     return 0;
 }
 

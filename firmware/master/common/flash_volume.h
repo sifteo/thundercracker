@@ -66,8 +66,27 @@ public:
     bool isValid() const;
     _SYSVolumeHandle getHandle() const;
     unsigned getType() const;
+    FlashVolume getParent() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
-    void markAsDeleted() const;
+
+    /**
+     * Delete just this volume. Only for use as part of a larger delete
+     * operation, or for volumes which are guaranteed not to have any
+     * child volumes. Saves the cost of a volume scan to look for children.
+     */
+    void deleteSingle() const;
+
+    /**
+     * Delete this volume and all children.
+     *
+     * Always use this function if there's any possibility that a volume
+     * has child volumes under it. Deleting a parent volume without deleting
+     * the corresponding child volumes will mean that the child volumes
+     * will return a no-longer-meaningful FlashVolume from getParent(). If
+     * a new volume is created at the same address later, the child volumes
+     * will be incorrectly parented.
+     */
+    void deleteTree() const;
 
 private:
     static uint32_t signHandle(uint32_t h);
@@ -193,8 +212,10 @@ public:
      * This can take some time, as it involves erasing flash blocks as well
      * as scanning for recyclable blocks.
      */
-    bool begin(unsigned type, unsigned payloadBytes, unsigned hdrDataBytes = 0);
-    
+    bool begin(unsigned type, unsigned payloadBytes,
+        unsigned hdrDataBytes = 0,
+        FlashVolume parent = FlashMapBlock::invalid());
+
     /**
      * Write any amount of payload data, starting at the beginning of the volume
      * or at the end of the last appendPayload() chunk. This data is buffered
