@@ -100,6 +100,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     }
 
     prev_ut = 0;
+    startingItem = 0;
 
     setIconYOffset(kDefaultIconYOffset);
     setPeekTiles(kDefaultPeekTiles);
@@ -237,6 +238,20 @@ inline void Menu::setPeekTiles(uint8_t numTiles)
     ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
     kPeekTiles = numTiles;
     updateBG0();
+}
+
+/**
+ * Set the menu anchor.
+ *
+ * The anchor item is the active item in the menu when the menu starts. If the
+ * menu has already started, calling this method affects the future invocations
+ * of the same menu since running the event pump after an item is pressed
+ * restarts the menu.
+ */
+void Menu::anchor(uint8_t item)
+{
+    ASSERT(item < numItems);
+    startingItem = item;
 }
 
 /**

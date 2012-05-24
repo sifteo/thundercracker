@@ -102,6 +102,7 @@ class Menu {
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);
+    void anchor(uint8_t item);
 
  private:
     static const float kTimeDilator = 13.1f;
@@ -138,6 +139,7 @@ class Menu {
     uint8_t numTips;                // number of tips in the theme
     struct MenuItem *items;         // items in the strip
     uint8_t numItems;               // number of items in the strip
+    uint8_t startingItem;           // centered item in strip on first draw
     // event breadcrumb
     struct MenuEvent currentEvent;
     // state tracking

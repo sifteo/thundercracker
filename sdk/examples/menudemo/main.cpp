@@ -43,6 +43,7 @@ void main() {
     begin();
 
     Menu m(gVideo[0], &gAssets, gItems);
+    m.anchor(2);
 
     struct MenuEvent e;
     while(1) {
@@ -52,6 +53,8 @@ void main() {
                     // Game Buddy is not clickable, so don't do anything on press
                     if (e.item >= 3) {
                         m.preventDefault();
+                    } else {
+                        m.anchor(e.item);
                     }
                     if (e.item == 4) {
                         static unsigned randomIcon = 0;

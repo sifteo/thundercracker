@@ -107,7 +107,7 @@ inline void Menu::stateStart()
 inline void Menu::transFromStart()
 {
     if (stateFinished) {
-        position = 0.f;
+        position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
 
