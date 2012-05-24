@@ -341,7 +341,7 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
     }
 }
 
-void PaintControl::vramFlushed(CubeSlot *cube)
+bool PaintControl::vramFlushed(CubeSlot *cube)
 {
     /*
      * Finished flushing VRAM out to the cubes. This is only called when
@@ -353,11 +353,14 @@ void PaintControl::vramFlushed(CubeSlot *cube)
      * that everything in the VRAM dirty bit can now be tracked
      * by the RENDER dirty bit; in other words, all dirty VRAM has been
      * flushed, and we can start a clean frame rendering.
+     *
+     * Returns true if we may have changed VRAM contents in a way which
+     * could benefit from attempting to flush additional bytes.
      */
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (!vbuf)
-        return;
+        return false;
     VRAMFlags vf(vbuf);
 
     PAINT_LOG((LOG_PREFIX "vramFlushed\n", LOG_PARAMS));
@@ -396,7 +399,11 @@ void PaintControl::vramFlushed(CubeSlot *cube)
         // Propagate the bits...
         Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
         Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
+
+        return true;
     }
+
+    return false;
 }
 
 bool PaintControl::allowContinuous(CubeSlot *cube)

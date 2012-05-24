@@ -150,7 +150,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     // First priority: Send video buffer updates
 
     if (codec.encodeVRAM(tx.packet, vbuf))
-        paintControl.vramFlushed(this);
+        if (paintControl.vramFlushed(this))
+            codec.encodeVRAM(tx.packet, vbuf);
 
     // Second priority: Download assets to flash
 

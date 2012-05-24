@@ -46,7 +46,9 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
      *
-     * Returns true iff all VRAM has been flushed.
+     * Returns true iff all VRAM has been flushed. The caller should try
+     * to send this additional data, if there's still room in the TX
+     * buffer.
      */
 
     bool flushed = false;
