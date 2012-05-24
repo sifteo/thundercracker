@@ -8,6 +8,7 @@
 #include "svmmemory.h"
 #include "cubeslots.h"
 #include "cube.h"
+#include "systime.h"
 
 
 void PanicMessenger::init(SvmMemory::VirtAddr vbufVA)
@@ -43,7 +44,13 @@ void PanicMessenger::paint(_SYSCubeID cube)
      *
      * We try not to invoke any Task handlers, as would be the case
      * if we used higher-level paint primitives.
+     *
+     * If the paint can't be completed in a fixed amount of time,
+     * we abort. This ensures that paint() returns even if the
+     * indicated cube is no longer reachable.
      */
+
+    SysTime::Ticks deadline = SysTime::ticks() + SysTime::sTicks(1);
 
     CubeSlot &slot = CubeSlots::instances[cube];
     avb->vbuf.vram.flags = _SYS_VF_CONTINUOUS;
@@ -56,7 +63,7 @@ void PanicMessenger::paint(_SYSCubeID cube)
     slot.setVideoBuffer(&avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm16 != 0) {
+    while (avb->vbuf.cm16 != 0 && SysTime::ticks() < deadline) {
         Atomic::Barrier();
         Radio::halt();
     }
@@ -65,7 +72,7 @@ void PanicMessenger::paint(_SYSCubeID cube)
     // through a frame when the radio transmission finished.
     for (unsigned i = 0; i < 2; i++) {
         uint8_t baseline = slot.getLastFrameACK();
-        while (slot.getLastFrameACK() == baseline) {
+        while (slot.getLastFrameACK() == baseline && SysTime::ticks() < deadline) {
             Atomic::Barrier();
             Radio::halt();
         }
@@ -76,7 +83,7 @@ void PanicMessenger::paint(_SYSCubeID cube)
     VRAM::unlock(avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm16 != 0) {
+    while (avb->vbuf.cm16 != 0&& SysTime::ticks() < deadline) {
         Atomic::Barrier();
         Radio::halt();
     }
