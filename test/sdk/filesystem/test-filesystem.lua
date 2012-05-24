@@ -9,7 +9,7 @@
 require('siftulator')
 require('luaunit')
 
-System():setOptions{ turbo=true }
+System():setOptions{ turbo=true, numCubes=0 }
 fs = Filesystem()
 writeTotal = 0
 
@@ -199,30 +199,39 @@ end
 function testHierarchy()
     -- Create trees of volumes, and assure that they are deleted correctly.
 
-    local a = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
-    local b = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
-    local c = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
-    local d = fs:newVolume(TEST_VOL_TYPE, "Foo", "", c)
-    local e = fs:newVolume(TEST_VOL_TYPE, "Foo", "", d)
+    -- XXX: known failure for iterations > ~50, after volume ID wraparound!
+    for iteration = 1, 10 do
 
-    local f = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
-    local g = fs:newVolume(TEST_VOL_TYPE, "Foo", "", f)
-    local h = fs:newVolume(TEST_VOL_TYPE, "Foo", "", g)
-    local i = fs:newVolume(TEST_VOL_TYPE, "Foo", "", h)
+        local a = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+        local b = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+        local c = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+        local d = fs:newVolume(TEST_VOL_TYPE, "Foo", "", c)
+        local e = fs:newVolume(TEST_VOL_TYPE, "Foo", "", d)
 
-    assertVolumes{a, b, c, d, e, f, g, h, i}
+        local f = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+        local g = fs:newVolume(TEST_VOL_TYPE, "Foo", "", f)
+        local h = fs:newVolume(TEST_VOL_TYPE, "Foo", "", g)
+        local i = fs:newVolume(TEST_VOL_TYPE, "Foo", "", h)
 
-    -- Delete the subtree containing {h, i}
-    fs:deleteVolume(h)
-    assertVolumes{a, b, c, d, e, f, g}
+        local allVolumes = {a, b, c, d, e, f, g, h, i}
+        assertVolumes(allVolumes)
 
-    -- Delete the entire tree below 'a', but leave the other tree
-    fs:deleteVolume(a)
-    assertVolumes{f, g}
+        print(string.format("Hierarchy iter %d: volumes {%s}",
+            iteration, table.concat(allVolumes, ",")))
 
-    -- Now delete the other subtree
-    fs:deleteVolume(f)
-    assertVolumes{}
+        -- Delete the subtree containing {h, i}
+        fs:deleteVolume(h)
+        assertVolumes{a, b, c, d, e, f, g}
+
+        -- Delete the entire tree below 'a', but leave the other tree
+        fs:deleteVolume(a)
+        assertVolumes{f, g}
+
+        -- Now delete the other subtree
+        fs:deleteVolume(f)
+        assertVolumes{}
+
+    end
 end
 
 
