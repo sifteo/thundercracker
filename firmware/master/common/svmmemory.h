@@ -293,6 +293,16 @@ public:
 #endif
     }
 
+    /*
+     * ALERT! You should probably not be using this function.
+     * Its main purpose in life is to allow factory test code to
+     * place audio data into valid virtual memory. This should NEVER
+     * be used during actual application runtime.
+     */
+    static void* copyToUserRAM(size_t destOffset, const void *src, size_t sz) {
+        return memcpy(userRAM + destOffset, src, sz);
+    }
+
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES] SECTION(".userram");
     static FlashMapSpan flashSeg[NUM_FLASH_SEGMENTS];
