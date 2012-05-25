@@ -18,6 +18,12 @@ else
     BIN_EXT :=
 endif
 
+# Aias i686 -> i386
+
+ifeq ($(BUILD_ARCH), i686)
+	BUILD_ARCH := i386
+endif
+
 # Pick a DEPS_DIR, set up target-specific tools
 
 ifeq ($(BUILD_PLATFORM), windows32)
@@ -27,7 +33,7 @@ ifeq ($(BUILD_PLATFORM), windows32)
 endif
 
 ifeq ($(BUILD_PLATFORM), Darwin)
-	ifeq ( $(BUILD_ARCH),i386 )
+	ifeq ($(BUILD_ARCH), i386)
 		DEPS_DIR := $(TC_DIR)/deps/osx/i386
 	else
 		DEPS_DIR := $(TC_DIR)/deps/osx/x86_64
@@ -35,7 +41,7 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 endif
 
 ifeq ($(BUILD_PLATFORM), Linux)
-	ifeq ( $(BUILD_ARCH),i386 )
+	ifeq ($(BUILD_ARCH), i386)
 		DEPS_DIR := $(TC_DIR)/deps/linux/i386
 	else
 		DEPS_DIR := $(TC_DIR)/deps/linux/x86_64
