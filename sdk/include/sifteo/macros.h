@@ -203,7 +203,7 @@ do { \
  * These script fragments are all executed in the same global Lua context.
  * Each script fragment executes synchronously with your game code.
  *
- * @warning The Lua objects provided by Siftulator are not yet documented.
+ * See the @ref scripting documentation for more info.
  */
 #define SCRIPT(_type, _code) \
 do { \
