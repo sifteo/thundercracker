@@ -6,19 +6,19 @@ ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
     BUILD_PLATFORM := windows32
 endif
 
-# Windows-isms
-
 ifeq ($(BUILD_PLATFORM), windows32)
-    LIB_STDCPP := -static -lstdc++
-    BIN_EXT := .exe
-    CC := mingw32-gcc
+	# Windows-isms
+	LIB_STDCPP := -static -lstdc++
+	BIN_EXT := .exe
+	CC := mingw32-gcc
 else
-    LIB_STDCPP := -lstdc++
-    BUILD_ARCH := $(shell arch)
-    BIN_EXT :=
+	# Note: Must use "uname -m" instead of arch. Arch lies on 64-bit Mac OS.
+	LIB_STDCPP := -lstdc++
+	BUILD_ARCH := $(shell uname -m)
+	BIN_EXT :=
 endif
 
-# Aias i686 -> i386
+# Alias i686 -> i386
 
 ifeq ($(BUILD_ARCH), i686)
 	BUILD_ARCH := i386
