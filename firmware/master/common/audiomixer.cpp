@@ -138,7 +138,7 @@ void AudioMixer::pullAudio(void *p) {
                 trackerCountdown = trackerInterval;
             }
         }
-    } while(mixed == numSamples && bytesToMix > totalBytesMixed);
+    } while (mixed == numSamples && bytesToMix > totalBytesMixed);
 
     // Check for buffer overrun.
     ASSERT(totalBytesMixed <= bytesToMix);
