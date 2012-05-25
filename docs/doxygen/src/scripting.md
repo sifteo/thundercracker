@@ -50,10 +50,10 @@ fe:exit()
 ## Inline scripting
 
 In this mode, script fragments are interleaved with normal C++ game code, using some macro, linker, and runtime tricks. It all starts with the SCRIPT()
-and SCRIPT_FMT() macros, which allow inline execution of Lua code your game, with limited ways for game code and Lua code to exchange data.
+and SCRIPT_FMT() macros, which allow inline execution of Lua code in your game, with limited ways for game code and Lua code to exchange data.
 
 It is often useful to include out-of-line Lua code via require(). All inline
-scripting runs in its own context, distinct from the context used by shell-mode scripting. This single contex is shared between all blocks
+scripting runs in its own context, distinct from the context used by shell-mode scripting. This single context is shared between all blocks
 of inline Lua code. The code is always parsed and run in the order that the
 enclosing C++ code runs, so these opening declarations commonly happen at the
 top of main().
