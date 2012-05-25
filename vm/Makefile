@@ -85,15 +85,22 @@ endif
 .SUFFIXES:
 
 ifeq ($(BUILD_PLATFORM), windows32)
-# We like having stripped binaries plus a separate file with
-# debug info. Do that on Win32 too.
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug "src/$(BIN)-d$(BIN_EXT)" "$(BIN).dSYM"
 	strip -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	rm -f "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
 	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
-else
-# Default link
+endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
+	strip -s "src/$(BIN)-d" -o "src/$(BIN)-stripped"
+	rm -f "$(BIN_DIR)/$(BIN)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)" "src/$(BIN)-stripped"
+endif
+
+ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d $(OBJS) $(LDFLAGS)
 	strip -o $(BIN_DIR)/$(BIN) src/$(BIN)-d

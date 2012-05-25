@@ -33,19 +33,12 @@ ifeq ($(BUILD_PLATFORM), windows32)
 endif
 
 ifeq ($(BUILD_PLATFORM), Darwin)
-	ifeq ($(BUILD_ARCH), i386)
-		DEPS_DIR := $(TC_DIR)/deps/osx/i386
-	else
-		DEPS_DIR := $(TC_DIR)/deps/osx/x86_64
-	endif
+	DEPS_DIR := $(TC_DIR)/deps/osx/$(BUILD_ARCH)
 endif
 
 ifeq ($(BUILD_PLATFORM), Linux)
-	ifeq ($(BUILD_ARCH), i386)
-		DEPS_DIR := $(TC_DIR)/deps/linux/i386
-	else
-		DEPS_DIR := $(TC_DIR)/deps/linux/x86_64
-	endif
+	DEPS_DIR := $(TC_DIR)/deps/linux/$(BUILD_ARCH)
+	UPX := upx
 endif
 
 # Tools that aren't (yet) target-specific
