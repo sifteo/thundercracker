@@ -116,14 +116,13 @@ void FlashVolume::deleteTree() const
      * instead of requiring an iteration for every single delete operation.
      */
 
-    FlashMapBlock::Set pending;     // Volumes to delete on the next pass
-    FlashMapBlock::Set deleted;     // Volumes already deleted
-
-    pending.clear();
+    FlashMapBlock::Set deleted;
+    bool notDoneYet;
     deleted.clear();
 
     // This is the root of the deletion tree
-    block.mark(pending);
+    deleteSingle();
+    block.mark(deleted);
 
     do {
         FlashVolumeIter vi;
@@ -133,27 +132,29 @@ void FlashVolume::deleteTree() const
          * Visit volumes in order, first to read their parent and then to
          * potentially delete them. By doing both of these consecutively on
          * the same volume, we can reduce cache thrashing.
+         *
+         * To finish, we need to do a full scan in which we find no volumes
+         * with deleted parents. We need this one last scan, since there's
+         * no way to know if a volume we've already iterated past was parented
+         * to a volume that was marked for deletion later in the same scan.
          */
 
+        notDoneYet = false;
         vi.begin();
+
         while (vi.next(vol)) {
             FlashVolume parent = vol.getParent();
 
-            // If this volume's parent is deleted or awaiting deletion,
-            // mark this volume as pending deletion also.
-            if (parent.block.isValid() && (deleted.test(parent.block.index()) ||
-                                           pending.test(parent.block.index()))) {
-                vol.block.mark(pending);
-            }
+            if (!deleted.test(vol.block.index()) &&
+                parent.block.isValid() &&
+                deleted.test(parent.block.index())) {
 
-            if (pending.test(vol.block.index())) {
                 vol.deleteSingle();
-                vol.block.clear(pending);
                 vol.block.mark(deleted);
+                notDoneYet = true;
             }
         }
-
-    } while (!pending.empty());
+    } while (notDoneYet);
 }
 
 bool FlashVolumeIter::next(FlashVolume &vol)

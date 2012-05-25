@@ -116,11 +116,11 @@ function checkEndurance()
     local idealEraseCount = writeTotal / DEVICE_SIZE
     local maxEC = getMaxEraseCount()
     local ratio = maxEC / idealEraseCount
-    local ratioLimit = 1.5
+    local ratioLimit = 1.3
 
-    print("--        Ideal erase count: " .. idealEraseCount)
-    print("--  Actual peak erase count: " .. maxEC)
-    print("--   Ratio, actual to ideal: " .. ratio .. " (Max " .. ratioLimit .. ")")
+    print(string.format("--        Ideal erase count: %.2f", idealEraseCount))
+    print(string.format("--  Actual peak erase count: %d", maxEC))
+    print(string.format("--    Ratio of peak / ideal: %.4f (Max %f)", ratio, ratioLimit))
 
     if ratio > ratioLimit then
         error("Wear levelling failed, peak erase count higher than allowed")
@@ -131,9 +131,11 @@ end
 function testRandomVolumes(verbose)
     -- Psuedorandomly create and delete volumes
 
-    local testData = string.rep("I am bytes, 16! ", 1024*1024)
+    print "Testing random volume creation and deletion"
 
+    local testData = string.rep("I am bytes, 16! ", 1024*1024)
     math.randomseed(1234)
+
     for iteration = 1, 100 do
 
         -- How big of a volume to create?
@@ -156,7 +158,7 @@ function testRandomVolumes(verbose)
             print(string.format("Created volume [%02x], %d bytes", vol, volSize))
         end
 
-        writeTotal = writeTotal + volSize
+        writeTotal = writeTotal + math.ceil(volSize / BLOCK_SIZE) * BLOCK_SIZE
     end
 end
 
@@ -196,11 +198,18 @@ function assertVolumes(t)
 end
 
 
-function testHierarchy()
+function testHierarchy(verbose)
     -- Create trees of volumes, and assure that they are deleted correctly.
 
-    -- XXX: known failure for iterations > ~50, after volume ID wraparound!
-    for iteration = 1, 10 do
+    print "Testing hierarchial volume deletion"
+
+    -- By running this several times, we both contribute toward testing wear
+    -- levelling, and we test the deletion code with various orderings of
+    -- volumes on the device.
+    for iteration = 1, 100 do
+
+        -- Account for our test volumes when computing wear levelling performance
+        writeTotal = writeTotal + BLOCK_SIZE * 9
 
         local a = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
         local b = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
@@ -214,10 +223,14 @@ function testHierarchy()
         local i = fs:newVolume(TEST_VOL_TYPE, "Foo", "", h)
 
         local allVolumes = {a, b, c, d, e, f, g, h, i}
-        assertVolumes(allVolumes)
+        if verbose then
+            print(string.format("Hierarchy iter %d: volumes {%s}",
+                iteration, table.concat(allVolumes, ",")))
+        end
 
-        print(string.format("Hierarchy iter %d: volumes {%s}",
-            iteration, table.concat(allVolumes, ",")))
+        -- All volumes must be present to start with.
+        -- (Note that this has the side-effect of sorting allVolumes)
+        assertVolumes(allVolumes)
 
         -- Delete the subtree containing {h, i}
         fs:deleteVolume(h)
