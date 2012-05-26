@@ -165,7 +165,6 @@ void SvmRuntime::tailcall(reg_t addr)
 
 void SvmRuntime::enterFunction(reg_t addr)
 {
-
     // Allocate stack space for this function, and enter it
     adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);

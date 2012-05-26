@@ -137,13 +137,10 @@ int main()
             Tasks::work();
     }
 
-    for (;;) {
-        Tasks::work();
-    }
-
     /*
      * Start the game runtime, and execute the Launcher app.
      */
 
+    SvmCpu::init();
     SvmLoader::runLauncher();
 }

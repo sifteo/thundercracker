@@ -58,9 +58,8 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     // the proper ELF binary to load debug symbols from.
     SvmDebugPipe::setSymbolSource(program);
 
-    // Initialize memory and CPU
+    // Initialize memory
     SvmMemory::erase();
-    SvmCpu::init();
     secondaryUnmap();
 
     // Load RWDATA into RAM
