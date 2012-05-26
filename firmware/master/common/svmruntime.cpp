@@ -35,6 +35,14 @@ void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 
 void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
 {
+    // Unset base pointers
+    validate(0);
+
+    // Escape from any active events
+    eventFrame = 0;
+    eventDispatchFlag = false;
+
+    // Reset stack limits
     initStack(stack);
 
     // Zero all GPRs
@@ -252,6 +260,7 @@ void SvmRuntime::svc(uint8_t imm8)
     } else if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
         syscall(syscallNum);
+        postSyscallWork();
 
     } else if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         int imm5 = imm8 & 0x1f;
@@ -286,11 +295,6 @@ void SvmRuntime::svc(uint8_t imm8)
             break;
         }
     }
-
-    if (eventDispatchFlag) {
-        eventDispatchFlag = 0;
-        Event::dispatch();
-    }
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
@@ -310,10 +314,12 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
         syscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        tailsyscall(imm15);
+        tailSyscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
@@ -428,13 +434,9 @@ void SvmRuntime::syscall(unsigned num)
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
-
-    // Poll for pending userspace tasks on our way up. This is akin to a
-    // deferred procedure call (DPC) in Win32.
-    Tasks::work();
 }
 
-void SvmRuntime::tailsyscall(unsigned num)
+void SvmRuntime::tailSyscall(unsigned num)
 {
     /*
      * Tail syscalls incorporate a normal system call plus a return.
@@ -459,6 +461,28 @@ void SvmRuntime::tailsyscall(unsigned num)
     ret(RET_BRANCH);
     syscall(num);
     ret(RET_ALL ^ RET_BRANCH);
+}
+
+void SvmRuntime::postSyscallWork()
+{
+    /*
+     * Deferred work items that must be handled after a syscall is fully
+     * done, the return values have been stored, and we're ready to return.
+     *
+     * This is work that could happen at the end of every svc(), but
+     * for performance reasons we only do it after syscalls.
+     */
+
+    // Poll for pending userspace tasks on our way up. This is akin to a
+    // deferred procedure call (DPC) in Win32.
+    Tasks::work();
+    
+    // Event dispatch is requested by certain syscalls, but must wait
+    // until after return values are stored.
+    if (eventDispatchFlag) {
+        eventDispatchFlag = 0;
+        Event::dispatch();
+    }
 }
 
 void SvmRuntime::resetSP()

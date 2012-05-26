@@ -46,7 +46,7 @@ public:
     static void branch(reg_t addr);
 
     /**
-     * Call Event::Dispatch() on our way out of the next svc(). Events can't
+     * Call Event::Dispatch() on our way out of the next syscall(). Events can't
      * be dispatched while we're in syscalls, since the internal call() we
      * generate must occur *after* the syscall's return value has been stored.
      */
@@ -61,7 +61,7 @@ public:
     static unsigned reconstructCodeAddr(reg_t pc) {
         return SvmMemory::reconstructCodeAddr(codeBlock, pc);
     }
-    
+
     /**
      * Event dispatch is only possible when the PC is at a bundle boundary,
      * since the resulting return pointer would not be valid coming from
@@ -70,7 +70,7 @@ public:
     static bool canSendEvent() {
         return eventFrame == 0 && (SvmCpu::reg(REG_PC) & 3) == 0;
     }
-    
+
     /**
      * Event dispatch is just a call() which also slips new parameters
      * into the registers after saving our CallFrame. This does not affect
@@ -162,9 +162,11 @@ private:
         return getSPAdjustWords(addr) * 4;
     }
 
-    static void validate(reg_t addr);
     static void syscall(unsigned num);
-    static void tailsyscall(unsigned num);
+    static void tailSyscall(unsigned num);
+    static void postSyscallWork();
+
+    static void validate(reg_t addr);
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
