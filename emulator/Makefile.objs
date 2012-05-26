@@ -38,6 +38,7 @@ LOCAL_OBJS = \
     src/mc_elfdebuginfo.o \
     src/mc_logdecoder.o \
     src/mc_gdbserver.o \
+    src/mc_led.o \
     resources/data.o \
     resources/firmware-sbt.o
 

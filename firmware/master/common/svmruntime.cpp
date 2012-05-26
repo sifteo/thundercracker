@@ -27,6 +27,7 @@ bool SvmRuntime::eventDispatchFlag;
 
 void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 {
+    UART(("Entering SVM.\r\n"));
     initStack(stack);
     SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
