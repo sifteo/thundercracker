@@ -59,6 +59,13 @@ void SvmRuntime::initStack(const StackInfo &stack)
 #endif
 }
 
+void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
+{
+    reg_t value = SvmCpu::reg(reg);
+    SvmMemory::squashPhysicalAddr(value);
+    msg << uint32_t(value);
+}
+
 void SvmRuntime::fault(FaultCode code)
 {
     // Try to find a handler for this fault. If nobody steps up,
@@ -77,18 +84,19 @@ void SvmRuntime::fault(FaultCode code)
      * Draw a message to cube #0 and exit.
      */
 
-    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     PanicMessenger msg;
     msg.init(0x10000);
 
     msg.at(1,1) << "Oh noes!";
     msg.at(1,3) << "Fault code " << uint8_t(code);
+
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     msg.at(1,5) << "PC: " << pcVA;
-    for (unsigned r = 0; r < 8; r++) {
-        reg_t value = SvmCpu::reg(r);
-        SvmMemory::squashPhysicalAddr(value);
-        msg.at(1,6+r) << 'r' << char('0' + r) << ": " << uint32_t(value);
-    }
+
+    dumpRegister(msg.at(1,6) << "SP: ", REG_SP);
+
+    for (unsigned r = 0; r < 8; r++)
+        dumpRegister(msg.at(1,7+r) << 'r' << char('0' + r) << ": ", r);
 
     msg.paint(0);
     SvmLoader::exit(true);
