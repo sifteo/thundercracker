@@ -17,9 +17,10 @@ if __name__ == '__main__':
     if (len(sys.argv) < 2):
         print "usage: python install.py /path/to/my/flash.bin"
         sys.exit(1)
+    filepath = sys.argv[1]
 
     try:
-        storage = SiftulatorFlash.StorageFile(sys.argv[1])
+        storage = SiftulatorFlash.StorageFile(filepath)
     except Exception, e:
         print "ERROR: %s" % e
         sys.exit(1)
@@ -48,7 +49,7 @@ if __name__ == '__main__':
                 sys.stderr.write(".")
         sys.stderr.write("\n")
 
-        sys.stderr.write("loading %s, %d bytes" % (filepath, size))
+        sys.stderr.write("Loading filesystem from %r, %d bytes" % (filepath, size))
         count = 0
         while blob:
             blockSize = min(60, len(blob))
