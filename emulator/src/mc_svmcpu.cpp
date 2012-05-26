@@ -196,7 +196,7 @@ static void emulateExitException()
 
 static void saveUserRegs()
 {
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    HwContext *ctx = reinterpret_cast<HwContext*>(userRegs.sp);
     memcpy(&userRegs.hw, ctx, sizeof *ctx);
 
     userRegs.irq.r4 = regs[4];
@@ -211,7 +211,7 @@ static void saveUserRegs()
 
 static void restoreUserRegs()
 {
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    HwContext *ctx = reinterpret_cast<HwContext*>(userRegs.sp);
     memcpy(ctx, &userRegs.hw, sizeof *ctx);
 
     regs[4] = userRegs.irq.r4;
