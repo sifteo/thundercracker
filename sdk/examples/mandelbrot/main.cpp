@@ -19,6 +19,17 @@ void main()
 {
     const CubeID cube(0);
     static VideoBuffer vid;
+    vid.attach(cube);
+
+    /*
+     * Blank the screen. This also blanks the one-pixel region between
+     * the bottom of the fractal and the top of the elapsed time indicator
+     * below.
+     */
+
+    vid.initMode(SOLID_MODE);
+    vid.colormap[0] = RGB565::fromRGB(0xFFFFFF);
+    System::paint();
 
     /*
      * We use STAMP mode in a special way here, to do (slow) true-color
@@ -31,15 +42,16 @@ void main()
      * frequently useful, but it's a fun parlour trick :)
      */
 
+    SystemTime startTime = SystemTime::now();
+
     vid.initMode(STAMP);
     vid.stamp.disableKey();
-    vid.attach(cube);
 
     auto &fb = vid.stamp.initFB<16,1>();
     for (unsigned i = 0; i < 16; i++)
         fb.plot(vec(i, 0U), i);
 
-    for (unsigned y = 0; y < LCD_height; y++)
+    for (unsigned y = 0; y < LCD_height - 9; y++)
         for (unsigned x = 0; x < LCD_width; x += 16) {
 
             /*
@@ -67,6 +79,21 @@ void main()
             vid.colormap.set(pixels);
             System::paintUnlimited();
         }
+
+    /*
+     * Use BG0_ROM mode to draw the elapsed time at the bottom of the screen.
+     */
+
+    TimeDelta elapsed = SystemTime::now() - startTime;
+
+    String<16> message;
+    message << (elapsed.milliseconds() / 1000) << "."
+        << Fixed(elapsed.milliseconds() % 1000, 3) << " sec";
+    LOG("Elapsed time: %s\n", message.c_str());
+
+    vid.initMode(BG0_ROM);
+    vid.bg0rom.text(vec(1,0), message);
+    vid.setWindow(LCD_height - 8, 8);
 
     // Kill time (efficiently)
     while (1)
