@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import SiftulatorFlash
 import sys, usb.core, usb.util
 
 IN_EP = 0x81
@@ -8,19 +11,25 @@ INSTALLER_HEADER = "\0\0\0\0"
 def getByte(dev, _timeout):
     return dev.read(IN_EP, 1, timeout = _timeout)[0]
 
+
 if __name__ == '__main__':
     
     if (len(sys.argv) < 2):
-        print "usage: python asset_install.py /path/to/my/assetfile"
+        print "usage: python install.py /path/to/my/flash.bin"
         sys.exit(1)
-    
-    filepath = sys.argv[1]
+
+    try:
+        storage = SiftulatorFlash.StorageFile(sys.argv[1])
+    except Exception, e:
+        print "ERROR: %s" % e
+        sys.exit(1)
+
     dev = usb.core.find(idVendor = 0x22fa, idProduct = 0x0105)
     if dev is None:
         raise ValueError('Device not found')
     
     try:
-        blob = open(filepath, 'rb').read()
+        blob = storage.mcReadTruncated()
         size = len(blob)
         sz = INSTALLER_HEADER
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
