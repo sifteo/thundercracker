@@ -114,7 +114,6 @@ void SystemMC::threadFn(void *param)
 
     instance->autoInstall();
 
-    SvmCpu::init();
     SvmLoader::runLauncher();
 }
 

@@ -141,6 +141,5 @@ int main()
      * Start the game runtime, and execute the Launcher app.
      */
 
-    SvmCpu::init();
     SvmLoader::runLauncher();
 }
