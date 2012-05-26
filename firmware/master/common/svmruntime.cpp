@@ -14,7 +14,20 @@
 #include "tasks.h"
 #include "panic.h"
 
+#include <math.h>
 #include <sifteo/abi.h>
+
+typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
+                               reg_t p4, reg_t p5, reg_t p6, reg_t p7);
+
+// Floating point library aliases, used by syscall-table on hardware only.
+#ifdef SIFTEO_SIMULATOR
+#   define FP_ALIAS(_sysName, _fpLibName)   _sysName
+#else
+#   define FP_ALIAS(_sysName, _fpLibName)   _fpLibName
+#endif
+
+#include "syscall-table.def"
 
 using namespace Svm;
 
@@ -388,13 +401,6 @@ void SvmRuntime::syscall(unsigned num)
     // and return up to 64 bits in r0-r1. Note that the return value is never
     // a system pointer, so for that purpose we treat return values as 32-bit
     // registers.
-
-    typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
-                                   reg_t p4, reg_t p5, reg_t p6, reg_t p7);
-
-    static const SvmSyscall SyscallTable[] = {
-        #include "syscall-table.def"
-    };
 
     if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
         SvmRuntime::fault(F_BAD_SYSCALL);

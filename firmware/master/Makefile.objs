@@ -5,7 +5,6 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_cube.o \
-    $(MASTER_DIR)/common/syscall_float.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_integer.o \
     $(MASTER_DIR)/common/syscall_image.o \
@@ -74,7 +73,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o \
     $(MASTER_DIR)/stm32/powermanager.stm32.o \
     $(MASTER_DIR)/stm32/exti.stm32.o \
-    $(MASTER_DIR)/stm32/led.stm32.o
+    $(MASTER_DIR)/stm32/led.stm32.o \
+    $(MASTER_DIR)/stm32/syscall_float.stm32.o
 
 # Sources for normal master firmware
 OBJS_STM32_MASTER = \

@@ -4,7 +4,10 @@
  */
 
 /*
- * Syscalls for software floating point support.
+ * Emulator-specific syscalls for software floating point support.
+ *
+ * This file emulates floating point operations which, on hardware, are
+ * mostly forwarded directly to the software FP library.
  */
 
 /*
@@ -226,28 +229,6 @@ uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
     return isunordered(reinterpret_cast<double&>(a), reinterpret_cast<double&>(b));
 }
 
-void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut)
-{
-    /*
-     * This syscall exists as such because it's very common, especially for
-     * our game code, to compute both sine and cosine of the same angle.
-     *
-     * It's possible to do both operations in one step, e.g. with the
-     * sincosf() function from GNU's math library.
-     *
-     * Right now we eschew this optimization in favor of portability,
-     * but this function is in the ABI so we can optimize later without
-     * breaking compatibility.
-     */
-
-    float fX = reinterpret_cast<float&>(x);
-
-    if (SvmMemory::mapRAM(sinOut, sizeof *sinOut))
-        *sinOut = ::sinf(fX);
-    if (SvmMemory::mapRAM(cosOut, sizeof *cosOut))
-        *cosOut = ::cosf(fX);
-}
-
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b)
 {
     float fA = reinterpret_cast<float&>(a);
@@ -288,6 +269,16 @@ uint64_t _SYS_logd(uint32_t aL, uint32_t aH)
     uint64_t a = aL | (uint64_t)aH << 32;
     double r = log(reinterpret_cast<double&>(a));
     return reinterpret_cast<uint64_t&>(r);
+}
+
+void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut)
+{
+    float fX = reinterpret_cast<float&>(x);
+
+    if (SvmMemory::mapRAM(sinOut, sizeof *sinOut))
+        *sinOut = sinf(fX);
+    if (SvmMemory::mapRAM(cosOut, sizeof *cosOut))
+        *cosOut = cosf(fX);
 }
 
 
