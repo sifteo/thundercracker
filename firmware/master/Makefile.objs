@@ -1,4 +1,4 @@
-MASTER_DIR = $(TC_DIR)/firmware/master
+MASTER_DIR := $(TC_DIR)/firmware/master
 
 # Sources common to both host and stm32 builds
 OBJS_COMMON = \
@@ -72,22 +72,10 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
     $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o \
     $(MASTER_DIR)/stm32/powermanager.stm32.o \
+    $(MASTER_DIR)/stm32/factorytest.stm32.o \
     $(MASTER_DIR)/stm32/exti.stm32.o \
     $(MASTER_DIR)/stm32/led.stm32.o \
     $(MASTER_DIR)/stm32/syscall_float.stm32.o
 
-# Sources for normal master firmware
-OBJS_STM32_MASTER = \
-    $(OBJS_STM32)                                       \
-    $(MASTER_DIR)/stm32/main.stm32.o                    \
-    $(MASTER_DIR)/stm32/factorytest.stm32.o             \
-    $(MASTER_DIR)/stm32/realtimeclock.stm32.o
-
-# Sources for stm32-based test jig firmware
-OBJS_STM32_TESTJIG = \
-    $(OBJS_STM32)                                       \
-    $(MASTER_DIR)/testjig/main.stm32.o                  \
-    $(MASTER_DIR)/testjig/testjig.stm32.o               \
-    $(MASTER_DIR)/stm32/neighbor.stm32.o                \
-    $(MASTER_DIR)/stm32/i2c.stm32.o                     \
-    $(MASTER_DIR)/stm32/adc.stm32.o
+# Other target specific sources should be appended to OBJS_STM32
+# in their project specific Makefiles

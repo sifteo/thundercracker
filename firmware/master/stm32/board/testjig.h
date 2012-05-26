@@ -64,6 +64,10 @@
 #define AUDIO_PWMB_GPIO     GPIOPin(&GPIOA, 8)
 #define AUDIO_PWM_CHAN      1
 
+#define VOLUME_TIM          TIM5
+#define VOLUME_CHAN         2
+#define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
+
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2
