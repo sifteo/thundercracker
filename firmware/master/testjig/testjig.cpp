@@ -95,7 +95,8 @@ void TestJig::init()
     vramTransaction.state = VramIdle;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
-//    neighbor.init();
+
+    neighbor.init();
 }
 
 /*
@@ -321,8 +322,12 @@ IRQ_HANDLER ISR_TIM3()
 
 IRQ_HANDLER ISR_TIM5()
 {
-    if (TIM5.SR & 1)
-        neighbor.rxPeriodIsr();
+    if (TIM5.SR & 1) {
+        uint16_t side, rxData;
+        if (neighbor.rxPeriodIsr(&side, &rxData)) {
+            TestJig::onNeighborMsgRx(side, rxData);
+        }
+    }
     TIM5.SR = 0; // must clear status to acknowledge the ISR
 }
 

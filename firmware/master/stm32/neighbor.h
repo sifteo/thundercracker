@@ -30,7 +30,7 @@ public:
 
     void transmitNextBit();
     void onRxPulse(uint8_t side);
-    void rxPeriodIsr();
+    bool rxPeriodIsr(uint16_t *side, uint16_t *rxData);
 
     inline static bool inIrqPending(uint8_t side) {
         return inPins[side].irqPending();
@@ -46,7 +46,7 @@ private:
     void enablePwm();
     void disablePwm();
 
-    uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
+    volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
 
     // sad to make these static, but no good way to init them other than
     // a) providing a default ctor for GPIOPin
