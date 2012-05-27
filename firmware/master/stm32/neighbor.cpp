@@ -36,7 +36,7 @@ void Neighbor::init()
     }
 
     txPeriodTimer.init(625, 4);
-    rxPeriodTimer.init(820, 0); // ~ 24 us
+    rxPeriodTimer.init(428, 0); // ~ 12 us
 
     for (unsigned i = 1; i < 5; ++i)
         txPeriodTimer.configureChannelAsOutput(i, HwTimer::ActiveHigh, HwTimer::Pwm1);
