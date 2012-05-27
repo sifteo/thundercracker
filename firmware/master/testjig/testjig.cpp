@@ -125,7 +125,7 @@ void TestJig::neighborInIsr(uint8_t side)
 void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
 {
     // NB! neighbor transmitted in its native big endian format
-    const uint8_t response[] = { 6, side, (msg >> 8) & 0xff, msg & 0xff };
+    const uint8_t response[] = { 101, side, (msg >> 8) & 0xff, msg & 0xff };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -148,7 +148,7 @@ void TestJig::onI2cEvent()
      */
     if (status & I2CSlave::AddressMatch) {
         if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0) {
-            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { 6 };
+            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { 100 };
             memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
             UsbDevice::write(resp, sizeof resp);
         }

@@ -46,13 +46,11 @@ void demo(void)
     draw_xy = XY(12,0);
     draw_image(img_radio_3);
 
-	#ifdef CUBE_CHAN
-
-		draw_xy = XY(0,15);
-	    draw_attr = ATTR_GRAY;
-	    draw_hex(CUBE_CHAN);
-
-	#endif
+    #ifdef CUBE_CHAN
+        draw_xy = XY(0,15);
+        draw_attr = ATTR_GRAY;
+        draw_hex(CUBE_CHAN);
+    #endif
 
     draw_xy = XY(14,15);
     draw_attr = ATTR_GRAY;
@@ -60,29 +58,29 @@ void demo(void)
 
     graphics_render();
 
-#ifdef DEBUG_TOUCH
-    draw_attr = ATTR_NONE;
+    #ifdef DEBUG_TOUCH
+        draw_attr = ATTR_NONE;
 
-    while(1) {
+        while(1) {
 
-    	draw_xy = XY(1,14);
-    	if( touch ) {
-    		draw_string("Touch!");
-    	} else {
-    		draw_string("      ");
-    	}
-    	draw_xy = XY(8,14);
-    	draw_hex(touch_count);
+            draw_xy = XY(1,14);
+            if( touch ) {
+                draw_string("Touch!");
+            } else {
+                draw_string("      ");
+            }
+            draw_xy = XY(8,14);
+            draw_hex(touch_count);
 
-    	graphics_render();
+            graphics_render();
 
-    }
-#endif
+        }
+    #endif
 
     draw_exit();
 
-#ifdef DEBUG_FLASH
-    vram.mode = _SYS_VM_BG0;
-    vram.flags = _SYS_VF_CONTINUOUS;
-#endif
+    #ifdef DEBUG_FLASH
+        vram.mode = _SYS_VM_BG0;
+        vram.flags = _SYS_VF_CONTINUOUS;
+    #endif
 }

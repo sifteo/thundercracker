@@ -34,9 +34,9 @@ volatile uint8_t sensor_tick_counter_high;
 #define ACCEL_CTRL_REG4         0x23
 #define ACCEL_REG4_INIT         0x80    // block update, 2g full-scale, little endian
 
-#define ACCEL_CTRL_REG6			0x25
-#define ACCEL_IO_00				0x00
-#define ACCEL_IO_11				0x02
+#define ACCEL_CTRL_REG6         0x25
+#define ACCEL_IO_00             0x00
+#define ACCEL_IO_11             0x02
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
@@ -94,8 +94,8 @@ uint8_t i2c_temp_2;
  *    [4:0] -- ID for the transmitting cube.
  */
 
-#define NBR_TX		// comment out to turn off neighbor TX
-#define NBR_RX		// comment out to turn off neighbor RX
+#define NBR_TX      // comment out to turn off neighbor TX
+#define NBR_RX      // comment out to turn off neighbor RX
 
 #ifdef NBR_RX
 //#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
@@ -122,13 +122,13 @@ __bit nb_rx_mask_bit1;
 __bit touch;
 //#define TOUCH_DEBOUNCE
 #ifdef TOUCH_DEBOUNCE
-	#define TOUCH_DEBOUNCE_ON 5
-	#define TOUCH_DEBOUNCE_OFF 10
-	uint8_t touch_on;
-	uint8_t touch_off;
+    #define TOUCH_DEBOUNCE_ON 5
+    #define TOUCH_DEBOUNCE_OFF 10
+    uint8_t touch_on;
+    uint8_t touch_off;
 #endif
 #ifdef DEBUG_TOUCH
-	uint8_t touch_count;
+    uint8_t touch_count;
 #endif
 
 /*
@@ -551,21 +551,21 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         
         jb      _touch, 8$
 #ifdef TOUCH_DEBOUNCE
-        mov		_touch_off, #(TOUCH_DEBOUNCE_OFF)
-        djnz	_touch_on, 8$
+        mov     _touch_off, #(TOUCH_DEBOUNCE_OFF)
+        djnz    _touch_on, 8$
 #endif
 #ifdef DEBUG_TOUCH
-        mov		a, _touch_count
-        inc 	a
-        mov		_touch_count, a
+        mov     a, _touch_count
+        inc     a
+        mov     _touch_count, a
 #endif
         setb    _touch
         sjmp    7$
 6$:
         jnb     _touch, 8$
 #ifdef TOUCH_DEBOUNCE
-        mov		_touch_on, #(TOUCH_DEBOUNCE_ON)
-        djnz	_touch_off, 8$
+        mov     _touch_on, #(TOUCH_DEBOUNCE_ON)
+        djnz    _touch_off, 8$
 #endif
         clr     _touch
 7$: 
@@ -653,11 +653,11 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 {
     __asm
-    	; Squelch immediately. Doesnt matter if it is Tx
+        ; Squelch immediately. Doesnt matter if it is Tx
 
-    	#ifdef NBR_SQUELCH_ENABLE
-    	anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
-    	#endif
+        #ifdef NBR_SQUELCH_ENABLE
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
+        #endif
 
         push    acc
         push    psw
@@ -678,7 +678,7 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         jb      _nb_rx_mask_state0, 1$          ; First state
         setb    _nb_rx_mask_state0
         #ifdef NBR_RX
-        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
+        mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
         #endif
         sjmp    10$                             ;    End of masking
 1$:
@@ -687,18 +687,18 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         setb    _nb_rx_mask_state1
         mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
         #ifdef NBR_RX
-        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
+        mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
         #endif
         sjmp    10$                             ;    End of masking
 2$:
 
-		#ifdef NBR_SQUELCH_ENABLE
+        #ifdef NBR_SQUELCH_ENABLE
         ; since we are squelching we have to setup side mask every time
         jb      _nb_rx_mask_state2, 3$          ; Finished second mask bit?
-		#else
+        #else
         ; otherwise we setup side mask only once (before receiving first payload bit)
         jb      _nb_rx_mask_state2, 10$         ; Finished second mask bit?
-		#endif
+        #endif
         setb    _nb_rx_mask_state2
         mov     _nb_rx_mask_bit1, c             ;    Store mask bit
 3$:
@@ -714,33 +714,33 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         #ifdef NBR_RX
         jb      _nb_rx_mask_bit0, 4$
          jb     _nb_rx_mask_bit1, 5$
-		  #ifdef NBR_SQUELCH_ENABLE
-          orl 	_MISC_DIR, #(MISC_NB_0_TOP)
+          #ifdef NBR_SQUELCH_ENABLE
+          orl   _MISC_DIR, #(MISC_NB_0_TOP)
           #else
-          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
-		  #endif
+          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
+          #endif
           sjmp  10$
 5$:
-		  #ifdef NBR_SQUELCH_ENABLE
-          orl 	_MISC_DIR, #(MISC_NB_1_LEFT)
-		  #else
-          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
-		  #endif
+          #ifdef NBR_SQUELCH_ENABLE
+          orl   _MISC_DIR, #(MISC_NB_1_LEFT)
+          #else
+          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
+          #endif
           sjmp  10$
 4$:
          jb     _nb_rx_mask_bit1, 6$
-		  #ifdef NBR_SQUELCH_ENABLE
-          orl 	_MISC_DIR, #(MISC_NB_2_BOTTOM)
-		  #else
-          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
-		  #endif
+          #ifdef NBR_SQUELCH_ENABLE
+          orl   _MISC_DIR, #(MISC_NB_2_BOTTOM)
+          #else
+          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
+          #endif
           sjmp  10$
 6$:
-		  #ifdef NBR_SQUELCH_ENABLE
-          orl 	_MISC_DIR, #(MISC_NB_3_RIGHT)
-		  #else
-          mov	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
-		  #endif
+          #ifdef NBR_SQUELCH_ENABLE
+          orl   _MISC_DIR, #(MISC_NB_3_RIGHT)
+          #else
+          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
+          #endif
         #endif
 
 10$:
@@ -781,7 +781,7 @@ nb_tx:
         jnc     2$
 
 #ifdef NBR_TX
-        anl     _MISC_DIR, #~MISC_NB_OUT		; TODO: do this just once before initiating tx
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; TODO: do this just once before initiating tx
         orl     MISC_PORT, #MISC_NB_OUT
 #endif
 2$:
