@@ -41,15 +41,20 @@ __bit flash_need_autoerase;
  * also rather lower power consumption, since we aren't toggling an
  * external pin in a tight loop!
  *
- * This polling is based on examining the most significant bit of the
- * data byte. While busy, it will be the inverse of the true data.
+ * This polling is based on verifying the programmed byte. While
+ * busy, the MSB will be the inverse of true data. When we're finished,
+ * the whole byte must match.
  *
- * XXX: This can hang forever if we try to program a '0' bit to '1'!
- *      We probably want to detect this and other flash errors via some
- *      kind of watchdog?
+ * If any programming failure happens (programming a '0' bit to '1',
+ * hardware faults, noise on the bus) this polling will never complete,
+ * and we rely on a high-level watchdog timer to reset us.
+ *
+ * Note that we can poll the entire byte using exactly the same number of
+ * clock cycles (4) as it would take to poll a single bit, using the
+ * cjne instruction.
  */
 
-static __bit flash_poll_data;  // What data bit are we expecting?
+static uint8_t flash_poll_byte;
 
 /*
  * Output a constant unlock prefix. Only the low 12 bits of address
@@ -197,13 +202,10 @@ void flash_program_start(void)
     ADDR_PORT = flash_addr_lat2;
     CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
 
-    // Set flash_poll_data to whatever data is at the current address,
+    // Set flash_poll_byte to whatever data is at the current address,
     // so we don't have to special-case the first program operation.
 
-    __asm
-        mov     c, BUS_PORT.7
-        mov     _flash_poll_data, c
-    __endasm ;
+    flash_poll_byte = BUS_PORT;
 }    
 
 void flash_program_end(void)
@@ -214,11 +216,8 @@ void flash_program_end(void)
      */
      
     __asm
-        jnb     _flash_poll_data, 2$
-3$:     jnb     BUS_PORT.7, 3$
-        sjmp    1$
-2$:     jb      BUS_PORT.7, 2$
-1$:
+        mov     a, _flash_poll_byte
+1$:     cjne    a, BUS_PORT, 1$
     __endasm ;
     
     CTRL_PORT = CTRL_IDLE;
@@ -248,11 +247,8 @@ void flash_program_word(uint16_t dat) __naked
 
     // Wait on the previous word-write
     __asm
-        jnb     _flash_poll_data, 2$
-3$:     jnb     BUS_PORT.7, 3$
-        sjmp    1$
-2$:     jb      BUS_PORT.7, 2$
-1$:
+        mov     a, _flash_poll_byte
+1$:     cjne    a, BUS_PORT, 1$
     __endasm ;
 
     // Do an autoerase, if necessary
@@ -281,28 +277,17 @@ void flash_program_word(uint16_t dat) __naked
 
     flash_addr_low += 2;
 
-    // Calculate the next flash_poll_data flag.
-    __asm
-        mov     a, DPL
-        rlc     a
-        mov     _flash_poll_data, c
-    __endasm ;
+    // Calculate the next byte to verify
+    flash_poll_byte = DPL;
 
     /*
      * High byte
      */
 
-   // Wait for the low byte to finish
+    // Wait for the low byte to finish
     __asm
         mov     a, DPH
-        rlc     a
-        jnc     5$
-
-6$:     jnb     BUS_PORT.7, 6$
-        sjmp    7$
-
-5$:     jb      BUS_PORT.7, 5$
-7$:
+6$:     cjne    a, BUS_PORT, 6$
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
@@ -349,17 +334,13 @@ void flash_program_word(uint16_t dat) __naked
         ; latch while the flash is busy! In the interest of keeping the common
         ; case fast, just wait for the current write to finish then update lat2.
 
-        jnb     _flash_poll_data, 10$
-8$:     jnb     BUS_PORT.7, 8$
-        sjmp    9$
-10$:    jb      BUS_PORT.7, 10$
-9$:
+        mov     a, _flash_poll_byte
+8$:     cjne    a, BUS_PORT, 8$
 
         mov     ADDR_PORT, a
         mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
 
-        mov     c, BUS_PORT.7
-        mov     _flash_poll_data, c
+        mov     _flash_poll_byte, BUS_PORT
 
         ret
 
