@@ -150,6 +150,10 @@ private:
     int fbPoke(lua_State *L);
     int fwPeek(lua_State *L);
     int fbPeek(lua_State *L);
+
+    // nvm
+    int nbPoke(lua_State *L);
+    int nbPeek(lua_State *L);
 };
 
 

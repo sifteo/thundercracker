@@ -42,19 +42,16 @@ class I2CTestJig {
     }
 
     void i2cStart() {
+        captureAck();
         state = enabled ? S_I2C_ADDRESS : S_IDLE;
     }
     
     void i2cStop() {
+        captureAck();
         if (state != S_IDLE) {
             tthread::lock_guard<tthread::mutex> guard(mutex);
 
             state = S_IDLE;
-
-            // Double-buffer the last full ACK packet we received.
-            // Only applicable if this was an ACK write packet at all.
-            if (!ackBuffer.empty())
-                ackPrevious = ackBuffer;
         }
     }
 
@@ -67,7 +64,6 @@ class I2CTestJig {
             if ((byte & 0xFE) == deviceAddress) {
                 // Begin a test packet
                 state = (byte & 1) ? S_READ_PACKET : S_WRITE_ACK;
-                ackBuffer.clear();
             } else {
                 // Not us
                 state = S_IDLE;
@@ -126,6 +122,15 @@ class I2CTestJig {
         S_WRITE_ACK,
         S_READ_PACKET,
     } state;
+    
+    void captureAck() {
+        // Double-buffer the last full ACK packet we received.
+        // Only applicable if this was an ACK write packet at all.
+        if (!ackBuffer.empty()) {
+            ackPrevious = ackBuffer;
+            ackBuffer.clear();
+        }
+    }
 };
 
 

@@ -11,7 +11,7 @@ entire sequence, and return to a normal sensor polling schedule.
 
 1. Start condition, address byte 0xAA: Start a write to address 0x55
 
-2. The memory-resident portion of the ACK buffer (not including HWID) is written, in the same format we send it over the radio.
+2. The full ACK packet (including HWID) is written, in the same format we send it over the radio.
 
 3. Repeated start condition, address byte 0xAB: Start a read from address 0x55.
 

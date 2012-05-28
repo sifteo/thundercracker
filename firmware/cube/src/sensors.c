@@ -11,6 +11,7 @@
 #include "cube_hardware.h"
 #include "radio.h"
 #include "time.h"
+#include "params.h"
 
 /*
  * We export a global tick counter, which can be used by other modules
@@ -353,47 +354,65 @@ fs_2:
         inc     _i2c_temp_1         ; Iterate over all ACK bytes
         djnz    _i2c_temp_2, fs_ret
 
+        mov     _i2c_temp_1, #(PARAMS_HWID & 0xFF)
+        mov     _i2c_temp_2, #HWID_LEN
         mov     _i2c_state, #(fs_3 - as_1)
         sjmp    fs_ret
 
-        ; 3. Send repeated start, and RX address
+        ; 3. Send an HWID byte.
+        ;
+        ; These bytes come from internal OTP flash, accessed via DPTR.
+        ; As above, we use temp_1 as a pointer and temp_2 as a counter.
 
 fs_3:
-        orl     _W2CON0, #W2CON0_START
-        mov     _W2DAT, #FACTORY_ADDR_RX
+        mov     dph, #(PARAMS_HWID >> 8)
+        mov     dpl, _i2c_temp_1
+        movx    a, @dptr
+        mov     _W2DAT, a
+
+        inc     _i2c_temp_1
+        djnz    _i2c_temp_2, fs_ret
         mov     _i2c_state, #(fs_4 - as_1)
         sjmp    fs_ret
 
-        ; 4. RX address finished. Subsequent bytes will be reads.
+        ; 4. Send repeated start, and RX address
 
 fs_4:
+        orl     _W2CON0, #W2CON0_START
+        mov     _W2DAT, #FACTORY_ADDR_RX
         mov     _i2c_state, #(fs_5 - as_1)
         sjmp    fs_ret
 
-        ; 5. Read first byte of factory test packet
+        ; 5. RX address finished. Subsequent bytes will be reads.
 
 fs_5:
+        mov     _i2c_state, #(fs_6 - as_1)
+        sjmp    fs_ret
+
+        ; 6. Read first byte of factory test packet
+
+fs_6:
         mov     a, _W2DAT
         mov     _i2c_temp_1, a
-        mov     _i2c_state, #(fs_6 - as_1)
+        mov     _i2c_state, #(fs_7 - as_1)
 
         cjne    a, #0xff, #fs_ret       ; Check for sentinel [ff] packet
         ljmp    as_nack                 ;   End of transaction.
 
-        ; 6. Read second byte of factory test packet
-
-fs_6:
-        mov     _i2c_temp_2, _W2DAT
-        mov     _i2c_state, #(fs_7 - as_1)
-        sjmp    fs_ret
-
-        ; 7. Read third and final byte of factory test packet,
-        ;    and perform the indicated operation.
-        ;
-        ; This loops back to state 5 afterwards, to read as many
-        ; three-byte packets as the test jig is willing to send us.
+        ; 7. Read second byte of factory test packet
 
 fs_7:
+        mov     _i2c_temp_2, _W2DAT
+        mov     _i2c_state, #(fs_8 - as_1)
+        sjmp    fs_ret
+
+        ; 8. Read third and final byte of factory test packet,
+        ;    and perform the indicated operation.
+        ;
+        ; This loops back to state 6 afterwards, to read as many
+        ; three-byte packets as the test jig is willing to send us.
+
+fs_8:
         mov     dpl, _i2c_temp_2
         mov     a, _i2c_temp_1
         anl     a, #3                   ; Enforce VRAM address limit
@@ -401,7 +420,7 @@ fs_7:
         mov     a, _W2DAT               ; Poke byte into VRAM, read from i2c.
         movx    @dptr, a
 
-        mov     _i2c_state, #(fs_5 - as_1)
+        mov     _i2c_state, #(fs_6 - as_1)
         sjmp    fs_ret
 
     __endasm ;
