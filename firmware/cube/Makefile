@@ -22,7 +22,8 @@ OBJS = \
         src/overlay.rel \
         src/power.rel \
         src/lcd.rel \
-        src/radio.rel \
+        src/radio_init.rel \
+        src/radio_isr.rel \
         src/battery.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \
