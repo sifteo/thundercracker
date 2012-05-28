@@ -128,7 +128,7 @@ TestTestjig = {}
         gx.cube:testWrite(packHex(
             -- Same thing, again.
             'fde1fd02fd00' ..       -- Address 0x0002
-            'fd41'                  -- TILE_P0 [0]
+            'fd41'                  -- TILE_P0 [1]
         ))
 
         -- Check memory contents
@@ -145,3 +145,80 @@ TestTestjig = {}
         assertEquals(fifoAck2, bit.band(fifoAck1 + 19, 0xFF))
     end
 
+    function TestTestjig:xxx_test_flash_verify_fail()
+        -- Simulate a verification failure, and make sure we can recover
+        -- XXX: Test disabled until the cube WDT is implemented.
+
+        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
+        
+        -- Flash reset
+        gx.cube:testWrite(packHex('fe'))
+        gx.sys:vsleep(0.3)
+
+        gx.cube:testWrite(packHex(
+            -- Write 0xFFFF at 0x0000 to force an auto-erase
+            -- without actually programming any zero bits.
+
+            'fde1fd00fd00' ..       -- Address 0x0000
+            'fd00fdfffdff' ..       -- LUT1    [0] = 0xffff
+            'fd01fdf3fdf2' ..       -- LUT1    [1] = 0xf3f2
+            'fd40' ..               -- TILE_P0 [0]
+
+            -- Write a test pattern to the second tile
+
+            'fde1fd02fd00' ..       -- Address 0x0002
+            'fd41'                  -- TILE_P0 [1]
+        ))
+
+        gx.sys:vsleep(0.5)
+
+        -- Check memory contents
+        for i = 0, 63 do
+            assertEquals(gx.cube:fwPeek(i), 0xffff)
+        end
+        for i = 64, 127 do
+            assertEquals(gx.cube:fwPeek(i), 0xf3f2)
+        end
+
+        -- Check for the expected number of byte ACKs
+        local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
+        assertEquals(fifoAck2, bit.band(fifoAck1 + 15, 0xFF))
+
+        -- Now perform a write that can't succeed: we're overwriting an
+        -- already-programmed tile, not at a sector boundary, with a bit
+        -- pattern that requires erasure. Auto-erase won't happen, and the
+        -- firmware will get stuck while waiting for this write to complete.
+        --
+        -- NOTE: This failure pattern has the important characteristic of
+        --       having high bits which match, but low bits which don't. This
+        --       checks to ensure that the firmware is actually verifying the
+        --       entire byte correctly, not just the MSB.
+
+        gx.cube:testWrite(packHex(
+            'fde1fd02fd00' ..       -- Address 0x0002
+            'fd40'                  -- TILE_P0 [0]
+        ))
+
+        gx.sys:vsleep(0.5)
+
+        -- Check memory contents again. Should be unchanged.
+        for i = 0, 63 do
+            assertEquals(gx.cube:fwPeek(i), 0xffff)
+        end
+        for i = 64, 127 do
+            assertEquals(gx.cube:fwPeek(i), 0xf3f2)
+        end
+
+        -- Do one more programming operation, to ensure the cube hasn't crashed
+
+        gx.cube:testWrite(packHex(
+            'fde1fd02fd00' ..       -- Address 0x0004
+            'fd41'                  -- TILE_P0 [1]
+        ))
+
+        gx.sys:vsleep(0.3)
+        
+        for i = 128, 192 do
+            assertEquals(gx.cube:fwPeek(i), 0xf3f2)
+        end
+    end
