@@ -18,7 +18,9 @@ entire sequence, and return to a normal sensor polling schedule.
 4. Read a packet. Defined formats:
 
     * [HH LL BB], with H < 4 -- Write 0xBB to VRAM address 0xHHLL
-    * [ff], no more packets. Stop polling.
+    * [fd BB] -- Write 0xBB to Flash FIFO
+    * [fe] -- Begin Flash FIFO reset sequence
+    * [ff] -- No more packets. Stop polling.
 
 5. Repeat step 4 until we get the no-more-packets packet.
 
@@ -70,8 +72,6 @@ synchronous with the main graphics thread, but the above is all running
 on the I2C state machine ISR. We could program flash via the decoder FIFO,
 using commands like these:
 
-    * [HH ff BB] -- Write 0xBB to Flash FIFO at offset (HH - 1) % size, then write HH to FIFO head pointer.
-    * [ff ff 00] -- Special case of above; begin Flash FIFO reset sequence
 
 But this still wouldn't provide any readback.
 

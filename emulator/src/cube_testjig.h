@@ -34,11 +34,13 @@ class I2CTestJig {
         buffer = ackPrevious;
     }
 
-    void writeVRAM(uint16_t addr, uint8_t value) {
+    void write(const uint8_t *bytes, unsigned count) {
         tthread::lock_guard<tthread::mutex> guard(mutex);
-        packetBuffer.push_back(addr >> 8);
-        packetBuffer.push_back(addr);
-        packetBuffer.push_back(value);
+        while (count) {
+            packetBuffer.push_back(*bytes);
+            count--;
+            bytes++;
+        }
     }
 
     void i2cStart() {

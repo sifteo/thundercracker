@@ -57,7 +57,7 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, testScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, testSetEnabled),
     LUNAR_DECLARE_METHOD(LuaCube, testGetACK),
-    LUNAR_DECLARE_METHOD(LuaCube, testWriteVRAM),
+    LUNAR_DECLARE_METHOD(LuaCube, testWrite),
     LUNAR_DECLARE_METHOD(LuaCube, xbPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xwPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xbPeek),
@@ -616,10 +616,12 @@ int LuaCube::testGetACK(lua_State *L)
     return 1;
 }
 
-int LuaCube::testWriteVRAM(lua_State *L)
+int LuaCube::testWrite(lua_State *L)
 {
     Cube::I2CTestJig &test = LuaSystem::sys->cubes[id].i2c.testjig;
-    test.writeVRAM(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    size_t dataStrLen = 0;
+    const char *dataStr = lua_tolstring(L, 1, &dataStrLen);
+    test.write((const uint8_t*) dataStr, dataStrLen);
     return 0;
 }
 

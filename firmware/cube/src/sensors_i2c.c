@@ -253,39 +253,72 @@ fs_5:
         mov     _i2c_state, #(fs_6 - as_1)
         sjmp    fs_ret
 
-        ; 6. Read first byte of factory test packet
+        ; 6. Read first byte of factory test packet.
+        ;    Check for one-byte ops.
 
 fs_6:
         mov     a, _W2DAT
-        mov     _i2c_temp_1, a
-        mov     _i2c_state, #(fs_7 - as_1)
 
-        cjne    a, #0xff, #fs_ret       ; Check for sentinel [ff] packet
+        cjne    a, #0xfd, #1$           ; Check for flash data [fd] packet
+        mov     _i2c_state, #(fs_9 - as_1)
+        sjmp    fs_ret
+1$:
+
+        cjne    a, #0xfe, #2$           ; Check for flash reset [fe] packet
+        mov     _flash_fifo_head, #FLS_FIFO_RESET
+        sjmp    fs_ret
+2$:
+
+        cjne    a, #0xff, #3$           ; Check for sentinel [ff] packet
         ljmp    as_nack                 ;   End of transaction.
+3$:
 
-        ; 7. Read second byte of factory test packet
+        anl     a, #3                   ; Enforce VRAM address limit,
+        mov     _i2c_temp_1, a          ;    prepare for VRAM write
+        mov     _i2c_state, #(fs_7 - as_1)
+        sjmp    fs_ret
+
+        ; 7. Read second byte of factory test VRAM write packet.
 
 fs_7:
         mov     _i2c_temp_2, _W2DAT
         mov     _i2c_state, #(fs_8 - as_1)
         sjmp    fs_ret
 
-        ; 8. Read third and final byte of factory test packet,
-        ;    and perform the indicated operation.
+        ; 8. Read third and final byte of factory test VRAM packet.
         ;
         ; This loops back to state 6 afterwards, to read as many
         ; three-byte packets as the test jig is willing to send us.
 
 fs_8:
         mov     dpl, _i2c_temp_2
-        mov     a, _i2c_temp_1
-        anl     a, #3                   ; Enforce VRAM address limit
-        mov     dph, a
+        mov     dph, _i2c_temp_1
         mov     a, _W2DAT               ; Poke byte into VRAM, read from i2c.
         movx    @dptr, a
 
+fs_goto_6:
         mov     _i2c_state, #(fs_6 - as_1)
         sjmp    fs_ret
+
+        ; 9. Read flash loadstream byte from factory test packet.
+
+fs_9:
+
+        mov     psw, #0                 ; Back to register bank 0
+        push    0                       ; Save R0
+        mov     a, _flash_fifo_head     ; Load the flash write pointer
+        add     a, #_flash_fifo         ; Address relative to flash_fifo[]
+        mov     r0, a
+        mov     a, _W2DAT               ; Store byte to the FIFO
+        mov     @r0, a
+        pop     0                       ; Restore R0
+
+        mov     a, _flash_fifo_head     ; Advance head pointer
+        inc     a
+        anl     a, #(FLS_FIFO_SIZE - 1)
+        mov     _flash_fifo_head, a
+
+        sjmp    fs_goto_6
 
     __endasm ;
 }
