@@ -202,7 +202,7 @@ TestTestjig = {}
 
         -- Must leave time for the write to begin, WDT to expire,
         -- and the cube to reboot.
-        gx.sys:vsleep(3.0)
+        gx.sys:vsleep(5.0)
 
         -- Check memory contents again. Should be unchanged.
         for i = 0, 63 do
@@ -228,7 +228,7 @@ TestTestjig = {}
             'fd45'                  -- TILE_P0 [5]
         ))
 
-        gx.sys:vsleep(1.0)
+        gx.sys:vsleep(2.0)
 
         for i = 128, 191 do
             assertEquals(gx.cube:fwPeek(i), 0x0000)
