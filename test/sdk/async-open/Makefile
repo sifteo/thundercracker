@@ -29,7 +29,7 @@ tests.stamp: $(BIN) mini-launcher.elf
 	@echo "\n================= Running SDK Test:" $(APP) "\n"
 	rm -f $@
 	TEST_STAMP_FILE="$(shell pwd)/tests.stamp" \
-		open -W -a $(SDK_DIR)/bin/Siftulator.app $(BIN) \
+		open -W -a "$(SDK_DIR)/bin/Siftulator.app" "$(BIN)" \
 		--args -l "$(shell pwd)/mini-launcher.elf"
 	[ -e $@ ]
 
