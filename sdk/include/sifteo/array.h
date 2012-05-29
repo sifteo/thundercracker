@@ -14,7 +14,6 @@
 
 namespace Sifteo {
 
-const unsigned ARRAY_NOT_FOUND = unsigned(-1);
 
 /**
  * A statically sized array.
@@ -28,6 +27,7 @@ public:
 
     typedef T* iterator;
     typedef const T* const_iterator;
+    static const unsigned NOT_FOUND = unsigned(-1);
 
     Array() {
         clear();
@@ -75,7 +75,7 @@ public:
 
     void erase(unsigned index) {
         // allow a.erase(a.find()) without checking for not-found.
-        if (index == ARRAY_NOT_FOUND)
+        if (index == NOT_FOUND)
             return;
 
         erase(items + index);
@@ -102,7 +102,7 @@ public:
             if (*I == itemToFind)
                 return index;
         }
-        return ARRAY_NOT_FOUND;
+        return NOT_FOUND;
     }
 
 private:
