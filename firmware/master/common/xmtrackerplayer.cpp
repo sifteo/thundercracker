@@ -70,8 +70,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     phrase = 0;
     memset(&next, 0, sizeof(next));
 
-    pattern.init(&song)->loadPattern(patternOrderTable(phrase));
-    if (!isPlaying()) {
+    if (!pattern.init(&song)->loadPattern(patternOrderTable(phrase))) {
         LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
         song.nPatterns = 0;
         return false;
@@ -93,15 +92,12 @@ void XmTrackerPlayer::stop()
 {
     if (isPlaying()) {
         ASSERT(song.nChannels);
-        
         AudioMixer &mixer = AudioMixer::instance;
-
         for (unsigned i = 0; i < song.nChannels; i++)
             if (mixer.isPlaying(CHANNEL_FOR(i)))
                 mixer.stop(CHANNEL_FOR(i));
-
     } else {
-        LOG((LGPFX"Notice: stop() called when no module was playing.\n"));
+        LOG((LGPFX"Warning: stop() called when no module was playing.\n"));
     }
 
     song.nPatterns = 0;
@@ -136,7 +132,10 @@ inline void XmTrackerPlayer::loadNextNotes()
         }
 
         if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
-            pattern.loadPattern(patternOrderTable(next.phrase));
+            if(!pattern.loadPattern(patternOrderTable(next.phrase))) {
+                stop();
+                return;
+            }
             phrase = next.phrase;
             memset(&loop, 0, sizeof(loop));
         } else if (next.phrase >= song.patternOrderTableSize) {
