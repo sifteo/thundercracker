@@ -200,11 +200,18 @@ TestTestjig = {}
             'fd40'                  -- TILE_P0 [0]
         ))
 
-        -- Must leave time for the write to begin, WDT to expire,
-        -- and the cube to reboot.
-        gx.sys:vsleep(5.0)
+        -- Wait for the cube to reboot
+
+        local deadline = gx.sys:vclock() + 15
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for cube to reboot")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == 0
 
         -- Check memory contents again. Should be unchanged.
+
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
@@ -228,7 +235,17 @@ TestTestjig = {}
             'fd45'                  -- TILE_P0 [5]
         ))
 
-        gx.sys:vsleep(2.0)
+        -- Wait for the programming to happen
+
+        deadline = gx.sys:vclock() + 15
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for flash programming")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == 8
+
+        -- Check the results
 
         for i = 128, 191 do
             assertEquals(gx.cube:fwPeek(i), 0x0000)
