@@ -28,34 +28,26 @@ void power_delay()
 void power_init(void)
 {
     /*
-     * If we're being powered on without a wakup-from-pin, go directly to
-     * sleep. We don't wake up when the batteries are first inserted, only
-     * when we get a touch signal.
-     *
-     * This default can be overridden by compiling with -DWAKE_ON_POWERUP.
-     */
-
-    /*
      * First, clean up after any possible sleep state we were just in. The
      * data sheet specifies that we need to rest PWRDWN to 0 after reading it,
      * and we need to re-open the I/O latch.
+     *
+     * We don't care why we were sleeping. If we did, though, we could do
+     * something useful with the value read back from PWRDWN.
      */
-    uint8_t powerupReason = PWRDWN;
+
+    PWRDWN;
     OPMCON = 0;
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
 
-    #ifdef SLEEP_ON_POWERUP
-        if (!powerupReason)
-            power_sleep();
-    #endif
-
     /*
-     * Basic poweron
+     * Basic poweron.
+     *
+     * Safe defaults, everything off.
+     * all control lines must be low before supply rails are turned on.
      */
 
-    // Safe defaults, everything off.
-    // all control lines must be low before supply rails are turned on.
     MISC_PORT = 0;
     CTRL_PORT = 0;
     ADDR_PORT = 0;
@@ -64,7 +56,8 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-    #if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
+    // Sequence 3.3v boost, followed by 2.0v downstream
+    #if HWREV >= 2
         // Turn on 3.3V boost
         CTRL_PORT = CTRL_3V3_EN;
 
@@ -82,6 +75,17 @@ void power_init(void)
     // (On Rev 1, we just turn everything on at once.)
     CTRL_PORT = CTRL_IDLE;
     MISC_PORT = MISC_IDLE;
+
+    /*
+     * By now, we should have a stable 16 MHz oscillator. Turn on
+     * CLKLF, digitally synthesizing it from the 16 MHz crystal.
+     *
+     * Then, turn on the watchdog timer. This WDT timeout must be
+     * long enough to cover the full initialization procedure, from
+     * here until when we enter the main loop.
+     */
+    CLKLFCTRL = CLKLFCTRL_SRC_SYNTH;
+    power_wdt_set();
 
     /*
      * Neighbor Tx Experimental setting.

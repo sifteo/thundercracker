@@ -50,12 +50,15 @@ void main(void)
     demo();
     
     while (1) {
-        global_busy_flag = 0;
-        
+        // Reset watchdog ONLY in main loop!
+        power_wdt_set();
+
         /*
          * Main tasks
          */
 
+        global_busy_flag = 0;
+        
         graphics_render();
         graphics_ack();
 
