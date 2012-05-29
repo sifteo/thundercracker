@@ -7,13 +7,9 @@
 # specifying a game's path on the command line.
 #
 
-ifeq ($(shell uname), Darwin)
 all: tests.stamp
-else
-all:
-endif
 
-APP = test-async-open
+APP = test-mac-open
 
 include $(SDK_DIR)/Makefile.defs
 
