@@ -1,10 +1,11 @@
 SUBDIRS = \
+	mandelbrot \
 	membrane \
 	menudemo \
 	sensors \
+	stampy \
 	stars \
-	text \
-	mandelbrot
+	text
 
 .PHONY: clean subdirs $(SUBDIRS)
 
