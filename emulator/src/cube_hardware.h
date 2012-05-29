@@ -139,6 +139,7 @@ class Hardware {
     
     uint32_t getExceptionCount();
     void incExceptionCount();
+    void logWatchdogReset();
     
     ALWAYS_INLINE uint8_t readFlashBus() {
         if (LIKELY(flash_drv))

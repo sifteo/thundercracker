@@ -274,8 +274,10 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
         // Update the 24-bit watchdog counter
         unsigned wdt = (aCPU->wdtCounter - 1) & 0xFFFFFF;
         aCPU->wdtCounter = wdt;
-        if (!wdt)
+        if (!wdt) {
+            ((Cube::Hardware*) aCPU->callbackData)->logWatchdogReset();
             em8051_reset(aCPU, true);
+        }
     }
 }
 

@@ -241,6 +241,31 @@ void Hardware::incExceptionCount()
     exceptionCount++;
 }
 
+void Hardware::logWatchdogReset()
+{
+    /*
+     * The watchdog timer expired. We don't treat this as a normal
+     * CPU exception, since the overall behaviour of reset recovery
+     * after a WDT fault is something that we need to accurately
+     * simulate, both for unit testing and for simulating userspace
+     * code which may happen to cause a watchdog fault due to a bad
+     * flash loadstream.
+     *
+     * This is called by the CPU emulation core, which is about to handle
+     * a reset. We can log a little extra info about the fault, to make
+     * debugging easier.
+     *
+     * If this fault was caused by a flash verify error, the bus address
+     * and data will match what we're seeing on the flash device, and "a"
+     * will have the expected value that isn't matching.
+     */
+
+    printf("CUBE[%d]: Watchdog reset. pc=%02x bus=[%02x:%02x:%02x -> %02x] a=%02x\n",
+        cpu.id, cpu.mPC,
+        lat2, lat1, cpu.mSFR[ADDR_PORT],
+        cpu.mSFR[BUS_PORT], cpu.mSFR[REG_ACC]);
+}
+
 void Hardware::initVCD(VCDWriter &vcd)
 {
     /*
