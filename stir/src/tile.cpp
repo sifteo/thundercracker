@@ -559,7 +559,7 @@ void TilePool::optimizePalette(Logger &log)
     if (needReduction) {
  
         // Ask the reducer to do its own (slow!) global optimization
-        reducer.reduce(log);
+        reducer.reduce(&log);
 
         // Now reduce each tile, using the agreed-upon color palette
         for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {

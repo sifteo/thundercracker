@@ -130,7 +130,7 @@ ColorReducer::ColorReducer()
     }
 }
 
-void ColorReducer::reduce(Logger &log)
+void ColorReducer::reduce(Logger *log)
 {
     /*
      * This is a median-cut style color reducer. We start with a
@@ -139,7 +139,8 @@ void ColorReducer::reduce(Logger &log)
      * metric.
      */
 
-    log.taskBegin("Optimizing palette");
+    if (log)
+        log->taskBegin("Optimizing palette");
 
     if (colors.size() >= 1) {
 
@@ -192,8 +193,8 @@ void ColorReducer::reduce(Logger &log)
                     break;
             }
 
-            if (boxes.size() % 64 == 0 || !errorStack.size())
-                log.taskProgress("%d colors in palette", (int)boxes.size());
+            if (log && (boxes.size() % 64 == 0 || !errorStack.size()))
+                log->taskProgress("%d colors in palette", (int)boxes.size());
 
             if (!errorStack.size())
                 break;
@@ -219,7 +220,8 @@ void ColorReducer::reduce(Logger &log)
         }
     }
 
-    log.taskEnd();
+    if (log)
+        log->taskEnd();
 }
 
 void ColorReducer::updateInverseLUT(RGB565 color)

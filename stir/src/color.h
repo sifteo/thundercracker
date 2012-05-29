@@ -205,7 +205,7 @@ class ColorReducer {
  public:
     ColorReducer();
 
-    void reduce(Logger &log);
+    void reduce(Logger *log = 0);
 
     void add(RGB565 color, double maxMSE) {
         colors.push_back(color.value);
