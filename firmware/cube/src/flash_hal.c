@@ -324,10 +324,6 @@ void flash_program_word(uint16_t dat) __naked
 
         ; Lat1 overflow
 12$:
-        mov     a, _flash_addr_lat2
-        add     a, #2
-        mov     _flash_addr_lat2, a
-        setb    _flash_need_autoerase
 
         ; Since we keep lat2 loaded into the latch, we need to at some point
         ; reload the latch before the next write. But we must not touch the
@@ -337,6 +333,11 @@ void flash_program_word(uint16_t dat) __naked
         mov     a, _flash_poll_byte
 8$:     cjne    a, BUS_PORT, 8$
 
+        setb    _flash_need_autoerase
+
+        mov     a, _flash_addr_lat2
+        add     a, #2
+        mov     _flash_addr_lat2, a
         mov     ADDR_PORT, a
         mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
 
