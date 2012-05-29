@@ -145,9 +145,8 @@ TestTestjig = {}
         assertEquals(fifoAck2, bit.band(fifoAck1 + 19, 0xFF))
     end
 
-    function TestTestjig:xxx_test_flash_verify_fail()
+    function TestTestjig:test_flash_verify_fail()
         -- Simulate a verification failure, and make sure we can recover
-        -- XXX: Test disabled until the cube WDT is implemented.
 
         local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
         
@@ -199,7 +198,7 @@ TestTestjig = {}
             'fd40'                  -- TILE_P0 [0]
         ))
 
-        gx.sys:vsleep(0.5)
+        gx.sys:vsleep(1.0)
 
         -- Check memory contents again. Should be unchanged.
         for i = 0, 63 do
@@ -209,16 +208,28 @@ TestTestjig = {}
             assertEquals(gx.cube:fwPeek(i), 0xf3f2)
         end
 
-        -- Do one more programming operation, to ensure the cube hasn't crashed
+        -- Do one more programming operation, to ensure the cube hasn't
+        -- permanently crashed. We expect the cube to have reset due to a
+        -- watchdog timeout, though, so the flash loadstream decoder state
+        -- will have been reset.
+        --
+        -- Verify this by checking that previously-set LUT entries have
+        -- been reset to zero.
 
         gx.cube:testWrite(packHex(
-            'fde1fd02fd00' ..       -- Address 0x0004
-            'fd41'                  -- TILE_P0 [1]
+            'fd05fdabfdcd' ..       -- LUT1    [5] = 0xabcd
+
+            'fde1fd04fd00' ..       -- Address 0x0004
+            'fd41' ..               -- TILE_P0 [1]
+            'fd45'                  -- TILE_P0 [5]
         ))
 
-        gx.sys:vsleep(0.3)
-        
-        for i = 128, 192 do
-            assertEquals(gx.cube:fwPeek(i), 0xf3f2)
+        gx.sys:vsleep(0.5)
+
+        for i = 128, 191 do
+            assertEquals(gx.cube:fwPeek(i), 0x0000)
+        end
+        for i = 192, 255 do
+            assertEquals(gx.cube:fwPeek(i), 0xabcd)
         end
     end
