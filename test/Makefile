@@ -14,7 +14,8 @@ TESTS = \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
-	sdk/scripting
+	sdk/scripting \
+	sdk/async-open
 
 ####################
 
