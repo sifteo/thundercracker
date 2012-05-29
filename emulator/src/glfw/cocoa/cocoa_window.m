@@ -550,6 +550,13 @@ int  _glfwPlatformOpenWindow( int width, int height,
                   styleMask:styleMask
                     backing:NSBackingStoreBuffered
                       defer:NO];
+
+    // SIFTEO: Disable automatic window restoration in Mac OS 10.7 (Lion)
+    if ([_glfwWin.window respondsToSelector:@selector(setRestorable:)]) {
+        IMP fn = [_glfwWin.window methodForSelector:@selector(setRestorable:)];
+        fn(_glfwWin.window, @selector(setRestorable:), NO);
+    }
+
     [_glfwWin.window setContentView:[[GLFWContentView alloc] init]];
     [_glfwWin.window setDelegate:_glfwWin.delegate];
     [_glfwWin.window setAcceptsMouseMovedEvents:YES];
