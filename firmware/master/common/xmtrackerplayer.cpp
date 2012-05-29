@@ -796,7 +796,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxRetrigNote: {
-                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     processRetrigger(channel, nparam);
                     break;
                 }
