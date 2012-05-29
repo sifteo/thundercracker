@@ -19,7 +19,7 @@ include $(SDK_DIR)/Makefile.defs
 
 OBJS = main.o
 
-GENERATED_FILES += tests.stamp
+GENERATED_FILES += tests.stamp mini-launcher.elf
 
 mini-launcher.elf: mini-launcher.o
 	@echo Linking $@ "$(LINK_MESSAGE)"
