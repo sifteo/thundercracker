@@ -56,7 +56,13 @@ bool Frontend::init(System *_sys)
     mothershipCount = 0;
 #endif
 
-    // Create the rest of the world
+    /*
+     * We need to first position our default set of cubes, then
+     * pick a permanent maxViewExtent, then use that max extent
+     * to create our thick walls.
+     */
+    updateCubeCount();
+    maxViewExtent = viewExtentForCubeCount(instance->sys->MAX_CUBES);
     createWalls();
 
     // Listen for collisions. This is how we update our neighbor matrix.
@@ -83,6 +89,18 @@ b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total)
 
     return b2Vec2( ((gridW - 1) * -0.5 + x) * spacing,
                    ((gridH - 1) * -0.5 + y) * spacing );
+}
+
+float Frontend::viewExtentForCubeCount(unsigned num)
+{
+    /*
+     * The view area should scale with number of cubes. So, scale the
+     * linear size of our view with the square root of the number of
+     * cubes. We don't just want to make sure they initially fit, but
+     * we want there to be a good amount of working space for
+     * manipulating the cubes.
+     */
+    return CubeConstants::SIZE * 2.5 * sqrtf(std::max(1U, num));
 }
 
 void Frontend::updateCubeCount()
@@ -113,17 +131,7 @@ void Frontend::updateCubeCount()
             if (instance->cubes[i].isInitialized())
                 instance->cubes[i].exit();
 
-        /*
-         * The view area should scale with number of cubes. So, scale the
-         * linear size of our view with the square root of the number of
-         * cubes. We don't just want to make sure they initially fit, but
-         * we want there to be a good amount of working space for
-         * manipulating the cubes.
-         */
-
-        normalViewExtent = CubeConstants::SIZE * 2.5 *
-            sqrtf(std::max(1U, targetCubeCount));
-        maxViewExtent = normalViewExtent * 10.0f;
+        normalViewExtent = viewExtentForCubeCount(targetCubeCount);
     }
 }
 
@@ -220,7 +228,7 @@ bool Frontend::runFrame()
 {
     tthread::lock_guard<tthread::mutex> guard(instanceLock);
 
-    if (!instance->isRunning || !instance->sys->isRunning())
+    if (!instance || !instance->isRunning || !instance->sys->isRunning())
         return false;
 
     instance->updateCubeCount();
