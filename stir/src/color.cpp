@@ -130,7 +130,7 @@ ColorReducer::ColorReducer()
     }
 }
 
-void ColorReducer::reduce(Logger *log)
+void ColorReducer::reduce(Logger *log, unsigned minColors)
 {
     /*
      * This is a median-cut style color reducer. We start with a
@@ -196,7 +196,7 @@ void ColorReducer::reduce(Logger *log)
             if (log && (boxes.size() % 64 == 0 || !errorStack.size()))
                 log->taskProgress("%d colors in palette", (int)boxes.size());
 
-            if (!errorStack.size())
+            if (!errorStack.size() && numColors() >= minColors)
                 break;
 
             /*
