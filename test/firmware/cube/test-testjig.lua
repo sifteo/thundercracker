@@ -76,13 +76,19 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(1.0)
+        -- Wait for the expected number of byte ACKs
 
-        -- Check for the expected number of byte ACKs
-        local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-        assertEquals(fifoAck2, bit.band(fifoAck1 + 11, 0xFF))
+        local deadline = gx.sys:vclock() + 15
+        local fifoAck2 = bit.band(fifoAck1 + 11, 0xFF)
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for flash programming")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
 
         -- Check contents of flash memory
+
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xabcd)
         end
@@ -94,12 +100,11 @@ TestTestjig = {}
     function TestTestjig:test_flash_verify()
         -- Rewrite the same tiles multiple times, ensure that the cube
         -- doesn't get stuck.
-
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
         
         -- Flash reset
         gx.cube:testWrite(packHex('fe'))
         gx.sys:vsleep(0.3)
+        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
 
         gx.cube:testWrite(packHex(
             -- Write 0xFFFF at 0x0000 to force an auto-erase
@@ -116,9 +121,19 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(1.0)
+        -- Wait for the expected number of byte ACKs
+
+        local deadline = gx.sys:vclock() + 15
+        local fifoAck2 = bit.band(fifoAck1 + 14, 0xFF)
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for flash programming")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
 
         -- Check memory contents
+
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
@@ -132,29 +147,34 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(1.0)
+        -- Wait for the expected number of byte ACKs
+
+        deadline = gx.sys:vclock() + 15
+        local fifoAck3 = bit.band(fifoAck1 + 18, 0xFF)
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for flash programming")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck3
 
         -- Check memory contents
+
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
         for i = 64, 127 do
             assertEquals(gx.cube:fwPeek(i), 0xf0f1)
         end
-
-        -- Check for the expected number of byte ACKs
-        local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-        assertEquals(fifoAck2, bit.band(fifoAck1 + 19, 0xFF))
     end
 
     function TestTestjig:test_flash_verify_fail()
         -- Simulate a verification failure, and make sure we can recover
 
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-        
         -- Flash reset
         gx.cube:testWrite(packHex('fe'))
         gx.sys:vsleep(0.3)
+        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
 
         gx.cube:testWrite(packHex(
             -- Write 0xFFFF at 0x0000 to force an auto-erase
@@ -171,19 +191,25 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(1.0)
+        -- Wait for the expected number of byte ACKs
+
+        local deadline = gx.sys:vclock() + 15
+        local fifoAck2 = bit.band(fifoAck1 + 14, 0xFF)
+        repeat
+            gx.sys:vsleep(0.1)
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for flash programming")
+            end
+        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
 
         -- Check memory contents
+
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
         for i = 64, 127 do
             assertEquals(gx.cube:fwPeek(i), 0xf3f2)
         end
-
-        -- Check for the expected number of byte ACKs
-        local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-        assertEquals(fifoAck2, bit.band(fifoAck1 + 15, 0xFF))
 
         -- Now perform a write that can't succeed: we're overwriting an
         -- already-programmed tile, not at a sector boundary, with a bit
