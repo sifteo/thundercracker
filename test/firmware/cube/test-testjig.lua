@@ -169,7 +169,7 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(0.5)
+        gx.sys:vsleep(1.0)
 
         -- Check memory contents
         for i = 0, 63 do
