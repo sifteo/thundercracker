@@ -50,11 +50,7 @@ class I2CTestJig {
     
     void i2cStop() {
         captureAck();
-        if (state != S_IDLE) {
-            tthread::lock_guard<tthread::mutex> guard(mutex);
-
-            state = S_IDLE;
-        }
+        state = S_IDLE;
     }
 
     uint8_t i2cWrite(uint8_t byte) {
@@ -113,9 +109,9 @@ class I2CTestJig {
     static const uint8_t deviceAddress = 0xAA;
 
     bool enabled;
-    std::vector<uint8_t> ackBuffer;
-    std::vector<uint8_t> ackPrevious;
-    std::list<uint8_t> packetBuffer;
+    std::vector<uint8_t> ackBuffer;     // Local to emulator thread
+    std::vector<uint8_t> ackPrevious;   // Protected by 'mutex'
+    std::list<uint8_t> packetBuffer;    // Protected by 'mutex'
     tthread::mutex mutex;
 
     enum {
@@ -128,6 +124,8 @@ class I2CTestJig {
     void captureAck() {
         // Double-buffer the last full ACK packet we received.
         // Only applicable if this was an ACK write packet at all.
+
+        tthread::lock_guard<tthread::mutex> guard(mutex);
         if (!ackBuffer.empty()) {
             ackPrevious = ackBuffer;
             ackBuffer.clear();
