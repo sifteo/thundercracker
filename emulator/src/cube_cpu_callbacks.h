@@ -183,7 +183,6 @@ struct SFR {
             case WDSV_READ_HIGH:
                 cpu->wdsvState = WDSV_LOW;
                 return cpu->wdsvHigh;
-                break;
             }
             break;
 
