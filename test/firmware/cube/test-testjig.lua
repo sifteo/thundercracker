@@ -200,7 +200,9 @@ TestTestjig = {}
             'fd40'                  -- TILE_P0 [0]
         ))
 
-        gx.sys:vsleep(1.0)
+        -- Must leave time for the write to begin, WDT to expire,
+        -- and the cube to reboot.
+        gx.sys:vsleep(3.0)
 
         -- Check memory contents again. Should be unchanged.
         for i = 0, 63 do
