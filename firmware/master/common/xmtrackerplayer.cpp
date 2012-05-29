@@ -34,7 +34,20 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
-    if (isPlaying()) {
+    // resume playback
+    if (!pSong) {
+        if (isPaused()) {
+            AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
+            tick();
+            paused = false;
+            return true;
+        } else {
+            LOG((LGPFX"Warning: resume() called while not paused.\n"));
+            return false;
+        }
+    }
+
+    if (!isStopped()) {
         LOG((LGPFX"Notice: play() called while already playing.\n"));
     }
 
@@ -61,6 +74,8 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
     // Ok, things look (probably) good.
     song = *pSong;
+    hasSong = true;
+    paused = false;
     
     volume = kMaxVolume;
     userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
@@ -72,7 +87,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
     if (!pattern.init(&song)->loadPattern(patternOrderTable(phrase))) {
         LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
-        song.nPatterns = 0;
+        hasSong = false;
         return false;
     }
 
@@ -90,7 +105,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
 void XmTrackerPlayer::stop()
 {
-    if (isPlaying()) {
+    if (!isStopped()) {
         ASSERT(song.nChannels);
         AudioMixer &mixer = AudioMixer::instance;
         for (unsigned i = 0; i < song.nChannels; i++)
@@ -100,8 +115,8 @@ void XmTrackerPlayer::stop()
         LOG((LGPFX"Warning: stop() called when no module was playing.\n"));
     }
 
-    song.nPatterns = 0;
     AudioMixer::instance.setTrackerCallbackInterval(0);
+    hasSong = false;
 }
 
 void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
@@ -112,6 +127,28 @@ void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
     } else {
         channels[ch].userVolume = pVolume;
     }
+}
+
+void XmTrackerPlayer::pause()
+{
+    // pause should only be called when there is a song playing
+    if (isStopped()) {
+        ASSERT(!isStopped());
+        return;
+    }
+
+    if (isPaused()) {
+        LOG((LGPFX"Notice: pause() called while already paused.\n"));
+    }
+
+    paused = true;
+    AudioMixer::instance.setTrackerCallbackInterval(0);
+
+    ASSERT(song.nChannels);
+    AudioMixer &mixer = AudioMixer::instance;
+    for (unsigned i = 0; i < song.nChannels; i++)
+        if (mixer.isPlaying(CHANNEL_FOR(i)))
+            mixer.stop(CHANNEL_FOR(i));
 }
 
 inline void XmTrackerPlayer::loadNextNotes()
@@ -945,11 +982,11 @@ void XmTrackerPlayer::process()
         struct XmTrackerChannel &channel = channels[i];
 
         processVolume(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
         processEffects(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
         processEnvelope(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
     }
 }
 
@@ -1089,14 +1126,14 @@ void XmTrackerPlayer::tick()
         ticks = delay = 0;
         // load next notes into the process channels
         loadNextNotes();
-        if (!isPlaying()) return;
+        if (isStopped()) return;
     }
 
     // process effects and envelopes
     process();
-    if (!isPlaying()) return;
+    if (isStopped()) return;
 
     // update mixer
     commit();
-    //if (!isPlaying()) return;
+    //if (isStopped()) return;
 }

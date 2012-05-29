@@ -97,22 +97,24 @@ public:
     static XmTrackerPlayer instance;
 
     static void mixerCallback() {
-        if (instance.song.nPatterns == 0) {
-            /* This should never happen.
+        if (instance.isStopped()) {
+            /* This should never happen. Call stop() (again?) to ensure a consistent playback state.
              * stop() sets nPatterns to 0 and kills the callback.
              */
-            XmTrackerPlayer::instance.stop();
+            instance.stop();
             return;
         }
 
         instance.tick();
     }
 
-    XmTrackerPlayer() { memset(&song, 0, sizeof song); }
+    XmTrackerPlayer() : hasSong(0), paused(0) { memset(&song, 0, sizeof song); }
     bool play(const struct _SYSXMSong *pSong);
-    bool isPlaying() const { return song.nPatterns > 0; }
+    bool isPaused() { return paused; }
+    bool isStopped() { return !hasSong; }
     void stop();
     void setVolume(int volume, uint8_t ch);
+    void pause();
 
     // TODO: future:
     // void muteChannel(uint8_t), unmuteChannel(uint8_t).
@@ -145,6 +147,8 @@ private:
     uint16_t volume;
     uint16_t userVolume;
     uint8_t ticks;
+    bool hasSong;
+    bool paused;
 
     /* The naming of bpm and tempo follows the (unofficial) XM module file
      * spec. It can be both dissatisfying and confusing, but is retained here
