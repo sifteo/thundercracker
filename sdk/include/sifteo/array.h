@@ -27,7 +27,7 @@ public:
 
     typedef T* iterator;
     typedef const T* const_iterator;
-    const unsigned NOT_FOUND = unsigned(-1);
+    static const unsigned NOT_FOUND = unsigned(-1);
 
     Array() {
         clear();
@@ -102,7 +102,7 @@ public:
             if (*I == itemToFind)
                 return index;
         }
-        return NOT_FOUND; // not found
+        return NOT_FOUND;
     }
 
 private:
