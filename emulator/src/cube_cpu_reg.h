@@ -240,6 +240,20 @@ enum IP_MASKS
     IPMASK_PT2 = 0x20
 };
 
+enum CLKLFCTRL_MASKS
+{
+    CLKLFMASK_SOURCE = 0x07,
+    CLKLFMASK_XOSC16M = 0x08,
+    CLKLFMASK_READY = 0x40,
+    CLKLFMASK_PHASE = 0x80,
+};
+
+enum CLKLFCTRL_SOURCES
+{
+    CLKLFSRC_SYNTH = 2,
+    CLKLFSRC_NONE = 7
+};
+
 // The active DPTR registers depend on the value of DPS.
 #define SEL_DPL(dps)   (((dps) & 1) ? REG_DPL1 : REG_DPL)
 #define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)

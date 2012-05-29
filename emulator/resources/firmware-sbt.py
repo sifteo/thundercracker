@@ -128,6 +128,10 @@ class CodeGenerator:
                 # RF SPI
                 0xE7,  # SPIRDAT
 
+                # Power
+                0xAD,  # CLKLFCTRL
+                0xAF,  # WDSV
+
                 ):
                 return True
 
