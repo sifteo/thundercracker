@@ -76,7 +76,7 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
-        gx.sys:vsleep(0.5)
+        gx.sys:vsleep(1.0)
 
         -- Check for the expected number of byte ACKs
         local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
@@ -116,8 +116,9 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
+        gx.sys:vsleep(1.0)
+
         -- Check memory contents
-        gx.sys:vsleep(0.5)
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
@@ -131,8 +132,9 @@ TestTestjig = {}
             'fd41'                  -- TILE_P0 [1]
         ))
 
+        gx.sys:vsleep(1.0)
+
         -- Check memory contents
-        gx.sys:vsleep(0.5)
         for i = 0, 63 do
             assertEquals(gx.cube:fwPeek(i), 0xffff)
         end
@@ -224,7 +226,7 @@ TestTestjig = {}
             'fd45'                  -- TILE_P0 [5]
         ))
 
-        gx.sys:vsleep(0.5)
+        gx.sys:vsleep(1.0)
 
         for i = 128, 191 do
             assertEquals(gx.cube:fwPeek(i), 0x0000)
