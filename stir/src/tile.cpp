@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <math.h>
 
 #include "tile.h"
 #include "tilecodec.h"
@@ -407,6 +408,15 @@ void TileStack::add(TileRef t)
         mPinned = true;
 }
 
+void TileStack::replace(TileRef t)
+{
+    // Replace the entire stack with a single new tile.
+
+    tiles.clear();
+    add(t);
+    cache = t;
+}
+
 TileRef TileStack::median()
 {
     /*
@@ -525,6 +535,7 @@ void TilePool::optimize(Logger &log)
 
     optimizePalette(log);
     optimizeTiles(log);
+    optimizeTrueColorTiles(log);
     optimizeOrder(log);
 }
 
@@ -559,7 +570,7 @@ void TilePool::optimizePalette(Logger &log)
     if (needReduction) {
  
         // Ask the reducer to do its own (slow!) global optimization
-        reducer.reduce(log);
+        reducer.reduce(&log);
 
         // Now reduce each tile, using the agreed-upon color palette
         for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {
@@ -693,6 +704,83 @@ void TilePool::optimizeTilesPass(Logger &log,
                 stackList.erase(j);
         }
     }
+}
+
+void TilePool::optimizeTrueColorTiles(Logger &log)
+{
+    /*
+     * Look at just the remaining tiles which have too many colors
+     * to palettize, and see if we can squeeze them a bit more until they
+     * fit in 16 colors.
+     *
+     * This is a purely *local* palette optimization, where we focus on
+     * individual problem tiles. The earlier global palette optimization is
+     * more likely to result in uniform color tones across an entire
+     * asset group (and avoiding tile discontinuities), whereas this is
+     * intended more for tiles that already use a bunch of colors.
+     */
+
+    unsigned totalCount = 0;
+    unsigned reducedCount = 0;
+    log.taskBegin("Optimizing true color tiles");
+
+    std::list<TileStack>::iterator i = stackList.begin();
+    while (1) {
+        TileStack &stack = *i;
+        TileRef tile = stack.median();
+
+        // Only operate on tiles that would require true-color encoding
+        if (!tile->palette().hasLUT()) {
+            totalCount++;
+
+            // Don't modify tiles that are marked as lossless
+            const double epsilon = 1e-3;
+            double maxMSE = tile->options().getMaxMSE();
+            if (maxMSE > epsilon) {
+
+                /*
+                 * Use an unlimited MSE but bounded number of colors, to forcibly
+                 * limit this tile to the maximum LUT size (16 colors) without
+                 * regard to quality settings.
+                 */
+
+                ColorReducer reducer;
+                for (unsigned j = 0; j < Tile::PIXELS; j++)
+                    reducer.add(tile->pixel(j));
+                reducer.reduce(0, TilePalette::LUT_MAX);
+                TileRef reduced = tile->reduce(reducer);
+
+                /*
+                 * Check the results, and decide whether they're adequate
+                 * according to the tile's compression quality.
+                 */
+
+                // Try extra hard to avoid CM_TRUE
+                double limit = maxMSE * 2.0;
+
+                if (tile->errorMetric(*reduced, limit) < limit) {
+                    stack.replace(reduced);
+                    reducedCount++;
+                }
+            }
+        }
+
+        ++i;
+        bool last = i == stackList.end();
+
+        // Update status periodically as well as on completion.
+        if (last || (totalCount % 16) == 0) {
+            log.taskProgress("%u of %u tile%s reduced (%.03f%%)",
+                reducedCount, totalCount,
+                totalCount == 1 ? "" : "s",
+                reducedCount * 100.0 / totalCount);
+        }
+
+        if (last)
+            break;
+    }
+
+    log.taskEnd();
 }
 
 void TilePool::optimizeOrder(Logger &log)

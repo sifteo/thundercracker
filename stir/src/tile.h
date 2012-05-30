@@ -212,6 +212,8 @@ class TileStack {
     TileStack();
 
     void add(TileRef t);
+    void replace(TileRef t);
+
     TileRef median();
 
     bool isPinned() const {
@@ -275,6 +277,7 @@ class TilePool {
     void optimizePalette(Logger &log);
     void optimizeOrder(Logger &log);
     void optimizeTiles(Logger &log);
+    void optimizeTrueColorTiles(Logger &log);
     void optimizeTilesPass(Logger &log,
                            std::tr1::unordered_set<TileStack *> &activeStacks,
                            bool gather, bool pinned);

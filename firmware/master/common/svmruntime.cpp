@@ -388,6 +388,9 @@ void SvmRuntime::validate(reg_t address)
      * base pointer registers r8-9 appropriately.
      */
 
+    // Mask off high bits, for 64-bit Siftulator builds
+    address = (uint32_t) address;
+
     SvmMemory::PhysAddr bro, brw;
     SvmMemory::validateBase(dataBlock, address, bro, brw);
 
