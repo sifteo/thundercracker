@@ -22,6 +22,14 @@ void sensors_init();
 extern volatile uint8_t sensor_tick_counter;
 extern volatile uint8_t sensor_tick_counter_high;
 
+#ifdef DEBUG_NBR
+	extern uint8_t __idata nbr_data[4];
+	extern uint8_t	nbr_temp;
+	extern uint8_t __idata nbr_data_valid;
+	extern uint8_t __idata nbr_data_invalid;
+#endif
+//#define DEBUG_NBR_IO	P3.1
+
 extern __bit touch;
 #ifdef DEBUG_TOUCH
     extern uint8_t touch_count;

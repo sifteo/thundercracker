@@ -63,13 +63,13 @@
 //#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 #endif
 
-#define NB_TX_BITS          17      // 1 header, 2 mask, 13 payload, 1 damping
+#define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 1 damping
 #define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
 // 2us pulses, 9.75us bit periods, 156us packets
 #define NB_BIT_TICKS        16      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   1       // Sampling tweak to ignore secondary pulses
-#define NB_DEADLINE         13      // Max amount Timer0 can be late by
+#define NB_BIT_TICK_FIRST   8       // Sampling tweak to ignore secondary pulses
+#define NB_DEADLINE         17      // Max amount Timer0 can be late by
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
 extern uint8_t nb_buffer[2];        // Packet shift register for TX/RX

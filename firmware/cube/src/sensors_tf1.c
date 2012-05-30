@@ -51,6 +51,9 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 
         mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
         setb    _T2CON_T2I0
+		#ifdef DEBUG_NBR_IO
+        setb	DEBUG_NBR_IO
+		#endif
 
         ; In the mean time, reset RX state
 
