@@ -68,6 +68,9 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 		#ifdef NBR_RX
         mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
 		#endif
+		#ifdef DEBUG_NBR_IO
+        setb	DEBUG_NBR_IO
+		#endif
         mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
         setb    _nb_rx_mask_state1
         sjmp    10$                             ;    End of masking
