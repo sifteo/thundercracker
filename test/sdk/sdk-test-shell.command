@@ -1,5 +1,5 @@
 #!/bin/bash
-# SDK Tests Setup Script for Mac OS
+# SDK Tests Setup Script for Mac OS / Linux
 
 export TC_DIR="`(cd $(dirname $0); cd ../..; pwd)`"
 export SDK_DIR="$TC_DIR/sdk"
