@@ -40,7 +40,7 @@ namespace Sifteo {
 #define M_SQRT2     1.41421356237309504880168872420969808   ///< sqrt(2)
 #define M_SQRT1_2   0.707106781186547524400844362104849039  ///< 1/sqrt(2)
 #define MAXFLOAT    ((float)3.40282346638528860e+38)        ///< Largest single-precision float value
-
+#define NAN         __builtin_nanf("0x7fc00000")            ///< Not a Number constant
 
 /**
  * For any type, clamp a value to the extremes 'low' and 'high'. If the
@@ -228,6 +228,30 @@ float inline cos(float x)
     float c;
     sincos(x, 0, &c);
     return c;
+}
+
+/**
+ * Unordered comparison. Given one or two single-precision floating point
+ * numbers, is there no defined sort order between them?
+ *
+ * Returns true if either or both arguments are NaN.
+ */
+
+bool inline isunordered(float a, float b = 0.f)
+{
+    return __builtin_isunordered(a, b);
+}
+
+/**
+ * Unordered comparison. Given one or two double-precision floating point
+ * numbers, is there no defined sort order between them?
+ *
+ * Returns true if either or both arguments are NaN.
+ */
+
+bool inline isunordered(double a, double b = 0.f)
+{
+    return __builtin_isunordered(a, b);
 }
 
 /**
