@@ -120,7 +120,7 @@ void NRF24L01::setPRXMode(bool enabled)
         ce.setHigh();
 
     } else {
-    	/* Radio back to PTX mode */
+        /* Radio back to PTX mode */
 
         spi.begin();
         spi.transfer(CMD_FLUSH_RX);
@@ -141,7 +141,6 @@ void NRF24L01::setPRXMode(bool enabled)
         spi.end();
 
         ce.setLow();
-
     }
 }
 
