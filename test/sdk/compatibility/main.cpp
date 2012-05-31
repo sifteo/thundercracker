@@ -2,7 +2,7 @@
  * Explicit tests for binary- and source-compatibility features.
  */
 
-#include <sifteo/array.h>
+#include <sifteo/abi.h>
 using namespace Sifteo;
 
 void testFeatureBits()
