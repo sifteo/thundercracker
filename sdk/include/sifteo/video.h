@@ -442,7 +442,7 @@ struct VideoBuffer {
      *
      * This is equivalent to calling tilt() on the cube() object.
      */
-    Byte2 physicalTilt() const {
+    Byte3 physicalTilt() const {
         return cube().tilt();
     }
 
@@ -451,8 +451,8 @@ struct VideoBuffer {
      * The resulting vector is oriented with respect to the current
      * LCD rotation.
      */
-    Byte2 virtualTilt() const {
-        return cube().tilt().rotateI(orientation());
+    Byte3 virtualTilt() const {
+        return cube().tilt().zRotateI(orientation());
     }
 
     /**
