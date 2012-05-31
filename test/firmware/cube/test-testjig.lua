@@ -115,7 +115,7 @@ TestTestjig = {}
     function TestTestjig:test_flash_verify_loop()
         -- Run the test-flash-verify test many times, to check for transient failures
     
-        for i = 1, 30 do
+        for i = 1, 50 do
             self:test_flash_verify()
         end
     end

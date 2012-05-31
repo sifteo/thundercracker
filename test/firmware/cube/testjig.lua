@@ -34,14 +34,17 @@ jig = {}
     function jig:programFlashAndWait(hexCommands, acks)
         acks = acks or (string.len(hexCommands) / 4)
         local baseline = self:getFlashACK()
-        local deadline = gx.sys:vclock() + 20.0
+        local deadline = gx.sys:vclock() + 15
 
         gx.cube:testWrite(packHex(hexCommands))
 
         repeat
             gx.yield()
             if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
+                error(string.format(
+                    "Timeout while waiting for flash programming. " ..
+                    "baseline=%02x acks=%02x current=%02x",
+                    baseline, acks, self:getFlashACK()))
             end
         until bit.band(baseline + acks, 0xFF) == self:getFlashACK()
     end
