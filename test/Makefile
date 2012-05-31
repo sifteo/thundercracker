@@ -14,6 +14,7 @@ include $(TC_DIR)/Makefile.platform
 TESTS = \
 	firmware/cube \
 	sdk/array \
+	sdk/compatibility \
 	sdk/math \
 	sdk/filesystem \
 	sdk/bg1 \
