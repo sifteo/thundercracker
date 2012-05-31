@@ -28,28 +28,30 @@ class I2CTestJig {
         enabled = e;
     }
 
+    // Return the last completed ack, not the one currently in progress.
     void getACK(std::vector<uint8_t> &buffer) {
-        // Return the last completed ack, not the one currently in progress.
         tthread::lock_guard<tthread::mutex> guard(mutex);
         buffer = ackPrevious;
     }
 
+    // Atomically add a set of byte(s) to send, next time the cube asks us for data.
+    // This buffer is synchronusly added to our queue, between transactions.
     void write(const uint8_t *bytes, unsigned count) {
         tthread::lock_guard<tthread::mutex> guard(mutex);
         while (count) {
-            packetBuffer.push_back(*bytes);
+            writeNext.push_back(*bytes);
             count--;
             bytes++;
         }
     }
 
     void i2cStart() {
-        captureAck();
+        syncPoint();
         state = enabled ? S_I2C_ADDRESS : S_IDLE;
     }
     
     void i2cStop() {
-        captureAck();
+        syncPoint();
         state = S_IDLE;
     }
 
@@ -57,8 +59,6 @@ class I2CTestJig {
         switch (state) {
 
         case S_I2C_ADDRESS: {
-            tthread::lock_guard<tthread::mutex> guard(mutex);
-
             if ((byte & 0xFE) == deviceAddress) {
                 // Begin a test packet
                 state = (byte & 1) ? S_READ_PACKET : S_WRITE_ACK;
@@ -70,7 +70,6 @@ class I2CTestJig {
         }
             
         case S_WRITE_ACK: {
-            tthread::lock_guard<tthread::mutex> guard(mutex);
             ackBuffer.push_back(byte);
             break;
         }
@@ -88,12 +87,10 @@ class I2CTestJig {
         switch (state) {
 
         case S_READ_PACKET: {
-            tthread::lock_guard<tthread::mutex> guard(mutex);
-
             // NB: If empty, return a sentinel packet of [ff].
-            if (!packetBuffer.empty()) {
-                result = packetBuffer.front();
-                packetBuffer.pop_front();
+            if (!writeBuffer.empty()) {
+                result = writeBuffer.front();
+                writeBuffer.pop_front();
             }
             break;
         }
@@ -110,8 +107,10 @@ class I2CTestJig {
 
     bool enabled;
     std::vector<uint8_t> ackBuffer;     // Local to emulator thread
+    std::list<uint8_t> writeBuffer;     // Local to emulator thread
+
     std::vector<uint8_t> ackPrevious;   // Protected by 'mutex'
-    std::list<uint8_t> packetBuffer;    // Protected by 'mutex'
+    std::list<uint8_t> writeNext;       // Protected by 'mutex'
     tthread::mutex mutex;
 
     enum {
@@ -121,15 +120,19 @@ class I2CTestJig {
         S_READ_PACKET,
     } state;
     
-    void captureAck() {
+    // Called on emulator thread, between packets
+    void syncPoint() {
+        tthread::lock_guard<tthread::mutex> guard(mutex);
+
         // Double-buffer the last full ACK packet we received.
         // Only applicable if this was an ACK write packet at all.
-
-        tthread::lock_guard<tthread::mutex> guard(mutex);
         if (!ackBuffer.empty()) {
             ackPrevious = ackBuffer;
             ackBuffer.clear();
         }
+
+        // Atomically add the next write packet(s) to our queue
+        writeBuffer.splice(writeBuffer.end(), writeNext);
     }
 };
 
