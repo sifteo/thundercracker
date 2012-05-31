@@ -1004,11 +1004,6 @@ void XmTrackerPlayer::commit()
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
 
-        if (!channel.active && mixer.isPlaying(CHANNEL_FOR(i))) {
-            mixer.stop(CHANNEL_FOR(i));
-            continue;
-        }
-
         /* This code relies on the single-threaded nature of the audio
          * stack--the sample is loaded first and volume and sampling rate
          * adjusted shortly after.
@@ -1022,15 +1017,15 @@ void XmTrackerPlayer::commit()
                 channel.active = false;
                 continue;
             }
+            channel.active = true;
         }
 
-        channel.active = mixer.isPlaying(CHANNEL_FOR(i));
+        if (!channel.active) continue;
 
         /* If note has been ended by kNoteOff, disable looping and let the
          * sample run itself out.
          */
-        if (channel.note.note == XmTrackerPattern::kNoteOff &&
-            mixer.isPlaying(CHANNEL_FOR(i)))
+        if (channel.note.note == XmTrackerPattern::kNoteOff)
         {
             mixer.setLoop(CHANNEL_FOR(i), _SYS_LOOP_ONCE);
         }
@@ -1048,12 +1043,12 @@ void XmTrackerPlayer::commit()
             if (channel.note.effectType != fxTremolo) channel.tremolo.volume = finalVolume;
 
             // Apply envelope
-            if (channel.active && channel.instrument.volumeType) {
+            if (channel.instrument.volumeType) {
                 finalVolume = (finalVolume * channel.envelope.value) >> 6;
             }
 
             // Apply fadeout
-            if (channel.active && channel.note.note == XmTrackerPattern::kNoteOff) {
+            if (channel.note.note == XmTrackerPattern::kNoteOff) {
                 if (channel.instrument.volumeFadeout > 0xFFF ||
                     channel.instrument.volumeFadeout > channel.fadeout ||
                     !channel.instrument.volumeFadeout)
@@ -1086,7 +1081,7 @@ void XmTrackerPlayer::commit()
         // Sampling rate
         if (channel.frequency > 0) {
             mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
-        } else if (mixer.isPlaying(CHANNEL_FOR(i))) {
+        } else {
             mixer.stop(CHANNEL_FOR(i));
         }
 
