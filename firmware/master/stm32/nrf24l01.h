@@ -33,6 +33,7 @@ public:
     Radio::TxPower txPower();
 
     void setConstantCarrier(bool enabled, unsigned channel = 0);
+    void setPRXMode(bool enabled);
 
     void isr();
     GPIOPin irq;
