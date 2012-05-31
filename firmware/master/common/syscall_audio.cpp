@@ -61,7 +61,7 @@ uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
     return AudioMixer::instance.pos(ch);
 }
 
-bool _SYS_tracker_play(const struct _SYSXMSong *song)
+uint32_t _SYS_tracker_play(const struct _SYSXMSong *song)
 {
     if (song) {
         _SYSXMSong modCopy;
@@ -76,12 +76,12 @@ bool _SYS_tracker_play(const struct _SYSXMSong *song)
     }
 }
 
-bool _SYS_tracker_isStopped()
+uint32_t _SYS_tracker_isStopped()
 {
     return XmTrackerPlayer::instance.isStopped();
 }
 
-bool _SYS_tracker_isPaused()
+uint32_t _SYS_tracker_isPaused()
 {
     return XmTrackerPlayer::instance.isPaused();
 }
