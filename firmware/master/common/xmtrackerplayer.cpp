@@ -32,6 +32,13 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 // To be replaced someday by a channel allocator and array
 #define CHANNEL_FOR(x) (_SYS_AUDIO_MAX_CHANNELS - ((x) + 1))
 
+void XmTrackerPlayer::init()
+{
+    hasSong = 0;
+    paused = 0;
+    bzero(&song, sizeof(song));
+}
+
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
     // resume playback

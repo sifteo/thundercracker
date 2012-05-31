@@ -21,6 +21,27 @@ AudioMixer::AudioMixer() :
 {
 }
 
+void AudioMixer::init()
+{
+    return;
+    uint32_t mask = playingChannelMask;
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        mask &= ~Intrinsic::LZ(idx);
+
+        if (idx >= _SYS_AUDIO_MAX_CHANNELS) {
+            ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+            continue;
+        }
+
+        AudioChannelSlot &ch = channelSlots[idx];
+
+        ch.stop();
+    }
+
+    XmTrackerPlayer::instance.init();
+}
+
 /*
  * Mix audio from flash into the audio device's buffer via each of the channels.
  *

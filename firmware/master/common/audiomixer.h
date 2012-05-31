@@ -17,6 +17,8 @@ class AudioMixer
 public:
     AudioMixer();
 
+    void init();
+
     static AudioMixer instance;
 
     static void test();

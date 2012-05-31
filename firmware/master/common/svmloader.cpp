@@ -17,6 +17,7 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "panic.h"
+#include "audiomixer.h"
 
 #include <stdlib.h>
 #include <sifteo/abi.h>
@@ -51,6 +52,9 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
         CubeSlots::instances[i].setVideoBuffer(0);
     }
+
+    // Reset any audio left playing by the previous tenant
+    AudioMixer::instance.init();
 
     // Reset the debugging and logging subsystem
     SvmDebugPipe::init();
