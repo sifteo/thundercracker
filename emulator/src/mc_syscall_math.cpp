@@ -4,16 +4,16 @@
  */
 
 /*
- * Emulator-specific syscalls for software floating point support.
+ * Emulator-specific syscalls for math library support.
  *
- * This file emulates floating point operations which, on hardware, are
- * mostly forwarded directly to the software FP library.
+ * This file emulates floating point and integer operations which,
+ * on hardware, are mostly forwarded directly to the software math library.
  */
 
 /*
- * XXX: This needs to fully trap floating point errors, either by checking
+ * XXX: This needs to fully trap exceptions, either by checking
  *      for any condition that may generate an error before they happen,
- *      or by trapping exceptions in some other way.
+ *      or by trapping them in some other way.
  */
 
 #include <math.h>
@@ -22,142 +22,167 @@
 
 extern "C" {
 
-uint32_t _SYS_add_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_add_f32(uint32_t a, uint32_t b)
+{
     float r = reinterpret_cast<float&>(a) + reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint64_t _SYS_add_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) + reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_sub_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_sub_f32(uint32_t a, uint32_t b)
+{
     float r = reinterpret_cast<float&>(a) - reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint64_t _SYS_sub_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) - reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_mul_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_mul_f32(uint32_t a, uint32_t b)
+{
     float r = reinterpret_cast<float&>(a) * reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint64_t _SYS_mul_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) * reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_div_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_div_f32(uint32_t a, uint32_t b)
+{
     float r = reinterpret_cast<float&>(a) / reinterpret_cast<float&>(b);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint64_t _SYS_div_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     double r = reinterpret_cast<double&>(a) / reinterpret_cast<double&>(b);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint64_t _SYS_fpext_f32_f64(uint32_t a) {
+uint64_t _SYS_fpext_f32_f64(uint32_t a)
+{
     double r = reinterpret_cast<float&>(a);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH) {
+uint32_t _SYS_fpround_f64_f32(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     float r = reinterpret_cast<double&>(a);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint32_t _SYS_fptosint_f32_i32(uint32_t a) {
+uint32_t _SYS_fptosint_f32_i32(uint32_t a)
+{
     int32_t r = reinterpret_cast<float&>(a);
     return r;
 }
 
-uint64_t _SYS_fptosint_f32_i64(uint32_t a) {
+uint64_t _SYS_fptosint_f32_i64(uint32_t a)
+{
     int64_t r = reinterpret_cast<float&>(a);
     return r;
 }
 
-uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH) {
+uint32_t _SYS_fptosint_f64_i32(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     int32_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH) {
+uint64_t _SYS_fptosint_f64_i64(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     int64_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint32_t _SYS_fptouint_f32_i32(uint32_t a) {
+uint32_t _SYS_fptouint_f32_i32(uint32_t a)
+{
     uint32_t r = reinterpret_cast<float&>(a);
     return r;
 }
 
-uint64_t _SYS_fptouint_f32_i64(uint32_t a) {
+uint64_t _SYS_fptouint_f32_i64(uint32_t a)
+{
     uint64_t r = reinterpret_cast<float&>(a);
     return r;
 }
 
-uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH) {
+uint32_t _SYS_fptouint_f64_i32(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint32_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH) {
+uint64_t _SYS_fptouint_f64_i64(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t r = reinterpret_cast<double&>(a);
     return r;
 }
 
-uint32_t _SYS_sinttofp_i32_f32(uint32_t a) {
+uint32_t _SYS_sinttofp_i32_f32(uint32_t a)
+{
     float r = reinterpret_cast<int32_t&>(a);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_sinttofp_i32_f64(uint32_t a) {
+uint64_t _SYS_sinttofp_i32_f64(uint32_t a)
+{
     double r = reinterpret_cast<int32_t&>(a);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH) {
+uint32_t _SYS_sinttofp_i64_f32(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     float r = reinterpret_cast<int64_t&>(a);
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH) {
+uint64_t _SYS_sinttofp_i64_f64(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     double r = reinterpret_cast<int64_t&>(a);
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_uinttofp_i32_f32(uint32_t a) {
+uint32_t _SYS_uinttofp_i32_f32(uint32_t a)
+{
     float r = a;
     return reinterpret_cast<uint32_t&>(r);
 }
 
-uint64_t _SYS_uinttofp_i32_f64(uint32_t a) {
+uint64_t _SYS_uinttofp_i32_f64(uint32_t a)
+{
     double r = a;
     return reinterpret_cast<uint64_t&>(r);
 }
         
-uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH) {
+uint32_t _SYS_uinttofp_i64_f32(uint32_t aL, uint32_t aH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     float r = a;
     return reinterpret_cast<uint32_t&>(r);
@@ -169,61 +194,73 @@ uint64_t _SYS_uinttofp_i64_f64(uint32_t aL, uint32_t aH) {
     return reinterpret_cast<uint64_t&>(r);
 }
 
-uint32_t _SYS_eq_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_eq_f32(uint32_t a, uint32_t b)
+{
     return reinterpret_cast<float&>(a) == reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_eq_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return reinterpret_cast<double&>(a) == reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_lt_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_lt_f32(uint32_t a, uint32_t b)
+{
     return reinterpret_cast<float&>(a) < reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_lt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return reinterpret_cast<double&>(a) < reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_le_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_le_f32(uint32_t a, uint32_t b)
+{
     return reinterpret_cast<float&>(a) <= reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_le_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return reinterpret_cast<double&>(a) <= reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_ge_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_ge_f32(uint32_t a, uint32_t b)
+{
     return reinterpret_cast<float&>(a) >= reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_ge_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return reinterpret_cast<double&>(a) >= reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_gt_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_gt_f32(uint32_t a, uint32_t b)
+{
     return reinterpret_cast<float&>(a) > reinterpret_cast<float&>(b);
 }
 
-uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_gt_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return reinterpret_cast<double&>(a) > reinterpret_cast<double&>(b);
 }
 
-uint32_t _SYS_un_f32(uint32_t a, uint32_t b) {
+uint32_t _SYS_un_f32(uint32_t a, uint32_t b)
+{
     return isunordered(reinterpret_cast<float&>(a), reinterpret_cast<float&>(b));
 }
 
-uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) {
+uint32_t _SYS_un_f64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
     return isunordered(reinterpret_cast<double&>(a), reinterpret_cast<double&>(b));
@@ -279,6 +316,59 @@ void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut)
         *sinOut = sinf(fX);
     if (SvmMemory::mapRAM(cosOut, sizeof *cosOut))
         *cosOut = cosf(fX);
+}
+
+uint64_t _SYS_shl_i64(uint32_t aL, uint32_t aH, uint32_t b)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    return a << b;
+}
+
+uint64_t _SYS_srl_i64(uint32_t aL, uint32_t aH, uint32_t b)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    return a >> b;
+}
+
+int64_t _SYS_sra_i64(uint32_t aL, uint32_t aH, uint32_t b)
+{
+    int64_t a = aL | (uint64_t)aH << 32;
+    return a >> b;
+}
+
+uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a * b;
+}
+
+int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    int64_t a = aL | (uint64_t)aH << 32;
+    int64_t b = bL | (uint64_t)bH << 32;
+    return a / b;
+}
+
+uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a / b;
+}
+
+int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    int64_t a = aL | (uint64_t)aH << 32;
+    int64_t b = bL | (uint64_t)bH << 32;
+    return a % b;
+}
+
+uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
+{
+    uint64_t a = aL | (uint64_t)aH << 32;
+    uint64_t b = bL | (uint64_t)bH << 32;
+    return a % b;
 }
 
 

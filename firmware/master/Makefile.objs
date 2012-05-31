@@ -6,7 +6,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
-    $(MASTER_DIR)/common/syscall_integer.o \
+    $(MASTER_DIR)/common/syscall_prng.o \
+    $(MASTER_DIR)/common/syscall_atomic.o \
     $(MASTER_DIR)/common/syscall_image.o \
     $(MASTER_DIR)/common/syscall_runtime.o \
     $(MASTER_DIR)/common/syscall_string.o \
@@ -76,7 +77,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/factorytest.stm32.o \
     $(MASTER_DIR)/stm32/exti.stm32.o \
     $(MASTER_DIR)/stm32/led.stm32.o \
-    $(MASTER_DIR)/stm32/syscall_float.stm32.o
+    $(MASTER_DIR)/stm32/syscall_math.stm32.o
 
 # Other target specific sources should be appended to OBJS_STM32
 # in their project specific Makefiles
