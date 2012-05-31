@@ -50,10 +50,10 @@ fe:exit()
 ## Inline scripting
 
 In this mode, script fragments are interleaved with normal C++ game code, using some macro, linker, and runtime tricks. It all starts with the SCRIPT()
-and SCRIPT_FMT() macros, which allow inline execution of Lua code your game, with limited ways for game code and Lua code to exchange data.
+and SCRIPT_FMT() macros, which allow inline execution of Lua code in your game, with limited ways for game code and Lua code to exchange data.
 
 It is often useful to include out-of-line Lua code via require(). All inline
-scripting runs in its own context, distinct from the context used by shell-mode scripting. This single contex is shared between all blocks
+scripting runs in its own context, distinct from the context used by shell-mode scripting. This single context is shared between all blocks
 of inline Lua code. The code is always parsed and run in the order that the
 enclosing C++ code runs, so these opening declarations commonly happen at the
 top of main().
@@ -307,11 +307,13 @@ This is the same filesystem which can be accessed with the SDK's @ref filesystem
 
 The constructor for Filesystem does not actually allocate any resources in Siftulator, it just allocates a Lua object which can then be used as a proxy for the filesystem layer in the Base's operating system. Takes no parameters.
 
-### Filesystem():newVolume( _type_, _payload data_, [_type-specific data_] )
+### Filesystem():newVolume( _type_, _payload data_, _type-specific data_ = "", _parent_ = 0 )
 
 Creates, writes, and commits a new Sifteo::Volume in the filesystem. The specified _type_ is the same 16-bit type code used by the Sifteo::Volume::Type enumeration. _Payload data_ is a string with binary data to load the Volume with.
 
-The _type-specific data_ parameter is optional, and currently not used.
+The _type-specific data_ parameter is an optional binary string, used by some volume types. Omitting this parameter is equivalent to passing in the empty string.
+
+The _parent_ parameter is a block code for another volume that is hierarchically above this new volume. If the parent volume is deleted, this volume (and its children, if any) are also deleted.
 
 On success, returns the volume's block code. This is an opaque identifier which is indirectly related to the identity of a Sifteo::Volume object. It is guaranteed to be nonzero.
 

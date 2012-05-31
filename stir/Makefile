@@ -70,8 +70,17 @@ $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	strip -s "src/$(BIN)-d.exe" -o "src/$(BIN)-stripped.exe"
 	rm -f "$(BIN_DIR)/$(BIN).exe"
 	$(UPX) -o "$(BIN_DIR)/$(BIN).exe" "src/$(BIN)-stripped.exe"
-else
-# Default link
+endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
+	strip -o "src/$(BIN)-stripped" "src/$(BIN)-d"
+	rm -f "$(BIN_DIR)/$(BIN)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)" "src/$(BIN)-stripped"
+endif
+
+ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d $(OBJS) $(LDFLAGS)
 	strip -o $(BIN_DIR)/$(BIN) src/$(BIN)-d

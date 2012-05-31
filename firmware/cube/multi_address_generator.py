@@ -13,9 +13,13 @@ import subprocess, multiprocessing
 
 date = datetime.date.today().isoformat()
 destination = "cube_firmware_%s" % date
-os.mkdir(destination)
 
 print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x02...\n"
+
+try:
+    os.stat(destination)
+except:
+    os.mkdir(destination)
 
 cores = multiprocessing.cpu_count()
 

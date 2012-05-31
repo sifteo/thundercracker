@@ -111,11 +111,11 @@ struct CubeID {
      * by a built-in filter. Tilt is a vector, where each component is
      * in the set (-1, 0, +1).
      */
-    Byte2 tilt() const {
+    Byte3 tilt() const {
         ASSERT(sys < NUM_SLOTS);
         _SYSByte4 v;
         v.value = _SYS_getTilt(*this);
-        return vec(v.x, v.y);
+        return vec(v.x, v.y, v.z);
     }
 
     /**

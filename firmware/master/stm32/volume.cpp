@@ -74,8 +74,9 @@ uint16_t calibrate(CalibrationState state)
 
 } // namespace Volume
 
-
+#if (BOARD != BOARD_TEST_JIG)
 IRQ_HANDLER ISR_TIM5()
 {
     timer.isr();    // must clear the TIM IRQ internally
 }
+#endif

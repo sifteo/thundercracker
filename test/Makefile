@@ -6,6 +6,11 @@
 # To run an individual test, do "make <test-name>", where <test-name> is the
 # same string found in the TESTS variable:
 
+TC_DIR := ..
+include $(TC_DIR)/Makefile.platform
+
+#############################################################
+
 TESTS = \
 	firmware/cube \
 	sdk/array \
@@ -16,7 +21,11 @@ TESTS = \
 	sdk/tilebuffer \
 	sdk/scripting
 
-####################
+ifeq ($(BUILD_PLATFORM), Darwin)
+	TESTS += sdk/mac-open
+endif
+
+#############################################################
 
 TC_DIR := $(abspath ..)
 SDK_DIR := $(TC_DIR)/sdk

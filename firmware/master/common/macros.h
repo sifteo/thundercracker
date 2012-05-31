@@ -59,7 +59,7 @@
 #define offsetof(t,m)  ((uintptr_t)(uint8_t*)&(((t*)0)->m))
 #endif
 
-#define ALWAYS_INLINE   __attribute__ ((always_inline))
+#define ALWAYS_INLINE   inline __attribute__ ((always_inline))
 #define NEVER_INLINE    __attribute__ ((noinline))
 
 #define LIKELY(x)       __builtin_expect((x), 1)

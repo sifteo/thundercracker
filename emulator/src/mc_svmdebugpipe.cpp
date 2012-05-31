@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include "lua_script.h"
 #include "svm.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
@@ -14,7 +15,6 @@
 #include "mc_logdecoder.h"
 #include "tinythread.h"
 #include "tasks.h"
-#include "lua_script.h"
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;

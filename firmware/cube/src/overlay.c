@@ -23,60 +23,60 @@
 static void overlay_memory() __naked {
     __asm
 
-	.area DSEG    (DATA)
+    .area DSEG    (DATA)
 
 _x_bg0_first_w::
 _lcd_window_x::
-	.ds 1
+    .ds 1
 _x_bg0_last_w::
 _lcd_window_y::
-	.ds 1
+    .ds 1
 _x_bg0_first_addr::
-	.ds 1
+    .ds 1
 _x_bg0_wrap::
-	.ds 1
+    .ds 1
 _y_bg0_addr_l::
-	.ds 1
+    .ds 1
 _y_bg0_map::
 _draw_xy::
-	.ds 2
+    .ds 2
 _y_spr_line::
 _draw_attr::
-	.ds 1
+    .ds 1
 _y_spr_line_limit::
-	.ds 1
+    .ds 1
 _y_spr_active::
-	.ds 1
+    .ds 1
 _y_bg1_map::
-	.ds 2
+    .ds 2
 _x_bg1_shift::
-	.ds 1
+    .ds 1
 _x_bg1_first_addr::
-	.ds 1
+    .ds 1
 _x_bg1_last_addr::
-	.ds 1
+    .ds 1
 _y_bg1_addr_l::
-	.ds 1
+    .ds 1
 _y_bg1_bit_index::
-	.ds 1
+    .ds 1
 _x_spr::            ; 20 bytes
 _bg2_state::        ; 14 bytes
-	.ds 20
+    .ds 20
 
-	.area BSEG    (BIT)
+    .area BSEG    (BIT)
 
 _x_bg1_rshift::
-	.ds 1
+    .ds 1
 _x_bg1_lshift::
-	.ds 1
+    .ds 1
 _x_bg1_offset_bit0::
-	.ds 1
+    .ds 1
 _x_bg1_offset_bit1::
-	.ds 1
+    .ds 1
 _x_bg1_offset_bit2::
-	.ds 1
+    .ds 1
 _y_bg1_empty::
-	.ds 1
+    .ds 1
 
     __endasm ;
 }

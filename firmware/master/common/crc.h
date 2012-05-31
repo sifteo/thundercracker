@@ -31,7 +31,7 @@ public:
     static uint32_t block(const uint32_t *words, uint32_t count);
 
     template <typename T>
-    static uint32_t object(T &o) {
+    static uint32_t object(const T &o) {
         STATIC_ASSERT((sizeof(o) & 3) == 0);
         ASSERT((reinterpret_cast<uintptr_t>(&o) & 3) == 0);
         return block(reinterpret_cast<const uint32_t*>(&o), sizeof(o) / 4);

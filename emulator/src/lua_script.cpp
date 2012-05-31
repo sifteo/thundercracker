@@ -57,7 +57,7 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, testScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, testSetEnabled),
     LUNAR_DECLARE_METHOD(LuaCube, testGetACK),
-    LUNAR_DECLARE_METHOD(LuaCube, testWriteVRAM),
+    LUNAR_DECLARE_METHOD(LuaCube, testWrite),
     LUNAR_DECLARE_METHOD(LuaCube, xbPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xwPoke),
     LUNAR_DECLARE_METHOD(LuaCube, xbPeek),
@@ -68,6 +68,8 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, fbPoke),
     LUNAR_DECLARE_METHOD(LuaCube, fwPeek),
     LUNAR_DECLARE_METHOD(LuaCube, fbPeek),
+    LUNAR_DECLARE_METHOD(LuaCube, nbPoke),
+    LUNAR_DECLARE_METHOD(LuaCube, nbPeek),
     {0,0}
 };
 
@@ -468,6 +470,20 @@ int LuaCube::fbPeek(lua_State *L)
     return 1;
 }
 
+int LuaCube::nbPeek(lua_State *L)
+{
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.getStorage()->nvm;
+    lua_pushinteger(L, mem[0x3ff & luaL_checkinteger(L, 1)]);
+    return 1;
+}
+
+int LuaCube::nbPoke(lua_State *L)
+{
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.getStorage()->nvm;
+    mem[0x3ff & luaL_checkinteger(L, 1)] = luaL_checkinteger(L, 2);
+    return 0;
+}
+
 int LuaCube::saveScreenshot(lua_State *L)
 {    
     const char *filename = luaL_checkstring(L, 1);
@@ -600,10 +616,12 @@ int LuaCube::testGetACK(lua_State *L)
     return 1;
 }
 
-int LuaCube::testWriteVRAM(lua_State *L)
+int LuaCube::testWrite(lua_State *L)
 {
     Cube::I2CTestJig &test = LuaSystem::sys->cubes[id].i2c.testjig;
-    test.writeVRAM(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    size_t dataStrLen = 0;
+    const char *dataStr = lua_tolstring(L, 1, &dataStrLen);
+    test.write((const uint8_t*) dataStr, dataStrLen);
     return 0;
 }
 
@@ -636,8 +654,9 @@ LuaFilesystem::LuaFilesystem(lua_State *L)
 int LuaFilesystem::newVolume(lua_State *L)
 {
     /*
-     * Takes three arguments: (type, payload data, type-specific data).
+     * Arguments: (type, payload data, type-specific data, parent).
      * Type-specific data is optional, and will be zero-length if omitted.
+     * Parent is optional, will be unset (zero) if omitted.
      *
      * Creates, writes, and commits the new volume. Returns its block code
      * on success, or nil on failure.
@@ -648,9 +667,10 @@ int LuaFilesystem::newVolume(lua_State *L)
     unsigned type = luaL_checkinteger(L, 1);
     const char *payloadStr = lua_tolstring(L, 2, &payloadStrLen);
     const char *dataStr = lua_tolstring(L, 3, &dataStrLen);
+    FlashMapBlock parent = FlashMapBlock::fromCode(lua_tointeger(L, 4));
 
     FlashVolumeWriter writer;
-    if (!writer.begin(type, payloadStrLen, dataStrLen))
+    if (!writer.begin(type, payloadStrLen, dataStrLen, parent))
         return 0;
 
     writer.appendPayload((const uint8_t*)payloadStr, payloadStrLen);
@@ -696,7 +716,8 @@ int LuaFilesystem::deleteVolume(lua_State *L)
         return 0;
     }
 
-    vol.markAsDeleted();
+    vol.deleteTree();
+
     return 0;
 }
 

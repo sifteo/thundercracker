@@ -442,6 +442,9 @@ __sbit __at 0xEA RF_CKEN;
 #define OPMCON_WUP_ACTIVE_LOW   0x04
 
 // CLKLFCTRL bits
+#define CLKLFCTRL_SRC_RC        0x01
+#define CLKLFCTRL_SRC_SYNTH     0x02
+#define CLKLFCTRL_SRC_NONE      0x07
 #define CLKLFCTRL_XOSC16M       0x08
 #define CLKLFCTRL_READY         0x40
 #define CLKLFCTRL_PHASE         0x80

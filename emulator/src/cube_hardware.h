@@ -136,10 +136,12 @@ class Hardware {
     ALWAYS_INLINE void setRadioClockEnable(bool e) {
         rfcken = e;
     }
-    
+
     uint32_t getExceptionCount();
     void incExceptionCount();
-    
+    void logWatchdogReset();
+    void traceExecution();
+
     ALWAYS_INLINE uint8_t readFlashBus() {
         if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();

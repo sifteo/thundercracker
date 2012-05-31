@@ -32,10 +32,13 @@
  * This attribute may be useful in cases where you want to explicitly prevent
  * a function's code from being included into its callers, for debugging or
  * for cache optimization reasons.
+ *
+ * @hideinitializer
  */
 #define NOINLINE        __attribute__ ((noinline))
 
 /// A macro wrapper for the C preprocessor stringification operator.
+/// @hideinitializer
 #define STRINGIFY(_x)   #_x
 
 /**
@@ -43,10 +46,13 @@
  *
  * Necessary if you wish to stringify tokens after macro expansion
  * rather than before.
+ *
+ * @hideinitializer
  */
 #define TOSTRING(_x)    STRINGIFY(_x)
 
 /// Expands to a string literal uniquely identifying the file and source line where it appears.
+/// @hideinitializer
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
 /**
@@ -67,6 +73,8 @@
  * This function evaluates to either true or false at link-time. So,
  * at link-time, if the `-g` flag was not passed to Slinky, the enclosed
  * code is optimized out.
+ *
+ * @hideinitializer
  */
 #define DEBUG_ONLY(_x) \
 do { \
@@ -123,6 +131,8 @@ do { \
      * - C-style strings: `%%s`
      * - Hex-dump of fixed width buffers: `%(width in bytes)h`
      * - Pointer, printed as a resolved symbol when possible: `%%P`
+     *
+     * @hideinitializer
      */
 #   define LOG(...) \
 do { \
@@ -147,6 +157,8 @@ do { \
      * but without assertions. For example, this can be used to isolate problems that,
      * for whatever reason, only show up with assertions disabled. You can do this
      * by setting the -DNO_ASSERT compiler option.
+     *
+     * @hideinitializer
      */
 #   define ASSERT(_x) \
 do { \
@@ -167,6 +179,8 @@ do { \
  * LOG() text is accumulated in a buffer in Siftulator until such time as
  * the scripting backend is set back to `NONE`. At that moment, the scripting
  * backend has a chance to synchronously interpret the buffer of logged text.
+ *
+ * @hideinitializer
  */
 #define SCRIPT_TYPE(_type) \
 do { \
@@ -203,7 +217,9 @@ do { \
  * These script fragments are all executed in the same global Lua context.
  * Each script fragment executes synchronously with your game code.
  *
- * @warning The Lua objects provided by Siftulator are not yet documented.
+ * See the @ref scripting documentation for more info.
+ *
+ * @hideinitializer
  */
 #define SCRIPT(_type, _code) \
 do { \
@@ -239,6 +255,8 @@ do { \
  * This is implemented using the same formatter as LOG(), so all of the
  * format specifiers and features described in LOG()'s documentation apply
  * to SCRIPT_FMT() as well.
+ *
+ * @hideinitializer
  */
 #define SCRIPT_FMT(_type, ...) \
 do { \
@@ -250,45 +268,57 @@ do { \
 } while (0)
 
 /// Convenience macro for tracing the name and value of an integer expression
+/// @hideinitializer
 #define LOG_INT(_x)     LOG("%s = %d\n", #_x, (_x));
 
 /// Convenience macro for tracing the name and value of an expression, in hexadecimal
+/// @hideinitializer
 #define LOG_HEX(_x)     LOG("%s = 0x%08x\n", #_x, (_x));
 
 /// Convenience macro for tracing the name and value of a floating point expression
+/// @hideinitializer
 #define LOG_FLOAT(_x)   LOG("%s = %f\n", #_x, (_x));
 
 /// Convenience macro for tracing the name and value of a C-style string
+/// @hideinitializer
 #define LOG_STR(_x)     LOG("%s = \"%s\"\n", #_x, (const char*)(_x));
 
 /// Convenience macro for tracing the name and value of an integer 2-vector expression
+/// @hideinitializer
 #define LOG_INT2(_x)    LOG("%s = (%d, %d)\n", #_x, (_x).x, (_x).y);
 
 /// Convenience macro for tracing the name and value of a floating point 2-vector expression
+/// @hideinitializer
 #define LOG_FLOAT2(_x)  LOG("%s = (%f, %f)\n", #_x, (_x).x, (_x).y);
 
 /// Produces a 'size of array is negative' compile error when the assert fails
+/// @hideinitializer
 #define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
 
 #ifndef MIN
 /// Macro which returns the smallest of two values. Values are evaluated twice.
+/// @hideinitializer
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 /// Macro which returns the largest of two values. Values are evaluated twice.
+/// @hideinitializer
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #endif
 
 #ifndef NULL
 /// Invalid pointer. Equal to zero.
+/// @hideinitializer
 #define NULL 0
 #endif
 
 #ifndef arraysize
 /// Calculate the number of elements in a C++ array, using sizeof.
+/// @hideinitializer
 #define arraysize(a)   (sizeof(a) / sizeof((a)[0]))
 #endif
 
 #ifndef offsetof
 /// Calculate the byte offset from the beginning of structure `t` to member `m`
+/// @hideinitializer
 #define offsetof(t,m)  ((uintptr_t)(uint8_t*)&(((t*)0)->m))
 #endif
 

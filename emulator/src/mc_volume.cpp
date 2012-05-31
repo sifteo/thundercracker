@@ -13,7 +13,6 @@ namespace Volume {
 
 void init()
 {
-    ASSERT(!initialized);
     initialized = true;
 }
 

@@ -1,7 +1,5 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
+/*
  * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>
@@ -118,7 +116,8 @@ void main()
             auto tilt = cube.tilt();
             str << "tilt:"
                 << Fixed(tilt.x, 3)
-                << Fixed(tilt.y, 3) << "\n";
+                << Fixed(tilt.y, 3)
+                << Fixed(tilt.z, 3) << "\n";
 
             str << "shake: " << counters.cubes[cube].shake;
 

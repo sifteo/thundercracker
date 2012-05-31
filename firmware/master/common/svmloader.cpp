@@ -16,6 +16,7 @@
 #include "panic.h"
 #include "cubeslots.h"
 #include "cube.h"
+#include "panic.h"
 
 #include <stdlib.h>
 #include <sifteo/abi.h>
@@ -58,9 +59,8 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     // the proper ELF binary to load debug symbols from.
     SvmDebugPipe::setSymbolSource(program);
 
-    // Initialize memory and CPU
+    // Initialize memory
     SvmMemory::erase();
-    SvmCpu::init();
     secondaryUnmap();
 
     // Load RWDATA into RAM
@@ -145,17 +145,13 @@ void SvmLoader::exit(bool fault)
     case RUNLEVEL_LAUNCHER:
         /*
          * Launcher exited! Normally this doesn't happen. In a production
-         * version of the launcher this would be a fatal error, so on hardware
-         * we'll just restart the launcher immediately. In simulation, however,
-         * we use this to exit the simulator.
+         * version of the launcher this would be a fatal error. In
+         * simulation, however, we use this to exit the simulator.
          */
         #ifdef SIFTEO_SIMULATOR
         // Must preserve the error code here, so that unit tests and other scripts work.
         ::exit(fault);
         #endif
-        for (;;) {
-            Tasks::work();
-            Radio::halt();
-        }
+        PanicMessenger::haltForever();
     }
 }

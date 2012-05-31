@@ -1,7 +1,5 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
+/*
  * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>
@@ -43,8 +41,10 @@ void main() {
     begin();
 
     Menu m(gVideo[0], &gAssets, gItems);
+    m.anchor(2);
 
     struct MenuEvent e;
+    uint8_t item;
     while(1) {
         while(m.pollEvent(&e)) {
             switch(e.type) {
@@ -52,11 +52,13 @@ void main() {
                     // Game Buddy is not clickable, so don't do anything on press
                     if (e.item >= 3) {
                         m.preventDefault();
+                    } else {
+                        m.anchor(e.item);
                     }
                     if (e.item == 4) {
                         static unsigned randomIcon = 0;
-                        randomIcon = (randomIcon + 1) % 4;
-                        m.replaceIcon(e.item, gItems[randomIcon].icon);
+                        randomIcon = (randomIcon + 1) % e.item;
+                        m.replaceIcon(e.item, gItems[randomIcon].icon, gItems[randomIcon].label);
                     }
                     break;
                 case MENU_EXIT:
@@ -76,9 +78,10 @@ void main() {
 
                 case MENU_ITEM_ARRIVE:
                     LOG("arriving at menu item %d\n", e.item);
+                    item = e.item;
                     break;
                 case MENU_ITEM_DEPART:
-                    LOG("departing from menu item %d\n", e.item);
+                    LOG("departing from menu item %d, scrolling %s\n", item, e.direction > 0 ? "forward" : "backward");
                     break;
 
                 case MENU_PREPAINT:

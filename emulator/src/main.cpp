@@ -115,14 +115,20 @@ static void message(const char *fmt, ...)
 
 static int run(System &sys)
 {
-    static Frontend fe;
-        
+    /*
+     * NB: The Frontend is dynamically allocated to fix a bad ordering dependency
+     *     during shutdown via exit(). Static C++ destructors will start getting
+     *     called before we're guaranteed to be out of the Frontend main loop,
+     *     and these destructors will start tearing down Box2D state too soon.
+     */
+    Frontend *fe = new Frontend;
+
     if (!sys.init()) {
         message("Emulator failed to initialize");
         return 1;
     }
 
-    if (!sys.opt_headless && !fe.init(&sys)) {
+    if (!sys.opt_headless && !fe->init(&sys)) {
         message("Graphical frontend failed to initialize");
         return 1;
     }    
@@ -133,11 +139,12 @@ static int run(System &sys)
         while (sys.isRunning())
             glfwSleep(0.1);
     } else {
-        while (fe.runFrame());
-        fe.exit();
+        while (fe->runFrame());
+        fe->exit();
     }
 
     sys.exit();
+    delete fe;
 
     return 0;
 }

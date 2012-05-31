@@ -70,6 +70,15 @@ unsigned FlashVolume::getType() const
     return hdr->type;
 }
 
+FlashVolume FlashVolume::getParent() const
+{
+    ASSERT(isValid());
+    FlashBlockRef ref;
+    FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
+    ASSERT(hdr->isHeaderValid());
+    return FlashMapBlock::fromCode(hdr->parentBlock);
+}
+
 FlashMapSpan FlashVolume::getPayload(FlashBlockRef &ref) const
 {
     ASSERT(isValid());
@@ -83,7 +92,7 @@ FlashMapSpan FlashVolume::getPayload(FlashBlockRef &ref) const
     return FlashMapSpan::create(map, offset, size);
 }
 
-void FlashVolume::markAsDeleted() const
+void FlashVolume::deleteSingle() const
 {
     FlashBlockRef ref;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
@@ -92,6 +101,60 @@ void FlashVolume::markAsDeleted() const
     FlashBlockWriter writer(ref);
     hdr->type = T_DELETED;
     hdr->typeCopy = T_DELETED;
+}
+
+void FlashVolume::deleteTree() const
+{
+    /*
+     * Delete a volume and all of its children. This is equivalent to a
+     * recursive delete operation, but to conserve stack space we actually
+     * do this iteratively using a bit vector to keep track of pending
+     * deletes.
+     *
+     * This also has the benefit of letting us process one complete level
+     * of the deletion tree for each iteration over the volume list,
+     * instead of requiring an iteration for every single delete operation.
+     */
+
+    FlashMapBlock::Set deleted;
+    bool notDoneYet;
+    deleted.clear();
+
+    // This is the root of the deletion tree
+    deleteSingle();
+    block.mark(deleted);
+
+    do {
+        FlashVolumeIter vi;
+        FlashVolume vol;
+
+        /*
+         * Visit volumes in order, first to read their parent and then to
+         * potentially delete them. By doing both of these consecutively on
+         * the same volume, we can reduce cache thrashing.
+         *
+         * To finish, we need to do a full scan in which we find no volumes
+         * with deleted parents. We need this one last scan, since there's
+         * no way to know if a volume we've already iterated past was parented
+         * to a volume that was marked for deletion later in the same scan.
+         */
+
+        notDoneYet = false;
+        vi.begin();
+
+        while (vi.next(vol)) {
+            FlashVolume parent = vol.getParent();
+
+            if (!deleted.test(vol.block.index()) &&
+                parent.block.isValid() &&
+                deleted.test(parent.block.index())) {
+
+                vol.deleteSingle();
+                vol.block.mark(deleted);
+                notDoneYet = true;
+            }
+        }
+    } while (notDoneYet);
 }
 
 bool FlashVolumeIter::next(FlashVolume &vol)
@@ -316,7 +379,8 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
     return true;
 }
 
-bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes, unsigned hdrDataBytes)
+bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
+    unsigned hdrDataBytes, FlashVolume parent)
 {
     // Save the real type for later, it isn't written until commit()
     this->type = type;
@@ -332,7 +396,7 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes, unsigned hdr
 
     // Initialize everything except the 'type' field.
     unsigned payloadBlocks = (payloadBytes + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
-    hdr->init(FlashVolume::T_INCOMPLETE, payloadBlocks, hdrDataBytes);
+    hdr->init(FlashVolume::T_INCOMPLETE, payloadBlocks, hdrDataBytes, parent.block);
 
     /*
      * Get some temporary memory to store erase counts in.

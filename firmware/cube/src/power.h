@@ -42,4 +42,13 @@ void power_sleep();
         power_sleep(); \
 }
 
+// Reset the watchdog timer. Must be called from main loop.
+// Currently we use a value of 1 second.
+#define power_wdt_set() { \
+    WDSV; \
+    WDSV = 128; \
+    WDSV = 0; \
+}
+
+
 #endif

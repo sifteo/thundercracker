@@ -95,7 +95,8 @@ void TestJig::init()
     vramTransaction.state = VramIdle;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
-//    neighbor.init();
+
+    neighbor.init();
 }
 
 /*
@@ -124,7 +125,7 @@ void TestJig::neighborInIsr(uint8_t side)
 void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
 {
     // NB! neighbor transmitted in its native big endian format
-    const uint8_t response[] = { 6, side, (msg >> 8) & 0xff, msg & 0xff };
+    const uint8_t response[] = { 101, side, (msg >> 8) & 0xff, msg & 0xff };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -147,7 +148,7 @@ void TestJig::onI2cEvent()
      */
     if (status & I2CSlave::AddressMatch) {
         if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0) {
-            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { 6 };
+            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { 100 };
             memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
             UsbDevice::write(resp, sizeof resp);
         }
@@ -321,8 +322,12 @@ IRQ_HANDLER ISR_TIM3()
 
 IRQ_HANDLER ISR_TIM5()
 {
-    if (TIM5.SR & 1)
-        neighbor.rxPeriodIsr();
+    if (TIM5.SR & 1) {
+        uint16_t side, rxData;
+        if (neighbor.rxPeriodIsr(&side, &rxData)) {
+            TestJig::onNeighborMsgRx(side, rxData);
+        }
+    }
     TIM5.SR = 0; // must clear status to acknowledge the ISR
 }
 

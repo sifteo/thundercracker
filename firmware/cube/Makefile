@@ -14,11 +14,16 @@ OBJS = \
         src/graphics_fb128.rel \
         src/graphics_solid.rel \
         src/graphics_stamp.rel \
+        src/sensors_init.rel \
+        src/sensors_i2c.rel \
+        src/sensors_tf0.rel \
+        src/sensors_tf1.rel \
+        src/sensors_tf2.rel \
         src/overlay.rel \
         src/power.rel \
         src/lcd.rel \
-        src/radio.rel \
-        src/sensors.rel \
+        src/radio_init.rel \
+        src/radio_isr.rel \
         src/battery.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \

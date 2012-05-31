@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 #include <protocol.h>
-#include "cube_hardware.h"
+#include <cube_hardware.h>
 
 /*
  * Separate register bank for RF IRQ handlers. This register bank is

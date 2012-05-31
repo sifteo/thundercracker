@@ -81,7 +81,7 @@ private:
     int x, y;
     
     struct {
-        char fps[16];
+        char fps[64];
         EventRateProbe lcd_wr;
         uint32_t flashModifyCount;
     } cubes[System::MAX_CUBES];

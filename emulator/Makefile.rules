@@ -4,19 +4,14 @@ all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
 .SUFFIXES:
 
 ifeq ($(BUILD_PLATFORM),windows32)
-
-# Win32 Link: Stripped and packed binaries, and separate debug symbols.
-# upx doesn't like overwriting the output file - rm it in case we're not building after clean
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
-	$(OBJCOPY) --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
 	$(STRIP) -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
 	rm -f "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
 	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
-else
+endif
+
 ifeq ($(BUILD_PLATFORM),Darwin)
-# Mac OS Link: Create an app bundle with a stripped binary,
-# and a separate (lowercase) symlink for easier command line use.
 $(BIN_DIR)/$(BIN): $(BIN_DIR)/$(BIN).app
 	ln -sf $(BIN).app/Contents/MacOS/$(BIN) $(BIN_DIR)/$(LOWERCASE_BIN)
 $(BIN_DIR)/$(BIN).app: $(OBJS)
@@ -27,13 +22,15 @@ $(BIN_DIR)/$(BIN).app: $(OBJS)
 	cp resources/siftrunner_icon.icns "$(BIN_DIR)/$(BIN).app/Contents/Resources/$(BIN).icns"
 	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN_DIR)/$(BIN).app/contents/MacOS/$(BIN)"
 	touch "$@"
-else
-# Default link (for Linux)
+endif
+
+ifeq ($(BUILD_PLATFORM),Linux)
 $(BIN_DIR)/$(BIN): $(BIN_DIR)/$(LOWERCASE_BIN)
 $(BIN_DIR)/$(LOWERCASE_BIN): $(OBJS)
 	$(CC) -o "src/$(LOWERCASE_BIN)-d" $(OBJS) $(LDFLAGS)
-	$(STRIP) -s "src/$(LOWERCASE_BIN)-d" -o "$@"
-endif
+	$(STRIP) -s "src/$(LOWERCASE_BIN)-d" -o "src/$(LOWERCASE_BIN)-stripped"
+	rm -f "$(BIN_DIR)/$(LOWERCASE_BIN)"
+	$(UPX) -o "$(BIN_DIR)/$(LOWERCASE_BIN)" "src/$(LOWERCASE_BIN)-stripped"
 endif
 
 %.o: %.cpp

@@ -6,9 +6,6 @@
 #include "neighbor.h"
 #include "board.h"
 
-#if (BOARD == BOARD_TEST_JIG)
-#include "testjig.h"
-#endif
 
 GPIOPin Neighbor::inPins[4] = {
     NBR_IN1_GPIO,
@@ -39,7 +36,7 @@ void Neighbor::init()
     }
 
     txPeriodTimer.init(625, 4);
-    rxPeriodTimer.init(820, 0); // ~ 24 us
+    rxPeriodTimer.init(428, 0); // ~ 12 us
 
     for (unsigned i = 1; i < 5; ++i)
         txPeriodTimer.configureChannelAsOutput(i, HwTimer::ActiveHigh, HwTimer::Pwm1);
@@ -108,6 +105,7 @@ void Neighbor::beginReceiving()
 {
     rxState = WaitingForStart;
     receivingSide = 0;  // just initialize to something safe
+    rxBitCounter = 0;   // incremented at the end of each bit period
 
     for (unsigned i = 0; i < 4; ++i) {
         GPIOPin &in = inPins[i];
@@ -153,7 +151,6 @@ void Neighbor::onRxPulse(uint8_t side)
 
         receivingSide = side;
         rxDataBuffer = 1;   // init bit 0 to 1 - we're here because we received a pulse after all
-        rxBitCounter = 0;   // this gets incremented at the end of the bit period
         rxState = ReceivingData;
 
         /*
@@ -179,19 +176,22 @@ void Neighbor::onRxPulse(uint8_t side)
  * and reset our state. Otherwise, shift the value received during this bit
  * period along 'rxDataBuffer'
  */
-void Neighbor::rxPeriodIsr()
+bool Neighbor::rxPeriodIsr(uint16_t *side, uint16_t *rxData)
 {
     outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
     // if we haven't gotten a start bit, nothing to do here
     if (rxState == WaitingForStart)
-        return;
+        return false;
 
     rxBitCounter++;
 
     if (rxBitCounter < NUM_RX_BITS) {
         rxDataBuffer <<= 1;
     } else {
+
+        rxState = WaitingForStart;
+
         /*
          * The second byte of a successful message must match the complement
          * of its first byte. Enforce that here before forwarding the message.
@@ -199,14 +199,11 @@ void Neighbor::rxPeriodIsr()
         int8_t lsb = rxDataBuffer & 0xff;
         int8_t msb = (rxDataBuffer >> 8) & 0xff;
         if (lsb == ~msb) {
-
-#if (BOARD == BOARD_TEST_JIG)
-            TestJig::onNeighborMsgRx(receivingSide, rxDataBuffer);
-#endif
-
+            *side = receivingSide;
+            *rxData = rxDataBuffer;
+            return true;
         }
-
-        rxState = WaitingForStart;
-        rxDataBuffer = 0;
     }
+
+    return false;
 }

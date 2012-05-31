@@ -9,12 +9,14 @@
 require('siftulator')
 require('luaunit')
 
+System():setOptions{ turbo=true, numCubes=0 }
 fs = Filesystem()
-System():setOptions{ turbo=true }
+writeTotal = 0
 
 TEST_VOL_TYPE = 0x8765
 BLOCK_SIZE = 128 * 1024
 DEVICE_SIZE = 16 * 1024 * 1024
+
 
 function volumeString(vol)
     -- Return a string representation of a volume
@@ -108,6 +110,59 @@ function dumpEndurance()
 end
 
 
+function checkEndurance()
+    -- Ensure that our wear levelling didn't fail too badly.
+
+    local idealEraseCount = writeTotal / DEVICE_SIZE
+    local maxEC = getMaxEraseCount()
+    local ratio = maxEC / idealEraseCount
+    local ratioLimit = 1.3
+
+    print(string.format("--        Ideal erase count: %.2f", idealEraseCount))
+    print(string.format("--  Actual peak erase count: %d", maxEC))
+    print(string.format("--    Ratio of peak / ideal: %.4f (Max %f)", ratio, ratioLimit))
+
+    if ratio > ratioLimit then
+        error("Wear levelling failed, peak erase count higher than allowed")
+    end
+end
+
+
+function testRandomVolumes(verbose)
+    -- Psuedorandomly create and delete volumes
+
+    print "Testing random volume creation and deletion"
+
+    local testData = string.rep("I am bytes, 16! ", 1024*1024)
+    math.randomseed(1234)
+
+    for iteration = 1, 100 do
+
+        -- How big of a volume to create?
+        local volSize = math.random(10 * 1024 * 1024)
+
+        -- Randomly delete volumes until we can fit this new volume
+        while getFreeSpace() < volSize do
+            local candidates = filterVolumes()
+            local vol = candidates[math.random(table.maxn(candidates))]
+
+            fs:deleteVolume(vol)
+            if verbose then
+                print(string.format("Deleted volume [%02x]", vol))
+            end
+        end
+
+        -- Create the volume
+        local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
+        if verbose then
+            print(string.format("Created volume [%02x], %d bytes", vol, volSize))
+        end
+
+        writeTotal = writeTotal + math.ceil(volSize / BLOCK_SIZE) * BLOCK_SIZE
+    end
+end
+
+
 function filterVolumes()
     -- Filter the list of volumes, looking for only TEST_VOL_TYPE
 
@@ -124,55 +179,89 @@ function filterVolumes()
 end
 
 
+function assertVolumes(t)
+    -- Raise an error if the output of filterVolumes() doesn't contain
+    -- the exact same set of volumes as 'table'. Note that the parameter
+    -- is sorted in-place.
+
+    local filtered = filterVolumes()
+
+    table.sort(filtered)
+    table.sort(t)
+
+    for index = 1, math.max(table.maxn(filtered), table.maxn(t)) do
+        if filtered[index] ~= t[index] then
+            error(string.format("Mismatch in test volumes, expected {%s}, found {%s}",
+                table.concat(t, ","), table.concat(filtered, ",")))
+        end
+    end
+end
+
+
+function testHierarchy(verbose)
+    -- Create trees of volumes, and assure that they are deleted correctly.
+
+    print "Testing hierarchial volume deletion"
+
+    -- By running this several times, we both contribute toward testing wear
+    -- levelling, and we test the deletion code with various orderings of
+    -- volumes on the device.
+    for iteration = 1, 100 do
+
+        -- Account for our test volumes when computing wear levelling performance
+        writeTotal = writeTotal + BLOCK_SIZE * 9
+
+        local a = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+        local b = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+        local c = fs:newVolume(TEST_VOL_TYPE, "Foo", "", a)
+        local d = fs:newVolume(TEST_VOL_TYPE, "Foo", "", c)
+        local e = fs:newVolume(TEST_VOL_TYPE, "Foo", "", d)
+
+        local f = fs:newVolume(TEST_VOL_TYPE, "Foo", "", 0)
+        local g = fs:newVolume(TEST_VOL_TYPE, "Foo", "", f)
+        local h = fs:newVolume(TEST_VOL_TYPE, "Foo", "", g)
+        local i = fs:newVolume(TEST_VOL_TYPE, "Foo", "", h)
+
+        local allVolumes = {a, b, c, d, e, f, g, h, i}
+        if verbose then
+            print(string.format("Hierarchy iter %d: volumes {%s}",
+                iteration, table.concat(allVolumes, ",")))
+        end
+
+        -- All volumes must be present to start with.
+        -- (Note that this has the side-effect of sorting allVolumes)
+        assertVolumes(allVolumes)
+
+        -- Delete the subtree containing {h, i}
+        fs:deleteVolume(h)
+        assertVolumes{a, b, c, d, e, f, g}
+
+        -- Delete the entire tree below 'a', but leave the other tree
+        fs:deleteVolume(a)
+        assertVolumes{f, g}
+
+        -- Now delete the other subtree
+        fs:deleteVolume(f)
+        assertVolumes{}
+
+    end
+end
+
+
 function testFilesystem()
 
     -- Dump the volumes that existed on entry
 
     dumpFilesystem()
 
-    -- Psuedorandomly create and delete volumes
+    -- Individual filesystem exercises
 
-    local testData = string.rep("I am bytes, 16! ", 1024*1024)
-    local writeTotal = 0
-
-    math.randomseed(1234)
-    for iteration = 1, 100 do
-
-        -- How big of a volume to create?
-        local volSize = math.random(10 * 1024 * 1024)
-
-        -- Randomly delete volumes until we can fit this new volume
-        while getFreeSpace() < volSize do
-            local candidates = filterVolumes()
-            local vol = candidates[math.random(table.maxn(candidates))]
-
-            fs:deleteVolume(vol)
-            -- print(string.format("Deleted volume [%02x]", vol))
-        end
-
-        -- Create the volume
-        local vol = fs:newVolume(TEST_VOL_TYPE, string.sub(testData, 1, volSize))
-        -- print(string.format("Created volume [%02x], %d bytes", vol, volSize))
-        writeTotal = writeTotal + volSize
-    end
+    testHierarchy()
+    testRandomVolumes()
 
     -- Check over the aftermath
 
     dumpFilesystem()
     dumpEndurance()
-
-    -- Ensure that our wear levelling didn't fail too badly.
-
-    local idealEraseCount = writeTotal / DEVICE_SIZE
-    local maxEC = getMaxEraseCount()
-    local ratio = maxEC / idealEraseCount
-    local ratioLimit = 1.5
-
-    print("--        Ideal erase count: " .. idealEraseCount)
-    print("--  Actual peak erase count: " .. maxEC)
-    print("--   Ratio, actual to ideal: " .. ratio .. " (Max " .. ratioLimit .. ")")
-
-    if ratio > ratioLimit then
-        error("Wear levelling failed, peak erase count higher than allowed")
-    end
+    checkEndurance()
 end

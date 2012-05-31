@@ -95,9 +95,11 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
         reset();
     }
 
-    while(newestSample < sampleNum || newestSample == kNoSamples) {
+    while (newestSample < sampleNum || newestSample == kNoSamples) {
         SvmMemory::PhysAddr pa;
         SvmMemory::VirtAddr va = mod->pData + bufPos;
+
+
         uint32_t bufLen = bytesForSamples(sampleNum - newestSample);
         if (!SvmMemory::mapROData(ref, va, bufLen, pa)) {
             // Fail in as many ways as possible!
@@ -105,15 +107,16 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
                  (void *)va, bytesForSamples(sampleNum - newestSample)));
             ASSERT(false);
             // The best we can now is be quiet and get out of the way.
-            while(newestSample < sampleNum || newestSample == kNoSamples)
+            while (newestSample < sampleNum || newestSample == kNoSamples)
                 writeNextSample(0);
             return;
         }
 
         uint8_t *bufPtr = pa;
-        switch(mod->type) {
+        switch (mod->type) {
+
             case _SYS_PCM:
-                while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
+                while (bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
                     if (pa + bufLen - bufPtr < (uint8_t)sizeof(int16_t)) {
                         int16_t sample;
                         if (!SvmMemory::copyROData(sample, va + (bufPtr - pa))) {
@@ -131,6 +134,7 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
                     bufPtr += sizeof(int16_t);
                 }
                 break;
+
             case _SYS_ADPCM:
                 while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
                     writeNextSample(adpcmDec.decodeSample(&bufPtr));

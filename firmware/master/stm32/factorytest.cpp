@@ -10,6 +10,7 @@
 #include "volume.h"
 #include "homebutton.h"
 #include "powermanager.h"
+#include "audiomixer.h"
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
@@ -24,6 +25,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     batteryCalibrationHandler,  // 6
     homeButtonHandler,          // 7
     shutdownHandler,            // 8
+    audioTestHandler,           // 9
 };
 
 void FactoryTest::init()
@@ -225,6 +227,56 @@ void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
         ;
 
     PowerManager::shutdown();
+}
+
+
+
+/*
+ * args[1] - non-zero == start, zero == stop
+ */
+
+#include "svmmemory.h"
+
+void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
+{
+    AudioMixer::instance.stop(0); // make sure we're stopped in either case.
+    if (args[1]) {
+
+        /*
+         * Audio data is expected to flow through the SVM virtual memory
+         * system. We'll copy a small triangle wave's data to user RAM
+         * (assuming nothing is running there)
+         */
+
+        const short TriangleData[] = { 0x7FFF, 0x8000 };
+
+        const _SYSAudioModule Triangle = {
+            /* sampleRate */ 262, // near enough to C-4 (261.626Hz)
+            /* loopStart  */ 0,
+            /* loopEnd    */ 1,
+            /* loopType   */ _SYS_LOOP_REPEAT,
+            /* type       */ _SYS_PCM,
+            /* volume     */ 128,
+            /* dataSize   */ 4,
+            /* pData      */ 0, // gets set appropriately below
+        };
+
+        /*
+         * copy AudioModule data, followed by sample data, into user RAM
+         */
+        uint8_t *userram = (uint8_t*)SvmMemory::copyToUserRAM(0, &Triangle, sizeof Triangle);
+        SvmMemory::copyToUserRAM(sizeof Triangle, &TriangleData, sizeof TriangleData);
+
+        // must update sample data pointer to its new location in user RAM!
+        _SYSAudioModule* userTriangle = reinterpret_cast<_SYSAudioModule*>(userram);
+        userTriangle->pData = reinterpret_cast<uint32_t>(userram + sizeof Triangle);
+
+        AudioMixer::instance.play(userTriangle, 0, _SYS_LOOP_REPEAT);
+    }
+
+    // no real response - just indicate that we've taken the requested action
+    const uint8_t response[] = { args[0], args[1] };
+    UsbDevice::write(response, sizeof response);
 }
 
 IRQ_HANDLER ISR_USART3()

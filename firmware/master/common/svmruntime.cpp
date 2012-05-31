@@ -14,7 +14,20 @@
 #include "tasks.h"
 #include "panic.h"
 
+#include <math.h>
 #include <sifteo/abi.h>
+
+typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
+                               reg_t p4, reg_t p5, reg_t p6, reg_t p7);
+
+// Floating point library aliases, used by syscall-table on hardware only.
+#ifdef SIFTEO_SIMULATOR
+#   define FP_ALIAS(_sysName, _fpLibName)   _sysName
+#else
+#   define FP_ALIAS(_sysName, _fpLibName)   _fpLibName
+#endif
+
+#include "syscall-table.def"
 
 using namespace Svm;
 
@@ -27,6 +40,7 @@ bool SvmRuntime::eventDispatchFlag;
 
 void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 {
+    UART(("Entering SVM.\r\n"));
     initStack(stack);
     SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
@@ -34,6 +48,14 @@ void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 
 void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
 {
+    // Unset base pointers
+    validate(0);
+
+    // Escape from any active events
+    eventFrame = 0;
+    eventDispatchFlag = false;
+
+    // Reset stack limits
     initStack(stack);
 
     // Zero all GPRs
@@ -58,6 +80,13 @@ void SvmRuntime::initStack(const StackInfo &stack)
 #endif
 }
 
+void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
+{
+    reg_t value = SvmCpu::reg(reg);
+    SvmMemory::squashPhysicalAddr(value);
+    msg << uint32_t(value);
+}
+
 void SvmRuntime::fault(FaultCode code)
 {
     // Try to find a handler for this fault. If nobody steps up,
@@ -76,18 +105,19 @@ void SvmRuntime::fault(FaultCode code)
      * Draw a message to cube #0 and exit.
      */
 
-    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     PanicMessenger msg;
     msg.init(0x10000);
 
     msg.at(1,1) << "Oh noes!";
     msg.at(1,3) << "Fault code " << uint8_t(code);
+
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     msg.at(1,5) << "PC: " << pcVA;
-    for (unsigned r = 0; r < 8; r++) {
-        reg_t value = SvmCpu::reg(r);
-        SvmMemory::squashPhysicalAddr(value);
-        msg.at(1,6+r) << 'r' << char('0' + r) << ": " << uint32_t(value);
-    }
+
+    dumpRegister(msg.at(1,6) << "SP: ", REG_SP);
+
+    for (unsigned r = 0; r < 8; r++)
+        dumpRegister(msg.at(1,7+r) << 'r' << char('0' + r) << ": ", r);
 
     msg.paint(0);
     SvmLoader::exit(true);
@@ -165,7 +195,6 @@ void SvmRuntime::tailcall(reg_t addr)
 
 void SvmRuntime::enterFunction(reg_t addr)
 {
-
     // Allocate stack space for this function, and enter it
     adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);
@@ -244,6 +273,7 @@ void SvmRuntime::svc(uint8_t imm8)
     } else if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
         syscall(syscallNum);
+        postSyscallWork();
 
     } else if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         int imm5 = imm8 & 0x1f;
@@ -278,11 +308,6 @@ void SvmRuntime::svc(uint8_t imm8)
             break;
         }
     }
-
-    if (eventDispatchFlag) {
-        eventDispatchFlag = 0;
-        Event::dispatch();
-    }
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)
@@ -302,10 +327,12 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
         syscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        tailsyscall(imm15);
+        tailSyscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
@@ -361,6 +388,9 @@ void SvmRuntime::validate(reg_t address)
      * base pointer registers r8-9 appropriately.
      */
 
+    // Mask off high bits, for 64-bit Siftulator builds
+    address = (uint32_t) address;
+
     SvmMemory::PhysAddr bro, brw;
     SvmMemory::validateBase(dataBlock, address, bro, brw);
 
@@ -374,13 +404,6 @@ void SvmRuntime::syscall(unsigned num)
     // and return up to 64 bits in r0-r1. Note that the return value is never
     // a system pointer, so for that purpose we treat return values as 32-bit
     // registers.
-
-    typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
-                                   reg_t p4, reg_t p5, reg_t p6, reg_t p7);
-
-    static const SvmSyscall SyscallTable[] = {
-        #include "syscall-table.def"
-    };
 
     if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
         SvmRuntime::fault(F_BAD_SYSCALL);
@@ -420,13 +443,9 @@ void SvmRuntime::syscall(unsigned num)
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
-
-    // Poll for pending userspace tasks on our way up. This is akin to a
-    // deferred procedure call (DPC) in Win32.
-    Tasks::work();
 }
 
-void SvmRuntime::tailsyscall(unsigned num)
+void SvmRuntime::tailSyscall(unsigned num)
 {
     /*
      * Tail syscalls incorporate a normal system call plus a return.
@@ -451,6 +470,28 @@ void SvmRuntime::tailsyscall(unsigned num)
     ret(RET_BRANCH);
     syscall(num);
     ret(RET_ALL ^ RET_BRANCH);
+}
+
+void SvmRuntime::postSyscallWork()
+{
+    /*
+     * Deferred work items that must be handled after a syscall is fully
+     * done, the return values have been stored, and we're ready to return.
+     *
+     * This is work that could happen at the end of every svc(), but
+     * for performance reasons we only do it after syscalls.
+     */
+
+    // Poll for pending userspace tasks on our way up. This is akin to a
+    // deferred procedure call (DPC) in Win32.
+    Tasks::work();
+    
+    // Event dispatch is requested by certain syscalls, but must wait
+    // until after return values are stored.
+    if (eventDispatchFlag) {
+        eventDispatchFlag = 0;
+        Event::dispatch();
+    }
 }
 
 void SvmRuntime::resetSP()

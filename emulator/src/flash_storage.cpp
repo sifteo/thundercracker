@@ -139,7 +139,7 @@ bool FlashStorage::installLauncher(const char *filename)
     vi.begin();
     while (vi.next(vol))
         if (vol.getType() == FlashVolume::T_LAUNCHER)
-            vol.markAsDeleted();
+            vol.deleteTree();
 
     // Built-in launcher
     uint32_t launcherSize = *reinterpret_cast<const uint32_t*>(launcher);

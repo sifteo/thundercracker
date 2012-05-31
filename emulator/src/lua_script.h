@@ -124,7 +124,7 @@ private:
 
     int testSetEnabled(lua_State *L);
     int testGetACK(lua_State *L);
-    int testWriteVRAM(lua_State *L);
+    int testWrite(lua_State *L);
 
     /*
      * Peek/poke operators for different memory regions and sizes.
@@ -150,6 +150,10 @@ private:
     int fbPoke(lua_State *L);
     int fwPeek(lua_State *L);
     int fbPeek(lua_State *L);
+
+    // nvm
+    int nbPoke(lua_State *L);
+    int nbPeek(lua_State *L);
 };
 
 

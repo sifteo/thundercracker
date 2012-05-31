@@ -7,9 +7,6 @@
 # Assumes every glyph fits in an 8x8 box. Each glyph is encoded as
 # an uncompressed 8-byte bitmap, preceeded by a one-byte escapement.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
-# Copyright <c> 2011 Sifteo, Inc. All rights reserved.
-#
 
 import ImageFont, ImageDraw, Image
 

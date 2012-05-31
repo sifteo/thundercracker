@@ -23,7 +23,7 @@ The maximum size of a binary on the Sifteo platform is @b 16MB. Currently, this 
 
 The .elf binary for your application contains all of the code, data, and assets required to run your game, so the total size of the .elf binary is the effective size of your application.
 
-@note If your application is linked for Debug (the default), the .elf binary will also include debug information which does not get installed to hardware. To see the final size of your application, make sure you are linking a release build with "make clean && make RELEASE=1".
+@note If your application is linked for Debug (the default), the .elf binary will also include debug information which does not get installed to hardware. To see the final size of your application, make sure you are linking a release build with `make clean && make RELEASE=1`.
 
 # Concurrency Model
 
@@ -37,4 +37,4 @@ At a yield point, any number of Sifteo::Events handlers may be called. From your
 
 Most events are idempotent operations without any built-in side-effects. For example, if a cube registers several touches between two successive yield points, the touch event callback will only be invoked once.
 
-The big exception to this rule is neighbor events. The system internally updates its matrix of neighbor states, if necssary, during a yield point. Neighbor states as seen by Sifteo::Neighborhood will not change between two yield points. Typical games only yield during Sifteo::System::paint(), so this means that neighbor states are only updated between frames.
+The big exception to this rule is neighbor events. The system internally updates its matrix of neighbor states, if necessary, during a yield point. Neighbor states as seen by Sifteo::Neighborhood will not change between two yield points. Typical games only yield during Sifteo::System::paint(), so this means that neighbor states are only updated between frames.

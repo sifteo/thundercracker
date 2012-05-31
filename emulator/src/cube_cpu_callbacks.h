@@ -117,7 +117,22 @@ struct SFR {
             if (cpu->mSFR[reg] == 0x01)
                 cpu->deepSleep = true;
             break;
-        
+
+        case REG_WDSV:
+            switch (cpu->wdsvState) {
+            default:
+                cpu->wdsvLow = cpu->mSFR[reg];
+                cpu->wdsvState = WDSV_WRITE_HIGH;
+                break;
+            case WDSV_WRITE_HIGH:
+                cpu->wdsvHigh = cpu->mSFR[reg];
+                cpu->wdsvState = WDSV_LOW;
+                cpu->wdtEnabled = true;
+                cpu->wdtCounter = (cpu->wdsvHigh << 16) | (cpu->wdsvLow << 8);
+                break;
+            }
+            break;
+
         }
     }
 
@@ -159,6 +174,17 @@ struct SFR {
         case BUS_PORT:
             cpu->needHardwareTick = true;
             return self->readFlashBus();
+
+        case REG_WDSV:
+            switch (cpu->wdsvState) {
+            default:
+                cpu->wdsvState = WDSV_READ_HIGH;
+                return cpu->wdsvLow;
+            case WDSV_READ_HIGH:
+                cpu->wdsvState = WDSV_LOW;
+                return cpu->wdsvHigh;
+            }
+            break;
 
         }
         

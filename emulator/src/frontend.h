@@ -98,6 +98,7 @@ class Frontend {
     void moveWalls(bool immediate=false);
     void pushBodyTowards(b2Body *b, b2Vec2 target, float gain);
 
+    static float viewExtentForCubeCount(unsigned num);
     static b2Vec2 getCubeGridLoc(unsigned index, unsigned total);
     b2Body *newKBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);

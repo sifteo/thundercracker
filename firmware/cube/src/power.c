@@ -28,34 +28,26 @@ void power_delay()
 void power_init(void)
 {
     /*
-     * If we're being powered on without a wakup-from-pin, go directly to
-     * sleep. We don't wake up when the batteries are first inserted, only
-     * when we get a touch signal.
-     *
-     * This default can be overridden by compiling with -DWAKE_ON_POWERUP.
-     */
-
-    /*
      * First, clean up after any possible sleep state we were just in. The
      * data sheet specifies that we need to rest PWRDWN to 0 after reading it,
      * and we need to re-open the I/O latch.
+     *
+     * We don't care why we were sleeping. If we did, though, we could do
+     * something useful with the value read back from PWRDWN.
      */
-    uint8_t powerupReason = PWRDWN;
+
+    PWRDWN;
     OPMCON = 0;
     TOUCH_WUPOC = 0;
     PWRDWN = 0;
 
-#ifdef SLEEP_ON_POWERUP
-    if (!powerupReason)
-        power_sleep();
-#endif
-
     /*
-     * Basic poweron
+     * Basic poweron.
+     *
+     * Safe defaults, everything off.
+     * all control lines must be low before supply rails are turned on.
      */
 
-    // Safe defaults, everything off.
-    // all control lines must be low before supply rails are turned on.
     MISC_PORT = 0;
     CTRL_PORT = 0;
     ADDR_PORT = 0;
@@ -64,19 +56,20 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
-    // Turn on 3.3V boost
-    CTRL_PORT = CTRL_3V3_EN;
+    // Sequence 3.3v boost, followed by 2.0v downstream
+    #if HWREV >= 2
+        // Turn on 3.3V boost
+        CTRL_PORT = CTRL_3V3_EN;
 
-    // Give 3.3V boost >1ms to turn-on
-    power_delay();
+        // Give 3.3V boost >1ms to turn-on
+        power_delay();
 
-    // Turn on 2V ds load switch
-    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+        // Turn on 2V ds load switch
+        CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
-    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-    power_delay();
-#endif
+        // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+        power_delay();
+    #endif
 
     // Now turn-on other control lines.
     // (On Rev 1, we just turn everything on at once.)
@@ -84,37 +77,45 @@ void power_init(void)
     MISC_PORT = MISC_IDLE;
 
     /*
+     * By now, we should have a stable 16 MHz oscillator. Turn on
+     * CLKLF, digitally synthesizing it from the 16 MHz crystal.
+     *
+     * Then, turn on the watchdog timer. This WDT timeout must be
+     * long enough to cover the full initialization procedure, from
+     * here until when we enter the main loop.
+     */
+    CLKLFCTRL = CLKLFCTRL_SRC_SYNTH;
+    power_wdt_set();
+
+    /*
      * Neighbor Tx Experimental setting.
      * Hope is to generate stronger magnetic field
      */
-//#define NBR_HIGH_DRIVE 1
-#ifdef NBR_HIGH_DRIVE
-    MISC_CON = 0x60;
-    MISC_CON = 0x61;
-    MISC_CON = 0x65;
-	#if HWREV >= 1
-    	MISC_CON = 0x64;
-	#else
-    	MISC_CON = 0x67;
-	#endif
-#endif
+    #ifdef NBR_HIGH_DRIVE
+        MISC_CON = 0x60;
+        MISC_CON = 0x61;
+        MISC_CON = 0x65;
+        #if HWREV >= 1
+            MISC_CON = 0x64;
+        #else
+            MISC_CON = 0x67;
+        #endif
+    #endif
 
     /*
      *  Neighbor Rx Experimental setting.
      *  Hope is to provide greater damping for tank oscillation
      */
-//#define NBR_PULLDOWN 1
-#ifdef NBR_PULLDOWN
-    MISC_CON = 0x30;
-    MISC_CON = 0x31;
-    MISC_CON = 0x35;
-	#if HWREV >= 1
-    	MISC_CON = 0x34;
-	#else
-    	MISC_CON = 0x37;
-	#endif
-#endif
-
+    #ifdef NBR_PULLDOWN
+        MISC_CON = 0x30;
+        MISC_CON = 0x31;
+        MISC_CON = 0x35;
+        #if HWREV >= 1
+            MISC_CON = 0x34;
+        #else
+            MISC_CON = 0x37;
+        #endif
+    #endif
 }
 
 void power_sleep(void)
@@ -141,7 +142,7 @@ void power_sleep(void)
     BUS_DIR = 0xFF;             // Float the bus before we've set CTRL_PORT
 
     ADDR_PORT = 0;              // Address bus must be all zero
-    MISC_PORT = 0;      		// Neighbor/I2C set to idle-mode as well
+    MISC_PORT = 0;              // Neighbor/I2C set to idle-mode as well
 
 #if HWREV >= 2
     // Sequencing is important. First, bring flash control lines low

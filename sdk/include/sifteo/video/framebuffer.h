@@ -356,7 +356,7 @@ struct StampDrawable {
     template <unsigned tWidth, unsigned tHeight>
     FBDrawable<tWidth, tHeight, 4>& initFB()
     {
-        System::finish();
+        _SYS_finish();
         resizeFB(vec(tWidth, tHeight));
         return getFB<tWidth, tHeight>();
     }
