@@ -103,6 +103,48 @@ void NRF24L01::beginTransmitting()
 }
 
 /*
+ * Test mode support for going to PRX-mode.
+ * Mask Rx interrupt to skip any packet handling
+ * Hold CE high
+ */
+void NRF24L01::setPRXMode(bool enabled)
+{
+    if (enabled) {
+        /* Radio in PRX mode with IRQs masked */
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_CONFIG);
+        spi.transfer(0x7f);
+        spi.end();
+
+        ce.setHigh();
+
+    } else {
+        /* Radio back to PTX mode */
+
+        spi.begin();
+        spi.transfer(CMD_FLUSH_RX);
+        spi.end();
+
+        spi.begin();
+        spi.transfer(CMD_FLUSH_TX);
+        spi.end();
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_STATUS);
+        spi.transfer(0x70);
+        spi.end();
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_CONFIG);
+        spi.transfer(0x0e);
+        spi.end();
+
+        ce.setLow();
+    }
+}
+
+/*
  * Test mode support for emitting a constant carrier on the given channel.
  */
 void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)

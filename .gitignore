@@ -7,3 +7,6 @@
 *~
 failed-*.png
 docs/doxygen/html
+
+/.cproject
+/.project

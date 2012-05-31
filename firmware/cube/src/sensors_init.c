@@ -31,6 +31,13 @@ __bit nb_rx_mask_bit0;
 __bit nb_rx_mask_bit1;
 __bit touch;
 
+#ifdef DEBUG_NBR
+	uint8_t __idata nbr_data[4];
+	uint8_t	nbr_temp;
+	uint8_t __idata nbr_data_valid;
+	uint8_t __idata nbr_data_invalid;
+#endif
+
 #ifdef DEBUG_TOUCH
     uint8_t touch_count;
 #endif

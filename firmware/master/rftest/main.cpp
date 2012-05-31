@@ -29,11 +29,11 @@ int main()
     Radio::init();
 
     /*
-     * Cycle through constant carrier on the given channels when
+     * Cycle through constant carrier and PRX on the given channels when
      * we detect a button press.
      */
     uint8_t channelIdx = 0;
-    const uint8_t channels[3] = { 2, 40, 80 };
+    const uint8_t channels[4] = { 2, 40, 80, 128};		// channel>127 => PRX
 
     NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
     bool lastButton = HomeButton::isPressed();
@@ -50,11 +50,16 @@ int main()
 
             // transition on press
             if (button == true) {
+                NRF24L01::instance.setPRXMode(false);
                 NRF24L01::instance.setConstantCarrier(false);
 
                 green.setLow();
                 channelIdx = (channelIdx + 1) % sizeof(channels);
-                NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
+                if (channels[channelIdx] < 128) {
+                	NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
+                } else {
+                	NRF24L01::instance.setPRXMode(true);
+                }
             } else {
                 green.setHigh();
             }

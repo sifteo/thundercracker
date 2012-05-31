@@ -40,36 +40,49 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Neighbor Bit Receive
         ;--------------------------------------------------------------------
 
-        ; Capture Timer1 here.
-        ; We will reset at a later point so as so ignore secondary pulses
+        ; Capture and reset Timer1 here.
 
         mov     a, TL1                          ; Capture count from Timer 1
         add     a, #0xFF                        ; Nonzero -> C
         mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
+		#ifdef DEBUG_NBR_IO
+        clr		DEBUG_NBR_IO
+		#endif
+        mov     TL1, #0                         ; Reset Timer 1.
+
+        ; Any transition from this point on, will be accounted towards the next bit
 
         jb      _nb_rx_mask_state0, 1$          ; First state
-        setb    _nb_rx_mask_state0
         #ifdef NBR_RX
         mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
         #endif
+		#ifdef DEBUG_NBR_IO
+        setb	DEBUG_NBR_IO
+		#endif
+        setb    _nb_rx_mask_state0
         sjmp    10$                             ;    End of masking
+
 1$:
 
         jb      _nb_rx_mask_state1, 2$          ; Second state
-        setb    _nb_rx_mask_state1
-        mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
-        #ifdef NBR_RX
+		#ifdef NBR_RX
         mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
-        #endif
+		#endif
+		#ifdef DEBUG_NBR_IO
+        setb	DEBUG_NBR_IO
+		#endif
+        mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
+        setb    _nb_rx_mask_state1
         sjmp    10$                             ;    End of masking
+
 2$:
 
         #ifdef NBR_SQUELCH_ENABLE
         ; since we are squelching we have to setup side mask every time
-        jb      _nb_rx_mask_state2, 3$          ; Finished second mask bit?
+        jb      _nb_rx_mask_state2, 3$       	; Finished second mask bit?
         #else
         ; otherwise we setup side mask only once (before receiving first payload bit)
-        jb      _nb_rx_mask_state2, 10$         ; Finished second mask bit?
+        jb      _nb_rx_mask_state2, 7$         ; Finished second mask bit?
         #endif
         setb    _nb_rx_mask_state2
         mov     _nb_rx_mask_bit1, c             ;    Store mask bit
@@ -91,14 +104,14 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
           #else
           mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
           #endif
-          sjmp  10$
+          sjmp  7$
 5$:
           #ifdef NBR_SQUELCH_ENABLE
           orl   _MISC_DIR, #(MISC_NB_1_LEFT)
           #else
           mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
           #endif
-          sjmp  10$
+          sjmp  7$
 4$:
          jb     _nb_rx_mask_bit1, 6$
           #ifdef NBR_SQUELCH_ENABLE
@@ -106,7 +119,7 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
           #else
           mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
           #endif
-          sjmp  10$
+          sjmp  7$
 6$:
           #ifdef NBR_SQUELCH_ENABLE
           orl   _MISC_DIR, #(MISC_NB_3_RIGHT)
@@ -114,6 +127,11 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
           mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
           #endif
         #endif
+
+7$:
+		#ifdef  DEBUG_NBR_IO
+        setb	DEBUG_NBR_IO
+		#endif
 
 10$:
         ; Done with masking.
@@ -176,10 +194,6 @@ nb_tx:
         ;--------------------------------------------------------------------
 
 nb_bit_done:
-        ; We now reset Timer-1. It may have incremented due
-        ; to a secondary pulse and we must ignore it.
-        ; Any transition from this point on, will be accounted towards the next bit
-        mov     TL1, #0                         ; Reset Timer 1.
 
         djnz    _nb_bits_remaining, nb_irq_ret  ; More bits left?
 
@@ -194,6 +208,13 @@ nb_bit_done:
         orl     a, #0xE0                        ; Put the implied bits back in
         cpl     a                               ; Complement
         xrl     a, (_nb_buffer+1)               ; Check byte
+#ifdef DEBUG_NBR
+        jz		dbg_skip
+        mov		a, _nb_buffer
+        mov		_nbr_data_invalid, a
+        sjmp	nb_packet_done
+dbg_skip:
+#endif
         jnz     nb_packet_done                  ;   Invalid, ignore the packet.
 
         ; We store good packets in nb_instant_state here. The Timer 0 ISR
@@ -214,6 +235,11 @@ nb_bit_done:
         anl     a, #NB_ID_MASK
         orl     a, #NB_FLAG_SIDE_ACTIVE
         mov     @r0, a
+
+#ifdef DEBUG_NBR
+        mov		a, _nb_buffer
+        mov		_nbr_data_valid, a
+#endif
 
         pop     0
         sjmp    nb_packet_done                  ; Done receiving
@@ -247,6 +273,9 @@ nb_packet_done:
 #if defined(NBR_TX) || defined(NBR_RX)
         orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
 #endif
+		#ifdef DEBUG_NBR_IO
+        clr		DEBUG_NBR_IO
+		#endif
 
 nb_irq_ret:
 

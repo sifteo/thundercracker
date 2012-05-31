@@ -262,7 +262,7 @@ inline void Menu::setPeekTiles(uint8_t numTiles)
  * of the same menu since running the event pump after an item is pressed
  * restarts the menu.
  */
-void Menu::anchor(uint8_t item)
+inline void Menu::anchor(uint8_t item)
 {
     ASSERT(item < numItems);
     startingItem = item;
