@@ -41,6 +41,19 @@ static void radio_init()
     spi_byte(0x07);
     spi_end();
 
+#ifdef PRX_MODE
+    /* 2 Mbit, max transmit power */
+    spi_begin();
+    spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_SETUP);
+    spi_byte(0x0e);
+    spi_end();
+
+    /* Power up, PRX mode, Mask interrupts */
+    spi_begin();
+    spi_byte(RF_CMD_W_REGISTER | RF_REG_CONFIG);
+    spi_byte(0x7f);
+    spi_end();
+#else
     /* 2 Mbit, max transmit power, continuous wave mode, pll lock */
     spi_begin();
     spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_SETUP);
@@ -52,6 +65,12 @@ static void radio_init()
     spi_byte(RF_CMD_W_REGISTER | RF_REG_CONFIG);
     spi_byte(0x0e);
     spi_end();
+#endif
+}
+
+static void radio_receive()
+{
+	while(1);
 }
 
 static void radio_transmit(uint8_t channel)
@@ -102,5 +121,11 @@ void main(void)
 {
     power_init();
     radio_init();
-    radio_transmit(2);
+#ifdef PRX_MODE
+    /* Radio in PRX mode */
+    radio_receive();
+#else
+    /* Radio in PTX mode */
+    radio_transmit(PTX_CHAN);
+#endif
 }
