@@ -36,7 +36,7 @@ void XmTrackerPlayer::init()
 {
     hasSong = 0;
     paused = 0;
-    bzero(&song, sizeof(song));
+    memset(&song, 0, sizeof(song));
 }
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)

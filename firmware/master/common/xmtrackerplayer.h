@@ -108,7 +108,7 @@ public:
         instance.tick();
     }
 
-    XmTrackerPlayer() : hasSong(0), paused(0) { bzero(&song, sizeof song); }
+    XmTrackerPlayer() : hasSong(0), paused(0) { memset(&song, 0, sizeof song); }
     void init();
     bool play(const struct _SYSXMSong *pSong);
     bool isPaused() { return paused; }
