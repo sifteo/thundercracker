@@ -580,10 +580,12 @@ void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 
 void XmTrackerPlayer::processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide)
 {
-    if (!channel.retrigger.interval) return;
+    if (!interval) return;
     if (!ticks) channel.retrigger.phase = 0;
 
-    if (channel.retrigger.phase >= channel.retrigger.interval) {
+    channel.retrigger.phase++;
+
+    if (channel.retrigger.phase >= interval) {
         channel.retrigger.phase = 0;
         channel.start = true;
 
@@ -601,8 +603,6 @@ void XmTrackerPlayer::processRetrigger(XmTrackerChannel &channel, uint8_t interv
             incrementVolume(channel.volume, channel.volume);
         }
     }
-
-    channel.retrigger.phase++;
 }
 
 bool XmTrackerPlayer::processTremor(XmTrackerChannel &channel)
