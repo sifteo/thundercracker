@@ -23,7 +23,6 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
-    return;
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
