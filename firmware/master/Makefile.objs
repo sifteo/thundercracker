@@ -30,6 +30,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flash_blockcache.o \
     $(MASTER_DIR)/common/flash_map.o \
     $(MASTER_DIR)/common/flash_volume.o \
+    $(MASTER_DIR)/common/flash_lfs.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
