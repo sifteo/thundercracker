@@ -4,10 +4,10 @@
  */
 
 /*
- * Syscalls for software floating point support.
+ * Syscalls for math library support support.
  *
  * Note that this file only implements operations which don't directly
- * map to functions in the software FP library.
+ * map to functions in libgcc or libm.
  */
 
 #include <math.h>
