@@ -61,20 +61,29 @@ uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
     return AudioMixer::instance.pos(ch);
 }
 
-bool _SYS_tracker_play(const struct _SYSXMSong *song)
+uint32_t _SYS_tracker_play(const struct _SYSXMSong *song)
 {
-    _SYSXMSong modCopy;
-    if (SvmMemory::copyROData(modCopy, song)) {
-        return XmTrackerPlayer::instance.play(&modCopy);
+    if (song) {
+        _SYSXMSong modCopy;
+        if (SvmMemory::copyROData(modCopy, song)) {
+            return XmTrackerPlayer::instance.play(&modCopy);
+        } else {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            return false;
+        }
+    } else {
+        return XmTrackerPlayer::instance.play(0);
     }
-
-    SvmRuntime::fault(F_SYSCALL_ADDRESS);
-    return false;
 }
 
-bool _SYS_tracker_isPlaying()
+uint32_t _SYS_tracker_isStopped()
 {
-    return XmTrackerPlayer::instance.isPlaying();
+    return XmTrackerPlayer::instance.isStopped();
+}
+
+uint32_t _SYS_tracker_isPaused()
+{
+    return XmTrackerPlayer::instance.isPaused();
 }
 
 void _SYS_tracker_stop()
@@ -85,6 +94,11 @@ void _SYS_tracker_stop()
 void _SYS_tracker_setVolume(int volume, _SYSAudioChannelID ch)
 {
     XmTrackerPlayer::instance.setVolume(volume, ch);
+}
+
+void _SYS_tracker_pause()
+{
+    XmTrackerPlayer::instance.pause();
 }
 
 }  // extern "C"

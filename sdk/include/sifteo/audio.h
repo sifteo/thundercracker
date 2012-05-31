@@ -159,10 +159,17 @@ struct AudioTracker {
     }
 
     /**
-     * Is the tracker currently playing a module?
+     * Resume playback of a paused module.
      */
-    static bool isPlaying() {
-        return _SYS_tracker_isPlaying();
+    static bool resume() {
+        return _SYS_tracker_play(0);
+    }
+
+    /**
+     * Pause playback of a module.
+     */
+    static void pause() {
+        _SYS_tracker_pause();
     }
 
     /**
@@ -171,6 +178,20 @@ struct AudioTracker {
      */
     static void stop() {
         _SYS_tracker_stop();
+    }
+
+    /**
+     * Is the tracker currently playing a module?
+     */
+    static bool isStopped() {
+        return _SYS_tracker_isStopped();
+    }
+
+    /**
+     * Is the tracker currently playing a module?
+     */
+    static bool isPaused() {
+        return _SYS_tracker_isPaused();
     }
 
     /**
