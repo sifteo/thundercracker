@@ -31,3 +31,89 @@ uint8_t LFS::computeCheckByte(uint8_t a, uint8_t b)
 
     return result;
 }
+
+bool LFS::isEmpty(const uint8_t *bytes, unsigned count)
+{
+    // Are the specified bytes all unprogrammed?
+
+    while (count) {
+        if (bytes[0] != 0xFF)
+            return false;
+        bytes++;
+        count--;
+    }
+    return true;
+}
+
+#if 0
+
+const FlashLFSIndexAnchor *FlashLFSIndexBlock::findAnchor() const
+{
+    /*
+     * Look for the valid anchor in this index block, if it exists.
+     * If no valid anchor exists, returns 0.
+     */
+
+    const FlashLFSIndexAnchor *ptr = (const FlashLFSIndexAnchor*) &bytes[0];
+    const FlashLFSIndexAnchor *limit = ((const FlashLFSIndexAnchor*) &bytes[sizeof bytes]) - 1;
+
+    while (ptr <= limit) {
+        if (ptr->isValid())
+            return ptr;
+        if (ptr->isEmpty())
+            break;
+        ptr++;
+    }
+
+    return 0;
+}
+
+const FlashLFSIndexRecord *FlashLFSIndexBlock::findRecord(
+    const FlashLFSIndexAnchor *anchor, unsigned key, unsigned &objectOffset) const
+{
+    /*
+     * Look for the latest record with the specified key. If we find it,
+     * objectOffset is set to the byte offset of the corresponding object,
+     * and we return a pointer to the record.
+     *
+     * If no matching record exists, returns zero.
+     *
+     * "anchor" must be the nonzero result of calling findAnchor() successfully.
+     * This intermediate result may be reused by the caller.
+     */
+
+    ASSERT(anchor);
+    ASSERT(anchor->isValid());
+    ASSERT(&objectOffset);
+    ASSERT(key < FlashLFSIndexRecord::MAX_KEYS);
+
+    const FlashLFSIndexRecord *ptr = (const FlashLFSIndexRecord*) (anchor + 1);
+    const FlashLFSIndexRecord *limit = ((const FlashLFSIndexRecord*) &bytes[sizeof bytes]) - 1;
+    unsigned offset = anchor->getOffsetInBytes();
+
+    while (ptr <= limit) {
+        if (ptr->isValid()) {
+            // Valid index records always have space allocated to them,
+            // even if the object CRC is no good
+            
+            if (ptr->getKey() == key) {
+                objectOffset = offset;
+                return ptr;
+            } else {
+                offset += ptr->getSizeInBytes();
+            }
+        } else if (ptr->isEmpty()) {
+            break;
+        }
+            
+            return ptr;
+
+        if (ptr->isEmpty())
+            break;
+    }
+
+    return 0;
+    
+}
+
+#endif
