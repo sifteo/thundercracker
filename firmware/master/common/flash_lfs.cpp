@@ -45,75 +45,151 @@ bool LFS::isEmpty(const uint8_t *bytes, unsigned count)
     return true;
 }
 
-#if 0
-
-const FlashLFSIndexAnchor *FlashLFSIndexBlock::findAnchor() const
+FlashLFSVolumeHeader *FlashLFSVolumeHeader::fromVolume(FlashBlockRef &ref, FlashVolume vol)
 {
     /*
-     * Look for the valid anchor in this index block, if it exists.
-     * If no valid anchor exists, returns 0.
+     * Obtain a mapped FlashLFSVolumeHeader pointer from a FlashVolume.
+     * Requires that the FlashVolume was created with enough type-specific
+     * data space allocated for this structure. Returns 0 on error.
      */
 
-    const FlashLFSIndexAnchor *ptr = (const FlashLFSIndexAnchor*) &bytes[0];
-    const FlashLFSIndexAnchor *limit = ((const FlashLFSIndexAnchor*) &bytes[sizeof bytes]) - 1;
+    unsigned size;
+    uint8_t *data = vol.mapTypeSpecificData(ref, size);
+    if (size >= sizeof(FlashLFSVolumeHeader))
+        return (FlashLFSVolumeHeader*) data;
+    else
+        return 0;
+}
 
-    while (ptr <= limit) {
-        if (ptr->isValid())
-            return ptr;
+bool FlashLFSVolumeHeader::isRowEmpty(unsigned row) const
+{
+    ASSERT(row < NUM_ROWS);
+    return metaIndex[row].isEmpty();
+}
+
+void FlashLFSVolumeHeader::add(unsigned row, unsigned key) {
+    metaIndex[row].add(row, key);
+}
+
+bool FlashLFSVolumeHeader::test(unsigned row, unsigned key) {
+    return metaIndex[row].test(row, key);
+}
+
+unsigned FlashLFSVolumeHeader::numNonEmptyRows()
+{
+    /*
+     * Count how many non-empty rows there are. The volume header is always
+     * partitioned into a set of empty rows following a set of non-empty
+     * rows. This is a quick binary search to locate the boundary.
+     *
+     * In other words, this returns the index of the first empty row, or
+     * NUM_ROWS if no rows are still empty.
+     */
+
+    // The result is guaranteed to be in the closed interval [first, last].
+    unsigned first = 0;
+    unsigned last = NUM_ROWS;
+
+    while (first < last) {
+        unsigned middle = (first + last) >> 1;
+        ASSERT(first <= middle);
+        ASSERT(middle < last);
+        ASSERT(middle < NUM_ROWS);
+
+        if (isRowEmpty(middle))
+            last = middle;
+        else
+            first = middle + 1;
+    }
+
+    ASSERT(first == last);
+    ASSERT(first <= NUM_ROWS);
+    ASSERT(first == NUM_ROWS || isRowEmpty(first));
+    ASSERT(first == 0 || !isRowEmpty(first - 1));
+    return first;
+}
+
+bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
+{
+    /*
+     * Initialize the iterator to the first valid index record in the
+     * given block. Returns false if no valid index records exist, or
+     * an anchor can't be found.
+     */
+
+    FlashBlock::get(blockRef, blockAddr);
+
+    FlashLFSIndexAnchor *ptr = LFS::firstAnchor(&*blockRef);
+    FlashLFSIndexAnchor *limit = LFS::lastAnchor(&*blockRef);
+
+    anchor = 0;
+    currentRecord = 0;
+
+    while (!ptr->isValid()) {
         if (ptr->isEmpty())
-            break;
+            return false;
         ptr++;
+        if (ptr > limit)
+            return false;
     }
 
-    return 0;
+    anchor = ptr;
+    currentOffset = anchor->getOffsetInBytes();
+    currentRecord = LFS::firstRecord(ptr);
+
+    if (currentRecord->isValid())
+        return true;
+    else
+        return next();
 }
 
-const FlashLFSIndexRecord *FlashLFSIndexBlock::findRecord(
-    const FlashLFSIndexAnchor *anchor, unsigned key, unsigned &objectOffset) const
+bool FlashLFSIndexBlockIter::prev()
 {
     /*
-     * Look for the latest record with the specified key. If we find it,
-     * objectOffset is set to the byte offset of the corresponding object,
-     * and we return a pointer to the record.
-     *
-     * If no matching record exists, returns zero.
-     *
-     * "anchor" must be the nonzero result of calling findAnchor() successfully.
-     * This intermediate result may be reused by the caller.
+     * Seek to the previous valid index record. Invalid records are skipped.
+     * Returns false if no further index records are available.
      */
 
-    ASSERT(anchor);
-    ASSERT(anchor->isValid());
-    ASSERT(&objectOffset);
-    ASSERT(key < FlashLFSIndexRecord::MAX_KEYS);
+    FlashLFSIndexRecord *ptr = currentRecord;
+    ASSERT(ptr);
+    ASSERT(ptr->isValid());
 
-    const FlashLFSIndexRecord *ptr = (const FlashLFSIndexRecord*) (anchor + 1);
-    const FlashLFSIndexRecord *limit = ((const FlashLFSIndexRecord*) &bytes[sizeof bytes]) - 1;
-    unsigned offset = anchor->getOffsetInBytes();
+    while (1) {
+        ptr--;
+        if (ptr < LFS::firstRecord(anchor))
+            return false;
 
-    while (ptr <= limit) {
         if (ptr->isValid()) {
-            // Valid index records always have space allocated to them,
-            // even if the object CRC is no good
-            
-            if (ptr->getKey() == key) {
-                objectOffset = offset;
-                return ptr;
-            } else {
-                offset += ptr->getSizeInBytes();
-            }
-        } else if (ptr->isEmpty()) {
-            break;
+            // Only valid records have a meaningful size
+            currentRecord = ptr;
+            currentOffset -= ptr->getSizeInBytes();
+            return true;
         }
-            
-            return ptr;
-
-        if (ptr->isEmpty())
-            break;
     }
-
-    return 0;
-    
 }
 
-#endif
+bool FlashLFSIndexBlockIter::next()
+{
+    /*
+     * Seek to the next valid index record. Invalid records are skipped.
+     * Returns false if no further index records are available.
+     */
+
+    FlashLFSIndexRecord *ptr = currentRecord;
+    ASSERT(ptr);
+    ASSERT(ptr->isValid());
+
+    unsigned nextOffset = currentOffset + ptr->getSizeInBytes();
+
+    while (1) {
+        ptr++;
+        if (ptr > LFS::lastRecord(&*blockRef))
+            return false;
+
+        if (ptr->isValid()) {
+            currentRecord = ptr;
+            currentOffset = nextOffset;
+            return true;
+        }
+    }
+}

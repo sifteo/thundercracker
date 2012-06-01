@@ -92,6 +92,32 @@ FlashMapSpan FlashVolume::getPayload(FlashBlockRef &ref) const
     return FlashMapSpan::create(map, offset, size);
 }
 
+uint8_t *FlashVolume::mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const
+{
+    /*
+     * Return a pointer and size to type-specific data in our cache.
+     * Restricted to only the portion of the type-specific data which
+     * fits in the same cache block as the header.
+     */
+
+    ASSERT(isValid());
+    FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
+    ASSERT(hdr->isHeaderValid());
+
+    // Allow underflow in these calculations
+    int32_t offset = hdr->dataOffsetBytes();
+    int32_t actualSize = FlashBlock::BLOCK_SIZE - offset;
+    int32_t dataBytes = hdr->dataBytes;
+    actualSize = MIN(actualSize, dataBytes);
+    if (actualSize <= 0) {
+        size = 0;
+        return 0;
+    }
+
+    size = actualSize;
+    return offset + (uint8_t*)hdr;
+}
+
 void FlashVolume::deleteSingle() const
 {
     FlashBlockRef ref;

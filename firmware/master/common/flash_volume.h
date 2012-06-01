@@ -68,6 +68,7 @@ public:
     unsigned getType() const;
     FlashVolume getParent() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
+    uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
 
     /**
      * Delete just this volume. Only for use as part of a larger delete

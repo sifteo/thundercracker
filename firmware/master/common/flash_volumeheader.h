@@ -68,6 +68,14 @@ struct FlashVolumeHeader
     static const uint64_t MAGIC = 0x5f4c4f5674666953ULL;
     typedef uint32_t EraseCount;
 
+    /**
+     * Maximum size of type-specific data that will fit within the same
+     * FlashBlock as the FlashVolumeHeader, given a minimal single-block
+     * volume header.
+     */
+    static const unsigned MAX_MAPPABLE_DATA_BYTES =
+        FlashBlock::BLOCK_SIZE - 32 - 4 - 4;
+
     static FlashVolumeHeader *get(FlashBlockRef &ref)
     {
         return reinterpret_cast<FlashVolumeHeader*>(ref->getData());

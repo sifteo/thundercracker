@@ -43,6 +43,7 @@
 
 #include "macros.h"
 #include "flash_volume.h"
+#include "flash_volumeheader.h"
 
 
 /**
@@ -68,44 +69,85 @@ namespace LFS {
  * "meta-index" that tells us which index pages we need to examine. This
  * must fit within the type-specific-data region in each Volume.
  *
- * In order to optimize for cases where games use small counting numbers for
- * keys, we opt to use a trivial hash function: the low 4 bits of every key.
- * This way, if a game chooses to use keys from 1 through 16, for example,
- * they will all occupy distinct filter bits, and our scan of the meta-index
- * will tell us for sure which index page we need. If there are collisions,
- * we still operate correctly, we just may need to load additional index
- * pages that we don't actually need.
- *
  * Because this filter must operate in flash memory, and adding an item must
  * not require an erase, we invert the typical Bloom filter bit values. "1"
  * represents an empty hash bucket, "0" means that one or more items occupy
  * that bucket.
+ * 
+ * We want a hash function with the following properties:
+ *
+ *   - If a game uses small counting numbers (0-15, for example) it's
+ *     guaranteed to get a distinct hash bucket for each key.
+ *
+ *   - If there are going to be collisions, we'd like a different
+ *     set of collisions to happen for each index block. This limits the
+ *     extent of the performance damage.
+ *
+ * To accomplish both of those goals, we use a really simple function:
+ *
+ *     (key * (1 + 2*row)) % 16
+ *
+ * This For every odd number M, [(i * M) % 16 for i in range(16)] produces
+ * a set which includes all numbers from 0 through 15, with no duplicates.
  */
 class FlashLFSKeyFilter
 {
     uint16_t bits;
 
-    unsigned bitHash(unsigned key) const {
+    unsigned bitHash(unsigned row, unsigned key) const {
+        // See explanation above.
+        unsigned h = (key * ((row << 1) | 1)) & 0xF;
+
         // We have no need for CLZ here, so use a right-to-left order.
-        return 1 << (key & 0xF);
+        return 1 << h;
     }
 
 public:
-    bool empty() {
+    bool isEmpty() const {
         return bits == 0xFFFF;
     }
 
-    void add(unsigned key) {
-        bits &= ~bitHash(key);
+    void add(unsigned row, unsigned key) {
+        bits &= ~bitHash(row, key);
     }
 
     /**
      * Returns 'true' if the item is possibly in the filter, or 'false'
      * if it is definitely not.
      */
-    bool test(unsigned key) const {
-        return !(bits & bitHash(key));
+    bool test(unsigned row, unsigned key) const {
+        return !(bits & bitHash(row, key));
     }
+};
+
+
+/**
+ * FlashLFSVolumeHeader represents the physical storage format of our
+ * volume-type-specific information. This data shares the same FlashBlock
+ * as the Volume header (which is guaranteed to be small for LFS volumes).
+ *
+ * We use this space to store a sequence number for each volume, as well
+ * as a "meta-index" of FlashLFSKeyFilters which tell us which index
+ * blocks may possibly contain a given record type.
+ *
+ * Note that this structure is guaranteed to be placed at a 32-bit-aligned
+ * address, as all elements in the Volume header format are aligned.
+ */
+class FlashLFSVolumeHeader
+{
+public:
+    // Number of meta-index rows that will fit in the available FlashBlock space
+    static const unsigned NUM_ROWS =
+        (FlashVolumeHeader::MAX_MAPPABLE_DATA_BYTES - 4) / 2;
+
+    uint32_t sequence;
+    FlashLFSKeyFilter metaIndex[NUM_ROWS];
+
+    static FlashLFSVolumeHeader *fromVolume(FlashBlockRef &ref, FlashVolume vol);
+    bool isRowEmpty(unsigned row) const;
+    void add(unsigned row, unsigned key);
+    bool test(unsigned row, unsigned key);
+    unsigned numNonEmptyRows();
 };
 
 
@@ -259,6 +301,34 @@ public:
 };
 
 
+// Out-of-class for accessing records and anchors (Avoids circular dependencies)
+namespace LFS {
+    
+    // Return the first possible location for a record in a block
+    inline FlashLFSIndexRecord *firstRecord(FlashLFSIndexAnchor *anchor) {
+        ASSERT(anchor);
+        return (FlashLFSIndexRecord *) (anchor + 1);
+    }
+
+    // Return the last possible location for an anchor in a block
+    inline FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
+        uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
+        return ((FlashLFSIndexRecord *) p) - 1;
+    }
+
+    // Return the first possible location for an anchor in a block
+    inline FlashLFSIndexAnchor *firstAnchor(FlashBlock *block) {
+        return (FlashLFSIndexAnchor *) block->getData();
+    }
+
+    // Return the last possible location for an anchor in a block
+    inline FlashLFSIndexAnchor *lastAnchor(FlashBlock *block) {
+        uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
+        return ((FlashLFSIndexAnchor *) p) - 1;
+    }
+}
+
+
 /**
  * FlashLFSIndexBlockIter is an iterator that knows how to interpret the
  * anchors and records present in a single index block.
@@ -274,15 +344,30 @@ public:
  * the records specify each object's type and size. The Index block alone
  * is enough information to compute the address of any object in the block.
  */
-class FlashLFSIndexIter
+class FlashLFSIndexBlockIter
 {
     FlashBlockRef blockRef;
-    unsigned offsetInBytes;
-    
     FlashLFSIndexAnchor *anchor;
+    FlashLFSIndexRecord *currentRecord;
+    unsigned currentOffset;
 
 public:
-    FlashLFSIndexIter(uint32_t blockAddr);
+    FlashLFSIndexBlockIter(uint32_t blockAddr) {
+        beginBlock(blockAddr);
+    }
+
+    bool beginBlock(uint32_t blockAddr);
+    bool prev();
+    bool next();
+
+    const FlashLFSIndexRecord* operator->() const {
+        ASSERT(currentRecord);
+        return currentRecord;
+    }
+
+    unsigned getCurrentOffset() const {
+        return currentOffset;
+    }
 };
 
 
@@ -307,13 +392,6 @@ private:
 
     static const unsigned MAX_OBJECTS_PER_VOLUME = FlashMapBlock::BLOCK_SIZE / FlashLFSIndexRecord::MIN_SIZE;
 
-    /*
-     * To spec sizes for:
-     *   - Objects
-     *   - Object index (header at the beginning of volume payload)
-     *   - Meta-index (in type-specific data portion of volume)
-     */
-
     FlashVolume volumes[];
 
 public:
@@ -335,6 +413,10 @@ public:
     void collectGarbage();
         // Scan backwards, keeping a bitmap of all keys we've found
         // Any volume consisting of only superceded keys is deleted
+        
+        // Also: If the oldest volume is less than X amount full, copy
+        //       all non-superceded keys, then delete it.
+        //       XXX - how to do this for more than one volume at a time?
 };
 
 #endif
