@@ -12,12 +12,13 @@
 class TestJig
 {
 public:
-    static void init();
-    static void enable_neighbor_receive();
-    static uint8_t got_i2c;
-    static uint8_t got_result;
-    static uint16_t get_received_data();
 
+    enum TestJigEventId {
+        EventAckPacket      = 100,
+        EventNeighbor       = 101
+    };
+
+    static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void neighborInIsr(uint8_t side);
     static void onNeighborMsgRx(uint8_t side, uint16_t msg);
@@ -40,7 +41,7 @@ private:
 
     struct SensorsTransaction {
         bool enabled;
-        RF_MemACKType cubeAck;
+        RF_ACKType cubeAck;
         uint8_t byteIdx;
     };
 
