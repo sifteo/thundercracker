@@ -10,12 +10,6 @@
  * on hardware, are mostly forwarded directly to the software math library.
  */
 
-/*
- * XXX: This needs to fully trap exceptions, either by checking
- *      for any condition that may generate an error before they happen,
- *      or by trapping them in some other way.
- */
-
 #include <math.h>
 #include <sifteo/abi.h>
 #include "svmmemory.h"
@@ -347,28 +341,28 @@ int64_t _SYS_sdiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     int64_t a = aL | (uint64_t)aH << 32;
     int64_t b = bL | (uint64_t)bH << 32;
-    return a / b;
+    return b ? (a / b) : 0;
 }
 
 uint64_t _SYS_udiv_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
-    return a / b;
+    return b ? (a / b) : 0;
 }
 
 int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     int64_t a = aL | (uint64_t)aH << 32;
     int64_t b = bL | (uint64_t)bH << 32;
-    return a % b;
+    return b ? (a % b) : a;
 }
 
 uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;
     uint64_t b = bL | (uint64_t)bH << 32;
-    return a % b;
+    return b ? (a % b) : a;
 }
 
 

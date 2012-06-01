@@ -50,6 +50,7 @@
  */
 namespace LFS {
     uint8_t computeCheckByte(uint8_t a, uint8_t b);
+    bool isEmpty(const uint8_t *bytes, unsigned count);
 };
 
 
@@ -179,6 +180,10 @@ public:
         return check == LFS::computeCheckByte(key, size);
     }
 
+    bool isEmpty() const {
+        return LFS::isEmpty((const uint8_t*) this, sizeof *this);
+    }
+
     unsigned getKey() const {
         return key;
     }
@@ -195,7 +200,7 @@ public:
 
 /**
  * FlashLFSIndexAnchor is a flavor of header record that appears at
- * the beginning of a FlashLFSIndexBlock. Typically there is exactly
+ * the beginning of an index block. Typically there is exactly
  * one anchor per block, but we must allow for the possibility of multiple
  * anchors, in case there's a power failure while allocating a new index
  * block. Anchors must be validated, and invalid anchors are ignored.
@@ -203,7 +208,7 @@ public:
  * immediately after the first valid anchor.
  *
  * Anchors are used to locate the object data which corresponds with the
- * first record in any given FlashLFSIndexBlock. The anchor value could also
+ * first record in any given index block. The anchor value could also
  * be determined by summing the sizes of all preceeding index records, but
  * including this value explicitly in the anchor lets us locate the objects
  * associated with an index block without reading any additional index blocks.
@@ -244,9 +249,40 @@ public:
         return check == LFS::computeCheckByte(offset[0], offset[1]);
     }
 
+    bool isEmpty() const {
+        return LFS::isEmpty((const uint8_t*) this, sizeof *this);
+    }
+
     unsigned getOffsetInBytes() const {
         return (this->offset[0] | (this->offset[1] << 8)) << OFFSET_SHIFT;
     }
+};
+
+
+/**
+ * FlashLFSIndexBlockIter is an iterator that knows how to interpret the
+ * anchors and records present in a single index block.
+ *
+ * Index blocks contain, in order:
+ *
+ *   1. Zero or more invalid anchors
+ *   2. Exactly one valid anchor
+ *   3. Zero or more records
+ *   4. Zero or more unprogrammed (0xFF) bytes
+ *
+ * The anchor specifies a base address for the indexed objects, whereas
+ * the records specify each object's type and size. The Index block alone
+ * is enough information to compute the address of any object in the block.
+ */
+class FlashLFSIndexIter
+{
+    FlashBlockRef blockRef;
+    unsigned offsetInBytes;
+    
+    FlashLFSIndexAnchor *anchor;
+
+public:
+    FlashLFSIndexIter(uint32_t blockAddr);
 };
 
 
@@ -279,6 +315,26 @@ private:
      */
 
     FlashVolume volumes[];
+
+public:
+    
+    FlashLFS(FlashVolume parent);
+
+    bool findObject(unsigned key, uint32_t &addr, uint32_t &size);
+        // Scan meta-index backwards, for candidate blocks
+        // Scan blocks forward, to establish anchor
+        // Scan backwards until we match
+        // Return address and size of object (guaranteed linear)
+    
+    void newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr);
+        // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
+        // Write an index record (allocates space for the object)
+        // Return location at which object data can be written.
+        // Write the object data (may be split among multiple flash blocks)
+
+    void collectGarbage();
+        // Scan backwards, keeping a bitmap of all keys we've found
+        // Any volume consisting of only superceded keys is deleted
 };
 
 #endif
