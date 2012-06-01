@@ -25,8 +25,8 @@ extern volatile uint8_t sensor_tick_counter_high;
 #ifdef DEBUG_NBR
 	extern uint8_t __idata nbr_data[4];
 	extern uint8_t	nbr_temp;
-	extern uint8_t __idata nbr_data_valid;
-	extern uint8_t __idata nbr_data_invalid;
+	extern uint8_t __idata nbr_data_valid[2];
+	extern uint8_t __idata nbr_data_invalid[2];
 #endif
 //#define DEBUG_NBR_IO	P3.1
 

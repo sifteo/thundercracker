@@ -68,7 +68,7 @@
 
 // 2us pulses, 9.75us bit periods, 156us packets
 #define NB_BIT_TICKS        16      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   8       // Sampling tweak to ignore secondary pulses
+#define NB_BIT_TICK_FIRST   9      	// Sampling tweak to ignore secondary pulses
 #define NB_DEADLINE         17      // Max amount Timer0 can be late by
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive

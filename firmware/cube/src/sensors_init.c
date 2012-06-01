@@ -34,8 +34,8 @@ __bit touch;
 #ifdef DEBUG_NBR
 	uint8_t __idata nbr_data[4];
 	uint8_t	nbr_temp;
-	uint8_t __idata nbr_data_valid;
-	uint8_t __idata nbr_data_invalid;
+	uint8_t __idata nbr_data_valid[2];
+	uint8_t __idata nbr_data_invalid[2];
 #endif
 
 #ifdef DEBUG_TOUCH

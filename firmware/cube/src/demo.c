@@ -74,10 +74,14 @@ void demo(void)
     	draw_hex(nbr_data[2]);
     	draw_xy = XY(11,14);
     	draw_hex(nbr_data[3]);
+    	draw_xy = XY(2,15);
+    	draw_hex(nbr_data_valid[0]);
     	draw_xy = XY(5,15);
-    	draw_hex(nbr_data_valid);
+    	draw_hex(nbr_data_valid[1]);
     	draw_xy = XY(8,15);
-    	draw_hex(nbr_data_invalid);
+    	draw_hex(nbr_data_invalid[0]);
+    	draw_xy = XY(11,15);
+    	draw_hex(nbr_data_invalid[1]);
 	#endif
 
     	graphics_render();

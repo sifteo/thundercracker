@@ -212,6 +212,8 @@ nb_bit_done:
         jz		dbg_skip
         mov		a, _nb_buffer
         mov		_nbr_data_invalid, a
+        mov		a, (_nb_buffer+1)
+        mov		(_nbr_data_invalid+1), a
         sjmp	nb_packet_done
 dbg_skip:
 #endif
@@ -239,6 +241,8 @@ dbg_skip:
 #ifdef DEBUG_NBR
         mov		a, _nb_buffer
         mov		_nbr_data_valid, a
+        mov		a, (_nb_buffer+1)
+        mov		(_nbr_data_valid+1), a
 #endif
 
         pop     0
