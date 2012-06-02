@@ -167,6 +167,7 @@ void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
 void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
 int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
 void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
+void _SYS_audio_setSpeed(_SYSAudioChannelID ch, uint32_t sampleRate) _SC(160);
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
 uint32_t _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
 uint32_t _SYS_tracker_isStopped() _SC(126);

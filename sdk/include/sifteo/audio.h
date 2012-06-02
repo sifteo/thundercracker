@@ -57,7 +57,8 @@ struct AudioChannel {
     {}
 
     /**
-     * Initialize an AudioChannel with a concrete value.
+     * @brief Initialize an AudioChannel with a concrete value.
+     *
      * If you use this constructor, there is no need to call init().
      * @param id must be in the range 0 to NUM_CHANNELS - 1
      */
@@ -65,56 +66,64 @@ struct AudioChannel {
     {}
 
     /**
-     * Initialize a channel by assignging it an ID.
+     * @brief Initialize a channel by assignging it an ID.
      * @param id must be in the range 0 to NUM_CHANNELS - 1
      */
-    void init(AudioChannelID id) {
+    void init(AudioChannelID id)
+    {
         ASSERT(id < NUM_CHANNELS && "AudioChannel ID is invalid");
         sys = id;
     }
 
     /**
-     * Begin playback of a sample.
+     * @brief Begin playback of a sample.
      * @param asset specifies the audio asset to playback.
      * @param loopMode specifies
      */
-    bool play(const AssetAudio &asset, LoopMode loopMode = UNDEF_LOOP) {
+    bool play(const AssetAudio &asset, LoopMode loopMode = UNDEF_LOOP) const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         return _SYS_audio_play(&asset.sys, sys, (_SYSAudioLoopType) loopMode);
     }
 
     /**
-     * Is this channel currently playing a sample?
+     * @brief Is this channel currently playing a sample?
      */
-    bool isPlaying() const {
+    bool isPlaying() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         return _SYS_audio_isPlaying(sys);
     }
 
     /**
-     * Stop playback of the current sample.
+     * @brief Stop playback of the current sample.
+     *
      * Has no effect if a sample is not currently playing.
      */
-    void stop() {
+    void stop() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         _SYS_audio_stop(sys);
     }
 
     /**
-     * Pause the currently playing sample in this channel.
+     * @brief Pause the currently playing sample in this channel.
+     *
      * Has no effect if a sample is not currently playing.
      */
-    void pause() {
+    void pause() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         _SYS_audio_pause(sys);
     }
 
     /**
-     * Resume playback on this channel.
+     * @brief Resume playback on this channel.
      *
      * XXX: this may go away in favor of play()
      */
-    void resume() {
+    void resume() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         _SYS_audio_resume(sys);
     }
@@ -124,20 +133,35 @@ struct AudioChannel {
      * May be applied when the channel is either stopped or playing.
      * @param volume from 0 to MAX_VOLUME
      */
-    void setVolume(int volume) {
+    void setVolume(int volume) const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         _SYS_audio_setVolume(sys, volume);
     }
 
     /**
-     * Get the current volume for this channel.
+     * @brief Sets the speed of this channel, in samples per second.
+     *
+     * To determine the default speed for an audio sample, you
+     * can use AssetAudio::speed().
      */
-    int volume() {
+    void setSpeed(unsigned hz) const
+    {
+        ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
+        _SYS_audio_setSpeed(sys, hz);
+    }
+
+    /**
+     * @brief Get the current volume for this channel.
+     */
+    int volume() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         return _SYS_audio_volume(sys);
     }
 
-    uint32_t pos() {
+    uint32_t pos() const
+    {
         ASSERT(sys < NUM_CHANNELS && "AudioChannel has invalid ID");
         return _SYS_audio_pos(sys);
     }
@@ -200,7 +224,8 @@ struct AudioTracker {
      * @param volume from 0 to MAX_VOLUME.
      * @param ch specifies the index of the channel in the module. Leave empty to set global volume.
      */
-    static void setVolume(int volume, _SYSAudioChannelID ch = -1) {
+    static void setVolume(int volume, _SYSAudioChannelID ch = -1)
+    {
         ASSERT(volume >= 0 && volume <= _SYS_AUDIO_MAX_VOLUME);
         _SYS_tracker_setVolume(volume, ch);
     }

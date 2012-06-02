@@ -216,7 +216,6 @@ void AudioMixer::stop(_SYSAudioChannelID ch)
         return;
     }
 
-
     channelSlots[ch].stop();
     Atomic::ClearLZ(playingChannelMask, ch);
 }

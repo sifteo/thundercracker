@@ -56,6 +56,11 @@ void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume)
     AudioMixer::instance.setVolume(ch, volume);
 }
 
+void _SYS_audio_setSpeed(_SYSAudioChannelID ch, uint32_t hz)
+{
+    AudioMixer::instance.setSpeed(ch, hz);
+}
+
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
 {
     return AudioMixer::instance.pos(ch);

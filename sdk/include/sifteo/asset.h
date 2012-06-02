@@ -653,6 +653,15 @@ struct FlatAssetImage {
 
 struct AssetAudio {
     _SYSAudioModule sys;
+
+    /**
+     * @brief Return the default speed for this audio asset, in samples per second.
+     *
+     * This can be used to calculate a new speed for AudioChannel::setSpeed().
+     */
+    unsigned speed() {
+        return sys.sampleRate;
+    }
 };
 
 /**
