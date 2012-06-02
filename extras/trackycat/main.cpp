@@ -9,7 +9,7 @@ static Metadata M = Metadata()
     .title("Trackycat~")
     .cubeRange(1);
 
-static const AssetTracker *mods[] = { &Bubbles, &Guitar };
+static const AssetTracker *mods[] = { &Bubbles, &Vox, &Guitar };
 static unsigned current = 0;
 static AudioTracker tracker;
 
