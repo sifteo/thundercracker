@@ -5,7 +5,8 @@ SUBDIRS = \
 	monster \
 	loopy \
 	thrasher \
-	synth
+	synth \
+	trackycat
 
 .PHONY: clean subdirs $(SUBDIRS)
 
