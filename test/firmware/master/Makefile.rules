@@ -1,8 +1,24 @@
-BIN_SIM = master-sim.a
 
-$(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(LIBTOOL_SIM) -static -o $@ $(^F) $(SIM_STATIC_LIBS)
+# Common makefile rules for master firmware unit tests
 
-%.sim.o: %.cpp $(CDEPS)
-	$(CXX) -c -o $(@F) $< $(CPPFLAGS) $(CXXFLAGS)
+all: tests.stamp
+
+tests.stamp: $(BIN)$(BIN_EXT)
+	@echo "\n================= Running Master Test:" $(BIN)$(BIN_EXT) "\n"
+	./$(BIN)$(BIN_EXT)
+	echo > $@
+
+$(BIN)$(BIN_EXT): $(OBJS)
+	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS)
+
+%.o: %.cpp
+	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
+
+.PHONY: clean
+
+clean:
+	rm -Rf $(BIN)$(BIN_EXT)
+	rm -Rf $(OBJS)

@@ -13,6 +13,7 @@ include $(TC_DIR)/Makefile.platform
 
 TESTS = \
 	firmware/cube \
+	firmware/master \
 	sdk/array \
 	sdk/compatibility \
 	sdk/crc \
