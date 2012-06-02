@@ -108,9 +108,11 @@ void SystemMC::threadFn(void *param)
     HomeButton::init();
     Crc32::init();
     Volume::init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
     Radio::init();
+
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::start();
 
     instance->autoInstall();
 
