@@ -24,6 +24,10 @@ private:
     AudioMixer *mixer;
     AudioBuffer buf;
 
+    // An additional simulation-only buffer, necessary because of the jitter in our virtual clock
+    typedef RingBuffer<512, int16_t> SimBuffer_t;
+    SimBuffer_t simBuffer;
+
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,
                                 const PaStreamCallbackTimeInfo* timeInfo,

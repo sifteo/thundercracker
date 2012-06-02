@@ -59,7 +59,7 @@ public:
     void pull(T &src)
     {
         unsigned rCount = src.readAvailable();
-        unsigned wCount = readAvailable();
+        unsigned wCount = writeAvailable();
         unsigned count = MIN(rCount, wCount);
         while (count--) {
             enqueue(src.dequeue());

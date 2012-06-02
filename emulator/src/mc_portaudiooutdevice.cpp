@@ -14,24 +14,37 @@ PortAudioOutDevice::PortAudioOutDevice() :
     outStream(0) {}
 
 int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputBuffer,
-                            unsigned long framesPerBuffer,
-                            const PaStreamCallbackTimeInfo* timeInfo,
-                            PaStreamCallbackFlags statusFlags,
-                            void *userData)
+    unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
+    PaStreamCallbackFlags statusFlags, void *userData)
 {
-    (void) timeInfo; // Prevent unused variable warnings.
+    // Prevent unused variable warnings.
+    (void) timeInfo;
     (void) inputBuffer;
 
-    PortAudioOutDevice *dev = static_cast<PortAudioOutDevice*>(userData);
-    AudioBuffer &audiobuf = dev->buf;
+    /*
+     * Copy from the source AudioBuffer to our simulation-only supplemental
+     * buffer which covers up the jitter in our virtual clock.
+     */
+
+    PortAudioOutDevice *self = static_cast<PortAudioOutDevice*>(userData);
+    SimBuffer_t &ring = self->simBuffer;
+    ring.pull(self->buf);
+
+    /*
+     * Copy from the intermediate buffer to PortAudio's
+     * variable-sized output buffer. If we run out of data
+     * early, we must pad with silence. This could indicate
+     * an actual underrun condition, or it could just be the
+     * end of all playing samples.
+     */
+
     int16_t *outBuf = (int16_t*)outputBuffer;
-
-    unsigned avail = audiobuf.readAvailable();
-
+    unsigned avail = ring.readAvailable();
     unsigned count = MIN(framesPerBuffer, avail);
+
     framesPerBuffer -= count;
     while (count--)
-        *outBuf++ = audiobuf.dequeue();
+        *outBuf++ = ring.dequeue();
 
     while (framesPerBuffer--)
         *outBuf++ = 0;
