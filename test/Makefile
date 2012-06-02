@@ -13,7 +13,6 @@ include $(TC_DIR)/Makefile.platform
 
 TESTS = \
 	firmware/cube \
-	firmware/master \
 	sdk/array \
 	sdk/compatibility \
 	sdk/crc \
@@ -26,7 +25,8 @@ TESTS = \
 	sdk/adpcm
 
 ifeq ($(BUILD_PLATFORM), Darwin)
-	TESTS += sdk/mac-open
+    TESTS += sdk/mac-open \
+             firmware/master
 endif
 
 #############################################################
