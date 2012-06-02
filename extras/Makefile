@@ -2,7 +2,9 @@ SUBDIRS = \
 	hello \
 	nyan \
 	pantera \
-	monster
+	monster \
+	loopy \
+	thrasher
 
 .PHONY: clean subdirs $(SUBDIRS)
 
