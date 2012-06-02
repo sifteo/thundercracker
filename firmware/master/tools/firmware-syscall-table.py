@@ -83,6 +83,8 @@ aliasTable = {
     '_SYS_fmod': 'fmod',
     '_SYS_sqrt': 'sqrt',
     '_SYS_logd': 'log',
+    '_SYS_pow': 'pow',
+    '_SYS_powf': 'powf',
     
     # 64-bit integer operators
     '_SYS_sdiv_i64' : '__aeabi_ldivmod',

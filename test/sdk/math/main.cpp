@@ -125,6 +125,14 @@ void testExceptions()
     // fmod(1, 0) == NAN
     ASSERT(isunordered(fmod(b(1.f), b(0.f))) == true);
     ASSERT(isunordered(fmod(b(1.0), b(0.0))) == true);
+
+    // pow(0, -1.5) == infinity
+    ASSERT(pow(b(0.f), b(-1.5f)) > MAXFLOAT);
+    ASSERT(pow(b(0.0), b(-1.5 )) > MAXFLOAT);
+
+    // pow(-1, 1.5) == NAN
+    ASSERT(isunordered(pow(b(-1.f), b(1.5f))) == true);
+    ASSERT(isunordered(pow(b(-1.0), b(1.5 ))) == true);
 }
 
 void main()

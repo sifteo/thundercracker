@@ -114,7 +114,7 @@ template <typename T> inline T bitRange(int begin, int end)
 }
 
 /**
- * Compute the remainder (modulo) operation for two floating point numbers.
+ * @brief Compute the remainder (modulo) operation for two floating point numbers.
  * This variant operates on single-precision floats.
  */
 
@@ -125,7 +125,7 @@ float inline fmod(float a, float b)
 }
 
 /**
- * Compute the remainder (modulo) operation for two floating point numbers.
+ * @brief Compute the remainder (modulo) operation for two floating point numbers.
  * This variant operates on double-precision floats.
  */
 
@@ -134,6 +134,30 @@ double inline fmod(double a, double b)
     uint64_t ia = reinterpret_cast<uint64_t&>(a);
     uint64_t ib = reinterpret_cast<uint64_t&>(b);
     uint64_t r = _SYS_fmod(ia, ia >> 32, ib, ib >> 32);
+    return reinterpret_cast<double&>(r);
+}
+
+/**
+ * @brief Compute 'x' raised to the power 'y'.
+ * This variant operates on single-precision floats.
+ */
+
+float inline pow(float a, float b)
+{
+    uint32_t r = _SYS_powf(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * @brief Compute 'x' raised to the power 'y'.
+ * This variant operates on double-precision floats.
+ */
+
+double inline pow(double a, double b)
+{
+    uint64_t ia = reinterpret_cast<uint64_t&>(a);
+    uint64_t ib = reinterpret_cast<uint64_t&>(b);
+    uint64_t r = _SYS_pow(ia, ia >> 32, ib, ib >> 32);
     return reinterpret_cast<double&>(r);
 }
 

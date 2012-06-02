@@ -113,9 +113,11 @@ uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(1
 
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(56);
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(53);
+uint32_t _SYS_powf(uint32_t a, uint32_t b) _SC(161);
 uint32_t _SYS_sqrtf(uint32_t a) _SC(101);
 uint32_t _SYS_logf(uint32_t a) _SC(155);
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(102);
+uint64_t _SYS_pow(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(162);
 uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(103);
 uint64_t _SYS_logd(uint32_t aL, uint32_t aH) _SC(156);
 
