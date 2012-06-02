@@ -53,8 +53,9 @@ public:
     operator const _SYSVolumeHandle () const { return sys; }
 
     /**
-     * List all volumes of the specified type. Populates an Array with
-     * the results.
+     * @brief List all volumes of the specified type
+     *
+     * Populates an Array with the results.
      */
     template <unsigned T>
     static void list(unsigned volType, Array<Volume, T> &volumes)
@@ -64,14 +65,29 @@ public:
     }
 
     /**
-     * Transfer control to a new program, fully replacing the current
-     * program in memory. Does not return.
+     * @brief Transfer control to a new program
      *
+     * Fully replaces the current program in memory. Does not return.
      * For Volumes containing a valid ELF binary only.
      */
-    void exec() const
-    {
+    void exec() const {
         _SYS_elf_exec(sys);
+    }
+
+    /**
+     * @brief Return the Volume corresponding to the currently running program.
+     *
+     * This can be used in various ways, such as skipping the current game
+     * in a listing of other games, reading your own metadata, or accessing
+     * saved objects that belong to you.
+     */
+    static Volume running() {
+        return (_SYSVolumeHandle) _SYS_fs_runningVolume();
+    }
+
+    /// Equality comparison operator
+    bool operator== (Volume other) const {
+        return sys == other.sys;
     }
 };
 
