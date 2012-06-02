@@ -15,6 +15,7 @@
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
 #   include "system_mc.h"
+#   include "mc_audiovisdata.h"
 #endif
 
 
@@ -57,6 +58,11 @@ void AudioMixer::init()
  */
 bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
 {
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = active();
+    #endif
+
+    // Early out when we can quickly determine that no channels are playing.
     if (!active())
         return false;
 
@@ -250,6 +256,10 @@ void AudioMixer::stop(_SYSAudioChannelID ch)
 
     channelSlots[ch].stop();
     Atomic::ClearLZ(playingChannelMask, ch);
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::clearChannel(ch);
+    #endif
 }
 
 void AudioMixer::pause(_SYSAudioChannelID ch)
@@ -263,6 +273,10 @@ void AudioMixer::pause(_SYSAudioChannelID ch)
     if (isPlaying(ch)) {
         channelSlots[ch].pause();
     }
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::clearChannel(ch);
+    #endif
 }
 
 void AudioMixer::resume(_SYSAudioChannelID ch)

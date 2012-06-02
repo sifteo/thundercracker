@@ -50,8 +50,12 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
 bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
-    if (state & STATE_STOPPED || samples.numSamples() == 0)
+    if (state & STATE_STOPPED || samples.numSamples() == 0) {
+        #ifdef SIFTEO_SIMULATOR
+            MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
+        #endif
         return false;
+    }
 
     uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
                      ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
@@ -64,6 +68,10 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
                 uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
                 offset = fpLoopStart + (offset - fpLimit);
             } else {
+                #ifdef SIFTEO_SIMULATOR
+                    MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
+                #endif
+
                 stop();
                 break;
             }

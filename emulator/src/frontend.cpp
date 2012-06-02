@@ -826,8 +826,10 @@ void Frontend::draw()
      * This throttling is vital when we can't sync to the host's vertical refresh, and the idling
      * is really nice to avoid killing laptop batteries...
      */
-    frControl.setTargetFPS(idleFrames > 100 ? 10.0 : 75.0);
-        
+
+    bool isIdle = idleFrames > 100 && overlay.allowIdling();
+    frControl.setTargetFPS(isIdle ? 10.0 : 75.0);
+
     renderer.endFrame();
     frControl.endFrame();
 }

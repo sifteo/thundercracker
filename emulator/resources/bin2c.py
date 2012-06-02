@@ -31,6 +31,8 @@ INPUTS = [
     ('r',  nulTerm,     "resources/cube_side_vp.glsl"),
     ('r',  nulTerm,     "resources/background_fp.glsl"),
     ('r',  nulTerm,     "resources/background_vp.glsl"),
+    ('r',  nulTerm,     "resources/scope_fp.glsl"),
+    ('r',  nulTerm,     "resources/scope_vp.glsl"),
     ('rb', None,        "resources/ui_font_data.fnt"),
     ('rb', None,        "resources/ui_font_data_0.png"),
     ]

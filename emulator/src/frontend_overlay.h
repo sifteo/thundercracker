@@ -49,7 +49,11 @@ public:
     void toggleAudioVisualizer();
 
     void postMessage(std::string msg);
-    
+
+    bool allowIdling() {
+        return !visualizerVisible;
+    }
+
 private:
     static const unsigned margin = 5;
     static const unsigned lineSpacing = 20;

@@ -20,14 +20,26 @@ public:
     // Size of scope buffer; also determines duration of each horizontal sweep.
     static const unsigned NUM_SAMPLES = 16000 / 440 * 8;
 
+    MCAudioVisScope();
+
     void write(int16_t sample)
     {
-        samples[head++] = sample;
+        isClear = false;
+        samples[head++] = sample + 0x8000;
         if (head == arraysize(samples))
             head = 0;
     }
 
-    int16_t *getSamples()
+    void clear()
+    {
+        if (!isClear) {
+            for (unsigned i = 0; i != NUM_SAMPLES * 2; ++i)
+                write(i);
+            isClear = true;
+        }
+    }
+
+    uint16_t *getSamples()
     {
         // Return the half of the buffer that isn't being written to.
         if (head >= NUM_SAMPLES)
@@ -38,7 +50,8 @@ public:
 
 private:
     unsigned head;
-    int16_t samples[NUM_SAMPLES * 2];
+    bool isClear;
+    uint16_t samples[NUM_SAMPLES * 2];
 };
 
 
@@ -52,7 +65,10 @@ public:
 class MCAudioVisData
 {
 public:
-    MCAudioVisChannel channels[_SYS_AUDIO_MAX_CHANNELS];
+    static const unsigned NUM_CHANNELS = _SYS_AUDIO_MAX_CHANNELS;
+
+    bool mixerActive;
+    MCAudioVisChannel channels[NUM_CHANNELS];
 
     static MCAudioVisData instance;
 
@@ -60,6 +76,12 @@ public:
     {
         ASSERT(c < arraysize(instance.channels));
         instance.channels[c].scope.write(sample);
+    }
+
+    static void clearChannel(unsigned c)
+    {
+        ASSERT(c < arraysize(instance.channels));
+        instance.channels[c].scope.clear();
     }
 };
 

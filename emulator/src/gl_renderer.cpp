@@ -46,10 +46,17 @@ bool GLRenderer::init()
     GLhandleARB backgroundFP = loadShader(GL_FRAGMENT_SHADER, background_fp);
     GLhandleARB backgroundVP = loadShader(GL_VERTEX_SHADER, background_vp);
     backgroundProgram = linkProgram(backgroundFP, backgroundVP);
-
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
+
+    extern const uint8_t scope_fp[];
+    extern const uint8_t scope_vp[];
+    GLhandleARB scopeFP = loadShader(GL_FRAGMENT_SHADER, scope_fp);
+    GLhandleARB scopeVP = loadShader(GL_VERTEX_SHADER, scope_vp);
+    scopeProgram = linkProgram(scopeFP, scopeVP);
+    glUseProgramObjectARB(scopeProgram);
+    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "texture"), 0);
 
     /*
      * Load textures
@@ -68,7 +75,8 @@ bool GLRenderer::init()
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
-    
+    scopeTexture = 0;
+
     /*
      * Procedural models
      */
@@ -340,8 +348,8 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
     glDisable(GL_TEXTURE_2D);
 }         
 
-void GLRenderer::overlayRect(int x, int y,
-                             int w, int h, const float color[4])
+void GLRenderer::overlayRect(int x, int y, int w, int h,
+    const float color[4], GLhandleARB program)
 {
     overlayVA.clear();
     VertexT a, b, c, d;
@@ -372,7 +380,7 @@ void GLRenderer::overlayRect(int x, int y,
     overlayVA.push_back(c);
     overlayVA.push_back(d);
         
-    glUseProgramObjectARB(0);
+    glUseProgramObjectARB(program);
     glColor4fv(color);
     glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
@@ -632,7 +640,8 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
-void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle) {
+void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle)
+{
     // TEMP just draw a blank cuuuuube
     CubeTransformState tState;
     b2Mat33 mat;
@@ -830,11 +839,6 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolyg
     }
 }
 
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-
-
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
     std::vector<uint8_t> pixels(width * height * 4, 0);
@@ -963,6 +967,54 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
 
 void GLRenderer::overlayAudioVisualizer()
 {
+    /*
+     * Draw an oscilloscope audio visualizer, using a fragment shader.
+     * Our input to the shader is a texture containing audio samples.
+     *
+     * We use a single 2D texture, with sample index on the X axis
+     * and channel number on the Y axis. Filtering is disabled.
+     */
+
+    // Visualizer hides to signify when the mixer is totally disabled.
+    if (!MCAudioVisData::instance.mixerActive)
+        return;
+
+    bool initializing = !scopeTexture;
+    if (initializing)
+        glGenTextures(1, &scopeTexture);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, scopeTexture);
+
+    if (initializing) {
+        // Allocate an empty texture
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16,
+            MCAudioVisScope::NUM_SAMPLES, MCAudioVisData::NUM_CHANNELS,
+            0, GL_LUMINANCE, GL_UNSIGNED_SHORT, 0);
+    }
+
+    // Upload texture, one channel / row at a time
+    for (unsigned channel = 0; channel < MCAudioVisData::NUM_CHANNELS; ++channel) {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, channel,
+            MCAudioVisScope::NUM_SAMPLES, 1, GL_LUMINANCE, GL_UNSIGNED_SHORT,
+            MCAudioVisData::instance.channels[channel].scope.getSamples());
+    }
+
+    const unsigned height = viewportHeight / 6;
+    const unsigned margin = 4;
+    static const float color[4] = { 1, 1, 1, 1 };
+
+    overlayRect(margin, viewportHeight - height - margin,
+        viewportWidth - margin*2, height, color, scopeProgram);
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 
