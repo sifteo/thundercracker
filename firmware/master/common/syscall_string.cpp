@@ -13,6 +13,7 @@
 #include <sifteo/abi.h>
 #include "svmmemory.h"
 #include "svmruntime.h"
+#include "crc.h"
 
 extern "C" {
 
@@ -49,6 +50,40 @@ void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count)
     // Currently implemented in terms of memcpy8. We may provide a
     // separate optimized implementation of this syscall in the future.   
     _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
+}
+
+uint32_t _SYS_crc32(const uint32_t *data, uint32_t count)
+{
+    FlashBlockRef ref;
+    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(data);
+    uint32_t bytes = mulsat16x16(sizeof *data, count);
+
+    Crc32::reset();
+
+    while (bytes) {
+        SvmMemory::PhysAddr pa;
+        uint32_t chunk = bytes;
+
+        if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            break;
+        }
+
+        // In case our mapping doesn't end at a word boundary...
+        chunk &= ~(uint32_t)3;
+        ASSERT(chunk <= bytes);
+        va += chunk;
+        bytes -= chunk;
+
+        unsigned iterations = chunk >> 2;
+        while (iterations) {
+            iterations--;
+            Crc32::add(*(uint32_t*)pa);
+            pa += 4;
+        }
+    }
+
+    return Crc32::get();
 }
 
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
