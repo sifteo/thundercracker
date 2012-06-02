@@ -11,6 +11,7 @@ include $(TC_DIR)/Makefile.platform
 
 #############################################################
 
+# Cross-platform tests
 TESTS = \
 	firmware/cube \
 	sdk/array \
@@ -21,13 +22,19 @@ TESTS = \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
-	sdk/scripting \
+	sdk/scripting
+
+# Mac-only tests
+ifeq ($(BUILD_PLATFORM), Darwin)
+    TESTS += sdk/mac-open
+endif
+
+# Tests that are broken on Windows currently
+ifneq ($(BUILD_PLATFORM), windows32)
+    TESTS += \
+	firmware/master \
 	sdk/adpcm \
 	sdk/tracker
-
-ifeq ($(BUILD_PLATFORM), Darwin)
-    TESTS += sdk/mac-open \
-             firmware/master
 endif
 
 #############################################################
