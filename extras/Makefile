@@ -4,7 +4,8 @@ SUBDIRS = \
 	pantera \
 	monster \
 	loopy \
-	thrasher
+	thrasher \
+	synth
 
 .PHONY: clean subdirs $(SUBDIRS)
 
