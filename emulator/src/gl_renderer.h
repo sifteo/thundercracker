@@ -61,6 +61,7 @@ class GLRenderer {
     void overlayRect(int x, int y, int w, int h, const float color[4]);
     void overlayCubeFlash(unsigned id, int x, int y, int w, int h,
         const uint8_t *data, bool dataChanged);
+    void overlayAudioVisualizer();
 
     void takeScreenshot(std::string name) {
         // Screenshots are asynchronous

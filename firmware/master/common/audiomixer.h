@@ -50,8 +50,13 @@ public:
     void setSampleRate(uint32_t samplerate) {
         curSampleRate = samplerate;
     }
+
     uint32_t sampleRate() {
         return curSampleRate;
+    }
+
+    unsigned channelID(AudioChannelSlot *slot) {
+        return slot - &channelSlots[0];
     }
 
 protected:

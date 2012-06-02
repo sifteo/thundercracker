@@ -369,6 +369,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->overlay.toggleInspector();
             break;
 
+        case 'V':
+            instance->overlay.toggleAudioVisualizer();
+            break;
+
         case 'R':
             /*
              * Intentionally undocumented: Toggle trace mode.

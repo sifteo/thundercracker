@@ -46,6 +46,7 @@ public:
 
     void toggleHelp();
     void toggleInspector();
+    void toggleAudioVisualizer();
 
     void postMessage(std::string msg);
     
@@ -69,6 +70,7 @@ private:
     unsigned messageTimer;
     bool helpVisible;
     bool inspectorVisible;
+    bool visualizerVisible;
     
     ElapsedTime slowTimer;
     ElapsedTime fastTimer;

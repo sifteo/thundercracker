@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include "mc_audiovisdata.h"
 #include "gl_renderer.h"
 #include "frontend.h"
 #include "lodepng.h"
@@ -959,3 +960,9 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
     overlayRect(x, y, w, h, color);
     glDisable(GL_TEXTURE_2D);
 }
+
+void GLRenderer::overlayAudioVisualizer()
+{
+}
+
+

@@ -19,7 +19,10 @@ static const Color inspectorTextColor(1, 1, 1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : helpVisible(false), inspectorVisible(false) {}
+    : helpVisible(false), 
+      inspectorVisible(false),
+      visualizerVisible(false)
+{}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -82,6 +85,10 @@ void FrontendOverlay::draw()
     
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
+
+    if (visualizerVisible) {
+        renderer->overlayAudioVisualizer();
+    }
 
     if (helpVisible) {
         drawHelp();
@@ -169,6 +176,13 @@ void FrontendOverlay::toggleHelp()
 void FrontendOverlay::toggleInspector()
 {
     inspectorVisible ^= true;
+    postMessage((inspectorVisible ? "Showing" : "Hiding") + std::string(" inspector panel"));
+}
+
+void FrontendOverlay::toggleAudioVisualizer()
+{
+    visualizerVisible ^= true;
+    postMessage((visualizerVisible ? "Showing" : "Hiding") + std::string(" audio visualizer"));
 }
 
 void FrontendOverlay::drawHelp()
@@ -180,7 +194,7 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector, 'V' - Visualze Audio",
         "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
         "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",

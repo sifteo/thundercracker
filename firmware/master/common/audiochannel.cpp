@@ -9,6 +9,11 @@
 #include <limits.h>
 #include "audiomixer.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include "mc_audiovisdata.h"
+#endif
+
+
 void AudioChannelSlot::init()
 {
     state = STATE_STOPPED;
@@ -78,6 +83,10 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
 
         // Mix volume
         sample = (sample * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME;
+
+        #ifdef SIFTEO_SIMULATOR
+            MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
+        #endif
 
         // Mix into buffer
         sample += *buffer;

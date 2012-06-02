@@ -28,6 +28,7 @@ LOCAL_OBJS = \
     src/wavefile.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
+    src/mc_audiovisdata.o \
     src/mc_portaudiooutdevice.o \
     src/mc_volume.o \
     src/mc_homebutton.o \
