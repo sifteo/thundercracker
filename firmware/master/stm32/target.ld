@@ -121,6 +121,9 @@ SECTIONS
  * These are extern symbols defined by hardware.h
  */
 
+/* Flash Option Bytes base address */
+FLASH_OB = 0x1FFFF800;
+
 TIM2 = 0x40000000;
 TIM3 = 0x40000400;
 TIM4 = 0x40000800;
