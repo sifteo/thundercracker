@@ -728,9 +728,9 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
     while (1) {
         TileStack &stack = *i;
         TileRef tile = stack.median();
+        bool isTrueColor = !tile->palette().hasLUT();
 
-        // Only operate on tiles that would require true-color encoding
-        if (!tile->palette().hasLUT()) {
+        if (isTrueColor) {
             totalCount++;
 
             // Don't modify tiles that are marked as lossless
@@ -769,11 +769,11 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
         bool last = i == stackList.end();
 
         // Update status periodically as well as on completion.
-        if (last || (totalCount % 16) == 0) {
+        if (last || (isTrueColor && (totalCount % 16) == 0)) {
             log.taskProgress("%u of %u tile%s reduced (%.03f%%)",
                 reducedCount, totalCount,
                 totalCount == 1 ? "" : "s",
-                reducedCount * 100.0 / totalCount);
+                totalCount ? (reducedCount * 100.0 / totalCount) : 0);
         }
 
         if (last)
