@@ -12,6 +12,12 @@
 #include "xmtrackerplayer.h"
 #include "volume.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include "system.h"
+#   include "system_mc.h"
+#endif
+
+
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
@@ -95,11 +101,26 @@ bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
 void AudioMixer::pullAudio(void *p)
 {
     /*
+     * Support audio in Siftulator, even in headless mode.
+     *
+     * In headless mode, we want to continue mixing even though
+     * there's no buffer attached or no space in that buffer. We'll
+     * either discard the mixed data, or if a waveout file is set we'll
+     * end up logging the mixed audio data.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        const bool headless = SystemMC::getSystem()->opt_headless;
+    #else
+        const bool headless = false;
+    #endif
+
+    /*
      * Destination buffer, provided by the audio device.
      * If no audio device is available (yet) this will be NULL.
      */
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
-    if (!buf)
+    if (!buf && !headless)
         return;
 
     /*
@@ -114,7 +135,11 @@ void AudioMixer::pullAudio(void *p)
      * from mixAudio(), or we may need to generate silent blocks.
      */
 
-    unsigned samplesLeft = buf->writeAvailable();
+    #ifdef SIFTEO_SIMULATOR
+        unsigned samplesLeft = headless ? SystemMC::suggestAudioSamplesToMix() : buf->writeAvailable();
+    #else
+        unsigned samplesLeft = buf->writeAvailable();
+    #endif
     if (!samplesLeft)
         return;
 
@@ -154,12 +179,19 @@ void AudioMixer::pullAudio(void *p)
                 memset(blockBuffer, 0, sizeof blockBuffer);
         }
 
+        #ifdef SIFTEO_SIMULATOR
+            // Log audio for --waveout
+            SystemMC::logAudioSamples(blockBuffer, blockSize);
+        #endif
+
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
 
-        int16_t *blockPtr = blockBuffer;
-        while (blockSize--)
-            buf->enqueue(*(blockPtr++));
+        if (!headless) {
+            int16_t *blockPtr = blockBuffer;
+            while (blockSize--)
+                buf->enqueue(*(blockPtr++));
+        }
 
         if (!trackerCountdown) {
             ASSERT(trackerInterval);

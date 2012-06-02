@@ -24,6 +24,14 @@ public:
     // Assumes 16-bit signed mono. No-op if file is closed.
     void write(const int16_t *samples, unsigned count);
 
+    bool isOpen() const {
+        return file != 0;
+    }
+
+    unsigned getSampleCount() const {
+        return sampleCount;
+    }
+
 private:
     FILE *file;
     unsigned sampleCount;

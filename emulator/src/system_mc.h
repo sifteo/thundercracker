@@ -59,6 +59,13 @@ class SystemMC {
         instance->waveOut.write(samples, count);
     }
 
+    /**
+     * How many audio samples should we mix?
+     * Used in headless mode, where we have no natural timebase to use.
+     * This fabricates an audio clock based on SysTime.
+     */
+    static unsigned suggestAudioSamplesToMix();
+
  private:
     static void threadFn(void *);
     void doRadioPacket();

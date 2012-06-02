@@ -371,3 +371,18 @@ void SystemMC::elapseTicks(unsigned n)
     while (self->ticks >= self->radioPacketDeadline)
         self->doRadioPacket();
 }
+
+unsigned SystemMC::suggestAudioSamplesToMix()
+{
+    /*
+     * SysTime-based clock for audio logging in --headless mode.
+     */
+
+    if (instance->waveOut.isOpen()) {
+        unsigned currentSample = SysTime::ticks() / SysTime::hzTicks(16000);
+        unsigned prevSamples = instance->waveOut.getSampleCount();
+        if (currentSample > prevSamples)
+            return currentSample - prevSamples;
+    }
+    return 0;
+}
