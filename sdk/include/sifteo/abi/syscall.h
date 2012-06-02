@@ -220,6 +220,9 @@ uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32
 void _SYS_elf_exec(_SYSVolumeHandle vol) _SC(151);
 uint32_t _SYS_elf_map(_SYSVolumeHandle vol) _SC(152);
 void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, unsigned *actualSize) _SC(153);
+int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer, unsigned bufferSize, _SYSVolumeHandle parent) _SC(163);
+int32_t _SYS_fs_objectWrite(unsigned key, uint8_t *data, unsigned dataSize) _SC(164);
+uint32_t _SYS_fs_runningVolume() _SC(165);
 
 
 #ifdef __cplusplus

@@ -251,6 +251,14 @@ public:
     bool checkCRC(unsigned reference) const {
         return !(((crc[0] | (crc[1] << 8)) ^ reference) & 0xFFFF);
     }
+
+    static bool isKeyAllowed(unsigned key) {
+        return key < MAX_KEYS;
+    }
+
+    static bool isSizeAllowed(unsigned bytes) {
+        return bytes <= MAX_SIZE;
+    }
 };
 
 
@@ -449,13 +457,13 @@ public:
         // Scan backwards until we match
         // Return address and size of object (guaranteed linear)
     
-    void newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr);
+    bool newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr);
         // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
         // Write an index record (allocates space for the object)
         // Return location at which object data can be written.
         // Write the object data (may be split among multiple flash blocks)
 
-    void collectGarbage();
+    bool collectGarbage();
         // Scan backwards, keeping a bitmap of all keys we've found
         // Any volume consisting of only superceded keys is deleted
         

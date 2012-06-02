@@ -26,6 +26,7 @@ using namespace Svm;
 
 FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
 uint8_t SvmLoader::runLevel;
+FlashVolume SvmLoader::runningVolume;
 
 
 void SvmLoader::loadRWData(const Elf::Program &program)
@@ -101,10 +102,11 @@ void SvmLoader::runLauncher()
         return;
     }
 
+    runLevel = RUNLEVEL_LAUNCHER;
+    runningVolume = vol;
+
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
-
-    runLevel = RUNLEVEL_LAUNCHER;
     SvmRuntime::run(program.getEntry(), stack);
 }
 
@@ -116,10 +118,11 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
         return;
     }
 
+    runLevel = level;
+    runningVolume = vol;
+
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
-
-    runLevel = level;
     SvmRuntime::exec(program.getEntry(), stack);
 }
 
