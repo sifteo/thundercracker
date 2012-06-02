@@ -15,6 +15,7 @@ TESTS = \
 	firmware/cube \
 	sdk/array \
 	sdk/compatibility \
+	sdk/crc \
 	sdk/math \
 	sdk/filesystem \
 	sdk/bg1 \
