@@ -73,7 +73,7 @@ static void usage()
             "  version of the system Launcher is used. This can be overridden\n"
             "  with the -l option.\n"
             "\n"
-            APP_COPYRIGHT "\n");
+            APP_COPYRIGHT_ASCII "\n");
 }
 
 static void getConsole()

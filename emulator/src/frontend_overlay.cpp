@@ -199,7 +199,7 @@ void FrontendOverlay::drawHelp()
         "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",
         "",
-        APP_COPYRIGHT,
+        APP_COPYRIGHT_LATIN1,
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];

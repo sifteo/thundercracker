@@ -276,7 +276,7 @@ int GLRenderer::measureText(const char *str)
     int x = 0, w = 0;
     uint32_t id;
     
-    while ((id = *(str++))) {
+    while ((id = (uint8_t) *(str++))) {
         const Glyph *g = findGlyph(id);
         if (g) {
             w = MAX(w, x + g->xOffset + g->width);
@@ -295,7 +295,7 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
     overlayVA.clear();
 
     uint32_t id;
-    while ((id = *(str++))) {
+    while ((id = (uint8_t) *(str++))) {
         const Glyph *g = findGlyph(id);
         if (g) {
             VertexT a, b, c, d;
