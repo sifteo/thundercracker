@@ -18,6 +18,10 @@ class WaveWriter
 public:
     WaveWriter();
 
+    ~WaveWriter() {
+        close();
+    }
+
     bool open(const char *filename, unsigned sampleRate);
     void close();
 

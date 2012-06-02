@@ -22,7 +22,8 @@ TESTS = \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
-	sdk/scripting
+	sdk/scripting \
+	sdk/adpcm
 
 ifeq ($(BUILD_PLATFORM), Darwin)
 	TESTS += sdk/mac-open
