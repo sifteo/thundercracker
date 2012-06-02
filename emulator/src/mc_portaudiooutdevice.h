@@ -7,8 +7,7 @@
 #define PORTAUDIO_OUT_DEVICE_H_
 
 #include "portaudio.h"
-#include "audiobuffer.h"
-#include "ringbuffer.h"
+#include "audiooutdevice.h"
 
 class AudioMixer;
 

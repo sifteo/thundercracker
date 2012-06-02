@@ -4,7 +4,7 @@
  */
 
 #include "audiomixer.h"
-#include "audiobuffer.h"
+#include "audiooutdevice.h"
 #include "flash_blockcache.h"
 #include <stdio.h>
 #include <string.h>
@@ -18,8 +18,7 @@ AudioMixer::AudioMixer() :
     playingChannelMask(0),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
-{
-}
+{}
 
 void AudioMixer::init()
 {
@@ -46,24 +45,23 @@ void AudioMixer::init()
  *
  * This currently assumes that it's being run on the main thread, such that it
  * can operate synchronously with data arriving from flash.
+ *
+ * Returns true if any audio data was available. If so, we're guaranteed
+ * to produce exactly 'numFrames' of data.
  */
-int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
+bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
 {
     if (!active())
-        return 0;
+        return false;
 
-    memset(buffer, 0, numsamples * sizeof(*buffer));
+    bool result = false;
+    memset(buffer, 0, numFrames * sizeof(*buffer));
 
-    uint32_t samplesMixed = 0;
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        mask &= ~Intrinsic::LZ(idx);
-
-        if (idx >= _SYS_AUDIO_MAX_CHANNELS) {
-            ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
-            continue;
-        }
+        mask ^= Intrinsic::LZ(idx);
+        ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
 
         AudioChannelSlot &ch = channelSlots[idx];
 
@@ -71,100 +69,109 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
             Atomic::ClearLZ(playingChannelMask, idx);
             continue;
         }
-
         if (ch.isPaused()) {
             continue;
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        uint32_t mixed = ch.mixAudio(buffer, numsamples);
+        result |= ch.mixAudio(buffer, numFrames);
+    }
 
-        // Update size of overall mixed audio buffer
-        if (mixed > samplesMixed) {
-            samplesMixed = mixed;
+    if (result) {
+        // Apply master volume control.
+        uint16_t mixerVolume = Volume::systemVolume();
+        for (unsigned i = 0; i < numFrames; i++) {
+            buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
         }
     }
 
-    // Apply master volume control.
-    uint16_t mixerVolume = Volume::systemVolume();
-    for (unsigned i = 0; i < samplesMixed; i++) {
-        buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
-    }
-
-    return samplesMixed;
+    return result;
 }
 
 /*
-    Called from within Tasks::work to mix audio on the main thread, to be
-    consumed by the audio out device.
-*/
-void AudioMixer::pullAudio(void *p) {
-    if (p == NULL) return;
+ * Called from within Tasks::work to mix audio on the main thread, to be
+ * consumed by the audio out device.
+ */
+void AudioMixer::pullAudio(void *p)
+{
+    /*
+     * Destination buffer, provided by the audio device.
+     * If no audio device is available (yet) this will be NULL.
+     */
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
-    if (buf->writeAvailable() < sizeof(int16_t)) return;
+    if (!buf)
+        return;
 
-    unsigned bytesToMix;
-    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToMix);
-    bytesToMix -= bytesToMix % sizeof(int16_t);
-    unsigned totalBytesMixed = 0;
+    /*
+     * In order to amortize the cost of iterating over channels, our
+     * audio mixer operates on small arrays of samples at a time. We
+     * give it a tiny buffer on the stack, which then flushes out
+     * to the device's provided AudioBuffer.
+     *
+     * We're responsible for invoking the Tracker's callback
+     * deterministically, exactly every 'trackerInterval' samples.
+     * To do this, we may need to subdivide the blocks we request
+     * from mixAudio(), or we may need to generate silent blocks.
+     */
 
-    unsigned mixed;
-    uint32_t numSamples;
+    unsigned samplesLeft = buf->writeAvailable();
+    if (!samplesLeft)
+        return;
 
-    uint32_t &trackerInterval = AudioMixer::instance.trackerCallbackInterval;
-    uint32_t &trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+    const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
+    uint32_t trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+
+    if (trackerInterval == 0) {
+        // Tracker callbacks disabled. Avoid special-casing below by
+        // assuming a countdown value that's effectively infinite.
+        trackerCountdown = 0xFFFFFFFF;
+    } else if (trackerCountdown == 0) {
+        // Countdown should never be stored as zero when the timer is enabled.
+        ASSERT(0);
+        trackerCountdown = trackerInterval;
+    }
 
     do {
-        numSamples = (bytesToMix - totalBytesMixed) / sizeof(int16_t);
-        numSamples = trackerInterval > 0 && trackerCountdown < numSamples
-                   ? trackerCountdown : numSamples;
-        if (!numSamples) {
-            ASSERT(numSamples);
-            return;
-        }
+        int16_t blockBuffer[32];
 
-        mixed = AudioMixer::instance.mixAudio(audiobuf, numSamples);
-        audiobuf += mixed;
-        totalBytesMixed += mixed * sizeof(int16_t);
+        uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
+        blockSize = MIN(blockSize, trackerCountdown);
+        ASSERT(blockSize > 0);
 
-        if (trackerInterval) {
-            if (mixed == 0) {
-                mixed = numSamples;
-                memset(audiobuf, 0, mixed * sizeof(int16_t));
-                totalBytesMixed += mixed * sizeof(int16_t);
-            }
+        bool mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
 
-            /* Tracker countdown should never be 0 when an interval is set--
-             * when it reaches 0 the callback is fired and the counter
-             * immediately reset.
+        if (!mixed) {
+            /*
+             * The mixer had nothing for us. Normally this means
+             * we can early-out and let the device's buffer drain,
+             * but if we're running the tracker, we need to keep
+             * samples flowing in order to keep its clock advancing.
+             * Generate silence.
              */
-            if (!trackerCountdown) {
-                ASSERT(trackerCountdown);
-                trackerCountdown = mixed;
-            }
-
-            // The mixer should never mix beyond the limit of the countdown.
-            if (mixed > trackerCountdown) {
-                ASSERT(mixed <= trackerCountdown);
-                trackerCountdown = mixed;
-            }
-
-            // Update the callback countdown
-            trackerCountdown -= mixed;
-
-            // Fire the callback
-            if (trackerCountdown == 0) {
-                XmTrackerPlayer::mixerCallback();
-                trackerCountdown = trackerInterval;
-            }
+            if (trackerInterval == 0)
+                break;
+            else
+                memset(blockBuffer, 0, sizeof blockBuffer);
         }
-    } while (mixed == numSamples && bytesToMix > totalBytesMixed);
 
-    // Check for buffer overrun.
-    ASSERT(totalBytesMixed <= bytesToMix);
+        trackerCountdown -= blockSize;
+        samplesLeft -= blockSize;
 
-    if (totalBytesMixed > 0) {
-        buf->commit(totalBytesMixed);
+        int16_t *blockPtr = blockBuffer;
+        while (blockSize--)
+            buf->enqueue(*(blockPtr++));
+
+        if (!trackerCountdown) {
+            ASSERT(trackerInterval);
+            trackerCountdown = trackerInterval;
+            XmTrackerPlayer::mixerCallback();
+        }
+
+    } while (samplesLeft);
+
+    if (trackerInterval != 0) {
+        // Write back local copy of Countdown, only if it's real.
+        AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
 }
 

@@ -67,7 +67,7 @@ private:
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
 
-    int mixAudio(int16_t *buffer, uint32_t numsamples);
+    bool mixAudio(int16_t *buffer, uint32_t numFrames);
 };
 
 #endif /* AUDIOMIXER_H_ */

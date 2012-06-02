@@ -87,7 +87,7 @@ void PwmAudioOut::tmrIsr()
     if (buf.readAvailable() < 2)
         return;
 
-    uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
+    uint16_t duty = buf.dequeue() + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
     pwmTimer.setDuty(pwmChan, duty);
 }

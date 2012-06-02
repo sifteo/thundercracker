@@ -7,6 +7,7 @@
 #define AUDIOOUTDEVICE_H_
 
 #include <stdint.h>
+#include "ringbuffer.h"
 
 class AudioMixer;
 
@@ -19,9 +20,7 @@ public:
         kHz32000
     };
 
-    static const unsigned BufferSize = 512;
     static void init(SampleRate samplerate, AudioMixer *mixer);
-
     static void start();
     static void stop();
 
@@ -43,5 +42,9 @@ public:
 private:
     static AudioMixer *mixer;
 };
+
+
+typedef RingBuffer<256, int16_t> AudioBuffer;
+
 
 #endif // AUDIOOUTDEVICE_H_

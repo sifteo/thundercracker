@@ -42,18 +42,17 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     state &= ~STATE_STOPPED;
 }
 
-uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
+bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
     if (state & STATE_STOPPED || samples.numSamples() == 0)
-        return 0;
+        return false;
 
     uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
                      ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
                      : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
-    uint32_t framesLeft = len;
 
-    while(framesLeft > 0) {
+    while (numFrames--) {
         // Looping logic
         if (offset > fpLimit) {
             if (state & STATE_LOOP) {
@@ -82,18 +81,18 @@ uint32_t AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t len)
 
         // Mix into buffer
         sample += *buffer;
+
         // TODO - more subtle compression instead of hard limiter
         *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
 
         // Advance to the next output sample
         offset += increment;
-        framesLeft--;
         buffer++;
     }
 
     samples.releaseRef();
 
-    return len - framesLeft;
+    return true;
 }
 
 void AudioChannelSlot::setPos(uint32_t ofs)

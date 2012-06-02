@@ -89,7 +89,7 @@ void DacAudioOut::tmrIsr()
     if (buf.readAvailable() < 2)
         return;
 
-    uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
+    uint16_t duty = buf.dequeue() + 0x8000;
     duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output
     Dac::write(this->dacChan, duty, Dac::RightAlign12Bit);
 }

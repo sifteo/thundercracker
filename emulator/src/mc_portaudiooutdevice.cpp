@@ -24,17 +24,17 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
 
     PortAudioOutDevice *dev = static_cast<PortAudioOutDevice*>(userData);
     AudioBuffer &audiobuf = dev->buf;
+    int16_t *outBuf = (int16_t*)outputBuffer;
 
     unsigned avail = audiobuf.readAvailable();
 
-    if (avail > 0) {
-        uint8_t *outBuf = (uint8_t*)outputBuffer;
-        unsigned bytesToWrite = MIN(framesPerBuffer * sizeof(int16_t), avail);
-        while (bytesToWrite--)
-            *outBuf++ = audiobuf.dequeue();
-    } else {
-        memset(outputBuffer, 0, framesPerBuffer * sizeof(int16_t));
-    }
+    unsigned count = MIN(framesPerBuffer, avail);
+    framesPerBuffer -= count;
+    while (count--)
+        *outBuf++ = audiobuf.dequeue();
+
+    while (framesPerBuffer--)
+        *outBuf++ = 0;
 
     return paContinue;
 }
