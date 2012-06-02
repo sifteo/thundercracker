@@ -1,9 +1,9 @@
-APP = test-adpcm
+APP = test-tracker
 
 include $(SDK_DIR)/Makefile.defs
 
 OBJS = $(ASSETS).gen.o main.o
-ASSETDEPS += *.raw $(ASSETS).lua
+ASSETDEPS += *.xm $(ASSETS).lua
 
 SIFTULATOR_FLAGS = --headless --waveout output.wav -T -n 0
 GENERATED_FILES += tests.stamp output.wav
