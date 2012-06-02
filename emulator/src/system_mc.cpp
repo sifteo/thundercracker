@@ -53,6 +53,10 @@ bool SystemMC::init(System *sys)
     FlashBlock::init();
     USBProtocolHandler::init();
 
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::start();
+
     return true;
 }
 
@@ -75,6 +79,9 @@ void SystemMC::stop()
 
 void SystemMC::exit()
 {
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::stop();
+
     waveOut.close();
 }
 
@@ -115,10 +122,6 @@ void SystemMC::threadFn(void *param)
     Crc32::init();
     Volume::init();
     Radio::init();
-
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    if (!instance->sys->opt_headless)
-        AudioOutDevice::start();
 
     instance->autoInstall();
 
