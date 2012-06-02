@@ -81,6 +81,21 @@ struct Hex64 {
 
 
 /**
+ * @brief Compare two C-style strings.
+ *
+ * Returns a number less than, equal to, or greater than zero,
+ * corresponding to a < b, a==b, and a > b respectively.
+ *
+ * The number returned is equal to the difference (a[i] - b[i])
+ * where i is the index of the first non-matching character.
+ */
+inline int strncmp(const char *a, const char *b, unsigned count)
+{
+    return _SYS_strncmp(a, b, count);
+}
+
+
+/**
  * @brief A statically sized character buffer, with output formatting support.
  *
  * Method naming and conventions are STL-inspired, but designed for very
@@ -162,7 +177,33 @@ public:
         return buffer[0] == '\0';
     }
 
-    /// Is this string equal to another string?
+    /**
+     * @brief Compare this string against another.
+     *
+     * Returns a number less than, equal to, or greater than zero,
+     * corresponding to this < other, this==other, and this > other respectively.
+     *
+     * The number returned is equal to the difference (this[i] - other[i])
+     * where i is the index of the first non-matching character.
+     */
+    template <class T> int compare(const T &other) const {
+        return strncmp(*this, other, min(capacity(), other.capacity()));
+    }
+
+    /**
+     * @brief Compare this string against a C-style string.
+     *
+     * Returns a number less than, equal to, or greater than zero,
+     * corresponding to this < other, this==other, and this > other respectively.
+     *
+     * The number returned is equal to the difference (this[i] - other[i])
+     * where i is the index of the first non-matching character.
+     */
+    int compare(const char *other) const {
+        return strncmp(*this, other, capacity());
+    }
+
+    /// Overwrite this with another string
     String& operator=(const char *src) {
         _SYS_strlcpy(buffer, src, _capacity);
         return *this;
@@ -230,7 +271,37 @@ public:
         }
         return *this;
     }
-    
+
+    /// Is this string equal to another?
+    template <typename T> bool operator==(const T &other) {
+        return compare(other) == 0;
+    }
+
+    /// Is this string different from another?
+    template <typename T> bool operator!=(const T &other) {
+        return compare(other) != 0;
+    }
+
+    /// Is this string before another, in ASCII order?
+    template <typename T> bool operator<(const T &other) {
+        return compare(other) < 0;
+    }
+
+    /// Is this string before another or equal, in ASCII order?
+    template <typename T> bool operator<=(const T &other) {
+        return compare(other) <= 0;
+    }
+
+    /// Is this string after another, in ASCII order?
+    template <typename T> bool operator>(const T &other) {
+        return compare(other) > 0;
+    }
+
+    /// Is this string after another or equal, in ASCII order?
+    template <typename T> bool operator>=(const T &other) {
+        return compare(other) >= 0;
+    }
+
 private:
     char buffer[_capacity];
 };
