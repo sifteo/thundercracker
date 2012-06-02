@@ -1,0 +1,24 @@
+
+# Common makefile rules for master firmware unit tests
+
+all: tests.stamp
+
+tests.stamp: $(BIN)$(BIN_EXT)
+	@echo "\n================= Running Master Test:" $(BIN)$(BIN_EXT) "\n"
+	./$(BIN)$(BIN_EXT)
+	echo > $@
+
+$(BIN)$(BIN_EXT): $(OBJS)
+	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS)
+
+%.o: %.cpp
+	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
+
+.PHONY: clean
+
+clean:
+	rm -Rf $(BIN)$(BIN_EXT)
+	rm -Rf $(OBJS)
