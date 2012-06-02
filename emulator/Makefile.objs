@@ -25,6 +25,7 @@ LOCAL_OBJS = \
     src/cube_neighbors.o \
     src/lsdec.o \
     src/tinythread.o \
+    src/wavefile.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
     src/mc_portaudiooutdevice.o \

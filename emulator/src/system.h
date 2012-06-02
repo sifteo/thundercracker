@@ -42,6 +42,7 @@ class System {
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
     std::string opt_launcherFilename;
+    std::string opt_waveoutFilename;
 
     // UI options
     bool opt_whiteBackground;

@@ -56,7 +56,7 @@ static void usage()
             "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
             "  -l LAUNCHER.elf     Start the supplied binary as the system launcher\n"
             "\n"
-            "  --headless          Run without the graphical frontend\n"
+            "  --headless          Run without graphics or sound output\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
@@ -65,6 +65,7 @@ static void usage()
             "  --paint-trace       Trace the state of the repaint controller\n"
             "  --white-bg          Force the UI to use a plain white background\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
+            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "\n"
             "Games:\n"
             "  Any games specified on the command line will be installed to\n"
@@ -242,6 +243,12 @@ int main(int argc, char **argv)
                 message("Error: opening file %s for write", argv[c+1]);
                 return 1;
             }
+            c++;
+            continue;
+        }
+
+        if (!strcmp(arg, "--waveout") && argv[c+1]) {
+            sys.opt_waveoutFilename = argv[c+1];
             c++;
             continue;
         }

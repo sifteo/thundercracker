@@ -43,6 +43,12 @@ bool SystemMC::init(System *sys)
     this->sys = sys;
     instance = this;
 
+    if (!sys->opt_waveoutFilename.empty() &&
+        !waveOut.open(sys->opt_waveoutFilename.c_str(), 16000)) {
+        LOG(("AUDIO: Can't open waveout file '%s'\n",
+            sys->opt_waveoutFilename.c_str()));
+    }
+
     FlashDevice::init();
     FlashBlock::init();
     USBProtocolHandler::init();
@@ -69,7 +75,7 @@ void SystemMC::stop()
 
 void SystemMC::exit()
 {
-    // Nothing to do yet
+    waveOut.close();
 }
 
 void SystemMC::autoInstall()
