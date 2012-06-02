@@ -36,6 +36,14 @@
  *      implied by the physical order of objects within a single LFS volume,
  *      and the ordering of LFS volumes within a particular LFS is stated
  *      explicitly via a sequence number in the volume header.
+ *
+ * Each volume has an "index" of objects in that volume, and a "meta-index"
+ * which acts as an index for individual blocks of index data.
+ *
+ * Index blocks grow down from the end of the volume, whereas object data
+ * grows up from the beginning of the volume. The maximum number of index
+ * blocks is limited both by the amount of space in the volume, and by the
+ * number of rows in the (fixed size) meta-index.
  */
 
 #ifndef FLASH_LFS_H_
@@ -132,6 +140,12 @@ public:
  *
  * Note that this structure is guaranteed to be placed at a 32-bit-aligned
  * address, as all elements in the Volume header format are aligned.
+ *
+ * Note that volumes can become full either because their payload space has
+ * filled up with objects, or because their index is full. The index is
+ * almost always large enough that the payload space fills up first, but
+ * there is no upper bound on the worst-case index space used. (Due to
+ * invalid index records and invalid anchor records)
  */
 class FlashLFSVolumeHeader
 {
@@ -372,6 +386,49 @@ public:
 
 
 /**
+ * FlashLFSVolumeVector is an ordered list of Volumes which comprise a
+ * single logical filesystem. The volumes in a VolumeVector are always
+ * sorted by sequence number. Slots in the vector may be marked as invalid
+ * due to deletion, and they must be skipped until the vector is compacted.
+ *
+ * The vector must be sized to support a worst-case filesystem layout. This
+ * means the maximum number of keys, and every object taking the maximum
+ * amount of space. Plus we need room for two partially-filled volumes at
+ * the beginning and end of our ring.
+ */
+class FlashLFSVolumeVector
+{
+    // Maximum size of our index, per volume
+    static const unsigned MAX_INDEX_BYTES_PER_VOLUME =
+        FlashBlock::BLOCK_SIZE * FlashLFSVolumeHeader::NUM_ROWS;
+
+    // Minimum amount of volume space available for object data
+    static const unsigned MIN_OBJ_BYTES_PER_VOLUME =
+        FlashMapBlock::BLOCK_SIZE   // Our volumes are a single map block long
+        - FlashBlock::BLOCK_SIZE    // Volume header takes one cache block
+        - MAX_INDEX_BYTES_PER_VOLUME;
+
+    // Theoretical maximum amount of space used by all objects
+    static const unsigned MAX_TOTAL_OBJ_BYTES =
+        FlashLFSIndexRecord::MAX_KEYS * FlashLFSIndexRecord::MAX_SIZE;
+
+    // Number of volumes required just to store the worst-case set of objects
+    static const unsigned MAX_OBJ_VOLUMES = 
+        (MAX_TOTAL_OBJ_BYTES + MIN_OBJ_BYTES_PER_VOLUME - 1) / MIN_OBJ_BYTES_PER_VOLUME;
+
+    // Number of 'padding' volumes which we may require for garbage collection
+    static const unsigned PAD_VOLUMES = 2;
+
+public:
+    // Maximum number of volumes in use by a single filesystem
+    static const unsigned MAX_VOLUMES = MAX_OBJ_VOLUMES + PAD_VOLUMES;
+
+    FlashVolume slots[MAX_VOLUMES];
+    unsigned numSlotsInUse;
+};
+
+
+/**
  * Represents the in-memory state associated with a single LFS.
  *
  * This is a vector of FlashVolumes for each volume within the LFS.
@@ -381,21 +438,9 @@ public:
 class FlashLFS
 {
 private:
-
-    /*
-     * All of our volumes occupy exactly one FlashMapBlock.
-     * The first block is used for a header (Volume header, plus our meta-index).
-     * Other blocks are available for our own payload (Index plus objects).
-     */
-    static const unsigned VOLUME_SIZE = FlashMapBlock::BLOCK_SIZE;
-    static const unsigned VOLUME_PAYLOAD_BYTES = VOLUME_SIZE - FlashBlock::BLOCK_SIZE;
-
-    static const unsigned MAX_OBJECTS_PER_VOLUME = FlashMapBlock::BLOCK_SIZE / FlashLFSIndexRecord::MIN_SIZE;
-
-    FlashVolume volumes[];
+    FlashLFSVolumeVector volumes;
 
 public:
-    
     FlashLFS(FlashVolume parent);
 
     bool findObject(unsigned key, uint32_t &addr, uint32_t &size);
