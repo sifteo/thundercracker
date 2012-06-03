@@ -27,6 +27,7 @@ private:
     // An additional simulation-only buffer, necessary because of the jitter in our virtual clock
     typedef RingBuffer<512, int16_t> SimBuffer_t;
     SimBuffer_t simBuffer;
+    uint32_t bufferFilling;     // Must be 32-bit (atomic access)
 
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,

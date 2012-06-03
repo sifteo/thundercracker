@@ -21,31 +21,50 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     (void) timeInfo;
     (void) inputBuffer;
 
+    int16_t *outBuf = (int16_t*)outputBuffer;
+    PortAudioOutDevice *self = static_cast<PortAudioOutDevice*>(userData);
+    SimBuffer_t &ring = self->simBuffer;
+
     /*
      * Copy from the source AudioBuffer to our simulation-only supplemental
      * buffer which covers up the jitter in our virtual clock.
      */
-
-    PortAudioOutDevice *self = static_cast<PortAudioOutDevice*>(userData);
-    SimBuffer_t &ring = self->simBuffer;
     ring.pull(self->buf);
 
-    /*
-     * Copy from the intermediate buffer to PortAudio's
-     * variable-sized output buffer. If we run out of data
-     * early, we must pad with silence. This could indicate
-     * an actual underrun condition, or it could just be the
-     * end of all playing samples.
-     */
+    if (self->bufferFilling) {
+        /*
+         * Waiting for buffer to fill
+         */
+        if (ring.full())
+            self->bufferFilling = false;
+    } else {
+        /*
+         * Copy from the intermediate buffer to PortAudio's
+         * variable-sized output buffer. If we run out of data
+         * early, we must pad with silence. This could indicate
+         * an actual underrun condition, or it could just be the
+         * end of all playing samples.
+         */
 
-    int16_t *outBuf = (int16_t*)outputBuffer;
-    unsigned avail = ring.readAvailable();
-    unsigned count = MIN(framesPerBuffer, avail);
+        unsigned avail = ring.readAvailable();
+        unsigned count = MIN(framesPerBuffer, avail);
 
-    framesPerBuffer -= count;
-    while (count--)
-        *outBuf++ = ring.dequeue();
+        framesPerBuffer -= count;
+        while (count--)
+            *outBuf++ = ring.dequeue();
 
+        if (framesPerBuffer) {
+            /*
+             * An underrun happened, oh noes. To make sure
+             * we can recover from this, give the ring buffer
+             * time to completely fill before we start pulling
+             * from it again.
+             */
+            self->bufferFilling = true;
+        }
+    }
+
+    // Underrun or mixer is disabled. Nothing to play.
     while (framesPerBuffer--)
         *outBuf++ = 0;
 
