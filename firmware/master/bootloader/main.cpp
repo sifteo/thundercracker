@@ -39,5 +39,6 @@ int main()
      * over USB and get processed within Tasks::work().
      */
      Bootloader loader;
+     loader.init();
      loader.exec(); // never returns
 }

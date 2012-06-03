@@ -11,6 +11,13 @@ public:
     static const uint32_t KEY1 = 0x45670123;
     static const uint32_t KEY2 = 0xCDEF89AB;
 
+    // connectivity line specific values
+    static const unsigned PAGE_SIZE = 2 * 1024;
+    static const unsigned NUM_PAGES = 64;
+
+    static const uint32_t START_ADDR = 0x8000000;
+    static const uint32_t END_ADDR = START_ADDR + (NUM_PAGES * PAGE_SIZE);
+
     static void unlock() {
         FLASH.KEYR = KEY1;
         FLASH.KEYR = KEY2;
@@ -50,10 +57,17 @@ public:
         FLASH.CR &= ~(1 << 1);
     }
 
-    static bool setReadOutProtectionEnabled(bool enabled);
-    static bool readOutProectionIsEnabled() {
+    static bool readOutProtectionIsEnabled() {
         return (FLASH.OBR & (1 << 1)) != 0;
     }
+
+    struct OptionByte {
+        bool program;
+        uint16_t value;
+    };
+
+    static const unsigned NUM_OPTION_BYTES = 8;
+    static bool setOptionBytes(OptionByte *optionBytes);
 
 private:
     enum WaitStatus {

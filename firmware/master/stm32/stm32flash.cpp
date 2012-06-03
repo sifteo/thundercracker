@@ -1,22 +1,37 @@
 #include "stm32flash.h"
 
-bool Stm32Flash::setReadOutProtectionEnabled(bool enabled)
+/*
+ * optionByteTable provides a table of { bool, value } entries
+ * to program into the option bytes.
+ */
+bool Stm32Flash::setOptionBytes(OptionByte *optionBytes)
 {
     if (waitForPreviousOperation() != WaitOk)
         return false;
 
-    // Authorizes the small information block programming
+    // enable information block programming
     FLASH.OPTKEYR = KEY1;
     FLASH.OPTKEYR = KEY2;
 
+    // erase option bytes
     FLASH.CR |= (1 << 5);   // OPTER: Option byte erase
     FLASH.CR |= (1 << 6);   // STRT: start the erase operation
-    if (waitForPreviousOperation() != WaitOk)
-        return false;
+    bool success = (waitForPreviousOperation() == WaitOk);
     FLASH.CR &= ~(1 << 5);  // OPTER: Option byte erase
+    if (!success)
+        return false;
 
+    // program option bytes
     FLASH.CR |= (1 << 4);   // OPTPG: Option byte programming
-    FLASH_OB.RDP = enabled ? 0x00 : READOUT_PROTECT_KEY;
+
+    uint32_t OB = reinterpret_cast<uint32_t>(&FLASH_OB);
+    for (unsigned i = 0; i < NUM_OPTION_BYTES; ++i) {
+        if (optionBytes->program)
+            programHalfWord(optionBytes->value, OB);
+        optionBytes++;
+        OB += sizeof(uint16_t);
+    }
+
     waitForPreviousOperation();
     FLASH.CR &= ~(1 << 4);  // OPTPG: Option byte programming
 
