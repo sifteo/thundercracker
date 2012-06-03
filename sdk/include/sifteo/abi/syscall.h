@@ -128,7 +128,7 @@ void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(105);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(48);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(106);
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(107);
-uint32_t _SYS_crc32(const uint32_t *data, uint32_t count) _SC(159);
+uint32_t _SYS_crc32(const uint8_t *data, uint32_t count) _SC(159);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(108);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(57);
