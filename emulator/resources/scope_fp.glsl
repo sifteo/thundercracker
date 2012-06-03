@@ -19,7 +19,7 @@ void main()
     float sample = 1.0 - texture2D(sampleBuffer, vec2(samplePos, channelNum / numChannels)).r;
     float closeness = pow(1.0 + abs(sample - texCoord.y), -focus);
 
-    vec4 bg = texture2D(background, vec2(samplePos, texCoord.y));
+    vec4 bg = texture2D(background, vec2(x, texCoord.y));
     gl_FragColor.rgb = mix(bg.rgb, fg.rgb, closeness * bg.a);
     gl_FragColor.a = 1.0;
 }

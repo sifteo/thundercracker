@@ -78,7 +78,7 @@ bool GLRenderer::init()
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     scopeSampleTexture = 0;
-    scopeBackgroundTexture = loadTexture(img_scope_bg, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
+    scopeBackgroundTexture = loadTexture(img_scope_bg, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     /*
      * Procedural models
@@ -1019,15 +1019,12 @@ void GLRenderer::overlayAudioVisualizer()
             MCAudioVisData::instance.channels[channel].scope.getSweep());
     }
 
-    const unsigned height = viewportHeight / 6;
-    const unsigned margin = 0;
+    // Make each channel's scope a square
+    const unsigned height = viewportWidth / MCAudioVisData::NUM_CHANNELS;
     static const float color[4] = { 1, 1, 1, 1 };
 
     glDisable(GL_BLEND);
-
-    overlayRect(margin, viewportHeight - height - margin,
-        viewportWidth - margin*2, height, color, scopeProgram);
-
+    overlayRect(0, viewportHeight - height, viewportWidth, height, color, scopeProgram);
     glEnable(GL_BLEND);
 
     glActiveTexture(GL_TEXTURE1);
