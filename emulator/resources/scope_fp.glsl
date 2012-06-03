@@ -16,7 +16,7 @@ void main()
     float channelNum = floor(x);
     float samplePos = x - channelNum;
 
-    float sample = texture2D(texture, vec2(samplePos, channelNum / numChannels)).r;
+    float sample = 1.0 - texture2D(texture, vec2(samplePos, channelNum / numChannels)).r;
     float closeness = pow(1.0 + abs(sample - texCoord.y), -focus);
 
     float shadowAlpha = (samplePos + texCoord.y) * 0.3;
