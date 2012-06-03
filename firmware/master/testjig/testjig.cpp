@@ -27,7 +27,7 @@ static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
-TestJig::VramTransaction TestJig::vramTransaction;
+TestJig::I2CWriteTransaction TestJig::cubeWrite;
 TestJig::SensorsTransaction TestJig::sensorsTransaction;
 
 /*
@@ -41,7 +41,7 @@ TestJig::TestHandler const TestJig::handlers[] = {
     getUsbCurrentHandler,                   // 3
     beginNeighborRxHandler,                 // 4
     stopNeighborRxHandler,                  // 5
-    writeToCubeVramHandler,                 // 6
+    writeToCubeI2CHandler,                  // 6
     setCubeSensorsEnabledHandler,           // 7
 };
 
@@ -92,7 +92,7 @@ void TestJig::init()
 
     sensorsTransaction.enabled = false;
     sensorsTransaction.byteIdx = 0;
-    vramTransaction.state = VramIdle;
+    cubeWrite.remaining = 0;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
 
@@ -164,32 +164,17 @@ void TestJig::onI2cEvent()
      * It's a bit gross, but treat a NACK as equivalent to a STOP to work around this.
      */
     if (status & (I2CSlave::Nack | I2CSlave::StopBit)) {
-        vramTransaction.state = VramIdle;
+        cubeWrite.remaining = 0;
     }
 
     // send next byte
     if (status & I2CSlave::TxEmpty) {
-        switch (vramTransaction.state) {
-
-        case VramIdle:
+        if (cubeWrite.remaining > 0) {
+            byte = *(cubeWrite.data);
+            cubeWrite.data++;
+            cubeWrite.remaining--;
+        } else {
             byte = 0xff;
-            break;
-
-        case VramAddressHigh:
-            byte = vramTransaction.address >> 8;
-            vramTransaction.state = VramAddressLow;
-            break;
-
-        case VramAddressLow:
-            byte = vramTransaction.address & 0xff;
-            vramTransaction.state = VramPayload;
-            break;
-
-        case VramPayload:
-            byte = vramTransaction.payload;
-            vramTransaction.state = VramIdle;
-            break;
-
         }
     }
 
@@ -278,21 +263,46 @@ void TestJig::stopNeighborRxHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
- * args[1] - low byte of address
- * args[2] - high byte of address
- * args[3] - data payload
+ * starting with args[1], back to back payloads as specified in
+ * docs/cube-factorytest-protocol.rst.
  */
-void TestJig::writeToCubeVramHandler(uint8_t argc, uint8_t *args)
+void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
 {
-    // ensure any vram transactions in progress are complete
-    while (vramTransaction.state != VramIdle)
-        ;
+    uint8_t transactionsWritten = 0;
 
-    vramTransaction.address = args[2] << 8 | args[1];
-    vramTransaction.payload = args[3];
-    vramTransaction.state = VramAddressHigh;
+    argc--; // step past command
 
-    const uint8_t response[] = { args[0] };
+    while (argc > 0) {
+
+        uint8_t numBytes;
+        if (args[0] == I2CFlashFifo)
+            numBytes = 2;
+        else if (args[0] == I2CFlashReset)
+            numBytes = 1;
+        else if (args[0] < I2CVramMax)
+            numBytes = 3;
+        else
+            break;
+
+        if (numBytes > argc)
+            break;
+
+        cubeWrite.data = args;
+        cubeWrite.remaining = numBytes;
+
+        // step to the next transaction
+        argc -= numBytes;
+        args += numBytes;
+        transactionsWritten++;
+
+        // wait for previous vram transactions to complete.
+        // need to wait for this before returning since
+        // cubeWrite has a pointer to argc and we need to keep it in scope
+        while (cubeWrite.remaining > 0)
+            ;
+    }
+
+    const uint8_t response[] = { args[0], transactionsWritten };
     UsbDevice::write(response, sizeof response);
 }
 
