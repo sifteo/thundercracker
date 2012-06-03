@@ -36,6 +36,19 @@ void checkSelf()
     String<11> buf;
     buf << self.title();
     ASSERT(buf == "Filesystem");
+    ASSERT(buf < "Filfsystem");
+    ASSERT(buf >= "Filesyste");
+}
+
+void createObjects()
+{
+    static StoredObject foo = StoredObject::allocate();
+    static StoredObject bar = StoredObject::allocate();
+    static StoredObject wub = StoredObject::allocate();
+
+    ASSERT(foo != bar);
+    ASSERT(foo != wub);
+    ASSERT(bar != wub);
 }
 
 void main()
@@ -55,6 +68,12 @@ void main()
     // This leaves a bunch of test volumes (Type 0x8765) in the filesystem.
     // We're guaranteed to see at least one of these.
     checkTestVolumes();
-    
+
+    // Now start flooding the FS with object writes
+    createObjects();
+
+    // Back to Lua, let it check whether our wear levelling has been working
+    SCRIPT(LUA, dumpAndCheckFilesystem());
+
     LOG("Success.\n");
 }

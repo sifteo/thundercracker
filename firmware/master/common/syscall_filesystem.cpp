@@ -161,7 +161,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
     return 0;
 }
 
-int32_t _SYS_fs_objectWrite(unsigned key, uint8_t *data, unsigned dataSize)
+int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize)
 {
     // Programs may only write objects in their own local volume
     FlashVolume parentVol = SvmLoader::getRunningVolume();

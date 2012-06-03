@@ -52,6 +52,7 @@
 #include "macros.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include <sifteo/abi.h>
 
 
 /**
@@ -207,19 +208,19 @@ public:
     // Keys are 8-bit, there can be at most this many
     static const unsigned MAX_KEYS = 0x100;
 
-    // Object sizes are 8-bit, nonzero, measured in multiples of SIZE_UNIT
+    // Object sizes are 8-bit, measured in multiples of SIZE_UNIT
     static const unsigned SIZE_SHIFT = 4;
     static const unsigned SIZE_UNIT = 1 << SIZE_SHIFT;
     static const unsigned SIZE_MASK = SIZE_UNIT - 1;
-    static const unsigned MAX_SIZE = 0x100 << SIZE_SHIFT;
-    static const unsigned MIN_SIZE = 0x001 << SIZE_SHIFT;
+    static const unsigned MAX_SIZE = 0xFF << SIZE_SHIFT;
 
     void init(unsigned key, unsigned sizeInBytes, unsigned crc)
     {
         STATIC_ASSERT(sizeof *this == 5);
+        STATIC_ASSERT(_SYS_FS_MAX_OBJECT_KEYS == MAX_KEYS);
+        STATIC_ASSERT(_SYS_FS_MAX_OBJECT_SIZE == MAX_SIZE);
 
         ASSERT(key < MAX_KEYS);
-        ASSERT(sizeInBytes >= MIN_SIZE);
         ASSERT(sizeInBytes <= MAX_SIZE);
         ASSERT((sizeInBytes & SIZE_MASK) == 0);
 
@@ -245,7 +246,7 @@ public:
     }
 
     unsigned getSizeInBytes() const {
-        return (size + 1U) << SIZE_SHIFT;
+        return size << SIZE_SHIFT;
     }
 
     bool checkCRC(unsigned reference) const {

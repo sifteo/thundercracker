@@ -258,9 +258,9 @@ function testFilesystem()
 
     testHierarchy()
     testRandomVolumes()
+end
 
-    -- Check over the aftermath
-
+function dumpAndCheckFilesystem()
     dumpFilesystem()
     dumpEndurance()
     checkEndurance()
