@@ -1,17 +1,12 @@
 ENTRY(_start)
 
 /*
- * Our ram is split into 3 sections:
- * - system ram, used for .data and stack of the firmware
- * - flash block cache, used to cache blocks of game code/data from external flash
- * - user ram, used as .data and stack for user applications
+ * XXX: flash size is temporary until I do some more teasing apart of the
+ *      build files to pare it down.
  */
 MEMORY
 {
-    SYSRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 28K
-    CACHERAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM), LENGTH = 4K
-    USERRAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM) + LENGTH(CACHERAM), LENGTH = 32K
-
+    SYSRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 64K
     FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
 }
 
@@ -91,20 +86,6 @@ SECTIONS
         *(.bss .bss.*);
         __bss_end = .;
     } >SYSRAM
-
-    .blockcache (NOLOAD) : {
-        . = ALIGN(4);
-        __blockcache_start = .;
-        *(.blockcache);
-        __blockcache_end = .;
-    } >CACHERAM
-
-    .userram (NOLOAD) : {
-        . = ALIGN(4);
-        __userram_start = .;
-        *(.userram);
-        __userram_end = .;
-    } >USERRAM
 
     /*
      * Junk we don't want.
