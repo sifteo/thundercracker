@@ -1,14 +1,14 @@
 varying vec2 texCoord;
 
-uniform sampler2D texture;
+// X = sample number, Y = channel number, L = unsigned sample value
+uniform sampler2D sampleBuffer; 
+
+// RGB = background color, A = trace mask
+uniform sampler2D background;
 
 const float numChannels = 8.0;
-const float focus = 40.0;
-
-const vec4 bg = vec4(0.0, 0.1, 0.2, 0.5);
-const vec4 fg = vec4(1.2, 1.8, 1.2, 1.0);
-
-const vec4 shadow = vec4(0.0, 0.0, 0.0, 1.0);
+const float focus = 60.0;
+const vec3 fg = vec3(1.8, 2.7, 1.8);
 
 void main()
 {
@@ -16,10 +16,10 @@ void main()
     float channelNum = floor(x);
     float samplePos = x - channelNum;
 
-    float sample = 1.0 - texture2D(texture, vec2(samplePos, channelNum / numChannels)).r;
+    float sample = 1.0 - texture2D(sampleBuffer, vec2(samplePos, channelNum / numChannels)).r;
     float closeness = pow(1.0 + abs(sample - texCoord.y), -focus);
 
-    float shadowAlpha = (samplePos + texCoord.y) * 0.3;
-
-    gl_FragColor = mix(mix(bg, fg, closeness), shadow, shadowAlpha);
+    vec4 bg = texture2D(background, vec2(samplePos, texCoord.y));
+    gl_FragColor.rgb = mix(bg.rgb, fg.rgb, closeness * bg.a);
+    gl_FragColor.a = 1.0;
 }

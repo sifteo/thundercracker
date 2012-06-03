@@ -144,7 +144,8 @@ class GLRenderer {
     GLuint bgLightTexture;
 
     GLhandleARB scopeProgram;
-    GLuint scopeTexture;
+    GLuint scopeSampleTexture;
+    GLuint scopeBackgroundTexture;
     
     GLuint fontTexture;
     

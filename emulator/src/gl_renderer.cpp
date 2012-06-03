@@ -56,7 +56,8 @@ bool GLRenderer::init()
     GLhandleARB scopeVP = loadShader(GL_VERTEX_SHADER, scope_vp);
     scopeProgram = linkProgram(scopeFP, scopeVP);
     glUseProgramObjectARB(scopeProgram);
-    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "texture"), 0);
+    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "sampleBuffer"), 0);
+    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "background"), 1);
 
     /*
      * Load textures
@@ -67,6 +68,7 @@ bool GLRenderer::init()
     extern const uint8_t img_cube_face_hilight_mask[];
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
+    extern const uint8_t img_scope_bg[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
@@ -75,7 +77,8 @@ bool GLRenderer::init()
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
-    scopeTexture = 0;
+    scopeSampleTexture = 0;
+    scopeBackgroundTexture = loadTexture(img_scope_bg, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
 
     /*
      * Procedural models
@@ -756,18 +759,23 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filte
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
+    if (filter == GL_LINEAR_MIPMAP_LINEAR) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  decoder.getWidth(),
                  decoder.getHeight(),
                  0, GL_RGBA, GL_UNSIGNED_BYTE,
                  &pixels[0]);
 
-    // Sane defaults
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-    
     return texture;
 }
 
@@ -979,13 +987,17 @@ void GLRenderer::overlayAudioVisualizer()
     if (!MCAudioVisData::instance.mixerActive)
         return;
 
-    bool initializing = !scopeTexture;
+    bool initializing = !scopeSampleTexture;
     if (initializing)
-        glGenTextures(1, &scopeTexture);
+        glGenTextures(1, &scopeSampleTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, scopeBackgroundTexture);
 
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, scopeTexture);
+    glBindTexture(GL_TEXTURE_2D, scopeSampleTexture);
 
     if (initializing) {
         // Allocate an empty texture
@@ -1008,12 +1020,19 @@ void GLRenderer::overlayAudioVisualizer()
     }
 
     const unsigned height = viewportHeight / 6;
-    const unsigned margin = 4;
+    const unsigned margin = 0;
     static const float color[4] = { 1, 1, 1, 1 };
+
+    glDisable(GL_BLEND);
 
     overlayRect(margin, viewportHeight - height - margin,
         viewportWidth - margin*2, height, color, scopeProgram);
 
+    glEnable(GL_BLEND);
+
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
 }
 
