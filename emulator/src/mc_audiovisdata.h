@@ -20,7 +20,17 @@ public:
     // Size of scope buffer; also determines duration of each horizontal sweep.
     static const unsigned NUM_SAMPLES = 16000 / 440 * 8;
 
+    // Size of array; holds two logical buffers
+    static const unsigned ARRAY_SIZE = NUM_SAMPLES * 2;
+
+    // Number of samples to search for a trigger
+    static const unsigned TRIGGER_SEARCH_LEN = NUM_SAMPLES / 4;
+
+    // Number of samples visible in one scope sweep.
+    static const unsigned SWEEP_LEN = NUM_SAMPLES - TRIGGER_SEARCH_LEN;
+
     MCAudioVisScope();
+    uint16_t *getSweep();
 
     void write(int16_t sample)
     {
@@ -33,25 +43,16 @@ public:
     void clear()
     {
         if (!isClear) {
-            for (unsigned i = 0; i != NUM_SAMPLES * 2; ++i)
+            for (unsigned i = 0; i != ARRAY_SIZE; ++i)
                 write(i);
             isClear = true;
         }
     }
 
-    uint16_t *getSamples()
-    {
-        // Return the half of the buffer that isn't being written to.
-        if (head >= NUM_SAMPLES)
-            return &samples[0];
-        else
-            return &samples[NUM_SAMPLES];
-    }
-
 private:
     unsigned head;
     bool isClear;
-    uint16_t samples[NUM_SAMPLES * 2];
+    uint16_t samples[ARRAY_SIZE];
 };
 
 

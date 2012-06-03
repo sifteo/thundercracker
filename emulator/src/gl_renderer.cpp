@@ -996,15 +996,15 @@ void GLRenderer::overlayAudioVisualizer()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16,
-            MCAudioVisScope::NUM_SAMPLES, MCAudioVisData::NUM_CHANNELS,
+            MCAudioVisScope::SWEEP_LEN, MCAudioVisData::NUM_CHANNELS,
             0, GL_LUMINANCE, GL_UNSIGNED_SHORT, 0);
     }
 
     // Upload texture, one channel / row at a time
     for (unsigned channel = 0; channel < MCAudioVisData::NUM_CHANNELS; ++channel) {
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, channel,
-            MCAudioVisScope::NUM_SAMPLES, 1, GL_LUMINANCE, GL_UNSIGNED_SHORT,
-            MCAudioVisData::instance.channels[channel].scope.getSamples());
+            MCAudioVisScope::SWEEP_LEN, 1, GL_LUMINANCE, GL_UNSIGNED_SHORT,
+            MCAudioVisData::instance.channels[channel].scope.getSweep());
     }
 
     const unsigned height = viewportHeight / 6;
