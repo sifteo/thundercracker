@@ -18,6 +18,10 @@
 #include "testjig.h"
 #endif
 
+#ifdef BOOTLOADER
+#include "bootloader.h"
+#endif
+
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
     Usb::DescriptorDevice,          // bDescriptorType

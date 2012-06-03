@@ -12,7 +12,8 @@ MEMORY
     CACHERAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM), LENGTH = 4K
     USERRAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM) + LENGTH(CACHERAM), LENGTH = 32K
 
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
+    /* Only 120K to leave room for bootloader */
+    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 120K
 }
 
 /* Main stack starts at the top of SYSRAM */

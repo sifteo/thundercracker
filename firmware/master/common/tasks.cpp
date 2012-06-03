@@ -15,16 +15,21 @@
 
 uint32_t Tasks::pendingMask;
 
+// XXX: managing the list of tasks for different configurations
+// is starting to get a little unwieldy...
 Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     #else
     { UsbDevice::handleOUTData, 0},
     #endif
+
+    #ifndef BOOTLOADER
     { AudioMixer::pullAudio, 0},
     { SvmDebugger::messageLoop, 0},
     { CubeSlots::assetLoaderTask, 0 },
     { HomeButton::task, 0 },
+    #endif
 };
 
 void Tasks::init()

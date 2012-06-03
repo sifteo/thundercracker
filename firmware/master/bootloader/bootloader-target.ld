@@ -1,13 +1,9 @@
 ENTRY(_start)
 
-/*
- * XXX: flash size is temporary until I do some more teasing apart of the
- *      build files to pare it down.
- */
 MEMORY
 {
     SYSRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 64K
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
+    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 8K
 }
 
 /* Main stack starts at the top of SYSRAM */
