@@ -12,31 +12,62 @@ static Metadata M = Metadata()
 static const CubeID cube = 0;
 static VideoBuffer vid;
 
+const AudioChannel squareChannel(0);
+const AudioChannel sine1Channel(1);
+const AudioChannel sine2Channel(2);
+
+static int16_t sineWave[64];
+static const AssetAudio sineAsset = {{
+    /* sampleRate  */  0,
+    /* loopStart   */  0,
+    /* loopEnd     */  arraysize(sineWave) - 1,
+    /* loopType    */  _SYS_LOOP_REPEAT,
+    /* type        */  _SYS_PCM,
+    /* volume      */  0,
+    /* dataSize    */  sizeof sineWave,
+    /* pData       */  reinterpret_cast<uint32_t>(sineWave),
+}};
+
+static int16_t squareWave[256];
+static const AssetAudio squareAsset = {{
+    /* sampleRate  */  0,
+    /* loopStart   */  0,
+    /* loopEnd     */  arraysize(squareWave) - 1,
+    /* loopType    */  _SYS_LOOP_REPEAT,
+    /* type        */  _SYS_PCM,
+    /* volume      */  0,
+    /* dataSize    */  sizeof squareWave,
+    /* pData       */  reinterpret_cast<uint32_t>(squareWave),
+}};
+
+void synthInit()
+{
+    for (int i = 0; i != arraysize(sineWave); i++) {
+        float theta = i * float(M_PI * 2 / (arraysize(sineWave)-1));
+        sineWave[i] = sin(theta) * 0x7fff;
+    }
+
+    sine1Channel.play(sineAsset);
+    sine2Channel.play(sineAsset);
+    squareChannel.play(squareAsset);
+}
 
 void synthesize(float hz, float timbre, float volume)
 {
     LOG("hz=%f timbre=%f volume=%f\n", hz, timbre, volume);
     
-    const AudioChannel channel(0);
-    static int16_t sampleWave[512];
-    static const AssetAudio sampleAsset = {{
-        /* sampleRate  */  0,
-        /* loopStart   */  0,
-        /* loopEnd     */  arraysize(sampleWave) - 1,
-        /* loopType    */  _SYS_LOOP_REPEAT,
-        /* type        */  _SYS_PCM,
-        /* volume      */  0,
-        /* dataSize    */  sizeof sampleWave,
-        /* pData       */  reinterpret_cast<uint32_t>(sampleWave),
-    }};
+    int dutyCycle = timbre * arraysize(squareWave);
+    for (int i = 0; i != arraysize(squareWave); i++) {
+        squareWave[i] = i < dutyCycle ? 0x7fff : 0x8000;
+    }
 
-    int dutyCycle = timbre * arraysize(sampleWave);
-    for (int i = 0; i != arraysize(sampleWave); i++)
-        sampleWave[i] = (dutyCycle < i) ? 10000 : -10000;
+    sine1Channel.setVolume(volume * 128.f);
+    sine2Channel.setVolume(volume * 96.f);
+    squareChannel.setVolume(volume * 32.f);
 
-    channel.play(sampleAsset);
-    channel.setVolume(volume * 255.f);
-    channel.setSpeed(hz * arraysize(sampleWave));
+    sine1Channel.setSpeed(hz * arraysize(sineWave));                // Fundamental
+    sine2Channel.setSpeed(hz * 1.02f * arraysize(sineWave));        // Beat frequency
+    squareChannel.setSpeed(hz * 1.26f * arraysize(squareWave));     // 5 half-steps above
 }
 
 void main()
@@ -48,20 +79,23 @@ void main()
     vid.bg0rom.erase(bg);
     vid.bg0rom.fill(vec(0,0), vec(3,3), fg);
     vid.attach(cube);
+    synthInit();
 
     float hz = 0;
 
     while (1) {
-        // Scale to [0, 1]
-        auto accel = (cube.accel() + vec(128,128,128)) / 255.f;
+        // Scale to [-1, 1]
+        auto accel = cube.accel() / 128.f;
 
         // Glide to the target note (half-steps above or below middle C)
         float note = 261.6f * pow(1.05946f, round(accel.y * 24.f));
         hz += (note - hz) * 0.4f;
 
-        synthesize(hz, accel.x, accel.x);
+        synthesize(hz, accel.x,
+            clamp(accel.x + 0.5f, 0.f, 1.f));
 
-        vid.bg0rom.setPanning(accel.xy() * -(LCD_size - vec(24,24)));
+        const Int2 center = LCD_center - vec(24,24)/2;
+        vid.bg0rom.setPanning(-(center + accel.xy() * 60.f));
         System::paint();
     }
 }
