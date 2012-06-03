@@ -1,6 +1,5 @@
 
 #include "bootloader.h"
-#include "flash_device.h"
 #include "stm32flash.h"
 #include "crc.h"
 #include "tasks.h"
@@ -11,15 +10,12 @@
 #include "string.h"
 
 Bootloader::Update Bootloader::update;
-
-Bootloader::Bootloader()
-{
-    
-}
+bool Bootloader::firstLoad;
 
 void Bootloader::init()
 {
-    FlashDevice::init();
+    firstLoad = true;
+
     Crc32::init();
     Tasks::init();
 }
@@ -49,10 +45,13 @@ void Bootloader::exec()
  */
 void Bootloader::load()
 {
-    // XXX: check if USB is already enabled (ie, this is not our first attempt)
-    UsbDevice::init();
+    if (firstLoad) {
+        UsbDevice::init();
+        Stm32Flash::unlock();
 
-    Stm32Flash::unlock();
+        firstLoad = false;
+    }
+
     if (!eraseMcuFlash())
         return;
 
@@ -86,21 +85,25 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
     }
 
     case CmdWriteMemory: {
-        // packets should be block aligned, after the cmd byte
-        if ((numBytes - 1) % AES128::BLOCK_SIZE != 0)
-            return;
-
         uint8_t plaintext[AES128::BLOCK_SIZE];
         const uint8_t *cipherIn = buf + 1;
+        numBytes--; // step past the byte of command
 
-        AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
-        AES128::xorBlock(plaintext, cipherIn);
+        while (numBytes >= AES128::BLOCK_SIZE) {
+            AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
+            AES128::xorBlock(plaintext, cipherIn);
 
-        const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
-        for (unsigned i = 0; i < AES128::BLOCK_SIZE / 2; ++i) {
-            Stm32Flash::programHalfWord(*p, update.addressPointer);
-            update.addressPointer += 2;
-            p++;
+            const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
+            const unsigned numHalfWords = AES128::BLOCK_SIZE / sizeof(uint16_t);
+
+            for (unsigned i = 0; i < numHalfWords; ++i) {
+                Stm32Flash::programHalfWord(*p, update.addressPointer);
+                update.addressPointer += 2;
+                p++;
+            }
+
+            cipherIn += AES128::BLOCK_SIZE;
+            numBytes -= AES128::BLOCK_SIZE;
         }
         break;
     }
@@ -182,9 +185,7 @@ void Bootloader::disableUpdater()
  */
 bool Bootloader::mcuFlashIsValid()
 {
-    uint32_t crc, imgsize;
-    // TODO: determine how we store these
-    crc = imgsize = 0;
+    uint32_t imgsize = 0;    // TODO: determine how we store this
 
     Crc32::reset();
     uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
@@ -200,7 +201,9 @@ bool Bootloader::mcuFlashIsValid()
     if (Crc32::get() == 0xffffffff)
         return false;
 
-    return (crc == Crc32::get());
+    // CRC is stored in flash directly after the FW image
+    uint32_t storedCrc = *address;
+    return (storedCrc == Crc32::get());
 }
 
 /*

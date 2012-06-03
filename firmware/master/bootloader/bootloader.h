@@ -14,7 +14,6 @@ public:
     static const uint32_t APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
     static const uint32_t NUM_FLASH_PAGES = SIZE / Stm32Flash::PAGE_SIZE;
 
-    Bootloader();
     static void init();
     static void exec();
 
@@ -36,6 +35,7 @@ private:
     };
 
     static Update update;
+    static bool firstLoad;
 
     enum Command {
         CmdGetVersion,

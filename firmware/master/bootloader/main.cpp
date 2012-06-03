@@ -23,16 +23,7 @@ int main()
      */
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
-
-
-    /*
-     * High-level hardware initialization
-     */
-
-    SysTime::init();
-
-    UsbDevice::init();
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
 
     /*
      * Once the TestJig is initialized, test commands from the host will arrive
