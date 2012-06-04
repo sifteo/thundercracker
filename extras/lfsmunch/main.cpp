@@ -14,7 +14,11 @@ void main()
 {
     for (unsigned i = 0; i <= StoredObject::LIMIT; i++) {
         LOG("Writing object #%d\n", i);
-        StoredObject(i).write(i);
+
+        String<10> obj;
+        obj << "Obj #" << i;
+
+        StoredObject(i).write(obj);
     }
     
     LOG("Done\n");

@@ -50,11 +50,20 @@
 class FlashVolume
 {
 public:
+    /**
+     * Convention for volume types:
+     *
+     *    - System volume types are two capital letters
+     *
+     *    - If userspace volumes are ever allowed, they will
+     *      follow a still-TBD namespacing scheme.
+     */
     enum Type {
-        T_DELETED       = 0x0000,       // Must be zero
-        T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,
-        T_GAME          = _SYS_FS_VOL_GAME,
-        T_INCOMPLETE    = 0xFFFF,       // Must be FFFF
+        T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"
+        T_GAME          = _SYS_FS_VOL_GAME,         // "GM"
+        T_LFS           = 0x5346,                   // "FS"
+        T_DELETED       = 0x0000,                   // Must be zero
+        T_INCOMPLETE    = 0xFFFF,                   // Must be FFFF
     };
 
     FlashMapBlock block;

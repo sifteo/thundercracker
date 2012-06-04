@@ -429,6 +429,10 @@ class FlashLFSVolumeVector
     static const unsigned PAD_VOLUMES = 2;
 
 public:
+    // Size of payload portion of any volume
+    static const unsigned VOL_PAYLOAD_SIZE = FlashMapBlock::BLOCK_SIZE
+        - FlashBlock::BLOCK_SIZE;
+
     // Maximum number of volumes in use by a single filesystem
     static const unsigned MAX_VOLUMES = MAX_OBJ_VOLUMES + PAD_VOLUMES;
 
@@ -447,6 +451,7 @@ public:
 class FlashLFS
 {
 private:
+    FlashVolume parent;
     FlashLFSVolumeVector volumes;
 
 public:

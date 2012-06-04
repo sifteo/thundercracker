@@ -195,6 +195,7 @@ bool FlashLFSIndexBlockIter::next()
 }
 
 FlashLFS::FlashLFS(FlashVolume parent)
+    : parent(parent)
 {
 }
 
@@ -213,7 +214,22 @@ bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &ad
     // Write an index record (allocates space for the object)
     // Return location at which object data can be written.
     // Write the object data (may be split among multiple flash blocks)
-    return false;
+
+    FlashVolumeWriter vw;
+    
+    if (!vw.begin(FlashVolume::T_LFS, FlashLFSVolumeVector::VOL_PAYLOAD_SIZE,
+        sizeof(FlashLFSVolumeHeader), parent))
+        return false;
+
+    vw.commit();
+
+    FlashBlockRef ref;
+    FlashMapSpan span = vw.volume.getPayload(ref);
+
+    if (!span.offsetToFlashAddr(0, addr))
+        return false;
+
+    return true;
 }
 
 bool FlashLFS::collectGarbage()
