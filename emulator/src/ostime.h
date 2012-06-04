@@ -32,7 +32,7 @@ private:
 #   include "ostime_win32.h"
 #else
 #   ifdef __APPLE__
-#      include "ostime_macos.h"
+#      include "ostime_mach.h"
 #   else
 #      include "ostime_posix.h"
 #   endif
