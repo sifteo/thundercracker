@@ -19,6 +19,7 @@ TESTS = \
 	sdk/crc \
 	sdk/math \
 	sdk/filesystem \
+	sdk/bg0rom \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
