@@ -7,6 +7,7 @@
  */
 
 #include "frontend.h"
+#include "mc_audiovisdata.h"
 
 static const Color msgColor(1, 1, 0.2);
 static const Color helpTextColor(1, 1, 1);
@@ -21,7 +22,8 @@ static const Color inspectorTextColor(1, 1, 1);
 FrontendOverlay::FrontendOverlay()
     : helpVisible(false), 
       inspectorVisible(false),
-      visualizerVisible(false)
+      visualizerVisible(false),
+      visualizerAlpha(0)
 {}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
@@ -86,9 +88,14 @@ void FrontendOverlay::draw()
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
 
-    if (visualizerVisible) {
-        renderer->overlayAudioVisualizer();
-    }
+    // Visualizer states: Hidden, mixer idle, active
+    float visTargetAlpha =
+        !visualizerVisible ? 0.0f :
+        !MCAudioVisData::instance.mixerActive ? 0.5f :
+        1.0f;
+    
+    visualizerAlpha += (visTargetAlpha - visualizerAlpha) * 0.2f;
+    renderer->overlayAudioVisualizer(visualizerAlpha);
 
     if (helpVisible) {
         drawHelp();

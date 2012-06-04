@@ -973,7 +973,7 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
     glDisable(GL_TEXTURE_2D);
 }
 
-void GLRenderer::overlayAudioVisualizer()
+void GLRenderer::overlayAudioVisualizer(float alpha)
 {
     /*
      * Draw an oscilloscope audio visualizer, using a fragment shader.
@@ -983,8 +983,7 @@ void GLRenderer::overlayAudioVisualizer()
      * and channel number on the Y axis. Filtering is disabled.
      */
 
-    // Visualizer hides to signify when the mixer is totally disabled.
-    if (!MCAudioVisData::instance.mixerActive)
+    if (alpha < 0.001)
         return;
 
     bool initializing = !scopeSampleTexture;
@@ -1021,12 +1020,14 @@ void GLRenderer::overlayAudioVisualizer()
 
     // Make each channel's scope a square
     const unsigned height = viewportWidth / MCAudioVisData::NUM_CHANNELS;
-    static const float color[4] = { 1, 1, 1, 1 };
+    const float color[4] = { 1, 1, 1, alpha };
 
-    glDisable(GL_BLEND);
+    if (alpha > 0.999)
+        glDisable(GL_BLEND);
+
     overlayRect(0, viewportHeight - height, viewportWidth, height, color, scopeProgram);
-    glEnable(GL_BLEND);
 
+    glEnable(GL_BLEND);
     glActiveTexture(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);

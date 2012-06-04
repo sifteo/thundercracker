@@ -61,7 +61,7 @@ class GLRenderer {
     int measureText(const char *str);
     void overlayCubeFlash(unsigned id, int x, int y, int w, int h,
         const uint8_t *data, bool dataChanged);
-    void overlayAudioVisualizer();
+    void overlayAudioVisualizer(float alpha);
 
     void takeScreenshot(std::string name) {
         // Screenshots are asynchronous

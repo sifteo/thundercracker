@@ -83,7 +83,8 @@ private:
     char realTimeMessage[64];
     Color realTimeColor;
     float filteredTimeRatio;
-    
+    float visualizerAlpha;
+
     int x, y;
     
     struct {
