@@ -193,3 +193,36 @@ bool FlashLFSIndexBlockIter::next()
         }
     }
 }
+
+FlashLFS::FlashLFS(FlashVolume parent)
+{
+}
+
+bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
+{
+    // Scan meta-index backwards, for candidate blocks
+    // Scan blocks forward, to establish anchor
+    // Scan backwards until we match
+    // Return address and size of object (guaranteed linear)
+    return false;
+}
+
+bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr)
+{
+    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
+    // Write an index record (allocates space for the object)
+    // Return location at which object data can be written.
+    // Write the object data (may be split among multiple flash blocks)
+    return false;
+}
+
+bool FlashLFS::collectGarbage()
+{
+    // Scan backwards, keeping a bitmap of all keys we've found
+    // Any volume consisting of only superceded keys is deleted
+    
+    // Also: If the oldest volume is less than X amount full, copy
+    //       all non-superceded keys, then delete it.
+    //       XXX - how to do this for more than one volume at a time?
+    return false;
+}

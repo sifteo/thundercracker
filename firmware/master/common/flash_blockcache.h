@@ -122,6 +122,7 @@ public:
     // Global operations
     static void init();
     static void invalidate();
+    static void invalidate(uint32_t addrBegin, uint32_t addrEnd);
 
     // Cached block accessors
     static void preload(uint32_t blockAddr);

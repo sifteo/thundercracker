@@ -173,8 +173,66 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
         return 0;
     }
 
-    // XXX
-    return 0;
+    /*
+     * Do the CRC early; we need to catch faults on 'data' before we create
+     * the new FS object. We'll ask for the CRC to be padded out to the
+     * nearest object allocation unit boundary.
+     */
+
+    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(data);
+    FlashBlockRef ref;
+    uint32_t crc;
+    if (!SvmMemory::crcROData(ref, va, dataSize, crc, FlashLFSIndexRecord::SIZE_UNIT)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    /*
+     * Allocate the LFS object. It will only become valid once we've also
+     * written data to the filesystem which matches our above CRC.
+     */
+
+    FlashLFS lfs(parentVol);
+    uint32_t objectAddr;
+    if (!lfs.newObject(key, dataSize, crc, objectAddr)) {
+        return 0;
+    }
+
+    /*
+     * Write the actual object data. We effectively do a non-cache-polluting
+     * write here, by writing directly to the device and invalidating a portion
+     * of the cache. (There's no benefit to using the cache here, since it would
+     * involve an extra copy from userspace memory to cache memory).
+     */
+
+    FlashBlock::invalidate(objectAddr, objectAddr + dataSize);
+
+    uint32_t currentAddr = objectAddr;
+    uint32_t remainingBytes = dataSize;
+
+    while (remainingBytes) {
+        SvmMemory::PhysAddr pa;
+        uint32_t chunk = remainingBytes;
+
+        if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+            // Shouldn't fail here, we already touched this memory above.
+            ASSERT(0);
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            return 0;
+        }
+
+        ASSERT(chunk > 0);
+        ASSERT(currentAddr >= objectAddr);
+        ASSERT(currentAddr + chunk <= objectAddr + dataSize);
+
+        FlashDevice::write(currentAddr, pa, chunk);
+
+        va += chunk;
+        remainingBytes -= chunk;
+        currentAddr += chunk;
+    }
+
+    return dataSize;
 }
 
 uint32_t _SYS_fs_runningVolume()

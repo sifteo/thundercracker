@@ -224,6 +224,7 @@ void FlashBlockWriter::beginBlock()
     FlashBlock::anonymous(ref, 0xFF);
 }
 
+
 void FlashBlock::invalidate()
 {
     /*
@@ -235,10 +236,29 @@ void FlashBlock::invalidate()
      * replacement. Blocks with a reference are reloaded in-place.
      */
 
+    invalidate(0, 0xFFFFFFFF);
+}
+
+void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd)
+{
+    /*
+     * Invalidate any cache blocks which overlap the given range of
+     * flash addresses.
+     */
+
+    ASSERT(addrBegin < addrEnd);
+
     for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
         FlashBlock *block = &instances[idx];
+        uint32_t blockAddrBegin = block->address;
+        uint32_t blockAddrEnd = blockAddrBegin + FlashBlock::BLOCK_SIZE;
 
-        if (block->address != INVALID_ADDRESS) {
+        if (blockAddrBegin == INVALID_ADDRESS)
+            continue;
+
+        if (blockAddrEnd > addrBegin && blockAddrBegin < addrEnd) {
+            // Block is in range. Invalidate it.
+
             if (block->refCount)
                 block->load(block->address);
             else
