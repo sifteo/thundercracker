@@ -16,6 +16,8 @@ Games you produce using the Sifteo SDK are not subject to this license. You wrot
 
 Header files and example code included with the SDK are free to use for any purpose. You wouldn't expect any less, right?
 
+Some examples include artwork which is distributed under its own license. See individual LICENSE.txt files where applicable.
+
 # Open Source Software
 
 The Sifteo SDK wouldn't be what it is today without these awesome open source projects! The licenses and descriptions below refer to individual open source projects that are distributed with the SDK directly, or which are compiled into our SDK tools.

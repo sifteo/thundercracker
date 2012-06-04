@@ -1,3 +1,5 @@
+Music = tracker{"sv_ttt.xm"}
+
 GameAssets = group{}
 
 Background = image{"stars-bg.png", quality=10}
