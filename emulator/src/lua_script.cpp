@@ -12,6 +12,7 @@
 #include "color.h"
 #include "svmmemory.h"
 #include "cubeslots.h"
+#include "ostime.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 
@@ -284,7 +285,7 @@ int LuaSystem::vclock(lua_State *L)
 
 int LuaSystem::sleep(lua_State *L)
 {
-    glfwSleep(luaL_checknumber(L, 1));
+    OSTime::sleep(luaL_checknumber(L, 1));
     return 0;
 }
     
@@ -298,7 +299,7 @@ int LuaSystem::vsleep(lua_State *L)
     double remaining;
     
     while ((remaining = deadline - sys->time.elapsedSeconds()) > 0)
-        glfwSleep(remaining * 0.1);
+        OSTime::sleep(remaining * 0.1);
 
     return 0;
 }

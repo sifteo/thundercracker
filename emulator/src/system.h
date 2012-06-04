@@ -15,7 +15,6 @@
 #define _SYSTEM_H
 
 #include <string>
-#include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_cubes.h"

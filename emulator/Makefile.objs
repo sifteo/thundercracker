@@ -1,4 +1,5 @@
 LOCAL_OBJS = \
+    src/ostime.o \
     src/frontend.o \
     src/frontend_cube.o \
     src/frontend_mothership.o \

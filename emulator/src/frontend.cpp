@@ -7,6 +7,7 @@
  */
 
 #include "frontend.h"
+#include "ostime.h"
 #include <time.h>
 
 /*
@@ -69,6 +70,7 @@ bool Frontend::init(System *_sys)
     world.SetContactListener(&contactListener);
 
     // Open our GUI window
+    glfwInit();
     if (!openWindow(800, 600))
         return false;
 
@@ -893,11 +895,11 @@ b2Vec2 Frontend::mouseVec(float viewExtent)
 
 std::string Frontend::createScreenshotName()
 {
-        char buffer[128];
+    char buffer[128];
     time_t t = time(NULL);
-        const struct tm *now = localtime(&t);
-        strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
-        return std::string(buffer);
+    const struct tm *now = localtime(&t);
+    strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
+    return std::string(buffer);
 }
 
 void Frontend::toggleRotationLock()
@@ -990,7 +992,7 @@ void FrameRateController::endFrame()
      */
     const double limit = 1.0;
 
-    double now = glfwGetTime();
+    double now = OSTime::clock();
     const double minPeriod = 1.0 / targetFPS;
     double thisPeriod = now - lastTimestamp;
     lastTimestamp = now;
@@ -1002,6 +1004,6 @@ void FrameRateController::endFrame()
     else if (accumulator > slack) {
         if (accumulator > limit)
             accumulator = limit;
-        glfwSleep(accumulator - slack);
+        OSTime::sleep(accumulator - slack);
     }
 }

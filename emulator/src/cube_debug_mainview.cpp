@@ -38,8 +38,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <curses.h>
-#include <glfw.h>
 
+#include "ostime.h"
 #include "cube_debug.h"
 
 namespace Cube {
@@ -627,7 +627,7 @@ void mainview_update(Cube::Hardware *cube)
         /* Periodically update most of the stats */
         if (cube->time->clocks < update_prev_clocks ||
             (cube->time->clocks - update_prev_clocks) > update_interval) {
-            double now = glfwGetTime();
+            double now = OSTime::clock();
 
             if (cube->time->clocks > update_prev_clocks && now > update_prev_time) {                
                 float virtual_elapsed = VirtualTime::toSeconds(cube->time->clocks - update_prev_clocks);

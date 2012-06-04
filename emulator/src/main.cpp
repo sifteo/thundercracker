@@ -23,6 +23,7 @@ static bool hasConsole = true;
 
 #include "frontend.h"
 #include "system.h"
+#include "ostime.h"
 #include "lua_script.h"
 
 
@@ -138,7 +139,7 @@ static int run(System &sys)
 
     if (sys.opt_headless) {
         while (sys.isRunning())
-            glfwSleep(0.1);
+            OSTime::sleep(0.1);
     } else {
         while (fe->runFrame());
         fe->exit();
@@ -313,9 +314,6 @@ int main(int argc, char **argv)
         // Other arguments are game binaries
         SystemMC::installGame(arg);
     }
-
-    // Necessary even when running windowless, since we use GLFW for time
-    glfwInit();
 
     return scriptFile ? runScript(sys, scriptFile) : run(sys);
 }
