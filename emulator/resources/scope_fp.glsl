@@ -16,8 +16,9 @@ void main()
     float x = texCoord.x * numChannels;
     float channelNum = floor(x);
     float samplePos = x - channelNum;
+    float channelPos = (channelNum + 0.5) / numChannels;  // Exact texel center!
 
-    float sample = 1.0 - texture2D(sampleBuffer, vec2(samplePos, channelNum / numChannels)).r;
+    float sample = 1.0 - texture2D(sampleBuffer, vec2(samplePos, channelPos)).r;
     float closeness = pow(1.0 + abs(sample - texCoord.y), -focus);
 
     vec4 bgImage = texture2D(background, vec2(x, texCoord.y));

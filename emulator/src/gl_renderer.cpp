@@ -999,12 +999,23 @@ void GLRenderer::overlayAudioVisualizer(float alpha)
     glBindTexture(GL_TEXTURE_2D, scopeSampleTexture);
 
     if (initializing) {
-        // Allocate an empty texture
+        /*
+         * Allocate an empty texture
+         *
+         * Note that we really want linear on the X axis (sample) to avoid
+         * jaggies when the scopes are large, but we ideally would want
+         * NEAREST filtering on the Y axis, since that's used to pick a
+         * channel. Instead we make do with bilinear, and we're careful
+         * to sample exactly at the vertical texel center.
+         *
+         * If we fail to sample exactly at the center, we'll see "crosstalk"
+         * between adjacent scope channels.
+         */
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16,
             MCAudioVisScope::SWEEP_LEN, MCAudioVisData::NUM_CHANNELS,
