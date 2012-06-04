@@ -25,7 +25,7 @@ public:
         LARGE_INTEGER freq;
         if (QueryPerformanceFrequency(&freq)) {
             hasQPC = true;
-            toSeconds = 1.0 / (double)freq;
+            toSeconds = 1.0 / (double)freq.QuadPart;
         } else {
             hasQPC = false;
             LOG(("WARNING: No high-resolution timer available!\n"));
@@ -38,7 +38,7 @@ inline double OSTime::clock()
     if (data.hasQPC) {
         LARGE_INTEGER t;
         QueryPerformanceCounter(&t);
-        return t * data.toSeconds;
+        return t.QuadPart * data.toSeconds;
     }
 
     return GetTickCount() * 1e-3;
