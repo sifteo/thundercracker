@@ -172,21 +172,42 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
 
-    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
+    /* XXX: XM format has envelope size *after* the points themselves.
+     * Fast-forward to get the table size so we're not emitting spurious
+     * warnings.
+     */
+    uint32_t vEnvelopePos = pos();
+    seek(48 + 48); // volume envelope & panning envelope
+    // FILE: Number of points in volume envelope
+    instrument.nVolumeEnvelopePoints = get8();
+    // And seek back to the volume envelope.
+    aseek(vEnvelopePos);
+
+    // FILE: Volume envelope (48 bytes(read from file) — 12(points) * sizeof(uint16_t)(compression) * 2(offset and value))
     uint16_t vEnvelope[12];
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
         uint16_t eValue = get16();
-        assert(eOffset == (eOffset & 0x01FF));  // 9 bits
-        assert(eValue == (eValue & 0x7F));      // 7 bits
-        vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
+
+        if (i < instrument.nVolumeEnvelopePoints) {
+            if (eOffset != (eOffset & 0x01FF)) { // 9 bits
+                log->error("%s, instrument %u, envelope point %d: clamping offset: 0x%hu to 0x%hu\n",
+                           filename, instruments.size(), i, eOffset, 0x1FF);
+                eOffset = 0x1FF;
+            }
+            if (eValue != (eValue & 0x7F)) { // 7 bits
+                log->error("%s, instrument %u, envelope point %d: clamping value: 0x%hu to 0x%hu\n",
+                           filename, instruments.size(), i, eValue, 0x7F + 1);
+                eValue = 0x7F;
+            }
+            vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
+        } else {
+            vEnvelope[i] = 0xFFFF;
+        }
     }
 
-    // FILE: Panning envelope
-    seek(48);
-
-    // FILE: Number of points in volume envelope
-    instrument.nVolumeEnvelopePoints = get8();
+    // FILE: Panning envelope, number of points in volume envelope, and number of points in panning envelope.
+    seek(48 + 1 + 1);
 
     // Now that we have all the volume envelope data, alloc and save to instrument
     size_t envelopeSize = instrument.nVolumeEnvelopePoints * sizeof(*vEnvelope);
@@ -199,9 +220,6 @@ bool XmTrackerLoader::readNextInstrument()
         size += envelopeSize;
         envelopes.push_back(envelope);
     }
-
-    // FILE: Number of points in panning envelope
-    seek(1);
 
     // FILE: Instrument data
     instrument.volumeSustainPoint = get8();
